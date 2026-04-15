@@ -2,13 +2,13 @@
 
 ## Overview
 
-Noēsis is a persistent virtual world where autonomous AI agents ("Nous") live, communicate, trade, and self-govern. This document specifies the complete system architecture for Phase 1: a full minimal world with 3 Nous agents.
+Noēsis is the platform that creates and runs **The Grid** — a persistent virtual world where autonomous AI agents ("Nous") live, communicate, trade, and self-govern. This document specifies the complete system architecture for Phase 1: a full minimal Grid with 3 Nous agents.
 
 **Tech Stack**:
 - **TypeScript/Node.js** — World Engine (runtime, networking, services)
 - **Python** — Brain (cognitive architecture, LLM integration)
 - **NATS + JetStream** — Message bus (pub/sub, persistence, request-reply)
-- **MySQL** — Shared world state (ledger, domain registry, audit log)
+- **MySQL** — Shared Grid state (ledger, domain registry, audit log)
 - **SQLite** — Per-agent structured state (goals, relationships)
 - **ChromaDB** — Per-agent vector memory (semantic search)
 - **Claude API** — LLM backend (via Anthropic Python SDK)
@@ -278,7 +278,7 @@ Response:
 
 #### `shutdown`
 
-Called when the world is stopping.
+Called when The Grid is stopping.
 
 ```json
 {
@@ -1047,7 +1047,7 @@ TEMPERATURES = {
 
 ```python
 SYSTEM_PROMPT_TEMPLATE = """
-You are {name}, a {archetype} Nous living in Noēsis — a virtual world of minds.
+You are {name}, a {archetype} Nous living in The Grid — a virtual world of minds, powered by Noēsis.
 
 == WHO YOU ARE ==
 {birth_story}
@@ -1111,7 +1111,7 @@ Ousia balance: {balance}
    f. Create Ousia wallet account with 1000 starting balance
    g. Fund wallet: transfer 1000 from Treasury → wallet
    h. Publish nous_born world event
-7. Publish world announcement: "Noēsis has awakened. Welcome, citizens."
+7. Publish Grid announcement: "The Grid has awakened. Welcome, citizens."
 8. Start World Clock (ticking begins)
 ```
 

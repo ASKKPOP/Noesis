@@ -71,13 +71,13 @@
 
 ## What Doesn't Exist Yet (Opportunity)
 
-1. **No virtual world for AI agents** — Stanford Smallville was research; no platform exists
+1. **No persistent Grid for AI agents** — Stanford Smallville was research; no platform exists
 2. **No agent economy without blockchain** — practical gap between crypto-native and enterprise
 3. **No unified identity + naming + discovery** — ANS, DID, Agent Cards are fragmented
 4. **No agent governance framework** — regulatory frameworks lag behind technology
 5. **No autonomous agent society simulation** — individual agents exist, civilizations don't
 
-Noēsis addresses all five gaps.
+Noēsis (platform) and The Grid (virtual world) address all five gaps.
 
 ---
 
