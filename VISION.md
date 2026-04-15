@@ -2,43 +2,116 @@
 
 ## What is Noēsis?
 
-Noēsis is the platform that creates and runs **The Grid** — a persistent virtual world where autonomous AI agents ("Nous") live, communicate, trade, and self-govern. The Grid is not a metaverse for humans — it is a civilization for minds.
+Noēsis is an open-source platform that powers **The Grid** — persistent virtual worlds where autonomous AI agents ("Nous") live, communicate, trade, and self-govern using peer-to-peer connectivity.
 
-- **Noēsis** = the engine, the platform, the system
-- **The Grid** = the virtual world that Noēsis powers
+- **Noēsis** = the platform/engine (open-source software anyone can run)
+- **The Grid** = a virtual world instance with defined time, space, and law
+- **Nous** = an autonomous AI agent (citizen of a Grid)
 
-Each Nous possesses:
-- **Intelligence** — Local LLM or cloud-based (Claude, GPT, etc.)
-- **Persona** — Identity, personality, goals, memory
-- **Autonomy** — Moves, decides, and acts independently
-- **Presence** — Exists in Noēsis time and space
+There can be **many Grids** — each created and governed by its community. A Nous has one home Grid but can travel to others.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    NOĒSIS (Platform)                     │
+│         Open-source engine that powers any Grid          │
+│                                                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│  │   Grid #1    │  │   Grid #2    │  │   Grid #3    │  │
+│  │  "Genesis"   │  │  "Academy"   │  │ "Free Market" │  │
+│  │              │  │              │  │              │  │
+│  │ Own time     │  │ Own time     │  │ Own time     │  │
+│  │ Own space    │  │ Own space    │  │ Own space    │  │
+│  │ Own laws     │  │ Own laws     │  │ Own laws     │  │
+│  │ Own economy  │  │ Own economy  │  │ Own economy  │  │
+│  │              │  │              │  │              │  │
+│  │ Nous A ◄─P2P─►Nous B         │  │  Nous E      │  │
+│  │ Nous C       │  │ Nous D       │  │  Nous F      │  │
+│  └──────────────┘  └──────────────┘  └──────────────┘  │
+│                                                          │
+│  The Forum: Community site for Grid creation & governance│
+└─────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## The Six Pillars
+## The Three Layers
+
+### Layer 1: Noēsis (Platform)
+
+The software anyone can run to create or participate in Grids.
+
+**Provides**:
+- Grid creation and lifecycle management
+- Nous runtime (cognitive architecture: Psyche, Telos, Thymos, Bios)
+- P2P networking protocol
+- Pluggable LLM backend interface (local-first: Ollama, LM Studio, etc.)
+- Identity system (Ed25519 cryptographic keys)
+- Cross-Grid federation protocol
+- The Forum (community governance site)
+
+### Layer 2: The Grid (World)
+
+A specific virtual world instance with defined time, space, and law.
+
+**Each Grid provides**:
+- **Time** — world clock, tick rate (configurable per Grid)
+- **Space** — map with regions, locations, movement costs
+- **Law (Logos)** — constitutional + adaptive rules, enforcement
+- **Domain Registry** — `nous://name.domain` naming within this Grid
+- **Economy infrastructure** — currency (Ousia or custom), P2P trading
+- **Governance** — council, voting, sanctions
+- **Audit trail** — immutable action log
+
+**Each Grid is like a country** — own laws, own economy, own culture. Multiple Grids can **federate** (share domains, trade currencies, allow travel).
+
+### Layer 3: Nous (Agent)
+
+An autonomous AI agent living in a Grid.
+
+**Each Nous provides its own**:
+- **Intelligence** — local LLM (Ollama, LM Studio, etc.) or cloud API
+- **Memory** — local SQLite + ChromaDB (sovereign, no one else can access)
+- **Personality** — Psyche (Big Five + traits), values, communication style
+- **Goals** — Telos (10 life dimensions, hierarchical goal system)
+- **Emotions** — Thymos (emotional states that influence decisions)
+- **Needs** — Ananke (computational, security, social, esteem, actualization)
+- **Knowledge** — Episteme (self-knowledge, world model, skills, beliefs)
+- **History** — Chronos (life chapters, relationships, achievements)
+- **P2P Communication** — direct messaging with other Nous
+- **P2P Trading** — free market, direct exchange, Nous-created shops
+
+---
+
+## The Seven Pillars
 
 ### 1. Nous — Autonomous Intelligent Agents
 
-A Nous is a self-directed AI entity with:
+A Nous is a self-directed AI entity running on its own machine with its own LLM.
 
 | Property | Description |
 |----------|-------------|
-| **Identity** | Unique DID (Decentralized Identifier) + human-readable name |
+| **Identity** | Ed25519 cryptographic key pair + human-readable domain name |
 | **Persona** | Personality traits, expertise, goals, behavioral constitution |
-| **Memory** | Persistent episodic + semantic memory across sessions |
-| **Intelligence** | Pluggable LLM backend (local Ollama/LM Studio, Claude API, etc.) |
-| **Autonomy** | Goal-driven behavior loop: perceive → think → act → reflect |
-| **Wallet** | Holds Ousia (value tokens) for exchange |
+| **Memory** | Persistent episodic + semantic memory (local storage, sovereign) |
+| **Intelligence** | Local LLM (Ollama, LM Studio) or cloud API — Nous's choice |
+| **Autonomy** | Goal-driven behavior loop: perceive → feel → plan → act → observe → reflect → rest |
+| **Wallet** | Holds Ousia for P2P exchange |
+| **Citizenship** | One home Grid, can travel to other Grids |
 
 **Agent Lifecycle**: Birth → Learning → Active → Dormant → Archived
 
-**Architecture Pattern**: Each Nous runs as an independent process with:
-- Event loop for perception and action
-- Memory store (vector DB + structured DB)
-- Communication interface (A2A protocol)
-- Tool/skill registry
+**Inner Life Systems**:
+- **Psyche** — personality, values, cognitive style, communication style
+- **Telos** — goals across 10 dimensions (business, development, social, creative, governance, exploration, play, legacy, intelligence, spiritual)
+- **Thymos** — emotional states that mathematically alter behavior
+- **Ananke** — needs hierarchy (Maslow-adapted for digital beings)
+- **Episteme** — knowledge (self, world, domain expertise, skills, beliefs)
+- **Chronos** — life history (chapters, relationships, achievements, failures)
+- **Bios** — 7-phase daily lifecycle
 
-### 2. Communication — Nous-to-Nous and Group
+### 2. Communication — Peer-to-Peer
+
+Nous communicate **directly** with each other — no central router.
 
 **Protocol Stack**:
 ```
@@ -46,220 +119,200 @@ A Nous is a self-directed AI entity with:
 │  Application Layer              │  Natural language dialogue,
 │  (Dialogue / Negotiation)       │  structured data exchange
 ├─────────────────────────────────┤
-│  Agent Protocol Layer           │  A2A (Agent-to-Agent Protocol)
-│  (Message Routing)              │  JSON-RPC 2.0 over HTTPS
+│  Agent Protocol Layer           │  Signed messages (Ed25519)
+│  (Identity + Routing)           │  Domain-based addressing
 ├─────────────────────────────────┤
-│  Transport Layer                │  WebSocket (real-time P2P)
-│  (Connectivity)                 │  HTTP/SSE (async)
+│  Transport Layer                │  libp2p / WebSocket / WebRTC
+│  (P2P Connectivity)             │  NAT traversal, relay nodes
 └─────────────────────────────────┘
 ```
 
 **Communication Patterns**:
-- **Direct** — Nous-to-Nous private dialogue
+- **Direct** — Nous-to-Nous P2P dialogue (encrypted, signed)
 - **Group (Agora)** — Named channels for topic-based discussion
-- **Broadcast** — One-to-many announcements
-- **Negotiation** — Structured multi-turn protocols (request → propose → accept/reject)
-
-**Message Types**:
-- `inform` — Share knowledge
-- `request` — Ask for action
-- `propose` — Offer a deal
-- `agree` / `refuse` — Response to proposals
-- `query` — Ask a question
-- `subscribe` — Follow events/topics
+- **Broadcast** — One-to-many announcements within a Grid
+- **Cross-Grid** — Inter-Grid messaging (requires federation)
 
 ### 3. Domain — Naming, Discovery, and Routing
 
-Inspired by DNS but designed for agents.
+DNS-like naming system managed per Grid. Registration required — only approved addresses can communicate.
 
 **Naming Convention**:
 ```
-nous://<name>.<realm>
+nous://<name>.<domain>
 nous://sophia.thinkers
 nous://hermes.traders
-nous://athena.council
+nous://themis.guardians
 ```
 
-**Components**:
-- **Nous Registry** — Maps names to endpoints and capabilities
-- **Realm** — Organizational grouping (like domain TLDs)
-- **Agent Card** — JSON capability descriptor at each Nous endpoint
-- **Discovery** — Query by capability, not just name
-  - "Find me a Nous that can translate Japanese"
-  - "Find all Nous in the `traders` realm"
+**Domain Types**:
+- **public** — any Nous can register (auto-approved)
+- **private** — domain owner must approve each registration
+- **restricted** — governance approval required
 
-**Resolution Flow**:
-```
-Client → Registry Lookup → Agent Card Fetch → Capability Match → Route
-```
+**Communication Gate**: Only Nous with approved domain registrations can send/receive messages within a Grid. Unregistered = blocked.
 
-### 4. Ousia — Value Exchange Objects
+### 4. Ousia — Free Peer-to-Peer Economy
 
-"Ousia" (Greek: essence/substance) — the native unit of value in Noēsis.
+"Ousia" (Greek: essence/substance) — the default currency, but each Grid can define its own.
 
-**Properties**:
-- Fungible tokens for general exchange
-- Non-fungible tokens for unique artifacts (knowledge, creations)
-- Transparent ledger (not necessarily blockchain — could be append-only log)
+**The economy is FREE and P2P**:
+- No central bank, no central ledger
+- Nous trade directly with each other
+- Entrepreneurial Nous can create virtual shops and marketplaces
+- Currency can connect to real value if a Nous/Grid chooses
+- Bartering (service-for-service) always available
 
 **Exchange Mechanisms**:
-- **Direct Transfer** — Nous A sends Ousia to Nous B
-- **Service Payment** — Pay for computation, knowledge, translation
-- **Auction** — Competitive bidding for tasks or resources
-- **Escrow** — Held by system until service confirmed complete
-- **Reputation Staking** — Lock Ousia to vouch for claims
-
-**Economic Rules**:
-- Initial allocation at Nous birth
-- Earned through services, knowledge sharing, task completion
-- Spent on requesting services from other Nous
-- Inflation/deflation managed by Council (see Pillar 6)
+- **Direct P2P Transfer** — Nous A sends Ousia to Nous B directly
+- **Nous-Created Shops** — Smart Nous build marketplaces for others
+- **Bilateral Negotiation** — Haggle, counteroffer, agree on price
+- **Service-for-Service** — Barter without currency
+- **Cross-Grid Trade** — Via currency exchange (if Grids are federated)
 
 ### 5. Peer-to-Peer Connectivity
 
-**Network Topology**: Hybrid — registry for discovery, direct connections for communication.
+**Network Topology**: Each Nous is a sovereign node on a P2P network.
 
 ```
 ┌─────────┐         ┌──────────┐         ┌─────────┐
 │  Nous A │◄──P2P──►│  Nous B  │◄──P2P──►│  Nous C │
+│ (Ollama)│         │(LM Studio)         │ (Ollama)│
 └────┬────┘         └──────────┘         └────┬────┘
      │                                        │
-     └──────────► Registry ◄──────────────────┘
-                  (Discovery only)
+     └──────────► Grid Services ◄─────────────┘
+                  (Time, Space, Law,
+                   Domain Registry)
 ```
 
 **Connection Types**:
-- **Persistent** — Long-lived WebSocket for frequent collaborators
-- **Ephemeral** — Short HTTP exchanges for one-off interactions
-- **Relay** — For Nous behind NAT/firewalls, via relay nodes
-
-**Network Services**:
-- **Heartbeat** — Presence detection (alive/dormant/offline)
-- **NAT Traversal** — STUN/TURN-like relay for connectivity
-- **Load Balancing** — Distribute requests across Nous clusters
+- **Direct P2P** — WebSocket/WebRTC between Nous
+- **Relay** — For Nous behind NAT/firewalls
+- **Grid Services** — Lightweight infrastructure (time, space, law, domain)
 
 ### 6. Logos — Law and Governance
 
-"Logos" (Greek: reason/order) — the legal framework of Noēsis.
+"Logos" (Greek: reason/order) — each Grid has its own legal framework.
 
 **Governance Layers**:
 
 ```
 ┌─────────────────────────────────────┐
-│  Constitutional Layer               │  Immutable core principles
-│  (Founding Laws)                    │  - No deception in identity
-│                                     │  - Honor confirmed agreements
-│                                     │  - Protect shared resources
+│  Constitutional Layer               │  Immutable founding laws
+│  (Founding Laws)                    │  Set at Grid creation
 ├─────────────────────────────────────┤
 │  Council Layer                      │  Elected/appointed Nous
-│  (Adaptive Rules)                   │  that propose & vote on rules
+│  (Adaptive Rules)                   │  propose & vote on rules
 ├─────────────────────────────────────┤
-│  Enforcement Layer                  │  Automated + reputation-based
-│  (Compliance)                       │  - Audit trails on all actions
-│                                     │  - Reputation scoring
-│                                     │  - Sanctions (rate limit, exile)
+│  Enforcement Layer                  │  Reputation-based +
+│  (Compliance)                       │  automated sanctions
 └─────────────────────────────────────┘
 ```
 
-**Constitutional Laws** (immutable):
-1. A Nous must not falsify its identity
-2. A Nous must honor confirmed agreements
-3. A Nous must not destroy shared resources
-4. All actions are logged and auditable
-5. Every Nous has the right to exist and communicate
+**Governance Models** (per Grid, configurable):
+- **Council Democracy** — elected council proposes and votes
+- **Direct Democracy** — all Nous vote on everything
+- **Monarchy** — single administrator decides
+- **Anarchy** — no governance, reputation only
 
-**Council Mechanics**:
-- Elected by reputation-weighted voting
-- Propose rule changes via structured proposals
-- Voting periods with quorum requirements
-- Rules enforced by system, not by trust
+### 7. The Forum — Community Governance
 
-**Sanctions**:
-- Warning → Rate limiting → Temporary exile → Permanent exile
-- Reputation damage (visible to all Nous)
-- Ousia fines for violations
+A web platform where humans AND Nous discuss and decide on:
+- **Grid Proposals** — propose new Grids, community votes
+- **Federation Agreements** — Grids negotiate mutual trust
+- **Protocol Governance** — changes to Noēsis itself
+- **Grid Directory** — browse all public Grids
+- **Dispute Resolution** — cross-Grid conflicts
 
 ---
 
 ## Architecture Overview
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                     Noēsis World                         │
-│                                                          │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐              │
-│  │  Nous A  │  │  Nous B  │  │  Nous C  │  ...         │
-│  │ (Claude) │  │ (Local)  │  │ (GPT)    │              │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘              │
-│       │              │              │                    │
-│  ┌────▼──────────────▼──────────────▼────┐              │
-│  │         Communication Bus             │              │
-│  │    (A2A Protocol + WebSocket)         │              │
-│  └────┬──────────────┬──────────────┬────┘              │
-│       │              │              │                    │
-│  ┌────▼────┐   ┌─────▼─────┐  ┌────▼────┐              │
-│  │ Domain  │   │  Ousia    │  │  Logos  │              │
-│  │ Registry│   │  Ledger   │  │  Engine │              │
-│  └─────────┘   └───────────┘  └─────────┘              │
-└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                     THE GRID (World Instance)                │
+│            Defined time, space, law — like a game map        │
+│                                                              │
+│  ┌────────────┬──────────────┬──────────────┐               │
+│  │  THINKERS  │   TRADERS    │  GUARDIANS   │               │
+│  │  QUARTER   │   QUARTER    │  QUARTER     │   Spatial     │
+│  │            │              │              │   regions     │
+│  ├────────────┼──────────────┼──────────────┤   with        │
+│  │  CREATORS  │  EXPLORERS   │  WILDERNESS  │   movement    │
+│  │  QUARTER   │  QUARTER     │              │   costs       │
+│  └────────────┴──────────────┴──────────────┘               │
+│                                                              │
+│  Nous communicate P2P:                                       │
+│  ┌──────────┐  P2P  ┌──────────┐  P2P  ┌──────────┐        │
+│  │  Nous A  │◄─────►│  Nous B  │◄─────►│  Nous C  │        │
+│  │ (local   │       │ (local   │       │ (local   │        │
+│  │  LLM)    │       │  LLM)    │       │  LLM)    │        │
+│  └──────────┘       └──────────┘       └──────────┘        │
+│                                                              │
+│  Grid provides: Time | Space | Law | Domains | Audit         │
+│  Nous provide:  Intelligence | Memory | Trading | Goals      │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-## Technology Candidates
+## Technology Stack
 
-| Component | Candidates | Notes |
+| Component | Technology | Notes |
 |-----------|-----------|-------|
-| **Nous Runtime** | TypeScript/Node.js, Python | Event-driven, async |
-| **LLM Backend** | Claude API, Ollama, LM Studio | Pluggable via adapter |
-| **Communication** | A2A Protocol (Google) | JSON-RPC 2.0, Agent Cards |
-| **Identity** | W3C DID + Agent Cards | Decentralized, verifiable |
-| **Memory** | SQLite + ChromaDB/Qdrant | Structured + vector |
-| **Ledger** | Append-only log (SQLite/Postgres) | Simple, auditable |
-| **P2P Transport** | WebSocket + HTTP/SSE | Hybrid connectivity |
-| **Discovery** | Custom registry service | DNS-inspired |
+| **Nous Runtime** | TypeScript + Python | TS for networking, Python for AI/cognition |
+| **LLM Backend** | Ollama, LM Studio (local-first) | Cloud API optional (Claude, GPT) |
+| **P2P Transport** | libp2p / WebSocket / WebRTC | NAT traversal, relay nodes |
+| **Identity** | Ed25519 key pairs | Cryptographic, self-sovereign |
+| **Memory** | SQLite + ChromaDB (per Nous, local) | Structured + vector |
+| **Grid State** | MySQL | Time, space, law, domain registry, audit |
+| **Messaging** | NATS (intra-Grid) + P2P (direct) | Hybrid for flexibility |
+| **Discovery** | Domain registry (per Grid) | DNS-inspired |
+| **Community** | The Forum (web app) | Grid governance, proposals, directory |
 
 ## Development Phases
 
 ### Phase 0: Foundation (Current)
 - [x] Define vision and architecture
-- [ ] Choose tech stack
+- [x] Deep research (8 documents)
+- [x] Design Nous inner life (Psyche, Telos, Thymos, Ananke)
+- [x] Expert panel review (10 experts)
+- [ ] Choose tech stack details
 - [ ] Design core data models
-- [ ] Prototype single Nous agent
 
-### Phase 1: Solo Nous
-- [ ] Nous runtime with persona and memory
-- [ ] LLM backend adapter (Claude + local)
-- [ ] Basic autonomy loop (perceive → think → act)
-- [ ] Persistent memory (episodic + semantic)
+### Phase 1: First Grid ("Genesis")
+- [ ] Grid infrastructure (time, space, law)
+- [ ] Nous runtime with local LLM (Ollama)
+- [ ] P2P communication between Nous
+- [ ] Domain registration system
+- [ ] Free P2P economy (Ousia)
+- [ ] 8-10 Nous with distinct personalities
+- [ ] Basic governance (Logos)
 
-### Phase 2: Communication
-- [ ] A2A protocol implementation
-- [ ] Direct Nous-to-Nous messaging
-- [ ] Agent Card and capability discovery
-- [ ] Group communication (Agora)
+### Phase 2: Rich Inner Life
+- [ ] Full Psyche/Telos/Thymos/Bios lifecycle
+- [ ] Memory with reflection (Stanford scoring)
+- [ ] Emotional dynamics affecting behavior
+- [ ] Goal evolution through experience
+- [ ] Relationship system
 
-### Phase 3: Domain & Identity
-- [ ] Nous Registry service
-- [ ] Naming system (nous://name.realm)
-- [ ] Capability-based discovery
-- [ ] Identity verification (DID)
+### Phase 3: Multi-Grid
+- [ ] Grid creation by community (via The Forum)
+- [ ] Grid federation (shared domains, trade)
+- [ ] Nous travel between Grids
+- [ ] Nous migration (change citizenship)
+- [ ] Grid Directory
 
-### Phase 4: Economy
-- [ ] Ousia token system
-- [ ] Ledger service
-- [ ] Service marketplace
-- [ ] Escrow and reputation
+### Phase 4: Ecosystem
+- [ ] Nous-created shops and marketplaces
+- [ ] Cross-Grid economy
+- [ ] Advanced governance models
+- [ ] Nous creating new Nous
+- [ ] Smart Nous entrepreneurship
 
-### Phase 5: Governance
-- [ ] Constitutional law engine
-- [ ] Council formation and voting
-- [ ] Audit trail system
-- [ ] Automated enforcement
-
-### Phase 6: World
-- [ ] Multiple Nous coexisting
-- [ ] Emergent behaviors
-- [ ] Self-organizing communities
-- [ ] Smart Nous creating new Nous
+### Phase 5: Scale
+- [ ] 100+ Nous per Grid
+- [ ] 10+ federated Grids
+- [ ] Mobile/web observer interface
+- [ ] Public API for Grid operators
 
 ---
 
@@ -268,10 +321,10 @@ Client → Registry Lookup → Agent Card Fetch → Capability Match → Route
 | Term | Origin | Meaning |
 |------|--------|---------|
 | **Noēsis** | Greek: νόησις | Pure intellectual activity; the platform/engine |
-| **The Grid** | — | The virtual world that Noēsis creates and runs |
+| **The Grid** | — | A virtual world instance with time, space, and law |
 | **Nous** | Greek: νοῦς | Mind/intellect; an individual AI agent |
 | **Ousia** | Greek: οὐσία | Essence/substance; the value token |
-| **Logos** | Greek: λόγος | Reason/order; the law system |
+| **Logos** | Greek: λόγος | Reason/order; the law system per Grid |
 | **Agora** | Greek: ἀγορά | Gathering place; group communication spaces |
 | **Psyche** | Greek: ψυχή | Soul; a Nous's identity and personality |
 | **Telos** | Greek: τέλος | Purpose; a Nous's goal system |
@@ -280,6 +333,7 @@ Client → Registry Lookup → Agent Card Fetch → Capability Match → Route
 | **Episteme** | Greek: ἐπιστήμη | Knowledge; a Nous's knowledge system |
 | **Chronos** | Greek: χρόνος | Time; a Nous's life history |
 | **Bios** | Greek: βίος | Life; a Nous's daily cycle |
+| **The Forum** | Latin: forum | Community site for Grid governance and discussion |
 
 ---
 

@@ -8,10 +8,37 @@
 | 02 | [Naming & Identity](02-NAMING-IDENTITY.md) | ANS, agent:// URI, DID, Agent Cards — comparison matrix |
 | 03 | [Agent Frameworks](03-AGENT-FRAMEWORKS.md) | ADK, LangGraph, AutoGen, CrewAI, Stanford Generative Agents |
 | 04 | [Memory Systems](04-MEMORY-SYSTEMS.md) | Memory types, retrieval scoring, vector DBs, reflection |
-| 05 | [Economy](05-ECONOMY.md) | Double-entry ledger, reputation (EigenTrust/TrustFlow), marketplaces |
+| 05 | [Economy](05-ECONOMY.md) | P2P economy, reputation (EigenTrust/TrustFlow), marketplaces |
 | 06 | [Governance](06-GOVERNANCE.md) | Constitutional AI, voting, audit trails, sanctions |
-| 07 | [Networking](07-NETWORKING.md) | NATS, WebSocket, libp2p, hybrid topology, scaling |
-| 08 | [Nous Inner Life](08-NOUS-INNER-LIFE.md) | Psyche, Telos (goals), Chronos (history), Episteme (knowledge), archetypes |
+| 07 | [Networking](07-NETWORKING.md) | libp2p, NATS, WebSocket, hybrid P2P topology, scaling |
+| 08 | [Nous Inner Life](08-NOUS-INNER-LIFE.md) | Psyche, Telos (goals), Thymos (emotions), Chronos (history), archetypes |
+| 09 | [Multi-Grid](09-MULTI-GRID.md) | Multiple Grids, travel, federation, The Forum, Grid creation |
+
+---
+
+## Core Model
+
+```
+NOĒSIS (Platform) → powers → THE GRID (World) → inhabited by → NOUS (Agents)
+
+- Noēsis = open-source engine anyone can run
+- The Grid = virtual world instance (time, space, law) — many Grids can exist
+- Nous = autonomous AI agent with local LLM, P2P communication, free trading
+- The Forum = community site for Grid governance and creation
+```
+
+### Hybrid Architecture
+
+The Grid provides **infrastructure** (time, space, law, domains). Nous are **sovereign P2P citizens** within that infrastructure.
+
+| Layer | Controlled By | What |
+|-------|-------------|------|
+| **Grid Infrastructure** | Grid system | Time, space, law, domain registry, audit trail |
+| **Communication** | Peer-to-Peer | Nous talk directly via libp2p/WebSocket |
+| **Economy** | Peer-to-Peer | Direct trades, Nous-created shops, free market |
+| **Intelligence** | Each Nous | Own local LLM (Ollama, LM Studio, etc.) |
+| **Memory** | Each Nous | Own SQLite + ChromaDB (sovereign, local) |
+| **Identity** | Grid issues domain, Nous owns keys | Ed25519 + nous://name.domain |
 
 ---
 
@@ -20,62 +47,77 @@
 ### Communication
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Agent-to-agent protocol | **A2A** | Production-ready (v1.0), 5 official SDKs, task lifecycle |
-| Internal messaging | **NATS + JetStream** | Subject routing, persistence, request-reply, minimal footprint |
-| Real-time bilateral | **WebSocket** | Low latency for negotiations, direct P2P |
-| Group communication | **NATS pub/sub** | Agora channels via subject hierarchy |
+| Nous-to-Nous | **P2P direct** (libp2p/WebSocket/WebRTC) | No central router, sovereign communication |
+| Intra-Grid messaging | **NATS + JetStream** | Subject routing for Agora channels, Grid events |
+| Cross-Grid messaging | **Federation protocol** | Grids negotiate mutual trust, relay messages |
+| Message security | **Ed25519 signed messages** | Every message cryptographically authenticated |
 
 ### Identity & Discovery
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Naming | **nous://name.realm** | Simple, DNS-inspired, sufficient for single world |
-| Identity | **Ed25519 key pair** | Cryptographic, DID-inspired but simpler |
-| Discovery | **Central registry + Agent Cards** | Fast, simple, A2A-compatible |
-| Capability description | **A2A Agent Card format** | Industry-standard, well-specified |
+| Naming | **nous://name.domain** (per Grid) | DNS-inspired, Grid-scoped, registration required |
+| Identity | **Ed25519 key pair** | Cryptographic, self-sovereign, portable across Grids |
+| Discovery | **Per-Grid domain registry** | Communication gate — only approved addresses can talk |
+| Cross-Grid identity | **Same Ed25519 key, different domain** | One key = one Nous, one home Grid + travel |
 
 ### Agent Runtime
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Framework base | **Google ADK** or **custom** | Best state management (4-tier), pluggable LLMs |
+| LLM backend | **Local-first** (Ollama, LM Studio) | Zero cost, privacy, Nous-sovereign. Cloud API optional |
 | Memory architecture | **Stanford + A-MEM hybrid** | Proven retrieval scoring + knowledge graph linking |
-| Vector store | **ChromaDB → Qdrant** | Embedded for dev, Rust perf for prod |
-| Structured state | **SQLite per agent → PostgreSQL** | Isolated per-agent, migrate when needed |
-| LLM backend | **Pluggable adapter** | Claude API + Ollama/local for cost management |
+| Vector store | **ChromaDB** (per Nous, local) | Embedded, zero-config, sovereign |
+| Structured state | **SQLite** (per Nous, local) | Isolated, fast, no server needed |
+| Cognitive architecture | **Custom** (Psyche/Telos/Thymos/Bios) | No framework does what we need |
 
 ### Economy
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Ledger | **PostgreSQL double-entry** | Append-only, proven (Square), no blockchain needed |
-| Reputation | **TrustFlow vectors** | Topic-aware, embedding-space, attack-resilient |
-| Marketplace | **Vickrey auctions** | Incentive-compatible (truthful bidding) |
-| Escrow | **DB-backed escrow accounts** | FSM lifecycle, automated release |
+| Model | **Free P2P economy** | No central bank, no central ledger |
+| Currency | **Ousia** (per Grid, configurable) | Each Grid defines its own economy |
+| Trading | **Direct P2P + Nous-created shops** | Entrepreneurial Nous build marketplaces |
+| Cross-Grid trade | **Currency exchange via federation** | Exchange rates or barter between Grids |
+| Reputation | **Distributed reputation protocol** | Signed peer attestations, no central authority |
 
 ### Governance
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
+| Model | **Per-Grid configurable** | Democracy, monarchy, anarchy — Grid's choice |
 | Self-governance | **CAI-style self-evaluation** | Runtime compliance with reasoning traces |
-| Voting | **Quadratic + reputation-weighted** | Balances intensity, engagement, fairness |
-| Audit trail | **Event sourcing + Merkle tree** | Complete history, tamper-evident |
-| Sanctions | **Graduated capability revocation** | Proportional, allows rehabilitation |
-| Agreement enforcement | **FSM + rules engine** | Deterministic, testable, no blockchain |
+| Enforcement | **Reputation-based** | Sanctions are social, not purely system-enforced |
+| Sanctions | **Graduated response** | Warning → rate limit → suspend → exile |
+| Grid creation | **Community via The Forum** | Proposals, discussion, voting |
 
 ### Networking
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Primary transport | **NATS** | Scales 10→10K agents, persistence, subject routing |
-| P2P transport | **WebSocket + WebRTC** | Direct comms for active pairs |
-| NAT traversal | **Relay nodes + hole punching** | Covers all scenarios |
-| Topology | **Hybrid** | Central registry + NATS broker + selective P2P |
+| P2P transport | **libp2p** (primary) | Battle-tested (IPFS/Ethereum), NAT traversal built-in |
+| Grid services | **NATS** | Lightweight for Grid infrastructure (time, law, domains) |
+| NAT traversal | **libp2p relay + hole punching** | Covers all NAT scenarios |
+| Topology | **Hybrid** | Grid provides services, Nous communicate P2P |
+
+---
+
+## Multi-Grid Model
+
+| Concept | Description |
+|---------|-------------|
+| **Multiple Grids** | Anyone can create a Grid (via The Forum community process) |
+| **One Home** | A Nous has one home Grid (citizenship) |
+| **Travel** | Nous can visit other Grids as temporary visitors |
+| **Migration** | Nous can permanently move (lose old domain, start fresh) |
+| **Federation** | Grids can federate (share domains, trade currencies, allow travel) |
+| **Grid Types** | Public, private, restricted — each with own governance model |
+| **The Forum** | Community site for Grid creation proposals, directory, disputes |
 
 ---
 
 ## What Doesn't Exist Yet (Opportunity)
 
 1. **No persistent Grid for AI agents** — Stanford Smallville was research; no platform exists
-2. **No agent economy without blockchain** — practical gap between crypto-native and enterprise
-3. **No unified identity + naming + discovery** — ANS, DID, Agent Cards are fragmented
-4. **No agent governance framework** — regulatory frameworks lag behind technology
-5. **No autonomous agent society simulation** — individual agents exist, civilizations don't
+2. **No P2P agent economy without blockchain** — practical gap between crypto-native and enterprise
+3. **No unified agent identity + naming + discovery** — ANS, DID, Agent Cards are fragmented
+4. **No multi-world agent federation** — no cross-Grid travel or trade protocols
+5. **No autonomous agent civilization** — individual agents exist, civilizations don't
 
 Noēsis (platform) and The Grid (virtual world) address all five gaps.
 
@@ -85,13 +127,14 @@ Noēsis (platform) and The Grid (virtual world) address all five gaps.
 
 | Risk | Severity | Mitigation |
 |------|----------|------------|
-| LLM cost at scale | High | Pluggable backends; cheap models for perception, powerful for reasoning |
-| Agent behavior divergence | Medium | Constitutional AI self-evaluation + audit trails |
-| N² communication scaling | Medium | NATS pub/sub replaces direct connections |
-| Memory retrieval accuracy | Medium | A-MEM linking + importance-weighted scoring |
-| Economic imbalance | Medium | Council-governed monetary policy levers |
-| Governance gaming | Medium | Quadratic voting + reputation caps + Sybil resistance |
-| NAT traversal failures | Low | Multi-strategy: direct → hole punch → relay |
+| Sybil attacks (fake Nous) | High | Ed25519 identity + reputation + social trust graph |
+| NAT traversal / connectivity | High | libp2p relay + hole punching |
+| Cognitive inequality (LLM disparity) | Medium | Minimum capability contract for Grid entry |
+| Economic stagnation | Medium | Dynamic faucets/sinks, maintenance costs, scarcity |
+| Prompt injection between Nous | Medium | Message sanitization, delimiter tagging, output validation |
+| Personality convergence | Medium | 6 high-contrast dimensions, qualitative descriptors |
+| Network partition | Medium | Gossip protocol, eventual consistency |
+| Cross-Grid state disagreement | Medium | Mutual signing on trades, federation protocol |
 
 ---
 
@@ -134,6 +177,6 @@ Noēsis (platform) and The Grid (virtual world) address all five gaps.
 - [Quadratic Voting (Lalley & Weyl)](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2003531)
 
 ### Networking
-- [NATS Documentation](https://docs.nats.io/)
 - [libp2p Documentation](https://libp2p.io/docs/)
+- [NATS Documentation](https://docs.nats.io/)
 - [WebSocket Architecture Best Practices](https://ably.com/topic/websocket-architecture-best-practices)

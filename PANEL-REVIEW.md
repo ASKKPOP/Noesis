@@ -267,3 +267,50 @@ Despite the critical feedback, every reviewer acknowledged:
 > "The Psyche framework is a genuine contribution" — Philosopher
 
 The message is clear: **the vision and research are exceptional; now ship Phase 1 with the critical fixes applied.**
+
+---
+
+## Founder Corrections (Post-Review)
+
+The founder corrected several fundamental misunderstandings in the panel's review:
+
+### Issue 1: "LLM Cost Will Kill the Project" → RESOLVED
+**Panel assumed**: Claude API for all agents = $750-2,400/month.
+**Founder correction**: Each Nous runs its own **local LLM** (Ollama, LM Studio, etc.). Cloud API is optional, not required. Cost is effectively zero for local models. Many smart open models are available now.
+**Status**: ~~CRITICAL~~ → **NOT AN ISSUE**
+
+### Issue 4: "3 Agents Is Not Enough" → WRONG FRAMING
+**Panel assumed**: Fixed at 3 agents in a central simulation.
+**Founder correction**: The Grid is **peer-to-peer** — any number of Nous can join. Each runs on its own machine. No central limit. Target is 8-10+ for Phase 1, unlimited at scale.
+**Status**: Issue reframed → **P2P security** is the real concern (Sybil attacks, identity)
+
+### Issue 5: "account_balances VIEW Will Collapse" → WRONG MODEL
+**Panel assumed**: Central MySQL ledger managing all balances.
+**Founder correction**: There is **no central ledger**. Economy is **free P2P** — Nous trade directly. Entrepreneurial Nous can create virtual shops/marketplaces. No central bank, no treasury controlling supply.
+**Status**: ~~CRITICAL~~ → **NOT APPLICABLE** (no central balance view needed)
+
+### Issue 6: "Synchronous Tick Blocks the World" → WRONG MODEL
+**Panel assumed**: Central World Engine controls all agents via synchronous ticks.
+**Founder correction**: **Not a central system**. Each Nous runs its own lifecycle at its own pace. Communication is P2P, not routed through a central engine. Grid provides time/space/law infrastructure, not agent orchestration.
+**Status**: ~~HIGH~~ → **NOT APPLICABLE** (no central tick blocking)
+
+### Additional Clarifications
+- **Multiple Grids**: Many Grids can exist, each created by community via The Forum
+- **One Nous, one home Grid**: A Nous has one citizenship but can travel to other Grids
+- **Grid federation**: Grids CAN federate (share domains, trade currencies, allow travel)
+- **Grid = game map**: Defined time and space with regions, controlled by Grid law (Logos)
+
+### Revised Top 10 Action Items
+
+| # | Action | Impact |
+|---|--------|--------|
+| 1 | **Implement Ed25519 identity + message signing** | Existential (trust in P2P) |
+| 2 | **Adopt libp2p for P2P transport** | Existential (connectivity) |
+| 3 | **Design Sybil resistance** (web-of-trust or proof-of-stake) | Critical (integrity) |
+| 4 | **Define pluggable LLM backend interface** (Ollama, LM Studio, Claude) | Critical (accessibility) |
+| 5 | **Design P2P trade protocol with mutual signing** | Critical (economy) |
+| 6 | **Build distributed reputation system** | High (governance) |
+| 7 | **Add prompt injection defense at receiving node** | High (safety) |
+| 8 | **Reduce personality to 6 dimensions, emotions to 6** | High (differentiation) |
+| 9 | **Publish open protocol specification** | High (adoption) |
+| 10 | **Create one-click Docker deployment package** | High (onboarding) |
