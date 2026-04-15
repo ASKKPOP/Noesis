@@ -1,0 +1,126 @@
+/**
+ * Audit Chain — append-only, hash-chained event log.
+ *
+ * Each entry's hash covers the previous hash, creating a tamper-evident chain.
+ * If any entry is modified or deleted, the chain breaks.
+ */
+
+import { createHash } from 'node:crypto';
+import type { AuditEntry, AuditQuery } from './types.js';
+
+const GENESIS_HASH = '0'.repeat(64);
+
+export class AuditChain {
+    private readonly entries: AuditEntry[] = [];
+    private lastHash: string = GENESIS_HASH;
+    private nextId = 1;
+
+    /** Append a new event to the chain. */
+    append(
+        eventType: string,
+        actorDid: string,
+        payload: Record<string, unknown>,
+        targetDid?: string,
+    ): AuditEntry {
+        const createdAt = Date.now();
+        const prevHash = this.lastHash;
+
+        const eventHash = AuditChain.computeHash(
+            prevHash, eventType, actorDid, payload, createdAt,
+        );
+
+        const entry: AuditEntry = {
+            id: this.nextId++,
+            eventType,
+            actorDid,
+            targetDid,
+            payload,
+            prevHash,
+            eventHash,
+            createdAt,
+        };
+
+        this.entries.push(entry);
+        this.lastHash = eventHash;
+
+        return entry;
+    }
+
+    /** Verify the integrity of the entire chain. */
+    verify(): { valid: boolean; brokenAt?: number } {
+        let expectedPrev = GENESIS_HASH;
+
+        for (let i = 0; i < this.entries.length; i++) {
+            const entry = this.entries[i];
+
+            // Check prev_hash links correctly
+            if (entry.prevHash !== expectedPrev) {
+                return { valid: false, brokenAt: i };
+            }
+
+            // Recompute and verify event hash
+            const recomputed = AuditChain.computeHash(
+                entry.prevHash,
+                entry.eventType,
+                entry.actorDid,
+                entry.payload,
+                entry.createdAt,
+            );
+
+            if (entry.eventHash !== recomputed) {
+                return { valid: false, brokenAt: i };
+            }
+
+            expectedPrev = entry.eventHash;
+        }
+
+        return { valid: true };
+    }
+
+    /** Query entries with optional filters. */
+    query(q: AuditQuery = {}): AuditEntry[] {
+        let results = this.entries;
+
+        if (q.eventType) {
+            results = results.filter(e => e.eventType === q.eventType);
+        }
+        if (q.actorDid) {
+            results = results.filter(e => e.actorDid === q.actorDid);
+        }
+        if (q.targetDid) {
+            results = results.filter(e => e.targetDid === q.targetDid);
+        }
+
+        const offset = q.offset ?? 0;
+        const limit = q.limit ?? results.length;
+
+        return results.slice(offset, offset + limit);
+    }
+
+    /** Get the last hash in the chain. */
+    get head(): string {
+        return this.lastHash;
+    }
+
+    /** Total entries in the chain. */
+    get length(): number {
+        return this.entries.length;
+    }
+
+    /** Get entry by index. */
+    at(index: number): AuditEntry | undefined {
+        return this.entries[index];
+    }
+
+    /** Compute SHA-256 hash for an entry. */
+    static computeHash(
+        prevHash: string,
+        eventType: string,
+        actorDid: string,
+        payload: Record<string, unknown>,
+        timestamp: number,
+    ): string {
+        const data = `${prevHash}|${eventType}|${actorDid}|${JSON.stringify(payload)}|${timestamp}`;
+        return createHash('sha256').update(data).digest('hex');
+    }
+}
