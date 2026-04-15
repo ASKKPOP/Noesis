@@ -1,0 +1,27 @@
+{
+  "name": "@noesis/cli",
+  "version": "0.1.0",
+  "description": "Noēsis CLI — create and manage Grid worlds",
+  "type": "module",
+  "bin": {
+    "noesis": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "clean": "rm -rf dist/"
+  },
+  "dependencies": {
+    "@noesis/grid": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "tsx": "^4.0.0",
+    "vitest": "^2.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

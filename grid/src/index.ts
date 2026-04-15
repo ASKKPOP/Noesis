@@ -16,3 +16,13 @@ export type { AuditEntry, AuditQuery } from './audit/types.js';
 
 export { buildServer } from './api/index.js';
 export type { GridServices, GridStatus } from './api/index.js';
+
+export { EconomyManager } from './economy/index.js';
+export type { EconomyConfig } from './economy/types.js';
+
+export { NousRegistry } from './registry/index.js';
+export type { NousRecord, SpawnRequest, LifecyclePhase } from './registry/types.js';
+
+export { GenesisLauncher } from './genesis/index.js';
+export { GENESIS_CONFIG, TEST_CONFIG } from './genesis/presets.js';
+export type { GenesisConfig, SeedNous, GridState } from './genesis/types.js';
