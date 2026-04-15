@@ -112,6 +112,30 @@ export class AuditChain {
         return this.entries[index];
     }
 
+    /** Return copies of all entries (used by GridStore.snapshot). */
+    all(): AuditEntry[] {
+        return this.entries.map(e => ({ ...e }));
+    }
+
+    /**
+     * Load a pre-existing ordered set of entries into a fresh (empty) chain.
+     * Restores lastHash and nextId so subsequent appends continue correctly.
+     * Throws if the chain already contains entries — use only for restore.
+     */
+    loadEntries(entries: AuditEntry[]): void {
+        if (this.entries.length > 0) {
+            throw new Error('Cannot loadEntries into a non-empty AuditChain');
+        }
+        for (const entry of entries) {
+            this.entries.push({ ...entry });
+        }
+        if (entries.length > 0) {
+            const last = entries[entries.length - 1];
+            this.lastHash = last.eventHash;
+            this.nextId   = (last.id ?? entries.length) + 1;
+        }
+    }
+
     /** Compute SHA-256 hash for an entry. */
     static computeHash(
         prevHash: string,

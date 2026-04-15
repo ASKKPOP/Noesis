@@ -29,3 +29,6 @@ export type { GenesisConfig, SeedNous, GridState } from './genesis/types.js';
 
 export { NousRunner, GridCoordinator } from './integration/index.js';
 export type { NousRunnerConfig, SpeakHandler, BrainAction } from './integration/index.js';
+
+export { DatabaseConnection, MigrationRunner, GridStore, InMemoryGridStore, PersistentAuditChain, snapshotGrid, restoreGrid, MIGRATIONS } from './db/index.js';
+export type { DbConfig, IGridStore, IAuditStore, IRegistryStore, ISpaceStore, Migration } from './db/index.js';

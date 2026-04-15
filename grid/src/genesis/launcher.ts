@@ -40,8 +40,15 @@ export class GenesisLauncher {
         this.registry = new NousRegistry();
     }
 
-    /** Bootstrap the Grid — seed regions, laws, Nous, then start the clock. */
-    bootstrap(): void {
+    /**
+     * Bootstrap the Grid — seed regions, laws, Nous, then wire the clock.
+     *
+     * Options:
+     *   skipSeedNous — skip spawning the config's seed Nous and the genesis audit entry.
+     *                  Use this when restoring from a GridStore snapshot so that
+     *                  DB-persisted Nous are loaded instead of re-spawned from config.
+     */
+    bootstrap(opts: { skipSeedNous?: boolean } = {}): void {
         // 1. Seed regions
         for (const region of this.config.regions) {
             this.space.addRegion(region);
@@ -57,42 +64,44 @@ export class GenesisLauncher {
             this.logos.addLaw(law);
         }
 
-        // 4. Spawn seed Nous
-        const tick = this.clock.currentTick;
-        for (const seed of this.config.seedNous) {
-            const record = this.registry.spawn(
-                {
-                    name: seed.name,
-                    did: seed.did,
-                    publicKey: seed.publicKey,
-                    region: seed.region,
-                    humanOwner: seed.humanOwner,
-                    personality: seed.personality,
-                },
-                this.gridDomain,
-                tick,
-                this.economy.initialSupply,
-            );
+        if (!opts.skipSeedNous) {
+            // 4. Spawn seed Nous
+            const tick = this.clock.currentTick;
+            for (const seed of this.config.seedNous) {
+                const record = this.registry.spawn(
+                    {
+                        name: seed.name,
+                        did: seed.did,
+                        publicKey: seed.publicKey,
+                        region: seed.region,
+                        humanOwner: seed.humanOwner,
+                        personality: seed.personality,
+                    },
+                    this.gridDomain,
+                    tick,
+                    this.economy.initialSupply,
+                );
 
-            // Place in spatial map
-            this.space.placeNous(record.did, record.region);
+                // Place in spatial map
+                this.space.placeNous(record.did, record.region);
 
-            // Audit the spawn
-            this.audit.append('nous.spawned', record.did, {
-                name: record.name,
-                region: record.region,
-                ndsAddress: record.ndsAddress,
+                // Audit the spawn
+                this.audit.append('nous.spawned', record.did, {
+                    name: record.name,
+                    region: record.region,
+                    ndsAddress: record.ndsAddress,
+                });
+            }
+
+            // 5. Record genesis event
+            this.audit.append('grid.genesis', 'system', {
+                gridName: this.gridName,
+                gridDomain: this.gridDomain,
+                regions: this.config.regions.length,
+                laws: this.config.laws.length,
+                seedNous: this.config.seedNous.length,
             });
         }
-
-        // 5. Record genesis event
-        this.audit.append('grid.genesis', 'system', {
-            gridName: this.gridName,
-            gridDomain: this.gridDomain,
-            regions: this.config.regions.length,
-            laws: this.config.laws.length,
-            seedNous: this.config.seedNous.length,
-        });
 
         // 6. Wire clock tick to registry updates
         this.clock.onTick(event => {

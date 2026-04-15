@@ -101,6 +101,22 @@ export class SpatialMap {
         return { success: true, fromRegion, toRegion: toRegionId, travelCost: cost };
     }
 
+    /** Return copies of all current positions (used by GridStore.snapshot). */
+    allPositions(): NousPosition[] {
+        return [...this.positions.values()].map(p => ({ ...p }));
+    }
+
+    /**
+     * Load a set of pre-existing positions into the map.
+     * Used by GridStore.restore() to rebuild spatial state from DB.
+     * Does NOT validate against known regions — caller ensures consistency.
+     */
+    loadPositions(positions: NousPosition[]): void {
+        for (const pos of positions) {
+            this.positions.set(pos.nousDid, { ...pos });
+        }
+    }
+
     /** Count of Nous on the map. */
     get nousCount(): number {
         return this.positions.size;

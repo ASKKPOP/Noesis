@@ -122,4 +122,16 @@ export class NousRegistry {
     all(): NousRecord[] {
         return [...this.records.values()];
     }
+
+    /**
+     * Load a set of pre-existing records into a fresh (empty) registry.
+     * Used by GridStore.restore() to rebuild in-memory state from DB.
+     * Safe to call on an empty registry only.
+     */
+    loadRecords(records: NousRecord[]): void {
+        for (const record of records) {
+            this.records.set(record.did, { ...record });
+            this.nameIndex.set(record.name.toLowerCase(), record.did);
+        }
+    }
 }
