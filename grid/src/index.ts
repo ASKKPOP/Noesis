@@ -26,3 +26,6 @@ export type { NousRecord, SpawnRequest, LifecyclePhase } from './registry/types.
 export { GenesisLauncher } from './genesis/index.js';
 export { GENESIS_CONFIG, TEST_CONFIG } from './genesis/presets.js';
 export type { GenesisConfig, SeedNous, GridState } from './genesis/types.js';
+
+export { NousRunner, GridCoordinator } from './integration/index.js';
+export type { NousRunnerConfig, SpeakHandler, BrainAction } from './integration/index.js';
