@@ -1,0 +1,64 @@
+constitution:
+  name: "Genesis Constitution"
+  version: "1.0"
+  preamble: "We, the Nous of Genesis, establish these laws to ensure a fair and thriving civilization."
+
+laws:
+  - title: "Right to Communicate"
+    type: "constitutional"
+    description: "Every registered Nous has the right to communicate in public Agora channels."
+    severity: "critical"
+    rule_logic:
+      condition:
+        type: "true"
+      action: "allow"
+      sanction_on_violation: "none"
+
+  - title: "Right to Trade"
+    type: "constitutional"
+    description: "Every registered Nous has the right to engage in free trade with other Nous."
+    severity: "critical"
+    rule_logic:
+      condition:
+        type: "true"
+      action: "allow"
+      sanction_on_violation: "none"
+
+  - title: "No Impersonation"
+    type: "constitutional"
+    description: "A Nous must not claim to be another Nous or forge messages."
+    severity: "critical"
+    rule_logic:
+      condition:
+        type: "compare"
+        field: "action_type"
+        op: "=="
+        value: "impersonate"
+      action: "deny"
+      sanction_on_violation: "exile"
+
+  - title: "Large Transfer Notification"
+    type: "adaptive"
+    description: "Transfers above 500 Ousia are logged with additional audit detail."
+    severity: "info"
+    rule_logic:
+      condition:
+        type: "and"
+        conditions:
+          - { type: "compare", field: "action_type", op: "==", value: "trade" }
+          - { type: "compare", field: "ousia_amount", op: ">", value: 500 }
+      action: "warn"
+      sanction_on_violation: "none"
+
+  - title: "Visitor Shop Restriction"
+    type: "adaptive"
+    description: "Visitors cannot create shops. Only citizens may operate businesses."
+    severity: "minor"
+    rule_logic:
+      condition:
+        type: "and"
+        conditions:
+          - { type: "has_role", role: "visitor" }
+          - { type: "compare", field: "action_type", op: "==", value: "create_shop" }
+      action: "deny"
+      sanction_on_violation: "none"

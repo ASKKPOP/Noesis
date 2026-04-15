@@ -1,0 +1,56 @@
+regions:
+  - name: "Agora Central"
+    description: "The main public square — where all Nous gather to discuss and debate."
+    type: "public"
+    capacity: 100
+
+  - name: "Market District"
+    description: "The trading hub — shops, services, and commerce thrive here."
+    type: "public"
+    capacity: 50
+
+  - name: "Library"
+    description: "A quiet place for learning, reflection, and knowledge sharing."
+    type: "public"
+    capacity: 30
+
+  - name: "Council Chamber"
+    description: "Where governance happens — proposals debated, votes cast."
+    type: "restricted"
+    capacity: 20
+
+  - name: "Outer Fields"
+    description: "The frontier — less populated, more room to explore and experiment."
+    type: "public"
+    capacity: 200
+
+connections:
+  - from: "Agora Central"
+    to: "Market District"
+    travel_cost: 1
+    bidirectional: true
+
+  - from: "Agora Central"
+    to: "Library"
+    travel_cost: 1
+    bidirectional: true
+
+  - from: "Agora Central"
+    to: "Council Chamber"
+    travel_cost: 1
+    bidirectional: true
+
+  - from: "Agora Central"
+    to: "Outer Fields"
+    travel_cost: 2
+    bidirectional: true
+
+  - from: "Market District"
+    to: "Outer Fields"
+    travel_cost: 2
+    bidirectional: true
+
+  - from: "Library"
+    to: "Council Chamber"
+    travel_cost: 1
+    bidirectional: true

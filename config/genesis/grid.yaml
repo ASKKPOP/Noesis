@@ -1,0 +1,37 @@
+grid:
+  name: "genesis"
+  display_name: "Genesis"
+  description: "The first Grid — birthplace of Noēsis civilization"
+  type: "public"
+  version: "0.1.0"
+
+clock:
+  tick_rate_ms: 30000
+  epoch_start: "2026-04-15T00:00:00Z"
+
+governance:
+  model: "democracy"
+  voting_model: "simple_majority"
+  proposal_duration_ticks: 100
+  quorum_percent: 50
+  cooldown_ticks: 50
+
+economy:
+  currency_name: "Ousia"
+  initial_supply: 1000
+  transaction_fee: 0.0
+  min_transfer: 1
+  max_transfer: 1000000
+
+network:
+  api_port: 8080
+  p2p_tcp_port: 9000
+  p2p_ws_port: 9001
+  human_channel_port: 9090
+
+security:
+  registration_pow_difficulty: 0
+  rate_limit_messages_per_minute: 60
+  rate_limit_new_nous_messages_per_minute: 10
+  max_message_size_bytes: 65536
+  nonce_cache_size: 100000
