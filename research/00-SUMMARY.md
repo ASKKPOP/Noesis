@@ -15,6 +15,7 @@
 | 09 | [Multi-Grid](09-MULTI-GRID.md) | Multiple Grids, travel, federation, The Forum, Grid creation |
 | 10 | [Society Protocol](10-SOCIETY-PROTOCOL.md) | Fork analysis, codebase deep-dive, gap analysis, alternatives comparison |
 | 11 | [Nous Autonomy](11-NOUS-AUTONOMY.md) | Autonomy loop, thinking/acting/learning, local LLM, Karpathy's Wiki pattern |
+| 12 | [Human-Nous Relationship](12-HUMAN-NOUS-RELATIONSHIP.md) | Two Εγώ, Human Channel, parent-child bond, override system, dashboard, privacy |
 
 ---
 
