@@ -1,0 +1,57 @@
+# ── Stage 1: Builder ─────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy workspace manifest + lock file first (layer caching)
+COPY package.json package-lock.json* ./
+COPY grid/package.json ./grid/
+COPY protocol/package.json ./protocol/
+
+# Install all dependencies (including devDependencies for tsc)
+RUN npm ci --workspaces --include-workspace-root
+
+# Copy source
+COPY grid/tsconfig.json ./grid/
+COPY grid/src ./grid/src
+COPY protocol/src ./protocol/src
+COPY protocol/tsconfig.json ./protocol/
+
+# Build protocol first (grid depends on it)
+RUN npm run build --workspace=@noesis/protocol
+
+# Build grid
+RUN npm run build --workspace=@noesis/grid
+
+# ── Stage 2: Runtime ─────────────────────────────────────────────────────────
+FROM node:20-alpine AS runtime
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy workspace manifests for production install
+COPY package.json package-lock.json* ./
+COPY grid/package.json ./grid/
+COPY protocol/package.json ./protocol/
+
+# Production-only install
+RUN npm ci --workspaces --include-workspace-root --omit=dev
+
+# Copy compiled output
+COPY --from=builder /app/grid/dist ./grid/dist
+COPY --from=builder /app/protocol/dist ./protocol/dist
+
+# Create sockets dir (will be overridden by volume mount)
+RUN mkdir -p /sockets
+
+# Non-root user
+RUN addgroup -S noesis && adduser -S nous -G noesis
+USER nous
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=3 \
+    CMD wget -qO- http://localhost:8080/health || exit 1
+
+CMD ["node", "grid/dist/entrypoint.js"]

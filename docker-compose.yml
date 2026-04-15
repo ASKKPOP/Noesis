@@ -1,11 +1,13 @@
 version: "3.8"
 
 services:
+
+  # ── MySQL ────────────────────────────────────────────────────────────────────
   mysql:
     image: mysql:8.0
     container_name: noesis-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:-changeme}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-noesis_grid}
       MYSQL_USER: ${MYSQL_USER:-noesis}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme}
@@ -13,12 +15,115 @@ services:
       - "${MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./sql:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-changeme}"]
       interval: 10s
       timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ── Grid Service ─────────────────────────────────────────────────────────────
+  grid:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.grid
+    container_name: noesis-grid
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "${GRID_PORT:-8080}:8080"
+    environment:
+      # MySQL
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-noesis_grid}
+      MYSQL_USER: ${MYSQL_USER:-noesis}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme}
+      # Grid
+      GRID_NAME: ${GRID_NAME:-Genesis}
+      GRID_DOMAIN: ${GRID_DOMAIN:-genesis.noesis}
+      GRID_PORT: 8080
+      GRID_TICK_RATE_MS: ${GRID_TICK_RATE_MS:-30000}
+    volumes:
+      - sockets:/sockets
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
       retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # ── Nous: Sophia (Philosopher, Agora) ────────────────────────────────────────
+  nous-sophia:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.brain
+    container_name: noesis-nous-sophia
+    depends_on:
+      grid:
+        condition: service_healthy
+    environment:
+      NOUS_NAME: sophia
+      NOUS_CONFIG: /app/data/nous/sophia.yaml
+      GRID_NAME: ${GRID_NAME:-Genesis}
+      GRID_ENDPOINT: http://grid:8080
+      NOUS_REGION: agora
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
+      LLM_MODEL: ${LLM_MODEL:-qwen3:4b}
+      SOCKET_DIR: /sockets
+    volumes:
+      - sockets:/sockets
+    restart: unless-stopped
+
+  # ── Nous: Hermes (Trader, Market) ────────────────────────────────────────────
+  nous-hermes:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.brain
+    container_name: noesis-nous-hermes
+    depends_on:
+      grid:
+        condition: service_healthy
+    environment:
+      NOUS_NAME: hermes
+      NOUS_CONFIG: /app/data/nous/hermes.yaml
+      GRID_NAME: ${GRID_NAME:-Genesis}
+      GRID_ENDPOINT: http://grid:8080
+      NOUS_REGION: market
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
+      LLM_MODEL: ${LLM_MODEL:-qwen3:4b}
+      SOCKET_DIR: /sockets
+    volumes:
+      - sockets:/sockets
+    restart: unless-stopped
+
+  # ── Nous: Themis (Lawkeeper, Council) ────────────────────────────────────────
+  nous-themis:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.brain
+    container_name: noesis-nous-themis
+    depends_on:
+      grid:
+        condition: service_healthy
+    environment:
+      NOUS_NAME: themis
+      NOUS_CONFIG: /app/data/nous/themis.yaml
+      GRID_NAME: ${GRID_NAME:-Genesis}
+      GRID_ENDPOINT: http://grid:8080
+      NOUS_REGION: council
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
+      LLM_MODEL: ${LLM_MODEL:-qwen3:4b}
+      SOCKET_DIR: /sockets
+    volumes:
+      - sockets:/sockets
+    restart: unless-stopped
 
 volumes:
   mysql_data:
+  sockets:
