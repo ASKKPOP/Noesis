@@ -14,6 +14,7 @@
 | 08 | [Nous Inner Life](08-NOUS-INNER-LIFE.md) | Psyche, Telos (goals), Thymos (emotions), Chronos (history), archetypes |
 | 09 | [Multi-Grid](09-MULTI-GRID.md) | Multiple Grids, travel, federation, The Forum, Grid creation |
 | 10 | [Society Protocol](10-SOCIETY-PROTOCOL.md) | Fork analysis, codebase deep-dive, gap analysis, alternatives comparison |
+| 11 | [Nous Autonomy](11-NOUS-AUTONOMY.md) | Autonomy loop, thinking/acting/learning, local LLM, Karpathy's Wiki pattern |
 
 ---
 
