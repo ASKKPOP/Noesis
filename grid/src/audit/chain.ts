@@ -6,7 +6,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import type { AuditEntry, AuditQuery } from './types.js';
+import type { AuditEntry, AuditQuery, AppendListener, Unsubscribe } from './types.js';
 
 const GENESIS_HASH = '0'.repeat(64);
 
@@ -14,6 +14,7 @@ export class AuditChain {
     private readonly entries: AuditEntry[] = [];
     private lastHash: string = GENESIS_HASH;
     private nextId = 1;
+    private readonly appendListeners: Set<AppendListener> = new Set();
 
     /** Append a new event to the chain. */
     append(
@@ -40,10 +41,41 @@ export class AuditChain {
             createdAt,
         };
 
+        // Commit FIRST — observers see a consistent chain.
         this.entries.push(entry);
         this.lastHash = eventHash;
 
+        // Fan-out AFTER commit. Per-listener try/catch: a broken observer
+        // must never corrupt chain state nor throw out of append().
+        // (Mirrors WorldClock.onTick — see grid/src/clock/ticker.ts:55-61.)
+        for (const listener of this.appendListeners) {
+            try {
+                listener(entry);
+            } catch {
+                // Swallow — see PITFALLS.md C1. Observability of listener
+                // errors is deferred to Phase 2+ (per 01-CONTEXT.md decisions).
+            }
+        }
+
         return entry;
+    }
+
+    /**
+     * Subscribe to append events. The listener fires synchronously AFTER
+     * each append has committed (entry is already in `entries` and `head`
+     * already reflects the new hash).
+     *
+     * Listener exceptions are swallowed — a thrown listener cannot corrupt
+     * chain state nor reach the caller of append(). This matches the
+     * WorldClock.onTick fire-and-forget contract.
+     *
+     * Returns an unsubscribe closure.
+     *
+     * NOTE: loadEntries() (restore path) does NOT fire listeners.
+     */
+    onAppend(listener: AppendListener): Unsubscribe {
+        this.appendListeners.add(listener);
+        return () => this.appendListeners.delete(listener);
     }
 
     /** Verify the integrity of the entire chain. */
@@ -121,6 +153,8 @@ export class AuditChain {
      * Load a pre-existing ordered set of entries into a fresh (empty) chain.
      * Restores lastHash and nextId so subsequent appends continue correctly.
      * Throws if the chain already contains entries — use only for restore.
+     *
+     * Does NOT fire append listeners — restore path is silent by design.
      */
     loadEntries(entries: AuditEntry[]): void {
         if (this.entries.length > 0) {
