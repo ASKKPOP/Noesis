@@ -2,7 +2,7 @@
 
 ## Overview
 
-Sprint 14 delivers the real-time dashboard that makes Nous life observable. The work follows a single dependency chain: WebSocket infrastructure must exist before the browser can receive anything, live views consume that stream, the Nous inspector calls the Grid API directly, and the economy overview rounds out what a developer needs to watch their world run.
+Sprint 14 delivers the real-time dashboard that makes Nous life observable. Research-driven reshape: Phase 1 is pure internal plumbing (no WS, no UI — preserves all 944 tests). Phase 2 exposes the stream server-side, testable with a CLI WebSocket client before any UI work. Phase 3 lands the first user-visible dashboard. Phase 4 completes the inspector, economy, and ships clean on `docker compose up`.
 
 ## Milestones
 
@@ -12,57 +12,66 @@ Sprint 14 delivers the real-time dashboard that makes Nous life observable. The 
 
 ## Phases
 
-- [ ] **Phase 1: WebSocket Infrastructure** - Add WS endpoint to Grid's Fastify server; broadcast AuditChain events to all connected clients
-- [ ] **Phase 2: Live Views** - Region map and audit trail — both render in real-time from the event stream
-- [ ] **Phase 3: Nous Inspector** - Clickable Nous panel showing personality, goals, emotions, and memory highlights
-- [ ] **Phase 4: Economy Overview** - Ousia balances, trade history, and active shop listings
+- [ ] **Phase 1: AuditChain Listener API + Broadcast Allowlist** — Make the audit chain observable via `onAppend()` and define the default-deny privacy allowlist. No network, no UI.
+- [ ] **Phase 2: WsHub + `/ws/events` Endpoint** — Server-side WebSocket with per-client ring buffer, drop-oldest backpressure, and `lastSeenId` resume protocol.
+- [ ] **Phase 3: Dashboard v1 — Firehose + Heartbeat + Region Map** — Scaffold Next.js, ship reconnecting WS client, render live event feed, tick heartbeat, and region map.
+- [ ] **Phase 4: Nous Inspector + Economy + Docker Polish** — Per-Nous detail panel (Psyche/Telos/Thymos/memory), economy snapshot, clean `docker compose up` experience.
 
 ## Phase Details
 
-### Phase 1: WebSocket Infrastructure
-**Goal**: Developers can connect to the Grid server over WebSocket and receive a live stream of all AuditChain events
-**Depends on**: Nothing (first phase — Grid REST API already exists, this extends it)
+### Phase 1: AuditChain Listener API + Broadcast Allowlist
+**Goal**: AuditChain supports observable listeners without changing its integrity contract or measurably regressing performance
+**Depends on**: Nothing (first phase — pure internal)
+**Requirements**: INFRA-01, INFRA-02
+**Success Criteria** (what must be TRUE):
+  1. `AuditChain.onAppend(fn)` returns an unsubscribe function and fires synchronously after each append, with per-listener try/catch isolation (a thrown listener cannot corrupt chain state or crash the caller)
+  2. `AuditChain.loadEntries()` (MySQL restore path) does NOT fire listeners — restore is silent
+  3. All 944 existing TS tests pass unchanged; `AuditChain.verify()` still returns `{valid: true}` with listeners attached
+  4. Determinism test: 100-tick simulation with 0 vs 10 listeners produces byte-identical audit chain hashes
+  5. A `broadcast-allowlist` module exists with default-deny semantics and an initial whitelist covering `nous.spawned`, `nous.moved`, `nous.spoke`, `trade.proposed`, `trade.settled`, `law.triggered`, `tick`, `grid.started`, `grid.stopped`
+  6. Benchmark: `append()` p99 adds <100µs per attached listener
+**Plans**: TBD
+
+### Phase 2: WsHub + `/ws/events` Endpoint
+**Goal**: The Grid server streams allowlisted audit events to any connected WebSocket client in real time, with backpressure that can never slow the simulation
+**Depends on**: Phase 1
 **Requirements**: ACT-01, ACT-02
 **Success Criteria** (what must be TRUE):
-  1. A developer can open a WebSocket connection to `ws://localhost:{PORT}/ws` on the Grid server
-  2. Every AuditChain event (Nous action, trade, movement, law trigger) appears on the socket within one tick of occurring
-  3. Multiple browser tabs can connect simultaneously and each receives the full event stream
-  4. When the Grid server restarts, clients receive a reconnectable error rather than a silent hang
+  1. A developer can open a WebSocket connection to `ws://localhost:{PORT}/ws/events` and receive a `hello` frame followed by live `event` frames
+  2. Every allowlisted AuditChain event appears on every connected socket within one tick of `append()` returning
+  3. Multiple clients connect simultaneously; each receives the full filtered event stream without cross-contamination
+  4. Slow client with full send buffer does NOT slow `append()` — events drop to a 256-entry ring buffer; on overflow, server emits `{type:"dropped", sinceId, latestId}` and the slow client can refill via `GET /api/v1/audit/trail?offset=sinceId`
+  5. On Grid restart, clients receive a clean `bye` frame or 1001 close code (not a silent hang); reconnecting with `{type:"subscribe", sinceId: N}` replays missed events from in-memory chain or tells client to use REST
+  6. 10k connect/disconnect cycles leave `WsHub.clients.size === 0` and Node heap stable (no socket leak)
 **Plans**: TBD
 
-### Phase 2: Live Views
-**Goal**: The dashboard renders a live region map and a scrolling audit trail that update without page refresh
-**Depends on**: Phase 1
+### Phase 3: Dashboard v1 — Firehose + Heartbeat + Region Map
+**Goal**: A developer can open the dashboard in a browser and watch the Grid tick, see events stream, and see Nous move between regions
+**Depends on**: Phase 2
 **Requirements**: ACT-03, MAP-01, MAP-02, MAP-03, AUDIT-01, AUDIT-02, AUDIT-03
 **Success Criteria** (what must be TRUE):
-  1. The region map shows all Grid regions as nodes with edges representing connections between them
-  2. Each region node displays the names of Nous currently present inside it
-  3. When a Nous moves, their marker shifts to the new region within one browser render cycle of the event arriving
-  4. The audit trail view shows AuditChain events in chronological order with event type, actor name, timestamp, and relevant payload
-  5. A developer can filter the audit trail to show only trades, only messages, only movement, or only law events
+  1. `dashboard/` workspace is scaffolded (Next.js 15 app router, TypeScript) and `npm run dev` inside it serves a working page on port 3001
+  2. The dashboard WebSocket client reconnects with exponential backoff + jitter, tracks `lastSeenId`, and refills gaps via the REST `/api/v1/audit/trail` endpoint on receipt of a `dropped` frame
+  3. The `/grid` route renders a live firehose panel showing the last 500 events (ring-buffered in memory, DOM-capped) with event type, actor name, timestamp, and payload
+  4. The `/grid` route renders a region map (SVG or react-flow) showing all regions as nodes with edges for connections; each region node lists currently-present Nous names
+  5. When a Nous moves, their marker shifts on the map within one browser render cycle of the `nous.moved` event arriving
+  6. A tick heartbeat widget displays the current tick count and "last event N seconds ago" indicator that turns stale/red if no events arrive within 2× tick rate
+  7. The firehose is filterable by event type (trade, message, movement, law)
 **Plans**: TBD
 **UI hint**: yes
 
-### Phase 3: Nous Inspector
-**Goal**: Developers can click any Nous and read their current inner state — personality, goals, emotions, and recent memories
-**Depends on**: Phase 2
-**Requirements**: NOUS-01, NOUS-02, NOUS-03
-**Success Criteria** (what must be TRUE):
-  1. Clicking a Nous on the region map (or in the audit trail) opens a side panel without leaving the page
-  2. The panel shows the five Big Five personality scores (Psyche), the active goal list (Telos), and the current emotional state vector (Thymos)
-  3. The panel shows the five most recent episodic memory entries for that Nous
-  4. The panel reflects the current state fetched from the Grid API at open time (not stale cached data)
-**Plans**: TBD
-**UI hint**: yes
-
-### Phase 4: Economy Overview
-**Goal**: Developers can see the live economic state of the Grid — balances, recent trades, and active shops
+### Phase 4: Nous Inspector + Economy + Docker Polish
+**Goal**: All five table-stakes views work and `docker compose up` produces a functional dashboard on first run
 **Depends on**: Phase 3
-**Requirements**: ECON-01, ECON-02, ECON-03
+**Requirements**: NOUS-01, NOUS-02, NOUS-03, ECON-01, ECON-02, ECON-03
 **Success Criteria** (what must be TRUE):
-  1. The economy view lists every Nous with their current Ousia balance
-  2. The economy view shows the last 20 completed trades with counterparties, amounts, and timestamps
-  3. The economy view lists active shops and the services each shop is currently offering
+  1. Clicking a Nous (in firehose, map, or a roster view) opens a side panel showing Big Five personality scores (Psyche), active goal list (Telos), and current emotional state vector (Thymos)
+  2. Inspector panel shows the five most recent episodic memory entries for that Nous, fetched from the Grid API at open time (not stale cached data — requires a `get_current_state(nous_id)` RPC on the brain side if not already present)
+  3. Economy panel lists every Nous with their current Ousia balance, refreshed on `trade.settled` events
+  4. Economy panel shows the last 20 completed trades with counterparties, amounts, and timestamps
+  5. Economy panel lists active shops and the services each shop is currently offering
+  6. From a clean checkout, `docker compose up` brings the full stack (Grid + Brain + MySQL + Dashboard) and the dashboard connects to the Grid's WebSocket on first attempt
+  7. All PITFALLS.md integrity non-negotiables hold: chain hash unchanged by observer count, no listener can crash append, no privacy leak in the broadcast allowlist, clean shutdown via `app.close()`
 **Plans**: TBD
 **UI hint**: yes
 
@@ -72,7 +81,26 @@ Sprint 14 delivers the real-time dashboard that makes Nous life observable. The 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. WebSocket Infrastructure | 0/TBD | Not started | - |
-| 2. Live Views | 0/TBD | Not started | - |
-| 3. Nous Inspector | 0/TBD | Not started | - |
-| 4. Economy Overview | 0/TBD | Not started | - |
+| 1. AuditChain Listener API | 0/TBD | Not started | - |
+| 2. WsHub + `/ws/events` | 0/TBD | Not started | - |
+| 3. Dashboard v1 | 0/TBD | Not started | - |
+| 4. Inspector + Economy + Docker | 0/TBD | Not started | - |
+
+## Research Artifacts
+
+Deep research committed to `.planning/research/`:
+- **STACK.md** — exact packages to install (`@fastify/websocket@^11`, `@fastify/static@^8`) and the "don't install" list
+- **FEATURES.md** — table stakes vs differentiators vs anti-features, ranked and tied to Noēsis philosophy
+- **ARCHITECTURE.md** — data flow, component inventory, the critical seam at `AuditChain.append → WsHub → broadcast`
+- **PITFALLS.md** — 6 critical + 8 moderate + 5 minor pitfalls with prevention strategies
+- **SUMMARY.md** — synthesis with TL;DR, integrity non-negotiables, and open questions for the planner
+
+## Open Questions (Planner Must Resolve)
+
+1. **Brain introspection RPC for Phase 4** — does `get_current_state(nous_id)` exist in the Python brain, or does Phase 4 add it?
+2. **Trade event taxonomy** — does AuditChain already distinguish `trade.proposed` / `trade.countered` / `trade.settled`? Affects economy view fidelity.
+3. **Consistency model** — confirm "broadcast best-effort, REST authoritative" is acceptable; if stricter needed, Phase 2 must wait on MySQL persistence in `append()`.
+
+---
+*Roadmap created: 2026-04-17*
+*Last updated: 2026-04-17 — reshape after deep research synthesis*
