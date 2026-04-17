@@ -20,3 +20,6 @@ export interface AuditQuery {
     limit?: number;
     offset?: number;
 }
+
+export type AppendListener = (entry: AuditEntry) => void;
+export type Unsubscribe = () => void;
