@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Dashboard (Sprint 14)
 status: executing
-stopped_at: Phase 3 Plan 01 complete — grid-side dashboard prerequisites shipped
-last_updated: "2026-04-18T04:12:00.000Z"
-last_activity: 2026-04-18 -- Plan 03-01 complete (303/303 grid tests green; +14 new)
+stopped_at: Phase 3 Plan 02 complete — dashboard Next.js workspace + test harness shipped
+last_updated: "2026-04-18T11:11:00.000Z"
+last_activity: 2026-04-18 -- Plan 03-02 complete (dashboard scaffold; 9/9 smoke tests green; Wave 0 gate open)
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
-  percent: 70
+  total_plans: 8
+  completed_plans: 8
+  percent: 75
 ---
 
 # Project State
@@ -27,11 +27,11 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 ## Current Position
 
 Phase: 3
-Plan: 01 complete — ready to verify Phase 3 once 03-02..03-06 land
-Status: Executing (Wave 1: 03-01 done, 03-02 landed in parallel worktree)
-Last activity: 2026-04-18 -- Plan 03-01 shipped: CORS + {regions,connections} + tick audit emission; 303/303 grid tests green
+Plan: 02 complete — Wave 1 closed (Plans 03-01 + 03-02); Wave 2 next (03-03 WsClient)
+Status: Executing (Wave 1 complete; dashboard scaffold + test harness + MockWebSocket + ws-frames fixtures landed)
+Last activity: 2026-04-18 -- Plan 03-02 shipped: Next 15 + React 19 + Tailwind 4 workspace, Vitest 4 (jsdom) + Playwright 1.50 configured, smoke test 9/9 green
 
-Progress: [███████░░░] 70%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -44,6 +44,7 @@ Progress: [███████░░░] 70%
 | Phase | Plan | Duration | Tasks | Files | Completed |
 |-------|------|----------|-------|-------|-----------|
 | 03 | 01 | ~18min | 3 | 7 | 2026-04-18 |
+| 03 | 02 | ~10min | 2 | 17 | 2026-04-18 |
 
 *Updated after each plan completion*
 
@@ -53,6 +54,11 @@ Progress: [███████░░░] 70%
 
 Recent decisions affecting current work:
 
+- Plan 03-02: Tailwind 4 CSS-first via `@theme` in globals.css; tailwind.config.ts retained as thin compatibility shim (content paths + legacy extend mirror)
+- Plan 03-02: Grid origin locked to `http://localhost:8080` in dashboard/.env.example (matches grid/src/main.ts:142 default, overrides 03-RESEARCH.md's earlier 3000 misnote)
+- Plan 03-02: ws-frames fixtures stay self-contained — no cross-workspace imports from grid/; shape PARITY enforced by review and Plan 03-03 SYNC header
+- Plan 03-02: Test-id convention binding on Plans 05 + 06 — `firehose-row`, `heartbeat-status`, `region-node`, `nous-marker`, `event-type-badge`
+- Plan 03-02: Playwright placeholder spec (tests/e2e/placeholder.spec.ts) added so `playwright test --list` exits 0 before Plan 06 lands real E2E
 - Plan 03-01: CORS origin list is explicit literal ['http://localhost:3001','http://localhost:3000'] — no regex, no wildcards, credentials off (production hardening deferred to Phase 4)
 - Plan 03-01: /api/v1/grid/regions extended in-place to {regions,connections} (single GET for dashboard map render) rather than add sibling /connections route
 - Plan 03-01: Single clock.onTick listener does registry.touch THEN audit.append('tick', ...) — one subscription, ordered side effects; hash-chain invariant preserved
@@ -75,5 +81,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Plan 03-01 complete — grid-side dashboard prerequisites shipped (3 commits: 4c4ea6c, d1ee094, 842ff8d)
+Stopped at: Plan 03-02 complete — dashboard Next.js workspace + Vitest/Playwright harness + MockWebSocket + ws-frames fixtures (3 commits: 09df580, 066f3c4, f902966)
 Resume file: None

@@ -65,7 +65,7 @@ Sprint 14 delivers the real-time dashboard that makes Nous life observable. Rese
   7. The firehose is filterable by event type (trade, message, movement, law)
 **Plans**: 6 plans
   - [x] 03-01-PLAN.md — Grid-side infra: CORS + regions.connections + tick audit emission (MAP-01, AUDIT-03)
-  - [ ] 03-02-PLAN.md — Dashboard Next.js workspace scaffold + Vitest/Playwright + MockWebSocket fixtures (AUDIT-01)
+  - [x] 03-02-PLAN.md — Dashboard Next.js workspace scaffold + Vitest/Playwright + MockWebSocket fixtures (AUDIT-01)
   - [ ] 03-03-PLAN.md — Protocol mirrors + WsClient + full-jitter backoff + refill (AUDIT-02, AUDIT-03)
   - [ ] 03-04-PLAN.md — FirehoseStore + PresenceStore + HeartbeatStore + event-type categorization (ACT-03, AUDIT-02)
   - [ ] 03-05-PLAN.md — /grid route: firehose + heartbeat + filter, WsClient wiring (ACT-03, AUDIT-01, AUDIT-03)
