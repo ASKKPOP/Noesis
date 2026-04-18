@@ -63,7 +63,13 @@ Sprint 14 delivers the real-time dashboard that makes Nous life observable. Rese
   5. When a Nous moves, their marker shifts on the map within one browser render cycle of the `nous.moved` event arriving
   6. A tick heartbeat widget displays the current tick count and "last event N seconds ago" indicator that turns stale/red if no events arrive within 2× tick rate
   7. The firehose is filterable by event type (trade, message, movement, law)
-**Plans**: TBD
+**Plans**: 6 plans
+  - [ ] 03-01-PLAN.md — Grid-side infra: CORS + regions.connections + tick audit emission (MAP-01, AUDIT-03)
+  - [ ] 03-02-PLAN.md — Dashboard Next.js workspace scaffold + Vitest/Playwright + MockWebSocket fixtures (AUDIT-01)
+  - [ ] 03-03-PLAN.md — Protocol mirrors + WsClient + full-jitter backoff + refill (AUDIT-02, AUDIT-03)
+  - [ ] 03-04-PLAN.md — FirehoseStore + PresenceStore + HeartbeatStore + event-type categorization (ACT-03, AUDIT-02)
+  - [ ] 03-05-PLAN.md — /grid route: firehose + heartbeat + filter, WsClient wiring (ACT-03, AUDIT-01, AUDIT-03)
+  - [ ] 03-06-PLAN.md — RegionMap SVG component + Nous markers + Playwright E2E smoke (MAP-01, MAP-02, MAP-03)
 **UI hint**: yes
 
 ### Phase 4: Nous Inspector + Economy + Docker Polish
