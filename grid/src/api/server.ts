@@ -6,6 +6,7 @@
  */
 
 import Fastify, { type FastifyInstance } from 'fastify';
+import cors from '@fastify/cors';
 import fastifyWebsocket from '@fastify/websocket';
 import type { WorldClock } from '../clock/ticker.js';
 import type { SpatialMap } from '../space/map.js';
@@ -37,6 +38,16 @@ export function buildServerWithHub(
 ): { app: FastifyInstance; wsHub: WsHub } {
     const app = Fastify({ logger: false });
     const startedAt = Date.now();
+
+    // Dashboard CORS (dev): Next.js dev server runs on :3001 per 03-VALIDATION.md.
+    // :3000 is included because `next dev` falls back to :3000 when :3001 is taken
+    // and we must not surprise-break that path in a hot-reload loop.
+    // Production hardening (0.0.0.0 bind, stricter origin list) is Phase 4.
+    void app.register(cors, {
+        origin: ['http://localhost:3001', 'http://localhost:3000'],
+        credentials: false,
+        methods: ['GET', 'OPTIONS'],
+    });
 
     // --- Health ---
 
