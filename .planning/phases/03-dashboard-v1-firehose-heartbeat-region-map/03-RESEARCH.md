@@ -774,29 +774,47 @@ export class FakeWebSocket {
 
 ## Open Questions
 
+> **All five questions resolved during revision 2026-04-18. Decisions locked below; see Plan 01 (Grid-side foundations) for producer code and Plan 02/03 for consumer shapes.**
+
 1. **Exact payload shape of `tick` event and `nous.moved` event**
    - What we know: Phase 2 forwards allowlisted events verbatim; the shapes are defined by NousRunner/Ticker, not by the WS layer.
    - What's unclear: Does `tick.payload` carry tick rate, world time, or both? Does `nous.moved.payload` use `toRegion: string` (region id) or `{to: {x,y}}` coordinates?
    - Recommendation: Planner reads `grid/src/clock/ticker.ts` and `grid/src/integration/nous-runner.ts` (the latter's `audit.append('nous.moved', ...)` at line 138 per earlier grep) before finalizing the PresenceStore's `moveNous` signature.
+   - **Resolved (2026-04-18):**
+     - `tick.payload = { tick: number; epoch: number; tickRateMs: number; timestamp: number }` — Plan 01 Task 3 adds a producer in `grid/src/genesis/launcher.ts` that subscribes to `WorldClock.onTick` and appends to the audit chain with this shape. `tickRateMs` drives the dashboard's 2× staleness threshold (Assumption A1 is now a locked fact).
+     - `nous.moved.payload = { name: string; fromRegion: string; toRegion: string; travelCost: number; tick: number }` — verified in `grid/src/integration/nous-runner.ts:135-146`. Uses region **IDs** (strings), NOT `{x,y}` coordinates. PresenceStore in Plan 04 reads `payload.toRegion` directly.
+     - `nous.spawned.payload = { name: string; region: string; ndsAddress: string }` — verified in `grid/src/genesis/launcher.ts:89`. Note singular key `region` (not `regionId`); PresenceStore reads `payload.region` on spawn.
 
 2. **Region connection topology**
    - What we know: `GET /api/v1/grid/regions` returns regions with some connection data.
    - What's unclear: Exact shape of the `connections` field — is it `string[]` of region ids, or `Array<{to: string, cost?: number}>`?
    - Recommendation: Planner reads `grid/src/space/map.ts` to confirm. If shape isn't client-friendly, add a projection.
+   - **Resolved (2026-04-18):** Authoritative types live in `grid/src/space/types.ts`:
+     ```ts
+     interface Region { id; name; description; regionType: 'public'|'restricted'|'private'; capacity: number; properties: Record<string,unknown>; }
+     interface RegionConnection { fromRegion: string; toRegion: string; travelCost: number; bidirectional: boolean; }
+     ```
+     Plan 01 Task 2 extends `GET /api/v1/grid/regions` to return `{ regions: Region[]; connections: RegionConnection[] }` by adding `SpaceSystem.allConnections()`. Plan 03 mirrors these exact shapes into `dashboard/src/lib/protocol/region-types.ts` via SYNC header (no cross-workspace import). **Critical:** `Region` has NO `x`/`y` coordinates in the authoritative type — see Q1b below for layout.
+
+   **Q1b (added during revision): Where do region `x`/`y` screen coordinates come from for the map?**
+   - **Resolved:** Client-side deterministic layout. Plan 06 Task 1 implements `computeRegionLayout(regions: Region[]): Map<string, {x:number; y:number}>` that hashes `region.id` (FNV-1a, 32-bit) into a [0,1]² grid and jitters to avoid collisions. Layout is pure — same input → same output → same Playwright assertion. No server-side coordinates, no hand-maintained lookup table. Future phases may replace with an authored layout; the function signature is stable.
 
 3. **Grid binding port and dev-origin wiring**
    - What we know: Grid uses Fastify; port is configurable.
    - What's unclear: Default dev port.
    - Recommendation: Grep `grid/src/main.ts` (or whatever entrypoint actually does `app.listen`) for the literal port; set `dashboard/.env.example` accordingly.
+   - **Resolved (2026-04-18):** Grid binds to **port 8080** in dev (verified via grep `app.listen` in `grid/src/main.ts`). Plan 02 Task 1 writes `dashboard/.env.example` with `NEXT_PUBLIC_GRID_ORIGIN=http://localhost:8080` and `NEXT_PUBLIC_GRID_WS=ws://localhost:8080/ws/events`. Assumption A6 (default 3000) is **superseded** — the correct default is 8080.
 
 4. **CORS allowlist state**
    - What we know: `@fastify/cors` is installed.
    - What's unclear: Whether `http://localhost:3001` is in the dev allowlist, or if CORS is wide-open in dev.
    - Recommendation: Planner adds a task to verify/extend CORS in the same Phase-3 plan (small Grid edit).
+   - **Resolved (2026-04-18):** Plan 01 Task 1 explicitly sets `@fastify/cors` origin allowlist to `['http://localhost:3000', 'http://localhost:3001']` (3001 = dashboard dev, 3000 = reserved for future Next.js default). WS upgrade inherits HTTP origin check from Fastify; no separate WS-layer CORS needed. Assumption A3 is now a locked fact.
 
 5. **Should the dashboard use an initial REST prime fetch of recent events?**
    - Options: (A) Rely solely on `subscribe {sinceId: 0}` which server replays up to REPLAY_WINDOW=512; (B) Fetch `/api/v1/audit/trail?limit=500` on page load and then connect WS with `sinceId=<latest>`.
    - Recommendation: **(A)** — fewer moving parts, proves the WS path on load. If replay is too slow (>500 ms), switch to (B).
+   - **Resolved (2026-04-18):** **Option A locked.** Plan 03 Task 2 implements `WsClient.connect()` with `subscribe { sinceId: 0 }` on first connect; on reconnect, resubscribe with `sinceId: lastSeenId`. On `dropped` frame, Plan 03 Task 3 calls `GET /api/v1/audit/trail?offset={gapStartId}&limit=512` to refill. No preemptive REST fetch on page load. If Phase-4 telemetry shows replay latency >500 ms at the p95, revisit Option B.
 
 ---
 
