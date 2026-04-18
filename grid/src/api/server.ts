@@ -180,8 +180,15 @@ export function buildServerWithHub(
         });
     });
 
-    // Lifecycle: drain hub on app.close()
-    app.addHook('onClose', async () => {
+    // Lifecycle: drain hub before @fastify/websocket tears down sockets.
+    // We use `preClose` so ByeFrame writes complete while sockets are still
+    // OPEN — onClose fires AFTER the websocket plugin has already moved every
+    // socket to CLOSING (readyState=2), at which point send() is a no-op.
+    //
+    // NOTE: callers who use graceful-shutdown signals (SIGTERM, etc.) should
+    // also invoke `wsHub.close()` explicitly if they call `app.close()` after
+    // other teardown steps that might race with @fastify/websocket.
+    app.addHook('preClose', async () => {
         await wsHub.close();
     });
 

@@ -363,8 +363,18 @@ export class WsHub {
             /* swallow */
         }
 
+        // Two-phase: emit all byes, yield to let the transport flush the
+        // frames into the socket, then close. Without the yield, some
+        // transports interleave the close handshake ahead of the pending
+        // data write and the client never sees the ByeFrame.
         for (const client of this._clients) {
             client.sendBye('shutting down');
+        }
+        // Yield so the bye frame is flushed into the transport's send queue
+        // before we initiate the close handshake — without this, some
+        // transports interleave the close ahead of the pending data write.
+        await new Promise((r) => setImmediate(r));
+        for (const client of this._clients) {
             try {
                 client.socket.close(1001, 'shutting down');
             } catch {
