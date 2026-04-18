@@ -31,9 +31,9 @@ Sprint 14 delivers the real-time dashboard that makes Nous life observable. Rese
   5. A `broadcast-allowlist` module exists with default-deny semantics and an initial whitelist covering `nous.spawned`, `nous.moved`, `nous.spoke`, `trade.proposed`, `trade.settled`, `law.triggered`, `tick`, `grid.started`, `grid.stopped`
   6. Benchmark: `append()` p99 adds <100µs per attached listener
 **Plans**: 3 plans
-  - [ ] 01-01-PLAN.md — RingBuffer<T> bounded-FIFO utility with drop-oldest semantics (INFRA-01)
-  - [ ] 01-02-PLAN.md — AuditChain.onAppend() listener API + determinism regression + p99 benchmark (INFRA-01)
-  - [ ] 01-03-PLAN.md — Broadcast allowlist module with default-deny + payload privacy lint (INFRA-02)
+  - [x] 01-01-PLAN.md — RingBuffer<T> bounded-FIFO utility with drop-oldest semantics (INFRA-01)
+  - [x] 01-02-PLAN.md — AuditChain.onAppend() listener API + determinism regression + p99 benchmark (INFRA-01)
+  - [x] 01-03-PLAN.md — Broadcast allowlist module with default-deny + payload privacy lint (INFRA-02)
 
 ### Phase 2: WsHub + `/ws/events` Endpoint
 **Goal**: The Grid server streams allowlisted audit events to any connected WebSocket client in real time, with backpressure that can never slow the simulation
