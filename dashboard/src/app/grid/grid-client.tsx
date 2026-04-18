@@ -10,8 +10,8 @@
  *   3. On 'dropped' frames, invoke refillFromDropped to paginate the REST
  *      audit trail and batch-ingest the gap, then bump WsClient.lastSeenId
  *      so the server no longer replays events the client already has.
- *   4. Render the three Phase-3 panels (Heartbeat, Firehose, filter chips)
- *      alongside a placeholder for the Plan-6 region map.
+ *   4. Render the four Phase-3 panels (RegionMap, Firehose, Heartbeat,
+ *      filter chips) — all subscribed to the shared stores.
  *
  * Lifecycle invariants:
  *   - useEffect([origin, stores]) owns the WsClient — cleanup runs on unmount
@@ -19,17 +19,19 @@
  *     in development does not leak a second socket (T-03-19 mitigation).
  *   - The AbortController cancels any in-flight refill fetch when the page
  *     unmounts, preventing late-resolving promises from writing to freed stores.
- *
- * Plan 06 swaps `regionMapPlaceholder` for <RegionMap regions=... connections=.../>.
- * No other wiring should change — all state arrives via useSyncExternalStore.
+ *   - ingestAll wraps PresenceStore.applyEvents in flushSync so the region
+ *     map marker commits in the same React cycle as the nous.moved frame
+ *     arrives (SC-5 / MAP-03). Firehose + heartbeat updates stay batched.
  */
 
 import { useEffect, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { StoresProvider, useStores } from './use-stores';
 import { WsClient } from '@/lib/transport/ws-client';
 import { refillFromDropped } from '@/lib/transport/refill';
 import { Firehose } from './components/firehose';
 import { Heartbeat } from './components/heartbeat';
+import { RegionMap } from './components/region-map';
 import type { Region, RegionConnection } from '@/lib/protocol/region-types';
 import type { AuditEntry } from '@/lib/protocol/audit-types';
 
@@ -77,7 +79,16 @@ function GridLayout({ origin, initialRegions, initialError }: GridClientProps): 
         const ingestAll = (entries: readonly AuditEntry[]): void => {
             if (entries.length === 0) return;
             stores.firehose.ingest(entries);
-            stores.presence.applyEvents(entries);
+            // flushSync so the Nous marker position commits in the same render
+            // cycle as the nous.moved frame arrives (SC-5 + MAP-03). React 19
+            // batches by default across async boundaries; flushSync is the
+            // explicit escape hatch for this synchronous-UX guarantee.
+            // Firehose + heartbeat updates stay OUTSIDE the flushSync so React
+            // can batch them normally — only presence needs one-render-cycle
+            // consistency.
+            flushSync(() => {
+                stores.presence.applyEvents(entries);
+            });
             stores.heartbeat.ingestBatch(entries);
         };
 
@@ -125,27 +136,9 @@ function GridLayout({ origin, initialRegions, initialError }: GridClientProps): 
         };
     }, [origin, stores]);
 
-    // Region map placeholder — Plan 06 replaces this block with a real
-    // <RegionMap regions={...} connections={...}/> component reading presence
-    // from the same PresenceStore that firehose already populates.
-    const regionMapPlaceholder = (
-        <section
-            aria-label="Region map"
-            data-testid="region-map-placeholder"
-            className="flex items-center justify-center border border-neutral-800 rounded-md bg-[#17181C] text-neutral-600 text-sm min-h-[320px]"
-        >
-            <div className="text-center space-y-1">
-                <div className="font-medium text-neutral-400">Region Map</div>
-                <div className="text-xs">Coming in Plan 06</div>
-                {initialRegions && (
-                    <div className="text-[10px] text-neutral-600 font-mono">
-                        {initialRegions.regions.length} regions · {initialRegions.connections.length} connections loaded
-                    </div>
-                )}
-            </div>
-        </section>
-    );
-
+    // Plan 06: the Plan-05 placeholder is replaced by <RegionMap/>. The
+    // component reads presence from the same PresenceStore that the firehose
+    // already populates; no separate props plumbing is needed.
     return (
         <main className="min-h-screen grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 p-4 bg-[#0A0A0B]">
             <header className="col-span-full flex items-baseline gap-3 mb-1">
@@ -163,7 +156,15 @@ function GridLayout({ origin, initialRegions, initialError }: GridClientProps): 
                 </div>
             )}
             <div className="flex flex-col gap-4 min-h-0">
-                {regionMapPlaceholder}
+                <section
+                    aria-label="Region map"
+                    className="flex-1 min-h-[320px]"
+                >
+                    <RegionMap
+                        regions={initialRegions?.regions ?? []}
+                        connections={initialRegions?.connections ?? []}
+                    />
+                </section>
                 <div className="flex-1 min-h-[320px]">
                     <Firehose />
                 </div>
