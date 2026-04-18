@@ -103,11 +103,21 @@ export class GenesisLauncher {
             });
         }
 
-        // 6. Wire clock tick to registry updates
+        // 6. Wire clock tick to registry updates + audit heartbeat.
+        // The audit entry is emitted so the dashboard HeartbeatStore can compute
+        // staleness without polling /api/v1/grid/clock. See 03-01-PLAN.md §Tick
+        // audit emission. Registry touch runs first so tick audit reflects the
+        // post-touch state.
         this.clock.onTick(event => {
             for (const record of this.registry.active()) {
                 this.registry.touch(record.did, event.tick);
             }
+            this.audit.append('tick', 'system', {
+                tick: event.tick,
+                epoch: event.epoch,
+                tickRateMs: this.clock.state.tickRateMs,
+                timestamp: event.timestamp,
+            });
         });
     }
 
