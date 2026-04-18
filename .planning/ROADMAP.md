@@ -46,7 +46,10 @@ Sprint 14 delivers the real-time dashboard that makes Nous life observable. Rese
   4. Slow client with full send buffer does NOT slow `append()` — events drop to a 256-entry ring buffer; on overflow, server emits `{type:"dropped", sinceId, latestId}` and the slow client can refill via `GET /api/v1/audit/trail?offset=sinceId`
   5. On Grid restart, clients receive a clean `bye` frame or 1001 close code (not a silent hang); reconnecting with `{type:"subscribe", sinceId: N}` replays missed events from in-memory chain or tells client to use REST
   6. 10k connect/disconnect cycles leave `WsHub.clients.size === 0` and Node heap stable (no socket leak)
-**Plans**: TBD
+**Plans**: 3 plans
+  - [ ] 02-01-PLAN.md — Install @fastify/websocket@^11 + author ws-protocol.ts frame types (ACT-01)
+  - [ ] 02-02-PLAN.md — WsHub + ClientConnection with ring-buffered backpressure + unit tests (ACT-02)
+  - [ ] 02-03-PLAN.md — Wire /ws/events into buildServer + integration tests including 10k leak guard (ACT-01, ACT-02)
 
 ### Phase 3: Dashboard v1 — Firehose + Heartbeat + Region Map
 **Goal**: A developer can open the dashboard in a browser and watch the Grid tick, see events stream, and see Nous move between regions
@@ -85,7 +88,7 @@ Sprint 14 delivers the real-time dashboard that makes Nous life observable. Rese
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. AuditChain Listener API | 0/3 | Not started | - |
-| 2. WsHub + `/ws/events` | 0/TBD | Not started | - |
+| 2. WsHub + `/ws/events` | 0/3 | Not started | - |
 | 3. Dashboard v1 | 0/TBD | Not started | - |
 | 4. Inspector + Economy + Docker | 0/TBD | Not started | - |
 
