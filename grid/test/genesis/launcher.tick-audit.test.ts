@@ -74,6 +74,11 @@ describe('GenesisLauncher — tick audit emission', () => {
     });
 
     it('is idempotent against observer listener count (hash chain unchanged)', () => {
+        // Hash chain includes tick-payload timestamp (Date.now), so both runs
+        // must share an identical wall clock for the hash to be reproducible.
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+
         // Run A: no extra listeners.
         const launcherA = makeLauncher();
         launcherA.bootstrap();
@@ -81,6 +86,9 @@ describe('GenesisLauncher — tick audit emission', () => {
         const headA = launcherA.audit.head;
         const lengthA = launcherA.audit.length;
         launcherA.stop();
+
+        // Reset to the same wall time for Run B.
+        vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
 
         // Run B: 3 no-op onAppend listeners attached before ticks.
         const launcherB = makeLauncher();
