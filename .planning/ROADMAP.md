@@ -64,7 +64,7 @@ Sprint 14 delivers the real-time dashboard that makes Nous life observable. Rese
   6. A tick heartbeat widget displays the current tick count and "last event N seconds ago" indicator that turns stale/red if no events arrive within 2× tick rate
   7. The firehose is filterable by event type (trade, message, movement, law)
 **Plans**: 6 plans
-  - [ ] 03-01-PLAN.md — Grid-side infra: CORS + regions.connections + tick audit emission (MAP-01, AUDIT-03)
+  - [x] 03-01-PLAN.md — Grid-side infra: CORS + regions.connections + tick audit emission (MAP-01, AUDIT-03)
   - [ ] 03-02-PLAN.md — Dashboard Next.js workspace scaffold + Vitest/Playwright + MockWebSocket fixtures (AUDIT-01)
   - [ ] 03-03-PLAN.md — Protocol mirrors + WsClient + full-jitter backoff + refill (AUDIT-02, AUDIT-03)
   - [ ] 03-04-PLAN.md — FirehoseStore + PresenceStore + HeartbeatStore + event-type categorization (ACT-03, AUDIT-02)

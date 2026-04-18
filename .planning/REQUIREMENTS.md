@@ -85,12 +85,12 @@
 | ACT-01 | Phase 2 | Pending |
 | ACT-02 | Phase 2 | Pending |
 | ACT-03 | Phase 3 | Pending |
-| MAP-01 | Phase 3 | Pending |
+| MAP-01 | Phase 3 | In progress (Plan 03-01: /regions returns edges) |
 | MAP-02 | Phase 3 | Pending |
 | MAP-03 | Phase 3 | Pending |
 | AUDIT-01 | Phase 3 | Pending |
 | AUDIT-02 | Phase 3 | Pending |
-| AUDIT-03 | Phase 3 | Pending |
+| AUDIT-03 | Phase 3 | In progress (Plan 03-01: tick audit emission) |
 | NOUS-01 | Phase 4 | Pending |
 | NOUS-02 | Phase 4 | Pending |
 | NOUS-03 | Phase 4 | Pending |
