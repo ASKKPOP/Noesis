@@ -6,11 +6,13 @@
  */
 
 import Fastify, { type FastifyInstance } from 'fastify';
+import fastifyWebsocket from '@fastify/websocket';
 import type { WorldClock } from '../clock/ticker.js';
 import type { SpatialMap } from '../space/map.js';
 import type { LogosEngine } from '../logos/engine.js';
 import type { AuditChain } from '../audit/chain.js';
 import type { GridStatus } from './types.js';
+import { WsHub } from './ws-hub.js';
 
 export interface GridServices {
     clock: WorldClock;
@@ -20,7 +22,19 @@ export interface GridServices {
     gridName: string;
 }
 
+export interface WsHubOverrides {
+    bufferCapacity?: number;
+    watermarkBytes?: number;
+}
+
 export function buildServer(services: GridServices): FastifyInstance {
+    return buildServerWithHub(services).app;
+}
+
+export function buildServerWithHub(
+    services: GridServices,
+    wsHubOptions?: WsHubOverrides,
+): { app: FastifyInstance; wsHub: WsHub } {
     const app = Fastify({ logger: false });
     const startedAt = Date.now();
 
@@ -100,5 +114,76 @@ export function buildServer(services: GridServices): FastifyInstance {
         return result;
     });
 
-    return app;
+    // --- WebSocket: /ws/events ---
+
+    void app.register(fastifyWebsocket, {
+        options: { maxPayload: 1_048_576 },
+    });
+
+    const wsHub = new WsHub({
+        audit: services.audit,
+        gridName: services.gridName,
+        bufferCapacity: wsHubOptions?.bufferCapacity,
+        watermarkBytes: wsHubOptions?.watermarkBytes,
+    });
+
+    // M5: Origin check deferred — v1 binds 127.0.0.1. See Phase 4 for 0.0.0.0 hardening.
+    // When binding 0.0.0.0 behind a reverse proxy, pair GRID_WS_SECRET with an origin
+    // allowlist check here. See PITFALLS.md §M5 for the deployment-time checklist.
+    //
+    // Local-dev auth posture (02-CONTEXT.md §Local-dev auth posture):
+    //   - If GRID_WS_SECRET env is set: require Authorization: Bearer <secret>
+    //     header OR ?token=<secret> query param. Missing/mismatch → 1008 close.
+    //   - If unset: permissive (developer default, 127.0.0.1 bind).
+    app.register(async (instance) => {
+        instance.get('/ws/events', { websocket: true }, (socket, req) => {
+            const secret = process.env.GRID_WS_SECRET;
+            if (secret) {
+                const headerAuth = (req.headers['authorization'] as string | undefined) ?? '';
+                const bearer = headerAuth.startsWith('Bearer ')
+                    ? headerAuth.substring('Bearer '.length)
+                    : null;
+                const q = req.query as { token?: unknown } | undefined;
+                const queryToken = typeof q?.token === 'string' ? q.token : null;
+                const presented = bearer ?? queryToken;
+                if (presented !== secret) {
+                    try {
+                        socket.close(1008, 'unauthorized');
+                    } catch {
+                        /* swallow */
+                    }
+                    return;
+                }
+            }
+            // Adapter: fastify/ws socket → ServerSocket shape expected by WsHub.
+            const adapter = {
+                get bufferedAmount() {
+                    return socket.bufferedAmount;
+                },
+                send: (data: string) => socket.send(data),
+                close: (code?: number, reason?: string) => socket.close(code, reason),
+                on: (event: 'message' | 'close' | 'error', cb: (arg: never) => void) => {
+                    if (event === 'message') {
+                        socket.on('message', (data: Buffer) =>
+                            (cb as (d: unknown) => void)(data.toString('utf8')),
+                        );
+                    } else if (event === 'close') {
+                        socket.on('close', () => (cb as () => void)());
+                    } else {
+                        socket.on('error', (err: Error) =>
+                            (cb as (e: Error) => void)(err),
+                        );
+                    }
+                },
+            };
+            wsHub.onConnect(adapter, { headers: req.headers as Record<string, unknown> });
+        });
+    });
+
+    // Lifecycle: drain hub on app.close()
+    app.addHook('onClose', async () => {
+        await wsHub.close();
+    });
+
+    return { app, wsHub };
 }
