@@ -78,7 +78,10 @@ export function buildServerWithHub(
     // --- Regions ---
 
     app.get('/api/v1/grid/regions', async () => {
-        return { regions: services.space.allRegions() };
+        return {
+            regions: services.space.allRegions(),
+            connections: services.space.allConnections(),
+        };
     });
 
     app.get<{ Params: { id: string } }>('/api/v1/grid/regions/:id', async (req, reply) => {

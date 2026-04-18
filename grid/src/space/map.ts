@@ -21,6 +21,15 @@ export class SpatialMap {
         return [...this.regions.values()];
     }
 
+    /**
+     * Return all connections. Returns a shallow copy so callers cannot mutate
+     * internal state. Used by the REST regions endpoint to expose edges to the
+     * dashboard without leaking the private array reference.
+     */
+    allConnections(): RegionConnection[] {
+        return this.connections.slice();
+    }
+
     addConnection(conn: RegionConnection): void {
         this.connections.push(conn);
     }

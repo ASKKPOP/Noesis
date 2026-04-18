@@ -137,4 +137,33 @@ describe('SpatialMap', () => {
             expect(map.getNousInRegion('library')).toHaveLength(0);
         });
     });
+
+    describe('allConnections (aggregate accessor)', () => {
+        it('returns all connections in insertion order', () => {
+            const c1: RegionConnection = {
+                fromRegion: 'agora', toRegion: 'market', travelCost: 2, bidirectional: true,
+            };
+            const c2: RegionConnection = {
+                fromRegion: 'market', toRegion: 'library', travelCost: 3, bidirectional: false,
+            };
+            map.addConnection(c1);
+            map.addConnection(c2);
+
+            const all = map.allConnections();
+            expect(all).toHaveLength(2);
+            expect(all[0]).toEqual(c1);
+            expect(all[1]).toEqual(c2);
+        });
+
+        it('returns a copy — mutating it does not affect internal state', () => {
+            map.addConnection({
+                fromRegion: 'agora', toRegion: 'market', travelCost: 2, bidirectional: true,
+            });
+            const first = map.allConnections();
+            first.push({
+                fromRegion: 'x', toRegion: 'y', travelCost: 0, bidirectional: false,
+            });
+            expect(map.allConnections()).toHaveLength(1);
+        });
+    });
 });
