@@ -4,14 +4,14 @@ milestone: v2.0
 milestone_name: Dashboard (Sprint 14)
 status: executing
 stopped_at: Phase 3 complete — Dashboard v1 (/grid route renders live firehose + heartbeat + region map subscribed to WS; 7/7 SC verified)
-last_updated: "2026-04-19T01:55:14.935Z"
-last_activity: 2026-04-19 -- Phase 4 planning complete
+last_updated: "2026-04-19T01:56:06.165Z"
+last_activity: 2026-04-19 -- Phase 04 Wave 1 complete (04-01 + 04-02 + 04-04; grid 327/327, dashboard vitest 149/149, brain 262/262)
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 19
-  completed_plans: 12
-  percent: 63
+  completed_plans: 15
+  percent: 79
 ---
 
 # Project State
@@ -22,14 +22,14 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 
 **Core value:** The first persistent Grid where Nous actually live — observable, running continuously, with real cognitive cycles, real trades, and real social dynamics emerging from the systems.
 **Current milestone:** v2.0 — Dashboard (Sprint 14)
-**Current focus:** Phase 4 — next to plan (economy + inspector + Docker polish)
+**Current focus:** Phase 04 — nous-inspector-economy-docker-polish
 
 ## Current Position
 
-Phase: 3 complete
-Plan: all 6 plans landed across 5 waves
-Status: Ready to execute
-Last activity: 2026-04-19 -- Phase 4 planning complete
+Phase: 04 (nous-inspector-economy-docker-polish) — EXECUTING
+Plan: Wave 1 complete (3 of 7 plans merged)
+Status: Wave 2 next (04-03 grid REST endpoints)
+Last activity: 2026-04-19 -- Phase 04 Wave 1 complete (04-01 + 04-02 + 04-04 merged; tests green)
 
 Progress: [█████████░] 88%
 
