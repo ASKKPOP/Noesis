@@ -8,14 +8,14 @@ Sprint 14 delivers the real-time dashboard that makes Nous life observable. Rese
 
 - ✅ **v1.0 Genesis** — Phases 1-10 (shipped 2026-04-17)
 - ✅ **v2.0 First Life (Sprints 11-13)** — E2E integration, persistence, Docker (shipped 2026-04-17)
-- 🚧 **v2.0 Dashboard (Sprint 14)** — Phases 1-4 (in progress)
+- ✅ **v2.0 Dashboard (Sprint 14)** — Phases 1-4 (shipped 2026-04-18; 6/7 SC verified + 1 PARTIAL deferred to live-stack smoke)
 
 ## Phases
 
 - [ ] **Phase 1: AuditChain Listener API + Broadcast Allowlist** — Make the audit chain observable via `onAppend()` and define the default-deny privacy allowlist. No network, no UI.
 - [ ] **Phase 2: WsHub + `/ws/events` Endpoint** — Server-side WebSocket with per-client ring buffer, drop-oldest backpressure, and `lastSeenId` resume protocol.
 - [x] **Phase 3: Dashboard v1 — Firehose + Heartbeat + Region Map** — Scaffold Next.js, ship reconnecting WS client, render live event feed, tick heartbeat, and region map. ✅ Verified 2026-04-18 (7/7 SC, grid 303/303 + dashboard 108/108 green)
-- [ ] **Phase 4: Nous Inspector + Economy + Docker Polish** — Per-Nous detail panel (Psyche/Telos/Thymos/memory), economy snapshot, clean `docker compose up` experience.
+- [x] **Phase 4: Nous Inspector + Economy + Docker Polish** — Per-Nous detail panel (Psyche/Telos/Thymos/memory), economy snapshot, clean `docker compose up` experience. ✅ Verified 2026-04-18 (6/7 SC MET + SC-6 PARTIAL — runtime `docker compose up` smoke deferred to dev env; grid 346/346, dashboard 215/215, brain 262/262)
 
 ## Phase Details
 
@@ -100,10 +100,10 @@ Sprint 14 delivers the real-time dashboard that makes Nous life observable. Rese
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. AuditChain Listener API | 0/3 | Not started | - |
-| 2. WsHub + `/ws/events` | 0/3 | Not started | - |
-| 3. Dashboard v1 | 0/TBD | Not started | - |
-| 4. Inspector + Economy + Docker | 0/7 | Not started | - |
+| 1. AuditChain Listener API | 3/3 | ✅ Complete | 2026-04-17 |
+| 2. WsHub + `/ws/events` | 3/3 | ✅ Complete | 2026-04-17 |
+| 3. Dashboard v1 | 6/6 | ✅ Complete | 2026-04-18 |
+| 4. Inspector + Economy + Docker | 7/7 | ✅ Complete | 2026-04-18 |
 
 ## Research Artifacts
 
@@ -122,4 +122,4 @@ Deep research committed to `.planning/research/`:
 
 ---
 *Roadmap created: 2026-04-17*
-*Last updated: 2026-04-17 — reshape after deep research synthesis*
+*Last updated: 2026-04-18 — Sprint 14 shipped; all 4 phases complete, all 19 plans merged*
