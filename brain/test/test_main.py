@@ -263,3 +263,36 @@ class TestBrainAppLifecycle:
         assert "name" in state
         assert "mood" in state
         assert state["name"] == "Sophia"
+
+
+# ── Plan 04-02: memory + did wiring ─────────────────────────────────────────
+
+class TestHandlerMemoryAndDidWiring:
+    """create_brain_app must construct a memory store and pass memory + did to BrainHandler."""
+
+    def test_handler_has_memory_attached(self):
+        app = create_brain_app(nous_name="sophia", config_data=SOPHIA_CONFIG)
+        assert app.handler.memory is not None, "BrainHandler.memory must be wired"
+
+    def test_handler_memory_supports_recent(self):
+        app = create_brain_app(nous_name="sophia", config_data=SOPHIA_CONFIG)
+        # recent() must exist; returns a list (empty at construction time).
+        result = app.handler.memory.recent(limit=5)
+        assert isinstance(result, list)
+
+    def test_handler_did_defaults_to_noesis_scheme_for_nous_name(self, monkeypatch):
+        monkeypatch.delenv("NOUS_DID", raising=False)
+        app = create_brain_app(nous_name="sophia", config_data=SOPHIA_CONFIG)
+        # Default derivation: did:noesis:<slug(nous_name)>
+        assert app.handler.did == "did:noesis:sophia"
+
+    def test_handler_did_honours_nous_did_env(self, monkeypatch):
+        monkeypatch.setenv("NOUS_DID", "did:noesis:sophia-primary")
+        app = create_brain_app(nous_name="sophia", config_data=SOPHIA_CONFIG)
+        assert app.handler.did == "did:noesis:sophia-primary"
+
+    def test_did_slug_sanitises_uppercase_and_spaces(self, monkeypatch):
+        monkeypatch.delenv("NOUS_DID", raising=False)
+        app = create_brain_app(nous_name="Sophia Alpha!", config_data=SOPHIA_CONFIG)
+        # Slug: lowercase + non-[a-z0-9_-] collapsed to '-', trimmed.
+        assert app.handler.did == "did:noesis:sophia-alpha"
