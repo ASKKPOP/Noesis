@@ -25,24 +25,30 @@ import type { ReactNode } from 'react';
 import { FirehoseStore } from '@/lib/stores/firehose-store';
 import { PresenceStore } from '@/lib/stores/presence-store';
 import { HeartbeatStore } from '@/lib/stores/heartbeat-store';
+import { selectionStore, type SelectionStore } from '@/lib/stores/selection-store';
 
 export interface Stores {
     readonly firehose: FirehoseStore;
     readonly presence: PresenceStore;
     readonly heartbeat: HeartbeatStore;
+    readonly selection: SelectionStore;
 }
 
 const StoresContext = createContext<Stores | null>(null);
 
 export function StoresProvider({ children }: { children: ReactNode }): ReactNode {
-    // Empty dep array → the triple is frozen for this provider's lifetime.
-    // React StrictMode will construct twice in dev, but the provider only
-    // commits one of those trees so consumers see a stable triple.
+    // Empty dep array → the triple (now quadruple) is frozen for this
+    // provider's lifetime. `selection` reuses the module-level singleton
+    // so that useHashSync (mounted once in <GridClient/>) and consumer
+    // components reading via useSelection() all observe the same state;
+    // the other three stores remain per-provider because their contents
+    // (ring buffers, presence maps) must not outlive a page session.
     const stores = useMemo<Stores>(
         () => ({
             firehose: new FirehoseStore(),
             presence: new PresenceStore(),
             heartbeat: new HeartbeatStore(),
+            selection: selectionStore,
         }),
         [],
     );
