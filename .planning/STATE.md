@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Dashboard (Sprint 14)
-status: Wave 2 in progress (04-03 merged; 04-05/06/07 remaining)
-stopped_at: "Plan 04-03 complete — Wave 2 first plan merged; /grid/nous + /nous/:did/state + /economy/trades + /economy/shops REST endpoints shipped (19 new tests, 346/346 green)"
-last_updated: "2026-04-19T02:38:01.999Z"
-last_activity: 2026-04-18 -- Plan 04-03 complete (grid REST endpoints; Inspector + Economy surface unblocked)
+status: completed
+stopped_at: Completed 04-05-PLAN.md
+last_updated: "2026-04-19T03:00:13.623Z"
+last_activity: 2026-04-18 -- Plan 04-03 complete (grid REST endpoints merged; 346/346 green)
 progress:
   total_phases: 4
   completed_phases: 3
@@ -51,6 +51,7 @@ Progress: [█████████░] 89%
 
 *Updated after each plan completion*
 | Phase 04 P03 | ~30min | 2 tasks | 7 files |
+| Phase 04 P05 | 1h15m | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,9 @@ Recent decisions affecting current work:
 - [Phase ?]: Plan 04-03: DID_REGEX /^did:noesis:[a-z0-9_\-]+$/i enforced at route entry; malformed → 400 invalid_did.
 - [Phase ?]: Plan 04-03: Inspector getState() throws logged via request.log.warn — raw err.message never proxied to client (T-04-12 privacy).
 - [Phase ?]: Plan 04-03: /economy/shops handler deep-copies frozen ShopRegistry listings so responses are safe to mutate client-side.
+- [Phase ?]: 04-05: Error copy owned client-side (ERR_COPY map) — backend error strings never rendered (T-04-22)
+- [Phase ?]: 04-05: Hand-rolled focus trap using FOCUSABLE_SELECTOR — no react-focus-lock dependency
+- [Phase ?]: 04-05: Inspector mounts once at GridClient root; fixed-position drawer owns its own layout
 
 ### Pending Todos
 
@@ -94,6 +98,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-19T02:38:01.997Z
-Stopped at: Plan 04-03 complete — Wave 2 first plan merged; /grid/nous + /nous/:did/state + /economy/trades + /economy/shops REST endpoints shipped (19 new tests, 346/346 green)
+Last session: 2026-04-19T03:00:13.620Z
+Stopped at: Completed 04-05-PLAN.md
 Resume file: None
