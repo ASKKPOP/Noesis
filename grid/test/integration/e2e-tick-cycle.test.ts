@@ -47,6 +47,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             expect(runner.connected).toBe(true);
@@ -71,6 +72,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             // Should not throw
@@ -94,6 +96,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             await runner.tick(42, 1);
@@ -120,6 +123,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const auditBefore = launcher.audit.length;
@@ -144,6 +148,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const auditBefore = launcher.audit.length;
@@ -173,6 +178,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             await runner.tick(5, 0);
@@ -196,6 +202,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             await runner.tick(6, 0);
@@ -216,6 +223,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const state = await runner.getState();
@@ -236,6 +244,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const coordinator = new GridCoordinator(launcher);
@@ -257,6 +266,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const coordinator = new GridCoordinator(launcher);
@@ -281,6 +291,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const hermesRunner = new NousRunner({
@@ -290,6 +301,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const coordinator = new GridCoordinator(launcher);
@@ -325,6 +337,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
                     space: launcher.space,
                     audit: launcher.audit,
                     registry: launcher.registry,
+                    economy: launcher.economy,
                 });
                 coordinator.addRunner(runner);
             }

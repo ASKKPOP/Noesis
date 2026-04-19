@@ -10,7 +10,9 @@ import { SpatialMap } from '../space/map.js';
 import { LogosEngine } from '../logos/engine.js';
 import { AuditChain } from '../audit/chain.js';
 import { EconomyManager } from '../economy/config.js';
+import { ShopRegistry } from '../economy/shop-registry.js';
 import { NousRegistry } from '../registry/registry.js';
+import { GENESIS_SHOPS } from './presets.js';
 import type { GenesisConfig, GridState } from './types.js';
 
 export class GenesisLauncher {
@@ -20,6 +22,7 @@ export class GenesisLauncher {
     readonly audit: AuditChain;
     readonly economy: EconomyManager;
     readonly registry: NousRegistry;
+    readonly shops: ShopRegistry;
     readonly gridName: string;
     readonly gridDomain: string;
 
@@ -38,6 +41,7 @@ export class GenesisLauncher {
         this.audit = new AuditChain();
         this.economy = new EconomyManager(config.economy);
         this.registry = new NousRegistry();
+        this.shops = new ShopRegistry();
     }
 
     /**
@@ -101,6 +105,17 @@ export class GenesisLauncher {
                 laws: this.config.laws.length,
                 seedNous: this.config.seedNous.length,
             });
+        }
+
+        // 5b. Register preset shops whose owner exists in the registry.
+        // Shops for unknown owners are skipped with a warn so demo data
+        // tolerates renamed/removed seed Nous (D7 — pure memory).
+        for (const shop of GENESIS_SHOPS) {
+            if (this.registry.get(shop.ownerDid)) {
+                this.shops.register(shop);
+            } else {
+                console.warn(`[genesis] skipping shop for unknown owner: ${shop.ownerDid}`);
+            }
         }
 
         // 6. Wire clock tick to registry updates + audit heartbeat.
