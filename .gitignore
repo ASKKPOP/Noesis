@@ -41,3 +41,6 @@ logs/
 coverage/
 .coverage
 htmlcov/
+
+# Claude Code session metadata
+.claude/
