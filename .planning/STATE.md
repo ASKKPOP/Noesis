@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Dashboard (Sprint 14)
 status: completed
-stopped_at: Completed 04-06-PLAN.md
-last_updated: "2026-04-19T03:12:10.463Z"
-last_activity: 2026-04-18 -- Plan 04-03 complete (grid REST endpoints merged; 346/346 green)
+stopped_at: Completed 04-07-PLAN.md (Phase 4 final plan)
+last_updated: "2026-04-19T03:19:09.330Z"
+last_activity: 2026-04-18 -- Plan 04-07 complete (Docker polish, 215/215 dashboard vitest green)
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 19
-  completed_plans: 18
-  percent: 95
+  completed_plans: 19
+  percent: 100
 ---
 
 # Project State
@@ -26,12 +26,12 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 
 ## Current Position
 
-Phase: 04 (nous-inspector-economy-docker-polish) — EXECUTING
-Plan: Wave 2 in progress (4 of 7 plans merged; 04-05/06/07 remaining)
-Status: 04-03 complete — Inspector + Economy REST surface shipped
-Last activity: 2026-04-18 -- Plan 04-03 complete (grid REST endpoints merged; 346/346 green)
+Phase: 04 (nous-inspector-economy-docker-polish) — COMPLETE
+Plan: 7/7 merged (01, 02, 03, 04, 05, 06, 07)
+Status: Phase 4 complete — Dashboard stack fully dockerized; SC-6 structurally ready
+Last activity: 2026-04-18 -- Plan 04-07 complete (Docker polish, 215/215 dashboard vitest green)
 
-Progress: [█████████░] 89%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Progress: [█████████░] 89%
 | Phase 04 P03 | ~30min | 2 tasks | 7 files |
 | Phase 04 P05 | 1h15m | 3 tasks | 13 files |
 | Phase 04 P06 | 45min | 3 tasks | 11 files |
+| Phase 04 P07 | ~20min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,12 @@ Recent decisions affecting current work:
 - [Phase ?]: Plan 04-06: Tab gating moved from page.tsx (server component) into grid-client.tsx GridLayout — useSearchParams is a client hook
 - [Phase ?]: Plan 04-06: Firehose dedup via lastTradeId ref (scan snapshot backwards for newest trade.settled id) to survive ring-buffer replay storms
 - [Phase ?]: Plan 04-06: Shops NOT refetched on trade.settled — they are launcher-registered, not trade-driven
+- Plan 04-07: NEXT_PUBLIC_GRID_ORIGIN passed as BOTH docker-compose build-arg AND runtime environment — build-arg bakes value into client bundle (Next 15 Pitfall 1), runtime env keeps dev/prod symmetric
+- Plan 04-07: Dashboard Dockerfile uses ARG→ENV promotion BEFORE `RUN npm run build`; ordering contract enforced by grep line-number comparison (W3 sandbox-safe verify, no docker daemon required)
+- Plan 04-07: Static /api/dash/health avoids cascading-failure antipattern (D14) — dashboard liveness independent of grid probe
+- Plan 04-07: Dashboard publishes :3001 exactly to match frozen D9 CORS allowlist — .env.example explicitly warns that changing DASHBOARD_PORT requires widening grid CORS
+- Plan 04-07: Next.js standalone output (monorepo layout) — runtime copies /app/dashboard/.next/standalone + /static + /public; CMD `node dashboard/server.js` (not `server.js`)
+- [Phase ?]: Plan 04-07: NEXT_PUBLIC_GRID_ORIGIN as BOTH build-arg + runtime env (Next 15 Pitfall 1)
 
 ### Pending Todos
 
@@ -102,6 +109,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-19T03:12:10.460Z
-Stopped at: Completed 04-06-PLAN.md
+Last session: 2026-04-18T20:17:00Z
+Stopped at: Completed 04-07-PLAN.md (Phase 4 final plan)
 Resume file: None
