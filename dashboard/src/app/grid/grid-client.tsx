@@ -32,8 +32,22 @@ import { refillFromDropped } from '@/lib/transport/refill';
 import { Firehose } from './components/firehose';
 import { Heartbeat } from './components/heartbeat';
 import { RegionMap } from './components/region-map';
+import { useHashSync } from '@/lib/hooks/use-hash-sync';
 import type { Region, RegionConnection } from '@/lib/protocol/region-types';
 import type { AuditEntry } from '@/lib/protocol/audit-types';
+
+/**
+ * HashSyncMount — mounts useHashSync() exactly once inside the client tree
+ * so that `#nous=<did>` ↔ SelectionStore stays bound without every consumer
+ * having to remember to call the hook. Returns null so it has no visual
+ * footprint; placement is above the first panel but inside <StoresProvider/>
+ * so the hook's default store (the singleton) matches the one threaded
+ * through context.
+ */
+function HashSyncMount(): null {
+    useHashSync();
+    return null;
+}
 
 export interface GridClientProps {
     readonly origin: string;
@@ -45,10 +59,13 @@ export interface GridClientProps {
 }
 
 export function GridClient(props: GridClientProps): React.ReactElement {
-    // StoresProvider must wrap everything that reads from the stores so the
-    // useStores() hook in each panel resolves to the SAME triple of stores.
+    // StoresProvider threads firehose / presence / heartbeat / selection to
+    // every consumer. Plan 04-04 extended `Stores` with `selection:
+    // SelectionStore` (see use-stores.ts) — the singleton lives there; this
+    // file only mounts <HashSyncMount/> once so `#nous=<did>` stays in sync.
     return (
         <StoresProvider>
+            <HashSyncMount />
             <GridLayout {...props} />
         </StoresProvider>
     );
