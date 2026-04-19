@@ -114,7 +114,14 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
             launcher.start();
             await server.listen({ port: config.port, host: '0.0.0.0' });
             console.log(`[Grid] ${launcher.gridName} started on port ${config.port}`);
-            console.log(`[Grid] Nous: ${launcher.registry.count} | Regions: ${launcher.space.allRegions().length}`);
+            // Shops are constructed by the launcher from GENESIS_SHOPS but REST wiring
+            // lands in Plan 04-03; log the count so operators can confirm seed shops
+            // registered (or were skipped for missing owners) on boot.
+            console.log(
+                `[Grid] Nous: ${launcher.registry.count} | ` +
+                `Regions: ${launcher.space.allRegions().length} | ` +
+                `Shops: ${launcher.shops.count}`,
+            );
         },
 
         async stop(): Promise<void> {

@@ -3,6 +3,7 @@
  */
 
 import type { GenesisConfig } from './types.js';
+import type { ShopRegisterInput } from '../economy/types.js';
 
 /** The default "Genesis" Grid — the first world. */
 export const GENESIS_CONFIG: GenesisConfig = {
@@ -128,3 +129,36 @@ export const TEST_CONFIG: GenesisConfig = {
         { name: 'Hermes', did: 'did:key:hermes', publicKey: 'pk-hermes', region: 'beta' },
     ],
 };
+
+/**
+ * Sample shops (`GENESIS_SHOPS`) registered at genesis to give the dashboard
+ * non-empty data. Owners are matched against the running registry at bootstrap;
+ * shops for unknown DIDs are skipped with a console.warn so demo data is
+ * tolerant of renames or missing seed Nous. See 04-CONTEXT.md D7 (pure-memory
+ * shops).
+ *
+ * Note: main.ts seeds Nous with `did:key:<slug>` DIDs. The `did:noesis:<slug>`
+ * shape used below matches the long-form NDS address format the rest of the
+ * system emits (see NousRegistry.spawn → `nous://<name>.<gridDomain>`). On a
+ * fresh Genesis boot these `did:noesis:*` shops will be skipped with a
+ * warning; a future plan will reconcile DID shapes end-to-end. The
+ * ShopRegistry is still constructed and available for REST (Plan 04-03) and
+ * runtime shop.register calls.
+ */
+export const GENESIS_SHOPS: ShopRegisterInput[] = [
+    {
+        ownerDid: 'did:noesis:hermes',
+        name: "Hermes' Market",
+        listings: [
+            { sku: 'scroll', label: 'Scroll of news', priceOusia: 5 },
+            { sku: 'bread',  label: 'Fresh bread',    priceOusia: 2 },
+        ],
+    },
+    {
+        ownerDid: 'did:noesis:sophia',
+        name: "Sophia's Library",
+        listings: [
+            { sku: 'lesson', label: 'Philosophy lesson', priceOusia: 10 },
+        ],
+    },
+];
