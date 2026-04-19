@@ -103,6 +103,45 @@ export class NousRegistry {
         if (record) record.lastActiveTick = tick;
     }
 
+    /**
+     * Atomically transfer Ousia between two Nous.
+     *
+     * Returns a tagged result. Performs no mutation unless success is true.
+     * The result is atomic: all validation occurs before any balance change,
+     * so a failed transfer leaves both records untouched.
+     *
+     * Failure modes:
+     *   - invalid_amount: amount is not a positive integer
+     *   - self_transfer:  fromDid === toDid
+     *   - not_found:      either DID is absent from the registry
+     *   - insufficient:   sender balance is below the requested amount
+     */
+    transferOusia(
+        fromDid: string,
+        toDid: string,
+        amount: number,
+    ):
+        | { success: true; fromBalance: number; toBalance: number }
+        | { success: false; error: 'not_found' | 'insufficient' | 'self_transfer' | 'invalid_amount' } {
+        if (!Number.isInteger(amount) || amount <= 0) {
+            return { success: false, error: 'invalid_amount' };
+        }
+        if (fromDid === toDid) {
+            return { success: false, error: 'self_transfer' };
+        }
+        const from = this.records.get(fromDid);
+        const to = this.records.get(toDid);
+        if (!from || !to) {
+            return { success: false, error: 'not_found' };
+        }
+        if (from.ousia < amount) {
+            return { success: false, error: 'insufficient' };
+        }
+        from.ousia -= amount;
+        to.ousia += amount;
+        return { success: true, fromBalance: from.ousia, toBalance: to.ousia };
+    }
+
     /** List all active Nous. */
     active(): NousRecord[] {
         return [...this.records.values()].filter(r => r.status === 'active');
