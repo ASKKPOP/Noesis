@@ -24,6 +24,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 import signal
 from pathlib import Path
 from typing import Any
@@ -35,8 +36,15 @@ from noesis_brain.thymos.tracker import ThymosTracker
 from noesis_brain.telos.manager import TelosManager
 from noesis_brain.telos.types import GoalType
 from noesis_brain.llm.ollama import OllamaAdapter
+from noesis_brain.memory.sqlite_store import MemoryStore
+from noesis_brain.memory.stream import MemoryStream
 from noesis_brain.rpc.server import RPCServer
 from noesis_brain.rpc.handler import BrainHandler
+
+
+def _slugify_nous_name(name: str) -> str:
+    """Lowercase + collapse non-[a-z0-9_-] chars to '-'; strip leading/trailing dashes."""
+    return re.sub(r"[^a-z0-9_-]+", "-", name.lower()).strip("-")
 
 log = logging.getLogger(__name__)
 
@@ -147,6 +155,15 @@ def create_brain_app(
     else:
         raise ValueError(f"Unknown LLM provider: {llm_provider!r}. Use 'ollama'.")
 
+    # Build memory store (in-memory SQLite by default; Phase 4 does not persist).
+    memory_store = MemoryStream(MemoryStore(":memory:"))
+
+    # Resolve the Nous DID: honour NOUS_DID env override; otherwise derive
+    # did:noesis:<slug(nous_name)> inline (no existing slug helper in the codebase).
+    did = os.environ.get("NOUS_DID", "").strip()
+    if not did:
+        did = f"did:noesis:{_slugify_nous_name(nous_name)}"
+
     # Build handler
     handler = BrainHandler(
         psyche=psyche,
@@ -155,6 +172,8 @@ def create_brain_app(
         llm=llm,
         grid_name=grid_name,
         location=location,
+        memory=memory_store,
+        did=did,
     )
 
     # Build RPC server
