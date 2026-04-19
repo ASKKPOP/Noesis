@@ -26,6 +26,7 @@
 
 import { useEffect, useRef } from 'react';
 import { flushSync } from 'react-dom';
+import { useSearchParams } from 'next/navigation';
 import { StoresProvider, useStores } from './use-stores';
 import { WsClient } from '@/lib/transport/ws-client';
 import { refillFromDropped } from '@/lib/transport/refill';
@@ -33,6 +34,8 @@ import { Firehose } from './components/firehose';
 import { Heartbeat } from './components/heartbeat';
 import { RegionMap } from './components/region-map';
 import { Inspector } from './components/inspector';
+import { TabBar } from './components/tab-bar';
+import { EconomyPanel } from './economy/economy-panel';
 import { useHashSync } from '@/lib/hooks/use-hash-sync';
 import type { Region, RegionConnection } from '@/lib/protocol/region-types';
 import type { AuditEntry } from '@/lib/protocol/audit-types';
@@ -80,6 +83,10 @@ export function GridClient(props: GridClientProps): React.ReactElement {
 function GridLayout({ origin, initialRegions, initialError }: GridClientProps): React.ReactElement {
     const stores = useStores();
     const wsRef = useRef<WsClient | null>(null);
+    // Plan 04-06: `?tab=economy` gates the Economy panel; anything else (or
+    // absent) leaves the inherited Phase-3 firehose + map layout active.
+    const searchParams = useSearchParams();
+    const activeTab = searchParams.get('tab') === 'economy' ? 'economy' : 'firehose';
 
     useEffect(() => {
         // Derive WS URL by swapping the scheme on the (validated) origin.
@@ -162,6 +169,11 @@ function GridLayout({ origin, initialRegions, initialError }: GridClientProps): 
     // Plan 06: the Plan-05 placeholder is replaced by <RegionMap/>. The
     // component reads presence from the same PresenceStore that the firehose
     // already populates; no separate props plumbing is needed.
+    //
+    // Plan 04-06: TabBar sits under the page header and gates the primary
+    // content area. The Firehose/Map layout and Economy panel mount/unmount
+    // based on the `?tab=` querystring. The Heartbeat aside renders in both
+    // tabs — it's a global signal, not tab-scoped.
     return (
         <main className="min-h-screen grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 p-4 bg-[#0A0A0B]">
             <header className="col-span-full flex items-baseline gap-3 mb-1">
@@ -179,18 +191,27 @@ function GridLayout({ origin, initialRegions, initialError }: GridClientProps): 
                 </div>
             )}
             <div className="flex flex-col gap-4 min-h-0">
-                <section
-                    aria-label="Region map"
-                    className="flex-1 min-h-[320px]"
-                >
-                    <RegionMap
-                        regions={initialRegions?.regions ?? []}
-                        connections={initialRegions?.connections ?? []}
-                    />
-                </section>
-                <div className="flex-1 min-h-[320px]">
-                    <Firehose />
-                </div>
+                <TabBar />
+                {activeTab === 'economy' ? (
+                    <div className="flex-1 min-h-[320px]">
+                        <EconomyPanel />
+                    </div>
+                ) : (
+                    <>
+                        <section
+                            aria-label="Region map"
+                            className="flex-1 min-h-[320px]"
+                        >
+                            <RegionMap
+                                regions={initialRegions?.regions ?? []}
+                                connections={initialRegions?.connections ?? []}
+                            />
+                        </section>
+                        <div className="flex-1 min-h-[320px]">
+                            <Firehose />
+                        </div>
+                    </>
+                )}
             </div>
             <aside className="flex flex-col gap-4">
                 <Heartbeat />

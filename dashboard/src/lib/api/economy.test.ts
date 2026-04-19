@@ -73,7 +73,7 @@ describe('fetchRoster', () => {
     });
 
     it('returns ok=true with the parsed body on HTTP 200', async () => {
-        const fetchMock = vi.fn(async () => jsonResp(ROSTER_FIXTURE, 200));
+        const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => jsonResp(ROSTER_FIXTURE, 200));
         vi.stubGlobal('fetch', fetchMock);
 
         const result = await fetchRoster('http://localhost:8080');
@@ -83,7 +83,7 @@ describe('fetchRoster', () => {
     });
 
     it('calls GET /api/v1/grid/nous on the given origin', async () => {
-        const fetchMock = vi.fn(async () => jsonResp(ROSTER_FIXTURE, 200));
+        const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => jsonResp(ROSTER_FIXTURE, 200));
         vi.stubGlobal('fetch', fetchMock);
 
         await fetchRoster('http://localhost:8080');
@@ -123,7 +123,7 @@ describe('fetchTrades', () => {
     });
 
     it('defaults to limit=20 when no limit passed', async () => {
-        const fetchMock = vi.fn(async () => jsonResp(TRADES_FIXTURE, 200));
+        const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => jsonResp(TRADES_FIXTURE, 200));
         vi.stubGlobal('fetch', fetchMock);
 
         await fetchTrades('http://localhost:8080');
@@ -133,7 +133,7 @@ describe('fetchTrades', () => {
     });
 
     it('clamps limit=999 to limit=100 (server-side max)', async () => {
-        const fetchMock = vi.fn(async () => jsonResp(TRADES_FIXTURE, 200));
+        const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => jsonResp(TRADES_FIXTURE, 200));
         vi.stubGlobal('fetch', fetchMock);
 
         await fetchTrades('http://localhost:8080', undefined, 999);
@@ -143,7 +143,7 @@ describe('fetchTrades', () => {
     });
 
     it('clamps limit=0 / negative / NaN to fallback limit=20', async () => {
-        const fetchMock = vi.fn(async () => jsonResp(TRADES_FIXTURE, 200));
+        const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => jsonResp(TRADES_FIXTURE, 200));
         vi.stubGlobal('fetch', fetchMock);
 
         await fetchTrades('http://localhost:8080', undefined, 0);
@@ -185,7 +185,7 @@ describe('fetchShops', () => {
     });
 
     it('calls GET /api/v1/economy/shops on the given origin', async () => {
-        const fetchMock = vi.fn(async () => jsonResp(SHOPS_FIXTURE, 200));
+        const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => jsonResp(SHOPS_FIXTURE, 200));
         vi.stubGlobal('fetch', fetchMock);
 
         await fetchShops('http://localhost:8080');
