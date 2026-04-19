@@ -180,6 +180,65 @@ export function buildServerWithHub(
         },
     );
 
+    // --- Plan 04-03: Economy endpoints ---
+
+    app.get<{ Querystring: { limit?: string; offset?: string } }>(
+        '/api/v1/economy/trades',
+        async (request): Promise<TradesResponse> => {
+            // Limit: default 20, clamp max 100, NaN/invalid → default.
+            const limitRaw = Number.parseInt(request.query.limit ?? '', 10);
+            const limit = Number.isFinite(limitRaw) && limitRaw > 0
+                ? Math.min(limitRaw, 100)
+                : 20;
+            // Offset: default 0, min 0, NaN/invalid → 0.
+            const offsetRaw = Number.parseInt(request.query.offset ?? '', 10);
+            const offset = Number.isFinite(offsetRaw) && offsetRaw >= 0 ? offsetRaw : 0;
+
+            // Total count of matching entries in the chain (pre-pagination).
+            // AuditChain.query() does not expose a separate total, so we
+            // compute it by running the filter without pagination.
+            const allMatching = services.audit?.query({ eventType: 'trade.settled' }) ?? [];
+            const total = allMatching.length;
+
+            const page = services.audit?.query({
+                eventType: 'trade.settled',
+                limit,
+                offset,
+            }) ?? [];
+
+            // W2 timestamp contract: AuditEntry.createdAt is Date.now() (ms).
+            // Emit Unix SECONDS (integer) per the contract locked in api/types.ts.
+            // Any value ≥ 10_000_000_000 would be ms — asserted by the test.
+            const trades: TradeRecord[] = page.map((e) => ({
+                actorDid: e.actorDid,
+                counterparty: String(e.payload['counterparty'] ?? ''),
+                amount: Number(e.payload['amount'] ?? 0),
+                nonce: String(e.payload['nonce'] ?? ''),
+                timestamp: Math.floor(e.createdAt / 1000),
+            }));
+
+            return { trades, total };
+        },
+    );
+
+    app.get('/api/v1/economy/shops', async (): Promise<ShopsResponse> => {
+        const shops = services.shops;
+        if (!shops) return { shops: [] };
+        // Defensive copy: frozen listings from ShopRegistry are not safe to
+        // hand to callers (mutating would throw). Spread each level to emit
+        // plain serializable objects.
+        const out = shops.list().map((s) => ({
+            ownerDid: s.ownerDid,
+            name: s.name,
+            listings: s.listings.map((l) => ({
+                sku: l.sku,
+                label: l.label,
+                priceOusia: l.priceOusia,
+            })),
+        }));
+        return { shops: out };
+    });
+
     // --- Laws ---
 
     app.get('/api/v1/governance/laws', async () => {
