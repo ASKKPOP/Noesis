@@ -104,6 +104,13 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         logos: launcher.logos,
         audit: launcher.audit,
         gridName: launcher.gridName,
+        registry: launcher.registry,
+        shops: launcher.shops,
+        // Plan 04-03: runner lookup for the inspector proxy. Runners are
+        // constructed by a future sub-plan that wires GridCoordinator here;
+        // until then the lookup always returns undefined → 404 unknown_nous.
+        // That is the correct behaviour for a Grid with no brain bridges.
+        getRunner: () => undefined,
     });
 
     return {

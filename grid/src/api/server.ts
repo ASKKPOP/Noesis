@@ -12,8 +12,29 @@ import type { WorldClock } from '../clock/ticker.js';
 import type { SpatialMap } from '../space/map.js';
 import type { LogosEngine } from '../logos/engine.js';
 import type { AuditChain } from '../audit/chain.js';
-import type { GridStatus } from './types.js';
+import type { NousRegistry } from '../registry/registry.js';
+import type { ShopRegistry } from '../economy/shop-registry.js';
+import type {
+    GridStatus,
+    NousRosterEntry,
+    NousRosterResponse,
+    ApiError,
+    TradeRecord,
+    TradesResponse,
+    ShopsResponse,
+} from './types.js';
 import { WsHub } from './ws-hub.js';
+
+/**
+ * Inspector runner accessor — returns an object that can report connection
+ * state and fetch the brain's get_state dict. NousRunner satisfies this shape;
+ * tests pass a fake. The accessor returns undefined when no runner exists for
+ * the given DID.
+ */
+export interface InspectorRunner {
+    connected: boolean;
+    getState(): Promise<Record<string, unknown>>;
+}
 
 export interface GridServices {
     clock: WorldClock;
@@ -21,7 +42,22 @@ export interface GridServices {
     logos: LogosEngine;
     audit: AuditChain;
     gridName: string;
+    /** NousRegistry — required by Plan 04-03 roster endpoint. Optional for
+     *  legacy tests that don't exercise the new routes. */
+    registry?: NousRegistry;
+    /** ShopRegistry — required by Plan 04-03 shops endpoint. */
+    shops?: ShopRegistry;
+    /** Runner lookup for the inspector proxy. Returns undefined if no runner
+     *  is registered for the DID (→ 404 unknown_nous). */
+    getRunner?: (did: string) => InspectorRunner | undefined;
 }
+
+/**
+ * DID regex used by /api/v1/nous/:did/state.
+ * Matches `did:noesis:<slug>` where slug is alphanumeric + underscore + hyphen.
+ * Case-insensitive. Exposed as a shared constant for Plan 04-06 to reuse.
+ */
+export const DID_REGEX = /^did:noesis:[a-z0-9_\-]+$/i;
 
 export interface WsHubOverrides {
     bufferCapacity?: number;
@@ -92,6 +128,57 @@ export function buildServerWithHub(
         }
         return region;
     });
+
+    // --- Plan 04-03: Nous roster + Inspector proxy ---
+
+    app.get('/api/v1/grid/nous', async (): Promise<NousRosterResponse> => {
+        const registry = services.registry;
+        if (!registry) {
+            // Legacy test harness path — no registry wired. Treat as empty roster.
+            return { nous: [] };
+        }
+        const nous: NousRosterEntry[] = registry.active().map((r) => ({
+            did: r.did,
+            name: r.name,
+            region: r.region,
+            ousia: r.ousia,
+            lifecyclePhase: r.lifecyclePhase,
+            reputation: r.reputation,
+            status: r.status,
+        }));
+        return { nous };
+    });
+
+    app.get<{ Params: { did: string } }>(
+        '/api/v1/nous/:did/state',
+        async (request, reply) => {
+            const { did } = request.params;
+            if (!DID_REGEX.test(did)) {
+                reply.code(400);
+                return { error: 'invalid_did' } satisfies ApiError;
+            }
+            const getRunner = services.getRunner;
+            const runner = getRunner ? getRunner(did) : undefined;
+            if (!runner) {
+                reply.code(404);
+                return { error: 'unknown_nous' } satisfies ApiError;
+            }
+            if (!runner.connected) {
+                reply.code(503);
+                return { error: 'brain_unavailable' } satisfies ApiError;
+            }
+            try {
+                const state = await runner.getState();
+                return state;
+            } catch (err) {
+                // Privacy invariant (T-04-12): never leak raw err.message.
+                // Log server-side only, return fixed error shape.
+                request.log.warn({ err, did }, 'brain get_state failed');
+                reply.code(503);
+                return { error: 'brain_unavailable' } satisfies ApiError;
+            }
+        },
+    );
 
     // --- Laws ---
 
