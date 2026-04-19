@@ -32,6 +32,7 @@ import { refillFromDropped } from '@/lib/transport/refill';
 import { Firehose } from './components/firehose';
 import { Heartbeat } from './components/heartbeat';
 import { RegionMap } from './components/region-map';
+import { Inspector } from './components/inspector';
 import { useHashSync } from '@/lib/hooks/use-hash-sync';
 import type { Region, RegionConnection } from '@/lib/protocol/region-types';
 import type { AuditEntry } from '@/lib/protocol/audit-types';
@@ -67,6 +68,11 @@ export function GridClient(props: GridClientProps): React.ReactElement {
         <StoresProvider>
             <HashSyncMount />
             <GridLayout {...props} />
+            {/* Plan 04-05: Inspector mounts once at the client-tree root so any
+                surface that selects a DID via SelectionStore can open it. The
+                drawer self-positions (fixed right-0) and renders null when no
+                DID is selected — zero cost when inactive. */}
+            <Inspector />
         </StoresProvider>
     );
 }

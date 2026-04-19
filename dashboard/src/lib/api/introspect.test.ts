@@ -104,23 +104,29 @@ describe('fetchNousState', () => {
     });
 
     it('uses encodeURIComponent on the did when building the URL', async () => {
-        const fetchMock = vi.fn(async () => jsonResp(FIXTURE, 200));
+        const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
+            Promise.resolve(jsonResp(FIXTURE, 200)),
+        );
         vi.stubGlobal('fetch', fetchMock);
 
         await fetchNousState('did:noesis:alpha', 'http://localhost:8080');
 
-        const url = fetchMock.mock.calls[0]![0] as string;
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        const [url] = fetchMock.mock.calls[0]!;
         expect(url).toBe('http://localhost:8080/api/v1/nous/did%3Anoesis%3Aalpha/state');
     });
 
     it('forwards the AbortSignal to fetch init', async () => {
-        const fetchMock = vi.fn(async () => jsonResp(FIXTURE, 200));
+        const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
+            Promise.resolve(jsonResp(FIXTURE, 200)),
+        );
         vi.stubGlobal('fetch', fetchMock);
 
         const ac = new AbortController();
         await fetchNousState('did:noesis:test', 'http://localhost:8080', ac.signal);
 
-        const init = fetchMock.mock.calls[0]![1] as RequestInit | undefined;
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        const [, init] = fetchMock.mock.calls[0]!;
         expect(init?.signal).toBe(ac.signal);
     });
 });
