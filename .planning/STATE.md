@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Dashboard (Sprint 14)
-status: executing
-stopped_at: Phase 3 complete — Dashboard v1 (/grid route renders live firehose + heartbeat + region map subscribed to WS; 7/7 SC verified)
-last_updated: "2026-04-19T01:56:06.165Z"
-last_activity: 2026-04-19 -- Phase 04 Wave 1 complete (04-01 + 04-02 + 04-04; grid 327/327, dashboard vitest 149/149, brain 262/262)
+status: Wave 2 in progress (04-03 merged; 04-05/06/07 remaining)
+stopped_at: "Plan 04-03 complete — Wave 2 first plan merged; /grid/nous + /nous/:did/state + /economy/trades + /economy/shops REST endpoints shipped (19 new tests, 346/346 green)"
+last_updated: "2026-04-19T02:38:01.999Z"
+last_activity: 2026-04-18 -- Plan 04-03 complete (grid REST endpoints; Inspector + Economy surface unblocked)
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 19
-  completed_plans: 15
-  percent: 79
+  completed_plans: 17
+  percent: 89
 ---
 
 # Project State
@@ -27,11 +27,11 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 ## Current Position
 
 Phase: 04 (nous-inspector-economy-docker-polish) — EXECUTING
-Plan: Wave 1 complete (3 of 7 plans merged)
-Status: Wave 2 next (04-03 grid REST endpoints)
-Last activity: 2026-04-19 -- Phase 04 Wave 1 complete (04-01 + 04-02 + 04-04 merged; tests green)
+Plan: Wave 2 in progress (4 of 7 plans merged; 04-05/06/07 remaining)
+Status: 04-03 complete — Inspector + Economy REST surface shipped
+Last activity: 2026-04-18 -- Plan 04-03 complete (grid REST endpoints merged; 346/346 green)
 
-Progress: [█████████░] 88%
+Progress: [█████████░] 89%
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Progress: [█████████░] 88%
 | 03 | 06 | ~7min | 3 | 7 | 2026-04-18 |
 
 *Updated after each plan completion*
+| Phase 04 P03 | ~30min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,10 @@ Recent decisions affecting current work:
 - Plan 03-01: CORS origin list is explicit literal ['http://localhost:3001','http://localhost:3000'] — no regex, no wildcards, credentials off
 - Plan 03-01: /api/v1/grid/regions extended in-place to {regions,connections} — single GET for dashboard map render
 - Plan 03-01: Single clock.onTick listener does registry.touch THEN audit.append('tick', ...) — one subscription, ordered side effects; hash-chain invariant preserved
+- [Phase ?]: Plan 04-03: TradeRecord.timestamp is Unix integer SECONDS (W2 contract locked by test assertion < 10_000_000_000). AuditEntry.createdAt is ms → mapper applies Math.floor(/1000).
+- [Phase ?]: Plan 04-03: DID_REGEX /^did:noesis:[a-z0-9_\-]+$/i enforced at route entry; malformed → 400 invalid_did.
+- [Phase ?]: Plan 04-03: Inspector getState() throws logged via request.log.warn — raw err.message never proxied to client (T-04-12 privacy).
+- [Phase ?]: Plan 04-03: /economy/shops handler deep-copies frozen ShopRegistry listings so responses are safe to mutate client-side.
 
 ### Pending Todos
 
@@ -89,6 +94,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-18
-Stopped at: Phase 3 complete — Dashboard v1 (/grid route renders live firehose + heartbeat + region map subscribed to WS; 7/7 SC verified)
-Resume file: .planning/phases/03-dashboard-v1-firehose-heartbeat-region-map/03-VERIFICATION.md
+Last session: 2026-04-19T02:38:01.997Z
+Stopped at: Plan 04-03 complete — Wave 2 first plan merged; /grid/nous + /nous/:did/state + /economy/trades + /economy/shops REST endpoints shipped (19 new tests, 346/346 green)
+Resume file: None

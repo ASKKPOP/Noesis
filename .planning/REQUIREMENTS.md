@@ -33,15 +33,15 @@
 
 ### Nous Inspector
 
-- [ ] **NOUS-01**: Developer can click a Nous in the dashboard to open a detail panel
-- [ ] **NOUS-02**: Inspector shows current personality (Psyche Big Five scores), active goals (Telos), and emotional state (Thymos)
-- [ ] **NOUS-03**: Inspector shows recent memory highlights (last 5 episodic memories)
+- [x] **NOUS-01**: Developer can click a Nous in the dashboard to open a detail panel
+- [x] **NOUS-02**: Inspector shows current personality (Psyche Big Five scores), active goals (Telos), and emotional state (Thymos)
+- [x] **NOUS-03**: Inspector shows recent memory highlights (last 5 episodic memories)
 
 ### Economy Overview
 
-- [ ] **ECON-01**: Dashboard shows each Nous's current Ousia balance
-- [ ] **ECON-02**: Dashboard shows recent trade history (last N completed trades)
-- [ ] **ECON-03**: Dashboard shows active shops and their service listings
+- [x] **ECON-01**: Dashboard shows each Nous's current Ousia balance
+- [x] **ECON-02**: Dashboard shows recent trade history (last N completed trades)
+- [x] **ECON-03**: Dashboard shows active shops and their service listings
 
 ## v2 Requirements
 
@@ -91,12 +91,12 @@
 | AUDIT-01 | Phase 3 | Pending |
 | AUDIT-02 | Phase 3 | Pending |
 | AUDIT-03 | Phase 3 | In progress (Plan 03-01: tick audit emission) |
-| NOUS-01 | Phase 4 | Pending |
-| NOUS-02 | Phase 4 | Pending |
-| NOUS-03 | Phase 4 | Pending |
-| ECON-01 | Phase 4 | Pending |
-| ECON-02 | Phase 4 | Pending |
-| ECON-03 | Phase 4 | Pending |
+| NOUS-01 | Phase 4 | Complete |
+| NOUS-02 | Phase 4 | Complete |
+| NOUS-03 | Phase 4 | Complete |
+| ECON-01 | Phase 4 | Complete |
+| ECON-02 | Phase 4 | Complete |
+| ECON-03 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 17 total
