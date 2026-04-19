@@ -14,7 +14,7 @@ Sprint 14 delivers the real-time dashboard that makes Nous life observable. Rese
 
 - [ ] **Phase 1: AuditChain Listener API + Broadcast Allowlist** — Make the audit chain observable via `onAppend()` and define the default-deny privacy allowlist. No network, no UI.
 - [ ] **Phase 2: WsHub + `/ws/events` Endpoint** — Server-side WebSocket with per-client ring buffer, drop-oldest backpressure, and `lastSeenId` resume protocol.
-- [ ] **Phase 3: Dashboard v1 — Firehose + Heartbeat + Region Map** — Scaffold Next.js, ship reconnecting WS client, render live event feed, tick heartbeat, and region map.
+- [x] **Phase 3: Dashboard v1 — Firehose + Heartbeat + Region Map** — Scaffold Next.js, ship reconnecting WS client, render live event feed, tick heartbeat, and region map. ✅ Verified 2026-04-18 (7/7 SC, grid 303/303 + dashboard 108/108 green)
 - [ ] **Phase 4: Nous Inspector + Economy + Docker Polish** — Per-Nous detail panel (Psyche/Telos/Thymos/memory), economy snapshot, clean `docker compose up` experience.
 
 ## Phase Details
