@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Dashboard (Sprint 14)
 status: completed
-stopped_at: Completed 04-05-PLAN.md
-last_updated: "2026-04-19T03:00:13.623Z"
+stopped_at: Completed 04-06-PLAN.md
+last_updated: "2026-04-19T03:12:10.463Z"
 last_activity: 2026-04-18 -- Plan 04-03 complete (grid REST endpoints merged; 346/346 green)
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 19
-  completed_plans: 17
-  percent: 89
+  completed_plans: 18
+  percent: 95
 ---
 
 # Project State
@@ -52,6 +52,7 @@ Progress: [█████████░] 89%
 *Updated after each plan completion*
 | Phase 04 P03 | ~30min | 2 tasks | 7 files |
 | Phase 04 P05 | 1h15m | 3 tasks | 13 files |
+| Phase 04 P06 | 45min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,9 @@ Recent decisions affecting current work:
 - [Phase ?]: 04-05: Error copy owned client-side (ERR_COPY map) — backend error strings never rendered (T-04-22)
 - [Phase ?]: 04-05: Hand-rolled focus trap using FOCUSABLE_SELECTOR — no react-focus-lock dependency
 - [Phase ?]: 04-05: Inspector mounts once at GridClient root; fixed-position drawer owns its own layout
+- [Phase ?]: Plan 04-06: Tab gating moved from page.tsx (server component) into grid-client.tsx GridLayout — useSearchParams is a client hook
+- [Phase ?]: Plan 04-06: Firehose dedup via lastTradeId ref (scan snapshot backwards for newest trade.settled id) to survive ring-buffer replay storms
+- [Phase ?]: Plan 04-06: Shops NOT refetched on trade.settled — they are launcher-registered, not trade-driven
 
 ### Pending Todos
 
@@ -98,6 +102,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-19T03:00:13.620Z
-Stopped at: Completed 04-05-PLAN.md
+Last session: 2026-04-19T03:12:10.460Z
+Stopped at: Completed 04-06-PLAN.md
 Resume file: None

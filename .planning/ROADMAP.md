@@ -89,8 +89,8 @@ Sprint 14 delivers the real-time dashboard that makes Nous life observable. Rese
   - [x] 04-02-PLAN.md — Brain get_state widening: plumb memory+did through BrainHandler; add psyche/thymos/telos/memory_highlights fields (NOUS-01, NOUS-02)
   - [x] 04-03-PLAN.md — Grid REST endpoints: /api/v1/grid/nous, /api/v1/nous/:did/state, /api/v1/economy/trades, /api/v1/economy/shops (NOUS-01, NOUS-02, NOUS-03, ECON-01, ECON-02, ECON-03)
   - [x] 04-04-PLAN.md — Dashboard plumbing: SelectionStore + useHashSync + useSelection + accessible TabBar (NOUS-01, NOUS-03)
-  - [ ] 04-05-PLAN.md — Inspector drawer + 4 sub-panels (Psyche/Thymos/Telos/Memory) + WAI-ARIA focus trap (NOUS-01, NOUS-02, NOUS-03)
-  - [ ] 04-06-PLAN.md — Economy panel: BalancesTable + TradesTable + ShopsList + trade.settled firehose invalidation (ECON-01, ECON-02, ECON-03)
+  - [x] 04-05-PLAN.md — Inspector drawer + 4 sub-panels (Psyche/Thymos/Telos/Memory) + WAI-ARIA focus trap (NOUS-01, NOUS-02, NOUS-03)
+  - [x] 04-06-PLAN.md — Economy panel: BalancesTable + TradesTable + ShopsList + trade.settled firehose invalidation (ECON-01, ECON-02, ECON-03)
   - [ ] 04-07-PLAN.md — Docker polish: Dockerfile.dashboard (standalone) + compose service + /api/dash/health + .env.example (NOUS-03)
 **UI hint**: yes
 
