@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
+from datetime import datetime
 from typing import Any
 
 from noesis_brain.llm.base import LLMAdapter, LLMError
 from noesis_brain.llm.types import GenerateOptions
-from noesis_brain.psyche.types import Psyche
+from noesis_brain.psyche.types import PersonalityDimension, Psyche
 from noesis_brain.prompts.system import build_system_prompt
 from noesis_brain.telos.manager import TelosManager
 from noesis_brain.thymos.tracker import ThymosTracker
@@ -36,6 +38,9 @@ class BrainHandler:
         llm: LLMAdapter,
         grid_name: str = "genesis",
         location: str = "Agora Central",
+        *,
+        memory: Any = None,
+        did: str = "",
     ) -> None:
         self.psyche = psyche
         self.thymos = thymos
@@ -43,6 +48,8 @@ class BrainHandler:
         self.llm = llm
         self.grid_name = grid_name
         self.location = location
+        self.memory = memory
+        self.did = did
 
     async def on_message(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle incoming P2P message → think → produce response actions.
@@ -126,15 +133,167 @@ class BrainHandler:
         log.info("Brain received event: %s", event_type)
 
     def get_state(self) -> dict[str, Any]:
-        """Return current brain state for Human Channel."""
+        """Return current brain state for the dashboard Inspector (NOUS-01..02).
+
+        Returns a strict superset of the legacy shape:
+            - Legacy top-level keys (name, archetype, mood, emotions, active_goals, location)
+              are preserved EXACTLY for backward compatibility.
+            - New top-level keys add the structured data the dashboard needs:
+              did, grid_name, psyche, thymos, telos, memory_highlights.
+        """
+        # Structured sub-dicts built up-front so the legacy keys can be re-derived from them.
+        psyche_dict = self._psyche_snapshot()
+        thymos_dict = self._thymos_snapshot()
+        goals_out = self._telos_snapshot()
+        memory_highlights: list[dict[str, Any]] = []
+        if self.memory is not None:
+            memory_highlights = self._memory_snapshot(limit=5)
+
         return {
+            # ── Legacy keys — preserved exactly for backward compatibility ──
             "name": self.psyche.name,
             "archetype": self.psyche.archetype,
             "mood": self.thymos.mood.current_mood(),
             "emotions": self.thymos.mood.describe(),
-            "active_goals": [g.description for g in self.telos.active_goals()],
+            "active_goals": [g["description"] for g in goals_out],
             "location": self.location,
+            # ── New keys for the dashboard Inspector ──
+            "did": self.did,
+            "grid_name": self.grid_name,
+            "psyche": psyche_dict,
+            "thymos": thymos_dict,
+            "telos": {"active_goals": goals_out},
+            "memory_highlights": memory_highlights,
         }
+
+    def _psyche_snapshot(self) -> dict[str, Any]:
+        """Structured Psyche snapshot — five Big-Five floats + archetype metadata.
+
+        The in-tree PersonalityProfile stores string levels (``low``/``medium``/``high``);
+        the Big-Five floats are derived via ``PersonalityProfile.get_numeric`` which maps
+        those levels to 0.2/0.5/0.8 (see psyche/types.py ``LEVEL_MAP``).
+
+        Psyche has six dimensions (openness, conscientiousness, extraversion, agreeableness,
+        resilience, ambition) and does NOT currently expose a ``neuroticism`` attribute.
+        Per the plan must_haves, the payload emits a ``neuroticism`` key derived as
+        ``1.0 - resilience`` (resilience and neuroticism are inversely related in the
+        Big-Five literature). The original ``resilience`` and ``ambition`` floats are
+        also exposed additively so downstream consumers keep full fidelity.
+        """
+        profile = self.psyche.personality
+        openness = float(profile.get_numeric(PersonalityDimension.OPENNESS))
+        conscientiousness = float(
+            profile.get_numeric(PersonalityDimension.CONSCIENTIOUSNESS)
+        )
+        extraversion = float(profile.get_numeric(PersonalityDimension.EXTRAVERSION))
+        agreeableness = float(profile.get_numeric(PersonalityDimension.AGREEABLENESS))
+        resilience = float(profile.get_numeric(PersonalityDimension.RESILIENCE))
+        ambition = float(profile.get_numeric(PersonalityDimension.AMBITION))
+        neuroticism = max(0.0, min(1.0, 1.0 - resilience))
+        return {
+            "openness": openness,
+            "conscientiousness": conscientiousness,
+            "extraversion": extraversion,
+            "agreeableness": agreeableness,
+            "neuroticism": neuroticism,
+            # Additive: full-fidelity fields beyond the canonical Big Five.
+            "resilience": resilience,
+            "ambition": ambition,
+            "archetype": self.psyche.archetype,
+        }
+
+    def _thymos_snapshot(self) -> dict[str, Any]:
+        """Structured Thymos snapshot — mood label + dict[str, float] of emotion intensities.
+
+        Unlike the legacy ``emotions`` top-level key (which is a natural-language string
+        from ``MoodState.describe()``), the Inspector needs a machine-readable dict so the
+        dashboard can render per-emotion bars.
+        """
+        emotions: dict[str, float] = {}
+        for emotion, state in self.thymos.mood.emotions.items():
+            name = emotion.value if hasattr(emotion, "value") else str(emotion)
+            intensity = float(state.intensity)
+            # Clamp defensively — EmotionState.clamp already enforces [0,1] but the
+            # dashboard contract is strict.
+            intensity = max(0.0, min(1.0, intensity))
+            emotions[name] = intensity
+        return {
+            "mood": self.thymos.mood.current_mood(),
+            "emotions": emotions,
+        }
+
+    def _telos_snapshot(self) -> list[dict[str, Any]]:
+        """Structured Telos snapshot — list of goal records with stable ids.
+
+        Goal currently has no ``id`` attribute (see telos/types.py). A stable id is
+        synthesised as ``sha256(description)[:12]`` so the dashboard can key React
+        lists without randomness (threat T-04-10 in the plan).
+        """
+        out: list[dict[str, Any]] = []
+        for goal in self.telos.active_goals():
+            description = goal.description
+            existing_id = getattr(goal, "id", None)
+            if isinstance(existing_id, str) and existing_id:
+                goal_id = existing_id
+            else:
+                goal_id = hashlib.sha256(description.encode("utf-8")).hexdigest()[:12]
+            out.append(
+                {
+                    "id": goal_id,
+                    "description": description,
+                    "priority": float(getattr(goal, "priority", 0.0)),
+                }
+            )
+        return out
+
+    def _memory_snapshot(self, limit: int = 5) -> list[dict[str, Any]]:
+        """Structured snapshot of the most recent memory entries (cap = ``limit``).
+
+        Works with any memory object that exposes ``recent(limit=...)`` returning
+        Memory-like objects (see memory/stream.py:86). Entries are normalised to
+        ``{timestamp, kind, summary}``; all other fields are deliberately dropped
+        (threat T-04-09: avoid leaking unbounded payload surface).
+        """
+        entries: list[dict[str, Any]] = []
+        try:
+            recent = self.memory.recent(limit=limit)
+        except Exception as exc:  # pragma: no cover - defensive fallback
+            log.warning("memory.recent() failed in get_state: %s", exc)
+            return entries
+
+        for raw in recent[:limit]:
+            entries.append(self._normalise_memory_entry(raw))
+        return entries
+
+    @staticmethod
+    def _normalise_memory_entry(raw: Any) -> dict[str, Any]:
+        """Map a Memory-like entry to the normalised ``{timestamp, kind, summary}`` shape.
+
+        Accepts either a dataclass (``noesis_brain.memory.types.Memory``) or a dict with
+        equivalent keys. Timestamps are serialised as ISO-8601 strings to keep the RPC
+        response JSON-serialisable (no raw ``datetime`` objects on the wire).
+        """
+
+        def _get(attr: str, default: Any = None) -> Any:
+            if isinstance(raw, dict):
+                return raw.get(attr, default)
+            return getattr(raw, attr, default)
+
+        ts = _get("created_at") or _get("timestamp")
+        if isinstance(ts, datetime):
+            timestamp: Any = ts.isoformat()
+        elif ts is None:
+            timestamp = ""
+        else:
+            timestamp = str(ts)
+
+        kind_raw = _get("memory_type") or _get("kind") or ""
+        kind = kind_raw.value if hasattr(kind_raw, "value") else str(kind_raw)
+
+        summary_raw = _get("content") or _get("summary") or ""
+        summary = str(summary_raw)
+
+        return {"timestamp": timestamp, "kind": kind, "summary": summary}
 
     def _instinct_response(self, sender_name: str) -> str:
         """Fallback response when LLM is unavailable."""
