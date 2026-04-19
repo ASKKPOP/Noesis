@@ -124,6 +124,36 @@ services:
       - sockets:/sockets
     restart: unless-stopped
 
+  # ── Dashboard (Next.js 15 standalone) ────────────────────────────────────────
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dashboard
+      args:
+        # NEXT_PUBLIC_* must be baked at build time (Next 15 inlines them).
+        NEXT_PUBLIC_GRID_ORIGIN: ${NEXT_PUBLIC_GRID_ORIGIN:-http://localhost:8080}
+    container_name: noesis-dashboard
+    depends_on:
+      grid:
+        condition: service_healthy
+    ports:
+      - "${DASHBOARD_PORT:-3001}:3001"
+    environment:
+      # Runtime env for parity — standalone rarely reads NEXT_PUBLIC_* at runtime,
+      # but this keeps dev/prod environments symmetric. Actual client values
+      # come from the build-arg baked into the bundle above.
+      NEXT_PUBLIC_GRID_ORIGIN: ${NEXT_PUBLIC_GRID_ORIGIN:-http://localhost:8080}
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3001
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/dash/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
 volumes:
   mysql_data:
   sockets:
