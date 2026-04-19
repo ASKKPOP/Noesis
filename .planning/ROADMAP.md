@@ -84,7 +84,14 @@ Sprint 14 delivers the real-time dashboard that makes Nous life observable. Rese
   5. Economy panel lists active shops and the services each shop is currently offering
   6. From a clean checkout, `docker compose up` brings the full stack (Grid + Brain + MySQL + Dashboard) and the dashboard connects to the Grid's WebSocket on first attempt
   7. All PITFALLS.md integrity non-negotiables hold: chain hash unchanged by observer count, no listener can crash append, no privacy leak in the broadcast allowlist, clean shutdown via `app.close()`
-**Plans**: TBD
+**Plans**: 7 plans
+  - [ ] 04-01-PLAN.md — Grid economy foundation: ShopRegistry + BrainAction.trade_request + NousRegistry.transferOusia + trade.settled emission (ECON-01, ECON-02, ECON-03)
+  - [ ] 04-02-PLAN.md — Brain get_state widening: plumb memory+did through BrainHandler; add psyche/thymos/telos/memory_highlights fields (NOUS-01, NOUS-02)
+  - [ ] 04-03-PLAN.md — Grid REST endpoints: /api/v1/grid/nous, /api/v1/nous/:did/state, /api/v1/economy/trades, /api/v1/economy/shops (NOUS-01, NOUS-02, NOUS-03, ECON-01, ECON-02, ECON-03)
+  - [ ] 04-04-PLAN.md — Dashboard plumbing: SelectionStore + useHashSync + useSelection + accessible TabBar (NOUS-01, NOUS-03)
+  - [ ] 04-05-PLAN.md — Inspector drawer + 4 sub-panels (Psyche/Thymos/Telos/Memory) + WAI-ARIA focus trap (NOUS-01, NOUS-02, NOUS-03)
+  - [ ] 04-06-PLAN.md — Economy panel: BalancesTable + TradesTable + ShopsList + trade.settled firehose invalidation (ECON-01, ECON-02, ECON-03)
+  - [ ] 04-07-PLAN.md — Docker polish: Dockerfile.dashboard (standalone) + compose service + /api/dash/health + .env.example (NOUS-03)
 **UI hint**: yes
 
 ## Progress
@@ -96,7 +103,7 @@ Sprint 14 delivers the real-time dashboard that makes Nous life observable. Rese
 | 1. AuditChain Listener API | 0/3 | Not started | - |
 | 2. WsHub + `/ws/events` | 0/3 | Not started | - |
 | 3. Dashboard v1 | 0/TBD | Not started | - |
-| 4. Inspector + Economy + Docker | 0/TBD | Not started | - |
+| 4. Inspector + Economy + Docker | 0/7 | Not started | - |
 
 ## Research Artifacts
 
