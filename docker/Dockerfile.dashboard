@@ -1,0 +1,48 @@
+# syntax=docker/dockerfile:1.7
+
+# ── Stage 1: Builder ─────────────────────────────────────────────────────────
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+# NEXT_PUBLIC_* must be available at BUILD time — Next inlines them into the
+# client bundle. Passing via `docker run -e` is too late. See D10 / Pitfall 1.
+ARG NEXT_PUBLIC_GRID_ORIGIN=http://localhost:8080
+ENV NEXT_PUBLIC_GRID_ORIGIN=${NEXT_PUBLIC_GRID_ORIGIN}
+
+# Copy workspace manifests first (layer caching)
+COPY package.json package-lock.json* ./
+COPY dashboard/package.json ./dashboard/
+
+RUN npm ci
+
+# Copy dashboard source
+COPY dashboard ./dashboard
+
+# Build in standalone mode (next.config.mjs → output: 'standalone')
+RUN npm run build --workspace=dashboard
+
+# ── Stage 2: Runtime ─────────────────────────────────────────────────────────
+FROM node:22-alpine AS runtime
+
+WORKDIR /app
+
+ENV NODE_ENV=production \
+    PORT=3001 \
+    HOSTNAME=0.0.0.0
+
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser  --system --uid 1001 nextjs
+
+# Next standalone output (monorepo layout): /app/dashboard/.next/standalone
+# contains the self-contained server tree with dashboard/server.js as the entry
+# point. Static assets and public files are copied adjacent to the server.
+COPY --from=builder --chown=nextjs:nodejs /app/dashboard/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/dashboard/.next/static    ./dashboard/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/dashboard/public          ./dashboard/public
+
+USER nextjs
+EXPOSE 3001
+
+# Standalone layout puts the server entrypoint at dashboard/server.js
+CMD ["node", "dashboard/server.js"]
