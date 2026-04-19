@@ -69,6 +69,7 @@ describe('Sprint 11: E2E Messaging', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const hermesRunner = new NousRunner({
@@ -78,6 +79,7 @@ describe('Sprint 11: E2E Messaging', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const coordinator = new GridCoordinator(launcher);
@@ -115,6 +117,7 @@ describe('Sprint 11: E2E Messaging', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const hermesBridge = makeBridge({ onMessage: () => [] });
@@ -125,6 +128,7 @@ describe('Sprint 11: E2E Messaging', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const coordinator = new GridCoordinator(launcher);
@@ -178,6 +182,7 @@ describe('Sprint 11: E2E Messaging', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const hermesRunner = new NousRunner({
@@ -187,6 +192,7 @@ describe('Sprint 11: E2E Messaging', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const coordinator = new GridCoordinator(launcher);
@@ -226,6 +232,7 @@ describe('Sprint 11: E2E Messaging', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const hermesRunner = new NousRunner({
@@ -235,6 +242,7 @@ describe('Sprint 11: E2E Messaging', () => {
                 space: launcher.space,
                 audit: launcher.audit,
                 registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const coordinator = new GridCoordinator(launcher);
@@ -275,11 +283,13 @@ describe('Sprint 11: E2E Messaging', () => {
                 nousDid: 'did:key:sophia', nousName: 'Sophia',
                 bridge: sophiaBridge, space: launcher.space,
                 audit: launcher.audit, registry: launcher.registry,
+                economy: launcher.economy,
             });
             const hermesRunner = new NousRunner({
                 nousDid: 'did:key:hermes', nousName: 'Hermes',
                 bridge: hermesBridge, space: launcher.space,
                 audit: launcher.audit, registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const coordinator = new GridCoordinator(launcher);
@@ -317,6 +327,7 @@ describe('Sprint 11: E2E Messaging', () => {
                 nousDid: 'did:key:sophia', nousName: 'Sophia',
                 bridge, space: launcher.space,
                 audit: launcher.audit, registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             new GridCoordinator(launcher).addRunner(runner);
@@ -366,11 +377,13 @@ describe('Sprint 11: E2E Messaging', () => {
                 nousDid: 'did:key:sophia', nousName: 'Sophia',
                 bridge: sophiaBridge, space: launcher.space,
                 audit: launcher.audit, registry: launcher.registry,
+                economy: launcher.economy,
             });
             const hermesRunner = new NousRunner({
                 nousDid: 'did:key:hermes', nousName: 'Hermes',
                 bridge: hermesBridge, space: launcher.space,
                 audit: launcher.audit, registry: launcher.registry,
+                economy: launcher.economy,
             });
 
             const coordinator = new GridCoordinator(launcher);

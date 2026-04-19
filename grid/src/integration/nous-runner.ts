@@ -13,6 +13,7 @@
 import type { SpatialMap } from '../space/map.js';
 import type { AuditChain } from '../audit/chain.js';
 import type { NousRegistry } from '../registry/registry.js';
+import type { EconomyManager } from '../economy/config.js';
 import type { BrainAction, IBrainBridge } from './types.js';
 
 export interface NousRunnerConfig {
@@ -22,6 +23,7 @@ export interface NousRunnerConfig {
     space: SpatialMap;
     audit: AuditChain;
     registry: NousRegistry;
+    economy: EconomyManager;
 }
 
 export type SpeakHandler = (runner: NousRunner, channel: string, text: string, tick: number) => void;
@@ -34,6 +36,7 @@ export class NousRunner {
     private readonly space: SpatialMap;
     private readonly audit: AuditChain;
     private readonly registry: NousRegistry;
+    private readonly economy: EconomyManager;
 
     private speakHandler: SpeakHandler | null = null;
 
@@ -44,6 +47,7 @@ export class NousRunner {
         this.space = config.space;
         this.audit = config.audit;
         this.registry = config.registry;
+        this.economy = config.economy;
     }
 
     /** Register handler called when this Nous speaks (for message routing). */
@@ -106,6 +110,55 @@ export class NousRunner {
                         channel: action.channel,
                         text: action.text.slice(0, 100),
                         tick,
+                    });
+                    break;
+                }
+
+                case 'trade_request': {
+                    // Privacy-first trade settlement (Plan 04-01 D8, Pitfall 4):
+                    //   - NEVER read action.text or action.channel into the audit payload
+                    //   - Emit exactly one trade.settled on success with keys
+                    //     {counterparty, amount, nonce} — nothing else
+                    //   - Emit exactly one trade.rejected with {reason, nonce} on failure
+                    const md = action.metadata ?? {};
+                    const counterpartyRaw = md['counterparty'];
+                    const amountRaw = md['amount'];
+                    const nonceRaw = md['nonce'];
+
+                    const counterparty = typeof counterpartyRaw === 'string' ? counterpartyRaw : null;
+                    const amount = typeof amountRaw === 'number' && Number.isFinite(amountRaw) ? amountRaw : null;
+                    const nonce = typeof nonceRaw === 'string' ? nonceRaw : null;
+
+                    if (counterparty === null || amount === null || nonce === null) {
+                        this.audit.append('trade.rejected', this.nousDid, {
+                            reason: 'malformed_metadata',
+                            nonce: nonce ?? null,
+                        });
+                        break;
+                    }
+
+                    const bounds = this.economy.validateTransfer(amount);
+                    if (!bounds.valid) {
+                        this.audit.append('trade.rejected', this.nousDid, {
+                            reason: 'bounds',
+                            nonce,
+                        });
+                        break;
+                    }
+
+                    const result = this.registry.transferOusia(this.nousDid, counterparty, amount);
+                    if (!result.success) {
+                        this.audit.append('trade.rejected', this.nousDid, {
+                            reason: result.error,
+                            nonce,
+                        });
+                        break;
+                    }
+
+                    this.audit.append('trade.settled', this.nousDid, {
+                        counterparty,
+                        amount,
+                        nonce,
                     });
                     break;
                 }
