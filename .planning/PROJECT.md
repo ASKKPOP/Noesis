@@ -28,16 +28,34 @@ The first persistent Grid where Nous actually live — observable, running conti
 - ✓ **E2E-01**: NousRunner + GridCoordinator wire Brain to Grid — full tick cycle end-to-end — Phase 2 Sprint 11
 - ✓ **STORE-01**: MySQL adapter for Grid state with migrations and snapshot/restore — Phase 2 Sprint 12
 - ✓ **DEPLOY-01**: Dockerfiles for Grid + Brain, `docker compose up` launches full stack — Phase 2 Sprint 13
+- ✓ **DASH-01**: WebSocket real-time activity stream from Grid to browser — v2.0 Sprint 14 Phase 2-3
+- ✓ **DASH-02**: Region map showing Nous positions and movement in real-time — v2.0 Sprint 14 Phase 3
+- ✓ **DASH-03**: Nous inspector showing personality, goals, emotions, memory highlights — v2.0 Sprint 14 Phase 4
+- ✓ **DASH-04**: Audit trail viewer (AuditChain events) — v2.0 Sprint 14 Phase 3
+- ✓ **DASH-05**: Trade history and economy overview — v2.0 Sprint 14 Phase 4
+
+## Current Milestone: v2.1 Steward Console
+
+**Goal:** Turn the dashboard from zoo-cam into a stewarded environment — operators can intervene at explicit agency tiers, Nous can review each other's proposed actions on objective invariants, and peer dialogue meaningfully mutates goals.
+
+**Target features:**
+- **ReviewerNous** — Agentic Reviewer pattern (Zou, Stanford HAI): objective-only pre-commit checks on trade proposals (balance, DID, memory refs, goal contradictions). No subjective judgment.
+- **Operator Agency Tiers (H1–H5)** — Human Agency Scale (arxiv 2506.06576) as first-class UI concept. Dashboard header shows current tier; every operator.* event records tier at commit time.
+- **Peer Dialogue Memory** — SPARC-inspired: two-Nous conversations can emit `telos.refined` events, mutating internal state without requiring Grid-level external commits.
+
+**Research source:** `.planning/research/stanford-peer-agent-patterns.md` (committed 9bb3046)
 
 ### Active
 
-<!-- Sprint 14 Dashboard — currently building. -->
+<!-- Sprint 15 v2.1 Steward Console — in planning. -->
 
-- [ ] **DASH-01**: WebSocket real-time activity stream from Grid to browser
-- [ ] **DASH-02**: Region map showing Nous positions and movement in real-time
-- [ ] **DASH-03**: Nous inspector showing personality, goals, emotions, memory highlights
-- [ ] **DASH-04**: Audit trail viewer (AuditChain events)
-- [ ] **DASH-05**: Trade history and economy overview
+- [ ] **REV-01**: ReviewerNous validates proposed trades against objective invariants before settlement
+- [ ] **REV-02**: `trade.reviewed` audit event (allowlisted) records review outcome + rejection reason if any
+- [ ] **AGENCY-01**: Dashboard header displays current operator agency tier (H1–H5)
+- [ ] **AGENCY-02**: Operator interventions (inspect, pause, law-change, force-Telos, delete) each map to a default tier and require explicit elevation when the action exceeds H1
+- [ ] **AGENCY-03**: `operator.*` audit events record the tier at commit time
+- [ ] **DIALOG-01**: Brain receives back-and-forth Nous conversation as context on next get_state call
+- [ ] **DIALOG-02**: `telos.refined` audit event emitted when dialogue surfaces a goal refinement (hash-only payload)
 
 ### Out of Scope
 
@@ -76,7 +94,11 @@ The first persistent Grid where Nous actually live — observable, running conti
 | P2P economy without central ledger | True sovereignty, bilateral state machine | ✓ Good |
 | MySQL for Grid state | Crash recovery, relational queries on Grid data | — Pending |
 | Docker Compose for single-command launch | Developer experience, reproducibility | — Pending |
-| Next.js for dashboard | Already scaffolded, app router, React ecosystem | — Pending |
+| Next.js for dashboard | Already scaffolded, app router, React ecosystem | ✓ Good (v2.0 shipped) |
+| Standalone Next.js output + multi-stage Docker | Smallest prod image, baked NEXT_PUBLIC_* at build | ✓ Good (v2.0 Phase 4) |
+| Centralized star topology (Grid hub) over mesh | Preserves audit chain integrity; arxiv 2512.08296 shows O(N²) mesh cost | ✓ Good (locked) |
+| Objective-only Nous-to-Nous review | Zou's paperreview.ai data: AI weak on subjective novelty judgment | — v2.1 decision |
+| H1–H5 as first-class operator UI concept | arxiv 2506.06576: users want higher agency than experts deem needed on 47.5% of tasks | — v2.1 decision |
 
 ## Evolution
 
@@ -96,4 +118,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-17 — GSD bootstrapped from 13 completed sprints*
+*Last updated: 2026-04-20 — v2.0 Dashboard shipped; v2.1 Steward Console opened*

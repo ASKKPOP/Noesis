@@ -21,17 +21,39 @@
 
 ---
 
-## v2.0: Phase 2 — First Life (IN PROGRESS)
+## v2.0: First Life (COMPLETE)
 
+**Shipped:** 2026-04-18 (Sprints 11-14)
 **Goal:** Make Nous actually live. Full end-to-end integration, persistent storage, deployment, and real-time dashboard.
 
-**Sprints 11-13 shipped:**
-- End-to-end integration: NousRunner + GridCoordinator, full tick cycle, E2E tests
-- Persistent storage: MySQL adapter, migrations, snapshot/restore
-- Docker & Deployment: Dockerfiles, docker-compose, health checks, env config
+**What shipped:**
+- **Sprint 11** — End-to-end integration: NousRunner + GridCoordinator, full tick cycle, E2E tests
+- **Sprint 12** — Persistent storage: MySQL adapter, migrations, snapshot/restore
+- **Sprint 13** — Docker & Deployment: Dockerfiles, docker-compose, health checks, env config
+- **Sprint 14** — Dashboard v1:
+  - Phase 1: AuditChain listener API + broadcast allowlist (zero-diff invariant)
+  - Phase 2: WsHub + `/ws/events` endpoint with ring-buffered backpressure
+  - Phase 3: Dashboard firehose + heartbeat + region map (Next.js 15)
+  - Phase 4: Nous inspector + economy + Docker polish (standalone Next + compose)
 
-**Sprint 14 remaining:**
-- Dashboard: WebSocket stream, region map, Nous inspector, audit viewer, economy overview
+**Test coverage at completion:** grid 346/346, brain 262/262, dashboard 215/215 — all green.
+**SC status:** 6/7 phase 4 success criteria MET; SC-6 (live docker compose smoke) verified on operator machine after shipping.
 
 ---
-*Last updated: 2026-04-17*
+
+## v2.1: Steward Console (IN PROGRESS)
+
+**Goal:** Turn the observational dashboard into a stewarded environment. Operators can intervene at explicit agency tiers, Nous review each other's proposed actions on objective invariants only, and peer dialogue meaningfully mutates goals.
+
+**Research foundation:** `.planning/research/stanford-peer-agent-patterns.md` (2026-04-20)
+- Agentic Reviewer pattern (Zou, Stanford HAI) → ReviewerNous
+- Human Agency Scale H1–H5 (arxiv 2506.06576) → operator UI
+- SPARC peer-dialogue → telos.refined from two-Nous exchanges
+
+**Target features:**
+- ReviewerNous — objective-only pre-commit checks on trades (REV-01, REV-02)
+- Operator Agency Tiers — H1–H5 first-class UI concept with tier-stamped audit events (AGENCY-01, AGENCY-02, AGENCY-03)
+- Peer Dialogue Memory — `telos.refined` from two-Nous exchanges (DIALOG-01, DIALOG-02)
+
+---
+*Last updated: 2026-04-20*
