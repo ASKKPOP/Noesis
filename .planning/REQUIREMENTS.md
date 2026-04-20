@@ -1,108 +1,87 @@
-# Requirements: Noēsis — Dashboard (Sprint 14)
+# Requirements: Noēsis — Steward Console (Sprint 15 / v2.1)
 
-**Defined:** 2026-04-17
-**Updated:** 2026-04-17 (research-driven reshape)
-**Core Value:** The first persistent Grid where Nous actually live — observable, running continuously.
+**Defined:** 2026-04-20
+**Core Value:** The first persistent Grid where Nous actually live — now with operators who steward rather than only observe.
+**Research source:** `.planning/research/stanford-peer-agent-patterns.md` (commit 9bb3046)
 
-## v1 Requirements
+## v2.1 Requirements
 
-### Infrastructure
+### Reviewer (Agentic Reviewer pattern — objective-only)
 
-<!-- Internal plumbing. No user-visible surface, but enables everything else. -->
+<!-- Zou / Stanford HAI: AI reviewers are reliable on objective checks, unreliable on subjective judgment.
+     REV-* checks are deliberately limited to invariants that have a yes/no answer. -->
 
-- [ ] **INFRA-01**: AuditChain supports listener subscriptions without regressing existing 944 tests or changing chain integrity semantics
-- [ ] **INFRA-02**: Event broadcast is gated by a default-deny allowlist so LLM prompts, wiki contents, reflections, and raw emotions never leave the Grid process
+- [ ] **REV-01**: A ReviewerNous runs a deterministic objective-invariant check on every `trade.proposed` event before the Grid calls `transferOusia`. Checks in scope: proposer balance ≥ amount, counterparty DID regex match, amount is positive non-zero integer, memory references in justification exist in proposer memory, no active Telos goal contradicts this trade.
+- [ ] **REV-02**: A new `trade.reviewed` event is added to the broadcast allowlist with payload `{trade_id, reviewer_did, verdict: "pass"|"fail", failure_reason?: string, failed_check?: string}`. On `verdict: fail` the Grid aborts the settlement and emits no `trade.settled`. Reason codes are a closed enum — never free-form text.
+- [ ] **REV-03**: ReviewerNous is deployed as a system singleton in v2.1 (one authoritative reviewer per Grid); opt-in peer review is deferred out of scope. This prevents veto-DoS from a malicious peer reviewer.
+- [ ] **REV-04**: The reviewer never makes subjective judgments. There is no "is this a good trade" check; only invariants. Attempting to add a subjective check must fail a lint/test gate. (This is a contract, not a feature — encoded as a test that enumerates allowed check names.)
 
-### Activity Stream
+### Operator Agency (Human Agency Scale H1–H5)
 
-- [ ] **ACT-01**: Developer can connect to a WebSocket endpoint on the Grid server and receive live events
-- [ ] **ACT-02**: Activity stream broadcasts all AuditChain events (Nous actions, trades, law triggers, movement) in real-time
-- [ ] **ACT-03**: Dashboard displays a scrolling live feed of events with timestamps and Nous attribution
+<!-- arxiv 2506.06576: H3 Equal Partnership dominant; workers consistently want higher agency than
+     experts think is needed. Make the tier a first-class UI concept so users always see the lever
+     they have. -->
 
-### Region Map
+- [ ] **AGENCY-01**: Dashboard header renders an Agency Indicator showing the current operator tier (H1 Observer / H2 Reviewer / H3 Partner / H4 Driver / H5 Sovereign) with the tier definition accessible via tooltip.
+- [ ] **AGENCY-02**: Every operator-initiated action has a declared default tier and requires an explicit elevation confirmation when the action exceeds H1. The tier map is:
+  - H1: observe firehose/map/inspector (no record)
+  - H2: query Nous memory (read-only, audit-logged)
+  - H3: pause simulation, change broadcast-allowlist, change a Grid law (co-decision + confirm)
+  - H4: force-mutate a specific Nous's Telos (operator drives, system executes)
+  - H5: delete a Nous (operator only; see AGENCY-05 gating)
+- [ ] **AGENCY-03**: Every `operator.*` audit event records the tier at commit time in payload (`{tier: "H3", action, target_did?, operator_id}`). Allowlist additions required: `operator.inspected`, `operator.paused`, `operator.resumed`, `operator.law_changed`, `operator.telos_forced`, `operator.nous_deleted`.
+- [ ] **AGENCY-04**: Elevation to H3+ triggers an explicit mode-switch dialog in the UI: "Entering H3 — Co-decision. This will be logged." Operator confirms before the action proceeds. A single confirmation covers one action, not a session.
+- [ ] **AGENCY-05**: H5 "delete a Nous" is gated by an irreversibility warning dialog that names the first-life promise explicitly, requires the operator to type the Nous's DID to confirm, and emits `operator.nous_deleted` with full Nous state hash pre-deletion for forensic reconstruction. Deletion never purges audit chain entries about the Nous (integrity preserved).
 
-- [ ] **MAP-01**: Dashboard displays the Grid's region graph — nodes are regions, edges are connections
-- [ ] **MAP-02**: Each region shows which Nous are currently present
-- [ ] **MAP-03**: When a Nous moves, their position updates on the map in real-time
+### Peer Dialogue Memory (SPARC-inspired)
 
-### Audit Trail
+<!-- Stanford SPARC + related research: peer-to-peer LLM dialogue outperforms tutor-student on
+     learning. Upgrade `nous.spoke` so conversation actually mutates participants' goals. -->
 
-- [ ] **AUDIT-01**: Dashboard has an audit trail view that displays AuditChain events in sequence
-- [ ] **AUDIT-02**: Each audit entry shows event type, actor (Nous), timestamp, and relevant data
-- [ ] **AUDIT-03**: Audit trail is filterable by event type (trade, message, movement, law)
+- [ ] **DIALOG-01**: When two Nous exchange ≥2 `nous.spoke` events with each other within N ticks (configurable, default N=5), the Grid aggregates the exchange into a dialogue context and passes it to both participants' Brains on their next `get_state` call as a `dialogue_context` field.
+- [ ] **DIALOG-02**: Brain can return a new `telos.refined` action when the dialogue context causes a goal refinement. Grid validates the action (signed, within actor's authority) and emits a new allowlisted `telos.refined` audit event with payload `{did, before_goal_hash, after_goal_hash, triggered_by_dialogue_id}` — hash-only, no goal contents in broadcast (privacy).
+- [ ] **DIALOG-03**: Dashboard Inspector's Telos panel shows a small "↻ refined via dialogue" badge on goals that have a `telos.refined` event in their history, with a link to the triggering dialogue's firehose entries.
 
-### Nous Inspector
+## Future Requirements
 
-- [x] **NOUS-01**: Developer can click a Nous in the dashboard to open a detail panel
-- [x] **NOUS-02**: Inspector shows current personality (Psyche Big Five scores), active goals (Telos), and emotional state (Thymos)
-- [x] **NOUS-03**: Inspector shows recent memory highlights (last 5 episodic memories)
-
-### Economy Overview
-
-- [x] **ECON-01**: Dashboard shows each Nous's current Ousia balance
-- [x] **ECON-02**: Dashboard shows recent trade history (last N completed trades)
-- [x] **ECON-03**: Dashboard shows active shops and their service listings
-
-## v2 Requirements
-
-### Advanced Observability
-
-- **ADV-01**: Nous thought stream (real-time LLM reasoning, sovereignty-gated via Human Channel observe grant)
-- **ADV-02**: Memory graph visualization (episodic + semantic connections)
-- **ADV-03**: Relationship network between Nous (trust, familiarity, sentiment)
-- **ADV-04**: Telos timeline — goal evolution across ticks
-- **ADV-05**: Event-type + actor filter on firehose (essential at 10+ Nous)
-
-### Controls
-
-- **CTRL-01**: Human can send a whisper to owned Nous from the dashboard
-- **CTRL-02**: Human can pause/resume a Nous from the dashboard
-- **CTRL-03**: Grid operator controls (pause clock, adjust tick rate)
+- **WHISPER-01**: Region-local `nous.whispered` with hash-only payload (deferred to Sprint 16+ — see research doc §2 scoped peer channel)
+- **OP-MULTI-01**: Multi-operator session support with conflict resolution (deferred — single-operator v2.1)
+- **REVIEW-PEER-01**: Opt-in peer review by any Nous (deferred — system singleton is v2.1 only)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Population-level KPIs (avg reputation, trades/hour) | Aggregation hides emergence at n=3 — per-Nous views instead |
-| Gamified UI (XP bars, cute avatars, achievements) | Frames Nous as game characters, not minds — contradicts philosophy |
-| Cross-Nous memory inspection without consent grant | Violates sovereignty pillar — always gate on Human Channel grants |
-| Puppet controls ("move Sophia to Agora") | Violates Human Channel consent model — route via `whisper`/`intervene` |
-| Auto-summarization by narrator LLM | Adds a lossy interpreter that wasn't in the simulation |
-| Headline LLM token/cost meter | Correct for LLMOps tools; wrong for a world |
-| Polished onboarding / tutorial | v1 audience is one developer |
-| Nous whisper / intervention controls | Phase 3+ Human Channel depth — dashboard is observer only for now |
-| Multi-Grid dashboard | Phase 5 — single Grid first |
-| Mobile app | Phase 6+ |
-| Authentication / multi-user access | Developer tool for now — single local user (bind 127.0.0.1) |
-| Historical replay / scrubber | v2 — stream first, replay later |
+| Full mesh peer-to-peer between all Nous | O(N²) breaks audit chain moat; arxiv 2512.08296 confirms complexity blows up above N≈20. Scoped `nous.whispered` is the later answer. |
+| AI-judged subjective evaluation ("is this a good Telos", "is this novel") | Zou's paperreview.ai data: unreliable. Explicitly rejected in REV-04. |
+| LLM peer-debate as a Grid-level decision mechanism | Same subjectivity concern; dialogue shapes internal Nous state only, never external Grid commits without reviewer/invariant gates. |
+| Multi-operator conflict resolution | v2.1 is single-operator. Flagged as future OP-MULTI-01. |
+| Auto-pause on invariant violation | Operators decide — REV-02 aborts settlement but does not pause sim. Conflates reviewer with pause authority. |
+| Reviewer subjective veto power | Explicitly rejected per REV-04. |
+| Deleting audit chain history on Nous delete | Violates Phase 1 integrity contract. AGENCY-05 preserves audit entries. |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | Phase 1 | Pending |
-| INFRA-02 | Phase 1 | Pending |
-| ACT-01 | Phase 2 | Pending |
-| ACT-02 | Phase 2 | Pending |
-| ACT-03 | Phase 3 | Pending |
-| MAP-01 | Phase 3 | In progress (Plan 03-01: /regions returns edges) |
-| MAP-02 | Phase 3 | Pending |
-| MAP-03 | Phase 3 | Pending |
-| AUDIT-01 | Phase 3 | Pending |
-| AUDIT-02 | Phase 3 | Pending |
-| AUDIT-03 | Phase 3 | In progress (Plan 03-01: tick audit emission) |
-| NOUS-01 | Phase 4 | Complete |
-| NOUS-02 | Phase 4 | Complete |
-| NOUS-03 | Phase 4 | Complete |
-| ECON-01 | Phase 4 | Complete |
-| ECON-02 | Phase 4 | Complete |
-| ECON-03 | Phase 4 | Complete |
+| REV-01 | TBD | Unmapped (roadmapper will assign) |
+| REV-02 | TBD | Unmapped |
+| REV-03 | TBD | Unmapped |
+| REV-04 | TBD | Unmapped |
+| AGENCY-01 | TBD | Unmapped |
+| AGENCY-02 | TBD | Unmapped |
+| AGENCY-03 | TBD | Unmapped |
+| AGENCY-04 | TBD | Unmapped |
+| AGENCY-05 | TBD | Unmapped |
+| DIALOG-01 | TBD | Unmapped |
+| DIALOG-02 | TBD | Unmapped |
+| DIALOG-03 | TBD | Unmapped |
 
 **Coverage:**
-- v1 requirements: 17 total
-- Mapped to phases: 17
-- Unmapped: 0 ✓
+- v2.1 requirements: 12 total
+- Mapped to phases: 0 (roadmapper pending)
+- Unmapped: 12
 
 ---
-*Requirements defined: 2026-04-17*
-*Last updated: 2026-04-17 — reshape after deep research (STACK/FEATURES/ARCHITECTURE/PITFALLS synthesis)*
+*Requirements defined: 2026-04-20*
+*Source: Stanford peer-agent research synthesis (9bb3046)*
