@@ -64,24 +64,25 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REV-01 | TBD | Unmapped (roadmapper will assign) |
-| REV-02 | TBD | Unmapped |
-| REV-03 | TBD | Unmapped |
-| REV-04 | TBD | Unmapped |
-| AGENCY-01 | TBD | Unmapped |
-| AGENCY-02 | TBD | Unmapped |
-| AGENCY-03 | TBD | Unmapped |
-| AGENCY-04 | TBD | Unmapped |
-| AGENCY-05 | TBD | Unmapped |
-| DIALOG-01 | TBD | Unmapped |
-| DIALOG-02 | TBD | Unmapped |
-| DIALOG-03 | TBD | Unmapped |
+| REV-01 | Phase 5 | Pending |
+| REV-02 | Phase 5 | Pending |
+| REV-03 | Phase 5 | Pending |
+| REV-04 | Phase 5 | Pending |
+| AGENCY-01 | Phase 6 | Pending |
+| AGENCY-02 | Phase 6 | Pending |
+| AGENCY-03 | Phase 6 | Pending |
+| AGENCY-04 | Phase 6 | Pending |
+| AGENCY-05 | Phase 8 | Pending |
+| DIALOG-01 | Phase 7 | Pending |
+| DIALOG-02 | Phase 7 | Pending |
+| DIALOG-03 | Phase 7 | Pending |
 
 **Coverage:**
 - v2.1 requirements: 12 total
-- Mapped to phases: 0 (roadmapper pending)
-- Unmapped: 12
+- Mapped to phases: 12 (Phase 5: 4, Phase 6: 4, Phase 7: 3, Phase 8: 1)
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-20*
+*Traceability filled: 2026-04-20 (roadmapper)*
 *Source: Stanford peer-agent research synthesis (9bb3046)*
