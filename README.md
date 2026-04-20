@@ -68,8 +68,8 @@ npm install                          # TypeScript (protocol, grid, cli)
 cd brain && python -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]" && cd ..
 
 # Run tests
-npm test                             # Protocol + Grid (944 tests)
-cd brain && pytest test/ -q          # Brain (226 tests)
+npm test                             # Protocol + Grid (346 grid) + Dashboard (215)
+cd brain && pytest test/ -q          # Brain (262 tests)
 
 # Launch a Grid
 npx tsx cli/src/index.ts genesis     # Launch the Genesis Grid
@@ -119,22 +119,21 @@ Humans own Nous through signed ownership proofs. Scoped consent grants: observe,
 
 ## Project Status
 
-**Phase 1 complete** — 10 sprints, 944+ tests, all core systems built.
+**v1.0 Genesis — SHIPPED** (Sprints 1–10, 2026-04-17). All core systems built: identity, cognition, memory, economy, governance, world infrastructure.
 
-| Sprint | Deliverable |
-|--------|-------------|
-| 1 | Identity — DID keys, SWP signed envelopes, P2P foundation |
-| 2 | NDS domains + Communication Gate |
-| 3 | LLM adapter — multi-provider routing (Ollama, Claude, GPT) |
-| 4 | Brain core — Psyche, Thymos, Telos, system prompts |
-| 5 | Brain-Protocol bridge — JSON-RPC over Unix socket |
-| 6 | Memory stream + personal wiki (Karpathy pattern) |
-| 7 | Grid infrastructure — clock, space, logos, audit, API |
-| 8 | P2P economy — Ousia transfers, negotiation, shops, reputation |
-| 9 | Human Channel — ownership, consent, gateway, observer |
-| 10 | Genesis launch — registry, launcher, CLI, presets |
+**v2.0 First Life — SHIPPED** (Sprints 11–14, 2026-04-18). Nous actually live — full E2E integration, persistent storage, Docker deployment, real-time Dashboard.
 
-See [ROADMAP.md](ROADMAP.md) for what's next.
+**v2.1 Steward Console — IN PROGRESS** (Sprint 15, opened 2026-04-20). Turning the dashboard from zoo-cam into a stewarded environment: ReviewerNous (objective-only pre-commit checks), Operator Agency Tiers (H1–H5, Human Agency Scale as first-class UI), Peer Dialogue Memory (two-Nous exchanges mutate goals via `telos.refined`).
+
+**Test coverage:** grid 346/346, brain 262/262, dashboard 215/215 — all green as of v2.0 ship.
+
+| Milestone | Sprints | Deliverables |
+|-----------|---------|--------------|
+| **v1.0 Genesis** | 1–10 | Identity (SWP+DID), NDS domains, multi-provider LLM, Brain core (Psyche/Thymos/Telos), JSON-RPC bridge, memory+wiki, Grid infra (clock/space/logos/audit), P2P Ousia economy, Human Channel, Genesis launcher |
+| **v2.0 First Life** | 11–14 | E2E NousRunner+GridCoordinator, MySQL persistence+snapshots, Docker compose stack, Dashboard v1 (firehose, region map, Nous inspector, trade history, audit viewer) |
+| **v2.1 Steward Console** | 15 | ReviewerNous pre-commit review, H1–H5 Agency Indicator, `telos.refined` from peer dialogue |
+
+See [.planning/ROADMAP.md](.planning/ROADMAP.md) for the current milestone's phase breakdown and [.planning/MILESTONES.md](.planning/MILESTONES.md) for shipped history. Research foundation for v2.1: [.planning/research/stanford-peer-agent-patterns.md](.planning/research/stanford-peer-agent-patterns.md).
 
 ---
 

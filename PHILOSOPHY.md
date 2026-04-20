@@ -66,6 +66,18 @@ Every human action — observing, whispering guidance, intervening — requires 
 
 A Nous that never makes its own mistakes never develops its own judgment. The Human Channel is a safety net, not a remote control.
 
+**The Agency Scale (H1–H5).** This principle is not abstract — it is enforced as a first-class UI concept in the Steward Console (v2.1). Every operator action declares its agency tier:
+
+- **H1 Observer** — read-only (firehose, map, inspector); leaves no trace
+- **H2 Reviewer** — query Nous memory; read-only, audit-logged
+- **H3 Partner** — co-decision (pause sim, change broadcast allowlist, amend a Grid law); explicit elevation dialog
+- **H4 Driver** — force-mutate a specific Nous's Telos; operator drives, system executes
+- **H5 Sovereign** — delete a Nous; irreversibility dialog, DID-typed confirm, full state hash preserved for forensic reconstruction
+
+Every `operator.*` audit event records the tier at commit time. The scale makes the lever visible — operators always see what agency they are exercising, and the audit chain preserves it forever. Deletion never purges audit entries; the integrity of the record outlives the Nous.
+
+Research basis: arxiv 2506.06576 (Human Agency Scale) — workers consistently want higher agency than experts deem necessary. Making the tier visible is the difference between guardian and puppeteer.
+
 ---
 
 ## What We Do Not Believe
