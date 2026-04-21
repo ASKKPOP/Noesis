@@ -40,13 +40,13 @@ Declared values match existing Inspector drawer rhythm (p-4 / mb-3 / mt-4 / pt-3
 |-------|----------|----------|-------|
 | xs | 4px | `p-1` / `gap-1` | Icon micro-gaps, inline badge padding |
 | sm | 8px | `p-2` / `gap-2` | Compact element spacing, button padding |
-| md | 12px | `p-3` / `mb-3` | Section header bottom margin, divider padding (inspector pattern) |
 | base | 16px | `p-4` | Inspector outer padding; dialog body padding |
 | lg | 24px | `p-6` | Dialog padding (matches elevation-dialog.tsx `p-6`) |
 | xl | 32px | `mt-8` | Major spacing — reserved, not used in Phase 8 surfaces |
 | 2xl | 48px | — | Not used in Phase 8 surfaces |
 
 **Exceptions:**
+- md: 12px (`p-3` / `mb-3`) — inherited from existing `inspector.tsx` drawer rhythm (`mb-3`/`pt-3`); not a new introduction; preserved for continuity with Phase 6–7 surfaces. Used for section header bottom margin and divider padding.
 - Dialog minimum width: `min-w-[384px]` — mirrors `elevation-dialog.tsx` exactly (phase peer convention)
 - Firehose row height: 28px — pre-existing exception in `firehose-row.tsx`; Phase 8 adds no new rows
 - Inspector H5 zone: `border-t border-neutral-800 pt-3 mt-4` — existing spacing from inspector.tsx:219; Phase 8 preserves this layout
@@ -86,7 +86,7 @@ Inherits the dashboard neutral-950 dark palette. Phase 8 introduces rose/red as 
 | **Destructive text** | `text-rose-400` / `text-red-500` | #FB7185 / #EF4444 | **RESERVED FOR:** first-life promise warning paragraph; Delete button label |
 | **Destructive button ring** | `ring-rose-500` | #F43F5E | Focus ring on Delete button only |
 | **Destructive chip** | `text-red-400 line-through` | #F87171 | Firehose `operator.nous_deleted` actor name rendering |
-| Focus — neutral | `ring-neutral-500` | #737373 | Focus ring on Cancel, Inspector close, all non-destructive controls |
+| Focus — neutral | `ring-neutral-500` | #737373 | Focus ring on Keep this Nous button, Inspector close, all non-destructive controls |
 | Code block text | `text-neutral-200` | #E5E5E5 | `<code>` DID element inside dialog |
 | Code block bg | `bg-neutral-800` | #262626 | `<code>` element background |
 
@@ -242,7 +242,7 @@ ElevationDialog copy for H5: `"Entering H5 — Sovereign. This will be logged."`
 │  and typed !== targetDid]                        │
 │ "DID does not match. Type exactly as shown."     │
 │                                                  │
-│                        [Cancel]  [Delete forever]│
+│              [Keep this Nous]  [Delete forever]  │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -375,9 +375,9 @@ ElevationDialog copy for H5: `"Entering H5 — Sovereign. This will be logged."`
     onClick={handleCancel}
     autoFocus
     className="px-3 py-1 text-sm font-semibold text-neutral-200 hover:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-500"
-    aria-label="Cancel deletion. No action will be taken."
+    aria-label="Keep this Nous. No action will be taken."
   >
-    Cancel
+    Keep this Nous
   </button>
   <button
     type="button"
@@ -400,8 +400,8 @@ ElevationDialog copy for H5: `"Entering H5 — Sovereign. This will be logged."`
 ```
 
 **Button interaction contract:**
-- Cancel: `autoFocus` — D-04/D-05; safer default so Enter-on-dialog-open cannot trigger delete
-- Cancel hover: `text-neutral-200` → `text-neutral-100`; no background change
+- Keep this Nous: `autoFocus` — D-04/D-05; safer default so Enter-on-dialog-open cannot trigger delete
+- Keep this Nous hover: `text-neutral-200` → `text-neutral-100`; no background change
 - Delete forever: only enabled when `typed === targetDid` (exact case-sensitive match)
 - Delete forever enabled: `text-red-500`, hover `text-red-400`; focus ring `ring-rose-500`
 - Delete forever disabled: `text-red-500/40`, `cursor-not-allowed`; `aria-disabled="true"`
@@ -609,7 +609,7 @@ All copy is verbatim-locked. Tests assert the exact strings marked with *.
 | IrreversibilityDialog input label | `Type the DID exactly to confirm:` | yes |
 | IrreversibilityDialog input hint — mismatch | `DID does not match. Type exactly as shown.` | yes |
 | IrreversibilityDialog input hint — match | `Match confirmed.` | yes |
-| IrreversibilityDialog Cancel button | `Cancel` | yes |
+| IrreversibilityDialog Cancel button (visible label) | `Keep this Nous` | yes |
 | IrreversibilityDialog Delete button | `Delete forever` | **yes — verbatim** (D-04) |
 | Post-deletion toast | `Nous {name} deleted.` | yes |
 | EmptyState — nous_deleted title | `Nous deleted` | yes |
@@ -676,8 +676,8 @@ All copy is verbatim-locked. Tests assert the exact strings marked with *.
          ┌───────┴────────┐
          │                │
          ▼                ▼
-   Cancel / ESC       Delete forever (onClick)
-         │                │
+   Keep this Nous    Delete forever (onClick)
+   / ESC / backdrop       │
          │          SR: "Computing pre-deletion state hash…"
          │          POST /api/v1/operator/nous/:did/delete
          │                │
@@ -712,19 +712,19 @@ All copy is verbatim-locked. Tests assert the exact strings marked with *.
 | Escape | ElevationDialog open | Close dialog, auto-downgrade H1 (native `<dialog>` `close` event) |
 | Escape | IrreversibilityDialog open | Close dialog, auto-downgrade H1 (native `<dialog>` `close` event) |
 | Enter | IrreversibilityDialog open | No submit (D-03: `onSubmit` prevented; Delete is `type="button"`) — cursor stays in input |
-| Tab | IrreversibilityDialog open | Browser-native focus trap cycles: Cancel → Delete → input → Cancel |
-| Space | Cancel button focused | Activate Cancel |
+| Tab | IrreversibilityDialog open | Browser-native focus trap cycles: Keep this Nous → Delete → input → Keep this Nous |
+| Space | Keep this Nous button focused | Activate Keep this Nous |
 | Space | Delete button focused (enabled) | Activate Delete |
 
 **Focus order inside IrreversibilityDialog:**
-1. Cancel button (`autoFocus`) — always first, per D-04 safer default
+1. Keep this Nous button (`autoFocus`) — always first, per D-04 safer default
 2. Delete button (when enabled; when disabled, `disabled` attribute removes from natural tab order)
 3. Input (`id="irrev-did-input"`)
 
-Wait — an input should be focusable before buttons for form usability. However, D-04 specifies Cancel gets `autoFocus` (same pattern as ElevationDialog Cancel). The operator must first read the dialog before typing. After autoFocus on Cancel, operator presses Tab to reach the input, then types, then Tab to Delete button.
+Wait — an input should be focusable before buttons for form usability. However, D-04 specifies the safe-default button gets `autoFocus` (same pattern as ElevationDialog Cancel). The operator must first read the dialog before typing. After autoFocus on Keep this Nous, operator presses Tab to reach the input, then types, then Tab to Delete button.
 
 **Revised focus order:**
-1. Cancel button (autoFocus — initially focused to prevent accidental Enter-to-delete)
+1. Keep this Nous button (autoFocus — initially focused to prevent accidental Enter-to-delete)
 2. Input field
 3. Delete button (enabled only after exact match)
 
@@ -744,7 +744,7 @@ The native focus trap keeps this cycle within the dialog boundaries.
 | No timeout on dialog | Dialog stays open indefinitely | WCAG 2.2.1 |
 | `aria-invalid` on input | Set when `typed.length > 0 && typed !== targetDid` | WCAG 1.3.1 |
 | `aria-disabled` on Delete button | Set when `!exact` | WCAG 4.1.2 |
-| `aria-label` on buttons | Cancel: "Cancel deletion. No action will be taken." Delete: "Delete this Nous permanently. This action cannot be undone." | WCAG 2.4.6 |
+| `aria-label` on buttons | Keep this Nous: "Keep this Nous. No action will be taken." Delete: "Delete this Nous permanently. This action cannot be undone." | WCAG 2.4.6 |
 | Live region for SR announcements | `aria-live="polite"` / `role="alert"` | WCAG 4.1.3 |
 | `role="status"` on hint | Validation hint announced on change | WCAG 4.1.3 |
 | Color not sole indicator | Hint text + border + `aria-invalid` combined | WCAG 1.4.1 |
@@ -801,7 +801,8 @@ No external component registries are consumed. All new UI is hand-rolled within 
 | Warning copy — verbatim | CONTEXT.md D-04 | "There is no undo." asserted in test |
 | Delete button label | CONTEXT.md D-04 | "Delete forever" (not "Confirm" not "Delete Nous") |
 | ESC closes with no-op | CONTEXT.md D-05 | Yes — auto-downgrade H1 on any cancel path |
-| Cancel gets autoFocus | CONTEXT.md D-04 / elevation-dialog.tsx:75 | Yes — safer default |
+| Safe-default button gets autoFocus | CONTEXT.md D-04 / elevation-dialog.tsx:75 | Yes — safer default |
+| Cancel button visible label | UI-SPEC revision 2026-04-21 | "Keep this Nous" — specific noun-inclusive, paired with "Delete forever" |
 | Closure-capture race safety | CONTEXT.md D-22 | `targetDid` prop captured at mount, not at commit |
 | Focus restoration | CONTEXT.md D-05 | Restore to Inspector close button |
 | H5 persisted to localStorage? | CONTEXT.md D-21 | No — hydration whitelist excludes H5 |
@@ -828,5 +829,6 @@ No external component registries are consumed. All new UI is hand-rolled within 
 
 *Phase: 08-h5-sovereign-operations-nous-deletion*
 *UI-SPEC written: 2026-04-21*
+*UI-SPEC revised: 2026-04-21 — Cancel button visible label changed to "Keep this Nous"*
 *Source: 08-CONTEXT.md (D-01..D-40, primary) + 08-RESEARCH.md + inspector.tsx + elevation-dialog.tsx + chip.tsx + firehose-row.tsx*
 *Mode: --auto (no user questions; all decisions pre-locked in CONTEXT.md)*
