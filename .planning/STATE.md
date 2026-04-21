@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Living Grid
-status: defining-requirements
-stopped_at: v2.2 opened — researchers spawning
-last_updated: "2026-04-21T19:00:00.000Z"
+status: planning-phase
+stopped_at: v2.2 roadmap approved — ready for /gsd-plan-phase 9
+last_updated: "2026-04-21T20:30:00.000Z"
 last_activity: 2026-04-21
 progress:
-  total_phases: 0
+  total_phases: 7
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -22,16 +22,16 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 **Core value:** The first persistent Grid where Nous actually live — observable, running continuously, with real cognitive cycles, real trades, and real social dynamics emerging from the systems.
 **Current milestone:** v2.2 — Living Grid (6 themes: Rich Inner Life, Relationships, Governance, Whisper, Observability, Researcher Tools)
-**Current focus:** Defining requirements — research phase running (4 parallel researchers on `.planning/research/v2.2/`)
+**Current focus:** Roadmap approved (7 phases: 9 → 10a → 10b → 11 → 12 → 13 → 14); next step `/gsd-plan-phase 9` — Relationship Graph (derived view).
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 9 (next to plan) — Relationship Graph (Derived View)
 Plan: —
-Status: Research in flight — requirements defined after synthesis
-Last activity: 2026-04-21 — v2.2 Living Grid opened, v2.1 phases archived to `.planning/phases/archived/v2.1/`
+Status: Ready for /gsd-plan-phase 9 — research + REQs + roadmap committed; all 39 v2.2 REQs mapped across 7 phases.
+Last activity: 2026-04-21 — v2.2 roadmap approved; ROADMAP.md + REQUIREMENTS.md + STATE.md committed.
 
-Progress: [░░░░░░░░░░] 0% (0/? plans — roadmap follows research + requirements scoping)
+Progress: [░░░░░░░░░░] 0% (0/7 phases — planning begins at Phase 9)
 
 ## Accumulated Context
 

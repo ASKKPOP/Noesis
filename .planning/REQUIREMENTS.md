@@ -154,27 +154,27 @@ Each addition lands in its own phase PR following the v2.1 freeze-except-by-addi
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REL-01..04 | Phase 9 | *Pending roadmap* |
-| DRIVE-01..05 | Phase 10 | *Pending roadmap* |
-| BIOS-01..04 | Phase 10 | *Pending roadmap* |
-| CHRONOS-01..03 | Phase 10 | *Pending roadmap* |
-| WHISPER-01..06 | Phase 11 | *Pending roadmap* |
-| VOTE-01..07 | Phase 12 | *Pending roadmap* |
-| REPLAY-01..05 | Phase 13 | *Pending roadmap* |
-| RIG-01..05 | Phase 14 | *Pending roadmap* |
+| REL-01..04 | Phase 9 | Planned |
+| DRIVE-01..05 | Phase 10a | Planned |
+| BIOS-01..04 | Phase 10b | Planned |
+| CHRONOS-01..03 | Phase 10b | Planned |
+| WHISPER-01..06 | Phase 11 | Planned |
+| VOTE-01..07 | Phase 12 | Planned |
+| REPLAY-01..05 | Phase 13 | Planned |
+| RIG-01..05 | Phase 14 | Planned |
 
 **Coverage (v2.2):**
-- DRIVE: 5 REQs
-- BIOS: 4 REQs
-- CHRONOS: 3 REQs
-- REL: 4 REQs
-- VOTE: 7 REQs
-- WHISPER: 6 REQs
-- REPLAY: 5 REQs
-- RIG: 5 REQs
-- **Total: 39 REQs** across 6 themes / 6–8 phases
+- DRIVE: 5 REQs → Phase 10a
+- BIOS: 4 REQs → Phase 10b
+- CHRONOS: 3 REQs → Phase 10b
+- REL: 4 REQs → Phase 9
+- VOTE: 7 REQs → Phase 12
+- WHISPER: 6 REQs → Phase 11
+- REPLAY: 5 REQs → Phase 13
+- RIG: 5 REQs → Phase 14
+- **Total: 39 REQs** across 6 themes / 7 phases (9, 10a, 10b, 11, 12, 13, 14)
 
-Unmapped: 0 (all REQs seed-mapped to phases; `gsd-roadmapper` finalizes the traceability table).
+Unmapped: 0 ✓. Phase 10 split into 10a (Ananke) + 10b (Bios + Chronos) per `gsd-roadmapper` analysis — see `.planning/ROADMAP.md` §Phase-Split Rationale.
 
 ---
 
