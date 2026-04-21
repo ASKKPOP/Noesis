@@ -14,7 +14,8 @@ import type { SpatialMap } from '../space/map.js';
 import type { AuditChain } from '../audit/chain.js';
 import type { NousRegistry } from '../registry/registry.js';
 import type { EconomyManager } from '../economy/config.js';
-import type { BrainAction, IBrainBridge, MemoryEntry } from './types.js';
+import type { BrainAction, IBrainBridge, MemoryEntry, TickParams } from './types.js';
+import type { DialogueContext } from '../dialogue/index.js';
 import { Reviewer } from '../review/index.js';
 import { VALID_REVIEW_FAILURE_CODES } from '../review/types.js';
 
@@ -60,6 +61,15 @@ export class NousRunner {
 
     private speakHandler: SpeakHandler | null = null;
 
+    /**
+     * Phase 7 DIALOG-01 (D-16 authority-check seam): tracks dialogue_ids
+     * recently delivered to THIS Nous. Populated by tick() when
+     * dialogue_context is present; consumed by Plan 03's `case 'telos_refined'`
+     * branch to reject forged dialogue_ids. Rolling insertion-ordered cap.
+     */
+    private readonly recentDialogueIds: Set<string> = new Set();
+    private static readonly RECENT_DIALOGUE_CAP = 100;
+
     constructor(config: NousRunnerConfig) {
         this.nousDid = config.nousDid;
         this.nousName = config.nousName;
@@ -76,13 +86,51 @@ export class NousRunner {
         this.speakHandler = handler;
     }
 
-    /** Deliver a world clock tick to the brain. */
-    async tick(tick: number, epoch: number): Promise<void> {
+    /**
+     * Deliver a world clock tick to the brain.
+     *
+     * Phase 7 DIALOG-01: `dialogueContext` is additive. When present, the
+     * runner records the dialogue_id in its rolling `recentDialogueIds` set
+     * (authority-check seam for Plan 03) and plumbs the context through
+     * TickParams.dialogue_context on the RPC to Brain. Existing callers that
+     * pass only `(tick, epoch)` continue to work unchanged (D-10).
+     */
+    async tick(tick: number, epoch: number, dialogueContext?: DialogueContext): Promise<void> {
         if (!this.bridge.connected) return;
 
-        const actions = await this.bridge.sendTick({ tick, epoch });
+        if (dialogueContext) {
+            this.recordDialogueDelivery(dialogueContext.dialogue_id);
+        }
+
+        const params: TickParams = dialogueContext
+            ? { tick, epoch, dialogue_context: dialogueContext }
+            : { tick, epoch };
+
+        const actions = await this.bridge.sendTick(params);
         this.registry.touch(this.nousDid, tick);
         await this.executeActions(actions, tick);
+    }
+
+    /**
+     * Rolling insertion-ordered set. On overflow, evict the oldest inserted
+     * dialogue_id (JS Set preserves insertion order).
+     */
+    private recordDialogueDelivery(id: string): void {
+        if (this.recentDialogueIds.size >= NousRunner.RECENT_DIALOGUE_CAP) {
+            const oldest = this.recentDialogueIds.values().next().value;
+            if (oldest !== undefined) this.recentDialogueIds.delete(oldest);
+        }
+        this.recentDialogueIds.add(id);
+    }
+
+    /**
+     * Read-only accessor for the rolling dialogue-id set. Exists so the
+     * Plan 03 `case 'telos_refined'` handler + future introspection probes
+     * can check membership without mutating state. Returns the live set —
+     * callers must NOT mutate it.
+     */
+    get _recentDialogueIdsForTest(): ReadonlySet<string> {
+        return this.recentDialogueIds;
     }
 
     /**
@@ -270,6 +318,14 @@ export class NousRunner {
                 case 'noop':
                     // Nothing to do
                     break;
+
+                // Phase 7 DIALOG-01 NOTE: 'telos_refined' is declared in the
+                // BrainAction union (Plan 01 Task 2) so the type-checker sees
+                // it as a valid Brain-returned action, but the handler plus
+                // appendTelosRefined producer boundary land together in Plan 03
+                // (D-18). Until then it silently falls through the switch —
+                // the `recentDialogueIds` authority check is the seam Plan 03
+                // will consume.
             }
         }
     }

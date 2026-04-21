@@ -5,6 +5,8 @@
  * has no build-time dependency on the protocol package.
  */
 
+import type { DialogueContext } from '../dialogue/index.js';
+
 export interface SpeakAction {
     action_type: 'speak';
     channel: string;
@@ -55,12 +57,35 @@ export interface TradeRequestAction {
     };
 }
 
+/**
+ * Phase 7 DIALOG-01: Brain-returned telos refinement initiated by a peer
+ * dialogue. The variant is declared here so the BrainAction union is
+ * exhaustive, but the `case 'telos_refined'` handler in NousRunner is
+ * DELIBERATELY DEFERRED to Plan 03 (handler + appendTelosRefined producer
+ * boundary ship atomically per 07-CONTEXT.md D-18).
+ *
+ * `new_goals` may appear on the wire but MUST be dropped by Plan 03's case
+ * handler before crossing the producer boundary (D-18, Pitfall 5).
+ */
+export interface TelosRefinedAction {
+    action_type: 'telos_refined';
+    channel: string;
+    text: string;
+    metadata: {
+        before_goal_hash: string;            // 64-hex; validated in Plan 03 handler
+        after_goal_hash: string;             // 64-hex; validated in Plan 03 handler
+        triggered_by_dialogue_id: string;    // 16-hex; validated in Plan 03 handler
+        [key: string]: unknown;
+    };
+}
+
 export type BrainAction =
     | SpeakAction
     | DirectMessageAction
     | MoveAction
     | NoopAction
-    | TradeRequestAction;
+    | TradeRequestAction
+    | TelosRefinedAction;
 
 export interface MessageParams {
     sender_name: string;
@@ -72,6 +97,13 @@ export interface MessageParams {
 export interface TickParams {
     tick: number;
     epoch: number;
+    /**
+     * Phase 7 DIALOG-01 (D-10): additive — present on the tick where a
+     * bidirectional peer dialogue crosses the aggregator threshold and the
+     * coordinator drains it for this runner. Existing callers that omit
+     * this field continue to work unchanged.
+     */
+    dialogue_context?: DialogueContext;
 }
 
 export interface EventParams {
