@@ -49,6 +49,8 @@ export interface TradeRequestAction {
         counterparty: string;
         amount: number;
         nonce: string;
+        memoryRefs: string[];    // Phase 5 (D-05): pre-resolved memory IDs, each `mem:<int>` per RQ3.
+        telosHash: string;       // Phase 5 (D-05): 64-hex SHA-256 of the proposer's currently active Telos.
         [key: string]: unknown;
     };
 }
