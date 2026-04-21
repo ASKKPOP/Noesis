@@ -116,7 +116,7 @@ describe('useElevatedAction — fire opens dialog and elevates store', () => {
         fireEvent.click(screen.getByTestId('trigger'));
 
         expect(agencyStore.getSnapshot()).toBe('H3');
-        expect(screen.getByTestId('elevation-dialog')).toBeInTheDocument();
+        expect(screen.queryByTestId('elevation-dialog')).not.toBeNull();
     });
 });
 
