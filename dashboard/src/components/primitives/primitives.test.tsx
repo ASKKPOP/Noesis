@@ -21,6 +21,16 @@ describe('Chip', () => {
         const el = screen.getByTestId('chip-movement');
         expect(el.textContent).toBe('movement');
     });
+
+    it("renders the 'dialogue' color variant with indigo-400 border + text classes", () => {
+        // Phase 7: Nous-initiated telos.refined badge uses indigo-400 #818CF8 on
+        // #17181C secondary surface (07-UI-SPEC §Color). This case also guards
+        // that no future executor silently removes the 'dialogue' slot.
+        render(<Chip label="x" color="dialogue" testId="chip-dialogue" />);
+        const el = screen.getByTestId('chip-dialogue');
+        expect(el.className).toContain('border-[#818CF8]');
+        expect(el.className).toContain('text-[#818CF8]');
+    });
 });
 
 describe('MeterRow', () => {
