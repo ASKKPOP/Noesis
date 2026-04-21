@@ -70,7 +70,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
 **Plans**: 4 plans
   - [x] 07-01-PLAN.md — Grid DialogueAggregator + computeDialogueId + TickParams widening + pause-drain (DIALOG-01, Wave 1) — shipped 2026-04-21
   - [x] 07-02-PLAN.md — Brain `telos.refined` action + handler (Wave 2)
-  - [ ] 07-03-PLAN.md — Grid `telos_refined` handler + `telos.refined` audit event allowlist addition (Wave 3)
+  - [x] 07-03-PLAN.md — Grid `telos_refined` handler + `telos.refined` audit event allowlist addition (Wave 3)
   - [ ] 07-04-PLAN.md — Dashboard Inspector Telos-panel badge + firehose link (Wave 4)
 **UI hint**: yes
 
