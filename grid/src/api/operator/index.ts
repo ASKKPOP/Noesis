@@ -12,14 +12,15 @@
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { registerClockOperatorRoutes } from './clock-pause-resume.js';
-// Additional operator routes registered here in Task 3 + Plan 05.
+import { registerGovernanceOperatorRoutes } from './governance-laws.js';
+// Plan 05 will add memory + telos operator routes.
 
 export function registerOperatorRoutes(
     app: FastifyInstance,
     services: GridServices,
 ): void {
     registerClockOperatorRoutes(app, services);
-    // registerGovernanceOperatorRoutes(app, services);  -- Task 3
+    registerGovernanceOperatorRoutes(app, services);
     // registerMemoryQueryRoute(app, services);          -- Plan 05
     // registerTelosForceRoute(app, services);           -- Plan 05
 }

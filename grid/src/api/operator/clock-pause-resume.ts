@@ -24,24 +24,7 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { appendOperatorEvent } from '../../audit/operator-events.js';
 import type { ApiError } from '../types.js';
-import { OPERATOR_ID_REGEX } from '../types.js';
-
-interface OperatorBody {
-    tier?: unknown;
-    operator_id?: unknown;
-}
-
-type ValidateResult =
-    | { ok: true; tier: 'H3'; operator_id: string }
-    | { ok: false; error: 'invalid_tier' | 'invalid_operator_id' };
-
-function validateH3Body(body: OperatorBody): ValidateResult {
-    if (body.tier !== 'H3') return { ok: false, error: 'invalid_tier' };
-    if (typeof body.operator_id !== 'string' || !OPERATOR_ID_REGEX.test(body.operator_id)) {
-        return { ok: false, error: 'invalid_operator_id' };
-    }
-    return { ok: true, tier: 'H3', operator_id: body.operator_id };
-}
+import { validateTierBody, type OperatorBody } from './_validation.js';
 
 export function registerClockOperatorRoutes(
     app: FastifyInstance,
@@ -50,7 +33,7 @@ export function registerClockOperatorRoutes(
     app.post<{ Body: OperatorBody }>(
         '/api/v1/operator/clock/pause',
         async (req, reply) => {
-            const v = validateH3Body(req.body ?? {});
+            const v = validateTierBody(req.body ?? {}, 'H3');
             if (!v.ok) {
                 reply.code(400);
                 return { error: v.error } satisfies ApiError;
@@ -74,7 +57,7 @@ export function registerClockOperatorRoutes(
     app.post<{ Body: OperatorBody }>(
         '/api/v1/operator/clock/resume',
         async (req, reply) => {
-            const v = validateH3Body(req.body ?? {});
+            const v = validateTierBody(req.body ?? {}, 'H3');
             if (!v.ok) {
                 reply.code(400);
                 return { error: v.error } satisfies ApiError;
