@@ -15,11 +15,23 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { SelectionStore } from '@/lib/stores/selection-store';
 import { useSelection } from '@/lib/hooks/use-selection';
 import type { NousStateResponse } from '@/lib/api/introspect';
 import { Inspector } from './inspector';
+
+// Mock deleteNous so Inspector tests don't need a real backend
+const deleteNousMock = vi.fn();
+vi.mock('@/lib/api/operator', async () => {
+    const actual = await vi.importActual<typeof import('@/lib/api/operator')>(
+        '@/lib/api/operator',
+    );
+    return {
+        ...actual,
+        deleteNous: (...args: unknown[]) => deleteNousMock(...args),
+    };
+});
 
 // Mock the fetch wrapper — each test rewrites the resolved value.
 const fetchMock = vi.fn();
@@ -265,5 +277,266 @@ describe('Inspector', () => {
         // The first signal must have been aborted once the second request fired.
         expect(signals[0]!.aborted).toBe(true);
         expect(signals[1]!.aborted).toBe(false);
+    });
+});
+
+// ── HTMLDialogElement shim for IrreversibilityDialog + ElevationDialog ────────
+// (mirrors elevation-dialog.test.tsx pattern)
+const dialogProto = HTMLDialogElement.prototype as HTMLDialogElement & {
+    showModal: () => void;
+    close: () => void;
+};
+if (!dialogProto.showModal) {
+    dialogProto.showModal = function (this: HTMLDialogElement) {
+        (this as unknown as { open: boolean }).open = true;
+    };
+}
+if (!dialogProto.close) {
+    dialogProto.close = function (this: HTMLDialogElement) {
+        (this as unknown as { open: boolean }).open = false;
+        this.dispatchEvent(new Event('close'));
+    };
+}
+
+const FIXTURE_ACTIVE: NousStateResponse = {
+    ...{
+        did: 'did:noesis:alpha',
+        name: 'Alpha',
+        archetype: 'curious-scholar',
+        location: 'origin',
+        grid_name: 'noesis',
+        mood: 'calm',
+        emotions: { joy: 0.4 },
+        active_goals: [],
+        psyche: {
+            openness: 0.5, conscientiousness: 0.5, extraversion: 0.5,
+            agreeableness: 0.5, neuroticism: 0.5,
+        },
+        thymos: { mood: 'calm', emotions: { joy: 0.4 } },
+        telos: { active_goals: [] },
+        memory_highlights: [],
+    },
+    status: 'active',
+};
+
+const FIXTURE_DELETED: NousStateResponse = {
+    ...FIXTURE_ACTIVE,
+    status: 'deleted',
+    deleted_at_tick: 42,
+};
+
+describe('Inspector — State A/B/C + H5 two-stage flow (Phase 8)', () => {
+    beforeEach(() => {
+        localStore = new SelectionStore();
+        fetchMock.mockReset();
+        deleteNousMock.mockReset();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('State A: active Nous → inspector-h5-delete button is present and not disabled', async () => {
+        fetchMock.mockResolvedValue({ ok: true, data: FIXTURE_ACTIVE });
+        render(<Harness />);
+        await act(async () => {
+            localStore.selectNous('did:noesis:alpha');
+            await flushMicrotasks();
+        });
+        const deleteBtn = screen.getByTestId('inspector-h5-delete');
+        expect(deleteBtn).not.toBeNull();
+        expect(deleteBtn.hasAttribute('disabled')).toBe(false);
+    });
+
+    it('State B: deleted Nous → renders tombstoned caption, no delete button', async () => {
+        fetchMock.mockResolvedValue({ ok: true, data: FIXTURE_DELETED });
+        render(<Harness />);
+        await act(async () => {
+            localStore.selectNous('did:noesis:alpha');
+            await flushMicrotasks();
+        });
+        // State B caption text (copy-locked)
+        expect(screen.getByTestId('inspector-tombstone-caption').textContent).toContain(
+            'Nous deleted at tick 42',
+        );
+        expect(screen.getByTestId('inspector-tombstone-firehose').textContent).toContain(
+            'Audit history available in the firehose.',
+        );
+        // Delete button hidden in State B (D-06)
+        expect(screen.queryByTestId('inspector-h5-delete')).toBeNull();
+    });
+
+    it('State C: loading state → inspector-h5-delete rendered (click is no-op)', async () => {
+        fetchMock.mockImplementation(() => new Promise(() => {})); // never resolves
+        render(<Harness />);
+        await act(async () => {
+            localStore.selectNous('did:noesis:alpha');
+            await flushMicrotasks();
+        });
+        // Button visible in State C
+        const deleteBtn = screen.queryByTestId('inspector-h5-delete');
+        expect(deleteBtn).not.toBeNull();
+    });
+
+    it('Clicking inspector-h5-delete on active Nous opens ElevationDialog with H5', async () => {
+        fetchMock.mockResolvedValue({ ok: true, data: FIXTURE_ACTIVE });
+        render(<Harness />);
+        await act(async () => {
+            localStore.selectNous('did:noesis:alpha');
+            await flushMicrotasks();
+        });
+        await act(async () => {
+            fireEvent.click(screen.getByTestId('inspector-h5-delete'));
+            await flushMicrotasks();
+        });
+        // ElevationDialog opens
+        const elevDlg = screen.queryByTestId('elevation-dialog');
+        expect(elevDlg).not.toBeNull();
+        // Dialog content mentions H5
+        expect(elevDlg!.textContent).toContain('H5');
+    });
+
+    it('Confirming H5 elevation opens IrreversibilityDialog', async () => {
+        fetchMock.mockResolvedValue({ ok: true, data: FIXTURE_ACTIVE });
+        render(<Harness />);
+        await act(async () => {
+            localStore.selectNous('did:noesis:alpha');
+            await flushMicrotasks();
+        });
+        // Open ElevationDialog
+        await act(async () => {
+            fireEvent.click(screen.getByTestId('inspector-h5-delete'));
+            await flushMicrotasks();
+        });
+        // Confirm H5
+        await act(async () => {
+            fireEvent.click(screen.getByTestId('elevation-confirm'));
+            await flushMicrotasks();
+        });
+        // IrreversibilityDialog should now be open
+        expect(screen.queryByTestId('irrev-dialog')).not.toBeNull();
+    });
+
+    it('On 200 delete success: toast text appears, tier auto-downgrades', async () => {
+        fetchMock.mockResolvedValue({ ok: true, data: FIXTURE_ACTIVE });
+        deleteNousMock.mockResolvedValue({
+            ok: true,
+            data: { tombstoned_at_tick: 40, pre_deletion_state_hash: 'a'.repeat(64) },
+        });
+        render(<Harness />);
+        await act(async () => {
+            localStore.selectNous('did:noesis:alpha');
+            await flushMicrotasks();
+        });
+        // Click delete → elevate → confirm irrev
+        await act(async () => {
+            fireEvent.click(screen.getByTestId('inspector-h5-delete'));
+            await flushMicrotasks();
+        });
+        await act(async () => {
+            fireEvent.click(screen.getByTestId('elevation-confirm'));
+            await flushMicrotasks();
+        });
+        // Type the DID to enable delete
+        const input = screen.getByTestId('irrev-did-input') as HTMLInputElement;
+        await act(async () => {
+            fireEvent.change(input, { target: { value: 'did:noesis:alpha' } });
+            await flushMicrotasks();
+        });
+        await act(async () => {
+            fireEvent.click(screen.getByTestId('irrev-delete'));
+            await flushMicrotasks();
+        });
+        // Success toast should appear
+        expect(screen.queryByTestId('inspector-toast')).not.toBeNull();
+        expect(screen.getByTestId('inspector-toast').textContent).toContain('Nous deleted.');
+    });
+
+    it('On 410 race: info toast "This Nous was already deleted." appears', async () => {
+        fetchMock.mockResolvedValue({ ok: true, data: FIXTURE_ACTIVE });
+        deleteNousMock.mockResolvedValue({ ok: false, error: { kind: 'nous_deleted' } });
+        render(<Harness />);
+        await act(async () => {
+            localStore.selectNous('did:noesis:alpha');
+            await flushMicrotasks();
+        });
+        await act(async () => {
+            fireEvent.click(screen.getByTestId('inspector-h5-delete'));
+            await flushMicrotasks();
+        });
+        await act(async () => {
+            fireEvent.click(screen.getByTestId('elevation-confirm'));
+            await flushMicrotasks();
+        });
+        const input = screen.getByTestId('irrev-did-input') as HTMLInputElement;
+        await act(async () => {
+            fireEvent.change(input, { target: { value: 'did:noesis:alpha' } });
+            await flushMicrotasks();
+        });
+        await act(async () => {
+            fireEvent.click(screen.getByTestId('irrev-delete'));
+            await flushMicrotasks();
+        });
+        const toast = screen.queryByTestId('inspector-toast');
+        expect(toast).not.toBeNull();
+        expect(toast!.textContent).toContain('This Nous was already deleted.');
+    });
+
+    it('On 503: IrreversibilityDialog stays open with inline error', async () => {
+        fetchMock.mockResolvedValue({ ok: true, data: FIXTURE_ACTIVE });
+        deleteNousMock.mockResolvedValue({ ok: false, error: { kind: 'brain_unavailable' } });
+        render(<Harness />);
+        await act(async () => {
+            localStore.selectNous('did:noesis:alpha');
+            await flushMicrotasks();
+        });
+        await act(async () => {
+            fireEvent.click(screen.getByTestId('inspector-h5-delete'));
+            await flushMicrotasks();
+        });
+        await act(async () => {
+            fireEvent.click(screen.getByTestId('elevation-confirm'));
+            await flushMicrotasks();
+        });
+        const input = screen.getByTestId('irrev-did-input') as HTMLInputElement;
+        await act(async () => {
+            fireEvent.change(input, { target: { value: 'did:noesis:alpha' } });
+            await flushMicrotasks();
+        });
+        await act(async () => {
+            fireEvent.click(screen.getByTestId('irrev-delete'));
+            await flushMicrotasks();
+        });
+        // Dialog stays open on 503
+        expect(screen.queryByTestId('irrev-dialog')).not.toBeNull();
+        // Inline error shown
+        expect(screen.getByTestId('inspector-inline-error').textContent).toContain(
+            'Brain unavailable. Try again.',
+        );
+    });
+
+    it('Cancel from IrreversibilityDialog auto-downgrades H5→H1, no deleteNous call', async () => {
+        fetchMock.mockResolvedValue({ ok: true, data: FIXTURE_ACTIVE });
+        render(<Harness />);
+        await act(async () => {
+            localStore.selectNous('did:noesis:alpha');
+            await flushMicrotasks();
+        });
+        await act(async () => {
+            fireEvent.click(screen.getByTestId('inspector-h5-delete'));
+            await flushMicrotasks();
+        });
+        await act(async () => {
+            fireEvent.click(screen.getByTestId('elevation-confirm'));
+            await flushMicrotasks();
+        });
+        // Cancel from IrreversibilityDialog
+        await act(async () => {
+            fireEvent.click(screen.getByTestId('irrev-cancel'));
+            await flushMicrotasks();
+        });
+        expect(deleteNousMock).not.toHaveBeenCalled();
+        // IrreversibilityDialog closed
+        expect(screen.queryByTestId('irrev-dialog')).toBeNull();
     });
 });

@@ -123,6 +123,66 @@ describe('FirehoseRow', () => {
         expect(row.textContent).not.toContain('did:nous:');
     });
 
+    it('FR-5: operator.nous_deleted row has text-red-400 line-through on actor column', () => {
+        const entry = makeAuditEntry({
+            id: 50,
+            eventType: 'operator.nous_deleted',
+            actorDid: 'did:nous:operator',
+            payload: {
+                tier: 'H5',
+                action: 'delete',
+                operator_id: 'op:00000000-0000-4000-8000-000000000000',
+                target_did: 'did:noesis:alpha',
+                pre_deletion_state_hash: 'a'.repeat(64),
+            },
+        });
+        render(<FirehoseRow entry={entry} />, { wrapper: Wrapper });
+        // Actor column should have red + line-through
+        const actorCol = screen.getByTestId('firehose-actor');
+        expect(actorCol.className).toContain('text-red-400');
+        expect(actorCol.className).toContain('line-through');
+    });
+
+    it('FR-6: operator.nous_deleted badge has bg-rose-900/20 text-rose-300', () => {
+        const entry = makeAuditEntry({
+            id: 51,
+            eventType: 'operator.nous_deleted',
+            actorDid: 'did:nous:operator',
+            payload: { tier: 'H5', action: 'delete', target_did: 'did:noesis:alpha', operator_id: 'op:x', pre_deletion_state_hash: 'b'.repeat(64) },
+        });
+        render(<FirehoseRow entry={entry} />, { wrapper: Wrapper });
+        const badge = screen.getByTestId('event-type-badge');
+        expect(badge.className).toContain('bg-rose-900/20');
+        expect(badge.className).toContain('text-rose-300');
+    });
+
+    it('FR-7: operator.nous_deleted row has border-l-2 border-rose-900 left accent', () => {
+        const entry = makeAuditEntry({
+            id: 52,
+            eventType: 'operator.nous_deleted',
+            actorDid: 'did:nous:operator',
+            payload: { tier: 'H5', action: 'delete', target_did: 'did:noesis:alpha', operator_id: 'op:x', pre_deletion_state_hash: 'c'.repeat(64) },
+        });
+        render(<FirehoseRow entry={entry} />, { wrapper: Wrapper });
+        const row = screen.getByTestId('firehose-row');
+        expect(row.className).toContain('border-l-2');
+        expect(row.className).toContain('border-rose-900');
+    });
+
+    it('FR-8: non-deleted event types do NOT receive destructive classes (regression guard)', () => {
+        const entry = makeAuditEntry({
+            id: 53,
+            eventType: 'nous.spoke',
+            actorDid: 'did:nous:alice',
+            payload: { message: 'hi' },
+        });
+        render(<FirehoseRow entry={entry} />, { wrapper: Wrapper });
+        const row = screen.getByTestId('firehose-row');
+        expect(row.className).not.toContain('border-rose-900');
+        const badge = screen.getByTestId('event-type-badge');
+        expect(badge.className).not.toContain('bg-rose-900/20');
+    });
+
     it('FR-4: movement category gets data-category="movement" on the badge', () => {
         const entry = makeAuditEntry({
             id: 5,
