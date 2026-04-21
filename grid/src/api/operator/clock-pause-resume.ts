@@ -43,6 +43,12 @@ export function registerClockOperatorRoutes(
             // we still need to not re-emit when the client double-clicks.
             const wasAlreadyPaused = services.clock.isPaused;
             services.clock.pause();
+            // Phase 7 DIALOG-01 (D-04): drain the dialogue aggregator AFTER
+            // pause so windows cannot bridge the pause boundary. Invoked even
+            // when wasAlreadyPaused so repeat-pause stays idempotently empty.
+            if (services.drainDialogueOnPause) {
+                services.drainDialogueOnPause();
+            }
             if (!wasAlreadyPaused) {
                 appendOperatorEvent(services.audit, 'operator.paused', v.operator_id, {
                     tier: v.tier,

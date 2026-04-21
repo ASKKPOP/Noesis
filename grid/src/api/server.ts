@@ -74,6 +74,13 @@ export interface GridServices {
     /** Runner lookup for the inspector proxy. Returns undefined if no runner
      *  is registered for the DID (→ 404 unknown_nous). */
     getRunner?: (did: string) => InspectorRunner | undefined;
+    /**
+     * Phase 7 DIALOG-01 (D-04): invoked by the clock-pause handler AFTER
+     * WorldClock.pause() to drain the dialogue aggregator so windows cannot
+     * span the pause boundary. Optional so legacy tests without a
+     * DialogueAggregator wiring still compile.
+     */
+    drainDialogueOnPause?: () => void;
 }
 
 /**

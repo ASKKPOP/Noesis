@@ -12,6 +12,7 @@ import { AuditChain } from '../audit/chain.js';
 import { EconomyManager } from '../economy/config.js';
 import { ShopRegistry } from '../economy/shop-registry.js';
 import { NousRegistry } from '../registry/registry.js';
+import { DialogueAggregator } from '../dialogue/index.js';
 import { GENESIS_SHOPS } from './presets.js';
 import type { GenesisConfig, GridState } from './types.js';
 
@@ -23,6 +24,14 @@ export class GenesisLauncher {
     readonly economy: EconomyManager;
     readonly registry: NousRegistry;
     readonly shops: ShopRegistry;
+    /**
+     * Phase 7 DIALOG-01: per-grid dialogue aggregator. Registers an
+     * onAppend listener on the AuditChain at construction time and surfaces
+     * completed bidirectional dialogue windows to GridCoordinator via
+     * pull-query (drainPending). Pause-drained on clock pause to prevent
+     * windows from spanning pause boundaries (D-04).
+     */
+    readonly aggregator: DialogueAggregator;
     readonly gridName: string;
     readonly gridDomain: string;
 
@@ -42,6 +51,12 @@ export class GenesisLauncher {
         this.economy = new EconomyManager(config.economy);
         this.registry = new NousRegistry();
         this.shops = new ShopRegistry();
+
+        // Phase 7 DIALOG-01 (D-25): default windowTicks=5, minExchanges=2.
+        // The aggregator MUST be constructed AFTER `this.audit` so its onAppend
+        // listener is wired to the same AuditChain instance the Grid uses.
+        const dialogueCfg = config.dialogue ?? { windowTicks: 5, minExchanges: 2 };
+        this.aggregator = new DialogueAggregator(this.audit, dialogueCfg);
     }
 
     /**
@@ -147,6 +162,20 @@ export class GenesisLauncher {
     stop(): void {
         this.audit.append('grid.stopped', 'system', { tick: this.clock.currentTick });
         this.clock.stop();
+    }
+
+    /**
+     * Phase 7 DIALOG-01 (D-04): drop all buffered dialogue state. Called by
+     * the operator clock-pause HTTP handler AFTER WorldClock.pause() so a
+     * dialogue window cannot bridge a pause boundary. Idempotent — calling
+     * when the aggregator is already empty is a no-op.
+     *
+     * Kept as a dedicated method on the launcher (not a direct
+     * aggregator.reset() call from the HTTP handler) so the producer
+     * boundary is testable and discoverable from one place.
+     */
+    drainDialogueOnPause(): void {
+        this.aggregator.reset();
     }
 
     /** Get current Grid state. */

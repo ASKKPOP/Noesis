@@ -121,6 +121,10 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         // until then the lookup always returns undefined → 404 unknown_nous.
         // That is the correct behaviour for a Grid with no brain bridges.
         getRunner: () => undefined,
+        // Phase 7 DIALOG-01 (D-04): wire the launcher's dialogue aggregator
+        // drain into the clock-pause HTTP handler so pause drops all
+        // buffered dialogue state atomically with the pause operator event.
+        drainDialogueOnPause: () => launcher.drainDialogueOnPause(),
     });
 
     return {

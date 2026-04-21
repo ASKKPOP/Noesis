@@ -41,11 +41,27 @@ export class GridCoordinator {
 
         this.launcher.clock.onTick(async (event) => {
             const { tick, epoch } = event;
-            const tickPromises = [...this.runners.values()].map(runner =>
-                runner.tick(tick, epoch).catch(err => {
+            const tickPromises = [...this.runners.values()].map((runner) => {
+                // Phase 7 DIALOG-01 (D-10, D-11): pull-query the aggregator
+                // before each runner's tick so any completed bidirectional
+                // dialogue window surfaces as TickParams.dialogue_context on
+                // Brain's next RPC. Empty array → plain runner.tick(tick, epoch).
+                const contexts = this.launcher.aggregator.drainPending(runner.nousDid, tick);
+                if (contexts.length === 0) {
+                    return runner.tick(tick, epoch).catch((err) => {
+                        console.error(`[GridCoordinator] tick error for ${runner.nousName}:`, err);
+                    });
+                }
+                // Multiple contexts: deliver each sequentially on the runner
+                // so Brain observes one dialogue per sendTick — preserves
+                // stable per-context reasoning ordering (D-11).
+                return contexts.reduce<Promise<void>>(
+                    (chain, ctx) => chain.then(() => runner.tick(tick, epoch, ctx)),
+                    Promise.resolve(),
+                ).catch((err) => {
                     console.error(`[GridCoordinator] tick error for ${runner.nousName}:`, err);
-                })
-            );
+                });
+            });
             await Promise.all(tickPromises);
         });
     }

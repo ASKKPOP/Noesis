@@ -16,6 +16,15 @@ export interface GenesisConfig {
     laws: Law[];                // Founding laws
     economy: Partial<EconomyConfig>;
     seedNous: SeedNous[];       // Initial Nous to spawn
+    /**
+     * Phase 7 DIALOG-01 (D-25): optional dialogue-aggregation tuning.
+     * Defaults applied by GenesisLauncher when omitted: windowTicks=5,
+     * minExchanges=2.
+     */
+    dialogue?: {
+        windowTicks: number;
+        minExchanges: number;
+    };
 }
 
 export interface SeedNous {
