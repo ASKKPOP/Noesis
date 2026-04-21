@@ -20,7 +20,9 @@
 
 export type OperatorErrorKind =
     | 'invalid_tier'
+    | 'invalid_did'
     | 'unknown_nous'
+    | 'nous_deleted'
     | 'brain_unavailable'
     | 'network';
 
@@ -37,6 +39,52 @@ const STATUS_TO_KIND: Record<number, OperatorErrorKind> = {
     404: 'unknown_nous',
     503: 'brain_unavailable',
 };
+
+// Status map for the delete route — different 400 semantic (invalid_did not invalid_tier)
+const STATUS_TO_KIND_DELETE: Record<number, OperatorErrorKind> = {
+    400: 'invalid_did',
+    404: 'unknown_nous',
+    410: 'nous_deleted',
+    503: 'brain_unavailable',
+};
+
+/**
+ * deleteNous — POST /api/operator/nous/:did/delete
+ *
+ * Phase 8 (AGENCY-05): H5 Sovereign irreversible deletion wrapper.
+ * Error taxonomy mirrors postOperatorAction discipline — only `kind` is
+ * exposed; raw err.message never leaks (T-08-45 mitigation).
+ *
+ * Status ladder:
+ *   200 → ok: true, data: { tombstoned_at_tick, pre_deletion_state_hash }
+ *   400 → invalid_did (DID shape failed Grid validation)
+ *   404 → unknown_nous (DID not in roster)
+ *   410 → nous_deleted (already tombstoned — 410 race, D-20)
+ *   503 → brain_unavailable (Brain container offline)
+ *   other non-2xx or fetch rejection (non-abort) → network
+ *   AbortError is re-thrown so callers can distinguish user-cancel from failure.
+ */
+export async function deleteNous(
+    did: string,
+    baseUrl: string,
+    signal?: AbortSignal,
+): Promise<OperatorFetchResult<{ tombstoned_at_tick: number; pre_deletion_state_hash: string }>> {
+    let resp: Response;
+    try {
+        resp = await fetch(`${baseUrl}/api/operator/nous/${did}/delete`, {
+            method: 'POST',
+            signal,
+        });
+    } catch (err) {
+        if ((err as { name?: string })?.name === 'AbortError') throw err;
+        return { ok: false, error: { kind: 'network' } };
+    }
+    if (resp.ok) {
+        const data = await resp.json();
+        return { ok: true, data };
+    }
+    return { ok: false, error: { kind: STATUS_TO_KIND_DELETE[resp.status] ?? 'network' } };
+}
 
 export async function postOperatorAction<T>(
     endpoint: string,

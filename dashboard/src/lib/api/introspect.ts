@@ -37,10 +37,14 @@ export type NousStateResponse = {
     thymos: { mood: string; emotions: Record<string, number> };
     telos: { active_goals: Array<{ id: string; description: string; priority: number }> };
     memory_highlights: Array<{ timestamp: number; kind: string; summary: string }>;
+    // Phase 8 (D-27): additive — existing consumers unaffected; Inspector uses
+    // status to render State A (active) vs State B (deleted — tombstoned caption).
+    status?: 'active' | 'deleted';
+    deleted_at_tick?: number;
 };
 
 export type FetchError = {
-    kind: 'invalid_did' | 'unknown_nous' | 'brain_unavailable' | 'network';
+    kind: 'invalid_did' | 'unknown_nous' | 'brain_unavailable' | 'network' | 'nous_deleted';
 };
 
 export type FetchResult =
@@ -50,6 +54,7 @@ export type FetchResult =
 const STATUS_TO_KIND: Record<number, FetchError['kind']> = {
     400: 'invalid_did',
     404: 'unknown_nous',
+    410: 'nous_deleted',
     503: 'brain_unavailable',
 };
 

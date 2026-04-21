@@ -20,19 +20,27 @@
 import { useEffect, useRef, type ReactElement } from 'react';
 import { TIER_NAME, type HumanAgencyTier } from '@/lib/protocol/agency-types';
 
+// ElevatedTier: H2/H3/H4 — the tiers useElevatedAction manages.
+// Kept backward-compatible so use-elevated-action.test.tsx import is stable.
 export type ElevatedTier = Exclude<HumanAgencyTier, 'H1' | 'H5'>;
 
+// AllElevatedTier: includes H5 for Phase 8 Inspector wiring.
+// ElevationDialogProps accepts this wider union so H5 can be passed.
+export type AllElevatedTier = Exclude<HumanAgencyTier, 'H1'>;
+
 export interface ElevationDialogProps {
-    readonly targetTier: ElevatedTier;
+    readonly targetTier: AllElevatedTier;
     readonly open: boolean;
     readonly onConfirm: () => void;
     readonly onCancel: () => void;
 }
 
-const CONFIRM_FILL: Record<ElevatedTier, string> = {
+const CONFIRM_FILL: Record<AllElevatedTier, string> = {
     H2: 'bg-blue-400 text-neutral-950',
     H3: 'bg-amber-300 text-neutral-950',
     H4: 'bg-red-400 text-neutral-950',
+    // H5 uses a deep-red destructive style — most dangerous tier (Phase 8)
+    H5: 'bg-red-700 text-neutral-50 font-bold',
 };
 
 export function ElevationDialog({

@@ -53,6 +53,11 @@ const ERR_COPY: Record<FetchError['kind'], { title: string; description: string 
         title: 'Inspector failed to load',
         description: 'The Grid could not be reached. Refresh to retry.',
     },
+    // Phase 8 (D-20): 410 Gone → nous_deleted EmptyState (copy-locked per copy_lock)
+    nous_deleted: {
+        title: 'Nous deleted',
+        description: 'This Nous was deleted. Audit history remains in the firehose.',
+    },
 };
 
 /** Selector for elements we consider focusable inside the drawer. */

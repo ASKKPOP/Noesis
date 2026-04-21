@@ -193,8 +193,8 @@ describe('deleteNous', () => {
     });
 
     it('sends POST to /api/operator/nous/:did/delete', async () => {
-        const fetchMock = vi.fn(async () =>
-            jsonResp({ tombstoned_at_tick: 1, pre_deletion_state_hash: HASH }, 200),
+        const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
+            Promise.resolve(jsonResp({ tombstoned_at_tick: 1, pre_deletion_state_hash: HASH }, 200)),
         );
         vi.stubGlobal('fetch', fetchMock);
         await deleteNous(DID, BASE);
@@ -205,8 +205,8 @@ describe('deleteNous', () => {
     });
 
     it('forwards AbortSignal to fetch options', async () => {
-        const fetchMock = vi.fn(async () =>
-            jsonResp({ tombstoned_at_tick: 1, pre_deletion_state_hash: HASH }, 200),
+        const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
+            Promise.resolve(jsonResp({ tombstoned_at_tick: 1, pre_deletion_state_hash: HASH }, 200)),
         );
         vi.stubGlobal('fetch', fetchMock);
         const ac = new AbortController();
