@@ -49,8 +49,8 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
   4. The tier recorded in each `operator.*` audit event matches the tier the operator was in at confirmation time, not the tier at the moment the HTTP request arrives at the Grid — this is verifiable by forcing a UI elevation-then-downgrade race and asserting the committed tier reflects the user's explicit choice.
   5. All four non-H5 tiers (H1 observe, H2 read memory, H3 pause / allowlist / law-change, H4 force-Telos) have at least one exercised action in the dashboard; H5 surfaces appear disabled with "requires Phase 8" affordance.
 **Plans**: 6 plans
-  - [ ] 06-01-PLAN.md — Allowlist 11→16 + appendOperatorEvent tier-required invariant + HumanAgencyTier union (AGENCY-03, Wave 1)
-  - [ ] 06-02-PLAN.md — AgencyIndicator chip + H1–H5 tier tooltip + route-level mount (AGENCY-01, Wave 2)
+  - [x] 06-01-PLAN.md — Allowlist 11→16 + appendOperatorEvent tier-required invariant + HumanAgencyTier union (AGENCY-03, Wave 1)
+  - [x] 06-02-PLAN.md — AgencyIndicator chip + H1–H5 tier tooltip + route-level mount (AGENCY-01, Wave 2)
   - [ ] 06-03-PLAN.md — ElevationDialog + closure-capture tier-at-confirm + SC#4 race regression (AGENCY-04, Wave 2)
   - [ ] 06-04-PLAN.md — H3 pause/resume + law add/amend/remove + zero-diff invariant across pause boundary (AGENCY-02, AGENCY-03, Wave 3)
   - [ ] 06-05-PLAN.md — H2 memory query + H4 force-Telos hash-only proxy + payload privacy closed-tuples (AGENCY-02, AGENCY-03, Wave 3)

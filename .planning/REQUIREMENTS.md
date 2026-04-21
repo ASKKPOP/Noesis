@@ -22,7 +22,7 @@
      experts think is needed. Make the tier a first-class UI concept so users always see the lever
      they have. -->
 
-- [ ] **AGENCY-01**: Dashboard header renders an Agency Indicator showing the current operator tier (H1 Observer / H2 Reviewer / H3 Partner / H4 Driver / H5 Sovereign) with the tier definition accessible via tooltip.
+- [x] **AGENCY-01**: Dashboard header renders an Agency Indicator showing the current operator tier (H1 Observer / H2 Reviewer / H3 Partner / H4 Driver / H5 Sovereign) with the tier definition accessible via tooltip.
 - [ ] **AGENCY-02**: Every operator-initiated action has a declared default tier and requires an explicit elevation confirmation when the action exceeds H1. The tier map is:
   - H1: observe firehose/map/inspector (no record)
   - H2: query Nous memory (read-only, audit-logged)
@@ -68,7 +68,7 @@
 | REV-02 | Phase 5 | Complete |
 | REV-03 | Phase 5 | Complete |
 | REV-04 | Phase 5 | Complete |
-| AGENCY-01 | Phase 6 | Pending |
+| AGENCY-01 | Phase 6 | Complete |
 | AGENCY-02 | Phase 6 | Pending |
 | AGENCY-03 | Phase 6 | Pending |
 | AGENCY-04 | Phase 6 | Pending |

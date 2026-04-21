@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Steward Console — Phases 5-8
-status: Phase 5 shipped — next focus Phase 06
-stopped_at: Phase 6 UI-SPEC approved
-last_updated: "2026-04-21T03:43:18.670Z"
+status: executing
+stopped_at: Phase 6 Plan 02 complete
+last_updated: "2026-04-21T05:04:23.530Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
-  percent: 100
+  total_plans: 11
+  completed_plans: 7
+  percent: 64
 ---
 
 # Project State
@@ -22,13 +22,13 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** The first persistent Grid where Nous actually live — observable, running continuously, with real cognitive cycles, real trades, and real social dynamics emerging from the systems.
 **Current milestone:** v2.1 — Steward Console
-**Current focus:** Phase 05 shipped — next focus Phase 06 (Operator Agency Foundation H1–H4)
+**Current focus:** Phase 6 — operator-agency-foundation-h1-h4
 
 ## Current Position
 
-Phase: 05 (reviewernous-objective-only-pre-commit-review) — COMPLETE
-Plan: 5 of 5 (shipped)
-Status: Phase 5 shipped — next focus Phase 06
+Phase: 6 (operator-agency-foundation-h1-h4) — EXECUTING
+Plan: 2 of 6 — SHIPPED (AgencyIndicator + agencyStore + TierTooltip + getOperatorId)
+Status: Ready for Plan 3 (elevation dialog + useElevatedAction)
 Last activity: 2026-04-21
 
 Progress: [██████████] 100% (1/4 phases complete, 5/5 plans in Phase 5)
@@ -103,7 +103,15 @@ See `.planning/phases/05-reviewernous-objective-only-pre-commit-review/05-CONTEX
 
 ## Session Continuity
 
-Last session: 2026-04-21T03:43:18.667Z
-Stopped at: Phase 6 UI-SPEC approved
-Resume file: .planning/phases/06-operator-agency-foundation-h1-h4/06-UI-SPEC.md
-Next action: Open Phase 6 planning (Operator Agency Foundation H1–H4) via `/gsd-discuss-phase`
+Last session: 2026-04-21T05:04:03.454Z
+Stopped at: Phase 6 Plan 02 complete — AgencyIndicator shipped (commits 77e939f, ad3a1ff, bfa82b3, 3b7e0cc)
+Resume file: None
+Next action: Execute Phase 6 Plan 03 (ElevationDialog + useElevatedAction) via `/gsd-execute-phase 06 03`
+
+## Accumulated Context (Plan 06-02 additions)
+
+- **Plan 06-02 shipped (2026-04-21):** dashboard `<AgencyIndicator />` mounted in root layout overlay (`fixed right-4 top-4 z-50`) — visible on every route, closing SC#1 at unit level. Tier chip reads from localStorage-backed `agencyStore` with SSR snapshot locked to `'H1'` per D-01. Full dashboard suite: 274/274 across 35 files.
+- **D-20 hydration discipline:** `agencyStore.hydrateFromStorage()` whitelist is `{H1,H2,H3,H4}` — `H5` is explicitly rejected even if someone sets `localStorage['noesis.operator.tier'] = 'H5'`. H5 remains a disabled-affordance-only tier for Phase 8.
+- **Dashboard type mirror pattern (second use):** `dashboard/src/lib/protocol/agency-types.ts` joins `audit-types.ts` as hand-copied dashboard mirrors of grid protocol types. SYNC header + drift-detector test (fs.readFileSync) in place. If a third mirror ships, consolidate into a shared package.
+- **PHILOSOPHY §7 verbatim drift detector:** `tier-tooltip.test.tsx` inlines the 5 tier definition strings — any paraphrase of `TIER_DEFINITIONS` fails. Source of truth remains PHILOSOPHY.md lines 71–75.
+- **Tooling gap (ecosystem):** Vitest 4.1 + jsdom ships empty `window.localStorage`; jest-dom matchers don't register under oxc JSX transform. Dashboard-wide convention is plain Chai + native DOM. Per-file Map-backed Storage polyfill pattern is the workaround.
