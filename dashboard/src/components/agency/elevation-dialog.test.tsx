@@ -253,6 +253,49 @@ describe('ElevationDialog — interaction', () => {
     });
 });
 
+describe('ElevationDialog — H5 tier option (Phase 8 AGENCY-05)', () => {
+    it('renders H5 option when availableTiers includes H5', () => {
+        render(
+            <ElevationDialog
+                targetTier="H5"
+                open={true}
+                onConfirm={() => {}}
+                onCancel={() => {}}
+            />,
+        );
+        // The dialog title should mention H5
+        expect(screen.getByTestId('elevation-dialog').textContent).toContain('H5');
+    });
+
+    it('H5 confirm button has destructive styling (text-red or similar)', () => {
+        render(
+            <ElevationDialog
+                targetTier="H5"
+                open={true}
+                onConfirm={() => {}}
+                onCancel={() => {}}
+            />,
+        );
+        const confirm = screen.getByTestId('elevation-confirm');
+        // H5 is the most destructive tier — confirm button should have red styling
+        expect(confirm.className).toMatch(/red/);
+    });
+
+    it('clicking Confirm with H5 invokes onConfirm', () => {
+        const onConfirm = vi.fn();
+        render(
+            <ElevationDialog
+                targetTier="H5"
+                open={true}
+                onConfirm={onConfirm}
+                onCancel={() => {}}
+            />,
+        );
+        fireEvent.click(screen.getByTestId('elevation-confirm'));
+        expect(onConfirm).toHaveBeenCalledTimes(1);
+    });
+});
+
 describe('ElevationDialog — tier-colored confirm (UI-SPEC lines 232-238)', () => {
     it('H2 confirm button carries bg-blue-400', () => {
         render(

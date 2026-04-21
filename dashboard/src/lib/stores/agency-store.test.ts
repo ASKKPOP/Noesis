@@ -265,3 +265,36 @@ describe('agencyStore singleton', () => {
         expect(agencyStore).toBeInstanceOf(AgencyStore);
     });
 });
+
+describe('AgencyStore — hydrateFromStorage rejects H5 (D-21 Phase 8 regression pin)', () => {
+    it('(a) localStorage {tier:"H5"} → hydrateFromStorage → tier === "H1" (H5 not in whitelist)', () => {
+        localStorage.setItem('noesis.operator.tier', 'H5');
+        const store = new AgencyStore();
+        store.hydrateFromStorage();
+        // H5 must fall back to H1 — never persists across reloads
+        expect(store.getSnapshot()).toBe('H1');
+    });
+
+    it('(b) H2/H3/H4 round-trip preserved (whitelist still allows H1-H4)', () => {
+        for (const tier of ['H2', 'H3', 'H4'] as const) {
+            localStorage.setItem('noesis.operator.tier', tier);
+            const store = new AgencyStore();
+            store.hydrateFromStorage();
+            expect(store.getSnapshot()).toBe(tier);
+        }
+    });
+
+    it('(c) malformed / out-of-whitelist input does not throw', () => {
+        localStorage.setItem('noesis.operator.tier', 'H5');
+        const store = new AgencyStore();
+        expect(() => store.hydrateFromStorage()).not.toThrow();
+        expect(store.getSnapshot()).toBe('H1');
+    });
+
+    it('H1 round-trip preserved (already the default; hydrate is a no-op change)', () => {
+        localStorage.setItem('noesis.operator.tier', 'H1');
+        const store = new AgencyStore();
+        store.hydrateFromStorage();
+        expect(store.getSnapshot()).toBe('H1');
+    });
+});

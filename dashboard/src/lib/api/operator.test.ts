@@ -15,7 +15,7 @@
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { postOperatorAction } from './operator';
+import { deleteNous, postOperatorAction } from './operator';
 
 function jsonResp(body: unknown, status = 200): Response {
     return {
@@ -164,5 +164,113 @@ describe('postOperatorAction', () => {
         expect(fetchMock).toHaveBeenCalledTimes(1);
         const [url] = fetchMock.mock.calls[0]!;
         expect(url).toBe('http://localhost:8080/api/v1/operator/clock/pause');
+    });
+});
+
+describe('deleteNous', () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.unstubAllGlobals();
+    });
+
+    const HASH = 'a'.repeat(64);
+    const DID = 'did:noesis:alpha';
+    const BASE = 'http://localhost:8080';
+
+    it('returns ok=true with tombstoned_at_tick and pre_deletion_state_hash on 200', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () =>
+                jsonResp({ tombstoned_at_tick: 40, pre_deletion_state_hash: HASH }, 200),
+            ),
+        );
+        const result = await deleteNous(DID, BASE);
+        expect(result.ok).toBe(true);
+        if (result.ok) {
+            expect(result.data.tombstoned_at_tick).toBe(40);
+            expect(result.data.pre_deletion_state_hash).toBe(HASH);
+        }
+    });
+
+    it('sends POST to /api/operator/nous/:did/delete', async () => {
+        const fetchMock = vi.fn(async () =>
+            jsonResp({ tombstoned_at_tick: 1, pre_deletion_state_hash: HASH }, 200),
+        );
+        vi.stubGlobal('fetch', fetchMock);
+        await deleteNous(DID, BASE);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        const [url, init] = fetchMock.mock.calls[0]!;
+        expect(url).toBe(`${BASE}/api/operator/nous/${DID}/delete`);
+        expect(init?.method).toBe('POST');
+    });
+
+    it('forwards AbortSignal to fetch options', async () => {
+        const fetchMock = vi.fn(async () =>
+            jsonResp({ tombstoned_at_tick: 1, pre_deletion_state_hash: HASH }, 200),
+        );
+        vi.stubGlobal('fetch', fetchMock);
+        const ac = new AbortController();
+        await deleteNous(DID, BASE, ac.signal);
+        const [, init] = fetchMock.mock.calls[0]!;
+        expect(init?.signal).toBe(ac.signal);
+    });
+
+    it('maps HTTP 400 to { kind: "invalid_did" }', async () => {
+        vi.stubGlobal('fetch', vi.fn(async () => jsonResp({ error: 'invalid_did' }, 400)));
+        const result = await deleteNous(DID, BASE);
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.kind).toBe('invalid_did');
+    });
+
+    it('maps HTTP 404 to { kind: "unknown_nous" }', async () => {
+        vi.stubGlobal('fetch', vi.fn(async () => jsonResp({ error: 'unknown_nous' }, 404)));
+        const result = await deleteNous(DID, BASE);
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.kind).toBe('unknown_nous');
+    });
+
+    it('maps HTTP 410 to { kind: "nous_deleted" }', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => jsonResp({ error: 'nous_deleted', deleted_at_tick: 40 }, 410)),
+        );
+        const result = await deleteNous(DID, BASE);
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.kind).toBe('nous_deleted');
+    });
+
+    it('maps HTTP 503 to { kind: "brain_unavailable" }', async () => {
+        vi.stubGlobal('fetch', vi.fn(async () => jsonResp({ error: 'brain_unavailable' }, 503)));
+        const result = await deleteNous(DID, BASE);
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.kind).toBe('brain_unavailable');
+    });
+
+    it('maps HTTP 500 to { kind: "network" }', async () => {
+        vi.stubGlobal('fetch', vi.fn(async () => jsonResp({ error: 'server_error' }, 500)));
+        const result = await deleteNous(DID, BASE);
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.kind).toBe('network');
+    });
+
+    it('maps fetch rejection (non-abort) to { kind: "network" }', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => {
+                throw new TypeError('failed to fetch');
+            }),
+        );
+        const result = await deleteNous(DID, BASE);
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+            expect(result.error.kind).toBe('network');
+            expect(Object.keys(result.error)).toEqual(['kind']);
+        }
+    });
+
+    it('re-throws AbortError (does NOT map to network)', async () => {
+        const abortErr = Object.assign(new Error('aborted'), { name: 'AbortError' });
+        vi.stubGlobal('fetch', vi.fn(async () => { throw abortErr; }));
+        await expect(deleteNous(DID, BASE)).rejects.toMatchObject({ name: 'AbortError' });
     });
 });

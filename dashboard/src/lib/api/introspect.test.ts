@@ -13,7 +13,7 @@
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchNousState, type NousStateResponse } from './introspect';
+import { fetchNousState, type FetchError, type NousStateResponse } from './introspect';
 
 function jsonResp(body: unknown, status = 200): Response {
     return {
@@ -128,5 +128,31 @@ describe('fetchNousState', () => {
         expect(fetchMock).toHaveBeenCalledTimes(1);
         const [, init] = fetchMock.mock.calls[0]!;
         expect(init?.signal).toBe(ac.signal);
+    });
+});
+
+describe('fetchNousState — maps HTTP 410 to nous_deleted (D-20)', () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.unstubAllGlobals();
+    });
+
+    it('maps HTTP 410 to { kind: "nous_deleted" }', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => jsonResp({ error: 'nous_deleted', deleted_at_tick: 42 }, 410)),
+        );
+        const result = await fetchNousState('did:noesis:alpha', 'http://localhost:8080');
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+            expect(result.error.kind).toBe('nous_deleted');
+            // Only `kind` is public — raw JSON fields must NOT leak
+            expect(Object.keys(result.error)).toEqual(['kind']);
+        }
+    });
+
+    it('FetchError kind union includes nous_deleted as a valid type', () => {
+        const err: FetchError = { kind: 'nous_deleted' };
+        expect(err.kind).toBe('nous_deleted');
     });
 });
