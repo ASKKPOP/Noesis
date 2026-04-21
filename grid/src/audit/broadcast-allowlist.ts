@@ -21,11 +21,14 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6) — exactly these 16 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7) — exactly these 17 event types.
  *  v1 (Phase 1, per 01-CONTEXT.md): 10 events.
  *  Phase 5 (REV-02): +1 'trade.reviewed' — externally observable reviewer verdict;
  *  payload shape D-03, 3 keys on pass / 5 keys on fail, all privacy-clean (see D-12 test).
  *  Phase 6 (AGENCY-02, AGENCY-03): +5 operator.* events (D-10 tuple order locked).
+ *  Phase 7 (DIALOG-02): +1 'telos.refined' at position 17 — Nous-initiated
+ *  hash-only refinement after peer dialogue. Tuple ORDER is locked; any
+ *  reorder fails grid/test/audit/allowlist-seventeen.test.ts.
  */
 const ALLOWLIST_MEMBERS: readonly string[] = [
     'nous.spawned',
@@ -48,6 +51,10 @@ const ALLOWLIST_MEMBERS: readonly string[] = [
     'operator.resumed',        // H3 Partner  — WorldClock.resume()
     'operator.law_changed',    // H3 Partner  — LogosEngine add/amend/repeal
     'operator.telos_forced',   // H4 Driver   — hash-only diff, no goal contents
+    // Phase 7 (DIALOG-02) — Nous-initiated telos refinement after peer dialogue.
+    // Payload shape: { did, before_goal_hash, after_goal_hash, triggered_by_dialogue_id }
+    // Emitted ONLY via appendTelosRefined() (grid/src/audit/append-telos-refined.ts).
+    'telos.refined',
 ] as const;
 
 /**
