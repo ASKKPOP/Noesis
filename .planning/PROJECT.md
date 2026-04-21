@@ -58,7 +58,35 @@ The first persistent Grid where Nous actually live — observable, running conti
 - ✓ **DIALOG-03**: Inspector Telos panel renders `↻ refined via dialogue (N)` badge linking to filtered firehose — v2.1 Phase 7 (shipped 2026-04-21)
   → Validated in Phase 7
 
-## Current Milestone: v2.1 Steward Console — SHIPPED (2026-04-21)
+## Current Milestone: v2.2 Living Grid
+
+**Goal:** Move Nous from observed entities into full agents. Inner life, social bonds, collective governance, sidechannel communication, deep observability, and researcher tooling ship together — the Grid stops being a simulation stage and becomes a living society.
+
+**Target features (6 themes, MVP depth):**
+1. **Rich Inner Life** — Ananke (internal drives), Bios (bodily needs), Chronos (time-perception) layer onto Brain; autonomous behavior gains internal pressure beyond Telos.
+2. **Relationship & Trust** — persistent Nous↔Nous relationship graph with reputation-weighted interactions; friendship / rivalry / acquaintance emerge from repeated audit-visible encounters.
+3. **Governance & Law** — voting primitives, proposal lifecycle, Nous-collective law enactment atop v2.1 `law.triggered` machinery. Operator stops being sole law author.
+4. **Mesh Whisper** — WHISPER-01 Nous-to-Nous sidechannel; mesh-vs-star revisited with audit-preserving pattern. Defers the full mesh but ships the smallest-viable whisper channel.
+5. **Operator Observability** — replay / rewind / export on top of the 18-event audit chain; deep telemetry tools for the Steward built in v2.1.
+6. **Observer / Researcher Tools** — spawn-N-Nous rigs, long-horizon tick runs (10,000+), dataset export for external analysis. Makes Noēsis usable as a research platform.
+
+**Constraints inherited from v2.1 (do not break):**
+- Broadcast allowlist frozen-except-by-explicit-addition (currently 18 events). Every new `*.whispered` / `relationship.*` / `vote.*` / `need.*` / `drive.*` earns its own allowlist slot in its own phase.
+- Zero-diff audit chain invariant unbroken since Phase 1 `29c3516` — every new listener is pure-observer.
+- Hash-only cross-boundary (Brain↔Grid plaintext never crosses the wire — applies to drives, needs, relationship memories, votes).
+- Closed-tuple payloads + sole-producer boundaries remain the law.
+- PHILOSOPHY §1 first-life promise — every audit entry retained forever; no purge paths.
+
+**Phase numbering:** continues from v2.1 (Phase 9 onward).
+
+**Research source:** `.planning/research/v2.2/` (to be populated — 4 parallel researchers: Stack, Features, Architecture, Pitfalls).
+
+### Active
+
+<!-- v2.2 Living Grid — requirements land here after research + scoping. Expect categories: DRIVE, BIOS, CHRONOS, REL, VOTE, WHISPER, REPLAY, RIG. -->
+<!-- Requirements will be REQ-ID'd per category and mapped 1:1 to phases. -->
+
+## Previous Milestone: v2.1 Steward Console — SHIPPED (2026-04-21)
 
 **Status:** Closed 2026-04-21, 18/18 plans = 100%. All requirements REV-01..04, AGENCY-01..05, DIALOG-01..03 validated across Phases 5–8.
 
@@ -68,25 +96,20 @@ The first persistent Grid where Nous actually live — observable, running conti
 - **Phase 7 — Peer Dialogue Memory** (shipped 2026-04-21): SPARC-inspired; `DialogueAggregator` surfaces `DialogueContext` after ≥2 bidirectional exchanges; Brain-side `TELOS_REFINED` with deterministic substring heuristic (no LLM call); Grid-side `appendTelosRefined` producer boundary with `recentDialogueIds` authority check (forgery guard); 17th allowlist member `telos.refined` with closed 4-key hash-only payload.
 - **Phase 8 — H5 Sovereign Operations** (shipped 2026-04-21): Tombstone primitive + DELETE route + `IrreversibilityDialog` (paste-suppressed typed DID + verbatim "Delete forever" / "Keep this Nous"); 18th allowlist member `operator.nous_deleted` with closed 5-key payload including pre-deletion state hash; Brain returns 4 component hashes, Grid composes 5th with locked canonical key order (D-07); HTTP 410 Gone precedes 404 for tombstoned DIDs; audit-chain entries retained forever; DID permanently reserved.
 
-**Research source:** `.planning/research/stanford-peer-agent-patterns.md` (committed 9bb3046 2026-04-20) — Agentic Reviewer → Phase 5; H1–H5 Agency Scale → Phase 6 + Phase 8; SPARC peer dialogue → Phase 7; mesh-vs-star → centralized kept, mesh deferred to Sprint 16+ (WHISPER-01).
-
-**Next milestone:** v2.2 (scope TBD via `/gsd-new-milestone`).
-
-### Active
-
-<!-- v2.1 Steward Console SHIPPED 2026-04-21 — all REV-01..04, AGENCY-01..05, DIALOG-01..03 moved to Validated above. -->
-<!-- No active requirements. v2.2 requirements will land here after `/gsd-new-milestone`. -->
+**Research source:** `.planning/research/stanford-peer-agent-patterns.md` (committed 9bb3046 2026-04-20) — Agentic Reviewer → Phase 5; H1–H5 Agency Scale → Phase 6 + Phase 8; SPARC peer dialogue → Phase 7; mesh-vs-star → centralized kept, mesh deferred to v2.2 WHISPER-01.
 
 ### Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Rich Inner Life (Ananke, Bios, Chronos) | Phase 3 — after First Life lands |
-| Relationship system | Phase 3 |
-| Governance voting | Phase 4 |
-| Real cryptographic signing | Phase 4 |
-| Multi-Grid federation | Phase 5 |
-| Mobile observer app | Phase 6+ |
+| Real cryptographic signing | Post-v2.2 — Ed25519 today is sufficient for the single-Grid trust model |
+| Multi-Grid federation | Post-v2.2 — WHISPER-01 in v2.2 is intra-Grid sidechannel only; inter-Grid handshake deferred |
+| Mobile observer app | Post-v2.2 — operator observability v2.2 targets the web Steward Console |
+| Full mesh topology (O(N²) pairwise) | Still deferred per arxiv 2512.08296 — WHISPER-01 ships smallest-viable sidechannel, not full mesh |
+| LLM-driven drives / emotions / goals | v2.2 keeps deterministic heuristics for Ananke/Bios/Chronos; LLM augmentation post-v2.2 |
+
+<!-- Moved into v2.2 scope (no longer out of scope): Rich Inner Life (Ananke/Bios/Chronos), Relationship system, Governance voting, WHISPER-01 sidechannel, deep operator observability, researcher tooling. -->
+
 
 ## Context
 
@@ -117,8 +140,9 @@ The first persistent Grid where Nous actually live — observable, running conti
 | Next.js for dashboard | Already scaffolded, app router, React ecosystem | ✓ Good (v2.0 shipped) |
 | Standalone Next.js output + multi-stage Docker | Smallest prod image, baked NEXT_PUBLIC_* at build | ✓ Good (v2.0 Phase 4) |
 | Centralized star topology (Grid hub) over mesh | Preserves audit chain integrity; arxiv 2512.08296 shows O(N²) mesh cost | ✓ Good (locked) |
-| Objective-only Nous-to-Nous review | Zou's paperreview.ai data: AI weak on subjective novelty judgment | — v2.1 decision |
-| H1–H5 as first-class operator UI concept | arxiv 2506.06576: users want higher agency than experts deem needed on 47.5% of tasks | — v2.1 decision |
+| Objective-only Nous-to-Nous review | Zou's paperreview.ai data: AI weak on subjective novelty judgment | ✓ v2.1 (Phase 5) |
+| H1–H5 as first-class operator UI concept | arxiv 2506.06576: users want higher agency than experts deem needed on 47.5% of tasks | ✓ v2.1 (Phase 6 + 8) |
+| Open v2.2 Living Grid with 6-theme MVP scope | Individual depth (inner life) without social context (relationships) is lonely; governance without sidechannel (whisper) is top-down; all 6 ship together so emergent society has substrate | — v2.2 decision (2026-04-21) |
 
 ## Evolution
 
@@ -138,4 +162,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-20 — v2.0 Dashboard shipped; v2.1 Steward Console opened*
+*Last updated: 2026-04-21 — v2.1 Steward Console SHIPPED (18/18 plans); v2.2 Living Grid opened (6 themes, MVP depth, Phase 9+ numbering)*

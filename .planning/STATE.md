@@ -1,38 +1,37 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: Steward Console — Phases 5-8
-status: shipped
-stopped_at: v2.1 COMPLETE — Phase 8 verified (AGENCY-05 closed)
-last_updated: "2026-04-21T18:00:00.000Z"
+milestone: v2.2
+milestone_name: Living Grid
+status: defining-requirements
+stopped_at: v2.2 opened — researchers spawning
+last_updated: "2026-04-21T19:00:00.000Z"
 last_activity: 2026-04-21
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 18
-  completed_plans: 18
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-20)
+See: .planning/PROJECT.md (updated 2026-04-21)
 
 **Core value:** The first persistent Grid where Nous actually live — observable, running continuously, with real cognitive cycles, real trades, and real social dynamics emerging from the systems.
-**Current milestone:** v2.1 — Steward Console **SHIPPED** (2026-04-21, 18/18 plans = 100%)
-**Current focus:** Milestone complete — awaiting v2.2 planning
+**Current milestone:** v2.2 — Living Grid (6 themes: Rich Inner Life, Relationships, Governance, Whisper, Observability, Researcher Tools)
+**Current focus:** Defining requirements — research phase running (4 parallel researchers on `.planning/research/v2.2/`)
 
 ## Current Position
 
-Phase: 08 (h5-sovereign-operations-nous-deletion) — **VERIFIED COMPLETE** (2026-04-21, VERIFICATION.md 15/15)
-Plan: 3 of 3 shipped
-v2.1 plans shipped: 05 (Phase 5 / 6 plans) + 06 (Phase 6 / 6 plans) + 07-01..04 (Phase 7) + 08-01..03 (Phase 8) = **18/18 plans**.
-Status: v2.1 Steward Console milestone closed. Ready for v2.2 planning via `/gsd-new-milestone`.
-Last activity: 2026-04-21
+Phase: Not started (defining requirements)
+Plan: —
+Status: Research in flight — requirements defined after synthesis
+Last activity: 2026-04-21 — v2.2 Living Grid opened, v2.1 phases archived to `.planning/phases/archived/v2.1/`
 
-Progress: [██████████] 100% (18/18 plans — Phases 5, 6, 7, 8 all verified complete)
+Progress: [░░░░░░░░░░] 0% (0/? plans — roadmap follows research + requirements scoping)
 
 ## Accumulated Context
 
@@ -126,10 +125,33 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 
 ## Session Continuity
 
-Last session: 2026-04-21T18:00:00.000Z
-Stopped at: v2.1 Steward Console SHIPPED — Phase 8 verified (AGENCY-05 closed, 18/18 plans = 100%)
-Resume file: None
-Next action: Run `/gsd-new-milestone` to open v2.2, OR `/gsd-discuss-phase` against a new phase if v2.2 scope is already defined in ROADMAP/PROJECT.
+Last session: 2026-04-21T19:00:00.000Z
+Stopped at: v2.2 Living Grid opened — PROJECT.md updated, phases archived, research spawning
+Resume file: `.planning/research/v2.2/SUMMARY.md` (when synthesis completes)
+Next action: After research completes, define REQUIREMENTS.md per category (DRIVE, BIOS, CHRONOS, REL, VOTE, WHISPER, REPLAY, RIG) then roadmap starting Phase 9.
+
+## v2.2 Opening Context
+
+**v2.2 Living Grid** — 6 themes, MVP depth per theme, Phase numbering continues from 8 (v2.2 Phase 9+).
+
+**Themes (user-confirmed 2026-04-21):**
+1. Rich Inner Life — Ananke (drives), Bios (bodily needs), Chronos (time-perception)
+2. Relationship & Trust — persistent Nous↔Nous graph, reputation-weighted interactions
+3. Governance & Law — voting primitives, proposal lifecycle, Nous-collective law enactment
+4. Mesh Whisper — WHISPER-01 sidechannel (smallest-viable, not full mesh)
+5. Operator Observability — replay/rewind/export on the 18-event audit chain
+6. Observer / Researcher Tools — spawn-N-Nous rigs, 10,000+ tick runs, dataset export
+
+**Archived phases:** v2.1 Phases 05–08 moved to `.planning/phases/archived/v2.1/`. v2.0 Phases 01–04 already in `.planning/phases/archived/v2.0/`.
+
+**Hard v2.2 invariants (inherited, non-negotiable):**
+- Broadcast allowlist frozen at 18 — grows ONLY by explicit per-phase addition. Every new event type requires sole-producer boundary + closed-tuple payload + privacy matrix + doc-sync regression update in the same commit.
+- Zero-diff audit chain — every new listener (drives engine, relationship tracker, vote tallier, whisper subscriber, replay engine) is pure-observer. Listener count must not mutate chain hash.
+- Hash-only cross-boundary — Brain↔Grid plaintext never crosses the wire for drives / needs / relationship memories / vote contents. Same discipline as Telos (Phase 6/7).
+- Closed-tuple payloads — no spread operators, no dynamic keys; `Object.keys().sort()` strict-equality assertions on every new event.
+- First-life promise — audit entries retained forever. No purge. Applies to tombstoned Nous (established v2.1 Phase 8) and now to all new event types.
+- DID regex `/^did:noesis:[a-z0-9_\-]+$/i` — same at all entry points for new routes.
+- Copy-verbatim pattern (established D-04/D-05) — any destructive/irreversible UX copy frozen in test assertions.
 
 ## Accumulated Context (Plan 06-02 additions)
 
