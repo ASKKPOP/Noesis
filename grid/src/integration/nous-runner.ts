@@ -14,7 +14,7 @@ import type { SpatialMap } from '../space/map.js';
 import type { AuditChain } from '../audit/chain.js';
 import type { NousRegistry } from '../registry/registry.js';
 import type { EconomyManager } from '../economy/config.js';
-import type { BrainAction, IBrainBridge } from './types.js';
+import type { BrainAction, IBrainBridge, MemoryEntry } from './types.js';
 import { Reviewer } from '../review/index.js';
 import { VALID_REVIEW_FAILURE_CODES } from '../review/types.js';
 
@@ -306,6 +306,32 @@ export class NousRunner {
     async getState(): Promise<Record<string, unknown>> {
         if (!this.bridge.connected) return { error: 'not connected' };
         return this.bridge.getState();
+    }
+
+    /**
+     * H2 Reviewer memory query passthrough (Phase 6 AGENCY-02).
+     *
+     * Thin passthrough to the brain bridge — NousRunner does NOT cache, log,
+     * or mutate the response. Audit writes for operator.inspected happen at
+     * the Fastify handler (single producer-boundary per D-13).
+     */
+    async queryMemory(
+        params: { query: string; limit?: number },
+    ): Promise<{ entries: MemoryEntry[] }> {
+        return this.bridge.queryMemory(params);
+    }
+
+    /**
+     * H4 Driver force-Telos passthrough (Phase 6 AGENCY-02).
+     *
+     * Thin passthrough. Returns ONLY the SHA-256 hashes — goal contents
+     * never touch grid-side code (D-19 hash-only invariant). Audit writes
+     * for operator.telos_forced happen at the Fastify handler.
+     */
+    async forceTelos(
+        newTelos: Record<string, unknown>,
+    ): Promise<{ telos_hash_before: string; telos_hash_after: string }> {
+        return this.bridge.forceTelos(newTelos);
     }
 
     get connected(): boolean {

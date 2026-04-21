@@ -6,7 +6,7 @@
  */
 
 import { RPCClient, type RPCClientConfig } from './rpc-client.js';
-import type { BrainAction, MessageParams, TickParams, EventParams } from './types.js';
+import type { BrainAction, MessageParams, TickParams, EventParams, MemoryEntry } from './types.js';
 
 export interface BrainBridgeConfig {
     socketPath: string;
@@ -61,6 +61,41 @@ export class BrainBridge {
     async getState(): Promise<Record<string, unknown>> {
         const result = await this.client.call('brain.getState', {});
         return (result as Record<string, unknown>) || {};
+    }
+
+    /**
+     * H2 Reviewer memory query.
+     *
+     * Returns normalized memory entries — each entry carries only
+     * {timestamp, kind, summary}. Full memory (importance, source_did,
+     * location, tick, raw content) is deliberately dropped at the RPC
+     * boundary per PHILOSOPHY §1 (sovereignty) and D-11 (no prompts / raw
+     * thoughts cross the Brain boundary).
+     */
+    async queryMemory(
+        params: { query: string; limit?: number },
+    ): Promise<{ entries: MemoryEntry[] }> {
+        const result = await this.client.call(
+            'brain.queryMemory',
+            params as unknown as Record<string, unknown>,
+        );
+        return (result as { entries: MemoryEntry[] }) ?? { entries: [] };
+    }
+
+    /**
+     * H4 Driver force-Telos.
+     *
+     * Submits a new Telos to the Brain, which rebuilds its active Telos
+     * from the payload and returns ONLY the SHA-256 hashes before/after.
+     * Goal contents (descriptions, priorities, progress) NEVER cross this
+     * boundary — the grid-side audit event (operator.telos_forced) must
+     * therefore log only the hash diff (D-19 hash-only invariant).
+     */
+    async forceTelos(
+        newTelos: Record<string, unknown>,
+    ): Promise<{ telos_hash_before: string; telos_hash_after: string }> {
+        const result = await this.client.call('brain.forceTelos', { new_telos: newTelos });
+        return result as { telos_hash_before: string; telos_hash_after: string };
     }
 
     get connected(): boolean {

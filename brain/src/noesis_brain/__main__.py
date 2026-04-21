@@ -190,6 +190,10 @@ def create_brain_app(
 
     rpc.register("brain.getState", get_state_handler)
 
+    # Phase 6 AGENCY-02 — operator-agency handlers (H2 Reviewer, H4 Driver).
+    rpc.register("brain.queryMemory", handler.query_memory)
+    rpc.register("brain.forceTelos", handler.force_telos)
+
     return BrainApp(handler=handler, rpc=rpc, nous_name=nous_name)
 
 

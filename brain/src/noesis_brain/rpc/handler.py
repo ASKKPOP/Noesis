@@ -11,6 +11,7 @@ from noesis_brain.llm.base import LLMAdapter, LLMError
 from noesis_brain.llm.types import GenerateOptions
 from noesis_brain.psyche.types import PersonalityDimension, Psyche
 from noesis_brain.prompts.system import build_system_prompt
+from noesis_brain.telos.hashing import compute_active_telos_hash
 from noesis_brain.telos.manager import TelosManager
 from noesis_brain.thymos.tracker import ThymosTracker
 from noesis_brain.thymos.types import Emotion
@@ -311,3 +312,102 @@ class BrainHandler:
         elif style == "playful":
             return f"Interesting, {sender_name}! Let me think on that."
         return f"I hear you, {sender_name}."
+
+    # ────────────────────────────────────────────────────────────────────
+    # Phase 6 AGENCY-02 — operator-agency handlers (H2 Reviewer, H4 Driver)
+    #
+    # Both methods produce a normalized, minimal response so the grid-side
+    # privacy invariant (no raw content / no plaintext Telos crosses the
+    # RPC boundary) can be enforced structurally. The Brain owns full
+    # memory + Telos plaintext; the Grid only ever sees summaries / hashes.
+    # ────────────────────────────────────────────────────────────────────
+
+    async def query_memory(self, params: dict[str, Any]) -> dict[str, Any]:
+        """H2 Reviewer memory query — normalised entries only.
+
+        Each entry is reduced to ``{timestamp, kind, summary}`` via
+        ``_normalise_memory_entry``. Raw content beyond ``summary``
+        (importance, source_did, tick, location, embeddings, etc.) is
+        deliberately dropped at this boundary. Returning richer fields
+        would violate D-11 (Brain sovereignty) and make the grid-side
+        operator-payload-privacy invariant unenforceable at source.
+
+        params:
+            query: substring to match against memory content (case-insensitive).
+                   Empty string returns the most recent entries.
+            limit: max entries to return (default 20, clamped to [1, 100]).
+
+        Returns:
+            {"entries": [{timestamp, kind, summary}, ...]}
+        """
+        query_raw = params.get("query", "")
+        query = str(query_raw).strip().lower() if query_raw is not None else ""
+
+        limit_raw = params.get("limit", 20)
+        try:
+            limit = int(limit_raw) if limit_raw is not None else 20
+        except (TypeError, ValueError):
+            limit = 20
+        # Clamp to sane bounds — prevents unbounded scans / DoS through the operator path.
+        limit = max(1, min(100, limit))
+
+        if self.memory is None:
+            return {"entries": []}
+
+        try:
+            # Over-fetch slightly so substring filtering still has material to work with.
+            # `recent()` returns newest-first; we filter then truncate to `limit`.
+            pool = self.memory.recent(limit=max(limit * 3, limit))
+        except Exception as exc:  # pragma: no cover — defensive fallback
+            log.warning("memory.recent() failed in query_memory: %s", exc)
+            return {"entries": []}
+
+        entries: list[dict[str, Any]] = []
+        for raw in pool:
+            normalised = self._normalise_memory_entry(raw)
+            if query and query not in normalised["summary"].lower():
+                continue
+            entries.append(normalised)
+            if len(entries) >= limit:
+                break
+
+        return {"entries": entries}
+
+    async def force_telos(self, params: dict[str, Any]) -> dict[str, Any]:
+        """H4 Driver force-Telos — rebuild active Telos, return hash diff only.
+
+        Per D-19 (hash-only H4), the response carries NO goal contents — only
+        the 64-hex SHA-256 hashes before and after the rebuild. The grid-side
+        audit event (operator.telos_forced) is structured to log exactly these
+        hashes and nothing else, which is the sole closure for T-6-06 (Telos
+        plaintext leak through the audit chain).
+
+        params:
+            new_telos: dict with optional keys "short_term", "medium_term",
+                       "long_term" — each a list of description strings. This
+                       is the TelosManager.from_yaml contract.
+
+        Returns:
+            {"telos_hash_before": <64-hex>, "telos_hash_after": <64-hex>}
+        """
+        new_telos_raw = params.get("new_telos", {})
+        if not isinstance(new_telos_raw, dict):
+            new_telos_raw = {}
+
+        # Snapshot the old hash from the currently active goals. Using the
+        # canonical helper (SOLE hash authority per hashing.py) guarantees
+        # cross-boundary comparability with grid-recorded hashes.
+        telos_hash_before = compute_active_telos_hash(self.telos.all_goals())
+
+        # Atomic rebuild — from_yaml constructs a fresh manager. We swap the
+        # instance under ``self.telos`` only AFTER the rebuild succeeds so a
+        # malformed payload cannot partially corrupt the goal set.
+        rebuilt = TelosManager.from_yaml(new_telos_raw)
+        self.telos = rebuilt
+
+        telos_hash_after = compute_active_telos_hash(self.telos.all_goals())
+
+        return {
+            "telos_hash_before": telos_hash_before,
+            "telos_hash_after": telos_hash_after,
+        }

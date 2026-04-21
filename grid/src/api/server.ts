@@ -27,14 +27,37 @@ import { WsHub } from './ws-hub.js';
 import { registerOperatorRoutes } from './operator/index.js';
 
 /**
+ * Phase 6 AGENCY-02: normalized memory entry shape crossing the RPC boundary.
+ *
+ * Duplicated locally from `grid/src/integration/types.ts` so the API layer has
+ * no direct dependency on integration types (keeps buildServer testable with a
+ * stub runner that doesn't depend on the full IBrainBridge surface).
+ */
+export interface InspectorMemoryEntry {
+    timestamp: string;
+    kind: string;
+    summary: string;
+}
+
+/**
  * Inspector runner accessor — returns an object that can report connection
  * state and fetch the brain's get_state dict. NousRunner satisfies this shape;
  * tests pass a fake. The accessor returns undefined when no runner exists for
  * the given DID.
+ *
+ * Phase 6 AGENCY-02 extensions: `queryMemory` (H2 Reviewer) and `forceTelos`
+ * (H4 Driver). Both are optional on the interface so legacy test fakes that
+ * only wire `getState` still compile — handlers must null-check at runtime.
  */
 export interface InspectorRunner {
     connected: boolean;
     getState(): Promise<Record<string, unknown>>;
+    queryMemory?(
+        params: { query: string; limit?: number },
+    ): Promise<{ entries: InspectorMemoryEntry[] }>;
+    forceTelos?(
+        newTelos: Record<string, unknown>,
+    ): Promise<{ telos_hash_before: string; telos_hash_after: string }>;
 }
 
 export interface GridServices {
