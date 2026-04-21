@@ -15,6 +15,8 @@ import type { AuditChain } from '../audit/chain.js';
 import type { NousRegistry } from '../registry/registry.js';
 import type { EconomyManager } from '../economy/config.js';
 import type { BrainAction, IBrainBridge } from './types.js';
+import { Reviewer } from '../review/index.js';
+import { VALID_REVIEW_FAILURE_CODES } from '../review/types.js';
 
 export interface NousRunnerConfig {
     nousDid: string;
@@ -24,6 +26,7 @@ export interface NousRunnerConfig {
     audit: AuditChain;
     registry: NousRegistry;
     economy: EconomyManager;
+    reviewer: Reviewer;  // Phase 5 (D-02): synchronous pre-commit reviewer, singleton-per-Grid
 }
 
 export type SpeakHandler = (runner: NousRunner, channel: string, text: string, tick: number) => void;
@@ -37,6 +40,7 @@ export class NousRunner {
     private readonly audit: AuditChain;
     private readonly registry: NousRegistry;
     private readonly economy: EconomyManager;
+    private readonly reviewer: Reviewer;
 
     private speakHandler: SpeakHandler | null = null;
 
@@ -48,6 +52,7 @@ export class NousRunner {
         this.audit = config.audit;
         this.registry = config.registry;
         this.economy = config.economy;
+        this.reviewer = config.reviewer;
     }
 
     /** Register handler called when this Nous speaks (for message routing). */
@@ -115,21 +120,38 @@ export class NousRunner {
                 }
 
                 case 'trade_request': {
-                    // Privacy-first trade settlement (Plan 04-01 D8, Pitfall 4):
-                    //   - NEVER read action.text or action.channel into the audit payload
-                    //   - Emit exactly one trade.settled on success with keys
-                    //     {counterparty, amount, nonce} — nothing else
-                    //   - Emit exactly one trade.rejected with {reason, nonce} on failure
+                    // Phase 5 (REV-01, REV-02) — 3-event flow:
+                    //     trade.proposed → reviewer.review() → trade.reviewed → [trade.settled | break]
+                    // Privacy-first: explicit keys only, no spread of raw metadata (T-5-04 mitigation).
+                    // T-5-06 mitigation: trade.proposed is appended to AuditChain BEFORE reviewer runs.
+                    //   AuditChain.append is synchronous → proposed is durably in the chain before
+                    //   reviewer.review() is called. Integration tests assert proposed.id < reviewed.id.
+                    // T-5-02 mitigation: before emitting trade.reviewed{fail}, assert
+                    //   VALID_REVIEW_FAILURE_CODES.has(verdict.failure_reason) — runtime backstop
+                    //   at the JSON boundary for the closed-enum contract.
                     const md = action.metadata ?? {};
                     const counterpartyRaw = md['counterparty'];
                     const amountRaw = md['amount'];
                     const nonceRaw = md['nonce'];
+                    const memoryRefsRaw = md['memoryRefs'];
+                    const telosHashRaw = md['telosHash'];
 
                     const counterparty = typeof counterpartyRaw === 'string' ? counterpartyRaw : null;
                     const amount = typeof amountRaw === 'number' && Number.isFinite(amountRaw) ? amountRaw : null;
                     const nonce = typeof nonceRaw === 'string' ? nonceRaw : null;
+                    const memoryRefs = Array.isArray(memoryRefsRaw) && memoryRefsRaw.every(r => typeof r === 'string')
+                        ? (memoryRefsRaw as string[])
+                        : null;
+                    const telosHash = typeof telosHashRaw === 'string' ? telosHashRaw : null;
 
-                    if (counterparty === null || amount === null || nonce === null) {
+                    if (
+                        counterparty === null ||
+                        amount === null ||
+                        nonce === null ||
+                        memoryRefs === null ||
+                        telosHash === null
+                    ) {
+                        // Transport-layer error — do NOT emit trade.proposed or trade.reviewed.
                         this.audit.append('trade.rejected', this.nousDid, {
                             reason: 'malformed_metadata',
                             nonce: nonce ?? null,
@@ -137,6 +159,59 @@ export class NousRunner {
                         break;
                     }
 
+                    // ─ T-5-06: proposed MUST land on chain before reviewer runs.
+                    this.audit.append('trade.proposed', this.nousDid, {
+                        counterparty,
+                        amount,
+                        nonce,
+                        memoryRefs,
+                        telosHash,
+                    });
+
+                    // ─ Synchronous review (D-02). No RPC, no async, no I/O — determinism invariant (D-13).
+                    // T-5-05 reminder: telosHash is a structural-attest only in Phase 5; Phase 7
+                    // TelosRegistry will upgrade this to a registry-backed identity binding. DO NOT
+                    // treat telosHash as an auth token here.
+                    const proposer = this.registry.get(this.nousDid);
+                    const proposerBalance = proposer?.ousia ?? 0;
+                    const verdict = this.reviewer.review({
+                        proposerDid: this.nousDid,
+                        proposerBalance,
+                        counterparty,
+                        amount,
+                        memoryRefs,
+                        telosHash,
+                    });
+
+                    if (verdict.verdict === 'fail') {
+                        // T-5-02 runtime backstop — closed enum at JSON emit boundary.
+                        if (!VALID_REVIEW_FAILURE_CODES.has(verdict.failure_reason)) {
+                            throw new Error(
+                                `Reviewer returned unknown failure_reason '${verdict.failure_reason}' — ` +
+                                `not in VALID_REVIEW_FAILURE_CODES.`,
+                            );
+                        }
+                        this.audit.append('trade.reviewed', Reviewer.DID, {
+                            trade_id: nonce,
+                            reviewer_did: Reviewer.DID,
+                            verdict: 'fail',
+                            failed_check: verdict.failed_check,
+                            failure_reason: verdict.failure_reason,
+                        });
+                        // NO transferOusia, NO trade.settled, NO trade.rejected on reviewer fail.
+                        break;
+                    }
+
+                    // Pass path — emit trade.reviewed{pass}, then proceed with existing bounds +
+                    // transferOusia + trade.settled.
+                    this.audit.append('trade.reviewed', Reviewer.DID, {
+                        trade_id: nonce,
+                        reviewer_did: Reviewer.DID,
+                        verdict: 'pass',
+                    });
+
+                    // Existing policy check — bounds is Grid-level min/max transfer (NOT a reviewer
+                    // invariant; reviewer owns positive-amount, bounds owns min/max range).
                     const bounds = this.economy.validateTransfer(amount);
                     if (!bounds.valid) {
                         this.audit.append('trade.rejected', this.nousDid, {
@@ -146,6 +221,11 @@ export class NousRunner {
                         break;
                     }
 
+                    // Defensive library-level guard — reviewer invariants make 'insufficient',
+                    // 'invalid_amount', 'self_transfer' unreachable in Phase 5. 'not_found' remains
+                    // reachable when the counterparty DID parses but isn't registered — reviewer
+                    // checks DID format, not registry membership (intentional — registry lookup
+                    // would break Phase 5's no-RPC/no-state-read-beyond-ctx invariant at check time).
                     const result = this.registry.transferOusia(this.nousDid, counterparty, amount);
                     if (!result.success) {
                         this.audit.append('trade.rejected', this.nousDid, {
