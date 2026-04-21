@@ -7,8 +7,8 @@ import {
 } from '../src/audit/broadcast-allowlist.js';
 
 describe('broadcast-allowlist: default-deny membership', () => {
-    it('has exactly 10 locked v1 event types', () => {
-        expect(ALLOWLIST.size).toBe(10);
+    it('has exactly 11 locked v1+Phase 5 event types', () => {
+        expect(ALLOWLIST.size).toBe(11);
     });
 
     it.each([
@@ -17,6 +17,7 @@ describe('broadcast-allowlist: default-deny membership', () => {
         'nous.spoke',
         'nous.direct_message',
         'trade.proposed',
+        'trade.reviewed',
         'trade.settled',
         'law.triggered',
         'tick',
@@ -39,7 +40,9 @@ describe('broadcast-allowlist: default-deny membership', () => {
 
     it('ALLOWLIST is frozen — runtime mutation throws', () => {
         expect(() => (ALLOWLIST as Set<string>).add('law.bypassed')).toThrow(TypeError);
-        expect(ALLOWLIST.size).toBe(10);
+        expect(() => (ALLOWLIST as Set<string>).delete('trade.reviewed')).toThrow(TypeError);
+        expect(() => (ALLOWLIST as Set<string>).clear()).toThrow(TypeError);
+        expect(ALLOWLIST.size).toBe(11);
     });
 });
 
