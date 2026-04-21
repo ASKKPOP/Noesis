@@ -85,21 +85,46 @@ function payloadPreview(payload: Record<string, unknown>): string {
 
 export interface FirehoseRowProps {
     readonly entry: AuditEntry;
+    /**
+     * Phase 7 (Plan 07-04 Task 3): optional dialogue_id filter. When non-null,
+     * rows that do NOT match receive `opacity-40 pointer-events-none` — the
+     * dim-not-hide invariant (AC-4-3-3). When null or undefined, row renders
+     * identically to pre-Phase-7 (zero-diff, AC-4-3-4).
+     *
+     * Match predicate: entry.eventType === 'telos.refined' AND
+     *                  entry.payload.triggered_by_dialogue_id === filter.value
+     */
+    readonly dialogueFilter?: { key: 'dialogue_id'; value: string } | null;
 }
 
-export function FirehoseRow({ entry }: FirehoseRowProps): React.ReactElement {
+export function FirehoseRow({
+    entry,
+    dialogueFilter = null,
+}: FirehoseRowProps): React.ReactElement {
     const presence = usePresence();
     const category = categorizeEventType(entry.eventType);
     const resolvedName = presence.nameOf(entry.actorDid);
     const actorDisplay =
         resolvedName ?? (entry.actorDid === 'system' ? 'system' : truncateDid(entry.actorDid));
 
+    // Phase 7: dim-not-hide when dialogue_id filter active and row doesn't
+    // match. Row is a match iff it's a telos.refined event whose
+    // triggered_by_dialogue_id equals the filter value.
+    const isMatch =
+        dialogueFilter === null ||
+        (entry.eventType === 'telos.refined' &&
+            typeof entry.payload === 'object' &&
+            entry.payload !== null &&
+            (entry.payload as { triggered_by_dialogue_id?: string })
+                .triggered_by_dialogue_id === dialogueFilter.value);
+    const dimClass = isMatch ? '' : ' opacity-40 pointer-events-none';
+
     return (
         <li
             role="listitem"
             data-testid="firehose-row"
             data-event-id={entry.id ?? ''}
-            className="flex items-center gap-2 h-[28px] px-3 border-b border-neutral-800/60 font-mono text-[12px] leading-[1.3] hover:bg-neutral-900/50 hover:border-l hover:border-l-sky-300"
+            className={`flex items-center gap-2 h-[28px] px-3 border-b border-neutral-800/60 font-mono text-[12px] leading-[1.3] hover:bg-neutral-900/50 hover:border-l hover:border-l-sky-300${dimClass}`}
         >
             <span className="text-neutral-500 w-[72px] shrink-0 tabular-nums">
                 {formatTimestamp(entry.createdAt)}
