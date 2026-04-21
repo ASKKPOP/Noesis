@@ -68,7 +68,7 @@ export function AgencyIndicator(): React.ReactElement {
                     if (e.key === 'Escape') setTooltipOpen(false);
                 }}
             >
-                <span role="status" aria-label={ariaLabel}>
+                <span role="status">
                     <Chip label={label} color={TIER_COLOR[tier]} testId="agency-chip" />
                 </span>
             </button>

@@ -61,10 +61,13 @@ describe('AgencyIndicator — default render (H1)', () => {
         expect(screen.getByTestId('agency-indicator')).not.toBeNull();
     });
 
-    it('exposes role="status" with tier info in aria-label', () => {
+    it('exposes role="status" and surfaces tier info via the trigger aria-label', () => {
         render(<AgencyIndicator />);
-        const status = screen.getByRole('status');
-        const label = status.getAttribute('aria-label') ?? '';
+        // role="status" is a live region so screen readers announce tier flips.
+        expect(screen.getByRole('status')).not.toBeNull();
+        // The accessible name lives on the outer button (avoid double-announce
+        // with the inner live region per code-review MED-02).
+        const label = screen.getByRole('button').getAttribute('aria-label') ?? '';
         expect(label).toContain('Current agency tier: H1 Observer');
         expect(label).toContain('Read-only.');
     });
@@ -99,8 +102,8 @@ describe('AgencyIndicator — tier reactivity', () => {
         act(() => {
             agencyStore.setTier('H3');
         });
-        const status = screen.getByRole('status');
-        const label = status.getAttribute('aria-label') ?? '';
+        // aria-label is on the outer button (MED-02: single accessible name).
+        const label = screen.getByRole('button').getAttribute('aria-label') ?? '';
         expect(label).toContain('Current agency tier: H3 Partner');
         expect(label).toContain('Elevation active.');
     });

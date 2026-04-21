@@ -40,6 +40,7 @@ export interface TierTooltipProps {
 export function TierTooltip({ activeTier }: TierTooltipProps): React.ReactElement {
     return (
         <div
+            id="tier-tooltip"
             role="tooltip"
             data-testid="tier-tooltip"
             className="absolute right-0 top-full mt-1 w-[360px] rounded border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-200 shadow-lg"
