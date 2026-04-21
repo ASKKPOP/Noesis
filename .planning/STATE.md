@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Steward Console — Phases 5-8
-status: Ready to open Phase 7 (Peer Dialogue → Telos Refinement) via `/gsd-discuss-phase`.
-stopped_at: Phase 6 shipped — all 6 plans green (01..06); 16-event broadcast allowlist reconciled; E2E SC gates pinned
-last_updated: "2026-04-21T06:38:06.487Z"
-last_activity: 2026-04-21
+status: executing
+stopped_at: Plan 07-01 shipped — Grid DialogueAggregator + computeDialogueId + TickParams widening + pause-drain (562/562 tests green)
+last_updated: "2026-04-21T01:45:00.000Z"
+last_activity: 2026-04-21 -- Plan 07-01 shipped (Grid-side DIALOG-01 satisfied)
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 11
-  completed_plans: 11
-  percent: 100
+  total_plans: 15
+  completed_plans: 12
+  percent: 80
 ---
 
 # Project State
@@ -22,16 +22,17 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** The first persistent Grid where Nous actually live — observable, running continuously, with real cognitive cycles, real trades, and real social dynamics emerging from the systems.
 **Current milestone:** v2.1 — Steward Console
-**Current focus:** Phase 6 — operator-agency-foundation-h1-h4
+**Current focus:** Phase 07 — peer-dialogue-telos-refinement
 
 ## Current Position
 
-Phase: 7
-Plans shipped: 01, 02, 03, 04, 05, 06 (all 6 plans of Phase 6 green; AGENCY-01..04 complete).
-Status: Ready to open Phase 7 (Peer Dialogue → Telos Refinement) via `/gsd-discuss-phase`.
-Last activity: 2026-04-21
+Phase: 07 (peer-dialogue-telos-refinement) — EXECUTING
+Plan: 2 of 4
+Plans shipped: 01, 02, 03, 04, 05, 06 (Phase 6 complete) + 07-01 (Phase 7 Wave 1 complete — Grid-side DIALOG-01 satisfied).
+Status: Executing Phase 07 — Plan 07-01 shipped, Plan 07-02 next (Brain telos.refined action)
+Last activity: 2026-04-21 -- Plan 07-01 shipped (562/562 grid tests green)
 
-Progress: [██████████] 100% (11/11 plans — Phase 5 shipped + Phase 6 shipped)
+Progress: [████████▒▒] 80% (12/15 plans — Phase 5 + Phase 6 + Phase 7 Wave 1 shipped)
 
 ## Accumulated Context
 
@@ -123,10 +124,10 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 
 ## Session Continuity
 
-Last session: 2026-04-21T06:38:06.484Z
-Stopped at: Phase 6 shipped — all 6 plans green (01..06); 16-event broadcast allowlist reconciled; E2E SC gates pinned
+Last session: 2026-04-21T01:45:00.000Z
+Stopped at: Plan 07-01 shipped — Grid DialogueAggregator + computeDialogueId + TickParams widening + pause-drain (562/562 green)
 Resume file: None
-Next action: Open Phase 7 (Peer Dialogue → Telos Refinement) via `/gsd-discuss-phase`
+Next action: Execute Plan 07-02 (Brain telos.refined action) via `/gsd-execute-plan`
 
 ## Accumulated Context (Plan 06-02 additions)
 
@@ -158,3 +159,17 @@ Next action: Open Phase 7 (Peer Dialogue → Telos Refinement) via `/gsd-discuss
 - **Test-hook exposure pattern:** `window.__agencyStore` and `window.__testTriggerH4Force` are exposed ONLY when `NEXT_PUBLIC_E2E_TESTHOOKS === '1'`. Playwright config webServer.env sets this flag for test runs; production builds elide the branch via dead-code elimination. Grep-verifiable: `.next/static` never contains `__agencyStore` when built with the flag unset.
 - **H5 Inspector affordance (SC#5):** Phase 6 Plan 02 & 03 did NOT land the visible-disabled "Delete Nous" button in the Inspector drawer — Plan 06-06 added it as a Rule 2 auto-fix. Testid is `inspector-h5-delete`; styling follows D-20 (line-through, neutral-600 text, `aria-disabled="true"`, `title="Requires Phase 8"`, `tabIndex={0}` so keyboard reaches it but no handler bound).
 - **WCAG contrast human-verify:** Phase 6 terminates with a human-verify checkpoint surfacing tier-color contrast in the real dark theme (H2 #60A5FA, H3 #FCD34D, H4 #F87171 on neutral-950). Automation-only gates (SC#1/#4/#5 Playwright, 40-case payload privacy, zero-diff pause/resume) are all green; the human check covers what jsdom anti-aliasing cannot sample reliably.
+
+## Accumulated Context (Plan 07-01 additions)
+
+- **Plan 07-01 shipped (2026-04-21):** Grid-side DIALOG-01 satisfied. `DialogueAggregator` subscribes to `AuditChain.onAppend`, buffers `nous.spoke` events per bidirectional pair (keyed by `sortedDids.join('|')|channel`), and surfaces `DialogueContext` to both participants on their next `sendTick` when ≥`minExchanges` (default 2) bidirectional utterances land within `windowTicks` (default 5). Commits: `f13d015` (aggregator + dialogue_id + zero-diff), `edac3c8` (TickParams widening + BrainAction variant + recentDialogueIds seam), `1596a52` (launcher/coordinator wiring + pause-drain). Full grid suite 562/562 (baseline 538 + 24 new dialogue tests).
+- **Zero-diff invariant extended (Phase 7):** 100 `nous.spoke` appends × 0 vs N listeners → byte-identical `entries[].eventHash` arrays. DialogueAggregator joins ReviewerNous as a pure-observer listener. Regression test: `grid/test/dialogue/zero-diff.test.ts`. Chain head remains stable across listener count (invariant unbroken since commit `29c3516`, Phase 1).
+- **Delivery keyed per-(pair, did) not per-pair (D-26 correction):** a pair-level delivery marker would silently skip the second participant. Delivery map key is `${sortedDids.join('|')}|${channel}|${did}` — each participant receives the same `DialogueContext` exactly once on their own tick. Load-bearing line: `grid/src/dialogue/aggregator.ts` inside `drainPending()`.
+- **drainPending does NOT prune (Phase 7 discipline):** windowing is enforced at INGEST time only (the `onAppend` listener prunes then pushes). Calling `pruneWindow()` inside `drainPending()` caused the "caps at 5" test to fail when drain happened many ticks after the last utterance (minTick > all buffered ticks → empty buffer). Rule: aggregator buffers are always window-valid at rest; drain simply matches against `minExchanges`.
+- **Aggregator construction order locked:** `GenesisLauncher` constructor MUST construct `this.aggregator` AFTER `this.audit` — the `AuditChain.onAppend` listener binds to the specific instance the Grid uses. Reversing the order silently breaks delivery (listener attaches to a discarded instance). Comment-guarded in `grid/src/genesis/launcher.ts`.
+- **TelosRefinedAction union extension ships WITHOUT handler (Plan 03 seam):** `BrainAction` gains the variant now so Plan 07-02 (Brain) can emit it without grid type errors. `NousRunner.actOn` has NO `case 'telos_refined':` branch — verified by `grep -rn "case 'telos_refined'" grid/src/integration/nous-runner.ts` returning only comment references. Handler lands in Plan 07-03.
+- **recentDialogueIds is a 100-cap insertion-ordered Set on `NousRunner`:** FIFO eviction via `Set.values().next()`. No wall-clock, no tick-indexed cleanup. Plan 07-03's authority check reads the set to reject Brain-returned `telos_refined` actions whose `triggered_by_dialogue_id` was never delivered to this Nous (forgery prevention). Test accessor: `_recentDialogueIdsForTest: ReadonlySet<string>`.
+- **Pause-drain producer boundary is `launcher.drainDialogueOnPause()`:** HTTP handler in `grid/src/api/operator/clock-pause-resume.ts` invokes `services.drainDialogueOnPause?.()` AFTER `services.clock.pause()`. Keeps `WorldClock` tier-agnostic and concentrates the drain call site in one testable place. Idempotent — re-invoking on an already-empty aggregator is a no-op. D-04 covered by `boundary.test.ts` Test 8.
+- **Pull-query tick delivery with sequential reduction:** `GridCoordinator.onTick` calls `aggregator.drainPending(runner.nousDid, tick)` BEFORE `runner.tick(...)`. When a runner has multiple pending contexts, they are delivered via sequential `Promise.reduce` (one `runner.tick()` call per context) to preserve per-context reasoning ordering (D-11). Empty-array path short-circuits to the plain `runner.tick(tick, epoch)` call — no allocation overhead when no dialogue is pending.
+- **Broadcast allowlist UNCHANGED at 16:** Plan 07-01 adds NO allowlist events. `telos.refined` addition lands in Plan 07-03. Freeze-except-by-explicit-addition rule preserved.
+- **Pre-existing tsc errors deferred:** `grid/src/db/connection.ts:46` (mysql2.execute overload) and `grid/src/main.ts:73,75,76` (DatabaseConnection.fromConfig arity) pre-exist on master. Tests don't need tsc (vitest isolated transform). Logged to `.planning/phases/07-peer-dialogue-telos-refinement/deferred-items.md` for future maintenance plan.

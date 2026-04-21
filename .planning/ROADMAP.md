@@ -67,7 +67,11 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
   3. Dashboard Inspector Telos panel renders a "↻ refined via dialogue" badge on any Telos goal whose history contains a `telos.refined` event, and the badge links to the firehose entries of the triggering dialogue (queryable by `triggered_by_dialogue_id`).
   4. AuditChain integrity: a 100-tick simulation with dialogue aggregation enabled and `telos.refined` actions emitted produces a deterministic, verifiable chain — `AuditChain.verify()` returns `{valid: true}` and determinism holds across 0 vs 10 listeners.
   5. The dialogue aggregation threshold (N) is configurable via Grid config and is covered by at least one test that varies N and asserts aggregation fires / does not fire at the boundary.
-**Plans**: TBD (estimate 3-4 plans: Grid dialogue aggregator + tick window, Brain `telos.refined` action + handler, allowlist + hash-only event, Inspector badge + firehose link)
+**Plans**: 4 plans
+  - [x] 07-01-PLAN.md — Grid DialogueAggregator + computeDialogueId + TickParams widening + pause-drain (DIALOG-01, Wave 1) — shipped 2026-04-21
+  - [ ] 07-02-PLAN.md — Brain `telos.refined` action + handler (Wave 2)
+  - [ ] 07-03-PLAN.md — Grid `telos_refined` handler + `telos.refined` audit event allowlist addition (Wave 3)
+  - [ ] 07-04-PLAN.md — Dashboard Inspector Telos-panel badge + firehose link (Wave 4)
 **UI hint**: yes
 
 ### Phase 8: H5 Sovereign Operations (Nous Deletion)
@@ -91,7 +95,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
 |-------|----------------|--------|-----------|
 | 5. ReviewerNous — Objective-Only Pre-Commit Review | 5/5 | ✅ Complete | 2026-04-21 |
 | 6. Operator Agency Foundation (H1–H4) | 6/6 | Complete    | 2026-04-21 |
-| 7. Peer Dialogue → Telos Refinement | 0/TBD | Not started | — |
+| 7. Peer Dialogue → Telos Refinement | 1/4 | In progress | — |
 | 8. H5 Sovereign Operations (Nous Deletion) | 0/TBD | Not started | — |
 
 ## Research Artifacts
