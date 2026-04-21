@@ -33,6 +33,14 @@ The first persistent Grid where Nous actually live — observable, running conti
 - ✓ **DASH-03**: Nous inspector showing personality, goals, emotions, memory highlights — v2.0 Sprint 14 Phase 4
 - ✓ **DASH-04**: Audit trail viewer (AuditChain events) — v2.0 Sprint 14 Phase 3
 - ✓ **DASH-05**: Trade history and economy overview — v2.0 Sprint 14 Phase 4
+- ✓ **REV-01**: ReviewerNous validates proposed trades against objective invariants before settlement — v2.1 Phase 5 (shipped 2026-04-21)
+  → Validated in Phase 5
+- ✓ **REV-02**: `trade.reviewed` audit event (allowlisted) records review outcome + rejection reason — v2.1 Phase 5 (shipped 2026-04-21)
+  → Validated in Phase 5
+- ✓ **REV-03**: ReviewerNous deployed as system singleton (opt-in peer review deferred) — v2.1 Phase 5 (shipped 2026-04-21)
+  → Validated in Phase 5
+- ✓ **REV-04**: Reviewer never makes subjective judgments — enforced via closed-enum reason codes + subjective-keyword lint gate — v2.1 Phase 5 (shipped 2026-04-21)
+  → Validated in Phase 5
 
 ## Current Milestone: v2.1 Steward Console
 
@@ -49,8 +57,8 @@ The first persistent Grid where Nous actually live — observable, running conti
 
 <!-- Sprint 15 v2.1 Steward Console — in planning. -->
 
-- [ ] **REV-01**: ReviewerNous validates proposed trades against objective invariants before settlement
-- [ ] **REV-02**: `trade.reviewed` audit event (allowlisted) records review outcome + rejection reason if any
+<!-- REV-01..04 shipped in Phase 5 (2026-04-21) — moved to Validated above. -->
+
 - [ ] **AGENCY-01**: Dashboard header displays current operator agency tier (H1–H5)
 - [ ] **AGENCY-02**: Operator interventions (inspect, pause, law-change, force-Telos, delete) each map to a default tier and require explicit elevation when the action exceeds H1
 - [ ] **AGENCY-03**: `operator.*` audit events record the tier at commit time

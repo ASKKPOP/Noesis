@@ -14,7 +14,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
 
 ## Phases
 
-- [ ] **Phase 5: ReviewerNous — Objective-Only Pre-Commit Review** — Singleton reviewer, `trade.reviewed` allowlist addition, closed-enum reason codes, Grid abort flow, subjective-check lint gate.
+- [x] **Phase 5: ReviewerNous — Objective-Only Pre-Commit Review** ✅ Complete (2026-04-21) — Singleton reviewer, `trade.reviewed` allowlist addition, closed-enum reason codes, Grid abort flow, subjective-check lint gate.
 - [ ] **Phase 6: Operator Agency Foundation (H1–H4)** — `operator.*` allowlist additions, tier-stamped audit events, Agency Indicator header, elevation confirmation dialog, tier map for inspect / pause / law-change / force-Telos.
 - [ ] **Phase 7: Peer Dialogue → Telos Refinement** — Grid dialogue aggregation, Brain `telos.refined` action, hash-only `telos.refined` audit event, Inspector Telos-panel badge.
 - [ ] **Phase 8: H5 Sovereign Operations (Nous Deletion)** — Irreversibility warning, DID-typed confirmation, pre-deletion forensic state hash, `operator.nous_deleted` audit event, audit-chain preservation invariant.
@@ -35,8 +35,8 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
   - [x] 05-01-PLAN.md — Closed-enum types + 5 objective check handlers + REV-04 subjective-keyword lint gate
   - [x] 05-02-PLAN.md — Reviewer singleton + first-fail-wins loop + public barrel
   - [x] 05-03-PLAN.md — Brain schema extension (memoryRefs + telosHash) + nous-runner 3-event rewrite + main.ts bootstrap wiring
-  - [ ] 05-04-PLAN.md — Allowlist addition (`trade.reviewed`) + D-12 privacy regression + D-13 zero-diff invariant regression
-  - [ ] 05-05-PLAN.md — STATE.md D-11 reconciliation + `scripts/check-state-doc-sync.mjs` regression gate + ship-time doc sync
+  - [x] 05-04-PLAN.md — Allowlist addition (`trade.reviewed`) + D-12 privacy regression + D-13 zero-diff invariant regression
+  - [x] 05-05-PLAN.md — STATE.md D-11 reconciliation + `scripts/check-state-doc-sync.mjs` regression gate + ship-time doc sync
 
 ### Phase 6: Operator Agency Foundation (H1–H4)
 **Goal**: Every operator-initiated action declares a tier, elevates explicitly above H1, and records the tier at commit time; the dashboard makes the current tier unmissable.
@@ -83,8 +83,8 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. ReviewerNous — Objective-Only Pre-Commit Review | 2/5 | In progress | — |
-| 6. Operator Agency Foundation (H1–H4) | 0/TBD | Not started | — |
+| 5. ReviewerNous — Objective-Only Pre-Commit Review | 5/5 | ✅ Complete | 2026-04-21 |
+| 6. Operator Agency Foundation (H1–H4) | 0/TBD | Next up | — |
 | 7. Peer Dialogue → Telos Refinement | 0/TBD | Not started | — |
 | 8. H5 Sovereign Operations (Nous Deletion) | 0/TBD | Not started | — |
 

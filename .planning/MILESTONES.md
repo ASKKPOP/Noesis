@@ -55,5 +55,29 @@
 - Operator Agency Tiers — H1–H5 first-class UI concept with tier-stamped audit events (AGENCY-01, AGENCY-02, AGENCY-03)
 - Peer Dialogue Memory — `telos.refined` from two-Nous exchanges (DIALOG-01, DIALOG-02)
 
+### Sprint 15 / v2.1 — Phase 5 SHIPPED
+
+**Shipped:** 2026-04-21
+**Phase:** 5 — ReviewerNous — Objective-Only Pre-Commit Review
+**Requirements closed:** REV-01, REV-02, REV-03, REV-04
+**Plans:** 5/5 (05-01, 05-02, 05-03, 05-04, 05-05)
+
+**Key artifacts shipped:**
+- `grid/src/review/` module — 5 objective-invariant check handlers (balance, counterparty DID, positive integer amount, memory-ref existence, no contradicting Telos)
+- Closed-enum `ReviewFailureCode` — reason codes are never free-form text (REV-02)
+- REV-04 subjective-keyword lint gate — test fails if a handler mentions fairness/wisdom/taste/quality/novelty
+- Reviewer singleton at `did:noesis:reviewer` with first-fail-wins dispatch loop (REV-03)
+- Brain schema extension: `memoryRefs: list[str]` + `telosHash: str` on `trade_request` action
+- 3-event audit flow: `trade.proposed` → `trade.reviewed` → `trade.settled` (REV-01, REV-02)
+- 11-event broadcast allowlist (was 10 pre-Phase-5) — `trade.reviewed` added
+- D-12 privacy regression test: `memoryRefs`/`telosHash` NEVER leak to broadcast payload
+- D-13 zero-diff invariant regression test: 100-tick sim with reviewer matches bypass hash modulo allowed `trade.reviewed` entries
+- D-11 STATE.md reconciliation — phantom `trade.countered` purged, 11-event enumeration explicit
+- `scripts/check-state-doc-sync.mjs` — new CI gate against future STATE.md drift
+
+**Key decisions locked:** D-01..D-13 (see `.planning/phases/05-reviewernous-objective-only-pre-commit-review/05-CONTEXT.md`)
+
+**Next up:** Phase 6 — Operator Agency Foundation (H1–H4)
+
 ---
-*Last updated: 2026-04-20*
+*Last updated: 2026-04-21 — Phase 5 shipped*

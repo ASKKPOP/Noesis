@@ -125,6 +125,8 @@ Humans own Nous through signed ownership proofs. Scoped consent grants: observe,
 
 **v2.1 Steward Console — IN PROGRESS** (Sprint 15, opened 2026-04-20). Turning the dashboard from zoo-cam into a stewarded environment: ReviewerNous (objective-only pre-commit checks), Operator Agency Tiers (H1–H5, Human Agency Scale as first-class UI), Peer Dialogue Memory (two-Nous exchanges mutate goals via `telos.refined`).
 
+**v2.1 Phase 5 — ReviewerNous — SHIPPED** (2026-04-21). Every `trade.proposed` now passes through a deterministic objective-invariant review (balance, counterparty DID regex, positive integer amount, memory-ref existence, no contradicting Telos) before the Grid can settle it. Review verdicts are audit-observable via the new allowlisted `trade.reviewed` event. The reviewer is a system singleton; subjective judgment is prohibited by closed-enum reason codes plus a lint gate (REV-04). Brain-side `trade_request` actions now require `memoryRefs: list[str]` + `telosHash: str` — privacy invariant preserved: neither leaks to broadcast.
+
 **Test coverage:** grid 346/346, brain 262/262, dashboard 215/215 — all green as of v2.0 ship.
 
 | Milestone | Sprints | Deliverables |
