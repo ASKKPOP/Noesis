@@ -29,6 +29,7 @@ import { DID_REGEX } from '../server.js';
 import type { ApiError } from '../types.js';
 import { appendOperatorEvent } from '../../audit/operator-events.js';
 import { validateTierBody, type OperatorBody } from './_validation.js';
+import { tombstoneCheck, TombstonedDidError } from '../../registry/tombstone-check.js';
 
 interface QueryBody extends OperatorBody {
     query?: unknown;
@@ -56,6 +57,19 @@ export function registerMemoryQueryRoute(
             if (!DID_REGEX.test(targetDid)) {
                 reply.code(400);
                 return { error: 'invalid_did' } satisfies ApiError;
+            }
+
+            // 2a. Tombstone check — 410 if DID already deleted (AGENCY-05 D-28).
+            if (services.registry) {
+                try {
+                    tombstoneCheck(services.registry, targetDid);
+                } catch (err) {
+                    if (err instanceof TombstonedDidError) {
+                        reply.code(410);
+                        return { error: 'gone', deleted_at_tick: err.deletedAtTick } as ApiError & { deleted_at_tick: number };
+                    }
+                    throw err;
+                }
             }
 
             // 3. Query-body validation.

@@ -25,6 +25,7 @@ import type {
 } from './types.js';
 import { WsHub } from './ws-hub.js';
 import { registerOperatorRoutes } from './operator/index.js';
+import { tombstoneCheck, TombstonedDidError } from '../registry/tombstone-check.js';
 
 /**
  * Phase 6 AGENCY-02: normalized memory entry shape crossing the RPC boundary.
@@ -188,6 +189,20 @@ export function buildServerWithHub(
                 reply.code(400);
                 return { error: 'invalid_did' } satisfies ApiError;
             }
+
+            // Tombstone check — 410 if DID already deleted (AGENCY-05 D-28).
+            if (services.registry) {
+                try {
+                    tombstoneCheck(services.registry, did);
+                } catch (err) {
+                    if (err instanceof TombstonedDidError) {
+                        reply.code(410);
+                        return { error: 'gone', deleted_at_tick: err.deletedAtTick } as ApiError & { deleted_at_tick: number };
+                    }
+                    throw err;
+                }
+            }
+
             const getRunner = services.getRunner;
             const runner = getRunner ? getRunner(did) : undefined;
             if (!runner) {

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Steward Console — Phases 5-8
-status: verifying
-stopped_at: Phase 8 UI-SPEC approved
-last_updated: "2026-04-21T11:04:47.582Z"
-last_activity: 2026-04-21
+status: executing
+stopped_at: Phase 8 plans approved (08-01, 08-02, 08-03)
+last_updated: "2026-04-21T11:50:42.582Z"
+last_activity: 2026-04-21 -- Phase 08 execution started
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 15
+  total_plans: 18
   completed_plans: 15
-  percent: 100
+  percent: 83
 ---
 
 # Project State
@@ -22,15 +22,15 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** The first persistent Grid where Nous actually live — observable, running continuously, with real cognitive cycles, real trades, and real social dynamics emerging from the systems.
 **Current milestone:** v2.1 — Steward Console
-**Current focus:** Phase 07 — peer-dialogue-telos-refinement
+**Current focus:** Phase 08 — h5-sovereign-operations-nous-deletion
 
 ## Current Position
 
-Phase: 07 (peer-dialogue-telos-refinement) — ✅ VERIFIED PASS (2026-04-21)
-Plan: 4 of 4 (all shipped)
+Phase: 08 (h5-sovereign-operations-nous-deletion) — EXECUTING
+Plan: 1 of 3
 Plans shipped: 01, 02, 03, 04, 05, 06 (Phase 6 complete) + 07-01, 07-02, 07-03, 07-04 (Phase 7 complete + verified — DIALOG-01/02/03 closed).
-Status: Phase 7 verified — ready to open Phase 8 (H5 Sovereign Operations — Nous Deletion).
-Last activity: 2026-04-21
+Status: Executing Phase 08
+Last activity: 2026-04-21 -- Phase 08 execution started
 
 Progress: [██████████] 100% (15/15 plans — Phases 5, 6, 7 verified complete)
 
@@ -59,9 +59,9 @@ Progress: [██████████] 100% (15/15 plans — Phases 5, 6, 7 
 
 Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule preserved.
 
-### Broadcast allowlist (Phase 7 — post-ship, Plan 07-03)
+### Broadcast allowlist (Phase 8 — post-ship, Plan 08-02)
 
-**17 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
+**18 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
 
 1. `nous.spawned`
 2. `nous.moved`
@@ -80,10 +80,11 @@ Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule p
 15. `operator.law_changed` ← NEW in Phase 6 (AGENCY-03)
 16. `operator.telos_forced` ← NEW in Phase 6 (AGENCY-03)
 17. `telos.refined` ← NEW in Phase 7 (DIALOG-02) — hash-only autonomous Telos refinement from peer dialogue
+18. `operator.nous_deleted` ← NEW in Phase 8 (AGENCY-05) — H5 Sovereign Operations, closed 5-key payload: {tier, action, operator_id, target_did, pre_deletion_state_hash}
 
 Phantom `trade.countered` is NOT emitted and NOT allowlisted — never shipped in code, removed from this enumeration per D-11. If/when the full trade counter-offer handshake ships it earns its own allowlist slot in its own phase.
 
-Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 17-event invariant.
+Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 18-event invariant.
 
 ### Research foundation for v2.1
 
@@ -125,9 +126,9 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 
 ## Session Continuity
 
-Last session: 2026-04-21T11:04:47.577Z
-Stopped at: Phase 8 UI-SPEC approved
-Resume file: .planning/phases/08-h5-sovereign-operations-nous-deletion/08-UI-SPEC.md
+Last session: 2026-04-21T11:49:55.737Z
+Stopped at: Phase 8 plans approved (08-01, 08-02, 08-03)
+Resume file: .planning/phases/08-h5-sovereign-operations-nous-deletion/08-01-PLAN.md
 Next action: Execute Plan 07-04 (Phase 7 closure — E2E integration, demo, doc-sync) via `/gsd-execute-plan`
 
 ## Accumulated Context (Plan 06-02 additions)
