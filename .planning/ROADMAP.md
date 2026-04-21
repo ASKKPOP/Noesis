@@ -90,7 +90,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 5. ReviewerNous — Objective-Only Pre-Commit Review | 5/5 | ✅ Complete | 2026-04-21 |
-| 6. Operator Agency Foundation (H1–H4) | 6/6 | Complete   | 2026-04-21 |
+| 6. Operator Agency Foundation (H1–H4) | 6/6 | Complete    | 2026-04-21 |
 | 7. Peer Dialogue → Telos Refinement | 0/TBD | Not started | — |
 | 8. H5 Sovereign Operations (Nous Deletion) | 0/TBD | Not started | — |
 
