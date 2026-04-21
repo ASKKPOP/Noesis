@@ -21,6 +21,20 @@ export class LogosEngine {
         return this.laws.delete(id);
     }
 
+    /**
+     * Phase 6 / D-18: replace-in-place amendment. Returns the amended law
+     * or undefined if the id is unknown. Identity (`id`) is preserved — the
+     * type `Partial<Omit<Law, 'id'>>` guarantees this at compile time, and
+     * the spread re-sets `id: id` at runtime to defend against casts.
+     */
+    amendLaw(id: string, updates: Partial<Omit<Law, 'id'>>): Law | undefined {
+        const existing = this.laws.get(id);
+        if (!existing) return undefined;
+        const amended: Law = { ...existing, ...updates, id };
+        this.laws.set(id, amended);
+        return amended;
+    }
+
     getLaw(id: string): Law | undefined {
         return this.laws.get(id);
     }

@@ -20,6 +20,7 @@ export class WorldClock {
     private readonly listeners: Set<TickListener> = new Set();
     private timer: ReturnType<typeof setInterval> | null = null;
     private startedAt = 0;
+    private paused = false;
 
     constructor(config: TickerConfig = {}) {
         this.tickRateMs = config.tickRateMs ?? 30000;
@@ -37,6 +38,32 @@ export class WorldClock {
             clearInterval(this.timer);
             this.timer = null;
         }
+    }
+
+    /**
+     * Pause the clock — clears the interval timer without advancing the
+     * counter or resetting startedAt. Zero-diff invariant (commit 29c3516
+     * / D-17): a paused+resumed run must produce an AuditChain head hash
+     * byte-identical to a continuous run that reaches the same tick.
+     * Idempotent: calling pause() when already paused (or never started)
+     * is a no-op.
+     */
+    pause(): void {
+        if (this.paused || !this.timer) return;
+        clearInterval(this.timer);
+        this.timer = null;
+        this.paused = true;
+    }
+
+    /**
+     * Resume a paused clock. Idempotent: resume-when-not-paused is a no-op.
+     * Does NOT reset startedAt or the tick counter — preserves determinism
+     * across the pause boundary (D-17 / worldclock-zero-diff.test.ts).
+     */
+    resume(): void {
+        if (!this.paused) return;
+        this.paused = false;
+        this.timer = setInterval(() => this.advance(), this.tickRateMs);
     }
 
     /** Manually advance one tick (useful for testing). */
@@ -79,6 +106,10 @@ export class WorldClock {
 
     get running(): boolean {
         return this.timer !== null;
+    }
+
+    get isPaused(): boolean {
+        return this.paused;
     }
 
     get currentTick(): number {
