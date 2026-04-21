@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Steward Console — Phases 5-8
 status: executing
-stopped_at: Plan 07-02 shipped — Brain ActionType.TELOS_REFINED + _build_refined_telos + dialogue_context consumption (brain 295/295 green)
-last_updated: "2026-04-21T08:58:45.358Z"
+stopped_at: Plan 07-03 shipped — Grid telos_refined handler + appendTelosRefined producer boundary + allowlist 16→17 (grid 585/585 green)
+last_updated: "2026-04-21T10:00:00.000Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 15
-  completed_plans: 13
-  percent: 87
+  completed_plans: 14
+  percent: 93
 ---
 
 # Project State
@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 ## Current Position
 
 Phase: 07 (peer-dialogue-telos-refinement) — EXECUTING
-Plan: 3 of 4
-Plans shipped: 01, 02, 03, 04, 05, 06 (Phase 6 complete) + 07-01, 07-02 (Phase 7 Wave 2 complete — Brain-side DIALOG-02 satisfied).
-Status: Ready to execute
+Plan: 4 of 4
+Plans shipped: 01, 02, 03, 04, 05, 06 (Phase 6 complete) + 07-01, 07-02, 07-03 (Phase 7 Wave 3 complete — Grid producer boundary + allowlist 17).
+Status: Ready to execute (07-04 final integration)
 Last activity: 2026-04-21
 
-Progress: [█████████░] 87% (13/15 plans — Phase 5 + Phase 6 + Phase 7 Waves 1-2 shipped)
+Progress: [█████████▌] 93% (14/15 plans — Phase 5 + Phase 6 + Phase 7 Plans 01-03 shipped)
 
 ## Accumulated Context
 
@@ -59,9 +59,9 @@ Progress: [█████████░] 87% (13/15 plans — Phase 5 + Phase 
 
 Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule preserved.
 
-### Broadcast allowlist (Phase 6 — post-ship)
+### Broadcast allowlist (Phase 7 — post-ship, Plan 07-03)
 
-**16 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
+**17 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
 
 1. `nous.spawned`
 2. `nous.moved`
@@ -79,10 +79,11 @@ Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule p
 14. `operator.resumed` ← NEW in Phase 6 (AGENCY-03)
 15. `operator.law_changed` ← NEW in Phase 6 (AGENCY-03)
 16. `operator.telos_forced` ← NEW in Phase 6 (AGENCY-03)
+17. `telos.refined` ← NEW in Phase 7 (DIALOG-02) — hash-only autonomous Telos refinement from peer dialogue
 
 Phantom `trade.countered` is NOT emitted and NOT allowlisted — never shipped in code, removed from this enumeration per D-11. If/when the full trade counter-offer handshake ships it earns its own allowlist slot in its own phase.
 
-Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 16-event invariant.
+Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 17-event invariant.
 
 ### Research foundation for v2.1
 
@@ -124,10 +125,10 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 
 ## Session Continuity
 
-Last session: 2026-04-21T09:30:00.000Z
-Stopped at: Plan 07-02 shipped — Brain ActionType.TELOS_REFINED + _build_refined_telos + dialogue_context consumption (brain 295/295 green)
+Last session: 2026-04-21T10:00:00.000Z
+Stopped at: Plan 07-03 shipped — Grid `case 'telos_refined'` handler + `appendTelosRefined` sole-producer boundary + allowlist 16→17 (grid 585/585 green)
 Resume file: None
-Next action: Execute Plan 07-03 (Grid handler for telos_refined + authority check + audit emit) via `/gsd-execute-plan`
+Next action: Execute Plan 07-04 (Phase 7 closure — E2E integration, demo, doc-sync) via `/gsd-execute-plan`
 
 ## Accumulated Context (Plan 06-02 additions)
 
@@ -187,3 +188,19 @@ Next action: Execute Plan 07-03 (Grid handler for telos_refined + authority chec
 - **Test layout deviation (Rule 3):** plan specified `brain/tests/unit/*.py` + `brain/tests/fixtures/dialogue_contexts.py`. Actual Brain layout is flat `brain/test/` per `pyproject.toml` `testpaths = ["test"]`. Colocated new files under `brain/test/` with module name `dialogue_fixtures.py`; imports as `from test.dialogue_fixtures import ...`. Any future Brain TDD work follows this flat convention — do not reintroduce the subdirectory layout without also updating `pyproject.toml`.
 - **Brain test fixture pattern:** `brain/test/dialogue_fixtures.py` exposes `make_dialogue_context(**overrides)` (well-formed, matches "Survive the day") and `make_dialogue_context_no_match()` (unrelated weather topic). Default `dialogue_id="a1b2c3d4e5f60718"` (16-hex). Pattern mirrors Grid-side `grid/test/dialogue/fixtures.ts` for cross-layer symmetry in future integration tests (Plan 07-03).
 - **Broadcast allowlist UNCHANGED at 16:** Plan 07-02 is Brain-only — no Grid changes, no allowlist mutation, no audit emission. `telos.refined` allowlist addition lands in Plan 07-03 where the Grid handler wraps the action → audit event. Freeze-except-by-explicit-addition rule preserved.
+
+## Accumulated Context (Plan 07-03 additions)
+
+- **Plan 07-03 shipped (2026-04-21):** Grid-side DIALOG-02 satisfied. Broadcast allowlist bumped 16→17 with `telos.refined` at position 17 (hash-only autonomous Telos refinement from peer dialogue). `NousRunner.executeActions` gained a `case 'telos_refined':` branch that applies the `recentDialogueIds` authority check (forgery guard T-07-20), extracts the 3 metadata keys, and routes through the new sole-producer helper `appendTelosRefined`. Commits: `8f916a2` (RED — 3 new test files / 16 failing), `449cba8` (GREEN — allowlist 17 + producer helper + index exports; Rule 1 auto-fix of broadcast-allowlist.test.ts 16→17), `6350676` (RED — integration test / 2 failing), `97040b9` (GREEN — runner branch + import). Full grid suite 585/585 (baseline 562 + 23 new: 4 allowlist-seventeen + 10 telos-refined-privacy + 2 producer-boundary + 6 runner-branch + 1 existing-test bump).
+- **Producer-boundary discipline (D-31 / Phase-6 clone):** `grid/src/audit/append-telos-refined.ts` is the SOLE file project-wide that calls `audit.append('telos.refined', ...)`. Enforcement: `grid/test/audit/telos-refined-producer-boundary.test.ts` greps all `grid/src/**` for the `chain.append[^;]{0,200}['"]telos\.refined['"]` pattern and fails if any file other than `audit/append-telos-refined.ts` matches. Mirrors the Phase 6 `appendOperatorEvent` contract-drift gate — future direct `audit.append(...)` regressions surface immediately in CI.
+- **Closed 4-key payload tuple (D-20):** `telos.refined` payload is `{did, before_goal_hash, after_goal_hash, triggered_by_dialogue_id}` ONLY. `appendTelosRefined` rejects any other key via `Object.keys(payload).sort()` strict-equality check. Explicit object reconstruction (no spread, no rest) guarantees no prototype pollution or accidental key leak. Leaky Brain metadata (e.g. `new_goals`, `prompt`, `response`) is silently dropped at the runner boundary — only the 3 metadata keys the runner extracts reach `appendTelosRefined`.
+- **Self-report invariant (D-31):** `appendTelosRefined` enforces `payload.did === actorDid` — a Nous cannot announce someone else's Telos refinement. A mismatch throws `TypeError` at the producer boundary, preventing forged cross-DID audit entries even if a compromised runner somehow constructed one.
+- **Regex lockdown at 3 shapes:** `DID_RE = /^did:noesis:[a-z0-9_\-]+$/i` (same regex as the 3 Phase 6 entry points), `HEX64_RE = /^[0-9a-f]{64}$/` (matches `grid/src/api/operator/_validation.ts`), `DIALOGUE_ID_RE = /^[0-9a-f]{16}$/` (truncated SHA-256 first-16-chars per Plan 07-01's `generateDialogueId` output). All three are re-exported from `grid/src/audit/index.ts` as `TELOS_REFINED_DID_RE`, `TELOS_REFINED_HEX64_RE`, `DIALOGUE_ID_RE` for downstream consumers.
+- **Authority check (T-07-20 forgery guard):** `NousRunner.executeActions` case `'telos_refined'` rejects silently (no audit emit, no error log) if `action.metadata.triggered_by_dialogue_id ∉ this.recentDialogueIds`. A Brain that fabricates a `dialogue_id` it never received via `dialogue_context` produces zero audit side effects. Test coverage: `telos-refined-runner-branch.test.ts::"unknown dialogue_id drops silently — no audit entry"`. Ties together Plan 07-01's 100-cap `recentDialogueIds` Set with Plan 07-02's hash-only Brain emission — the dialogue_id round-trip is the cryptographic-style authority token.
+- **Privacy belt-and-suspenders (D-21):** `appendTelosRefined` runs `payloadPrivacyCheck(cleanPayload)` as step 4, AFTER the closed-tuple check guarantees the payload only carries the 4 hash/DID/dialogue_id keys (natively privacy-clean). The gate is a regression check, not the primary defense — its purpose is to fail future edits that accidentally widen the payload shape. Privacy matrix `telos-refined-privacy.test.ts` proves the gate fires correctly on each of the 6 forbidden keywords (`prompt|response|wiki|reflection|thought|emotion_delta`) and on a nested case.
+- **Silent-drop discipline at runner boundary:** Following Phase 5/6 precedent (transport-layer rejections for trade reviewer / operator endpoint validation), the `case 'telos_refined':` branch uses `try { appendTelosRefined(...) } catch { /* silent drop */ }` rather than logging. Rationale: the producer boundary's `TypeError` throws are regression-test signal (they should NEVER fire in shipped code), not operational errors. If they DO fire in production, the test suite has already broken — logging adds noise without actionable signal.
+- **Zero-diff invariant UNBROKEN across Plan 07-03:** `case 'telos_refined'` emits at most ONE audit entry per action and only when the authority check passes. A simulation with Brain emitting `telos_refined` actions vs one with those actions stripped produces byte-identical chain hashes EXCEPT for the added `telos.refined` entries (structurally identical to Phase 5/6 zero-diff treatment). No side-effect on other listeners; DialogueAggregator does not react to `telos.refined` (it subscribes to `nous.spoke` only, per Plan 07-01).
+- **`nous-runner.ts` has no logger import:** the Phase 6 runner branches (e.g. operator event routing) do NOT use a logger — they use silent break / comment semantics. Plan 07-03 follows the same convention. Rule: if a `telos_refined` action is malformed or forged, the drop is silent at the runner; the Brain-side emission path should already have produced a canonical action per Plan 07-02. No logger was introduced solely for this plan.
+- **Test files colocated under `grid/test/audit/` and `grid/test/integration/`:** `allowlist-seventeen.test.ts` + `telos-refined-privacy.test.ts` + `telos-refined-producer-boundary.test.ts` live next to `broadcast-allowlist.test.ts` (same-domain co-location). `telos-refined-runner-branch.test.ts` lives under `grid/test/integration/` since it exercises the full NousRunner + AuditChain + fake Brain bridge. No tests moved from existing locations.
+- **Rule 1 auto-fix of `broadcast-allowlist.test.ts`:** bumping `ALLOWLIST.size` 16→17 broke two Phase 6 assertions (`expect(ALLOWLIST.size).toBe(16)` at lines asserting frozen-tuple invariance). Auto-fixed by updating both literals to `17` and appending `'telos.refined'` to the `it.each` enumeration. Updated test-title comment to mention "Phase 5+Phase 6+Phase 7 event types" for ongoing traceability.
+- **Broadcast allowlist NOW 17 events:** Freeze-except-by-explicit-addition rule preserved. Next scheduled addition: `operator.nous_deleted` in Phase 8 (H5 nous-delete consent dialog). No other allowlist additions pending across v2.1.
