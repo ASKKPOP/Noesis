@@ -24,6 +24,7 @@ import type {
     ShopsResponse,
 } from './types.js';
 import { WsHub } from './ws-hub.js';
+import { registerOperatorRoutes } from './operator/index.js';
 
 /**
  * Inspector runner accessor — returns an object that can report connection
@@ -253,6 +254,12 @@ export function buildServerWithHub(
         }
         return law;
     });
+
+    // --- Phase 6 Plan 04: Operator routes (AGENCY-02 H3 + AGENCY-03) ---
+    // All operator.* audit writes inside this registrar go through
+    // appendOperatorEvent — enforces tier-required + payload-privacy at the
+    // single producer boundary.
+    registerOperatorRoutes(app, services);
 
     // --- Audit ---
 
