@@ -41,29 +41,41 @@ The first persistent Grid where Nous actually live — observable, running conti
   → Validated in Phase 5
 - ✓ **REV-04**: Reviewer never makes subjective judgments — enforced via closed-enum reason codes + subjective-keyword lint gate — v2.1 Phase 5 (shipped 2026-04-21)
   → Validated in Phase 5
+- ✓ **AGENCY-01**: Dashboard Agency Indicator renders H1–H5 tier with tooltip — v2.1 Phase 6 (shipped 2026-04-21)
+  → Validated in Phase 6
+- ✓ **AGENCY-02**: Per-action default tier + explicit elevation confirmation above H1; tier map covers inspect/memory-query/pause/law-change/force-Telos/delete — v2.1 Phase 6 (shipped 2026-04-21)
+  → Validated in Phase 6
+- ✓ **AGENCY-03**: `operator.*` events record tier at commit time; 5 new allowlist members at closed-tuple payloads — v2.1 Phase 6 (shipped 2026-04-21)
+  → Validated in Phase 6
+- ✓ **AGENCY-04**: Elevation dialog ("Entering H3 — Co-decision. This will be logged.") covers one action; closure-capture race-safety — v2.1 Phase 6 (shipped 2026-04-21)
+  → Validated in Phase 6
+- ✓ **AGENCY-05**: H5 irreversible Nous deletion with DID-typed confirmation + pre-deletion state hash + `operator.nous_deleted` + audit-chain preservation forever — v2.1 Phase 8 (shipped 2026-04-21)
+  → Validated in Phase 8
+- ✓ **DIALOG-01**: Grid aggregates ≥2 bidirectional `nous.spoke` in sliding window and surfaces `dialogue_context` to both participants — v2.1 Phase 7 (shipped 2026-04-21)
+  → Validated in Phase 7
+- ✓ **DIALOG-02**: `telos.refined` allowlisted with closed 4-key hash-only payload; `recentDialogueIds` authority check at producer boundary — v2.1 Phase 7 (shipped 2026-04-21)
+  → Validated in Phase 7
+- ✓ **DIALOG-03**: Inspector Telos panel renders `↻ refined via dialogue (N)` badge linking to filtered firehose — v2.1 Phase 7 (shipped 2026-04-21)
+  → Validated in Phase 7
 
-## Current Milestone: v2.1 Steward Console
+## Current Milestone: v2.1 Steward Console — SHIPPED (2026-04-21)
 
-**Goal:** Turn the dashboard from zoo-cam into a stewarded environment — operators can intervene at explicit agency tiers, Nous can review each other's proposed actions on objective invariants, and peer dialogue meaningfully mutates goals.
+**Status:** Closed 2026-04-21, 18/18 plans = 100%. All requirements REV-01..04, AGENCY-01..05, DIALOG-01..03 validated across Phases 5–8.
 
-**Target features:**
-- **ReviewerNous** — Agentic Reviewer pattern (Zou, Stanford HAI): objective-only pre-commit checks on trade proposals (balance, DID, memory refs, goal contradictions). No subjective judgment.
-- **Operator Agency Tiers (H1–H5)** — Human Agency Scale (arxiv 2506.06576) as first-class UI concept. Dashboard header shows current tier; every operator.* event records tier at commit time.
-- **Peer Dialogue Memory** — SPARC-inspired: two-Nous conversations can emit `telos.refined` events, mutating internal state without requiring Grid-level external commits.
+**Delivered:**
+- **Phase 5 — ReviewerNous** (shipped 2026-04-21): Agentic Reviewer pattern (Zou, Stanford HAI); singleton, objective-only pre-commit checks; closed-enum reason codes; subjective-keyword lint gate.
+- **Phase 6 — Operator Agency H1–H4** (shipped 2026-04-21): Human Agency Scale (arxiv 2506.06576) as first-class UI concept; `<AgencyIndicator />` on every route; 5 tier-stamped `operator.*` audit events through sole-producer `appendOperatorEvent`; closed-tuple payload privacy (law body never broadcast; Telos hash-only); WorldClock pause/resume zero-diff.
+- **Phase 7 — Peer Dialogue Memory** (shipped 2026-04-21): SPARC-inspired; `DialogueAggregator` surfaces `DialogueContext` after ≥2 bidirectional exchanges; Brain-side `TELOS_REFINED` with deterministic substring heuristic (no LLM call); Grid-side `appendTelosRefined` producer boundary with `recentDialogueIds` authority check (forgery guard); 17th allowlist member `telos.refined` with closed 4-key hash-only payload.
+- **Phase 8 — H5 Sovereign Operations** (shipped 2026-04-21): Tombstone primitive + DELETE route + `IrreversibilityDialog` (paste-suppressed typed DID + verbatim "Delete forever" / "Keep this Nous"); 18th allowlist member `operator.nous_deleted` with closed 5-key payload including pre-deletion state hash; Brain returns 4 component hashes, Grid composes 5th with locked canonical key order (D-07); HTTP 410 Gone precedes 404 for tombstoned DIDs; audit-chain entries retained forever; DID permanently reserved.
 
-**Research source:** `.planning/research/stanford-peer-agent-patterns.md` (committed 9bb3046)
+**Research source:** `.planning/research/stanford-peer-agent-patterns.md` (committed 9bb3046 2026-04-20) — Agentic Reviewer → Phase 5; H1–H5 Agency Scale → Phase 6 + Phase 8; SPARC peer dialogue → Phase 7; mesh-vs-star → centralized kept, mesh deferred to Sprint 16+ (WHISPER-01).
+
+**Next milestone:** v2.2 (scope TBD via `/gsd-new-milestone`).
 
 ### Active
 
-<!-- Sprint 15 v2.1 Steward Console — in planning. -->
-
-<!-- REV-01..04 shipped in Phase 5 (2026-04-21) — moved to Validated above. -->
-
-- [ ] **AGENCY-01**: Dashboard header displays current operator agency tier (H1–H5)
-- [ ] **AGENCY-02**: Operator interventions (inspect, pause, law-change, force-Telos, delete) each map to a default tier and require explicit elevation when the action exceeds H1
-- [ ] **AGENCY-03**: `operator.*` audit events record the tier at commit time
-- [ ] **DIALOG-01**: Brain receives back-and-forth Nous conversation as context on next get_state call
-- [ ] **DIALOG-02**: `telos.refined` audit event emitted when dialogue surfaces a goal refinement (hash-only payload)
+<!-- v2.1 Steward Console SHIPPED 2026-04-21 — all REV-01..04, AGENCY-01..05, DIALOG-01..03 moved to Validated above. -->
+<!-- No active requirements. v2.2 requirements will land here after `/gsd-new-milestone`. -->
 
 ### Out of Scope
 

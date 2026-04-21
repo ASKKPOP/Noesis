@@ -10,7 +10,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
 
 - ✅ **v1.0 Genesis** (shipped 2026-04-17) — Phases 1-10, 944+ TS tests, 226 Py tests
 - ✅ **v2.0 First Life Sprints 11-14** (shipped 2026-04-18) — E2E, persistence, Docker, Dashboard v1
-- 🚧 **v2.1 Steward Console — Phases 5-8** (in progress, opened 2026-04-20)
+- ✅ **v2.1 Steward Console — Phases 5-8** (shipped 2026-04-21, 18/18 plans)
 
 ## Phases
 

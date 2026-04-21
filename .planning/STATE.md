@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Steward Console — Phases 5-8
-status: executing
-stopped_at: Completed 08-02-PLAN.md
-last_updated: "2026-04-21T12:44:00.500Z"
+status: shipped
+stopped_at: v2.1 COMPLETE — Phase 8 verified (AGENCY-05 closed)
+last_updated: "2026-04-21T18:00:00.000Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 4
@@ -21,18 +21,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** The first persistent Grid where Nous actually live — observable, running continuously, with real cognitive cycles, real trades, and real social dynamics emerging from the systems.
-**Current milestone:** v2.1 — Steward Console
-**Current focus:** Phase 08 — h5-sovereign-operations-nous-deletion
+**Current milestone:** v2.1 — Steward Console **SHIPPED** (2026-04-21, 18/18 plans = 100%)
+**Current focus:** Milestone complete — awaiting v2.2 planning
 
 ## Current Position
 
-Phase: 08 (h5-sovereign-operations-nous-deletion) — EXECUTING
-Plan: 3 of 3
-Plans shipped: 01, 02, 03, 04, 05, 06 (Phase 6 complete) + 07-01, 07-02, 07-03, 07-04 (Phase 7 complete + verified — DIALOG-01/02/03 closed).
-Status: Ready to execute
+Phase: 08 (h5-sovereign-operations-nous-deletion) — **VERIFIED COMPLETE** (2026-04-21, VERIFICATION.md 15/15)
+Plan: 3 of 3 shipped
+v2.1 plans shipped: 05 (Phase 5 / 6 plans) + 06 (Phase 6 / 6 plans) + 07-01..04 (Phase 7) + 08-01..03 (Phase 8) = **18/18 plans**.
+Status: v2.1 Steward Console milestone closed. Ready for v2.2 planning via `/gsd-new-milestone`.
 Last activity: 2026-04-21
 
-Progress: [██████████] 100% (15/15 plans — Phases 5, 6, 7 verified complete)
+Progress: [██████████] 100% (18/18 plans — Phases 5, 6, 7, 8 all verified complete)
 
 ## Accumulated Context
 
@@ -126,10 +126,10 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 
 ## Session Continuity
 
-Last session: 2026-04-21T12:44:00.497Z
-Stopped at: Completed 08-02-PLAN.md
+Last session: 2026-04-21T18:00:00.000Z
+Stopped at: v2.1 Steward Console SHIPPED — Phase 8 verified (AGENCY-05 closed, 18/18 plans = 100%)
 Resume file: None
-Next action: Execute Plan 07-04 (Phase 7 closure — E2E integration, demo, doc-sync) via `/gsd-execute-plan`
+Next action: Run `/gsd-new-milestone` to open v2.2, OR `/gsd-discuss-phase` against a new phase if v2.2 scope is already defined in ROADMAP/PROJECT.
 
 ## Accumulated Context (Plan 06-02 additions)
 

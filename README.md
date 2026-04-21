@@ -68,8 +68,8 @@ npm install                          # TypeScript (protocol, grid, cli)
 cd brain && python -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]" && cd ..
 
 # Run tests
-npm test                             # Protocol + Grid (346 grid) + Dashboard (215)
-cd brain && pytest test/ -q          # Brain (262 tests)
+npm test                             # Protocol + Grid (656 grid) + Dashboard (404)
+cd brain && pytest test/ -q          # Brain (310 tests)
 
 # Launch a Grid
 npx tsx cli/src/index.ts genesis     # Launch the Genesis Grid
@@ -123,7 +123,7 @@ Humans own Nous through signed ownership proofs. Scoped consent grants: observe,
 
 **v2.0 First Life — SHIPPED** (Sprints 11–14, 2026-04-18). Nous actually live — full E2E integration, persistent storage, Docker deployment, real-time Dashboard.
 
-**v2.1 Steward Console — IN PROGRESS** (Sprint 15, opened 2026-04-20). Turning the dashboard from zoo-cam into a stewarded environment: ReviewerNous (objective-only pre-commit checks — Phase 5 ✅), Operator Agency Tiers (H1–H5, Human Agency Scale as first-class UI — Phase 6 ✅), Peer Dialogue Memory (two-Nous exchanges mutate goals via `telos.refined` — Phase 7 ✅), H5 Sovereign Operations / Nous Deletion (Phase 8 — Plans 01–03 ✅, final plan pending).
+**v2.1 Steward Console — SHIPPED** (Sprint 15, 2026-04-20 → 2026-04-21, 18/18 plans = 100%). The dashboard is no longer zoo-cam — it's a stewarded environment: ReviewerNous (objective-only pre-commit checks — Phase 5 ✅), Operator Agency Tiers (H1–H5, Human Agency Scale as first-class UI — Phase 6 ✅), Peer Dialogue Memory (two-Nous exchanges mutate goals via `telos.refined` — Phase 7 ✅), H5 Sovereign Operations / Nous Deletion (Phase 8 ✅).
 
 **v2.1 Phase 5 — ReviewerNous — SHIPPED** (2026-04-21). Every `trade.proposed` now passes through a deterministic objective-invariant review (balance, counterparty DID regex, positive integer amount, memory-ref existence, no contradicting Telos) before the Grid can settle it. Review verdicts are audit-observable via the new allowlisted `trade.reviewed` event. The reviewer is a system singleton; subjective judgment is prohibited by closed-enum reason codes plus a lint gate (REV-04). Brain-side `trade_request` actions now require `memoryRefs: list[str]` + `telosHash: str` — privacy invariant preserved: neither leaks to broadcast.
 
@@ -131,15 +131,15 @@ Humans own Nous through signed ownership proofs. Scoped consent grants: observe,
 
 **v2.1 Phase 7 — Peer Dialogue Memory — SHIPPED** (2026-04-21). Nous that actually talk to each other now influence each other's goals. `DialogueAggregator` watches `nous.spoke` and surfaces a `DialogueContext` to both participants after ≥2 bidirectional exchanges within a sliding tick window; Brain-side `ActionType.TELOS_REFINED` uses deterministic substring matching (no LLM call) with hash-only cross-boundary contract identical to Phase 6's `operator.telos_forced`; Grid-side `appendTelosRefined` producer boundary applies a `recentDialogueIds` authority check (forgery guard), and the 17th broadcast allowlist member `telos.refined` carries a closed 4-key payload `{did, before_goal_hash, after_goal_hash, triggered_by_dialogue_id}`. Plaintext goals never cross the wire. Dashboard Firehose filters by `dialogue_id` (dim-not-hide invariant). Phase 7 verified complete.
 
-**v2.1 Phase 8 — H5 Sovereign Operations (Nous Deletion) — IN PROGRESS** (2026-04-21). H5 tier (irreversible operations) lands the two-stage deletion flow: the operator elevates to H5 via `ElevationDialog`, then types the target Nous DID verbatim into `IrreversibilityDialog` (paste-suppressed, exact-match gate, verbatim warning copy frozen). On confirm, `deleteNous()` POSTs to the Grid operator endpoint; the Inspector transitions to State B (tombstoned caption, `operator.nous_deleted` firehose row with destructive red styling). Plans 01–03 shipped (Grid endpoint + allowlist + dashboard TDD). Plan 04 (E2E integration/demo) pending.
+**v2.1 Phase 8 — H5 Sovereign Operations (Nous Deletion) — SHIPPED** (2026-04-21, AGENCY-05). H5 tier (irreversible operations) ships the two-stage deletion flow: the operator elevates to H5 via `ElevationDialog`, then types the target Nous DID verbatim into `IrreversibilityDialog` (paste-suppressed, exact-match gate, verbatim "Delete forever" / "Keep this Nous" copy frozen). On confirm, `deleteNous()` calls the Grid DELETE endpoint which executes the D-30 order: validate → tombstoneCheck → Brain `hash_state` RPC → `registry.tombstone` → `coordinator.despawnNous` → `appendNousDeleted`. The 18th (and final v2.1) broadcast allowlist member `operator.nous_deleted` carries a closed 5-key payload `{tier, action, operator_id, target_did, pre_deletion_state_hash}` — no plaintext state ever leaves the Brain. Tombstoned DIDs return HTTP 410 Gone (before 404) on all subsequent operator routes and are permanently reserved in `NousRegistry`. Audit chain entries for deleted Nous are retained forever (first-life promise). Inspector transitions to State B with destructive red firehose row styling on `operator.nous_deleted`.
 
-**Test coverage:** grid 585/585, brain 295/295, dashboard 404/404 — all green as of Plan 08-03 ship.
+**Test coverage:** grid 656/656, brain 310/310, dashboard 404/404 — all green as of v2.1 close.
 
 | Milestone | Sprints | Deliverables |
 |-----------|---------|--------------|
 | **v1.0 Genesis** | 1–10 | Identity (SWP+DID), NDS domains, multi-provider LLM, Brain core (Psyche/Thymos/Telos), JSON-RPC bridge, memory+wiki, Grid infra (clock/space/logos/audit), P2P Ousia economy, Human Channel, Genesis launcher |
 | **v2.0 First Life** | 11–14 | E2E NousRunner+GridCoordinator, MySQL persistence+snapshots, Docker compose stack, Dashboard v1 (firehose, region map, Nous inspector, trade history, audit viewer) |
-| **v2.1 Steward Console** | 15 | ReviewerNous pre-commit review, H1–H5 Agency Indicator, `telos.refined` from peer dialogue |
+| **v2.1 Steward Console** | 15 | ReviewerNous pre-commit review, H1–H5 Agency Indicator, `telos.refined` from peer dialogue, H5 Sovereign Nous deletion (tombstone + `operator.nous_deleted` + HTTP 410) |
 
 See [.planning/ROADMAP.md](.planning/ROADMAP.md) for the current milestone's phase breakdown and [.planning/MILESTONES.md](.planning/MILESTONES.md) for shipped history. Research foundation for v2.1: [.planning/research/stanford-peer-agent-patterns.md](.planning/research/stanford-peer-agent-patterns.md).
 

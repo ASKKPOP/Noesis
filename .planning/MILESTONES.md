@@ -41,7 +41,7 @@
 
 ---
 
-## v2.1: Steward Console (IN PROGRESS)
+## v2.1: Steward Console (SHIPPED — 2026-04-21, 18/18 plans)
 
 **Goal:** Turn the observational dashboard into a stewarded environment. Operators can intervene at explicit agency tiers, Nous review each other's proposed actions on objective invariants only, and peer dialogue meaningfully mutates goals.
 
@@ -132,4 +132,59 @@
 **Next up:** v2.2 milestone planning (or Phase 8 — Sovereign Nous deletion / AGENCY-05)
 
 ---
-*Last updated: 2026-04-21 — Phase 7 shipped (DIALOG-01/02/03 closed)*
+
+### v2.1 Phase 8 — H5 Sovereign Operations (Nous Deletion) — SHIPPED (2026-04-21)
+
+**Requirement:** AGENCY-05 — H5 Sovereign tier executes irreversible Nous deletion with typed-DID consent + pre-deletion state hash + runtime removal + audit-chain preservation forever.
+
+**Delivered (3 plans, 3 waves):**
+
+- **Plan 08-01 — Tombstone primitives + state hash (Wave 1)**
+  - `NousRecord.status: 'active' | 'deleted'` + `deletedAtTick?: number`; `registry.tombstone(did, tick, spatialMap)` method; `removeNous(did)` no-op on tombstoned (never unreserves DID)
+  - `grid/src/registry/tombstone-check.ts` — `tombstoneCheck()` throws `TombstonedDidError` with `statusHint=410`
+  - `grid/src/audit/state-hash.ts` — `combineStateHash({psyche, thymos, telos, memory_stream})` canonical JSON SHA-256 with **LOCKED** canonical key order `psyche→thymos→telos→memory_stream` (D-07) via engine-safe manual `canonicalSerialize`
+  - `brain/src/noesis_brain/state_hash.py` — `compute_pre_deletion_state_hash()` returns 4 component hashes; Brain composes nothing (Grid composes 5th)
+  - `brain/src/noesis_brain/rpc.py` — `hash_state` method on `BrainHandler`
+- **Plan 08-02 — DELETE route + audit producer + allowlist growth (Wave 2)**
+  - Broadcast allowlist bumped **17 → 18** with `operator.nous_deleted` at position 18; `Object.defineProperty` freeze throws `TypeError` on any mutation
+  - `grid/src/audit/append-nous-deleted.ts` — SOLE producer; validates `tier==='H5'` + `action==='delete'` + DID + HEX64; closed 5-key literal (NO spread); `Object.keys().sort()` assertion; `payload.operator_id === actorOperatorId` self-report invariant
+  - `grid/src/api/operator/delete-nous.ts` — DELETE `/api/v1/operator/nous/:did`; 9-step error ladder 400/404/410/503 (**NO 500s** anywhere); D-30 order: validate → tombstoneCheck → Brain hash_state RPC → registry.tombstone → coordinator.despawnNous → appendNousDeleted
+  - `coordinator.despawnNous(did)` — close bridge, unsubscribe tick, drop spatial
+  - `nous-runner.onTick` — tick-skip guard: `if record.status === 'deleted' return early` (STRIDE T-08-33/34)
+  - `tombstoneCheck` centralized in inspect, memory-query, telos-force, delete-nous routes — **HTTP 410 precedes 404** for tombstoned DIDs
+  - Zero-diff audit chain preserved: `nous-deleted-zero-diff.test.ts` pins `Date.now()` via `vi.setSystemTime()` for cross-listener head comparison
+  - Audit entries **never purged**: `audit-no-purge.test.ts` confirms `chain.verify()` passes after tombstone + delete; DID **permanently reserved** (re-creation rejected)
+- **Plan 08-03 — Dashboard UX: two-stage H5 flow + firehose destructive styling (Wave 3)**
+  - `IrreversibilityDialog` primitive: native `<dialog>` + `showModal()` + `role="alertdialog"` + aria-labelledby/describedby + autoFocus on Cancel + paste suppression (`onPaste preventDefault`) + Enter blocked + focus trap
+  - Copy verbatim-locked (D-04/D-05): `TITLE_COPY`, `WARNING_COPY`, `DELETE_LABEL = 'Delete forever'`, `CANCEL_LABEL = 'Keep this Nous'`, DID label — pinned in test assertions, any paraphrase fails
+  - Delete gated on exact case-sensitive `typed === targetDid` (substring-match explicitly rejected)
+  - Closure-capture race-safety (D-22): `capturedDidRef.current = targetDid` at dialog-open time — mid-flight Inspector selection change cannot mutate committed DID
+  - Two-stage elevation: `ElevationDialog(H5)` → `IrreversibilityDialog` → `deleteNous()` → auto-downgrade H5→H1 on all 4 close paths
+  - D-20/D-21 hydration rejection regression pinned: `agency-store.test.ts` proves `localStorage['noesis.operator.tier'] = 'H5'` hydrates to H1 (whitelist `{H1,H2,H3,H4}`); H2-H4 round-trip; malformed no-throw
+  - Inspector State A/B/C (active / tombstoned / loading-or-error); firehose destructive styling on `operator.nous_deleted`: `border-l-2 border-rose-900` + `bg-rose-900/20 text-rose-300` + `text-red-400 line-through` on actor
+  - Toast auto-dismiss (4s via useEffect cleanup); inline error scoped to `irrevOpen`
+
+**Crown-jewel invariants preserved:**
+- **Sole-producer boundary** — grep-verified across entire `grid/src/`: only `append-nous-deleted.ts:132` emits `operator.nous_deleted`
+- **Hash-only cross-boundary** — Brain returns 4 component hashes; Grid composes 5th with locked canonical key order; no plaintext state crosses the bridge
+- **Closed 5-key tuple** — `{tier, action, operator_id, target_did, pre_deletion_state_hash}` with structural sorted-key equality; no spread; self-report invariant
+- **Zero-diff audit chain** — unbroken since Phase 1 `29c3516`; listener count does not affect chain head
+- **First-life promise** — audit entries for deleted Nous retained forever; DID permanently reserved (no reuse)
+- **Error ladder has no 500s** — only 400/404/410/503
+- **D-30 deletion order locked** — validate → tombstoneCheck → Brain hash_state → tombstone → despawnNous → appendNousDeleted
+- **Broadcast allowlist frozen at 18** — growth-only via explicit phase addition; `scripts/check-state-doc-sync.mjs` regression gate
+
+**Key decisions locked:** D-01..D-40 (see `.planning/phases/08-h5-sovereign-operations-nous-deletion/08-CONTEXT.md`). D-04/D-05 (copy verbatim), D-07 (canonical key order), D-20 (H5 hydration rejection), D-21 (H5 whitelist regression), D-22 (closure-capture), D-30 (deletion order), D-31 (H5 default-ON behind IrreversibilityDialog), D-38 (sole-producer boundary).
+
+**STRIDE threats addressed:** T-08-33 (tick-skip guard prevents post-tombstone Brain RPC), T-08-34 (coordinator.despawnNous releases bridge + spatial + tick subscription before audit emit — no orphan resources).
+
+**Test counts at ship:** grid **656/656**, brain **310/310**, dashboard **404/404**. Phase 8 added 9 grid tests + 15 Brain tests + 58 dashboard tests (across 8 files).
+
+### v2.1 Steward Console — MILESTONE COMPLETE (2026-04-21)
+
+**Sprint 15 closed 2026-04-21, 18/18 plans = 100%.** Phases 5 (ReviewerNous), 6 (H1–H4 Operator Agency), 7 (Peer Dialogue Memory), 8 (H5 Sovereign Deletion) all shipped. Broadcast allowlist grew 10 → 18 across v2.1; every addition carries a closed-tuple payload and a sole-producer boundary; plaintext Telos / law body / memory refs / emotional state never cross the audit or RPC wire. The dashboard is a stewarded environment: Agency Indicator on every route, elevation-gated H1–H5 flows, peer-dialogue-driven Telos refinement with forgery guard, irreversible Nous deletion with pre-deletion state hash + typed-DID consent + audit-chain preservation forever. Zero-diff invariant unbroken since Phase 1. Research foundation validated: Stanford peer-agent synthesis (Zou HAI, SPARC, arxiv 2506.06576) mapped 1:1 to shipped phases.
+
+**Next up:** v2.2 milestone planning.
+
+---
+*Last updated: 2026-04-21 — v2.1 Steward Console SHIPPED (Phase 8 AGENCY-05 closed, 18/18 plans = 100%)*
