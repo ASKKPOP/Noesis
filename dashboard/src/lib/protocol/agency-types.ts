@@ -17,4 +17,5 @@ export const TIER_NAME: Record<HumanAgencyTier, string> = {
 };
 
 // operator_id: session-scoped UUID-v4. Regex enforces v4 variant bits per RFC 4122.
-export const OPERATOR_ID_REGEX = /^op:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export const OPERATOR_ID_REGEX =
+    /^op:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
