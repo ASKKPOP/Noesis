@@ -15,20 +15,29 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { fireEvent, render, screen } from '@testing-library/react';
 import { ElevationDialog } from './elevation-dialog';
 
-const showModalSpy = vi
-    .spyOn(HTMLDialogElement.prototype, 'showModal')
-    .mockImplementation(function (this: HTMLDialogElement) {
-        (this as unknown as { open: boolean }).open = true;
-    });
-const closeSpy = vi
-    .spyOn(HTMLDialogElement.prototype, 'close')
-    .mockImplementation(function (this: HTMLDialogElement) {
-        (this as unknown as { open: boolean }).open = false;
-        this.dispatchEvent(new Event('close'));
-    });
+/**
+ * jsdom 26 leaves HTMLDialogElement.showModal/close undefined. We assign a
+ * minimal shim onto the prototype so React's useEffect can call them — and
+ * then wrap the shim with vi.spyOn so tests can assert call counts and
+ * trigger the `close` event that Escape would fire natively.
+ */
+const proto = HTMLDialogElement.prototype as HTMLDialogElement & {
+    showModal: () => void;
+    close: () => void;
+};
+
+proto.showModal = function (this: HTMLDialogElement) {
+    (this as unknown as { open: boolean }).open = true;
+};
+proto.close = function (this: HTMLDialogElement) {
+    (this as unknown as { open: boolean }).open = false;
+    this.dispatchEvent(new Event('close'));
+};
+
+const showModalSpy = vi.spyOn(proto, 'showModal');
+const closeSpy = vi.spyOn(proto, 'close');
 
 beforeAll(() => {
-    // Spies established at module load; beforeAll is kept for intent.
     showModalSpy.mockClear();
     closeSpy.mockClear();
 });
@@ -193,8 +202,9 @@ describe('ElevationDialog — accessibility (aria-label per UI-SPEC)', () => {
             />,
         );
         const cancel = screen.getByTestId('elevation-cancel');
-        // React's autoFocus prop renders as the `autofocus` attribute in jsdom.
-        expect(cancel.hasAttribute('autofocus')).toBe(true);
+        // React's autoFocus prop does not emit an `autofocus` attribute; it
+        // calls .focus() during mount. jsdom reflects this as document.activeElement.
+        expect(document.activeElement).toBe(cancel);
     });
 });
 
