@@ -48,7 +48,13 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
   3. Any UI action mapped to H3 or H4 surfaces a mode-switch confirmation dialog before proceeding, the dialog names the destination tier explicitly ("Entering H3 — Co-decision. This will be logged."), and a single confirmation covers one action only (no session-wide persistence).
   4. The tier recorded in each `operator.*` audit event matches the tier the operator was in at confirmation time, not the tier at the moment the HTTP request arrives at the Grid — this is verifiable by forcing a UI elevation-then-downgrade race and asserting the committed tier reflects the user's explicit choice.
   5. All four non-H5 tiers (H1 observe, H2 read memory, H3 pause / allowlist / law-change, H4 force-Telos) have at least one exercised action in the dashboard; H5 surfaces appear disabled with "requires Phase 8" affordance.
-**Plans**: TBD (estimate 4-5 plans: allowlist additions + tier field contract, Agency Indicator + tooltip, elevation dialog + tier map, H2/H3 wiring, H4 force-Telos)
+**Plans**: 6 plans
+  - [ ] 06-01-PLAN.md — Allowlist 11→16 + appendOperatorEvent tier-required invariant + HumanAgencyTier union (AGENCY-03, Wave 1)
+  - [ ] 06-02-PLAN.md — AgencyIndicator chip + H1–H5 tier tooltip + route-level mount (AGENCY-01, Wave 2)
+  - [ ] 06-03-PLAN.md — ElevationDialog + closure-capture tier-at-confirm + SC#4 race regression (AGENCY-04, Wave 2)
+  - [ ] 06-04-PLAN.md — H3 pause/resume + law add/amend/remove + zero-diff invariant across pause boundary (AGENCY-02, AGENCY-03, Wave 3)
+  - [ ] 06-05-PLAN.md — H2 memory query + H4 force-Telos hash-only proxy + payload privacy closed-tuples (AGENCY-02, AGENCY-03, Wave 3)
+  - [ ] 06-06-PLAN.md — Playwright E2E SC#1/#4/#5 + doc-sync reconciliation (STATE.md + check-state-doc-sync.mjs) + WCAG checkpoint (AGENCY-01..04, Wave 4)
 **UI hint**: yes
 
 ### Phase 7: Peer Dialogue → Telos Refinement
@@ -84,7 +90,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 5. ReviewerNous — Objective-Only Pre-Commit Review | 5/5 | ✅ Complete | 2026-04-21 |
-| 6. Operator Agency Foundation (H1–H4) | 0/TBD | Next up | — |
+| 6. Operator Agency Foundation (H1–H4) | 0/6 | Next up | — |
 | 7. Peer Dialogue → Telos Refinement | 0/TBD | Not started | — |
 | 8. H5 Sovereign Operations (Nous Deletion) | 0/TBD | Not started | — |
 
