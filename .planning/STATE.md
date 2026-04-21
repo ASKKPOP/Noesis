@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Steward Console — Phases 5-8
 status: Phase 5 shipped — next focus Phase 06
-stopped_at: Phase 6 context gathered (--auto)
-last_updated: "2026-04-21T03:34:16.674Z"
+stopped_at: Phase 6 UI-SPEC approved
+last_updated: "2026-04-21T03:43:18.670Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 4
@@ -103,7 +103,7 @@ See `.planning/phases/05-reviewernous-objective-only-pre-commit-review/05-CONTEX
 
 ## Session Continuity
 
-Last session: 2026-04-21T03:34:16.672Z
-Stopped at: Phase 6 context gathered (--auto)
-Resume file: .planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md
+Last session: 2026-04-21T03:43:18.667Z
+Stopped at: Phase 6 UI-SPEC approved
+Resume file: .planning/phases/06-operator-agency-foundation-h1-h4/06-UI-SPEC.md
 Next action: Open Phase 6 planning (Operator Agency Foundation H1–H4) via `/gsd-discuss-phase`
