@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Living Grid
 status: planning-phase
-stopped_at: v2.2 roadmap approved — ready for /gsd-plan-phase 9
-last_updated: "2026-04-21T20:30:00.000Z"
+stopped_at: Phase 9 context gathered (13 auto-decisions) — ready for /gsd-plan-phase 9
+last_updated: "2026-04-21T20:50:00.000Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 7
@@ -26,10 +26,10 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 ## Current Position
 
-Phase: 9 (next to plan) — Relationship Graph (Derived View)
+Phase: 9 (context gathered — ready to plan) — Relationship Graph (Derived View)
 Plan: —
-Status: Ready for /gsd-plan-phase 9 — research + REQs + roadmap committed; all 39 v2.2 REQs mapped across 7 phases.
-Last activity: 2026-04-21 — v2.2 roadmap approved; ROADMAP.md + REQUIREMENTS.md + STATE.md committed.
+Status: 09-CONTEXT.md + 09-DISCUSSION-LOG.md written via `/gsd-discuss-phase 9 --auto` — 13 gray areas resolved in single pass (D-9-01..D-9-13). Next step `/gsd-plan-phase 9 --auto`.
+Last activity: 2026-04-21 — Phase 9 context committed; τ=1000 ticks locked (ROADMAP Open Question #1 closed); zero-allowlist-growth invariant confirmed.
 
 Progress: [░░░░░░░░░░] 0% (0/7 phases — planning begins at Phase 9)
 
@@ -239,3 +239,20 @@ Next action: After research completes, define REQUIREMENTS.md per category (DRIV
 - **Inspector conditional rendering pattern:** `{irrevOpen && <IrreversibilityDialog .../>}` — dialog fully unmounts on close so `queryByTestId('irrev-dialog')` returns `null` post-cancel. Same pattern for `{elevationOpen && <ElevationDialog .../>}`. Avoids the "hidden `<dialog>` still in DOM" failure mode from jsdom's open-attribute approach.
 - **Toast auto-dismiss (4s) via useEffect cleanup:** `showToast(message)` sets `{message, id: Date.now()}`, a `useEffect([toast])` schedules `setTimeout(4000)` and returns the clearTimeout as cleanup. `data-testid="inspector-toast"` visible during the window; cleared when Inspector unmounts or a new toast displaces the old one.
 - **`inlineError` scoped to irrevOpen:** `inlineError` is only rendered when `inlineError && irrevOpen` — prevents stale error text leaking into the Inspector after the dialog closes. Inline error `data-testid="inspector-inline-error"` sits inside `<IrreversibilityDialog>` (passed as a prop or rendered adjacent in the flow).
+
+## Accumulated Context (Phase 9 opening — /gsd-discuss-phase --auto)
+
+- **Phase 9 context gathered (2026-04-21):** `/gsd-discuss-phase 9 --auto` resolved 13 gray areas in single pass. See `.planning/phases/09-relationship-graph-derived-view/09-CONTEXT.md` (D-9-01..D-9-13) + `09-DISCUSSION-LOG.md` audit trail. Next: `/gsd-plan-phase 9 --auto`.
+- **D-9-01 — τ = 1000 ticks default (ROADMAP Open Question #1 closed):** Half-life ≈ 693 ticks, 3τ cool-down ≈ 3000 ticks. Balances "unobserved relationships cool over realistic researcher-rig horizon" against replay determinism. Exposed as `relationship.decay_tau_ticks` per-Grid config. Lazy decay at READ time (`weight × exp(-Δtick / τ)`) — no per-tick sweep, preserves O(edges_touched_this_tick) budget.
+- **D-9-02 — Deterministic event-class valence mapping (plaintext NEVER crosses boundary):** Closed bump table: `trade.settled +0.10`, `trade.reviewed(rejected) -0.10`, `nous.spoke (bidirectional) +0.01`, `telos.refined (matching participants) +0.05`. Clamped to `[-1, +1]`. Valence derived FROM existing audit events; NOT from utterance text (rejects sentiment analysis). Constants frozen in `grid/src/relationships/config.ts`.
+- **D-9-03 — Storage: in-memory Map + MySQL snapshot every 100 ticks + rebuild-from-chain on restart:** Clones `grid/src/db/persistent-chain.ts` snapshot cadence. Idempotent rebuild gives correctness; snapshot gives fast restart. Migration `sql/009_relationships.sql`.
+- **D-9-04 — Listener construction order:** `RelationshipListener` constructed AFTER `this.aggregator` in `GenesisLauncher` (same pattern as Phase 7 D-26). Zero-diff test clones `grid/test/dialogue/zero-diff.test.ts`.
+- **D-9-05 — Sole-producer grep gate (two-file writer):** `grid/src/relationships/listener.ts` = only in-memory Map mutator; `grid/src/relationships/storage.ts` = only MySQL writer. Clones Phase 6 D-13 `appendOperatorEvent` producer-boundary discipline. Test: `grid/test/audit/relationship-sole-producer.test.ts`.
+- **D-9-06 — Tier-graded privacy surface (3 endpoint variants, ZERO new allowlist members):** `/api/v1/relationships/:did?tier=H1` returns bucketed warmth (cold/warm/hot); `?tier=H2` returns numeric `{valence, weight}`; `?tier=H5` returns raw edge-events. Audits via existing `operator.inspected` (Phase 6) — no allowlist growth. Mitigates T-09-07 plaintext-trust-score risk.
+- **D-9-07 — Top-N = 5 default, cap 20, useSWR batching:** Matches ROADMAP success criterion #4 (`top=5`). Mitigates T-09-11 N+1 fetching from dashboard Inspector.
+- **D-9-08 — Vanilla SVG graph view, deterministic seeded layout (NO new runtime deps):** Grep gate forbids `d3-force|react-force-graph|cytoscape|graphology` imports under `dashboard/src/components/relationships/**`. Upholds v2.2 "no new runtime deps" discipline.
+- **D-9-09 — Performance: O(edges_touched_this_tick) + weekly 10K-edge p95 <100ms CI bench:** Lazy decay at read. `grid/test/relationships/load-10k.test.ts` runs weekly (matching Phase 8 perf-bench cadence). Closes ROADMAP success criterion #3.
+- **D-9-10 — Canonical edge serialization (Phase 8 D-07 pattern):** 6-key order `{from_did, to_did, valence, weight, recency_tick, last_event_hash}`, 3-decimal fixed-point floats (`valence.toFixed(3)`, `weight.toFixed(3)`), SHA-256 over the concatenated UTF-8 string. Enables rebuild-from-chain idempotency check.
+- **D-9-11 — Self-loop silent-reject at listener boundary (T-09-08 mitigation):** `from_did === to_did` events are silently dropped (no throw, no emit, no edge created). Mirrors Phase 7 D-21 silent-drop discipline. Test: `grid/test/relationships/self-edge-rejection.test.ts`.
+- **D-9-12 — Wall-clock grep ban in `grid/src/relationships/**`:** Forbids `Date.now|performance.now|setInterval|setTimeout|Math.random`. Clones Phase 7 `dialogue-determinism-source.test.ts`. Relationships reads `currentTick` from the onAppend entry only. T-09-09 port mitigation.
+- **D-9-13 — Zero new allowlist members (HARD INVARIANT, confirmed by ROADMAP SC#5):** Broadcast allowlist stays at 18. `relationship.warmed|cooled` deferred to REL-EMIT-01. `scripts/check-state-doc-sync.mjs` unchanged. Test: `grid/test/relationships/no-audit-emit.test.ts` asserts chain length unchanged by listener.

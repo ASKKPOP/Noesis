@@ -282,7 +282,7 @@ Inherited from v2.1 (do not break):
 
 ## Open Questions (Planner Must Resolve)
 
-1. **Phase 9 relationship τ (decay time constant)** — what value balances "unobserved relationships cool" against replay determinism? REL-03 requires per-Grid configuration; plan-phase must pick a sensible default and document.
+1. ~~**Phase 9 relationship τ (decay time constant)**~~ — **resolved 2026-04-21 in 09-CONTEXT.md D-9-01**: τ = 1000 ticks default (half-life ≈ 693 ticks, 3τ cool-down ≈ 3000 ticks). Per-Grid override via `relationship.decay_tau_ticks`. Balances "cools over realistic researcher-rig horizon" against replay determinism.
 2. **Phase 10a drive normalization** — 5 drives × `[0.0, 1.0]` gives 10^5 raw state space; with 3 levels × 5 drives = 243 broadcast states. Is this coarse enough to avoid fingerprinting (T-09-02 residual) or is 2-level (low/high) safer? Research suggests 3-level; plan-phase validates against privacy-matrix coverage.
 3. **Phase 10b Bios → Ananke elevation rule** — does sustenance crossing high elevate safety once, or every tick it stays high? DRIVE-01/BIOS-01 don't specify; plan-phase must choose and assert in regression test.
 4. **Phase 11 whisper rate budget** — default 10/100 ticks; is this safe for the governance deliberation use case in Phase 12? May require tuning when Phase 12 integrates.
