@@ -126,6 +126,15 @@ export class SpatialMap {
         }
     }
 
+    /**
+     * Idempotent spatial eviction — AGENCY-05 D-13.
+     * Removes the position entry for the DID. No-op if the DID was never placed.
+     * Called by NousRegistry.tombstone() after flipping status to 'deleted'.
+     */
+    removeNous(nousDid: string): void {
+        this.positions.delete(nousDid);
+    }
+
     /** Count of Nous on the map. */
     get nousCount(): number {
         return this.positions.size;

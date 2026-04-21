@@ -16,7 +16,9 @@ export interface NousRecord {
     ousia: number;              // Current balance
     spawnedAtTick: number;
     lastActiveTick: number;
-    status: 'active' | 'suspended' | 'exiled';
+    status: 'active' | 'suspended' | 'exiled' | 'deleted';
+    /** Phase 8 (AGENCY-05). Stamped by tombstone(). Absent on active records. */
+    deletedAtTick?: number;
 }
 
 export interface SpawnRequest {

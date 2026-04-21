@@ -5,6 +5,7 @@
  */
 
 import type { NousRecord, SpawnRequest, LifecyclePhase } from './types.js';
+import type { SpatialMap } from '../space/map.js';
 
 const LIFECYCLE_ORDER: LifecyclePhase[] = ['spawning', 'infant', 'adolescent', 'maturity', 'elder'];
 
@@ -14,6 +15,12 @@ export class NousRegistry {
 
     /** Spawn a new Nous into the Grid. */
     spawn(req: SpawnRequest, gridDomain: string, tick: number, initialOusia: number): NousRecord {
+        const existing = this.records.get(req.did);
+        if (existing?.status === 'deleted') {
+            throw new TypeError(
+                `NousRegistry.spawn: DID ${req.did} is tombstoned (deletedAtTick=${existing.deletedAtTick}) and cannot be reused (D-04 — DID permanently reserved for audit integrity)`,
+            );
+        }
         if (this.records.has(req.did)) {
             throw new Error(`Nous already registered: ${req.did}`);
         }
@@ -140,6 +147,52 @@ export class NousRegistry {
         from.ousia -= amount;
         to.ousia += amount;
         return { success: true, fromBalance: from.ousia, toBalance: to.ousia };
+    }
+
+    /**
+     * Tombstone a Nous — AGENCY-05 soft-delete primitive.
+     *
+     * 1. Flips status 'active' → 'deleted' and stamps deletedAtTick.
+     * 2. Evicts from SpatialMap (no further placements/moves possible).
+     * 3. LEAVES the NousRecord in this.records — tombstoned records stay
+     *    forever so audit-chain replay can always resolve actor/target DIDs.
+     *
+     * @throws TypeError on unknown DID, already-tombstoned DID, or invalid tick.
+     */
+    tombstone(did: string, tick: number, spatial: SpatialMap): void {
+        if (!Number.isInteger(tick) || tick < 0) {
+            throw new TypeError(`NousRegistry.tombstone: tick must be non-negative integer, got ${tick}`);
+        }
+        const record = this.records.get(did);
+        if (!record) {
+            throw new TypeError(`NousRegistry.tombstone: unknown DID ${did}`);
+        }
+        if (record.status === 'deleted') {
+            throw new TypeError(
+                `NousRegistry.tombstone: DID ${did} already tombstoned at tick ${record.deletedAtTick}`,
+            );
+        }
+        // Flip status + stamp tick — replace the record with the new frozen shape.
+        const tombstoned: NousRecord = { ...record, status: 'deleted', deletedAtTick: tick };
+        this.records.set(did, tombstoned);
+        // Evict from spatial index — no further moves/placements reach this DID.
+        spatial.removeNous(did);
+    }
+
+    /**
+     * Defensive no-op on tombstoned records. Throws on active records.
+     * Exists for symmetry with tombstone(); production code calls tombstone()
+     * directly (which handles spatial eviction internally).
+     */
+    removeNous(did: string): void {
+        const record = this.records.get(did);
+        if (!record) return;  // idempotent on unknown
+        if (record.status !== 'deleted') {
+            throw new TypeError(
+                `NousRegistry.removeNous: DID ${did} is active — call tombstone() instead (D-02 soft-delete only)`,
+            );
+        }
+        // no-op — the record stays for audit retention.
     }
 
     /** List all active Nous. */
