@@ -21,13 +21,18 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Initial allowlist (v1) — exactly these 10 event types, per 01-CONTEXT.md. */
+/** Initial allowlist (v1 + Phase 5) — exactly these 11 event types.
+ *  v1 (Phase 1, per 01-CONTEXT.md): 10 events.
+ *  Phase 5 (REV-02): +1 'trade.reviewed' — externally observable reviewer verdict;
+ *  payload shape D-03, 3 keys on pass / 5 keys on fail, all privacy-clean (see D-12 test).
+ */
 const ALLOWLIST_MEMBERS: readonly string[] = [
     'nous.spawned',
     'nous.moved',
     'nous.spoke',
     'nous.direct_message', // metadata only — payload must not contain message body
     'trade.proposed',
+    'trade.reviewed',      // Phase 5 (REV-02)
     'trade.settled',
     'law.triggered',
     'tick',
