@@ -32,7 +32,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
   4. A contract test enumerates the allowed check names; adding a new check requires updating the enum, and the test fails (red) if any check handler references subjective concepts (fairness, wisdom, taste, quality, novelty) by keyword.
   5. AuditChain zero-diff invariant still holds — a 100-tick simulation with review enabled produces byte-identical chain hashes to the same simulation with the reviewer path bypassed *except* for the added `trade.reviewed` entries (i.e., determinism is preserved, the allowlist addition is the only diff).
 **Plans**: 5 plans
-  - [ ] 05-01-PLAN.md — Closed-enum types + 5 objective check handlers + REV-04 subjective-keyword lint gate
+  - [x] 05-01-PLAN.md — Closed-enum types + 5 objective check handlers + REV-04 subjective-keyword lint gate
   - [ ] 05-02-PLAN.md — Reviewer singleton + first-fail-wins loop + public barrel
   - [ ] 05-03-PLAN.md — Brain schema extension (memoryRefs + telosHash) + nous-runner 3-event rewrite + main.ts bootstrap wiring
   - [ ] 05-04-PLAN.md — Allowlist addition (`trade.reviewed`) + D-12 privacy regression + D-13 zero-diff invariant regression

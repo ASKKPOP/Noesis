@@ -11,10 +11,10 @@
 <!-- Zou / Stanford HAI: AI reviewers are reliable on objective checks, unreliable on subjective judgment.
      REV-* checks are deliberately limited to invariants that have a yes/no answer. -->
 
-- [ ] **REV-01**: A ReviewerNous runs a deterministic objective-invariant check on every `trade.proposed` event before the Grid calls `transferOusia`. Checks in scope: proposer balance ≥ amount, counterparty DID regex match, amount is positive non-zero integer, memory references in justification exist in proposer memory, no active Telos goal contradicts this trade.
-- [ ] **REV-02**: A new `trade.reviewed` event is added to the broadcast allowlist with payload `{trade_id, reviewer_did, verdict: "pass"|"fail", failure_reason?: string, failed_check?: string}`. On `verdict: fail` the Grid aborts the settlement and emits no `trade.settled`. Reason codes are a closed enum — never free-form text.
+- [x] **REV-01**: A ReviewerNous runs a deterministic objective-invariant check on every `trade.proposed` event before the Grid calls `transferOusia`. Checks in scope: proposer balance ≥ amount, counterparty DID regex match, amount is positive non-zero integer, memory references in justification exist in proposer memory, no active Telos goal contradicts this trade.
+- [x] **REV-02**: A new `trade.reviewed` event is added to the broadcast allowlist with payload `{trade_id, reviewer_did, verdict: "pass"|"fail", failure_reason?: string, failed_check?: string}`. On `verdict: fail` the Grid aborts the settlement and emits no `trade.settled`. Reason codes are a closed enum — never free-form text.
 - [ ] **REV-03**: ReviewerNous is deployed as a system singleton in v2.1 (one authoritative reviewer per Grid); opt-in peer review is deferred out of scope. This prevents veto-DoS from a malicious peer reviewer.
-- [ ] **REV-04**: The reviewer never makes subjective judgments. There is no "is this a good trade" check; only invariants. Attempting to add a subjective check must fail a lint/test gate. (This is a contract, not a feature — encoded as a test that enumerates allowed check names.)
+- [x] **REV-04**: The reviewer never makes subjective judgments. There is no "is this a good trade" check; only invariants. Attempting to add a subjective check must fail a lint/test gate. (This is a contract, not a feature — encoded as a test that enumerates allowed check names.)
 
 ### Operator Agency (Human Agency Scale H1–H5)
 
@@ -64,10 +64,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REV-01 | Phase 5 | Pending |
-| REV-02 | Phase 5 | Pending |
+| REV-01 | Phase 5 | Complete |
+| REV-02 | Phase 5 | Complete |
 | REV-03 | Phase 5 | Pending |
-| REV-04 | Phase 5 | Pending |
+| REV-04 | Phase 5 | Complete |
 | AGENCY-01 | Phase 6 | Pending |
 | AGENCY-02 | Phase 6 | Pending |
 | AGENCY-03 | Phase 6 | Pending |
