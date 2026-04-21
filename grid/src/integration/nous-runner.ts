@@ -18,6 +18,7 @@ import type { BrainAction, IBrainBridge, MemoryEntry, TickParams } from './types
 import type { DialogueContext } from '../dialogue/index.js';
 import { Reviewer } from '../review/index.js';
 import { VALID_REVIEW_FAILURE_CODES } from '../review/types.js';
+import { appendTelosRefined } from '../audit/append-telos-refined.js';
 
 export interface NousRunnerConfig {
     nousDid: string;
@@ -315,17 +316,53 @@ export class NousRunner {
                     break;
                 }
 
+                case 'telos_refined': {
+                    // Phase 7 DIALOG-02 (D-16 validation, D-17 sole producer path,
+                    // D-31 self-report invariant).
+                    //
+                    // The Brain metadata carries exactly 3 keys; the runner
+                    // injects `did = this.nousDid` (self-report per D-31) and
+                    // passes the 4-key closed tuple to `appendTelosRefined`.
+                    //
+                    // Authority check FIRST: reject any `triggered_by_dialogue_id`
+                    // not in `this.recentDialogueIds` (forgery guard, T-07-20).
+                    // Producer-boundary exceptions (malformed hashes, extra keys,
+                    // privacy leaks) are caught and silently dropped — mirrors
+                    // the Phase 6 malformed-brain-response discipline.
+                    const md = (action.metadata ?? {}) as Record<string, unknown>;
+                    const dialogueId = typeof md['triggered_by_dialogue_id'] === 'string'
+                        ? (md['triggered_by_dialogue_id'] as string)
+                        : '';
+                    const beforeHash = typeof md['before_goal_hash'] === 'string'
+                        ? (md['before_goal_hash'] as string)
+                        : '';
+                    const afterHash = typeof md['after_goal_hash'] === 'string'
+                        ? (md['after_goal_hash'] as string)
+                        : '';
+
+                    if (!this.recentDialogueIds.has(dialogueId)) {
+                        // D-16: a Brain cannot claim participation in a dialogue
+                        // its runner never delivered. Unknown ids drop silently.
+                        break;
+                    }
+
+                    try {
+                        appendTelosRefined(this.audit, this.nousDid, {
+                            did: this.nousDid,           // self-report — matches actorDid per D-31
+                            before_goal_hash: beforeHash,
+                            after_goal_hash: afterHash,
+                            triggered_by_dialogue_id: dialogueId,
+                        });
+                    } catch {
+                        // Producer-boundary rejection (D-16 step 4): any assertion
+                        // fail → drop. Mirrors Phase 6 malformed-brain-response.
+                    }
+                    break;
+                }
+
                 case 'noop':
                     // Nothing to do
                     break;
-
-                // Phase 7 DIALOG-01 NOTE: 'telos_refined' is declared in the
-                // BrainAction union (Plan 01 Task 2) so the type-checker sees
-                // it as a valid Brain-returned action, but the handler plus
-                // appendTelosRefined producer boundary land together in Plan 03
-                // (D-18). Until then it silently falls through the switch —
-                // the `recentDialogueIds` authority check is the seam Plan 03
-                // will consume.
             }
         }
     }
