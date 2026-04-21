@@ -11,10 +11,14 @@
  * resolves to the existing neutral styling so Inspector + Economy callers
  * remain zero-diff.
  *
+ * Phase 7: 'dialogue' variant — indigo-400 #818CF8 for Nous-initiated
+ * telos.refined badge (07-UI-SPEC §Color). Contrast 6.4:1 on #17181C.
+ * Not to be reused for operator-tier surfaces (H2/H3/H4 reserved).
+ *
  * Per UI-SPEC §Component Inventory P1 — presentational, no hooks, text-only.
  */
 
-export type ChipColor = 'neutral' | 'blue' | 'amber' | 'red' | 'muted';
+export type ChipColor = 'neutral' | 'blue' | 'amber' | 'red' | 'muted' | 'dialogue';
 
 export interface ChipProps {
     readonly label: string;
@@ -33,6 +37,7 @@ const COLOR_CLASSES: Record<ChipColor, string> = {
     amber: 'bg-neutral-900 border-2 border-amber-300 text-neutral-200',
     red: 'bg-neutral-900 border-2 border-red-400 text-red-400',
     muted: 'bg-neutral-900 border border-dashed border-neutral-600 text-neutral-500 line-through',
+    dialogue: 'bg-[#17181C] border border-[#818CF8] text-[#818CF8]',
 };
 
 export function Chip({ label, testId, color, 'aria-label': ariaLabel }: ChipProps): React.ReactElement {
