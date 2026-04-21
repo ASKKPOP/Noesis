@@ -119,12 +119,23 @@ export function FirehoseRow({
                 .triggered_by_dialogue_id === dialogueFilter.value);
     const dimClass = isMatch ? '' : ' opacity-40 pointer-events-none';
 
+    // Phase 8: destructive visual treatment for operator.nous_deleted rows (UI-SPEC §Firehose).
+    // Red left border accent, rose badge, red strikethrough actor name.
+    const isDeleted = entry.eventType === 'operator.nous_deleted';
+    const rowBorderClass = isDeleted ? ' border-l-2 border-rose-900' : '';
+    const badgeClass = isDeleted
+        ? 'bg-rose-900/20 text-rose-300'
+        : CATEGORY_BADGE[category];
+    const actorClass = isDeleted
+        ? 'text-red-400 line-through w-[132px] shrink-0 truncate'
+        : 'text-neutral-200 w-[132px] shrink-0 truncate';
+
     return (
         <li
             role="listitem"
             data-testid="firehose-row"
             data-event-id={entry.id ?? ''}
-            className={`flex items-center gap-2 h-[28px] px-3 border-b border-neutral-800/60 font-mono text-[12px] leading-[1.3] hover:bg-neutral-900/50 hover:border-l hover:border-l-sky-300${dimClass}`}
+            className={`flex items-center gap-2 h-[28px] px-3 border-b border-neutral-800/60 font-mono text-[12px] leading-[1.3] hover:bg-neutral-900/50 hover:border-l hover:border-l-sky-300${dimClass}${rowBorderClass}`}
         >
             <span className="text-neutral-500 w-[72px] shrink-0 tabular-nums">
                 {formatTimestamp(entry.createdAt)}
@@ -132,11 +143,15 @@ export function FirehoseRow({
             <span
                 data-testid="event-type-badge"
                 data-category={category}
-                className={`text-[10px] uppercase tracking-wide px-1.5 py-[1px] rounded-sm shrink-0 ${CATEGORY_BADGE[category]}`}
+                className={`text-[10px] uppercase tracking-wide px-1.5 py-[1px] rounded-sm shrink-0 ${badgeClass}`}
             >
                 {entry.eventType}
             </span>
-            <span className="text-neutral-200 w-[132px] shrink-0 truncate" title={entry.actorDid}>
+            <span
+                data-testid="firehose-actor"
+                className={actorClass}
+                title={entry.actorDid}
+            >
                 {actorDisplay}
             </span>
             <span className="text-neutral-400 flex-1 truncate">

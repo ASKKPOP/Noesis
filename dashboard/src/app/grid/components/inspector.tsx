@@ -20,12 +20,25 @@
  *   7. Keyboard: ESC calls `selection.clear()`; Tab/Shift+Tab cycle the
  *      focusable descendants (T-04-24: no focus escape from dialog).
  *   8. On close → restore focus to the opener if still in the DOM.
+ *
+ * Phase 8 (AGENCY-05): adds H5 two-stage delete flow.
+ *   - State A: active Nous → inspector-h5-delete button enabled
+ *   - State B: deleted Nous → tombstoned caption, no delete button (D-06)
+ *   - State C: loading/error → delete button visible but click is no-op
+ *   - ElevationDialog(H5) → IrreversibilityDialog → deleteNous() → toast + refetch
+ *   - 410 race: info toast + refetch → State B; auto-downgrade H5→H1
+ *   - 503: inline error in dialog, tier stays H5 until explicit cancel
+ *   - Cancel path: auto-downgrade H5→H1, no deleteNous call (D-05)
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelection } from '@/lib/hooks/use-selection';
 import { fetchNousState, type NousStateResponse, type FetchError } from '@/lib/api/introspect';
+import { deleteNous } from '@/lib/api/operator';
+import { agencyStore } from '@/lib/stores/agency-store';
 import { EmptyState } from '@/components/primitives';
+import { ElevationDialog } from '@/components/agency/elevation-dialog';
+import { IrreversibilityDialog } from '@/components/agency/irreversibility-dialog';
 import { PsycheSection } from './inspector-sections/psyche';
 import { ThymosSection } from './inspector-sections/thymos';
 import { TelosSection } from './inspector-sections/telos';
@@ -60,6 +73,11 @@ const ERR_COPY: Record<FetchError['kind'], { title: string; description: string 
     },
 };
 
+// Phase 8 copy constants (copy-locked — tests assert these literals)
+const TOAST_SUCCESS = 'Nous deleted.';
+const TOAST_RACE = 'This Nous was already deleted.';
+const INLINE_ERROR_503 = 'Brain unavailable. Try again.';
+
 /** Selector for elements we consider focusable inside the drawer. */
 const FOCUSABLE_SELECTOR =
     'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -70,15 +88,24 @@ type DrawerState =
     | { status: 'ok';    data: NousStateResponse }
     | { status: 'error'; error: FetchError };
 
+type ToastState = { message: string; id: number } | null;
+
 export function Inspector(): React.ReactElement | null {
     const { selectedDid, clear } = useSelection();
     const [state, setState] = useState<DrawerState>({ status: 'idle' });
+
+    // Phase 8: two-stage delete state
+    const [elevationOpen, setElevationOpen] = useState(false);
+    const [irrevOpen, setIrrevOpen] = useState(false);
+    const [inlineError, setInlineError] = useState<string | null>(null);
+    const [toast, setToast] = useState<ToastState>(null);
 
     // Tracks the focused element at the moment the drawer opened so we can
     // hand focus back on close. Never read during SSR — guarded by selectedDid.
     const openerRef = useRef<HTMLElement | null>(null);
     const firstFocusable = useRef<HTMLButtonElement | null>(null);
     const dialogRef = useRef<HTMLDivElement | null>(null);
+    const deleteButtonRef = useRef<HTMLButtonElement | null>(null);
 
     // NEXT_PUBLIC_GRID_ORIGIN is baked at build time per dashboard/.env.example.
     const origin = useMemo(() => process.env.NEXT_PUBLIC_GRID_ORIGIN ?? '', []);
@@ -157,10 +184,90 @@ export function Inspector(): React.ReactElement | null {
         return () => document.removeEventListener('keydown', onKey);
     }, [selectedDid, clear]);
 
+    // --- Phase 8: H5 delete orchestration -----------------------------------
+
+    const showToast = (message: string) => {
+        setToast({ message, id: Date.now() });
+        // Auto-dismiss after 4s
+        setTimeout(() => setToast(null), 4000);
+    };
+
+    const refetchState = () => {
+        if (!selectedDid) return;
+        setState({ status: 'loading' });
+        (async () => {
+            try {
+                const r = await fetchNousState(selectedDid, origin);
+                setState(r.ok
+                    ? { status: 'ok', data: r.data }
+                    : { status: 'error', error: r.error });
+            } catch {
+                setState({ status: 'error', error: { kind: 'network' } });
+            }
+        })();
+    };
+
+    const onH5DeleteClick = () => {
+        // State C guard: only open ElevationDialog when Nous is confirmed active
+        if (state.status !== 'ok' || state.data.status !== 'active') return;
+        setElevationOpen(true);
+    };
+
+    const onElevationConfirm = () => {
+        setElevationOpen(false);
+        agencyStore.setTier('H5');
+        setIrrevOpen(true);
+    };
+
+    const onElevationCancel = () => {
+        setElevationOpen(false);
+    };
+
+    const onIrrevConfirm = async () => {
+        if (!selectedDid) return;
+        setInlineError(null);
+        const result = await deleteNous(selectedDid, origin);
+        if (result.ok) {
+            showToast(TOAST_SUCCESS);
+            setIrrevOpen(false);
+            agencyStore.setTier('H1');
+            refetchState();
+            return;
+        }
+        switch (result.error.kind) {
+            case 'nous_deleted':
+                showToast(TOAST_RACE);
+                setIrrevOpen(false);
+                agencyStore.setTier('H1');
+                refetchState();
+                break;
+            case 'brain_unavailable':
+                // Dialog stays open — operator can retry (D-30)
+                setInlineError(INLINE_ERROR_503);
+                break;
+            default:
+                // invalid_did / unknown_nous / network → close + downgrade
+                setIrrevOpen(false);
+                agencyStore.setTier('H1');
+                break;
+        }
+    };
+
+    const onIrrevCancel = () => {
+        setIrrevOpen(false);
+        setInlineError(null);
+        // D-05 auto-downgrade: H5 is single-use; cancel exits the elevation
+        agencyStore.setTier('H1');
+    };
+
     if (!selectedDid) return null;
     // SSR guard: document is undefined on server — caller already sets
     // 'use client', but double-guard to be explicit about browser-only usage.
     if (typeof document === 'undefined') return null;
+
+    // Determine which delete affordance to render (State A / B / C)
+    const isStateB =
+        state.status === 'ok' && state.data.status === 'deleted';
 
     return (
         <div
@@ -189,6 +296,16 @@ export function Inspector(): React.ReactElement | null {
                 </button>
             </header>
 
+            {/* Toast (Phase 8 delete feedback) */}
+            {toast && (
+                <div
+                    data-testid="inspector-toast"
+                    className="mb-2 rounded border border-neutral-700 bg-neutral-900 px-3 py-2 text-xs text-neutral-200"
+                >
+                    {toast.message}
+                </div>
+            )}
+
             {state.status === 'loading' && (
                 <div data-testid="inspector-loading" className="text-xs text-neutral-400">
                     Loading…
@@ -203,7 +320,7 @@ export function Inspector(): React.ReactElement | null {
                 />
             )}
 
-            {state.status === 'ok' && (
+            {state.status === 'ok' && !isStateB && (
                 <>
                     <PsycheSection psyche={state.data.psyche} />
                     <ThymosSection thymos={state.data.thymos} />
@@ -212,35 +329,77 @@ export function Inspector(): React.ReactElement | null {
                 </>
             )}
 
-            {/*
-             * H5 "Delete Nous" disabled affordance (Phase 6 D-20 / SC#5).
-             * Visible-but-disabled for all tiers H1–H4. Clicking does nothing
-             * (no onClick handler bound); keyboard focus is reachable via
-             * tabIndex={0} so screen-readers can announce the tooltip.
-             * Irreversibility dialog + consent flow lands in Phase 8
-             * (AGENCY-05). Rendered outside the fetch-state branches so
-             * it is present regardless of loading/error state.
-             */}
-            <div className="mt-4 border-t border-neutral-800 pt-3">
-                <button
-                    type="button"
-                    data-testid="inspector-h5-delete"
-                    disabled
-                    aria-disabled="true"
-                    title="Requires Phase 8"
-                    tabIndex={0}
-                    className="w-full cursor-not-allowed rounded border border-neutral-800 bg-neutral-900 px-3 py-2 text-xs text-neutral-600 line-through"
+            {/* State B: tombstoned Nous — show caption, hide delete button (D-06) */}
+            {isStateB && (
+                <div className="mt-2">
+                    <p
+                        data-testid="inspector-tombstone-caption"
+                        className="text-sm text-neutral-300"
+                    >
+                        Nous deleted at tick {state.data.deleted_at_tick}
+                    </p>
+                    <p
+                        data-testid="inspector-tombstone-firehose"
+                        className="mt-1 text-xs text-neutral-500"
+                    >
+                        Audit history available in the firehose.
+                    </p>
+                </div>
+            )}
+
+            {/* State A + C: Delete Nous button (Phase 8 AGENCY-05). Hidden in State B (D-06). */}
+            {!isStateB && (
+                <div className="mt-4 border-t border-neutral-800 pt-3">
+                    <button
+                        ref={deleteButtonRef}
+                        type="button"
+                        data-testid="inspector-h5-delete"
+                        onClick={onH5DeleteClick}
+                        className="w-full rounded border border-rose-900/60 bg-neutral-900 px-3 py-2 text-xs text-red-400 hover:bg-rose-950/30 hover:text-red-300"
+                    >
+                        Delete Nous
+                    </button>
+                    <p className="mt-1 text-[10px] text-neutral-600">
+                        H5 Sovereign — irreversible action.
+                    </p>
+                </div>
+            )}
+
+            {/* Phase 8: Inline error for 503 (shown when IrreversibilityDialog is open) */}
+            {inlineError && irrevOpen && (
+                <p
+                    data-testid="inspector-inline-error"
+                    className="mt-2 text-xs text-red-400"
                 >
-                    Delete Nous
-                </button>
-                <p className="mt-1 text-[10px] text-neutral-600">
-                    H5 — irreversible action, requires Phase 8 consent dialog.
+                    {inlineError}
                 </p>
-            </div>
+            )}
 
             <footer className="mt-auto pt-3 text-[11px] text-neutral-600">
                 Esc to close
             </footer>
+
+            {/* Phase 8: ElevationDialog for H5 gate */}
+            {elevationOpen && (
+                <ElevationDialog
+                    targetTier="H5"
+                    open={elevationOpen}
+                    onConfirm={onElevationConfirm}
+                    onCancel={onElevationCancel}
+                />
+            )}
+
+            {/* Phase 8: IrreversibilityDialog — DID-typed confirmation.
+                Conditionally rendered so queryByTestId returns null after cancel. */}
+            {irrevOpen && (
+                <IrreversibilityDialog
+                    open={irrevOpen}
+                    targetDid={selectedDid}
+                    onConfirm={onIrrevConfirm}
+                    onCancel={onIrrevCancel}
+                    openerRef={deleteButtonRef}
+                />
+            )}
         </div>
     );
 }
