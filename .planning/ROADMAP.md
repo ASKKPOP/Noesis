@@ -34,7 +34,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
 **Plans**: 5 plans
   - [x] 05-01-PLAN.md — Closed-enum types + 5 objective check handlers + REV-04 subjective-keyword lint gate
   - [x] 05-02-PLAN.md — Reviewer singleton + first-fail-wins loop + public barrel
-  - [ ] 05-03-PLAN.md — Brain schema extension (memoryRefs + telosHash) + nous-runner 3-event rewrite + main.ts bootstrap wiring
+  - [x] 05-03-PLAN.md — Brain schema extension (memoryRefs + telosHash) + nous-runner 3-event rewrite + main.ts bootstrap wiring
   - [ ] 05-04-PLAN.md — Allowlist addition (`trade.reviewed`) + D-12 privacy regression + D-13 zero-diff invariant regression
   - [ ] 05-05-PLAN.md — STATE.md D-11 reconciliation + `scripts/check-state-doc-sync.mjs` regression gate + ship-time doc sync
 
