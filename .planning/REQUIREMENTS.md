@@ -23,13 +23,13 @@
      they have. -->
 
 - [x] **AGENCY-01**: Dashboard header renders an Agency Indicator showing the current operator tier (H1 Observer / H2 Reviewer / H3 Partner / H4 Driver / H5 Sovereign) with the tier definition accessible via tooltip.
-- [ ] **AGENCY-02**: Every operator-initiated action has a declared default tier and requires an explicit elevation confirmation when the action exceeds H1. The tier map is:
+- [x] **AGENCY-02**: Every operator-initiated action has a declared default tier and requires an explicit elevation confirmation when the action exceeds H1. The tier map is:
   - H1: observe firehose/map/inspector (no record)
   - H2: query Nous memory (read-only, audit-logged)
   - H3: pause simulation, change broadcast-allowlist, change a Grid law (co-decision + confirm)
   - H4: force-mutate a specific Nous's Telos (operator drives, system executes)
   - H5: delete a Nous (operator only; see AGENCY-05 gating)
-- [ ] **AGENCY-03**: Every `operator.*` audit event records the tier at commit time in payload (`{tier: "H3", action, target_did?, operator_id}`). Allowlist additions required: `operator.inspected`, `operator.paused`, `operator.resumed`, `operator.law_changed`, `operator.telos_forced`, `operator.nous_deleted`.
+- [x] **AGENCY-03**: Every `operator.*` audit event records the tier at commit time in payload (`{tier: "H3", action, target_did?, operator_id}`). Allowlist additions required: `operator.inspected`, `operator.paused`, `operator.resumed`, `operator.law_changed`, `operator.telos_forced`, `operator.nous_deleted`.
 - [ ] **AGENCY-04**: Elevation to H3+ triggers an explicit mode-switch dialog in the UI: "Entering H3 — Co-decision. This will be logged." Operator confirms before the action proceeds. A single confirmation covers one action, not a session.
 - [ ] **AGENCY-05**: H5 "delete a Nous" is gated by an irreversibility warning dialog that names the first-life promise explicitly, requires the operator to type the Nous's DID to confirm, and emits `operator.nous_deleted` with full Nous state hash pre-deletion for forensic reconstruction. Deletion never purges audit chain entries about the Nous (integrity preserved).
 
@@ -69,8 +69,8 @@
 | REV-03 | Phase 5 | Complete |
 | REV-04 | Phase 5 | Complete |
 | AGENCY-01 | Phase 6 | Complete |
-| AGENCY-02 | Phase 6 | Pending |
-| AGENCY-03 | Phase 6 | Pending |
+| AGENCY-02 | Phase 6 | Complete |
+| AGENCY-03 | Phase 6 | Complete |
 | AGENCY-04 | Phase 6 | Pending |
 | AGENCY-05 | Phase 8 | Pending |
 | DIALOG-01 | Phase 7 | Pending |

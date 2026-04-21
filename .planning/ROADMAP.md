@@ -52,7 +52,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
   - [x] 06-01-PLAN.md — Allowlist 11→16 + appendOperatorEvent tier-required invariant + HumanAgencyTier union (AGENCY-03, Wave 1)
   - [x] 06-02-PLAN.md — AgencyIndicator chip + H1–H5 tier tooltip + route-level mount (AGENCY-01, Wave 2)
   - [ ] 06-03-PLAN.md — ElevationDialog + closure-capture tier-at-confirm + SC#4 race regression (AGENCY-04, Wave 2)
-  - [ ] 06-04-PLAN.md — H3 pause/resume + law add/amend/remove + zero-diff invariant across pause boundary (AGENCY-02, AGENCY-03, Wave 3)
+  - [x] 06-04-PLAN.md — H3 pause/resume + law add/amend/remove + zero-diff invariant across pause boundary (AGENCY-02, AGENCY-03, Wave 3)
   - [ ] 06-05-PLAN.md — H2 memory query + H4 force-Telos hash-only proxy + payload privacy closed-tuples (AGENCY-02, AGENCY-03, Wave 3)
   - [ ] 06-06-PLAN.md — Playwright E2E SC#1/#4/#5 + doc-sync reconciliation (STATE.md + check-state-doc-sync.mjs) + WCAG checkpoint (AGENCY-01..04, Wave 4)
 **UI hint**: yes
@@ -90,7 +90,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 5. ReviewerNous — Objective-Only Pre-Commit Review | 5/5 | ✅ Complete | 2026-04-21 |
-| 6. Operator Agency Foundation (H1–H4) | 0/6 | Next up | — |
+| 6. Operator Agency Foundation (H1–H4) | 3/6 | In Progress|  |
 | 7. Peer Dialogue → Telos Refinement | 0/TBD | Not started | — |
 | 8. H5 Sovereign Operations (Nous Deletion) | 0/TBD | Not started | — |
 

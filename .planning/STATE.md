@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Steward Console — Phases 5-8
 status: executing
-stopped_at: Phase 6 Plan 02 complete
-last_updated: "2026-04-21T05:04:23.530Z"
+stopped_at: Phase 6 Plans 01+02+04 complete — Plan 03 still pending (parallel execution)
+last_updated: "2026-04-21T05:05:39.829Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 11
-  completed_plans: 7
-  percent: 64
+  completed_plans: 9
+  percent: 82
 ---
 
 # Project State
@@ -27,11 +27,11 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 ## Current Position
 
 Phase: 6 (operator-agency-foundation-h1-h4) — EXECUTING
-Plan: 2 of 6 — SHIPPED (AgencyIndicator + agencyStore + TierTooltip + getOperatorId)
-Status: Ready for Plan 3 (elevation dialog + useElevatedAction)
+Plans shipped: 01, 02, 04 (Grid H3 endpoints + AgencyIndicator); Plan 03 still pending (elevation dialog); Plans 05+06 after.
+Status: Ready to execute Plan 03 (elevation dialog + useElevatedAction)
 Last activity: 2026-04-21
 
-Progress: [██████████] 100% (1/4 phases complete, 5/5 plans in Phase 5)
+Progress: [████████░░] 82% (9/11 plans — Phases 5 complete + 3 of 6 Phase 6 plans shipped)
 
 ## Accumulated Context
 
@@ -103,8 +103,8 @@ See `.planning/phases/05-reviewernous-objective-only-pre-commit-review/05-CONTEX
 
 ## Session Continuity
 
-Last session: 2026-04-21T05:04:03.454Z
-Stopped at: Phase 6 Plan 02 complete — AgencyIndicator shipped (commits 77e939f, ad3a1ff, bfa82b3, 3b7e0cc)
+Last session: 2026-04-21T05:04:00Z
+Stopped at: Phase 6 Plan 04 complete — Grid-side H3 endpoints shipped (commits b8c760f, d188671, 83ecde3)
 Resume file: None
 Next action: Execute Phase 6 Plan 03 (ElevationDialog + useElevatedAction) via `/gsd-execute-phase 06 03`
 
@@ -115,3 +115,11 @@ Next action: Execute Phase 6 Plan 03 (ElevationDialog + useElevatedAction) via `
 - **Dashboard type mirror pattern (second use):** `dashboard/src/lib/protocol/agency-types.ts` joins `audit-types.ts` as hand-copied dashboard mirrors of grid protocol types. SYNC header + drift-detector test (fs.readFileSync) in place. If a third mirror ships, consolidate into a shared package.
 - **PHILOSOPHY §7 verbatim drift detector:** `tier-tooltip.test.tsx` inlines the 5 tier definition strings — any paraphrase of `TIER_DEFINITIONS` fails. Source of truth remains PHILOSOPHY.md lines 71–75.
 - **Tooling gap (ecosystem):** Vitest 4.1 + jsdom ships empty `window.localStorage`; jest-dom matchers don't register under oxc JSX transform. Dashboard-wide convention is plain Chai + native DOM. Per-file Map-backed Storage polyfill pattern is the workaround.
+
+## Accumulated Context (Plan 06-04 additions)
+
+- **Plan 06-04 shipped (2026-04-21):** Grid-side H3 Partner endpoints + WorldClock pause/resume + LogosEngine.amendLaw. 5 Fastify operator endpoints live at `/api/v1/operator/clock/{pause,resume}` and `/api/v1/operator/governance/laws*`. Commits: b8c760f (engine primitives + zero-diff), d188671 (clock endpoints), 83ecde3 (governance CRUD + shared validator). Full Grid suite 491/491 (baseline 458 + 33 new).
+- **Crown-jewel #2 locked:** WorldClock pause/resume preserves the AuditChain head across the pause boundary byte-for-byte. Regression hash: `c7c49f492d85072327e8a4af6912228d6dc2db2d7be372f92b57b30b2a4b0461` (continuous == paused-at-50 with `FIXED_TIME=2026-01-01T00:00:00.000Z`, 100 ticks, `tickRateMs=1_000_000`, `ticksPerEpoch=25`). Closes T-6-05 (chain-of-custody loss across pause).
+- **D-11 payload closure (T-6-06 closed):** `operator.law_changed` audit payload is a closed tuple `{tier, action, operator_id, law_id, change_type}` — law body NEVER broadcast. Structural `Object.keys(entry.payload).sort()` assertion in `governance.test.ts` Test 8 fails loudly if a future refactor adds any key.
+- **Shared validator lives at `grid/src/api/operator/_validation.ts`:** `validateTierBody<T extends HumanAgencyTier>(body, expectedTier)` single-sources the D-14/D-15 body contract across all `/api/v1/operator/*` endpoints. Plan 05 (memory + telos operator routes) consumes the same helper unchanged.
+- **Idempotency decided in HTTP handler, not WorldClock:** capture `isPaused` before/after the call; only emit audit event on a genuine state transition. Double-pause returns 200 but emits one audit entry. WorldClock itself stays simple (`pause()` short-circuits when `!this.timer`).
