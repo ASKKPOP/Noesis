@@ -99,6 +99,13 @@ export class NousRunner {
     async tick(tick: number, epoch: number, dialogueContext?: DialogueContext): Promise<void> {
         if (!this.bridge.connected) return;
 
+        // SC#3 tick-skip guard (Phase 8 AGENCY-05): if this Nous has been
+        // tombstoned (status='deleted'), skip the tick entirely. The coordinator
+        // removes the runner via despawnNous(), but a tick may have already been
+        // dispatched concurrently. Early-return prevents post-tombstone Brain RPCs.
+        const record = this.registry.get(this.nousDid);
+        if (record?.status === 'deleted') return;
+
         if (dialogueContext) {
             this.recordDialogueDelivery(dialogueContext.dialogue_id);
         }

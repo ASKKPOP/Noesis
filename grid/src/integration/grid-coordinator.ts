@@ -97,6 +97,19 @@ export class GridCoordinator {
         }
     }
 
+    /**
+     * Phase 8 AGENCY-05 (D-30 step 2): remove runner and clean up resources
+     * after a Nous has been tombstoned by the H5 delete route.
+     *
+     * Idempotent — calling despawnNous on an already-removed DID is a no-op.
+     * The registry.tombstone call (step 1) already removed the Nous from
+     * SpatialMap; this removes the runner from the coordinator so future
+     * ticks are not dispatched to a tombstoned Nous.
+     */
+    despawnNous(nousDid: string): void {
+        this.runners.delete(nousDid);
+    }
+
     /** Number of active runners. */
     get size(): number {
         return this.runners.size;

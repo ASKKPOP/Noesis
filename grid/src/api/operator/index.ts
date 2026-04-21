@@ -15,6 +15,7 @@ import { registerClockOperatorRoutes } from './clock-pause-resume.js';
 import { registerGovernanceOperatorRoutes } from './governance-laws.js';
 import { registerMemoryQueryRoute } from './memory-query.js';
 import { registerTelosForceRoute } from './telos-force.js';
+import { registerDeleteNousRoute } from './delete-nous.js';
 
 export function registerOperatorRoutes(
     app: FastifyInstance,
@@ -24,4 +25,6 @@ export function registerOperatorRoutes(
     registerGovernanceOperatorRoutes(app, services);
     registerMemoryQueryRoute(app, services);
     registerTelosForceRoute(app, services);
+    // Phase 8 AGENCY-05: H5 Sovereign Operations — Nous deletion.
+    registerDeleteNousRoute(app, services);
 }
