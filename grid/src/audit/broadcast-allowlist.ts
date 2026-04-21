@@ -21,10 +21,11 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Initial allowlist (v1 + Phase 5) — exactly these 11 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6) — exactly these 16 event types.
  *  v1 (Phase 1, per 01-CONTEXT.md): 10 events.
  *  Phase 5 (REV-02): +1 'trade.reviewed' — externally observable reviewer verdict;
  *  payload shape D-03, 3 keys on pass / 5 keys on fail, all privacy-clean (see D-12 test).
+ *  Phase 6 (AGENCY-02, AGENCY-03): +5 operator.* events (D-10 tuple order locked).
  */
 const ALLOWLIST_MEMBERS: readonly string[] = [
     'nous.spawned',
@@ -38,6 +39,15 @@ const ALLOWLIST_MEMBERS: readonly string[] = [
     'tick',
     'grid.started',
     'grid.stopped',
+    // Phase 6 (AGENCY-02, AGENCY-03) — operator agency events.
+    // Shared payload contract: { tier, action, operator_id, target_did? }
+    // All five emitted from grid/src/api/operator/* handlers after
+    // appendOperatorEvent() validates tier-required invariant (D-13).
+    'operator.inspected',      // H2 Reviewer — memory query
+    'operator.paused',         // H3 Partner  — WorldClock.pause()
+    'operator.resumed',        // H3 Partner  — WorldClock.resume()
+    'operator.law_changed',    // H3 Partner  — LogosEngine add/amend/repeal
+    'operator.telos_forced',   // H4 Driver   — hash-only diff, no goal contents
 ] as const;
 
 /**

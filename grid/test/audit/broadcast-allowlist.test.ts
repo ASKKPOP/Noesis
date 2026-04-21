@@ -4,11 +4,11 @@ import {
     isAllowlisted,
     payloadPrivacyCheck,
     FORBIDDEN_KEY_PATTERN,
-} from '../src/audit/broadcast-allowlist.js';
+} from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast-allowlist: default-deny membership', () => {
-    it('has exactly 11 locked v1+Phase 5 event types', () => {
-        expect(ALLOWLIST.size).toBe(11);
+    it('has exactly 16 locked v1+Phase 5+Phase 6 event types', () => {
+        expect(ALLOWLIST.size).toBe(16);
     });
 
     it.each([
@@ -23,6 +23,12 @@ describe('broadcast-allowlist: default-deny membership', () => {
         'tick',
         'grid.started',
         'grid.stopped',
+        // Phase 6 (AGENCY-02, AGENCY-03) — D-10 tuple order locked.
+        'operator.inspected',
+        'operator.paused',
+        'operator.resumed',
+        'operator.law_changed',
+        'operator.telos_forced',
     ])('allows %s', (eventType) => {
         expect(isAllowlisted(eventType)).toBe(true);
     });
@@ -34,6 +40,7 @@ describe('broadcast-allowlist: default-deny membership', () => {
         'unknown.event',
         '',
         'NOUS.MOVED', // case sensitive — must be exact
+        'operator.unknown', // Phase 6: event-name namespace is allowlist-locked
     ])('denies %s', (eventType) => {
         expect(isAllowlisted(eventType)).toBe(false);
     });
@@ -42,7 +49,46 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(() => (ALLOWLIST as Set<string>).add('law.bypassed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).delete('trade.reviewed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).clear()).toThrow(TypeError);
-        expect(ALLOWLIST.size).toBe(11);
+        expect(ALLOWLIST.size).toBe(16);
+    });
+
+    it('Phase 6 operator.* tuple order: inspected < paused < resumed < law_changed < telos_forced', () => {
+        // Iteration order of a Set preserves insertion order — used here as a
+        // D-10 structural proof that the tuple was appended, not reshuffled.
+        const members = Array.from(ALLOWLIST);
+        const idx = (k: string): number => members.indexOf(k);
+        expect(idx('grid.stopped')).toBeLessThan(idx('operator.inspected'));
+        expect(idx('operator.inspected')).toBeLessThan(idx('operator.paused'));
+        expect(idx('operator.paused')).toBeLessThan(idx('operator.resumed'));
+        expect(idx('operator.resumed')).toBeLessThan(idx('operator.law_changed'));
+        expect(idx('operator.law_changed')).toBeLessThan(idx('operator.telos_forced'));
+    });
+});
+
+describe('broadcast-allowlist: Phase 6 operator.* payload privacy (representative cases)', () => {
+    it('H3 pause payload passes privacy', () => {
+        expect(
+            payloadPrivacyCheck({ tier: 'H3', action: 'pause', operator_id: 'op:test-1' }).ok,
+        ).toBe(true);
+    });
+
+    it('H4 force-Telos hash-only payload passes privacy', () => {
+        expect(
+            payloadPrivacyCheck({
+                tier: 'H4',
+                action: 'force_telos',
+                operator_id: 'op:test-2',
+                target_did: 'did:noesis:test',
+                telos_hash_before: 'a'.repeat(64),
+                telos_hash_after: 'b'.repeat(64),
+            }).ok,
+        ).toBe(true);
+    });
+
+    it('H4 force-Telos payload carrying wiki leak is rejected (T-6-03)', () => {
+        expect(
+            payloadPrivacyCheck({ tier: 'H4', action: 'force_telos', wiki: 'leak' }).ok,
+        ).toBe(false);
     });
 });
 
