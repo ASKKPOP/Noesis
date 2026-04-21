@@ -109,7 +109,10 @@ def _make_handler(goal_descriptions: list[str] | None = None) -> BrainHandler:
 
 class TestTelosRefinedActionContract:
     async def test_happy_path_returns_telos_refined_with_closed_tuple(self):
-        handler = _make_handler(goal_descriptions=["Survive the day"])
+        # 2 goals: only "Survive the day" is mentioned → promotion changes
+        # the other goal's bucket (short_term → medium_term), guaranteeing
+        # a genuine canonical-hash mutation (priority/goal_type shift).
+        handler = _make_handler(goal_descriptions=["Survive the day", "Make allies"])
         ctx = make_dialogue_context()
 
         response = await handler.on_tick(
@@ -135,7 +138,7 @@ class TestTelosRefinedActionContract:
 
     async def test_no_forbidden_plaintext_keys_in_metadata(self):
         """D-18 Brain-side privacy gate — plaintext never crosses the boundary."""
-        handler = _make_handler(goal_descriptions=["Survive the day"])
+        handler = _make_handler(goal_descriptions=["Survive the day", "Make allies"])
         ctx = make_dialogue_context()
         response = await handler.on_tick(
             {"tick": 20, "epoch": 1, "dialogue_context": [ctx]}
@@ -164,7 +167,7 @@ class TestTelosRefinedActionContract:
     )
     async def test_malformed_dialogue_id_drops_silently(self, bad_dialogue_id):
         """D-16 mirror on Brain side: malformed dialogue_id → drop, no action."""
-        handler = _make_handler(goal_descriptions=["Survive the day"])
+        handler = _make_handler(goal_descriptions=["Survive the day", "Make allies"])
         ctx = make_dialogue_context()
         ctx["dialogue_id"] = bad_dialogue_id  # bypass keyword 16-hex default
         response = await handler.on_tick(

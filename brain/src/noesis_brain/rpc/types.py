@@ -14,6 +14,7 @@ class ActionType(str, Enum):
     DIRECT_MESSAGE = "direct_message"  # Send DM to specific Nous
     MOVE = "move"  # Move to a different region
     TRADE_REQUEST = "trade_request"  # Send trade offer
+    TELOS_REFINED = "telos_refined"  # Phase 7 DIALOG-02 — Nous-initiated refinement after peer dialogue
     NOOP = "noop"  # Do nothing this cycle
 
 

@@ -115,11 +115,34 @@ class BrainHandler:
         params:
             tick: Current tick number
             epoch: Current epoch
+            dialogue_context: (Phase 7 DIALOG-02, optional) list of
+                DialogueContext dicts aggregated by the Grid from recent
+                nous.spoke events. Brain MAY respond with
+                ActionType.TELOS_REFINED actions (opt-in per D-15).
+                Absence/empty list preserves Phase 6 behavior (D-10
+                additive widening).
         """
-        # Decay emotions each tick
+        # Decay emotions each tick (Phase 6 behavior — preserved exactly).
         self.thymos.decay()
 
-        # For now, just check if there are pressing goals
+        # Phase 7 additive widening (D-10): consume optional dialogue_context.
+        # Absent, empty, or malformed → no refinement attempted, falls through
+        # to NOOP path (strict superset of Phase 6 on_tick contract).
+        dialogue_ctxs = params.get("dialogue_context")
+        actions: list[dict[str, Any]] = []
+        if isinstance(dialogue_ctxs, list):
+            for ctx in dialogue_ctxs:
+                if not isinstance(ctx, dict):
+                    continue
+                refined = self._build_refined_telos(ctx)
+                if refined is not None:
+                    actions.append(refined.to_dict())
+
+        if actions:
+            return actions
+
+        # Pre-Phase-7 NOOP fallback preserved verbatim for additive-widening
+        # compatibility (matches test_get_state_widening strict-superset rule).
         top_goals = self.telos.top_priority(1)
         if not top_goals:
             return [Action(action_type=ActionType.NOOP).to_dict()]
@@ -410,4 +433,126 @@ class BrainHandler:
         return {
             "telos_hash_before": telos_hash_before,
             "telos_hash_after": telos_hash_after,
+        }
+
+    # ────────────────────────────────────────────────────────────────────
+    # Phase 7 DIALOG-02 — Nous-initiated telos refinement after peer dialogue
+    #
+    # Unlike force_telos (Phase 6, operator-driven H4 Driver), this helper
+    # is invoked from on_tick when the Grid delivers a dialogue_context.
+    # Brain remains sovereign (PHILOSOPHY §1, D-15): opt-in, never coerced.
+    # Returned metadata carries ONLY the two 64-hex goal hashes + the 16-hex
+    # dialogue_id — no plaintext crosses the RPC boundary (D-18).
+    # ────────────────────────────────────────────────────────────────────
+
+    def _build_refined_telos(self, ctx: dict[str, Any]) -> Action | None:
+        """Brain decides whether to refine Telos after a peer dialogue.
+
+        Mirrors the hash-before/mutate/hash-after shape of ``force_telos``
+        (the Phase 6 SOLE-hash-authority pattern). Returns an
+        ActionType.TELOS_REFINED Action when the refinement produces a
+        non-identity hash change, else None.
+
+        Per D-18 the returned metadata carries ONLY hashes + dialogue_id —
+        never goal plaintext. Per D-15 the decision is Brain-opt-in: this
+        method MAY return None even when ctx is well-formed.
+
+        ctx: A single dialogue_context dict from the incoming tick params —
+             keys include dialogue_id (16-hex), counterparty_did, channel,
+             utterances (list, <=5 entries, each text <=200 chars).
+        """
+        dialogue_id = ctx.get("dialogue_id", "")
+        if not isinstance(dialogue_id, str) or len(dialogue_id) != 16:
+            # Malformed ctx — log and drop. No audit emit (D-16 mirror on Brain side).
+            log.warning(
+                "telos_refined: dropping ctx with bad dialogue_id %r", dialogue_id
+            )
+            return None
+
+        # Heuristic: decide whether THIS dialogue suggests refinement.
+        # v2.1 minimal: proceed if any utterance text substring-matches any
+        # active goal description (lowercased). Future phases replace this
+        # with a persona-contingent LLM prompt — kept minimal here per
+        # CONTEXT "Claude's Discretion" guidance (substring only, no eval,
+        # no dynamic code → T-07-16 elevation threat mitigation).
+        proposed = self._dialogue_driven_goal_set(ctx)
+        if proposed is None:
+            return None  # Brain opted out — no audit emit (D-15).
+
+        # SOLE hash authority, called BEFORE mutation (D-14).
+        telos_hash_before = compute_active_telos_hash(self.telos.all_goals())
+
+        # Atomic swap — build first, swap only on success (clone force_telos).
+        rebuilt = TelosManager.from_yaml(proposed)
+        self.telos = rebuilt
+
+        # SOLE hash authority, called AFTER mutation (D-14).
+        telos_hash_after = compute_active_telos_hash(self.telos.all_goals())
+
+        if telos_hash_before == telos_hash_after:
+            # No-op refinement — silence per D-22 silent-no-op invariant.
+            return None
+
+        # Closed 3-key metadata tuple (D-20) — Grid injects `did` downstream.
+        return Action(
+            action_type=ActionType.TELOS_REFINED,
+            channel="",
+            text="",
+            metadata={
+                "before_goal_hash": telos_hash_before,
+                "after_goal_hash": telos_hash_after,
+                "triggered_by_dialogue_id": dialogue_id,
+            },
+        )
+
+    def _dialogue_driven_goal_set(
+        self, ctx: dict[str, Any]
+    ) -> dict[str, list[str]] | None:
+        """Minimal v2.1 heuristic: if any utterance substring-matches an active
+        goal description (case-insensitive), propose a reprioritised goal set.
+
+        Returns a TelosManager.from_yaml-compatible dict, or None if no
+        refinement is warranted. Future phases replace this with an LLM call.
+
+        Kept deterministic + synchronous so tests can pin behavior without
+        mocking the LLM. The LLM prompt path is tracked as a deferred idea.
+
+        Threat T-07-16: utterance text feeds into the match check ONLY,
+        never into goal-description strings. Promoted/demoted lists are drawn
+        from the Nous's OWN pre-existing goals — there is no path for
+        adversarial prompt injection to write new goals.
+        """
+        utterances = ctx.get("utterances") or []
+        if not isinstance(utterances, list) or not utterances:
+            return None
+        active = self.telos.active_goals()
+        if not active:
+            return None
+        # Lowercased utterance text pool (truncation-respecting: Grid already
+        # capped to 200 chars; we do not re-inflate).
+        texts: list[str] = []
+        for u in utterances:
+            if isinstance(u, dict):
+                t = u.get("text")
+                if isinstance(t, str):
+                    texts.append(t.lower())
+        pool = " ".join(texts)
+        if not pool:
+            return None
+        # Promote goals whose description is mentioned; demote the rest.
+        promoted: list[str] = []
+        demoted: list[str] = []
+        for g in active:
+            if g.description.lower() in pool:
+                promoted.append(g.description)
+            else:
+                demoted.append(g.description)
+        if not promoted:
+            return None  # No goal mentioned — dialogue not goal-relevant.
+        # Return a from_yaml-compatible shape. Keep all goals; priority shifts
+        # via bucket assignment (promoted → short_term, demoted → medium_term).
+        return {
+            "short_term": promoted,
+            "medium_term": demoted,
+            "long_term": [],
         }

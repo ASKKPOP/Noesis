@@ -122,7 +122,10 @@ async def test_on_tick_dialogue_context_without_match_produces_noop():
 
 
 async def test_on_tick_matching_dialogue_produces_telos_refined():
-    handler = _make_handler(goal_descriptions=["Survive the day"])
+    # Two goals ensure promotion mutates the canonical hash (the non-matching
+    # goal flips from short_term to medium_term). A single already-short_term
+    # goal would be a silent no-op by design (D-22).
+    handler = _make_handler(goal_descriptions=["Survive the day", "Make allies"])
     response = await handler.on_tick(
         {
             "tick": 1,
@@ -180,7 +183,9 @@ async def test_on_tick_handles_utterance_at_boundary_length():
 
 async def test_on_tick_ignores_non_dict_entries_in_list():
     """Defensive: non-dict entries in dialogue_context list are skipped."""
-    handler = _make_handler(goal_descriptions=["Survive the day"])
+    # Two goals so the valid entry produces a real mutation (see note in
+    # test_on_tick_matching_dialogue_produces_telos_refined).
+    handler = _make_handler(goal_descriptions=["Survive the day", "Make allies"])
     response = await handler.on_tick(
         {
             "tick": 1,
