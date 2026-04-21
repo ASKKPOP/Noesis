@@ -17,7 +17,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
 - [x] **Phase 5: ReviewerNous — Objective-Only Pre-Commit Review** ✅ Complete (2026-04-21) — Singleton reviewer, `trade.reviewed` allowlist addition, closed-enum reason codes, Grid abort flow, subjective-check lint gate.
 - [x] **Phase 6: Operator Agency Foundation (H1–H4)** — `operator.*` allowlist additions, tier-stamped audit events, Agency Indicator header, elevation confirmation dialog, tier map for inspect / pause / law-change / force-Telos. (completed 2026-04-21)
 - [x] **Phase 7: Peer Dialogue → Telos Refinement** — Grid dialogue aggregation, Brain `telos.refined` action, hash-only `telos.refined` audit event, Inspector Telos-panel badge. (completed 2026-04-21)
-- [ ] **Phase 8: H5 Sovereign Operations (Nous Deletion)** — Irreversibility warning, DID-typed confirmation, pre-deletion forensic state hash, `operator.nous_deleted` audit event, audit-chain preservation invariant.
+- [x] **Phase 8: H5 Sovereign Operations (Nous Deletion)** — Irreversibility warning, DID-typed confirmation, pre-deletion forensic state hash, `operator.nous_deleted` audit event, audit-chain preservation invariant. (completed 2026-04-21)
 
 ## Phase Details
 
@@ -96,7 +96,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
 | 5. ReviewerNous — Objective-Only Pre-Commit Review | 5/5 | ✅ Complete | 2026-04-21 |
 | 6. Operator Agency Foundation (H1–H4) | 6/6 | Complete    | 2026-04-21 |
 | 7. Peer Dialogue → Telos Refinement | 4/4 | ✅ Complete | 2026-04-21 |
-| 8. H5 Sovereign Operations (Nous Deletion) | 2/3 | In Progress|  |
+| 8. H5 Sovereign Operations (Nous Deletion) | 3/3 | Complete   | 2026-04-21 |
 
 ## Research Artifacts
 
