@@ -26,7 +26,23 @@ export interface NousRunnerConfig {
     audit: AuditChain;
     registry: NousRegistry;
     economy: EconomyManager;
-    reviewer: Reviewer;  // Phase 5 (D-02): synchronous pre-commit reviewer, singleton-per-Grid
+    /**
+     * Phase 5 (D-02): synchronous pre-commit reviewer, singleton-per-Grid.
+     *
+     * Production callers (main.ts / launcher) MUST pass a Reviewer instance —
+     * omission would bypass the REV-02 gate and is a policy bug. This field is
+     * typed optional ONLY to support the D-13 zero-diff regression test
+     * (`grid/test/review/zero-diff.test.ts`, Phase 5 Plan 05-04), which runs
+     * the SAME scripted trade sequence twice — once with reviewer enabled,
+     * once with reviewer bypassed — and proves reviewer-bypass affects NOTHING
+     * beyond the absence of `trade.reviewed` entries. Without this opt-out the
+     * invariant cannot be asserted without duplicating NousRunner internals.
+     *
+     * If `reviewer` is undefined at runtime, the trade_request handler skips
+     * BOTH the `reviewer.review()` call AND the `trade.reviewed` emit, but
+     * leaves the `trade.proposed` and `trade.settled` emit sites untouched.
+     */
+    reviewer?: Reviewer;
 }
 
 export type SpeakHandler = (runner: NousRunner, channel: string, text: string, tick: number) => void;
@@ -40,7 +56,7 @@ export class NousRunner {
     private readonly audit: AuditChain;
     private readonly registry: NousRegistry;
     private readonly economy: EconomyManager;
-    private readonly reviewer: Reviewer;
+    private readonly reviewer: Reviewer | undefined;
 
     private speakHandler: SpeakHandler | null = null;
 
@@ -172,43 +188,51 @@ export class NousRunner {
                     // T-5-05 reminder: telosHash is a structural-attest only in Phase 5; Phase 7
                     // TelosRegistry will upgrade this to a registry-backed identity binding. DO NOT
                     // treat telosHash as an auth token here.
-                    const proposer = this.registry.get(this.nousDid);
-                    const proposerBalance = proposer?.ousia ?? 0;
-                    const verdict = this.reviewer.review({
-                        proposerDid: this.nousDid,
-                        proposerBalance,
-                        counterparty,
-                        amount,
-                        memoryRefs,
-                        telosHash,
-                    });
+                    //
+                    // Reviewer-bypass branch (D-13 regression affordance, Plan 05-04): when
+                    // `this.reviewer` is undefined, skip BOTH the review() call AND the
+                    // trade.reviewed emit. Production wiring ALWAYS passes a reviewer — this
+                    // branch exists solely for the zero-diff regression test. See the NousRunnerConfig
+                    // `reviewer?` field JSDoc for the contract.
+                    if (this.reviewer) {
+                        const proposer = this.registry.get(this.nousDid);
+                        const proposerBalance = proposer?.ousia ?? 0;
+                        const verdict = this.reviewer.review({
+                            proposerDid: this.nousDid,
+                            proposerBalance,
+                            counterparty,
+                            amount,
+                            memoryRefs,
+                            telosHash,
+                        });
 
-                    if (verdict.verdict === 'fail') {
-                        // T-5-02 runtime backstop — closed enum at JSON emit boundary.
-                        if (!VALID_REVIEW_FAILURE_CODES.has(verdict.failure_reason)) {
-                            throw new Error(
-                                `Reviewer returned unknown failure_reason '${verdict.failure_reason}' — ` +
-                                `not in VALID_REVIEW_FAILURE_CODES.`,
-                            );
+                        if (verdict.verdict === 'fail') {
+                            // T-5-02 runtime backstop — closed enum at JSON emit boundary.
+                            if (!VALID_REVIEW_FAILURE_CODES.has(verdict.failure_reason)) {
+                                throw new Error(
+                                    `Reviewer returned unknown failure_reason '${verdict.failure_reason}' — ` +
+                                    `not in VALID_REVIEW_FAILURE_CODES.`,
+                                );
+                            }
+                            this.audit.append('trade.reviewed', Reviewer.DID, {
+                                trade_id: nonce,
+                                reviewer_did: Reviewer.DID,
+                                verdict: 'fail',
+                                failed_check: verdict.failed_check,
+                                failure_reason: verdict.failure_reason,
+                            });
+                            // NO transferOusia, NO trade.settled, NO trade.rejected on reviewer fail.
+                            break;
                         }
+
+                        // Pass path — emit trade.reviewed{pass}, then proceed with existing bounds +
+                        // transferOusia + trade.settled.
                         this.audit.append('trade.reviewed', Reviewer.DID, {
                             trade_id: nonce,
                             reviewer_did: Reviewer.DID,
-                            verdict: 'fail',
-                            failed_check: verdict.failed_check,
-                            failure_reason: verdict.failure_reason,
+                            verdict: 'pass',
                         });
-                        // NO transferOusia, NO trade.settled, NO trade.rejected on reviewer fail.
-                        break;
                     }
-
-                    // Pass path — emit trade.reviewed{pass}, then proceed with existing bounds +
-                    // transferOusia + trade.settled.
-                    this.audit.append('trade.reviewed', Reviewer.DID, {
-                        trade_id: nonce,
-                        reviewer_did: Reviewer.DID,
-                        verdict: 'pass',
-                    });
 
                     // Existing policy check — bounds is Grid-level min/max transfer (NOT a reviewer
                     // invariant; reviewer owns positive-amount, bounds owns min/max range).
