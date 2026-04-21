@@ -9,13 +9,14 @@
  * Exits 1 with a diagnostic when drift is detected.
  *
  * Invariants enforced:
- *   1. STATE.md mentions "11 events" (the Phase-5 post-ship count).
- *   2. All 11 allowlist members appear textually in STATE.md.
+ *   1. STATE.md mentions "16 events" (the Phase-6 post-ship count).
+ *   2. All 16 allowlist members appear textually in STATE.md.
  *   3. The phantom `trade.countered` only appears inside a deferred/phantom/never-emitted
  *      context block — never as a live/allowlisted event.
  *
- * If broader allowlist-doc-sync becomes needed (e.g. after Phase 6 adds 5 operator.*
- * events), update the `required` array below and the "11 events" count literal.
+ * Phase 6 bumped the allowlist to 16 events by adding 5 operator.* members.
+ * Any future phase that extends the allowlist must bump the count literal here
+ * and append its members to the `required` array.
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -34,9 +35,9 @@ if (!existsSync(statePath)) {
 const state = readFileSync(statePath, 'utf8');
 const failures = [];
 
-// 1. Canonical "11 events" assertion must appear at least once in Accumulated Context.
-if (!/11\s+events/i.test(state)) {
-  failures.push('STATE.md does not mention "11 events" — Phase 5 allowlist count assertion missing.');
+// 1. Canonical "16 events" assertion must appear at least once in Accumulated Context.
+if (!/16\s+events/i.test(state)) {
+  failures.push('STATE.md does not mention "16 events" — Phase 6 allowlist count assertion missing.');
 }
 
 // 2. Phantom `trade.countered` must NOT appear as a live/shipped event.
@@ -74,6 +75,12 @@ const required = [
   'tick',
   'grid.started',
   'grid.stopped',
+  // Phase 6 additions (AGENCY-01..04):
+  'operator.inspected',
+  'operator.paused',
+  'operator.resumed',
+  'operator.law_changed',
+  'operator.telos_forced',
 ];
 for (const event of required) {
   const pattern = new RegExp(event.replace(/\./g, '\\.'));
@@ -89,5 +96,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log('[state-doc-sync] OK — STATE.md is in sync with the 11-event allowlist.');
+console.log('[state-doc-sync] OK — STATE.md is in sync with the 16-event allowlist.');
 process.exit(0);

@@ -123,11 +123,13 @@ Humans own Nous through signed ownership proofs. Scoped consent grants: observe,
 
 **v2.0 First Life — SHIPPED** (Sprints 11–14, 2026-04-18). Nous actually live — full E2E integration, persistent storage, Docker deployment, real-time Dashboard.
 
-**v2.1 Steward Console — IN PROGRESS** (Sprint 15, opened 2026-04-20). Turning the dashboard from zoo-cam into a stewarded environment: ReviewerNous (objective-only pre-commit checks), Operator Agency Tiers (H1–H5, Human Agency Scale as first-class UI), Peer Dialogue Memory (two-Nous exchanges mutate goals via `telos.refined`).
+**v2.1 Steward Console — IN PROGRESS** (Sprint 15, opened 2026-04-20). Turning the dashboard from zoo-cam into a stewarded environment: ReviewerNous (objective-only pre-commit checks — Phase 5 ✅), Operator Agency Tiers (H1–H5, Human Agency Scale as first-class UI — Phase 6 ✅), Peer Dialogue Memory (two-Nous exchanges mutate goals via `telos.refined` — Phase 7 pending).
 
 **v2.1 Phase 5 — ReviewerNous — SHIPPED** (2026-04-21). Every `trade.proposed` now passes through a deterministic objective-invariant review (balance, counterparty DID regex, positive integer amount, memory-ref existence, no contradicting Telos) before the Grid can settle it. Review verdicts are audit-observable via the new allowlisted `trade.reviewed` event. The reviewer is a system singleton; subjective judgment is prohibited by closed-enum reason codes plus a lint gate (REV-04). Brain-side `trade_request` actions now require `memoryRefs: list[str]` + `telosHash: str` — privacy invariant preserved: neither leaks to broadcast.
 
-**Test coverage:** grid 346/346, brain 262/262, dashboard 215/215 — all green as of v2.0 ship.
+**v2.1 Phase 6 — Operator Agency (H1–H4) — SHIPPED** (2026-04-21). Human Agency Scale tiers are a first-class dashboard surface: `<AgencyIndicator />` renders on every route, elevation from H1 → H2/H3/H4 runs through a native `<dialog>` confirmation with closure-capture race-safety (SC#4: mid-flight tier downgrade cannot mutate the committed tier), and five new tier-stamped audit events (`operator.inspected`, `operator.paused`, `operator.resumed`, `operator.law_changed`, `operator.telos_forced`) flow through a single `appendOperatorEvent()` producer boundary that enforces closed-tuple payload privacy (law body never broadcast; Telos plaintext never crosses the RPC or audit boundary — only SHA-256 hashes do). WorldClock pause/resume preserves the AuditChain head byte-for-byte (zero-diff invariant extended across Phase 6). H5 "Delete Nous" surfaces as a visible-but-disabled affordance with `title="Requires Phase 8"` — first-life promise preserved.
+
+**Test coverage:** grid 538/538, brain 277/277, dashboard 274/274 — all green as of Phase 6 ship.
 
 | Milestone | Sprints | Deliverables |
 |-----------|---------|--------------|

@@ -92,7 +92,7 @@ export async function startMockGrid(port = 8080): Promise<MockGridHandle> {
     // this suite; dashboard fetches are same-origin from its Next.js server.
     app.addHook('onRequest', async (_req, reply) => {
         reply.header('access-control-allow-origin', 'http://localhost:3001');
-        reply.header('access-control-allow-methods', 'GET,OPTIONS');
+        reply.header('access-control-allow-methods', 'GET,POST,OPTIONS');
         reply.header('access-control-allow-headers', 'content-type');
     });
 
@@ -100,6 +100,48 @@ export async function startMockGrid(port = 8080): Promise<MockGridHandle> {
         regions: MOCK_REGIONS,
         connections: MOCK_CONNECTIONS,
     }));
+
+    // ── Phase 6 operator endpoints — minimal stubs (Plan 06-06 Task 1) ────
+    // These satisfy the HTTP contract for dashboard E2E flow only. Audit
+    // invariants + privacy checks live in grid vitest suites (Plan 05 Task 2,
+    // Plan 04 Tasks 1–3). The dashboard never reads the response body deeply;
+    // it only needs a 200-shaped response to unblock the UI.
+    //
+    // Route shapes mirror the REAL Grid (grid/src/api/operator/*):
+    //   memory-query   → POST /api/v1/operator/nous/:did/memory/query
+    //   telos-force    → POST /api/v1/operator/nous/:did/telos/force
+    //   clock-pause    → POST /api/v1/operator/clock/pause
+    //   clock-resume   → POST /api/v1/operator/clock/resume
+    app.post<{ Params: { did: string } }>(
+        '/api/v1/operator/nous/:did/memory/query',
+        async (_req, reply) => {
+            reply.code(200);
+            return { entries: [] };
+        },
+    );
+
+    app.post<{ Params: { did: string } }>(
+        '/api/v1/operator/nous/:did/telos/force',
+        async (_req, reply) => {
+            reply.code(200);
+            // Distinct hashes — exercises the diff-display branch if UI
+            // ever renders it. Shape mirrors Plan 05 `telos-force.ts`.
+            return {
+                telos_hash_before: 'a'.repeat(64),
+                telos_hash_after: 'b'.repeat(64),
+            };
+        },
+    );
+
+    app.post('/api/v1/operator/clock/pause', async (_req, reply) => {
+        reply.code(200);
+        return { paused: true };
+    });
+
+    app.post('/api/v1/operator/clock/resume', async (_req, reply) => {
+        reply.code(200);
+        return { paused: false };
+    });
 
     const sockets = new Set<WebSocket>();
 
