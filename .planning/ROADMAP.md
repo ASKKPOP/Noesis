@@ -31,7 +31,12 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
   3. `ReviewerNous` is deployed as exactly one system singleton per Grid at startup; a second reviewer registration attempt fails fast with a clear error. Opt-in peer review is unreachable from the public API surface.
   4. A contract test enumerates the allowed check names; adding a new check requires updating the enum, and the test fails (red) if any check handler references subjective concepts (fairness, wisdom, taste, quality, novelty) by keyword.
   5. AuditChain zero-diff invariant still holds — a 100-tick simulation with review enabled produces byte-identical chain hashes to the same simulation with the reviewer path bypassed *except* for the added `trade.reviewed` entries (i.e., determinism is preserved, the allowlist addition is the only diff).
-**Plans**: TBD (estimate 3-4 plans: allowlist + event type, singleton + invariant handlers, Grid abort wiring, lint/contract test)
+**Plans**: 5 plans
+  - [ ] 05-01-PLAN.md — Closed-enum types + 5 objective check handlers + REV-04 subjective-keyword lint gate
+  - [ ] 05-02-PLAN.md — Reviewer singleton + first-fail-wins loop + public barrel
+  - [ ] 05-03-PLAN.md — Brain schema extension (memoryRefs + telosHash) + nous-runner 3-event rewrite + main.ts bootstrap wiring
+  - [ ] 05-04-PLAN.md — Allowlist addition (`trade.reviewed`) + D-12 privacy regression + D-13 zero-diff invariant regression
+  - [ ] 05-05-PLAN.md — STATE.md D-11 reconciliation + `scripts/check-state-doc-sync.mjs` regression gate + ship-time doc sync
 
 ### Phase 6: Operator Agency Foundation (H1–H4)
 **Goal**: Every operator-initiated action declares a tier, elevates explicitly above H1, and records the tier at commit time; the dashboard makes the current tier unmissable.
@@ -78,7 +83,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. ReviewerNous — Objective-Only Pre-Commit Review | 0/TBD | Not started | — |
+| 5. ReviewerNous — Objective-Only Pre-Commit Review | 0/5 | Planned | — |
 | 6. Operator Agency Foundation (H1–H4) | 0/TBD | Not started | — |
 | 7. Peer Dialogue → Telos Refinement | 0/TBD | Not started | — |
 | 8. H5 Sovereign Operations (Nous Deletion) | 0/TBD | Not started | — |
