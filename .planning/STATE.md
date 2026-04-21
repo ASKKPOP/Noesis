@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Steward Console
 status: planning
-stopped_at: Roadmap created (Phases 5-8); planning Phase 5 pending
-last_updated: "2026-04-20T00:00:00.000Z"
-last_activity: 2026-04-20 -- v2.1 roadmap written; 12/12 requirements mapped across Phases 5-8
+stopped_at: Phase 5 context gathered (13 decisions locked); auto-advancing to plan-phase
+last_updated: "2026-04-20T01:00:00.000Z"
+last_activity: 2026-04-20 -- Phase 5 discuss-phase completed; 05-CONTEXT.md + DISCUSSION-LOG committed (58b12f3)
 progress:
   total_phases: 4
   completed_phases: 0
@@ -26,10 +26,10 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 
 ## Current Position
 
-Phase: 5 — ReviewerNous — Objective-Only Pre-Commit Review (pending — not started)
+Phase: 5 — ReviewerNous — Objective-Only Pre-Commit Review (context gathered — plan pending)
 Plan: —
-Status: v2.1 roadmap written; 4 phases (5-8) defined; 12/12 requirements mapped; awaiting `/gsd-plan-phase 5`
-Last activity: 2026-04-20 -- ROADMAP.md written with Phases 5-8, success criteria derived goal-backward, traceability filled
+Status: 13 decisions locked in 05-CONTEXT.md (D-01..D-13); auto-advancing to `/gsd-plan-phase 5 --auto`
+Last activity: 2026-04-20 -- discuss-phase complete; CONTEXT + DISCUSSION-LOG committed (58b12f3)
 
 Progress: [░░░░░░░░░░] 0% (0/4 phases complete)
 
@@ -39,7 +39,7 @@ Progress: [░░░░░░░░░░] 0% (0/4 phases complete)
 
 **v2.0 shipped state (2026-04-18):**
 - grid 346/346 tests, brain 262/262 tests, dashboard 215/215 tests — all green
-- Broadcast allowlist FROZEN (11 events): `nous.spawned`, `nous.moved`, `nous.spoke`, `trade.proposed`, `trade.settled`, `law.triggered`, `tick`, `grid.started`, `grid.stopped`, plus `trade.countered`
+- Broadcast allowlist FROZEN (10 events, per actual `grid/src/audit/broadcast-allowlist.ts`): `nous.spawned`, `nous.moved`, `nous.spoke`, `nous.direct_message`, `trade.proposed`, `trade.settled`, `law.triggered`, `tick`, `grid.started`, `grid.stopped` (prior STATE said 11 with phantom `trade.countered` — drift corrected 2026-04-20 per Phase 5 D-11)
 - AuditChain zero-diff invariant holds since Phase 1 commit `29c3516`
 - DID regex `/^did:noesis:[a-z0-9_\-]+$/i` enforced at 3 entry points
 - TradeRecord.timestamp contract: Unix **seconds** (`< 10_000_000_000`)
@@ -74,6 +74,7 @@ Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule p
 
 ## Session Continuity
 
-Last session: 2026-04-20T00:00:00Z
-Stopped at: ROADMAP.md written for v2.1; 12/12 requirements mapped to Phases 5-8
-Resume file: None — next action is `/gsd-plan-phase 5`
+Last session: 2026-04-20T01:00:00Z
+Stopped at: Phase 5 discuss-phase complete — 13 decisions locked (D-01..D-13)
+Resume file: `.planning/phases/05-reviewernous-objective-only-pre-commit-review/05-CONTEXT.md`
+Next action: `/gsd-plan-phase 5 --auto` (auto-advancing per --auto flag)
