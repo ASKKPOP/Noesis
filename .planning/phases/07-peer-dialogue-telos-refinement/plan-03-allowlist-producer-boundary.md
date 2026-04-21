@@ -4,13 +4,14 @@ plan: 03
 type: execute
 wave: 3
 depends_on: [01, 02]
+revised_at: 2026-04-21
 files_modified:
   - grid/src/audit/broadcast-allowlist.ts
   - grid/src/audit/append-telos-refined.ts
   - grid/src/audit/index.ts
   - grid/src/integration/nous-runner.ts
   - grid/test/audit/telos-refined-privacy.test.ts
-  - grid/test/audit/allowlist-17.test.ts
+  - grid/test/audit/allowlist-seventeen.test.ts
   - grid/test/audit/telos-refined-producer-boundary.test.ts
   - grid/test/integration/telos-refined-runner-branch.test.ts
   - scripts/check-state-doc-sync.mjs
@@ -42,7 +43,7 @@ must_haves:
     - path: "grid/test/audit/telos-refined-privacy.test.ts"
       provides: "8-case privacy matrix (6 forbidden flat + 1 nested + 1 happy baseline) + EVENT_SPECS coverage assertion"
       contains: "FORBIDDEN_CASES"
-    - path: "grid/test/audit/allowlist-17.test.ts"
+    - path: "grid/test/audit/allowlist-seventeen.test.ts"
       provides: "Frozen-tuple ordering invariant — length === 17, position 17 === 'telos.refined', set is frozen"
       contains: "toHaveLength(17)"
     - path: "grid/test/audit/telos-refined-producer-boundary.test.ts"
@@ -204,7 +205,7 @@ export function appendTelosRefined(
 
 <task type="auto" tdd="true">
   <name>Task 1: Allowlist 16→17 + appendTelosRefined producer helper + three test files</name>
-  <files>grid/src/audit/broadcast-allowlist.ts, grid/src/audit/append-telos-refined.ts, grid/src/audit/index.ts, grid/test/audit/allowlist-17.test.ts, grid/test/audit/telos-refined-privacy.test.ts, grid/test/audit/telos-refined-producer-boundary.test.ts</files>
+  <files>grid/src/audit/broadcast-allowlist.ts, grid/src/audit/append-telos-refined.ts, grid/src/audit/index.ts, grid/test/audit/allowlist-seventeen.test.ts, grid/test/audit/telos-refined-privacy.test.ts, grid/test/audit/telos-refined-producer-boundary.test.ts</files>
   <read_first>
     - grid/src/audit/broadcast-allowlist.ts (FULL — current 16-member tuple at lines 30-51; FORBIDDEN_KEY_PATTERN at line 85; payloadPrivacyCheck implementation)
     - grid/src/audit/operator-events.ts (FULL — the Phase 6 analog; clone function shape, import style, error messages)
@@ -215,8 +216,8 @@ export function appendTelosRefined(
     - grid/test/audit/operator-event-invariant.test.ts — the analog enumeration-shape test
     - grid/test/audit/operator-payload-privacy.test.ts — the analog privacy-matrix test (Phase 6 ships 5 events × 8 cases = 40; Phase 7 ships 1 × 8 = 8)
     - 07-CONTEXT.md D-19, D-20, D-21, D-22, D-31 (allowlist position, closed tuple, native privacy pass, privacy matrix, sole producer boundary)
-    - 07-PATTERNS.md §grid/src/audit/append-telos-refined.ts, §grid/test/dialogue/allowlist-17.test.ts, §grid/test/dialogue/telos-refined-privacy.test.ts, §grid/test/dialogue/producer-boundary.test.ts
-    - 07-VALIDATION.md Wave 0 Grid section (confirms these test files are mandatory)
+    - 07-PATTERNS.md §grid/src/audit/append-telos-refined.ts, §grid/test/dialogue/allowlist-seventeen.test.ts, §grid/test/dialogue/telos-refined-privacy.test.ts, §grid/test/dialogue/producer-boundary.test.ts
+    - 07-VALIDATION.md Wave 0 Grid section (confirms these test files are mandatory and authored RED-first inside this task)
   </read_first>
   <behavior>
     - **broadcast-allowlist.ts:** After edit, `ALLOWLIST_MEMBERS.length === 17`, `ALLOWLIST_MEMBERS[16] === 'telos.refined'`, `ALLOWLIST.has('telos.refined') === true`, and all pre-existing Phase 6 tests still pass (order of first 16 members unchanged).
@@ -227,11 +228,16 @@ export function appendTelosRefined(
     - **append-telos-refined.ts (invalid dialogue_id):** throws `TypeError` matching `/dialogue_id|hex16/i` when `triggered_by_dialogue_id` is not 16-hex.
     - **append-telos-refined.ts (extra key):** throws `TypeError` matching `/extra|unexpected/i` if the payload carries any key outside the 4-key closed tuple. (Implementation tip: destructure + explicit reconstruction; then `Object.keys(payload).length === 4` assertion.)
     - **append-telos-refined.ts (privacy gate):** `payloadPrivacyCheck` runs BEFORE `chain.append`; a payload with `prompt`/`response`/`wiki`/`reflection`/`thought`/`emotion_delta` keys throws before anything enters the chain.
-    - **allowlist-17.test.ts:** asserts length 17, position 16 is `'telos.refined'`, first 16 members unchanged (pin as array literal comparison).
+    - **allowlist-seventeen.test.ts:** asserts length 17, position 16 is `'telos.refined'`, first 16 members unchanged (pin as array literal comparison).
     - **telos-refined-privacy.test.ts:** 8 cases = 6 forbidden flat (`prompt`, `response`, `wiki`, `reflection`, `thought`, `emotion_delta`) + 1 nested forbidden (`{meta: {prompt: 'x'}}`) + 1 happy baseline. Plus a coverage assertion that the allowlist / EVENT_SPECS enumeration includes `'telos.refined'`.
     - **telos-refined-producer-boundary.test.ts:** grep-style invariant — read all `.ts` files under `grid/src/` (excluding `grid/src/audit/append-telos-refined.ts`), assert none contains `audit.append` / `chain.append` followed (within ~100 chars) by the string `'telos.refined'`. This is the "sole call site" gate.
   </behavior>
   <action>
+    **TDD discipline — author tests RED-first BEFORE any src/ edit.**
+
+    **Step 0 — RED: Create all three test files before any production code exists.**
+    Create `grid/test/audit/allowlist-seventeen.test.ts`, `grid/test/audit/telos-refined-privacy.test.ts`, and `grid/test/audit/telos-refined-producer-boundary.test.ts` with real `expect(...)` assertions per the test bodies shown in Steps 4–6 below. Run `cd grid && pnpm test -- audit/allowlist-seventeen audit/telos-refined-privacy audit/telos-refined-producer-boundary --run` and CONFIRM all three files report failing tests (not "0 tests found"). The failures confirm the test harness is wired and the assertions are real.
+
     **Step 1 — Edit `grid/src/audit/broadcast-allowlist.ts`:**
     1. Locate the `ALLOWLIST_MEMBERS` tuple (currently lines 30-51).
     2. Replace the header comment (lines 24-29) to mention Phase 7:
@@ -242,7 +248,7 @@ export function appendTelosRefined(
      *  Phase 6 (AGENCY-02/03): +5 operator.* events.
      *  Phase 7 (DIALOG-02): +1 'telos.refined' at position 17 — Nous-initiated
      *  hash-only refinement after peer dialogue. Tuple ORDER is locked; any
-     *  reorder fails grid/test/audit/allowlist-17.test.ts.
+     *  reorder fails grid/test/audit/allowlist-seventeen.test.ts.
      */
     ```
     3. Append `'telos.refined'` as the 17th entry, BELOW `'operator.telos_forced'`:
@@ -374,7 +380,7 @@ export function appendTelosRefined(
     ```
     If a `HEX64_RE` is already re-exported from another audit submodule, adjust the alias to prevent name collision — do NOT shadow the existing export.
 
-    **Step 4 — Create `grid/test/audit/allowlist-17.test.ts`:**
+    **Step 4 — `grid/test/audit/allowlist-seventeen.test.ts` (authored RED in Step 0; GREEN after Step 1):**
     ```typescript
     import { describe, expect, it } from 'vitest';
     import { ALLOWLIST, isAllowlisted } from '../../src/audit/broadcast-allowlist';
@@ -424,7 +430,7 @@ export function appendTelosRefined(
     });
     ```
 
-    **Step 5 — Create `grid/test/audit/telos-refined-privacy.test.ts`:**
+    **Step 5 — `grid/test/audit/telos-refined-privacy.test.ts` (authored RED in Step 0; GREEN after Step 2):**
     ```typescript
     import { describe, expect, it } from 'vitest';
     import { AuditChain } from '../../src/audit/chain';
@@ -478,7 +484,7 @@ export function appendTelosRefined(
     });
     ```
 
-    **Step 6 — Create `grid/test/audit/telos-refined-producer-boundary.test.ts`:**
+    **Step 6 — `grid/test/audit/telos-refined-producer-boundary.test.ts` (authored RED in Step 0; GREEN after Step 2):**
     This is the grep-style "sole call site" invariant. It scans all `.ts` files under `grid/src/` (excluding `append-telos-refined.ts` itself and tests) and asserts none of them calls `audit.append` / `chain.append` / `this.audit.append` with a literal `'telos.refined'` in proximity.
     ```typescript
     import { describe, expect, it } from 'vitest';
@@ -524,6 +530,8 @@ export function appendTelosRefined(
 
     **Step 7 — Vitest config:** ensure `grid/vitest.config.ts` (or package-level `test:` glob) picks up `grid/test/audit/**/*.test.ts`. If already glob-included, no change. If not, add the directory to `include`.
 
+    **Step 8 — CONFIRM GREEN:** Run `cd grid && pnpm test -- audit/allowlist-seventeen audit/telos-refined-privacy audit/telos-refined-producer-boundary --run` and confirm vitest reports a non-zero PASSING count across all three files (not "0 tests found"). If any file reports "0 tests found", the test-discovery glob failed — fix `vitest.config.ts` before marking done.
+
     **Do NOT modify:**
     - `payloadPrivacyCheck` or `FORBIDDEN_KEY_PATTERN` (Phase 1 + Phase 6 frozen contracts).
     - `appendOperatorEvent` or any Phase 6 operator.* test (DIALOG-02 is additive only).
@@ -531,17 +539,17 @@ export function appendTelosRefined(
     - Any `grid/src/review/*` or `grid/src/api/operator/*` file (out of scope).
   </action>
   <verify>
-    <automated>cd grid &amp;&amp; pnpm test -- audit/allowlist-17 audit/telos-refined-privacy audit/telos-refined-producer-boundary &amp;&amp; pnpm run typecheck</automated>
+    <automated>cd grid &amp;&amp; pnpm test -- audit/allowlist-seventeen audit/telos-refined-privacy audit/telos-refined-producer-boundary --run &amp;&amp; pnpm run typecheck</automated>
   </verify>
   <done>
     - `grid/src/audit/broadcast-allowlist.ts` contains `'telos.refined'` on a line immediately after `'operator.telos_forced'`.
     - `grid/src/audit/append-telos-refined.ts` exists and exports `appendTelosRefined`, `HEX64_RE`, `DIALOGUE_ID_RE`, `TelosRefinedPayload`.
     - `grid/src/audit/index.ts` re-exports the new symbols (import from `@/audit` works in downstream code).
-    - `cd grid && pnpm test -- audit/allowlist-17` reports 4/4 tests green.
-    - `cd grid && pnpm test -- audit/telos-refined-privacy` reports ≥9 tests green (1 coverage + 1 happy + 7 parametrized + 1 privacy-check native pass).
-    - `cd grid && pnpm test -- audit/telos-refined-producer-boundary` reports 2/2 green.
+    - `cd grid && pnpm test -- audit/allowlist-seventeen --run` reports 4/4 tests green (non-zero count).
+    - `cd grid && pnpm test -- audit/telos-refined-privacy --run` reports ≥9 tests green (1 coverage + 1 happy + 7 parametrized + 1 privacy-check native pass).
+    - `cd grid && pnpm test -- audit/telos-refined-producer-boundary --run` reports 2/2 green.
     - `cd grid && pnpm run typecheck` passes (no type errors introduced).
-    - `cd grid && pnpm test -- audit` (full audit dir) reports no regressions in Phase 6 tests.
+    - `cd grid && pnpm test -- audit --run` (full audit dir) reports no regressions in Phase 6 tests.
   </done>
 </task>
 
@@ -566,6 +574,10 @@ export function appendTelosRefined(
     - **Non-regression:** Phase 5/6 existing cases (`speak`, `direct_message`, `move`, `trade_request`, `noop`) still compile + all their Phase 6 tests still pass.
   </behavior>
   <action>
+    **TDD discipline — author the integration test RED-first BEFORE editing nous-runner.ts.**
+
+    **Step 0 — RED: Create `grid/test/integration/telos-refined-runner-branch.test.ts`** with the test body shown in Step 2 below. Run `cd grid && pnpm test -- integration/telos-refined-runner-branch --run` and CONFIRM the test file fails (not "0 tests found"). All 6 scenarios should fail because the `case 'telos_refined':` branch does not yet exist in nous-runner.ts.
+
     **Step 1 — Edit `grid/src/integration/nous-runner.ts`:**
     Inside the `executeActions` method (the switch statement that dispatches on `action.action_type`), add a new `case 'telos_refined':` branch. Location: AFTER the existing `case 'trade_request':` and BEFORE the `default:` / `case 'noop':` (whichever comes last in the file). Follow the PATTERNS.md §nous-runner.ts shape verbatim, adapted to (a) use THIS plan's `appendTelosRefined` import, (b) reference the `recentDialogueIds` seam that Plan 01 created.
 
@@ -626,7 +638,7 @@ export function appendTelosRefined(
     - Do NOT propagate `err` — this case drops silently by design (mirrors Phase 6 malformed-brain-response pattern per D-16 step 4).
     - Do NOT add a `default:` branch — the existing default handles unknown action types.
 
-    **Step 2 — Create `grid/test/integration/telos-refined-runner-branch.test.ts`:**
+    **Step 2 — `grid/test/integration/telos-refined-runner-branch.test.ts` (authored RED in Step 0; GREEN after Step 1):**
     ```typescript
     /**
      * DIALOG-02 integration: NousRunner.executeActions case 'telos_refined'.
@@ -734,20 +746,22 @@ export function appendTelosRefined(
     });
     ```
 
+    **Step 3 — CONFIRM GREEN:** Run `cd grid && pnpm test -- integration/telos-refined-runner-branch --run` and confirm vitest reports 6/6 passing (non-zero count).
+
     **Do NOT:**
     - Add a `setRecentDialogueIds` public API to NousRunner just for tests — use the type-assertion seam pattern (`(runner as unknown as {...}).recentDialogueIds.add(...)`) so the production API stays clean.
     - Broadcast anything new — `audit.append` → `WsHub` → allowlist → clients is the existing wiring. This branch does not touch WsHub directly.
     - Mutate `recentDialogueIds` after the call — a single action consumes but does not evict.
   </action>
   <verify>
-    <automated>cd grid &amp;&amp; pnpm test -- integration/telos-refined-runner-branch &amp;&amp; pnpm run typecheck</automated>
+    <automated>cd grid &amp;&amp; pnpm test -- integration/telos-refined-runner-branch --run &amp;&amp; pnpm run typecheck</automated>
   </verify>
   <done>
     - `grep "case 'telos_refined':" grid/src/integration/nous-runner.ts` returns a match.
     - `grep "appendTelosRefined" grid/src/integration/nous-runner.ts` returns exactly one match (the call inside the new case).
-    - `cd grid && pnpm test -- integration/telos-refined-runner-branch` reports 6/6 green.
+    - `cd grid && pnpm test -- integration/telos-refined-runner-branch --run` reports 6/6 green (non-zero count).
     - `cd grid && pnpm run typecheck` passes.
-    - `cd grid && pnpm test -- integration` reports no regressions in Phase 6 tests.
+    - `cd grid && pnpm test -- integration --run` reports no regressions in Phase 6 tests.
     - The producer-boundary test from Task 1 (`telos-refined-producer-boundary.test.ts`) also passes after this change — nous-runner.ts does NOT call `audit.append('telos.refined', ...)` directly; it goes via `appendTelosRefined`.
   </done>
 </task>
@@ -834,7 +848,7 @@ export function appendTelosRefined(
     - Commit in this task — the planner-specified workflow commits at phase close, not per-task.
   </action>
   <verify>
-    <automated>node scripts/check-state-doc-sync.mjs &amp;&amp; cd grid &amp;&amp; pnpm test -- audit/allowlist-17</automated>
+    <automated>node scripts/check-state-doc-sync.mjs &amp;&amp; cd grid &amp;&amp; pnpm test -- audit/allowlist-seventeen --run</automated>
   </verify>
   <done>
     - `node scripts/check-state-doc-sync.mjs` exits 0.
@@ -843,7 +857,7 @@ export function appendTelosRefined(
     - `grep "'telos.refined'" scripts/check-state-doc-sync.mjs` returns exactly one match (the required-array entry).
     - `grep "17" scripts/check-state-doc-sync.mjs` returns matches for the count assertion.
     - README.md either (a) mentions "17" in the allowlist context or (b) has no allowlist-count claim at all (both are acceptable; a stale "16" is NOT).
-    - The allowlist-17 vitest test still passes (confirms STATE.md and code stayed in lockstep).
+    - The allowlist-seventeen vitest test still passes (confirms STATE.md and code stayed in lockstep).
   </done>
 </task>
 
@@ -866,7 +880,7 @@ export function appendTelosRefined(
 |-----------|----------|-----------|-------------|-----------------|
 | T-07-20 | Spoofing | Compromised Brain forges a `triggered_by_dialogue_id` it never received | mitigate | `NousRunner.recentDialogueIds` authority check (D-16 step 1) — only dialogue_ids the runner itself delivered to THIS Brain are acceptable. Unknown ids drop silently. |
 | T-07-21 | Spoofing | Compromised Brain claims a different Nous's DID in metadata | mitigate | `appendTelosRefined` enforces `payload.did === actorDid` (self-report invariant). Runner hard-codes `did: this.nousDid` and ignores any `did` in Brain metadata. |
-| T-07-22 | Tampering | Someone edits broadcast-allowlist.ts to remove an event | mitigate | `allowlist-17.test.ts` pins the full 17-tuple by array literal comparison; any reorder / removal / addition fails. |
+| T-07-22 | Tampering | Someone edits broadcast-allowlist.ts to remove an event | mitigate | `allowlist-seventeen.test.ts` pins the full 17-tuple by array literal comparison; any reorder / removal / addition fails. |
 | T-07-23 | Tampering | Scattered `audit.append('telos.refined', ...)` calls accrete across grid/src/ over time | mitigate | `telos-refined-producer-boundary.test.ts` grep-scans grid/src/ on every test run; only `append-telos-refined.ts` is exempt. |
 | T-07-24 | Repudiation | Developer forgets to update STATE.md when code changes | mitigate | `scripts/check-state-doc-sync.mjs` runs in CI (Phase 5 / Phase 6 precedent); STATE.md must mention "17 events" and list telos.refined. |
 | T-07-25 | Info Disclosure | Brain metadata carries `new_goals: [...]` or `prompt: ...`; leaks into audit | mitigate | (a) NousRunner destructures metadata explicitly — only 3 known keys reach the helper; (b) `appendTelosRefined` closed-tuple check rejects any unexpected key; (c) `payloadPrivacyCheck` runs as belt-and-suspenders third gate. Plan 03 Task 2 Test 6 asserts this. |
@@ -880,8 +894,8 @@ export function appendTelosRefined(
 <verification>
 **Holistic end-to-end check after all three tasks:**
 
-1. **Allowlist + privacy + producer-boundary:** `cd grid && pnpm test -- audit` — all Phase 6 tests green + all three new Plan 03 test files green.
-2. **Runner branch:** `cd grid && pnpm test -- integration` — all Phase 6 agency integration tests green + new Plan 03 runner-branch test green.
+1. **Allowlist + privacy + producer-boundary:** `cd grid && pnpm test -- audit --run` — all Phase 6 tests green + all three new Plan 03 test files green.
+2. **Runner branch:** `cd grid && pnpm test -- integration --run` — all Phase 6 agency integration tests green + new Plan 03 runner-branch test green.
 3. **Typecheck:** `cd grid && pnpm run typecheck` — clean.
 4. **Doc-sync regression:** `node scripts/check-state-doc-sync.mjs` — exit 0.
 5. **Full Grid suite:** `cd grid && pnpm test` — green.
@@ -906,7 +920,7 @@ export function appendTelosRefined(
 <output>
 After completion, create `.planning/phases/07-peer-dialogue-telos-refinement/07-03-SUMMARY.md` covering:
 - Line counts for each modified file.
-- All test counts (allowlist-17: 4, privacy matrix: ≥9, producer-boundary: 2, runner-branch: 6).
+- All test counts (allowlist-seventeen: 4, privacy matrix: ≥9, producer-boundary: 2, runner-branch: 6).
 - Confirmation that `node scripts/check-state-doc-sync.mjs` exits 0.
 - Any README.md changes (or explicit note that README did not claim an allowlist count, so no-op there).
 - Confirmation that the producer-boundary invariant test passes — list the `grep -rn "telos.refined" grid/src/` output to prove ONLY the allowlist entry + the producer helper reference the literal string.

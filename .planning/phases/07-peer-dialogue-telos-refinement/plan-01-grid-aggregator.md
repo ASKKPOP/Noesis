@@ -4,7 +4,7 @@ plan_id: 01
 slug: grid-aggregator
 status: draft
 wave: 1
-wave_deps: [0]
+wave_deps: []
 requirement_refs: [DIALOG-01]
 context_refs: [D-01, D-02, D-03, D-04, D-05, D-06, D-07, D-08, D-09, D-10, D-11, D-12, D-25, D-26]
 files_modified:
@@ -17,6 +17,10 @@ files_modified:
   - grid/src/integration/nous-runner.ts
   - grid/src/genesis/launcher.ts
   - grid/src/genesis/types.ts
+  - grid/test/dialogue/dialogue-id.test.ts
+  - grid/test/dialogue/aggregator.test.ts
+  - grid/test/dialogue/zero-diff.test.ts
+  - grid/test/dialogue/boundary.test.ts
 autonomous: true
 must_haves:
   truths:
@@ -31,6 +35,14 @@ must_haves:
       provides: "computeDialogueId pure function"
     - path: grid/src/dialogue/types.ts
       provides: "DialogueContext, SpokeWindow TS interfaces"
+    - path: grid/test/dialogue/dialogue-id.test.ts
+      provides: "Wave-0 determinism + regex tests for computeDialogueId (RED-first)"
+    - path: grid/test/dialogue/aggregator.test.ts
+      provides: "Wave-0 behavioural tests for DialogueAggregator (RED-first)"
+    - path: grid/test/dialogue/zero-diff.test.ts
+      provides: "Wave-0 determinism gate: 0 vs N listeners → byte-identical chain head (RED-first)"
+    - path: grid/test/dialogue/boundary.test.ts
+      provides: "Wave-0 windowTicks boundary + pause-drain tests (RED-first; extended in Task 3)"
   key_links:
     - from: "grid/src/genesis/launcher.ts"
       to: "grid/src/dialogue/aggregator.ts"
@@ -48,7 +60,9 @@ Build the grid-side dialogue aggregation subsystem — the pure-function `comput
 
 Purpose: DIALOG-01. Without this plan, no dialogue is ever detected and no downstream `telos.refined` path can fire. This plan also establishes the seam `recentDialogueIds` that Plan 03 consumes to authority-check Brain-returned `telos_refined` actions (prevents forgery).
 
-Output: `grid/src/dialogue/{aggregator,dialogue-id,types,index}.ts`, widened `TickParams` in `grid/src/integration/types.ts`, pull-query wiring in `grid-coordinator.ts`, `recentDialogueIds` populated in `nous-runner.ts`, aggregator constructed + pause-drained from `genesis/launcher.ts`.
+**TDD discipline (revision 2026-04-21):** Tasks 1 and 3 are TDD-flipped. Test files are authored in the SAME task as the implementation, RED-first. Each task's `<action>` block lists the RED → GREEN sequence explicitly. Vitest must report real passing test assertions (not "0 tests found") at the end of each task.
+
+Output: `grid/src/dialogue/{aggregator,dialogue-id,types,index}.ts`, widened `TickParams` in `grid/src/integration/types.ts`, pull-query wiring in `grid-coordinator.ts`, `recentDialogueIds` populated in `nous-runner.ts`, aggregator constructed + pause-drained from `genesis/launcher.ts`, plus the four `grid/test/dialogue/*.test.ts` files.
 </objective>
 
 <execution_context>
@@ -118,9 +132,9 @@ export class WorldClock {
 
 <tasks>
 
-<task type="auto" tdd="false">
-  <name>Task 1: Create grid/src/dialogue/ subtree — types + pure dialogue-id + aggregator + barrel</name>
-  <files>grid/src/dialogue/types.ts, grid/src/dialogue/dialogue-id.ts, grid/src/dialogue/aggregator.ts, grid/src/dialogue/index.ts</files>
+<task type="auto" tdd="true">
+  <name>Task 1: TDD — dialogue_id + DialogueAggregator + zero-diff determinism (RED→GREEN in one task)</name>
+  <files>grid/src/dialogue/types.ts, grid/src/dialogue/dialogue-id.ts, grid/src/dialogue/aggregator.ts, grid/src/dialogue/index.ts, grid/test/dialogue/dialogue-id.test.ts, grid/test/dialogue/aggregator.test.ts, grid/test/dialogue/zero-diff.test.ts</files>
   <read_first>
     - 07-PATTERNS.md §"`grid/src/dialogue/types.ts`" (copy readonly interface style from grid/src/integration/types.ts)
     - 07-PATTERNS.md §"`grid/src/dialogue/dialogue-id.ts`" (copy createHash+slice pattern from grid/src/api/operator/telos-force.ts HEX64_RE guard)
@@ -131,10 +145,46 @@ export class WorldClock {
     - 07-RESEARCH.md §"Pitfall 1" (no Date.now in aggregator; use entry.tick only)
     - 07-RESEARCH.md §"Pitfall 2" (Array.from(map.keys()).sort() before iterating)
   </read_first>
+  <behavior>
+    - **dialogue-id.test.ts:** computeDialogueId is order-independent over DIDs; output matches /^[0-9a-f]{16}$/; differs on any input change; passes ≥3 explicit assertions.
+    - **aggregator.test.ts:** drainPending returns 0 windows with only 1 utterance; returns 1 DialogueContext on ≥2 bidirectional utterances within window; returns 0 on unidirectional stream; reset() clears state; ≥4 explicit assertions.
+    - **zero-diff.test.ts:** 100 nous.spoke appends with 0 vs 10 passive listeners produce byte-identical chain `entries[].hash` arrays; aggregator listener is pure observer.
+  </behavior>
   <action>
+Create the test files FIRST (RED), then implement to make them GREEN. Each step is mandatory and sequenced — executor MUST NOT skip the RED phase.
+
+**Step 1 (RED — tests authored before any production code):**
+
+**1a.** Create `grid/test/dialogue/dialogue-id.test.ts`:
+- `describe('computeDialogueId', ...)` with concrete `it(...)` cases:
+  - "matches DIALOGUE_ID_RE (/^[0-9a-f]{16}$/)"
+  - "is order-independent over dids"
+  - "differs when channel differs"
+  - "differs when windowStartTick differs"
+- Each `it(...)` makes a real `expect(...)` assertion. NO `it.todo`, NO empty `describe`.
+- Imports: `import { computeDialogueId, DIALOGUE_ID_RE } from '../../src/dialogue';` — these symbols do not yet exist, so the file fails to compile. That is the intended RED signal.
+
+**1b.** Create `grid/test/dialogue/aggregator.test.ts`:
+- `describe('DialogueAggregator', ...)` with `it(...)` cases:
+  - "emits 0 contexts when only 1 utterance observed"
+  - "emits 1 DialogueContext when ≥minExchanges bidirectional utterances occur within windowTicks"
+  - "emits 0 contexts for unidirectional stream (same speaker repeating)"
+  - "reset() drops all buffered state"
+  - "Map iteration is deterministic (Array.from(...).sort() pattern)"
+- Uses the real `AuditChain` from `../../src/audit/chain` to drive the listener.
+
+**1c.** Create `grid/test/dialogue/zero-diff.test.ts`:
+- `describe('dialogue — zero-diff determinism', ...)` with one `it(...)`:
+  - "100 nous.spoke appends with 0 vs N passive DialogueAggregator listeners produce byte-identical entries[].hash chain head"
+- The test creates two `AuditChain` instances with identical seed, runs 100 identical appends on each (one has N=10 aggregator listeners, the other N=0), then asserts `chainA.entries.map(e => e.hash)` deep-equals `chainB.entries.map(e => e.hash)`.
+
+**1d.** Run `cd grid && pnpm test -- dialogue/dialogue-id dialogue/aggregator dialogue/zero-diff --run 2>&1 | tail -40` — MUST fail (compile error on missing imports OR failing assertions). Confirm failure is due to unimplemented code, not test malformation.
+
+**Step 2 (GREEN — implement production code until tests pass):**
+
 Create four files implementing the dialogue subsystem, following the analog patterns exactly.
 
-**1. `grid/src/dialogue/types.ts`** — readonly discriminated interfaces mirroring `grid/src/integration/types.ts`:
+**2a. `grid/src/dialogue/types.ts`** — readonly discriminated interfaces mirroring `grid/src/integration/types.ts`:
 ```typescript
 export interface DialogueContext {
     readonly dialogue_id: string;            // 16-hex per D-03
@@ -165,7 +215,7 @@ export interface DialogueAggregatorConfig {
 }
 ```
 
-**2. `grid/src/dialogue/dialogue-id.ts`** — pure function, no imports from grid internals:
+**2b. `grid/src/dialogue/dialogue-id.ts`** — pure function, no imports from grid internals:
 ```typescript
 import { createHash } from 'node:crypto';
 
@@ -186,7 +236,7 @@ export function computeDialogueId(
 }
 ```
 
-**3. `grid/src/dialogue/aggregator.ts`** — class with AuditChain listener + per-pair-channel buffer + `drainPending(did, tick)` + `reset()`:
+**2c. `grid/src/dialogue/aggregator.ts`** — class with AuditChain listener + per-pair-channel buffer + `drainPending(did, tick)` + `reset()`:
 
 - Constructor: `(audit: AuditChain, config: DialogueAggregatorConfig)`. Register `audit.onAppend` listener; filter `entry.event_type === 'nous.spoke'`; call `this.ingestSpoke(entry)` per 07-PATTERNS.md §aggregator.
 - Internal state:
@@ -194,52 +244,36 @@ export function computeDialogueId(
   - `#deliveredIds: Map<string, Set<string>>` pair_key -> set of dialogue_ids already delivered (prevents duplicate emission per window, D-08).
 - `ingestSpoke(entry)`:
   1. Extract `{speaker_did: entry.actor_did, channel, text, name}` from payload + `tick = entry.tick`.
-  2. Identify candidate pairs: for every currently-active buffer whose key starts with a set containing `speaker_did` and channel matches, check membership; also create new buffer entries when observing a new pair on same channel (implementation: walk all known peers on this channel via the existing buffer map — bounded because buffers evict).
-  3. **Bidirectional check (D-01):** maintain `didsSeenInDirection` per pair; add `speaker_did` on each observation. Fire only when `didsSeenInDirection.size === 2` AND `utterances.length >= config.minExchanges`.
-  4. **Window prune:** remove utterances older than `currentTick - config.windowTicks`; if a buffer becomes empty, delete the map entry. If the oldest remaining utterance is newer than the recorded `windowStartTick`, update `windowStartTick` to that utterance's tick (D-07).
-  5. Enforce buffer cap `windowTicks × 4` entries — `.slice(-cap)` on overflow (prevents unbounded memory).
+  2. Identify candidate pairs; create/update per D-01..D-08 semantics.
+  3. **Bidirectional check (D-01):** `didsSeenInDirection` reaches size 2 AND utterances.length ≥ config.minExchanges before firing.
+  4. **Window prune / windowStartTick update** per D-07.
+  5. Enforce buffer cap `windowTicks × 4` entries.
 - `drainPending(did: string, currentTick: number): DialogueContext[]`:
-  1. Iterate `Array.from(this.#buffers.keys()).sort()` (pitfall 2 — deterministic).
-  2. For each buffer whose pair_key includes `did` and whose state satisfies bidirectional + minExchanges and whose `dialogue_id` has NOT yet been delivered to `did` in this window:
-     - Compute `dialogueId = computeDialogueId(dids, channel, windowStartTick)`.
-     - Build `DialogueContext` with `utterances.slice(-5)`, `counterparty_did = pair.find(d => d !== did)`, `exchange_count = utterances.length`, `window_end_tick = currentTick`.
-     - Record delivery in `#deliveredIds.get(pair_key).add(dialogueId)`.
-     - Return in result list.
-  3. **Window expiry (D-08):** if no utterance between the pair for `config.windowTicks` ticks (tracked via last-observation tick per buffer), drop the buffer AND its `#deliveredIds` entry on next observation so the next exchange mints a NEW dialogue_id.
-- `reset(): void` — clears `#buffers` and `#deliveredIds` (called by launcher on pause per D-04).
-- **No `Date.now()`, no `Math.random()`, no `performance.now()`** anywhere in the module (Pitfall 1). Aggregator derives all timing from `entry.tick` / `currentTick` passed in.
-- Expose `DIALOGUE_ID_RE` re-export from barrel.
+  1. Iterate `Array.from(this.#buffers.keys()).sort()` (pitfall 2).
+  2. Build + return DialogueContext list per D-08 / D-11.
+- `reset(): void` — clears `#buffers` and `#deliveredIds` (D-04).
+- **No `Date.now()` / `Math.random()` / `performance.now()`** anywhere.
 
-**4. `grid/src/dialogue/index.ts`** — barrel:
+**2d. `grid/src/dialogue/index.ts`** — barrel:
 ```typescript
 export { DialogueAggregator } from './aggregator';
 export { computeDialogueId, DIALOGUE_ID_RE } from './dialogue-id';
 export type { DialogueContext, SpokeObservation, DialogueAggregatorConfig } from './types';
 ```
 
-**Do NOT** touch integration types, coordinator, runner, or launcher yet — those are Task 2/3. This task stands alone and compiles against existing AuditChain API.
+**Step 3 (CONFIRM GREEN):**
+Re-run `cd grid && pnpm test -- dialogue/dialogue-id dialogue/aggregator dialogue/zero-diff --run 2>&1 | tail -40`. All `it(...)` cases must pass; vitest output must show a non-zero test count. If vitest reports "0 tests found" the task FAILS — it means the test file was placed in a path vitest doesn't scan (fix by adjusting `grid/vitest.config.ts` `include` glob to cover `grid/test/dialogue/**/*.test.ts`).
   </action>
-  <behavior>
-    - Test 1 (Wave 0 exists: grid/test/dialogue/dialogue-id.test.ts): computeDialogueId is order-independent over DIDs; matches /^[0-9a-f]{16}$/; differs on any input change.
-    - Test 2 (Wave 0 exists: grid/test/dialogue/aggregator.test.ts): drainPending returns 0 windows when only 1 utterance observed; returns 1 DialogueContext when ≥2 bidirectional utterances within window; returns 0 when both utterances come from the same DID (unidirectional).
-    - Test 3 (same file): reset() clears all state (post-pause simulation).
-    - Test 4 (Wave 0 exists: grid/test/dialogue/zero-diff.test.ts): 100 nous.spoke appends with 0 vs 10 passive listeners produce byte-identical chain entries[].hash array — aggregator listener does NOT mutate chain.
-  </behavior>
-  <acceptance_criteria>
-    - All four files exist under grid/src/dialogue/.
-    - `grep -rn "Date\.now\|Math\.random\|performance\.now" grid/src/dialogue/` returns zero matches (Pitfall 1 invariant, also covered by Wave 0 grid/test/dialogue/dialogue-determinism-source.test.ts if present; if not, add inline assertion to aggregator.test.ts).
-    - Iteration order determinism: every Map iteration in aggregator.ts is wrapped in `Array.from(m.keys()).sort()` (grep-verifiable).
-    - `grid/src/dialogue/index.ts` barrel exports `DialogueAggregator`, `computeDialogueId`, `DIALOGUE_ID_RE`, and the three type aliases.
-    - `cd grid && pnpm run typecheck` (or `tsc --noEmit`) passes with zero errors.
-  </acceptance_criteria>
   <verify>
-    <automated>cd grid && pnpm test -- dialogue/dialogue-id dialogue/aggregator dialogue/zero-diff 2>&1 | tail -40</automated>
+    <automated>cd grid && pnpm test -- dialogue/dialogue-id dialogue/aggregator dialogue/zero-diff --run 2>&1 | tail -40</automated>
   </verify>
   <done>
-    - Pure dialogue_id function passes all three determinism tests.
-    - Aggregator emits DialogueContext only on bidirectional ≥minExchanges within window; returns empty array otherwise.
-    - Zero-diff test green: aggregator listener is pure-observer (no chain mutation).
-    - Typecheck clean.
+    - grid/test/dialogue/{dialogue-id,aggregator,zero-diff}.test.ts exist with real `expect(...)` assertions (NOT it.todo).
+    - vitest reports a non-zero passing count across those three files.
+    - Pure dialogue_id function passes all determinism tests.
+    - Aggregator emits DialogueContext only on bidirectional ≥minExchanges within window.
+    - Zero-diff test green: aggregator listener is pure-observer.
+    - `grep -rn "Date\.now\|Math\.random\|performance\.now" grid/src/dialogue/` → 0 matches.
   </done>
 </task>
 
@@ -309,7 +343,6 @@ async tick(tick: number, epoch: number, dialogueContext?: DialogueContext): Prom
     if (dialogueContext) {
         this.recordDialogueDelivery(dialogueContext.dialogue_id);
     }
-    // existing body — pass dialogueContext to bridge.sendTick if present:
     const params: TickParams = dialogueContext
         ? { tick, epoch, dialogue_context: dialogueContext }
         : { tick, epoch };
@@ -319,7 +352,6 @@ async tick(tick: number, epoch: number, dialogueContext?: DialogueContext): Prom
 
 private recordDialogueDelivery(id: string): void {
     if (this.recentDialogueIds.size >= NousRunner.RECENT_DIALOGUE_CAP) {
-        // Evict oldest (insertion-order: delete first element from Set iteration)
         const oldest = this.recentDialogueIds.values().next().value;
         if (oldest !== undefined) this.recentDialogueIds.delete(oldest);
     }
@@ -352,9 +384,9 @@ private recordDialogueDelivery(id: string): void {
   </done>
 </task>
 
-<task type="auto" tdd="false">
-  <name>Task 3: Wire DialogueAggregator from GenesisLauncher (construction + pause drain) + GridCoordinator (pull-query per-runner per-tick)</name>
-  <files>grid/src/genesis/launcher.ts, grid/src/genesis/types.ts, grid/src/integration/grid-coordinator.ts</files>
+<task type="auto" tdd="true">
+  <name>Task 3: TDD — Wire DialogueAggregator from GenesisLauncher (pause drain) + GridCoordinator (pull-query per-runner per-tick), RED-first with grid/test/dialogue/boundary.test.ts</name>
+  <files>grid/src/genesis/launcher.ts, grid/src/genesis/types.ts, grid/src/integration/grid-coordinator.ts, grid/test/dialogue/boundary.test.ts</files>
   <read_first>
     - 07-PATTERNS.md §"`grid/src/genesis/launcher.ts`" (construct + pass to coordinator)
     - 07-PATTERNS.md §"`grid/src/integration/grid-coordinator.ts`" (pull-query drain injection into existing onTick loop lines 42-51)
@@ -363,8 +395,21 @@ private recordDialogueDelivery(id: string): void {
     - grid/src/clock/ticker.ts — confirm WorldClock.pause() is the drain trigger
     - grid/src/integration/grid-coordinator.ts existing tick loop lines 42-51
   </read_first>
+  <behavior>
+    - **boundary.test.ts (SC#5):** varies `config.dialogue.windowTicks ∈ {3, 5, 7}` and asserts that bidirectional utterances at tick T and tick T+windowTicks-1 fire (within window) while utterances at T and T+windowTicks+1 do NOT fire (outside window).
+    - **boundary.test.ts (pause scenario, D-04):** launcher.clock.pause() followed by more nous.spoke events does NOT emit a dialogue_id that bridges pre-pause + post-pause utterances (Pitfall 3). aggregator.reset() is confirmed to have been invoked.
+    - Launcher startup constructs a non-null `aggregator` reachable on `launcher.aggregator`.
+  </behavior>
   <action>
-Three cross-wiring edits to make the aggregator live + pause-safe + reachable from the coordinator.
+Three cross-wiring edits PLUS a test file authored RED-first.
+
+**Step 1 (RED — test file):**
+
+Create `grid/test/dialogue/boundary.test.ts` with `describe(...)` + concrete `it(...)` cases for the behaviour above. Real `expect(...)` assertions, no `it.todo`. Imports will reference `DialogueAggregator` (exists after Task 1) plus the launcher / coordinator integration seam which does not yet exist — so tests fail compile / assertion. That is the RED signal.
+
+Run `cd grid && pnpm test -- dialogue/boundary --run 2>&1 | tail -30`. MUST fail.
+
+**Step 2 (GREEN — implementation):**
 
 **A. `grid/src/genesis/types.ts` — add optional dialogue config:**
 ```typescript
@@ -402,9 +447,6 @@ export interface GridConfig {
        const { tick, epoch } = event;
        const tickPromises = [...this.runners.values()].map(runner => {
            const contexts = this.aggregator.drainPending(runner.nousDid, tick);
-           // Per-participant per-tick delivery (D-11). If multiple dialogues
-           // qualify in the same tick (rare in v2.1 single-operator use), deliver
-           // them serially via sequential runner.tick invocations in-order.
            return contexts.length === 0
                ? runner.tick(tick, epoch).catch(err => log.error({ err, did: runner.nousDid }, 'runner tick failed'))
                : contexts.reduce<Promise<void>>(
@@ -416,24 +458,15 @@ export interface GridConfig {
    });
    ```
 3. Keep the existing `log.error` path byte-identical to avoid zero-diff drift.
+
+**Step 3 (CONFIRM GREEN):**
+Re-run `cd grid && pnpm test -- dialogue integration/grid-coordinator genesis/launcher --run 2>&1 | tail -40`. boundary.test.ts must report a non-zero passing count; aggregator.test.ts + zero-diff.test.ts from Task 1 still green.
   </action>
-  <behavior>
-    - Test 1 (Wave 0 exists: grid/test/dialogue/aggregator.test.ts — via integration, OR extend it here): launcher startup constructs a non-null `aggregator` reachable on `launcher.aggregator`.
-    - Test 2 (Wave 0 exists: grid/test/dialogue/boundary.test.ts — extended with pause scenario): clock.pause() followed by more nous.spoke events does NOT emit a dialogue_id that bridges pre-pause + post-pause utterances (Pitfall 3).
-    - Test 3 (Wave 0 exists: grid/test/dialogue/zero-diff.test.ts — already green from Task 1): still byte-identical across 0/10 listeners after coordinator wiring is in place.
-    - Full grid test suite shows no regressions vs. Phase 6 baseline.
-  </behavior>
-  <acceptance_criteria>
-    - `GenesisLauncher` constructs `DialogueAggregator` exactly once per grid lifetime.
-    - `GridCoordinator` constructor accepts `aggregator` and consumes `drainPending` in every tick invocation.
-    - `WorldClock.pause()` flow triggers `aggregator.reset()` (either via direct call or onPause callback).
-    - `cd grid && pnpm test 2>&1 | grep -E "Tests +(Failed|Passed)"` shows all Phase 6 baseline green + the 3 new dialogue tests green.
-    - No `Date.now()` introduced in this task's edits (grep-verifiable).
-  </acceptance_criteria>
   <verify>
-    <automated>cd grid && pnpm test -- dialogue integration/grid-coordinator genesis/launcher 2>&1 | tail -40</automated>
+    <automated>cd grid && pnpm test -- dialogue integration/grid-coordinator genesis/launcher --run 2>&1 | tail -40</automated>
   </verify>
   <done>
+    - grid/test/dialogue/boundary.test.ts exists with real assertions; passes.
     - Aggregator is live at grid startup, pause-safe, and reachable from the coordinator tick loop.
     - DialogueContexts are pull-queried + delivered per-runner per-tick (D-11).
     - Phase 6 baseline regressions: zero.
@@ -456,25 +489,26 @@ export interface GridConfig {
 
 | Threat ID | Category | Component | Disposition | Mitigation Plan |
 |-----------|----------|-----------|-------------|-----------------|
-| T-07-01 | Tampering | DialogueAggregator (listener pollution) | mitigate | Aggregator is a pure observer; zero-diff test across 0/10 listeners (Wave 0 grid/test/dialogue/zero-diff.test.ts); source-grep forbids Date.now/Math.random/performance.now in grid/src/dialogue/ |
+| T-07-01 | Tampering | DialogueAggregator (listener pollution) | mitigate | Aggregator is a pure observer; zero-diff test across 0/10 listeners (grid/test/dialogue/zero-diff.test.ts); source-grep forbids Date.now/Math.random/performance.now in grid/src/dialogue/ |
 | T-07-02 | Spoofing | runner.recentDialogueIds forgery | mitigate | Set only populated when GridCoordinator delivers a context pulled from aggregator; rolling cap 100; Plan 03 handler rejects unknown dialogue_id (D-16) |
 | T-07-03 | Information Disclosure | utterance content leak via DialogueContext | accept | DialogueContext stays in-process — never broadcast; utterance text is already Phase-1-truncated to 200 chars at nous.spoke producer. No new privacy surface introduced |
 | T-07-04 | Denial of Service | unbounded per-pair buffer | mitigate | Buffer cap = windowTicks × 4 entries per pair; utterance slice(-cap) on overflow; window prune on every observation |
-| T-07-05 | Integrity of audit forensics | pause-spanning dialogue window | mitigate | D-04: aggregator.reset() on WorldClock.pause() (Pitfall 3); covered by extended boundary test |
+| T-07-05 | Integrity of audit forensics | pause-spanning dialogue window | mitigate | D-04: aggregator.reset() on WorldClock.pause() (Pitfall 3); covered by grid/test/dialogue/boundary.test.ts |
 | T-07-06 | Tampering (determinism) | Map iteration order leak | mitigate | Array.from(m.keys()).sort() before iterating (Pitfall 2); covered by zero-diff test |
 </threat_model>
 
 <verification>
-- Wave 0 gate: grid/test/dialogue/{aggregator,dialogue-id,zero-diff,boundary}.test.ts must already exist with test bodies derived from analog lines (07-PATTERNS.md §tests; 07-VALIDATION.md §Wave 0 Requirements).
-- After all three tasks: `cd grid && pnpm test` shows Phase 6 baseline (538) + 4+ new dialogue test cases all green.
+- Task 1 creates grid/test/dialogue/{aggregator,dialogue-id,zero-diff}.test.ts with real assertions (RED-first, then GREEN).
+- Task 3 creates grid/test/dialogue/boundary.test.ts with real assertions (RED-first, then GREEN).
+- After all three tasks: `cd grid && pnpm test` shows Phase 6 baseline (538) + 4 new dialogue test files green with non-zero case counts.
 - `grep -rn "Date\.now\|Math\.random\|performance\.now" grid/src/dialogue/` → zero matches.
 - `cd grid && pnpm run typecheck` clean.
 </verification>
 
 <success_criteria>
 - DIALOG-01 SC#1: Two-Nous bidirectional exchange ≥2 utterances within windowTicks triggers dialogue_context delivery to BOTH participants.
-- DIALOG-01 SC#5: aggregator-window.test.ts (Wave 0) varies N and asserts boundary fires/does-not-fire correctly.
-- Zero-diff invariant preserved: 0 vs 10 listeners → byte-identical chain head (extended from Phase 6's c7c49f49 pattern to cover aggregator subscription).
+- DIALOG-01 SC#5: grid/test/dialogue/boundary.test.ts varies windowTicks and asserts boundary fires/does-not-fire correctly.
+- Zero-diff invariant preserved: 0 vs 10 listeners → byte-identical chain head.
 - No new wall-clock dependency in determinism path (grep-verified).
 - BrainAction union extended; Plan 03 can land the `case 'telos_refined'` branch against the `recentDialogueIds` seam without touching coordinator/aggregator again.
 </success_criteria>

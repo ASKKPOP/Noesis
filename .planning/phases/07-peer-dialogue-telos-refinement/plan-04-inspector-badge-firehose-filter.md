@@ -4,6 +4,7 @@ plan: 04
 type: execute
 wave: 4
 depends_on: [01, 02, 03]
+revised_at: 2026-04-21
 files_modified:
   - dashboard/src/components/primitives/chip.tsx
   - dashboard/src/components/primitives/primitives.test.tsx
@@ -626,8 +627,8 @@ export const HEX64_RE = /^[0-9a-f]{64}$/;
     **Step 5 (REFACTOR + source-invariant checks):**
     - In `telos-refined-badge.test.tsx`, add the two source-invariant `it(...)` cases (plaintext-never + color-scope). Implementation:
       ```typescript
-      import { readFileSync } from 'node:fs';
-      import { join } from 'node:path';
+      import { readFileSync, readdirSync, statSync } from 'node:fs';
+      import { join, relative } from 'node:path';
       const SRC = readFileSync(join(process.cwd(), 'src/components/dialogue/telos-refined-badge.tsx'), 'utf8');
       it('has no plaintext goal references', () => {
         for (const forbidden of ['new_goals', 'goal_description', 'utterance']) {
@@ -637,11 +638,29 @@ export const HEX64_RE = /^[0-9a-f]{64}$/;
       // 'priority' check is intentionally omitted — TelosSection sibling uses it
       // for the existing priority chip and could import indirectly.
       ```
-    - Also add a cross-file color-scope check (more appropriate in a top-level test but keep here for locality):
+    - Also add a cross-file color-scope check using `node:fs` readdirSync recursion (the `glob` package is NOT a dashboard dependency; this is the canonical tooling choice for this scope-scan):
       ```typescript
-      import { globSync } from 'glob';
+      // node:fs-based recursive walker — no `glob` dep required.
+      // Imported from the 'node:fs' + 'node:path' imports at the top of Step 5.
+      function walkTsFiles(dir: string, root: string = dir): string[] {
+        const out: string[] = [];
+        for (const entry of readdirSync(dir)) {
+          const full = join(dir, entry);
+          const st = statSync(full);
+          if (st.isDirectory()) {
+            if (entry === 'node_modules' || entry === '.next') continue;
+            out.push(...walkTsFiles(full, root));
+          } else if (/\.(ts|tsx)$/.test(entry)) {
+            // Emit paths relative to the cwd root, forward-slash normalized.
+            out.push(relative(root, full).replace(/\\/g, '/'));
+          }
+        }
+        return out;
+      }
+
       it('indigo-400 #818CF8 literal scoped to Phase 7 files only', () => {
-        const files = globSync('src/**/*.{ts,tsx}', { cwd: process.cwd() });
+        const SRC_ROOT = join(process.cwd(), 'src');
+        const files = walkTsFiles(SRC_ROOT).map((f) => `src/${f}`);
         const offenders: string[] = [];
         const allowed = new Set([
           'src/components/primitives/chip.tsx',
@@ -660,7 +679,6 @@ export const HEX64_RE = /^[0-9a-f]{64}$/;
         expect(offenders).toEqual([]);
       });
       ```
-      (If `glob` is not already in `dashboard/package.json`, use `node:fs` readdirSync recursion instead — match whatever pattern the existing dashboard tests use. Check `dashboard/package.json` for `glob` or fall back.)
     - Run full dashboard test suite: `cd dashboard && pnpm test --run` — all green, new tests + all pre-existing.
     - Run `cd dashboard && pnpm tsc --noEmit` — zero errors.
   </action>
@@ -683,7 +701,7 @@ export const HEX64_RE = /^[0-9a-f]{64}$/;
 
     **AC-4-2-3 (Aria-label exact match):** For refinedCount=1 and refinedCount=3, the `aria-label` on the trigger button is a literal byte-for-byte match against 07-UI-SPEC §Copywriting (lines 202-204). Any drift fails the test. Enforces voice/copy lock per UI-SPEC.
 
-    **AC-4-2-4 (Color-scope invariant, cross-file):** The source-invariant test walks `dashboard/src/**/*.{ts,tsx}` and asserts `#818CF8` appears ONLY in the 7 allowlisted Phase 7 files. Prevents a future executor from accidentally introducing the dialogue color to an unrelated surface (e.g., an operator-tier chip), which would conflate Nous-initiated with operator-forced in the UI.
+    **AC-4-2-4 (Color-scope invariant, cross-file):** The source-invariant test walks `dashboard/src/**/*.{ts,tsx}` via `node:fs` readdirSync recursion and asserts `#818CF8` appears ONLY in the 7 allowlisted Phase 7 files. Prevents a future executor from accidentally introducing the dialogue color to an unrelated surface (e.g., an operator-tier chip), which would conflate Nous-initiated with operator-forced in the UI.
 
     **AC-4-2-5 (Plaintext-never at component level):** `telos-refined-badge.tsx` source does not contain the strings `new_goals`, `goal_description`, or `utterance`. PHILOSOPHY §1 invariant enforced all the way down the stack: aggregator (Plan 01) → producer (Plan 03) → hook (Task 1) → component (Task 2).
 
@@ -844,7 +862,7 @@ export const HEX64_RE = /^[0-9a-f]{64}$/;
     - Allowlist grew 16 → 17; sole producer boundary `appendTelosRefined`; NousRunner `case 'telos_refined'` with `recentDialogueIds` authority check (Plan 03)
     - Inspector panel-level `↻ refined via dialogue` badge; `useRefinedTelosHistory` derived selector (zero new RPC); `firehose_filter=dialogue_id:<16-hex>` dim-not-hide filter (Plan 04)
 
-    **Invariants preserved:** zero-diff determinism (grid/test/dialogue-zero-diff.test.ts), hash-only cross-boundary, plaintext `new_goals` never leaves Brain, allowlist position-stability, `telos.refined` sole producer boundary.
+    **Invariants preserved:** zero-diff determinism (grid/test/dialogue/zero-diff.test.ts), hash-only cross-boundary, plaintext `new_goals` never leaves Brain, allowlist position-stability, `telos.refined` sole producer boundary.
 
     **STRIDE mitigations shipped:** 34 threats across 4 plans — see each plan's `<threat_model>` register.
     ```
@@ -874,7 +892,7 @@ export const HEX64_RE = /^[0-9a-f]{64}$/;
 
     **AC-4-3-5 (Doc-sync on phase ship per CLAUDE.md):** `git diff .planning/MILESTONES.md` contains the Phase 7 entry with the six required elements: (a) phase number + slug, (b) ship date, (c) enumerated plans 01-04, (d) invariants preserved list, (e) STRIDE threat count summary, (f) closes DIALOG-01/02/03 requirements. MILESTONES.md is the public record of what shipped; the entry must be readable as a standalone history record.
 
-    **AC-4-3-6 (End-to-end green):** `make test` exits 0 from the repo root. This is the final gate before /gsd-verify-work. Grid + Brain + Dashboard all pass; `grid/test/dialogue-zero-diff.test.ts` (determinism gate) still green; no regression anywhere in the stack.
+    **AC-4-3-6 (End-to-end green):** `make test` exits 0 from the repo root. This is the final gate before /gsd-verify-work. Grid + Brain + Dashboard all pass; `grid/test/dialogue/zero-diff.test.ts` (determinism gate) still green; no regression anywhere in the stack.
   </acceptance_criteria>
 </task>
 
@@ -908,7 +926,7 @@ export const HEX64_RE = /^[0-9a-f]{64}$/;
 | T-07-51 | Denial of Service | Infinite-render loop if `useMemo` deps are not referentially stable | mitigate | `snap.entries` is a stable array reference from `FirehoseStore` (Phase 3 contract); dep array `[did, snap.entries]` reliably invalidates only on new events or did change. Reference-stability test case in Task 1 asserts this. |
 | T-07-52 | Elevation of Privilege | Badge click navigates to a URL that triggers privileged action (e.g., `?admin=1`) | mitigate | Badge click constructs URL via `new URLSearchParams(searchParams.toString())` — preserves existing params as-is, sets only `tab=firehose` and `firehose_filter=...`. No attacker-controlled path component, no new privileged param injected |
 | T-07-53 | Elevation of Privilege | Operator confuses Nous-initiated refinement badge with an operator-forced action chip | mitigate | Indigo-400 `#818CF8` palette choice (07-UI-SPEC §Color, lines 164-176) deliberately avoids the H2/H3/H4 tier palette; label "refined via dialogue" explicitly names the initiator (Brain, not operator); aria-label reiterates "via peer dialogue" |
-| T-07-54 | Tampering | Future UI developer adds `#818CF8` to a non-Phase-7 surface, conflating dialogue-refinement with other states | mitigate | Cross-file grep source-invariant test in Task 2 walks `dashboard/src/**/*.{ts,tsx}`, asserts `#818CF8` appears ONLY in 7 allowlisted files — test fails on any drift |
+| T-07-54 | Tampering | Future UI developer adds `#818CF8` to a non-Phase-7 surface, conflating dialogue-refinement with other states | mitigate | Cross-file grep source-invariant test in Task 2 walks `dashboard/src/**/*.{ts,tsx}` via `node:fs` readdirSync recursion, asserts `#818CF8` appears ONLY in 7 allowlisted files — test fails on any drift |
 </threat_model>
 
 <verification>
@@ -927,12 +945,12 @@ cd dashboard && pnpm tsc --noEmit
 **End-to-end determinism gate (reuses Wave 0 infrastructure):**
 ```bash
 cd /Users/desirey/Programming/src/Noēsis && make test
-# Runs Grid + Brain + Dashboard; grid/test/dialogue-zero-diff.test.ts (determinism invariant) MUST be green
+# Runs Grid + Brain + Dashboard; grid/test/dialogue/zero-diff.test.ts (determinism invariant) MUST be green
 ```
 
 **Source invariants (enforced inside Task 2 tests):**
 - Plaintext-never: no `new_goals`, `goal_description`, `utterance` in `telos-refined-badge.tsx`
-- Color-scope: `#818CF8` appears only in 7 allowlisted Phase 7 files
+- Color-scope: `#818CF8` appears only in 7 allowlisted Phase 7 files (walker uses `node:fs` readdirSync — no `glob` dep)
 - Testid lock: snapshot check for the four locked testids (`telos-refined-badge`, `telos-refined-badge-trigger`, `firehose-filter-chip`, `firehose-filter-clear`)
 </verification>
 
@@ -946,7 +964,7 @@ DIALOG-03 closed per REQUIREMENTS.md. All of the following testable:
 6. Malformed `firehose_filter` values (non-16-hex) → chip not mounted, filter not applied — verified by test
 7. Malformed `telos.refined` events on the wire silently dropped at hook boundary — verified by test
 8. Plaintext `new_goals` / `goal_description` / `utterance` NEVER reach the dashboard — verified by source-invariant grep test
-9. Indigo-400 `#818CF8` appears ONLY in the 7 allowlisted Phase 7 files — verified by cross-file grep test
+9. Indigo-400 `#818CF8` appears ONLY in the 7 allowlisted Phase 7 files — verified by cross-file grep test (node:fs walker, no `glob` dep)
 10. `make test` exits 0 — full repo green end-to-end
 11. `.planning/MILESTONES.md` contains the Phase 7 ship entry per CLAUDE.md Doc Sync Rule
 </success_criteria>
