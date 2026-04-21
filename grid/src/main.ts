@@ -8,6 +8,7 @@
 import { GenesisLauncher } from './genesis/launcher.js';
 import { GENESIS_CONFIG } from './genesis/presets.js';
 import { buildServer } from './api/server.js';
+import { Reviewer } from './review/index.js';
 import {
     DatabaseConnection,
     MigrationRunner,
@@ -77,6 +78,15 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
 
     // Bootstrap infra (regions, connections, laws) — skip Nous for now
     launcher.bootstrap({ skipSeedNous: true });
+
+    // Phase 5 (REV-03, D-06, D-07): Construct the ReviewerNous singleton once per Grid.
+    // MUST run AFTER launcher.bootstrap() — Reviewer depends on launcher.audit + launcher.registry
+    // being initialized. Second construction throws (D-07 singleton enforcement via static flag).
+    // Any future code path that instantiates NousRunner instances must pass this reviewer in via
+    // NousRunnerConfig.reviewer. The getRunner() stub below currently returns undefined — when
+    // runners land in main.ts (sub-plan future), inject `reviewer` at each construction site.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const reviewer = new Reviewer(launcher.audit, launcher.registry);
 
     // Restore Nous from DB if available, otherwise seed fresh
     let restored = false;

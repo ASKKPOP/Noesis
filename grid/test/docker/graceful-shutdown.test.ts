@@ -8,10 +8,11 @@
  *   4. Server stops accepting connections after stop()
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { createGridApp, type GridAppConfig } from '../../src/main.js';
 import { InMemoryGridStore, snapshotGrid } from '../../src/db/index.js';
 import { TEST_CONFIG } from '../../src/genesis/index.js';
+import { Reviewer } from '../../src/review/index.js';
 
 const BASE_CONFIG: GridAppConfig = {
     genesisConfig: { ...TEST_CONFIG, seedNous: [] },
@@ -19,6 +20,12 @@ const BASE_CONFIG: GridAppConfig = {
 };
 
 describe('Sprint 13: Graceful Shutdown', () => {
+    // Phase 5: each createGridApp() constructs a fresh Reviewer singleton —
+    // reset the process-global flag so successive test cases can re-bootstrap.
+    beforeEach(() => {
+        Reviewer.resetForTesting();
+    });
+
 
     it('clock stops after app.stop()', async () => {
         const app = await createGridApp(BASE_CONFIG);

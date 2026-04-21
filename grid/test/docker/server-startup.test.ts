@@ -8,9 +8,10 @@
  *   4. app.stop() halts the clock gracefully
  */
 
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createGridApp, type GridApp } from '../../src/main.js';
 import { TEST_CONFIG } from '../../src/genesis/index.js';
+import { Reviewer } from '../../src/review/index.js';
 import type { GridAppConfig } from '../../src/main.js';
 
 // No DB, no seed Nous in TEST_CONFIG (or we add our own)
@@ -23,6 +24,14 @@ const TEST_APP_CONFIG: GridAppConfig = {
 };
 
 let app: GridApp | undefined;
+
+// Phase 5: Reviewer singleton is process-global. Each test constructs a fresh
+// Grid via createGridApp, which constructs a fresh Reviewer → reset first.
+// The resetForTesting() symbol is deliberately not exported from the barrel
+// (production code cannot reach it); Reviewer.resetForTesting lives on the class.
+beforeEach(() => {
+    Reviewer.resetForTesting();
+});
 
 afterEach(async () => {
     if (app) {
