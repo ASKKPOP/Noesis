@@ -33,7 +33,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
   5. AuditChain zero-diff invariant still holds — a 100-tick simulation with review enabled produces byte-identical chain hashes to the same simulation with the reviewer path bypassed *except* for the added `trade.reviewed` entries (i.e., determinism is preserved, the allowlist addition is the only diff).
 **Plans**: 5 plans
   - [x] 05-01-PLAN.md — Closed-enum types + 5 objective check handlers + REV-04 subjective-keyword lint gate
-  - [ ] 05-02-PLAN.md — Reviewer singleton + first-fail-wins loop + public barrel
+  - [x] 05-02-PLAN.md — Reviewer singleton + first-fail-wins loop + public barrel
   - [ ] 05-03-PLAN.md — Brain schema extension (memoryRefs + telosHash) + nous-runner 3-event rewrite + main.ts bootstrap wiring
   - [ ] 05-04-PLAN.md — Allowlist addition (`trade.reviewed`) + D-12 privacy regression + D-13 zero-diff invariant regression
   - [ ] 05-05-PLAN.md — STATE.md D-11 reconciliation + `scripts/check-state-doc-sync.mjs` regression gate + ship-time doc sync
@@ -83,7 +83,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. ReviewerNous — Objective-Only Pre-Commit Review | 0/5 | Planned | — |
+| 5. ReviewerNous — Objective-Only Pre-Commit Review | 2/5 | In progress | — |
 | 6. Operator Agency Foundation (H1–H4) | 0/TBD | Not started | — |
 | 7. Peer Dialogue → Telos Refinement | 0/TBD | Not started | — |
 | 8. H5 Sovereign Operations (Nous Deletion) | 0/TBD | Not started | — |
