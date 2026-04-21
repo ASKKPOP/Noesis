@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Steward Console — Phases 5-8
 status: executing
-stopped_at: Plan 07-01 shipped — Grid DialogueAggregator + computeDialogueId + TickParams widening + pause-drain (562/562 tests green)
-last_updated: "2026-04-21T01:45:00.000Z"
-last_activity: 2026-04-21 -- Plan 07-01 shipped (Grid-side DIALOG-01 satisfied)
+stopped_at: Plan 07-02 shipped — Brain ActionType.TELOS_REFINED + _build_refined_telos + dialogue_context consumption (brain 295/295 green)
+last_updated: "2026-04-21T08:58:45.358Z"
+last_activity: 2026-04-21
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 15
-  completed_plans: 12
-  percent: 80
+  completed_plans: 13
+  percent: 87
 ---
 
 # Project State
@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 ## Current Position
 
 Phase: 07 (peer-dialogue-telos-refinement) — EXECUTING
-Plan: 2 of 4
-Plans shipped: 01, 02, 03, 04, 05, 06 (Phase 6 complete) + 07-01 (Phase 7 Wave 1 complete — Grid-side DIALOG-01 satisfied).
-Status: Executing Phase 07 — Plan 07-01 shipped, Plan 07-02 next (Brain telos.refined action)
-Last activity: 2026-04-21 -- Plan 07-01 shipped (562/562 grid tests green)
+Plan: 3 of 4
+Plans shipped: 01, 02, 03, 04, 05, 06 (Phase 6 complete) + 07-01, 07-02 (Phase 7 Wave 2 complete — Brain-side DIALOG-02 satisfied).
+Status: Ready to execute
+Last activity: 2026-04-21
 
-Progress: [████████▒▒] 80% (12/15 plans — Phase 5 + Phase 6 + Phase 7 Wave 1 shipped)
+Progress: [█████████░] 87% (13/15 plans — Phase 5 + Phase 6 + Phase 7 Waves 1-2 shipped)
 
 ## Accumulated Context
 
@@ -124,10 +124,10 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 
 ## Session Continuity
 
-Last session: 2026-04-21T01:45:00.000Z
-Stopped at: Plan 07-01 shipped — Grid DialogueAggregator + computeDialogueId + TickParams widening + pause-drain (562/562 green)
+Last session: 2026-04-21T09:30:00.000Z
+Stopped at: Plan 07-02 shipped — Brain ActionType.TELOS_REFINED + _build_refined_telos + dialogue_context consumption (brain 295/295 green)
 Resume file: None
-Next action: Execute Plan 07-02 (Brain telos.refined action) via `/gsd-execute-plan`
+Next action: Execute Plan 07-03 (Grid handler for telos_refined + authority check + audit emit) via `/gsd-execute-plan`
 
 ## Accumulated Context (Plan 06-02 additions)
 
@@ -173,3 +173,17 @@ Next action: Execute Plan 07-02 (Brain telos.refined action) via `/gsd-execute-p
 - **Pull-query tick delivery with sequential reduction:** `GridCoordinator.onTick` calls `aggregator.drainPending(runner.nousDid, tick)` BEFORE `runner.tick(...)`. When a runner has multiple pending contexts, they are delivered via sequential `Promise.reduce` (one `runner.tick()` call per context) to preserve per-context reasoning ordering (D-11). Empty-array path short-circuits to the plain `runner.tick(tick, epoch)` call — no allocation overhead when no dialogue is pending.
 - **Broadcast allowlist UNCHANGED at 16:** Plan 07-01 adds NO allowlist events. `telos.refined` addition lands in Plan 07-03. Freeze-except-by-explicit-addition rule preserved.
 - **Pre-existing tsc errors deferred:** `grid/src/db/connection.ts:46` (mysql2.execute overload) and `grid/src/main.ts:73,75,76` (DatabaseConnection.fromConfig arity) pre-exist on master. Tests don't need tsc (vitest isolated transform). Logged to `.planning/phases/07-peer-dialogue-telos-refinement/deferred-items.md` for future maintenance plan.
+
+## Accumulated Context (Plan 07-02 additions)
+
+- **Plan 07-02 shipped (2026-04-21):** Brain-side DIALOG-02 satisfied. `ActionType.TELOS_REFINED = "telos_refined"` added; `BrainHandler.on_tick` additively consumes optional `dialogue_context: list[dict]` RPC param; `_build_refined_telos(ctx)` clones the Phase 6 `force_telos` hash-before/mutate/hash-after pattern. Commits: `5a2ddec` (RED — 18 failing tests + fixtures), `ba518d3` (GREEN — handler widening + helper). Full Brain suite 295/295 (baseline 277 + 18 new dialogue tests).
+- **D-13 ActionType distinction locked:** `TELOS_REFINED` (Nous-initiated, autonomous peer-dialogue refinement) is a distinct enum value from `operator.telos_forced` (Phase 6 operator-driven). Both cross the RPC boundary hash-only; the distinction is preserved on the wire so Grid Plan 07-03 can apply the authority check (reject if `triggered_by_dialogue_id ∉ nous.recentDialogueIds`) to autonomous refinements only.
+- **D-14 closed 3-key metadata tuple:** `telos_refined` action metadata is `{before_goal_hash, after_goal_hash, triggered_by_dialogue_id}` ONLY — no `new_goals`, no `telos_yaml`, no `prompt`, no `reflection`. `FORBIDDEN_METADATA_KEYS = {new_goals, goals, telos_yaml, prompt, response, wiki, reflection, thought, emotion_delta}` enforced by `test_no_forbidden_plaintext_keys_in_metadata`. Set-equality assertion `set(md.keys()) == EXPECTED_METADATA_KEYS` fails loudly on any key drift.
+- **D-18 Brain-side privacy gate (hash-only cross-boundary):** `compute_active_telos_hash(self.telos.all_goals())` is the SOLE hash authority, called BEFORE then AFTER the atomic `self.telos = rebuilt` swap. Plaintext goals NEVER cross the RPC boundary in either direction. Mirrors the Phase 6 D-15/D-19 hash-only contract established for `operator.telos_forced` in `handler.py:376`.
+- **D-22 silent no-op discipline:** when `before_goal_hash == after_goal_hash` (e.g. heuristic produces the same goal set), `_build_refined_telos` returns `None` and no action is emitted. Empty refinements never reach the wire. Test enforcement: `test_no_op_refinement_returns_no_action`. Implication for test authoring: single-goal `["Survive the day"]` fixtures that only promote within `short_term` produce no hash change → tests requiring a refinement must use 2+ goals so bucket promotion (`short_term` → `medium_term`) mutates the canonical hash.
+- **Malformed `dialogue_id` drops silently:** Brain validates `dialogue_id` is a 16-char string BEFORE computing any hashes. Invalid shapes (empty, wrong length, non-string, `None`) return `None` from `_build_refined_telos` — no NOOP, no error, just absence. Parametrized coverage: `test_malformed_dialogue_id_drops_silently` × 5 cases.
+- **Additive widening preserves Phase 6 NOOP path:** absent `dialogue_context`, empty list, non-list (`"not a list"`), non-dict entries (`None, "string", 42`), and non-matching dialogues ALL fall through to the existing Phase 6 NOOP branch unchanged. `test_on_tick_without_dialogue_context_preserves_pre_phase7_behavior` is the additive-widening contract test — any regression of the pre-Phase-7 baseline fails this case first.
+- **Deterministic substring heuristic (no LLM):** `_dialogue_driven_goal_set(ctx)` lowercases utterance text, searches for active goal description substrings in any utterance, promotes matched goals to `short_term` and demotes unmatched to `medium_term`. No LLM call, no non-determinism, no external state. Goal descriptions sourced EXCLUSIVELY from `self.telos.active_goals()` (mitigates T-07-16: utterance text NEVER becomes a goal description).
+- **Test layout deviation (Rule 3):** plan specified `brain/tests/unit/*.py` + `brain/tests/fixtures/dialogue_contexts.py`. Actual Brain layout is flat `brain/test/` per `pyproject.toml` `testpaths = ["test"]`. Colocated new files under `brain/test/` with module name `dialogue_fixtures.py`; imports as `from test.dialogue_fixtures import ...`. Any future Brain TDD work follows this flat convention — do not reintroduce the subdirectory layout without also updating `pyproject.toml`.
+- **Brain test fixture pattern:** `brain/test/dialogue_fixtures.py` exposes `make_dialogue_context(**overrides)` (well-formed, matches "Survive the day") and `make_dialogue_context_no_match()` (unrelated weather topic). Default `dialogue_id="a1b2c3d4e5f60718"` (16-hex). Pattern mirrors Grid-side `grid/test/dialogue/fixtures.ts` for cross-layer symmetry in future integration tests (Plan 07-03).
+- **Broadcast allowlist UNCHANGED at 16:** Plan 07-02 is Brain-only — no Grid changes, no allowlist mutation, no audit emission. `telos.refined` allowlist addition lands in Plan 07-03 where the Grid handler wraps the action → audit event. Freeze-except-by-explicit-addition rule preserved.

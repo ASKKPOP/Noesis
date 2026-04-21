@@ -39,7 +39,7 @@
      learning. Upgrade `nous.spoke` so conversation actually mutates participants' goals. -->
 
 - [x] **DIALOG-01**: When two Nous exchange ≥2 `nous.spoke` events with each other within N ticks (configurable, default N=5), the Grid aggregates the exchange into a dialogue context and passes it to both participants' Brains on their next `get_state` call as a `dialogue_context` field. _Grid-side complete 2026-04-21 (Plan 07-01); Brain side lands in Plan 07-02._
-- [ ] **DIALOG-02**: Brain can return a new `telos.refined` action when the dialogue context causes a goal refinement. Grid validates the action (signed, within actor's authority) and emits a new allowlisted `telos.refined` audit event with payload `{did, before_goal_hash, after_goal_hash, triggered_by_dialogue_id}` — hash-only, no goal contents in broadcast (privacy).
+- [x] **DIALOG-02**: Brain can return a new `telos.refined` action when the dialogue context causes a goal refinement. Grid validates the action (signed, within actor's authority) and emits a new allowlisted `telos.refined` audit event with payload `{did, before_goal_hash, after_goal_hash, triggered_by_dialogue_id}` — hash-only, no goal contents in broadcast (privacy).
 - [ ] **DIALOG-03**: Dashboard Inspector's Telos panel shows a small "↻ refined via dialogue" badge on goals that have a `telos.refined` event in their history, with a link to the triggering dialogue's firehose entries.
 
 ## Future Requirements
@@ -74,7 +74,7 @@
 | AGENCY-04 | Phase 6 | Complete |
 | AGENCY-05 | Phase 8 | Pending |
 | DIALOG-01 | Phase 7 | Grid-side complete (Plan 07-01); Brain side pending (Plan 07-02) |
-| DIALOG-02 | Phase 7 | Pending |
+| DIALOG-02 | Phase 7 | Complete |
 | DIALOG-03 | Phase 7 | Pending |
 
 **Coverage:**
