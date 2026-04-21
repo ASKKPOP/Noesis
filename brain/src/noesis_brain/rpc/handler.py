@@ -11,6 +11,7 @@ from noesis_brain.llm.base import LLMAdapter, LLMError
 from noesis_brain.llm.types import GenerateOptions
 from noesis_brain.psyche.types import PersonalityDimension, Psyche
 from noesis_brain.prompts.system import build_system_prompt
+from noesis_brain.state_hash import compute_pre_deletion_state_hash
 from noesis_brain.telos.hashing import compute_active_telos_hash
 from noesis_brain.telos.manager import TelosManager
 from noesis_brain.thymos.tracker import ThymosTracker
@@ -318,6 +319,29 @@ class BrainHandler:
         summary = str(summary_raw)
 
         return {"timestamp": timestamp, "kind": kind, "summary": summary}
+
+    # ────────────────────────────────────────────────────────────────────
+    # Phase 8 AGENCY-05 — H5 Sovereign pre-deletion state hash
+    #
+    # Brain computes 4 component hashes (psyche, thymos, telos,
+    # memory_stream). Grid composes the canonical pre_deletion_state_hash
+    # from these 4 values — Brain NEVER composes the 5th (D-03).
+    # ────────────────────────────────────────────────────────────────────
+
+    async def hash_state(self, params: dict[str, Any]) -> dict[str, str]:
+        """AGENCY-05: return 4 component hashes for pre-deletion forensics.
+
+        Brain returns {psyche_hash, thymos_hash, telos_hash,
+        memory_stream_hash} — each a 64-hex SHA-256 digest. Grid's
+        combineStateHash() composes the 5th canonical hash (D-03 boundary:
+        a compromised Brain cannot forge a consistent deletion record).
+
+        params: ignored (hash computed from current in-memory state).
+
+        Returns:
+            dict with EXACTLY 4 keys, each a 64-hex string.
+        """
+        return compute_pre_deletion_state_hash(self)
 
     def _instinct_response(self, sender_name: str) -> str:
         """Fallback response when LLM is unavailable."""
