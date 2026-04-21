@@ -83,8 +83,23 @@ The first persistent Grid where Nous actually live — observable, running conti
 
 ### Active
 
-<!-- v2.2 Living Grid — requirements land here after research + scoping. Expect categories: DRIVE, BIOS, CHRONOS, REL, VOTE, WHISPER, REPLAY, RIG. -->
-<!-- Requirements will be REQ-ID'd per category and mapped 1:1 to phases. -->
+**39 REQs across 8 categories, mapped to 7 phases (9, 10a, 10b, 11, 12, 13, 14). Full detail in [REQUIREMENTS.md](REQUIREMENTS.md); phase structure in [ROADMAP.md](ROADMAP.md).**
+
+| Category | REQs | Phase |
+|----------|------|-------|
+| **REL** (Relationship Graph) | REL-01..04 | 9 — Relationship Graph (Derived View) |
+| **DRIVE** (Ananke Drives) | DRIVE-01..05 | 10a — Ananke Drives |
+| **BIOS** (Bodily Needs) + **CHRONOS** (Subjective Time) | BIOS-01..04, CHRONOS-01..03 | 10b — Bios + Chronos |
+| **VOTE** (Commit-Reveal Voting) | VOTE-01..07 | 11 — Commit-Reveal Voting |
+| **WHISPER** (Sidechannel) | WHISPER-01..06 | 12 — Whisper (libsodium X25519+XChaCha20) |
+| **REPLAY** (Replay + Export) | REPLAY-01..05 | 13 — Replay + Export |
+| **RIG** (Researcher Rigs) | RIG-01..05 | 14 — Researcher Rigs (50 Nous × 10k ticks) |
+
+**Build order rationale (from [research/v2.2/FEATURES.md](research/v2.2/FEATURES.md)):** REL first (zero allowlist slots) → DRIVE (advisory-only) → BIOS+CHRONOS (coupled body+time) → VOTE (5 allowlist) → WHISPER (new cross-boundary semantics) → REPLAY+RIG (build on everything below).
+
+**Allowlist growth:** 18 → 25 (+7 events: `drive.threshold_crossed`, `bios.need_crossed`, `bios.died`, `vote.proposed`, `vote.committed`, `vote.revealed`, `vote.resolved`). WHISPER uses no broadcast events — deliveries audited via `whisper.delivered` hash-only boundary event (counted within 25).
+
+**Future (deferred to v2.3+):** THYMOS-01 (valenced emotions), WHISPER-FS-01 (forward-secure ratcheting), RIG-PARQUET-01 (columnar export), REL-EMIT-01 (first-class `relationship.*` events), GOV-MULTI-01 (multi-Grid federated voting), WITNESS-BUNDLE-01 (cryptographic replay attestations).
 
 ## Previous Milestone: v2.1 Steward Console — SHIPPED (2026-04-21)
 
