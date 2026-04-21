@@ -203,10 +203,19 @@ export async function startMockGrid(port = 8080): Promise<MockGridHandle> {
 
             // 1 spawn → 3 ticks → 1 move, spaced so the dashboard settles
             // between frames (ingest cadence + flushSync timing tolerant).
+            //
+            // DID format: `did:noesis:alice` (Plan 06-06 correction). Earlier
+            // Phase-3 fixtures used `did:example:alice`, which passes broadcast
+            // + presence stores (neither validates DID shape) but FAILS
+            // SelectionStore's DID_REGEX (`/^did:noesis:[a-z0-9_-]+$/i`, T-04-17
+            // tampering mitigation). Without matching the regex, clicking the
+            // Nous marker silently falls through to null and Inspector never
+            // opens — breaking SC#5. `did:noesis:alice` is the canonical test
+            // DID used by grid-page.spec.ts + agency.spec.ts going forward.
             setTimeout(() => {
                 emit({
                     eventType: 'nous.spawned',
-                    actorDid: 'did:example:alice',
+                    actorDid: 'did:noesis:alice',
                     // nous.spawned payload uses singular `region` per
                     // grid/src/genesis/launcher.ts:89 — NOT regionId.
                     payload: { name: 'Alice', region: 'region-a', ndsAddress: 'nds://mock/alice' },
@@ -226,7 +235,7 @@ export async function startMockGrid(port = 8080): Promise<MockGridHandle> {
             setTimeout(() => {
                 emit({
                     eventType: 'nous.moved',
-                    actorDid: 'did:example:alice',
+                    actorDid: 'did:noesis:alice',
                     // nous.moved payload uses fromRegion/toRegion per
                     // grid/src/integration/nous-runner.ts:138 — NOT {x,y}.
                     payload: {

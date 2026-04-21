@@ -70,19 +70,28 @@ test('dashboard boots, renders live region map + firehose + heartbeat, and anima
     const expectedX = Math.round(posB!.x * VIEWPORT_W);
     const expectedY = Math.round(posB!.y * VIEWPORT_H);
 
-    const marker = page.locator('[data-nous-did="did:example:alice"]');
+    const marker = page.locator('[data-nous-did="did:noesis:alice"]');
     await expect(marker).toBeVisible({ timeout: 5_000 });
 
     // Match expected translate with 1px tolerance per axis (float rounding).
     // Browsers may return `translate(Xpx, Ypx)` or `translate(X.Npx, Y.Npx)`.
+    // Tolerance is ±1px because the hash-derived layout can round up OR down
+    // depending on the DID (changed from did:example:alice → did:noesis:alice
+    // in Plan 06-06 to satisfy SelectionStore.DID_REGEX).
     await expect
         .poll(
             async () => await marker.evaluate((el) => (el as SVGGElement).style.transform),
             { timeout: 5_000 },
         )
         .toMatch(
-            new RegExp(
-                String.raw`translate\(\s*${expectedX}(?:\.\d+)?px,\s*${expectedY}(?:\.\d+)?px\s*\)`,
-            ),
+            (() => {
+                const x0 = expectedX - 1;
+                const x1 = expectedX + 1;
+                const y0 = expectedY - 1;
+                const y1 = expectedY + 1;
+                return new RegExp(
+                    String.raw`translate\(\s*(?:${x0}|${expectedX}|${x1})(?:\.\d+)?px,\s*(?:${y0}|${expectedY}|${y1})(?:\.\d+)?px\s*\)`,
+                );
+            })(),
         );
 });

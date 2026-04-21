@@ -89,6 +89,24 @@ export class AgencyStore {
 export const agencyStore = new AgencyStore();
 
 /**
+ * Playwright-only test hook (Plan 06-06 / SC#4).
+ *
+ * Exposes the singleton under `window.__agencyStore` ONLY when the build-time
+ * env flag `NEXT_PUBLIC_E2E_TESTHOOKS === '1'` is set. In production builds
+ * the flag is unset and the entire branch is eliminated by Next.js's dead-code
+ * elimination on `process.env.*` literals (T-6-08a mitigation).
+ *
+ * Why this exists: SC#4's race test needs to force a mid-flight store
+ * downgrade from inside a Playwright `page.route` handler. That handler runs
+ * in the browser context via `page.evaluate`, which can only reach the store
+ * through a globally-exposed reference. No production callsite reads
+ * `window.__agencyStore`; removing the flag makes the hook disappear.
+ */
+if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_E2E_TESTHOOKS === '1') {
+    (window as unknown as { __agencyStore?: AgencyStore }).__agencyStore = agencyStore;
+}
+
+/**
  * getOperatorId — synchronous accessor for the session-scoped `op:<uuid-v4>`.
  *
  * Generates via crypto.randomUUID() on first call (available in all evergreen

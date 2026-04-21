@@ -176,9 +176,15 @@ describe('Inspector', () => {
             await flushMicrotasks();
         });
         const drawer = screen.getByTestId('inspector-drawer');
+        // Mirror the production FOCUSABLE_SELECTOR + disabled filter
+        // (inspector.tsx:59-60, 137). The H5 "Delete Nous" button
+        // (data-testid="inspector-h5-delete") is disabled+tabIndex=0 so
+        // it matches the raw selector but is filtered by the production
+        // Tab handler. Test MUST filter identically or wrap assertions
+        // will fail the first time the H5 affordance lands (Plan 06-06).
         const focusables = Array.from(
             drawer.querySelectorAll<HTMLElement>('button, [href], input, [tabindex]:not([tabindex="-1"])'),
-        );
+        ).filter((el) => !el.hasAttribute('disabled'));
         expect(focusables.length).toBeGreaterThan(0);
         const first = focusables[0]!;
         const last  = focusables[focusables.length - 1]!;

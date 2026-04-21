@@ -207,6 +207,32 @@ export function Inspector(): React.ReactElement | null {
                 </>
             )}
 
+            {/*
+             * H5 "Delete Nous" disabled affordance (Phase 6 D-20 / SC#5).
+             * Visible-but-disabled for all tiers H1–H4. Clicking does nothing
+             * (no onClick handler bound); keyboard focus is reachable via
+             * tabIndex={0} so screen-readers can announce the tooltip.
+             * Irreversibility dialog + consent flow lands in Phase 8
+             * (AGENCY-05). Rendered outside the fetch-state branches so
+             * it is present regardless of loading/error state.
+             */}
+            <div className="mt-4 border-t border-neutral-800 pt-3">
+                <button
+                    type="button"
+                    data-testid="inspector-h5-delete"
+                    disabled
+                    aria-disabled="true"
+                    title="Requires Phase 8"
+                    tabIndex={0}
+                    className="w-full cursor-not-allowed rounded border border-neutral-800 bg-neutral-900 px-3 py-2 text-xs text-neutral-600 line-through"
+                >
+                    Delete Nous
+                </button>
+                <p className="mt-1 text-[10px] text-neutral-600">
+                    H5 — irreversible action, requires Phase 8 consent dialog.
+                </p>
+            </div>
+
             <footer className="mt-auto pt-3 text-[11px] text-neutral-600">
                 Esc to close
             </footer>

@@ -16,6 +16,15 @@ export default defineConfig({
         port: 3001,
         reuseExistingServer: !process.env.CI,
         timeout: 30_000,
+        env: {
+            // Exposes the Plan 06-06 test hooks (__agencyStore,
+            // __testTriggerH4Force). Dead-code eliminated in production.
+            NEXT_PUBLIC_E2E_TESTHOOKS: '1',
+            // Mock-grid fixture binds to 127.0.0.1:8080 (see
+            // tests/e2e/fixtures/mock-grid-server.ts). Dashboard fetches
+            // target this origin during Playwright runs.
+            NEXT_PUBLIC_GRID_ORIGIN: 'http://127.0.0.1:8080',
+        },
     },
     projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 });

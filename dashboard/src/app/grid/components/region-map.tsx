@@ -31,6 +31,7 @@
 
 import { memo, useMemo } from 'react';
 import type { Region, RegionConnection } from '@/lib/protocol/region-types';
+import { useSelection } from '@/lib/hooks/use-selection';
 import { usePresence } from '../hooks';
 import {
     VIEWPORT_W,
@@ -54,6 +55,7 @@ export const RegionMap = memo(function RegionMap({
     connections,
 }: RegionMapProps) {
     const presence = usePresence();
+    const { select } = useSelection();
 
     const layout = useMemo(() => computeRegionLayout(regions), [regions]);
 
@@ -161,9 +163,20 @@ export const RegionMap = memo(function RegionMap({
                             key={did}
                             data-testid="nous-marker"
                             data-nous-did={did}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Inspect ${info.name}`}
+                            onClick={() => select(did)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    select(did);
+                                }
+                            }}
                             style={{
                                 transform: `translate(${pos.cx}px, ${pos.cy}px)`,
                                 transition: 'transform 150ms ease-out',
+                                cursor: 'pointer',
                             }}
                         >
                             <circle r={MARKER_R} fill="#10b981" />
