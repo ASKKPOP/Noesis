@@ -202,7 +202,7 @@ export function Inspector(): React.ReactElement | null {
                 <>
                     <PsycheSection psyche={state.data.psyche} />
                     <ThymosSection thymos={state.data.thymos} />
-                    <TelosSection  telos={state.data.telos} />
+                    <TelosSection  telos={state.data.telos} did={selectedDid} />
                     <MemorySection memories={state.data.memory_highlights} />
                 </>
             )}

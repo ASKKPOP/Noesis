@@ -67,6 +67,23 @@ vi.mock('@/lib/hooks/use-selection', async () => {
     };
 });
 
+// Phase 7: TelosSection now renders TelosRefinedBadge which subscribes to
+// useRefinedTelosHistory (→ useFirehose → StoresProvider). The Inspector test
+// harness has no StoresProvider, so we short-circuit the hook with an empty
+// history. next/navigation also needs stubbing for the badge's router wiring.
+vi.mock('@/lib/hooks/use-refined-telos-history', () => ({
+    useRefinedTelosHistory: () => ({
+        refinedCount: 0,
+        lastRefinedDialogueId: null,
+        refinedAfterHashes: new Set<string>(),
+    }),
+}));
+
+vi.mock('next/navigation', () => ({
+    useRouter: () => ({ push: vi.fn() }),
+    useSearchParams: () => new URLSearchParams(''),
+}));
+
 function Harness() {
     const { select } = useSelection(localStore);
     return (
