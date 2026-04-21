@@ -31,7 +31,7 @@
   - H5: delete a Nous (operator only; see AGENCY-05 gating)
 - [x] **AGENCY-03**: Every `operator.*` audit event records the tier at commit time in payload (`{tier: "H3", action, target_did?, operator_id}`). Allowlist additions required: `operator.inspected`, `operator.paused`, `operator.resumed`, `operator.law_changed`, `operator.telos_forced`, `operator.nous_deleted`.
 - [x] **AGENCY-04**: Elevation to H3+ triggers an explicit mode-switch dialog in the UI: "Entering H3 — Co-decision. This will be logged." Operator confirms before the action proceeds. A single confirmation covers one action, not a session.
-- [ ] **AGENCY-05**: H5 "delete a Nous" is gated by an irreversibility warning dialog that names the first-life promise explicitly, requires the operator to type the Nous's DID to confirm, and emits `operator.nous_deleted` with full Nous state hash pre-deletion for forensic reconstruction. Deletion never purges audit chain entries about the Nous (integrity preserved).
+- [x] **AGENCY-05**: H5 "delete a Nous" is gated by an irreversibility warning dialog that names the first-life promise explicitly, requires the operator to type the Nous's DID to confirm, and emits `operator.nous_deleted` with full Nous state hash pre-deletion for forensic reconstruction. Deletion never purges audit chain entries about the Nous (integrity preserved).
 
 ### Peer Dialogue Memory (SPARC-inspired)
 
@@ -72,7 +72,7 @@
 | AGENCY-02 | Phase 6 | Complete |
 | AGENCY-03 | Phase 6 | Complete |
 | AGENCY-04 | Phase 6 | Complete |
-| AGENCY-05 | Phase 8 | Pending |
+| AGENCY-05 | Phase 8 | Complete |
 | DIALOG-01 | Phase 7 | Complete |
 | DIALOG-02 | Phase 7 | Complete |
 | DIALOG-03 | Phase 7 | Complete |
