@@ -16,7 +16,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
 
 - [x] **Phase 5: ReviewerNous — Objective-Only Pre-Commit Review** ✅ Complete (2026-04-21) — Singleton reviewer, `trade.reviewed` allowlist addition, closed-enum reason codes, Grid abort flow, subjective-check lint gate.
 - [x] **Phase 6: Operator Agency Foundation (H1–H4)** — `operator.*` allowlist additions, tier-stamped audit events, Agency Indicator header, elevation confirmation dialog, tier map for inspect / pause / law-change / force-Telos. (completed 2026-04-21)
-- [ ] **Phase 7: Peer Dialogue → Telos Refinement** — Grid dialogue aggregation, Brain `telos.refined` action, hash-only `telos.refined` audit event, Inspector Telos-panel badge.
+- [x] **Phase 7: Peer Dialogue → Telos Refinement** — Grid dialogue aggregation, Brain `telos.refined` action, hash-only `telos.refined` audit event, Inspector Telos-panel badge. (completed 2026-04-21)
 - [ ] **Phase 8: H5 Sovereign Operations (Nous Deletion)** — Irreversibility warning, DID-typed confirmation, pre-deletion forensic state hash, `operator.nous_deleted` audit event, audit-chain preservation invariant.
 
 ## Phase Details
@@ -69,9 +69,9 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
   5. The dialogue aggregation threshold (N) is configurable via Grid config and is covered by at least one test that varies N and asserts aggregation fires / does not fire at the boundary.
 **Plans**: 4 plans
   - [x] 07-01-PLAN.md — Grid DialogueAggregator + computeDialogueId + TickParams widening + pause-drain (DIALOG-01, Wave 1) — shipped 2026-04-21
-  - [x] 07-02-PLAN.md — Brain `telos.refined` action + handler (Wave 2)
-  - [x] 07-03-PLAN.md — Grid `telos_refined` handler + `telos.refined` audit event allowlist addition (Wave 3)
-  - [ ] 07-04-PLAN.md — Dashboard Inspector Telos-panel badge + firehose link (Wave 4)
+  - [x] 07-02-PLAN.md — Brain `telos.refined` action + handler (Wave 2) — shipped 2026-04-21
+  - [x] 07-03-PLAN.md — Grid `telos_refined` handler + `telos.refined` audit event allowlist addition (Wave 3) — shipped 2026-04-21
+  - [x] 07-04-PLAN.md — Dashboard Inspector Telos-panel badge + firehose link (Wave 4) — shipped 2026-04-21
 **UI hint**: yes
 
 ### Phase 8: H5 Sovereign Operations (Nous Deletion)
@@ -95,7 +95,7 @@ Phase ordering respects the zero-diff invariant of Phase 1 (commit `29c3516`), p
 |-------|----------------|--------|-----------|
 | 5. ReviewerNous — Objective-Only Pre-Commit Review | 5/5 | ✅ Complete | 2026-04-21 |
 | 6. Operator Agency Foundation (H1–H4) | 6/6 | Complete    | 2026-04-21 |
-| 7. Peer Dialogue → Telos Refinement | 2/4 | In Progress|  |
+| 7. Peer Dialogue → Telos Refinement | 4/4 | ✅ Complete | 2026-04-21 |
 | 8. H5 Sovereign Operations (Nous Deletion) | 0/TBD | Not started | — |
 
 ## Research Artifacts
