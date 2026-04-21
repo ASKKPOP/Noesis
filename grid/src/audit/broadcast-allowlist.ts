@@ -21,14 +21,18 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7) — exactly these 17 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8) — exactly these 18 event types.
  *  v1 (Phase 1, per 01-CONTEXT.md): 10 events.
  *  Phase 5 (REV-02): +1 'trade.reviewed' — externally observable reviewer verdict;
  *  payload shape D-03, 3 keys on pass / 5 keys on fail, all privacy-clean (see D-12 test).
  *  Phase 6 (AGENCY-02, AGENCY-03): +5 operator.* events (D-10 tuple order locked).
  *  Phase 7 (DIALOG-02): +1 'telos.refined' at position 17 — Nous-initiated
- *  hash-only refinement after peer dialogue. Tuple ORDER is locked; any
- *  reorder fails grid/test/audit/allowlist-seventeen.test.ts.
+ *  hash-only refinement after peer dialogue.
+ *  Phase 8 (AGENCY-05): +1 'operator.nous_deleted' at position 18 — H5 Sovereign
+ *  Operations, sole operator-initiated tombstone event. Closed 5-key payload:
+ *  {tier:'H5', action:'delete', operator_id, target_did, pre_deletion_state_hash}.
+ *  Emitted ONLY via appendNousDeleted() (grid/src/audit/append-nous-deleted.ts).
+ *  Tuple ORDER is locked; any reorder fails allowlist-eighteen.test.ts.
  */
 const ALLOWLIST_MEMBERS: readonly string[] = [
     'nous.spawned',
@@ -55,6 +59,10 @@ const ALLOWLIST_MEMBERS: readonly string[] = [
     // Payload shape: { did, before_goal_hash, after_goal_hash, triggered_by_dialogue_id }
     // Emitted ONLY via appendTelosRefined() (grid/src/audit/append-telos-refined.ts).
     'telos.refined',
+    // Phase 8 (AGENCY-05) — H5 Sovereign Operations. Closed 5-key payload:
+    // {tier: 'H5', action: 'delete', operator_id, target_did, pre_deletion_state_hash}.
+    // Emitted ONLY via appendNousDeleted() (grid/src/audit/append-nous-deleted.ts).
+    'operator.nous_deleted',
 ] as const;
 
 /**
