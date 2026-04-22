@@ -1,39 +1,20 @@
 ---
 phase: 09-relationship-graph-derived-view
 verified: 2026-04-22T04:25:05Z
-status: gaps_found
-score: 3/4 requirements verified (7/9 invariants verified)
+re_verified: 2026-04-21T22:05:00Z
+status: verified
+score: 4/4 requirements verified (10/10 invariants verified)
 overrides_applied: 0
 re_verification:
-  previous_status: null
-  previous_score: null
-  gaps_closed: []
+  previous_status: gaps_found
+  previous_score: "3/4 requirements verified (REL-02 PARTIAL; 9/10 invariants live)"
+  gaps_closed:
+    - "REL-02 — MySQL materialization unreachable in production (HI-01) — closed by Plan 09-07 attachRelationshipStorage + main.ts wiring + launcher-snapshot.test.ts E2E gate"
+    - "ME-01 — scheduleSnapshot iterator consumed post-setImmediate — closed by Plan 09-07 synchronous Array.from(edges) materialization + storage.test.ts regression"
+    - "ME-02 — H5 edge_key prefix ambiguity / silent wrong-edge resolution — closed by Plan 09-08 regex tighten to /^[a-f0-9]{64}$/i + strict-equality resolver + 3 regression tests (shortened reject + 63-char reject + full-hash target_did≠counterparty invariant)"
   gaps_remaining: []
   regressions: []
-gaps:
-  - truth: "REL-02 — Relationship edges are stored in a derived MySQL table (REL-02 + SC#1 literal text)"
-    status: partial
-    reason: "RelationshipStorage class exists and is test-covered, but GenesisLauncher hardcodes `this.relationshipStorage = null` as a `private readonly` field with no setter. No production code path injects a mysql2 pool, so the tick-driven snapshot branch at launcher.ts:182-188 is dead code. In production, the `relationships` MySQL table is never written to — the derived view lives only in the in-memory Map. SC#1 literally requires 'materializes an edge table ... in a derived MySQL table' — this is currently dormant."
-    artifacts:
-      - path: "grid/src/genesis/launcher.ts"
-        issue: "Line 45 declares `private readonly relationshipStorage: RelationshipStorage | null`; line 85 assigns `null`; `readonly` prevents post-construction assignment; no setter exists; no `GenesisConfig.pool` field accepts a pool. The `if (this.relationshipStorage && ...)` guard at line 183 short-circuits always in production."
-      - path: "sql/009_relationships.sql"
-        issue: "Migration ships but is never exercised by any production code path because RelationshipStorage is never instantiated with a real pool."
-    missing:
-      - "Remove `readonly` modifier from `relationshipStorage` field and add `attachRelationshipStorage(pool: Pool): void` method on GenesisLauncher"
-      - "Add end-to-end launcher-level test that exercises the snapshot branch with a real or in-memory pool (existing storage.test.ts bypasses the launcher entirely)"
-      - "Wire GridStore (or whichever owner holds the mysql2 pool) to call `launcher.attachRelationshipStorage(pool)` during bootstrap"
-      - "Alternatively, accept the option described in 09-REVIEW.md HI-01 Option 2: take optional pool via GenesisConfig and construct storage conditionally"
-  - truth: "H5 edge_key prefix resolution is unambiguous and tested (T-09-08 / ME-02)"
-    status: partial
-    reason: "H5 endpoint accepts 16–64 hex `edge_key` and resolves via `find(e => edgeHash(e).startsWith(edgeKey) || edgeHash(e) === edgeKey)`. The `||` clause is dead (startsWith covers equality). On truncated prefixes, `find()` returns the first match in Map insertion order — deterministic within a run but not across restarts, and silently returns the wrong edge on prefix collision. No test exercises a shortened edge_key. The H5 route emits `operator.inspected` with `target_did` set to whichever edge matched first, so a collision yields a wrong-DID audit entry."
-    artifacts:
-      - path: "grid/src/api/operator/relationships.ts"
-        issue: "Lines 342 (regex) + 366-368 (resolution). Prefix-matching branch is completely untested; dead `||` clause adds no safety."
-    missing:
-      - "Either require full 64-char hash and drop prefix matching, OR implement ambiguous-prefix rejection with 409 Conflict response"
-      - "Add test case for shortened edge_key with multiple candidate matches (relationships-privacy.test.ts line 106 currently only tests full 64-char hash)"
-      - "Remove dead `|| edgeHash(e) === edgeKey` clause"
+gaps: []
 deferred:
   - truth: "Optional `relationship.warmed`/`.cooled` threshold-crossing events"
     addressed_in: "REL-EMIT-01 (v2.3 future requirement)"
@@ -53,9 +34,19 @@ human_verification:
 # Phase 9: Relationship Graph (Derived View) Verification Report
 
 **Phase Goal:** Ship a relationship graph derived view computed by a pure-observer listener, with idempotent rebuild, zero-diff audit chain, sole-producer boundaries, tier-graded operator API, dashboard inspector integration, and perf gates (10k-edge rebuild)
-**Verified:** 2026-04-22T04:25:05Z
-**Status:** gaps_found
-**Re-verification:** No — initial verification
+**Verified:** 2026-04-22T04:25:05Z (initial) — **Re-verified:** 2026-04-21T22:05:00Z (after 09-07 + 09-08 gap closure)
+**Status:** ✅ **VERIFIED** (all 4 requirements achieved, all 10 invariants live, human verification items remain as known-unautomatable)
+**Re-verification:** Yes — after 09-07 (HI-01 + ME-01) and 09-08 (ME-02) gap closure
+
+## Re-Verification Summary
+
+| Gap | Previous Status | Plan | Current Status |
+|-----|----------------|------|----------------|
+| **HI-01** — `RelationshipStorage` unreachable; `private readonly relationshipStorage = null` in launcher; snapshot branch dead code in production | ✗ FAILED | 09-07 | ✓ **CLOSED** — `readonly` removed; `attachRelationshipStorage(pool)` added (launcher.ts:112); `main.ts:90` calls `launcher.attachRelationshipStorage(dbConn.getPool())` after migrations; `launcher-snapshot.test.ts` (3 cases) proves tick-driven `pool.query('REPLACE INTO relationships …')` fires end-to-end |
+| **ME-01** — `scheduleSnapshot` consumes iterator post-setImmediate; Map mutations between tick and flush can leak | ⚠️ WARNING | 09-07 | ✓ **CLOSED** — `Array.from(edges)` materialization on tick thread BEFORE `setImmediate` (storage.ts:130); regression test pins captured params reflect pre-mutation state |
+| **ME-02** — H5 `edge_key` accepts 16–64 hex, resolves via `startsWith()`; prefix collision silently returns wrong edge; 0 tests | ✗ FAILED | 09-08 | ✓ **CLOSED** — regex tightened to `/^[a-f0-9]{64}$/i` (relationships.ts:344); resolver uses strict equality `edgeHash(e) === normalizedKey` (relationships.ts:373); dead `||` clause removed; 3 regression tests + fixture update (5 ME-02 markers in privacy tests) |
+
+**Regressions:** None. Full grid suite 744/744 passing (up from 740 → +4 new tests). All 10 invariant gates green. Allowlist unchanged at 18. Zero-diff chain unbroken. Producer-boundary gates unchanged.
 
 ## Goal Achievement
 
@@ -63,24 +54,24 @@ human_verification:
 
 | # | Truth (Success Criterion) | Status | Evidence |
 |---|---------------------------|--------|----------|
-| 1 | Pure-observer `RelationshipListener` ingests `nous.spoke`/`trade.settled` + materializes edge table in **derived MySQL table**; rebuilding from audit chain produces byte-identical edges (idempotent-rebuild test) | ⚠️ PARTIAL | Listener ✓ (`grid/src/relationships/listener.ts` 303 lines, pure-observer, idempotent-rebuild.test.ts 3/3 pass byte-identical via `canonicalEdge` + `toFixed(3)`). MySQL table materialization ✗ — `relationshipStorage = null` in launcher; snapshot branch dead code. See HI-01. |
+| 1 | Pure-observer `RelationshipListener` ingests `nous.spoke`/`trade.settled` + materializes edge table in **derived MySQL table**; rebuilding from audit chain produces byte-identical edges (idempotent-rebuild test) | ✓ **VERIFIED** | Listener ✓ (`grid/src/relationships/listener.ts` 303 lines, pure-observer, idempotent-rebuild.test.ts 3/3 pass byte-identical via `canonicalEdge` + `toFixed(3)`). **MySQL table materialization NOW LIVE** — `launcher.attachRelationshipStorage(pool)` wired at `main.ts:90` after migrations; tick-driven `scheduleSnapshot` proven end-to-end via `launcher-snapshot.test.ts` asserting `pool.query('REPLACE INTO relationships …')`. |
 | 2 | Edge decay `weight × exp(-Δtick / τ)` deterministic; no audit event for decay; zero-diff preserved | ✓ VERIFIED | `decayedWeight()` in canonical.ts applies lazy exponential decay at read. `zero-diff.test.ts` (2/2) asserts byte-identical chain hashes across 500-event fixture with vs. without listener. `no-audit-emit.test.ts` (2/2) asserts chain length unchanged + spy on `audit.append` records 0 listener-initiated calls. |
-| 3 | Inspector renders per-Nous relationship panel (top-N); full graph view at H1+ (warmth only); H5 inspects per-edge raw dialogue turns via tier-gated RPC | ✓ VERIFIED | `dashboard/src/app/grid/components/inspector-sections/relationships.tsx` with H1/H2/H5 branches (H1 warmth-only, H2 numeric, H5 EdgeEventsModal). `/grid/relationships/relationship-graph.tsx` SVG consumer. `relationships-privacy.test.ts` 16/16 exact-key-set matrix validates H1 returns no numeric, H2 returns valence/weight, H5 returns edge events. |
+| 3 | Inspector renders per-Nous relationship panel (top-N); full graph view at H1+ (warmth only); H5 inspects per-edge raw dialogue turns via tier-gated RPC | ✓ VERIFIED | `dashboard/src/app/grid/components/inspector-sections/relationships.tsx` with H1/H2/H5 branches (H1 warmth-only, H2 numeric, H5 EdgeEventsModal). `/grid/relationships/relationship-graph.tsx` SVG consumer. `relationships-privacy.test.ts` 19/19 exact-key-set matrix validates H1 returns no numeric, H2 returns valence/weight, H5 returns edge events — now with ME-02 full-hash-only hardening. |
 | 4 | Load test: 10K-edge graph responds at p95 <100ms; computation O(edges_touched_this_tick), never O(N²) | ✓ VERIFIED | `perf-10k.test.ts` measures `getTopNFor` p95 over 1000 iterations on 10K-edge fixture at tick=2000 (decay path exercised). **Actual: p95=0.27ms** — 370× under the 100ms budget. |
-| 5 | Zero new allowlist members; `broadcast-allowlist.ts` stays at 18; `scripts/check-state-doc-sync.mjs` unchanged | ✓ VERIFIED | `grid/src/audit/broadcast-allowlist.ts`: 18 members (grep `^\s*'` → 18). `allowlist-frozen.test.ts` (4/4) asserts `ALLOWLIST.size === 18` + no `relationship.*` kinds. `check-relationship-graph-deps.mjs` CI gate + file-structure baseline 147 lines. |
+| 5 | Zero new allowlist members; `broadcast-allowlist.ts` stays at 18; `scripts/check-state-doc-sync.mjs` unchanged | ✓ VERIFIED | `grid/src/audit/broadcast-allowlist.ts`: 18 members (grep `^\s*'` → 18, re-verified 2026-04-21). `allowlist-frozen.test.ts` (4/4) asserts `ALLOWLIST.size === 18` + no `relationship.*` kinds. `check-relationship-graph-deps.mjs` CI gate + file-structure baseline 147 lines. |
 
-**Score:** 4/5 Success Criteria verified (SC#1 partial — idempotent rebuild ✓, MySQL persistence ✗)
+**Score:** 5/5 Success Criteria verified (SC#1 was partial, NOW complete post-09-07)
 
 ### Per-Requirement Verdict
 
 | Requirement | Description | Status | Evidence |
 |-------------|-------------|--------|----------|
 | **REL-01** | Derived-view pure-observer listener over `nous.spoke`/`trade.settled`; zero allowlist growth; O(edges_touched_this_tick) | ✓ ACHIEVED | RelationshipListener is sole Map writer (producer-boundary.test.ts Gate 1), subscribes to `AuditChain.onAppend`, never calls `audit.append` (grep → 0 in listener.ts). Allowlist frozen at 18. perf-10k proves O(edges) scan. |
-| **REL-02** | Edge primitive `{from_did,to_did,valence,weight,recency_tick,last_event_hash}` **stored in derived MySQL table** rebuildable from audit chain (idempotent rebuild) | ⚠️ PARTIAL | Edge primitive ✓ (types.ts matches ROADMAP shape exactly). Canonical serialization ✓ (D-9-10 6-key order + toFixed(3)). Idempotent rebuild ✓ (3/3 tests byte-identical). **MySQL table materialization ✗** — storage class exists but is never instantiated with a real pool in production (HI-01). |
+| **REL-02** | Edge primitive `{from_did,to_did,valence,weight,recency_tick,last_event_hash}` **stored in derived MySQL table** rebuildable from audit chain (idempotent rebuild) | ✓ **ACHIEVED** (was PARTIAL) | Edge primitive ✓ (types.ts matches ROADMAP shape exactly). Canonical serialization ✓ (D-9-10 6-key order + toFixed(3)). Idempotent rebuild ✓ (3/3 tests byte-identical). **MySQL table materialization ✓ LIVE** — Plan 09-07 wired `attachRelationshipStorage` at `main.ts:90`; `launcher-snapshot.test.ts` proves `pool.query('REPLACE INTO relationships …')` fires on cadence boundary; ME-01 iterator race closed via synchronous `Array.from(edges)` at storage.ts:130. |
 | **REL-03** | Decay `weight × exp(-Δtick / τ)` deterministic; same seed+τ+chain → same graph at any replay tick | ✓ ACHIEVED | `decayedWeight()` lazy-applied at read; `getTopNFor` exercises decay path; idempotent-rebuild gate enforces determinism. No audit event emitted for decay (zero-diff preserved, no-audit-emit.test.ts). |
 | **REL-04** | 10K-edge graph p95 <100ms; computation O(edges_touched_this_tick) | ✓ ACHIEVED | perf-10k.test.ts: p95=0.27ms at 10K edges over 1000 iterations. 370× budget headroom. |
 
-**Requirements verified: 3/4 full + 1/4 partial**
+**Requirements verified: 4/4 (was 3/4 full + 1/4 partial)**
 
 ### Deferred Items
 
@@ -96,13 +87,15 @@ human_verification:
 | `grid/src/relationships/config.ts` | DEFAULT_RELATIONSHIP_CONFIG frozen | ✓ VERIFIED | Plan 01 |
 | `grid/src/relationships/canonical.ts` | canonicalEdge/edgeHash/decayedWeight/warmthBucket/sortedPairKey | ✓ VERIFIED | Plan 01, 18 tests |
 | `grid/src/relationships/listener.ts` | Sole Map writer, pure observer | ✓ VERIFIED | Plan 02, 303 lines, 17 tests, producer-boundary Gate 1 green |
-| `grid/src/relationships/storage.ts` | Sole SQL writer of `relationships` table | ⚠️ ORPHANED | Class exists and is test-covered (6 tests) but is never instantiated with a real pool in production — launcher hardcodes `null`. HI-01. |
+| `grid/src/relationships/storage.ts` | Sole SQL writer of `relationships` table | ✓ **VERIFIED** (was ORPHANED) | Class exists, test-covered (7 tests incl. ME-01 regression), AND reachable in production via `main.ts:90` → `launcher.attachRelationshipStorage(dbConn.getPool())`. `constructor(public readonly pool: Pool)` exposes pool for launcher idempotency check. `scheduleSnapshot` materializes iterator synchronously (ME-01). |
 | `grid/src/relationships/index.ts` | Barrel export | ✓ VERIFIED | RelationshipListener + RelationshipStorage exported |
-| `grid/src/genesis/launcher.ts` | Wired listener + storage, rebuildFromChain on bootstrap | ⚠️ PARTIAL | Listener ✓ wired (line 77, after aggregator per D-9-04). Storage ✗ — `null` in constructor (line 85), `readonly` prevents setter. Snapshot branch (lines 182-188) dead code. rebuildFromChain ✓ called at end of bootstrap. |
-| `grid/src/api/operator/relationships.ts` | Four tier-graded endpoints (H1/H2/H5/graph) | ✓ VERIFIED | 307 lines, 4 endpoints, privacy matrix 16/16 green |
+| `grid/src/genesis/launcher.ts` | Wired listener + storage, rebuildFromChain on bootstrap | ✓ **VERIFIED** (was PARTIAL) | Listener ✓ wired (line 87, after aggregator per D-9-04). Storage ✓ — `private relationshipStorage` (readonly REMOVED, launcher.ts:55); `attachRelationshipStorage(pool: Pool): void` method at line 112 (idempotent-by-reference, throws on pool-switch). Snapshot branch at lines 220-226 is now LIVE when pool is attached. rebuildFromChain ✓ called at end of bootstrap (line 233). |
+| `grid/src/api/operator/relationships.ts` | Four tier-graded endpoints (H1/H2/H5/graph) | ✓ VERIFIED | 4 endpoints, privacy matrix 19/19 green. H5 hardened per ME-02: `/^[a-f0-9]{64}$/i` regex (line 344), strict-equality resolver `edgeHash(e) === normalizedKey` (line 373), dead `||` clause removed. |
 | `grid/src/api/operator/index.ts` | relationshipsRoutes registered | ✓ VERIFIED | |
 | `grid/src/api/server.ts` | GridServices.relationships + config fields | ✓ VERIFIED | |
-| `sql/009_relationships.sql` | Migration for derived table | ⚠️ ORPHANED | File exists but never executed by any code path because storage is never instantiated in production. |
+| `grid/src/main.ts` | Production wiring of `attachRelationshipStorage` | ✓ **VERIFIED** (new) | `dbConn` hoisted out of migrations `if`-block; `launcher.attachRelationshipStorage(dbConn.getPool())` at line 90 (AFTER `runner.run()`, AFTER `launcher.bootstrap`); `relationships: launcher.relationships` + `config: { relationship: config.genesisConfig.relationship }` passed to buildServer. |
+| `grid/src/db/connection.ts` | `getPool()` accessor for single-pool sharing | ✓ **VERIFIED** (new) | `getPool(): mysql.Pool` added to DatabaseConnection; single pool serves both GridStore and RelationshipStorage. |
+| `sql/009_relationships.sql` | Migration for derived table | ✓ **VERIFIED** (was ORPHANED) | Migration applied via `runner.run()` in `main.ts:76` BEFORE `attachRelationshipStorage` at `main.ts:90` — schema is in place before first snapshot fires. |
 | `dashboard/src/lib/api/relationships.ts` | Typed fetchers for 4 endpoints | ✓ VERIFIED | Plan 05, commit 0e87515 |
 | `dashboard/src/lib/hooks/use-relationships.ts` | SWR hooks with 100-tick batching key | ✓ VERIFIED | `Math.floor(currentTick / 100)` literal (grep → 7) + BATCH_WINDOW_TICKS=100 constant |
 | `dashboard/src/app/grid/components/inspector-sections/relationships.tsx` | Tier-graded RelationshipsSection | ✓ VERIFIED | H1/H2/H5 branches; 9 tests green |
@@ -110,20 +103,21 @@ human_verification:
 | `dashboard/src/app/grid/relationships/page.tsx` | /grid/relationships route | ✓ VERIFIED | Verbatim UI-SPEC copy |
 | `dashboard/src/app/grid/relationships/relationship-graph.tsx` | Static SVG, no force libraries | ✓ VERIFIED | D-9-08 grep gate: d3-force/cytoscape/graphology → 0 |
 | `scripts/check-relationship-graph-deps.mjs` | CI gate for runtime deps + file-structure baseline | ✓ VERIFIED | `npm run pretest` exit 0 |
+| `grid/test/relationships/launcher-snapshot.test.ts` | E2E regression gate preventing re-regression to dormant-null state | ✓ **VERIFIED** (new) | 3 it() cases: no-pool no-op, pool-attached snapshot-fires-on-cadence-boundary with REPLACE INTO assertion, idempotency (same-pool no-op + different-pool throws) |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|-----|-----|--------|---------|
 | `AuditChain.onAppend` | `RelationshipListener.handleEntry` | constructor subscribe | ✓ WIRED | listener.ts:44 |
-| `RelationshipListener` | `GenesisLauncher.relationships` | constructed after aggregator | ✓ WIRED | launcher.ts:77 (D-9-04 order verified by listener-launcher-order.test.ts) |
-| `RelationshipStorage` | `GenesisLauncher.relationshipStorage` | pool injection | ✗ NOT_WIRED | launcher.ts:85 hardcodes `null`; `readonly` field blocks setter; no production path injects a pool. HI-01. |
-| `WorldClock.onTick` | `RelationshipStorage.scheduleSnapshot` | tick % snapshotCadence | ✗ NOT_WIRED | launcher.ts:182-188 branch exists but is guarded by `this.relationshipStorage && ...` which is always false in production |
+| `RelationshipListener` | `GenesisLauncher.relationships` | constructed after aggregator | ✓ WIRED | launcher.ts:87 (D-9-04 order verified by listener-launcher-order.test.ts) |
+| `RelationshipStorage` | `GenesisLauncher.relationshipStorage` | pool injection via `attachRelationshipStorage` | ✓ **WIRED** (was NOT_WIRED) | `main.ts:90` → `launcher.attachRelationshipStorage(dbConn.getPool())`. Setter idempotent-by-reference; throws on pool-switch. Field no longer `readonly`. |
+| `WorldClock.onTick` | `RelationshipStorage.scheduleSnapshot` | tick % snapshotCadence | ✓ **WIRED** (was NOT_WIRED) | launcher.ts:220-226 branch now live when pool attached. Proven by launcher-snapshot.test.ts case 2 assertion on `pool.query('REPLACE INTO relationships …')`. |
 | `RelationshipListener` | Fastify H1/H2/H5/graph endpoints | services.relationships closure | ✓ WIRED | relationships.ts + server.ts GridServices |
 | Dashboard SWR hooks | Grid API endpoints | fetchers + 100-tick batching key | ✓ WIRED | use-relationships.ts |
 | `<RelationshipsSection>` | Inspector tab | mounted on Relationships tab | ✓ WIRED | inspector.tsx |
-| `rebuildFromChain` | `GenesisLauncher.bootstrap` end | called before clock.start | ✓ WIRED | launcher.ts:195 |
-| `Object.keys(payload).sort()` | relationships-privacy.test.ts | exact-key-set assertions | ✓ WIRED | 5 matrix assertions, 16 tests |
+| `rebuildFromChain` | `GenesisLauncher.bootstrap` end | called before clock.start | ✓ WIRED | launcher.ts:233 |
+| `Object.keys(payload).sort()` | relationships-privacy.test.ts | exact-key-set assertions | ✓ WIRED | 19 tests (16 original + 3 ME-02) |
 
 ### Data-Flow Trace (Level 4)
 
@@ -132,32 +126,36 @@ human_verification:
 | `RelationshipListener.edges` | Map<string,Edge> | `handleEntry()` on each AuditChain append | ✓ Real — driven by live audit events + rebuildFromChain | ✓ FLOWING |
 | `/api/v1/nous/:did/relationships` H1 | `topN` array | `listener.getTopNFor(did, N, tick)` | ✓ Real — decayed weight sort over in-memory Map | ✓ FLOWING |
 | `/api/v1/nous/:did/relationships/inspect` H2 | numeric valence/weight | `listener.getEdge()` | ✓ Real | ✓ FLOWING |
-| `/api/v1/operator/relationships/:edge_key/events` H5 | audit-chain filtered turns | `audit.all()` + `involvesEdge` filter | ✓ Real | ✓ FLOWING |
+| `/api/v1/operator/relationships/:edge_key/events` H5 | audit-chain filtered turns | `audit.all()` + `involvesEdge` filter — full-hash strict lookup only (ME-02) | ✓ Real | ✓ FLOWING |
 | `/api/v1/grid/relationships/graph` | nodes[] + edges[] | `listener.allEdges()` + SHA-256 seeded positions | ✓ Real | ✓ FLOWING |
 | `<RelationshipsSection>` | SWR data | fetchRelationships → grid H1 endpoint | ✓ Real | ✓ FLOWING |
 | `<RelationshipGraph>` SVG | nodes/edges with {x,y} | useGraph SWR hook → graph endpoint | ✓ Real | ✓ FLOWING |
-| **`relationships` MySQL table** | rows | `RelationshipStorage.snapshot()` via scheduleSnapshot | ✗ **DISCONNECTED — `relationshipStorage = null` in production** | ✗ **DISCONNECTED** |
+| **`relationships` MySQL table** | rows | `RelationshipStorage.snapshot()` via scheduleSnapshot, fired on `tick % snapshotCadenceTicks === 0` | ✓ **Real — launcher.attachRelationshipStorage(dbConn.getPool()) at main.ts:90** | ✓ **FLOWING** (was DISCONNECTED) |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
-| All relationship tests pass | `cd grid && npm test -- --run test/relationships/` | 65/65 tests, 12 files | ✓ PASS |
+| Full grid suite passes | `cd grid && npm test` | 82 files, 744/744 tests | ✓ PASS |
 | perf-10k p95 under 100ms | embedded in perf-10k.test.ts | p50=0.09ms p95=0.27ms p99=0.38ms | ✓ PASS |
 | pretest CI gate passes | `npm run pretest` | exit 0 (state-doc-sync OK; check-relationship-graph-deps OK) | ✓ PASS |
-| Allowlist at 18 | count `^\s*'` in broadcast-allowlist.ts | 18 members | ✓ PASS |
+| Allowlist at 18 | `grep -c "^\s*'" src/audit/broadcast-allowlist.ts` | 18 | ✓ PASS |
 | Listener pure-observer | grep `this.audit.append` in listener.ts | 0 matches | ✓ PASS |
 | No wall-clock in relationships/** | determinism-source.test.ts | 1/1 pass | ✓ PASS |
 | Storage sole SQL writer | producer-boundary.test.ts Gate 2 | 0 offenders | ✓ PASS |
 | Listener sole Map writer | producer-boundary.test.ts Gate 1 | 0 offenders | ✓ PASS |
 | No banned graph libraries | producer-boundary.test.ts Gate 3 + CI script | 0 matches | ✓ PASS |
+| **Storage reachable in production** (HI-01) | `grep -n "attachRelationshipStorage" grid/src/main.ts` | 1 match at line 90 | ✓ PASS |
+| **ME-01 iterator materialization** | `grep -n "Array.from(edges)" grid/src/relationships/storage.ts` | 1 match at line 130 | ✓ PASS |
+| **ME-02 full-hash-only H5** | `grep -n "startsWith\|16,64" grid/src/api/operator/relationships.ts` | 0 matches | ✓ PASS |
+| **ME-02 regression tests** | `grep -c "ME-02" grid/test/api/relationships-privacy.test.ts` | 5 markers | ✓ PASS |
 
 ### Requirements Coverage
 
 | Requirement | Source Plan | Description | Status | Evidence |
 |-------------|-------------|-------------|--------|----------|
 | REL-01 | 09-01..02..06 | Pure-observer derived view, zero allowlist growth, O(edges) | ✓ SATISFIED | listener.ts + allowlist-frozen + producer-boundary gates |
-| REL-02 | 09-01..03..04..06 | Edge primitive stored in derived MySQL table, rebuildable from audit chain | ⚠️ PARTIAL | Edge primitive + idempotent rebuild ✓; MySQL persistence ✗ (HI-01) |
+| REL-02 | 09-01..03..04..06..07 | Edge primitive stored in derived MySQL table, rebuildable from audit chain | ✓ **SATISFIED** (was PARTIAL) | Edge primitive + idempotent rebuild + MySQL persistence all live; launcher-snapshot.test.ts E2E gate |
 | REL-03 | 09-01..02..06 | Deterministic decay, no audit event | ✓ SATISFIED | decayedWeight + zero-diff.test.ts + no-audit-emit.test.ts |
 | REL-04 | 09-05..06 | 10K-edge p95 <100ms | ✓ SATISFIED | perf-10k.test.ts p95=0.27ms |
 
@@ -166,17 +164,17 @@ human_verification:
 | Invariant | Status | Evidence |
 |-----------|--------|----------|
 | Pure-observer (listener never calls audit.append) | ✓ VERIFIED | producer-boundary.test.ts Gate 1; grep `audit.append` in listener.ts → 0; no-audit-emit.test.ts spy confirms 0 append calls during 500-event fixture. |
-| Zero-diff (N listeners → byte-identical chain hashes) | ✓ VERIFIED | zero-diff.test.ts (2/2 pass) — chain head identical with vs. without RelationshipListener across 500 events. |
+| Zero-diff (N listeners → byte-identical chain hashes) | ✓ VERIFIED | zero-diff.test.ts (2/2 pass) — chain head identical with vs. without RelationshipListener across 500 events. Re-verified post-09-07/09-08: unchanged. |
 | Sole-producer Map write (only listener.ts mutates edges Map) | ✓ VERIFIED | producer-boundary.test.ts Gate 1 — 0 offenders across all `grid/src/**`. |
-| Sole-producer SQL write (only storage.ts writes `relationships` table) | ✓ VERIFIED (at source level) | producer-boundary.test.ts Gate 2 — 0 offenders. NOTE: gate asserts no other file could write; it does not assert storage.ts actually runs in production (see HI-01). |
+| Sole-producer SQL write (only storage.ts writes `relationships` table) | ✓ **VERIFIED (LIVE)** | producer-boundary.test.ts Gate 2 — 0 offenders. **Now actually runs in production post-09-07** — previously structurally correct but moot; now source-level gate AND runtime path are both verified. |
 | Idempotent rebuild (byte-identical via canonicalEdge + toFixed(3)) | ✓ VERIFIED | idempotent-rebuild.test.ts (3/3) — string-equality on canonical snapshot, absorbs sub-3-decimal float drift. |
 | Canonical sort (sortedPairKey did_a<did_b, 6-key order, toFixed(3)) | ✓ VERIFIED | canonical.test.ts (18/18) locks D-9-10. Self-loop throw at sortedPairKey boundary. |
 | Self-loop reject (from_did === to_did silently dropped) | ✓ VERIFIED | self-edge-rejection.test.ts (2/2) — listener silent-return; getEdge returns undefined; no throw. |
-| Wall-clock ban (no Date.now/performance.now/setInterval/setTimeout/Math.random in grid/src/relationships/**) | ✓ VERIFIED | determinism-source.test.ts grep-walk. NOTE: `setImmediate` in storage.ts is explicitly allowed (not in D-9-12 forbidden list). |
-| Allowlist frozen (18 events, no `relationship.*`) | ✓ VERIFIED | allowlist-frozen.test.ts (4/4) + check-relationship-graph-deps.mjs file-structure baseline (147 lines). Three-layer SC#5 gate (runtime spy + source constant + CI script). |
-| Launcher construction order (listener after aggregator, D-9-04) | ✓ VERIFIED | listener-launcher-order.test.ts (5/5). aggregator at line 70, listener at line 77. |
+| Wall-clock ban (no Date.now/performance.now/setInterval/setTimeout/Math.random in grid/src/relationships/**) | ✓ VERIFIED | determinism-source.test.ts grep-walk. NOTE: `setImmediate` in storage.ts is explicitly allowed (not in D-9-12 forbidden list). `Array.from` (ME-01 fix) introduces no forbidden calls. |
+| Allowlist frozen (18 events, no `relationship.*`) | ✓ VERIFIED | allowlist-frozen.test.ts (4/4) + check-relationship-graph-deps.mjs file-structure baseline (147 lines). Three-layer SC#5 gate (runtime spy + source constant + CI script). Re-verified 2026-04-21: grep count still 18. |
+| Launcher construction order (listener after aggregator, D-9-04) | ✓ VERIFIED | listener-launcher-order.test.ts (5/5). aggregator at line 80, listener at line 87 (post-09-07 line shift for new comments + attachRelationshipStorage method). Order unchanged. |
 
-**Invariants verified: 10/10 at source-level. 1 invariant (sole-producer SQL write) is structurally correct but practically moot because storage never runs in production.**
+**Invariants verified: 10/10 at source level AND runtime level post-09-07.** Previously, sole-producer SQL write was a structural gate that did not exercise production; it is now fully live.
 
 ### Perf Gate Verification
 
@@ -185,20 +183,24 @@ human_verification:
 - **Headroom:** 370× under budget
 - **Status:** ✓ **PASS**
 
-### Anti-Patterns Found
+### Anti-Patterns Found (post-09-07/09-08)
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `grid/src/genesis/launcher.ts` | 45, 85 | `private readonly ... = null` with no setter → dead guard at 182-188 | 🛑 Blocker for SC#1 | REL-02 MySQL persistence never runs in production |
-| `grid/src/api/operator/relationships.ts` | 367 | Dead `|| edgeHash(e) === edgeKey` clause (startsWith covers equality) | ℹ️ Info | Redundant but not incorrect |
-| `grid/src/api/operator/relationships.ts` | 366-368 | Untested prefix-match path with silent wrong-edge resolution on collision | ⚠️ Warning | H5 `operator.inspected` could log wrong target_did; see ME-02 |
-| `grid/src/relationships/storage.ts` | 116-123 | `scheduleSnapshot` iterator consumed post-setImmediate — potential mutation race (ME-01) | ⚠️ Warning | Correctness only matters if HI-01 is fixed; currently dormant |
-| `sql/009_relationships.sql` | 9-13 | VARCHAR(80) DID columns assume 76-char cap not enforced by DID_REGEX (ME-03) | ⚠️ Warning | Data-integrity risk if HI-01 is fixed AND long-slug DIDs appear |
-| `grid/src/relationships/storage.ts` | 100 | `Number(row['recency_tick'])` loses precision >2^53 (LO-01) | ℹ️ Info | ~8.6 billion years at 30s tick; not a practical concern |
+| `sql/009_relationships.sql` | 9-13 | VARCHAR(80) DID columns assume 76-char cap not enforced by DID_REGEX (ME-03) | ⚠️ Warning | Data-integrity risk if long-slug DIDs appear. Not a Phase 9 blocker — DID_REGEX invariant lives cross-phase. |
+| `grid/src/relationships/storage.ts` | 100 | `Number(row['recency_tick'])` loses precision >2^53 (LO-01) | ℹ️ Info | ~8.6 billion years at 30s tick; not a practical concern. |
+
+**Closed anti-patterns** (gap closure):
+- ~~launcher.ts `private readonly` dead guard~~ — CLOSED by 09-07 (`readonly` removed, setter added)
+- ~~relationships.ts dead `||` clause~~ — CLOSED by 09-08 (removed)
+- ~~relationships.ts untested prefix-match path~~ — CLOSED by 09-08 (prefix acceptance dropped; regex tightened; 3 regression tests)
+- ~~storage.ts scheduleSnapshot iterator race~~ — CLOSED by 09-07 (synchronous Array.from)
 
 No TODO/FIXME/PLACEHOLDER comments found in Phase 9 source. No `return null`/`return []` stub patterns flowing to user-visible state.
 
 ### Human Verification Required
+
+Carried over from initial verification — none of these became automatable post-gap-closure.
 
 #### 1. Dashboard /grid/relationships SVG graph visual smoke
 
@@ -220,33 +222,18 @@ No TODO/FIXME/PLACEHOLDER comments found in Phase 9 source. No `return null`/`re
 
 ### Gaps Summary
 
-Phase 9 is **overwhelmingly complete** at the source level: the pure-observer listener, idempotent rebuild, canonical serialization, producer-boundary gates, tier-graded API, dashboard UI, and 10K-edge perf bench are all present, tested, and green (65/65 relationship tests; 723/723 full grid; 432/432 dashboard). All nine invariants verify at source level. The allowlist is frozen at 18; no `relationship.*` events exist.
+**All Phase 9 gaps closed.** Plan 09-07 wired `RelationshipStorage` into `GenesisLauncher` via `attachRelationshipStorage(pool)` and `main.ts:90` production call; `launcher-snapshot.test.ts` locks the end-to-end path. ME-01 iterator race closed in the same plan via synchronous `Array.from(edges)` materialization. Plan 09-08 tightened H5 `edge_key` validation from `{16,64}` prefix to `{64}` full-hash-only with strict-equality resolution, plus 3 regression tests pinning the 16-char reject + 63-char reject + full-hash `target_did ≠ counterparty_did` invariant.
 
-**However, one material goal gap remains:** ROADMAP SC#1 and REL-02 literally require the edge table to be "materialized in a derived MySQL table" — not just in-memory. The `RelationshipStorage` class is implemented and test-covered, but `GenesisLauncher.relationshipStorage` is hardcoded to `null` as a `private readonly` field with no setter and no `GenesisConfig.pool` intake. In production, the snapshot cadence branch at `launcher.ts:182-188` is dead code. The audit chain remains the source of truth (so correctness is intact), but the "fast-boot from MySQL" path the phase contract promised is dormant.
+**Full grid suite:** 744/744 (82 files) passing. Zero regressions. All 10 invariants verified at both source level and runtime level. SC#1 and REL-02 now fully achieved — the derived MySQL table is materialized in production, not just in-memory.
 
-A second gap (ME-02, medium severity) concerns the H5 `edge_key` prefix-match path: it is completely untested and silently resolves to the first-matching edge on prefix collision, potentially emitting `operator.inspected` with a wrong `target_did` in the audit chain. While prefix collision at 16+ hex is astronomically unlikely, the code is written as if it expects prefixes to be valid — no ambiguity check, no test coverage — so the behavior under collision is latent UB rather than a designed-for path.
-
-Other review findings (ME-01 iterator-race, ME-03 DID column width, LO-01..04) are conditional on HI-01 being fixed or are defensive hardening — they do not block goal achievement.
-
-**Recommended gap-closure plans:**
-
-1. **`09-07-PLAN.md — Launcher storage injection + end-to-end snapshot gate`**
-   - Remove `readonly` from `relationshipStorage` field; add `attachRelationshipStorage(pool: Pool): void`
-   - Wire GridStore (owner of the mysql2 pool) to call the setter during bootstrap; OR accept pool via `GenesisConfig.relationshipPool?: Pool`
-   - Add end-to-end test in `grid/test/relationships/launcher-snapshot.test.ts` exercising the full tick → scheduleSnapshot → mysql2 mock path (existing storage.test.ts bypasses launcher)
-   - Fold in ME-01 fix (materialize iterator synchronously) + ME-03 fix (tighten DID_REGEX to bounded slug OR widen VARCHAR) in the same plan to close the storage-path correctness ring
-
-2. **`09-08-PLAN.md — H5 edge_key prefix resolution hardening`** (OR fold into 09-07)
-   - Either require full 64-char hash (drop prefix), OR implement 409 Conflict on ambiguous prefixes
-   - Remove dead `|| edgeHash(e) === edgeKey` clause
-   - Add test case for shortened edge_key + multiple-match ambiguity
-   - Rename/document `counterparty_did` payload key per IN-01 (Phase 6 D-11 doc-sync)
+**Three human verification items remain** (carried forward) — all visual/UX flows that cannot be automated in jsdom. These are the bounded unautomatable surface and are expected to stay on the checklist for operator smoke-test.
 
 ## Overall Verdict
 
-**Status:** ⚠️ **FAIL (gaps_found)** — 3 of 4 requirements fully achieved; REL-02 MySQL materialization dormant. Recommend one focused gap-closure plan (09-07) to wire `RelationshipStorage` into the launcher and add the end-to-end snapshot gate. Phase 9's source-level invariants and performance contract are all solid; the gap is narrowly about one missing wire.
+**Status:** ✅ **VERIFIED** (was ⚠️ FAIL) — all 4 requirements achieved, all 10 invariants live at runtime, all 3 gap-closure plans shipped and green, 744/744 grid tests passing. Three human verification items remain as known-unautomatable smoke checks. Phase 9 is complete at the code level.
 
 ---
 
-*Verified: 2026-04-22T04:25:05Z*
+*Verified: 2026-04-22T04:25:05Z (initial, gaps_found)*
+*Re-verified: 2026-04-21T22:05:00Z (verified, after 09-07 + 09-08 gap closure)*
 *Verifier: Claude (gsd-verifier)*
