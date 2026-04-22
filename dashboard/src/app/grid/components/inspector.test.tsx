@@ -96,6 +96,16 @@ vi.mock('next/navigation', () => ({
     useSearchParams: () => new URLSearchParams(''),
 }));
 
+// Phase 9: RelationshipsSection imports tick-store → useStores (StoresProvider).
+// Short-circuit the relationships hook and tick store so the Inspector test
+// harness (which has no StoresProvider) keeps working without modification.
+vi.mock('@/lib/stores/tick-store', () => ({ useTick: () => 0 }));
+vi.mock('@/lib/hooks/use-relationships', () => ({
+    useRelationshipsH1: () => ({ data: undefined, isLoading: false, error: undefined }),
+    useRelationshipsH2: () => ({ data: undefined, isLoading: false, error: undefined }),
+    useGraph: () => ({ data: undefined, isLoading: false, error: undefined }),
+}));
+
 function Harness() {
     const { select } = useSelection(localStore);
     return (

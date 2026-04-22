@@ -43,6 +43,7 @@ import { PsycheSection } from './inspector-sections/psyche';
 import { ThymosSection } from './inspector-sections/thymos';
 import { TelosSection } from './inspector-sections/telos';
 import { MemorySection } from './inspector-sections/memory';
+import { RelationshipsSection } from './inspector-sections/relationships';
 
 /**
  * Locked error-copy map. UI-SPEC §162-166 is the single source of truth for
@@ -94,6 +95,9 @@ export function Inspector(): React.ReactElement | null {
     const { selectedDid, clear } = useSelection();
     const [state, setState] = useState<DrawerState>({ status: 'idle' });
 
+    // Phase 9: in-drawer tab state (Overview | Relationships)
+    const [inspectorTab, setInspectorTab] = useState<'overview' | 'relationships'>('overview');
+
     // Phase 8: two-stage delete state
     const [elevationOpen, setElevationOpen] = useState(false);
     const [irrevOpen, setIrrevOpen] = useState(false);
@@ -109,6 +113,11 @@ export function Inspector(): React.ReactElement | null {
 
     // NEXT_PUBLIC_GRID_ORIGIN is baked at build time per dashboard/.env.example.
     const origin = useMemo(() => process.env.NEXT_PUBLIC_GRID_ORIGIN ?? '', []);
+
+    // --- Phase 9: reset tab to 'overview' on every DID change (UI-SPEC §Surface 1b)
+    useEffect(() => {
+        setInspectorTab('overview');
+    }, [selectedDid]);
 
     // --- Fetch lifecycle -----------------------------------------------------
     useEffect(() => {
@@ -296,6 +305,51 @@ export function Inspector(): React.ReactElement | null {
                 </button>
             </header>
 
+            {/* Phase 9: in-drawer tab strip (Overview | Relationships) */}
+            <div
+                role="tablist"
+                data-testid="inspector-tabs"
+                className="flex gap-0 border-b border-neutral-800 mb-3"
+                onKeyDown={(e) => {
+                    if (e.key === 'ArrowRight') {
+                        setInspectorTab((t) => t === 'overview' ? 'relationships' : 'overview');
+                    } else if (e.key === 'ArrowLeft') {
+                        setInspectorTab((t) => t === 'overview' ? 'relationships' : 'overview');
+                    }
+                }}
+            >
+                <button
+                    role="tab"
+                    type="button"
+                    data-testid="inspector-tab-overview"
+                    aria-selected={inspectorTab === 'overview'}
+                    aria-controls="inspector-panel-overview"
+                    onClick={() => setInspectorTab('overview')}
+                    className={`px-3 py-2 text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-500 ${
+                        inspectorTab === 'overview'
+                            ? 'border-b-2 border-accent text-neutral-100 -mb-[1px]'
+                            : 'text-neutral-400 hover:text-neutral-200'
+                    }`}
+                >
+                    Overview
+                </button>
+                <button
+                    role="tab"
+                    type="button"
+                    data-testid="inspector-tab-relationships"
+                    aria-selected={inspectorTab === 'relationships'}
+                    aria-controls="inspector-panel-relationships"
+                    onClick={() => setInspectorTab('relationships')}
+                    className={`px-3 py-2 text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-500 ${
+                        inspectorTab === 'relationships'
+                            ? 'border-b-2 border-accent text-neutral-100 -mb-[1px]'
+                            : 'text-neutral-400 hover:text-neutral-200'
+                    }`}
+                >
+                    Relationships
+                </button>
+            </div>
+
             {/* Toast (Phase 8 delete feedback) */}
             {toast && (
                 <div
@@ -322,10 +376,25 @@ export function Inspector(): React.ReactElement | null {
 
             {state.status === 'ok' && !isStateB && (
                 <>
-                    <PsycheSection psyche={state.data.psyche} />
-                    <ThymosSection thymos={state.data.thymos} />
-                    <TelosSection  telos={state.data.telos} did={selectedDid} />
-                    <MemorySection memories={state.data.memory_highlights} />
+                    <div
+                        id="inspector-panel-overview"
+                        role="tabpanel"
+                        aria-labelledby="inspector-tab-overview"
+                        hidden={inspectorTab !== 'overview'}
+                    >
+                        <PsycheSection psyche={state.data.psyche} />
+                        <ThymosSection thymos={state.data.thymos} />
+                        <TelosSection  telos={state.data.telos} did={selectedDid} />
+                        <MemorySection memories={state.data.memory_highlights} />
+                    </div>
+                    <div
+                        id="inspector-panel-relationships"
+                        role="tabpanel"
+                        aria-labelledby="inspector-tab-relationships"
+                        hidden={inspectorTab !== 'relationships'}
+                    >
+                        <RelationshipsSection did={selectedDid} />
+                    </div>
                 </>
             )}
 
