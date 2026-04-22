@@ -6,6 +6,7 @@
  */
 
 import type { DialogueContext } from '../dialogue/index.js';
+import type { AnankeDriveName, AnankeDriveLevel, AnankeDirection } from '../ananke/types.js';
 
 export interface SpeakAction {
     action_type: 'speak';
@@ -79,13 +80,44 @@ export interface TelosRefinedAction {
     };
 }
 
+/**
+ * Phase 10a DRIVE-03: Brain-returned ananke drive threshold-crossing action.
+ *
+ * `metadata` carries EXACTLY 3 keys — {drive, level, direction} — sourced
+ * from the Brain's closed-enum domain (see grid/src/ananke/types.ts). The
+ * Grid injects the authoritative `did` (from runner context) and `tick`
+ * (from the executeActions tick parameter, sourced upstream from the
+ * world-clock tick passed into NousRunner.tick) at dispatch time to form
+ * the 5-key payload consumed by `appendAnankeDriveCrossed`.
+ *
+ * `channel` and `text` are kept on the shape for protocol uniformity with
+ * the other BrainAction variants but MUST be empty strings for
+ * DRIVE_CROSSED — the event is Nous-internal, not a spoken utterance.
+ *
+ * The 3-keys-not-5 invariant (10a-CONTEXT.md D-10a-04) is structural:
+ * because `BrainActionDriveCrossed.metadata` has no `did` / `tick` slots,
+ * the Brain cannot forge them. The dispatcher in nous-runner.ts MUST NOT
+ * read `did` or `tick` from action.metadata.
+ */
+export interface BrainActionDriveCrossed {
+    readonly action_type: 'drive_crossed';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly drive: AnankeDriveName;
+        readonly level: AnankeDriveLevel;
+        readonly direction: AnankeDirection;
+    };
+}
+
 export type BrainAction =
     | SpeakAction
     | DirectMessageAction
     | MoveAction
     | NoopAction
     | TradeRequestAction
-    | TelosRefinedAction;
+    | TelosRefinedAction
+    | BrainActionDriveCrossed;
 
 export interface MessageParams {
     sender_name: string;

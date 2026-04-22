@@ -19,6 +19,7 @@ import type { DialogueContext } from '../dialogue/index.js';
 import { Reviewer } from '../review/index.js';
 import { VALID_REVIEW_FAILURE_CODES } from '../review/types.js';
 import { appendTelosRefined } from '../audit/append-telos-refined.js';
+import { appendAnankeDriveCrossed } from '../ananke/index.js';
 
 export interface NousRunnerConfig {
     nousDid: string;
@@ -363,6 +364,29 @@ export class NousRunner {
                     } catch {
                         // Producer-boundary rejection (D-16 step 4): any assertion
                         // fail → drop. Mirrors Phase 6 malformed-brain-response.
+                    }
+                    break;
+                }
+
+                case 'drive_crossed': {
+                    // Phase 10a DRIVE-03 / D-10a-03, D-10a-04: Grid injects
+                    // did+tick (3-keys-not-5 invariant). `tick` is the world-clock
+                    // tick from executeActions — NEVER Date.now(). Rejections
+                    // drop silently per T-10a-18 so sibling actions still dispatch.
+                    try {
+                        appendAnankeDriveCrossed(this.audit, this.nousDid, {
+                            did: this.nousDid,
+                            tick,
+                            drive: action.metadata.drive,
+                            level: action.metadata.level,
+                            direction: action.metadata.direction,
+                        });
+                    } catch (err) {
+                        console.warn(JSON.stringify({
+                            event: 'ananke.dispatch.rejected',
+                            did: this.nousDid,
+                            reason: (err as Error).message,
+                        }));
                     }
                     break;
                 }
