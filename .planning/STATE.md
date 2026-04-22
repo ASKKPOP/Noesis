@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Active)
 status: executing
-stopped_at: Completed 10a-04-PLAN.md
-last_updated: "2026-04-22T07:41:40.410Z"
+stopped_at: Completed 10a-05-PLAN.md
+last_updated: "2026-04-22T08:02:39.001Z"
 last_activity: 2026-04-22
 progress:
   total_phases: 11
   completed_phases: 1
   total_plans: 14
-  completed_plans: 11
-  percent: 79
+  completed_plans: 13
+  percent: 93
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 ## Current Position
 
 Phase: 10a (Ananke Drives (Inner Life, part 1)) — EXECUTING
-Plan: 2 of 6
+Plan: 6 of 6
 Status: Ready to execute
 Last activity: 2026-04-22
 
@@ -125,8 +125,8 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 
 ## Session Continuity
 
-Last session: 2026-04-22T07:41:40.407Z
-Stopped at: Completed 10a-04-PLAN.md
+Last session: 2026-04-22T08:02:38.937Z
+Stopped at: Completed 10a-05-PLAN.md
 Resume file: None
 Next action: After research completes, define REQUIREMENTS.md per category (DRIVE, BIOS, CHRONOS, REL, VOTE, WHISPER, REPLAY, RIG) then roadmap starting Phase 9.
 
@@ -258,3 +258,20 @@ Next action: After research completes, define REQUIREMENTS.md per category (DRIV
 - **D-9-11 — Self-loop silent-reject at listener boundary (T-09-08 mitigation):** `from_did === to_did` events are silently dropped (no throw, no emit, no edge created). Mirrors Phase 7 D-21 silent-drop discipline. Test: `grid/test/relationships/self-edge-rejection.test.ts`.
 - **D-9-12 — Wall-clock grep ban in `grid/src/relationships/**`:** Forbids `Date.now|performance.now|setInterval|setTimeout|Math.random`. Clones Phase 7 `dialogue-determinism-source.test.ts`. Relationships reads `currentTick` from the onAppend entry only. T-09-09 port mitigation.
 - **D-9-13 — Zero new allowlist members (HARD INVARIANT, confirmed by ROADMAP SC#5):** Broadcast allowlist stays at 18. `relationship.warmed|cooled` deferred to REL-EMIT-01. `scripts/check-state-doc-sync.mjs` unchanged. Test: `grid/test/relationships/no-audit-emit.test.ts` asserts chain length unchanged by listener.
+
+## Accumulated Context (Plan 10a-05 additions)
+
+- **Plan 10a-05 shipped (2026-04-22):** Dashboard Drives panel live. `AnankeSection` renders 5 rows in locked order (hunger, curiosity, safety, boredom, loneliness) between `<ThymosSection>` and `<TelosSection>` in the Inspector Overview tabpanel. Zero new RPC, zero new `NousStateResponse` fields, zero wall-clock, zero timers, zero animation. Commits: `688670a` (RED Task 1 — 11 failing tests), `4494eb9` (GREEN Task 1 — SYNC mirror + hook, 11/11 green), `bbbfb27` (RED Task 2 — AnankeSection + privacy tests), `e7e32d1` (GREEN Task 2 — AnankeSection + Inspector mount), `1714f8e` (section-order regression). Full dashboard suite 517/517 across 53 test files (baseline 434 + 82 new Ananke tests + 1 section-order).
+- **DRIVE-05 render-surface contract (6 enforcement gates):**
+  1. Privacy grep on rendered DOM (`drive-forbidden-keys-dashboard.test.tsx`): no `/0\.[0-9]+/` in `container.innerHTML`, no `title=` attr, no `data-value=`, no `data-drive-raw=`.
+  2. NousStateResponse shape grep: `dashboard/src/lib/api/introspect.ts` asserted free of any drive property key (`hunger:`, `curiosity:`, …).
+  3. Wall-clock grep in Ananke source: `setTimeout|setInterval|requestAnimationFrame|Date.now|performance.now` forbidden in `inspector-sections/ananke.tsx` + `hooks/use-ananke-levels.ts`.
+  4. 45-state aria-label matrix: `{drive} level {level}` or `{drive} level {level}, {direction}` — no other template variants allowed (5 drives × 3 levels × 3 directions).
+  5. Drift detector (`ananke-types.drift.test.ts`): parses `brain/src/noesis_brain/ananke/config.py` at test time, bucketizes each float with `bucketFromLow(v)` (hysteresis-aware bucket starting from LOW: threshold 0.35, rise threshold 0.68), asserts mirror matches.
+  6. SYNC-header discipline: `dashboard/src/lib/protocol/ananke-types.ts` carries 3 `SYNC: mirrors` pointer comments (Brain types.py, Brain config.py, Grid ananke/types.ts). Drift test asserts ≥2.
+- **Locked UI contract (verbatim from 10a-UI-SPEC):** `DRIVE_ORDER = ['hunger', 'curiosity', 'safety', 'boredom', 'loneliness']`. Glyphs: `⊘ ✦ ◆ ◯ ❍` (U+2298, U+2726, U+25C6, U+25EF, U+274D — Unicode escape syntax in source, not literal glyphs). Palette: `bg-neutral-400|amber-400|rose-400` + matching `text-*` classes. Direction arrows: `↑` U+2191 rising, `↓` U+2193 falling, none if stable. Baseline bucketed map: hunger=low, curiosity=med, safety=low, boredom=med, loneliness=med. **NO** baseline floats (0.3/0.5/0.2/0.4) appear in executable dashboard code — documentation block only.
+- **Hook pattern clone:** `use-ananke-levels.ts` clones `use-refined-telos-history.ts` — `useFirehose()` → filter by `(actorDid === did) && (eventType === 'ananke.drive_crossed')` → `useMemo` keyed on `(snap.entries, did)` → walks chronologically so the latest crossing per drive wins → `Map<DriveName, {level, direction}>` return. Shape-guard `isAnankeCrossingPayload(entry.payload)` before unpacking; malformed payloads silently ignored.
+- **Test-harness mock pattern (Phase 7+9 clone):** Inspector renders AnankeSection unconditionally, so every Inspector test harness must mock `useAnankeLevels` at the module level (identical to the Phase 7 `use-refined-telos-history` mock and Phase 9 `use-relationships` + `tick-store` mocks). Applied to `inspector.test.tsx` AND `delete-flow.test.tsx`. Any future Inspector integration test adding `<Inspector />` must add this mock or wrap in a `StoresProvider`.
+- **Rule 1 pre-existing fix in delete-flow.test.tsx:** The 3 delete-flow integration tests were failing on Phase-9 `use-relationships` + `tick-store` `StoresProvider` requirement BEFORE my Task 2 changes (verified via stash). Closed the gap here by adding Phase-9 mocks — not strictly required for 10a-05 but cheap to fix when touching the file for Phase 10a anyway. delete-flow now 3/3 green.
+- **Rule 3 Vitest include extension:** `dashboard/vitest.config.ts` `include` was `src/**/*.{test,spec}.{ts,tsx}`. Plan put drift detector + privacy grep under `dashboard/test/`, which Vitest silently skipped. Extended to `['src/**', 'test/**']`. Any future dashboard test file under `dashboard/test/**` will now be picked up automatically.
+- **Broadcast allowlist UNCHANGED at 19:** Plan 10a-05 is dashboard-only consumer. No new events. Allowlist position 19 is still `ananke.drive_crossed` (added in Plan 10a-02). Freeze-except-by-explicit-addition rule preserved.

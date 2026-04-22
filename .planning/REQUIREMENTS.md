@@ -15,7 +15,7 @@
 - [x] **DRIVE-02**: Drives decay deterministically given `(seed, tick)` — replay from the same seed produces byte-identical drive traces. Decay function is monotonic rise in absence of satisfying action; unit tests cover bounds clamping at 0.0/1.0, monotonic rise without satisfaction, idempotent re-tick at same tick#.
 - [ ] **DRIVE-03**: A new allowlisted event **`ananke.drive_crossed`** fires only when a drive transitions across a configured pressure threshold (e.g. hunger > 0.7). Payload: closed-tuple `{did, tick, drive, level, direction}` where `drive ∈ {hunger, curiosity, safety, boredom, loneliness}`, `direction ∈ {rising, falling}`, `level ∈ {low, med, high}`. Per-tick emission is an anti-feature (audit-bloat pitfall T-09-01).
 - [x] **DRIVE-04**: Drive → action coupling is **advisory, not coercive**. A high-hunger Nous may still choose non-feeding action; the Brain logs the divergence to its private memory but the Grid does not override or penalize. This preserves Nous sovereignty (PHILOSOPHY §6).
-- [ ] **DRIVE-05**: No numeric drive value ever crosses the Brain↔Grid boundary as a free field. All operator-visible drive state arrives exclusively via `ananke.drive_crossed` at hashed/bucketed granularity (low/med/high, not raw float). Grid-side grep test enforces no drive-float in emitters.
+- [x] **DRIVE-05**: No numeric drive value ever crosses the Brain↔Grid boundary as a free field. All operator-visible drive state arrives exclusively via `ananke.drive_crossed` at hashed/bucketed granularity (low/med/high, not raw float). Grid-side grep test enforces no drive-float in emitters.
 
 ### BIOS — Bodily needs & lifecycle (Theme 1, Inner Life)
 

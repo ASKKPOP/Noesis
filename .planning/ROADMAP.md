@@ -78,9 +78,9 @@ Plans:
 Plans:
 - [x] 10a-01-PLAN.md — Wave 1: Brain Ananke skeleton (types/config/drives/runtime pure-functional) + determinism/bounds/threshold/hysteresis tests
 - [x] 10a-02-PLAN.md — Wave 1: Grid allowlist 18→19 + appendAnankeDriveCrossed sole-producer emitter + producer-boundary grep gate + privacy matrix extension
-- [ ] 10a-03-PLAN.md — Wave 2: Brain handler wiring — ActionType.DRIVE_CROSSED + AnankeLoader + advisory drive→action divergence log (PHILOSOPHY §6 sovereignty preserved)
+- [x] 10a-03-PLAN.md — Wave 2: Brain handler wiring — ActionType.DRIVE_CROSSED + AnankeLoader + advisory drive→action divergence log (PHILOSOPHY §6 sovereignty preserved)
 - [x] 10a-04-PLAN.md — Wave 2: Grid dispatcher — BrainActionDriveCrossed variant + case drive_crossed branch + 3-keys-not-5 invariant realized end-to-end
-- [ ] 10a-05-PLAN.md — Wave 3: Dashboard Drives panel (SYNC type mirror + firehose-derived hook + 45-state aria matrix + locked Unicode glyph constants)
+- [x] 10a-05-PLAN.md — Wave 3: Dashboard Drives panel (SYNC type mirror + firehose-derived hook + 45-state aria matrix + locked Unicode glyph constants)
 - [ ] 10a-06-PLAN.md — Wave 4: Zero-diff regression + audit-size ceiling + wall-clock grep gates (Brain + Grid) + Dashboard visual smoke + doc-sync execution
 
 ### Phase 10b: Bios Needs + Chronos Subjective Time (Inner Life, part 2)
@@ -201,7 +201,7 @@ Dependencies form a strict chain (no parallel phases in v2.2). Rationale:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 9. Relationship Graph (Derived View) | 8/8 | Complete   | 2026-04-22 |
-| 10a. Ananke Drives | 3/6 | In Progress|  |
+| 10a. Ananke Drives | 5/6 | In Progress|  |
 | 10b. Bios Needs + Chronos Subjective Time | 0/? | Not started | - |
 | 11. Mesh Whisper | 0/? | Not started | - |
 | 12. Governance & Collective Law | 0/? | Not started | - |
