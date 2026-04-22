@@ -13,7 +13,10 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "lint": "turbo run lint",
-    "clean": "turbo run clean"
+    "clean": "turbo run clean",
+    "check:state-doc-sync": "node scripts/check-state-doc-sync.mjs",
+    "check:relationship-graph-deps": "node scripts/check-relationship-graph-deps.mjs",
+    "pretest": "npm run check:state-doc-sync && npm run check:relationship-graph-deps"
   },
   "devDependencies": {
     "turbo": "^2.0.0",
