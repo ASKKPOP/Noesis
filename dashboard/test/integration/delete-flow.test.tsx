@@ -73,6 +73,29 @@ vi.mock('next/navigation', () => ({
     useSearchParams: () => new URLSearchParams(''),
 }));
 
+// Phase 9: RelationshipsSection imports tick-store → useStores (StoresProvider).
+// Short-circuit the relationships hook and tick store so this integration test
+// keeps working without a StoresProvider (mirrors inspector.test.tsx pattern).
+vi.mock('@/lib/stores/tick-store', () => ({ useTick: () => 0 }));
+vi.mock('@/lib/hooks/use-relationships', () => ({
+    useRelationshipsH1: () => ({ data: undefined, isLoading: false, error: undefined }),
+    useRelationshipsH2: () => ({ data: undefined, isLoading: false, error: undefined }),
+    useGraph: () => ({ data: undefined, isLoading: false, error: undefined }),
+}));
+
+// Phase 10a: AnankeSection subscribes to useAnankeLevels → useFirehose →
+// StoresProvider. Short-circuit with a baseline map so this integration test
+// keeps working without a StoresProvider (mirrors the Phase 7 telos pattern).
+vi.mock('@/lib/hooks/use-ananke-levels', () => ({
+    useAnankeLevels: () => new Map([
+        ['hunger',     { level: 'low', direction: null }],
+        ['curiosity',  { level: 'med', direction: null }],
+        ['safety',     { level: 'low', direction: null }],
+        ['boredom',    { level: 'med', direction: null }],
+        ['loneliness', { level: 'med', direction: null }],
+    ]),
+}));
+
 // ── Test harness ───────────────────────────────────────────────────────────────
 let localStore: SelectionStore;
 
