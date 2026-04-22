@@ -149,6 +149,13 @@ Phase 10a closed cleanly. Ready for `/gsd-discuss-phase 10b` (Bios + Chronos —
 - **Regression template pool:** new tests in `grid/test/audit/zero-diff-*.test.ts`, `grid/test/audit/audit-size-ceiling-*.test.ts`, `grid/test/ci/*-no-walltime.test.ts`, `brain/test/test_*_no_walltime.py` form a cloneable template for Phase 10b closure plan.
 - **No blockers** — worktree branch `worktree-agent-ae0cee32` ready to merge back to master.
 
+## Self-Check: PASSED
+
+- FOUND: `.planning/phases/10a-ananke-drives-inner-life-part-1/10a-06-SUMMARY.md`
+- FOUND: commit `7c6c794` (Task 1 — regression tests + doc-sync bump)
+- FOUND: commit `a35def6` (Task 3 — atomic Doc-Sync commit across 5 planning docs)
+- FOUND: commit `daa0016` (SUMMARY.md)
+
 ---
 *Phase: 10a-ananke-drives-inner-life-part-1*
 *Completed: 2026-04-22*
