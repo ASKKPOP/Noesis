@@ -298,7 +298,11 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
     // ── Test 9: H5 GET unknown edge_key → 404 ────────────────────────────────
 
     it('Test 9: H5 GET unknown edge_key → 404', async () => {
-        const unknownKey = '0'.repeat(16);
+        // Full 64-char hex that does not match any existing edge.
+        // (Post-ME-02 hardening, shortened keys are rejected with 400 at the
+        // regex gate before edge resolution — a 16-char unknown key is no
+        // longer the correct fixture for asserting 404 edge_not_found.)
+        const unknownKey = '0'.repeat(64);
         const res = await fixture.app.inject({
             method: 'GET',
             url: `/api/v1/operator/relationships/${unknownKey}/events?tier=H5&operator_id=${VALID_OP_ID}`,
@@ -331,6 +335,83 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         });
         expect(res.statusCode).toBe(400);
         expect(res.json()).toEqual({ error: 'tier_mismatch' });
+    });
+
+    // ── ME-02 regression: shortened edge_key must not match by prefix ────────
+    // (Gap 2 from 09-VERIFICATION.md) — pre-hardening, a 16-char prefix would
+    // silently match the first edge whose hash started with those 16 chars,
+    // emitting operator.inspected with a wrong target_did. The regex gate is
+    // now /^[a-f0-9]{64}$/i and resolution is strict equality on a lowercased
+    // input — short keys short-circuit at the validation gate before any edge
+    // lookup, operator_id check, or audit emission.
+
+    it('H5 rejects 16-char edge_key prefix with 400 invalid_edge_key (ME-02)', async () => {
+        const { app, audit, edgeKey } = fixture;
+        const auditLenBefore = audit.all().length;
+
+        const shortKey = edgeKey.slice(0, 16);
+        const res = await app.inject({
+            method: 'GET',
+            url: `/api/v1/operator/relationships/${shortKey}/events?tier=H5&operator_id=${VALID_OP_ID}`,
+        });
+
+        expect(res.statusCode).toBe(400);
+        expect(res.json()).toEqual({ error: 'invalid_edge_key' });
+
+        // No operator.inspected should have been emitted
+        const inspectedAfter = audit.all()
+            .slice(auditLenBefore)
+            .filter(e => e.eventType === 'operator.inspected');
+        expect(inspectedAfter).toHaveLength(0);
+    });
+
+    it('H5 rejects 63-char edge_key (one short of full hash) with 400 (ME-02)', async () => {
+        const { app, audit, edgeKey } = fixture;
+        const auditLenBefore = audit.all().length;
+
+        const nearKey = edgeKey.slice(0, 63);
+        const res = await app.inject({
+            method: 'GET',
+            url: `/api/v1/operator/relationships/${nearKey}/events?tier=H5&operator_id=${VALID_OP_ID}`,
+        });
+
+        expect(res.statusCode).toBe(400);
+        expect(res.json()).toEqual({ error: 'invalid_edge_key' });
+
+        const inspectedAfter = audit.all()
+            .slice(auditLenBefore)
+            .filter(e => e.eventType === 'operator.inspected');
+        expect(inspectedAfter).toHaveLength(0);
+    });
+
+    it('H5 accepts 64-char full edge_hash and emits operator.inspected with correct target_did (ME-02)', async () => {
+        const { app, audit, edgeKey } = fixture;
+        const auditLenBefore = audit.all().length;
+
+        expect(edgeKey).toMatch(/^[a-f0-9]{64}$/);
+
+        const res = await app.inject({
+            method: 'GET',
+            url: `/api/v1/operator/relationships/${edgeKey}/events?tier=H5&operator_id=${VALID_OP_ID}`,
+        });
+
+        expect(res.statusCode).toBe(200);
+
+        const inspected = audit.all()
+            .slice(auditLenBefore)
+            .filter(e => e.eventType === 'operator.inspected');
+        expect(inspected).toHaveLength(1);
+
+        // Canonical edge enforces did_a < did_b, so for the A-B edge target_did
+        // is one of {DID_A, DID_B} and counterparty is the other — they must
+        // NEVER be equal (which would indicate a wrong-edge silent match via
+        // the old prefix resolver).
+        const payload = inspected[0].payload as Record<string, unknown>;
+        expect([DID_A, DID_B]).toContain(payload.target_did);
+        expect([DID_A, DID_B]).toContain(payload.counterparty_did);
+        expect(payload.target_did).not.toBe(payload.counterparty_did);
+        expect(payload.tier).toBe('H5');
+        expect(payload.action).toBe('inspect_edge_events');
     });
 
     // ── Test 12: Graph GET response shape ────────────────────────────────────
