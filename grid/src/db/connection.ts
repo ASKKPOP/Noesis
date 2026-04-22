@@ -50,4 +50,13 @@ export class DatabaseConnection {
     async close(): Promise<void> {
         await this.pool.end();
     }
+
+    /**
+     * Return the underlying mysql2 Pool so other subsystems (e.g. Phase 9
+     * RelationshipStorage via GenesisLauncher.attachRelationshipStorage) can
+     * reuse the same connection pool without constructing a second one.
+     */
+    getPool(): mysql.Pool {
+        return this.pool;
+    }
 }

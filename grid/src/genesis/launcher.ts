@@ -5,6 +5,7 @@
  * and provides a unified interface for the running Grid.
  */
 
+import type { Pool } from 'mysql2/promise';
 import { WorldClock } from '../clock/ticker.js';
 import { SpatialMap } from '../space/map.js';
 import { LogosEngine } from '../logos/engine.js';
@@ -41,8 +42,17 @@ export class GenesisLauncher {
      * survives pauses; recency_tick anchors decay relative to the next resume.
      */
     readonly relationships: RelationshipListener;
-    /** Snapshot writer for the derived `relationships` MySQL table. Null if no pool available. */
-    private readonly relationshipStorage: RelationshipStorage | null;
+    /**
+     * Snapshot writer for the derived `relationships` MySQL table. Null until
+     * attachRelationshipStorage(pool) is called by main.ts after MySQL migrations
+     * complete. The tick-driven snapshot branch in bootstrap() is a no-op until
+     * storage is attached (recoverable via rebuildFromChain on next boot).
+     *
+     * Not readonly — HI-01 gap closure (09-VERIFICATION.md). The field must be
+     * assignable post-construction so the single production pool owner (main.ts
+     * DatabaseConnection) can inject after MigrationRunner.run(MIGRATIONS).
+     */
+    private relationshipStorage: RelationshipStorage | null;
     readonly gridName: string;
     readonly gridDomain: string;
 
@@ -83,6 +93,34 @@ export class GenesisLauncher {
         // We set this to null here; production wiring via GridStore injects storage
         // after construction if needed. Tests that don't need MySQL snapshots pass null.
         this.relationshipStorage = null;
+    }
+
+    /**
+     * Attach a MySQL pool for the derived `relationships` table snapshot path.
+     *
+     * Must be called exactly once, AFTER construction but BEFORE start().
+     * Idempotent: calling twice with the same pool is a no-op; calling with a
+     * different pool throws (prevents accidental pool-switch mid-run).
+     *
+     * Called by main.ts after MigrationRunner.run(MIGRATIONS) so the schema
+     * for `sql/009_relationships.sql` is in place before the first snapshot.
+     *
+     * Closes HI-01 (09-VERIFICATION.md): makes REL-02 MySQL materialization
+     * path reachable in production. Without this call the snapshot branch in
+     * bootstrap() is dead; audit-chain rebuild remains source of truth.
+     */
+    attachRelationshipStorage(pool: Pool): void {
+        if (this.relationshipStorage !== null) {
+            // Idempotent-by-reference: same pool is fine, different pool is a bug.
+            // We compare the wrapped pool via a stored reference, exposed as getter.
+            if (this.relationshipStorage.pool === pool) {
+                return;
+            }
+            throw new Error(
+                'GenesisLauncher.attachRelationshipStorage called twice with different pools',
+            );
+        }
+        this.relationshipStorage = new RelationshipStorage(pool);
     }
 
     /**

@@ -22,7 +22,7 @@ import type { Pool, RowDataPacket } from 'mysql2/promise';
 import type { Edge } from './types.js';
 
 export class RelationshipStorage {
-    constructor(private readonly pool: Pool) {}
+    constructor(public readonly pool: Pool) {}
 
     /**
      * Batched full rewrite of the `relationships` table.
