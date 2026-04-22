@@ -25,6 +25,7 @@ from noesis_brain.ananke.drives import (
     detect_crossing,
     initial_state,
 )
+from noesis_brain.ananke.runtime import AnankeRuntime
 
 __all__ = [
     "DriveName",
@@ -37,4 +38,5 @@ __all__ = [
     "bucket",
     "detect_crossing",
     "initial_state",
+    "AnankeRuntime",
 ]
