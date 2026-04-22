@@ -82,6 +82,29 @@ export interface GridServices {
      * DialogueAggregator wiring still compile.
      */
     drainDialogueOnPause?: () => void;
+    /**
+     * Phase 9 REL-04: relationship listener — provides getTopNFor, allEdges,
+     * getEdge for the four relationship endpoints. Optional so legacy tests
+     * without Phase 9 wiring still compile.
+     */
+    relationships?: {
+        getTopNFor(did: string, n: number, currentTick: number): ReadonlyArray<{
+            counterpartyDid: string;
+            valence: number;
+            weight: number;
+            recency_tick: number;
+            last_event_hash: string;
+        }>;
+        getEdge(didA: string, didB: string): import('../relationships/types.js').Edge | undefined;
+        allEdges(): IterableIterator<import('../relationships/types.js').Edge>;
+    };
+    /**
+     * Phase 9 REL-04: per-Grid relationship + decay config. Optional; routes
+     * fall back to DEFAULT_RELATIONSHIP_CONFIG when absent.
+     */
+    config?: {
+        relationship?: import('../relationships/types.js').RelationshipConfig;
+    };
 }
 
 /**
