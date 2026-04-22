@@ -17,7 +17,7 @@ Phase numbering continues from v2.1 — do NOT reset without `--reset-phase-numb
 
 ## Phases (v2.2 Active)
 
-- [ ] **Phase 9: Relationship Graph (Derived View)** — Pure-observer relationship listener over existing dialogue.* + trade.* events. Zero allowlist additions.
+- [x] **Phase 9: Relationship Graph (Derived View)** — Pure-observer relationship listener over existing dialogue.* + trade.* events. Zero allowlist additions. (completed 2026-04-22)
 - [ ] **Phase 10a: Ananke Drives (Inner Life, part 1)** — Five-drive subsystem with threshold-crossing audit events. Establishes hash-only drive discipline for Phase 10b.
 - [ ] **Phase 10b: Bios Needs + Chronos Subjective Time (Inner Life, part 2)** — Bodily needs elevate drives; subjective time modulates Stanford retrieval recency. Zero allowlist additions.
 - [ ] **Phase 11: Mesh Whisper** — Nous-to-Nous E2E envelope (libsodium `crypto_box`); operators cannot read plaintext at any tier.
@@ -53,7 +53,7 @@ Plans:
 - [x] 09-04-PLAN.md — Wave 2: GenesisLauncher wiring (construction order after aggregator), Fastify plugin with H1/H2/H5 endpoints + privacy-shape tests
 - [x] 09-05-PLAN.md — Wave 3: Dashboard Inspector Relationships tab, graph-view route, useSWR 100-tick batching key
 - [x] 09-06-PLAN.md — Wave 4: 10K-edge perf bench (p95<100ms), zero-diff regression, idempotent-rebuild, no-audit-emit gate, D-9-08 CI grep
-- [ ] 09-07-PLAN.md — Wave 5 (gap closure, REL-02): unlock GenesisLauncher.relationshipStorage, add attachRelationshipStorage(pool) setter, wire main.ts, fix ME-01 iterator race in scheduleSnapshot
+- [x] 09-07-PLAN.md — Wave 5 (gap closure, REL-02): unlock GenesisLauncher.relationshipStorage, add attachRelationshipStorage(pool) setter, wire main.ts, fix ME-01 iterator race in scheduleSnapshot
 - [x] 09-08-PLAN.md — Wave 5 (gap closure, REL-02): tighten H5 edge_key to full 64-char hash only, remove prefix resolver + dead || clause, add ME-02 regression tests
 
 ### Phase 10a: Ananke Drives (Inner Life, part 1)
@@ -192,7 +192,7 @@ Dependencies form a strict chain (no parallel phases in v2.2). Rationale:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 9. Relationship Graph (Derived View) | 0/? | Not started | - |
+| 9. Relationship Graph (Derived View) | 8/8 | Complete   | 2026-04-22 |
 | 10a. Ananke Drives | 0/? | Not started | - |
 | 10b. Bios Needs + Chronos Subjective Time | 0/? | Not started | - |
 | 11. Mesh Whisper | 0/? | Not started | - |
