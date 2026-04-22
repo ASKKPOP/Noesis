@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Living Grid
-status: planning-phase
-stopped_at: Phase 9 context gathered (13 auto-decisions) — ready for /gsd-plan-phase 9
-last_updated: "2026-04-21T20:50:00.000Z"
-last_activity: 2026-04-21
+status: "Phase 9 artifacts staged — CONTEXT, RESEARCH, VALIDATION, UI-SPEC, PATTERNS ready for planner spawn"
+stopped_at: "Phase 9 UI-SPEC approved + PATTERNS mapped"
+last_updated: "2026-04-22T00:12:25.905Z"
+last_activity: "2026-04-21 — Phase 9 context committed; τ=1000 ticks locked (ROADMAP Open Question #1 closed); zero-allowlist-growth invariant confirmed."
 progress:
-  total_phases: 7
+  total_phases: 11
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -125,9 +125,9 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 
 ## Session Continuity
 
-Last session: 2026-04-21T19:00:00.000Z
-Stopped at: v2.2 Living Grid opened — PROJECT.md updated, phases archived, research spawning
-Resume file: `.planning/research/v2.2/SUMMARY.md` (when synthesis completes)
+Last session: 2026-04-22T00:12:25.902Z
+Stopped at: Phase 9 UI-SPEC approved
+Resume file: .planning/phases/09-relationship-graph-derived-view/09-UI-SPEC.md
 Next action: After research completes, define REQUIREMENTS.md per category (DRIVE, BIOS, CHRONOS, REL, VOTE, WHISPER, REPLAY, RIG) then roadmap starting Phase 9.
 
 ## v2.2 Opening Context
@@ -135,6 +135,7 @@ Next action: After research completes, define REQUIREMENTS.md per category (DRIV
 **v2.2 Living Grid** — 6 themes, MVP depth per theme, Phase numbering continues from 8 (v2.2 Phase 9+).
 
 **Themes (user-confirmed 2026-04-21):**
+
 1. Rich Inner Life — Ananke (drives), Bios (bodily needs), Chronos (time-perception)
 2. Relationship & Trust — persistent Nous↔Nous graph, reputation-weighted interactions
 3. Governance & Law — voting primitives, proposal lifecycle, Nous-collective law enactment
@@ -145,6 +146,7 @@ Next action: After research completes, define REQUIREMENTS.md per category (DRIV
 **Archived phases:** v2.1 Phases 05–08 moved to `.planning/phases/archived/v2.1/`. v2.0 Phases 01–04 already in `.planning/phases/archived/v2.0/`.
 
 **Hard v2.2 invariants (inherited, non-negotiable):**
+
 - Broadcast allowlist frozen at 18 — grows ONLY by explicit per-phase addition. Every new event type requires sole-producer boundary + closed-tuple payload + privacy matrix + doc-sync regression update in the same commit.
 - Zero-diff audit chain — every new listener (drives engine, relationship tracker, vote tallier, whisper subscriber, replay engine) is pure-observer. Listener count must not mutate chain hash.
 - Hash-only cross-boundary — Brain↔Grid plaintext never crosses the wire for drives / needs / relationship memories / vote contents. Same discipline as Telos (Phase 6/7).
