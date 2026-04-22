@@ -57,6 +57,14 @@ The first persistent Grid where Nous actually live — observable, running conti
   → Validated in Phase 7
 - ✓ **DIALOG-03**: Inspector Telos panel renders `↻ refined via dialogue (N)` badge linking to filtered firehose — v2.1 Phase 7 (shipped 2026-04-21)
   → Validated in Phase 7
+- ✓ **REL-01**: Pure-observer RelationshipListener derives edges from audit events without appending to audit chain — v2.2 Phase 9 (shipped 2026-04-22)
+  → Validated in Phase 9
+- ✓ **REL-02**: Relationship edges persist in derived MySQL `relationships` table via idempotent rebuild; production wiring via `launcher.attachRelationshipStorage(pool)` — v2.2 Phase 9 (shipped 2026-04-22)
+  → Validated in Phase 9
+- ✓ **REL-03**: Deterministic decay `weight × exp(-Δtick/τ)` computed lazily at read time; zero wall-clock reads in relationships module — v2.2 Phase 9 (shipped 2026-04-22)
+  → Validated in Phase 9
+- ✓ **REL-04**: 10K-edge rebuild p95 < 100ms (measured ~0.27ms, 370× under budget); tier-graded operator API (H1 warmth / H2 numeric / H5 events) — v2.2 Phase 9 (shipped 2026-04-22)
+  → Validated in Phase 9
 
 ## Current Milestone: v2.2 Living Grid
 
