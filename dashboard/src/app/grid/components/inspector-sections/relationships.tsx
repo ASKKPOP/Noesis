@@ -94,8 +94,12 @@ export function RelationshipsSection({ did }: RelationshipsSectionProps): React.
     const [pendingEdgeKey, setPendingEdgeKey] = useState<string>('');
 
     // SWR hooks — H2 hook returns null key when tier === 'H1' (T-09-20)
+    // Narrow HumanAgencyTier to the three values the hook accepts; H3/H4 map to 'H2'
+    // (they have Reviewer-level access and should see numeric data).
+    const hookTier: 'H1' | 'H2' | 'H5' =
+        tier === 'H5' ? 'H5' : tier === 'H1' ? 'H1' : 'H2';
     const h1Result = useRelationshipsH1(did);
-    const h2Result = useRelationshipsH2(did, tier);
+    const h2Result = useRelationshipsH2(did, hookTier);
 
     // Use H2 data at H2/H5 tier, H1 data otherwise
     const isH2orAbove = tier === 'H2' || tier === 'H5';

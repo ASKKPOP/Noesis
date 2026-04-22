@@ -95,7 +95,7 @@ function statusToKind(
 }
 
 const GRID_ORIGIN = (): string =>
-    (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_GRID_ORIGIN) ?? '';
+    process.env.NEXT_PUBLIC_GRID_ORIGIN ?? '';
 
 // ---------------------------------------------------------------------------
 // Fetchers
