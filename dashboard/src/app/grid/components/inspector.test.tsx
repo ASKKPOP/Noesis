@@ -538,6 +538,40 @@ describe('Inspector — State A/B/C + H5 two-stage flow (Phase 8)', () => {
         );
     });
 
+    it('Overview tabpanel renders sections in canonical order: Psyche → Thymos → Ananke → Telos → Memory', async () => {
+        fetchMock.mockResolvedValue({ ok: true, data: FIXTURE_ACTIVE });
+        render(<Harness />);
+        await act(async () => {
+            localStore.selectNous('did:noesis:alpha');
+            await flushMicrotasks();
+        });
+        const sections = [
+            'section-psyche',
+            'section-thymos',
+            'section-ananke',
+            'section-telos',
+            'section-memory',
+        ];
+        const positions = sections.map((tid) => {
+            const el = screen.queryByTestId(tid);
+            expect(el, `missing section: ${tid}`).not.toBeNull();
+            // getBoundingClientRect is unreliable in jsdom; use document order instead
+            // by measuring the index of the element among all [data-testid^="section-"].
+            return Array.from(document.body.querySelectorAll('[data-testid]'))
+                .filter((e) =>
+                    (e.getAttribute('data-testid') ?? '').startsWith('section-'),
+                )
+                .indexOf(el!);
+        });
+        // Each subsequent section must appear LATER in document order than the prior one.
+        for (let i = 1; i < positions.length; i++) {
+            expect(
+                positions[i],
+                `${sections[i]} must appear after ${sections[i - 1]}`,
+            ).toBeGreaterThan(positions[i - 1]);
+        }
+    });
+
     it('Cancel from IrreversibilityDialog auto-downgrades H5→H1, no deleteNous call', async () => {
         fetchMock.mockResolvedValue({ ok: true, data: FIXTURE_ACTIVE });
         render(<Harness />);
