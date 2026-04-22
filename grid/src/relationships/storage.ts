@@ -103,19 +103,33 @@ export class RelationshipStorage {
     }
 
     /**
-     * Non-blocking wrapper around snapshot() for use by Plan 04's launcher wiring.
+     * Non-blocking wrapper around snapshot() for use by the launcher tick listener.
      *
-     * Schedules the snapshot via setImmediate so the current tick completes without
-     * waiting. If snapshot() rejects (already caught internally), the catch here is
-     * defense-in-depth — we are inside a setImmediate callback and must not rethrow.
+     * Materializes the edge iterator into a frozen Edge[] array SYNCHRONOUSLY
+     * at call time. This closes ME-01 (09-REVIEW.md): the previous
+     * implementation captured a live Map.values() iterator that would be
+     * consumed after setImmediate, meaning Map mutations applied by
+     * RelationshipListener.applyBump between the tick fire and the deferred
+     * flush would leak into the snapshot. Materialization snaps the edge
+     * state at tick-fire time; later mutations cannot back-fill.
      *
-     * setImmediate is NOT in the D-9-12 forbidden list (wall-clock access, randomness,
-     * and blocking timer calls are forbidden; setImmediate is allowed).
-     * Verified: determinism-source.test.ts grep gate does not flag setImmediate.
+     * Per-edge shallow clone is NOT required today (Edge is a plain value
+     * object and .set() on an existing key replaces the entire value), but
+     * we materialize to a new array so future refactors that re-key edges
+     * cannot silently change snapshot semantics.
+     *
+     * setImmediate is NOT in the D-9-12 forbidden list (wall-clock access,
+     * randomness, and blocking timer calls are forbidden; setImmediate is
+     * allowed). Verified: determinism-source.test.ts grep gate does not
+     * flag setImmediate.
      */
     scheduleSnapshot(edges: IterableIterator<Edge>, snapshotTick: number): void {
+        // ME-01 fix: materialize synchronously so later Map mutations do not
+        // leak into this snapshot. Array.from() drains the iterator here, on
+        // the tick thread, before any possible applyBump() re-entry.
+        const frozen: Edge[] = Array.from(edges);
         setImmediate(() => {
-            this.snapshot(edges, snapshotTick).catch(() => {
+            this.snapshot(frozen[Symbol.iterator](), snapshotTick).catch(() => {
                 // Already caught inside snapshot(); this is defense-in-depth.
                 // Do NOT rethrow — we are in a setImmediate callback.
             });

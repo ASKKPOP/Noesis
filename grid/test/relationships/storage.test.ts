@@ -258,4 +258,65 @@ describe('RelationshipStorage', () => {
             warnSpy.mockRestore();
         });
     });
+
+    it('scheduleSnapshot materializes the iterator synchronously — Map mutations after scheduleSnapshot do not leak into the snapshot (ME-01)', async () => {
+        const capturedSql: string[] = [];
+        const capturedParams: unknown[][] = [];
+        const mockPool = {
+            query: async (sql: string, params: unknown[]) => {
+                capturedSql.push(sql);
+                capturedParams.push(params);
+                return [[], []] as never;
+            },
+        } as unknown as import('mysql2/promise').Pool;
+        const storage = new RelationshipStorage(mockPool);
+
+        // Build a live edges Map with ONE edge.
+        const edges = new Map<string, Edge>();
+        edges.set('did:a|did:b', {
+            did_a: 'did:a',
+            did_b: 'did:b',
+            valence: 0.1,
+            weight: 0.2,
+            recency_tick: 5,
+            last_event_hash: 'a'.repeat(64),
+        });
+
+        // Call scheduleSnapshot with the live iterator.
+        storage.scheduleSnapshot(edges.values(), 100);
+
+        // Mutate the Map SYNCHRONOUSLY after scheduleSnapshot but before the
+        // setImmediate flush. Without ME-01 fix, this mutation would leak in.
+        edges.set('did:a|did:b', {
+            did_a: 'did:a',
+            did_b: 'did:b',
+            valence: 0.999,   // post-mutation canary
+            weight: 0.999,
+            recency_tick: 999,
+            last_event_hash: 'b'.repeat(64),
+        });
+        edges.set('did:c|did:d', {
+            did_a: 'did:c',
+            did_b: 'did:d',
+            valence: 0.5,
+            weight: 0.5,
+            recency_tick: 50,
+            last_event_hash: 'c'.repeat(64),
+        });
+
+        // Let the setImmediate fire.
+        await new Promise<void>(resolve => setImmediate(resolve));
+        // One more tick to let the async pool.query resolve.
+        await new Promise<void>(resolve => setImmediate(resolve));
+
+        expect(capturedSql.length).toBe(1);
+        // REPLACE INTO relationships — exactly ONE edge (the original A-B edge),
+        // with the ORIGINAL valence/weight (0.1/0.2), not the mutated 0.999 values.
+        const params = capturedParams[0];
+        // Column order: edge_key, did_a, did_b, valence, weight, recency_tick, last_event_hash, snapshot_tick
+        expect(params.length).toBe(8);              // exactly one row = 8 columns
+        expect(params[3]).toBe(0.1);                // valence = pre-mutation
+        expect(params[4]).toBe(0.2);                // weight = pre-mutation
+        expect(params[5]).toBe(5);                  // recency_tick = pre-mutation
+    });
 });
