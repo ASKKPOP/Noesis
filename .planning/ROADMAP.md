@@ -54,7 +54,7 @@ Plans:
 - [x] 09-05-PLAN.md — Wave 3: Dashboard Inspector Relationships tab, graph-view route, useSWR 100-tick batching key
 - [x] 09-06-PLAN.md — Wave 4: 10K-edge perf bench (p95<100ms), zero-diff regression, idempotent-rebuild, no-audit-emit gate, D-9-08 CI grep
 - [ ] 09-07-PLAN.md — Wave 5 (gap closure, REL-02): unlock GenesisLauncher.relationshipStorage, add attachRelationshipStorage(pool) setter, wire main.ts, fix ME-01 iterator race in scheduleSnapshot
-- [ ] 09-08-PLAN.md — Wave 5 (gap closure, REL-02): tighten H5 edge_key to full 64-char hash only, remove prefix resolver + dead || clause, add ME-02 regression tests
+- [x] 09-08-PLAN.md — Wave 5 (gap closure, REL-02): tighten H5 edge_key to full 64-char hash only, remove prefix resolver + dead || clause, add ME-02 regression tests
 
 ### Phase 10a: Ananke Drives (Inner Life, part 1)
 **Goal**: Five drives (hunger, curiosity, safety, boredom, loneliness) run deterministically in the Brain; only threshold crossings cross the boundary as hash-authoritative broadcast.

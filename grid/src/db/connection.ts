@@ -37,13 +37,13 @@ export class DatabaseConnection {
 
     /** Execute a SELECT query and return typed rows. */
     async query<T = unknown>(sql: string, values?: unknown[]): Promise<T[]> {
-        const [rows] = await this.pool.execute(sql, values);
+        const [rows] = await this.pool.execute(sql, values as never);
         return rows as T[];
     }
 
     /** Execute a DML/DDL statement (INSERT, UPDATE, DELETE, CREATE). */
     async execute(sql: string, values?: unknown[]): Promise<void> {
-        await this.pool.execute(sql, values);
+        await this.pool.execute(sql, values as never);
     }
 
     /** Close all connections in the pool. */

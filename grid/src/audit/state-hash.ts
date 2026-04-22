@@ -73,7 +73,7 @@ export function combineStateHash(components: StateHashComponents): string {
 
     // 3. Per-component 64-hex regex guard (D-05).
     for (const key of LOCKED_KEY_ORDER) {
-        const v = (components as Record<string, unknown>)[key];
+        const v = (components as unknown as Record<string, unknown>)[key];
         if (typeof v !== 'string' || !HEX64_RE.test(v)) {
             throw new TypeError(`combineStateHash: ${key} must match HEX64_RE (64 lowercase hex chars), got ${JSON.stringify(v)}`);
         }

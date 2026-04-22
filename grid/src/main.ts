@@ -67,17 +67,28 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     const launcher = new GenesisLauncher(config.genesisConfig);
 
     let store: GridStore | undefined;
+    let dbConn: DatabaseConnection | undefined;
 
     // Connect to DB + run migrations if configured
     if (config.db) {
-        const conn = DatabaseConnection.fromConfig(config.db);
-        const runner = new MigrationRunner(conn);
-        await runner.run(MIGRATIONS);
-        store = new GridStore(conn, config.genesisConfig.gridName);
+        dbConn = new DatabaseConnection(config.db);
+        const runner = new MigrationRunner(dbConn);
+        await runner.run();
+        store = new GridStore(dbConn);
     }
 
     // Bootstrap infra (regions, connections, laws) — skip Nous for now
     launcher.bootstrap({ skipSeedNous: true });
+
+    // HI-01 closure (09-VERIFICATION.md): wire the derived `relationships`
+    // MySQL snapshot path. MUST run AFTER MigrationRunner so
+    // sql/009_relationships.sql is applied before the first snapshot fires,
+    // and AFTER launcher.bootstrap() so the tick listener is already
+    // registered (attach is an assignment; the listener sees non-null on
+    // the next tick that matches snapshotCadenceTicks).
+    if (dbConn) {
+        launcher.attachRelationshipStorage(dbConn.getPool());
+    }
 
     // Phase 5 (REV-03, D-06, D-07): Construct the ReviewerNous singleton once per Grid.
     // MUST run AFTER launcher.bootstrap() — Reviewer depends on launcher.audit + launcher.registry
@@ -116,6 +127,8 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         gridName: launcher.gridName,
         registry: launcher.registry,
         shops: launcher.shops,
+        relationships: launcher.relationships,
+        config: { relationship: config.genesisConfig.relationship },
         // Plan 04-03: runner lookup for the inspector proxy. Runners are
         // constructed by a future sub-plan that wires GridCoordinator here;
         // until then the lookup always returns undefined → 404 unknown_nous.
