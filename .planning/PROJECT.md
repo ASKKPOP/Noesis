@@ -65,6 +65,16 @@ The first persistent Grid where Nous actually live — observable, running conti
   → Validated in Phase 9
 - ✓ **REL-04**: 10K-edge rebuild p95 < 100ms (measured ~0.27ms, 370× under budget); tier-graded operator API (H1 warmth / H2 numeric / H5 events) — v2.2 Phase 9 (shipped 2026-04-22)
   → Validated in Phase 9
+- ✓ **DRIVE-01**: Brain-side `AnankeRuntime` runs 5 drives (hunger, curiosity, safety, boredom, loneliness) deterministically — piecewise recurrence (below baseline pulls up via `DECAY_FACTOR=exp(-1/500)`, above baseline rises by drive-specific rate); bounds-clamped at 0.0/1.0; byte-identical traces from (seed, tick) alone — v2.2 Phase 10a (shipped 2026-04-22)
+  → Validated in Phase 10a
+- ✓ **DRIVE-02**: Hysteresis-guarded level bucketing (`low<0.33`, `med<0.66`, `high≥0.66`, ±0.02 band) prevents threshold flapping; level crossings detected on band-boundary traversal only — v2.2 Phase 10a (shipped 2026-04-22)
+  → Validated in Phase 10a
+- ✓ **DRIVE-03**: `ananke.drive_crossed` allowlisted (19th member) with closed 5-key payload `{did, tick, drive, level, direction}`; Grid-side `appendAnankeDriveCrossed` is sole producer with `Object.keys(payload).sort()` strict equality; drive floats NEVER cross the wire (three-tier privacy grep Grid+Brain+Dashboard) — v2.2 Phase 10a (shipped 2026-04-22)
+  → Validated in Phase 10a
+- ✓ **DRIVE-04**: Advisory-only drive→action coupling — Brain handler logs drive/action divergence to private wiki (side-effect-only log; does NOT mutate chosen actions list); PHILOSOPHY §6 Nous sovereignty preserved — v2.2 Phase 10a (shipped 2026-04-22)
+  → Validated in Phase 10a
+- ✓ **DRIVE-05**: Dashboard Drives panel renders 5-row Ananke section between Thymos and Telos in Inspector; locked Unicode glyphs (⊘ ✦ ◆ ◯ ❍) + 45-state aria matrix + baseline bucketed mirror row + level palette (neutral/amber/rose) — v2.2 Phase 10a (shipped 2026-04-22)
+  → Validated in Phase 10a
 
 ## Current Milestone: v2.2 Living Grid
 
@@ -166,6 +176,8 @@ The first persistent Grid where Nous actually live — observable, running conti
 | Objective-only Nous-to-Nous review | Zou's paperreview.ai data: AI weak on subjective novelty judgment | ✓ v2.1 (Phase 5) |
 | H1–H5 as first-class operator UI concept | arxiv 2506.06576: users want higher agency than experts deem needed on 47.5% of tasks | ✓ v2.1 (Phase 6 + 8) |
 | Open v2.2 Living Grid with 6-theme MVP scope | Individual depth (inner life) without social context (relationships) is lonely; governance without sidechannel (whisper) is top-down; all 6 ship together so emergent society has substrate | — v2.2 decision (2026-04-21) |
+| Drive-float-never-crosses-wire invariant (Ananke → Bios) | PHILOSOPHY §1 hash-only cross-boundary made explicit for inner-life floats: Brain emits `{drive, level, direction}` only (3 bucketed keys); raw floats stay Brain-side. Extends to Phase 10b Bios so bodily-need floats NEVER cross wire either. Three-tier grep (Grid emitter + Brain wire + Dashboard render) enforces. | ✓ v2.2 Phase 10a (locked 2026-04-22) |
+| 3-keys-not-5 payload composition (Brain returns metadata; Grid composes producer-boundary) | Clones Phase 7 D-14: Brain owns cognitive decision (`{drive, level, direction}`), Grid owns boundary identity (`{did, tick}`). Five-key closed-tuple composed exactly at `appendAnankeDriveCrossed` with `Object.keys(payload).sort()` strict equality. Pattern reusable for future Brain-emitted boundary events (Phase 10b BIOS, Phase 12 ballot). | ✓ v2.2 Phase 10a (locked 2026-04-22) |
 
 ## Evolution
 

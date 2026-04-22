@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Active)
-status: executing
-stopped_at: Completed 10a-05-PLAN.md
-last_updated: "2026-04-22T08:02:39.001Z"
+status: Phase 10a shipped — ready for /gsd-discuss-phase 10b (Bios + Chronos)
+stopped_at: Phase 10a shipped — ready for /gsd-discuss-phase 10b
+last_updated: "2026-04-22T08:25:19.875Z"
 last_activity: 2026-04-22
 progress:
   total_phases: 11
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 14
-  completed_plans: 13
-  percent: 93
+  completed_plans: 14
+  percent: 100
 ---
 
 # Project State
@@ -22,16 +22,16 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 **Core value:** The first persistent Grid where Nous actually live — observable, running continuously, with real cognitive cycles, real trades, and real social dynamics emerging from the systems.
 **Current milestone:** v2.2 — Living Grid (6 themes: Rich Inner Life, Relationships, Governance, Whisper, Observability, Researcher Tools)
-**Current focus:** Phase 10a — Ananke Drives (Inner Life, part 1)
+**Current focus:** Phase 10b — Bios Needs + Chronos Subjective Time (Inner Life, part 2)
 
 ## Current Position
 
-Phase: 10a (Ananke Drives (Inner Life, part 1)) — EXECUTING
-Plan: 6 of 6
-Status: Ready to execute
+Phase: 10b (Bios Needs + Chronos Subjective Time) — NOT STARTED
+Plan: Not started
+Status: Phase 10a shipped — ready for /gsd-discuss-phase 10b (Bios + Chronos)
 Last activity: 2026-04-22
 
-Progress: [░░░░░░░░░░] 0% (0/7 phases — planning begins at Phase 9)
+Progress: [███░░░░░░░] 29% (2/7 v2.2 phases complete — Phase 9 + Phase 10a shipped)
 
 ## Accumulated Context
 
@@ -58,9 +58,9 @@ Progress: [░░░░░░░░░░] 0% (0/7 phases — planning begins at
 
 Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule preserved.
 
-### Broadcast allowlist (Phase 8 — post-ship, Plan 08-02)
+### Broadcast allowlist (Phase 10a — post-ship, Plan 10a-02)
 
-**18 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
+**19 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
 
 1. `nous.spawned`
 2. `nous.moved`
@@ -80,10 +80,11 @@ Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule p
 16. `operator.telos_forced` ← NEW in Phase 6 (AGENCY-03)
 17. `telos.refined` ← NEW in Phase 7 (DIALOG-02) — hash-only autonomous Telos refinement from peer dialogue
 18. `operator.nous_deleted` ← NEW in Phase 8 (AGENCY-05) — H5 Sovereign Operations, closed 5-key payload: {tier, action, operator_id, target_did, pre_deletion_state_hash}
+19. `ananke.drive_crossed` ← NEW in Phase 10a (DRIVE-03) — hash-only drive threshold crossing; closed 5-key payload `{did, tick, drive, level, direction}` where `drive ∈ {hunger, curiosity, safety, boredom, loneliness}`, `level ∈ {low, med, high}`, `direction ∈ {rising, falling}`
 
 Phantom `trade.countered` is NOT emitted and NOT allowlisted — never shipped in code, removed from this enumeration per D-11. If/when the full trade counter-offer handshake ships it earns its own allowlist slot in its own phase.
 
-Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 18-event invariant.
+Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 19-event invariant.
 
 ### Research foundation for v2.1
 
@@ -125,10 +126,10 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 
 ## Session Continuity
 
-Last session: 2026-04-22T08:02:38.937Z
-Stopped at: Completed 10a-05-PLAN.md
+Last session: 2026-04-22T08:25:19.871Z
+Stopped at: Phase 10a shipped — ready for /gsd-discuss-phase 10b
 Resume file: None
-Next action: After research completes, define REQUIREMENTS.md per category (DRIVE, BIOS, CHRONOS, REL, VOTE, WHISPER, REPLAY, RIG) then roadmap starting Phase 9.
+Next action: `/gsd-discuss-phase 10b` (Bios Needs + Chronos Subjective Time — zero allowlist growth; Bios elevates Ananke drives via existing `ananke.drive_crossed`, Chronos is read-side transform).
 
 ## v2.2 Opening Context
 
@@ -275,3 +276,21 @@ Next action: After research completes, define REQUIREMENTS.md per category (DRIV
 - **Rule 1 pre-existing fix in delete-flow.test.tsx:** The 3 delete-flow integration tests were failing on Phase-9 `use-relationships` + `tick-store` `StoresProvider` requirement BEFORE my Task 2 changes (verified via stash). Closed the gap here by adding Phase-9 mocks — not strictly required for 10a-05 but cheap to fix when touching the file for Phase 10a anyway. delete-flow now 3/3 green.
 - **Rule 3 Vitest include extension:** `dashboard/vitest.config.ts` `include` was `src/**/*.{test,spec}.{ts,tsx}`. Plan put drift detector + privacy grep under `dashboard/test/`, which Vitest silently skipped. Extended to `['src/**', 'test/**']`. Any future dashboard test file under `dashboard/test/**` will now be picked up automatically.
 - **Broadcast allowlist UNCHANGED at 19:** Plan 10a-05 is dashboard-only consumer. No new events. Allowlist position 19 is still `ananke.drive_crossed` (added in Plan 10a-02). Freeze-except-by-explicit-addition rule preserved.
+
+## Accumulated Context (Phase 10a — Ananke drives shipped)
+
+- **Phase 10a shipped (2026-04-22):** Five drives (hunger, curiosity, safety, boredom, loneliness) run deterministically in the Brain; `ananke.drive_crossed` is the 19th allowlisted event, carrying closed 5-key payload `{did, tick, drive, level, direction}`. Plans 10a-01 through 10a-06. Full Brain + Grid + Dashboard suites green.
+- **Broadcast allowlist now 19 events.** Freeze-except-by-explicit-addition rule preserved. Next scheduled addition: `nous.whispered` in Phase 11. Phase 10b adds ZERO (Bios reuses `ananke.drive_crossed`, Chronos is read-side only).
+- **Drive-baseline mirror contract:** Dashboard renders baseline levels as a second row mirroring the current drive row. Baselines bucketed via `bucket(baseline, DriveLevel.LOW)` — hunger→low, curiosity→med, safety→low, boredom→med, loneliness→med. These are hardcoded visual constants; not read from Brain over the wire.
+- **3-keys-not-5 invariant (D-10a-XX):** Brain returns `ActionType.DRIVE_CROSSED` with metadata `{drive, level, direction}` (3 keys). Grid dispatcher injects `{did, tick}` at the producer boundary to compose the 5-key closed-tuple payload. Clones Phase 7 D-14 pattern (Brain returns hash-only metadata; Grid composes the full payload).
+- **T-09-01 audit-size ceiling locked:** 1000 ticks × 5 drives × 1 Nous ≤50 `ananke.drive_crossed` entries. Regression test: `grid/test/audit/audit-size-ceiling-ananke.test.ts`. Expected count ~10 (2 crossings/drive × 5); ×5 margin for oscillation near threshold.
+- **T-09-02 plaintext-drive-leak defense — three-tier grep:** (1) Grid emitter privacy matrix forbids `hunger|curiosity|safety|boredom|loneliness|drive_value` flat + nested; (2) Brain wire-side asserts only `{drive, level, direction}` cross the RPC boundary (no raw floats); (3) Dashboard render-side asserts no `/0\.[0-9]+/` text nodes and no `data-value`/`title` numeric attributes.
+- **T-09-03 wall-clock-coupling defense:** grep gates in `brain/test/test_ananke_no_walltime.py` and `grid/test/ci/ananke-no-walltime.test.ts` forbid `Date.now|performance.now|setInterval|setTimeout|Math.random|time.time|datetime.now|datetime.utcnow|random.random|uuid.uuid4` in either ananke source tree. Drive math consumes tick deltas only.
+- **DECAY_FACTOR locked:** `math.exp(-1/TAU)` with `TAU=500`, computed ONCE at module load in `brain/src/noesis_brain/ananke/config.py`. No per-step recomputation. Rise rates (hunger=0.0003, curiosity=0.0002, safety=0.0001, boredom=0.0002, loneliness=0.0002) calibrated for 10,000-tick RIG runs to produce 2-3 crossings/drive.
+- **Hysteresis band ±0.02:** level buckets don't flap across threshold (0.33/0.66) boundary. `bucket(value, previous_level)` returns the previous level if value is within band of the threshold; only crossing the band boundary returns a new level. Enforced in `brain/src/noesis_brain/ananke/drives.py::bucket`.
+- **Advisory drive→action coupling (PHILOSOPHY §6 preserved):** handler logs divergence to Brain's private wiki when e.g. a high-hunger Nous chooses SPEAK instead of MOVE. The log is side-effect-only; MUST NOT mutate the chosen actions list. Grep-verifiable in `brain/src/noesis_brain/rpc/handler.py::_advisory_log_divergence`.
+- **Drive-float-never-crosses-wire invariant:** Brain-side `CrossingEvent` carries `(drive, level, direction)` only — never the raw float. Implicit extension of PHILOSOPHY §1 hash-only cross-boundary; made explicit for Phase 10b Bios so bodily-need floats NEVER cross either.
+- **AnankeRuntime constructor-time seeding:** per-Nous seed derived SHA256(did)[:8] at `_get_or_create_ananke`. Same DID always produces same seed; deterministic replay guaranteed.
+- **Dashboard type mirror pattern (third use):** `dashboard/src/lib/protocol/ananke-types.ts` joins `audit-types.ts` and `agency-types.ts`. SYNC header + drift-detector test reads `brain/src/noesis_brain/ananke/config.py` constants. When a fourth mirror ships (likely Phase 11 whisper), consolidate into a shared `@noesis/protocol-types` package.
+- **Zero-diff invariant extended to Phase 10a:** listener count with/without AnankeLoader wiring produces byte-identical `eventHash` sequences modulo the added `ananke.drive_crossed` entries. Regression test: `grid/test/audit/zero-diff-ananke.test.ts` (Plan 10a-06). Invariant unbroken since Phase 1 commit `29c3516`.
+- **Plan 10a-06 shipped (2026-04-22):** Phase 10a closed. Task 1 landed 3 regression tests (zero-diff, audit-size ceiling, wall-clock grep gates Brain+Grid) + doc-sync script bump 18→19. Commit `7c6c794`. Task 2 human-verify checkpoint approved 2026-04-22 (standard Unicode BMP glyphs trusted: U+2298, U+2726, U+25C6, U+25EF, U+274D, U+2191, U+2193). Task 3 executed the CLAUDE.md Doc-Sync Rule: ROADMAP, STATE, MILESTONES, PROJECT, README updated atomically.
