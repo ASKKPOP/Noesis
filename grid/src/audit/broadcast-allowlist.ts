@@ -21,7 +21,7 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8) — exactly these 18 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a) — exactly these 19 event types.
  *  v1 (Phase 1, per 01-CONTEXT.md): 10 events.
  *  Phase 5 (REV-02): +1 'trade.reviewed' — externally observable reviewer verdict;
  *  payload shape D-03, 3 keys on pass / 5 keys on fail, all privacy-clean (see D-12 test).
@@ -32,7 +32,12 @@
  *  Operations, sole operator-initiated tombstone event. Closed 5-key payload:
  *  {tier:'H5', action:'delete', operator_id, target_did, pre_deletion_state_hash}.
  *  Emitted ONLY via appendNousDeleted() (grid/src/audit/append-nous-deleted.ts).
- *  Tuple ORDER is locked; any reorder fails allowlist-eighteen.test.ts.
+ *  Phase 10a (DRIVE-03): +1 'ananke.drive_crossed' at position 19 — Nous-internal
+ *  drive pressure threshold crossings. Closed 5-key payload:
+ *  {did, tick, drive, level, direction}. level ∈ {low,med,high};
+ *  direction ∈ {rising,falling}. Emitted ONLY via appendAnankeDriveCrossed()
+ *  (grid/src/ananke/append-drive-crossed.ts).
+ *  Tuple ORDER is locked; any reorder fails allowlist-nineteen.test.ts.
  */
 const ALLOWLIST_MEMBERS: readonly string[] = [
     'nous.spawned',
@@ -63,6 +68,10 @@ const ALLOWLIST_MEMBERS: readonly string[] = [
     // {tier: 'H5', action: 'delete', operator_id, target_did, pre_deletion_state_hash}.
     // Emitted ONLY via appendNousDeleted() (grid/src/audit/append-nous-deleted.ts).
     'operator.nous_deleted',
+    // Phase 10a (DRIVE-03) — Ananke drive threshold crossings. Closed 5-key payload:
+    // {did, tick, drive, level, direction}. level ∈ {low,med,high}; direction ∈ {rising,falling}.
+    // Emitted ONLY via appendAnankeDriveCrossed() (grid/src/ananke/append-drive-crossed.ts).
+    'ananke.drive_crossed',
 ] as const;
 
 /**
@@ -94,10 +103,28 @@ export function isAllowlisted(eventType: string): boolean {
 }
 
 /**
+ * Phase 10a (D-10a-07): drive-leaf keys that MUST NOT appear in any broadcast
+ * payload. Numeric drive pressures are NEVER permitted across the Brain↔Grid↔
+ * Dashboard wire. Only the closed-enum {drive, level, direction} triple crosses.
+ */
+export const DRIVE_FORBIDDEN_KEYS = [
+    'hunger',
+    'curiosity',
+    'safety',
+    'boredom',
+    'loneliness',
+    'drive_value',
+] as const;
+
+/**
  * Case-insensitive regex matching forbidden key substrings. Any payload
  * key that matches ANYWHERE (e.g., `user_prompt`, `Prompting`) is rejected.
+ *
+ * Phase 10a (D-10a-07): extended with the 6 DRIVE_FORBIDDEN_KEYS so numeric
+ * drive pressures cannot leak via nested payloads. Prior Phase 6 keywords
+ * (prompt|response|wiki|reflection|thought|emotion_delta) preserved verbatim.
  */
-export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta/i;
+export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value/i;
 
 export interface PrivacyCheckResult {
     ok: boolean;
