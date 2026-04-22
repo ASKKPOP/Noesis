@@ -41,6 +41,7 @@ import { ElevationDialog } from '@/components/agency/elevation-dialog';
 import { IrreversibilityDialog } from '@/components/agency/irreversibility-dialog';
 import { PsycheSection } from './inspector-sections/psyche';
 import { ThymosSection } from './inspector-sections/thymos';
+import { AnankeSection } from './inspector-sections/ananke';
 import { TelosSection } from './inspector-sections/telos';
 import { MemorySection } from './inspector-sections/memory';
 import { RelationshipsSection } from './inspector-sections/relationships';
@@ -384,6 +385,7 @@ export function Inspector(): React.ReactElement | null {
                     >
                         <PsycheSection psyche={state.data.psyche} />
                         <ThymosSection thymos={state.data.thymos} />
+                        <AnankeSection did={selectedDid} />
                         <TelosSection  telos={state.data.telos} did={selectedDid} />
                         <MemorySection memories={state.data.memory_highlights} />
                     </div>

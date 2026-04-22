@@ -106,6 +106,19 @@ vi.mock('@/lib/hooks/use-relationships', () => ({
     useGraph: () => ({ data: undefined, isLoading: false, error: undefined }),
 }));
 
+// Phase 10a: AnankeSection subscribes to useAnankeLevels → useFirehose →
+// StoresProvider. Short-circuit with a baseline map so the Inspector test
+// harness keeps working without a StoresProvider (mirrors Phase 7 + 9 pattern).
+vi.mock('@/lib/hooks/use-ananke-levels', () => ({
+    useAnankeLevels: () => new Map([
+        ['hunger',     { level: 'low', direction: null }],
+        ['curiosity',  { level: 'med', direction: null }],
+        ['safety',     { level: 'low', direction: null }],
+        ['boredom',    { level: 'med', direction: null }],
+        ['loneliness', { level: 'med', direction: null }],
+    ]),
+}));
+
 function Harness() {
     const { select } = useSelection(localStore);
     return (
