@@ -12,3 +12,4 @@
 export type { WarmthBucket, Edge, RelationshipConfig, SpokeObservation } from './types.js';
 export { DEFAULT_RELATIONSHIP_CONFIG } from './config.js';
 export { canonicalEdge, edgeHash, decayedWeight, warmthBucket, sortedPairKey } from './canonical.js';
+export { RelationshipListener } from './listener.js';
