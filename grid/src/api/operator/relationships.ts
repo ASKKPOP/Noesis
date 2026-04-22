@@ -338,8 +338,10 @@ export function relationshipsRoutes(
         async (req, reply) => {
             const { edge_key: edgeKey } = req.params;
 
-            // 1. Validate edge_key format — hex string 16-64 chars (D-9-10 hash prefix)
-            if (!/^[a-f0-9]{16,64}$/i.test(edgeKey)) {
+            // 1. Validate edge_key format — full 64-char SHA-256 hex (D-9-10).
+            // D-9-10: edge_hash is always full 64-char SHA-256 hex. No prefix matching.
+            // Closes Gap 2 (ME-02): silent wrong-edge resolution on prefix collision.
+            if (!/^[a-f0-9]{64}$/i.test(edgeKey)) {
                 reply.code(400);
                 return { error: 'invalid_edge_key' } satisfies ApiError;
             }
@@ -356,15 +358,19 @@ export function relationshipsRoutes(
                 return { error: 'missing_operator_id' } satisfies ApiError;
             }
 
-            // 3. Edge resolution by hash prefix (D-9-10)
+            // 3. Edge resolution by full canonical hash (D-9-10)
             const relationships = services.relationships;
             if (!relationships) {
                 reply.code(404);
                 return { error: 'edge_not_found' } satisfies ApiError;
             }
 
+            // Strict equality — full canonical hash required per D-9-10.
+            // Normalize input to lowercase for case-insensitive match against
+            // canonical lowercase hex hashes from edgeHash().
+            const normalizedKey = edgeKey.toLowerCase();
             const edge = Array.from(relationships.allEdges()).find(
-                e => edgeHash(e).startsWith(edgeKey) || edgeHash(e) === edgeKey,
+                e => edgeHash(e) === normalizedKey,
             );
 
             if (!edge) {
