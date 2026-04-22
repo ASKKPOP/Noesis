@@ -1,9 +1,12 @@
 /**
  * Phase 9 Plan 06 Task 2 — SC#5 broadcast allowlist frozen at source level.
+ * Phase 10a update: baseline grows 18 → 19 with the explicit addition of
+ * `ananke.drive_crossed` per D-10a-08. This is the ONLY sanctioned growth;
+ * no relationship.* kinds are admitted (Phase 9 SC#5 still holds).
  *
  * This test imports BROADCAST_ALLOWLIST (re-exported as ALLOWLIST from
  * grid/src/audit/broadcast-allowlist.ts) DIRECTLY and asserts:
- *   1. Size === 18 (pre-Phase-9 baseline per STATE.md Accumulated Context)
+ *   1. Size === 19 (Phase 10a baseline: Phase 9 size 18 + ananke.drive_crossed)
  *   2. No relationship.* kinds are admitted
  *   3. Every kind is a non-empty string literal (structural sanity)
  *
@@ -13,20 +16,20 @@
  *   - Source constant: this test (allowlist-frozen ALLOWLIST.size + no relationship.*)
  *   - File structure: check-relationship-graph-deps.mjs (CI line-count assertion)
  *
- * Reference: D-9-13, SC#5, T-09-35.
+ * Reference: D-9-13, SC#5, T-09-35, D-10a-08.
  */
 
 import { describe, it, expect } from 'vitest';
 import { ALLOWLIST } from '../../src/audit/broadcast-allowlist.js';
 
-describe('SC#5 — broadcast allowlist is frozen across Phase 9', () => {
-    it('BROADCAST_ALLOWLIST length === 18 (pre-Phase-9 baseline)', () => {
-        // If this fails, something added a new kind — violates SC#5 / D-9-13.
+describe('SC#5 — broadcast allowlist is frozen across Phase 9 (Phase 10a-adjusted baseline)', () => {
+    it('BROADCAST_ALLOWLIST length === 19 (Phase 10a baseline: +ananke.drive_crossed)', () => {
+        // If this fails, something added a new kind beyond D-10a-08.
         // See .planning/STATE.md Accumulated Context for the baseline lock.
-        expect(ALLOWLIST.size).toBe(18);
+        expect(ALLOWLIST.size).toBe(19);
     });
 
-    it('no relationship.* kinds are admitted', () => {
+    it('no relationship.* kinds are admitted (Phase 9 SC#5 still holds)', () => {
         const relationshipKinds = Array.from(ALLOWLIST).filter(k => k.startsWith('relationship'));
         expect(relationshipKinds).toEqual([]);
     });
