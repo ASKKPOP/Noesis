@@ -5,6 +5,7 @@
 import type { Region, RegionConnection } from '../space/types.js';
 import type { Law } from '../logos/types.js';
 import type { EconomyConfig } from '../economy/types.js';
+import type { RelationshipConfig } from '../relationships/index.js';
 
 export interface GenesisConfig {
     gridName: string;
@@ -25,6 +26,12 @@ export interface GenesisConfig {
         windowTicks: number;
         minExchanges: number;
     };
+    /**
+     * Phase 9 REL-01: optional relationship engine tuning.
+     * Defaults applied by GenesisLauncher when omitted (DEFAULT_RELATIONSHIP_CONFIG).
+     * Per-Grid overridable for researcher rigs.
+     */
+    relationship?: RelationshipConfig;
 }
 
 export interface SeedNous {

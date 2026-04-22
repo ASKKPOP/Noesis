@@ -13,6 +13,7 @@ import { EconomyManager } from '../economy/config.js';
 import { ShopRegistry } from '../economy/shop-registry.js';
 import { NousRegistry } from '../registry/registry.js';
 import { DialogueAggregator } from '../dialogue/index.js';
+import { RelationshipListener, RelationshipStorage, DEFAULT_RELATIONSHIP_CONFIG } from '../relationships/index.js';
 import { GENESIS_SHOPS } from './presets.js';
 import type { GenesisConfig, GridState } from './types.js';
 
@@ -32,6 +33,16 @@ export class GenesisLauncher {
      * windows from spanning pause boundaries (D-04).
      */
     readonly aggregator: DialogueAggregator;
+    /**
+     * Phase 9 REL-01 (D-9-04): relationship listener — pure observer, sole
+     * writer of the in-memory edges Map. Constructed AFTER the aggregator so
+     * its onAppend listener is registered second (D-9-04 order preserved).
+     * Not reset on pause — relationship warmth is time-integrated state that
+     * survives pauses; recency_tick anchors decay relative to the next resume.
+     */
+    readonly relationships: RelationshipListener;
+    /** Snapshot writer for the derived `relationships` MySQL table. Null if no pool available. */
+    private readonly relationshipStorage: RelationshipStorage | null;
     readonly gridName: string;
     readonly gridDomain: string;
 
@@ -57,6 +68,21 @@ export class GenesisLauncher {
         // listener is wired to the same AuditChain instance the Grid uses.
         const dialogueCfg = config.dialogue ?? { windowTicks: 5, minExchanges: 2 };
         this.aggregator = new DialogueAggregator(this.audit, dialogueCfg);
+
+        // Phase 9 REL-01 (D-9-04): RelationshipListener is constructed AFTER the
+        // aggregator so its onAppend listener is wired to the same AuditChain instance,
+        // matching the order the Phase 7 zero-diff regression tests validate.
+        // See 09-CONTEXT.md D-9-04.
+        const relationshipCfg = config.relationship ?? DEFAULT_RELATIONSHIP_CONFIG;
+        this.relationships = new RelationshipListener(this.audit, relationshipCfg);
+
+        // Storage is optional — if no mysql2 pool is present (unit-test launcher),
+        // snapshot scheduling is a no-op. The audit chain remains the source of truth;
+        // losing snapshot cadence only loses the fast-boot path.
+        // GenesisLauncher has no pool field (pool lives in GridStore / db layer).
+        // We set this to null here; production wiring via GridStore injects storage
+        // after construction if needed. Tests that don't need MySQL snapshots pass null.
+        this.relationshipStorage = null;
     }
 
     /**
@@ -138,6 +164,7 @@ export class GenesisLauncher {
         // staleness without polling /api/v1/grid/clock. See 03-01-PLAN.md §Tick
         // audit emission. Registry touch runs first so tick audit reflects the
         // post-touch state.
+        const relationshipCfgForTick = this.config.relationship ?? DEFAULT_RELATIONSHIP_CONFIG;
         this.clock.onTick(event => {
             for (const record of this.registry.active()) {
                 this.registry.touch(record.did, event.tick);
@@ -148,7 +175,24 @@ export class GenesisLauncher {
                 tickRateMs: this.clock.state.tickRateMs,
                 timestamp: event.timestamp,
             });
+
+            // D-9-03: Snapshot every N ticks (default 100). Fire-and-forget per OQ-2 —
+            // tick is never blocked on MySQL I/O. Missed snapshots are losslessly
+            // recoverable via rebuildFromChain() on restart.
+            if (
+                this.relationshipStorage &&
+                event.tick > 0 &&
+                event.tick % relationshipCfgForTick.snapshotCadenceTicks === 0
+            ) {
+                this.relationshipStorage.scheduleSnapshot(this.relationships.allEdges(), event.tick);
+            }
         });
+
+        // P-9-02: AuditChain.loadEntries() does NOT fire onAppend. Manual replay is
+        // required to reconstruct the derived view. Must run BEFORE the clock starts —
+        // otherwise new entries could be double-processed (once by rebuild, once by the
+        // live onAppend). Called here (end of bootstrap) so the chain is fully populated.
+        this.relationships.rebuildFromChain();
     }
 
     /** Start the Grid clock. */
@@ -176,6 +220,10 @@ export class GenesisLauncher {
      */
     drainDialogueOnPause(): void {
         this.aggregator.reset();
+        // NOTE: No reset of this.relationships on pause. Dialogue windows are
+        // pause-bounded (D-04 Phase 7); relationship warmth is time-integrated
+        // state that survives pauses. recency_tick on each edge correctly anchors
+        // decay relative to the next resume tick.
     }
 
     /** Get current Grid state. */
