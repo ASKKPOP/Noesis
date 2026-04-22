@@ -21,7 +21,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'fs';
-import { join, relative } from 'path';
+import { join, relative, resolve as _resolve } from 'path';
+import { readFileSync as _readFileSync2 } from 'node:fs';
 
 const GRID_SRC = join(__dirname, '../../src');
 
@@ -41,6 +42,19 @@ function walk(dir: string, files: string[] = []): string[] {
 // Gate 2: SQL writes against the `relationships` table allowed ONLY in storage.ts (D-9-05).
 const SQL_WRITE_PATTERN = /\b(?:INSERT\s+INTO|UPDATE|REPLACE\s+INTO|DELETE\s+FROM)\s+[`"']?relationships[`"']?/i;
 const ALLOWED_SQL_WRITER = /relationships\/storage\.ts$/;
+
+// Gate 3: D-9-08 runtime-dep allowlist — banned client-side graph layout libs.
+// These libs must NOT appear in dashboard/package.json or grid/package.json.
+// Server emits {x, y} coordinates; client reads them — no client layout engine needed.
+
+const BANNED_LIBS = [
+    'd3-force', 'd3-hierarchy', 'd3-force-3d',
+    'cytoscape', 'cytoscape-cola',
+    'graphology', 'graphology-layout',
+    'ngraph.forcelayout', 'sigma',
+    'vis-network', 'react-force-graph',
+    'react-force-graph-2d', 'react-force-graph-3d',
+];
 
 describe('relationships producer boundary', () => {
     const all = walk(GRID_SRC);
@@ -65,5 +79,26 @@ describe('relationships producer boundary', () => {
             }
         }
         expect(offenders).toEqual([]);
+    });
+
+    // Gate 3: D-9-08 runtime-dep allowlist — grep package.json files for banned libs.
+    it('Gate 3: dashboard/package.json contains no banned graph libs (D-9-08)', () => {
+        const pkgPath = _resolve(__dirname, '../../../dashboard/package.json');
+        const pkg = JSON.parse(_readFileSync2(pkgPath, 'utf-8'));
+        const allDeps = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) };
+
+        for (const banned of BANNED_LIBS) {
+            expect(allDeps[banned]).toBeUndefined();
+        }
+    });
+
+    it('Gate 3: grid/package.json contains no banned graph libs (D-9-08)', () => {
+        const pkgPath = _resolve(__dirname, '../../package.json');
+        const pkg = JSON.parse(_readFileSync2(pkgPath, 'utf-8'));
+        const allDeps = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) };
+
+        for (const banned of BANNED_LIBS) {
+            expect(allDeps[banned]).toBeUndefined();
+        }
     });
 });
