@@ -1,21 +1,22 @@
 /**
- * Phase 9 Plan 02 Task 3 — Map-write producer boundary grep gate (D-9-05, T-09-06 CRITICAL).
+ * Phase 9 Plans 02+03 — Producer boundary grep gates (D-9-05, T-09-06 CRITICAL).
  *
- * Gate 1 (this file, Wave 1): Only grid/src/relationships/listener.ts may call
+ * Gate 1 (Plan 02, Wave 1): Only grid/src/relationships/listener.ts may call
  *   edges.set() / edges.delete() / edges.clear() — the sole in-memory Map writer.
  *
  * Gate 2 (Plan 03, Wave 1): Only grid/src/relationships/storage.ts may write to
- *   the MySQL `relationships` SQL table. That `it(...)` block is appended here
- *   in Plan 03 once storage.ts exists.
+ *   the MySQL `relationships` SQL table via INSERT/UPDATE/REPLACE/DELETE.
+ *
+ * Both gates are now live. Walk scope is ALL of grid/src/ so a rogue mutation
+ * in grid/src/integration/ or grid/src/api/ fires either gate.
  *
  * Clones grid/test/audit/telos-refined-producer-boundary.test.ts structure exactly.
- * Walk scope is ALL of grid/src/ (not just relationships/) so a rogue mutation
- * in grid/src/integration/ or grid/src/api/ fires the gate.
  *
  * Edge cases handled (RESEARCH.md lines 585-588):
  * - Token `edges.` is domain-specific; verified zero hits outside planned paths.
- * - Comments containing `edges.set(` also trigger the gate. Path-allowlist is
+ * - Comments containing `edges.set(` also trigger Gate 1. Path-allowlist is
  *   the only escape — NOT eslint-disable or comment suppression.
+ * - SQL_WRITE_PATTERN is case-insensitive; matches both upper and lower case SQL.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -37,6 +38,10 @@ function walk(dir: string, files: string[] = []): string[] {
     return files;
 }
 
+// Gate 2: SQL writes against the `relationships` table allowed ONLY in storage.ts (D-9-05).
+const SQL_WRITE_PATTERN = /\b(?:INSERT\s+INTO|UPDATE|REPLACE\s+INTO|DELETE\s+FROM)\s+[`"']?relationships[`"']?/i;
+const ALLOWED_SQL_WRITER = /relationships\/storage\.ts$/;
+
 describe('relationships producer boundary', () => {
     const all = walk(GRID_SRC);
 
@@ -51,5 +56,14 @@ describe('relationships producer boundary', () => {
         expect(offenders).toEqual([]);
     });
 
-    // Plan 03 Wave 1 appends a second `it(...)` block for SQL-write boundary.
+    it('only storage.ts writes to the relationships SQL table (D-9-05)', () => {
+        const offenders: string[] = [];
+        for (const f of all) {
+            const src = readFileSync(f, 'utf-8');
+            if (SQL_WRITE_PATTERN.test(src) && !ALLOWED_SQL_WRITER.test(f)) {
+                offenders.push(relative(GRID_SRC, f));
+            }
+        }
+        expect(offenders).toEqual([]);
+    });
 });
