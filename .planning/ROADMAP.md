@@ -73,7 +73,15 @@ Plans:
   - T-09-02 (CRITICAL): Plaintext drive state leak — clone Phase 6 privacy-matrix skeleton with DRIVE_FORBIDDEN_KEYS; three-tier grep (Grid emitter, Brain wire, Dashboard render).
   - T-09-03 (HIGH): Drive math coupled to wall-clock — grep gate forbids `Date.now`/`performance.now`/`setInterval` in `grid/src/ananke/**` and `brain/src/ananke/**`.
 **Allowlist additions**: **+1**. Event: `ananke.drive_crossed` with closed-tuple payload `{did, tick, drive, level, direction}` where `drive ∈ {hunger, curiosity, safety, boredom, loneliness}`, `level ∈ {low, med, high}`, `direction ∈ {rising, falling}`. Running total: **19**.
-**Plans**: TBD
+**Plans**: 6 plans (4 waves)
+
+Plans:
+- [ ] 10a-01-PLAN.md — Wave 1: Brain Ananke skeleton (types/config/drives/runtime pure-functional) + determinism/bounds/threshold/hysteresis tests
+- [ ] 10a-02-PLAN.md — Wave 1: Grid allowlist 18→19 + appendAnankeDriveCrossed sole-producer emitter + producer-boundary grep gate + privacy matrix extension
+- [ ] 10a-03-PLAN.md — Wave 2: Brain handler wiring — ActionType.DRIVE_CROSSED + AnankeLoader + advisory drive→action divergence log (PHILOSOPHY §6 sovereignty preserved)
+- [ ] 10a-04-PLAN.md — Wave 2: Grid dispatcher — BrainActionDriveCrossed variant + case drive_crossed branch + 3-keys-not-5 invariant realized end-to-end
+- [ ] 10a-05-PLAN.md — Wave 3: Dashboard Drives panel (SYNC type mirror + firehose-derived hook + 45-state aria matrix + locked Unicode glyph constants)
+- [ ] 10a-06-PLAN.md — Wave 4: Zero-diff regression + audit-size ceiling + wall-clock grep gates (Brain + Grid) + Dashboard visual smoke + doc-sync execution
 
 ### Phase 10b: Bios Needs + Chronos Subjective Time (Inner Life, part 2)
 **Goal**: Bodily needs (energy, sustenance) elevate Ananke drives on threshold crossing, and a per-Nous subjective-time multiplier modulates Stanford retrieval recency — all without adding a single allowlist member.
@@ -193,7 +201,7 @@ Dependencies form a strict chain (no parallel phases in v2.2). Rationale:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 9. Relationship Graph (Derived View) | 8/8 | Complete   | 2026-04-22 |
-| 10a. Ananke Drives | 0/? | Not started | - |
+| 10a. Ananke Drives | 0/6 | Planned | - |
 | 10b. Bios Needs + Chronos Subjective Time | 0/? | Not started | - |
 | 11. Mesh Whisper | 0/? | Not started | - |
 | 12. Governance & Collective Law | 0/? | Not started | - |
