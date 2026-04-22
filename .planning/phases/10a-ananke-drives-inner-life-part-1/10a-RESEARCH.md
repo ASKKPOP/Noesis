@@ -964,27 +964,23 @@ describe('ananke.drive_crossed — privacy matrix', () => {
 | A4 | `pyproject.toml` `testpaths = ["test"]` means `brain/test/ananke/` is picked up automatically. | §Project Structure | If testpaths differs, add `brain/test/ananke` to config. Zero risk. [ASSUMED — per Phase 7 STATE.md note.] |
 | A5 | 5 drives × 3 levels × 2 directions = 30 possible crossing events, all expressible in the 5-key closed tuple. No crossing variant needs a 6th key. | §Code Examples | If a future phase needs "saturated" or "reset" variants, they require a new event type, not key widening (D-10a-08 already forbids sibling event types). [VERIFIED: DRIVE-03 literal text specifies the exact 5 keys.] |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Path discrepancy: `brain/src/ananke/` vs. `brain/src/noesis_brain/ananke/`**
    - What we know: CONTEXT.md D-10a-02 and REQUIREMENTS.md DRIVE-01 both say `brain/src/ananke/drives.py`. But the actual existing Brain subsystem layout is `brain/src/noesis_brain/{psyche,telos,thymos}/` — there is no `brain/src/psyche/` or `brain/src/telos/`.
-   - What's unclear: Whether the doc path is aspirational / shorthand, or whether there's a packaging reason to place ananke *outside* `noesis_brain/`.
-   - Recommendation: Place under `brain/src/noesis_brain/ananke/` (sibling consistency). Update DRIVE-01 / D-10a-02 wording in a follow-up documentation commit. The Brain-side `grep` for `brain/src/ananke/**` in D-10a-05 becomes `brain/src/noesis_brain/ananke/**`. Planner to confirm.
+   - **RESOLVED: Place under `brain/src/noesis_brain/ananke/` (sibling consistency with psyche/telos/thymos).** D-10a-02 and DRIVE-01 literal path wording is shorthand — the real sibling layout is authoritative. Plans 10a-01 and 10a-06 target the correct path. CONTEXT.md D-10a-02 and REQUIREMENTS.md DRIVE-01 wording updated in this revision to `brain/src/noesis_brain/ananke/drives.py`. Brain-side grep gate in D-10a-05 targets `brain/src/noesis_brain/ananke/**`.
 
 2. **Rise-rate calibration — does a 10k-tick RIG run end with all 5 drives saturated at 1.0 or a distributed mix?**
    - What we know: With `rise_rate = 0.0003` per tick and `baseline = 0.3`, a drive starting at baseline reaches `prev + 0.0003 × 10000 = 3.3` (clamped to 1.0 around tick 2334). All drives saturate.
-   - What's unclear: Whether this is intended behavior or whether per-drive rise-rates should be tuned so e.g. safety saturates slower than curiosity.
-   - Recommendation: Planner locks `rise_rate` constants. Start with `0.0001` (≈ 10k ticks to full saturation from 0) and tune based on RIG observation. No determinism impact — calibration is purely cosmetic.
+   - **RESOLVED: Lock `rise_rate = 0.0001` per-drive uniform for 10a.** ≈10k ticks to full saturation from baseline. Calibration is cosmetic (no determinism impact); per-drive tuning deferred to 10c once RIG data exists. Planner 10a-01 locks this in `ananke/config.py`.
 
 3. **Hysteresis band size (0.02) — is this empirically right or a placeholder?**
    - What we know: A band of 0.02 means a drive near 0.33 must cross 0.35 to enter MED and drop to 0.31 to return to LOW.
-   - What's unclear: With `rise_rate = 0.0001` and `decay_factor = exp(-1/5000) ≈ 0.9998`, can a drive realistically oscillate by 0.04 per tick? Probably not — the recurrence is near-monotonic. But no RIG data yet.
-   - Recommendation: Ship with 0.02; add a metric to the audit-ceiling regression that counts crossings. If average is well below 50, hysteresis can be reduced in 10c. If chattering appears, increase.
+   - **RESOLVED: Ship with `HYSTERESIS_BAND = 0.02`.** With `rise_rate = 0.0001` + `decay_factor = exp(-1/5000) ≈ 0.9998` the recurrence is near-monotonic; 0.02 is generous. Audit-ceiling regression in 10a-06 counts crossings — if average is well below 50 per 1k ticks, band can be reduced in 10c.
 
 4. **Does the `seed` parameter serve any purpose in pure-rise-only math?**
    - What we know: CONTEXT D-10a-01 says "function of `(seed, tick)`", but the recommended recurrence uses only `(prev_value, config)` per drive — neither seed nor tick appears in the math.
-   - What's unclear: Whether "function of `(seed, tick)`" is a forward-looking phrasing for when jitter is added, or whether we must wire the seed through now even though it's unused.
-   - Recommendation: Wire seed + tick as parameters (matches the spec literally), leave them unused in rise-only. Phase 10c or 10d may introduce per-drive jitter via `blake2b(seed || tick || drive_name)`. Zero cost now, preserves API stability.
+   - **RESOLVED: Wire `seed` and `tick` as parameters (API stability), leave unused in rise-only math for 10a.** Matches D-10a-01 spec literal. Future jitter in 10c/10d may consume them via `blake2b(seed || tick || drive_name)`. Zero cost now. Plan 10a-01 already encodes this signature.
 
 ## Validation Architecture
 

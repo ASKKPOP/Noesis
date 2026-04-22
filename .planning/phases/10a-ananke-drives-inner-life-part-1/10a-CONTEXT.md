@@ -29,7 +29,7 @@ The three additional gray areas surfaced in discuss-phase were dismissed by the 
 - **Initial drive state + Psyche coupling** — starting value for each drive at `bios.birth`. Default: **per-drive baseline** (same as passive-pull target). Psyche/Big Five coupling is **out of scope for 10a** — first-life drive vector is the baseline vector; personality-derived initial conditions deferred.
 
 ### Determinism / boundary invariants (inherited, locked)
-- **D-10a-02:** Drive math lives entirely in `brain/src/ananke/drives.py` as pure Python, no external libraries (DRIVE-01).
+- **D-10a-02:** Drive math lives entirely in `brain/src/noesis_brain/ananke/drives.py` (sibling of `psyche/`, `telos/`, `thymos/`) as pure Python, no external libraries (DRIVE-01). *Path normalized 2026-04-22 per RESEARCH §Open Questions Q1 resolution.*
 - **D-10a-03:** Drive state never crosses the wire as a free field. `ananke.drive_crossed` payload is the closed-tuple `{did, tick, drive, level, direction}` enforced via `Object.keys(payload).sort()` strict equality at the sole-producer boundary (clone Phase 6 D-11 pattern).
 - **D-10a-04:** Emission is threshold-crossing-only — never per tick. Audit-size ceiling regression: 1000 ticks × 5 drives × 1 Nous ≤ 50 entries.
 - **D-10a-05:** Determinism source grep gate — `Date.now`, `performance.now`, `setInterval` forbidden in `grid/src/ananke/**` and `brain/src/ananke/**`. Replay at `tickRateMs=1_000_000` vs `tickRateMs=1000` must produce byte-identical audit entries (T-09-03).
