@@ -28,7 +28,7 @@ created: 2026-04-21
 
 ## Sampling Rate
 
-- **After every task commit:** Run scoped subset: `cd grid && npm test -- --run test/relationships test/audit/relationship-*` for grid tasks; `cd dashboard && npm test -- --run src/components/relationships` for dashboard tasks.
+- **After every task commit:** Run scoped subset: `cd grid && npm test -- --run test/relationships test/audit/relationship-*` for grid tasks; `cd dashboard && npm test -- --run src/app/grid/relationships src/app/grid/components/inspector-sections/relationships src/lib/hooks/use-relationships` for dashboard tasks.
 - **After every plan wave:** Run full grid suite (`cd grid && npm test -- --run`).
 - **Before `/gsd-verify-work`:** Full suite (grid + dashboard) must be green; 10K-edge perf bench must assert p95 <100ms.
 - **Max feedback latency:** 15 seconds (scoped) / 20 seconds (full grid).
@@ -50,7 +50,9 @@ created: 2026-04-21
 
 - [ ] `grid/src/relationships/` — directory does not exist (Wave 0 creates it)
 - [ ] `grid/test/relationships/` — directory does not exist (Wave 0 creates it)
-- [ ] `dashboard/src/components/relationships/` — directory does not exist (Wave 0 creates it)
+- [ ] `dashboard/src/app/grid/relationships/` — new page route (Wave 3 creates it)
+- [ ] `dashboard/src/app/grid/components/inspector-sections/relationships.tsx` — new Inspector section (Wave 3 creates it)
+- [ ] `dashboard/src/lib/hooks/use-relationships.ts` — new SWR hook (Wave 3 creates it)
 - [ ] `sql/009_relationships.sql` — migration does not exist (Wave 0 creates it)
 - [ ] Confirm `BIGINT UNSIGNED` column type assumption matches `sql/008_economy.sql` (Assumption A1 from RESEARCH.md)
 - [ ] Confirm `useSWR` is already in `dashboard/package.json` (Assumption A6; research says YES but execute verifies)
