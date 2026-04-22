@@ -50,7 +50,7 @@ Plans:
 - [x] 09-01-PLAN.md — Wave 0: types/config/canonical primitives + MySQL migration + swr install + regression tests (D-9-10, D-9-11, D-9-12 locked from day one)
 - [x] 09-02-PLAN.md — Wave 1: RelationshipListener (sole Map writer), bump table, clamping, rebuildFromChain, producer-boundary Gate 1
 - [x] 09-03-PLAN.md — Wave 1: RelationshipStorage (sole SQL writer) with batched REPLACE INTO snapshots + producer-boundary Gate 2
-- [ ] 09-04-PLAN.md — Wave 2: GenesisLauncher wiring (construction order after aggregator), Fastify plugin with H1/H2/H5 endpoints + privacy-shape tests
+- [x] 09-04-PLAN.md — Wave 2: GenesisLauncher wiring (construction order after aggregator), Fastify plugin with H1/H2/H5 endpoints + privacy-shape tests
 - [ ] 09-05-PLAN.md — Wave 3: Dashboard Inspector Relationships tab, graph-view route, useSWR 100-tick batching key
 - [ ] 09-06-PLAN.md — Wave 4: 10K-edge perf bench (p95<100ms), zero-diff regression, idempotent-rebuild, no-audit-emit gate, D-9-08 CI grep
 
