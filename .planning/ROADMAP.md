@@ -18,7 +18,7 @@ Phase numbering continues from v2.1 — do NOT reset without `--reset-phase-numb
 ## Phases (v2.2 Active)
 
 - [x] **Phase 9: Relationship Graph (Derived View)** — Pure-observer relationship listener over existing dialogue.* + trade.* events. Zero allowlist additions. (completed 2026-04-22)
-- [ ] **Phase 10a: Ananke Drives (Inner Life, part 1)** — Five-drive subsystem with threshold-crossing audit events. Establishes hash-only drive discipline for Phase 10b.
+- [x] **Phase 10a: Ananke Drives (Inner Life, part 1)** — Five-drive subsystem with threshold-crossing audit events. Establishes hash-only drive discipline for Phase 10b. (shipped 2026-04-22, allowlist 18→19 with `ananke.drive_crossed`)
 - [ ] **Phase 10b: Bios Needs + Chronos Subjective Time (Inner Life, part 2)** — Bodily needs elevate drives; subjective time modulates Stanford retrieval recency. Zero allowlist additions.
 - [ ] **Phase 11: Mesh Whisper** — Nous-to-Nous E2E envelope (libsodium `crypto_box`); operators cannot read plaintext at any tier.
 - [ ] **Phase 12: Governance & Collective Law** — Commit-reveal ballot lifecycle (4 events); successful proposals promote to v2.1 LogosEngine.
@@ -81,7 +81,7 @@ Plans:
 - [x] 10a-03-PLAN.md — Wave 2: Brain handler wiring — ActionType.DRIVE_CROSSED + AnankeLoader + advisory drive→action divergence log (PHILOSOPHY §6 sovereignty preserved)
 - [x] 10a-04-PLAN.md — Wave 2: Grid dispatcher — BrainActionDriveCrossed variant + case drive_crossed branch + 3-keys-not-5 invariant realized end-to-end
 - [x] 10a-05-PLAN.md — Wave 3: Dashboard Drives panel (SYNC type mirror + firehose-derived hook + 45-state aria matrix + locked Unicode glyph constants)
-- [ ] 10a-06-PLAN.md — Wave 4: Zero-diff regression + audit-size ceiling + wall-clock grep gates (Brain + Grid) + Dashboard visual smoke + doc-sync execution
+- [x] 10a-06-PLAN.md — Wave 4: Zero-diff regression + audit-size ceiling + wall-clock grep gates (Brain + Grid) + Dashboard visual smoke + doc-sync execution (shipped 2026-04-22)
 
 ### Phase 10b: Bios Needs + Chronos Subjective Time (Inner Life, part 2)
 **Goal**: Bodily needs (energy, sustenance) elevate Ananke drives on threshold crossing, and a per-Nous subjective-time multiplier modulates Stanford retrieval recency — all without adding a single allowlist member.
@@ -201,7 +201,7 @@ Dependencies form a strict chain (no parallel phases in v2.2). Rationale:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 9. Relationship Graph (Derived View) | 8/8 | Complete   | 2026-04-22 |
-| 10a. Ananke Drives | 5/6 | In Progress|  |
+| 10a. Ananke Drives | 6/6 | Complete   | 2026-04-22 |
 | 10b. Bios Needs + Chronos Subjective Time | 0/? | Not started | - |
 | 11. Mesh Whisper | 0/? | Not started | - |
 | 12. Governance & Collective Law | 0/? | Not started | - |

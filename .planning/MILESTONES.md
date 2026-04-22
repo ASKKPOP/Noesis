@@ -187,4 +187,34 @@
 **Next up:** v2.2 milestone planning.
 
 ---
-*Last updated: 2026-04-21 — v2.1 Steward Console SHIPPED (Phase 8 AGENCY-05 closed, 18/18 plans = 100%)*
+
+## v2.2: Living Grid (IN PROGRESS — opened 2026-04-21)
+
+**Goal:** Move Nous from observed entities into full agents. Six themes ship MVP depth together: Rich Inner Life (Ananke + Bios + Chronos), Relationship & Trust, Governance & Law, Mesh Whisper, Operator Observability, Researcher Tooling.
+
+### Phase 10a — Ananke Drives (Inner Life, part 1) — SHIPPED 2026-04-22
+
+**Shipped:** 2026-04-22
+**Goal:** Five drives (hunger, curiosity, safety, boredom, loneliness) run deterministically in the Brain; only threshold crossings cross the boundary as hash-authoritative broadcast.
+**Requirements delivered:** DRIVE-01, DRIVE-02, DRIVE-03, DRIVE-04, DRIVE-05
+**Plans:** 6/6 (10a-01, 10a-02, 10a-03, 10a-04, 10a-05, 10a-06)
+**Allowlist added:** `ananke.drive_crossed` (+1 → 19)
+
+**Key primitives:**
+- Brain-side `AnankeRuntime` with piecewise deterministic recurrence (below baseline pulls up via `DECAY_FACTOR=exp(-1/500)`; above baseline pure rise by drive-specific rate)
+- Hysteresis-guarded level bucketing (`low<0.33`, `med<0.66`, `high≥0.66` with ±0.02 band)
+- Grid-side `appendAnankeDriveCrossed` sole-producer emitter with closed 5-key payload `{did, tick, drive, level, direction}` enforced via `Object.keys(payload).sort()` strict equality
+- 3-keys-not-5 invariant: Brain returns 3 metadata keys; Grid injects `{did, tick}` at boundary
+- Dashboard Drives panel with 45-state aria matrix + locked Unicode glyphs (⊘ ✦ ◆ ◯ ❍) + baseline bucketed mirror
+- Zero-diff invariant extended: chain head byte-identical with/without Ananke listeners, modulo added `ananke.drive_crossed` entries
+- Audit-size ceiling: 1000 ticks × 5 drives × 1 Nous ≤ 50 entries (T-09-01 defense)
+- Wall-clock grep gates in both `brain/src/noesis_brain/ananke/**` and `grid/src/ananke/**` (T-09-03 defense)
+- Three-tier privacy grep (Grid emitter + Brain wire + Dashboard render) preventing plaintext drive float leak (T-09-02 defense)
+- Advisory-only drive→action coupling (PHILOSOPHY §6 Nous sovereignty preserved)
+
+**STRIDE threats addressed:** T-09-01 (per-tick audit bloat — ceiling locked ≤50), T-09-02 (plaintext drive leak — three-tier grep), T-09-03 (wall-clock coupling — grep gates in both ananke source trees), T-10a-27..T-10a-33 (from Plan 10a-06 threat model).
+
+**Next up:** Phase 10b — Bios Needs + Chronos Subjective Time (zero allowlist growth).
+
+---
+*Last updated: 2026-04-22 — Phase 10a shipped (6/6 plans, allowlist 18→19 with `ananke.drive_crossed`)*
