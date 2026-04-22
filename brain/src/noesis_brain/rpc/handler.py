@@ -7,6 +7,8 @@ import logging
 from datetime import datetime
 from typing import Any
 
+from noesis_brain.ananke import AnankeRuntime, DriveLevel, DriveName
+from noesis_brain.ananke.loader import AnankeLoader
 from noesis_brain.llm.base import LLMAdapter, LLMError
 from noesis_brain.llm.types import GenerateOptions
 from noesis_brain.psyche.types import PersonalityDimension, Psyche
@@ -52,6 +54,12 @@ class BrainHandler:
         self.location = location
         self.memory = memory
         self.did = did
+        # Phase 10a DRIVE-02 wire-side: per-DID AnankeRuntime registry. One
+        # handler may, over its lifetime, receive ticks for multiple DIDs
+        # (though typical Brain process serves one Nous). The loader is a
+        # stateless factory; per-DID runtimes live in _ananke_runtimes.
+        self._ananke_loader = AnankeLoader()
+        self._ananke_runtimes: dict[str, AnankeRuntime] = {}
 
     async def on_message(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle incoming P2P message → think → produce response actions.
@@ -139,23 +147,149 @@ class BrainHandler:
                 if refined is not None:
                     actions.append(refined.to_dict())
 
+        # Phase 10a DRIVE-02 wire-side: advance Ananke drive state and drain
+        # any threshold crossings into DRIVE_CROSSED actions. Each crossing
+        # becomes ONE separate Action. Metadata carries EXACTLY 3 keys
+        # {drive, level, direction} — Grid injects did and tick downstream
+        # (3-keys-not-5 invariant, D-10a-03).
+        tick_raw = params.get("tick", 0)
+        try:
+            tick = int(tick_raw) if tick_raw is not None else 0
+        except (TypeError, ValueError):
+            tick = 0
+        runtime = self._get_or_create_ananke(self.did)
+        runtime.on_tick(tick)
+        for xing in runtime.drain_crossings():
+            actions.append(
+                Action(
+                    action_type=ActionType.DRIVE_CROSSED,
+                    channel="",
+                    text="",
+                    metadata={
+                        "drive": xing.drive.value,
+                        "level": xing.level.value,
+                        "direction": xing.direction.value,
+                    },
+                ).to_dict()
+            )
+
         if actions:
+            # Advisory logging (D-10a-06): drive-vs-action divergence is
+            # PURE OBSERVATION. This call MUST NOT mutate `actions`.
+            # PHILOSOPHY §6 Nous sovereignty: drives inform, never coerce.
+            self._advisory_log_divergence(self.did, runtime.state, actions)
             return actions
 
         # Pre-Phase-7 NOOP fallback preserved verbatim for additive-widening
         # compatibility (matches test_get_state_widening strict-superset rule).
         top_goals = self.telos.top_priority(1)
         if not top_goals:
-            return [Action(action_type=ActionType.NOOP).to_dict()]
-
-        # Could generate autonomous action based on goals
-        # For Sprint 5, just acknowledge the tick
-        return [Action(action_type=ActionType.NOOP).to_dict()]
+            actions.append(Action(action_type=ActionType.NOOP).to_dict())
+        else:
+            # Could generate autonomous action based on goals
+            # For Sprint 5, just acknowledge the tick
+            actions.append(Action(action_type=ActionType.NOOP).to_dict())
+        # Advisory logging also runs on the NOOP path — a HIGH drive coupled
+        # with a NOOP primary is the canonical divergence case.
+        self._advisory_log_divergence(self.did, runtime.state, actions)
+        return actions
 
     async def on_event(self, params: dict[str, Any]) -> None:
         """Handle grid event (law change, sanction, etc.) — fire-and-forget."""
         event_type = params.get("event_type", "")
         log.info("Brain received event: %s", event_type)
+
+    # ────────────────────────────────────────────────────────────────────
+    # Phase 10a DRIVE-02/DRIVE-04 — Ananke integration helpers
+    #
+    # `_get_or_create_ananke` lazily instantiates a deterministic
+    # AnankeRuntime per DID. Seed derivation is SHA-256 of the DID bytes
+    # truncated to 8 bytes and interpreted big-endian as an integer —
+    # deterministic, no wall-clock input (T-10a-14 mitigation).
+    #
+    # `_advisory_log_divergence` records drive-vs-action divergence to the
+    # Nous's private logger (never broadcast). PHILOSOPHY §6: drives inform
+    # but do not coerce; this function is PURE OBSERVATION and must not
+    # modify the actions list. T-10a-11 mitigation.
+    # ────────────────────────────────────────────────────────────────────
+
+    # Mapping drive → matching primary action type. If a drive is HIGH but
+    # no action of the matching type is present in the chosen actions, the
+    # handler logs a divergence. This is informational; the Nous's chosen
+    # action is sovereign.
+    _DIVERGENCE_HEURISTIC: dict[DriveName, ActionType] = {
+        DriveName.HUNGER: ActionType.MOVE,
+        DriveName.CURIOSITY: ActionType.SPEAK,
+        DriveName.SAFETY: ActionType.MOVE,
+        DriveName.BOREDOM: ActionType.SPEAK,
+        DriveName.LONELINESS: ActionType.DIRECT_MESSAGE,
+    }
+
+    def _get_or_create_ananke(self, did: str) -> AnankeRuntime:
+        """Return the AnankeRuntime for the given DID, creating one on first use.
+
+        Seed derivation is deterministic: `int.from_bytes(sha256(did)[:8], big)`.
+        Given identical DID strings across replays, the same seed (and thus the
+        same tick-by-tick drive trace) is reproduced byte-for-byte. No
+        wall-clock input — preserves the determinism contract (DRIVE-02).
+        """
+        if did not in self._ananke_runtimes:
+            seed = int.from_bytes(
+                hashlib.sha256(did.encode("utf-8")).digest()[:8], "big"
+            )
+            self._ananke_runtimes[did] = self._ananke_loader.build(seed=seed)
+        return self._ananke_runtimes[did]
+
+    def _advisory_log_divergence(
+        self,
+        did: str,
+        state: Any,
+        actions: list[dict[str, Any]],
+    ) -> None:
+        """Log drive-vs-action divergence to the Brain's private logger.
+
+        PHILOSOPHY §6 invariant (T-10a-11): this method MUST NOT append to,
+        remove from, or mutate `actions`. It is side-effect-only. The
+        advisory log is the Brain's private channel — it never crosses the
+        Grid broadcast boundary (T-10a-12 mitigation; `ananke.divergence` is
+        not in the broadcast allowlist).
+
+        Heuristic: for each drive at level HIGH, check whether the Nous
+        chose an action of the "matching" type (see `_DIVERGENCE_HEURISTIC`).
+        If not, emit an INFO log record with structured `extra` so test
+        fixtures and operators can introspect the divergence without
+        affecting runtime behavior.
+
+        Args:
+            did: The Nous's DID (goes into the log record for operator
+                forensics; never written to the actions list).
+            state: Current DriveState; `state.levels` is a
+                `dict[DriveName, DriveLevel]`.
+            actions: The Nous's chosen action list. Read-only from this
+                function's perspective.
+        """
+        chosen_types = {a.get("action_type") for a in actions}
+        for drive, matching_action in self._DIVERGENCE_HEURISTIC.items():
+            # Defensive .get — state.levels should always have all 5 drives
+            # (DriveState invariant), but we never want a KeyError in a
+            # pure-observation function.
+            level = state.levels.get(drive)
+            if level != DriveLevel.HIGH:
+                continue
+            if matching_action.value in chosen_types:
+                continue
+            log.info(
+                "ananke.divergence drive=%s level=high chose=%s",
+                drive.value,
+                sorted(chosen_types),
+                extra={
+                    "event": "ananke.divergence",
+                    "did": did,
+                    "drive": drive.value,
+                    "level": "high",
+                    "chose": sorted(chosen_types),
+                },
+            )
 
     def get_state(self) -> dict[str, Any]:
         """Return current brain state for the dashboard Inspector (NOUS-01..02).
