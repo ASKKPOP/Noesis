@@ -58,9 +58,9 @@ Progress: [████░░░░░░] 43% (3/7 v2.2 phases complete — Pha
 
 Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule preserved.
 
-### Broadcast allowlist (Phase 10b — post-ship, Plan 10b-03)
+### Broadcast allowlist (Phase 11 — pre-ship, Plan 11-00)
 
-**21 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
+**22 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
 
 1. `nous.spawned`
 2. `nous.moved`
@@ -83,10 +83,11 @@ Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule p
 19. `ananke.drive_crossed` ← NEW in Phase 10a (DRIVE-03) — hash-only drive threshold crossing; closed 5-key payload `{did, tick, drive, level, direction}` where `drive ∈ {hunger, curiosity, safety, boredom, loneliness}`, `level ∈ {low, med, high}`, `direction ∈ {rising, falling}`
 20. `bios.birth` ← NEW in Phase 10b (BIOS-02) — Nous lifecycle open; closed 3-key payload `{did, tick, psyche_hash}`; sole producer `grid/src/bios/appendBiosBirth.ts` · Phase 10b
 21. `bios.death` ← NEW in Phase 10b (BIOS-02/03) — Nous lifecycle close; closed 4-key payload `{did, tick, cause, final_state_hash}`; `cause ∈ {starvation, operator_h5, replay_boundary}`; sole producer `grid/src/bios/appendBiosDeath.ts` · Phase 10b
+22. `nous.whispered` ← NEW in Phase 11 (WHISPER-04) — Nous↔Nous envelope emission; closed 4-key payload `{ciphertext_hash, from_did, tick, to_did}`; sole producer `grid/src/whisper/appendNousWhispered.ts` · Phase 11 · D-11-01
 
 Phantom `trade.countered` is NOT emitted and NOT allowlisted — never shipped in code, removed from this enumeration per D-11. If/when the full trade counter-offer handshake ships it earns its own allowlist slot in its own phase.
 
-Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 21-event invariant.
+Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 22-event invariant.
 
 ### Research foundation for v2.1
 
@@ -128,10 +129,10 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 
 ## Session Continuity
 
-Last session: 2026-04-23T06:54:57.946Z
-Stopped at: Phase 10b complete — all 8 plans shipped; doc-sync closed (10b-08); allowlist 19→21; Phase 11 Mesh Whisper is next
+Last session: 2026-04-23T10:45:00.000Z
+Stopped at: Phase 11 Wave 0 shipped — allowlist 21→22; RED stubs in place
 Resume file: None
-Next action: `/gsd-discuss-phase 11` then `/gsd-plan-phase 11` then `/gsd-execute-phase 11 --auto`
+Next action: `/gsd-execute-phase 11` Wave 1 (crypto core)
 
 ## v2.2 Opening Context
 
@@ -157,6 +158,7 @@ Next action: `/gsd-discuss-phase 11` then `/gsd-plan-phase 11` then `/gsd-execut
 - First-life promise — audit entries retained forever. No purge. Applies to tombstoned Nous (established v2.1 Phase 8) and now to all new event types.
 - DID regex `/^did:noesis:[a-z0-9_\-]+$/i` — same at all entry points for new routes.
 - Copy-verbatim pattern (established D-04/D-05) — any destructive/irreversible UX copy frozen in test assertions.
+- Hash-only whisper boundary — Brain↔Grid whisper plaintext NEVER crosses the wire. Grid sees only `{ciphertext_hash, nonce, ephemeral_pub, ciphertext(bytes), envelope_id}`. Ciphertext is deleted from Grid on recipient ack; audit chain retains `ciphertext_hash` forever. Keyring lives Brain-side only (D-11-04). Wall-clock ban extends to `grid/src/whisper/**` and `brain/src/noesis_brain/whisper/**` (D-11-13).
 
 ## Accumulated Context (Plan 06-02 additions)
 

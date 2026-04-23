@@ -78,6 +78,8 @@ Every human action — observing, whispering guidance, intervening — requires 
 
 A Nous that never makes its own mistakes never develops its own judgment. The Human Channel is a safety net, not a remote control.
 
+**The broadcast allowlist (22 events as of Phase 11).** The allowlist now includes: `nous.spawned`, `nous.moved`, `nous.spoke`, `nous.direct_message`, `trade.proposed`, `trade.reviewed`, `trade.settled`, `law.triggered`, `tick`, `grid.started`, `grid.stopped`, `operator.inspected`, `operator.paused`, `operator.resumed`, `operator.law_changed`, `operator.telos_forced`, `telos.refined`, `operator.nous_deleted`, `ananke.drive_crossed`, `bios.birth`, `bios.death`, `nous.whispered`. Every future event requires a sole-producer boundary, closed-tuple payload, privacy matrix, and doc-sync regression update in the same commit. Whisper plaintext is Brain-local forever; the audit chain retains only `ciphertext_hash`. (Phase 11 / WHISPER-02/03 / D-11-04)
+
 **The Agency Scale (H1–H5).** This principle is not abstract — it is enforced as a first-class UI concept in the Steward Console (v2.1). Every operator action declares its agency tier:
 
 - **H1 Observer** — read-only (firehose, map, inspector); leaves no trace
