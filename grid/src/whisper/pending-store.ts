@@ -145,14 +145,16 @@ export class PendingStore {
     }
 
     /**
-     * Returns a Record mapping each recipient DID with at least one envelope
-     * to its current envelope count. DIDs with zero envelopes are omitted.
-     * Used by the Wave 3 GET /api/v1/whispers/metrics endpoint.
+     * Return a record of all DIDs with pending envelopes and their counts.
+     * For the Wave 3 metrics endpoint GET /api/v1/whispers/metrics.
+     * Returns only DIDs that have ≥1 envelope queued.
      */
     allDidsWithCounts(): Record<string, number> {
         const out: Record<string, number> = {};
         for (const [did, envs] of this.store) {
-            if (envs.length > 0) out[did] = envs.length;
+            if (envs.length > 0) {
+                out[did] = envs.length;
+            }
         }
         return out;
     }

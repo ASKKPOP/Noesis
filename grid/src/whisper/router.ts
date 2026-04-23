@@ -52,7 +52,7 @@ export interface WhisperRouterDeps {
     readonly registry: WhisperRegistry;
     readonly rateLimiter: TickRateLimiter;
     readonly pendingStore: PendingStore;
-    /** Optional — omit in W2 tests for backward compat. W3 routes always inject one. */
+    /** Optional metrics counter — W2 tests pass without it. */
     readonly metricsCounter?: WhisperMetricsCounter;
 }
 
@@ -102,7 +102,9 @@ export class WhisperRouter {
         // Step 5: Enqueue for recipient pull (LOCKED — must come after audit emit).
         this.deps.pendingStore.enqueue(env);
 
+        // Step 6: Increment emitted counter (optional dep — W2 tests pass without it).
         this.deps.metricsCounter?.increment('emitted');
+
         return true;
     }
 }
