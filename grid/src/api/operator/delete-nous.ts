@@ -32,6 +32,7 @@ import type { SpatialMap } from '../../space/map.js';
 import { validateTierBody, type OperatorBody } from './_validation.js';
 import { tombstoneCheck, TombstonedDidError } from '../../registry/tombstone-check.js';
 import { appendNousDeleted } from '../../audit/append-nous-deleted.js';
+import { appendBiosDeath } from '../../bios/index.js';
 import { combineStateHash } from '../../audit/state-hash.js';
 import {
     fetchBrainHashState,
@@ -152,7 +153,18 @@ export function registerDeleteNousRoute(
             // 6b. Despawn from coordinator (removes runner, cleans up resources).
             resolvedDeps.coordinator.despawnNous(targetDid);
 
-            // 6c. Emit operator.nous_deleted audit event (sole producer path).
+            // 6c. Bios lifecycle layer — bios.death precedes operator.nous_deleted (D-10b-03).
+            // Wire keys are snake_case per D-10b-01 closed-tuple contract.
+            // appendBiosDeath does NOT tombstone internally (B6 fix, plan 10b-03);
+            // the tombstone was performed at step 6a above (caller-owned).
+            appendBiosDeath(services.audit, targetDid, {
+                did: targetDid,
+                tick: currentTick,
+                cause: 'operator_h5',
+                final_state_hash: stateHash,
+            });
+
+            // 6d. Emit operator.nous_deleted audit event (sole producer path).
             appendNousDeleted(services.audit, v.operator_id, {
                 tier: 'H5',
                 action: 'delete',
