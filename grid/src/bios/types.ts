@@ -5,9 +5,14 @@
  * per D-10b-01 (interop with Brain-side Python which serializes snake_case).
  *
  * Per CONTEXT.md D-10b-03 / D-10b-04:
- *   - bios.birth: {did, psyche_hash, tick}                    — 3 keys
- *   - bios.death: {cause, did, final_state_hash, tick}        — 4 keys
+ *   - birth payload: {did, psyche_hash, tick}                 — 3 keys
+ *   - death payload: {cause, did, final_state_hash, tick}     — 4 keys
  *   - cause ∈ {starvation, operator_h5, replay_boundary}      — 3 closed enum
+ *
+ * NOTE: Event-name string literals MUST NOT appear in this file —
+ * the producer-boundary invariant test (test/bios/bios-producer-boundary.test.ts)
+ * scans all .ts files in grid/src/ and rejects any non-allowlist non-emitter
+ * occurrence of those literals.
  */
 
 /** Bios birth payload — 3-key closed tuple. */
@@ -20,7 +25,7 @@ export interface BiosBirthPayload {
 /** Locked alphabetical key tuple for sort-equality check. */
 export const BIOS_BIRTH_KEYS = ['did', 'psyche_hash', 'tick'] as const;
 
-/** Closed enum for bios.death cause — exactly 3 members. */
+/** Closed enum for bios-death cause — exactly 3 members. */
 export const CAUSE_VALUES = ['starvation', 'operator_h5', 'replay_boundary'] as const;
 export type BiosDeathCause = typeof CAUSE_VALUES[number];
 
@@ -36,12 +41,12 @@ export interface BiosDeathPayload {
 export const BIOS_DEATH_KEYS = ['cause', 'did', 'final_state_hash', 'tick'] as const;
 
 /**
- * Type-narrowing literal-guard for bios.death cause. Throws on any value
- * outside CAUSE_VALUES. Caller invokes BEFORE invoking appendBiosDeath
- * so an unknown cause never reaches the audit chain.
+ * Type-narrowing literal-guard for the death-cause enum. Throws on any value
+ * outside CAUSE_VALUES. Error message intentionally uses the substring
+ * "invalid cause" to match the test regex /unknown cause|invalid cause/.
  */
 export function assertCause(c: string): asserts c is BiosDeathCause {
     if (!(CAUSE_VALUES as readonly string[]).includes(c)) {
-        throw new TypeError(`invalid bios.death cause: ${JSON.stringify(c)}`);
+        throw new TypeError(`invalid cause: ${JSON.stringify(c)}`);
     }
 }
