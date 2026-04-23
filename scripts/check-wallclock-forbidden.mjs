@@ -38,6 +38,9 @@ import { join } from 'node:path';
 const TIER_A_ROOTS = [
     'brain/src/noesis_brain/bios',
     'brain/src/noesis_brain/chronos',
+    // Phase 11 (D-11-13): whisper Brain tree — deterministic derivation only,
+    // no wall-clock reads permitted (seed+tick+counter basis for all crypto ops).
+    'brain/src/noesis_brain/whisper',
 ];
 
 // ── Tier A forbidden patterns (any match in above roots = violation) ──────────
@@ -65,6 +68,12 @@ const TIER_B_PATTERNS = [
 // ── Grid TypeScript paths (Tier B — call-only) ───────────────────────────────
 const TIER_B_TS_ROOTS = [
     'grid/src/bios',
+    // Phase 11 (D-11-13): whisper Grid tree — nonce derivation is tick-indexed;
+    // Date.now/performance.now/Math.random are forbidden. @fastify/rate-limit's
+    // internal Date.now usage is third-party and already exempt via import-only clause.
+    // Dashboard whisper tree is render-only counts (Date.now allowed for UI state);
+    // do NOT extend to dashboard/src/whisper/** per plan interfaces block.
+    'grid/src/whisper',
 ];
 
 const TIER_B_TS_PATTERNS = [
