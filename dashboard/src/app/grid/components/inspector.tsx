@@ -43,6 +43,7 @@ import { PsycheSection } from './inspector-sections/psyche';
 import { ThymosSection } from './inspector-sections/thymos';
 import { AnankeSection } from './inspector-sections/ananke';
 import { BiosSection } from './inspector-sections/bios';
+import { WhisperSection } from './inspector-sections/whisper';
 import { TelosSection } from './inspector-sections/telos';
 import { MemorySection } from './inspector-sections/memory';
 import { RelationshipsSection } from './inspector-sections/relationships';
@@ -388,6 +389,7 @@ export function Inspector(): React.ReactElement | null {
                         <ThymosSection thymos={state.data.thymos} />
                         <AnankeSection did={selectedDid} />
                         <BiosSection did={selectedDid} />
+                        <WhisperSection did={selectedDid} />
                         <TelosSection  telos={state.data.telos} did={selectedDid} />
                         <MemorySection memories={state.data.memory_highlights} />
                     </div>
