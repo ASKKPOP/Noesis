@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from noesis_brain.ananke.drives import detect_crossing, initial_state, step
-from noesis_brain.ananke.types import CrossingEvent, DriveState
+from noesis_brain.ananke.types import CrossingEvent, DriveLevel, DriveName, DriveState
 
 
 @dataclass
@@ -73,3 +73,25 @@ class AnankeRuntime:
         mutate internal state.
         """
         return tuple(self._crossings)
+
+    def elevate_drive(self, drive: DriveName) -> None:
+        """Raise drive level by one bucket (LOW→MED or MED→HIGH); no-op at HIGH.
+
+        Called by BiosRuntime per D-10b-02 when a Bios need crosses up: the
+        matching Ananke drive is bumped one bucket. This is in-memory mutation
+        only — does NOT append to `_crossings`, does NOT emit audit events.
+        The elevated level is picked up on the NEXT on_tick() call where
+        detect_crossing() observes the bucket already-changed and emits the
+        ananke.drive_crossed event normally (sole-producer invariant: only
+        drives.detect_crossing() emits crossings to the wire).
+
+        Mapping is enforced by the caller: BiosRuntime uses NEED_TO_DRIVE
+        which restricts elevations to {hunger, safety} — curiosity/boredom/
+        loneliness are never touched by Bios.
+        """
+        current = self.state.levels[drive]
+        if current == DriveLevel.LOW:
+            self.state.levels[drive] = DriveLevel.MED
+        elif current == DriveLevel.MED:
+            self.state.levels[drive] = DriveLevel.HIGH
+        # HIGH: no-op (cap)
