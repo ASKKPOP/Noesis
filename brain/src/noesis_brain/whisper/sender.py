@@ -48,6 +48,22 @@ __all__ = ["send_whisper"]
 
 _keyring = Keyring()
 
+# WR-03: Per-(sender_did, tick) counter state to enforce nonce monotonicity.
+#
+# The nonce formula is blake2b(seed ‖ tick_le64 ‖ counter_le32). For a given
+# (sender_did, tick) pair, nonce uniqueness depends entirely on counter being
+# distinct per call.  Reusing the same (tick, counter) pair for two different
+# plaintexts encrypted to the same key is a catastrophic AEAD failure that
+# leaks the XOR of the two plaintexts under XSalsa20-Poly1305.
+#
+# This dict auto-increments the counter and resets it when tick advances,
+# eliminating any risk of accidental caller-side reuse within a process lifetime.
+# Callers that pass an explicit counter= argument take manual responsibility;
+# callers that omit counter (use the default sentinel -1) get automatic tracking.
+_counter_state: dict[tuple[str, int], int] = {}
+
+_COUNTER_AUTO = -1  # sentinel: use automatic per-(sender, tick) tracking
+
 
 async def send_whisper(
     *,
@@ -55,7 +71,7 @@ async def send_whisper(
     recipient_did: str,
     plaintext: str,
     tick: int,
-    counter: int,
+    counter: int = _COUNTER_AUTO,
     grid_base_url: str = "http://127.0.0.1:8080",
     http_client: httpx.AsyncClient | None = None,
 ) -> dict:
@@ -67,6 +83,15 @@ async def send_whisper(
         plaintext: the message text to encrypt. NEVER sent in plaintext over wire.
         tick: current world-clock tick (deterministic nonce input).
         counter: per-(sender, tick) message counter (deterministic nonce input).
+            Defaults to automatic tracking (_COUNTER_AUTO): the module maintains
+            a per-(sender_did, tick) counter that increments on every call and
+            resets when tick advances.  Pass an explicit non-negative integer
+            ONLY when you need deterministic counters for testing — in that case
+            YOU are responsible for ensuring (tick, counter) uniqueness.
+
+            CRITICAL: reusing the same (tick, counter) pair for two different
+            plaintexts causes nonce reuse under XSalsa20-Poly1305 — an AEAD
+            catastrophe that can reveal the XOR of both plaintexts.
         grid_base_url: base URL of the local Grid instance.
         http_client: optional injected httpx.AsyncClient (for testing).
 
@@ -77,6 +102,11 @@ async def send_whisper(
         TradeKeywordRejected: if plaintext contains trade keywords (T-10-06).
         httpx.HTTPStatusError: if Grid returns non-2xx.
     """
+    # WR-03: Resolve counter — auto-increment if caller did not supply one.
+    if counter == _COUNTER_AUTO:
+        key = (sender_did, tick)
+        counter = _counter_state.get(key, 0)
+        _counter_state[key] = counter + 1
     # Step 0: T-10-06 defense-depth — trade keyword gate BEFORE any crypto.
     assert_no_trade_keywords(plaintext)
 

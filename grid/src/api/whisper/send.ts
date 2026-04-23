@@ -51,6 +51,14 @@ export function sendHandler(deps: WhisperRouteDeps) {
         reply: FastifyReply,
     ) => {
         const senderDid = req.params.did;
+
+        // Validate senderDid shape — must match DID_RE before any registry lookup
+        // or envelope construction (CR-01: asymmetry with to_did validation fixed).
+        if (!DID_RE.test(senderDid)) {
+            reply.code(400);
+            return { error: 'invalid_did' };
+        }
+
         const body = (req.body ?? {}) as SendBody;
 
         // Validate to_did shape.
@@ -81,6 +89,14 @@ export function sendHandler(deps: WhisperRouteDeps) {
         if (deps.registry.isTombstoned(senderDid)) {
             reply.code(410);
             return { error: 'self_tombstoned' };
+        }
+
+        // WR-02: Guard against memory exhaustion from oversized base64 blobs.
+        // ~48 KB decoded is well above any real whisper message.
+        const MAX_CT_B64_LENGTH = 65_536;
+        if (ctB64.length > MAX_CT_B64_LENGTH) {
+            reply.code(400);
+            return { error: 'ciphertext_too_large' };
         }
 
         // Decode ciphertext bytes and compute SHA-256 hash.

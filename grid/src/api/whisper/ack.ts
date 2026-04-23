@@ -17,6 +17,8 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { WhisperRouteDeps } from './routes.js';
 
+const DID_RE = /^did:noesis:[a-zA-Z0-9_\-]+$/;
+
 interface AckBody {
     envelope_ids?: unknown;
 }
@@ -30,6 +32,13 @@ export function ackHandler(deps: WhisperRouteDeps) {
         reply: FastifyReply,
     ) => {
         const did = req.params.did;
+
+        // WR-04: Validate :did param before passing to PendingStore.
+        if (!DID_RE.test(did)) {
+            reply.code(400);
+            return { error: 'invalid_did' };
+        }
+
         const body = (req.body ?? {}) as AckBody;
         const ids = body.envelope_ids;
 

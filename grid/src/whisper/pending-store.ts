@@ -112,16 +112,19 @@ export class PendingStore {
         this.store.delete(did);
 
         // Scrub sender-side: remove envelopes from_did === did from all queues.
+        // WR-01: collect mutations in a first pass, apply after iteration to avoid
+        // mutating the Map while it is being iterated (fragile / spec edge case).
+        const toDelete: string[] = [];
+        const toSet: [string, Envelope[]][] = [];
         for (const [recipient, envs] of this.store) {
             const filtered = envs.filter(e => e.from_did !== did);
             if (filtered.length !== envs.length) {
-                if (filtered.length === 0) {
-                    this.store.delete(recipient);
-                } else {
-                    this.store.set(recipient, filtered);
-                }
+                if (filtered.length === 0) toDelete.push(recipient);
+                else toSet.push([recipient, filtered]);
             }
         }
+        for (const k of toDelete) this.store.delete(k);
+        for (const [k, v] of toSet) this.store.set(k, v);
     }
 
     /**

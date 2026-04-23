@@ -18,15 +18,24 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { WhisperRouteDeps } from './routes.js';
 
+const DID_RE = /^did:noesis:[a-zA-Z0-9_\-]+$/;
+
 /**
  * Build Fastify handler for GET /api/v1/nous/:did/whispers/pending.
  */
 export function pendingHandler(deps: WhisperRouteDeps) {
     return async (
         req: FastifyRequest<{ Params: { did: string } }>,
-        _reply: FastifyReply,
+        reply: FastifyReply,
     ) => {
         const did = req.params.did;
+
+        // WR-04: Validate :did param before passing to PendingStore.
+        if (!DID_RE.test(did)) {
+            reply.code(400);
+            return { error: 'invalid_did' };
+        }
+
         const envelopes = deps.pendingStore.drainFor(did);
         return { envelopes };
     };
