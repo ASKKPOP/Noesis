@@ -70,8 +70,14 @@ describe('bios.birth — sole producer boundary (BIOS-02)', () => {
     });
 });
 
+// Known bios.death consumers: observe the event but never call audit.append for it.
+// Phase 11 WHISPER-06: PendingStore subscribes to bios.death via onAppend to GC
+// tombstoned DID queues (D-11-17). It checks entry.eventType === 'bios.death' but
+// does NOT emit bios.death.
+const KNOWN_CONSUMERS_DEATH = ['whisper/pending-store.ts'];
+
 describe('bios.death — sole producer boundary (BIOS-03)', () => {
-    it("string 'bios.death' appears only in allowlist and emitter", () => {
+    it("string 'bios.death' appears only in allowlist, emitter, and known consumers", () => {
         const hits: string[] = [];
         for (const file of walk(GRID_SRC)) {
             const rel = relative(GRID_SRC, file).replace(/\\/g, '/');
@@ -79,7 +85,8 @@ describe('bios.death — sole producer boundary (BIOS-03)', () => {
             if (/bios\.death/.test(src)) hits.push(rel);
         }
         hits.sort();
-        expect(hits).toEqual([SOLE_EMITTER_DEATH, ALLOWLIST_FILE].sort());
+        const expected = [SOLE_EMITTER_DEATH, ALLOWLIST_FILE, ...KNOWN_CONSUMERS_DEATH].sort();
+        expect(hits).toEqual(expected);
     });
 
     it('no file in grid/src/ except appendBiosDeath.ts directly emits bios.death via audit.append', () => {

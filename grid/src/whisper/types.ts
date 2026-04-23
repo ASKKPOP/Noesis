@@ -61,4 +61,6 @@ export interface Envelope {
     readonly ephemeral_pub_b64: string;
     readonly ciphertext_b64: string;
     readonly ciphertext_hash: string;
+    /** Brain-generated UUID for ack dedup (D-11-06). Used by PendingStore.ackDelete. */
+    readonly envelope_id: string;
 }

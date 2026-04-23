@@ -20,6 +20,7 @@ import { Reviewer } from '../review/index.js';
 import { VALID_REVIEW_FAILURE_CODES } from '../review/types.js';
 import { appendTelosRefined } from '../audit/append-telos-refined.js';
 import { appendAnankeDriveCrossed } from '../ananke/index.js';
+import type { WhisperRouter } from '../whisper/router.js';
 
 export interface NousRunnerConfig {
     nousDid: string;
@@ -46,6 +47,15 @@ export interface NousRunnerConfig {
      * leaves the `trade.proposed` and `trade.settled` emit sites untouched.
      */
     reviewer?: Reviewer;
+    /**
+     * Phase 11 (WHISPER-03 / D-11-05): shared WhisperRouter instance.
+     *
+     * Constructed at Grid bootstrap with injected {audit, registry,
+     * rateLimiter, pendingStore} and shared with routes.ts (Wave 3).
+     * Optional here — if absent the whisper_send action is silently
+     * skipped (mirrors reviewer optional pattern for test isolation).
+     */
+    whisperRouter?: WhisperRouter;
 }
 
 export type SpeakHandler = (runner: NousRunner, channel: string, text: string, tick: number) => void;
@@ -60,6 +70,7 @@ export class NousRunner {
     private readonly registry: NousRegistry;
     private readonly economy: EconomyManager;
     private readonly reviewer: Reviewer | undefined;
+    private readonly whisperRouter: WhisperRouter | undefined;
 
     private speakHandler: SpeakHandler | null = null;
 
@@ -81,6 +92,7 @@ export class NousRunner {
         this.registry = config.registry;
         this.economy = config.economy;
         this.reviewer = config.reviewer;
+        this.whisperRouter = config.whisperRouter;
     }
 
     /** Register handler called when this Nous speaks (for message routing). */
@@ -387,6 +399,32 @@ export class NousRunner {
                             did: this.nousDid,
                             reason: (err as Error).message,
                         }));
+                    }
+                    break;
+                }
+
+                case 'whisper_send': {
+                    // Phase 11 WHISPER-03 / D-11-05: route pre-encrypted envelope
+                    // through WhisperRouter (validate → tombstone → ratelimit → emit → queue).
+                    // Silent drop on tombstone or rate-limit per D-11-18 / D-11-08 (return false).
+                    // Throws only on validation errors (bad DID regex, bad hash) — catch and log.
+                    // Transport-error fallback mirrors trade_request pattern.
+                    if (this.whisperRouter) {
+                        try {
+                            const accepted = this.whisperRouter.route(action.envelope, tick);
+                            if (!accepted) {
+                                // Silent drop — tombstone or rate-limit. NO log, NO retry.
+                                return;
+                            }
+                        } catch (err) {
+                            // Validation failures (bad DID regex, bad hash, etc.) are programmer
+                            // errors from the Brain side — surface for debugging.
+                            console.error(JSON.stringify({
+                                event: 'whisper.dispatch.validation_failed',
+                                did: this.nousDid,
+                                reason: (err as Error).message,
+                            }));
+                        }
                     }
                     break;
                 }
