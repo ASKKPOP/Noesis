@@ -1,0 +1,19 @@
+{
+  "_generated": {
+    "note": "GENERATED \u2014 DO NOT EDIT; regenerate via: pytest brain/test/whisper/test_roundtrip.py",
+    "generator": "brain/test/whisper/test_roundtrip.py",
+    "phase": "11-mesh-whisper",
+    "wave": 1,
+    "purpose": "Python->JS byte-compat roundtrip fixture (RESEARCH \u00a72.2 A2 proof)"
+  },
+  "sender_did": "did:noesis:alice_test",
+  "recipient_did": "did:noesis:bob_test",
+  "tick": 43,
+  "counter": 0,
+  "plaintext_b64": "aGVsbG8gZnJvbSBQeXRob24=",
+  "nonce_b64": "sIdE5a+ctbkJ7W/AAhDw27VqoO9/3T3n",
+  "ciphertext_b64": "rpVVGeo4X/Xp8Xbvjk1Jsx7wgJX8yLiRA6BJTblRj3Hq",
+  "ciphertext_hash": "56ae905f6a2dfab24bed4f761ce5454508c2fd53bd5bb8a582bf0c1731c660b9",
+  "sender_pub_b64": "ZNgryiwUnAHDYGqRm117oLdcGr6EcX2z0pZHQv/+QHw=",
+  "recipient_pub_b64": "h7xHzUePFH0+FDtuBfKljHSbveJzQ5jdEMrswvW7lhc="
+}

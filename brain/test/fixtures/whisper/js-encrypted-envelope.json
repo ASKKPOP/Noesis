@@ -1,0 +1,19 @@
+{
+  "_generated": {
+    "note": "GENERATED — DO NOT EDIT; regenerate via: node grid/scripts/gen-whisper-jsfixture.mjs",
+    "generator": "grid/scripts/gen-whisper-jsfixture.mjs",
+    "phase": "11-mesh-whisper",
+    "wave": 1,
+    "purpose": "JS->Python byte-compat roundtrip fixture (RESEARCH §2.2 A2 proof)"
+  },
+  "sender_did": "did:noesis:alice_test",
+  "recipient_did": "did:noesis:bob_test",
+  "tick": 42,
+  "counter": 0,
+  "plaintext_b64": "aGVsbG8gZnJvbSBKUw==",
+  "nonce_b64": "ncWSfA9Av2qYOj9SO7TNUk1/wSHRyd43",
+  "ciphertext_b64": "a+XGJvhheJqhirlSChDr8HX/LvgCgF/Fp2jEdPI=",
+  "ciphertext_hash": "ceb2fa571c6c3c01cad71ece86b7c77d47315b390e240bc86dcbe4793d0f5a7e",
+  "sender_pub_b64": "ZNgryiwUnAHDYGqRm117oLdcGr6EcX2z0pZHQv/+QHw=",
+  "recipient_pub_b64": "h7xHzUePFH0+FDtuBfKljHSbveJzQ5jdEMrswvW7lhc="
+}
