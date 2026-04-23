@@ -40,11 +40,14 @@ const TARGETS = [
     resolve(repoRoot, 'grid/package.json'),
 ];
 
-// SC#5 — broadcast-allowlist.ts pre-Phase-9 baseline (recorded 2026-04-22).
+// SC#5 — broadcast-allowlist.ts baseline line count.
+// Updated 2026-04-23 (Phase 11 doc-sync): Phase 10b added bios.birth + bios.death (+2 entries),
+// Phase 11 added nous.whispered (+1 entry). Each addition was approved in its own CONTEXT.md.
 // Update ONLY when a deliberate post-Phase-9 change is made AND the plan-checker
 // approves the amendment of D-9-13. Do NOT update to suppress a failing gate.
+// History: Phase 9 baseline = 147, Phase 10b post-ship = 213, Phase 11 post-ship = 266.
 const ALLOWLIST_FILE = resolve(repoRoot, 'grid/src/audit/broadcast-allowlist.ts');
-const ALLOWLIST_BASELINE_LINES = 147;
+const ALLOWLIST_BASELINE_LINES = 266;
 
 let hadError = false;
 

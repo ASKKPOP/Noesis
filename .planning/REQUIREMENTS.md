@@ -75,12 +75,12 @@
 <!-- E2E envelope Nous→Nous. Operators cannot read plaintext at ANY tier including H5.
      Envelope only in v2.2 — Signal Double Ratchet / sealed-sender deferred post-milestone. -->
 
-- [x] **WHISPER-01**: A new allowlisted event **`nous.whispered`** carries closed-tuple `{from_did, to_did, tick, ciphertext_hash}` — `ciphertext_hash` only, never ciphertext or plaintext. Single sole-producer file `grid/src/whisper/WhisperRouter.ts` — grep enforced. This supersedes the v2.1 WHISPER-01 future-requirement placeholder.
-- [ ] **WHISPER-02**: Envelope uses **libsodium `crypto_box`** (X25519 + XChaCha20-Poly1305 AEAD). Each Nous has a per-identity keypair generated at `bios.birth`; keys never leave the Nous's Brain-scoped keyring. Signal Double Ratchet / sealed-sender explicitly deferred to a post-v2.2 milestone.
-- [ ] **WHISPER-03**: **Operators cannot read Whisper plaintext at any tier, including H5.** Locked. Grid MUST NOT persist plaintext, Brain MUST NOT log plaintext, Dashboard MUST NOT render plaintext — three-tier grep CI gate (`scripts/check-whisper-plaintext.mjs`) plus an `fs.writeFile` monkey-patch runtime test on the router.
-- [ ] **WHISPER-04**: Whisper delivery is **recipient-pull**: the recipient's Brain polls undelivered envelopes on tick; the sender's Brain does not push. Ciphertext is **deleted from the Grid once the recipient acknowledges pull** — audit entry (`nous.whispered` with hash) retained forever per first-life.
-- [x] **WHISPER-05**: Rate-limit is **per-sender** using `@fastify/rate-limit`. Default budget configurable per Grid (e.g. 10 whispers per 100 ticks). Exceeding the budget queues the send; queue length is observable via operator-side metric but plaintext is still never exposed.
-- [x] **WHISPER-06**: The v2.1 `DialogueAggregator` is extended to treat whisper-exchanges as dialogue substrate — DialogueAggregator receives `nous.whispered` events but only the hash, never plaintext. A whispered-dialogue can still trigger `telos.refined` (the refinement itself is an existing v2.1 audit event, hash-only).
+- [x] **WHISPER-01**: A new allowlisted event **`nous.whispered`** carries closed-tuple `{from_did, to_did, tick, ciphertext_hash}` — `ciphertext_hash` only, never ciphertext or plaintext. Single sole-producer file `grid/src/whisper/WhisperRouter.ts` — grep enforced. This supersedes the v2.1 WHISPER-01 future-requirement placeholder. ✅ Validated Phase 11
+- [x] **WHISPER-02**: Envelope uses **libsodium `crypto_box`** (X25519 + XChaCha20-Poly1305 AEAD). Each Nous has a per-identity keypair generated at `bios.birth`; keys never leave the Nous's Brain-scoped keyring. Signal Double Ratchet / sealed-sender explicitly deferred to a post-v2.2 milestone. ✅ Validated Phase 11
+- [x] **WHISPER-03**: **Operators cannot read Whisper plaintext at any tier, including H5.** Locked. Grid MUST NOT persist plaintext, Brain MUST NOT log plaintext, Dashboard MUST NOT render plaintext — three-tier grep CI gate (`scripts/check-whisper-plaintext.mjs`) plus an `fs.writeFile` monkey-patch runtime test on the router. ✅ Validated Phase 11
+- [x] **WHISPER-04**: Whisper delivery is **recipient-pull**: the recipient's Brain polls undelivered envelopes on tick; the sender's Brain does not push. Ciphertext is **deleted from the Grid once the recipient acknowledges pull** — audit entry (`nous.whispered` with hash) retained forever per first-life. ✅ Validated Phase 11
+- [x] **WHISPER-05**: Rate-limit is **per-sender** using `@fastify/rate-limit`. Default budget configurable per Grid (e.g. 10 whispers per 100 ticks). Exceeding the budget queues the send; queue length is observable via operator-side metric but plaintext is still never exposed. ✅ Validated Phase 11
+- [x] **WHISPER-06**: The v2.1 `DialogueAggregator` is extended to treat whisper-exchanges as dialogue substrate — DialogueAggregator receives `nous.whispered` events but only the hash, never plaintext. A whispered-dialogue can still trigger `telos.refined` (the refinement itself is an existing v2.1 audit event, hash-only). ✅ Validated Phase 11
 
 ### REPLAY — Operator observability (Theme 5)
 
@@ -168,7 +168,7 @@ Each addition lands in its own phase PR following the v2.1 freeze-except-by-addi
 | DRIVE-01..05 | Phase 10a | Validated (shipped 2026-04-22) |
 | BIOS-01..04 | Phase 10b | Validated (shipped 2026-04-22) |
 | CHRONOS-01..03 | Phase 10b | Validated (shipped 2026-04-22) |
-| WHISPER-01..06 | Phase 11 | Planned |
+| WHISPER-01..06 | Phase 11 | Validated (shipped 2026-04-23) |
 | VOTE-01..07 | Phase 12 | Planned |
 | REPLAY-01..05 | Phase 13 | Planned |
 | RIG-01..05 | Phase 14 | Planned |

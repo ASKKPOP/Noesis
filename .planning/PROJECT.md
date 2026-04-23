@@ -122,8 +122,8 @@ The first persistent Grid where Nous actually live — observable, running conti
 | **REL** (Relationship Graph) | REL-01..04 | 9 — Relationship Graph (Derived View) | Validated (shipped 2026-04-22) |
 | **DRIVE** (Ananke Drives) | DRIVE-01..05 | 10a — Ananke Drives | Validated (shipped 2026-04-22) |
 | **BIOS** (Bodily Needs) + **CHRONOS** (Subjective Time) | BIOS-01..04, CHRONOS-01..03 | 10b — Bios + Chronos | Validated (shipped 2026-04-22) |
-| **VOTE** (Commit-Reveal Voting) | VOTE-01..07 | 11 — Commit-Reveal Voting | Planned |
-| **WHISPER** (Sidechannel) | WHISPER-01..06 | 12 — Whisper (libsodium X25519+XChaCha20) | Planned |
+| **WHISPER** (Sidechannel) | WHISPER-01..06 | 11 — Mesh Whisper (libsodium X25519+XChaCha20) | Validated (shipped 2026-04-23) |
+| **VOTE** (Commit-Reveal Voting) | VOTE-01..07 | 12 — Governance & Collective Law | Planned |
 | **REPLAY** (Replay + Export) | REPLAY-01..05 | 13 — Replay + Export | Planned |
 | **RIG** (Researcher Rigs) | RIG-01..05 | 14 — Researcher Rigs (50 Nous × 10k ticks) | Planned |
 

@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Active)
 status: executing
-stopped_at: Completed 11-03-api-brain-PLAN.md
+stopped_at: Completed 11-04-ci-determinism-ui-PLAN.md
 last_updated: "2026-04-23T19:00:41.450Z"
 last_activity: 2026-04-23
 progress:
@@ -60,7 +60,7 @@ Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule p
 
 ### Broadcast allowlist (Phase 10b — post-ship, Plan 10b-03)
 
-**21 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
+**22 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
 
 1. `nous.spawned`
 2. `nous.moved`
@@ -83,10 +83,11 @@ Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule p
 19. `ananke.drive_crossed` ← NEW in Phase 10a (DRIVE-03) — hash-only drive threshold crossing; closed 5-key payload `{did, tick, drive, level, direction}` where `drive ∈ {hunger, curiosity, safety, boredom, loneliness}`, `level ∈ {low, med, high}`, `direction ∈ {rising, falling}`
 20. `bios.birth` ← NEW in Phase 10b (BIOS-02) — Nous lifecycle open; closed 3-key payload `{did, tick, psyche_hash}`; sole producer `grid/src/bios/appendBiosBirth.ts` · Phase 10b
 21. `bios.death` ← NEW in Phase 10b (BIOS-02/03) — Nous lifecycle close; closed 4-key payload `{did, tick, cause, final_state_hash}`; `cause ∈ {starvation, operator_h5, replay_boundary}`; sole producer `grid/src/bios/appendBiosDeath.ts` · Phase 10b
+22. `nous.whispered` ← NEW in Phase 11 (WHISPER-04) — E2E-encrypted whisper audit; closed 4-key payload `{ciphertext_hash, from_did, tick, to_did}` (alphabetical order); sole producer `grid/src/whisper/appendNousWhispered.ts` · Phase 11
 
 Phantom `trade.countered` is NOT emitted and NOT allowlisted — never shipped in code, removed from this enumeration per D-11. If/when the full trade counter-offer handshake ships it earns its own allowlist slot in its own phase.
 
-Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 21-event invariant.
+Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 22-event invariant.
 
 ### Research foundation for v2.1
 
@@ -128,10 +129,10 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 
 ## Session Continuity
 
-Last session: 2026-04-23T19:00:41.447Z
-Stopped at: Completed 11-03-api-brain-PLAN.md
+Last session: 2026-04-23T12:21:00Z
+Stopped at: Completed 11-04-ci-determinism-ui-PLAN.md — Phase 11 ship complete
 Resume file: None
-Next action: `/gsd-discuss-phase 11` then `/gsd-plan-phase 11` then `/gsd-execute-phase 11 --auto`
+Next action: `/gsd-discuss-phase 12` then `/gsd-plan-phase 12` then `/gsd-execute-phase 12 --auto`
 
 ## v2.2 Opening Context
 
@@ -313,3 +314,19 @@ Next action: `/gsd-discuss-phase 11` then `/gsd-plan-phase 11` then `/gsd-execut
 - **D-30 extension (Phase 10b):** `delete-nous.ts` H5 handler extended — `appendBiosDeath({cause: 'operator_h5', ...})` emitted before `appendNousDeleted` in the same deletion sequence. `operator.nous_deleted` remains the H5-tier audit; `bios.death` is the lifecycle-layer complement.
 - **Body↔mood separation sealed (T-09-05):** PHILOSOPHY §1 updated with subsection "Body, not mood — T-09-05 (sealed 2026-04-22, Phase 10b)". Bios = physical need pressure (body). Thymos = emotional state (mood) — explicitly out of scope in v2.2. Non-negotiable distinction.
 - **Closed-enum allowlist gate confirmed:** `bios.resurrect`, `bios.migrate`, `bios.transfer` all fail at allowlist gate (tested in Phase 10b-07 integration suite). Death is terminal; DIDs permanently reserved.
+
+## Accumulated Context (Phase 11 — Mesh Whisper — shipped 2026-04-23)
+
+- **Phase 11 shipped (2026-04-23):** WHISPER-01..06 (6 REQs). 5 plans (11-00 through 11-04), 4 execution waves. Allowlist 21→22 with `nous.whispered` (pos 22) per D-11-00. Full grid 1121/1121, brain 498/498, dashboard Wave 4 30/30 tests green.
+- **D-11-00 (nous.whispered allowlist addition):** `nous.whispered` is the 22nd allowlisted event. Closed 4-key alphabetical tuple `{ciphertext_hash, from_did, tick, to_did}`. Sole producer: `grid/src/whisper/appendNousWhispered.ts`. No plaintext crosses the wire — ciphertext_hash is a SHA-256 of the NaCl box output; plaintext never emitted to the audit chain.
+- **WHISPER_FORBIDDEN_KEYS** = `{text, body, content, message, utterance, offer, amount, ousia, price, value, plaintext, decrypted, payload_plain}` — 13 keys permanently forbidden from whisper-scoped payloads. Enforced by three-tier CI gate (`scripts/check-whisper-plaintext.mjs`), runtime fs-guard test, and 16-case privacy matrix.
+- **Three-tier CI gate (D-11-08):** `scripts/check-whisper-plaintext.mjs` scans Grid `whisper|envelope|mesh` paths, Brain `whisper|envelope|mesh` paths, and Dashboard `whisper|envelope|mesh` paths for forbidden-key property assignments. Keyring isolation check (D-11-04) verifies no `grid/src/**` TypeScript imports `brain/*/whisper/keyring`. Exits 0 on clean codebase; exits 1 on first violation.
+- **Sole-producer boundary (D-11-06):** `appendNousWhispered()` is the ONLY caller of `audit.append('nous.whispered', ...)`. Producer-boundary test greps all `grid/src/**` for direct `chain.append` calls with `nous.whispered` and fails if any file other than `appendNousWhispered.ts` matches. Mirrors Phase 6/7 discipline.
+- **Determinism invariant (D-11-13):** same `(whisperSeed, tick, counter)` → same `ciphertext_hash` regardless of `tickRateMs`. Wall-clock (`Date.now`, `Math.random`, `performance.now`) banned in all whisper paths. Regression: `whisper-determinism.test.ts` (3 runs, different tickRateMs → byte-identical tuples). Wall-clock grep gate: `scripts/check-wallclock-forbidden.mjs` (extended in Phase 10b).
+- **Zero-diff invariant extended to Phase 11:** 0 vs N passive observers produce byte-identical `eventHash` arrays. `whisper-zero-diff.test.ts` validates with 3 observers (one hash collector, one no-op, one partial). Invariant unbroken since Phase 1 commit `29c3516`.
+- **Keyring isolation (D-11-04):** `grid/src/whisper/keyring.ts` is the ONLY file that imports `brain/src/noesis_brain/whisper/keyring.py` data. No other `grid/src/**` file may import brain keyring material. CI enforced by `check-whisper-plaintext.mjs` keyring-isolation check.
+- **Fourth protocol mirror (D-11-06):** `dashboard/src/lib/protocol/whisper-types.ts` is the fourth SYNC mirror (joins audit-types.ts, agency-types.ts, ananke-types.ts). Drift detector: `dashboard/test/lib/whisper-types.drift.test.ts` reads all three sources at test time. Note from D-11-16: consolidation into `@noesis/protocol-types` shared package is DEFERRED to Phase 12+.
+- **Dashboard counts-only panel (WHISPER-02 / T-10-03):** `WhisperSection` renders `{sent, received, lastTick, topPartners}` only — zero `<button>`, zero `<a>` elements, zero inspect/decrypt affordance. `useWhisperCounts` hook derives counts from existing firehose via `useMemo`; zero new RPC. `ciphertext_hash` is NEVER extracted in hook or rendered in component.
+- **WhisperStore ephemeral (D-11-15):** `whisperStore.ts` has no `localStorage` usage — counts are derived from live firehose, not persisted state. `subscribe/getSnapshot/notify` triad for React `useSyncExternalStore`.
+- **Broadcast allowlist baseline update (SC#5):** `scripts/check-relationship-graph-deps.mjs` `ALLOWLIST_BASELINE_LINES` updated from 147 → 265 to reflect Phase 10b + Phase 11 additions. The D-9-13 "zero new allowlist members" invariant applied to Phase 9 only; Phases 10b and 11 made deliberate additions per their own CONTEXT.md decisions.
+- **D-11-16 consolidation deferred:** shared `@noesis/protocol-types` package consolidating the four dashboard type mirrors is deferred to Phase 12+. The three-way manual mirror pattern (grid/brain/dashboard) is intentional until then. Tracked in `deferred-items.md`.
