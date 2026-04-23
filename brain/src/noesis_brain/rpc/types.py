@@ -16,6 +16,7 @@ class ActionType(str, Enum):
     TRADE_REQUEST = "trade_request"  # Send trade offer
     TELOS_REFINED = "telos_refined"  # Phase 7 DIALOG-02 — Nous-initiated refinement after peer dialogue
     DRIVE_CROSSED = "drive_crossed"  # Phase 10a DRIVE-03 — Ananke threshold crossing; Grid dispatcher converts to ananke.drive_crossed audit event. Metadata shape: {drive, level, direction} (3 keys; Grid injects did and tick).
+    BIOS_DEATH = "bios_death"  # Phase 10b BIOS-04 — starvation death signal; Grid plan 10b-05 emits bios.death audit event. Metadata shape: {cause, final_state_hash} (Grid injects did and tick).
     NOOP = "noop"  # Do nothing this cycle
 
 

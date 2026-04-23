@@ -30,17 +30,12 @@ from noesis_brain.memory.types import Memory  # exists in 10a — used as fixtur
 
 
 def _make_memory(tick: int) -> "Memory":
-    """Build a minimal Memory at the given tick.
-
-    Memory has additional required fields in 10a; the stub focuses on tick.
-    Wave 3 may relax this builder to call the actual constructor.
-    """
-    return Memory(  # type: ignore[call-arg]
+    """Build a minimal Memory at the given tick using the actual constructor."""
+    from noesis_brain.memory.types import MemoryType
+    return Memory(
+        memory_type=MemoryType.OBSERVATION,
+        content="x",
         tick=tick,
-        kind="utterance",
-        text="x",
-        speaker="did:noesis:stub",
-        channel="channel-a",
     )
 
 

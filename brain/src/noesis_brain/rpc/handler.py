@@ -9,6 +9,8 @@ from typing import Any
 
 from noesis_brain.ananke import AnankeRuntime, DriveLevel, DriveName
 from noesis_brain.ananke.loader import AnankeLoader
+from noesis_brain.bios import BiosLoader, BiosRuntime
+from noesis_brain.chronos import compute_multiplier
 from noesis_brain.llm.base import LLMAdapter, LLMError
 from noesis_brain.llm.types import GenerateOptions
 from noesis_brain.psyche.types import PersonalityDimension, Psyche
@@ -60,6 +62,12 @@ class BrainHandler:
         # stateless factory; per-DID runtimes live in _ananke_runtimes.
         self._ananke_loader = AnankeLoader()
         self._ananke_runtimes: dict[str, AnankeRuntime] = {}
+        # Phase 10b BIOS-02/BIOS-04: per-DID BiosRuntime registry.
+        # Mirrors the Ananke pattern. birth_tick defaults to 0; set via
+        # _set_birth_tick(did, tick) at spawn time when available.
+        self._bios_loader = BiosLoader()
+        self._bios_runtimes: dict[str, BiosRuntime] = {}
+        self._bios_birth_ticks: dict[str, int] = {}
 
     async def on_message(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle incoming P2P message → think → produce response actions.
@@ -78,10 +86,20 @@ class BrainHandler:
         # 1. Update emotions based on message content
         self.thymos.apply_triggers(text)
 
-        # 2. Build system prompt with current state
+        # 2. Build system prompt with current state (+ Bios/Chronos awareness).
+        ananke_rt = self._get_or_create_ananke(self.did)
+        bios_rt = self._get_or_create_bios(self.did)
+        subjective_multiplier = compute_multiplier(
+            curiosity_level=ananke_rt.state.levels[DriveName.CURIOSITY],
+            boredom_level=ananke_rt.state.levels[DriveName.BOREDOM],
+        )
+        epoch_since_spawn = bios_rt.epoch_since_spawn(0)  # tick=0 until on_tick supplies it
         system_prompt = build_system_prompt(
             self.psyche, self.thymos.mood, self.telos,
             grid_name=self.grid_name, location=self.location,
+            bios_snapshot=bios_rt.state,
+            epoch_since_spawn=epoch_since_spawn,
+            subjective_multiplier=subjective_multiplier,
         )
 
         # 3. Build user prompt with message context
@@ -173,6 +191,23 @@ class BrainHandler:
                 ).to_dict()
             )
 
+        # Phase 10b BIOS-04: step BiosRuntime each tick; enqueue BIOS_DEATH on starvation.
+        bios = self._get_or_create_bios(self.did)
+        bios.on_tick(tick)
+        if bios.drain_death():
+            # D-10b-09: starvation death — Grid plan 10b-05 emits bios.death audit event.
+            # T-10b-04-03: flag is consumed (drain_death clears it) to prevent re-fire.
+            actions.append(
+                Action(
+                    action_type=ActionType.BIOS_DEATH,
+                    channel="",
+                    text="",
+                    metadata={
+                        "cause": "starvation",
+                    },
+                ).to_dict()
+            )
+
         if actions:
             # Advisory logging (D-10a-06): drive-vs-action divergence is
             # PURE OBSERVATION. This call MUST NOT mutate `actions`.
@@ -239,6 +274,34 @@ class BrainHandler:
             )
             self._ananke_runtimes[did] = self._ananke_loader.build(seed=seed)
         return self._ananke_runtimes[did]
+
+    def _get_or_create_bios(self, did: str) -> BiosRuntime:
+        """Return the BiosRuntime for the given DID, creating one on first use.
+
+        Mirrors _get_or_create_ananke. birth_tick is taken from
+        _bios_birth_ticks[did] if set (populated at spawn time via
+        set_birth_tick); defaults to 0 for backward compatibility.
+
+        Determinism: same DID → same seed across replays (SHA-256, no wall-clock).
+        """
+        if did not in self._bios_runtimes:
+            seed = int.from_bytes(
+                hashlib.sha256(did.encode("utf-8")).digest()[:8], "big"
+            )
+            birth_tick = self._bios_birth_ticks.get(did, 0)
+            self._bios_runtimes[did] = self._bios_loader.build(
+                seed=seed, birth_tick=birth_tick
+            )
+        return self._bios_runtimes[did]
+
+    def set_birth_tick(self, did: str, birth_tick: int) -> None:
+        """Record the Grid tick at which this Nous was spawned.
+
+        Called by the Grid-side spawner (plan 10b-05) immediately after
+        appendBiosBirth so that epoch_since_spawn() returns the correct age.
+        Must be called BEFORE the first _get_or_create_bios() for this DID.
+        """
+        self._bios_birth_ticks[did] = birth_tick
 
     def _advisory_log_divergence(
         self,

@@ -61,8 +61,8 @@ def test_loader_multiple_dids_get_independent_runtimes() -> None:
 def test_action_type_drive_crossed_present() -> None:
     """Phase 10a DRIVE-03: DRIVE_CROSSED is a member of the closed ActionType enum."""
     assert ActionType.DRIVE_CROSSED.value == "drive_crossed"
-    # ActionType has exactly 7 members after this addition (6 prior + 1 new).
-    assert len(list(ActionType)) == 7
+    # ActionType has exactly 8 members after Phase 10b added BIOS_DEATH (7 prior + 1 new).
+    assert len(list(ActionType)) == 8
 
 
 def test_action_type_drive_crossed_position() -> None:
