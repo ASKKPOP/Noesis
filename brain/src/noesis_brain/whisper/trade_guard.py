@@ -19,7 +19,7 @@ SECURITY:
 Word-boundary semantics:
     \\b matches at a position between a word character (\\w) and a non-word
     character (\\W). So "buy" matches in "I want to buy" but NOT in "buying",
-    "buyer", or "re-buy-all" (the last has \w on both sides of the match).
+    "buyer", or "re-buy-all" (the last has \\w on both sides of the match).
 
 NO datetime, NO time.time, NO random — wall-clock ban per D-11-13.
 See: 11-CONTEXT.md T-10-06. sender.py for the call site.
