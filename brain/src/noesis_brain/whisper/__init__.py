@@ -22,6 +22,10 @@ from noesis_brain.whisper.types import NousWhisperedPayload, WHISPERED_KEYS
 from noesis_brain.whisper.nonce import derive_nonce
 from noesis_brain.whisper.keyring import Keyring
 from noesis_brain.whisper.key_directory import KeyDirectory
+from noesis_brain.whisper.trade_guard import assert_no_trade_keywords, TradeKeywordRejected
+from noesis_brain.whisper.decrypt import decrypt_envelope, DecryptVerificationError
+from noesis_brain.whisper.sender import send_whisper
+from noesis_brain.whisper.receiver import receive_loop
 
 __all__ = [
     "NousWhisperedPayload",
@@ -29,4 +33,10 @@ __all__ = [
     "derive_nonce",
     "Keyring",
     "KeyDirectory",
+    "assert_no_trade_keywords",
+    "TradeKeywordRejected",
+    "decrypt_envelope",
+    "DecryptVerificationError",
+    "send_whisper",
+    "receive_loop",
 ]
