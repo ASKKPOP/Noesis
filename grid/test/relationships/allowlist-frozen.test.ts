@@ -1,8 +1,10 @@
 /**
  * Phase 9 Plan 06 Task 2 — SC#5 broadcast allowlist frozen at source level.
  * Phase 10a update: baseline grows 18 → 19 with the explicit addition of
- * `ananke.drive_crossed` per D-10a-08. This is the ONLY sanctioned growth;
- * no relationship.* kinds are admitted (Phase 9 SC#5 still holds).
+ * `ananke.drive_crossed` per D-10a-08.
+ * Phase 10b update: baseline grows 19 → 21 with the explicit addition of
+ * `bios.birth` and `bios.death` per D-10b-01. No relationship.* kinds are
+ * admitted (Phase 9 SC#5 still holds).
  *
  * This test imports BROADCAST_ALLOWLIST (re-exported as ALLOWLIST from
  * grid/src/audit/broadcast-allowlist.ts) DIRECTLY and asserts:
@@ -22,11 +24,11 @@
 import { describe, it, expect } from 'vitest';
 import { ALLOWLIST } from '../../src/audit/broadcast-allowlist.js';
 
-describe('SC#5 — broadcast allowlist is frozen across Phase 9 (Phase 10a-adjusted baseline)', () => {
-    it('BROADCAST_ALLOWLIST length === 19 (Phase 10a baseline: +ananke.drive_crossed)', () => {
-        // If this fails, something added a new kind beyond D-10a-08.
+describe('SC#5 — broadcast allowlist is frozen across Phase 9 (Phase 10b-adjusted baseline)', () => {
+    it('BROADCAST_ALLOWLIST length === 21 (Phase 10b baseline: +bios.birth, +bios.death)', () => {
+        // If this fails, something added a new kind beyond D-10b-01.
         // See .planning/STATE.md Accumulated Context for the baseline lock.
-        expect(ALLOWLIST.size).toBe(19);
+        expect(ALLOWLIST.size).toBe(21);
     });
 
     it('no relationship.* kinds are admitted (Phase 9 SC#5 still holds)', () => {

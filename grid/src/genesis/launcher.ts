@@ -6,6 +6,7 @@
  */
 
 import type { Pool } from 'mysql2/promise';
+import { createHash } from 'node:crypto';
 import { WorldClock } from '../clock/ticker.js';
 import { SpatialMap } from '../space/map.js';
 import { LogosEngine } from '../logos/engine.js';
@@ -15,8 +16,25 @@ import { ShopRegistry } from '../economy/shop-registry.js';
 import { NousRegistry } from '../registry/registry.js';
 import { DialogueAggregator } from '../dialogue/index.js';
 import { RelationshipListener, RelationshipStorage, DEFAULT_RELATIONSHIP_CONFIG } from '../relationships/index.js';
+import { appendBiosBirth } from '../bios/index.js';
 import { GENESIS_SHOPS } from './presets.js';
 import type { GenesisConfig, GridState } from './types.js';
+
+/**
+ * Deterministic bootstrap psyche_hash for a freshly-spawned Nous.
+ *
+ * Phase 10b BIOS-02 wires the bios-birth event emission at every spawn boundary
+ * (D-10b-01). The wire payload requires a 64-char hex psyche_hash; at
+ * Grid spawn time the Brain has not yet computed its real Psyche state
+ * (which depends on first-tick experience), so we seed with a deterministic
+ * SHA-256 of the spawn-identity tuple. The Brain's later real Psyche hash
+ * supersedes this in subsequent state-hash composition (D-07 ordering).
+ *
+ * Wall-clock free per D-10b-09 — input is purely tick + identity material.
+ */
+function bootstrapPsycheHash(did: string, publicKey: string, tick: number): string {
+    return createHash('sha256').update(`${did}|${publicKey}|${tick}`).digest('hex');
+}
 
 export class GenesisLauncher {
     readonly clock: WorldClock;
@@ -174,6 +192,14 @@ export class GenesisLauncher {
                     region: record.region,
                     ndsAddress: record.ndsAddress,
                 });
+
+                // Phase 10b BIOS-02 (D-10b-01): emit the bios-birth event immediately
+                // after nous.spawned within the same tick. ORDER is locked.
+                appendBiosBirth(this.audit, record.did, {
+                    did: record.did,
+                    psyche_hash: bootstrapPsycheHash(record.did, record.publicKey, tick),
+                    tick,
+                });
             }
 
             // 5. Record genesis event
@@ -296,6 +322,15 @@ export class GenesisLauncher {
         this.space.placeNous(record.did, record.region);
         this.audit.append('nous.spawned', record.did, {
             name, region, ndsAddress: record.ndsAddress,
+        });
+
+        // Phase 10b BIOS-02 (D-10b-01): emit the bios-birth event immediately after
+        // nous.spawned within the same tick. ORDER is locked. Both genesis
+        // and runtime spawn paths converge on this contract.
+        appendBiosBirth(this.audit, record.did, {
+            did: record.did,
+            psyche_hash: bootstrapPsycheHash(record.did, record.publicKey, tick),
+            tick,
         });
     }
 }
