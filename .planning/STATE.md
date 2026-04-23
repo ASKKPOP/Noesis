@@ -126,10 +126,10 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 
 ## Session Continuity
 
-Last session: 2026-04-22T09:35:46.929Z
-Stopped at: Phase 10b UI-SPEC approved (6/6 PASS)
-Resume file: .planning/phases/10b-bios-needs-chronos-subjective-time-inner-life-part-2/10b-UI-SPEC.md
-Next action: `/gsd-discuss-phase 10b` (Bios Needs + Chronos Subjective Time — zero allowlist growth; Bios elevates Ananke drives via existing `ananke.drive_crossed`, Chronos is read-side transform).
+Last session: 2026-04-22
+Stopped at: Phase 10b plans APPROVED (8 plans across 4 waves; iteration 2 of 3; allowlist 19→21 via `bios.birth` + `bios.death` per D-10b-01)
+Resume file: .planning/phases/10b-bios-needs-chronos-subjective-time-inner-life-part-2/10b-01-wave0-test-scaffolding-PLAN.md
+Next action: `/gsd-execute-phase 10b --auto`
 
 ## v2.2 Opening Context
 

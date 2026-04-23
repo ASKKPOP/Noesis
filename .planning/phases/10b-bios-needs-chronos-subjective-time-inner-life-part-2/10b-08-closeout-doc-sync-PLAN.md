@@ -113,8 +113,8 @@ Edit `.planning/STATE.md`:
   - Replace every occurrence of `19 events` / `19-event allowlist` with `21 events` / `21-event allowlist`.
   - Append to the allowlist enumeration:
     ```
-    20. bios.birth — closed-tuple {did, psycheHash, tick} · sole producer grid/src/bios/appendBiosBirth.ts · Phase 10b
-    21. bios.death — closed-tuple {cause, did, finalStateHash, tick}; cause∈{starvation, operator_h5, replay_boundary} · sole producer grid/src/bios/appendBiosDeath.ts · Phase 10b
+    20. bios.birth — closed-tuple {did, psyche_hash, tick} · sole producer grid/src/bios/appendBiosBirth.ts · Phase 10b
+    21. bios.death — closed-tuple {cause, did, final_state_hash, tick}; cause∈{starvation, operator_h5, replay_boundary} · sole producer grid/src/bios/appendBiosDeath.ts · Phase 10b
     ```
 - Update "Current focus" / "Next up" section: Phase 10b shipped; next focus per ROADMAP.
 - Add BIOS_FORBIDDEN_KEYS + CHRONOS_FORBIDDEN_KEYS to the frozen-invariants list.

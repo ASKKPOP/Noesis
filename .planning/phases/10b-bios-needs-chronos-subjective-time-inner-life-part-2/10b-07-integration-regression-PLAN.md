@@ -102,7 +102,7 @@ import { createInMemoryHarness } from '../helpers/harness';
 describe('Phase 10b invariant: audit_tick === system_tick over 1000 ticks', () => {
   it('no drift across 1000 ticks with bios + ananke + telos events in stream', async () => {
     const harness = createInMemoryHarness({ seed: 42 });
-    await harness.spawnNous({ did: 'did:nous:' + 'a'.repeat(32) });
+    await harness.spawnNous({ did: 'did:noesis:' + 'a'.repeat(32) });
 
     for (let t = 1; t <= 1000; t++) {
       await harness.tick();
@@ -125,7 +125,7 @@ import { createInMemoryHarness } from '../helpers/harness';
 describe('Bios→Ananke elevator end-to-end', () => {
   it('energy crossing LOW→MED produces ananke.drive_crossed drive=hunger', async () => {
     const harness = createInMemoryHarness({ seed: 42 });
-    await harness.spawnNous({ did: 'did:nous:' + 'b'.repeat(32) });
+    await harness.spawnNous({ did: 'did:noesis:' + 'b'.repeat(32) });
 
     // Rise rate 0.0003/tick; from baseline 0.3 → threshold 0.33+0.02 band = ~130 ticks
     let crossedTick: number | null = null;
@@ -174,7 +174,7 @@ const PHASE_6_D17_HASH = 'c7c49f492d85072327e8a4af6912228d6dc2db2d7be372f92b57b3
 describe('Phase 6 D-17 regression: zero-diff pause/resume with Bios + Chronos wired', () => {
   it('produces identical audit hash when bios state is steady during pause window', async () => {
     const harness = createInMemoryHarness({ seed: 42, chronosListener: true });
-    await harness.spawnNous({ did: 'did:nous:' + 'c'.repeat(32) });
+    await harness.spawnNous({ did: 'did:noesis:' + 'c'.repeat(32) });
     for (let t = 1; t <= 100; t++) await harness.tick();
 
     harness.pause();
@@ -195,13 +195,14 @@ import { describe, it, expect } from 'vitest';
 import { createInMemoryHarness } from '../helpers/harness';
 
 // Phase 10b D-10b-10: 5 drives × crossings + 2 needs × crossings + bios.birth over 1000 ticks
-// Tight bound: 50 (drives) + 3 (energy max crossings) + 1 (sustenance max) + 1 (bios.birth) = 55
-const PHASE_10B_CEILING = 55;
+// Tight bound per D-10b-10: 50 (drives 10a) + 2 (energy max crossings) + 1 (sustenance max crossing) = 53
+// (bios.birth + bios.death are lifecycle events, not counted in per-tick steady-state ceiling)
+const PHASE_10B_CEILING = 53;
 
 describe('Phase 10b audit size ceiling', () => {
   it('≤ ceiling events per Nous over 1000 ticks', async () => {
     const harness = createInMemoryHarness({ seed: 42 });
-    await harness.spawnNous({ did: 'did:nous:' + 'd'.repeat(32) });
+    await harness.spawnNous({ did: 'did:noesis:' + 'd'.repeat(32) });
     for (let t = 1; t <= 1000; t++) await harness.tick();
 
     expect(harness.totalEvents()).toBeLessThanOrEqual(PHASE_10B_CEILING);
@@ -219,7 +220,7 @@ describe('Closed-enum allowlist: bios lifecycle rejects non-members', () => {
   for (const fake of ['bios.resurrect', 'bios.migrate', 'bios.transfer']) {
     it(`rejects ${fake}`, async () => {
       const harness = createInMemoryHarness({ seed: 42 });
-      await expect(harness.rawAppend(fake as any, { did: 'did:nous:' + 'e'.repeat(32), tick: 1 }))
+      await expect(harness.rawAppend(fake as any, { did: 'did:noesis:' + 'e'.repeat(32), tick: 1 }))
         .rejects.toThrow(/allowlist/i);
     });
   }

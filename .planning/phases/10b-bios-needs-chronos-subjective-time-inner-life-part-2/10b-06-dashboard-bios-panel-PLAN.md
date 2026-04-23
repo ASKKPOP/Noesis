@@ -16,7 +16,8 @@ must_haves:
   truths:
     - "Inspector Overview tab shows a Bios section between Ananke and Telos with 2 rows: energy (⚡) and sustenance (⬡)"
     - "Bios levels render as glyph/bucket only (low/med/high) — no raw values on screen"
-    - "Dashboard bios-types.ts mirrors grid BiosBirth/BiosDeath payloads via SYNC header (drift test will fail if diverged)"
+    - "Dashboard bios-types.ts mirrors grid BiosBirth/BiosDeath payloads BYTE-EQUIVALENTLY via SYNC header — snake_case keys (psyche_hash, final_state_hash) per D-10b-01"
+    - "BIOS_BIRTH_KEYS / BIOS_DEATH_KEYS tuples match grid exactly; drift test fails on any divergence"
     - "BIOS_FORBIDDEN_KEYS also enforced dashboard-side: any forbidden key in incoming event fails render"
   artifacts:
     - path: "dashboard/src/app/grid/components/inspector-sections/bios.tsx"
@@ -26,7 +27,7 @@ must_haves:
       provides: "React hook extracting energy/sustenance levels from current Nous state"
       contains: "export function useBiosLevels"
     - path: "dashboard/src/lib/protocol/bios-types.ts"
-      provides: "Dashboard mirror of Grid bios payloads with drift-sync header"
+      provides: "Dashboard mirror of Grid bios payloads with drift-sync header; snake_case wire keys"
       contains: "SYNC:"
   key_links:
     - from: "dashboard/src/app/grid/components/inspector.tsx"
@@ -37,10 +38,14 @@ must_haves:
       to: "dashboard/src/lib/hooks/use-bios-levels.ts"
       via: "hook provides levels to component"
       pattern: "useBiosLevels"
+    - from: "dashboard/src/lib/protocol/bios-types.ts"
+      to: "grid/src/bios/types.ts"
+      via: "SYNC header; byte-equivalent shape; snake_case keys"
+      pattern: "psyche_hash|final_state_hash"
 ---
 
 <objective>
-Create the Dashboard Bios panel per the approved 10b-UI-SPEC.md: a compact 2-row section (⚡ energy, ⬡ sustenance) in the Inspector Overview tab, between AnankeSection and TelosSection. Mirror the 10a Ananke inspector patterns exactly. Turns Wave 0 stubs GREEN for: privacy/bios-forbidden-keys-dashboard, lib/bios-types.drift.
+Create the Dashboard Bios panel per the approved 10b-UI-SPEC.md: a compact 2-row section (⚡ energy, ⬡ sustenance) in the Inspector Overview tab, between AnankeSection and TelosSection. Mirror the 10a Ananke inspector patterns exactly. The dashboard mirror of bios payloads MUST use snake_case keys (`psyche_hash`, `final_state_hash`) matching the Grid source of truth per D-10b-01 — the drift test compares shape byte-equivalently. Turns Wave 0 stubs GREEN for: privacy/bios-forbidden-keys-dashboard, lib/bios-types.drift.
 
 Purpose: Make the Nous body legible to humans operating the Grid — level buckets only, glyphs over numbers, no raw floats ever.
 
@@ -68,56 +73,24 @@ From dashboard/src/app/grid/components/inspector-sections/ananke.tsx — clone f
 - 5 rows (hunger, safety, curiosity, sociality, spite). Bios version has 2 rows only.
 - Aria pattern: `aria-label="{drive} {level} {direction}"` — mirror for bios.
 
-From dashboard/src/lib/hooks/use-ananke-levels.ts — clone for use-bios-levels.ts:
-- Selects slice of Nous state. Filter to energy + sustenance only.
-- Returns `{ energy: NeedLevel, sustenance: NeedLevel }`.
+From dashboard/src/lib/hooks/use-ananke-levels.ts — clone for use-bios-levels.ts (line-for-line, per 10b-PATTERNS.md lines 857-928):
+- Filters the `useFirehose()` stream for `eventType === 'ananke.drive_crossed'` events matching the target DID.
+- Maps the Ananke drives that correspond to Bios needs via `DRIVE_TO_NEED = { hunger: 'energy', safety: 'sustenance' }`.
+- Returns `Map<NeedName, NeedLevelEntry>` where each entry carries `{ level, direction }` (both level and direction dimensions matter).
 
 From dashboard/src/lib/protocol/ananke-types.ts — clone for bios-types.ts:
 - File starts with SYNC header pointing at grid/src/bios/types.ts
-- Mirrors BiosBirthPayload, BiosDeathPayload exactly (keys sorted, CAUSE_VALUES re-exported)
-- A drift test will fail if grid types diverge from dashboard types
+- Mirrors BiosBirthPayload, BiosDeathPayload **byte-equivalently** in shape (keys sorted, CAUSE_VALUES re-exported)
+- A drift test compares dashboard types to grid types; any divergence (casing, missing key, reordered tuple) fails.
 
-From 10b-UI-SPEC.md (approved 6/6 PASS):
-- Glyphs: ⚡ U+26A1 energy, ⬡ U+2B21 sustenance
-- Level-to-color map: low=green, med=amber, high=red (match Ananke vocabulary)
-- Empty state (Nous not yet birthed): "—" placeholder, aria="bios pending"
-- Section heading: "Bios" with small-caps styling (match Ananke heading)
-- 18-case aria matrix: 2 needs × 3 levels × 3 directions (rising/stable/falling)
-</interfaces>
-</context>
-
-<tasks>
-
-<task type="auto" tdd="true">
-  <name>Task 1: Dashboard bios-types.ts (drift-synced) + use-bios-levels hook</name>
-  <files>dashboard/src/lib/protocol/bios-types.ts, dashboard/src/lib/hooks/use-bios-levels.ts</files>
-  <read_first>
-    - dashboard/src/lib/protocol/ananke-types.ts (clone target; copy SYNC header format)
-    - dashboard/src/lib/hooks/use-ananke-levels.ts (hook clone target)
-    - grid/src/bios/types.ts (from plan 10b-03 — source of truth for sync)
-    - .planning/phases/10b-bios-needs-chronos-subjective-time-inner-life-part-2/10b-UI-SPEC.md (glyph + level mapping)
-  </read_first>
-  <behavior>
-    - bios-types.ts starts with `// SYNC: grid/src/bios/types.ts — drift test enforces parity`
-    - Mirrors BiosBirthPayload, BiosDeathPayload, CAUSE_VALUES, assertCause
-    - use-bios-levels.ts subscribes to Nous state store, extracts only bucket levels (never raw values)
-    - Hook returns `{ energy: 'low' | 'med' | 'high' | null, sustenance: 'low' | 'med' | 'high' | null }`
-  </behavior>
-  <action>
-Create `dashboard/src/lib/protocol/bios-types.ts` (mirror `ananke-types.ts` structure, starting with explicit SYNC header):
+From grid/src/bios/types.ts (plan 10b-03 — source of truth, D-10b-01 snake_case on the wire):
 ```ts
-// SYNC: grid/src/bios/types.ts
-// This file MUST remain byte-equivalent in shape to the Grid source of truth.
-// The drift test at dashboard/test/lib/bios-types.drift.test.ts will fail on divergence.
-// When grid/src/bios/types.ts changes, regenerate this file with identical keys/values.
-
 export interface BiosBirthPayload {
   readonly did: string;
   readonly tick: number;
-  readonly psycheHash: string;
+  readonly psyche_hash: string;        // snake_case
 }
-
-export const BIOS_BIRTH_KEYS = ['did', 'psycheHash', 'tick'] as const;
+export const BIOS_BIRTH_KEYS = ['did', 'psyche_hash', 'tick'] as const;
 
 export const CAUSE_VALUES = ['starvation', 'operator_h5', 'replay_boundary'] as const;
 export type Cause = typeof CAUSE_VALUES[number];
@@ -126,10 +99,76 @@ export interface BiosDeathPayload {
   readonly did: string;
   readonly tick: number;
   readonly cause: Cause;
-  readonly finalStateHash: string;
+  readonly final_state_hash: string;   // snake_case
+}
+export const BIOS_DEATH_KEYS = ['cause', 'did', 'final_state_hash', 'tick'] as const;
+```
+Dashboard MUST mirror these exactly. The drift test (`dashboard/test/lib/bios-types.drift.test.ts`) will fail if any key is camelCase (e.g., `psycheHash`, `finalStateHash`) or if the sorted-tuple constants diverge.
+
+From 10b-UI-SPEC.md (approved 6/6 PASS):
+- Glyphs: ⚡ U+26A1 energy, ⬡ U+2B21 sustenance
+- Level-to-color map: low=green, med=amber, high=red (match Ananke vocabulary)
+- Empty state (Nous not yet birthed): "—" placeholder, aria="bios pending"
+- Section heading: "Bios" with small-caps styling (match Ananke heading)
+- Aria-label grammar: `{need} {level} {direction}` mirroring Ananke (e.g. `energy med rising`). The BiosSection test matrix covers level × direction per need; the firehose-source hook unit test (in use-bios-levels.test.ts) covers the full drive → need mapping.
+</interfaces>
+</context>
+
+<tasks>
+
+<task type="auto" tdd="true">
+  <name>Task 1: Dashboard bios-types.ts (drift-synced, snake_case) + use-bios-levels hook</name>
+  <files>dashboard/src/lib/protocol/bios-types.ts, dashboard/src/lib/hooks/use-bios-levels.ts</files>
+  <read_first>
+    - dashboard/src/lib/protocol/ananke-types.ts (clone target; copy SYNC header format)
+    - dashboard/src/lib/hooks/use-ananke-levels.ts (hook clone target)
+    - grid/src/bios/types.ts (from plan 10b-03 — source of truth for sync; snake_case keys)
+    - dashboard/test/lib/bios-types.drift.test.ts (Wave 0 stub — confirms fixture expects snake_case)
+    - .planning/phases/10b-bios-needs-chronos-subjective-time-inner-life-part-2/10b-UI-SPEC.md (glyph + level mapping)
+  </read_first>
+  <behavior>
+    - bios-types.ts starts with `// SYNC: grid/src/bios/types.ts — drift test enforces parity`
+    - Mirrors BiosBirthPayload, BiosDeathPayload, CAUSE_VALUES, assertCause — **keys are snake_case** matching grid (per D-10b-01)
+    - `BIOS_BIRTH_KEYS = ['did', 'psyche_hash', 'tick']` (sorted; snake_case member `psyche_hash`)
+    - `BIOS_DEATH_KEYS = ['cause', 'did', 'final_state_hash', 'tick']` (sorted; snake_case member `final_state_hash`)
+    - If the Wave 0 drift-test fixture was scaffolded with camelCase placeholders from an earlier iteration, update the fixture to snake_case so it matches the grid source of truth
+    - use-bios-levels.ts subscribes to the Grid firehose via `useFirehose()` (same pattern as use-ananke-levels)
+    - Filters `eventType === 'ananke.drive_crossed'` where `actorDid === did` AND `payload.drive ∈ {hunger, safety}` (the two drives Bios elevates per D-10b-02)
+    - Maps drive → need via `DRIVE_TO_NEED = { hunger: 'energy', safety: 'sustenance' }`
+    - Returns `Map<NeedName, NeedLevelEntry>` where `NeedLevelEntry = { level: 'low'|'med'|'high', direction: 'rising'|'falling'|null }`
+    - Initial baseline (before any crossing fires): energy and sustenance both at `low` with `direction: null`
+  </behavior>
+  <action>
+Create `dashboard/src/lib/protocol/bios-types.ts` (mirror `ananke-types.ts` structure, starting with explicit SYNC header). **All wire-payload keys are snake_case per D-10b-01** — this file is a byte-equivalent shape-mirror of `grid/src/bios/types.ts`:
+```ts
+// SYNC: grid/src/bios/types.ts
+// This file MUST remain byte-equivalent in shape to the Grid source of truth.
+// Keys are snake_case per D-10b-01 (wire-format contract).
+// The drift test at dashboard/test/lib/bios-types.drift.test.ts will fail on divergence
+// (case drift, key reorder, missing tuple entries, etc.).
+// When grid/src/bios/types.ts changes, regenerate this file with identical keys/values.
+
+export interface BiosBirthPayload {
+  readonly did: string;
+  readonly tick: number;
+  readonly psyche_hash: string;   // snake_case per D-10b-01 (mirrors grid source)
 }
 
-export const BIOS_DEATH_KEYS = ['cause', 'did', 'finalStateHash', 'tick'] as const;
+// Alphabetically sorted — matches grid BIOS_BIRTH_KEYS exactly.
+export const BIOS_BIRTH_KEYS = ['did', 'psyche_hash', 'tick'] as const;
+
+export const CAUSE_VALUES = ['starvation', 'operator_h5', 'replay_boundary'] as const;
+export type Cause = typeof CAUSE_VALUES[number];
+
+export interface BiosDeathPayload {
+  readonly did: string;
+  readonly tick: number;
+  readonly cause: Cause;
+  readonly final_state_hash: string;   // snake_case per D-10b-01 (mirrors grid source)
+}
+
+// Alphabetically sorted — matches grid BIOS_DEATH_KEYS exactly.
+export const BIOS_DEATH_KEYS = ['cause', 'did', 'final_state_hash', 'tick'] as const;
 
 export function assertCause(c: string): asserts c is Cause {
   if (!(CAUSE_VALUES as readonly string[]).includes(c)) {
@@ -138,35 +177,73 @@ export function assertCause(c: string): asserts c is Cause {
 }
 ```
 
-Create `dashboard/src/lib/hooks/use-bios-levels.ts` (clone `use-ananke-levels.ts`):
+**Drift-test fixture sync:** If the Wave 0 stub at `dashboard/test/lib/bios-types.drift.test.ts` has any embedded fixture referencing `psycheHash` or `finalStateHash` (camelCase from an earlier iteration), update those references to `psyche_hash` / `final_state_hash` so the fixture matches the grid source of truth. The drift test should pass after bios-types.ts is created.
+
+Create `dashboard/src/lib/hooks/use-bios-levels.ts` — clone of `use-ananke-levels.ts` with drive→need filtering (canonical pattern from 10b-PATTERNS.md lines 902-928):
 ```ts
-import { useGridStore } from '../store/grid-store'; // existing store
 import { useMemo } from 'react';
+import { useFirehose } from './use-firehose';
+import type { AnankeDriveCrossedPayload } from '../protocol/ananke-types';
 
+export type NeedName = 'energy' | 'sustenance';
 export type NeedLevel = 'low' | 'med' | 'high';
+export type NeedDirection = 'rising' | 'falling' | null;
 
-export interface BiosLevels {
-  energy: NeedLevel | null;
-  sustenance: NeedLevel | null;
+export interface NeedLevelEntry {
+  level: NeedLevel;
+  direction: NeedDirection;
 }
 
-export function useBiosLevels(did: string | null): BiosLevels {
-  const nous = useGridStore(s => (did ? s.nousByDid[did] : null));
-  return useMemo<BiosLevels>(() => {
-    if (!nous || !nous.bios) return { energy: null, sustenance: null };
-    return {
-      energy: nous.bios.energy ?? null,
-      sustenance: nous.bios.sustenance ?? null,
-    };
-  }, [nous]);
+// D-10b-02: Bios elevates hunger (from energy) and safety (from sustenance).
+// The dashboard receives `ananke.drive_crossed` for these drives and projects them back
+// to Bios needs for display. No bios.* event carries level data — this is by design.
+const DRIVE_TO_NEED: Record<string, NeedName> = {
+  hunger: 'energy',
+  safety: 'sustenance',
+};
+
+const NEED_ORDER: readonly NeedName[] = ['energy', 'sustenance'];
+
+function baselineMap(): Map<NeedName, NeedLevelEntry> {
+  const map = new Map<NeedName, NeedLevelEntry>();
+  for (const n of NEED_ORDER) map.set(n, { level: 'low', direction: null });
+  return map;
+}
+
+function isAnankeCrossingPayload(p: unknown, targetDid: string): p is AnankeDriveCrossedPayload {
+  if (typeof p !== 'object' || p === null) return false;
+  const r = p as Record<string, unknown>;
+  if (r.did !== targetDid) return false;
+  if (typeof r.drive !== 'string') return false;
+  if (r.level !== 'low' && r.level !== 'med' && r.level !== 'high') return false;
+  if (r.direction !== 'rising' && r.direction !== 'falling') return false;
+  if (typeof r.tick !== 'number') return false;
+  return true;
+}
+
+export function useBiosLevels(did: string | null): Map<NeedName, NeedLevelEntry> {
+  const snap = useFirehose();
+  return useMemo<Map<NeedName, NeedLevelEntry>>(() => {
+    const map = baselineMap();
+    if (!did) return map;
+    for (const entry of snap.entries) {
+      if (entry.eventType !== 'ananke.drive_crossed') continue;
+      if (entry.actorDid !== did) continue;
+      if (!isAnankeCrossingPayload(entry.payload, did)) continue;
+      const need = DRIVE_TO_NEED[entry.payload.drive];
+      if (!need) continue;  // drives that don't map to a Bios need (curiosity, boredom, sociality, spite) — ignore
+      map.set(need, { level: entry.payload.level, direction: entry.payload.direction });
+    }
+    return map;
+  }, [snap.entries, did]);
 }
 ```
-Adjust the grid store typing (if needed) to carry `bios: { energy, sustenance } | null` on each Nous entry, populated by the bios.birth → bios.death stream handler. Keep raw values out of the store entirely — the reducer should convert incoming level codes to enum strings before storing. If the store reducer currently doesn't handle bios.birth/bios.death, add minimal handlers that only set/clear the levels bucket (no values stored).
+Do NOT add `bios` state to any Zustand store. The hook reads the firehose directly and projects drive events to need levels at render time. Raw float values never enter the dashboard pipeline — only the bucket levels already present in `ananke.drive_crossed` payloads.
   </action>
   <verify>
     <automated>cd dashboard && bun test test/lib/bios-types.drift.test.ts test/privacy/bios-forbidden-keys-dashboard.test.ts --run</automated>
   </verify>
-  <done>Drift test passes (grid types === dashboard types). Hook returns bucket-only levels. No raw float keys present anywhere in dashboard store path.</done>
+  <done>Drift test passes (grid types === dashboard types; snake_case keys match). Hook returns bucket-only levels. No raw float keys present anywhere in dashboard store path. Grep `rg "psycheHash|finalStateHash" dashboard/src/lib/protocol/bios-types.ts` returns zero matches (no camelCase leak).</done>
 </task>
 
 <task type="auto" tdd="true">
@@ -189,16 +266,22 @@ Adjust the grid store typing (if needed) to carry `bios: { energy, sustenance } 
   <action>
 Create `dashboard/src/app/grid/components/inspector-sections/bios.tsx`:
 ```tsx
-import { useBiosLevels, type NeedLevel } from '../../../../lib/hooks/use-bios-levels';
+import { useBiosLevels, type NeedName, type NeedLevelEntry } from '../../../../lib/hooks/use-bios-levels';
 import { LevelIndicator } from '../atoms/level-indicator'; // same atom used by Ananke
 
-const NEEDS: ReadonlyArray<{ key: 'energy' | 'sustenance'; glyph: string; label: string }> = [
+const NEEDS: ReadonlyArray<{ key: NeedName; glyph: string; label: string }> = [
   { key: 'energy',     glyph: '⚡', label: 'energy' },
   { key: 'sustenance', glyph: '⬡', label: 'sustenance' },
 ];
 
 interface Props {
   did: string | null;
+}
+
+function ariaLabelFor(label: string, entry: NeedLevelEntry | undefined, didIsNull: boolean): string {
+  if (didIsNull) return `${label} pending`;
+  if (!entry) return `${label} pending`;
+  return entry.direction ? `${label} ${entry.level} ${entry.direction}` : `${label} ${entry.level}`;
 }
 
 export function BiosSection({ did }: Props) {
@@ -212,16 +295,16 @@ export function BiosSection({ did }: Props) {
       <header className="inspector-section__heading">Bios</header>
       <ul className="inspector-section__rows">
         {NEEDS.map(({ key, glyph, label }) => {
-          const level = levels[key];
+          const entry = levels.get(key);
           return (
             <li
               key={key}
               className="inspector-row"
-              aria-label={level ? `${label} ${level}` : `${label} pending`}
+              aria-label={ariaLabelFor(label, entry, did === null)}
             >
               <span className="inspector-row__glyph" aria-hidden>{glyph}</span>
               <span className="inspector-row__label">{label}</span>
-              {level ? <LevelIndicator level={level} /> : <span className="inspector-row__empty">—</span>}
+              {entry ? <LevelIndicator level={entry.level} /> : <span className="inspector-row__empty">—</span>}
             </li>
           );
         })}
@@ -241,35 +324,49 @@ vi.mock('../../../../lib/hooks/use-bios-levels', () => ({
   useBiosLevels: vi.fn(),
 }));
 
-import { useBiosLevels } from '../../../../lib/hooks/use-bios-levels';
+import { useBiosLevels, type NeedName, type NeedLevelEntry, type NeedLevel, type NeedDirection } from '../../../../lib/hooks/use-bios-levels';
 
-const LEVELS = ['low', 'med', 'high'] as const;
+const LEVELS: readonly NeedLevel[] = ['low', 'med', 'high'];
+const DIRECTIONS: readonly NeedDirection[] = ['rising', 'falling', null];
+
+function mapOf(entries: Partial<Record<NeedName, NeedLevelEntry>>): Map<NeedName, NeedLevelEntry> {
+  const m = new Map<NeedName, NeedLevelEntry>();
+  if (entries.energy) m.set('energy', entries.energy);
+  if (entries.sustenance) m.set('sustenance', entries.sustenance);
+  return m;
+}
 
 describe('BiosSection', () => {
-  it('renders empty state when levels are null', () => {
-    (useBiosLevels as any).mockReturnValue({ energy: null, sustenance: null });
+  it('renders pending state when did is null (no Nous selected)', () => {
+    (useBiosLevels as any).mockReturnValue(mapOf({}));
     render(<BiosSection did={null} />);
     expect(screen.getByLabelText('energy pending')).toBeInTheDocument();
     expect(screen.getByLabelText('sustenance pending')).toBeInTheDocument();
   });
 
+  // 18-case aria matrix: 2 needs × 3 levels × 3 direction states (rising, falling, null)
   for (const need of ['energy', 'sustenance'] as const) {
     for (const level of LEVELS) {
-      it(`renders ${need} ${level} with correct aria-label`, () => {
-        (useBiosLevels as any).mockReturnValue({
-          energy: need === 'energy' ? level : null,
-          sustenance: need === 'sustenance' ? level : null,
+      for (const direction of DIRECTIONS) {
+        const expected = direction ? `${need} ${level} ${direction}` : `${need} ${level}`;
+        it(`renders ${need} @ ${level} direction=${direction ?? 'null'} → aria="${expected}"`, () => {
+          (useBiosLevels as any).mockReturnValue(mapOf({
+            [need]: { level, direction },
+          } as any));
+          render(<BiosSection did="did:noesis:abc" />);
+          expect(screen.getByLabelText(expected)).toBeInTheDocument();
         });
-        render(<BiosSection did="did:nous:abc" />);
-        expect(screen.getByLabelText(`${need} ${level}`)).toBeInTheDocument();
-      });
+      }
     }
   }
 
   it('does NOT render any numeric value', () => {
-    (useBiosLevels as any).mockReturnValue({ energy: 'high', sustenance: 'med' });
-    const { container } = render(<BiosSection did="did:nous:abc" />);
-    // No digits except within aria-hidden glyphs (which have no digits anyway)
+    (useBiosLevels as any).mockReturnValue(mapOf({
+      energy: { level: 'high', direction: 'rising' },
+      sustenance: { level: 'med', direction: 'falling' },
+    }));
+    const { container } = render(<BiosSection did="did:noesis:abc" />);
+    // No digits anywhere in the Bios section text
     expect(container.textContent ?? '').not.toMatch(/[0-9]/);
   });
 });
@@ -288,7 +385,7 @@ Edit `dashboard/src/app/grid/components/inspector.tsx`:
   <verify>
     <automated>cd dashboard && bun test test/app/grid/components/inspector-sections/bios.test.tsx --run</automated>
   </verify>
-  <done>18+ aria cases pass. BiosSection mounts between Ananke and Telos. No digits rendered in Bios panel.</done>
+  <done>18-case aria matrix passes (2 needs × 3 levels × 3 direction states incl. null). BiosSection mounts between Ananke and Telos. No digits rendered in Bios panel.</done>
 </task>
 
 <task type="checkpoint:human-verify" gate="blocking">
@@ -318,20 +415,23 @@ Edit `dashboard/src/app/grid/components/inspector.tsx`:
 |----------|-------------|
 | Grid → Dashboard event wire | bios.birth/death events consumed; must not deserialize forbidden keys |
 | Dashboard store → React render | Only bucket-level strings stored; raw values never reach components |
+| Dashboard types ↔ Grid types | Byte-equivalent snake_case mirror; drift test enforces parity |
 
 ## STRIDE Threat Register
 
 | Threat ID | Category | Component | Disposition | Mitigation Plan |
 |-----------|----------|-----------|-------------|-----------------|
-| T-10b-06-01 | Information Disclosure | Raw need value leaks into DOM | mitigate | Test asserts no digits in Bios panel text; store reducer drops any non-bucket key |
-| T-10b-06-02 | Tampering | Drift between grid and dashboard types | mitigate | bios-types.drift.test.ts compares file contents; fails on divergence |
+| T-10b-06-01 | Information Disclosure | Raw need value leaks into DOM | mitigate | Test asserts no digits in Bios panel text; hook sources only `ananke.drive_crossed` payloads which carry bucket levels only (no raw floats ever enter dashboard) |
+| T-10b-06-02 | Tampering | Drift between grid and dashboard types (casing, tuple order, missing keys) | mitigate | bios-types.drift.test.ts compares file contents; fails on camelCase leak or tuple divergence |
 | T-10b-06-03 | Accessibility regression | Aria labels missing for new section | mitigate | 18-case aria matrix test covers every (need × level) combination |
 </threat_model>
 
 <verification>
 - `cd dashboard && bun test test/app/grid/components/inspector-sections/bios.test.tsx test/lib/bios-types.drift.test.ts test/privacy/bios-forbidden-keys-dashboard.test.ts --run` — all GREEN
 - `rg "<BiosSection" dashboard/src/app/grid/components/inspector.tsx` returns exactly 1 match
-- Grep: `rg "raw_value|rise_rate" dashboard/src/` returns zero matches
+- `rg "raw_value|rise_rate" dashboard/src/` returns zero matches
+- `rg "psycheHash|finalStateHash" dashboard/src/lib/protocol/bios-types.ts` returns zero matches (no camelCase leak on the wire mirror)
+- `rg "psyche_hash|final_state_hash" dashboard/src/lib/protocol/bios-types.ts` returns ≥2 matches (snake_case present)
 - Human-verify checkpoint approved
 </verification>
 
@@ -340,10 +440,11 @@ Edit `dashboard/src/app/grid/components/inspector.tsx`:
 - Exactly 2 rows with glyphs ⚡ and ⬡
 - All 18 aria matrix cases render with correct labels
 - Zero numeric values rendered in Bios section
-- Drift-sync test ensures dashboard types never diverge from grid types
+- Drift-sync test passes: dashboard types snake_case-mirror grid types byte-equivalently
 - Human confirms visual smoke: rows appear, levels update, glyphs render correctly
 </success_criteria>
 
 <output>
 After completion, create `.planning/phases/10b-bios-needs-chronos-subjective-time-inner-life-part-2/10b-06-SUMMARY.md`
+</output>
 </output>

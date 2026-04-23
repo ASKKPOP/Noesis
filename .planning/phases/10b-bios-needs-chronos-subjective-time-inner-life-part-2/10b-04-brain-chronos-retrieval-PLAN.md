@@ -15,7 +15,7 @@ autonomous: true
 requirements: [CHRONOS-01, CHRONOS-02, CHRONOS-03]
 must_haves:
   truths:
-    - "Chronos subjective_multiplier computed Brain-local from curiosity + boredom Telos levels, never wired"
+    - "Chronos subjective_multiplier computed Brain-local from curiosity + boredom Drive levels, never wired"
     - "Memory recency is tick-based: recency = exp(-(current_tick - memory.tick) / TAU) * subjective_multiplier"
     - "Zero wall-clock reads in retrieval path (datetime.now removed)"
     - "epoch_since_spawn is derived read over AuditChain cache (bios.birth tick → current_tick), not a new event"
@@ -46,7 +46,7 @@ must_haves:
 ---
 
 <objective>
-Create the Brain-side Chronos subjective-time subsystem and replace the datetime-based recency in `memory/retrieval.py` with tick-based scoring modulated by a Brain-local `subjective_multiplier ∈ [0.25, 4.0]` derived from curiosity + boredom Telos levels. Wire Bios runtime + death action into the RPC handler and inject epoch + multiplier into the system prompt. Turns Wave 0 stubs GREEN for: test_subjective_multiplier, test_epoch_since_spawn, chronos/no-wire-test.
+Create the Brain-side Chronos subjective-time subsystem and replace the datetime-based recency in `memory/retrieval.py` with tick-based scoring modulated by a Brain-local `subjective_multiplier ∈ [0.25, 4.0]` derived from curiosity + boredom Drive levels. Wire Bios runtime + death action into the RPC handler and inject epoch + multiplier into the system prompt. Turns Wave 0 stubs GREEN for: test_subjective_time, test_epoch_since_spawn.
 
 Purpose: Time feels different depending on inner state (curiosity stretches, boredom compresses) — the second pillar of v2.1 Inner Life. Strictly Brain-local and read-side: no new RPC, no new event, no wire leakage.
 
@@ -104,7 +104,7 @@ From 10b-02-SUMMARY.md (predecessor plan):
   <name>Task 1: Chronos subsystem — subjective_time formula</name>
   <files>brain/src/noesis_brain/chronos/__init__.py, brain/src/noesis_brain/chronos/types.py, brain/src/noesis_brain/chronos/subjective_time.py</files>
   <read_first>
-    - brain/src/noesis_brain/telos/types.py (Telos enum Curiosity, Boredom + TelosLevel)
+    - brain/src/noesis_brain/ananke/types.py (DriveName.CURIOSITY, DriveName.BOREDOM + DriveLevel enum)
     - .planning/phases/10b-bios-needs-chronos-subjective-time-inner-life-part-2/10b-CONTEXT.md (D-10b-05, D-10b-07)
     - .planning/phases/10b-bios-needs-chronos-subjective-time-inner-life-part-2/10b-RESEARCH.md (Chronos section)
   </read_first>
@@ -138,21 +138,21 @@ __all__ = [
 Create `brain/src/noesis_brain/chronos/types.py`:
 ```python
 """Chronos constants per CONTEXT.md D-10b-05 (locked)."""
-from noesis_brain.telos.types import TelosLevel
+from noesis_brain.ananke.types import DriveLevel
 
 SUBJECTIVE_MULT_MIN: float = 0.25
 SUBJECTIVE_MULT_MAX: float = 4.0
 
-CURIOSITY_BOOST: dict[TelosLevel, float] = {
-    TelosLevel.LOW: 0.0,
-    TelosLevel.MED: 1.0,
-    TelosLevel.HIGH: 3.0,
+CURIOSITY_BOOST: dict[DriveLevel, float] = {
+    DriveLevel.LOW: 0.0,
+    DriveLevel.MED: 1.0,
+    DriveLevel.HIGH: 3.0,
 }
 
-BOREDOM_PENALTY: dict[TelosLevel, float] = {
-    TelosLevel.LOW: 0.0,
-    TelosLevel.MED: 0.3,
-    TelosLevel.HIGH: 0.75,
+BOREDOM_PENALTY: dict[DriveLevel, float] = {
+    DriveLevel.LOW: 0.0,
+    DriveLevel.MED: 0.3,
+    DriveLevel.HIGH: 0.75,
 }
 ```
 
@@ -163,12 +163,12 @@ from noesis_brain.chronos.types import (
     SUBJECTIVE_MULT_MIN, SUBJECTIVE_MULT_MAX,
     CURIOSITY_BOOST, BOREDOM_PENALTY,
 )
-from noesis_brain.telos.types import TelosLevel
+from noesis_brain.ananke.types import DriveLevel
 
 
 def compute_subjective_multiplier(
-    curiosity: TelosLevel,
-    boredom: TelosLevel,
+    curiosity: DriveLevel,
+    boredom: DriveLevel,
 ) -> float:
     """Per D-10b-05: clamp(1 + boost(curiosity) - penalty(boredom), 0.25, 4.0).
 
@@ -180,7 +180,7 @@ def compute_subjective_multiplier(
 ```
   </action>
   <verify>
-    <automated>cd brain && uv run pytest tests/chronos/test_subjective_multiplier.py tests/chronos/test_chronos_no_wire.py -q</automated>
+    <automated>cd brain && uv run pytest test/chronos/test_subjective_time.py -q</automated>
   </verify>
   <done>Formula matches D-10b-05 for all 9 (curiosity × boredom) cases. No chronos.* symbol leaks into grid/src/audit/broadcast-allowlist.ts.</done>
 </task>
@@ -207,7 +207,7 @@ Edit `brain/src/noesis_brain/memory/retrieval.py`:
 ```python
 import math
 from noesis_brain.chronos import compute_subjective_multiplier
-from noesis_brain.telos.types import TelosLevel
+from noesis_brain.ananke.types import DriveLevel
 ```
 - Add new function above the existing score function:
 ```python
@@ -247,7 +247,7 @@ def score_with_chronos(
 - Ensure NO `datetime`, `time.time`, `time.monotonic` remain in this file.
   </action>
   <verify>
-    <automated>cd brain && uv run pytest tests/memory/ tests/chronos/ -q && rg "datetime|time\\.time" brain/src/noesis_brain/memory/retrieval.py || echo "CLEAN"</automated>
+    <automated>cd brain && uv run pytest test/memory/ test/chronos/ -q && rg "datetime|time\\.time" brain/src/noesis_brain/memory/retrieval.py || echo "CLEAN"</automated>
   </verify>
   <done>retrieval.py has zero wall-clock reads. score_with_chronos multiplies recency by subjective_multiplier. All memory + chronos tests pass.</done>
 </task>
@@ -265,7 +265,7 @@ def score_with_chronos(
   <behavior>
     - handler maintains per-DID BiosRuntime via _get_or_create_bios(did) — mirrors existing ananke pattern
     - Each tick: handler calls bios.step(current_tick), checks death_pending, on True enqueues BIOS_DEATH action with cause='starvation' and final_state_hash
-    - Retrieval: handler computes subjective_multiplier from current Telos levels (curiosity, boredom) and passes to score_with_chronos
+    - Retrieval: handler computes subjective_multiplier from current Drive levels (curiosity, boredom) and passes to score_with_chronos
     - build_system_prompt receives (bios_snapshot, epoch_since_spawn_ticks, subjective_multiplier) and injects them as Nous self-awareness section
     - epoch_since_spawn_ticks computed as current_tick - bios_birth_tick (looked up in audit chain cache by DID)
     - No new RPC method, no new audit event (just a new internal action for starvation consumed by existing operator-like pipeline that calls appendBiosDeath via Grid emitter in plan 10b-05)
@@ -306,8 +306,8 @@ if bios.death_pending:
 ```
 - At retrieval call sites, replace legacy `score(memory, query_embedding)` with:
 ```python
-curiosity_level = telos.states[Telos.CURIOSITY].level
-boredom_level = telos.states[Telos.BOREDOM].level
+curiosity_level = ananke.states[DriveName.CURIOSITY].level
+boredom_level = ananke.states[DriveName.BOREDOM].level
 subjective_multiplier = compute_subjective_multiplier(curiosity_level, boredom_level)
 scored = [
     (score_with_chronos(m, query_embedding, current_tick, subjective_multiplier), m)
@@ -339,7 +339,7 @@ if subjective_multiplier is not None:
 - Do NOT include raw need values (value float) — only level buckets per BIOS_FORBIDDEN_KEYS discipline, even though prompt is Brain-local (defense-in-depth).
   </action>
   <verify>
-    <automated>cd brain && uv run pytest tests/rpc/ tests/chronos/test_epoch_since_spawn.py tests/bios/ -q</automated>
+    <automated>cd brain && uv run pytest test/rpc/ test/bios/test_epoch_since_spawn.py test/bios/ -q</automated>
   </verify>
   <done>Handler creates per-DID BiosRuntime, steps each tick, enqueues BIOS_DEATH on starvation. Retrieval uses score_with_chronos. System prompt has Bios + epoch + subjective_multiplier sections. No raw float values in prompt text.</done>
 </task>
@@ -365,7 +365,7 @@ if subjective_multiplier is not None:
 </threat_model>
 
 <verification>
-- `cd brain && uv run pytest tests/chronos/ tests/bios/ tests/memory/ tests/rpc/ -q` — all GREEN
+- `cd brain && uv run pytest test/chronos/ test/bios/ test/memory/ test/rpc/ -q` — all GREEN
 - `rg "datetime|time\\.time|time\\.monotonic" brain/src/noesis_brain/memory/retrieval.py brain/src/noesis_brain/chronos/` returns zero matches
 - `rg "chronos\\.\\w+" grid/src/audit/broadcast-allowlist.ts` returns zero matches (no wire leak)
 - `rg "_get_or_create_bios" brain/src/noesis_brain/rpc/handler.py` returns ≥1 match

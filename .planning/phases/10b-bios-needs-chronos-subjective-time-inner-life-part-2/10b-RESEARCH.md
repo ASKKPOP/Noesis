@@ -629,22 +629,22 @@ export const FORBIDDEN_KEY_PATTERN =
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **AnankeRuntime.elevate_drive() API**
+1. **AnankeRuntime.elevate_drive() API** — (RESOLVED)
    - What we know: D-10b-02 says "raises the matching drive's level by one bucket." AnankeRuntime currently only has `on_tick`, `drain_crossings`, `peek_crossings`.
    - What's unclear: Does `elevate_drive()` directly mutate `state.levels` in-memory, bypassing `detect_crossing()`? Or does it inject a synthetic high value that triggers natural crossing on the next `detect_crossing()` pass?
-   - Recommendation: Direct level mutation is simpler and avoids re-triggering the crossing detection hysteresis. Add `elevate_drive(drive: DriveName) -> None` to `AnankeRuntime` that: (1) reads current level, (2) if < HIGH, sets level one bucket higher, (3) NO-OP if already HIGH. Does NOT add to `_crossings` — that would double-emit. The next `on_tick()` cycle naturally handles any further level changes.
+   - **Resolution (adopted by Plan 10b-02 Task 3):** Direct floor-raise mutation via `AnankeRuntime.elevate_drive(drive, level, tick)`. Sets the drive's value to the elevated level's lower bound so the NEXT `drives.step()` emits `ananke.drive_crossed` naturally — preserving the sole-producer invariant (drives.step remains the only emitter). No `_crossings` manipulation. No-op when already at HIGH.
 
-2. **`bios.birth` trigger point in GenesisLauncher**
+2. **`bios.birth` trigger point in GenesisLauncher** — (RESOLVED)
    - What we know: `registry.spawn()` is called in `GenesisLauncher`. `nous.spawned` is already emitted there.
    - What's unclear: Should `bios.birth` be emitted as part of the spawn sequence (just after `nous.spawned`), or should it be emitted by the Brain on first tick response?
-   - Recommendation: Emit `bios.birth` immediately after `nous.spawned` in the spawn handler — same tick, same transactional sequence. This mirrors the Phase 8 pattern (delete = tombstone+despawn+death in same tick). Brain constructor receives `birth_tick` as a constructor parameter for `epoch_since_spawn`.
+   - **Resolution (adopted by Plan 10b-03 Task 3):** `appendBiosBirth` is wired into both `grid/src/genesis/launcher.ts` spawn sites (initial genesis spawn loop at ~line 172 and operator-requested spawn at ~line 297) immediately after `appendNousSpawned` — same tick, same transactional sequence. `psycheHash` sourced from existing Psyche bootstrap.
 
-3. **Memory.audit_tick availability**
+3. **Memory.audit_tick availability** — (RESOLVED)
    - What we know: `brain/src/noesis_brain/memory/types.py` exists but we only checked `retrieval.py`.
    - What's unclear: Does `Memory` have `audit_tick` or only `created_at`?
-   - Recommendation: Planner reads `memory/types.py` before Wave 1. If `audit_tick` is absent, add it as `audit_tick: int = 0` (backward-compatible default).
+   - **Resolution (adopted by Plan 10b-04 Task 2):** `Memory.tick` field already exists at `brain/src/noesis_brain/memory/types.py:39` (verified). No schema change required; `memory.tick` is used directly as `audit_tick` in `recency_score_by_tick(memory_tick, current_tick)`.
 
 ---
 

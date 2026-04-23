@@ -41,7 +41,7 @@ must_haves:
 ---
 
 <objective>
-Create the Brain-side Bios subsystem (energy + sustenance needs) as a 100% structural clone of `brain/src/noesis_brain/ananke/` applied to 2 needs. Add one-shot BIOS→Ananke elevation via `AnankeRuntime.elevate_drive()`. Turns Wave 0 stubs GREEN for: test_needs_determinism.py, test_needs_baseline.py, test_bios_no_walltime.py, test_bios_ananke_elevator.py.
+Create the Brain-side Bios subsystem (energy + sustenance needs) as a 100% structural clone of `brain/src/noesis_brain/ananke/` applied to 2 needs. Add one-shot BIOS→Ananke elevation via `AnankeRuntime.elevate_drive()`. Turns Wave 0 stubs GREEN for: test_needs_determinism.py, test_needs_baseline.py, test_bios_no_walltime.py, test_needs_elevator.py.
 
 Purpose: Bodily needs rise inside the Brain (not on the wire), deterministically, and elevate matching Ananke drives on threshold crossing — the physical substrate for v2.1 Inner Life.
 
@@ -193,7 +193,7 @@ NEED_TO_DRIVE: dict[Need, Drive] = {
 ```
   </action>
   <verify>
-    <automated>cd brain && uv run pytest tests/bios/test_needs_baseline.py -q</automated>
+    <automated>cd brain && uv run pytest test/bios/test_needs_baseline.py -q</automated>
   </verify>
   <done>Files exist; `uv run python -c "from noesis_brain.bios import Need, NEED_TO_DRIVE; assert NEED_TO_DRIVE[Need.ENERGY].value == 'hunger'"` succeeds.</done>
 </task>
@@ -276,7 +276,7 @@ def load_needs(seed: int) -> dict[Need, NeedState]:
 ```
   </action>
   <verify>
-    <automated>cd brain && uv run pytest tests/bios/test_needs_determinism.py tests/bios/test_needs_baseline.py tests/bios/test_bios_no_walltime.py -q</automated>
+    <automated>cd brain && uv run pytest test/bios/test_needs_determinism.py test/bios/test_needs_baseline.py test/bios/test_bios_no_walltime.py -q</automated>
   </verify>
   <done>Determinism + baseline + no-walltime tests pass. Grep check: `rg "datetime|time\\.time" brain/src/noesis_brain/bios/` returns zero matches.</done>
 </task>
@@ -397,7 +397,7 @@ Add to `brain/src/noesis_brain/ananke/runtime.py` (append method inside AnankeRu
 ```
   </action>
   <verify>
-    <automated>cd brain && uv run pytest tests/bios/test_bios_ananke_elevator.py tests/bios/test_needs_determinism.py -q</automated>
+    <automated>cd brain && uv run pytest test/bios/test_needs_elevator.py test/bios/test_needs_determinism.py -q</automated>
   </verify>
   <done>BiosRuntime.step() produces crossings and invokes elevator. AnankeRuntime.elevate_drive() raises drive floor without emitting events. One-shot semantics verified by test.</done>
 </task>
@@ -422,7 +422,7 @@ Add to `brain/src/noesis_brain/ananke/runtime.py` (append method inside AnankeRu
 </threat_model>
 
 <verification>
-- `cd brain && uv run pytest tests/bios/ -q` — all Bios Brain tests GREEN
+- `cd brain && uv run pytest test/bios/ -q` — all Bios Brain tests GREEN
 - `rg "datetime|time\\.time" brain/src/noesis_brain/bios/` returns zero matches
 - `uv run python -c "from noesis_brain.bios import BiosRuntime; rt = BiosRuntime.create(seed=42); print(rt.step(1))"` runs without error
 - `rg "def elevate_drive" brain/src/noesis_brain/ananke/runtime.py` returns 1 match
@@ -431,7 +431,7 @@ Add to `brain/src/noesis_brain/ananke/runtime.py` (append method inside AnankeRu
 <success_criteria>
 - 6 new files exist under `brain/src/noesis_brain/bios/`
 - `AnankeRuntime.elevate_drive()` method added (1 new method, no other ananke/ changes)
-- All Wave 0 stubs turned from RED → GREEN: test_needs_determinism, test_needs_baseline, test_bios_no_walltime, test_bios_ananke_elevator
+- All Wave 0 stubs turned from RED → GREEN: test_needs_determinism, test_needs_baseline, test_bios_no_walltime, test_needs_elevator
 - Zero wall-clock reads in bios/ (determinism invariant)
 - Sole-producer of ananke.drive_crossed invariant preserved (elevate_drive mutates state, drives.step() emits)
 </success_criteria>

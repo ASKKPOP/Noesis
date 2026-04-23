@@ -16,7 +16,7 @@ requirements: [BIOS-02, BIOS-03, BIOS-04]
 must_haves:
   truths:
     - "Broadcast allowlist contains exactly 21 events (19 existing + bios.birth + bios.death)"
-    - "bios.birth emits on every Nous spawn (both launcher sites) with closed-tuple {did, tick, psyche_hash}"
+    - "bios.birth emits on every Nous spawn (both launcher sites) with closed-tuple {did, tick, psyche_hash} (snake_case on the wire per D-10b-01)"
     - "bios.death is the sole producer file for bios.death; closed-tuple {did, tick, cause, final_state_hash}; cause enum literal-guarded"
     - "Tombstoned DIDs cannot emit bios.birth or bios.death (gated via NousRegistry)"
   artifacts:
@@ -79,14 +79,14 @@ function assertCause(c: string): asserts c is Cause {
 
 From grid/src/audit/broadcast-allowlist.ts (existing file) — extend from 19→21:
 - Append 'bios.birth' at position 20, 'bios.death' at position 21
-- Add BIOS_FORBIDDEN_KEYS = ['value', 'raw_value', 'rise_rate', 'threshold'] as const
-- Add CHRONOS_FORBIDDEN_KEYS = ['subjective_multiplier', 'curiosity', 'boredom'] as const
+- Add BIOS_FORBIDDEN_KEYS = ['energy', 'sustenance', 'need_value', 'bios_value'] as const (D-10b-10; exactly 4 keys)
+- Add CHRONOS_FORBIDDEN_KEYS = ['subjective_multiplier', 'chronos_multiplier', 'subjective_tick'] as const (D-10b-10; exactly 3 keys)
 - Extend FORBIDDEN_KEY_PATTERN to include both new matrices
 
 From grid/src/genesis/launcher.ts:172, 297 — TWO spawn call sites:
 - Line 172: initial genesis spawn loop
 - Line 297: operator-requested spawn
-- Both: after appendNousSpawned, call appendBiosBirth({did, tick, psycheHash}).
+- Both: after appendNousSpawned, call appendBiosBirth({did, tick, psyche_hash}) — snake_case payload per D-10b-01.
 </interfaces>
 </context>
 
@@ -103,10 +103,10 @@ From grid/src/genesis/launcher.ts:172, 297 — TWO spawn call sites:
   </read_first>
   <behavior>
     - BROADCAST_ALLOWLIST has exactly 21 members (sorted order preserved, bios.birth and bios.death appended)
-    - BIOS_FORBIDDEN_KEYS = ['value', 'raw_value', 'rise_rate', 'threshold'] (flat + nested)
-    - CHRONOS_FORBIDDEN_KEYS = ['subjective_multiplier', 'curiosity', 'boredom']
-    - bios/types.ts exports BiosBirthPayload = { did: string; tick: number; psycheHash: string }
-    - bios/types.ts exports BiosDeathPayload = { did: string; tick: number; cause: Cause; finalStateHash: string }
+    - BIOS_FORBIDDEN_KEYS = ['energy', 'sustenance', 'need_value', 'bios_value'] (exactly 4 keys per D-10b-10; flat + nested)
+    - CHRONOS_FORBIDDEN_KEYS = ['subjective_multiplier', 'chronos_multiplier', 'subjective_tick'] (exactly 3 keys per D-10b-10)
+    - bios/types.ts exports BiosBirthPayload = { did: string; tick: number; psyche_hash: string } (snake_case keys per D-10b-01)
+    - bios/types.ts exports BiosDeathPayload = { did: string; tick: number; cause: Cause; final_state_hash: string } (snake_case keys per D-10b-01)
     - CAUSE_VALUES literal-guarded constant exported
   </behavior>
   <action>
@@ -116,14 +116,18 @@ Edit `grid/src/audit/broadcast-allowlist.ts`:
 - Update the size assertion/comment: `// 21 events: 19 from phases 1-10a + bios.birth + bios.death (+2 per Phase 10b)`
 - Add below the existing FORBIDDEN_KEYS:
 ```ts
+// Per CONTEXT.md D-10b-10 — exactly 4 bios keys, exactly 3 chronos keys. Do NOT add extras.
 export const BIOS_FORBIDDEN_KEYS = [
-  'value', 'raw_value', 'rise_rate', 'threshold',
-  'hysteresis_band', 'tau', 'decay_factor',
+  'energy',
+  'sustenance',
+  'need_value',
+  'bios_value',
 ] as const;
 
 export const CHRONOS_FORBIDDEN_KEYS = [
-  'subjective_multiplier', 'curiosity', 'boredom',
-  'curiosity_boost', 'boredom_penalty',
+  'subjective_multiplier',
+  'chronos_multiplier',
+  'subjective_tick',
 ] as const;
 ```
 - Extend the FORBIDDEN_KEY_PATTERN regex (or equivalent filter) to union both new matrices so any attempt to include these keys in a broadcast payload fails the closed-tuple gate.
@@ -138,10 +142,10 @@ Create `grid/src/bios/types.ts`:
 export interface BiosBirthPayload {
   readonly did: string;
   readonly tick: number;
-  readonly psycheHash: string;
+  readonly psyche_hash: string;
 }
 
-export const BIOS_BIRTH_KEYS = ['did', 'psycheHash', 'tick'] as const;
+export const BIOS_BIRTH_KEYS = ['did', 'psyche_hash', 'tick'] as const;
 
 export const CAUSE_VALUES = ['starvation', 'operator_h5', 'replay_boundary'] as const;
 export type Cause = typeof CAUSE_VALUES[number];
@@ -150,10 +154,10 @@ export interface BiosDeathPayload {
   readonly did: string;
   readonly tick: number;
   readonly cause: Cause;
-  readonly finalStateHash: string;
+  readonly final_state_hash: string;
 }
 
-export const BIOS_DEATH_KEYS = ['cause', 'did', 'finalStateHash', 'tick'] as const;
+export const BIOS_DEATH_KEYS = ['cause', 'did', 'final_state_hash', 'tick'] as const;
 
 export function assertCause(c: string): asserts c is Cause {
   if (!(CAUSE_VALUES as readonly string[]).includes(c)) {
@@ -194,7 +198,7 @@ import { NousRegistry } from '../genesis/nous-registry.js';
 import { BIOS_FORBIDDEN_KEYS } from '../audit/broadcast-allowlist.js';
 import { BiosBirthPayload, BIOS_BIRTH_KEYS } from './types.js';
 
-const DID_REGEX = /^did:nous:[a-z0-9]{32}$/;
+const DID_REGEX = /^did:noesis:[a-z0-9_\-]+$/i;
 
 export interface AppendBiosBirthDeps {
   chain: AuditChain;
@@ -217,9 +221,9 @@ export async function appendBiosBirth(
     throw new Error(`invalid DID format: ${payload.did}`);
   }
 
-  // Step 3: psycheHash format (64-char hex)
-  if (!/^[0-9a-f]{64}$/.test(payload.psycheHash)) {
-    throw new Error(`invalid psycheHash format`);
+  // Step 3: psyche_hash format (64-char hex) — snake_case on wire per D-10b-01
+  if (!/^[0-9a-f]{64}$/.test(payload.psyche_hash)) {
+    throw new Error(`invalid psyche_hash format`);
   }
 
   // Step 4: closed-tuple strict-equality gate
@@ -257,7 +261,7 @@ import { NousRegistry } from '../genesis/nous-registry.js';
 import { BIOS_FORBIDDEN_KEYS } from '../audit/broadcast-allowlist.js';
 import { BiosDeathPayload, BIOS_DEATH_KEYS, assertCause } from './types.js';
 
-const DID_REGEX = /^did:nous:[a-z0-9]{32}$/;
+const DID_REGEX = /^did:noesis:[a-z0-9_\-]+$/i;
 
 export interface AppendBiosDeathDeps {
   chain: AuditChain;
@@ -276,8 +280,8 @@ export async function appendBiosDeath(
   if (!DID_REGEX.test(payload.did)) {
     throw new Error(`invalid DID format: ${payload.did}`);
   }
-  if (!/^[0-9a-f]{64}$/.test(payload.finalStateHash)) {
-    throw new Error(`invalid finalStateHash format`);
+  if (!/^[0-9a-f]{64}$/.test(payload.final_state_hash)) {
+    throw new Error(`invalid final_state_hash format`);
   }
   assertCause(payload.cause); // literal-guard: throws on unknown cause
 
@@ -299,8 +303,11 @@ export async function appendBiosDeath(
   }
 
   const hash = await deps.chain.append('bios.death', payload);
-  // NousRegistry tombstones on bios.death (extend registry listener per Phase 8 D-33)
-  deps.registry.tombstone(payload.did);
+  // Per B6 fix: appendBiosDeath does NOT tombstone internally.
+  // Caller (delete-nous.ts for H5; Grid death handler for starvation) must call
+  // deps.registry.tombstone(did, ...) BEFORE invoking appendBiosDeath — this enforces
+  // the locked D-30 ORDER (tombstone → despawn → appendBiosDeath → appendNousDeleted)
+  // and keeps tombstone control with the orchestrating call site (single responsibility).
   return hash;
 }
 ```
@@ -340,7 +347,7 @@ Edit `grid/src/genesis/launcher.ts`:
 ```ts
 await appendBiosBirth(
   { chain: deps.chain, registry: deps.registry, currentTick: deps.currentTick },
-  { did, tick: currentTick, psycheHash },
+  { did, tick: currentTick, psyche_hash: psycheHash },  // snake_case on wire per D-10b-01
 );
 ```
 - At line ~297 (operator-requested spawn): same insertion after `appendNousSpawned`.
@@ -371,7 +378,7 @@ await appendBiosBirth(
 | T-10b-03-02 | Spoofing | Forge bios.death with fake cause | mitigate | assertCause literal-guard + TypeScript exhaustive narrowing |
 | T-10b-03-03 | Information Disclosure | Raw value leak via forbidden key | mitigate | BIOS_FORBIDDEN_KEYS privacy grep at append-time (step 5) |
 | T-10b-03-04 | Elevation of Privilege | Re-birth tombstoned DID | mitigate | NousRegistry.isTombstoned check (step 6) |
-| T-10b-03-05 | Repudiation | bios.death without tombstone | mitigate | appendBiosDeath calls registry.tombstone on success |
+| T-10b-03-05 | Repudiation | bios.death without tombstone | mitigate | Caller (delete-nous.ts / starvation handler) must tombstone BEFORE appendBiosDeath per D-30 ORDER; appendBiosDeath itself does NOT tombstone (single responsibility, B6 fix) |
 </threat_model>
 
 <verification>
