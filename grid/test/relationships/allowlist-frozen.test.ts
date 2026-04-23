@@ -25,10 +25,11 @@ import { describe, it, expect } from 'vitest';
 import { ALLOWLIST } from '../../src/audit/broadcast-allowlist.js';
 
 describe('SC#5 — broadcast allowlist is frozen across Phase 9 (Phase 10b-adjusted baseline)', () => {
-    it('BROADCAST_ALLOWLIST length === 21 (Phase 10b baseline: +bios.birth, +bios.death)', () => {
-        // If this fails, something added a new kind beyond D-10b-01.
+    it('BROADCAST_ALLOWLIST length === 22 (Phase 11 baseline: +nous.whispered)', () => {
+        // If this fails, something added or removed kinds unexpectedly.
+        // Phase 11 (WHISPER-04 D-11-01) added nous.whispered at position 22.
         // See .planning/STATE.md Accumulated Context for the baseline lock.
-        expect(ALLOWLIST.size).toBe(21);
+        expect(ALLOWLIST.size).toBe(22);
     });
 
     it('no relationship.* kinds are admitted (Phase 9 SC#5 still holds)', () => {

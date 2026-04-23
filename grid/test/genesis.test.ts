@@ -55,8 +55,8 @@ describe('GenesisLauncher', () => {
         it('records audit events', () => {
             launcher = new GenesisLauncher(TEST_CONFIG);
             launcher.bootstrap();
-            // 2 nous.spawned + 1 grid.genesis = 3 entries
-            expect(launcher.audit.length).toBe(3);
+            // 2 nous.spawned + 2 bios.birth (Phase 10b BIOS-02) + 1 grid.genesis = 5 entries
+            expect(launcher.audit.length).toBe(5);
             expect(launcher.audit.verify().valid).toBe(true);
         });
     });

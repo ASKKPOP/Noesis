@@ -43,8 +43,8 @@ const EXPECTED_ORDER = [
 ] as const;
 
 describe('broadcast allowlist — Phase 10b invariant (BIOS-02 D-10b-01)', () => {
-    it('has exactly 21 entries', () => {
-        expect(ALLOWLIST.size).toBe(21);
+    it('has at least 21 entries (Phase 11 adds nous.whispered at 22)', () => {
+        expect(ALLOWLIST.size).toBeGreaterThanOrEqual(21);
     });
 
     it('contains bios.birth at position 20 (index 19)', () => {
@@ -68,8 +68,12 @@ describe('broadcast allowlist — Phase 10b invariant (BIOS-02 D-10b-01)', () =>
         expect(isAllowlisted(event)).toBe(false);
     });
 
-    it('preserves Phase 6/7/8/10a order and appends bios.birth + bios.death last', () => {
-        expect([...ALLOWLIST]).toEqual([...EXPECTED_ORDER]);
+    it('preserves Phase 6/7/8/10a order — bios.birth + bios.death at positions 20-21 (Phase 11 may extend further)', () => {
+        const allList = [...ALLOWLIST];
+        // Verify all 21 Phase 10b members appear in the correct relative order
+        for (let i = 0; i < EXPECTED_ORDER.length; i++) {
+            expect(allList[i]).toBe(EXPECTED_ORDER[i]);
+        }
     });
 
     it('preserves all 19 prior allowlist members (regression — Phase 10a)', () => {
