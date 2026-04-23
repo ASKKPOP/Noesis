@@ -110,6 +110,27 @@ export interface BrainActionDriveCrossed {
     };
 }
 
+/**
+ * Phase 11 WHISPER-03 / D-11-05: Brain-returned whisper send action.
+ *
+ * `envelope` is a fully-encrypted Envelope produced by the Brain (sender.py).
+ * Grid NEVER decrypts ciphertext — it routes the opaque blob through
+ * WhisperRouter (validate → tombstone → rate-limit → audit → queue).
+ *
+ * Only the closed-tuple metadata {from_did, to_did, tick, ciphertext_hash}
+ * crosses the audit boundary via appendNousWhispered; the raw envelope is
+ * queued in PendingStore for recipient pull.
+ *
+ * Per D-11-06: sender is visible (no sealed-sender this phase).
+ * Per D-11-18: tombstone rejection is SILENT (no audit, no log, no 410).
+ */
+export interface BrainActionWhisperSend {
+    readonly action_type: 'whisper_send';
+    readonly channel: '';
+    readonly text: '';
+    readonly envelope: import('../whisper/types.js').Envelope;
+}
+
 export type BrainAction =
     | SpeakAction
     | DirectMessageAction
@@ -117,7 +138,8 @@ export type BrainAction =
     | NoopAction
     | TradeRequestAction
     | TelosRefinedAction
-    | BrainActionDriveCrossed;
+    | BrainActionDriveCrossed
+    | BrainActionWhisperSend;
 
 export interface MessageParams {
     sender_name: string;
