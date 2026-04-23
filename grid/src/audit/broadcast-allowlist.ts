@@ -21,7 +21,7 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a) — exactly these 19 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b) — exactly these 21 event types.
  *  v1 (Phase 1, per 01-CONTEXT.md): 10 events.
  *  Phase 5 (REV-02): +1 'trade.reviewed' — externally observable reviewer verdict;
  *  payload shape D-03, 3 keys on pass / 5 keys on fail, all privacy-clean (see D-12 test).
@@ -37,7 +37,16 @@
  *  {did, tick, drive, level, direction}. level ∈ {low,med,high};
  *  direction ∈ {rising,falling}. Emitted ONLY via appendAnankeDriveCrossed()
  *  (grid/src/ananke/append-drive-crossed.ts).
- *  Tuple ORDER is locked; any reorder fails allowlist-nineteen.test.ts.
+ *  Phase 10b (BIOS-02, BIOS-03): +2 bios lifecycle events at positions 20-21.
+ *   - 'bios.birth' — Nous spawn boundary. Closed 3-key payload:
+ *     {did, psyche_hash, tick}. Emitted ONLY via appendBiosBirth()
+ *     (grid/src/bios/appendBiosBirth.ts).
+ *   - 'bios.death' — Nous tombstone boundary. Closed 4-key payload:
+ *     {cause, did, final_state_hash, tick}. cause ∈ {starvation, operator_h5,
+ *     replay_boundary}. Emitted ONLY via appendBiosDeath()
+ *     (grid/src/bios/appendBiosDeath.ts).
+ *  Chronos is READ-SIDE ONLY per D-10b-11 — no chronos.* wire events.
+ *  Tuple ORDER is locked; any reorder fails allowlist-twenty-one.test.ts.
  */
 const ALLOWLIST_MEMBERS: readonly string[] = [
     'nous.spawned',
@@ -72,6 +81,14 @@ const ALLOWLIST_MEMBERS: readonly string[] = [
     // {did, tick, drive, level, direction}. level ∈ {low,med,high}; direction ∈ {rising,falling}.
     // Emitted ONLY via appendAnankeDriveCrossed() (grid/src/ananke/append-drive-crossed.ts).
     'ananke.drive_crossed',
+    // Phase 10b (BIOS-02) — Bios birth boundary. Closed 3-key payload:
+    // {did, psyche_hash, tick}. Emitted ONLY via appendBiosBirth()
+    // (grid/src/bios/appendBiosBirth.ts).
+    'bios.birth',
+    // Phase 10b (BIOS-03) — Bios death boundary. Closed 4-key payload:
+    // {cause, did, final_state_hash, tick}. cause ∈ {starvation, operator_h5, replay_boundary}.
+    // Emitted ONLY via appendBiosDeath() (grid/src/bios/appendBiosDeath.ts).
+    'bios.death',
 ] as const;
 
 /**
@@ -117,14 +134,44 @@ export const DRIVE_FORBIDDEN_KEYS = [
 ] as const;
 
 /**
+ * Phase 10b (D-10b-10): bios-leaf keys that MUST NOT appear in any broadcast
+ * payload. Numeric bios needs (energy / sustenance buffers, raw need values,
+ * raw bios pressures) NEVER cross the wire. Only the closed-enum
+ * {did, psyche_hash, tick} (birth) or {cause, did, final_state_hash, tick}
+ * (death) crosses. Per CONTEXT.md D-10b-10 — exactly 4 keys. Do NOT add extras.
+ */
+export const BIOS_FORBIDDEN_KEYS = [
+    'energy',
+    'sustenance',
+    'need_value',
+    'bios_value',
+] as const;
+
+/**
+ * Phase 10b (D-10b-10): chronos-leaf keys that MUST NOT appear in any broadcast
+ * payload. Chronos is READ-SIDE ONLY (D-10b-11) — multipliers and subjective
+ * tick translations are Brain-internal experience and never traverse the wire.
+ * Per CONTEXT.md D-10b-10 — exactly 3 keys. Do NOT add extras.
+ */
+export const CHRONOS_FORBIDDEN_KEYS = [
+    'subjective_multiplier',
+    'chronos_multiplier',
+    'subjective_tick',
+] as const;
+
+/**
  * Case-insensitive regex matching forbidden key substrings. Any payload
  * key that matches ANYWHERE (e.g., `user_prompt`, `Prompting`) is rejected.
  *
  * Phase 10a (D-10a-07): extended with the 6 DRIVE_FORBIDDEN_KEYS so numeric
- * drive pressures cannot leak via nested payloads. Prior Phase 6 keywords
+ * drive pressures cannot leak via nested payloads.
+ *
+ * Phase 10b (D-10b-10): extended with the 4 BIOS_FORBIDDEN_KEYS + 3
+ * CHRONOS_FORBIDDEN_KEYS so numeric bios needs and chronos multipliers
+ * cannot leak via nested payloads. Prior Phase 6 keywords
  * (prompt|response|wiki|reflection|thought|emotion_delta) preserved verbatim.
  */
-export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value/i;
+export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick/i;
 
 export interface PrivacyCheckResult {
     ok: boolean;

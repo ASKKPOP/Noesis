@@ -7,8 +7,8 @@ import {
 } from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast-allowlist: default-deny membership', () => {
-    it('has exactly 19 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a event types', () => {
-        expect(ALLOWLIST.size).toBe(19);
+    it('has exactly 21 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b event types', () => {
+        expect(ALLOWLIST.size).toBe(21);
     });
 
     it.each([
@@ -55,7 +55,7 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(() => (ALLOWLIST as Set<string>).add('law.bypassed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).delete('trade.reviewed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).clear()).toThrow(TypeError);
-        expect(ALLOWLIST.size).toBe(19);
+        expect(ALLOWLIST.size).toBe(21);
     });
 
     it('Phase 6 operator.* tuple order: inspected < paused < resumed < law_changed < telos_forced', () => {
