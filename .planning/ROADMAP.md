@@ -102,8 +102,8 @@ Plans:
 **Allowlist additions**: **+2** (`bios.birth`, `bios.death` — both previously unimplemented; Chronos is Brain-local read-side transform, no wire event). Running total: **21**.
 **Plans**: 8 plans across 4 waves
 - [x] 10b-01-wave0-test-scaffolding-PLAN.md — 24 RED test stubs (Brain pytest + Grid vitest + Dashboard)
-- [ ] 10b-02-brain-bios-subsystem-PLAN.md — brain/src/noesis_brain/bios/ (types, config, needs, runtime, loader) + AnankeRuntime.elevate_drive
-- [ ] 10b-03-grid-bios-emitters-allowlist-PLAN.md — grid/src/bios/ sole-producer emitters + allowlist 19→21 + BIOS/CHRONOS forbidden keys + launcher wiring
+- [x] 10b-02-brain-bios-subsystem-PLAN.md — brain/src/noesis_brain/bios/ (types, config, needs, runtime, loader) + AnankeRuntime.elevate_drive
+- [x] 10b-03-grid-bios-emitters-allowlist-PLAN.md — grid/src/bios/ sole-producer emitters + allowlist 19→21 + BIOS/CHRONOS forbidden keys + launcher wiring
 - [ ] 10b-04-brain-chronos-retrieval-PLAN.md — brain/src/noesis_brain/chronos/ + score_with_chronos replacing datetime.now recency + handler+prompt wiring
 - [ ] 10b-05-grid-delete-nous-h5-cause-PLAN.md — delete-nous D-30 ORDER extension: appendBiosDeath(cause=operator_h5) before appendNousDeleted
 - [ ] 10b-06-dashboard-bios-panel-PLAN.md — BiosSection between Ananke and Telos + bios-types drift sync + use-bios-levels hook
@@ -210,7 +210,7 @@ Dependencies form a strict chain (no parallel phases in v2.2). Rationale:
 |-------|----------------|--------|-----------|
 | 9. Relationship Graph (Derived View) | 8/8 | Complete   | 2026-04-22 |
 | 10a. Ananke Drives | 6/6 | Complete   | 2026-04-22 |
-| 10b. Bios Needs + Chronos Subjective Time | 1/8 | In Progress|  |
+| 10b. Bios Needs + Chronos Subjective Time | 3/8 | In Progress|  |
 | 11. Mesh Whisper | 0/? | Not started | - |
 | 12. Governance & Collective Law | 0/? | Not started | - |
 | 13. Operator Replay & Export | 0/? | Not started | - |
