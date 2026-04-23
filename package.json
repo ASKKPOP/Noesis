@@ -16,7 +16,8 @@
     "clean": "turbo run clean",
     "check:state-doc-sync": "node scripts/check-state-doc-sync.mjs",
     "check:relationship-graph-deps": "node scripts/check-relationship-graph-deps.mjs",
-    "pretest": "npm run check:state-doc-sync && npm run check:relationship-graph-deps"
+    "check:wallclock": "node scripts/check-wallclock-forbidden.mjs",
+    "pretest": "npm run check:state-doc-sync && npm run check:relationship-graph-deps && npm run check:wallclock"
   },
   "devDependencies": {
     "turbo": "^2.0.0",
