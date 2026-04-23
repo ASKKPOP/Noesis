@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Active)
-status: planning
-stopped_at: Phase 10b complete — all 8 plans shipped; doc-sync closed (10b-08); allowlist 19→21; Phase 11 Mesh Whisper is next
-last_updated: "2026-04-23T06:54:57.951Z"
+status: executing
+stopped_at: Phase 11 planned (5 waves, WHISPER-01..06 covered, checker PASS); next /gsd-execute-phase 11 --auto
+last_updated: "2026-04-23T10:45:00.000Z"
 last_activity: 2026-04-22 -- Phase 10b shipped (8/8 plans, allowlist 19→21)
 progress:
   total_phases: 11
