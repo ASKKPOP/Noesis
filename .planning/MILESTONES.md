@@ -243,7 +243,38 @@
 
 **STRIDE threats addressed:** T-09-01 (per-tick audit bloat — ceiling locked ≤50), T-09-02 (plaintext drive leak — three-tier grep), T-09-03 (wall-clock coupling — grep gates in both ananke source trees), T-10a-27..T-10a-33 (from Plan 10a-06 threat model).
 
-**Next up:** Phase 10b — Bios Needs + Chronos Subjective Time (allowlist +2: bios.birth, bios.death per D-10b-01 — SHIPPED 2026-04-22, see entry above).
+**Next up:** Phase 11 — Mesh Whisper (SHIPPED 2026-04-23, see entry above).
 
 ---
-*Last updated: 2026-04-22 — Phase 10b shipped (8/8 plans, allowlist 19→21 with `bios.birth` + `bios.death` per D-10b-01 correction)*
+
+### Phase 11 — Mesh Whisper — SHIPPED 2026-04-23
+
+**Shipped:** 2026-04-23
+**Goal:** Any two Nous can exchange E2E-encrypted envelopes via libsodium `crypto_box`; operators cannot read plaintext at any tier including H5; audit chain retains only `ciphertext_hash` forever.
+**Requirements delivered:** WHISPER-01, WHISPER-02, WHISPER-03, WHISPER-04, WHISPER-05, WHISPER-06
+**Plans:** 5/5 (11-00 through 11-04, 4 waves)
+**Allowlist added:** `nous.whispered` (pos 22, alphabetical closed 4-key tuple `{ciphertext_hash, from_did, tick, to_did}`) — allowlist 21→22
+
+**Key primitives:**
+- `grid/src/whisper/crypto.ts`: libsodium `crypto_box_easy` wrapper — `encryptFor`, `decryptFrom`, `deriveNonce(seed, tick, counter)`, `hashCiphertext` (SHA-256 → 64-char hex); all deterministic, no wall-clock
+- `grid/src/whisper/appendNousWhispered.ts`: sole producer for `nous.whispered`; closed 4-key alphabetical payload enforced by `Object.keys(payload).sort()` strict equality
+- `WhisperRouter`: rate-limit gate (10/100 ticks per sender) → validation → encrypt → `appendNousWhispered` → `pendingStore.enqueue`; side-effects locked in order
+- `PendingStore`: recipient-pull delivery; `drainFor(did, tick)` returns ciphertexts; `ackDelete(did, envelopeId)` removes after pull; plaintext never persisted
+- Brain-side `whisper_router.py`: `send_whisper` / `receive_whispers` handlers; keyring scoped per Nous (D-11-04: no cross-Nous key access)
+- Fastify endpoints: `POST /api/v1/nous/:did/whisper/send` + `GET /api/v1/nous/:did/whisper/receive` + `DELETE /api/v1/nous/:did/whisper/ack`
+- Dashboard `WhisperSection`: counts-only panel `{sent, received, lastTick, topPartners}` — zero read/inspect affordance, `useWhisperCounts` hook over firehose `useMemo`
+
+**Invariants sealed:**
+- WHISPER_FORBIDDEN_KEYS (13 keys): `{text, body, content, message, utterance, offer, amount, ousia, price, value, plaintext, decrypted, payload_plain}` — 16-case privacy matrix + three-tier CI gate + runtime fs-guard
+- Determinism: same `(whisperSeed, tick, counter)` → same `ciphertext_hash` regardless of `tickRateMs` (whisper-determinism.test.ts)
+- Zero-diff: 0 vs N passive observers → byte-identical `eventHash` arrays (whisper-zero-diff.test.ts)
+- Keyring isolation (D-11-04): no `grid/src/**` file imports `brain/*/whisper/keyring`; CI-enforced
+- Fourth protocol mirror: `dashboard/src/lib/protocol/whisper-types.ts` + drift detector (whisper-types.drift.test.ts)
+- Dashboard panel: zero `<button>`, zero `<a>`, zero ciphertext_hash rendered — 23 source-inspection tests
+
+**STRIDE threats addressed:** T-10-01 (plaintext leak — three-tier grep gate + privacy matrix + runtime fs-guard), T-10-02 (flooding DoS — rate-limit + queue), T-10-03 (dashboard read affordance — source-inspection tests), T-10-04 (keyring isolation — CI gate), T-10-06 (whisper-as-trade bypass — `amount|ousia|offer|price` in FORBIDDEN_KEYS).
+
+**Test coverage at completion:** Grid 1121/1121 (122 files), Brain 498/498, Dashboard Wave 4 30/30.
+
+---
+*Last updated: 2026-04-23 — Phase 11 shipped (5/5 plans, allowlist 21→22 with `nous.whispered`)*
