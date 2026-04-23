@@ -11,6 +11,7 @@ files_modified:
   - brain/pyproject.toml
   - brain/uv.lock
   - grid/src/whisper/crypto.ts
+  - brain/src/noesis_brain/whisper/crypto.py
   - brain/src/noesis_brain/whisper/nonce.py
   - brain/src/noesis_brain/whisper/keyring.py
   - brain/src/noesis_brain/whisper/key_directory.py
