@@ -7,8 +7,8 @@ import {
 } from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast-allowlist: default-deny membership', () => {
-    it('has exactly 21 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b event types', () => {
-        expect(ALLOWLIST.size).toBe(21);
+    it('has exactly 22 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11 event types', () => {
+        expect(ALLOWLIST.size).toBe(22);
     });
 
     it.each([
@@ -35,6 +35,12 @@ describe('broadcast-allowlist: default-deny membership', () => {
         'operator.nous_deleted',
         // Phase 10a (DRIVE-03) — position 19 Ananke drive threshold crossings.
         'ananke.drive_crossed',
+        // Phase 10b (BIOS-02) — position 20 Bios birth boundary.
+        'bios.birth',
+        // Phase 10b (BIOS-03) — position 21 Bios death boundary.
+        'bios.death',
+        // Phase 11 (WHISPER-04) — position 22 Nous↔Nous envelope emission.
+        'nous.whispered',
     ])('allows %s', (eventType) => {
         expect(isAllowlisted(eventType)).toBe(true);
     });
@@ -55,7 +61,7 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(() => (ALLOWLIST as Set<string>).add('law.bypassed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).delete('trade.reviewed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).clear()).toThrow(TypeError);
-        expect(ALLOWLIST.size).toBe(21);
+        expect(ALLOWLIST.size).toBe(22);
     });
 
     it('Phase 6 operator.* tuple order: inspected < paused < resumed < law_changed < telos_forced', () => {

@@ -21,7 +21,7 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b) — exactly these 21 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11) — exactly these 22 event types.
  *  v1 (Phase 1, per 01-CONTEXT.md): 10 events.
  *  Phase 5 (REV-02): +1 'trade.reviewed' — externally observable reviewer verdict;
  *  payload shape D-03, 3 keys on pass / 5 keys on fail, all privacy-clean (see D-12 test).
@@ -46,7 +46,11 @@
  *     replay_boundary}. Emitted ONLY via appendBiosDeath()
  *     (grid/src/bios/appendBiosDeath.ts).
  *  Chronos is READ-SIDE ONLY per D-10b-11 — no chronos.* wire events.
- *  Tuple ORDER is locked; any reorder fails allowlist-twenty-one.test.ts.
+ *  Phase 11 (WHISPER-04): +1 'nous.whispered' at position 22 — closed 4-tuple
+ *   {ciphertext_hash, from_did, tick, to_did}; sole producer
+ *   grid/src/whisper/appendNousWhispered.ts (to land in Wave 2).
+ *   Per D-11-01 / CONTEXT-11.
+ *  Tuple ORDER is locked; any reorder fails broadcast-allowlist.test.ts.
  */
 const ALLOWLIST_MEMBERS: readonly string[] = [
     'nous.spawned',
@@ -89,6 +93,10 @@ const ALLOWLIST_MEMBERS: readonly string[] = [
     // {cause, did, final_state_hash, tick}. cause ∈ {starvation, operator_h5, replay_boundary}.
     // Emitted ONLY via appendBiosDeath() (grid/src/bios/appendBiosDeath.ts).
     'bios.death',
+    // Phase 11 (WHISPER-04) — Nous↔Nous envelope emission. Closed 4-key payload:
+    // {ciphertext_hash, from_did, tick, to_did}. Sole producer
+    // grid/src/whisper/appendNousWhispered.ts (lands in Wave 2). Per D-11-01 / CONTEXT-11.
+    'nous.whispered',
 ] as const;
 
 /**
@@ -160,6 +168,37 @@ export const CHRONOS_FORBIDDEN_KEYS = [
 ] as const;
 
 /**
+ * Phase 11 (WHISPER-04 / D-11-09): whisper-leaf keys that MUST NOT appear in any
+ * whisper payload. Plaintext whisper content (message bodies, utterances, offer
+ * text, ousia amounts within whispers, raw decrypted data) NEVER crosses the wire.
+ * Only the closed-enum {ciphertext_hash, from_did, tick, to_did} 4-tuple crosses.
+ * Per D-11-09 — exactly 13 keys. Do NOT add extras.
+ *
+ * NOTE: offer, amount, ousia, price, value are NOT added to FORBIDDEN_KEY_PATTERN
+ * because these keys are legitimately used in trade payloads (trade.proposed,
+ * trade.settled). The whisper-specific plaintext gate uses WHISPER_FORBIDDEN_KEYS
+ * directly in the whisper emitter boundary checks. The global FORBIDDEN_KEY_PATTERN
+ * is extended only with the 8 whisper-only keys that have no legitimate use in
+ * any other event payload type (text, body, content, message, utterance,
+ * plaintext, decrypted, payload_plain).
+ */
+export const WHISPER_FORBIDDEN_KEYS = Object.freeze([
+    'text',
+    'body',
+    'content',
+    'message',
+    'utterance',
+    'offer',
+    'amount',
+    'ousia',
+    'price',
+    'value',
+    'plaintext',
+    'decrypted',
+    'payload_plain',
+] as const);
+
+/**
  * Case-insensitive regex matching forbidden key substrings. Any payload
  * key that matches ANYWHERE (e.g., `user_prompt`, `Prompting`) is rejected.
  *
@@ -170,8 +209,14 @@ export const CHRONOS_FORBIDDEN_KEYS = [
  * CHRONOS_FORBIDDEN_KEYS so numeric bios needs and chronos multipliers
  * cannot leak via nested payloads. Prior Phase 6 keywords
  * (prompt|response|wiki|reflection|thought|emotion_delta) preserved verbatim.
+ *
+ * Phase 11 (D-11-09): extended with 8 whisper-only WHISPER_FORBIDDEN_KEYS
+ * (text|body|content|message|utterance|plaintext|decrypted|payload_plain).
+ * The 5 trade-compatible keys (offer|amount|ousia|price|value) from
+ * WHISPER_FORBIDDEN_KEYS are NOT added here because they appear in legitimate
+ * trade payloads — they are enforced only at the whisper emitter boundary.
  */
-export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick/i;
+export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content|message|utterance|plaintext|decrypted|payload_plain/i;
 
 export interface PrivacyCheckResult {
     ok: boolean;
