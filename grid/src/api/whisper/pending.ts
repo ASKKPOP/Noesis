@@ -1,13 +1,15 @@
 /**
- * GET /api/v1/nous/:did/whispers/pending — snapshot handler.
+ * GET /api/v1/nous/:did/whispers/pending — snapshot pull handler.
  *
  * Phase 11 Wave 3 — WHISPER-06 / D-11-06.
  *
- * Returns a snapshot of all pending envelopes for the given recipient DID.
- * Does NOT delete envelopes — caller must POST /whispers/ack to confirm delivery.
+ * Returns { envelopes: Envelope[] } drained from PendingStore for :did.
+ * This is a SNAPSHOT — it does NOT delete envelopes. Caller must POST /ack
+ * to remove them from the queue.
  *
- * PRIVACY: envelopes contain ciphertext_b64 and nonce_b64 (opaque blobs).
- * Grid never decodes these. The Brain decrypts locally after receiving.
+ * Privacy invariant: envelopes contain ciphertext_b64 (opaque blob) and
+ * ciphertext_hash (hex digest). The Grid never decodes ciphertext; only the
+ * Brain decrypts it after receiving it here.
  *
  * NO Date.now, NO Math.random (wall-clock ban per D-11-13).
  * See: 11-CONTEXT.md D-11-06. WHISPER-06. routes.ts for loopback hook.

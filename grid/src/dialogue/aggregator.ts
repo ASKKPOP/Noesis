@@ -47,12 +47,31 @@ interface PairBuffer {
     readonly speakersInWindow: Set<string>;
 }
 
+/**
+ * Hash-only whisper observation stored in the whisper buffer.
+ * PRIVACY: no plaintext, no ciphertext, no envelope_id — only tick + hash.
+ * Per D-11-09 hash-only ingestion (Phase 11 Wave 3).
+ */
+interface WhisperObservation {
+    readonly tick: number;
+    readonly ciphertext_hash: string;
+}
+
 export class DialogueAggregator {
     private readonly audit: AuditChain;
     private readonly config: DialogueAggregatorConfig;
 
     /** Key: sortedDids.join('|') + '|' + channel. */
     private buffers: Map<string, PairBuffer> = new Map();
+
+    /**
+     * Whisper-channel hash-only buffers.
+     * Key: [from_did, to_did].sort().join('|') + '|whisper'.
+     * Value: array of { tick, ciphertext_hash } observations.
+     * Per D-11-09: ONLY hash + tick stored — no plaintext, no ciphertext blob.
+     * Phase 11 Wave 3.
+     */
+    private whisperBuffers: Map<string, WhisperObservation[]> = new Map();
 
     /**
      * dialogue_ids already delivered, keyed by `${pair_key}|${did}`.
@@ -99,7 +118,17 @@ export class DialogueAggregator {
 
             // Bidirectional + threshold gate (D-01).
             if (buf.speakersInWindow.size < 2) continue;
-            if (buf.utterances.length < this.config.minExchanges) continue;
+
+            // D-11-09: combine unique ticks from both 'spoke' and 'whisper' buffers
+            // for this pair. A spoke at tick=5 and a whisper at tick=5 count as 1
+            // (same dialogue moment, different channels). Equal weighting per D-11-09.
+            const whisperKey = buf.sortedDids.join('|') + '|whisper';
+            const whisperObs = this.whisperBuffers.get(whisperKey) ?? [];
+            const combinedUniqueTicks = new Set([
+                ...buf.utterances.map((u) => u.tick),
+                ...whisperObs.map((w) => w.tick),
+            ]);
+            if (combinedUniqueTicks.size < this.config.minExchanges) continue;
 
             const windowStartTick = buf.windowStartTick;
             const windowEndTick = buf.utterances[buf.utterances.length - 1]?.tick ?? windowStartTick;
@@ -154,17 +183,50 @@ export class DialogueAggregator {
     reset(): void {
         this.buffers = new Map();
         this.delivered = new Map();
+        this.whisperBuffers = new Map();
+    }
+
+    /**
+     * Return all whisper hash-only observations for a given pair key.
+     * Key format: [didA, didB].sort().join('|') + '|whisper'.
+     * PRIVACY: returned entries contain only { tick, ciphertext_hash }.
+     * Phase 11 Wave 3 — D-11-09.
+     */
+    getWhisperBuffer(pairKey: string): readonly WhisperObservation[] {
+        return Object.freeze(this.whisperBuffers.get(pairKey) ?? []);
     }
 
     // -------------------- internals --------------------
 
     private handleEntry(entry: AuditEntry): void {
-        if (entry.eventType !== 'nous.spoke') return;
+        if (entry.eventType === 'nous.spoke') {
+            const obs = this.extractObservation(entry);
+            if (!obs) return;
+            this.ingestSpoke(obs);
+            return;
+        }
 
-        const obs = this.extractObservation(entry);
-        if (!obs) return;
+        if (entry.eventType === 'nous.whispered') {
+            // Hash-only ingestion per D-11-09. NO plaintext, NO ciphertext blob,
+            // NO envelope_id stored — only tick + ciphertext_hash (opaque digest).
+            const p = entry.payload;
+            const fromDid = p['from_did'];
+            const toDid = p['to_did'];
+            const tick = p['tick'];
+            const ciphertextHash = p['ciphertext_hash'];
 
-        this.ingestSpoke(obs);
+            if (
+                typeof fromDid !== 'string' ||
+                typeof toDid !== 'string' ||
+                typeof tick !== 'number' ||
+                typeof ciphertextHash !== 'string'
+            ) return;
+
+            const sortedDids = [fromDid, toDid].sort();
+            const key = sortedDids.join('|') + '|whisper';
+            const existing = this.whisperBuffers.get(key) ?? [];
+            this.whisperBuffers.set(key, [...existing, { tick, ciphertext_hash: ciphertextHash }]);
+        }
     }
 
     private extractObservation(entry: AuditEntry): SpokeObservation | null {

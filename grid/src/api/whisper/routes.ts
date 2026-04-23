@@ -37,7 +37,7 @@
  * NO Date.now, NO Math.random, NO setTimeout, NO setInterval (wall-clock ban D-11-13).
  */
 
-import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
+import type { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import type { WhisperRouter } from '../../whisper/router.js';
 import type { PendingStore } from '../../whisper/pending-store.js';
 import type { WhisperRegistry } from '../../whisper/router.js';
@@ -58,12 +58,15 @@ export interface WhisperRouteDeps {
 /**
  * Loopback guard — reject non-loopback callers with 403.
  * Applied as an onRequest hook to ALL routes in this plugin.
+ *
+ * IMPORTANT: Must be async and return reply.send() to avoid Fastify v5
+ * inject() hanging. Synchronous reply.send() without done() callback causes
+ * the request lifecycle to stall in test environments.
  */
-function loopbackOnly(req: FastifyRequest, reply: { code(n: number): void; send(v: unknown): void }): void {
+async function loopbackOnly(req: FastifyRequest, reply: FastifyReply): Promise<void> {
     const ip = req.ip;
     if (ip !== '127.0.0.1' && ip !== '::1' && ip !== '::ffff:127.0.0.1') {
-        reply.code(403);
-        reply.send({ error: 'loopback_only' });
+        return reply.code(403).send({ error: 'loopback_only' });
     }
 }
 

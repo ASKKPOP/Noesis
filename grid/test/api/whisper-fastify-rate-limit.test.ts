@@ -14,6 +14,7 @@
 
 import { describe, it, expect, afterEach } from 'vitest';
 import Fastify from 'fastify';
+import fastifyRateLimit from '@fastify/rate-limit';
 import type { FastifyInstance } from 'fastify';
 import { AuditChain } from '../../src/audit/chain.js';
 import { PendingStore } from '../../src/whisper/pending-store.js';
@@ -40,6 +41,13 @@ async function buildApp(): Promise<{ app: FastifyInstance; pendingStore: Pending
     const worldClock = { currentTick: () => 1 };
 
     const app = Fastify({ logger: false });
+    // @fastify/rate-limit MUST be registered at top level, not inside whisperRoutes plugin.
+    // Per-route limit of 60/min is configured via config.rateLimit in whisperRoutes.
+    await app.register(fastifyRateLimit, {
+        max: 60,
+        timeWindow: '1 minute',
+        keyGenerator: (req) => (req.params as { did?: string }).did ?? req.ip,
+    });
     await app.register(whisperRoutes, {
         deps: { whisperRouter: router, pendingStore, registry, worldClock, metricsCounter },
     });

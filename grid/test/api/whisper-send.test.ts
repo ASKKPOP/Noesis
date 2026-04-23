@@ -228,8 +228,12 @@ describe('POST /api/v1/nous/:did/whisper/send', () => {
         });
 
         const bodyStr = resp.body;
-        // No long base64 blob in response (ciphertext never returned).
-        expect(bodyStr).not.toMatch(/[A-Za-z0-9+/]{60,}/);
+        // No base64 ciphertext blob in response — base64 uses +/= beyond hex chars.
+        // The ciphertext_hash is a 64-char hex string (a-f0-9 only), which is fine.
+        // This regex matches strings that contain the base64-specific chars + or /.
+        expect(bodyStr).not.toMatch(/[A-Za-z0-9+/]{60,}=[^"]/);
+        // No raw base64 with padding either.
+        expect(bodyStr).not.toMatch(/[A-Za-z0-9+/=]{80,}/);
         // Only envelope_id and ciphertext_hash keys.
         const body = JSON.parse(bodyStr);
         expect(Object.keys(body).sort()).toEqual(['ciphertext_hash', 'envelope_id']);

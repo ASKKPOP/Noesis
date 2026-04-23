@@ -36,6 +36,7 @@ import { DID_RE, appendNousWhispered } from './appendNousWhispered.js';
 import type { TickRateLimiter } from './rate-limit.js';
 import type { PendingStore } from './pending-store.js';
 import type { Envelope } from './types.js';
+import type { WhisperMetricsCounter } from './metrics-counter.js';
 
 /**
  * Minimal registry interface needed by WhisperRouter.
@@ -51,6 +52,8 @@ export interface WhisperRouterDeps {
     readonly registry: WhisperRegistry;
     readonly rateLimiter: TickRateLimiter;
     readonly pendingStore: PendingStore;
+    /** Optional — omit in W2 tests for backward compat. W3 routes always inject one. */
+    readonly metricsCounter?: WhisperMetricsCounter;
 }
 
 export class WhisperRouter {
@@ -73,11 +76,20 @@ export class WhisperRouter {
 
         // Step 2: Tombstone check — silent drop per D-11-18.
         // NO audit emit, NO log, NO 410. Just return false.
-        if (this.deps.registry.isTombstoned(env.from_did)) return false;
-        if (this.deps.registry.isTombstoned(env.to_did)) return false;
+        if (this.deps.registry.isTombstoned(env.from_did)) {
+            this.deps.metricsCounter?.increment('tombstone_dropped');
+            return false;
+        }
+        if (this.deps.registry.isTombstoned(env.to_did)) {
+            this.deps.metricsCounter?.increment('tombstone_dropped');
+            return false;
+        }
 
         // Step 3: Rate-limit — silent drop per D-11-08.
-        if (!this.deps.rateLimiter.tryConsume(env.from_did, currentTick)) return false;
+        if (!this.deps.rateLimiter.tryConsume(env.from_did, currentTick)) {
+            this.deps.metricsCounter?.increment('rate_limited');
+            return false;
+        }
 
         // Step 4: Sole-producer audit emit (LOCKED — must come before enqueue).
         appendNousWhispered(this.deps.audit, env.from_did, {
@@ -90,6 +102,7 @@ export class WhisperRouter {
         // Step 5: Enqueue for recipient pull (LOCKED — must come after audit emit).
         this.deps.pendingStore.enqueue(env);
 
+        this.deps.metricsCounter?.increment('emitted');
         return true;
     }
 }
