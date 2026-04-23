@@ -84,7 +84,7 @@ Plans:
 - [x] 10a-06-PLAN.md — Wave 4: Zero-diff regression + audit-size ceiling + wall-clock grep gates (Brain + Grid) + Dashboard visual smoke + doc-sync execution (shipped 2026-04-22)
 
 ### Phase 10b: Bios Needs + Chronos Subjective Time (Inner Life, part 2)
-**Goal**: Bodily needs (energy, sustenance) elevate Ananke drives on threshold crossing, and a per-Nous subjective-time multiplier modulates Stanford retrieval recency — all without adding a single allowlist member.
+**Goal**: Bodily needs (energy, sustenance) elevate Ananke drives on threshold crossing, and a per-Nous subjective-time multiplier modulates Stanford retrieval recency. Adds `bios.birth` + `bios.death` to the allowlist (+2, per D-10b-01 CONTEXT correction); Chronos is Brain-local read-side only.
 **Depends on**: Phase 10a (Ananke drives must exist so Bios can elevate them; drive privacy-matrix pattern must be locked so Bios clones it without drift)
 **Requirements**: BIOS-01, BIOS-02, BIOS-03, BIOS-04, CHRONOS-01, CHRONOS-02, CHRONOS-03
 **Success Criteria** (what must be TRUE):
@@ -94,13 +94,21 @@ Plans:
   4. Each Nous has a subjective-time multiplier in `[0.25, 4.0]` derived from drive state; the multiplier modulates the Stanford retrieval recency score for that Nous's memory queries — a high-curiosity Nous remembers recent events as more salient. Subjective time is a read-side query transform only.
   5. Audit-chain tick numbering is **never** influenced by subjective time. `audit_tick == system_tick` strictly; CI test asserts no drift across a 1000-tick run with varying subjective-time multipliers. `epoch_since_spawn` is exposed to the Nous as a queryable primitive (ticks since `bios.birth`) without emitting any new event.
 **Scope (ships)**: BIOS-01..04, CHRONOS-01..03.
-**Out of scope for this phase**: New broadcast events (phase ships zero allowlist growth); LLM-driven subjective time (deterministic heuristic only); Thymos emotion layer (deferred to v2.3).
+**Out of scope for this phase**: Chronos wire events (Chronos is Brain-local ONLY — no chronos.* allowlist members this phase or ever); LLM-driven subjective time (deterministic heuristic only); Thymos emotion layer (deferred to v2.3).
 **Risk**:
   - T-09-04 (HIGH): Chronos mutable state reads from wall-clock — `grid/src/chronos/**` grep gate forbids `Date.now`/`performance.now`; pause/resume zero-diff regression (clone `c7c49f49…` hash template).
   - T-09-05 (MEDIUM): Bios/Thymos namespace collision — PHILOSOPHY §1 doc-sync update documenting body↔mood separation (fatigue is a physical metric, not an emotion); no Thymos audit event lands in v2.2 (THYMOS-01 deferred).
   - T-09-03 (HIGH, carried): Bios needs-math must consume tick deltas only — clone Ananke determinism-source grep gate.
-**Allowlist additions**: **0** (Bios reuses existing `bios.birth`/`bios.death` + Phase 10a `ananke.drive_crossed`; Chronos is read-side transform). Running total: **19**.
-**Plans**: TBD
+**Allowlist additions**: **+2** (`bios.birth`, `bios.death` — both previously unimplemented; Chronos is Brain-local read-side transform, no wire event). Running total: **21**.
+**Plans**: 8 plans across 4 waves
+- [ ] 10b-01-wave0-test-scaffolding-PLAN.md — 24 RED test stubs (Brain pytest + Grid vitest + Dashboard)
+- [ ] 10b-02-brain-bios-subsystem-PLAN.md — brain/src/noesis_brain/bios/ (types, config, needs, runtime, loader) + AnankeRuntime.elevate_drive
+- [ ] 10b-03-grid-bios-emitters-allowlist-PLAN.md — grid/src/bios/ sole-producer emitters + allowlist 19→21 + BIOS/CHRONOS forbidden keys + launcher wiring
+- [ ] 10b-04-brain-chronos-retrieval-PLAN.md — brain/src/noesis_brain/chronos/ + score_with_chronos replacing datetime.now recency + handler+prompt wiring
+- [ ] 10b-05-grid-delete-nous-h5-cause-PLAN.md — delete-nous D-30 ORDER extension: appendBiosDeath(cause=operator_h5) before appendNousDeleted
+- [ ] 10b-06-dashboard-bios-panel-PLAN.md — BiosSection between Ananke and Telos + bios-types drift sync + use-bios-levels hook
+- [ ] 10b-07-integration-regression-PLAN.md — 1000-tick audit_tick drift + Bios→Ananke end-to-end + Phase 6 D-17 hash + ceiling + closed-enum + CI wall-clock gate
+- [ ] 10b-08-closeout-doc-sync-PLAN.md — atomic CLAUDE.md doc-sync: ROADMAP+STATE+MILESTONES+PROJECT+REQUIREMENTS+PHILOSOPHY+README+check-state-doc-sync.mjs
 
 ### Phase 11: Mesh Whisper
 **Goal**: Any two Nous can exchange E2E-encrypted envelopes directly; operators cannot read plaintext at any tier, including H5, and the audit chain retains only the ciphertext hash forever.
@@ -119,7 +127,7 @@ Plans:
   - T-10-02 (CRITICAL): Whisper flooding as DoS / audit chain exhaustion — per-sender rate limit at producer boundary; 1000-whispers-in-1-tick regression test asserts audit chain grows by ≤ budget.
   - T-10-03 (HIGH): Operator reading whispers sub-H5 — no whisper-read RPC lands in v2.2 (documented out-of-scope; any future whisper-read flow clones Phase 8 `IrreversibilityDialog` H5 pattern with its own allowlist addition in its own phase).
   - T-10-06 (MEDIUM): Whisper encoding implicit trade commitment — privacy matrix forbids `amount|ousia|offer|price`; integration test asserts whisper-then-trade still produces `trade.reviewed` before `trade.settled`.
-**Allowlist additions**: **+1**. Event: `nous.whispered` with closed-tuple payload `{from_did, to_did, tick, ciphertext_hash}`. Running total: **20**.
+**Allowlist additions**: **+1**. Event: `nous.whispered` with closed-tuple payload `{from_did, to_did, tick, ciphertext_hash}`. Running total: **22**.
 **Plans**: TBD
 **UI hint**: yes
 
