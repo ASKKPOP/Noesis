@@ -23,7 +23,7 @@ describe('Grid API', () => {
         space.addRegion({ id: 'agora', name: 'Agora Central', description: 'Main plaza', regionType: 'public', capacity: 100, properties: {} });
         space.addRegion({ id: 'market', name: 'Market District', description: 'Trading hub', regionType: 'public', capacity: 50, properties: {} });
         space.addConnection({ fromRegion: 'agora', toRegion: 'market', travelCost: 2, bidirectional: true });
-        space.placeNous('did:key:sophia', 'agora');
+        space.placeNous('did:noesis:sophia', 'agora');
 
         logos.addLaw({
             id: 'l1',
@@ -34,8 +34,8 @@ describe('Grid API', () => {
             status: 'active',
         });
 
-        audit.append('domain.register', 'did:key:sophia', { name: 'sophia' });
-        audit.append('grid.started', 'did:key:admin', { gridName: 'genesis' });
+        audit.append('domain.register', 'did:noesis:sophia', { name: 'sophia' });
+        audit.append('grid.started', 'did:noesis:admin', { gridName: 'genesis' });
 
         clock.advance(); // tick 1
 

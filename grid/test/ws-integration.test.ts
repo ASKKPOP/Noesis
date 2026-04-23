@@ -158,7 +158,7 @@ describe('WS integration', () => {
         await c.waitOpen();
         await c.next(); // hello
 
-        audit.append('nous.moved', 'did:key:alice', { to: 'market' });
+        audit.append('nous.moved', 'did:noesis:alice', { to: 'market' });
         const ev = await c.next();
         expect(ev.type).toBe('event');
         expect(ev.entry.eventType).toBe('nous.moved');

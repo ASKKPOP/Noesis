@@ -2,7 +2,7 @@
  * End-to-end test: NousRunner trade_request pipeline.
  *
  * Updated for Phase 5 Plan 03 (reviewer integration — D-01, D-02, D-05):
- *   - Buyer/Seller DIDs switched from `did:key:*` to `did:noesis:*` so they pass
+ *   - Buyer/Seller DIDs switched from `did:noesis:*` to `did:noesis:*` so they pass
  *     the reviewer's Phase-1-frozen DID regex /^did:noesis:[a-z0-9_\-]+$/i.
  *   - Metadata fixtures include the REQUIRED memoryRefs + telosHash.
  *   - Seed env constructs a Reviewer and injects it into the NousRunner.

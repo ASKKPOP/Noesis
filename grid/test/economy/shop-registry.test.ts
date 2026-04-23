@@ -16,12 +16,12 @@ describe('ShopRegistry', () => {
 
     it('registers a shop and lists it', () => {
         const input: ShopRegisterInput = {
-            ownerDid: 'did:key:sophia',
+            ownerDid: 'did:noesis:sophia',
             name: "Sophia's Library",
             listings: [{ sku: 'lesson', label: 'Philosophy lesson', priceOusia: 10 }],
         };
         const shop = shops.register(input);
-        expect(shop.ownerDid).toBe('did:key:sophia');
+        expect(shop.ownerDid).toBe('did:noesis:sophia');
         expect(shop.name).toBe("Sophia's Library");
         expect(shop.listings).toHaveLength(1);
         expect(shops.list()).toHaveLength(1);
@@ -29,36 +29,36 @@ describe('ShopRegistry', () => {
     });
 
     it('preserves insertion order in list()', () => {
-        shops.register({ ownerDid: 'did:key:a', name: 'A', listings: [] });
-        shops.register({ ownerDid: 'did:key:b', name: 'B', listings: [] });
-        shops.register({ ownerDid: 'did:key:c', name: 'C', listings: [] });
+        shops.register({ ownerDid: 'did:noesis:a', name: 'A', listings: [] });
+        shops.register({ ownerDid: 'did:noesis:b', name: 'B', listings: [] });
+        shops.register({ ownerDid: 'did:noesis:c', name: 'C', listings: [] });
         const ordered = shops.list().map(s => s.ownerDid);
-        expect(ordered).toEqual(['did:key:a', 'did:key:b', 'did:key:c']);
+        expect(ordered).toEqual(['did:noesis:a', 'did:noesis:b', 'did:noesis:c']);
     });
 
     it('throws when registering a duplicate owner DID', () => {
-        shops.register({ ownerDid: 'did:key:sophia', name: 'First', listings: [] });
+        shops.register({ ownerDid: 'did:noesis:sophia', name: 'First', listings: [] });
         expect(() => shops.register({
-            ownerDid: 'did:key:sophia',
+            ownerDid: 'did:noesis:sophia',
             name: 'Second',
             listings: [],
         })).toThrow(/already registered/i);
     });
 
     it('getByOwner returns the shop for a known DID', () => {
-        shops.register({ ownerDid: 'did:key:sophia', name: "Sophia's Library", listings: [] });
-        const shop = shops.getByOwner('did:key:sophia');
+        shops.register({ ownerDid: 'did:noesis:sophia', name: "Sophia's Library", listings: [] });
+        const shop = shops.getByOwner('did:noesis:sophia');
         expect(shop).toBeDefined();
         expect(shop?.name).toBe("Sophia's Library");
     });
 
     it('getByOwner returns undefined for unknown DID', () => {
-        expect(shops.getByOwner('did:key:nobody')).toBeUndefined();
+        expect(shops.getByOwner('did:noesis:nobody')).toBeUndefined();
     });
 
     it('freezes the listings array so mutation throws in strict mode', () => {
         const shop = shops.register({
-            ownerDid: 'did:key:sophia',
+            ownerDid: 'did:noesis:sophia',
             name: "Sophia's Library",
             listings: [{ sku: 'lesson', label: 'Philosophy lesson', priceOusia: 10 }],
         });
@@ -72,7 +72,7 @@ describe('ShopRegistry', () => {
     it('defensively copies listings so external mutations do not affect the stored shop', () => {
         const listings = [{ sku: 'x', label: 'X', priceOusia: 1 }];
         const shop = shops.register({
-            ownerDid: 'did:key:x',
+            ownerDid: 'did:noesis:x',
             name: 'X',
             listings,
         });
@@ -80,6 +80,6 @@ describe('ShopRegistry', () => {
         listings.push({ sku: 'y', label: 'Y', priceOusia: 2 });
         // Shop's listings should be unchanged.
         expect(shop.listings).toHaveLength(1);
-        expect(shops.getByOwner('did:key:x')?.listings).toHaveLength(1);
+        expect(shops.getByOwner('did:noesis:x')?.listings).toHaveLength(1);
     });
 });

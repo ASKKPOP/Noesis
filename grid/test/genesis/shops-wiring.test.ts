@@ -44,7 +44,7 @@ describe('Plan 04-01 — GenesisLauncher shops wiring', () => {
     });
 
     it('launcher exposes a ShopRegistry as `shops`', () => {
-        const launcher = new GenesisLauncher(cfgWithSeed('did:key:x', 'X'));
+        const launcher = new GenesisLauncher(cfgWithSeed('did:noesis:x', 'X'));
         expect(launcher.shops).toBeInstanceOf(ShopRegistry);
     });
 
@@ -63,7 +63,7 @@ describe('Plan 04-01 — GenesisLauncher shops wiring', () => {
     it('bootstrap skips shops for unknown owners without throwing', () => {
         // No seeded Nous matches GENESIS_SHOPS entries — all should be skipped
         const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-        const cfg = cfgWithSeed('did:key:nobody', 'Nobody');
+        const cfg = cfgWithSeed('did:noesis:nobody', 'Nobody');
         const launcher = new GenesisLauncher(cfg);
         expect(() => launcher.bootstrap()).not.toThrow();
         // At least one skip warning should have been emitted

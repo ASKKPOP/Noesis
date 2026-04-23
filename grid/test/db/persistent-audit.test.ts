@@ -19,7 +19,7 @@ describe('Sprint 12: PersistentAuditChain', () => {
         const store = new InMemoryGridStore();
         const chain = new PersistentAuditChain(store.audit, GRID);
 
-        chain.append('nous.spoke', 'did:key:sophia', { text: 'Hello' });
+        chain.append('nous.spoke', 'did:noesis:sophia', { text: 'Hello' });
 
         // Wait for the fire-and-forget promise to settle
         await new Promise(r => setTimeout(r, 10));
@@ -34,7 +34,7 @@ describe('Sprint 12: PersistentAuditChain', () => {
         const chain = new PersistentAuditChain(store.audit, GRID);
 
         for (let i = 0; i < 5; i++) {
-            chain.append(`event.${i}`, 'did:key:actor', { i });
+            chain.append(`event.${i}`, 'did:noesis:actor', { i });
         }
 
         await new Promise(r => setTimeout(r, 20));
@@ -47,9 +47,9 @@ describe('Sprint 12: PersistentAuditChain', () => {
         const store = new InMemoryGridStore();
         const chain = new PersistentAuditChain(store.audit, GRID);
 
-        chain.append('a', 'did:key:x', {});
-        chain.append('b', 'did:key:x', {});
-        chain.append('c', 'did:key:x', {});
+        chain.append('a', 'did:noesis:x', {});
+        chain.append('b', 'did:noesis:x', {});
+        chain.append('c', 'did:noesis:x', {});
 
         expect(chain.verify().valid).toBe(true);
     });
@@ -58,9 +58,9 @@ describe('Sprint 12: PersistentAuditChain', () => {
         const store = new InMemoryGridStore();
         const chain = new PersistentAuditChain(store.audit, GRID);
 
-        chain.append('nous.spoke', 'did:key:sophia', { text: 'Hi' });
-        chain.append('nous.moved', 'did:key:sophia', { region: 'beta' });
-        chain.append('nous.spoke', 'did:key:hermes', { text: 'Hey' });
+        chain.append('nous.spoke', 'did:noesis:sophia', { text: 'Hi' });
+        chain.append('nous.moved', 'did:noesis:sophia', { region: 'beta' });
+        chain.append('nous.spoke', 'did:noesis:hermes', { text: 'Hey' });
 
         const spokes = chain.query({ eventType: 'nous.spoke' });
         expect(spokes).toHaveLength(2);
@@ -74,7 +74,7 @@ describe('Sprint 12: PersistentAuditChain', () => {
         const chain = new PersistentAuditChain(store.audit, GRID);
 
         // Should not throw
-        expect(() => chain.append('test.event', 'did:key:x', {})).not.toThrow();
+        expect(() => chain.append('test.event', 'did:noesis:x', {})).not.toThrow();
 
         await new Promise(r => setTimeout(r, 20));
 

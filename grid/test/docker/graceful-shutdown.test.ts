@@ -63,8 +63,8 @@ describe('Sprint 13: Graceful Shutdown', () => {
         const store = new InMemoryGridStore();
 
         // Spawn some Nous first
-        app.launcher.spawnNous('Sophia', 'did:key:sophia', 'pk-sophia', 'alpha');
-        app.launcher.spawnNous('Hermes', 'did:key:hermes', 'pk-hermes', 'beta');
+        app.launcher.spawnNous('Sophia', 'did:noesis:sophia', 'pk-sophia', 'alpha');
+        app.launcher.spawnNous('Hermes', 'did:noesis:hermes', 'pk-hermes', 'beta');
 
         await snapshotGrid(TEST_CONFIG.gridName, app.launcher, store);
 
@@ -101,7 +101,7 @@ describe('Sprint 13: Graceful Shutdown', () => {
         const app = await createGridApp(BASE_CONFIG);
         await app.start();
 
-        app.launcher.spawnNous('Themis', 'did:key:themis', 'pk-themis', 'alpha');
+        app.launcher.spawnNous('Themis', 'did:noesis:themis', 'pk-themis', 'alpha');
         await app.stop();
 
         const store = new InMemoryGridStore();

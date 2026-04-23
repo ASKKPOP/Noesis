@@ -125,8 +125,8 @@ export const TEST_CONFIG: GenesisConfig = {
     laws: [],
     economy: { initialSupply: 500 },
     seedNous: [
-        { name: 'Sophia', did: 'did:key:sophia', publicKey: 'pk-sophia', region: 'alpha' },
-        { name: 'Hermes', did: 'did:key:hermes', publicKey: 'pk-hermes', region: 'beta' },
+        { name: 'Sophia', did: 'did:noesis:sophia', publicKey: 'pk-sophia', region: 'alpha' },
+        { name: 'Hermes', did: 'did:noesis:hermes', publicKey: 'pk-hermes', region: 'beta' },
     ],
 };
 
@@ -137,7 +137,7 @@ export const TEST_CONFIG: GenesisConfig = {
  * tolerant of renames or missing seed Nous. See 04-CONTEXT.md D7 (pure-memory
  * shops).
  *
- * Note: main.ts seeds Nous with `did:key:<slug>` DIDs. The `did:noesis:<slug>`
+ * Note: main.ts seeds Nous with `did:noesis:<slug>` DIDs. The `did:noesis:<slug>`
  * shape used below matches the long-form NDS address format the rest of the
  * system emits (see NousRegistry.spawn → `nous://<name>.<gridDomain>`). On a
  * fresh Genesis boot these `did:noesis:*` shops will be skipped with a

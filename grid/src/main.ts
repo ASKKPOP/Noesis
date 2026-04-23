@@ -45,9 +45,9 @@ export interface GridApp {
 // ── Seed Nous for first-boot (not in GENESIS_CONFIG to keep config clean) ────
 
 const SEED_NOUS = [
-    { name: 'Sophia', did: 'did:key:sophia', publicKey: 'pk-sophia', region: 'agora' },
-    { name: 'Hermes', did: 'did:key:hermes', publicKey: 'pk-hermes', region: 'market' },
-    { name: 'Themis', did: 'did:key:themis', publicKey: 'pk-themis', region: 'council' },
+    { name: 'Sophia', did: 'did:noesis:sophia', publicKey: 'pk-sophia', region: 'agora' },
+    { name: 'Hermes', did: 'did:noesis:hermes', publicKey: 'pk-hermes', region: 'market' },
+    { name: 'Themis', did: 'did:noesis:themis', publicKey: 'pk-themis', region: 'council' },
 ] as const;
 
 // ── Factory ───────────────────────────────────────────────────────────────────

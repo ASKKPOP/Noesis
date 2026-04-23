@@ -16,7 +16,7 @@ function makeLaw(id: string, condition: RuleCondition, action: 'allow' | 'deny' 
 function makeContext(overrides: Partial<ActionContext> = {}): ActionContext {
     return {
         action_type: 'speak',
-        actor_did: 'did:key:sophia',
+        actor_did: 'did:noesis:sophia',
         actor_role: 'citizen',
         actor_region: 'agora',
         actor_reputation_tier: 'silver',

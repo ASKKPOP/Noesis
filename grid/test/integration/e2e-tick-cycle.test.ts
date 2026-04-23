@@ -41,7 +41,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             launcher.bootstrap();
 
             const runner = new NousRunner({
-                nousDid: 'did:key:sophia',
+                nousDid: 'did:noesis:sophia',
                 nousName: 'Sophia',
                 bridge: makeBridge(() => []),
                 space: launcher.space,
@@ -66,7 +66,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             };
 
             const runner = new NousRunner({
-                nousDid: 'did:key:sophia',
+                nousDid: 'did:noesis:sophia',
                 nousName: 'Sophia',
                 bridge: disconnectedBridge,
                 space: launcher.space,
@@ -90,7 +90,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             });
 
             const runner = new NousRunner({
-                nousDid: 'did:key:sophia',
+                nousDid: 'did:noesis:sophia',
                 nousName: 'Sophia',
                 bridge,
                 space: launcher.space,
@@ -102,7 +102,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             await runner.tick(42, 1);
 
             expect(ticksReceived).toContain(42);
-            expect(launcher.registry.get('did:key:sophia')?.lastActiveTick).toBe(42);
+            expect(launcher.registry.get('did:noesis:sophia')?.lastActiveTick).toBe(42);
         });
 
         it('speak action creates audit entry', async () => {
@@ -117,7 +117,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             }]);
 
             const runner = new NousRunner({
-                nousDid: 'did:key:sophia',
+                nousDid: 'did:noesis:sophia',
                 nousName: 'Sophia',
                 bridge,
                 space: launcher.space,
@@ -132,7 +132,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             expect(launcher.audit.length).toBeGreaterThan(auditBefore);
             const spokes = launcher.audit.query({ eventType: 'nous.spoke' });
             expect(spokes.length).toBe(1);
-            expect(spokes[0].actorDid).toBe('did:key:sophia');
+            expect(spokes[0].actorDid).toBe('did:noesis:sophia');
             expect((spokes[0].payload as any).channel).toBe('agora');
             expect((spokes[0].payload as any).text).toBe('Hello Grid!');
         });
@@ -142,7 +142,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             launcher.bootstrap();
 
             const runner = new NousRunner({
-                nousDid: 'did:key:sophia',
+                nousDid: 'did:noesis:sophia',
                 nousName: 'Sophia',
                 bridge: makeBridge(() => [{ action_type: 'noop', channel: '', text: '', metadata: {} }]),
                 space: launcher.space,
@@ -162,7 +162,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             launcher.bootstrap();
 
             // Sophia starts in alpha, move to beta
-            expect(launcher.space.getPosition('did:key:sophia')?.regionId).toBe('alpha');
+            expect(launcher.space.getPosition('did:noesis:sophia')?.regionId).toBe('alpha');
 
             const bridge = makeBridge(() => [{
                 action_type: 'move',
@@ -172,7 +172,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             }]);
 
             const runner = new NousRunner({
-                nousDid: 'did:key:sophia',
+                nousDid: 'did:noesis:sophia',
                 nousName: 'Sophia',
                 bridge,
                 space: launcher.space,
@@ -183,7 +183,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
 
             await runner.tick(5, 0);
 
-            expect(launcher.space.getPosition('did:key:sophia')?.regionId).toBe('beta');
+            expect(launcher.space.getPosition('did:noesis:sophia')?.regionId).toBe('beta');
             const moves = launcher.audit.query({ eventType: 'nous.moved' });
             expect(moves.length).toBe(1);
             expect((moves[0].payload as any).fromRegion).toBe('alpha');
@@ -196,7 +196,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
 
             const longText = 'x'.repeat(500);
             const runner = new NousRunner({
-                nousDid: 'did:key:sophia',
+                nousDid: 'did:noesis:sophia',
                 nousName: 'Sophia',
                 bridge: makeBridge(() => [{ action_type: 'speak', channel: 'agora', text: longText, metadata: {} }]),
                 space: launcher.space,
@@ -217,7 +217,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             launcher.bootstrap();
 
             const runner = new NousRunner({
-                nousDid: 'did:key:sophia',
+                nousDid: 'did:noesis:sophia',
                 nousName: 'Sophia',
                 bridge: makeBridge(() => [], undefined, { name: 'Sophia', mood: 'curious' }),
                 space: launcher.space,
@@ -238,7 +238,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             launcher.bootstrap();
 
             const runner = new NousRunner({
-                nousDid: 'did:key:sophia',
+                nousDid: 'did:noesis:sophia',
                 nousName: 'Sophia',
                 bridge: makeBridge(() => []),
                 space: launcher.space,
@@ -251,7 +251,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             coordinator.addRunner(runner);
             expect(coordinator.size).toBe(1);
 
-            coordinator.removeRunner('did:key:sophia');
+            coordinator.removeRunner('did:noesis:sophia');
             expect(coordinator.size).toBe(0);
         });
 
@@ -260,7 +260,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             launcher.bootstrap();
 
             const runner = new NousRunner({
-                nousDid: 'did:key:sophia',
+                nousDid: 'did:noesis:sophia',
                 nousName: 'Sophia',
                 bridge: makeBridge(() => []),
                 space: launcher.space,
@@ -272,8 +272,8 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             const coordinator = new GridCoordinator(launcher);
             coordinator.addRunner(runner);
 
-            expect(coordinator.getRunner('did:key:sophia')).toBe(runner);
-            expect(coordinator.getRunner('did:key:unknown')).toBeUndefined();
+            expect(coordinator.getRunner('did:noesis:sophia')).toBe(runner);
+            expect(coordinator.getRunner('did:noesis:unknown')).toBeUndefined();
         });
 
         it('clock-driven tick reaches all runners', async () => {
@@ -285,7 +285,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             const hermesTicks: number[] = [];
 
             const sophiaRunner = new NousRunner({
-                nousDid: 'did:key:sophia',
+                nousDid: 'did:noesis:sophia',
                 nousName: 'Sophia',
                 bridge: makeBridge((p) => { sophiaTicks.push(p.tick); return []; }),
                 space: launcher.space,
@@ -295,7 +295,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             });
 
             const hermesRunner = new NousRunner({
-                nousDid: 'did:key:hermes',
+                nousDid: 'did:noesis:hermes',
                 nousName: 'Hermes',
                 bridge: makeBridge((p) => { hermesTicks.push(p.tick); return []; }),
                 space: launcher.space,
@@ -322,7 +322,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
         it('all 3 receive ticks and accumulate lastActiveTick', async () => {
             const launcher = new GenesisLauncher(TEST_CONFIG);
             launcher.bootstrap();
-            launcher.spawnNous('Themis', 'did:key:themis', 'pk-themis', 'alpha');
+            launcher.spawnNous('Themis', 'did:noesis:themis', 'pk-themis', 'alpha');
 
             expect(launcher.registry.count).toBe(3);
 
@@ -331,7 +331,7 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             const names = ['sophia', 'hermes', 'themis'];
             for (const name of names) {
                 const runner = new NousRunner({
-                    nousDid: `did:key:${name}`,
+                    nousDid: `did:noesis:${name}`,
                     nousName: name,
                     bridge: makeBridge(() => [{ action_type: 'noop', channel: '', text: '', metadata: {} }]),
                     space: launcher.space,
@@ -345,11 +345,11 @@ describe('Sprint 11: E2E Tick Cycle', () => {
             expect(coordinator.size).toBe(3);
 
             // Deliver tick 10 to all
-            const allRunners = names.map(n => coordinator.getRunner(`did:key:${n}`)!);
+            const allRunners = names.map(n => coordinator.getRunner(`did:noesis:${n}`)!);
             await Promise.all(allRunners.map(r => r.tick(10, 0)));
 
             for (const name of names) {
-                const record = launcher.registry.get(`did:key:${name}`);
+                const record = launcher.registry.get(`did:noesis:${name}`);
                 expect(record?.lastActiveTick).toBe(10);
             }
         });
@@ -357,11 +357,11 @@ describe('Sprint 11: E2E Tick Cycle', () => {
         it('each Nous has distinct personality in registry', () => {
             const launcher = new GenesisLauncher(TEST_CONFIG);
             launcher.bootstrap();
-            launcher.spawnNous('Themis', 'did:key:themis', 'pk-themis', 'alpha', undefined);
+            launcher.spawnNous('Themis', 'did:noesis:themis', 'pk-themis', 'alpha', undefined);
 
-            const sophia = launcher.registry.get('did:key:sophia');
-            const hermes = launcher.registry.get('did:key:hermes');
-            const themis = launcher.registry.get('did:key:themis');
+            const sophia = launcher.registry.get('did:noesis:sophia');
+            const hermes = launcher.registry.get('did:noesis:hermes');
+            const themis = launcher.registry.get('did:noesis:themis');
 
             expect(sophia?.name).toBe('Sophia');
             expect(hermes?.name).toBe('Hermes');

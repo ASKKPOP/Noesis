@@ -5,7 +5,7 @@
 export type LifecyclePhase = 'spawning' | 'infant' | 'adolescent' | 'maturity' | 'elder' | 'exiled';
 
 export interface NousRecord {
-    did: string;                // did:key:...
+    did: string;                // did:noesis:...
     name: string;               // Display name
     ndsAddress: string;         // nous://name.grid_domain
     publicKey: string;

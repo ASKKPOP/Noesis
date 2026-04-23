@@ -153,7 +153,7 @@ export function registerDeleteNousRoute(
             // 6b. Despawn from coordinator (removes runner, cleans up resources).
             resolvedDeps.coordinator.despawnNous(targetDid);
 
-            // 6c. Bios lifecycle layer — bios.death precedes operator.nous_deleted (D-10b-03).
+            // 6c. Bios lifecycle event precedes operator.nous_deleted (D-10b-03).
             // Wire keys are snake_case per D-10b-01 closed-tuple contract.
             // appendBiosDeath does NOT tombstone internally (B6 fix, plan 10b-03);
             // the tombstone was performed at step 6a above (caller-owned).

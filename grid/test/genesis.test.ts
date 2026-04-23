@@ -28,28 +28,28 @@ describe('GenesisLauncher', () => {
             launcher = new GenesisLauncher(TEST_CONFIG);
             launcher.bootstrap();
             expect(launcher.registry.count).toBe(2);
-            expect(launcher.registry.get('did:key:sophia')).toBeDefined();
-            expect(launcher.registry.get('did:key:hermes')).toBeDefined();
+            expect(launcher.registry.get('did:noesis:sophia')).toBeDefined();
+            expect(launcher.registry.get('did:noesis:hermes')).toBeDefined();
         });
 
         it('places seed Nous in spatial map', () => {
             launcher = new GenesisLauncher(TEST_CONFIG);
             launcher.bootstrap();
-            expect(launcher.space.getPosition('did:key:sophia')?.regionId).toBe('alpha');
-            expect(launcher.space.getPosition('did:key:hermes')?.regionId).toBe('beta');
+            expect(launcher.space.getPosition('did:noesis:sophia')?.regionId).toBe('alpha');
+            expect(launcher.space.getPosition('did:noesis:hermes')?.regionId).toBe('beta');
         });
 
         it('assigns NDS addresses', () => {
             launcher = new GenesisLauncher(TEST_CONFIG);
             launcher.bootstrap();
-            const sophia = launcher.registry.get('did:key:sophia')!;
+            const sophia = launcher.registry.get('did:noesis:sophia')!;
             expect(sophia.ndsAddress).toBe('nous://sophia.test.noesis');
         });
 
         it('grants initial Ousia', () => {
             launcher = new GenesisLauncher(TEST_CONFIG);
             launcher.bootstrap();
-            expect(launcher.registry.get('did:key:sophia')!.ousia).toBe(500);
+            expect(launcher.registry.get('did:noesis:sophia')!.ousia).toBe(500);
         });
 
         it('records audit events', () => {
@@ -104,10 +104,10 @@ describe('GenesisLauncher', () => {
         it('spawns a new Nous into running Grid', () => {
             launcher = new GenesisLauncher(TEST_CONFIG);
             launcher.bootstrap();
-            launcher.spawnNous('Atlas', 'did:key:atlas', 'pk-atlas', 'alpha');
+            launcher.spawnNous('Atlas', 'did:noesis:atlas', 'pk-atlas', 'alpha');
             expect(launcher.registry.count).toBe(3);
-            expect(launcher.space.getPosition('did:key:atlas')?.regionId).toBe('alpha');
-            expect(launcher.registry.get('did:key:atlas')!.ousia).toBe(500);
+            expect(launcher.space.getPosition('did:noesis:atlas')?.regionId).toBe('alpha');
+            expect(launcher.registry.get('did:noesis:atlas')!.ousia).toBe(500);
         });
     });
 
@@ -116,7 +116,7 @@ describe('GenesisLauncher', () => {
             launcher = new GenesisLauncher(TEST_CONFIG);
             launcher.bootstrap();
             launcher.clock.advance(); // tick 1
-            expect(launcher.registry.get('did:key:sophia')!.lastActiveTick).toBe(1);
+            expect(launcher.registry.get('did:noesis:sophia')!.lastActiveTick).toBe(1);
         });
     });
 

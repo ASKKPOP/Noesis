@@ -69,50 +69,50 @@ describe('SpatialMap', () => {
         });
 
         it('places a Nous in a region', () => {
-            map.placeNous('did:key:sophia', 'agora');
-            const pos = map.getPosition('did:key:sophia');
+            map.placeNous('did:noesis:sophia', 'agora');
+            const pos = map.getPosition('did:noesis:sophia');
             expect(pos).toBeDefined();
             expect(pos!.regionId).toBe('agora');
             expect(map.nousCount).toBe(1);
         });
 
         it('throws when placing in unknown region', () => {
-            expect(() => map.placeNous('did:key:x', 'nowhere')).toThrow('Region not found');
+            expect(() => map.placeNous('did:noesis:x', 'nowhere')).toThrow('Region not found');
         });
 
         it('moves Nous between connected regions', () => {
-            map.placeNous('did:key:sophia', 'agora');
-            const result = map.moveNous('did:key:sophia', 'market');
+            map.placeNous('did:noesis:sophia', 'agora');
+            const result = map.moveNous('did:noesis:sophia', 'market');
             expect(result.success).toBe(true);
             expect(result.fromRegion).toBe('agora');
             expect(result.toRegion).toBe('market');
             expect(result.travelCost).toBe(2);
-            expect(map.getPosition('did:key:sophia')!.regionId).toBe('market');
+            expect(map.getPosition('did:noesis:sophia')!.regionId).toBe('market');
         });
 
         it('rejects move for unplaced Nous', () => {
-            const result = map.moveNous('did:key:unknown', 'market');
+            const result = map.moveNous('did:noesis:unknown', 'market');
             expect(result.success).toBe(false);
             expect(result.error).toContain('not placed');
         });
 
         it('rejects move to unknown region', () => {
-            map.placeNous('did:key:sophia', 'agora');
-            const result = map.moveNous('did:key:sophia', 'nowhere');
+            map.placeNous('did:noesis:sophia', 'agora');
+            const result = map.moveNous('did:noesis:sophia', 'nowhere');
             expect(result.success).toBe(false);
             expect(result.error).toContain('not found');
         });
 
         it('rejects move to same region', () => {
-            map.placeNous('did:key:sophia', 'agora');
-            const result = map.moveNous('did:key:sophia', 'agora');
+            map.placeNous('did:noesis:sophia', 'agora');
+            const result = map.moveNous('did:noesis:sophia', 'agora');
             expect(result.success).toBe(false);
             expect(result.error).toContain('Already');
         });
 
         it('rejects move to unconnected region', () => {
-            map.placeNous('did:key:sophia', 'agora');
-            const result = map.moveNous('did:key:sophia', 'library');
+            map.placeNous('did:noesis:sophia', 'agora');
+            const result = map.moveNous('did:noesis:sophia', 'library');
             expect(result.success).toBe(false);
             expect(result.error).toContain('No connection');
         });
@@ -121,17 +121,17 @@ describe('SpatialMap', () => {
             const tiny = makeRegion('tiny', 'Tiny Room', 1);
             map.addRegion(tiny);
             map.addConnection({ fromRegion: 'agora', toRegion: 'tiny', travelCost: 1, bidirectional: true });
-            map.placeNous('did:key:hermes', 'tiny');
-            map.placeNous('did:key:sophia', 'agora');
-            const result = map.moveNous('did:key:sophia', 'tiny');
+            map.placeNous('did:noesis:hermes', 'tiny');
+            map.placeNous('did:noesis:sophia', 'agora');
+            const result = map.moveNous('did:noesis:sophia', 'tiny');
             expect(result.success).toBe(false);
             expect(result.error).toContain('capacity');
         });
 
         it('lists all Nous in a region', () => {
-            map.placeNous('did:key:sophia', 'agora');
-            map.placeNous('did:key:hermes', 'agora');
-            map.placeNous('did:key:atlas', 'market');
+            map.placeNous('did:noesis:sophia', 'agora');
+            map.placeNous('did:noesis:hermes', 'agora');
+            map.placeNous('did:noesis:atlas', 'market');
             expect(map.getNousInRegion('agora')).toHaveLength(2);
             expect(map.getNousInRegion('market')).toHaveLength(1);
             expect(map.getNousInRegion('library')).toHaveLength(0);

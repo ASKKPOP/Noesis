@@ -19,7 +19,7 @@ function makeEntry(id: number, overrides: Partial<AuditEntry> = {}): AuditEntry 
     return {
         id,
         eventType: 'test.event',
-        actorDid: 'did:key:actor',
+        actorDid: 'did:noesis:actor',
         payload: { tick: id },
         prevHash: `prev-${id}`,
         eventHash: `hash-${id}`,
@@ -31,7 +31,7 @@ function makeEntry(id: number, overrides: Partial<AuditEntry> = {}): AuditEntry 
 function makeRecord(did: string, overrides: Partial<NousRecord> = {}): NousRecord {
     return {
         did,
-        name: did.replace('did:key:', ''),
+        name: did.replace('did:noesis:', ''),
         ndsAddress: `nous://${did}.test`,
         publicKey: 'pk-' + did,
         region: 'alpha',
@@ -111,16 +111,16 @@ describe('Sprint 12: InMemoryGridStore', () => {
 
     describe('registry store', () => {
         it('upserts and loads records', async () => {
-            const r = makeRecord('did:key:sophia');
+            const r = makeRecord('did:noesis:sophia');
             await store.registry.upsert(GRID, r);
 
             const loaded = await store.registry.loadAll(GRID);
             expect(loaded).toHaveLength(1);
-            expect(loaded[0].did).toBe('did:key:sophia');
+            expect(loaded[0].did).toBe('did:noesis:sophia');
         });
 
         it('upsert updates existing record', async () => {
-            const r = makeRecord('did:key:sophia');
+            const r = makeRecord('did:noesis:sophia');
             await store.registry.upsert(GRID, r);
 
             const updated = { ...r, lastActiveTick: 99, ousia: 500 };
@@ -137,8 +137,8 @@ describe('Sprint 12: InMemoryGridStore', () => {
         });
 
         it('records are isolated by grid name', async () => {
-            await store.registry.upsert(GRID, makeRecord('did:key:a'));
-            await store.registry.upsert('grid-b', makeRecord('did:key:a'));
+            await store.registry.upsert(GRID, makeRecord('did:noesis:a'));
+            await store.registry.upsert('grid-b', makeRecord('did:noesis:a'));
 
             expect(await store.registry.loadAll(GRID)).toHaveLength(1);
             expect(await store.registry.loadAll('grid-b')).toHaveLength(1);
@@ -149,18 +149,18 @@ describe('Sprint 12: InMemoryGridStore', () => {
 
     describe('space store', () => {
         it('upserts and loads positions', async () => {
-            const pos = makePosition('did:key:sophia', 'alpha');
+            const pos = makePosition('did:noesis:sophia', 'alpha');
             await store.space.upsertPosition(GRID, pos);
 
             const loaded = await store.space.loadPositions(GRID);
             expect(loaded).toHaveLength(1);
-            expect(loaded[0].nousDid).toBe('did:key:sophia');
+            expect(loaded[0].nousDid).toBe('did:noesis:sophia');
             expect(loaded[0].regionId).toBe('alpha');
         });
 
         it('upsert updates existing position', async () => {
-            await store.space.upsertPosition(GRID, makePosition('did:key:sophia', 'alpha'));
-            await store.space.upsertPosition(GRID, makePosition('did:key:sophia', 'beta'));
+            await store.space.upsertPosition(GRID, makePosition('did:noesis:sophia', 'alpha'));
+            await store.space.upsertPosition(GRID, makePosition('did:noesis:sophia', 'beta'));
 
             const loaded = await store.space.loadPositions(GRID);
             expect(loaded).toHaveLength(1);

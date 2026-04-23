@@ -36,8 +36,8 @@ describe('Sprint 12: Snapshot & Restore', () => {
         const records = await store.registry.loadAll(GRID);
         expect(records.length).toBe(launcher.registry.count);
         const dids = records.map(r => r.did).sort();
-        expect(dids).toContain('did:key:sophia');
-        expect(dids).toContain('did:key:hermes');
+        expect(dids).toContain('did:noesis:sophia');
+        expect(dids).toContain('did:noesis:hermes');
     });
 
     it('snapshotGrid saves audit entries to store', async () => {
@@ -62,8 +62,8 @@ describe('Sprint 12: Snapshot & Restore', () => {
         const positions = await store.space.loadPositions(GRID);
         expect(positions.length).toBe(launcher.space.nousCount);
         const dids = positions.map(p => p.nousDid).sort();
-        expect(dids).toContain('did:key:sophia');
-        expect(dids).toContain('did:key:hermes');
+        expect(dids).toContain('did:noesis:sophia');
+        expect(dids).toContain('did:noesis:hermes');
     });
 
     it('restoreGrid returns true when store has data', async () => {
@@ -85,7 +85,7 @@ describe('Sprint 12: Snapshot & Restore', () => {
         launcher.bootstrap();
 
         // Add a third Nous after bootstrap
-        launcher.spawnNous('Themis', 'did:key:themis', 'pk-themis', 'alpha');
+        launcher.spawnNous('Themis', 'did:noesis:themis', 'pk-themis', 'alpha');
 
         await snapshotGrid(GRID, launcher, store);
 
@@ -95,9 +95,9 @@ describe('Sprint 12: Snapshot & Restore', () => {
         await restoreGrid(GRID, launcher2, store);
 
         expect(launcher2.registry.count).toBe(3);
-        expect(launcher2.registry.get('did:key:sophia')?.name).toBe('Sophia');
-        expect(launcher2.registry.get('did:key:hermes')?.name).toBe('Hermes');
-        expect(launcher2.registry.get('did:key:themis')?.name).toBe('Themis');
+        expect(launcher2.registry.get('did:noesis:sophia')?.name).toBe('Sophia');
+        expect(launcher2.registry.get('did:noesis:hermes')?.name).toBe('Hermes');
+        expect(launcher2.registry.get('did:noesis:themis')?.name).toBe('Themis');
     });
 
     it('restored audit chain passes verification', async () => {
@@ -106,8 +106,8 @@ describe('Sprint 12: Snapshot & Restore', () => {
         launcher.bootstrap();
 
         // Some activity
-        launcher.audit.append('nous.spoke', 'did:key:sophia', { text: 'Hello' });
-        launcher.audit.append('nous.moved', 'did:key:hermes', { region: 'alpha' });
+        launcher.audit.append('nous.spoke', 'did:noesis:sophia', { text: 'Hello' });
+        launcher.audit.append('nous.moved', 'did:noesis:hermes', { region: 'alpha' });
 
         await snapshotGrid(GRID, launcher, store);
 
@@ -126,7 +126,7 @@ describe('Sprint 12: Snapshot & Restore', () => {
         launcher.bootstrap();
 
         // Move Hermes to alpha
-        launcher.space.moveNous('did:key:hermes', 'alpha');
+        launcher.space.moveNous('did:noesis:hermes', 'alpha');
 
         await snapshotGrid(GRID, launcher, store);
 
@@ -134,8 +134,8 @@ describe('Sprint 12: Snapshot & Restore', () => {
         launcher2.bootstrap({ skipSeedNous: true });
         await restoreGrid(GRID, launcher2, store);
 
-        expect(launcher2.space.getPosition('did:key:sophia')?.regionId).toBe('alpha');
-        expect(launcher2.space.getPosition('did:key:hermes')?.regionId).toBe('alpha');
+        expect(launcher2.space.getPosition('did:noesis:sophia')?.regionId).toBe('alpha');
+        expect(launcher2.space.getPosition('did:noesis:hermes')?.regionId).toBe('alpha');
     });
 
     it('snapshot is idempotent — calling twice does not duplicate data', async () => {

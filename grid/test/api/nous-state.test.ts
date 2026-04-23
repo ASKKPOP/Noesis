@@ -89,7 +89,7 @@ describe('GET /api/v1/nous/:did/state — DID validation', () => {
     it('rejects a DID with uppercase forbidden characters (special chars)', async () => {
         const res = await app.inject({
             method: 'GET',
-            url: '/api/v1/nous/did%3Akey%3Asophia/state', // did:key:sophia — wrong namespace
+            url: '/api/v1/nous/did%3Akey%3Asophia/state', // did:noesis:sophia — wrong namespace
         });
         expect(res.statusCode).toBe(400);
         expect(res.json()).toEqual({ error: 'invalid_did' });

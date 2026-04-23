@@ -120,9 +120,9 @@ describe('Sprint 13: Server Startup', () => {
         // All 3 SEED_NOUS (sophia/agora, hermes/market, themis/council) have
         // matching regions in GENESIS_CONFIG → all 3 spawned
         expect(genesisApp.launcher.registry.count).toBe(3);
-        expect(genesisApp.launcher.registry.get('did:key:sophia')?.name).toBe('Sophia');
-        expect(genesisApp.launcher.registry.get('did:key:hermes')?.name).toBe('Hermes');
-        expect(genesisApp.launcher.registry.get('did:key:themis')?.name).toBe('Themis');
+        expect(genesisApp.launcher.registry.get('did:noesis:sophia')?.name).toBe('Sophia');
+        expect(genesisApp.launcher.registry.get('did:noesis:hermes')?.name).toBe('Hermes');
+        expect(genesisApp.launcher.registry.get('did:noesis:themis')?.name).toBe('Themis');
 
         await genesisApp.stop();
     });

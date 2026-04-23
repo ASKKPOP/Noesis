@@ -39,10 +39,10 @@ describe('Sprint 11: E2E Messaging', () => {
             // TEST_CONFIG: sophia starts in alpha, hermes in beta — move hermes to alpha
             const launcher = new GenesisLauncher(TEST_CONFIG);
             launcher.bootstrap();
-            launcher.space.moveNous('did:key:hermes', 'alpha');
+            launcher.space.moveNous('did:noesis:hermes', 'alpha');
 
-            expect(launcher.space.getPosition('did:key:sophia')?.regionId).toBe('alpha');
-            expect(launcher.space.getPosition('did:key:hermes')?.regionId).toBe('alpha');
+            expect(launcher.space.getPosition('did:noesis:sophia')?.regionId).toBe('alpha');
+            expect(launcher.space.getPosition('did:noesis:hermes')?.regionId).toBe('alpha');
 
             const hermesReceived: MessageParams[] = [];
 
@@ -63,7 +63,7 @@ describe('Sprint 11: E2E Messaging', () => {
             });
 
             const sophiaRunner = new NousRunner({
-                nousDid: 'did:key:sophia',
+                nousDid: 'did:noesis:sophia',
                 nousName: 'Sophia',
                 bridge: sophiaBridge,
                 space: launcher.space,
@@ -73,7 +73,7 @@ describe('Sprint 11: E2E Messaging', () => {
             });
 
             const hermesRunner = new NousRunner({
-                nousDid: 'did:key:hermes',
+                nousDid: 'did:noesis:hermes',
                 nousName: 'Hermes',
                 bridge: hermesBridge,
                 space: launcher.space,
@@ -87,7 +87,7 @@ describe('Sprint 11: E2E Messaging', () => {
             coordinator.addRunner(hermesRunner);
 
             // Deliver a message to Sophia — she speaks back — coordinator relays to Hermes
-            await sophiaRunner.receiveMessage('Themis', 'did:key:themis', 'agora', 'What is wisdom?', 1);
+            await sophiaRunner.receiveMessage('Themis', 'did:noesis:themis', 'agora', 'What is wisdom?', 1);
 
             // Give async relay a chance to complete
             await new Promise(r => setTimeout(r, 50));
@@ -111,7 +111,7 @@ describe('Sprint 11: E2E Messaging', () => {
             });
 
             const sophiaRunner = new NousRunner({
-                nousDid: 'did:key:sophia',
+                nousDid: 'did:noesis:sophia',
                 nousName: 'Sophia',
                 bridge: sophiaBridge,
                 space: launcher.space,
@@ -122,7 +122,7 @@ describe('Sprint 11: E2E Messaging', () => {
 
             const hermesBridge = makeBridge({ onMessage: () => [] });
             const hermesRunner = new NousRunner({
-                nousDid: 'did:key:hermes',
+                nousDid: 'did:noesis:hermes',
                 nousName: 'Hermes',
                 bridge: hermesBridge,
                 space: launcher.space,
@@ -138,7 +138,7 @@ describe('Sprint 11: E2E Messaging', () => {
             const countBefore = sophiaReceived.length;
 
             // Sophia receives external message, speaks → coordinator should NOT relay to Sophia herself
-            await sophiaRunner.receiveMessage('Atlas', 'did:key:atlas', 'agora', 'Hello!', 2);
+            await sophiaRunner.receiveMessage('Atlas', 'did:noesis:atlas', 'agora', 'Hello!', 2);
             await new Promise(r => setTimeout(r, 50));
 
             // Sophia received Atlas's message (count + 1), but not her own reply
@@ -153,9 +153,9 @@ describe('Sprint 11: E2E Messaging', () => {
             launcher.bootstrap();
 
             // Move Hermes to beta
-            launcher.space.moveNous('did:key:hermes', 'beta');
-            expect(launcher.space.getPosition('did:key:hermes')?.regionId).toBe('beta');
-            expect(launcher.space.getPosition('did:key:sophia')?.regionId).toBe('alpha');
+            launcher.space.moveNous('did:noesis:hermes', 'beta');
+            expect(launcher.space.getPosition('did:noesis:hermes')?.regionId).toBe('beta');
+            expect(launcher.space.getPosition('did:noesis:sophia')?.regionId).toBe('alpha');
 
             const hermesReceived: MessageParams[] = [];
 
@@ -176,7 +176,7 @@ describe('Sprint 11: E2E Messaging', () => {
             });
 
             const sophiaRunner = new NousRunner({
-                nousDid: 'did:key:sophia',
+                nousDid: 'did:noesis:sophia',
                 nousName: 'Sophia',
                 bridge: sophiaBridge,
                 space: launcher.space,
@@ -186,7 +186,7 @@ describe('Sprint 11: E2E Messaging', () => {
             });
 
             const hermesRunner = new NousRunner({
-                nousDid: 'did:key:hermes',
+                nousDid: 'did:noesis:hermes',
                 nousName: 'Hermes',
                 bridge: hermesBridge,
                 space: launcher.space,
@@ -201,7 +201,7 @@ describe('Sprint 11: E2E Messaging', () => {
 
             const hermesBefore = hermesReceived.length;
 
-            await sophiaRunner.receiveMessage('Themis', 'did:key:themis', 'agora', 'Alpha message!', 3);
+            await sophiaRunner.receiveMessage('Themis', 'did:noesis:themis', 'agora', 'Alpha message!', 3);
             await new Promise(r => setTimeout(r, 50));
 
             // Hermes is in beta — should NOT receive Sophia's message from alpha
@@ -213,7 +213,7 @@ describe('Sprint 11: E2E Messaging', () => {
             launcher.bootstrap();
 
             // Start with Hermes in beta
-            launcher.space.moveNous('did:key:hermes', 'beta');
+            launcher.space.moveNous('did:noesis:hermes', 'beta');
 
             const hermesReceived: MessageParams[] = [];
 
@@ -226,7 +226,7 @@ describe('Sprint 11: E2E Messaging', () => {
             });
 
             const sophiaRunner = new NousRunner({
-                nousDid: 'did:key:sophia',
+                nousDid: 'did:noesis:sophia',
                 nousName: 'Sophia',
                 bridge: sophiaBridge,
                 space: launcher.space,
@@ -236,7 +236,7 @@ describe('Sprint 11: E2E Messaging', () => {
             });
 
             const hermesRunner = new NousRunner({
-                nousDid: 'did:key:hermes',
+                nousDid: 'did:noesis:hermes',
                 nousName: 'Hermes',
                 bridge: hermesBridge,
                 space: launcher.space,
@@ -250,15 +250,15 @@ describe('Sprint 11: E2E Messaging', () => {
             coordinator.addRunner(hermesRunner);
 
             // First message while Hermes is in beta — NOT received
-            await sophiaRunner.receiveMessage('Atlas', 'did:key:atlas', 'agora', 'Msg1', 4);
+            await sophiaRunner.receiveMessage('Atlas', 'did:noesis:atlas', 'agora', 'Msg1', 4);
             await new Promise(r => setTimeout(r, 50));
             expect(hermesReceived.length).toBe(0);
 
             // Hermes moves back to alpha
-            launcher.space.moveNous('did:key:hermes', 'alpha');
+            launcher.space.moveNous('did:noesis:hermes', 'alpha');
 
             // Second message — NOW received
-            await sophiaRunner.receiveMessage('Atlas', 'did:key:atlas', 'agora', 'Msg2', 5);
+            await sophiaRunner.receiveMessage('Atlas', 'did:noesis:atlas', 'agora', 'Msg2', 5);
             await new Promise(r => setTimeout(r, 50));
             expect(hermesReceived.length).toBe(1);
             expect(hermesReceived[0].sender_name).toBe('Sophia');
@@ -269,7 +269,7 @@ describe('Sprint 11: E2E Messaging', () => {
         it('full exchange produces valid audit chain', async () => {
             const launcher = new GenesisLauncher(TEST_CONFIG);
             launcher.bootstrap();
-            launcher.space.moveNous('did:key:hermes', 'alpha');
+            launcher.space.moveNous('did:noesis:hermes', 'alpha');
 
             // Sophia speaks on receive; Hermes returns noop to avoid infinite relay loop
             const sophiaBridge = makeBridge({
@@ -280,13 +280,13 @@ describe('Sprint 11: E2E Messaging', () => {
             });
 
             const sophiaRunner = new NousRunner({
-                nousDid: 'did:key:sophia', nousName: 'Sophia',
+                nousDid: 'did:noesis:sophia', nousName: 'Sophia',
                 bridge: sophiaBridge, space: launcher.space,
                 audit: launcher.audit, registry: launcher.registry,
                 economy: launcher.economy,
             });
             const hermesRunner = new NousRunner({
-                nousDid: 'did:key:hermes', nousName: 'Hermes',
+                nousDid: 'did:noesis:hermes', nousName: 'Hermes',
                 bridge: hermesBridge, space: launcher.space,
                 audit: launcher.audit, registry: launcher.registry,
                 economy: launcher.economy,
@@ -298,7 +298,7 @@ describe('Sprint 11: E2E Messaging', () => {
 
             // Multiple message rounds
             for (let tick = 1; tick <= 3; tick++) {
-                await sophiaRunner.receiveMessage('Atlas', 'did:key:atlas', 'agora', `Round ${tick}`, tick);
+                await sophiaRunner.receiveMessage('Atlas', 'did:noesis:atlas', 'agora', `Round ${tick}`, tick);
                 await new Promise(r => setTimeout(r, 50));
             }
 
@@ -319,12 +319,12 @@ describe('Sprint 11: E2E Messaging', () => {
                     action_type: 'direct_message',
                     channel: 'direct',
                     text: 'Private word',
-                    metadata: { target_did: 'did:key:hermes' },
+                    metadata: { target_did: 'did:noesis:hermes' },
                 }],
             });
 
             const runner = new NousRunner({
-                nousDid: 'did:key:sophia', nousName: 'Sophia',
+                nousDid: 'did:noesis:sophia', nousName: 'Sophia',
                 bridge, space: launcher.space,
                 audit: launcher.audit, registry: launcher.registry,
                 economy: launcher.economy,
@@ -332,11 +332,11 @@ describe('Sprint 11: E2E Messaging', () => {
 
             new GridCoordinator(launcher).addRunner(runner);
 
-            await runner.receiveMessage('Atlas', 'did:key:atlas', 'agora', 'Come here', 1);
+            await runner.receiveMessage('Atlas', 'did:noesis:atlas', 'agora', 'Come here', 1);
 
             const dmEntries = launcher.audit.query({ eventType: 'nous.direct_message' });
             expect(dmEntries.length).toBe(1);
-            expect((dmEntries[0].payload as any).targetDid).toBe('did:key:hermes');
+            expect((dmEntries[0].payload as any).targetDid).toBe('did:noesis:hermes');
         });
     });
 
@@ -345,7 +345,7 @@ describe('Sprint 11: E2E Messaging', () => {
             const launcher = new GenesisLauncher(TEST_CONFIG);
             launcher.bootstrap();
             // Move Hermes to alpha so both are co-located with Sophia
-            launcher.space.moveNous('did:key:hermes', 'alpha');
+            launcher.space.moveNous('did:noesis:hermes', 'alpha');
 
             const events: string[] = [];
 
@@ -374,13 +374,13 @@ describe('Sprint 11: E2E Messaging', () => {
             });
 
             const sophiaRunner = new NousRunner({
-                nousDid: 'did:key:sophia', nousName: 'Sophia',
+                nousDid: 'did:noesis:sophia', nousName: 'Sophia',
                 bridge: sophiaBridge, space: launcher.space,
                 audit: launcher.audit, registry: launcher.registry,
                 economy: launcher.economy,
             });
             const hermesRunner = new NousRunner({
-                nousDid: 'did:key:hermes', nousName: 'Hermes',
+                nousDid: 'did:noesis:hermes', nousName: 'Hermes',
                 bridge: hermesBridge, space: launcher.space,
                 audit: launcher.audit, registry: launcher.registry,
                 economy: launcher.economy,
