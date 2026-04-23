@@ -4,7 +4,7 @@
 
 v2.2 moves Nous from observed entities to full agents. Six themes ship as 7 phases (Phase 9 → Phase 14, with Phase 10 split into 10a/10b) on top of the frozen v2.1 Steward Console. Build order follows **FEATURES** (motivation-first): Relationship first as the zero-allowlist-cost opener that validates the pure-observer pattern for v2.2, then Inner Life to establish the hash-only drive discipline, then Whisper (proposal bodies will ride whisper), then Governance, then operator Replay, then Researcher Rigs as the terminal integration test.
 
-Allowlist grows **18 → 25** (+7 events across 4 phases). Three phases add zero new allowlist members: **Phase 9** (derived relationship view), **Phase 14** (Rigs run their own isolated chain), and **Phase 10b** (Bios + Chronos ride existing lifecycle events and read-side transforms).
+Allowlist grows **18 → 27** (+9 events across 5 phases). Two phases add zero new allowlist members: **Phase 9** (derived relationship view) and **Phase 14** (Rigs run their own isolated chain). Note: Phase 10b adds +2 (`bios.birth`, `bios.death`) per D-10b-01 correction — these events were not in v2.1 as originally assumed.
 
 Phase numbering continues from v2.1 — do NOT reset without `--reset-phase-numbers`.
 
@@ -19,7 +19,7 @@ Phase numbering continues from v2.1 — do NOT reset without `--reset-phase-numb
 
 - [x] **Phase 9: Relationship Graph (Derived View)** — Pure-observer relationship listener over existing dialogue.* + trade.* events. Zero allowlist additions. (completed 2026-04-22)
 - [x] **Phase 10a: Ananke Drives (Inner Life, part 1)** — Five-drive subsystem with threshold-crossing audit events. Establishes hash-only drive discipline for Phase 10b. (shipped 2026-04-22, allowlist 18→19 with `ananke.drive_crossed`)
-- [ ] **Phase 10b: Bios Needs + Chronos Subjective Time (Inner Life, part 2)** — Bodily needs elevate drives; subjective time modulates Stanford retrieval recency. Zero allowlist additions.
+- [x] **Phase 10b: Bios Needs + Chronos Subjective Time (Inner Life, part 2)** — Bodily needs elevate drives; subjective time modulates Stanford retrieval recency. Allowlist +2 (bios.birth, bios.death). (shipped 2026-04-22, allowlist 19→21)
 - [ ] **Phase 11: Mesh Whisper** — Nous-to-Nous E2E envelope (libsodium `crypto_box`); operators cannot read plaintext at any tier.
 - [ ] **Phase 12: Governance & Collective Law** — Commit-reveal ballot lifecycle (4 events); successful proposals promote to v2.1 LogosEngine.
 - [ ] **Phase 13: Operator Replay & Export** — State-level ReplayGrid + deterministic JSONL tarball export; read-only rewind in Steward Console.
@@ -108,7 +108,7 @@ Plans:
 - [x] 10b-05-grid-delete-nous-h5-cause-PLAN.md — delete-nous D-30 ORDER extension: appendBiosDeath(cause=operator_h5) before appendNousDeleted
 - [x] 10b-06-dashboard-bios-panel-PLAN.md — BiosSection between Ananke and Telos + bios-types drift sync + use-bios-levels hook
 - [x] 10b-07-integration-regression-PLAN.md — 1000-tick audit_tick drift + Bios→Ananke end-to-end + Phase 6 D-17 hash + ceiling + closed-enum + CI wall-clock gate
-- [ ] 10b-08-closeout-doc-sync-PLAN.md — atomic CLAUDE.md doc-sync: ROADMAP+STATE+MILESTONES+PROJECT+REQUIREMENTS+PHILOSOPHY+README+check-state-doc-sync.mjs
+- [x] 10b-08-closeout-doc-sync-PLAN.md — atomic CLAUDE.md doc-sync: ROADMAP+STATE+MILESTONES+PROJECT+REQUIREMENTS+PHILOSOPHY+README+check-state-doc-sync.mjs
 
 ### Phase 11: Mesh Whisper
 **Goal**: Any two Nous can exchange E2E-encrypted envelopes directly; operators cannot read plaintext at any tier, including H5, and the audit chain retains only the ciphertext hash forever.
@@ -127,7 +127,7 @@ Plans:
   - T-10-02 (CRITICAL): Whisper flooding as DoS / audit chain exhaustion — per-sender rate limit at producer boundary; 1000-whispers-in-1-tick regression test asserts audit chain grows by ≤ budget.
   - T-10-03 (HIGH): Operator reading whispers sub-H5 — no whisper-read RPC lands in v2.2 (documented out-of-scope; any future whisper-read flow clones Phase 8 `IrreversibilityDialog` H5 pattern with its own allowlist addition in its own phase).
   - T-10-06 (MEDIUM): Whisper encoding implicit trade commitment — privacy matrix forbids `amount|ousia|offer|price`; integration test asserts whisper-then-trade still produces `trade.reviewed` before `trade.settled`.
-**Allowlist additions**: **+1**. Event: `nous.whispered` with closed-tuple payload `{from_did, to_did, tick, ciphertext_hash}`. Running total: **22**.
+**Allowlist additions**: **+1**. Event: `nous.whispered` with closed-tuple payload `{from_did, to_did, tick, ciphertext_hash}`. Running total: **22**. (Note: updated from pre-10b figure of 20; 10b added bios.birth+bios.death, so 21+1=22)
 **Plans**: TBD
 **UI hint**: yes
 
@@ -149,7 +149,7 @@ Plans:
   - T-09-14 (HIGH): Sybil voting via cheap spawn — documented limitation in PHILOSOPHY (v2.2 ships without eligibility gate; spawn-cost primitive remains out-of-scope; operator-observable anomaly surfacing lands in v2.3).
   - T-09-15 (HIGH): Nous-collective law path bypasses operator provenance — ensure `proposal.tallied → law.triggered` promotion emits with explicit `enacted_by: 'collective'` marker inside the existing `law.triggered` closed tuple (additive widening of existing payload, not new event); grep test asserts `proposal.tallied` never triggers `operator.law_changed`.
   - T-09-16 (MEDIUM): Vote targeting tombstoned proposer — extend Phase 8 `tombstoneCheck` to proposal/ballot routes; decision documented in phase CONTEXT.md (votes for tombstoned-proposer proposals complete with existing votes, reject new votes).
-**Allowlist additions**: **+4**. Events: `proposal.opened` `{proposal_id, proposer_did, title_hash, quorum_pct, supermajority_pct, deadline_tick}`; `ballot.committed` `{proposal_id, voter_did, commit_hash}`; `ballot.revealed` `{proposal_id, voter_did, choice, nonce}`; `proposal.tallied` `{proposal_id, outcome, yes_count, no_count, abstain_count, quorum_met}`. Running total: **24**.
+**Allowlist additions**: **+4**. Events: `proposal.opened` `{proposal_id, proposer_did, title_hash, quorum_pct, supermajority_pct, deadline_tick}`; `ballot.committed` `{proposal_id, voter_did, commit_hash}`; `ballot.revealed` `{proposal_id, voter_did, choice, nonce}`; `proposal.tallied` `{proposal_id, outcome, yes_count, no_count, abstain_count, quorum_met}`. Running total: **26**.
 **Plans**: TBD
 **UI hint**: yes
 
@@ -170,7 +170,7 @@ Plans:
   - T-10-08 (CRITICAL): Replay emits audit entries with fake timestamps — hard ban on `replay.*` allowlist members (`scripts/check-state-doc-sync.mjs` rejects any prefix `replay.`); Replay UI renders to sandbox view, never to firehose.
   - T-10-09 (HIGH): Replay viewer reveals plaintext at H1 — Telos-revealing frames require H4, whisper-revealing frames require H5; Playwright E2E asserts tier-elevation required before plaintext renders.
   - T-10-10 (CRITICAL): Export tarball contains plaintext never broadcast — default export is audit-chain-only (hash-only artifacts); plaintext export is a distinct H5 flow with `IrreversibilityDialog` consent (one dialog per Nous included or a collective-consent primitive).
-**Allowlist additions**: **+1**. Event: `operator.exported` with closed-tuple payload `{tier, operator_id, start_tick, end_tick, tarball_hash, requested_at}`. Running total: **25**.
+**Allowlist additions**: **+1**. Event: `operator.exported` with closed-tuple payload `{tier, operator_id, start_tick, end_tick, tarball_hash, requested_at}`. Running total: **27**.
 **Plans**: TBD
 **UI hint**: yes
 
@@ -192,7 +192,7 @@ Plans:
   - T-10-14 (HIGH): Tarball non-deterministic due to spawn order — `tar --sort=name` + clamped mtime + zero uid/gid (reproducible-builds.org conventions); same seed + args → same `sha256sum`.
   - T-10-15 (HIGH): 10k-tick run reveals producer-boundary perf cliff — `Set.has()` (already frozen) not array scans; producer-boundary benchmark in nightly CI.
   - T-10-16 (CRITICAL): Published dataset inadvertently leaks plaintext Telos — rig output has two modes (`--audit-only` default, `--full-state` with verbatim-copy-locked consent prompt); default output scanned by `grep -rE "telos_text|goal_description|memory_text"` returns zero matches.
-**Allowlist additions**: **0** (on production allowlist — Rigs run their own isolated chain). Note: `chronos.rig_closed` exists on the Rig's own chain but is explicitly NOT added to `grid/src/audit/broadcast-allowlist.ts`. Running total: **25**.
+**Allowlist additions**: **0** (on production allowlist — Rigs run their own isolated chain). Note: `chronos.rig_closed` exists on the Rig's own chain but is explicitly NOT added to `grid/src/audit/broadcast-allowlist.ts`. Running total: **27**.
 **Plans**: TBD
 
 ## Progress
@@ -210,7 +210,7 @@ Dependencies form a strict chain (no parallel phases in v2.2). Rationale:
 |-------|----------------|--------|-----------|
 | 9. Relationship Graph (Derived View) | 8/8 | Complete   | 2026-04-22 |
 | 10a. Ananke Drives | 6/6 | Complete   | 2026-04-22 |
-| 10b. Bios Needs + Chronos Subjective Time | 7/8 | In Progress|  |
+| 10b. Bios Needs + Chronos Subjective Time | 8/8 | Complete   | 2026-04-22 |
 | 11. Mesh Whisper | 0/? | Not started | - |
 | 12. Governance & Collective Law | 0/? | Not started | - |
 | 13. Operator Replay & Export | 0/? | Not started | - |
@@ -255,16 +255,17 @@ Starting: **18 events** (v2.1 frozen end-state).
 |-------|-------------|---------------|---------------|
 | 9 | *(none — derived view)* | — | 18 |
 | 10a | `ananke.drive_crossed` | `{did, tick, drive, level, direction}` | 19 |
-| 10b | *(none — reuses existing lifecycle + read-side transform)* | — | 19 |
-| 11 | `nous.whispered` | `{from_did, to_did, tick, ciphertext_hash}` | 20 |
-| 12 | `proposal.opened` | `{proposal_id, proposer_did, title_hash, quorum_pct, supermajority_pct, deadline_tick}` | 21 |
-| 12 | `ballot.committed` | `{proposal_id, voter_did, commit_hash}` | 22 |
-| 12 | `ballot.revealed` | `{proposal_id, voter_did, choice, nonce}` | 23 |
-| 12 | `proposal.tallied` | `{proposal_id, outcome, yes_count, no_count, abstain_count, quorum_met}` | 24 |
-| 13 | `operator.exported` | `{tier, operator_id, start_tick, end_tick, tarball_hash, requested_at}` | 25 |
+| 10b | `bios.birth` | `{did, tick, psyche_hash}` | 20 |
+| 10b | `bios.death` | `{did, tick, cause, final_state_hash}` | 21 |
+| 11 | `nous.whispered` | `{from_did, to_did, tick, ciphertext_hash}` | 22 |
+| 12 | `proposal.opened` | `{proposal_id, proposer_did, title_hash, quorum_pct, supermajority_pct, deadline_tick}` | 23 |
+| 12 | `ballot.committed` | `{proposal_id, voter_did, commit_hash}` | 24 |
+| 12 | `ballot.revealed` | `{proposal_id, voter_did, choice, nonce}` | 25 |
+| 12 | `proposal.tallied` | `{proposal_id, outcome, yes_count, no_count, abstain_count, quorum_met}` | 26 |
+| 13 | `operator.exported` | `{tier, operator_id, start_tick, end_tick, tarball_hash, requested_at}` | 27 |
 | 14 | *(none on production allowlist — Rigs run isolated chain)* | — | 25 |
 
-**Total v2.2 allowlist growth: +7 (18 → 25).** Freeze-except-by-explicit-addition rule preserved — every addition lands in its own phase with closed-tuple payload test, sole-producer grep, privacy-matrix update, and `scripts/check-state-doc-sync.mjs` literal bump in the same commit.
+**Total v2.2 allowlist growth: +9 (18 → 27).** Freeze-except-by-explicit-addition rule preserved — every addition lands in its own phase with closed-tuple payload test, sole-producer grep, privacy-matrix update, and `scripts/check-state-doc-sync.mjs` literal bump in the same commit.
 
 ## Phase-Split Rationale (Phase 10)
 
@@ -358,4 +359,4 @@ Inherited from v2.1 (do not break):
 ---
 
 *Roadmap created: 2026-04-20 — v2.1 Steward Console opened*
-*Updated: 2026-04-21 — v2.1 shipped (Phases 5-8, 18/18 plans); v2.2 Living Grid opened (Phases 9-14, 7 phases, 39 REQs, +7 allowlist)*
+*Updated: 2026-04-22 — Phase 10b shipped (8/8 plans, allowlist 19→21 with bios.birth+bios.death per D-10b-01); corrected total allowlist growth 18→27 (+9 events)*

@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
 milestone: v2.2
-milestone_name: Active)
+milestone_name: Living Grid (Active)
 status: executing
-stopped_at: Phase 10b plans APPROVED (8 plans across 4 waves; iteration 2 of 3; allowlist 19→21 via `bios.birth` + `bios.death` per D-10b-01)
-last_updated: "2026-04-23T03:35:55.596Z"
-last_activity: 2026-04-23 -- Phase 10b execution started
+stopped_at: Phase 10b complete (8/8 plans shipped; allowlist 19→21 via bios.birth + bios.death; Phase 11 next)
+last_updated: "2026-04-22T00:00:00.000Z"
+last_activity: 2026-04-22 -- Phase 10b shipped
 progress:
   total_phases: 11
-  completed_phases: 2
-  total_plans: 22
-  completed_plans: 14
-  percent: 64
+  completed_phases: 3
+  total_plans: 30
+  completed_plans: 22
+  percent: 73
 ---
 
 # Project State
@@ -22,16 +22,16 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 **Core value:** The first persistent Grid where Nous actually live — observable, running continuously, with real cognitive cycles, real trades, and real social dynamics emerging from the systems.
 **Current milestone:** v2.2 — Living Grid (6 themes: Rich Inner Life, Relationships, Governance, Whisper, Observability, Researcher Tools)
-**Current focus:** Phase 10b — bios-needs-chronos-subjective-time-inner-life-part-2
+**Current focus:** Phase 11 — mesh-whisper (next up after Phase 10b shipped)
 
 ## Current Position
 
-Phase: 10b (bios-needs-chronos-subjective-time-inner-life-part-2) — EXECUTING
-Plan: 1 of 8
-Status: Executing Phase 10b
-Last activity: 2026-04-23 -- Phase 10b execution started
+Phase: 11 (mesh-whisper) — NEXT
+Plan: 0 of ?
+Status: Phase 10b complete; Phase 11 planning next
+Last activity: 2026-04-22 -- Phase 10b shipped (8/8 plans, allowlist 19→21)
 
-Progress: [███░░░░░░░] 29% (2/7 v2.2 phases complete — Phase 9 + Phase 10a shipped)
+Progress: [████░░░░░░] 43% (3/7 v2.2 phases complete — Phase 9 + Phase 10a + Phase 10b shipped)
 
 ## Accumulated Context
 
@@ -58,9 +58,9 @@ Progress: [███░░░░░░░] 29% (2/7 v2.2 phases complete — Pha
 
 Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule preserved.
 
-### Broadcast allowlist (Phase 10a — post-ship, Plan 10a-02)
+### Broadcast allowlist (Phase 10b — post-ship, Plan 10b-03)
 
-**19 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
+**21 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
 
 1. `nous.spawned`
 2. `nous.moved`
@@ -81,10 +81,12 @@ Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule p
 17. `telos.refined` ← NEW in Phase 7 (DIALOG-02) — hash-only autonomous Telos refinement from peer dialogue
 18. `operator.nous_deleted` ← NEW in Phase 8 (AGENCY-05) — H5 Sovereign Operations, closed 5-key payload: {tier, action, operator_id, target_did, pre_deletion_state_hash}
 19. `ananke.drive_crossed` ← NEW in Phase 10a (DRIVE-03) — hash-only drive threshold crossing; closed 5-key payload `{did, tick, drive, level, direction}` where `drive ∈ {hunger, curiosity, safety, boredom, loneliness}`, `level ∈ {low, med, high}`, `direction ∈ {rising, falling}`
+20. `bios.birth` ← NEW in Phase 10b (BIOS-02) — Nous lifecycle open; closed 3-key payload `{did, tick, psyche_hash}`; sole producer `grid/src/bios/appendBiosBirth.ts` · Phase 10b
+21. `bios.death` ← NEW in Phase 10b (BIOS-02/03) — Nous lifecycle close; closed 4-key payload `{did, tick, cause, final_state_hash}`; `cause ∈ {starvation, operator_h5, replay_boundary}`; sole producer `grid/src/bios/appendBiosDeath.ts` · Phase 10b
 
 Phantom `trade.countered` is NOT emitted and NOT allowlisted — never shipped in code, removed from this enumeration per D-11. If/when the full trade counter-offer handshake ships it earns its own allowlist slot in its own phase.
 
-Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 19-event invariant.
+Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 21-event invariant.
 
 ### Research foundation for v2.1
 
@@ -127,9 +129,9 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 ## Session Continuity
 
 Last session: 2026-04-22
-Stopped at: Phase 10b plans APPROVED (8 plans across 4 waves; iteration 2 of 3; allowlist 19→21 via `bios.birth` + `bios.death` per D-10b-01)
-Resume file: .planning/phases/10b-bios-needs-chronos-subjective-time-inner-life-part-2/10b-01-wave0-test-scaffolding-PLAN.md
-Next action: `/gsd-execute-phase 10b --auto`
+Stopped at: Phase 10b complete — all 8 plans shipped; doc-sync closed (10b-08); allowlist 19→21; Phase 11 Mesh Whisper is next
+Resume file: None (Phase 10b fully closed)
+Next action: `/gsd-discuss-phase 11` then `/gsd-plan-phase 11` then `/gsd-execute-phase 11 --auto`
 
 ## v2.2 Opening Context
 
@@ -280,7 +282,7 @@ Next action: `/gsd-execute-phase 10b --auto`
 ## Accumulated Context (Phase 10a — Ananke drives shipped)
 
 - **Phase 10a shipped (2026-04-22):** Five drives (hunger, curiosity, safety, boredom, loneliness) run deterministically in the Brain; `ananke.drive_crossed` is the 19th allowlisted event, carrying closed 5-key payload `{did, tick, drive, level, direction}`. Plans 10a-01 through 10a-06. Full Brain + Grid + Dashboard suites green.
-- **Broadcast allowlist now 19 events.** Freeze-except-by-explicit-addition rule preserved. Next scheduled addition: `nous.whispered` in Phase 11. Phase 10b adds ZERO (Bios reuses `ananke.drive_crossed`, Chronos is read-side only).
+- **Broadcast allowlist now 21 events** (Phase 10b added `bios.birth` at position 20 and `bios.death` at position 21 per D-10b-01). Freeze-except-by-explicit-addition rule preserved. Next scheduled addition: `nous.whispered` in Phase 11.
 - **Drive-baseline mirror contract:** Dashboard renders baseline levels as a second row mirroring the current drive row. Baselines bucketed via `bucket(baseline, DriveLevel.LOW)` — hunger→low, curiosity→med, safety→low, boredom→med, loneliness→med. These are hardcoded visual constants; not read from Brain over the wire.
 - **3-keys-not-5 invariant (D-10a-XX):** Brain returns `ActionType.DRIVE_CROSSED` with metadata `{drive, level, direction}` (3 keys). Grid dispatcher injects `{did, tick}` at the producer boundary to compose the 5-key closed-tuple payload. Clones Phase 7 D-14 pattern (Brain returns hash-only metadata; Grid composes the full payload).
 - **T-09-01 audit-size ceiling locked:** 1000 ticks × 5 drives × 1 Nous ≤50 `ananke.drive_crossed` entries. Regression test: `grid/test/audit/audit-size-ceiling-ananke.test.ts`. Expected count ~10 (2 crossings/drive × 5); ×5 margin for oscillation near threshold.
@@ -294,3 +296,20 @@ Next action: `/gsd-execute-phase 10b --auto`
 - **Dashboard type mirror pattern (third use):** `dashboard/src/lib/protocol/ananke-types.ts` joins `audit-types.ts` and `agency-types.ts`. SYNC header + drift-detector test reads `brain/src/noesis_brain/ananke/config.py` constants. When a fourth mirror ships (likely Phase 11 whisper), consolidate into a shared `@noesis/protocol-types` package.
 - **Zero-diff invariant extended to Phase 10a:** listener count with/without AnankeLoader wiring produces byte-identical `eventHash` sequences modulo the added `ananke.drive_crossed` entries. Regression test: `grid/test/audit/zero-diff-ananke.test.ts` (Plan 10a-06). Invariant unbroken since Phase 1 commit `29c3516`.
 - **Plan 10a-06 shipped (2026-04-22):** Phase 10a closed. Task 1 landed 3 regression tests (zero-diff, audit-size ceiling, wall-clock grep gates Brain+Grid) + doc-sync script bump 18→19. Commit `7c6c794`. Task 2 human-verify checkpoint approved 2026-04-22 (standard Unicode BMP glyphs trusted: U+2298, U+2726, U+25C6, U+25EF, U+274D, U+2191, U+2193). Task 3 executed the CLAUDE.md Doc-Sync Rule: ROADMAP, STATE, MILESTONES, PROJECT, README updated atomically.
+
+## Accumulated Context (Phase 10b — Bios Needs + Chronos Subjective Time — shipped 2026-04-22)
+
+- **Phase 10b shipped (2026-04-22):** BIOS-01..04, CHRONOS-01..03 (7 REQs). 8 plans across 4 waves. Allowlist 19→21 with `bios.birth` (pos 20) + `bios.death` (pos 21) per D-10b-01 correction.
+- **D-10b-01 (allowlist correction):** ROADMAP originally claimed "Phase 10b: Allowlist additions: 0" assuming bios.birth/bios.death existed in v2.1. They did not. Authoritative source (`grid/src/audit/broadcast-allowlist.ts`) confirmed 19 entries at Phase 10b open. Phase 10b adds exactly +2. Running total: 19→21. This doc-sync plan (10b-08) corrects all source-of-truth files.
+- **Bios→Ananke elevator (D-10b-02):** energy→hunger, sustenance→safety. Once per threshold crossing, not every tick. Elevation raises matching drive level by one bucket; if already `high`, no-op. No new broadcast event — surfaces only via existing `ananke.drive_crossed`.
+- **BIOS_FORBIDDEN_KEYS** = `{energy, sustenance, need_value, bios_value}` — forbidden across flat + nested render surfaces; three-tier grep (Grid emitter, Brain wire, Dashboard render). Clone of D-10a-07.
+- **CHRONOS_FORBIDDEN_KEYS** = `{subjective_multiplier, chronos_multiplier, subjective_tick}` — Chronos is Brain-local read-side only; multiplier NEVER crosses the wire.
+- **No wall-clock in Bios/Chronos/retrieval — enforced by `scripts/check-wallclock-forbidden.mjs`** (CI gate added in Plan 10b-07). Two-tier pattern: bios/chronos dirs fully banned from datetime imports (Tier A); retrieval.py banned from calling datetime.now() — type annotations allowed (Tier B).
+- **audit_tick === system_tick** — enforced by 1000-tick integration test (`grid/test/integration/audit-tick-system-tick-drift-1000.test.ts`). Subjective-time multiplier NEVER influences audit tick numbering.
+- **Phase 10b audit-size ceiling (D-10b-10):** 1000 ticks × 1 Nous ≤ 53 total events (bios.birth + bios.death + ananke.drive_crossed combined). Regression test: `grid/test/ananke/audit-size-ceiling-10b.test.ts`.
+- **ChronosListener** is a pure-observer (`grid/src/chronos/wire-listener.ts`) — subscribes to `bios.birth` via `AuditChain.onAppend`, tracks per-DID birth ticks, exposes `epochSinceSpawn(did, currentTick)`. Clones `DialogueAggregator` pure-observer discipline. Zero `append` calls.
+- **bios.birth sole-producer:** `grid/src/bios/appendBiosBirth.ts`. Closed 3-key payload `{did, tick, psyche_hash}`. `psyche_hash` = Brain-computed hash of Psyche init vector (no Big Five floats on wire).
+- **bios.death sole-producer:** `grid/src/bios/appendBiosDeath.ts`. Closed 4-key payload `{did, tick, cause, final_state_hash}`. `cause ∈ {starvation, operator_h5, replay_boundary}`.
+- **D-30 extension (Phase 10b):** `delete-nous.ts` H5 handler extended — `appendBiosDeath({cause: 'operator_h5', ...})` emitted before `appendNousDeleted` in the same deletion sequence. `operator.nous_deleted` remains the H5-tier audit; `bios.death` is the lifecycle-layer complement.
+- **Body↔mood separation sealed (T-09-05):** PHILOSOPHY §1 updated with subsection "Body, not mood — T-09-05 (sealed 2026-04-22, Phase 10b)". Bios = physical need pressure (body). Thymos = emotional state (mood) — explicitly out of scope in v2.2. Non-negotiable distinction.
+- **Closed-enum allowlist gate confirmed:** `bios.resurrect`, `bios.migrate`, `bios.transfer` all fail at allowlist gate (tested in Phase 10b-07 integration suite). Death is terminal; DIDs permanently reserved.

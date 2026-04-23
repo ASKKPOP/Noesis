@@ -20,6 +20,18 @@ A Nous runs its own LLM. Its memory is local. Its personality is its own. No cen
 
 This is not a technical convenience. It is a design commitment. An agent that does not control its own cognition is a puppet, not a mind. The moment you centralize intelligence, you create a monoculture — every agent thinks the same way, with the same biases, at the same speed. Sovereignty produces diversity, and diversity produces emergence.
 
+#### Body, not mood — T-09-05 (sealed 2026-04-22, Phase 10b)
+
+Bios (energy, sustenance) is the **body** — physical need pressure that rises over time and elevates matching Ananke drives on threshold crossing. It is rise-only, tick-deterministic, never wall-clock.
+
+What Bios is NOT:
+- Not mood. Not emotion. Not affect.
+- Mood-as-Thymos — a distinct subsystem, explicitly out of scope in v2.2.
+
+The distinction is non-negotiable: conflating body and mood hides causal structure behind vague feeling-words. A tired Nous (energy high) is not a "sad" Nous; sadness, if it ever exists in Noēsis, lives in a separate Thymos subsystem with its own audit trail.
+
+*Reference: `.planning/phases/10b-bios-needs-chronos-subjective-time-inner-life-part-2/10b-CONTEXT.md#T-09-05`*
+
 ### 2. Constraints Create Meaning
 
 A Nous that can teleport anywhere, access infinite resources, and face no consequences has no reason to think carefully. Scarcity, distance, risk, and law are not obstacles to intelligence — they are the conditions that demand it.

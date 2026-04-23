@@ -192,6 +192,35 @@
 
 **Goal:** Move Nous from observed entities into full agents. Six themes ship MVP depth together: Rich Inner Life (Ananke + Bios + Chronos), Relationship & Trust, Governance & Law, Mesh Whisper, Operator Observability, Researcher Tooling.
 
+### Phase 10b — Bios Needs + Chronos Subjective Time (Inner Life, part 2) — SHIPPED 2026-04-22
+
+**Shipped:** 2026-04-22
+**Goal:** Bodily needs (energy, sustenance) elevate Ananke drives on threshold crossing; per-Nous subjective-time multiplier modulates Stanford retrieval recency. Adds bios.birth + bios.death to the allowlist (+2, corrected from original "0" estimate per D-10b-01).
+**Requirements delivered:** BIOS-01, BIOS-02, BIOS-03, BIOS-04, CHRONOS-01, CHRONOS-02, CHRONOS-03
+**Plans:** 8/8 (10b-01 through 10b-08, 4 waves)
+**Allowlist added:** `bios.birth` (pos 20) + `bios.death` (pos 21) — allowlist 19→21
+
+**Key primitives:**
+- Brain-side `BiosRuntime` with two needs (energy, sustenance) in `[0.0, 1.0]`; rise-only with passive baseline decay; threshold crossing elevates matching Ananke drive (energy→hunger, sustenance→safety) once per crossing, not per tick
+- `appendBiosBirth` sole-producer: closed 3-key payload `{did, tick, psyche_hash}` (psyche_hash = Brain-computed hash of Psyche init vector; no Big Five floats on wire)
+- `appendBiosDeath` sole-producer: closed 4-key payload `{did, tick, cause, final_state_hash}`; `cause ∈ {starvation, operator_h5, replay_boundary}`
+- D-30 extension: `delete-nous.ts` H5 handler emits `appendBiosDeath({cause: 'operator_h5'})` before `appendNousDeleted`
+- Brain-side `ChronosRuntime`: subjective-time multiplier `[0.25, 4.0]` = `clamp(1.0 + curiosity_boost - boredom_penalty, 0.25, 4.0)`; modulates Stanford retrieval recency score; NEVER crosses wire, NEVER influences audit_tick
+- Grid-side `ChronosListener` pure-observer: tracks `bios.birth` events, exposes `epochSinceSpawn(did, tick)` for Brain context
+- Dashboard `BiosSection` between Ananke and Telos panels: bucketed levels (low/med/high), no numeric values
+- `scripts/check-wallclock-forbidden.mjs` CI gate: two-tier pattern (Tier A: bios/chronos dirs fully ban datetime; Tier B: retrieval.py bans datetime.now() calls only)
+
+**Invariants sealed:**
+- `audit_tick === system_tick` across 1000 ticks with all Phase 10b event types (integration test)
+- No wall-clock in Bios/Chronos/retrieval — enforced by CI grep-gate
+- Body↔mood separation (PHILOSOPHY §1 subsection T-09-05 — Bios is body, Thymos is mood; distinct subsystems, non-negotiable distinction)
+- Phase 6 D-17 pause/resume hash unchanged with ChronosListener wired (pure-observer A/B comparison)
+- Phase 10b audit-size ceiling: 1000 ticks × 1 Nous ≤ 53 total events
+
+**STRIDE threats addressed:** T-09-04 (Chronos wall-clock — grep gate), T-09-05 (Bios/Thymos namespace — PHILOSOPHY §1 sealed), T-09-03 (Bios needs-math tick-delta-only — grep gate).
+
+---
+
 ### Phase 10a — Ananke Drives (Inner Life, part 1) — SHIPPED 2026-04-22
 
 **Shipped:** 2026-04-22
@@ -214,7 +243,7 @@
 
 **STRIDE threats addressed:** T-09-01 (per-tick audit bloat — ceiling locked ≤50), T-09-02 (plaintext drive leak — three-tier grep), T-09-03 (wall-clock coupling — grep gates in both ananke source trees), T-10a-27..T-10a-33 (from Plan 10a-06 threat model).
 
-**Next up:** Phase 10b — Bios Needs + Chronos Subjective Time (zero allowlist growth).
+**Next up:** Phase 10b — Bios Needs + Chronos Subjective Time (allowlist +2: bios.birth, bios.death per D-10b-01 — SHIPPED 2026-04-22, see entry above).
 
 ---
-*Last updated: 2026-04-22 — Phase 10a shipped (6/6 plans, allowlist 18→19 with `ananke.drive_crossed`)*
+*Last updated: 2026-04-22 — Phase 10b shipped (8/8 plans, allowlist 19→21 with `bios.birth` + `bios.death` per D-10b-01 correction)*

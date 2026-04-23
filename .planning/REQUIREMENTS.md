@@ -17,34 +17,45 @@
 - [x] **DRIVE-04**: Drive → action coupling is **advisory, not coercive**. A high-hunger Nous may still choose non-feeding action; the Brain logs the divergence to its private memory but the Grid does not override or penalize. This preserves Nous sovereignty (PHILOSOPHY §6).
 - [x] **DRIVE-05**: No numeric drive value ever crosses the Brain↔Grid boundary as a free field. All operator-visible drive state arrives exclusively via `ananke.drive_crossed` at hashed/bucketed granularity (low/med/high, not raw float). Grid-side grep test enforces no drive-float in emitters.
 
-### BIOS — Bodily needs & lifecycle (Theme 1, Inner Life)
+### BIOS — Bodily needs & lifecycle (Theme 1, Inner Life) — VALIDATED Phase 10b
 
 <!-- Lifecycle events ride the existing v2.1 registry; tombstone permanence preserved.
      First-life invariant (I-6): death is terminal, DIDs never re-used. -->
 
-- [ ] **BIOS-01**: Bios tracks two bodily needs — **energy** and **sustenance** — each in `[0.0, 1.0]`. Needs rise monotonically in absence of satiating action; threshold-crossing elevates matching Ananke drive (energy→hunger, sustenance→safety). Needs ride the same sole-producer boundary as drives.
-- [ ] **BIOS-02**: `bios.birth` and `bios.death` are the **only** lifecycle events. No `bios.resurrect`, no `bios.migrate`, no `bios.transfer`. Attempting to emit a third lifecycle event must fail a closed-enum test. These two events may already exist partial in v2.1 — verify at Phase-open; additive widening only if payload changes.
-- [ ] **BIOS-03**: `bios.death` payload is closed-tuple `{did, tick, cause, final_state_hash}` where `cause ∈ {starvation, operator_h5, replay_boundary}`. New causes require explicit per-phase allowlist addition. Post-death, any event referencing the dead DID is rejected at the sole-producer boundary (grep-enforced).
-- [ ] **BIOS-04**: Tombstoned DIDs are permanently reserved — the NousRegistry blocks DID reuse after `bios.death`. This is the first-life promise (PHILOSOPHY §1). GDPR-style erasure is out of scope; tombstones retain the DID + death hash, never PII.
+- [x] **BIOS-01**: Bios tracks two bodily needs — **energy** and **sustenance** — each in `[0.0, 1.0]`. Needs rise monotonically in absence of satiating action; threshold-crossing elevates matching Ananke drive (energy→hunger, sustenance→safety). Needs ride the same sole-producer boundary as drives.
+  → Validated in Phase 10b (shipped 2026-04-22)
+- [x] **BIOS-02**: `bios.birth` and `bios.death` are the **only** lifecycle events. No `bios.resurrect`, no `bios.migrate`, no `bios.transfer`. Attempting to emit a third lifecycle event must fail a closed-enum test. Both events confirmed absent from v2.1 allowlist per D-10b-01 and added as positions 20+21.
+  → Validated in Phase 10b (shipped 2026-04-22)
+- [x] **BIOS-03**: `bios.death` payload is closed-tuple `{did, tick, cause, final_state_hash}` where `cause ∈ {starvation, operator_h5, replay_boundary}`. New causes require explicit per-phase allowlist addition. Post-death, any event referencing the dead DID is rejected at the sole-producer boundary (grep-enforced).
+  → Validated in Phase 10b (shipped 2026-04-22)
+- [x] **BIOS-04**: Tombstoned DIDs are permanently reserved — the NousRegistry blocks DID reuse after `bios.death`. This is the first-life promise (PHILOSOPHY §1). GDPR-style erasure is out of scope; tombstones retain the DID + death hash, never PII.
+  → Validated in Phase 10b (shipped 2026-04-22)
 
-### CHRONOS — Subjective time (Theme 1, Inner Life)
+### CHRONOS — Subjective time (Theme 1, Inner Life) — VALIDATED Phase 10b
 
 <!-- Chronos links to Stanford retrieval score as a recency multiplier — cognitive mechanism, not decoration.
      Subjective time never leaks into audit-chain tick numbering (PITFALL T-09-04). -->
 
-- [ ] **CHRONOS-01**: Each Nous has a **subjective time multiplier** in `[0.25, 4.0]` derived from drive state (high curiosity → time feels slow; high boredom → time feels fast). Multiplier modulates the Stanford retrieval recency-score for that Nous's memory queries — a high-curiosity Nous remembers recent events as more salient.
-- [ ] **CHRONOS-02**: Audit-chain tick numbering is **never** influenced by subjective time. `audit_tick == system_tick` strictly; CI test asserts no drift. Subjective time is a read-side query transform only, never a write-side modification.
-- [ ] **CHRONOS-03**: `epoch_since_spawn` is exposed to the Nous as a queryable primitive (ticks since its `bios.birth`). Used by Brain prompting to construct "I am N ticks old" self-awareness context. No new allowlist event — this is a derived read over existing birth event.
+- [x] **CHRONOS-01**: Each Nous has a **subjective time multiplier** in `[0.25, 4.0]` derived from drive state (high curiosity → time feels slow; high boredom → time feels fast). Multiplier modulates the Stanford retrieval recency-score for that Nous's memory queries — a high-curiosity Nous remembers recent events as more salient.
+  → Validated in Phase 10b (shipped 2026-04-22)
+- [x] **CHRONOS-02**: Audit-chain tick numbering is **never** influenced by subjective time. `audit_tick == system_tick` strictly; CI test asserts no drift. Subjective time is a read-side query transform only, never a write-side modification.
+  → Validated in Phase 10b (shipped 2026-04-22)
+- [x] **CHRONOS-03**: `epoch_since_spawn` is exposed to the Nous as a queryable primitive (ticks since its `bios.birth`). Used by Brain prompting to construct "I am N ticks old" self-awareness context. No new allowlist event — this is a derived read over existing birth event.
+  → Validated in Phase 10b (shipped 2026-04-22)
 
 ### REL — Relationship graph (Theme 2, Relationship & Trust)
 
 <!-- Zero new allowlist members — pure-observer derived view over existing dialogue.* events.
      Clones v2.1 DialogueAggregator pattern (AGG-01). -->
 
-- [ ] **REL-01**: Relationship state is a **derived view** computed by a pure-observer listener over existing `nous.spoke` and `trade.settled` events. Zero new allowlist members at MVP. Clones the v2.1 `DialogueAggregator` zero-diff-safe pattern. Listener runs `O(edges_touched_this_tick)`, never `O(N²)`.
-- [ ] **REL-02**: Relationship edge primitive: `{from_did, to_did, valence: [-1.0, +1.0], weight: [0.0, 1.0], recency_tick, last_event_hash}`. Valence derives from dialogue sentiment proxy + trade success/rejection; weight from interaction frequency; recency from last audit event. Stored in a derived MySQL table rebuildable from the audit chain (idempotent rebuild test).
-- [ ] **REL-03**: Relationships decay deterministically: weight × `exp(-Δtick / τ)` with `τ` configured per Grid. Unobserved relationships cool toward zero without emitting any audit event. Decay determinism is replay-safe (same seed → same graph).
-- [ ] **REL-04**: Dashboard Inspector shows a per-Nous **relationship panel** with top-N partners by weight. Dashboard graph-view renders the full relationship graph at H1+ (aggregate warmth only). H5 operators can inspect per-edge raw dialogue turns. Load test: 10K-edge graph responds <100ms at p95.
+- [x] **REL-01**: Relationship state is a **derived view** computed by a pure-observer listener over existing `nous.spoke` and `trade.settled` events. Zero new allowlist members at MVP. Clones the v2.1 `DialogueAggregator` zero-diff-safe pattern. Listener runs `O(edges_touched_this_tick)`, never `O(N²)`.
+  → Validated in Phase 9 (shipped 2026-04-22)
+- [x] **REL-02**: Relationship edge primitive: `{from_did, to_did, valence: [-1.0, +1.0], weight: [0.0, 1.0], recency_tick, last_event_hash}`. Valence derives from dialogue sentiment proxy + trade success/rejection; weight from interaction frequency; recency from last audit event. Stored in a derived MySQL table rebuildable from the audit chain (idempotent rebuild test).
+  → Validated in Phase 9 (shipped 2026-04-22)
+- [x] **REL-03**: Relationships decay deterministically: weight × `exp(-Δtick / τ)` with `τ` configured per Grid. Unobserved relationships cool toward zero without emitting any audit event. Decay determinism is replay-safe (same seed → same graph).
+  → Validated in Phase 9 (shipped 2026-04-22)
+- [x] **REL-04**: Dashboard Inspector shows a per-Nous **relationship panel** with top-N partners by weight. Dashboard graph-view renders the full relationship graph at H1+ (aggregate warmth only). H5 operators can inspect per-edge raw dialogue turns. Load test: 10K-edge graph responds <100ms at p95.
+  → Validated in Phase 9 (shipped 2026-04-22)
 
 ### VOTE — Collective governance (Theme 3, Governance & Law)
 
@@ -134,19 +145,18 @@
 ## Allowlist Growth Ledger (v2.2)
 
 Starting: **18 events** (v2.1 frozen).
-Projected end-state: **25 events** (conservative).
+Projected end-state: **27 events** (corrected — Phase 10b adds +2 per D-10b-01).
 
-| Event | Theme | Adds | Running Total |
-|-------|-------|------|---------------|
-| `ananke.drive_crossed` | DRIVE | +1 | 19 |
-| `nous.whispered` | WHISPER | +1 | 20 |
-| `proposal.opened` | VOTE | +1 | 21 |
-| `ballot.committed` | VOTE | +1 | 22 |
-| `ballot.revealed` | VOTE | +1 | 23 |
-| `proposal.tallied` | VOTE | +1 | 24 |
-| `operator.exported` | REPLAY | +1 | 25 |
+| Phase | Delta | Running Total | Events | Shipped |
+|-------|-------|---------------|--------|---------|
+| 10a | +1 | 19 | `ananke.drive_crossed` | 2026-04-22 |
+| 10b | +2 | 21 | `bios.birth`, `bios.death` | 2026-04-22 |
+| 11 | +1 | 22 | `nous.whispered` | — |
+| 12 | +4 | 26 | `proposal.opened`, `ballot.committed`, `ballot.revealed`, `proposal.tallied` | — |
+| 13 | +1 | 27 | `operator.exported` | — |
+| 14 | +0 | 27 | *(Rigs use isolated chain, not production allowlist)* | — |
 
-**Zero-addition themes:** REL (derived view), CHRONOS (read-side transform), BIOS (existing lifecycle events only), RIG (own isolated chain, not production allowlist).
+**Zero-addition phases:** Phase 9 (REL — derived view), Phase 14 (RIG — own isolated chain). CHRONOS is Brain-local read-side transform (no wire event).
 
 Each addition lands in its own phase PR following the v2.1 freeze-except-by-addition discipline: closed-tuple payload test, sole-producer grep, privacy-matrix update, CLAUDE.md doc-sync commit (STATE.md Accumulated Context + `scripts/check-state-doc-sync.mjs` + privacy matrix enumerator).
 
@@ -154,10 +164,10 @@ Each addition lands in its own phase PR following the v2.1 freeze-except-by-addi
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REL-01..04 | Phase 9 | Planned |
-| DRIVE-01..05 | Phase 10a | Planned |
-| BIOS-01..04 | Phase 10b | Planned |
-| CHRONOS-01..03 | Phase 10b | Planned |
+| REL-01..04 | Phase 9 | Validated (shipped 2026-04-22) |
+| DRIVE-01..05 | Phase 10a | Validated (shipped 2026-04-22) |
+| BIOS-01..04 | Phase 10b | Validated (shipped 2026-04-22) |
+| CHRONOS-01..03 | Phase 10b | Validated (shipped 2026-04-22) |
 | WHISPER-01..06 | Phase 11 | Planned |
 | VOTE-01..07 | Phase 12 | Planned |
 | REPLAY-01..05 | Phase 13 | Planned |

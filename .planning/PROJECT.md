@@ -75,6 +75,20 @@ The first persistent Grid where Nous actually live — observable, running conti
   → Validated in Phase 10a
 - ✓ **DRIVE-05**: Dashboard Drives panel renders 5-row Ananke section between Thymos and Telos in Inspector; locked Unicode glyphs (⊘ ✦ ◆ ◯ ❍) + 45-state aria matrix + baseline bucketed mirror row + level palette (neutral/amber/rose) — v2.2 Phase 10a (shipped 2026-04-22)
   → Validated in Phase 10a
+- ✓ **BIOS-01**: Brain-side `BiosRuntime` tracks energy + sustenance in `[0.0, 1.0]`; rise-only with passive baseline decay; threshold crossing elevates matching Ananke drive (energy→hunger, sustenance→safety) once per crossing — v2.2 Phase 10b (shipped 2026-04-22)
+  → Validated in Phase 10b
+- ✓ **BIOS-02**: `bios.birth` (pos 20) and `bios.death` (pos 21) are the only lifecycle events; closed-enum test confirms bios.resurrect/migrate/transfer fail at allowlist gate; allowlist 19→21 per D-10b-01 correction — v2.2 Phase 10b (shipped 2026-04-22)
+  → Validated in Phase 10b
+- ✓ **BIOS-03**: `bios.death` payload closed-tuple `{did, tick, cause, final_state_hash}`; `cause ∈ {starvation, operator_h5, replay_boundary}`; D-30 extension: H5 delete handler emits bios.death before operator.nous_deleted — v2.2 Phase 10b (shipped 2026-04-22)
+  → Validated in Phase 10b
+- ✓ **BIOS-04**: Tombstoned DIDs permanently reserved; NousRegistry blocks DID reuse after bios.death; first-life promise (PHILOSOPHY §1) preserved; GDPR erasure out of scope — v2.2 Phase 10b (shipped 2026-04-22)
+  → Validated in Phase 10b
+- ✓ **CHRONOS-01**: Subjective-time multiplier `[0.25, 4.0]` = `clamp(1.0 + curiosity_boost - boredom_penalty, 0.25, 4.0)`; modulates Stanford retrieval recency score; Brain-local, never crosses wire — v2.2 Phase 10b (shipped 2026-04-22)
+  → Validated in Phase 10b
+- ✓ **CHRONOS-02**: `audit_tick === system_tick` strictly; 1000-tick CI integration test asserts zero drift across all Phase 10b event types; subjective time is read-side only — v2.2 Phase 10b (shipped 2026-04-22)
+  → Validated in Phase 10b
+- ✓ **CHRONOS-03**: `epoch_since_spawn` exposed to Brain prompting via ChronosListener (Grid-side pure-observer over bios.birth); no new allowlist event; Brain context "I am N ticks old" — v2.2 Phase 10b (shipped 2026-04-22)
+  → Validated in Phase 10b
 
 ## Current Milestone: v2.2 Living Grid
 
@@ -103,15 +117,15 @@ The first persistent Grid where Nous actually live — observable, running conti
 
 **39 REQs across 8 categories, mapped to 7 phases (9, 10a, 10b, 11, 12, 13, 14). Full detail in [REQUIREMENTS.md](REQUIREMENTS.md); phase structure in [ROADMAP.md](ROADMAP.md).**
 
-| Category | REQs | Phase |
-|----------|------|-------|
-| **REL** (Relationship Graph) | REL-01..04 | 9 — Relationship Graph (Derived View) |
-| **DRIVE** (Ananke Drives) | DRIVE-01..05 | 10a — Ananke Drives |
-| **BIOS** (Bodily Needs) + **CHRONOS** (Subjective Time) | BIOS-01..04, CHRONOS-01..03 | 10b — Bios + Chronos |
-| **VOTE** (Commit-Reveal Voting) | VOTE-01..07 | 11 — Commit-Reveal Voting |
-| **WHISPER** (Sidechannel) | WHISPER-01..06 | 12 — Whisper (libsodium X25519+XChaCha20) |
-| **REPLAY** (Replay + Export) | REPLAY-01..05 | 13 — Replay + Export |
-| **RIG** (Researcher Rigs) | RIG-01..05 | 14 — Researcher Rigs (50 Nous × 10k ticks) |
+| Category | REQs | Phase | Status |
+|----------|------|-------|--------|
+| **REL** (Relationship Graph) | REL-01..04 | 9 — Relationship Graph (Derived View) | Validated (shipped 2026-04-22) |
+| **DRIVE** (Ananke Drives) | DRIVE-01..05 | 10a — Ananke Drives | Validated (shipped 2026-04-22) |
+| **BIOS** (Bodily Needs) + **CHRONOS** (Subjective Time) | BIOS-01..04, CHRONOS-01..03 | 10b — Bios + Chronos | Validated (shipped 2026-04-22) |
+| **VOTE** (Commit-Reveal Voting) | VOTE-01..07 | 11 — Commit-Reveal Voting | Planned |
+| **WHISPER** (Sidechannel) | WHISPER-01..06 | 12 — Whisper (libsodium X25519+XChaCha20) | Planned |
+| **REPLAY** (Replay + Export) | REPLAY-01..05 | 13 — Replay + Export | Planned |
+| **RIG** (Researcher Rigs) | RIG-01..05 | 14 — Researcher Rigs (50 Nous × 10k ticks) | Planned |
 
 **Build order rationale (from [research/v2.2/FEATURES.md](research/v2.2/FEATURES.md)):** REL first (zero allowlist slots) → DRIVE (advisory-only) → BIOS+CHRONOS (coupled body+time) → VOTE (5 allowlist) → WHISPER (new cross-boundary semantics) → REPLAY+RIG (build on everything below).
 
@@ -178,6 +192,8 @@ The first persistent Grid where Nous actually live — observable, running conti
 | Open v2.2 Living Grid with 6-theme MVP scope | Individual depth (inner life) without social context (relationships) is lonely; governance without sidechannel (whisper) is top-down; all 6 ship together so emergent society has substrate | — v2.2 decision (2026-04-21) |
 | Drive-float-never-crosses-wire invariant (Ananke → Bios) | PHILOSOPHY §1 hash-only cross-boundary made explicit for inner-life floats: Brain emits `{drive, level, direction}` only (3 bucketed keys); raw floats stay Brain-side. Extends to Phase 10b Bios so bodily-need floats NEVER cross wire either. Three-tier grep (Grid emitter + Brain wire + Dashboard render) enforces. | ✓ v2.2 Phase 10a (locked 2026-04-22) |
 | 3-keys-not-5 payload composition (Brain returns metadata; Grid composes producer-boundary) | Clones Phase 7 D-14: Brain owns cognitive decision (`{drive, level, direction}`), Grid owns boundary identity (`{did, tick}`). Five-key closed-tuple composed exactly at `appendAnankeDriveCrossed` with `Object.keys(payload).sort()` strict equality. Pattern reusable for future Brain-emitted boundary events (Phase 10b BIOS, Phase 12 ballot). | ✓ v2.2 Phase 10a (locked 2026-04-22) |
+| D-10b-01 allowlist correction (Phase 10b adds +2, not 0) | ROADMAP originally assumed bios.birth + bios.death existed in v2.1. Authoritative check against `grid/src/audit/broadcast-allowlist.ts` (19 entries at Phase 10b open) showed neither existed. Phase 10b adds exactly +2. Running total: 19→21. All source-of-truth files corrected atomically in Plan 10b-08. | ✓ v2.2 Phase 10b (locked 2026-04-22) |
+| Body↔mood separation (T-09-05, PHILOSOPHY §1) | Bios = physical body (energy, sustenance — tick-deterministic rise). Thymos = mood/emotions (distinct subsystem, out of scope v2.2). Non-negotiable distinction sealed in PHILOSOPHY §1 to prevent future namespace collision. | ✓ v2.2 Phase 10b (locked 2026-04-22) |
 
 ## Evolution
 
@@ -197,4 +213,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-21 — v2.1 Steward Console SHIPPED (18/18 plans); v2.2 Living Grid opened (6 themes, MVP depth, Phase 9+ numbering)*
+*Last updated: 2026-04-22 — Phase 10b shipped (BIOS-01..04, CHRONOS-01..03 validated; allowlist 19→21; body↔mood separation sealed in PHILOSOPHY §1)*
