@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Active)
-status: Phase 10a shipped — ready for /gsd-discuss-phase 10b (Bios + Chronos)
-stopped_at: Phase 10b UI-SPEC approved (6/6 PASS)
-last_updated: "2026-04-22T09:35:46.933Z"
-last_activity: 2026-04-22
+status: executing
+stopped_at: Phase 10b plans APPROVED (8 plans across 4 waves; iteration 2 of 3; allowlist 19→21 via `bios.birth` + `bios.death` per D-10b-01)
+last_updated: "2026-04-23T03:35:55.596Z"
+last_activity: 2026-04-23 -- Phase 10b execution started
 progress:
   total_phases: 11
   completed_phases: 2
-  total_plans: 14
+  total_plans: 22
   completed_plans: 14
-  percent: 100
+  percent: 64
 ---
 
 # Project State
@@ -22,14 +22,14 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 **Core value:** The first persistent Grid where Nous actually live — observable, running continuously, with real cognitive cycles, real trades, and real social dynamics emerging from the systems.
 **Current milestone:** v2.2 — Living Grid (6 themes: Rich Inner Life, Relationships, Governance, Whisper, Observability, Researcher Tools)
-**Current focus:** Phase 10b — Bios Needs + Chronos Subjective Time (Inner Life, part 2)
+**Current focus:** Phase 10b — bios-needs-chronos-subjective-time-inner-life-part-2
 
 ## Current Position
 
-Phase: 10b (Bios Needs + Chronos Subjective Time) — NOT STARTED
-Plan: Not started
-Status: Phase 10a shipped — ready for /gsd-discuss-phase 10b (Bios + Chronos)
-Last activity: 2026-04-22
+Phase: 10b (bios-needs-chronos-subjective-time-inner-life-part-2) — EXECUTING
+Plan: 1 of 8
+Status: Executing Phase 10b
+Last activity: 2026-04-23 -- Phase 10b execution started
 
 Progress: [███░░░░░░░] 29% (2/7 v2.2 phases complete — Phase 9 + Phase 10a shipped)
 
