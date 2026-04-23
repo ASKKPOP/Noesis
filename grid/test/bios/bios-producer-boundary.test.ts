@@ -25,6 +25,8 @@ const GRID_SRC = join(__dirname, '..', '..', 'src');
 const SOLE_EMITTER_BIRTH = 'bios/appendBiosBirth.ts';
 const SOLE_EMITTER_DEATH = 'bios/appendBiosDeath.ts';
 const ALLOWLIST_FILE = 'audit/broadcast-allowlist.ts';
+// Known event consumers: observe bios events but never call audit.append for them.
+const KNOWN_CONSUMERS_BIRTH = ['chronos/wire-listener.ts'];
 
 function walk(dir: string): string[] {
     const out: string[] = [];
@@ -38,7 +40,7 @@ function walk(dir: string): string[] {
 }
 
 describe('bios.birth — sole producer boundary (BIOS-02)', () => {
-    it("string 'bios.birth' appears only in allowlist and emitter", () => {
+    it("string 'bios.birth' appears only in allowlist, emitter, and known consumers", () => {
         const hits: string[] = [];
         for (const file of walk(GRID_SRC)) {
             const rel = relative(GRID_SRC, file).replace(/\\/g, '/');
@@ -46,7 +48,8 @@ describe('bios.birth — sole producer boundary (BIOS-02)', () => {
             if (/bios\.birth/.test(src)) hits.push(rel);
         }
         hits.sort();
-        expect(hits).toEqual([SOLE_EMITTER_BIRTH, ALLOWLIST_FILE].sort());
+        const expected = [SOLE_EMITTER_BIRTH, ALLOWLIST_FILE, ...KNOWN_CONSUMERS_BIRTH].sort();
+        expect(hits).toEqual(expected);
     });
 
     it('no file in grid/src/ except appendBiosBirth.ts directly emits bios.birth via audit.append', () => {
