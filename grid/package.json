@@ -19,6 +19,7 @@
     "@fastify/websocket": "^11.2.0",
     "@noesis/protocol": "*",
     "fastify": "^5.0.0",
+    "libsodium-wrappers": "^0.8.4",
     "mysql2": "^3.9.0"
   },
   "devDependencies": {

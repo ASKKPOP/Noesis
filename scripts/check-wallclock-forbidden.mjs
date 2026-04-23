@@ -87,6 +87,10 @@ const TIER_B_TS_PATTERNS = [
 function walk(dir, acc = []) {
     if (!existsSync(dir)) return acc;
     for (const entry of readdirSync(dir)) {
+        // Skip Python bytecode cache directories — they contain compiled .pyc files
+        // that duplicate source comments (including forbidden-word mentions in docstrings)
+        // and would produce false positives.
+        if (entry === '__pycache__') continue;
         const p = join(dir, entry);
         const st = statSync(p);
         if (st.isDirectory()) walk(p, acc);

@@ -19,8 +19,14 @@ Sole-producer invariant:
 """
 
 from noesis_brain.whisper.types import NousWhisperedPayload, WHISPERED_KEYS
+from noesis_brain.whisper.nonce import derive_nonce
+from noesis_brain.whisper.keyring import Keyring
+from noesis_brain.whisper.key_directory import KeyDirectory
 
 __all__ = [
     "NousWhisperedPayload",
     "WHISPERED_KEYS",
+    "derive_nonce",
+    "Keyring",
+    "KeyDirectory",
 ]
