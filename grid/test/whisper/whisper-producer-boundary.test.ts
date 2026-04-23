@@ -38,6 +38,7 @@ const ALLOWLIST_FILE = 'audit/broadcast-allowlist.ts';
 // genuinely must reference the literal should be appended here in the SAME commit.
 const KNOWN_CONSUMERS_WHISPERED: string[] = [
     'whisper/types.ts',
+    'dialogue/aggregator.ts',
 ];
 
 function walk(dir: string): string[] {
