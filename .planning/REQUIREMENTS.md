@@ -75,12 +75,12 @@
 <!-- E2E envelope Nous→Nous. Operators cannot read plaintext at ANY tier including H5.
      Envelope only in v2.2 — Signal Double Ratchet / sealed-sender deferred post-milestone. -->
 
-- [ ] **WHISPER-01**: A new allowlisted event **`nous.whispered`** carries closed-tuple `{from_did, to_did, tick, ciphertext_hash}` — `ciphertext_hash` only, never ciphertext or plaintext. Single sole-producer file `grid/src/whisper/WhisperRouter.ts` — grep enforced. This supersedes the v2.1 WHISPER-01 future-requirement placeholder.
+- [x] **WHISPER-01**: A new allowlisted event **`nous.whispered`** carries closed-tuple `{from_did, to_did, tick, ciphertext_hash}` — `ciphertext_hash` only, never ciphertext or plaintext. Single sole-producer file `grid/src/whisper/WhisperRouter.ts` — grep enforced. This supersedes the v2.1 WHISPER-01 future-requirement placeholder.
 - [ ] **WHISPER-02**: Envelope uses **libsodium `crypto_box`** (X25519 + XChaCha20-Poly1305 AEAD). Each Nous has a per-identity keypair generated at `bios.birth`; keys never leave the Nous's Brain-scoped keyring. Signal Double Ratchet / sealed-sender explicitly deferred to a post-v2.2 milestone.
 - [ ] **WHISPER-03**: **Operators cannot read Whisper plaintext at any tier, including H5.** Locked. Grid MUST NOT persist plaintext, Brain MUST NOT log plaintext, Dashboard MUST NOT render plaintext — three-tier grep CI gate (`scripts/check-whisper-plaintext.mjs`) plus an `fs.writeFile` monkey-patch runtime test on the router.
 - [ ] **WHISPER-04**: Whisper delivery is **recipient-pull**: the recipient's Brain polls undelivered envelopes on tick; the sender's Brain does not push. Ciphertext is **deleted from the Grid once the recipient acknowledges pull** — audit entry (`nous.whispered` with hash) retained forever per first-life.
-- [ ] **WHISPER-05**: Rate-limit is **per-sender** using `@fastify/rate-limit`. Default budget configurable per Grid (e.g. 10 whispers per 100 ticks). Exceeding the budget queues the send; queue length is observable via operator-side metric but plaintext is still never exposed.
-- [ ] **WHISPER-06**: The v2.1 `DialogueAggregator` is extended to treat whisper-exchanges as dialogue substrate — DialogueAggregator receives `nous.whispered` events but only the hash, never plaintext. A whispered-dialogue can still trigger `telos.refined` (the refinement itself is an existing v2.1 audit event, hash-only).
+- [x] **WHISPER-05**: Rate-limit is **per-sender** using `@fastify/rate-limit`. Default budget configurable per Grid (e.g. 10 whispers per 100 ticks). Exceeding the budget queues the send; queue length is observable via operator-side metric but plaintext is still never exposed.
+- [x] **WHISPER-06**: The v2.1 `DialogueAggregator` is extended to treat whisper-exchanges as dialogue substrate — DialogueAggregator receives `nous.whispered` events but only the hash, never plaintext. A whispered-dialogue can still trigger `telos.refined` (the refinement itself is an existing v2.1 audit event, hash-only).
 
 ### REPLAY — Operator observability (Theme 5)
 
