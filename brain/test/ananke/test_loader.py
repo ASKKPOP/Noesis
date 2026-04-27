@@ -61,16 +61,25 @@ def test_loader_multiple_dids_get_independent_runtimes() -> None:
 def test_action_type_drive_crossed_present() -> None:
     """Phase 10a DRIVE-03: DRIVE_CROSSED is a member of the closed ActionType enum."""
     assert ActionType.DRIVE_CROSSED.value == "drive_crossed"
-    # ActionType has exactly 8 members after Phase 10b added BIOS_DEATH (7 prior + 1 new).
-    assert len(list(ActionType)) == 8
+    # ActionType has exactly 11 members after Phase 12 added PROPOSE, VOTE_COMMIT, VOTE_REVEAL
+    # (8 prior + 3 new governance actions).
+    assert len(list(ActionType)) == 11
 
 
 def test_action_type_drive_crossed_position() -> None:
-    """DRIVE_CROSSED sits between TELOS_REFINED and NOOP; NOOP remains last."""
+    """DRIVE_CROSSED sits between TELOS_REFINED and NOOP.
+
+    Phase 12 appended PROPOSE / VOTE_COMMIT / VOTE_REVEAL after NOOP, so NOOP
+    is no longer the last member.  The relative ordering of the pre-Phase-12
+    members is the invariant that matters here.
+    """
     members = list(ActionType)
     names = [m.name for m in members]
     idx_telos = names.index("TELOS_REFINED")
     idx_drive = names.index("DRIVE_CROSSED")
     idx_noop = names.index("NOOP")
     assert idx_telos < idx_drive < idx_noop
-    assert names[-1] == "NOOP"
+    # Governance actions come after NOOP (Phase 12 Wave 3).
+    assert "PROPOSE" in names
+    assert "VOTE_COMMIT" in names
+    assert "VOTE_REVEAL" in names

@@ -18,6 +18,11 @@ class ActionType(str, Enum):
     DRIVE_CROSSED = "drive_crossed"  # Phase 10a DRIVE-03 — Ananke threshold crossing; Grid dispatcher converts to ananke.drive_crossed audit event. Metadata shape: {drive, level, direction} (3 keys; Grid injects did and tick).
     BIOS_DEATH = "bios_death"  # Phase 10b BIOS-04 — starvation death signal; Grid plan 10b-05 emits bios.death audit event. Metadata shape: {cause, final_state_hash} (Grid injects did and tick).
     NOOP = "noop"  # Do nothing this cycle
+    # Phase 12 Wave 3 — D-12-07 / VOTE-05: collective-law governance actions.
+    # String values MUST match the Grid NousRunner switch cases exactly.
+    PROPOSE = "propose"         # Open a proposal. Metadata: {body_text, deadline_tick, quorum_pct?, supermajority_pct?}
+    VOTE_COMMIT = "vote_commit"  # Blind ballot commit. Metadata: {proposal_id, commit_hash}
+    VOTE_REVEAL = "vote_reveal"  # Reveal nonce+choice. Metadata: {proposal_id, choice, nonce}
 
 
 # JSON-RPC error codes

@@ -44,6 +44,14 @@ from noesis_brain.governance.commit_reveal import (
     verify_reveal,
     generate_nonce,
 )
+from noesis_brain.governance.state import CommittedBallot, GovernanceState
+from noesis_brain.governance.proposer import build_propose_action
+from noesis_brain.governance.voter import (
+    NoCommittedBallotError,
+    build_commit_action,
+    build_reveal_action,
+    evaluate_choice,
+)
 
 __all__ = [
     "ProposalOpenedPayload",
@@ -60,4 +68,12 @@ __all__ = [
     "compute_commit_hash",
     "verify_reveal",
     "generate_nonce",
+    # Wave 3
+    "CommittedBallot",
+    "GovernanceState",
+    "build_propose_action",
+    "NoCommittedBallotError",
+    "build_commit_action",
+    "build_reveal_action",
+    "evaluate_choice",
 ]

@@ -21,6 +21,12 @@ import { VALID_REVIEW_FAILURE_CODES } from '../review/types.js';
 import { appendTelosRefined } from '../audit/append-telos-refined.js';
 import { appendAnankeDriveCrossed } from '../ananke/index.js';
 import type { WhisperRouter } from '../whisper/router.js';
+import { appendProposalOpened } from '../governance/appendProposalOpened.js';
+import { appendBallotCommitted } from '../governance/appendBallotCommitted.js';
+import { appendBallotRevealed } from '../governance/appendBallotRevealed.js';
+import { GovernanceError } from '../governance/errors.js';
+import type { GovernanceStore } from '../governance/store.js';
+import type { BallotChoice } from '../governance/types.js';
 
 export interface NousRunnerConfig {
     nousDid: string;
@@ -56,6 +62,23 @@ export interface NousRunnerConfig {
      * skipped (mirrors reviewer optional pattern for test isolation).
      */
     whisperRouter?: WhisperRouter;
+    /**
+     * Phase 12 Wave 3 — D-12-07 / VOTE-05: governance sole-producer dependencies.
+     *
+     * Optional — if absent the propose/vote_commit/vote_reveal actions are
+     * silently dropped with a console.warn (mirrors whisperRouter pattern).
+     * Production wiring passes { audit, store } from GenesisLauncher so Nous
+     * can drive the governance lifecycle in-process without an HTTP hop.
+     *
+     * NOTE: `audit` here is the same AuditChain instance as NousRunnerConfig.audit.
+     * It is kept explicit in the sub-interface to preserve the sole-producer
+     * contract: the emitters require audit as a parameter and this runner
+     * passes it directly, matching the test-harness pattern in governance tests.
+     */
+    governanceDeps?: {
+        audit: AuditChain;
+        store: GovernanceStore;
+    };
 }
 
 export type SpeakHandler = (runner: NousRunner, channel: string, text: string, tick: number) => void;
@@ -71,6 +94,7 @@ export class NousRunner {
     private readonly economy: EconomyManager;
     private readonly reviewer: Reviewer | undefined;
     private readonly whisperRouter: WhisperRouter | undefined;
+    private readonly governanceDeps: { audit: AuditChain; store: GovernanceStore } | undefined;
 
     private speakHandler: SpeakHandler | null = null;
 
@@ -93,6 +117,7 @@ export class NousRunner {
         this.economy = config.economy;
         this.reviewer = config.reviewer;
         this.whisperRouter = config.whisperRouter;
+        this.governanceDeps = config.governanceDeps;
     }
 
     /** Register handler called when this Nous speaks (for message routing). */
@@ -424,6 +449,177 @@ export class NousRunner {
                                 did: this.nousDid,
                                 reason: (err as Error).message,
                             }));
+                        }
+                    }
+                    break;
+                }
+
+                case 'propose': {
+                    // Phase 12 Wave 3 — D-12-07 / VOTE-05.
+                    // NousRunner runs in-process; no HTTP hop needed (mirrors direct_message pattern).
+                    // Sole producer: appendProposalOpened. Grid injects proposer_did + currentTick.
+                    // On malformed metadata: console.warn + break (no audit emit, no throw).
+                    // No 27th allowlist entry added — governance_rejected uses warn-only fallback.
+                    const govDeps = this.governanceDeps;
+                    if (!govDeps) {
+                        console.warn(JSON.stringify({
+                            event: 'governance.dispatch.not_wired',
+                            action_type: 'propose',
+                            did: this.nousDid,
+                        }));
+                        break;
+                    }
+                    {
+                        const md = (action.metadata ?? {}) as Record<string, unknown>;
+                        const bodyText = typeof md['body_text'] === 'string' ? md['body_text'] : null;
+                        const deadlineTick = typeof md['deadline_tick'] === 'number' && Number.isInteger(md['deadline_tick']) ? (md['deadline_tick'] as number) : null;
+                        const quorumPct = typeof md['quorum_pct'] === 'number' ? (md['quorum_pct'] as number) : undefined;
+                        const supermajorityPct = typeof md['supermajority_pct'] === 'number' ? (md['supermajority_pct'] as number) : undefined;
+
+                        if (bodyText === null || deadlineTick === null) {
+                            console.warn(JSON.stringify({
+                                event: 'governance.propose.malformed_metadata',
+                                did: this.nousDid,
+                                reason: 'missing body_text or deadline_tick',
+                                tick,
+                            }));
+                            break;
+                        }
+
+                        try {
+                            await appendProposalOpened(govDeps.audit, {
+                                proposer_did: this.nousDid,
+                                body_text: bodyText,
+                                deadline_tick: deadlineTick,
+                                currentTick: tick,
+                                quorum_pct: quorumPct,
+                                supermajority_pct: supermajorityPct,
+                                store: govDeps.store,
+                            });
+                        } catch (err) {
+                            console.warn(JSON.stringify({
+                                event: 'governance.propose.rejected',
+                                did: this.nousDid,
+                                reason: (err as Error).message,
+                                tick,
+                            }));
+                        }
+                    }
+                    break;
+                }
+
+                case 'vote_commit': {
+                    // Phase 12 Wave 3 — D-12-07 / VOTE-05.
+                    // Sole producer: appendBallotCommitted. Grid injects voter_did + committed_at_tick.
+                    // Catches GovernanceError(409) for duplicate ballot.
+                    const govDepsC = this.governanceDeps;
+                    if (!govDepsC) {
+                        console.warn(JSON.stringify({
+                            event: 'governance.dispatch.not_wired',
+                            action_type: 'vote_commit',
+                            did: this.nousDid,
+                        }));
+                        break;
+                    }
+                    {
+                        const md = (action.metadata ?? {}) as Record<string, unknown>;
+                        const proposalId = typeof md['proposal_id'] === 'string' ? (md['proposal_id'] as string) : null;
+                        const commitHash = typeof md['commit_hash'] === 'string' ? (md['commit_hash'] as string) : null;
+
+                        if (proposalId === null || commitHash === null) {
+                            console.warn(JSON.stringify({
+                                event: 'governance.vote_commit.malformed_metadata',
+                                did: this.nousDid,
+                                reason: 'missing proposal_id or commit_hash',
+                                tick,
+                            }));
+                            break;
+                        }
+
+                        try {
+                            await appendBallotCommitted(govDepsC.audit, {
+                                proposal_id: proposalId,
+                                voter_did: this.nousDid,
+                                commit_hash: commitHash,
+                                currentTick: tick,
+                                store: govDepsC.store,
+                            });
+                        } catch (err) {
+                            if (err instanceof GovernanceError && err.httpStatus === 409) {
+                                console.warn(JSON.stringify({
+                                    event: 'governance.vote_commit.duplicate_ballot',
+                                    did: this.nousDid,
+                                    proposal_id: proposalId,
+                                    tick,
+                                }));
+                            } else {
+                                console.warn(JSON.stringify({
+                                    event: 'governance.vote_commit.rejected',
+                                    did: this.nousDid,
+                                    reason: (err as Error).message,
+                                    tick,
+                                }));
+                            }
+                        }
+                    }
+                    break;
+                }
+
+                case 'vote_reveal': {
+                    // Phase 12 Wave 3 — D-12-07 / VOTE-05.
+                    // Sole producer: appendBallotRevealed. Grid injects voter_did + revealed_at_tick.
+                    // Catches GovernanceError(422) for hash mismatch — NO ballot.revealed emitted.
+                    const govDepsR = this.governanceDeps;
+                    if (!govDepsR) {
+                        console.warn(JSON.stringify({
+                            event: 'governance.dispatch.not_wired',
+                            action_type: 'vote_reveal',
+                            did: this.nousDid,
+                        }));
+                        break;
+                    }
+                    {
+                        const md = (action.metadata ?? {}) as Record<string, unknown>;
+                        const proposalId = typeof md['proposal_id'] === 'string' ? (md['proposal_id'] as string) : null;
+                        const choice = typeof md['choice'] === 'string' ? (md['choice'] as string) : null;
+                        const nonce = typeof md['nonce'] === 'string' ? (md['nonce'] as string) : null;
+                        const validChoices: ReadonlySet<string> = new Set(['yes', 'no', 'abstain']);
+
+                        if (proposalId === null || choice === null || nonce === null || !validChoices.has(choice)) {
+                            console.warn(JSON.stringify({
+                                event: 'governance.vote_reveal.malformed_metadata',
+                                did: this.nousDid,
+                                reason: 'missing or invalid proposal_id, choice, or nonce',
+                                tick,
+                            }));
+                            break;
+                        }
+
+                        try {
+                            await appendBallotRevealed(govDepsR.audit, {
+                                proposal_id: proposalId,
+                                voter_did: this.nousDid,
+                                choice: choice as BallotChoice,
+                                nonce,
+                                currentTick: tick,
+                                store: govDepsR.store,
+                            });
+                        } catch (err) {
+                            if (err instanceof GovernanceError && err.httpStatus === 422) {
+                                console.warn(JSON.stringify({
+                                    event: 'governance.vote_reveal.hash_mismatch',
+                                    did: this.nousDid,
+                                    proposal_id: proposalId,
+                                    tick,
+                                }));
+                            } else {
+                                console.warn(JSON.stringify({
+                                    event: 'governance.vote_reveal.rejected',
+                                    did: this.nousDid,
+                                    reason: (err as Error).message,
+                                    tick,
+                                }));
+                            }
                         }
                     }
                     break;

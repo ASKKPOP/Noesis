@@ -131,6 +131,60 @@ export interface BrainActionWhisperSend {
     readonly envelope: import('../whisper/types.js').Envelope;
 }
 
+/**
+ * Phase 12 Wave 3 — D-12-07 / VOTE-05: Brain-initiated governance actions.
+ *
+ * PROPOSE: open a collective-law proposal. Brain provides body_text, deadline_tick,
+ *   quorum_pct, supermajority_pct. Grid injects proposer_did (= this.nousDid) and
+ *   currentTick (= executeActions tick). Sole producer: appendProposalOpened().
+ *
+ * VOTE_COMMIT: commit a blind ballot. Brain provides proposal_id and commit_hash
+ *   (sha256 of choice|nonce|voter_did). Grid injects voter_did + tick.
+ *   Sole producer: appendBallotCommitted().
+ *
+ * VOTE_REVEAL: reveal the nonce + choice for a committed ballot. Brain provides
+ *   proposal_id, choice ∈ {yes,no,abstain}, nonce (32-hex).
+ *   Sole producer: appendBallotRevealed().
+ *
+ * channel and text are kept for protocol uniformity but are ignored by the
+ * governance handler (governance is Nous-internal, not a spoken utterance).
+ */
+export interface BrainActionPropose {
+    readonly action_type: 'propose';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly body_text: string;
+        readonly deadline_tick: number;
+        readonly quorum_pct?: number;
+        readonly supermajority_pct?: number;
+        readonly [key: string]: unknown;
+    };
+}
+
+export interface BrainActionVoteCommit {
+    readonly action_type: 'vote_commit';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly proposal_id: string;
+        readonly commit_hash: string;
+        readonly [key: string]: unknown;
+    };
+}
+
+export interface BrainActionVoteReveal {
+    readonly action_type: 'vote_reveal';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly proposal_id: string;
+        readonly choice: string;
+        readonly nonce: string;
+        readonly [key: string]: unknown;
+    };
+}
+
 export type BrainAction =
     | SpeakAction
     | DirectMessageAction
@@ -139,7 +193,10 @@ export type BrainAction =
     | TradeRequestAction
     | TelosRefinedAction
     | BrainActionDriveCrossed
-    | BrainActionWhisperSend;
+    | BrainActionWhisperSend
+    | BrainActionPropose
+    | BrainActionVoteCommit
+    | BrainActionVoteReveal;
 
 export interface MessageParams {
     sender_name: string;
