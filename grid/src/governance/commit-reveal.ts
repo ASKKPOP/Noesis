@@ -55,7 +55,7 @@ export function computeCommitHash(
  * @param choice - The revealed ballot choice
  * @param nonce - The 32 hex char nonce revealed by Brain
  * @param voter_did - The voter DID
- * @param expected_commit_hash - The commit_hash from the ballot.committed event
+ * @param expected_commit_hash - The commit_hash stored at ballot-commit time (see appendBallotCommitted.ts)
  * @returns true iff sha256(choice|nonce|voter_did) === expected_commit_hash
  */
 export function verifyReveal(

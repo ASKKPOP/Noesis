@@ -39,6 +39,11 @@ from noesis_brain.governance.types import (
     ProposalOutcome,
     GOVERNANCE_FORBIDDEN_KEYS,
 )
+from noesis_brain.governance.commit_reveal import (
+    compute_commit_hash,
+    verify_reveal,
+    generate_nonce,
+)
 
 __all__ = [
     "ProposalOpenedPayload",
@@ -52,4 +57,7 @@ __all__ = [
     "PROPOSAL_TALLIED_KEYS",
     "ProposalOutcome",
     "GOVERNANCE_FORBIDDEN_KEYS",
+    "compute_commit_hash",
+    "verify_reveal",
+    "generate_nonce",
 ]
