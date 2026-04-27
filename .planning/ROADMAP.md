@@ -185,12 +185,14 @@ Plans:
   - T-10-09 (HIGH): Replay viewer reveals plaintext at H1 — Telos-revealing frames require H4, whisper-revealing frames require H5; Playwright E2E asserts tier-elevation required before plaintext renders.
   - T-10-10 (CRITICAL): Export tarball contains plaintext never broadcast — default export is audit-chain-only (hash-only artifacts); plaintext export is a distinct H5 flow with `IrreversibilityDialog` consent (one dialog per Nous included or a collective-consent primitive).
 **Allowlist additions**: **+1**. Event: `operator.exported` with closed-tuple payload `{tier, operator_id, start_tick, end_tick, tarball_hash, requested_at}`. Running total: **27**.
-**Plans**: 5 plans
+**Plans**: 7 plans (5 main waves + 2 gap-closure)
 - [x] 13-01-PLAN.md — Wave 0: deps install + 9 RED test files + verbatim copy locked
 - [x] 13-02-PLAN.md — Wave 1: ReadOnlyAuditChain + ReplayGrid + state-builder + check-replay-readonly CI gate
 - [x] 13-03-PLAN.md — Wave 2: canonical-json + deterministic tarball + replay-verify CLI
 - [x] 13-04-PLAN.md — Wave 3: appendOperatorExported + allowlist 26→27 + Fastify route + check-state-doc-sync bump + replay.* hard-ban
 - [x] 13-05-PLAN.md — Wave 4: Dashboard /grid/replay UI + ExportConsentDialog + wall-clock gate extension + atomic doc-sync
+- [x] 13-06-PLAN.md — Wave 5 (gap-closure): restore STATE.md regression from f425d99 + hoist tar@^7.5.13 to root workspace
+- [ ] 13-07-PLAN.md — Wave 6 (gap-closure): wire Firehose/Inspector/RegionMap into ReplayClient via ReplayStoresProvider (REPLAY-05 SC#5 closure)
 **UI hint**: yes
 
 ### Phase 14: Researcher Rigs
@@ -239,7 +241,7 @@ Dependencies form a strict chain (no parallel phases in v2.2). Rationale:
 | 10b. Bios Needs + Chronos Subjective Time | 8/8 | Complete   | 2026-04-23 |
 | 11. Mesh Whisper | 5/5 | Complete   | 2026-04-23 |
 | 12. Governance & Collective Law | 5/5 | Complete   | 2026-04-27 |
-| 13. Operator Replay & Export | 5/5 | Complete   | 2026-04-27 |
+| 13. Operator Replay & Export | 6/7 | In Progress|  |
 | 14. Researcher Rigs | 0/? | Not started | - |
 
 ## Coverage & Traceability
