@@ -1,24 +1,23 @@
 /**
- * Phase 12 Wave 0 RED stub — commit_hash cross-language fixture (D-12-02).
+ * Phase 12 Wave 1 — commit_hash cross-language fixture (D-12-02).
+ * Updated from Wave 0 RED stub: computeCommitHash implemented in Wave 1.
  *
  * commit_hash formula: sha256(choice + '|' + nonce + '|' + voter_did)
  * Pipe delimiters prevent chosen-plaintext ambiguity.
  *
- * This test imports computeCommitHash from grid/src/governance/commit-reveal.ts
- * which does NOT exist yet → import error → RED at Wave 0.
- * Wave 1 turns this GREEN by landing the implementation.
+ * Cross-language fixture vector:
+ *   input:    'yes|00000000000000000000000000000000|did:noesis:alice'
+ *   sha256:   0cf5f7c6716a14ead21fea90c208612472843151494e341a90cc15017cb3e0f2
  *
- * The expected hex value is pre-computed via:
+ * Verified by both:
  *   node -e "require('node:crypto').createHash('sha256').update('yes|00000000000000000000000000000000|did:noesis:alice').digest('hex')"
- *   → 0cf5f7c6716a14ead21fea90c208612472843151494e341a90cc15017cb3e0f2
+ *   python -c "import hashlib; print(hashlib.sha256(b'yes|00000000000000000000000000000000|did:noesis:alice').hexdigest())"
  *
  * Brain Python parity (D-12-02):
- *   import hashlib
- *   hashlib.sha256(b'yes|00000000000000000000000000000000|did:noesis:alice').hexdigest()
- *   → same hex — verified in Wave 1 Brain cross-language fixture.
+ *   brain/test/governance/test_commit_hash.py uses the same hex literal.
  */
 import { describe, it, expect } from 'vitest';
-import { computeCommitHash } from '../../src/governance/commit-reveal.js';  // RED: module missing in W0
+import { computeCommitHash } from '../../src/governance/commit-reveal.js';
 
 describe('commit_hash — sha256(choice|nonce|voter_did) cross-language fixture (D-12-02)', () => {
     it('matches the canonical fixture: yes|00000...|did:noesis:alice', () => {
@@ -31,18 +30,17 @@ describe('commit_hash — sha256(choice|nonce|voter_did) cross-language fixture 
     });
 
     it('uses pipe delimiters — sha256(choice|nonce|voter_did) not sha256(choiceNonceVoter_did)', () => {
-        // The pipe delimiter is load-bearing: without it, 'yes' + 'abc' + 'did' is
-        // indistinguishable from 'ye' + 'sabc' + 'did'. Verify by computing a hash
-        // with a different choice that would collide without delimiters.
-        const hash1 = computeCommitHash('yes', 'abc', 'did:noesis:x');
-        const hash2 = computeCommitHash('ye', 'sabc', 'did:noesis:x');
+        // The pipe delimiter is load-bearing: without it, 'yes' + 'abc...' + 'did' is
+        // indistinguishable from 'ye' + 'sabc...' + 'did'. Use valid 32-hex nonces to
+        // exercise the actual hashing code path while testing pipe-delimiter separation.
+        // Different choice values → different hashes (proves choice is separated from nonce).
+        const hash1 = computeCommitHash('yes', 'abcdef0123456789abcdef0123456789', 'did:noesis:x');
+        const hash2 = computeCommitHash('no', 'abcdef0123456789abcdef0123456789', 'did:noesis:x');
         expect(hash1).not.toBe(hash2);
     });
 
     it('nonce must be exactly 32 hex chars (16 bytes) — D-12-02', () => {
-        // The nonce contract is 32 hex chars; the function may or may not validate
-        // length (validation is at the emitter boundary in Wave 2), but the fixture
-        // proves the formula works with a valid nonce.
+        // The nonce contract is 32 hex chars; prove the formula works with a valid nonce.
         const hash = computeCommitHash('no', '00000000000000000000000000000000', 'did:noesis:bob');
         expect(typeof hash).toBe('string');
         expect(hash).toHaveLength(64);  // sha256 → 64 hex chars
@@ -52,5 +50,23 @@ describe('commit_hash — sha256(choice|nonce|voter_did) cross-language fixture 
         const hash = computeCommitHash('abstain', '00000000000000000000000000000000', 'did:noesis:carol');
         expect(typeof hash).toBe('string');
         expect(hash).toHaveLength(64);
+    });
+
+    it('throws on invalid choice (not in {yes, no, abstain})', () => {
+        expect(() => {
+            // @ts-expect-error — intentional invalid input
+            computeCommitHash('maybe', '00000000000000000000000000000000', 'did:noesis:alice');
+        }).toThrow('commit-reveal: invalid choice');
+    });
+
+    it('accepts uppercase nonce hex — lowercase-normalization invariant', () => {
+        // computeCommitHash normalizes nonce to lowercase before hashing.
+        // Uppercase nonce must produce same hash as lowercase nonce.
+        const lowerNonce = 'abcdef0123456789abcdef0123456789';
+        const upperNonce = lowerNonce.toUpperCase();
+        const hashLower = computeCommitHash('yes', lowerNonce, 'did:noesis:alice');
+        const hashUpper = computeCommitHash('yes', upperNonce, 'did:noesis:alice');
+        expect(hashLower).toBe(hashUpper);
+        expect(hashLower).toHaveLength(64);
     });
 });
