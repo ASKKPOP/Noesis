@@ -185,7 +185,12 @@ Plans:
   - T-10-09 (HIGH): Replay viewer reveals plaintext at H1 — Telos-revealing frames require H4, whisper-revealing frames require H5; Playwright E2E asserts tier-elevation required before plaintext renders.
   - T-10-10 (CRITICAL): Export tarball contains plaintext never broadcast — default export is audit-chain-only (hash-only artifacts); plaintext export is a distinct H5 flow with `IrreversibilityDialog` consent (one dialog per Nous included or a collective-consent primitive).
 **Allowlist additions**: **+1**. Event: `operator.exported` with closed-tuple payload `{tier, operator_id, start_tick, end_tick, tarball_hash, requested_at}`. Running total: **27**.
-**Plans**: TBD
+**Plans**: 5 plans
+- [ ] 13-01-PLAN.md — Wave 0: deps install + 9 RED test files + verbatim copy locked
+- [ ] 13-02-PLAN.md — Wave 1: ReadOnlyAuditChain + ReplayGrid + state-builder + check-replay-readonly CI gate
+- [ ] 13-03-PLAN.md — Wave 2: canonical-json + deterministic tarball + replay-verify CLI
+- [ ] 13-04-PLAN.md — Wave 3: appendOperatorExported + allowlist 26→27 + Fastify route + check-state-doc-sync bump + replay.* hard-ban
+- [ ] 13-05-PLAN.md — Wave 4: Dashboard /grid/replay UI + ExportConsentDialog + wall-clock gate extension + atomic doc-sync
 **UI hint**: yes
 
 ### Phase 14: Researcher Rigs
