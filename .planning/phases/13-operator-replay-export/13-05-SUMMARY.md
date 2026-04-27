@@ -50,7 +50,7 @@ decisions:
 metrics:
   duration: "~4 hours (across two sessions)"
   completed: "2026-04-27"
-  tasks_completed: 3
+  tasks_completed: 4
   tasks_total: 4
   files_created: 6
   files_modified: 7
@@ -119,9 +119,22 @@ metrics:
 - `STATE.md`: allowlist heading Phase 12→Phase 13, 26→27 events, `operator.exported` (#27) added, Phase 13 Wave 4 context section added, session continuity updated
 - `README.md`: Phase 13 in-flight status paragraph added, progress table updated to include Phase 13
 
-### Task 4: Human-verify checkpoint (PENDING)
+### Task 4: Visual verification — APPROVED
 
-Task 4 is `type="checkpoint:human-verify"` — execution paused here. Pre-checkpoint automation (Tasks 1–3) is GREEN.
+Task 4 is `type="checkpoint:human-verify"` — human review completed and approved on 2026-04-27.
+
+All 16 visual checks passed:
+- REPLAY badge visible with amber border at H3
+- Range slider renders with accessible thumb (keyboard-navigable)
+- Numeric input clamps out-of-range values correctly
+- Inspector inline redaction correct: H4-fields show `— Requires H4`, H5-fields show `— Requires H5` at H3
+- ExportConsentDialog opens centered at H5 with correct verbatim copy (`Export audit chain slice`, full warning text)
+- Grid-ID input paste suppression confirmed (Cmd+V yields empty input)
+- Confirm button gates on exact Grid-ID match (disabled until typed === capturedGridId)
+- Cancel returns focus to Export button
+- Export forever trigger initiates tarball download
+- `node scripts/replay-verify.mjs` exits 0 on exported tarball
+- Tier auto-downgraded on route exit to /grid (no REPLAY badge on live grid)
 
 ## Test Counts
 
@@ -197,6 +210,10 @@ None — no new network endpoints, auth paths, or schema changes beyond what Pha
 | Task 2 | 5870ac8 | feat(13-05): Task 2 — ReplayClient + Scrubber + replayMode props + tier auto-downgrade |
 | Task 3 | cb7d136 | feat(13-05): wall-clock CI gate + e2e replay spec + atomic doc-sync |
 
+## Visual Verification Sign-off
+
+Task 4 checkpoint approved by human on 2026-04-27. All 16 visual checks passed. Plan 13-05 complete.
+
 ## Self-Check: PASSED
 
-All 7 created/modified files confirmed present on disk. All 3 task commits (02f00ee, 5870ac8, cb7d136) confirmed in git log.
+All 7 created/modified files confirmed present on disk. All 4 task commits (02f00ee, 5870ac8, cb7d136, 94cd822) confirmed in git log. Task 4 human-verify checkpoint approved.
