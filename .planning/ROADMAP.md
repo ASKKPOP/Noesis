@@ -188,7 +188,7 @@ Plans:
 **Plans**: 5 plans
 - [x] 13-01-PLAN.md — Wave 0: deps install + 9 RED test files + verbatim copy locked
 - [x] 13-02-PLAN.md — Wave 1: ReadOnlyAuditChain + ReplayGrid + state-builder + check-replay-readonly CI gate
-- [ ] 13-03-PLAN.md — Wave 2: canonical-json + deterministic tarball + replay-verify CLI
+- [x] 13-03-PLAN.md — Wave 2: canonical-json + deterministic tarball + replay-verify CLI
 - [ ] 13-04-PLAN.md — Wave 3: appendOperatorExported + allowlist 26→27 + Fastify route + check-state-doc-sync bump + replay.* hard-ban
 - [ ] 13-05-PLAN.md — Wave 4: Dashboard /grid/replay UI + ExportConsentDialog + wall-clock gate extension + atomic doc-sync
 **UI hint**: yes
@@ -239,7 +239,7 @@ Dependencies form a strict chain (no parallel phases in v2.2). Rationale:
 | 10b. Bios Needs + Chronos Subjective Time | 8/8 | Complete   | 2026-04-23 |
 | 11. Mesh Whisper | 5/5 | Complete   | 2026-04-23 |
 | 12. Governance & Collective Law | 5/5 | Complete   | 2026-04-27 |
-| 13. Operator Replay & Export | 2/5 | In Progress|  |
+| 13. Operator Replay & Export | 3/5 | In Progress|  |
 | 14. Researcher Rigs | 0/? | Not started | - |
 
 ## Coverage & Traceability
