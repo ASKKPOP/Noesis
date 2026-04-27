@@ -22,7 +22,7 @@ Phase numbering continues from v2.1 — do NOT reset without `--reset-phase-numb
 - [x] **Phase 10b: Bios Needs + Chronos Subjective Time (Inner Life, part 2)** — Bodily needs elevate drives; subjective time modulates Stanford retrieval recency. Allowlist +2 (bios.birth, bios.death). (shipped 2026-04-22, allowlist 19→21)
 - [x] **Phase 11: Mesh Whisper** — Nous-to-Nous E2E envelope (libsodium `crypto_box`); operators cannot read plaintext at any tier. (shipped 2026-04-23, allowlist 21→22 with `nous.whispered`)
 - [x] **Phase 12: Governance & Collective Law** — Commit-reveal ballot lifecycle (4 events); successful proposals promote to v2.1 LogosEngine. (completed 2026-04-27)
-- [ ] **Phase 13: Operator Replay & Export** — State-level ReplayGrid + deterministic JSONL tarball export; read-only rewind in Steward Console.
+- [x] **Phase 13: Operator Replay & Export** — State-level ReplayGrid + deterministic JSONL tarball export; read-only rewind in Steward Console. (completed 2026-04-27)
 - [ ] **Phase 14: Researcher Rigs** — `noesis rig` CLI spawns ephemeral Grid with LLM fixture mode; target 50 Nous × 10,000 ticks in <60min.
 
 ## Phase Details
@@ -190,7 +190,7 @@ Plans:
 - [x] 13-02-PLAN.md — Wave 1: ReadOnlyAuditChain + ReplayGrid + state-builder + check-replay-readonly CI gate
 - [x] 13-03-PLAN.md — Wave 2: canonical-json + deterministic tarball + replay-verify CLI
 - [x] 13-04-PLAN.md — Wave 3: appendOperatorExported + allowlist 26→27 + Fastify route + check-state-doc-sync bump + replay.* hard-ban
-- [ ] 13-05-PLAN.md — Wave 4: Dashboard /grid/replay UI + ExportConsentDialog + wall-clock gate extension + atomic doc-sync
+- [x] 13-05-PLAN.md — Wave 4: Dashboard /grid/replay UI + ExportConsentDialog + wall-clock gate extension + atomic doc-sync
 **UI hint**: yes
 
 ### Phase 14: Researcher Rigs
@@ -239,7 +239,7 @@ Dependencies form a strict chain (no parallel phases in v2.2). Rationale:
 | 10b. Bios Needs + Chronos Subjective Time | 8/8 | Complete   | 2026-04-23 |
 | 11. Mesh Whisper | 5/5 | Complete   | 2026-04-23 |
 | 12. Governance & Collective Law | 5/5 | Complete   | 2026-04-27 |
-| 13. Operator Replay & Export | 4/5 | In Progress|  |
+| 13. Operator Replay & Export | 5/5 | Complete   | 2026-04-27 |
 | 14. Researcher Rigs | 0/? | Not started | - |
 
 ## Coverage & Traceability
