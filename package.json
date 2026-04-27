@@ -17,7 +17,11 @@
     "check:state-doc-sync": "node scripts/check-state-doc-sync.mjs",
     "check:relationship-graph-deps": "node scripts/check-relationship-graph-deps.mjs",
     "check:wallclock": "node scripts/check-wallclock-forbidden.mjs",
-    "pretest": "npm run check:state-doc-sync && npm run check:relationship-graph-deps && npm run check:wallclock"
+    "check:whisper-plaintext": "node scripts/check-whisper-plaintext.mjs",
+    "check:governance:isolation": "node scripts/check-governance-isolation.mjs",
+    "check:governance:plaintext": "node scripts/check-governance-plaintext.mjs",
+    "check:governance:weight": "node scripts/check-governance-weight.mjs",
+    "pretest": "npm run check:state-doc-sync && npm run check:relationship-graph-deps && npm run check:wallclock && npm run check:whisper-plaintext && npm run check:governance:isolation && npm run check:governance:plaintext && npm run check:governance:weight"
   },
   "devDependencies": {
     "turbo": "^2.0.0",
