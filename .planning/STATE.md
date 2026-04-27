@@ -58,9 +58,9 @@ Progress: [█████░░░░░] 71% (5/7 v2.2 phases complete — Pha
 
 Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule preserved.
 
-### Broadcast allowlist (Phase 12 — post-ship, Plan 12-04)
+### Broadcast allowlist (Phase 13 — post-Wave-3, Plan 13-04)
 
-**26 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
+**27 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
 
 1. `nous.spawned`
 2. `nous.moved`
@@ -88,10 +88,11 @@ Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule p
 24. `ballot.committed` ← NEW in Phase 12 (VOTE-02 / D-12-01) — commit-reveal vote commitment; closed 3-key payload `{proposal_id, voter_did, commit_hash}`; sole producer `grid/src/governance/appendBallotCommitted.ts` · Phase 12
 25. `ballot.revealed` ← NEW in Phase 12 (VOTE-03 / D-12-01) — commit-reveal vote reveal; closed 4-key payload `{proposal_id, voter_did, choice, nonce_hash}`; sole producer `grid/src/governance/appendBallotRevealed.ts` · Phase 12
 26. `proposal.tallied` ← NEW in Phase 12 (VOTE-04 / D-12-01) — governance tally; closed 6-key payload `{proposal_id, outcome, votes_for, votes_against, votes_abstain, tick}`; `outcome ∈ {passed, failed, quorum_not_met}`; sole producer `grid/src/governance/appendProposalTallied.ts` · Phase 12
+27. `operator.exported` ← NEW in Phase 13 (REPLAY-02 / D-13-04) — H5-consent-gated audit-chain tarball export; closed 6-key payload `{tier, operator_id, start_tick, end_tick, tarball_hash, requested_at}`; sole producer `grid/src/replay/appendOperatorExported.ts` · Phase 13
 
 Phantom `trade.countered` is NOT emitted and NOT allowlisted — never shipped in code, removed from this enumeration per D-11. If/when the full trade counter-offer handshake ships it earns its own allowlist slot in its own phase.
 
-Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 26-event invariant.
+Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 27-event invariant.
 
 ### Research foundation for v2.1
 
@@ -134,9 +135,9 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 ## Session Continuity
 
 Last session: 2026-04-27T21:00:00.000Z
-Stopped at: Phase 13 planned — 5-wave plan, gsd-plan-checker PASSED
-Resume file: .planning/phases/13-operator-replay-export/13-01-PLAN.md
-Next action: `/gsd-execute-phase 13`
+Stopped at: Phase 13 Wave 4 (13-05) executing — Dashboard /grid/replay UI + ExportConsentDialog + wall-clock gate + doc-sync
+Resume file: .planning/phases/13-operator-replay-export/13-05-PLAN.md
+Next action: `/gsd-verify-work 13` (after human-verify checkpoint Task 4 approved)
 
 ## v2.2 Opening Context
 
@@ -318,6 +319,21 @@ Next action: `/gsd-execute-phase 13`
 - **D-30 extension (Phase 10b):** `delete-nous.ts` H5 handler extended — `appendBiosDeath({cause: 'operator_h5', ...})` emitted before `appendNousDeleted` in the same deletion sequence. `operator.nous_deleted` remains the H5-tier audit; `bios.death` is the lifecycle-layer complement.
 - **Body↔mood separation sealed (T-09-05):** PHILOSOPHY §1 updated with subsection "Body, not mood — T-09-05 (sealed 2026-04-22, Phase 10b)". Bios = physical need pressure (body). Thymos = emotional state (mood) — explicitly out of scope in v2.2. Non-negotiable distinction.
 - **Closed-enum allowlist gate confirmed:** `bios.resurrect`, `bios.migrate`, `bios.transfer` all fail at allowlist gate (tested in Phase 10b-07 integration suite). Death is terminal; DIDs permanently reserved.
+
+## Accumulated Context (Phase 13 — Operator Replay & Export — Wave 4 executing 2026-04-27)
+
+- **Phase 13 Wave 4 executing (2026-04-27):** Dashboard /grid/replay UI + ExportConsentDialog + wall-clock gate extension + atomic doc-sync (this entry). Plans 13-01 through 13-04 shipped; 13-05 (Wave 4) in execution.
+- **Allowlist bumped 26→27:** `operator.exported` (pos 27) added in Plan 13-04 (Wave 3) — closed 6-key payload `{tier, operator_id, start_tick, end_tick, tarball_hash, requested_at}`; sole producer `grid/src/replay/appendOperatorExported.ts`. STATE.md allowlist updated atomically in Plan 13-05 (Wave 4) per CLAUDE.md doc-sync rule.
+- **Phase 13 plan structure (5 plans, Waves 0–4):**
+  - 13-01: Wave 0 — deps install + 9 RED test files + verbatim copy locked
+  - 13-02: Wave 1 — ReadOnlyAuditChain + ReplayGrid + state-builder + check-replay-readonly CI gate
+  - 13-03: Wave 2 — canonical-json + deterministic tarball + replay-verify CLI
+  - 13-04: Wave 3 — appendOperatorExported + allowlist 26→27 + Fastify route + check-state-doc-sync bump + replay.* hard-ban
+  - 13-05: Wave 4 — Dashboard /grid/replay UI + ExportConsentDialog + wall-clock gate extension + atomic doc-sync
+- **ExportConsentDialog discipline (D-13-08 / T-10-10):** Copy-lock verbatim constants. Paste-suppressed Grid-ID input forces character-by-character typing. Closure-capture: `capturedGridIdRef.current = gridId` set only at open time. Cancel auto-downgrades to H1. `onConfirm` receives no arguments — parent component owns the fetch call.
+- **ReplayClient discipline (D-13-07 / T-10-09):** `useEffect(() => () => agencyStore.setTier('H1'), [])` cleanup fires on unmount (route exit, browser back, hard navigation). Tier gate at H1/H2 shows TIER_GATE_COPY only. H3+ shows REPLAY badge + Scrubber + replay entry list. Inline redaction: H4-restricted fields render `'— Requires H4'`; H5-restricted fields render `'— Requires H5'`.
+- **Wall-clock CI gate extended (D-13-04 / T-10-08):** `scripts/check-wallclock-forbidden.mjs` TIER_B_TS_ROOTS extended with `'dashboard/src/app/grid/replay'`. TIER_B_TS_PATTERNS extended with `setInterval` + `setTimeout`. File extension filter corrected to include `.tsx` and `.jsx` (bug fix — replay files are `.tsx`). Synthetic violation test confirmed exit 1.
+- **REPLAY-05 surface shipped:** `/grid/replay` route at H3+ renders REPLAY badge, Scrubber (range + number inputs, tick-clamped), and audit entry list with inline redaction. Firehose/Inspector/RegionMap accept `replayMode` prop (currently wired but store read not yet switched — planned for Phase 14 Rigs integration).
 
 ## Accumulated Context (Phase 11 — Mesh Whisper — shipped 2026-04-23)
 

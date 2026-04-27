@@ -1,15 +1,19 @@
 #!/usr/bin/env node
 /**
  * Phase 10b D-10b-06 / D-10b-09 — wall-clock reads forbidden gate.
+ * Phase 13 D-13-04 — replay viewer must derive all timing from the rewound
+ * chain — no auto-play (no Date.now / setInterval / setTimeout / Math.random).
  *
- * Bios, Chronos, and the retrieval scorer MUST NOT read wall-clock time.
- * Determinism requires all timing to derive from the Grid system tick.
+ * Bios, Chronos, the retrieval scorer, and the replay viewer MUST NOT read
+ * wall-clock time. Determinism requires all timing to derive from the Grid
+ * system tick or the rewound chain's tick index.
  *
  * Scanned paths:
  *   brain/src/noesis_brain/bios/      — Python: no datetime import allowed
  *   brain/src/noesis_brain/chronos/   — Python: no datetime import allowed
  *   brain/src/noesis_brain/memory/retrieval.py — Python: no datetime.now() call
  *   grid/src/bios/                    — TypeScript: no Date.now / performance.now
+ *   dashboard/src/app/grid/replay/    — TypeScript: no wall-clock or timer APIs
  *
  * Two tiers of forbidden patterns:
  *
@@ -83,12 +87,19 @@ const TIER_B_TS_ROOTS = [
     // counts/aggregates (Date.now allowed for UI state); do NOT extend to
     // dashboard/src/app/grid/governance/** per plan interfaces block.
     'grid/src/governance',
+    // Phase 13 (D-13-04 / D-13-01..D-13-09): replay viewer must derive all
+    // timing from the rewound chain — no auto-play, no wall-clock reads.
+    // setInterval and setTimeout are also forbidden (no auto-advance per D-13-04).
+    // Math.random is forbidden (replay must be deterministic for any given slice).
+    'dashboard/src/app/grid/replay',
 ];
 
 const TIER_B_TS_PATTERNS = [
     /\bDate\.now\s*\(/,           // Date.now() wall-clock call
     /\bperformance\.now\s*\(/,    // performance.now() wall-clock call
     /\bMath\.random\s*\(/,        // Math.random() — non-deterministic (D-10b-09)
+    /\bsetInterval\s*\(/,         // setInterval — no auto-play in replay viewer (D-13-04)
+    /\bsetTimeout\s*\(/,          // setTimeout — no deferred wall-clock ops in replay (D-13-04)
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -200,7 +211,7 @@ for (const file of TIER_B_FILES) {
 
 // Tier B TS: Grid bios/ directory — call-only TypeScript patterns.
 for (const root of TIER_B_TS_ROOTS) {
-    const files = walk(root).filter(f => f.endsWith('.ts') || f.endsWith('.js'));
+    const files = walk(root).filter(f => f.endsWith('.ts') || f.endsWith('.tsx') || f.endsWith('.js') || f.endsWith('.jsx'));
     for (const f of files) {
         allViolations = allViolations.concat(scan(f, TIER_B_TS_PATTERNS));
     }
