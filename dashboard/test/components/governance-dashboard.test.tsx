@@ -16,6 +16,7 @@
  * VOTE-05 hand-audit: No propose/commit/reveal button exists in any render path.
  */
 
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import type { ProposalSummary } from '../../src/app/grid/governance/use-governance-proposals';

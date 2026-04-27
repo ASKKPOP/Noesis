@@ -13,6 +13,7 @@
  * Tests use @testing-library/react with vi.mock for fetch.
  */
 
+import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import type { BallotHistoryEntry } from '../../src/app/grid/governance/voting-history-modal';
