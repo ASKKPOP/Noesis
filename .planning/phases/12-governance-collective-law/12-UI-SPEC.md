@@ -50,7 +50,7 @@ Inherits the established dashboard spacing vocabulary. No new tokens.
 |-------|----------|----------|------------------|
 | xs | 4px | `p-1` / `gap-1` | Inline badge padding; status dot gap |
 | sm | 8px | `p-2` / `gap-2` | Proposal row internal spacing; tally count row gaps |
-| md | 12px | `p-3` / `mb-3` | Section heading bottom margin |
+| md | 12px | `p-3` / `mb-3` | Section heading bottom margin. **Inherited project exception from Phase 9 precedent** — Phase 9 uses `p-3`/`mb-3` extensively as a project-standard intermediate step. Although 12px falls outside the canonical {4, 8, 16, 24, 32, 48, 64} set, it is a frozen project token carried forward from Phase 9 and is not a new Phase 12 addition. |
 | base | 16px | `p-4` | Page outer padding; proposal detail card padding |
 | lg | 24px | `p-6` | Proposal list card padding |
 | xl | 32px | `mt-8` | Top section break between proposals list and detail pane |
@@ -70,7 +70,7 @@ Inherits the four-size scale established across Phases 6–11. No new sizes.
 |------|------|----------|--------|-------------|------------------|
 | Section heading | 14px | `text-sm` | 600 | 1.25 | Page h1 "Governance"; proposal detail heading; H5 modal heading |
 | Body / label | 12px | `text-xs` | 400 | 1.5 | Proposal metadata (status, tick range, counts); tally result labels; footnote disclaimers |
-| Meta / caption | 11px | `text-[11px]` | 400 | 1.4 | Proposal ID (truncated); outcome caption; quorum note; H5 voting history timestamps |
+| Meta / caption | 11px | `text-[11px]` | 400 | 1.4 | Proposal ID (truncated); outcome caption; quorum note; H5 voting history timestamps; **status badge pill text** |
 | Monospace ID / hash | 12px | `font-mono text-xs` | 400 | 1.3 | `title_hash` display; `proposal_id` truncated; `commit_hash` in H5 history rows |
 
 **Weight discipline:** Only 400 (regular) and 600 (semibold). No 500, no 700. Matches Phases 6–11.
@@ -307,7 +307,7 @@ Phase 12 is read-only. No primary action CTA exists. The sole interactive afford
 >
     <span
         data-testid={`proposal-status-badge-${proposal.proposal_id}`}
-        className={`shrink-0 text-[10px] uppercase tracking-wide px-1.5 py-[1px] rounded-sm ${
+        className={`shrink-0 text-[11px] uppercase tracking-wide px-2 py-1 rounded-sm ${
             proposal.status === 'open'
                 ? 'bg-sky-400/10 text-sky-400'
                 : proposal.outcome === 'passed'
@@ -790,7 +790,7 @@ All design contract questions answered without new user input — fully pre-popu
 | Design Contract Question | Answered By | Decision |
 |--------------------------|-------------|----------|
 | Spacing scale | `dashboard/tailwind.config.ts` + Phase 9 UI-SPEC | Inherit 4/8/12/16/24/32 scale; no new tokens |
-| Typography sizes | Existing Inspector + Phase 9 UI-SPEC | 4 sizes (14/12/11/12-mono); 2 weights (400/600) |
+| Typography sizes | Existing Inspector + Phase 9 UI-SPEC | 3 sizes (14/12/11); 2 weights (400/600); monospace variant reuses 12px |
 | Color 60/30/10 split | `globals.css` + Phase 9 UI-SPEC | 60% neutral-950 / 30% neutral-900 / 10% outcome scale scoped to governance only |
 | Outcome badge colors | CONTEXT.md D-12-09 + govenance states `open/passed/rejected/quorum_fail` | sky-400 / green-400 / neutral-400 / amber-400 |
 | Event category for governance events in firehose | `firehose-row.tsx` CATEGORY_BADGE | `law` → `bg-pink-400/10 text-pink-300` (no new color) |
@@ -837,6 +837,7 @@ No external component registries consumed. All new UI is hand-rolled within the 
 
 *Phase: 12-governance-collective-law*
 *UI-SPEC written: 2026-04-24*
+*Revised: 2026-04-24 — checker fixes: badge py-[1px]→py-1, px-1.5→px-2, text-[10px]→text-[11px]; md spacing token documented as inherited Phase 9 exception*
 *Source: 12-CONTEXT.md (D-12-01..D-12-11, primary) + 12-RESEARCH.md §Standard Stack +
 phase 9 (09-UI-SPEC.md, canonical page pattern) + `dashboard/tailwind.config.ts` +
 `dashboard/src/app/globals.css` + `dashboard/src/app/grid/relationships/page.tsx` +
