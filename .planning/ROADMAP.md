@@ -157,7 +157,14 @@ Plans:
   - T-09-15 (HIGH): Nous-collective law path bypasses operator provenance — ensure `proposal.tallied → law.triggered` promotion emits with explicit `enacted_by: 'collective'` marker inside the existing `law.triggered` closed tuple (additive widening of existing payload, not new event); grep test asserts `proposal.tallied` never triggers `operator.law_changed`.
   - T-09-16 (MEDIUM): Vote targeting tombstoned proposer — extend Phase 8 `tombstoneCheck` to proposal/ballot routes; decision documented in phase CONTEXT.md (votes for tombstoned-proposer proposals complete with existing votes, reject new votes).
 **Allowlist additions**: **+4**. Events: `proposal.opened` `{proposal_id, proposer_did, title_hash, quorum_pct, supermajority_pct, deadline_tick}`; `ballot.committed` `{proposal_id, voter_did, commit_hash}`; `ballot.revealed` `{proposal_id, voter_did, choice, nonce}`; `proposal.tallied` `{proposal_id, outcome, yes_count, no_count, abstain_count, quorum_met}`. Running total: **26**.
-**Plans**: TBD
+**Plans**: 5 plans (Wave 0–4)
+
+**Plans**:
+- [ ] 12-00-PLAN.md — Wave 0: allowlist 22→26, types/config, MySQL v6 migration, RED stubs, doc-sync
+- [ ] 12-01-PLAN.md — Wave 1: commit-reveal crypto (Grid + Brain) with cross-language sha256 parity
+- [ ] 12-02-PLAN.md — Wave 2: four sole-producer emitters + GovernanceStore + computeTally + GovernanceEngine + appendLawTriggered widening
+- [ ] 12-03-PLAN.md — Wave 3: five Fastify routes + GenesisLauncher wiring + NousRunner switch cases + Brain proposer/voter/state
+- [ ] 12-04-PLAN.md — Wave 4: three CI gates + Dashboard /grid/governance page + drift detector + atomic doc-sync
 **UI hint**: yes
 
 ### Phase 13: Operator Replay & Export
@@ -200,7 +207,14 @@ Plans:
   - T-10-15 (HIGH): 10k-tick run reveals producer-boundary perf cliff — `Set.has()` (already frozen) not array scans; producer-boundary benchmark in nightly CI.
   - T-10-16 (CRITICAL): Published dataset inadvertently leaks plaintext Telos — rig output has two modes (`--audit-only` default, `--full-state` with verbatim-copy-locked consent prompt); default output scanned by `grep -rE "telos_text|goal_description|memory_text"` returns zero matches.
 **Allowlist additions**: **0** (on production allowlist — Rigs run their own isolated chain). Note: `chronos.rig_closed` exists on the Rig's own chain but is explicitly NOT added to `grid/src/audit/broadcast-allowlist.ts`. Running total: **27**.
-**Plans**: TBD
+**Plans**: 5 plans (Wave 0–4)
+
+**Plans**:
+- [ ] 12-00-PLAN.md — Wave 0: allowlist 22→26, types/config, MySQL v6 migration, RED stubs, doc-sync
+- [ ] 12-01-PLAN.md — Wave 1: commit-reveal crypto (Grid + Brain) with cross-language sha256 parity
+- [ ] 12-02-PLAN.md — Wave 2: four sole-producer emitters + GovernanceStore + computeTally + GovernanceEngine + appendLawTriggered widening
+- [ ] 12-03-PLAN.md — Wave 3: five Fastify routes + GenesisLauncher wiring + NousRunner switch cases + Brain proposer/voter/state
+- [ ] 12-04-PLAN.md — Wave 4: three CI gates + Dashboard /grid/governance page + drift detector + atomic doc-sync
 
 ## Progress
 
