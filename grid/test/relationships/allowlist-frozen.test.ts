@@ -28,13 +28,14 @@ import { describe, it, expect } from 'vitest';
 import { ALLOWLIST } from '../../src/audit/broadcast-allowlist.js';
 
 describe('SC#5 — broadcast allowlist is frozen across Phase 9 (Phase 10b-adjusted baseline)', () => {
-    it('BROADCAST_ALLOWLIST length === 26 (Phase 12 baseline: +4 governance events)', () => {
+    it('BROADCAST_ALLOWLIST length === 27 (Phase 13 baseline: +1 operator.exported event)', () => {
         // If this fails, something added or removed kinds unexpectedly.
         // Phase 11 (WHISPER-04 D-11-01) added nous.whispered at position 22.
         // Phase 12 (VOTE-01..04 D-12-01) added proposal.opened, ballot.committed,
         // ballot.revealed, proposal.tallied at positions 23..26.
+        // Phase 13 (REPLAY-02 D-13-09) added operator.exported at position 27.
         // See .planning/STATE.md Accumulated Context for the baseline lock.
-        expect(ALLOWLIST.size).toBe(26);
+        expect(ALLOWLIST.size).toBe(27);
     });
 
     it('no relationship.* kinds are admitted (Phase 9 SC#5 still holds)', () => {

@@ -17,6 +17,7 @@ import { registerMemoryQueryRoute } from './memory-query.js';
 import { registerTelosForceRoute } from './telos-force.js';
 import { registerDeleteNousRoute } from './delete-nous.js';
 import { relationshipsRoutes } from './relationships.js';
+import { registerReplayExportRoute } from './export-replay.js';
 
 export function registerOperatorRoutes(
     app: FastifyInstance,
@@ -30,4 +31,6 @@ export function registerOperatorRoutes(
     registerDeleteNousRoute(app, services);
     // Phase 9 REL-04: Relationship graph endpoints (H1/H2/H5 tier-graded).
     relationshipsRoutes(app, services);
+    // Phase 13 REPLAY-02: H5 Sovereign Operations — operator replay export.
+    registerReplayExportRoute(app, services);
 }
