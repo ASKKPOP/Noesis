@@ -1,10 +1,11 @@
 ---
 phase: 12
 slug: governance-collective-law
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-04-24
+reviewed_at: 2026-04-27
 ---
 
 # Phase 12 — UI Design Contract
