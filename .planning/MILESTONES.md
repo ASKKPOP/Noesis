@@ -277,4 +277,42 @@
 **Test coverage at completion:** Grid 1121/1121 (122 files), Brain 498/498, Dashboard Wave 4 30/30.
 
 ---
-*Last updated: 2026-04-23 — Phase 11 shipped (5/5 plans, allowlist 21→22 with `nous.whispered`)*
+
+### Phase 12 — Governance & Collective Law — SHIPPED 2026-04-27
+
+**Shipped:** 2026-04-27
+**Goal:** Nous collectively open, vote on, and enact laws via a commit-reveal ballot lifecycle; operators cannot vote, propose, or tally at any tier; successful proposals promote to the v2.1 LogosEngine.
+**Requirements delivered:** VOTE-01, VOTE-02, VOTE-03, VOTE-04, VOTE-05, VOTE-06, VOTE-07
+**Plans:** 5/5 (12-00 through 12-04, 4 waves)
+**Allowlist added:** `proposal.opened` (pos 23) + `ballot.committed` (pos 24) + `ballot.revealed` (pos 25) + `proposal.tallied` (pos 26) — allowlist 22→26
+
+**Key primitives:**
+- `grid/src/governance/` module: GovernanceStore, GovernanceEngine, commitReveal crypto, computeTally, four sole-producer emitters
+- commit_hash formula (D-12-02): `sha256(choice + '|' + nonce + '|' + voter_did)` — pipe delimiters prevent chosen-plaintext ambiguity; nonce = `secrets.token_hex(16)` (32 hex chars), Brain-generated
+- `appendLawTriggered` widened with `enacted_by: 'collective' | 'operator'` — forensic distinction between collective enactment and H3 operator law-change (T-09-15)
+- Five Fastify routes: POST /proposals, POST /proposals/:id/commit, POST /proposals/:id/reveal, POST /proposals/:id/tally, GET /proposals/:id/body (H2+), GET /proposals/:id/ballots/history (H5)
+- Brain `proposer.py` + `voter.py`: hash-only cross-boundary discipline; `body_text` never crosses RPC wire; `title_hash = sha256(body_text)[:32]` is the sole cross-boundary artifact
+- Three CI gates: `scripts/check-governance-isolation.mjs` (VOTE-05), `scripts/check-governance-plaintext.mjs` (T-09-12), `scripts/check-governance-weight.mjs` (VOTE-06)
+- Dashboard `/grid/governance` page: SWR 2s polling; H1+ proposals list; H2+ body view; H5 native `<dialog>` VotingHistoryModal; zero propose/commit/reveal affordance at any tier (VOTE-05 hard invariant)
+- Fifth protocol mirror: `dashboard/src/lib/protocol/governance-types.ts` + drift detector `dashboard/test/lib/governance-types.drift.test.ts`
+- GOVERNANCE_FORBIDDEN_KEYS: 12 keys (`text`, `body`, `content`, `description`, `rationale`, `proposal_text`, `law_text`, `body_text`, `weight`, `reputation`, `relationship_score`, `ousia_weight`) — enforced via CI gates + closed-tuple payload discipline
+
+**Invariants sealed:**
+- VOTE-05: Operators read-only at ALL tiers including H5 — CI gate + no operator.* emit from governance + zero propose/commit/reveal DOM node in dashboard
+- VOTE-06: No vote-weighting — GOVERNANCE_FORBIDDEN_KEYS excludes weight/reputation/relationship_score/ousia_weight; CI gate + closed-tuple payload
+- T-09-12: Proposal body privacy — `title_hash` in audit chain; `body_text` stored MySQL only; CI gate scans all governance source for forbidden body keys with filepath allowlist
+- T-09-15: Collective-vs-operator forensic distinction — `enacted_by` field on `law.triggered`; grep test asserts `proposal.tallied` never triggers `operator.law_changed`
+- T-09-16: Tombstoned proposer/voter routes return 410; existing committed ballots tally normally
+- T-09-17: Governance type drift — drift detector test reads grid + brain + dashboard type files at CI time
+
+**Allowlist delta:** 22 → 26 (+4). Freeze-except-by-explicit-addition rule preserved.
+**Pointer to phase artifacts:** `.planning/phases/12-governance-collective-law/`
+
+**Lessons learned:**
+- The `enacted_by` field widening of `law.triggered` is additive to an existing payload. The closed-tuple discipline requires updating `Object.keys().sort()` assertions in prior-wave tests when widening. Always read prior-wave tests before widening existing payload shapes.
+- Body-text allowlist in the plaintext gate is the trickiest part of governance privacy enforcement. `appendLawTriggered.ts` legitimately uses `description: law.description` (Law DSL field, not proposal body); `replay.ts` contains `body_text` in test fixtures. Both paths require explicit filepath allowlisting with comments explaining the rationale.
+- React `import React from 'react'` is required in component and test files when the oxc JSX transform's automatic runtime doesn't inject it in the vitest test context.
+- Python `@dataclass` regex extraction for drift detectors must handle triple-quoted docstrings that contain blank lines — a simple `\n\n`-terminated regex stops too early inside the docstring.
+
+---
+*Last updated: 2026-04-27 — Phase 12 shipped (5/5 plans, allowlist 22→26 with governance events)*

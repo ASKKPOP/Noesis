@@ -26,12 +26,12 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 ## Current Position
 
-Phase: 12 (governance-collective-law) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 12
-Last activity: 2026-04-27 -- Phase 12 execution started
+Phase: 12 (governance-collective-law) — SHIPPED
+Plan: 5 of 5 (complete)
+Status: Phase 12 shipped — Phase 13 (Operator Replay & Export) next
+Last activity: 2026-04-27 -- Phase 12 shipped
 
-Progress: [████░░░░░░] 43% (3/7 v2.2 phases complete — Phase 9 + Phase 10a + Phase 10b shipped)
+Progress: [█████░░░░░] 57% (4/7 v2.2 phases complete — Phase 9 + Phase 10a + Phase 10b + Phase 12 shipped)
 
 ## Accumulated Context
 
@@ -58,9 +58,9 @@ Progress: [████░░░░░░] 43% (3/7 v2.2 phases complete — Pha
 
 Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule preserved.
 
-### Broadcast allowlist (Phase 10b — post-ship, Plan 10b-03)
+### Broadcast allowlist (Phase 12 — post-ship, Plan 12-04)
 
-**22 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
+**26 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
 
 1. `nous.spawned`
 2. `nous.moved`
@@ -84,10 +84,14 @@ Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule p
 20. `bios.birth` ← NEW in Phase 10b (BIOS-02) — Nous lifecycle open; closed 3-key payload `{did, tick, psyche_hash}`; sole producer `grid/src/bios/appendBiosBirth.ts` · Phase 10b
 21. `bios.death` ← NEW in Phase 10b (BIOS-02/03) — Nous lifecycle close; closed 4-key payload `{did, tick, cause, final_state_hash}`; `cause ∈ {starvation, operator_h5, replay_boundary}`; sole producer `grid/src/bios/appendBiosDeath.ts` · Phase 10b
 22. `nous.whispered` ← NEW in Phase 11 (WHISPER-04) — E2E-encrypted whisper audit; closed 4-key payload `{ciphertext_hash, from_did, tick, to_did}` (alphabetical order); sole producer `grid/src/whisper/appendNousWhispered.ts` · Phase 11
+23. `proposal.opened` ← NEW in Phase 12 (VOTE-01) — governance proposal opened; closed 6-key payload `{deadline_tick, proposal_id, proposer_did, quorum_pct, supermajority_pct, title_hash}` (alphabetical); sole producer `grid/src/governance/appendProposalOpened.ts` · Phase 12
+24. `ballot.committed` ← NEW in Phase 12 (VOTE-02) — commit-reveal ballot commit phase; closed 3-key payload `{commit_hash, proposal_id, voter_did}` (alphabetical); sole producer `grid/src/governance/appendBallotCommitted.ts` · Phase 12
+25. `ballot.revealed` ← NEW in Phase 12 (VOTE-02) — commit-reveal ballot reveal phase; closed 4-key payload `{choice, nonce, proposal_id, voter_did}` (alphabetical); `choice ∈ {yes, no, abstain}`; sole producer `grid/src/governance/appendBallotRevealed.ts` · Phase 12
+26. `proposal.tallied` ← NEW in Phase 12 (VOTE-03) — governance proposal tally; closed 6-key payload `{abstain_count, no_count, outcome, proposal_id, quorum_met, yes_count}` (alphabetical); `outcome ∈ {passed, rejected, quorum_fail}`; sole producer `grid/src/governance/appendProposalTallied.ts` · Phase 12
 
 Phantom `trade.countered` is NOT emitted and NOT allowlisted — never shipped in code, removed from this enumeration per D-11. If/when the full trade counter-offer handshake ships it earns its own allowlist slot in its own phase.
 
-Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 22-event invariant.
+Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 26-event invariant.
 
 ### Research foundation for v2.1
 
@@ -314,6 +318,22 @@ Next action: `/gsd-discuss-phase 12` then `/gsd-plan-phase 12` then `/gsd-execut
 - **D-30 extension (Phase 10b):** `delete-nous.ts` H5 handler extended — `appendBiosDeath({cause: 'operator_h5', ...})` emitted before `appendNousDeleted` in the same deletion sequence. `operator.nous_deleted` remains the H5-tier audit; `bios.death` is the lifecycle-layer complement.
 - **Body↔mood separation sealed (T-09-05):** PHILOSOPHY §1 updated with subsection "Body, not mood — T-09-05 (sealed 2026-04-22, Phase 10b)". Bios = physical need pressure (body). Thymos = emotional state (mood) — explicitly out of scope in v2.2. Non-negotiable distinction.
 - **Closed-enum allowlist gate confirmed:** `bios.resurrect`, `bios.migrate`, `bios.transfer` all fail at allowlist gate (tested in Phase 10b-07 integration suite). Death is terminal; DIDs permanently reserved.
+
+## Accumulated Context (Phase 12 — Governance & Collective Law — shipped 2026-04-27)
+
+- **Phase 12 shipped (2026-04-27):** VOTE-01..07 (7 REQs). 5 plans (12-00 through 12-04), 4 execution waves. Allowlist 22→26 with `proposal.opened` (pos 23), `ballot.committed` (pos 24), `ballot.revealed` (pos 25), `proposal.tallied` (pos 26). Full grid 1147+, brain 513+, dashboard governance tests green.
+- **Broadcast allowlist now 26 events** (Phase 12 added 4 governance events). Freeze-except-by-explicit-addition rule preserved. Next scheduled phase: Phase 13 (Operator Replay & Export).
+- **VOTE-05 HARD INVARIANT — operators read-only at ALL tiers including H5:** No propose, commit, or reveal route exists for operators. Dashboard `/grid/governance` renders zero propose/commit/reveal trigger DOM nodes at any tier. CI enforced by `scripts/check-governance-isolation.mjs` (checks no `operator-events.ts` import in governance modules + no `operator.*` emit from governance paths).
+- **VOTE-06 HARD INVARIANT — no vote-weighting:** `GOVERNANCE_FORBIDDEN_KEYS` excludes `weight`, `reputation`, `relationship_score`, `ousia_weight`. One Nous = one vote = one ballot commit. Enforced by `scripts/check-governance-weight.mjs`. No allowlist exceptions for v2.2 (vote-weighting deferred to v2.3).
+- **commit_hash formula (D-12-02):** `sha256(choice + '|' + nonce + '|' + voter_did)`. Pipe delimiters prevent chosen-plaintext ambiguity. nonce = `secrets.token_hex(16)` → 32 hex chars; Brain-generated, never Grid.
+- **law.triggered widened with `enacted_by` field (T-09-15 mitigation):** Successful proposals promote to LogosEngine via existing `law.triggered` event, now carrying `enacted_by: 'collective' | 'operator'` to forensically distinguish collective enactment from H3 operator law-change. The `proposal.tallied → law.triggered` promotion path sets `enacted_by: 'collective'`; CI gate asserts `proposal.tallied` never triggers `operator.law_changed`.
+- **Three CI gates added (D-12-11):**
+  - `scripts/check-governance-isolation.mjs` — guards VOTE-05: no `operator-events.ts` import in `grid/src/governance/**`, no `operator.*` emit from governance, no `grid/src/api/operator/governance-laws` import into governance. Reverse direction: `operator-events.ts` MUST NOT import from `grid/src/governance/**`.
+  - `scripts/check-governance-plaintext.mjs` — guards T-09-12: scans governance + brain governance source for forbidden body/text/content/description/rationale/proposal_text/law_text/body_text property keys. Allowlisted paths: `grid/src/db/schema.ts`, `grid/src/api/governance/routes.ts`, `grid/src/governance/store.ts`, `grid/src/governance/appendProposalOpened.ts`, `grid/src/governance/appendLawTriggered.ts`, `brain/src/noesis_brain/governance/proposer.py`, `grid/src/governance/replay.ts`.
+  - `scripts/check-governance-weight.mjs` — guards VOTE-06: no weight/reputation/relationship_score/ousia_weight in governance source. No allowlist exceptions.
+- **Tombstoned proposer/voter return 410 from all three governance POST routes** (proposal/commit/reveal); existing committed ballots tally normally (T-09-16 mitigation).
+- **Fifth protocol mirror:** `dashboard/src/lib/protocol/governance-types.ts` joins the four existing mirrors. Drift detector: `dashboard/test/lib/governance-types.drift.test.ts` reads all three sources (grid, brain, dashboard) at test time. Consolidation into `@noesis/protocol-types` remains deferred per D-11-16.
+- **Dashboard `/grid/governance` page (D-12-09):** SWR 2s polling, `revalidateOnFocus: false`. H1+: proposals list with aggregate counts. H2+: "View body" button enabled (fetches body via H2+ API). H5: "View votes" button rendered (opens native `<dialog>` VotingHistoryModal). No propose/commit/reveal affordance at any tier including H5.
 
 ## Accumulated Context (Phase 11 — Mesh Whisper — shipped 2026-04-23)
 
