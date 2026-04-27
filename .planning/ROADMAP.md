@@ -162,7 +162,7 @@ Plans:
 **Plans**:
 - [x] 12-00-PLAN.md — Wave 0: allowlist 22→26, types/config, MySQL v6 migration, RED stubs, doc-sync
 - [x] 12-01-PLAN.md — Wave 1: commit-reveal crypto (Grid + Brain) with cross-language sha256 parity
-- [ ] 12-02-PLAN.md — Wave 2: four sole-producer emitters + GovernanceStore + computeTally + GovernanceEngine + appendLawTriggered widening
+- [x] 12-02-PLAN.md — Wave 2: four sole-producer emitters + GovernanceStore + computeTally + GovernanceEngine + appendLawTriggered widening
 - [ ] 12-03-PLAN.md — Wave 3: five Fastify routes + GenesisLauncher wiring + NousRunner switch cases + Brain proposer/voter/state
 - [ ] 12-04-PLAN.md — Wave 4: three CI gates + Dashboard /grid/governance page + drift detector + atomic doc-sync
 **UI hint**: yes
@@ -211,7 +211,7 @@ Plans:
 
 **Plans**:
 - [x] 12-00-PLAN.md — Wave 0: allowlist 22→26, types/config, MySQL v6 migration, RED stubs, doc-sync
-- [ ] 12-01-PLAN.md — Wave 1: commit-reveal crypto (Grid + Brain) with cross-language sha256 parity
+- [x] 12-01-PLAN.md — Wave 1: commit-reveal crypto (Grid + Brain) with cross-language sha256 parity
 - [ ] 12-02-PLAN.md — Wave 2: four sole-producer emitters + GovernanceStore + computeTally + GovernanceEngine + appendLawTriggered widening
 - [ ] 12-03-PLAN.md — Wave 3: five Fastify routes + GenesisLauncher wiring + NousRunner switch cases + Brain proposer/voter/state
 - [ ] 12-04-PLAN.md — Wave 4: three CI gates + Dashboard /grid/governance page + drift detector + atomic doc-sync
@@ -233,7 +233,7 @@ Dependencies form a strict chain (no parallel phases in v2.2). Rationale:
 | 10a. Ananke Drives | 6/6 | Complete   | 2026-04-22 |
 | 10b. Bios Needs + Chronos Subjective Time | 8/8 | Complete   | 2026-04-23 |
 | 11. Mesh Whisper | 5/5 | Complete   | 2026-04-23 |
-| 12. Governance & Collective Law | 2/5 | In Progress|  |
+| 12. Governance & Collective Law | 3/5 | In Progress|  |
 | 13. Operator Replay & Export | 0/? | Not started | - |
 | 14. Researcher Rigs | 0/? | Not started | - |
 
