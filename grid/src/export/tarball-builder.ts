@@ -109,8 +109,20 @@ export async function buildExportTarball(input: ExportTarballInputs): Promise<Ex
         (a, b) => (a.id ?? 0) - (b.id ?? 0)
     );
 
+    // Strip undefined-valued fields from each entry before serialization.
+    // canonicalStringify throws on undefined; AuditEntry has optional fields
+    // (targetDid, id) that may be present as undefined on real chain entries.
+    // Standard JSON.stringify drops undefined values — we match that behavior here.
+    const stripUndefined = (obj: Record<string, unknown>): Record<string, unknown> => {
+        const result: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(obj)) {
+            if (v !== undefined) result[k] = v;
+        }
+        return result;
+    };
+
     // Build JSONL: one canonical-JSON line per entry, LF-separated, no trailing newline.
-    const jsonl = sortedEntries.map((e) => canonicalStringify(e)).join('\n');
+    const jsonl = sortedEntries.map((e) => canonicalStringify(stripUndefined(e as unknown as Record<string, unknown>))).join('\n');
 
     // Build snapshot JSON files.
     const snapshotStartJson = canonicalStringify(input.startSnapshot);
