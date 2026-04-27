@@ -22,6 +22,7 @@
  * Phase 10b (Plan 10b-03, BIOS-02) bumped it to 21 by appending `bios.birth` + `bios.death`.
  * Phase 11 (Plan 11-00, WHISPER-04) bumped it to 22 by appending `nous.whispered`.
  * Phase 12 (Plan 12-00, VOTE-01..04) bumped it to 26 by appending the four governance events.
+ * Phase 13 (Plan 13-04, REPLAY-02) bumped it to 27 by appending `operator.exported`.
  * Any future phase that extends the allowlist must bump the count literal here
  * and append its members to the `required` array.
  */
@@ -42,9 +43,9 @@ if (!existsSync(statePath)) {
 const state = readFileSync(statePath, 'utf8');
 const failures = [];
 
-// 1. Canonical "26 events" assertion must appear at least once in Accumulated Context.
-if (!/26\s+events/i.test(state)) {
-  failures.push('STATE.md does not mention "26 events" — Phase 12 allowlist count assertion missing.');
+// 1. Canonical "27 events" assertion must appear at least once in Accumulated Context.
+if (!/27\s+events/i.test(state)) {
+  failures.push('STATE.md does not mention "27 events" — Phase 13 allowlist count assertion missing.');
 }
 
 // 2. Phantom `trade.countered` must NOT appear as a live/shipped event.
@@ -104,6 +105,9 @@ const required = [
   'ballot.committed',
   'ballot.revealed',
   'proposal.tallied',
+  // Phase 13 addition (REPLAY-02 / Plan 13-04 / D-13-09). Closed 6-tuple operator.exported event.
+  // ALWAYS keep this in sync with grid/src/audit/broadcast-allowlist.ts ALLOWLIST_MEMBERS.
+  'operator.exported',
 ];
 for (const event of required) {
   const pattern = new RegExp(event.replace(/\./g, '\\.'));
@@ -112,6 +116,32 @@ for (const event of required) {
   }
 }
 
+// 4. replay.* prefix hard-ban: no string-quoted token starting with 'replay.' may
+//    ever appear in the ALLOWLIST_MEMBERS array.
+//    Phase 13 D-13 §deferred: ReplayGrid runs an isolated chain; nothing it does
+//    ever reaches production. replay.* event names are permanently banned.
+function checkReplayPrefixBan() {
+  const allowlistPath = resolve(repoRoot, 'grid/src/audit/broadcast-allowlist.ts');
+  if (!existsSync(allowlistPath)) {
+    failures.push(`checkReplayPrefixBan: ${allowlistPath} not found — cannot verify ban.`);
+    return;
+  }
+  const text = readFileSync(allowlistPath, 'utf8');
+  // Match any string-quoted token starting with 'replay.' or "replay."
+  const re = /['"]replay\./g;
+  const matches = text.match(re);
+  if (matches && matches.length > 0) {
+    failures.push(
+      `REPLAY PREFIX HARD-BAN VIOLATION: ${allowlistPath} contains a 'replay.*' token.\n` +
+      `  Phase 13 D-13 §deferred bans replay.* allowlist members:\n` +
+      `  > ReplayGrid runs its own isolated chain; nothing it does ever reaches production.\n` +
+      `  Reference: .planning/phases/13-operator-replay-export/13-CONTEXT.md §deferred`
+    );
+  }
+}
+
+checkReplayPrefixBan();
+
 if (failures.length > 0) {
   console.error('[state-doc-sync] FAIL — doc drift detected:');
   for (const f of failures) console.error('  • ' + f);
@@ -119,5 +149,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log('[state-doc-sync] OK — STATE.md is in sync with the 26-event allowlist.');
+console.log('[state-doc-sync] OK — STATE.md is in sync with the 27-event allowlist.');
 process.exit(0);
