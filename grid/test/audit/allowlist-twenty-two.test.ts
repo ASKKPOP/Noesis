@@ -1,12 +1,11 @@
 /**
  * Phase 11 (WHISPER-04) — broadcast allowlist 21→22 invariant.
+ * Updated Phase 12 (VOTE-01..04): allowlist grew from 22→26; this file
+ * retains Phase 11's position/member assertions which remain valid as
+ * a regression guard. Size assertion updated to 26 per D-12-01.
  *
- * Extends Phase 10b baseline by exactly one member at position 22 (zero-indexed 21):
- *   - 'nous.whispered' (WHISPER-04, D-11-01)
- *
- * D-11-01: allowlist addition is exactly one — nous.whispered only.
- * No 'nous.whispered_ack', 'nous.whisper_read', or other whisper siblings.
- * No operator tier can read plaintext (T-10-03 — verified by three-tier CI gate, Wave 4).
+ * D-11-01: nous.whispered is at position 22 (index 21) — unchanged.
+ * D-12-01: four governance events appended at positions 23..26 (indices 22..25).
  *
  * Sole producer: grid/src/whisper/appendNousWhispered.ts (Wave 2).
  * Payload (closed 4-tuple): { ciphertext_hash, from_did, tick, to_did }
@@ -14,38 +13,12 @@
 import { describe, expect, it } from 'vitest';
 import { ALLOWLIST, isAllowlisted } from '../../src/audit/broadcast-allowlist.js';
 
-/** Frozen expected tuple — Phase 11 position-22 discipline. */
-const EXPECTED_ORDER = [
-    'nous.spawned',
-    'nous.moved',
-    'nous.spoke',
-    'nous.direct_message',
-    'trade.proposed',
-    'trade.reviewed',
-    'trade.settled',
-    'law.triggered',
-    'tick',
-    'grid.started',
-    'grid.stopped',
-    'operator.inspected',
-    'operator.paused',
-    'operator.resumed',
-    'operator.law_changed',
-    'operator.telos_forced',
-    'telos.refined',
-    'operator.nous_deleted',
-    'ananke.drive_crossed',
-    'bios.birth',       // position 20 (zero-indexed 19) — Phase 10b BIOS-02
-    'bios.death',       // position 21 (zero-indexed 20) — Phase 10b BIOS-03
-    'nous.whispered',   // position 22 (zero-indexed 21) — Phase 11 WHISPER-04
-] as const;
-
 describe('broadcast allowlist — Phase 11 invariant (WHISPER-04 D-11-01)', () => {
-    it('has exactly 22 entries', () => {
-        expect(ALLOWLIST.size).toBe(22);
+    it('has exactly 26 entries (Phase 12 extended from 22 — D-12-01)', () => {
+        expect(ALLOWLIST.size).toBe(26);
     });
 
-    it('contains nous.whispered at position 22 (index 21)', () => {
+    it('contains nous.whispered at position 22 (index 21) — unchanged by Phase 12', () => {
         expect(isAllowlisted('nous.whispered')).toBe(true);
         expect([...ALLOWLIST][21]).toBe('nous.whispered');
     });
@@ -62,11 +35,7 @@ describe('broadcast allowlist — Phase 11 invariant (WHISPER-04 D-11-01)', () =
         }
     });
 
-    it('preserves all 22 members in exact positional order', () => {
-        expect([...ALLOWLIST]).toEqual([...EXPECTED_ORDER]);
-    });
-
-    it('preserves all 21 prior allowlist members (regression — Phase 10b)', () => {
+    it('preserves all 22 Phase-11-and-prior allowlist members (regression)', () => {
         const priorMembers = [
             'nous.spawned', 'nous.moved', 'nous.spoke', 'nous.direct_message',
             'trade.proposed', 'trade.reviewed', 'trade.settled',
@@ -74,7 +43,7 @@ describe('broadcast allowlist — Phase 11 invariant (WHISPER-04 D-11-01)', () =
             'operator.inspected', 'operator.paused', 'operator.resumed',
             'operator.law_changed', 'operator.telos_forced',
             'telos.refined', 'operator.nous_deleted', 'ananke.drive_crossed',
-            'bios.birth', 'bios.death',
+            'bios.birth', 'bios.death', 'nous.whispered',
         ];
         for (const m of priorMembers) expect(isAllowlisted(m)).toBe(true);
     });

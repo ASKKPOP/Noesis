@@ -7,8 +7,8 @@ import {
 } from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast-allowlist: default-deny membership', () => {
-    it('has exactly 22 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11 event types', () => {
-        expect(ALLOWLIST.size).toBe(22);
+    it('has exactly 26 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12 event types', () => {
+        expect(ALLOWLIST.size).toBe(26);
     });
 
     it.each([
@@ -41,6 +41,11 @@ describe('broadcast-allowlist: default-deny membership', () => {
         'bios.death',
         // Phase 11 (WHISPER-04) — position 22 Nous↔Nous envelope emission.
         'nous.whispered',
+        // Phase 12 (VOTE-01..04) — positions 23..26 governance events.
+        'proposal.opened',
+        'ballot.committed',
+        'ballot.revealed',
+        'proposal.tallied',
     ])('allows %s', (eventType) => {
         expect(isAllowlisted(eventType)).toBe(true);
     });
@@ -61,7 +66,7 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(() => (ALLOWLIST as Set<string>).add('law.bypassed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).delete('trade.reviewed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).clear()).toThrow(TypeError);
-        expect(ALLOWLIST.size).toBe(22);
+        expect(ALLOWLIST.size).toBe(26);
     });
 
     it('Phase 6 operator.* tuple order: inspected < paused < resumed < law_changed < telos_forced', () => {

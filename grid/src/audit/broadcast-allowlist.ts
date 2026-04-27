@@ -21,7 +21,7 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11) — exactly these 22 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12) — exactly these 26 event types.
  *  v1 (Phase 1, per 01-CONTEXT.md): 10 events.
  *  Phase 5 (REV-02): +1 'trade.reviewed' — externally observable reviewer verdict;
  *  payload shape D-03, 3 keys on pass / 5 keys on fail, all privacy-clean (see D-12 test).
@@ -50,6 +50,10 @@
  *   {ciphertext_hash, from_did, tick, to_did}; sole producer
  *   grid/src/whisper/appendNousWhispered.ts (to land in Wave 2).
  *   Per D-11-01 / CONTEXT-11.
+ *  Phase 12 (VOTE-01..04): +4 governance events at positions 23..26 — closed payloads
+ *   `proposal.opened {6}`, `ballot.committed {3}`, `ballot.revealed {4}`,
+ *   `proposal.tallied {6}`. Sole producers in `grid/src/governance/append*.ts`
+ *   (Wave 2). Per D-12-01 / CONTEXT-12.
  *  Tuple ORDER is locked; any reorder fails broadcast-allowlist.test.ts.
  */
 const ALLOWLIST_MEMBERS: readonly string[] = [
@@ -97,6 +101,23 @@ const ALLOWLIST_MEMBERS: readonly string[] = [
     // {ciphertext_hash, from_did, tick, to_did}. Sole producer
     // grid/src/whisper/appendNousWhispered.ts (lands in Wave 2). Per D-11-01 / CONTEXT-11.
     'nous.whispered',
+    // Phase 12 (VOTE-01) — Governance proposal open. Closed 6-key payload:
+    // {deadline_tick, proposal_id, proposer_did, quorum_pct, supermajority_pct, title_hash}.
+    // Sole producer grid/src/governance/appendProposalOpened.ts (Wave 2). Per D-12-01 / CONTEXT-12.
+    'proposal.opened',
+    // Phase 12 (VOTE-02) — Blind ballot commit. Closed 3-key payload:
+    // {commit_hash, proposal_id, voter_did}.
+    // Sole producer grid/src/governance/appendBallotCommitted.ts (Wave 2). Per D-12-01 / CONTEXT-12.
+    'ballot.committed',
+    // Phase 12 (VOTE-03) — Ballot reveal. Closed 4-key payload:
+    // {choice, nonce, proposal_id, voter_did}. choice ∈ {yes, no, abstain}.
+    // Sole producer grid/src/governance/appendBallotRevealed.ts (Wave 2). Per D-12-01 / CONTEXT-12.
+    'ballot.revealed',
+    // Phase 12 (VOTE-04) — Proposal tally. Closed 6-key payload:
+    // {abstain_count, no_count, outcome, proposal_id, quorum_met, yes_count}.
+    // outcome ∈ {passed, rejected, quorum_fail}.
+    // Sole producer grid/src/governance/appendProposalTallied.ts (Wave 2). Per D-12-01 / CONTEXT-12.
+    'proposal.tallied',
 ] as const;
 
 /**
@@ -168,6 +189,29 @@ export const CHRONOS_FORBIDDEN_KEYS = [
 ] as const;
 
 /**
+ * Phase 12 (VOTE-06 / D-12-04 / D-12-11): governance-leaf keys that MUST NOT appear
+ * in any governance payload. Proposal body text, plaintext vote contents, and
+ * weight/reputation keys are permanently forbidden from all audit payloads.
+ *
+ * Source-of-truth: declared here, imported by grid/src/governance/types.ts.
+ * Per D-12-11 — exactly 12 keys. Do NOT add extras without a CONTEXT.md decision.
+ */
+export const GOVERNANCE_FORBIDDEN_KEYS = Object.freeze([
+    'text',
+    'body',
+    'content',
+    'description',
+    'rationale',
+    'proposal_text',
+    'law_text',
+    'body_text',
+    'weight',
+    'reputation',
+    'relationship_score',
+    'ousia_weight',
+] as const);
+
+/**
  * Phase 11 (WHISPER-04 / D-11-09): whisper-leaf keys that MUST NOT appear in any
  * whisper payload. Plaintext whisper content (message bodies, utterances, offer
  * text, ousia amounts within whispers, raw decrypted data) NEVER crosses the wire.
@@ -215,8 +259,13 @@ export const WHISPER_FORBIDDEN_KEYS = Object.freeze([
  * The 5 trade-compatible keys (offer|amount|ousia|price|value) from
  * WHISPER_FORBIDDEN_KEYS are NOT added here because they appear in legitimate
  * trade payloads — they are enforced only at the whisper emitter boundary.
+ *
+ * Phase 12 (D-12-04 / D-12-11): extended with 9 governance-only GOVERNANCE_FORBIDDEN_KEYS
+ * not already present (description|rationale|proposal_text|law_text|body_text|
+ * weight|reputation|relationship_score|ousia_weight). Keys text|body|content are
+ * already present from Phase 11 — de-duped, not re-added.
  */
-export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content|message|utterance|plaintext|decrypted|payload_plain/i;
+export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content|message|utterance|plaintext|decrypted|payload_plain|description|rationale|proposal_text|law_text|body_text|weight|reputation|relationship_score|ousia_weight/i;
 
 export interface PrivacyCheckResult {
     ok: boolean;

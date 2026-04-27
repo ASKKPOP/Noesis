@@ -21,6 +21,7 @@
  * Phase 10a (Plan 10a-02, DRIVE-03) bumped it to 19 by appending `ananke.drive_crossed`.
  * Phase 10b (Plan 10b-03, BIOS-02) bumped it to 21 by appending `bios.birth` + `bios.death`.
  * Phase 11 (Plan 11-00, WHISPER-04) bumped it to 22 by appending `nous.whispered`.
+ * Phase 12 (Plan 12-00, VOTE-01..04) bumped it to 26 by appending the four governance events.
  * Any future phase that extends the allowlist must bump the count literal here
  * and append its members to the `required` array.
  */
@@ -41,9 +42,9 @@ if (!existsSync(statePath)) {
 const state = readFileSync(statePath, 'utf8');
 const failures = [];
 
-// 1. Canonical "22 events" assertion must appear at least once in Accumulated Context.
-if (!/22\s+events/i.test(state)) {
-  failures.push('STATE.md does not mention "22 events" — Phase 11 allowlist count assertion missing.');
+// 1. Canonical "26 events" assertion must appear at least once in Accumulated Context.
+if (!/26\s+events/i.test(state)) {
+  failures.push('STATE.md does not mention "26 events" — Phase 12 allowlist count assertion missing.');
 }
 
 // 2. Phantom `trade.countered` must NOT appear as a live/shipped event.
@@ -98,6 +99,11 @@ const required = [
   'bios.death',
   // Phase 11 addition (WHISPER-04 / Plan 11-00):
   'nous.whispered',
+  // Phase 12 additions (VOTE-01..04 / Plan 12-00):
+  'proposal.opened',
+  'ballot.committed',
+  'ballot.revealed',
+  'proposal.tallied',
 ];
 for (const event of required) {
   const pattern = new RegExp(event.replace(/\./g, '\\.'));
@@ -113,5 +119,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log('[state-doc-sync] OK — STATE.md is in sync with the 22-event allowlist.');
+console.log('[state-doc-sync] OK — STATE.md is in sync with the 26-event allowlist.');
 process.exit(0);
