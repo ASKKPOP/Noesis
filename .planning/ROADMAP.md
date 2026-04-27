@@ -186,7 +186,7 @@ Plans:
   - T-10-10 (CRITICAL): Export tarball contains plaintext never broadcast — default export is audit-chain-only (hash-only artifacts); plaintext export is a distinct H5 flow with `IrreversibilityDialog` consent (one dialog per Nous included or a collective-consent primitive).
 **Allowlist additions**: **+1**. Event: `operator.exported` with closed-tuple payload `{tier, operator_id, start_tick, end_tick, tarball_hash, requested_at}`. Running total: **27**.
 **Plans**: 5 plans
-- [ ] 13-01-PLAN.md — Wave 0: deps install + 9 RED test files + verbatim copy locked
+- [x] 13-01-PLAN.md — Wave 0: deps install + 9 RED test files + verbatim copy locked
 - [ ] 13-02-PLAN.md — Wave 1: ReadOnlyAuditChain + ReplayGrid + state-builder + check-replay-readonly CI gate
 - [ ] 13-03-PLAN.md — Wave 2: canonical-json + deterministic tarball + replay-verify CLI
 - [ ] 13-04-PLAN.md — Wave 3: appendOperatorExported + allowlist 26→27 + Fastify route + check-state-doc-sync bump + replay.* hard-ban
@@ -239,7 +239,7 @@ Dependencies form a strict chain (no parallel phases in v2.2). Rationale:
 | 10b. Bios Needs + Chronos Subjective Time | 8/8 | Complete   | 2026-04-23 |
 | 11. Mesh Whisper | 5/5 | Complete   | 2026-04-23 |
 | 12. Governance & Collective Law | 5/5 | Complete   | 2026-04-27 |
-| 13. Operator Replay & Export | 0/? | Not started | - |
+| 13. Operator Replay & Export | 1/5 | In Progress|  |
 | 14. Researcher Rigs | 0/? | Not started | - |
 
 ## Coverage & Traceability
