@@ -48,11 +48,14 @@ export { computeRegionLayout };
 export interface RegionMapProps {
     readonly regions: readonly Region[];
     readonly connections: readonly RegionConnection[];
+    /** Phase 13 (REPLAY-05): when true, reads from replay store instead of live store. */
+    readonly replayMode?: boolean;
 }
 
 export const RegionMap = memo(function RegionMap({
     regions,
     connections,
+    replayMode: _replayMode = false,
 }: RegionMapProps) {
     const presence = usePresence();
     const { select } = useSelection();

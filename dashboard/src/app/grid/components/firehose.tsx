@@ -53,7 +53,12 @@ function rowMatchesDialogueFilter(
     );
 }
 
-export function Firehose(): React.ReactElement {
+export interface FirehoseProps {
+    /** Phase 13 (REPLAY-05): when true, reads from replay store instead of live store. */
+    replayMode?: boolean;
+}
+
+export function Firehose({ replayMode: _replayMode = false }: FirehoseProps = {}): React.ReactElement {
     const snap = useFirehose();
     const { filter: dialogueFilter } = useFirehoseFilter();
     // filteredEntries is oldest-first inside the store. Newest-first in the

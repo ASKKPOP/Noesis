@@ -94,7 +94,12 @@ type DrawerState =
 
 type ToastState = { message: string; id: number } | null;
 
-export function Inspector(): React.ReactElement | null {
+export interface InspectorProps {
+    /** Phase 13 (REPLAY-05): when true, reads from replay store instead of live store. */
+    replayMode?: boolean;
+}
+
+export function Inspector({ replayMode: _replayMode = false }: InspectorProps = {}): React.ReactElement | null {
     const { selectedDid, clear } = useSelection();
     const [state, setState] = useState<DrawerState>({ status: 'idle' });
 
