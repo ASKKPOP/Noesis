@@ -100,4 +100,44 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS grid_config`,
     },
+    {
+        version: 6,
+        name: 'governance_proposals + governance_ballots',
+        up: `
+            CREATE TABLE IF NOT EXISTS governance_proposals (
+                grid_name        VARCHAR(63)  NOT NULL,
+                proposal_id      VARCHAR(36)  NOT NULL,
+                proposer_did     VARCHAR(255) NOT NULL,
+                title_hash       VARCHAR(32)  NOT NULL,
+                body_text        TEXT         NOT NULL,
+                quorum_pct       TINYINT      NOT NULL DEFAULT 50,
+                supermajority_pct TINYINT     NOT NULL DEFAULT 67,
+                deadline_tick    INT UNSIGNED NOT NULL,
+                status           VARCHAR(32)  NOT NULL DEFAULT 'open',
+                outcome          VARCHAR(32),
+                opened_at_tick   INT UNSIGNED NOT NULL,
+                tallied_at_tick  INT UNSIGNED,
+                PRIMARY KEY (grid_name, proposal_id),
+                INDEX idx_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            CREATE TABLE IF NOT EXISTS governance_ballots (
+                grid_name        VARCHAR(63)  NOT NULL,
+                proposal_id      VARCHAR(36)  NOT NULL,
+                voter_did        VARCHAR(255) NOT NULL,
+                commit_hash      VARCHAR(64)  NOT NULL,
+                revealed         TINYINT(1)   NOT NULL DEFAULT 0,
+                choice           VARCHAR(16),
+                nonce            VARCHAR(32),
+                committed_tick   INT UNSIGNED NOT NULL,
+                revealed_tick    INT UNSIGNED,
+                PRIMARY KEY (grid_name, proposal_id, voter_did),
+                INDEX idx_proposal (grid_name, proposal_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `
+            DROP TABLE IF EXISTS governance_ballots;
+            DROP TABLE IF EXISTS governance_proposals
+        `,
+    },
 ];
