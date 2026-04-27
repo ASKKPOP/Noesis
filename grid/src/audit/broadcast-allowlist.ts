@@ -21,7 +21,7 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12) — exactly these 26 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13) — exactly these 27 event types.
  *  v1 (Phase 1, per 01-CONTEXT.md): 10 events.
  *  Phase 5 (REV-02): +1 'trade.reviewed' — externally observable reviewer verdict;
  *  payload shape D-03, 3 keys on pass / 5 keys on fail, all privacy-clean (see D-12 test).
@@ -54,9 +54,12 @@
  *   `proposal.opened {6}`, `ballot.committed {3}`, `ballot.revealed {4}`,
  *   `proposal.tallied {6}`. Sole producers in `grid/src/governance/append*.ts`
  *   (Wave 2). Per D-12-01 / CONTEXT-12.
+ *  Phase 13 (REPLAY-02): +1 'operator.exported' at position 27 — closed 6-key payload:
+ *   {tier:'H5', operator_id, start_tick, end_tick, tarball_hash, requested_at}.
+ *   Sole producer grid/src/audit/append-operator-exported.ts. Per D-13-09 / REPLAY-02.
  *  Tuple ORDER is locked; any reorder fails broadcast-allowlist.test.ts.
  */
-const ALLOWLIST_MEMBERS: readonly string[] = [
+export const ALLOWLIST_MEMBERS: readonly string[] = [
     'nous.spawned',
     'nous.moved',
     'nous.spoke',
@@ -118,6 +121,9 @@ const ALLOWLIST_MEMBERS: readonly string[] = [
     // outcome ∈ {passed, rejected, quorum_fail}.
     // Sole producer grid/src/governance/appendProposalTallied.ts (Wave 2). Per D-12-01 / CONTEXT-12.
     'proposal.tallied',
+    // Phase 13 — REPLAY-02 / D-13-09. Closed 6-tuple {tier, operator_id, start_tick, end_tick, tarball_hash, requested_at}.
+    // Sole producer grid/src/audit/append-operator-exported.ts. requested_at is Unix SECONDS (< 10_000_000_000).
+    'operator.exported',
 ] as const;
 
 /**
