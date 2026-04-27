@@ -44,11 +44,12 @@ const EXPECTED_ORDER = [
     'ballot.committed',   // position 24 (zero-indexed 23) — Phase 12 VOTE-02
     'ballot.revealed',    // position 25 (zero-indexed 24) — Phase 12 VOTE-03
     'proposal.tallied',   // position 26 (zero-indexed 25) — Phase 12 VOTE-04
+    'operator.exported',  // position 27 (zero-indexed 26) — Phase 13 REPLAY-02 / D-13-09
 ] as const;
 
 describe('broadcast allowlist — Phase 12 invariant (VOTE-01..04 D-12-01)', () => {
-    it('has exactly 26 entries', () => {
-        expect(ALLOWLIST.size).toBe(26);
+    it('has exactly 27 entries (Phase 13 extended from 26 — REPLAY-02)', () => {
+        expect(ALLOWLIST.size).toBe(27);
     });
 
     it('contains proposal.opened at position 23 (index 22)', () => {
@@ -71,7 +72,7 @@ describe('broadcast allowlist — Phase 12 invariant (VOTE-01..04 D-12-01)', () 
         expect([...ALLOWLIST][25]).toBe('proposal.tallied');
     });
 
-    it('preserves all 26 members in exact positional order', () => {
+    it('preserves all 27 members in exact positional order', () => {
         expect([...ALLOWLIST]).toEqual([...EXPECTED_ORDER]);
     });
 
