@@ -41,13 +41,15 @@ const TARGETS = [
 ];
 
 // SC#5 — broadcast-allowlist.ts baseline line count.
-// Updated 2026-04-23 (Phase 11 doc-sync): Phase 10b added bios.birth + bios.death (+2 entries),
-// Phase 11 added nous.whispered (+1 entry). Each addition was approved in its own CONTEXT.md.
+// Updated 2026-04-27 (Phase 13 gap-closure): Phase 12 added proposal.opened + ballot.committed +
+// ballot.revealed + proposal.tallied (+4 entries); Phase 13 added operator.exported (+1 entry).
+// Each addition was approved in its own CONTEXT.md.
 // Update ONLY when a deliberate post-Phase-9 change is made AND the plan-checker
 // approves the amendment of D-9-13. Do NOT update to suppress a failing gate.
-// History: Phase 9 baseline = 147, Phase 10b post-ship = 213, Phase 11 post-ship = 266.
+// History: Phase 9 baseline = 147, Phase 10b post-ship = 213, Phase 11 post-ship = 266,
+//          Phase 12 post-ship = 321 (4 governance events), Phase 13 Wave 3 = 321 (operator.exported).
 const ALLOWLIST_FILE = resolve(repoRoot, 'grid/src/audit/broadcast-allowlist.ts');
-const ALLOWLIST_BASELINE_LINES = 266;
+const ALLOWLIST_BASELINE_LINES = 321;
 
 let hadError = false;
 
