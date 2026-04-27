@@ -41,6 +41,9 @@ const TIER_A_ROOTS = [
     // Phase 11 (D-11-13): whisper Brain tree — deterministic derivation only,
     // no wall-clock reads permitted (seed+tick+counter basis for all crypto ops).
     'brain/src/noesis_brain/whisper',
+    // Phase 12 (D-12-11): governance Brain tree — commit-reveal timing derives
+    // from Grid system tick only; no wall-clock reads permitted.
+    'brain/src/noesis_brain/governance',
 ];
 
 // ── Tier A forbidden patterns (any match in above roots = violation) ──────────
@@ -74,6 +77,12 @@ const TIER_B_TS_ROOTS = [
     // Dashboard whisper tree is render-only counts (Date.now allowed for UI state);
     // do NOT extend to dashboard/src/whisper/** per plan interfaces block.
     'grid/src/whisper',
+    // Phase 12 (D-12-11): governance Grid tree — commit-reveal and tally logic
+    // must derive timing from Grid system tick only; Date.now/performance.now/
+    // Math.random are forbidden. Dashboard governance tree is render-only
+    // counts/aggregates (Date.now allowed for UI state); do NOT extend to
+    // dashboard/src/app/grid/governance/** per plan interfaces block.
+    'grid/src/governance',
 ];
 
 const TIER_B_TS_PATTERNS = [

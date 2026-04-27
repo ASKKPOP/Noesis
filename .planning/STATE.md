@@ -58,9 +58,9 @@ Progress: [████░░░░░░] 43% (3/7 v2.2 phases complete — Pha
 
 Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule preserved.
 
-### Broadcast allowlist (Phase 10b — post-ship, Plan 10b-03)
+### Broadcast allowlist (Phase 12 — pre-ship, Plan 12-00)
 
-**22 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
+**26 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
 
 1. `nous.spawned`
 2. `nous.moved`
@@ -84,10 +84,14 @@ Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule p
 20. `bios.birth` ← NEW in Phase 10b (BIOS-02) — Nous lifecycle open; closed 3-key payload `{did, tick, psyche_hash}`; sole producer `grid/src/bios/appendBiosBirth.ts` · Phase 10b
 21. `bios.death` ← NEW in Phase 10b (BIOS-02/03) — Nous lifecycle close; closed 4-key payload `{did, tick, cause, final_state_hash}`; `cause ∈ {starvation, operator_h5, replay_boundary}`; sole producer `grid/src/bios/appendBiosDeath.ts` · Phase 10b
 22. `nous.whispered` ← NEW in Phase 11 (WHISPER-04) — E2E-encrypted whisper audit; closed 4-key payload `{ciphertext_hash, from_did, tick, to_did}` (alphabetical order); sole producer `grid/src/whisper/appendNousWhispered.ts` · Phase 11
+23. `proposal.opened` ← NEW in Phase 12 (VOTE-01) — closed 6-key `{deadline_tick, proposal_id, proposer_did, quorum_pct, supermajority_pct, title_hash}`; sole producer `grid/src/governance/appendProposalOpened.ts` · D-12-01
+24. `ballot.committed` ← NEW in Phase 12 (VOTE-02) — closed 3-key `{commit_hash, proposal_id, voter_did}`; sole producer `grid/src/governance/appendBallotCommitted.ts` · D-12-01
+25. `ballot.revealed` ← NEW in Phase 12 (VOTE-03) — closed 4-key `{choice, nonce, proposal_id, voter_did}`; sole producer `grid/src/governance/appendBallotRevealed.ts` · D-12-01
+26. `proposal.tallied` ← NEW in Phase 12 (VOTE-04) — closed 6-key `{abstain_count, no_count, outcome, proposal_id, quorum_met, yes_count}`; sole producer `grid/src/governance/appendProposalTallied.ts` · D-12-01
 
 Phantom `trade.countered` is NOT emitted and NOT allowlisted — never shipped in code, removed from this enumeration per D-11. If/when the full trade counter-offer handshake ships it earns its own allowlist slot in its own phase.
 
-Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 22-event invariant.
+Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 26-event invariant.
 
 ### Research foundation for v2.1
 
@@ -129,10 +133,10 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 
 ## Session Continuity
 
-Last session: 2026-04-27T07:05:58.031Z
-Stopped at: Phase 12 UI-SPEC approved
-Resume file: .planning/phases/12-governance-collective-law/12-UI-SPEC.md
-Next action: `/gsd-discuss-phase 12` then `/gsd-plan-phase 12` then `/gsd-execute-phase 12 --auto`
+Last session: 2026-04-27T00:46:00.000Z
+Stopped at: Phase 12 Wave 0 shipped — allowlist 22→26; RED stubs in place; migration v6 ready
+Resume file: None
+Next action: `/gsd-execute-phase 12` Wave 1 (commit-reveal crypto cross-language)
 
 ## v2.2 Opening Context
 
@@ -158,6 +162,9 @@ Next action: `/gsd-discuss-phase 12` then `/gsd-plan-phase 12` then `/gsd-execut
 - First-life promise — audit entries retained forever. No purge. Applies to tombstoned Nous (established v2.1 Phase 8) and now to all new event types.
 - DID regex `/^did:noesis:[a-z0-9_\-]+$/i` — same at all entry points for new routes.
 - Copy-verbatim pattern (established D-04/D-05) — any destructive/irreversible UX copy frozen in test assertions.
+- Operator governance exclusion — operators cannot vote, propose, or tally at ANY tier including H5. CI gate `scripts/check-governance-isolation.mjs` enforces no `operator.*` emit from `grid/src/governance/**` and no import from `grid/src/audit/operator-events.ts`. (D-12-11, VOTE-05)
+- No vote-weighting — no `weight | reputation | relationship_score | ousia_weight` keys in any governance payload. CI gate `scripts/check-governance-weight.mjs` enforces. (D-12-11, VOTE-06)
+- commit_hash formula frozen — `sha256(choice + '|' + nonce + '|' + voter_did)` with PIPE delimiters. Identical formula in Brain (Python `hashlib`) and Grid (`node:crypto`). Cross-language fixture in `grid/test/governance/governance-commit-hash.test.ts`. (D-12-02)
 
 ## Accumulated Context (Plan 06-02 additions)
 

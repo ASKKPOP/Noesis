@@ -21,7 +21,7 @@ Phase numbering continues from v2.1 — do NOT reset without `--reset-phase-numb
 - [x] **Phase 10a: Ananke Drives (Inner Life, part 1)** — Five-drive subsystem with threshold-crossing audit events. Establishes hash-only drive discipline for Phase 10b. (shipped 2026-04-22, allowlist 18→19 with `ananke.drive_crossed`)
 - [x] **Phase 10b: Bios Needs + Chronos Subjective Time (Inner Life, part 2)** — Bodily needs elevate drives; subjective time modulates Stanford retrieval recency. Allowlist +2 (bios.birth, bios.death). (shipped 2026-04-22, allowlist 19→21)
 - [x] **Phase 11: Mesh Whisper** — Nous-to-Nous E2E envelope (libsodium `crypto_box`); operators cannot read plaintext at any tier. (shipped 2026-04-23, allowlist 21→22 with `nous.whispered`)
-- [ ] **Phase 12: Governance & Collective Law** — Commit-reveal ballot lifecycle (4 events); successful proposals promote to v2.1 LogosEngine.
+- [ ] **Phase 12: Governance & Collective Law** — Commit-reveal ballot lifecycle (4 events); successful proposals promote to v2.1 LogosEngine. (allowlist 22→26 with `proposal.opened`, `ballot.committed`, `ballot.revealed`, `proposal.tallied`)
 - [ ] **Phase 13: Operator Replay & Export** — State-level ReplayGrid + deterministic JSONL tarball export; read-only rewind in Steward Console.
 - [ ] **Phase 14: Researcher Rigs** — `noesis rig` CLI spawns ephemeral Grid with LLM fixture mode; target 50 Nous × 10,000 ticks in <60min.
 
