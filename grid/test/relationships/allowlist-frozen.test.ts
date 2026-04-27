@@ -5,10 +5,13 @@
  * Phase 10b update: baseline grows 19 → 21 with the explicit addition of
  * `bios.birth` and `bios.death` per D-10b-01. No relationship.* kinds are
  * admitted (Phase 9 SC#5 still holds).
+ * Phase 12 update: baseline grows 22 → 26 with the explicit addition of
+ * `proposal.opened`, `ballot.committed`, `ballot.revealed`, `proposal.tallied`
+ * per D-12-01. The four governance events occupy positions 23..26.
  *
  * This test imports BROADCAST_ALLOWLIST (re-exported as ALLOWLIST from
  * grid/src/audit/broadcast-allowlist.ts) DIRECTLY and asserts:
- *   1. Size === 19 (Phase 10a baseline: Phase 9 size 18 + ananke.drive_crossed)
+ *   1. Size === 26 (Phase 12 baseline: +4 governance events)
  *   2. No relationship.* kinds are admitted
  *   3. Every kind is a non-empty string literal (structural sanity)
  *
@@ -18,18 +21,20 @@
  *   - Source constant: this test (allowlist-frozen ALLOWLIST.size + no relationship.*)
  *   - File structure: check-relationship-graph-deps.mjs (CI line-count assertion)
  *
- * Reference: D-9-13, SC#5, T-09-35, D-10a-08.
+ * Reference: D-9-13, SC#5, T-09-35, D-10a-08, D-12-01.
  */
 
 import { describe, it, expect } from 'vitest';
 import { ALLOWLIST } from '../../src/audit/broadcast-allowlist.js';
 
 describe('SC#5 — broadcast allowlist is frozen across Phase 9 (Phase 10b-adjusted baseline)', () => {
-    it('BROADCAST_ALLOWLIST length === 22 (Phase 11 baseline: +nous.whispered)', () => {
+    it('BROADCAST_ALLOWLIST length === 26 (Phase 12 baseline: +4 governance events)', () => {
         // If this fails, something added or removed kinds unexpectedly.
         // Phase 11 (WHISPER-04 D-11-01) added nous.whispered at position 22.
+        // Phase 12 (VOTE-01..04 D-12-01) added proposal.opened, ballot.committed,
+        // ballot.revealed, proposal.tallied at positions 23..26.
         // See .planning/STATE.md Accumulated Context for the baseline lock.
-        expect(ALLOWLIST.size).toBe(22);
+        expect(ALLOWLIST.size).toBe(26);
     });
 
     it('no relationship.* kinds are admitted (Phase 9 SC#5 still holds)', () => {
