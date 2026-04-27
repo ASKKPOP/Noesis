@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Active)
 status: executing
-stopped_at: Phase 12 UI-SPEC approved
-last_updated: "2026-04-27T07:40:53.566Z"
-last_activity: 2026-04-27 -- Phase 12 execution started
+stopped_at: Phase 12 complete — 25/25 verified
+last_updated: "2026-04-24T00:00:00.000Z"
+last_activity: 2026-04-24 -- Phase 12 verified and complete
 progress:
   total_phases: 11
-  completed_phases: 4
-  total_plans: 32
-  completed_plans: 27
-  percent: 84
+  completed_phases: 5
+  total_plans: 37
+  completed_plans: 32
+  percent: 86
 ---
 
 # Project State
@@ -22,16 +22,16 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 **Core value:** The first persistent Grid where Nous actually live — observable, running continuously, with real cognitive cycles, real trades, and real social dynamics emerging from the systems.
 **Current milestone:** v2.2 — Living Grid (6 themes: Rich Inner Life, Relationships, Governance, Whisper, Observability, Researcher Tools)
-**Current focus:** Phase 12 — governance-collective-law
+**Current focus:** Phase 13 — operator-replay-export (next)
 
 ## Current Position
 
-Phase: 12 (governance-collective-law) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 12
-Last activity: 2026-04-27 -- Phase 12 execution started
+Phase: 12 (governance-collective-law) — COMPLETE ✅
+Plan: 5 of 5
+Status: Verified 25/25 — ready for Phase 13
+Last activity: 2026-04-24 -- Phase 12 verified and complete
 
-Progress: [████░░░░░░] 43% (3/7 v2.2 phases complete — Phase 9 + Phase 10a + Phase 10b shipped)
+Progress: [█████░░░░░] 71% (5/7 v2.2 phases complete — Phase 9 + 10a + 10b + 11 + 12 shipped)
 
 ## Accumulated Context
 
