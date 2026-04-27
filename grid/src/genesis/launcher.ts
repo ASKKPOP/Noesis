@@ -17,6 +17,9 @@ import { NousRegistry } from '../registry/registry.js';
 import { DialogueAggregator } from '../dialogue/index.js';
 import { RelationshipListener, RelationshipStorage, DEFAULT_RELATIONSHIP_CONFIG } from '../relationships/index.js';
 import { appendBiosBirth } from '../bios/index.js';
+import { GovernanceEngine } from '../governance/engine.js';
+import { createInMemoryStore } from '../governance/store.js';
+import type { GovernanceStore } from '../governance/store.js';
 import { GENESIS_SHOPS } from './presets.js';
 import type { GenesisConfig, GridState } from './types.js';
 
@@ -71,6 +74,19 @@ export class GenesisLauncher {
      * DatabaseConnection) can inject after MigrationRunner.run(MIGRATIONS).
      */
     private relationshipStorage: RelationshipStorage | null;
+    /**
+     * Phase 12 Wave 3 — GovernanceEngine and its backing store.
+     *
+     * Uses an in-memory store by default (no MySQL required for unit tests or
+     * early boot). Production wiring with MySQL-backed GovernanceStore is deferred
+     * to a later phase when governance_proposals / governance_ballots tables are
+     * migrated and a real GovernanceDb adapter is injected (analogous to
+     * attachRelationshipStorage). Until then the in-memory store provides full
+     * proposal/ballot lifecycle support — entries are not persisted across restarts,
+     * which is acceptable per D-12-03 (pessimistic quorum absorbs unrevealed ballots).
+     */
+    readonly governance: GovernanceEngine;
+    readonly governanceStore: GovernanceStore;
     readonly gridName: string;
     readonly gridDomain: string;
 
@@ -111,6 +127,14 @@ export class GenesisLauncher {
         // We set this to null here; production wiring via GridStore injects storage
         // after construction if needed. Tests that don't need MySQL snapshots pass null.
         this.relationshipStorage = null;
+
+        // Phase 12 Wave 3 — GovernanceEngine wiring (D-12-03).
+        // In-memory store: no MySQL required. Production injection deferred to a later
+        // phase once governance_proposals/governance_ballots migrations ship.
+        // The engine is constructed here (AFTER audit + registry + logos are set) so
+        // it is available by the time bootstrap() wires the clock.onTick callback.
+        this.governanceStore = createInMemoryStore(config.gridName);
+        this.governance = new GovernanceEngine(this.audit, this.governanceStore, this.registry, this.logos);
     }
 
     /**
@@ -239,6 +263,13 @@ export class GenesisLauncher {
                 tickRateMs: this.clock.state.tickRateMs,
                 timestamp: event.timestamp,
             });
+
+            // Phase 12 Wave 3 — D-12-03: scan for proposals at deadline AFTER the tick
+            // audit entry so proposal.tallied lands after the tick event in the chain.
+            // Fire-and-forget (analogous to relationship snapshot scheduling) — the clock
+            // is never blocked on async I/O. Missed tallies are non-recoverable in v2.2
+            // (in-memory store) but acceptable per D-12-03 pessimistic-quorum contract.
+            void this.governance.onTickClosed(event.tick);
 
             // D-9-03: Snapshot every N ticks (default 100). Fire-and-forget per OQ-2 —
             // tick is never blocked on MySQL I/O. Missed snapshots are losslessly

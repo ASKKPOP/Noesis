@@ -105,6 +105,15 @@ export interface GridServices {
     config?: {
         relationship?: import('../relationships/types.js').RelationshipConfig;
     };
+    /**
+     * Phase 12 Wave 3 — governance plugin dependencies.
+     * Optional so legacy tests without governance wiring still compile.
+     * When present, registers the five governance Fastify routes.
+     */
+    governance?: {
+        store: import('../governance/store.js').GovernanceStore;
+        engine: import('../governance/engine.js').GovernanceEngine;
+    };
 }
 
 /**
@@ -328,6 +337,20 @@ export function buildServerWithHub(
     // appendOperatorEvent — enforces tier-required + payload-privacy at the
     // single producer boundary.
     registerOperatorRoutes(app, services);
+
+    // --- Phase 12 Wave 3: Governance proposal/ballot routes ---
+    // Registered only when governance deps are provided (optional for legacy tests).
+    if (services.governance && services.registry) {
+        void app.register(async (instance) => {
+            const { registerGovernanceRoutes } = await import('./governance/index.js');
+            await registerGovernanceRoutes(instance, {
+                audit: services.audit,
+                store: services.governance!.store,
+                registry: services.registry!,
+                logos: services.logos,
+            });
+        });
+    }
 
     // --- Audit ---
 
