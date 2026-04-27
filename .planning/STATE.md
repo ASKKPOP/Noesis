@@ -58,9 +58,9 @@ Progress: [█████░░░░░] 71% (5/7 v2.2 phases complete — Pha
 
 Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule preserved.
 
-### Broadcast allowlist (Phase 13 — post-ship, Plan 13-04)
+### Broadcast allowlist (Phase 12 — post-ship, Plan 12-04)
 
-**27 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
+**26 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
 
 1. `nous.spawned`
 2. `nous.moved`
@@ -88,11 +88,10 @@ Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule p
 24. `ballot.committed` ← NEW in Phase 12 (VOTE-02 / D-12-01) — commit-reveal vote commitment; closed 3-key payload `{proposal_id, voter_did, commit_hash}`; sole producer `grid/src/governance/appendBallotCommitted.ts` · Phase 12
 25. `ballot.revealed` ← NEW in Phase 12 (VOTE-03 / D-12-01) — commit-reveal vote reveal; closed 4-key payload `{proposal_id, voter_did, choice, nonce_hash}`; sole producer `grid/src/governance/appendBallotRevealed.ts` · Phase 12
 26. `proposal.tallied` ← NEW in Phase 12 (VOTE-04 / D-12-01) — governance tally; closed 6-key payload `{proposal_id, outcome, votes_for, votes_against, votes_abstain, tick}`; `outcome ∈ {passed, failed, quorum_not_met}`; sole producer `grid/src/governance/appendProposalTallied.ts` · Phase 12
-27. `operator.exported` ← NEW in Phase 13 (REPLAY-02 / D-13-09) — operator tarball export audit event; closed 6-key payload `{tier, operator_id, start_tick, end_tick, tarball_hash, requested_at}` where `requested_at` is Unix SECONDS (< 10_000_000_000); sole producer `grid/src/audit/append-operator-exported.ts` · Phase 13
 
 Phantom `trade.countered` is NOT emitted and NOT allowlisted — never shipped in code, removed from this enumeration per D-11. If/when the full trade counter-offer handshake ships it earns its own allowlist slot in its own phase.
 
-Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 27-event invariant.
+Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 26-event invariant.
 
 ### Research foundation for v2.1
 
