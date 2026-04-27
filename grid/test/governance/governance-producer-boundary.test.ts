@@ -44,7 +44,7 @@ const SOLE_EMITTER_PROPOSAL_OPENED = 'governance/appendProposalOpened.ts';
 const GOVERNANCE_TYPES_FILE = 'governance/types.ts';
 
 // Known consumers that reference 'proposal.opened' but never call audit.append.
-// governance/types.ts references it in SYNC docblock. Add Wave 2/3 consumers here.
+// governance/types.ts references it in SYNC docblock.
 const KNOWN_CONSUMERS_PROPOSAL_OPENED: string[] = [
     GOVERNANCE_TYPES_FILE,
 ];
@@ -101,6 +101,7 @@ describe("'proposal.opened' sole-producer boundary (VOTE-01 / D-12-01)", () => {
 
 const SOLE_EMITTER_BALLOT_COMMITTED = 'governance/appendBallotCommitted.ts';
 
+// Known consumers: governance/types.ts references it in SYNC docblock.
 const KNOWN_CONSUMERS_BALLOT_COMMITTED: string[] = [
     GOVERNANCE_TYPES_FILE,
 ];
@@ -157,8 +158,12 @@ describe("'ballot.committed' sole-producer boundary (VOTE-02 / D-12-01)", () => 
 
 const SOLE_EMITTER_BALLOT_REVEALED = 'governance/appendBallotRevealed.ts';
 
+// Known consumers: governance/types.ts references it in SYNC docblock.
+// integration/nous-runner.ts routes VOTE_REVEAL brain action to the sole emitter
+// but never calls audit.append('ballot.revealed', ...) directly.
 const KNOWN_CONSUMERS_BALLOT_REVEALED: string[] = [
     GOVERNANCE_TYPES_FILE,
+    'integration/nous-runner.ts',
 ];
 
 describe("'ballot.revealed' sole-producer boundary (VOTE-03 / D-12-01)", () => {
@@ -213,8 +218,11 @@ describe("'ballot.revealed' sole-producer boundary (VOTE-03 / D-12-01)", () => {
 
 const SOLE_EMITTER_PROPOSAL_TALLIED = 'governance/appendProposalTallied.ts';
 
+// genesis/launcher.ts — reads proposal.tallied to wire GovernanceEngine.onTickClosed
+//   callback but never calls audit.append('proposal.tallied', ...) directly.
 const KNOWN_CONSUMERS_PROPOSAL_TALLIED: string[] = [
     GOVERNANCE_TYPES_FILE,
+    'genesis/launcher.ts',
 ];
 
 describe("'proposal.tallied' sole-producer boundary (VOTE-04 / D-12-01)", () => {

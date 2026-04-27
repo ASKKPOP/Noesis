@@ -17,9 +17,9 @@
  *   - GET /proposals list is aggregate-only: no body_text, no voter_did breakdown.
  *
  * Sole-producer contract (D-12-08 / VOTE-05):
- *   This file MUST NOT call audit.append('proposal.opened' | 'ballot.committed' |
- *   'ballot.revealed') directly. All governance events are emitted exclusively via
- *   the sole-producer functions from grid/src/governance/.
+ *   This file MUST NOT directly emit governance audit events.
+ *   All governance events are emitted exclusively via the sole-producer
+ *   functions in grid/src/governance/ (appendProposalOpened etc.).
  *   CI gate `check-governance-isolation.mjs` (Wave 4) enforces this.
  *   NO operator.* audit emit in this file. NO import from operator-events.ts.
  *
