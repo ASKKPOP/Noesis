@@ -34,7 +34,7 @@ export interface Stores {
     readonly selection: SelectionStore;
 }
 
-const StoresContext = createContext<Stores | null>(null);
+export const StoresContext = createContext<Stores | null>(null);
 
 export function StoresProvider({ children }: { children: ReactNode }): ReactNode {
     // Empty dep array → the triple (now quadruple) is frozen for this
