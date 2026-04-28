@@ -2,9 +2,10 @@
 phase: 13-operator-replay-export
 reviewed: 2026-04-27T00:00:00Z
 depth: standard
-files_reviewed: 39
+files_reviewed: 49
 files_reviewed_list:
   - README.md
+  - dashboard/src/app/grid/components/firehose-row.tsx
   - dashboard/src/app/grid/components/firehose.tsx
   - dashboard/src/app/grid/components/inspector.tsx
   - dashboard/src/app/grid/components/region-map.tsx
@@ -13,10 +14,14 @@ files_reviewed_list:
   - dashboard/src/app/grid/replay/page.tsx
   - dashboard/src/app/grid/replay/replay-client.test.tsx
   - dashboard/src/app/grid/replay/replay-client.tsx
+  - dashboard/src/app/grid/replay/replay-redaction-copy.ts
+  - dashboard/src/app/grid/replay/replay-stores.tsx
   - dashboard/src/app/grid/replay/scrubber.tsx
   - dashboard/src/app/grid/replay/use-replay-session.ts
+  - dashboard/src/app/grid/use-stores.ts
   - dashboard/src/test/setup.ts
   - dashboard/tests/e2e/replay.spec.ts
+  - grid/package.json
   - grid/src/api/operator/export-replay.ts
   - grid/src/api/operator/index.ts
   - grid/src/audit/append-operator-exported.ts
@@ -42,15 +47,17 @@ files_reviewed_list:
   - grid/test/replay/replay-grid.test.ts
   - grid/test/replay/state-builder.test.ts
   - grid/test/replay/tarball-determinism.test.ts
+  - package.json
+  - scripts/check-relationship-graph-deps.mjs
   - scripts/check-replay-readonly.mjs
   - scripts/check-state-doc-sync.mjs
   - scripts/check-wallclock-forbidden.mjs
   - scripts/replay-verify.mjs
 findings:
-  critical: 1
-  warning: 4
-  info: 3
-  total: 8
+  critical: 0
+  warning: 5
+  info: 5
+  total: 10
 status: issues_found
 ---
 
@@ -58,75 +65,82 @@ status: issues_found
 
 **Reviewed:** 2026-04-27
 **Depth:** standard
-**Files Reviewed:** 39
+**Files Reviewed:** 49
 **Status:** issues_found
 
 ## Summary
 
-Phase 13 implements Operator Replay & Export: a `/grid/replay` rewind surface plus a deterministic audit-chain tarball export. The overall architecture is sound and the multi-layer defense discipline (type system + runtime throws + CI grep gates) is faithfully carried forward from prior phases. The allowlist, sole-producer boundary, payload privacy gate, and closed-tuple enforcement all appear correctly implemented.
+Phase 13 introduces the Operator Replay & Export feature: a deterministic tarball exporter, a read-only replay engine, and a consent-gated dashboard surface. The architecture and multi-layer defense disciplines (type system + runtime throws + CI grep gates) are well-implemented and faithfully carry forward from prior phases. The allowlist sole-producer boundary, payload privacy gate, closed-tuple enforcement, and T-10-07/T-10-08 invariants are all correctly in place.
 
-One critical security issue was found: the export confirm handler in `replay-client.tsx` fires the fetch immediately after `onConfirm()` but does **not** wait for the dialog's close animation — more importantly, it completely silences fetch errors, leaving the operator with no signal when export fails. Combined with the audit event already having been committed before the bytes stream back, a network failure between those two events means the operator sees nothing while the audit chain records an export that the operator never received. This is an unhandled error path with no user feedback.
+No critical security vulnerabilities were found. Five warnings were found covering: silent export failure feedback, an inconsistent slice strategy in the tarball adapter, a close-handler double-fire risk, an unguarded async fetch against potential unmount, and an uncleared toast timer. Five informational items cover dead code, a stale comment, an ESM/CJS mixing issue, a missing `operator_id` source, and an unused prop stub.
 
-Four warnings were found covering an off-by-one in the tarball adapter's `startReplay` slice logic, a double-fire risk on the `ExportConsentDialog` `onCancel` callback, a missing teardown of the `setTimeout` toast timer in `inspector.tsx`, and the `replay-client.tsx` confirm handler mutating state on an already-unmounted component.
+---
 
-Three informational items cover minor code quality notes.
+## Warnings
 
-## Critical Issues
+### WR-01: Silent export failure — operator receives no feedback when export fetch fails
 
-### CR-01: Export fetch errors are swallowed — operator receives no feedback on failure
+**File:** `dashboard/src/app/grid/replay/replay-client.tsx:206`
 
-**File:** `dashboard/src/app/grid/replay/replay-client.tsx:220`
-**Issue:** The `onConfirm` handler catches all fetch/network errors with an empty `.catch(() => { // Export fetch failed — silently ignore for now })`. By the time this error occurs the audit event (`operator.exported`) has already been committed to the chain (the route appends *before* streaming per the D-30 order invariant). The operator sees the dialog close and nothing else — no toast, no error banner. The phrase "for now" in the comment signals this was intentional deferral, but it creates a UX gap where a real export failure is indistinguishable from success.
+**Issue:** The `onConfirm` fetch callback catches all errors with `.catch(() => { // Export fetch failed — silently ignore for now })`. When the fetch fails (network error, HTTP 4xx/5xx, or a non-`ok` response), the dialog has already closed and the operator receives no signal. Since the route commits the audit event *before* streaming bytes back (D-30 order invariant), a network failure between commit and delivery means the audit chain records an export that the operator never received, with no feedback to the operator and no recovery path visible.
 
 **Fix:**
 ```tsx
-// Replace the silent catch with user feedback.
 // Add error state to ReplayClient:
 const [exportError, setExportError] = useState<string | null>(null);
 
 // In the onConfirm handler's .catch():
-}).catch(() => {
-    setExportError('Export failed. Check Grid connectivity and retry.');
+}).catch((err) => {
+    if ((err as { name?: string }).name !== 'AbortError') {
+        setExportError('Export failed. Check Grid connectivity and retry.');
+    }
 });
+
+// Also handle non-ok HTTP response:
+if (!res.ok) {
+    setExportError(`Export failed: HTTP ${res.status}`);
+    return;
+}
 
 // Render below the export button:
 {exportError && (
-    <p
-        data-testid="replay-export-error"
-        className="mt-1 text-xs text-red-400"
-        role="alert"
-    >
+    <p data-testid="replay-export-error" className="mt-1 text-xs text-red-400" role="alert">
         {exportError}
     </p>
 )}
 ```
 
-## Warnings
+---
 
-### WR-01: Off-by-one in tarball adapter's startReplay slice — entry at startTick included in start snapshot
+### WR-02: Inconsistent slice strategy in `tarball.ts` startReplay — uses count, not tick id
 
 **File:** `grid/src/replay/tarball.ts:60`
-**Issue:** `startReplay` is constructed with `sortedEntries.slice(0, startTick)`. Because `entry.id` is 1-based and the entries array is 0-indexed, `slice(0, startTick)` cuts at position `startTick` (exclusive), which excludes exactly the `startTick`-th entry. However the export route in `export-replay.ts` builds its `startEntries` as `allEntries.filter((e) => (e.id ?? 0) <= startTickN)` — inclusive of the entry whose `id === startTick`. The two slice strategies are inconsistent: the standalone `tarball.ts` helper excludes `id===startTick` from the start snapshot while the route's own `buildStateAtTick` call includes it. This means `tarball.ts`'s start-snapshot state will diverge from the route's start-snapshot whenever the slice is used directly, breaking the determinism invariant for any consumer that calls `buildExportTarball` from `tarball.ts` directly.
+
+**Issue:** `startReplay` is constructed with `sortedEntries.slice(0, startTick)`, which uses `startTick` as a **count / array index** rather than an entry id filter. The production export route in `export-replay.ts` builds the equivalent slice with `allEntries.filter((e) => (e.id ?? 0) <= startTickN)` — inclusive on the entry whose `id === startTick`. These two strategies diverge whenever entry ids are non-contiguous or the slice does not begin at id=1. For example, if `startTick=5` but the provided entries start at id=3, `slice(0, 5)` takes all five entries instead of the three with ids ≤ 5. This produces a different start snapshot than what the route would generate, breaking the snapshot consistency for any consumer of the `tarball.ts` adapter (including `replay-verify.mjs` if used against route output).
 
 **Fix:**
 ```typescript
-// In grid/src/replay/tarball.ts, line 60 — change the filter to be
-// consistent with export-replay.ts (inclusive):
-const startEntries = sortedEntries.filter((e) => (e.id ?? 0) <= startTick);
-const startReplay = new ReplayGrid(startEntries, gridName);
+// grid/src/replay/tarball.ts line 60 — replace slice with id-based filter:
+const startReplay = new ReplayGrid(
+    sortedEntries.filter((e) => (e.id ?? 0) <= startTick),
+    gridName,
+);
 ```
 
-### WR-02: ExportConsentDialog close event fires onCancel twice on programmatic confirm path
+---
 
-**File:** `dashboard/src/app/grid/replay/export-consent-dialog.tsx:82-91` and `172-174`
-**Issue:** The `close` event listener registered in `useEffect` (lines 82–91) always calls `onCancel()`. The confirm button (line 172) calls `onConfirm()` without first closing the dialog. If the parent's `onConfirm` eventually triggers `open=false → dlg.close()` (via the `open` prop changing in the `useEffect` at line 63–74), the `close` event will fire and call `onCancel()` as well as the already-called `onConfirm()`. This mirrors an identical bug in the referenced `IrreversibilityDialog` pattern but matters here because `onCancel` also calls `agencyStore.setTier('H1')` — a confirmed export would downgrade tier unexpectedly.
+### WR-03: ExportConsentDialog `close` event fires `onCancel` on the confirm path
+
+**File:** `dashboard/src/app/grid/replay/export-consent-dialog.tsx:82-91`
+
+**Issue:** The native `close` event listener registered in the second `useEffect` (lines 82–91) unconditionally calls `agencyStore.setTier('H1')` and `onCancel()` on every close. When the operator clicks "Export forever", `onConfirm()` is called (line 172) and the parent eventually sets `open=false`, which causes the `useEffect` at lines 63–74 to call `dlg.close()`. That fires the `close` event, which then calls `onCancel()` a second time and downgrades the tier mid-export. The confirm and cancel paths are not distinguished.
 
 **Fix:**
 ```tsx
-// Track whether onConfirm was called to suppress the close-event onCancel.
+// Add a ref to track whether confirm was clicked:
 const confirmedRef = useRef(false);
 
-// In confirm button onClick:
+// In confirm onClick:
 onClick={() => {
     confirmedRef.current = true;
     onConfirm();
@@ -143,14 +157,60 @@ const handleClose = () => {
 };
 ```
 
-### WR-03: Toast setTimeout in inspector.tsx not cleaned up — potential state update after unmount
+---
 
-**File:** `dashboard/src/app/grid/inspector.tsx:207-210`
-**Issue:** `showToast` schedules a bare `setTimeout(() => setToast(null), 4000)` with no cleanup. If the inspector closes (component unmounts) while the timer is pending, React will still attempt to call `setToast(null)` on the unmounted component. In React 18 this is a no-op warning, but the function reference captured by the closure may keep the component alive in memory longer than expected.
+### WR-04: Export fetch in `replay-client.tsx` not guarded against component unmount
+
+**File:** `dashboard/src/app/grid/replay/replay-client.tsx:193-210`
+
+**Issue:** The `onConfirm` callback starts an async `fetch()` after `setExportDialogOpen(false)`. If the operator navigates away from `/grid/replay` while the fetch is in flight, the `useEffect` cleanup fires `agencyStore.setTier('H1')` and the component unmounts, but the `.then()` resolution still runs: it creates a blob URL, creates an anchor element, and calls `.click()` in a stale execution context with no abort signal. The blob URL is also created and immediately revoked inside the same microtask, which may produce an unreliable download on slow responses.
+
+**Fix:**
+```tsx
+// In the useEffect cleanup, abort any in-flight export:
+const exportAcRef = useRef<AbortController | null>(null);
+
+useEffect(() => {
+    return () => {
+        agencyStore.setTier('H1');
+        exportAcRef.current?.abort();
+    };
+}, []);
+
+// In onConfirm, pass signal and guard all async steps:
+const ac = new AbortController();
+exportAcRef.current = ac;
+fetch(url, { method: 'POST', headers, body, signal: ac.signal })
+    .then((res) => {
+        if (ac.signal.aborted) return;
+        if (res.ok) {
+            return res.blob().then((blob) => {
+                if (ac.signal.aborted) return;
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `replay-${startTick}-${endTick}.tar`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        }
+    })
+    .catch((err) => {
+        if ((err as { name?: string }).name === 'AbortError') return;
+        setExportError('Export failed. Check Grid connectivity and retry.');
+    });
+```
+
+---
+
+### WR-05: Toast `setTimeout` in `inspector.tsx` not cleared on unmount
+
+**File:** `dashboard/src/app/grid/components/inspector.tsx:207-210`
+
+**Issue:** `showToast` schedules `setTimeout(() => setToast(null), 4000)` with no cleanup ref. If the Inspector unmounts while the timer is pending (e.g., the operator closes the drawer within 4 seconds of a delete operation), the timer's callback fires on the unmounted component, calling `setToast(null)` after unmount. In React 18 this produces a no-op warning and may hold a closure reference keeping the component's state in memory longer than expected.
 
 **Fix:**
 ```typescript
-// Replace bare setTimeout with a ref-tracked timer:
 const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 const showToast = (message: string) => {
@@ -159,7 +219,7 @@ const showToast = (message: string) => {
     toastTimerRef.current = setTimeout(() => setToast(null), 4000);
 };
 
-// Add cleanup in useEffect:
+// Add cleanup in a useEffect:
 useEffect(() => {
     return () => {
         if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -167,84 +227,64 @@ useEffect(() => {
 }, []);
 ```
 
-### WR-04: ReplayClient onConfirm handler updates state after potential unmount
-
-**File:** `dashboard/src/app/grid/replay/replay-client.tsx:193-224`
-**Issue:** The `onConfirm` callback passed to `ExportConsentDialog` contains a `.then(res => res.blob().then(...))` chain that calls `URL.createObjectURL`, creates an anchor, and clicks it. This entire chain runs asynchronously after `setExportDialogOpen(false)` on line 194. If the user navigates away from `/grid/replay` between the `fetch()` call and the `.then()` resolution, `ReplayClient` will have unmounted (triggering the `agencyStore.setTier('H1')` cleanup), but the blob URL creation and anchor click will still execute against a detached document — an already-unmounted component's closure. The anchor element will be created and clicked in a stale execution context. An `AbortController` tied to the component's mount lifetime would prevent this.
-
-**Fix:**
-```typescript
-// Add an AbortController for the export fetch, cleaned up on unmount:
-const exportAcRef = useRef<AbortController | null>(null);
-
-useEffect(() => {
-    return () => {
-        agencyStore.setTier('H1');
-        exportAcRef.current?.abort();  // cancel in-flight export on unmount
-    };
-}, []);
-
-// In onConfirm:
-onConfirm={() => {
-    setExportDialogOpen(false);
-    if (origin) {
-        const ac = new AbortController();
-        exportAcRef.current = ac;
-        fetch(`${origin}/api/v1/operator/replay/export`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ tier: 'H5', operator_id: gridId, start_tick: startTick, end_tick: endTick }),
-            signal: ac.signal,
-        }).then((res) => {
-            if (ac.signal.aborted) return;
-            if (res.ok) {
-                return res.blob().then((blob) => {
-                    if (ac.signal.aborted) return;
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `replay-${startTick}-${endTick}.tar`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                });
-            }
-        }).catch((err) => {
-            if ((err as { name?: string }).name === 'AbortError') return;
-            setExportError('Export failed. Check Grid connectivity and retry.');
-        });
-    }
-}}
-```
+---
 
 ## Info
 
-### IN-01: `replayMode` prop accepted but not wired — Firehose, Inspector, RegionMap read live store regardless
+### IN-01: `replayMode` prop accepted but immediately discarded — Firehose, Inspector, RegionMap read live store unconditionally
 
 **File:** `dashboard/src/app/grid/components/firehose.tsx:61`, `dashboard/src/app/grid/components/inspector.tsx:102`, `dashboard/src/app/grid/components/region-map.tsx:58`
-**Issue:** All three components accept a `replayMode` prop that is immediately aliased to `_replayMode` (prefixed with underscore to silence the unused-variable warning). The prop is documented as "Phase 13 (REPLAY-05): when true, reads from replay store instead of live store" but the actual store-switching logic is not implemented — both `useFirehose()` and `usePresence()` read from the live store unconditionally. This is a stub, not a bug, but it means the replay route's firehose panel will show live events rather than the rewound chain entries if these components are ever mounted inside `ReplayClient`. Given that `ReplayClient` renders its own `replay-firehose` div (not these components), the impact is currently zero, but the dead prop is misleading.
 
-**Fix:** Either remove the `replayMode` prop and the underscore aliases until the store-switching logic is implemented, or add a TODO comment with a reference to the phase/ticket that will complete the wiring.
+**Issue:** All three components accept a `replayMode` prop that is immediately renamed to `_replayMode` to suppress the unused-variable lint warning. The prop is documented as the store-switching mechanism, but neither `useFirehose()` nor `usePresence()` inspects it. The actual store override happens via `ReplayStoresProvider`'s context injection, so for the current design the prop is entirely vestigial. It signals a design intent that was not implemented at the component level.
 
-### IN-02: `check-state-doc-sync.mjs` asserts "21 events" but checks 27 — misleading comment
+**Fix:** Remove the `replayMode` prop from the three components (and update their callers in `replay-client.tsx`), since the store override is already handled by `ReplayStoresProvider` without it. If the prop is intended for future non-provider-based usage, add a comment explaining the planned wiring.
 
-**File:** `scripts/check-state-doc-sync.mjs:11`
-**Issue:** The script header comment says "Asserts the STATE.md Accumulated Context stays in sync with the frozen broadcast allowlist invariant" and line 11 lists the invariant as "STATE.md mentions '21 events'", but the actual assertion on line 47 checks for `"27 events"`. The comment block was not updated when the count changed through subsequent phases.
+---
 
-**Fix:** Update the comment on line 11 to read `"27 events"` instead of `"21 events"`.
+### IN-02: `use-replay-session.ts` is not imported anywhere and defines a duplicate `AuditEntry` type
 
-### IN-03: `tarball-determinism.test.ts` uses `require('node:stream')` — inconsistent with ESM module context
+**File:** `dashboard/src/app/grid/replay/use-replay-session.ts`
+
+**Issue:** The hook is not imported by any other file in scope. The data flow for the replay route goes through `page.tsx` (server component) props to `ReplayClient`, bypassing this hook entirely. The file also defines a local `AuditEntry` interface (lines 13–22) that duplicates `@/lib/protocol/audit-types`, and a `ReplayState` type that shadows the same name in `grid/src/replay/state-builder.ts`.
+
+**Fix:** Either integrate `useReplaySession` into `ReplayClient` to drive client-side audit slice fetching, or remove the file if the server-component fetch pattern is the canonical approach.
+
+---
+
+### IN-03: `gridId=""` default in `page.tsx` means export `operator_id` is always empty string
+
+**File:** `dashboard/src/app/grid/replay/page.tsx:82`
+
+**Issue:** `ReplayPage` passes `gridId=""` to `ReplayClient`. The export fetch sends `operator_id: gridId` in the body. An empty string will fail `OPERATOR_ID_RE` validation in `appendOperatorExported` and return `400 audit_emit_failed`. This means the export feature will never succeed in the current server-component implementation — the operator can complete the consent dialog, the fetch will fire, and it will always receive a 400. This is related to WR-01 since the failure will be silently swallowed.
+
+**Fix:** Determine the canonical source for the operator id (session cookie, header, env var, or URL param) and pass a real `op:<uuid-v4>` value to `ReplayClient` from `page.tsx`. The `gridId` and `operator_id` concepts may need to be separated into distinct props.
+
+---
+
+### IN-04: `tarball-determinism.test.ts` uses `require()` in an ESM module context
 
 **File:** `grid/test/replay/tarball-determinism.test.ts:139`
-**Issue:** The test file uses `import` statements throughout (ESM) but line 139 contains `const { Readable } = require('node:stream')`. The top of the file (lines 20–22) already imports from ES modules. The `require()` call in an ESM file will either fail (if not CJS-interop) or inject a CommonJS dependency unexpectedly.
+
+**Issue:** The file uses `import` throughout but line 139 contains `const { Readable } = require('node:stream')`. This CommonJS `require()` inside an ESM test file will either fail in strict ESM mode or create a CJS/ESM interop dependency. The `node:stream` module is already importable as ESM.
 
 **Fix:**
 ```typescript
 // Add to the existing imports at the top of the file:
 import { Readable } from 'node:stream';
 
-// Remove the inline require() on line 139:
-// const { Readable } = require('node:stream');   <-- delete this line
+// Remove line 139:
+// const { Readable } = require('node:stream');
 ```
+
+---
+
+### IN-05: `check-state-doc-sync.mjs` header comment still references "21 events"
+
+**File:** `scripts/check-state-doc-sync.mjs:11`
+
+**Issue:** The script header on line 11 says: `"STATE.md mentions '21 events' (the Phase-10b post-ship count)"` but the actual assertion on line 47 checks for `"27 events"`. The comment is stale from Phase 10b and was not updated as the count grew through Phases 11, 12, and 13.
+
+**Fix:** Update the comment on line 11 to `"27 events" (the Phase-13 post-ship count)`.
 
 ---
 
