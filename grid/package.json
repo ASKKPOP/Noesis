@@ -23,6 +23,7 @@
     "fastify": "^5.0.0",
     "libsodium-wrappers": "^0.8.4",
     "mysql2": "^3.9.0",
+    "smol-toml": "^1.6.1",
     "tar": "^7.5.13"
   },
   "devDependencies": {
