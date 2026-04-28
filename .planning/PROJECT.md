@@ -124,7 +124,7 @@ The first persistent Grid where Nous actually live — observable, running conti
 | **BIOS** (Bodily Needs) + **CHRONOS** (Subjective Time) | BIOS-01..04, CHRONOS-01..03 | 10b — Bios + Chronos | Validated (shipped 2026-04-22) |
 | **WHISPER** (Sidechannel) | WHISPER-01..06 | 11 — Mesh Whisper (libsodium X25519+XChaCha20) | Validated (shipped 2026-04-23) |
 | **VOTE** (Commit-Reveal Voting) | VOTE-01..07 | 12 — Governance & Collective Law | Planned |
-| **REPLAY** (Replay + Export) | REPLAY-01..05 | 13 — Replay + Export | Planned |
+| **REPLAY** (Replay + Export) | REPLAY-01..05 | 13 — Replay + Export | Validated (shipped 2026-04-27) |
 | **RIG** (Researcher Rigs) | RIG-01..05 | 14 — Researcher Rigs (50 Nous × 10k ticks) | Planned |
 
 **Build order rationale (from [research/v2.2/FEATURES.md](research/v2.2/FEATURES.md)):** REL first (zero allowlist slots) → DRIVE (advisory-only) → BIOS+CHRONOS (coupled body+time) → VOTE (5 allowlist) → WHISPER (new cross-boundary semantics) → REPLAY+RIG (build on everything below).
@@ -213,4 +213,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-22 — Phase 10b shipped (BIOS-01..04, CHRONOS-01..03 validated; allowlist 19→21; body↔mood separation sealed in PHILOSOPHY §1)*
+*Last updated: 2026-04-27 — Phase 13 shipped (REPLAY-01..05 validated; allowlist 26→27 with operator.exported; ReplayGrid + deterministic tarball + /grid/replay panel surface with tier-aware redaction)*
