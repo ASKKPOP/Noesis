@@ -98,6 +98,36 @@ export class GridCoordinator {
     }
 
     /**
+     * Phase 14 RIG-04: synchronous tick dispatch with completion guarantee.
+     *
+     * Unlike start() (which wires clock.onTick fire-and-forget for production real-time
+     * pacing), awaitTick() is for headless rigs that drive ticks via clock.advance() in
+     * a direct for-loop. Returns a Promise that resolves only after EVERY connected
+     * runner's tick(tick, epoch) has settled, so rig.mjs can advance the next tick
+     * without races between simultaneous ticks (Open Question A4 from RESEARCH.md).
+     *
+     * Rigs MUST NOT call start() — call addRunner() then advance ticks in a loop with
+     * `await coordinator.awaitTick(tick, epoch)`.
+     */
+    async awaitTick(tick: number, epoch: number): Promise<void> {
+        const tickPromises = [...this.runners.values()].map((runner) => {
+            const contexts = this.launcher.aggregator.drainPending(runner.nousDid, tick);
+            if (contexts.length === 0) {
+                return runner.tick(tick, epoch).catch((err) => {
+                    console.error(`[GridCoordinator.awaitTick] tick error for ${runner.nousName}:`, err);
+                });
+            }
+            return contexts.reduce<Promise<void>>(
+                (chain, ctx) => chain.then(() => runner.tick(tick, epoch, ctx)),
+                Promise.resolve(),
+            ).catch((err) => {
+                console.error(`[GridCoordinator.awaitTick] tick error for ${runner.nousName}:`, err);
+            });
+        });
+        await Promise.all(tickPromises);
+    }
+
+    /**
      * Phase 8 AGENCY-05 (D-30 step 2): remove runner and clean up resources
      * after a Nous has been tombstoned by the H5 delete route.
      *
