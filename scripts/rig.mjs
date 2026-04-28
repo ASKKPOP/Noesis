@@ -192,6 +192,10 @@ mkdirSync(dirname(outPath), { recursive: true });
 writeFileSync(outPath, bytes);
 console.log(`[rig] tarball=${outPath} sha256=${hash} entries=${finalEntries.length} exit=${exitReason}`);
 
+// D-14-08: emit final structured JSON line — consumed by scripts/rig-bench-runner.mjs.
+// The bench runner parses ONLY the last non-empty stdout line; all prior lines are human-readable.
+console.log(JSON.stringify({ event: 'rig_closed', payload: rigClosedPayload }));
+
 process.exit(0);
 
 // ---------- helpers ----------

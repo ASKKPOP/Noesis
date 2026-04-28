@@ -26,7 +26,12 @@ import { join, relative } from 'node:path';
 
 const ROOT = process.cwd();
 const RIG_SCRIPT = join(ROOT, 'scripts', 'rig.mjs');
+const RIG_BENCH_RUNNER = join(ROOT, 'scripts', 'rig-bench-runner.mjs');
 const RIG_SRC_DIR = join(ROOT, 'grid', 'src', 'rig');
+
+// SCAN_TARGETS: scripts scanned for both T-10-12 (forbidden symbols) and T-10-13 (bypass flags).
+// Task 1 (Plan 14-04) appended rig-bench-runner.mjs here.
+const SCAN_TARGETS = [RIG_SCRIPT, RIG_BENCH_RUNNER];
 
 const FORBIDDEN_SYMBOLS_RE = /httpServer\.listen|wsHub/g;
 const BYPASS_FLAG_RE = /--skip-[a-z]|--bypass-[a-z]|--disable-[a-z]|--no-reviewer|--no-tier/g;
@@ -77,12 +82,15 @@ function scanFile(filePath, rules) {
 
 const allViolations = [];
 
-// Scan scripts/rig.mjs for both T-10-12 and T-10-13 violations
-if (existsSync(RIG_SCRIPT)) {
-    allViolations.push(...scanFile(RIG_SCRIPT, [
-        { name: 'FORBIDDEN_SYMBOLS_RE (T-10-12)', re: FORBIDDEN_SYMBOLS_RE },
-        { name: 'BYPASS_FLAG_RE (T-10-13)', re: BYPASS_FLAG_RE },
-    ]));
+// Scan all SCAN_TARGETS for both T-10-12 (forbidden symbols) and T-10-13 (bypass flags).
+// Task 1 (Plan 14-04) added rig-bench-runner.mjs to SCAN_TARGETS.
+for (const targetPath of SCAN_TARGETS) {
+    if (existsSync(targetPath)) {
+        allViolations.push(...scanFile(targetPath, [
+            { name: 'FORBIDDEN_SYMBOLS_RE (T-10-12)', re: FORBIDDEN_SYMBOLS_RE },
+            { name: 'BYPASS_FLAG_RE (T-10-13)', re: BYPASS_FLAG_RE },
+        ]));
+    }
 }
 
 // Scan grid/src/rig/** for T-10-13 violations (bypass flags in rig source)
