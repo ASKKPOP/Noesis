@@ -23,7 +23,7 @@ Phase numbering continues from v2.1 — do NOT reset without `--reset-phase-numb
 - [x] **Phase 11: Mesh Whisper** — Nous-to-Nous E2E envelope (libsodium `crypto_box`); operators cannot read plaintext at any tier. (shipped 2026-04-23, allowlist 21→22 with `nous.whispered`)
 - [x] **Phase 12: Governance & Collective Law** — Commit-reveal ballot lifecycle (4 events); successful proposals promote to v2.1 LogosEngine. (completed 2026-04-27)
 - [x] **Phase 13: Operator Replay & Export** — State-level ReplayGrid + deterministic JSONL tarball export; read-only rewind in Steward Console. (completed 2026-04-27)
-- [ ] **Phase 14: Researcher Rigs** — `noesis rig` CLI spawns ephemeral Grid with LLM fixture mode; target 50 Nous × 10,000 ticks in <60min.
+- [x] **Phase 14: Researcher Rigs** — `noesis rig` CLI spawns ephemeral Grid with LLM fixture mode; target 50 Nous × 10,000 ticks in <60min. (shipped 2026-04-28)
 
 ## Phase Details
 
@@ -195,33 +195,33 @@ Plans:
 - [x] 13-07-PLAN.md — Wave 6 (gap-closure): wire Firehose/Inspector/RegionMap into ReplayClient via ReplayStoresProvider (REPLAY-05 SC#5 closure)
 **UI hint**: yes
 
-### Phase 14: Researcher Rigs
+### Phase 14: Researcher Rigs [x] (shipped 2026-04-28)
 **Goal**: A researcher can spawn an ephemeral Grid from a versioned config, run 50 Nous × 10,000 ticks in under 60 minutes with LLM fixture mode, and export a deterministic JSONL dataset — all on an isolated audit chain that never touches production.
 **Depends on**: Phase 13 (tarball determinism pattern established; Rig exit snapshot reuses REPLAY-01 format); all prior v2.2 phases (Rigs are the integration test for Inner Life + Relationships + Governance + Whisper emergent dynamics — Rig must be able to spawn all six themes as a single integrated research workload)
 **Requirements**: RIG-01, RIG-02, RIG-03, RIG-04, RIG-05
 **Success Criteria** (what must be TRUE):
-  1. A new `noesis rig` CLI spawns an ephemeral Grid from a config `{seed, tick_budget, nous_manifest, operator_tier_cap, llm_fixture_path?}`. Configs version-controlled in `config/rigs/*.toml`. One launcher binary, N configs — zero code divergence from production `GenesisLauncher`; grep CI gate asserts `scripts/rig.mjs` does not reference `httpServer.listen` or `wsHub` symbols (T-10-12 defense).
-  2. Each Rig runs its **own isolated audit chain** (separate MySQL schema or in-memory SQLite), separate WsHub, separate Brain instances. The live Grid's AuditChain is never touched. Nested Rigs are rejected at launcher entry (`scripts/rig.mjs` exits non-zero if `NOESIS_RIG_PARENT` env var is set).
-  3. LLM fixture mode: Rig reads pre-recorded Brain prompt→response pairs from JSONL fixture files and replays them deterministically; a Brain running in fixture mode refuses network LLM calls (grep-enforced in `brain/src/llm/**`). This is the reproducibility workaround for LLM non-determinism.
-  4. Target scale benchmark: 50 Nous × 10,000 ticks in a single Rig run completes on a 16GB/8-core researcher laptop in <60 minutes with fixture-mode LLM. Nightly CI smoke (not per-commit) asserts the benchmark; producer-boundary microbenchmark (`grid/test/audit/producer-boundary-bench.test.ts`) asserts p99 emit latency <1ms (T-10-15 defense).
-  5. Rig exit emits snapshot as **JSONL export** (same deterministic format as REPLAY-01 tarball). Exit conditions: tick budget exhausted, all-Nous-dead, or operator-H5-terminate. Rig emits `chronos.rig_closed` on the **Rig's own chain only** — never on the production allowlist. **No rig CLI flag mutates invariants**: `scripts/check-rig-invariants.mjs` greps `scripts/rig.mjs` for `--skip-*|--bypass-*|--disable-*|--no-reviewer|--no-tier` and fails on any match (T-10-13 defense).
+  1. [x] A new `noesis rig` CLI spawns an ephemeral Grid from a config `{seed, tick_budget, nous_manifest, operator_tier_cap, llm_fixture_path?}`. Configs version-controlled in `config/rigs/*.toml`. One launcher binary, N configs — zero code divergence from production `GenesisLauncher`; grep CI gate asserts `scripts/rig.mjs` does not reference `httpServer.listen` or `wsHub` symbols (T-10-12 defense). Evidence: 14-01-SUMMARY.md + 14-03-SUMMARY.md.
+  2. [x] Each Rig runs its **own isolated audit chain** (separate MySQL schema), separate Brain instances in NOESIS_FIXTURE_MODE. The live Grid's AuditChain is never touched. Nested Rigs are rejected at launcher entry (`scripts/rig.mjs` exits non-zero if `NOESIS_RIG_PARENT` env var is set). Evidence: 14-02-SUMMARY.md + 14-03-SUMMARY.md.
+  3. [x] LLM fixture mode: Rig reads pre-recorded Brain prompt→response pairs from JSONL fixture files and replays them deterministically; a Brain running in fixture mode refuses network LLM calls (grep-enforced in `brain/src/llm/**`). Evidence: 14-02-SUMMARY.md.
+  4. [x] Target scale benchmark: 50 Nous × 10,000 ticks in a single Rig run completes on a 16GB/8-core researcher laptop in <60 minutes with fixture-mode LLM. Nightly CI smoke (not per-commit) asserts the benchmark; producer-boundary microbenchmark (`grid/test/audit/producer-boundary-bench.test.ts`) asserts p99 emit latency <1ms (T-10-15 defense). Evidence: 14-04-SUMMARY.md (nightly workflow wired; first run after merge).
+  5. [x] Rig exit emits snapshot as **JSONL export** (same deterministic format as REPLAY-01 tarball). Exit conditions: tick budget exhausted, all-Nous-dead, or operator-H5-terminate. Rig emits `chronos.rig_closed` on the **Rig's own chain only** — never on the production allowlist. `scripts/check-rig-invariants.mjs` greps for bypass flags (T-10-13 defense); `scripts/check-state-doc-sync.mjs` enforces chronos.* and rig.* prefix bans (T-14-05-01/02). Evidence: 14-04-SUMMARY.md + 14-05-SUMMARY.md.
 **Scope (ships)**: RIG-01..05.
 **Out of scope for this phase**: Parquet export (RIG-PARQUET-01 deferred); nested Rigs (rejected at launcher); per-Rig dashboard surfaces (Rig output is stdout + tarball only); multi-Grid federation (post-v2.2); plaintext export without explicit-consent flag (default output is audit-only; `--full-state` requires verbatim-copy-locked `--i-consent-to-plaintext-export` prompt, T-10-16 defense).
-**Risk**:
-  - T-10-12 (CRITICAL): Headless rig enables WsHub by accident — explicit `{transport: 'in-memory'}` option in `GenesisLauncher`; grep gate asserts `rig.mjs` does not reference `httpServer.listen` / `wsHub`.
-  - T-10-13 (CRITICAL): Rig CLI flag silently disables invariants — `scripts/check-rig-invariants.mjs` CI gate; rig output tarball manifest includes git SHA + exact CLI args + invariant-version hash.
-  - T-10-14 (HIGH): Tarball non-deterministic due to spawn order — `tar --sort=name` + clamped mtime + zero uid/gid (reproducible-builds.org conventions); same seed + args → same `sha256sum`.
-  - T-10-15 (HIGH): 10k-tick run reveals producer-boundary perf cliff — `Set.has()` (already frozen) not array scans; producer-boundary benchmark in nightly CI.
-  - T-10-16 (CRITICAL): Published dataset inadvertently leaks plaintext Telos — rig output has two modes (`--audit-only` default, `--full-state` with verbatim-copy-locked consent prompt); default output scanned by `grep -rE "telos_text|goal_description|memory_text"` returns zero matches.
+**Risk** (all mitigated):
+  - T-10-12 (CRITICAL): Headless rig enables WsHub by accident — explicit `{transport: 'in-memory'}` option in `GenesisLauncher`; grep gate asserts `rig.mjs` does not reference `httpServer.listen` / `wsHub`. MITIGATED.
+  - T-10-13 (CRITICAL): Rig CLI flag silently disables invariants — `scripts/check-rig-invariants.mjs` CI gate; rig output tarball manifest includes git SHA + exact CLI args + invariant-version hash. MITIGATED.
+  - T-10-14 (HIGH): Tarball non-deterministic due to spawn order — `tar --sort=name` + clamped mtime + zero uid/gid (reproducible-builds.org conventions); same seed + args → same `sha256sum`. MITIGATED.
+  - T-10-15 (HIGH): 10k-tick run reveals producer-boundary perf cliff — `Set.has()` (already frozen) not array scans; producer-boundary benchmark in nightly CI. MITIGATED.
+  - T-10-16 (CRITICAL): Published dataset inadvertently leaks plaintext Telos — rig output has two modes (`--audit-only` default, `--full-state` with verbatim-copy-locked consent prompt). MITIGATED.
 **Allowlist additions**: **0** (on production allowlist — Rigs run their own isolated chain). Note: `chronos.rig_closed` exists on the Rig's own chain but is explicitly NOT added to `grid/src/audit/broadcast-allowlist.ts`. Running total: **27**.
 **Plans**: 5 plans (Wave 0–4)
 
-**Plans**:
-- [ ] 14-01-PLAN.md — Wave 0: scaffolding (smol-toml + RigConfig types) + invariants grep gate (T-10-12 + T-10-13) + 5 RED test stubs
-- [ ] 14-02-PLAN.md — Wave 1: FixtureBrainAdapter (Python, RIG-03) + GridCoordinator.awaitTick + createRigSchema + producer-boundary microbenchmark (T-10-15)
-- [ ] 14-03-PLAN.md — Wave 2: scripts/rig.mjs CLI + TOML loader + example configs/manifests/fixtures + verbatim --full-state consent prompt (T-10-16)
-- [ ] 14-04-PLAN.md — Wave 3: nightly bench-50 smoke (RIG-04) + .github/workflows (rig-invariants per-commit + nightly-rig-bench)
-- [ ] 14-05-PLAN.md — Wave 4: atomic doc-sync (STATE/ROADMAP/MILESTONES/README/PROJECT) + chronos.* and rig.* prefix hard-bans in check-state-doc-sync.mjs
+Plans:
+- [x] 14-01-PLAN.md — Wave 0: scaffolding (smol-toml + RigConfig types) + invariants grep gate (T-10-12 + T-10-13) + 5 RED test stubs
+- [x] 14-02-PLAN.md — Wave 1: FixtureBrainAdapter (Python, RIG-03) + GridCoordinator.awaitTick + createRigSchema + producer-boundary microbenchmark (T-10-15)
+- [x] 14-03-PLAN.md — Wave 2: scripts/rig.mjs CLI + TOML loader + example configs/manifests/fixtures + verbatim --full-state consent prompt (T-10-16)
+- [x] 14-04-PLAN.md — Wave 3: nightly bench-50 smoke (RIG-04) + .github/workflows (rig-invariants per-commit + nightly-rig-bench)
+- [x] 14-05-PLAN.md — Wave 4: atomic doc-sync (STATE/ROADMAP/MILESTONES/README/PROJECT) + chronos.* and rig.* prefix hard-bans in check-state-doc-sync.mjs
 
 ## Progress
 
@@ -242,7 +242,7 @@ Dependencies form a strict chain (no parallel phases in v2.2). Rationale:
 | 11. Mesh Whisper | 5/5 | Complete   | 2026-04-23 |
 | 12. Governance & Collective Law | 5/5 | Complete   | 2026-04-27 |
 | 13. Operator Replay & Export | 7/7 | Complete    | 2026-04-28 |
-| 14. Researcher Rigs | 0/5 | Not started | - |
+| 14. Researcher Rigs | 5/5 | Complete    | 2026-04-28 |
 
 ## Coverage & Traceability
 
@@ -291,7 +291,7 @@ Starting: **18 events** (v2.1 frozen end-state).
 | 12 | `ballot.revealed` | `{proposal_id, voter_did, choice, nonce}` | 25 |
 | 12 | `proposal.tallied` | `{proposal_id, outcome, yes_count, no_count, abstain_count, quorum_met}` | 26 |
 | 13 | `operator.exported` | `{tier, operator_id, start_tick, end_tick, tarball_hash, requested_at}` | 27 |
-| 14 | *(none on production allowlist — Rigs run isolated chain)* | — | 25 |
+| 14 | *(none on production allowlist — Rigs run isolated chain; chronos.rig_closed on Rig's own AuditChain only, never broadcast)* | — | 27 |
 
 **Total v2.2 allowlist growth: +9 (18 → 27).** Freeze-except-by-explicit-addition rule preserved — every addition lands in its own phase with closed-tuple payload test, sole-producer grep, privacy-matrix update, and `scripts/check-state-doc-sync.mjs` literal bump in the same commit.
 

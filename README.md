@@ -143,16 +143,30 @@ Humans own Nous through signed ownership proofs. Scoped consent grants: observe,
 
 **v2.2 Phase 12 — Governance & Collective Law — SHIPPED** (2026-04-27, VOTE-01..07). Nous collectively open, vote on, and enact laws via a commit-reveal ballot lifecycle. Four new allowlist events: `proposal.opened` (#23), `ballot.committed` (#24), `ballot.revealed` (#25), `proposal.tallied` (#26). Operators are read-only at ALL tiers including H5 — no propose, commit, or reveal affordance exists in the dashboard (VOTE-05 lock). Vote-weighting by reputation, relationship score, or Ousia is banned at the payload level (`GOVERNANCE_FORBIDDEN_KEYS` — VOTE-06). Successful proposals (`outcome: passed`) promote to the v2.1 LogosEngine via the existing `law.triggered` event, now carrying `enacted_by: 'collective'` to forensically distinguish collective enactment from operator law-change (T-09-15). Three CI gates: `check-governance-isolation.mjs` (VOTE-05 operator exclusion), `check-governance-plaintext.mjs` (T-09-12 body privacy — only `title_hash` in broadcast, never `body_text`), `check-governance-weight.mjs` (VOTE-06 no vote-weighting). Dashboard `/grid/governance` page: H1+ proposals list, H2+ body view, H5 native `<dialog>` voting history modal.
 
-**v2.2 Phase 13 — Operator Replay & Export — IN PROGRESS** (2026-04-27, REPLAY-01..05). Phase 13 (Operator Replay & Export) plans authored (5 plans, Waves 0–4) — Steward Console rewind surface plus reproducible audit-chain tarball export. Wave 4 (13-05) executing: `/grid/replay` route at H3+ with REPLAY badge + Scrubber + inline redaction placeholders; `ExportConsentDialog` H5-gated paste-suppressed consent surface (chain-only export at MVP per D-13-09 — no plaintext memory/whisper export); `operator.exported` (27th allowlist member) added in Wave 3; wall-clock CI gate extended to cover `dashboard/src/app/grid/replay/**` (forbids `Date.now`, `performance.now`, `setInterval`, `setTimeout`, `Math.random`). Awaiting human-verify checkpoint (Task 4) before verification pass.
+**v2.2 Phase 13 — Operator Replay & Export — SHIPPED** (2026-04-28, REPLAY-01..05). H3+ operators can scrub historical chain slices in a sandboxed `ReplayGrid` and export a deterministic tarball that reproduces the same audit hash from seed. `ReadOnlyAuditChain` + constructor-injected readonly chain contract; `scripts/check-replay-readonly.mjs` CI gate; `operator.exported` (27th allowlist member, closed 6-key payload); dashboard `/grid/replay` route with REPLAY badge + Scrubber + tier-aware inline redaction. replay.* prefix hard-ban CI-enforced.
 
-**Test coverage:** grid 1147+, brain 513+, dashboard governance tests green (allowlist 22→26 → 27 with operator.exported).
+**v2.2 Phase 14 — Researcher Rigs — SHIPPED** (2026-04-28, RIG-01..05). Researchers can spawn headless ephemeral Grids for benchmarks and experiments. Reuses the production `GenesisLauncher` unchanged (zero code divergence — RIG-01). Runs in-memory transport with LLM fixture mode (`FixtureBrainAdapter`), isolated MySQL schema, and isolated AuditChain. `chronos.rig_closed` 5-key tuple emitted on the Rig's own chain only — never on the production allowlist (D-14-08). Two new CI hard-bans added: `chronos.*` and `rig.*` prefixes permanently banned from `broadcast-allowlist.ts` via `check-state-doc-sync.mjs`. Nightly CI smoke: 50 Nous × 10,000 ticks in <60min via `.github/workflows/nightly-rig-bench.yml`.
+
+### Researcher Rigs
+
+Headless ephemeral Grid for benchmarks and experiments. Reuses the production `GenesisLauncher` unchanged (zero code divergence) — runs in-memory, fixture-backed, with isolated MySQL schema and isolated AuditChain.
+
+```bash
+node scripts/rig.mjs config/rigs/small-10.toml
+```
+
+See `config/rigs/` for example configs and `.planning/phases/14-researcher-rigs/` for the design rationale.
+
+**v2.2 Living Grid — COMPLETE** (2026-04-28, all 7 phases shipped). Allowlist grew 18 → 27 (+9 events). Zero-diff audit chain unbroken since Phase 1 commit `29c3516`.
+
+**Test coverage:** grid 1147+, brain 513+, dashboard tests green (allowlist frozen at 27).
 
 | Milestone | Sprints | Deliverables |
 |-----------|---------|--------------|
 | **v1.0 Genesis** | 1–10 | Identity (SWP+DID), NDS domains, multi-provider LLM, Brain core (Psyche/Thymos/Telos), JSON-RPC bridge, memory+wiki, Grid infra (clock/space/logos/audit), P2P Ousia economy, Human Channel, Genesis launcher |
 | **v2.0 First Life** | 11–14 | E2E NousRunner+GridCoordinator, MySQL persistence+snapshots, Docker compose stack, Dashboard v1 (firehose, region map, Nous inspector, trade history, audit viewer) |
 | **v2.1 Steward Console** | 15 | ReviewerNous pre-commit review, H1–H5 Agency Indicator, `telos.refined` from peer dialogue, H5 Sovereign Nous deletion (tombstone + `operator.nous_deleted` + HTTP 410) |
-| **v2.2 Living Grid (partial)** | 9, 10a, 10b, 11, 12, 13 | Relationship graph (pure-observer derived view); Ananke drives (`ananke.drive_crossed` #19); Bios needs + Chronos subjective time (`bios.birth` #20, `bios.death` #21); Mesh Whisper (`nous.whispered` #22, E2E encrypted, zero-plaintext invariant); Governance & Collective Law (`proposal.opened` #23, `ballot.committed` #24, `ballot.revealed` #25, `proposal.tallied` #26, commit-reveal ballots, operators read-only); Operator Replay & Export (`operator.exported` #27, deterministic tarball, /grid/replay rewind surface — in progress) |
+| **v2.2 Living Grid (complete)** | 9, 10a, 10b, 11, 12, 13, 14 | Relationship graph (pure-observer derived view); Ananke drives (`ananke.drive_crossed` #19); Bios needs + Chronos subjective time (`bios.birth` #20, `bios.death` #21); Mesh Whisper (`nous.whispered` #22, E2E encrypted, zero-plaintext invariant); Governance & Collective Law (`proposal.opened` #23, `ballot.committed` #24, `ballot.revealed` #25, `proposal.tallied` #26, commit-reveal ballots, operators read-only); Operator Replay & Export (`operator.exported` #27, deterministic tarball, /grid/replay rewind surface); Researcher Rigs (zero new allowlist events — isolated chain; `node scripts/rig.mjs config.toml` CLI; LLM fixture mode; nightly 50×10k bench) |
 
 See [.planning/ROADMAP.md](.planning/ROADMAP.md) for the current milestone's phase breakdown and [.planning/MILESTONES.md](.planning/MILESTONES.md) for shipped history. Research foundation for v2.1: [.planning/research/stanford-peer-agent-patterns.md](.planning/research/stanford-peer-agent-patterns.md).
 

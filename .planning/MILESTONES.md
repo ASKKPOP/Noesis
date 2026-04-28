@@ -315,4 +315,76 @@
 - Python `@dataclass` regex extraction for drift detectors must handle triple-quoted docstrings that contain blank lines — a simple `\n\n`-terminated regex stops too early inside the docstring.
 
 ---
-*Last updated: 2026-04-27 — Phase 12 shipped (5/5 plans, allowlist 22→26 with governance events)*
+
+### Phase 13 — Operator Replay & Export — SHIPPED 2026-04-28
+
+**Shipped:** 2026-04-28
+**Goal:** H3+ operators can scrub historical chain slices in a sandboxed ReplayGrid and export a deterministic tarball that reproduces the same audit hash from seed — without the replay ever mutating the live chain.
+**Requirements delivered:** REPLAY-01, REPLAY-02, REPLAY-03, REPLAY-04, REPLAY-05
+**Plans:** 7/7 (13-01 through 13-07, Waves 0–6)
+**Allowlist added:** `operator.exported` (pos 27, closed 6-key payload) — allowlist 26→27
+
+**Key primitives:**
+- `ReadOnlyAuditChain` + `ReplayGrid` — constructor-injected readonly chain contract; zero `.append(` in `grid/src/replay/**` (CI-enforced by `check-replay-readonly.mjs`)
+- Deterministic JSONL tarball: `tar --sort=name` + clamped mtime + zero uid/gid; same seed + args → same `sha256sum`
+- `replay-verify` CLI: reproduces tarball hash from contents bit-for-bit
+- `appendOperatorExported` sole-producer: H5-consent-gated via ExportConsentDialog (paste-suppressed, verbatim copy frozen)
+- Dashboard `/grid/replay` route: H3+ REPLAY badge + Scrubber + audit entry list with inline redaction
+- replay.* prefix hard-ban added to `check-state-doc-sync.mjs` (Phase 13 D-13 §deferred)
+- `scripts/check-wallclock-forbidden.mjs` extended to cover replay dashboard files
+
+**Allowlist delta:** 26 → 27 (+1). Freeze-except-by-explicit-addition preserved.
+**Pointer to phase artifacts:** `.planning/phases/13-operator-replay-export/`
+
+---
+
+### Phase 14 — Researcher Rigs — SHIPPED 2026-04-28
+
+**Shipped:** 2026-04-28
+**Goal:** A researcher can spawn an ephemeral Grid from a versioned TOML config, run 50 Nous × 10,000 ticks in under 60 minutes with LLM fixture mode, and export a deterministic JSONL dataset — all on an isolated audit chain that never touches production.
+**Requirements delivered:** RIG-01, RIG-02, RIG-03, RIG-04, RIG-05
+**Plans:** 5/5 (14-01 through 14-05, Waves 0–4)
+**Allowlist added:** *(none — Rigs run their own isolated chain)*
+
+**Requirements summary:**
+- **RIG-01**: Zero code divergence — `scripts/rig.mjs` invokes `GenesisLauncher` UNCHANGED; grep CI gate asserts no `httpServer.listen` or `wsHub` in rig entry files (T-10-12 defense).
+- **RIG-02**: Each Rig has its own isolated MySQL schema (`rig_{configName}_{seed8}`) and isolated AuditChain; nested Rigs rejected at entry via `NOESIS_RIG_PARENT` env var (D-14-02).
+- **RIG-03**: `FixtureBrainAdapter` replays pre-recorded prompt→response pairs deterministically; network LLM calls refused when `NOESIS_FIXTURE_MODE=1`; grep-enforced (D-14-06).
+- **RIG-04**: 50 Nous × 10,000 ticks in <60min on 16GB/8-core researcher laptop; nightly CI smoke via `.github/workflows/nightly-rig-bench.yml`; producer-boundary p99 <1ms (T-10-15).
+- **RIG-05**: Rig exit emits JSONL tarball (Phase 13 REPLAY-01 format); `chronos.rig_closed` 5-key tuple `{seed, tick, exit_reason, chain_entry_count, chain_tail_hash}` on the Rig's own chain only, never production broadcast (D-14-08).
+
+**Invariants preserved:**
+- Broadcast allowlist count: **27** (Phase 14 adds zero production members — first phase in v2.2 to add zero while introducing a new audit event class on an isolated chain)
+- Zero code divergence: Rigs are configured production code, not a fork (RIG-01)
+- chronos.* prefix hard-ban: CI-enforced via `scripts/check-state-doc-sync.mjs` — any `chronos.*` token in `broadcast-allowlist.ts` fails CI
+- rig.* prefix hard-ban: same gate, same isolation rule — mirrors Phase 13 replay.* ban
+- --permissive is NOT a security bypass: `check-rig-invariants.mjs` T-10-13 grep gate forbids `--skip-*|--bypass-*|--disable-*|--no-reviewer|--no-tier` in any rig entry file
+
+**CI gates added:**
+- `scripts/check-rig-invariants.mjs` — per-commit gate: T-10-12 (no httpServer.listen/wsHub in rig files) + T-10-13 (no bypass flags)
+- `.github/workflows/rig-invariants.yml` — per-commit CI workflow running both invariant checks
+- `.github/workflows/nightly-rig-bench.yml` — nightly MySQL-backed 50×10k benchmark with artifact upload
+- `scripts/check-state-doc-sync.mjs` — extended with `checkChronosPrefixBan()` + `checkRigPrefixBan()` (Plan 14-05)
+
+**Files shipped:**
+- `scripts/rig.mjs` — main Rig CLI entry point (TOML loader, NOESIS_RIG_PARENT guard, rig schema creation, GenesisLauncher invocation, chronos.rig_closed emit, tarball export)
+- `scripts/rig-bench-runner.mjs` — subprocess wrapper for nightly bench-50
+- `scripts/check-rig-invariants.mjs` — CI grep gate (T-10-12 + T-10-13)
+- `grid/src/rig/types.ts`, `grid/src/rig/schema.ts` — RigConfig types + MySQL schema bootstrap
+- `brain/src/noesis_brain/llm/fixture_adapter.py` — FixtureBrainAdapter (LLMAdapter ABC)
+- `grid/src/genesis/coordinator.ts` — `GridCoordinator.awaitTick()` added
+- `config/rigs/` — example TOML configs (`small-10.toml`, `bench-50.toml`)
+- `.github/workflows/rig-invariants.yml`, `.github/workflows/nightly-rig-bench.yml`
+- `scripts/check-state-doc-sync.mjs` — extended with two new prefix hard-bans
+
+**Allowlist delta:** 27 → 27 (unchanged). Freeze-except-by-explicit-addition preserved.
+**Pointer to phase artifacts:** `.planning/phases/14-researcher-rigs/`
+
+---
+
+## v2.2 Living Grid — COMPLETE (2026-04-28)
+
+**All 7 phases shipped.** Broadcast allowlist grew 18 → 27 (+9 events across 5 phases; Phase 9 and Phase 14 added zero). Zero-diff audit chain invariant unbroken since Phase 1 commit `29c3516`. Hash-only cross-boundary, closed-tuple payloads, and sole-producer discipline preserved across all phases.
+
+---
+*Last updated: 2026-04-28 — Phase 14 shipped (5/5 plans, allowlist stays at 27; chronos./rig. isolation CI-enforced forever)*
