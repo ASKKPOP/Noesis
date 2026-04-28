@@ -1,0 +1,5 @@
+{"key":"action_selection","response_text":"MOVE agora","tokens":12,"tier":"PRIMARY"}
+{"key":"reflection","response_text":"I considered speaking but moved instead.","tokens":18,"tier":"LARGE"}
+{"key":"dialogue_response","response_text":"Hello, I am curious today.","tokens":10,"tier":"SMALL"}
+{"key":"goal_update","response_text":"Continue exploring the agora.","tokens":8,"tier":"PRIMARY"}
+{"key":"vote_decision","response_text":"YES","tokens":3,"tier":"SMALL"}

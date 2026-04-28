@@ -1,0 +1,10 @@
+{"name":"alice","did":"did:noesis:alice","public_key":"ed25519-pub-alice","region":"agora"}
+{"name":"bob","did":"did:noesis:bob","public_key":"ed25519-pub-bob","region":"agora"}
+{"name":"carol","did":"did:noesis:carol","public_key":"ed25519-pub-carol","region":"library"}
+{"name":"dave","did":"did:noesis:dave","public_key":"ed25519-pub-dave","region":"library"}
+{"name":"erin","did":"did:noesis:erin","public_key":"ed25519-pub-erin","region":"agora"}
+{"name":"frank","did":"did:noesis:frank","public_key":"ed25519-pub-frank","region":"market"}
+{"name":"gina","did":"did:noesis:gina","public_key":"ed25519-pub-gina","region":"market"}
+{"name":"hank","did":"did:noesis:hank","public_key":"ed25519-pub-hank","region":"agora"}
+{"name":"ivy","did":"did:noesis:ivy","public_key":"ed25519-pub-ivy","region":"library"}
+{"name":"jack","did":"did:noesis:jack","public_key":"ed25519-pub-jack","region":"market"}

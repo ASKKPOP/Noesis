@@ -1,0 +1,18 @@
+# config/rigs/bench-50.toml — Phase 14 RIG-04 nightly benchmark target.
+# 50 Nous × 10000 ticks; external JSONL manifest.
+# Target: <60 minutes on 16GB/8-core laptop with fixture-mode LLM.
+#
+# Usage:
+#   node scripts/rig.mjs config/rigs/bench-50.toml
+#
+# Schema name: rig_bench-50_abcdef01
+
+seed = "abcdef0123456789fedcba9876543210"
+config_name = "bench-50"
+tick_budget = 10000
+tick_rate_ms = 0
+operator_tier_cap = "H3"
+permissive = false
+llm_fixture_path = "fixtures/example-fixture.jsonl"
+
+nous_manifest_path = "manifests/bench-50.jsonl"

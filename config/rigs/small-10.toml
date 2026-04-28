@@ -1,0 +1,38 @@
+# config/rigs/small-10.toml — Phase 14 dev-iteration example
+# 10 Nous × 1000 ticks; external JSONL manifest for quick smoke runs.
+#
+# Usage:
+#   node scripts/rig.mjs config/rigs/small-10.toml
+#
+# Requirements satisfied: RIG-01 (TOML config), RIG-02 (isolated schema),
+#   RIG-03 (fixture mode), RIG-05 (deterministic tarball).
+
+# Deterministic entropy seed — first 8 hex chars become the schema name suffix.
+# Schema name: rig_small-10_d4e5f6a7
+seed = "d4e5f6a7b8c9d0e1"
+
+# Config identifier — must match /^[a-z0-9-]+$/
+config_name = "small-10"
+
+# Tick budget: total number of ticks before tick_budget_exhausted exit.
+tick_budget = 1000
+
+# D-14-07: 0 = headless as-fast-as-possible (default for benchmarking).
+# Set to 1000 for real-time 1-second ticks during debugging.
+tick_rate_ms = 0
+
+# Maximum operator action tier permitted in this rig run.
+# H3 = view/read-only + basic management; no destructive H4/H5 operations.
+operator_tier_cap = "H3"
+
+# D-14-05: false = strict cache-miss (fatal error on unmatched fixture key).
+# Set to true to allow permissive stub responses during fixture authoring.
+permissive = false
+
+# LLM fixture file path (relative to this TOML file's directory).
+# Records: {key, response_text, tokens, tier}
+llm_fixture_path = "fixtures/example-fixture.jsonl"
+
+# External JSONL manifest — one SeedNous-shaped JSON object per line.
+# Path is relative to this TOML file's directory.
+nous_manifest_path = "manifests/small-10.jsonl"
