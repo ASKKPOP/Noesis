@@ -1,0 +1,110 @@
+name: nightly-rig-bench
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: noesis_rig
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      MYSQL_URL: mysql://root:root@127.0.0.1:3306/noesis_rig
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      NOESIS_FIXTURE_MODE: '1'
+      NOESIS_RUN_NIGHTLY: '1'
+      RIG_OUTPUT_DIR: ${{ github.workspace }}/rig-output
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: grid/package-lock.json
+
+      - name: Install deps
+        working-directory: grid
+        run: npm ci
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -proot --silent 2>/dev/null; then
+              echo "MySQL is ready"
+              exit 0
+            fi
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 2
+          done
+          echo "MySQL never became ready"
+          exit 1
+
+      - name: Path A — direct rig.mjs invocation (RIG-04 wall-clock assertion)
+        run: |
+          mkdir -p "$RIG_OUTPUT_DIR"
+          { time node scripts/rig.mjs config/rigs/bench-50.toml | tee rig-stdout.log; } 2>rig-time.log
+          cat rig-time.log
+          EXIT_REASON=$(tail -n 1 rig-stdout.log | node -e "
+            let d = '';
+            process.stdin.on('data', c => d += c);
+            process.stdin.on('end', () => {
+              const j = JSON.parse(d);
+              if (!j.payload || !j.payload.exit_reason) {
+                console.error('Missing exit_reason in payload:', JSON.stringify(j));
+                process.exit(1);
+              }
+              console.log(j.payload.exit_reason);
+            });
+          ")
+          if [ "$EXIT_REASON" != "tick_budget_exhausted" ]; then
+            echo "RIG-04 FAIL: exit_reason was '$EXIT_REASON', expected 'tick_budget_exhausted'"
+            exit 1
+          fi
+          echo "RIG-04 PASS: exit_reason=$EXIT_REASON"
+
+      - name: Path B — Vitest wrapper exercise (rig-bench-runner.mjs end-to-end)
+        working-directory: grid
+        run: npx vitest run test/rig/rig-bench.test.ts
+
+      - name: Upload deterministic JSONL tarball artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rig-bench-50-tarball
+          path: ${{ env.RIG_OUTPUT_DIR }}/*.tar.gz
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload run logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rig-bench-50-logs
+          path: |
+            rig-stdout.log
+            rig-time.log
+          retention-days: 7

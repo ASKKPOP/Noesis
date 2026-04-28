@@ -1,0 +1,31 @@
+name: rig-invariants
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  invariants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: grid/package-lock.json
+
+      - name: T-10-12 + T-10-13 grep gates
+        run: node scripts/check-rig-invariants.mjs
+
+      - name: Fast Vitest rig suite (Wave 0/1/2 — NOESIS_RUN_NIGHTLY unset, rig-bench skips)
+        working-directory: grid
+        run: |
+          npm ci
+          npx vitest run test/rig/
