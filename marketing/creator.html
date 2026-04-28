@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HWAN JOO JANG — Software Engineering</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f4ef;
+      --bg2: #eeede8;
+      --bg3: #ffffff;
+      --border: rgba(0, 0, 0, 0.08);
+      --border2: rgba(0, 0, 0, 0.13);
+      --text: #1a1a1a;
+      --muted: #6b6b6b;
+      --muted2: #999;
+      --accent: #2563eb;
+      --accent-bg: #eff6ff;
+      --tag-bg: #f0f0ea;
+      --sans: 'Sora', system-ui, sans-serif;
+      --serif: 'Lora', Georgia, serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.7; }
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(245,244,239,.93); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 0 2rem; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { font-family: var(--serif); font-size: 1.1rem; font-weight: 500; color: var(--text); }
+    .nav-logo span { color: var(--accent); }
+    .nav-tabs { display: flex; gap: 2px; }
+    .nav-tab { padding: 6px 16px; border-radius: 6px; font-size: .85rem; font-weight: 500; color: var(--muted); text-decoration: none; cursor: pointer; transition: all .15s; border: none; background: transparent; font-family: var(--sans); }
+    .nav-tab:hover { color: var(--text); background: var(--bg2); }
+    .nav-tab.active { color: var(--text); background: var(--bg3); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    .nav-cta { background: var(--accent); color: #fff; padding: 6px 18px; border-radius: 6px; font-size: .85rem; font-weight: 500; text-decoration: none; transition: opacity .15s; border: none; cursor: pointer; font-family: var(--sans); }
+    .nav-cta:hover { opacity: .85; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .container { max-width: 880px; margin: 0 auto; padding: 0 2rem; }
+    .section { padding: 3.5rem 0; border-bottom: 1px solid var(--border); }
+    .section:last-child { border-bottom: none; }
+    .sec-label { font-size: .7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin-bottom: .5rem; }
+    .sec-title { font-family: var(--serif); font-size: 1.6rem; font-weight: 500; margin-bottom: .5rem; line-height: 1.3; }
+    .sec-desc { color: var(--muted); font-size: .875rem; max-width: 520px; font-weight: 300; }
+    .hero { padding: 4rem 0 3rem; border-bottom: 1px solid var(--border); }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: .75rem; font-weight: 600; color: var(--accent); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 1.25rem; }
+    .eyebrow::before { content: ''; width: 20px; height: 1.5px; background: var(--accent); }
+    h1 { font-family: var(--serif); font-size: clamp(2rem,4.5vw,3.2rem); font-weight: 500; line-height: 1.2; letter-spacing: -.01em; margin-bottom: 1rem; max-width: 640px; }
+    h1 em { color: var(--accent); font-style: italic; }
+    .hero-sub { font-size: 1rem; color: var(--muted); font-weight: 300; margin-bottom: 2rem; line-height: 1.7; }
+    .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 2.5rem; }
+    .btn-p { background: var(--accent); color: #fff; padding: 9px 22px; border-radius: 7px; font-weight: 500; font-size: .9rem; border: none; cursor: pointer; font-family: var(--sans); transition: opacity .15s; }
+    .btn-p:hover { opacity: .85; }
+    .btn-g { background: var(--bg3); color: var(--text); padding: 9px 22px; border-radius: 7px; font-weight: 500; font-size: .9rem; border: 1px solid var(--border2); cursor: pointer; font-family: var(--sans); transition: border-color .15s; }
+    .btn-g:hover { border-color: var(--muted); }
+    .hero-stats { display: flex; gap: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+    .sn { font-family: var(--serif); font-size: 2rem; font-weight: 500; color: var(--text); line-height: 1; }
+    .sl { font-size: .75rem; color: var(--muted); margin-top: 3px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 1.75rem; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 1.75rem; }
+    .cell { background: var(--bg); padding: 1.5rem; }
+    .cell:hover { background: var(--bg3); }
+    .cell-num { font-family: var(--serif); font-size: 2rem; color: var(--border2); line-height: 1; margin-bottom: .75rem; }
+    .cell-title { font-size: .9rem; font-weight: 600; color: var(--text); margin-bottom: .4rem; }
+    .cell-desc { font-size: .82rem; color: var(--muted); line-height: 1.6; }
+    .proc-steps { display: flex; gap: 0; margin-top: 2rem; position: relative; }
+    .proc-steps::before { content: ''; position: absolute; top: 20px; left: 20px; right: 20px; height: 1px; background: var(--border2); }
+    .proc-step { flex: 1; text-align: center; position: relative; z-index: 1; }
+    .proc-circle { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid var(--border2); background: var(--bg); display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-size: .8rem; font-weight: 600; color: var(--muted); transition: all .2s; }
+    .proc-circle.on, .proc-circle:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .proc-name { font-size: .72rem; color: var(--muted); font-weight: 500; }
+    .svc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 1.75rem; }
+    .svc { background: var(--bg); padding: 1.75rem; transition: background .15s; }
+    .svc:hover { background: var(--bg3); }
+    .svc.ai { background: var(--accent-bg); grid-column: 1/-1; }
+    .svc-num { font-size: .7rem; font-weight: 700; color: var(--muted2); letter-spacing: .06em; margin-bottom: .5rem; }
+    .svc-title { font-size: .95rem; font-weight: 600; color: var(--text); margin-bottom: .4rem; }
+    .svc-title.at { color: var(--accent); }
+    .svc-desc { font-size: .82rem; color: var(--muted); line-height: 1.6; margin-bottom: 1rem; }
+    .svc-desc.ad { color: rgba(37,99,235,.8); }
+    .ai-subs { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 1rem; }
+    .ai-sub { font-size: .78rem; color: var(--accent); background: rgba(37,99,235,.08); padding: 4px 10px; border-radius: 5px; }
+    .ai-links { display: flex; gap: 10px; margin-top: 1rem; flex-wrap: wrap; }
+    .ai-link { display: inline-flex; align-items: center; gap: 6px; font-size: .82rem; font-weight: 600; color: var(--accent); text-decoration: none; padding: 7px 16px; border-radius: 7px; border: 1.5px solid rgba(37,99,235,.25); background: rgba(37,99,235,.06); transition: all .2s; }
+    .ai-link:hover { background: rgba(37,99,235,.14); border-color: var(--accent); transform: translateY(-1px); }
+    .ai-link svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .tag { font-size: .72rem; padding: 3px 9px; border-radius: 5px; background: var(--tag-bg); color: var(--muted); font-weight: 500; border: 1px solid var(--border); }
+    .tg { background: #edf7f2; color: #1a7a4a; border-color: rgba(26,122,74,.2); }
+    .tb { background: #eff6ff; color: var(--accent); border-color: rgba(37,99,235,.2); }
+    .tp { background: #f5f0ff; color: #7c3aed; border-color: rgba(124,58,237,.2); }
+    .tl { background: #f0fdf4; color: #16a34a; border-color: rgba(22,163,74,.2); }
+    .dep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 1.75rem; }
+    .dep-card { border: 1px solid var(--border2); border-radius: 10px; padding: 1.5rem; background: var(--bg3); }
+    .dep-title { font-size: .9rem; font-weight: 600; color: var(--text); margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+    .dep-badge { font-size: .65rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+    .bg { background: #edf7f2; color: #1a7a4a; }
+    .bb { background: #eff6ff; color: var(--accent); }
+    .dep-list { display: flex; flex-direction: column; gap: 8px; }
+    .dep-item { display: flex; align-items: flex-start; gap: 8px; font-size: .82rem; color: var(--muted); }
+    .ddot { width: 6px; height: 6px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+    .dg { background: #1a7a4a; }
+    .db { background: var(--accent); }
+    .stats4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin: 1.5rem 0; }
+    .stat-box { background: var(--bg2); border-radius: 8px; padding: 1rem; text-align: center; }
+    .stat-box .n { font-family: var(--serif); font-size: 1.75rem; font-weight: 500; color: var(--text); }
+    .stat-box .l { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+    .exp-layout { display: grid; grid-template-columns: 1fr 1.2fr; gap: 3rem; margin-top: 1.5rem; align-items: start; }
+    .dom-list { display: flex; flex-direction: column; gap: 8px; }
+    .dom-item { padding: .75rem 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg3); transition: border-color .15s; }
+    .dom-item:hover { border-color: var(--border2); }
+    .dom-name { font-size: .85rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .dom-desc { font-size: .78rem; color: var(--muted); line-height: 1.5; }
+    .tl-wrap { display: flex; flex-direction: column; }
+    .tl-row { display: grid; grid-template-columns: 62px 14px 1fr; gap: 0 12px; align-items: stretch; }
+    .tl-yr { font-size: .7rem; color: var(--muted2); text-align: right; padding-top: 3px; white-space: nowrap; }
+    .tl-sp { display: flex; flex-direction: column; align-items: center; }
+    .tl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; background: var(--accent); }
+    .tl-dot.dim { background: var(--muted2); }
+    .tl-line { width: 1px; flex: 1; background: var(--border2); min-height: 10px; }
+    .tl-row:last-child .tl-line { display: none; }
+    .tl-c { padding-bottom: 1.1rem; }
+    .tl-t { font-size: .85rem; font-weight: 600; color: var(--text); }
+    .tl-s { font-size: .78rem; color: var(--muted); margin-top: 1px; margin-bottom: 5px; }
+    .stack-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 1.75rem; }
+    .sg { background: var(--bg); padding: 1.25rem 1.5rem; }
+    .sg-label { font-size: .68rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--muted2); margin-bottom: 8px; }
+    .cert-list { display: flex; flex-direction: column; gap: 8px; margin-top: 1.5rem; }
+    .cert-item { display: flex; align-items: center; gap: 12px; padding: .875rem 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg3); }
+    .cert-icon { width: 36px; height: 36px; border-radius: 7px; background: var(--accent-bg); display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; color: var(--accent); flex-shrink: 0; }
+    .cert-name { font-size: .875rem; font-weight: 500; color: var(--text); }
+    .cert-org { font-size: .78rem; color: var(--muted); }
+    .con-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 1.75rem; }
+    .con-card { background: var(--bg); padding: 1.5rem; }
+    .con-type { font-size: .875rem; font-weight: 600; color: var(--text); margin-bottom: .4rem; }
+    .con-desc { font-size: .78rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.5; }
+    .con-items { display: flex; flex-direction: column; gap: 5px; }
+    .ci { font-size: .78rem; color: var(--muted); padding-left: 12px; position: relative; line-height: 1.5; }
+    .ci::before { content: '—'; position: absolute; left: 0; color: var(--border2); }
+    .btable-wrap { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 1.75rem; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--bg2); }
+    th { text-align: left; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 10px 16px; }
+    td { padding: 11px 16px; font-size: .85rem; color: var(--muted); border-top: 1px solid var(--border); background: var(--bg3); vertical-align: middle; }
+    td:first-child { color: var(--text); font-weight: 500; }
+    .pc { color: var(--text) !important; font-weight: 600 !important; }
+    .lb { display: inline-block; font-size: .68rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+    .ljr { background: #edf7f2; color: #1a7a4a; }
+    .lmd { background: #fff8e6; color: #b45309; }
+    .lsr { background: #f5f0ff; color: #7c3aed; }
+    .lld { background: #fff0f0; color: #dc2626; }
+    .calc { margin-top: 1.5rem; background: var(--bg3); border: 1px solid var(--border2); border-radius: 10px; padding: 1.5rem; }
+    .calc-title { font-size: .875rem; font-weight: 600; color: var(--text); margin-bottom: 1.25rem; }
+    .calc-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); }
+    .calc-row:last-of-type { border-bottom: none; }
+    .calc-label { font-size: .82rem; color: var(--muted); }
+    .calc-qty { display: flex; align-items: center; gap: 10px; }
+    .qb { width: 26px; height: 26px; border: 1px solid var(--border2); background: var(--bg); color: var(--text); border-radius: 5px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; font-family: var(--sans); }
+    .qb:hover { background: var(--bg2); }
+    .qn { font-size: .85rem; font-weight: 600; color: var(--text); min-width: 18px; text-align: center; }
+    .calc-total { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1.5px solid var(--border2); display: flex; align-items: baseline; justify-content: space-between; }
+    .total-label { font-size: .85rem; color: var(--muted); }
+    .total-r { display: flex; align-items: baseline; gap: 6px; }
+    .total-amt { font-family: var(--serif); font-size: 1.8rem; font-weight: 500; color: var(--accent); }
+    .total-per { font-size: .78rem; color: var(--muted); }
+    .contact-hero { padding: 3.5rem 0 2.5rem; border-bottom: 1px solid var(--border); }
+    .contact-hero h1 { font-family: var(--serif); font-size: clamp(1.75rem,3.5vw,2.5rem); font-weight: 500; margin-bottom: .75rem; }
+    .contact-hero p { color: var(--muted); font-size: .95rem; font-weight: 300; max-width: 480px; }
+    .contact-layout { display: grid; grid-template-columns: 1.1fr 1fr; gap: 3rem; padding: 3rem 0; }
+    .form-section h3, .contact-info h3 { font-size: .9rem; font-weight: 600; color: var(--text); margin-bottom: 1.25rem; }
+    .fg { margin-bottom: .875rem; }
+    label { font-size: .78rem; font-weight: 600; color: var(--muted); display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .06em; }
+    input, textarea, select { width: 100%; background: var(--bg3); border: 1px solid var(--border2); color: var(--text); padding: 9px 12px; border-radius: 7px; font-family: var(--sans); font-size: .875rem; outline: none; transition: border-color .15s; appearance: none; }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.08); }
+    input::placeholder, textarea::placeholder { color: var(--muted2); }
+    textarea { min-height: 110px; resize: vertical; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-submit { width: 100%; background: var(--accent); color: #fff; border: none; padding: 10px; border-radius: 7px; font-size: .9rem; font-weight: 600; cursor: pointer; font-family: var(--sans); transition: opacity .15s; margin-top: .5rem; }
+    .form-submit:hover { opacity: .85; }
+    .form-note { font-size: .75rem; color: var(--muted2); text-align: center; margin-top: .625rem; }
+    .info-block { margin-bottom: 2rem; }
+    .info-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); margin-bottom: .75rem; }
+    .info-cards { display: flex; flex-direction: column; gap: 8px; }
+    .info-card { border: 1px solid var(--border); border-radius: 8px; padding: .875rem 1rem; background: var(--bg3); }
+    .info-card-title { font-size: .875rem; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    .info-card-desc { font-size: .78rem; color: var(--muted); line-height: 1.5; }
+    .info-list { display: flex; flex-direction: column; gap: 6px; }
+    .info-item { font-size: .82rem; color: var(--muted); display: flex; gap: 8px; }
+    .info-item::before { content: '·'; color: var(--accent); font-weight: 700; }
+    .trust-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 1.5rem; }
+    .trust-item { background: var(--bg2); border-radius: 8px; padding: 1rem; }
+    .trust-n { font-family: var(--serif); font-size: 1.5rem; color: var(--text); line-height: 1; }
+    .trust-l { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+    footer { border-top: 1px solid var(--border); padding: 1.75rem 2rem; }
+    .footer-inner { max-width: 880px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .footer-logo { font-family: var(--serif); font-size: .95rem; color: var(--muted); }
+    .footer-logo span { color: var(--accent); }
+    .footer-copy { font-size: .78rem; color: var(--muted2); }
+    @media(max-width:760px) {
+      .grid3, .con-grid { grid-template-columns: 1fr; }
+      .grid2, .svc-grid, .dep-grid, .exp-layout, .contact-layout, .form-row { grid-template-columns: 1fr; }
+      .svc.ai { grid-column: auto; }
+      .ai-subs { grid-template-columns: 1fr 1fr; }
+      .stats4 { grid-template-columns: 1fr 1fr; }
+      .stack-grid { grid-template-columns: 1fr 1fr; }
+      .hero-stats { gap: 1.5rem; flex-wrap: wrap; }
+      .proc-steps { flex-wrap: wrap; gap: 10px; }
+      .proc-steps::before { display: none; }
+      .trust-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-logo">HWAN JOO<span>.</span>Software Full Stack Developer</div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="show('dev')">Software Development</button>
+      <button class="nav-tab" onclick="show('contact')">Contact</button>
+    </div>
+    <button class="nav-cta" onclick="show('contact')">Start a Project</button>
+  </nav>
+
+  <!-- SOFTWARE DEV PAGE -->
+  <div id="page-dev" class="page active">
+    <div class="container">
+
+      <div class="hero">
+        <div class="eyebrow">20+ Years of Engineering Discipline</div>
+        <h1>Real software. <em>Built by engineers.</em> Delivered right.</h1>
+        <p class="hero-sub">I'm a senior full-stack developer with 20+ years of experience, looking for freelance projects and part-time work alongside a small group of 2 trusted developers. No sales team, no account managers — just an experienced engineer who cares about your project as much as you do.</p>
+        <div class="hero-actions">
+          <button class="btn-p" onclick="show('contact')">Start Your Project →</button>
+          <button class="btn-g" onclick="document.getElementById('ps').scrollIntoView({behavior:'smooth'})">See How We Build</button>
+        </div>
+        <div class="hero-stats">
+          <div><div class="sn">20+</div><div class="sl">Years experience</div></div>
+          <div><div class="sn">8+</div><div class="sl">Industries served</div></div>
+          <div><div class="sn">4</div><div class="sl">Countries deployed</div></div>
+          <div><div class="sn">15+</div><div class="sl">Technologies</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="sec-label">The Problem</div>
+        <div class="sec-title">Why most software projects fail</div>
+        <div class="sec-desc">Most projects don't fail because of bad ideas. They fail because engineering discipline was skipped. We never skip it.</div>
+        <div class="grid3">
+          <div class="cell"><div class="cell-num">01</div><div class="cell-title">No engineering process</div><div class="cell-desc">Built fast, broken in production. No requirements phase, no architecture review, no test strategy.</div></div>
+          <div class="cell"><div class="cell-num">02</div><div class="cell-title">Requirements misunderstood</div><div class="cell-desc">What the client said, what the developer heard, and what was built are three different things.</div></div>
+          <div class="cell"><div class="cell-num">03</div><div class="cell-title">AI code without engineering</div><div class="cell-desc">AI generates code fast. Without experienced engineers directing the output — you accumulate technical debt at machine speed.</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="sec-label">Why Engineers</div>
+        <div class="sec-title">Experience is the multiplier</div>
+        <p style="font-size:.95rem;color:var(--muted);font-weight:300;line-height:1.8;max-width:600px;margin-bottom:1.75rem;">AI can write code. Only an <strong style="color:var(--text);font-weight:500;">experienced engineer</strong> can take responsibility for it — knowing when it's right, when it's dangerous, and when it needs to be rethought.</p>
+        <div class="grid2">
+          <div class="cell" style="border-left:3px solid transparent;transition:border-color .2s;" onmouseover="this.style.borderLeftColor='#2563eb'" onmouseout="this.style.borderLeftColor='transparent'"><div class="cell-title">Systems thinking, not just features</div><div class="cell-desc">Engineers design for the whole — scalability, failure modes, maintenance costs, security.</div></div>
+          <div class="cell" style="border-left:3px solid transparent;transition:border-color .2s;" onmouseover="this.style.borderLeftColor='#2563eb'" onmouseout="this.style.borderLeftColor='transparent'"><div class="cell-title">Architecture decisions have 5-year consequences</div><div class="cell-desc">The database you choose, the API structure, the service boundaries — these compound.</div></div>
+          <div class="cell" style="border-left:3px solid transparent;transition:border-color .2s;" onmouseover="this.style.borderLeftColor='#2563eb'" onmouseout="this.style.borderLeftColor='transparent'"><div class="cell-title">Experience means anticipating failure</div><div class="cell-desc">Network drop mid-transaction? Two users editing simultaneously? We've seen it. We plan for it.</div></div>
+          <div class="cell" style="border-left:3px solid transparent;transition:border-color .2s;" onmouseover="this.style.borderLeftColor='#2563eb'" onmouseout="this.style.borderLeftColor='transparent'"><div class="cell-title">Security is invisible until violated</div><div class="cell-desc">SQL injection, insecure tokens, auth flaws — AI-generated code is often security-naive. We think adversarially by default.</div></div>
+        </div>
+      </div>
+
+      <div class="section" id="ps">
+        <div class="sec-label">Our Process</div>
+        <div class="sec-title">Every step. Every time.</div>
+        <div class="sec-desc">We don't start coding until requirements are truly understood. We don't ship until testing is complete.</div>
+        <div class="proc-steps">
+          <div class="proc-step"><div class="proc-circle on">1</div><div class="proc-name">Requirements</div></div>
+          <div class="proc-step"><div class="proc-circle">2</div><div class="proc-name">PRD</div></div>
+          <div class="proc-step"><div class="proc-circle">3</div><div class="proc-name">Architecture</div></div>
+          <div class="proc-step"><div class="proc-circle">4</div><div class="proc-name">Build</div></div>
+          <div class="proc-step"><div class="proc-circle">5</div><div class="proc-name">Test</div></div>
+          <div class="proc-step"><div class="proc-circle">6</div><div class="proc-name">Deploy</div></div>
+          <div class="proc-step"><div class="proc-circle">7</div><div class="proc-name">Maintain</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="sec-label">Services</div>
+        <div class="sec-title">Everything we build</div>
+        <div class="svc-grid">
+          <div class="svc"><div class="svc-num">01</div><div class="svc-title">Web Application Development</div><div class="svc-desc">Full-stack web platforms, SaaS products, enterprise portals, dashboards.</div><div class="tags"><span class="tag tg">Next.js</span><span class="tag tg">React.js</span><span class="tag">Node.js</span><span class="tag">Laravel</span><span class="tag">MySQL</span><span class="tag tl">AWS</span></div></div>
+          <div class="svc"><div class="svc-num">02</div><div class="svc-title">Mobile App Development</div><div class="svc-desc">iOS and Android apps, cross-platform mobile, real-time data sync.</div><div class="tags"><span class="tag tg">iOS</span><span class="tag tg">Android</span><span class="tag">Cross-platform</span><span class="tag">Node.js</span></div></div>
+          <div class="svc"><div class="svc-num">03</div><div class="svc-title">Enterprise Systems — ERP, CRM, WMS, OMS, TMS</div><div class="svc-desc">Complex business logic, multi-system integration, legacy system modernization.</div><div class="tags"><span class="tag">Java Spring</span><span class="tag">C#</span><span class="tag tg">Oracle</span><span class="tag tg">MS-SQL</span><span class="tag tb">REST API</span></div></div>
+          <div class="svc"><div class="svc-num">04</div><div class="svc-title">API Design &amp; System Integration</div><div class="svc-desc">REST and GraphQL APIs, third-party integrations, OAuth/JWT security.</div><div class="tags"><span class="tag tb">REST API</span><span class="tag tb">GraphQL</span><span class="tag tb">OAuth/JWT</span><span class="tag tb">Swagger</span></div></div>
+          <div class="svc"><div class="svc-num">05</div><div class="svc-title">Cloud &amp; DevOps Deployment</div><div class="svc-desc">AWS cloud setup, CI/CD pipelines, load balancing, SSL, scalable infrastructure.</div><div class="tags"><span class="tag tl">AWS EC2</span><span class="tag tl">S3</span><span class="tag tl">Route 53</span><span class="tag tl">ELB</span><span class="tag">Docker</span><span class="tag">CI/CD</span></div></div>
+          <div class="svc"><div class="svc-num">06</div><div class="svc-title">Database Architecture &amp; Migration</div><div class="svc-desc">Database design, performance tuning, large-scale data migration, schema optimization.</div><div class="tags"><span class="tag tg">Oracle</span><span class="tag tg">MySQL</span><span class="tag tg">MS-SQL</span><span class="tag">Data Modeling</span></div></div>
+          <div class="svc ai">
+            <div class="svc-num" style="color:var(--accent);opacity:.6">07</div>
+            <div class="svc-title at">Custom AI &amp; LLM — Built Into Your Software</div>
+            <div class="svc-desc ad">We build and integrate AI directly into your software. Custom AI trained on your data, your processes, your business logic.</div>
+            <div class="ai-subs"><div class="ai-sub">Custom business chatbot (RAG)</div><div class="ai-sub">Internal knowledge AI</div><div class="ai-sub">AI process automation</div><div class="ai-sub">Fine-tuned domain model</div><div class="ai-sub">LLM API integration</div><div class="ai-sub">AI decision support</div></div>
+            <div class="tags"><span class="tag tp">OpenAI</span><span class="tag tp">Claude API</span><span class="tag tp">Llama 3</span><span class="tag tp">LangChain</span><span class="tag tp">RAG</span><span class="tag tp">Vector DB</span><span class="tag tp">n8n</span><span class="tag tp">HuggingFace</span></div>
+            <div class="ai-links">
+              <a href="https://jangq.ai" target="_blank" rel="noopener" class="ai-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>jangq.ai</a>
+              <a href="https://vmlx.net" target="_blank" rel="noopener" class="ai-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>vmlx.net</a>
+              <a href="https://github.com/jjang-ai" target="_blank" rel="noopener" class="ai-link"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>GitHub</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="sec-label">Deployment</div>
+        <div class="sec-title">AWS cloud or your own server</div>
+        <div class="dep-grid">
+          <div class="dep-card">
+            <div class="dep-title">AWS Cloud Deployment <span class="dep-badge bg">Recommended</span></div>
+            <div class="dep-list">
+              <div class="dep-item"><div class="ddot dg"></div>EC2 — scalable compute instances</div>
+              <div class="dep-item"><div class="ddot dg"></div>Elastic Load Balancing — high availability</div>
+              <div class="dep-item"><div class="ddot dg"></div>Route 53 — DNS and domain routing</div>
+              <div class="dep-item"><div class="ddot dg"></div>S3 — storage, assets, backups</div>
+              <div class="dep-item"><div class="ddot dg"></div>Certificate Manager — SSL/TLS security</div>
+              <div class="dep-item"><div class="ddot dg"></div>GitHub Actions CI/CD pipelines</div>
+            </div>
+          </div>
+          <div class="dep-card">
+            <div class="dep-title">Own Server / On-Premise <span class="dep-badge bb">Enterprise</span></div>
+            <div class="dep-list">
+              <div class="dep-item"><div class="ddot db"></div>Linux server setup and administration</div>
+              <div class="dep-item"><div class="ddot db"></div>Apache / Nginx web server configuration</div>
+              <div class="dep-item"><div class="ddot db"></div>Database server management (Oracle, MySQL)</div>
+              <div class="dep-item"><div class="ddot db"></div>Sun Solaris and IBM AIX enterprise platforms</div>
+              <div class="dep-item"><div class="ddot db"></div>Windows-to-Linux server migration</div>
+              <div class="dep-item"><div class="ddot db"></div>On-premise ERP and enterprise system hosting</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="sec-label">Experience</div>
+        <div class="sec-title">20 years. Real systems. Real industries.</div>
+        <div class="stats4">
+          <div class="stat-box"><div class="n">20+</div><div class="l">Years experience</div></div>
+          <div class="stat-box"><div class="n">8+</div><div class="l">Industries served</div></div>
+          <div class="stat-box"><div class="n">15+</div><div class="l">Languages &amp; frameworks</div></div>
+          <div class="stat-box"><div class="n">4</div><div class="l">Countries deployed</div></div>
+        </div>
+        <div class="exp-layout">
+          <div>
+            <p style="font-size:.72rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted2);margin-bottom:.875rem;">Domain Expertise</p>
+            <div class="dom-list">
+              <div class="dom-item"><div class="dom-name">Healthcare</div><div class="dom-desc">CCM/RPM portals, lab management, hardware device integration, iOS/Android</div></div>
+              <div class="dom-item"><div class="dom-name">Logistics &amp; Supply Chain</div><div class="dom-desc">OMS, WMS, TMS, cargo systems, 1,200+ branch REST API</div></div>
+              <div class="dom-item"><div class="dom-name">Government &amp; Insurance</div><div class="dom-desc">National insurance DB, postal network, COBOL-to-Oracle migration</div></div>
+              <div class="dom-item"><div class="dom-name">Enterprise Retail</div><div class="dom-desc">Large-scale e-commerce, seller portals, POS integration</div></div>
+              <div class="dom-item"><div class="dom-name">Manufacturing &amp; IoT</div><div class="dom-desc">ESL hardware integration, POS-to-E-paper sync</div></div>
+              <div class="dom-item"><div class="dom-name">Automotive R&amp;D</div><div class="dom-desc">Breakdown tracking, vehicle diagnostics, failure modeling</div></div>
+              <div class="dom-item"><div class="dom-name">Media &amp; Broadcasting</div><div class="dom-desc">Web platforms, iOS/Android streaming, radio systems</div></div>
+              <div class="dom-item"><div class="dom-name">Aviation Cargo</div><div class="dom-desc">TMS, AWB/ULD tracking, robot control app</div></div>
+            </div>
+          </div>
+          <div>
+            <p style="font-size:.72rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted2);margin-bottom:.875rem;">Career Timeline</p>
+            <div class="tl-wrap">
+              <div class="tl-row"><div class="tl-yr">2024–Now</div><div class="tl-sp"><div class="tl-dot"></div><div class="tl-line"></div></div><div class="tl-c"><div class="tl-t">AI-Powered Software Development</div><div class="tl-s">Full-Stack · AI Integration · Automation</div><div class="tags" style="margin-top:4px"><span class="tag tp" style="font-size:.68rem">Cursor</span><span class="tag tp" style="font-size:.68rem">n8n</span><span class="tag tp" style="font-size:.68rem">LLM API</span><span class="tag tl" style="font-size:.68rem">AWS</span></div></div></div>
+              <div class="tl-row"><div class="tl-yr">2020–2024</div><div class="tl-sp"><div class="tl-dot"></div><div class="tl-line"></div></div><div class="tl-c"><div class="tl-t">PM &amp; Full-Stack Developer</div><div class="tl-s">Healthcare Platform — USA</div><div class="tags" style="margin-top:4px"><span class="tag tg" style="font-size:.68rem">Next.js</span><span class="tag" style="font-size:.68rem">Laravel</span><span class="tag tl" style="font-size:.68rem">AWS</span><span class="tag tg" style="font-size:.68rem">iOS/Android</span></div></div></div>
+              <div class="tl-row"><div class="tl-yr">2018–2019</div><div class="tl-sp"><div class="tl-dot"></div><div class="tl-line"></div></div><div class="tl-c"><div class="tl-t">Full-Stack Developer &amp; Tech Lead</div><div class="tl-s">Global Logistics OMS — Korea</div><div class="tags" style="margin-top:4px"><span class="tag" style="font-size:.68rem">Java Spring</span><span class="tag" style="font-size:.68rem">Laravel</span><span class="tag tg" style="font-size:.68rem">AngularJS</span></div></div></div>
+              <div class="tl-row"><div class="tl-yr">2016–2018</div><div class="tl-sp"><div class="tl-dot"></div><div class="tl-line"></div></div><div class="tl-c"><div class="tl-t">Oracle DBA &amp; Backend Developer</div><div class="tl-s">Government Postal Network — Malaysia</div><div class="tags" style="margin-top:4px"><span class="tag tg" style="font-size:.68rem">Oracle</span><span class="tag tb" style="font-size:.68rem">REST API ×1,200</span></div></div></div>
+              <div class="tl-row"><div class="tl-yr">2013–2016</div><div class="tl-sp"><div class="tl-dot"></div><div class="tl-line"></div></div><div class="tl-c"><div class="tl-t">Backend Developer &amp; Platform Engineer</div><div class="tl-s">Enterprise Retail — Korea &amp; Vietnam</div><div class="tags" style="margin-top:4px"><span class="tag" style="font-size:.68rem">PHP</span><span class="tag tg" style="font-size:.68rem">Oracle</span><span class="tag tb" style="font-size:.68rem">REST API</span></div></div></div>
+              <div class="tl-row"><div class="tl-yr">Before 2013</div><div class="tl-sp"><div class="tl-dot dim"></div><div class="tl-line"></div></div><div class="tl-c"><div class="tl-t">Developer — Aviation, Government, Automotive, Media</div><div class="tl-s">Korea &amp; USA · 6+ industries</div><div class="tags" style="margin-top:4px"><span class="tag" style="font-size:.68rem">Java</span><span class="tag" style="font-size:.68rem">Oracle</span><span class="tag" style="font-size:.68rem">C#</span><span class="tag" style="font-size:.68rem">C++</span></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="sec-label">Tech Stack</div>
+        <div class="sec-title">Current technology</div>
+        <div class="stack-grid">
+          <div class="sg"><div class="sg-label">Frontend</div><div class="tags"><span class="tag tg">Next.js</span><span class="tag tg">React.js</span><span class="tag tg">AngularJS</span><span class="tag tg">Node.js</span></div></div>
+          <div class="sg"><div class="sg-label">Backend</div><div class="tags"><span class="tag">Laravel</span><span class="tag">Java Spring</span><span class="tag">Python</span><span class="tag">C#</span><span class="tag">PHP</span></div></div>
+          <div class="sg"><div class="sg-label">Database</div><div class="tags"><span class="tag tg">Oracle</span><span class="tag tg">MySQL</span><span class="tag tg">MS-SQL</span></div></div>
+          <div class="sg"><div class="sg-label">AI &amp; Automation</div><div class="tags"><span class="tag tp">OpenAI</span><span class="tag tp">Claude API</span><span class="tag tp">Llama 3</span><span class="tag tp">LangChain</span><span class="tag tp">n8n</span><span class="tag tp">Cursor</span></div></div>
+          <div class="sg"><div class="sg-label">Cloud — AWS</div><div class="tags"><span class="tag tl">EC2</span><span class="tag tl">ELB</span><span class="tag tl">S3</span><span class="tag tl">Route 53</span><span class="tag tl">ACM</span></div></div>
+          <div class="sg"><div class="sg-label">DevOps</div><div class="tags"><span class="tag">Docker</span><span class="tag">GitHub CI/CD</span><span class="tag">Linux</span><span class="tag">Nginx</span></div></div>
+          <div class="sg"><div class="sg-label">API &amp; Security</div><div class="tags"><span class="tag tb">REST API</span><span class="tag tb">GraphQL</span><span class="tag tb">OAuth/JWT</span><span class="tag tb">Swagger</span></div></div>
+          <div class="sg"><div class="sg-label">Mobile</div><div class="tags"><span class="tag tg">iOS</span><span class="tag tg">Android</span><span class="tag tg">Cross-platform</span></div></div>
+          <div class="sg"><div class="sg-label">AI Tools</div><div class="tags"><span class="tag tp">AI Agent</span><span class="tag tp">n8n</span><span class="tag tp">Cursor</span></div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="sec-label">Credentials</div>
+        <div class="sec-title">Certifications &amp; Training</div>
+        <div class="cert-list">
+          <div class="cert-item"><div class="cert-icon">CE</div><div><div class="cert-name">Industrial Engineer — Information Processing</div><div class="cert-org">Government Certification · Korea · 2005</div></div></div>
+          <div class="cert-item"><div class="cert-icon">DB</div><div><div class="cert-name">Relational Database Modeling</div><div class="cert-org">Samsung Education Center</div></div></div>
+          <div class="cert-item"><div class="cert-icon">OR</div><div><div class="cert-name">Oracle Tools — Developer, Discoverer, Designer</div><div class="cert-org">Oracle Korea Education Center</div></div></div>
+          <div class="cert-item"><div class="cert-icon">MS</div><div><div class="cert-name">Supporting Microsoft Windows Core Technologies</div><div class="cert-org">Microsoft MCP Group</div></div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="sec-label">Engagement</div>
+        <div class="sec-title">Transparent terms</div>
+        <div class="con-grid">
+          <div class="con-card"><div class="con-type">Fixed-Price Project</div><div class="con-desc">Defined scope, fixed budget.</div><div class="con-items"><div class="ci">Full PRD before development</div><div class="ci">Milestone-based payments</div><div class="ci">Full IP transfer on completion</div></div></div>
+          <div class="con-card"><div class="con-type">Monthly Retainer</div><div class="con-desc">Ongoing capacity.</div><div class="con-items"><div class="ci">Dedicated hours per month</div><div class="ci">Weekly progress reporting</div><div class="ci">Rolling 30-day cancellation</div></div></div>
+          <div class="con-card"><div class="con-type">Time &amp; Materials</div><div class="con-desc">Flexible, pay actual hours.</div><div class="con-items"><div class="ci">Hourly or daily rate</div><div class="ci">Weekly time reporting</div><div class="ci">Adjust scope anytime</div></div></div>
+          <div class="con-card"><div class="con-type">Staff Augmentation</div><div class="con-desc">Senior engineer embedded in your team.</div><div class="con-items"><div class="ci">Full-time or part-time</div><div class="ci">NDA signed before discovery</div><div class="ci">3-month minimum term</div></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONTACT PAGE -->
+  <div id="page-contact" class="page">
+    <div class="container">
+      <div class="contact-hero">
+        <div class="eyebrow">Get Started</div>
+        <h1>Ready to build something<br>that actually works?</h1>
+        <p>20 years of engineering discipline. Zero shortcuts. Tell us what you need — response within 24 hours.</p>
+      </div>
+      <div class="contact-layout">
+        <div class="form-section">
+          <h3>Tell us about your project</h3>
+          <div class="form-row">
+            <div class="fg"><label>Your Name</label><input id="cf-name" type="text" placeholder="Full name"></div>
+            <div class="fg"><label>Company</label><input id="cf-company" type="text" placeholder="Company name"></div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Email</label><input id="cf-email" type="email" placeholder="you@company.com"></div>
+            <div class="fg"><label>Phone (optional)</label><input id="cf-phone" type="tel" placeholder="+1 (555) 000-0000"></div>
+          </div>
+          <div class="fg"><label>Project Type</label><select id="cf-type"><option value="">Select a service</option><option>Web Application</option><option>Mobile App</option><option>Enterprise System (ERP/CRM/WMS)</option><option>Custom AI / LLM Integration</option><option>API Development &amp; Integration</option><option>Cloud / DevOps Setup</option><option>Database Architecture &amp; Migration</option><option>Staff Augmentation</option><option>Other</option></select></div>
+          <div class="fg"><label>Project Description</label><textarea id="cf-desc" placeholder="Describe what you're building, the problem it solves, and any technical context."></textarea></div>
+          <div class="form-row">
+            <div class="fg"><label>Budget Range</label><select id="cf-budget"><option value="">Select range (optional)</option><option>Under $10,000</option><option>$10,000 – $30,000</option><option>$30,000 – $100,000</option><option>$100,000+</option><option>Monthly retainer</option></select></div>
+            <div class="fg"><label>Timeline</label><select id="cf-timeline"><option value="">When do you need this?</option><option>ASAP</option><option>Within 1 month</option><option>1–3 months</option><option>3–6 months</option><option>Flexible</option></select></div>
+          </div>
+          <button class="form-submit" onclick="sendContactEmail()">Send Message →</button>
+          <p class="form-note">Free initial consultation · NDA available · Response within 24 hours</p>
+        </div>
+        <div class="contact-info">
+          <h3>Engagement options</h3>
+          <div class="info-block">
+            <div class="info-label">Always included</div>
+            <div class="info-list">
+              <div class="info-item">NDA signed before any discovery</div>
+              <div class="info-item">Full IP ownership on payment</div>
+              <div class="info-item">Source code handover</div>
+              <div class="info-item">Complete documentation</div>
+              <div class="info-item">All 7 engineering steps — every project</div>
+            </div>
+          </div>
+          <div class="trust-grid">
+            <div class="trust-item"><div class="trust-n">20+</div><div class="trust-l">Years experience</div></div>
+            <div class="trust-item"><div class="trust-n">8+</div><div class="trust-l">Industries served</div></div>
+            <div class="trust-item"><div class="trust-n">4</div><div class="trust-l">Countries deployed</div></div>
+            <div class="trust-item"><div class="trust-n">24h</div><div class="trust-l">Response time</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">HWAN JOO JANG<span>.</span></div>
+      <div class="footer-copy">junekimsop@gmail.com</div>
+      <div class="footer-copy">I treat your project like it's my own business.</div>
+    </div>
+  </footer>
+
+  <script>
+    function show(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('page-' + id).classList.add('active');
+      document.querySelectorAll('.nav-tab')[id === 'dev' ? 0 : 1].classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    function sendContactEmail() {
+      const name = document.getElementById('cf-name').value.trim();
+      const email = document.getElementById('cf-email').value.trim();
+      if (!name || !email) { alert('Please fill in your name and email.'); return; }
+      const company = document.getElementById('cf-company').value.trim();
+      const subject = 'Project Inquiry from ' + name + (company ? ' (' + company + ')' : '');
+      const body = [
+        'Name: ' + name,
+        company ? 'Company: ' + company : '',
+        'Email: ' + email,
+        '',
+        'Project Type: ' + document.getElementById('cf-type').value,
+        'Budget: ' + document.getElementById('cf-budget').value,
+        'Timeline: ' + document.getElementById('cf-timeline').value,
+        '',
+        document.getElementById('cf-desc').value
+      ].filter(Boolean).join('\n');
+      window.location.href = 'mailto:junekimsop@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    }
+  </script>
+</body></html>
