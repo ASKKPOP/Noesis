@@ -30,6 +30,19 @@ import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+// -- T-10-16: Verbatim-locked consent prompt — defined FIRST to avoid TDZ --
+// Test grid/test/rig/full-state-consent.test.ts asserts exact match.
+// IMPORTANT: This string is verbatim-locked. Any change here requires updating the test too.
+const FULL_STATE_CONSENT_PROMPT = `⚠️  FULL-STATE EXPORT — IRREVERSIBLE PRIVACY DECISION
+
+You are about to export plaintext Telos goals, internal Nous memory, and personality
+data that has NEVER been broadcast publicly. Once published, this export cannot be
+redacted from copies that have been shared.
+
+This is a per-run consent — even the same researcher must reconfirm for each rig run.
+
+If you are sure, set NOESIS_FULL_STATE_CONSENT="I-CONSENT-TO-PLAINTEXT-EXPORT" and re-run.`;
+
 // -- D-14-02: Nested-rig guard at entry point --
 // Check BEFORE any other work — prevents nested rigs from bootstrapping a Grid.
 if (process.env.NOESIS_RIG_PARENT === '1') {
@@ -230,19 +243,6 @@ function requireFullStateConsent(flags) {
     console.error('To proceed, re-run with NOESIS_FULL_STATE_CONSENT="I-CONSENT-TO-PLAINTEXT-EXPORT" set in env.');
     process.exit(3);
 }
-
-/** Verbatim-locked copy. Test asserts exact match. */
-const FULL_STATE_CONSENT_PROMPT = [
-    '⚠️  FULL-STATE EXPORT — IRREVERSIBLE PRIVACY DECISION',
-    '',
-    'You are about to export plaintext Telos goals, internal Nous memory, and personality',
-    'data that has NEVER been broadcast publicly. Once published, this export cannot be',
-    'redacted from copies that have been shared.',
-    '',
-    'This is a per-run consent — even the same researcher must reconfirm for each rig run.',
-    '',
-    'If you are sure, set NOESIS_FULL_STATE_CONSENT="I-CONSENT-TO-PLAINTEXT-EXPORT" and re-run.',
-].join('\n');
 
 /** Scrub plaintext Telos keys from entries and snapshots (T-10-16 defense). */
 function scrubPlaintextTelos(entries, startSnap, endSnap) {
