@@ -4,14 +4,14 @@ milestone: v2.2
 milestone_name: Active)
 status: executing
 stopped_at: Phase 14 context gathered
-last_updated: "2026-04-28T08:57:22.128Z"
-last_activity: 2026-04-28
+last_updated: "2026-04-28T10:02:24.054Z"
+last_activity: 2026-04-28 -- Phase 14 execution started
 progress:
   total_phases: 11
   completed_phases: 6
-  total_plans: 39
+  total_plans: 44
   completed_plans: 39
-  percent: 100
+  percent: 89
 ---
 
 # Project State
@@ -22,16 +22,16 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 **Core value:** The first persistent Grid where Nous actually live — observable, running continuously, with real cognitive cycles, real trades, and real social dynamics emerging from the systems.
 **Current milestone:** v2.2 — Living Grid (6 themes: Rich Inner Life, Relationships, Governance, Whisper, Observability, Researcher Tools)
-**Current focus:** Phase 13 — operator-replay-export
+**Current focus:** Phase 14 — researcher-rigs
 
 ## Current Position
 
-Phase: 14
-Plan: Not started
-Status: Executing Phase 13
-Last activity: 2026-04-28
+Phase: 14 (researcher-rigs) — COMPLETE
+Plan: 5 of 5
+Status: Phase 14 shipped 2026-04-28. v2.2 milestone: all 7 phases complete. Next: TBD (v2.3).
+Last activity: 2026-04-28 -- Phase 14 doc-sync + prefix hard-bans shipped
 
-Progress: [█████░░░░░] 71% (5/7 v2.2 phases complete — Phase 9 + 10a + 10b + 11 + 12 shipped)
+Progress: [██████████] 100% (7/7 v2.2 phases complete — Phase 9 + 10a + 10b + 11 + 12 + 13 + 14 shipped)
 
 ## Accumulated Context
 
@@ -319,6 +319,35 @@ Next action: `/gsd-execute-phase 13 --gaps-only`
 - **D-30 extension (Phase 10b):** `delete-nous.ts` H5 handler extended — `appendBiosDeath({cause: 'operator_h5', ...})` emitted before `appendNousDeleted` in the same deletion sequence. `operator.nous_deleted` remains the H5-tier audit; `bios.death` is the lifecycle-layer complement.
 - **Body↔mood separation sealed (T-09-05):** PHILOSOPHY §1 updated with subsection "Body, not mood — T-09-05 (sealed 2026-04-22, Phase 10b)". Bios = physical need pressure (body). Thymos = emotional state (mood) — explicitly out of scope in v2.2. Non-negotiable distinction.
 - **Closed-enum allowlist gate confirmed:** `bios.resurrect`, `bios.migrate`, `bios.transfer` all fail at allowlist gate (tested in Phase 10b-07 integration suite). Death is terminal; DIDs permanently reserved.
+
+## Accumulated Context (Phase 14 — Researcher Rigs — shipped 2026-04-28)
+
+### Phase 14 — Researcher Rigs (RIG-01..05) — shipped 2026-04-28
+
+**Allowlist count: 27 events (unchanged)**. Phase 14 adds zero production-allowlist members.
+
+**chronos.rig_closed isolation (D-14-08)** — emitted ONLY on the Rig's isolated AuditChain, never broadcast. It is rig-internal; lives in the deferred / never-broadcast space alongside replay.* events. The closed 5-key tuple is `{seed, tick, exit_reason, chain_entry_count, chain_tail_hash}` and any extra/missing key is a contract violation. `exit_reason ∈ {tick_budget_exhausted, all_nous_dead, operator_h5_terminate}`.
+
+**chronos.* and rig.* prefix hard-bans (D-14-08)** — CI-enforced via `scripts/check-state-doc-sync.mjs` (extended in Plan 14-05 Task 1). Mirrors the Phase 13 replay.* prefix ban. Any future allowlist PR that adds a string-quoted token starting with `chronos.` or `rig.` to `grid/src/audit/broadcast-allowlist.ts` fails CI.
+
+**Zero code divergence (RIG-01)** — Rigs are configured production code, not a fork. `scripts/rig.mjs` is a thin CLI that constructs a GenesisConfig from a TOML file and invokes `GenesisLauncher` UNCHANGED. The forbidden-symbol grep gate (`scripts/check-rig-invariants.mjs`, T-10-12) bans `httpServer.listen` and `wsHub` from rig entry files to enforce in-memory transport.
+
+**NOESIS_RIG_PARENT nested-rig rejection (D-14-02)** — `scripts/rig.mjs` sets `process.env.NOESIS_RIG_PARENT='1'` BEFORE constructing GenesisLauncher; the entry guard at the top of `rig.mjs` rejects with exit code 2 if NOESIS_RIG_PARENT is already set, preventing recursive rig spawns.
+
+**NOESIS_FIXTURE_MODE network refusal (D-14-06)** — when `NOESIS_FIXTURE_MODE=1`, `FixtureBrainAdapter` is the only allowed LLM path. Real-network LLM client construction throws if this env var is set. `scripts/check-rig-invariants.mjs` greps for any conditional that could route around this.
+
+**--permissive is NOT a security bypass (D-14-05)** — `--permissive` is a research convenience flag that lets `FixtureBrainAdapter` return `"[UNMATCHED FIXTURE]"` stubs on cache miss instead of raising. It DOES NOT skip reviewers, tier checks, or any production safety gate. The T-10-13 grep gate (`scripts/check-rig-invariants.mjs`) forbids any actual `--skip-*` / `--bypass-*` / `--disable-*` / `--no-reviewer` / `--no-tier` flag from appearing in any rig entry file.
+
+**MySQL isolated schema (D-14-01)** — schema name format: `rig_{configName}_{seed_first_8_hex_chars}`. Created via `CREATE SCHEMA IF NOT EXISTS \`{schemaName}\`` and bootstrapped with the existing `MigrationRunner` UNCHANGED. The schema is created at rig start and is left in place after rig exit (researcher inspection); cleanup is out-of-band.
+
+**Nightly bench-50 evidence (RIG-04)** — see `.planning/phases/14-researcher-rigs/14-04-SUMMARY.md` for the first observed wall-clock, the chronos.rig_closed payload, and the deterministic tarball sha256. (The nightly workflow has not yet run at doc-sync time; first run occurs after merge via cron or `gh workflow run nightly-rig-bench.yml`.)
+
+**Phase 14 plan structure (5 plans, Waves 0–4):**
+- 14-01: Wave 0 — scaffolding (smol-toml + RigConfig types) + invariants grep gate (T-10-12 + T-10-13) + 5 RED test stubs
+- 14-02: Wave 1 — FixtureBrainAdapter (Python, RIG-03) + GridCoordinator.awaitTick + createRigSchema + producer-boundary microbenchmark (T-10-15)
+- 14-03: Wave 2 — scripts/rig.mjs CLI + TOML loader + example configs/manifests/fixtures + verbatim --full-state consent prompt (T-10-16)
+- 14-04: Wave 3 — nightly bench-50 smoke (RIG-04) + .github/workflows (rig-invariants per-commit + nightly-rig-bench)
+- 14-05: Wave 4 — atomic doc-sync + chronos.* and rig.* prefix hard-bans in check-state-doc-sync.mjs
 
 ## Accumulated Context (Phase 13 — Operator Replay & Export — Wave 4 executing 2026-04-27)
 
