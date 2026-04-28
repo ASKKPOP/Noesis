@@ -217,11 +217,11 @@ Plans:
 **Plans**: 5 plans (Wave 0–4)
 
 **Plans**:
-- [x] 12-00-PLAN.md — Wave 0: allowlist 22→26, types/config, MySQL v6 migration, RED stubs, doc-sync
-- [x] 12-01-PLAN.md — Wave 1: commit-reveal crypto (Grid + Brain) with cross-language sha256 parity
-- [x] 12-02-PLAN.md — Wave 2: four sole-producer emitters + GovernanceStore + computeTally + GovernanceEngine + appendLawTriggered widening
-- [x] 12-03-PLAN.md — Wave 3: five Fastify routes + GenesisLauncher wiring + NousRunner switch cases + Brain proposer/voter/state
-- [ ] 12-04-PLAN.md — Wave 4: three CI gates + Dashboard /grid/governance page + drift detector + atomic doc-sync
+- [ ] 14-01-PLAN.md — Wave 0: scaffolding (smol-toml + RigConfig types) + invariants grep gate (T-10-12 + T-10-13) + 5 RED test stubs
+- [ ] 14-02-PLAN.md — Wave 1: FixtureBrainAdapter (Python, RIG-03) + GridCoordinator.awaitTick + createRigSchema + producer-boundary microbenchmark (T-10-15)
+- [ ] 14-03-PLAN.md — Wave 2: scripts/rig.mjs CLI + TOML loader + example configs/manifests/fixtures + verbatim --full-state consent prompt (T-10-16)
+- [ ] 14-04-PLAN.md — Wave 3: nightly bench-50 smoke (RIG-04) + .github/workflows (rig-invariants per-commit + nightly-rig-bench)
+- [ ] 14-05-PLAN.md — Wave 4: atomic doc-sync (STATE/ROADMAP/MILESTONES/README/PROJECT) + chronos.* and rig.* prefix hard-bans in check-state-doc-sync.mjs
 
 ## Progress
 
@@ -242,7 +242,7 @@ Dependencies form a strict chain (no parallel phases in v2.2). Rationale:
 | 11. Mesh Whisper | 5/5 | Complete   | 2026-04-23 |
 | 12. Governance & Collective Law | 5/5 | Complete   | 2026-04-27 |
 | 13. Operator Replay & Export | 7/7 | Complete    | 2026-04-28 |
-| 14. Researcher Rigs | 0/? | Not started | - |
+| 14. Researcher Rigs | 0/5 | Not started | - |
 
 ## Coverage & Traceability
 
