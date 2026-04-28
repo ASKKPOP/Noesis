@@ -241,7 +241,7 @@ Dependencies form a strict chain (no parallel phases in v2.2). Rationale:
 | 10b. Bios Needs + Chronos Subjective Time | 8/8 | Complete   | 2026-04-23 |
 | 11. Mesh Whisper | 5/5 | Complete   | 2026-04-23 |
 | 12. Governance & Collective Law | 5/5 | Complete   | 2026-04-27 |
-| 13. Operator Replay & Export | 7/7 | Complete   | 2026-04-28 |
+| 13. Operator Replay & Export | 7/7 | Complete    | 2026-04-28 |
 | 14. Researcher Rigs | 0/? | Not started | - |
 
 ## Coverage & Traceability
