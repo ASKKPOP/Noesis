@@ -11,6 +11,7 @@ from noesis_brain.llm.ollama import OllamaAdapter
 from noesis_brain.llm.claude import ClaudeAdapter
 from noesis_brain.llm.openai_compat import OpenAICompatAdapter
 from noesis_brain.llm.router import ModelRouter
+from noesis_brain.llm.fixture import FixtureBrainAdapter
 
 __all__ = [
     "LLMAdapter",
@@ -22,4 +23,5 @@ __all__ = [
     "ClaudeAdapter",
     "OpenAICompatAdapter",
     "ModelRouter",
+    "FixtureBrainAdapter",
 ]
