@@ -192,7 +192,7 @@ Plans:
 - [x] 13-04-PLAN.md — Wave 3: appendOperatorExported + allowlist 26→27 + Fastify route + check-state-doc-sync bump + replay.* hard-ban
 - [x] 13-05-PLAN.md — Wave 4: Dashboard /grid/replay UI + ExportConsentDialog + wall-clock gate extension + atomic doc-sync
 - [x] 13-06-PLAN.md — Wave 5 (gap-closure): restore STATE.md regression from f425d99 + hoist tar@^7.5.13 to root workspace
-- [ ] 13-07-PLAN.md — Wave 6 (gap-closure): wire Firehose/Inspector/RegionMap into ReplayClient via ReplayStoresProvider (REPLAY-05 SC#5 closure)
+- [x] 13-07-PLAN.md — Wave 6 (gap-closure): wire Firehose/Inspector/RegionMap into ReplayClient via ReplayStoresProvider (REPLAY-05 SC#5 closure)
 **UI hint**: yes
 
 ### Phase 14: Researcher Rigs
@@ -241,7 +241,7 @@ Dependencies form a strict chain (no parallel phases in v2.2). Rationale:
 | 10b. Bios Needs + Chronos Subjective Time | 8/8 | Complete   | 2026-04-23 |
 | 11. Mesh Whisper | 5/5 | Complete   | 2026-04-23 |
 | 12. Governance & Collective Law | 5/5 | Complete   | 2026-04-27 |
-| 13. Operator Replay & Export | 6/7 | In Progress|  |
+| 13. Operator Replay & Export | 7/7 | Complete   | 2026-04-28 |
 | 14. Researcher Rigs | 0/? | Not started | - |
 
 ## Coverage & Traceability
