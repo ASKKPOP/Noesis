@@ -11,69 +11,77 @@
  * Tier reset on unmount (D-13-07): agencyStore.setTier('H1') called on unmount.
  * Wall-clock grep (D-13-05): no Date.now/setInterval/setTimeout/requestAnimationFrame/
  * Math.random in the source file.
+ *
+ * Test architecture:
+ *   - ReplayClient uses ReplayStoresProvider internally, which calls useStores()
+ *     from the context. Tests wrap renders with StoresProvider so useStores()
+ *     resolves via React context (not bypassed by a mock).
+ *   - ReplayStoresProvider overrides firehose+presence in the context subtree,
+ *     so Firehose reads from the replay-scoped seeded store, not the live one.
+ *   - agencyStore is mocked so Firehose's useSyncExternalStore reads the tier
+ *     that the test controls (H3 default → H4 redaction applies; H4 → H5 applies).
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 // Verbatim export copy constants — mirrored here from export-consent-dialog.test.tsx
 // to ensure both test files are updated together if copy changes (D-13-08 discipline).
-// Wave 4 must implement these exact strings in ExportConsentDialog.
 const _EXPORT_TITLE_COPY = 'Export audit chain slice';     // locked D-13-08
 const _EXPORT_CONFIRM_LABEL = 'Export forever';             // locked D-13-08
 const _EXPORT_CANCEL_LABEL = 'Keep private';                // locked D-13-08
 
-// Mock agencyStore so tests can verify setTier calls
+// ── Mocks ────────────────────────────────────────────────────────────────────
+
+// agencyStore mock — controls what operatorTier Firehose sees.
+// getSnapshot() returns the tier for the current test. Tests that need a
+// specific tier call mockAgencyTier(tier) before rendering.
+let _currentMockTier = 'H3';
 vi.mock('@/lib/stores/agency-store', () => ({
     agencyStore: {
         setTier: vi.fn(),
-        getTier: vi.fn(() => 'H3'),
-        subscribe: vi.fn(() => () => {}),
-        getSnapshot: vi.fn(() => 'H3'),
+        getTier: vi.fn(() => _currentMockTier),
+        subscribe: vi.fn((listener: () => void) => {
+            // Return an unsubscribe noop — store won't emit in tests.
+            void listener;
+            return () => {};
+        }),
+        getSnapshot: vi.fn(() => _currentMockTier),
     },
 }));
 
-// Mock useStores so ReplayStoresProvider can call it without a live StoresProvider.
-// We provide minimal in-memory FirehoseStore + PresenceStore instances.
-import { FirehoseStore } from '@/lib/stores/firehose-store';
-import { PresenceStore } from '@/lib/stores/presence-store';
-import { HeartbeatStore } from '@/lib/stores/heartbeat-store';
-import { selectionStore } from '@/lib/stores/selection-store';
+function mockAgencyTier(tier: string): void {
+    _currentMockTier = tier;
+}
 
-const mockFirehose = new FirehoseStore();
-const mockPresence = new PresenceStore();
-const mockHeartbeat = new HeartbeatStore();
-
-vi.mock('../use-stores', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../use-stores')>();
-    return {
-        ...actual,
-        useStores: vi.fn(() => ({
-            firehose: mockFirehose,
-            presence: mockPresence,
-            heartbeat: mockHeartbeat,
-            selection: selectionStore,
-        })),
-    };
-});
-
-// Mock useFirehoseFilter — used inside Firehose component
+// useFirehoseFilter — not relevant to replay redaction tests.
 vi.mock('@/lib/hooks/use-firehose-filter', () => ({
     useFirehoseFilter: vi.fn(() => ({ filter: null })),
 }));
 
-// Mock useSelection — used inside Inspector (returns null selectedDid so Inspector renders null)
+// useSelection — Inspector calls this; null selectedDid makes Inspector return null.
 vi.mock('@/lib/hooks/use-selection', () => ({
     useSelection: vi.fn(() => ({ selectedDid: null, clear: vi.fn() })),
 }));
 
+// ── Imports ───────────────────────────────────────────────────────────────────
+
+import { StoresProvider } from '../use-stores';
 import { ReplayClient } from './replay-client';
 import { agencyStore } from '@/lib/stores/agency-store';
 import { H4_PLACEHOLDER, H5_PLACEHOLDER } from './replay-redaction-copy';
 
-// Fixture entries for rendering tests
+// ── Test wrapper (provides StoresProvider so useStores() resolves via context) ─
+
+function Wrapper({ children }: { children: ReactNode }) {
+    return <StoresProvider>{children}</StoresProvider>;
+}
+
+// ── Fixture entries ───────────────────────────────────────────────────────────
+
 const EMPTY_ENTRIES: unknown[] = [];
 const TELOS_ENTRY = {
     id: 1,
@@ -104,15 +112,19 @@ const WHISPER_ENTRY = {
     createdAt: 1714435201000,
 };
 
+// ── Test setup ────────────────────────────────────────────────────────────────
+
 beforeEach(() => {
     vi.mocked(agencyStore.setTier).mockClear();
+    mockAgencyTier('H3'); // default tier for most tests
     cleanup();
-    // Reset stores for isolation
-    mockFirehose.ingest([]);
 });
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('ReplayClient — tier gate', () => {
     it('H1 operator sees "Replay requires H3 or higher" and no firehose', () => {
+        mockAgencyTier('H1');
         render(
             <ReplayClient
                 operatorTier="H1"
@@ -121,12 +133,14 @@ describe('ReplayClient — tier gate', () => {
                 endTick={50}
                 gridId="test-grid"
             />,
+            { wrapper: Wrapper },
         );
         expect(screen.getByText(/Replay requires H3/i)).toBeTruthy();
         expect(screen.queryByTestId('replay-firehose')).toBeNull();
     });
 
     it('H2 operator sees "Replay requires H3 or higher" and no firehose', () => {
+        mockAgencyTier('H2');
         render(
             <ReplayClient
                 operatorTier="H2"
@@ -135,6 +149,7 @@ describe('ReplayClient — tier gate', () => {
                 endTick={50}
                 gridId="test-grid"
             />,
+            { wrapper: Wrapper },
         );
         expect(screen.getByText(/Replay requires H3/i)).toBeTruthy();
         expect(screen.queryByTestId('replay-firehose')).toBeNull();
@@ -151,6 +166,7 @@ describe('ReplayClient — three-panel surface (D-13-03 / gap-closure 13-07)', (
                 endTick={50}
                 gridId="test-grid"
             />,
+            { wrapper: Wrapper },
         );
         expect(screen.getByLabelText('Event firehose')).toBeTruthy();
     });
@@ -166,6 +182,7 @@ describe('ReplayClient — three-panel surface (D-13-03 / gap-closure 13-07)', (
                 regions={[]}
                 connections={[]}
             />,
+            { wrapper: Wrapper },
         );
         expect(screen.getByLabelText('Region map')).toBeTruthy();
     });
@@ -173,6 +190,7 @@ describe('ReplayClient — three-panel surface (D-13-03 / gap-closure 13-07)', (
 
 describe('ReplayClient — redaction placeholders (via FirehoseRow)', () => {
     it('H3 renders "— Requires H4" placeholder for telos-revealing frame', () => {
+        mockAgencyTier('H3');
         render(
             <ReplayClient
                 operatorTier="H3"
@@ -181,12 +199,14 @@ describe('ReplayClient — redaction placeholders (via FirehoseRow)', () => {
                 endTick={10}
                 gridId="test-grid"
             />,
+            { wrapper: Wrapper },
         );
         // The Telos plaintext must NOT appear; placeholder must be shown
         expect(screen.getByText(H4_PLACEHOLDER)).toBeTruthy();
     });
 
     it('H3 renders "— Requires H5" placeholder for whisper frame', () => {
+        mockAgencyTier('H3');
         render(
             <ReplayClient
                 operatorTier="H3"
@@ -195,11 +215,13 @@ describe('ReplayClient — redaction placeholders (via FirehoseRow)', () => {
                 endTick={10}
                 gridId="test-grid"
             />,
+            { wrapper: Wrapper },
         );
         expect(screen.getByText(H5_PLACEHOLDER)).toBeTruthy();
     });
 
     it('H4 renders "— Requires H5" placeholder for whisper frame', () => {
+        mockAgencyTier('H4');
         render(
             <ReplayClient
                 operatorTier="H4"
@@ -208,11 +230,13 @@ describe('ReplayClient — redaction placeholders (via FirehoseRow)', () => {
                 endTick={10}
                 gridId="test-grid"
             />,
+            { wrapper: Wrapper },
         );
         expect(screen.getByText(H5_PLACEHOLDER)).toBeTruthy();
     });
 
     it('H4 renders unredacted payload for H4-restricted telos event', () => {
+        mockAgencyTier('H4');
         render(
             <ReplayClient
                 operatorTier="H4"
@@ -221,6 +245,7 @@ describe('ReplayClient — redaction placeholders (via FirehoseRow)', () => {
                 endTick={10}
                 gridId="test-grid"
             />,
+            { wrapper: Wrapper },
         );
         // H4 can see telos.refined payload — no placeholder
         expect(screen.queryByText(H4_PLACEHOLDER)).toBeNull();
@@ -237,6 +262,7 @@ describe('ReplayClient — tier reset on unmount (D-13-07)', () => {
                 endTick={50}
                 gridId="test-grid"
             />,
+            { wrapper: Wrapper },
         );
         unmount();
         expect(agencyStore.setTier).toHaveBeenCalledWith('H1');

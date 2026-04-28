@@ -20,6 +20,7 @@
 import { usePresence } from '../hooks';
 import { categorizeEventType, type EventCategory } from '@/lib/stores/event-type';
 import type { AuditEntry } from '@/lib/protocol/audit-types';
+import { H4_PLACEHOLDER, H5_PLACEHOLDER, H4_RESTRICTED, H5_RESTRICTED } from '@/app/grid/replay/replay-redaction-copy';
 
 /**
  * Category → Tailwind classes for the event-type badge.
@@ -95,11 +96,19 @@ export interface FirehoseRowProps {
      *                  entry.payload.triggered_by_dialogue_id === filter.value
      */
     readonly dialogueFilter?: { key: 'dialogue_id'; value: string } | null;
+    /**
+     * Phase 13 (REPLAY-05 / D-13-06 / gap-closure 13-07): operator tier for
+     * inline payload redaction. When undefined, no redaction is applied
+     * (live /grid behavior unchanged — backward-compatible default).
+     * Format: 'H1' | 'H2' | 'H3' | 'H4' | 'H5'.
+     */
+    readonly operatorTier?: string;
 }
 
 export function FirehoseRow({
     entry,
     dialogueFilter = null,
+    operatorTier,
 }: FirehoseRowProps): React.ReactElement {
     const presence = usePresence();
     const category = categorizeEventType(entry.eventType);
@@ -155,7 +164,19 @@ export function FirehoseRow({
                 {actorDisplay}
             </span>
             <span className="text-neutral-400 flex-1 truncate">
-                {payloadPreview(entry.payload)}
+                {(() => {
+                    // Phase 13 (D-13-06 / gap-closure 13-07): tier-aware payload redaction.
+                    // When operatorTier is undefined (live /grid — no tier plumbed), tierNum
+                    // is 99 so neither restriction branch fires — backward-compat preserved.
+                    const tierNum = operatorTier ? parseInt(operatorTier.replace('H', ''), 10) : 99;
+                    if (H5_RESTRICTED.has(entry.eventType) && tierNum < 5) {
+                        return H5_PLACEHOLDER;
+                    }
+                    if (H4_RESTRICTED.has(entry.eventType) && tierNum < 4) {
+                        return H4_PLACEHOLDER;
+                    }
+                    return payloadPreview(entry.payload);
+                })()}
             </span>
         </li>
     );

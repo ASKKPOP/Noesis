@@ -24,11 +24,13 @@
  *     "No matching events for dialogue_id ${value}. Press × to clear."
  */
 
+import { useSyncExternalStore } from 'react';
 import { useFirehose } from '../hooks';
 import { useFirehoseFilter } from '@/lib/hooks/use-firehose-filter';
 import { FirehoseRow } from './firehose-row';
 import { EventTypeFilter } from './event-type-filter';
 import { FirehoseFilterChip } from './firehose-filter-chip';
+import { agencyStore } from '@/lib/stores/agency-store';
 import type { AuditEntry } from '@/lib/protocol/audit-types';
 
 /** Maximum number of DOM rows. The ring buffer keeps 500; we render 100. */
@@ -61,6 +63,14 @@ export interface FirehoseProps {
 export function Firehose({ replayMode: _replayMode = false }: FirehoseProps = {}): React.ReactElement {
     const snap = useFirehose();
     const { filter: dialogueFilter } = useFirehoseFilter();
+    // Phase 13 (D-13-06 / gap-closure 13-07): read operator tier so FirehoseRow
+    // can apply inline payload redaction for H4/H5-restricted event types.
+    // Uses the same agencyStore pattern as RelationshipsSection (useSyncExternalStore).
+    const operatorTier = useSyncExternalStore(
+        agencyStore.subscribe,
+        agencyStore.getSnapshot,
+        agencyStore.getSnapshot,
+    );
     // filteredEntries is oldest-first inside the store. Newest-first in the
     // UI matches scrolling-log convention (top = most recent). slice(-100)
     // keeps only the tail (most recent 100), then reverse() flips order.
@@ -130,6 +140,7 @@ export function Firehose({ replayMode: _replayMode = false }: FirehoseProps = {}
                             key={typeof entry.id === 'number' ? `id:${entry.id}` : `h:${entry.eventHash}`}
                             entry={entry}
                             dialogueFilter={dialogueFilter}
+                            operatorTier={operatorTier}
                         />
                     ))}
                 </ul>
