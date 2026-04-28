@@ -1,12 +1,13 @@
 /**
- * RED tests for ReplayClient (REPLAY-05 / D-13-05..07 / T-10-09).
+ * Tests for ReplayClient (REPLAY-05 / D-13-05..07 / T-10-09).
  *
- * These tests encode the acceptance criteria for Wave 4 (Plan 13-05).
- * They MUST fail until dashboard/src/app/grid/replay/replay-client.tsx is created.
+ * Wave 6 (Plan 13-07): Updated to verify the three-panel surface
+ * (Firehose, Inspector, RegionMap) mounted with replayMode={true},
+ * sourced from ReplayStoresProvider seeded with the entries prop.
  *
  * Threat mitigation: T-10-09 — "H1 operator sees plaintext during replay".
- * Tier gate H1/H2 must show 'Replay requires H3 or higher'; H3/H4/H5 see the viewer.
- * H4 redaction placeholder 'Requires H4'; H5 whisper placeholder 'Requires H5'.
+ * Tier gate H1/H2 must show 'Replay requires H3 or higher'; H3/H4/H5 see panels.
+ * H4 redaction placeholder '— Requires H4'; H5 whisper placeholder '— Requires H5'.
  * Tier reset on unmount (D-13-07): agencyStore.setTier('H1') called on unmount.
  * Wall-clock grep (D-13-05): no Date.now/setInterval/setTimeout/requestAnimationFrame/
  * Math.random in the source file.
@@ -34,9 +35,43 @@ vi.mock('@/lib/stores/agency-store', () => ({
     },
 }));
 
-// RED until Wave 4 (Plan 13-05) creates dashboard/src/app/grid/replay/replay-client.tsx
+// Mock useStores so ReplayStoresProvider can call it without a live StoresProvider.
+// We provide minimal in-memory FirehoseStore + PresenceStore instances.
+import { FirehoseStore } from '@/lib/stores/firehose-store';
+import { PresenceStore } from '@/lib/stores/presence-store';
+import { HeartbeatStore } from '@/lib/stores/heartbeat-store';
+import { selectionStore } from '@/lib/stores/selection-store';
+
+const mockFirehose = new FirehoseStore();
+const mockPresence = new PresenceStore();
+const mockHeartbeat = new HeartbeatStore();
+
+vi.mock('../use-stores', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../use-stores')>();
+    return {
+        ...actual,
+        useStores: vi.fn(() => ({
+            firehose: mockFirehose,
+            presence: mockPresence,
+            heartbeat: mockHeartbeat,
+            selection: selectionStore,
+        })),
+    };
+});
+
+// Mock useFirehoseFilter — used inside Firehose component
+vi.mock('@/lib/hooks/use-firehose-filter', () => ({
+    useFirehoseFilter: vi.fn(() => ({ filter: null })),
+}));
+
+// Mock useSelection — used inside Inspector (returns null selectedDid so Inspector renders null)
+vi.mock('@/lib/hooks/use-selection', () => ({
+    useSelection: vi.fn(() => ({ selectedDid: null, clear: vi.fn() })),
+}));
+
 import { ReplayClient } from './replay-client';
 import { agencyStore } from '@/lib/stores/agency-store';
+import { H4_PLACEHOLDER, H5_PLACEHOLDER } from './replay-redaction-copy';
 
 // Fixture entries for rendering tests
 const EMPTY_ENTRIES: unknown[] = [];
@@ -72,6 +107,8 @@ const WHISPER_ENTRY = {
 beforeEach(() => {
     vi.mocked(agencyStore.setTier).mockClear();
     cleanup();
+    // Reset stores for isolation
+    mockFirehose.ingest([]);
 });
 
 describe('ReplayClient — tier gate', () => {
@@ -79,7 +116,7 @@ describe('ReplayClient — tier gate', () => {
         render(
             <ReplayClient
                 operatorTier="H1"
-                entries={EMPTY_ENTRIES}
+                entries={EMPTY_ENTRIES as never}
                 startTick={0}
                 endTick={50}
                 gridId="test-grid"
@@ -88,13 +125,12 @@ describe('ReplayClient — tier gate', () => {
         expect(screen.getByText(/Replay requires H3/i)).toBeTruthy();
         expect(screen.queryByTestId('replay-firehose')).toBeNull();
     });
-    // RED until Wave 4 (Plan 13-05) creates dashboard/src/app/grid/replay/replay-client.tsx
 
     it('H2 operator sees "Replay requires H3 or higher" and no firehose', () => {
         render(
             <ReplayClient
                 operatorTier="H2"
-                entries={EMPTY_ENTRIES}
+                entries={EMPTY_ENTRIES as never}
                 startTick={0}
                 endTick={50}
                 gridId="test-grid"
@@ -103,38 +139,92 @@ describe('ReplayClient — tier gate', () => {
         expect(screen.getByText(/Replay requires H3/i)).toBeTruthy();
         expect(screen.queryByTestId('replay-firehose')).toBeNull();
     });
-    // RED until Wave 4 (Plan 13-05) creates dashboard/src/app/grid/replay/replay-client.tsx
 });
 
-describe('ReplayClient — redaction placeholders', () => {
+describe('ReplayClient — three-panel surface (D-13-03 / gap-closure 13-07)', () => {
+    it('H3 mounts the Firehose panel (aria-label="Event firehose")', () => {
+        render(
+            <ReplayClient
+                operatorTier="H3"
+                entries={EMPTY_ENTRIES as never}
+                startTick={0}
+                endTick={50}
+                gridId="test-grid"
+            />,
+        );
+        expect(screen.getByLabelText('Event firehose')).toBeTruthy();
+    });
+
+    it('H3 mounts the RegionMap panel (aria-label="Region map")', () => {
+        render(
+            <ReplayClient
+                operatorTier="H3"
+                entries={EMPTY_ENTRIES as never}
+                startTick={0}
+                endTick={50}
+                gridId="test-grid"
+                regions={[]}
+                connections={[]}
+            />,
+        );
+        expect(screen.getByLabelText('Region map')).toBeTruthy();
+    });
+});
+
+describe('ReplayClient — redaction placeholders (via FirehoseRow)', () => {
     it('H3 renders "— Requires H4" placeholder for telos-revealing frame', () => {
         render(
             <ReplayClient
                 operatorTier="H3"
-                entries={[TELOS_ENTRY]}
+                entries={[TELOS_ENTRY] as never}
                 startTick={0}
                 endTick={10}
                 gridId="test-grid"
             />,
         );
         // The Telos plaintext must NOT appear; placeholder must be shown
-        expect(screen.getByText(/— Requires H4/i)).toBeTruthy();
+        expect(screen.getByText(H4_PLACEHOLDER)).toBeTruthy();
     });
-    // RED until Wave 4 (Plan 13-05) creates dashboard/src/app/grid/replay/replay-client.tsx
 
     it('H3 renders "— Requires H5" placeholder for whisper frame', () => {
         render(
             <ReplayClient
                 operatorTier="H3"
-                entries={[WHISPER_ENTRY]}
+                entries={[WHISPER_ENTRY] as never}
                 startTick={0}
                 endTick={10}
                 gridId="test-grid"
             />,
         );
-        expect(screen.getByText(/— Requires H5/i)).toBeTruthy();
+        expect(screen.getByText(H5_PLACEHOLDER)).toBeTruthy();
     });
-    // RED until Wave 4 (Plan 13-05) creates dashboard/src/app/grid/replay/replay-client.tsx
+
+    it('H4 renders "— Requires H5" placeholder for whisper frame', () => {
+        render(
+            <ReplayClient
+                operatorTier="H4"
+                entries={[WHISPER_ENTRY] as never}
+                startTick={0}
+                endTick={10}
+                gridId="test-grid"
+            />,
+        );
+        expect(screen.getByText(H5_PLACEHOLDER)).toBeTruthy();
+    });
+
+    it('H4 renders unredacted payload for H4-restricted telos event', () => {
+        render(
+            <ReplayClient
+                operatorTier="H4"
+                entries={[TELOS_ENTRY] as never}
+                startTick={0}
+                endTick={10}
+                gridId="test-grid"
+            />,
+        );
+        // H4 can see telos.refined payload — no placeholder
+        expect(screen.queryByText(H4_PLACEHOLDER)).toBeNull();
+    });
 });
 
 describe('ReplayClient — tier reset on unmount (D-13-07)', () => {
@@ -142,7 +232,7 @@ describe('ReplayClient — tier reset on unmount (D-13-07)', () => {
         const { unmount } = render(
             <ReplayClient
                 operatorTier="H3"
-                entries={EMPTY_ENTRIES}
+                entries={EMPTY_ENTRIES as never}
                 startTick={0}
                 endTick={50}
                 gridId="test-grid"
@@ -151,16 +241,10 @@ describe('ReplayClient — tier reset on unmount (D-13-07)', () => {
         unmount();
         expect(agencyStore.setTier).toHaveBeenCalledWith('H1');
     });
-    // RED until Wave 4 (Plan 13-05) creates dashboard/src/app/grid/replay/replay-client.tsx
 });
 
 describe('ReplayClient — wall-clock grep gate (D-13-05)', () => {
     it('source file contains no banned time/random APIs', () => {
-        /**
-         * This test will throw ENOENT until Wave 4 creates replay-client.tsx.
-         * That ENOENT is the expected RED failure mode for this test.
-         * Once Wave 4 creates the file, this test must pass — no forbidden APIs.
-         */
         const srcPath = path.resolve(
             import.meta.dirname ?? __dirname,
             'replay-client.tsx',
@@ -177,5 +261,4 @@ describe('ReplayClient — wall-clock grep gate (D-13-05)', () => {
             expect(src).not.toContain(banned);
         }
     });
-    // RED until Wave 4 (Plan 13-05) creates dashboard/src/app/grid/replay/replay-client.tsx
 });
