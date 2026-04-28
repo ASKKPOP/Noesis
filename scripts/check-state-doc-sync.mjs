@@ -23,6 +23,10 @@
  * Phase 11 (Plan 11-00, WHISPER-04) bumped it to 22 by appending `nous.whispered`.
  * Phase 12 (Plan 12-00, VOTE-01..04) bumped it to 26 by appending the four governance events.
  * Phase 13 (Plan 13-04, REPLAY-02) bumped it to 27 by appending `operator.exported`.
+ * Phase 14 (Plans 14-01..14-05, RIG-01..05 / D-14-08) added two prefix hard-bans:
+ *   - chronos.*: chronos.rig_closed is rig-internal, never broadcast
+ *   - rig.*: future rig-internal events follow the same isolation rule
+ * Allowlist count remains 27 (no Phase 14 additions).
  * Any future phase that extends the allowlist must bump the count literal here
  * and append its members to the `required` array.
  */
@@ -141,6 +145,55 @@ function checkReplayPrefixBan() {
 }
 
 checkReplayPrefixBan();
+
+// 5. chronos.* prefix hard-ban (Phase 14 D-14-08).
+//    chronos.rig_closed is the closed 5-key tuple emitted on the Rig's isolated AuditChain
+//    when a Researcher Rig terminates. It MUST NOT appear in the production broadcast
+//    allowlist — Rigs are headless, off-broadcast, and researcher-internal by construction.
+function checkChronosPrefixBan() {
+  const allowlistPath = resolve(repoRoot, 'grid/src/audit/broadcast-allowlist.ts');
+  if (!existsSync(allowlistPath)) {
+    failures.push(`checkChronosPrefixBan: ${allowlistPath} not found — cannot verify ban.`);
+    return;
+  }
+  const text = readFileSync(allowlistPath, 'utf8');
+  const re = /['"]chronos\./g;
+  const matches = text.match(re);
+  if (matches && matches.length > 0) {
+    failures.push(
+      `CHRONOS PREFIX HARD-BAN VIOLATION: ${allowlistPath} contains a 'chronos.*' token.\n` +
+      `  Phase 14 D-14-08 bans chronos.* allowlist members:\n` +
+      `  > chronos.rig_closed lives ONLY on the Rig's isolated AuditChain; it is never broadcast.\n` +
+      `  Reference: .planning/phases/14-researcher-rigs/14-CONTEXT.md §D-14-08`
+    );
+  }
+}
+
+// 6. rig.* prefix hard-ban (Phase 14 D-14-08).
+//    Future rig-internal events (rig.*) follow the same isolation rule as chronos.rig_closed:
+//    they are emitted on the Rig's isolated AuditChain only and MUST NOT cross into production
+//    broadcast.
+function checkRigPrefixBan() {
+  const allowlistPath = resolve(repoRoot, 'grid/src/audit/broadcast-allowlist.ts');
+  if (!existsSync(allowlistPath)) {
+    failures.push(`checkRigPrefixBan: ${allowlistPath} not found — cannot verify ban.`);
+    return;
+  }
+  const text = readFileSync(allowlistPath, 'utf8');
+  const re = /['"]rig\./g;
+  const matches = text.match(re);
+  if (matches && matches.length > 0) {
+    failures.push(
+      `RIG PREFIX HARD-BAN VIOLATION: ${allowlistPath} contains a 'rig.*' token.\n` +
+      `  Phase 14 D-14-08 bans rig.* allowlist members:\n` +
+      `  > Rig-internal events live on the Rig's isolated AuditChain only; never broadcast.\n` +
+      `  Reference: .planning/phases/14-researcher-rigs/14-CONTEXT.md §D-14-08`
+    );
+  }
+}
+
+checkChronosPrefixBan();
+checkRigPrefixBan();
 
 if (failures.length > 0) {
   console.error('[state-doc-sync] FAIL — doc drift detected:');
