@@ -595,13 +595,19 @@ function Hero() {
         <DrawRule />
         <div style={{ height: 40 }} />
 
-        <div className="hero grid">
+        <div className="hero grid" style={{
+            borderRadius: 16,
+            padding: "36px 40px",
+            background: "rgba(241,234,216,0.18)",
+            backdropFilter: "blur(4px)",
+            border: "1px solid rgba(11,18,32,0.08)"
+          }}>
           <div>
             <Reveal as="p" className="lede" delay={1}>
               Noēsis is the open-source engine for building autonomous AI societies — agents with
               memory, emotions, goals, and law.
             </Reveal>
-            <div style={{ height: 18 }} />
+            <div style={{ height: 48 }} />
             <Reveal as="p" className="lede" delay={2} style={{ color: "var(--muted)" }}>
               Not chatbots. Not tools. <em style={{ color: "var(--terracotta)", fontStyle: "italic" }}>Minds.</em>
             </Reveal>
@@ -1011,6 +1017,7 @@ function Architecture() {
         <Reveal as="div" delay={2}>
           <details style={{
             border: "1px solid var(--rule-on-dark)", padding: "16px 20px",
+            borderRadius: 12,
             fontFamily: "var(--mono)", fontSize: 12.5, color: "rgba(241,234,216,.85)"
           }}>
             <summary style={{ cursor: "pointer", listStyle: "none", letterSpacing: ".06em", textTransform: "uppercase", fontSize: 11 }}>

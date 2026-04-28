@@ -332,7 +332,7 @@ h1, h2, h3, h4 { font-weight: 400; margin: 0; letter-spacing: -0.015em; }
 .arch-stage {
   background: var(--ink);
   color: var(--parchment);
-  border-radius: 2px;
+  border-radius: 16px;
   padding: clamp(28px, 4vw, 56px);
   position: relative;
 }
@@ -351,6 +351,7 @@ h1, h2, h3, h4 { font-weight: 400; margin: 0; letter-spacing: -0.015em; }
   min-height: 180px;
   display: flex; flex-direction: column;
   gap: 10px;
+  border-radius: 12px;
 }
 .pkg .pkg-name {
   font-family: var(--mono);
@@ -380,7 +381,7 @@ h1, h2, h3, h4 { font-weight: 400; margin: 0; letter-spacing: -0.015em; }
 .pkg .pkg-tags span {
   border: 1px solid var(--rule-on-dark);
   padding: 2px 6px;
-  border-radius: 2px;
+  border-radius: 6px;
 }
 
 /* Bridge in middle of grid */
@@ -401,6 +402,7 @@ h1, h2, h3, h4 { font-weight: 400; margin: 0; letter-spacing: -0.015em; }
   background: var(--ink);
   padding: 8px 12px;
   border: 1px solid var(--terracotta);
+  border-radius: 8px;
   font-family: var(--mono);
   font-size: 10.5px;
   letter-spacing: 0.14em;
