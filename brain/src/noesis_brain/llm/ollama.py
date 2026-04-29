@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import os
 import time
 
 import httpx
 
 from noesis_brain.llm.base import LLMAdapter, LLMError
 from noesis_brain.llm.types import GenerateOptions, LLMResponse
+
+_FIXTURE_MODE_VAR = "NOESIS_FIXTURE_MODE"
 
 
 class OllamaAdapter(LLMAdapter):
@@ -19,6 +22,11 @@ class OllamaAdapter(LLMAdapter):
         base_url: str = "http://localhost:11434",
         timeout: float = 120.0,
     ) -> None:
+        if os.environ.get(_FIXTURE_MODE_VAR) == "1":
+            raise RuntimeError(
+                f"OllamaAdapter: network LLM calls forbidden — {_FIXTURE_MODE_VAR}=1 is set. "
+                "Use FixtureBrainAdapter for rig runs (Phase 14 D-14-06)."
+            )
         self._model = model
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout

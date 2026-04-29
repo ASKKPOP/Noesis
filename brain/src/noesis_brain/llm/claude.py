@@ -8,6 +8,8 @@ import time
 from noesis_brain.llm.base import LLMAdapter, LLMError
 from noesis_brain.llm.types import GenerateOptions, LLMResponse
 
+_FIXTURE_MODE_VAR = "NOESIS_FIXTURE_MODE"
+
 
 class ClaudeAdapter(LLMAdapter):
     """Adapter for Anthropic Claude API."""
@@ -17,6 +19,11 @@ class ClaudeAdapter(LLMAdapter):
         model: str = "claude-sonnet-4-6",
         api_key: str | None = None,
     ) -> None:
+        if os.environ.get(_FIXTURE_MODE_VAR) == "1":
+            raise RuntimeError(
+                f"ClaudeAdapter: network LLM calls forbidden — {_FIXTURE_MODE_VAR}=1 is set. "
+                "Use FixtureBrainAdapter for rig runs (Phase 14 D-14-06)."
+            )
         self._model = model
         self._api_key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
         if not self._api_key:

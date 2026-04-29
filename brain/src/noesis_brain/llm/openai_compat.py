@@ -9,6 +9,8 @@ import time
 from noesis_brain.llm.base import LLMAdapter, LLMError
 from noesis_brain.llm.types import GenerateOptions, LLMResponse
 
+_FIXTURE_MODE_VAR = "NOESIS_FIXTURE_MODE"
+
 
 class OpenAICompatAdapter(LLMAdapter):
     """Adapter for any OpenAI-compatible API (LM Studio, OpenAI, vLLM, etc.)."""
@@ -20,6 +22,11 @@ class OpenAICompatAdapter(LLMAdapter):
         api_key: str | None = None,
         provider_label: str = "openai",
     ) -> None:
+        if os.environ.get(_FIXTURE_MODE_VAR) == "1":
+            raise RuntimeError(
+                f"OpenAICompatAdapter: network LLM calls forbidden — {_FIXTURE_MODE_VAR}=1 is set. "
+                "Use FixtureBrainAdapter for rig runs (Phase 14 D-14-06)."
+            )
         self._model = model
         self._base_url = base_url  # None → OpenAI default; "http://localhost:1234/v1" for LM Studio
         self._api_key = api_key or os.environ.get("OPENAI_API_KEY", "")

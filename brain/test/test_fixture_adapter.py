@@ -78,3 +78,41 @@ async def test_is_available_true_when_records_loaded():
     path = _write_fixture(FIXTURE_LINES)
     adapter = FixtureBrainAdapter(fixture_path=path)
     assert await adapter.is_available() is True
+
+
+# ---------------------------------------------------------------------------
+# Phase 14 D-14-06: real adapters refuse instantiation when NOESIS_FIXTURE_MODE=1
+# ---------------------------------------------------------------------------
+
+def test_ollama_adapter_refuses_when_fixture_mode(monkeypatch):
+    """OllamaAdapter.__init__ must raise RuntimeError when NOESIS_FIXTURE_MODE=1."""
+    monkeypatch.setenv("NOESIS_FIXTURE_MODE", "1")
+    from noesis_brain.llm.ollama import OllamaAdapter
+    with pytest.raises(RuntimeError, match="NOESIS_FIXTURE_MODE"):
+        OllamaAdapter()
+
+
+def test_claude_adapter_refuses_when_fixture_mode(monkeypatch):
+    """ClaudeAdapter.__init__ must raise RuntimeError when NOESIS_FIXTURE_MODE=1."""
+    monkeypatch.setenv("NOESIS_FIXTURE_MODE", "1")
+    from noesis_brain.llm.claude import ClaudeAdapter
+    with pytest.raises(RuntimeError, match="NOESIS_FIXTURE_MODE"):
+        ClaudeAdapter(api_key="dummy")
+
+
+def test_openai_compat_adapter_refuses_when_fixture_mode(monkeypatch):
+    """OpenAICompatAdapter.__init__ must raise RuntimeError when NOESIS_FIXTURE_MODE=1."""
+    monkeypatch.setenv("NOESIS_FIXTURE_MODE", "1")
+    from noesis_brain.llm.openai_compat import OpenAICompatAdapter
+    with pytest.raises(RuntimeError, match="NOESIS_FIXTURE_MODE"):
+        OpenAICompatAdapter()
+
+
+def test_real_adapters_work_normally_without_fixture_mode(monkeypatch):
+    """Real adapters must NOT raise when NOESIS_FIXTURE_MODE is unset."""
+    monkeypatch.delenv("NOESIS_FIXTURE_MODE", raising=False)
+    from noesis_brain.llm.ollama import OllamaAdapter
+    from noesis_brain.llm.openai_compat import OpenAICompatAdapter
+    # These construct without raising (no network call yet)
+    OllamaAdapter()
+    OpenAICompatAdapter()
