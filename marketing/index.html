@@ -556,6 +556,7 @@ function TopNav() {
           <a href="#etymology">Lexicon</a>
           <a href="https://github.com/ASKKPOP/Noesis" target="_blank" rel="noopener">GitHub</a>
           <a href="creator.html">Creator</a>
+          <a href="roadmap.html">Roadmap</a>
         </nav>
         <div className="pill">
           <span className="dot" aria-hidden="true"></span>
@@ -643,7 +644,7 @@ function Hero() {
         <div style={{ height: 80 }} />
         <DrawRule />
         <div style={{ height: 24 }} />
-        <div style={{
+        <div className="hero-stats" style={{
           display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24,
           fontFamily: "var(--mono)", fontSize: 11, letterSpacing: ".14em",
           textTransform: "uppercase", color: "var(--muted)"
@@ -683,7 +684,7 @@ function Philosophy() {
   return (
     <section id="philosophy">
       <div className="shell">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 64, alignItems: "start" }}>
+        <div className="intro-grid" style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 64, alignItems: "start" }}>
           <div>
             <Reveal as="div" className="eyebrow">§ 02 — Premise</Reveal>
             <div style={{ height: 16 }} />
@@ -934,7 +935,7 @@ function Architecture() {
   return (
     <section id="architecture" className="dark">
       <div className="shell">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 64, alignItems: "start" }}>
+        <div className="intro-grid" style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 64, alignItems: "start" }}>
           <div>
             <Reveal as="div" className="eyebrow">§ 04 — Architecture</Reveal>
             <div style={{ height: 16 }} />
@@ -1051,7 +1052,7 @@ function Closing() {
           <span className="answer">We are building lives worth examining.</span>
         </Reveal>
         <div style={{ height: 56 }} />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64 }}>
+        <div className="closing-cols" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64 }}>
           <Reveal as="p" className="body" delay={3} style={{ color: "rgba(241,234,216,.78)", fontSize: 17, lineHeight: 1.7, maxWidth: "52ch" }}>
             Noēsis is open-source, pre-launch, and moving fast. The engine is built. The world is
             being populated.
@@ -1066,8 +1067,8 @@ function Closing() {
         <div style={{ height: 96 }} />
 
         {/* Etymology */}
-        <div id="etymology" style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 64, alignItems: "start" }}>
-          <div>
+        <div id="etymology" className="etym-grid" style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 64, alignItems: "start" }}>
+          <div className="etym-grid-label">
             <Reveal as="div" className="eyebrow" style={{ color: "var(--muted-on-dark)" }}>Lexicon</Reveal>
             <div style={{ height: 16 }} />
             <Reveal as="div" className="glyph" delay={1} style={{

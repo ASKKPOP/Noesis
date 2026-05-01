@@ -498,6 +498,59 @@ h1, h2, h3, h4 { font-weight: 400; margin: 0; letter-spacing: -0.015em; }
   .bridge { display: none; }
 }
 
+@media (max-width: 768px) {
+  /* ── Navigation ── */
+  .topnav .pill { display: none; }
+  .brand { flex-shrink: 0; }
+  .navlinks {
+    flex-shrink: 1;
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 18px;
+    mask-image: linear-gradient(to right, black 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+  }
+  .navlinks::-webkit-scrollbar { display: none; }
+  .navlinks a { white-space: nowrap; flex-shrink: 0; }
+
+  /* ── Inline grids: stack to single column ── */
+  .intro-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+  .etym-grid  { grid-template-columns: 1fr !important; gap: 24px !important; }
+  .closing-cols { grid-template-columns: 1fr !important; gap: 24px !important; }
+  .etym-grid-label { display: none; }   /* hide large ω glyph on mobile */
+
+  /* ── Hero stats: 4-col → 2x2 ── */
+  .hero-stats { grid-template-columns: repeat(2, 1fr) !important; gap: 20px !important; }
+
+  /* ── Pillar: drop number col entirely on small screens ── */
+  .pillar { grid-template-columns: 1fr; padding: 36px 0; }
+  .pillar .num { display: none; }
+  .pillar .left { grid-column: 1; }
+  .pillar .right { grid-column: 1; padding-top: 0; }
+
+  /* ── Architecture pkg header: stack ── */
+  .arch-header { flex-direction: column; gap: 4px; }
+
+  /* ── Footer: stack ── */
+  .footer { flex-direction: column; gap: 12px; text-align: center; align-items: center; }
+
+  /* ── Suppress huge closing glyph on mobile ── */
+  .closing-display { font-size: clamp(36px, 8vw, 56px); }
+}
+
+@media (max-width: 480px) {
+  /* Extra-small: reduce hero glyph so it doesn't dominate */
+  .hero-glyph { font-size: clamp(160px, 48vw, 260px) !important; }
+  /* Audience tabs: full-width */
+  .audience-tabs { width: 100%; display: flex; }
+  .audience-tabs button { flex: 1; }
+  /* Table: let it scroll */
+  .etym { font-size: 14px; }
+  .etym th, .etym td { padding: 14px 10px; }
+}
+
 /* Tweaks: density */
 body[data-density="airy"] { --pad-section: clamp(120px, 14vw, 220px); }
 body[data-density="tight"] { --pad-section: clamp(56px, 7vw, 100px); }

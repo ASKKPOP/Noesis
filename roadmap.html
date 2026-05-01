@@ -645,15 +645,20 @@ footer {
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
+  .nav-logo { flex-shrink: 0; }
   .nav-links {
     gap: 16px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    padding-right: 4px;
+    flex-shrink: 1;
+    min-width: 0;
+    mask-image: linear-gradient(to right, black 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
   }
   .nav-links::-webkit-scrollbar { display: none; }
-  .nav-links a:not(.pill) { white-space: nowrap; }
+  .nav-links a:not(.pill) { white-space: nowrap; flex-shrink: 0; }
+  .nav-links .pill { flex-shrink: 0; }
 }
 @media (max-width: 600px) {
   .service-card { grid-template-columns: 1fr; }
