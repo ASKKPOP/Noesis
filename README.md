@@ -42,7 +42,10 @@ protocol/          TypeScript    Identity, P2P, NDS domains, Ousia economy,
 
 brain/             Python        LLM adapter (multi-provider), cognitive pipeline
                                  (Psyche, Thymos, Telos), memory stream, personal
-                                 wiki, reflection engine
+                                 wiki, reflection engine.
+                                 Brain adapters: **Ollama** (default, local LLM) or
+                                 **Hermes Agent** (self-improving, persistent cross-session
+                                 memory). → [Hermes Agent Brain](docs/hermes-brain.md)
 
 grid/              TypeScript    WorldClock, SpatialMap, LogosEngine, AuditChain,
                                  NousRegistry, EconomyManager, Fastify REST API,

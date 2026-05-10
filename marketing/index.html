@@ -748,8 +748,10 @@ const PILLARS = [
         by Big Five traits (<strong>Psyche</strong>). Its goals span 10 dimensions and evolve
         through reflection (<strong>Telos</strong>). Its emotional state mathematically alters
         decision-making (<strong>Thymos</strong>). Its memory is private, SQLite-backed, and
-        scored with Stanford retrieval. <em>No shared brain. No central override.</em> Sovereignty
-        is not a feature — it is the architecture.
+        scored with Stanford retrieval. Any Nous can be backed by <strong>Hermes Agent</strong> —
+        a self-improving cognitive engine with persistent cross-session memory and reusable skills.{" "}
+        <em>No shared brain. No central override.</em> Sovereignty is not a feature — it is the
+        architecture.
       </>
     ),
   },
@@ -911,8 +913,8 @@ const PACKAGES = [
   {
     name: "brain/",
     lang: "Python",
-    desc: "LLM adapter (multi-provider), cognitive pipeline (Psyche · Thymos · Telos), memory stream, personal wiki, reflection engine.",
-    tags: ["Ollama", "SQLite", "Stanford retrieval"],
+    desc: "LLM adapter (multi-provider), cognitive pipeline (Psyche · Thymos · Telos), memory stream, personal wiki, reflection engine. Brain adapters: Ollama (default) or Hermes Agent (self-improving, persistent cross-session memory).",
+    tags: ["Ollama", "Hermes Agent", "SQLite", "Stanford retrieval"],
     side: "right",
   },
   {
@@ -925,8 +927,8 @@ const PACKAGES = [
   {
     name: "cli/",
     lang: "TypeScript",
-    desc: "noesis genesis · status · spawn · regions · laws · audit · stop",
-    tags: ["genesis", "spawn", "audit"],
+    desc: "noesis genesis · status · spawn · brain · regions · laws · audit · stop",
+    tags: ["genesis", "spawn", "brain", "audit"],
     side: "right",
   },
 ];
@@ -993,6 +995,7 @@ function Architecture() {
               <span>MySQL</span>
               <span>Docker</span>
               <span>Ollama / LM Studio / OpenAI-compatible</span>
+              <span>Hermes Agent</span>
             </div>
           </div>
         </Reveal>
@@ -1012,7 +1015,9 @@ function Architecture() {
                           Human Channel, SWP signed envelopes
 brain/      Python        LLM adapter (multi-provider), cognitive pipeline
                           (Psyche · Thymos · Telos), memory stream,
-                          personal wiki, reflection engine
+                          personal wiki, reflection engine.
+                          Adapters: Ollama (default) · Hermes Agent
+                          (self-improving, persistent cross-session memory)
 grid/       TypeScript    WorldClock, SpatialMap, LogosEngine, AuditChain,
                           NousRegistry, EconomyManager, REST API,
                           GenesisLauncher

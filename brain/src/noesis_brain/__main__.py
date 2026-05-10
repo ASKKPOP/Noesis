@@ -9,10 +9,15 @@ Environment variables:
     NOUS_CONFIG     - Path to Nous YAML config file
     GRID_NAME       - Grid name
     NOUS_REGION     - Starting region name
-    LLM_PROVIDER    - 'ollama' (default) or 'mock'
+    LLM_PROVIDER    - 'ollama' (default) or 'hermes'
     OLLAMA_HOST     - Ollama base URL (default: http://localhost:11434)
-    LLM_MODEL       - Model name override
+    LLM_MODEL       - Model name override (ollama only)
     SOCKET_DIR      - Directory for Unix socket (default: /tmp)
+
+    Hermes-specific (only used when LLM_PROVIDER=hermes):
+    HERMES_PROVIDER - LLM provider key passed to Hermes (default: anthropic)
+    HERMES_MODEL    - Model override (e.g. claude-opus-4-5)
+    HERMES_API_KEY  - API key override (else uses ~/.hermes/.env)
 
 Usage:
     python -m noesis_brain
@@ -108,25 +113,47 @@ def create_brain_app(
     ollama_host: str = "http://localhost:11434",
     llm_model: str = "qwen3:4b",
     socket_dir: str = "/tmp",
+    # Hermes-specific overrides (only used when llm_provider == "hermes")
+    hermes_provider: str = "anthropic",
+    hermes_model: str = "",
+    hermes_api_key: str | None = None,
 ) -> BrainApp:
     """Create a BrainApp from config.
 
     Args:
-        nous_name:    Short name for socket path (e.g. 'sophia')
-        config_path:  Path to Nous YAML file (mutually exclusive with config_data)
-        config_data:  Pre-parsed YAML dict (for testing)
-        grid_name:    Grid this Nous belongs to
-        location:     Starting region name
-        llm_provider: 'ollama' or 'mock'
-        ollama_host:  Ollama base URL
-        llm_model:    Override LLM model name
-        socket_dir:   Directory for Unix socket file
+        nous_name:        Short name for socket path (e.g. 'sophia')
+        config_path:      Path to Nous YAML file (mutually exclusive with config_data)
+        config_data:      Pre-parsed YAML dict (for testing)
+        grid_name:        Grid this Nous belongs to
+        location:         Starting region name
+        llm_provider:     'ollama' or 'hermes'
+        ollama_host:      Ollama base URL (ollama only)
+        llm_model:        Override LLM model name (ollama only)
+        socket_dir:       Directory for Unix socket file
+        hermes_provider:  Hermes LLM provider key (hermes only, default: anthropic)
+        hermes_model:     Hermes model override (hermes only)
+        hermes_api_key:   Hermes API key override (hermes only)
     """
     # Load config
     if config_data is None:
         if config_path is None:
             raise ValueError("Either config_path or config_data must be provided")
         config_data = _load_config(config_path)
+
+    # Delegate to Hermes factory when provider is 'hermes' — bypasses the
+    # standard Ollama/BrainHandler path entirely.
+    if llm_provider == "hermes":
+        from noesis_brain.hermes.factory import create_hermes_brain_app  # noqa: PLC0415
+        return create_hermes_brain_app(
+            nous_name=nous_name,
+            config_data=config_data,
+            grid_name=grid_name,
+            location=location,
+            hermes_provider=hermes_provider,
+            hermes_model=hermes_model,
+            hermes_api_key=hermes_api_key,
+            socket_dir=socket_dir,
+        )
 
     # Build Psyche
     psyche = load_psyche(data=config_data)
@@ -220,6 +247,9 @@ def create_brain_app_from_env() -> BrainApp:
         ollama_host=os.environ.get("OLLAMA_HOST", "http://localhost:11434"),
         llm_model=os.environ.get("LLM_MODEL", "qwen3:4b"),
         socket_dir=os.environ.get("SOCKET_DIR", "/tmp"),
+        hermes_provider=os.environ.get("HERMES_PROVIDER", "anthropic"),
+        hermes_model=os.environ.get("HERMES_MODEL", ""),
+        hermes_api_key=os.environ.get("HERMES_API_KEY"),
     )
 
 
