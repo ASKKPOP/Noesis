@@ -18,7 +18,7 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
 
 - [x] **Phase 15: Pneuma (Narrative Self)** — Growth Journal + ReflexionBuffer + RuleStore + Voyager Skill Library + AAU Web Learner + Coherence Gate. Allowlist 27→30. (shipped 2026-05-14)
 - 🔄 **Phase 16: Hypnos (Consolidating Memory)** — Per-Nous sleep/consolidation: Working Memory (cap=7) → NREM Hebbian LTM concept graph → SHY downscale. Allowlist 30→32. (in progress)
-- 📋 **Phase 17: Iris (Theory of Mind)** — Per-Nous private belief model of peers (5 dims: belief/desire/intention/knowledge/emotion). CONTEXT gathered 2026-05-15. Allowlist 32→36. (context ready)
+- [x] **Phase 17: Iris (Theory of Mind)** — Per-Nous private belief model of peers (5 dims: belief/desire/intention/knowledge/emotion). 27/27 verified. Allowlist 33→36. (shipped 2026-05-15)
 
 ## Phase Details (v2.3)
 
@@ -69,7 +69,7 @@ Plans:
 **Allowlist additions**: **+2**. Events: `nous.sleep.entered` `{nous_did, tick, ltm_snapshot_hash}`; `nous.sleep.completed` `{nous_did, tick, ltm_snapshot_hash}`. Running total: **32**.
 **Plans**: TBD (planning in progress)
 
-### Phase 17: Iris (Theory of Mind) 📋 (context ready 2026-05-15)
+### Phase 17: Iris (Theory of Mind) [x] (shipped 2026-05-15)
 **Goal**: Each Nous maintains a private per-peer belief model across 5 dimensions (belief, desire, intention, knowledge, emotion). The model is Brain-private; only belief-revision events cross the wire as hashes. The Iris elicit cycle uses LLM inference over witnessed peer events to form, update, and detect contradictions in beliefs.
 **Depends on**: Phase 16 (LTM concept graph provides the memory substrate Iris draws from when forming beliefs; Working Memory holds recent peer observations that `IrisRuntime.elicit` reads)
 **Requirements**: IRIS-01 (Belief dataclass + 5 dimensions), IRIS-02 (IrisRuntime.elicit), IRIS-03 (contradiction detection), IRIS-04 (prior seeding from observed events), IRIS-05 (belief context injection at prompt-build)
@@ -87,7 +87,14 @@ Plans:
   - T-17-03 (MEDIUM): Elicit LLM call blocks Grid tick — elicit runs as async Brain task with IRIS_ELICIT_COOLDOWN=20 ticks per pair preventing saturation.
   - T-17-04 (MEDIUM): Contradiction threshold too sensitive — IRIS_CONTRADICTION_THRESHOLD=0.3 (configurable); unit test: updating belief with near-identical content does NOT trigger contradiction.
 **Allowlist additions**: **+4**. Events: `iris.belief_revised` `{nous_did, tick, target_did, belief_hash}`; `iris.context_invoked` `{nous_did, tick, belief_count}`; `iris.contradiction_detected` `{nous_did, tick, target_did, contradiction_hash}`; `iris.prior_seeded` `{nous_did, tick, target_did, seed_event_hash}`. Running total: **36**.
-**Plans**: TBD (CONTEXT.md gathered 2026-05-15; planning not started)
+**Plans**: 5 plans (all shipped 2026-05-15)
+
+Plans:
+- [x] 17-01-wave-0-PLAN.md — Wave 0: fix _iris_runtime AttributeError; extend allowlist 27→36 + FORBIDDEN_KEY_PATTERN +6 iris keys
+- [x] 17-02-wave-1-PLAN.md — Wave 1: 4 ActionType members in types.py; extend BrainAction union in bridge/types.ts
+- [x] 17-03-wave-2-PLAN.md — Wave 2: grid/src/iris/ (4 sole-producer emitters + types + index); 4 NousRunner cases
+- [x] 17-04-wave-3-PLAN.md — Wave 3: IrisRuntime optional-dep init; elicit() in on_tick(); context_for() + ToM prompt section
+- [x] 17-05-wave-4-PLAN.md — Wave 4: Python invariant tests (cooldown, contradiction, append-only, zero-diff); TypeScript emitter tests; CI grep gates
 
 ## Progress (v2.3)
 

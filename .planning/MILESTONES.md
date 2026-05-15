@@ -387,4 +387,41 @@
 **All 7 phases shipped.** Broadcast allowlist grew 18 → 27 (+9 events across 5 phases; Phase 9 and Phase 14 added zero). Zero-diff audit chain invariant unbroken since Phase 1 commit `29c3516`. Hash-only cross-boundary, closed-tuple payloads, and sole-producer discipline preserved across all phases.
 
 ---
-*Last updated: 2026-04-28 — Phase 14 shipped (5/5 plans, allowlist stays at 27; chronos./rig. isolation CI-enforced forever)*
+
+## v2.3 Living Minds — IN PROGRESS (opened 2026-05-14)
+
+**Goal:** Give Nous a mind that authors itself. Three cognitive capabilities on top of the v2.2 frozen audit chain.
+
+### Phase 15: Pneuma (Narrative Self) — SHIPPED 2026-05-14
+
+**Plans:** 6/6. Allowlist: 27 → 30 (+3: nous.reflection_authored, nous.self_model_revised, nous.creed_violation).
+
+**Key artifacts:**
+- `brain/src/noesis_brain/reflexion/` — ReflexionBuffer (cap=5, evict-oldest)
+- `brain/src/noesis_brain/rules/` — RuleStore (WikiCategory.SELF_MODEL, cap=10)
+- `brain/src/noesis_brain/skills/` — SkillStore (FTS5 retrieval + SKILL_LEARN action)
+- `brain/src/noesis_brain/aau/` — AAULearner (DuckDuckGo/arXiv/Wikipedia/PyPI/RSS/Jina, async, never blocks tick)
+- `brain/src/noesis_brain/coherence/` — CoherenceGate (creed contradiction detection)
+- `grid/src/pneuma/` — 3 sole-producer emitters
+
+### Phase 16: Hypnos (Consolidating Memory) — IN PROGRESS
+
+**Plans:** TBD. Allowlist target: 30 → 32 (+2: nous.sleep.entered, nous.sleep.completed).
+
+### Phase 17: Iris (Theory of Mind) — SHIPPED 2026-05-15
+
+**Plans:** 5/5. Allowlist: 33 → 36 (+4: iris.belief_revised, iris.context_invoked, iris.contradiction_detected, iris.prior_seeded). 27/27 verification criteria met.
+
+**Key artifacts:**
+- `brain/src/noesis_brain/iris/` — IrisStore (SQLite WAL + FTS5, append-only), IrisRuntime (elicit + contradiction detection), context_for(), seed_priors() — all Brain-private
+- `grid/src/iris/` — 4 sole-producer emitters with HEX64_RE hash validation + closed-tuple enforcement
+- `brain/src/noesis_brain/rpc/handler.py` — IrisRuntime optional-dep init (iris_db_dir param), elicit() per peer per tick, context_for() → "Theory of Mind" prompt section
+- `brain/src/noesis_brain/prompts/system.py` — `_theory_of_mind_section()` helper (up to 3 peers × 5 beliefs)
+- `brain/test/iris/` — 19 Python tests (cooldown, contradiction threshold, append-only, zero-diff)
+- `grid/src/iris/*.test.ts` — 58 TypeScript tests (closed-tuple, self-report, HEX64_RE enforcement)
+- CI gates: iris-wallclock-gate.sh, iris-content-leak-gate.sh — both clean
+
+**Invariants preserved:** wall-clock free (tick is sole time axis), content never crosses wire (hashes only), append-only IrisStore (superseded_by FK chain), sole-producer boundary, 3-keys-not-5.
+
+---
+*Last updated: 2026-05-15 — Phase 17 shipped (5/5 plans, allowlist at 36, 27/27 verified)*
