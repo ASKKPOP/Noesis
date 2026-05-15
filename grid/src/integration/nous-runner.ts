@@ -27,6 +27,12 @@ import { appendBallotRevealed } from '../governance/appendBallotRevealed.js';
 import { GovernanceError } from '../governance/errors.js';
 import type { GovernanceStore } from '../governance/store.js';
 import type { BallotChoice } from '../governance/types.js';
+import {
+    appendIrisBeliefRevised,
+    appendIrisContextInvoked,
+    appendIrisContradictionDetected,
+    appendIrisPriorSeeded,
+} from '../iris/index.js';
 
 export interface NousRunnerConfig {
     nousDid: string;
@@ -621,6 +627,91 @@ export class NousRunner {
                                 }));
                             }
                         }
+                    }
+                    break;
+                }
+
+                case 'iris_belief_revised': {
+                    // Phase 17 D-17-09: Grid injects nous_did+tick (3-keys-not-5).
+                    // Brain sends target_did, belief_hash, dimension (3 keys).
+                    // Sole producer: appendIrisBeliefRevised. Rejections drop silently.
+                    try {
+                        appendIrisBeliefRevised(this.audit, this.nousDid, {
+                            nous_did: this.nousDid,
+                            tick,
+                            target_did: action.metadata['target_did'] as string,
+                            belief_hash: action.metadata['belief_hash'] as string,
+                        });
+                    } catch (err) {
+                        console.warn(JSON.stringify({
+                            event: 'iris.dispatch.rejected',
+                            action_type: 'iris_belief_revised',
+                            did: this.nousDid,
+                            reason: (err as Error).message,
+                        }));
+                    }
+                    break;
+                }
+
+                case 'iris_context_invoked': {
+                    // Phase 17 D-17-09: belief_count is total beliefs injected this tick.
+                    // Sole producer: appendIrisContextInvoked.
+                    try {
+                        appendIrisContextInvoked(this.audit, this.nousDid, {
+                            nous_did: this.nousDid,
+                            tick,
+                            belief_count: action.metadata['belief_count'] as number,
+                        });
+                    } catch (err) {
+                        console.warn(JSON.stringify({
+                            event: 'iris.dispatch.rejected',
+                            action_type: 'iris_context_invoked',
+                            did: this.nousDid,
+                            reason: (err as Error).message,
+                        }));
+                    }
+                    break;
+                }
+
+                case 'iris_contradiction_detected': {
+                    // Phase 17 D-17-09: Grid injects nous_did+tick; Brain sends target_did, contradiction_hash.
+                    // Sole producer: appendIrisContradictionDetected.
+                    try {
+                        appendIrisContradictionDetected(this.audit, this.nousDid, {
+                            nous_did: this.nousDid,
+                            tick,
+                            target_did: action.metadata['target_did'] as string,
+                            contradiction_hash: action.metadata['contradiction_hash'] as string,
+                        });
+                    } catch (err) {
+                        console.warn(JSON.stringify({
+                            event: 'iris.dispatch.rejected',
+                            action_type: 'iris_contradiction_detected',
+                            did: this.nousDid,
+                            reason: (err as Error).message,
+                        }));
+                    }
+                    break;
+                }
+
+                case 'iris_prior_seeded': {
+                    // Phase 17 D-17-09: Grid injects nous_did+tick; Brain sends target_did, seed_event_hash.
+                    // seed_event_hash is full 64-char sha256 hexdigest from elicit.py source_event_hash.
+                    // Sole producer: appendIrisPriorSeeded.
+                    try {
+                        appendIrisPriorSeeded(this.audit, this.nousDid, {
+                            nous_did: this.nousDid,
+                            tick,
+                            target_did: action.metadata['target_did'] as string,
+                            seed_event_hash: action.metadata['seed_event_hash'] as string,
+                        });
+                    } catch (err) {
+                        console.warn(JSON.stringify({
+                            event: 'iris.dispatch.rejected',
+                            action_type: 'iris_prior_seeded',
+                            did: this.nousDid,
+                            reason: (err as Error).message,
+                        }));
                     }
                     break;
                 }

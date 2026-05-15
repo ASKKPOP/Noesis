@@ -185,6 +185,58 @@ export interface BrainActionVoteReveal {
     };
 }
 
+/**
+ * Phase 17 D-17-08 / D-17-09: Iris Theory of Mind lifecycle actions.
+ *
+ * Brain metadata carries 1-3 keys only (3-keys-not-5 invariant, D-17-07).
+ * Grid injects nous_did (= this.nousDid) and tick at dispatch time.
+ * All 4 are forwarded to the Grid (unlike SKILL_LEARN/RULE_STORE which are Brain-internal).
+ * Sole producers: grid/src/iris/append*.ts.
+ */
+export interface BrainActionIrisBeliefRevised {
+    readonly action_type: 'iris_belief_revised';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly target_did: string;
+        readonly belief_hash: string;       // 64-char sha256 hexdigest
+        readonly dimension: string;
+        readonly [key: string]: unknown;
+    };
+}
+
+export interface BrainActionIrisContextInvoked {
+    readonly action_type: 'iris_context_invoked';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly belief_count: number;      // total beliefs injected this tick
+        readonly [key: string]: unknown;
+    };
+}
+
+export interface BrainActionIrisContradictionDetected {
+    readonly action_type: 'iris_contradiction_detected';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly target_did: string;
+        readonly contradiction_hash: string; // 64-char sha256 hexdigest
+        readonly [key: string]: unknown;
+    };
+}
+
+export interface BrainActionIrisPriorSeeded {
+    readonly action_type: 'iris_prior_seeded';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly target_did: string;
+        readonly seed_event_hash: string;   // 64-char sha256 hexdigest from elicit.py
+        readonly [key: string]: unknown;
+    };
+}
+
 export type BrainAction =
     | SpeakAction
     | DirectMessageAction
@@ -196,7 +248,11 @@ export type BrainAction =
     | BrainActionWhisperSend
     | BrainActionPropose
     | BrainActionVoteCommit
-    | BrainActionVoteReveal;
+    | BrainActionVoteReveal
+    | BrainActionIrisBeliefRevised
+    | BrainActionIrisContextInvoked
+    | BrainActionIrisContradictionDetected
+    | BrainActionIrisPriorSeeded;
 
 export interface MessageParams {
     sender_name: string;
