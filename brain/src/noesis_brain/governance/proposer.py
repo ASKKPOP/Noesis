@@ -34,6 +34,7 @@ def build_propose_action(
     opened_at_tick: int,
     quorum_pct: int = _DEFAULT_QUORUM_PCT,
     supermajority_pct: int = _DEFAULT_SUPERMAJORITY_PCT,
+    iris_runtime: object | None = None,
 ) -> Action:
     """Build a PROPOSE Action for submission to the Grid.
 

@@ -53,7 +53,100 @@ class MemoryStore:
                 updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
                 created_at  TEXT NOT NULL DEFAULT (datetime('now'))
             );
+
+            -- Phase 15: FTS5 full-text index over wiki_pages (keyword search for
+            -- learned knowledge retrieval). content= makes this a "contentless-
+            -- rowid" table backed by wiki_pages; triggers keep it in sync.
+            CREATE VIRTUAL TABLE IF NOT EXISTS wiki_fts
+                USING fts5(title, content, content='wiki_pages', content_rowid='id');
+
+            CREATE TRIGGER IF NOT EXISTS wiki_fts_ai
+                AFTER INSERT ON wiki_pages BEGIN
+                    INSERT INTO wiki_fts(rowid, title, content)
+                    VALUES (new.id, new.title, new.content);
+                END;
+
+            CREATE TRIGGER IF NOT EXISTS wiki_fts_au
+                AFTER UPDATE ON wiki_pages BEGIN
+                    INSERT INTO wiki_fts(wiki_fts, rowid, title, content)
+                    VALUES ('delete', old.id, old.title, old.content);
+                    INSERT INTO wiki_fts(rowid, title, content)
+                    VALUES (new.id, new.title, new.content);
+                END;
+
+            CREATE TRIGGER IF NOT EXISTS wiki_fts_ad
+                AFTER DELETE ON wiki_pages BEGIN
+                    INSERT INTO wiki_fts(wiki_fts, rowid, title, content)
+                    VALUES ('delete', old.id, old.title, old.content);
+                END;
+
+            -- Phase 15: Skill library (Voyager-adapted, text-only for safety).
+            -- Nous writes text procedures; FTS5 retrieves top-k at prompt build.
+            CREATE TABLE IF NOT EXISTS skills (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                name         TEXT NOT NULL UNIQUE,
+                description  TEXT NOT NULL,
+                instructions TEXT NOT NULL,
+                triggers     TEXT NOT NULL DEFAULT '[]',  -- JSON list of keyword phrases
+                tags         TEXT NOT NULL DEFAULT '[]',  -- JSON list for category filter
+                usage_count  INTEGER NOT NULL DEFAULT 0,
+                success_rate REAL NOT NULL DEFAULT 0.0,
+                created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+                last_used_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+
+            CREATE VIRTUAL TABLE IF NOT EXISTS skills_fts
+                USING fts5(name, description, instructions, content='skills', content_rowid='id');
+
+            CREATE TRIGGER IF NOT EXISTS skills_fts_ai
+                AFTER INSERT ON skills BEGIN
+                    INSERT INTO skills_fts(rowid, name, description, instructions)
+                    VALUES (new.id, new.name, new.description, new.instructions);
+                END;
+
+            CREATE TRIGGER IF NOT EXISTS skills_fts_au
+                AFTER UPDATE ON skills BEGIN
+                    INSERT INTO skills_fts(skills_fts, rowid, name, description, instructions)
+                    VALUES ('delete', old.id, old.name, old.description, old.instructions);
+                    INSERT INTO skills_fts(rowid, name, description, instructions)
+                    VALUES (new.id, new.name, new.description, new.instructions);
+                END;
+
+            CREATE TRIGGER IF NOT EXISTS skills_fts_ad
+                AFTER DELETE ON skills BEGIN
+                    INSERT INTO skills_fts(skills_fts, rowid, name, description, instructions)
+                    VALUES ('delete', old.id, old.name, old.description, old.instructions);
+                END;
+
+            -- Phase 16: peer-skill provenance (source_did, peer_verified).
+            -- ALTER TABLE is idempotent via error-ignore (SQLite has no IF NOT EXISTS
+            -- for ADD COLUMN). The executescript() below handles the try/except.
+
+            -- Phase 15: URL + content deduplication for web learning.
+            -- Prevents refetching the same source within its TTL.
+            CREATE TABLE IF NOT EXISTS learned_sources (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                url_hash     TEXT NOT NULL UNIQUE,   -- sha256(url)[:16]
+                url          TEXT NOT NULL,
+                content_hash TEXT NOT NULL,           -- sha256(extracted_text)[:16]
+                source_kind  TEXT NOT NULL DEFAULT 'web',
+                fetched_at   TEXT NOT NULL DEFAULT (datetime('now')),
+                ttl_days     INTEGER NOT NULL DEFAULT 7
+            );
+            CREATE INDEX IF NOT EXISTS idx_ls_fetched ON learned_sources(fetched_at);
         """)
+
+        # Phase 16: additive column migrations — idempotent (ignore OperationalError
+        # if the column already exists, which SQLite raises for duplicate ADD COLUMN).
+        for _stmt in [
+            "ALTER TABLE skills ADD COLUMN source_did TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE skills ADD COLUMN peer_verified INTEGER NOT NULL DEFAULT 1",
+        ]:
+            try:
+                self._conn.execute(_stmt)
+                self._conn.commit()
+            except Exception:  # noqa: BLE001
+                pass  # column already exists — skip silently
 
     # ── Memory operations ───────────────────────────────────
 
@@ -195,6 +288,60 @@ class MemoryStore:
         cur = self._conn.execute("DELETE FROM wiki_pages WHERE title = ?", (title,))
         self._conn.commit()
         return cur.rowcount > 0
+
+    def search_wiki_fts(self, query: str, limit: int = 5) -> list[WikiPage]:
+        """BM25 full-text search over wiki pages (Phase 15 FTS5)."""
+        rows = self._conn.execute(
+            """SELECT w.id, w.title, w.category, w.content, w.confidence,
+                      w.source, w.version, w.updated_at, w.created_at
+               FROM wiki_fts
+               JOIN wiki_pages w ON wiki_fts.rowid = w.id
+               WHERE wiki_fts MATCH ?
+               ORDER BY rank
+               LIMIT ?""",
+            (query, limit),
+        ).fetchall()
+        return [self._row_to_wiki(r) for r in rows]
+
+    def is_source_fresh(self, url: str) -> bool:
+        """Return True if url was recently learned and is within its TTL (Phase 15)."""
+        import hashlib
+        from datetime import datetime, timezone
+
+        url_hash = hashlib.sha256(url.encode()).hexdigest()[:16]
+        row = self._conn.execute(
+            "SELECT fetched_at, ttl_days FROM learned_sources WHERE url_hash = ?",
+            (url_hash,),
+        ).fetchone()
+        if not row:
+            return False
+        fetched = datetime.fromisoformat(row["fetched_at"])
+        if fetched.tzinfo is None:
+            fetched = fetched.replace(tzinfo=timezone.utc)
+        age_days = (datetime.now(timezone.utc) - fetched).days
+        return age_days < int(row["ttl_days"])
+
+    def record_learned_source(
+        self,
+        url: str,
+        content: str,
+        source_kind: str = "web",
+        ttl_days: int = 7,
+    ) -> None:
+        """Track a fetched URL so it won't be re-fetched within its TTL (Phase 15)."""
+        import hashlib
+        from datetime import datetime, timezone
+
+        url_hash = hashlib.sha256(url.encode()).hexdigest()[:16]
+        content_hash = hashlib.sha256(content.encode()).hexdigest()[:16]
+        now = datetime.now(timezone.utc).isoformat()
+        self._conn.execute(
+            """INSERT OR REPLACE INTO learned_sources
+               (url_hash, url, content_hash, source_kind, fetched_at, ttl_days)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (url_hash, url, content_hash, source_kind, now, ttl_days),
+        )
+        self._conn.commit()
 
     # ── Helpers ──────────────────────────────────────────────
 

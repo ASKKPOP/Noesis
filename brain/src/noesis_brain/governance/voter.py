@@ -136,7 +136,7 @@ def build_reveal_action(
     return action
 
 
-def evaluate_choice(proposal_body: str, telos: object | None = None) -> str:
+def evaluate_choice(proposal_body: str, telos: object | None = None, iris_runtime: object | None = None) -> str:
     """Telos-driven yes/no/abstain decision.
 
     TODO(v2.3): Replace this placeholder with LLM-driven telos evaluation.

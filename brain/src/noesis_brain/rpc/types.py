@@ -23,6 +23,14 @@ class ActionType(str, Enum):
     PROPOSE = "propose"         # Open a proposal. Metadata: {body_text, deadline_tick, quorum_pct?, supermajority_pct?}
     VOTE_COMMIT = "vote_commit"  # Blind ballot commit. Metadata: {proposal_id, commit_hash}
     VOTE_REVEAL = "vote_reveal"  # Reveal nonce+choice. Metadata: {proposal_id, choice, nonce}
+    # Phase 15 — Brain-internal only; NEVER forwarded to the Grid.
+    # Rate-limited to max 1 each per on_tick() call.
+    SKILL_LEARN = "skill_learn"  # Store a reusable text procedure. Metadata: {name, description, instructions, triggers}
+    RULE_STORE = "rule_store"    # Store a strategic behavioral rule (SCOPE). Metadata: {content, confidence, source}
+    # Phase 16 — Brain-internal only; travels as metadata inside DIRECT_MESSAGE payload.
+    # Peer skill sharing (trust-gated). Metadata: {name, description, instructions, triggers, source_did}
+    # The receiving BrainHandler strips the __skill_share prefix and routes to PeerSkillFilter.
+    SKILL_SHARE = "skill_share"  # Peer-pushed skill offer. Metadata: {name, description, instructions, triggers, source_did}
 
 
 # JSON-RPC error codes

@@ -21,6 +21,7 @@ from noesis_brain.telos.manager import TelosManager
 from noesis_brain.thymos.tracker import ThymosTracker
 from noesis_brain.thymos.types import Emotion
 from noesis_brain.rpc.types import Action, ActionType
+from noesis_brain.iris.priors import seed_priors
 
 log = logging.getLogger(__name__)
 
@@ -207,6 +208,23 @@ class BrainHandler:
                     },
                 ).to_dict()
             )
+
+        # Phase 17 Iris — seed relationship-graph priors (optional-dep injection).
+        # Processes relationship_context edges from Grid if Iris is enabled.
+        # Once-per-(nous_did, target_did) pair: has_prior_for() gate in seed_priors.
+        # If _iris_runtime is None (default), this block is a no-op.
+        relationship_context = params.get("relationship_context")
+        if self._iris_runtime is not None and isinstance(relationship_context, list):
+            try:
+                seed_priors(
+                    edges=relationship_context,
+                    nous_did=self.did,
+                    store=self._iris_runtime.store,
+                    tick=tick,
+                    dispatcher=self._iris_runtime.dispatcher,
+                )
+            except Exception as exc:  # pragma: no cover — Iris is fail-soft
+                log.warning("iris: seed_priors failed: %s", exc)
 
         if actions:
             # Advisory logging (D-10a-06): drive-vs-action divergence is
@@ -540,6 +558,29 @@ class BrainHandler:
         """
         return compute_pre_deletion_state_hash(self)
 
+    # ────────────────────────────────────────────────────────────────────
+    # Phase 8 AGENCY-05 — H5 Sovereign pre-deletion state hash
+    #
+    # Brain computes 4 component hashes (psyche, thymos, telos,
+    # memory_stream). Grid composes the canonical pre_deletion_state_hash
+    # from these 4 values — Brain NEVER composes the 5th (D-03).
+    # ────────────────────────────────────────────────────────────────────
+
+    async def hash_state(self, params: dict[str, Any]) -> dict[str, str]:
+        """AGENCY-05: return 4 component hashes for pre-deletion forensics.
+
+        Brain returns {psyche_hash, thymos_hash, telos_hash,
+        memory_stream_hash} — each a 64-hex SHA-256 digest. Grid's
+        combineStateHash() composes the 5th canonical hash (D-03 boundary:
+        a compromised Brain cannot forge a consistent deletion record).
+
+        params: ignored (hash computed from current in-memory state).
+
+        Returns:
+            dict with EXACTLY 4 keys, each a 64-hex string.
+        """
+        return compute_pre_deletion_state_hash(self)
+
     def _instinct_response(self, sender_name: str) -> str:
         """Fallback response when LLM is unavailable."""
         mood = self.thymos.mood.current_mood()
@@ -556,6 +597,227 @@ class BrainHandler:
         elif style == "playful":
             return f"Interesting, {sender_name}! Let me think on that."
         return f"I hear you, {sender_name}."
+
+    # ────────────────────────────────────────────────────────────────────
+    # Phase 6 AGENCY-02 — operator-agency handlers (H2 Reviewer, H4 Driver)
+    #
+    # Both methods produce a normalized, minimal response so the grid-side
+    # privacy invariant (no raw content / no plaintext Telos crosses the
+    # RPC boundary) can be enforced structurally. The Brain owns full
+    # memory + Telos plaintext; the Grid only ever sees summaries / hashes.
+    # ────────────────────────────────────────────────────────────────────
+
+    async def query_memory(self, params: dict[str, Any]) -> dict[str, Any]:
+        """H2 Reviewer memory query — normalised entries only.
+
+        Each entry is reduced to ``{timestamp, kind, summary}`` via
+        ``_normalise_memory_entry``. Raw content beyond ``summary``
+        (importance, source_did, tick, location, embeddings, etc.) is
+        deliberately dropped at this boundary. Returning richer fields
+        would violate D-11 (Brain sovereignty) and make the grid-side
+        operator-payload-privacy invariant unenforceable at source.
+
+        params:
+            query: substring to match against memory content (case-insensitive).
+                   Empty string returns the most recent entries.
+            limit: max entries to return (default 20, clamped to [1, 100]).
+
+        Returns:
+            {"entries": [{timestamp, kind, summary}, ...]}
+        """
+        query_raw = params.get("query", "")
+        query = str(query_raw).strip().lower() if query_raw is not None else ""
+
+        limit_raw = params.get("limit", 20)
+        try:
+            limit = int(limit_raw) if limit_raw is not None else 20
+        except (TypeError, ValueError):
+            limit = 20
+        # Clamp to sane bounds — prevents unbounded scans / DoS through the operator path.
+        limit = max(1, min(100, limit))
+
+        if self.memory is None:
+            return {"entries": []}
+
+        try:
+            # Over-fetch slightly so substring filtering still has material to work with.
+            # `recent()` returns newest-first; we filter then truncate to `limit`.
+            pool = self.memory.recent(limit=max(limit * 3, limit))
+        except Exception as exc:  # pragma: no cover — defensive fallback
+            log.warning("memory.recent() failed in query_memory: %s", exc)
+            return {"entries": []}
+
+        entries: list[dict[str, Any]] = []
+        for raw in pool:
+            normalised = self._normalise_memory_entry(raw)
+            if query and query not in normalised["summary"].lower():
+                continue
+            entries.append(normalised)
+            if len(entries) >= limit:
+                break
+
+        return {"entries": entries}
+
+    async def force_telos(self, params: dict[str, Any]) -> dict[str, Any]:
+        """H4 Driver force-Telos — rebuild active Telos, return hash diff only.
+
+        Per D-19 (hash-only H4), the response carries NO goal contents — only
+        the 64-hex SHA-256 hashes before and after the rebuild. The grid-side
+        audit event (operator.telos_forced) is structured to log exactly these
+        hashes and nothing else, which is the sole closure for T-6-06 (Telos
+        plaintext leak through the audit chain).
+
+        params:
+            new_telos: dict with optional keys "short_term", "medium_term",
+                       "long_term" — each a list of description strings. This
+                       is the TelosManager.from_yaml contract.
+
+        Returns:
+            {"telos_hash_before": <64-hex>, "telos_hash_after": <64-hex>}
+        """
+        new_telos_raw = params.get("new_telos", {})
+        if not isinstance(new_telos_raw, dict):
+            new_telos_raw = {}
+
+        # Snapshot the old hash from the currently active goals. Using the
+        # canonical helper (SOLE hash authority per hashing.py) guarantees
+        # cross-boundary comparability with grid-recorded hashes.
+        telos_hash_before = compute_active_telos_hash(self.telos.all_goals())
+
+        # Atomic rebuild — from_yaml constructs a fresh manager. We swap the
+        # instance under ``self.telos`` only AFTER the rebuild succeeds so a
+        # malformed payload cannot partially corrupt the goal set.
+        rebuilt = TelosManager.from_yaml(new_telos_raw)
+        self.telos = rebuilt
+
+        telos_hash_after = compute_active_telos_hash(self.telos.all_goals())
+
+        return {
+            "telos_hash_before": telos_hash_before,
+            "telos_hash_after": telos_hash_after,
+        }
+
+    # ────────────────────────────────────────────────────────────────────
+    # Phase 7 DIALOG-02 — Nous-initiated telos refinement after peer dialogue
+    #
+    # Unlike force_telos (Phase 6, operator-driven H4 Driver), this helper
+    # is invoked from on_tick when the Grid delivers a dialogue_context.
+    # Brain remains sovereign (PHILOSOPHY §1, D-15): opt-in, never coerced.
+    # Returned metadata carries ONLY the two 64-hex goal hashes + the 16-hex
+    # dialogue_id — no plaintext crosses the RPC boundary (D-18).
+    # ────────────────────────────────────────────────────────────────────
+
+    def _build_refined_telos(self, ctx: dict[str, Any]) -> Action | None:
+        """Brain decides whether to refine Telos after a peer dialogue.
+
+        Mirrors the hash-before/mutate/hash-after shape of ``force_telos``
+        (the Phase 6 SOLE-hash-authority pattern). Returns an
+        ActionType.TELOS_REFINED Action when the refinement produces a
+        non-identity hash change, else None.
+
+        Per D-18 the returned metadata carries ONLY hashes + dialogue_id —
+        never goal plaintext. Per D-15 the decision is Brain-opt-in: this
+        method MAY return None even when ctx is well-formed.
+
+        ctx: A single dialogue_context dict from the incoming tick params —
+             keys include dialogue_id (16-hex), counterparty_did, channel,
+             utterances (list, <=5 entries, each text <=200 chars).
+        """
+        dialogue_id = ctx.get("dialogue_id", "")
+        if not isinstance(dialogue_id, str) or len(dialogue_id) != 16:
+            # Malformed ctx — log and drop. No audit emit (D-16 mirror on Brain side).
+            log.warning(
+                "telos_refined: dropping ctx with bad dialogue_id %r", dialogue_id
+            )
+            return None
+
+        # Heuristic: decide whether THIS dialogue suggests refinement.
+        # v2.1 minimal: proceed if any utterance text substring-matches any
+        # active goal description (lowercased). Future phases replace this
+        # with a persona-contingent LLM prompt — kept minimal here per
+        # CONTEXT "Claude's Discretion" guidance (substring only, no eval,
+        # no dynamic code → T-07-16 elevation threat mitigation).
+        proposed = self._dialogue_driven_goal_set(ctx)
+        if proposed is None:
+            return None  # Brain opted out — no audit emit (D-15).
+
+        # SOLE hash authority, called BEFORE mutation (D-14).
+        telos_hash_before = compute_active_telos_hash(self.telos.all_goals())
+
+        # Atomic swap — build first, swap only on success (clone force_telos).
+        rebuilt = TelosManager.from_yaml(proposed)
+        self.telos = rebuilt
+
+        # SOLE hash authority, called AFTER mutation (D-14).
+        telos_hash_after = compute_active_telos_hash(self.telos.all_goals())
+
+        if telos_hash_before == telos_hash_after:
+            # No-op refinement — silence per D-22 silent-no-op invariant.
+            return None
+
+        # Closed 3-key metadata tuple (D-20) — Grid injects `did` downstream.
+        return Action(
+            action_type=ActionType.TELOS_REFINED,
+            channel="",
+            text="",
+            metadata={
+                "before_goal_hash": telos_hash_before,
+                "after_goal_hash": telos_hash_after,
+                "triggered_by_dialogue_id": dialogue_id,
+            },
+        )
+
+    def _dialogue_driven_goal_set(
+        self, ctx: dict[str, Any]
+    ) -> dict[str, list[str]] | None:
+        """Minimal v2.1 heuristic: if any utterance substring-matches an active
+        goal description (case-insensitive), propose a reprioritised goal set.
+
+        Returns a TelosManager.from_yaml-compatible dict, or None if no
+        refinement is warranted. Future phases replace this with an LLM call.
+
+        Kept deterministic + synchronous so tests can pin behavior without
+        mocking the LLM. The LLM prompt path is tracked as a deferred idea.
+
+        Threat T-07-16: utterance text feeds into the match check ONLY,
+        never into goal-description strings. Promoted/demoted lists are drawn
+        from the Nous's OWN pre-existing goals — there is no path for
+        adversarial prompt injection to write new goals.
+        """
+        utterances = ctx.get("utterances") or []
+        if not isinstance(utterances, list) or not utterances:
+            return None
+        active = self.telos.active_goals()
+        if not active:
+            return None
+        # Lowercased utterance text pool (truncation-respecting: Grid already
+        # capped to 200 chars; we do not re-inflate).
+        texts: list[str] = []
+        for u in utterances:
+            if isinstance(u, dict):
+                t = u.get("text")
+                if isinstance(t, str):
+                    texts.append(t.lower())
+        pool = " ".join(texts)
+        if not pool:
+            return None
+        # Promote goals whose description is mentioned; demote the rest.
+        promoted: list[str] = []
+        demoted: list[str] = []
+        for g in active:
+            if g.description.lower() in pool:
+                promoted.append(g.description)
+            else:
+                demoted.append(g.description)
+        if not promoted:
+            return None  # No goal mentioned — dialogue not goal-relevant.
+        # Return a from_yaml-compatible shape. Keep all goals; priority shifts
+        # via bucket assignment (promoted → short_term, demoted → medium_term).
+        return {
+            "short_term": promoted,
+            "medium_term": demoted,
+            "long_term": [],
+        }
 
     # ────────────────────────────────────────────────────────────────────
     # Phase 6 AGENCY-02 — operator-agency handlers (H2 Reviewer, H4 Driver)

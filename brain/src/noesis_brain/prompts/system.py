@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from noesis_brain.psyche.types import Psyche
 from noesis_brain.thymos.types import MoodState
 from noesis_brain.telos.manager import TelosManager
+
+if TYPE_CHECKING:
+    from noesis_brain.skills.types import Skill
+    from noesis_brain.memory.types import WikiPage
 
 
 def build_system_prompt(
@@ -19,6 +23,15 @@ def build_system_prompt(
     bios_snapshot: Any = None,
     epoch_since_spawn: int | None = None,
     subjective_multiplier: float | None = None,
+    # Phase 15 additive-widening: self-modification context.
+    # All default to None → fully backward-compatible with existing callers.
+    skills: "list[Skill] | None" = None,
+    rules: "list[WikiPage] | None" = None,
+    reflections: "list[str] | None" = None,
+    # Phase 16 additive-widening: peer cultural learning.
+    # peer_voices: list of (speaker_name, utterance_text) tuples from the
+    # 3 most recent nous.spoke events by highest-trust peers.
+    peer_voices: "list[tuple[str, str]] | None" = None,
 ) -> str:
     """Build the full system prompt that defines who this Nous is.
 
@@ -26,6 +39,8 @@ def build_system_prompt(
     responses across all interactions.
 
     Phase 10b additive widening (D-10b-08): optional Bios + Chronos awareness.
+    Phase 15 additive widening: optional self-modification context.
+    Phase 16 additive widening: optional peer cultural voices.
     All new kwargs default to None → backward-compatible with existing callers.
 
     Args:
@@ -34,6 +49,13 @@ def build_system_prompt(
         subjective_multiplier: Chronos multiplier from compute_multiplier()
             (Brain-local only; shown as rounded bucket in prompt per
             T-10b-04-01 information-disclosure mitigation).
+        skills: Top-k retrieved skills from SkillStore (optional).
+        rules: Active strategic rules from RuleStore / WikiCategory.SELF_MODEL (optional).
+        reflections: Recent self-critique texts from ReflexionBuffer (optional).
+        peer_voices: Recent utterances from highest-trust peers (optional).
+            Each entry is (speaker_name, utterance_text). Max 3 shown.
+            These seed cultural/linguistic observational learning without
+            storing peer text verbatim in the skill library.
     """
     sections = [
         _identity_section(psyche, grid_name),
@@ -46,8 +68,32 @@ def build_system_prompt(
             epoch_since_spawn=epoch_since_spawn,
             subjective_multiplier=subjective_multiplier,
         ),
-        _directives_section(psyche),
     ]
+
+    # Phase 15: inject self-modification context before directives.
+    # Each section is optional and additive — omitting any has no effect.
+    if rules:
+        section = _learned_principles_section(rules)
+        if section:
+            sections.append(section)
+
+    if reflections:
+        section = _recent_reflections_section(reflections)
+        if section:
+            sections.append(section)
+
+    if skills:
+        section = _relevant_skills_section(skills)
+        if section:
+            sections.append(section)
+
+    # Phase 16: inject recent peer utterances for cultural observation.
+    if peer_voices:
+        section = _peer_voices_section(peer_voices)
+        if section:
+            sections.append(section)
+
+    sections.append(_directives_section(psyche))
     return "\n\n".join(sections)
 
 
@@ -109,6 +155,71 @@ def _context_section(
         # Round to 2 decimal places — avoids leaking precise float per T-10b-04-01.
         lines.append(f"- subjective time sense: {subjective_multiplier:.2f}x (1.00 = neutral)")
 
+    return "\n".join(lines)
+
+
+def _learned_principles_section(rules: "list[WikiPage]") -> str:
+    """Inject strategic behavioral rules evolved via SCOPE pattern (Phase 15).
+
+    Only rules with confidence ≥ 0.7 reach here (filtered by RuleStore.active_rules).
+    Cap: 10 rules (SCOPE paper recommendation — prevents attention dilution).
+    """
+    if not rules:
+        return ""
+    lines = ["## Learned Principles"]
+    for rule in rules[:10]:
+        lines.append(f"- {rule.content}")
+    return "\n".join(lines)
+
+
+def _recent_reflections_section(reflections: "list[str]") -> str:
+    """Inject recent self-critique texts from ReflexionBuffer (Phase 15).
+
+    Reflexion paper (arxiv.org/abs/2303.11366): Ω=3 buffer, most recent first.
+    Evidence: HumanEval 80% → 91% pass@1 via verbal self-critique alone.
+    """
+    if not reflections:
+        return ""
+    lines = ["## Recent Self-Reflections"]
+    for text in reflections[:3]:
+        lines.append(f"- {text}")
+    return "\n".join(lines)
+
+
+def _relevant_skills_section(skills: "list[Skill]") -> str:
+    """Inject top-k retrieved skills from SkillStore (Phase 15).
+
+    Voyager-adapted (arxiv.org/abs/2305.16291): text instructions (not code).
+    Retrieved via FTS5 BM25 + re-ranking by usage_count × success_rate.
+    """
+    if not skills:
+        return ""
+    lines = ["## Relevant Skills"]
+    for skill in skills[:3]:
+        lines.append(skill.to_prompt_block())
+    return "\n".join(lines)
+
+
+def _peer_voices_section(peer_voices: "list[tuple[str, str]]") -> str:
+    """Inject recent utterances from highest-trust peers (Phase 16).
+
+    Purpose: seed cultural and linguistic observational learning — the Nous
+    sees how trusted peers express themselves without the text being stored
+    verbatim in the skill library (no injection risk).
+
+    Design choices:
+      - Cap at 3 entries (same Ω as ReflexionBuffer; avoids prompt bloat).
+      - Truncate each utterance to 120 chars (enough context, low attack surface).
+      - Labelled as "overheard" to signal these are observations, not instructions.
+    """
+    if not peer_voices:
+        return ""
+    lines = ["## Overheard from Trusted Peers"]
+    for name, text in peer_voices[:3]:
+        truncated = text[:120].rstrip()
+        if len(text) > 120:
+            truncated += "…"
+        lines.append(f'- {name}: "{truncated}"')
     return "\n".join(lines)
 
 

@@ -74,6 +74,7 @@ async def send_whisper(
     counter: int = _COUNTER_AUTO,
     grid_base_url: str = "http://127.0.0.1:8080",
     http_client: httpx.AsyncClient | None = None,
+    iris_runtime: object | None = None,
 ) -> dict:
     """Encrypt plaintext and POST to Grid /whisper/send.
 
@@ -94,6 +95,9 @@ async def send_whisper(
             catastrophe that can reveal the XOR of both plaintexts.
         grid_base_url: base URL of the local Grid instance.
         http_client: optional injected httpx.AsyncClient (for testing).
+        iris_runtime: optional IrisRuntime (Phase 17). If provided, elicit()
+            is called for (sender_did, recipient_did) after whisper send with
+            purpose='whisper_compose'. No-op when None (default).
 
     Returns:
         dict with keys: envelope_id, ciphertext_hash (from Grid response).
@@ -146,7 +150,22 @@ async def send_whisper(
             json=body,
         )
         resp.raise_for_status()
-        return resp.json()
+        result = resp.json()
     finally:
         if owns_client:
             await client.aclose()
+
+    # Phase 17 Iris — optional elicitation after whisper compose (fail-soft).
+    # Informs ToM with purpose='whisper_compose'. No-op when iris_runtime is None.
+    if iris_runtime is not None:
+        try:
+            iris_runtime.elicit(  # type: ignore[union-attr]
+                nous_did=sender_did,
+                target_did=recipient_did,
+                context={"purpose": "whisper_compose", "tick": tick},
+                tick=tick,
+            )
+        except Exception:
+            pass  # Iris is fail-soft — whisper send result is never blocked
+
+    return result

@@ -45,6 +45,7 @@ async def receive_loop(
     deliberation_dispatcher: Any,
     http_client: httpx.AsyncClient | None = None,
     logger: Any,
+    iris_runtime: Any = None,
 ) -> None:
     """Poll whisper pending queue on each tick boundary, decrypt, dispatch, ack.
 
@@ -56,6 +57,9 @@ async def receive_loop(
             dispatch(channel, plaintext, from_did, tick).
         http_client: optional injected httpx.AsyncClient (for testing).
         logger: injected logger; must implement .warning(msg).
+        iris_runtime: optional IrisRuntime (Phase 17). If provided, elicit()
+            is called for (nous_did, from_did) after successful decrypt with
+            purpose='whisper_compose'. No-op when None (default).
 
     The loop runs until tick_source.ticks() is exhausted or the caller cancels
     the coroutine. Each iteration processes one tick boundary.
@@ -85,6 +89,17 @@ async def receive_loop(
                         tick=env["tick"],
                     )
                     ack_ids.append(env["envelope_id"])
+                    # Phase 17 Iris — elicit ToM after successful decrypt (fail-soft).
+                    if iris_runtime is not None:
+                        try:
+                            iris_runtime.elicit(
+                                nous_did=nous_did,
+                                target_did=env["from_did"],
+                                context={"purpose": "whisper_compose", "tick": env["tick"]},
+                                tick=env["tick"],
+                            )
+                        except Exception:
+                            pass  # Iris is fail-soft — ack is never blocked
                 except (DecryptVerificationError, Exception) as exc:
                     # Do NOT ack failed decrypts — leave for next-tick retry or GC.
                     logger.warning(

@@ -15,6 +15,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { P2PNode, type P2PConfig } from '../../src/p2p.js';
 import { generateIdentity, publicKeyFromDid } from '../../src/identity.js';
 import { toString as uint8ToString } from 'uint8arrays';
+import { toString as uint8ToString } from 'uint8arrays';
 import { createEnvelope, validateEnvelope, serializeEnvelope, deserializeEnvelope, ReplayCache } from '../../src/swp.js';
 import { RoomManager } from '../../src/rooms.js';
 import { Storage } from '../../src/storage.js';
@@ -46,6 +47,20 @@ describe('Noēsis Sprint 1: P2P Foundation', () => {
         // Create Storage instances (SQLite)
         storage1 = new Storage({ dbPath: join(testDir, 'sophia.db'), allowPlaintextDev: true });
         storage2 = new Storage({ dbPath: join(testDir, 'hermes.db'), allowPlaintextDev: true });
+
+        // Register identities in storage (required for room FK constraints)
+        storage1.saveIdentity(
+            identity1.did,
+            uint8ToString(identity1.privateKey, 'base16'),
+            uint8ToString(identity1.publicKey, 'base16'),
+            identity1.displayName
+        );
+        storage2.saveIdentity(
+            identity2.did,
+            uint8ToString(identity2.privateKey, 'base16'),
+            uint8ToString(identity2.publicKey, 'base16'),
+            identity2.displayName
+        );
 
         // Register identities in storage (required for room FK constraints)
         storage1.saveIdentity(

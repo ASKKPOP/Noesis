@@ -25,6 +25,9 @@ class WikiCategory(str, Enum):
     PLACE = "place"  # A region or location
     SKILL = "skill"  # A skill or ability
     BELIEF = "belief"  # A personal belief or opinion
+    # Phase 15 additions — self-modification + world learning
+    SELF_MODEL = "self_model"  # Nous's evolved behavioral rules (SCOPE pattern, cap 10)
+    LEARNED = "learned"  # Knowledge fetched from the online world (AAU web learning)
 
 
 @dataclass
