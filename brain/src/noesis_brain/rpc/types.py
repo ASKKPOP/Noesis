@@ -31,6 +31,14 @@ class ActionType(str, Enum):
     # Peer skill sharing (trust-gated). Metadata: {name, description, instructions, triggers, source_did}
     # The receiving BrainHandler strips the __skill_share prefix and routes to PeerSkillFilter.
     SKILL_SHARE = "skill_share"  # Peer-pushed skill offer. Metadata: {name, description, instructions, triggers, source_did}
+    # Phase 17 — D-17-06: Iris Theory of Mind lifecycle events.
+    # String values MUST match the Grid NousRunner switch cases exactly.
+    # All 4 are forwarded to the Grid (unlike SKILL_LEARN/RULE_STORE/SKILL_SHARE which are Brain-internal).
+    # 3-keys-not-5: Brain metadata carries 1–3 keys; Grid injects nous_did and tick at emit time.
+    IRIS_BELIEF_REVISED = "iris_belief_revised"              # Metadata: {target_did, belief_hash, dimension} (3 keys)
+    IRIS_CONTEXT_INVOKED = "iris_context_invoked"            # Metadata: {belief_count} (1 key)
+    IRIS_CONTRADICTION_DETECTED = "iris_contradiction_detected"  # Metadata: {target_did, contradiction_hash} (2 keys)
+    IRIS_PRIOR_SEEDED = "iris_prior_seeded"                  # Metadata: {target_did, seed_event_hash} (2 keys)
 
 
 # JSON-RPC error codes

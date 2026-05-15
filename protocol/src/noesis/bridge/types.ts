@@ -23,7 +23,28 @@ export interface RPCError {
 }
 
 export interface BrainAction {
-    action_type: 'speak' | 'direct_message' | 'move' | 'trade_request' | 'noop';
+    /** Action type string — MUST match ActionType enum values in brain/src/noesis_brain/rpc/types.py exactly. */
+    action_type:
+        | 'speak'
+        | 'direct_message'
+        | 'move'
+        | 'trade_request'
+        | 'noop'
+        // Phase 7: Nous-initiated telos refinement after peer dialogue.
+        | 'telos_refined'
+        // Phase 10a: Ananke drive threshold crossing (Grid injects nous_did + tick).
+        | 'drive_crossed'
+        // Phase 10b: Bios starvation death signal.
+        | 'bios_death'
+        // Phase 12: Governance voting lifecycle.
+        | 'propose'
+        | 'vote_commit'
+        | 'vote_reveal'
+        // Phase 17 — D-17-10: Iris Theory of Mind lifecycle events (forwarded to Grid).
+        | 'iris_belief_revised'
+        | 'iris_context_invoked'
+        | 'iris_contradiction_detected'
+        | 'iris_prior_seeded';
     channel: string;
     text: string;
     metadata: Record<string, unknown>;
