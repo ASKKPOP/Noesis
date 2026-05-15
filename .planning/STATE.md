@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.3
 milestone_name: Active)
 status: verifying
-stopped_at: Phase 17 context gathered
-last_updated: "2026-05-15T19:07:13.507Z"
+stopped_at: Phase 16 context gathered
+last_updated: "2026-05-15T23:53:18.460Z"
 last_activity: 2026-05-15
 progress:
   total_phases: 18
@@ -134,9 +134,9 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 
 ## Session Continuity
 
-Last session: 2026-05-15T19:07:13.502Z
-Stopped at: Phase 17 context gathered
-Resume file: None
+Last session: 2026-05-15T23:53:18.456Z
+Stopped at: Phase 16 context gathered
+Resume file: .planning/phases/16-hypnos-consolidating-memory/16-CONTEXT.md
 Next action: `/gsd-execute-phase 13 --gaps-only`
 
 ## v2.2 Opening Context
