@@ -101,7 +101,7 @@ Dependencies form a strict chain. Rationale:
 |-------|----------------|--------|-----------|
 | 15. Pneuma (Narrative Self) | 6/6 | Complete | 2026-05-14 |
 | 16. Hypnos (Consolidating Memory) | TBD | In Progress | — |
-| 17. Iris (Theory of Mind) | TBD | Context Ready | — |
+| 17. Iris (Theory of Mind) | 1/5 | In Progress|  |
 
 ## Allowlist Growth Ledger (v2.3)
 

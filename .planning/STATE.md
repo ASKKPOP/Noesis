@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.3
 milestone_name: Active)
-status: completed
+status: verifying
 stopped_at: Phase 17 context gathered
-last_updated: "2026-05-15T18:05:05.578Z"
-last_activity: 2026-04-28 -- Phase 14 doc-sync + prefix hard-bans shipped
+last_updated: "2026-05-15T18:38:32.358Z"
+last_activity: 2026-05-15
 progress:
-  total_phases: 10
+  total_phases: 18
   completed_phases: 7
-  total_plans: 44
-  completed_plans: 44
-  percent: 100
+  total_plans: 49
+  completed_plans: 45
+  percent: 92
 ---
 
 # Project State
@@ -28,8 +28,8 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 Phase: 14 (researcher-rigs) — COMPLETE
 Plan: 5 of 5
-Status: Phase 14 shipped 2026-04-28. v2.2 milestone: all 7 phases complete. Next: TBD (v2.3).
-Last activity: 2026-04-28 -- Phase 14 doc-sync + prefix hard-bans shipped
+Status: Phase complete — ready for verification
+Last activity: 2026-05-15
 
 Progress: [██████████] 100% (7/7 v2.2 phases complete — Phase 9 + 10a + 10b + 11 + 12 + 13 + 14 shipped)
 
@@ -134,9 +134,9 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 
 ## Session Continuity
 
-Last session: 2026-05-15T18:05:05.574Z
+Last session: 2026-05-15T18:38:32.354Z
 Stopped at: Phase 17 context gathered
-Resume file: .planning/phases/17-iris-theory-of-mind/17-CONTEXT.md
+Resume file: None
 Next action: `/gsd-execute-phase 13 --gaps-only`
 
 ## v2.2 Opening Context
