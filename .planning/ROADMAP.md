@@ -1,21 +1,136 @@
-# Roadmap: Noēsis — v2.2 Living Grid
+# Roadmap: Noēsis — v2.3 Living Minds
 
 ## Overview
 
-v2.2 moves Nous from observed entities to full agents. Six themes ship as 7 phases (Phase 9 → Phase 14, with Phase 10 split into 10a/10b) on top of the frozen v2.1 Steward Console. Build order follows **FEATURES** (motivation-first): Relationship first as the zero-allowlist-cost opener that validates the pure-observer pattern for v2.2, then Inner Life to establish the hash-only drive discipline, then Whisper (proposal bodies will ride whisper), then Governance, then operator Replay, then Researcher Rigs as the terminal integration test.
+v2.3 gives Nous a mind that authors itself. Three themes — Narrative Self (Pneuma), Consolidating Memory (Hypnos), and Social Cognition (Iris) — build on top of the v2.2 Living Grid's frozen audit chain. The Nous can now learn continuously from the open web, reflect on failures, maintain an immutable creed, sleep to consolidate experience into long-term memory, and model the beliefs and intentions of peers. Allowlist grows **27 → 36** (+9 events across 3 phases, all Brain-private content; only hashes cross the wire).
 
-Allowlist grows **18 → 27** (+9 events across 5 phases). Two phases add zero new allowlist members: **Phase 9** (derived relationship view) and **Phase 14** (Rigs run their own isolated chain). Note: Phase 10b adds +2 (`bios.birth`, `bios.death`) per D-10b-01 correction — these events were not in v2.1 as originally assumed.
-
-Phase numbering continues from v2.1 — do NOT reset without `--reset-phase-numbers`.
+Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numbers`.
 
 ## Milestones
 
 - ✅ **v1.0 Genesis** (shipped 2026-04-17) — Phases 1-10, 944+ TS tests, 226 Py tests
 - ✅ **v2.0 First Life Sprints 11-14** (shipped 2026-04-18) — E2E, persistence, Docker, Dashboard v1
 - ✅ **v2.1 Steward Console — Phases 5-8** (shipped 2026-04-21, 18/18 plans)
-- 🔄 **v2.2 Living Grid — Phases 9-14** (opened 2026-04-21)
+- ✅ **v2.2 Living Grid — Phases 9-14** (shipped 2026-04-28, 44/44 plans)
+- 🔄 **v2.3 Living Minds — Phases 15-17** (opened 2026-05-14)
 
-## Phases (v2.2 Active)
+## Phases (v2.3 Active)
+
+- [x] **Phase 15: Pneuma (Narrative Self)** — Growth Journal + ReflexionBuffer + RuleStore + Voyager Skill Library + AAU Web Learner + Coherence Gate. Allowlist 27→30. (shipped 2026-05-14)
+- 🔄 **Phase 16: Hypnos (Consolidating Memory)** — Per-Nous sleep/consolidation: Working Memory (cap=7) → NREM Hebbian LTM concept graph → SHY downscale. Allowlist 30→32. (in progress)
+- 📋 **Phase 17: Iris (Theory of Mind)** — Per-Nous private belief model of peers (5 dims: belief/desire/intention/knowledge/emotion). CONTEXT gathered 2026-05-15. Allowlist 32→36. (context ready)
+
+## Phase Details (v2.3)
+
+### Phase 15: Pneuma (Narrative Self) [x] (shipped 2026-05-14)
+**Goal**: A Nous can author its own growth journal, verbally reflect on failures via ReflexionBuffer, accumulate strategic rules in a RuleStore, learn reusable procedures via a Voyager-style Skill Library, and continuously learn from the open web via the AAU Learner — all Brain-private, with only content-hashes crossing the wire.
+**Depends on**: Phase 14 (Researcher Rigs prove deterministic Brain fixture mode; AAU Learner must not call real LLMs during rig runs; FixtureBrainAdapter must handle SKILL_LEARN + CREED_VIOLATION action variants)
+**Requirements**: PNEU-01 (Growth Journal), PNEU-02 (ReflexionBuffer), PNEU-03 (RuleStore), PNEU-04 (Skill Library), PNEU-05 (AAU Web Learner), PNEU-06 (Coherence Gate)
+**Success Criteria** (what must be TRUE):
+  1. Growth Journal appends one entry per tick cycle with fields `{tick, summary_hash, reflection_refs}`; journal is Brain-private (no plaintext crosses the wire). `nous.reflection_authored` fires once per authored entry with closed-tuple payload `{nous_did, tick, entry_hash}`.
+  2. ReflexionBuffer stores up to 5 verbal post-hoc self-critiques; buffer overflow evicts oldest. Reflexion entries injected at prompt-build time. Evidence: GPT-4 HumanEval 80% → 91% pass@1 (arxiv.org/abs/2303.11366).
+  3. RuleStore accumulates strategic guidelines as WikiCategory.SELF_MODEL wiki pages, capped at 10 (SCOPE pattern). Evidence: 14.23% → 38.64% task success rate (arxiv.org/abs/2512.15374). `nous.self_model_revised` fires on each rule write with closed-tuple payload `{nous_did, tick, rule_hash}`.
+  4. Skill Library stores reusable text-based "how-to" procedures retrieved via FTS5; top-k skills injected into system prompt at build time. Skills are prose instructions only — no executable code (Level 4 sandbox deferred).
+  5. AAU Learner performs async background fetches (DuckDuckGo, arXiv, Wikipedia, PyPI, RSS, Jina Reader fallback) that NEVER block the Grid tick RPC. All learned content stored in MemoryStore `wiki_pages` (WikiCategory.LEARNED) with FTS5 + URL+content-hash dedup. Zero audit events for learned facts (Brain-private).
+  6. Coherence Gate blocks actions that contradict the Nous's creed (immutable self-model statement). Contradiction triggers `nous.creed_violation` with closed-tuple payload `{nous_did, tick, violation_hash}` before action rejection.
+**Scope (ships)**: PNEU-01..06.
+**Out of scope for this phase**: Dynamic Python tool generation (Level 4 sandbox — deferred); peer skill sharing (Phase 16 PeerSkillFilter via ObservationalLearner); adversarial skill injection (mitigated in Phase 16 via B-authors-text discipline).
+**Risk**:
+  - T-15-01 (CRITICAL): AAU HTTP fetches block Grid tick — all fetches wrapped in `asyncio.create_task`, never `await` in tick path; grep gate forbids `await` in `aau/learner.py` at top-level tick entry point.
+  - T-15-02 (HIGH): Creed content crosses wire — `nous.creed_violation` payload contains only `violation_hash`; grep CI gate forbids `creed_text|creed_content|rule_text` in any Grid emitter.
+  - T-15-03 (MEDIUM): Reflexion buffer grows unbounded — hard cap at 5 entries (oldest evicted); unit test asserts buffer length ≤ 5 after 100 insertions.
+**Allowlist additions**: **+3**. Events: `nous.reflection_authored` `{nous_did, tick, entry_hash}`; `nous.self_model_revised` `{nous_did, tick, rule_hash}`; `nous.creed_violation` `{nous_did, tick, violation_hash}`. Running total: **30**.
+**Plans**: 6 plans (all shipped 2026-05-14)
+
+Plans:
+- [x] 15-01-PLAN.md — Wave 0: allowlist 27→30 + types/config + RED test stubs (ReflexionBuffer, RuleStore, SkillStore, AAULearner, CoherenceGate, sole-producer emitters)
+- [x] 15-02-PLAN.md — Wave 1: Brain ReflexionBuffer (cap=5, evict-oldest) + RuleStore (WikiCategory.SELF_MODEL, cap=10) + wiki-page cap enforcement
+- [x] 15-03-PLAN.md — Wave 2: Voyager SkillStore (FTS5 retrieval + SKILL_LEARN action + PeerSkillFilter scaffold) + ObservationalLearner hook
+- [x] 15-04-PLAN.md — Wave 3: AAULearner (DuckDuckGo/arXiv/Wikipedia/PyPI/RSS/Jina + dedup + async task isolation + rig fixture guard)
+- [x] 15-05-PLAN.md — Wave 4: CoherenceGate + CREED_VIOLATION action + Brain prompt injection (reflexion + skills + rules top-k) + sole-producer emitters wiring
+- [x] 15-06-PLAN.md — Wave 5: zero-diff regression + AAU block-test + buffer-cap test + CI grep gates (T-15-01/02/03) + atomic doc-sync
+
+### Phase 16: Hypnos (Consolidating Memory) 🔄 (in progress)
+**Goal**: Each Nous has a Working Memory (capacity=7) that consolidates into a Long-Term Memory concept graph via NREM Hebbian learning during a configurable sleep cycle, followed by synaptic homeostasis (SHY downscale). Sleep is Brain-private; only the two boundary events cross the wire.
+**Depends on**: Phase 15 (ReflexionBuffer + RuleStore prove text-procedure storage patterns; AAU Learner feeds Working Memory with web-sourced episodes; SkillStore FTS5 pattern cloned for LTM retrieval)
+**Requirements**: HYP-01 (Working Memory cap=7), HYP-02 (NREM Hebbian consolidation), HYP-03 (SHY downscale), HYP-04 (sleep cycle trigger + boundary events), HYP-05 (LTM concept graph retrieval)
+**Success Criteria** (what must be TRUE):
+  1. Working Memory holds ≤7 episode slots (Miller's Law); overflow evicts oldest. Insertion and retrieval deterministic given `(seed, tick)` — zero wall-clock references. Unit test: 8 insertions → exactly 7 retained; same episodes → same Working Memory state at any replay tick.
+  2. NREM Hebbian pass: co-activated concept pairs strengthen LTM graph edges via `Δw = η × pre × post` with configurable `η` (default 0.01). Graph stored in Brain SQLite, never broadcast. Determinism test: fixed `(seed, episodes, η)` → byte-identical graph at any replay tick.
+  3. SHY downscale: after Hebbian pass all edge weights scaled by `σ ∈ (0, 1)` (default 0.95) to prevent runaway saturation. Unit test: after 100 sleep cycles maximum edge weight remains bounded.
+  4. `nous.sleep.entered` fires at sleep-cycle start; `nous.sleep.completed` fires when SHY downscale finishes. Both closed-tuple `{nous_did, tick, ltm_snapshot_hash}`. No intermediate NREM state crosses the wire. Grid continues ticking during sleep (async Brain task).
+  5. LTM retrieval: during prompt-build top-k concept nodes ranked by `(edge_weight × recency_factor)` injected as long-term memories. Query is O(concept_count) not O(N²). p95 retrieval <10ms on 1000-node graph.
+**Scope (ships)**: HYP-01..05.
+**Out of scope for this phase**: REM dreaming / creative recombination (deferred); cross-Nous LTM merging (Brain-private invariant — anti-feature); LTM external database export (anti-feature).
+**Risk**:
+  - T-16-01 (CRITICAL): LTM content crosses wire — `nous.sleep.completed` payload contains only `ltm_snapshot_hash`; grep gate forbids `ltm_content|concept_text|graph_data` in any Grid emitter.
+  - T-16-02 (HIGH): Hebbian pass blocks Grid tick — sleep runs as async Brain task; `nous.sleep.entered` emitted before sleep starts, Grid ticks continue during consolidation.
+  - T-16-03 (MEDIUM): Edge weight divergence across ticks — determinism test with fixed `(seed, η, σ, episodes)` produces byte-identical graph; wall-clock grep gate cloned from Phase 15 T-15-01.
+**Allowlist additions**: **+2**. Events: `nous.sleep.entered` `{nous_did, tick, ltm_snapshot_hash}`; `nous.sleep.completed` `{nous_did, tick, ltm_snapshot_hash}`. Running total: **32**.
+**Plans**: TBD (planning in progress)
+
+### Phase 17: Iris (Theory of Mind) 📋 (context ready 2026-05-15)
+**Goal**: Each Nous maintains a private per-peer belief model across 5 dimensions (belief, desire, intention, knowledge, emotion). The model is Brain-private; only belief-revision events cross the wire as hashes. The Iris elicit cycle uses LLM inference over witnessed peer events to form, update, and detect contradictions in beliefs.
+**Depends on**: Phase 16 (LTM concept graph provides the memory substrate Iris draws from when forming beliefs; Working Memory holds recent peer observations that `IrisRuntime.elicit` reads)
+**Requirements**: IRIS-01 (Belief dataclass + 5 dimensions), IRIS-02 (IrisRuntime.elicit), IRIS-03 (contradiction detection), IRIS-04 (prior seeding from observed events), IRIS-05 (belief context injection at prompt-build)
+**Success Criteria** (what must be TRUE):
+  1. `Belief` dataclass (frozen): `{id, nous_did, target_did, dimension, content, confidence, superseded_by, created_tick, source_event_hash, recency_decay}`. Dimension is `Literal["belief", "desire", "intention", "knowledge", "emotion"]`. Content is Brain-private prose — never broadcast.
+  2. `IrisRuntime.elicit(nous_did, target_did, witnessed_events)` forms or updates a belief about `target_did` via LLM call. Wall-clock free: NEVER use `datetime`, `time.time`, `random.random`, `uuid.uuid4`, `os.urandom` — tick is sole time axis. Cooldown: IRIS_ELICIT_COOLDOWN=20 ticks per `(nous_did, target_did)` pair. 3-keys-not-5: Grid injects `nous_did` and `tick` at emit time; Brain metadata never contains these.
+  3. Contradiction detection: when new belief content conflicts with existing one (confidence-weighted cosine distance < IRIS_CONTRADICTION_THRESHOLD=0.3), `iris.contradiction_detected` fires with `{nous_did, tick, target_did, contradiction_hash}`. Old belief marked `superseded_by = new_belief.id`.
+  4. Prior seeding: `iris.prior_seeded` fires when a Nous forms an initial belief about a peer from observed events (no prior belief existed). Payload `{nous_did, tick, target_did, seed_event_hash}`. Enables auditors to trace belief formation origin without reading content.
+  5. Top-5 beliefs (by `confidence × recency_decay`, IRIS_CONTEXT_TOP_K=5, cap IRIS_BELIEFS_CAP=10) injected into system prompt at build time. `iris.context_invoked` fires on injection `{nous_did, tick, belief_count}`. `iris.belief_revised` fires on every belief write `{nous_did, tick, target_did, belief_hash}`.
+**Scope (ships)**: IRIS-01..05.
+**Out of scope for this phase**: Cross-Nous belief sharing (adversarial surface — deferred); belief influence on governance voting (post-v2.3); Thymos emotion-label integration (deferred to v2.4); ObservationalLearner → Iris pipeline (Phase 16 wires observation; Iris reads from LTM).
+**Risk**:
+  - T-17-01 (CRITICAL): Belief content crosses wire — all 4 audit events carry only hashes; grep gate forbids `belief_content|target_content|emotion_text|dimension_text` in any Grid emitter.
+  - T-17-02 (HIGH): Wall-clock in elicit — grep gate forbids `datetime|time.time|random.random|uuid.uuid4|os.urandom` in `iris/elicit.py`; tick is sole time axis.
+  - T-17-03 (MEDIUM): Elicit LLM call blocks Grid tick — elicit runs as async Brain task with IRIS_ELICIT_COOLDOWN=20 ticks per pair preventing saturation.
+  - T-17-04 (MEDIUM): Contradiction threshold too sensitive — IRIS_CONTRADICTION_THRESHOLD=0.3 (configurable); unit test: updating belief with near-identical content does NOT trigger contradiction.
+**Allowlist additions**: **+4**. Events: `iris.belief_revised` `{nous_did, tick, target_did, belief_hash}`; `iris.context_invoked` `{nous_did, tick, belief_count}`; `iris.contradiction_detected` `{nous_did, tick, target_did, contradiction_hash}`; `iris.prior_seeded` `{nous_did, tick, target_did, seed_event_hash}`. Running total: **36**.
+**Plans**: TBD (CONTEXT.md gathered 2026-05-15; planning not started)
+
+## Progress (v2.3)
+
+**Execution Order:** 15 → 16 → 17
+
+Dependencies form a strict chain. Rationale:
+- 15 first: establishes text-procedure storage patterns (ReflexionBuffer, RuleStore, SkillStore) that Hypnos's LTM retrieval inherits.
+- 16 before 17: LTM concept graph is the memory substrate Iris reads; Working Memory holds the peer observations Iris elicit consumes.
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 15. Pneuma (Narrative Self) | 6/6 | Complete | 2026-05-14 |
+| 16. Hypnos (Consolidating Memory) | TBD | In Progress | — |
+| 17. Iris (Theory of Mind) | TBD | Context Ready | — |
+
+## Allowlist Growth Ledger (v2.3)
+
+Starting: **27 events** (v2.2 frozen end-state).
+
+| Phase | Event Added | Payload Shape | Running Total |
+|-------|-------------|---------------|---------------|
+| 15 | `nous.reflection_authored` | `{nous_did, tick, entry_hash}` | 28 |
+| 15 | `nous.self_model_revised` | `{nous_did, tick, rule_hash}` | 29 |
+| 15 | `nous.creed_violation` | `{nous_did, tick, violation_hash}` | 30 |
+| 16 | `nous.sleep.entered` | `{nous_did, tick, ltm_snapshot_hash}` | 31 |
+| 16 | `nous.sleep.completed` | `{nous_did, tick, ltm_snapshot_hash}` | 32 |
+| 17 | `iris.belief_revised` | `{nous_did, tick, target_did, belief_hash}` | 33 |
+| 17 | `iris.context_invoked` | `{nous_did, tick, belief_count}` | 34 |
+| 17 | `iris.contradiction_detected` | `{nous_did, tick, target_did, contradiction_hash}` | 35 |
+| 17 | `iris.prior_seeded` | `{nous_did, tick, target_did, seed_event_hash}` | 36 |
+
+**Total v2.3 allowlist growth: +9 (27 → 36).** All additions Brain-private content — only hashes cross the wire. Freeze-except-by-explicit-addition rule preserved — every addition lands in its own phase with closed-tuple payload test, sole-producer grep, privacy-matrix update, and `scripts/check-state-doc-sync.mjs` literal bump in the same commit.
+
+## Research Artifacts (v2.3)
+
+Primary sources (committed in `.planning/research/v2.3/`):
+- Phase 15: Reflexion (Shinn et al., arxiv.org/abs/2303.11366); RuleStore (arxiv.org/abs/2512.15374); ObservationalLearner (arxiv.org/abs/2512.20845); Voyager skill library (Wang et al. 2023)
+- Phase 16: Miller's Law (1956) — Working Memory cap=7; Tononi SHY hypothesis (2003) — synaptic homeostasis; Hebbian learning (Hebb 1949)
+- Phase 17: Theory of Mind (Premack & Woodruff 1978); BDI model (Bratman 1987); ToM in LLMs (Kosinski 2023)
+
+---
+
+## Phases (v2.2 — Shipped)
 
 - [x] **Phase 9: Relationship Graph (Derived View)** — Pure-observer relationship listener over existing dialogue.* + trade.* events. Zero allowlist additions. (completed 2026-04-22)
 - [x] **Phase 10a: Ananke Drives (Inner Life, part 1)** — Five-drive subsystem with threshold-crossing audit events. Establishes hash-only drive discipline for Phase 10b. (shipped 2026-04-22, allowlist 18→19 with `ananke.drive_crossed`)
