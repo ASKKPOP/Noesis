@@ -181,7 +181,6 @@ Also add `iris_db_dir: str | Path | None = None` to `__init__` signature after `
         # Each ElicitResult may emit: IRIS_BELIEF_REVISED, IRIS_CONTRADICTION_DETECTED,
         # IRIS_PRIOR_SEEDED. IRIS_CONTEXT_INVOKED emitted once if any beliefs injected.
         if self._iris_runtime is not None and isinstance(dialogue_ctxs, list):
-            total_injected = 0
             for ctx in dialogue_ctxs:
                 if not isinstance(ctx, dict):
                     continue
@@ -199,18 +198,21 @@ Also add `iris_db_dir: str | Path | None = None` to `__init__` signature after `
                     log.warning("iris: elicit failed for %s: %s", target_did, exc)
                     continue
 
-                # IRIS_BELIEF_REVISED: one action per returned belief (may be empty on cooldown).
-                for belief in result.beliefs:
+                # IRIS_BELIEF_REVISED: at most once per elicit() call (D-17-06).
+                # result.beliefs is empty on cooldown or error; result.new_hash is the
+                # sha256 of the single newly written belief row (all returned beliefs
+                # are revisions of the same writing operation).
+                if result.beliefs:
                     actions.append(Action(
                         action_type=ActionType.IRIS_BELIEF_REVISED,
                         metadata={
                             "target_did": target_did,
                             "belief_hash": result.new_hash,
-                            "dimension": belief.dimension if isinstance(belief.dimension, str)
-                                        else belief.dimension.value,
+                            "dimension": result.beliefs[0].dimension
+                                        if isinstance(result.beliefs[0].dimension, str)
+                                        else result.beliefs[0].dimension.value,
                         },
                     ).to_dict())
-                    total_injected += 1
 
                 # IRIS_CONTRADICTION_DETECTED: fires when confidence delta > threshold.
                 if result.contradiction:
@@ -233,12 +235,9 @@ Also add `iris_db_dir: str | Path | None = None` to `__init__` signature after `
                         },
                     ).to_dict())
 
-            # D-17-13: IRIS_CONTEXT_INVOKED emitted once per tick when beliefs injected.
-            if total_injected > 0:
-                actions.append(Action(
-                    action_type=ActionType.IRIS_CONTEXT_INVOKED,
-                    metadata={"belief_count": total_injected},
-                ).to_dict())
+            # Note: IRIS_CONTEXT_INVOKED is emitted in Task 2 after context_for() determines
+            # the total beliefs injected into the prompt (D-17-13: belief_count = sum of
+            # context_for() results, NOT count of IRIS_BELIEF_REVISED actions emitted).
 ```
 
 **Invariant check on contradiction_hash:** NousRunner's appendIrisContradictionDetected slices `[:32]` — the hash comes from `result.prior_hash` (a full sha256 hexdigest). Brain sends it full; Grid truncates. This is correct.
@@ -356,6 +355,16 @@ In `on_tick()`, before the `build_system_prompt(...)` call, insert:
                 )
                 if tom_ctx.beliefs:
                     tom_contexts.append(tom_ctx)
+
+            # D-17-13: IRIS_CONTEXT_INVOKED emitted once per tick when any beliefs injected.
+            # belief_count = total beliefs fetched by context_for() across all peers.
+            # Emitted here (after context_for) so it reflects freshly written beliefs from elicit().
+            total_injected = sum(len(ctx.beliefs) for ctx in tom_contexts)
+            if total_injected > 0:
+                actions.append(Action(
+                    action_type=ActionType.IRIS_CONTEXT_INVOKED,
+                    metadata={"belief_count": total_injected},
+                ).to_dict())
 ```
 
 Then pass `tom_context=tom_contexts` to `build_system_prompt()`:

@@ -26,7 +26,7 @@ must_haves:
   artifacts:
     - path: "grid/src/iris/appendIrisBeliefRevised.ts"
       provides: "sole producer for iris.belief_revised"
-      exports: ["appendIrisBeliefRevised", "DID_RE", "HEX32_RE"]
+      exports: ["appendIrisBeliefRevised", "DID_RE", "HEX64_RE"]
     - path: "grid/src/iris/appendIrisContextInvoked.ts"
       provides: "sole producer for iris.context_invoked"
       exports: ["appendIrisContextInvoked"]
@@ -196,7 +196,7 @@ Sole producer for `iris.belief_revised`. 4-key payload: `{nous_did, tick, target
  *   3. Self-report invariant: payload.nous_did === actorDid
  *   4. Tick: non-negative integer
  *   5. DID regex: payload.target_did
- *   6. Hash format: payload.belief_hash (32-char hex, HEX32_RE)
+ *   6. Hash format: payload.belief_hash (64-char hex, HEX64_RE — full sha256 hexdigest)
  *   7. Closed-tuple: Object.keys(payload).sort() === IRIS_BELIEF_REVISED_KEYS
  *   8. Explicit reconstruction (prototype-pollution defense)
  *   9. Privacy gate: payloadPrivacyCheck belt-and-suspenders (D-17-17)
@@ -213,8 +213,8 @@ import { IRIS_BELIEF_REVISED_KEYS, type IrisBeliefRevisedPayload } from './types
 /** DID regex — locked project-wide (Phase 7 D-29). */
 export const DID_RE = /^did:noesis:[a-z0-9_\-]+$/i;
 
-/** 32-char lowercase hex (sha256[:32] — Brain-side truncation convention for iris hashes). */
-export const HEX32_RE = /^[0-9a-f]{32}$/;
+/** 64-char lowercase hex (full sha256 hexdigest — Brain emits full hash, Grid stores as-is). */
+export const HEX64_RE = /^[0-9a-f]{64}$/;
 
 export function appendIrisBeliefRevised(
     audit: AuditChain,
@@ -248,9 +248,9 @@ export function appendIrisBeliefRevised(
         throw new TypeError(`appendIrisBeliefRevised: invalid payload.target_did (DID_RE failed)`);
     }
     // 6. Hash format: belief_hash
-    if (typeof payload.belief_hash !== 'string' || !HEX32_RE.test(payload.belief_hash)) {
+    if (typeof payload.belief_hash !== 'string' || !HEX64_RE.test(payload.belief_hash)) {
         throw new TypeError(
-            `appendIrisBeliefRevised: invalid belief_hash (expected 32-char lowercase hex)`,
+            `appendIrisBeliefRevised: invalid belief_hash (expected 64-char lowercase hex sha256)`,
         );
     }
     // 7. Closed-tuple check
@@ -309,7 +309,7 @@ Skip steps 5b (no hash) and proceed to closed-tuple check.
 Sole producer for `iris.contradiction_detected`. 4-key payload: `{nous_did, tick, target_did, contradiction_hash}`.
 
 Structurally identical to appendIrisBeliefRevised — swap:
-- `belief_hash` → `contradiction_hash` (same HEX32_RE validation)
+- `belief_hash` → `contradiction_hash` (same HEX64_RE validation)
 - `IRIS_BELIEF_REVISED_KEYS` → `IRIS_CONTRADICTION_DETECTED_KEYS`
 - `IrisBeliefRevisedPayload` → `IrisContradictionDetectedPayload`
 - event string: `'iris.contradiction_detected'`
@@ -320,24 +320,20 @@ Structurally identical to appendIrisBeliefRevised — swap:
 Sole producer for `iris.prior_seeded`. 4-key payload: `{nous_did, tick, target_did, seed_event_hash}`.
 
 Structurally identical to appendIrisBeliefRevised — swap:
-- `belief_hash` → `seed_event_hash` (same HEX32_RE validation)
+- `belief_hash` → `seed_event_hash` (same HEX64_RE validation)
 - `IRIS_BELIEF_REVISED_KEYS` → `IRIS_PRIOR_SEEDED_KEYS`
 - `IrisBeliefRevisedPayload` → `IrisPriorSeededPayload`
 - event string: `'iris.prior_seeded'`
 - all error message prefixes: `appendIrisPriorSeeded`
 
-Note: `seed_event_hash` may be a full sha256 (64 chars) in some cases per elicit.py line 191. Use a relaxed validation: non-empty hex string of length 32 OR 64. Adjust HEX32_RE accordingly:
-```typescript
-const HEX_HASH_RE = /^[0-9a-f]{32,64}$/;  // 32 or 64 char hex
-```
-Apply only to seed_event_hash (belief_hash and contradiction_hash remain HEX32_RE).
+Note: `seed_event_hash` is the full sha256 hexdigest from elicit.py (64 chars). Use `HEX64_RE` consistently — same as belief_hash and contradiction_hash.
 
 **File 6: grid/src/iris/index.ts**
 
 Barrel export:
 ```typescript
 /** Phase 17 Grid-side Iris Theory of Mind audit surface — D-17-08. */
-export { appendIrisBeliefRevised, DID_RE, HEX32_RE } from './appendIrisBeliefRevised.js';
+export { appendIrisBeliefRevised, DID_RE, HEX64_RE } from './appendIrisBeliefRevised.js';
 export { appendIrisContextInvoked } from './appendIrisContextInvoked.js';
 export { appendIrisContradictionDetected } from './appendIrisContradictionDetected.js';
 export { appendIrisPriorSeeded } from './appendIrisPriorSeeded.js';
@@ -395,7 +391,7 @@ import {
                             nous_did: this.nousDid,
                             tick,
                             target_did: action.metadata['target_did'] as string,
-                            belief_hash: (action.metadata['belief_hash'] as string).slice(0, 32),
+                            belief_hash: action.metadata['belief_hash'] as string,
                         });
                     } catch (err) {
                         console.warn(JSON.stringify({
@@ -436,7 +432,7 @@ import {
                             nous_did: this.nousDid,
                             tick,
                             target_did: action.metadata['target_did'] as string,
-                            contradiction_hash: (action.metadata['contradiction_hash'] as string).slice(0, 32),
+                            contradiction_hash: action.metadata['contradiction_hash'] as string,
                         });
                     } catch (err) {
                         console.warn(JSON.stringify({
@@ -472,7 +468,7 @@ import {
                 }
 ```
 
-**belief_hash truncation rationale:** elicit.py produces `hashlib.sha256(content).hexdigest()` (64 chars). NousRunner slices to `.slice(0, 32)` to match HEX32_RE in the emitter. `seed_event_hash` may be 32 or 64 chars (accepted by HEX_HASH_RE in appendIrisPriorSeeded).
+**Hash format:** All three hash fields (belief_hash, contradiction_hash, seed_event_hash) are full 64-char sha256 hexdigests from elicit.py. NousRunner passes them through as-is; all 4 emitters validate with HEX64_RE. No truncation.
 
 **Duplicate method warning:** nous-runner.ts has no duplicate methods, but handler.py does. This edit is only to nous-runner.ts — no handler.py changes here.
   </action>
