@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.2
+milestone: v2.3
 milestone_name: Active)
-status: executing
-stopped_at: Phase 14 context gathered
-last_updated: "2026-04-28T10:02:24.054Z"
-last_activity: 2026-04-28 -- Phase 14 execution started
+status: completed
+stopped_at: Phase 17 context gathered
+last_updated: "2026-05-15T18:05:05.578Z"
+last_activity: 2026-04-28 -- Phase 14 doc-sync + prefix hard-bans shipped
 progress:
-  total_phases: 11
-  completed_phases: 6
+  total_phases: 10
+  completed_phases: 7
   total_plans: 44
-  completed_plans: 39
-  percent: 89
+  completed_plans: 44
+  percent: 100
 ---
 
 # Project State
@@ -134,9 +134,9 @@ See `.planning/phases/06-operator-agency-foundation-h1-h4/06-CONTEXT.md` for ful
 
 ## Session Continuity
 
-Last session: 2026-04-28T01:41:56.143Z
-Stopped at: Phase 14 context gathered
-Resume file: .planning/phases/14-researcher-rigs/14-CONTEXT.md
+Last session: 2026-05-15T18:05:05.574Z
+Stopped at: Phase 17 context gathered
+Resume file: .planning/phases/17-iris-theory-of-mind/17-CONTEXT.md
 Next action: `/gsd-execute-phase 13 --gaps-only`
 
 ## v2.2 Opening Context
@@ -343,6 +343,7 @@ Next action: `/gsd-execute-phase 13 --gaps-only`
 **Nightly bench-50 evidence (RIG-04)** — see `.planning/phases/14-researcher-rigs/14-04-SUMMARY.md` for the first observed wall-clock, the chronos.rig_closed payload, and the deterministic tarball sha256. (The nightly workflow has not yet run at doc-sync time; first run occurs after merge via cron or `gh workflow run nightly-rig-bench.yml`.)
 
 **Phase 14 plan structure (5 plans, Waves 0–4):**
+
 - 14-01: Wave 0 — scaffolding (smol-toml + RigConfig types) + invariants grep gate (T-10-12 + T-10-13) + 5 RED test stubs
 - 14-02: Wave 1 — FixtureBrainAdapter (Python, RIG-03) + GridCoordinator.awaitTick + createRigSchema + producer-boundary microbenchmark (T-10-15)
 - 14-03: Wave 2 — scripts/rig.mjs CLI + TOML loader + example configs/manifests/fixtures + verbatim --full-state consent prompt (T-10-16)
