@@ -22,6 +22,10 @@ from noesis_brain.thymos.tracker import ThymosTracker
 from noesis_brain.thymos.types import Emotion
 from noesis_brain.rpc.types import Action, ActionType
 from noesis_brain.iris.priors import seed_priors
+from pathlib import Path
+from noesis_brain.iris.store import IrisStore
+from noesis_brain.iris.elicit import IrisRuntime
+from noesis_brain.iris.integration import context_for
 
 log = logging.getLogger(__name__)
 
@@ -48,6 +52,7 @@ class BrainHandler:
         *,
         memory: Any = None,
         did: str = "",
+        iris_db_dir: str | Path | None = None,   # Phase 17 D-17-14
     ) -> None:
         self.psyche = psyche
         self.thymos = thymos
@@ -69,7 +74,18 @@ class BrainHandler:
         self._bios_loader = BiosLoader()
         self._bios_runtimes: dict[str, BiosRuntime] = {}
         self._bios_birth_ticks: dict[str, int] = {}
-        self._iris_runtime = None  # Phase 17 D-17-14: declared here; initialized in Wave 3 Task 1
+        # Phase 17 D-17-14: IrisRuntime optional-dep injection.
+        # iris_db_dir=None → Iris disabled (all iris guards are no-ops).
+        # iris_db_dir provided → IrisStore + IrisRuntime constructed for this Nous.
+        if iris_db_dir is not None:
+            _iris_store = IrisStore(
+                db_path=Path(iris_db_dir) / f"iris_{self.did.replace(':', '_')}.db",
+                nous_did=self.did,
+            )
+            self._iris_runtime: IrisRuntime | None = IrisRuntime(_iris_store, self.llm)
+            self._iris_runtime.set_dispatcher(None)  # dispatcher injected post-init if needed
+        else:
+            self._iris_runtime = None
 
     async def on_message(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle incoming P2P message → think → produce response actions.
@@ -96,12 +112,30 @@ class BrainHandler:
             boredom_level=ananke_rt.state.levels[DriveName.BOREDOM],
         )
         epoch_since_spawn = bios_rt.epoch_since_spawn(0)  # tick=0 until on_tick supplies it
+
+        # Phase 17 D-17-16: gather Theory of Mind context for sender at prompt-build time.
+        # ToM is tick-driven; on_message() passes the most recent stored beliefs.
+        # context_for() is PURE READ — no elicit() here (elicit is tick-driven only).
+        msg_tom_contexts: list = []
+        if self._iris_runtime is not None and sender_did:
+            try:
+                tom_ctx = context_for(
+                    target_did=sender_did,
+                    store=self._iris_runtime.store,
+                    k=5,
+                )
+                if tom_ctx.beliefs:
+                    msg_tom_contexts.append(tom_ctx)
+            except Exception as exc:
+                log.warning("iris: context_for failed for sender %s: %s", sender_did, exc)
+
         system_prompt = build_system_prompt(
             self.psyche, self.thymos.mood, self.telos,
             grid_name=self.grid_name, location=self.location,
             bios_snapshot=bios_rt.state,
             epoch_since_spawn=epoch_since_spawn,
             subjective_multiplier=subjective_multiplier,
+            tom_context=msg_tom_contexts if msg_tom_contexts else None,   # Phase 17 D-17-16
         )
 
         # 3. Build user prompt with message context
@@ -226,6 +260,93 @@ class BrainHandler:
                 )
             except Exception as exc:  # pragma: no cover — Iris is fail-soft
                 log.warning("iris: seed_priors failed: %s", exc)
+
+        # Phase 17 D-17-15: IrisRuntime.elicit() — once per peer in dialogue_context.
+        # Gated: _iris_runtime present AND dialogue_context is a list (D-17-04).
+        # Each ElicitResult may emit: IRIS_BELIEF_REVISED, IRIS_CONTRADICTION_DETECTED,
+        # IRIS_PRIOR_SEEDED. IRIS_CONTEXT_INVOKED emitted once if any beliefs injected.
+        if self._iris_runtime is not None and isinstance(dialogue_ctxs, list):
+            for ctx in dialogue_ctxs:
+                if not isinstance(ctx, dict):
+                    continue
+                target_did = ctx.get("counterparty_did", "")
+                if not target_did:
+                    continue
+                try:
+                    result = self._iris_runtime.elicit(
+                        nous_did=self.did,
+                        target_did=target_did,
+                        context=ctx,
+                        tick=tick,
+                    )
+                except Exception as exc:
+                    log.warning("iris: elicit failed for %s: %s", target_did, exc)
+                    continue
+
+                # IRIS_BELIEF_REVISED: at most once per elicit() call (D-17-06).
+                if result.beliefs:
+                    actions.append(Action(
+                        action_type=ActionType.IRIS_BELIEF_REVISED,
+                        metadata={
+                            "target_did": target_did,
+                            "belief_hash": result.new_hash,
+                            "dimension": result.beliefs[0].dimension
+                                        if isinstance(result.beliefs[0].dimension, str)
+                                        else result.beliefs[0].dimension.value,
+                        },
+                    ).to_dict())
+
+                # IRIS_CONTRADICTION_DETECTED: fires when confidence delta > threshold.
+                if result.contradiction:
+                    actions.append(Action(
+                        action_type=ActionType.IRIS_CONTRADICTION_DETECTED,
+                        metadata={
+                            "target_did": target_did,
+                            "contradiction_hash": result.prior_hash,
+                        },
+                    ).to_dict())
+
+                # IRIS_PRIOR_SEEDED: fires when this is the first belief for this pair.
+                # Condition: new_hash present AND no prior (prior_hash empty string).
+                if result.new_hash and not result.prior_hash:
+                    actions.append(Action(
+                        action_type=ActionType.IRIS_PRIOR_SEEDED,
+                        metadata={
+                            "target_did": target_did,
+                            "seed_event_hash": result.source_event_hash or result.new_hash,
+                        },
+                    ).to_dict())
+
+            # Phase 17 D-17-16: context_for() + IRIS_CONTEXT_INVOKED.
+            # Called AFTER elicit() so belief_count reflects newly written beliefs.
+            # D-17-12: up to 3 most-recently-interacted peers.
+            tom_contexts: list = []
+            seen_peers: list[str] = []
+            for ctx in dialogue_ctxs:
+                if not isinstance(ctx, dict):
+                    continue
+                peer = ctx.get("counterparty_did", "")
+                if peer and peer not in seen_peers:
+                    seen_peers.append(peer)
+            for peer_did in seen_peers[:3]:
+                try:
+                    tom_ctx = context_for(
+                        target_did=peer_did,
+                        store=self._iris_runtime.store,
+                        k=5,
+                    )
+                    if tom_ctx.beliefs:
+                        tom_contexts.append(tom_ctx)
+                except Exception as exc:
+                    log.warning("iris: context_for failed for %s: %s", peer_did, exc)
+
+            # D-17-13: IRIS_CONTEXT_INVOKED emitted once per tick when any beliefs injected.
+            total_injected = sum(len(tc.beliefs) for tc in tom_contexts)
+            if total_injected > 0:
+                actions.append(Action(
+                    action_type=ActionType.IRIS_CONTEXT_INVOKED,
+                    metadata={"belief_count": total_injected},
+                ).to_dict())
 
         if actions:
             # Advisory logging (D-10a-06): drive-vs-action divergence is

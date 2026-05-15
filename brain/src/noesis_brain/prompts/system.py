@@ -32,6 +32,10 @@ def build_system_prompt(
     # peer_voices: list of (speaker_name, utterance_text) tuples from the
     # 3 most recent nous.spoke events by highest-trust peers.
     peer_voices: "list[tuple[str, str]] | None" = None,
+    # Phase 17 additive-widening: Theory of Mind context for up to 3 peers.
+    # tom_context: list of ToMContext objects, one per peer with active beliefs.
+    # None when Iris disabled; empty list when enabled but no beliefs yet.
+    tom_context: "list | None" = None,
 ) -> str:
     """Build the full system prompt that defines who this Nous is.
 
@@ -90,6 +94,12 @@ def build_system_prompt(
     # Phase 16: inject recent peer utterances for cultural observation.
     if peer_voices:
         section = _peer_voices_section(peer_voices)
+        if section:
+            sections.append(section)
+
+    # Phase 17: inject Theory of Mind context if available.
+    if tom_context:
+        section = _theory_of_mind_section(tom_context)
         if section:
             sections.append(section)
 
@@ -221,6 +231,36 @@ def _peer_voices_section(peer_voices: "list[tuple[str, str]]") -> str:
             truncated += "…"
         lines.append(f'- {name}: "{truncated}"')
     return "\n".join(lines)
+
+
+def _theory_of_mind_section(tom_contexts: list) -> str:
+    """Build Theory of Mind section for up to 3 peers (D-17-11, D-17-12).
+
+    Brain-private: belief content never leaves Brain. This section is in the
+    LLM system prompt — it does NOT cross the Brain↔Grid wire.
+
+    Args:
+        tom_contexts: list of ToMContext objects from context_for().
+                      Up to 3 peers; each has beliefs and n_beliefs_used.
+    """
+    if not tom_contexts:
+        return ""
+
+    lines = ["## What You Know About Others"]
+    # D-17-12: max 3 most-recently-interacted peers.
+    for ctx in tom_contexts[:3]:
+        if not ctx.beliefs:
+            continue
+        lines.append(f"\nAbout {ctx.target_did}:")
+        for belief in ctx.beliefs[:5]:  # IRIS_CONTEXT_TOP_K = 5
+            dim = belief.dimension if isinstance(belief.dimension, str) else belief.dimension.value
+            conf_label = "confidently" if belief.confidence > 0.7 else "tentatively"
+            lines.append(
+                f"  - [{dim}] You {conf_label} believe: {belief.content}"
+            )
+    result = "\n".join(lines)
+    # Guard: if nothing was added beyond the header, return ""
+    return result if len(lines) > 1 else ""
 
 
 def _directives_section(psyche: Psyche) -> str:
