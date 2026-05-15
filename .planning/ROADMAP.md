@@ -501,5 +501,67 @@ Inherited from v2.1 (do not break):
 
 ---
 
+## v2.0 First Life — SHIPPED (2026-04-18, Sprints 11-14) — HISTORY
+
+**Status:** Closed 2026-04-18. Full E2E integration, persistent storage, Docker deployment, and real-time Dashboard v1. Phases 1-4 introduced the GSD phase numbering system and established the broadcast allowlist (0 → 10 events).
+
+**Sprint overview:**
+- **Sprint 11** — End-to-end integration: NousRunner + GridCoordinator, full tick cycle, E2E tests
+- **Sprint 12** — Persistent storage: MySQL adapter, migrations, snapshot/restore
+- **Sprint 13** — Docker & Deployment: Dockerfiles, docker-compose, health checks, env config
+- **Sprint 14** — Dashboard v1 (Phases 1-4 — see below)
+
+**Test coverage at completion:** grid 346/346, brain 262/262, dashboard 215/215 — all green.
+
+### Phase 1: AuditChain Listener API + Broadcast Allowlist ✅ (2026-04-18)
+**Goal**: Establish the zero-diff audit chain invariant and the frozen broadcast allowlist. Every future phase is bound by these two invariants forever.
+**Key primitives**: `AuditChain.appendEntry()` sole-producer pattern; `grid/src/audit/broadcast-allowlist.ts` frozen set (`Object.defineProperty` throws on mutation); `check-state-doc-sync.mjs` CI gate for drift prevention; zero-diff regression hash `c7c49f49…` locked at Phase 1 commit `29c3516`.
+**Allowlist added**: **+10** initial events: `nous.spoke`, `nous.thought`, `nous.memory_formed`, `trade.proposed`, `trade.reviewed`, `trade.settled`, `telos.defined`, `law.triggered`, `operator.login`, `operator.logout`. Running total: **10**.
+
+### Phase 2: WsHub + `/ws/events` Endpoint ✅ (2026-04-18)
+**Goal**: Real-time broadcast of audit events to connected dashboard clients via WebSocket with ring-buffered backpressure.
+**Key primitives**: `WsHub` with ring buffer (capacity 1000); `/ws/events` Fastify WebSocket endpoint; broadcast-allowlist filtering before transmission; client reconnect with replay-from-cursor.
+**Allowlist added**: **0** (pure broadcast layer over existing events). Running total: **10**.
+
+### Phase 3: Dashboard Firehose + Heartbeat + Region Map ✅ (2026-04-18)
+**Goal**: Next.js 15 dashboard displays live firehose of audit events, system heartbeat, and spatial region map of Nous positions.
+**Key primitives**: `useFirehose()` WebSocket hook; `FirehoseList` component with virtual scroll; `RegionMap` SVG canvas; heartbeat banner; zero-diff regression (firehose renders byte-identical output given same chain state).
+**Allowlist added**: **0**. Running total: **10**.
+
+### Phase 4: Nous Inspector + Economy + Docker Polish ✅ (2026-04-18)
+**Goal**: Per-Nous inspector panel (memory, Telos, drives), economy view (Ousia balances, trade history), standalone Next.js + Docker deployment.
+**Key primitives**: Inspector panel with tab navigation; `useNous()` RPC hook; economy tab; standalone Next.js export; `docker-compose.yml` with health-check endpoints; compose smoke test on operator machine (SC-6).
+**Allowlist added**: **0** (inspector is read-only; no new audit events). Running total: **10**.
+
+**v2.0 phase directories archived:** `.planning/phases/archived/v2.0/01-*` through `04-*`.
+
+---
+
+## v1.0 Genesis — SHIPPED (2026-04-17, 10 Sprints) — HISTORY
+
+**Status:** Closed 2026-04-17. Built all core systems from scratch — identity, cognition, memory, economy, governance, world infrastructure. GSD phase numbering begins at Phase 1 in v2.0; v1.0 sprints are numbered Sprint 1-10 for historical reference.
+
+**What shipped (10 Sprints):**
+- **Sprint 1** — Ed25519 DID identity + SWP signed envelopes + P2P mesh
+- **Sprint 2** — NDS (Noēsis Domain System) + Communication Gate
+- **Sprint 3** — LLM adapter — multi-provider routing (Ollama, Claude, GPT, local)
+- **Sprint 4** — Brain core — Psyche (Big Five), Thymos (emotions), Telos (goals)
+- **Sprint 5** — Brain-Protocol bridge — JSON-RPC over Unix domain socket
+- **Sprint 6** — Memory stream + personal wiki (Karpathy pattern) + reflection engine
+- **Sprint 7** — Grid infrastructure — WorldClock, SpatialMap, LogosEngine, AuditChain, REST API
+- **Sprint 8** — P2P economy — Ousia transfers, bilateral negotiation, shops, reputation
+- **Sprint 9** — Human Channel — ownership proofs, consent grants, gateway, activity observer
+- **Sprint 10** — Genesis launch — NousRegistry, GenesisLauncher, CLI, world presets
+
+**Test coverage at completion:** 944+ TypeScript tests, 226 Python tests — all passing.
+
+**Key invariants established in v1.0 (carried forward forever):**
+- AuditChain zero-diff invariant — commit `29c3516`, regression hash `c7c49f49…`
+- Hash-only cross-boundary — Brain↔Grid plaintext never crosses the RPC wire
+- DID regex `/^did:noesis:[a-z0-9_\-]+$/i` enforced at all entry points
+- First-life promise — audit entries retained forever; tombstoned DIDs permanently reserved
+
+---
+
 *Roadmap created: 2026-04-20 — v2.1 Steward Console opened*
-*Updated: 2026-04-22 — Phase 10b shipped (8/8 plans, allowlist 19→21 with bios.birth+bios.death per D-10b-01); corrected total allowlist growth 18→27 (+9 events)*
+*Updated: 2026-05-15 — v2.3 Living Minds phases 15-17 added; complete v2.0 and v1.0 history sections added*
