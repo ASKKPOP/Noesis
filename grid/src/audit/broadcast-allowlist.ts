@@ -21,7 +21,7 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13) — exactly these 27 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17) — exactly these 36 event types.
  *  v1 (Phase 1, per 01-CONTEXT.md): 10 events.
  *  Phase 5 (REV-02): +1 'trade.reviewed' — externally observable reviewer verdict;
  *  payload shape D-03, 3 keys on pass / 5 keys on fail, all privacy-clean (see D-12 test).
@@ -57,6 +57,14 @@
  *  Phase 13 (REPLAY-02): +1 'operator.exported' at position 27 — closed 6-key payload:
  *   {tier:'H5', operator_id, start_tick, end_tick, tarball_hash, requested_at}.
  *   Sole producer grid/src/audit/append-operator-exported.ts. Per D-13-09 / REPLAY-02.
+ *  Phase 15 (REFLEX-02): +3 nous.reflection_authored, nous.self_model_revised, nous.creed_violation at positions 28-30.
+ *  Phase 16 (SLEEP-01): +2 nous.sleep.entered, nous.sleep.completed at positions 31-32.
+ *  Phase 17 (D-17-02): +4 iris.* events at positions 33-36 (allowlist 32→36).
+ *   - 'iris.belief_revised'           (33) — closed 4-key {nous_did, tick, target_did, belief_hash}
+ *   - 'iris.context_invoked'          (34) — closed 3-key {nous_did, tick, belief_count}
+ *   - 'iris.contradiction_detected'   (35) — closed 4-key {nous_did, tick, target_did, contradiction_hash}
+ *   - 'iris.prior_seeded'             (36) — closed 4-key {nous_did, tick, target_did, seed_event_hash}
+ *  All 4 emitted ONLY via grid/src/iris/append*.ts sole-producer emitters (D-17-08).
  *  Tuple ORDER is locked; any reorder fails broadcast-allowlist.test.ts.
  */
 export const ALLOWLIST_MEMBERS: readonly string[] = [
@@ -124,6 +132,22 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     // Phase 13 — REPLAY-02 / D-13-09. Closed 6-tuple {tier, operator_id, start_tick, end_tick, tarball_hash, requested_at}.
     // Sole producer grid/src/audit/append-operator-exported.ts. requested_at is Unix SECONDS (< 10_000_000_000).
     'operator.exported',
+    // Phase 15 (REFLEX-02) — stub allowlist entries. Sole-producer emitters in grid/src/reflexion/.
+    // Added as prerequisites per D-17-01 (Phase 15/16 were not separately executed).
+    'nous.reflection_authored',  // (28) {nous_did, tick, reflection_hash}
+    'nous.self_model_revised',   // (29) {nous_did, tick, revision_hash}
+    'nous.creed_violation',      // (30) {nous_did, tick, creed_hash, violation_hash}
+    // Phase 16 (SLEEP-01) — stub allowlist entries. Sole-producer emitters in grid/src/sleep/.
+    // Added as prerequisites per D-17-01 (Phase 15/16 were not separately executed).
+    'nous.sleep.entered',        // (31) {nous_did, tick}
+    'nous.sleep.completed',      // (32) {nous_did, tick, sleep_duration_ticks}
+    // Phase 17 (IRIS-01..04 / D-17-02) — Theory of Mind lifecycle events.
+    // All 4 carry hashes/counts only — belief content is Brain-private and NEVER crosses the wire.
+    // Sole producers in grid/src/iris/append*.ts (D-17-08).
+    'iris.belief_revised',         // (33) {nous_did, tick, target_did, belief_hash}
+    'iris.context_invoked',        // (34) {nous_did, tick, belief_count}
+    'iris.contradiction_detected', // (35) {nous_did, tick, target_did, contradiction_hash}
+    'iris.prior_seeded',           // (36) {nous_did, tick, target_did, seed_event_hash}
 ] as const;
 
 /**
@@ -218,6 +242,22 @@ export const GOVERNANCE_FORBIDDEN_KEYS = Object.freeze([
 ] as const);
 
 /**
+ * Phase 17 (D-17-17): iris-leaf keys that MUST NOT appear in any iris payload.
+ * Belief content, target text, emotion prose, dimension labels, and any iris
+ * narrative is Brain-private and NEVER crosses the wire.
+ * Only hashes (belief_hash, contradiction_hash, seed_event_hash) and counts
+ * (belief_count) are permitted. Per D-17-17 — exactly 6 keys.
+ */
+export const IRIS_FORBIDDEN_KEYS = Object.freeze([
+    'belief_content',
+    'target_content',
+    'emotion_text',
+    'dimension_text',
+    'belief_prose',
+    'iris_content',
+] as const);
+
+/**
  * Phase 11 (WHISPER-04 / D-11-09): whisper-leaf keys that MUST NOT appear in any
  * whisper payload. Plaintext whisper content (message bodies, utterances, offer
  * text, ousia amounts within whispers, raw decrypted data) NEVER crosses the wire.
@@ -271,7 +311,7 @@ export const WHISPER_FORBIDDEN_KEYS = Object.freeze([
  * weight|reputation|relationship_score|ousia_weight). Keys text|body|content are
  * already present from Phase 11 — de-duped, not re-added.
  */
-export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content|message|utterance|plaintext|decrypted|payload_plain|description|rationale|proposal_text|law_text|body_text|weight|reputation|relationship_score|ousia_weight/i;
+export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content|message|utterance|plaintext|decrypted|payload_plain|description|rationale|proposal_text|law_text|body_text|weight|reputation|relationship_score|ousia_weight|belief_content|target_content|emotion_text|dimension_text|belief_prose|iris_content/i;
 
 export interface PrivacyCheckResult {
     ok: boolean;

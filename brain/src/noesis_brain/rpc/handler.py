@@ -69,6 +69,7 @@ class BrainHandler:
         self._bios_loader = BiosLoader()
         self._bios_runtimes: dict[str, BiosRuntime] = {}
         self._bios_birth_ticks: dict[str, int] = {}
+        self._iris_runtime = None  # Phase 17 D-17-14: declared here; initialized in Wave 3 Task 1
 
     async def on_message(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle incoming P2P message → think → produce response actions.
