@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: grid/package-lock.json
+          cache-dependency-path: grid/package.json
 
       - name: T-10-12 + T-10-13 grep gates
         run: node scripts/check-rig-invariants.mjs
