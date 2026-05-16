@@ -28,6 +28,15 @@ class SkillStore:
 
     def __init__(self, conn: sqlite3.Connection) -> None:
         self._conn = conn  # shared with MemoryStore
+        # Phase 18 (SKILL-04): lineage tracing via parent_hash self-join.
+        # ALTER TABLE is idempotent: OperationalError = column already exists.
+        try:
+            self._conn.execute(
+                "ALTER TABLE skills ADD COLUMN lineage_parent_hash TEXT"
+            )
+            self._conn.commit()
+        except sqlite3.OperationalError:
+            pass  # column already exists
 
     # ── Writes ──────────────────────────────────────────────────────────────
 

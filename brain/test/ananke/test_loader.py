@@ -61,9 +61,11 @@ def test_loader_multiple_dids_get_independent_runtimes() -> None:
 def test_action_type_drive_crossed_present() -> None:
     """Phase 10a DRIVE-03: DRIVE_CROSSED is a member of the closed ActionType enum."""
     assert ActionType.DRIVE_CROSSED.value == "drive_crossed"
-    # ActionType has exactly 11 members after Phase 12 added PROPOSE, VOTE_COMMIT, VOTE_REVEAL
-    # (8 prior + 3 new governance actions).
-    assert len(list(ActionType)) == 11
+    # ActionType member count grows with each phase:
+    # 11 (Phase 12) + 2 (Phase 15: SKILL_LEARN, RULE_STORE)
+    # + 3 (Phase 16: SKILL_SHARE, SLEEP_ENTERED, SLEEP_COMPLETED)
+    # + 4 (Phase 17: IRIS_*) + 3 (Phase 18: SKILL_TAUGHT, SKILL_INFERRED, SKILL_REJECTED) = 23
+    assert len(list(ActionType)) == 23
 
 
 def test_action_type_drive_crossed_position() -> None:
