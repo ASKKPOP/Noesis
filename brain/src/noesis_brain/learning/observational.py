@@ -216,23 +216,24 @@ class ObservationalLearner:
             # Phase 18 SKILL-02: route to quarantine (not active store).
             # parent_hash = skill_hash: OL-inferred skills are first-gen
             # (no teacher lineage, D-18-10). source="observed" provenance tag.
+            # source_event_hash: sha256 of the canonical trade key (buyer+seller+item+tick).
+            # Computed before enqueue so it can be stored in quarantine payload (D-18-10).
+            source_event_hash = _hashlib.sha256(
+                f"{buyer_did}|{seller_did}|{item}|{tick}".encode()
+            ).hexdigest()
             self._quarantine_store.enqueue(
                 skill,
                 source_did=seller_did,
                 tick=tick,
-                parent_hash=skill_hash,  # self-referential root
+                parent_hash=skill_hash,         # self-referential root
+                source='observed',              # provenance tag per D-18-05
+                source_event_hash=source_event_hash,
             )
             logger.info(
                 "ObservationalLearner: queued skill %r in quarantine from observing %s",
                 slug, seller_did[:20],
             )
             from noesis_brain.rpc.types import ActionType, Action
-            # source_event_hash: sha256 of the canonical trade key (buyer+seller+item+tick).
-            # observe_trade() receives no raw audit event hash, so we synthesise one
-            # deterministically from the trade identity tuple (D-18-10 compliant).
-            source_event_hash = _hashlib.sha256(
-                f"{buyer_did}|{seller_did}|{item}|{tick}".encode()
-            ).hexdigest()
             return Action(
                 action_type=ActionType.SKILL_INFERRED,
                 metadata={

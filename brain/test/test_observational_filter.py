@@ -1,4 +1,4 @@
-"""ObservationalLearner DID/numeric filter tests — Phase 18 SKILL-02.
+"""ObservationalLearner DID/numeric filter tests -- Phase 18 SKILL-02.
 
 Tests cover:
 - DID reference in extracted text -> SKILL_REJECTED(structural_invalid)
@@ -8,12 +8,12 @@ Tests cover:
 - did:noesis: substring anywhere in text is rejected (not just standalone)
 
 Note: tests the regex directly (module-level constant from observational.py),
-not the full OL instantiation — fast and deterministic.
+not the full OL instantiation -- fast and deterministic.
 """
 import re
 import pytest
 
-# Test the regex directly — does not require full OL instantiation
+# Test the regex directly -- does not require full OL instantiation
 _STRUCTURAL_INVALID_RE = re.compile(r'\bdid:noesis:\S+\b|\b\d{4,}\b')
 
 
@@ -69,3 +69,50 @@ class TestCombined:
             assert _STRUCTURAL_INVALID_RE.search(sample) is None, (
                 f"Incorrectly rejected: {sample!r}"
             )
+
+
+class TestSourcePassthrough:
+    """Gap-closure test for Truth 12: source='observed' passed to enqueue()."""
+
+    def test_observe_trade_passes_source_observed_to_enqueue(self):
+        """observational.py must pass source='observed' to quarantine_store.enqueue()."""
+        from unittest.mock import AsyncMock, MagicMock
+        import asyncio
+
+        store_mock = MagicMock()
+        store_mock.wiki_pages_by_category.return_value = [
+            MagicMock(source="did:noesis:seller", confidence=0.8),
+        ]
+        skill_store_mock = MagicMock()
+        skill_store_mock.get.return_value = None
+
+        quarantine_mock = MagicMock()
+        quarantine_mock.has.return_value = False
+
+        llm_mock = MagicMock()
+        llm_mock.complete = AsyncMock(
+            return_value="Always greet traders politely before negotiating."
+        )
+
+        from noesis_brain.learning.observational import ObservationalLearner
+        ol = ObservationalLearner(
+            store=store_mock,
+            skill_store=skill_store_mock,
+            llm=llm_mock,
+            quarantine_store=quarantine_mock,
+        )
+
+        # Trigger two observations (MIN_OBSERVATIONS_BEFORE_EXTRACT=2)
+        async def _run():
+            await ol.observe_trade("did:noesis:buyer", "did:noesis:seller", "grain", tick=5)
+            await ol.observe_trade("did:noesis:buyer", "did:noesis:seller", "grain", tick=6)
+
+        asyncio.run(_run())
+
+        # Confirm enqueue was called with source='observed'
+        assert quarantine_mock.enqueue.called, "enqueue() was never called"
+        call_kwargs = quarantine_mock.enqueue.call_args
+        kwargs = call_kwargs.kwargs if hasattr(call_kwargs, "kwargs") else call_kwargs[1]
+        assert kwargs.get("source") == "observed", (
+            f"enqueue() was called without source='observed'; kwargs={kwargs}"
+        )

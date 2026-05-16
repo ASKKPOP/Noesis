@@ -312,14 +312,32 @@ class BrainHandler:
             )
             for result in sweep_results:
                 if result.promoted:
-                    actions.append(Action(
-                        action_type=ActionType.SKILL_TAUGHT,
-                        metadata={
-                            "skill_hash": result.skill_hash,
-                            "teacher_did": result.source_did,
-                            "parent_hash": result.parent_hash,
-                        },
-                    ).to_dict())
+                    if result.source == "observed":
+                        # OL-path promotion: emit SKILL_INFERRED (SKILL-03)
+                        # source_event_hash stored in payload_json by observational.py
+                        import json as _json
+                        try:
+                            payload_data = _json.loads(result.payload_json)
+                            source_event_hash = payload_data.get("source_event_hash", result.skill_hash)
+                        except (json.JSONDecodeError, ValueError):
+                            source_event_hash = result.skill_hash
+                        actions.append(Action(
+                            action_type=ActionType.SKILL_INFERRED,
+                            metadata={
+                                "skill_hash": result.skill_hash,
+                                "source_event_hash": source_event_hash,
+                            },
+                        ).to_dict())
+                    else:
+                        # Peer-path promotion: emit SKILL_TAUGHT (unchanged)
+                        actions.append(Action(
+                            action_type=ActionType.SKILL_TAUGHT,
+                            metadata={
+                                "skill_hash": result.skill_hash,
+                                "teacher_did": result.source_did,
+                                "parent_hash": result.parent_hash,
+                            },
+                        ).to_dict())
                 else:
                     actions.append(Action(
                         action_type=ActionType.SKILL_REJECTED,

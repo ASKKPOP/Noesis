@@ -155,7 +155,7 @@ class TestSweep:
         skill = _make_skill()
         skill_hash = _compute_hash(skill.instructions)
         store.enqueue(skill, source_did="did:noesis:teacher", tick=0, parent_hash=skill_hash)
-        # First sweep with high trust — skill not ready yet
+        # First sweep with high trust -- skill not ready yet
         trust_fn_high = lambda did: 0.9
         results = store.sweep(current_tick=QUARANTINE_TICKS - 1, trust_fn=trust_fn_high)
         assert len(results) == 0
@@ -166,7 +166,7 @@ class TestSweep:
         assert results[0].promoted is False  # evicted despite passing admission gate
 
     def test_sweep_is_deterministic(self, store, conn):
-        """Same state + same tick + same trust → same result (zero wall-clock)."""
+        """Same state + same tick + same trust -> same result (zero wall-clock)."""
         skill = _make_skill()
         skill_hash = _compute_hash(skill.instructions)
         store.enqueue(skill, source_did="did:noesis:teacher", tick=0, parent_hash=skill_hash)
@@ -175,4 +175,97 @@ class TestSweep:
         r1 = store.sweep(current_tick=QUARANTINE_TICKS, trust_fn=trust_fn)
         r2 = store.sweep(current_tick=QUARANTINE_TICKS, trust_fn=trust_fn)
         assert len(r1) == 1
-        assert len(r2) == 0  # idempotent — row gone
+        assert len(r2) == 0  # idempotent -- row gone
+
+
+class TestSourceProvenance:
+    """Gap-closure tests for Truth 11 and Truth 12 (VERIFICATION.md gaps)."""
+
+    def test_enqueue_stores_source_observed_in_payload(self, store, conn):
+        """Truth 12: source='observed' must persist in payload_json."""
+        skill = _make_skill()
+        skill_hash = _compute_hash(skill.instructions)
+        store.enqueue(
+            skill,
+            source_did="did:noesis:ol-agent",
+            tick=0,
+            parent_hash=skill_hash,
+            source="observed",
+        )
+        row = conn.execute(
+            "SELECT payload_json FROM skills_quarantine WHERE skill_hash = ?",
+            (skill_hash,),
+        ).fetchone()
+        assert row is not None
+        import json
+        payload = json.loads(row["payload_json"])
+        assert payload["source"] == "observed", (
+            f"source not stored in payload_json; got {payload.get('source')!r}"
+        )
+
+    def test_enqueue_default_source_is_peer(self, store, conn):
+        """Peer-path (whisper) enqueue uses 'peer' source by default."""
+        skill = _make_skill()
+        skill_hash = _compute_hash(skill.instructions)
+        store.enqueue(skill, source_did="did:noesis:teacher", tick=0, parent_hash=skill_hash)
+        row = conn.execute(
+            "SELECT payload_json FROM skills_quarantine WHERE skill_hash = ?",
+            (skill_hash,),
+        ).fetchone()
+        import json
+        payload = json.loads(row["payload_json"])
+        assert payload.get("source", "peer") == "peer"
+
+    def test_sweep_result_source_observed(self, store, conn):
+        """Truth 12: QuarantineResult.source == 'observed' for OL-path skills."""
+        skill = _make_skill()
+        skill_hash = _compute_hash(skill.instructions)
+        store.enqueue(
+            skill,
+            source_did="did:noesis:ol-agent",
+            tick=0,
+            parent_hash=skill_hash,
+            source="observed",
+        )
+        results = store.sweep(current_tick=QUARANTINE_TICKS, trust_fn=lambda did: 0.9)
+        assert len(results) == 1
+        assert results[0].source == "observed", (
+            f"Expected source='observed' on QuarantineResult, got {results[0].source!r}"
+        )
+
+    def test_sweep_result_source_peer_for_whisper_path(self, store, conn):
+        """Peer-path (default) promotions carry source='peer' on QuarantineResult."""
+        skill = _make_skill(FAKE_INSTRUCTIONS_2)
+        skill_hash = _compute_hash(skill.instructions)
+        store.enqueue(
+            skill,
+            source_did="did:noesis:teacher",
+            tick=0,
+            parent_hash=skill_hash,
+            # source omitted -- defaults to 'peer'
+        )
+        results = store.sweep(current_tick=QUARANTINE_TICKS, trust_fn=lambda did: 0.9)
+        assert len(results) == 1
+        assert results[0].source == "peer"
+
+    def test_enqueue_stores_source_event_hash_for_ol_path(self, store, conn):
+        """Truth 12: source_event_hash persists in payload_json for OL-path skills."""
+        import hashlib
+        import json as _json
+        skill = _make_skill()
+        skill_hash = _compute_hash(skill.instructions)
+        expected_event_hash = hashlib.sha256(b"buyer|seller|item|42").hexdigest()
+        store.enqueue(
+            skill,
+            source_did="did:noesis:ol-agent",
+            tick=0,
+            parent_hash=skill_hash,
+            source="observed",
+            source_event_hash=expected_event_hash,
+        )
+        row = conn.execute(
+            "SELECT payload_json FROM skills_quarantine WHERE skill_hash = ?",
+            (skill_hash,),
+        ).fetchone()
+        payload = _json.loads(row["payload_json"])
+        assert payload.get("source_event_hash") == expected_event_hash
