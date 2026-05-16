@@ -46,6 +46,12 @@ class ActionType(str, Enum):
     IRIS_CONTEXT_INVOKED = "iris_context_invoked"            # Metadata: {belief_count} (1 key)
     IRIS_CONTRADICTION_DETECTED = "iris_contradiction_detected"  # Metadata: {target_did, contradiction_hash} (2 keys)
     IRIS_PRIOR_SEEDED = "iris_prior_seeded"                  # Metadata: {target_did, seed_event_hash} (2 keys)
+    # Phase 18 — D-18-09: Grid-forwarded skill lifecycle events.
+    # String values MUST match the Grid NousRunner switch cases exactly.
+    # 3-keys-not-5: Brain metadata carries 1-3 keys; Grid injects learner_did and tick at emit time.
+    SKILL_TAUGHT   = "skill_taught"    # Metadata: {skill_hash, teacher_did, parent_hash} (3 keys)
+    SKILL_INFERRED = "skill_inferred"  # Metadata: {skill_hash, source_event_hash} (2 keys)
+    SKILL_REJECTED = "skill_rejected"  # Metadata: {rejection_reason} (1 key); reason ∈ {low_trust, structural_invalid, quota_exceeded}
 
 
 # JSON-RPC error codes
