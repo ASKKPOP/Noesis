@@ -161,6 +161,11 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'skill.taught',    // (37) {learner_did, parent_hash, skill_hash, teacher_did, tick}
     'skill.inferred',  // (38) {learner_did, skill_hash, source_event_hash, tick}
     'skill.rejected',  // (39) {learner_did, rejection_reason, tick}; reason ∈ {low_trust, structural_invalid, quota_exceeded}
+    // Assert: ALLOWLIST_MEMBERS.length === 39 before these two lines (D-19-11).
+    // NormDetector observes nous.self_model_revised; fires when N≥3 Nous share fingerprint.
+    // Both emitted ONLY via grid/src/norms/appendNormCandidate.ts and appendNormCrystallized.ts (D-19-06).
+    'norm.candidate',    // (40) {convergence_type, fingerprint, participating_count, tick}
+    'norm.crystallized', // (41) {convergence_type, evidence_tick_range, fingerprint, participating_count, tick}
 ] as const;
 
 /**
@@ -300,6 +305,19 @@ export const SKILL_FORBIDDEN_KEYS = Object.freeze([
 ] as const);
 
 /**
+ * Phase 19 (NORM-01 / D-19-11): norm-leaf keys that MUST NOT appear in any
+ * broadcast payload. Brain-private rule text, fingerprint source text, and raw
+ * rule content NEVER cross the Brain↔Grid wire. Only the 6-char hex fingerprint
+ * (revision_hash) is permitted — not the text it was derived from.
+ * Per D-19-11 — exactly 3 keys. Do NOT add extras without a CONTEXT.md decision.
+ */
+export const NORM_FORBIDDEN_KEYS = Object.freeze([
+    'norm_text',
+    'fingerprint_text',
+    'rule_content',
+] as const);
+
+/**
  * Phase 11 (WHISPER-04 / D-11-09): whisper-leaf keys that MUST NOT appear in any
  * whisper payload. Plaintext whisper content (message bodies, utterances, offer
  * text, ousia amounts within whispers, raw decrypted data) NEVER crosses the wire.
@@ -356,8 +374,12 @@ export const WHISPER_FORBIDDEN_KEYS = Object.freeze([
  * Phase 18 (D-18-08): extended with 3 SKILL_FORBIDDEN_KEYS (skill_body|skill_text|rule_text).
  * Skill body text, skill instructions, and rule text are Brain-private and NEVER cross
  * the Brain↔Grid wire. Only hashes (skill_hash, parent_hash, source_event_hash) are permitted.
+ *
+ * Phase 19 (NORM-01 / D-19-11): extended with 3 NORM_FORBIDDEN_KEYS (norm_text|fingerprint_text|rule_content).
+ * Brain-private norm text and rule content NEVER cross the Brain↔Grid wire. Only the 6-char hex
+ * fingerprint (revision_hash) is permitted — not the rule text it was derived from.
  */
-export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content|message|utterance|plaintext|decrypted|payload_plain|description|rationale|proposal_text|law_text|body_text|weight|reputation|relationship_score|ousia_weight|belief_content|target_content|emotion_text|dimension_text|belief_prose|iris_content|ltm_content|concept_text|graph_data|episode_text|node_content|edge_content|skill_body|skill_text|rule_text/i;
+export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content|message|utterance|plaintext|decrypted|payload_plain|description|rationale|proposal_text|law_text|body_text|weight|reputation|relationship_score|ousia_weight|belief_content|target_content|emotion_text|dimension_text|belief_prose|iris_content|ltm_content|concept_text|graph_data|episode_text|node_content|edge_content|skill_body|skill_text|rule_text|norm_text|fingerprint_text|rule_content/i;
 
 export interface PrivacyCheckResult {
     ok: boolean;
