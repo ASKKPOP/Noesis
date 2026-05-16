@@ -109,9 +109,29 @@ class BrainHandler:
                 )
             else:
                 self._obs_learner = None
+            # Phase 18 SKILL-01: PeerSkillFilter + QuarantineStore.
+            # Only wired when SkillStore is available (requires MemoryStore connection).
+            if _skill_store is not None:
+                from noesis_brain.skills.peer_filter import PeerSkillFilter as _PeerSkillFilter
+                from noesis_brain.skills.quarantine import QuarantineStore as _QuarantineStore
+                self._cached_peer_weights: dict[str, float] = {}
+                self._peer_filter: _PeerSkillFilter | None = _PeerSkillFilter(
+                    skill_store=_skill_store,
+                    relationship_weight_fn=lambda did: self._cached_peer_weights.get(did, 0.0),
+                )
+                self._quarantine_store: _QuarantineStore | None = _QuarantineStore(
+                    self.memory._conn
+                )
+            else:
+                self._cached_peer_weights = {}
+                self._peer_filter = None
+                self._quarantine_store = None
         else:
             self._hypnos_runtime = None
             self._obs_learner = None
+            self._cached_peer_weights = {}
+            self._peer_filter = None
+            self._quarantine_store = None
         self._last_sleep_tick: int = 0
         # Pending SLEEP_COMPLETED hash from async task (drained on next tick). D-16-Q1.
         self._pending_sleep_completed: str | None = None
@@ -129,6 +149,36 @@ class BrainHandler:
         sender_did = params.get("sender_did", "")
         channel = params.get("channel", "")
         text = params.get("text", "")
+
+        # Phase 18 SKILL-01: peer skill reception — runs BEFORE thymos/LLM (non-conversational).
+        _SKILL_SHARE_PREFIX = "__skill_share:"
+        if text.startswith(_SKILL_SHARE_PREFIX):
+            if self._peer_filter is not None and self._quarantine_store is not None:
+                import json as _json
+                raw_json = text[len(_SKILL_SHARE_PREFIX):]
+                try:
+                    payload = _json.loads(raw_json)
+                except (ValueError, TypeError):
+                    return []  # malformed — silent drop per Brain discipline
+                skill = self._peer_filter.evaluate(payload, source_did=sender_did)
+                if skill is None:
+                    return [Action(
+                        action_type=ActionType.SKILL_REJECTED,
+                        metadata={"rejection_reason": "low_trust"},
+                    ).to_dict()]
+                # Accepted — route to quarantine. SKILL_TAUGHT fires at promotion tick (D-18-09).
+                import hashlib as _hashlib
+                parent_hash = payload.get(
+                    "parent_hash",
+                    _hashlib.sha256(skill.instructions.encode()).hexdigest(),
+                )
+                self._quarantine_store.enqueue(
+                    skill,
+                    source_did=sender_did,
+                    tick=params.get("tick", 0),
+                    parent_hash=parent_hash,
+                )
+            return []  # __skill_share is never a conversational reply
 
         # 1. Update emotions based on message content
         self.thymos.apply_triggers(text)
@@ -243,6 +293,38 @@ class BrainHandler:
         # to NOOP path (strict superset of Phase 6 on_tick contract).
         dialogue_ctxs = params.get("dialogue_context")
         actions: list[dict[str, Any]] = []
+
+        # Phase 18 SKILL-01: quarantine sweep — synchronous, runs before OL dispatch.
+        # Update cached trust weights from relationship_context (Pitfall 2 solution).
+        if self._quarantine_store is not None and self._peer_filter is not None:
+            rel_ctx = params.get("relationship_context", [])
+            if isinstance(rel_ctx, list):
+                for edge in rel_ctx:
+                    if isinstance(edge, dict) and "did" in edge and "weight" in edge:
+                        try:
+                            self._cached_peer_weights[edge["did"]] = float(edge["weight"])
+                        except (TypeError, ValueError):
+                            pass
+            _sweep_tick = int(params.get("tick", 0) or 0)
+            sweep_results = self._quarantine_store.sweep(
+                current_tick=_sweep_tick,
+                trust_fn=lambda did: self._cached_peer_weights.get(did, 0.0),
+            )
+            for result in sweep_results:
+                if result.promoted:
+                    actions.append(Action(
+                        action_type=ActionType.SKILL_TAUGHT,
+                        metadata={
+                            "skill_hash": result.skill_hash,
+                            "teacher_did": result.source_did,
+                            "parent_hash": result.parent_hash,
+                        },
+                    ).to_dict())
+                else:
+                    actions.append(Action(
+                        action_type=ActionType.SKILL_REJECTED,
+                        metadata={"rejection_reason": "low_trust"},
+                    ).to_dict())
 
         # Phase 16 D-16-07: Drain pending SLEEP_COMPLETED from previous async run_sleep task.
         if self._pending_sleep_completed is not None:

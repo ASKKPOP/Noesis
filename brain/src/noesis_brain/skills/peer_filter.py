@@ -147,7 +147,10 @@ class PeerSkillFilter:
             )
             return None
 
-        # ── Accept: build and store skill ─────────────────────────────────────
+        # ── Accept: build and return skill (Phase 18: caller routes to quarantine) ──
+        # Phase 18 D-18-09: evaluate() now returns a validated Skill without storing it.
+        # The caller (BrainHandler.__skill_share: dispatch) enqueues to QuarantineStore.
+        # Promotion from quarantine to active SkillStore happens in on_tick() sweep.
         skill = Skill(
             name=name,
             description=description[:200],
@@ -159,30 +162,37 @@ class PeerSkillFilter:
             source_did=source_did,
             peer_verified=True,  # filter has passed; mark as verified
         )
-
-        try:
-            stored = self._store.add(skill)
-            logger.info(
-                "PeerSkillFilter: accepted skill %r from %s",
-                name, source_did[:20],
-            )
-            return stored
-        except ValueError as exc:
-            # Name collision — skill already exists; not an attack, just a dupe
-            logger.debug("PeerSkillFilter: skill %r already exists: %s", name, exc)
-            return None
+        logger.info(
+            "PeerSkillFilter: accepted skill %r from %s (routing to quarantine)",
+            name, source_did[:20],
+        )
+        return skill
 
     # ── Internal checks ───────────────────────────────────────────────────────
 
     def _count_peer_skills(self, source_did: str) -> int:
-        """Return number of skills already accepted from this source_did."""
+        """Return number of skills already accepted from this source_did.
+
+        Phase 18 T-18-03: counts BOTH active skills AND quarantine rows so an
+        adversary cannot bypass MAX_SKILLS_PER_SOURCE by sending 3 skills before
+        any are promoted out of quarantine.
+        """
         try:
-            rows = self._store._conn.execute(  # noqa: SLF001
+            active = self._store._conn.execute(  # noqa: SLF001
                 "SELECT COUNT(*) FROM skills WHERE source_did = ?", (source_did,)
             ).fetchone()
-            return int(rows[0]) if rows else 0
+            active_count = int(active[0]) if active else 0
         except Exception:  # noqa: BLE001
-            return 0
+            active_count = 0
+        try:
+            quarantine = self._store._conn.execute(  # noqa: SLF001
+                "SELECT COUNT(*) FROM skills_quarantine WHERE source_did = ?", (source_did,)
+            ).fetchone()
+            quarantine_count = int(quarantine[0]) if quarantine else 0
+        except Exception:  # noqa: BLE001
+            # skills_quarantine may not exist (offline / pre-Phase-18 DB) — ignore
+            quarantine_count = 0
+        return active_count + quarantine_count
 
     def _content_check(
         self, name: str, description: str, instructions: str
