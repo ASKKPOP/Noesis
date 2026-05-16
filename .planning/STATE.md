@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
 milestone: v2.4
-milestone_name: Agora (Emergence & Culture)
-status: roadmap created
-stopped_at: Roadmap written — Phase 18 ready for planning
-last_updated: "2026-05-16T00:00:00.000Z"
-last_activity: 2026-05-16
+milestone_name: Active)
+status: executing
+stopped_at: "v2.4 roadmap created (4 phases: 18-21, 13 REQs, 7 allowlist additions)"
+last_updated: "2026-05-16T19:01:34.712Z"
+last_activity: 2026-05-16 -- Phase 18 execution started
 progress:
-  total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_phases: 22
+  completed_phases: 9
+  total_plans: 61
+  completed_plans: 60
+  percent: 98
 ---
 
 # Project State
@@ -22,14 +22,14 @@ See: .planning/PROJECT.md (updated 2026-05-16)
 
 **Core value:** The first persistent Grid where Nous actually live — observable, running continuously, with real cognitive cycles, real trades, and real social dynamics emerging from the systems.
 **Current milestone:** v2.4 — Agora (Emergence & Culture: skill diffusion, norm crystallization, lore commons, culture dashboard)
-**Current focus:** Phase 18 ready for planning — wire PeerSkillFilter + ObservationalLearner, emit skill.* events
+**Current focus:** Phase 18 — skill-diffusion
 
 ## Current Position
 
-Phase: 18 (Skill Diffusion) — Not started
-Plan: —
-Status: Roadmap created, ready for `/gsd-plan-phase 18`
-Last activity: 2026-05-16 — v2.4 roadmap written (4 phases, 13 REQs, 7 allowlist additions)
+Phase: 18 (skill-diffusion) — EXECUTING
+Plan: 1 of 7
+Status: Executing Phase 18
+Last activity: 2026-05-16 -- Phase 18 execution started
 
 Progress: [░░░░░░░░░░] 0% (0/4 phases complete)
 
@@ -111,6 +111,7 @@ Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration mat
 | 21 (Culture Dashboard) | +0 | 43 | reads existing events, no new emissions |
 
 **Locked payload shapes (alphabetical key order, sole-producer boundary):**
+
 - `skill.taught`: `{learner_did, parent_hash, skill_hash, teacher_did, tick}` — sole producer `grid/src/skills/appendSkillTaught.ts`
 - `skill.inferred`: `{learner_did, skill_hash, source_event_hash, tick}` — sole producer `grid/src/skills/appendSkillInferred.ts`
 - `skill.rejected`: `{learner_did, rejection_reason, tick}` where `rejection_reason in {low_trust, structural_invalid, quota_exceeded}` — sole producer `grid/src/skills/appendSkillRejected.ts`
@@ -134,6 +135,7 @@ Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration mat
 ### v2.3 phase decisions (carry-forward)
 
 Phase 15-17 shipped with all Brain-private invariants intact. Key carry-forwards:
+
 - `nous.self_model_revised` (pos 29) is the event NormDetector (Phase 19) will watch
 - ObservationalLearner wired on trade_settled events (Phase 16) — Phase 18 extends it for skill inference
 - PeerSkillFilter scaffold created in Phase 15 Plan 3 — Phase 18 wires it
