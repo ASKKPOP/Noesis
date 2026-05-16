@@ -17,7 +17,7 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
 
 ## Phases (v2.4 Active)
 
-- [ ] **Phase 18: Skill Diffusion** — Wire PeerSkillFilter + ObservationalLearner into teaching/inference paths. Allowlist 36→39 (+3: skill.taught, skill.inferred, skill.rejected).
+- [x] **Phase 18: Skill Diffusion** — Wire PeerSkillFilter + ObservationalLearner into teaching/inference paths. Allowlist 36→39 (+3: skill.taught, skill.inferred, skill.rejected). (completed 2026-05-16)
 - [ ] **Phase 19: Norm Crystallization** — NormDetector pure-observer clusters rule fingerprints across Nous. Allowlist 39→41 (+2: norm.candidate, norm.crystallized).
 - [ ] **Phase 20: Lore Commons** — Nous-initiated shared knowledge substrate (hash index only). Allowlist 41→43 (+2: lore.contributed, lore.cited).
 - [ ] **Phase 21: Culture Dashboard** — Skill lineage tree + norm timeline + lore graph as raw SVG. Allowlist 43→43 (no new events).
@@ -519,11 +519,11 @@ Phase numbering continues from v2.3 -- do NOT reset without `--reset-phase-numbe
 **Plans**: 5 plans
 
 Plans:
-- [ ] 18-01-PLAN.md — Wave 0: FORBIDDEN_KEY_PATTERN extension (skill_body|skill_text|rule_text) + SKILL_FORBIDDEN_KEYS constant + allowlist-36-baseline RED test
-- [ ] 18-02-PLAN.md — Wave 1a: ActionType.SKILL_TAUGHT/INFERRED/REJECTED + QuarantineStore module + __skill_share: dispatch in on_message() + quarantine sweep in on_tick() + lineage_parent_hash column
-- [ ] 18-03-PLAN.md — Wave 1b (parallel to 18-02): ObservationalLearner DID/numeric filter + quarantine redirect + SKILL_INFERRED/SKILL_REJECTED action emission
-- [ ] 18-04-PLAN.md — Wave 2: grid/src/skills/ sole-producer emitters (appendSkillTaught/Inferred/Rejected + types + index) + ALLOWLIST_MEMBERS 36→39 + 3 NousRunner dispatch cases
-- [ ] 18-05-PLAN.md — Wave 3: Brain unit tests (quarantine, OL filter, 3-hop lineage) + Grid emitter tests + sole-producer boundary test + allowlist-39 count/position test
+- [x] 18-01-PLAN.md — Wave 0: FORBIDDEN_KEY_PATTERN extension (skill_body|skill_text|rule_text) + SKILL_FORBIDDEN_KEYS constant + allowlist-36-baseline RED test
+- [x] 18-02-PLAN.md — Wave 1a: ActionType.SKILL_TAUGHT/INFERRED/REJECTED + QuarantineStore module + __skill_share: dispatch in on_message() + quarantine sweep in on_tick() + lineage_parent_hash column
+- [x] 18-03-PLAN.md — Wave 1b (parallel to 18-02): ObservationalLearner DID/numeric filter + quarantine redirect + SKILL_INFERRED/SKILL_REJECTED action emission
+- [x] 18-04-PLAN.md — Wave 2: grid/src/skills/ sole-producer emitters (appendSkillTaught/Inferred/Rejected + types + index) + ALLOWLIST_MEMBERS 36→39 + 3 NousRunner dispatch cases
+- [x] 18-05-PLAN.md — Wave 3: Brain unit tests (quarantine, OL filter, 3-hop lineage) + Grid emitter tests + sole-producer boundary test + allowlist-39 count/position test
 
 ### Phase 19: Norm Crystallization
 **Goal**: When N>=3 Nous independently hold semantically similar rules in their RuleStore, a norm crystallizes at the Grid level -- operator-observable, never operator-injected, emerging entirely from Nous cognition.
@@ -588,7 +588,7 @@ Dependency rationale:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 18. Skill Diffusion | 0/TBD | Not started | - |
+| 18. Skill Diffusion | 6/6 | Complete   | 2026-05-16 |
 | 19. Norm Crystallization | 0/TBD | Not started | - |
 | 20. Lore Commons | 0/TBD | Not started | - |
 | 21. Culture Dashboard | 0/TBD | Not started | - |
