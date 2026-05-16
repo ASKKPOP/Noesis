@@ -48,8 +48,10 @@ const TARGETS = [
 // approves the amendment of D-9-13. Do NOT update to suppress a failing gate.
 // History: Phase 9 baseline = 147, Phase 10b post-ship = 213, Phase 11 post-ship = 266,
 //          Phase 12 post-ship = 321 (4 governance events), Phase 13 Wave 3 = 321 (operator.exported).
+//          Phase 16 post-ship = 379 (HYPNOS_FORBIDDEN_KEYS + extended FORBIDDEN_KEY_PATTERN +
+//          corrected stub comments for positions 31-32; approved in 16-01-PLAN.md D-16-05).
 const ALLOWLIST_FILE = resolve(repoRoot, 'grid/src/audit/broadcast-allowlist.ts');
-const ALLOWLIST_BASELINE_LINES = 321;
+const ALLOWLIST_BASELINE_LINES = 379;
 
 let hadError = false;
 
