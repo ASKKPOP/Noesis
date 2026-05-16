@@ -71,8 +71,8 @@ Plans:
 
 Plans:
 - [x] 16-01-PLAN.md — Wave 1: correct allowlist stubs (positions 31-32) + create grid/src/sleep/ sole-producer emitters + extend FORBIDDEN_KEY_PATTERN + ActionType/BrainAction extensions + RED test stubs
-- [ ] 16-02-PLAN.md — Wave 2: Brain hypnos/ module (config.py + types.py + working_memory.py + ltm_store.py + consolidator.py)
-- [ ] 16-03-PLAN.md — Wave 3: HypnosRuntime (run_sleep + compute_snapshot_hash + retrieve_top_k) + BrainHandler wiring (Working Memory feed + sleep trigger + LTM retrieval + pending-buffer pattern)
+- [x] 16-02-PLAN.md — Wave 2: Brain hypnos/ module (config.py + types.py + working_memory.py + ltm_store.py + consolidator.py)
+- [x] 16-03-PLAN.md — Wave 3: HypnosRuntime (run_sleep + compute_snapshot_hash + retrieve_top_k) + BrainHandler wiring (Working Memory feed + sleep trigger + LTM retrieval + pending-buffer pattern)
 - [ ] 16-04-PLAN.md — Wave 4: ltm_memories kwarg in build_system_prompt + _ltm_memories_section builder + ObservationalLearner construction + peer_voices fetch in BrainHandler
 - [ ] 16-05-PLAN.md — Wave 5: zero-diff test + sleep-trigger discipline test + CI grep gate extension + atomic doc-sync
 
@@ -114,7 +114,7 @@ Dependencies form a strict chain. Rationale:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 15. Pneuma (Narrative Self) | 6/6 | Complete | 2026-05-14 |
-| 16. Hypnos (Consolidating Memory) | 1/5 | In Progress|  |
+| 16. Hypnos (Consolidating Memory) | 3/5 | In Progress|  |
 | 17. Iris (Theory of Mind) | 5/5 | Complete   | 2026-05-15 |
 
 ## Allowlist Growth Ledger (v2.3)
