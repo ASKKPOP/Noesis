@@ -16,7 +16,7 @@
 import { describe, expect, it } from 'vitest';
 import { ALLOWLIST, isAllowlisted, GOVERNANCE_FORBIDDEN_KEYS } from '../../src/audit/broadcast-allowlist.js';
 
-/** Frozen expected tuple — Phase 12 positions 23..26 discipline. */
+/** Frozen expected tuple — Phase 12 positions 23..26 + Phase 13-17 extensions. */
 const EXPECTED_ORDER = [
     'nous.spawned',
     'nous.moved',
@@ -40,16 +40,25 @@ const EXPECTED_ORDER = [
     'bios.birth',
     'bios.death',
     'nous.whispered',
-    'proposal.opened',    // position 23 (zero-indexed 22) — Phase 12 VOTE-01
-    'ballot.committed',   // position 24 (zero-indexed 23) — Phase 12 VOTE-02
-    'ballot.revealed',    // position 25 (zero-indexed 24) — Phase 12 VOTE-03
-    'proposal.tallied',   // position 26 (zero-indexed 25) — Phase 12 VOTE-04
-    'operator.exported',  // position 27 (zero-indexed 26) — Phase 13 REPLAY-02 / D-13-09
+    'proposal.opened',           // position 23 (zero-indexed 22) — Phase 12 VOTE-01
+    'ballot.committed',          // position 24 (zero-indexed 23) — Phase 12 VOTE-02
+    'ballot.revealed',           // position 25 (zero-indexed 24) — Phase 12 VOTE-03
+    'proposal.tallied',          // position 26 (zero-indexed 25) — Phase 12 VOTE-04
+    'operator.exported',         // position 27 (zero-indexed 26) — Phase 13 REPLAY-02 / D-13-09
+    'nous.reflection_authored',  // position 28 — Phase 15 REFLEX-02
+    'nous.self_model_revised',   // position 29 — Phase 15 REFLEX-02
+    'nous.creed_violation',      // position 30 — Phase 15 REFLEX-02
+    'nous.sleep.entered',        // position 31 — Phase 16 SLEEP-01
+    'nous.sleep.completed',      // position 32 — Phase 16 SLEEP-01
+    'iris.belief_revised',       // position 33 — Phase 17 D-17-02
+    'iris.context_invoked',      // position 34 — Phase 17 D-17-02
+    'iris.contradiction_detected', // position 35 — Phase 17 D-17-02
+    'iris.prior_seeded',         // position 36 — Phase 17 D-17-02
 ] as const;
 
 describe('broadcast allowlist — Phase 12 invariant (VOTE-01..04 D-12-01)', () => {
-    it('has exactly 27 entries (Phase 13 extended from 26 — REPLAY-02)', () => {
-        expect(ALLOWLIST.size).toBe(27);
+    it('has exactly 36 entries (Phase 17 extended from 27 — SLEEP-01 + IRIS-01..04)', () => {
+        expect(ALLOWLIST.size).toBe(36);
     });
 
     it('contains proposal.opened at position 23 (index 22)', () => {
@@ -72,7 +81,7 @@ describe('broadcast allowlist — Phase 12 invariant (VOTE-01..04 D-12-01)', () 
         expect([...ALLOWLIST][25]).toBe('proposal.tallied');
     });
 
-    it('preserves all 27 members in exact positional order', () => {
+    it('preserves all 36 members in exact positional order', () => {
         expect([...ALLOWLIST]).toEqual([...EXPECTED_ORDER]);
     });
 
