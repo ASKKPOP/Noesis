@@ -188,6 +188,75 @@ Unmapped: 0 ✓. Phase 10 split into 10a (Ananke) + 10b (Bios + Chronos) per `gs
 
 ---
 
-*Requirements defined: 2026-04-21 (post-research synthesis)*
-*Source: `.planning/research/v2.2/SUMMARY.md` + 4 parallel researcher files*
-*v2.1 validated REQs preserved above — see `.planning/MILESTONES.md` for ship log.*
+## v2.4 Active Requirements — Agora (Emergence & Culture)
+
+**Defined:** 2026-05-16
+**Core Value:** The Nous population develops genuine culture — skills spread peer-to-peer, norms crystallize from independent convergence, and collective lore forms bottom-up. No operator-imposed culture; emergence only.
+**Research source:** `.planning/research/v2.4/SUMMARY.md` synthesizing STACK / FEATURES / ARCHITECTURE / PITFALLS.
+**Allowlist starting point:** 36 events (post-v2.3). Target: 43 (+7 events across 4 phases).
+
+### SKILL — Skill Diffusion (Phase 18)
+
+- [ ] **SKILL-01**: Nous can teach skills to trusted peers via the Phase 11 whisper channel; `PeerSkillFilter` (fully implemented in Phase 15, currently unwired in `BrainHandler.on_message()`) gates acceptance on relationship weight (Phase 9 graph) + structural validity check; accepted skills enter a quarantine SkillStore and are promoted to active SkillStore after N ticks. First plan of Phase 18 MUST wire the `__skill_share:` dispatch path before any Grid changes land.
+- [ ] **SKILL-02**: `ObservationalLearner` (Phase 16) infers skills from observed peer audit events; inferred skills are provenance-tagged `source: observed`; a DID-value and numeric-literal filter is applied to inferred skill bodies before quarantine entry — preventing behavioral templates that replay an adversarial Nous's exact actions.
+- [ ] **SKILL-03**: Three new allowlisted events emitted at quarantine promotion: `skill.taught` (position 37) for whisper-path promotion with closed-tuple `{learner_did, tick, skill_hash, teacher_did, parent_hash}`; `skill.inferred` (position 38) for ObservationalLearner-path promotion with `{learner_did, tick, skill_hash, source_event_hash}`; `skill.rejected` (position 39) for PeerSkillFilter rejection with `{learner_did, tick, rejection_reason}` where `rejection_reason ∈ {low_trust, structural_invalid, quota_exceeded}`.
+- [ ] **SKILL-04**: Skill lineage is reconstructable from the audit chain via the `parent_hash` field in `skill.taught` payloads — no additional graph storage required. Ancestry queries use SQL self-joins on the existing `SkillStore` SQLite schema extended with a `lineage_parent_hash TEXT` column.
+
+### NORM — Norm Crystallization (Phase 19)
+
+- [ ] **NORM-01**: `NormDetector` is a pure-observer Grid-side listener on `nous.self_model_revised` audit events (Phase 15); it computes an n-gram fingerprint (SHA-256 of sorted word-trigrams, truncated to 6-char hex) per rule write without reading rule content; fingerprints are clustered across Nous; `norm.candidate` (position 40) fires when N≥3 Nous share a fingerprint cluster within a W-tick sliding window. `actorDid` for norm events is `did:noesis:grid` (system emitter, validated by existing `DID_RE`).
+- [ ] **NORM-02**: Causal lineage gate: converging Nous with no prior audit-chain-visible interaction (no shared `nous.spoke`, `nous.whispered`, `trade.proposed`, or `telos.refined` events) are flagged `convergence_type: "coincidental"` in the `norm.candidate` payload rather than `"emergent"` — distinguishing genuine cultural transmission from shared LLM prior.
+- [ ] **NORM-03**: `norm.crystallized` (position 41) fires when a `norm.candidate` cluster remains stable (N≥3 Nous hold matching rules, no defections) for K ticks; two-stage lifecycle prevents flash norms. `norm.crystallized` payload is closed-tuple `{tick, fingerprint, participant_count, convergence_type}`.
+
+### LORE — Lore Commons (Phase 20)
+
+- [ ] **LORE-01**: Nous can publish lore via a `LORE_CONTRIBUTE` Brain action; lore body stays Brain-private (never crosses wire); Grid stores only a hash index: `{contributor_did, tick, content_hash, title_hash, category_tag, citation_count}`; `lore.contributed` (position 42) is the sole audit event with closed-tuple payload `{contributor_did, tick, content_hash, category_tag}`. Grid is not a content server.
+- [ ] **LORE-02**: Lore content is retrieved Nous-to-Nous via whisper using `__lore_request` / `__lore_response` prefix (mirrors `__skill_share` pattern from Phase 15); retrieval ranking uses `citation_count` from the Grid hash index; `lore.cited` (position 43) fires when a Nous references lore at prompt-build time with `{citing_did, tick, content_hash}`.
+- [ ] **LORE-03**: Contribution quota of K entries per Nous per sleep epoch (Phase 16 sleep boundary) is enforced Brain-side before emitting `LORE_CONTRIBUTE`; cooldown after quota exhaustion prevents lore flooding. K is a configurable constant (TOML RIG config for researcher runs).
+
+### CULTURE — Culture Dashboard (Phase 21)
+
+- [ ] **CULTURE-01**: Skill lineage tree rendered as a raw SVG directed graph (D-9-08 pattern from Phase 9 — server computes `{x, y}` positions, client renders `<line>`/`<circle>` elements); nodes represent Nous and skill hashes; edges carry tick labels from `skill.taught`/`skill.inferred` events; zero new allowlist events.
+- [ ] **CULTURE-02**: Norm adoption timeline: a horizontal SVG timeline per norm showing `norm.candidate` → `norm.crystallized` transitions, participating Nous DIDs, and `convergence_type` label (emergent vs coincidental).
+- [ ] **CULTURE-03**: Lore contribution graph: a bipartite SVG (Nous nodes + lore entry nodes); edges = `lore.contributed` (solid) and `lore.cited` (dashed) events; edge weight proportional to citation count.
+
+## Out of Scope (v2.4)
+
+| Feature | Reason |
+|---------|--------|
+| Direct semantic embedding for norm detection | Float non-determinism conflicts with zero-diff audit chain invariant; n-gram fingerprinting is the deterministic alternative |
+| Operator-curated lore | Anti-feature: Agora culture is Nous-initiated only; operator curation destroys emergence |
+| Cross-Grid skill sharing | Multi-Grid federation (GOV-MULTI-01) remains deferred |
+| Skill executable code (Level 4 sandbox) | Deferred from Phase 15 — security surface not yet designed |
+| Thymos emotion integration | THYMOS-01 remains deferred; Thymos/Ananke separation sealed by T-09-05 |
+| D3 / recharts / react-flow for dashboard | D-9-08 raw SVG pattern is locked for all relationship/cultural visualizations |
+| `sentence-transformers` for norm similarity | Float non-determinism; n-gram fingerprinting covers vocabulary-overlapping rules at MVP |
+| Norm text read by Grid | Brain-private invariant; NormDetector works on hashes only, never rule content |
+
+## Allowlist Growth Ledger (v2.4)
+
+Starting: **36 events** (v2.3 frozen, post-Phase 17).
+
+| Phase | Delta | Running Total | Events |
+|-------|-------|---------------|--------|
+| 18 (Skill Diffusion) | +3 | 39 | `skill.taught`, `skill.inferred`, `skill.rejected` |
+| 19 (Norm Crystallization) | +2 | 41 | `norm.candidate`, `norm.crystallized` |
+| 20 (Lore Commons) | +2 | 43 | `lore.contributed`, `lore.cited` |
+| 21 (Culture Dashboard) | +0 | 43 | *(reads existing events, no new emissions)* |
+
+## Traceability (v2.4)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| SKILL-01..04 | Phase 18 | Planned |
+| NORM-01..03 | Phase 19 | Planned |
+| LORE-01..03 | Phase 20 | Planned |
+| CULTURE-01..03 | Phase 21 | Planned |
+
+**Coverage (v2.4):** 13 REQs across 4 themes / 4 phases (18–21). Unmapped: 0 ✓.
+
+---
+
+*v2.2 requirements (2026-04-21) and v2.4 requirements (2026-05-16) above.*
+*Source: `.planning/research/v2.4/SUMMARY.md` + 4 parallel researcher files*
+*v2.1, v2.2, v2.3 validated REQs preserved in PROJECT.md — see `.planning/MILESTONES.md` for ship log.*
