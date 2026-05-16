@@ -114,7 +114,7 @@ Dependencies form a strict chain. Rationale:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 15. Pneuma (Narrative Self) | 6/6 | Complete | 2026-05-14 |
-| 16. Hypnos (Consolidating Memory) | 5/5 | Complete   | 2026-05-16 |
+| 16. Hypnos (Consolidating Memory) | 5/5 | Complete    | 2026-05-16 |
 | 17. Iris (Theory of Mind) | 5/5 | Complete   | 2026-05-15 |
 
 ## Allowlist Growth Ledger (v2.3)
