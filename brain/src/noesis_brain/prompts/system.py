@@ -28,6 +28,10 @@ def build_system_prompt(
     skills: "list[Skill] | None" = None,
     rules: "list[WikiPage] | None" = None,
     reflections: "list[str] | None" = None,
+    # Phase 16 additive-widening: long-term memory concept retrieval. D-16-08.
+    # ltm_memories: list of content_hash strings (sha256 hex) from HypnosRuntime.retrieve_top_k.
+    # Brain-private: LTM content never crosses the Brain↔Grid wire (D-16-10).
+    ltm_memories: "list[str] | None" = None,
     # Phase 16 additive-widening: peer cultural learning.
     # peer_voices: list of (speaker_name, utterance_text) tuples from the
     # 3 most recent nous.spoke events by highest-trust peers.
@@ -88,6 +92,12 @@ def build_system_prompt(
 
     if skills:
         section = _relevant_skills_section(skills)
+        if section:
+            sections.append(section)
+
+    # Phase 16 D-16-08: inject LTM concept nodes BEFORE peer_voices.
+    if ltm_memories:
+        section = _ltm_memories_section(ltm_memories)
         if section:
             sections.append(section)
 
@@ -207,6 +217,20 @@ def _relevant_skills_section(skills: "list[Skill]") -> str:
     lines = ["## Relevant Skills"]
     for skill in skills[:3]:
         lines.append(skill.to_prompt_block())
+    return "\n".join(lines)
+
+
+def _ltm_memories_section(ltm_memories: "list[str]") -> str:
+    """Render top-k LTM concept content hashes as long-term pattern context. D-16-08.
+
+    Content is content_hash strings (sha256 hex) — not raw prose.
+    Brain-private: LTM content never crosses the Brain↔Grid wire. D-16-10.
+    """
+    if not ltm_memories:
+        return ""
+    lines = ["## Long-Term Patterns"]
+    for entry in ltm_memories[:5]:  # HYPNOS_TOP_K = 5
+        lines.append(f"- {entry}")
     return "\n".join(lines)
 
 
