@@ -7,6 +7,8 @@ import type { AuditEntry } from '../audit/types.js';
 import { payloadPrivacyCheck } from '../audit/broadcast-allowlist.js';
 import { NORM_CANDIDATE_KEYS, VALID_CONVERGENCE_TYPES, type NormCandidatePayload } from './types.js';
 
+export const NORM_CANDIDATE_EVENT = 'norm.candidate' as const;
+
 const DID_RE = /^did:noesis:[a-z0-9_\-]+$/i;
 const CHAR6_RE = /^[0-9a-f]{6}$/;
 const NORM_THRESHOLD = 3; // minimum participating_count; injected from NormConfig at call site

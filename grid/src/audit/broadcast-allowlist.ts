@@ -21,7 +21,7 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18) — exactly these 39 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19) — exactly these 41 event types.
  *  v1 (Phase 1, per 01-CONTEXT.md): 10 events.
  *  Phase 5 (REV-02): +1 'trade.reviewed' — externally observable reviewer verdict;
  *  payload shape D-03, 3 keys on pass / 5 keys on fail, all privacy-clean (see D-12 test).
