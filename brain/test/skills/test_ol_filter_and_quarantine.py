@@ -153,7 +153,7 @@ class TestOLDIDFilter:
         key = (BUYER[:20], SELLER[:20], "grain"[:30].lower())
         learner._obs_counts[key] = 5
 
-        result = self._run(learner.observe_trade(BUYER, SELLER, "grain", tick=10))
+        result = self._run(learner.observe_trade(BUYER, SELLER, "grain", tick=30))
 
         assert isinstance(result, Action), f"Expected Action, got {type(result)}"
         assert result.action_type == ActionType.SKILL_REJECTED, (
@@ -175,7 +175,7 @@ class TestOLDIDFilter:
         key = (BUYER[:20], SELLER[:20], "wood"[:30].lower())
         learner._obs_counts[key] = 5
 
-        result = self._run(learner.observe_trade(BUYER, SELLER, "wood", tick=11))
+        result = self._run(learner.observe_trade(BUYER, SELLER, "wood", tick=31))
 
         assert isinstance(result, Action)
         assert result.action_type == ActionType.SKILL_REJECTED
@@ -193,7 +193,7 @@ class TestOLDIDFilter:
         key = (BUYER[:20], SELLER[:20], "silk"[:30].lower())
         learner._obs_counts[key] = 5
 
-        result = self._run(learner.observe_trade(BUYER, SELLER, "silk", tick=12))
+        result = self._run(learner.observe_trade(BUYER, SELLER, "silk", tick=32))
 
         # Should be SKILL_INFERRED (not SKILL_REJECTED and not None)
         assert result is not None, "Expected SKILL_INFERRED Action, got None"
@@ -246,7 +246,7 @@ class TestOLQuarantineRedirect:
         key = (BUYER[:20], SELLER[:20], "herbs"[:30].lower())
         learner._obs_counts[key] = 5
 
-        self._run(learner.observe_trade(BUYER, SELLER, "herbs", tick=20))
+        self._run(learner.observe_trade(BUYER, SELLER, "herbs", tick=30))
 
         assert len(enqueue_calls) == 1, (
             f"Expected 1 quarantine.enqueue call, got {len(enqueue_calls)}"
