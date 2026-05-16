@@ -26,6 +26,9 @@ from pathlib import Path
 from noesis_brain.iris.store import IrisStore
 from noesis_brain.iris.elicit import IrisRuntime
 from noesis_brain.iris.integration import context_for
+from noesis_brain.hypnos.config import SLEEP_MIN_INTERVAL
+from noesis_brain.hypnos.ltm_store import LtmStore
+from noesis_brain.hypnos.runtime import HypnosRuntime
 
 log = logging.getLogger(__name__)
 
@@ -53,6 +56,7 @@ class BrainHandler:
         memory: Any = None,
         did: str = "",
         iris_db_dir: str | Path | None = None,   # Phase 17 D-17-14
+        hypnos_db_dir: str | Path | None = None,  # Phase 16 D-16-02
     ) -> None:
         self.psyche = psyche
         self.thymos = thymos
@@ -86,6 +90,16 @@ class BrainHandler:
             self._iris_runtime.set_dispatcher(None)  # dispatcher injected post-init if needed
         else:
             self._iris_runtime = None
+        # Phase 16 D-16-02/D-16-09: Hypnos optional-dep injection.
+        # hypnos_db_dir=None → Hypnos disabled; sleep never fires.
+        if hypnos_db_dir is not None:
+            _ltm_store = LtmStore(db_path=Path(hypnos_db_dir), nous_did=self.did)
+            self._hypnos_runtime: HypnosRuntime | None = HypnosRuntime(_ltm_store)
+        else:
+            self._hypnos_runtime = None
+        self._last_sleep_tick: int = 0
+        # Pending SLEEP_COMPLETED hash from async task (drained on next tick). D-16-Q1.
+        self._pending_sleep_completed: str | None = None
 
     async def on_message(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle incoming P2P message → think → produce response actions.
@@ -129,6 +143,13 @@ class BrainHandler:
             except Exception as exc:
                 log.warning("iris: context_for failed for sender %s: %s", sender_did, exc)
 
+        # Phase 16 D-16-08: Inject LTM top-k BEFORE peer_voices in system prompt.
+        ltm_memories: list[str] | None = None
+        if self._hypnos_runtime is not None:
+            ltm_memories = self._hypnos_runtime.retrieve_top_k(current_tick=0)
+            if not ltm_memories:
+                ltm_memories = None
+
         system_prompt = build_system_prompt(
             self.psyche, self.thymos.mood, self.telos,
             grid_name=self.grid_name, location=self.location,
@@ -136,6 +157,7 @@ class BrainHandler:
             epoch_since_spawn=epoch_since_spawn,
             subjective_multiplier=subjective_multiplier,
             tom_context=msg_tom_contexts if msg_tom_contexts else None,   # Phase 17 D-17-16
+            **({"ltm_memories": ltm_memories} if ltm_memories else {}),
         )
 
         # 3. Build user prompt with message context
@@ -193,6 +215,17 @@ class BrainHandler:
         # to NOOP path (strict superset of Phase 6 on_tick contract).
         dialogue_ctxs = params.get("dialogue_context")
         actions: list[dict[str, Any]] = []
+
+        # Phase 16 D-16-07: Drain pending SLEEP_COMPLETED from previous async run_sleep task.
+        if self._pending_sleep_completed is not None:
+            actions.append(
+                Action(
+                    action_type=ActionType.SLEEP_COMPLETED,
+                    metadata={"ltm_snapshot_hash": self._pending_sleep_completed},
+                ).to_dict()
+            )
+            self._pending_sleep_completed = None
+
         if isinstance(dialogue_ctxs, list):
             for ctx in dialogue_ctxs:
                 if not isinstance(ctx, dict):
@@ -243,6 +276,36 @@ class BrainHandler:
                     },
                 ).to_dict()
             )
+
+        # Phase 16 D-16-01: Update Working Memory from most-recent 7 MemoryStore entries.
+        if self._hypnos_runtime is not None and self.memory is not None:
+            recent = self.memory.recent_memories(limit=7)
+            self._hypnos_runtime.working_memory.set_episodes(recent)
+
+            # Phase 16 D-16-02: Trigger sleep cycle every SLEEP_MIN_INTERVAL ticks.
+            if (tick - self._last_sleep_tick) >= SLEEP_MIN_INTERVAL:
+                self._last_sleep_tick = tick
+                # Emit SLEEP_ENTERED synchronously BEFORE creating async task (D-16-Q1).
+                snapshot_hash_pre = self._hypnos_runtime.compute_snapshot_hash()
+                actions.append(
+                    Action(
+                        action_type=ActionType.SLEEP_ENTERED,
+                        metadata={"ltm_snapshot_hash": snapshot_hash_pre},
+                    ).to_dict()
+                )
+                # Async sleep task; SLEEP_COMPLETED hash stored in _pending_sleep_completed.
+                import asyncio as _asyncio
+
+                def _make_sleep_task(
+                    rt: HypnosRuntime = self._hypnos_runtime,
+                    t: int = tick,
+                ) -> None:
+                    async def _run() -> None:
+                        result_hash = await rt.run_sleep(self.did, t)
+                        self._pending_sleep_completed = result_hash
+                    _asyncio.create_task(_run())
+
+                _make_sleep_task()
 
         # Phase 17 Iris — seed relationship-graph priors (optional-dep injection).
         # Processes relationship_context edges from Grid if Iris is enabled.
