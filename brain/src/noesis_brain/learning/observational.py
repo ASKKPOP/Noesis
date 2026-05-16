@@ -24,7 +24,9 @@ Integration point (BrainHandler.on_tick):
 
 from __future__ import annotations
 
+import hashlib as _hashlib
 import logging
+import re as _re_ol
 from typing import TYPE_CHECKING, Any
 
 from noesis_brain.memory.sqlite_store import MemoryStore
@@ -34,6 +36,12 @@ from noesis_brain.skills.types import Skill
 
 if TYPE_CHECKING:
     from noesis_brain.llm.types import LLMCaller
+    from noesis_brain.skills.quarantine import QuarantineStore
+
+# Phase 18 (D-18-05): DID-value and numeric-literal filter for OL-extracted skill text.
+# Rejects skills containing DID references (would replay adversarial peer identity) or
+# large integers (would encode Ousia-range offer amounts). Pattern is exact per CONTEXT.md.
+_STRUCTURAL_INVALID_RE = _re_ol.compile(r'\bdid:noesis:\S+\b|\b\d{4,}\b')
 
 logger = logging.getLogger(__name__)
 
@@ -88,11 +96,15 @@ class ObservationalLearner:
         skill_store: SkillStore,
         llm: "LLMCaller | None" = None,
         my_name: str = "Nous",
+        quarantine_store: "QuarantineStore | None" = None,
     ) -> None:
         self._store = store
         self._skill_store = skill_store
         self._llm = llm
         self._my_name = my_name
+        # Phase 18 SKILL-02: quarantine_store routes OL-inferred skills through
+        # quarantine instead of the active SkillStore. None = offline/test mode.
+        self._quarantine_store = quarantine_store
         # (buyer_did, seller_did, item_slug) -> observation count
         self._obs_counts: dict[tuple[str, str, str], int] = {}
 
@@ -157,6 +169,33 @@ class ObservationalLearner:
         if not instructions:
             return None
 
+        # Phase 18 SKILL-02: structural validity filter (D-18-05).
+        # Reject skills whose text contains DID references or large integers —
+        # these patterns indicate adversarial content (replaying peer identity or
+        # encoding Ousia-range amounts).
+        if _STRUCTURAL_INVALID_RE.search(instructions):
+            logger.warning(
+                "ObservationalLearner: structural_invalid filter — rejecting skill from %s",
+                seller_did[:20],
+            )
+            from noesis_brain.rpc.types import ActionType, Action
+            return Action(
+                action_type=ActionType.SKILL_REJECTED,
+                metadata={"rejection_reason": "structural_invalid"},
+            )
+
+        # Compute skill_hash for dedup and action metadata (D-18-10).
+        skill_hash = _hashlib.sha256(instructions.encode()).hexdigest()
+
+        # Gate 3 (extended): dedup against BOTH active store AND quarantine (Pitfall 6).
+        # Active store dedup already done above (slug check). Also check quarantine.
+        if self._quarantine_store is not None and self._quarantine_store.has(skill_hash):
+            logger.debug(
+                "ObservationalLearner: skill %s already in quarantine — skipping",
+                skill_hash[:16],
+            )
+            return None
+
         # Build skill — source_did = seller (provenance), peer_verified = True
         # because B wrote the instructions (observational, not peer-pushed text).
         buyer_label = buyer_did.split(":")[-1][:12] if ":" in buyer_did else buyer_did[:12]
@@ -173,16 +212,46 @@ class ObservationalLearner:
             peer_verified=True,  # B authored the text; no adversarial input stored
         )
 
-        try:
-            stored = self._skill_store.add(skill)
+        if self._quarantine_store is not None:
+            # Phase 18 SKILL-02: route to quarantine (not active store).
+            # parent_hash = skill_hash: OL-inferred skills are first-gen
+            # (no teacher lineage, D-18-10). source="observed" provenance tag.
+            self._quarantine_store.enqueue(
+                skill,
+                source_did=seller_did,
+                tick=tick,
+                parent_hash=skill_hash,  # self-referential root
+            )
             logger.info(
-                "ObservationalLearner: stored skill %r from observing %s",
+                "ObservationalLearner: queued skill %r in quarantine from observing %s",
                 slug, seller_did[:20],
             )
-            return stored
-        except ValueError:
-            # Race or duplicate — safe to ignore
-            return None
+            from noesis_brain.rpc.types import ActionType, Action
+            # source_event_hash: sha256 of the canonical trade key (buyer+seller+item+tick).
+            # observe_trade() receives no raw audit event hash, so we synthesise one
+            # deterministically from the trade identity tuple (D-18-10 compliant).
+            source_event_hash = _hashlib.sha256(
+                f"{buyer_did}|{seller_did}|{item}|{tick}".encode()
+            ).hexdigest()
+            return Action(
+                action_type=ActionType.SKILL_INFERRED,
+                metadata={
+                    "skill_hash": skill_hash,
+                    "source_event_hash": source_event_hash,
+                },
+            )
+        else:
+            # Offline/test mode: fall through to original _skill_store.add() path.
+            try:
+                stored = self._skill_store.add(skill)
+                logger.info(
+                    "ObservationalLearner: stored skill %r from observing %s",
+                    slug, seller_did[:20],
+                )
+                return stored
+            except ValueError:
+                # Race or duplicate — safe to ignore
+                return None
 
     # ── Peer reflexion helper (Tier 3) ────────────────────────────────────────
 

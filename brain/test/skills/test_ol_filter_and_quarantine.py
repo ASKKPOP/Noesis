@@ -134,7 +134,7 @@ class TestOLDIDFilter:
         return ObservationalLearner(**kwargs)
 
     def _run(self, coro: "object") -> "object":
-        return asyncio.get_event_loop().run_until_complete(coro)  # type: ignore[arg-type]
+        return asyncio.run(coro)  # type: ignore[arg-type]
 
     def test_structural_invalid_returns_skill_rejected_action(self) -> None:
         """DID in extracted text → SKILL_REJECTED with rejection_reason=structural_invalid."""
@@ -206,7 +206,7 @@ class TestOLQuarantineRedirect:
     """observe_trade() routes to QuarantineStore (not _skill_store.add()) when quarantine enabled."""
 
     def _run(self, coro: "object") -> "object":
-        return asyncio.get_event_loop().run_until_complete(coro)  # type: ignore[arg-type]
+        return asyncio.run(coro)  # type: ignore[arg-type]
 
     def test_quarantine_enqueue_called_not_skill_store_add(self) -> None:
         """Clean skill goes to _quarantine_store.enqueue, never _skill_store.add()."""
@@ -290,8 +290,13 @@ class TestOLQuarantineRedirect:
         )
 
     def test_offline_mode_falls_through_to_skill_store(self) -> None:
-        """quarantine_store=None → original _skill_store.add() path preserved."""
+        """quarantine_store=None → original _skill_store.add() path preserved.
+
+        Offline mode returns a Skill object (or None), never an Action.
+        """
         from noesis_brain.learning.observational import ObservationalLearner
+        from noesis_brain.rpc.types import Action
+        from noesis_brain.skills.types import Skill
 
         skill_store = _make_skill_store()
         memory = _make_memory_store()
@@ -307,22 +312,22 @@ class TestOLQuarantineRedirect:
 
         result = self._run(learner.observe_trade(BUYER, SELLER, "iron", tick=40))
 
-        # Offline mode returns None (original behaviour) and stores in skill_store
-        # (Skill returned or None — either way, no SKILL_INFERRED action)
-        from noesis_brain.rpc.types import ActionType
-        if result is not None:
-            # If anything is returned in offline mode, it should NOT be SKILL_INFERRED
-            # (SKILL_INFERRED only fires when quarantine is set)
-            assert result.action_type != ActionType.SKILL_INFERRED, (
-                "Offline mode must not emit SKILL_INFERRED"
-            )
+        # Offline mode returns a Skill or None — never an Action (SKILL_INFERRED is quarantine-only)
+        assert not isinstance(result, Action), (
+            "Offline mode (no quarantine_store) must not return an Action — "
+            f"got {result!r}"
+        )
+        # Result is either None (error path) or a Skill (success path)
+        assert result is None or isinstance(result, Skill), (
+            f"Offline mode must return Skill or None, got {type(result)}"
+        )
 
 
 class TestOLDedupCheck:
     """Dedup check covers both active SkillStore and QuarantineStore (Pitfall 6)."""
 
     def _run(self, coro: "object") -> "object":
-        return asyncio.get_event_loop().run_until_complete(coro)  # type: ignore[arg-type]
+        return asyncio.run(coro)  # type: ignore[arg-type]
 
     def test_dedup_against_quarantine(self) -> None:
         """If skill already in quarantine, observe_trade returns None (not re-enqueued)."""
@@ -395,7 +400,7 @@ class TestOLRateLimitPreserved:
         learner._llm = _make_llm("Trade with care.")
 
         # First observation only (count will be 1, need 2)
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             learner.observe_trade(BUYER, SELLER, "gold", tick=1)
         )
         assert result is None, "Should defer on first observation (debounce)"
