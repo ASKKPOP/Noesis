@@ -21,7 +21,7 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17) — exactly these 36 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18) — exactly these 39 event types.
  *  v1 (Phase 1, per 01-CONTEXT.md): 10 events.
  *  Phase 5 (REV-02): +1 'trade.reviewed' — externally observable reviewer verdict;
  *  payload shape D-03, 3 keys on pass / 5 keys on fail, all privacy-clean (see D-12 test).
@@ -65,6 +65,11 @@
  *   - 'iris.contradiction_detected'   (35) — closed 4-key {nous_did, tick, target_did, contradiction_hash}
  *   - 'iris.prior_seeded'             (36) — closed 4-key {nous_did, tick, target_did, seed_event_hash}
  *  All 4 emitted ONLY via grid/src/iris/append*.ts sole-producer emitters (D-17-08).
+ *  Phase 18 (SKILL-03 / D-18-09): +3 skill.* events at positions 37-39 (allowlist 36→39).
+ *   - 'skill.taught'    (37) — closed 5-key {learner_did, parent_hash, skill_hash, teacher_did, tick}
+ *   - 'skill.inferred'  (38) — closed 4-key {learner_did, skill_hash, source_event_hash, tick}
+ *   - 'skill.rejected'  (39) — closed 3-key {learner_did, rejection_reason, tick}; reason ∈ {low_trust, structural_invalid, quota_exceeded}
+ *  All 3 emitted ONLY via grid/src/skills/append*.ts sole-producer emitters (D-18-07/09).
  *  Tuple ORDER is locked; any reorder fails broadcast-allowlist.test.ts.
  */
 export const ALLOWLIST_MEMBERS: readonly string[] = [
@@ -150,6 +155,12 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'iris.context_invoked',        // (34) {nous_did, tick, belief_count}
     'iris.contradiction_detected', // (35) {nous_did, tick, target_did, contradiction_hash}
     'iris.prior_seeded',           // (36) {nous_did, tick, target_did, seed_event_hash}
+    // Phase 18 (SKILL-03 / D-18-09) — Skill lifecycle events. Allowlist 36→39.
+    // Brain metadata: see ActionType comments in brain/rpc/types.py. Grid injects learner_did + tick.
+    // All 3 emitted ONLY via grid/src/skills/append*.ts sole-producer emitters (D-18-07/09).
+    'skill.taught',    // (37) {learner_did, parent_hash, skill_hash, teacher_did, tick}
+    'skill.inferred',  // (38) {learner_did, skill_hash, source_event_hash, tick}
+    'skill.rejected',  // (39) {learner_did, rejection_reason, tick}; reason ∈ {low_trust, structural_invalid, quota_exceeded}
 ] as const;
 
 /**
