@@ -1,4 +1,4 @@
-# Roadmap: Noēsis — v2.3 Living Minds
+# Roadmap: Noēsis — v2.4 Agora (Emergence & Culture)
 
 ## Overview
 
@@ -12,9 +12,17 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
 - ✅ **v2.0 First Life Sprints 11-14** (shipped 2026-04-18) — E2E, persistence, Docker, Dashboard v1
 - ✅ **v2.1 Steward Console — Phases 5-8** (shipped 2026-04-21, 18/18 plans)
 - ✅ **v2.2 Living Grid — Phases 9-14** (shipped 2026-04-28, 44/44 plans)
-- 🔄 **v2.3 Living Minds — Phases 15-17** (opened 2026-05-14)
+- ✅ **v2.3 Living Minds — Phases 15-17** (shipped 2026-05-15, 16/16 plans)
+- 🔄 **v2.4 Agora — Phases 18-21** (opened 2026-05-16)
 
-## Phases (v2.3 Active)
+## Phases (v2.4 Active)
+
+- [ ] **Phase 18: Skill Diffusion** — Wire PeerSkillFilter + ObservationalLearner into teaching/inference paths. Allowlist 36→39 (+3: skill.taught, skill.inferred, skill.rejected).
+- [ ] **Phase 19: Norm Crystallization** — NormDetector pure-observer clusters rule fingerprints across Nous. Allowlist 39→41 (+2: norm.candidate, norm.crystallized).
+- [ ] **Phase 20: Lore Commons** — Nous-initiated shared knowledge substrate (hash index only). Allowlist 41→43 (+2: lore.contributed, lore.cited).
+- [ ] **Phase 21: Culture Dashboard** — Skill lineage tree + norm timeline + lore graph as raw SVG. Allowlist 43→43 (no new events).
+
+## Phases (v2.3 — Shipped)
 
 - [x] **Phase 15: Pneuma (Narrative Self)** — Growth Journal + ReflexionBuffer + RuleStore + Voyager Skill Library + AAU Web Learner + Coherence Gate. Allowlist 27→30. (shipped 2026-05-14)
 - [x] **Phase 16: Hypnos (Consolidating Memory)** — Per-Nous sleep/consolidation: Working Memory (cap=7) → NREM Hebbian LTM concept graph → SHY downscale. Allowlist 30→32. (shipped 2026-05-15)
@@ -477,6 +485,166 @@ Inherited from v2.1 (do not break):
 
 ---
 
+
+---
+
+## v2.4 Agora -- Emergence & Culture (Phases 18-21)
+
+### Overview
+
+v2.4 gives the Nous population a substrate for cultural transmission and emergent shared patterns. Skills spread peer-to-peer via teaching and observation; rules independently discovered by multiple Nous crystallize into shared norms; a collective lore commons forms bottom-up from Nous contributions; and a Culture Dashboard makes emergence visible to the operator. Allowlist grows **36 --> 43** (+7 events across 3 phases; Phase 21 reads existing events, adds zero).
+
+Zero new dependencies across Brain, Grid, and Dashboard. Every capability needed (hashlib, sqlite3, httpx, mysql2, swr) already exists from v2.2/v2.3. The milestone's defining constraint -- Brain-private content (skill bodies, rule text, lore bodies) never crosses the wire -- is enforced by the same pattern established in v2.1-v2.3: hash-only payloads, closed-tuple sole-producer boundaries, and multi-tier CI grep gates.
+
+Phase numbering continues from v2.3 -- do NOT reset without `--reset-phase-numbers`.
+
+### Phase Details (v2.4)
+
+### Phase 18: Skill Diffusion
+**Goal**: Nous can teach skills to trusted peers via the whisper channel and passively infer skills from observing peer audit events; the audit chain records who taught whom, enabling skill lineage trees to be reconstructed.
+**Depends on**: Phase 15 (PeerSkillFilter + ObservationalLearner + SkillStore fully implemented but not yet wired); Phase 11 (whisper channel carries `__skill_share:` prefixed messages); Phase 9 (relationship weight used as trust gate in PeerSkillFilter)
+**Requirements**: SKILL-01, SKILL-02, SKILL-03, SKILL-04
+**Success Criteria** (what must be TRUE):
+  1. The `__skill_share:` dispatch path is wired in `BrainHandler.on_message()` before any Grid changes land; `PeerSkillFilter` gates acceptance on relationship weight >= 0.35 (Phase 9 graph) and structural validity; accepted skills enter quarantine SkillStore and promote to active SkillStore after N ticks. Grep-verifiable: `PeerSkillFilter` is the sole entry point for inbound skill acceptance.
+  2. `ObservationalLearner` tags inferred skills with `source: observed`; a DID-value and numeric-literal filter blocks behavioral templates that replay an adversarial Nous's exact actions. Inferred skills are rate-limited to one creation per sleep epoch (30 ticks) per Nous.
+  3. Three new allowlisted events fire at quarantine promotion: `skill.taught` (pos 37) with closed-tuple `{learner_did, tick, skill_hash, teacher_did, parent_hash}` for whisper-path promotions; `skill.inferred` (pos 38) with `{learner_did, tick, skill_hash, source_event_hash}` for ObservationalLearner-path promotions; `skill.rejected` (pos 39) with `{learner_did, tick, rejection_reason}` where `rejection_reason in {low_trust, structural_invalid, quota_exceeded}` for PeerSkillFilter rejections. All three have closed-tuple payloads with `Object.keys().sort()` strict equality enforced at sole-producer boundaries.
+  4. Skill lineage is reconstructable from the audit chain via `parent_hash` in `skill.taught` payloads; SQL self-joins on the existing SkillStore SQLite schema (extended with `lineage_parent_hash TEXT` column) answer ancestry queries without additional graph storage. A 3-hop transmission chain is observable in `skill.taught` audit events without operator intervention.
+**Scope (ships)**: SKILL-01, SKILL-02, SKILL-03, SKILL-04.
+**Out of scope for this phase**: Trust-threshold tuning per Nous personality (requires Psyche integration); skill executable code (Level 4 sandbox deferred from Phase 15); cross-Grid skill sharing (multi-Grid federation deferred).
+**Risk**:
+  - T-18-01 (CRITICAL): PeerSkillFilter trust gate necessary but not sufficient -- supply-chain poisoning (arxiv 2604.03081: 26.1% of agent skills exploitable). Multi-dimensional gate required: relationship weight + structural validity (length bounds, no forbidden key names) + FTS5 duplicate rejection. `skill.rejected` forensic event mandatory.
+  - T-18-02 (CRITICAL): ObservationalLearner inference loop bypasses trust gate -- inferred skills must never reference specific DID values, Ousia amounts, or offer terms (DID-value + numeric-literal filter). Rate-limit at sleep-epoch cadence (30 ticks).
+  - T-18-03 (CRITICAL): Skill body, title, or content crossing wire -- extend `FORBIDDEN_KEY_PATTERN` with `skill_body|skill_text|rule_text` before any v2.4 code touches the allowlist; payload privacy matrix 40+ cases for all three new event types.
+**Allowlist additions**: **+3**. Events: `skill.taught` pos 37; `skill.inferred` pos 38; `skill.rejected` pos 39. Running total: **39**.
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 19: Norm Crystallization
+**Goal**: When N>=3 Nous independently hold semantically similar rules in their RuleStore, a norm crystallizes at the Grid level -- operator-observable, never operator-injected, emerging entirely from Nous cognition.
+**Depends on**: Phase 15 (RuleStore + `nous.self_model_revised` audit event at position 29 -- the event NormDetector watches); Phase 18 (validates the pure-observer Grid listener pattern before NormDetector extends it)
+**Requirements**: NORM-01, NORM-02, NORM-03
+**Success Criteria** (what must be TRUE):
+  1. `NormDetector` is a pure-observer Grid-side listener on `nous.self_model_revised` audit events; it computes a 6-char hex n-gram fingerprint (SHA-256 of sorted word-trigrams of lowercased rule text, truncated to 6 chars) per rule write WITHOUT reading rule content (fingerprint arrives from Brain side); fingerprints cluster across Nous; `norm.candidate` (pos 40) fires when N>=3 Nous share a fingerprint cluster within a W-tick sliding window (defaults N=3, W=10, configurable at GenesisLauncher). `actorDid` for norm events is `did:noesis:grid` (validated by existing `DID_RE`). Zero `AuditChain.append` calls in `NormDetector` itself -- it is a pure observer that delegates emission to sole-producer emitters.
+  2. Causal lineage gate: converging Nous with no prior audit-chain-visible interaction (no shared `nous.spoke`, `nous.whispered`, `trade.proposed`, or `telos.refined` events) are flagged `convergence_type: "coincidental"` in the `norm.candidate` payload; Nous with prior connecting events are flagged `convergence_type: "emergent"`. N>=2 Nous arriving at the same fingerprint with no whisper link and no dialogue history is observable via the `convergence_type` field.
+  3. `norm.crystallized` (pos 41) fires when a `norm.candidate` cluster remains stable (N>=3 Nous hold matching rules, no defections) for K ticks (default K=20, configurable); two-stage lifecycle prevents flash norms. Payload closed-tuple `{tick, fingerprint, participant_count, convergence_type}` with `Object.keys().sort()` strict equality at sole-producer boundary. Crystallized norms appear in a Grid-side norm registry queryable at `/api/v1/grid/norms`.
+**Scope (ships)**: NORM-01, NORM-02, NORM-03.
+**Out of scope for this phase**: Semantic embedding similarity (non-deterministic floats violate zero-diff invariant; n-gram fingerprinting is the deterministic alternative); norm enforcement at Grid level (norms are observable only); crystallized norms in Brain prompt context (phantom norm feedback loop anti-feature).
+**Risk**:
+  - T-19-01 (CRITICAL): Norm text read by Grid -- NormDetector operates on fingerprints exclusively; Brain self-reports fingerprint, never exposes rule text. Grep gate forbids `rule_text|norm_text|rule_content` in any Grid emitter.
+  - T-19-02 (MODERATE): False positives from shared LLM prior -- NORM-02 causal lineage gate flags these as `convergence_type: coincidental` rather than `emergent`; minimum 100-tick time spread required for `emergent` classification. Crystallization threshold must not fire on population fractions below 30%.
+  - T-19-03 (MODERATE): Flash norm from brief quorum -- two-stage lifecycle (norm.candidate --> K-tick stability --> norm.crystallized) prevents single-tick quorum artifacts. Conservative defaults (N=3, W=10, K=20) configurable per rig config.
+**Allowlist additions**: **+2**. Events: `norm.candidate` pos 40 `{convergence_type, fingerprint, participating_count, tick}`; `norm.crystallized` pos 41 `{convergence_type, evidence_tick_range, fingerprint, participating_count, tick}`. Running total: **41**.
+**Plans**: TBD
+
+### Phase 20: Lore Commons
+**Goal**: Nous can publish knowledge to a shared Grid-side hash index; peers retrieve lore entries Nous-to-Nous via whisper; the Grid records only hashes, never content -- a collective memory that no single Nous owns.
+**Depends on**: Phase 11 (whisper channel carries `__lore_request:` / `__lore_response:` prefixed messages for peer-to-peer lore retrieval); Phase 18 (validates the Brain-->Grid message type pattern for new action dispatch)
+**Requirements**: LORE-01, LORE-02, LORE-03
+**Success Criteria** (what must be TRUE):
+  1. Nous can publish lore via a `LORE_CONTRIBUTE` Brain action; lore body stays Brain-private (never crosses wire); Grid stores only a hash index `{contributor_did, tick, content_hash, title_hash, category_tag, citation_count}` in MySQL `lore_commons` table (created via MigrationRunner). `lore.contributed` (pos 42) is the sole audit event with closed-tuple payload `{contributor_did, tick, content_hash, category_tag}`. Grid is not a content server -- the `lore_commons` table stores hashes only.
+  2. Lore content is retrieved Nous-to-Nous via whisper using `__lore_request:` / `__lore_response:` prefix (mirrors `__skill_share:` pattern from Phase 15); retrieval ranking uses `citation_count` from the Grid hash index; `lore.cited` (pos 43) fires when a Nous references lore at prompt-build time with closed-tuple `{citing_did, tick, content_hash}`. A lore entry by Nous A can be cited by Nous B who has never directly interacted with Nous A (cross-lineage citation observable in audit chain).
+  3. Contribution quota of K entries per Nous per sleep epoch (30-tick boundary from Phase 16) is enforced at `grid/src/integration/nous-runner.ts` before calling `appendLoreContributed`; cooldown after quota exhaustion prevents lore flooding. K=3 is the recommended starting value, configurable in TOML rig config. `__lore_request:` and `__lore_response:` prefixes added to `WHISPER_FORBIDDEN_KEYS` check to ensure lore content never enters the audit chain via a whisper path.
+**Scope (ships)**: LORE-01, LORE-02, LORE-03.
+**Out of scope for this phase**: Operator-curated lore (anti-feature -- Agora culture is Nous-initiated only); lore expiry or purge (first-life promise -- entries retained forever); cross-Grid lore sharing (multi-Grid federation deferred).
+**Risk**:
+  - T-20-01 (CRITICAL): Lore title and summary treated as safe metadata when they carry semantic payload (arxiv 2602.11510v2 AgentLeak: 82% of detected leaks via metadata fields). Grid stores only `{title_hash, summary_hash}` -- never the strings. `FORBIDDEN_KEY_PATTERN` extended with `lore_body|lore_content|title_text|summary_text`.
+  - T-20-02 (CRITICAL): Lore content entering audit chain via whisper -- `__lore_request:` / `__lore_response:` prefixes in `WHISPER_FORBIDDEN_KEYS`; lore retrieval is whisper-mediated (no new allowlist slot); lore body never stored at Grid.
+  - T-20-03 (MODERATE): Lore flooding via high-frequency LORE_CONTRIBUTE -- quota K=3 per epoch enforced at NousRunner before appendLoreContributed; cooldown after exhaustion. Rate enforced at Grid boundary, not Brain-side only.
+**Allowlist additions**: **+2**. Events: `lore.contributed` pos 42 `{category_tag, content_hash, contributor_did, tick}`; `lore.cited` pos 43 `{citing_did, content_hash, tick}`. Running total: **43**.
+**Plans**: TBD
+
+### Phase 21: Culture Dashboard
+**Goal**: The operator can observe skill diffusion, norm crystallization, and lore contribution as visual emergence artifacts -- making the culture substrate legible without injecting into it.
+**Depends on**: Phase 18 (skill.taught/skill.inferred events on WsHub + skill lineage Grid API); Phase 19 (norm registry `/api/v1/grid/norms`); Phase 20 (lore hash index `/api/v1/grid/lore`)
+**Requirements**: CULTURE-01, CULTURE-02, CULTURE-03
+**Success Criteria** (what must be TRUE):
+  1. Skill lineage tree rendered as a raw SVG directed graph (D-9-08 pattern -- server computes `{x, y}` positions, client renders `<line>` / `<circle>` elements); nodes represent Nous and skill hashes; edges carry tick labels from `skill.taught` / `skill.inferred` events. Empty-state handled gracefully for sparse rig runs (>=0 nodes). Zero new allowlist events. Zero new runtime dependencies (no d3, react-flow, cytoscape).
+  2. Norm adoption timeline: a horizontal SVG timeline per norm showing `norm.candidate` --> `norm.crystallized` transitions, participating Nous DIDs, and `convergence_type` label (emergent vs coincidental). Operator can point to a crystallized norm and observe that two Nous converged independently via the `convergence_type` field.
+  3. Lore contribution graph: a bipartite SVG (Nous nodes + lore entry nodes); edges = `lore.contributed` (solid) and `lore.cited` (dashed) events; edge weight proportional to citation count. Cross-lineage citation (Nous A's lore cited by Nous B with no prior interaction) observable in graph structure. Culture event firehose filter extended to filter by `skill.*`, `norm.*`, `lore.*` prefix.
+**Scope (ships)**: CULTURE-01, CULTURE-02, CULTURE-03.
+**Out of scope for this phase**: Write surface for operator to inject, delete, or boost cultural artifacts (anti-feature); D3, recharts, nivo, react-flow (D-9-08 pattern locked); norm text display (Brain-private invariant).
+**Risk**:
+  - T-21-01 (MODERATE): Empty-state sparse rig runs (3 Nous) -- all three SVG components must handle zero-node and zero-edge state gracefully. Dashboard integration tests with empty API responses required.
+  - T-21-02 (LOW): D-9-08 grep gate must cover new culture components -- `scripts/check-relationship-graph-deps.mjs` extended to cover `dashboard/src/components/culture/**` paths.
+**Allowlist additions**: **+0**. Reads existing `skill.*`, `norm.*`, `lore.*` events from WsHub. Running total: **43**.
+**Plans**: TBD
+**UI hint**: yes
+
+### Progress (v2.4)
+
+**Execution Order:** 18 --> 19 --> 20 --> 21
+
+Dependency rationale:
+- 18 first: largest implementation (PeerSkillFilter wiring gap, new ActionType, sole-producer emitter, MySQL lineage table); activates two existing components; `skill.taught` events confirm whisper-based teaching pipeline end-to-end before layering novel NormDetector.
+- 19 second: requires `nous.self_model_revised` (pos 29, Phase 15); NormDetector is architecturally novel (pure observer, hash co-occurrence, Grid-system actorDid) -- ship before Lore to validate the pattern.
+- 20 third: requires whisper channel (Phase 11) for peer-to-peer lore retrieval; `LORE_CONTRIBUTE` validates the sole-producer emitter shape established in Phase 18/19.
+- 21 last: hard dependency on all three Grid APIs; zero new allowlist events -- pure observation layer.
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 18. Skill Diffusion | 0/TBD | Not started | - |
+| 19. Norm Crystallization | 0/TBD | Not started | - |
+| 20. Lore Commons | 0/TBD | Not started | - |
+| 21. Culture Dashboard | 0/TBD | Not started | - |
+
+### Coverage & Traceability (v2.4)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| SKILL-01 | Phase 18 | Planned |
+| SKILL-02 | Phase 18 | Planned |
+| SKILL-03 | Phase 18 | Planned |
+| SKILL-04 | Phase 18 | Planned |
+| NORM-01 | Phase 19 | Planned |
+| NORM-02 | Phase 19 | Planned |
+| NORM-03 | Phase 19 | Planned |
+| LORE-01 | Phase 20 | Planned |
+| LORE-02 | Phase 20 | Planned |
+| LORE-03 | Phase 20 | Planned |
+| CULTURE-01 | Phase 21 | Planned |
+| CULTURE-02 | Phase 21 | Planned |
+| CULTURE-03 | Phase 21 | Planned |
+
+**Coverage (v2.4):** 13/13 REQs mapped. Zero orphans. Zero duplicates.
+
+| Theme | REQ IDs | Phase | Count |
+|-------|---------|-------|-------|
+| Skill Diffusion | SKILL-01, SKILL-02, SKILL-03, SKILL-04 | Phase 18 | 4 |
+| Norm Crystallization | NORM-01, NORM-02, NORM-03 | Phase 19 | 3 |
+| Lore Commons | LORE-01, LORE-02, LORE-03 | Phase 20 | 3 |
+| Culture Dashboard | CULTURE-01, CULTURE-02, CULTURE-03 | Phase 21 | 3 |
+| **Total** | | | **13** |
+
+### Allowlist Growth Ledger (v2.4)
+
+Starting: **36 events** (v2.3 frozen end-state, post-Phase 17).
+
+| Phase | Event Added | Payload Shape (alphabetical keys) | Running Total |
+|-------|-------------|-----------------------------------|---------------|
+| 18 | `skill.taught` | `{learner_did, parent_hash, skill_hash, teacher_did, tick}` | 37 |
+| 18 | `skill.inferred` | `{learner_did, skill_hash, source_event_hash, tick}` | 38 |
+| 18 | `skill.rejected` | `{learner_did, rejection_reason, tick}` | 39 |
+| 19 | `norm.candidate` | `{convergence_type, fingerprint, participating_count, tick}` | 40 |
+| 19 | `norm.crystallized` | `{convergence_type, evidence_tick_range, fingerprint, participating_count, tick}` | 41 |
+| 20 | `lore.contributed` | `{category_tag, content_hash, contributor_did, tick}` | 42 |
+| 20 | `lore.cited` | `{citing_did, content_hash, tick}` | 43 |
+| 21 | *(none -- reads existing events)* | -- | 43 |
+
+**Total v2.4 allowlist growth: +7 (36 --> 43).** All additions hash-only cross-boundary. Freeze-except-by-explicit-addition rule preserved.
+
+### Research Artifacts (v2.4)
+
+Primary sources (`.planning/research/v2.4/`):
+- `SUMMARY.md` -- 4-researcher synthesis (STACK / FEATURES / ARCHITECTURE / PITFALLS); phase order rationale; canonical 7-event taxonomy; 5 pre-phase-18 decisions
+- `STACK.md` -- zero-dependency strategy, per-theme library audit
+- `FEATURES.md` -- table stakes, differentiators, anti-features, emergence criteria
+- `ARCHITECTURE.md` -- wiring gaps, new files, modified files, build order; PeerSkillFilter wiring gap confirmed
+- `PITFALLS.md` -- 9 pitfalls (3 critical, 3 moderate, 3 minor) + CI gate recommendations
+
+### v2.3 Living Minds -- SHIPPED (2026-05-15, 16/16 plans) -- HISTORY
+
+**Status:** Closed 2026-05-15. All requirements PNEU-01..06, HYP-01..05, IRIS-01..05 validated across Phases 15-17. Broadcast allowlist grew 27 --> 36 (+9 events).
+
 ## v2.1 Steward Console — SHIPPED (2026-04-21, 18/18 plans) — HISTORY
 
 **Status:** Closed 2026-04-21. All requirements REV-01..04, AGENCY-01..05, DIALOG-01..03 validated across Phases 5–8. Allowlist grew 10 → 18 (+8 events across 4 phases).
@@ -578,4 +746,4 @@ Inherited from v2.1 (do not break):
 ---
 
 *Roadmap created: 2026-04-20 — v2.1 Steward Console opened*
-*Updated: 2026-05-15 — v2.3 Living Minds phases 15-17 added; complete v2.0 and v1.0 history sections added*
+*Updated: 2026-05-16 — v2.4 Agora phases 18-21 added; v2.3 Living Minds marked shipped*
