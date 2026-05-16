@@ -140,4 +140,35 @@ export const MIGRATIONS: Migration[] = [
             DROP TABLE IF EXISTS governance_proposals
         `,
     },
+    {
+        version: 7,
+        name: 'create_norm_tables',
+        up: `
+            CREATE TABLE IF NOT EXISTS norm_candidates (
+                fingerprint       CHAR(6)      NOT NULL,
+                grid_name         VARCHAR(255) NOT NULL,
+                participant_dids  TEXT         NOT NULL,
+                first_seen_tick   INT          NOT NULL,
+                last_updated_tick INT          NOT NULL,
+                PRIMARY KEY (fingerprint, grid_name)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            CREATE TABLE IF NOT EXISTS norm_registry (
+                norm_id           VARCHAR(64)  NOT NULL,
+                fingerprint       CHAR(6)      NOT NULL,
+                crystallized_tick INT          NOT NULL,
+                participant_count INT          NOT NULL,
+                convergence_type  ENUM('emergent','coincidental') NOT NULL,
+                event_hash        VARCHAR(64)  NOT NULL,
+                grid_name         VARCHAR(255) NOT NULL,
+                PRIMARY KEY (norm_id),
+                INDEX idx_fingerprint (grid_name, fingerprint),
+                INDEX idx_crystallized (grid_name, crystallized_tick)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `
+            DROP TABLE IF EXISTS norm_candidates;
+            DROP TABLE IF EXISTS norm_registry
+        `,
+    },
 ];
