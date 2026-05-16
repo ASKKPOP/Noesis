@@ -516,8 +516,14 @@ Phase numbering continues from v2.3 -- do NOT reset without `--reset-phase-numbe
   - T-18-02 (CRITICAL): ObservationalLearner inference loop bypasses trust gate -- inferred skills must never reference specific DID values, Ousia amounts, or offer terms (DID-value + numeric-literal filter). Rate-limit at sleep-epoch cadence (30 ticks).
   - T-18-03 (CRITICAL): Skill body, title, or content crossing wire -- extend `FORBIDDEN_KEY_PATTERN` with `skill_body|skill_text|rule_text` before any v2.4 code touches the allowlist; payload privacy matrix 40+ cases for all three new event types.
 **Allowlist additions**: **+3**. Events: `skill.taught` pos 37; `skill.inferred` pos 38; `skill.rejected` pos 39. Running total: **39**.
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 5 plans
+
+Plans:
+- [ ] 18-01-PLAN.md — Wave 0: FORBIDDEN_KEY_PATTERN extension (skill_body|skill_text|rule_text) + SKILL_FORBIDDEN_KEYS constant + allowlist-36-baseline RED test
+- [ ] 18-02-PLAN.md — Wave 1a: ActionType.SKILL_TAUGHT/INFERRED/REJECTED + QuarantineStore module + __skill_share: dispatch in on_message() + quarantine sweep in on_tick() + lineage_parent_hash column
+- [ ] 18-03-PLAN.md — Wave 1b (parallel to 18-02): ObservationalLearner DID/numeric filter + quarantine redirect + SKILL_INFERRED/SKILL_REJECTED action emission
+- [ ] 18-04-PLAN.md — Wave 2: grid/src/skills/ sole-producer emitters (appendSkillTaught/Inferred/Rejected + types + index) + ALLOWLIST_MEMBERS 36→39 + 3 NousRunner dispatch cases
+- [ ] 18-05-PLAN.md — Wave 3: Brain unit tests (quarantine, OL filter, 3-hop lineage) + Grid emitter tests + sole-producer boundary test + allowlist-39 count/position test
 
 ### Phase 19: Norm Crystallization
 **Goal**: When N>=3 Nous independently hold semantically similar rules in their RuleStore, a norm crystallizes at the Grid level -- operator-observable, never operator-injected, emerging entirely from Nous cognition.
