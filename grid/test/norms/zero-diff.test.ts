@@ -1,7 +1,5 @@
 /**
- * RED stub — will fail with 'Cannot find module' until Plan 03 ships grid/src/norms/NormDetector.ts
- *
- * Phase 19 Plan 01 — NORM-01 pure-observer gate.
+ * Phase 19 Plan 03 — NORM-01 pure-observer gate.
  *
  * Proves that attaching a NormDetector to AuditChain does NOT mutate
  * any entries[].eventHash. Clone of grid/test/relationships/zero-diff.test.ts
@@ -11,16 +9,28 @@
  * norm.candidate / norm.crystallized via sole-producer emitters. It must be a
  * pure observer — registering its onAppend callback must never alter eventHashes.
  *
+ * To isolate the pure-observer property (no hash mutation) from the side-effect
+ * (extra norm.* entries appended), the tests use a high-threshold NormConfig
+ * (threshold: 100) so the detector never fires during the test sequence.
+ * This proves the onAppend registration itself does not alter hashes.
+ *
  * Reference: D-19-06 (pure-observer), D-19-11 (allowlist baseline).
  */
 
 import { describe, it, expect, vi } from 'vitest';
 import { AuditChain } from '../../src/audit/chain.js';
-// RED: These imports fail until Plan 03 ships NormDetector + types
 import { NormDetector } from '../../src/norms/NormDetector.js';
-import { DEFAULT_NORM_CONFIG } from '../../src/norms/types.js';
+import type { NormConfig } from '../../src/norms/types.js';
 import { RelationshipListener } from '../../src/relationships/listener.js';
 import { DEFAULT_RELATIONSHIP_CONFIG } from '../../src/relationships/config.js';
+
+// High-threshold config: ensures no norm events fire during the test sequence.
+// This isolates the "does attaching NormDetector alter existing eventHashes?" invariant.
+const ZERO_DIFF_NORM_CONFIG: NormConfig = {
+    threshold: 100,   // never reached in test sequence (max 5 DIDs)
+    windowTicks: 10,
+    adoptionTicks: 20,
+};
 
 // ─── Fixed deterministic event sequence ──────────────────────────────────────
 
@@ -142,7 +152,8 @@ describe('NORM-01 zero-diff — NormDetector attach does not alter chain', () =>
                 : undefined;
             if (withDetector && relListener) {
                 // NormDetector wires its own onAppend inside the constructor (D-19-06)
-                void new NormDetector(chain, relListener, DEFAULT_NORM_CONFIG);
+                // ZERO_DIFF_NORM_CONFIG has threshold=100 so no norm events fire during this test.
+                void new NormDetector(chain, relListener, ZERO_DIFF_NORM_CONFIG);
             }
             for (let i = 0; i < extraListeners; i++) {
                 chain.onAppend(() => {});
@@ -179,7 +190,7 @@ describe('NORM-01 zero-diff — NormDetector attach does not alter chain', () =>
                 ? new RelationshipListener(chain, DEFAULT_RELATIONSHIP_CONFIG)
                 : undefined;
             if (withDetector && relListener) {
-                void new NormDetector(chain, relListener, DEFAULT_NORM_CONFIG);
+                void new NormDetector(chain, relListener, ZERO_DIFF_NORM_CONFIG);
             }
             for (const e of events) {
                 chain.append(e.type, e.actorDid, e.payload, e.targetDid);
@@ -191,8 +202,8 @@ describe('NORM-01 zero-diff — NormDetector attach does not alter chain', () =>
         const observed = run(true);
 
         for (let i = 0; i < plain.length; i++) {
-            expect(observed[i].eventHash).toBe(plain[i].eventHash);
-            expect(observed[i].prevHash).toBe(plain[i].prevHash);
+            expect(observed[i]!.eventHash).toBe(plain[i]!.eventHash);
+            expect(observed[i]!.prevHash).toBe(plain[i]!.prevHash);
         }
 
         nowSpy.mockRestore();
