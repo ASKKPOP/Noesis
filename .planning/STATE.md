@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Active)
 status: executing
-stopped_at: "v2.4 roadmap created (4 phases: 18-21, 13 REQs, 7 allowlist additions)"
+stopped_at: "Phase 19 complete — allowlist at 41 — ready for /gsd-plan-phase 20"
 last_updated: "2026-05-16T23:10:19.070Z"
 last_activity: 2026-05-16
 progress:
@@ -26,12 +26,12 @@ See: .planning/PROJECT.md (updated 2026-05-16)
 
 ## Current Position
 
-Phase: 19
-Plan: 4 of 5 complete
-Status: Executing Phase 19 — plan 19-04 complete
+Phase: 20
+Plan: 0 of TBD complete
+Status: Phase 19 shipped — ready for Phase 20 planning
 Last activity: 2026-05-16
 
-Progress: [██░░░░░░░░] 25% (1/4 phases complete)
+Progress: [████░░░░░░] 50% (2/4 phases complete)
 
 ## Accumulated Context
 
@@ -58,9 +58,9 @@ Progress: [██░░░░░░░░] 25% (1/4 phases complete)
 
 Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule preserved.
 
-### Broadcast allowlist (v2.3 end-state — 36 events)
+### Broadcast allowlist (v2.4 Phase 19 end-state — 41 events)
 
-**36 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
+**41 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
 
 1. `nous.spawned`
 2. `nous.moved`
@@ -98,6 +98,11 @@ Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule p
 34. `iris.context_invoked` ← Phase 17 (IRIS-05) — `{nous_did, tick, belief_count}`
 35. `iris.contradiction_detected` ← Phase 17 (IRIS-03) — `{nous_did, tick, target_did, contradiction_hash}`
 36. `iris.prior_seeded` ← Phase 17 (IRIS-04) — `{nous_did, tick, target_did, seed_event_hash}`
+37. `skill.taught` ← Phase 18 (SKILL-03) — `{learner_did, parent_hash, skill_hash, teacher_did, tick}`
+38. `skill.inferred` ← Phase 18 (SKILL-03) — `{learner_did, skill_hash, source_event_hash, tick}`
+39. `skill.rejected` ← Phase 18 (SKILL-03) — `{learner_did, rejection_reason, tick}`
+40. `norm.candidate` ← Phase 19 (NORM-01) — `{convergence_type, fingerprint, participating_count, tick}`
+41. `norm.crystallized` ← Phase 19 (NORM-03) — `{convergence_type, evidence_tick_range, fingerprint, participating_count, tick}`
 
 Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 36-event invariant.
 
@@ -105,8 +110,8 @@ Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration mat
 
 | Phase | Delta | Running Total | Events |
 |-------|-------|---------------|--------|
-| 18 (Skill Diffusion) | +3 | 39 | `skill.taught` (pos 37), `skill.inferred` (pos 38), `skill.rejected` (pos 39) |
-| 19 (Norm Crystallization) | +2 | 41 | `norm.candidate` (pos 40), `norm.crystallized` (pos 41) |
+| 18 (Skill Diffusion) | +3 | 39 | `skill.taught` (pos 37), `skill.inferred` (pos 38), `skill.rejected` (pos 39) | complete |
+| 19 (Norm Crystallization) | +2 | 41 | `norm.candidate` (pos 40), `norm.crystallized` (pos 41) | complete |
 | 20 (Lore Commons) | +2 | 43 | `lore.contributed` (pos 42), `lore.cited` (pos 43) |
 | 21 (Culture Dashboard) | +0 | 43 | reads existing events, no new emissions |
 
@@ -152,6 +157,6 @@ Phase 15-17 shipped with all Brain-private invariants intact. Key carry-forwards
 ## Session Continuity
 
 Last session: 2026-05-16
-Stopped at: Phase 19 Plan 04 complete — NormDetector wired, GET /api/v1/grid/norms shipped
+Stopped at: Phase 19 complete — allowlist at 41 — ready for /gsd-plan-phase 20
 Resume file: None
-Next action: Execute 19-05-PLAN.md
+Next action: /gsd-plan-phase 20 (Lore Commons)

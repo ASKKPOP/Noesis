@@ -18,7 +18,7 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
 ## Phases (v2.4 Active)
 
 - [x] **Phase 18: Skill Diffusion** — Wire PeerSkillFilter + ObservationalLearner into teaching/inference paths. Allowlist 36→39 (+3: skill.taught, skill.inferred, skill.rejected). (completed 2026-05-16)
-- [ ] **Phase 19: Norm Crystallization** — NormDetector pure-observer clusters rule fingerprints across Nous. Allowlist 39→41 (+2: norm.candidate, norm.crystallized).
+- [x] **Phase 19: Norm Crystallization** — NormDetector pure-observer clusters rule fingerprints across Nous. Allowlist 39→41 (+2: norm.candidate, norm.crystallized). (completed 2026-05-16)
 - [ ] **Phase 20: Lore Commons** — Nous-initiated shared knowledge substrate (hash index only). Allowlist 41→43 (+2: lore.contributed, lore.cited).
 - [ ] **Phase 21: Culture Dashboard** — Skill lineage tree + norm timeline + lore graph as raw SVG. Allowlist 43→43 (no new events).
 
@@ -543,11 +543,12 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 19-01-PLAN.md — Wave 0: Brain fingerprint audit (D-19-03) + FORBIDDEN_KEY_PATTERN + NORM_FORBIDDEN_KEYS + RED test stubs
-- [ ] 19-02-PLAN.md — Wave 1: MySQL schema version 7 (norm_candidates + norm_registry) + migration test
-- [ ] 19-03-PLAN.md — Wave 2: NormDetector + appendNormCandidate + appendNormCrystallized + NormStorage + unit tests
-- [ ] 19-04-PLAN.md — Wave 3: GenesisLauncher wiring + GET /api/v1/grid/norms + norms-api test
-- [ ] 19-05-PLAN.md — Wave 4: startup rebuild test + full suite green + doc-sync
+- [x] 19-01-PLAN.md — Wave 0: Brain fingerprint audit (D-19-03) + FORBIDDEN_KEY_PATTERN + NORM_FORBIDDEN_KEYS + RED test stubs
+- [x] 19-02-PLAN.md — Wave 1: MySQL schema version 7 (norm_candidates + norm_registry) + migration test
+- [x] 19-03-PLAN.md — Wave 2: NormDetector + appendNormCandidate + appendNormCrystallized + NormStorage + unit tests
+- [x] 19-04-PLAN.md — Wave 3: GenesisLauncher wiring + GET /api/v1/grid/norms + norms-api test
+- [x] 19-05-PLAN.md — Wave 4: startup rebuild test + full suite green + doc-sync
+Phase 19 completed 2026-05-16 with 5 plans (19-01 through 19-05). Allowlist at 41 events.
 
 ### Phase 20: Lore Commons
 **Goal**: Nous can publish knowledge to a shared Grid-side hash index; peers retrieve lore entries Nous-to-Nous via whisper; the Grid records only hashes, never content -- a collective memory that no single Nous owns.

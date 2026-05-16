@@ -441,5 +441,36 @@
 
 **Invariants preserved:** wall-clock free (tick is sole time axis), content never crosses wire (hashes only), append-only IrisStore (superseded_by FK chain), sole-producer boundary, 3-keys-not-5.
 
+### Phase 18: Skill Diffusion — SHIPPED 2026-05-16
+
+**Plans:** 7/7. Allowlist: 36 → 39 (+3: skill.taught, skill.inferred, skill.rejected).
+
+**Key artifacts:**
+- `grid/src/skills/` — PeerSkillFilter, sole-producer emitters (appendSkillTaught, appendSkillInferred, appendSkillRejected), NousRunner dispatch
+- `brain/src/noesis_brain/skills/` — PeerSkillFilter wired into BrainHandler.on_message(), ObservationalLearner, skill quarantine
+- Brain unit tests: quarantine, OL filter, 3-hop lineage; sole-producer boundary test; allowlist-39 count/position test
+
 ---
-*Last updated: 2026-05-15 — Phase 17 shipped (5/5 plans, allowlist at 36, 27/27 verified)*
+
+### Phase 19: Norm Crystallization — SHIPPED 2026-05-16
+
+**Plans:** 5/5. Allowlist: 39 → 41 (+2: norm.candidate, norm.crystallized).
+
+**Key artifacts:**
+- `grid/src/norms/NormDetector.ts` — pure-observer listener on `nous.self_model_revised`; zero `AuditChain.append` calls; sliding-window eviction; crystallization two-stage lifecycle
+- `grid/src/norms/appendNormCandidate.ts`, `appendNormCrystallized.ts` — sole-producer emitters with closed-tuple enforcement
+- `grid/src/norms/NormStorage.ts` — MySQL norm_candidates + norm_registry tables (schema v7)
+- `GET /api/v1/grid/norms` — operator-queryable norm registry
+- `grid/test/norms/norm-startup-rebuild.test.ts` — startup rebuild integration test (rebuildFromChain is a pure reader, zero emissions)
+- `grid/test/relationships/allowlist-frozen.test.ts` — baseline updated to 41
+
+**Invariants preserved:**
+- NormDetector is a pure observer — `rebuildFromChain` uses `applyEntry` (no emitters), verified by test
+- `norm.candidate` fires once per cluster crossing threshold; `norm.crystallized` fires after K=20 tick stability
+- `actorDid` for norm events is `did:noesis:grid`
+- Sole-producer boundary: only `appendNormCandidate` / `appendNormCrystallized` emit norm events
+
+**Test results at completion:** 1539 grid tests passed (180 files), 682 brain tests passed — all green.
+
+---
+*Last updated: 2026-05-16 — Phase 19 shipped (5/5 plans, allowlist at 41)*
