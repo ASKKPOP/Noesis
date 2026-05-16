@@ -48,6 +48,10 @@ const TIER_A_ROOTS = [
     // Phase 12 (D-12-11): governance Brain tree — commit-reveal timing derives
     // from Grid system tick only; no wall-clock reads permitted.
     'brain/src/noesis_brain/governance',
+    // Phase 16 (T-16-03): hypnos Brain tree — Hebbian LTM consolidation and SHY
+    // downscale must derive all timing from tick parameter only; datetime/time.time/
+    // random/uuid/os.urandom are permanently forbidden in this deterministic module.
+    'brain/src/noesis_brain/hypnos',
 ];
 
 // ── Tier A forbidden patterns (any match in above roots = violation) ──────────

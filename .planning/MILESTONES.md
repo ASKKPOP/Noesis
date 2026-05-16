@@ -404,9 +404,27 @@
 - `brain/src/noesis_brain/coherence/` — CoherenceGate (creed contradiction detection)
 - `grid/src/pneuma/` — 3 sole-producer emitters
 
-### Phase 16: Hypnos (Consolidating Memory) — IN PROGRESS
+### Phase 16: Hypnos (Consolidating Memory) — SHIPPED 2026-05-15
 
-**Plans:** TBD. Allowlist target: 30 → 32 (+2: nous.sleep.entered, nous.sleep.completed).
+**Plans:** 5/5. Allowlist: 30 → 32 (+2: nous.sleep.entered, nous.sleep.completed). HYP-01..05 complete.
+
+**Key artifacts:**
+- `brain/src/noesis_brain/hypnos/` — config.py, types.py, working_memory.py (cap=7 Miller's Law), ltm_store.py (SQLite WAL concept graph), consolidator.py (Hebbian + SHY), runtime.py (run_sleep + compute_snapshot_hash + retrieve_top_k)
+- `grid/src/sleep/` — 2 sole-producer emitters: appendNousSleepEntered.ts + appendNousSleepCompleted.ts
+- `brain/src/noesis_brain/learning/observational.py` — ObservationalLearner (observe_trade dispatch, wired to trade_settled events)
+- `brain/src/noesis_brain/prompts/system.py` — ltm_memories kwarg + _ltm_memories_section (D-16-08 stack order)
+- `brain/src/noesis_brain/rpc/handler.py` — Working Memory feed + sleep trigger (asyncio.create_task) + LTM retrieval + pending-buffer pattern + ObservationalLearner + peer_voices fetch
+- `brain/test/hypnos/test_zero_diff.py` — zero-diff integration test (HYP-04, T-16-02)
+- `brain/test/hypnos/test_sleep_trigger.py` — asyncio.create_task discipline test (T-16-02)
+- `scripts/check-wallclock-forbidden.mjs` — Tier A extended with brain/src/noesis_brain/hypnos/ (T-16-03)
+
+**Key invariants sealed:**
+- Working Memory cap=7 (Miller's Law); overflow evicts oldest episode
+- Hebbian η=0.01 + SHY σ=0.95; max edge weight bounded at η/(1−σ)=0.2 (no runaway saturation)
+- Sleep fires every 30 ticks via asyncio.create_task; SLEEP_ENTERED emitted synchronously before task
+- SLEEP_COMPLETED drained on next tick via _pending_sleep_completed buffer (D-16-Q1 resolution)
+- Zero-diff: identical episodes → byte-identical snapshot hash (DID does not affect graph content)
+- Wall-clock permanently forbidden in hypnos/ — CI-enforced via TIER_A of check-wallclock-forbidden.mjs
 
 ### Phase 17: Iris (Theory of Mind) — SHIPPED 2026-05-15
 

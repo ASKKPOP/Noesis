@@ -162,6 +162,12 @@ See `config/rigs/` for example configs and `.planning/phases/14-researcher-rigs/
 
 **v2.2 Living Grid — COMPLETE** (2026-04-28, all 7 phases shipped). Allowlist grew 18 → 27 (+9 events). Zero-diff audit chain unbroken since Phase 1 commit `29c3516`.
 
+**v2.3 Phase 15 — Pneuma (Narrative Self) — SHIPPED** (2026-05-14, PNEU-01..06). Growth Journal + ReflexionBuffer (cap=5) + RuleStore (WikiCategory.SELF_MODEL, cap=10) + Voyager SkillStore (FTS5 retrieval + SKILL_LEARN action) + AAU Web Learner (DuckDuckGo/arXiv/Wikipedia/PyPI/RSS/Jina, async, never blocks tick) + CoherenceGate (creed contradiction detection). Allowlist 27→30: `nous.reflection_authored` (#28), `nous.self_model_revised` (#29), `nous.creed_violation` (#30). All content Brain-private; only content-hashes cross the wire.
+
+**v2.3 Phase 16 — Hypnos (Consolidating Memory) — SHIPPED** (2026-05-15, HYP-01..05). Each Nous now consolidates experience into a Long-Term Memory concept graph during sleep. Working Memory (cap=7, Miller's Law) is populated from MemoryStore each tick. Sleep fires every 30 ticks via `asyncio.create_task` — non-blocking, Grid continues ticking during consolidation. Hebbian pass (η=0.01) strengthens LTM edges for co-activated concept pairs; SHY downscale (σ=0.95) prevents runaway saturation (max edge weight bounded at η/(1−σ)=0.2). Snapshot hash (SHA-256 over canonical JSON of LTM graph) crosses the wire — never raw concept content. Allowlist 30→32: `nous.sleep.entered` (#31) + `nous.sleep.completed` (#32) with closed-tuple `{nous_did, tick, ltm_snapshot_hash}`. LTM retrieval (top-k by edge_weight × recency_factor, O(concept_count), p95 <10ms on 1000-node graph) injects "## Long-Term Patterns" into system prompt. ObservationalLearner wired on trade_settled events. peer_voices from WikiCategory.NOUS injected alongside LTM memories. Wall-clock permanently forbidden in hypnos/ (CI gate Tier A).
+
+**v2.3 Phase 17 — Iris (Theory of Mind) — SHIPPED** (2026-05-15, IRIS-01..05). Each Nous maintains a private per-peer belief model across 5 dimensions (belief, desire, intention, knowledge, emotion). Allowlist 33→36: `iris.belief_revised` (#33), `iris.context_invoked` (#34), `iris.contradiction_detected` (#35), `iris.prior_seeded` (#36). Belief content Brain-private; only hashes cross the wire. 27/27 verification criteria met.
+
 **Test coverage:** grid 1147+, brain 513+, dashboard tests green (allowlist frozen at 27).
 
 | Milestone | Sprints | Deliverables |

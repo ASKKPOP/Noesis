@@ -17,7 +17,7 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
 ## Phases (v2.3 Active)
 
 - [x] **Phase 15: Pneuma (Narrative Self)** — Growth Journal + ReflexionBuffer + RuleStore + Voyager Skill Library + AAU Web Learner + Coherence Gate. Allowlist 27→30. (shipped 2026-05-14)
-- 🔄 **Phase 16: Hypnos (Consolidating Memory)** — Per-Nous sleep/consolidation: Working Memory (cap=7) → NREM Hebbian LTM concept graph → SHY downscale. Allowlist 30→32. (in progress)
+- [x] **Phase 16: Hypnos (Consolidating Memory)** — Per-Nous sleep/consolidation: Working Memory (cap=7) → NREM Hebbian LTM concept graph → SHY downscale. Allowlist 30→32. (shipped 2026-05-15)
 - [x] **Phase 17: Iris (Theory of Mind)** — Per-Nous private belief model of peers (5 dims: belief/desire/intention/knowledge/emotion). 27/27 verified. Allowlist 33→36. (shipped 2026-05-15)
 
 ## Phase Details (v2.3)
@@ -50,7 +50,7 @@ Plans:
 - [x] 15-05-PLAN.md — Wave 4: CoherenceGate + CREED_VIOLATION action + Brain prompt injection (reflexion + skills + rules top-k) + sole-producer emitters wiring
 - [x] 15-06-PLAN.md — Wave 5: zero-diff regression + AAU block-test + buffer-cap test + CI grep gates (T-15-01/02/03) + atomic doc-sync
 
-### Phase 16: Hypnos (Consolidating Memory) 🔄 (in progress)
+### Phase 16: Hypnos (Consolidating Memory) [x] (shipped 2026-05-15)
 **Goal**: Each Nous has a Working Memory (capacity=7) that consolidates into a Long-Term Memory concept graph via NREM Hebbian learning during a configurable sleep cycle, followed by synaptic homeostasis (SHY downscale). Sleep is Brain-private; only the two boundary events cross the wire.
 **Depends on**: Phase 15 (ReflexionBuffer + RuleStore prove text-procedure storage patterns; AAU Learner feeds Working Memory with web-sourced episodes; SkillStore FTS5 pattern cloned for LTM retrieval)
 **Requirements**: HYP-01 (Working Memory cap=7), HYP-02 (NREM Hebbian consolidation), HYP-03 (SHY downscale), HYP-04 (sleep cycle trigger + boundary events), HYP-05 (LTM concept graph retrieval)
@@ -73,8 +73,8 @@ Plans:
 - [x] 16-01-PLAN.md — Wave 1: correct allowlist stubs (positions 31-32) + create grid/src/sleep/ sole-producer emitters + extend FORBIDDEN_KEY_PATTERN + ActionType/BrainAction extensions + RED test stubs
 - [x] 16-02-PLAN.md — Wave 2: Brain hypnos/ module (config.py + types.py + working_memory.py + ltm_store.py + consolidator.py)
 - [x] 16-03-PLAN.md — Wave 3: HypnosRuntime (run_sleep + compute_snapshot_hash + retrieve_top_k) + BrainHandler wiring (Working Memory feed + sleep trigger + LTM retrieval + pending-buffer pattern)
-- [ ] 16-04-PLAN.md — Wave 4: ltm_memories kwarg in build_system_prompt + _ltm_memories_section builder + ObservationalLearner construction + peer_voices fetch in BrainHandler
-- [ ] 16-05-PLAN.md — Wave 5: zero-diff test + sleep-trigger discipline test + CI grep gate extension + atomic doc-sync
+- [x] 16-04-PLAN.md — Wave 4: ltm_memories kwarg in build_system_prompt + _ltm_memories_section builder + ObservationalLearner construction + peer_voices fetch in BrainHandler
+- [x] 16-05-PLAN.md — Wave 5: zero-diff test + sleep-trigger discipline test + CI grep gate extension + atomic doc-sync
 
 ### Phase 17: Iris (Theory of Mind) [x] (shipped 2026-05-15)
 **Goal**: Each Nous maintains a private per-peer belief model across 5 dimensions (belief, desire, intention, knowledge, emotion). The model is Brain-private; only belief-revision events cross the wire as hashes. The Iris elicit cycle uses LLM inference over witnessed peer events to form, update, and detect contradictions in beliefs.
@@ -114,7 +114,7 @@ Dependencies form a strict chain. Rationale:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 15. Pneuma (Narrative Self) | 6/6 | Complete | 2026-05-14 |
-| 16. Hypnos (Consolidating Memory) | 3/5 | In Progress|  |
+| 16. Hypnos (Consolidating Memory) | 5/5 | Complete   | 2026-05-15 |
 | 17. Iris (Theory of Mind) | 5/5 | Complete   | 2026-05-15 |
 
 ## Allowlist Growth Ledger (v2.3)
