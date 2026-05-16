@@ -276,6 +276,19 @@ export const HYPNOS_FORBIDDEN_KEYS = Object.freeze([
 ] as const);
 
 /**
+ * Phase 18 (D-18-08): skill-leaf keys that MUST NOT appear in any broadcast
+ * payload. Skill body text, skill instructions, and rule text are Brain-private
+ * and NEVER cross the Brain↔Grid wire. Only hashes (skill_hash, parent_hash,
+ * source_event_hash) are permitted.
+ * Per D-18-08 — exactly 3 keys. Do NOT add extras without a CONTEXT.md decision.
+ */
+export const SKILL_FORBIDDEN_KEYS = Object.freeze([
+    'skill_body',
+    'skill_text',
+    'rule_text',
+] as const);
+
+/**
  * Phase 11 (WHISPER-04 / D-11-09): whisper-leaf keys that MUST NOT appear in any
  * whisper payload. Plaintext whisper content (message bodies, utterances, offer
  * text, ousia amounts within whispers, raw decrypted data) NEVER crosses the wire.
@@ -328,8 +341,12 @@ export const WHISPER_FORBIDDEN_KEYS = Object.freeze([
  * not already present (description|rationale|proposal_text|law_text|body_text|
  * weight|reputation|relationship_score|ousia_weight). Keys text|body|content are
  * already present from Phase 11 — de-duped, not re-added.
+ *
+ * Phase 18 (D-18-08): extended with 3 SKILL_FORBIDDEN_KEYS (skill_body|skill_text|rule_text).
+ * Skill body text, skill instructions, and rule text are Brain-private and NEVER cross
+ * the Brain↔Grid wire. Only hashes (skill_hash, parent_hash, source_event_hash) are permitted.
  */
-export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content|message|utterance|plaintext|decrypted|payload_plain|description|rationale|proposal_text|law_text|body_text|weight|reputation|relationship_score|ousia_weight|belief_content|target_content|emotion_text|dimension_text|belief_prose|iris_content|ltm_content|concept_text|graph_data|episode_text|node_content|edge_content/i;
+export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content|message|utterance|plaintext|decrypted|payload_plain|description|rationale|proposal_text|law_text|body_text|weight|reputation|relationship_score|ousia_weight|belief_content|target_content|emotion_text|dimension_text|belief_prose|iris_content|ltm_content|concept_text|graph_data|episode_text|node_content|edge_content|skill_body|skill_text|rule_text/i;
 
 export interface PrivacyCheckResult {
     ok: boolean;
