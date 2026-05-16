@@ -1,13 +1,13 @@
-"""HypnosRuntime — orchestrates a single sleep cycle. Phase 16.
+"""HypnosRuntime — orchestrates sleep cycle (Hebbian + SHY + snapshot hash). Phase 16.
 
-Coordinates WorkingMemory + consolidator (hebbian_pass + shy_downscale) + LtmStore.
 Wall-clock FORBIDDEN: no wall-clock imports allowed (see T-16-03).
-Only tick from caller is the time axis.
+Only tick from caller is the time axis. D-16-03, T-16-03.
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import math
 
 from noesis_brain.hypnos.config import HYPNOS_ETA, HYPNOS_SIGMA, HYPNOS_TOP_K
 from noesis_brain.hypnos.consolidator import hebbian_pass, shy_downscale
@@ -16,11 +16,7 @@ from noesis_brain.hypnos.working_memory import WorkingMemory
 
 
 class HypnosRuntime:
-    """Orchestrates sleep consolidation: Hebbian pass + SHY downscale + snapshot hash.
-
-    Constructed once per Nous. The store is injected (allows :memory: for tests).
-    eta and sigma default to module config constants (D-16-04).
-    """
+    """Orchestrates per-Nous sleep cycle: Working Memory → Hebbian → SHY → snapshot hash."""
 
     def __init__(
         self,
@@ -36,47 +32,24 @@ class HypnosRuntime:
         self.working_memory: WorkingMemory = WorkingMemory()
 
     async def run_sleep(self, nous_did: str, tick: int) -> str:
-        """Execute one sleep cycle: Hebbian pass then SHY downscale.
+        """Execute one sleep cycle. Returns ltm_snapshot_hash (64-char hex).
 
-        Returns the ltm_snapshot_hash (sha256 of canonical LTM state).
-        Non-blocking async wrapper; all operations are synchronous SQLite calls.
-        nous_did is accepted for future sole-producer emit wiring (Plan 03).
+        Non-blocking — caller MUST use asyncio.create_task() for this coroutine.
+        NEVER await in on_tick() path directly (T-16-02).
+
+        Steps: Hebbian pass (all episode pairs) → SHY downscale → snapshot hash.
         """
         episodes = self.working_memory.episodes()
         if episodes:
             hebbian_pass(self._store, episodes, self._eta, tick)
-            shy_downscale(self._store, self._sigma)
+        shy_downscale(self._store, self._sigma)
         return self.compute_snapshot_hash()
 
-    def retrieve_top_k(self, current_tick: int) -> list[dict]:
-        """Return top-k LTM concept nodes ranked by incident edge weight + recency.
-
-        O(concept_count) via SQL GROUP BY + LEFT JOIN in LtmStore.retrieve_candidates.
-        recency_factor = 1 / (1 + age_ticks / 1000) — simple inverse-age decay.
-        Called by prompt-build path (Plan 03). HYP-05.
-        """
-        candidates = self._store.retrieve_candidates(self._top_k * 4)  # over-fetch then re-rank
-        results = []
-        for row in candidates:
-            age = max(0, current_tick - row["first_seen_tick"])
-            recency = 1.0 / (1.0 + age / 1000.0)
-            score = row["total_weight"] * recency
-            results.append({
-                "node_id": row["node_id"],
-                "content_hash": row["content_hash"],
-                "first_seen_tick": row["first_seen_tick"],
-                "total_weight": row["total_weight"],
-                "recency": recency,
-                "score": score,
-            })
-        results.sort(key=lambda r: r["score"], reverse=True)
-        return results[: self._top_k]
-
     def compute_snapshot_hash(self) -> str:
-        """Compute a deterministic sha256 hash of the current LTM graph state.
+        """Canonical JSON hash of the LTM graph state. Deterministic: sorted keys.
 
-        Serialization: canonical JSON with sorted keys, nodes and edges sorted by
-        their natural key order for byte-identical output on identical graphs.
+        Format: {"edges":[...],"nodes":[...]} (all top-level keys sorted).
+        sha256(canonical_utf8).hexdigest() → 64-char hex. D-16-03.
         """
         nodes = self._store._conn.execute(
             "SELECT node_id, content_hash, first_seen_tick FROM ltm_nodes ORDER BY node_id"
@@ -84,16 +57,41 @@ class HypnosRuntime:
         edges = self._store._conn.execute(
             "SELECT src, dst, weight, last_updated_tick FROM ltm_edges ORDER BY src, dst"
         ).fetchall()
-
-        snapshot = {
+        graph_dict = {
             "nodes": [
-                {"node_id": r["node_id"], "content_hash": r["content_hash"], "first_seen_tick": r["first_seen_tick"]}
+                {
+                    "content_hash": r["content_hash"],
+                    "first_seen_tick": r["first_seen_tick"],
+                    "node_id": r["node_id"],
+                }
                 for r in nodes
             ],
             "edges": [
-                {"src": r["src"], "dst": r["dst"], "weight": r["weight"], "last_updated_tick": r["last_updated_tick"]}
+                {
+                    "dst": r["dst"],
+                    "last_updated_tick": r["last_updated_tick"],
+                    "src": r["src"],
+                    "weight": r["weight"],
+                }
                 for r in edges
             ],
         }
-        canonical = json.dumps(snapshot, sort_keys=True, separators=(",", ":"))
+        canonical = json.dumps(graph_dict, separators=(",", ":"), sort_keys=True)
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    def retrieve_top_k(self, current_tick: int, tau: int = 500) -> list[str]:
+        """Return top-k concept content_hashes ranked by (sum_weight × recency_factor).
+
+        O(concept_count) via SQL GROUP BY (retrieve_candidates) + Python re-rank.
+        p95 < 10ms on 1000-node graph (HYP-05).
+        recency_factor = exp(-delta / tau) where delta = current_tick - first_seen_tick.
+        tau=500 mirrors Phase 10b Chronos TAU convention.
+        """
+        candidates = self._store.retrieve_candidates(self._top_k * 4)
+        scored: list[tuple[float, str]] = []
+        for row in candidates:
+            delta = current_tick - row["first_seen_tick"]
+            recency = math.exp(-delta / tau) if delta >= 0 else 1.0
+            scored.append((row["total_weight"] * recency, row["content_hash"]))
+        scored.sort(reverse=True)
+        return [content_hash for _, content_hash in scored[: self._top_k]]
