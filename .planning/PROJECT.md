@@ -221,4 +221,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-28 — Phase 14 shipped (RIG-01..05 validated; allowlist stays at 27 — Phase 14 adds zero production members; chronos./rig. isolation CI-enforced forever; D-14-01..D-14-08 locked; v2.2 Living Grid COMPLETE)*
+*Last updated: 2026-05-15 — Phase 16 shipped (Hypnos: WorkingMemory cap=7, Hebbian + SHY consolidation, sleep boundary events at positions 31-32, LTM retrieval in prompt context; allowlist grows 27→36 with Phases 15/16/17; HYP-01..05 validated)*
