@@ -67,7 +67,14 @@ Plans:
   - T-16-02 (HIGH): Hebbian pass blocks Grid tick — sleep runs as async Brain task; `nous.sleep.entered` emitted before sleep starts, Grid ticks continue during consolidation.
   - T-16-03 (MEDIUM): Edge weight divergence across ticks — determinism test with fixed `(seed, η, σ, episodes)` produces byte-identical graph; wall-clock grep gate cloned from Phase 15 T-15-01.
 **Allowlist additions**: **+2**. Events: `nous.sleep.entered` `{nous_did, tick, ltm_snapshot_hash}`; `nous.sleep.completed` `{nous_did, tick, ltm_snapshot_hash}`. Running total: **32**.
-**Plans**: TBD (planning in progress)
+**Plans**: 5 plans
+
+Plans:
+- [ ] 16-01-PLAN.md — Wave 1: correct allowlist stubs (positions 31-32) + create grid/src/sleep/ sole-producer emitters + extend FORBIDDEN_KEY_PATTERN + ActionType/BrainAction extensions + RED test stubs
+- [ ] 16-02-PLAN.md — Wave 2: Brain hypnos/ module (config.py + types.py + working_memory.py + ltm_store.py + consolidator.py)
+- [ ] 16-03-PLAN.md — Wave 3: HypnosRuntime (run_sleep + compute_snapshot_hash + retrieve_top_k) + BrainHandler wiring (Working Memory feed + sleep trigger + LTM retrieval + pending-buffer pattern)
+- [ ] 16-04-PLAN.md — Wave 4: ltm_memories kwarg in build_system_prompt + _ltm_memories_section builder + ObservationalLearner construction + peer_voices fetch in BrainHandler
+- [ ] 16-05-PLAN.md — Wave 5: zero-diff test + sleep-trigger discipline test + CI grep gate extension + atomic doc-sync
 
 ### Phase 17: Iris (Theory of Mind) [x] (shipped 2026-05-15)
 **Goal**: Each Nous maintains a private per-peer belief model across 5 dimensions (belief, desire, intention, knowledge, emotion). The model is Brain-private; only belief-revision events cross the wire as hashes. The Iris elicit cycle uses LLM inference over witnessed peer events to form, update, and detect contradictions in beliefs.
@@ -107,7 +114,7 @@ Dependencies form a strict chain. Rationale:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 15. Pneuma (Narrative Self) | 6/6 | Complete | 2026-05-14 |
-| 16. Hypnos (Consolidating Memory) | TBD | In Progress | — |
+| 16. Hypnos (Consolidating Memory) | 0/5 | In Progress | — |
 | 17. Iris (Theory of Mind) | 5/5 | Complete   | 2026-05-15 |
 
 ## Allowlist Growth Ledger (v2.3)
