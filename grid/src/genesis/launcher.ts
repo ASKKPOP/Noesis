@@ -16,6 +16,8 @@ import { ShopRegistry } from '../economy/shop-registry.js';
 import { NousRegistry } from '../registry/registry.js';
 import { DialogueAggregator } from '../dialogue/index.js';
 import { RelationshipListener, RelationshipStorage, DEFAULT_RELATIONSHIP_CONFIG } from '../relationships/index.js';
+import { NormDetector, NormStorage, DEFAULT_NORM_CONFIG, NORM_CRYSTALLIZED_EVENT } from '../norms/index.js';
+import type { NormConfig } from '../norms/types.js';
 import { appendBiosBirth } from '../bios/index.js';
 import { GovernanceEngine } from '../governance/engine.js';
 import { createInMemoryStore } from '../governance/store.js';
@@ -75,6 +77,20 @@ export class GenesisLauncher {
      */
     private relationshipStorage: RelationshipStorage | null;
     /**
+     * Phase 19 NORM-01 (D-19-06): NormDetector — pure observer on the AuditChain.
+     * Constructed after RelationshipListener so its onAppend listener fires after
+     * relationship edges are updated (correct convergence classification order).
+     */
+    readonly normDetector: NormDetector;
+    /**
+     * Persistence writer for the norm_registry MySQL table. Null until
+     * attachNormStorage(pool) is called by main.ts after migrations complete.
+     * The onAppend persistence branch is a no-op until storage is attached
+     * (recoverable via NormDetector.rebuildFromChain on next boot).
+     */
+    private normStorage: NormStorage | null;
+    private normCfg: NormConfig;
+    /**
      * Phase 12 Wave 3 — GovernanceEngine and its backing store.
      *
      * Uses an in-memory store by default (no MySQL required for unit tests or
@@ -128,6 +144,13 @@ export class GenesisLauncher {
         // after construction if needed. Tests that don't need MySQL snapshots pass null.
         this.relationshipStorage = null;
 
+        // Phase 19 NORM-01 (D-19-06): NormDetector constructed AFTER RelationshipListener
+        // so its onAppend listener fires after relationship edges are updated, ensuring
+        // correct convergence classification (emergent vs coincidental).
+        this.normCfg = config.norm ?? DEFAULT_NORM_CONFIG;
+        this.normDetector = new NormDetector(this.audit, this.relationships, this.normCfg);
+        this.normStorage = null;
+
         // Phase 12 Wave 3 — GovernanceEngine wiring (D-12-03).
         // In-memory store: no MySQL required. Production injection deferred to a later
         // phase once governance_proposals/governance_ballots migrations ship.
@@ -163,6 +186,38 @@ export class GenesisLauncher {
             );
         }
         this.relationshipStorage = new RelationshipStorage(pool);
+    }
+
+    /**
+     * Attach a MySQL pool for the derived `norm_registry` table persistence path.
+     *
+     * Must be called exactly once, AFTER construction but BEFORE start().
+     * Idempotent: calling twice with the same pool is a no-op; calling with a
+     * different pool throws (prevents accidental pool-switch mid-run).
+     *
+     * Called by main.ts after MigrationRunner.run(MIGRATIONS) so the schema
+     * for version 7 norm tables is in place before the first insert.
+     *
+     * When attached, an onAppend listener persists each crystallized-norm event
+     * to norm_registry. Fire-and-forget (analogous to relationship snapshots) —
+     * the audit chain remains the source of truth; DB loss is recoverable via
+     * NormDetector.rebuildFromChain on next boot.
+     */
+    attachNormStorage(pool: Pool): void {
+        if (this.normStorage !== null) {
+            if (this.normStorage.pool === pool) {
+                return;
+            }
+            throw new Error(
+                'GenesisLauncher.attachNormStorage called twice with different pools',
+            );
+        }
+        this.normStorage = new NormStorage(pool);
+    }
+
+    /** Expose normStorage for API server wiring (mirrors relationshipStorage getter pattern). */
+    get normStorageRef(): NormStorage | null {
+        return this.normStorage;
     }
 
     /**
@@ -288,6 +343,40 @@ export class GenesisLauncher {
         // otherwise new entries could be double-processed (once by rebuild, once by the
         // live onAppend). Called here (end of bootstrap) so the chain is fully populated.
         this.relationships.rebuildFromChain();
+
+        // Phase 19 NORM-01 (D-19-05): Rebuild NormDetector candidate window from the
+        // audit chain so in-flight candidates survive restarts. fromTick is the start
+        // of the current window (current tick minus windowTicks). Must run AFTER
+        // relationships.rebuildFromChain() to preserve the correct convergence
+        // classification order (D-19-06).
+        const currentTick = this.clock.currentTick ?? 0;
+        this.normDetector.rebuildFromChain(currentTick - this.normCfg.windowTicks);
+
+        // Phase 19 NORM-01: Wire crystallized-norm events → NormStorage persistence.
+        // Fire-and-forget (analogous to relationship snapshot scheduling) — the clock
+        // is never blocked on async I/O. Audit chain remains source of truth.
+        this.audit.onAppend((entry) => {
+            if (entry.eventType !== NORM_CRYSTALLIZED_EVENT) return;
+            const storage = this.normStorage;
+            if (!storage) return;
+            const payload = entry.payload as {
+                fingerprint: string;
+                tick: number;
+                participating_count: number;
+                convergence_type: string;
+                evidence_tick_range: [number, number];
+            };
+            void storage.insertRegistry(
+                entry.eventHash,
+                payload.fingerprint,
+                payload.tick,
+                payload.participating_count,
+                payload.convergence_type,
+                entry.eventHash,
+                this.gridName,
+                payload.evidence_tick_range[0],
+            );
+        });
     }
 
     /** Start the Grid clock. */

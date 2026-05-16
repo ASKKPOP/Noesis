@@ -2,6 +2,9 @@
 // Only this file may call audit.append('norm.crystallized', ...) — enforced by
 // grid/test/norms/norm-producer-boundary.test.ts grep gate.
 
+/** Event type constant for norm.crystallized. Import this to avoid string duplication. */
+export const NORM_CRYSTALLIZED_EVENT = 'norm.crystallized' as const;
+
 import type { AuditChain } from '../audit/chain.js';
 import type { AuditEntry } from '../audit/types.js';
 import { payloadPrivacyCheck } from '../audit/broadcast-allowlist.js';

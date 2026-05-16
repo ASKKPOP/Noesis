@@ -68,10 +68,11 @@ export class NormStorage {
         convergenceType: string,
         eventHash: string,
         gridName: string,
+        firstSeenTick: number,
     ): Promise<void> {
         const sql = `INSERT INTO norm_registry
-            (norm_id, fingerprint, crystallized_tick, participant_count, convergence_type, event_hash, grid_name)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`;
+            (norm_id, fingerprint, crystallized_tick, participant_count, convergence_type, event_hash, grid_name, first_seen_tick)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
         try {
             await this.pool.query(sql, [
                 normId,
@@ -81,6 +82,7 @@ export class NormStorage {
                 convergenceType,
                 eventHash,
                 gridName,
+                firstSeenTick,
             ]);
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);

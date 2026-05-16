@@ -114,6 +114,21 @@ export interface GridServices {
         store: import('../governance/store.js').GovernanceStore;
         engine: import('../governance/engine.js').GovernanceEngine;
     };
+    /**
+     * Phase 19 NORM-01: NormStorage accessor for the GET /api/v1/grid/norms endpoint.
+     * Optional so legacy tests without Phase 19 wiring still compile.
+     * When absent, the route is not registered (→ 404).
+     */
+    norms?: {
+        loadNorms(gridName: string): Promise<Array<{
+            norm_id: string;
+            fingerprint: string;
+            crystallized_tick: number;
+            participant_count: number;
+            convergence_type: 'emergent' | 'coincidental';
+            first_seen_tick: number;
+        }>>;
+    };
 }
 
 /**
@@ -337,6 +352,25 @@ export function buildServerWithHub(
     // appendOperatorEvent — enforces tier-required + payload-privacy at the
     // single producer boundary.
     registerOperatorRoutes(app, services);
+
+    // --- Phase 19 NORM-01: Crystallized norms endpoint ---
+    // Registered only when norms service is provided (optional for legacy tests).
+    if (services.norms) {
+        app.get('/api/v1/grid/norms', async (_req, reply) => {
+            const rows = await services.norms!.loadNorms(services.gridName);
+            reply.code(200);
+            return {
+                norms: rows.map((r) => ({
+                    norm_id: r.norm_id,
+                    fingerprint: r.fingerprint,
+                    crystallized_tick: r.crystallized_tick,
+                    participant_count: r.participant_count,
+                    convergence_type: r.convergence_type,
+                    evidence_tick_range: [r.first_seen_tick, r.crystallized_tick],
+                })),
+            };
+        });
+    }
 
     // --- Phase 12 Wave 3: Governance proposal/ballot routes ---
     // Registered only when governance deps are provided (optional for legacy tests).

@@ -161,6 +161,7 @@ export const MIGRATIONS: Migration[] = [
                 convergence_type  ENUM('emergent','coincidental') NOT NULL,
                 event_hash        VARCHAR(64)  NOT NULL,
                 grid_name         VARCHAR(255) NOT NULL,
+                first_seen_tick   INT          NOT NULL DEFAULT 0,
                 PRIMARY KEY (norm_id),
                 INDEX idx_fingerprint (grid_name, fingerprint),
                 INDEX idx_crystallized (grid_name, crystallized_tick)

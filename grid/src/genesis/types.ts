@@ -6,6 +6,7 @@ import type { Region, RegionConnection } from '../space/types.js';
 import type { Law } from '../logos/types.js';
 import type { EconomyConfig } from '../economy/types.js';
 import type { RelationshipConfig } from '../relationships/index.js';
+import type { NormConfig } from '../norms/types.js';
 
 export interface GenesisConfig {
     gridName: string;
@@ -32,6 +33,12 @@ export interface GenesisConfig {
      * Per-Grid overridable for researcher rigs.
      */
     relationship?: RelationshipConfig;
+    /**
+     * Phase 19 NORM-01: optional norm crystallization tuning.
+     * Defaults applied by GenesisLauncher when omitted (DEFAULT_NORM_CONFIG).
+     * Per-Grid overridable for researcher rigs.
+     */
+    norm?: NormConfig;
 }
 
 export interface SeedNous {
