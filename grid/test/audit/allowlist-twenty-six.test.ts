@@ -16,7 +16,7 @@
 import { describe, expect, it } from 'vitest';
 import { ALLOWLIST, isAllowlisted, GOVERNANCE_FORBIDDEN_KEYS } from '../../src/audit/broadcast-allowlist.js';
 
-/** Frozen expected tuple — Phase 12 positions 23..26 + Phase 13-17 extensions. */
+/** Frozen expected tuple — Phase 12 positions 23..26 + Phase 13-19 extensions. */
 const EXPECTED_ORDER = [
     'nous.spawned',
     'nous.moved',
@@ -57,11 +57,13 @@ const EXPECTED_ORDER = [
     'skill.taught',              // position 37 — Phase 18 SKILL-03 D-18-09
     'skill.inferred',            // position 38 — Phase 18 SKILL-03 D-18-09
     'skill.rejected',            // position 39 — Phase 18 SKILL-03 D-18-09
+    'norm.candidate',            // position 40 — Phase 19 NORM-01 D-19-11
+    'norm.crystallized',         // position 41 — Phase 19 NORM-01 D-19-11
 ] as const;
 
 describe('broadcast allowlist — Phase 12 invariant (VOTE-01..04 D-12-01)', () => {
-    it('has exactly 39 entries (Phase 18 extended from 36 — SKILL-03 +3 skill.* events)', () => {
-        expect(ALLOWLIST.size).toBe(39);
+    it('has exactly 41 entries (Phase 19 extended from 39 — NORM-01 +2 norm.* events)', () => {
+        expect(ALLOWLIST.size).toBe(41);
     });
 
     it('contains proposal.opened at position 23 (index 22)', () => {
