@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.3
 milestone_name: Active)
-status: verifying
-stopped_at: Phase 16 context gathered
-last_updated: "2026-05-15T23:53:18.460Z"
+status: ready_to_execute
+stopped_at: Phase 16 planned — ready for execution
+last_updated: "2026-05-15T00:00:00.000Z"
 last_activity: 2026-05-15
 progress:
   total_phases: 18
   completed_phases: 8
-  total_plans: 49
+  total_plans: 54
   completed_plans: 49
-  percent: 100
+  percent: 91
 ---
 
 # Project State
@@ -26,12 +26,12 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 ## Current Position
 
-Phase: 14 (researcher-rigs) — COMPLETE
-Plan: 5 of 5
-Status: Phase complete — ready for verification
+Phase: 16 (hypnos-consolidating-memory) — PLANNED
+Plan: 0 of 5
+Status: Ready to execute — 5 plans in 5 waves
 Last activity: 2026-05-15
 
-Progress: [██████████] 100% (7/7 v2.2 phases complete — Phase 9 + 10a + 10b + 11 + 12 + 13 + 14 shipped)
+Progress: [████████░░] 91% (8/18 phases complete, Phase 16 planned)
 
 ## Accumulated Context
 
