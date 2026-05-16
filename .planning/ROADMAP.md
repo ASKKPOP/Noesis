@@ -588,7 +588,7 @@ Dependency rationale:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 18. Skill Diffusion | 7/7 | Complete   | 2026-05-16 |
+| 18. Skill Diffusion | 7/7 | Complete    | 2026-05-16 |
 | 19. Norm Crystallization | 0/TBD | Not started | - |
 | 20. Lore Commons | 0/TBD | Not started | - |
 | 21. Culture Dashboard | 0/TBD | Not started | - |
