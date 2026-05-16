@@ -43,6 +43,7 @@ class QuarantineResult:
     parent_hash: str
     payload_json: str
     promoted: bool  # True = promoted to active store; False = evicted
+    source: str = "peer"  # 'observed' for OL-path, 'peer' for whisper-path
 
 
 class QuarantineStore:
@@ -76,6 +77,8 @@ class QuarantineStore:
         source_did: str,
         tick: int,
         parent_hash: str,
+        source: str = "peer",           # 'observed' for OL-path, 'peer' for whisper-path
+        source_event_hash: str = "",    # for OL-path SKILL_INFERRED metadata
     ) -> None:
         """Insert skill into quarantine; promote_at_tick = tick + QUARANTINE_TICKS.
 
@@ -91,6 +94,8 @@ class QuarantineStore:
             "tags": getattr(skill, "tags", []),
             "source_did": source_did,
             "parent_hash": parent_hash,
+            "source": source,                       # persists provenance through quarantine
+            "source_event_hash": source_event_hash, # empty string for peer-path
         }
         try:
             self._conn.execute(
@@ -138,6 +143,7 @@ class QuarantineStore:
             except (json.JSONDecodeError, ValueError):
                 payload = {}
             parent_hash: str = payload.get("parent_hash", skill_hash)
+            skill_source: str = payload.get("source", "peer")
 
             if weight >= TRUST_THRESHOLD_SKILL:
                 promoted = self._promote(skill_hash, payload, current_tick, parent_hash)
@@ -147,6 +153,7 @@ class QuarantineStore:
                     parent_hash=parent_hash,
                     payload_json=payload_json,
                     promoted=promoted,
+                    source=skill_source,
                 ))
             else:
                 # Evict — trust too low
@@ -164,6 +171,7 @@ class QuarantineStore:
                     parent_hash=parent_hash,
                     payload_json=payload_json,
                     promoted=False,
+                    source=skill_source,
                 ))
         return results
 
