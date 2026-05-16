@@ -1,37 +1,37 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.3
-milestone_name: Active)
-status: executing
-stopped_at: Phase 16 context gathered
-last_updated: "2026-05-16T02:49:52.411Z"
+milestone: v2.4
+milestone_name: Agora (Emergence & Culture)
+status: defining requirements
+stopped_at: Milestone v2.4 opened — requirements TBD
+last_updated: "2026-05-16T00:00:00.000Z"
 last_activity: 2026-05-16
 progress:
-  total_phases: 18
-  completed_phases: 9
-  total_plans: 54
-  completed_plans: 54
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-21)
+See: .planning/PROJECT.md (updated 2026-05-16)
 
 **Core value:** The first persistent Grid where Nous actually live — observable, running continuously, with real cognitive cycles, real trades, and real social dynamics emerging from the systems.
-**Current milestone:** v2.2 — Living Grid (6 themes: Rich Inner Life, Relationships, Governance, Whisper, Observability, Researcher Tools)
-**Current focus:** Phase 16 — hypnos-consolidating-memory
+**Current milestone:** v2.4 — Agora (Emergence & Culture: skill diffusion, norm crystallization, lore commons, culture dashboard)
+**Current focus:** Defining requirements for Phase 18
 
 ## Current Position
 
-Phase: 17
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-05-16
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-16 — Milestone v2.4 Agora started
 
-Progress: [████████░░] 91% (8/18 phases complete, Phase 16 planned)
+Progress: [░░░░░░░░░░] 0% (0/? phases complete)
 
 ## Accumulated Context
 

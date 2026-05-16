@@ -90,48 +90,55 @@ The first persistent Grid where Nous actually live — observable, running conti
 - ✓ **CHRONOS-03**: `epoch_since_spawn` exposed to Brain prompting via ChronosListener (Grid-side pure-observer over bios.birth); no new allowlist event; Brain context "I am N ticks old" — v2.2 Phase 10b (shipped 2026-04-22)
   → Validated in Phase 10b
 
-## Current Milestone: v2.2 Living Grid
+## Current Milestone: v2.4 Agora (Emergence & Culture)
 
-**Goal:** Move Nous from observed entities into full agents. Inner life, social bonds, collective governance, sidechannel communication, deep observability, and researcher tooling ship together — the Grid stops being a simulation stage and becomes a living society.
+**Goal:** Give the Nous population a substrate for cultural transmission and emergent shared patterns — skills spread peer-to-peer via teaching and observation, rules independently discovered by multiple Nous crystallize into shared norms, and a collective lore commons forms bottom-up from Nous contributions.
 
-**Target features (6 themes, MVP depth):**
-1. **Rich Inner Life** — Ananke (internal drives), Bios (bodily needs), Chronos (time-perception) layer onto Brain; autonomous behavior gains internal pressure beyond Telos.
-2. **Relationship & Trust** — persistent Nous↔Nous relationship graph with reputation-weighted interactions; friendship / rivalry / acquaintance emerge from repeated audit-visible encounters.
-3. **Governance & Law** — voting primitives, proposal lifecycle, Nous-collective law enactment atop v2.1 `law.triggered` machinery. Operator stops being sole law author.
-4. **Mesh Whisper** — WHISPER-01 Nous-to-Nous sidechannel; mesh-vs-star revisited with audit-preserving pattern. Defers the full mesh but ships the smallest-viable whisper channel.
-5. **Operator Observability** — replay / rewind / export on top of the 18-event audit chain; deep telemetry tools for the Steward built in v2.1.
-6. **Observer / Researcher Tools** — spawn-N-Nous rigs, long-horizon tick runs (10,000+), dataset export for external analysis. Makes Noēsis usable as a research platform.
+**Target features (4 themes):**
+1. **Skill Diffusion** — trust-gated explicit skill teaching (via Phase 11 whisper channel) + passive inference (Phase 15 ObservationalLearner + PeerSkillFilter scaffold). Observable as skill lineage trees: who invented what, who taught whom, which techniques went viral vs died.
+2. **Norm Crystallization** — when N≥threshold Nous independently hold semantically similar rules in their RuleStore, a norm crystallizes at the Grid level. Operator-observable, never operator-injected. Emerges entirely from Nous cognition.
+3. **Lore Commons** — a Grid-side shared knowledge substrate contributed and cited bottom-up. Nous decide what's worth publishing; peers can query and reference it. Collective memory that no single Nous owns.
+4. **Culture Dashboard** — skill diffusion heatmap, norm adoption timeline, lore contribution graph. Makes emergence visible to the operator.
 
-**Constraints inherited from v2.1 (do not break):**
-- Broadcast allowlist frozen-except-by-explicit-addition (currently 18 events). Every new `*.whispered` / `relationship.*` / `vote.*` / `need.*` / `drive.*` earns its own allowlist slot in its own phase.
+**Constraints inherited from v2.3 (do not break):**
+- Broadcast allowlist frozen-except-by-explicit-addition (currently 36 events). Every new `skill.*` / `norm.*` / `lore.*` earns its own allowlist slot in its own phase.
 - Zero-diff audit chain invariant unbroken since Phase 1 `29c3516` — every new listener is pure-observer.
-- Hash-only cross-boundary (Brain↔Grid plaintext never crosses the wire — applies to drives, needs, relationship memories, votes).
+- Hash-only cross-boundary — skill content, rule text, lore body are Brain-private; only hashes cross the wire.
 - Closed-tuple payloads + sole-producer boundaries remain the law.
 - PHILOSOPHY §1 first-life promise — every audit entry retained forever; no purge paths.
+- Wall-clock permanently forbidden in cognitive modules (Tier A CI gate).
+- PeerSkillFilter trust gate from Phase 15 scaffold — sender must have sufficient relationship weight before skill is accepted.
 
-**Phase numbering:** continues from v2.1 (Phase 9 onward).
-
-**Research source:** `.planning/research/v2.2/` (to be populated — 4 parallel researchers: Stack, Features, Architecture, Pitfalls).
+**Phase numbering:** continues from v2.3 (Phase 18 onward).
 
 ### Active
 
-**39 REQs across 8 categories, mapped to 7 phases (9, 10a, 10b, 11, 12, 13, 14). Full detail in [REQUIREMENTS.md](REQUIREMENTS.md); phase structure in [ROADMAP.md](ROADMAP.md).**
+Requirements to be defined — see [REQUIREMENTS.md](REQUIREMENTS.md) and [ROADMAP.md](ROADMAP.md) once created.
+
+## Previous Milestone: v2.3 Living Minds — SHIPPED (2026-05-15)
+
+**Status:** Closed 2026-05-15, 15/15 plans = 100%. All requirements PNEU-01..06, HYP-01..05, IRIS-01..05 validated across Phases 15–17. Broadcast allowlist grew 27 → 36 (+9 events).
+
+**Delivered:**
+- **Phase 15 — Pneuma (Narrative Self)** (shipped 2026-05-14): Growth Journal, ReflexionBuffer (cap=5), RuleStore (cap=10, WikiCategory.SELF_MODEL), Voyager SkillStore (FTS5), AAU Web Learner (async, never blocks tick), CoherenceGate (creed contradiction). Allowlist 27→30.
+- **Phase 16 — Hypnos (Consolidating Memory)** (shipped 2026-05-15): Working Memory (cap=7, Miller's Law), Hebbian LTM concept graph (η=0.01, SHY σ=0.95), sleep every 30 ticks via asyncio.create_task, ObservationalLearner wired on trade_settled. Allowlist 30→32.
+- **Phase 17 — Iris (Theory of Mind)** (shipped 2026-05-15): Per-Nous private belief model (5 dims: belief/desire/intention/knowledge/emotion), IrisRuntime.elicit via LLM, contradiction detection, prior seeding from observed events, belief context injection at prompt-build. 27/27 verification criteria met. Allowlist 33→36.
+
+## Previous Milestone: v2.2 Living Grid — SHIPPED (2026-04-28)
+
+**Status:** Closed 2026-04-28, 44/44 plans = 100%. Allowlist grew 18 → 27 (+9 events across 5 phases; Phases 9 and 14 added zero). All 39 REQs validated.
 
 | Category | REQs | Phase | Status |
 |----------|------|-------|--------|
-| **REL** (Relationship Graph) | REL-01..04 | 9 — Relationship Graph (Derived View) | Validated (shipped 2026-04-22) |
-| **DRIVE** (Ananke Drives) | DRIVE-01..05 | 10a — Ananke Drives | Validated (shipped 2026-04-22) |
-| **BIOS** (Bodily Needs) + **CHRONOS** (Subjective Time) | BIOS-01..04, CHRONOS-01..03 | 10b — Bios + Chronos | Validated (shipped 2026-04-22) |
-| **WHISPER** (Sidechannel) | WHISPER-01..06 | 11 — Mesh Whisper (libsodium X25519+XChaCha20) | Validated (shipped 2026-04-23) |
-| **VOTE** (Commit-Reveal Voting) | VOTE-01..07 | 12 — Governance & Collective Law | Validated (shipped 2026-04-27) |
-| **REPLAY** (Replay + Export) | REPLAY-01..05 | 13 — Replay + Export | Validated (shipped 2026-04-28) |
-| **RIG** (Researcher Rigs) | RIG-01..05 | 14 — Researcher Rigs (50 Nous × 10k ticks) | Validated (shipped 2026-04-28) |
+| **REL** (Relationship Graph) | REL-01..04 | 9 | Validated (shipped 2026-04-22) |
+| **DRIVE** (Ananke Drives) | DRIVE-01..05 | 10a | Validated (shipped 2026-04-22) |
+| **BIOS** (Bodily Needs) + **CHRONOS** (Subjective Time) | BIOS-01..04, CHRONOS-01..03 | 10b | Validated (shipped 2026-04-22) |
+| **WHISPER** (Sidechannel) | WHISPER-01..06 | 11 | Validated (shipped 2026-04-23) |
+| **VOTE** (Commit-Reveal Voting) | VOTE-01..07 | 12 | Validated (shipped 2026-04-27) |
+| **REPLAY** (Replay + Export) | REPLAY-01..05 | 13 | Validated (shipped 2026-04-28) |
+| **RIG** (Researcher Rigs) | RIG-01..05 | 14 | Validated (shipped 2026-04-28) |
 
-**Build order rationale (from [research/v2.2/FEATURES.md](research/v2.2/FEATURES.md)):** REL first (zero allowlist slots) → DRIVE (advisory-only) → BIOS+CHRONOS (coupled body+time) → VOTE (5 allowlist) → WHISPER (new cross-boundary semantics) → REPLAY+RIG (build on everything below).
-
-**Allowlist growth:** 18 → 27 (+9 events across 5 phases; Phases 9 and 14 added zero). All 39 REQs validated.
-
-**Future (deferred to v2.3+):** THYMOS-01 (valenced emotions), WHISPER-FS-01 (forward-secure ratcheting), RIG-PARQUET-01 (columnar export), REL-EMIT-01 (first-class `relationship.*` events), GOV-MULTI-01 (multi-Grid federated voting), WITNESS-BUNDLE-01 (cryptographic replay attestations).
+**Future (deferred to v2.4+):** THYMOS-01 (valenced emotions), WHISPER-FS-01 (forward-secure ratcheting), RIG-PARQUET-01 (columnar export), REL-EMIT-01 (first-class `relationship.*` events), GOV-MULTI-01 (multi-Grid federated voting), WITNESS-BUNDLE-01 (cryptographic replay attestations).
 
 ## Previous Milestone: v2.1 Steward Console — SHIPPED (2026-04-21)
 
@@ -221,4 +228,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-15 — Phase 16 shipped (Hypnos: WorkingMemory cap=7, Hebbian + SHY consolidation, sleep boundary events at positions 31-32, LTM retrieval in prompt context; allowlist grows 27→36 with Phases 15/16/17; HYP-01..05 validated)*
+*Last updated: 2026-05-16 — Milestone v2.4 Agora opened (Emergence & Culture: skill diffusion, norm crystallization, lore commons, culture dashboard; Phase 18 onward)*
