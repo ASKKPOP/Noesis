@@ -14,8 +14,8 @@ import { describe, expect, it } from 'vitest';
 import { ALLOWLIST, isAllowlisted } from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast allowlist — Phase 11 invariant (WHISPER-04 D-11-01)', () => {
-    it('has exactly 36 entries (Phase 16/17 extended from 27 — SLEEP-01 + IRIS-01..04)', () => {
-        expect(ALLOWLIST.size).toBe(36);
+    it('has exactly 39 entries (Phase 18 extended from 36 — SKILL-03 +3 skill.* events)', () => {
+        expect(ALLOWLIST.size).toBe(39);
     });
 
     it('contains nous.whispered at position 22 (index 21) — unchanged by Phase 12', () => {

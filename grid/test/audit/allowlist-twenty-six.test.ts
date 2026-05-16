@@ -54,11 +54,14 @@ const EXPECTED_ORDER = [
     'iris.context_invoked',      // position 34 — Phase 17 D-17-02
     'iris.contradiction_detected', // position 35 — Phase 17 D-17-02
     'iris.prior_seeded',         // position 36 — Phase 17 D-17-02
+    'skill.taught',              // position 37 — Phase 18 SKILL-03 D-18-09
+    'skill.inferred',            // position 38 — Phase 18 SKILL-03 D-18-09
+    'skill.rejected',            // position 39 — Phase 18 SKILL-03 D-18-09
 ] as const;
 
 describe('broadcast allowlist — Phase 12 invariant (VOTE-01..04 D-12-01)', () => {
-    it('has exactly 36 entries (Phase 17 extended from 27 — SLEEP-01 + IRIS-01..04)', () => {
-        expect(ALLOWLIST.size).toBe(36);
+    it('has exactly 39 entries (Phase 18 extended from 36 — SKILL-03 +3 skill.* events)', () => {
+        expect(ALLOWLIST.size).toBe(39);
     });
 
     it('contains proposal.opened at position 23 (index 22)', () => {
@@ -81,7 +84,7 @@ describe('broadcast allowlist — Phase 12 invariant (VOTE-01..04 D-12-01)', () 
         expect([...ALLOWLIST][25]).toBe('proposal.tallied');
     });
 
-    it('preserves all 36 members in exact positional order', () => {
+    it('preserves all 39 members in exact positional order', () => {
         expect([...ALLOWLIST]).toEqual([...EXPECTED_ORDER]);
     });
 

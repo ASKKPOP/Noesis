@@ -14,8 +14,8 @@ import { describe, it, expect } from 'vitest';
 import { ALLOWLIST_MEMBERS, ALLOWLIST } from '../../src/audit/broadcast-allowlist.js';
 
 describe('operator.exported allowlist membership', () => {
-    it('allowlist size === 36 (Phase 17 final — 27 + Phase 15/16/17 additions)', () => {
-        expect((ALLOWLIST_MEMBERS as readonly string[]).length).toBe(36);
+    it('allowlist size === 39 (Phase 18 final — 36 + Phase 18 SKILL-03 additions)', () => {
+        expect((ALLOWLIST_MEMBERS as readonly string[]).length).toBe(39);
     });
     // RED until Wave 3 (Plan 13-04) bumps allowlist 26→27
 
