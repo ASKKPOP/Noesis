@@ -14,7 +14,9 @@ Rate-limited: max 1 RULE_STORE action per tick (enforced by BrainHandler).
 
 from __future__ import annotations
 
+import hashlib
 import logging
+import re
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
@@ -25,6 +27,21 @@ if TYPE_CHECKING:
     pass
 
 logger = logging.getLogger(__name__)
+
+
+def compute_norm_fingerprint(rule_text: str) -> str:
+    """6-char hex n-gram fingerprint for norm clustering (D-19-03).
+
+    Algorithm: sorted unique word-trigrams from lowercased alphabetic tokens,
+    SHA-256 of their joined string, truncated to 6 hex chars.
+    Fallback for rules < 3 words: SHA-256 of lowercased words joined by space.
+    Deterministic: no wall-clock, no random, no LLM.
+    """
+    words = re.findall(r'[a-z]+', rule_text.lower())
+    trigrams = sorted({' '.join(words[i:i + 3]) for i in range(len(words) - 2)})
+    if not trigrams:
+        return hashlib.sha256(' '.join(words).encode()).hexdigest()[:6]
+    return hashlib.sha256(' '.join(trigrams).encode()).hexdigest()[:6]
 
 RULE_CAP = 10           # SCOPE paper maximum strategic guidelines
 MIN_CONFIDENCE = 0.7    # Threshold for prompt injection
