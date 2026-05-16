@@ -95,8 +95,23 @@ class BrainHandler:
         if hypnos_db_dir is not None:
             _ltm_store = LtmStore(db_path=Path(hypnos_db_dir), nous_did=self.did)
             self._hypnos_runtime: HypnosRuntime | None = HypnosRuntime(_ltm_store)
+            # Phase 16 D-16-09: construct ObservationalLearner alongside HypnosRuntime.
+            # Reuses the MemoryStore connection for SkillStore (shared DB, one file per Nous).
+            from noesis_brain.learning.observational import ObservationalLearner
+            from noesis_brain.skills.store import SkillStore as _SkillStore
+            _skill_store = _SkillStore(self.memory._conn) if self.memory is not None and hasattr(self.memory, "_conn") else None
+            if _skill_store is not None:
+                self._obs_learner: ObservationalLearner | None = ObservationalLearner(
+                    store=self.memory,
+                    skill_store=_skill_store,
+                    llm=self.llm,
+                    my_name=self.psyche.name,
+                )
+            else:
+                self._obs_learner = None
         else:
             self._hypnos_runtime = None
+            self._obs_learner = None
         self._last_sleep_tick: int = 0
         # Pending SLEEP_COMPLETED hash from async task (drained on next tick). D-16-Q1.
         self._pending_sleep_completed: str | None = None
@@ -150,6 +165,18 @@ class BrainHandler:
             if not ltm_memories:
                 ltm_memories = None
 
+        # Phase 16 D-16-09: fetch top-3 peer utterances for peer_voices context.
+        peer_voices: list[tuple[str, str]] | None = None
+        if self._hypnos_runtime is not None and self.memory is not None:
+            try:
+                from noesis_brain.memory.types import WikiCategory as _WikiCategory
+                nous_pages = self.memory.wiki_pages_by_category(_WikiCategory.NOUS)
+                filtered = [p for p in nous_pages if getattr(p, "confidence", 1.0) >= 0.5]
+                if filtered:
+                    peer_voices = [(p.title or "peer", p.content) for p in filtered[:3]]
+            except Exception:
+                peer_voices = None  # graceful no-op if method unavailable
+
         system_prompt = build_system_prompt(
             self.psyche, self.thymos.mood, self.telos,
             grid_name=self.grid_name, location=self.location,
@@ -158,6 +185,7 @@ class BrainHandler:
             subjective_multiplier=subjective_multiplier,
             tom_context=msg_tom_contexts if msg_tom_contexts else None,   # Phase 17 D-17-16
             **({"ltm_memories": ltm_memories} if ltm_memories else {}),
+            **({"peer_voices": peer_voices} if peer_voices else {}),
         )
 
         # 3. Build user prompt with message context
@@ -306,6 +334,23 @@ class BrainHandler:
                     _asyncio.create_task(_run())
 
                 _make_sleep_task()
+
+        # Phase 16 D-16-09: dispatch ObservationalLearner on trade_settled events.
+        if self._obs_learner is not None:
+            trade_events = params.get("trade_settled_events", [])
+            if isinstance(trade_events, list):
+                for evt in trade_events:
+                    if not isinstance(evt, dict):
+                        continue
+                    buyer = evt.get("buyer_did", "")
+                    seller = evt.get("seller_did", "")
+                    # Skip own trades (self is never an observer of own pair).
+                    if buyer == self.did or seller == self.did:
+                        continue
+                    import asyncio as _asyncio
+                    _asyncio.create_task(
+                        self._obs_learner.observe_trade(buyer, seller, evt.get("item", ""), tick)
+                    )
 
         # Phase 17 Iris — seed relationship-graph priors (optional-dep injection).
         # Processes relationship_context edges from Grid if Iris is enabled.
