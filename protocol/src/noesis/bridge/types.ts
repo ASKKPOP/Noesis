@@ -40,6 +40,9 @@ export interface BrainAction {
         | 'propose'
         | 'vote_commit'
         | 'vote_reveal'
+        // Phase 16 — D-16-07: Hypnos sleep boundary events (forwarded to Grid).
+        | 'sleep_entered'
+        | 'sleep_completed'
         // Phase 17 — D-17-10: Iris Theory of Mind lifecycle events (forwarded to Grid).
         | 'iris_belief_revised'
         | 'iris_context_invoked'

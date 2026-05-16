@@ -31,6 +31,13 @@ class ActionType(str, Enum):
     # Peer skill sharing (trust-gated). Metadata: {name, description, instructions, triggers, source_did}
     # The receiving BrainHandler strips the __skill_share prefix and routes to PeerSkillFilter.
     SKILL_SHARE = "skill_share"  # Peer-pushed skill offer. Metadata: {name, description, instructions, triggers, source_did}
+    # Phase 16 — D-16-07: Hypnos sleep boundary events.
+    # String values MUST match the Grid NousRunner switch cases exactly.
+    # Both forwarded to Grid (unlike SKILL_LEARN/RULE_STORE/SKILL_SHARE which are Brain-internal).
+    # 3-keys-not-5: Brain metadata carries 1 key {ltm_snapshot_hash};
+    # Grid injects nous_did and tick at emit time.
+    SLEEP_ENTERED = "sleep_entered"    # metadata: {ltm_snapshot_hash} (1 key)
+    SLEEP_COMPLETED = "sleep_completed"  # metadata: {ltm_snapshot_hash} (1 key)
     # Phase 17 — D-17-06: Iris Theory of Mind lifecycle events.
     # String values MUST match the Grid NousRunner switch cases exactly.
     # All 4 are forwarded to the Grid (unlike SKILL_LEARN/RULE_STORE/SKILL_SHARE which are Brain-internal).
