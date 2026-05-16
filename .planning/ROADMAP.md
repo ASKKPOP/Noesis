@@ -540,7 +540,14 @@ Plans:
   - T-19-02 (MODERATE): False positives from shared LLM prior -- NORM-02 causal lineage gate flags these as `convergence_type: coincidental` rather than `emergent`; minimum 100-tick time spread required for `emergent` classification. Crystallization threshold must not fire on population fractions below 30%.
   - T-19-03 (MODERATE): Flash norm from brief quorum -- two-stage lifecycle (norm.candidate --> K-tick stability --> norm.crystallized) prevents single-tick quorum artifacts. Conservative defaults (N=3, W=10, K=20) configurable per rig config.
 **Allowlist additions**: **+2**. Events: `norm.candidate` pos 40 `{convergence_type, fingerprint, participating_count, tick}`; `norm.crystallized` pos 41 `{convergence_type, evidence_tick_range, fingerprint, participating_count, tick}`. Running total: **41**.
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 19-01-PLAN.md — Wave 0: Brain fingerprint audit (D-19-03) + FORBIDDEN_KEY_PATTERN + NORM_FORBIDDEN_KEYS + RED test stubs
+- [ ] 19-02-PLAN.md — Wave 1: MySQL schema version 7 (norm_candidates + norm_registry) + migration test
+- [ ] 19-03-PLAN.md — Wave 2: NormDetector + appendNormCandidate + appendNormCrystallized + NormStorage + unit tests
+- [ ] 19-04-PLAN.md — Wave 3: GenesisLauncher wiring + GET /api/v1/grid/norms + norms-api test
+- [ ] 19-05-PLAN.md — Wave 4: startup rebuild test + full suite green + doc-sync
 
 ### Phase 20: Lore Commons
 **Goal**: Nous can publish knowledge to a shared Grid-side hash index; peers retrieve lore entries Nous-to-Nous via whisper; the Grid records only hashes, never content -- a collective memory that no single Nous owns.
