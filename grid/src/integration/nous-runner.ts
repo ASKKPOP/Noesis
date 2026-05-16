@@ -33,6 +33,11 @@ import {
     appendIrisContradictionDetected,
     appendIrisPriorSeeded,
 } from '../iris/index.js';
+import {
+    appendSkillTaught,
+    appendSkillInferred,
+    appendSkillRejected,
+} from '../skills/index.js';
 
 export interface NousRunnerConfig {
     nousDid: string;
@@ -709,6 +714,70 @@ export class NousRunner {
                         console.warn(JSON.stringify({
                             event: 'iris.dispatch.rejected',
                             action_type: 'iris_prior_seeded',
+                            did: this.nousDid,
+                            reason: (err as Error).message,
+                        }));
+                    }
+                    break;
+                }
+
+                case 'skill_taught': {
+                    // Phase 18 D-18-09: Grid injects learner_did+tick (3-keys-not-5).
+                    // Brain sends skill_hash, teacher_did, parent_hash (3 keys).
+                    // Sole producer: appendSkillTaught — rejections logged, not re-thrown.
+                    try {
+                        appendSkillTaught(this.audit, this.nousDid, {
+                            learner_did: this.nousDid,
+                            tick,
+                            skill_hash: action.metadata['skill_hash'] as string,
+                            teacher_did: action.metadata['teacher_did'] as string,
+                            parent_hash: action.metadata['parent_hash'] as string,
+                        });
+                    } catch (err) {
+                        console.warn(JSON.stringify({
+                            event: 'skill.dispatch.rejected',
+                            action_type: 'skill_taught',
+                            did: this.nousDid,
+                            reason: (err as Error).message,
+                        }));
+                    }
+                    break;
+                }
+
+                case 'skill_inferred': {
+                    // Phase 18 D-18-09: Grid injects learner_did+tick.
+                    // Brain sends skill_hash, source_event_hash (2 keys).
+                    try {
+                        appendSkillInferred(this.audit, this.nousDid, {
+                            learner_did: this.nousDid,
+                            tick,
+                            skill_hash: action.metadata['skill_hash'] as string,
+                            source_event_hash: action.metadata['source_event_hash'] as string,
+                        });
+                    } catch (err) {
+                        console.warn(JSON.stringify({
+                            event: 'skill.dispatch.rejected',
+                            action_type: 'skill_inferred',
+                            did: this.nousDid,
+                            reason: (err as Error).message,
+                        }));
+                    }
+                    break;
+                }
+
+                case 'skill_rejected': {
+                    // Phase 18 D-18-09: Grid injects learner_did+tick.
+                    // Brain sends rejection_reason (1 key). reason ∈ {low_trust, structural_invalid, quota_exceeded}.
+                    try {
+                        appendSkillRejected(this.audit, this.nousDid, {
+                            learner_did: this.nousDid,
+                            tick,
+                            rejection_reason: action.metadata['rejection_reason'] as string,
+                        });
+                    } catch (err) {
+                        console.warn(JSON.stringify({
+                            event: 'skill.dispatch.rejected',
+                            action_type: 'skill_rejected',
                             did: this.nousDid,
                             reason: (err as Error).message,
                         }));
