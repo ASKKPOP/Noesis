@@ -137,10 +137,12 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'nous.reflection_authored',  // (28) {nous_did, tick, reflection_hash}
     'nous.self_model_revised',   // (29) {nous_did, tick, revision_hash}
     'nous.creed_violation',      // (30) {nous_did, tick, creed_hash, violation_hash}
-    // Phase 16 (SLEEP-01) — stub allowlist entries. Sole-producer emitters in grid/src/sleep/.
-    // Added as prerequisites per D-17-01 (Phase 15/16 were not separately executed).
-    'nous.sleep.entered',        // (31) {nous_did, tick}
-    'nous.sleep.completed',      // (32) {nous_did, tick, sleep_duration_ticks}
+    // Phase 16 (SLEEP-01) — Nous sleep cycle boundaries. Closed 3-key payload:
+    // {ltm_snapshot_hash, nous_did, tick} (alphabetical). Sole producers in grid/src/sleep/.
+    // appendNousSleepEntered (grid/src/sleep/appendNousSleepEntered.ts)
+    // appendNousSleepCompleted (grid/src/sleep/appendNousSleepCompleted.ts)
+    'nous.sleep.entered',        // (31) {ltm_snapshot_hash, nous_did, tick}
+    'nous.sleep.completed',      // (32) {ltm_snapshot_hash, nous_did, tick}
     // Phase 17 (IRIS-01..04 / D-17-02) — Theory of Mind lifecycle events.
     // All 4 carry hashes/counts only — belief content is Brain-private and NEVER crosses the wire.
     // Sole producers in grid/src/iris/append*.ts (D-17-08).
@@ -258,6 +260,22 @@ export const IRIS_FORBIDDEN_KEYS = Object.freeze([
 ] as const);
 
 /**
+ * Phase 16 (HYP-04 / D-16-05): hypnos-leaf keys that MUST NOT appear in any
+ * broadcast payload. LTM graph content, concept/node/edge text, episode text,
+ * and raw graph data are Brain-private and NEVER cross the wire.
+ * Only the closed 3-key tuple {ltm_snapshot_hash, nous_did, tick} crosses.
+ * Per D-16-05 — exactly 6 keys. Do NOT add extras.
+ */
+export const HYPNOS_FORBIDDEN_KEYS = Object.freeze([
+    'ltm_content',
+    'concept_text',
+    'graph_data',
+    'episode_text',
+    'node_content',
+    'edge_content',
+] as const);
+
+/**
  * Phase 11 (WHISPER-04 / D-11-09): whisper-leaf keys that MUST NOT appear in any
  * whisper payload. Plaintext whisper content (message bodies, utterances, offer
  * text, ousia amounts within whispers, raw decrypted data) NEVER crosses the wire.
@@ -311,7 +329,7 @@ export const WHISPER_FORBIDDEN_KEYS = Object.freeze([
  * weight|reputation|relationship_score|ousia_weight). Keys text|body|content are
  * already present from Phase 11 — de-duped, not re-added.
  */
-export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content|message|utterance|plaintext|decrypted|payload_plain|description|rationale|proposal_text|law_text|body_text|weight|reputation|relationship_score|ousia_weight|belief_content|target_content|emotion_text|dimension_text|belief_prose|iris_content/i;
+export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content|message|utterance|plaintext|decrypted|payload_plain|description|rationale|proposal_text|law_text|body_text|weight|reputation|relationship_score|ousia_weight|belief_content|target_content|emotion_text|dimension_text|belief_prose|iris_content|ltm_content|concept_text|graph_data|episode_text|node_content|edge_content/i;
 
 export interface PrivacyCheckResult {
     ok: boolean;
