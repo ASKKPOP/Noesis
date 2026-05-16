@@ -102,10 +102,11 @@ class TestSourcePassthrough:
             quarantine_store=quarantine_mock,
         )
 
-        # Trigger two observations (MIN_OBSERVATIONS_BEFORE_EXTRACT=2)
+        # Trigger two observations (MIN_OBSERVATIONS_BEFORE_EXTRACT=2).
+        # Second tick must be >= SLEEP_EPOCH_TICKS (30) so the tick gate passes.
         async def _run():
-            await ol.observe_trade("did:noesis:buyer", "did:noesis:seller", "grain", tick=5)
-            await ol.observe_trade("did:noesis:buyer", "did:noesis:seller", "grain", tick=6)
+            await ol.observe_trade("did:noesis:buyer", "did:noesis:seller", "grain", tick=0)
+            await ol.observe_trade("did:noesis:buyer", "did:noesis:seller", "grain", tick=30)
 
         asyncio.run(_run())
 
@@ -115,4 +116,111 @@ class TestSourcePassthrough:
         kwargs = call_kwargs.kwargs if hasattr(call_kwargs, "kwargs") else call_kwargs[1]
         assert kwargs.get("source") == "observed", (
             f"enqueue() was called without source='observed'; kwargs={kwargs}"
+        )
+
+
+class TestTickGate:
+    """Tests for SLEEP_EPOCH_TICKS tick-based rate-limit gate (SKILL-02, Option B)."""
+
+    def _make_ol(self, llm_text="Always greet traders politely before negotiating."):
+        from unittest.mock import AsyncMock, MagicMock
+        from noesis_brain.learning.observational import ObservationalLearner
+
+        store_mock = MagicMock()
+        store_mock.wiki_pages_by_category.return_value = [
+            MagicMock(source="did:noesis:seller", confidence=0.9),
+        ]
+        skill_store_mock = MagicMock()
+        skill_store_mock.get.return_value = None
+
+        quarantine_mock = MagicMock()
+        quarantine_mock.has.return_value = False
+
+        llm_mock = MagicMock()
+        llm_mock.complete = AsyncMock(return_value=llm_text)
+
+        ol = ObservationalLearner(
+            store=store_mock,
+            skill_store=skill_store_mock,
+            llm=llm_mock,
+            quarantine_store=quarantine_mock,
+        )
+        return ol, quarantine_mock
+
+    def test_extraction_allowed_after_30_ticks(self):
+        """Extraction fires when tick gap >= SLEEP_EPOCH_TICKS (30)."""
+        import asyncio
+        ol, quarantine_mock = self._make_ol()
+
+        async def _run():
+            # tick=0: count=1, blocked by count gate
+            await ol.observe_trade("did:noesis:buyer", "did:noesis:seller", "grain", tick=0)
+            # tick=31: count=2, tick gap = 31-0 = 31 >= 30 → extraction fires
+            await ol.observe_trade("did:noesis:buyer", "did:noesis:seller", "grain", tick=31)
+
+        asyncio.run(_run())
+        assert quarantine_mock.enqueue.called, (
+            "enqueue() should have been called when tick gap >= SLEEP_EPOCH_TICKS"
+        )
+
+    def test_extraction_blocked_before_30_ticks(self):
+        """Extraction is silently skipped when tick gap < SLEEP_EPOCH_TICKS (30)."""
+        import asyncio
+        ol, quarantine_mock = self._make_ol()
+
+        async def _run():
+            # Establish first extraction at tick=31 (_last_extraction_tick becomes 31)
+            await ol.observe_trade("did:noesis:buyer", "did:noesis:seller", "grain", tick=0)
+            await ol.observe_trade("did:noesis:buyer", "did:noesis:seller", "grain", tick=31)
+            # Reset count so the count gate passes on the next call
+            key = ("did:noesis:buyer", "did:noesis:seller", "grain")
+            ol._obs_counts[key] = 10
+            # tick=40: tick gap = 40-31 = 9 < 30 → silently blocked by tick gate
+            return await ol.observe_trade(
+                "did:noesis:buyer", "did:noesis:seller", "grain", tick=40
+            )
+
+        result = asyncio.run(_run())
+        assert result is None, (
+            f"Expected None (tick-gate block) but got {result!r}"
+        )
+        assert quarantine_mock.enqueue.call_count == 1, (
+            f"enqueue() was called {quarantine_mock.enqueue.call_count} times; "
+            "tick-gate should have blocked the second extraction attempt"
+        )
+
+    def test_count_gate_blocks_regardless_of_tick_gap(self):
+        """Count gate (MIN_OBSERVATIONS_BEFORE_EXTRACT=2) blocks when count < 2."""
+        import asyncio
+        ol, quarantine_mock = self._make_ol()
+
+        async def _run():
+            # Only ONE observation — count = 1 < 2; tick gap is large but irrelevant
+            return await ol.observe_trade(
+                "did:noesis:buyer", "did:noesis:seller", "grain", tick=1000
+            )
+
+        result = asyncio.run(_run())
+        assert result is None, (
+            "Count gate should block extraction when count < MIN_OBSERVATIONS_BEFORE_EXTRACT"
+        )
+        assert not quarantine_mock.enqueue.called, (
+            "enqueue() must not be called when count gate blocks"
+        )
+
+    def test_last_extraction_tick_updated_after_extraction(self):
+        """_last_extraction_tick is set to current_tick after a successful extraction."""
+        import asyncio
+        ol, quarantine_mock = self._make_ol()
+
+        async def _run():
+            # tick=0: count=1, blocked by count gate
+            await ol.observe_trade("did:noesis:buyer", "did:noesis:seller", "grain", tick=0)
+            # tick=50: count=2, tick gap = 50-0 = 50 >= 30 → extraction fires
+            await ol.observe_trade("did:noesis:buyer", "did:noesis:seller", "grain", tick=50)
+
+        asyncio.run(_run())
+        assert ol._last_extraction_tick == 50, (
+            f"Expected _last_extraction_tick=50 after extraction at tick=50, "
+            f"got {ol._last_extraction_tick}"
         )

@@ -53,6 +53,10 @@ MIN_PEER_CONFIDENCE: float = 0.5
 # Prevents burning LLM calls on single-observation flukes.
 MIN_OBSERVATIONS_BEFORE_EXTRACT: int = 2
 
+# Minimum ticks between LLM extraction calls (rate-limit, not a policy gate).
+# Prevents LLM cost runaway during burst observation windows.
+SLEEP_EPOCH_TICKS: int = 30
+
 # Character budget for the extraction prompt context.
 _OBSERVATION_PROMPT_TEMPLATE = """\
 You are helping {my_name} learn from watching a successful trade between {buyer} and {seller}.
@@ -107,6 +111,10 @@ class ObservationalLearner:
         self._quarantine_store = quarantine_store
         # (buyer_did, seller_did, item_slug) -> observation count
         self._obs_counts: dict[tuple[str, str, str], int] = {}
+        # Phase 18 SKILL-02 tick gate: tracks the tick at which we last successfully
+        # ran LLM extraction. Initialized to 0 so the first extraction is always
+        # allowed (any positive tick >= 30 passes; tick=0 passes at tick>=30).
+        self._last_extraction_tick: int = 0
 
     # ── Public API ────────────────────────────────────────────────────────────
 
@@ -149,6 +157,16 @@ class ObservationalLearner:
             logger.debug(
                 "ObservationalLearner: trade pattern count=%d (need %d) — deferring",
                 count, MIN_OBSERVATIONS_BEFORE_EXTRACT,
+            )
+            return None
+
+        # Gate 2b: tick-based rate-limit — prevents LLM cost runaway on burst
+        # observation windows (SKILL-02, Option B).  Silent skip (no event emitted).
+        if tick - self._last_extraction_tick < SLEEP_EPOCH_TICKS:
+            logger.debug(
+                "ObservationalLearner: tick-gate blocked extraction "
+                "(current=%d, last=%d, epoch=%d)",
+                tick, self._last_extraction_tick, SLEEP_EPOCH_TICKS,
             )
             return None
 
@@ -200,6 +218,8 @@ class ObservationalLearner:
         # because B wrote the instructions (observational, not peer-pushed text).
         buyer_label = buyer_did.split(":")[-1][:12] if ":" in buyer_did else buyer_did[:12]
         seller_label = seller_did.split(":")[-1][:12] if ":" in seller_did else seller_did[:12]
+        # Record the tick at which extraction succeeded (tick-gate reset).
+        self._last_extraction_tick = tick
         skill = Skill(
             name=slug,
             description=f"Observed successful trade between {buyer_label} and {seller_label}: {item[:60]}",
