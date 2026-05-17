@@ -142,6 +142,7 @@ class BrainHandler:
         self._lore_poll_interval: int = _lore_poll_interval
         self._lore_capacity: int = _lore_capacity
         self._pending_actions: list = []
+        self._cached_lore_entries: "list | None" = None
         # LoreStore initialized lazily on first on_tick() when memory._conn is available
 
     async def on_message(self, params: dict[str, Any]) -> list[dict[str, Any]]:
@@ -304,6 +305,7 @@ class BrainHandler:
             tom_context=msg_tom_contexts if msg_tom_contexts else None,   # Phase 17 D-17-16
             **({"ltm_memories": ltm_memories} if ltm_memories else {}),
             **({"peer_voices": peer_voices} if peer_voices else {}),
+            **({"lore_entries": self._cached_lore_entries} if self._cached_lore_entries else {}),
         )
 
         # 3. Build user prompt with message context
@@ -686,6 +688,9 @@ class BrainHandler:
                     metadata={"content_hash": _le.content_hash},
                 )
                 self._pending_actions.append(_cited_action)
+            # Cache for on_message() build_system_prompt injection (D-20-02 gap closure).
+            # Persists the tick's top-k retrieval so lore is visible at next LLM call.
+            self._cached_lore_entries = lore_entries_for_prompt if lore_entries_for_prompt else None
 
         # Drain pending actions (lore response/request/cited queued above)
         for _pa in self._pending_actions:
