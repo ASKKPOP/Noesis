@@ -2,47 +2,21 @@
 phase: 20-lore-commons
 reviewed: 2026-05-17T00:00:00Z
 depth: standard
-files_reviewed: 36
+files_reviewed: 10
 files_reviewed_list:
-  - brain/src/noesis_brain/lore/__init__.py
+  - brain/src/noesis_brain/rpc/handler.py
+  - brain/src/noesis_brain/prompts/system.py
   - brain/src/noesis_brain/lore/store.py
   - brain/src/noesis_brain/lore/types.py
-  - brain/src/noesis_brain/prompts/system.py
-  - brain/src/noesis_brain/rpc/handler.py
-  - brain/src/noesis_brain/rpc/types.py
-  - brain/test/ananke/test_loader.py
-  - brain/test/lore/__init__.py
+  - brain/test/lore/test_lore_prompt_injection.py
   - brain/test/lore/test_lore_store.py
-  - grid/src/api/routes/lore.ts
-  - grid/src/api/server.ts
-  - grid/src/audit/broadcast-allowlist.ts
-  - grid/src/db/schema.ts
+  - grid/src/genesis/launcher.ts
   - grid/src/integration/nous-runner.ts
-  - grid/src/lore/LoreCitationListener.ts
-  - grid/src/lore/LoreCommonsListener.ts
   - grid/src/lore/LoreQuotaTracker.ts
-  - grid/src/lore/LoreStorage.ts
-  - grid/src/lore/appendLoreCited.ts
-  - grid/src/lore/appendLoreContributed.ts
-  - grid/src/lore/index.ts
-  - grid/src/lore/types.ts
-  - grid/test/audit/allowlist-twenty-six.test.ts
-  - grid/test/audit/allowlist-twenty-two.test.ts
-  - grid/test/audit/broadcast-allowlist.test.ts
-  - grid/test/audit/operator-exported-allowlist.test.ts
-  - grid/test/audit/skill-allowlist.test.ts
-  - grid/test/lore/appendLoreCited.test.ts
-  - grid/test/lore/appendLoreContributed.test.ts
-  - grid/test/lore/lore-allowlist-baseline.test.ts
-  - grid/test/lore/lore-allowlist.test.ts
-  - grid/test/lore/lore-citation-listener.test.ts
-  - grid/test/lore/lore-migration.test.ts
-  - grid/test/lore/lore-producer-boundary.test.ts
-  - grid/test/lore/lore-quota.test.ts
-  - grid/test/relationships/allowlist-frozen.test.ts
+  - grid/test/lore/lore-wiring.test.ts
 findings:
-  critical: 2
-  warning: 3
+  critical: 1
+  warning: 4
   info: 2
   total: 7
 status: issues_found
@@ -52,196 +26,167 @@ status: issues_found
 
 **Reviewed:** 2026-05-17
 **Depth:** standard
-**Files Reviewed:** 36
+**Files Reviewed:** 10
 **Status:** issues_found
 
 ## Summary
 
-Phase 20 introduces the Lore Commons feature: a Brain-local SQLite FTS5 store (`LoreStore`) for peer-contributed lore entries, a Grid-side MySQL hash index (`lore_commons`), quota enforcement (`LoreQuotaTracker`), REST discovery endpoint, two sole-producer audit emitters (`appendLoreContributed`, `appendLoreCited`), and pure-observer listeners. The privacy boundary discipline — lore body text is Brain-private, only `content_hash` crosses the wire — is consistently applied across both sides.
+The Phase 20 lore commons implementation is well-structured overall. The `LoreStore` (FTS5 retrieval, FIFO eviction, capacity cap), `LoreQuotaTracker` (K=3 per epoch), `NousRunner` dispatch for `lore_contribute`/`lore_cited`, and the system-prompt injection path are all implemented correctly in isolation. The lore types, prompt builder, and unit tests are clean.
 
-Two critical bugs were found, both in `brain/src/noesis_brain/rpc/handler.py`. The most severe is mass method duplication: five class methods (`hash_state`, `query_memory`, `force_telos`, `_build_refined_telos`, `_dialogue_driven_goal_set`) are each defined twice in `BrainHandler`. Python silently drops the first definition, making the first copy of each method dead code. The second critical bug is a `received_tick=0` hardcode when storing inbound lore responses, breaking FIFO eviction order. Three warnings and two info items round out the findings.
+One critical bug was found: `handler.py` references the bare name `json` in an except clause inside a scope that only imported `json as _json`, which will raise a `NameError` when malformed JSON arrives in the quarantine sweep path. Four warnings surface additional correctness gaps: five methods are duplicated in `BrainHandler` (Python silently uses the second definition, making the first copy dead code); inbound lore response entries are stored with a hardcoded `received_tick=0` breaking FIFO eviction ordering; `_grid_base_url` is never set making the HTTP discovery poll permanently inoperative; and the LoreStore insert/evict split across two commits breaks atomicity.
 
 ---
 
 ## Critical Issues
 
-### CR-01: Five `BrainHandler` methods defined twice — first definition silently overwritten
+### CR-01: `NameError` — bare `json` referenced after `import json as _json`
 
-**File:** `brain/src/noesis_brain/rpc/handler.py:1012-1507`
+**File:** `brain/src/noesis_brain/rpc/handler.py:392`
 
-**Issue:** The following five methods each appear twice in `BrainHandler`:
-- `hash_state` (lines 1012 and 1035)
-- `query_memory` (lines 1076 and 1297)
-- `force_telos` (lines 1127 and 1348)
-- `_build_refined_telos` (lines 1176 and 1397)
-- `_dialogue_driven_goal_set` (lines 1236 and 1457)
-
-In Python, the second `def` statement for a name in a class body silently overwrites the first. The first copy of each of these methods is dead code and has no effect. The two copies are textually identical, so there is no behavioral regression right now, but the duplicated block (lines ~1027–1508) exists and any future edit to one copy will diverge silently from the other. This appears to be an artifact of a copy-paste during the Phase 20 additions.
-
-**Fix:** Delete the duplicate block. Lines 1028–1507 are the redundant second definitions and should be removed entirely. The file should end after line 1027 (`return compute_pre_deletion_state_hash(self)`).
+**Issue:** Inside the quarantine sweep block, line 389 does `import json as _json`, but line 392 catches `json.JSONDecodeError` using the bare unaliased module name. The bare name `json` is not imported at module level in this file, so `json` is not in scope when the `except` clause is evaluated. Any time a quarantine sweep result has `source == "observed"` and `payload_json` contains malformed JSON, Python raises `NameError: name 'json' is not defined` rather than handling the decode error — crashing the entire `on_tick()` call for that Nous.
 
 ```python
-# handler.py should contain each of these exactly ONCE:
-async def hash_state(self, params: dict[str, Any]) -> dict[str, str]: ...
-async def query_memory(self, params: dict[str, Any]) -> dict[str, Any]: ...
-async def force_telos(self, params: dict[str, Any]) -> dict[str, Any]: ...
-def _build_refined_telos(self, ctx: dict[str, Any]) -> Action | None: ...
-def _dialogue_driven_goal_set(self, ctx: dict[str, Any]) -> dict[str, list[str]] | None: ...
+# Current — broken (lines 386-393):
+import json as _json
+try:
+    payload_data = _json.loads(result.payload_json)
+    source_event_hash = payload_data.get("source_event_hash", result.skill_hash)
+except (json.JSONDecodeError, ValueError):  # NameError: 'json' not defined
+    source_event_hash = result.skill_hash
 ```
 
----
-
-### CR-02: Inbound lore entries stored with `received_tick=0` — FIFO eviction broken
-
-**File:** `brain/src/noesis_brain/rpc/handler.py:222-224`
-
-**Issue:** When a `__lore_response:` whisper is received and decoded, the `LoreEntry` is constructed with a hardcoded `received_tick=0`:
+**Fix:** Use the local alias consistently:
 
 ```python
-entry = _LoreEntry(
-    content_hash=recv_hash,
-    contributor_did=sender_did,
-    category_tag="observation",  # also see WR-01
-    received_tick=0,             # BUG: always 0
-)
-```
-
-`LoreStore._evict_if_over_capacity()` orders eviction by `received_tick ASC`, so every entry received through this path has the same tick (0). When the store fills, eviction becomes arbitrary among all received-via-response entries. Entries received later will be evicted as readily as the oldest ones, defeating the D-20-09 FIFO guarantee. Entries that arrived via the poll path do not store a tick either (the tick is not passed into `on_message`), but at minimum the tick from `params.get("tick", 0)` in `on_tick` context should be threaded through. The `on_message` handler does not have a `tick` parameter at all — `received_tick` should be set from a monotonic counter, a message parameter, or the world tick injected from the Grid.
-
-**Fix:** Thread the current tick into the lore response handler. The quickest correct fix is to accept an optional `tick` in the whisper dispatch path and propagate it:
-
-```python
-# In the __lore_response: branch, use params.get("tick", 0) if available,
-# or add a tick parameter to on_message():
-entry = _LoreEntry(
-    content_hash=recv_hash,
-    contributor_did=sender_did,
-    category_tag="observation",
-    title=title.strip(),
-    content=body.strip(),
-    received_tick=params.get("tick", 0),  # use actual tick
-)
+except (_json.JSONDecodeError, ValueError):
+    source_event_hash = result.skill_hash
 ```
 
 ---
 
 ## Warnings
 
-### WR-01: Inbound lore entries force `category_tag="observation"` — contributor category lost
+### WR-01: Five `BrainHandler` methods defined twice — first definition silently overwritten
 
-**File:** `brain/src/noesis_brain/rpc/handler.py:220`
+**File:** `brain/src/noesis_brain/rpc/handler.py:1017-1512`
 
-**Issue:** The `__lore_response:` wire format is `{title}\n{body}`. When a peer serves content, the category tag is not included in the wire content. The Brain hardcodes `category_tag="observation"` for all received entries regardless of the category the contributor originally declared. If a peer contributed a `"historical"` or `"synthesis"` entry, the receiving Brain stores it as `"observation"`, making the stored metadata inconsistent with the Grid index.
+**Issue:** The following methods each appear twice inside `BrainHandler`:
+- `hash_state` (approximately lines 1017 and 1040)
+- `query_memory` (approximately lines 1081 and 1302)
+- `force_telos` (approximately lines 1132 and 1353)
+- `_build_refined_telos` (approximately lines 1181 and 1402)
+- `_dialogue_driven_goal_set` (approximately lines 1241 and 1462)
 
-The wire format was defined to be `"{title}\n{body}"` (handler.py line 238), which means category is knowingly omitted. This is either an intentional simplification (acceptable if documented) or a gap. There is no comment acknowledging this lossy behaviour; the D-20-07 reference only says "serve content to requesting peers" without specifying category preservation.
+Python silently overwrites the first definition with the second. The first copy of each method is dead code with no effect. The section header comment blocks ("Phase 8 AGENCY-05", "Phase 6 AGENCY-02", "Phase 7 DIALOG-02") are also duplicated. Both copies are currently textually identical so there is no behavioral regression, but any future edit to one copy will diverge silently from the other. This appears to be a copy-paste artifact from Phase 20 additions.
 
-**Fix:** Either extend the wire format to include category (e.g., `"{category}\n{title}\n{body}"`), or add an explicit comment acknowledging the intentional lossy default and its consequences for FTS5 retrieval accuracy:
-
-```python
-# Wire format intentionally excludes category_tag (D-20-07 minimal spec).
-# All received entries are stored as "observation"; this is acceptable because
-# FTS5 retrieval ranks by content relevance, not category, and category is a
-# UI-facing filter only.
-category_tag="observation",
-```
+**Fix:** Delete the entire duplicate block (the second occurrence of each method, which starts at approximately line 1293 with the second "Phase 6 AGENCY-02" banner comment). The file should contain each of these five methods exactly once.
 
 ---
 
-### WR-02: `json.JSONDecodeError` referenced without importing `json` at module level
+### WR-02: Inbound `__lore_response:` entries stored with `received_tick=0` — FIFO eviction broken
 
-**File:** `brain/src/noesis_brain/rpc/handler.py:390`
+**File:** `brain/src/noesis_brain/rpc/handler.py:224`
 
-**Issue:** Line 390 catches `json.JSONDecodeError`:
-
-```python
-except (json.JSONDecodeError, ValueError):
-```
-
-The bare name `json` is not imported at the module level in this file. The only json import is a local alias `import json as _json` at lines 165 and 386 (inside function bodies). The bare `json` reference on line 390 would raise a `NameError` at runtime whenever the `except` branch is evaluated, because `json` is not bound in the enclosing scope.
-
-This is partially masked because the `_json.loads(raw_json)` call on line 388 uses the local alias `_json`, but the `except` clause references the unaliased `json` module name. The except clause exists to catch malformed JSON — the path that matters for robustness — and it would fail with a `NameError` when triggered.
-
-**Fix:**
+**Issue:** When a `__lore_response:` message is received and decoded, the `LoreEntry` is constructed with a hardcoded `received_tick=0` regardless of when the message actually arrives:
 
 ```python
-# Line 386-390 — use the local alias consistently:
-import json as _json
-try:
-    payload_data = _json.loads(result.payload_json)
-    source_event_hash = payload_data.get("source_event_hash", result.skill_hash)
-except (_json.JSONDecodeError, ValueError):  # was: json.JSONDecodeError
-    source_event_hash = result.skill_hash
+entry = _LoreEntry(
+    content_hash=recv_hash,
+    contributor_did=sender_did,
+    category_tag="observation",
+    title=title.strip(),
+    content=body.strip(),
+    received_tick=0,   # BUG: always 0
+)
 ```
+
+`LoreStore._evict_if_over_capacity()` orders eviction by `received_tick ASC`. Every entry received via `__lore_response:` has `received_tick=0`, so when the store fills, the eviction sweep treats all received-via-response entries as equally old — entries received at tick 10,000 are evicted as readily as entries from tick 1. The D-20-09 FIFO guarantee is broken for this path.
+
+**Fix:** Use the tick from `params` if it is present in the message payload, or thread the world tick into `on_message()`. The Grid already injects `tick` into some message paths:
+
+```python
+received_tick = int(params.get("tick", 0)),
+```
+
+If the Grid does not send a tick in `__lore_response:` messages, store the last-known tick as `self._last_known_tick` (updated in `on_tick()`) and reference it here.
 
 ---
 
-### WR-03: `LoreStore._evict_if_over_capacity` called after commit, not inside the same transaction
+### WR-03: `_grid_base_url` never set — lore HTTP discovery poll is permanently a no-op
+
+**File:** `brain/src/noesis_brain/rpc/handler.py:640-647`
+
+**Issue:** The lore discovery poll closure captures `base_url: str = getattr(self, "_grid_base_url", "")`. The attribute `_grid_base_url` is never initialized in `BrainHandler.__init__` and is never assigned anywhere in the class. The `getattr` returns `""` on every call, so the guard `if not base_url: return` on line 647 fires immediately. The HTTP `GET /api/v1/grid/lore` is never issued. The entire peer lore discovery path (D-20-05/D-20-06) is silently inoperative in all environments.
+
+**Fix:** Add `grid_base_url` as a constructor parameter and store it:
+
+```python
+# In __init__ signature:
+grid_base_url: str = "",
+
+# In __init__ body:
+self._grid_base_url: str = grid_base_url
+```
+
+If this path is intentionally deferred, remove the HTTP poll scaffold and replace it with a `# TODO(D-20-11): lore HTTP discovery not yet wired` comment.
+
+---
+
+### WR-04: `LoreStore.add()` — INSERT committed before eviction, breaking atomicity
 
 **File:** `brain/src/noesis_brain/lore/store.py:74-97`
 
-**Issue:** `add()` commits the INSERT on line 83, then calls `_evict_if_over_capacity()` on line 84. The eviction DELETE runs in a separate implicit transaction. If the process crashes between commit and eviction, the store will be over capacity until the next successful `add()` runs cleanup. More importantly, the FTS5 delete trigger fires for the evicted row — but only if that second DELETE commits. If it fails mid-way, FTS5 and the base table can diverge.
+**Issue:** `add()` commits the INSERT on line 83, then calls `_evict_if_over_capacity()` on line 84. These run in two separate transactions. If the process crashes between the committed INSERT and the eviction DELETE, the store is left over capacity permanently until the next successful `add()` call. More critically, if the eviction DELETE fails mid-way, the FTS5 virtual table and the base table can diverge (the FTS5 delete trigger fires per row as part of the DELETE statement, but if the DELETE transaction aborts after partial execution the FTS5 index is corrupted relative to the base table).
 
-This is low-risk in practice (SQLite in-process crash is rare and the cap is a soft guard), but the sequence is not atomic. An over-capacity store that persists across restarts would not be caught until the next write.
-
-**Fix:** Wrap both the INSERT and the eviction DELETE in a single `with self._conn:` transaction block, or run the eviction check within the same transaction before committing:
+**Fix:** Run both the INSERT and the eviction in a single `with self._conn:` context (which issues a single `BEGIN`/`COMMIT`):
 
 ```python
 def add(self, entry: LoreEntry) -> None:
     with self._conn:
         self._conn.execute(
-            """INSERT OR REPLACE INTO lore_entries ...""",
-            (...),
+            """INSERT OR REPLACE INTO lore_entries
+               (content_hash, contributor_did, category_tag, title, content, received_tick)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (entry.content_hash, entry.contributor_did, entry.category_tag,
+             entry.title, entry.content, entry.received_tick),
         )
-        # Evict within same transaction — atomicity preserved.
         count = self._conn.execute("SELECT COUNT(*) FROM lore_entries").fetchone()[0]
         if count > self._capacity:
             excess = count - self._capacity
-            self._conn.execute("""DELETE FROM lore_entries WHERE content_hash IN (
-                SELECT content_hash FROM lore_entries ORDER BY received_tick ASC LIMIT ?
-            )""", (excess,))
-    # No separate commit() needed — `with conn:` handles it.
+            self._conn.execute("""
+                DELETE FROM lore_entries WHERE content_hash IN (
+                    SELECT content_hash FROM lore_entries
+                    ORDER BY received_tick ASC LIMIT ?
+                )
+            """, (excess,))
+    # with-block commits atomically; no separate self._conn.commit() needed.
 ```
 
 ---
 
 ## Info
 
-### IN-01: `_grid_base_url` attribute read via `getattr` but never set — lore polling silently no-ops
+### IN-01: Lore discovery poll fires at tick 0
 
-**File:** `brain/src/noesis_brain/rpc/handler.py:640`
+**File:** `brain/src/noesis_brain/rpc/handler.py:635`
 
-**Issue:** The lore discovery poll uses:
+**Issue:** The condition `(tick % self._lore_poll_interval) == 0` is `True` at tick 0, scheduling a discovery poll on the very first tick. This is harmless while WR-03 exists (the empty `base_url` guard returns immediately), but once `_grid_base_url` is wired, the Brain will issue an HTTP request at tick 0 before any lore entries have been contributed to the Grid.
+
+**Fix:** Guard with `tick > 0`:
 
 ```python
-base_url: str = getattr(self, "_grid_base_url", ""),
+if self._lore_store is not None and tick > 0 and (tick % self._lore_poll_interval) == 0:
 ```
-
-`BrainHandler.__init__` never sets `self._grid_base_url`. The `getattr` default is an empty string, and the poll closure returns immediately if `base_url` is falsy (line 645: `if not base_url: return`). This means the HTTP-polling lore discovery path (`GET /api/v1/grid/lore`) is always a no-op in the current implementation — the Brain never actually discovers new lore hashes from the Grid.
-
-This appears intentional (the poll path is best-effort), but `_grid_base_url` is a configuration point that is never wired. If it is meant to be supplied at construction time, it should be a documented `__init__` parameter. If lore discovery via HTTP is not yet implemented, the dead poll loop should be removed or replaced with a comment.
-
-**Fix:** Either add `grid_base_url: str = ""` to `BrainHandler.__init__` and store it as `self._grid_base_url`, or remove the HTTP poll scaffold and leave a TODO comment referencing the design decision (D-20-11).
 
 ---
 
-### IN-02: `lore-producer-boundary.test.ts` regex may miss audit calls with multiline formatting
+### IN-02: `lore-wiring.test.ts` does not exercise NousRunner quota gate through action dispatch
 
-**File:** `grid/test/lore/lore-producer-boundary.test.ts:62-65`
+**File:** `grid/test/lore/lore-wiring.test.ts:42-59`
 
-**Issue:** The grep pattern used to detect unauthorized `audit.append` calls is:
+**Issue:** The test `'NousRunner loreDeps wiring: quotaTracker from launcher enforces K=3 and epoch reset'` calls `loreDeps.quotaTracker.tryConsume()` directly rather than dispatching a `lore_contribute` action through `NousRunner.executeActions()`. The test confirms the tracker logic works in isolation but does not exercise the NousRunner integration path. A bug in the `case 'lore_contribute':` branch wiring (e.g., `this.loreDeps?.quotaTracker` being accidentally `undefined`, or the quota check branch being short-circuited) would not be caught by this test.
 
-```javascript
-const pattern = new RegExp(
-    `\\b(?:audit|chain|this\\.audit|this\\.chain)\\.append[^;]{0,200}['"\`]${escapedEvent}['"\`]`,
-    's'
-);
-```
-
-The `[^;]{0,200}` quantifier stops at semicolons and is limited to 200 characters between `.append` and the event string. A call written across more than 200 characters or with a `;` in an intermediate argument (e.g., a template literal containing a semicolon) would not be detected. This is a weak negative assertion — it could give a false clean signal. The same pattern was presumably inherited from earlier phase boundary tests and carries the same limitation forward.
-
-This is low-severity because the producer boundary tests for prior phases use the same pattern and have not caused an issue, but the limitation is worth noting for future phases that add more complex emitter calls.
-
-**Fix:** Consider replacing the character-count-bounded regex with an AST-based check, or add a stricter grep for the event string literal alone (as the first check in the same test already does), relying on the two-gate combination for confidence.
+**Fix:** Add a test that constructs a `NousRunner` with a mock bridge returning a `lore_contribute` action, a mock `audit`, and `loreDeps: { quotaTracker }`. Assert that `appendLoreContributed` is called for the first three dispatches and not called on the fourth within the same epoch. This exercises the full wiring from action dispatch through quota check to audit emit.
 
 ---
 
