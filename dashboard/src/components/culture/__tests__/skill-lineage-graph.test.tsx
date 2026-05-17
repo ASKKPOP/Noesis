@@ -1,4 +1,5 @@
 import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { SkillLineageGraph } from '../skill-lineage-graph';
 import { useSkillLineage } from '@/lib/hooks/use-culture';

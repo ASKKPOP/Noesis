@@ -1,4 +1,5 @@
 import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { NormTimeline } from '../norm-timeline';
 import { useNorms } from '@/lib/hooks/use-culture';
