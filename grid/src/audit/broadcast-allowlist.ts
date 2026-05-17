@@ -318,6 +318,23 @@ export const NORM_FORBIDDEN_KEYS = Object.freeze([
 ] as const);
 
 /**
+ * Phase 20 (LORE-01 / D-20-13): lore-leaf keys that MUST NOT appear in any
+ * broadcast payload. Lore body text and title text are Brain-private and NEVER
+ * cross the Brain↔Grid wire. Only content_hash (64-char hex) is permitted.
+ * Per D-20-13 — exactly 4 keys. Do NOT add extras without a CONTEXT.md decision.
+ *
+ * NOTE: __lore_request: and __lore_response: are Brain-internal whisper prefixes;
+ * they are never payload field names and are NOT added to WHISPER_FORBIDDEN_KEYS.
+ * The Brain-side on_message() prefix check is the guard for lore plaintext. (RESEARCH.md §8)
+ */
+export const LORE_FORBIDDEN_KEYS = Object.freeze([
+    'lore_body',
+    'lore_content',
+    'title_text',
+    'summary_text',
+] as const);
+
+/**
  * Phase 11 (WHISPER-04 / D-11-09): whisper-leaf keys that MUST NOT appear in any
  * whisper payload. Plaintext whisper content (message bodies, utterances, offer
  * text, ousia amounts within whispers, raw decrypted data) NEVER crosses the wire.
@@ -331,6 +348,10 @@ export const NORM_FORBIDDEN_KEYS = Object.freeze([
  * is extended only with the 8 whisper-only keys that have no legitimate use in
  * any other event payload type (text, body, content, message, utterance,
  * plaintext, decrypted, payload_plain).
+ *
+ * Phase 20: lore whispers use __lore_request: and __lore_response: Brain-internal
+ * prefixes. These prefixes are NOT field names and are not in this array. See
+ * RESEARCH.md §8 and D-20-13.
  */
 export const WHISPER_FORBIDDEN_KEYS = Object.freeze([
     'text',
@@ -378,8 +399,12 @@ export const WHISPER_FORBIDDEN_KEYS = Object.freeze([
  * Phase 19 (NORM-01 / D-19-11): extended with 3 NORM_FORBIDDEN_KEYS (norm_text|fingerprint_text|rule_content).
  * Brain-private norm text and rule content NEVER cross the Brain↔Grid wire. Only the 6-char hex
  * fingerprint (revision_hash) is permitted — not the rule text it was derived from.
+ *
+ * Phase 20 (LORE-01 / D-20-13): extended with 4 LORE_FORBIDDEN_KEYS (lore_body|lore_content|title_text|summary_text).
+ * Lore body text and title text are Brain-private and NEVER cross the Brain↔Grid wire. Only
+ * content_hash (64-char hex) is permitted. Added before any lore emitter code lands.
  */
-export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content|message|utterance|plaintext|decrypted|payload_plain|description|rationale|proposal_text|law_text|body_text|weight|reputation|relationship_score|ousia_weight|belief_content|target_content|emotion_text|dimension_text|belief_prose|iris_content|ltm_content|concept_text|graph_data|episode_text|node_content|edge_content|skill_body|skill_text|rule_text|norm_text|fingerprint_text|rule_content/i;
+export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content|message|utterance|plaintext|decrypted|payload_plain|description|rationale|proposal_text|law_text|body_text|weight|reputation|relationship_score|ousia_weight|belief_content|target_content|emotion_text|dimension_text|belief_prose|iris_content|ltm_content|concept_text|graph_data|episode_text|node_content|edge_content|skill_body|skill_text|rule_text|norm_text|fingerprint_text|rule_content|lore_body|lore_content|title_text|summary_text/i;
 
 export interface PrivacyCheckResult {
     ok: boolean;
