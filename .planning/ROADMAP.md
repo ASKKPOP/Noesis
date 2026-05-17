@@ -19,7 +19,7 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
 
 - [x] **Phase 18: Skill Diffusion** — Wire PeerSkillFilter + ObservationalLearner into teaching/inference paths. Allowlist 36→39 (+3: skill.taught, skill.inferred, skill.rejected). (completed 2026-05-16)
 - [x] **Phase 19: Norm Crystallization** — NormDetector pure-observer clusters rule fingerprints across Nous. Allowlist 39→41 (+2: norm.candidate, norm.crystallized). (completed 2026-05-16)
-- [ ] **Phase 20: Lore Commons** — Nous-initiated shared knowledge substrate (hash index only). Allowlist 41→43 (+2: lore.contributed, lore.cited).
+- [x] **Phase 20: Lore Commons** — Nous-initiated shared knowledge substrate (hash index only). Allowlist 41→43 (+2: lore.contributed, lore.cited). (completed 2026-05-17)
 - [ ] **Phase 21: Culture Dashboard** — Skill lineage tree + norm timeline + lore graph as raw SVG. Allowlist 43→43 (no new events).
 
 ## Phases (v2.3 — Shipped)
@@ -567,10 +567,10 @@ Phase 19 completed 2026-05-16 with 5 plans (19-01 through 19-05). Allowlist at 4
 **Allowlist additions**: **+2**. Events: `lore.contributed` pos 42 `{category_tag, content_hash, contributor_did, tick}`; `lore.cited` pos 43 `{citing_did, content_hash, tick}`. Running total: **43**.
 **Plans**: 4 plans (Waves 1-4)
 Plans:
-- [ ] 20-01-PLAN.md — Wave 0 safety gate: FORBIDDEN_KEY_PATTERN extension + type contracts + RED test stubs
-- [ ] 20-02-PLAN.md — Data layer: MySQL migration v8 + Brain LoreStore + ActionType additions
-- [ ] 20-03-PLAN.md — Integration: sole-producer emitters + listeners + Brain handler wiring + prompt injection
-- [ ] 20-04-PLAN.md — Completion: ALLOWLIST_MEMBERS 41→43 + NousRunner dispatch + REST endpoint + quota enforcement
+- [x] 20-01-PLAN.md — Wave 0 safety gate: FORBIDDEN_KEY_PATTERN extension + type contracts + RED test stubs
+- [x] 20-02-PLAN.md — Data layer: MySQL migration v8 + Brain LoreStore + ActionType additions
+- [x] 20-03-PLAN.md — Integration: sole-producer emitters + listeners + Brain handler wiring + prompt injection
+- [x] 20-04-PLAN.md — Completion: ALLOWLIST_MEMBERS 41→43 + NousRunner dispatch + REST endpoint + quota enforcement
 
 ### Phase 21: Culture Dashboard
 **Goal**: The operator can observe skill diffusion, norm crystallization, and lore contribution as visual emergence artifacts -- making the culture substrate legible without injecting into it.
@@ -602,7 +602,7 @@ Dependency rationale:
 |-------|----------------|--------|-----------|
 | 18. Skill Diffusion | 7/7 | Complete    | 2026-05-16 |
 | 19. Norm Crystallization | 0/TBD | Not started | - |
-| 20. Lore Commons | 0/TBD | Not started | - |
+| 20. Lore Commons | 4/4 | Complete   | 2026-05-17 |
 | 21. Culture Dashboard | 0/TBD | Not started | - |
 
 ### Coverage & Traceability (v2.4)
