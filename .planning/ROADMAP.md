@@ -586,7 +586,15 @@ Plans:
   - T-21-01 (MODERATE): Empty-state sparse rig runs (3 Nous) -- all three SVG components must handle zero-node and zero-edge state gracefully. Dashboard integration tests with empty API responses required.
   - T-21-02 (LOW): D-9-08 grep gate must cover new culture components -- `scripts/check-relationship-graph-deps.mjs` extended to cover `dashboard/src/components/culture/**` paths.
 **Allowlist additions**: **+0**. Reads existing `skill.*`, `norm.*`, `lore.*` events from WsHub. Running total: **43**.
-**Plans**: TBD
+**Plans**: 7 plans
+Plans:
+- [ ] 21-01-PLAN.md — Grep gate fix + test stubs (Wave 0)
+- [ ] 21-02-PLAN.md — Grid skill lineage endpoint (Wave 1)
+- [ ] 21-03-PLAN.md — Dashboard API wrappers + SWR hooks (Wave 1)
+- [ ] 21-04-PLAN.md — SkillLineageGraph SVG component (Wave 2)
+- [ ] 21-05-PLAN.md — NormTimeline + LoreGraph SVG components (Wave 2)
+- [ ] 21-06-PLAN.md — EventCategory + TabBar integration (Wave 2)
+- [ ] 21-07-PLAN.md — Culture page + CultureDashboard assembly (Wave 3)
 
 ### Progress (v2.4)
 
