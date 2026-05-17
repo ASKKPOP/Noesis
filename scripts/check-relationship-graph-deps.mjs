@@ -19,7 +19,7 @@
  *   wc -l grid/src/audit/broadcast-allowlist.ts → 146 lines
  */
 
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -50,8 +50,10 @@ const TARGETS = [
 //          Phase 12 post-ship = 321 (4 governance events), Phase 13 Wave 3 = 321 (operator.exported).
 //          Phase 16 post-ship = 379 (HYPNOS_FORBIDDEN_KEYS + extended FORBIDDEN_KEY_PATTERN +
 //          corrected stub comments for positions 31-32; approved in 16-01-PLAN.md D-16-05).
+//          Phase 20 post-ship = 458 (lore.contributed + lore.cited + LORE_FORBIDDEN_KEYS;
+//          approved in 20-PLAN.md).
 const ALLOWLIST_FILE = resolve(repoRoot, 'grid/src/audit/broadcast-allowlist.ts');
-const ALLOWLIST_BASELINE_LINES = 379;
+const ALLOWLIST_BASELINE_LINES = 459;
 
 let hadError = false;
 
@@ -94,6 +96,43 @@ if (existsSync(ALLOWLIST_FILE)) {
     }
 } else {
     console.warn(`[check-relationship-graph-deps] SC#5 WARNING: ${ALLOWLIST_FILE} not found; SC#5 gate skipped.`);
+}
+
+// ── Gate C — D-9-08 source-level scan: culture/ component directory ───────────
+
+const CULTURE_DIR = resolve(repoRoot, 'dashboard/src/components/culture');
+
+function collectTsxFiles(dir) {
+    const results = [];
+    for (const entry of readdirSync(dir)) {
+        const full = resolve(dir, entry);
+        if (statSync(full).isDirectory()) {
+            results.push(...collectTsxFiles(full));
+        } else if (entry.endsWith('.tsx')) {
+            results.push(full);
+        }
+    }
+    return results;
+}
+
+if (!existsSync(CULTURE_DIR)) {
+    console.warn('[check-relationship-graph-deps] Gate C: culture/ directory not found, skipping');
+} else {
+    const tsxFiles = collectTsxFiles(CULTURE_DIR);
+    let gateCFailed = false;
+    for (const filepath of tsxFiles) {
+        const contents = readFileSync(filepath, 'utf8');
+        for (const banned of BANNED) {
+            if (contents.includes(banned)) {
+                console.error(`[check-relationship-graph-deps] Gate C FAIL: banned graph lib import "${banned}" in ${filepath}`);
+                gateCFailed = true;
+                hadError = true;
+            }
+        }
+    }
+    if (!gateCFailed) {
+        console.log('[check-relationship-graph-deps] Gate C PASS: no banned graph libs in dashboard/src/components/culture/');
+    }
 }
 
 // ── Result ────────────────────────────────────────────────────────────────────
