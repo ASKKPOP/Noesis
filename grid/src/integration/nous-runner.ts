@@ -38,6 +38,9 @@ import {
     appendSkillInferred,
     appendSkillRejected,
 } from '../skills/index.js';
+import { appendLoreContributed } from '../lore/appendLoreContributed.js';
+import { appendLoreCited } from '../lore/appendLoreCited.js';
+import { LoreQuotaTracker } from '../lore/LoreQuotaTracker.js';
 
 export interface NousRunnerConfig {
     nousDid: string;
@@ -90,6 +93,14 @@ export interface NousRunnerConfig {
         audit: AuditChain;
         store: GovernanceStore;
     };
+    /**
+     * Phase 20 LORE-03: lore contribution quota tracker.
+     * Optional — if absent the lore_contribute quota check is skipped (mirrors governanceDeps pattern).
+     * Production wiring passes { quotaTracker } from GenesisLauncher to enforce K=3 per epoch.
+     */
+    loreDeps?: {
+        quotaTracker: LoreQuotaTracker;
+    };
 }
 
 export type SpeakHandler = (runner: NousRunner, channel: string, text: string, tick: number) => void;
@@ -106,6 +117,7 @@ export class NousRunner {
     private readonly reviewer: Reviewer | undefined;
     private readonly whisperRouter: WhisperRouter | undefined;
     private readonly governanceDeps: { audit: AuditChain; store: GovernanceStore } | undefined;
+    private readonly loreDeps: { quotaTracker: LoreQuotaTracker } | undefined;
 
     private speakHandler: SpeakHandler | null = null;
 
@@ -129,6 +141,7 @@ export class NousRunner {
         this.reviewer = config.reviewer;
         this.whisperRouter = config.whisperRouter;
         this.governanceDeps = config.governanceDeps;
+        this.loreDeps = config.loreDeps;
     }
 
     /** Register handler called when this Nous speaks (for message routing). */
@@ -782,6 +795,117 @@ export class NousRunner {
                             reason: (err as Error).message,
                         }));
                     }
+                    break;
+                }
+
+                case 'lore_contribute': {
+                    // Phase 20 D-20-12: Grid injects contributor_did+tick (3-keys-not-5).
+                    // Brain sends content_hash, category_tag (2 keys).
+                    // Quota enforcement at Grid boundary BEFORE sole-producer call (STATE.md invariant, LORE-03).
+                    const md = (action.metadata ?? {}) as Record<string, unknown>;
+                    const contentHash = typeof md['content_hash'] === 'string' ? md['content_hash'] : null;
+                    const categoryTag = typeof md['category_tag'] === 'string' ? md['category_tag'] : null;
+                    if (contentHash === null || categoryTag === null) {
+                        console.warn(JSON.stringify({
+                            event: 'lore.contribute.malformed_metadata',
+                            did: this.nousDid,
+                            tick,
+                        }));
+                        break;
+                    }
+                    // Quota check: K=3 per sleep epoch (D-20-03)
+                    const quotaTracker = this.loreDeps?.quotaTracker;
+                    if (quotaTracker && !quotaTracker.tryConsume(this.nousDid, tick)) {
+                        console.warn(JSON.stringify({
+                            event: 'lore.contribute.quota_exceeded',
+                            did: this.nousDid,
+                            tick,
+                        }));
+                        break;
+                    }
+                    try {
+                        appendLoreContributed(this.audit, this.nousDid, {
+                            contributor_did: this.nousDid,
+                            tick,
+                            content_hash: contentHash,
+                            category_tag: categoryTag,
+                        });
+                    } catch (err) {
+                        console.warn(JSON.stringify({
+                            event: 'lore.dispatch.rejected',
+                            action_type: 'lore_contribute',
+                            did: this.nousDid,
+                            reason: (err as Error).message,
+                        }));
+                    }
+                    break;
+                }
+
+                case 'lore_cited': {
+                    // Phase 20 D-20-12: Grid injects citing_did+tick (3-keys-not-5).
+                    // Brain sends content_hash (1 key). No quota enforcement on citations.
+                    const md = (action.metadata ?? {}) as Record<string, unknown>;
+                    const contentHash = typeof md['content_hash'] === 'string' ? md['content_hash'] : null;
+                    if (contentHash === null) {
+                        console.warn(JSON.stringify({
+                            event: 'lore.cited.malformed_metadata',
+                            did: this.nousDid,
+                            tick,
+                        }));
+                        break;
+                    }
+                    try {
+                        appendLoreCited(this.audit, this.nousDid, {
+                            citing_did: this.nousDid,
+                            tick,
+                            content_hash: contentHash,
+                        });
+                    } catch (err) {
+                        console.warn(JSON.stringify({
+                            event: 'lore.dispatch.rejected',
+                            action_type: 'lore_cited',
+                            did: this.nousDid,
+                            reason: (err as Error).message,
+                        }));
+                    }
+                    break;
+                }
+
+                case 'lore_request': {
+                    // Phase 20: Brain queued this after discovering an unknown hash in _poll().
+                    // Intent: deliver __lore_request:{content_hash} to contributor_did via direct message.
+                    // WhisperRouter only handles pre-encrypted envelopes (D-11-05); plaintext lore
+                    // discovery messages cannot be routed through it. Best-effort: logged only.
+                    // The primary discovery path is Brain HTTP-polling GET /api/v1/grid/lore (D-20-11).
+                    const md = (action.metadata ?? {}) as Record<string, unknown>;
+                    const contentHash = typeof md['content_hash'] === 'string' ? md['content_hash'] : null;
+                    const recipientDid = typeof md['contributor_did'] === 'string' ? md['contributor_did'] : null;
+                    if (contentHash === null || recipientDid === null) { break; }
+                    // Log the intent for observability; actual peer-to-peer lore retrieval is future work.
+                    console.warn(JSON.stringify({
+                        event: 'lore.request.dispatched',
+                        did: this.nousDid,
+                        recipient_did: recipientDid,
+                        content_hash: contentHash,
+                        tick,
+                    }));
+                    break;
+                }
+
+                case 'lore_response': {
+                    // Phase 20: Brain queued this after receiving __lore_request: from a peer.
+                    // Intent: deliver __lore_response:{hash}:{b64} back to requester via direct message.
+                    // Same constraint as lore_request: WhisperRouter is pre-encrypted-only.
+                    // Best-effort: logged only. Primary path is Brain's local LoreStore.
+                    const md = (action.metadata ?? {}) as Record<string, unknown>;
+                    const recipientDid = typeof md['recipient_did'] === 'string' ? md['recipient_did'] : null;
+                    if (recipientDid === null) { break; }
+                    console.warn(JSON.stringify({
+                        event: 'lore.response.dispatched',
+                        did: this.nousDid,
+                        recipient_did: recipientDid,
+                        tick,
+                    }));
                     break;
                 }
 

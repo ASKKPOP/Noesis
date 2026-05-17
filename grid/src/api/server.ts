@@ -129,6 +129,14 @@ export interface GridServices {
             first_seen_tick: number;
         }>>;
     };
+    /**
+     * Phase 20 LORE-01: LoreStorage for GET /api/v1/grid/lore endpoint + listener instantiation.
+     * Optional so legacy tests without Phase 20 wiring still compile.
+     * When present, registers the lore route and instantiates LoreCitationListener and LoreCommonsListener.
+     */
+    lore?: {
+        storage: import('../lore/LoreStorage.js').LoreStorage;
+    };
 }
 
 /**
@@ -369,6 +377,21 @@ export function buildServerWithHub(
                     evidence_tick_range: [r.first_seen_tick, r.crystallized_tick],
                 })),
             };
+        });
+    }
+
+    // --- Phase 20 LORE-01: Lore Commons endpoint + listeners ---
+    // Registered only when lore service is provided (optional for legacy tests).
+    if (services.lore) {
+        const loreSvc = services.lore;
+        void app.register(async (instance) => {
+            const { registerLoreRoutes } = await import('./routes/lore.js');
+            const { LoreCitationListener, LoreCommonsListener } = await import('../lore/index.js');
+            // Instantiate listeners so citation_count increments and lore_commons is populated.
+            // These wire onto audit.onAppend() and must be active from startup.
+            new LoreCitationListener(services.audit, loreSvc.storage, services.gridName);
+            new LoreCommonsListener(services.audit, loreSvc.storage, services.gridName);
+            await registerLoreRoutes(instance, loreSvc.storage, services.gridName);
         });
     }
 
