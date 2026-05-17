@@ -1,7 +1,8 @@
 ---
 phase: 21
 slug: culture-dashboard
-status: draft
+status: approved
+reviewed_at: 2026-05-17
 shadcn_initialized: false
 preset: none
 created: 2026-05-17
