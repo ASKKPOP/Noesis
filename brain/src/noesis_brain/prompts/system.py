@@ -40,6 +40,9 @@ def build_system_prompt(
     # tom_context: list of ToMContext objects, one per peer with active beliefs.
     # None when Iris disabled; empty list when enabled but no beliefs yet.
     tom_context: "list | None" = None,
+    # Phase 20 additive-widening: Lore Commons top-k entries from LoreStore.retrieve().
+    # None = LoreStore disabled; [] = enabled but empty; list = entries to inject.
+    lore_entries: "list | None" = None,
 ) -> str:
     """Build the full system prompt that defines who this Nous is.
 
@@ -110,6 +113,13 @@ def build_system_prompt(
     # Phase 17: inject Theory of Mind context if available.
     if tom_context:
         section = _theory_of_mind_section(tom_context)
+        if section:
+            sections.append(section)
+
+    # Phase 20 (D-20-02): inject Lore Commons top-k entries before directives.
+    # None = disabled; [] = enabled but empty (no injection).
+    if lore_entries:
+        section = _lore_commons_section(lore_entries)
         if section:
             sections.append(section)
 
@@ -285,6 +295,18 @@ def _theory_of_mind_section(tom_contexts: list) -> str:
     result = "\n".join(lines)
     # Guard: if nothing was added beyond the header, return ""
     return result if len(lines) > 1 else ""
+
+
+def _lore_commons_section(lore_entries: list) -> str:
+    """Format lore entries for system prompt injection (Phase 20 D-20-02).
+
+    Brain-private: lore body text never crosses the Brain↔Grid wire. D-20-11.
+    Each entry is formatted via LoreEntry.to_prompt_block().
+    """
+    blocks = [e.to_prompt_block() for e in lore_entries if hasattr(e, "to_prompt_block")]
+    if not blocks:
+        return ""
+    return "## Lore Commons\n\n" + "\n\n".join(blocks)
 
 
 def _directives_section(psyche: Psyche) -> str:
