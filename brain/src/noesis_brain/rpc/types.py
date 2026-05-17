@@ -52,6 +52,15 @@ class ActionType(str, Enum):
     SKILL_TAUGHT   = "skill_taught"    # Metadata: {skill_hash, teacher_did, parent_hash} (3 keys)
     SKILL_INFERRED = "skill_inferred"  # Metadata: {skill_hash, source_event_hash} (2 keys)
     SKILL_REJECTED = "skill_rejected"  # Metadata: {rejection_reason} (1 key); reason ∈ {low_trust, structural_invalid, quota_exceeded}
+    # Phase 20 — Lore Commons.
+    # String values MUST match the Grid NousRunner switch cases exactly (case-sensitive).
+    # LORE_CONTRIBUTE and LORE_CITED are Grid-forwarded (sole-producer emitters).
+    # LORE_DISCOVER, LORE_REQUEST, LORE_RESPONSE are Brain-internal only.
+    LORE_CONTRIBUTE = "lore_contribute"  # Grid-forwarded. Brain metadata: {content_hash, category_tag} (2 keys; Grid injects contributor_did + tick -> 4-key payload)
+    LORE_CITED      = "lore_cited"       # Grid-forwarded. Brain metadata: {content_hash} (1 key; Grid injects citing_did + tick -> 3-key payload)
+    LORE_DISCOVER   = "lore_discover"    # Brain-internal; triggers background poll via asyncio.create_task; never forwarded to Grid
+    LORE_REQUEST    = "lore_request"     # Brain-internal; becomes __lore_request:{hash} whisper text
+    LORE_RESPONSE   = "lore_response"    # Brain-internal; decoded from __lore_response:{hash}:{base64} whisper
 
 
 # JSON-RPC error codes
