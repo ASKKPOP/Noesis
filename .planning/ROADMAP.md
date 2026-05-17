@@ -20,7 +20,7 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
 - [x] **Phase 18: Skill Diffusion** — Wire PeerSkillFilter + ObservationalLearner into teaching/inference paths. Allowlist 36→39 (+3: skill.taught, skill.inferred, skill.rejected). (completed 2026-05-16)
 - [x] **Phase 19: Norm Crystallization** — NormDetector pure-observer clusters rule fingerprints across Nous. Allowlist 39→41 (+2: norm.candidate, norm.crystallized). (completed 2026-05-16)
 - [x] **Phase 20: Lore Commons** — Nous-initiated shared knowledge substrate (hash index only). Allowlist 41→43 (+2: lore.contributed, lore.cited). (completed 2026-05-17)
-- [ ] **Phase 21: Culture Dashboard** — Skill lineage tree + norm timeline + lore graph as raw SVG. Allowlist 43→43 (no new events).
+- [x] **Phase 21: Culture Dashboard** — Skill lineage tree + norm timeline + lore graph as raw SVG. Allowlist 43→43 (no new events). (completed 2026-05-17)
 
 ## Phases (v2.3 — Shipped)
 
@@ -588,13 +588,13 @@ Plans:
 **Allowlist additions**: **+0**. Reads existing `skill.*`, `norm.*`, `lore.*` events from WsHub. Running total: **43**.
 **Plans**: 7 plans
 Plans:
-- [ ] 21-01-PLAN.md — Grep gate fix + test stubs (Wave 0)
-- [ ] 21-02-PLAN.md — Grid skill lineage endpoint (Wave 1)
-- [ ] 21-03-PLAN.md — Dashboard API wrappers + SWR hooks (Wave 1)
-- [ ] 21-04-PLAN.md — SkillLineageGraph SVG component (Wave 2)
-- [ ] 21-05-PLAN.md — NormTimeline + LoreGraph SVG components (Wave 2)
-- [ ] 21-06-PLAN.md — EventCategory + TabBar integration (Wave 2)
-- [ ] 21-07-PLAN.md — Culture page + CultureDashboard assembly (Wave 3)
+- [x] 21-01-PLAN.md — Grep gate fix + test stubs (Wave 0)
+- [x] 21-02-PLAN.md — Grid skill lineage endpoint (Wave 1)
+- [x] 21-03-PLAN.md — Dashboard API wrappers + SWR hooks (Wave 1)
+- [x] 21-04-PLAN.md — SkillLineageGraph SVG component (Wave 2)
+- [x] 21-05-PLAN.md — NormTimeline + LoreGraph SVG components (Wave 2)
+- [x] 21-06-PLAN.md — EventCategory + TabBar integration (Wave 2)
+- [x] 21-07-PLAN.md — Culture page + CultureDashboard assembly (Wave 3)
 
 ### Progress (v2.4)
 
@@ -611,7 +611,7 @@ Dependency rationale:
 | 18. Skill Diffusion | 7/7 | Complete    | 2026-05-16 |
 | 19. Norm Crystallization | 0/TBD | Not started | - |
 | 20. Lore Commons | 5/5 | Complete    | 2026-05-17 |
-| 21. Culture Dashboard | 0/TBD | Not started | - |
+| 21. Culture Dashboard | 7/7 | Complete   | 2026-05-17 |
 
 ### Coverage & Traceability (v2.4)
 

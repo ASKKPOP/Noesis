@@ -216,9 +216,9 @@ Unmapped: 0 ✓. Phase 10 split into 10a (Ananke) + 10b (Bios + Chronos) per `gs
 
 ### CULTURE — Culture Dashboard (Phase 21)
 
-- [ ] **CULTURE-01**: Skill lineage tree rendered as a raw SVG directed graph (D-9-08 pattern from Phase 9 — server computes `{x, y}` positions, client renders `<line>`/`<circle>` elements); nodes represent Nous and skill hashes; edges carry tick labels from `skill.taught`/`skill.inferred` events; zero new allowlist events.
-- [ ] **CULTURE-02**: Norm adoption timeline: a horizontal SVG timeline per norm showing `norm.candidate` → `norm.crystallized` transitions, participating Nous DIDs, and `convergence_type` label (emergent vs coincidental).
-- [ ] **CULTURE-03**: Lore contribution graph: a bipartite SVG (Nous nodes + lore entry nodes); edges = `lore.contributed` (solid) and `lore.cited` (dashed) events; edge weight proportional to citation count.
+- [x] **CULTURE-01**: Skill lineage tree rendered as a raw SVG directed graph (D-9-08 pattern from Phase 9 — server computes `{x, y}` positions, client renders `<line>`/`<circle>` elements); nodes represent Nous and skill hashes; edges carry tick labels from `skill.taught`/`skill.inferred` events; zero new allowlist events.
+- [x] **CULTURE-02**: Norm adoption timeline: a horizontal SVG timeline per norm showing `norm.candidate` → `norm.crystallized` transitions, participating Nous DIDs, and `convergence_type` label (emergent vs coincidental).
+- [x] **CULTURE-03**: Lore contribution graph: a bipartite SVG (Nous nodes + lore entry nodes); edges = `lore.contributed` (solid) and `lore.cited` (dashed) events; edge weight proportional to citation count.
 
 ## Out of Scope (v2.4)
 
