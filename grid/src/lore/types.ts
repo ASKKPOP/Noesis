@@ -1,6 +1,6 @@
 /**
  * Lore Grid types — Phase 20 D-20-12.
- * Payload interfaces and EXPECTED_KEYS tuples for lore.contributed + lore.cited sole-producer emitters.
+ * Payload interfaces and EXPECTED_KEYS tuples for the two lore sole-producer emitters.
  *
  * 3-keys-not-5 invariant: Brain metadata carries 1-2 keys;
  * Grid injects contributor_did/citing_did + tick at emit time.

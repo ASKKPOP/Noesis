@@ -135,6 +135,14 @@ class BrainHandler:
         self._last_sleep_tick: int = 0
         # Pending SLEEP_COMPLETED hash from async task (drained on next tick). D-16-Q1.
         self._pending_sleep_completed: str | None = None
+        # Phase 20 — Lore Commons (D-20-01, D-20-06, D-20-09)
+        _lore_capacity = int(getattr(memory, "lore_capacity", 50)) if memory is not None else 50
+        _lore_poll_interval = 30  # ticks between discovery polls (D-20-06)
+        self._lore_store: "Any | None" = None
+        self._lore_poll_interval: int = _lore_poll_interval
+        self._lore_capacity: int = _lore_capacity
+        self._pending_actions: list = []
+        # LoreStore initialized lazily on first on_tick() when memory._conn is available
 
     async def on_message(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle incoming P2P message → think → produce response actions.
@@ -179,6 +187,66 @@ class BrainHandler:
                     parent_hash=parent_hash,
                 )
             return []  # __skill_share is never a conversational reply
+
+        # Phase 20 LORE-02: lore response reception — Brain-internal, non-conversational.
+        # Format: __lore_response:{content_hash}:{base64_utf8_content}
+        _LORE_RESPONSE_PREFIX = "__lore_response:"
+        if text.startswith(_LORE_RESPONSE_PREFIX):
+            if self._lore_store is not None:
+                import hashlib as _hashlib
+                import base64 as _base64
+                rest = text[len(_LORE_RESPONSE_PREFIX):]
+                sep = rest.find(":")
+                if sep > 0:
+                    recv_hash = rest[:sep]
+                    try:
+                        raw_bytes = _base64.b64decode(rest[sep + 1:])
+                        raw_content = raw_bytes.decode("utf-8")
+                    except Exception:
+                        return []  # malformed — silent drop per Brain discipline
+                    # Verify sha256(content) == content_hash (D-20-05)
+                    computed = _hashlib.sha256(raw_bytes).hexdigest()
+                    if computed != recv_hash:
+                        return []  # hash mismatch — silent drop
+                    # Parse: content wire format is "{title}\n{body}"
+                    if "\n" in raw_content:
+                        title, body = raw_content.split("\n", 1)
+                    else:
+                        title, body = "Untitled", raw_content
+                    from noesis_brain.lore.types import LoreEntry as _LoreEntry
+                    entry = _LoreEntry(
+                        content_hash=recv_hash,
+                        contributor_did=sender_did,
+                        category_tag="observation",
+                        title=title.strip(),
+                        content=body.strip(),
+                        received_tick=0,
+                    )
+                    if not self._lore_store.has(recv_hash):
+                        self._lore_store.add(entry)
+            return []  # __lore_response is never a conversational reply
+
+        # Phase 20 LORE-02: lore request handling — serve content if held (D-20-07).
+        # Format: __lore_request:{content_hash}
+        _LORE_REQUEST_PREFIX = "__lore_request:"
+        if text.startswith(_LORE_REQUEST_PREFIX):
+            if self._lore_store is not None:
+                requested_hash = text[len(_LORE_REQUEST_PREFIX):]
+                entry = self._lore_store.retrieve_by_hash(requested_hash)
+                if entry is not None:
+                    import base64 as _base64
+                    wire_content = f"{entry.title}\n{entry.content}"
+                    b64_payload = _base64.b64encode(wire_content.encode("utf-8")).decode("ascii")
+                    response_text = f"__lore_response:{requested_hash}:{b64_payload}"
+                    _response_action = Action(
+                        action_type=ActionType.LORE_RESPONSE,
+                        metadata={
+                            "recipient_did": sender_did,
+                            "payload": response_text,
+                        },
+                    )
+                    self._pending_actions.append(_response_action)
+            return []  # __lore_request is never a conversational reply
 
         # 1. Update emotions based on message content
         self.thymos.apply_triggers(text)
@@ -555,6 +623,74 @@ class BrainHandler:
                     action_type=ActionType.IRIS_CONTEXT_INVOKED,
                     metadata={"belief_count": total_injected},
                 ).to_dict())
+
+        # Phase 20 LORE-02: lore discovery poll — every lore_poll_interval ticks (D-20-05/06).
+        # Initialize LoreStore on first tick if memory._conn available (lazy init).
+        if self._lore_store is None and self.memory is not None and hasattr(self.memory, "_conn"):
+            from noesis_brain.lore.store import LoreStore as _LoreStore
+            self._lore_store = _LoreStore(self.memory._conn, capacity=self._lore_capacity)
+
+        if self._lore_store is not None and (tick % self._lore_poll_interval) == 0:
+            import asyncio as _asyncio
+
+            def _make_lore_poll(
+                lore_store=self._lore_store,
+                t: int = tick,
+                did: str = self.did,
+                base_url: str = getattr(self, "_grid_base_url", ""),
+                pending_actions: list = self._pending_actions,
+            ) -> None:
+                async def _poll() -> None:
+                    import httpx as _httpx
+                    if not base_url:
+                        return
+                    try:
+                        async with _httpx.AsyncClient() as client:
+                            resp = await client.get(
+                                f"{base_url}/api/v1/grid/lore",
+                                params={"limit": "20"},
+                                timeout=5.0,
+                            )
+                            if resp.status_code != 200:
+                                return
+                            data = resp.json()
+                            entries = data.get("entries", [])
+                            for item in entries:
+                                content_hash = item.get("content_hash", "")
+                                contributor_did = item.get("contributor_did", "")
+                                if content_hash and not lore_store.has(content_hash):
+                                    _req_action = Action(
+                                        action_type=ActionType.LORE_REQUEST,
+                                        metadata={
+                                            "content_hash": content_hash,
+                                            "contributor_did": contributor_did,
+                                        },
+                                    )
+                                    pending_actions.append(_req_action)
+                    except Exception:
+                        pass  # Network errors are silent — discovery is best-effort
+
+                _asyncio.create_task(_poll())
+
+            _make_lore_poll()
+
+        # Phase 20 LORE-02: lore injection at prompt-build (D-20-02).
+        # Top-k lore entries by FTS5 relevance injected before directives.
+        lore_entries_for_prompt = None
+        if self._lore_store is not None:
+            _telos_text = str(getattr(self, "_telos", self.telos.describe() if self.telos else ""))
+            lore_entries_for_prompt = self._lore_store.retrieve(_telos_text, k=3)
+            for _le in lore_entries_for_prompt:
+                _cited_action = Action(
+                    action_type=ActionType.LORE_CITED,
+                    metadata={"content_hash": _le.content_hash},
+                )
+                self._pending_actions.append(_cited_action)
+
+        # Drain pending actions (lore response/request/cited queued above)
+        for _pa in self._pending_actions:
+            actions.append(_pa.to_dict())
+        self._pending_actions.clear()
 
         if actions:
             # Advisory logging (D-10a-06): drive-vs-action divergence is

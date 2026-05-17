@@ -19,7 +19,7 @@ export interface LoreEntryRow {
 export class LoreStorage {
     constructor(public readonly pool: Pool) {}
 
-    /** Insert or ignore lore.contributed entry. Swallows errors. */
+    /** Insert or ignore a lore contribution entry. Swallows errors. */
     async upsertContribution(
         gridName: string,
         contentHash: string,

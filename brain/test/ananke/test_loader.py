@@ -64,8 +64,9 @@ def test_action_type_drive_crossed_present() -> None:
     # ActionType member count grows with each phase:
     # 11 (Phase 12) + 2 (Phase 15: SKILL_LEARN, RULE_STORE)
     # + 3 (Phase 16: SKILL_SHARE, SLEEP_ENTERED, SLEEP_COMPLETED)
-    # + 4 (Phase 17: IRIS_*) + 3 (Phase 18: SKILL_TAUGHT, SKILL_INFERRED, SKILL_REJECTED) = 23
-    assert len(list(ActionType)) == 23
+    # + 4 (Phase 17: IRIS_*) + 3 (Phase 18: SKILL_TAUGHT, SKILL_INFERRED, SKILL_REJECTED)
+    # + 5 (Phase 20: LORE_CONTRIBUTE, LORE_CITED, LORE_DISCOVER, LORE_REQUEST, LORE_RESPONSE) = 28
+    assert len(list(ActionType)) == 28
 
 
 def test_action_type_drive_crossed_position() -> None:
