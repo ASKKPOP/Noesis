@@ -59,11 +59,13 @@ const EXPECTED_ORDER = [
     'skill.rejected',            // position 39 — Phase 18 SKILL-03 D-18-09
     'norm.candidate',            // position 40 — Phase 19 NORM-01 D-19-11
     'norm.crystallized',         // position 41 — Phase 19 NORM-01 D-19-11
+    'lore.contributed',          // position 42 — Phase 20 LORE-01 D-20-12
+    'lore.cited',                // position 43 — Phase 20 LORE-02 D-20-12
 ] as const;
 
 describe('broadcast allowlist — Phase 12 invariant (VOTE-01..04 D-12-01)', () => {
-    it('has exactly 41 entries (Phase 19 extended from 39 — NORM-01 +2 norm.* events)', () => {
-        expect(ALLOWLIST.size).toBe(41);
+    it('has exactly 43 entries (Phase 20 extended from 41 — LORE-01/02 +2 lore.* events)', () => {
+        expect(ALLOWLIST.size).toBe(43);
     });
 
     it('contains proposal.opened at position 23 (index 22)', () => {

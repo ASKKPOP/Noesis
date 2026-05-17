@@ -166,6 +166,11 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     // Both emitted ONLY via grid/src/norms/appendNormCandidate.ts and appendNormCrystallized.ts (D-19-06).
     'norm.candidate',    // (40) {convergence_type, fingerprint, participating_count, tick}
     'norm.crystallized', // (41) {convergence_type, evidence_tick_range, fingerprint, participating_count, tick}
+    // Phase 20 (LORE-01..02 / D-20-12) — Lore commons lifecycle events. Allowlist 41→43.
+    // Brain sends content_hash (+ category_tag for contributed); Grid injects contributor_did/citing_did + tick.
+    // Emitted ONLY via grid/src/lore/appendLoreContributed.ts and appendLoreCited.ts (D-20-12).
+    'lore.contributed', // (42) {category_tag, content_hash, contributor_did, tick}
+    'lore.cited',       // (43) {citing_did, content_hash, tick}
 ] as const;
 
 /**
@@ -404,7 +409,7 @@ export const WHISPER_FORBIDDEN_KEYS = Object.freeze([
  * Lore body text and title text are Brain-private and NEVER cross the Brain↔Grid wire. Only
  * content_hash (64-char hex) is permitted. Added before any lore emitter code lands.
  */
-export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content|message|utterance|plaintext|decrypted|payload_plain|description|rationale|proposal_text|law_text|body_text|weight|reputation|relationship_score|ousia_weight|belief_content|target_content|emotion_text|dimension_text|belief_prose|iris_content|ltm_content|concept_text|graph_data|episode_text|node_content|edge_content|skill_body|skill_text|rule_text|norm_text|fingerprint_text|rule_content|lore_body|lore_content|title_text|summary_text/i;
+export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content(?!_hash)|message|utterance|plaintext|decrypted|payload_plain|description|rationale|proposal_text|law_text|body_text|weight|reputation|relationship_score|ousia_weight|belief_content|target_content|emotion_text|dimension_text|belief_prose|iris_content|ltm_content|concept_text|graph_data|episode_text|node_content|edge_content|skill_body|skill_text|rule_text|norm_text|fingerprint_text|rule_content|lore_body|lore_content|title_text|summary_text/i;
 
 export interface PrivacyCheckResult {
     ok: boolean;

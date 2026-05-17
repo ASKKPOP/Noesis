@@ -9,9 +9,10 @@ import { describe, it, expect } from 'vitest';
 import { ALLOWLIST_MEMBERS } from '../../src/audit/broadcast-allowlist.js';
 
 describe('Phase 18 skill.* allowlist — post-Wave-3 (D-18-07)', () => {
-    it('allowlist is exactly 41 events after skill.* additions (Phase 19 added norm.candidate/norm.crystallized)', () => {
-        // Phase 18 added 39 events; Phase 19 (D-19-11) adds norm.candidate (40) + norm.crystallized (41).
-        expect((ALLOWLIST_MEMBERS as readonly string[]).length).toBe(41);
+    it('allowlist is exactly 43 events after lore.* additions (Phase 20 added lore.contributed/lore.cited)', () => {
+        // Phase 18 added 39 events; Phase 19 adds norm.candidate (40) + norm.crystallized (41);
+        // Phase 20 (D-20-12) adds lore.contributed (42) + lore.cited (43).
+        expect((ALLOWLIST_MEMBERS as readonly string[]).length).toBe(43);
     });
 
     it('skill.taught is at position 37 (index 36)', () => {
