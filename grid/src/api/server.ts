@@ -395,6 +395,13 @@ export function buildServerWithHub(
         });
     }
 
+    // --- Phase 21 CULTURE-01: Skill lineage endpoint ---
+    // Always registered — audit chain is always present (unconditional, no optional guard).
+    void app.register(async (instance) => {
+        const { registerCultureRoutes } = await import('./routes/culture.js');
+        await registerCultureRoutes(instance, services.audit);
+    });
+
     // --- Phase 12 Wave 3: Governance proposal/ballot routes ---
     // Registered only when governance deps are provided (optional for legacy tests).
     if (services.governance && services.registry) {
