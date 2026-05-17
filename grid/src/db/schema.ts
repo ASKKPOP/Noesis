@@ -172,4 +172,24 @@ export const MIGRATIONS: Migration[] = [
             DROP TABLE IF EXISTS norm_registry
         `,
     },
+    {
+        version: 8,
+        name: 'create_lore_commons',
+        up: `
+            CREATE TABLE IF NOT EXISTS lore_commons (
+                grid_name        VARCHAR(63)  NOT NULL,
+                content_hash     CHAR(64)     NOT NULL,
+                contributor_did  VARCHAR(255) NOT NULL,
+                title_hash       CHAR(64)     NOT NULL,
+                category_tag     VARCHAR(32)  NOT NULL,
+                citation_count   INT UNSIGNED NOT NULL DEFAULT 0,
+                contributed_tick INT UNSIGNED NOT NULL,
+                PRIMARY KEY (grid_name, content_hash),
+                INDEX idx_category    (grid_name, category_tag),
+                INDEX idx_contributor (grid_name, contributor_did),
+                INDEX idx_tick        (grid_name, contributed_tick)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS lore_commons`,
+    },
 ];
