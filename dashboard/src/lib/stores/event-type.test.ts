@@ -33,6 +33,11 @@ const cases: ReadonlyArray<{ input: string; expected: EventCategory }> = [
     { input: 'grid.stopped', expected: 'lifecycle' },
     { input: 'tick', expected: 'lifecycle' },
 
+    // culture — prefix match on 'skill.', 'norm.', 'lore.'
+    { input: 'skill.taught', expected: 'culture' },
+    { input: 'norm.candidate', expected: 'culture' },
+    { input: 'lore.contributed', expected: 'culture' },
+
     // other — fall-through (unknown future types, empty string)
     { input: 'something.unknown', expected: 'other' },
     { input: '', expected: 'other' },
@@ -47,8 +52,8 @@ describe('categorizeEventType', () => {
         expect(categorizeEventType('trade.proposed')).toBe(categorizeEventType('trade.proposed'));
     });
 
-    it('exposes ALL_CATEGORIES as the 5 filterable UI categories', () => {
-        expect([...ALL_CATEGORIES]).toEqual(['trade', 'message', 'movement', 'law', 'lifecycle']);
+    it('exposes ALL_CATEGORIES as the 6 filterable UI categories', () => {
+        expect([...ALL_CATEGORIES]).toEqual(['trade', 'message', 'movement', 'law', 'lifecycle', 'culture']);
     });
 
     it('ALL_CATEGORIES is frozen (immutable at runtime)', () => {

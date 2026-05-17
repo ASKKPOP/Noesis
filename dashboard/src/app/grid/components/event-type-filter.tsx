@@ -28,6 +28,7 @@ const DOT: Record<EventCategory, string> = {
     movement: 'bg-blue-400',
     law: 'bg-pink-400',
     lifecycle: 'bg-neutral-400',
+    culture: 'bg-emerald-400',
     other: 'bg-neutral-700',
 };
 

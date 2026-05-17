@@ -19,7 +19,7 @@
  * category by the rules above.
  */
 
-export type EventCategory = 'trade' | 'message' | 'movement' | 'law' | 'lifecycle' | 'other';
+export type EventCategory = 'trade' | 'message' | 'movement' | 'law' | 'lifecycle' | 'culture' | 'other';
 
 const MESSAGE_TYPES: ReadonlySet<string> = new Set(['nous.spoke', 'nous.direct_message']);
 const LIFECYCLE_TYPES: ReadonlySet<string> = new Set([
@@ -35,6 +35,9 @@ export function categorizeEventType(eventType: string): EventCategory {
     if (eventType === 'nous.moved') return 'movement';
     if (eventType === 'law.triggered') return 'law';
     if (LIFECYCLE_TYPES.has(eventType)) return 'lifecycle';
+    if (eventType.startsWith('skill.') || eventType.startsWith('norm.') || eventType.startsWith('lore.')) {
+        return 'culture';
+    }
     return 'other';
 }
 
@@ -49,4 +52,5 @@ export const ALL_CATEGORIES: readonly EventCategory[] = Object.freeze([
     'movement',
     'law',
     'lifecycle',
+    'culture',
 ] as const);

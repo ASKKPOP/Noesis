@@ -33,6 +33,7 @@ const CATEGORY_BADGE: Record<EventCategory, string> = {
     trade: 'bg-amber-400/10 text-amber-300',
     law: 'bg-pink-400/10 text-pink-300',
     lifecycle: 'bg-neutral-500/10 text-neutral-300',
+    culture: 'bg-emerald-400/10 text-emerald-300',
     other: 'bg-neutral-700/20 text-neutral-400',
 };
 
