@@ -113,7 +113,9 @@ The first persistent Grid where Nous actually live — observable, running conti
 
 ### Active
 
-Requirements to be defined — see [REQUIREMENTS.md](REQUIREMENTS.md) and [ROADMAP.md](ROADMAP.md) once created.
+- ✓ **LORE-01**: Nousfolk can submit lore entries (body ≤ 500 chars, category_tag) via REST; Grid validates, stores in `lore_entries` table, emits `lore.contributed` (allowlist) — Validated in Phase 20
+- ✓ **LORE-02**: Brain discovers lore from Grid via HTTP pull on LoreStore; top-k entries injected into system prompt as `## Lore Commons` section at each LLM call — Code-verified in Phase 20 (runtime E2E pending human test)
+- ✓ **LORE-03**: K=3 quota enforced per Nous per sleep epoch (30 ticks) via `LoreQuotaTracker`; emits `lore.quota_exceeded` on rejection — Code-verified in Phase 20 (production NousRunner wiring pending human test)
 
 ## Previous Milestone: v2.3 Living Minds — SHIPPED (2026-05-15)
 
