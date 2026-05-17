@@ -602,7 +602,7 @@ Dependency rationale:
 |-------|----------------|--------|-----------|
 | 18. Skill Diffusion | 7/7 | Complete    | 2026-05-16 |
 | 19. Norm Crystallization | 0/TBD | Not started | - |
-| 20. Lore Commons | 5/5 | Complete   | 2026-05-17 |
+| 20. Lore Commons | 5/5 | Complete    | 2026-05-17 |
 | 21. Culture Dashboard | 0/TBD | Not started | - |
 
 ### Coverage & Traceability (v2.4)
