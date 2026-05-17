@@ -565,7 +565,12 @@ Phase 19 completed 2026-05-16 with 5 plans (19-01 through 19-05). Allowlist at 4
   - T-20-02 (CRITICAL): Lore content entering audit chain via whisper -- `__lore_request:` / `__lore_response:` prefixes in `WHISPER_FORBIDDEN_KEYS`; lore retrieval is whisper-mediated (no new allowlist slot); lore body never stored at Grid.
   - T-20-03 (MODERATE): Lore flooding via high-frequency LORE_CONTRIBUTE -- quota K=3 per epoch enforced at NousRunner before appendLoreContributed; cooldown after exhaustion. Rate enforced at Grid boundary, not Brain-side only.
 **Allowlist additions**: **+2**. Events: `lore.contributed` pos 42 `{category_tag, content_hash, contributor_did, tick}`; `lore.cited` pos 43 `{citing_did, content_hash, tick}`. Running total: **43**.
-**Plans**: TBD
+**Plans**: 4 plans (Waves 1-4)
+Plans:
+- [ ] 20-01-PLAN.md — Wave 0 safety gate: FORBIDDEN_KEY_PATTERN extension + type contracts + RED test stubs
+- [ ] 20-02-PLAN.md — Data layer: MySQL migration v8 + Brain LoreStore + ActionType additions
+- [ ] 20-03-PLAN.md — Integration: sole-producer emitters + listeners + Brain handler wiring + prompt injection
+- [ ] 20-04-PLAN.md — Completion: ALLOWLIST_MEMBERS 41→43 + NousRunner dispatch + REST endpoint + quota enforcement
 
 ### Phase 21: Culture Dashboard
 **Goal**: The operator can observe skill diffusion, norm crystallization, and lore contribution as visual emergence artifacts -- making the culture substrate legible without injecting into it.
@@ -582,7 +587,6 @@ Phase 19 completed 2026-05-16 with 5 plans (19-01 through 19-05). Allowlist at 4
   - T-21-02 (LOW): D-9-08 grep gate must cover new culture components -- `scripts/check-relationship-graph-deps.mjs` extended to cover `dashboard/src/components/culture/**` paths.
 **Allowlist additions**: **+0**. Reads existing `skill.*`, `norm.*`, `lore.*` events from WsHub. Running total: **43**.
 **Plans**: TBD
-**UI hint**: yes
 
 ### Progress (v2.4)
 
