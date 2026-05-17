@@ -848,7 +848,7 @@ export class NousRunner {
                     const contentHash = typeof md['content_hash'] === 'string' ? md['content_hash'] : null;
                     if (contentHash === null) {
                         console.warn(JSON.stringify({
-                            event: 'lore.cited.malformed_metadata',
+                            event: 'lore_cited.malformed_metadata',
                             did: this.nousDid,
                             tick,
                         }));
