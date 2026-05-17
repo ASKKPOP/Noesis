@@ -22,6 +22,7 @@ import { appendBiosBirth } from '../bios/index.js';
 import { GovernanceEngine } from '../governance/engine.js';
 import { createInMemoryStore } from '../governance/store.js';
 import type { GovernanceStore } from '../governance/store.js';
+import { LoreQuotaTracker } from '../lore/LoreQuotaTracker.js';
 import { GENESIS_SHOPS } from './presets.js';
 import type { GenesisConfig, GridState } from './types.js';
 
@@ -103,6 +104,14 @@ export class GenesisLauncher {
      */
     readonly governance: GovernanceEngine;
     readonly governanceStore: GovernanceStore;
+    /**
+     * Phase 20 LORE-03 (D-20-03): LoreQuotaTracker — enforces K=3 lore contributions
+     * per Nous per sleep epoch (30 ticks). Constructed once at launcher creation.
+     *
+     * Exposed as public readonly so callers can inject it as:
+     *   new NousRunner(config, { loreDeps: { quotaTracker: launcher.loreQuotaTracker } })
+     */
+    readonly loreQuotaTracker: LoreQuotaTracker;
     readonly gridName: string;
     readonly gridDomain: string;
 
@@ -158,6 +167,10 @@ export class GenesisLauncher {
         // it is available by the time bootstrap() wires the clock.onTick callback.
         this.governanceStore = createInMemoryStore(config.gridName);
         this.governance = new GovernanceEngine(this.audit, this.governanceStore, this.registry, this.logos);
+        // Phase 20 LORE-03 (D-20-03): Construct LoreQuotaTracker at Grid startup so
+        // NousRunner can receive loreDeps: { quotaTracker: this.loreQuotaTracker } and
+        // enforce K=3 per epoch. Default k=3, epochLength=30 (D-20-03/D-20-13).
+        this.loreQuotaTracker = new LoreQuotaTracker();
     }
 
     /**
