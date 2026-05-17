@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Active)
-status: planning
-stopped_at: Phase 20 context gathered
-last_updated: "2026-05-17T01:26:03.745Z"
+status: ready_to_execute
+stopped_at: Phase 20 planned — 4 plans ready
+last_updated: "2026-05-16T00:00:00.000Z"
 last_activity: 2026-05-16
 progress:
   total_phases: 22
   completed_phases: 11
-  total_plans: 66
+  total_plans: 70
   completed_plans: 66
-  percent: 100
+  percent: 94
 ---
 
 # Project State
@@ -22,13 +22,13 @@ See: .planning/PROJECT.md (updated 2026-05-16)
 
 **Core value:** The first persistent Grid where Nous actually live — observable, running continuously, with real cognitive cycles, real trades, and real social dynamics emerging from the systems.
 **Current milestone:** v2.4 — Agora (Emergence & Culture: skill diffusion, norm crystallization, lore commons, culture dashboard)
-**Current focus:** Phase 19 — norm-crystallization
+**Current focus:** Phase 20 — lore-commons
 
 ## Current Position
 
 Phase: 20
-Plan: 0 of TBD complete
-Status: Phase 19 shipped — ready for Phase 20 planning
+Plan: 0 of 4 complete
+Status: Phase 20 planned — ready to execute (4 plans, 4 waves)
 Last activity: 2026-05-16
 
 Progress: [████░░░░░░] 50% (2/4 phases complete)
@@ -156,7 +156,7 @@ Phase 15-17 shipped with all Brain-private invariants intact. Key carry-forwards
 
 ## Session Continuity
 
-Last session: 2026-05-17T01:26:03.741Z
-Stopped at: Phase 20 context gathered
-Resume file: .planning/phases/20-lore-commons/20-CONTEXT.md
-Next action: /gsd-plan-phase 20 (Lore Commons)
+Last session: 2026-05-16T00:00:00.000Z
+Stopped at: Phase 20 planned — 4 plans verified and ready
+Resume file: .planning/phases/20-lore-commons/20-01-PLAN.md
+Next action: /gsd-execute-phase 20 (Lore Commons)
