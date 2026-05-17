@@ -1,11 +1,11 @@
 'use client';
 /**
- * TabBar — two-tab WAI-ARIA tablist driving `/grid` view selection.
- * Active tab is derived from the `?tab=` querystring, kept in sync via
- * `router.replace(...)` so browser back-button does not accumulate a history
- * entry per tab click (operator is navigating a single dev view, not
- * browsing pages). Keyboard navigation follows the activate-on-focus
- * pattern because 2 tabs makes roving-tabindex + manual activation overkill.
+ * TabBar — three-tab WAI-ARIA tablist driving `/grid` view selection.
+ * Active tab is derived from the `?tab=` querystring for in-page tabs
+ * (firehose/economy), kept in sync via `router.replace(...)` so browser
+ * back-button does not accumulate a history entry per tab click.
+ * The 'culture' tab navigates to `/grid/culture` via `router.push`.
+ * Keyboard navigation follows the activate-on-focus pattern.
  *
  * Per UI-SPEC §Interaction Contract:
  *   - `role="tablist"` container, each tab `role="tab"` + `aria-selected`
@@ -14,10 +14,10 @@
  *     once and keyboard users arrow within it
  */
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useCallback, useRef, type KeyboardEvent } from 'react';
 
-type Tab = 'firehose' | 'economy';
+type Tab = 'firehose' | 'economy' | 'culture';
 
 interface TabDef {
     readonly id: Tab;
@@ -28,20 +28,27 @@ interface TabDef {
 const TABS: readonly TabDef[] = [
     { id: 'firehose', label: 'Firehose + Map', testId: 'tab-firehose' },
     { id: 'economy', label: 'Economy', testId: 'tab-economy' },
+    { id: 'culture', label: 'Culture', testId: 'tab-culture' },
 ];
 
-function resolveActive(paramValue: string | null): Tab {
+function resolveActive(paramValue: string | null, pathname: string): Tab {
+    if (pathname === '/grid/culture') return 'culture';
     return paramValue === 'economy' ? 'economy' : 'firehose';
 }
 
 export function TabBar(): React.ReactElement {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const active = resolveActive(searchParams.get('tab'));
+    const pathname = usePathname();
+    const active = resolveActive(searchParams.get('tab'), pathname);
     const refs = useRef<Map<Tab, HTMLButtonElement>>(new Map());
 
     const activate = useCallback(
         (tab: Tab): void => {
+            if (tab === 'culture') {
+                router.push('/grid/culture');
+                return;
+            }
             const params = new URLSearchParams(searchParams.toString());
             if (tab === 'economy') {
                 params.set('tab', 'economy');

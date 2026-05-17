@@ -13,27 +13,33 @@ import { TabBar } from './tab-bar';
 
 // Mutable mocks the test body rewrites per-case.
 const mockReplace = vi.fn();
+const mockPush = vi.fn();
 let mockSearchParamsStr = '';
+let mockPathname = '/grid';
 
 vi.mock('next/navigation', () => ({
-    useRouter: () => ({ replace: mockReplace }),
+    useRouter: () => ({ replace: mockReplace, push: mockPush }),
     useSearchParams: () => new URLSearchParams(mockSearchParamsStr),
+    usePathname: () => mockPathname,
 }));
 
 beforeEach(() => {
     mockReplace.mockReset();
+    mockPush.mockReset();
     mockSearchParamsStr = '';
+    mockPathname = '/grid';
 });
 
 describe('TabBar — structure and a11y', () => {
-    it('renders a tablist with exactly two tabs', () => {
+    it('renders a tablist with exactly three tabs', () => {
         render(<TabBar />);
         const tablist = screen.getByRole('tablist');
         expect(tablist).not.toBeNull();
         const tabs = screen.getAllByRole('tab');
-        expect(tabs).toHaveLength(2);
+        expect(tabs).toHaveLength(3);
         expect(screen.getByTestId('tab-firehose')).not.toBeNull();
         expect(screen.getByTestId('tab-economy')).not.toBeNull();
+        expect(screen.getByTestId('tab-culture')).not.toBeNull();
     });
 });
 
@@ -68,6 +74,14 @@ describe('TabBar — click behaviour', () => {
         // Empty-string querystring = no params = default firehose view
         expect(mockReplace).toHaveBeenCalledWith('?');
     });
+
+    it('clicking Culture calls router.push with /grid/culture', () => {
+        render(<TabBar />);
+        fireEvent.click(screen.getByTestId('tab-culture'));
+        expect(mockPush).toHaveBeenCalledTimes(1);
+        expect(mockPush).toHaveBeenCalledWith('/grid/culture');
+        expect(mockReplace).not.toHaveBeenCalled();
+    });
 });
 
 describe('TabBar — keyboard navigation', () => {
@@ -86,10 +100,10 @@ describe('TabBar — keyboard navigation', () => {
         expect(mockReplace).toHaveBeenCalledWith('?');
     });
 
-    it('End key activates the last tab', () => {
+    it('End key activates the last tab (Culture)', () => {
         render(<TabBar />);
         const tablist = screen.getByRole('tablist');
         fireEvent.keyDown(tablist, { key: 'End' });
-        expect(mockReplace).toHaveBeenCalledWith('?tab=economy');
+        expect(mockPush).toHaveBeenCalledWith('/grid/culture');
     });
 });
