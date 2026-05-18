@@ -195,6 +195,11 @@ export class NousRegistry {
         // no-op — the record stays for audit retention.
     }
 
+    /** Returns true if the given DID has been tombstoned (status === 'deleted'). */
+    isTombstoned(did: string): boolean {
+        return this.records.get(did)?.status === 'deleted';
+    }
+
     /** List all active Nous. */
     active(): NousRecord[] {
         return [...this.records.values()].filter(r => r.status === 'active');

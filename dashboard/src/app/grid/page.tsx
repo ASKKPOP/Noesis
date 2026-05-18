@@ -16,6 +16,7 @@
  * on the server, not leaked through the props of the client shell.
  */
 
+import React, { Suspense } from 'react';
 import { GridClient } from './grid-client';
 import type { Region, RegionConnection } from '@/lib/protocol/region-types';
 
@@ -46,10 +47,12 @@ export default async function GridPage(): Promise<React.ReactElement> {
         initialError = err instanceof Error ? err.message : 'Unknown fetch error';
     }
     return (
-        <GridClient
-            origin={origin}
-            initialRegions={initial}
-            initialError={initialError}
-        />
+        <Suspense>
+            <GridClient
+                origin={origin}
+                initialRegions={initial}
+                initialError={initialError}
+            />
+        </Suspense>
     );
 }

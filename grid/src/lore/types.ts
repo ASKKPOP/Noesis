@@ -13,12 +13,14 @@ export interface LoreContributedPayload {
     content_hash: string;
     contributor_did: string;
     tick: number;
+    [key: string]: unknown;
 }
 
 export interface LoreCitedPayload {
     citing_did: string;      // alphabetical — locked by D-20-12
     content_hash: string;
     tick: number;
+    [key: string]: unknown;
 }
 
 /** Alphabetically sorted key tuples — locked by D-20-12. */

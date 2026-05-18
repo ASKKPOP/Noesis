@@ -15,14 +15,22 @@
  */
 
 import { useSyncExternalStore } from 'react';
-import { useStores } from '@/app/grid/use-stores';
+import { useContext } from 'react';
+import { StoresContext } from '@/app/grid/use-stores';
+import { HeartbeatStore } from '@/lib/stores/heartbeat-store';
+
+// Fallback store used when no StoresProvider is present (SSR prerender path).
+// Returns tick=0, subscribe is a no-op so React never re-renders from it.
+const _fallback = new HeartbeatStore();
 
 /**
- * Returns the current grid tick (0 before first observation).
+ * Returns the current grid tick (0 before first observation, 0 during SSR).
+ * Safe to call outside <StoresProvider> — falls back to tick=0 without throwing.
  * Mocked in unit tests via vi.mock('@/lib/stores/tick-store').
  */
 export function useTick(): number {
-    const { heartbeat } = useStores();
+    const ctx = useContext(StoresContext);
+    const heartbeat = ctx?.heartbeat ?? _fallback;
     const snap = useSyncExternalStore(
         heartbeat.subscribe.bind(heartbeat),
         heartbeat.getSnapshot.bind(heartbeat),

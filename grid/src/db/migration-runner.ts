@@ -16,10 +16,21 @@ export class MigrationRunner {
      * Apply all pending migrations.
      * Returns the number of migrations applied.
      */
+    /** Execute a possibly multi-statement SQL block by splitting on ';' boundaries. */
+    private async executeBlock(sql: string): Promise<void> {
+        const statements = sql
+            .split(';')
+            .map(s => s.trim())
+            .filter(s => s.length > 0);
+        for (const stmt of statements) {
+            await this.db.execute(stmt);
+        }
+    }
+
     async run(): Promise<number> {
         // Migration 1 creates the migrations table — run it unconditionally
         // (CREATE TABLE IF NOT EXISTS is idempotent).
-        await this.db.execute(MIGRATIONS[0].up);
+        await this.executeBlock(MIGRATIONS[0].up);
 
         const applied = await this.getApplied();
         let count = 0;
@@ -27,7 +38,7 @@ export class MigrationRunner {
         for (const migration of MIGRATIONS) {
             if (applied.has(migration.version)) continue;
 
-            await this.db.execute(migration.up);
+            await this.executeBlock(migration.up);
             await this.db.execute(
                 `INSERT INTO grid_migrations (version, name) VALUES (?, ?)`,
                 [migration.version, migration.name],
@@ -50,7 +61,7 @@ export class MigrationRunner {
             .sort((a, b) => b.version - a.version);   // highest first
 
         for (const migration of toRollback) {
-            await this.db.execute(migration.down);
+            await this.executeBlock(migration.down);
             await this.db.execute(
                 `DELETE FROM grid_migrations WHERE version = ?`,
                 [migration.version],

@@ -40,9 +40,7 @@ export function initSodium(): Promise<typeof sodium> {
     return _readyPromise;
 }
 
-// Top-level await: ensures sodium is ready before any synchronous export is used.
-// This allows test code to call synchronous functions immediately after dynamic import().
-await initSodium();
+// Callers must await initSodium() before using any synchronous function in this module.
 
 // ── SHA-256 helper (Node built-in; libsodium-wrappers non-sumo lacks crypto_hash_sha256) ──
 
@@ -111,8 +109,8 @@ export function deriveNonce(senderPrivSeed: Uint8Array, tick: number, counter: n
     input.set(senderPrivSeed, 0);
     input.set(tickBuf, senderPrivSeed.length);
     input.set(ctrBuf, senderPrivSeed.length + 8);
-    // crypto_generichash = blake2b; 24-byte output
-    return sodium.crypto_generichash(24, input);
+    // crypto_generichash = blake2b; 24-byte output; null key = keyless BLAKE2b
+    return sodium.crypto_generichash(24, input, null);
 }
 
 // ── AEAD encrypt / decrypt ────────────────────────────────────────────────────

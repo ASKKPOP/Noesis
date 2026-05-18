@@ -31,8 +31,9 @@ COPY --from=builder /opt/venv /opt/venv
 COPY brain/src ./src
 COPY brain/data ./data
 
-# Create sockets dir (overridden by volume)
-RUN mkdir -p /sockets
+# Create sockets dir with world-write so the nous user can create socket files
+# even when a Docker named volume (owned root:root) is mounted over it.
+RUN mkdir -p /sockets && chmod 777 /sockets
 
 # Non-root user
 RUN groupadd -r noesis && useradd -r -g noesis nous

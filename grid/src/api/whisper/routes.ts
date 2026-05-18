@@ -91,7 +91,7 @@ export const whisperRoutes: FastifyPluginAsync<{ deps: WhisperRouteDeps }> = asy
     // POST /api/v1/nous/:did/whisper/send
     // Rate-limited at 60/min per sender DID via @fastify/rate-limit route config.
     // Parent app must have registered @fastify/rate-limit at top level.
-    fastify.post<{ Params: { did: string } }>(
+    fastify.post<{ Params: { did: string }; Body: Record<string, unknown> }>(
         '/api/v1/nous/:did/whisper/send',
         {
             config: {
@@ -102,7 +102,7 @@ export const whisperRoutes: FastifyPluginAsync<{ deps: WhisperRouteDeps }> = asy
                 },
             },
         },
-        sendHandler(deps),
+        sendHandler(deps) as never,
     );
 
     // GET /api/v1/nous/:did/whispers/pending — no rate limit (loopback pull only).
@@ -113,10 +113,10 @@ export const whisperRoutes: FastifyPluginAsync<{ deps: WhisperRouteDeps }> = asy
     );
 
     // POST /api/v1/nous/:did/whispers/ack — no rate limit (loopback ack only).
-    fastify.post<{ Params: { did: string } }>(
+    fastify.post<{ Params: { did: string }; Body: Record<string, unknown> }>(
         '/api/v1/nous/:did/whispers/ack',
         { config: { rateLimit: false } },
-        ackHandler(deps),
+        ackHandler(deps) as never,
     );
 
     // GET /api/v1/whispers/metrics — no rate limit (operator monitoring).

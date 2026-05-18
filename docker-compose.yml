@@ -48,7 +48,7 @@ services:
     volumes:
       - sockets:/sockets
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
       interval: 15s
       timeout: 5s
       retries: 5

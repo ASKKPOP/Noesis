@@ -237,6 +237,91 @@ export interface BrainActionIrisPriorSeeded {
     };
 }
 
+/**
+ * Phase 18 D-18-09: Skill lifecycle actions (brain-private teach/infer/reject).
+ * Grid injects learner_did + tick; Brain sends 1-3 keys in metadata.
+ * Sole producers: grid/src/skills/append*.ts.
+ */
+export interface BrainActionSkillTaught {
+    readonly action_type: 'skill_taught';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly skill_hash: string;
+        readonly teacher_did: string;
+        readonly parent_hash: string;
+        readonly [key: string]: unknown;
+    };
+}
+
+export interface BrainActionSkillInferred {
+    readonly action_type: 'skill_inferred';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly skill_hash: string;
+        readonly source_event_hash: string;
+        readonly [key: string]: unknown;
+    };
+}
+
+export interface BrainActionSkillRejected {
+    readonly action_type: 'skill_rejected';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly rejection_reason: string;
+        readonly [key: string]: unknown;
+    };
+}
+
+/**
+ * Phase 20 D-20-12: Lore Commons actions.
+ * Grid injects contributor_did/citing_did + tick; Brain sends 1-2 keys.
+ * lore_request / lore_response are logged-only; primary path is Brain HTTP-poll (D-20-11).
+ */
+export interface BrainActionLoreContribute {
+    readonly action_type: 'lore_contribute';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly content_hash: string;
+        readonly category_tag: string;
+        readonly [key: string]: unknown;
+    };
+}
+
+export interface BrainActionLoreCited {
+    readonly action_type: 'lore_cited';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly content_hash: string;
+        readonly [key: string]: unknown;
+    };
+}
+
+export interface BrainActionLoreRequest {
+    readonly action_type: 'lore_request';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly content_hash: string;
+        readonly contributor_did: string;
+        readonly [key: string]: unknown;
+    };
+}
+
+export interface BrainActionLoreResponse {
+    readonly action_type: 'lore_response';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly recipient_did: string;
+        readonly [key: string]: unknown;
+    };
+}
+
 export type BrainAction =
     | SpeakAction
     | DirectMessageAction
@@ -252,7 +337,14 @@ export type BrainAction =
     | BrainActionIrisBeliefRevised
     | BrainActionIrisContextInvoked
     | BrainActionIrisContradictionDetected
-    | BrainActionIrisPriorSeeded;
+    | BrainActionIrisPriorSeeded
+    | BrainActionSkillTaught
+    | BrainActionSkillInferred
+    | BrainActionSkillRejected
+    | BrainActionLoreContribute
+    | BrainActionLoreCited
+    | BrainActionLoreRequest
+    | BrainActionLoreResponse;
 
 export interface MessageParams {
     sender_name: string;
