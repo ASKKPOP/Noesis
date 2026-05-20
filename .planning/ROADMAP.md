@@ -18,13 +18,13 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
 
 ## Phases (v2.5 Human Portal — Active)
 
-- [ ] **Phase 22: Web3 Identity** — SIWE (Sign-In With Ethereum) auth, MetaMask/WalletConnect, human DID issuance (`did:noesis:human:<address>`), `human_users` MySQL table, JWT session layer. Allowlist 43→44 (+1: human.joined).
+- [x] **Phase 22: Web3 Identity** — SIWE (Sign-In With Ethereum) auth, MetaMask/WalletConnect, human DID issuance (`did:noesis:human:<address>`), `human_users` MySQL table, JWT session layer. Allowlist 43→44 (+1: human.joined). (completed 2026-05-20)
   **Plans**: 4 plans
   Plans:
   - [x] 22-01-PLAN.md — Grid: human_users migration (v9) + HumanRegistry service
   - [x] 22-02-PLAN.md — Grid: SIWE auth endpoints + JWT issuance + human.joined emitter
   - [x] 22-03-PLAN.md — Dashboard: wagmi provider + wallet connect UI + portal layout
-  - [ ] 22-04-PLAN.md — Dashboard: SIWE sign-in flow + auth store + Next.js middleware
+  - [x] 22-04-PLAN.md — Dashboard: SIWE sign-in flow + auth store + Next.js middleware
 - [ ] **Phase 23: Cyber Coin Wallet** — EVM on-chain balance display (USDT/ETH), ethers.js/wagmi integration, wallet connect UI, send/receive Cyber Coin, transaction history. Allowlist 44→45 (+1: human.transferred).
 - [ ] **Phase 24: Portal Shell** — `/portal/*` route namespace in Next.js dashboard, navigation, user profile page, region presence display, portal layout separate from Steward Console.
 - [ ] **Phase 25: Sophia Onboarding** — Fast-proxy LLM chat (out-of-tick), goal-setting wizard, animated world introduction, Sophia as guide persona, first-time user flow with welcome Cyber Coin allocation.
