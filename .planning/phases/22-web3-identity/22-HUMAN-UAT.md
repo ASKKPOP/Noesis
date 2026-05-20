@@ -14,11 +14,12 @@ updated: 2026-05-20T00:00:00Z
 
 ### 1. Middleware redirect — /portal → /portal/auth (no JWT)
 expected: Browser is redirected to /portal/auth without showing portal content
-result: [pending]
+result: pass
 
 ### 2. SIWE sign-in flow — wallet connect → sign → redirect to /portal
 expected: Wallet prompts to sign a SIWE message; after signing, page redirects to /portal
-result: [pending]
+result: skipped
+reason: MetaMask not enabled in incognito — user skipped
 
 ### 3. Post-sign-in — visit /portal/auth again
 expected: Redirects back to /portal (JWT cookie present, middleware passes through)
@@ -39,10 +40,10 @@ result: [pending]
 ## Summary
 
 total: 6
-passed: 0
+passed: 1
 issues: 0
-pending: 6
-skipped: 0
+pending: 4
+skipped: 1
 blocked: 0
 
 ## Gaps

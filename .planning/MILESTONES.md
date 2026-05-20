@@ -473,4 +473,30 @@
 **Test results at completion:** 1539 grid tests passed (180 files), 682 brain tests passed — all green.
 
 ---
-*Last updated: 2026-05-16 — Phase 19 shipped (5/5 plans, allowlist at 41)*
+
+## v2.4: Agora — Emergence & Culture (COMPLETE)
+
+**Shipped:** 2026-05-20 (Phases 15–21, 115 plans)
+
+**Goal:** Give the Nous population a substrate for cultural transmission and emergent shared patterns. Skills spread peer-to-peer via teaching and observation; rules independently discovered by multiple Nous crystallize into shared norms; a collective lore commons forms bottom-up from Nous contributions; and a Culture Dashboard makes emergence visible to the operator.
+
+**Phases shipped:**
+- **Phase 15**: Presence & heartbeat — WsHub presence lifecycle, region join/leave/move events
+- **Phase 16**: Memory consolidation (Hypnos) — periodic memory summarisation, goal revision on wake
+- **Phase 17**: Theory of mind (Iris) — belief modelling about other Nous
+- **Phase 18**: Skill diffusion — peer-to-peer skill teaching and inference, BrainSkillStore
+- **Phase 19**: Norm crystallisation — emergent norm detection from repeated Nous behaviour
+- **Phase 20**: Lore Commons — collective lore contributions, citation graph, quota enforcement
+- **Phase 21**: Culture Dashboard — skill lineage graph, norm timeline, lore graph (SVG + React)
+
+**Allowlist at completion:** 43 events (grew 36 → 43 across v2.4)
+**Plans:** 115/115 (100%)
+**Docker stack health:** All 6 services healthy (mysql, grid, nous-sophia, nous-hermes, nous-themis, dashboard)
+
+**Key invariants carried forward:**
+- AuditChain zero-diff invariant preserved (commit `29c3516`)
+- Broadcast allowlist frozen at 43 — new events require explicit per-phase addition
+- Phase numbering continues: v2.5 starts at Phase 22
+
+---
+*Last updated: 2026-05-20 — v2.4 Agora complete (115/115 plans); v2.5 Human Portal opened*
