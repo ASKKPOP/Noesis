@@ -491,7 +491,7 @@ function PortalAuthPage() {
                             color: 'rgba(245,240,234,0.55)',
                             lineHeight: 1.4,
                         }}>
-                            Phase 22 · Genesis Grid. Your session is end-to-end encrypted.
+                            By entering the Genesis Grid, you agree to the Grid Charter and the Laws of Themis.
                         </span>
                     </div>
                 </div>
