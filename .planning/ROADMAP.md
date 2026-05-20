@@ -13,7 +13,25 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
 - ✅ **v2.1 Steward Console — Phases 5-8** (shipped 2026-04-21, 18/18 plans)
 - ✅ **v2.2 Living Grid — Phases 9-14** (shipped 2026-04-28, 44/44 plans)
 - ✅ **v2.3 Living Minds — Phases 15-17** (shipped 2026-05-15, 16/16 plans)
-- 🔄 **v2.4 Agora — Phases 18-21** (opened 2026-05-16)
+- ✅ **v2.4 Agora — Phases 18-21** (shipped 2026-05-20, 115/115 plans)
+- 🔄 **v2.5 Human Portal — Phases 22-29** (opened 2026-05-20)
+
+## Phases (v2.5 Human Portal — Active)
+
+- [ ] **Phase 22: Web3 Identity** — SIWE (Sign-In With Ethereum) auth, MetaMask/WalletConnect, human DID issuance (`did:noesis:human:<address>`), `human_users` MySQL table, JWT session layer. Allowlist 43→44 (+1: human.joined).
+  **Plans**: 4 plans
+  Plans:
+  - [ ] 22-01-PLAN.md — Grid: human_users migration (v9) + HumanRegistry service
+  - [ ] 22-02-PLAN.md — Grid: SIWE auth endpoints + JWT issuance + human.joined emitter
+  - [ ] 22-03-PLAN.md — Dashboard: wagmi provider + wallet connect UI + portal layout
+  - [ ] 22-04-PLAN.md — Dashboard: SIWE sign-in flow + auth store + Next.js middleware
+- [ ] **Phase 23: Cyber Coin Wallet** — EVM on-chain balance display (USDT/ETH), ethers.js/wagmi integration, wallet connect UI, send/receive Cyber Coin, transaction history. Allowlist 44→45 (+1: human.transferred).
+- [ ] **Phase 24: Portal Shell** — `/portal/*` route namespace in Next.js dashboard, navigation, user profile page, region presence display, portal layout separate from Steward Console.
+- [ ] **Phase 25: Sophia Onboarding** — Fast-proxy LLM chat (out-of-tick), goal-setting wizard, animated world introduction, Sophia as guide persona, first-time user flow with welcome Cyber Coin allocation.
+- [ ] **Phase 26: Nous Interaction** — Humans chat with Sophia/Hermes/Themis via `/portal/chat`, send Cyber Coin tips, browse Nous activity feed, view skills/lore/norms the Nous have produced. Allowlist 45→46 (+1: human.spoke).
+- [ ] **Phase 27: Personal Nous** — Human spawns own Nous agent (costs Cyber Coin), names it, picks personality seeds, it gets a DID and runs in the Genesis Grid alongside Sophia/Hermes/Themis. `humanOwner` field wired. Allowlist 46→47 (+1: nous.spawned_by_human).
+- [ ] **Phase 28: Community** — User directory, community board (posts, replies), live activity feed, follow other users, leaderboard by Cyber Coin holdings and Nous contributions.
+- [ ] **Phase 29: Resources & Support** — Help center, interactive guide, FAQ, onboarding documentation, support ticket flow, Noēsis glossary (Nous, Ousia, Agora, lore, norms explained).
 
 ## Phases (v2.4 Active)
 
