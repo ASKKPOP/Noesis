@@ -25,7 +25,10 @@ import type {
 } from './types.js';
 import { WsHub } from './ws-hub.js';
 import { registerOperatorRoutes } from './operator/index.js';
+import { registerPortalRoutes } from './portal/index.js';
 import { tombstoneCheck, TombstonedDidError } from '../registry/tombstone-check.js';
+import type { HumanRegistry } from '../human/index.js';
+import fastifyCookie from '@fastify/cookie';
 
 /**
  * Phase 6 AGENCY-02: normalized memory entry shape crossing the RPC boundary.
@@ -70,6 +73,12 @@ export interface GridServices {
     /** NousRegistry — required by Plan 04-03 roster endpoint. Optional for
      *  legacy tests that don't exercise the new routes. */
     registry?: NousRegistry;
+    /**
+     * Phase 22 WEB3-02: HumanRegistry — in-memory store for Portal users.
+     * Optional so legacy tests without Phase 22 wiring still compile.
+     * When absent, portal auth routes return 503 human_registry_unavailable.
+     */
+    humanRegistry?: HumanRegistry;
     /** ShopRegistry — required by Plan 04-03 shops endpoint. */
     shops?: ShopRegistry;
     /** Runner lookup for the inspector proxy. Returns undefined if no runner
@@ -161,6 +170,9 @@ export function buildServerWithHub(
 ): { app: FastifyInstance; wsHub: WsHub } {
     const app = Fastify({ logger: false });
     const startedAt = Date.now();
+
+    // Phase 22: @fastify/cookie required for portal JWT cookie support (WEB3-03).
+    void app.register(fastifyCookie);
 
     // Dashboard CORS (dev): Next.js dev server runs on :3001 per 03-VALIDATION.md.
     // :3000 is included because `next dev` falls back to :3000 when :3001 is taken
@@ -360,6 +372,9 @@ export function buildServerWithHub(
     // appendOperatorEvent — enforces tier-required + payload-privacy at the
     // single producer boundary.
     registerOperatorRoutes(app, services);
+
+    // --- Phase 22: Portal auth routes (WEB3-01 to WEB3-06) ---
+    registerPortalRoutes(app, services);
 
     // --- Phase 19 NORM-01: Crystallized norms endpoint ---
     // Registered only when norms service is provided (optional for legacy tests).
