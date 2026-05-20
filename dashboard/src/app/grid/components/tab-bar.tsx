@@ -85,7 +85,13 @@ export function TabBar(): React.ReactElement {
             aria-label="Grid views"
             data-testid="tab-bar"
             onKeyDown={onKeyDown}
-            className="flex items-center gap-1 h-10 border-b border-neutral-800"
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                height: 40,
+                borderBottom: '1px solid var(--rule)',
+            }}
         >
             {TABS.map((t) => {
                 const isActive = t.id === active;
@@ -101,11 +107,23 @@ export function TabBar(): React.ReactElement {
                             if (el) refs.current.set(t.id, el);
                         }}
                         onClick={() => activate(t.id)}
-                        className={
-                            isActive
-                                ? 'px-3 h-full text-sm text-neutral-100 border-b-2 border-sky-400 font-medium'
-                                : 'px-3 h-full text-sm text-neutral-400 border-b-2 border-transparent hover:text-neutral-200'
-                        }
+                        style={{
+                            padding: '0 12px',
+                            height: '100%',
+                            fontSize: 13,
+                            fontFamily: 'var(--sans-portal)',
+                            fontWeight: isActive ? 600 : 400,
+                            color: isActive ? 'var(--terracotta)' : 'var(--muted)',
+                            background: 'transparent',
+                            borderTop: 'none',
+                            borderLeft: 'none',
+                            borderRight: 'none',
+                            borderBottomWidth: 2,
+                            borderBottomStyle: 'solid',
+                            borderBottomColor: isActive ? 'var(--terracotta)' : 'transparent',
+                            cursor: 'pointer',
+                            transition: 'color 0.15s',
+                        }}
                     >
                         {t.label}
                     </button>

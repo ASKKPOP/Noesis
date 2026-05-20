@@ -23,13 +23,34 @@
 import { useHeartbeat } from '../hooks';
 
 const STATUS_DOT: Record<'live' | 'stale' | 'unknown', string> = {
-    live: 'bg-green-400',
-    stale: 'bg-red-400 animate-pulse',
-    unknown: 'bg-neutral-600',
+    live: 'bg-green-500',
+    stale: 'bg-red-500 animate-pulse',
+    unknown: 'bg-neutral-400',
 };
 
 export function Heartbeat(): React.ReactElement {
     const hb = useHeartbeat();
+
+    const cardStyle: React.CSSProperties = {
+        border: '1px solid var(--rule)',
+        borderRadius: 6,
+        background: 'var(--parchment)',
+        padding: 16,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+    };
+
+    const labelStyle: React.CSSProperties = {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        fontSize: 10,
+        fontFamily: 'var(--mono-portal)',
+        letterSpacing: '0.12em',
+        textTransform: 'uppercase',
+        color: 'var(--muted)',
+    };
 
     if (hb.status === 'unknown' || hb.lastTick === null) {
         return (
@@ -37,14 +58,16 @@ export function Heartbeat(): React.ReactElement {
                 aria-label="Heartbeat"
                 data-testid="heartbeat-status"
                 data-status="unknown"
-                className="border border-neutral-800 rounded-md bg-[#17181C] p-4 space-y-2"
+                style={cardStyle}
             >
-                <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-neutral-500">
+                <div style={labelStyle}>
                     <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT.unknown}`} aria-hidden="true" />
                     Heartbeat
                 </div>
-                <div className="text-sm text-neutral-500">No data yet</div>
-                <div className="text-xs text-neutral-600">
+                <div style={{ fontSize: 13, fontFamily: 'var(--sans-portal)', color: 'var(--muted)' }}>
+                    No data yet
+                </div>
+                <div style={{ fontSize: 12, fontFamily: 'var(--sans-portal)', color: 'var(--muted)', opacity: 0.7 }}>
                     Waiting for first tick event from Grid.
                 </div>
             </section>
@@ -55,19 +78,15 @@ export function Heartbeat(): React.ReactElement {
         hb.secondsSinceLastEvent === null
             ? '—'
             : String(hb.secondsSinceLastEvent);
-    const staleLineClass =
-        hb.status === 'stale'
-            ? 'font-mono text-xs text-red-400 animate-pulse'
-            : 'font-mono text-xs text-neutral-400';
 
     return (
         <section
             aria-label="Heartbeat"
             data-testid="heartbeat-status"
             data-status={hb.status}
-            className="border border-neutral-800 rounded-md bg-[#17181C] p-4 space-y-2"
+            style={cardStyle}
         >
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-neutral-500">
+            <div style={labelStyle}>
                 <span
                     className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[hb.status]}`}
                     aria-hidden="true"
@@ -75,15 +94,29 @@ export function Heartbeat(): React.ReactElement {
                 Heartbeat
             </div>
             <div
-                className="font-mono text-[22px] font-semibold text-neutral-100 [font-variant-numeric:tabular-nums]"
                 data-testid="heartbeat-tick"
+                style={{
+                    fontFamily: 'var(--mono-portal)',
+                    fontSize: 22,
+                    fontWeight: 600,
+                    color: 'var(--ink)',
+                    fontVariantNumeric: 'tabular-nums',
+                }}
             >
-                Tick <span className="text-sky-300">{hb.lastTick}</span>
+                Tick <span style={{ color: 'var(--terracotta)' }}>{hb.lastTick}</span>
             </div>
-            <div className={staleLineClass} data-testid="heartbeat-elapsed">
+            <div
+                data-testid="heartbeat-elapsed"
+                style={{
+                    fontFamily: 'var(--mono-portal)',
+                    fontSize: 11,
+                    color: hb.status === 'stale' ? '#dc2626' : 'var(--muted)',
+                }}
+                className={hb.status === 'stale' ? 'animate-pulse' : ''}
+            >
                 last event {secondsText}s ago
                 {hb.status === 'stale' && (
-                    <span className="ml-2 text-[10px] uppercase tracking-wide">
+                    <span style={{ marginLeft: 8, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                         (no events for 2× tick rate)
                     </span>
                 )}

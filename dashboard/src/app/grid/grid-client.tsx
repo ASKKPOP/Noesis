@@ -175,17 +175,41 @@ function GridLayout({ origin, initialRegions, initialError }: GridClientProps): 
     // based on the `?tab=` querystring. The Heartbeat aside renders in both
     // tabs — it's a global signal, not tab-scoped.
     return (
-        <main className="min-h-screen grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 p-4 bg-[#0A0A0B]">
-            <header className="col-span-full flex items-baseline gap-3 mb-1">
-                <h1 className="text-[22px] font-semibold text-neutral-100 tracking-tight">
+        <main className="min-h-screen grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 p-6 lg:p-8"
+            style={{ background: 'var(--vellum)' }}>
+            <header className="col-span-full flex items-baseline gap-3 mb-1"
+                style={{ borderBottom: '1px solid var(--rule)', paddingBottom: 16 }}>
+                <h1 style={{
+                    fontFamily: 'var(--serif)',
+                    fontSize: 22,
+                    fontWeight: 600,
+                    color: 'var(--ink)',
+                    letterSpacing: '0.01em',
+                }}>
                     Noēsis
                 </h1>
-                <span className="font-mono text-sm text-neutral-500">/ grid</span>
+                <span style={{
+                    fontFamily: 'var(--mono-portal)',
+                    fontSize: 11,
+                    color: 'var(--muted)',
+                    letterSpacing: '0.10em',
+                }}>
+                    / GRID
+                </span>
             </header>
             {initialError && (
                 <div
                     role="alert"
-                    className="col-span-full text-sm text-amber-300 bg-neutral-900 border border-amber-900/60 rounded-md px-3 py-2"
+                    style={{
+                        gridColumn: '1 / -1',
+                        fontSize: 13,
+                        color: '#92400e',
+                        background: '#fef3c7',
+                        border: '1px solid #fcd34d',
+                        borderRadius: 4,
+                        padding: '10px 16px',
+                        fontFamily: 'var(--sans-portal)',
+                    }}
                 >
                     Initial regions fetch failed: {initialError}. Reconnect in progress…
                 </div>

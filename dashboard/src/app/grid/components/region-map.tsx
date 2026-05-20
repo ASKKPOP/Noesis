@@ -92,7 +92,8 @@ export const RegionMap = memo(function RegionMap({
             viewBox={`0 0 ${VIEWPORT_W} ${VIEWPORT_H}`}
             role="img"
             aria-label="Region map"
-            className="w-full h-full bg-neutral-900 border border-neutral-800 rounded-md"
+            className="w-full h-full rounded-md"
+            style={{ background: 'var(--parchment)', border: '1px solid var(--rule)' }}
         >
             {regions.length === 0 && (
                 <text
@@ -115,7 +116,7 @@ export const RegionMap = memo(function RegionMap({
                         y1={e.y1}
                         x2={e.x2}
                         y2={e.y2}
-                        stroke="#404040"
+                        stroke="rgba(11,18,32,0.18)"
                         strokeWidth={1}
                     />
                 ))}
@@ -136,17 +137,17 @@ export const RegionMap = memo(function RegionMap({
                                 cx={pos.cx}
                                 cy={pos.cy}
                                 r={REGION_R}
-                                fill="#171717"
-                                stroke="#525252"
+                                fill="var(--parchment-2, #e8dfc8)"
+                                stroke="rgba(11,18,32,0.35)"
                                 strokeWidth={1.5}
                             />
                             <text
                                 x={pos.cx}
                                 y={pos.cy + REGION_R + 14}
                                 textAnchor="middle"
-                                fill="#a3a3a3"
+                                fill="rgba(11,18,32,0.50)"
                                 fontSize={11}
-                                fontFamily="Inter, system-ui, sans-serif"
+                                fontFamily="Inter Tight, Inter, system-ui, sans-serif"
                             >
                                 {r.name}
                             </text>

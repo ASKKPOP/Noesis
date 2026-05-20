@@ -94,35 +94,58 @@ export function Firehose({ replayMode: _replayMode = false }: FirehoseProps = {}
     return (
         <section
             aria-label="Event firehose"
-            className="flex flex-col min-h-0 border border-neutral-800 rounded-md bg-[#17181C]"
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: 0,
+                border: '1px solid var(--rule)',
+                borderRadius: 6,
+                background: 'var(--parchment)',
+            }}
         >
-            <header className="flex items-center justify-between gap-3 px-4 py-2 border-b border-neutral-800">
-                <h2 className="font-semibold text-sm text-neutral-200">Firehose</h2>
+            <header style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+                padding: '8px 16px',
+                borderBottom: '1px solid var(--rule)',
+            }}>
+                <h2 style={{
+                    fontFamily: 'var(--sans-portal)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    letterSpacing: '0.10em',
+                    textTransform: 'uppercase',
+                    color: 'var(--muted)',
+                }}>
+                    Firehose
+                </h2>
                 <EventTypeFilter />
             </header>
             {/* Phase 7: dialogue_id filter chip mounts iff filter non-null (self-conditional). */}
             <FirehoseFilterChip />
             {showEmptyMatchHeading ? (
-                <div className="flex-1 flex items-center justify-center p-6 text-neutral-500 text-sm text-center">
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
                     <div>
-                        <div className="font-medium text-neutral-300">
+                        <div style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>
                             No matching events for dialogue_id {dialogueFilter.value}. Press × to clear.
                         </div>
                     </div>
                 </div>
             ) : visible.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center p-6 text-neutral-500 text-sm text-center">
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
                     {filterActive && totalInStore > 0 ? (
                         <div>
-                            <div className="font-medium text-neutral-300">No events match</div>
-                            <div className="mt-1 text-xs">
+                            <div style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>No events match</div>
+                            <div style={{ marginTop: 4, fontFamily: 'var(--sans-portal)', fontSize: 12, color: 'var(--muted)' }}>
                                 No events in the last 500 match the active filter.
                             </div>
                         </div>
                     ) : (
                         <div>
-                            <div className="font-medium text-neutral-300">Waiting for events…</div>
-                            <div className="mt-1 text-xs">
+                            <div style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>Waiting for events…</div>
+                            <div style={{ marginTop: 4, fontFamily: 'var(--sans-portal)', fontSize: 12, color: 'var(--muted)' }}>
                                 Grid is connected but no allowlisted events have arrived yet.
                             </div>
                         </div>

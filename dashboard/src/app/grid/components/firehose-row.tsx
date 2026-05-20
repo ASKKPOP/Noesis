@@ -28,13 +28,13 @@ import { H4_PLACEHOLDER, H5_PLACEHOLDER, H4_RESTRICTED, H5_RESTRICTED } from '@/
  * Each entry produces a small pill with a tinted background and lighter text.
  */
 const CATEGORY_BADGE: Record<EventCategory, string> = {
-    movement: 'bg-blue-400/10 text-blue-300',
-    message: 'bg-violet-400/10 text-violet-300',
-    trade: 'bg-amber-400/10 text-amber-300',
-    law: 'bg-pink-400/10 text-pink-300',
-    lifecycle: 'bg-neutral-500/10 text-neutral-300',
-    culture: 'bg-emerald-400/10 text-emerald-300',
-    other: 'bg-neutral-700/20 text-neutral-400',
+    movement:  'bg-blue-100 text-blue-700',
+    message:   'bg-violet-100 text-violet-700',
+    trade:     'bg-amber-100 text-amber-700',
+    law:       'bg-pink-100 text-pink-700',
+    lifecycle: 'bg-neutral-100 text-neutral-600',
+    culture:   'bg-emerald-100 text-emerald-700',
+    other:     'bg-neutral-100 text-neutral-500',
 };
 
 function formatTimestamp(ms: number): string {
@@ -132,22 +132,23 @@ export function FirehoseRow({
     // Phase 8: destructive visual treatment for operator.nous_deleted rows (UI-SPEC §Firehose).
     // Red left border accent, rose badge, red strikethrough actor name.
     const isDeleted = entry.eventType === 'operator.nous_deleted';
-    const rowBorderClass = isDeleted ? ' border-l-2 border-rose-900' : '';
+    const rowBorderClass = isDeleted ? ' border-l-2 border-rose-400' : '';
     const badgeClass = isDeleted
-        ? 'bg-rose-900/20 text-rose-300'
+        ? 'bg-rose-100 text-rose-700'
         : CATEGORY_BADGE[category];
     const actorClass = isDeleted
-        ? 'text-red-400 line-through w-[132px] shrink-0 truncate'
-        : 'text-neutral-200 w-[132px] shrink-0 truncate';
+        ? 'text-red-500 line-through w-[132px] shrink-0 truncate'
+        : 'w-[132px] shrink-0 truncate';
 
     return (
         <li
             role="listitem"
             data-testid="firehose-row"
             data-event-id={entry.id ?? ''}
-            className={`flex items-center gap-2 h-[28px] px-3 border-b border-neutral-800/60 font-mono text-[12px] leading-[1.3] hover:bg-neutral-900/50 hover:border-l hover:border-l-sky-300${dimClass}${rowBorderClass}`}
+            className={`flex items-center gap-2 h-[28px] px-3 border-b font-mono text-[12px] leading-[1.3] hover:border-l hover:border-l-[var(--terracotta)]${dimClass}${rowBorderClass}`}
+            style={{ borderBottomColor: 'rgba(11,18,32,0.08)' }}
         >
-            <span className="text-neutral-500 w-[72px] shrink-0 tabular-nums">
+            <span className="w-[72px] shrink-0 tabular-nums" style={{ color: 'var(--muted)' }}>
                 {formatTimestamp(entry.createdAt)}
             </span>
             <span
@@ -160,11 +161,12 @@ export function FirehoseRow({
             <span
                 data-testid="firehose-actor"
                 className={actorClass}
+                style={isDeleted ? undefined : { color: 'var(--ink)' }}
                 title={entry.actorDid}
             >
                 {actorDisplay}
             </span>
-            <span className="text-neutral-400 flex-1 truncate">
+            <span className="flex-1 truncate" style={{ color: 'var(--muted)' }}>
                 {(() => {
                     // Phase 13 (D-13-06 / gap-closure 13-07): tier-aware payload redaction.
                     // When operatorTier is undefined (live /grid — no tier plumbed), tierNum

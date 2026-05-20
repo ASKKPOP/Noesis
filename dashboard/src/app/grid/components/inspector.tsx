@@ -293,12 +293,12 @@ export function Inspector({ replayMode: _replayMode = false }: InspectorProps = 
             aria-modal="true"
             aria-labelledby="inspector-title"
             data-testid="inspector-drawer"
-            className="fixed right-0 top-0 z-40 flex h-full w-96 flex-col overflow-y-auto border-l border-neutral-800 bg-neutral-950 p-4 shadow-xl"
+            style={{ position: 'fixed', right: 0, top: 0, zIndex: 40, display: 'flex', height: '100%', width: 384, flexDirection: 'column', overflowY: 'auto', borderLeft: '1px solid var(--rule)', background: 'var(--parchment)', padding: 16, boxShadow: '-4px 0 24px rgba(11,18,32,0.08)' }}
         >
-            <header className="mb-3 flex items-center justify-between">
+            <header style={{ marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <h2
                     id="inspector-title"
-                    className="text-sm font-semibold text-neutral-100"
+                    style={{ fontFamily: 'var(--serif)', fontSize: 16, fontWeight: 600, color: 'var(--ink)' }}
                 >
                     Nous Inspector
                 </h2>
@@ -307,7 +307,7 @@ export function Inspector({ replayMode: _replayMode = false }: InspectorProps = 
                     data-testid="inspector-close"
                     onClick={clear}
                     aria-label="Close inspector"
-                    className="rounded px-2 text-neutral-400 hover:text-neutral-100"
+                    style={{ padding: '2px 8px', fontFamily: 'var(--sans-portal)', fontSize: 14, color: 'var(--muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}
                 >
                     ×
                 </button>
@@ -317,7 +317,7 @@ export function Inspector({ replayMode: _replayMode = false }: InspectorProps = 
             <div
                 role="tablist"
                 data-testid="inspector-tabs"
-                className="flex gap-0 border-b border-neutral-800 mb-3"
+                style={{ display: 'flex', borderBottom: '1px solid var(--rule)', marginBottom: 12 }}
                 onKeyDown={(e) => {
                     if (e.key === 'ArrowRight') {
                         setInspectorTab((t) => t === 'overview' ? 'relationships' : 'overview');
@@ -326,50 +326,50 @@ export function Inspector({ replayMode: _replayMode = false }: InspectorProps = 
                     }
                 }}
             >
-                <button
-                    role="tab"
-                    type="button"
-                    data-testid="inspector-tab-overview"
-                    aria-selected={inspectorTab === 'overview'}
-                    aria-controls="inspector-panel-overview"
-                    onClick={() => setInspectorTab('overview')}
-                    className={`px-3 py-2 text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-500 ${
-                        inspectorTab === 'overview'
-                            ? 'border-b-2 border-accent text-neutral-100 -mb-[1px]'
-                            : 'text-neutral-400 hover:text-neutral-200'
-                    }`}
-                >
-                    Overview
-                </button>
-                <button
-                    role="tab"
-                    type="button"
-                    data-testid="inspector-tab-relationships"
-                    aria-selected={inspectorTab === 'relationships'}
-                    aria-controls="inspector-panel-relationships"
-                    onClick={() => setInspectorTab('relationships')}
-                    className={`px-3 py-2 text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-500 ${
-                        inspectorTab === 'relationships'
-                            ? 'border-b-2 border-accent text-neutral-100 -mb-[1px]'
-                            : 'text-neutral-400 hover:text-neutral-200'
-                    }`}
-                >
-                    Relationships
-                </button>
+                {(['overview', 'relationships'] as const).map((tab) => (
+                    <button
+                        key={tab}
+                        role="tab"
+                        type="button"
+                        data-testid={`inspector-tab-${tab}`}
+                        aria-selected={inspectorTab === tab}
+                        aria-controls={`inspector-panel-${tab}`}
+                        onClick={() => setInspectorTab(tab)}
+                        style={{
+                            padding: '6px 12px',
+                            fontSize: 12,
+                            fontFamily: 'var(--sans-portal)',
+                            fontWeight: inspectorTab === tab ? 600 : 400,
+                            color: inspectorTab === tab ? 'var(--terracotta)' : 'var(--muted)',
+                            marginBottom: -1,
+                            background: 'transparent',
+                            borderTop: 'none',
+                            borderLeft: 'none',
+                            borderRight: 'none',
+                            borderBottomWidth: 2,
+                            borderBottomStyle: 'solid',
+                            borderBottomColor: inspectorTab === tab ? 'var(--terracotta)' : 'transparent',
+                            cursor: 'pointer',
+                            textTransform: 'capitalize',
+                        }}
+                    >
+                        {tab}
+                    </button>
+                ))}
             </div>
 
             {/* Toast (Phase 8 delete feedback) */}
             {toast && (
                 <div
                     data-testid="inspector-toast"
-                    className="mb-2 rounded border border-neutral-700 bg-neutral-900 px-3 py-2 text-xs text-neutral-200"
+                    style={{ marginBottom: 8, borderRadius: 4, border: '1px solid var(--rule)', background: 'var(--parchment-2)', padding: '8px 12px', fontSize: 12, fontFamily: 'var(--sans-portal)', color: 'var(--ink)' }}
                 >
                     {toast.message}
                 </div>
             )}
 
             {state.status === 'loading' && (
-                <div data-testid="inspector-loading" className="text-xs text-neutral-400">
+                <div data-testid="inspector-loading" style={{ fontSize: 12, fontFamily: 'var(--sans-portal)', color: 'var(--muted)' }}>
                     Loading…
                 </div>
             )}
@@ -411,16 +411,16 @@ export function Inspector({ replayMode: _replayMode = false }: InspectorProps = 
 
             {/* State B: tombstoned Nous — show caption, hide delete button (D-06) */}
             {isStateB && (
-                <div className="mt-2">
+                <div style={{ marginTop: 8 }}>
                     <p
                         data-testid="inspector-tombstone-caption"
-                        className="text-sm text-neutral-300"
+                        style={{ fontSize: 13, fontFamily: 'var(--sans-portal)', color: 'var(--ink)' }}
                     >
                         Nous deleted at tick {state.data.deleted_at_tick}
                     </p>
                     <p
                         data-testid="inspector-tombstone-firehose"
-                        className="mt-1 text-xs text-neutral-500"
+                        style={{ marginTop: 4, fontSize: 12, fontFamily: 'var(--sans-portal)', color: 'var(--muted)' }}
                     >
                         Audit history available in the firehose.
                     </p>
@@ -429,17 +429,17 @@ export function Inspector({ replayMode: _replayMode = false }: InspectorProps = 
 
             {/* State A + C: Delete Nous button (Phase 8 AGENCY-05). Hidden in State B (D-06). */}
             {!isStateB && (
-                <div className="mt-4 border-t border-neutral-800 pt-3">
+                <div style={{ marginTop: 16, borderTop: '1px solid var(--rule)', paddingTop: 12 }}>
                     <button
                         ref={deleteButtonRef}
                         type="button"
                         data-testid="inspector-h5-delete"
                         onClick={onH5DeleteClick}
-                        className="w-full rounded border border-rose-900/60 bg-neutral-900 px-3 py-2 text-xs text-red-400 hover:bg-rose-950/30 hover:text-red-300"
+                        style={{ width: '100%', borderRadius: 4, border: '1px solid rgba(220,38,38,0.30)', background: 'rgba(220,38,38,0.04)', padding: '8px 12px', fontSize: 12, fontFamily: 'var(--sans-portal)', color: '#dc2626', cursor: 'pointer' }}
                     >
                         Delete Nous
                     </button>
-                    <p className="mt-1 text-[10px] text-neutral-600">
+                    <p style={{ marginTop: 4, fontSize: 10, fontFamily: 'var(--mono-portal)', color: 'var(--muted)', letterSpacing: '0.06em' }}>
                         H5 Sovereign — irreversible action.
                     </p>
                 </div>
