@@ -40,7 +40,7 @@ const NAV: NavSection[] = [
         items: [
             { href: '/portal/auth',    label: 'Sign In',   exact: true, guestOnly: true },
             { href: '/portal/profile', label: 'Profile' },
-            { href: '/portal/wallet',  label: 'Wallet',    phase: '23' },
+            { href: '/portal/wallet',  label: 'Wallet' },
         ],
     },
     {
@@ -318,7 +318,7 @@ export function PortalSidebar() {
                     color: 'rgba(200,192,184,0.22)',
                     paddingLeft: 2,
                 }}>
-                    v2.5 · Phase 22 · Genesis Grid
+                    v2.5 · Phase 23 · Genesis Grid
                 </div>
             </div>
         </aside>
