@@ -230,4 +230,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-16 — Milestone v2.4 Agora opened (Emergence & Culture: skill diffusion, norm crystallization, lore commons, culture dashboard; Phase 18 onward)*
+*Last updated: 2026-05-20 — Phase 22 complete: SIWE Web3 identity shipped (human_users DB, HumanRegistry, SIWE auth API + JWT, wagmi frontend, /portal/* routes). Allowlist 43→44. v2.5 Human Portal milestone underway.*
