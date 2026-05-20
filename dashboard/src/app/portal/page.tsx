@@ -20,6 +20,20 @@ const STATS = [
 
 const SECTIONS = [
     {
+        href: '/worldmap',
+        label: 'Cyber World Map',
+        desc: '22×22 isometric city — districts, data packets, pan & zoom.',
+        icon: '◈',
+        phase: null,
+    },
+    {
+        href: '/nous',
+        label: 'Nous Monitor',
+        desc: 'Live agent activity stream with real-time event log.',
+        icon: '◉',
+        phase: null,
+    },
+    {
         href: '/portal/profile',
         label: 'Profile',
         desc: 'Your identity in the Genesis Grid.',
