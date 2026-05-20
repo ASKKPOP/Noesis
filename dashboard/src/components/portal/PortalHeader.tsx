@@ -19,14 +19,19 @@ function truncateDid(did: string): string {
 function usePageLabel(): string {
     const pathname = usePathname();
     const labels: Record<string, string> = {
-        '/portal': 'Home',
-        '/portal/auth': 'Sign In',
-        '/portal/wallet': 'Wallet',
-        '/portal/chat': 'Chat',
-        '/portal/my-nous': 'My Nous',
-        '/portal/community': 'Community',
-        '/portal/profile': 'Profile',
-        '/portal/help': 'Help',
+        '/portal':              'World Map',
+        '/portal/auth':         'Sign In',
+        '/portal/profile':      'Profile',
+        '/portal/wallet':       'Wallet',
+        '/portal/chat':         'Chat with Nous',
+        '/portal/my-nous':      'My Nous',
+        '/portal/community':    'Community',
+        '/portal/leaderboard':  'Leaderboard',
+        '/portal/docs':         'Documents',
+        '/portal/glossary':     'Glossary',
+        '/portal/help':         'Help & FAQ',
+        '/portal/activity':     'Activity',
+        '/portal/settings':     'Settings',
     };
     return labels[pathname] ?? 'Portal';
 }
