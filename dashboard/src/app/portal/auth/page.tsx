@@ -522,10 +522,14 @@ function PortalAuthPage() {
                         gap: 12,
                         flexWrap: 'wrap' as const,
                     }}>
-                        {['Privacy Policy', 'Terms of Service', 'Project Status'].map(link => (
+                        {[
+                            { label: 'Privacy Policy',   href: '/portal/privacy' },
+                            { label: 'Terms of Service', href: '/portal/terms' },
+                            { label: 'Project Status',   href: '/portal/status' },
+                        ].map(({ label, href }) => (
                             <a
-                                key={link}
-                                href="#"
+                                key={label}
+                                href={href}
                                 style={{
                                     fontSize: 11,
                                     color: '#da7a4e',
@@ -533,7 +537,7 @@ function PortalAuthPage() {
                                     opacity: 0.7,
                                 }}
                             >
-                                {link}
+                                {label}
                             </a>
                         ))}
                     </div>

@@ -63,6 +63,9 @@ const NAV: NavSection[] = [
             { href: '/portal/docs',     label: 'Documents', phase: '30' },
             { href: '/portal/glossary', label: 'Glossary' },
             { href: '/portal/help',     label: 'Help & FAQ' },
+            { href: '/portal/privacy',  label: 'Privacy Policy' },
+            { href: '/portal/terms',    label: 'Terms of Service' },
+            { href: '/portal/status',   label: 'Project Status' },
         ],
     },
     {
