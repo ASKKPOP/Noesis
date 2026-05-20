@@ -192,4 +192,21 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS lore_commons`,
     },
+    {
+        version: 9,
+        name: 'create_human_users',
+        up: `
+            CREATE TABLE IF NOT EXISTS human_users (
+                id           BIGINT UNSIGNED     NOT NULL AUTO_INCREMENT,
+                grid_name    VARCHAR(63)         NOT NULL,
+                did          VARCHAR(255)        NOT NULL,
+                eth_address  VARCHAR(255)        NOT NULL,
+                created_at   TIMESTAMP(3)        NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (id),
+                UNIQUE KEY uq_did          (grid_name, did),
+                UNIQUE KEY uq_eth_address  (grid_name, eth_address)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS human_users`,
+    },
 ];
