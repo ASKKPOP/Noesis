@@ -171,6 +171,11 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     // Emitted ONLY via grid/src/lore/appendLoreContributed.ts and appendLoreCited.ts (D-20-12).
     'lore.contributed', // (42) {category_tag, content_hash, contributor_did, tick}
     'lore.cited',       // (43) {citing_did, content_hash, tick}
+    // Phase 22 (WEB3-04) — Human Portal first-connect event. Closed 4-key payload:
+    // {human_did, eth_address_hash, grid_name, tick}. ETH address is SHA-256 hashed —
+    // raw address NEVER crosses the wire. Emitted ONLY via appendHumanJoined()
+    // (grid/src/audit/append-human-joined.ts). Per WEB3-04 / D-22-02.
+    'human.joined',     // (44) {human_did, eth_address_hash, grid_name, tick}
 ] as const;
 
 /**
