@@ -15,10 +15,14 @@
     "clean": "rm -rf .next node_modules/.cache test-results playwright-report"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "@wagmi/connectors": "^5.0.0",
     "next": "15.2.4",
     "react": "19.2.5",
     "react-dom": "19.2.5",
-    "swr": "^2.4.1"
+    "swr": "^2.4.1",
+    "viem": "^2.0.0",
+    "wagmi": "^2.0.0"
   },
   "devDependencies": {
     "@fastify/websocket": "^11.0.0",
