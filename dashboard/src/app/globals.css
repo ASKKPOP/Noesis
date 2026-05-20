@@ -3,9 +3,13 @@
  *
  * Tailwind 4 uses CSS-first configuration via the `@theme` directive.
  * Design tokens sourced from 03-UI-SPEC.md §Color / §Typography / §Spacing.
- * Plan 05 wires Inter + JetBrains Mono via next/font; this file keeps
- * globals minimal so the scaffold builds cleanly before fonts exist.
+ *
+ * Editorial portal theme tokens from nexus.eklotho.com/docs/design-theme-showcase.html
  */
+
+/* ── Google Fonts: Cormorant Garamond + Inter Tight + JetBrains Mono ── */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @import "tailwindcss";
 
 @theme {
@@ -48,4 +52,37 @@ body {
 :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
+}
+
+/* ── Portal editorial theme tokens ──────────────────────────────────────── */
+/* Sourced from nexus.eklotho.com/docs/design-theme-showcase.html           */
+.portal-theme {
+    --ink:          #0b1220;
+    --navy:         #16213d;
+    --parchment:    #f1ead8;
+    --parchment-2:  #e8dfc8;
+    --vellum:       #faf6ec;
+    --terracotta:   #b8542f;
+    --terracotta-2: #d97a4f;
+    --bronze:       #8a6a3b;
+    --rule:         rgba(11,18,32,0.12);
+    --muted:        rgba(11,18,32,0.50);
+    --serif:        "Cormorant Garamond", Georgia, serif;
+    --sans-portal:  "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+    --mono-portal:  "JetBrains Mono", ui-monospace, monospace;
+
+    font-family: var(--sans-portal);
+    color: var(--ink);
+    background: var(--vellum);
+    color-scheme: light;
+}
+
+.portal-theme h1,
+.portal-theme h2,
+.portal-theme .serif {
+    font-family: var(--serif);
+}
+
+.portal-theme .mono {
+    font-family: var(--mono-portal);
 }

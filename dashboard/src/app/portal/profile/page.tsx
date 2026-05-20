@@ -1,7 +1,8 @@
 'use client';
 
 /**
- * Portal profile page — loaded client-only (ssr:false) because it uses wagmi hooks.
+ * Portal profile page — editorial theme.
+ * Loaded client-only (ssr:false) because it uses wagmi hooks.
  */
 
 import dynamic from 'next/dynamic';
@@ -20,51 +21,154 @@ function ProfilePage() {
         window.location.href = '/portal/auth';
     }
 
-    const rows: { label: string; value: string }[] = [
-        { label: 'DID', value: currentUser?.did ?? '—' },
-        { label: 'Ethereum Address', value: currentUser?.eth_address ?? address ?? '—' },
-        { label: 'Network', value: chain?.name ?? '—' },
-        { label: 'Agency Tier', value: 'H1 — Observe only' },
+    const rows: { label: string; value: string; mono?: boolean }[] = [
+        { label: 'DID',              value: currentUser?.did ?? '—',                          mono: true },
+        { label: 'Ethereum Address', value: currentUser?.eth_address ?? address ?? '—',       mono: true },
+        { label: 'Network',          value: chain?.name ?? '—' },
+        { label: 'Agency Tier',      value: 'H1 — Observe only' },
     ];
 
     return (
-        <div className="p-8">
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-neutral-100">Profile</h1>
-                <p className="mt-1 text-sm text-neutral-400">Your on-chain identity in the Noēsis Portal.</p>
+        <div style={{ padding: '36px 40px', maxWidth: 680 }}>
+            {/* Page heading */}
+            <div style={{ marginBottom: 32 }}>
+                <h1 style={{
+                    fontFamily: 'var(--serif)',
+                    fontSize: 30,
+                    fontWeight: 600,
+                    color: 'var(--ink)',
+                    letterSpacing: '0.01em',
+                    lineHeight: 1.15,
+                    marginBottom: 6,
+                }}>
+                    Profile
+                </h1>
+                <p style={{
+                    fontFamily: 'var(--sans-portal)',
+                    fontSize: 13,
+                    color: 'var(--muted)',
+                    lineHeight: 1.5,
+                }}>
+                    Your on-chain identity in the Noēsis Portal.
+                </p>
             </div>
 
-            <div className="max-w-lg">
-                <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900">
-                    <dl>
-                        {rows.map(({ label, value }, i) => (
-                            <div
-                                key={label}
-                                className={[
-                                    'flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-center sm:gap-4',
-                                    i < rows.length - 1 ? 'border-b border-neutral-800' : '',
-                                ].join(' ')}
-                            >
-                                <dt className="w-36 shrink-0 text-xs font-medium uppercase tracking-wider text-neutral-500">
-                                    {label}
-                                </dt>
-                                <dd className="break-all font-mono text-sm text-neutral-200">{value}</dd>
-                            </div>
-                        ))}
-                    </dl>
+            {/* Identity card */}
+            <div style={{
+                background: 'var(--parchment)',
+                border: '1px solid var(--rule)',
+                borderRadius: 6,
+                overflow: 'hidden',
+                marginBottom: 24,
+            }}>
+                {/* Card header */}
+                <div style={{
+                    padding: '14px 20px',
+                    borderBottom: '1px solid var(--rule)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                }}>
+                    <span style={{
+                        fontFamily: 'var(--mono-portal)',
+                        fontSize: 9,
+                        fontWeight: 600,
+                        letterSpacing: '0.14em',
+                        textTransform: 'uppercase',
+                        color: 'var(--muted)',
+                    }}>
+                        Identity
+                    </span>
+                    {currentUser && (
+                        <span style={{
+                            fontFamily: 'var(--mono-portal)',
+                            fontSize: 9,
+                            color: '#4ade80',
+                            background: 'rgba(74,222,128,0.08)',
+                            border: '1px solid rgba(74,222,128,0.20)',
+                            borderRadius: 2,
+                            padding: '1px 6px',
+                            letterSpacing: '0.06em',
+                        }}>
+                            ACTIVE
+                        </span>
+                    )}
                 </div>
 
-                <div className="mt-6">
-                    <button
-                        onClick={handleSignOut}
-                        className="flex items-center gap-2 rounded-lg border border-red-800/50 bg-red-950/30 px-4 py-2.5 text-sm font-medium text-red-400 transition-colors hover:border-red-700 hover:text-red-300"
-                    >
-                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
-                        </svg>
-                        Sign Out
-                    </button>
-                </div>
+                {/* Rows */}
+                <dl>
+                    {rows.map(({ label, value, mono }, i) => (
+                        <div
+                            key={label}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: 16,
+                                padding: '12px 20px',
+                                borderBottom: i < rows.length - 1 ? '1px solid var(--rule)' : 'none',
+                            }}
+                        >
+                            <dt style={{
+                                width: 148,
+                                flexShrink: 0,
+                                fontFamily: 'var(--mono-portal)',
+                                fontSize: 10,
+                                fontWeight: 500,
+                                letterSpacing: '0.10em',
+                                textTransform: 'uppercase',
+                                color: 'var(--muted)',
+                                paddingTop: 2,
+                            }}>
+                                {label}
+                            </dt>
+                            <dd style={{
+                                fontFamily: mono ? 'var(--mono-portal)' : 'var(--sans-portal)',
+                                fontSize: mono ? 12 : 13,
+                                color: 'var(--ink)',
+                                wordBreak: 'break-all',
+                                lineHeight: 1.5,
+                            }}>
+                                {value}
+                            </dd>
+                        </div>
+                    ))}
+                </dl>
+            </div>
+
+            {/* Sign Out */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <button
+                    onClick={handleSignOut}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        background: 'transparent',
+                        border: '1px solid var(--rule)',
+                        borderRadius: 4,
+                        padding: '7px 16px',
+                        fontSize: 12,
+                        fontFamily: 'var(--sans-portal)',
+                        fontWeight: 500,
+                        color: 'var(--muted)',
+                        cursor: 'pointer',
+                        transition: 'color 0.15s, border-color 0.15s',
+                    }}
+                >
+                    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+                    </svg>
+                    Sign Out
+                </button>
+                <span style={{
+                    fontFamily: 'var(--mono-portal)',
+                    fontSize: 10,
+                    letterSpacing: '0.08em',
+                    color: 'var(--muted)',
+                    opacity: 0.5,
+                }}>
+                    Clears session and disconnects wallet
+                </span>
             </div>
         </div>
     );

@@ -1,5 +1,5 @@
 /**
- * Settings — Phase 31 placeholder.
+ * Settings — Phase 31 placeholder · editorial theme.
  * Server component.
  */
 
@@ -28,32 +28,112 @@ const SETTING_GROUPS = [
 
 export default function SettingsPage() {
     return (
-        <div className="p-8">
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-neutral-100">Settings</h1>
-                <p className="mt-1 text-sm text-neutral-400">Portal preferences, privacy controls, and developer options.</p>
+        <div style={{ padding: '36px 40px', maxWidth: 580 }}>
+            {/* Heading */}
+            <div style={{ marginBottom: 24 }}>
+                <h1 style={{
+                    fontFamily: 'var(--serif)',
+                    fontSize: 30,
+                    fontWeight: 600,
+                    color: 'var(--ink)',
+                    letterSpacing: '0.01em',
+                    lineHeight: 1.15,
+                    marginBottom: 6,
+                }}>
+                    Settings
+                </h1>
+                <p style={{
+                    fontFamily: 'var(--sans-portal)',
+                    fontSize: 13,
+                    color: 'var(--muted)',
+                    lineHeight: 1.5,
+                }}>
+                    Portal preferences, privacy controls, and developer options.
+                </p>
             </div>
 
-            <div className="mb-8 flex items-center gap-3 rounded-xl border border-neutral-800/50 bg-neutral-900/30 px-5 py-3">
-                <span className="rounded bg-neutral-800 px-2 py-0.5 text-[10px] font-semibold text-neutral-500">Phase 31</span>
-                <p className="text-xs text-neutral-500">Full settings panel coming in a future release.</p>
+            {/* Phase notice */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                background: 'var(--parchment)',
+                border: '1px solid var(--rule)',
+                borderRadius: 4,
+                padding: '10px 16px',
+                marginBottom: 32,
+            }}>
+                <span style={{
+                    fontFamily: 'var(--mono-portal)',
+                    fontSize: 9,
+                    fontWeight: 600,
+                    letterSpacing: '0.12em',
+                    color: 'var(--bronze)',
+                    background: 'var(--parchment-2)',
+                    border: '1px solid var(--rule)',
+                    borderRadius: 2,
+                    padding: '2px 6px',
+                    flexShrink: 0,
+                }}>
+                    Phase 31
+                </span>
+                <span style={{
+                    fontFamily: 'var(--sans-portal)',
+                    fontSize: 12,
+                    color: 'var(--muted)',
+                }}>
+                    Full settings panel coming in a future release.
+                </span>
             </div>
 
-            <div className="max-w-lg space-y-6">
+            {/* Setting groups */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                 {SETTING_GROUPS.map(group => (
                     <div key={group.title}>
-                        <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-600">{group.title}</h2>
-                        <div className="overflow-hidden rounded-xl border border-neutral-800">
+                        <div style={{
+                            fontFamily: 'var(--mono-portal)',
+                            fontSize: 9,
+                            fontWeight: 600,
+                            letterSpacing: '0.14em',
+                            textTransform: 'uppercase',
+                            color: 'var(--muted)',
+                            marginBottom: 8,
+                        }}>
+                            {group.title}
+                        </div>
+
+                        <div style={{
+                            background: 'var(--parchment)',
+                            border: '1px solid var(--rule)',
+                            borderRadius: 6,
+                            overflow: 'hidden',
+                        }}>
                             {group.items.map((item, i) => (
                                 <div
                                     key={item}
-                                    className={[
-                                        'flex items-center justify-between px-5 py-3 opacity-40',
-                                        i < group.items.length - 1 ? 'border-b border-neutral-800' : '',
-                                    ].join(' ')}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        padding: '11px 20px',
+                                        borderBottom: i < group.items.length - 1 ? '1px solid var(--rule)' : 'none',
+                                        opacity: 0.45,
+                                    }}
                                 >
-                                    <span className="text-sm text-neutral-300">{item}</span>
-                                    <div className="h-4 w-16 rounded bg-neutral-800" />
+                                    <span style={{
+                                        fontFamily: 'var(--sans-portal)',
+                                        fontSize: 13,
+                                        color: 'var(--ink)',
+                                    }}>
+                                        {item}
+                                    </span>
+                                    <div style={{
+                                        width: 52,
+                                        height: 14,
+                                        borderRadius: 3,
+                                        background: 'var(--parchment-2)',
+                                        border: '1px solid var(--rule)',
+                                    }} />
                                 </div>
                             ))}
                         </div>

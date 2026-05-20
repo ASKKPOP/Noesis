@@ -55,29 +55,100 @@ function PortalAuthPage() {
     }
 
     return (
-        <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8 min-h-[calc(100vh-3.5rem)]">
-            <div className="w-full max-w-sm rounded-2xl border border-neutral-800 bg-neutral-900 p-8 text-center shadow-xl">
-                <div className="mb-6 flex justify-center">
-                    <div className="rounded-full bg-violet-600/20 p-4">
-                        <svg className="h-8 w-8 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 0 0-2.25-2.25H15a3 3 0 1 1-6 0H5.25A2.25 2.25 0 0 0 3 12m18 0v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 9m18 0V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v3" />
-                        </svg>
-                    </div>
+        <div style={{
+            display: 'flex',
+            flex: 1,
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 'calc(100vh - 52px)',
+            padding: '40px 24px',
+            background: 'var(--vellum)',
+        }}>
+            {/* Card */}
+            <div style={{
+                width: '100%',
+                maxWidth: 380,
+                background: 'var(--parchment)',
+                border: '1px solid var(--rule)',
+                borderRadius: 8,
+                padding: '40px 36px',
+                textAlign: 'center',
+            }}>
+                {/* Monogram */}
+                <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 52,
+                    height: 52,
+                    borderRadius: '50%',
+                    border: '1px solid var(--rule)',
+                    background: 'var(--parchment-2)',
+                    marginBottom: 20,
+                }}>
+                    <span style={{
+                        fontFamily: 'var(--serif)',
+                        fontSize: 22,
+                        fontWeight: 600,
+                        color: 'var(--bronze)',
+                        lineHeight: 1,
+                    }}>Ν</span>
                 </div>
 
-                <h1 className="text-xl font-bold text-neutral-100">Sign In to Noēsis</h1>
-                <p className="mt-2 text-sm text-neutral-400">
-                    {isConnected ? 'Sign a message to verify wallet ownership' : 'Connect your wallet to continue'}
+                {/* Heading */}
+                <h1 style={{
+                    fontFamily: 'var(--serif)',
+                    fontSize: 26,
+                    fontWeight: 600,
+                    color: 'var(--ink)',
+                    letterSpacing: '0.01em',
+                    lineHeight: 1.2,
+                    marginBottom: 8,
+                }}>
+                    Sign In to Noēsis
+                </h1>
+
+                <p style={{
+                    fontFamily: 'var(--sans-portal)',
+                    fontSize: 13,
+                    color: 'var(--muted)',
+                    lineHeight: 1.5,
+                    marginBottom: 28,
+                }}>
+                    {isConnected
+                        ? 'Sign a message to verify wallet ownership'
+                        : 'Connect your wallet to continue'}
                 </p>
 
-                <div className="mt-6 flex flex-col gap-3">
+                {/* Divider */}
+                <div style={{
+                    borderTop: '1px solid var(--rule)',
+                    marginBottom: 24,
+                }} />
+
+                {/* Actions */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {!isConnected && <ConnectWalletButton />}
 
                     {isConnected && !currentUser && (
                         <button
                             onClick={handleSignIn}
                             disabled={isPending}
-                            className="w-full rounded-lg bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50 transition-colors"
+                            style={{
+                                width: '100%',
+                                background: isPending ? 'rgba(184,84,47,0.55)' : 'var(--terracotta)',
+                                color: '#faf6ec',
+                                border: 'none',
+                                borderRadius: 4,
+                                padding: '10px 20px',
+                                fontSize: 13,
+                                fontWeight: 600,
+                                fontFamily: 'var(--sans-portal)',
+                                letterSpacing: '0.03em',
+                                cursor: isPending ? 'not-allowed' : 'pointer',
+                                transition: 'background 0.15s',
+                            }}
                         >
                             {isPending ? 'Signing…' : 'Sign In'}
                         </button>
@@ -85,11 +156,32 @@ function PortalAuthPage() {
                 </div>
 
                 {error && (
-                    <p className="mt-4 text-red-400 text-xs" role="alert">
-                        Sign-in failed: {error}
+                    <p style={{
+                        marginTop: 16,
+                        fontFamily: 'var(--mono-portal)',
+                        fontSize: 11,
+                        color: '#b83232',
+                        background: 'rgba(184,50,50,0.06)',
+                        border: '1px solid rgba(184,50,50,0.20)',
+                        borderRadius: 3,
+                        padding: '6px 10px',
+                    }} role="alert">
+                        {error}
                     </p>
                 )}
             </div>
+
+            {/* Footer note */}
+            <p style={{
+                marginTop: 20,
+                fontFamily: 'var(--mono-portal)',
+                fontSize: 10,
+                letterSpacing: '0.08em',
+                color: 'var(--muted)',
+                opacity: 0.6,
+            }}>
+                PHASE 22 · GENESIS GRID · SIWE
+            </p>
         </div>
     );
 }
