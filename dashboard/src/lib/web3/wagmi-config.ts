@@ -11,6 +11,7 @@ import { injected, walletConnect } from 'wagmi/connectors';
 
 export const wagmiConfig = createConfig({
     chains: [mainnet, sepolia],
+    ssr: true,          // Defers browser API access until client hydration
     connectors: [
         injected(),
         walletConnect({
