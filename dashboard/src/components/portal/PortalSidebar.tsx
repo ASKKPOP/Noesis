@@ -278,7 +278,7 @@ export function PortalSidebar() {
                             transition: 'background 0.15s',
                         }}
                     >
-                        Connect &amp; Sign In
+                        Connect Wallet
                     </Link>
                 )}
 

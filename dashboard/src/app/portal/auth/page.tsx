@@ -54,6 +54,14 @@ function PortalAuthPage() {
         }
     }
 
+    // Auto sign-in as soon as wallet connects — no separate button press needed.
+    useEffect(() => {
+        if (isConnected && address && chain && !currentUser && !isPending) {
+            handleSignIn();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isConnected, address, chain?.id]);
+
     return (
         <div style={{
             display: 'flex',
@@ -116,9 +124,9 @@ function PortalAuthPage() {
                     lineHeight: 1.5,
                     marginBottom: 28,
                 }}>
-                    {isConnected
-                        ? 'Sign a message to verify wallet ownership'
-                        : 'Connect your wallet to continue'}
+                    {isPending
+                        ? 'Check your wallet — sign the message to continue'
+                        : 'Connect your wallet to join the Genesis Grid'}
                 </p>
 
                 {/* Divider */}
@@ -132,26 +140,42 @@ function PortalAuthPage() {
                     {!isConnected && <ConnectWalletButton />}
 
                     {isConnected && !currentUser && (
-                        <button
-                            onClick={handleSignIn}
-                            disabled={isPending}
-                            style={{
-                                width: '100%',
-                                background: isPending ? 'rgba(184,84,47,0.55)' : 'var(--terracotta)',
-                                color: '#faf6ec',
-                                border: 'none',
-                                borderRadius: 4,
-                                padding: '10px 20px',
-                                fontSize: 13,
-                                fontWeight: 600,
-                                fontFamily: 'var(--sans-portal)',
-                                letterSpacing: '0.03em',
-                                cursor: isPending ? 'not-allowed' : 'pointer',
-                                transition: 'background 0.15s',
-                            }}
-                        >
-                            {isPending ? 'Signing…' : 'Sign In'}
-                        </button>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 8,
+                            padding: '10px 0',
+                            fontFamily: 'var(--mono-portal)',
+                            fontSize: 11,
+                            color: 'var(--muted)',
+                            letterSpacing: '0.06em',
+                        }}>
+                            {isPending ? (
+                                <>
+                                    <span style={{
+                                        display: 'inline-block',
+                                        width: 8, height: 8,
+                                        borderRadius: '50%',
+                                        background: 'var(--terracotta)',
+                                        boxShadow: '0 0 6px var(--terracotta)',
+                                        animation: 'pulse 1.2s ease-in-out infinite',
+                                    }} />
+                                    Awaiting signature…
+                                </>
+                            ) : (
+                                <>
+                                    <span style={{
+                                        display: 'inline-block',
+                                        width: 8, height: 8,
+                                        borderRadius: '50%',
+                                        background: '#4ade80',
+                                        boxShadow: '0 0 6px #4ade80',
+                                    }} />
+                                    Wallet connected
+                                </>
+                            )}
+                        </div>
                     )}
                 </div>
 

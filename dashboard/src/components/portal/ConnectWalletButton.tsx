@@ -21,13 +21,31 @@ export function ConnectWalletButton() {
 
     if (isConnected && address) {
         return (
-            <div className="flex items-center gap-3">
-                <span className="rounded-full bg-neutral-800 px-4 py-2 text-sm font-mono text-neutral-300">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                <span style={{
+                    fontFamily: 'var(--mono-portal)',
+                    fontSize: 11,
+                    letterSpacing: '0.04em',
+                    color: 'var(--bronze)',
+                    background: 'var(--parchment-2)',
+                    border: '1px solid var(--rule)',
+                    borderRadius: 3,
+                    padding: '4px 10px',
+                }}>
                     {truncateAddress(address)}
                 </span>
                 <button
                     onClick={() => disconnect()}
-                    className="rounded-lg bg-neutral-700 px-4 py-2 text-sm font-medium text-neutral-200 hover:bg-neutral-600 transition-colors"
+                    style={{
+                        background: 'transparent',
+                        border: '1px solid var(--rule)',
+                        borderRadius: 3,
+                        padding: '4px 10px',
+                        fontSize: 11,
+                        fontFamily: 'var(--sans-portal)',
+                        color: 'var(--muted)',
+                        cursor: 'pointer',
+                    }}
                 >
                     Disconnect
                 </button>
@@ -39,7 +57,20 @@ export function ConnectWalletButton() {
         <button
             onClick={() => connect({ connector: injected() })}
             disabled={isConnecting}
-            className="rounded-lg bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50 transition-colors"
+            style={{
+                width: '100%',
+                background: isConnecting ? 'rgba(184,84,47,0.55)' : 'var(--terracotta)',
+                color: '#faf6ec',
+                border: 'none',
+                borderRadius: 4,
+                padding: '10px 20px',
+                fontSize: 13,
+                fontWeight: 600,
+                fontFamily: 'var(--sans-portal)',
+                letterSpacing: '0.03em',
+                cursor: isConnecting ? 'not-allowed' : 'pointer',
+                transition: 'background 0.15s',
+            }}
         >
             {isConnecting ? 'Connecting…' : 'Connect Wallet'}
         </button>
