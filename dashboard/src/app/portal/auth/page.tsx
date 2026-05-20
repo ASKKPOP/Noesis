@@ -19,6 +19,7 @@ import { useAccount, useSignMessage, useConnect, useDisconnect } from 'wagmi';
 import { injected } from 'wagmi/connectors';
 import { signIn } from 'next-auth/react';
 import { signInWithEthereum } from '@/lib/web3/siwe-auth';
+import { signInWithEmail, signUpWithEmail } from '@/lib/web3/email-auth';
 import { useHumanAuthStore } from '@/lib/stores/human-auth-store';
 
 // ParticleCanvas removed — replaced by live CyberGrid background.
@@ -84,6 +85,12 @@ function PortalAuthPage() {
     const [error, setError] = useState<string | null>(null);
     const [socialPending, setSocialPending] = useState<'google' | 'apple' | null>(null);
 
+    // Email form state
+    const [emailInput, setEmailInput] = useState('');
+    const [passwordInput, setPasswordInput] = useState('');
+    const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
+    const [emailPending, setEmailPending] = useState(false);
+
     // Already signed in — redirect.
     useEffect(() => {
         if (currentUser) router.push('/portal');
@@ -124,6 +131,39 @@ function PortalAuthPage() {
         } catch {
             setError('social_sign_in_failed');
             setSocialPending(null);
+        }
+    }
+
+    async function handleEmailSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        setError(null);
+
+        const isJoinTab = tab === 'join';
+
+        if (!emailInput.trim() || !passwordInput) {
+            setError('email_and_password_required');
+            return;
+        }
+        if (isJoinTab && passwordInput !== confirmPasswordInput) {
+            setError('passwords_do_not_match');
+            return;
+        }
+        if (passwordInput.length < 8) {
+            setError('password_too_short');
+            return;
+        }
+
+        setEmailPending(true);
+        try {
+            const user = isJoinTab
+                ? await signUpWithEmail({ email: emailInput.trim(), password: passwordInput })
+                : await signInWithEmail({ email: emailInput.trim(), password: passwordInput });
+            setUser(user);
+            router.push('/portal');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : (isJoinTab ? 'sign_up_failed' : 'sign_in_failed'));
+        } finally {
+            setEmailPending(false);
         }
     }
 
@@ -327,7 +367,81 @@ function PortalAuthPage() {
                         </button>
                     </div>
 
-                    {/* ── Divider ── */}
+                    {/* ── Divider: social → email ── */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        marginBottom: 20,
+                    }}>
+                        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.10)' }} />
+                        <span style={{
+                            fontFamily: '"JetBrains Mono", monospace',
+                            fontSize: 10,
+                            letterSpacing: '0.10em',
+                            color: 'rgba(245,240,234,0.35)',
+                            textTransform: 'uppercase',
+                        }}>
+                            or
+                        </span>
+                        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.10)' }} />
+                    </div>
+
+                    {/* ── Email form ── */}
+                    <form onSubmit={handleEmailSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+                        <input
+                            type="email"
+                            placeholder="Email address"
+                            autoComplete="email"
+                            value={emailInput}
+                            onChange={e => setEmailInput(e.target.value)}
+                            disabled={emailPending}
+                            style={{ ...inputStyle, opacity: emailPending ? 0.6 : 1 }}
+                        />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            autoComplete={isJoin ? 'new-password' : 'current-password'}
+                            value={passwordInput}
+                            onChange={e => setPasswordInput(e.target.value)}
+                            disabled={emailPending}
+                            style={{ ...inputStyle, opacity: emailPending ? 0.6 : 1 }}
+                        />
+                        {isJoin && (
+                            <input
+                                type="password"
+                                placeholder="Confirm password"
+                                autoComplete="new-password"
+                                value={confirmPasswordInput}
+                                onChange={e => setConfirmPasswordInput(e.target.value)}
+                                disabled={emailPending}
+                                style={{ ...inputStyle, opacity: emailPending ? 0.6 : 1 }}
+                            />
+                        )}
+                        <button
+                            type="submit"
+                            disabled={emailPending}
+                            style={{
+                                width: '100%',
+                                background: emailPending ? 'rgba(218,122,78,0.60)' : '#da7a4e',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: 10,
+                                padding: '13px 16px',
+                                fontSize: 14,
+                                fontWeight: 600,
+                                fontFamily: '"DM Sans", "Inter Tight", sans-serif',
+                                cursor: emailPending ? 'not-allowed' : 'pointer',
+                                transition: 'background 0.15s',
+                            }}
+                        >
+                            {emailPending
+                                ? (isJoin ? 'Creating account…' : 'Signing in…')
+                                : (isJoin ? 'Create account' : 'Sign in with email')}
+                        </button>
+                    </form>
+
+                    {/* ── Divider: email → wallet ── */}
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -415,9 +529,17 @@ function PortalAuthPage() {
                             color: '#f87171',
                             textAlign: 'center',
                         }}>
-                            {error === 'user_rejected_signature'
-                                ? 'Signature rejected — reconnect to retry'
-                                : error}
+                            {{
+                                user_rejected_signature:  'Signature rejected — reconnect to retry',
+                                email_and_password_required: 'Email and password are required',
+                                passwords_do_not_match:   'Passwords do not match',
+                                password_too_short:       'Password must be at least 8 characters',
+                                email_already_exists:     'An account with this email already exists',
+                                invalid_credentials:      'Incorrect email or password',
+                                sign_in_failed:           'Sign in failed — please try again',
+                                sign_up_failed:           'Account creation failed — please try again',
+                                social_sign_in_failed:    'Social sign-in failed — please try again',
+                            }[error] ?? error}
                         </div>
                     )}
 

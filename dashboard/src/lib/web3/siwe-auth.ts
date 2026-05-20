@@ -13,6 +13,8 @@ import { SiweMessage } from 'siwe';
 export interface HumanUser {
     did: string;
     eth_address: string;
+    /** Present for email-authenticated users. */
+    email?: string;
 }
 
 export interface SignInParams {
