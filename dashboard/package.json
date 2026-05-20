@@ -20,9 +20,11 @@
     "next": "15.2.4",
     "react": "19.2.5",
     "react-dom": "19.2.5",
+    "siwe": "^2.3.2",
     "swr": "^2.4.1",
     "viem": "^2.0.0",
-    "wagmi": "^2.0.0"
+    "wagmi": "^2.0.0",
+    "zustand": "^4.5.0"
   },
   "devDependencies": {
     "@fastify/websocket": "^11.0.0",
