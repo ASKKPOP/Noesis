@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.4
-milestone_name: Active)
+milestone: v2.5
+milestone_name: Human Portal — Active)
 status: executing
 stopped_at: Phase 21 UI-SPEC approved
-last_updated: "2026-05-17T17:14:00.153Z"
-last_activity: 2026-05-17
+last_updated: "2026-05-20T16:02:31.202Z"
+last_activity: 2026-05-20 -- Phase 22 execution started
 progress:
-  total_phases: 22
-  completed_phases: 13
-  total_plans: 78
-  completed_plans: 78
-  percent: 100
+  total_phases: 23
+  completed_phases: 21
+  total_plans: 119
+  completed_plans: 115
+  percent: 97
 ---
 
 # Project State
@@ -20,18 +20,32 @@ progress:
 
 See: .planning/PROJECT.md (updated 2026-05-16)
 
-**Core value:** The first persistent Grid where Nous actually live — observable, running continuously, with real cognitive cycles, real trades, and real social dynamics emerging from the systems.
-**Current milestone:** v2.4 — Agora (Emergence & Culture: skill diffusion, norm crystallization, lore commons, culture dashboard)
-**Current focus:** Phase 21 — culture-dashboard
+**Core value:** The first persistent Grid where Nous actually live — and now, the first milestone where real human users can enter: Web3 wallet auth, Cyber Coin (real EVM crypto), Sophia-guided onboarding, Nous chat & tips, personal Nous spawning, community, and help.
+**Current milestone:** v2.5 — Human Portal
+**Previous milestone:** v2.4 Agora — SHIPPED 2026-05-20 (115/115 plans)
+**Current focus:** Phase 22 — web3-identity
 
 ## Current Position
 
-Phase: 21
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-05-17
+Phase: 22 (web3-identity) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 22
+Last activity: 2026-05-20 -- Phase 22 execution started
 
-Progress: [████████████████████] 71/78 plans (91%)
+Progress: [                    ] 0/0 plans (v2.5 not yet planned)
+
+## v2.5 Key Decisions (locked 2026-05-20)
+
+| Decision | Choice |
+|----------|--------|
+| Human auth | SIWE (Sign-In With Ethereum) — wallet signature = identity, no password |
+| Cyber Coin | Real EVM crypto (USDT/ETH) — user's own wallet, platform holds zero custody |
+| Onboarding AI | Fast-proxy LLM (out-of-tick) — Sophia's voice, ~2s response |
+| Personal Nous | In-scope for v2.5 — users spawn their own Nous agent in Genesis Grid |
+| Portal location | `/portal/*` routes inside existing Next.js dashboard — no new Docker service |
+| Starting Cyber Coin | None assigned by platform — user brings their own wallet funds |
+| Human DID scheme | `did:noesis:human:<checksummed-eth-address>` |
+| Allowlist growth | 43 → 47 (+4 events: human.joined, human.transferred, human.spoke, nous.spawned_by_human) |
 
 ## Accumulated Context
 
@@ -88,7 +102,7 @@ Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule p
 24. `ballot.committed` ← Phase 12 (VOTE-02)
 25. `ballot.revealed` ← Phase 12 (VOTE-03)
 26. `proposal.tallied` ← Phase 12 (VOTE-04)
-27. `operator.exported` ← Phase 13 (REPLAY-02)
+27. `operator.exported` ← Phase 13 (REPLAY-02) — **Phase 13 end-state: 27 events total**
 28. `nous.reflection_authored` ← Phase 15 (PNEU-01) — `{nous_did, tick, entry_hash}`
 29. `nous.self_model_revised` ← Phase 15 (PNEU-03) — `{nous_did, tick, rule_hash}`
 30. `nous.creed_violation` ← Phase 15 (PNEU-06) — `{nous_did, tick, violation_hash}`
