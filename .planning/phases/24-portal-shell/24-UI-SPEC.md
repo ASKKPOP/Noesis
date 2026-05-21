@@ -47,9 +47,11 @@ Declared values (must be multiples of 4):
 - Header height: 52px (fixed — do not change)
 - Sidebar width: 220px (fixed — do not change)
 - Page content padding: 36px top/bottom, 40px left/right (established pattern in profile page and portal home)
-- Nav link padding: 6px 12px (established NavLink pattern)
+- Nav link padding: 6px 12px — **legacy frozen exception from Phase 22; do not propagate to new components. All new components must use 8px 12px or an on-scale equivalent.**
 - Identity card row padding: 12px 20px
 - Mobile sidebar touch target minimum: 44px height for hamburger button and close button
+
+**Primary visual anchor:** The three live stat cards in the header row of the portal home page (Active Nous count, Current Tick, and phase label). These are the focal point of the primary screen and must remain the most visually prominent element on first paint.
 
 ---
 
@@ -57,23 +59,27 @@ Declared values (must be multiples of 4):
 
 | Role | Size | Weight | Line Height | Font Family |
 |------|------|--------|-------------|-------------|
-| Display heading (h1) | 30–36px | 600 | 1.1–1.15 | `var(--serif)` (Cormorant Garamond) |
-| Section heading / card title | 16–20px | 600 | 1.2 | `var(--serif)` |
-| Body copy | 13–14px | 400 | 1.5 | `var(--sans-portal)` (Inter Tight) |
-| Label / UI chrome | 12–13px | 500–600 | 1.0 | `var(--sans-portal)` |
-| Mono label (uppercase, spaced) | 9–11px | 400–500 | 1.0 | `var(--mono-portal)` (JetBrains Mono) |
+| Page heading (h1) | 30px | 600 | 1.15 | `var(--serif)` (Cormorant Garamond) |
+| Stat display | 28px | 600 | 1.0 | `var(--serif)` (Cormorant Garamond) |
+| Body / dd value | 13px | 400 | 1.5 | `var(--sans-portal)` (Inter Tight) |
+| Label / mono / small | 12px | 400 or 600 | 1.0 | `var(--sans-portal)` or `var(--mono-portal)` — see exact declarations |
+
+**Weights in use: 400 (body, plain labels) and 600 (headings, bold labels, stat values). No 500-weight permitted.**
 
 **Exact declarations for Phase 24 new elements:**
 
 - **Profile page heading:** 30px, weight 600, `var(--serif)`, line-height 1.15
-- **Profile identity card row — dt label:** 10px, weight 500, `var(--mono-portal)`, letterSpacing 0.10em, uppercase, `var(--muted)` color
+- **Profile identity card row — dt label:** 12px, weight 600, `var(--mono-portal)`, letterSpacing 0.10em, uppercase, `var(--muted)` color
 - **Profile identity card row — dd value (plain text):** 13px, weight 400, `var(--sans-portal)`, line-height 1.5, `var(--ink)` color
 - **Profile identity card row — dd value (mono, e.g. wallet address):** 12px, weight 400, `var(--mono-portal)`, line-height 1.5
 - **Portal home stat card — stat value:** 28px, weight 600, `var(--serif)`, line-height 1.0
-- **Portal home stat card — stat label:** 9px, weight 400, `var(--mono-portal)`, letterSpacing 0.12em, uppercase
-- **Portal home stat card — stat sub-label:** 11px, weight 400, `var(--sans-portal)`
-- **Section category label:** 9px, weight 600, `var(--mono-portal)`, letterSpacing 0.14em, uppercase, `var(--muted)` color
+- **Portal home stat card — stat label:** 12px, weight 400, `var(--mono-portal)`, letterSpacing 0.12em, uppercase
+- **Portal home stat card — stat sub-label:** 12px, weight 400, `var(--sans-portal)`
+- **Section category label:** 12px, weight 600, `var(--mono-portal)`, letterSpacing 0.14em, uppercase, `var(--muted)` color
 - **Hamburger button label (screen reader only):** Not rendered visually — aria-label only
+- **"→ Wallet" link in profile balance row:** 12px, weight 400, `var(--sans-portal)`, color `var(--terracotta)`
+
+**Consolidation note:** Original spec declared 9px, 10px, 11px sizes for mono labels and sub-labels. All three are rounded up to 12px per the 4-size maximum rule. Original 500 weight reclassified as 400 for plain labels and 400 for dt labels that were previously 500 — bold dt labels use 600. This preserves the visual hierarchy with two weights only.
 
 **Source:** Directly read from `PortalShell.tsx`, `PortalHeader.tsx`, `PortalSidebar.tsx`, `profile/page.tsx`, `page.tsx`.
 
@@ -184,13 +190,13 @@ Declared values (must be multiples of 4):
 - **Hooks:** Reuse `useBalance` (ETH) and `useReadContract` (USDT) directly from wagmi — same calls as `WalletPanel.tsx`
 - **Display:** Single row, one line: `{N.NN} ETH · {N} USDT` + right-aligned `→ Wallet` link
 - **Loading state:** Show "—" for balances while hooks are pending; never show spinner in the row
-- **"→ Wallet" link:** `Link href="/portal/wallet"`, color `var(--terracotta)`, font `var(--sans-portal)` 12px weight 500
+- **"→ Wallet" link:** `Link href="/portal/wallet"`, color `var(--terracotta)`, font `var(--sans-portal)` 12px weight 400
 
 ### Region Display (D-01, D-03, D-05)
 
 - **Source:** `useHumanAuthStore().currentUser.region` (once store is extended per D-07)
 - **Display:** Title-case (e.g. `'Agora'`); plain text, no badge, no icon
-- **Edit hint:** Optional small link "→ Set during onboarding" displayed in `var(--muted)` at 10px if region is `null` or `'agora'` default — Claude's discretion call (CONTEXT.md)
+- **Edit hint:** Optional small link "→ Set during onboarding" displayed in `var(--muted)` at 12px if region is `null` or `'agora'` default — Claude's discretion call (CONTEXT.md)
 - **Not shown in:** Sidebar footer, header breadcrumb — profile page only per D-06
 
 ---
