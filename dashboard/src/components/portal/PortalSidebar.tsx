@@ -140,7 +140,7 @@ function NavLink({ item }: { item: NavItem }) {
 
 // ── PortalSidebar ────────────────────────────────────────────────────────────
 
-export function PortalSidebar() {
+export function PortalSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     const { address, isConnected } = useAccount();
     const { currentUser, clearUser } = useHumanAuthStore();
     const { disconnect } = useDisconnect();
@@ -153,19 +153,43 @@ export function PortalSidebar() {
     }
 
     return (
-        <aside style={{
-            width: 220,
-            flexShrink: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'var(--navy)',
-            borderRight: '1px solid rgba(255,255,255,0.07)',
-            overflow: 'hidden',
-        }}>
+        <>
+        {isOpen && (
+            <div
+                onClick={onClose}
+                style={{
+                    position: 'fixed',
+                    inset: 0,
+                    background: 'rgba(11,18,32,0.40)',
+                    zIndex: 49,
+                }}
+                aria-hidden="true"
+            />
+        )}
+        <aside
+            className="md:relative md:translate-x-0"
+            style={{
+                width: 220,
+                flexShrink: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                background: 'var(--navy)',
+                borderRight: '1px solid rgba(255,255,255,0.07)',
+                overflow: 'hidden',
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                height: '100%',
+                zIndex: 50,
+                transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
+                transition: 'transform 0.2s ease',
+            }}
+        >
             {/* ── Logo ── */}
             <div style={{
                 padding: '20px 16px 18px',
                 borderBottom: '1px solid rgba(255,255,255,0.07)',
+                position: 'relative',
             }}>
                 <div style={{
                     fontFamily: 'var(--serif)',
@@ -187,6 +211,29 @@ export function PortalSidebar() {
                 }}>
                     Portal · Genesis Grid
                 </div>
+                <button
+                    onClick={onClose}
+                    className="md:hidden"
+                    aria-label="Close navigation"
+                    style={{
+                        position: 'absolute',
+                        top: 18,
+                        right: 12,
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'rgba(200,192,184,0.72)',
+                        fontSize: 18,
+                        lineHeight: 1,
+                        padding: '4px',
+                        fontFamily: 'var(--sans-portal)',
+                        fontWeight: 400,
+                        minHeight: 24,
+                        minWidth: 24,
+                    }}
+                >
+                    ×
+                </button>
             </div>
 
             {/* ── Nav ── */}
@@ -322,5 +369,6 @@ export function PortalSidebar() {
                 </div>
             </div>
         </aside>
+        </>
     );
 }

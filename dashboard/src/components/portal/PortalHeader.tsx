@@ -32,7 +32,7 @@ function usePageLabel(): string {
     return labels[pathname] ?? 'Portal';
 }
 
-export function PortalHeader() {
+export function PortalHeader({ onMenuOpen }: { onMenuOpen: () => void }) {
     const { address, isConnected } = useAccount();
     const { disconnect } = useDisconnect();
     const { currentUser, clearUser } = useHumanAuthStore();
@@ -58,6 +58,29 @@ export function PortalHeader() {
         }}>
             {/* Left: breadcrumb */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                    onClick={onMenuOpen}
+                    className="md:hidden"
+                    aria-label="Open navigation"
+                    style={{
+                        background: 'transparent',
+                        border: 'none',
+                        padding: '8px',
+                        cursor: 'pointer',
+                        minHeight: 44,
+                        minWidth: 44,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginLeft: -8,
+                    }}
+                >
+                    <svg width={18} height={18} viewBox="0 0 18 18" fill="none">
+                        <line x1="2" y1="5"  x2="16" y2="5"  stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" />
+                        <line x1="2" y1="9"  x2="16" y2="9"  stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" />
+                        <line x1="2" y1="13" x2="16" y2="13" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                </button>
                 <span style={{
                     fontFamily: 'var(--mono-portal)',
                     fontSize: 10,
