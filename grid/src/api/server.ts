@@ -28,6 +28,7 @@ import { WsFirehoseHub } from '../audit/firehose-hub.js';
 import { DriftDetector } from '../audit/drift-detector.js';
 import { registerAuditFirehoseRoute } from './routes/audit-firehose.js';
 import { registerDriftAlertsRoute } from './routes/audit-drift-alerts.js';
+import { registerHumansRoutes } from './routes/humans.js';
 import { registerOperatorRoutes } from './operator/index.js';
 import { registerPortalRoutes } from './portal/index.js';
 import { tombstoneCheck, TombstonedDidError } from '../registry/tombstone-check.js';
@@ -389,6 +390,9 @@ export function buildServerWithHub(
 
     // --- Phase 22: Portal auth routes (WEB3-01 to WEB3-06) ---
     registerPortalRoutes(app, services);
+
+    // --- Phase 25a OBS-HUMANS: Human profile + history routes ---
+    registerHumansRoutes(app, services);
 
     // --- Phase 19 NORM-01: Crystallized norms endpoint ---
     // Registered only when norms service is provided (optional for legacy tests).
