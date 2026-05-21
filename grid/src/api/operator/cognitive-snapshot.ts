@@ -16,8 +16,16 @@
  * SOLE-PRODUCER INVARIANT (Pitfall 4): appendOperatorEvent is called EXACTLY
  * ONCE in this file, on the SUCCESS path only. Error paths MUST NOT emit.
  *
+ * AUTH MODEL (GAP-25a-1 fix, Phase 25a-07):
+ *   tier and operator_id are derived from server-trusted request headers
+ *   (x-operator-tier, x-operator-id) — NOT from the request body. Mirrors
+ *   the canonical validateTierAtLeast pattern from grid/src/api/governance/
+ *   _validation.ts. Request body is unused.
+ *
  * ERROR LADDER (no 500s — mirrors memory-query.ts discipline):
- *   400 — malformed tier (not 'H3') / operator_id / DID
+ *   400 — malformed DID or x-operator-id header (invalid_did / invalid_operator_id)
+ *   401 — tier_missing (x-operator-tier header absent / non-numeric)
+ *   403 — tier_too_low (x-operator-tier < 3)
  *   404 — unknown Nous (no runner for DID)
  *   410 — tombstoned DID
  *   503 — Brain unavailable (unreachable, timeout, malformed response)
@@ -30,8 +38,8 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { DID_REGEX } from '../server.js';
 import type { ApiError } from '../types.js';
+import { OPERATOR_ID_REGEX } from '../types.js';
 import { appendOperatorEvent } from '../../audit/operator-events.js';
-import { validateTierBody, type OperatorBody } from './_validation.js';
 import { tombstoneCheck, TombstonedDidError } from '../../registry/tombstone-check.js';
 import {
     fetchCognitiveSnapshot,
@@ -43,8 +51,6 @@ import {
     BrainMalformedResponseError,
 } from './brain-http-errors.js';
 
-interface CognitiveSnapshotBody extends OperatorBody {}
-
 export interface CognitiveSnapshotResponse extends BrainCognitiveSnapshot {
     creed_violation_count: number;
 }
@@ -53,17 +59,35 @@ export function registerCognitiveSnapshotRoute(
     app: FastifyInstance,
     services: GridServices,
 ): void {
-    app.post<{ Params: { did: string }; Body: CognitiveSnapshotBody }>(
+    app.post<{ Params: { did: string }; Body: never }>(
         '/api/v1/operator/nous/:did/cognitive-snapshot',
         async (req, reply) => {
-            const body = req.body ?? {};
-
-            // 1. Tier + operator_id gate — H3 required for cognitive-snapshot (D-25a-04).
-            const v = validateTierBody(body, 'H3');
-            if (!v.ok) {
-                reply.code(400);
-                return { error: v.error } satisfies ApiError;
+            // 1. Tier gate — read from server-trusted x-operator-tier header (D-25a-04).
+            //    Mirrors grid/src/api/governance/_validation.ts validateTierAtLeast.
+            //    GAP-25a-1 fix: body fields tier/operator_id are NOT trusted.
+            const tierHeader = req.headers['x-operator-tier'];
+            if (typeof tierHeader !== 'string') {
+                reply.code(401);
+                return { error: 'tier_missing' } satisfies ApiError;
             }
+            const tierNum = parseInt(tierHeader, 10);
+            if (!Number.isFinite(tierNum)) {
+                reply.code(401);
+                return { error: 'tier_missing' } satisfies ApiError;
+            }
+            if (tierNum < 3) {
+                reply.code(403);
+                return { error: 'tier_too_low' } satisfies ApiError;
+            }
+
+            // 1b. Operator-id gate — read from server-trusted x-operator-id header.
+            const opIdHeader = req.headers['x-operator-id'];
+            if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) {
+                reply.code(400);
+                return { error: 'invalid_operator_id' } satisfies ApiError;
+            }
+            const resolvedTier: 'H3' = 'H3';
+            const resolvedOperatorId = opIdHeader;
 
             // 2. DID shape gate.
             const targetDid = req.params.did;
@@ -123,14 +147,15 @@ export function registerCognitiveSnapshotRoute(
 
             // 7. Emit operator.inspected — ONLY on success path (sole-producer invariant, Pitfall 4).
             //    Closed payload tuple: no cognitive state content in audit.
+            //    GAP-25a-1 fix: operator_id sourced from header, never from body.
             appendOperatorEvent(
                 services.audit,
                 'operator.inspected',
-                v.operator_id,
+                resolvedOperatorId,
                 {
-                    tier: v.tier,
+                    tier: resolvedTier,
                     action: 'cognitive_snapshot',
-                    operator_id: v.operator_id,
+                    operator_id: resolvedOperatorId,
                     target_did: targetDid,
                 },
                 targetDid,
