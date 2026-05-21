@@ -4,14 +4,14 @@ milestone: v2.5
 milestone_name: Human Portal — Active)
 status: executing
 stopped_at: Phase 25a UI-SPEC approved
-last_updated: "2026-05-21T17:24:34.346Z"
-last_activity: 2026-05-21
+last_updated: "2026-05-21T17:54:19.405Z"
+last_activity: 2026-05-21 -- Phase 25a planning complete
 progress:
   total_phases: 27
   completed_phases: 24
-  total_plans: 125
+  total_plans: 131
   completed_plans: 125
-  percent: 100
+  percent: 95
 ---
 
 # Project State
@@ -29,8 +29,8 @@ See: .planning/PROJECT.md (updated 2026-05-16)
 
 Phase: 24
 Plan: Not started
-Status: Executing Phase 24
-Last activity: 2026-05-21
+Status: Ready to execute
+Last activity: 2026-05-21 -- Phase 25a planning complete
 
 Progress: [██████████████████  ] 23/29 phases complete (v2.5 in progress)
 Note: Phase 24 planned 2026-05-21 — 5 plans in 2 waves (01-04 Wave 1 parallel, 05 Wave 2 tests)
