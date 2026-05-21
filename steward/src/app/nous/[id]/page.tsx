@@ -7,6 +7,85 @@ import StewardShell from '@/components/StewardShell';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 
+// Drive names per UI-SPEC Correction Notice (verified from brain/src/noesis_brain/ananke/types.py DriveName enum)
+const DRIVE_NAMES = ['HUNGER', 'CURIOSITY', 'SAFETY', 'BOREDOM', 'LONELINESS'] as const;
+type DriveName = typeof DRIVE_NAMES[number];
+
+const DRIVE_COLORS: Record<DriveName, string> = {
+    HUNGER:    '#b8542f', // terracotta — physical need, urgent/warm
+    CURIOSITY: '#3a7a5a', // sage — intellectual, calm growth
+    SAFETY:    '#3a4a7a', // indigo — security, cool stable
+    BOREDOM:   '#8a8479', // muted gray — neutral flatness
+    LONELINESS:'#6a4a7a', // mauve — social, quiet purple
+};
+
+interface CognitiveSnapshot {
+    reflexion_count: number;
+    rule_count: number;
+    skill_titles_topk: string[];
+    drive_levels: Record<string, number>;
+    last_sleep_tick: number;
+    creed_violation_count: number;
+}
+
+interface TickMetrics {
+    p50: number;
+    p95: number;
+    queue_depth: number;
+    sample_count: number;
+}
+
+interface AuditTrailEntry {
+    id: string;
+    eventType: string;
+    actorDid: string;
+    payload: Record<string, unknown>;
+    createdAt: string;
+    tick?: number;
+}
+
+function DriveBar({ drive, level, mini = false }: { drive: DriveName; level: number; mini?: boolean }) {
+    const pct = Math.round(Math.max(0, Math.min(1, level)) * 100);
+    const barHeight = mini ? 6 : 8;
+    return (
+        <div
+            role="meter"
+            aria-valuenow={pct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`${drive} drive level`}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: mini ? 4 : 6 }}
+        >
+            {!mini && (
+                <div style={{ width: 88, fontFamily: 'var(--mono)', fontSize: 9, textTransform: 'uppercase', color: 'var(--muted)', flexShrink: 0 }}>
+                    {drive}
+                </div>
+            )}
+            {mini && (
+                <div style={{ width: 72, fontFamily: 'var(--mono)', fontSize: 9, textTransform: 'uppercase', color: 'var(--muted)', flexShrink: 0 }}>
+                    {drive}
+                </div>
+            )}
+            <div style={{ flex: 1, height: barHeight, borderRadius: 4, background: 'var(--rule)', overflow: 'hidden' }}>
+                <div
+                    style={{
+                        width: `${pct}%`,
+                        height: '100%',
+                        background: DRIVE_COLORS[drive],
+                        borderRadius: 4,
+                        transition: 'width 0.3s ease',
+                    }}
+                />
+            </div>
+            {!mini && (
+                <div style={{ width: 36, fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--muted)', textAlign: 'right', flexShrink: 0 }}>
+                    {level != null ? `${pct}%` : '—'}
+                </div>
+            )}
+        </div>
+    );
+}
+
 interface NousEntry {
     did: string;
     name: string;
@@ -58,9 +137,29 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
     const router = useRouter();
 
     const [nousInfo, setNousInfo] = useState<NousEntry | null>(null);
-    const [brainState, setBrainState] = useState<unknown>(null);
+    const [brainState, setBrainState] = useState<Record<string, unknown> | null>(null);
     const [brainError, setBrainError] = useState<string | null>(null);
     const [brainLoading, setBrainLoading] = useState(true);
+
+    // Cognitive Inspector
+    const [cognitive, setCognitive] = useState<CognitiveSnapshot | null>(null);
+    const [cogLoading, setCogLoading] = useState(true);
+    const [cogError, setCogError] = useState<string | null>(null);
+
+    // Brain Health — tick metrics
+    const [tickMetrics, setTickMetrics] = useState<TickMetrics | null>(null);
+    const [tickMetricsError, setTickMetricsError] = useState<string | null>(null);
+
+    // Brain Health — audit event counts
+    const [reflectionCount, setReflectionCount] = useState<number>(0);
+    const [skillCount, setSkillCount] = useState<number>(0);
+    const [ruleCount, setRuleCount] = useState<number>(0);
+    const [driveEvents, setDriveEvents] = useState<AuditTrailEntry[]>([]);
+    const [sleepEnteredEvents, setSleepEnteredEvents] = useState<AuditTrailEntry[]>([]);
+    const [sleepCompletedEvents, setSleepCompletedEvents] = useState<AuditTrailEntry[]>([]);
+    const [creedViolationCount, setCreedViolationCount] = useState<number>(0);
+    const [healthLoading, setHealthLoading] = useState(true);
+    const [healthError, setHealthError] = useState<string | null>(null);
 
     // Force telos form
     const [telosText, setTelosText] = useState('');
@@ -98,7 +197,7 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
                     if (data.error) {
                         setBrainError(data.error);
                     } else {
-                        setBrainState(data);
+                        setBrainState(data as Record<string, unknown>);
                     }
                 } else if (res.status === 503 || res.status === 404) {
                     setBrainError(`Nous state unavailable (${res.status})`);
@@ -109,6 +208,127 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
                 setBrainError(e instanceof Error ? e.message : 'Network error');
             } finally {
                 setBrainLoading(false);
+            }
+
+            // Fetch cognitive snapshot (H3+ gated via Grid proxy)
+            setCogLoading(true);
+            try {
+                const res = await fetch(
+                    `${GRID_ORIGIN}/api/v1/operator/nous/${encodeURIComponent(did)}/cognitive-snapshot`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ tier: 'H3', operator_id: 'op:steward:default' }),
+                    }
+                );
+                if (res.ok) {
+                    const data = await res.json();
+                    setCognitive(data as CognitiveSnapshot);
+                } else if (res.status === 403) {
+                    setCogError('403');
+                } else if (res.status === 503) {
+                    setCogError('503');
+                } else {
+                    setCogError(`HTTP ${res.status}`);
+                }
+            } catch {
+                setCogError('503');
+            } finally {
+                setCogLoading(false);
+            }
+
+            // Fetch brain health data (tick-metrics + audit aggregations)
+            setHealthLoading(true);
+            try {
+                const encodedDid = encodeURIComponent(did);
+
+                const [
+                    tickRes,
+                    reflectionRes,
+                    skillTaughtRes,
+                    skillInferredRes,
+                    ruleRes,
+                    driveRes,
+                    sleepEnteredRes,
+                    sleepCompletedRes,
+                    creedRes,
+                ] = await Promise.allSettled([
+                    fetch(`${GRID_ORIGIN}/api/v1/nous/${encodedDid}/tick-metrics`),
+                    fetch(`${GRID_ORIGIN}/api/v1/audit/trail?type=nous.reflection_authored&actor=${encodedDid}&limit=200`),
+                    fetch(`${GRID_ORIGIN}/api/v1/audit/trail?type=skill.taught&actor=${encodedDid}&limit=200`),
+                    fetch(`${GRID_ORIGIN}/api/v1/audit/trail?type=skill.inferred&actor=${encodedDid}&limit=200`),
+                    fetch(`${GRID_ORIGIN}/api/v1/audit/trail?type=nous.self_model_revised&actor=${encodedDid}&limit=200`),
+                    fetch(`${GRID_ORIGIN}/api/v1/audit/trail?type=ananke.drive_crossed&actor=${encodedDid}&limit=200`),
+                    fetch(`${GRID_ORIGIN}/api/v1/audit/trail?type=nous.sleep.entered&actor=${encodedDid}&limit=200`),
+                    fetch(`${GRID_ORIGIN}/api/v1/audit/trail?type=nous.sleep.completed&actor=${encodedDid}&limit=200`),
+                    fetch(`${GRID_ORIGIN}/api/v1/audit/trail?type=nous.creed_violation&actor=${encodedDid}&limit=200`),
+                ]);
+
+                // Tick metrics
+                if (tickRes.status === 'fulfilled' && tickRes.value.ok) {
+                    setTickMetrics(await tickRes.value.json() as TickMetrics);
+                } else if (tickRes.status === 'fulfilled' && tickRes.value.status === 404) {
+                    setTickMetricsError('404');
+                } else {
+                    setTickMetricsError('error');
+                }
+
+                function extractEntries(result: PromiseSettledResult<Response>): AuditTrailEntry[] {
+                    if (result.status === 'fulfilled' && result.value.ok) {
+                        return result.value.json().then((d: unknown) => {
+                            const data = d as { entries?: AuditTrailEntry[] } | AuditTrailEntry[];
+                            return Array.isArray(data) ? data : (data as { entries?: AuditTrailEntry[] }).entries ?? [];
+                        }).catch(() => []) as unknown as AuditTrailEntry[];
+                    }
+                    return [];
+                }
+
+                // Parse all audit results
+                const parseAudit = async (result: PromiseSettledResult<Response>): Promise<AuditTrailEntry[]> => {
+                    if (result.status !== 'fulfilled' || !result.value.ok) return [];
+                    try {
+                        const d = await result.value.json();
+                        return Array.isArray(d) ? d : d.entries ?? [];
+                    } catch {
+                        return [];
+                    }
+                };
+
+                void extractEntries; // silence unused warning
+
+                const [reflections, skillTaught, skillInferred, rules, drives, sleepEntered, sleepCompleted, creedViolations] = await Promise.all([
+                    parseAudit(reflectionRes),
+                    parseAudit(skillTaughtRes),
+                    parseAudit(skillInferredRes),
+                    parseAudit(ruleRes),
+                    parseAudit(driveRes),
+                    parseAudit(sleepEnteredRes),
+                    parseAudit(sleepCompletedRes),
+                    parseAudit(creedRes),
+                ]);
+
+                // Filter skill events by learner_did === did in case actor is system DID
+                const filteredSkillTaught = skillTaught.filter((e) => {
+                    const p = e.payload as Record<string, unknown>;
+                    return e.actorDid === did || p?.learner_did === did;
+                });
+                const filteredSkillInferred = skillInferred.filter((e) => {
+                    const p = e.payload as Record<string, unknown>;
+                    return e.actorDid === did || p?.learner_did === did;
+                });
+
+                setReflectionCount(reflections.length);
+                setSkillCount(filteredSkillTaught.length + filteredSkillInferred.length);
+                setRuleCount(rules.length);
+                setDriveEvents(drives);
+                setSleepEnteredEvents(sleepEntered);
+                setSleepCompletedEvents(sleepCompleted);
+                setCreedViolationCount(creedViolations.length);
+                setHealthError(null);
+            } catch (e) {
+                setHealthError(e instanceof Error ? e.message : 'Could not load health metrics.');
+            } finally {
+                setHealthLoading(false);
             }
         }
         fetchData();
@@ -239,6 +459,281 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
                             {JSON.stringify(brainState, null, 2)}
                         </pre>
                     )}
+                </div>
+            </div>
+
+            {/* Cognitive Inspector Card */}
+            <div className="steward-card" style={{ marginBottom: 24 }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--rule)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+                        Cognitive Inspector
+                    </div>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--muted)', background: 'var(--parchment)', border: '1px solid var(--rule)', borderRadius: 4, padding: '2px 6px' }}>
+                        H3+
+                    </span>
+                </div>
+                <div style={{ padding: '16px 20px' }}>
+                    {cogError === '403' ? (
+                        <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>
+                            H3+ operator tier required to access cognitive snapshot.
+                        </div>
+                    ) : cogError === '503' || (cogError && !cogLoading) ? (
+                        <>
+                            {/* Hashes row still renders from existing brain-state fetch */}
+                            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                                {(['mem', 'creed', 'skill'] as const).map((label) => {
+                                    const hashKey = label === 'mem' ? 'memory_hash' : label === 'creed' ? 'creed_hash' : 'skill_hash';
+                                    const val = brainState ? String((brainState as Record<string, unknown>)[hashKey] ?? '').slice(0, 12) || '—' : '—';
+                                    return (
+                                        <span key={label} style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--muted)', background: 'var(--parchment)', border: '1px solid var(--rule)', borderRadius: 4, padding: '3px 8px' }}>
+                                            {label}: {val}
+                                        </span>
+                                    );
+                                })}
+                            </div>
+                            <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>
+                                Cognitive snapshot unavailable — Brain offline.
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            {/* Hashes row */}
+                            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                                {(['mem', 'creed', 'skill'] as const).map((label) => {
+                                    const hashKey = label === 'mem' ? 'memory_hash' : label === 'creed' ? 'creed_hash' : 'skill_hash';
+                                    const val = brainState ? String((brainState as Record<string, unknown>)[hashKey] ?? '').slice(0, 12) || '—' : '—';
+                                    return (
+                                        <span key={label} style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--muted)', background: 'var(--parchment)', border: '1px solid var(--rule)', borderRadius: 4, padding: '3px 8px' }}>
+                                            {label}: {val}
+                                        </span>
+                                    );
+                                })}
+                            </div>
+
+                            <div style={{ height: 1, background: 'var(--rule)', marginBottom: 16 }} />
+
+                            {/* Counts row */}
+                            <div style={{ display: 'flex', gap: 24, marginBottom: 16 }}>
+                                {[
+                                    { label: 'Reflexion Buffer', value: cogLoading ? '…' : String(cognitive?.reflexion_count ?? '—') },
+                                    { label: 'Self-Model Rules', value: cogLoading ? '…' : String(cognitive?.rule_count ?? '—') },
+                                    { label: 'Creed Violations', value: cogLoading ? '…' : String(cognitive?.creed_violation_count ?? '—') },
+                                ].map(({ label, value }) => (
+                                    <div key={label}>
+                                        <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 4 }}>
+                                            {label}
+                                        </div>
+                                        <div style={{ fontFamily: 'var(--serif)', fontSize: 20, color: 'var(--ink)', lineHeight: 1 }}>
+                                            {value}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div style={{ height: 1, background: 'var(--rule)', marginBottom: 16 }} />
+
+                            {/* Drive bars */}
+                            <div style={{ marginBottom: 16 }}>
+                                <div style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
+                                    Drive Levels
+                                </div>
+                                {DRIVE_NAMES.map((drive) => (
+                                    <DriveBar
+                                        key={drive}
+                                        drive={drive}
+                                        level={cogLoading ? 0 : (cognitive?.drive_levels?.[drive] ?? 0)}
+                                    />
+                                ))}
+                            </div>
+
+                            <div style={{ height: 1, background: 'var(--rule)', marginBottom: 16 }} />
+
+                            {/* Skill titles */}
+                            <div style={{ marginBottom: 16 }}>
+                                <div style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
+                                    Top Skills
+                                </div>
+                                {cogLoading ? (
+                                    <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>…</div>
+                                ) : !cognitive?.skill_titles_topk?.length ? (
+                                    <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>No skills recorded.</div>
+                                ) : (
+                                    <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                                        {cognitive.skill_titles_topk.slice(0, 10).map((title, i) => (
+                                            <li
+                                                key={i}
+                                                style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'var(--ink)', paddingBlock: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                                                title={title}
+                                            >
+                                                {title.length > 60 ? title.slice(0, 60) + '…' : title}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+
+                            <div style={{ height: 1, background: 'var(--rule)', marginBottom: 16 }} />
+
+                            {/* Sleep + creed metadata */}
+                            <div style={{ display: 'flex', gap: 24, marginTop: 16 }}>
+                                <div>
+                                    <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 4 }}>
+                                        Last Sleep Tick
+                                    </div>
+                                    <div style={{ fontFamily: 'var(--serif)', fontSize: 20, color: 'var(--ink)', lineHeight: 1 }}>
+                                        {cogLoading ? '…' : (cognitive?.last_sleep_tick ? cognitive.last_sleep_tick.toLocaleString() : 'Never')}
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* Brain Health 2×2 grid */}
+            <div style={{ marginBottom: 24 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 4 }}>
+                    <h2 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 400, color: 'var(--ink)' }}>
+                        Brain Health
+                    </h2>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--muted)' }}>
+                        Derived from existing audit events — read-only
+                    </span>
+                </div>
+
+                {healthError ? (
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)', marginBottom: 16 }}>
+                        Could not load health metrics.
+                    </div>
+                ) : null}
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    {/* Card A: Tick Performance */}
+                    <div className="steward-stat-card">
+                        <div style={{ padding: '14px 18px 18px' }}>
+                            <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
+                                Tick Performance
+                            </div>
+                            {tickMetricsError === '404' ? (
+                                <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>Tick metrics unavailable.</div>
+                            ) : tickMetricsError ? (
+                                <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>Tick metrics unavailable.</div>
+                            ) : (
+                                <>
+                                    <div style={{ display: 'flex', gap: 24, marginBottom: 8 }}>
+                                        <div>
+                                            <div style={{ fontFamily: 'var(--mono)', fontSize: 9, textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 2 }}>p50</div>
+                                            <div style={{ fontFamily: 'var(--serif)', fontSize: 20, color: 'var(--ink)' }}>
+                                                {healthLoading ? '…' : tickMetrics ? `${tickMetrics.p50}ms` : '—'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontFamily: 'var(--mono)', fontSize: 9, textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 2 }}>p95</div>
+                                            <div style={{ fontFamily: 'var(--serif)', fontSize: 20, color: 'var(--ink)' }}>
+                                                {healthLoading ? '…' : tickMetrics ? `${tickMetrics.p95}ms` : '—'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)' }}>
+                                        {healthLoading ? '…' : tickMetrics ? `Queue depth: ${tickMetrics.queue_depth} · Samples: ${tickMetrics.sample_count}` : ''}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Card B: Memory Stores */}
+                    <div className="steward-stat-card">
+                        <div style={{ padding: '14px 18px 18px' }}>
+                            <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
+                                Memory Stores
+                            </div>
+                            {[
+                                { label: 'Reflexion Buffer', value: healthLoading ? '…' : String(reflectionCount) },
+                                { label: 'Skill Store Size', value: healthLoading ? '…' : String(skillCount) },
+                                { label: 'Rule Count', value: healthLoading ? '…' : String(ruleCount) },
+                            ].map(({ label, value }) => (
+                                <div key={label} style={{ marginBottom: 10 }}>
+                                    <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 2 }}>
+                                        {label}
+                                    </div>
+                                    <div style={{ fontFamily: 'var(--serif)', fontSize: 20, color: 'var(--ink)', lineHeight: 1 }}>
+                                        {value}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Card C: Drive & Sleep */}
+                    <div className="steward-stat-card">
+                        <div style={{ padding: '14px 18px 18px' }}>
+                            <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
+                                Drive &amp; Sleep
+                            </div>
+                            {/* Mini drive bars from most recent ananke.drive_crossed per drive */}
+                            {DRIVE_NAMES.map((drive) => {
+                                const driveEvent = [...driveEvents]
+                                    .reverse()
+                                    .find((e) => {
+                                        const p = e.payload as Record<string, unknown>;
+                                        return (p?.drive as string)?.toUpperCase() === drive;
+                                    });
+                                const levelStr = driveEvent ? String((driveEvent.payload as Record<string, unknown>)?.level ?? '') : '';
+                                const level = levelStr === 'high' ? 0.9 : levelStr === 'med' ? 0.5 : levelStr === 'low' ? 0.15 : 0;
+                                return <DriveBar key={drive} drive={drive} level={level} mini />;
+                            })}
+
+                            {/* Sleep stats */}
+                            {sleepEnteredEvents.length === 0 ? (
+                                <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)', marginTop: 8 }}>
+                                    No sleep events recorded.
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
+                                    <div>
+                                        <div style={{ fontFamily: 'var(--mono)', fontSize: 9, textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 2 }}>Sleep Cadence</div>
+                                        <div style={{ fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--ink)' }}>
+                                            {(() => {
+                                                const ticks = sleepEnteredEvents.map((e) => Number((e.payload as Record<string, unknown>)?.tick ?? 0)).filter(Boolean);
+                                                if (ticks.length < 2) return '—';
+                                                const deltas = ticks.slice(1).map((t, i) => t - ticks[i]);
+                                                const avg = Math.round(deltas.reduce((a, b) => a + b, 0) / deltas.length);
+                                                return `${avg} ticks avg`;
+                                            })()}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontFamily: 'var(--mono)', fontSize: 9, textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 2 }}>Last Duration</div>
+                                        <div style={{ fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--ink)' }}>
+                                            {(() => {
+                                                if (!sleepEnteredEvents.length || !sleepCompletedEvents.length) return '—';
+                                                const lastEntered = Number((sleepEnteredEvents[sleepEnteredEvents.length - 1]?.payload as Record<string, unknown>)?.tick ?? 0);
+                                                const lastCompleted = Number((sleepCompletedEvents[sleepCompletedEvents.length - 1]?.payload as Record<string, unknown>)?.tick ?? 0);
+                                                if (!lastEntered || !lastCompleted) return '—';
+                                                return `${lastCompleted - lastEntered} ticks`;
+                                            })()}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Card D: Coherence */}
+                    <div className="steward-stat-card">
+                        <div style={{ padding: '14px 18px 18px' }}>
+                            <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
+                                Coherence
+                            </div>
+                            <div style={{ fontFamily: 'var(--serif)', fontSize: 36, fontWeight: 400, color: healthLoading ? 'var(--muted)' : creedViolationCount > 0 ? 'var(--terracotta)' : 'var(--ink)', lineHeight: 1, marginBottom: 6 }}>
+                                {healthLoading ? '…' : creedViolationCount}
+                            </div>
+                            <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+                                Creed Violations
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
