@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import StewardShell from '@/components/StewardShell';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
@@ -175,7 +176,14 @@ export default function UsersPage() {
                                                 style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)' }}
                                                 title={u.did}
                                             >
-                                                {truncateDid(u.did)}
+                                                <Link
+                                                    href={`/humans/${encodeURIComponent(u.did)}`}
+                                                    style={{ color: 'var(--muted)', textDecoration: 'none', fontFamily: 'var(--mono)', fontSize: 11 }}
+                                                    onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--terracotta)'; }}
+                                                    onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--muted)'; }}
+                                                >
+                                                    {truncateDid(u.did)}
+                                                </Link>
                                             </td>
                                             <td
                                                 style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)' }}
