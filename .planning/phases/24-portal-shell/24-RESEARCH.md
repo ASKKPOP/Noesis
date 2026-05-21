@@ -424,6 +424,8 @@ No blocking missing dependencies. All required tools are in the project or alrea
 
 ## Validation Architecture
 
+> **Note (Nyquist compliance):** This section, together with the Wave 0 Gaps list below, serves as the Phase 24 validation plan. No separate 24-VALIDATION.md is required. Checker tools should treat this RESEARCH.md as the authoritative Nyquist validation strategy for this phase.
+
 ### Test Framework
 
 | Property | Value |
@@ -624,7 +626,7 @@ CORS config in `server.ts` (line 181): `origin: ['http://localhost:3001', 'http:
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Does `/verify` endpoint need to return region + created_at?**
    - What we know: `/verify` currently returns `{ did, eth_address, is_new }`. The auth page calls `setUser()` with only `did` and `eth_address`.
