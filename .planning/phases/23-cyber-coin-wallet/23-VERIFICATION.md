@@ -1,8 +1,9 @@
 ---
 phase: 23-cyber-coin-wallet
 verified: 2026-05-20T00:00:00Z
-status: complete_with_gap
-score: 8/8 dashboard truths verified; Grid endpoint gap deferred to Phase 24
+gap_resolved: 2026-05-20T00:00:00Z
+status: complete
+score: 8/8 dashboard truths verified; Grid gap resolved in commit ca6d76b
 overrides_applied: 0
 ---
 
@@ -10,7 +11,7 @@ overrides_applied: 0
 
 **Phase Goal:** EVM on-chain balance display (USDT/ETH), send/receive Cyber Coin, transaction history. Allowlist 44→45 (+1: human.transferred).
 **Verified:** 2026-05-20
-**Status:** complete_with_gap — dashboard shipped, Grid side (endpoint + emitter + allowlist) deferred
+**Status:** complete — dashboard shipped; Grid endpoint + emitter + allowlist resolved in ca6d76b
 
 ## Goal Achievement
 
