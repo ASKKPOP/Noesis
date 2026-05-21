@@ -112,6 +112,8 @@ export function registerPortalAuthRoutes(
             did: human.did,
             eth_address: human.eth_address,
             grid_name: gridName,
+            region: human.region,                        // NEW — per D-03/D-07
+            created_at: human.created_at.toISOString(), // NEW — per D-07
         })
             .setProtectedHeader({ alg: 'ES256' })
             .setIssuedAt()
@@ -147,6 +149,8 @@ export function registerPortalAuthRoutes(
             return reply.send({
                 did: payload['did'],
                 eth_address: payload['eth_address'],
+                region: (payload['region'] as string | undefined) ?? 'agora',       // NEW — per D-07
+                created_at: (payload['created_at'] as string | undefined) ?? null,  // NEW — per D-07
             });
         } catch {
             return reply.status(401).send({ error: 'invalid_token' });

@@ -8,7 +8,7 @@
  * This avoids a full SIWE round-trip while still testing the real /me handler.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { SignJWT, jwtVerify } from 'jose';
 import { buildServer } from '../../src/api/server.js';
 import { WorldClock } from '../../src/clock/ticker.js';
@@ -17,18 +17,26 @@ import { LogosEngine } from '../../src/logos/engine.js';
 import { AuditChain } from '../../src/audit/chain.js';
 import { HumanRegistry } from '../../src/human/HumanRegistry.js';
 import { keyPairPromise, COOKIE_NAME } from '../../src/api/portal/auth.js';
+import type { FastifyInstance } from 'fastify';
 
-async function buildTestServer() {
-    const clock = new WorldClock({ tickRateMs: 100_000 });
+let app: FastifyInstance;
+let clock: WorldClock;
+
+beforeAll(async () => {
+    clock = new WorldClock({ tickRateMs: 100_000 });
     const space = new SpatialMap();
     const logos = new LogosEngine();
     const audit = new AuditChain();
     const humanRegistry = new HumanRegistry();
 
-    const app = buildServer({ clock, space, logos, audit, gridName: 'genesis', humanRegistry });
+    app = buildServer({ clock, space, logos, audit, gridName: 'genesis', humanRegistry });
     await app.ready();
-    return { app, clock };
-}
+});
+
+afterAll(async () => {
+    await app.close();
+    clock.stop();
+});
 
 async function makeJwt(payload: Record<string, unknown>): Promise<string> {
     const { privateKey } = await keyPairPromise;
@@ -41,8 +49,6 @@ async function makeJwt(payload: Record<string, unknown>): Promise<string> {
 
 describe('GET /api/v1/portal/auth/me — region + created_at fields', () => {
     it('returns 4-field response: did, eth_address, region, created_at', async () => {
-        const { app, clock } = await buildTestServer();
-
         const token = await makeJwt({
             did: 'did:noesis:human:0xabcdef1234567890abcdef1234567890abcdef12',
             eth_address: '0xabcdef1234567890abcdef1234567890abcdef12',
@@ -63,14 +69,9 @@ describe('GET /api/v1/portal/auth/me — region + created_at fields', () => {
         expect(body).toHaveProperty('eth_address');
         expect(body).toHaveProperty('region');
         expect(body).toHaveProperty('created_at');
-
-        await app.close();
-        clock.stop();
     });
 
     it('returns region from JWT payload', async () => {
-        const { app, clock } = await buildTestServer();
-
         const token = await makeJwt({
             did: 'did:noesis:human:0xabcdef1234567890abcdef1234567890abcdef12',
             eth_address: '0xabcdef1234567890abcdef1234567890abcdef12',
@@ -87,14 +88,9 @@ describe('GET /api/v1/portal/auth/me — region + created_at fields', () => {
 
         expect(res.statusCode).toBe(200);
         expect(res.json().region).toBe('market');
-
-        await app.close();
-        clock.stop();
     });
 
     it('falls back to agora for old tokens without region', async () => {
-        const { app, clock } = await buildTestServer();
-
         // Old-style JWT without region or created_at fields
         const token = await makeJwt({
             did: 'did:noesis:human:0xabcdef1234567890abcdef1234567890abcdef12',
@@ -110,14 +106,9 @@ describe('GET /api/v1/portal/auth/me — region + created_at fields', () => {
 
         expect(res.statusCode).toBe(200);
         expect(res.json().region).toBe('agora');
-
-        await app.close();
-        clock.stop();
     });
 
     it('falls back to null for old tokens without created_at', async () => {
-        const { app, clock } = await buildTestServer();
-
         const token = await makeJwt({
             did: 'did:noesis:human:0xabcdef1234567890abcdef1234567890abcdef12',
             eth_address: '0xabcdef1234567890abcdef1234567890abcdef12',
@@ -132,9 +123,6 @@ describe('GET /api/v1/portal/auth/me — region + created_at fields', () => {
 
         expect(res.statusCode).toBe(200);
         expect(res.json().created_at).toBeNull();
-
-        await app.close();
-        clock.stop();
     });
 });
 
