@@ -10,13 +10,13 @@ interface GridStatus {
 }
 
 interface NousEntry {
-    id: string;
-    name: string;
-    role: string;
     did: string;
+    name: string;
     region: string;
-    status: 'active' | 'sleeping' | 'voting';
-    last_tick: number | null;
+    ousia: number;
+    lifecyclePhase: string;
+    reputation: number;
+    status: string;
 }
 
 interface Proposal {
@@ -80,13 +80,13 @@ function NavLink({
     );
 }
 
-function StatusBadge({ status }: { status: 'active' | 'sleeping' | 'voting' }) {
-    const map = {
+function StatusBadge({ status }: { status: string }) {
+    const map: Record<string, { label: string; cls: string; dot: string }> = {
         active: { label: 'Active', cls: 'badge-active', dot: '#2d7a2d' },
         sleeping: { label: 'Sleeping', cls: 'badge-sleeping', dot: '#8a8479' },
         voting: { label: 'Voting', cls: 'badge-voting', dot: '#8a6a2e' },
     };
-    const { label, cls, dot } = map[status];
+    const { label, cls, dot } = map[status] ?? { label: status, cls: 'badge-sleeping', dot: '#8a8479' };
     return (
         <span className={`badge ${cls}`}>
             <Dot color={dot} />
@@ -393,16 +393,16 @@ export default function DashboardPage() {
                                 <thead>
                                     <tr>
                                         <th>Name</th>
-                                        <th>Role</th>
+                                        <th>Phase</th>
                                         <th>DID</th>
                                         <th>Region</th>
                                         <th>Status</th>
-                                        <th>Last Tick</th>
+                                        <th>Ousia</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {nousList.map((n) => (
-                                        <tr key={n.id}>
+                                        <tr key={n.did}>
                                             <td style={{ fontWeight: 500 }}>{n.name}</td>
                                             <td
                                                 style={{
@@ -411,7 +411,7 @@ export default function DashboardPage() {
                                                     color: 'var(--muted)',
                                                 }}
                                             >
-                                                {n.role}
+                                                {n.lifecyclePhase}
                                             </td>
                                             <td
                                                 style={{
@@ -434,7 +434,7 @@ export default function DashboardPage() {
                                                     color: 'var(--muted)',
                                                 }}
                                             >
-                                                {n.last_tick ?? '—'}
+                                                {n.ousia.toLocaleString()}
                                             </td>
                                         </tr>
                                     ))}

@@ -175,11 +175,11 @@ export function buildServerWithHub(
     void app.register(fastifyCookie);
 
     // Dashboard CORS (dev): Next.js dev server runs on :3001 per 03-VALIDATION.md.
-    // :3000 is included because `next dev` falls back to :3000 when :3001 is taken
-    // and we must not surprise-break that path in a hot-reload loop.
+    // :3000 is included because `next dev` falls back to :3000 when :3001 is taken.
+    // :3002 is the Steward Console.
     // Production hardening (0.0.0.0 bind, stricter origin list) is Phase 4.
     void app.register(cors, {
-        origin: ['http://localhost:3001', 'http://localhost:3000'],
+        origin: ['http://localhost:3001', 'http://localhost:3000', 'http://localhost:3002'],
         credentials: true,
         methods: ['GET', 'POST', 'OPTIONS'],
     });
