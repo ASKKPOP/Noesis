@@ -828,10 +828,10 @@ Plans:
 
 **Requirements:** To be enumerated in 25a-PLAN files. Decision context: `.planning/phases/25a-observer-surfaces/25a-CONTEXT.md` (extracted from 25-CONTEXT.md decisions D-01..D-06, D-14..D-19 — observer-surface decisions only).
 **Depends on:** Phase 24 (portal-shell), existing Steward Console base (commit becc6e7).
-**Plans:** 6 plans in 4 waves.
+**Plans:** 1/6 plans executed
 
 Plans:
-- [ ] 25a-01-PLAN.md — Foundation: FORBIDDEN_KEY_PATTERN extension, RingBuffer.peek(), shared brain-http-errors, CI grep gate
+- [x] 25a-01-PLAN.md — Foundation: FORBIDDEN_KEY_PATTERN extension, RingBuffer.peek(), shared brain-http-errors, CI grep gate
 - [ ] 25a-02-PLAN.md — Firehose hub + drift detector + WS/REST routes
 - [ ] 25a-03-PLAN.md — Brain aiohttp HTTP server + cognitive-snapshot endpoint (FIRST Brain HTTP surface)
 - [ ] 25a-04-PLAN.md — Humans REST routes (profile + history with payload filtering) + NousRunner tick-metrics
