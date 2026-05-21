@@ -38,6 +38,15 @@ export class RingBuffer<T> {
         return out;
     }
 
+    /**
+     * Non-destructive snapshot in FIFO order. Used by DriftDetector polling.
+     * Unlike drain(), peek() does not empty the buffer — subsequent push/peek/drain
+     * see identical state to before this call.
+     */
+    peek(): readonly T[] {
+        return [...this.items];
+    }
+
     get size(): number { return this.items.length; }
     get capacity(): number { return this._capacity; }
     get isFull(): boolean { return this.items.length >= this._capacity; }

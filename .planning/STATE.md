@@ -4,8 +4,8 @@ milestone: v2.5
 milestone_name: Human Portal — Active)
 status: executing
 stopped_at: Phase 25a UI-SPEC approved
-last_updated: "2026-05-21T17:54:19.405Z"
-last_activity: 2026-05-21 -- Phase 25a planning complete
+last_updated: "2026-05-21T18:30:32.122Z"
+last_activity: 2026-05-21 -- Phase 25a execution started
 progress:
   total_phases: 27
   completed_phases: 24
@@ -23,14 +23,14 @@ See: .planning/PROJECT.md (updated 2026-05-16)
 **Core value:** The first persistent Grid where Nous actually live — and now, the first milestone where real human users can enter: Web3 wallet auth, Cyber Coin (real EVM crypto), Sophia-guided onboarding, Nous chat & tips, personal Nous spawning, community, and help.
 **Current milestone:** v2.5 — Human Portal
 **Previous milestone:** v2.4 Agora — SHIPPED 2026-05-20 (115/115 plans)
-**Current focus:** Phase 24 — portal-shell
+**Current focus:** Phase 25a — observer-surfaces
 
 ## Current Position
 
-Phase: 24
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-05-21 -- Phase 25a planning complete
+Phase: 25a (observer-surfaces) — EXECUTING
+Plan: 1 of 6
+Status: Executing Phase 25a
+Last activity: 2026-05-21 -- Phase 25a execution started
 
 Progress: [██████████████████  ] 23/29 phases complete (v2.5 in progress)
 Note: Phase 24 planned 2026-05-21 — 5 plans in 2 waves (01-04 Wave 1 parallel, 05 Wave 2 tests)
