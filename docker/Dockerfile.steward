@@ -1,0 +1,41 @@
+# syntax=docker/dockerfile:1.7
+
+# ── Stage 1: Builder ─────────────────────────────────────────────────────────
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+ARG NEXT_PUBLIC_GRID_ORIGIN=http://localhost:8080
+ENV NEXT_PUBLIC_GRID_ORIGIN=${NEXT_PUBLIC_GRID_ORIGIN}
+
+RUN apk add --no-cache python3 make g++
+
+COPY package.json package-lock.json* ./
+COPY steward/package.json ./steward/
+
+RUN npm ci
+
+COPY steward ./steward
+
+RUN npm run build --workspace=steward
+
+# ── Stage 2: Runtime ─────────────────────────────────────────────────────────
+FROM node:22-alpine AS runtime
+
+WORKDIR /app
+
+ENV NODE_ENV=production \
+    PORT=3002 \
+    HOSTNAME=0.0.0.0
+
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser  --system --uid 1001 nextjs
+
+COPY --from=builder --chown=nextjs:nodejs /app/steward/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/steward/.next/static    ./steward/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/steward/public          ./steward/public 2>/dev/null || true
+
+USER nextjs
+EXPOSE 3002
+
+CMD ["node", "steward/server.js"]

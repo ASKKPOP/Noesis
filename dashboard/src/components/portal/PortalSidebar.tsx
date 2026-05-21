@@ -168,7 +168,7 @@ export function PortalSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
             />
         )}
         <aside
-            className="md:relative md:translate-x-0"
+            className={`portal-sidebar${isOpen ? ' sidebar-open' : ''}`}
             style={{
                 width: 220,
                 flexShrink: 0,
@@ -177,13 +177,6 @@ export function PortalSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
                 background: 'var(--navy)',
                 borderRight: '1px solid rgba(255,255,255,0.07)',
                 overflow: 'hidden',
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                height: '100%',
-                zIndex: 50,
-                transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
-                transition: 'transform 0.2s ease',
             }}
         >
             {/* ── Logo ── */}

@@ -91,3 +91,86 @@ body {
 .portal-theme .mono {
     font-family: var(--mono-portal);
 }
+
+/* ── Sidebar layout ──────────────────────────────────────────────────────── */
+/* Mobile: slides in as overlay. Desktop (md+): always visible in-flow.      */
+.portal-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+}
+.portal-sidebar.sidebar-open {
+    transform: translateX(0);
+}
+@media (min-width: 768px) {
+    .portal-sidebar {
+        position: relative !important;
+        transform: none !important;
+        transition: none !important;
+    }
+}
+
+/* ── Editorial card pattern ──────────────────────────────────────────────── */
+/* Terracotta 2px gradient top-stripe + vellum background + rule border.     */
+.noesis-card {
+    background: var(--vellum);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+.noesis-card::before {
+    content: "";
+    display: block;
+    height: 2px;
+    background: linear-gradient(90deg, var(--terracotta), var(--terracotta-2));
+    flex-shrink: 0;
+}
+
+/* Stat card — no top-stripe, parchment bg */
+.noesis-stat-card {
+    background: var(--parchment);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 18px 22px;
+    position: relative;
+}
+.noesis-stat-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--terracotta), var(--terracotta-2));
+    border-radius: 10px 10px 0 0;
+}
+
+/* Card row hover */
+.noesis-card-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 20px;
+    border-bottom: 1px solid var(--rule);
+    transition: background 0.12s;
+    cursor: default;
+}
+.noesis-card-row:last-child { border-bottom: none; }
+.noesis-card-row:hover { background: rgba(184, 84, 47, 0.06); }
+
+/* Section card hover */
+.portal-section-card:hover {
+    border-color: var(--terracotta) !important;
+    box-shadow: 0 2px 8px rgba(184,84,47,0.10);
+}
+
+/* Nav link hover */
+.portal-nav-link:hover {
+    color: rgba(200,192,184,0.90) !important;
+    background: rgba(255,255,255,0.05);
+}

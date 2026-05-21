@@ -19,9 +19,9 @@ export function PortalShell({ children }: { children: ReactNode }) {
     }
 
     return (
-        <div className="portal-theme flex h-screen overflow-hidden">
+        <div className="portal-theme flex h-screen overflow-hidden" style={{ background: 'var(--vellum)' }}>
             <PortalSidebar isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
-            <div className="flex flex-1 flex-col overflow-hidden">
+            <div className="flex flex-1 flex-col overflow-hidden" style={{ minWidth: 0 }}>
                 <PortalHeader onMenuOpen={() => setMenuOpen(true)} />
                 <main className="flex-1 overflow-y-auto" style={{ background: 'var(--vellum)' }}>
                     {children}

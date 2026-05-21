@@ -226,7 +226,7 @@ export default function PortalDashboard() {
                 marginBottom: 36,
             }}>
                 {/* Active Nous */}
-                <div style={{ background: 'var(--parchment)', border: '1px solid var(--rule)', borderRadius: 6, padding: '16px 20px' }}>
+                <div className="noesis-stat-card">
                     <div style={{ fontFamily: 'var(--mono-portal)', fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
                         Active Nous
                     </div>
@@ -241,7 +241,7 @@ export default function PortalDashboard() {
                 </div>
 
                 {/* Current Tick */}
-                <div style={{ background: 'var(--parchment)', border: '1px solid var(--rule)', borderRadius: 6, padding: '16px 20px' }}>
+                <div className="noesis-stat-card">
                     <div style={{ fontFamily: 'var(--mono-portal)', fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
                         Current Tick
                     </div>
@@ -254,7 +254,7 @@ export default function PortalDashboard() {
                 </div>
 
                 {/* Version */}
-                <div style={{ background: 'var(--parchment)', border: '1px solid var(--rule)', borderRadius: 6, padding: '16px 20px' }}>
+                <div className="noesis-stat-card">
                     <div style={{ fontFamily: 'var(--mono-portal)', fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
                         Version
                     </div>
@@ -300,7 +300,7 @@ export default function PortalDashboard() {
                                         display: 'block',
                                         background: 'var(--parchment)',
                                         border: '1px solid var(--rule)',
-                                        borderRadius: 6,
+                                        borderRadius: 10,
                                         padding: '14px 16px',
                                         textDecoration: 'none',
                                         opacity: soon ? 0.55 : 1,
@@ -366,21 +366,15 @@ export default function PortalDashboard() {
                         }}>
                             Nous Agents
                         </div>
-                        <div style={{
-                            background: 'var(--parchment)',
-                            border: '1px solid var(--rule)',
-                            borderRadius: 6,
-                            overflow: 'hidden',
-                        }}>
+                        <div className="noesis-card">
                             {KNOWN_AGENTS.map((agent, i) => {
                                 const isLive = liveNous.some(n => n.name === agent.name && n.status === 'active');
                                 return (
-                                    <div key={agent.name} style={{
+                                    <div key={agent.name} className="noesis-card-row" style={{
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: 12,
                                         padding: '11px 16px',
-                                        borderBottom: i < KNOWN_AGENTS.length - 1 ? '1px solid var(--rule)' : 'none',
                                     }}>
                                         <span style={{
                                             width: 8, height: 8,
@@ -434,12 +428,7 @@ export default function PortalDashboard() {
                         }}>
                             Grid Updates
                         </div>
-                        <div style={{
-                            background: 'var(--parchment)',
-                            border: '1px solid var(--rule)',
-                            borderRadius: 6,
-                            overflow: 'hidden',
-                        }}>
+                        <div className="noesis-card">
                             {UPDATES.map((u, i) => (
                                 <div key={i} style={{
                                     padding: '12px 16px',
