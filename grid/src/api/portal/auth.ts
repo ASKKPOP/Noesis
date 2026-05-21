@@ -37,7 +37,12 @@ export function registerPortalAuthRoutes(
     // GET /api/v1/portal/auth/nonce
     app.get('/api/v1/portal/auth/nonce', async (_req, reply) => {
         const nonce = randomUUID();
-        nonceMap.set(nonce, Date.now());
+        // Prune expired entries before adding a new one (CR-01: prevent unbounded growth).
+        const now = Date.now();
+        for (const [k, ts] of nonceMap) {
+            if (now - ts > NONCE_TTL_MS) nonceMap.delete(k);
+        }
+        nonceMap.set(nonce, now);
         return reply.send({ nonce });
     });
 
