@@ -15,6 +15,7 @@ import type { AuditChain } from '../audit/chain.js';
 import type { NousRegistry } from '../registry/registry.js';
 import type { EconomyManager } from '../economy/config.js';
 import type { BrainAction, IBrainBridge, MemoryEntry, TickParams } from './types.js';
+import { RingBuffer } from '../util/ring-buffer.js';
 import type { DialogueContext } from '../dialogue/index.js';
 import { Reviewer } from '../review/index.js';
 import { VALID_REVIEW_FAILURE_CODES } from '../review/types.js';
@@ -122,6 +123,13 @@ export class NousRunner {
     private speakHandler: SpeakHandler | null = null;
 
     /**
+     * Phase 25a OBS-BRAIN-HEALTH: per-instance tick-latency ring buffer (capacity 100).
+     * Records the wall-clock duration of each bridge.sendTick() call in milliseconds.
+     * Non-persistent: reset on runner restart. Used by getTickMetrics().
+     */
+    private readonly tickLatencyBuffer = new RingBuffer<number>(100);
+
+    /**
      * Phase 7 DIALOG-01 (D-16 authority-check seam): tracks dialogue_ids
      * recently delivered to THIS Nous. Populated by tick() when
      * dialogue_context is present; consumed by Plan 03's `case 'telos_refined'`
@@ -176,9 +184,16 @@ export class NousRunner {
             ? { tick, epoch, dialogue_context: dialogueContext }
             : { tick, epoch };
 
-        const actions = await this.bridge.sendTick(params);
+        // Phase 25a OBS-BRAIN-HEALTH: measure tick RPC latency for getTickMetrics().
+        const t0 = performance.now();
+        let actions: BrainAction[];
+        try {
+            actions = await this.bridge.sendTick(params);
+        } finally {
+            this.tickLatencyBuffer.push(performance.now() - t0);
+        }
         this.registry.touch(this.nousDid, tick);
-        await this.executeActions(actions, tick);
+        await this.executeActions(actions!, tick);
     }
 
     /**
@@ -974,6 +989,26 @@ export class NousRunner {
         newTelos: Record<string, unknown>,
     ): Promise<{ telos_hash_before: string; telos_hash_after: string }> {
         return this.bridge.forceTelos(newTelos);
+    }
+
+    /**
+     * Phase 25a OBS-BRAIN-HEALTH: compute p50/p95 latency percentiles from the
+     * in-memory ring buffer. Returns zeros when no ticks have been recorded.
+     *
+     * queue_depth: 0 — NousRunner has no pending-tick queue concept; populated
+     * when a pending-tick concept is introduced in a future phase.
+     */
+    getTickMetrics(): { p50: number; p95: number; queue_depth: number; sample_count: number } {
+        const samples = [...this.tickLatencyBuffer.peek()].sort((a, b) => a - b);
+        const n = samples.length;
+        if (n === 0) return { p50: 0, p95: 0, queue_depth: 0, sample_count: 0 };
+        const pct = (q: number): number => samples[Math.min(n - 1, Math.floor(q * n))]!;
+        return {
+            p50: Math.round(pct(0.5) * 100) / 100,
+            p95: Math.round(pct(0.95) * 100) / 100,
+            queue_depth: 0,
+            sample_count: n,
+        };
     }
 
     get connected(): boolean {
