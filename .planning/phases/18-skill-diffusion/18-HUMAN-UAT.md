@@ -1,14 +1,14 @@
 ---
-status: partial
+status: complete
 phase: 18-skill-diffusion
 source: [18-VERIFICATION.md]
 started: 2026-05-16T11:38:00Z
-updated: 2026-05-16T11:42:00Z
+updated: 2026-05-21T03:25:00Z
 ---
 
 ## Current Test
 
-User decision: Option B — add tick-based gate
+[all tests resolved]
 
 ## Tests
 
@@ -22,13 +22,13 @@ Options:
   A — Accept the observation-count gate as sufficient. No new code needed.
   B — Add a tick-based gate: track `_last_extraction_tick` per Nous, block if `current_tick - last_extraction_tick < 30`. Requires a new plan.
 
-result: Option B selected — add tick-based gate (_last_extraction_tick per Nous, block if current_tick - last_extraction_tick < 30)
+result: pass — Option B was already implemented in observational.py. `_last_extraction_tick` (line 117) + Gate 2b (lines 163-171) block extraction if `tick - _last_extraction_tick < SLEEP_EPOCH_TICKS (30)`. Reset on successful extraction (line 222). Three unit tests confirm the gate: test_extraction_blocked_before_30_ticks, test_count_gate_blocks_regardless_of_tick_gap, test_last_extraction_tick_updated_after_extraction — all passing.
 
 ## Summary
 
 total: 1
-passed: 0
-issues: 1
+passed: 1
+issues: 0
 pending: 0
 skipped: 0
 blocked: 0
