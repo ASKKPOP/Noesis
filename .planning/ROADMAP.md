@@ -29,14 +29,14 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
   **Plans**: 1 plan
   Plans:
   - [x] 23-01-PLAN.md — Dashboard: WalletPanel (ETH/USDT balances, send form, tx history)
-- [ ] **Phase 24: Portal Shell** — region presence on profile, profile completeness (region + wallet balance + join date), mobile hamburger sidebar, portal home live Grid stats. Allowlist stays at 45 (no new events).
+- [x] **Phase 24: Portal Shell** — region presence on profile, profile completeness (region + wallet balance + join date), mobile hamburger sidebar, portal home live Grid stats. Allowlist stays at 45 (no new events). (completed 2026-05-21)
   **Plans**: 5 plans
   Plans:
   - [x] 24-01-PLAN.md — Grid: migration v10 (region column) + HumanRecord/Registry + JWT/me extension
   - [x] 24-02-PLAN.md — Dashboard: HumanUser type + auth hydration + profile page (3 new rows)
   - [x] 24-03-PLAN.md — Dashboard: mobile sidebar (PortalShell/Sidebar/Header hamburger overlay)
   - [x] 24-04-PLAN.md — Dashboard: portal home live stats polling + updated labels/content
-  - [ ] 24-05-PLAN.md — Tests: WALLET-04 verification + Phase 24 test coverage gaps
+  - [x] 24-05-PLAN.md — Tests: WALLET-04 verification + Phase 24 test coverage gaps
 - [ ] **Phase 25: Sophia Onboarding** — Fast-proxy LLM chat (out-of-tick), goal-setting wizard, animated world introduction, Sophia as guide persona, first-time user flow with welcome Cyber Coin allocation.
 - [ ] **Phase 26: Nous Interaction** — Humans chat with Sophia/Hermes/Themis via `/portal/chat`, send Cyber Coin tips, browse Nous activity feed, view skills/lore/norms the Nous have produced. Allowlist 45→46 (+1: human.spoke).
 - [ ] **Phase 27: Personal Nous** — Human spawns own Nous agent (costs Cyber Coin), names it, picks personality seeds, it gets a DID and runs in the Genesis Grid alongside Sophia/Hermes/Themis. `humanOwner` field wired. Allowlist 46→47 (+1: nous.spawned_by_human).
