@@ -213,12 +213,20 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
             // Fetch cognitive snapshot (H3+ gated via Grid proxy)
             setCogLoading(true);
             try {
+                // GAP-25a-1/2 fix: tier + operator_id are now derived server-side from
+                // x-operator-tier / x-operator-id headers. Body is unused.
+                // The Steward Console runs as a trusted internal surface; in a future phase
+                // these headers will be injected by an auth proxy / SIWE session middleware.
+                // For now, send the H3 default the Steward operator already implicitly assumes.
                 const res = await fetch(
                     `${GRID_ORIGIN}/api/v1/operator/nous/${encodeURIComponent(did)}/cognitive-snapshot`,
                     {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ tier: 'H3', operator_id: 'op:steward:default' }),
+                        headers: {
+                            'x-operator-tier': '3',
+                            'x-operator-id': process.env.NEXT_PUBLIC_STEWARD_OPERATOR_ID
+                                ?? 'op:00000000-0000-4000-8000-000000000001',
+                        },
                     }
                 );
                 if (res.ok) {
@@ -541,7 +549,9 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
                                     <DriveBar
                                         key={drive}
                                         drive={drive}
-                                        level={cogLoading ? 0 : (cognitive?.drive_levels?.[drive] ?? 0)}
+                                        // GAP-25a-3 fix: Brain returns lowercase drive keys (hunger/curiosity/...);
+                                        // DRIVE_NAMES is uppercase for display only. Lowercase the lookup key.
+                                        level={cogLoading ? 0 : (cognitive?.drive_levels?.[drive.toLowerCase()] ?? 0)}
                                     />
                                 ))}
                             </div>
