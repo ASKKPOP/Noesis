@@ -25,7 +25,10 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
   - [x] 22-02-PLAN.md — Grid: SIWE auth endpoints + JWT issuance + human.joined emitter
   - [x] 22-03-PLAN.md — Dashboard: wagmi provider + wallet connect UI + portal layout
   - [x] 22-04-PLAN.md — Dashboard: SIWE sign-in flow + auth store + Next.js middleware
-- [ ] **Phase 23: Cyber Coin Wallet** — EVM on-chain balance display (USDT/ETH), ethers.js/wagmi integration, wallet connect UI, send/receive Cyber Coin, transaction history. Allowlist 44→45 (+1: human.transferred).
+- [x] **Phase 23: Cyber Coin Wallet** — EVM on-chain balance display (USDT/ETH), wagmi integration, send form, transaction history. Dashboard UI shipped. Grid endpoint + human.transferred emitter deferred to Phase 24 (allowlist stays at 44). (completed 2026-05-20)
+  **Plans**: 1 plan
+  Plans:
+  - [x] 23-01-PLAN.md — Dashboard: WalletPanel (ETH/USDT balances, send form, tx history)
 - [ ] **Phase 24: Portal Shell** — `/portal/*` route namespace in Next.js dashboard, navigation, user profile page, region presence display, portal layout separate from Steward Console.
 - [ ] **Phase 25: Sophia Onboarding** — Fast-proxy LLM chat (out-of-tick), goal-setting wizard, animated world introduction, Sophia as guide persona, first-time user flow with welcome Cyber Coin allocation.
 - [ ] **Phase 26: Nous Interaction** — Humans chat with Sophia/Hermes/Themis via `/portal/chat`, send Cyber Coin tips, browse Nous activity feed, view skills/lore/norms the Nous have produced. Allowlist 45→46 (+1: human.spoke).
