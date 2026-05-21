@@ -38,10 +38,10 @@ export function PortalHeader({ onMenuOpen }: { onMenuOpen: () => void }) {
     const { currentUser, clearUser } = useHumanAuthStore();
     const pageLabel = usePageLabel();
 
-    function handleSignOut() {
+    async function handleSignOut() {
         clearUser();
         disconnect();
-        document.cookie = 'noesis_portal_token=; Max-Age=0; path=/';
+        await fetch('/api/v1/portal/auth/logout', { method: 'POST', credentials: 'include' });
         window.location.href = '/portal/auth';
     }
 

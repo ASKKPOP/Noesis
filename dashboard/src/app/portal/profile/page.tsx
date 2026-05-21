@@ -45,10 +45,10 @@ function ProfilePage() {
         query: { enabled: !!usdtAddr && !!address },
     });
 
-    function handleSignOut() {
+    async function handleSignOut() {
         clearUser();
         disconnect();
-        document.cookie = 'noesis_portal_token=; Max-Age=0; path=/';
+        await fetch('/api/v1/portal/auth/logout', { method: 'POST', credentials: 'include' });
         window.location.href = '/portal/auth';
     }
 
