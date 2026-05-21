@@ -133,7 +133,13 @@ export function registerPortalAuthRoutes(
             maxAge: 24 * 60 * 60, // seconds
         });
 
-        return reply.send({ did: human.did, eth_address: human.eth_address, is_new: isNew });
+        return reply.send({
+            did: human.did,
+            eth_address: human.eth_address,
+            region: human.region,
+            created_at: human.created_at.toISOString(),
+            is_new: isNew,
+        });
     });
 
     // POST /api/v1/portal/auth/logout

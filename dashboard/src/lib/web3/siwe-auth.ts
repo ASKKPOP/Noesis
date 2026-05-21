@@ -94,6 +94,11 @@ export async function signInWithEthereum(params: SignInParams): Promise<HumanUse
         throw new Error(errData.error ?? 'sign_in_failed');
     }
 
-    const userData = await verifyRes.json() as HumanUser;
-    return { did: userData.did, eth_address: userData.eth_address };
+    const userData = await verifyRes.json() as HumanUser & { is_new: boolean };
+    return {
+        did: userData.did,
+        eth_address: userData.eth_address,
+        region: userData.region,
+        created_at: userData.created_at,
+    };
 }
