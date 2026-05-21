@@ -8,6 +8,7 @@
 import { GenesisLauncher } from './genesis/launcher.js';
 import { GENESIS_CONFIG } from './genesis/presets.js';
 import { buildServer } from './api/server.js';
+import { HumanRegistry } from './human/index.js';
 import { Reviewer } from './review/index.js';
 import {
     DatabaseConnection,
@@ -119,6 +120,8 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         }
     }
 
+    const humanRegistry = new HumanRegistry();
+
     const server = buildServer({
         clock: launcher.clock,
         space: launcher.space,
@@ -128,6 +131,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         registry: launcher.registry,
         shops: launcher.shops,
         relationships: launcher.relationships,
+        humanRegistry,
         config: { relationship: config.genesisConfig.relationship },
         // Plan 04-03: runner lookup for the inspector proxy. Runners are
         // constructed by a future sub-plan that wires GridCoordinator here;
