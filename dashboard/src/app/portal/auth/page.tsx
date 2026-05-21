@@ -111,11 +111,13 @@ function PortalAuthPage() {
         if (!address || !chain) return;
         setIsPending(true);
         setError(null);
+        const gridApiBase = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
         try {
             const user = await signInWithEthereum({
                 address,
                 chainId: chain.id,
                 signMessage: (msg) => signMessageAsync({ message: msg }),
+                gridApiBase,
             });
             setUser(user);
             // Hydrate full profile from /me (region, created_at) — non-fatal if it fails
@@ -171,11 +173,12 @@ function PortalAuthPage() {
             return;
         }
 
+        const gridApiBase = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
         setEmailPending(true);
         try {
             const user = isJoinTab
-                ? await signUpWithEmail({ email: emailInput.trim(), password: passwordInput })
-                : await signInWithEmail({ email: emailInput.trim(), password: passwordInput });
+                ? await signUpWithEmail({ email: emailInput.trim(), password: passwordInput, gridApiBase })
+                : await signInWithEmail({ email: emailInput.trim(), password: passwordInput, gridApiBase });
             setUser(user);
             router.push('/portal');
         } catch (err) {
