@@ -14,12 +14,31 @@
  *   await app.register(fastifyCookie);
  */
 
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, scrypt, timingSafeEqual } from 'node:crypto';
+import { promisify } from 'node:util';
 import { SiweMessage } from 'siwe';
 import { SignJWT, jwtVerify, generateKeyPair } from 'jose';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { appendHumanJoined } from '../../audit/append-human-joined.js';
+
+const scryptAsync = promisify(scrypt);
+
+/** Hash a plaintext password → `salt:hash` (hex). */
+async function hashPassword(password: string): Promise<string> {
+    const salt = randomBytes(16).toString('hex');
+    const hash = (await scryptAsync(password, salt, 64)) as Buffer;
+    return `${salt}:${hash.toString('hex')}`;
+}
+
+/** Verify a plaintext password against a stored `salt:hash` string. */
+async function verifyPassword(password: string, stored: string): Promise<boolean> {
+    const [salt, hashHex] = stored.split(':');
+    if (!salt || !hashHex) return false;
+    const storedHash = Buffer.from(hashHex, 'hex');
+    const candidate = (await scryptAsync(password, salt, 64)) as Buffer;
+    return storedHash.length === candidate.length && timingSafeEqual(storedHash, candidate);
+}
 
 export const COOKIE_NAME = 'noesis_portal_token';
 const NONCE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -146,6 +165,120 @@ export function registerPortalAuthRoutes(
     app.post('/api/v1/portal/auth/logout', async (_req, reply) => {
         reply.clearCookie(COOKIE_NAME, { path: '/' });
         return reply.send({ ok: true });
+    });
+
+    // POST /api/v1/portal/auth/email/signup
+    app.post<{
+        Body: { email: unknown; password: unknown };
+    }>('/api/v1/portal/auth/email/signup', async (req, reply) => {
+        if (!services.humanRegistry) {
+            return reply.status(503).send({ error: 'human_registry_unavailable' });
+        }
+
+        const { email, password } = req.body ?? ({} as { email: unknown; password: unknown });
+        if (typeof email !== 'string' || !email.includes('@') || typeof password !== 'string' || password.length < 8) {
+            return reply.status(400).send({ error: 'invalid_request' });
+        }
+
+        const gridName = services.gridName;
+        if (services.humanRegistry.findByEmail(gridName, email)) {
+            return reply.status(409).send({ error: 'email_already_registered' });
+        }
+
+        const password_hash = await hashPassword(password);
+        const human = services.humanRegistry.createHuman({
+            email,
+            password_hash,
+            grid_name: gridName,
+        });
+
+        const { privateKey } = await keyPairPromise;
+        const token = await new SignJWT({
+            did: human.did,
+            eth_address: human.eth_address,
+            grid_name: gridName,
+            region: human.region,
+            created_at: human.created_at.toISOString(),
+        })
+            .setProtectedHeader({ alg: 'ES256' })
+            .setIssuedAt()
+            .setExpirationTime('24h')
+            .sign(privateKey);
+
+        reply.setCookie(COOKIE_NAME, token, {
+            httpOnly: true,
+            sameSite: 'strict',
+            secure: process.env['NODE_ENV'] === 'production',
+            path: '/',
+            maxAge: 24 * 60 * 60,
+        });
+
+        return reply.status(201).send({
+            did: human.did,
+            eth_address: human.eth_address,
+            region: human.region,
+            created_at: human.created_at.toISOString(),
+            is_new: true,
+        });
+    });
+
+    // POST /api/v1/portal/auth/email/signin
+    app.post<{
+        Body: { email: unknown; password: unknown };
+    }>('/api/v1/portal/auth/email/signin', async (req, reply) => {
+        if (!services.humanRegistry) {
+            return reply.status(503).send({ error: 'human_registry_unavailable' });
+        }
+
+        const { email, password } = req.body ?? ({} as { email: unknown; password: unknown });
+        if (typeof email !== 'string' || typeof password !== 'string') {
+            return reply.status(400).send({ error: 'invalid_request' });
+        }
+
+        const gridName = services.gridName;
+        const human = services.humanRegistry.findByEmail(gridName, email);
+        if (!human) {
+            return reply.status(401).send({ error: 'invalid_credentials' });
+        }
+
+        const storedHash = services.humanRegistry.getPasswordHash(gridName, email);
+        if (!storedHash) {
+            return reply.status(401).send({ error: 'invalid_credentials' });
+        }
+
+        const valid = await verifyPassword(password, storedHash);
+        if (!valid) {
+            return reply.status(401).send({ error: 'invalid_credentials' });
+        }
+
+        const { privateKey } = await keyPairPromise;
+        const token = await new SignJWT({
+            did: human.did,
+            eth_address: human.eth_address,
+            grid_name: gridName,
+            region: human.region,
+            created_at: human.created_at.toISOString(),
+        })
+            .setProtectedHeader({ alg: 'ES256' })
+            .setIssuedAt()
+            .setExpirationTime('24h')
+            .sign(privateKey);
+
+        reply.setCookie(COOKIE_NAME, token, {
+            httpOnly: true,
+            sameSite: 'strict',
+            secure: process.env['NODE_ENV'] === 'production',
+            path: '/',
+            maxAge: 24 * 60 * 60,
+        });
+
+        return reply.send({
+            did: human.did,
+            eth_address: human.eth_address,
+            region: human.region,
+            created_at: human.created_at.toISOString(),
+            is_new: false,
+        });
     });
 
     // GET /api/v1/portal/auth/me

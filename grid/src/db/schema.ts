@@ -215,4 +215,22 @@ export const MIGRATIONS: Migration[] = [
         up: `ALTER TABLE human_users ADD COLUMN region VARCHAR(127) NOT NULL DEFAULT 'agora'`,
         down: `ALTER TABLE human_users DROP COLUMN region`,
     },
+    {
+        version: 11,
+        name: 'add_email_auth_to_human_users',
+        up: `
+            ALTER TABLE human_users
+              MODIFY COLUMN eth_address VARCHAR(255) NULL,
+              ADD COLUMN email         VARCHAR(255) NULL AFTER eth_address,
+              ADD COLUMN password_hash VARCHAR(255) NULL AFTER email,
+              ADD UNIQUE KEY uq_email (grid_name, email)
+        `,
+        down: `
+            ALTER TABLE human_users
+              DROP INDEX uq_email,
+              DROP COLUMN password_hash,
+              DROP COLUMN email,
+              MODIFY COLUMN eth_address VARCHAR(255) NOT NULL
+        `,
+    },
 ];
