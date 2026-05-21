@@ -115,6 +115,21 @@ function PortalAuthPage() {
                 signMessage: (msg) => signMessageAsync({ message: msg }),
             });
             setUser(user);
+            // Hydrate full profile from /me (region, created_at) — non-fatal if it fails
+            try {
+                const meRes = await fetch('/api/v1/portal/auth/me', { credentials: 'include' });
+                if (meRes.ok) {
+                    const meData = await meRes.json() as {
+                        did: string;
+                        eth_address: string;
+                        region: string;
+                        created_at: string | null;
+                    };
+                    setUser(meData);  // overwrite with full profile
+                }
+            } catch {
+                // /me failed — store retains the partial user from /verify; non-fatal
+            }
             router.push('/portal');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'sign_in_failed');

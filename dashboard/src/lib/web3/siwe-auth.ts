@@ -15,6 +15,10 @@ export interface HumanUser {
     eth_address: string;
     /** Present for email-authenticated users. */
     email?: string;
+    /** Auto-assigned region — populated from /me after sign-in. */
+    region?: string | null;
+    /** ISO 8601 join timestamp — populated from /me after sign-in. */
+    created_at?: string | null;
 }
 
 export interface SignInParams {
