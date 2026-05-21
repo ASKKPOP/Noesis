@@ -169,6 +169,10 @@ Phase 15-17 shipped with all Brain-private invariants intact. Key carry-forwards
   - SPARC peer-dialogue pattern → telos.refined from exchanges (Phase 7)
   - arxiv 2506.06576 Human Agency Scale → H1-H5 operator UI (Phases 6, 8)
 
+### Roadmap Evolution
+
+- Phase 25 added: Steward Console expansion — humans, sanctions, cognitive inspector, live firehose, culture browser, replay scrubber, brain health, allowlist monitor, spawn-Nous wizard
+
 ## Session Continuity
 
 Last session: 2026-05-21T00:59:21.089Z

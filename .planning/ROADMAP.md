@@ -797,7 +797,33 @@ Primary sources (`.planning/research/v2.4/`):
 - DID regex `/^did:noesis:[a-z0-9_\-]+$/i` enforced at all entry points
 - First-life promise — audit entries retained forever; tombstoned DIDs permanently reserved
 
+### Phase 25: Steward Console expansion — humans, sanctions, cognitive inspector, live firehose, culture browser, replay scrubber, brain health, allowlist monitor, spawn-Nous wizard
+
+**Goal:** Expand the existing Steward Console (`steward/`, base shell shipped) with operator-facing surfaces for sanctions, cognitive observability, live audit visibility, replay, culture browsing, and Nous/human management — split into 25a/25b/25c.
+
+**Sub-phase split (locked 2026-05-21 in 25-CONTEXT.md):**
+
+- **Phase 25a — Observer surfaces** (read-only): live firehose (`/firehose`), cognitive inspector (new Brain `GET /brain/<did>/cognitive-snapshot` H3+ endpoint), brain health metrics, allowlist monitor with runtime drift detector, humans profile/history page (`/humans/[did]`). **Allowlist delta: 0.**
+- **Phase 25b — Sanctions + spawn wizard** (write actions, H-tier gated): Nous sanctions (mute-broadcast H3, slash-coin H4, quarantine H4, force-sleep H3), human sanctions (ban-human H5, freeze-wallet H5), system/researcher Nous spawn wizard (H5, treasury-funded, distinct from Phase 27 human-spawn). **Allowlist delta: +6** (`operator.muted`, `operator.slashed`, `operator.quarantined`, `operator.forced_sleep`, `operator.human_banned`, `operator.human_frozen`). Running total after 25b: **53** (assuming v2.5 portal +4 has landed).
+- **Phase 25c — Replay scrubber + culture browser**: REPLAY-05 modal ReplayGrid scrubber spawned from `operator.exported` entries, Phase 21 culture views re-themed into StewardShell at `/culture` with per-Nous cross-filtering. **Allowlist delta: 0.**
+
+**Requirements**: To be enumerated per sub-phase in 25a/25b/25c PLAN files. Decision context: `25-CONTEXT.md`.
+**Depends on:** Phase 24 (portal-shell), Phase 13 (REPLAY-01..05 for 25c), Phase 21 (culture views for 25c), Phase 6/8 (operator agency primitives for 25b sanctions UI).
+**Plans:** 0 plans (run `/gsd-plan-phase 25a`, then 25b, then 25c sequentially)
+
+**Invariants preserved:**
+- Brain-private — the new cognitive-snapshot endpoint is the ONE audited exception, exposes scrubbed metadata + skill TITLES only (never bodies). Grep-gated for plaintext.
+- Allowlist freeze-except-by-explicit-addition — 25b's +6 events are sole-producer, closed-tuple, named in this entry.
+- Replay observer-only — 25c modal cannot write back to live Grid (REPLAY-05).
+- Phase 21 D-9-08 raw-SVG invariant carries into 25c culture browser (no d3/react-flow/cytoscape/recharts).
+
+Plans:
+- [ ] 25a — Observer surfaces (run /gsd-plan-phase 25a to break down)
+- [ ] 25b — Sanctions + spawn wizard (run /gsd-plan-phase 25b to break down)
+- [ ] 25c — Replay scrubber + culture browser (run /gsd-plan-phase 25c to break down)
+
 ---
 
 *Roadmap created: 2026-04-20 — v2.1 Steward Console opened*
 *Updated: 2026-05-16 — v2.4 Agora phases 18-21 added; v2.3 Living Minds marked shipped*
+*Updated: 2026-05-21 — Phase 25 scoped via /gsd-discuss-phase, split into 25a/25b/25c, +6 allowlist events earmarked for 25b*
