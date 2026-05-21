@@ -1,11 +1,53 @@
 ---
 phase: 25a-observer-surfaces
 verified: 2026-05-21T00:00:00Z
-status: human_needed
-score: 6/6 must-haves verified
+status: gaps_found
+score: 6/6 must-haves verified (initial); 3 gaps found post-Codex review
 overrides_applied: 0
 re_verification: null
-gaps: []
+gaps:
+  - id: GAP-25a-1
+    severity: P1
+    file: grid/src/api/operator/cognitive-snapshot.ts
+    line: 61
+    title: "H3 tier-bypass — operator tier/id derived from request body, not authenticated context"
+    detail: |
+      The route reads `tier` and `operator_id` from the POSTed JSON body and passes them to
+      validateTierBody('H3'). A caller can claim H3 by sending {tier:'H3', operator_id:'...'}.
+      The endpoint must derive operator identity/tier from server-side auth context
+      (existing operator auth middleware or session), not from request body.
+    impact: "Unauthenticated read of cognitive snapshot — bypasses entire tier model."
+    fix_direction: |
+      Resolve operator from authenticated context (same source used by other H3-gated routes),
+      reject body-supplied tier/operator_id, then validate the resolved tier ≥ H3. Audit event
+      operator.inspected must reference the resolved operator_id.
+  - id: GAP-25a-2
+    severity: P1
+    file: steward/src/app/nous/[id]/page.tsx
+    line: 221
+    title: "Cognitive Inspector sends invalid operator_id format"
+    detail: |
+      Page posts `operator_id: 'op:steward:default'` to /cognitive-snapshot. OPERATOR_ID_REGEX
+      requires UUID-v4 format. With GAP-25a-1 fixed (server derives operator from auth) this
+      hard-coded value becomes dead; in the meantime the call fails for any caller relying on it.
+    impact: "UAT item #3 cannot pass — Cognitive Inspector fetch rejected with validation error."
+    fix_direction: |
+      Remove the hard-coded operator_id/tier from the request body once GAP-25a-1 is fixed.
+      Client should send only {did} and let server-derived auth supply operator identity.
+  - id: GAP-25a-3
+    severity: P2
+    file: steward/src/app/nous/[id]/page.tsx
+    line: 544
+    title: "drive_levels indexed with uppercase keys; Brain returns lowercase"
+    detail: |
+      UI renders 5 drive bars using DRIVE_NAMES uppercase ('HUNGER','CURIOSITY',...).
+      brain/src/noesis_brain/http/cognitive_snapshot.py:60 returns lowercase drive keys
+      ('hunger','curiosity','safety','boredom','loneliness'). All 5 bars show 0 / undefined.
+    impact: "UAT item #3 — drive bars render but always at zero."
+    fix_direction: |
+      Lowercase the index lookup (e.g. `drive_levels[name.toLowerCase()]`) while keeping the
+      uppercase display label. Add a unit test on the cognitive snapshot client that asserts
+      the contract key casing.
 deferred: []
 human_verification:
   - test: "Navigate to /firehose in the Steward Console while Grid is running. Verify rows appear with left-border family color coding, a Connected status pill, and that hovering the list pauses auto-scroll while leaving resumes it."
@@ -217,9 +259,18 @@ The following items require a running Steward Console + Grid + Brain to verify. 
 
 ### Gaps Summary
 
-No gaps found. All 23 observable truths verified. All 21 required artifacts confirmed. All 14 key links confirmed wired. All 10 data flows confirmed flowing. Zero anti-patterns. Zero stub patterns.
+**Updated 2026-05-21 post-Codex adversarial review.** Initial gsd-verifier pass found 0 gaps. Codex (independent second-opinion review, OpenAI) traced data-flow end-to-end and surfaced 3 gaps the file-grep verifier missed:
 
-The phase goal — five read-only observer surfaces with zero allowlist delta — is achieved in code. Human verification items above are UI acceptance tests that require runtime, not indicators of missing implementation.
+| ID | Severity | Surface | Summary |
+|----|----------|---------|---------|
+| GAP-25a-1 | P1 | `grid/src/api/operator/cognitive-snapshot.ts:61` | H3 tier-bypass — tier/operator_id read from request body, not auth context |
+| GAP-25a-2 | P1 | `steward/src/app/nous/[id]/page.tsx:221` | Cognitive Inspector posts invalid operator_id `'op:steward:default'` (UUID-v4 required) |
+| GAP-25a-3 | P2 | `steward/src/app/nous/[id]/page.tsx:544` | Drive bars index `drive_levels` with uppercase keys; Brain returns lowercase → all bars render 0 |
+
+GAP-25a-1 + GAP-25a-2 are coupled (server-side fix obviates the client-side hard-coded values).
+GAP-25a-3 blocks UAT item #3 even with auth fix applied.
+
+The phase goal — five read-only observer surfaces with zero allowlist delta — is achieved in code for 4 of 5 surfaces. The Cognitive Inspector surface ships with a critical auth bypass and a guaranteed-broken drive bar display. Phase cannot ship until these are closed.
 
 ---
 
