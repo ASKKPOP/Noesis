@@ -822,8 +822,36 @@ Plans:
 - [ ] 25b — Sanctions + spawn wizard (run /gsd-plan-phase 25b to break down)
 - [ ] 25c — Replay scrubber + culture browser (run /gsd-plan-phase 25c to break down)
 
+### Phase 25a: Observer surfaces — live firehose, cognitive inspector, brain health, allowlist monitor, humans profile
+
+**Goal:** Ship read-only operator-facing observability surfaces in the Steward Console: live audit firehose, cognitive inspector backed by a new Brain `GET /brain/<did>/cognitive-snapshot` endpoint (H3+ gated, scrubbed metadata + skill titles only), per-Nous brain health metrics page, allowlist monitor with runtime drift detector, and `/humans/[did]` KYC-ish profile + history page. **Allowlist delta: 0.** All five surfaces are read-only; no sanctions, no writes, no spawn flow (those land in 25b/25c).
+
+**Requirements:** To be enumerated in 25a-PLAN files. Decision context: `.planning/phases/25a-observer-surfaces/25a-CONTEXT.md` (extracted from 25-CONTEXT.md decisions D-01..D-06, D-14..D-19 — observer-surface decisions only).
+**Depends on:** Phase 24 (portal-shell), existing Steward Console base (commit becc6e7).
+**Plans:** 0 plans (run `/gsd-plan-phase 25a` to break down).
+
+**Invariants preserved:**
+- Brain-private — the new `cognitive-snapshot` endpoint is the ONE audited exception, returning scrubbed metadata + skill TITLES only (never bodies). Grep-gated for plaintext (`reflexion_text|rule_text|creed_text|skill_body|lore_body|whisper_plaintext`).
+- Allowlist freeze — 25a adds **zero** new events. Existing `operator.inspected` is emitted on every cognitive-snapshot query.
+- Hash-only cross-boundary — Brain↔Grid plaintext never crosses the wire; `cognitive-snapshot` is the explicit, audited exception for `skill_title` only.
+- Sole-producer emitters retained.
+- Steward never talks directly to Brain — backend proxies through Grid → Brain.
+
+### Phase 25b: Sanctions + spawn wizard (placeholder — plan after 25a ships)
+
+**Goal:** Ship operator-facing write actions: Nous sanctions (mute-broadcast H3, slash-coin H4, quarantine H4, force-sleep H3), human sanctions (ban-human H5, freeze-wallet H5), and system/researcher Nous spawn wizard (H5, treasury-funded). **Allowlist delta: +6** (`operator.muted`, `operator.slashed`, `operator.quarantined`, `operator.forced_sleep`, `operator.human_banned`, `operator.human_frozen`). Running total after 25b: 53.
+
+**Depends on:** Phase 25a, Phase 6/8 operator agency primitives.
+
+### Phase 25c: Replay scrubber + culture browser (placeholder — plan after 25b ships)
+
+**Goal:** REPLAY-05 modal ReplayGrid scrubber spawned from `operator.exported` entries, and Phase 21 culture views re-themed into StewardShell at `/culture` with per-Nous cross-filtering. **Allowlist delta: 0.**
+
+**Depends on:** Phase 25a, Phase 13 (REPLAY-01..05), Phase 21 (culture views).
+
 ---
 
 *Roadmap created: 2026-04-20 — v2.1 Steward Console opened*
 *Updated: 2026-05-16 — v2.4 Agora phases 18-21 added; v2.3 Living Minds marked shipped*
 *Updated: 2026-05-21 — Phase 25 scoped via /gsd-discuss-phase, split into 25a/25b/25c, +6 allowlist events earmarked for 25b*
+*Updated: 2026-05-21 — Phase 25a/25b/25c promoted to roadmap-recognized phase headers so /gsd-plan-phase can resolve them independently*
