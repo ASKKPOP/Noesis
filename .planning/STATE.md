@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Human Portal — Active)
-status: discussing
+status: executing
 stopped_at: Phase 24 UI-SPEC approved
-last_updated: "2026-05-21T00:59:21.093Z"
-last_activity: 2026-05-20
+last_updated: "2026-05-21T01:29:52.791Z"
+last_activity: 2026-05-21 -- Phase 24 execution started
 progress:
   total_phases: 25
   completed_phases: 23
-  total_plans: 120
+  total_plans: 125
   completed_plans: 120
-  percent: 100
+  percent: 96
 ---
 
 # Project State
@@ -27,13 +27,13 @@ See: .planning/PROJECT.md (updated 2026-05-16)
 
 ## Current Position
 
-Phase: 24
-Plan: Not started
-Status: Discussing Phase 24
-Last activity: 2026-05-20
+Phase: 24 (portal-shell) — EXECUTING
+Plan: 1 of 5
+Status: Executing Phase 24
+Last activity: 2026-05-21 -- Phase 24 execution started
 
 Progress: [██████████████████  ] 23/29 phases complete (v2.5 in progress)
-Note: Phase 23 backfilled 2026-05-20 — dashboard wallet UI shipped, Grid endpoint (human.transferred) deferred to Phase 24
+Note: Phase 24 planned 2026-05-21 — 5 plans in 2 waves (01-04 Wave 1 parallel, 05 Wave 2 tests)
 
 ## v2.5 Key Decisions (locked 2026-05-20)
 

@@ -32,10 +32,10 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
 - [ ] **Phase 24: Portal Shell** — region presence on profile, profile completeness (region + wallet balance + join date), mobile hamburger sidebar, portal home live Grid stats. Allowlist stays at 45 (no new events).
   **Plans**: 5 plans
   Plans:
-  - [ ] 24-01-PLAN.md — Grid: migration v10 (region column) + HumanRecord/Registry + JWT/me extension
-  - [ ] 24-02-PLAN.md — Dashboard: HumanUser type + auth hydration + profile page (3 new rows)
-  - [ ] 24-03-PLAN.md — Dashboard: mobile sidebar (PortalShell/Sidebar/Header hamburger overlay)
-  - [ ] 24-04-PLAN.md — Dashboard: portal home live stats polling + updated labels/content
+  - [x] 24-01-PLAN.md — Grid: migration v10 (region column) + HumanRecord/Registry + JWT/me extension
+  - [x] 24-02-PLAN.md — Dashboard: HumanUser type + auth hydration + profile page (3 new rows)
+  - [x] 24-03-PLAN.md — Dashboard: mobile sidebar (PortalShell/Sidebar/Header hamburger overlay)
+  - [x] 24-04-PLAN.md — Dashboard: portal home live stats polling + updated labels/content
   - [ ] 24-05-PLAN.md — Tests: WALLET-04 verification + Phase 24 test coverage gaps
 - [ ] **Phase 25: Sophia Onboarding** — Fast-proxy LLM chat (out-of-tick), goal-setting wizard, animated world introduction, Sophia as guide persona, first-time user flow with welcome Cyber Coin allocation.
 - [ ] **Phase 26: Nous Interaction** — Humans chat with Sophia/Hermes/Themis via `/portal/chat`, send Cyber Coin tips, browse Nous activity feed, view skills/lore/norms the Nous have produced. Allowlist 45→46 (+1: human.spoke).
