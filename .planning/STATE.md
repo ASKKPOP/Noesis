@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Human Portal — Active)
 status: executing
-stopped_at: Phase 25 context gathered — split 25a/25b/25c
-last_updated: "2026-05-21T05:23:44.913Z"
+stopped_at: Phase 25a UI-SPEC approved
+last_updated: "2026-05-21T17:24:34.346Z"
 last_activity: 2026-05-21
 progress:
-  total_phases: 26
+  total_phases: 27
   completed_phases: 24
   total_plans: 125
   completed_plans: 125
@@ -175,6 +175,6 @@ Phase 15-17 shipped with all Brain-private invariants intact. Key carry-forwards
 
 ## Session Continuity
 
-Last session: 2026-05-21T05:23:44.909Z
-Stopped at: Phase 25 context gathered — split 25a/25b/25c
-Resume file: .planning/phases/25-steward-console-expansion-humans-sanctions-cognitive-inspect/25-CONTEXT.md
+Last session: 2026-05-21T17:24:34.343Z
+Stopped at: Phase 25a UI-SPEC approved
+Resume file: .planning/phases/25a-observer-surfaces/25a-UI-SPEC.md
