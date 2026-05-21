@@ -828,7 +828,7 @@ Plans:
 
 **Requirements:** To be enumerated in 25a-PLAN files. Decision context: `.planning/phases/25a-observer-surfaces/25a-CONTEXT.md` (extracted from 25-CONTEXT.md decisions D-01..D-06, D-14..D-19 — observer-surface decisions only).
 **Depends on:** Phase 24 (portal-shell), existing Steward Console base (commit becc6e7).
-**Plans:** 5/6 plans executed
+**Plans:** 6/6 plans complete
 
 Plans:
 - [x] 25a-01-PLAN.md — Foundation: FORBIDDEN_KEY_PATTERN extension, RingBuffer.peek(), shared brain-http-errors, CI grep gate
@@ -836,7 +836,7 @@ Plans:
 - [x] 25a-03-PLAN.md — Brain aiohttp HTTP server + cognitive-snapshot endpoint (FIRST Brain HTTP surface)
 - [x] 25a-04-PLAN.md — Humans REST routes (profile + history with payload filtering) + NousRunner tick-metrics
 - [x] 25a-05-PLAN.md — Grid H3 cognitive-snapshot proxy + closed-tuple client + operator.inspected emission
-- [ ] 25a-06-PLAN.md — Steward UI: /firehose, /humans/[did], Cognitive Inspector card, Brain Health 2x2 grid, Allowlist Monitor, /users deep-link
+- [x] 25a-06-PLAN.md — Steward UI: /firehose, /humans/[did], Cognitive Inspector card, Brain Health 2x2 grid, Allowlist Monitor, /users deep-link
 
 **Invariants preserved:**
 - Brain-private — the new `cognitive-snapshot` endpoint is the ONE audited exception, returning scrubbed metadata + skill TITLES only (never bodies). Grep-gated for plaintext (`reflexion_text|rule_text|creed_text|skill_body|lore_body|whisper_plaintext`).
