@@ -97,6 +97,7 @@ export default function StewardShell({ title, breadcrumb, children }: StewardShe
                 <NavItem href="/economy" label="Economy" />
                 <NavItem href="/governance" label="Governance" />
                 <NavItem href="/users" label="Users" />
+                <NavItem href="/firehose" label="Firehose" />
                 <NavItem href="/audit" label="Audit Log" />
 
                 {/* Grid section */}
