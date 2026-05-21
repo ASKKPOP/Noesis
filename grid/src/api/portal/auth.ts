@@ -160,7 +160,7 @@ export function registerPortalAuthRoutes(
             return reply.send({
                 did: payload['did'],
                 eth_address: payload['eth_address'],
-                region: (payload['region'] as string | undefined) ?? 'agora',       // NEW — per D-07
+                region: (payload['region'] as string | undefined) ?? null,           // null for pre-migration tokens (WR-04)
                 created_at: (payload['created_at'] as string | undefined) ?? null,  // NEW — per D-07
             });
         } catch {
