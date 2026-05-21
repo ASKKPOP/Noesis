@@ -32,6 +32,7 @@ import { registerHumansRoutes } from './routes/humans.js';
 import { registerTickMetricsRoute } from './routes/tick-metrics.js';
 import { registerOperatorRoutes } from './operator/index.js';
 import { registerPortalRoutes } from './portal/index.js';
+import { registerCognitiveSnapshotRoute } from './operator/cognitive-snapshot.js';
 import { tombstoneCheck, TombstonedDidError } from '../registry/tombstone-check.js';
 import type { HumanRegistry } from '../human/index.js';
 import fastifyCookie from '@fastify/cookie';
@@ -167,6 +168,18 @@ export interface GridServices {
      * Backs GET /api/v1/audit/drift-alerts. Constructed and wired by buildServerWithHub.
      */
     driftDetector?: DriftDetector;
+    /**
+     * Phase 25a OBS-COGNITIVE-INSPECTOR: injectable fetch for Brain HTTP calls.
+     * When absent, the route uses global `fetch`. Allows tests to inject mocks
+     * without monkey-patching. Pattern mirrors delete-nous.ts (AGENCY-05 D-03).
+     */
+    brainFetch?: typeof fetch;
+    /**
+     * Phase 25a OBS-COGNITIVE-INSPECTOR: base URL for Brain HTTP API.
+     * Defaults to `process.env.BRAIN_HTTP_BASE_URL` when absent.
+     * Used by the cognitive-snapshot proxy to locate the target Brain instance.
+     */
+    brainBaseUrl?: string;
 }
 
 /**
@@ -402,6 +415,9 @@ export function buildServerWithHub(
 
     // --- Phase 25a OBS-BRAIN-HEALTH: Tick-metrics route ---
     registerTickMetricsRoute(app, services);
+
+    // --- Phase 25a OBS-COGNITIVE-INSPECTOR: H3 cognitive-snapshot proxy ---
+    registerCognitiveSnapshotRoute(app, services);
 
     // --- Phase 19 NORM-01: Crystallized norms endpoint ---
     // Registered only when norms service is provided (optional for legacy tests).
