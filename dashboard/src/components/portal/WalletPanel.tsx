@@ -84,8 +84,9 @@ function fmtTs(ts: number): string {
 
 /** Best-effort Grid notification — fires human.transferred on backend. */
 async function notifyGrid(to: string, amount: string, asset: string): Promise<void> {
+    const gridBase = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
     try {
-        await fetch('/api/v1/portal/wallet/transfer', {
+        await fetch(`${gridBase}/api/v1/portal/wallet/transfer`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',

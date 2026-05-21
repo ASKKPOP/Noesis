@@ -117,10 +117,11 @@ export default function PortalDashboard() {
     const [currentTick, setCurrentTick] = useState<number | null>(null);
 
     useEffect(() => {
+        const gridBase = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
         async function fetchStats() {
             const [nousRes, statusRes] = await Promise.allSettled([
-                fetch('/api/v1/grid/nous', { credentials: 'include' }),
-                fetch('/api/v1/grid/status', { credentials: 'include' }),
+                fetch(`${gridBase}/api/v1/grid/nous`, { credentials: 'include' }),
+                fetch(`${gridBase}/api/v1/grid/status`, { credentials: 'include' }),
             ]);
             if (nousRes.status === 'fulfilled' && nousRes.value.ok) {
                 const data = await nousRes.value.json() as { nous: NousRosterEntry[] };

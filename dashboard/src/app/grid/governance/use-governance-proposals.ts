@@ -47,7 +47,8 @@ interface ProposalsResponse {
 // ── Fetcher ───────────────────────────────────────────────────────────────────
 
 async function fetchProposals(): Promise<ProposalSummary[]> {
-    const resp = await fetch('/api/v1/governance/proposals');
+    const gridBase = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
+    const resp = await fetch(`${gridBase}/api/v1/governance/proposals`);
     if (!resp.ok) {
         throw new Error(`governance/proposals fetch failed: ${resp.status}`);
     }

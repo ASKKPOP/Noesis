@@ -122,7 +122,7 @@ function PortalAuthPage() {
             setUser(user);
             // Hydrate full profile from /me (region, created_at) — non-fatal if it fails
             try {
-                const meRes = await fetch('/api/v1/portal/auth/me', { credentials: 'include' });
+                const meRes = await fetch(`${gridApiBase}/api/v1/portal/auth/me`, { credentials: 'include' });
                 if (meRes.ok) {
                     const meData = await meRes.json() as {
                         did: string;

@@ -46,9 +46,10 @@ function ProfilePage() {
     });
 
     async function handleSignOut() {
+        const gridBase = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
         clearUser();
         disconnect();
-        await fetch('/api/v1/portal/auth/logout', { method: 'POST', credentials: 'include' });
+        await fetch(`${gridBase}/api/v1/portal/auth/logout`, { method: 'POST', credentials: 'include' });
         window.location.href = '/portal/auth';
     }
 
