@@ -24,6 +24,10 @@ import type {
     ShopsResponse,
 } from './types.js';
 import { WsHub } from './ws-hub.js';
+import { WsFirehoseHub } from '../audit/firehose-hub.js';
+import { DriftDetector } from '../audit/drift-detector.js';
+import { registerAuditFirehoseRoute } from './routes/audit-firehose.js';
+import { registerDriftAlertsRoute } from './routes/audit-drift-alerts.js';
 import { registerOperatorRoutes } from './operator/index.js';
 import { registerPortalRoutes } from './portal/index.js';
 import { tombstoneCheck, TombstonedDidError } from '../registry/tombstone-check.js';
@@ -146,6 +150,16 @@ export interface GridServices {
     lore?: {
         storage: import('../lore/LoreStorage.js').LoreStorage;
     };
+    /**
+     * Phase 25a OBS-FIREHOSE: WsFirehoseHub — unfiltered AuditChain → WebSocket fan-out.
+     * Backs GET /api/v1/audit/firehose. Constructed and wired by buildServerWithHub.
+     */
+    firehoseHub?: WsFirehoseHub;
+    /**
+     * Phase 25a OBS-ALLOWLIST-MONITOR: DriftDetector — runtime non-allowlisted event monitor.
+     * Backs GET /api/v1/audit/drift-alerts. Constructed and wired by buildServerWithHub.
+     */
+    driftDetector?: DriftDetector;
 }
 
 /**
@@ -167,7 +181,7 @@ export function buildServer(services: GridServices): FastifyInstance {
 export function buildServerWithHub(
     services: GridServices,
     wsHubOptions?: WsHubOverrides,
-): { app: FastifyInstance; wsHub: WsHub } {
+): { app: FastifyInstance; wsHub: WsHub; firehoseHub: WsFirehoseHub; driftDetector: DriftDetector } {
     const app = Fastify({ logger: false });
     const startedAt = Date.now();
 
@@ -464,6 +478,12 @@ export function buildServerWithHub(
         watermarkBytes: wsHubOptions?.watermarkBytes,
     });
 
+    // Phase 25a: Firehose hub + drift detector (observer-only, no audit writes).
+    const firehoseHub = new WsFirehoseHub(services.audit, services.gridName);
+    const driftDetector = new DriftDetector(services.audit);
+    services.firehoseHub = firehoseHub;
+    services.driftDetector = driftDetector;
+
     // M5: Origin check deferred — v1 binds 127.0.0.1. See Phase 4 for 0.0.0.0 hardening.
     // When binding 0.0.0.0 behind a reverse proxy, pair GRID_WS_SECRET with an origin
     // allowlist check here. See PITFALLS.md §M5 for the deployment-time checklist.
@@ -472,7 +492,13 @@ export function buildServerWithHub(
     //   - If GRID_WS_SECRET env is set: require Authorization: Bearer <secret>
     //     header OR ?token=<secret> query param. Missing/mismatch → 1008 close.
     //   - If unset: permissive (developer default, 127.0.0.1 bind).
+    // Phase 25a: REST drift-alerts route (registered at top-level, not inside WS scope).
+    registerDriftAlertsRoute(app, services);
+
     app.register(async (instance) => {
+        // Phase 25a: firehose WS route registered inside the same plugin scope as /ws/events.
+        registerAuditFirehoseRoute(instance, firehoseHub);
+
         instance.get('/ws/events', { websocket: true }, (socket, req) => {
             const secret = process.env.GRID_WS_SECRET;
             if (secret) {
@@ -527,7 +553,9 @@ export function buildServerWithHub(
     // other teardown steps that might race with @fastify/websocket.
     app.addHook('preClose', async () => {
         await wsHub.close();
+        await firehoseHub.close();
+        driftDetector.close();
     });
 
-    return { app, wsHub };
+    return { app, wsHub, firehoseHub, driftDetector };
 }
