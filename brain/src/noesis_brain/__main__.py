@@ -45,6 +45,7 @@ from noesis_brain.memory.sqlite_store import MemoryStore
 from noesis_brain.memory.stream import MemoryStream
 from noesis_brain.rpc.server import RPCServer
 from noesis_brain.rpc.handler import BrainHandler
+from noesis_brain.http.server import BrainHttpServer
 
 
 def _slugify_nous_name(name: str) -> str:
@@ -64,21 +65,27 @@ class BrainApp:
         handler: BrainHandler,
         rpc: RPCServer,
         nous_name: str,
+        http_server: BrainHttpServer | None = None,
     ) -> None:
         self.handler = handler
         self.rpc = rpc
         self.nous_name = nous_name
+        self.http_server = http_server
         self._running = False
 
     async def start(self) -> None:
-        """Start RPC server and begin listening."""
+        """Start RPC server (and HTTP server if configured) and begin listening."""
         await self.rpc.start()
+        if self.http_server is not None:
+            await self.http_server.start()
         self._running = True
         log.info("[Brain:%s] RPC server started", self.nous_name)
 
     async def stop(self) -> None:
         """Graceful shutdown."""
         self._running = False
+        if self.http_server is not None:
+            await self.http_server.stop()
         await self.rpc.stop()
         log.info("[Brain:%s] stopped", self.nous_name)
 
@@ -224,6 +231,21 @@ def create_brain_app(
     return BrainApp(handler=handler, rpc=rpc, nous_name=nous_name)
 
 
+def _build_http_server(handler: BrainHandler) -> BrainHttpServer:
+    """Read BRAIN_HTTP_SECRET and BRAIN_HTTP_PORT from env, return a BrainHttpServer.
+
+    Raises RuntimeError if BRAIN_HTTP_SECRET is not set.
+    """
+    secret = os.environ.get("BRAIN_HTTP_SECRET", "").strip()
+    if not secret:
+        raise RuntimeError(
+            "BRAIN_HTTP_SECRET environment variable is required to start the Brain HTTP server. "
+            "Generate one with: openssl rand -hex 32"
+        )
+    port = int(os.environ.get("BRAIN_HTTP_PORT", "8090"))
+    return BrainHttpServer(handler=handler, secret=secret, port=port)
+
+
 # ── Environment-based factory ─────────────────────────────────────────────────
 
 def create_brain_app_from_env() -> BrainApp:
@@ -238,7 +260,7 @@ def create_brain_app_from_env() -> BrainApp:
     else:
         config_path = Path(config_path_str)
 
-    return create_brain_app(
+    app = create_brain_app(
         nous_name=nous_name,
         config_path=config_path,
         grid_name=os.environ.get("GRID_NAME", "genesis"),
@@ -251,6 +273,9 @@ def create_brain_app_from_env() -> BrainApp:
         hermes_model=os.environ.get("HERMES_MODEL", ""),
         hermes_api_key=os.environ.get("HERMES_API_KEY"),
     )
+    # Wire the HTTP server (requires BRAIN_HTTP_SECRET in env).
+    app.http_server = _build_http_server(app.handler)
+    return app
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
