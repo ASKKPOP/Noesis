@@ -21,14 +21,14 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { appendHumanJoined } from '../../audit/append-human-joined.js';
 
-const COOKIE_NAME = 'noesis_portal_token';
+export const COOKIE_NAME = 'noesis_portal_token';
 const NONCE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 /** In-memory nonce store. Key = nonce string, Value = created timestamp (ms). */
 const nonceMap = new Map<string, number>();
 
-/** ES256 key pair — generated once at module load (WEB3-03). */
-const keyPairPromise = generateKeyPair('ES256');
+/** ES256 key pair — generated once at module load (WEB3-03). Exported for wallet route JWT verification. */
+export const keyPairPromise = generateKeyPair('ES256');
 
 export function registerPortalAuthRoutes(
     app: FastifyInstance,

@@ -7,10 +7,12 @@
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { registerPortalAuthRoutes } from './auth.js';
+import { registerPortalWalletRoutes } from './wallet.js';
 
 export function registerPortalRoutes(
     app: FastifyInstance,
     services: GridServices,
 ): void {
     registerPortalAuthRoutes(app, services);
+    registerPortalWalletRoutes(app, services);
 }

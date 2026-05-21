@@ -176,6 +176,10 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     // raw address NEVER crosses the wire. Emitted ONLY via appendHumanJoined()
     // (grid/src/audit/append-human-joined.ts). Per WEB3-04 / D-22-02.
     'human.joined',     // (44) {human_did, eth_address_hash, grid_name, tick}
+    // Phase 23 gap / Phase 24 fix — Cyber Coin transfer notification. Closed 4-key payload:
+    // {asset, grid_name, human_did, tick}. Recipient address and amount are NEVER stored.
+    // Emitted ONLY via appendHumanTransferred() (grid/src/audit/append-human-transferred.ts).
+    'human.transferred', // (45) {asset, grid_name, human_did, tick}
 ] as const;
 
 /**
