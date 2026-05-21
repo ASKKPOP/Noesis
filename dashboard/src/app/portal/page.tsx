@@ -5,18 +5,21 @@
  * Overview of the Grid's current state, quick navigation, and status.
  */
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAccount } from 'wagmi';
 import { useHumanAuthStore } from '@/lib/stores/human-auth-store';
 
-// ── Data ─────────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
-const STATS = [
-    { label: 'Current Phase', value: 'P22', sub: 'Human Portal & Web3 Identity', live: true },
-    { label: 'Active Nous', value: '3', sub: 'Sophia · Hermes · Themis', live: true },
-    { label: 'Grid Health', value: '100%', sub: 'All services operational', live: true },
-    { label: 'Next Phase', value: 'P23', sub: 'Cyber Coin Wallet', live: false },
-];
+interface NousRosterEntry {
+    did: string;
+    name: string;
+    region: string;
+    status: string;
+}
+
+// ── Data ─────────────────────────────────────────────────────────────────────
 
 const SECTIONS = [
     {
@@ -45,7 +48,7 @@ const SECTIONS = [
         label: 'Wallet',
         desc: 'Cyber Coin balance and transactions.',
         icon: '◎',
-        phase: 'P23',
+        phase: null,
     },
     {
         href: '/portal/chat',
@@ -91,15 +94,16 @@ const SECTIONS = [
     },
 ];
 
-const NOUS_AGENTS = [
-    { name: 'Sophia', role: 'Philosopher', color: '#bf00ff', status: 'live' },
-    { name: 'Hermes', role: 'Trader',      color: '#ffd700', status: 'live' },
-    { name: 'Themis', role: 'Lawkeeper',   color: '#ff4400', status: 'live' },
+const KNOWN_AGENTS = [
+    { name: 'Sophia', role: 'Philosopher', color: '#bf00ff' },
+    { name: 'Hermes', role: 'Trader',      color: '#ffd700' },
+    { name: 'Themis', role: 'Lawkeeper',   color: '#ff4400' },
 ];
 
 const UPDATES = [
     { date: 'May 2026', text: 'Phase 22 live — Human Portal & SIWE authentication launched.' },
-    { date: 'Coming',   text: 'Phase 23 — Cyber Coin Wallet integration in development.' },
+    { date: 'May 2026', text: 'Phase 23 live — Cyber Coin Wallet and human.transferred event.' },
+    { date: 'Coming',   text: 'Phase 24 — Portal Shell: region presence, mobile layout, live Grid stats.' },
     { date: 'Coming',   text: 'Phase 26 — Direct dialogue with Nous agents planned.' },
 ];
 
@@ -108,6 +112,29 @@ const UPDATES = [
 export default function PortalDashboard() {
     const { address, isConnected } = useAccount();
     const { currentUser } = useHumanAuthStore();
+
+    const [liveNous, setLiveNous] = useState<NousRosterEntry[]>([]);
+    const [currentTick, setCurrentTick] = useState<number | null>(null);
+
+    useEffect(() => {
+        async function fetchStats() {
+            const [nousRes, statusRes] = await Promise.allSettled([
+                fetch('/api/v1/grid/nous', { credentials: 'include' }),
+                fetch('/api/v1/grid/status', { credentials: 'include' }),
+            ]);
+            if (nousRes.status === 'fulfilled' && nousRes.value.ok) {
+                const data = await nousRes.value.json() as { nous: NousRosterEntry[] };
+                setLiveNous(data.nous);
+            }
+            if (statusRes.status === 'fulfilled' && statusRes.value.ok) {
+                const data = await statusRes.value.json() as { tick: number };
+                setCurrentTick(data.tick);
+            }
+        }
+        void fetchStats();
+        const id = setInterval(() => void fetchStats(), 15_000);
+        return () => clearInterval(id);
+    }, []);
 
     const greeting = currentUser
         ? 'Welcome back.'
@@ -126,7 +153,7 @@ export default function PortalDashboard() {
                     textTransform: 'uppercase',
                     color: 'var(--muted)',
                 }}>
-                    Grid · Phase 22
+                    Grid · v2.5
                 </span>
             </div>
 
@@ -197,43 +224,46 @@ export default function PortalDashboard() {
                 gap: 12,
                 marginBottom: 36,
             }}>
-                {STATS.map(s => (
-                    <div key={s.label} style={{
-                        background: 'var(--parchment)',
-                        border: '1px solid var(--rule)',
-                        borderRadius: 6,
-                        padding: '16px 20px',
-                    }}>
-                        <div style={{
-                            fontFamily: 'var(--mono-portal)',
-                            fontSize: 9,
-                            letterSpacing: '0.12em',
-                            textTransform: 'uppercase',
-                            color: 'var(--muted)',
-                            marginBottom: 6,
-                        }}>
-                            {s.label}
-                        </div>
-                        <div style={{
-                            fontFamily: 'var(--serif)',
-                            fontSize: 28,
-                            fontWeight: 600,
-                            color: s.live ? 'var(--ink)' : 'var(--muted)',
-                            lineHeight: 1,
-                            marginBottom: 4,
-                        }}>
-                            {s.value}
-                        </div>
-                        <div style={{
-                            fontFamily: 'var(--sans-portal)',
-                            fontSize: 11,
-                            color: 'var(--muted)',
-                            opacity: 0.8,
-                        }}>
-                            {s.sub}
-                        </div>
+                {/* Active Nous */}
+                <div style={{ background: 'var(--parchment)', border: '1px solid var(--rule)', borderRadius: 6, padding: '16px 20px' }}>
+                    <div style={{ fontFamily: 'var(--mono-portal)', fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
+                        Active Nous
                     </div>
-                ))}
+                    <div style={{ fontFamily: 'var(--serif)', fontSize: 28, fontWeight: 600, color: 'var(--ink)', lineHeight: 1, marginBottom: 4 }}>
+                        {liveNous.length > 0 ? liveNous.length : (currentTick !== null ? '0' : '—')}
+                    </div>
+                    <div style={{ fontFamily: 'var(--sans-portal)', fontSize: 12, color: 'var(--muted)', opacity: 0.8 }}>
+                        {liveNous.length > 0
+                            ? liveNous.map(n => n.name).join(' · ')
+                            : (currentTick !== null ? 'Grid online' : 'Grid offline')}
+                    </div>
+                </div>
+
+                {/* Current Tick */}
+                <div style={{ background: 'var(--parchment)', border: '1px solid var(--rule)', borderRadius: 6, padding: '16px 20px' }}>
+                    <div style={{ fontFamily: 'var(--mono-portal)', fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
+                        Current Tick
+                    </div>
+                    <div style={{ fontFamily: 'var(--serif)', fontSize: 28, fontWeight: 600, color: 'var(--ink)', lineHeight: 1, marginBottom: 4 }}>
+                        {currentTick !== null ? currentTick.toLocaleString() : '—'}
+                    </div>
+                    <div style={{ fontFamily: 'var(--sans-portal)', fontSize: 12, color: 'var(--muted)', opacity: 0.8 }}>
+                        {currentTick !== null ? 'Grid live' : 'Grid offline'}
+                    </div>
+                </div>
+
+                {/* Version */}
+                <div style={{ background: 'var(--parchment)', border: '1px solid var(--rule)', borderRadius: 6, padding: '16px 20px' }}>
+                    <div style={{ fontFamily: 'var(--mono-portal)', fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
+                        Version
+                    </div>
+                    <div style={{ fontFamily: 'var(--serif)', fontSize: 28, fontWeight: 600, color: 'var(--ink)', lineHeight: 1, marginBottom: 4 }}>
+                        v2.5
+                    </div>
+                    <div style={{ fontFamily: 'var(--sans-portal)', fontSize: 12, color: 'var(--muted)', opacity: 0.8 }}>
+                        Portal Shell
+                    </div>
+                </div>
             </div>
 
             {/* ── Main grid: sections + sidebar ── */}
@@ -341,49 +371,52 @@ export default function PortalDashboard() {
                             borderRadius: 6,
                             overflow: 'hidden',
                         }}>
-                            {NOUS_AGENTS.map((n, i) => (
-                                <div key={n.name} style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 12,
-                                    padding: '11px 16px',
-                                    borderBottom: i < NOUS_AGENTS.length - 1 ? '1px solid var(--rule)' : 'none',
-                                }}>
-                                    <span style={{
-                                        width: 8, height: 8,
-                                        borderRadius: '50%',
-                                        background: n.color,
-                                        boxShadow: `0 0 6px ${n.color}88`,
-                                        flexShrink: 0,
-                                    }} />
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{
-                                            fontFamily: 'var(--serif)',
-                                            fontSize: 14,
-                                            fontWeight: 600,
-                                            color: 'var(--ink)',
-                                        }}>
-                                            {n.name}
-                                        </div>
-                                        <div style={{
-                                            fontFamily: 'var(--sans-portal)',
-                                            fontSize: 11,
-                                            color: 'var(--muted)',
-                                        }}>
-                                            {n.role}
-                                        </div>
-                                    </div>
-                                    <span style={{
-                                        fontFamily: 'var(--mono-portal)',
-                                        fontSize: 8,
-                                        letterSpacing: '0.12em',
-                                        color: '#4ade80',
-                                        textTransform: 'uppercase',
+                            {KNOWN_AGENTS.map((agent, i) => {
+                                const isLive = liveNous.some(n => n.name === agent.name && n.status === 'active');
+                                return (
+                                    <div key={agent.name} style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 12,
+                                        padding: '11px 16px',
+                                        borderBottom: i < KNOWN_AGENTS.length - 1 ? '1px solid var(--rule)' : 'none',
                                     }}>
-                                        live
-                                    </span>
-                                </div>
-                            ))}
+                                        <span style={{
+                                            width: 8, height: 8,
+                                            borderRadius: '50%',
+                                            background: isLive ? agent.color : 'rgba(200,192,184,0.28)',
+                                            boxShadow: isLive ? `0 0 6px ${agent.color}88` : 'none',
+                                            flexShrink: 0,
+                                        }} />
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{
+                                                fontFamily: 'var(--serif)',
+                                                fontSize: 14,
+                                                fontWeight: 600,
+                                                color: 'var(--ink)',
+                                            }}>
+                                                {agent.name}
+                                            </div>
+                                            <div style={{
+                                                fontFamily: 'var(--sans-portal)',
+                                                fontSize: 11,
+                                                color: 'var(--muted)',
+                                            }}>
+                                                {agent.role}
+                                            </div>
+                                        </div>
+                                        <span style={{
+                                            fontFamily: 'var(--mono-portal)',
+                                            fontSize: 8,
+                                            letterSpacing: '0.12em',
+                                            color: isLive ? '#4ade80' : 'rgba(200,192,184,0.55)',
+                                            textTransform: 'uppercase',
+                                        }}>
+                                            {isLive ? 'live' : 'offline'}
+                                        </span>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -507,7 +540,7 @@ export default function PortalDashboard() {
                             fontFamily: 'var(--sans-portal)',
                             fontSize: 13,
                             color: 'var(--ink)',
-                            fontWeight: 500,
+                            fontWeight: 400,
                         }}>
                             Project Status
                         </span>
