@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { PortalSidebar } from './PortalSidebar';
 import { PortalHeader } from './PortalHeader';
@@ -9,6 +9,9 @@ import { PortalHeader } from './PortalHeader';
  *  On /portal/auth the shell is bypassed so the auth page renders full-screen. */
 export function PortalShell({ children }: { children: ReactNode }) {
     const pathname = usePathname();
+    const [menuOpen, setMenuOpen] = useState(false);
+    // Close sidebar when user navigates to a new route (Pitfall 6)
+    useEffect(() => { setMenuOpen(false); }, [pathname]);
 
     // Auth page is full-screen — no sidebar or header.
     if (pathname === '/portal/auth') {
@@ -17,9 +20,9 @@ export function PortalShell({ children }: { children: ReactNode }) {
 
     return (
         <div className="portal-theme flex h-screen overflow-hidden">
-            <PortalSidebar />
+            <PortalSidebar isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
             <div className="flex flex-1 flex-col overflow-hidden">
-                <PortalHeader />
+                <PortalHeader onMenuOpen={() => setMenuOpen(true)} />
                 <main className="flex-1 overflow-y-auto" style={{ background: 'var(--vellum)' }}>
                     {children}
                 </main>
