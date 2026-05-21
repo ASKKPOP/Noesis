@@ -61,7 +61,7 @@ Declared values (all multiples of 4px — matches existing codebase usage):
 | 3xl | 32px | Main content padding, grid gap between stat cards |
 
 Exceptions:
-- Firehose rows: 6px top/bottom padding (half-sm), 16px inline — density exception
+- Firehose rows: 8px top/bottom padding (`sm` token), 16px inline — uses the canonical `xs` = 8px token; density achieved through line-height (16px), not sub-grid padding
 - Drive bar container height: 8px (xs × 2) — fixed visual element
 - Card header `::before` accent stripe: 3px — existing steward-card pattern, not a spacing token
 
@@ -74,7 +74,7 @@ Exceptions:
 | Display | 34px | 400 | 1.1 | serif (Cormorant Garamond) | Page h1 in StewardShell |
 | Heading | 20–22px | 400 | 1.2 | serif | Card section titles (h2) |
 | Body | 13px | 400 | 1.5 | sans (Inter Tight) | Table cells, paragraphs, labels |
-| Label / meta | 9–11px | 400 | 1.4 | mono (JetBrains Mono) | Uppercase labels, timestamps, event-type badges, DID truncations |
+| Label / meta | 9–12px | 400 | 1.4 | mono (JetBrains Mono) | Uppercase labels, timestamps, event-type badges, DID truncations, tab labels |
 
 Rules for this phase:
 - Firehose row event-type text: 11px mono, weight 400
@@ -178,8 +178,8 @@ Single-line row. No expand. No filters. Density is the design goal.
 | Event-type badge | `event_type` string | 10px mono, rounded 3px, badge-tint bg + badge-text color per family; padding 2px 6px |
 | Actor DID | Truncated: first 8 chars + `…` + last 6 chars | 11px mono, `var(--muted)` |
 
-Row height: 28px total (6px padding-top + 16px line-height + 6px padding-bottom). At 1440p with
-52px header + 32px status bar, approximately 50 rows visible at once.
+Row height: 32px total (8px padding-top + 16px line-height + 8px padding-bottom). At 1440p with
+52px header + 32px status bar, approximately 45 rows visible at once.
 
 Row left-border: 3px solid, family color (matches the left-border pattern of `.steward-nav-link.active` but applied per-row).
 
@@ -711,7 +711,7 @@ No third-party component registries. All UI built from primitives (`<div>`, `<ta
 | Card patterns | Extracted from `globals.css` `.steward-card`, `.steward-stat-card` |
 | Table patterns | Extracted from `globals.css` `table`, `thead`, `tbody` rules |
 | Badge patterns | Extracted from `globals.css` `.badge` and variants |
-| Firehose row density | Designer recommendation — 28px row height fits ~50 rows at 1440p with standard chrome |
+| Firehose row density | 32px row height (8px + 16px + 8px) fits ~45 rows at 1440p with standard chrome — on-grid spacing |
 | Cognitive inspector K=10 | RESEARCH recommendation — K=10 for skill_titles_topk |
 | Drift poll interval | RESEARCH recommendation — 5s polling |
 
