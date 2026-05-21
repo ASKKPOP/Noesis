@@ -180,8 +180,8 @@ export function buildServerWithHub(
     // Production hardening (0.0.0.0 bind, stricter origin list) is Phase 4.
     void app.register(cors, {
         origin: ['http://localhost:3001', 'http://localhost:3000'],
-        credentials: false,
-        methods: ['GET', 'OPTIONS'],
+        credentials: true,
+        methods: ['GET', 'POST', 'OPTIONS'],
     });
 
     // --- Health ---
