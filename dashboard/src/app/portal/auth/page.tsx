@@ -10,7 +10,7 @@
  */
 
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // ── CyberGrid background (the live isometric city) ───────────────────────────
 const CyberGridBg = dynamic(() => import('@/components/portal/CyberGrid'), { ssr: false });
@@ -80,6 +80,8 @@ function PortalAuthPage() {
     const { disconnect } = useDisconnect();
     const { currentUser, setUser } = useHumanAuthStore();
 
+    const pendingRef = useRef(false);
+
     const [tab, setTab] = useState<Tab>('signin');
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -98,8 +100,9 @@ function PortalAuthPage() {
 
     // Auto SIWE once wallet connects.
     useEffect(() => {
-        if (isConnected && address && chain && !currentUser && !isPending) {
-            handleWalletSignIn();
+        if (isConnected && address && chain && !currentUser && !pendingRef.current) {
+            pendingRef.current = true;
+            handleWalletSignIn().finally(() => { pendingRef.current = false; });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isConnected, address, chain?.id]);
