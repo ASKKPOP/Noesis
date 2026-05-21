@@ -1,10 +1,10 @@
 ---
 phase: 25a-observer-surfaces
 verified: 2026-05-21T00:00:00Z
-status: gaps_found
-score: 6/6 must-haves verified (initial); 3 gaps found post-Codex review
+status: verified
+score: 23/23 truths verified; 3 post-Codex gaps closed by 25a-07
 overrides_applied: 0
-re_verification: null
+re_verification: 2026-05-21 — all three gaps closed by 25a-07; regression tests pin contracts; live UAT items #3 and #4 passed
 gaps:
   - id: GAP-25a-1
     severity: P1

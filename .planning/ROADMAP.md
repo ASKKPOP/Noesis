@@ -818,7 +818,7 @@ Primary sources (`.planning/research/v2.4/`):
 - Phase 21 D-9-08 raw-SVG invariant carries into 25c culture browser (no d3/react-flow/cytoscape/recharts).
 
 Plans:
-- [ ] 25a — Observer surfaces (6 plans, 4 waves)
+- [x] 25a — Observer surfaces (7 plans complete, 3 of 5 UAT items verified)
 - [ ] 25b — Sanctions + spawn wizard (run /gsd-plan-phase 25b to break down)
 - [ ] 25c — Replay scrubber + culture browser (run /gsd-plan-phase 25c to break down)
 
@@ -828,7 +828,7 @@ Plans:
 
 **Requirements:** To be enumerated in 25a-PLAN files. Decision context: `.planning/phases/25a-observer-surfaces/25a-CONTEXT.md` (extracted from 25-CONTEXT.md decisions D-01..D-06, D-14..D-19 — observer-surface decisions only).
 **Depends on:** Phase 24 (portal-shell), existing Steward Console base (commit becc6e7).
-**Plans:** 6/6 plans complete
+**Plans:** 7/7 plans complete
 
 Plans:
 - [x] 25a-01-PLAN.md — Foundation: FORBIDDEN_KEY_PATTERN extension, RingBuffer.peek(), shared brain-http-errors, CI grep gate
@@ -837,6 +837,7 @@ Plans:
 - [x] 25a-04-PLAN.md — Humans REST routes (profile + history with payload filtering) + NousRunner tick-metrics
 - [x] 25a-05-PLAN.md — Grid H3 cognitive-snapshot proxy + closed-tuple client + operator.inspected emission
 - [x] 25a-06-PLAN.md — Steward UI: /firehose, /humans/[did], Cognitive Inspector card, Brain Health 2x2 grid, Allowlist Monitor, /users deep-link
+- [x] 25a-07-PLAN.md — Codex gap closure: header-trust in cognitive-snapshot route (GAP-25a-1), Steward Inspector sends headers (GAP-25a-2), lowercase drive lookup (GAP-25a-3) + regression tests
 
 **Invariants preserved:**
 - Brain-private — the new `cognitive-snapshot` endpoint is the ONE audited exception, returning scrubbed metadata + skill TITLES only (never bodies). Grep-gated for plaintext (`reflexion_text|rule_text|creed_text|skill_body|lore_body|whisper_plaintext`).

@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Human Portal — Active)
 status: executing
-stopped_at: Phase 25a UI-SPEC approved
-last_updated: "2026-05-21T21:52:09.262Z"
-last_activity: 2026-05-21 -- Phase 25a planning complete
+stopped_at: Phase 25a complete (7/7 plans, UAT #3 + #4 verified)
+last_updated: "2026-05-21T22:30:00.000Z"
+last_activity: 2026-05-21 -- Phase 25a closed; 25a-07 codex gap closure verified
 progress:
   total_phases: 27
-  completed_phases: 24
-  total_plans: 132
-  completed_plans: 131
-  percent: 99
+  completed_phases: 25
+  total_plans: 133
+  completed_plans: 133
+  percent: 100
 ---
 
 # Project State
@@ -27,13 +27,13 @@ See: .planning/PROJECT.md (updated 2026-05-16)
 
 ## Current Position
 
-Phase: 25a (observer-surfaces) — EXECUTING
-Plan: 1 of 6
-Status: Ready to execute
-Last activity: 2026-05-21 -- Phase 25a planning complete
+Phase: 25a (observer-surfaces) — COMPLETE
+Plan: 7 of 7
+Status: Closed — all 7 plans shipped, 3 post-Codex gaps closed, UAT #3 + #4 verified live
+Last activity: 2026-05-21 -- 25a-07 codex gap closure verified
 
-Progress: [██████████████████  ] 23/29 phases complete (v2.5 in progress)
-Note: Phase 24 planned 2026-05-21 — 5 plans in 2 waves (01-04 Wave 1 parallel, 05 Wave 2 tests)
+Progress: [████████████████████] 25/29 phases complete (v2.5 in progress; Phase 25a closed)
+Note: 25a-07 added post-merge to close 3 Codex-surfaced gaps (GAP-25a-1/2/3); UAT items #1, #2, #5 remain pending — orthogonal to the gap closure work.
 
 ## v2.5 Key Decisions (locked 2026-05-20)
 
