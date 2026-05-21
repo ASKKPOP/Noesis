@@ -209,4 +209,10 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS human_users`,
     },
+    {
+        version: 10,
+        name: 'add_region_to_human_users',
+        up: `ALTER TABLE human_users ADD COLUMN region VARCHAR(127) NOT NULL DEFAULT 'agora'`,
+        down: `ALTER TABLE human_users DROP COLUMN region`,
+    },
 ];

@@ -11,6 +11,7 @@ export interface HumanRecord {
     /** Lowercased Ethereum address (0x...) */
     readonly eth_address: string;
     readonly grid_name: string;
+    readonly region: string;
     readonly created_at: Date;
 }
 
@@ -18,4 +19,5 @@ export interface CreateHumanParams {
     /** Ethereum address — mixed-case input accepted; stored lowercased. */
     eth_address: string;
     grid_name: string;
+    region?: string;
 }

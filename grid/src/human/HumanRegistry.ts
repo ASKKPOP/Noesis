@@ -34,6 +34,7 @@ export class HumanRegistry {
             did,
             eth_address: address,
             grid_name: params.grid_name,
+            region: params.region ?? 'agora',
             created_at: new Date(),
         };
 
