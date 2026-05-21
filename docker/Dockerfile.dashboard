@@ -10,6 +10,9 @@ WORKDIR /app
 ARG NEXT_PUBLIC_GRID_ORIGIN=http://localhost:8080
 ENV NEXT_PUBLIC_GRID_ORIGIN=${NEXT_PUBLIC_GRID_ORIGIN}
 
+# Install native build deps (required by bufferutil / node-gyp)
+RUN apk add --no-cache python3 make g++
+
 # Copy workspace manifests first (layer caching)
 COPY package.json package-lock.json* ./
 COPY dashboard/package.json ./dashboard/

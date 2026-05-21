@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * /portal/wallet — Phase 23 Cyber Coin Wallet.
  * Client-only (wagmi hooks).

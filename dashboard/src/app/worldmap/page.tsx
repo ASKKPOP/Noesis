@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * /worldmap — Noēsis Cyber Grid, full-screen isometric city view.
  * 22×22 tile grid with 7 district types, animated packets, matrix rain,

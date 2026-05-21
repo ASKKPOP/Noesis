@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * /nous — real-time Nous agent monitor.
  * Renders a full-screen isometric city canvas connected to the local
