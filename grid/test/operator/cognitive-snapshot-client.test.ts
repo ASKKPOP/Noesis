@@ -143,6 +143,46 @@ describe('fetchCognitiveSnapshot', () => {
         await expect(fetchCognitiveSnapshot(BASE_URL, DID, brainFetch)).rejects.toThrow(BrainMalformedResponseError);
     });
 
+    it('GAP-25a-3 regression: rejects drive_levels with uppercase keys', async () => {
+        const badBody = {
+            drive_levels: {
+                HUNGER: 0.5,
+                CURIOSITY: 0.4,
+                SAFETY: 0.3,
+                BOREDOM: 0.2,
+                LONELINESS: 0.1,
+            },
+            last_sleep_tick: 100,
+            reflexion_count: 1,
+            rule_count: 1,
+            skill_titles_topk: [],
+        };
+        const brainFetch = makeFetch(200, badBody);
+        await expect(
+            fetchCognitiveSnapshot(BASE_URL, DID, brainFetch),
+        ).rejects.toThrow(BrainMalformedResponseError);
+    });
+
+    it('GAP-25a-3 regression: accepts drive_levels with the exact lowercase contract keys', async () => {
+        const goodBody = {
+            drive_levels: {
+                hunger: 0.5,
+                curiosity: 0.4,
+                safety: 0.3,
+                boredom: 0.2,
+                loneliness: 0.1,
+            },
+            last_sleep_tick: 100,
+            reflexion_count: 1,
+            rule_count: 1,
+            skill_titles_topk: [],
+        };
+        const brainFetch = makeFetch(200, goodBody);
+        const result = await fetchCognitiveSnapshot(BASE_URL, DID, brainFetch);
+        expect(result.drive_levels.hunger).toBe(0.5);
+        expect(result.drive_levels.loneliness).toBe(0.1);
+    });
+
     it('throws BrainUnreachableError when fetch times out (timeoutMs exceeded)', async () => {
         const brainFetch: typeof fetch = vi.fn().mockImplementation((_url: unknown, init: RequestInit) => {
             return new Promise<Response>((_res, rej) => {
