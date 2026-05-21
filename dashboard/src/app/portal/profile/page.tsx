@@ -6,13 +6,44 @@
  */
 
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useHumanAuthStore } from '@/lib/stores/human-auth-store';
-import { useAccount, useDisconnect } from 'wagmi';
+import { useAccount, useDisconnect, useBalance, useReadContract } from 'wagmi';
+import { mainnet } from 'wagmi/chains';
+import { formatEther, formatUnits } from 'viem';
+
+// ── Constants ──────────────────────────────────────────────────────────────────
+
+const USDT_ADDR: Record<number, `0x${string}`> = {
+    [mainnet.id]: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+};
+
+const ERC20_ABI = [
+    {
+        name: 'balanceOf',
+        type: 'function' as const,
+        stateMutability: 'view' as const,
+        inputs:  [{ name: 'account', type: 'address' as const }],
+        outputs: [{ type: 'uint256' as const }],
+    },
+] as const;
+
+// ── Component ──────────────────────────────────────────────────────────────────
 
 function ProfilePage() {
     const { currentUser, clearUser } = useHumanAuthStore();
     const { address, chain } = useAccount();
     const { disconnect } = useDisconnect();
+
+    const usdtAddr = chain?.id ? USDT_ADDR[chain.id] : undefined;
+    const { data: ethBal } = useBalance({ address });
+    const { data: usdtRaw } = useReadContract({
+        address: usdtAddr,
+        abi: ERC20_ABI,
+        functionName: 'balanceOf',
+        args: address ? [address] : undefined,
+        query: { enabled: !!usdtAddr && !!address },
+    });
 
     function handleSignOut() {
         clearUser();
@@ -27,6 +58,52 @@ function ProfilePage() {
         { label: 'Network',          value: chain?.name ?? '—' },
         { label: 'Agency Tier',      value: 'H1 — Observe only' },
     ];
+
+    // Derived values for new rows
+    const regionValue = currentUser?.region
+        ? (currentUser.region.charAt(0).toUpperCase() + currentUser.region.slice(1))
+        : '—';
+
+    const memberSinceValue = currentUser?.created_at
+        ? new Date(currentUser.created_at).toLocaleString('en-US', { month: 'long', year: 'numeric' })
+        : '—';
+
+    const ethBalValue = ethBal
+        ? parseFloat(formatEther(ethBal.value)).toFixed(4)
+        : '—';
+
+    const usdtValue = usdtRaw !== undefined
+        ? parseFloat(formatUnits(usdtRaw as bigint, 6)).toFixed(2)
+        : '—';
+
+    // Shared style for new hardcoded dt labels (fontWeight: 600 per UI-SPEC)
+    const newDtStyle: React.CSSProperties = {
+        width: 148,
+        flexShrink: 0,
+        fontFamily: 'var(--mono-portal)',
+        fontSize: 12,
+        fontWeight: 600,
+        letterSpacing: '0.10em',
+        textTransform: 'uppercase',
+        color: 'var(--muted)',
+        paddingTop: 2,
+    };
+
+    const newRowStyle: React.CSSProperties = {
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 16,
+        padding: '12px 20px',
+        borderBottom: '1px solid var(--rule)',
+    };
+
+    const newDdStyle: React.CSSProperties = {
+        margin: 0,
+        fontFamily: 'var(--sans-portal)',
+        fontSize: 13,
+        color: 'var(--ink)',
+        lineHeight: 1.5,
+    };
 
     return (
         <div style={{ padding: '36px 40px', maxWidth: 680 }}>
@@ -132,6 +209,45 @@ function ProfilePage() {
                             </dd>
                         </div>
                     ))}
+
+                    {/* Current Region row — hardcoded to use fontWeight: 600 */}
+                    <div style={newRowStyle}>
+                        <dt style={newDtStyle}>Current Region</dt>
+                        <dd style={newDdStyle}>{regionValue}</dd>
+                    </div>
+
+                    {/* Cyber Coin balance row — inline Link requires separate row */}
+                    <div style={newRowStyle}>
+                        <dt style={newDtStyle}>Cyber Coin</dt>
+                        <dd style={{
+                            ...newDdStyle,
+                            display: 'flex',
+                            gap: 6,
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                        }}>
+                            <span>
+                                {ethBalValue} ETH
+                                {' · '}
+                                {usdtValue} USDT
+                            </span>
+                            <Link href="/portal/wallet" style={{
+                                fontFamily: 'var(--sans-portal)',
+                                fontSize: 12,
+                                fontWeight: 400,
+                                color: 'var(--terracotta)',
+                                textDecoration: 'none',
+                            }}>
+                                → Wallet
+                            </Link>
+                        </dd>
+                    </div>
+
+                    {/* Member Since row — hardcoded to use fontWeight: 600 */}
+                    <div style={{ ...newRowStyle, borderBottom: 'none' }}>
+                        <dt style={newDtStyle}>Member Since</dt>
+                        <dd style={newDdStyle}>{memberSinceValue}</dd>
+                    </div>
                 </dl>
             </div>
 
