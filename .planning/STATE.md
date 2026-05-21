@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
 milestone: v2.5
-milestone_name: Human Portal — Active
-status: executing
-stopped_at: Phase 23 backfilled — advancing to Phase 24
-last_updated: "2026-05-20T18:00:00.000Z"
+milestone_name: Human Portal — Active)
+status: discussing
+stopped_at: Phase 24 context gathered
+last_updated: "2026-05-21T00:48:16.818Z"
 last_activity: 2026-05-20
 progress:
-  total_phases: 29
+  total_phases: 25
   completed_phases: 23
   total_plans: 120
   completed_plans: 120
-  percent: 79
+  percent: 100
 ---
 
 # Project State
@@ -171,6 +171,6 @@ Phase 15-17 shipped with all Brain-private invariants intact. Key carry-forwards
 
 ## Session Continuity
 
-Last session: 2026-05-17T16:59:18.151Z
-Stopped at: Phase 21 UI-SPEC approved
-Resume file: None
+Last session: 2026-05-21T00:48:16.814Z
+Stopped at: Phase 24 context gathered
+Resume file: .planning/phases/24-portal-shell/24-CONTEXT.md
