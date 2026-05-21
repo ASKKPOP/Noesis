@@ -10,6 +10,7 @@ import { GENESIS_CONFIG } from './genesis/presets.js';
 import { buildServer } from './api/server.js';
 import { HumanRegistry } from './human/index.js';
 import { Reviewer } from './review/index.js';
+import { LoreStorage } from './lore/LoreStorage.js';
 import {
     DatabaseConnection,
     MigrationRunner,
@@ -122,6 +123,8 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
 
     const humanRegistry = new HumanRegistry();
 
+    const loreStorage = dbConn ? new LoreStorage(dbConn.getPool()) : undefined;
+
     const server = buildServer({
         clock: launcher.clock,
         space: launcher.space,
@@ -133,6 +136,11 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         relationships: launcher.relationships,
         humanRegistry,
         config: { relationship: config.genesisConfig.relationship },
+        governance: {
+            store: launcher.governanceStore,
+            engine: launcher.governance,
+        },
+        ...(loreStorage ? { lore: { storage: loreStorage } } : {}),
         // Plan 04-03: runner lookup for the inspector proxy. Runners are
         // constructed by a future sub-plan that wires GridCoordinator here;
         // until then the lookup always returns undefined → 404 unknown_nous.
