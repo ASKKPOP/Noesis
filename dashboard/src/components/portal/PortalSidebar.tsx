@@ -365,7 +365,7 @@ export function PortalSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
                     color: 'rgba(200,192,184,0.22)',
                     paddingLeft: 2,
                 }}>
-                    v2.5 · Phase 23 · Genesis Grid
+                    v2.5 · Phase 24 · Genesis Grid
                 </div>
             </div>
         </aside>
