@@ -20,6 +20,7 @@ import { relationshipsRoutes } from './relationships.js';
 import { registerReplayExportRoute } from './export-replay.js';
 import { registerMuteBroadcastRoute } from './mute-broadcast.js';
 import { registerForceSleepRoute } from './force-sleep.js';
+import { registerQuarantineRoute } from './quarantine.js';
 
 export function registerOperatorRoutes(
     app: FastifyInstance,
@@ -39,4 +40,6 @@ export function registerOperatorRoutes(
     registerMuteBroadcastRoute(app, services);
     // Phase 25b SANCTION-04: H3 — force Nous into Hypnos sleep cycle.
     registerForceSleepRoute(app, services);
+    // Phase 25b SANCTION-03: H4 — quarantine Nous (excludes from peer-discovery).
+    registerQuarantineRoute(app, services);
 }

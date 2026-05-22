@@ -205,9 +205,16 @@ export class NousRegistry {
         return [...this.records.values()].filter(r => r.status === 'active');
     }
 
-    /** List all Nous in a region. */
+    /**
+     * List all active, non-quarantined Nous in a region.
+     *
+     * Phase 25b SANCTION-03 (D-25b-NEW-3): Quarantined Nous are excluded from
+     * peer-discovery queries. They remain physically in their region and are
+     * visible to operator-side queries (all(), active()) — only peer visibility
+     * is suppressed.
+     */
     inRegion(region: string): NousRecord[] {
-        return this.active().filter(r => r.region === region);
+        return this.active().filter(r => r.region === region && !r.quarantineFlag);
     }
 
     /** Total registered Nous. */
