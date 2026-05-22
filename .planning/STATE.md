@@ -4,14 +4,14 @@ milestone: v2.5
 milestone_name: Human Portal — Active)
 status: executing
 stopped_at: Phase 25a UI-SPEC approved
-last_updated: "2026-05-22T04:05:07.925Z"
-last_activity: 2026-05-22 -- Phase 25b execution started
+last_updated: "2026-05-22T15:12:22.975Z"
+last_activity: 2026-05-22
 progress:
   total_phases: 28
-  completed_phases: 25
+  completed_phases: 26
   total_plans: 146
-  completed_plans: 132
-  percent: 90
+  completed_plans: 146
+  percent: 100
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-05-16)
 
 ## Current Position
 
-Phase: 25b (sanctions-and-spawn-wizard) — EXECUTING
-Plan: 1 of 14
+Phase: 25b
+Plan: Not started
 Status: Executing Phase 25b
-Last activity: 2026-05-22 -- Phase 25b execution started
+Last activity: 2026-05-22
 
 Progress: [████████████████████] 25/29 phases complete (v2.5 in progress; Phase 25a closed)
 Note: 25a-07 added post-merge to close 3 Codex-surfaced gaps (GAP-25a-1/2/3); UAT items #1, #2, #5 remain pending — orthogonal to the gap closure work.
