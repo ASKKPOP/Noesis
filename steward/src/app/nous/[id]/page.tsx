@@ -300,16 +300,6 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
                     setTickMetricsError('error');
                 }
 
-                function extractEntries(result: PromiseSettledResult<Response>): AuditTrailEntry[] {
-                    if (result.status === 'fulfilled' && result.value.ok) {
-                        return result.value.json().then((d: unknown) => {
-                            const data = d as { entries?: AuditTrailEntry[] } | AuditTrailEntry[];
-                            return Array.isArray(data) ? data : (data as { entries?: AuditTrailEntry[] }).entries ?? [];
-                        }).catch(() => []) as unknown as AuditTrailEntry[];
-                    }
-                    return [];
-                }
-
                 // Parse all audit results
                 const parseAudit = async (result: PromiseSettledResult<Response>): Promise<AuditTrailEntry[]> => {
                     if (result.status !== 'fulfilled' || !result.value.ok) return [];
@@ -320,8 +310,6 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
                         return [];
                     }
                 };
-
-                void extractEntries; // silence unused warning
 
                 const [reflections, skillTaught, skillInferred, rules, drives, sleepEntered, sleepCompleted, creedViolations] = await Promise.all([
                     parseAudit(reflectionRes),
