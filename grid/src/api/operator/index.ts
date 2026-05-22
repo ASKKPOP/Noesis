@@ -24,6 +24,7 @@ import { registerQuarantineRoute } from './quarantine.js';
 import { registerSlashCoinRoute } from './slash-coin.js';
 import { registerBanHumanRoute } from './ban-human.js';
 import { registerFreezeWalletRoute } from './freeze-wallet.js';
+import { registerSpawnSystemNousRoute } from './spawn-system-nous.js';
 
 export function registerOperatorRoutes(
     app: FastifyInstance,
@@ -51,4 +52,6 @@ export function registerOperatorRoutes(
     registerBanHumanRoute(app, services);
     // Phase 25b SANCTION-06: H5 — freeze human wallet (Grid-side flag; zero-custody per D-25b-NEW-4).
     registerFreezeWalletRoute(app, services);
+    // Phase 25b D-25b-12: H5 — spawn system-tier Nous (researcher class, did:noesis:system:*).
+    registerSpawnSystemNousRoute(app, services);
 }

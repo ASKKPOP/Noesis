@@ -40,10 +40,10 @@ const SYSTEM_DID_REGEX = /^did:noesis:system:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}
 function makeSpawnDeps(audit: AuditChain): { deps: SpawnNousDeps; spawnCalls: Array<{ name: string; did: string; region: string }> } {
     const spawnCalls: Array<{ name: string; did: string; region: string }> = [];
     const deps: SpawnNousDeps = {
-        spawnNous: (name: string, did: string, publicKey: string, region: string) => {
+        spawnNous: (name: string, did: string, _publicKey: string, region: string) => {
             spawnCalls.push({ name, did, region });
-            // Simulate the deux events GenesisLauncher.spawnNous emits:
-            // 1. nous.spawned, 2. bios.birth
+            // Simulate the two events GenesisLauncher.spawnNous emits:
+            // 1. nous.spawned (actorDid = did), 2. bios.birth (actorDid = did)
             audit.append('nous.spawned', did, { name, region, ndsAddress: `nous://${name}.test` });
             audit.append('bios.birth', did, { did, psyche_hash: 'a'.repeat(64), tick: 0 });
         },
@@ -260,7 +260,7 @@ describe('25b-14: spawn-system-nous success path', () => {
         app = testApp;
         await app.ready();
 
-        const beforeLen = audit.entries().length;
+        const beforeLen = audit.all().length;
 
         const res = await app.inject({
             method: 'POST',
@@ -272,19 +272,19 @@ describe('25b-14: spawn-system-nous success path', () => {
         expect(res.statusCode).toBe(200);
         const newDid = res.json().nous_did;
 
-        const entries = audit.entries().slice(beforeLen);
+        const entries = audit.all().slice(beforeLen);
         expect(entries).toHaveLength(2);
 
         // First event: nous.spawned
-        expect(entries[0].event).toBe('nous.spawned');
-        expect(entries[0].did).toBe(newDid);
+        expect(entries[0].eventType).toBe('nous.spawned');
+        expect(entries[0].actorDid).toBe(newDid);
 
         // Second event: bios.birth (ORDER-LOCKED per launcher.spawnNous contract)
-        expect(entries[1].event).toBe('bios.birth');
-        expect(entries[1].did).toBe(newDid);
+        expect(entries[1].eventType).toBe('bios.birth');
+        expect(entries[1].actorDid).toBe(newDid);
 
         // No operator.* events
-        const operatorEvents = entries.filter(e => e.event.startsWith('operator.'));
+        const operatorEvents = entries.filter(e => e.eventType.startsWith('operator.'));
         expect(operatorEvents).toHaveLength(0);
     });
 
