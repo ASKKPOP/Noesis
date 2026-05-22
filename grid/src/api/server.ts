@@ -216,6 +216,8 @@ export interface GridServices {
         existsByDid(did: string): Promise<boolean>;
         setBanned(did: string): Promise<void>;
         setFrozen(did: string): Promise<void>;
+        /** Phase 25b plan 13: portal preHandler reads flags to enforce freeze/ban at runtime. */
+        getFlags(did: string): Promise<{ frozen: number; banned: number } | null>;
     };
 }
 
