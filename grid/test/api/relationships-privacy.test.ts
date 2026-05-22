@@ -516,3 +516,107 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         }
     });
 });
+
+// ── D-01 header-auth migration tests (D-25c-01) ───────────────────────────────
+// These tests assert the header-auth contract after migration.
+// RED: these fail before migration (routes still use body/query auth).
+// GREEN: pass after relationships.ts is migrated to x-operator-tier / x-operator-id headers.
+
+describe('Relationship routes — header-auth contract (D-25c-01)', () => {
+    let fixture: TestFixture;
+
+    beforeEach(async () => {
+        fixture = await buildFixture();
+    });
+
+    afterEach(async () => {
+        await fixture.app.close();
+        fixture.services.clock.stop();
+    });
+
+    // ── H2 POST header-auth gate ──────────────────────────────────────────────
+
+    it('H2 POST: no x-operator-tier header → 401 tier_missing', async () => {
+        const res = await fixture.app.inject({
+            method: 'POST',
+            url: `/api/v1/nous/${DID_A}/relationships/inspect`,
+            payload: { top: 5 },
+        });
+        expect(res.statusCode).toBe(401);
+        expect(res.json().error).toBe('tier_missing');
+    });
+
+    it('H2 POST: non-numeric x-operator-tier → 401 tier_missing', async () => {
+        const res = await fixture.app.inject({
+            method: 'POST',
+            url: `/api/v1/nous/${DID_A}/relationships/inspect`,
+            headers: { 'x-operator-tier': 'H2', 'x-operator-id': VALID_OP_ID },
+            payload: { top: 5 },
+        });
+        expect(res.statusCode).toBe(401);
+        expect(res.json().error).toBe('tier_missing');
+    });
+
+    it('H2 POST: tier 1 (< 2) → 403 tier_too_low', async () => {
+        const res = await fixture.app.inject({
+            method: 'POST',
+            url: `/api/v1/nous/${DID_A}/relationships/inspect`,
+            headers: { 'x-operator-tier': '1', 'x-operator-id': VALID_OP_ID },
+            payload: { top: 5 },
+        });
+        expect(res.statusCode).toBe(403);
+        expect(res.json().error).toBe('tier_too_low');
+    });
+
+    it('H2 POST: valid tier 2 header → 200 with edges', async () => {
+        const res = await fixture.app.inject({
+            method: 'POST',
+            url: `/api/v1/nous/${DID_A}/relationships/inspect`,
+            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OP_ID },
+            payload: { top: 5 },
+        });
+        expect(res.statusCode).toBe(200);
+        expect(res.json()).toHaveProperty('edges');
+    });
+
+    // ── H5 GET header-auth gate ───────────────────────────────────────────────
+
+    it('H5 GET: no x-operator-tier header → 401 tier_missing', async () => {
+        const res = await fixture.app.inject({
+            method: 'GET',
+            url: `/api/v1/operator/relationships/${fixture.edgeKey}/events`,
+        });
+        expect(res.statusCode).toBe(401);
+        expect(res.json().error).toBe('tier_missing');
+    });
+
+    it('H5 GET: non-numeric x-operator-tier → 401 tier_missing', async () => {
+        const res = await fixture.app.inject({
+            method: 'GET',
+            url: `/api/v1/operator/relationships/${fixture.edgeKey}/events`,
+            headers: { 'x-operator-tier': 'H5', 'x-operator-id': VALID_OP_ID },
+        });
+        expect(res.statusCode).toBe(401);
+        expect(res.json().error).toBe('tier_missing');
+    });
+
+    it('H5 GET: tier 4 (< 5) → 403 tier_too_low', async () => {
+        const res = await fixture.app.inject({
+            method: 'GET',
+            url: `/api/v1/operator/relationships/${fixture.edgeKey}/events`,
+            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
+        });
+        expect(res.statusCode).toBe(403);
+        expect(res.json().error).toBe('tier_too_low');
+    });
+
+    it('H5 GET: valid tier 5 header → 200 with events', async () => {
+        const res = await fixture.app.inject({
+            method: 'GET',
+            url: `/api/v1/operator/relationships/${fixture.edgeKey}/events`,
+            headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OP_ID },
+        });
+        expect(res.statusCode).toBe(200);
+        expect(res.json()).toHaveProperty('events');
+    });
+});
