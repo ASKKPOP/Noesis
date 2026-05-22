@@ -1,10 +1,11 @@
 ---
 phase: 26
 slug: sophia-onboarding
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-22
+reviewed_at: 2026-05-22
 ---
 
 # Phase 26 — UI Design Contract: Sophia Onboarding
@@ -53,7 +54,7 @@ palette (dark on dark, not the light `.portal-theme` editorial palette used by t
 | Text muted | `rgba(245,240,234,0.45)` | Secondary labels, hints |
 | Text accent | `#da7a4e` | Sophia attribution label, active step dot label |
 
-Accent reserved for: Continue button, Sophia name chip, active step indicator dot, loading indicator pulse, user-reply "Send" button.
+Accent reserved for: Continue button, Sophia name chip, active step indicator dot, loading indicator pulse, user-reply "Send Reply" button.
 
 No raw hex values in component code. Map to the values above via inline style literals — the auth page pattern does not use CSS custom properties on the dark surface; it uses hex/rgba literals directly. Follow this pattern.
 
@@ -82,20 +83,24 @@ Exceptions:
 
 ## Typography
 
+Approved scale: exactly 4 sizes, exactly 2 weights.
+
 | Role | Font | Size | Weight | Line Height | Usage |
 |------|------|------|--------|-------------|-------|
 | Logotype | var(--serif) | 42px | 600 | 1 | Noēsis wordmark at top of step 1 |
-| Narration heading | var(--serif) | 24px | 600 | 1.2 | Step 1 welcome headline |
-| Narration body | var(--serif) | 17px | 400 | 1.65 | Step 1 world-intro paragraph, step 3 district narration |
-| Sophia message | var(--serif) | 16px | 400 | 1.6 | Sophia's chat bubbles in step 2 |
-| User message | var(--sans-portal) | 14px | 400 | 1.5 | User's chat bubbles in step 2 |
-| Chat input | var(--sans-portal) | 14px | 400 | 1.5 | Step 2 text input field |
-| Sophia name chip | var(--mono-portal) | 11px | 600 | 1 | "SOPHIA" label above Sophia bubbles |
-| Step indicator label | var(--mono-portal) | 10px | 600 | 1 | Step number dots (letter-spacing: 0.10em) |
-| Continue button | var(--sans-portal) | 14px | 600 | 1 | Primary CTA |
-| Loading text | var(--sans-portal) | 13px | 400 | 1 | "Sophia is thinking…" placeholder |
-| Metadata / badge | var(--mono-portal) | 10px | 600 | 1 | "PORTAL", "GENESIS GRID" badge (step 1) |
-| District label | var(--serif) | 18px | 500 | 1.3 | Step 3 district name heading |
+| Narration heading / district name | var(--serif) | 24px | 600 | 1.2 | Step 1 welcome headline; step 3 district name heading |
+| Body / message / input / button | var(--serif) / var(--sans-portal) | 16px | 400 or 600 | 1.6 | Sophia chat bubbles (serif 400); user bubbles, input, CTA, ghost buttons (sans 400 or 600) |
+| Small labels / badges / loading | var(--mono-portal) / var(--sans-portal) | 11px | 400 or 600 | 1 | Sophia name chip (mono 600), step indicator dots (mono 600), loading text (sans 400), "Sophia is thinking…", district progress dots, ghost nav buttons |
+
+Size-to-role mapping (exhaustive):
+- 42px: logotype wordmark only
+- 24px: narration heading (step 1), district name heading (step 3)
+- 16px: narration body text (step 1, step 3), Sophia chat bubbles, user chat bubbles, chat input field, Continue/Send Reply buttons, ghost nav buttons
+- 11px: Sophia name chip "SOPHIA", step indicator dot numbers, loading text "Sophia is thinking…", error state text, metadata badges "PORTAL"/"GENESIS GRID", district progress dot labels
+
+Weight mapping:
+- 400 (regular): all body prose, narration paragraphs, Sophia bubbles, user bubbles, chat input, loading text
+- 600 (semibold): logotype, narration heading, district name heading, Sophia name chip, step indicator labels, Continue button, Send Reply button, ghost nav button labels
 
 Typography rules:
 - Sophia's voice (narration + chat bubbles) always uses `var(--serif)`. This is the defining visual distinction between AI/world text and UI text.
@@ -126,7 +131,7 @@ Step content card (wraps narration or chat panel):
 - `background: rgba(2,6,16,0.72)`
 - `border: 1px solid rgba(0,212,255,0.15)`
 - `borderRadius: 16px`
-- `padding: 36px 36px 28px`
+- `padding: 32px 32px 24px`
 - `backdropFilter: blur(20px)`
 - `boxShadow: 0 8px 48px rgba(0,0,0,0.5), inset 0 0 60px rgba(0,212,255,0.03)`
 
@@ -174,10 +179,10 @@ Noēsis                                  ← serif 42px
   Welcome to the Genesis Grid           ← serif 24px heading
   
   You stand at the threshold of a world
-  unlike any other — a living city     ← serif 17px, ~3 lines, line-height 1.65
+  unlike any other — a living city     ← serif 16px, ~3 lines, line-height 1.6
   where minds think, trade, and grow...
   
-  [                   Continue →      ] ← primary CTA button, visible immediately
+  [                   Begin →         ] ← primary CTA button, visible immediately
   ──────────────────────────────────────
 ```
 
@@ -223,8 +228,8 @@ Continue button is visible immediately on step 1 (no gating condition). User rea
 
   ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─  ← rule line rgba(255,255,255,0.08)
 
-  [text input: "Reply to Sophia..."]    ← sans-portal 14px
-  [                         Send →    ] ← secondary accent button
+  [text input: "Reply to Sophia..."]    ← sans-portal 16px
+  [                     Send Reply →  ] ← secondary accent button
 
   [Continue →] appears ONLY after Sophia's closing message
   ──────────────────────────────────────
@@ -233,7 +238,7 @@ Continue button is visible immediately on step 1 (no gating condition). User rea
 ### Sophia avatar
 
 - 20px × 20px circle, color `#da7a4e`, opacity 0.85
-- Inside: greek letter Σ in mono 10px, color `#020610` (or a simple minimal mark)
+- Inside: greek letter Σ in mono 11px, color `#020610` (or a simple minimal mark)
 - Alternatively: a solid amber dot with a soft glow shadow (`box-shadow: 0 0 6px rgba(218,122,78,0.6)`)
 - Appears left-aligned before each Sophia message
 - User messages: no avatar — right-aligned bubble only
@@ -257,7 +262,7 @@ This is the only visual representation of Sophia in the wizard. No full portrait
 - `borderRadius: 12px 4px 12px 12px` (right-anchored shape)
 - `padding: 12px 16px`
 - `maxWidth: 80%`
-- `fontFamily: var(--sans-portal); fontSize: 14px; lineHeight: 1.5; color: #f5f0ea`
+- `fontFamily: var(--sans-portal); fontSize: 16px; lineHeight: 1.6; color: #f5f0ea`
 - Aligned right (flex justify-content: flex-end)
 
 Vertical margin between messages: 12px. Between Sophia-then-user or user-then-Sophia: 16px.
@@ -267,8 +272,8 @@ Vertical margin between messages: 12px. Between Sophia-then-user or user-then-So
 Shown after user sends a message, while `POST /api/v1/portal/chat/onboard` is pending (~2s):
 
 - Replace Sophia's next bubble position with a loading row
-- 3-dot pulsing indicator: three 6px circles at 0.4s staggered animation using `portal-pulse` keyframe
-- Text: "Sophia is thinking…" — sans-portal 13px, `rgba(245,240,234,0.45)`
+- 3-dot pulsing indicator: three 8px circles at 0.4s staggered animation using `portal-pulse` keyframe
+- Text: "Sophia is thinking…" — sans-portal 11px, `rgba(245,240,234,0.45)`
 - No spinner. No progress bar. Dot pulse only.
 
 ### Input field
@@ -276,17 +281,17 @@ Shown after user sends a message, while `POST /api/v1/portal/chat/onboard` is pe
 - `width: 100%`
 - `background: rgba(255,255,255,0.05)`
 - `border: 1px solid rgba(255,255,255,0.12)`
-- `borderRadius: 10px`
-- `padding: 13px 16px`
-- `fontSize: 14px; fontFamily: var(--sans-portal); color: #f5f0ea`
+- `borderRadius: 8px`
+- `padding: 12px 16px`
+- `fontSize: 16px; fontFamily: var(--sans-portal); color: #f5f0ea`
 - `placeholder: "Reply to Sophia…"`
 - On focus: `borderColor: rgba(218,122,78,0.50)` (terracotta glow)
 - Disabled (opacity 0.5) while loading state is active
 
-Send button:
+Send Reply button:
 - Inline below input OR attached as suffix icon (Claude's discretion — prefer separate row for touch target)
-- If separate row: `background: rgba(218,122,78,0.15); border: 1px solid rgba(218,122,78,0.30); borderRadius: 8px; padding: 10px 20px; color: #da7a4e; fontSize: 13px; fontWeight: 600; fontFamily: var(--sans-portal)`
-- Label: "Send"
+- If separate row: `background: rgba(218,122,78,0.15); border: 1px solid rgba(218,122,78,0.30); borderRadius: 8px; padding: 8px 20px; color: #da7a4e; fontSize: 16px; fontWeight: 600; fontFamily: var(--sans-portal)`
+- Label: "Send Reply"
 - Disabled while loading
 
 ### Continue button trigger (step 2)
@@ -317,14 +322,14 @@ Continue button copy: "Explore the World →"
 [step content card]
   ──────────────────────────────────────
   SOPHIA                                 ← mono 11px, #da7a4e
-  [avatar dot] AI Core                  ← serif 18px district name
+  [avatar dot] AI Core                  ← serif 24px district name
   
-  The neural nexus of the Genesis Grid. ← serif 17px, line-height 1.65
+  The neural nexus of the Genesis Grid. ← serif 16px, line-height 1.6
   Sophia, Hermes, and Themis live here...
 
   [● ○ ○ ○ ○]  ← district progress dots (5 districts)
 
-  [< Prev]              [Next District >] ← navigation row (sans-portal 13px)
+  [< Prev]              [Next District >] ← navigation row (sans-portal 16px)
 
   [                   Enter the World →] ← appears only on last district
   ──────────────────────────────────────
@@ -342,7 +347,7 @@ For each district:
 Navigation buttons (Prev / Next District):
 - Prev hidden on first district
 - Next label changes to "Enter the World →" (full-width primary button) on the 5th district
-- Prev / Next: ghost buttons — `background: transparent; border: 1px solid rgba(255,255,255,0.12); color: rgba(245,240,234,0.70); borderRadius: 8px; padding: 8px 16px; fontSize: 13px; fontFamily: var(--sans-portal)`
+- Prev / Next: ghost buttons — `background: transparent; border: 1px solid rgba(255,255,255,0.12); color: rgba(245,240,234,0.70); borderRadius: 8px; padding: 8px 16px; fontSize: 16px; fontFamily: var(--sans-portal)`
 
 ### Dark veil step 3
 
@@ -366,7 +371,7 @@ The Continue button is the sole progression mechanism across all steps. No skip.
 
 | State | Appearance |
 |-------|-----------|
-| Default | `background: #da7a4e; color: #fff; borderRadius: 10px; padding: 14px 24px; fontSize: 14px; fontWeight: 600; fontFamily: var(--sans-portal); width: 100%` |
+| Default | `background: #da7a4e; color: #fff; borderRadius: 8px; padding: 16px 24px; fontSize: 16px; fontWeight: 600; fontFamily: var(--sans-portal); width: 100%` |
 | Hover | `opacity: 0.88; cursor: pointer` (transition: 0.15s) |
 | Disabled | `opacity: 0.40; cursor: not-allowed` |
 | Loading (post-tap) | Replace text with "…" + disable; no spinner |
@@ -397,7 +402,7 @@ Show error inline above input field:
 background: rgba(184,50,50,0.10)
 border: 1px solid rgba(184,50,50,0.30)
 borderRadius: 8px
-padding: 10px 14px
+padding: 8px 12px
 fontFamily: var(--mono-portal)
 fontSize: 11px
 color: #f87171
@@ -405,7 +410,7 @@ color: #f87171
 
 Copy: "Sophia is unavailable right now — please try again."
 
-Retry: input field and Send button remain enabled. No automatic retry. User re-sends.
+Retry: input field and Send Reply button remain enabled. No automatic retry. User re-sends.
 
 ### Goal storage failure (D-08)
 
@@ -421,7 +426,7 @@ If `human_users.onboarding_goal IS NOT NULL` (user already onboarded), `portal/l
 ### Mobile considerations
 
 - Chat message list height: 240px max on viewport < 768px
-- Input field + Send button stack vertically on mobile (already full-width)
+- Input field + Send Reply button stack vertically on mobile (already full-width)
 - Continue button: full-width always
 - Step card: 100% width minus 32px horizontal margin on mobile
 - Touch targets: all interactive elements ≥ 44px height
@@ -441,7 +446,8 @@ If `human_users.onboarding_goal IS NOT NULL` (user already onboarded), `portal/l
 | Empty chat (initial) | No empty state — Sophia's first message loads on mount |
 | Sophia name chip | "SOPHIA" (all caps, mono) |
 | Next district button | "Next District →" |
-| Prev district button | "← Prev" |
+| Prev district button | "← Previous" |
+| Send button | "Send Reply" |
 | Page not applicable (no destructive actions) | — |
 
 No destructive actions in this phase. No confirmation dialogs.
@@ -472,7 +478,7 @@ The executor needs to create or extend these:
 | `portal/onboard/StepWorldTour.tsx` | new | Step 3 district cycling + narration |
 | `portal/onboard/SophiaBubble.tsx` | new | Sophia message bubble + avatar dot |
 | `portal/onboard/UserBubble.tsx` | new | User message bubble |
-| `portal/onboard/ChatInput.tsx` | new | Text input + Send row |
+| `portal/onboard/ChatInput.tsx` | new | Text input + Send Reply row |
 | `portal/onboard/ContinueButton.tsx` | new | Universal Continue/Begin/Enter button |
 | `CyberGrid.tsx` | extend (or prop-add) | Add optional `highlightDistrict?: string` prop for step 3 |
 | `dashboard/src/app/portal/layout.tsx` | extend | Add `onboarded` check + redirect |
