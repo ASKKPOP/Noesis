@@ -58,9 +58,15 @@ function familyColor(eventType: string): string {
     return EVENT_FAMILY_COLORS[family] ?? '#8a8479';
 }
 
+function getEntryTick(e: AuditEntry): number {
+    if (typeof e.payload['tick'] === 'number') return e.payload['tick'] as number;
+    return e.id ?? 0;
+}
+
 export function ReplayModal({ entry, onClose, operatorTier }: ReplayModalProps) {
     const { operator_id, start_tick, end_tick } = entry.payload;
-    const tierNum = parseInt((operatorTier ?? 'H1').replace('H', ''), 10);
+    const rawTier = (operatorTier ?? 'H1').replace(/^H/i, '');
+    const tierNum = Number.isInteger(Number(rawTier)) ? Number(rawTier) : 1;
 
     const [selectedTick, setSelectedTick] = useState(start_tick);
     const [entries, setEntries] = useState<AuditEntry[]>([]);
@@ -91,8 +97,11 @@ export function ReplayModal({ entry, onClose, operatorTier }: ReplayModalProps) 
                 if (res.ok) {
                     const data = await res.json();
                     const all: AuditEntry[] = Array.isArray(data) ? data : data.entries ?? [];
-                    // Filter to tick range
-                    const inRange = all.filter(e => (e.id ?? 0) >= start_tick && (e.id ?? 0) <= end_tick);
+                    // Filter to tick range using payload.tick (fallback: id)
+                    const inRange = all.filter(e => {
+                        const t = getEntryTick(e);
+                        return t >= start_tick && t <= end_tick;
+                    });
                     setEntries(inRange);
                 } else {
                     setError('Could not load audit entries.');
@@ -107,8 +116,8 @@ export function ReplayModal({ entry, onClose, operatorTier }: ReplayModalProps) 
     }, [entry, tierNum, start_tick, end_tick]);
 
     const visibleEntries = entries
-        .filter(e => (e.id ?? 0) <= selectedTick)
-        .sort((a, b) => (b.id ?? 0) - (a.id ?? 0))
+        .filter(e => getEntryTick(e) <= selectedTick)
+        .sort((a, b) => getEntryTick(b) - getEntryTick(a))
         .slice(0, 100);
 
     return (

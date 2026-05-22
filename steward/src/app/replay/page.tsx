@@ -141,7 +141,7 @@ export default function ReplayPage() {
             )}
 
             {selected && (
-                <ReplayModal entry={selected} onClose={() => setSelected(null)} />
+                <ReplayModal entry={selected} onClose={() => setSelected(null)} operatorTier={selected.payload.tier} />
             )}
         </StewardShell>
     );
