@@ -873,11 +873,20 @@ Plans:
 - [x] 25b-13-PLAN.md — Wave 3: portal frozen-check middleware + Steward /humans/[did] Sanctions tab
 - [x] 25b-14-PLAN.md — Wave 4: spawn-system-nous route (H5, reuses GenesisLauncher.spawnNous + economy.initialSupply) + Steward /system/spawn wizard
 
-### Phase 25c: Replay scrubber + culture browser (placeholder — plan after 25b ships)
+### Phase 25c: Replay scrubber + culture browser
 
 **Goal:** REPLAY-05 modal ReplayGrid scrubber spawned from `operator.exported` entries, and Phase 21 culture views re-themed into StewardShell at `/culture` with per-Nous cross-filtering. **Allowlist delta: 0.**
 
 **Depends on:** Phase 25a, Phase 13 (REPLAY-01..05), Phase 21 (culture views).
+
+**Plans:** 5 plans
+
+Plans:
+- [ ] 25c-01-PLAN.md — Wave 0: relationships.ts header-auth migration + humanSanctionStore + SpawnNousDeps wiring
+- [ ] 25c-02-PLAN.md — Wave 1: D-07 replay-client.test.tsx RED→GREEN + @vitejs/plugin-react fix
+- [ ] 25c-03-PLAN.md — Wave 2-3: StewardShell Observatory nav + /replay listing page + scrubber modal
+- [ ] 25c-04-PLAN.md — Wave 4: /culture page + NousFilterBar + three raw-SVG culture components
+- [ ] 25c-05-PLAN.md — Wave 5: regression gates + doc-sync
 
 ---
 
@@ -890,3 +899,4 @@ Plans:
 *Updated: 2026-05-21 — Phase 25b broken down into 14 plans across 5 waves*
 *Updated: 2026-05-21 — Phase 25b revised post-plan-check: serialized 25b-09→25b-10 barrel; locked plan 14 treasury to `economy.initialSupply` reuse; ratified D-25b-NEW-5 (separate `banned` column); documented wave-as-earliest-possible convention*
 *Updated: 2026-05-22 — Phase 25b complete (14/14 plans, allowlist 51). High-level v2.5 phase list reconciled: Phase 25 = Steward Console expansion (25a ✓ 25b ✓ 25c ☐); Sophia Onboarding renumbered Phase 26; downstream phases renumbered 27-30.*
+*Updated: 2026-05-22 — Phase 25c broken down into 5 plans across 5 waves (replay scrubber + culture browser)*
