@@ -124,7 +124,7 @@ export default function CulturePage() {
             }
         }
         fetchCultureData();
-    }, []);
+    }, [activeFilter]); // re-fetch when Nous filter changes so ?did= can be forwarded to Grid endpoints
 
     return (
         <StewardShell title="Culture" breadcrumb="Steward · Observatory · Culture">
