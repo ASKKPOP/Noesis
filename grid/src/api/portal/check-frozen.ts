@@ -19,10 +19,10 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { GridServices } from '../server.js';
 
 // Routes that constitute portal "actions" (write-side). Auth-only routes excluded.
-// Forward-compat: phases 26 (chat, tip), 27 (spawn) will add to this list.
 const PORTAL_ACTION_PATTERNS: RegExp[] = [
-    /^\/api\/v1\/portal\/wallet\//,  // Phase 23/24 wallet write actions
-    // Phase 26+27 routes added here when shipped
+    /^\/api\/v1\/portal\/wallet\//,      // Phase 23/24 wallet write actions
+    /^\/api\/v1\/portal\/chat\//,         // Phase 26 onboarding chat
+    /^\/api\/v1\/portal\/auth\/me$/,      // Phase 26 PATCH /me (goal storage)
 ];
 
 function isPortalActionRoute(url: string): boolean {
