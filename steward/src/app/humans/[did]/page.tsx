@@ -134,7 +134,10 @@ export default function HumanDetailPage() {
 
             // Profile
             if (profileRes.status === 'fulfilled') {
-                if (profileRes.value.status === 404) {
+                // Treat both 404 (unknown_human) and 400 (invalid_did) as "not found"
+                // so malformed DIDs surface the same inline state instead of rendering
+                // an empty profile (UAT #5 follow-up).
+                if (profileRes.value.status === 404 || profileRes.value.status === 400) {
                     setNotFound(true);
                     setLoading(false);
                     return;
