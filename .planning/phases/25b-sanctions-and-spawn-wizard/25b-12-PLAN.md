@@ -12,7 +12,7 @@ files_modified:
   - grid/test/operator/ban-human.test.ts
   - grid/test/operator/freeze-wallet.test.ts
 autonomous: true
-requirements: [D-25b-08, D-25b-NEW-1, D-25b-NEW-4]
+requirements: [D-25b-08, D-25b-NEW-1, D-25b-NEW-4, D-25b-NEW-5]
 tags: [sanction-route, h5, human, ban, freeze]
 
 must_haves:
@@ -44,6 +44,8 @@ must_haves:
 ---
 
 <objective>
+**Key Decision (D-25b-NEW-5):** `human_users.banned` is a SEPARATE column from `human_users.frozen` — locked during plan-checker revision. Rationale: frozen-but-not-banned humans must still be able to SIWE-auth to view their status; banned humans are fully revoked. Migration v13 introduces the `banned` column; v12 (plan 07) already added `frozen`. See `.planning/phases/25b-sanctions-and-spawn-wizard/25b-CONTEXT.md` `<decisions>` section for the full ratified record.
+
 Ship two H5 human sanctions: ban-human (full portal access revoked) and freeze-wallet (Grid-side flag blocking portal actions; zero-custody per D-25b-NEW-4 — on-chain wallet untouched). Both header-auth.
 
 Purpose: Operator power to revoke malicious humans. Freeze-wallet is the Noēsis-side reversible action; ban-human is full revocation.

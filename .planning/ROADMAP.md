@@ -853,6 +853,9 @@ Plans:
 **Depends on:** Phase 25a, Phase 6/8 operator agency primitives.
 
 **Plans:** 14 plans across 5 waves
+
+> **Wave convention (project-wide):** `wave:` in plan frontmatter = the earliest possible execution wave; `depends_on:` enforces actual ordering within and across waves. Two plans sharing a `wave:` label may still be serialized via `depends_on` (e.g. 25b-10 depends_on 25b-09 to avoid a barrel merge-conflict; both are wave:2).
+
 Plans:
 - [ ] 25b-01-PLAN.md — Wave 0: clock-pause-resume header-auth migration (H3)
 - [ ] 25b-02-PLAN.md — Wave 0: governance-laws header-auth migration (H3)
@@ -863,11 +866,11 @@ Plans:
 - [ ] 25b-07-PLAN.md — Wave 1: allowlist 45→51 + 6 sanction emitters + migration v12 (sanction_reasons + human_users.frozen)
 - [ ] 25b-08-PLAN.md — Wave 1: CI plaintext gate + 6 producer-boundary tests
 - [ ] 25b-09-PLAN.md — Wave 2: mute-broadcast + force-sleep routes (H3) + NousRunner muteFlag enforcement
-- [ ] 25b-10-PLAN.md — Wave 2: quarantine + slash-coin routes (H4) + registry quarantine filter
+- [ ] 25b-10-PLAN.md — Wave 2 (serialized after 25b-09): quarantine + slash-coin routes (H4) + registry quarantine filter
 - [ ] 25b-11-PLAN.md — Wave 2: Steward /nous/[id] Sanctions card (4 actions)
 - [ ] 25b-12-PLAN.md — Wave 3: ban-human + freeze-wallet routes (H5) + migration v13 (banned column)
 - [ ] 25b-13-PLAN.md — Wave 3: portal frozen-check middleware + Steward /humans/[did] Sanctions tab
-- [ ] 25b-14-PLAN.md — Wave 4: spawn-system-nous route (H5) + Steward /system/spawn wizard
+- [ ] 25b-14-PLAN.md — Wave 4: spawn-system-nous route (H5, reuses GenesisLauncher.spawnNous + economy.initialSupply) + Steward /system/spawn wizard
 
 ### Phase 25c: Replay scrubber + culture browser (placeholder — plan after 25b ships)
 
@@ -884,3 +887,4 @@ Plans:
 *Updated: 2026-05-21 — Phase 25a broken down into 6 plans across 4 waves*
 
 *Updated: 2026-05-21 — Phase 25b broken down into 14 plans across 5 waves*
+*Updated: 2026-05-21 — Phase 25b revised post-plan-check: serialized 25b-09→25b-10 barrel; locked plan 14 treasury to `economy.initialSupply` reuse; ratified D-25b-NEW-5 (separate `banned` column); documented wave-as-earliest-possible convention*

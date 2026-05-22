@@ -92,6 +92,12 @@ Planner: encode these as task acceptance criteria. If a different model fits the
 - Implementation: `human_users.frozen: bool` column added via new migration (v11). Portal middleware checks the flag and blocks portal actions (chat, tip, spawn — phases 26+27) when true. SIWE sign-in itself remains allowed so the user can still see their (read-only) frozen status.
 - The user's underlying EVM wallet is untouched. They can still transact on-chain outside Noēsis — Noēsis just refuses to accept further actions from them inside the portal until an H5 operator clears the flag.
 
+**D-25b-NEW-5 — Ban-human uses a distinct `human_users.banned` column (separate from `frozen`):**
+- Locked during plan-checker revision (2026-05-21). The PATTERNS.md original note left this to planner discretion; planner picked "separate columns" and we now ratify that choice.
+- **Rationale:** `frozen` and `banned` are semantically distinct sanctions. A frozen-but-not-banned human must still be able to SIWE-authenticate to see their (read-only) frozen status (per D-25b-NEW-4). A banned human is fully revoked. Collapsing both into one column would conflate two different operator intents and one different downstream behavior (SIWE permitted vs SIWE rejected).
+- **Implementation:** Migration v13 adds `human_users.banned TINYINT(1) NOT NULL DEFAULT 0`. Migration v12 (plan 07) already adds `frozen`. Both columns coexist on `human_users`. Ban sets `banned=1`; freeze sets `frozen=1`; they are independently togglable.
+- **Forward-compat:** Portal middleware (plan 13) reads BOTH columns. Ban → SIWE rejected at auth layer. Freeze → SIWE accepted, but portal-action endpoints reject.
+
 </decisions>
 
 <deferred_ideas>
@@ -103,6 +109,7 @@ Planner: encode these as task acceptance criteria. If a different model fits the
 - **On-chain freeze** — would require custody, violates v2.5 zero-custody invariant. Never.
 - **Public Steward deploy** — still gated on SIWE-derived session middleware; out of scope for 25b.
 - **Unified spawn wizard for steward + human portal** — rejected in umbrella D-12. Steward spawn (25b, H5 operator, treasury-funded) and human spawn (Phase 27, SIWE-authenticated human, Cyber-Coin-funded) stay distinct flows.
+- **Treasury funding mechanism for system Nous spawn** (whether config-defined treasury DID, operator-allocated, or a dedicated `system_treasury` ledger entry) — defer to a follow-up phase. 25b ships with the existing `economy.initialSupply` allocation (same path Phase 22 / GenesisLauncher uses for every spawned Nous). If researchers need different per-spawn allocations or a treasury debit trail, raise it as a new phase.
 - **Replay scrubber + culture browser** → 25c.
 
 </deferred_ideas>

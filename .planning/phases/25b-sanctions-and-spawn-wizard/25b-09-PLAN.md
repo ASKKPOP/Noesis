@@ -3,6 +3,7 @@ phase: 25b-sanctions-and-spawn-wizard
 plan: 09
 type: execute
 wave: 2
+# wave = earliest-possible execution wave; depends_on enforces actual ordering within wave.
 depends_on: [25b-07, 25b-08]
 files_modified:
   - grid/src/api/operator/mute-broadcast.ts

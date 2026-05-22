@@ -3,6 +3,7 @@ phase: 25b-sanctions-and-spawn-wizard
 plan: 08
 type: execute
 wave: 1
+# wave = earliest-possible execution wave; depends_on enforces actual ordering within wave.
 depends_on: [25b-07]
 files_modified:
   - scripts/check-operator-sanctions-plaintext.mjs

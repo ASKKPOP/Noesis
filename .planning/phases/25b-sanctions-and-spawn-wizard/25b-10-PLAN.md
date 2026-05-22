@@ -3,7 +3,11 @@ phase: 25b-sanctions-and-spawn-wizard
 plan: 10
 type: execute
 wave: 2
-depends_on: [25b-07, 25b-08]
+# wave = earliest-possible execution wave; depends_on enforces actual ordering within wave.
+# Serialized after 25b-09 to avoid merge conflict on grid/src/api/operator/index.ts barrel
+# (both plans register new routes into the same barrel registrar). Wave label kept at 2
+# because 09 and 10 share the same upstream prerequisite set.
+depends_on: [25b-07, 25b-08, 25b-09]
 files_modified:
   - grid/src/api/operator/quarantine.ts
   - grid/src/api/operator/slash-coin.ts
@@ -53,6 +57,8 @@ Ship two H4 Nous sanctions: quarantine (set registry flag; peer discovery filter
 Purpose: Completes the 4-route Nous sanction set started in plan 09.
 
 Output: 2 new routes + registry quarantine support + tests.
+
+**Sequencing note:** This plan runs AFTER 25b-09 (not in parallel) because both plans modify `grid/src/api/operator/index.ts` (the route barrel). Serializing them avoids a merge conflict on barrel registrations.
 </objective>
 
 <execution_context>
@@ -73,7 +79,7 @@ Output: 2 new routes + registry quarantine support + tests.
     - grid/src/api/operator/mute-broadcast.ts (template from plan 09 — clone structure, change tier to H4)
     - grid/src/registry/nous-registry.ts (NousRecord shape + peer-discovery / nearby-list query methods)
     - grid/src/audit/append-operator-quarantined.ts (emitter signature from plan 07)
-    - grid/src/api/operator/index.ts (barrel registrar)
+    - grid/src/api/operator/index.ts (barrel registrar — already updated by plan 09 with mute + force-sleep entries; preserve those)
   </read_first>
   <action>
     **A. Create `grid/src/api/operator/quarantine.ts`:**
@@ -97,7 +103,7 @@ Output: 2 new routes + registry quarantine support + tests.
     4. Do NOT physically move the Nous; it remains in its region per D-25b-NEW-3.
     5. Quarantined Nous still appears in operator-side queries (full registry list) — only peer-side discovery filters.
 
-    **C. Register route in `grid/src/api/operator/index.ts`.**
+    **C. Register route in `grid/src/api/operator/index.ts`** (append after plan 09's registrations; preserve mute + force-sleep entries).
   </action>
   <verify>
     <automated>npm --prefix grid run test -- run test/operator/quarantine.test.ts</automated>
@@ -105,7 +111,7 @@ Output: 2 new routes + registry quarantine support + tests.
   <done>
     - Route exists, H4 header-auth
     - Registry record gains quarantineFlag; peer-discovery filters
-    - Route registered in barrel
+    - Route registered in barrel (alongside plan 09's mute + force-sleep)
   </done>
 </task>
 
