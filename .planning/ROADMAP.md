@@ -879,12 +879,12 @@ Plans:
 
 **Depends on:** Phase 25a, Phase 13 (REPLAY-01..05), Phase 21 (culture views).
 
-**Plans:** 2/5 plans executed
+**Plans:** 3/5 plans executed
 
 Plans:
 - [x] 25c-01-PLAN.md — Wave 0: relationships.ts header-auth migration + humanSanctionStore + SpawnNousDeps wiring
 - [x] 25c-02-PLAN.md — Wave 1: D-07 replay-client.test.tsx RED→GREEN + @vitejs/plugin-react fix
-- [ ] 25c-03-PLAN.md — Wave 2-3: StewardShell Observatory nav + /replay listing page + scrubber modal
+- [x] 25c-03-PLAN.md — Wave 2-3: StewardShell Observatory nav + /replay listing page + scrubber modal
 - [ ] 25c-04-PLAN.md — Wave 4: /culture page + NousFilterBar + three raw-SVG culture components
 - [ ] 25c-05-PLAN.md — Wave 5: regression gates + doc-sync
 
