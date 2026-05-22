@@ -22,7 +22,8 @@
     "check:governance:isolation": "node scripts/check-governance-isolation.mjs",
     "check:governance:plaintext": "node scripts/check-governance-plaintext.mjs",
     "check:governance:weight": "node scripts/check-governance-weight.mjs",
-    "pretest": "npm run check:state-doc-sync && npm run check:relationship-graph-deps && npm run check:wallclock && npm run check:whisper-plaintext && npm run check:governance:isolation && npm run check:governance:plaintext && npm run check:governance:weight"
+    "check:operator-sanctions-plaintext": "node scripts/check-operator-sanctions-plaintext.mjs",
+    "pretest": "npm run check:state-doc-sync && npm run check:relationship-graph-deps && npm run check:wallclock && npm run check:whisper-plaintext && npm run check:governance:isolation && npm run check:governance:plaintext && npm run check:governance:weight && npm run check:operator-sanctions-plaintext"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
