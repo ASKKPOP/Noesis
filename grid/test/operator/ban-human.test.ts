@@ -1,0 +1,306 @@
+/**
+ * Phase 25b SANCTION-05 (D-25b-08) — tests for POST /api/v1/operator/humans/:did/ban.
+ *
+ * Test matrix:
+ *   Header-auth contract (H5 gate):
+ *   - No x-operator-tier header → 401 tier_missing
+ *   - Non-numeric tier header → 401 tier_missing
+ *   - tier '4' (< 5) → 403 tier_too_low
+ *   - tier '5' + invalid x-operator-id → 400 invalid_operator_id
+ *   - Invalid DID shape → 400 invalid_did
+ *   - No human_users row for DID → 404 unknown_human (no tombstone check — humans have none)
+ *   - Success: 200 ok + human_users.banned=1 + operator.human_banned in audit + sanction_reasons row
+ *   - Reason discipline: plaintext not in audit payload; audit has reason_hash only
+ *   - Payload uses human_did field, not target_did
+ */
+
+import { describe, it, expect, afterEach } from 'vitest';
+import Fastify from 'fastify';
+import { AuditChain } from '../../src/audit/chain.js';
+import { WorldClock } from '../../src/clock/ticker.js';
+import { registerBanHumanRoute } from '../../src/api/operator/ban-human.js';
+import type { FastifyInstance } from 'fastify';
+import type { GridServices } from '../../src/api/server.js';
+import { createHash } from 'node:crypto';
+
+const OPERATOR = 'op:11111111-1111-4111-8111-111111111111';
+const HUMAN_DID = 'did:noesis:human:0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef';
+
+function sha256(text: string): string {
+    return createHash('sha256').update(text).digest('hex');
+}
+
+/** Stub human_users DB rows keyed by DID. Each has a banned flag. */
+function makeHumanDb(existingDids: string[] = [HUMAN_DID]): {
+    rows: Map<string, { banned: number }>;
+    humanStore: GridServices['humanStore'];
+} {
+    const rows = new Map<string, { banned: number }>(
+        existingDids.map(did => [did, { banned: 0 }]),
+    );
+
+    const humanStore: GridServices['humanStore'] = {
+        findByDid: async (did: string) => rows.has(did) ? { did } as Record<string, unknown> : null,
+        setBanned: async (did: string) => {
+            const row = rows.get(did);
+            if (row) row.banned = 1;
+        },
+    } as unknown as GridServices['humanStore'];
+
+    return { rows, humanStore };
+}
+
+function buildTestApp(opts: {
+    humanExists?: boolean;
+    sanctionReasonStore?: GridServices['sanctionReasonStore'];
+}): {
+    app: FastifyInstance;
+    audit: AuditChain;
+    rows: Map<string, { banned: number }>;
+    insertCalls: Array<Record<string, unknown>>;
+} {
+    const audit = new AuditChain();
+    const insertCalls: Array<Record<string, unknown>> = [];
+
+    const existingDids = opts.humanExists === false ? [] : [HUMAN_DID];
+    const { rows, humanStore } = makeHumanDb(existingDids);
+
+    const sanctionReasonStore = opts.sanctionReasonStore ?? {
+        insert: async (row: Record<string, unknown>) => {
+            insertCalls.push(row);
+        },
+    };
+
+    const services: Partial<GridServices> = {
+        clock: new WorldClock({ tickRateMs: 1_000_000 }),
+        audit,
+        gridName: 'test-grid',
+        humanStore,
+        sanctionReasonStore,
+    };
+
+    const app = Fastify({ logger: false });
+    registerBanHumanRoute(app, services as GridServices);
+
+    return { app, audit, rows, insertCalls };
+}
+
+describe('POST /api/v1/operator/humans/:did/ban — header-auth contract', () => {
+    let app: FastifyInstance;
+
+    afterEach(async () => {
+        if (app) await app.close();
+    });
+
+    it('returns 401 tier_missing when x-operator-tier header is absent', async () => {
+        ({ app } = buildTestApp({}));
+        await app.ready();
+
+        const res = await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/humans/${HUMAN_DID}/ban`,
+            payload: { tier: 'H5', operator_id: OPERATOR },
+        });
+        expect(res.statusCode).toBe(401);
+        expect(res.json().error).toBe('tier_missing');
+    });
+
+    it('returns 401 tier_missing when x-operator-tier is non-numeric', async () => {
+        ({ app } = buildTestApp({}));
+        await app.ready();
+
+        const res = await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/humans/${HUMAN_DID}/ban`,
+            headers: { 'x-operator-tier': 'H5', 'x-operator-id': OPERATOR },
+        });
+        expect(res.statusCode).toBe(401);
+        expect(res.json().error).toBe('tier_missing');
+    });
+
+    it('returns 403 tier_too_low when x-operator-tier is 4 (< 5)', async () => {
+        ({ app } = buildTestApp({}));
+        await app.ready();
+
+        const res = await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/humans/${HUMAN_DID}/ban`,
+            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
+        });
+        expect(res.statusCode).toBe(403);
+        expect(res.json().error).toBe('tier_too_low');
+    });
+
+    it('returns 400 invalid_operator_id when x-operator-id header is badly formatted', async () => {
+        ({ app } = buildTestApp({}));
+        await app.ready();
+
+        const res = await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/humans/${HUMAN_DID}/ban`,
+            headers: { 'x-operator-tier': '5', 'x-operator-id': 'not-an-op-id' },
+        });
+        expect(res.statusCode).toBe(400);
+        expect(res.json().error).toBe('invalid_operator_id');
+    });
+
+    it('returns 400 invalid_did when DID URL param is malformed', async () => {
+        ({ app } = buildTestApp({}));
+        await app.ready();
+
+        const res = await app.inject({
+            method: 'POST',
+            url: '/api/v1/operator/humans/not-a-did/ban',
+            headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
+        });
+        expect(res.statusCode).toBe(400);
+        expect(res.json().error).toBe('invalid_did');
+    });
+
+    it('returns 404 unknown_human when no human_users row exists for DID', async () => {
+        ({ app } = buildTestApp({ humanExists: false }));
+        await app.ready();
+
+        const res = await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/humans/${HUMAN_DID}/ban`,
+            headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
+        });
+        expect(res.statusCode).toBe(404);
+        expect(res.json().error).toBe('unknown_human');
+    });
+});
+
+describe('POST /api/v1/operator/humans/:did/ban — success path', () => {
+    let app: FastifyInstance;
+
+    afterEach(async () => {
+        if (app) await app.close();
+    });
+
+    it('returns 200 ok on valid H5 request', async () => {
+        ({ app } = buildTestApp({}));
+        await app.ready();
+
+        const res = await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/humans/${HUMAN_DID}/ban`,
+            headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
+            payload: { reason: 'policy violation' },
+        });
+        expect(res.statusCode).toBe(200);
+        expect(res.json().ok).toBe(true);
+    });
+
+    it('sets human_users.banned = 1 after successful ban', async () => {
+        let rows: Map<string, { banned: number }>;
+        ({ app, rows } = buildTestApp({}));
+        await app.ready();
+
+        expect(rows.get(HUMAN_DID)?.banned).toBe(0);
+
+        await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/humans/${HUMAN_DID}/ban`,
+            headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
+        });
+
+        expect(rows.get(HUMAN_DID)?.banned).toBe(1);
+    });
+
+    it('emits operator.human_banned with human_did field (not target_did)', async () => {
+        let audit: AuditChain;
+        ({ app, audit } = buildTestApp({}));
+        await app.ready();
+
+        await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/humans/${HUMAN_DID}/ban`,
+            headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
+            payload: { reason: 'banned for misconduct' },
+        });
+
+        const entries = audit.query({ eventType: 'operator.human_banned' });
+        expect(entries).toHaveLength(1);
+        const payload = entries[0].payload as Record<string, unknown>;
+        expect(payload.tier).toBe('H5');
+        expect(payload.action).toBe('ban_human');
+        expect(payload.operator_id).toBe(OPERATOR);
+        expect(payload.human_did).toBe(HUMAN_DID);
+        expect(payload).not.toHaveProperty('target_did');
+        expect(payload.reason_hash).toBe(sha256('banned for misconduct'));
+        // Reason plaintext must NOT appear in audit payload
+        expect(JSON.stringify(payload)).not.toContain('misconduct');
+    });
+
+    it('does NOT emit audit events on error paths (sole-producer invariant)', async () => {
+        let audit: AuditChain;
+        ({ app, audit } = buildTestApp({}));
+        await app.ready();
+
+        // Trigger 401
+        await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/humans/${HUMAN_DID}/ban`,
+        });
+
+        expect(audit.query({ eventType: 'operator.human_banned' })).toHaveLength(0);
+    });
+});
+
+describe('POST /api/v1/operator/humans/:did/ban — reason discipline', () => {
+    let app: FastifyInstance;
+
+    afterEach(async () => {
+        if (app) await app.close();
+    });
+
+    it('reason plaintext goes to sanction_reasons; audit payload has only reason_hash', async () => {
+        let audit: AuditChain;
+        let insertCalls: Array<Record<string, unknown>>;
+
+        ({ app, audit, insertCalls } = buildTestApp({}));
+        await app.ready();
+
+        const reason = 'detailed ban reason for operator log';
+        await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/humans/${HUMAN_DID}/ban`,
+            headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
+            payload: { reason },
+        });
+
+        // Audit payload must not contain plaintext
+        const banned = audit.query({ eventType: 'operator.human_banned' });
+        expect(banned).toHaveLength(1);
+        expect(JSON.stringify(banned[0].payload)).not.toContain(reason);
+        expect((banned[0].payload as Record<string, unknown>).reason_hash).toBe(sha256(reason));
+
+        // sanction_reasons must have been called with plaintext
+        expect(insertCalls).toHaveLength(1);
+        expect(insertCalls[0]?.plaintext).toBe(reason);
+        expect(insertCalls[0]?.reason_hash).toBe(sha256(reason));
+        expect(insertCalls[0]?.event_type).toBe('operator.human_banned');
+        expect(insertCalls[0]?.target_did).toBe(HUMAN_DID);
+        expect(insertCalls[0]?.operator_id).toBe(OPERATOR);
+    });
+
+    it('uses empty-string reason and SHA-256 of empty when reason is absent', async () => {
+        let audit: AuditChain;
+        let insertCalls: Array<Record<string, unknown>>;
+
+        ({ app, audit, insertCalls } = buildTestApp({}));
+        await app.ready();
+
+        await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/humans/${HUMAN_DID}/ban`,
+            headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
+            // No body.reason
+        });
+
+        const banned = audit.query({ eventType: 'operator.human_banned' });
+        expect((banned[0].payload as Record<string, unknown>).reason_hash).toBe(sha256(''));
+        expect(insertCalls[0]?.plaintext).toBe('');
+    });
+});
