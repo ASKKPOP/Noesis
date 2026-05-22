@@ -158,6 +158,10 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         };
     })() : undefined;
 
+    // Phase 26 ONBOARD-04: humanPool — lightweight pool reference for onboarding_goal
+    // queries on GET /me and PATCH /me. Follows the humanSanctionStore closure pattern.
+    const humanPool = dbConn ? dbConn.getPool() : undefined;
+
     const server = buildServer({
         clock: launcher.clock,
         space: launcher.space,
@@ -175,6 +179,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         },
         ...(loreStorage ? { lore: { storage: loreStorage } } : {}),
         ...(humanSanctionStore ? { humanSanctionStore } : {}),
+        ...(humanPool ? { humanPool } : {}),
         // D-03: inject spawnNousDeps via _spawnNousDeps escape hatch (see spawn-system-nous.ts line 89).
         // Cast required because _spawnNousDeps is not on the public GridServices interface.
         ...({ _spawnNousDeps: spawnNousDeps } as unknown as { _spawnNousDeps: SpawnNousDeps }),

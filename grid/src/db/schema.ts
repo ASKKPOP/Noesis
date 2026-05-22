@@ -267,4 +267,10 @@ export const MIGRATIONS: Migration[] = [
             ALTER TABLE human_users DROP COLUMN banned;
         `,
     },
+    {
+        version: 14,
+        name: 'add_onboarding_goal_to_human_users',
+        up: `ALTER TABLE human_users ADD COLUMN onboarding_goal TEXT NULL DEFAULT NULL`,
+        down: `ALTER TABLE human_users DROP COLUMN onboarding_goal`,
+    },
 ];

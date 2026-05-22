@@ -290,14 +290,72 @@ export function registerPortalAuthRoutes(
         try {
             const { publicKey } = await keyPairPromise;
             const { payload } = await jwtVerify(token, publicKey);
+
+            // Phase 26 ONBOARD-04: query onboarding_goal to derive onboarded boolean.
+            // Fail-safe: DB unavailability returns onboarded: false rather than 503.
+            let onboarded = false;
+            try {
+                const pool = services.humanPool;
+                if (pool) {
+                    const [rows] = await pool.query(
+                        'SELECT onboarding_goal FROM human_users WHERE did = ? LIMIT 1',
+                        [payload['did'] as string],
+                    ) as [Array<{ onboarding_goal: string | null }>, unknown];
+                    onboarded = rows.length > 0
+                        && rows[0]?.onboarding_goal !== null
+                        && rows[0]?.onboarding_goal !== undefined;
+                }
+            } catch (err) {
+                // DB query failed — fail-safe: treat as not onboarded.
+                // User will re-enter onboarding rather than silently skip it.
+                console.warn('[/me] onboarding_goal query failed, defaulting to onboarded=false', err);
+            }
+
             return reply.send({
                 did: payload['did'],
                 eth_address: payload['eth_address'],
                 region: (payload['region'] as string | undefined) ?? null,           // null for pre-migration tokens (WR-04)
                 created_at: (payload['created_at'] as string | undefined) ?? null,  // NEW — per D-07
+                onboarded,
             });
         } catch {
             return reply.status(401).send({ error: 'invalid_token' });
         }
+    });
+
+    // PATCH /api/v1/portal/auth/me — Phase 26 ONBOARD-04: store onboarding_goal
+    app.patch<{
+        Body: { onboarding_goal?: unknown };
+    }>('/api/v1/portal/auth/me', async (req, reply) => {
+        // Auth guard (same pattern as GET /me)
+        const token = (req.cookies as Record<string, string | undefined>)[COOKIE_NAME];
+        if (!token) return reply.status(401).send({ error: 'not_authenticated' });
+        let did: unknown;
+        try {
+            const { publicKey } = await keyPairPromise;
+            const { payload } = await jwtVerify(token, publicKey);
+            did = payload['did'];
+        } catch {
+            return reply.status(401).send({ error: 'invalid_token' });
+        }
+        // Validate body
+        const { onboarding_goal } = req.body ?? {};
+        if (typeof onboarding_goal !== 'string' || onboarding_goal.trim().length === 0) {
+            return reply.status(400).send({ error: 'invalid_request' });
+        }
+        const truncated = onboarding_goal.slice(0, 2000);
+        try {
+            const pool = services.humanPool;
+            if (pool) {
+                await pool.query(
+                    'UPDATE human_users SET onboarding_goal = ? WHERE did = ?',
+                    [truncated, did as string],
+                );
+            }
+        } catch (err) {
+            console.error('[PATCH /me] failed to store onboarding_goal', err);
+            return reply.status(500).send({ error: 'storage_failed' });
+        }
+        return reply.send({ ok: true });
     });
 }
