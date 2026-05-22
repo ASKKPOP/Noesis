@@ -134,28 +134,29 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
 
     // D-02: humanSanctionStore — DB pool wrapper for ban-human + freeze-wallet routes.
     // Must be conditioned on dbConn (test envs run without MySQL).
-    const humanSanctionStore = dbConn ? {
-        async existsByDid(did: string): Promise<boolean> {
-            const pool = dbConn.getPool();
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const [rows] = await pool.query('SELECT did FROM human_users WHERE did = ? LIMIT 1', [did]) as any;
-            return (rows as Array<{ did: string }>).length > 0;
-        },
-        async setBanned(did: string): Promise<void> {
-            const pool = dbConn.getPool();
-            await pool.query('UPDATE human_users SET banned = 1 WHERE did = ?', [did]);
-        },
-        async setFrozen(did: string): Promise<void> {
-            const pool = dbConn.getPool();
-            await pool.query('UPDATE human_users SET frozen = 1 WHERE did = ?', [did]);
-        },
-        async getFlags(did: string): Promise<{ frozen: number; banned: number } | null> {
-            const pool = dbConn.getPool();
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const [rows] = await pool.query('SELECT frozen, banned FROM human_users WHERE did = ? LIMIT 1', [did]) as any;
-            return (rows as Array<{ frozen: number; banned: number }>)[0] ?? null;
-        },
-    } : undefined;
+    // Pool is captured at IIFE construction time so future reassignment of dbConn
+    // cannot cause a null dereference inside the closures.
+    const humanSanctionStore = dbConn ? (() => {
+        const pool = dbConn.getPool();
+        return {
+            async existsByDid(did: string): Promise<boolean> {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const [rows] = await pool.query('SELECT did FROM human_users WHERE did = ? LIMIT 1', [did]) as any;
+                return (rows as Array<{ did: string }>).length > 0;
+            },
+            async setBanned(did: string): Promise<void> {
+                await pool.query('UPDATE human_users SET banned = 1 WHERE did = ?', [did]);
+            },
+            async setFrozen(did: string): Promise<void> {
+                await pool.query('UPDATE human_users SET frozen = 1 WHERE did = ?', [did]);
+            },
+            async getFlags(did: string): Promise<{ frozen: number; banned: number } | null> {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const [rows] = await pool.query('SELECT frozen, banned FROM human_users WHERE did = ? LIMIT 1', [did]) as any;
+                return (rows as Array<{ frozen: number; banned: number }>)[0] ?? null;
+            },
+        };
+    })() : undefined;
 
     const server = buildServer({
         clock: launcher.clock,
