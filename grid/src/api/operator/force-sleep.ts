@@ -104,7 +104,12 @@ export function registerForceSleepRoute(app: FastifyInstance, services: GridServ
             }
 
             // 5. Reason hash — SHA-256(plaintext). Plaintext stored in sanction_reasons; hash in audit.
+            //    WR-02 fix: enforce minimum reason length server-side (UI minLength is bypassable).
             const reasonPlain = typeof req.body?.reason === 'string' ? req.body.reason : '';
+            if (reasonPlain.length < 10) {
+                reply.code(400);
+                return { error: 'reason_required' } satisfies ApiError;
+            }
             const reasonHash = createHash('sha256').update(reasonPlain).digest('hex');
 
             // 6. Persist reason plaintext to sanction_reasons table (fire-and-forget on DB absence).
