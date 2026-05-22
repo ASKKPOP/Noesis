@@ -74,6 +74,16 @@ export interface InspectorRunner {
      * Optional so legacy fakes without Phase 25a wiring still compile.
      */
     getTickMetrics?(): { p50: number; p95: number; queue_depth: number; sample_count: number };
+    /**
+     * Phase 25b SANCTION-01: mute flag — suppresses broadcast emissions at runner boundary.
+     * Optional so legacy fakes without Phase 25b wiring still compile.
+     */
+    muteFlag?: boolean;
+    /**
+     * Phase 25b SANCTION-04: force-sleep trigger — signals the runner to enter Hypnos sleep.
+     * Optional so legacy fakes without Phase 25b wiring still compile.
+     */
+    triggerSleep?(): void | Promise<void>;
 }
 
 export interface GridServices {
@@ -180,6 +190,22 @@ export interface GridServices {
      * Used by the cognitive-snapshot proxy to locate the target Brain instance.
      */
     brainBaseUrl?: string;
+    /**
+     * Phase 25b SANCTION-01/04: optional sanction_reasons DB writer.
+     * When present, sanction routes write reason plaintext to the sanction_reasons table.
+     * When absent (e.g. tests), the DB insert is skipped — the route still emits the audit event.
+     * Production wiring passes a mysql2/promise Pool query wrapper from genesis/launcher.
+     */
+    sanctionReasonStore?: {
+        insert(row: {
+            reason_hash: string;
+            plaintext: string;
+            operator_id: string;
+            event_type: string;
+            target_did: string;
+            tick: number;
+        }): Promise<void>;
+    };
 }
 
 /**
