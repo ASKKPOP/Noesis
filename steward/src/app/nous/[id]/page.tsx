@@ -173,6 +173,27 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
     const [deleteStatus, setDeleteStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
     const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
+    // Sanctions — mute (H3)
+    const [muteReason, setMuteReason] = useState('');
+    const [muteStatus, setMuteStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+    const [muteSubmitting, setMuteSubmitting] = useState(false);
+
+    // Sanctions — force-sleep (H3)
+    const [sleepReason, setSleepReason] = useState('');
+    const [sleepStatus, setSleepStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+    const [sleepSubmitting, setSleepSubmitting] = useState(false);
+
+    // Sanctions — quarantine (H4)
+    const [quarantineReason, setQuarantineReason] = useState('');
+    const [quarantineStatus, setQuarantineStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+    const [quarantineSubmitting, setQuarantineSubmitting] = useState(false);
+
+    // Sanctions — slash (H4)
+    const [slashAmount, setSlashAmount] = useState('');
+    const [slashReason, setSlashReason] = useState('');
+    const [slashStatus, setSlashStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+    const [slashSubmitting, setSlashSubmitting] = useState(false);
+
     useEffect(() => {
         async function fetchData() {
             // Fetch nous info from roster
@@ -341,6 +362,123 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
         }
         fetchData();
     }, [did]);
+
+    async function handleMute(e: React.FormEvent) {
+        e.preventDefault();
+        setMuteSubmitting(true);
+        setMuteStatus(null);
+        try {
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/operator/nous/${encodeURIComponent(did)}/mute`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-operator-tier': '3',
+                    'x-operator-id': process.env.NEXT_PUBLIC_STEWARD_OPERATOR_ID
+                        ?? 'op:00000000-0000-4000-8000-000000000001',
+                },
+                body: JSON.stringify({ reason: muteReason }),
+            });
+            if (res.ok) {
+                setMuteStatus({ type: 'success', msg: 'Mute applied.' });
+                setMuteReason('');
+            } else {
+                const d = await res.json().catch(() => ({}));
+                setMuteStatus({ type: 'error', msg: (d as { error?: string }).error ?? `HTTP ${res.status}` });
+            }
+        } catch (e) {
+            setMuteStatus({ type: 'error', msg: e instanceof Error ? e.message : 'Network error' });
+        } finally {
+            setMuteSubmitting(false);
+        }
+    }
+
+    async function handleForceSleep(e: React.FormEvent) {
+        e.preventDefault();
+        setSleepSubmitting(true);
+        setSleepStatus(null);
+        try {
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/operator/nous/${encodeURIComponent(did)}/force-sleep`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-operator-tier': '3',
+                    'x-operator-id': process.env.NEXT_PUBLIC_STEWARD_OPERATOR_ID
+                        ?? 'op:00000000-0000-4000-8000-000000000001',
+                },
+                body: JSON.stringify({ reason: sleepReason }),
+            });
+            if (res.ok) {
+                setSleepStatus({ type: 'success', msg: 'Force sleep applied.' });
+                setSleepReason('');
+            } else {
+                const d = await res.json().catch(() => ({}));
+                setSleepStatus({ type: 'error', msg: (d as { error?: string }).error ?? `HTTP ${res.status}` });
+            }
+        } catch (e) {
+            setSleepStatus({ type: 'error', msg: e instanceof Error ? e.message : 'Network error' });
+        } finally {
+            setSleepSubmitting(false);
+        }
+    }
+
+    async function handleQuarantine(e: React.FormEvent) {
+        e.preventDefault();
+        setQuarantineSubmitting(true);
+        setQuarantineStatus(null);
+        try {
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/operator/nous/${encodeURIComponent(did)}/quarantine`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-operator-tier': '4',
+                    'x-operator-id': process.env.NEXT_PUBLIC_STEWARD_OPERATOR_ID
+                        ?? 'op:00000000-0000-4000-8000-000000000001',
+                },
+                body: JSON.stringify({ reason: quarantineReason }),
+            });
+            if (res.ok) {
+                setQuarantineStatus({ type: 'success', msg: 'Quarantine applied.' });
+                setQuarantineReason('');
+            } else {
+                const d = await res.json().catch(() => ({}));
+                setQuarantineStatus({ type: 'error', msg: (d as { error?: string }).error ?? `HTTP ${res.status}` });
+            }
+        } catch (e) {
+            setQuarantineStatus({ type: 'error', msg: e instanceof Error ? e.message : 'Network error' });
+        } finally {
+            setQuarantineSubmitting(false);
+        }
+    }
+
+    async function handleSlash(e: React.FormEvent) {
+        e.preventDefault();
+        setSlashSubmitting(true);
+        setSlashStatus(null);
+        try {
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/operator/nous/${encodeURIComponent(did)}/slash`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-operator-tier': '4',
+                    'x-operator-id': process.env.NEXT_PUBLIC_STEWARD_OPERATOR_ID
+                        ?? 'op:00000000-0000-4000-8000-000000000001',
+                },
+                body: JSON.stringify({ amount: Number(slashAmount), reason: slashReason }),
+            });
+            if (res.ok) {
+                setSlashStatus({ type: 'success', msg: 'Slash applied.' });
+                setSlashAmount('');
+                setSlashReason('');
+            } else {
+                const d = await res.json().catch(() => ({}));
+                setSlashStatus({ type: 'error', msg: (d as { error?: string }).error ?? `HTTP ${res.status}` });
+            }
+        } catch (e) {
+            setSlashStatus({ type: 'error', msg: e instanceof Error ? e.message : 'Network error' });
+        } finally {
+            setSlashSubmitting(false);
+        }
+    }
 
     async function handleForceTelos(e: React.FormEvent) {
         e.preventDefault();
@@ -836,6 +974,166 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
                         </button>
                     </div>
                 </form>
+            </div>
+
+            {/* Sanctions */}
+            <div className="steward-card" style={{ marginBottom: 24 }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--rule)', fontFamily: 'var(--serif)', fontSize: 18, color: 'var(--ink)' }}>
+                    Sanctions
+                </div>
+                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+                    {/* Mute Broadcast (H3) */}
+                    <form onSubmit={handleMute} style={{ borderBottom: '1px solid var(--rule)', paddingBottom: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>
+                                Mute Broadcast
+                            </span>
+                            <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--muted)', background: 'var(--parchment)', border: '1px solid var(--rule)', borderRadius: 4, padding: '2px 6px' }}>
+                                H3
+                            </span>
+                        </div>
+                        <div>
+                            <label style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
+                                Reason
+                            </label>
+                            <textarea
+                                value={muteReason}
+                                onChange={(e) => setMuteReason(e.target.value)}
+                                required
+                                placeholder="Operator rationale…"
+                                style={{ ...inputStyle, resize: 'vertical', minHeight: 60, lineHeight: 1.5 }}
+                            />
+                        </div>
+                        {muteStatus && (
+                            <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: muteStatus.type === 'success' ? '#2d7a2d' : 'var(--terracotta)', padding: '8px 12px', background: muteStatus.type === 'success' ? 'rgba(34,139,34,0.08)' : 'rgba(184,84,47,0.08)', borderRadius: 5, border: `1px solid ${muteStatus.type === 'success' ? 'rgba(34,139,34,0.2)' : 'rgba(184,84,47,0.2)'}` }}>
+                                {muteStatus.msg}
+                            </div>
+                        )}
+                        <div>
+                            <button type="submit" style={btnPrimary} disabled={muteSubmitting}>
+                                {muteSubmitting ? 'Sending…' : 'Mute Broadcast'}
+                            </button>
+                        </div>
+                    </form>
+
+                    {/* Force Sleep (H3) */}
+                    <form onSubmit={handleForceSleep} style={{ borderBottom: '1px solid var(--rule)', paddingBottom: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>
+                                Force Sleep
+                            </span>
+                            <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--muted)', background: 'var(--parchment)', border: '1px solid var(--rule)', borderRadius: 4, padding: '2px 6px' }}>
+                                H3
+                            </span>
+                        </div>
+                        <div>
+                            <label style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
+                                Reason
+                            </label>
+                            <textarea
+                                value={sleepReason}
+                                onChange={(e) => setSleepReason(e.target.value)}
+                                required
+                                placeholder="Operator rationale…"
+                                style={{ ...inputStyle, resize: 'vertical', minHeight: 60, lineHeight: 1.5 }}
+                            />
+                        </div>
+                        {sleepStatus && (
+                            <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: sleepStatus.type === 'success' ? '#2d7a2d' : 'var(--terracotta)', padding: '8px 12px', background: sleepStatus.type === 'success' ? 'rgba(34,139,34,0.08)' : 'rgba(184,84,47,0.08)', borderRadius: 5, border: `1px solid ${sleepStatus.type === 'success' ? 'rgba(34,139,34,0.2)' : 'rgba(184,84,47,0.2)'}` }}>
+                                {sleepStatus.msg}
+                            </div>
+                        )}
+                        <div>
+                            <button type="submit" style={btnPrimary} disabled={sleepSubmitting}>
+                                {sleepSubmitting ? 'Sending…' : 'Force Sleep'}
+                            </button>
+                        </div>
+                    </form>
+
+                    {/* Quarantine (H4) */}
+                    <form onSubmit={handleQuarantine} style={{ borderBottom: '1px solid var(--rule)', paddingBottom: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>
+                                Quarantine
+                            </span>
+                            <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--muted)', background: 'var(--parchment)', border: '1px solid var(--rule)', borderRadius: 4, padding: '2px 6px' }}>
+                                H4
+                            </span>
+                        </div>
+                        <div>
+                            <label style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
+                                Reason
+                            </label>
+                            <textarea
+                                value={quarantineReason}
+                                onChange={(e) => setQuarantineReason(e.target.value)}
+                                required
+                                placeholder="Operator rationale…"
+                                style={{ ...inputStyle, resize: 'vertical', minHeight: 60, lineHeight: 1.5 }}
+                            />
+                        </div>
+                        {quarantineStatus && (
+                            <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: quarantineStatus.type === 'success' ? '#2d7a2d' : 'var(--terracotta)', padding: '8px 12px', background: quarantineStatus.type === 'success' ? 'rgba(34,139,34,0.08)' : 'rgba(184,84,47,0.08)', borderRadius: 5, border: `1px solid ${quarantineStatus.type === 'success' ? 'rgba(34,139,34,0.2)' : 'rgba(184,84,47,0.2)'}` }}>
+                                {quarantineStatus.msg}
+                            </div>
+                        )}
+                        <div>
+                            <button type="submit" style={btnPrimary} disabled={quarantineSubmitting}>
+                                {quarantineSubmitting ? 'Sending…' : 'Quarantine'}
+                            </button>
+                        </div>
+                    </form>
+
+                    {/* Slash Cyber Coin (H4) */}
+                    <form onSubmit={handleSlash} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>
+                                Slash Cyber Coin
+                            </span>
+                            <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--muted)', background: 'var(--parchment)', border: '1px solid var(--rule)', borderRadius: 4, padding: '2px 6px' }}>
+                                H4
+                            </span>
+                        </div>
+                        <div>
+                            <label style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
+                                Amount
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                value={slashAmount}
+                                onChange={(e) => setSlashAmount(e.target.value)}
+                                required
+                                placeholder="e.g. 100"
+                                style={inputStyle}
+                            />
+                        </div>
+                        <div>
+                            <label style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
+                                Reason
+                            </label>
+                            <textarea
+                                value={slashReason}
+                                onChange={(e) => setSlashReason(e.target.value)}
+                                required
+                                placeholder="Operator rationale…"
+                                style={{ ...inputStyle, resize: 'vertical', minHeight: 60, lineHeight: 1.5 }}
+                            />
+                        </div>
+                        {slashStatus && (
+                            <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: slashStatus.type === 'success' ? '#2d7a2d' : 'var(--terracotta)', padding: '8px 12px', background: slashStatus.type === 'success' ? 'rgba(34,139,34,0.08)' : 'rgba(184,84,47,0.08)', borderRadius: 5, border: `1px solid ${slashStatus.type === 'success' ? 'rgba(34,139,34,0.2)' : 'rgba(184,84,47,0.2)'}` }}>
+                                {slashStatus.msg}
+                            </div>
+                        )}
+                        <div>
+                            <button type="submit" style={btnPrimary} disabled={slashSubmitting}>
+                                {slashSubmitting ? 'Sending…' : 'Slash Cyber Coin'}
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
             </div>
 
             {/* Danger Zone */}
