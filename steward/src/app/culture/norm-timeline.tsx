@@ -54,9 +54,18 @@ export function NormTimeline({ norms }: Props) {
     // Sort norms by crystallized_tick ascending (most recent at bottom)
     const sortedNorms = [...norms].sort((a, b) => a.crystallized_tick - b.crystallized_tick);
 
-    const allTicks = sortedNorms.flatMap(n => [n.evidence_tick_range[0], n.evidence_tick_range[1], n.crystallized_tick]);
-    const minTick = Math.min(...allTicks);
-    const maxTick = Math.max(...allTicks);
+    // Use a reduce loop instead of Math.min/max(...spread) to avoid stack overflow
+    // on large norm arrays (V8 caps function arguments at ~65 535).
+    let minTick = Infinity;
+    let maxTick = -Infinity;
+    for (const n of sortedNorms) {
+        if (n.evidence_tick_range[0] < minTick) minTick = n.evidence_tick_range[0];
+        if (n.evidence_tick_range[1] < minTick) minTick = n.evidence_tick_range[1];
+        if (n.crystallized_tick < minTick) minTick = n.crystallized_tick;
+        if (n.evidence_tick_range[0] > maxTick) maxTick = n.evidence_tick_range[0];
+        if (n.evidence_tick_range[1] > maxTick) maxTick = n.evidence_tick_range[1];
+        if (n.crystallized_tick > maxTick) maxTick = n.crystallized_tick;
+    }
 
     // Compute tick marks every 100 ticks on the x-axis
     const firstMark = Math.ceil(minTick / 100) * 100;
