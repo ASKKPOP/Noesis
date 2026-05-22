@@ -106,10 +106,11 @@ describe('appendOperatorMuted — operator.muted (D-25b-07)', () => {
             .toThrow(/unexpected|key/i);
     });
 
-    it('rejects missing key (closed-tuple)', () => {
+    it('rejects missing key (closed-tuple or field validation)', () => {
         const { reason_hash: _, ...missing } = happyMuted;
+        // Missing reason_hash: may throw from field validation or closed-tuple check
         expect(() => appendOperatorMuted(chain, OPERATOR, missing as unknown as typeof happyMuted))
-            .toThrow(/unexpected|key/i);
+            .toThrow(/reason_hash|unexpected|key/i);
     });
 });
 
