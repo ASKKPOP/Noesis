@@ -7,8 +7,8 @@ import {
 } from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast-allowlist: default-deny membership', () => {
-    it('has exactly 43 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19 event types', () => {
-        expect(ALLOWLIST.size).toBe(43);
+    it('has exactly 51 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b event types', () => {
+        expect(ALLOWLIST.size).toBe(51);
     });
 
     it.each([
@@ -48,6 +48,17 @@ describe('broadcast-allowlist: default-deny membership', () => {
         'proposal.tallied',
         // Phase 13 (REPLAY-02) — position 27 operator export audit event.
         'operator.exported',
+        // Phase 22 (WEB3-04) — position 44 human portal first-connect.
+        'human.joined',
+        // Phase 23/24 — position 45 Cyber Coin transfer notification.
+        'human.transferred',
+        // Phase 25b (SANCTION-01..06 / D-25b-07/08) — positions 46..51 operator sanction events.
+        'operator.muted',
+        'operator.slashed',
+        'operator.quarantined',
+        'operator.forced_sleep',
+        'operator.human_banned',
+        'operator.human_frozen',
     ])('allows %s', (eventType) => {
         expect(isAllowlisted(eventType)).toBe(true);
     });
@@ -68,7 +79,7 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(() => (ALLOWLIST as Set<string>).add('law.bypassed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).delete('trade.reviewed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).clear()).toThrow(TypeError);
-        expect(ALLOWLIST.size).toBe(43);
+        expect(ALLOWLIST.size).toBe(51);
     });
 
     it('Phase 6 operator.* tuple order: inspected < paused < resumed < law_changed < telos_forced', () => {
@@ -81,6 +92,26 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(idx('operator.paused')).toBeLessThan(idx('operator.resumed'));
         expect(idx('operator.resumed')).toBeLessThan(idx('operator.law_changed'));
         expect(idx('operator.law_changed')).toBeLessThan(idx('operator.telos_forced'));
+    });
+
+    it('Phase 25b sanction events appear at positions 46-51 (0-indexed: 45-50) in declared order', () => {
+        const members = Array.from(ALLOWLIST);
+        const idx = (k: string): number => members.indexOf(k);
+        // Assert all 6 appear after human.transferred (pos 44, 0-indexed 43)
+        expect(idx('human.transferred')).toBeLessThan(idx('operator.muted'));
+        // Assert declared order: muted < slashed < quarantined < forced_sleep < human_banned < human_frozen
+        expect(idx('operator.muted')).toBeLessThan(idx('operator.slashed'));
+        expect(idx('operator.slashed')).toBeLessThan(idx('operator.quarantined'));
+        expect(idx('operator.quarantined')).toBeLessThan(idx('operator.forced_sleep'));
+        expect(idx('operator.forced_sleep')).toBeLessThan(idx('operator.human_banned'));
+        expect(idx('operator.human_banned')).toBeLessThan(idx('operator.human_frozen'));
+        // Assert 0-indexed positions 45-50
+        expect(idx('operator.muted')).toBe(45);
+        expect(idx('operator.slashed')).toBe(46);
+        expect(idx('operator.quarantined')).toBe(47);
+        expect(idx('operator.forced_sleep')).toBe(48);
+        expect(idx('operator.human_banned')).toBe(49);
+        expect(idx('operator.human_frozen')).toBe(50);
     });
 });
 
