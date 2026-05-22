@@ -9,6 +9,7 @@ import type { GridServices } from '../server.js';
 import { registerPortalAuthRoutes } from './auth.js';
 import { registerPortalWalletRoutes } from './wallet.js';
 import { registerFrozenCheck } from './check-frozen.js';
+import { registerPortalChatRoutes } from './chat.js';
 
 export function registerPortalRoutes(
     app: FastifyInstance,
@@ -19,4 +20,5 @@ export function registerPortalRoutes(
     // Frozen/banned check — registered after auth so session is available.
     registerFrozenCheck(app, services);
     registerPortalWalletRoutes(app, services);
+    registerPortalChatRoutes(app, services);
 }
