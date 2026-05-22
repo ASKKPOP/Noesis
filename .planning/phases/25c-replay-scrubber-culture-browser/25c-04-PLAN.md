@@ -187,6 +187,8 @@ const DID_REGEX = /^did:noesis:[a-z0-9_\-]+$/i;
 
 State: skillData, normsData, loreData, citationsData (each typed), loading, error.
 
+NOTE on D-09: D-09 as stated ('Steward routes all Grid calls through the existing operator proxy') is unimplementable for culture endpoints. The Steward operator proxy maps to /api/v1/operator/... on Grid; culture endpoints at /api/v1/grid/... and /api/v1/audit/... cannot be routed through it (they are different path prefixes that the proxy does not rewrite). Direct fetch from NEXT_PUBLIC_GRID_ORIGIN is the technically correct approach per RESEARCH.md Pitfall 3. This is a forced deviation, not a scope reduction — the proxy is architecturally incapable of routing these paths.
+
 Fetch via Promise.allSettled from GRID_ORIGIN directly (per RESEARCH Pitfall 3 — culture routes are NOT operator-gated):
 ```typescript
 const [skillRes, normsRes, loreRes, citationsRes] = await Promise.allSettled([

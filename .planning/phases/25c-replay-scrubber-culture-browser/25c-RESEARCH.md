@@ -482,14 +482,16 @@ const COINCIDENTAL_FILL = '#8a8479';  // --muted
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Fetch audit entries for scrubber modal: server-side or client-side?**
+   - RESOLVED: Client-side fetch in modal (Plan 03 T2). Listing page is a server/client component; the scrubber modal is a client component that fetches the audit entry slice for the selected export when opened, using start_tick/end_tick from the selected row.
    - What we know: Server component can pre-fetch entries; client component can re-fetch on demand.
    - What's unclear: If the tick range is large (hundreds of entries), server-pre-fetch is better for initial render; but the user hasn't selected a specific export row until they click. A two-step approach (listing page = server; modal = client fetch when row is clicked) is likely correct.
    - Recommendation: Listing page is server component. Modal is client component that fetches the entry slice for the selected export when opened (using the start/end tick from the selected row).
 
 2. **Nous DID filter when Nous DIDs are not in the culture API responses**
+   - RESOLVED: Norms show all (Grid-wide); SkillLineage filters by node.id==filter; LoreGraph filters by contributor_did==filter (Plan 04 T2).
    - What we know: `SkillLineageResponse.nodes` includes `{id: string}` where `id` is a DID for Nous nodes and a skill hash for skill nodes. `NormsResponse` has no per-Nous DID (norms are grid-wide convergences). `LoreEntriesResponse.entries` has `contributor_did`.
    - What's unclear: Norms cannot be filtered to a specific Nous (they are Grid-wide crystallizations). The filter would only meaningfully affect skill lineage (nodes with `type: 'nous'`) and lore (by `contributor_did`). Norm timeline filter would show all norms.
    - Recommendation: Filter bar affects skill lineage (highlight/filter selected Nous node + its edges) and lore (filter entries by `contributor_did`). Norm timeline: show all, since norms are multi-Nous convergences. Document this behavior in the plan.

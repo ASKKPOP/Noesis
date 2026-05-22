@@ -2,7 +2,7 @@
 phase: 25c
 plan: 02
 type: execute
-wave: 2
+wave: 1
 depends_on: []
 files_modified:
   - dashboard/package.json

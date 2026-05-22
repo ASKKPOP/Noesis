@@ -210,6 +210,7 @@ Do not change anything else in StewardShell.tsx. The NavSection and NavItem comp
     - steward/src/app/nous/[id]/page.tsx (modal overlay pattern + tier badge pattern)
     - steward/src/components/StewardShell.tsx (StewardShell props: title, breadcrumb)
     - steward/src/app/globals.css (verify --ink, --parchment, --vellum, --terracotta, --rule, --muted are defined)
+    - steward/src/app/api/operator/[...path]/route.ts (check if operator tier is readable from session/cookie server-side to wire through page→modal prop chain)
   </read_first>
   <action>
 Create TWO new files.
@@ -274,9 +275,9 @@ When a row is selected: render `<ReplayModal entry={selected} onClose={() => set
 ---
 
 FILE 2 — steward/src/app/replay/replay-modal.tsx:
-Client component implementing the scrubber modal. Reads operator tier from a prop (page passes it from cookie/session) OR defaults to reading from a dedicated GET endpoint. Since Steward uses cookie-based operator tier set during proxy auth, the simplest approach: accept `operatorTier` as a prop with a default of 'H1' (safe default). The page component can read the tier from document.cookie or pass 'H5' for trusted internal use. For v1, accept `operatorTier?: string` prop defaulting to 'H3' (gives scrubber access to most operators).
+Client component implementing the scrubber modal. Reads operator tier from a prop (page passes it from cookie/session) OR defaults to reading from a dedicated GET endpoint. Since Steward uses cookie-based operator tier set during proxy auth, the simplest approach: accept `operatorTier` as a prop with a default of 'H1' (safe default). The page component can read the tier from document.cookie or pass 'H5' for trusted internal use. For v1, accept `operatorTier?: string` prop defaulting to 'H1' (fail-closed: most restrictive default — operators without an explicit tier see the gate message, not the slider).
 
-NOTE: The tier gate in Steward works as follows — the Steward proxy injects x-operator-tier on Grid API calls, but the Steward UI itself is accessed by operators who have a cookie from the Steward auth session. Read how other Steward pages handle operator tier display (check nous/[id]/page.tsx or users/page.tsx for any tier reading pattern). If no pattern exists, default to H3 (show scrubber, apply H4 redaction for sensitive fields) — this is the safe default per REPLAY-05.
+NOTE: The tier gate in Steward works as follows — the Steward proxy injects x-operator-tier on Grid API calls, but the Steward UI itself is accessed by operators who have a cookie from the Steward auth session. Read how other Steward pages handle operator tier display (check nous/[id]/page.tsx or users/page.tsx for any tier reading pattern). If no pattern exists, default to H1 (fail-closed: no scrubber access until tier is confirmed) — this is the safe default per D-06/REPLAY-05.
 
 Modal implementation per 25c-UI-SPEC §Scrubber Modal:
 
@@ -313,7 +314,7 @@ State: `selectedTick` (number, init = start_tick), `entries` (AuditEntry[], init
 
 On mount / when entry changes: fetch `${GRID_ORIGIN}/api/v1/audit/trail?limit=1000` and filter to entries where id >= start_tick && id <= end_tick. Or fetch with offset/limit if the audit trail supports tick-range queries. If the Grid does not support tick range filtering in the query, fetch limit=1000 and filter client-side.
 
-Tier gate: derive `operatorTierNum` from `parseInt(operatorTier ?? 'H3'.slice(1))`. If tier < 3 (H1 or H2), render gate message "H3+ operator tier required to replay exports." 14px sans --ink, centered, padding-block 48px. No slider. No data fetch.
+Tier gate: derive `operatorTierNum` from `parseInt((operatorTier ?? 'H1').replace('H', ''), 10)`. (NOT `parseInt(operatorTier ?? 'H3'.slice(1))` — that returns NaN for 'Hx' strings; use .replace('H','') to strip the prefix before parsing.) If tier < 3 (H1 or H2), render gate message "H3+ operator tier required to replay exports." 14px sans --ink, centered, padding-block 48px. No slider. No data fetch.
 
 Tier for H4 redaction: if tierNum < 4, apply SENSITIVE_KEYS redaction to payload field values.
 
