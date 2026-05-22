@@ -846,11 +846,28 @@ Plans:
 - Sole-producer emitters retained.
 - Steward never talks directly to Brain — backend proxies through Grid → Brain.
 
-### Phase 25b: Sanctions + spawn wizard (placeholder — plan after 25a ships)
+### Phase 25b: Sanctions + spawn wizard
 
-**Goal:** Ship operator-facing write actions: Nous sanctions (mute-broadcast H3, slash-coin H4, quarantine H4, force-sleep H3), human sanctions (ban-human H5, freeze-wallet H5), and system/researcher Nous spawn wizard (H5, treasury-funded). **Allowlist delta: +6** (`operator.muted`, `operator.slashed`, `operator.quarantined`, `operator.forced_sleep`, `operator.human_banned`, `operator.human_frozen`). Running total after 25b: 53.
+**Goal:** Ship operator-facing write actions: Nous sanctions (mute-broadcast H3, slash-coin H4, quarantine H4, force-sleep H3), human sanctions (ban-human H5, freeze-wallet H5), system/researcher Nous spawn wizard (H5, treasury-funded), AND a Wave-0 header-auth migration of the 6 existing operator routes (security prerequisite per D-25b-NEW-1). **Allowlist delta: +6** (`operator.muted`, `operator.slashed`, `operator.quarantined`, `operator.forced_sleep`, `operator.human_banned`, `operator.human_frozen`). Running total after 25b: 51.
 
 **Depends on:** Phase 25a, Phase 6/8 operator agency primitives.
+
+**Plans:** 14 plans across 5 waves
+Plans:
+- [ ] 25b-01-PLAN.md — Wave 0: clock-pause-resume header-auth migration (H3)
+- [ ] 25b-02-PLAN.md — Wave 0: governance-laws header-auth migration (H3)
+- [ ] 25b-03-PLAN.md — Wave 0: telos-force header-auth migration (H4)
+- [ ] 25b-04-PLAN.md — Wave 0: delete-nous header-auth migration (H5)
+- [ ] 25b-05-PLAN.md — Wave 0: memory-query header-auth migration (H2)
+- [ ] 25b-06-PLAN.md — Wave 0: export-replay header-auth migration (H5)
+- [ ] 25b-07-PLAN.md — Wave 1: allowlist 45→51 + 6 sanction emitters + migration v12 (sanction_reasons + human_users.frozen)
+- [ ] 25b-08-PLAN.md — Wave 1: CI plaintext gate + 6 producer-boundary tests
+- [ ] 25b-09-PLAN.md — Wave 2: mute-broadcast + force-sleep routes (H3) + NousRunner muteFlag enforcement
+- [ ] 25b-10-PLAN.md — Wave 2: quarantine + slash-coin routes (H4) + registry quarantine filter
+- [ ] 25b-11-PLAN.md — Wave 2: Steward /nous/[id] Sanctions card (4 actions)
+- [ ] 25b-12-PLAN.md — Wave 3: ban-human + freeze-wallet routes (H5) + migration v13 (banned column)
+- [ ] 25b-13-PLAN.md — Wave 3: portal frozen-check middleware + Steward /humans/[did] Sanctions tab
+- [ ] 25b-14-PLAN.md — Wave 4: spawn-system-nous route (H5) + Steward /system/spawn wizard
 
 ### Phase 25c: Replay scrubber + culture browser (placeholder — plan after 25b ships)
 
@@ -865,3 +882,5 @@ Plans:
 *Updated: 2026-05-21 — Phase 25 scoped via /gsd-discuss-phase, split into 25a/25b/25c, +6 allowlist events earmarked for 25b*
 *Updated: 2026-05-21 — Phase 25a/25b/25c promoted to roadmap-recognized phase headers so /gsd-plan-phase can resolve them independently*
 *Updated: 2026-05-21 — Phase 25a broken down into 6 plans across 4 waves*
+
+*Updated: 2026-05-21 — Phase 25b broken down into 14 plans across 5 waves*
