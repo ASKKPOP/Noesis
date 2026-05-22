@@ -233,4 +233,28 @@ export const MIGRATIONS: Migration[] = [
               MODIFY COLUMN eth_address VARCHAR(255) NOT NULL
         `,
     },
+    {
+        version: 12,
+        name: 'create_sanction_reasons_and_freeze_human_users',
+        up: `
+            CREATE TABLE IF NOT EXISTS sanction_reasons (
+              id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+              reason_hash   CHAR(64)        NOT NULL,
+              plaintext     TEXT            NOT NULL,
+              operator_id   VARCHAR(48)     NOT NULL,
+              event_type    VARCHAR(63)     NOT NULL,
+              target_did    VARCHAR(255)    NOT NULL,
+              tick          BIGINT UNSIGNED NOT NULL,
+              created_at    TIMESTAMP(3)    NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+              PRIMARY KEY (id),
+              UNIQUE KEY uq_reason_hash (reason_hash),
+              INDEX idx_target_tick (target_did, tick)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+            ALTER TABLE human_users ADD COLUMN frozen TINYINT(1) NOT NULL DEFAULT 0
+        `,
+        down: `
+            ALTER TABLE human_users DROP COLUMN frozen;
+            DROP TABLE IF EXISTS sanction_reasons
+        `,
+    },
 ];
