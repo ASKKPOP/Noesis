@@ -54,7 +54,11 @@ function makeHumanSanctionStore(existingDids: string[] = [HUMAN_DID]): {
         setFrozen: async (did: string) => {
             if (frozenFlags.has(did)) frozenFlags.set(did, true);
         },
-    } as unknown as GridServices['humanSanctionStore'];
+        getFlags: async (did: string) => {
+            if (!frozenFlags.has(did)) return null;
+            return { frozen: frozenFlags.get(did) ? 1 : 0, banned: bannedFlags.get(did) ? 1 : 0 };
+        },
+    };
 
     return { frozenFlags, bannedFlags, humanSanctionStore };
 }
@@ -215,6 +219,7 @@ describe('POST /api/v1/operator/humans/:did/freeze — success path', () => {
             method: 'POST',
             url: `/api/v1/operator/humans/${HUMAN_DID}/freeze`,
             headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
+            payload: { reason: 'suspicious activity detected' },
         });
 
         // frozen flag is set; banned is still untouched (D-25b-NEW-5: distinct columns)
@@ -311,22 +316,22 @@ describe('POST /api/v1/operator/humans/:did/freeze — reason discipline', () =>
         expect(insertCalls[0]?.operator_id).toBe(OPERATOR);
     });
 
-    it('uses empty-string reason and SHA-256 of empty when reason is absent', async () => {
+    it('returns 400 reason_required when reason is absent or shorter than 10 chars', async () => {
         let audit: AuditChain;
-        let insertCalls: Array<Record<string, unknown>>;
 
-        ({ app, audit, insertCalls } = buildTestApp({}));
+        ({ app, audit } = buildTestApp({}));
         await app.ready();
 
-        await app.inject({
+        const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/humans/${HUMAN_DID}/freeze`,
             headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
-            // No body.reason
+            // No body.reason — length 0, < 10
         });
 
-        const frozen = audit.query({ eventType: 'operator.human_frozen' });
-        expect((frozen[0].payload as Record<string, unknown>).reason_hash).toBe(sha256(''));
-        expect(insertCalls[0]?.plaintext).toBe('');
+        expect(res.statusCode).toBe(400);
+        expect(res.json().error).toBe('reason_required');
+        // No audit event emitted on error path
+        expect(audit.query({ eventType: 'operator.human_frozen' })).toHaveLength(0);
     });
 });
