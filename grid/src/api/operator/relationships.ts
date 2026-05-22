@@ -9,7 +9,7 @@
  *
  *   H2  POST /api/v1/nous/:did/relationships/inspect
  *         → {edges: [{counterparty_did, valence, weight, recency_tick, last_event_hash}]}
- *         Requires validateTierBody + tombstoneCheck; emits operator.inspected.
+ *         Requires header-auth (x-operator-tier >= 2) + tombstoneCheck; emits operator.inspected.
  *
  *   H5  GET  /api/v1/operator/relationships/:edge_key/events
  *         Query params: tier=H5&operator_id=...
@@ -36,8 +36,8 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { DID_REGEX } from '../server.js';
 import type { ApiError } from '../types.js';
+import { OPERATOR_ID_REGEX } from '../types.js';
 import { appendOperatorEvent } from '../../audit/operator-events.js';
-import { validateTierBody } from './_validation.js';
 import { tombstoneCheck, TombstonedDidError } from '../../registry/tombstone-check.js';
 import {
     edgeHash,
@@ -247,17 +247,31 @@ export function relationshipsRoutes(
 
     app.post<{
         Params: { did: string };
-        Body: { tier?: unknown; operator_id?: unknown; top?: unknown };
+        Body: { top?: unknown };
     }>(
         '/api/v1/nous/:did/relationships/inspect',
         async (req, reply) => {
             const body = req.body ?? {};
 
-            // 1. Tier + operator_id gate (validateTierBody enforces strict equality, D-13)
-            const v = validateTierBody(body, 'H2');
-            if (!v.ok) {
+            // 1. Tier gate — read from server-trusted x-operator-tier header (D-25b-NEW-1).
+            const tierHeader = req.headers['x-operator-tier'];
+            if (typeof tierHeader !== 'string') {
+                reply.code(401);
+                return { error: 'tier_missing' } satisfies ApiError;
+            }
+            const tierNum = parseInt(tierHeader, 10);
+            if (!Number.isFinite(tierNum)) {
+                reply.code(401);
+                return { error: 'tier_missing' } satisfies ApiError;
+            }
+            if (tierNum < 2) {
+                reply.code(403);
+                return { error: 'tier_too_low' } satisfies ApiError;
+            }
+            const operatorId = req.headers['x-operator-id'];
+            if (typeof operatorId !== 'string' || !OPERATOR_ID_REGEX.test(operatorId)) {
                 reply.code(400);
-                return { error: v.error } satisfies ApiError;
+                return { error: 'invalid_operator_id' } satisfies ApiError;
             }
 
             const { did } = req.params;
@@ -300,11 +314,11 @@ export function relationshipsRoutes(
             appendOperatorEvent(
                 services.audit,
                 'operator.inspected',
-                v.operator_id,
+                operatorId,
                 {
-                    tier: v.tier,
+                    tier: 'H2',
                     action: 'inspect_relationships',
-                    operator_id: v.operator_id,
+                    operator_id: operatorId,
                     target_did: did,
                 },
                 did,
@@ -332,7 +346,6 @@ export function relationshipsRoutes(
 
     app.get<{
         Params: { edge_key: string };
-        Querystring: { tier?: string; operator_id?: string };
     }>(
         '/api/v1/operator/relationships/:edge_key/events',
         async (req, reply) => {
@@ -346,16 +359,25 @@ export function relationshipsRoutes(
                 return { error: 'invalid_edge_key' } satisfies ApiError;
             }
 
-            // 2. Validate tier from query params (strict equality, T-09-14 mitigation)
-            const tier = String(req.query.tier ?? '');
-            const operatorId = String(req.query.operator_id ?? '');
-            if (tier !== 'H5') {
-                reply.code(400);
-                return { error: 'tier_mismatch' } satisfies ApiError;
+            // 2. Tier gate — read from server-trusted x-operator-tier header (D-25b-NEW-1).
+            const tierHeader = req.headers['x-operator-tier'];
+            if (typeof tierHeader !== 'string') {
+                reply.code(401);
+                return { error: 'tier_missing' } satisfies ApiError;
             }
-            if (!operatorId) {
+            const tierNum = parseInt(tierHeader, 10);
+            if (!Number.isFinite(tierNum)) {
+                reply.code(401);
+                return { error: 'tier_missing' } satisfies ApiError;
+            }
+            if (tierNum < 5) {
+                reply.code(403);
+                return { error: 'tier_too_low' } satisfies ApiError;
+            }
+            const operatorId = req.headers['x-operator-id'];
+            if (typeof operatorId !== 'string' || !OPERATOR_ID_REGEX.test(operatorId)) {
                 reply.code(400);
-                return { error: 'missing_operator_id' } satisfies ApiError;
+                return { error: 'invalid_operator_id' } satisfies ApiError;
             }
 
             // 3. Edge resolution by full canonical hash (D-9-10)

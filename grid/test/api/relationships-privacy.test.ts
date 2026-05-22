@@ -224,7 +224,8 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         const res = await fixture.app.inject({
             method: 'POST',
             url: `/api/v1/nous/${DID_A}/relationships/inspect`,
-            payload: { tier: 'H2', operator_id: VALID_OP_ID, top: 5 },
+            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OP_ID },
+            payload: { top: 5 },
         });
         expect(res.statusCode).toBe(200);
         const body = res.json();
@@ -252,7 +253,8 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         await fixture.app.inject({
             method: 'POST',
             url: `/api/v1/nous/${DID_A}/relationships/inspect`,
-            payload: { tier: 'H2', operator_id: VALID_OP_ID, top: 5 },
+            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OP_ID },
+            payload: { top: 5 },
         });
         const entries = fixture.audit.query({ eventType: 'operator.inspected' });
         expect(entries.length).toBe(beforeCount + 1);
@@ -264,14 +266,14 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
 
     // ── Test 7: H2 POST tier spoof → 400 ─────────────────────────────────────
 
-    it('Test 7: H2 POST tier spoof → 400 tier_mismatch (T-09-14)', async () => {
+    it('Test 7: H2 POST tier too low → 403 tier_too_low (T-09-14)', async () => {
         const res = await fixture.app.inject({
             method: 'POST',
             url: `/api/v1/nous/${DID_A}/relationships/inspect`,
-            payload: { tier: 'H5', operator_id: VALID_OP_ID },
+            headers: { 'x-operator-tier': '1', 'x-operator-id': VALID_OP_ID },
         });
-        expect(res.statusCode).toBe(400);
-        expect(res.json().error).toBe('invalid_tier');
+        expect(res.statusCode).toBe(403);
+        expect(res.json().error).toBe('tier_too_low');
     });
 
     // ── Test 8: H5 GET events shape ──────────────────────────────────────────
@@ -279,7 +281,8 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
     it('Test 8: H5 GET events — exact 4-key per event ({tick,event_type,payload,entry_hash})', async () => {
         const res = await fixture.app.inject({
             method: 'GET',
-            url: `/api/v1/operator/relationships/${fixture.edgeKey}/events?tier=H5&operator_id=${VALID_OP_ID}`,
+            url: `/api/v1/operator/relationships/${fixture.edgeKey}/events`,
+            headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OP_ID },
         });
         expect(res.statusCode).toBe(200);
         const body = res.json();
@@ -305,7 +308,8 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         const unknownKey = '0'.repeat(64);
         const res = await fixture.app.inject({
             method: 'GET',
-            url: `/api/v1/operator/relationships/${unknownKey}/events?tier=H5&operator_id=${VALID_OP_ID}`,
+            url: `/api/v1/operator/relationships/${unknownKey}/events`,
+            headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OP_ID },
         });
         expect(res.statusCode).toBe(404);
         expect(res.json()).toEqual({ error: 'edge_not_found' });
@@ -317,7 +321,8 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         const beforeCount = fixture.audit.query({ eventType: 'operator.inspected' }).length;
         await fixture.app.inject({
             method: 'GET',
-            url: `/api/v1/operator/relationships/${fixture.edgeKey}/events?tier=H5&operator_id=${VALID_OP_ID}`,
+            url: `/api/v1/operator/relationships/${fixture.edgeKey}/events`,
+            headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OP_ID },
         });
         const entries = fixture.audit.query({ eventType: 'operator.inspected' });
         expect(entries.length).toBe(beforeCount + 1);
@@ -328,13 +333,14 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
 
     // ── Test 11: H5 GET tier query-param mismatch → 400 ─────────────────────
 
-    it('Test 11: H5 GET wrong tier query param → 400 tier_mismatch', async () => {
+    it('Test 11: H5 GET tier too low → 403 tier_too_low', async () => {
         const res = await fixture.app.inject({
             method: 'GET',
-            url: `/api/v1/operator/relationships/${fixture.edgeKey}/events?tier=H2&operator_id=${VALID_OP_ID}`,
+            url: `/api/v1/operator/relationships/${fixture.edgeKey}/events`,
+            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
         });
-        expect(res.statusCode).toBe(400);
-        expect(res.json()).toEqual({ error: 'tier_mismatch' });
+        expect(res.statusCode).toBe(403);
+        expect(res.json()).toEqual({ error: 'tier_too_low' });
     });
 
     // ── ME-02 regression: shortened edge_key must not match by prefix ────────
@@ -352,7 +358,8 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         const shortKey = edgeKey.slice(0, 16);
         const res = await app.inject({
             method: 'GET',
-            url: `/api/v1/operator/relationships/${shortKey}/events?tier=H5&operator_id=${VALID_OP_ID}`,
+            url: `/api/v1/operator/relationships/${shortKey}/events`,
+            headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OP_ID },
         });
 
         expect(res.statusCode).toBe(400);
@@ -372,7 +379,8 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         const nearKey = edgeKey.slice(0, 63);
         const res = await app.inject({
             method: 'GET',
-            url: `/api/v1/operator/relationships/${nearKey}/events?tier=H5&operator_id=${VALID_OP_ID}`,
+            url: `/api/v1/operator/relationships/${nearKey}/events`,
+            headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OP_ID },
         });
 
         expect(res.statusCode).toBe(400);
@@ -392,7 +400,8 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
 
         const res = await app.inject({
             method: 'GET',
-            url: `/api/v1/operator/relationships/${edgeKey}/events?tier=H5&operator_id=${VALID_OP_ID}`,
+            url: `/api/v1/operator/relationships/${edgeKey}/events`,
+            headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OP_ID },
         });
 
         expect(res.statusCode).toBe(200);
@@ -489,7 +498,7 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         const h2res = await fixture.app.inject({
             method: 'POST',
             url: `/api/v1/nous/${DID_A}/relationships/inspect`,
-            payload: { tier: 'H2', operator_id: VALID_OP_ID },
+            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OP_ID },
         });
         for (const e of h2res.json().edges) {
             expect(e).toHaveProperty('valence');
@@ -499,7 +508,8 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         // H5 events carry raw payload (sovereign tier)
         const h5res = await fixture.app.inject({
             method: 'GET',
-            url: `/api/v1/operator/relationships/${fixture.edgeKey}/events?tier=H5&operator_id=${VALID_OP_ID}`,
+            url: `/api/v1/operator/relationships/${fixture.edgeKey}/events`,
+            headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OP_ID },
         });
         for (const ev of h5res.json().events) {
             expect(ev).toHaveProperty('payload');
