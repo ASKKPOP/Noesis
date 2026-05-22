@@ -37,11 +37,12 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
   - [x] 24-03-PLAN.md — Dashboard: mobile sidebar (PortalShell/Sidebar/Header hamburger overlay)
   - [x] 24-04-PLAN.md — Dashboard: portal home live stats polling + updated labels/content
   - [x] 24-05-PLAN.md — Tests: WALLET-04 verification + Phase 24 test coverage gaps
-- [ ] **Phase 25: Sophia Onboarding** — Fast-proxy LLM chat (out-of-tick), goal-setting wizard, animated world introduction, Sophia as guide persona, first-time user flow with welcome Cyber Coin allocation.
-- [ ] **Phase 26: Nous Interaction** — Humans chat with Sophia/Hermes/Themis via `/portal/chat`, send Cyber Coin tips, browse Nous activity feed, view skills/lore/norms the Nous have produced. Allowlist 45→46 (+1: human.spoke).
-- [ ] **Phase 27: Personal Nous** — Human spawns own Nous agent (costs Cyber Coin), names it, picks personality seeds, it gets a DID and runs in the Genesis Grid alongside Sophia/Hermes/Themis. `humanOwner` field wired. Allowlist 46→47 (+1: nous.spawned_by_human).
-- [ ] **Phase 28: Community** — User directory, community board (posts, replies), live activity feed, follow other users, leaderboard by Cyber Coin holdings and Nous contributions.
-- [ ] **Phase 29: Resources & Support** — Help center, interactive guide, FAQ, onboarding documentation, support ticket flow, Noēsis glossary (Nous, Ousia, Agora, lore, norms explained).
+- [~] **Phase 25: Steward Console expansion** — Operator-facing observability + write actions (25a/25b/25c). Allowlist 45→51 (+6 sanction events). **25a ✓ 25b ✓ 25c ☐ (replay scrubber + culture browser, pending)**
+- [ ] **Phase 26: Sophia Onboarding** — Fast-proxy LLM chat (out-of-tick), goal-setting wizard, animated world introduction, Sophia as guide persona, first-time user flow with welcome Cyber Coin allocation. *(originally Phase 25 — pushed by Steward Console priority)*
+- [ ] **Phase 27: Nous Interaction** — Humans chat with Sophia/Hermes/Themis via `/portal/chat`, send Cyber Coin tips, browse Nous activity feed, view skills/lore/norms the Nous have produced. Allowlist 51→52 (+1: human.spoke).
+- [ ] **Phase 28: Personal Nous** — Human spawns own Nous agent (costs Cyber Coin), names it, picks personality seeds, it gets a DID and runs in the Genesis Grid alongside Sophia/Hermes/Themis. `humanOwner` field wired. Allowlist +1 (nous.spawned_by_human).
+- [ ] **Phase 29: Community** — User directory, community board (posts, replies), live activity feed, follow other users, leaderboard by Cyber Coin holdings and Nous contributions.
+- [ ] **Phase 30: Resources & Support** — Help center, interactive guide, FAQ, onboarding documentation, support ticket flow, Noēsis glossary (Nous, Ousia, Agora, lore, norms explained).
 
 ## Phases (v2.4 Active)
 
@@ -888,3 +889,4 @@ Plans:
 
 *Updated: 2026-05-21 — Phase 25b broken down into 14 plans across 5 waves*
 *Updated: 2026-05-21 — Phase 25b revised post-plan-check: serialized 25b-09→25b-10 barrel; locked plan 14 treasury to `economy.initialSupply` reuse; ratified D-25b-NEW-5 (separate `banned` column); documented wave-as-earliest-possible convention*
+*Updated: 2026-05-22 — Phase 25b complete (14/14 plans, allowlist 51). High-level v2.5 phase list reconciled: Phase 25 = Steward Console expansion (25a ✓ 25b ✓ 25c ☐); Sophia Onboarding renumbered Phase 26; downstream phases renumbered 27-30.*

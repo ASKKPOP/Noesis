@@ -45,3 +45,4 @@ htmlcov/
 # Claude Code session metadata
 .claude/
 .gstack/
+.claire/
