@@ -19,6 +19,8 @@ export interface HumanUser {
     region?: string | null;
     /** ISO 8601 join timestamp — populated from /me after sign-in. */
     created_at?: string | null;
+    /** True when human_users.onboarding_goal IS NOT NULL. Populated from /me after sign-in. */
+    onboarded?: boolean;
 }
 
 export interface SignInParams {

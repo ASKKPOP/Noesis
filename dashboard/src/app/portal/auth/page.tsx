@@ -93,9 +93,14 @@ function PortalAuthPage() {
     const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
     const [emailPending, setEmailPending] = useState(false);
 
-    // Already signed in — redirect.
+    // Already signed in — redirect based on onboarding status.
     useEffect(() => {
-        if (currentUser) router.push('/portal');
+        if (!currentUser) return;
+        if (currentUser.onboarded === false) {
+            router.push('/portal/onboard');
+        } else {
+            router.push('/portal');
+        }
     }, [currentUser, router]);
 
     // Auto SIWE once wallet connects.
@@ -120,7 +125,7 @@ function PortalAuthPage() {
                 gridApiBase,
             });
             setUser(user);
-            // Hydrate full profile from /me (region, created_at) — non-fatal if it fails
+            // Hydrate full profile from /me (region, created_at, onboarded) — non-fatal if it fails
             try {
                 const meRes = await fetch(`${gridApiBase}/api/v1/portal/auth/me`, { credentials: 'include' });
                 if (meRes.ok) {
@@ -129,13 +134,23 @@ function PortalAuthPage() {
                         eth_address: string;
                         region: string;
                         created_at: string | null;
+                        onboarded: boolean;  // NEW — from Plan A
                     };
                     setUser(meData);  // overwrite with full profile
+                    // Conditional redirect based on onboarding status (per D-12)
+                    if (!meData.onboarded) {
+                        router.push('/portal/onboard');
+                    } else {
+                        router.push('/portal');
+                    }
+                } else {
+                    // /me failed but sign-in succeeded — go to portal
+                    router.push('/portal');
                 }
             } catch {
                 // /me failed — store retains the partial user from /verify; non-fatal
+                router.push('/portal');
             }
-            router.push('/portal');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'sign_in_failed');
         } finally {
@@ -180,7 +195,29 @@ function PortalAuthPage() {
                 ? await signUpWithEmail({ email: emailInput.trim(), password: passwordInput, gridApiBase })
                 : await signInWithEmail({ email: emailInput.trim(), password: passwordInput, gridApiBase });
             setUser(user);
-            router.push('/portal');
+            // Hydrate full profile from /me (onboarded) — non-fatal if it fails
+            try {
+                const meRes = await fetch(`${gridApiBase}/api/v1/portal/auth/me`, { credentials: 'include' });
+                if (meRes.ok) {
+                    const meData = await meRes.json() as {
+                        did: string;
+                        eth_address: string;
+                        region: string;
+                        created_at: string | null;
+                        onboarded: boolean;
+                    };
+                    setUser(meData);
+                    if (!meData.onboarded) {
+                        router.push('/portal/onboard');
+                    } else {
+                        router.push('/portal');
+                    }
+                } else {
+                    router.push('/portal');
+                }
+            } catch {
+                router.push('/portal');
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : (isJoinTab ? 'sign_up_failed' : 'sign_in_failed'));
         } finally {
