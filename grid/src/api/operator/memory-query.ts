@@ -16,8 +16,16 @@
  * normalization (handler.query_memory drops all fields beyond summary) form
  * the two halves of the sovereignty boundary.
  *
+ * AUTH MODEL (GAP-25a-1 fix, Phase 25b Wave 0):
+ *   tier and operator_id are derived from server-trusted request headers
+ *   (x-operator-tier, x-operator-id) — NOT from the request body. Body tier
+ *   and operator_id fields are silently ignored; the body carries only the
+ *   query-specific fields (query string and optional limit).
+ *
  * ERROR LADDER (no 500s):
- *   400  — malformed tier / operator_id / DID / query body
+ *   400  — malformed DID or x-operator-id header (invalid_did / invalid_operator_id)
+ *   401  — tier_missing (x-operator-tier header absent / non-numeric)
+ *   403  — tier_too_low (x-operator-tier < 2)
  *   404  — unknown Nous (no runner for DID)
  *   503  — Brain unavailable (bridge.connected === false OR RPC throws);
  *          NO audit event emitted on 503 (we only audit successful inspects).
@@ -27,11 +35,11 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { DID_REGEX } from '../server.js';
 import type { ApiError } from '../types.js';
+import { OPERATOR_ID_REGEX } from '../types.js';
 import { appendOperatorEvent } from '../../audit/operator-events.js';
-import { validateTierBody, type OperatorBody } from './_validation.js';
 import { tombstoneCheck, TombstonedDidError } from '../../registry/tombstone-check.js';
 
-interface QueryBody extends OperatorBody {
+interface QueryBody {
     query?: unknown;
     limit?: unknown;
 }
@@ -45,12 +53,31 @@ export function registerMemoryQueryRoute(
         async (req, reply) => {
             const body = req.body ?? {};
 
-            // 1. Tier + operator_id gate (D-13 + D-15).
-            const v = validateTierBody(body, 'H2');
-            if (!v.ok) {
-                reply.code(400);
-                return { error: v.error } satisfies ApiError;
+            // 1. Tier gate — read from server-trusted x-operator-tier header (D-25b-NEW-1).
+            //    GAP-25a-1 fix: body fields tier/operator_id are NOT trusted.
+            const tierHeader = req.headers['x-operator-tier'];
+            if (typeof tierHeader !== 'string') {
+                reply.code(401);
+                return { error: 'tier_missing' } satisfies ApiError;
             }
+            const tierNum = parseInt(tierHeader, 10);
+            if (!Number.isFinite(tierNum)) {
+                reply.code(401);
+                return { error: 'tier_missing' } satisfies ApiError;
+            }
+            if (tierNum < 2) {
+                reply.code(403);
+                return { error: 'tier_too_low' } satisfies ApiError;
+            }
+
+            // 1b. Operator-id gate — read from server-trusted x-operator-id header.
+            const opIdHeader = req.headers['x-operator-id'];
+            if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) {
+                reply.code(400);
+                return { error: 'invalid_operator_id' } satisfies ApiError;
+            }
+            const resolvedTier: 'H2' = 'H2';
+            const resolvedOperatorId = opIdHeader;
 
             // 2. DID shape gate (consistent with /api/v1/nous/:did/state from Plan 04).
             const targetDid = req.params.did;
@@ -72,7 +99,7 @@ export function registerMemoryQueryRoute(
                 }
             }
 
-            // 3. Query-body validation.
+            // 3. Query-body validation (body carries only query-specific fields).
             const queryRaw = body.query;
             if (typeof queryRaw !== 'string') {
                 reply.code(400);
@@ -124,14 +151,15 @@ export function registerMemoryQueryRoute(
             }
 
             // 7. Emit operator.inspected — closed payload tuple, no memory content.
+            //    GAP-25a-1 fix: operator_id sourced from header, never from body.
             appendOperatorEvent(
                 services.audit,
                 'operator.inspected',
-                v.operator_id,
+                resolvedOperatorId,
                 {
-                    tier: v.tier,
+                    tier: resolvedTier,
                     action: 'inspect',
-                    operator_id: v.operator_id,
+                    operator_id: resolvedOperatorId,
                     target_did: targetDid,
                 },
                 targetDid,
