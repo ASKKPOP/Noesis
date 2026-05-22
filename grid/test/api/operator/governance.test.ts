@@ -6,6 +6,9 @@
  * change_type} — law body NEVER appears in the broadcast payload (T-6-06).
  * Law body remains accessible through GET /api/v1/governance/laws/:id
  * (existing Phase 4 endpoint, not broadcast-scoped).
+ *
+ * Updated Phase 25b (D-25b-NEW-1): tier and operator_id now sourced from
+ * server-trusted x-operator-tier / x-operator-id headers, not request body.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -18,6 +21,10 @@ import type { FastifyInstance } from 'fastify';
 import type { Law } from '../../../src/logos/types.js';
 
 const VALID_OP_ID = 'op:11111111-1111-4111-8111-111111111111';
+const VALID_HEADERS = {
+    'x-operator-tier': '3',
+    'x-operator-id': VALID_OP_ID,
+};
 
 const FIXTURE_LAW: Law = {
     id: 'law.test.001',
@@ -67,7 +74,8 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/governance/laws',
-            payload: { tier: 'H3', operator_id: VALID_OP_ID, law: FIXTURE_LAW },
+            headers: VALID_HEADERS,
+            payload: { law: FIXTURE_LAW },
         });
         expect(res.statusCode).toBe(200);
         expect(res.json()).toEqual({ ok: true, law_id: FIXTURE_LAW.id });
@@ -89,9 +97,8 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'PUT',
             url: `/api/v1/operator/governance/laws/${FIXTURE_LAW.id}`,
+            headers: VALID_HEADERS,
             payload: {
-                tier: 'H3',
-                operator_id: VALID_OP_ID,
                 updates: { title: 'Amended' },
             },
         });
@@ -109,7 +116,7 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'DELETE',
             url: `/api/v1/operator/governance/laws/${FIXTURE_LAW.id}`,
-            payload: { tier: 'H3', operator_id: VALID_OP_ID },
+            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(200);
         expect(services.logos.getLaw(FIXTURE_LAW.id)).toBeUndefined();
@@ -123,9 +130,8 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'PUT',
             url: '/api/v1/operator/governance/laws/law.nonexistent',
+            headers: VALID_HEADERS,
             payload: {
-                tier: 'H3',
-                operator_id: VALID_OP_ID,
                 updates: { title: 'x' },
             },
         });
@@ -138,45 +144,47 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'DELETE',
             url: '/api/v1/operator/governance/laws/law.nonexistent',
-            payload: { tier: 'H3', operator_id: VALID_OP_ID },
+            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(404);
         expect(res.json()).toEqual({ error: 'law_not_found' });
         expect(services.audit.query({ eventType: 'operator.law_changed' }).length).toBe(0);
     });
 
-    it('Test 6: 400 invalid_tier on POST — no audit event, law NOT added', async () => {
+    it('Test 6: 403 tier_too_low on POST — no audit event, law NOT added', async () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/governance/laws',
-            payload: { tier: 'H2', operator_id: VALID_OP_ID, law: FIXTURE_LAW },
+            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OP_ID },
+            payload: { law: FIXTURE_LAW },
         });
-        expect(res.statusCode).toBe(400);
-        expect(res.json()).toEqual({ error: 'invalid_tier' });
+        expect(res.statusCode).toBe(403);
+        expect(res.json()).toEqual({ error: 'tier_too_low' });
         expect(services.logos.getLaw(FIXTURE_LAW.id)).toBeUndefined();
         expect(services.audit.query({ eventType: 'operator.law_changed' }).length).toBe(0);
     });
 
-    it('Test 6b: 400 invalid_tier on PUT — no audit event, law not amended', async () => {
+    it('Test 6b: 401 tier_missing on PUT — no audit event, law not amended', async () => {
         services.logos.addLaw(FIXTURE_LAW);
         const res = await app.inject({
             method: 'PUT',
             url: `/api/v1/operator/governance/laws/${FIXTURE_LAW.id}`,
-            payload: { tier: 'H1', operator_id: VALID_OP_ID, updates: { title: 'X' } },
+            payload: { updates: { title: 'X' } },
         });
-        expect(res.statusCode).toBe(400);
+        expect(res.statusCode).toBe(401);
+        expect(res.json()).toEqual({ error: 'tier_missing' });
         expect(services.logos.getLaw(FIXTURE_LAW.id)?.title).toBe('Test Law');
         expect(services.audit.query({ eventType: 'operator.law_changed' }).length).toBe(0);
     });
 
-    it('Test 6c: 400 invalid_tier on DELETE — no audit event, law not removed', async () => {
+    it('Test 6c: 401 tier_missing on DELETE — no audit event, law not removed', async () => {
         services.logos.addLaw(FIXTURE_LAW);
         const res = await app.inject({
             method: 'DELETE',
             url: `/api/v1/operator/governance/laws/${FIXTURE_LAW.id}`,
-            payload: { tier: 'H4', operator_id: VALID_OP_ID },
         });
-        expect(res.statusCode).toBe(400);
+        expect(res.statusCode).toBe(401);
+        expect(res.json()).toEqual({ error: 'tier_missing' });
         expect(services.logos.getLaw(FIXTURE_LAW.id)).toBeDefined();
         expect(services.audit.query({ eventType: 'operator.law_changed' }).length).toBe(0);
     });
@@ -185,7 +193,8 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/governance/laws',
-            payload: { tier: 'H3', operator_id: 'bogus', law: FIXTURE_LAW },
+            headers: { 'x-operator-tier': '3', 'x-operator-id': 'bogus' },
+            payload: { law: FIXTURE_LAW },
         });
         expect(res.statusCode).toBe(400);
         expect(res.json()).toEqual({ error: 'invalid_operator_id' });
@@ -196,7 +205,8 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
         await app.inject({
             method: 'POST',
             url: '/api/v1/operator/governance/laws',
-            payload: { tier: 'H3', operator_id: VALID_OP_ID, law: FIXTURE_LAW },
+            headers: VALID_HEADERS,
+            payload: { law: FIXTURE_LAW },
         });
         const entry = services.audit.query({ eventType: 'operator.law_changed' })[0];
         expect(entry).toBeDefined();
@@ -217,7 +227,8 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
         await app.inject({
             method: 'POST',
             url: '/api/v1/operator/governance/laws',
-            payload: { tier: 'H3', operator_id: VALID_OP_ID, law: FIXTURE_LAW },
+            headers: VALID_HEADERS,
+            payload: { law: FIXTURE_LAW },
         });
         const entry = services.audit.query({ eventType: 'operator.law_changed' })[0];
         expect(entry.payload.tier).toBe('H3');
