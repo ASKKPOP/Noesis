@@ -240,13 +240,11 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
                 // these headers will be injected by an auth proxy / SIWE session middleware.
                 // For now, send the H3 default the Steward operator already implicitly assumes.
                 const res = await fetch(
-                    `${GRID_ORIGIN}/api/v1/operator/nous/${encodeURIComponent(did)}/cognitive-snapshot`,
+                    `/api/operator/nous/${encodeURIComponent(did)}/cognitive-snapshot`,
                     {
                         method: 'POST',
                         headers: {
                             'x-operator-tier': '3',
-                            'x-operator-id': process.env.NEXT_PUBLIC_STEWARD_OPERATOR_ID
-                                ?? 'op:00000000-0000-4000-8000-000000000001',
                         },
                     }
                 );
@@ -368,13 +366,11 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
         setMuteSubmitting(true);
         setMuteStatus(null);
         try {
-            const res = await fetch(`${GRID_ORIGIN}/api/v1/operator/nous/${encodeURIComponent(did)}/mute`, {
+            const res = await fetch(`/api/operator/nous/${encodeURIComponent(did)}/mute`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'x-operator-tier': '3',
-                    'x-operator-id': process.env.NEXT_PUBLIC_STEWARD_OPERATOR_ID
-                        ?? 'op:00000000-0000-4000-8000-000000000001',
                 },
                 body: JSON.stringify({ reason: muteReason }),
             });
@@ -397,13 +393,11 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
         setSleepSubmitting(true);
         setSleepStatus(null);
         try {
-            const res = await fetch(`${GRID_ORIGIN}/api/v1/operator/nous/${encodeURIComponent(did)}/force-sleep`, {
+            const res = await fetch(`/api/operator/nous/${encodeURIComponent(did)}/force-sleep`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'x-operator-tier': '3',
-                    'x-operator-id': process.env.NEXT_PUBLIC_STEWARD_OPERATOR_ID
-                        ?? 'op:00000000-0000-4000-8000-000000000001',
                 },
                 body: JSON.stringify({ reason: sleepReason }),
             });
@@ -426,13 +420,11 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
         setQuarantineSubmitting(true);
         setQuarantineStatus(null);
         try {
-            const res = await fetch(`${GRID_ORIGIN}/api/v1/operator/nous/${encodeURIComponent(did)}/quarantine`, {
+            const res = await fetch(`/api/operator/nous/${encodeURIComponent(did)}/quarantine`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'x-operator-tier': '4',
-                    'x-operator-id': process.env.NEXT_PUBLIC_STEWARD_OPERATOR_ID
-                        ?? 'op:00000000-0000-4000-8000-000000000001',
                 },
                 body: JSON.stringify({ reason: quarantineReason }),
             });
@@ -455,13 +447,11 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
         setSlashSubmitting(true);
         setSlashStatus(null);
         try {
-            const res = await fetch(`${GRID_ORIGIN}/api/v1/operator/nous/${encodeURIComponent(did)}/slash`, {
+            const res = await fetch(`/api/operator/nous/${encodeURIComponent(did)}/slash`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'x-operator-tier': '4',
-                    'x-operator-id': process.env.NEXT_PUBLIC_STEWARD_OPERATOR_ID
-                        ?? 'op:00000000-0000-4000-8000-000000000001',
                 },
                 body: JSON.stringify({ amount: Number(slashAmount), reason: slashReason }),
             });
@@ -485,10 +475,13 @@ export default function NousDetailPage({ params }: { params: Promise<{ id: strin
         setTelosSubmitting(true);
         setTelosStatus(null);
         try {
-            const res = await fetch(`${GRID_ORIGIN}/api/v1/operator/nous/${encodeURIComponent(did)}/telos`, {
+            const res = await fetch(`/api/operator/nous/${encodeURIComponent(did)}/telos/force`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telos: telosText, reason: telosReason }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-operator-tier': '4',
+                },
+                body: JSON.stringify({ new_telos: telosText, reason: telosReason }),
             });
             if (res.ok) {
                 setTelosStatus({ type: 'success', msg: 'Telos updated successfully.' });

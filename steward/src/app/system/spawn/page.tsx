@@ -114,12 +114,11 @@ export default function SpawnSystemNousPage() {
         setSubmitting(true);
         setError(null);
         try {
-            const res = await fetch(`${GRID_ORIGIN}/api/v1/operator/spawn-system-nous`, {
+            const res = await fetch(`/api/operator/spawn-system-nous`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'x-operator-tier': '5',
-                    'x-operator-id': process.env.NEXT_PUBLIC_STEWARD_OPERATOR_ID ?? 'op:00000000-0000-4000-8000-000000000001',
                 },
                 body: JSON.stringify({
                     name: name.trim(),

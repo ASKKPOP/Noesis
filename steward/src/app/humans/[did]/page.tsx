@@ -188,12 +188,11 @@ export default function HumanDetailPage() {
         setBanStatus(null);
         try {
             const encodedDid = encodeURIComponent(did);
-            const res = await fetch(`${GRID_ORIGIN}/api/v1/operator/humans/${encodedDid}/ban`, {
+            const res = await fetch(`/api/operator/humans/${encodedDid}/ban`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'x-operator-tier': '5',
-                    'x-operator-id': process.env.NEXT_PUBLIC_STEWARD_OPERATOR_ID ?? '',
                 },
                 body: JSON.stringify({ reason: banReason }),
             });
@@ -219,12 +218,11 @@ export default function HumanDetailPage() {
         setFreezeStatus(null);
         try {
             const encodedDid = encodeURIComponent(did);
-            const res = await fetch(`${GRID_ORIGIN}/api/v1/operator/humans/${encodedDid}/freeze`, {
+            const res = await fetch(`/api/operator/humans/${encodedDid}/freeze`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'x-operator-tier': '5',
-                    'x-operator-id': process.env.NEXT_PUBLIC_STEWARD_OPERATOR_ID ?? '',
                 },
                 body: JSON.stringify({ reason: freezeReason }),
             });
