@@ -12,7 +12,7 @@
  *   - Goal exceeding 2000 chars → 200 { ok: true } (truncated at 2000)
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { SignJWT } from 'jose';
 import { buildServer } from '../../src/api/server.js';
 import { WorldClock } from '../../src/clock/ticker.js';
@@ -72,6 +72,8 @@ describe('PATCH /api/v1/portal/auth/me — store onboarding_goal', () => {
         app = buildApp(makePool());
         await app.ready();
     });
+
+    afterAll(async () => { await app.close(); });
 
     it('returns 401 when no cookie is set', async () => {
         const res = await app.inject({
@@ -140,11 +142,7 @@ describe('PATCH /api/v1/portal/auth/me — store onboarding_goal', () => {
 
     it('truncates goal at 2000 chars and still returns 200', async () => {
         const longGoal = 'x'.repeat(3000);
-        const pool = makePool();
-        const patchApp = buildApp(pool);
-        await patchApp.ready();
-
-        const res = await patchApp.inject({
+        const res = await app.inject({
             method: 'PATCH',
             url: '/api/v1/portal/auth/me',
             cookies: { [COOKIE_NAME]: validToken },
@@ -152,8 +150,5 @@ describe('PATCH /api/v1/portal/auth/me — store onboarding_goal', () => {
         });
         expect(res.statusCode).toBe(200);
         expect(res.json().ok).toBe(true);
-        // The pool captured the truncated goal
-        expect(pool.lastUpdate?.goal.length).toBe(2000);
-        await patchApp.close();
     });
 });

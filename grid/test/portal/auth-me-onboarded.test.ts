@@ -46,29 +46,31 @@ function makePool(goal: string | null | 'THROW'): GridServices['humanPool'] {
     };
 }
 
-function buildApp(humanPool?: GridServices['humanPool']): FastifyInstance {
-    const clock = new WorldClock({ tickRateMs: 100_000 });
-    return buildServer({
-        clock,
-        space: new SpatialMap(),
-        logos: new LogosEngine(),
-        audit: new AuditChain(),
-        gridName: 'genesis',
-        humanRegistry: new HumanRegistry(),
-        humanPool,
-    });
-}
+let token: string;
 
-describe('GET /api/v1/portal/auth/me — onboarded field', () => {
-    let token: string;
+// Suites share a token but each needs a different pool — we create apps per suite.
+
+describe('GET /api/v1/portal/auth/me — onboarded: false when goal is null', () => {
+    let app: FastifyInstance;
 
     beforeAll(async () => {
         token = await makeJwt();
+        const clock = new WorldClock({ tickRateMs: 100_000 });
+        app = buildServer({
+            clock,
+            space: new SpatialMap(),
+            logos: new LogosEngine(),
+            audit: new AuditChain(),
+            gridName: 'genesis',
+            humanRegistry: new HumanRegistry(),
+            humanPool: makePool(null),
+        });
+        await app.ready();
     });
 
+    afterAll(async () => { await app.close(); });
+
     it('returns onboarded: false when DB row has onboarding_goal = null', async () => {
-        const app = buildApp(makePool(null));
-        await app.ready();
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal/auth/me',
@@ -76,12 +78,29 @@ describe('GET /api/v1/portal/auth/me — onboarded field', () => {
         });
         expect(res.statusCode).toBe(200);
         expect(res.json().onboarded).toBe(false);
-        await app.close();
+    });
+});
+
+describe('GET /api/v1/portal/auth/me — onboarded: true when goal is set', () => {
+    let app: FastifyInstance;
+
+    beforeAll(async () => {
+        const clock = new WorldClock({ tickRateMs: 100_000 });
+        app = buildServer({
+            clock,
+            space: new SpatialMap(),
+            logos: new LogosEngine(),
+            audit: new AuditChain(),
+            gridName: 'genesis',
+            humanRegistry: new HumanRegistry(),
+            humanPool: makePool('learn about AI'),
+        });
+        await app.ready();
     });
 
+    afterAll(async () => { await app.close(); });
+
     it('returns onboarded: true when DB row has onboarding_goal = some text', async () => {
-        const app = buildApp(makePool('learn about AI'));
-        await app.ready();
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal/auth/me',
@@ -89,26 +108,58 @@ describe('GET /api/v1/portal/auth/me — onboarded field', () => {
         });
         expect(res.statusCode).toBe(200);
         expect(res.json().onboarded).toBe(true);
-        await app.close();
+    });
+});
+
+describe('GET /api/v1/portal/auth/me — fail-safe on DB error', () => {
+    let app: FastifyInstance;
+
+    beforeAll(async () => {
+        const clock = new WorldClock({ tickRateMs: 100_000 });
+        app = buildServer({
+            clock,
+            space: new SpatialMap(),
+            logos: new LogosEngine(),
+            audit: new AuditChain(),
+            gridName: 'genesis',
+            humanRegistry: new HumanRegistry(),
+            humanPool: makePool('THROW'),
+        });
+        await app.ready();
     });
 
-    it('returns onboarded: false (fail-safe) when DB query throws', async () => {
-        const app = buildApp(makePool('THROW'));
-        await app.ready();
+    afterAll(async () => { await app.close(); });
+
+    it('returns onboarded: false (fail-safe) when DB query throws — no 503', async () => {
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal/auth/me',
             cookies: { [COOKIE_NAME]: token },
         });
-        // Must be 200, not 503 — fail-safe
         expect(res.statusCode).toBe(200);
         expect(res.json().onboarded).toBe(false);
-        await app.close();
     });
+});
+
+describe('GET /api/v1/portal/auth/me — fail-safe when no humanPool', () => {
+    let app: FastifyInstance;
+
+    beforeAll(async () => {
+        const clock = new WorldClock({ tickRateMs: 100_000 });
+        app = buildServer({
+            clock,
+            space: new SpatialMap(),
+            logos: new LogosEngine(),
+            audit: new AuditChain(),
+            gridName: 'genesis',
+            humanRegistry: new HumanRegistry(),
+        });
+        await app.ready();
+    });
+
+    afterAll(async () => { await app.close(); });
 
     it('returns onboarded: false when no humanPool is configured', async () => {
-        const app = buildApp(undefined);
-        await app.ready();
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal/auth/me',
@@ -116,6 +167,5 @@ describe('GET /api/v1/portal/auth/me — onboarded field', () => {
         });
         expect(res.statusCode).toBe(200);
         expect(res.json().onboarded).toBe(false);
-        await app.close();
     });
 });
