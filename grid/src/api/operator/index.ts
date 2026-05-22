@@ -21,6 +21,7 @@ import { registerReplayExportRoute } from './export-replay.js';
 import { registerMuteBroadcastRoute } from './mute-broadcast.js';
 import { registerForceSleepRoute } from './force-sleep.js';
 import { registerQuarantineRoute } from './quarantine.js';
+import { registerSlashCoinRoute } from './slash-coin.js';
 
 export function registerOperatorRoutes(
     app: FastifyInstance,
@@ -42,4 +43,6 @@ export function registerOperatorRoutes(
     registerForceSleepRoute(app, services);
     // Phase 25b SANCTION-03: H4 — quarantine Nous (excludes from peer-discovery).
     registerQuarantineRoute(app, services);
+    // Phase 25b SANCTION-02: H4 — slash Nous ousia balance (punitive debit).
+    registerSlashCoinRoute(app, services);
 }
