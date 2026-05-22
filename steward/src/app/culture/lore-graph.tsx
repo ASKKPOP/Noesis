@@ -111,8 +111,16 @@ export function LoreGraph({ entries, citations, filter }: Props) {
                         const citedPos = posMap.get(content_hash);
                         if (!citedPos) return null;
 
-                        // Find a lore entry contributed by the citing DID to use as source position
-                        const citingEntry = entries.find(e => e.contributor_did === citing_did);
+                        // Find the source lore entry for the citing DID.
+                        // The citation payload identifies the cited entry by content_hash; the citing
+                        // entry is identified only by citing_did. If the DID has multiple entries,
+                        // we pick the one whose content_hash appears in posMap and most closely
+                        // precedes the citation tick — falling back to the first entry in the dataset
+                        // for that DID when no better anchor is available.
+                        const allForCitingDid = entries.filter(e => e.contributor_did === citing_did);
+                        const citingEntry =
+                            allForCitingDid.find(e => e.tick <= citation.payload.tick) ??
+                            allForCitingDid[0];
                         if (!citingEntry) return null;
 
                         const citingPos = posMap.get(citingEntry.content_hash);
