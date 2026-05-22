@@ -8,11 +8,15 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { registerPortalAuthRoutes } from './auth.js';
 import { registerPortalWalletRoutes } from './wallet.js';
+import { registerFrozenCheck } from './check-frozen.js';
 
 export function registerPortalRoutes(
     app: FastifyInstance,
     services: GridServices,
 ): void {
+    // Auth routes first — SIWE populates session.humanDid which check-frozen reads.
     registerPortalAuthRoutes(app, services);
+    // Frozen/banned check — registered after auth so session is available.
+    registerFrozenCheck(app, services);
     registerPortalWalletRoutes(app, services);
 }

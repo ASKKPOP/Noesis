@@ -44,7 +44,7 @@ interface NousEntry {
     humanOwner?: string;
 }
 
-type TabId = 'profile' | 'history' | 'nous';
+type TabId = 'profile' | 'history' | 'nous' | 'sanctions';
 
 function truncateDid(did: string): string {
     if (!did || did.length <= 20) return did ?? '';
@@ -113,12 +113,24 @@ export default function HumanDetailPage() {
     const [notFound, setNotFound] = useState(false);
     const [activeTab, setActiveTab] = useState<TabId>('profile');
 
+    // Sanctions state — local per row (H5 confirm dialogs)
+    const [banConfirm, setBanConfirm] = useState('');
+    const [banReason, setBanReason] = useState('');
+    const [banSubmitting, setBanSubmitting] = useState(false);
+    const [banStatus, setBanStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
+    const [freezeConfirm, setFreezeConfirm] = useState('');
+    const [freezeReason, setFreezeReason] = useState('');
+    const [freezeSubmitting, setFreezeSubmitting] = useState(false);
+    const [freezeStatus, setFreezeStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
     // Tab refs for keyboard navigation
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const TABS: { id: TabId; label: string }[] = [
         { id: 'profile', label: 'Profile' },
         { id: 'history', label: 'History' },
         { id: 'nous', label: 'Nous' },
+        { id: 'sanctions', label: 'Sanctions' },
     ];
 
     useEffect(() => {
@@ -165,6 +177,71 @@ export default function HumanDetailPage() {
         }
         fetchAll();
     }, [did]);
+
+    // Last 6 chars of wallet address used as H5 confirm token (per plan 13)
+    const walletSuffix = profile?.eth_address ? profile.eth_address.slice(-6) : '';
+
+    async function handleBan(e: React.FormEvent) {
+        e.preventDefault();
+        if (banSubmitting) return;
+        setBanSubmitting(true);
+        setBanStatus(null);
+        try {
+            const encodedDid = encodeURIComponent(did);
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/operator/humans/${encodedDid}/ban`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-operator-tier': '5',
+                    'x-operator-id': process.env.NEXT_PUBLIC_STEWARD_OPERATOR_ID ?? '',
+                },
+                body: JSON.stringify({ reason: banReason }),
+            });
+            if (res.ok) {
+                setBanStatus({ type: 'success', msg: 'Human banned.' });
+                setBanConfirm('');
+                setBanReason('');
+            } else {
+                const data = (await res.json()) as { error?: string };
+                setBanStatus({ type: 'error', msg: data.error ?? String(res.status) });
+            }
+        } catch {
+            setBanStatus({ type: 'error', msg: 'Network error' });
+        } finally {
+            setBanSubmitting(false);
+        }
+    }
+
+    async function handleFreeze(e: React.FormEvent) {
+        e.preventDefault();
+        if (freezeSubmitting) return;
+        setFreezeSubmitting(true);
+        setFreezeStatus(null);
+        try {
+            const encodedDid = encodeURIComponent(did);
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/operator/humans/${encodedDid}/freeze`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-operator-tier': '5',
+                    'x-operator-id': process.env.NEXT_PUBLIC_STEWARD_OPERATOR_ID ?? '',
+                },
+                body: JSON.stringify({ reason: freezeReason }),
+            });
+            if (res.ok) {
+                setFreezeStatus({ type: 'success', msg: 'Wallet frozen.' });
+                setFreezeConfirm('');
+                setFreezeReason('');
+            } else {
+                const data = (await res.json()) as { error?: string };
+                setFreezeStatus({ type: 'error', msg: data.error ?? String(res.status) });
+            }
+        } catch {
+            setFreezeStatus({ type: 'error', msg: 'Network error' });
+        } finally {
+            setFreezeSubmitting(false);
+        }
+    }
 
     function handleTabKeyDown(e: React.KeyboardEvent, index: number) {
         if (e.key === 'ArrowRight') {
@@ -453,6 +530,126 @@ export default function HumanDetailPage() {
                                         </tbody>
                                     </table>
                                 )}
+                            </div>
+                        )}
+
+                        {/* Tab 4: Sanctions */}
+                        {activeTab === 'sanctions' && (
+                            <div className="steward-card">
+                                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--rule)', fontFamily: 'var(--serif)', fontSize: 18, fontWeight: 400, color: 'var(--ink)' }}>
+                                    Sanctions
+                                </div>
+                                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+                                    {/* Ban Human (H5) */}
+                                    <form onSubmit={handleBan} style={{ borderBottom: '1px solid var(--rule)', paddingBottom: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <span style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>
+                                                Ban Human
+                                            </span>
+                                            <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--muted)', background: 'var(--parchment)', border: '1px solid var(--rule)', borderRadius: 4, padding: '2px 6px' }}>
+                                                H5
+                                            </span>
+                                        </div>
+                                        <p style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'var(--muted)', lineHeight: 1.5, margin: 0 }}>
+                                            This revokes all portal access. Sanction is reversible only by H5 operator clearing the flag manually (no UI in 25b).
+                                        </p>
+                                        <div>
+                                            <label style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
+                                                Confirm (last 6 chars of wallet: <span style={{ color: 'var(--ink)' }}>{walletSuffix || '—'}</span>)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={banConfirm}
+                                                onChange={(e) => setBanConfirm(e.target.value)}
+                                                placeholder={walletSuffix || 'wallet address last 6 chars'}
+                                                style={{ fontFamily: 'var(--mono)', fontSize: 13, padding: '8px 10px', border: '1px solid var(--rule)', borderRadius: 5, background: 'var(--vellum)', color: 'var(--ink)', width: '100%', boxSizing: 'border-box' as const }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
+                                                Reason (≥10 chars)
+                                            </label>
+                                            <textarea
+                                                value={banReason}
+                                                onChange={(e) => setBanReason(e.target.value)}
+                                                required
+                                                minLength={10}
+                                                placeholder="Operator rationale for ban…"
+                                                style={{ fontFamily: 'var(--mono)', fontSize: 13, padding: '8px 10px', border: '1px solid var(--rule)', borderRadius: 5, background: 'var(--vellum)', color: 'var(--ink)', width: '100%', boxSizing: 'border-box' as const, resize: 'vertical', minHeight: 72, lineHeight: 1.5 }}
+                                            />
+                                        </div>
+                                        {banStatus && (
+                                            <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: banStatus.type === 'success' ? '#2d7a2d' : 'var(--terracotta)', padding: '8px 12px', background: banStatus.type === 'success' ? 'rgba(34,139,34,0.08)' : 'rgba(184,84,47,0.08)', borderRadius: 5, border: `1px solid ${banStatus.type === 'success' ? 'rgba(34,139,34,0.2)' : 'rgba(184,84,47,0.2)'}` }}>
+                                                {banStatus.msg}
+                                            </div>
+                                        )}
+                                        <div>
+                                            <button
+                                                type="submit"
+                                                disabled={banSubmitting || banConfirm !== walletSuffix || banReason.length < 10}
+                                                style={{ fontFamily: 'var(--mono)', fontSize: 12, padding: '9px 18px', background: 'var(--terracotta)', color: '#fff', border: 'none', borderRadius: 5, cursor: banSubmitting || banConfirm !== walletSuffix || banReason.length < 10 ? 'not-allowed' : 'pointer', opacity: banSubmitting || banConfirm !== walletSuffix || banReason.length < 10 ? 0.5 : 1 }}
+                                            >
+                                                {banSubmitting ? 'Sending…' : 'Ban Human (H5)'}
+                                            </button>
+                                        </div>
+                                    </form>
+
+                                    {/* Freeze Wallet (H5) */}
+                                    <form onSubmit={handleFreeze} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <span style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>
+                                                Freeze Wallet
+                                            </span>
+                                            <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--muted)', background: 'var(--parchment)', border: '1px solid var(--rule)', borderRadius: 4, padding: '2px 6px' }}>
+                                                H5
+                                            </span>
+                                        </div>
+                                        <p style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'var(--muted)', lineHeight: 1.5, margin: 0 }}>
+                                            This blocks portal actions (chat, tip, spawn). User can still sign in to see status. Zero-custody: on-chain wallet is NOT affected.
+                                        </p>
+                                        <div>
+                                            <label style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
+                                                Confirm (last 6 chars of wallet: <span style={{ color: 'var(--ink)' }}>{walletSuffix || '—'}</span>)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={freezeConfirm}
+                                                onChange={(e) => setFreezeConfirm(e.target.value)}
+                                                placeholder={walletSuffix || 'wallet address last 6 chars'}
+                                                style={{ fontFamily: 'var(--mono)', fontSize: 13, padding: '8px 10px', border: '1px solid var(--rule)', borderRadius: 5, background: 'var(--vellum)', color: 'var(--ink)', width: '100%', boxSizing: 'border-box' as const }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
+                                                Reason (≥10 chars)
+                                            </label>
+                                            <textarea
+                                                value={freezeReason}
+                                                onChange={(e) => setFreezeReason(e.target.value)}
+                                                required
+                                                minLength={10}
+                                                placeholder="Operator rationale for freeze…"
+                                                style={{ fontFamily: 'var(--mono)', fontSize: 13, padding: '8px 10px', border: '1px solid var(--rule)', borderRadius: 5, background: 'var(--vellum)', color: 'var(--ink)', width: '100%', boxSizing: 'border-box' as const, resize: 'vertical', minHeight: 72, lineHeight: 1.5 }}
+                                            />
+                                        </div>
+                                        {freezeStatus && (
+                                            <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: freezeStatus.type === 'success' ? '#2d7a2d' : 'var(--terracotta)', padding: '8px 12px', background: freezeStatus.type === 'success' ? 'rgba(34,139,34,0.08)' : 'rgba(184,84,47,0.08)', borderRadius: 5, border: `1px solid ${freezeStatus.type === 'success' ? 'rgba(34,139,34,0.2)' : 'rgba(184,84,47,0.2)'}` }}>
+                                                {freezeStatus.msg}
+                                            </div>
+                                        )}
+                                        <div>
+                                            <button
+                                                type="submit"
+                                                disabled={freezeSubmitting || freezeConfirm !== walletSuffix || freezeReason.length < 10}
+                                                style={{ fontFamily: 'var(--mono)', fontSize: 12, padding: '9px 18px', background: 'var(--terracotta)', color: '#fff', border: 'none', borderRadius: 5, cursor: freezeSubmitting || freezeConfirm !== walletSuffix || freezeReason.length < 10 ? 'not-allowed' : 'pointer', opacity: freezeSubmitting || freezeConfirm !== walletSuffix || freezeReason.length < 10 ? 0.5 : 1 }}
+                                            >
+                                                {freezeSubmitting ? 'Sending…' : 'Freeze Wallet (H5)'}
+                                            </button>
+                                        </div>
+                                    </form>
+
+                                </div>
                             </div>
                         )}
                     </div>
