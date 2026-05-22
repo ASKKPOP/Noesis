@@ -827,7 +827,7 @@ Primary sources (`.planning/research/v2.4/`):
 Plans:
 - [x] 25a — Observer surfaces (7 plans complete, 3 of 5 UAT items verified)
 - [x] 25b — Sanctions + spawn wizard (run /gsd-plan-phase 25b to break down) (completed 2026-05-22)
-- [ ] 25c — Replay scrubber + culture browser (run /gsd-plan-phase 25c to break down)
+- [x] 25c — Replay scrubber + culture browser (run /gsd-plan-phase 25c to break down) (completed 2026-05-22)
 
 ### Phase 25a: Observer surfaces — live firehose, cognitive inspector, brain health, allowlist monitor, humans profile
 
@@ -885,7 +885,7 @@ Plans:
 
 **Depends on:** Phase 25a, Phase 13 (REPLAY-01..05), Phase 21 (culture views).
 
-**Plans:** 5/5 plans executed (complete)
+**Plans:** 5/5 plans complete
 
 Plans:
 - [x] 25c-01-PLAN.md — Wave 0: relationships.ts header-auth migration + humanSanctionStore + SpawnNousDeps wiring
