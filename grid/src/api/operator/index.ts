@@ -22,6 +22,8 @@ import { registerMuteBroadcastRoute } from './mute-broadcast.js';
 import { registerForceSleepRoute } from './force-sleep.js';
 import { registerQuarantineRoute } from './quarantine.js';
 import { registerSlashCoinRoute } from './slash-coin.js';
+import { registerBanHumanRoute } from './ban-human.js';
+import { registerFreezeWalletRoute } from './freeze-wallet.js';
 
 export function registerOperatorRoutes(
     app: FastifyInstance,
@@ -45,4 +47,8 @@ export function registerOperatorRoutes(
     registerQuarantineRoute(app, services);
     // Phase 25b SANCTION-02: H4 — slash Nous ousia balance (punitive debit).
     registerSlashCoinRoute(app, services);
+    // Phase 25b SANCTION-05: H5 — ban human (full portal access revoked).
+    registerBanHumanRoute(app, services);
+    // Phase 25b SANCTION-06: H5 — freeze human wallet (Grid-side flag; zero-custody per D-25b-NEW-4).
+    registerFreezeWalletRoute(app, services);
 }

@@ -257,4 +257,14 @@ export const MIGRATIONS: Migration[] = [
             DROP TABLE IF EXISTS sanction_reasons
         `,
     },
+    {
+        version: 13,
+        name: 'add_banned_human_users',
+        up: `
+            ALTER TABLE human_users ADD COLUMN banned TINYINT(1) NOT NULL DEFAULT 0;
+        `,
+        down: `
+            ALTER TABLE human_users DROP COLUMN banned;
+        `,
+    },
 ];
