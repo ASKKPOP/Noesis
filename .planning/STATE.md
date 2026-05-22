@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Human Portal — Active)
 status: executing
-stopped_at: Phase 25c context gathered
-last_updated: "2026-05-22T19:13:52.694Z"
-last_activity: 2026-05-22 -- Phase 25c execution started
+stopped_at: Phase 25c complete
+last_updated: "2026-05-22T20:30:00.000Z"
+last_activity: 2026-05-22 -- Phase 25c complete (replay scrubber + culture browser)
 progress:
   total_phases: 29
   completed_phases: 26
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-05-16)
 
 ## Current Position
 
-Phase: 25c (replay-scrubber-culture-browser) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 25c
-Last activity: 2026-05-22 -- Phase 25c execution started
+Phase: 25c (replay-scrubber-culture-browser) — COMPLETE
+Plan: 5 of 5
+Status: Phase 25c complete — all plans shipped
+Last activity: 2026-05-22 -- Phase 25c complete (replay scrubber + culture browser)
 
 Progress: [████████████████████] 25/29 phases complete (v2.5 in progress; Phase 25a closed)
 Note: 25a-07 added post-merge to close 3 Codex-surfaced gaps (GAP-25a-1/2/3); UAT items #1, #2, #5 remain pending — orthogonal to the gap closure work.

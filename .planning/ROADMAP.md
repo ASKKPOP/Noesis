@@ -37,7 +37,13 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
   - [x] 24-03-PLAN.md — Dashboard: mobile sidebar (PortalShell/Sidebar/Header hamburger overlay)
   - [x] 24-04-PLAN.md — Dashboard: portal home live stats polling + updated labels/content
   - [x] 24-05-PLAN.md — Tests: WALLET-04 verification + Phase 24 test coverage gaps
-- [~] **Phase 25: Steward Console expansion** — Operator-facing observability + write actions (25a/25b/25c). Allowlist 45→51 (+6 sanction events). **25a ✓ 25b ✓ 25c ☐ (replay scrubber + culture browser, pending)**
+- [x] **Phase 25: Steward Console expansion** — Operator-facing observability + write actions (25a/25b/25c). Allowlist 45→51 (+6 sanction events). **25a ✓ 25b ✓ 25c ✓ (replay scrubber + culture browser)**
+  Phase 25c plans:
+  - [x] 25c-01-PLAN.md — Wave 0: relationships.ts header-auth + humanSanctionStore + SpawnNousDeps wiring
+  - [x] 25c-02-PLAN.md — Wave 1: D-07 replay-client.test.tsx RED→GREEN + @vitejs/plugin-react fix
+  - [x] 25c-03-PLAN.md — Wave 2-3: StewardShell Observatory nav + /replay listing page + scrubber modal
+  - [x] 25c-04-PLAN.md — Wave 4: /culture page + NousFilterBar + three raw-SVG culture components
+  - [x] 25c-05-PLAN.md — Wave 5: regression gates + doc-sync
 - [ ] **Phase 26: Sophia Onboarding** — Fast-proxy LLM chat (out-of-tick), goal-setting wizard, animated world introduction, Sophia as guide persona, first-time user flow with welcome Cyber Coin allocation. *(originally Phase 25 — pushed by Steward Console priority)*
 - [ ] **Phase 27: Nous Interaction** — Humans chat with Sophia/Hermes/Themis via `/portal/chat`, send Cyber Coin tips, browse Nous activity feed, view skills/lore/norms the Nous have produced. Allowlist 51→52 (+1: human.spoke).
 - [ ] **Phase 28: Personal Nous** — Human spawns own Nous agent (costs Cyber Coin), names it, picks personality seeds, it gets a DID and runs in the Genesis Grid alongside Sophia/Hermes/Themis. `humanOwner` field wired. Allowlist +1 (nous.spawned_by_human).
@@ -879,14 +885,14 @@ Plans:
 
 **Depends on:** Phase 25a, Phase 13 (REPLAY-01..05), Phase 21 (culture views).
 
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans executed (complete)
 
 Plans:
 - [x] 25c-01-PLAN.md — Wave 0: relationships.ts header-auth migration + humanSanctionStore + SpawnNousDeps wiring
 - [x] 25c-02-PLAN.md — Wave 1: D-07 replay-client.test.tsx RED→GREEN + @vitejs/plugin-react fix
 - [x] 25c-03-PLAN.md — Wave 2-3: StewardShell Observatory nav + /replay listing page + scrubber modal
 - [x] 25c-04-PLAN.md — Wave 4: /culture page + NousFilterBar + three raw-SVG culture components
-- [ ] 25c-05-PLAN.md — Wave 5: regression gates + doc-sync
+- [x] 25c-05-PLAN.md — Wave 5: regression gates + doc-sync
 
 ---
 
@@ -895,6 +901,7 @@ Plans:
 *Updated: 2026-05-21 — Phase 25 scoped via /gsd-discuss-phase, split into 25a/25b/25c, +6 allowlist events earmarked for 25b*
 *Updated: 2026-05-21 — Phase 25a/25b/25c promoted to roadmap-recognized phase headers so /gsd-plan-phase can resolve them independently*
 *Updated: 2026-05-21 — Phase 25a broken down into 6 plans across 4 waves*
+*Updated: 2026-05-22 — Phase 25c complete (replay scrubber + culture browser, 5/5 plans shipped, allowlist delta 0)*
 
 *Updated: 2026-05-21 — Phase 25b broken down into 14 plans across 5 waves*
 *Updated: 2026-05-21 — Phase 25b revised post-plan-check: serialized 25b-09→25b-10 barrel; locked plan 14 treasury to `economy.initialSupply` reuse; ratified D-25b-NEW-5 (separate `banned` column); documented wave-as-earliest-possible convention*
