@@ -18,6 +18,8 @@ import { registerTelosForceRoute } from './telos-force.js';
 import { registerDeleteNousRoute } from './delete-nous.js';
 import { relationshipsRoutes } from './relationships.js';
 import { registerReplayExportRoute } from './export-replay.js';
+import { registerMuteBroadcastRoute } from './mute-broadcast.js';
+import { registerForceSleepRoute } from './force-sleep.js';
 
 export function registerOperatorRoutes(
     app: FastifyInstance,
@@ -33,4 +35,8 @@ export function registerOperatorRoutes(
     relationshipsRoutes(app, services);
     // Phase 13 REPLAY-02: H5 Sovereign Operations — operator replay export.
     registerReplayExportRoute(app, services);
+    // Phase 25b SANCTION-01: H3 — mute Nous broadcast emissions.
+    registerMuteBroadcastRoute(app, services);
+    // Phase 25b SANCTION-04: H3 — force Nous into Hypnos sleep cycle.
+    registerForceSleepRoute(app, services);
 }
