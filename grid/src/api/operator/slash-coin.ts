@@ -134,11 +134,15 @@ export function registerSlashCoinRoute(app: FastifyInstance, services: GridServi
 
             // 8. Apply sanction — debit ousia from NousRecord. Clamped to 0 (never negative).
             //    See file-level comment for rationale on clamp-to-zero vs 409.
+            //    WR-01 fix: re-check record presence before emitting to avoid a false
+            //    audit event if the Nous was tombstoned between step 3 and here.
             if (services.registry) {
                 const record = services.registry.get(targetDid);
-                if (record) {
-                    record.ousia = Math.max(0, record.ousia - amount);
+                if (!record || (record as unknown as { status?: string }).status === 'deleted') {
+                    reply.code(410);
+                    return { error: 'gone' } satisfies ApiError;
                 }
+                record.ousia = Math.max(0, record.ousia - amount);
             }
 
             // 9. Emit operator.slashed — ONLY on success path (sole-producer invariant, Pitfall 4).

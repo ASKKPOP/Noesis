@@ -122,11 +122,15 @@ export function registerQuarantineRoute(app: FastifyInstance, services: GridServ
             // 7. Apply sanction — set quarantineFlag on registry record (D-25b-NEW-3).
             //    Peer-discovery (inRegion) filters records with quarantineFlag=true.
             //    The Nous is NOT physically moved — only peer visibility is affected.
+            //    WR-01 fix: re-check record presence before emitting to avoid a false
+            //    audit event if the Nous was tombstoned between step 3 and here.
             if (services.registry) {
                 const record = services.registry.get(targetDid);
-                if (record) {
-                    (record as unknown as { quarantineFlag: boolean }).quarantineFlag = true;
+                if (!record || (record as unknown as { status?: string }).status === 'deleted') {
+                    reply.code(410);
+                    return { error: 'gone' } satisfies ApiError;
                 }
+                (record as unknown as { quarantineFlag: boolean }).quarantineFlag = true;
             }
 
             // 8. Emit operator.quarantined — ONLY on success path (sole-producer invariant, Pitfall 4).
