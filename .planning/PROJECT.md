@@ -230,4 +230,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-21 — Phase 24 complete: Portal shell shipped — responsive mobile sidebar, live Grid stats polling, user profile with region/wallet/member-since rows, migration v10 (region column), JWT+/me extended. Allowlist stays at 45 (WALLET-04 verified). PORTAL-04, PORTAL-05, WALLET-04 validated.*
+*Last updated: 2026-05-22 — Phase 25b complete: Operator sanctions + spawn wizard shipped — Wave-0 header-auth migration (6 routes), 6 operator sanction routes (mute H3, force-sleep H3, quarantine H4, slash-coin H4, ban-human H5, freeze-wallet H5), spawn-system-nous H5, portal frozen-account gate, Steward sanctions UI + spawn wizard. Allowlist now 51 (+6 sanction events). humanSanctionStore + SpawnNousDeps deferred-injectable (503 until production wiring).*
