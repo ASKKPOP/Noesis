@@ -53,7 +53,7 @@ Deliver the first-time user onboarding wizard at `/portal/onboard`. Detect new u
 
 ### DB Migration
 
-- **D-13:** Migration adds `onboarding_goal TEXT NULL DEFAULT NULL` column to `human_users`. Schema version 11 (Phase 24 was version 10). Uses existing `MigrationRunner` pattern.
+- **D-13:** Migration adds `onboarding_goal TEXT NULL DEFAULT NULL` column to `human_users`. Schema version 14 (versions 11, 12, 13 were applied by Phases 22–25b — RESEARCH.md confirms this from the live schema.ts). Uses existing `MigrationRunner` pattern.
 
 </decisions>
 
@@ -76,7 +76,7 @@ Deliver the first-time user onboarding wizard at `/portal/onboard`. Detect new u
 
 ### Grid Backend (read before writing plans)
 - `grid/src/api/portal/auth.ts` — `/me` endpoint; extend to return `onboarded: boolean`; also add `PATCH /me` or new endpoint for goal storage
-- `grid/src/db/schema.ts` — migration array; Phase 26 migration is version 11 (`onboarding_goal TEXT NULL`)
+- `grid/src/db/schema.ts` — migration array; Phase 26 migration is version 14 (`onboarding_goal TEXT NULL`)
 - `grid/src/main.ts` — where LLM provider is configured; `POST /api/v1/portal/chat/onboard` reuses this provider config with a fixed Sophia system prompt
 
 ### Design System
@@ -102,10 +102,10 @@ Deliver the first-time user onboarding wizard at `/portal/onboard`. Detect new u
 - **Fetch-based API calls**: No dedicated API client — raw `fetch` with `credentials: 'include'`
 
 ### Integration Points
-- `portal/layout.tsx` → add redirect logic: if `!humanAuth.onboarded` → redirect to `/portal/onboard`
+- `dashboard/src/components/portal/PortalShell.tsx` → add redirect guard: `if (!currentUser.onboarded) router.replace('/portal/onboard')` (layout.tsx is `'use client'` with no redirect capability; PortalShell already has the bypass pattern for `/portal/auth` and is the correct location — confirmed by PATTERNS.md and live code inspection)
 - New route: `dashboard/src/app/portal/onboard/page.tsx` — client component (ssr: false), wizard state machine
 - New Grid endpoint: `POST /api/v1/portal/chat/onboard` — fixed Sophia system prompt, multi-turn capable (accepts conversation history array)
-- DB: `human_users` table gets `onboarding_goal TEXT NULL` (schema version 11)
+- DB: `human_users` table gets `onboarding_goal TEXT NULL` (schema version 14)
 
 </code_context>
 
