@@ -129,6 +129,9 @@ export function registerQuarantineRoute(app: FastifyInstance, services: GridServ
             //    The Nous is NOT physically moved — only peer visibility is affected.
             //    WR-01 fix: re-check record presence before emitting to avoid a false
             //    audit event if the Nous was tombstoned between step 3 and here.
+            //    WR-04 NOTE — IN-MEMORY ONLY: quarantineFlag lives on the in-memory registry
+            //    record and is NOT persisted. On any Grid restart the flag resets to false.
+            //    Operators must re-apply quarantine after any restart.
             if (services.registry) {
                 const record = services.registry.get(targetDid);
                 if (!record || (record as unknown as { status?: string }).status === 'deleted') {

@@ -144,7 +144,11 @@ export class NousRunner {
      * only the audit emissions are withheld. The Nous "shouts into the void".
      *
      * Set via `runner.muteFlag = true` by the POST /api/v1/operator/nous/:did/mute route.
-     * Not persisted across Grid restarts (sanction must be re-applied after restart).
+     *
+     * WR-04 NOTE — IN-MEMORY ONLY: this flag is NOT persisted. On any Grid restart all mute
+     * sanctions are silently lost. The operator audit trail records the original sanction event
+     * but there is no startup replay. Operators must re-apply mute after any restart.
+     * A future phase should add a sanctions table and replay it on startup.
      */
     muteFlag: boolean = false;
 
