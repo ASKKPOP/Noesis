@@ -230,4 +230,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-22 — Phase 25b complete: Operator sanctions + spawn wizard shipped — Wave-0 header-auth migration (6 routes), 6 operator sanction routes (mute H3, force-sleep H3, quarantine H4, slash-coin H4, ban-human H5, freeze-wallet H5), spawn-system-nous H5, portal frozen-account gate, Steward sanctions UI + spawn wizard. Allowlist now 51 (+6 sanction events). humanSanctionStore + SpawnNousDeps deferred-injectable (503 until production wiring).*
+*Last updated: 2026-05-22 — Phase 25c complete: Replay scrubber + culture browser shipped — humanSanctionStore + SpawnNousDeps fully wired (ban/freeze/spawn routes now live), /replay listing page + tick-scrubber modal (H3+ gate, H4 SENSITIVE_KEYS redaction), /culture page with three raw-SVG visualizations (Skill Lineage, Norm Timeline, Lore Graph) + Nous DID filter bar. Dashboard replay-client.test.tsx GREEN (Vite 8 OXC fix). Allowlist unchanged at 51. REPLAY-05 validated.*
