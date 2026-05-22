@@ -21,7 +21,7 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19) — exactly these 41 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b) — exactly these 51 event types.
  *  v1 (Phase 1, per 01-CONTEXT.md): 10 events.
  *  Phase 5 (REV-02): +1 'trade.reviewed' — externally observable reviewer verdict;
  *  payload shape D-03, 3 keys on pass / 5 keys on fail, all privacy-clean (see D-12 test).
@@ -71,6 +71,9 @@
  *   - 'skill.rejected'  (39) — closed 3-key {learner_did, rejection_reason, tick}; reason ∈ {low_trust, structural_invalid, quota_exceeded}
  *  All 3 emitted ONLY via grid/src/skills/append*.ts sole-producer emitters (D-18-07/09).
  *  Tuple ORDER is locked; any reorder fails broadcast-allowlist.test.ts.
+ *  Phase 25b (SANCTION-01..06 / D-25b-07/08): +6 operator.* sanction events at positions 46..51 (allowlist 45→51).
+ *   All 6 emitted ONLY via grid/src/audit/append-operator-*.ts sole-producer emitters (D-25b-09).
+ *   Reason plaintext NEVER crosses the wire — only reason_hash (HEX64_RE) per D-25b-11.
  */
 export const ALLOWLIST_MEMBERS: readonly string[] = [
     'nous.spawned',
@@ -161,7 +164,7 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'skill.taught',    // (37) {learner_did, parent_hash, skill_hash, teacher_did, tick}
     'skill.inferred',  // (38) {learner_did, skill_hash, source_event_hash, tick}
     'skill.rejected',  // (39) {learner_did, rejection_reason, tick}; reason ∈ {low_trust, structural_invalid, quota_exceeded}
-    // Assert: ALLOWLIST_MEMBERS.length === 39 before these two lines (D-19-11).
+    // Assert: ALLOWLIST_MEMBERS.length === 39 before these two lines (D-19-11). Running total before Phase 25b additions: 45.
     // NormDetector observes nous.self_model_revised; fires when N≥3 Nous share fingerprint.
     // Both emitted ONLY via grid/src/norms/appendNormCandidate.ts and appendNormCrystallized.ts (D-19-06).
     'norm.candidate',    // (40) {convergence_type, fingerprint, participating_count, tick}
@@ -180,6 +183,15 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     // {asset, grid_name, human_did, tick}. Recipient address and amount are NEVER stored.
     // Emitted ONLY via appendHumanTransferred() (grid/src/audit/append-human-transferred.ts).
     'human.transferred', // (45) {asset, grid_name, human_did, tick}
+    // Phase 25b (SANCTION-01..06 / D-25b-07/08) — operator sanction events. Allowlist 45→51.
+    // All 6 emitted ONLY via grid/src/audit/append-operator-*.ts sole-producer emitters (D-25b-09).
+    // Reason plaintext NEVER crosses the wire — only reason_hash (HEX64_RE) per D-25b-11.
+    'operator.muted',          // (46) {action, operator_id, reason_hash, target_did, tick, tier:'H3'}
+    'operator.slashed',        // (47) {action, amount, operator_id, reason_hash, target_did, tick, tier:'H4'}
+    'operator.quarantined',    // (48) {action, operator_id, reason_hash, target_did, tick, tier:'H4'}
+    'operator.forced_sleep',   // (49) {action, operator_id, reason_hash, target_did, tick, tier:'H3'}
+    'operator.human_banned',   // (50) {action, human_did, operator_id, reason_hash, tick, tier:'H5'}
+    'operator.human_frozen',   // (51) {action, human_did, operator_id, reason_hash, tick, tier:'H5'}
 ] as const;
 
 /**
