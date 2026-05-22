@@ -219,6 +219,14 @@ export interface GridServices {
         /** Phase 25b plan 13: portal preHandler reads flags to enforce freeze/ban at runtime. */
         getFlags(did: string): Promise<{ frozen: number; banned: number } | null>;
     };
+    /**
+     * Phase 26 ONBOARD-04: MySQL pool for onboarding_goal queries on GET /me and PATCH /me.
+     * When present, GET /me returns `onboarded: boolean` derived from human_users.onboarding_goal.
+     * When absent, GET /me returns `onboarded: false` (fail-safe default).
+     */
+    humanPool?: {
+        query(sql: string, values?: unknown[]): Promise<[unknown, unknown]>;
+    };
 }
 
 /**
