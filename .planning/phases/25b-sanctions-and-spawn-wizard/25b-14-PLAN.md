@@ -3,7 +3,9 @@ phase: 25b-sanctions-and-spawn-wizard
 plan: 14
 type: execute
 wave: 4
-depends_on: [25b-04]
+# wave = earliest-possible execution wave; depends_on enforces actual ordering within wave.
+# Serialized after 25b-12 to avoid merge conflict on grid/src/api/operator/index.ts barrel.
+depends_on: [25b-04, 25b-12]
 files_modified:
   - grid/src/api/operator/spawn-system-nous.ts
   - grid/src/api/operator/index.ts
