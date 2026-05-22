@@ -1,7 +1,13 @@
 /**
  * Phase 8 AGENCY-05 — POST /api/v1/operator/nous/:did/delete route tests.
  *
- * Covers the full error ladder (D-33):
+ * Updated in Phase 25b Wave 0 (D-25b-NEW-1): header-auth migration.
+ * Auth is now sourced from x-operator-tier + x-operator-id headers, not body.
+ *
+ * Covers the full error ladder:
+ *   401  — tier_missing (no / non-numeric x-operator-tier header)
+ *   403  — tier_too_low (header tier < 5)
+ *   400  — invalid_operator_id (bad x-operator-id header)
  *   400  — malformed DID
  *   410  — tombstoned DID (tombstoneCheck gate)
  *   404  — unknown DID (registry has no record)
@@ -11,21 +17,27 @@
  * D-30 ordering invariant: tombstone BEFORE audit emit.
  * SC#3 invariant: 503 Brain failure → Nous stays active.
  *
- * Uses Fastify app.inject so we exercise the full route stack.
+ * Uses lightweight Fastify + route registration (mirrors cognitive-snapshot test pattern).
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { buildServer } from '../../src/api/server.js';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import Fastify from 'fastify';
 import { WorldClock } from '../../src/clock/ticker.js';
 import { SpatialMap } from '../../src/space/map.js';
 import { LogosEngine } from '../../src/logos/engine.js';
 import { AuditChain } from '../../src/audit/chain.js';
 import { NousRegistry } from '../../src/registry/registry.js';
+import { registerDeleteNousRoute } from '../../src/api/operator/delete-nous.js';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../src/api/server.js';
 
 const OPERATOR   = 'op:11111111-1111-4111-8111-111111111111';
 const ALPHA_DID  = 'did:noesis:alpha';
-const HASH64     = 'a'.repeat(64);
+
+// Valid headers for H5 requests.
+const VALID_HEADERS = {
+    'x-operator-tier': '5',
+    'x-operator-id': OPERATOR,
+};
 
 const BRAIN_HASHES = {
     psyche_hash:        'a'.repeat(64),
@@ -44,10 +56,10 @@ function spawnAlpha(registry: NousRegistry): void {
     );
 }
 
-function buildServices(opts: {
+function buildTestApp(opts: {
     brainFetch?: typeof fetch;
     spawnAlpha?: boolean;
-}): { services: GridServices; registry: NousRegistry; audit: AuditChain; space: SpatialMap; despawnCalls: string[] } {
+}): { app: FastifyInstance; registry: NousRegistry; audit: AuditChain; space: SpatialMap; despawnCalls: string[] } {
     const space    = new SpatialMap();
     const registry = new NousRegistry();
     const audit    = new AuditChain();
@@ -55,24 +67,27 @@ function buildServices(opts: {
 
     if (opts.spawnAlpha !== false) spawnAlpha(registry);
 
-    const services: GridServices = {
+    const deleteNousDeps = {
+        brainFetch: opts.brainFetch ?? (() => Promise.reject(new Error('no fetch'))),
+        space,
+        coordinator: {
+            despawnNous: (did: string) => { despawnCalls.push(did); },
+        },
+    };
+
+    const services: Partial<GridServices> = {
         clock:    new WorldClock({ tickRateMs: 1_000_000 }),
         space,
         logos:    new LogosEngine(),
         audit,
         gridName: 'test-grid',
         registry,
-        // Inject coordinator + space + brainFetch via the deleteNous deps hook
-        _deleteNousDeps: {
-            brainFetch: opts.brainFetch ?? (() => Promise.reject(new Error('no fetch'))),
-            space,
-            coordinator: {
-                despawnNous: (did: string) => { despawnCalls.push(did); },
-            },
-        },
-    } as unknown as GridServices;
+    };
 
-    return { services, registry, audit, space, despawnCalls };
+    const app = Fastify({ logger: false });
+    registerDeleteNousRoute(app, services as GridServices, deleteNousDeps);
+
+    return { app, registry, audit, space, despawnCalls };
 }
 
 describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-33)', () => {
@@ -82,30 +97,69 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         if (app) await app.close();
     });
 
+    it('401 — no headers (body-only tier claim rejected)', async () => {
+        ({ app } = buildTestApp({}));
+        await app.ready();
+
+        const res = await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
+            // No headers — body claims H5 but must be ignored
+            payload: { tier: 'H5', operator_id: OPERATOR },
+        });
+        expect(res.statusCode).toBe(401);
+        expect(res.json().error).toBe('tier_missing');
+    });
+
+    it('403 — header tier 4 (< 5) → tier_too_low', async () => {
+        ({ app } = buildTestApp({}));
+        await app.ready();
+
+        const res = await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
+            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
+        });
+        expect(res.statusCode).toBe(403);
+        expect(res.json().error).toBe('tier_too_low');
+    });
+
+    it('400 — invalid_operator_id when x-operator-id header is missing', async () => {
+        ({ app } = buildTestApp({}));
+        await app.ready();
+
+        const res = await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
+            headers: { 'x-operator-tier': '5' },
+        });
+        expect(res.statusCode).toBe(400);
+        expect(res.json().error).toBe('invalid_operator_id');
+    });
+
     it('400 — malformed DID (not-a-did)', async () => {
-        const { services } = buildServices({});
-        app = buildServer(services);
+        ({ app } = buildTestApp({}));
         await app.ready();
 
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/nous/not-a-did/delete',
-            payload: { tier: 'H5', operator_id: OPERATOR },
+            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(400);
         expect(res.json().error).toBe('invalid_did');
     });
 
     it('410 — already tombstoned DID returns 410 Gone', async () => {
-        const { services, registry, space } = buildServices({});
+        const { app: a, registry, space } = buildTestApp({});
+        app = a;
         registry.tombstone(ALPHA_DID, 5, space);
-        app = buildServer(services);
         await app.ready();
 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            payload: { tier: 'H5', operator_id: OPERATOR },
+            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(410);
         expect(res.json().error).toBe('gone');
@@ -113,14 +167,13 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
     });
 
     it('404 — DID not in registry', async () => {
-        const { services } = buildServices({ spawnAlpha: false });
-        app = buildServer(services);
+        ({ app } = buildTestApp({ spawnAlpha: false }));
         await app.ready();
 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            payload: { tier: 'H5', operator_id: OPERATOR },
+            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(404);
         expect(res.json().error).toBe('unknown_did');
@@ -130,14 +183,14 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         const brainFetch = vi.fn().mockRejectedValue(
             Object.assign(new Error('aborted'), { name: 'AbortError' }),
         );
-        const { services, registry, audit } = buildServices({ brainFetch });
-        app = buildServer(services);
+        const { app: a, registry, audit } = buildTestApp({ brainFetch });
+        app = a;
         await app.ready();
 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            payload: { tier: 'H5', operator_id: OPERATOR },
+            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(503);
         // Nous must remain active — tombstone must NOT have fired
@@ -151,14 +204,14 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         const brainFetch = vi.fn().mockResolvedValue(
             new Response(JSON.stringify(bad), { status: 200, headers: { 'content-type': 'application/json' } }),
         );
-        const { services, registry } = buildServices({ brainFetch });
-        app = buildServer(services);
+        const { app: a, registry } = buildTestApp({ brainFetch });
+        app = a;
         await app.ready();
 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            payload: { tier: 'H5', operator_id: OPERATOR },
+            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(503);
         expect(registry.get(ALPHA_DID)?.status).toBe('active');
@@ -169,45 +222,31 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         const brainFetch = vi.fn().mockResolvedValue(
             new Response(JSON.stringify(leaky), { status: 200, headers: { 'content-type': 'application/json' } }),
         );
-        const { services, registry } = buildServices({ brainFetch });
-        app = buildServer(services);
+        const { app: a, registry } = buildTestApp({ brainFetch });
+        app = a;
         await app.ready();
 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            payload: { tier: 'H5', operator_id: OPERATOR },
+            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(503);
         expect(registry.get(ALPHA_DID)?.status).toBe('active');
     });
 
-    it('400 — wrong tier (H4 instead of H5)', async () => {
-        const { services } = buildServices({});
-        app = buildServer(services);
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            payload: { tier: 'H4', operator_id: OPERATOR },
-        });
-        expect(res.statusCode).toBe(400);
-        expect(res.json().error).toBe('invalid_tier');
-    });
-
-    it('200 happy path — tombstones, despawns, emits audit event', async () => {
+    it('200 happy path — tombstones, despawns, emits audit event (operator_id from header)', async () => {
         const brainFetch = vi.fn().mockResolvedValue(
             new Response(JSON.stringify(BRAIN_HASHES), { status: 200, headers: { 'content-type': 'application/json' } }),
         );
-        const { services, registry, audit, despawnCalls } = buildServices({ brainFetch });
-        app = buildServer(services);
+        const { app: a, registry, audit, despawnCalls } = buildTestApp({ brainFetch });
+        app = a;
         await app.ready();
 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            payload: { tier: 'H5', operator_id: OPERATOR },
+            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(200);
         const body = res.json();
@@ -237,18 +276,40 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
             .toMatch(/^[0-9a-f]{64}$/);
     });
 
+    it('200 happy path — body tier field ignored when valid headers present', async () => {
+        const brainFetch = vi.fn().mockResolvedValue(
+            new Response(JSON.stringify(BRAIN_HASHES), { status: 200, headers: { 'content-type': 'application/json' } }),
+        );
+        const { app: a, audit } = buildTestApp({ brainFetch });
+        app = a;
+        await app.ready();
+
+        // Send H1 in body but H5 in header — header wins
+        const res = await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
+            headers: VALID_HEADERS,
+            payload: { tier: 'H1' },
+        });
+        expect(res.statusCode).toBe(200);
+
+        // Audit payload must reflect header-sourced tier (H5), not body tier (H1)
+        const entries = audit.query({ eventType: 'operator.nous_deleted' });
+        expect((entries[0].payload as { tier: string }).tier).toBe('H5');
+    });
+
     it('D-30 order: tombstone happens BEFORE audit append', async () => {
         const brainFetch = vi.fn().mockResolvedValue(
             new Response(JSON.stringify(BRAIN_HASHES), { status: 200, headers: { 'content-type': 'application/json' } }),
         );
-        const { services, registry, audit } = buildServices({ brainFetch });
-        app = buildServer(services);
+        const { app: a, registry, audit } = buildTestApp({ brainFetch });
+        app = a;
         await app.ready();
 
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            payload: { tier: 'H5', operator_id: OPERATOR },
+            headers: VALID_HEADERS,
         });
 
         // Both must have happened (tombstone AND audit)
@@ -261,15 +322,14 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         const brainFetch = vi.fn().mockResolvedValue(
             new Response(JSON.stringify(BRAIN_HASHES), { status: 200, headers: { 'content-type': 'application/json' } }),
         );
-        const { services } = buildServices({ brainFetch });
-        app = buildServer(services);
+        ({ app } = buildTestApp({ brainFetch }));
         await app.ready();
 
         // First delete
         const r1 = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            payload: { tier: 'H5', operator_id: OPERATOR },
+            headers: VALID_HEADERS,
         });
         expect(r1.statusCode).toBe(200);
 
@@ -277,7 +337,7 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         const r2 = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            payload: { tier: 'H5', operator_id: OPERATOR },
+            headers: VALID_HEADERS,
         });
         expect(r2.statusCode).toBe(410);
     });

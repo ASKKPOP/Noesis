@@ -1,6 +1,9 @@
 /**
  * Phase 10b Wave 0 RED stub — BIOS-03 H5 delete handler emits bios.death.
  *
+ * Updated in Phase 25b Wave 0 (D-25b-NEW-1): header-auth migration.
+ * Auth is now sourced from x-operator-tier + x-operator-id headers, not body.
+ *
  * Extends Phase 8 D-30 ordering: the operator H5 delete handler must
  * emit BOTH events in this strict order:
  *
@@ -11,21 +14,31 @@
  * (the Brain returns one stateHash; the handler reuses it across both
  * audit emissions).
  *
- * RED at Wave 0: the production handler in grid/src/api/operator/delete-nous.ts
- * does not yet emit bios.death. Wave 3 (Plan 10b-05) extends the handler.
+ * bios.death.operator_id (via actorDid on audit chain) and
+ * operator.nous_deleted.payload.operator_id must both equal the
+ * header-supplied x-operator-id value.
+ *
+ * Uses lightweight Fastify + route registration (mirrors cognitive-snapshot test pattern).
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { buildServer } from '../../../src/api/server.js';
+import Fastify from 'fastify';
 import { WorldClock } from '../../../src/clock/ticker.js';
 import { SpatialMap } from '../../../src/space/map.js';
 import { LogosEngine } from '../../../src/logos/engine.js';
 import { AuditChain } from '../../../src/audit/chain.js';
 import { NousRegistry } from '../../../src/registry/registry.js';
+import { registerDeleteNousRoute } from '../../../src/api/operator/delete-nous.js';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../../src/api/server.js';
 
 const OPERATOR  = 'op:11111111-1111-4111-8111-111111111111';
 const ALPHA_DID = 'did:noesis:alpha';
+
+// Valid headers for H5 requests.
+const VALID_HEADERS = {
+    'x-operator-tier': '5',
+    'x-operator-id': OPERATOR,
+};
 
 const BRAIN_HASHES = {
     psyche_hash:        'a'.repeat(64),
@@ -41,8 +54,8 @@ function spawnAlpha(registry: NousRegistry): void {
     );
 }
 
-function buildServices(opts: { brainFetch?: typeof fetch }): {
-    services: GridServices;
+function buildTestApp(opts: { brainFetch?: typeof fetch }): {
+    app: FastifyInstance;
     audit: AuditChain;
     despawnCalls: string[];
 } {
@@ -52,25 +65,32 @@ function buildServices(opts: { brainFetch?: typeof fetch }): {
     const despawnCalls: string[] = [];
     spawnAlpha(registry);
 
-    const services: GridServices = {
+    const deleteNousDeps = {
+        brainFetch: opts.brainFetch ?? (() =>
+            Promise.resolve(new Response(JSON.stringify(BRAIN_HASHES), {
+                status: 200,
+                headers: { 'content-type': 'application/json' },
+            }))
+        ),
+        space,
+        coordinator: {
+            despawnNous: (did: string) => { despawnCalls.push(did); },
+        },
+    };
+
+    const services: Partial<GridServices> = {
         clock:    new WorldClock({ tickRateMs: 1_000_000 }),
         space,
         logos:    new LogosEngine(),
         audit,
         gridName: 'test-grid',
         registry,
-        _deleteNousDeps: {
-            brainFetch: opts.brainFetch ?? (() =>
-                Promise.resolve(new Response(JSON.stringify(BRAIN_HASHES), { status: 200 }))
-            ),
-            space,
-            coordinator: {
-                despawnNous: (did: string) => { despawnCalls.push(did); },
-            },
-        },
-    } as unknown as GridServices;
+    };
 
-    return { services, audit, despawnCalls };
+    const app = Fastify({ logger: false });
+    registerDeleteNousRoute(app, services as GridServices, deleteNousDeps);
+
+    return { app, audit, despawnCalls };
 }
 
 describe('AGENCY-05 + BIOS-03 — H5 delete emits bios.death THEN operator.nous_deleted', () => {
@@ -78,14 +98,14 @@ describe('AGENCY-05 + BIOS-03 — H5 delete emits bios.death THEN operator.nous_
     afterEach(async () => { if (app) await app.close(); });
 
     it('chain tail contains bios.death immediately followed by operator.nous_deleted', async () => {
-        const { services, audit } = buildServices({});
-        app = buildServer(services);
+        const { app: a, audit } = buildTestApp({});
+        app = a;
         await app.ready();
 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            payload: { tier: 'H5', operator_id: OPERATOR },
+            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(200);
 
@@ -101,14 +121,14 @@ describe('AGENCY-05 + BIOS-03 — H5 delete emits bios.death THEN operator.nous_
     });
 
     it('bios.death payload carries cause=operator_h5 and the same tick as operator.nous_deleted', async () => {
-        const { services, audit } = buildServices({});
-        app = buildServer(services);
+        const { app: a, audit } = buildTestApp({});
+        app = a;
         await app.ready();
 
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            payload: { tier: 'H5', operator_id: OPERATOR },
+            headers: VALID_HEADERS,
         });
 
         const entries = audit.all();
@@ -131,14 +151,14 @@ describe('AGENCY-05 + BIOS-03 — H5 delete emits bios.death THEN operator.nous_
     });
 
     it('bios.death emitted BEFORE operator.nous_deleted (D-30 ordering carried)', async () => {
-        const { services, audit } = buildServices({});
-        app = buildServer(services);
+        const { app: a, audit } = buildTestApp({});
+        app = a;
         await app.ready();
 
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            payload: { tier: 'H5', operator_id: OPERATOR },
+            headers: VALID_HEADERS,
         });
 
         const entries = audit.all();
@@ -147,5 +167,25 @@ describe('AGENCY-05 + BIOS-03 — H5 delete emits bios.death THEN operator.nous_
         expect(biosIdx).toBeGreaterThanOrEqual(0);
         expect(operatorIdx).toBeGreaterThanOrEqual(0);
         expect(biosIdx).toBeLessThan(operatorIdx);
+    });
+
+    it('bios.death and operator.nous_deleted both source operator_id from x-operator-id header', async () => {
+        const { app: a, audit } = buildTestApp({});
+        app = a;
+        await app.ready();
+
+        await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
+            headers: VALID_HEADERS,
+        });
+
+        const entries = audit.all();
+        const operatorDeleted = entries.find(e => e.eventType === 'operator.nous_deleted');
+        expect(operatorDeleted).toBeDefined();
+
+        const operatorPayload = operatorDeleted!.payload as Record<string, unknown>;
+        // operator.nous_deleted payload.operator_id === header-supplied x-operator-id
+        expect(operatorPayload.operator_id).toBe(OPERATOR);
     });
 });
