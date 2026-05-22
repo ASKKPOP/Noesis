@@ -1,16 +1,18 @@
 import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
 /**
- * Vitest 2.x + Vite 5: use @vitejs/plugin-react for JSX automatic runtime
- * transform. The `oxc` key is Vite 8 syntax and is ignored on Vite 5.
+ * Vitest 4.x + Vite 8 (bundled rolldown/oxc): configure JSX via the native
+ * oxc option instead of @vitejs/plugin-react (which targets Vite 4-7 / babel).
  *
- * No HMR / react-refresh is needed because this config serves Vitest only
- * (tests run to completion, not a dev server).
+ * Vite 8 uses OXC for transforms. Setting `oxc.jsx` to automatic enables React
+ * JSX transform without any external plugin. This replaces the previous
+ * @vitejs/plugin-react approach which is incompatible with Vite 8's oxc pipeline.
+ *
+ * @vitejs/plugin-react is kept in devDependencies for IDE tooling / Next.js
+ * next.config usage, but is NOT loaded in this vitest config.
  */
 export default defineConfig({
-    plugins: [react()],
     test: {
         environment: 'jsdom',
         globals: true,
@@ -21,6 +23,11 @@ export default defineConfig({
         ],
         exclude: ['node_modules', '.next', 'tests/e2e/**'],
         css: false,
+    },
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+        },
     },
     resolve: {
         alias: { '@': path.resolve(__dirname, './src') },
