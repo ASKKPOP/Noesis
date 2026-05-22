@@ -100,6 +100,11 @@ export default function StewardShell({ title, breadcrumb, children }: StewardShe
                 <NavItem href="/firehose" label="Firehose" />
                 <NavItem href="/audit" label="Audit Log" />
 
+                {/* Observatory section — Phase 25c: read-only historical/derived views */}
+                <NavSection title="Observatory" />
+                <NavItem href="/replay" label="Replay" />
+                <NavItem href="/culture" label="Culture" />
+
                 {/* Grid section */}
                 <NavSection title="Grid" />
                 <NavItem href="/system" label="System" />
