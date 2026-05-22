@@ -206,6 +206,17 @@ export interface GridServices {
             tick: number;
         }): Promise<void>;
     };
+    /**
+     * Phase 25b SANCTION-05/06: human sanction DB operations (ban-human, freeze-wallet).
+     * When present, routes check human existence and update banned/frozen flags.
+     * When absent, the route returns 503 human_sanction_store_unavailable.
+     * Production wiring passes a mysql2/promise Pool query wrapper from genesis/launcher.
+     */
+    humanSanctionStore?: {
+        existsByDid(did: string): Promise<boolean>;
+        setBanned(did: string): Promise<void>;
+        setFrozen(did: string): Promise<void>;
+    };
 }
 
 /**

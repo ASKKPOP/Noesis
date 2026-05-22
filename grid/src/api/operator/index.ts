@@ -22,6 +22,7 @@ import { registerMuteBroadcastRoute } from './mute-broadcast.js';
 import { registerForceSleepRoute } from './force-sleep.js';
 import { registerQuarantineRoute } from './quarantine.js';
 import { registerSlashCoinRoute } from './slash-coin.js';
+import { registerBanHumanRoute } from './ban-human.js';
 
 export function registerOperatorRoutes(
     app: FastifyInstance,
@@ -45,4 +46,6 @@ export function registerOperatorRoutes(
     registerQuarantineRoute(app, services);
     // Phase 25b SANCTION-02: H4 — slash Nous ousia balance (punitive debit).
     registerSlashCoinRoute(app, services);
+    // Phase 25b SANCTION-05: H5 — ban human (full portal access revoked).
+    registerBanHumanRoute(app, services);
 }

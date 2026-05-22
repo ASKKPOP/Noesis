@@ -30,24 +30,26 @@ function sha256(text: string): string {
     return createHash('sha256').update(text).digest('hex');
 }
 
-/** Stub human_users DB rows keyed by DID. Each has a banned flag. */
-function makeHumanDb(existingDids: string[] = [HUMAN_DID]): {
-    rows: Map<string, { banned: number }>;
-    humanStore: GridServices['humanStore'];
+/** Stub humanSanctionStore — tracks which DIDs exist and banned state. */
+function makeHumanSanctionStore(existingDids: string[] = [HUMAN_DID]): {
+    bannedFlags: Map<string, boolean>;
+    humanSanctionStore: GridServices['humanSanctionStore'];
 } {
-    const rows = new Map<string, { banned: number }>(
-        existingDids.map(did => [did, { banned: 0 }]),
+    const bannedFlags = new Map<string, boolean>(
+        existingDids.map(did => [did, false]),
     );
 
-    const humanStore: GridServices['humanStore'] = {
-        findByDid: async (did: string) => rows.has(did) ? { did } as Record<string, unknown> : null,
+    const humanSanctionStore: GridServices['humanSanctionStore'] = {
+        existsByDid: async (did: string) => bannedFlags.has(did),
         setBanned: async (did: string) => {
-            const row = rows.get(did);
-            if (row) row.banned = 1;
+            if (bannedFlags.has(did)) bannedFlags.set(did, true);
         },
-    } as unknown as GridServices['humanStore'];
+        setFrozen: async (did: string) => {
+            // Not used by ban-human, included for interface completeness
+        },
+    } as unknown as GridServices['humanSanctionStore'];
 
-    return { rows, humanStore };
+    return { bannedFlags, humanSanctionStore };
 }
 
 function buildTestApp(opts: {
@@ -56,14 +58,14 @@ function buildTestApp(opts: {
 }): {
     app: FastifyInstance;
     audit: AuditChain;
-    rows: Map<string, { banned: number }>;
+    bannedFlags: Map<string, boolean>;
     insertCalls: Array<Record<string, unknown>>;
 } {
     const audit = new AuditChain();
     const insertCalls: Array<Record<string, unknown>> = [];
 
     const existingDids = opts.humanExists === false ? [] : [HUMAN_DID];
-    const { rows, humanStore } = makeHumanDb(existingDids);
+    const { bannedFlags, humanSanctionStore } = makeHumanSanctionStore(existingDids);
 
     const sanctionReasonStore = opts.sanctionReasonStore ?? {
         insert: async (row: Record<string, unknown>) => {
@@ -75,14 +77,14 @@ function buildTestApp(opts: {
         clock: new WorldClock({ tickRateMs: 1_000_000 }),
         audit,
         gridName: 'test-grid',
-        humanStore,
+        humanSanctionStore,
         sanctionReasonStore,
     };
 
     const app = Fastify({ logger: false });
     registerBanHumanRoute(app, services as GridServices);
 
-    return { app, audit, rows, insertCalls };
+    return { app, audit, bannedFlags, insertCalls };
 }
 
 describe('POST /api/v1/operator/humans/:did/ban — header-auth contract', () => {
@@ -192,12 +194,12 @@ describe('POST /api/v1/operator/humans/:did/ban — success path', () => {
         expect(res.json().ok).toBe(true);
     });
 
-    it('sets human_users.banned = 1 after successful ban', async () => {
-        let rows: Map<string, { banned: number }>;
-        ({ app, rows } = buildTestApp({}));
+    it('sets human_users.banned = true after successful ban', async () => {
+        let bannedFlags: Map<string, boolean>;
+        ({ app, bannedFlags } = buildTestApp({}));
         await app.ready();
 
-        expect(rows.get(HUMAN_DID)?.banned).toBe(0);
+        expect(bannedFlags.get(HUMAN_DID)).toBe(false);
 
         await app.inject({
             method: 'POST',
@@ -205,7 +207,7 @@ describe('POST /api/v1/operator/humans/:did/ban — success path', () => {
             headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
         });
 
-        expect(rows.get(HUMAN_DID)?.banned).toBe(1);
+        expect(bannedFlags.get(HUMAN_DID)).toBe(true);
     });
 
     it('emits operator.human_banned with human_did field (not target_did)', async () => {
