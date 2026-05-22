@@ -21,6 +21,7 @@ import {
 } from './db/index.js';
 import type { GenesisConfig } from './genesis/types.js';
 import type { FastifyInstance } from 'fastify';
+import type { SpawnNousDeps } from './api/operator/spawn-system-nous.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -82,6 +83,12 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     // Bootstrap infra (regions, connections, laws) — skip Nous for now
     launcher.bootstrap({ skipSeedNous: true });
 
+    // D-03: SpawnNousDeps — wraps launcher.spawnNous for spawn-system-nous route.
+    const spawnNousDeps = {
+        spawnNous: (name: string, did: string, publicKey: string, region: string) =>
+            launcher.spawnNous(name, did, publicKey, region),
+    };
+
     // HI-01 closure (09-VERIFICATION.md): wire the derived `relationships`
     // MySQL snapshot path. MUST run AFTER MigrationRunner so
     // sql/009_relationships.sql is applied before the first snapshot fires,
@@ -125,6 +132,31 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
 
     const loreStorage = dbConn ? new LoreStorage(dbConn.getPool()) : undefined;
 
+    // D-02: humanSanctionStore — DB pool wrapper for ban-human + freeze-wallet routes.
+    // Must be conditioned on dbConn (test envs run without MySQL).
+    const humanSanctionStore = dbConn ? {
+        async existsByDid(did: string): Promise<boolean> {
+            const pool = dbConn.getPool();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const [rows] = await pool.query('SELECT did FROM human_users WHERE did = ? LIMIT 1', [did]) as any;
+            return (rows as Array<{ did: string }>).length > 0;
+        },
+        async setBanned(did: string): Promise<void> {
+            const pool = dbConn.getPool();
+            await pool.query('UPDATE human_users SET banned = 1 WHERE did = ?', [did]);
+        },
+        async setFrozen(did: string): Promise<void> {
+            const pool = dbConn.getPool();
+            await pool.query('UPDATE human_users SET frozen = 1 WHERE did = ?', [did]);
+        },
+        async getFlags(did: string): Promise<{ frozen: number; banned: number } | null> {
+            const pool = dbConn.getPool();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const [rows] = await pool.query('SELECT frozen, banned FROM human_users WHERE did = ? LIMIT 1', [did]) as any;
+            return (rows as Array<{ frozen: number; banned: number }>)[0] ?? null;
+        },
+    } : undefined;
+
     const server = buildServer({
         clock: launcher.clock,
         space: launcher.space,
@@ -141,6 +173,10 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
             engine: launcher.governance,
         },
         ...(loreStorage ? { lore: { storage: loreStorage } } : {}),
+        ...(humanSanctionStore ? { humanSanctionStore } : {}),
+        // D-03: inject spawnNousDeps via _spawnNousDeps escape hatch (see spawn-system-nous.ts line 89).
+        // Cast required because _spawnNousDeps is not on the public GridServices interface.
+        ...({ _spawnNousDeps: spawnNousDeps } as unknown as { _spawnNousDeps: SpawnNousDeps }),
         // Plan 04-03: runner lookup for the inspector proxy. Runners are
         // constructed by a future sub-plan that wires GridCoordinator here;
         // until then the lookup always returns undefined → 404 unknown_nous.

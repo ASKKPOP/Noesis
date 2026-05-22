@@ -47,7 +47,12 @@ function makeHumanSanctionStore(existingDids: string[] = [HUMAN_DID]): {
         setFrozen: async (did: string) => {
             // Not used by ban-human, included for interface completeness
         },
-    } as unknown as GridServices['humanSanctionStore'];
+        getFlags: async (did: string) => {
+            // Return null for unknown DIDs; banned=0 for known (not yet banned)
+            if (!bannedFlags.has(did)) return null;
+            return { frozen: 0, banned: bannedFlags.get(did) ? 1 : 0 };
+        },
+    };
 
     return { bannedFlags, humanSanctionStore };
 }
@@ -205,6 +210,7 @@ describe('POST /api/v1/operator/humans/:did/ban — success path', () => {
             method: 'POST',
             url: `/api/v1/operator/humans/${HUMAN_DID}/ban`,
             headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
+            payload: { reason: 'policy violation in community' },
         });
 
         expect(bannedFlags.get(HUMAN_DID)).toBe(true);
@@ -287,22 +293,22 @@ describe('POST /api/v1/operator/humans/:did/ban — reason discipline', () => {
         expect(insertCalls[0]?.operator_id).toBe(OPERATOR);
     });
 
-    it('uses empty-string reason and SHA-256 of empty when reason is absent', async () => {
+    it('returns 400 reason_required when reason is absent or shorter than 10 chars', async () => {
         let audit: AuditChain;
-        let insertCalls: Array<Record<string, unknown>>;
 
-        ({ app, audit, insertCalls } = buildTestApp({}));
+        ({ app, audit } = buildTestApp({}));
         await app.ready();
 
-        await app.inject({
+        const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/humans/${HUMAN_DID}/ban`,
             headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
-            // No body.reason
+            // No body.reason — length 0, < 10
         });
 
-        const banned = audit.query({ eventType: 'operator.human_banned' });
-        expect((banned[0].payload as Record<string, unknown>).reason_hash).toBe(sha256(''));
-        expect(insertCalls[0]?.plaintext).toBe('');
+        expect(res.statusCode).toBe(400);
+        expect(res.json().error).toBe('reason_required');
+        // No audit event emitted on error path
+        expect(audit.query({ eventType: 'operator.human_banned' })).toHaveLength(0);
     });
 });
