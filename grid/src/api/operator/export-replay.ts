@@ -2,7 +2,7 @@
  * POST /api/v1/operator/replay/export — H5 Sovereign export endpoint.
  *
  * Phase 13 REPLAY-02 / D-13-09 — The operator-facing entry point that:
- *   1. Validates H5 tier + operator_id (validateTierBody).
+ *   1. Validates H5 tier + operator_id (header-trust auth per D-25b-NEW-1).
  *   2. Validates the tick range (non-negative integers, end ≥ start).
  *   3. Reads the audit slice from services.audit (live chain, READ-ONLY).
  *   4. Builds start + end ReplayState snapshots via ReplayGrid + buildStateAtTick.
@@ -11,8 +11,12 @@
  *   7. Streams the tarball bytes back with X-Tarball-Hash + Content-Disposition headers.
  *
  * SECURITY PROPERTIES:
- *   T-13-04-01 (Spoofing): validateTierBody enforces tier === 'H5' by strict equality.
- *     Self-report invariant in appendOperatorExported prevents cross-operator attribution.
+ *   T-25b-06-01 (Elevation of Privilege): H5 header-trust gate per D-25b-NEW-1.
+ *     tier and operator_id are derived from server-trusted request headers
+ *     (x-operator-tier, x-operator-id) — NOT from the request body.
+ *     Body-supplied tier/operator_id are ignored (GAP-25a-1 fix pattern).
+ *   T-25b-06-02 (Repudiation): operator.exported.operator_id sourced from
+ *     server-trusted header, not body — prevents cross-operator attribution.
  *   T-13-04-03 (Elevation of Privilege): H5 is the maximum tier — no escalation surface.
  *   T-10-10 (Privacy): appendOperatorExported's closed-tuple + payloadPrivacyCheck are
  *     the last line of defense. The route only ever passes the closed 6-tuple — no
@@ -25,22 +29,32 @@
  *   Audit event is committed BEFORE bytes leave the system — non-repudiable trail.
  *   On any error before the audit append: NO audit event is emitted.
  *
- * Template: grid/src/api/operator/delete-nous.ts (registrar shape).
+ * AUTH MODEL (Phase 25b Wave 0 / D-25b-NEW-1):
+ *   tier and operator_id read from server-trusted x-operator-tier / x-operator-id headers.
+ *   Request body is NOT trusted for auth fields — only start_tick / end_tick remain in body.
  *
- * See: REPLAY-02, D-13-09, T-10-08, T-10-10, T-13-04-01, T-13-04-03.
+ * ERROR LADDER (no 500s):
+ *   400 — invalid_operator_id / invalid_start_tick / invalid_end_tick / empty_slice / audit_emit_failed
+ *   401 — tier_missing (x-operator-tier header absent / non-numeric)
+ *   403 — tier_too_low (x-operator-tier < 5)
+ *   200 — success, tarball streamed
+ *
+ * Template: grid/src/api/operator/cognitive-snapshot.ts (header-auth pattern).
+ *
+ * See: REPLAY-02, D-13-09, D-25b-NEW-1, T-10-08, T-10-10, T-25b-06-01, T-25b-06-02.
  */
 
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import type { ApiError } from '../types.js';
-import { validateTierBody, type OperatorBody } from './_validation.js';
+import { OPERATOR_ID_REGEX } from '../types.js';
 import { appendOperatorExported, type OperatorExportedPayload } from '../../audit/append-operator-exported.js';
 import { buildExportTarball } from '../../export/tarball-builder.js';
 import { createManifest } from '../../export/manifest.js';
 import { ReplayGrid } from '../../replay/replay-grid.js';
 import { buildStateAtTick } from '../../replay/state-builder.js';
 
-interface ExportReplayBody extends OperatorBody {
+interface ExportReplayBody {
     start_tick?: unknown;
     end_tick?: unknown;
 }
@@ -50,14 +64,33 @@ export function registerReplayExportRoute(
     services: GridServices,
 ): void {
     app.post<{ Body: ExportReplayBody }>('/api/v1/operator/replay/export', async (req, reply) => {
-        const body = (req.body ?? {}) as ExportReplayBody;
-
-        // 1. Tier + operator_id gate (H5).
-        const v = validateTierBody(body, 'H5');
-        if (!v.ok) {
-            reply.code(400);
-            return { error: v.error } satisfies ApiError;
+        // 1. Tier gate — read from server-trusted x-operator-tier header (D-25b-NEW-1).
+        //    GAP-25a-1 fix: body fields tier/operator_id are NOT trusted.
+        const tierHeader = req.headers['x-operator-tier'];
+        if (typeof tierHeader !== 'string') {
+            reply.code(401);
+            return { error: 'tier_missing' } satisfies ApiError;
         }
+        const tierNum = parseInt(tierHeader, 10);
+        if (!Number.isFinite(tierNum)) {
+            reply.code(401);
+            return { error: 'tier_missing' } satisfies ApiError;
+        }
+        if (tierNum < 5) {
+            reply.code(403);
+            return { error: 'tier_too_low' } satisfies ApiError;
+        }
+
+        // 1b. Operator-id gate — read from server-trusted x-operator-id header.
+        const opIdHeader = req.headers['x-operator-id'];
+        if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) {
+            reply.code(400);
+            return { error: 'invalid_operator_id' } satisfies ApiError;
+        }
+        const resolvedTier: 'H5' = 'H5';
+        const resolvedOperatorId = opIdHeader;
+
+        const body = (req.body ?? {}) as ExportReplayBody;
 
         // 2. Tick range validation.
         const startTick = body.start_tick;
@@ -120,11 +153,12 @@ export function registerReplayExportRoute(
 
         // 7. Sole-producer audit event — emit BEFORE streaming response (D-30 order).
         //    requested_at = Unix SECONDS per D-13-09 (NOT Date.now() milliseconds).
+        //    operator_id sourced from header (resolvedOperatorId), NOT body (T-25b-06-02).
         const requestedAt = Math.floor(Date.now() / 1000);
 
         const exportPayload: OperatorExportedPayload = {
-            tier: 'H5',
-            operator_id: v.operator_id,
+            tier: resolvedTier,
+            operator_id: resolvedOperatorId,
             start_tick: startTickN,
             end_tick: endTickN,
             tarball_hash: tarballHash,
@@ -132,7 +166,7 @@ export function registerReplayExportRoute(
         };
 
         try {
-            appendOperatorExported(services.audit, v.operator_id, exportPayload);
+            appendOperatorExported(services.audit, resolvedOperatorId, exportPayload);
         } catch (err) {
             // If the sole-producer rejects (should never happen with valid inputs),
             // log and refuse — never leak partial export without a recorded trail.
