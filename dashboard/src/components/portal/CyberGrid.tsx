@@ -131,7 +131,16 @@ interface TooltipState { x: number; y: number; name: string; typeStr: string; de
 interface PanelState { id: DistrictId; }
 
 // ── CyberGrid canvas component ───────────────────────────────────────────────
-export default function CyberGrid() {
+interface CyberGridProps {
+    /** If set, buildings in this district pulse with increased glow intensity.
+     *  Pass null or undefined for default state (steps 1 and 2 of the wizard). */
+    highlightDistrict?: DistrictId | null;
+    /** When true, suppresses all HUD overlays (header, stats bar, legend, controls,
+     *  corner decorations, scanlines). Required for the onboarding wizard. Default: false. */
+    hideHud?: boolean;
+}
+
+export default function CyberGrid({ highlightDistrict, hideHud }: CyberGridProps = {}) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const rafRef = useRef<number>(0);
@@ -144,6 +153,10 @@ export default function CyberGrid() {
     const packetsRef  = useRef(true);
     const rainRef     = useRef(true);
     const rotateRef   = useRef(false);
+    const highlightDistrictRef = useRef<DistrictId | null>(highlightDistrict ?? null);
+    useEffect(() => {
+        highlightDistrictRef.current = highlightDistrict ?? null;
+    }, [highlightDistrict]);
 
     const [stats,   setStats]   = useState({ nodes: 3, pps: 0, uptime: '00:00:00' });
     const [tooltip, setTooltip] = useState<TooltipState | null>(null);
@@ -267,14 +280,21 @@ export default function CyberGrid() {
             gr.addColorStop(0, '#020610'); gr.addColorStop(1, colorMix(d.dark, 0.7));
             ctx.fillStyle = gr; ctx.fill();
 
+            // District highlight pulse (for onboarding world tour step 3)
+            const isHighlighted = highlightDistrictRef.current !== null &&
+                WORLD.tileMap[r]?.[c] === highlightDistrictRef.current;
+            const pulseMult = isHighlighted ? 0.8 + 0.2 * Math.sin(tick * 0.05) : 1;
+
             ctx.beginPath();
             ctx.moveTo(p.x, p.y - h - th2); ctx.lineTo(p.x + tw2, p.y - h);
             ctx.lineTo(p.x, p.y - h + th2); ctx.lineTo(p.x - tw2, p.y - h); ctx.closePath();
             const gt = ctx.createRadialGradient(p.x, p.y - h, 0, p.x, p.y - h, tw2);
-            gt.addColorStop(0, colorMix(d.color, nightRef.current ? 0.6 : 0.5));
+            const topAlpha = isHighlighted ? (nightRef.current ? 0.6 : 0.5) + 0.25 : (nightRef.current ? 0.6 : 0.5);
+            gt.addColorStop(0, colorMix(d.color, topAlpha));
             gt.addColorStop(1, colorMix(d.dark, 0.8));
             ctx.fillStyle = gt; ctx.fill();
-            ctx.shadowColor = d.glow; ctx.shadowBlur = nightRef.current ? 22 : 12;
+            ctx.shadowColor = d.glow;
+            ctx.shadowBlur = isHighlighted ? 32 * pulseMult : (nightRef.current ? 22 : 12);
             ctx.strokeStyle = colorMix(d.color, nightRef.current ? 0.7 : 0.5);
             ctx.lineWidth = 0.8; ctx.stroke(); ctx.shadowBlur = 0;
 
@@ -512,11 +532,13 @@ export default function CyberGrid() {
             <canvas ref={canvasRef} className="absolute inset-0 cursor-crosshair" />
 
             {/* ── Scanlines ── */}
-            <div className="pointer-events-none absolute inset-0 opacity-50"
-                style={{ background: 'repeating-linear-gradient(0deg,rgba(0,0,0,0) 0px,rgba(0,0,0,0) 2px,rgba(0,0,8,0.15) 2px,rgba(0,0,8,0.15) 4px)' }} />
+            {!hideHud && (
+                <div className="pointer-events-none absolute inset-0 opacity-50"
+                    style={{ background: 'repeating-linear-gradient(0deg,rgba(0,0,0,0) 0px,rgba(0,0,0,0) 2px,rgba(0,0,8,0.15) 2px,rgba(0,0,8,0.15) 4px)' }} />
+            )}
 
             {/* ── Corner decorations ── */}
-            {[
+            {!hideHud && [
                 'top-3 left-3 border-t border-l',
                 'top-3 right-3 border-t border-r',
                 'bottom-3 left-3 border-b border-l',
@@ -526,54 +548,62 @@ export default function CyberGrid() {
             ))}
 
             {/* ── HUD: Header ── */}
-            <div className="pointer-events-none absolute left-8 top-6 select-none">
-                <div className="text-2xl font-bold tracking-[6px] text-cyan-400"
-                    style={{ textShadow: '0 0 10px #00d4ff, 0 0 30px #00d4ff80' }}>
-                    NOĒSIS
+            {!hideHud && (
+                <div className="pointer-events-none absolute left-8 top-6 select-none">
+                    <div className="text-2xl font-bold tracking-[6px] text-cyan-400"
+                        style={{ textShadow: '0 0 10px #00d4ff, 0 0 30px #00d4ff80' }}>
+                        NOĒSIS
+                    </div>
+                    <div className="mt-0.5 text-[11px] tracking-[3px] text-cyan-400/55 uppercase">
+                        // CYBER GRID — LIVE WORLD MAP
+                    </div>
+                    <div className="mt-0.5 text-[9px] tracking-[2px] text-cyan-400/44">
+                        GRID NODE v2.4 ● GENESIS CLUSTER ● UPTIME {stats.uptime}
+                    </div>
                 </div>
-                <div className="mt-0.5 text-[11px] tracking-[3px] text-cyan-400/55 uppercase">
-                    // CYBER GRID — LIVE WORLD MAP
-                </div>
-                <div className="mt-0.5 text-[9px] tracking-[2px] text-cyan-400/44">
-                    GRID NODE v2.4 ● GENESIS CLUSTER ● UPTIME {stats.uptime}
-                </div>
-            </div>
+            )}
 
             {/* ── HUD: Controls ── */}
-            <div className="absolute right-8 top-6 flex gap-3 pointer-events-auto">
-                {btn('◐ NIGHT',    nightMode,   toggleNight)}
-                {btn('▶ PACKETS',  showPackets, togglePackets)}
-                {btn('✦ RAIN',     showRain,    toggleRain)}
-                {btn('↺ ROTATE',   autoRotate,  toggleRotate)}
-            </div>
+            {!hideHud && (
+                <div className="absolute right-8 top-6 flex gap-3 pointer-events-auto">
+                    {btn('◐ NIGHT',    nightMode,   toggleNight)}
+                    {btn('▶ PACKETS',  showPackets, togglePackets)}
+                    {btn('✦ RAIN',     showRain,    toggleRain)}
+                    {btn('↺ ROTATE',   autoRotate,  toggleRotate)}
+                </div>
+            )}
 
             {/* ── HUD: Stats bar ── */}
-            <div className="pointer-events-none absolute bottom-6 left-8 flex gap-8 select-none">
-                {[
-                    { label: 'Active Nodes', value: stats.nodes.toString() },
-                    { label: 'Packets/s',    value: stats.pps.toString() },
-                    { label: 'Grid Health',  value: '100%' },
-                    { label: 'Uptime',       value: stats.uptime },
-                ].map(({ label, value }) => (
-                    <div key={label} className="flex flex-col gap-0.5">
-                        <div className="text-[9px] tracking-[2px] uppercase text-cyan-400/55">{label}</div>
-                        <div className="text-base font-bold tracking-[2px] text-cyan-400"
-                            style={{ textShadow: '0 0 8px #00d4ff88' }}>
-                            {value}
+            {!hideHud && (
+                <div className="pointer-events-none absolute bottom-6 left-8 flex gap-8 select-none">
+                    {[
+                        { label: 'Active Nodes', value: stats.nodes.toString() },
+                        { label: 'Packets/s',    value: stats.pps.toString() },
+                        { label: 'Grid Health',  value: '100%' },
+                        { label: 'Uptime',       value: stats.uptime },
+                    ].map(({ label, value }) => (
+                        <div key={label} className="flex flex-col gap-0.5">
+                            <div className="text-[9px] tracking-[2px] uppercase text-cyan-400/55">{label}</div>
+                            <div className="text-base font-bold tracking-[2px] text-cyan-400"
+                                style={{ textShadow: '0 0 8px #00d4ff88' }}>
+                                {value}
+                            </div>
                         </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
             {/* ── HUD: Legend ── */}
-            <div className="pointer-events-none absolute bottom-6 right-8 select-none">
-                {(Object.entries(DISTRICTS) as [DistrictId, District][]).map(([id, d]) => (
-                    <div key={id} className="mb-1.5 flex items-center gap-2 text-[10px] tracking-[1px] text-white/55">
-                        <div className="h-2 w-2 shrink-0 rounded-full" style={{ background: d.color, boxShadow: `0 0 6px ${d.color}` }} />
-                        {d.name}
-                    </div>
-                ))}
-            </div>
+            {!hideHud && (
+                <div className="pointer-events-none absolute bottom-6 right-8 select-none">
+                    {(Object.entries(DISTRICTS) as [DistrictId, District][]).map(([id, d]) => (
+                        <div key={id} className="mb-1.5 flex items-center gap-2 text-[10px] tracking-[1px] text-white/55">
+                            <div className="h-2 w-2 shrink-0 rounded-full" style={{ background: d.color, boxShadow: `0 0 6px ${d.color}` }} />
+                            {d.name}
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* ── Tooltip ── */}
             {tooltip && (
