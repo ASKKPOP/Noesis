@@ -91,6 +91,13 @@ export function registerBanHumanRoute(app: FastifyInstance, services: GridServic
                 return { error: 'unknown_human' } satisfies ApiError;
             }
 
+            // 3b. Idempotency — WR-03 fix: if the human is already banned, return success
+            //     without emitting a duplicate audit event. Repeated calls are safe.
+            const currentFlags = await services.humanSanctionStore.getFlags(targetDid);
+            if (currentFlags && currentFlags.banned === 1) {
+                return { ok: true };
+            }
+
             // 4. Reason hash — SHA-256(plaintext). Plaintext stored in sanction_reasons; hash in audit.
             //    WR-02 fix: enforce minimum reason length server-side (UI minLength is bypassable).
             const reasonPlain = typeof req.body?.reason === 'string' ? req.body.reason : '';
