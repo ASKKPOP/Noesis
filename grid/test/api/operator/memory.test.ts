@@ -10,6 +10,10 @@
  *
  * Error ladder: 400 (malformed) → 404 (unknown Nous) → 503 (Brain down),
  * with no 500s. 503 and 400/404 do NOT emit audit events.
+ *
+ * Updated Phase 25b Wave 0: auth migrated to header-trust (D-25b-NEW-1).
+ * Tier and operator_id are now sent as x-operator-tier / x-operator-id
+ * headers; body-supplied values are ignored.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -22,6 +26,10 @@ import type { FastifyInstance } from 'fastify';
 
 const VALID_OP_ID = 'op:11111111-1111-4111-8111-111111111111';
 const VALID_DID = 'did:noesis:sophia';
+const VALID_HEADERS = {
+    'x-operator-tier': '2',
+    'x-operator-id': VALID_OP_ID,
+};
 
 interface MockRunner extends InspectorRunner {
     lastCall?: { query: string; limit?: number };
@@ -95,7 +103,8 @@ describe('Operator memory query — AGENCY-02 H2 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/memory/query`,
-            payload: { tier: 'H2', operator_id: VALID_OP_ID, query: 'merchant' },
+            headers: VALID_HEADERS,
+            payload: { query: 'merchant' },
         });
         expect(res.statusCode).toBe(200);
         const body = res.json();
@@ -121,22 +130,24 @@ describe('Operator memory query — AGENCY-02 H2 + D-11 privacy', () => {
         );
     });
 
-    it('Test 2: invalid tier → 400 invalid_tier, no audit event', async () => {
+    it('Test 2: missing tier header → 401 tier_missing, no audit event (D-25b-NEW-1)', async () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/memory/query`,
-            payload: { tier: 'H3', operator_id: VALID_OP_ID, query: 'x' },
+            // No headers — body tier is now ignored
+            payload: { query: 'x' },
         });
-        expect(res.statusCode).toBe(400);
-        expect(res.json()).toEqual({ error: 'invalid_tier' });
+        expect(res.statusCode).toBe(401);
+        expect(res.json()).toEqual({ error: 'tier_missing' });
         expect(services.audit.query({ eventType: 'operator.inspected' }).length).toBe(0);
     });
 
-    it('Test 3: invalid operator_id → 400 invalid_operator_id, no audit event', async () => {
+    it('Test 3: invalid operator_id header → 400 invalid_operator_id, no audit event', async () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/memory/query`,
-            payload: { tier: 'H2', operator_id: 'not-a-uuid', query: 'x' },
+            headers: { 'x-operator-tier': '2', 'x-operator-id': 'not-a-uuid' },
+            payload: { query: 'x' },
         });
         expect(res.statusCode).toBe(400);
         expect(res.json()).toEqual({ error: 'invalid_operator_id' });
@@ -147,7 +158,8 @@ describe('Operator memory query — AGENCY-02 H2 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/nous/garbage-did/memory/query',
-            payload: { tier: 'H2', operator_id: VALID_OP_ID, query: 'x' },
+            headers: VALID_HEADERS,
+            payload: { query: 'x' },
         });
         expect(res.statusCode).toBe(400);
         expect(res.json()).toEqual({ error: 'invalid_did' });
@@ -158,7 +170,8 @@ describe('Operator memory query — AGENCY-02 H2 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/nous/did:noesis:nobody/memory/query',
-            payload: { tier: 'H2', operator_id: VALID_OP_ID, query: 'x' },
+            headers: VALID_HEADERS,
+            payload: { query: 'x' },
         });
         expect(res.statusCode).toBe(404);
         expect(res.json()).toEqual({ error: 'unknown_nous' });
@@ -177,7 +190,8 @@ describe('Operator memory query — AGENCY-02 H2 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/memory/query`,
-            payload: { tier: 'H2', operator_id: VALID_OP_ID, query: 'x' },
+            headers: VALID_HEADERS,
+            payload: { query: 'x' },
         });
         expect(res.statusCode).toBe(503);
         expect(res.json()).toEqual({ error: 'brain_unavailable' });
@@ -199,7 +213,8 @@ describe('Operator memory query — AGENCY-02 H2 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/memory/query`,
-            payload: { tier: 'H2', operator_id: VALID_OP_ID, query: 'x' },
+            headers: VALID_HEADERS,
+            payload: { query: 'x' },
         });
         expect(res.statusCode).toBe(503);
         expect(res.json()).toEqual({ error: 'brain_unavailable' });
