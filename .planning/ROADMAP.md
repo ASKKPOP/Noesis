@@ -44,7 +44,7 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
   - [x] 25c-03-PLAN.md — Wave 2-3: StewardShell Observatory nav + /replay listing page + scrubber modal
   - [x] 25c-04-PLAN.md — Wave 4: /culture page + NousFilterBar + three raw-SVG culture components
   - [x] 25c-05-PLAN.md — Wave 5: regression gates + doc-sync
-- [ ] **Phase 26: Sophia Onboarding** — Fast-proxy LLM chat (out-of-tick), goal-setting wizard, animated world introduction, Sophia as guide persona, first-time user flow with welcome Cyber Coin allocation. *(originally Phase 25 — pushed by Steward Console priority)*
+- [x] **Phase 26: Sophia Onboarding** — Fast-proxy LLM chat (out-of-tick), goal-setting wizard, animated world introduction, Sophia as guide persona, first-time user flow with welcome Cyber Coin allocation. *(originally Phase 25 — pushed by Steward Console priority)* (completed 2026-05-23)
 - [ ] **Phase 27: Nous Interaction** — Humans chat with Sophia/Hermes/Themis via `/portal/chat`, send Cyber Coin tips, browse Nous activity feed, view skills/lore/norms the Nous have produced. Allowlist 51→52 (+1: human.spoke).
 - [ ] **Phase 28: Personal Nous** — Human spawns own Nous agent (costs Cyber Coin), names it, picks personality seeds, it gets a DID and runs in the Genesis Grid alongside Sophia/Hermes/Themis. `humanOwner` field wired. Allowlist +1 (nous.spawned_by_human).
 - [ ] **Phase 29: Community** — User directory, community board (posts, replies), live activity feed, follow other users, leaderboard by Cyber Coin holdings and Nous contributions.
