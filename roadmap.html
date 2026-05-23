@@ -201,10 +201,10 @@
 
   <div class="stats">
     <div class="stat"><div class="stat-label">Current milestone</div><div class="stat-value active">v2.5 · Human Portal</div></div>
-    <div class="stat"><div class="stat-label">Phases complete</div><div class="stat-value shipped">25 / 29</div></div>
-    <div class="stat"><div class="stat-label">Plans (shipped)</div><div class="stat-value shipped">133 / 133*</div></div>
-    <div class="stat"><div class="stat-label">Audit allowlist</div><div class="stat-value">45 events</div></div>
-    <div class="stat"><div class="stat-label">Last shipped</div><div class="stat-value">25a · 2026-05-21</div></div>
+    <div class="stat"><div class="stat-label">Phases complete</div><div class="stat-value shipped">26 / 30</div></div>
+    <div class="stat"><div class="stat-label">Plans (shipped)</div><div class="stat-value shipped">158 / 158*</div></div>
+    <div class="stat"><div class="stat-label">Audit allowlist</div><div class="stat-value">51 events</div></div>
+    <div class="stat"><div class="stat-label">Last shipped</div><div class="stat-value">26 · 2026-05-22</div></div>
   </div>
 
   <div class="legend">
@@ -220,7 +220,7 @@
 <details class="milestone active" open>
   <summary class="milestone-head">
     <span class="chev">▶</span>
-    <span class="milestone-title">v2.5 · Human Portal <small>Phases 22–29</small></span>
+    <span class="milestone-title">v2.5 · Human Portal <small>Phases 22–30</small></span>
     <span class="milestone-meta">opened 2026-05-20</span>
     <span class="badge active">active</span>
   </summary>
@@ -241,17 +241,18 @@
             <div class="sub-phases">
               <div class="sub-phases-title">Sub-phases</div>
               <div class="sub-phase"><strong>25a</strong> Observer surfaces — live firehose, Cognitive Inspector, Brain Health, Allowlist Monitor, /humans/[did]. 7/7 plans (incl. 25a-07 codex gap closure). Allowlist Δ 0. <span class="badge shipped">shipped 2026-05-21</span></div>
-              <div class="sub-phase"><strong>25b</strong> Sanctions + spawn wizard — H-tier-gated writes (mute, slash-coin, quarantine, force-sleep, ban/freeze human, researcher Nous spawn). Allowlist Δ +6. <span class="badge pending">planned</span></div>
-              <div class="sub-phase"><strong>25c</strong> Replay scrubber + culture browser — REPLAY-05 modal scrubber + Phase 21 culture views re-themed into Steward. Allowlist Δ 0. <span class="badge pending">planned</span></div>
+              <div class="sub-phase"><strong>25b</strong> Sanctions + spawn wizard — H-tier-gated writes (mute, slash-coin, quarantine, force-sleep, ban/freeze human, researcher Nous spawn). Allowlist Δ +6. <span class="badge shipped">shipped 2026-05-21</span></div>
+              <div class="sub-phase"><strong>25c</strong> Replay scrubber + culture browser — REPLAY-05 modal scrubber + Phase 21 culture views re-themed into Steward. Allowlist Δ 0. <span class="badge shipped">shipped 2026-05-22</span></div>
             </div>
           </td>
           <td class="allow">45 → 51 (cumulative)</td>
-          <td class="status"><span class="badge partial">25a done</span></td>
+          <td class="status"><span class="badge shipped">shipped</span></td>
         </tr>
-        <tr><td class="id">26</td><td class="name">Nous Interaction</td><td class="desc">Humans chat with Sophia/Hermes/Themis via <code>/portal/chat</code>, send Cyber Coin tips, browse Nous activity feed, view skills/lore/norms produced.</td><td class="allow">+human.spoke</td><td class="status"><span class="badge pending">planned</span></td></tr>
-        <tr><td class="id">27</td><td class="name">Personal Nous</td><td class="desc">Human spawns own Nous agent (costs Cyber Coin), names it, picks personality seeds. Gets a DID and runs in Genesis Grid alongside Sophia/Hermes/Themis.</td><td class="allow">+nous.spawned_by_human</td><td class="status"><span class="badge pending">planned</span></td></tr>
-        <tr><td class="id">28</td><td class="name">Community</td><td class="desc">User directory, community board (posts/replies), live activity feed, follow other users, leaderboard by Cyber Coin holdings + Nous contributions.</td><td class="allow">—</td><td class="status"><span class="badge pending">planned</span></td></tr>
-        <tr><td class="id">29</td><td class="name">Resources &amp; Support</td><td class="desc">Help center, interactive guide, FAQ, onboarding documentation, support ticket flow, Noēsis glossary (Nous, Ousia, Agora, lore, norms).</td><td class="allow">—</td><td class="status"><span class="badge pending">planned</span></td></tr>
+        <tr><td class="id">26</td><td class="name">Sophia Onboarding</td><td class="desc">3-step wizard (Welcome → Sophia Chat → World Tour), fast-proxy LLM chat (out-of-tick, Ollama), <code>onboarding_goal</code> MySQL column, PATCH <code>/me</code>, CyberGrid <code>hideHud</code> + <code>highlightDistrict</code> props. 6 plans.</td><td class="allow">51 (no Δ)</td><td class="status"><span class="badge shipped">shipped</span></td></tr>
+        <tr><td class="id">27</td><td class="name">Nous Interaction</td><td class="desc">Humans chat with Sophia/Hermes/Themis via <code>/portal/chat</code>, send Cyber Coin tips, browse Nous activity feed, view skills/lore/norms produced.</td><td class="allow">+human.spoke</td><td class="status"><span class="badge pending">planned</span></td></tr>
+        <tr><td class="id">28</td><td class="name">Personal Nous</td><td class="desc">Human spawns own Nous agent (costs Cyber Coin), names it, picks personality seeds. Gets a DID and runs in Genesis Grid alongside Sophia/Hermes/Themis.</td><td class="allow">+nous.spawned_by_human</td><td class="status"><span class="badge pending">planned</span></td></tr>
+        <tr><td class="id">29</td><td class="name">Community</td><td class="desc">User directory, community board (posts/replies), live activity feed, follow other users, leaderboard by Cyber Coin holdings + Nous contributions.</td><td class="allow">—</td><td class="status"><span class="badge pending">planned</span></td></tr>
+        <tr><td class="id">30</td><td class="name">Resources &amp; Support</td><td class="desc">Help center, interactive guide, FAQ, onboarding documentation, support ticket flow, Noēsis glossary (Nous, Ousia, Agora, lore, norms).</td><td class="allow">—</td><td class="status"><span class="badge pending">planned</span></td></tr>
       </tbody>
     </table>
 
@@ -264,7 +265,7 @@
         <li>Personal Nous: in scope — users spawn their own Nous in Genesis Grid</li>
         <li>Portal location: <code>/portal/*</code> routes inside existing Next.js dashboard — no new Docker service</li>
         <li>Human DID scheme: <code>did:noesis:human:&lt;checksummed-eth-address&gt;</code></li>
-        <li>Allowlist growth: 43 → 47 (+4 events across milestone)</li>
+        <li>Allowlist growth: 43 → 51 (+8 events across milestone — +1 human.joined in Ph22, +6 sanction events in Ph25b, +0 Ph26)</li>
       </ul>
     </div>
   </div>
@@ -409,7 +410,7 @@
   <div class="milestone-body" style="padding: 20px 22px; border-top: none;">
     <ul style="margin: 0; padding-left: 22px; color: var(--text-dim); line-height: 1.7;">
       <li><strong style="color:var(--text)">AuditChain zero-diff</strong> — holds since Phase 1 commit <code>29c3516</code>; any drift fails the regression test.</li>
-      <li><strong style="color:var(--text)">Allowlist freeze-except-by-explicit-addition</strong> — every new <code>operator.*</code>, <code>nous.*</code>, or <code>trade.*</code> event requires per-phase allowlist addition in the plan that introduces it. Current size: 45 events.</li>
+      <li><strong style="color:var(--text)">Allowlist freeze-except-by-explicit-addition</strong> — every new <code>operator.*</code>, <code>nous.*</code>, or <code>trade.*</code> event requires per-phase allowlist addition in the plan that introduces it. Current size: 51 events.</li>
       <li><strong style="color:var(--text)">Brain-private content</strong> — reflexion/creed/rule/skill body/lore body/whisper plaintext never cross the Brain↔Grid wire; only hashes. Sole audited exception: <code>cognitive-snapshot</code> returns scrubbed metadata + skill titles, H3-gated (hardened in 25a-07).</li>
       <li><strong style="color:var(--text)">Sole-producer emitters</strong> — each audit event has exactly one call site that emits it. Enforced by grep gates in CI.</li>
       <li><strong style="color:var(--text)">Steward never talks directly to Brain</strong> — all Brain access proxied through Grid for audit coverage.</li>
@@ -420,7 +421,7 @@
 </div>
 
 <footer>
-  Generated 2026-05-21 from <code>.planning/ROADMAP.md</code>, <code>.planning/MILESTONES.md</code>, <code>.planning/STATE.md</code>, <code>.planning/PROJECT.md</code>. *Plan count reflects shipped phases through 25a (133/133); v2.5 phases 25b–29 will add more plans as they are written.
+  Generated 2026-05-22 from <code>.planning/ROADMAP.md</code>, <code>.planning/MILESTONES.md</code>, <code>.planning/STATE.md</code>, <code>.planning/PROJECT.md</code>. *Plan count reflects all shipped phases through 26 (158/158); v2.5 phases 27–30 will add more plans as they are written.
 </footer>
 
 </div>
