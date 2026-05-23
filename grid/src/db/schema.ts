@@ -273,4 +273,26 @@ export const MIGRATIONS: Migration[] = [
         up: `ALTER TABLE human_users ADD COLUMN onboarding_goal TEXT NULL DEFAULT NULL`,
         down: `ALTER TABLE human_users DROP COLUMN onboarding_goal`,
     },
+    {
+        version: 15,
+        name: 'add_personality_seed_to_nous_registry',
+        up: `ALTER TABLE nous_registry ADD COLUMN personality_seed VARCHAR(32) NULL DEFAULT NULL`,
+        down: `ALTER TABLE nous_registry DROP COLUMN personality_seed`,
+    },
+    {
+        version: 16,
+        name: 'create_spawn_payments',
+        up: `
+            CREATE TABLE IF NOT EXISTS spawn_payments (
+                tx_hash     CHAR(66)     NOT NULL,
+                human_did   VARCHAR(255) NOT NULL,
+                nous_did    VARCHAR(255) NULL,
+                confirmed   TINYINT(1)   NOT NULL DEFAULT 0,
+                created_at  TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (tx_hash),
+                INDEX idx_spawn_payments_human (human_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS spawn_payments`,
+    },
 ];

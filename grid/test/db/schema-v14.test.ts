@@ -9,9 +9,9 @@ import { describe, it, expect } from 'vitest';
 import { MIGRATIONS } from '../../src/db/schema.js';
 
 describe('Phase 26: Migration v14 — add_onboarding_goal_to_human_users', () => {
-    it('last migration is version 14', () => {
+    it('last migration is version 16 (Phase 28 added v15 + v16)', () => {
         const last = MIGRATIONS[MIGRATIONS.length - 1];
-        expect(last.version).toBe(14);
+        expect(last.version).toBe(16);
     });
 
     it('version 14 name is add_onboarding_goal_to_human_users', () => {

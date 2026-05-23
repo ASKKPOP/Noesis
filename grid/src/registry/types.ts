@@ -30,4 +30,6 @@ export interface SpawnRequest {
     region: string;             // Starting region
     humanOwner?: string;
     personality?: Record<string, unknown>;
+    /** Phase 28 SPAWN-04: personality seed type persisted to nous_registry.personality_seed. */
+    personalitySeed?: string;
 }

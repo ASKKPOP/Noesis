@@ -48,6 +48,8 @@ export interface SeedNous {
     region: string;             // Starting region ID
     humanOwner?: string;
     personality?: Record<string, unknown>;
+    /** Phase 28 SPAWN-04: optional personality seed forwarded to bootstrapPsycheHash. */
+    personalitySeed?: string;
 }
 
 export interface GridState {
