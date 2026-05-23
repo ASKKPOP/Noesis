@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
     ALLOWLIST,
+    ALLOWLIST_MEMBERS,
     isAllowlisted,
     payloadPrivacyCheck,
     FORBIDDEN_KEY_PATTERN,
@@ -9,6 +10,10 @@ import {
 describe('broadcast-allowlist: default-deny membership', () => {
     it('has exactly 53 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27+Phase 28 event types', () => {
         expect(ALLOWLIST.size).toBe(53);
+    });
+
+    it('has frozen 53-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(53);
     });
 
     it.each([
@@ -96,6 +101,15 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(idx('operator.paused')).toBeLessThan(idx('operator.resumed'));
         expect(idx('operator.resumed')).toBeLessThan(idx('operator.law_changed'));
         expect(idx('operator.law_changed')).toBeLessThan(idx('operator.telos_forced'));
+    });
+
+    it('includes nous.spawned_by_human at position 53 (index 52)', () => {
+        expect(ALLOWLIST_MEMBERS.includes('nous.spawned_by_human')).toBe(true);
+        expect(ALLOWLIST_MEMBERS[52]).toBe('nous.spawned_by_human');
+    });
+
+    it('exposes nous.spawned_by_human via the frozen ALLOWLIST set', () => {
+        expect(ALLOWLIST.has('nous.spawned_by_human')).toBe(true);
     });
 
     it('Phase 25b sanction events appear at positions 46-51 (0-indexed: 45-50) in declared order', () => {
