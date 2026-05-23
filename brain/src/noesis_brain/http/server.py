@@ -37,17 +37,22 @@ class BrainHttpServer:
         self._port = port
         self._app = web.Application()
 
-        # Import handler here to keep circular-import surface minimal.
+        # Import handlers here to keep circular-import surface minimal.
         from .cognitive_snapshot import handle_cognitive_snapshot  # noqa: PLC0415
+        from .skills_lookup import handle_skills_lookup  # noqa: PLC0415
 
-        # Use an async wrapper so aiohttp does not emit the bare-function deprecation.
+        # Use async wrappers so aiohttp does not emit the bare-function deprecation.
         _h = self._handler
         _s = self._secret
 
         async def _cognitive_snapshot_route(req: web.Request) -> web.Response:
             return await handle_cognitive_snapshot(req, _h, _s)
 
+        async def _skills_lookup_route(req: web.Request) -> web.Response:
+            return await handle_skills_lookup(req, _h, _s)
+
         self._app.router.add_get("/cognitive-snapshot/{did}", _cognitive_snapshot_route)
+        self._app.router.add_get("/skills/{hash}", _skills_lookup_route)
 
         self._runner: web.AppRunner | None = None
         self._site: web.TCPSite | None = None

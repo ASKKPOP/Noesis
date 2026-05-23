@@ -11,6 +11,7 @@ Retrieval ranking (EvoAgent §4 three-stage cascade):
 
 from __future__ import annotations
 
+import hashlib
 import math
 import sqlite3
 from datetime import datetime, timezone
@@ -159,6 +160,17 @@ class SkillStore:
             "SELECT * FROM skills WHERE name = ?", (name,)
         ).fetchone()
         return Skill.from_row(row) if row else None
+
+    def get_by_hash(self, skill_hash: str) -> "Skill | None":
+        """Lookup a skill by sha256(instructions). O(N) scan — acceptable for <1000 skills.
+
+        Phase 27 (D-07/D-15): supports Brain→Grid skill-name proxy for portal Skills tab.
+        No new columns or migrations required — computes hash on-the-fly from stored rows.
+        """
+        for skill in self._all_skills():
+            if hashlib.sha256(skill.instructions.encode()).hexdigest() == skill_hash:
+                return skill
+        return None
 
     def count(self) -> int:
         row = self._conn.execute("SELECT COUNT(*) FROM skills").fetchone()
