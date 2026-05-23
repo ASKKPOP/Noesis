@@ -11,8 +11,10 @@ import { describe, it, expect } from 'vitest';
 import { ALLOWLIST_MEMBERS } from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast allowlist — Phase 24 end-state (45 events)', () => {
-    it('has exactly 45 members', () => {
-        expect((ALLOWLIST_MEMBERS as readonly string[]).length).toBe(45);
+    it('has exactly 45 members at Phase 24 end-state (allowlist has since grown to 52)', () => {
+        // Allowlist grew in Phase 25b (+6) and Phase 27 (+1); verify positional invariants
+        // for Phases 22-24 hold while acknowledging the current size is 52.
+        expect((ALLOWLIST_MEMBERS as readonly string[]).length).toBe(52);
     });
 
     it('has human.transferred at position 45 (index 44)', () => {

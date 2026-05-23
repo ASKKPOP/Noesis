@@ -21,7 +21,8 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b) — exactly these 51 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27) — exactly these 52 event types.
+ *  Phase 27 (CHAT-04): +1 human.spoke at position 52.
  *  v1 (Phase 1, per 01-CONTEXT.md): 10 events.
  *  Phase 5 (REV-02): +1 'trade.reviewed' — externally observable reviewer verdict;
  *  payload shape D-03, 3 keys on pass / 5 keys on fail, all privacy-clean (see D-12 test).
@@ -192,6 +193,11 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'operator.forced_sleep',   // (49) {action, operator_id, reason_hash, target_did, tick, tier:'H3'}
     'operator.human_banned',   // (50) {action, human_did, operator_id, reason_hash, tick, tier:'H5'}
     'operator.human_frozen',   // (51) {action, human_did, operator_id, reason_hash, tick, tier:'H5'}
+    // Phase 27 (CHAT-04) — Human-to-Nous message audit. Closed 4-key payload:
+    // {human_did, msg_hash, nous_did, tick}. Plain message text NEVER crosses the wire —
+    // only sha256(plaintext). Emitted ONLY via appendHumanSpoke()
+    // (grid/src/audit/append-human-spoke.ts). Running allowlist total: 52.
+    'human.spoke',   // (52)
 ] as const;
 
 /**
