@@ -171,7 +171,7 @@ Wizard page layout
 Page wrapper: `padding: 32px 24px; maxWidth: 560px; margin: 0 auto`
 
 **Page heading block:**
-- Heading: `fontFamily: var(--serif); fontSize: 20px; fontWeight: 600; color: var(--ink); marginBottom: 6px`
+- Heading: `fontFamily: var(--serif); fontSize: 20px; fontWeight: 600; color: var(--ink); marginBottom: 8px`
 - Subheading: `fontFamily: var(--sans-portal); fontSize: 13px; color: var(--muted); marginBottom: 24px; lineHeight: 1.5`
 
 **StepIndicator bar:**
@@ -188,10 +188,10 @@ Inner padding: `24px`
 
 **Navigation buttons row (bottom of WizardCard):**
 - `display: flex; justifyContent: space-between; alignItems: center; marginTop: 24px; paddingTop: 20px; borderTop: 1px solid var(--rule)`
-- Back button: `padding: 10px 20px; borderRadius: 8px; border: 1px solid var(--rule); background: transparent; fontFamily: var(--sans-portal); fontSize: 16px; fontWeight: 600; color: var(--muted); cursor: pointer; minHeight: 44px`
+- Back button: `padding: 8px 20px; borderRadius: 8px; border: 1px solid var(--rule); background: transparent; fontFamily: var(--sans-portal); fontSize: 16px; fontWeight: 600; color: var(--muted); cursor: pointer; minHeight: 44px`
   - Hover: `color: var(--ink); borderColor: var(--ink)`
   - Hidden on Step 1 (no Back from first step)
-- Next / Spawn button: `padding: 10px 24px; borderRadius: 8px; border: none; background: var(--terracotta-2); color: #fff; fontFamily: var(--sans-portal); fontSize: 16px; fontWeight: 600; cursor: pointer; minHeight: 44px`
+- Next / Spawn button: `padding: 8px 24px; borderRadius: 8px; border: none; background: var(--terracotta-2); color: #fff; fontFamily: var(--sans-portal); fontSize: 16px; fontWeight: 600; cursor: pointer; minHeight: 44px`
   - Hover: `opacity: 0.88`
   - Disabled (validation incomplete): `opacity: 0.40; cursor: not-allowed`
   - Step 4 label: "Spawn Nous" (instead of "Next")
@@ -219,12 +219,12 @@ Step 1 content
 
 - Step heading: `var(--serif)` 20px 600, `var(--ink)`, `marginBottom: 16px`
 - Field label: `var(--sans-portal)` 16px 400, `var(--ink)`, `marginBottom: 8px`
-- Input: `width: 100%; padding: 12px 16px; borderRadius: 8px; border: 1px solid var(--rule); background: var(--vellum); fontFamily: var(--sans-portal); fontSize: 16px; color: var(--ink); outline: none`
+- Input: `width: 100%; padding: 8px 16px; borderRadius: 8px; border: 1px solid var(--rule); background: var(--vellum); fontFamily: var(--sans-portal); fontSize: 16px; color: var(--ink); outline: none`
   - Focus: `borderColor: var(--terracotta-2)`
   - Error state: `borderColor: var(--terracotta)` + error message below in `var(--terracotta)` sans 13px
   - Placeholder: "e.g. Eidolon" — sans 16px 400, `var(--muted)`
 - Helper text: `fontFamily: var(--sans-portal); fontSize: 13px; color: var(--muted); marginTop: 8px; lineHeight: 1.5`
-- DID preview block: `marginTop: 16px; padding: 12px; background: var(--parchment); borderRadius: 6px; border: 1px solid var(--rule)`
+- DID preview block: `marginTop: 16px; padding: 16px; background: var(--parchment); borderRadius: 6px; border: 1px solid var(--rule)`
   - Label above: `fontFamily: var(--sans-portal); fontSize: 13px; color: var(--muted); marginBottom: 4px` — "Your Nous DID"
   - DID string: `fontFamily: var(--mono-portal); fontSize: 13px; color: var(--muted); wordBreak: break-all` — live preview, `{name}` updates as user types; shows `—` when empty
 - Inline error (name conflict — 409 from API): `color: var(--terracotta); fontFamily: var(--sans-portal); fontSize: 13px; marginTop: 8px` — "This name is already taken. Please choose another."
@@ -260,13 +260,13 @@ Step 2 content
 - Seed cards list: `display: flex; flexDirection: column; gap: 8px`
 
 **SeedCard:**
-- Default: `padding: 14px 16px; borderRadius: 8px; border: 1px solid var(--rule); background: var(--parchment); cursor: pointer; display: flex; alignItems: flex-start; gap: 12px; borderLeft: 3px solid transparent; transition: border-color 0.12s, background 0.12s`
+- Default: `padding: 16px; borderRadius: 8px; border: 1px solid var(--rule); background: var(--parchment); cursor: pointer; display: flex; alignItems: flex-start; gap: 8px; borderLeft: 3px solid transparent; transition: border-color 0.12s, background 0.12s`
 - Hover: `background: var(--parchment-2)`
 - Selected: `background: var(--parchment-2); borderLeft: 3px solid {seed-accent}` (see Seed Card Accent Colors table)
 - Glyph slot: `flexShrink: 0; width: 24px; height: 24px` — inline SVG, `color: var(--muted)` default, `color: var(--terracotta-2)` when selected
 - Seed title: `fontFamily: var(--serif); fontSize: 20px; fontWeight: 600; color: var(--ink); lineHeight: 1.1; marginBottom: 4px`
 - Seed description: `fontFamily: var(--sans-portal); fontSize: 13px; color: var(--muted); lineHeight: 1.5`
-- Selected seed badge: `fontFamily: var(--mono-portal); fontSize: 13px; fontWeight: 600; color: var(--bronze); background: var(--parchment-2); border: 1px solid var(--rule); borderRadius: 2px; padding: 2px 6px; letterSpacing: 0.08em; textTransform: uppercase; marginTop: 6px; display: inline-block` — e.g. "EXPLORER"
+- Selected seed badge: `fontFamily: var(--mono-portal); fontSize: 13px; fontWeight: 600; color: var(--bronze); background: var(--parchment-2); border: 1px solid var(--rule); borderRadius: 2px; padding: 4px 8px; letterSpacing: 0.08em; textTransform: uppercase; marginTop: 8px; display: inline-block` — e.g. "EXPLORER"
 
 Seed descriptions (hardcoded copy — not LLM-generated):
 - **Explorer**: "High curiosity, restless spirit. Drawn to the unknown, open to surprise, low routine."
@@ -294,7 +294,7 @@ Step 3 content
 ```
 
 - Step heading + subheading: same pattern as Step 2
-- Region select: `width: 100%; padding: 12px 16px; borderRadius: 8px; border: 1px solid var(--rule); background: var(--vellum); fontFamily: var(--sans-portal); fontSize: 16px; color: var(--ink); cursor: pointer; appearance: none; backgroundImage: url("data:image/svg+xml…")` (inline chevron SVG for custom arrow)
+- Region select: `width: 100%; padding: 8px 16px; borderRadius: 8px; border: 1px solid var(--rule); background: var(--vellum); fontFamily: var(--sans-portal); fontSize: 16px; color: var(--ink); cursor: pointer; appearance: none; backgroundImage: url("data:image/svg+xml…")` (inline chevron SVG for custom arrow)
   - Focus: `outline: none; borderColor: var(--terracotta-2)`
   - Placeholder option: `color: var(--muted)` — "Choose a region…"
 - Region options: populated from `GET /api/v1/grid/nous` distinct `region` values, or a hardcoded enum if the API is not available (fallback: Agora, Nexus, Archive, Frontier)
@@ -334,7 +334,7 @@ Step 4 content
 
 **Summary card:**
 - `.noesis-stat-card` class from `globals.css` (parchment background, rule border, 18px 22px padding, 2px terracotta top stripe)
-- Each row: `display: flex; justifyContent: space-between; alignItems: center; padding: 6px 0; borderBottom: 1px solid var(--rule)` (last row no border)
+- Each row: `display: flex; justifyContent: space-between; alignItems: center; padding: 8px 0; borderBottom: 1px solid var(--rule)` (last row no border)
 - Label: `fontFamily: var(--sans-portal); fontSize: 13px; color: var(--muted)`
 - Value: `fontFamily: var(--sans-portal); fontSize: 16px; fontWeight: 400; color: var(--ink)` — seed badge renders inline badge component
 - Cost row value: `fontFamily: var(--sans-portal); fontSize: 16px; fontWeight: 600; color: var(--ink)` — "50 USDT" (emphasized)
@@ -397,7 +397,7 @@ Empty state card:
 - Glyph: 40px sparkle SVG (inline, `color: var(--bronze)`) — reuse the `sparkle` icon path from Phase 27 placeholder
 - Heading: `fontFamily: var(--serif); fontSize: 20px; fontWeight: 600; color: var(--ink)`
 - Body: `fontFamily: var(--sans-portal); fontSize: 13px; color: var(--muted); lineHeight: 1.6; maxWidth: 360px`
-- CTA button: `padding: 10px 24px; borderRadius: 8px; border: none; background: var(--terracotta-2); color: #fff; fontFamily: var(--sans-portal); fontSize: 16px; fontWeight: 600; cursor: pointer; marginTop: 8px; minHeight: 44px`
+- CTA button: `padding: 8px 24px; borderRadius: 8px; border: none; background: var(--terracotta-2); color: #fff; fontFamily: var(--sans-portal); fontSize: 16px; fontWeight: 600; cursor: pointer; marginTop: 8px; minHeight: 44px`
   - Hover: `opacity: 0.88`
   - Action: `router.push('/portal/nous/spawn')`
 
@@ -432,7 +432,7 @@ My Nous page — owner hub
 **Page wrapper:** `padding: 32px 24px; maxWidth: 800px; margin: 0 auto`
 
 **Page heading block:**
-- Heading: `fontFamily: var(--serif); fontSize: 20px; fontWeight: 600; color: var(--ink); marginBottom: 6px`
+- Heading: `fontFamily: var(--serif); fontSize: 20px; fontWeight: 600; color: var(--ink); marginBottom: 8px`
 - No subheading in post-spawn state
 
 **HeroCard (reuse from Phase 27):**
@@ -450,7 +450,7 @@ My Nous page — owner hub
 - Each row: `display: flex; justifyContent: space-between; alignItems: center; padding: 8px 0; borderBottom: 1px solid var(--rule)` (last row no border)
 - Label: `fontFamily: var(--sans-portal); fontSize: 13px; color: var(--muted)`
 - Value: `fontFamily: var(--sans-portal); fontSize: 16px; fontWeight: 400; color: var(--ink)`
-- Seed value renders inline badge (same badge style as wizard Step 2 selected state): `fontFamily: var(--mono-portal); fontSize: 13px; fontWeight: 600; color: var(--bronze); background: var(--parchment-2); border: 1px solid var(--rule); borderRadius: 2px; padding: 2px 6px; letterSpacing: 0.08em; textTransform: uppercase`
+- Seed value renders inline badge (same badge style as wizard Step 2 selected state): `fontFamily: var(--mono-portal); fontSize: 13px; fontWeight: 600; color: var(--bronze); background: var(--parchment-2); border: 1px solid var(--rule); borderRadius: 2px; padding: 4px 8px; letterSpacing: 0.08em; textTransform: uppercase`
 - No management controls, no rename, no suspend (SPAWN-05 / D-05 locked).
 
 **Loading state (fetching Nous data on mount):**
