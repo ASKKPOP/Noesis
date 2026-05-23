@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Human Portal — Active)
 status: executing
-stopped_at: Phase 25c context gathered
-last_updated: "2026-05-23T03:01:04.768Z"
+stopped_at: Phase 27 context gathered
+last_updated: "2026-05-23T04:47:33.711Z"
 last_activity: 2026-05-23
 progress:
-  total_phases: 30
+  total_phases: 31
   completed_phases: 28
   total_plans: 157
   completed_plans: 157
@@ -175,6 +175,6 @@ Phase 15-17 shipped with all Brain-private invariants intact. Key carry-forwards
 
 ## Session Continuity
 
-Last session: 2026-05-22T15:57:57.083Z
-Stopped at: Phase 25c context gathered
-Resume file: .planning/phases/25c-replay-scrubber-culture-browser/25c-CONTEXT.md
+Last session: 2026-05-23T04:47:33.708Z
+Stopped at: Phase 27 context gathered
+Resume file: .planning/phases/27-nous-interaction/27-CONTEXT.md
