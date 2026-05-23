@@ -20,9 +20,10 @@ import type { GridServices } from '../server.js';
 
 // Routes that constitute portal "actions" (write-side). Auth-only routes excluded.
 const PORTAL_ACTION_PATTERNS: RegExp[] = [
-    /^\/api\/v1\/portal\/wallet\//,      // Phase 23/24 wallet write actions
-    /^\/api\/v1\/portal\/chat\//,         // Phase 26 onboarding chat
-    /^\/api\/v1\/portal\/auth\/me$/,      // Phase 26 PATCH /me (goal storage)
+    /^\/api\/v1\/portal\/wallet\//,          // Phase 23/24 wallet write actions
+    /^\/api\/v1\/portal\/chat\//,             // Phase 26 onboarding chat
+    /^\/api\/v1\/portal\/auth\/me$/,          // Phase 26 PATCH /me (goal storage)
+    /^\/api\/v1\/portal\/nous\/spawn$/,       // Phase 28 SPAWN-03 — spawn POST only (status/config/check-name are read-only GETs)
 ];
 
 function isPortalActionRoute(url: string): boolean {
