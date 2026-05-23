@@ -16,7 +16,7 @@ import { AuditChain } from '../../src/audit/chain.js';
 import { appendHumanSpoke } from '../../src/audit/append-human-spoke.js';
 import { ALLOWLIST_MEMBERS, payloadPrivacyCheck } from '../../src/audit/broadcast-allowlist.js';
 
-const VALID_HUMAN_DID = 'did:noesis:human:0xABC';
+const VALID_HUMAN_DID = 'did:noesis:human_0xabc123';
 const VALID_NOUS_DID = 'did:noesis:sophia';
 const VALID_MSG_HASH = 'a'.repeat(64); // 64 lowercase hex chars
 
