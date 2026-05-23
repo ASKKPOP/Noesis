@@ -58,7 +58,7 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
   Plans:
   - [x] 28-01-PLAN.md — Grid foundation: allowlist 53 + appendNousSpawnedByHuman + bootstrapPsycheHash extension + migrations v15/v16 + check-frozen.ts
   - [x] 28-02-PLAN.md — Wave 0 test scaffolds (RED): spawn-nous.test.ts + append-nous-spawned-by-human.test.ts + broadcast-allowlist.test.ts length 53
-  - [ ] 28-03-PLAN.md — Portal spawn API: POST /spawn + GET /spawn/status + /spawn/config + /spawn/check-name + /me/nous + chat.ts dynamic personal-Nous prompt
+  - [x] 28-03-PLAN.md — Portal spawn API: POST /spawn + GET /spawn/status + /spawn/config + /spawn/check-name + /me/nous + chat.ts dynamic personal-Nous prompt
   - [ ] 28-04-PLAN.md — Dashboard 4-step spawn wizard at /portal/nous/spawn (wagmi USDT payment + 3s polling/2-min timeout)
   - [ ] 28-05-PLAN.md — Dashboard /portal/my-nous owner hub (double-duty: empty CTA + OwnerHub + PersonalNousAvatar + HeroCard extension)
 - [ ] **Phase 29: Community** — User directory, community board (posts, replies), live activity feed, follow other users, leaderboard by Cyber Coin holdings and Nous contributions.
@@ -971,7 +971,7 @@ Plans:
 - `.planning/phases/27-nous-interaction/27-CONTEXT.md` — Portal patterns, Nous profile pages, tip mechanic
 - `.planning/STATE.md` — accumulated context (allowlist discipline, zero-diff invariant)
 
-**Plans:** 2/5 plans executed
+**Plans:** 3/5 plans executed
 
 Plans:
 - [x] 28-01-PLAN.md — Grid foundation: allowlist 52→53 + appendNousSpawnedByHuman + bootstrapPsycheHash(personalitySeed?) + migrations v15 (personality_seed) + v16 (spawn_payments) + check-frozen.ts spawn route
