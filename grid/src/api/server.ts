@@ -262,7 +262,7 @@ export function buildServerWithHub(
     void app.register(cors, {
         origin: ['http://localhost:3001', 'http://localhost:3000', 'http://localhost:3002'],
         credentials: true,
-        methods: ['GET', 'POST', 'OPTIONS'],
+        methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
     });
 
     // --- Health ---

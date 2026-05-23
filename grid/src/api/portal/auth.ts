@@ -343,7 +343,7 @@ export function registerPortalAuthRoutes(
         if (typeof onboarding_goal !== 'string' || onboarding_goal.trim().length === 0) {
             return reply.status(400).send({ error: 'invalid_request' });
         }
-        const truncated = onboarding_goal.slice(0, 2000);
+        const truncated = onboarding_goal.trim().slice(0, 2000);
         try {
             const pool = services.humanPool;
             if (pool) {

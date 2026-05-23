@@ -102,5 +102,6 @@ export async function signInWithEthereum(params: SignInParams): Promise<HumanUse
         eth_address: userData.eth_address,
         region: userData.region,
         created_at: userData.created_at,
+        onboarded: userData.onboarded ?? false,
     };
 }
