@@ -295,4 +295,10 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS spawn_payments`,
     },
+    {
+        version: 17,
+        name: 'unique_nous_per_human',
+        up: `ALTER TABLE nous_registry ADD UNIQUE KEY uq_human_owner (human_owner)`,
+        down: `ALTER TABLE nous_registry DROP INDEX uq_human_owner`,
+    },
 ];

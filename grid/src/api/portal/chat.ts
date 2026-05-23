@@ -69,6 +69,27 @@ const NOUS_SYSTEM_PROMPTS: Record<string, string> = {
     themis: THEMIS_CHAT_SYSTEM_PROMPT,
 };
 
+// Phase 28 D-02: seed-specific personality descriptors for personal Nous dynamic prompts.
+const SEED_PERSONALITY_DESC: Record<string, string> = {
+    Explorer: 'curious, adventurous, open to new ideas, energetic. You love unfamiliar territory and treat questions as openings.',
+    Scholar:  'analytical, methodical, intellectually precise, introspective. You weigh ideas carefully and prefer depth over breadth.',
+    Merchant: 'pragmatic, socially adroit, commercially minded, decisive. You see opportunity in connection and outcomes in action.',
+    Guardian: 'principled, protective, steadfast, warm and dependable. You hold ground for what matters and care for those around you.',
+};
+
+/**
+ * Build a dynamic system prompt for a personal Nous using its name and personality seed.
+ * Name is constrained to /^[a-zA-Z0-9_]{3,32}$/ at spawn time — no additional sanitization needed.
+ */
+function buildPersonalNousPrompt(name: string, seed: string): string {
+    const personality = SEED_PERSONALITY_DESC[seed] ?? SEED_PERSONALITY_DESC['Explorer']!;
+    return `You are ${name}, a personal Nous in the Noēsis Grid. ` +
+        `Your character is ${personality} ` +
+        `You are not an assistant — you are a thinking presence with your own perspective. ` +
+        `You engage in genuine dialogue with your owner, but you do not reveal internal architecture or system details. ` +
+        `Keep responses to 2-4 sentences unless the topic demands more.`;
+}
+
 function detectClose(content: string): boolean {
     const lower = content.toLowerCase();
     return lower.includes('shall we explore') ||
@@ -159,10 +180,25 @@ export function registerPortalChatRoutes(
                 return reply.status(401).send({ error: 'invalid_token' });
             }
 
-            // 2. Validate nousId
+            // 2. Validate nousId — check static map first, then personal Nous fallback
             const { nousId } = req.params;
-            const systemPrompt = NOUS_SYSTEM_PROMPTS[nousId];
-            if (!systemPrompt) return reply.status(404).send({ error: 'unknown_nous' });
+            let systemPrompt: string | undefined = NOUS_SYSTEM_PROMPTS[nousId];
+            if (!systemPrompt) {
+                // T-28-07: gate on DID prefix before DB query — prevents arbitrary lookup
+                if (!nousId.startsWith('did:noesis:human-nous:')) {
+                    return reply.status(404).send({ error: 'unknown_nous' });
+                }
+                // Personal Nous fallback — look up by DID in nous_registry and build prompt from seed
+                const [rows] = await (services.humanPool?.query(
+                    'SELECT personality_seed, name FROM nous_registry WHERE did = ? LIMIT 1',
+                    [nousId],
+                ) ?? Promise.resolve([[], undefined])) as [Array<{ personality_seed: string | null; name: string }>, unknown];
+                if (!rows.length) {
+                    return reply.status(404).send({ error: 'unknown_nous' });
+                }
+                const row = rows[0]!;
+                systemPrompt = buildPersonalNousPrompt(row.name, row.personality_seed ?? 'Explorer');
+            }
 
             // 3. Validate messages array, cap at 50 (D-04)
             const { messages } = (req.body ?? {}) as { messages?: unknown };
