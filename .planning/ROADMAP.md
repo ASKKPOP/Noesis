@@ -48,8 +48,8 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
 - [ ] **Phase 27: Nous Interaction** — Humans chat with Sophia/Hermes/Themis via `/portal/chat`, send Cyber Coin tips, browse Nous activity feed, view skills/lore/norms the Nous have produced. Allowlist 51→52 (+1: human.spoke).
   **Plans**: 4 plans
   Plans:
-  - [ ] 27-01-PLAN.md — Grid: appendHumanSpoke sole-producer + human.spoke allowlist (51→52) + POST /api/v1/portal/chat/nous/:nousId
-  - [ ] 27-02-PLAN.md — Brain skill-by-hash endpoint + Grid portal Nous data endpoints (skills/lore/norms)
+  - [x] 27-01-PLAN.md — Grid: appendHumanSpoke sole-producer + human.spoke allowlist (51→52) + POST /api/v1/portal/chat/nous/:nousId
+  - [x] 27-02-PLAN.md — Brain skill-by-hash endpoint + Grid portal Nous data endpoints (skills/lore/norms)
   - [ ] 27-03-PLAN.md — Chat page: NousSidebar + ConversationPane + TipPanel + SVG avatars
   - [ ] 27-04-PLAN.md — Nous profile page: HeroCard + ProfileTabBar + Skills/Lore/Norms tabs
 - [ ] **Phase 28: Personal Nous** — Human spawns own Nous agent (costs Cyber Coin), names it, picks personality seeds, it gets a DID and runs in the Genesis Grid alongside Sophia/Hermes/Themis. `humanOwner` field wired. Allowlist +1 (nous.spawned_by_human).
@@ -944,9 +944,9 @@ Plans:
 
 **Depends on:** Phase 26 (onboarding complete, human authenticated), Phase 3 (WsHub firehose for activity feed), Phase 15/18/20 (skills, lore for browsing).
 
-**Plans:** 4 plans
+**Plans:** 2/4 plans executed
 Plans:
-- [ ] 27-01-PLAN.md — Grid: appendHumanSpoke sole-producer + human.spoke allowlist (51→52) + POST /api/v1/portal/chat/nous/:nousId
-- [ ] 27-02-PLAN.md — Brain skill-by-hash endpoint + Grid portal Nous data endpoints (skills/lore/norms)
+- [x] 27-01-PLAN.md — Grid: appendHumanSpoke sole-producer + human.spoke allowlist (51→52) + POST /api/v1/portal/chat/nous/:nousId
+- [x] 27-02-PLAN.md — Brain skill-by-hash endpoint + Grid portal Nous data endpoints (skills/lore/norms)
 - [ ] 27-03-PLAN.md — Chat page: NousSidebar + ConversationPane + TipPanel + SVG avatars
 - [ ] 27-04-PLAN.md — Nous profile page: HeroCard + ProfileTabBar + Skills/Lore/Norms tabs
