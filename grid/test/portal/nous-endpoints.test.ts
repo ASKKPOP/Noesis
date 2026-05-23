@@ -9,8 +9,9 @@
  *   - GET /skills: Brain lookup failure falls back to truncated hash display
  *   - GET /lore: returns {entries: LoreEntry[], cursor?} — no body field
  *   - GET /lore: cursor pagination (?cursor=100 → contributed_tick < 100)
- *   - GET /norms: returns {norms: NormEntry[]} with fingerprint, status, etc.
- *   - GET /norms: empty result when no candidates found
+ *   - GET /norms: returns {norms: []} when no candidates
+ *   - GET /norms: returns norms with fingerprint, status
+ *   - GET /norms: crystallized status when in norm_registry
  */
 
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
@@ -33,8 +34,9 @@ async function makeJwt(did = 'did:noesis:human:0xtest'): Promise<string> {
         .sign(privateKey);
 }
 
-// Mock humanPool factory — returns rows based on SQL pattern
-function makePool(queryFn: (sql: string, params: unknown[]) => [unknown[], unknown]) {
+type MockPool = { query: ReturnType<typeof vi.fn> };
+
+function makePool(queryFn: (sql: string, params: unknown[]) => [unknown[], unknown]): MockPool {
     return {
         query: vi.fn().mockImplementation((sql: string, params: unknown[]) =>
             Promise.resolve(queryFn(sql, params)),
@@ -42,7 +44,7 @@ function makePool(queryFn: (sql: string, params: unknown[]) => [unknown[], unkno
     };
 }
 
-function buildApp(humanPool?: ReturnType<typeof makePool>): FastifyInstance {
+function buildApp(humanPool?: MockPool): FastifyInstance {
     const clock = new WorldClock({ tickRateMs: 100_000 });
     return buildServer({
         clock,
@@ -54,6 +56,8 @@ function buildApp(humanPool?: ReturnType<typeof makePool>): FastifyInstance {
         humanPool,
     });
 }
+
+// ── Auth gate tests ──────────────────────────────────────────────────────────
 
 describe('Portal Nous endpoints — auth', () => {
     let app: FastifyInstance;
@@ -90,26 +94,25 @@ describe('Portal Nous endpoints — auth', () => {
     });
 });
 
+// ── GET /api/v1/portal/nous/:nousId/skills ───────────────────────────────────
+
 describe('GET /api/v1/portal/nous/:nousId/skills', () => {
     let app: FastifyInstance;
     let validToken: string;
-    let pool: ReturnType<typeof makePool>;
 
     beforeAll(async () => {
-        const hash = 'abc123def456abc1';
-        pool = makePool(() => [
-            [
-                {
-                    skill_hash: hash,
-                    source: 'skill.taught',
-                    teacher_did: 'did:noesis:hermes',
-                    created_at: 42,
-                },
-            ],
+        const hash = 'abc123def456abc1ff2233445566778899aabbccddeeff0011223344556677';
+        const pool = makePool(() => [
+            [{
+                skill_hash: hash,
+                source: 'skill.taught',
+                teacher_did: 'did:noesis:hermes',
+                created_at: 42,
+            }],
             [],
         ]);
 
-        // Mock Brain fetch to fail (test fallback)
+        // Stub global fetch so Brain proxy fails (tests fallback behavior)
         vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('brain offline')));
 
         app = buildApp(pool);
@@ -141,27 +144,31 @@ describe('GET /api/v1/portal/nous/:nousId/skills', () => {
         });
         const body = res.json() as { skills: Array<{ name: string; description: string }> };
         expect(body.skills.length).toBeGreaterThan(0);
-        // When Brain is offline, name should be truncated hash + '...'
         const skill = body.skills[0];
         expect(skill).toBeDefined();
         if (skill) {
+            // Truncated hash: first 16 chars + '...'
             expect(skill.name).toMatch(/\.\.\./);
+            expect(skill.name.length).toBeLessThan(25); // truncated, not full hash
             expect(skill.description).toBe('');
         }
     });
 });
 
+// ── GET /api/v1/portal/nous/:nousId/lore ─────────────────────────────────────
+
 describe('GET /api/v1/portal/nous/:nousId/lore', () => {
     let app: FastifyInstance;
     let validToken: string;
+    let mockQuery: ReturnType<typeof vi.fn>;
 
     beforeAll(async () => {
         const loreRows = [
             { content_hash: 'hash1', category_tag: 'philosophy', contributed_tick: 50, citation_count: 3 },
             { content_hash: 'hash2', category_tag: 'science', contributed_tick: 30, citation_count: 1 },
         ];
-
-        const pool = makePool(() => [loreRows, []]);
+        mockQuery = vi.fn().mockResolvedValue([loreRows, []]);
+        const pool = { query: mockQuery };
         app = buildApp(pool);
         await app.ready();
         validToken = await makeJwt();
@@ -169,7 +176,7 @@ describe('GET /api/v1/portal/nous/:nousId/lore', () => {
 
     afterAll(async () => { await app.close(); });
 
-    it('returns 200 with entries array and cursor', async () => {
+    it('returns 200 with entries array and cursor key', async () => {
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal/nous/sophia/lore',
@@ -181,7 +188,7 @@ describe('GET /api/v1/portal/nous/:nousId/lore', () => {
         expect('cursor' in body).toBe(true);
     });
 
-    it('entries contain only metadata — no body field', async () => {
+    it('entries contain only metadata — no body field (D-08a invariant)', async () => {
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal/nous/sophia/lore',
@@ -197,60 +204,52 @@ describe('GET /api/v1/portal/nous/:nousId/lore', () => {
         }
     });
 
-    it('passes cursor to query when ?cursor= provided', async () => {
-        const mockQuery = vi.fn().mockResolvedValue([[], []]);
-        const pool = { query: mockQuery };
-        const appWithPool = buildServer({
-            clock: new WorldClock({ tickRateMs: 100_000 }),
-            space: new SpatialMap(),
-            logos: new LogosEngine(),
-            audit: new AuditChain(),
-            gridName: 'genesis',
-            humanRegistry: new HumanRegistry(),
-            humanPool: pool,
-        });
-        await appWithPool.ready();
-
-        const token = await makeJwt();
-        await appWithPool.inject({
+    it('passes cursor value to DB query when ?cursor= provided', async () => {
+        mockQuery.mockClear();
+        const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal/nous/sophia/lore?cursor=100',
-            cookies: { [COOKIE_NAME]: token },
+            cookies: { [COOKIE_NAME]: validToken },
         });
-
-        // Query should include cursor value (100) in params
+        expect(res.statusCode).toBe(200);
+        // Query should have been called with cursor value 100 in params
         expect(mockQuery).toHaveBeenCalled();
         const [, params] = mockQuery.mock.calls[0] as [string, unknown[]];
         expect(params).toContain(100);
-
-        await appWithPool.close();
     });
 });
 
-describe('GET /api/v1/portal/nous/:nousId/norms', () => {
+// ── GET /api/v1/portal/nous/:nousId/norms ────────────────────────────────────
+
+describe('GET /api/v1/portal/nous/:nousId/norms — empty result', () => {
+    let app: FastifyInstance;
     let validToken: string;
 
     beforeAll(async () => {
+        const pool = makePool(() => [[], []]);
+        app = buildApp(pool);
+        await app.ready();
         validToken = await makeJwt();
     });
 
-    it('returns {norms: []} when no candidates match', async () => {
-        const pool = makePool(() => [[], []]);
-        const app = buildApp(pool);
-        await app.ready();
+    afterAll(async () => { await app.close(); });
 
+    it('returns {norms: []} when no candidates match', async () => {
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal/nous/sophia/norms',
             cookies: { [COOKIE_NAME]: validToken },
         });
-
         expect(res.statusCode).toBe(200);
         expect(res.json()).toEqual({ norms: [] });
-        await app.close();
     });
+});
 
-    it('returns norms with fingerprint and status when candidates exist', async () => {
+describe('GET /api/v1/portal/nous/:nousId/norms — candidate status', () => {
+    let app: FastifyInstance;
+    let validToken: string;
+
+    beforeAll(async () => {
         // First query (norm_candidates): returns a candidate
         // Second query (norm_registry): no crystallized entry → status is 'candidate'
         let callCount = 0;
@@ -267,19 +266,21 @@ describe('GET /api/v1/portal/nous/:nousId/norms', () => {
                     [],
                 ];
             }
-            // Second call: norm_registry lookup — empty (not crystallized)
             return [[], []];
         });
-
-        const app = buildApp(pool);
+        app = buildApp(pool);
         await app.ready();
+        validToken = await makeJwt();
+    });
 
+    afterAll(async () => { await app.close(); });
+
+    it('returns norms with fingerprint, status candidate, and tick range', async () => {
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal/nous/sophia/norms',
             cookies: { [COOKIE_NAME]: validToken },
         });
-
         expect(res.statusCode).toBe(200);
         const body = res.json() as { norms: Array<{
             fingerprint: string;
@@ -290,18 +291,19 @@ describe('GET /api/v1/portal/nous/:nousId/norms', () => {
         }> };
         expect(body.norms.length).toBe(1);
         const norm = body.norms[0];
-        expect(norm).toBeDefined();
-        if (norm) {
-            expect(norm.fingerprint).toBe('abc123');
-            expect(norm.status).toBe('candidate');
-            expect(norm.tick_start).toBe(10);
-            expect(norm.tick_end).toBe(50);
-            expect(norm.participating_count).toBe(2); // length of participant_dids array
-        }
-        await app.close();
+        expect(norm?.fingerprint).toBe('abc123');
+        expect(norm?.status).toBe('candidate');
+        expect(norm?.tick_start).toBe(10);
+        expect(norm?.tick_end).toBe(50);
+        expect(norm?.participating_count).toBe(2);
     });
+});
 
-    it('marks norm as crystallized when found in norm_registry', async () => {
+describe('GET /api/v1/portal/nous/:nousId/norms — crystallized status', () => {
+    let app: FastifyInstance;
+    let validToken: string;
+
+    beforeAll(async () => {
         let callCount = 0;
         const pool = makePool(() => {
             callCount++;
@@ -321,20 +323,27 @@ describe('GET /api/v1/portal/nous/:nousId/norms', () => {
                 [],
             ];
         });
-
-        const app = buildApp(pool);
+        app = buildApp(pool);
         await app.ready();
+        validToken = await makeJwt();
+    });
 
+    afterAll(async () => { await app.close(); });
+
+    it('marks norm as crystallized when found in norm_registry', async () => {
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal/nous/sophia/norms',
             cookies: { [COOKIE_NAME]: validToken },
         });
-
-        const body = res.json() as { norms: Array<{ status: string; convergence_type: string; participating_count: number }> };
+        expect(res.statusCode).toBe(200);
+        const body = res.json() as { norms: Array<{
+            status: string;
+            convergence_type: string;
+            participating_count: number;
+        }> };
         expect(body.norms[0]?.status).toBe('crystallized');
         expect(body.norms[0]?.convergence_type).toBe('emergent');
         expect(body.norms[0]?.participating_count).toBe(5);
-        await app.close();
     });
 });
