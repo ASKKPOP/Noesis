@@ -907,3 +907,35 @@ Plans:
 *Updated: 2026-05-21 — Phase 25b revised post-plan-check: serialized 25b-09→25b-10 barrel; locked plan 14 treasury to `economy.initialSupply` reuse; ratified D-25b-NEW-5 (separate `banned` column); documented wave-as-earliest-possible convention*
 *Updated: 2026-05-22 — Phase 25b complete (14/14 plans, allowlist 51). High-level v2.5 phase list reconciled: Phase 25 = Steward Console expansion (25a ✓ 25b ✓ 25c ☐); Sophia Onboarding renumbered Phase 26; downstream phases renumbered 27-30.*
 *Updated: 2026-05-22 — Phase 25c broken down into 5 plans across 5 waves (replay scrubber + culture browser)*
+
+---
+
+### Phase 26: Sophia Onboarding ✅ (2026-05-22)
+
+**Goal:** First-time user experience: 3-step wizard (Welcome → Sophia Chat → World Tour) that orients new humans before they enter the main portal. Fast-proxy LLM chat out-of-tick (Ollama, stream:false). `onboarding_goal` persisted to MySQL. Sophia as guide persona. CyberGrid `hideHud` + `highlightDistrict` props added. Portal redirects unonboarded users to `/portal/onboard`.
+
+**Allowlist delta: 0.** Running total: 51.
+
+**Depends on:** Phase 24 (PortalShell, JWT /me), Phase 22 (human_users table).
+
+**Plans:** 6/6 plans complete
+
+Plans:
+- [x] 26-01-PLAN.md — Wave 1: Grid DB migration v14 (onboarding_goal column) + tests
+- [x] 26-02-PLAN.md — Wave 1: Grid auth routes — GET /me onboarded field + PATCH /me endpoint
+- [x] 26-03-PLAN.md — Wave 1: Grid chat proxy — POST /portal/chat/onboard (Ollama, detectClose)
+- [x] 26-04-PLAN.md — Wave 2: Dashboard CyberGrid props (hideHud, highlightDistrict) + onboard page shell
+- [x] 26-05-PLAN.md — Wave 3: Dashboard onboard wizard steps (Welcome, Sophia Chat, World Tour)
+- [x] 26-06-PLAN.md — Wave 4: E2E integration tests + verification checkpoint
+
+---
+
+### Phase 27: Nous Interaction
+
+**Goal:** Humans can chat with any active Nous (Sophia, Hermes, Themis) via `/portal/chat`, send Cyber Coin tips, browse the Nous activity feed, and view skills, lore, and norms the Nous have produced. First allowlist event tied to human agency: `human.spoke`.
+
+**Allowlist delta: +1** (`human.spoke`). Running total after Phase 27: 52.
+
+**Depends on:** Phase 26 (onboarding complete, human authenticated), Phase 3 (WsHub firehose for activity feed), Phase 15/18/20 (skills, lore for browsing).
+
+**Plans:** 0 plans (run `/gsd-plan-phase 27`)
