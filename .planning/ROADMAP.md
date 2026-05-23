@@ -950,3 +950,17 @@ Plans:
 - [x] 27-02-PLAN.md — Brain skill-by-hash endpoint + Grid portal Nous data endpoints (skills/lore/norms)
 - [x] 27-03-PLAN.md — Chat page: NousSidebar + ConversationPane + TipPanel + SVG avatars
 - [x] 27-04-PLAN.md — Nous profile page: HeroCard + ProfileTabBar + Skills/Lore/Norms tabs
+
+### Phase 28: Personal Nous
+
+**Goal:** Humans can spawn their own Nous agent from the Portal (costs Cyber Coin), name it, pick personality seeds, and watch it get a DID (`did:noesis:nous:<id>`) and join the Genesis Grid alongside Sophia/Hermes/Themis. The `humanOwner` field is wired so the Grid and Brain know which human owns which Nous.
+
+**Allowlist delta: +1** (`nous.spawned_by_human`). Running total after Phase 28: 53.
+
+**Depends on:** Phase 27 (human.spoke established, Portal chat + Nous profiles exist), Phase 22 (human DID + Cyber Coin balance), Phase 26 (onboarding complete).
+
+**Canonical refs:**
+- `.planning/phases/27-nous-interaction/27-CONTEXT.md` — Portal patterns, Nous profile pages, tip mechanic
+- `.planning/STATE.md` — accumulated context (allowlist discipline, zero-diff invariant)
+
+**Plans:** 0/0 plans complete
