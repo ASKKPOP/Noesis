@@ -227,6 +227,20 @@ export interface GridServices {
     humanPool?: {
         query(sql: string, values?: unknown[]): Promise<[unknown, unknown]>;
     };
+    /**
+     * Phase 28 SPAWN-01: GenesisLauncher accessor for human-spawned Nous routes.
+     * When present, POST /api/v1/portal/nous/spawn delegates Nous creation here.
+     * When absent, spawnNous calls are no-ops (guard in portal/index.ts).
+     */
+    launcher?: {
+        spawnNous(name: string, did: string, publicKey: string, region: string, humanOwner?: string, personalitySeed?: string): void;
+    };
+    /**
+     * Phase 28 SPAWN-01: EVM RPC tx confirmation function for payment verification.
+     * When present, GET /spawn/status and POST /spawn use this to verify USDT payment.
+     * When absent, confirmTxPaid always returns { confirmed: false }.
+     */
+    evmConfirmTx?: (txHash: string) => Promise<{ confirmed: boolean; amountUsdt?: string; from?: string }>;
 }
 
 /**
