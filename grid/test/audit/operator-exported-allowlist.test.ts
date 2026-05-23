@@ -15,8 +15,8 @@ import { ALLOWLIST_MEMBERS, ALLOWLIST } from '../../src/audit/broadcast-allowlis
 
 describe('operator.exported allowlist membership', () => {
     it('allowlist size === 43 (Phase 20 final — 41 + Phase 20 LORE-01/02 additions)', () => {
-        // Allowlist has grown to 52 by Phase 27; positional assertions below remain valid.
-        expect((ALLOWLIST_MEMBERS as readonly string[]).length).toBe(52);
+        // Allowlist has grown to 53 by Phase 28; positional assertions below remain valid.
+        expect((ALLOWLIST_MEMBERS as readonly string[]).length).toBe(53);
     });
     // RED until Wave 3 (Plan 13-04) bumps allowlist 26→27
 

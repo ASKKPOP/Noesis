@@ -15,8 +15,8 @@ import { ALLOWLIST, isAllowlisted } from '../../src/audit/broadcast-allowlist.js
 
 describe('broadcast allowlist — Phase 11 invariant (WHISPER-04 D-11-01)', () => {
     it('has exactly 43 entries (Phase 20 extended from 41 — LORE-01/02 +2 lore.* events)', () => {
-        // Allowlist has grown to 52 by Phase 27; positional assertions below remain valid.
-        expect(ALLOWLIST.size).toBe(52);
+        // Allowlist has grown to 53 by Phase 28; positional assertions below remain valid.
+        expect(ALLOWLIST.size).toBe(53);
     });
 
     it('contains nous.whispered at position 22 (index 21) — unchanged by Phase 12', () => {

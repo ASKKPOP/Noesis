@@ -149,9 +149,9 @@ describe('appendHumanSpoke — 8-step discipline', () => {
     });
 });
 
-describe('broadcast-allowlist — Phase 27 end-state (52 events)', () => {
-    it('ALLOWLIST_MEMBERS.length === 52', () => {
-        expect((ALLOWLIST_MEMBERS as readonly string[]).length).toBe(52);
+describe('broadcast-allowlist — Phase 27 end-state (52 events; Phase 28 added 1 more, now 53)', () => {
+    it('ALLOWLIST_MEMBERS.length === 53 (Phase 28 SPAWN-04 added nous.spawned_by_human)', () => {
+        expect((ALLOWLIST_MEMBERS as readonly string[]).length).toBe(53);
     });
 
     it('ALLOWLIST_MEMBERS[51] === "human.spoke"', () => {

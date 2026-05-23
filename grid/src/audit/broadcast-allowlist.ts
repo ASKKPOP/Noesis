@@ -21,8 +21,9 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27) — exactly these 52 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28) — exactly these 53 event types.
  *  Phase 27 (CHAT-04): +1 human.spoke at position 52.
+ *  Phase 28 (SPAWN-04): +1 nous.spawned_by_human at position 53.
  *  v1 (Phase 1, per 01-CONTEXT.md): 10 events.
  *  Phase 5 (REV-02): +1 'trade.reviewed' — externally observable reviewer verdict;
  *  payload shape D-03, 3 keys on pass / 5 keys on fail, all privacy-clean (see D-12 test).
@@ -198,6 +199,10 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     // only sha256(plaintext). Emitted ONLY via appendHumanSpoke()
     // (grid/src/audit/append-human-spoke.ts). Running allowlist total: 52.
     'human.spoke',   // (52)
+    // Phase 28 (SPAWN-04) — Personal Nous spawn by human. Closed 4-key payload:
+    // {grid_name, nous_did, owner_human_did, tick}. Emitted ONLY via appendNousSpawnedByHuman()
+    // (grid/src/audit/append-nous-spawned-by-human.ts). Running allowlist total: 53.
+    'nous.spawned_by_human',   // (53)
 ] as const;
 
 /**

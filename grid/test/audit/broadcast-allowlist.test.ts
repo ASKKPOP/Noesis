@@ -7,8 +7,8 @@ import {
 } from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast-allowlist: default-deny membership', () => {
-    it('has exactly 52 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27 event types', () => {
-        expect(ALLOWLIST.size).toBe(52);
+    it('has exactly 53 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27+Phase 28 event types', () => {
+        expect(ALLOWLIST.size).toBe(53);
     });
 
     it.each([
@@ -61,6 +61,8 @@ describe('broadcast-allowlist: default-deny membership', () => {
         'operator.human_frozen',
         // Phase 27 (CHAT-04) — Human-to-Nous message audit.
         'human.spoke',
+        // Phase 28 (SPAWN-04) — Personal Nous spawn by human.
+        'nous.spawned_by_human',
     ])('allows %s', (eventType) => {
         expect(isAllowlisted(eventType)).toBe(true);
     });
@@ -81,7 +83,7 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(() => (ALLOWLIST as Set<string>).add('law.bypassed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).delete('trade.reviewed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).clear()).toThrow(TypeError);
-        expect(ALLOWLIST.size).toBe(52);
+        expect(ALLOWLIST.size).toBe(53);
     });
 
     it('Phase 6 operator.* tuple order: inspected < paused < resumed < law_changed < telos_forced', () => {
