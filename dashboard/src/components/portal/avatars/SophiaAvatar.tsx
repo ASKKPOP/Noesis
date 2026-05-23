@@ -43,3 +43,5 @@ export function SophiaAvatar({ size = 44, style }: SophiaAvatarProps) {
         </svg>
     );
 }
+
+export default SophiaAvatar;

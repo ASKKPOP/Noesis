@@ -37,3 +37,5 @@ export function ThemisAvatar({ size = 44, style }: ThemisAvatarProps) {
         </svg>
     );
 }
+
+export default ThemisAvatar;

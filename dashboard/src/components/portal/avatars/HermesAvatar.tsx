@@ -45,3 +45,5 @@ export function HermesAvatar({ size = 44, style }: HermesAvatarProps) {
         </svg>
     );
 }
+
+export default HermesAvatar;
