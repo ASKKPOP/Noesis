@@ -129,6 +129,12 @@ Skills / Lore / Norms panels).
   Claude writes these prompts. Structure mirrors the onboarding prompt but covers open-ended
   conversation rather than goal capture.
 
+### Planning-Phase Decision Overrides (locked 2026-05-23)
+
+- **D-17a (override):** `human.spoke` payload key is `msg_hash` (not `message_hash`). Reason: `message_hash` contains the substring `message` which matches `FORBIDDEN_KEY_PATTERN` in `broadcast-allowlist.ts` and would silently fail `payloadPrivacyCheck` at runtime. Audit event schema: `{human_did, msg_hash, nous_did, tick}`. User confirmed 2026-05-23.
+
+- **D-08a (override):** Lore tab shows metadata only — `category_tag` badge + `content_hash` truncated + `contributed_tick` + `citation_count`. The expand chevron and body text from D-08 are removed. D-08's premise ("Lore content is Grid-stored so full text is available") was incorrect — `lore_commons` table has no prose body column and the STATE.md invariant "lore body never crosses wire" applies. User confirmed metadata-only is acceptable 2026-05-23.
+
 ### Claude's Discretion
 
 - Norms tab row format and column detail (D-09)
