@@ -230,4 +230,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-22 — Phase 25c complete: Replay scrubber + culture browser shipped — humanSanctionStore + SpawnNousDeps fully wired (ban/freeze/spawn routes now live), /replay listing page + tick-scrubber modal (H3+ gate, H4 SENSITIVE_KEYS redaction), /culture page with three raw-SVG visualizations (Skill Lineage, Norm Timeline, Lore Graph) + Nous DID filter bar. Dashboard replay-client.test.tsx GREEN (Vite 8 OXC fix). Allowlist unchanged at 51. REPLAY-05 validated.*
+*Last updated: 2026-05-23 — Phase 26 complete: Sophia Onboarding Wizard shipped — migration v14 (onboarding_goal TEXT), GET/PATCH /me with onboarded flag, POST /chat/onboard Sophia LLM proxy, CyberGrid highlightDistrict+hideHud props, full 3-step wizard UI (9 components: Welcome→SophiaChat→WorldTour). PortalShell guards + auth redirect wired. 33 new tests passing. UAT deferred to HUMAN-UAT.md (live stack required). ONBOARD-01 through ONBOARD-06 all static-verified.*
