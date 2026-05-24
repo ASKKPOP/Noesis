@@ -21,6 +21,7 @@ import {
     restoreGrid,
     MIGRATIONS,
 } from './db/index.js';
+import { AuditReconcile } from './db/audit-reconcile.js';
 import type { GenesisConfig } from './genesis/types.js';
 import type { FastifyInstance } from 'fastify';
 import type { SpawnNousDeps } from './api/operator/spawn-system-nous.js';
@@ -72,6 +73,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     let store: GridStore | undefined;
     let dbConn: DatabaseConnection | undefined;
     let chain: PersistentAuditChain | undefined;
+    let auditReconcile: AuditReconcile | undefined;
 
     // Connect to DB + run migrations if configured.
     // Phase 31 OBS-01 (D-31-A1): construct PersistentAuditChain BEFORE the
@@ -85,11 +87,20 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         store = new GridStore(dbConn);
         const auditStore = new AuditStore(dbConn);
         chain = new PersistentAuditChain(auditStore, config.genesisConfig.gridName);
+
+        // Phase 31 OBS-02 (D-31-C3): tick-cadenced reconcile loop. Wired into the
+        // launcher's clock.onTick block via deps.auditReconcile. Cadence = every 60 ticks.
+        auditReconcile = new AuditReconcile(
+            chain,
+            auditStore,
+            dbConn,
+            config.genesisConfig.gridName,
+        );
     }
 
     const launcher = new GenesisLauncher(
         config.genesisConfig,
-        chain ? { audit: chain } : undefined,
+        chain ? { audit: chain, auditReconcile } : undefined,
     );
 
     // Bootstrap infra (regions, connections, laws) — skip Nous for now
