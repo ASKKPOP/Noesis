@@ -70,7 +70,13 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
   - **R-32-02 (MEDIUM)**: Watchdog `setInterval` handle garbage-collected silently — watchdog stored as `readonly` field on `GenesisLauncher` with explicit `stop()` in `launcher.stop()`; CI gate `scripts/check-interval-lifecycle.mjs` asserts every `setInterval` in `grid/src/diagnostics/` is held in a field.
   - **R-32-03 (MEDIUM)**: Frame counter increment placement leaks state across timing boundaries — `frames_sent_total++` happens AFTER `socket.send` succeeds (NOT before); regression test asserts a `socket.send`-throwing client never increments `frames_sent_total`.
 **Allowlist additions**: **0**. Running total: **53**.
-**Plans**: TBD
+**Plans**: 6 plans
+  - [ ] 32-01-PLAN.md — Frame counters on WsFirehoseHub + stats() method + HubMetricsSink (OBS-05)
+  - [ ] 32-02-PLAN.md — R-32-03 regression test (firehose-send-throws.test.ts) pinning counter placement (OBS-05)
+  - [ ] 32-03-PLAN.md — HealthWatchdog class + HEALTH_THRESHOLDS + computeStatus + transition logging (OBS-07)
+  - [ ] 32-04-PLAN.md — GenesisLauncher attach methods + buildServerWithHub wiring + /health/detailed route + integration test (OBS-06, OBS-07)
+  - [ ] 32-05-PLAN.md — Two CI gates (R-32-01 observability-no-TODO + R-32-02 setInterval-lifecycle) wired into rig-invariants.yml (OBS-05/06/07)
+  - [ ] 32-06-PLAN.md — 32-HUMAN-UAT.md operator playbook + uat-half-close-socket.mjs harness (OBS-05/06/07)
 **UI hint**: yes
 
 ### Phase 33: portal.auth.* Producers
