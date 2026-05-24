@@ -11,6 +11,7 @@ import { WorldClock } from '../clock/ticker.js';
 import { SpatialMap } from '../space/map.js';
 import { LogosEngine } from '../logos/engine.js';
 import { AuditChain } from '../audit/chain.js';
+import type { AuditReconcile } from '../db/audit-reconcile.js';
 import { EconomyManager } from '../economy/config.js';
 import { ShopRegistry } from '../economy/shop-registry.js';
 import { NousRegistry } from '../registry/registry.js';
@@ -38,6 +39,13 @@ import type { GenesisConfig, GridState } from './types.js';
  */
 export interface GenesisLauncherDeps {
     audit?: AuditChain;
+    /**
+     * Phase 31 OBS-02 (D-31-C3): tick-cadenced reconcile loop. Held as a readonly
+     * field on the launcher so Phase 32's HealthWatchdog and /health/detailed can
+     * read `launcher.auditReconcile.lastReconcileAt` without reaching through a
+     * shared mutable state object.
+     */
+    auditReconcile?: AuditReconcile;
 }
 
 /**
@@ -134,6 +142,13 @@ export class GenesisLauncher {
      *   new NousRunner(config, { loreDeps: { quotaTracker: launcher.loreQuotaTracker } })
      */
     readonly loreQuotaTracker: LoreQuotaTracker;
+    /**
+     * Phase 31 OBS-02 (D-31-C3): AuditReconcile — tick-cadenced reconcile loop that
+     * replays missing tail entries to audit_trail. Undefined when MySQL is not
+     * configured (no-DB unit-test path). Phase 32 reads getters from this field for
+     * /health/detailed.
+     */
+    readonly auditReconcile: AuditReconcile | undefined;
     readonly gridName: string;
     readonly gridDomain: string;
 
@@ -156,6 +171,7 @@ export class GenesisLauncher {
         // wiring passes PersistentAuditChain when MySQL is configured), otherwise
         // construct a plain AuditChain (unit-test path, no DB).
         this.audit = deps?.audit ?? new AuditChain();
+        this.auditReconcile = deps?.auditReconcile;
         this.economy = new EconomyManager(config.economy);
         this.registry = new NousRegistry();
         this.shops = new ShopRegistry();
@@ -376,6 +392,15 @@ export class GenesisLauncher {
                 event.tick % relationshipCfgForTick.snapshotCadenceTicks === 0
             ) {
                 this.relationshipStorage.scheduleSnapshot(this.relationships.allEdges(), event.tick);
+            }
+
+            // Phase 31 OBS-02 (D-31-C3/C4): tick-cadenced reconcile every 60 ticks
+            // (~30s at default tickRateMs). Fire-and-forget — the clock is never
+            // blocked on MySQL I/O. Reconcile body never throws (defense-in-depth
+            // try/catch inside AuditReconcile.run, mirrors firehose-hub onAuditEvent).
+            // Silence in the audit_reconcile_ok log stream is the alarm signal.
+            if (this.auditReconcile && event.tick > 0 && event.tick % 60 === 0) {
+                void this.auditReconcile.run();
             }
         });
 
