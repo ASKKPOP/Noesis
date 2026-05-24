@@ -13,6 +13,7 @@ import { registerPortalChatRoutes } from './chat.js';
 import { registerPortalNousRoutes } from './nous.js';
 import { registerSpawnRoutes } from './spawn.js';
 import { registerCommunityRoutes } from './community.js';
+import { registerSupportRoutes } from './support.js';
 
 export function registerPortalRoutes(
     app: FastifyInstance,
@@ -91,4 +92,6 @@ export function registerPortalRoutes(
         audit: services.audit,
         gridName: services.gridName,
     });
+    // Phase 30: support routes (HELP-02 progress endpoint; HELP-05 tickets added in Plan 05).
+    registerSupportRoutes(app, services);
 }
