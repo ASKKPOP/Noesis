@@ -358,4 +358,22 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS user_follows`,
     },
+    {
+        version: 22,
+        name: 'create_support_tickets',
+        up: `
+            CREATE TABLE IF NOT EXISTS support_tickets (
+                id             CHAR(36)     NOT NULL,
+                human_did      VARCHAR(255) NOT NULL,
+                subject        VARCHAR(64)  NOT NULL,
+                message        TEXT         NOT NULL,
+                attachment_url TEXT         NULL,
+                status         ENUM('open','closed') NOT NULL DEFAULT 'open',
+                created_at     TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (id),
+                INDEX idx_support_tickets_human (human_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS support_tickets`,
+    },
 ];
