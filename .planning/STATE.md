@@ -4,8 +4,8 @@ milestone: v2.6
 milestone_name: — Active)
 status: Phase 31 closed — operator UAT pending (31-HUMAN-UAT.md Steps 1-9)
 stopped_at: Completed .planning/phases/31-audit-pipeline-persistence/31-06-PLAN.md
-last_updated: "2026-05-24T06:00:53.274Z"
-last_activity: "2026-05-24 — Phase 31 Audit Pipeline Persistence SHIPPED. PersistentAuditChain wired into production main.ts (D-31-A1); AuditReconcile loop firing every 60 ticks (D-31-C3/C4); Pino structured logging replaces silent .catch+console.warn (D-31-B3); CI gate scripts/check-no-silent-catch.mjs locks the discipline (OBS-03); backfill-audit-trail.mjs recovers the 2026-05-22 stall window. R-31-01..03 all mitigated. Allowlist unchanged at 53. Cutover divergence count: [recorded by operator in Step 2 of 31-HUMAN-UAT.md]."
+last_updated: "2026-05-24T06:14:47.231Z"
+last_activity: "2026-05-24 — Phase 31 Audit Pipeline Persistence SHIPPED (code goal verified 9/9; operator cutover UAT pending). PersistentAuditChain wired into production main.ts (D-31-A1); AuditReconcile loop firing every 60 ticks (D-31-C3/C4); Pino structured logging replaces silent .catch+console.warn (D-31-B3); CI gate scripts/check-no-silent-catch.mjs locks the discipline (OBS-03); backfill-audit-trail.mjs recovers the 2026-05-22 stall window. R-31-01..03 all mitigated. Allowlist unchanged at 53. Code review: 0 critical / 7 warnings / 9 info (top item WR-01 AuditReconcile in-flight guard — follow-up via /gsd-code-review-fix). Cutover divergence count: [recorded by operator in Step 2 of 31-HUMAN-UAT.md]."
 progress:
   total_phases: 5
   completed_phases: 1
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 Phase: 32 — Firehose Observability (next)
 Plan: — (Phase 31 SHIPPED on 2026-05-24; Phase 32 planning not yet started)
 Status: Phase 31 closed — operator UAT pending (31-HUMAN-UAT.md Steps 1-9)
-Last activity: 2026-05-24 — Phase 31 Audit Pipeline Persistence SHIPPED. PersistentAuditChain wired into production main.ts (D-31-A1); AuditReconcile loop firing every 60 ticks (D-31-C3/C4); Pino structured logging replaces silent .catch+console.warn (D-31-B3); CI gate scripts/check-no-silent-catch.mjs locks the discipline (OBS-03); backfill-audit-trail.mjs recovers the 2026-05-22 stall window. R-31-01..03 all mitigated. Allowlist unchanged at 53. Cutover divergence count: [recorded by operator in Step 2 of 31-HUMAN-UAT.md].
+Last activity: 2026-05-24 — Phase 31 Audit Pipeline Persistence SHIPPED. PersistentAuditChain wired into production main.ts (D-31-A1); AuditReconcile loop firing every 60 ticks (D-31-C3/C4); Pino structured logging replaces silent .catch+console.warn (D-31-B3); CI gate scripts/check-no-silent-catch.mjs locks the discipline (OBS-03); backfill-audit-trail.mjs recovers the 2026-05-22 stall window. R-31-01..03 all mitigated. Allowlist unchanged at 53. Code review: 0 critical / 7 warnings / 9 info. Cutover divergence count: [recorded by operator in Step 2 of 31-HUMAN-UAT.md].
 
 Driving inputs for v2.6 (unchanged from milestone open):
 

@@ -143,7 +143,7 @@ Dependencies form a strict chain. Rationale:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 31. Audit Pipeline Persistence | 6/6 | Complete   | 2026-05-24 |
+| 31. Audit Pipeline Persistence | 6/6 | Complete    | 2026-05-24 |
 | 32. Firehose Observability | 0/? | Pending | — |
 | 33. portal.auth.* Producers | 0/? | Pending | — |
 | 34. Steward `/system` Health Surfaces | 0/? | Pending | — |
