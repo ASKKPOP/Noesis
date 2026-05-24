@@ -8,6 +8,8 @@
 import { useState, useEffect } from 'react';
 import { UserDirectoryRow } from '../../../components/portal/UserDirectoryRow';
 import { LeaderboardRow } from '../../../components/portal/LeaderboardRow';
+import { PostCard } from '../../../components/portal/PostCard';
+import { PostComposer } from '../../../components/portal/PostComposer';
 
 type Tab = 'board' | 'users' | 'leaderboard';
 
@@ -29,14 +31,35 @@ interface LeaderboardEntry {
     nous_score: number;
 }
 
+interface Post {
+    id: number;
+    author_did: string;
+    content: string;
+    created_at: string;
+    reply_count: number;
+}
+
 export default function CommunityPage() {
     const [activeTab, setActiveTab] = useState<Tab>('board');
     const [users, setUsers] = useState<UserEntry[]>([]);
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [postsLoading, setPostsLoading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    function loadPosts() {
+        setPostsLoading(true);
+        fetch('/api/v1/portal/community/posts', { credentials: 'include' })
+            .then(r => r.json())
+            .then((d: { posts?: Post[] }) => { setPosts(d.posts ?? []); setPostsLoading(false); })
+            .catch(() => setPostsLoading(false));
+    }
+
     useEffect(() => {
+        if (activeTab === 'board' && posts.length === 0) {
+            loadPosts();
+        }
         if (activeTab === 'users' && users.length === 0) {
             setLoading(true);
             fetch('/api/v1/portal/community/users', { credentials: 'include' })
@@ -120,21 +143,21 @@ export default function CommunityPage() {
                 </p>
             )}
 
-            {/* Board tab — placeholder for Plan 29-03 */}
+            {/* Board tab — PostComposer + PostCard list */}
             {!error && activeTab === 'board' && (
-                <div data-testid="community-board-placeholder" style={{
-                    background: 'var(--parchment)',
-                    border: '1px solid var(--rule)',
-                    borderRadius: 6,
-                    padding: '48px 32px',
-                    textAlign: 'center',
-                }}>
-                    <p style={{ fontFamily: 'var(--serif)', fontSize: 18, color: 'var(--ink)' }}>
-                        Community Board
-                    </p>
-                    <p style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, color: 'var(--muted)', marginTop: 8 }}>
-                        Post and reply features load in Phase 29 Plan 03.
-                    </p>
+                <div>
+                    <PostComposer onPosted={loadPosts} />
+                    {postsLoading && (
+                        <p style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, color: 'var(--muted)' }}>Loading…</p>
+                    )}
+                    {!postsLoading && posts.length === 0 && (
+                        <p style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, color: 'var(--muted)', textAlign: 'center', padding: 40 }}>
+                            No posts yet. Be the first to share something.
+                        </p>
+                    )}
+                    {posts.map(post => (
+                        <PostCard key={post.id} {...post} />
+                    ))}
                 </div>
             )}
 
