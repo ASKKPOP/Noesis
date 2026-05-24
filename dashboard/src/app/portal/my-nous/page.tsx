@@ -1,71 +1,86 @@
-/**
- * My Nous — Phase 27 placeholder · editorial theme.
- * Server component.
- */
+'use client';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import OwnerHub from './OwnerHub';
+
+const GRID_BASE = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
+
+interface NousRecord {
+    did: string;
+    name: string;
+    region: string;
+    personality_seed: string | null;
+    spawned_at_tick: number;
+    ousia: string;
+    status?: string;
+    spawn_cost_usdt?: string;
+}
 
 export default function MyNousPage() {
-    return (
-        <div style={{ padding: '36px 40px', maxWidth: 580 }}>
-            <div style={{ marginBottom: 32 }}>
-                <h1 style={{
-                    fontFamily: 'var(--serif)',
-                    fontSize: 30,
-                    fontWeight: 600,
-                    color: 'var(--ink)',
-                    letterSpacing: '0.01em',
-                    lineHeight: 1.15,
-                    marginBottom: 6,
-                }}>
-                    My Nous
-                </h1>
-                <p style={{
-                    fontFamily: 'var(--sans-portal)',
-                    fontSize: 13,
-                    color: 'var(--muted)',
-                    lineHeight: 1.5,
-                }}>
+    const router = useRouter();
+    const [nousData, setNousData] = useState<NousRecord | null | undefined>(undefined);
+
+    useEffect(() => {
+        let cancelled = false;
+        fetch(`${GRID_BASE}/api/v1/portal/human/me/nous`, { credentials: 'include' })
+            .then(r => r.ok ? r.json() : { nous: null })
+            .then((data: { nous: NousRecord | null }) => {
+                if (!cancelled) setNousData(data.nous);
+            })
+            .catch(() => { if (!cancelled) setNousData(null); });
+        return () => { cancelled = true; };
+    }, []);
+
+    if (nousData === undefined) {
+        return (
+            <div style={{ padding: '32px 24px', maxWidth: 800, margin: '0 auto' }}>
+                <div style={{
+                    background: 'var(--parchment-2)', borderRadius: 10, height: 112,
+                    animation: 'portal-pulse 1.2s ease-in-out infinite',
+                }} />
+                <style>{`
+                    @keyframes portal-pulse {
+                        0%, 100% { opacity: 0.5; }
+                        50% { opacity: 0.8; }
+                    }
+                `}</style>
+            </div>
+        );
+    }
+
+    if (nousData === null) {
+        return (
+            <div style={{ padding: '32px 24px', maxWidth: 800, margin: '0 auto' }}>
+                <h1 style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 600,
+                    color: 'var(--ink)', marginBottom: 8 }}>My Nous</h1>
+                <p style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, color: 'var(--muted)',
+                    lineHeight: 1.5, marginBottom: 24 }}>
                     Spawn and manage your own Nous agent in the Genesis Grid.
                 </p>
-            </div>
-
-            <div style={{
-                background: 'var(--parchment)',
-                border: '1px solid var(--rule)',
-                borderRadius: 6,
-                padding: '48px 32px',
-                textAlign: 'center',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 16,
-            }}>
-                <div style={{
-                    width: 52, height: 52, borderRadius: '50%',
-                    border: '1px solid var(--rule)', background: 'var(--parchment-2)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                <div className="noesis-card" style={{
+                    padding: '48px 32px', textAlign: 'center',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
                 }}>
-                    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} style={{ color: 'var(--bronze)' }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
+                    {/* 40px sparkle SVG, bronze */}
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden>
+                        <path d="M20 4 L22 18 L36 20 L22 22 L20 36 L18 22 L4 20 L18 18 Z" fill="var(--bronze)" />
                     </svg>
-                </div>
-                <div>
-                    <p style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', marginBottom: 8 }}>
-                        Coming in Phase 27
+                    <h2 style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 600,
+                        color: 'var(--ink)' }}>You don&apos;t have a Nous yet.</h2>
+                    <p style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, color: 'var(--muted)',
+                        lineHeight: 1.6, maxWidth: 360 }}>
+                        Bring a Nous to life in the Genesis Grid. Choose a name, a personality seed, and a home region.
                     </p>
-                    <p style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, color: 'var(--muted)', lineHeight: 1.6, maxWidth: 380 }}>
-                        Spawn your own Nous agent, give it a name and personality seeds,
-                        and watch it live alongside Sophia and Hermes in the Genesis Grid.
-                    </p>
+                    <button type="button" onClick={() => router.push('/portal/nous/spawn')} style={{
+                        padding: '8px 24px', borderRadius: 8, border: 'none',
+                        background: 'var(--terracotta-2)', color: '#fff',
+                        fontFamily: 'var(--sans-portal)', fontSize: 16, fontWeight: 600,
+                        cursor: 'pointer', marginTop: 8, minHeight: 44,
+                    }}>Spawn Your Nous</button>
                 </div>
-                <span style={{
-                    fontFamily: 'var(--mono-portal)', fontSize: 9, fontWeight: 600,
-                    letterSpacing: '0.12em', textTransform: 'uppercase' as const,
-                    color: 'var(--bronze)', background: 'var(--parchment-2)',
-                    border: '1px solid var(--rule)', borderRadius: 2, padding: '3px 8px',
-                }}>
-                    Phase 27 · Nous
-                </span>
             </div>
-        </div>
-    );
+        );
+    }
+
+    return <OwnerHub nous={nousData} />;
 }
