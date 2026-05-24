@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 25c — Replay Scrubber + Culture Browser</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+      padding: 32px 24px;
+    }
+
+    .header {
+      border-bottom: 1px solid #30363d;
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+    .header h1 { font-size: 20px; font-weight: 600; color: #f0f6fc; letter-spacing: 0.02em; }
+    .header .subtitle { font-size: 13px; color: #8b949e; margin-top: 6px; }
+    .header .phase-badge {
+      display: inline-block; background: #1f6feb22; border: 1px solid #1f6feb55;
+      color: #58a6ff; font-size: 11px; padding: 2px 10px; border-radius: 12px; margin-top: 8px;
+    }
+
+    .progress-bar-wrap {
+      background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+      padding: 20px 24px; margin-bottom: 24px;
+    }
+    .progress-label {
+      display: flex; justify-content: space-between; font-size: 12px;
+      color: #8b949e; margin-bottom: 10px;
+    }
+    .progress-label span:last-child { color: #58a6ff; font-weight: 600; }
+    .progress-track { background: #21262d; border-radius: 4px; height: 8px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+    .progress-fill.phase  { background: linear-gradient(90deg, #1f6feb, #58a6ff); }
+    .progress-fill.planning { background: linear-gradient(90deg, #388bfd, #79c0ff); }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px;
+    }
+    .card h2 {
+      font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em;
+      color: #8b949e; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .card h2 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .dot.green  { background: #3fb950; box-shadow: 0 0 6px #3fb95066; }
+    .dot.yellow { background: #d29922; box-shadow: 0 0 6px #d2992266; }
+    .dot.blue   { background: #58a6ff; box-shadow: 0 0 6px #58a6ff66; }
+    .dot.red    { background: #f85149; box-shadow: 0 0 6px #f8514966; }
+
+    .item {
+      display: flex; align-items: flex-start; gap: 10px; padding: 8px 0;
+      border-bottom: 1px solid #21262d; font-size: 13px; line-height: 1.5;
+    }
+    .item:last-child { border-bottom: none; }
+    .item .icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+    .item .label { color: #e6edf3; }
+    .item .sub { color: #8b949e; font-size: 11px; margin-top: 2px; }
+
+    .status-done    { color: #3fb950; }
+    .status-active  { color: #d29922; }
+    .status-todo    { color: #8b949e; }
+    .status-blocked { color: #f85149; }
+
+    .current-section {
+      background: #161b22; border: 1px solid #1f6feb55; border-left: 3px solid #1f6feb;
+      border-radius: 8px; padding: 20px 24px; margin-bottom: 24px;
+    }
+    .current-section h2 {
+      font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em;
+      color: #58a6ff; margin-bottom: 14px;
+    }
+    .current-task { font-size: 15px; color: #f0f6fc; font-weight: 500; }
+    .current-task .note { font-size: 12px; color: #8b949e; margin-top: 8px; line-height: 1.6; }
+
+    .findings-section {
+      background: #161b22; border: 1px solid #30363d; border-left: 3px solid #d29922;
+      border-radius: 8px; padding: 20px 24px; margin-bottom: 24px;
+    }
+    .findings-section h2 {
+      font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em;
+      color: #d29922; margin-bottom: 14px;
+    }
+    .finding-item {
+      font-size: 12px; color: #e6edf3; padding: 6px 0;
+      border-bottom: 1px solid #21262d; line-height: 1.6;
+    }
+    .finding-item:last-child { border-bottom: none; }
+    .finding-item strong { color: #ffa657; }
+
+    .footer {
+      font-size: 11px; color: #484f58; text-align: center;
+      margin-top: 32px; padding-top: 16px; border-top: 1px solid #21262d;
+    }
+
+    .wave-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+    .wave-badge {
+      font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid;
+    }
+    .wave-badge.done   { background: #3fb95022; border-color: #3fb95055; color: #3fb950; }
+    .wave-badge.active { background: #d2992222; border-color: #d2992255; color: #d29922; }
+    .wave-badge.todo   { background: #21262d; border-color: #30363d; color: #484f58; }
+
+    /* checklist for UI-SPEC dimensions */
+    .dims { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .dim-badge {
+      font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid;
+    }
+    .dim-badge.pass { background: #3fb95022; border-color: #3fb95055; color: #3fb950; }
+    .dim-badge.flag { background: #d2992222; border-color: #d2992255; color: #d29922; }
+    .dim-badge.block{ background: #f8514922; border-color: #f8514955; color: #f85149; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Phase 25c — Replay Scrubber + Culture Browser</h1>
+    <div class="subtitle">Milestone v2.5 · Noesis Grid · StewardShell expansion</div>
+    <div class="phase-badge">Allowlist delta: 0 · Observer-only</div>
+  </div>
+
+  <!-- Overall progress -->
+  <div class="progress-bar-wrap">
+    <div class="progress-label">
+      <span>Overall Phase Progress</span>
+      <span id="overall-pct">—</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill phase" id="overall-bar" style="width: 0%"></div>
+    </div>
+    <div class="progress-label" style="margin-top: 12px">
+      <span>Planning Pipeline</span>
+      <span id="plan-pct">UI-SPEC ✓ — Awaiting plan-phase</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill planning" id="plan-bar" style="width: 50%"></div>
+    </div>
+  </div>
+
+  <!-- Current task -->
+  <div class="current-section">
+    <h2>▶ Currently Doing</h2>
+    <div class="current-task">
+      Ready to plan — run <code>/gsd-plan-phase 25c</code>
+      <div class="note">
+        Research ✓ · UI-SPEC ✓ (6/6 dimensions pass, 1 non-blocking flag on Dimension 4 typography)<br>
+        Next: <code>/clear</code> then <code>/gsd-plan-phase 25c</code> to create PLAN.md files
+      </div>
+    </div>
+  </div>
+
+  <!-- Research findings -->
+  <div class="findings-section">
+    <h2>⚡ Key Research Findings (affects planning)</h2>
+    <div class="finding-item"><strong>operator.exported has no nous_did field</strong> — Listing table shows: date / operator_id / tick range / tarball hash. No Nous DID column.</div>
+    <div class="finding-item"><strong>Culture routes are NOT operator-gated</strong> — /api/v1/grid/culture/* are public Grid endpoints. Steward server components fetch directly from NEXT_PUBLIC_GRID_ORIGIN, not through operator proxy.</div>
+    <div class="finding-item"><strong>ReplayGrid cannot be imported into Steward</strong> — Scrubber modal uses simple <code>entries.filter(e =&gt; e.id &lt;= tick)</code>. Full ReplayGrid machinery not needed.</div>
+    <div class="finding-item"><strong>replay-client.test.tsx is currently failing</strong> — vitest 4.x + @vitejs/plugin-react hoisting issue. Wave-0 must fix before D-07 RED stubs can go GREEN.</div>
+    <div class="finding-item"><strong>relationships.ts has TWO validateTierBody call sites</strong> — H2 inspect route + H5 edge-events route. Both must be migrated for D-01.</div>
+  </div>
+
+  <!-- Two-column: Done / Left -->
+  <div class="grid">
+
+    <div class="card">
+      <h2><span class="dot green"></span>Done</h2>
+
+      <div class="item">
+        <span class="icon status-done">✓</span>
+        <div>
+          <div class="label">Phase 25b shipped</div>
+          <div class="sub">14/14 plans complete · 2026-05-22</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="icon status-done">✓</span>
+        <div>
+          <div class="label">Context gathered</div>
+          <div class="sub">25c-CONTEXT.md — D-01..D-11 locked</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="icon status-done">✓</span>
+        <div>
+          <div class="label">Research complete</div>
+          <div class="sub">25c-RESEARCH.md — 5 key findings + Validation Architecture</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="icon status-done">✓</span>
+        <div>
+          <div class="label">UI-SPEC approved (6/6 dimensions)</div>
+          <div class="sub">25c-UI-SPEC.md · 1 revision cycle · "Observatory" nav group added</div>
+          <div class="dims">
+            <span class="dim-badge pass">1 Copywriting ✓</span>
+            <span class="dim-badge pass">2 Visuals ✓</span>
+            <span class="dim-badge pass">3 Color ✓</span>
+            <span class="dim-badge flag">4 Typography ⚠ (non-blocking)</span>
+            <span class="dim-badge pass">5 Spacing ✓</span>
+            <span class="dim-badge pass">6 Registry ✓</span>
+          </div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="icon status-done">✓</span>
+        <div>
+          <div class="label">Memory: model selection rule saved</div>
+          <div class="sub">Opus 4.7 for planning/design · Sonnet 4.6 for execution</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot yellow"></span>Left To Do</h2>
+
+      <div class="item">
+        <span class="icon status-active">◆</span>
+        <div>
+          <div class="label">Run /gsd-plan-phase 25c</div>
+          <div class="sub">Spawn planner (Opus 4.7) → plan-checker → requirements gate</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="icon status-todo">○</span>
+        <div>
+          <div class="label">Execute Wave 0 — Cleanup + wiring</div>
+          <div class="sub">D-01 header-auth · D-02 humanSanctionStore · D-03 SpawnNousDeps · vitest fix</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="icon status-todo">○</span>
+        <div>
+          <div class="label">Execute Wave 1 — Replay foundation</div>
+          <div class="sub">D-07 RED stubs GREEN · D-04/D-05 listing page</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="icon status-todo">○</span>
+        <div>
+          <div class="label">Execute Wave 2 — Scrubber modal</div>
+          <div class="sub">D-06 tick slider + event list · H3+ gate · H4 redaction</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="icon status-todo">○</span>
+        <div>
+          <div class="label">Execute Wave 3 — Culture browser</div>
+          <div class="sub">D-08..D-11 · norm timeline, lore graph, skill lineage · Nous filter bar</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UI-SPEC key decisions -->
+  <div class="card" style="margin-bottom: 24px">
+    <h2><span class="dot green"></span>UI-SPEC Key Decisions (25c-specific)</h2>
+
+    <div class="item">
+      <span class="icon status-done">✓</span>
+      <div>
+        <div class="label">Nav group "Observatory" — new group between Operator and Grid</div>
+        <div class="sub">Houses Replay + Culture as read-only historical surfaces</div>
+      </div>
+    </div>
+    <div class="item">
+      <span class="icon status-done">✓</span>
+      <div>
+        <div class="label">Per-Nous filter — URL-param <code>?nous=&lt;did&gt;</code> + debounced text input + active-filter pill</div>
+        <div class="sub">Enables deep-link from Nous inspector · filter scope: skill lineage + lore filter, norms show all (Grid-wide)</div>
+      </div>
+    </div>
+    <div class="item">
+      <span class="icon status-done">✓</span>
+      <div>
+        <div class="label">Replay listing columns — date / operator / tick range / tarball hash</div>
+        <div class="sub">Corrected: no nous_did (RESEARCH Pitfall 2)</div>
+      </div>
+    </div>
+    <div class="item">
+      <span class="icon status-done">✓</span>
+      <div>
+        <div class="label">H4 redaction — sensitive keys replaced with "— Requires H4" at H3</div>
+        <div class="sub">telos_text, creed_text, skill_body, rule_text, lore_body, message, text, content, ciphertext, belief_content, violation_text</div>
+      </div>
+    </div>
+    <div class="item">
+      <span class="icon status-done">✓</span>
+      <div>
+        <div class="label">Raw-SVG invariant enforced (D-10)</div>
+        <div class="sub">All 3 culture views: server-computed positions + client &lt;line&gt;/&lt;circle&gt;/&lt;rect&gt; only</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decisions D-01..D-11 -->
+  <div class="card" style="margin-bottom: 24px">
+    <h2><span class="dot blue"></span>Decisions D-01 → D-11 (planning target)</h2>
+
+    <div class="item"><span class="icon status-todo">○</span><div><div class="label">D-01 · relationships.ts → header-auth (2 call sites)</div><div class="sub">Wave-0</div></div></div>
+    <div class="item"><span class="icon status-todo">○</span><div><div class="label">D-02 · Wire humanSanctionStore in main.ts</div><div class="sub">Wave-0 · removes 503 from ban-human + freeze-wallet</div></div></div>
+    <div class="item"><span class="icon status-todo">○</span><div><div class="label">D-03 · Wire SpawnNousDeps in main.ts</div><div class="sub">Wave-0 · removes 503 from spawn-system-nous</div></div></div>
+    <div class="item"><span class="icon status-todo">○</span><div><div class="label">D-04 · /replay nav in StewardShell + Observatory group</div><div class="sub">Wave-1</div></div></div>
+    <div class="item"><span class="icon status-todo">○</span><div><div class="label">D-05 · Replay listing table (date / operator / tick range / tarball hash)</div><div class="sub">Wave-1 · ⚡ corrected: no nous_did</div></div></div>
+    <div class="item"><span class="icon status-todo">○</span><div><div class="label">D-06 · Scrubber modal — tick slider + event list + H3+ gate + H4 redaction</div><div class="sub">Wave-2</div></div></div>
+    <div class="item"><span class="icon status-todo">○</span><div><div class="label">D-07 · Phase 13 RED stubs GREEN in replay-client.test.tsx</div><div class="sub">Wave-1 · vitest fix required first</div></div></div>
+    <div class="item"><span class="icon status-todo">○</span><div><div class="label">D-08 · Steward-native culture components (steward/src/app/culture/)</div><div class="sub">Wave-3 · do NOT copy dashboard components</div></div></div>
+    <div class="item"><span class="icon status-todo">○</span><div><div class="label">D-09 · Culture endpoints via direct fetch (not operator proxy)</div><div class="sub">Wave-3 · ⚡ corrected: public routes</div></div></div>
+    <div class="item"><span class="icon status-todo">○</span><div><div class="label">D-10 · Raw-SVG invariant — no charting libs</div><div class="sub">Wave-3 · server-computed positions</div></div></div>
+    <div class="item"><span class="icon status-todo">○</span><div><div class="label">D-11 · Per-Nous cross-filter (URL-param ?nous=&lt;did&gt;)</div><div class="sub">Wave-3 · filter bar above all 3 culture panels</div></div></div>
+  </div>
+
+  <!-- Wave plan -->
+  <div class="card">
+    <h2><span class="dot blue"></span>Expected Wave Structure</h2>
+    <div class="item"><div><div class="label">Wave 0 — Cleanup + Production Wiring</div><div class="wave-row"><span class="wave-badge todo">D-01 relationships.ts</span><span class="wave-badge todo">D-02 humanSanctionStore</span><span class="wave-badge todo">D-03 SpawnNousDeps</span><span class="wave-badge todo">vitest fix</span></div></div></div>
+    <div class="item"><div><div class="label">Wave 1 — Replay Foundation</div><div class="wave-row"><span class="wave-badge todo">D-07 RED→GREEN</span><span class="wave-badge todo">D-04 nav</span><span class="wave-badge todo">D-05 listing</span></div></div></div>
+    <div class="item"><div><div class="label">Wave 2 — Scrubber Modal</div><div class="wave-row"><span class="wave-badge todo">D-06 tick slider + event list</span></div></div></div>
+    <div class="item"><div><div class="label">Wave 3 — Culture Browser</div><div class="wave-row"><span class="wave-badge todo">D-08 components</span><span class="wave-badge todo">D-09 endpoints</span><span class="wave-badge todo">D-10 raw-SVG</span><span class="wave-badge todo">D-11 filter bar</span></div></div></div>
+  </div>
+
+  <div class="footer">
+    Phase 25c · Noesis v2.5 Human Portal · Updated: 2026-05-22 · UI-SPEC ✓ — Ready to plan
+  </div>
+
+  <script>
+    const done   = document.querySelectorAll('.icon.status-done').length;
+    const active = document.querySelectorAll('.icon.status-active').length;
+    const all    = document.querySelectorAll('.item .icon').length;
+    const score  = done + active * 0.5;
+    const pct    = Math.round((score / all) * 100);
+    document.getElementById('overall-bar').style.width = pct + '%';
+    document.getElementById('overall-pct').textContent = pct + '%';
+  </script>
+
+</body>
+</html>

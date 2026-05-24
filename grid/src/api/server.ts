@@ -24,8 +24,15 @@ import type {
     ShopsResponse,
 } from './types.js';
 import { WsHub } from './ws-hub.js';
+import { WsFirehoseHub } from '../audit/firehose-hub.js';
+import { DriftDetector } from '../audit/drift-detector.js';
+import { registerAuditFirehoseRoute } from './routes/audit-firehose.js';
+import { registerDriftAlertsRoute } from './routes/audit-drift-alerts.js';
+import { registerHumansRoutes } from './routes/humans.js';
+import { registerTickMetricsRoute } from './routes/tick-metrics.js';
 import { registerOperatorRoutes } from './operator/index.js';
 import { registerPortalRoutes } from './portal/index.js';
+import { registerCognitiveSnapshotRoute } from './operator/cognitive-snapshot.js';
 import { tombstoneCheck, TombstonedDidError } from '../registry/tombstone-check.js';
 import type { HumanRegistry } from '../human/index.js';
 import fastifyCookie from '@fastify/cookie';
@@ -62,6 +69,21 @@ export interface InspectorRunner {
     forceTelos?(
         newTelos: Record<string, unknown>,
     ): Promise<{ telos_hash_before: string; telos_hash_after: string }>;
+    /**
+     * Phase 25a OBS-BRAIN-HEALTH: tick-latency percentiles from in-memory ring buffer.
+     * Optional so legacy fakes without Phase 25a wiring still compile.
+     */
+    getTickMetrics?(): { p50: number; p95: number; queue_depth: number; sample_count: number };
+    /**
+     * Phase 25b SANCTION-01: mute flag — suppresses broadcast emissions at runner boundary.
+     * Optional so legacy fakes without Phase 25b wiring still compile.
+     */
+    muteFlag?: boolean;
+    /**
+     * Phase 25b SANCTION-04: force-sleep trigger — signals the runner to enter Hypnos sleep.
+     * Optional so legacy fakes without Phase 25b wiring still compile.
+     */
+    triggerSleep?(): void | Promise<void>;
 }
 
 export interface GridServices {
@@ -146,6 +168,79 @@ export interface GridServices {
     lore?: {
         storage: import('../lore/LoreStorage.js').LoreStorage;
     };
+    /**
+     * Phase 25a OBS-FIREHOSE: WsFirehoseHub — unfiltered AuditChain → WebSocket fan-out.
+     * Backs GET /api/v1/audit/firehose. Constructed and wired by buildServerWithHub.
+     */
+    firehoseHub?: WsFirehoseHub;
+    /**
+     * Phase 25a OBS-ALLOWLIST-MONITOR: DriftDetector — runtime non-allowlisted event monitor.
+     * Backs GET /api/v1/audit/drift-alerts. Constructed and wired by buildServerWithHub.
+     */
+    driftDetector?: DriftDetector;
+    /**
+     * Phase 25a OBS-COGNITIVE-INSPECTOR: injectable fetch for Brain HTTP calls.
+     * When absent, the route uses global `fetch`. Allows tests to inject mocks
+     * without monkey-patching. Pattern mirrors delete-nous.ts (AGENCY-05 D-03).
+     */
+    brainFetch?: typeof fetch;
+    /**
+     * Phase 25a OBS-COGNITIVE-INSPECTOR: base URL for Brain HTTP API.
+     * Defaults to `process.env.BRAIN_HTTP_BASE_URL` when absent.
+     * Used by the cognitive-snapshot proxy to locate the target Brain instance.
+     */
+    brainBaseUrl?: string;
+    /**
+     * Phase 25b SANCTION-01/04: optional sanction_reasons DB writer.
+     * When present, sanction routes write reason plaintext to the sanction_reasons table.
+     * When absent (e.g. tests), the DB insert is skipped — the route still emits the audit event.
+     * Production wiring passes a mysql2/promise Pool query wrapper from genesis/launcher.
+     */
+    sanctionReasonStore?: {
+        insert(row: {
+            reason_hash: string;
+            plaintext: string;
+            operator_id: string;
+            event_type: string;
+            target_did: string;
+            tick: number;
+        }): Promise<void>;
+    };
+    /**
+     * Phase 25b SANCTION-05/06: human sanction DB operations (ban-human, freeze-wallet).
+     * When present, routes check human existence and update banned/frozen flags.
+     * When absent, the route returns 503 human_sanction_store_unavailable.
+     * Production wiring passes a mysql2/promise Pool query wrapper from genesis/launcher.
+     */
+    humanSanctionStore?: {
+        existsByDid(did: string): Promise<boolean>;
+        setBanned(did: string): Promise<void>;
+        setFrozen(did: string): Promise<void>;
+        /** Phase 25b plan 13: portal preHandler reads flags to enforce freeze/ban at runtime. */
+        getFlags(did: string): Promise<{ frozen: number; banned: number } | null>;
+    };
+    /**
+     * Phase 26 ONBOARD-04: MySQL pool for onboarding_goal queries on GET /me and PATCH /me.
+     * When present, GET /me returns `onboarded: boolean` derived from human_users.onboarding_goal.
+     * When absent, GET /me returns `onboarded: false` (fail-safe default).
+     */
+    humanPool?: {
+        query(sql: string, values?: unknown[]): Promise<[unknown, unknown]>;
+    };
+    /**
+     * Phase 28 SPAWN-01: GenesisLauncher accessor for human-spawned Nous routes.
+     * When present, POST /api/v1/portal/nous/spawn delegates Nous creation here.
+     * When absent, spawnNous calls are no-ops (guard in portal/index.ts).
+     */
+    launcher?: {
+        spawnNous(name: string, did: string, publicKey: string, region: string, humanOwner?: string, personalitySeed?: string): void;
+    };
+    /**
+     * Phase 28 SPAWN-01: EVM RPC tx confirmation function for payment verification.
+     * When present, GET /spawn/status and POST /spawn use this to verify USDT payment.
+     * When absent, confirmTxPaid always returns { confirmed: false }.
+     */
+    evmConfirmTx?: (txHash: string) => Promise<{ confirmed: boolean; amountUsdt?: string; from?: string }>;
 }
 
 /**
@@ -167,7 +262,7 @@ export function buildServer(services: GridServices): FastifyInstance {
 export function buildServerWithHub(
     services: GridServices,
     wsHubOptions?: WsHubOverrides,
-): { app: FastifyInstance; wsHub: WsHub } {
+): { app: FastifyInstance; wsHub: WsHub; firehoseHub: WsFirehoseHub; driftDetector: DriftDetector } {
     const app = Fastify({ logger: false });
     const startedAt = Date.now();
 
@@ -175,13 +270,13 @@ export function buildServerWithHub(
     void app.register(fastifyCookie);
 
     // Dashboard CORS (dev): Next.js dev server runs on :3001 per 03-VALIDATION.md.
-    // :3000 is included because `next dev` falls back to :3000 when :3001 is taken
-    // and we must not surprise-break that path in a hot-reload loop.
+    // :3000 is included because `next dev` falls back to :3000 when :3001 is taken.
+    // :3002 is the Steward Console.
     // Production hardening (0.0.0.0 bind, stricter origin list) is Phase 4.
     void app.register(cors, {
-        origin: ['http://localhost:3001', 'http://localhost:3000'],
-        credentials: false,
-        methods: ['GET', 'OPTIONS'],
+        origin: ['http://localhost:3001', 'http://localhost:3000', 'http://localhost:3002'],
+        credentials: true,
+        methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
     });
 
     // --- Health ---
@@ -376,6 +471,15 @@ export function buildServerWithHub(
     // --- Phase 22: Portal auth routes (WEB3-01 to WEB3-06) ---
     registerPortalRoutes(app, services);
 
+    // --- Phase 25a OBS-HUMANS: Human profile + history routes ---
+    registerHumansRoutes(app, services);
+
+    // --- Phase 25a OBS-BRAIN-HEALTH: Tick-metrics route ---
+    registerTickMetricsRoute(app, services);
+
+    // --- Phase 25a OBS-COGNITIVE-INSPECTOR: H3 cognitive-snapshot proxy ---
+    registerCognitiveSnapshotRoute(app, services);
+
     // --- Phase 19 NORM-01: Crystallized norms endpoint ---
     // Registered only when norms service is provided (optional for legacy tests).
     if (services.norms) {
@@ -464,6 +568,12 @@ export function buildServerWithHub(
         watermarkBytes: wsHubOptions?.watermarkBytes,
     });
 
+    // Phase 25a: Firehose hub + drift detector (observer-only, no audit writes).
+    const firehoseHub = new WsFirehoseHub(services.audit, services.gridName);
+    const driftDetector = new DriftDetector(services.audit);
+    services.firehoseHub = firehoseHub;
+    services.driftDetector = driftDetector;
+
     // M5: Origin check deferred — v1 binds 127.0.0.1. See Phase 4 for 0.0.0.0 hardening.
     // When binding 0.0.0.0 behind a reverse proxy, pair GRID_WS_SECRET with an origin
     // allowlist check here. See PITFALLS.md §M5 for the deployment-time checklist.
@@ -472,7 +582,13 @@ export function buildServerWithHub(
     //   - If GRID_WS_SECRET env is set: require Authorization: Bearer <secret>
     //     header OR ?token=<secret> query param. Missing/mismatch → 1008 close.
     //   - If unset: permissive (developer default, 127.0.0.1 bind).
+    // Phase 25a: REST drift-alerts route (registered at top-level, not inside WS scope).
+    registerDriftAlertsRoute(app, services);
+
     app.register(async (instance) => {
+        // Phase 25a: firehose WS route registered inside the same plugin scope as /ws/events.
+        registerAuditFirehoseRoute(instance, firehoseHub);
+
         instance.get('/ws/events', { websocket: true }, (socket, req) => {
             const secret = process.env.GRID_WS_SECRET;
             if (secret) {
@@ -527,7 +643,9 @@ export function buildServerWithHub(
     // other teardown steps that might race with @fastify/websocket.
     app.addHook('preClose', async () => {
         await wsHub.close();
+        await firehoseHub.close();
+        driftDetector.close();
     });
 
-    return { app, wsHub };
+    return { app, wsHub, firehoseHub, driftDetector };
 }

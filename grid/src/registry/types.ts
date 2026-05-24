@@ -19,6 +19,8 @@ export interface NousRecord {
     status: 'active' | 'suspended' | 'exiled' | 'deleted';
     /** Phase 8 (AGENCY-05). Stamped by tombstone(). Absent on active records. */
     deletedAtTick?: number;
+    /** Phase 25b (SANCTION-03). Set by quarantine route. Excludes Nous from peer-discovery (inRegion). */
+    quarantineFlag?: boolean;
 }
 
 export interface SpawnRequest {
@@ -28,4 +30,6 @@ export interface SpawnRequest {
     region: string;             // Starting region
     humanOwner?: string;
     personality?: Record<string, unknown>;
+    /** Phase 28 SPAWN-04: personality seed type persisted to nous_registry.personality_seed. */
+    personalitySeed?: string;
 }

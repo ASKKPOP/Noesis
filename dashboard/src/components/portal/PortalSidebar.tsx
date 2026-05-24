@@ -40,7 +40,7 @@ const NAV: NavSection[] = [
         items: [
             { href: '/portal/auth',    label: 'Sign In',   exact: true, guestOnly: true },
             { href: '/portal/profile', label: 'Profile' },
-            { href: '/portal/wallet',  label: 'Wallet',    phase: '23' },
+            { href: '/portal/wallet',  label: 'Wallet' },
         ],
     },
     {
@@ -60,12 +60,14 @@ const NAV: NavSection[] = [
     {
         label: 'Resources',
         items: [
-            { href: '/portal/docs',     label: 'Documents', phase: '30' },
-            { href: '/portal/glossary', label: 'Glossary' },
-            { href: '/portal/help',     label: 'Help & FAQ' },
-            { href: '/portal/privacy',  label: 'Privacy Policy' },
-            { href: '/portal/terms',    label: 'Terms of Service' },
-            { href: '/portal/status',   label: 'Project Status' },
+            { href: '/portal/help',          label: 'Help Center',    exact: true },
+            { href: '/portal/help/guide',    label: 'Getting Started' },
+            { href: '/portal/help/faq',      label: 'FAQ' },
+            { href: '/portal/help/glossary', label: 'Glossary' },
+            { href: '/portal/help/contact',  label: 'Support' },
+            { href: '/portal/privacy',       label: 'Privacy Policy' },
+            { href: '/portal/terms',         label: 'Terms of Service' },
+            { href: '/portal/status',        label: 'Project Status' },
         ],
     },
     {
@@ -140,32 +142,50 @@ function NavLink({ item }: { item: NavItem }) {
 
 // ── PortalSidebar ────────────────────────────────────────────────────────────
 
-export function PortalSidebar() {
+export function PortalSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     const { address, isConnected } = useAccount();
     const { currentUser, clearUser } = useHumanAuthStore();
     const { disconnect } = useDisconnect();
 
-    function handleSignOut() {
+    async function handleSignOut() {
+        const gridBase = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
         clearUser();
         disconnect();
-        document.cookie = 'noesis_portal_token=; Max-Age=0; path=/';
+        await fetch(`${gridBase}/api/v1/portal/auth/logout`, { method: 'POST', credentials: 'include' });
         window.location.href = '/portal/auth';
     }
 
     return (
-        <aside style={{
-            width: 220,
-            flexShrink: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'var(--navy)',
-            borderRight: '1px solid rgba(255,255,255,0.07)',
-            overflow: 'hidden',
-        }}>
+        <>
+        {isOpen && (
+            <div
+                onClick={onClose}
+                style={{
+                    position: 'fixed',
+                    inset: 0,
+                    background: 'rgba(11,18,32,0.40)',
+                    zIndex: 49,
+                }}
+                aria-hidden="true"
+            />
+        )}
+        <aside
+            className={`portal-sidebar${isOpen ? ' sidebar-open' : ''}`}
+            style={{
+                width: 220,
+                flexShrink: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                background: 'var(--navy)',
+                borderRight: '1px solid rgba(255,255,255,0.07)',
+                overflow: 'hidden',
+            }}
+        >
             {/* ── Logo ── */}
             <div style={{
                 padding: '20px 16px 18px',
                 borderBottom: '1px solid rgba(255,255,255,0.07)',
+                position: 'relative',
             }}>
                 <div style={{
                     fontFamily: 'var(--serif)',
@@ -187,6 +207,29 @@ export function PortalSidebar() {
                 }}>
                     Portal · Genesis Grid
                 </div>
+                <button
+                    onClick={onClose}
+                    className="md:hidden"
+                    aria-label="Close navigation"
+                    style={{
+                        position: 'absolute',
+                        top: 18,
+                        right: 12,
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'rgba(200,192,184,0.72)',
+                        fontSize: 18,
+                        lineHeight: 1,
+                        padding: '4px',
+                        fontFamily: 'var(--sans-portal)',
+                        fontWeight: 400,
+                        minHeight: 24,
+                        minWidth: 24,
+                    }}
+                >
+                    ×
+                </button>
             </div>
 
             {/* ── Nav ── */}
@@ -318,9 +361,10 @@ export function PortalSidebar() {
                     color: 'rgba(200,192,184,0.22)',
                     paddingLeft: 2,
                 }}>
-                    v2.5 · Phase 22 · Genesis Grid
+                    v2.5 · Phase 24 · Genesis Grid
                 </div>
             </div>
         </aside>
+        </>
     );
 }

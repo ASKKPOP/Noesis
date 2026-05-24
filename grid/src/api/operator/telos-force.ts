@@ -17,8 +17,16 @@
  *     2. Handler side: closed payload literal below — no key spread.
  *     3. Privacy gate: payloadPrivacyCheck catches forbidden keys structurally.
  *
+ * AUTH MODEL (D-25b-NEW-1 fix, Phase 25b Wave 0):
+ *   tier and operator_id are derived from server-trusted request headers
+ *   (x-operator-tier, x-operator-id) — NOT from the request body. Mirrors
+ *   the canonical cognitive-snapshot.ts pattern. Body tier/operator_id
+ *   are rejected — body-trust GAP closed.
+ *
  * ERROR LADDER (no 500s):
- *   400  — malformed tier / operator_id / DID / new_telos body
+ *   400  — malformed operator_id header / DID / new_telos body
+ *   401  — tier_missing (x-operator-tier header absent / non-numeric)
+ *   403  — tier_too_low (x-operator-tier < 4)
  *   404  — unknown Nous (no runner for DID)
  *   503  — Brain unavailable (bridge.connected === false OR RPC throws);
  *          NO audit event emitted on 503.
@@ -28,11 +36,11 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { DID_REGEX } from '../server.js';
 import type { ApiError } from '../types.js';
+import { OPERATOR_ID_REGEX } from '../types.js';
 import { appendOperatorEvent } from '../../audit/operator-events.js';
-import { validateTierBody, type OperatorBody } from './_validation.js';
 import { tombstoneCheck, TombstonedDidError } from '../../registry/tombstone-check.js';
 
-interface ForceTelosBody extends OperatorBody {
+interface ForceTelosBody {
     new_telos?: unknown;
 }
 
@@ -50,14 +58,31 @@ export function registerTelosForceRoute(
     app.post<{ Params: { did: string }; Body: ForceTelosBody }>(
         '/api/v1/operator/nous/:did/telos/force',
         async (req, reply) => {
-            const body = req.body ?? {};
-
-            // 1. Tier + operator_id gate.
-            const v = validateTierBody(body, 'H4');
-            if (!v.ok) {
-                reply.code(400);
-                return { error: v.error } satisfies ApiError;
+            // 1. Tier gate — read from server-trusted x-operator-tier header (D-25b-NEW-1).
+            //    GAP closed: body fields tier/operator_id are NOT trusted.
+            const tierHeader = req.headers['x-operator-tier'];
+            if (typeof tierHeader !== 'string') {
+                reply.code(401);
+                return { error: 'tier_missing' } satisfies ApiError;
             }
+            const tierNum = parseInt(tierHeader, 10);
+            if (!Number.isFinite(tierNum)) {
+                reply.code(401);
+                return { error: 'tier_missing' } satisfies ApiError;
+            }
+            if (tierNum < 4) {
+                reply.code(403);
+                return { error: 'tier_too_low' } satisfies ApiError;
+            }
+
+            // 1b. Operator-id gate — read from server-trusted x-operator-id header.
+            const opIdHeader = req.headers['x-operator-id'];
+            if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) {
+                reply.code(400);
+                return { error: 'invalid_operator_id' } satisfies ApiError;
+            }
+            const resolvedTier: 'H4' = 'H4';
+            const resolvedOperatorId = opIdHeader;
 
             // 2. DID shape gate.
             const targetDid = req.params.did;
@@ -82,6 +107,7 @@ export function registerTelosForceRoute(
             // 3. new_telos body validation — must be an object (dict of lists).
             //    We don't validate the interior shape here; TelosManager.from_yaml
             //    on the Python side is tolerant of missing keys + empty lists.
+            const body = req.body ?? {};
             const newTelosRaw = body.new_telos;
             if (
                 newTelosRaw === undefined ||
@@ -138,14 +164,15 @@ export function registerTelosForceRoute(
 
             // 8. Emit operator.telos_forced — closed payload tuple, hashes only.
             //    This literal IS the D-19 enforcement: NO spread, NO plaintext.
+            //    D-25b-NEW-1: operator_id sourced from header, never from body.
             appendOperatorEvent(
                 services.audit,
                 'operator.telos_forced',
-                v.operator_id,
+                resolvedOperatorId,
                 {
-                    tier: v.tier,
+                    tier: resolvedTier,
                     action: 'force_telos',
-                    operator_id: v.operator_id,
+                    operator_id: resolvedOperatorId,
                     target_did: targetDid,
                     telos_hash_before: result.telos_hash_before,
                     telos_hash_after: result.telos_hash_after,

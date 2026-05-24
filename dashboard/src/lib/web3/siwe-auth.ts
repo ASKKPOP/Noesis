@@ -13,6 +13,14 @@ import { SiweMessage } from 'siwe';
 export interface HumanUser {
     did: string;
     eth_address: string;
+    /** Present for email-authenticated users. */
+    email?: string;
+    /** Auto-assigned region — populated from /me after sign-in. */
+    region?: string | null;
+    /** ISO 8601 join timestamp — populated from /me after sign-in. */
+    created_at?: string | null;
+    /** True when human_users.onboarding_goal IS NOT NULL. Populated from /me after sign-in. */
+    onboarded?: boolean;
 }
 
 export interface SignInParams {
@@ -88,6 +96,12 @@ export async function signInWithEthereum(params: SignInParams): Promise<HumanUse
         throw new Error(errData.error ?? 'sign_in_failed');
     }
 
-    const userData = await verifyRes.json() as HumanUser;
-    return { did: userData.did, eth_address: userData.eth_address };
+    const userData = await verifyRes.json() as HumanUser & { is_new: boolean };
+    return {
+        did: userData.did,
+        eth_address: userData.eth_address,
+        region: userData.region,
+        created_at: userData.created_at,
+        onboarded: userData.onboarded ?? false,
+    };
 }

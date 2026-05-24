@@ -11,84 +11,18 @@
 
 import dynamic from 'next/dynamic';
 import { useEffect, useRef, useState } from 'react';
+
+// ── CyberGrid background (the live isometric city) ───────────────────────────
+const CyberGridBg = dynamic(() => import('@/components/portal/CyberGrid'), { ssr: false });
 import { useRouter } from 'next/navigation';
 import { useAccount, useSignMessage, useConnect, useDisconnect } from 'wagmi';
 import { injected } from 'wagmi/connectors';
 import { signIn } from 'next-auth/react';
 import { signInWithEthereum } from '@/lib/web3/siwe-auth';
+import { signInWithEmail, signUpWithEmail } from '@/lib/web3/email-auth';
 import { useHumanAuthStore } from '@/lib/stores/human-auth-store';
 
-// ── Particle canvas ──────────────────────────────────────────────────────────
-
-function ParticleCanvas() {
-    const ref = useRef<HTMLCanvasElement>(null);
-
-    useEffect(() => {
-        const canvas = ref.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        const dots: { x: number; y: number; r: number; vx: number; vy: number; a: number }[] = [];
-
-        function resize() {
-            if (!canvas) return;
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        resize();
-        window.addEventListener('resize', resize);
-
-        // Seed ~80 dots
-        for (let i = 0; i < 80; i++) {
-            dots.push({
-                x: Math.random() * window.innerWidth,
-                y: Math.random() * window.innerHeight,
-                r: Math.random() * 1.8 + 0.4,
-                vx: (Math.random() - 0.5) * 0.15,
-                vy: (Math.random() - 0.5) * 0.15,
-                a: Math.random() * 0.6 + 0.2,
-            });
-        }
-
-        let raf: number;
-        function draw() {
-            if (!canvas || !ctx) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (const d of dots) {
-                d.x += d.vx;
-                d.y += d.vy;
-                if (d.x < 0) d.x = canvas.width;
-                if (d.x > canvas.width) d.x = 0;
-                if (d.y < 0) d.y = canvas.height;
-                if (d.y > canvas.height) d.y = 0;
-                ctx.beginPath();
-                ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(218, 122, 78, ${d.a})`;
-                ctx.fill();
-            }
-            raf = requestAnimationFrame(draw);
-        }
-        draw();
-
-        return () => {
-            cancelAnimationFrame(raf);
-            window.removeEventListener('resize', resize);
-        };
-    }, []);
-
-    return (
-        <canvas
-            ref={ref}
-            style={{
-                position: 'fixed',
-                inset: 0,
-                pointerEvents: 'none',
-                zIndex: 0,
-            }}
-        />
-    );
-}
+// ParticleCanvas removed — replaced by live CyberGrid background.
 
 // ── SVG logos ────────────────────────────────────────────────────────────────
 
@@ -146,20 +80,34 @@ function PortalAuthPage() {
     const { disconnect } = useDisconnect();
     const { currentUser, setUser } = useHumanAuthStore();
 
+    const pendingRef = useRef(false);
+
     const [tab, setTab] = useState<Tab>('signin');
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [socialPending, setSocialPending] = useState<'google' | 'apple' | null>(null);
 
-    // Already signed in — redirect.
+    // Email form state
+    const [emailInput, setEmailInput] = useState('');
+    const [passwordInput, setPasswordInput] = useState('');
+    const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
+    const [emailPending, setEmailPending] = useState(false);
+
+    // Already signed in — redirect based on onboarding status.
     useEffect(() => {
-        if (currentUser) router.push('/portal');
+        if (!currentUser) return;
+        if (currentUser.onboarded === false) {
+            router.push('/portal/onboard');
+        } else {
+            router.push('/portal');
+        }
     }, [currentUser, router]);
 
     // Auto SIWE once wallet connects.
     useEffect(() => {
-        if (isConnected && address && chain && !currentUser && !isPending) {
-            handleWalletSignIn();
+        if (isConnected && address && chain && !currentUser && !pendingRef.current) {
+            pendingRef.current = true;
+            handleWalletSignIn().finally(() => { pendingRef.current = false; });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isConnected, address, chain?.id]);
@@ -168,14 +116,41 @@ function PortalAuthPage() {
         if (!address || !chain) return;
         setIsPending(true);
         setError(null);
+        const gridApiBase = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
         try {
             const user = await signInWithEthereum({
                 address,
                 chainId: chain.id,
                 signMessage: (msg) => signMessageAsync({ message: msg }),
+                gridApiBase,
             });
             setUser(user);
-            router.push('/portal');
+            // Hydrate full profile from /me (region, created_at, onboarded) — non-fatal if it fails
+            try {
+                const meRes = await fetch(`${gridApiBase}/api/v1/portal/auth/me`, { credentials: 'include' });
+                if (meRes.ok) {
+                    const meData = await meRes.json() as {
+                        did: string;
+                        eth_address: string;
+                        region: string;
+                        created_at: string | null;
+                        onboarded: boolean;  // NEW — from Plan A
+                    };
+                    setUser(meData);  // overwrite with full profile
+                    // Conditional redirect based on onboarding status (per D-12)
+                    if (!meData.onboarded) {
+                        router.push('/portal/onboard');
+                    } else {
+                        router.push('/portal');
+                    }
+                } else {
+                    // /me failed but sign-in succeeded — go to portal
+                    router.push('/portal');
+                }
+            } catch {
+                // /me failed — store retains the partial user from /verify; non-fatal
+                router.push('/portal');
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'sign_in_failed');
         } finally {
@@ -191,6 +166,62 @@ function PortalAuthPage() {
         } catch {
             setError('social_sign_in_failed');
             setSocialPending(null);
+        }
+    }
+
+    async function handleEmailSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        setError(null);
+
+        const isJoinTab = tab === 'join';
+
+        if (!emailInput.trim() || !passwordInput) {
+            setError('email_and_password_required');
+            return;
+        }
+        if (isJoinTab && passwordInput !== confirmPasswordInput) {
+            setError('passwords_do_not_match');
+            return;
+        }
+        if (passwordInput.length < 8) {
+            setError('password_too_short');
+            return;
+        }
+
+        const gridApiBase = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
+        setEmailPending(true);
+        try {
+            const user = isJoinTab
+                ? await signUpWithEmail({ email: emailInput.trim(), password: passwordInput, gridApiBase })
+                : await signInWithEmail({ email: emailInput.trim(), password: passwordInput, gridApiBase });
+            setUser(user);
+            // Hydrate full profile from /me (onboarded) — non-fatal if it fails
+            try {
+                const meRes = await fetch(`${gridApiBase}/api/v1/portal/auth/me`, { credentials: 'include' });
+                if (meRes.ok) {
+                    const meData = await meRes.json() as {
+                        did: string;
+                        eth_address: string;
+                        region: string;
+                        created_at: string | null;
+                        onboarded: boolean;
+                    };
+                    setUser(meData);
+                    if (!meData.onboarded) {
+                        router.push('/portal/onboard');
+                    } else {
+                        router.push('/portal');
+                    }
+                } else {
+                    router.push('/portal');
+                }
+            } catch {
+                router.push('/portal');
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : (isJoinTab ? 'sign_up_failed' : 'sign_in_failed'));
+        } finally {
+            setEmailPending(false);
         }
     }
 
@@ -226,7 +257,7 @@ function PortalAuthPage() {
         <div style={{
             position: 'relative',
             minHeight: '100vh',
-            background: '#1d1c1b',
+            background: '#020610',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -234,10 +265,27 @@ function PortalAuthPage() {
             padding: '40px 20px',
             fontFamily: '"DM Sans", "Inter Tight", sans-serif',
         }}>
-            <ParticleCanvas />
+            {/* Live isometric city — full-screen non-interactive background */}
+            <div style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 0,
+                pointerEvents: 'none',
+            }}>
+                <CyberGridBg />
+            </div>
+
+            {/* Dark veil so login card reads clearly over the busy city */}
+            <div style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 1,
+                background: 'rgba(2,6,16,0.52)',
+                pointerEvents: 'none',
+            }} />
 
             {/* Content */}
-            <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 440 }}>
+            <div style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 440 }}>
 
                 {/* ── Logo ── */}
                 <div style={{ textAlign: 'center', marginBottom: 28 }}>
@@ -282,11 +330,12 @@ function PortalAuthPage() {
 
                 {/* ── Card ── */}
                 <div style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(2,6,16,0.72)',
+                    border: '1px solid rgba(0,212,255,0.15)',
                     borderRadius: 16,
                     padding: '36px 36px 28px',
-                    backdropFilter: 'blur(12px)',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '0 8px 48px rgba(0,0,0,0.5), inset 0 0 60px rgba(0,212,255,0.03)',
                 }}>
 
                     {/* Heading */}
@@ -376,7 +425,81 @@ function PortalAuthPage() {
                         </button>
                     </div>
 
-                    {/* ── Divider ── */}
+                    {/* ── Divider: social → email ── */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        marginBottom: 20,
+                    }}>
+                        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.10)' }} />
+                        <span style={{
+                            fontFamily: '"JetBrains Mono", monospace',
+                            fontSize: 10,
+                            letterSpacing: '0.10em',
+                            color: 'rgba(245,240,234,0.35)',
+                            textTransform: 'uppercase',
+                        }}>
+                            or
+                        </span>
+                        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.10)' }} />
+                    </div>
+
+                    {/* ── Email form ── */}
+                    <form onSubmit={handleEmailSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+                        <input
+                            type="email"
+                            placeholder="Email address"
+                            autoComplete="email"
+                            value={emailInput}
+                            onChange={e => setEmailInput(e.target.value)}
+                            disabled={emailPending}
+                            style={{ ...inputStyle, opacity: emailPending ? 0.6 : 1 }}
+                        />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            autoComplete={isJoin ? 'new-password' : 'current-password'}
+                            value={passwordInput}
+                            onChange={e => setPasswordInput(e.target.value)}
+                            disabled={emailPending}
+                            style={{ ...inputStyle, opacity: emailPending ? 0.6 : 1 }}
+                        />
+                        {isJoin && (
+                            <input
+                                type="password"
+                                placeholder="Confirm password"
+                                autoComplete="new-password"
+                                value={confirmPasswordInput}
+                                onChange={e => setConfirmPasswordInput(e.target.value)}
+                                disabled={emailPending}
+                                style={{ ...inputStyle, opacity: emailPending ? 0.6 : 1 }}
+                            />
+                        )}
+                        <button
+                            type="submit"
+                            disabled={emailPending}
+                            style={{
+                                width: '100%',
+                                background: emailPending ? 'rgba(218,122,78,0.60)' : '#da7a4e',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: 10,
+                                padding: '13px 16px',
+                                fontSize: 14,
+                                fontWeight: 600,
+                                fontFamily: '"DM Sans", "Inter Tight", sans-serif',
+                                cursor: emailPending ? 'not-allowed' : 'pointer',
+                                transition: 'background 0.15s',
+                            }}
+                        >
+                            {emailPending
+                                ? (isJoin ? 'Creating account…' : 'Signing in…')
+                                : (isJoin ? 'Create account' : 'Sign in with email')}
+                        </button>
+                    </form>
+
+                    {/* ── Divider: email → wallet ── */}
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -464,9 +587,17 @@ function PortalAuthPage() {
                             color: '#f87171',
                             textAlign: 'center',
                         }}>
-                            {error === 'user_rejected_signature'
-                                ? 'Signature rejected — reconnect to retry'
-                                : error}
+                            {{
+                                user_rejected_signature:  'Signature rejected — reconnect to retry',
+                                email_and_password_required: 'Email and password are required',
+                                passwords_do_not_match:   'Passwords do not match',
+                                password_too_short:       'Password must be at least 8 characters',
+                                email_already_exists:     'An account with this email already exists',
+                                invalid_credentials:      'Incorrect email or password',
+                                sign_in_failed:           'Sign in failed — please try again',
+                                sign_up_failed:           'Account creation failed — please try again',
+                                social_sign_in_failed:    'Social sign-in failed — please try again',
+                            }[error] ?? error}
                         </div>
                     )}
 

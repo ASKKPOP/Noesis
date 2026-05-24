@@ -8,7 +8,9 @@
 import { GenesisLauncher } from './genesis/launcher.js';
 import { GENESIS_CONFIG } from './genesis/presets.js';
 import { buildServer } from './api/server.js';
+import { HumanRegistry } from './human/index.js';
 import { Reviewer } from './review/index.js';
+import { LoreStorage } from './lore/LoreStorage.js';
 import {
     DatabaseConnection,
     MigrationRunner,
@@ -19,6 +21,7 @@ import {
 } from './db/index.js';
 import type { GenesisConfig } from './genesis/types.js';
 import type { FastifyInstance } from 'fastify';
+import type { SpawnNousDeps } from './api/operator/spawn-system-nous.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -80,6 +83,12 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     // Bootstrap infra (regions, connections, laws) — skip Nous for now
     launcher.bootstrap({ skipSeedNous: true });
 
+    // D-03: SpawnNousDeps — wraps launcher.spawnNous for spawn-system-nous route.
+    const spawnNousDeps = {
+        spawnNous: (name: string, did: string, publicKey: string, region: string) =>
+            launcher.spawnNous(name, did, publicKey, region),
+    };
+
     // HI-01 closure (09-VERIFICATION.md): wire the derived `relationships`
     // MySQL snapshot path. MUST run AFTER MigrationRunner so
     // sql/009_relationships.sql is applied before the first snapshot fires,
@@ -119,6 +128,65 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         }
     }
 
+    const humanRegistry = new HumanRegistry();
+
+    const loreStorage = dbConn ? new LoreStorage(dbConn.getPool()) : undefined;
+
+    // D-02: humanSanctionStore — DB pool wrapper for ban-human + freeze-wallet routes.
+    // Must be conditioned on dbConn (test envs run without MySQL).
+    // Pool is captured at IIFE construction time so future reassignment of dbConn
+    // cannot cause a null dereference inside the closures.
+    const humanSanctionStore = dbConn ? (() => {
+        const pool = dbConn.getPool();
+        return {
+            async existsByDid(did: string): Promise<boolean> {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const [rows] = await pool.query('SELECT did FROM human_users WHERE did = ? LIMIT 1', [did]) as any;
+                return (rows as Array<{ did: string }>).length > 0;
+            },
+            async setBanned(did: string): Promise<void> {
+                await pool.query('UPDATE human_users SET banned = 1 WHERE did = ?', [did]);
+            },
+            async setFrozen(did: string): Promise<void> {
+                await pool.query('UPDATE human_users SET frozen = 1 WHERE did = ?', [did]);
+            },
+            async getFlags(did: string): Promise<{ frozen: number; banned: number } | null> {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const [rows] = await pool.query('SELECT frozen, banned FROM human_users WHERE did = ? LIMIT 1', [did]) as any;
+                return (rows as Array<{ frozen: number; banned: number }>)[0] ?? null;
+            },
+        };
+    })() : undefined;
+
+    // Phase 26 ONBOARD-04: humanPool — lightweight pool reference for onboarding_goal
+    // queries on GET /me and PATCH /me. Follows the humanSanctionStore closure pattern.
+    const humanPool = dbConn ? dbConn.getPool() : undefined;
+
+    // Phase 28 SPAWN-01: EVM RPC client for payment confirmation.
+    // Only wired when GRID_EVM_RPC_URL is present — tests and DB-less envs omit it.
+    // Uses raw JSON-RPC (eth_getTransactionReceipt + eth_getTransactionByHash) so that
+    // no extra npm dependency is needed inside the grid container.
+    const evmRpcUrl = process.env.GRID_EVM_RPC_URL;
+    const evmConfirmTx = evmRpcUrl
+        ? async (txHash: string): Promise<{ confirmed: boolean; from?: string }> => {
+              try {
+                  // eth_getTransactionReceipt — null when tx is pending/unknown
+                  const receiptRes = await fetch(evmRpcUrl, {
+                      method: 'POST',
+                      headers: { 'content-type': 'application/json' },
+                      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_getTransactionReceipt', params: [txHash] }),
+                  });
+                  const receiptJson = await receiptRes.json() as { result: { status: string; from?: string } | null };
+                  if (!receiptJson.result || receiptJson.result.status !== '0x1') {
+                      return { confirmed: false };
+                  }
+                  return { confirmed: true, from: receiptJson.result.from };
+              } catch {
+                  return { confirmed: false };
+              }
+          }
+        : undefined;
+
     const server = buildServer({
         clock: launcher.clock,
         space: launcher.space,
@@ -128,7 +196,22 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         registry: launcher.registry,
         shops: launcher.shops,
         relationships: launcher.relationships,
+        humanRegistry,
         config: { relationship: config.genesisConfig.relationship },
+        governance: {
+            store: launcher.governanceStore,
+            engine: launcher.governance,
+        },
+        ...(loreStorage ? { lore: { storage: loreStorage } } : {}),
+        ...(humanSanctionStore ? { humanSanctionStore } : {}),
+        ...(humanPool ? { humanPool } : {}),
+        // Phase 28 SPAWN-01: EVM tx confirmation + launcher accessor for human-spawn routes.
+        ...(evmConfirmTx ? { evmConfirmTx } : {}),
+        launcher: { spawnNous: (name: string, did: string, pk: string, region: string, humanOwner?: string, personalitySeed?: string) =>
+            launcher.spawnNous(name, did, pk, region, humanOwner, personalitySeed) },
+        // D-03: inject spawnNousDeps via _spawnNousDeps escape hatch (see spawn-system-nous.ts line 89).
+        // Cast required because _spawnNousDeps is not on the public GridServices interface.
+        ...({ _spawnNousDeps: spawnNousDeps } as unknown as { _spawnNousDeps: SpawnNousDeps }),
         // Plan 04-03: runner lookup for the inspector proxy. Runners are
         // constructed by a future sub-plan that wires GridCoordinator here;
         // until then the lookup always returns undefined → 404 unknown_nous.

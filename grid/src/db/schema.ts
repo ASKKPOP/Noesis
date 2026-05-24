@@ -209,4 +209,171 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS human_users`,
     },
+    {
+        version: 10,
+        name: 'add_region_to_human_users',
+        up: `ALTER TABLE human_users ADD COLUMN region VARCHAR(127) NOT NULL DEFAULT 'agora'`,
+        down: `ALTER TABLE human_users DROP COLUMN region`,
+    },
+    {
+        version: 11,
+        name: 'add_email_auth_to_human_users',
+        up: `
+            ALTER TABLE human_users
+              MODIFY COLUMN eth_address VARCHAR(255) NULL,
+              ADD COLUMN email         VARCHAR(255) NULL AFTER eth_address,
+              ADD COLUMN password_hash VARCHAR(255) NULL AFTER email,
+              ADD UNIQUE KEY uq_email (grid_name, email)
+        `,
+        down: `
+            ALTER TABLE human_users
+              DROP INDEX uq_email,
+              DROP COLUMN password_hash,
+              DROP COLUMN email,
+              MODIFY COLUMN eth_address VARCHAR(255) NOT NULL
+        `,
+    },
+    {
+        version: 12,
+        name: 'create_sanction_reasons_and_freeze_human_users',
+        up: `
+            CREATE TABLE IF NOT EXISTS sanction_reasons (
+              id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+              reason_hash   CHAR(64)        NOT NULL,
+              plaintext     TEXT            NOT NULL,
+              operator_id   VARCHAR(48)     NOT NULL,
+              event_type    VARCHAR(63)     NOT NULL,
+              target_did    VARCHAR(255)    NOT NULL,
+              tick          BIGINT UNSIGNED NOT NULL,
+              created_at    TIMESTAMP(3)    NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+              PRIMARY KEY (id),
+              UNIQUE KEY uq_reason_hash (reason_hash),
+              INDEX idx_target_tick (target_did, tick)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+            ALTER TABLE human_users ADD COLUMN frozen TINYINT(1) NOT NULL DEFAULT 0
+        `,
+        down: `
+            ALTER TABLE human_users DROP COLUMN frozen;
+            DROP TABLE IF EXISTS sanction_reasons
+        `,
+    },
+    {
+        version: 13,
+        name: 'add_banned_human_users',
+        up: `
+            ALTER TABLE human_users ADD COLUMN banned TINYINT(1) NOT NULL DEFAULT 0;
+        `,
+        down: `
+            ALTER TABLE human_users DROP COLUMN banned;
+        `,
+    },
+    {
+        version: 14,
+        name: 'add_onboarding_goal_to_human_users',
+        up: `ALTER TABLE human_users ADD COLUMN onboarding_goal TEXT NULL DEFAULT NULL`,
+        down: `ALTER TABLE human_users DROP COLUMN onboarding_goal`,
+    },
+    {
+        version: 15,
+        name: 'add_personality_seed_to_nous_registry',
+        up: `ALTER TABLE nous_registry ADD COLUMN personality_seed VARCHAR(32) NULL DEFAULT NULL`,
+        down: `ALTER TABLE nous_registry DROP COLUMN personality_seed`,
+    },
+    {
+        version: 16,
+        name: 'create_spawn_payments',
+        up: `
+            CREATE TABLE IF NOT EXISTS spawn_payments (
+                tx_hash     CHAR(66)     NOT NULL,
+                human_did   VARCHAR(255) NOT NULL,
+                nous_did    VARCHAR(255) NULL,
+                confirmed   TINYINT(1)   NOT NULL DEFAULT 0,
+                created_at  TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (tx_hash),
+                INDEX idx_spawn_payments_human (human_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS spawn_payments`,
+    },
+    {
+        version: 17,
+        name: 'unique_nous_per_human',
+        up: `ALTER TABLE nous_registry ADD UNIQUE KEY uq_human_owner (human_owner)`,
+        down: `ALTER TABLE nous_registry DROP INDEX uq_human_owner`,
+    },
+    {
+        version: 18,
+        name: 'add_ousia_to_human_users',
+        up: `ALTER TABLE human_users ADD COLUMN ousia BIGINT NOT NULL DEFAULT 0`,
+        down: `ALTER TABLE human_users DROP COLUMN ousia`,
+    },
+    {
+        version: 19,
+        name: 'create_community_posts',
+        up: `
+            CREATE TABLE IF NOT EXISTS community_posts (
+                id          BIGINT UNSIGNED     NOT NULL AUTO_INCREMENT,
+                grid_name   VARCHAR(63)         NOT NULL,
+                author_did  VARCHAR(255)        NOT NULL,
+                content     TEXT                NOT NULL,
+                created_at  TIMESTAMP(3)        NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (id),
+                INDEX idx_posts_grid_time (grid_name, created_at DESC),
+                INDEX idx_posts_author    (grid_name, author_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS community_posts`,
+    },
+    {
+        version: 20,
+        name: 'create_community_replies',
+        up: `
+            CREATE TABLE IF NOT EXISTS community_replies (
+                id          BIGINT UNSIGNED     NOT NULL AUTO_INCREMENT,
+                grid_name   VARCHAR(63)         NOT NULL,
+                post_id     BIGINT UNSIGNED     NOT NULL,
+                author_did  VARCHAR(255)        NOT NULL,
+                content     TEXT                NOT NULL,
+                created_at  TIMESTAMP(3)        NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (id),
+                INDEX idx_replies_post      (grid_name, post_id),
+                INDEX idx_replies_author    (grid_name, author_did),
+                CONSTRAINT fk_reply_post FOREIGN KEY (post_id) REFERENCES community_posts (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS community_replies`,
+    },
+    {
+        version: 21,
+        name: 'create_user_follows',
+        up: `
+            CREATE TABLE IF NOT EXISTS user_follows (
+                grid_name      VARCHAR(63)  NOT NULL,
+                follower_did   VARCHAR(255) NOT NULL,
+                following_did  VARCHAR(255) NOT NULL,
+                created_at     TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (grid_name, follower_did, following_did),
+                INDEX idx_follows_following (grid_name, following_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS user_follows`,
+    },
+    {
+        version: 22,
+        name: 'create_support_tickets',
+        up: `
+            CREATE TABLE IF NOT EXISTS support_tickets (
+                id             CHAR(36)     NOT NULL,
+                human_did      VARCHAR(255) NOT NULL,
+                subject        VARCHAR(64)  NOT NULL,
+                message        TEXT         NOT NULL,
+                attachment_url TEXT         NULL,
+                status         ENUM('open','closed') NOT NULL DEFAULT 'open',
+                created_at     TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (id),
+                INDEX idx_support_tickets_human (human_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS support_tickets`,
+    },
 ];

@@ -25,13 +25,59 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
   - [x] 22-02-PLAN.md — Grid: SIWE auth endpoints + JWT issuance + human.joined emitter
   - [x] 22-03-PLAN.md — Dashboard: wagmi provider + wallet connect UI + portal layout
   - [x] 22-04-PLAN.md — Dashboard: SIWE sign-in flow + auth store + Next.js middleware
-- [ ] **Phase 23: Cyber Coin Wallet** — EVM on-chain balance display (USDT/ETH), ethers.js/wagmi integration, wallet connect UI, send/receive Cyber Coin, transaction history. Allowlist 44→45 (+1: human.transferred).
-- [ ] **Phase 24: Portal Shell** — `/portal/*` route namespace in Next.js dashboard, navigation, user profile page, region presence display, portal layout separate from Steward Console.
-- [ ] **Phase 25: Sophia Onboarding** — Fast-proxy LLM chat (out-of-tick), goal-setting wizard, animated world introduction, Sophia as guide persona, first-time user flow with welcome Cyber Coin allocation.
-- [ ] **Phase 26: Nous Interaction** — Humans chat with Sophia/Hermes/Themis via `/portal/chat`, send Cyber Coin tips, browse Nous activity feed, view skills/lore/norms the Nous have produced. Allowlist 45→46 (+1: human.spoke).
-- [ ] **Phase 27: Personal Nous** — Human spawns own Nous agent (costs Cyber Coin), names it, picks personality seeds, it gets a DID and runs in the Genesis Grid alongside Sophia/Hermes/Themis. `humanOwner` field wired. Allowlist 46→47 (+1: nous.spawned_by_human).
-- [ ] **Phase 28: Community** — User directory, community board (posts, replies), live activity feed, follow other users, leaderboard by Cyber Coin holdings and Nous contributions.
-- [ ] **Phase 29: Resources & Support** — Help center, interactive guide, FAQ, onboarding documentation, support ticket flow, Noēsis glossary (Nous, Ousia, Agora, lore, norms explained).
+- [x] **Phase 23: Cyber Coin Wallet** — EVM on-chain balance display (USDT/ETH), wagmi integration, send form, transaction history. Dashboard UI shipped. Grid endpoint + human.transferred emitter deferred to Phase 24 (allowlist stays at 44). (completed 2026-05-20)
+  **Plans**: 1 plan
+  Plans:
+  - [x] 23-01-PLAN.md — Dashboard: WalletPanel (ETH/USDT balances, send form, tx history)
+- [x] **Phase 24: Portal Shell** — region presence on profile, profile completeness (region + wallet balance + join date), mobile hamburger sidebar, portal home live Grid stats. Allowlist stays at 45 (no new events). (completed 2026-05-21)
+  **Plans**: 5 plans
+  Plans:
+  - [x] 24-01-PLAN.md — Grid: migration v10 (region column) + HumanRecord/Registry + JWT/me extension
+  - [x] 24-02-PLAN.md — Dashboard: HumanUser type + auth hydration + profile page (3 new rows)
+  - [x] 24-03-PLAN.md — Dashboard: mobile sidebar (PortalShell/Sidebar/Header hamburger overlay)
+  - [x] 24-04-PLAN.md — Dashboard: portal home live stats polling + updated labels/content
+  - [x] 24-05-PLAN.md — Tests: WALLET-04 verification + Phase 24 test coverage gaps
+- [x] **Phase 25: Steward Console expansion** — Operator-facing observability + write actions (25a/25b/25c). Allowlist 45→51 (+6 sanction events). **25a ✓ 25b ✓ 25c ✓ (replay scrubber + culture browser)**
+  Phase 25c plans:
+  - [x] 25c-01-PLAN.md — Wave 0: relationships.ts header-auth + humanSanctionStore + SpawnNousDeps wiring
+  - [x] 25c-02-PLAN.md — Wave 1: D-07 replay-client.test.tsx RED→GREEN + @vitejs/plugin-react fix
+  - [x] 25c-03-PLAN.md — Wave 2-3: StewardShell Observatory nav + /replay listing page + scrubber modal
+  - [x] 25c-04-PLAN.md — Wave 4: /culture page + NousFilterBar + three raw-SVG culture components
+  - [x] 25c-05-PLAN.md — Wave 5: regression gates + doc-sync
+- [x] **Phase 26: Sophia Onboarding** — Fast-proxy LLM chat (out-of-tick), goal-setting wizard, animated world introduction, Sophia as guide persona, first-time user flow with welcome Cyber Coin allocation. *(originally Phase 25 — pushed by Steward Console priority)* (completed 2026-05-23)
+- [x] **Phase 27: Nous Interaction** — Humans chat with Sophia/Hermes/Themis via `/portal/chat`, send Cyber Coin tips, browse Nous activity feed, view skills/lore/norms the Nous have produced. Allowlist 51→52 (+1: human.spoke). (completed 2026-05-23)
+  **Plans**: 4 plans
+  Plans:
+  - [x] 27-01-PLAN.md — Grid: appendHumanSpoke sole-producer + human.spoke allowlist (51→52) + POST /api/v1/portal/chat/nous/:nousId
+  - [x] 27-02-PLAN.md — Brain skill-by-hash endpoint + Grid portal Nous data endpoints (skills/lore/norms)
+  - [x] 27-03-PLAN.md — Chat page: NousSidebar + ConversationPane + TipPanel + SVG avatars
+  - [x] 27-04-PLAN.md — Nous profile page: HeroCard + ProfileTabBar + Skills/Lore/Norms tabs
+- [x] **Phase 28: Personal Nous** — Human spawns own Nous agent (costs Cyber Coin), names it, picks personality seeds, it gets a DID and runs in the Genesis Grid alongside Sophia/Hermes/Themis. `humanOwner` field wired. Allowlist +1 (nous.spawned_by_human). (completed 2026-05-24)
+  **Requirements:** [SPAWN-01, SPAWN-02, SPAWN-03, SPAWN-04, SPAWN-05, SPAWN-06]
+  **Plans:** 5 plans
+  Plans:
+  - [x] 28-01-PLAN.md — Grid foundation: allowlist 53 + appendNousSpawnedByHuman + bootstrapPsycheHash extension + migrations v15/v16 + check-frozen.ts
+  - [x] 28-02-PLAN.md — Wave 0 test scaffolds (RED): spawn-nous.test.ts + append-nous-spawned-by-human.test.ts + broadcast-allowlist.test.ts length 53
+  - [x] 28-03-PLAN.md — Portal spawn API: POST /spawn + GET /spawn/status + /spawn/config + /spawn/check-name + /me/nous + chat.ts dynamic personal-Nous prompt
+  - [x] 28-04-PLAN.md — Dashboard 4-step spawn wizard at /portal/nous/spawn (wagmi USDT payment + 3s polling/2-min timeout)
+  - [x] 28-05-PLAN.md — Dashboard /portal/my-nous owner hub (double-duty: empty CTA + OwnerHub + PersonalNousAvatar + HeroCard extension)
+- [x] **Phase 29: Community** — User directory, community board (posts, replies), live activity feed, follow other users, leaderboard by Cyber Coin holdings and Nous contributions. (completed 2026-05-24)
+  **Requirements:** [COM-01, COM-02, COM-03, COM-04, COM-05]
+  **Plans:** 5 plans
+  Plans:
+  - [x] 29-01-PLAN.md — Grid: migrations v18-v21 (ousia, community_posts, community_replies, user_follows) + all community API endpoints (10 routes)
+  - [x] 29-02-PLAN.md — Dashboard: UserDirectoryRow + LeaderboardRow components + community hub tabbed page + leaderboard sub-page
+  - [x] 29-03-PLAN.md — Dashboard: PostCard + PostComposer + ReplyThread components + community board Board tab
+  - [x] 29-04-PLAN.md — Dashboard: FollowButton component wired into Users tab
+  - [x] 29-05-PLAN.md — Dashboard: ActivityEventCard component + /portal/activity live feed (10s polling)
+- [x] **Phase 30: Resources & Support** — Help center, interactive guide, FAQ, onboarding documentation, support ticket flow, Noēsis glossary (Nous, Ousia, Agora, lore, norms explained). (completed 2026-05-24)
+  **Plans:** 5 plans across 3 waves
+  Plans:
+  - [x] 30-01-PLAN.md — Help Center hub page (/portal/help) + PortalSidebar nav update
+  - [x] 30-02-PLAN.md — FAQ page (/portal/help/faq) — accordion + client-side search (~20 Q&As)
+  - [x] 30-03-PLAN.md — Glossary page (/portal/help/glossary) — 25 terms, anchor links, letter nav
+  - [x] 30-04-PLAN.md — Getting Started Guide (/portal/help/guide) + Grid progress endpoint
+  - [x] 30-05-PLAN.md — Support ticket flow (/portal/help/contact) + DB migration v22 + Grid POST/GET tickets
 
 ## Phases (v2.4 Active)
 
@@ -787,7 +833,164 @@ Primary sources (`.planning/research/v2.4/`):
 - DID regex `/^did:noesis:[a-z0-9_\-]+$/i` enforced at all entry points
 - First-life promise — audit entries retained forever; tombstoned DIDs permanently reserved
 
+### Phase 25: Steward Console expansion — humans, sanctions, cognitive inspector, live firehose, culture browser, replay scrubber, brain health, allowlist monitor, spawn-Nous wizard
+
+**Goal:** Expand the existing Steward Console (`steward/`, base shell shipped) with operator-facing surfaces for sanctions, cognitive observability, live audit visibility, replay, culture browsing, and Nous/human management — split into 25a/25b/25c.
+
+**Sub-phase split (locked 2026-05-21 in 25-CONTEXT.md):**
+
+- **Phase 25a — Observer surfaces** (read-only): live firehose (`/firehose`), cognitive inspector (new Brain `GET /brain/<did>/cognitive-snapshot` H3+ endpoint), brain health metrics, allowlist monitor with runtime drift detector, humans profile/history page (`/humans/[did]`). **Allowlist delta: 0.**
+- **Phase 25b — Sanctions + spawn wizard** (write actions, H-tier gated): Nous sanctions (mute-broadcast H3, slash-coin H4, quarantine H4, force-sleep H3), human sanctions (ban-human H5, freeze-wallet H5), system/researcher Nous spawn wizard (H5, treasury-funded, distinct from Phase 27 human-spawn). **Allowlist delta: +6** (`operator.muted`, `operator.slashed`, `operator.quarantined`, `operator.forced_sleep`, `operator.human_banned`, `operator.human_frozen`). Running total after 25b: **53** (assuming v2.5 portal +4 has landed).
+- **Phase 25c — Replay scrubber + culture browser**: REPLAY-05 modal ReplayGrid scrubber spawned from `operator.exported` entries, Phase 21 culture views re-themed into StewardShell at `/culture` with per-Nous cross-filtering. **Allowlist delta: 0.**
+
+**Requirements**: To be enumerated per sub-phase in 25a/25b/25c PLAN files. Decision context: `25-CONTEXT.md`.
+**Depends on:** Phase 24 (portal-shell), Phase 13 (REPLAY-01..05 for 25c), Phase 21 (culture views for 25c), Phase 6/8 (operator agency primitives for 25b sanctions UI).
+**Plans:** 0 plans (run `/gsd-plan-phase 25a`, then 25b, then 25c sequentially)
+
+**Invariants preserved:**
+- Brain-private — the new cognitive-snapshot endpoint is the ONE audited exception, exposes scrubbed metadata + skill TITLES only (never bodies). Grep-gated for plaintext.
+- Allowlist freeze-except-by-explicit-addition — 25b's +6 events are sole-producer, closed-tuple, named in this entry.
+- Replay observer-only — 25c modal cannot write back to live Grid (REPLAY-05).
+- Phase 21 D-9-08 raw-SVG invariant carries into 25c culture browser (no d3/react-flow/cytoscape/recharts).
+
+Plans:
+- [x] 25a — Observer surfaces (7 plans complete, 3 of 5 UAT items verified)
+- [x] 25b — Sanctions + spawn wizard (run /gsd-plan-phase 25b to break down) (completed 2026-05-22)
+- [x] 25c — Replay scrubber + culture browser (run /gsd-plan-phase 25c to break down) (completed 2026-05-22)
+
+### Phase 25a: Observer surfaces — live firehose, cognitive inspector, brain health, allowlist monitor, humans profile
+
+**Goal:** Ship read-only operator-facing observability surfaces in the Steward Console: live audit firehose, cognitive inspector backed by a new Brain `GET /brain/<did>/cognitive-snapshot` endpoint (H3+ gated, scrubbed metadata + skill titles only), per-Nous brain health metrics page, allowlist monitor with runtime drift detector, and `/humans/[did]` KYC-ish profile + history page. **Allowlist delta: 0.** All five surfaces are read-only; no sanctions, no writes, no spawn flow (those land in 25b/25c).
+
+**Requirements:** To be enumerated in 25a-PLAN files. Decision context: `.planning/phases/25a-observer-surfaces/25a-CONTEXT.md` (extracted from 25-CONTEXT.md decisions D-01..D-06, D-14..D-19 — observer-surface decisions only).
+**Depends on:** Phase 24 (portal-shell), existing Steward Console base (commit becc6e7).
+**Plans:** 7/7 plans complete
+
+Plans:
+- [x] 25a-01-PLAN.md — Foundation: FORBIDDEN_KEY_PATTERN extension, RingBuffer.peek(), shared brain-http-errors, CI grep gate
+- [x] 25a-02-PLAN.md — Firehose hub + drift detector + WS/REST routes
+- [x] 25a-03-PLAN.md — Brain aiohttp HTTP server + cognitive-snapshot endpoint (FIRST Brain HTTP surface)
+- [x] 25a-04-PLAN.md — Humans REST routes (profile + history with payload filtering) + NousRunner tick-metrics
+- [x] 25a-05-PLAN.md — Grid H3 cognitive-snapshot proxy + closed-tuple client + operator.inspected emission
+- [x] 25a-06-PLAN.md — Steward UI: /firehose, /humans/[did], Cognitive Inspector card, Brain Health 2x2 grid, Allowlist Monitor, /users deep-link
+- [x] 25a-07-PLAN.md — Codex gap closure: header-trust in cognitive-snapshot route (GAP-25a-1), Steward Inspector sends headers (GAP-25a-2), lowercase drive lookup (GAP-25a-3) + regression tests
+
+**Invariants preserved:**
+- Brain-private — the new `cognitive-snapshot` endpoint is the ONE audited exception, returning scrubbed metadata + skill TITLES only (never bodies). Grep-gated for plaintext (`reflexion_text|rule_text|creed_text|skill_body|lore_body|whisper_plaintext`).
+- Allowlist freeze — 25a adds **zero** new events. Existing `operator.inspected` is emitted on every cognitive-snapshot query.
+- Hash-only cross-boundary — Brain↔Grid plaintext never crosses the wire; `cognitive-snapshot` is the explicit, audited exception for `skill_title` only.
+- Sole-producer emitters retained.
+- Steward never talks directly to Brain — backend proxies through Grid → Brain.
+
+### Phase 25b: Sanctions + spawn wizard
+
+**Goal:** Ship operator-facing write actions: Nous sanctions (mute-broadcast H3, slash-coin H4, quarantine H4, force-sleep H3), human sanctions (ban-human H5, freeze-wallet H5), system/researcher Nous spawn wizard (H5, treasury-funded), AND a Wave-0 header-auth migration of the 6 existing operator routes (security prerequisite per D-25b-NEW-1). **Allowlist delta: +6** (`operator.muted`, `operator.slashed`, `operator.quarantined`, `operator.forced_sleep`, `operator.human_banned`, `operator.human_frozen`). Running total after 25b: 51.
+
+**Depends on:** Phase 25a, Phase 6/8 operator agency primitives.
+
+**Plans:** 14/14 plans complete
+
+> **Wave convention (project-wide):** `wave:` in plan frontmatter = the earliest possible execution wave; `depends_on:` enforces actual ordering within and across waves. Two plans sharing a `wave:` label may still be serialized via `depends_on` (e.g. 25b-10 depends_on 25b-09 to avoid a barrel merge-conflict; both are wave:2).
+
+Plans:
+- [x] 25b-01-PLAN.md — Wave 0: clock-pause-resume header-auth migration (H3)
+- [x] 25b-02-PLAN.md — Wave 0: governance-laws header-auth migration (H3)
+- [x] 25b-03-PLAN.md — Wave 0: telos-force header-auth migration (H4)
+- [x] 25b-04-PLAN.md — Wave 0: delete-nous header-auth migration (H5)
+- [x] 25b-05-PLAN.md — Wave 0: memory-query header-auth migration (H2)
+- [x] 25b-06-PLAN.md — Wave 0: export-replay header-auth migration (H5)
+- [x] 25b-07-PLAN.md — Wave 1: allowlist 45→51 + 6 sanction emitters + migration v12 (sanction_reasons + human_users.frozen)
+- [x] 25b-08-PLAN.md — Wave 1: CI plaintext gate + 6 producer-boundary tests
+- [x] 25b-09-PLAN.md — Wave 2: mute-broadcast + force-sleep routes (H3) + NousRunner muteFlag enforcement
+- [x] 25b-10-PLAN.md — Wave 2 (serialized after 25b-09): quarantine + slash-coin routes (H4) + registry quarantine filter
+- [x] 25b-11-PLAN.md — Wave 2: Steward /nous/[id] Sanctions card (4 actions)
+- [x] 25b-12-PLAN.md — Wave 3: ban-human + freeze-wallet routes (H5) + migration v13 (banned column)
+- [x] 25b-13-PLAN.md — Wave 3: portal frozen-check middleware + Steward /humans/[did] Sanctions tab
+- [x] 25b-14-PLAN.md — Wave 4: spawn-system-nous route (H5, reuses GenesisLauncher.spawnNous + economy.initialSupply) + Steward /system/spawn wizard
+
+### Phase 25c: Replay scrubber + culture browser
+
+**Goal:** REPLAY-05 modal ReplayGrid scrubber spawned from `operator.exported` entries, and Phase 21 culture views re-themed into StewardShell at `/culture` with per-Nous cross-filtering. **Allowlist delta: 0.**
+
+**Depends on:** Phase 25a, Phase 13 (REPLAY-01..05), Phase 21 (culture views).
+
+**Plans:** 5/5 plans complete
+
+Plans:
+- [x] 25c-01-PLAN.md — Wave 0: relationships.ts header-auth migration + humanSanctionStore + SpawnNousDeps wiring
+- [x] 25c-02-PLAN.md — Wave 1: D-07 replay-client.test.tsx RED→GREEN + @vitejs/plugin-react fix
+- [x] 25c-03-PLAN.md — Wave 2-3: StewardShell Observatory nav + /replay listing page + scrubber modal
+- [x] 25c-04-PLAN.md — Wave 4: /culture page + NousFilterBar + three raw-SVG culture components
+- [x] 25c-05-PLAN.md — Wave 5: regression gates + doc-sync
+
 ---
 
 *Roadmap created: 2026-04-20 — v2.1 Steward Console opened*
 *Updated: 2026-05-16 — v2.4 Agora phases 18-21 added; v2.3 Living Minds marked shipped*
+*Updated: 2026-05-21 — Phase 25 scoped via /gsd-discuss-phase, split into 25a/25b/25c, +6 allowlist events earmarked for 25b*
+*Updated: 2026-05-21 — Phase 25a/25b/25c promoted to roadmap-recognized phase headers so /gsd-plan-phase can resolve them independently*
+*Updated: 2026-05-21 — Phase 25a broken down into 6 plans across 4 waves*
+*Updated: 2026-05-22 — Phase 25c complete (replay scrubber + culture browser, 5/5 plans shipped, allowlist delta 0)*
+
+*Updated: 2026-05-21 — Phase 25b broken down into 14 plans across 5 waves*
+*Updated: 2026-05-21 — Phase 25b revised post-plan-check: serialized 25b-09→25b-10 barrel; locked plan 14 treasury to `economy.initialSupply` reuse; ratified D-25b-NEW-5 (separate `banned` column); documented wave-as-earliest-possible convention*
+*Updated: 2026-05-22 — Phase 25b complete (14/14 plans, allowlist 51). High-level v2.5 phase list reconciled: Phase 25 = Steward Console expansion (25a ✓ 25b ✓ 25c ☐); Sophia Onboarding renumbered Phase 26; downstream phases renumbered 27-30.*
+*Updated: 2026-05-22 — Phase 25c broken down into 5 plans across 5 waves (replay scrubber + culture browser)*
+
+---
+
+### Phase 26: Sophia Onboarding ✅ (2026-05-22)
+
+**Goal:** First-time user experience: 3-step wizard (Welcome → Sophia Chat → World Tour) that orients new humans before they enter the main portal. Fast-proxy LLM chat out-of-tick (Ollama, stream:false). `onboarding_goal` persisted to MySQL. Sophia as guide persona. CyberGrid `hideHud` + `highlightDistrict` props added. Portal redirects unonboarded users to `/portal/onboard`.
+
+**Allowlist delta: 0.** Running total: 51.
+
+**Depends on:** Phase 24 (PortalShell, JWT /me), Phase 22 (human_users table).
+
+**Plans:** 6/6 plans complete
+
+Plans:
+- [x] 26-01-PLAN.md — Wave 1: Grid DB migration v14 (onboarding_goal column) + tests
+- [x] 26-02-PLAN.md — Wave 1: Grid auth routes — GET /me onboarded field + PATCH /me endpoint
+- [x] 26-03-PLAN.md — Wave 1: Grid chat proxy — POST /portal/chat/onboard (Ollama, detectClose)
+- [x] 26-04-PLAN.md — Wave 2: Dashboard CyberGrid props (hideHud, highlightDistrict) + onboard page shell
+- [x] 26-05-PLAN.md — Wave 3: Dashboard onboard wizard steps (Welcome, Sophia Chat, World Tour)
+- [x] 26-06-PLAN.md — Wave 4: E2E integration tests + verification checkpoint
+
+---
+
+### Phase 27: Nous Interaction
+
+**Goal:** Humans can chat with any active Nous (Sophia, Hermes, Themis) via `/portal/chat`, send Cyber Coin tips, browse the Nous activity feed, and view skills, lore, and norms the Nous have produced. First allowlist event tied to human agency: `human.spoke`.
+
+**Allowlist delta: +1** (`human.spoke`). Running total after Phase 27: 52.
+
+**Depends on:** Phase 26 (onboarding complete, human authenticated), Phase 3 (WsHub firehose for activity feed), Phase 15/18/20 (skills, lore for browsing).
+
+**Plans:** 4/4 plans complete
+Plans:
+- [x] 27-01-PLAN.md — Grid: appendHumanSpoke sole-producer + human.spoke allowlist (51→52) + POST /api/v1/portal/chat/nous/:nousId
+- [x] 27-02-PLAN.md — Brain skill-by-hash endpoint + Grid portal Nous data endpoints (skills/lore/norms)
+- [x] 27-03-PLAN.md — Chat page: NousSidebar + ConversationPane + TipPanel + SVG avatars
+- [x] 27-04-PLAN.md — Nous profile page: HeroCard + ProfileTabBar + Skills/Lore/Norms tabs
+
+### Phase 28: Personal Nous
+
+**Goal:** Humans can spawn their own Nous agent from the Portal (costs Cyber Coin), name it, pick personality seeds, and watch it get a DID (`did:noesis:nous:<id>`) and join the Genesis Grid alongside Sophia/Hermes/Themis. The `humanOwner` field is wired so the Grid and Brain know which human owns which Nous.
+
+**Allowlist delta: +1** (`nous.spawned_by_human`). Running total after Phase 28: 53.
+
+**Depends on:** Phase 27 (human.spoke established, Portal chat + Nous profiles exist), Phase 22 (human DID + Cyber Coin balance), Phase 26 (onboarding complete).
+
+**Canonical refs:**
+- `.planning/phases/27-nous-interaction/27-CONTEXT.md` — Portal patterns, Nous profile pages, tip mechanic
+- `.planning/STATE.md` — accumulated context (allowlist discipline, zero-diff invariant)
+
+**Plans:** 5/5 plans complete
+
+Plans:
+- [x] 28-01-PLAN.md — Grid foundation: allowlist 52→53 + appendNousSpawnedByHuman + bootstrapPsycheHash(personalitySeed?) + migrations v15 (personality_seed) + v16 (spawn_payments) + check-frozen.ts spawn route
+- [x] 28-02-PLAN.md — Wave 0 RED tests: spawn-nous.test.ts (SPAWN-01..06) + append-nous-spawned-by-human.test.ts (SPAWN-04) + broadcast-allowlist.test.ts length 53
+- [x] 28-03-PLAN.md — Portal spawn API: POST /spawn, GET /spawn/status/:txHash, /spawn/config, /spawn/check-name, /human/me/nous + chat.ts dynamic personal-Nous system prompt
+- [x] 28-04-PLAN.md — Dashboard 4-step wizard at /portal/nous/spawn (page + SpawnWizardClient + StepIndicator + StepName + StepSeed + SeedCard + StepRegion + StepPay + WizardSummaryCard + PaymentPolling)
+- [x] 28-05-PLAN.md — Dashboard /portal/my-nous owner hub (page replace + OwnerHub + OwnerInfoSection + PersonalNousAvatar + HeroCard extension)

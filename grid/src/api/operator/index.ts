@@ -18,6 +18,13 @@ import { registerTelosForceRoute } from './telos-force.js';
 import { registerDeleteNousRoute } from './delete-nous.js';
 import { relationshipsRoutes } from './relationships.js';
 import { registerReplayExportRoute } from './export-replay.js';
+import { registerMuteBroadcastRoute } from './mute-broadcast.js';
+import { registerForceSleepRoute } from './force-sleep.js';
+import { registerQuarantineRoute } from './quarantine.js';
+import { registerSlashCoinRoute } from './slash-coin.js';
+import { registerBanHumanRoute } from './ban-human.js';
+import { registerFreezeWalletRoute } from './freeze-wallet.js';
+import { registerSpawnSystemNousRoute } from './spawn-system-nous.js';
 
 export function registerOperatorRoutes(
     app: FastifyInstance,
@@ -33,4 +40,18 @@ export function registerOperatorRoutes(
     relationshipsRoutes(app, services);
     // Phase 13 REPLAY-02: H5 Sovereign Operations — operator replay export.
     registerReplayExportRoute(app, services);
+    // Phase 25b SANCTION-01: H3 — mute Nous broadcast emissions.
+    registerMuteBroadcastRoute(app, services);
+    // Phase 25b SANCTION-04: H3 — force Nous into Hypnos sleep cycle.
+    registerForceSleepRoute(app, services);
+    // Phase 25b SANCTION-03: H4 — quarantine Nous (excludes from peer-discovery).
+    registerQuarantineRoute(app, services);
+    // Phase 25b SANCTION-02: H4 — slash Nous ousia balance (punitive debit).
+    registerSlashCoinRoute(app, services);
+    // Phase 25b SANCTION-05: H5 — ban human (full portal access revoked).
+    registerBanHumanRoute(app, services);
+    // Phase 25b SANCTION-06: H5 — freeze human wallet (Grid-side flag; zero-custody per D-25b-NEW-4).
+    registerFreezeWalletRoute(app, services);
+    // Phase 25b D-25b-12: H5 — spawn system-tier Nous (researcher class, did:noesis:system:*).
+    registerSpawnSystemNousRoute(app, services);
 }

@@ -6,16 +6,24 @@
  */
 
 export interface HumanRecord {
-    /** did:noesis:human:<lowercased-eth-address> */
+    /** did:noesis:human:<lowercased-eth-address> or did:noesis:human:email:<uuid> */
     readonly did: string;
-    /** Lowercased Ethereum address (0x...) */
-    readonly eth_address: string;
+    /** Lowercased Ethereum address (0x...) — null for email-only users. */
+    readonly eth_address: string | null;
+    /** Email address — null for SIWE-only users. */
+    readonly email: string | null;
     readonly grid_name: string;
+    readonly region: string;
     readonly created_at: Date;
 }
 
 export interface CreateHumanParams {
-    /** Ethereum address — mixed-case input accepted; stored lowercased. */
-    eth_address: string;
+    /** Ethereum address — mixed-case input accepted; stored lowercased. Omit for email-only users. */
+    eth_address?: string | null;
+    /** Email address — omit for SIWE-only users. */
+    email?: string | null;
+    /** Hashed password (scrypt) — only set for email auth users. */
+    password_hash?: string | null;
     grid_name: string;
+    region?: string;
 }

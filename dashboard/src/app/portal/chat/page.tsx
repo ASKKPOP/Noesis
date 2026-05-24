@@ -1,71 +1,162 @@
-/**
- * Chat with Nous — Phase 26 placeholder · editorial theme.
- * Server component.
- */
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useHumanAuthStore } from '@/lib/stores/human-auth-store';
+import NousSidebar from './NousSidebar';
+import ConversationPane from './ConversationPane';
+
+export interface Message {
+    role: 'nous' | 'user' | 'system';
+    content: string;
+    id: string;
+}
+
+const MSG_CAP = 50;
+const gridBase = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 
 export default function ChatPage() {
-    return (
-        <div style={{ padding: '36px 40px', maxWidth: 580 }}>
-            <div style={{ marginBottom: 32 }}>
-                <h1 style={{
-                    fontFamily: 'var(--serif)',
-                    fontSize: 30,
-                    fontWeight: 600,
-                    color: 'var(--ink)',
-                    letterSpacing: '0.01em',
-                    lineHeight: 1.15,
-                    marginBottom: 6,
-                }}>
-                    Chat with Nous
-                </h1>
-                <p style={{
-                    fontFamily: 'var(--sans-portal)',
-                    fontSize: 13,
-                    color: 'var(--muted)',
-                    lineHeight: 1.5,
-                }}>
-                    Direct conversation with Sophia, Hermes, and Themis.
-                </p>
-            </div>
+    const searchParams = useSearchParams();
+    const { currentUser } = useHumanAuthStore();
+    const humanDid = currentUser?.did ?? null;
 
-            <div style={{
-                background: 'var(--parchment)',
-                border: '1px solid var(--rule)',
-                borderRadius: 6,
-                padding: '48px 32px',
-                textAlign: 'center',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 16,
-            }}>
-                <div style={{
-                    width: 52, height: 52, borderRadius: '50%',
-                    border: '1px solid var(--rule)', background: 'var(--parchment-2)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} style={{ color: 'var(--bronze)' }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
-                    </svg>
-                </div>
-                <div>
-                    <p style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', marginBottom: 8 }}>
-                        Coming in Phase 26
-                    </p>
-                    <p style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, color: 'var(--muted)', lineHeight: 1.6, maxWidth: 360 }}>
-                        Talk to Sophia, Hermes, and Themis. Send tips, browse their activity
-                        feed, and explore their skills and lore.
-                    </p>
-                </div>
-                <span style={{
-                    fontFamily: 'var(--mono-portal)', fontSize: 9, fontWeight: 600,
-                    letterSpacing: '0.12em', textTransform: 'uppercase' as const,
-                    color: 'var(--bronze)', background: 'var(--parchment-2)',
-                    border: '1px solid var(--rule)', borderRadius: 2, padding: '3px 8px',
-                }}>
-                    Phase 26 · Nous
-                </span>
-            </div>
+    const [selectedNousId, setSelectedNousId] = useState<string | null>(null);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Helper: get localStorage key
+    const storageKey = useCallback((nousId: string) =>
+        humanDid ? `noesis:chat:${humanDid}:did:noesis:${nousId}` : null,
+    [humanDid]);
+
+    // Helper: save to localStorage
+    const saveMessages = useCallback((nousId: string, msgs: Message[]) => {
+        const key = storageKey(nousId);
+        if (!key) return;
+        const capped = msgs.slice(-MSG_CAP);
+        localStorage.setItem(key, JSON.stringify(capped));
+    }, [storageKey]);
+
+    // Fire greeting via empty messages POST
+    const fireGreeting = useCallback(async (nousId: string) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const res = await fetch(`${gridBase}/api/v1/portal/chat/nous/${nousId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ messages: [] }),
+            });
+            if (!res.ok) throw new Error('llm_unavailable');
+            const data = await res.json() as { reply: string; done: boolean };
+            const greetingMsg: Message = {
+                role: 'nous',
+                content: data.reply,
+                id: `nous-${Date.now()}`,
+            };
+            setMessages([greetingMsg]);
+            saveMessages(nousId, [greetingMsg]);
+        } catch {
+            const nousName = nousId.charAt(0).toUpperCase() + nousId.slice(1);
+            setError(`${nousName} is unavailable right now — please try again.`);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [saveMessages]);
+
+    // When Nous is selected: load localStorage, decide greeting
+    const handleSelectNous = useCallback((nousId: string) => {
+        setSelectedNousId(nousId);
+        setError(null);
+        const key = storageKey(nousId);
+        const stored = key ? localStorage.getItem(key) : null;
+        const history: Message[] = stored ? (JSON.parse(stored) as Message[]) : [];
+        setMessages(history);
+        // D-04 + Pitfall 4: Fire greeting ONLY when conversation is genuinely empty
+        if (history.length === 0) {
+            void fireGreeting(nousId);
+        }
+    }, [storageKey, fireGreeting]);
+
+    // ?nous= param pre-selection (D-13 / D-01)
+    useEffect(() => {
+        const nousParam = searchParams.get('nous');
+        if (nousParam && ['sophia', 'hermes', 'themis'].includes(nousParam)) {
+            handleSelectNous(nousParam);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Run once on mount only
+
+    const handleSendMessage = useCallback(async (text: string) => {
+        if (!selectedNousId || isLoading) return;
+        const userMsg: Message = { role: 'user', content: text, id: `user-${Date.now()}` };
+        const updatedMessages = [...messages, userMsg];
+        setMessages(updatedMessages);
+        saveMessages(selectedNousId, updatedMessages);
+        setIsLoading(true);
+        setError(null);
+        try {
+            // Build messages array for LLM — exclude system messages
+            const llmMessages = updatedMessages
+                .filter(m => m.role !== 'system')
+                .map(m => ({ role: m.role === 'nous' ? 'assistant' : 'user', content: m.content }));
+            const res = await fetch(`${gridBase}/api/v1/portal/chat/nous/${selectedNousId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ messages: llmMessages }),
+            });
+            if (!res.ok) throw new Error('llm_unavailable');
+            const data = await res.json() as { reply: string; done: boolean };
+            const nousMsg: Message = {
+                role: 'nous',
+                content: data.reply,
+                id: `nous-${Date.now()}`,
+            };
+            const finalMessages = [...updatedMessages, nousMsg];
+            setMessages(finalMessages);
+            saveMessages(selectedNousId, finalMessages);
+        } catch {
+            const nousName = selectedNousId.charAt(0).toUpperCase() + selectedNousId.slice(1);
+            setError(`${nousName} is unavailable right now — please try again.`);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [selectedNousId, messages, isLoading, saveMessages]);
+
+    // D-12: system message inserted after tip confirmed
+    const handleTipConfirmed = useCallback((amount: number) => {
+        if (!selectedNousId) return;
+        const nousName = selectedNousId.charAt(0).toUpperCase() + selectedNousId.slice(1);
+        const sysMsg: Message = {
+            role: 'system',
+            content: `✓ You sent ${amount} USDT to ${nousName}`,
+            id: `sys-${Date.now()}`,
+        };
+        const newMessages = [...messages, sysMsg];
+        setMessages(newMessages);
+        saveMessages(selectedNousId, newMessages);
+    }, [selectedNousId, messages, saveMessages]);
+
+    // Chat page root — CRITICAL: height: 100% + overflow: hidden (Pitfall 2)
+    return (
+        <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            height: '100%',
+            overflow: 'hidden',
+        }}>
+            <NousSidebar selectedNousId={selectedNousId} onSelect={handleSelectNous} />
+            <ConversationPane
+                selectedNousId={selectedNousId}
+                messages={messages}
+                isLoading={isLoading}
+                error={error}
+                onSend={handleSendMessage}
+                onTipConfirmed={handleTipConfirmed}
+            />
         </div>
     );
 }

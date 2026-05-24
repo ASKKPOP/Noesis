@@ -5,9 +5,16 @@
  * tombstones a Nous, despawns it from the spatial map, and emits an
  * operator.nous_deleted audit event.
  *
+ * AUTH MODEL (GAP-25a-1 fix, Phase 25b Wave 0 — D-25b-NEW-1):
+ *   tier and operator_id are derived from server-trusted request headers
+ *   (x-operator-tier, x-operator-id) — NOT from the request body.
+ *   Body-supplied tier / operator_id fields are ignored.
+ *
  * ERROR LADDER (D-33 — no 500s):
- *   400 — malformed tier (not 'H5') or malformed operator_id
- *   400 — malformed DID
+ *   401 — tier_missing (x-operator-tier header absent / non-numeric)
+ *   403 — tier_too_low (x-operator-tier < 5)
+ *   400 — malformed x-operator-id header (invalid_operator_id)
+ *   400 — malformed DID (invalid_did)
  *   410 — DID already tombstoned (tombstoneCheck gate)
  *   404 — DID unknown to registry
  *   503 — Brain RPC failure (unreachable, timeout, malformed body)
@@ -16,7 +23,8 @@
  * D-30 ORDER (LOCKED):
  *   1. registry.tombstone(did, tick, space)   — soft-delete in registry
  *   2. coordinator.despawnNous(did)            — remove from coord + space
- *   3. appendNousDeleted(audit, ...)           — emit audit event
+ *   3. appendBiosDeath(audit, ...)             — bios lifecycle event
+ *   4. appendNousDeleted(audit, ...)           — emit operator.nous_deleted
  *
  * SC#3 invariant: on 503 (Brain failure) the tombstone MUST NOT fire.
  * The Brain fetch happens BEFORE step 1.
@@ -28,8 +36,8 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { DID_REGEX } from '../server.js';
 import type { ApiError } from '../types.js';
+import { OPERATOR_ID_REGEX } from '../types.js';
 import type { SpatialMap } from '../../space/map.js';
-import { validateTierBody, type OperatorBody } from './_validation.js';
 import { tombstoneCheck, TombstonedDidError } from '../../registry/tombstone-check.js';
 import { appendNousDeleted } from '../../audit/append-nous-deleted.js';
 import { appendBiosDeath } from '../../bios/index.js';
@@ -59,8 +67,6 @@ export interface DeleteNousDeps {
     coordinator: DeleteNousCoordinator;
 }
 
-interface DeleteNousBody extends OperatorBody {}
-
 export function registerDeleteNousRoute(
     app: FastifyInstance,
     services: GridServices,
@@ -71,17 +77,34 @@ export function registerDeleteNousRoute(
     const resolvedDeps: DeleteNousDeps | undefined =
         deps ?? (services as unknown as { _deleteNousDeps?: DeleteNousDeps })._deleteNousDeps;
 
-    app.post<{ Params: { did: string }; Body: DeleteNousBody }>(
+    app.post<{ Params: { did: string }; Body: never }>(
         '/api/v1/operator/nous/:did/delete',
         async (req, reply) => {
-            const body = req.body ?? {};
-
-            // 1. Tier + operator_id gate (H5 required for Sovereign Operations).
-            const v = validateTierBody(body, 'H5');
-            if (!v.ok) {
-                reply.code(400);
-                return { error: v.error } satisfies ApiError;
+            // 1. Tier gate — read from server-trusted x-operator-tier header (D-25b-NEW-1).
+            //    Body-supplied tier / operator_id are NOT trusted.
+            const tierHeader = req.headers['x-operator-tier'];
+            if (typeof tierHeader !== 'string') {
+                reply.code(401);
+                return { error: 'tier_missing' } satisfies ApiError;
             }
+            const tierNum = parseInt(tierHeader, 10);
+            if (!Number.isFinite(tierNum)) {
+                reply.code(401);
+                return { error: 'tier_missing' } satisfies ApiError;
+            }
+            if (tierNum < 5) {
+                reply.code(403);
+                return { error: 'tier_too_low' } satisfies ApiError;
+            }
+
+            // 1b. Operator-id gate — read from server-trusted x-operator-id header.
+            const opIdHeader = req.headers['x-operator-id'];
+            if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) {
+                reply.code(400);
+                return { error: 'invalid_operator_id' } satisfies ApiError;
+            }
+            const resolvedTier: 'H5' = 'H5';
+            const resolvedOperatorId = opIdHeader;
 
             // 2. DID shape gate.
             const targetDid = req.params.did;
@@ -165,10 +188,10 @@ export function registerDeleteNousRoute(
             });
 
             // 6d. Emit operator.nous_deleted audit event (sole producer path).
-            appendNousDeleted(services.audit, v.operator_id, {
-                tier: 'H5',
+            appendNousDeleted(services.audit, resolvedOperatorId, {
+                tier: resolvedTier,
                 action: 'delete',
-                operator_id: v.operator_id,
+                operator_id: resolvedOperatorId,
                 target_did: targetDid,
                 pre_deletion_state_hash: stateHash,
             });

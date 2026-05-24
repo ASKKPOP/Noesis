@@ -38,8 +38,16 @@ import type { GenesisConfig, GridState } from './types.js';
  *
  * Wall-clock free per D-10b-09 — input is purely tick + identity material.
  */
-function bootstrapPsycheHash(did: string, publicKey: string, tick: number): string {
-    return createHash('sha256').update(`${did}|${publicKey}|${tick}`).digest('hex');
+function bootstrapPsycheHash(
+    did: string,
+    publicKey: string,
+    tick: number,
+    personalitySeed?: string,
+): string {
+    const input = personalitySeed
+        ? `${did}|${publicKey}|${tick}|${personalitySeed}`
+        : `${did}|${publicKey}|${tick}`;
+    return createHash('sha256').update(input).digest('hex');
 }
 
 export class GenesisLauncher {
@@ -442,11 +450,16 @@ export class GenesisLauncher {
 
     /** Spawn a new Nous into a running Grid. */
     spawnNous(
-        name: string, did: string, publicKey: string, region: string, humanOwner?: string,
+        name: string,
+        did: string,
+        publicKey: string,
+        region: string,
+        humanOwner?: string,
+        personalitySeed?: string,
     ): void {
         const tick = this.clock.currentTick;
         const record = this.registry.spawn(
-            { name, did, publicKey, region, humanOwner },
+            { name, did, publicKey, region, humanOwner, personalitySeed },
             this.gridDomain,
             tick,
             this.economy.initialSupply,
@@ -462,7 +475,7 @@ export class GenesisLauncher {
         // and runtime spawn paths converge on this contract.
         appendBiosBirth(this.audit, record.did, {
             did: record.did,
-            psyche_hash: bootstrapPsycheHash(record.did, record.publicKey, tick),
+            psyche_hash: bootstrapPsycheHash(record.did, record.publicKey, tick, personalitySeed),
             tick,
         });
     }

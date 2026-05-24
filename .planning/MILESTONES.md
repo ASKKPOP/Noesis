@@ -473,4 +473,76 @@
 **Test results at completion:** 1539 grid tests passed (180 files), 682 brain tests passed — all green.
 
 ---
-*Last updated: 2026-05-16 — Phase 19 shipped (5/5 plans, allowlist at 41)*
+
+## v2.4: Agora — Emergence & Culture (COMPLETE)
+
+**Shipped:** 2026-05-20 (Phases 15–21, 115 plans)
+
+**Goal:** Give the Nous population a substrate for cultural transmission and emergent shared patterns. Skills spread peer-to-peer via teaching and observation; rules independently discovered by multiple Nous crystallize into shared norms; a collective lore commons forms bottom-up from Nous contributions; and a Culture Dashboard makes emergence visible to the operator.
+
+**Phases shipped:**
+- **Phase 15**: Presence & heartbeat — WsHub presence lifecycle, region join/leave/move events
+- **Phase 16**: Memory consolidation (Hypnos) — periodic memory summarisation, goal revision on wake
+- **Phase 17**: Theory of mind (Iris) — belief modelling about other Nous
+- **Phase 18**: Skill diffusion — peer-to-peer skill teaching and inference, BrainSkillStore
+- **Phase 19**: Norm crystallisation — emergent norm detection from repeated Nous behaviour
+- **Phase 20**: Lore Commons — collective lore contributions, citation graph, quota enforcement
+- **Phase 21**: Culture Dashboard — skill lineage graph, norm timeline, lore graph (SVG + React)
+
+**Allowlist at completion:** 43 events (grew 36 → 43 across v2.4)
+**Plans:** 115/115 (100%)
+**Docker stack health:** All 6 services healthy (mysql, grid, nous-sophia, nous-hermes, nous-themis, dashboard)
+
+**Key invariants carried forward:**
+- AuditChain zero-diff invariant preserved (commit `29c3516`)
+- Broadcast allowlist frozen at 43 — new events require explicit per-phase addition
+- Phase numbering continues: v2.5 starts at Phase 22
+
+---
+
+### Phase 25c: Replay Scrubber + Culture Browser — SHIPPED 2026-05-22
+
+**Shipped:** 2026-05-22
+**Goal:** Two read-only StewardShell surfaces: /replay (operator export listing + tick scrubber modal, H3+ gate, H4/H5 redaction) and /culture (Skill Lineage, Norm Timeline, Lore Graph SVGs with per-Nous filter). Wave-0: relationships.ts header-auth migration, humanSanctionStore wiring, SpawnNousDeps wiring. Phase 13 REPLAY-05 RED→GREEN. Allowlist delta: 0.
+**Requirements delivered:** D-01, D-02, D-03, D-04, D-05, D-06, D-07, D-08, D-09, D-10, D-11
+**Plans:** 5/5 (25c-01 through 25c-05, Waves 0–5)
+**Allowlist added:** *(none — 0 new audit events; /replay and /culture are read-only observer surfaces)*
+
+**Key artifacts:**
+- `grid/src/api/operator/relationships.ts` — H2/H5 routes migrated from body/query-trust to server-trusted `x-operator-tier` header auth (D-01)
+- `grid/src/main.ts` — `humanSanctionStore` wired for ban-human + freeze-wallet routes (D-02); `spawnNousDeps` injected via `_spawnNousDeps` escape hatch for spawn-system-nous (D-03)
+- `steward/src/components/StewardShell.tsx` — Observatory section with Replay + Culture nav items (D-04)
+- `steward/src/app/replay/page.tsx` — /replay listing page with `operator.exported` entries, H3+ tier gate, ReplayModal trigger
+- `steward/src/app/replay/replay-modal.tsx` — tick scrubber modal with H4/H5 payload redaction
+- `steward/src/app/culture/page.tsx` — /culture page fetching directly from NEXT_PUBLIC_GRID_ORIGIN (D-09 forced deviation — proxy cannot rewrite /api/v1/grid/* prefixes)
+- `steward/src/app/culture/nous-filter-bar.tsx` — 300ms debounced URL param DID filter with aria support
+- `steward/src/app/culture/skill-lineage.tsx` — raw SVG skill lineage tree (server-computed {x,y} nodes)
+- `steward/src/app/culture/norm-timeline.tsx` — raw SVG horizontal norm timeline with evidence ranges
+- `steward/src/app/culture/lore-graph.tsx` — raw SVG lore graph with deterministic hash-seeded node positions
+- `dashboard/vitest.config.ts` — fixed Vite 8/OXC JSX incompatibility (replaced @vitejs/plugin-react with native `oxc: { jsx: { runtime: 'automatic' } }`)
+
+**Tests added/modified:**
+- `grid/test/api/relationships-privacy.test.ts` — D-25c-01 header-auth suite (RED→GREEN via Plan 01)
+- `grid/test/operator/ban-human.test.ts` + `freeze-wallet.test.ts` — humanSanctionStore wiring tests
+- `dashboard/src/app/grid/replay/replay-client.test.tsx` — Phase 13 REPLAY-05 test stubs (RED→GREEN via Plan 02; 10/10 passing)
+
+**Invariants confirmed:**
+- Allowlist delta: 0 (grep gate: 0 new `audit.append` calls in 25c-modified files)
+- Raw-SVG invariant (D-10): 0 d3/recharts/react-flow/cytoscape imports in culture/
+- Header-auth migration complete (D-01): 0 `validateTierBody` references in relationships.ts
+- humanSanctionStore: 3 references in main.ts (construction + conditional + buildServer spread)
+- spawnNousDeps: 3 references in main.ts
+- Observatory nav: 4 references in StewardShell.tsx (section + 2 NavItems + comment)
+- Culture direct-fetch (D-09): 0 `/api/operator` references in culture/page.tsx
+- Replay listing: `audit/trail` present in replay/page.tsx (direct Grid fetch)
+
+**Files created:** 7 (5 steward pages/components + 2 steward app pages)
+**Files modified:** 5 (relationships.ts, main.ts, StewardShell.tsx, vitest.config.ts, relationships-privacy.test.ts)
+
+**Pre-existing non-regressions (retheme branch):**
+- 112 Grid vitest failures: infrastructure/server-not-running failures from feat/grid-retheme-portal-dashboard branch
+- 21 Dashboard vitest failures: behavioral test failures from Tailwind class renames (firehose-row, inspector, heartbeat, delete-flow, portal-sidebar)
+- Both failure sets pre-date Phase 25c; zero new regressions introduced
+
+---
+*Last updated: 2026-05-22 — Phase 25c complete (replay scrubber + culture browser); v2.5 Human Portal in progress*

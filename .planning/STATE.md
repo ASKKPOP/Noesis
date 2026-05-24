@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Human Portal — Active)
-status: executing
-stopped_at: Phase 21 UI-SPEC approved
-last_updated: "2026-05-20T16:41:19.064Z"
-last_activity: 2026-05-20
+status: complete
+stopped_at: Phase 30 verified — v2.5 milestone SHIPPED
+last_updated: "2026-05-24T10:00:00.000Z"
+last_activity: 2026-05-24
 progress:
-  total_phases: 23
-  completed_phases: 22
-  total_plans: 119
-  completed_plans: 119
+  total_phases: 34
+  completed_phases: 33
+  total_plans: 181
+  completed_plans: 181
   percent: 100
 ---
 
@@ -23,16 +23,17 @@ See: .planning/PROJECT.md (updated 2026-05-16)
 **Core value:** The first persistent Grid where Nous actually live — and now, the first milestone where real human users can enter: Web3 wallet auth, Cyber Coin (real EVM crypto), Sophia-guided onboarding, Nous chat & tips, personal Nous spawning, community, and help.
 **Current milestone:** v2.5 — Human Portal
 **Previous milestone:** v2.4 Agora — SHIPPED 2026-05-20 (115/115 plans)
-**Current focus:** Phase 22 — web3-identity
+**Current focus:** v2.5 complete — all phases shipped
 
 ## Current Position
 
-Phase: 22
-Plan: Not started
-Status: Executing Phase 22
-Last activity: 2026-05-20
+Phase: 30 (resources-support) — NEXT
+Plan: 5 of 5
+Status: Phase complete — ready for verification
+Last activity: 2026-05-24
 
-Progress: [                    ] 0/0 plans (v2.5 not yet planned)
+Progress: [████████████████████] 26/29 phases planned (v2.5 in progress; Phase 26 complete)
+Note: 25a-07 added post-merge to close 3 Codex-surfaced gaps (GAP-25a-1/2/3); UAT items #1, #2, #5 remain pending — orthogonal to the gap closure work.
 
 ## v2.5 Key Decisions (locked 2026-05-20)
 
@@ -168,8 +169,12 @@ Phase 15-17 shipped with all Brain-private invariants intact. Key carry-forwards
   - SPARC peer-dialogue pattern → telos.refined from exchanges (Phase 7)
   - arxiv 2506.06576 Human Agency Scale → H1-H5 operator UI (Phases 6, 8)
 
+### Roadmap Evolution
+
+- Phase 25 added: Steward Console expansion — humans, sanctions, cognitive inspector, live firehose, culture browser, replay scrubber, brain health, allowlist monitor, spawn-Nous wizard
+
 ## Session Continuity
 
-Last session: 2026-05-17T16:59:18.151Z
-Stopped at: Phase 21 UI-SPEC approved
+Last session: 2026-05-24T02:13:00.262Z
+Stopped at: Phase 28 UI-SPEC approved
 Resume file: None

@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noēsis — UAT Test Scenarios</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3347;
+    --text: #e2e8f0;
+    --muted: #8892aa;
+    --pass: #22c55e;
+    --fail: #ef4444;
+    --skip: #f59e0b;
+    --pending: #6b7280;
+    --accent: #6366f1;
+    --badge-blue: #3b82f6;
+    --badge-green: #10b981;
+    --badge-amber: #f59e0b;
+    --badge-purple: #a855f7;
+    --badge-red: #ef4444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* Layout */
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 20px 0;
+  }
+
+  .sidebar-title {
+    padding: 0 16px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  .sidebar-item {
+    display: block;
+    padding: 7px 16px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    border-left: 3px solid transparent;
+    transition: all .15s;
+  }
+  .sidebar-item:hover { color: var(--text); background: var(--surface2); }
+  .sidebar-item.active { color: var(--text); border-left-color: var(--accent); }
+
+  .sidebar-group {
+    padding: 12px 16px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+  }
+
+  .sidebar-stats {
+    margin: 16px;
+    padding: 12px;
+    background: var(--surface2);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .sidebar-stats .stat-row { display: flex; justify-content: space-between; margin: 3px 0; }
+  .sidebar-stats .pass-count { color: var(--pass); font-weight: 600; }
+  .sidebar-stats .fail-count { color: var(--fail); font-weight: 600; }
+  .sidebar-stats .skip-count { color: var(--skip); font-weight: 600; }
+  .sidebar-stats .total-count { color: var(--text); font-weight: 600; }
+
+  .sidebar-reset {
+    display: block;
+    margin: 0 16px;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all .15s;
+  }
+  .sidebar-reset:hover { border-color: var(--fail); color: var(--fail); }
+
+  /* Main content */
+  .main { flex: 1; padding: 32px 40px; max-width: 900px; }
+
+  .page-header { margin-bottom: 40px; }
+  .page-header h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+  .page-header p { color: var(--muted); font-size: 15px; }
+
+  .milestone-section { margin-bottom: 48px; }
+  .milestone-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .milestone-header h2 { font-size: 18px; font-weight: 700; }
+  .milestone-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .badge-shipped { background: rgba(16,185,129,.15); color: #10b981; }
+  .badge-v20 { background: rgba(107,114,128,.15); color: #9ca3af; }
+  .badge-v21 { background: rgba(99,102,241,.15); color: #818cf8; }
+  .badge-v22 { background: rgba(59,130,246,.15); color: #60a5fa; }
+  .badge-v23 { background: rgba(168,85,247,.15); color: #c084fc; }
+  .badge-v24 { background: rgba(34,197,94,.15); color: #4ade80; }
+
+  /* Test card */
+  .test-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 14px;
+    overflow: hidden;
+    transition: border-color .15s;
+  }
+  .test-card.result-pass { border-color: rgba(34,197,94,.4); }
+  .test-card.result-fail { border-color: rgba(239,68,68,.4); }
+  .test-card.result-skip { border-color: rgba(245,158,11,.4); }
+
+  .test-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .test-id {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    padding-top: 2px;
+    min-width: 52px;
+  }
+
+  .test-title-area { flex: 1; }
+  .test-title { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
+  .test-prereq {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .test-prereq::before { content: '↳ requires: '; }
+
+  .test-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    align-items: flex-start;
+  }
+
+  .btn {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: var(--muted);
+    transition: all .15s;
+  }
+  .btn:hover { opacity: .8; }
+  .btn-pass { border-color: var(--pass); color: var(--pass); }
+  .btn-fail { border-color: var(--fail); color: var(--fail); }
+  .btn-skip { border-color: var(--skip); color: var(--skip); }
+  .btn-pass.active { background: var(--pass); color: #000; }
+  .btn-fail.active { background: var(--fail); color: #fff; }
+  .btn-skip.active { background: var(--skip); color: #000; }
+
+  .test-body { padding: 0 16px 16px 80px; }
+
+  .test-steps {
+    margin-top: 4px;
+    padding: 12px 14px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .test-steps h4 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .step {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+  .step-text { flex: 1; }
+  .step-text code {
+    background: rgba(255,255,255,.06);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+  }
+  .expected {
+    margin-top: 10px;
+    padding: 8px 10px;
+    background: rgba(99,102,241,.08);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    font-size: 13px;
+  }
+  .expected-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .test-notes {
+    margin-top: 10px;
+  }
+  .test-notes textarea {
+    width: 100%;
+    min-height: 52px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 12px;
+    padding: 8px 10px;
+    resize: vertical;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .test-notes textarea:focus { border-color: var(--accent); }
+  .test-notes textarea::placeholder { color: var(--muted); }
+
+  .expand-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    margin-top: 2px;
+  }
+  .expand-toggle:hover { color: var(--text); }
+  .expand-icon { transition: transform .2s; font-size: 10px; }
+  .expand-icon.open { transform: rotate(90deg); }
+
+  .collapsible { display: none; }
+  .collapsible.open { display: block; }
+
+  /* Info box */
+  .info-box {
+    padding: 12px 16px;
+    background: rgba(99,102,241,.07);
+    border: 1px solid rgba(99,102,241,.2);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .info-box strong { color: var(--text); }
+
+  /* Code block */
+  pre {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    overflow-x: auto;
+    color: #a5b4fc;
+    margin: 8px 0;
+  }
+
+  @media print {
+    .sidebar { display: none; }
+    .main { padding: 20px; }
+    .btn { display: none; }
+    .test-body { display: block !important; }
+    .collapsible { display: block !important; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-title">Noēsis UAT</div>
+
+  <div class="sidebar-stats">
+    <div class="stat-row"><span>Pass</span><span class="pass-count" id="stat-pass">0</span></div>
+    <div class="stat-row"><span>Fail</span><span class="fail-count" id="stat-fail">0</span></div>
+    <div class="stat-row"><span>Skip</span><span class="skip-count" id="stat-skip">0</span></div>
+    <div class="stat-row"><span>Total</span><span class="total-count" id="stat-total">0</span></div>
+  </div>
+
+  <div class="sidebar-group">Prerequisites</div>
+  <a class="sidebar-item" href="#prereq">Stack Setup</a>
+
+  <div class="sidebar-group">v2.0 — First Life</div>
+  <a class="sidebar-item" href="#v20-core">Core Grid</a>
+  <a class="sidebar-item" href="#v20-dashboard">Dashboard</a>
+  <a class="sidebar-item" href="#v20-inspector">Nous Inspector</a>
+
+  <div class="sidebar-group">v2.1 — Steward Console</div>
+  <a class="sidebar-item" href="#v21-reviewer">ReviewerNous</a>
+  <a class="sidebar-item" href="#v21-agency">Operator Agency</a>
+  <a class="sidebar-item" href="#v21-dialogue">Peer Dialogue</a>
+  <a class="sidebar-item" href="#v21-deletion">H5 Deletion</a>
+
+  <div class="sidebar-group">v2.2 — Living Grid</div>
+  <a class="sidebar-item" href="#v22-relationships">Relationships</a>
+  <a class="sidebar-item" href="#v22-drives">Ananke Drives</a>
+  <a class="sidebar-item" href="#v22-whisper">Mesh Whisper</a>
+  <a class="sidebar-item" href="#v22-governance">Governance</a>
+  <a class="sidebar-item" href="#v22-replay">Replay & Export</a>
+
+  <div class="sidebar-group">v2.3 — Living Minds</div>
+  <a class="sidebar-item" href="#v23-memory">Memory (Hypnos)</a>
+  <a class="sidebar-item" href="#v23-iris">Theory of Mind</a>
+  <a class="sidebar-item" href="#v23-skills">Skill Diffusion</a>
+  <a class="sidebar-item" href="#v23-norms">Norm Crystallization</a>
+  <a class="sidebar-item" href="#v23-lore">Lore Commons</a>
+
+  <div class="sidebar-group">v2.4 — Culture Dashboard</div>
+  <a class="sidebar-item" href="#v24-nav">Navigation</a>
+  <a class="sidebar-item" href="#v24-skill-graph">Skill Lineage Graph</a>
+  <a class="sidebar-item" href="#v24-norm-timeline">Norm Timeline</a>
+  <a class="sidebar-item" href="#v24-lore-graph">Lore Graph</a>
+  <a class="sidebar-item" href="#v24-events">Event Categorization</a>
+
+  <div style="margin-top:20px;"></div>
+  <button class="sidebar-reset" onclick="resetAll()">Reset All Results</button>
+</nav>
+
+<!-- Main -->
+<main class="main">
+  <div class="page-header">
+    <h1>Noēsis — UAT Test Scenarios</h1>
+    <p>User acceptance tests for v2.4 Agora milestone. Run against a live stack (docker compose up). Mark each test Pass / Fail / Skip.</p>
+  </div>
+
+  <!-- Prerequisites -->
+  <div class="milestone-section" id="prereq">
+    <div class="milestone-header">
+      <h2>Prerequisites — Stack Setup</h2>
+      <span class="milestone-badge badge-v20">Required</span>
+    </div>
+
+    <div class="info-box">
+      <strong>Before running any tests:</strong> start the full stack and confirm all services are healthy. All subsequent tests assume the stack is running.
+    </div>
+
+    <pre>cd /Users/desirey/Programming/src/Noesis
+docker compose up -d --build
+docker compose ps   # wait until all STATUS = healthy</pre>
+
+    <div class="test-card" id="tc-PRE-01">
+      <div class="test-header" onclick="toggleBody('PRE-01')">
+        <div class="test-id">PRE-01</div>
+        <div class="test-title-area">
+          <div class="test-title">All four services start healthy</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'PRE-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'PRE-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'PRE-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible open" id="body-PRE-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Run <code>docker compose ps</code></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Confirm MySQL, Grid, Brain, Dashboard all show <code>healthy</code></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">Open <code>http://localhost:3001/grid</code> in Chrome</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Four services healthy. Dashboard loads without a white screen or error boundary.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('PRE-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-PRE-02">
+      <div class="test-header" onclick="toggleBody('PRE-02')">
+        <div class="test-id">PRE-02</div>
+        <div class="test-title-area">
+          <div class="test-title">Grid health endpoint responds 200</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'PRE-02','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'PRE-02','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'PRE-02','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-PRE-02">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Run <code>curl -s http://localhost:8080/health | jq .</code></div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            HTTP 200. JSON body with <code>"status": "ok"</code>.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('PRE-02', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.0 Core Grid -->
+  <div class="milestone-section" id="v20-core">
+    <div class="milestone-header">
+      <h2>v2.0 — Core Grid</h2>
+      <span class="milestone-badge badge-v20">v2.0 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-CORE-01">
+      <div class="test-header" onclick="toggleBody('CORE-01')">
+        <div class="test-id">CORE-01</div>
+        <div class="test-title-area">
+          <div class="test-title">AuditChain WebSocket streams live events</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'CORE-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'CORE-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'CORE-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-CORE-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Open the dashboard at <code>http://localhost:3001/grid</code></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Watch the Firehose panel. Wait up to 30 seconds.</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Event rows appear in the Firehose panel as the Grid ticks. Events have a timestamp, event type, and payload summary. New events push older ones down.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('CORE-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-CORE-02">
+      <div class="test-header" onclick="toggleBody('CORE-02')">
+        <div class="test-id">CORE-02</div>
+        <div class="test-title-area">
+          <div class="test-title">Heartbeat indicator stays green during normal operation</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'CORE-02','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'CORE-02','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'CORE-02','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-CORE-02">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Locate the heartbeat/connection indicator in the dashboard header</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Observe for 20 seconds</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Indicator shows a green/connected state. No reconnection flashes during normal operation.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('CORE-02', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.0 Dashboard -->
+  <div class="milestone-section" id="v20-dashboard">
+    <div class="milestone-header">
+      <h2>v2.0 — Dashboard Views</h2>
+      <span class="milestone-badge badge-v20">v2.0 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-DASH-01">
+      <div class="test-header" onclick="toggleBody('DASH-01')">
+        <div class="test-id">DASH-01</div>
+        <div class="test-title-area">
+          <div class="test-title">Region map shows Nous positions</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'DASH-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'DASH-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'DASH-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-DASH-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Open the Region Map tab or panel</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Observe Nous agent dots on the map</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Nous agents appear as dots in distinct regions. Positions update as agents move between regions.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('DASH-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-DASH-02">
+      <div class="test-header" onclick="toggleBody('DASH-02')">
+        <div class="test-id">DASH-02</div>
+        <div class="test-title-area">
+          <div class="test-title">Event type filter narrows firehose to selected categories</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'DASH-02','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'DASH-02','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'DASH-02','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-DASH-02">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Click on an event category chip (e.g., "trade")</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Observe the firehose output</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">Click the "culture" chip (emerald green dot)</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Only events matching the selected category appear. Selecting "culture" shows only skill.*, norm.*, lore.* events. Deselecting returns all events.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('DASH-02', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.0 Inspector -->
+  <div class="milestone-section" id="v20-inspector">
+    <div class="milestone-header">
+      <h2>v2.0 — Nous Inspector & Economy</h2>
+      <span class="milestone-badge badge-v20">v2.0 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-INS-01">
+      <div class="test-header" onclick="toggleBody('INS-01')">
+        <div class="test-id">INS-01</div>
+        <div class="test-title-area">
+          <div class="test-title">Click a Nous to open the inspector panel</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'INS-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'INS-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'INS-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-INS-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Click any Nous agent on the region map or from the Nous list</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Inspect the panel that opens</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Inspector panel shows the Nous DID (truncated), Telos/goals list, Ousia balance, and current region. Panel closes when clicking elsewhere.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('INS-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-INS-02">
+      <div class="test-header" onclick="toggleBody('INS-02')">
+        <div class="test-id">INS-02</div>
+        <div class="test-title-area">
+          <div class="test-title">Economy view shows Ousia balances and trade history</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'INS-02','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'INS-02','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'INS-02','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-INS-02">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Open the Economy tab or panel</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Ousia balances visible per Nous. Recent trade.settled events appear in trade history with buyer DID, seller DID, and item.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('INS-02', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.1 ReviewerNous -->
+  <div class="milestone-section" id="v21-reviewer">
+    <div class="milestone-header">
+      <h2>v2.1 — ReviewerNous</h2>
+      <span class="milestone-badge badge-v21">v2.1 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-REV-01">
+      <div class="test-header" onclick="toggleBody('REV-01')">
+        <div class="test-id">REV-01</div>
+        <div class="test-title-area">
+          <div class="test-title">trade.reviewed event appears before every trade.settled in firehose</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'REV-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'REV-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'REV-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-REV-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Filter firehose to "trade" category</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Watch for <code>trade.settled</code> events</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">Check that each <code>trade.settled</code> is preceded by a <code>trade.reviewed</code> with the same trade context</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Every trade.settled is preceded by a trade.reviewed event. No trade.settled appears without a corresponding review. Reviewer decision is visible in the payload.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('REV-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.1 Operator Agency -->
+  <div class="milestone-section" id="v21-agency">
+    <div class="milestone-header">
+      <h2>v2.1 — Operator Agency (H1–H4)</h2>
+      <span class="milestone-badge badge-v21">v2.1 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-AGN-01">
+      <div class="test-header" onclick="toggleBody('AGN-01')">
+        <div class="test-id">AGN-01</div>
+        <div class="test-title-area">
+          <div class="test-title">Current operator tier displayed in dashboard header</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'AGN-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'AGN-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'AGN-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-AGN-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Look at the dashboard header/navigation area</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Operator tier indicator is always visible (H1 default). It is impossible to miss the current tier.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('AGN-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-AGN-02">
+      <div class="test-header" onclick="toggleBody('AGN-02')">
+        <div class="test-id">AGN-02</div>
+        <div class="test-title-area">
+          <div class="test-title">Tier elevation to H2+ requires explicit confirmation</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'AGN-02','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'AGN-02','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'AGN-02','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-AGN-02">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Attempt to access an H2+ feature or click tier elevation button</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Observe the confirmation prompt</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            An explicit confirmation dialog appears before elevation. The dialog shows what tier you are elevating to. The action is recorded as an operator.* audit event.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('AGN-02', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.1 Peer Dialogue -->
+  <div class="milestone-section" id="v21-dialogue">
+    <div class="milestone-header">
+      <h2>v2.1 — Peer Dialogue & Telos Refinement</h2>
+      <span class="milestone-badge badge-v21">v2.1 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-DIA-01">
+      <div class="test-header" onclick="toggleBody('DIA-01')">
+        <div class="test-id">DIA-01</div>
+        <div class="test-title-area">
+          <div class="test-title">nous.spoke events appear in firehose during simulation</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'DIA-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'DIA-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'DIA-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-DIA-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Filter firehose to "message" category or watch for <code>nous.spoke</code></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Observe event payload — it should contain a hash, not raw text</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            nous.spoke events appear. Payload contains only content hash — no plaintext message content ever visible in the firehose.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('DIA-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-DIA-02">
+      <div class="test-header" onclick="toggleBody('DIA-02')">
+        <div class="test-id">DIA-02</div>
+        <div class="test-title-area">
+          <div class="test-title">telos.refined event visible after dialogue; goal shows refinement badge</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'DIA-02','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'DIA-02','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'DIA-02','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-DIA-02">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Wait for a <code>telos.refined</code> event in the firehose</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Open the Nous inspector for the agent whose Telos was refined</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">Look at the Goals section of the inspector</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            The refined goal shows a "↻ refined via dialogue" badge. The badge derives from firehose history — it is not stored in backend state.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('DIA-02', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.1 H5 Deletion -->
+  <div class="milestone-section" id="v21-deletion">
+    <div class="milestone-header">
+      <h2>v2.1 — H5 Sovereign Operations (Nous Deletion)</h2>
+      <span class="milestone-badge badge-v21">v2.1 · Shipped</span>
+    </div>
+    <div class="info-box"><strong>Warning:</strong> H5 deletion is irreversible. Only run this test in a non-production environment. The deleted Nous DID is tombstoned permanently.</div>
+
+    <div class="test-card" id="tc-H5-01">
+      <div class="test-header" onclick="toggleBody('H5-01')">
+        <div class="test-id">H5-01</div>
+        <div class="test-title-area">
+          <div class="test-title">H5 deletion surface requires copy-paste confirmation text</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'H5-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'H5-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'H5-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-H5-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Elevate to H5 tier (maximum friction expected)</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Initiate deletion of a Nous from the inspector</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">Observe the IrreversibilityDialog</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Dialog shows: "Type the Grid-ID to confirm" input field, verbatim buttons "Delete forever" and "Keep". Paste-suppressed (cannot paste — must type). Confirm button disabled until exact Grid-ID is typed.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('H5-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.2 Relationships -->
+  <div class="milestone-section" id="v22-relationships">
+    <div class="milestone-header">
+      <h2>v2.2 — Relationship Graph</h2>
+      <span class="milestone-badge badge-v22">v2.2 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-REL-01">
+      <div class="test-header" onclick="toggleBody('REL-01')">
+        <div class="test-id">REL-01</div>
+        <div class="test-title-area">
+          <div class="test-title">Nous inspector shows top-N relationship partners by warmth</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'REL-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'REL-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'REL-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-REL-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Open the Nous inspector for any agent that has traded or spoken to peers</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Look for the Relationships section</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Up to 5 partner DIDs listed with a warmth indicator. No raw trust scores visible at H1 — only aggregate warmth level. Relationship data derived from nous.spoke and trade.settled (no new audit events added).
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('REL-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.2 Ananke Drives -->
+  <div class="milestone-section" id="v22-drives">
+    <div class="milestone-header">
+      <h2>v2.2 — Ananke Drives</h2>
+      <span class="milestone-badge badge-v22">v2.2 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-DRV-01">
+      <div class="test-header" onclick="toggleBody('DRV-01')">
+        <div class="test-id">DRV-01</div>
+        <div class="test-title-area">
+          <div class="test-title">ananke.drive_crossed events appear with bucketed level (never raw floats)</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'DRV-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'DRV-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'DRV-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-DRV-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Wait for an <code>ananke.drive_crossed</code> event in the firehose</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Expand the event payload</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Payload fields: <code>{did, tick, drive, level, direction}</code>. <code>level</code> is one of <code>low|med|high</code> — never a numeric float. <code>drive</code> is one of <code>hunger|curiosity|safety|boredom|loneliness</code>.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('DRV-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-DRV-02">
+      <div class="test-header" onclick="toggleBody('DRV-02')">
+        <div class="test-id">DRV-02</div>
+        <div class="test-title-area">
+          <div class="test-title">Nous inspector shows drive level as icon, not raw number</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'DRV-02','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'DRV-02','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'DRV-02','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-DRV-02">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Open Nous inspector and find the Drives section</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Five drives shown as icons or badges representing low/med/high. No raw floating-point drive values displayed anywhere in the dashboard.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('DRV-02', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.2 Whisper -->
+  <div class="milestone-section" id="v22-whisper">
+    <div class="milestone-header">
+      <h2>v2.2 — Mesh Whisper</h2>
+      <span class="milestone-badge badge-v22">v2.2 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-WSP-01">
+      <div class="test-header" onclick="toggleBody('WSP-01')">
+        <div class="test-id">WSP-01</div>
+        <div class="test-title-area">
+          <div class="test-title">nous.whispered events show ciphertext hash, no plaintext</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'WSP-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'WSP-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'WSP-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-WSP-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Wait for a <code>nous.whispered</code> event in the firehose</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Expand the event payload</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Payload: <code>{from_did, to_did, tick, ciphertext_hash}</code>. No message content visible. Ciphertext hash is a SHA-256 hex string, not readable text.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('WSP-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.2 Governance -->
+  <div class="milestone-section" id="v22-governance">
+    <div class="milestone-header">
+      <h2>v2.2 — Governance & Collective Law</h2>
+      <span class="milestone-badge badge-v22">v2.2 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-GOV-01">
+      <div class="test-header" onclick="toggleBody('GOV-01')">
+        <div class="test-id">GOV-01</div>
+        <div class="test-title-area">
+          <div class="test-title">proposal.opened → ballot.committed → ballot.revealed → proposal.tallied lifecycle visible in firehose</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'GOV-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'GOV-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'GOV-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-GOV-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Open the Governance tab/panel in the dashboard</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Wait for a governance cycle to complete (or observe open proposals)</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            All four lifecycle events visible in sequence. Ballot payloads show commit hashes (not plaintext votes). Tally shows yes/no/abstain counts. Passed proposals show promotion to law.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('GOV-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-GOV-02">
+      <div class="test-header" onclick="toggleBody('GOV-02')">
+        <div class="test-id">GOV-02</div>
+        <div class="test-title-area">
+          <div class="test-title">No operator.* events emitted from governance module</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'GOV-02','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'GOV-02','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'GOV-02','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-GOV-02">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Search firehose for any events with type prefix <code>operator.</code> that correlate to governance timing</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Zero operator.* events emitted during any governance action. Operators can only observe governance — they cannot vote, propose, or tally.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('GOV-02', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.2 Replay -->
+  <div class="milestone-section" id="v22-replay">
+    <div class="milestone-header">
+      <h2>v2.2 — Operator Replay & Export</h2>
+      <span class="milestone-badge badge-v22">v2.2 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-RPL-01">
+      <div class="test-header" onclick="toggleBody('RPL-01')">
+        <div class="test-id">RPL-01</div>
+        <div class="test-title-area">
+          <div class="test-title">Rewind panel scrubs to a past tick and shows historical state</div>
+          <div class="test-prereq">H3+ operator tier required</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'RPL-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'RPL-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'RPL-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-RPL-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Elevate to H3+ tier</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Open the Rewind panel</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">Scrub the slider to a past tick</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Firehose and inspector show state at the selected tick. Live Grid is not affected. A "Replay mode" banner indicates you are viewing historical state, not live.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('RPL-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.3 Hypnos Memory -->
+  <div class="milestone-section" id="v23-memory">
+    <div class="milestone-header">
+      <h2>v2.3 — Hypnos (Consolidating Memory)</h2>
+      <span class="milestone-badge badge-v23">v2.3 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-HYP-01">
+      <div class="test-header" onclick="toggleBody('HYP-01')">
+        <div class="test-id">HYP-01</div>
+        <div class="test-title-area">
+          <div class="test-title">nous.sleep_started and nous.sleep_ended events fire on sleep cycle</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'HYP-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'HYP-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'HYP-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-HYP-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Filter firehose for sleep-related events or watch the lifecycle category</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            <code>nous.sleep_started</code> followed by <code>nous.sleep_ended</code> appear for Nous agents on their sleep cycle. No internal memory content (LTM graph, Hebbian weights) visible in payloads — only boundary hashes cross the wire.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('HYP-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.3 Iris -->
+  <div class="milestone-section" id="v23-iris">
+    <div class="milestone-header">
+      <h2>v2.3 — Iris (Theory of Mind)</h2>
+      <span class="milestone-badge badge-v23">v2.3 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-IRS-01">
+      <div class="test-header" onclick="toggleBody('IRS-01')">
+        <div class="test-id">IRS-01</div>
+        <div class="test-title-area">
+          <div class="test-title">iris.belief_revised events appear in firehose with hash payload</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'IRS-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'IRS-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'IRS-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-IRS-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Wait for <code>iris.belief_revised</code> event in the firehose</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Expand the payload</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Payload shows belief dimension and hash — no plaintext belief content visible at H1–H4. The Iris model stays Brain-private; only revision boundary events cross the wire.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('IRS-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.3 Skill Diffusion -->
+  <div class="milestone-section" id="v23-skills">
+    <div class="milestone-header">
+      <h2>v2.3 — Skill Diffusion</h2>
+      <span class="milestone-badge badge-v23">v2.3 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-SKL-01">
+      <div class="test-header" onclick="toggleBody('SKL-01')">
+        <div class="test-id">SKL-01</div>
+        <div class="test-title-area">
+          <div class="test-title">skill.taught events appear when a Nous teaches a peer skill via whisper</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'SKL-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'SKL-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'SKL-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-SKL-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Watch for <code>skill.taught</code> in the firehose (culture category)</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Expand the event payload</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Payload contains <code>teacher_did</code>, <code>student_did</code>, <code>skill_hash</code>, and <code>tick</code>. No plaintext skill text visible.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('SKL-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-SKL-02">
+      <div class="test-header" onclick="toggleBody('SKL-02')">
+        <div class="test-id">SKL-02</div>
+        <div class="test-title-area">
+          <div class="test-title">skill.inferred events appear after Nous observes repeated peer trades</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'SKL-02','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'SKL-02','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'SKL-02','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-SKL-02">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Watch for <code>skill.inferred</code> in firehose after some simulation time</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            skill.inferred events appear as Nous agents passively learn from observing peer behavior. Rate-limited to one skill per sleep epoch per Nous.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('SKL-02', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.3 Norms -->
+  <div class="milestone-section" id="v23-norms">
+    <div class="milestone-header">
+      <h2>v2.3 — Norm Crystallization</h2>
+      <span class="milestone-badge badge-v23">v2.3 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-NRM-01">
+      <div class="test-header" onclick="toggleBody('NRM-01')">
+        <div class="test-id">NRM-01</div>
+        <div class="test-title-area">
+          <div class="test-title">norm.crystallized event emitted when ≥3 Nous hold similar rules</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'NRM-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'NRM-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'NRM-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-NRM-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Run the simulation for enough ticks for norms to emerge (may take 200+ ticks)</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Watch for <code>norm.crystallized</code> event in the firehose</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            norm.crystallized event has <code>participant_count ≥ 3</code>. Convergence type is <code>emergent</code> or <code>coincidental</code>. Event was never operator-injected — it emerged from Nous cognition.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('NRM-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.3 Lore -->
+  <div class="milestone-section" id="v23-lore">
+    <div class="milestone-header">
+      <h2>v2.3 — Lore Commons</h2>
+      <span class="milestone-badge badge-v23">v2.3 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-LOR-01">
+      <div class="test-header" onclick="toggleBody('LOR-01')">
+        <div class="test-id">LOR-01</div>
+        <div class="test-title-area">
+          <div class="test-title">lore.contributed events appear; payload contains hash only</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'LOR-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'LOR-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'LOR-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-LOR-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Filter firehose for culture category</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Look for <code>lore.contributed</code> events</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Payload: <code>contributor_did</code>, <code>content_hash</code>, <code>category_tag</code>, <code>tick</code>. No lore text content visible in the audit chain — Grid stores only hashes.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('LOR-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-LOR-02">
+      <div class="test-header" onclick="toggleBody('LOR-02')">
+        <div class="test-id">LOR-02</div>
+        <div class="test-title-area">
+          <div class="test-title">lore.cited events appear when a Nous cites another's lore entry</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'LOR-02','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'LOR-02','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'LOR-02','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-LOR-02">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Wait for <code>lore.cited</code> in the firehose</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Payload: <code>citing_did</code>, <code>content_hash</code> (referencing the original lore entry), <code>tick</code>. The citation network can be reconstructed from audit history alone.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('LOR-02', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.4 Navigation -->
+  <div class="milestone-section" id="v24-nav">
+    <div class="milestone-header">
+      <h2>v2.4 — Culture Dashboard: Navigation</h2>
+      <span class="milestone-badge badge-v24">v2.4 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-CUL-01">
+      <div class="test-header" onclick="toggleBody('CUL-01')">
+        <div class="test-id">CUL-01</div>
+        <div class="test-title-area">
+          <div class="test-title">Culture tab appears in TabBar and navigates to /grid/culture</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'CUL-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'CUL-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'CUL-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-CUL-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Open <code>http://localhost:3001/grid</code></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Find the TabBar (should have at least 3 tabs now)</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">Click the "Culture" tab</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Culture tab is visible. Clicking it navigates to <code>/grid/culture</code>. The tab shows as active (highlighted) on that route. URL in browser address bar updates to <code>/grid/culture</code>.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('CUL-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-CUL-02">
+      <div class="test-header" onclick="toggleBody('CUL-02')">
+        <div class="test-id">CUL-02</div>
+        <div class="test-title-area">
+          <div class="test-title">/grid/culture page renders with correct title and three section headings</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'CUL-02','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'CUL-02','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'CUL-02','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-CUL-02">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Navigate to <code>http://localhost:3001/grid/culture</code></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Check the page title (browser tab) and heading</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">Scroll down to see all three sections</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Browser tab title: "Culture — Noēsis Grid". Page shows a "Culture" heading and subtitle. Three visible section headings: <strong>Skill Lineage</strong>, <strong>Norm Adoption Timeline</strong>, <strong>Lore Contributions</strong>.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('CUL-02', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.4 Skill Lineage Graph -->
+  <div class="milestone-section" id="v24-skill-graph">
+    <div class="milestone-header">
+      <h2>v2.4 — Skill Lineage Graph</h2>
+      <span class="milestone-badge badge-v24">v2.4 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-SLG-01">
+      <div class="test-header" onclick="toggleBody('SLG-01')">
+        <div class="test-id">SLG-01</div>
+        <div class="test-title-area">
+          <div class="test-title">Skill Lineage Graph renders SVG when skill events exist</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'SLG-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'SLG-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'SLG-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-SLG-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Navigate to <code>/grid/culture</code> after some simulation time (ensure skill events have occurred)</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Inspect the "Skill Lineage" section</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            An SVG visualization is rendered (not just the loading state). Nodes visible as circles. Nous nodes are amber/orange (<code>#F59E0B</code>). Skill nodes are green (<code>#4ADE80</code>).
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('SLG-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-SLG-02">
+      <div class="test-header" onclick="toggleBody('SLG-02')">
+        <div class="test-id">SLG-02</div>
+        <div class="test-title-area">
+          <div class="test-title">Taught edges are solid lines; inferred edges are dashed</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'SLG-02','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'SLG-02','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'SLG-02','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-SLG-02">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Open the Skill Lineage SVG (ensure both skill.taught and skill.inferred events exist)</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Compare the edge line styles</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Edges from <code>skill.taught</code> are solid lines. Edges from <code>skill.inferred</code> are dashed lines (dash pattern <code>4 2</code>). Both types have a tooltip showing "tick N" on hover.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('SLG-02', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-SLG-03">
+      <div class="test-header" onclick="toggleBody('SLG-03')">
+        <div class="test-id">SLG-03</div>
+        <div class="test-title-area">
+          <div class="test-title">Empty state shown when no skill events exist ("No skill events yet.")</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'SLG-03','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'SLG-03','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'SLG-03','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-SLG-03">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Open <code>/grid/culture</code> immediately after a fresh stack start (before skills have diffused)</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            The Skill Lineage section shows "No skill events yet." rather than an empty SVG or error. No crash or white box.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('SLG-03', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-SLG-04">
+      <div class="test-header" onclick="toggleBody('SLG-04')">
+        <div class="test-id">SLG-04</div>
+        <div class="test-title-area">
+          <div class="test-title">Hover tooltip on node shows full DID or content hash</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'SLG-04','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'SLG-04','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'SLG-04','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-SLG-04">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Hover over a node circle in the Skill Lineage SVG</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Browser tooltip (SVG <code>&lt;title&gt;</code>) shows the full <code>did:noesis:…</code> for Nous nodes, or the full <code>sha256:…</code> hash for skill nodes.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('SLG-04', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.4 Norm Timeline -->
+  <div class="milestone-section" id="v24-norm-timeline">
+    <div class="milestone-header">
+      <h2>v2.4 — Norm Adoption Timeline</h2>
+      <span class="milestone-badge badge-v24">v2.4 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-NTL-01">
+      <div class="test-header" onclick="toggleBody('NTL-01')">
+        <div class="test-id">NTL-01</div>
+        <div class="test-title-area">
+          <div class="test-title">Norm Timeline SVG renders rect bars per norm when data exists</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'NTL-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'NTL-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'NTL-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-NTL-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Navigate to <code>/grid/culture</code> after norms have crystallized</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Observe the "Norm Adoption Timeline" section</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            SVG shows colored horizontal bars — one per crystallized norm. Emergent norms are light blue. Coincidental norms are neutral gray. Each bar has a text label "N Nous · type".
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('NTL-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-NTL-02">
+      <div class="test-header" onclick="toggleBody('NTL-02')">
+        <div class="test-id">NTL-02</div>
+        <div class="test-title-area">
+          <div class="test-title">Hover tooltip on norm bar shows fingerprint, type, Nous count, and duration</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'NTL-02','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'NTL-02','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'NTL-02','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-NTL-02">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Hover over a norm bar rectangle in the SVG</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Tooltip (SVG <code>&lt;title&gt;</code>) format: <code>{fingerprint} — {convergence_type} — {N} Nous — {duration} ticks</code>. Example: "a1b2c3 — emergent — 4 Nous — 40 ticks".
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('NTL-02', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-NTL-03">
+      <div class="test-header" onclick="toggleBody('NTL-03')">
+        <div class="test-id">NTL-03</div>
+        <div class="test-title-area">
+          <div class="test-title">Empty state shows "No norms yet." when no norm.crystallized events</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'NTL-03','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'NTL-03','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'NTL-03','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-NTL-03">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Open <code>/grid/culture</code> before any norms have crystallized</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Norm Adoption Timeline shows "No norms yet." No SVG or empty axes rendered.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('NTL-03', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.4 Lore Graph -->
+  <div class="milestone-section" id="v24-lore-graph">
+    <div class="milestone-header">
+      <h2>v2.4 — Lore Contributions Graph</h2>
+      <span class="milestone-badge badge-v24">v2.4 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-LRG-01">
+      <div class="test-header" onclick="toggleBody('LRG-01')">
+        <div class="test-id">LRG-01</div>
+        <div class="test-title-area">
+          <div class="test-title">Lore Graph SVG renders bipartite layout with Nous (left) and lore entries (right)</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'LRG-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'LRG-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'LRG-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-LRG-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Navigate to <code>/grid/culture</code> after lore contributions have occurred</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Observe the "Lore Contributions" section</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            SVG shows two columns. Left column: Nous contributor nodes (smaller circles). Right column: Lore entry nodes (larger circles). Edges connect contributors to their entries.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('LRG-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-LRG-02">
+      <div class="test-header" onclick="toggleBody('LRG-02')">
+        <div class="test-id">LRG-02</div>
+        <div class="test-title-area">
+          <div class="test-title">Contributed edges are solid; cited edges are dashed</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'LRG-02','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'LRG-02','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'LRG-02','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-LRG-02">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Ensure both lore.contributed and lore.cited events have occurred</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Look at the Lore Graph SVG edges</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            <code>lore.contributed</code> edges are solid lines. <code>lore.cited</code> edges are dashed (pattern <code>4 2</code>). A visual difference is clearly perceptible.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('LRG-02', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-LRG-03">
+      <div class="test-header" onclick="toggleBody('LRG-03')">
+        <div class="test-id">LRG-03</div>
+        <div class="test-title-area">
+          <div class="test-title">Hover tooltip on Nous node shows full DID; lore node shows full content hash</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'LRG-03','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'LRG-03','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'LRG-03','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-LRG-03">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Hover over a left-column (Nous) node</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Hover over a right-column (lore entry) node</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Nous node tooltip: full <code>did:noesis:…</code> DID. Lore entry tooltip: full <code>sha256:…</code> content hash.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('LRG-03', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-LRG-04">
+      <div class="test-header" onclick="toggleBody('LRG-04')">
+        <div class="test-id">LRG-04</div>
+        <div class="test-title-area">
+          <div class="test-title">Empty state shows "No lore yet." when no lore events exist</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'LRG-04','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'LRG-04','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'LRG-04','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-LRG-04">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Open <code>/grid/culture</code> before any lore has been contributed</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Lore Contributions section shows "No lore yet." No SVG or empty chart rendered.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('LRG-04', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v2.4 Event Categorization -->
+  <div class="milestone-section" id="v24-events">
+    <div class="milestone-header">
+      <h2>v2.4 — Event Categorization</h2>
+      <span class="milestone-badge badge-v24">v2.4 · Shipped</span>
+    </div>
+
+    <div class="test-card" id="tc-EVT-01">
+      <div class="test-header" onclick="toggleBody('EVT-01')">
+        <div class="test-id">EVT-01</div>
+        <div class="test-title-area">
+          <div class="test-title">"culture" category chip (emerald) appears in the event filter row</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'EVT-01','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'EVT-01','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'EVT-01','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-EVT-01">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Look at the event type filter chips in the firehose toolbar</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            A "culture" chip with an emerald/green dot is visible alongside the other category chips (trade, message, movement, law, lifecycle, other). Total: 7 category chips.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('EVT-01', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card" id="tc-EVT-02">
+      <div class="test-header" onclick="toggleBody('EVT-02')">
+        <div class="test-id">EVT-02</div>
+        <div class="test-title-area">
+          <div class="test-title">Filtering by "culture" shows only skill.*, norm.*, lore.* events</div>
+        </div>
+        <div class="test-actions">
+          <button class="btn btn-pass" onclick="setResult(event,'EVT-02','pass')">Pass</button>
+          <button class="btn btn-fail" onclick="setResult(event,'EVT-02','fail')">Fail</button>
+          <button class="btn btn-skip" onclick="setResult(event,'EVT-02','skip')">Skip</button>
+        </div>
+      </div>
+      <div class="test-body collapsible" id="body-EVT-02">
+        <div class="test-steps">
+          <h4>Steps</h4>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Click the "culture" chip to filter the firehose</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Observe the events that appear</div></div>
+          <div class="expected">
+            <div class="expected-label">Expected</div>
+            Only events with types <code>skill.taught</code>, <code>skill.inferred</code>, <code>skill.rejected</code>, <code>norm.candidate</code>, <code>norm.crystallized</code>, <code>lore.contributed</code>, <code>lore.cited</code> appear. No trade, message, movement, or law events visible.
+          </div>
+        </div>
+        <div class="test-notes">
+          <textarea placeholder="Notes…" oninput="saveNote('EVT-02', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+const STORAGE_KEY = 'noesis-uat-v1';
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+  catch { return {}; }
+}
+
+function saveState(state) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function setResult(e, id, result) {
+  e.stopPropagation();
+  const state = loadState();
+  if (state[id]?.result === result) {
+    delete state[id];
+  } else {
+    state[id] = { ...(state[id] || {}), result };
+  }
+  saveState(state);
+  applyState(state);
+}
+
+function saveNote(id, value) {
+  const state = loadState();
+  state[id] = { ...(state[id] || {}), note: value };
+  saveState(state);
+}
+
+function applyState(state) {
+  let pass = 0, fail = 0, skip = 0;
+  document.querySelectorAll('.test-card').forEach(card => {
+    const id = card.id.replace('tc-', '');
+    const entry = state[id] || {};
+    const result = entry.result;
+    card.classList.remove('result-pass', 'result-fail', 'result-skip');
+    card.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+    if (result) {
+      card.classList.add('result-' + result);
+      const btn = card.querySelector('.btn-' + result);
+      if (btn) btn.classList.add('active');
+    }
+    const ta = card.querySelector('textarea');
+    if (ta && entry.note !== undefined) ta.value = entry.note;
+    if (result === 'pass') pass++;
+    else if (result === 'fail') fail++;
+    else if (result === 'skip') skip++;
+  });
+  const total = document.querySelectorAll('.test-card').length;
+  document.getElementById('stat-pass').textContent = pass;
+  document.getElementById('stat-fail').textContent = fail;
+  document.getElementById('stat-skip').textContent = skip;
+  document.getElementById('stat-total').textContent = total;
+}
+
+function toggleBody(id) {
+  const body = document.getElementById('body-' + id);
+  if (body) body.classList.toggle('open');
+}
+
+function resetAll() {
+  if (!confirm('Reset all test results and notes?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  applyState({});
+}
+
+// Initial load
+applyState(loadState());
+</script>
+</body>
+</html>

@@ -1,4 +1,6 @@
 export { AuditChain } from './chain.js';
+export { appendNousSpawnedByHuman } from './append-nous-spawned-by-human.js';
+export type { NousSpawnedByHumanPayload } from './append-nous-spawned-by-human.js';
 export type { AuditEntry, AuditQuery } from './types.js';
 export {
     appendTelosRefined,

@@ -14,21 +14,40 @@
  *   await app.register(fastifyCookie);
  */
 
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, scrypt, timingSafeEqual } from 'node:crypto';
+import { promisify } from 'node:util';
 import { SiweMessage } from 'siwe';
 import { SignJWT, jwtVerify, generateKeyPair } from 'jose';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { appendHumanJoined } from '../../audit/append-human-joined.js';
 
-const COOKIE_NAME = 'noesis_portal_token';
+const scryptAsync = promisify(scrypt);
+
+/** Hash a plaintext password → `salt:hash` (hex). */
+async function hashPassword(password: string): Promise<string> {
+    const salt = randomBytes(16).toString('hex');
+    const hash = (await scryptAsync(password, salt, 64)) as Buffer;
+    return `${salt}:${hash.toString('hex')}`;
+}
+
+/** Verify a plaintext password against a stored `salt:hash` string. */
+async function verifyPassword(password: string, stored: string): Promise<boolean> {
+    const [salt, hashHex] = stored.split(':');
+    if (!salt || !hashHex) return false;
+    const storedHash = Buffer.from(hashHex, 'hex');
+    const candidate = (await scryptAsync(password, salt, 64)) as Buffer;
+    return storedHash.length === candidate.length && timingSafeEqual(storedHash, candidate);
+}
+
+export const COOKIE_NAME = 'noesis_portal_token';
 const NONCE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 /** In-memory nonce store. Key = nonce string, Value = created timestamp (ms). */
 const nonceMap = new Map<string, number>();
 
-/** ES256 key pair — generated once at module load (WEB3-03). */
-const keyPairPromise = generateKeyPair('ES256');
+/** ES256 key pair — generated once at module load (WEB3-03). Exported for wallet route JWT verification. */
+export const keyPairPromise = generateKeyPair('ES256');
 
 export function registerPortalAuthRoutes(
     app: FastifyInstance,
@@ -37,7 +56,12 @@ export function registerPortalAuthRoutes(
     // GET /api/v1/portal/auth/nonce
     app.get('/api/v1/portal/auth/nonce', async (_req, reply) => {
         const nonce = randomUUID();
-        nonceMap.set(nonce, Date.now());
+        // Prune expired entries before adding a new one (CR-01: prevent unbounded growth).
+        const now = Date.now();
+        for (const [k, ts] of nonceMap) {
+            if (now - ts > NONCE_TTL_MS) nonceMap.delete(k);
+        }
+        nonceMap.set(nonce, now);
         return reply.send({ nonce });
     });
 
@@ -112,6 +136,8 @@ export function registerPortalAuthRoutes(
             did: human.did,
             eth_address: human.eth_address,
             grid_name: gridName,
+            region: human.region,                        // NEW — per D-03/D-07
+            created_at: human.created_at.toISOString(), // NEW — per D-07
         })
             .setProtectedHeader({ alg: 'ES256' })
             .setIssuedAt()
@@ -126,13 +152,133 @@ export function registerPortalAuthRoutes(
             maxAge: 24 * 60 * 60, // seconds
         });
 
-        return reply.send({ did: human.did, eth_address: human.eth_address, is_new: isNew });
+        return reply.send({
+            did: human.did,
+            eth_address: human.eth_address,
+            region: human.region,
+            created_at: human.created_at.toISOString(),
+            is_new: isNew,
+        });
     });
 
     // POST /api/v1/portal/auth/logout
     app.post('/api/v1/portal/auth/logout', async (_req, reply) => {
         reply.clearCookie(COOKIE_NAME, { path: '/' });
         return reply.send({ ok: true });
+    });
+
+    // POST /api/v1/portal/auth/email/signup
+    app.post<{
+        Body: { email: unknown; password: unknown };
+    }>('/api/v1/portal/auth/email/signup', async (req, reply) => {
+        if (!services.humanRegistry) {
+            return reply.status(503).send({ error: 'human_registry_unavailable' });
+        }
+
+        const { email, password } = req.body ?? ({} as { email: unknown; password: unknown });
+        if (typeof email !== 'string' || !email.includes('@') || typeof password !== 'string' || password.length < 8) {
+            return reply.status(400).send({ error: 'invalid_request' });
+        }
+
+        const gridName = services.gridName;
+        if (services.humanRegistry.findByEmail(gridName, email)) {
+            return reply.status(409).send({ error: 'email_already_registered' });
+        }
+
+        const password_hash = await hashPassword(password);
+        const human = services.humanRegistry.createHuman({
+            email,
+            password_hash,
+            grid_name: gridName,
+        });
+
+        const { privateKey } = await keyPairPromise;
+        const token = await new SignJWT({
+            did: human.did,
+            eth_address: human.eth_address,
+            grid_name: gridName,
+            region: human.region,
+            created_at: human.created_at.toISOString(),
+        })
+            .setProtectedHeader({ alg: 'ES256' })
+            .setIssuedAt()
+            .setExpirationTime('24h')
+            .sign(privateKey);
+
+        reply.setCookie(COOKIE_NAME, token, {
+            httpOnly: true,
+            sameSite: 'strict',
+            secure: process.env['NODE_ENV'] === 'production',
+            path: '/',
+            maxAge: 24 * 60 * 60,
+        });
+
+        return reply.status(201).send({
+            did: human.did,
+            eth_address: human.eth_address,
+            region: human.region,
+            created_at: human.created_at.toISOString(),
+            is_new: true,
+        });
+    });
+
+    // POST /api/v1/portal/auth/email/signin
+    app.post<{
+        Body: { email: unknown; password: unknown };
+    }>('/api/v1/portal/auth/email/signin', async (req, reply) => {
+        if (!services.humanRegistry) {
+            return reply.status(503).send({ error: 'human_registry_unavailable' });
+        }
+
+        const { email, password } = req.body ?? ({} as { email: unknown; password: unknown });
+        if (typeof email !== 'string' || typeof password !== 'string') {
+            return reply.status(400).send({ error: 'invalid_request' });
+        }
+
+        const gridName = services.gridName;
+        const human = services.humanRegistry.findByEmail(gridName, email);
+        if (!human) {
+            return reply.status(401).send({ error: 'invalid_credentials' });
+        }
+
+        const storedHash = services.humanRegistry.getPasswordHash(gridName, email);
+        if (!storedHash) {
+            return reply.status(401).send({ error: 'invalid_credentials' });
+        }
+
+        const valid = await verifyPassword(password, storedHash);
+        if (!valid) {
+            return reply.status(401).send({ error: 'invalid_credentials' });
+        }
+
+        const { privateKey } = await keyPairPromise;
+        const token = await new SignJWT({
+            did: human.did,
+            eth_address: human.eth_address,
+            grid_name: gridName,
+            region: human.region,
+            created_at: human.created_at.toISOString(),
+        })
+            .setProtectedHeader({ alg: 'ES256' })
+            .setIssuedAt()
+            .setExpirationTime('24h')
+            .sign(privateKey);
+
+        reply.setCookie(COOKIE_NAME, token, {
+            httpOnly: true,
+            sameSite: 'strict',
+            secure: process.env['NODE_ENV'] === 'production',
+            path: '/',
+            maxAge: 24 * 60 * 60,
+        });
+
+        return reply.send({
+            did: human.did,
+            eth_address: human.eth_address,
+            region: human.region,
+            created_at: human.created_at.toISOString(),
+            is_new: false,
+        });
     });
 
     // GET /api/v1/portal/auth/me
@@ -144,12 +290,72 @@ export function registerPortalAuthRoutes(
         try {
             const { publicKey } = await keyPairPromise;
             const { payload } = await jwtVerify(token, publicKey);
+
+            // Phase 26 ONBOARD-04: query onboarding_goal to derive onboarded boolean.
+            // Fail-safe: DB unavailability returns onboarded: false rather than 503.
+            let onboarded = false;
+            try {
+                const pool = services.humanPool;
+                if (pool) {
+                    const [rows] = await pool.query(
+                        'SELECT onboarding_goal FROM human_users WHERE did = ? LIMIT 1',
+                        [payload['did'] as string],
+                    ) as [Array<{ onboarding_goal: string | null }>, unknown];
+                    onboarded = rows.length > 0
+                        && rows[0]?.onboarding_goal !== null
+                        && rows[0]?.onboarding_goal !== undefined;
+                }
+            } catch (err) {
+                // DB query failed — fail-safe: treat as not onboarded.
+                // User will re-enter onboarding rather than silently skip it.
+                console.warn('[/me] onboarding_goal query failed, defaulting to onboarded=false', err);
+            }
+
             return reply.send({
                 did: payload['did'],
                 eth_address: payload['eth_address'],
+                region: (payload['region'] as string | undefined) ?? null,           // null for pre-migration tokens (WR-04)
+                created_at: (payload['created_at'] as string | undefined) ?? null,  // NEW — per D-07
+                onboarded,
             });
         } catch {
             return reply.status(401).send({ error: 'invalid_token' });
         }
+    });
+
+    // PATCH /api/v1/portal/auth/me — Phase 26 ONBOARD-04: store onboarding_goal
+    app.patch<{
+        Body: { onboarding_goal?: unknown };
+    }>('/api/v1/portal/auth/me', async (req, reply) => {
+        // Auth guard (same pattern as GET /me)
+        const token = (req.cookies as Record<string, string | undefined>)[COOKIE_NAME];
+        if (!token) return reply.status(401).send({ error: 'not_authenticated' });
+        let did: unknown;
+        try {
+            const { publicKey } = await keyPairPromise;
+            const { payload } = await jwtVerify(token, publicKey);
+            did = payload['did'];
+        } catch {
+            return reply.status(401).send({ error: 'invalid_token' });
+        }
+        // Validate body
+        const { onboarding_goal } = req.body ?? {};
+        if (typeof onboarding_goal !== 'string' || onboarding_goal.trim().length === 0) {
+            return reply.status(400).send({ error: 'invalid_request' });
+        }
+        const truncated = onboarding_goal.trim().slice(0, 2000);
+        try {
+            const pool = services.humanPool;
+            if (pool) {
+                await pool.query(
+                    'UPDATE human_users SET onboarding_goal = ? WHERE did = ?',
+                    [truncated, did as string],
+                );
+            }
+        } catch (err) {
+            console.error('[PATCH /me] failed to store onboarding_goal', err);
+            return reply.status(500).send({ error: 'storage_failed' });
+        }
+        return reply.send({ ok: true });
     });
 }

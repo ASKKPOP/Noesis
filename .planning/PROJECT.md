@@ -230,4 +230,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-20 — Phase 22 complete: SIWE Web3 identity shipped (human_users DB, HumanRegistry, SIWE auth API + JWT, wagmi frontend, /portal/* routes). Allowlist 43→44. v2.5 Human Portal milestone underway.*
+*Last updated: 2026-05-23 — Phase 27 complete: Nous Interaction shipped — POST /portal/chat/nous/:nousId with Sophia/Hermes/Themis personalities + appendHumanSpoke sole-producer (allowlist 51→52); Brain GET /skills/:hash + Grid portal Nous endpoints (skills/lore/norms); full /portal/chat split-pane UI (NousSidebar, ConversationPane, wagmi TipPanel, 3 SVG avatars, localStorage history); /portal/nous/[id] profile page (HeroCard, Skills/Lore/Norms tabs, D-08a lore invariant preserved). CHAT-01 through CHAT-06 all static-verified. UAT deferred to HUMAN-UAT.md (live stack + MetaMask required).*

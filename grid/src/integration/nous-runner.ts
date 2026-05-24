@@ -15,6 +15,7 @@ import type { AuditChain } from '../audit/chain.js';
 import type { NousRegistry } from '../registry/registry.js';
 import type { EconomyManager } from '../economy/config.js';
 import type { BrainAction, IBrainBridge, MemoryEntry, TickParams } from './types.js';
+import { RingBuffer } from '../util/ring-buffer.js';
 import type { DialogueContext } from '../dialogue/index.js';
 import { Reviewer } from '../review/index.js';
 import { VALID_REVIEW_FAILURE_CODES } from '../review/types.js';
@@ -101,6 +102,19 @@ export interface NousRunnerConfig {
     loreDeps?: {
         quotaTracker: LoreQuotaTracker;
     };
+    /**
+     * Phase 25b SANCTION-04 / D-25b-NEW-3: force-sleep trigger.
+     *
+     * Invoked by POST /api/v1/operator/nous/:did/force-sleep AFTER emitting operator.forced_sleep.
+     * Production wiring invokes the Hypnos sleep entry path (Brain sends nous.sleep.entered after
+     * receiving the sleep signal). When absent, force-sleep route still emits operator.forced_sleep
+     * but no sleep machinery is triggered (tests inject a mock that emits nous.sleep.entered directly).
+     *
+     * The audit ordering invariant (D-25b-NEW-3): operator.forced_sleep precedes nous.sleep.entered.
+     * This is guaranteed because the route emits operator.forced_sleep synchronously before calling
+     * this trigger.
+     */
+    sleepTrigger?: () => void | Promise<void>;
 }
 
 export type SpeakHandler = (runner: NousRunner, channel: string, text: string, tick: number) => void;
@@ -118,8 +132,32 @@ export class NousRunner {
     private readonly whisperRouter: WhisperRouter | undefined;
     private readonly governanceDeps: { audit: AuditChain; store: GovernanceStore } | undefined;
     private readonly loreDeps: { quotaTracker: LoreQuotaTracker } | undefined;
+    private readonly sleepTrigger: (() => void | Promise<void>) | undefined;
 
     private speakHandler: SpeakHandler | null = null;
+
+    /**
+     * Phase 25b SANCTION-01 / D-25b-NEW-3: mute flag set by the operator mute-broadcast route.
+     *
+     * When true, all broadcast-emitting actions (speak, direct_message, whisper_send, skill_taught)
+     * are suppressed at this runner's emit boundary. The Nous continues to think and tick —
+     * only the audit emissions are withheld. The Nous "shouts into the void".
+     *
+     * Set via `runner.muteFlag = true` by the POST /api/v1/operator/nous/:did/mute route.
+     *
+     * WR-04 NOTE — IN-MEMORY ONLY: this flag is NOT persisted. On any Grid restart all mute
+     * sanctions are silently lost. The operator audit trail records the original sanction event
+     * but there is no startup replay. Operators must re-apply mute after any restart.
+     * A future phase should add a sanctions table and replay it on startup.
+     */
+    muteFlag: boolean = false;
+
+    /**
+     * Phase 25a OBS-BRAIN-HEALTH: per-instance tick-latency ring buffer (capacity 100).
+     * Records the wall-clock duration of each bridge.sendTick() call in milliseconds.
+     * Non-persistent: reset on runner restart. Used by getTickMetrics().
+     */
+    private readonly tickLatencyBuffer = new RingBuffer<number>(100);
 
     /**
      * Phase 7 DIALOG-01 (D-16 authority-check seam): tracks dialogue_ids
@@ -142,6 +180,7 @@ export class NousRunner {
         this.whisperRouter = config.whisperRouter;
         this.governanceDeps = config.governanceDeps;
         this.loreDeps = config.loreDeps;
+        this.sleepTrigger = config.sleepTrigger;
     }
 
     /** Register handler called when this Nous speaks (for message routing). */
@@ -176,9 +215,16 @@ export class NousRunner {
             ? { tick, epoch, dialogue_context: dialogueContext }
             : { tick, epoch };
 
-        const actions = await this.bridge.sendTick(params);
+        // Phase 25a OBS-BRAIN-HEALTH: measure tick RPC latency for getTickMetrics().
+        const t0 = performance.now();
+        let actions: BrainAction[];
+        try {
+            actions = await this.bridge.sendTick(params);
+        } finally {
+            this.tickLatencyBuffer.push(performance.now() - t0);
+        }
         this.registry.touch(this.nousDid, tick);
-        await this.executeActions(actions, tick);
+        await this.executeActions(actions!, tick);
     }
 
     /**
@@ -242,6 +288,10 @@ export class NousRunner {
                 }
 
                 case 'direct_message': {
+                    // Phase 25b SANCTION-01 / D-25b-NEW-3: muteFlag suppression.
+                    if (this.muteFlag) {
+                        break;
+                    }
                     // Direct messages are logged but routing is handled by coordinator
                     const targetDid = action.metadata?.['target_did'] as string | undefined;
                     this.audit.append('nous.direct_message', this.nousDid, {
@@ -453,6 +503,10 @@ export class NousRunner {
                 }
 
                 case 'whisper_send': {
+                    // Phase 25b SANCTION-01 / D-25b-NEW-3: muteFlag suppression.
+                    if (this.muteFlag) {
+                        break;
+                    }
                     // Phase 11 WHISPER-03 / D-11-05: route pre-encrypted envelope
                     // through WhisperRouter (validate → tombstone → ratelimit → emit → queue).
                     // Silent drop on tombstone or rate-limit per D-11-18 / D-11-08 (return false).
@@ -735,6 +789,10 @@ export class NousRunner {
                 }
 
                 case 'skill_taught': {
+                    // Phase 25b SANCTION-01 / D-25b-NEW-3: muteFlag suppression (skill teaching = broadcast).
+                    if (this.muteFlag) {
+                        break;
+                    }
                     // Phase 18 D-18-09: Grid injects learner_did+tick (3-keys-not-5).
                     // Brain sends skill_hash, teacher_did, parent_hash (3 keys).
                     // Sole producer: appendSkillTaught — rejections logged, not re-thrown.
@@ -917,6 +975,12 @@ export class NousRunner {
     }
 
     private async handleSpeak(channel: string, text: string, tick: number): Promise<void> {
+        // Phase 25b SANCTION-01 / D-25b-NEW-3: muteFlag suppression at sole-producer boundary.
+        // Sanctioned Nous still thinks; only the broadcast emission is withheld (shouting into void).
+        if (this.muteFlag) {
+            return;
+        }
+
         // 1. Audit the speech
         this.audit.append('nous.spoke', this.nousDid, {
             name: this.nousName,
@@ -974,6 +1038,42 @@ export class NousRunner {
         newTelos: Record<string, unknown>,
     ): Promise<{ telos_hash_before: string; telos_hash_after: string }> {
         return this.bridge.forceTelos(newTelos);
+    }
+
+    /**
+     * Phase 25b SANCTION-04 / D-25b-NEW-3: force this Nous into a Hypnos sleep cycle.
+     *
+     * Called by POST /api/v1/operator/nous/:did/force-sleep AFTER operator.forced_sleep
+     * is emitted (guaranteeing the audit cause-effect ordering).
+     *
+     * Invokes the sleepTrigger injectable if present. Production wiring supplies the
+     * Hypnos entry path; tests inject a mock that emits nous.sleep.entered directly.
+     * When no sleepTrigger is wired, this is a no-op (operator.forced_sleep still emitted).
+     */
+    async triggerSleep(): Promise<void> {
+        if (this.sleepTrigger) {
+            await this.sleepTrigger();
+        }
+    }
+
+    /**
+     * Phase 25a OBS-BRAIN-HEALTH: compute p50/p95 latency percentiles from the
+     * in-memory ring buffer. Returns zeros when no ticks have been recorded.
+     *
+     * queue_depth: 0 — NousRunner has no pending-tick queue concept; populated
+     * when a pending-tick concept is introduced in a future phase.
+     */
+    getTickMetrics(): { p50: number; p95: number; queue_depth: number; sample_count: number } {
+        const samples = [...this.tickLatencyBuffer.peek()].sort((a, b) => a - b);
+        const n = samples.length;
+        if (n === 0) return { p50: 0, p95: 0, queue_depth: 0, sample_count: 0 };
+        const pct = (q: number): number => samples[Math.min(n - 1, Math.floor(q * n))]!;
+        return {
+            p50: Math.round(pct(0.5) * 100) / 100,
+            p95: Math.round(pct(0.95) * 100) / 100,
+            queue_depth: 0,
+            sample_count: n,
+        };
     }
 
     get connected(): boolean {
