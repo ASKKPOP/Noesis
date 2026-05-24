@@ -171,6 +171,10 @@ The first persistent Grid where Nous actually live — observable, running conti
 - ✓ **LORE-01**: Nousfolk can submit lore entries (body ≤ 500 chars, category_tag) via REST; Grid validates, stores in `lore_entries` table, emits `lore.contributed` (allowlist) — Validated in Phase 20
 - ✓ **LORE-02**: Brain discovers lore from Grid via HTTP pull on LoreStore; top-k entries injected into system prompt as `## Lore Commons` section at each LLM call — Code-verified in Phase 20 (runtime E2E pending human test)
 - ✓ **LORE-03**: K=3 quota enforced per Nous per sleep epoch (30 ticks) via `LoreQuotaTracker`; emits `lore.quota_exceeded` on rejection — Code-verified in Phase 20 (production NousRunner wiring pending human test)
+- ✓ **OBS-01**: `PersistentAuditChain` instantiated in `grid/src/main.ts` when `dbConn` is present and injected into `GenesisLauncher` via deps (D-31-A1). Zero-diff invariant preserved (`super.append()` first, then fire-and-forget DB write) — Code-verified in Phase 31 (operator UAT pending: 31-HUMAN-UAT.md Steps 1-9)
+- ✓ **OBS-02**: Tick-cadenced reconcile loop (`grid/src/db/audit-reconcile.ts`) every 60 ticks; `INSERT IGNORE` idempotency; replay batch cap 500 (R-31-02); logs `{event: 'audit_reconcile_ok', divergence, replayed, remaining}` on every cycle — Code-verified in Phase 31 (operator UAT pending)
+- ✓ **OBS-03**: Pino structured logging replaces silent `.catch+console.warn` in `grid/src/db/` and `grid/src/audit/`; CI gate `scripts/check-no-silent-catch.mjs` wired into `rig-invariants.yml` prevents regression — Code-verified in Phase 31 (operator UAT pending)
+- ✓ **OBS-04**: One-shot backfill script `scripts/backfill-audit-trail.mjs` recovers in-memory entries that never reached MySQL during the 2026-05-22 stall window. Env-only credentials, `INSERT IGNORE` idempotent, `--dry-run` mode — Code-verified in Phase 31 (operator UAT pending: Steps 2-3 of 31-HUMAN-UAT.md)
 
 ## Previous Milestone: v2.3 Living Minds — SHIPPED (2026-05-15)
 
@@ -285,4 +289,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-24 — v2.5 Human Portal SHIPPED (181/181 plans, allowlist 53). Phases 22–30 all closed. Two post-ship gaps logged for v2.6 backlog: GAP-2026-05-24-A (audit pipeline silence) and GAP-2026-05-24-B (missing portal.auth.* producers). Awaiting v2.6 theme selection and /gsd-new-milestone.*
+*Last updated: 2026-05-24 — v2.6 Phase 31 Audit Pipeline Persistence SHIPPED (6/6 plans, code goal verified, operator UAT pending). PersistentAuditChain wired in production main.ts; AuditReconcile loop firing every 60 ticks (cap 500/cycle); Pino structured logging with OBS-03 CI gate; backfill-audit-trail.mjs recovers the 2026-05-22 stall window. Allowlist unchanged at 53. R-31-01..03 all mitigated. v2.5 Human Portal previously SHIPPED 2026-05-24 (181/181 plans). v2.6 next: Phase 32 Firehose Observability.*
