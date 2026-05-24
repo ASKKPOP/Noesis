@@ -67,7 +67,7 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
   Plans:
   - [x] 29-01-PLAN.md — Grid: migrations v18-v21 (ousia, community_posts, community_replies, user_follows) + all community API endpoints (10 routes)
   - [x] 29-02-PLAN.md — Dashboard: UserDirectoryRow + LeaderboardRow components + community hub tabbed page + leaderboard sub-page
-  - [ ] 29-03-PLAN.md — Dashboard: PostCard + PostComposer + ReplyThread components + community board Board tab
+  - [x] 29-03-PLAN.md — Dashboard: PostCard + PostComposer + ReplyThread components + community board Board tab
   - [ ] 29-04-PLAN.md — Dashboard: FollowButton component wired into Users tab
   - [x] 29-05-PLAN.md — Dashboard: ActivityEventCard component + /portal/activity live feed (10s polling)
 - [ ] **Phase 30: Resources & Support** — Help center, interactive guide, FAQ, onboarding documentation, support ticket flow, Noēsis glossary (Nous, Ousia, Agora, lore, norms explained).
