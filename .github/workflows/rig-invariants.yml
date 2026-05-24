@@ -24,6 +24,9 @@ jobs:
       - name: T-10-12 + T-10-13 grep gates
         run: node scripts/check-rig-invariants.mjs
 
+      - name: OBS-03 no-silent-catch gate (Phase 31)
+        run: node scripts/check-no-silent-catch.mjs
+
       - name: Fast Vitest rig suite (Wave 0/1/2 — NOESIS_RUN_NIGHTLY unset, rig-bench skips)
         working-directory: grid
         run: |
