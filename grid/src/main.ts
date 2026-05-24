@@ -22,6 +22,7 @@ import {
 import type { GenesisConfig } from './genesis/types.js';
 import type { FastifyInstance } from 'fastify';
 import type { SpawnNousDeps } from './api/operator/spawn-system-nous.js';
+import { createPublicClient, http, defineChain } from 'viem';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -162,6 +163,35 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     // queries on GET /me and PATCH /me. Follows the humanSanctionStore closure pattern.
     const humanPool = dbConn ? dbConn.getPool() : undefined;
 
+    // Phase 28 SPAWN-01: EVM RPC client for payment confirmation.
+    // Only wired when GRID_EVM_RPC_URL is present — tests and DB-less envs omit it.
+    // Uses viem's createPublicClient with a minimal custom chain (chain ID is not used
+    // by getTransactionReceipt, only the transport matters for receipt lookup).
+    const evmRpcUrl = process.env.GRID_EVM_RPC_URL;
+    const evmConfirmTx = evmRpcUrl
+        ? (() => {
+              const chain = defineChain({
+                  id: 1,
+                  name: 'noesis-evm',
+                  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+                  rpcUrls: { default: { http: [evmRpcUrl] } },
+              });
+              const client = createPublicClient({ chain, transport: http(evmRpcUrl) });
+              return async (txHash: string): Promise<{ confirmed: boolean; from?: string }> => {
+                  try {
+                      const receipt = await client.getTransactionReceipt({
+                          hash: txHash as `0x${string}`,
+                      });
+                      if (!receipt) return { confirmed: false };
+                      const tx = await client.getTransaction({ hash: txHash as `0x${string}` });
+                      return { confirmed: true, from: tx?.from };
+                  } catch {
+                      return { confirmed: false };
+                  }
+              };
+          })()
+        : undefined;
+
     const server = buildServer({
         clock: launcher.clock,
         space: launcher.space,
@@ -180,6 +210,10 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         ...(loreStorage ? { lore: { storage: loreStorage } } : {}),
         ...(humanSanctionStore ? { humanSanctionStore } : {}),
         ...(humanPool ? { humanPool } : {}),
+        // Phase 28 SPAWN-01: EVM tx confirmation + launcher accessor for human-spawn routes.
+        ...(evmConfirmTx ? { evmConfirmTx } : {}),
+        launcher: { spawnNous: (name: string, did: string, pk: string, region: string, humanOwner?: string, personalitySeed?: string) =>
+            launcher.spawnNous(name, did, pk, region, humanOwner, personalitySeed) },
         // D-03: inject spawnNousDeps via _spawnNousDeps escape hatch (see spawn-system-nous.ts line 89).
         // Cast required because _spawnNousDeps is not on the public GridServices interface.
         ...({ _spawnNousDeps: spawnNousDeps } as unknown as { _spawnNousDeps: SpawnNousDeps }),
