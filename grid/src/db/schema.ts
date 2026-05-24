@@ -301,4 +301,61 @@ export const MIGRATIONS: Migration[] = [
         up: `ALTER TABLE nous_registry ADD UNIQUE KEY uq_human_owner (human_owner)`,
         down: `ALTER TABLE nous_registry DROP INDEX uq_human_owner`,
     },
+    {
+        version: 18,
+        name: 'add_ousia_to_human_users',
+        up: `ALTER TABLE human_users ADD COLUMN ousia BIGINT NOT NULL DEFAULT 0`,
+        down: `ALTER TABLE human_users DROP COLUMN ousia`,
+    },
+    {
+        version: 19,
+        name: 'create_community_posts',
+        up: `
+            CREATE TABLE IF NOT EXISTS community_posts (
+                id          BIGINT UNSIGNED     NOT NULL AUTO_INCREMENT,
+                grid_name   VARCHAR(63)         NOT NULL,
+                author_did  VARCHAR(255)        NOT NULL,
+                content     TEXT                NOT NULL,
+                created_at  TIMESTAMP(3)        NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (id),
+                INDEX idx_posts_grid_time (grid_name, created_at DESC),
+                INDEX idx_posts_author    (grid_name, author_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS community_posts`,
+    },
+    {
+        version: 20,
+        name: 'create_community_replies',
+        up: `
+            CREATE TABLE IF NOT EXISTS community_replies (
+                id          BIGINT UNSIGNED     NOT NULL AUTO_INCREMENT,
+                grid_name   VARCHAR(63)         NOT NULL,
+                post_id     BIGINT UNSIGNED     NOT NULL,
+                author_did  VARCHAR(255)        NOT NULL,
+                content     TEXT                NOT NULL,
+                created_at  TIMESTAMP(3)        NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (id),
+                INDEX idx_replies_post      (grid_name, post_id),
+                INDEX idx_replies_author    (grid_name, author_did),
+                CONSTRAINT fk_reply_post FOREIGN KEY (post_id) REFERENCES community_posts (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS community_replies`,
+    },
+    {
+        version: 21,
+        name: 'create_user_follows',
+        up: `
+            CREATE TABLE IF NOT EXISTS user_follows (
+                grid_name      VARCHAR(63)  NOT NULL,
+                follower_did   VARCHAR(255) NOT NULL,
+                following_did  VARCHAR(255) NOT NULL,
+                created_at     TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (grid_name, follower_did, following_did),
+                INDEX idx_follows_following (grid_name, following_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS user_follows`,
+    },
 ];
