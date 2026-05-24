@@ -61,14 +61,14 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
   - [x] 28-03-PLAN.md — Portal spawn API: POST /spawn + GET /spawn/status + /spawn/config + /spawn/check-name + /me/nous + chat.ts dynamic personal-Nous prompt
   - [x] 28-04-PLAN.md — Dashboard 4-step spawn wizard at /portal/nous/spawn (wagmi USDT payment + 3s polling/2-min timeout)
   - [x] 28-05-PLAN.md — Dashboard /portal/my-nous owner hub (double-duty: empty CTA + OwnerHub + PersonalNousAvatar + HeroCard extension)
-- [ ] **Phase 29: Community** — User directory, community board (posts, replies), live activity feed, follow other users, leaderboard by Cyber Coin holdings and Nous contributions.
+- [x] **Phase 29: Community** — User directory, community board (posts, replies), live activity feed, follow other users, leaderboard by Cyber Coin holdings and Nous contributions. (completed 2026-05-24)
   **Requirements:** [COM-01, COM-02, COM-03, COM-04, COM-05]
   **Plans:** 5 plans
   Plans:
   - [x] 29-01-PLAN.md — Grid: migrations v18-v21 (ousia, community_posts, community_replies, user_follows) + all community API endpoints (10 routes)
   - [x] 29-02-PLAN.md — Dashboard: UserDirectoryRow + LeaderboardRow components + community hub tabbed page + leaderboard sub-page
   - [x] 29-03-PLAN.md — Dashboard: PostCard + PostComposer + ReplyThread components + community board Board tab
-  - [ ] 29-04-PLAN.md — Dashboard: FollowButton component wired into Users tab
+  - [x] 29-04-PLAN.md — Dashboard: FollowButton component wired into Users tab
   - [x] 29-05-PLAN.md — Dashboard: ActivityEventCard component + /portal/activity live feed (10s polling)
 - [ ] **Phase 30: Resources & Support** — Help center, interactive guide, FAQ, onboarding documentation, support ticket flow, Noēsis glossary (Nous, Ousia, Agora, lore, norms explained).
   **Plans:** 5 plans across 3 waves
