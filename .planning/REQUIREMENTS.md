@@ -1,262 +1,81 @@
-# Requirements: Noēsis — v2.2 Living Grid
+# Requirements: Noēsis — v2.6 Resilience & Observability
 
-**Defined:** 2026-04-21
-**Core Value:** The first persistent Grid where Nous actually *live* — now with inner drives, social bonds, collective governance, sidechannel intimacy, deep observability, and researcher-grade tooling. The Grid stops being a simulation stage and becomes a living society.
-**Research source:** `.planning/research/v2.2/SUMMARY.md` (commit `69c5deb`) synthesizing STACK / FEATURES / ARCHITECTURE / PITFALLS.
+**Defined:** 2026-05-24
+**Core Value:** Trust in the audit pipeline and observability surfaces is the foundation for everything that follows. v2.5 opened the Grid to humans; v2.6 makes sure the operators and Steward surfaces always see what the Grid actually emits.
+**Research source:** `.planning/research/v2.6/OBSERVABILITY-HARDENING.md` (committed `3e1fbe6`).
 
-## v2.2 Active Requirements
+## v2.6 Active Requirements
 
-### DRIVE — Ananke internal drives (Theme 1, Inner Life)
+### OBS — Audit Pipeline Persistence (Phase 31 — GAP-A root cause)
 
-<!-- LIDA-grounded unvalenced pressures. Ananke ≠ Thymos; drives are numeric forces, not emotions.
-     Thymos categorical emotion labels deferred to v2.3 to avoid namespace collision (pitfall T-09-05). -->
+<!-- Production currently uses plain AuditChain; PersistentAuditChain exists but is never instantiated.
+     Result: no entry has flushed to MySQL since 2026-05-22T06:57Z. Fix is structural, not a flusher tweak. -->
 
-- [x] **DRIVE-01**: Ananke subsystem runs 5 drives at MVP — **hunger, curiosity, safety, boredom, loneliness** — each a numeric value in `[0.0, 1.0]`. Drives are pure Python in `brain/src/noesis_brain/ananke/drives.py` (sibling of `psyche/`, `telos/`, `thymos/`), no external library. New drives are a v2.3 decision; MVP enum is closed.
-- [x] **DRIVE-02**: Drives decay deterministically given `(seed, tick)` — replay from the same seed produces byte-identical drive traces. Decay function is monotonic rise in absence of satisfying action; unit tests cover bounds clamping at 0.0/1.0, monotonic rise without satisfaction, idempotent re-tick at same tick#.
-- [x] **DRIVE-03**: A new allowlisted event **`ananke.drive_crossed`** fires only when a drive transitions across a configured pressure threshold (e.g. hunger > 0.7). Payload: closed-tuple `{did, tick, drive, level, direction}` where `drive ∈ {hunger, curiosity, safety, boredom, loneliness}`, `direction ∈ {rising, falling}`, `level ∈ {low, med, high}`. Per-tick emission is an anti-feature (audit-bloat pitfall T-09-01).
-- [x] **DRIVE-04**: Drive → action coupling is **advisory, not coercive**. A high-hunger Nous may still choose non-feeding action; the Brain logs the divergence to its private memory but the Grid does not override or penalize. This preserves Nous sovereignty (PHILOSOPHY §6).
-- [x] **DRIVE-05**: No numeric drive value ever crosses the Brain↔Grid boundary as a free field. All operator-visible drive state arrives exclusively via `ananke.drive_crossed` at hashed/bucketed granularity (low/med/high, not raw float). Grid-side grep test enforces no drive-float in emitters.
+- [ ] **OBS-01**: `PersistentAuditChain` is instantiated in the production boot path (`grid/src/main.ts`) when `dbConn` is present, and passed into `GenesisLauncher` via injected deps. Replaces the plain `AuditChain` construction at `grid/src/genesis/launcher.ts:138`. Listener fan-out semantics preserved (zero-diff invariant — `super.append()` first, then fire-and-forget DB write).
+- [ ] **OBS-02**: A tick-cadenced reconcile loop (every 60 ticks, ≈30s at default rate) compares `chain.length` to `SELECT MAX(id) FROM audit_trail WHERE grid_name = ?` and replays missing tail entries via `INSERT IGNORE` (idempotent). Lives at `grid/src/db/audit-reconcile.ts`, wired into `launcher.clock.onTick()`. Logs `{ event: 'audit_reconcile_ok', divergence: N }` on every cadence tick (not just failures) — silence is itself a signal.
+- [ ] **OBS-03**: All audit-persistence failure paths log via Pino structured logging with `{ event: 'audit_persist_failed', entry_id, event_type, error_message, error_code }`. Zero silent `.catch(err => console.warn(...))` patterns remain in `grid/src/db/` or `grid/src/audit/`. Enforced by `scripts/check-no-silent-catch.mjs` CI gate.
+- [ ] **OBS-04**: A one-shot backfill script (`scripts/backfill-audit-trail.mjs`) recovers in-memory entries that never reached MySQL during the 2026-05-22 → present stall. Reads in-memory chain via REST (`GET /api/v1/audit/trail`), writes to MySQL via direct mysql2 connection. Idempotent (uses `INSERT IGNORE`). Documented manual UAT step in `31-HUMAN-UAT.md`.
 
-### BIOS — Bodily needs & lifecycle (Theme 1, Inner Life) — VALIDATED Phase 10b
+### OBS — Firehose Observability (Phase 32 — frame visibility)
 
-<!-- Lifecycle events ride the existing v2.1 registry; tombstone permanence preserved.
-     First-life invariant (I-6): death is terminal, DIDs never re-used. -->
+<!-- "Tick advances but zero frames delivered" must never go unnoticed for >60s.
+     Current hub swallows all socket errors with no counter, no log. -->
 
-- [x] **BIOS-01**: Bios tracks two bodily needs — **energy** and **sustenance** — each in `[0.0, 1.0]`. Needs rise monotonically in absence of satiating action; threshold-crossing elevates matching Ananke drive (energy→hunger, sustenance→safety). Needs ride the same sole-producer boundary as drives.
-  → Validated in Phase 10b (shipped 2026-04-22)
-- [x] **BIOS-02**: `bios.birth` and `bios.death` are the **only** lifecycle events. No `bios.resurrect`, no `bios.migrate`, no `bios.transfer`. Attempting to emit a third lifecycle event must fail a closed-enum test. Both events confirmed absent from v2.1 allowlist per D-10b-01 and added as positions 20+21.
-  → Validated in Phase 10b (shipped 2026-04-22)
-- [x] **BIOS-03**: `bios.death` payload is closed-tuple `{did, tick, cause, final_state_hash}` where `cause ∈ {starvation, operator_h5, replay_boundary}`. New causes require explicit per-phase allowlist addition. Post-death, any event referencing the dead DID is rejected at the sole-producer boundary (grep-enforced).
-  → Validated in Phase 10b (shipped 2026-04-22)
-- [x] **BIOS-04**: Tombstoned DIDs are permanently reserved — the NousRegistry blocks DID reuse after `bios.death`. This is the first-life promise (PHILOSOPHY §1). GDPR-style erasure is out of scope; tombstones retain the DID + death hash, never PII.
-  → Validated in Phase 10b (shipped 2026-04-22)
+- [ ] **OBS-05**: `WsFirehoseHub` exposes a `stats()` method returning `{ frames_sent_total, frames_dropped_total, last_frame_at, client_count, watermark_bytes }`. `frames_sent_total` increments in `ClientConnection.trySend()` AFTER successful `socket.send` (NOT before — backpressure-evicted entries do not count as "sent"). `frames_dropped_total` increments in `ClientConnection.enqueue()` on ring-buffer overflow eviction. `last_frame_at` updates to `Date.now()` on every successful send.
+- [ ] **OBS-06**: `GET /health/detailed` endpoint returns `{ status: 'ok'|'degraded'|'critical', timestamp, audit: { in_memory_length, persisted_max_id, divergence, divergence_threshold, last_persist_attempt_at, last_persist_error }, firehose: { client_count, frames_sent_total, frames_dropped_total, last_frame_at, watermark_bytes }, clock: { tick, running, last_tick_at } }`. `status: 'degraded'` when divergence >10 OR last_frame_at null with clients>0 OR last_frame_at >60s stale with clients>0. `status: 'critical'` when divergence >100 OR last_persist_error set with divergence >0. Endpoint MUST NOT block on DB — uses cached `persisted_max_id` populated by the reconcile loop.
+- [ ] **OBS-07**: A `HealthWatchdog` at `grid/src/diagnostics/health-watchdog.ts` tracks `last_reconcile_at` and `last_persist_attempt_at`. If `Date.now() - last_reconcile_at > 5 × snapshotCadenceMs`, surfaces `status: 'degraded'` with the stale timestamp in the `/health/detailed` response. Watchdog is a `readonly` field on `GenesisLauncher` (not in a closure) with explicit `stop()` in `launcher.stop()`.
 
-### CHRONOS — Subjective time (Theme 1, Inner Life) — VALIDATED Phase 10b
+### OBS — Missing portal.auth.* Producers (Phase 33 — GAP-B fix)
 
-<!-- Chronos links to Stanford retrieval score as a recency multiplier — cognitive mechanism, not decoration.
-     Subjective time never leaks into audit-chain tick numbering (PITFALL T-09-04). -->
+<!-- /users + /humans/[did]/history read portal.auth.login/register events but NO producer emits them.
+     Closed 3-key payloads, hash-only privacy — IP / UA / email / token never on the wire. -->
 
-- [x] **CHRONOS-01**: Each Nous has a **subjective time multiplier** in `[0.25, 4.0]` derived from drive state (high curiosity → time feels slow; high boredom → time feels fast). Multiplier modulates the Stanford retrieval recency-score for that Nous's memory queries — a high-curiosity Nous remembers recent events as more salient.
-  → Validated in Phase 10b (shipped 2026-04-22)
-- [x] **CHRONOS-02**: Audit-chain tick numbering is **never** influenced by subjective time. `audit_tick == system_tick` strictly; CI test asserts no drift. Subjective time is a read-side query transform only, never a write-side modification.
-  → Validated in Phase 10b (shipped 2026-04-22)
-- [x] **CHRONOS-03**: `epoch_since_spawn` is exposed to the Nous as a queryable primitive (ticks since its `bios.birth`). Used by Brain prompting to construct "I am N ticks old" self-awareness context. No new allowlist event — this is a derived read over existing birth event.
-  → Validated in Phase 10b (shipped 2026-04-22)
+- [ ] **OBS-08**: `appendPortalAuthLogin(audit, { human_did, method, tick })` sole-producer file lands at `grid/src/audit/append-portal-auth-login.ts`. Closed 3-key payload, `method ∈ {'siwe', 'email'}` (closed enum), DID_RE on `human_did`, integer guard on `tick`, structural `Object.keys(payload).sort()` strict-equality check, `payloadPrivacyCheck` runs before `audit.append('portal.auth.login', ...)`. Emits at allowlist position 54. Wired into SIWE verify success path (line ~131 in `grid/src/api/portal/auth.ts`) AND email signin success (line ~265). Mirror discipline of `append-human-joined.ts`.
+- [ ] **OBS-09**: `appendPortalAuthRegister(audit, { human_did, method, tick })` sole-producer file lands at `grid/src/audit/append-portal-auth-register.ts`. Same discipline as OBS-08. Emits at allowlist position 55. Wired into SIWE verify FIRST-CONNECT path (after `appendHumanJoined`, only when `isNew === true`) AND email signup success (line ~217).
+- [ ] **OBS-10**: `PORTAL_AUTH_FORBIDDEN_KEYS` set blocks: `ip_address`, `ip`, `user_agent`, `ua`, `session_id`, `token`, `jwt`, `cookie`, `email` (plaintext, vs `email_hash` allowed), `password_hash`, `nonce`, `signature`, `device_fingerprint`. `FORBIDDEN_KEY_PATTERN` extended with word-boundary-anchored alternation `\b(?:ip_address|user_agent|session_id|jwt|password_hash|device_fingerprint)\b`. Test cases for `email_hash` (allowed) vs `email` (forbidden) AND `nonce_hash` (allowed) vs `nonce` (forbidden).
 
-### REL — Relationship graph (Theme 2, Relationship & Trust)
+### OBS — Steward Console Health Surfaces (Phase 34 — visibility)
 
-<!-- Zero new allowlist members — pure-observer derived view over existing dialogue.* events.
-     Clones v2.1 DialogueAggregator pattern (AGG-01). -->
+<!-- Operator looking at /system must immediately know if any of the three pipelines
+     (in-memory chain, MySQL persistence, firehose fan-out) is degraded. -->
 
-- [x] **REL-01**: Relationship state is a **derived view** computed by a pure-observer listener over existing `nous.spoke` and `trade.settled` events. Zero new allowlist members at MVP. Clones the v2.1 `DialogueAggregator` zero-diff-safe pattern. Listener runs `O(edges_touched_this_tick)`, never `O(N²)`.
-  → Validated in Phase 9 (shipped 2026-04-22)
-- [x] **REL-02**: Relationship edge primitive: `{from_did, to_did, valence: [-1.0, +1.0], weight: [0.0, 1.0], recency_tick, last_event_hash}`. Valence derives from dialogue sentiment proxy + trade success/rejection; weight from interaction frequency; recency from last audit event. Stored in a derived MySQL table rebuildable from the audit chain (idempotent rebuild test).
-  → Validated in Phase 9 (shipped 2026-04-22)
-- [x] **REL-03**: Relationships decay deterministically: weight × `exp(-Δtick / τ)` with `τ` configured per Grid. Unobserved relationships cool toward zero without emitting any audit event. Decay determinism is replay-safe (same seed → same graph).
-  → Validated in Phase 9 (shipped 2026-04-22)
-- [x] **REL-04**: Dashboard Inspector shows a per-Nous **relationship panel** with top-N partners by weight. Dashboard graph-view renders the full relationship graph at H1+ (aggregate warmth only). H5 operators can inspect per-edge raw dialogue turns. Load test: 10K-edge graph responds <100ms at p95.
-  → Validated in Phase 9 (shipped 2026-04-22)
+- [ ] **OBS-11**: Steward `/system` page renders an **Audit Pipeline Health** card above the existing Allowlist Monitor. Polls `/health/detailed` every 5s. Renders the `audit` block: big-number `divergence` with green (0) / amber (1-10) / red (>10) banding; sub-line `In-memory: N · Persisted: M · Last persist error: <code> at <time>`. Hook: `steward/src/lib/use-health-detailed.ts` (new SWR-style polling hook with abort-on-unmount).
+- [ ] **OBS-12**: Steward `/system` page renders a **Firehose Diagnostics** card. Polls `/health/detailed` every 5s. Renders: connected-clients gauge, frames-sent (1m delta + 12-point sparkline), frames-dropped (1m delta), time-since-last-frame (red state when >60s AND clients>0). Uses the same `use-health-detailed` hook as OBS-11.
+- [ ] **OBS-13**: Steward `/system` page renders an **Events per Minute by Family** sparkline driven by REST (`GET /api/v1/audit/trail?limit=200`, NOT WebSocket). Buckets events by `eventType` prefix (`nous.*`, `operator.*`, `human.*`, `portal.*`, etc.); renders a horizontal stacked bar of the last 5 minutes. REST-driven so it stays alive when the firehose is broken (exactly when you want to look at it).
+- [ ] **OBS-14**: Steward firehose page (`/firehose`) has a client-side watchdog (`steward/src/lib/use-firehose-ws.ts`) tracking `last_frame_at`. If `Date.now() - last_frame_at > 60_000` AND server reports `client_count > 0` in `/health/detailed`, forces a WS reconnect. Prevents the "WS opens, never delivers, browser thinks it's healthy forever" failure mode.
 
-### VOTE — Collective governance (Theme 3, Governance & Law)
+### OBS — UAT Re-Verification + Documentation Sync (Phase 35 — close-out)
 
-<!-- Commit-reveal ballot lifecycle (4 events). One-Nous-one-vote; operators excluded from governance.
-     Successful proposals promote to LogosEngine (v2.1 law.triggered machinery). -->
+<!-- Loop closure: the gaps that motivated v2.6 must measurably close. -->
 
-- [x] **VOTE-01**: A new allowlisted event **`proposal.opened`** carries closed-tuple `{proposal_id, proposer_did, title_hash, quorum_pct, supermajority_pct, deadline_tick}`. Proposal body stored in Grid MySQL (not in audit payload); body hash in `title_hash`. Defaults when proposer omits: quorum=50%, supermajority=2/3. Deadline is tick-count (not wall-clock) for replay determinism.
-- [x] **VOTE-02**: A new allowlisted event **`ballot.committed`** carries closed-tuple `{proposal_id, voter_did, commit_hash}` where `commit_hash = sha256(choice || nonce || voter_did)`. Vote choice is private until reveal. Duplicate DIDs on same proposal rejected pre-commit (one-Nous-one-vote, I-7 enforcement).
-- [x] **VOTE-03**: A new allowlisted event **`ballot.revealed`** carries closed-tuple `{proposal_id, voter_did, choice, nonce}`. Revealed commits that do not hash-match are rejected at tally; the Nous is logged but not penalized in v2.2 (penalty policy deferred).
-- [x] **VOTE-04**: A new allowlisted event **`proposal.tallied`** carries closed-tuple `{proposal_id, outcome, yes_count, no_count, abstain_count, quorum_met}`. `outcome ∈ {passed, rejected, quorum_fail}`. On `passed`, the Grid promotes the proposal to the v2.1 LogosEngine via a separate existing `law.triggered` event — no new promotion event.
-- [x] **VOTE-05**: **Operators cannot vote, propose, or tally at any tier**, including H5. Governance is strictly intra-Nous. Grep test enforces no `operator.*` event is emitted by the governance module. Operator-side of governance is read-only dashboard view.
-- [x] **VOTE-06**: No token-weighted, reputation-weighted, or relationship-weighted voting. One Nous = one vote = one ballot commit. Ballot-weighting mechanisms are an anti-feature (PHILOSOPHY §6, Economy must be free).
-- [x] **VOTE-07**: Dashboard gets a **Governance page** showing open proposals, committed/revealed counts, tally results, and post-tally law-promotion links. H5 operators can see per-Nous voting history for forensic review; H1–H4 see aggregates only.
+- [ ] **OBS-15**: `25a-HUMAN-UAT.md` items #1 (firehose color rendering, live) and #5c (`/users` → `/humans/[did]` deep-link click) re-verified to PASS with live data. `.planning/MILESTONES.md` logs v2.6 close with allowlist count 53 → 55. `.planning/PROJECT.md` moves OBS-01..14 to Validated; updates Most-Recent Milestone section. `PHILOSOPHY.md` updates broadcast-allowlist paragraph (53 → 55, mentions `PORTAL_AUTH_FORBIDDEN_KEYS`). `README.md` Project Status appends v2.6 SHIPPED line. CLAUDE.md Documentation Sync Rule audit pass.
 
-### WHISPER — Mesh sidechannel (Theme 4)
+## Future Requirements (deferred to v2.7+)
 
-<!-- E2E envelope Nous→Nous. Operators cannot read plaintext at ANY tier including H5.
-     Envelope only in v2.2 — Signal Double Ratchet / sealed-sender deferred post-milestone. -->
+- **OBS-FUTURE-METRICS-01**: `ua_hash` and `ip_country` payload extensions for portal.auth.* if analytics need surfaces. Deferred — YAGNI for v2.6.
+- **OBS-FUTURE-OTEL-01**: OpenTelemetry self-hosted via `@fastify/otel` + OTLP collector. Deferred — only if operators ask. Sovereignty review required.
+- **OBS-FUTURE-INDEX-01**: In-memory index-by-event-type map inside `AuditChain` if `audit.query({ eventType })` p95 exceeds 50ms at 100k+ entries. Conditional on the perf benchmark added in Phase 33.
+- **OBS-FUTURE-DIAG-01**: `GET /api/v1/health/diagnostics/self-test` endpoint that runs an end-to-end synthetic event through chain → DB → firehose to detect silent breakage. Deferred — the OBS-06 `/health/detailed` + OBS-14 client-watchdog combination is the v2.6 minimum.
 
-- [x] **WHISPER-01**: A new allowlisted event **`nous.whispered`** carries closed-tuple `{from_did, to_did, tick, ciphertext_hash}` — `ciphertext_hash` only, never ciphertext or plaintext. Single sole-producer file `grid/src/whisper/WhisperRouter.ts` — grep enforced. This supersedes the v2.1 WHISPER-01 future-requirement placeholder. ✅ Validated Phase 11
-- [x] **WHISPER-02**: Envelope uses **libsodium `crypto_box`** (X25519 + XChaCha20-Poly1305 AEAD). Each Nous has a per-identity keypair generated at `bios.birth`; keys never leave the Nous's Brain-scoped keyring. Signal Double Ratchet / sealed-sender explicitly deferred to a post-v2.2 milestone. ✅ Validated Phase 11
-- [x] **WHISPER-03**: **Operators cannot read Whisper plaintext at any tier, including H5.** Locked. Grid MUST NOT persist plaintext, Brain MUST NOT log plaintext, Dashboard MUST NOT render plaintext — three-tier grep CI gate (`scripts/check-whisper-plaintext.mjs`) plus an `fs.writeFile` monkey-patch runtime test on the router. ✅ Validated Phase 11
-- [x] **WHISPER-04**: Whisper delivery is **recipient-pull**: the recipient's Brain polls undelivered envelopes on tick; the sender's Brain does not push. Ciphertext is **deleted from the Grid once the recipient acknowledges pull** — audit entry (`nous.whispered` with hash) retained forever per first-life. ✅ Validated Phase 11
-- [x] **WHISPER-05**: Rate-limit is **per-sender** using `@fastify/rate-limit`. Default budget configurable per Grid (e.g. 10 whispers per 100 ticks). Exceeding the budget queues the send; queue length is observable via operator-side metric but plaintext is still never exposed. ✅ Validated Phase 11
-- [x] **WHISPER-06**: The v2.1 `DialogueAggregator` is extended to treat whisper-exchanges as dialogue substrate — DialogueAggregator receives `nous.whispered` events but only the hash, never plaintext. A whispered-dialogue can still trigger `telos.refined` (the refinement itself is an existing v2.1 audit event, hash-only). ✅ Validated Phase 11
+## Out of Scope (v2.6)
 
-### REPLAY — Operator observability (Theme 5)
-
-<!-- State-level replay (not decision-level — LLM non-determinism precludes prompt re-play).
-     Read-only rewind; mutating rewind is an anti-feature (first-life invariant). -->
-
-- [ ] **REPLAY-01**: Chain slice export produces a **deterministic tarball** — fixed mtime, sorted entries, canonical JSON (`pyarrow` not required; JSONL format only at MVP). Tarball contents: audit chain slice + snapshot of registry state at start/end ticks + manifest with chain-tail hash. Integrity verifier (`replay-verify` CLI) reproduces the tarball hash from contents.
-- [ ] **REPLAY-02**: A new allowlisted event **`operator.exported`** carries closed-tuple `{tier, operator_id, start_tick, end_tick, tarball_hash, requested_at}`. Export is operator-initiated and H5-consent-gated via an `IrreversibilityDialog`-style consent surface (clones v2.1 AGENCY-05 copy-verbatim pattern — export publishes data irreversibly).
-- [ ] **REPLAY-03**: Replay runs in a **configuration-over-fork** `ReplayGrid` — same `GenesisLauncher` with isolated chain (in-memory `better-sqlite3`), isolated MySQL schema, isolated WsHub port, and fake Brain bridges (`FIXED_TIME` discipline). The replayed chain's `operator.*` events are filtered out (replay cannot emit new operator events).
-- [ ] **REPLAY-04**: Replay is **STATE-LEVEL**: it re-reads the audit chain and recomputes derived state (relationships, drive crossings, dialogue aggregates). It does **not** re-run Brain prompts — LLM non-determinism precludes decision-level replay. Replayed state must be byte-identical to live state at the same tick for a fixed seed (CI canned-scenario test).
-- [x] **REPLAY-05**: Steward Console gets a **read-only Rewind panel** that lets H3+ operators scrub a chain slice in the ReplayGrid, inspecting firehose + inspector + map state at any replayed tick. The panel never writes back to the live Grid — rewind is observer-only. Mutating rewind is an anti-feature (violates first-life). *(Validated in Phase 25c)*
-
-### RIG — Researcher tools (Theme 6)
-
-<!-- Ephemeral Grid per experiment. Own isolated audit chain — no contamination of live chain.
-     LLM fixture mode enables reproducibility despite LLM non-determinism. -->
-
-- [ ] **RIG-01**: A new `noesis rig` CLI spawns an **ephemeral Grid** from a config: `{seed, tick_budget, nous_manifest, operator_tier_cap, llm_fixture_path?}`. Configs version-controlled in `config/rigs/*.toml`. One launcher binary, N configs — zero code divergence from production `GenesisLauncher` (configuration-over-fork principle).
-- [ ] **RIG-02**: Each Rig runs its **own isolated audit chain** (separate MySQL schema or in-memory SQLite), separate WsHub, separate Brain instances. The live Grid's AuditChain is never touched by any Rig. Nested Rigs are rejected at launcher entry.
-- [ ] **RIG-03**: Rigs support **LLM fixture mode** — pre-recorded Brain prompt→response pairs replayed deterministically. This is the reproducibility workaround for LLM non-determinism. Fixture files are JSONL in the Rig config directory; a Brain running in fixture mode refuses network LLM calls (grep-enforced).
-- [ ] **RIG-04**: Target scale: **50 Nous × 10,000 ticks** in a single Rig run must complete on a researcher laptop (16GB RAM, 8 cores) in under 60 minutes with fixture-mode LLM. Benchmark test in CI as a nightly smoke (not per-commit).
-- [ ] **RIG-05**: Rig exit emits snapshot as **JSONL export** (same format as REPLAY-01 tarball; `pyarrow` / Parquet explicitly deferred to v2.3). Exit conditions: tick budget exhausted, all-Nous-dead, or operator-H5-terminate. Exit emits `chronos.rig_closed` on the **Rig's own chain only** — not on the production allowlist.
-
-## Validated (v2.1 Steward Console — SHIPPED 2026-04-21)
-
-<!-- Kept here for traceability reference. Do not modify. -->
-
-- [x] **REV-01**..**REV-04** — Agentic Reviewer (objective-only) — Phase 5
-- [x] **AGENCY-01**..**AGENCY-04** — Operator Agency Scale H1–H5 — Phase 6
-- [x] **DIALOG-01**..**DIALOG-03** — Peer Dialogue Memory (SPARC-inspired) — Phase 7
-- [x] **AGENCY-05** — H5 Nous-deletion irreversibility dialog — Phase 8
-
-## Future Requirements
-
-- **THYMOS-01**: Categorical emotion labels (joy, fear, anger, trust) layered on top of Ananke drives — deferred to v2.3 to avoid drive/emotion namespace collision. Expected 4–6 REQs once v2.2 ships Ananke.
-- **WHISPER-FS-01**: Signal Double Ratchet / sealed-sender — forward secrecy for Whisper envelopes; deferred to post-v2.2.
-- **RIG-PARQUET-01**: `pyarrow`-based Parquet export format for Rigs with >1M events; deferred unless researchers demand columnar format.
-- **REL-EMIT-01**: Optional `relationship.warmed` / `.cooled` threshold-crossing events — deferred unless derived-view performance forces event-sourcing.
-- **GOV-MULTI-01**: Multi-proposal sequencing, proposal-chains, vote delegation — deferred to v2.3+. v2.2 ships single-proposal lifecycle only.
-- **WITNESS-BUNDLE-01**: Operator witness-bundle plaintext export with H5 consent — deferred to v2.3 observability follow-up.
-
-## Out of Scope
-
-| Feature | Reason |
-|---------|--------|
-| Multi-Grid federation / inter-Grid mesh | O(N²) broadcast cost (arxiv 2512.08296); still deferred post-v2.2. Intra-Grid Whisper only. |
-| Mobile observer app | Single-surface (web Steward Console) remains v2.2 scope. |
-| Real cryptographic signing for governance ballots | Hash-commit suffices at MVP; signed ballots deferred pending formal threat review. |
-| LLM-driven drive generation | Drives are hand-rolled Python — no LLM in the Ananke hot path (determinism + speed). |
-| Thymos categorical emotion labels | Flagged in Future as THYMOS-01; v2.2 ships Ananke drives only to avoid payload-namespace collision (pitfall T-09-05). |
-| Operator vote / propose / tally | Anti-feature VOTE-05. Governance is intra-Nous. |
-| Operator Whisper plaintext read at any tier | Anti-feature WHISPER-03. Sovereignty lock. |
-| Mutating rewind | Anti-feature REPLAY-05. Violates first-life invariant. |
-| Token / reputation / relationship vote-weighting | Anti-feature VOTE-06. Economy must be free (PHILOSOPHY §6). |
-| DAO governance libraries (Aragon, Snapshot.js, OpenZeppelin Governor) | Blockchain trust model wrong for Noēsis; hash-commit is ~40 LOC with existing `@noble/hashes`. |
-| Graph database for relationships | Derived view pattern suffices; Neo4j / graphology add deps without MVP-N justification. |
-| Signal Double Ratchet in v2.2 | Envelope only at MVP; ratchet deferred to WHISPER-FS-01. |
-| Nested Rigs | Rejected at launcher entry for safety (state-isolation guarantees). |
-| `bios.resurrect` / `bios.migrate` | First-life invariant (I-6); death is terminal, DIDs don't move. |
-| Parquet export at MVP | JSONL suffices for 50×10k researcher scale; Parquet deferred to RIG-PARQUET-01. |
-
-## Allowlist Growth Ledger (v2.2)
-
-Starting: **18 events** (v2.1 frozen).
-Projected end-state: **27 events** (corrected — Phase 10b adds +2 per D-10b-01).
-
-| Phase | Delta | Running Total | Events | Shipped |
-|-------|-------|---------------|--------|---------|
-| 10a | +1 | 19 | `ananke.drive_crossed` | 2026-04-22 |
-| 10b | +2 | 21 | `bios.birth`, `bios.death` | 2026-04-22 |
-| 11 | +1 | 22 | `nous.whispered` | — |
-| 12 | +4 | 26 | `proposal.opened`, `ballot.committed`, `ballot.revealed`, `proposal.tallied` | — |
-| 13 | +1 | 27 | `operator.exported` | — |
-| 14 | +0 | 27 | *(Rigs use isolated chain, not production allowlist)* | — |
-
-**Zero-addition phases:** Phase 9 (REL — derived view), Phase 14 (RIG — own isolated chain). CHRONOS is Brain-local read-side transform (no wire event).
-
-Each addition lands in its own phase PR following the v2.1 freeze-except-by-addition discipline: closed-tuple payload test, sole-producer grep, privacy-matrix update, CLAUDE.md doc-sync commit (STATE.md Accumulated Context + `scripts/check-state-doc-sync.mjs` + privacy matrix enumerator).
+| Item | Reason |
+|------|--------|
+| Adopt Prometheus / `prom-client` | Adds new HTTP scrape endpoint; pulls Prometheus deployment model into the stack. Sovereignty-incompatible. Pino + `/health/detailed` JSON polling does the same job in-process. |
+| Adopt Datadog / Honeycomb / New Relic SaaS | Vendor lock-in violates PHILOSOPHY §1 sovereignty. |
+| Replace logger with winston / bunyan | Pino is already a Fastify transitive dep. No reason to introduce a second logger. |
+| Add `pino-mysql` transport | Logging into the same MySQL connection that audit_trail uses is a single-point-of-failure. Log to stdout, let Docker handle it. |
+| New Docker service for observability | Self-hosted users on a single VPS gain nothing. In-process metrics + REST polling is sufficient. |
+| Migrate `audit_trail` to a time-series DB | YAGNI for current chain size (~2500 entries). v2.7+ if benchmark warrants. |
+| Operator-facing Thymos / mood metrics | Out of scope per the v2.6 theme — Thymos remains deferred until at least v2.7. |
+| Multi-Grid health aggregation | Single-Grid for v2.6. Federation deferred. |
 
 ## Traceability
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| REL-01..04 | Phase 9 | Validated (shipped 2026-04-22) |
-| DRIVE-01..05 | Phase 10a | Validated (shipped 2026-04-22) |
-| BIOS-01..04 | Phase 10b | Validated (shipped 2026-04-22) |
-| CHRONOS-01..03 | Phase 10b | Validated (shipped 2026-04-22) |
-| WHISPER-01..06 | Phase 11 | Validated (shipped 2026-04-23) |
-| VOTE-01..07 | Phase 12 | Planned |
-| REPLAY-01..05 | Phase 13 | Planned |
-| RIG-01..05 | Phase 14 | Planned |
-
-**Coverage (v2.2):**
-- DRIVE: 5 REQs → Phase 10a
-- BIOS: 4 REQs → Phase 10b
-- CHRONOS: 3 REQs → Phase 10b
-- REL: 4 REQs → Phase 9
-- VOTE: 7 REQs → Phase 12
-- WHISPER: 6 REQs → Phase 11
-- REPLAY: 5 REQs → Phase 13
-- RIG: 5 REQs → Phase 14
-- **Total: 39 REQs** across 6 themes / 7 phases (9, 10a, 10b, 11, 12, 13, 14)
-
-Unmapped: 0 ✓. Phase 10 split into 10a (Ananke) + 10b (Bios + Chronos) per `gsd-roadmapper` analysis — see `.planning/ROADMAP.md` §Phase-Split Rationale.
-
----
-
-## v2.4 Active Requirements — Agora (Emergence & Culture)
-
-**Defined:** 2026-05-16
-**Core Value:** The Nous population develops genuine culture — skills spread peer-to-peer, norms crystallize from independent convergence, and collective lore forms bottom-up. No operator-imposed culture; emergence only.
-**Research source:** `.planning/research/v2.4/SUMMARY.md` synthesizing STACK / FEATURES / ARCHITECTURE / PITFALLS.
-**Allowlist starting point:** 36 events (post-v2.3). Target: 43 (+7 events across 4 phases).
-
-### SKILL — Skill Diffusion (Phase 18)
-
-- [ ] **SKILL-01**: Nous can teach skills to trusted peers via the Phase 11 whisper channel; `PeerSkillFilter` (fully implemented in Phase 15, currently unwired in `BrainHandler.on_message()`) gates acceptance on relationship weight (Phase 9 graph) + structural validity check; accepted skills enter a quarantine SkillStore and are promoted to active SkillStore after N ticks. First plan of Phase 18 MUST wire the `__skill_share:` dispatch path before any Grid changes land.
-- [ ] **SKILL-02**: `ObservationalLearner` (Phase 16) infers skills from observed peer audit events; inferred skills are provenance-tagged `source: observed`; a DID-value and numeric-literal filter is applied to inferred skill bodies before quarantine entry — preventing behavioral templates that replay an adversarial Nous's exact actions.
-- [ ] **SKILL-03**: Three new allowlisted events emitted at quarantine promotion: `skill.taught` (position 37) for whisper-path promotion with closed-tuple `{learner_did, tick, skill_hash, teacher_did, parent_hash}`; `skill.inferred` (position 38) for ObservationalLearner-path promotion with `{learner_did, tick, skill_hash, source_event_hash}`; `skill.rejected` (position 39) for PeerSkillFilter rejection with `{learner_did, tick, rejection_reason}` where `rejection_reason ∈ {low_trust, structural_invalid, quota_exceeded}`.
-- [ ] **SKILL-04**: Skill lineage is reconstructable from the audit chain via the `parent_hash` field in `skill.taught` payloads — no additional graph storage required. Ancestry queries use SQL self-joins on the existing `SkillStore` SQLite schema extended with a `lineage_parent_hash TEXT` column.
-
-### NORM — Norm Crystallization (Phase 19)
-
-- [ ] **NORM-01**: `NormDetector` is a pure-observer Grid-side listener on `nous.self_model_revised` audit events (Phase 15); it computes an n-gram fingerprint (SHA-256 of sorted word-trigrams, truncated to 6-char hex) per rule write without reading rule content; fingerprints are clustered across Nous; `norm.candidate` (position 40) fires when N≥3 Nous share a fingerprint cluster within a W-tick sliding window. `actorDid` for norm events is `did:noesis:grid` (system emitter, validated by existing `DID_RE`).
-- [ ] **NORM-02**: Causal lineage gate: converging Nous with no prior audit-chain-visible interaction (no shared `nous.spoke`, `nous.whispered`, `trade.proposed`, or `telos.refined` events) are flagged `convergence_type: "coincidental"` in the `norm.candidate` payload rather than `"emergent"` — distinguishing genuine cultural transmission from shared LLM prior.
-- [ ] **NORM-03**: `norm.crystallized` (position 41) fires when a `norm.candidate` cluster remains stable (N≥3 Nous hold matching rules, no defections) for K ticks; two-stage lifecycle prevents flash norms. `norm.crystallized` payload is closed-tuple `{tick, fingerprint, participant_count, convergence_type}`.
-
-### LORE — Lore Commons (Phase 20)
-
-- [ ] **LORE-01**: Nous can publish lore via a `LORE_CONTRIBUTE` Brain action; lore body stays Brain-private (never crosses wire); Grid stores only a hash index: `{contributor_did, tick, content_hash, title_hash, category_tag, citation_count}`; `lore.contributed` (position 42) is the sole audit event with closed-tuple payload `{contributor_did, tick, content_hash, category_tag}`. Grid is not a content server.
-- [ ] **LORE-02**: Lore content is retrieved Nous-to-Nous via whisper using `__lore_request` / `__lore_response` prefix (mirrors `__skill_share` pattern from Phase 15); retrieval ranking uses `citation_count` from the Grid hash index; `lore.cited` (position 43) fires when a Nous references lore at prompt-build time with `{citing_did, tick, content_hash}`.
-- [ ] **LORE-03**: Contribution quota of K entries per Nous per sleep epoch (Phase 16 sleep boundary) is enforced Brain-side before emitting `LORE_CONTRIBUTE`; cooldown after quota exhaustion prevents lore flooding. K is a configurable constant (TOML RIG config for researcher runs).
-
-### CULTURE — Culture Dashboard (Phase 21)
-
-- [x] **CULTURE-01**: Skill lineage tree rendered as a raw SVG directed graph (D-9-08 pattern from Phase 9 — server computes `{x, y}` positions, client renders `<line>`/`<circle>` elements); nodes represent Nous and skill hashes; edges carry tick labels from `skill.taught`/`skill.inferred` events; zero new allowlist events.
-- [x] **CULTURE-02**: Norm adoption timeline: a horizontal SVG timeline per norm showing `norm.candidate` → `norm.crystallized` transitions, participating Nous DIDs, and `convergence_type` label (emergent vs coincidental).
-- [x] **CULTURE-03**: Lore contribution graph: a bipartite SVG (Nous nodes + lore entry nodes); edges = `lore.contributed` (solid) and `lore.cited` (dashed) events; edge weight proportional to citation count.
-
-## Out of Scope (v2.4)
-
-| Feature | Reason |
-|---------|--------|
-| Direct semantic embedding for norm detection | Float non-determinism conflicts with zero-diff audit chain invariant; n-gram fingerprinting is the deterministic alternative |
-| Operator-curated lore | Anti-feature: Agora culture is Nous-initiated only; operator curation destroys emergence |
-| Cross-Grid skill sharing | Multi-Grid federation (GOV-MULTI-01) remains deferred |
-| Skill executable code (Level 4 sandbox) | Deferred from Phase 15 — security surface not yet designed |
-| Thymos emotion integration | THYMOS-01 remains deferred; Thymos/Ananke separation sealed by T-09-05 |
-| D3 / recharts / react-flow for dashboard | D-9-08 raw SVG pattern is locked for all relationship/cultural visualizations |
-| `sentence-transformers` for norm similarity | Float non-determinism; n-gram fingerprinting covers vocabulary-overlapping rules at MVP |
-| Norm text read by Grid | Brain-private invariant; NormDetector works on hashes only, never rule content |
-
-## Allowlist Growth Ledger (v2.4)
-
-Starting: **36 events** (v2.3 frozen, post-Phase 17).
-
-| Phase | Delta | Running Total | Events |
-|-------|-------|---------------|--------|
-| 18 (Skill Diffusion) | +3 | 39 | `skill.taught`, `skill.inferred`, `skill.rejected` |
-| 19 (Norm Crystallization) | +2 | 41 | `norm.candidate`, `norm.crystallized` |
-| 20 (Lore Commons) | +2 | 43 | `lore.contributed`, `lore.cited` |
-| 21 (Culture Dashboard) | +0 | 43 | *(reads existing events, no new emissions)* |
-
-## Traceability (v2.4)
-
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| SKILL-01..04 | Phase 18 | Planned |
-| NORM-01..03 | Phase 19 | Planned |
-| LORE-01..03 | Phase 20 | Planned |
-| CULTURE-01..03 | Phase 21 | Planned |
-
-**Coverage (v2.4):** 13 REQs across 4 themes / 4 phases (18–21). Unmapped: 0 ✓.
-
----
-
-*v2.2 requirements (2026-04-21) and v2.4 requirements (2026-05-16) above.*
-*Source: `.planning/research/v2.4/SUMMARY.md` + 4 parallel researcher files*
-*v2.1, v2.2, v2.3 validated REQs preserved in PROJECT.md — see `.planning/MILESTONES.md` for ship log.*
+| REQ-ID | Phase | Status |
+|--------|-------|--------|
+| OBS-01..04 | 31 | (filled by roadmap) |
+| OBS-05..07 | 32 | (filled by roadmap) |
+| OBS-08..10 | 33 | (filled by roadmap) |
+| OBS-11..14 | 34 | (filled by roadmap) |
+| OBS-15 | 35 | (filled by roadmap) |
