@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.6
 milestone_name: — Active)
 status: executing
-stopped_at: Phase 31 context gathered
-last_updated: "2026-05-24T05:20:48.630Z"
-last_activity: 2026-05-24 -- Phase 31 execution started
+stopped_at: Phase 31 SHIPPED — cutover playbook delivered; operator UAT pending
+last_updated: "2026-05-24T05:55:00Z"
+last_activity: 2026-05-24 -- Phase 31 Audit Pipeline Persistence SHIPPED. PersistentAuditChain wired into production main.ts; AuditReconcile loop firing every 60 ticks; Pino structured logging; CI gate OBS-03; backfill script ready. Cutover playbook at 31-HUMAN-UAT.md — operator runs Steps 1-9 against live docker stack.
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 6
-  completed_plans: 0
-  percent: 0
+  completed_plans: 6
+  percent: 20
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 
 ## Current Position
 
-Phase: 31 (audit-pipeline-persistence) — EXECUTING
-Plan: 1 of 6
-Status: Executing Phase 31
-Last activity: 2026-05-24 -- Phase 31 execution started
+Phase: 32 — Firehose Observability (next)
+Plan: — (Phase 31 SHIPPED on 2026-05-24; Phase 32 planning not yet started)
+Status: Phase 31 closed — operator UAT pending (31-HUMAN-UAT.md Steps 1-9)
+Last activity: 2026-05-24 — Phase 31 Audit Pipeline Persistence SHIPPED. PersistentAuditChain wired into production main.ts (D-31-A1); AuditReconcile loop firing every 60 ticks (D-31-C3/C4); Pino structured logging replaces silent .catch+console.warn (D-31-B3); CI gate scripts/check-no-silent-catch.mjs locks the discipline (OBS-03); backfill-audit-trail.mjs recovers the 2026-05-22 stall window. R-31-01..03 all mitigated. Allowlist unchanged at 53. Cutover divergence count: [recorded by operator in Step 2 of 31-HUMAN-UAT.md].
 
 Driving inputs for v2.6 (unchanged from milestone open):
 
@@ -216,8 +216,33 @@ Total v2.6 allowlist growth: **+2 (53 → 55)**. Freeze-except-by-explicit-addit
 
 - v2.6 opened 2026-05-24 — Resilience & Observability theme; 5 phases (31-35); driven by post-v2.5 UAT gaps (GAP-A audit pipeline silence + GAP-B missing portal.auth.* producers)
 
+### v2.6 Phase 31 close-out (locked 2026-05-24)
+
+**Phase 31 SHIPPED.** Plans 31-01 through 31-06 all complete. Allowlist unchanged at 53 (Phase 31 added zero events — this was a wiring + observability phase only).
+
+**Inherits to Phases 32+:**
+
+- `PersistentAuditChain` is the production audit chain whenever `config.db` is set (constructor injection via `GenesisLauncherDeps.audit` — D-31-A1). Plain `AuditChain` remains the default for no-DB unit-test paths.
+- `AuditReconcile` is held as `readonly auditReconcile: AuditReconcile | undefined` on `GenesisLauncher`. Phase 32 reads `launcher.auditReconcile.{lastReconcileAt, persistedMaxId, lastPersistError}` for `/health/detailed`. The getter contract is the cross-phase API surface.
+- Pino is a direct dependency of `@noesis/grid` at `^10.0.0`. Singleton at `grid/src/util/logger.ts`. Per-module scoping via `.child({ module: '<name>' })`. Redact list strips `password`, `password_hash`, `signature`, `nonce`, `cookie`, `jwt`, `authorization`, `secret`, `token` plus `*.<key>` wildcard variants before stdout. Future phases reuse this logger — DO NOT introduce winston/bunyan/pino-mysql.
+- CI gate `scripts/check-no-silent-catch.mjs` blocks any `.catch(...console.{warn,log,debug,error}(...))` in `grid/src/db/` or `grid/src/audit/`. Wired into `.github/workflows/rig-invariants.yml` as step "OBS-03 no-silent-catch gate (Phase 31)". Future phases adding code to those directories must use `logger.warn(...)` shape — see `grid/src/db/persistent-chain.ts` for the canonical replacement.
+- Reconcile cadence lives inside the EXISTING `this.clock.onTick(event => {...})` block in `grid/src/genesis/launcher.ts`. There is exactly ONE onTick subscription. Phase 32 HealthWatchdog reads state from `launcher.auditReconcile`; do not create new onTick subscriptions in Phase 32+.
+- Listener fan-out order in `grid/src/audit/chain.ts:44-58` (the zero-diff invariant since commit 29c3516) is now also pinned at the test layer via `grid/test/audit-persistence-wiring.test.ts` zero-diff-head-hash case (R-31-01 regression guard).
+- Backfill script (`scripts/backfill-audit-trail.mjs`) is reusable for any future stall recovery. Idempotent via `INSERT IGNORE`. DB creds via env (never CLI args).
+
+**Mitigations carried forward:**
+
+- **R-31-01 (CRITICAL)** mitigated: zero-diff head hash regression test pins listener fan-out order. Any future change to `chain.ts` or `persistent-chain.ts` that breaks the contract fails the test.
+- **R-31-02 (HIGH)** mitigated: 500-entry replay batch cap in `AuditReconcile`. `INSERT IGNORE` ensures multi-cycle catch-up after a long outage. Never overwhelms MySQL.
+- **R-31-03 (MEDIUM)** mitigated: cutover playbook (`31-HUMAN-UAT.md`) backfills BEFORE restart. Zero data loss across the cutover from OLD plain-AuditChain process to NEW PersistentAuditChain process. Divergence count recorded by operator in Step 2 of 31-HUMAN-UAT.md.
+
+**Cross-phase deferred (still owned by later phases):**
+
+- Phase 32 will add firehose frame counters, `/health/detailed`, and HealthWatchdog (reads `launcher.auditReconcile` getters).
+- Phase 33 will add `portal.auth.login` (54) and `portal.auth.register` (55) — allowlist 53 → 55. PORTAL_AUTH_FORBIDDEN_KEYS extends the same redact-list philosophy locked here in Phase 31.
+
 ## Session Continuity
 
-Last session: 2026-05-24T04:24:03.747Z
-Stopped at: Phase 31 context gathered
-Resume file: .planning/phases/31-audit-pipeline-persistence/31-CONTEXT.md
+Last session: 2026-05-24T05:55:00Z
+Stopped at: Completed .planning/phases/31-audit-pipeline-persistence/31-06-PLAN.md
+Resume file: None — Phase 31 complete. Next: plan Phase 32 (Firehose Observability).
