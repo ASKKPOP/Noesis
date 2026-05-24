@@ -5,6 +5,7 @@ import { formatUnits } from 'viem';
 import { SophiaAvatar } from '@/components/portal/avatars/SophiaAvatar';
 import { HermesAvatar } from '@/components/portal/avatars/HermesAvatar';
 import { ThemisAvatar } from '@/components/portal/avatars/ThemisAvatar';
+import { PersonalNousAvatar } from '@/components/portal/avatars/PersonalNousAvatar';
 
 interface HeroCardProps {
     nousId: string;
@@ -19,11 +20,39 @@ const NOUS_METADATA: Record<string, { name: string; tagline: string }> = {
     themis: { name: 'Themis', tagline: 'Lawkeeper · Genesis Grid' },
 };
 
-const AVATAR_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
+const AVATAR_MAP: Record<string, React.ComponentType<{ size?: number; style?: React.CSSProperties }>> = {
     sophia: SophiaAvatar,
     hermes: HermesAvatar,
     themis: ThemisAvatar,
 };
+
+function isPersonalNousDid(nousId: string): boolean {
+    return nousId.startsWith('did:noesis:human-nous:');
+}
+
+function extractPersonalNousName(nousId: string): string {
+    // did:noesis:human-nous:<prefix>-<name> — name may contain underscores; prefix is hex (no underscores)
+    const tail = nousId.replace('did:noesis:human-nous:', '');
+    const dashIdx = tail.indexOf('-');
+    if (dashIdx === -1) return tail;
+    return tail.slice(dashIdx + 1);
+}
+
+function resolveNousMeta(nousId: string): { name: string; tagline: string } {
+    if (NOUS_METADATA[nousId]) return NOUS_METADATA[nousId]; // genesis Nous
+    if (isPersonalNousDid(nousId)) {
+        const rawName = extractPersonalNousName(nousId);
+        const displayName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+        return { name: displayName, tagline: `${displayName} · Personal Nous` };
+    }
+    return { name: nousId, tagline: 'Unknown Nous' }; // fallback
+}
+
+function resolveAvatar(nousId: string): React.ComponentType<{ size?: number; style?: React.CSSProperties }> {
+    if (AVATAR_MAP[nousId]) return AVATAR_MAP[nousId];
+    if (isPersonalNousDid(nousId)) return PersonalNousAvatar;
+    return PersonalNousAvatar; // safe fallback
+}
 
 function titleCase(str: string): string {
     if (!str || str === '—') return str;
@@ -32,10 +61,9 @@ function titleCase(str: string): string {
 
 export default function HeroCard({ nousId, region, ousia, status: _status }: HeroCardProps) {
     const router = useRouter();
-    const meta = NOUS_METADATA[nousId];
-    const AvatarComponent = AVATAR_MAP[nousId];
-
-    if (!meta || !AvatarComponent) return null;
+    const meta = resolveNousMeta(nousId);
+    const AvatarComponent = resolveAvatar(nousId);
+    const chatHref = `/portal/chat?nous=${encodeURIComponent(nousId)}`;
 
     const ousiaDisplay = formatUnits(BigInt(ousia || '0'), 6);
 
@@ -107,7 +135,7 @@ export default function HeroCard({ nousId, region, ousia, status: _status }: Her
 
                 {/* Chat button */}
                 <button
-                    onClick={() => router.push(`/portal/chat?nous=${nousId}`)}
+                    onClick={() => router.push(chatHref)}
                     style={{
                         alignSelf: 'flex-start',
                         padding: '8px 20px',
