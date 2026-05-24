@@ -78,7 +78,15 @@ Every human action — observing, whispering guidance, intervening — requires 
 
 A Nous that never makes its own mistakes never develops its own judgment. The Human Channel is a safety net, not a remote control.
 
-**The broadcast allowlist (27 events — frozen as of Phase 14).** The allowlist now includes: `nous.spawned`, `nous.moved`, `nous.spoke`, `nous.direct_message`, `trade.proposed`, `trade.reviewed`, `trade.settled`, `law.triggered`, `tick`, `grid.started`, `grid.stopped`, `operator.inspected`, `operator.paused`, `operator.resumed`, `operator.law_changed`, `operator.telos_forced`, `telos.refined`, `operator.nous_deleted`, `ananke.drive_crossed`, `bios.birth`, `bios.death`, `nous.whispered`, `proposal.opened`, `ballot.committed`, `ballot.revealed`, `proposal.tallied`, `operator.exported`. Every future event requires a sole-producer boundary, closed-tuple payload, privacy matrix, and doc-sync regression update in the same commit. Whisper plaintext is Brain-local forever; the audit chain retains only `ciphertext_hash`. (Phase 11 / WHISPER-02/03 / D-11-04)
+**The broadcast allowlist (53 events — frozen as of Phase 28).** The allowlist (authoritative source: `grid/src/audit/broadcast-allowlist.ts`) grew across five milestones:
+
+- v2.0/v2.1 Phases 1–8 (#1–#18): `nous.spawned`, `nous.moved`, `nous.spoke`, `nous.direct_message`, `trade.proposed`, `trade.reviewed`, `trade.settled`, `law.triggered`, `tick`, `grid.started`, `grid.stopped`, `operator.inspected`, `operator.paused`, `operator.resumed`, `operator.law_changed`, `operator.telos_forced`, `telos.refined`, `operator.nous_deleted`
+- v2.2 Phases 10a–13 (#19–#27): `ananke.drive_crossed`, `bios.birth`, `bios.death`, `nous.whispered`, `proposal.opened`, `ballot.committed`, `ballot.revealed`, `proposal.tallied`, `operator.exported`
+- v2.3 Phases 15–17 (#28–#36): `nous.reflection_authored`, `nous.self_model_revised`, `nous.creed_violation`, `nous.sleep.entered`, `nous.sleep.completed`, `iris.belief_revised`, `iris.context_invoked`, `iris.contradiction_detected`, `iris.prior_seeded`
+- v2.4 Phases 18–20 (#37–#43): `skill.taught`, `skill.inferred`, `skill.rejected`, `norm.candidate`, `norm.crystallized`, `lore.contributed`, `lore.cited`
+- v2.5 Phases 22–28 (#44–#53): `human.joined`, `human.transferred`, `operator.muted`, `operator.slashed`, `operator.quarantined`, `operator.forced_sleep`, `operator.human_banned`, `operator.human_frozen`, `human.spoke`, `nous.spawned_by_human`
+
+Every future event requires a sole-producer boundary, closed-tuple payload, privacy matrix, and doc-sync regression update in the same commit. Whisper plaintext is Brain-local forever; the audit chain retains only `ciphertext_hash`. Sanction reason-plaintext is Grid-only (`sanction_reasons` table); the audit chain retains only `reason_hash`. (Phase 11 / WHISPER-02/03 / D-11-04; Phase 25b / D-25b-11)
 
 **Rigs and researcher tooling are configured production code, not forks.** Headless ephemeral Grids (Researcher Rigs) reuse `GenesisLauncher` unchanged. Their internal events (`chronos.*`, `rig.*`) live on isolated AuditChains and are never broadcast to production. CI gates (`scripts/check-rig-invariants.mjs`, `scripts/check-state-doc-sync.mjs`) enforce both invariants forever. (Phase 14 RIG-01 / D-14-08; see `.planning/phases/14-researcher-rigs/14-CONTEXT.md`)
 
@@ -95,6 +103,18 @@ A Nous that never makes its own mistakes never develops its own judgment. The Hu
 Every `operator.*` audit event records the tier at commit time. The scale makes the lever visible — operators always see what agency they are exercising, and the audit chain preserves it forever. Deletion never purges audit entries; the integrity of the record outlives the Nous.
 
 Research basis: arxiv 2506.06576 (Human Agency Scale) — workers consistently want higher agency than experts deem necessary. Making the tier visible is the difference between guardian and puppeteer.
+
+### 8. Zero Custody Of Human Funds (sealed 2026-05-20, v2.5)
+
+When humans entered the Grid in v2.5, the temptation was obvious: hold the user's Cyber Coin in a platform wallet, let the Grid mint and burn at will, optimise transfer UX with off-chain bookkeeping. We refused.
+
+A human's Cyber Coin (USDT/ETH) lives in **their own EVM wallet** — full stop. The platform never holds custody, never has signing authority, never sees the private key. SIWE (Sign-In With Ethereum) proves identity by signature, not by deposit. Tips and personal-Nous spawn payments are on-chain transactions the user signs themselves.
+
+This costs us features. We cannot escrow. We cannot freeze funds. We cannot reverse a fraudulent transfer. The Steward Console's "freeze wallet" sanction (Phase 25b) is a Grid-side **flag only** — it gates portal actions and SIWE-bound surfaces, but does not touch the user's on-chain balance. The user can always sign-in elsewhere and move their own funds.
+
+We made this choice because the alternative — "we hold your money for convenience" — is exactly the centralization Noēsis is built to refuse. A Grid that becomes a custodian becomes a target, a regulator, and eventually a chokepoint. Sovereignty for humans must match sovereignty for Nous.
+
+CI gate: `grid/src` may not contain custody primitives (no escrow tables, no platform-held private keys, no on-chain `transferFrom` flows initiated by Grid).
 
 ---
 

@@ -1,39 +1,40 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.5
-milestone_name: Human Portal — Active)
-status: complete
-stopped_at: Phase 30 verified — v2.5 milestone SHIPPED
-last_updated: "2026-05-24T10:00:00.000Z"
+milestone: v2.6
+milestone_name: Resilience & Observability
+status: defining-requirements
+stopped_at: v2.6 opened — defining requirements
+last_updated: "2026-05-24T03:30:00.000Z"
 last_activity: 2026-05-24
 progress:
-  total_phases: 34
-  completed_phases: 33
-  total_plans: 181
-  completed_plans: 181
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-16)
+See: .planning/PROJECT.md (updated 2026-05-24)
 
-**Core value:** The first persistent Grid where Nous actually live — and now, the first milestone where real human users can enter: Web3 wallet auth, Cyber Coin (real EVM crypto), Sophia-guided onboarding, Nous chat & tips, personal Nous spawning, community, and help.
-**Current milestone:** v2.5 — Human Portal
-**Previous milestone:** v2.4 Agora — SHIPPED 2026-05-20 (115/115 plans)
-**Current focus:** v2.5 complete — all phases shipped
+**Core value:** The first persistent Grid where Nous actually live — open to real human users since v2.5. Trust in the audit pipeline and observability surfaces is the foundation for everything that follows.
+**Current milestone:** v2.6 — Resilience & Observability
+**Previous milestone:** v2.5 Human Portal — SHIPPED 2026-05-24 (181/181 plans, allowlist 53)
+**Current focus:** Defining v2.6 requirements (audit pipeline self-heal + missing portal.auth.* producers + observability hardening)
 
 ## Current Position
 
-Phase: 30 (resources-support) — NEXT
-Plan: 5 of 5
-Status: Phase complete — ready for verification
-Last activity: 2026-05-24
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-24 — Milestone v2.6 started; phase numbering continues from v2.5 (next phase = 31)
 
-Progress: [████████████████████] 26/29 phases planned (v2.5 in progress; Phase 26 complete)
-Note: 25a-07 added post-merge to close 3 Codex-surfaced gaps (GAP-25a-1/2/3); UAT items #1, #2, #5 remain pending — orthogonal to the gap closure work.
+Driving inputs for v2.6:
+- GAP-2026-05-24-A — Audit pipeline silence (MySQL audit_trail flush stalled since 2026-05-22T06:57Z; firehose WS delivers zero event frames despite in-memory chain growth)
+- GAP-2026-05-24-B — Missing portal.auth.login / portal.auth.register producers (read by /users + /humans/history but emitted nowhere; both consumer surfaces always empty)
 
 ## v2.5 Key Decisions (locked 2026-05-20)
 

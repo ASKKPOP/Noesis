@@ -90,7 +90,62 @@ The first persistent Grid where Nous actually live — observable, running conti
 - ✓ **CHRONOS-03**: `epoch_since_spawn` exposed to Brain prompting via ChronosListener (Grid-side pure-observer over bios.birth); no new allowlist event; Brain context "I am N ticks old" — v2.2 Phase 10b (shipped 2026-04-22)
   → Validated in Phase 10b
 
-## Current Milestone: v2.4 Agora (Emergence & Culture)
+## Current Milestone: v2.6 Resilience & Observability
+
+**Goal:** Close the two post-v2.5 surfaced gaps (audit pipeline silence + missing `portal.auth.*` producers) and harden the audit/observability pipeline end-to-end so operators and Steward Console surfaces can trust that what they see reflects what the Grid actually emits.
+
+**Target features:**
+- Audit pipeline self-healing & health probes (root-cause and fix the MySQL `audit_trail` flush stall; `/health` surfaces in-memory vs DB divergence; structured logging on flusher failure)
+- Missing `portal.auth.login` + `portal.auth.register` sole-producers wired into SIWE verify + email signup/signin; allowlist 53 → 55; lights up `/users` directory and `/humans/[did]/history` `siwe_sessions`
+- Firehose end-to-end delivery confirmed + WS-level metrics (frames sent / dropped / client count); regression test for "tick advances but no frames" failure mode
+- Steward Console health surfaces — audit pipeline health card on `/system`; firehose connection diagnostics; events-per-minute-by-family sparkline
+- UAT re-verification — close 25a-HUMAN-UAT items #1 + #5 fully once pipeline + producers are healthy
+
+**Phase numbering:** continues from v2.5 (Phase 31 onward).
+
+**Constraints inherited from v2.5 (do not break):**
+- Broadcast allowlist frozen-except-by-explicit-addition (currently 53). New events earn their own allowlist slot per-phase with sole-producer + closed-tuple discipline.
+- Zero-diff audit chain unbroken since commit `29c3516` — any new listeners are pure-observer
+- Hash-only cross-boundary (eth-address-hash, reason-hash, content-hash)
+- Zero-custody invariant (PHILOSOPHY §8) — no sanction work in v2.6 touches user funds
+- PHILOSOPHY §1 first-life promise — audit entries retained forever
+
+## Most-Recent Milestone: v2.5 Human Portal — SHIPPED (2026-05-24)
+
+**Status:** Closed 2026-05-24, 181/181 plans = 100%. The Grid is now open to real human users via SIWE auth, real-on-chain Cyber Coin (zero platform custody), and a full Portal layer at `/portal/*`. Allowlist grew 43 → 53 (+10 events across 5 phases).
+
+**Delivered:**
+- **Phase 22 — Web3 Identity** (2026-05-20): SIWE auth, MetaMask/WalletConnect, JWT session, `human_users` MySQL table. Allowlist +1 (`human.joined` #44).
+- **Phase 23 — Cyber Coin Wallet** (2026-05-20): On-chain USDT/ETH balance + send + history; user retains custody. (wiring landed in Phase 24, +1 `human.transferred` #45)
+- **Phase 24 — Portal Shell** (2026-05-21): Region presence, profile completeness, mobile sidebar, portal home live Grid stats.
+- **Phase 25 (a/b/c) — Steward Console Expansion** (2026-05-21..22): H1+ observer surfaces (firehose, drift, cognitive inspector) + H3/H4/H5 sanction write-actions (mute/slash/quarantine/forced_sleep/ban-human/freeze-wallet, +6 events #46–#51) + replay scrubber + culture browser. Sanction-reason plaintext stays Grid-only (`sanction_reasons` table); only `reason_hash` enters audit chain.
+- **Phase 26 — Sophia Onboarding** (2026-05-23): Fast-proxy LLM chat out-of-tick, goal wizard, animated world intro, welcome Cyber Coin.
+- **Phase 27 — Nous Interaction** (2026-05-23): `/portal/chat` split-pane with Sophia/Hermes/Themis, tip-by-Cyber-Coin, browse skills/lore/norms. Allowlist +1 (`human.spoke` #52).
+- **Phase 28 — Personal Nous** (2026-05-24): Human spawns own Nous in Genesis Grid (USDT payment + name + personality seeds). Allowlist +1 (`nous.spawned_by_human` #53).
+- **Phase 29 — Community** (2026-05-24): User directory, board (posts + replies), follows, leaderboard, live activity feed.
+- **Phase 30 — Resources & Support** (2026-05-24): Help center, FAQ (~20 Q&As), Glossary (25 terms), Getting Started guide, support ticket flow.
+
+**Key locked invariants (added in v2.5):**
+- Zero-custody for human funds — platform never holds USDT/ETH; sanctions are Grid-side flags only (PHILOSOPHY §8)
+- `eth_address_hash` (SHA-256 of lowercased address) is the only ETH-address representation in the audit chain; raw address never crosses
+- Sanction reason discipline (D-25b-11): plaintext in `sanction_reasons` table; `reason_hash` only in audit payloads
+- Human DID scheme: `did:noesis:human:<lowercased-eth-address>` (SIWE) or `did:noesis:human:email:<uuid>` (email path)
+
+**Post-ship gaps (recorded for v2.6 backlog):**
+- GAP-2026-05-24-A — Audit pipeline silence: MySQL `audit_trail` flush stalled since 2026-05-22T06:57Z; firehose WS delivers zero `event` frames despite in-memory chain growth
+- GAP-2026-05-24-B — `/users` directory has no audit producers: `portal.auth.login` / `portal.auth.register` event types are read by /users + /humans/history but no producer emits them
+
+## Previous Milestone: v2.4 Agora — SHIPPED (2026-05-20)
+
+**Status:** Closed 2026-05-20, 115/115 plans = 100%. Allowlist grew 36 → 43 (+7 events across Phases 18–20; Phase 21 added zero — read-only Culture Dashboard).
+
+**Delivered:**
+- **Phase 18 — Skill Diffusion** (2026-05-16): `skill.taught` (#37) / `skill.inferred` (#38) / `skill.rejected` (#39); PeerSkillFilter trust gate + ObservationalLearner.
+- **Phase 19 — Norm Crystallization** (2026-05-16): `norm.candidate` (#40) / `norm.crystallized` (#41); pure-observer NormDetector clustering rule fingerprints.
+- **Phase 20 — Lore Commons** (2026-05-17): `lore.contributed` (#42) / `lore.cited` (#43); hash-only Grid index, K=3 contribution quota per Nous per sleep epoch.
+- **Phase 21 — Culture Dashboard** (2026-05-17): Raw-SVG skill lineage tree + norm timeline + lore graph (no d3 / recharts / react-flow).
+
+### v2.4 Original Scope Notes (archived)
 
 **Goal:** Give the Nous population a substrate for cultural transmission and emergent shared patterns — skills spread peer-to-peer via teaching and observation, rules independently discovered by multiple Nous crystallize into shared norms, and a collective lore commons forms bottom-up from Nous contributions.
 
@@ -230,4 +285,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-23 — Phase 27 complete: Nous Interaction shipped — POST /portal/chat/nous/:nousId with Sophia/Hermes/Themis personalities + appendHumanSpoke sole-producer (allowlist 51→52); Brain GET /skills/:hash + Grid portal Nous endpoints (skills/lore/norms); full /portal/chat split-pane UI (NousSidebar, ConversationPane, wagmi TipPanel, 3 SVG avatars, localStorage history); /portal/nous/[id] profile page (HeroCard, Skills/Lore/Norms tabs, D-08a lore invariant preserved). CHAT-01 through CHAT-06 all static-verified. UAT deferred to HUMAN-UAT.md (live stack + MetaMask required).*
+*Last updated: 2026-05-24 — v2.5 Human Portal SHIPPED (181/181 plans, allowlist 53). Phases 22–30 all closed. Two post-ship gaps logged for v2.6 backlog: GAP-2026-05-24-A (audit pipeline silence) and GAP-2026-05-24-B (missing portal.auth.* producers). Awaiting v2.6 theme selection and /gsd-new-milestone.*

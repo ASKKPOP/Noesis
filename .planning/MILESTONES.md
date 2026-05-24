@@ -500,6 +500,51 @@
 
 ---
 
+## v2.5: Human Portal (COMPLETE)
+
+**Shipped:** 2026-05-24 (Phases 22–30, 181 plans across 34 phase units including 25a/25b/25c sub-phases)
+
+**Goal:** Open the Grid to real human users — Web3 wallet authentication, real EVM crypto (Cyber Coin), Sophia-guided onboarding, peer-Nous chat and tips, personal Nous spawning by humans, community surfaces, and help/support infrastructure. Pair with a Steward Console expansion that gives operators direct write-actions (sanctions) on top of the v2.4 read-only observatory.
+
+**Key locked decisions (2026-05-20):**
+- Human auth = SIWE (Sign-In With Ethereum); wallet signature = identity, no platform-held password
+- Cyber Coin = real on-chain EVM crypto (USDT/ETH) in the user's own wallet — platform holds **zero custody**
+- Human DID scheme = `did:noesis:human:<lowercased-eth-address>` (SIWE) or `did:noesis:human:email:<uuid>` (email path)
+- Onboarding LLM = fast-proxy out-of-tick (~2s response), never blocks the Grid clock
+- Portal location = `/portal/*` routes inside the existing Next.js dashboard — no new Docker service
+- Personal Nous = in-scope; users can spawn their own Nous agent in Genesis Grid alongside Sophia / Hermes / Themis
+
+**Phases shipped:**
+- **Phase 22 — Web3 Identity** (2026-05-20): SIWE auth, MetaMask/WalletConnect, JWT session layer, `human_users` MySQL table, allowlist 43→44 (+1 `human.joined`)
+- **Phase 23 — Cyber Coin Wallet** (2026-05-20): EVM balance display (USDT/ETH), wagmi send form, transaction history. Grid endpoint + `human.transferred` emitter shipped in Phase 24 (allowlist 44→45)
+- **Phase 24 — Portal Shell** (2026-05-21): Region presence on profile, profile completeness, mobile sidebar, portal home live Grid stats
+- **Phase 25 — Steward Console Expansion** (2026-05-21..22, 25a/25b/25c sub-phases): H1+ observer surfaces (firehose, allowlist drift monitor, cognitive inspector, brain health) + H3/H4/H5 sanction write-actions + replay scrubber + culture browser. Allowlist 45→51 (+6: `operator.muted`, `operator.slashed`, `operator.quarantined`, `operator.forced_sleep`, `operator.human_banned`, `operator.human_frozen`). Zero-custody invariant for human sanctions: freeze/ban are Grid-side flags only, no on-chain action.
+- **Phase 26 — Sophia Onboarding** (2026-05-23): Fast-proxy LLM chat (out-of-tick), goal-setting wizard, animated world introduction, Sophia as guide persona, first-time user flow
+- **Phase 27 — Nous Interaction** (2026-05-23): Humans chat with Sophia/Hermes/Themis via `/portal/chat`, send Cyber Coin tips, browse skills/lore/norms each Nous has produced. Allowlist 51→52 (+1 `human.spoke`).
+- **Phase 28 — Personal Nous** (2026-05-24): Human spawns own Nous agent (USDT payment), names it, picks personality seeds. Allowlist 52→53 (+1 `nous.spawned_by_human`).
+- **Phase 29 — Community** (2026-05-24): User directory, community board (posts + replies), live activity feed, follows, leaderboard by Cyber Coin holdings + Nous contributions
+- **Phase 30 — Resources & Support** (2026-05-24): Help center, FAQ, glossary (25 terms), Getting Started guide, support ticket flow
+
+**Allowlist at completion:** 53 events (grew 43 → 53 across v2.5: +1 Phase 22, +1 Phase 23 wiring landed in Phase 24, +6 Phase 25b, +1 Phase 27, +1 Phase 28)
+**Plans:** 181/181 (100%)
+**Docker stack health:** All 7 services healthy (mysql, grid, nous-sophia, nous-hermes, nous-themis, dashboard, steward)
+
+**Key invariants carried forward:**
+- AuditChain zero-diff invariant preserved (commit `29c3516` — unbroken since Phase 1)
+- Zero-custody invariant locked: platform never holds user funds; all crypto stays in the user's own EVM wallet
+- Hash-only cross-boundary invariant extended to human surfaces: `eth_address_hash` (SHA-256) is the only address representation in the audit chain; raw address never crosses
+- Sanction reason-plaintext stays in Grid-only `sanction_reasons` table; only `reason_hash` enters the audit chain (D-25b-11)
+- Operators read-only on governance (VOTE-05 from v2.2) preserved — write-actions added in Phase 25b are sanctions, not governance
+- Phase numbering continues: v2.6 starts at Phase 31
+
+**Post-ship gaps surfaced (2026-05-24 UAT re-verification):**
+- GAP-2026-05-24-A — Audit pipeline silence: MySQL `audit_trail` flush has stalled since 2026-05-22T06:57Z (in-memory chain still grows); firehose WebSocket connects but delivers zero `event` frames over a 22s observation window. Symptom-level operational fault — Phase 25a code itself remains correct. v2.6 backlog candidate.
+- GAP-2026-05-24-B — `/users` directory has no audit producers: `portal.auth.login` / `portal.auth.register` event types are read by `steward/src/app/users/page.tsx` and `/humans/[did]/history` `siwe_sessions`, but no producer in `grid/src` emits either. Both consumers will always show empty lists until the producers are wired. v2.6 backlog candidate.
+
+See `.planning/phases/25a-observer-surfaces/25a-HUMAN-UAT.md` for full UAT closure.
+
+---
+
 ### Phase 25c: Replay Scrubber + Culture Browser — SHIPPED 2026-05-22
 
 **Shipped:** 2026-05-22
@@ -545,4 +590,4 @@
 - Both failure sets pre-date Phase 25c; zero new regressions introduced
 
 ---
-*Last updated: 2026-05-22 — Phase 25c complete (replay scrubber + culture browser); v2.5 Human Portal in progress*
+*Last updated: 2026-05-24 — v2.5 Human Portal SHIPPED (181/181 plans, allowlist 53). Two post-ship gaps recorded for v2.6 backlog.*
