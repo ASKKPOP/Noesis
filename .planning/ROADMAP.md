@@ -46,8 +46,8 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
   - **R-31-03 (MEDIUM)**: Production restart loses in-memory chain before reconcile catches up — Phase 31 ships with a one-shot backfill script for the 2026-05-22 stall; production restart procedure documented in `31-HUMAN-UAT.md`.
 **Allowlist additions**: **0**. Running total: **53**.
 **Plans**: 6 plans
-  - [ ] 31-01-PLAN.md — Pino logger singleton + grid/package.json deps (OBS-03 foundation)
-  - [ ] 31-02-PLAN.md — Backfill script scripts/backfill-audit-trail.mjs (OBS-04)
+  - [x] 31-01-PLAN.md — Pino logger singleton + grid/package.json deps (OBS-03 foundation)
+  - [x] 31-02-PLAN.md — Backfill script scripts/backfill-audit-trail.mjs (OBS-04)
   - [ ] 31-03-PLAN.md — PersistentAuditChain wiring in main.ts + Pino logger replaces console.warn + zero-diff regression test (OBS-01, OBS-03)
   - [ ] 31-04-PLAN.md — AuditReconcile loop + launcher.clock.onTick wire + batch-cap test (OBS-02)
   - [ ] 31-05-PLAN.md — scripts/check-no-silent-catch.mjs CI gate + workflow integration (OBS-03 enforcement)
@@ -143,7 +143,7 @@ Dependencies form a strict chain. Rationale:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 31. Audit Pipeline Persistence | 0/6 | Plans created | — |
+| 31. Audit Pipeline Persistence | 2/6 | In Progress|  |
 | 32. Firehose Observability | 0/? | Pending | — |
 | 33. portal.auth.* Producers | 0/? | Pending | — |
 | 34. Steward `/system` Health Surfaces | 0/? | Pending | — |
