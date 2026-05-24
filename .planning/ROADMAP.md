@@ -65,7 +65,7 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
   **Requirements:** [COM-01, COM-02, COM-03, COM-04, COM-05]
   **Plans:** 5 plans
   Plans:
-  - [ ] 29-01-PLAN.md — Grid: migrations v18-v21 (ousia, community_posts, community_replies, user_follows) + all community API endpoints (10 routes)
+  - [x] 29-01-PLAN.md — Grid: migrations v18-v21 (ousia, community_posts, community_replies, user_follows) + all community API endpoints (10 routes)
   - [ ] 29-02-PLAN.md — Dashboard: UserDirectoryRow + LeaderboardRow components + community hub tabbed page + leaderboard sub-page
   - [ ] 29-03-PLAN.md — Dashboard: PostCard + PostComposer + ReplyThread components + community board Board tab
   - [ ] 29-04-PLAN.md — Dashboard: FollowButton component wired into Users tab

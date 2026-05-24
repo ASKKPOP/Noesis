@@ -4,14 +4,14 @@ milestone: v2.5
 milestone_name: Human Portal — Active)
 status: executing
 stopped_at: Phase 28 UI-SPEC approved
-last_updated: "2026-05-23T20:14:10.469Z"
-last_activity: 2026-05-23 -- Phase 28 execution started
+last_updated: "2026-05-24T01:57:52.094Z"
+last_activity: 2026-05-24
 progress:
-  total_phases: 32
-  completed_phases: 29
-  total_plans: 166
-  completed_plans: 161
-  percent: 97
+  total_phases: 34
+  completed_phases: 30
+  total_plans: 176
+  completed_plans: 167
+  percent: 95
 ---
 
 # Project State
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-05-16)
 ## Current Position
 
 Phase: 28 (personal-nous) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 28
-Last activity: 2026-05-23 -- Phase 28 execution started
+Plan: 2 of 5
+Status: Ready to execute
+Last activity: 2026-05-24
 
 Progress: [████████████████████] 26/29 phases planned (v2.5 in progress; Phase 26 complete)
 Note: 25a-07 added post-merge to close 3 Codex-surfaced gaps (GAP-25a-1/2/3); UAT items #1, #2, #5 remain pending — orthogonal to the gap closure work.
@@ -175,6 +175,6 @@ Phase 15-17 shipped with all Brain-private invariants intact. Key carry-forwards
 
 ## Session Continuity
 
-Last session: 2026-05-23T19:01:12.930Z
+Last session: 2026-05-24T01:57:52.091Z
 Stopped at: Phase 28 UI-SPEC approved
-Resume file: .planning/phases/28-personal-nous/28-UI-SPEC.md
+Resume file: None
