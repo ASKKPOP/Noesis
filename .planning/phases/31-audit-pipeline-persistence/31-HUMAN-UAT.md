@@ -178,21 +178,31 @@ docker compose up -d grid
 
 **Pre-state:** Step 6 produced a running NEW Grid container.
 
-**Action:** Tail logs for 30 seconds AFTER container is Up:
+**Action:** Tail logs after container is Up. Cadence is **tick-rate-dependent** — first heartbeat fires at tick 60:
 
+| GRID_TICK_RATE_MS | Time to first heartbeat | Action |
+|---|---|---|
+| 30000 (production default) | **~30 minutes** after start | `docker compose logs grid -f` and leave running, OR temporarily override |
+| 500 (test override) | ~30 seconds after start | `docker compose logs grid --tail=200 -f` for 60s |
+
+To verify wiring quickly without waiting 30 min, temporarily override:
 ```
-docker compose logs grid --tail=200 -f
+GRID_TICK_RATE_MS=500 docker compose up -d --force-recreate grid
+# wait 30-60s
+docker compose logs grid -f
+# observe heartbeat, then revert:
+docker compose up -d --force-recreate grid
 ```
 
-**Expected output:** Within 30s of container start, logs include JSON lines like:
-- `{"level":30,"time":<epoch>,"pid":...,"hostname":"...","module":"persistent-chain", ...}` — confirms Pino is the logger AND the persistent-chain module is initialized
-- One or more `{event:"audit_reconcile_ok",divergence:0,replayed:0,remaining:0, ...}` lines — confirms AuditReconcile is wired and firing on the tick cadence
+**Expected output:** logs include JSON lines like:
+- `{"level":30,"time":<epoch>,"pid":...,"hostname":"...","module":"audit-reconcile", ...}` — confirms Pino is the logger AND the audit-reconcile module is initialized (also accept `"module":"persistent-chain"` when a persist failure is logged)
+- One or more `{event:"audit_reconcile_ok",divergence:0,replayed:0,remaining:0, ...}` (when memory and DB agree) or `{event:"audit_reconcile_replay",divergence:N,replayed:N,...}` (when memory is ahead of DB) lines — confirms AuditReconcile is wired and firing on the tick cadence
 
 Press `Ctrl+C` to stop the tail.
 
-**Go / no-go:** If you see NO Pino-shaped JSON in stdout (still `[PersistentAuditChain] Failed to persist...` plain text), the build did not include plan 03's changes — roll back to OLD Grid (`docker compose stop grid && [restart-old-image-command]`) and investigate. If you see Pino-shaped JSON but NO `audit_reconcile_ok` line in 60+ seconds of tail, AuditReconcile is not wired — same rollback.
+**Go / no-go:** If you see NO Pino-shaped JSON in stdout (still `[PersistentAuditChain] Failed to persist...` plain text), the build did not include plan 03's changes — roll back to OLD Grid (`docker compose stop grid && [restart-old-image-command]`) and investigate. If you see Pino-shaped JSON but NO `audit_reconcile_ok`/`audit_reconcile_replay` line within the timing window for your tick rate above, AuditReconcile is not wired — same rollback.
 
-Note: the FIRST `audit_reconcile_ok` fires at tick 60 (~30s after start at default tickRateMs). If the container just started, give it at least 60 seconds before concluding the heartbeat is absent.
+Note: the FIRST heartbeat fires at tick 60 (`event.tick % 60 === 0` in `launcher.ts`). At production GRID_TICK_RATE_MS=30000 that's 30 minutes; at GRID_TICK_RATE_MS=500 it's 30 seconds. Always wait at least 65 ticks before concluding the heartbeat is absent.
 
 - [x] Saw Pino JSON: **yes (at GRID_TICK_RATE_MS=500 override).**
 
@@ -213,15 +223,16 @@ Note: the FIRST `audit_reconcile_ok` fires at tick 60 (~30s after start at defau
 
 **Pre-state:** Step 7 confirmed initial heartbeat fired.
 
-**Action:** Tail logs for 5 minutes, counting heartbeats:
+**Action:** Count heartbeats over a window scaled to the current tick rate. Window must cover ≥10 cycles to satisfy Success Criterion 2:
 
-```
-docker compose logs grid -f --since=5m | grep -c 'audit_reconcile_ok'
-```
+| GRID_TICK_RATE_MS | Window for ≥10 heartbeats | Command |
+|---|---|---|
+| 30000 (production default) | **~5 hours** | `docker compose logs grid --since=5h \| grep -cE 'audit_reconcile_(ok\|replay)'` |
+| 500 (test override) | ~5 minutes | `docker compose logs grid --since=5m \| grep -cE 'audit_reconcile_(ok\|replay)'` |
 
-(Or: run `docker compose logs grid -f` for 5 min and visually count.)
+Practical operator recommendation: do the 500ms-override run from Step 7 to confirm cadence in minutes, then revert to production tick rate. Production-rate verification is for long-running monitoring (Phase 32 HealthWatchdog will surface this without operator polling).
 
-**Expected output:** At least 10 `audit_reconcile_ok` lines (one per 60-tick cadence at default tickRateMs — Success Criterion 2). Each should have `divergence: 0` once steady state is reached.
+**Expected output:** At least 10 `audit_reconcile_ok` (or `audit_reconcile_replay` — both count) lines in the chosen window — one per 60-tick cadence at the current GRID_TICK_RATE_MS (Success Criterion 2). Each should have `divergence` low (0 at production tick rate; 1 is normal at 500ms override because of the in-flight fire-and-forget DB write).
 
 **Go / no-go:** If fewer than 10 lines in 5 min: cadence is broken (or clock is paused). Inspect `event.tick` from the `tick` audit entries to confirm clock is advancing. If `divergence: 0` is never reached, OBS-02 is broken — check the SELECT MAX(id) result against `audit.length`.
 

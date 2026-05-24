@@ -2,7 +2,7 @@
  * AuditReconcile — Phase 31 OBS-02 (D-31-C1..C4).
  *
  * Tick-cadenced belt-and-suspenders for PersistentAuditChain. Every 60 ticks
- * (≈30s at default tickRateMs):
+ * (≈30 minutes at production tickRateMs=30000; ≈30s only if overridden to 500):
  *   1. Queries SELECT MAX(id) FROM audit_trail WHERE grid_name = ?.
  *   2. Compares against chain.length.
  *   3. Replays any missing tail entries via store.append (INSERT IGNORE idempotent).
