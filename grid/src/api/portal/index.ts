@@ -12,6 +12,7 @@ import { registerFrozenCheck } from './check-frozen.js';
 import { registerPortalChatRoutes } from './chat.js';
 import { registerPortalNousRoutes } from './nous.js';
 import { registerSpawnRoutes } from './spawn.js';
+import { registerCommunityRoutes } from './community.js';
 
 export function registerPortalRoutes(
     app: FastifyInstance,
@@ -83,5 +84,11 @@ export function registerPortalRoutes(
         audit: services.audit,
         currentTick: () => services.clock.state.tick,
         gridName: () => services.gridName,
+    });
+    // Phase 29: community routes (COM-01 through COM-05).
+    registerCommunityRoutes(app, {
+        humanPool: services.humanPool,
+        audit: services.audit,
+        gridName: services.gridName,
     });
 }

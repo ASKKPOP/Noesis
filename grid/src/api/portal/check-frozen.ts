@@ -24,6 +24,10 @@ const PORTAL_ACTION_PATTERNS: RegExp[] = [
     /^\/api\/v1\/portal\/chat\//,             // Phase 26 onboarding chat
     /^\/api\/v1\/portal\/auth\/me$/,          // Phase 26 PATCH /me (goal storage)
     /^\/api\/v1\/portal\/nous\/spawn$/,       // Phase 28 SPAWN-03 — spawn POST only (status/config/check-name are read-only GETs)
+    // Phase 29 COM-02/COM-04 — write actions blocked for frozen/banned humans
+    /^\/api\/v1\/portal\/community\/posts$/,              // POST new post
+    /^\/api\/v1\/portal\/community\/posts\/\d+\/replies$/, // POST new reply
+    /^\/api\/v1\/portal\/community\/follow\//,            // POST/DELETE follow
 ];
 
 function isPortalActionRoute(url: string): boolean {
