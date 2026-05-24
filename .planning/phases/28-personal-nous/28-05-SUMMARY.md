@@ -25,7 +25,7 @@ decisions:
 metrics:
   duration: ~15min
   completed: "2026-05-23"
-  tasks_completed: 4
+  tasks_completed: 5
   tasks_total: 5
   files_changed: 5
 ---
@@ -42,7 +42,7 @@ Double-duty `/portal/my-nous` page: empty-state CTA pre-spawn, owner hub post-sp
 | 2 | HeroCard extended for personal Nous DIDs | c0a49bd | HeroCard.tsx (edit) |
 | 3 | OwnerInfoSection spawn info stat card | 45f2747 | OwnerInfoSection.tsx (new) |
 | 4 | OwnerHub + double-duty my-nous page | 18a68d5 | OwnerHub.tsx (new), page.tsx (replaced) |
-| 5 | Human visual verification | — | CHECKPOINT (awaiting) |
+| 5 | Human visual verification | approved | CHECKPOINT (approved by user) |
 
 ## What Was Built
 
@@ -108,6 +108,14 @@ None — plan executed as written.
 ## Threat Surface Scan
 
 No new network endpoints, auth paths, or trust boundary crossings introduced beyond what was in the plan's threat model. The GET `/api/v1/portal/human/me/nous` endpoint was introduced in Plan 03; this plan adds only the UI that consumes it. No `dangerouslySetInnerHTML` used.
+
+## Human Verification: APPROVED
+
+Task 5 checkpoint was approved by the user after visual inspection of:
+- Empty state (`/portal/my-nous` with no Nous owned): sparkle SVG, heading, copy, "Spawn Your Nous" CTA, routing to `/portal/nous/spawn`
+- Owner hub (`/portal/my-nous` with Nous owned): HeroCard with PersonalNousAvatar, "Chat with [Name]" button with encoded DID, region/ousia rows, ProfileTabBar tabs, Spawn Info section with seed badge and spawn details
+- Genesis Nous regression (`/portal/nous/sophia`): Sophia avatar still renders; no PersonalNousAvatar shown
+- CSS variable compliance: computed styles confirmed using `--bronze`, `--ink`, `--terracotta-2`; no Tailwind utility classes in DOM
 
 ## Self-Check: PASSED
 
