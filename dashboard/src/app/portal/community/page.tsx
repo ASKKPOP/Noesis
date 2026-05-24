@@ -10,6 +10,7 @@ import { UserDirectoryRow } from '../../../components/portal/UserDirectoryRow';
 import { LeaderboardRow } from '../../../components/portal/LeaderboardRow';
 import { PostCard } from '../../../components/portal/PostCard';
 import { PostComposer } from '../../../components/portal/PostComposer';
+import { FollowButton } from '../../../components/portal/FollowButton';
 
 type Tab = 'board' | 'users' | 'leaderboard';
 
@@ -47,6 +48,8 @@ export default function CommunityPage() {
     const [postsLoading, setPostsLoading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [followingSet, setFollowingSet] = useState<Set<string>>(new Set());
+    const [myDid, setMyDid] = useState<string | null>(null);
 
     function loadPosts() {
         setPostsLoading(true);
@@ -66,6 +69,20 @@ export default function CommunityPage() {
                 .then(r => r.json())
                 .then(d => { setUsers(d.users ?? []); setLoading(false); })
                 .catch(() => { setError('Failed to load users'); setLoading(false); });
+        }
+        if (activeTab === 'users' && !myDid) {
+            fetch('/api/v1/portal/auth/me', { credentials: 'include' })
+                .then(r => r.json())
+                .then((d: { did?: string }) => { if (d.did) setMyDid(d.did); })
+                .catch(() => {});
+        }
+        if (activeTab === 'users' && followingSet.size === 0) {
+            fetch('/api/v1/portal/community/following', { credentials: 'include' })
+                .then(r => r.json())
+                .then((d: { following?: string[] }) => {
+                    setFollowingSet(new Set(d.following ?? []));
+                })
+                .catch(() => {});
         }
         if (activeTab === 'leaderboard' && leaderboard.length === 0) {
             setLoading(true);
@@ -179,7 +196,27 @@ export default function CommunityPage() {
                             </p>
                         )}
                         {users.map(u => (
-                            <UserDirectoryRow key={u.did} {...u} />
+                            <div key={u.did} style={{ display: 'flex', alignItems: 'center' }}>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <UserDirectoryRow {...u} />
+                                </div>
+                                {myDid && u.did !== myDid && (
+                                    <div style={{ padding: '0 16px', flexShrink: 0 }}>
+                                        <FollowButton
+                                            targetDid={u.did}
+                                            initialFollowing={followingSet.has(u.did)}
+                                            onFollowChange={isNowFollowing => {
+                                                setFollowingSet(prev => {
+                                                    const next = new Set(prev);
+                                                    if (isNowFollowing) next.add(u.did);
+                                                    else next.delete(u.did);
+                                                    return next;
+                                                });
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
                         ))}
                     </div>
                 </div>
