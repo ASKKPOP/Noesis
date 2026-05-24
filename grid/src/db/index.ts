@@ -1,3 +1,4 @@
+export { AuditStore } from './stores/audit-store.js';
 export { DatabaseConnection } from './connection.js';
 export { MigrationRunner } from './migration-runner.js';
 export { GridStore, snapshotGrid, restoreGrid } from './grid-store.js';
