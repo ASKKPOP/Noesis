@@ -60,12 +60,14 @@ const NAV: NavSection[] = [
     {
         label: 'Resources',
         items: [
-            { href: '/portal/docs',     label: 'Documents', phase: '30' },
-            { href: '/portal/glossary', label: 'Glossary' },
-            { href: '/portal/help',     label: 'Help & FAQ' },
-            { href: '/portal/privacy',  label: 'Privacy Policy' },
-            { href: '/portal/terms',    label: 'Terms of Service' },
-            { href: '/portal/status',   label: 'Project Status' },
+            { href: '/portal/help',          label: 'Help Center',    exact: true },
+            { href: '/portal/help/guide',    label: 'Getting Started' },
+            { href: '/portal/help/faq',      label: 'FAQ' },
+            { href: '/portal/help/glossary', label: 'Glossary' },
+            { href: '/portal/help/contact',  label: 'Support' },
+            { href: '/portal/privacy',       label: 'Privacy Policy' },
+            { href: '/portal/terms',         label: 'Terms of Service' },
+            { href: '/portal/status',        label: 'Project Status' },
         ],
     },
     {
