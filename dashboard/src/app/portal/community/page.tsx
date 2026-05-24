@@ -1,12 +1,68 @@
 /**
- * Community — Phase 28 placeholder · editorial theme.
- * Server component.
+ * Community — tabbed hub: Board | Users | Leaderboard
+ * Phase 29 COM-01/COM-02/COM-03.
+ * Client component (needs state for tab switching + data fetching).
  */
+'use client';
+
+import { useState, useEffect } from 'react';
+import { UserDirectoryRow } from '../../../components/portal/UserDirectoryRow';
+import { LeaderboardRow } from '../../../components/portal/LeaderboardRow';
+
+type Tab = 'board' | 'users' | 'leaderboard';
+
+interface UserEntry {
+    did: string;
+    eth_address: string | null;
+    ousia: number;
+    created_at: string;
+    nous_name: string | null;
+}
+
+interface LeaderboardEntry {
+    did: string;
+    eth_address: string | null;
+    ousia: number;
+    created_at: string;
+    nous_name: string | null;
+    nous_did: string | null;
+    nous_score: number;
+}
 
 export default function CommunityPage() {
+    const [activeTab, setActiveTab] = useState<Tab>('board');
+    const [users, setUsers] = useState<UserEntry[]>([]);
+    const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (activeTab === 'users' && users.length === 0) {
+            setLoading(true);
+            fetch('/api/v1/portal/community/users', { credentials: 'include' })
+                .then(r => r.json())
+                .then(d => { setUsers(d.users ?? []); setLoading(false); })
+                .catch(() => { setError('Failed to load users'); setLoading(false); });
+        }
+        if (activeTab === 'leaderboard' && leaderboard.length === 0) {
+            setLoading(true);
+            fetch('/api/v1/portal/community/leaderboard', { credentials: 'include' })
+                .then(r => r.json())
+                .then(d => { setLeaderboard(d.entries ?? []); setLoading(false); })
+                .catch(() => { setError('Failed to load leaderboard'); setLoading(false); });
+        }
+    }, [activeTab]);
+
+    const tabs: { id: Tab; label: string }[] = [
+        { id: 'board', label: 'Board' },
+        { id: 'users', label: 'Users' },
+        { id: 'leaderboard', label: 'Leaderboard' },
+    ];
+
     return (
-        <div style={{ padding: '36px 40px', maxWidth: 580 }}>
-            <div style={{ marginBottom: 32 }}>
+        <div style={{ padding: '36px 40px', maxWidth: 680 }}>
+            {/* Header */}
+            <div style={{ marginBottom: 24 }}>
                 <h1 style={{
                     fontFamily: 'var(--serif)',
                     fontSize: 30,
@@ -24,48 +80,111 @@ export default function CommunityPage() {
                     color: 'var(--muted)',
                     lineHeight: 1.5,
                 }}>
-                    User directory, community board, and live activity feed.
+                    Community board, user directory, and leaderboard.
                 </p>
             </div>
 
+            {/* Tab bar */}
             <div style={{
-                background: 'var(--parchment)',
-                border: '1px solid var(--rule)',
-                borderRadius: 6,
-                padding: '48px 32px',
-                textAlign: 'center',
                 display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 16,
+                gap: 0,
+                borderBottom: '1px solid var(--rule)',
+                marginBottom: 24,
             }}>
-                <div style={{
-                    width: 52, height: 52, borderRadius: '50%',
-                    border: '1px solid var(--rule)', background: 'var(--parchment-2)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} style={{ color: 'var(--bronze)' }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
-                    </svg>
-                </div>
-                <div>
-                    <p style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', marginBottom: 8 }}>
-                        Coming in Phase 28
-                    </p>
-                    <p style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, color: 'var(--muted)', lineHeight: 1.6, maxWidth: 380 }}>
-                        User directory, community board, live activity feed, follow others,
-                        and leaderboard by Cyber Coin holdings and Nous contributions.
-                    </p>
-                </div>
-                <span style={{
-                    fontFamily: 'var(--mono-portal)', fontSize: 9, fontWeight: 600,
-                    letterSpacing: '0.12em', textTransform: 'uppercase' as const,
-                    color: 'var(--bronze)', background: 'var(--parchment-2)',
-                    border: '1px solid var(--rule)', borderRadius: 2, padding: '3px 8px',
-                }}>
-                    Phase 28 · Community
-                </span>
+                {tabs.map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => { setActiveTab(tab.id); setError(null); }}
+                        style={{
+                            fontFamily: 'var(--sans-portal)',
+                            fontSize: 13,
+                            fontWeight: activeTab === tab.id ? 600 : 400,
+                            color: activeTab === tab.id ? 'var(--ink)' : 'var(--muted)',
+                            background: 'none',
+                            border: 'none',
+                            borderBottom: activeTab === tab.id ? '2px solid var(--bronze)' : '2px solid transparent',
+                            padding: '8px 20px',
+                            cursor: 'pointer',
+                            marginBottom: -1,
+                        }}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
             </div>
+
+            {/* Error state */}
+            {error && (
+                <p style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, color: 'var(--muted)', textAlign: 'center', padding: 40 }}>
+                    {error}
+                </p>
+            )}
+
+            {/* Board tab — placeholder for Plan 29-03 */}
+            {!error && activeTab === 'board' && (
+                <div data-testid="community-board-placeholder" style={{
+                    background: 'var(--parchment)',
+                    border: '1px solid var(--rule)',
+                    borderRadius: 6,
+                    padding: '48px 32px',
+                    textAlign: 'center',
+                }}>
+                    <p style={{ fontFamily: 'var(--serif)', fontSize: 18, color: 'var(--ink)' }}>
+                        Community Board
+                    </p>
+                    <p style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, color: 'var(--muted)', marginTop: 8 }}>
+                        Post and reply features load in Phase 29 Plan 03.
+                    </p>
+                </div>
+            )}
+
+            {/* Users tab */}
+            {!error && activeTab === 'users' && (
+                <div>
+                    <div style={{ fontFamily: 'var(--sans-portal)', fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>
+                        {loading ? 'Loading…' : `${users.length} members`}
+                    </div>
+                    <div style={{
+                        border: '1px solid var(--rule)',
+                        borderRadius: 6,
+                        overflow: 'hidden',
+                        background: 'var(--parchment)',
+                    }}>
+                        {!loading && users.length === 0 && (
+                            <p style={{ padding: 32, textAlign: 'center', color: 'var(--muted)', fontFamily: 'var(--sans-portal)', fontSize: 13 }}>
+                                No users yet.
+                            </p>
+                        )}
+                        {users.map(u => (
+                            <UserDirectoryRow key={u.did} {...u} />
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Leaderboard tab */}
+            {!error && activeTab === 'leaderboard' && (
+                <div>
+                    <div style={{ fontFamily: 'var(--sans-portal)', fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>
+                        {loading ? 'Loading…' : 'Ranked by Cyber Coin (ousia)'}
+                    </div>
+                    <div style={{
+                        border: '1px solid var(--rule)',
+                        borderRadius: 6,
+                        overflow: 'hidden',
+                        background: 'var(--parchment)',
+                    }}>
+                        {!loading && leaderboard.length === 0 && (
+                            <p style={{ padding: 32, textAlign: 'center', color: 'var(--muted)', fontFamily: 'var(--sans-portal)', fontSize: 13 }}>
+                                No entries yet.
+                            </p>
+                        )}
+                        {leaderboard.map((entry, i) => (
+                            <LeaderboardRow key={entry.did} rank={i + 1} {...entry} />
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
