@@ -42,17 +42,17 @@ export function appendHumanSpoke(
         throw new TypeError('appendHumanSpoke: payload must be a plain object');
     }
     // Step 2: human_did regex
-    if (typeof (payload as Record<string, unknown>).human_did !== 'string'
+    if (typeof (payload as unknown as Record<string, unknown>).human_did !== 'string'
         || !DID_RE.test((payload as HumanSpokePayload).human_did)) {
         throw new TypeError('appendHumanSpoke: human_did must match DID_RE');
     }
     // Step 3: nous_did regex
-    if (typeof (payload as Record<string, unknown>).nous_did !== 'string'
+    if (typeof (payload as unknown as Record<string, unknown>).nous_did !== 'string'
         || !DID_RE.test((payload as HumanSpokePayload).nous_did)) {
         throw new TypeError('appendHumanSpoke: nous_did must match DID_RE');
     }
     // Step 4: msg_hash format
-    if (typeof (payload as Record<string, unknown>).msg_hash !== 'string'
+    if (typeof (payload as unknown as Record<string, unknown>).msg_hash !== 'string'
         || !HEX64_RE.test((payload as HumanSpokePayload).msg_hash)) {
         throw new TypeError('appendHumanSpoke: msg_hash must be 64 lowercase hex chars');
     }

@@ -22,7 +22,6 @@ import {
 import type { GenesisConfig } from './genesis/types.js';
 import type { FastifyInstance } from 'fastify';
 import type { SpawnNousDeps } from './api/operator/spawn-system-nous.js';
-import { createPublicClient, http, defineChain } from 'viem';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -165,31 +164,27 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
 
     // Phase 28 SPAWN-01: EVM RPC client for payment confirmation.
     // Only wired when GRID_EVM_RPC_URL is present — tests and DB-less envs omit it.
-    // Uses viem's createPublicClient with a minimal custom chain (chain ID is not used
-    // by getTransactionReceipt, only the transport matters for receipt lookup).
+    // Uses raw JSON-RPC (eth_getTransactionReceipt + eth_getTransactionByHash) so that
+    // no extra npm dependency is needed inside the grid container.
     const evmRpcUrl = process.env.GRID_EVM_RPC_URL;
     const evmConfirmTx = evmRpcUrl
-        ? (() => {
-              const chain = defineChain({
-                  id: 1,
-                  name: 'noesis-evm',
-                  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-                  rpcUrls: { default: { http: [evmRpcUrl] } },
-              });
-              const client = createPublicClient({ chain, transport: http(evmRpcUrl) });
-              return async (txHash: string): Promise<{ confirmed: boolean; from?: string }> => {
-                  try {
-                      const receipt = await client.getTransactionReceipt({
-                          hash: txHash as `0x${string}`,
-                      });
-                      if (!receipt) return { confirmed: false };
-                      const tx = await client.getTransaction({ hash: txHash as `0x${string}` });
-                      return { confirmed: true, from: tx?.from };
-                  } catch {
+        ? async (txHash: string): Promise<{ confirmed: boolean; from?: string }> => {
+              try {
+                  // eth_getTransactionReceipt — null when tx is pending/unknown
+                  const receiptRes = await fetch(evmRpcUrl, {
+                      method: 'POST',
+                      headers: { 'content-type': 'application/json' },
+                      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_getTransactionReceipt', params: [txHash] }),
+                  });
+                  const receiptJson = await receiptRes.json() as { result: { status: string; from?: string } | null };
+                  if (!receiptJson.result || receiptJson.result.status !== '0x1') {
                       return { confirmed: false };
                   }
-              };
-          })()
+                  return { confirmed: true, from: receiptJson.result.from };
+              } catch {
+                  return { confirmed: false };
+              }
+          }
         : undefined;
 
     const server = buildServer({
