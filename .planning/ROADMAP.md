@@ -21,7 +21,7 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
 
 ## Phases (v2.6 — Active)
 
-- [ ] **Phase 31: Audit Pipeline Persistence** — Fix GAP-A root cause. Wire `PersistentAuditChain` into production boot, add tick-cadenced reconcile loop, Pino structured logging on every persist attempt, one-shot backfill script for the 2026-05-22 → present stall. (allowlist unchanged 53)
+- [x] **Phase 31: Audit Pipeline Persistence** — Fix GAP-A root cause. Wire `PersistentAuditChain` into production boot, add tick-cadenced reconcile loop, Pino structured logging on every persist attempt, one-shot backfill script for the 2026-05-22 → present stall. (allowlist unchanged 53) (completed 2026-05-24)
 - [ ] **Phase 32: Firehose Observability** — Frame counters + `/health/detailed` endpoint + health watchdog. Make "tick advances but zero frames delivered" impossible to go unnoticed for >60s. (allowlist unchanged 53)
 - [ ] **Phase 33: portal.auth.* Producers** — Wire `appendPortalAuthLogin` + `appendPortalAuthRegister` sole-producers into SIWE verify + email signup/signin. Add `PORTAL_AUTH_FORBIDDEN_KEYS`. Allowlist 53 → 55 (+2).
 - [ ] **Phase 34: Steward `/system` Health Surfaces** — Audit Pipeline Health card + Firehose Diagnostics card + Events per Minute by Family sparkline + client-side firehose watchdog. (allowlist unchanged 55)
@@ -51,7 +51,7 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
   - [x] 31-03-PLAN.md — PersistentAuditChain wiring in main.ts + Pino logger replaces console.warn + zero-diff regression test (OBS-01, OBS-03)
   - [x] 31-04-PLAN.md — AuditReconcile loop + launcher.clock.onTick wire + batch-cap test (OBS-02)
   - [x] 31-05-PLAN.md — scripts/check-no-silent-catch.mjs CI gate + workflow integration (OBS-03 enforcement)
-  - [ ] 31-06-PLAN.md — 31-HUMAN-UAT.md cutover playbook + STATE.md close-out tick (OBS-01..04 manual verification)
+  - [x] 31-06-PLAN.md — 31-HUMAN-UAT.md cutover playbook + STATE.md close-out tick (OBS-01..04 manual verification)
 
 ### Phase 32: Firehose Observability
 **Goal**: Make "tick advances but zero frames delivered" impossible to go unnoticed for >60 seconds. Add frame counters to `WsFirehoseHub`, expose pipeline health via `/health/detailed`, ship a tick-cadenced health watchdog.
@@ -143,7 +143,7 @@ Dependencies form a strict chain. Rationale:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 31. Audit Pipeline Persistence | 5/6 | In Progress|  |
+| 31. Audit Pipeline Persistence | 6/6 | Complete   | 2026-05-24 |
 | 32. Firehose Observability | 0/? | Pending | — |
 | 33. portal.auth.* Producers | 0/? | Pending | — |
 | 34. Steward `/system` Health Surfaces | 0/? | Pending | — |

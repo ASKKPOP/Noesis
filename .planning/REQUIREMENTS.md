@@ -11,10 +11,10 @@
 <!-- Production currently uses plain AuditChain; PersistentAuditChain exists but is never instantiated.
      Result: no entry has flushed to MySQL since 2026-05-22T06:57Z. Fix is structural, not a flusher tweak. -->
 
-- [ ] **OBS-01**: `PersistentAuditChain` is instantiated in the production boot path (`grid/src/main.ts`) when `dbConn` is present, and passed into `GenesisLauncher` via injected deps. Replaces the plain `AuditChain` construction at `grid/src/genesis/launcher.ts:138`. Listener fan-out semantics preserved (zero-diff invariant — `super.append()` first, then fire-and-forget DB write).
-- [ ] **OBS-02**: A tick-cadenced reconcile loop (every 60 ticks, ≈30s at default rate) compares `chain.length` to `SELECT MAX(id) FROM audit_trail WHERE grid_name = ?` and replays missing tail entries via `INSERT IGNORE` (idempotent). Lives at `grid/src/db/audit-reconcile.ts`, wired into `launcher.clock.onTick()`. Logs `{ event: 'audit_reconcile_ok', divergence: N }` on every cadence tick (not just failures) — silence is itself a signal.
-- [ ] **OBS-03**: All audit-persistence failure paths log via Pino structured logging with `{ event: 'audit_persist_failed', entry_id, event_type, error_message, error_code }`. Zero silent `.catch(err => console.warn(...))` patterns remain in `grid/src/db/` or `grid/src/audit/`. Enforced by `scripts/check-no-silent-catch.mjs` CI gate.
-- [ ] **OBS-04**: A one-shot backfill script (`scripts/backfill-audit-trail.mjs`) recovers in-memory entries that never reached MySQL during the 2026-05-22 → present stall. Reads in-memory chain via REST (`GET /api/v1/audit/trail`), writes to MySQL via direct mysql2 connection. Idempotent (uses `INSERT IGNORE`). Documented manual UAT step in `31-HUMAN-UAT.md`.
+- [x] **OBS-01**: `PersistentAuditChain` is instantiated in the production boot path (`grid/src/main.ts`) when `dbConn` is present, and passed into `GenesisLauncher` via injected deps. Replaces the plain `AuditChain` construction at `grid/src/genesis/launcher.ts:138`. Listener fan-out semantics preserved (zero-diff invariant — `super.append()` first, then fire-and-forget DB write).
+- [x] **OBS-02**: A tick-cadenced reconcile loop (every 60 ticks, ≈30s at default rate) compares `chain.length` to `SELECT MAX(id) FROM audit_trail WHERE grid_name = ?` and replays missing tail entries via `INSERT IGNORE` (idempotent). Lives at `grid/src/db/audit-reconcile.ts`, wired into `launcher.clock.onTick()`. Logs `{ event: 'audit_reconcile_ok', divergence: N }` on every cadence tick (not just failures) — silence is itself a signal.
+- [x] **OBS-03**: All audit-persistence failure paths log via Pino structured logging with `{ event: 'audit_persist_failed', entry_id, event_type, error_message, error_code }`. Zero silent `.catch(err => console.warn(...))` patterns remain in `grid/src/db/` or `grid/src/audit/`. Enforced by `scripts/check-no-silent-catch.mjs` CI gate.
+- [x] **OBS-04**: A one-shot backfill script (`scripts/backfill-audit-trail.mjs`) recovers in-memory entries that never reached MySQL during the 2026-05-22 → present stall. Reads in-memory chain via REST (`GET /api/v1/audit/trail`), writes to MySQL via direct mysql2 connection. Idempotent (uses `INSERT IGNORE`). Documented manual UAT step in `31-HUMAN-UAT.md`.
 
 ### OBS — Firehose Observability (Phase 32 — frame visibility)
 
@@ -74,10 +74,10 @@
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| OBS-01 | 31 | Pending |
-| OBS-02 | 31 | Pending |
-| OBS-03 | 31 | Pending |
-| OBS-04 | 31 | Pending |
+| OBS-01 | 31 | Complete |
+| OBS-02 | 31 | Complete |
+| OBS-03 | 31 | Complete |
+| OBS-04 | 31 | Complete |
 | OBS-05 | 32 | Pending |
 | OBS-06 | 32 | Pending |
 | OBS-07 | 32 | Pending |
