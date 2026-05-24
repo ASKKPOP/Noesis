@@ -52,15 +52,15 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
   - [x] 27-02-PLAN.md — Brain skill-by-hash endpoint + Grid portal Nous data endpoints (skills/lore/norms)
   - [x] 27-03-PLAN.md — Chat page: NousSidebar + ConversationPane + TipPanel + SVG avatars
   - [x] 27-04-PLAN.md — Nous profile page: HeroCard + ProfileTabBar + Skills/Lore/Norms tabs
-- [ ] **Phase 28: Personal Nous** — Human spawns own Nous agent (costs Cyber Coin), names it, picks personality seeds, it gets a DID and runs in the Genesis Grid alongside Sophia/Hermes/Themis. `humanOwner` field wired. Allowlist +1 (nous.spawned_by_human).
+- [x] **Phase 28: Personal Nous** — Human spawns own Nous agent (costs Cyber Coin), names it, picks personality seeds, it gets a DID and runs in the Genesis Grid alongside Sophia/Hermes/Themis. `humanOwner` field wired. Allowlist +1 (nous.spawned_by_human). (completed 2026-05-24)
   **Requirements:** [SPAWN-01, SPAWN-02, SPAWN-03, SPAWN-04, SPAWN-05, SPAWN-06]
   **Plans:** 5 plans
   Plans:
   - [x] 28-01-PLAN.md — Grid foundation: allowlist 53 + appendNousSpawnedByHuman + bootstrapPsycheHash extension + migrations v15/v16 + check-frozen.ts
   - [x] 28-02-PLAN.md — Wave 0 test scaffolds (RED): spawn-nous.test.ts + append-nous-spawned-by-human.test.ts + broadcast-allowlist.test.ts length 53
   - [x] 28-03-PLAN.md — Portal spawn API: POST /spawn + GET /spawn/status + /spawn/config + /spawn/check-name + /me/nous + chat.ts dynamic personal-Nous prompt
-  - [ ] 28-04-PLAN.md — Dashboard 4-step spawn wizard at /portal/nous/spawn (wagmi USDT payment + 3s polling/2-min timeout)
-  - [ ] 28-05-PLAN.md — Dashboard /portal/my-nous owner hub (double-duty: empty CTA + OwnerHub + PersonalNousAvatar + HeroCard extension)
+  - [x] 28-04-PLAN.md — Dashboard 4-step spawn wizard at /portal/nous/spawn (wagmi USDT payment + 3s polling/2-min timeout)
+  - [x] 28-05-PLAN.md — Dashboard /portal/my-nous owner hub (double-duty: empty CTA + OwnerHub + PersonalNousAvatar + HeroCard extension)
 - [ ] **Phase 29: Community** — User directory, community board (posts, replies), live activity feed, follow other users, leaderboard by Cyber Coin holdings and Nous contributions.
 - [ ] **Phase 30: Resources & Support** — Help center, interactive guide, FAQ, onboarding documentation, support ticket flow, Noēsis glossary (Nous, Ousia, Agora, lore, norms explained).
 
@@ -971,11 +971,11 @@ Plans:
 - `.planning/phases/27-nous-interaction/27-CONTEXT.md` — Portal patterns, Nous profile pages, tip mechanic
 - `.planning/STATE.md` — accumulated context (allowlist discipline, zero-diff invariant)
 
-**Plans:** 3/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 - [x] 28-01-PLAN.md — Grid foundation: allowlist 52→53 + appendNousSpawnedByHuman + bootstrapPsycheHash(personalitySeed?) + migrations v15 (personality_seed) + v16 (spawn_payments) + check-frozen.ts spawn route
 - [x] 28-02-PLAN.md — Wave 0 RED tests: spawn-nous.test.ts (SPAWN-01..06) + append-nous-spawned-by-human.test.ts (SPAWN-04) + broadcast-allowlist.test.ts length 53
-- [ ] 28-03-PLAN.md — Portal spawn API: POST /spawn, GET /spawn/status/:txHash, /spawn/config, /spawn/check-name, /human/me/nous + chat.ts dynamic personal-Nous system prompt
-- [ ] 28-04-PLAN.md — Dashboard 4-step wizard at /portal/nous/spawn (page + SpawnWizardClient + StepIndicator + StepName + StepSeed + SeedCard + StepRegion + StepPay + WizardSummaryCard + PaymentPolling)
-- [ ] 28-05-PLAN.md — Dashboard /portal/my-nous owner hub (page replace + OwnerHub + OwnerInfoSection + PersonalNousAvatar + HeroCard extension)
+- [x] 28-03-PLAN.md — Portal spawn API: POST /spawn, GET /spawn/status/:txHash, /spawn/config, /spawn/check-name, /human/me/nous + chat.ts dynamic personal-Nous system prompt
+- [x] 28-04-PLAN.md — Dashboard 4-step wizard at /portal/nous/spawn (page + SpawnWizardClient + StepIndicator + StepName + StepSeed + SeedCard + StepRegion + StepPay + WizardSummaryCard + PaymentPolling)
+- [x] 28-05-PLAN.md — Dashboard /portal/my-nous owner hub (page replace + OwnerHub + OwnerInfoSection + PersonalNousAvatar + HeroCard extension)
