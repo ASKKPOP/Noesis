@@ -12,9 +12,11 @@ import { HumanRegistry } from './human/index.js';
 import { Reviewer } from './review/index.js';
 import { LoreStorage } from './lore/LoreStorage.js';
 import {
+    AuditStore,
     DatabaseConnection,
     MigrationRunner,
     GridStore,
+    PersistentAuditChain,
     snapshotGrid,
     restoreGrid,
     MIGRATIONS,
@@ -67,18 +69,28 @@ const SEED_NOUS = [
  * Does NOT start the clock or listen for HTTP — call `app.start()` for that.
  */
 export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
-    const launcher = new GenesisLauncher(config.genesisConfig);
-
     let store: GridStore | undefined;
     let dbConn: DatabaseConnection | undefined;
+    let chain: PersistentAuditChain | undefined;
 
-    // Connect to DB + run migrations if configured
+    // Connect to DB + run migrations if configured.
+    // Phase 31 OBS-01 (D-31-A1): construct PersistentAuditChain BEFORE the
+    // GenesisLauncher so listeners constructed inside the launcher constructor
+    // (DialogueAggregator, RelationshipListener, NormDetector, GovernanceEngine)
+    // bind to the persistent chain — see CONTEXT.md D-31-A1.
     if (config.db) {
         dbConn = new DatabaseConnection(config.db);
         const runner = new MigrationRunner(dbConn);
         await runner.run();
         store = new GridStore(dbConn);
+        const auditStore = new AuditStore(dbConn);
+        chain = new PersistentAuditChain(auditStore, config.genesisConfig.gridName);
     }
+
+    const launcher = new GenesisLauncher(
+        config.genesisConfig,
+        chain ? { audit: chain } : undefined,
+    );
 
     // Bootstrap infra (regions, connections, laws) — skip Nous for now
     launcher.bootstrap({ skipSeedNous: true });

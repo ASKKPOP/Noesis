@@ -27,6 +27,20 @@ import { GENESIS_SHOPS } from './presets.js';
 import type { GenesisConfig, GridState } from './types.js';
 
 /**
+ * Phase 31 OBS-01 (D-31-A1): optional dependencies that can be supplied at
+ * launcher construction time. Currently used to inject a PersistentAuditChain
+ * so listener bindings inside the constructor (DialogueAggregator,
+ * RelationshipListener, NormDetector, GovernanceEngine) attach to the
+ * persistent chain — preserving the zero-diff invariant that a post-construction
+ * setter pattern would have broken (see CONTEXT.md D-31-A1 rationale vs D-9-04).
+ *
+ * Future phases may extend this type (e.g. health watchdogs, custom loggers).
+ */
+export interface GenesisLauncherDeps {
+    audit?: AuditChain;
+}
+
+/**
  * Deterministic bootstrap psyche_hash for a freshly-spawned Nous.
  *
  * Phase 10b BIOS-02 wires the bios-birth event emission at every spawn boundary
@@ -125,7 +139,10 @@ export class GenesisLauncher {
 
     private startedAt = 0;
 
-    constructor(private readonly config: GenesisConfig) {
+    constructor(
+        private readonly config: GenesisConfig,
+        deps?: GenesisLauncherDeps,
+    ) {
         this.gridName = config.gridName;
         this.gridDomain = config.gridDomain;
 
@@ -135,7 +152,10 @@ export class GenesisLauncher {
         });
         this.space = new SpatialMap();
         this.logos = new LogosEngine();
-        this.audit = new AuditChain();
+        // Phase 31 OBS-01 (D-31-A1): use injected chain if provided (production
+        // wiring passes PersistentAuditChain when MySQL is configured), otherwise
+        // construct a plain AuditChain (unit-test path, no DB).
+        this.audit = deps?.audit ?? new AuditChain();
         this.economy = new EconomyManager(config.economy);
         this.registry = new NousRegistry();
         this.shops = new ShopRegistry();
