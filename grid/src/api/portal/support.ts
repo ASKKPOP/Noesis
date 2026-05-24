@@ -6,6 +6,7 @@
  *                   GET  /api/v1/portal/support/tickets
  */
 
+import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 
@@ -75,4 +76,85 @@ export function registerSupportRoutes(
     });
 
     // Ticket routes added in Phase 30 Plan 05
+
+    const VALID_SUBJECTS = new Set([
+        'Bug Report',
+        'Feature Request',
+        'Account Issue',
+        'Payment Issue',
+        'Other',
+    ]);
+
+    /**
+     * POST /api/v1/portal/support/tickets
+     *
+     * Creates a support ticket for the authenticated human.
+     * Body: { subject: string, message: string, attachment_url?: string }
+     * Returns: { id: string, status: 'open' }
+     *
+     * Validation:
+     * - subject must be one of VALID_SUBJECTS
+     * - message must be 1-1000 characters
+     * - attachment_url: ignored in v1 (D-14: file upload deferred)
+     *
+     * No audit event emitted (allowlist stays at 53 — D-15).
+     */
+    app.post('/api/v1/portal/support/tickets', async (request, reply) => {
+        const humanDid = (request as any).session?.humanDid as string | undefined;
+        if (!humanDid) {
+            return reply.status(401).send({ error: 'Unauthorized' });
+        }
+        if (!services.humanPool) {
+            return reply.status(503).send({ error: 'Service unavailable' });
+        }
+
+        const body = request.body as Record<string, unknown>;
+        const subject = typeof body?.subject === 'string' ? body.subject.trim() : '';
+        const message = typeof body?.message === 'string' ? body.message.trim() : '';
+
+        if (!VALID_SUBJECTS.has(subject)) {
+            return reply.status(400).send({
+                error: `Invalid subject. Must be one of: ${[...VALID_SUBJECTS].join(', ')}`,
+            });
+        }
+        if (message.length < 1 || message.length > 1000) {
+            return reply.status(400).send({ error: 'Message must be 1-1000 characters.' });
+        }
+
+        const id = randomUUID();
+        await services.humanPool.query(
+            `INSERT INTO support_tickets (id, human_did, subject, message, attachment_url, status)
+             VALUES (?, ?, ?, ?, NULL, 'open')`,
+            [id, humanDid, subject, message],
+        );
+
+        return reply.status(201).send({ id, status: 'open' });
+    });
+
+    /**
+     * GET /api/v1/portal/support/tickets
+     *
+     * Returns the authenticated human's own support tickets (last 20, newest first).
+     * Returns: { tickets: Array<{ id, subject, status, created_at }> }
+     */
+    app.get('/api/v1/portal/support/tickets', async (request, reply) => {
+        const humanDid = (request as any).session?.humanDid as string | undefined;
+        if (!humanDid) {
+            return reply.status(401).send({ error: 'Unauthorized' });
+        }
+        if (!services.humanPool) {
+            return reply.send({ tickets: [] });
+        }
+
+        const [rows] = await services.humanPool.query(
+            `SELECT id, subject, status, created_at
+             FROM support_tickets
+             WHERE human_did = ?
+             ORDER BY created_at DESC
+             LIMIT 20`,
+            [humanDid],
+        ) as [Array<{ id: string; subject: string; status: string; created_at: string }>, unknown];
+
+        return reply.send({ tickets: rows });
+    });
 }
