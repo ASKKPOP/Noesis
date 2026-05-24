@@ -70,14 +70,14 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
   - [x] 29-03-PLAN.md — Dashboard: PostCard + PostComposer + ReplyThread components + community board Board tab
   - [x] 29-04-PLAN.md — Dashboard: FollowButton component wired into Users tab
   - [x] 29-05-PLAN.md — Dashboard: ActivityEventCard component + /portal/activity live feed (10s polling)
-- [ ] **Phase 30: Resources & Support** — Help center, interactive guide, FAQ, onboarding documentation, support ticket flow, Noēsis glossary (Nous, Ousia, Agora, lore, norms explained).
+- [x] **Phase 30: Resources & Support** — Help center, interactive guide, FAQ, onboarding documentation, support ticket flow, Noēsis glossary (Nous, Ousia, Agora, lore, norms explained). (completed 2026-05-24)
   **Plans:** 5 plans across 3 waves
   Plans:
-  - [ ] 30-01-PLAN.md — Help Center hub page (/portal/help) + PortalSidebar nav update
-  - [ ] 30-02-PLAN.md — FAQ page (/portal/help/faq) — accordion + client-side search (~20 Q&As)
-  - [ ] 30-03-PLAN.md — Glossary page (/portal/help/glossary) — 25 terms, anchor links, letter nav
-  - [ ] 30-04-PLAN.md — Getting Started Guide (/portal/help/guide) + Grid progress endpoint
-  - [ ] 30-05-PLAN.md — Support ticket flow (/portal/help/contact) + DB migration v18 + Grid POST/GET tickets
+  - [x] 30-01-PLAN.md — Help Center hub page (/portal/help) + PortalSidebar nav update
+  - [x] 30-02-PLAN.md — FAQ page (/portal/help/faq) — accordion + client-side search (~20 Q&As)
+  - [x] 30-03-PLAN.md — Glossary page (/portal/help/glossary) — 25 terms, anchor links, letter nav
+  - [x] 30-04-PLAN.md — Getting Started Guide (/portal/help/guide) + Grid progress endpoint
+  - [x] 30-05-PLAN.md — Support ticket flow (/portal/help/contact) + DB migration v22 + Grid POST/GET tickets
 
 ## Phases (v2.4 Active)
 

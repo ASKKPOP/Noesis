@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Human Portal — Active)
 status: executing
-stopped_at: Phase 29 complete — Phase 30 next
-last_updated: "2026-05-24T02:30:00.000Z"
+stopped_at: Phase 30 complete — v2.5 all phases shipped
+last_updated: "2026-05-24T10:00:00.000Z"
 last_activity: 2026-05-24
 progress:
   total_phases: 34
-  completed_phases: 32
-  total_plans: 176
-  completed_plans: 176
+  completed_phases: 33
+  total_plans: 181
+  completed_plans: 181
   percent: 100
 ---
 
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md (updated 2026-05-16)
 **Core value:** The first persistent Grid where Nous actually live — and now, the first milestone where real human users can enter: Web3 wallet auth, Cyber Coin (real EVM crypto), Sophia-guided onboarding, Nous chat & tips, personal Nous spawning, community, and help.
 **Current milestone:** v2.5 — Human Portal
 **Previous milestone:** v2.4 Agora — SHIPPED 2026-05-20 (115/115 plans)
-**Current focus:** Phase 30 — resources-support
+**Current focus:** v2.5 complete — all phases shipped
 
 ## Current Position
 
