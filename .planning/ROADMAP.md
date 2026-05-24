@@ -50,7 +50,7 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
   - [x] 31-02-PLAN.md — Backfill script scripts/backfill-audit-trail.mjs (OBS-04)
   - [x] 31-03-PLAN.md — PersistentAuditChain wiring in main.ts + Pino logger replaces console.warn + zero-diff regression test (OBS-01, OBS-03)
   - [x] 31-04-PLAN.md — AuditReconcile loop + launcher.clock.onTick wire + batch-cap test (OBS-02)
-  - [ ] 31-05-PLAN.md — scripts/check-no-silent-catch.mjs CI gate + workflow integration (OBS-03 enforcement)
+  - [x] 31-05-PLAN.md — scripts/check-no-silent-catch.mjs CI gate + workflow integration (OBS-03 enforcement)
   - [ ] 31-06-PLAN.md — 31-HUMAN-UAT.md cutover playbook + STATE.md close-out tick (OBS-01..04 manual verification)
 
 ### Phase 32: Firehose Observability
@@ -143,7 +143,7 @@ Dependencies form a strict chain. Rationale:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 31. Audit Pipeline Persistence | 4/6 | In Progress|  |
+| 31. Audit Pipeline Persistence | 5/6 | In Progress|  |
 | 32. Firehose Observability | 0/? | Pending | — |
 | 33. portal.auth.* Producers | 0/? | Pending | — |
 | 34. Steward `/system` Health Surfaces | 0/? | Pending | — |
