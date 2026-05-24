@@ -69,7 +69,7 @@ Phase numbering continues from v2.2 — do NOT reset without `--reset-phase-numb
   - [x] 29-02-PLAN.md — Dashboard: UserDirectoryRow + LeaderboardRow components + community hub tabbed page + leaderboard sub-page
   - [ ] 29-03-PLAN.md — Dashboard: PostCard + PostComposer + ReplyThread components + community board Board tab
   - [ ] 29-04-PLAN.md — Dashboard: FollowButton component wired into Users tab
-  - [ ] 29-05-PLAN.md — Dashboard: ActivityEventCard component + /portal/activity live feed (10s polling)
+  - [x] 29-05-PLAN.md — Dashboard: ActivityEventCard component + /portal/activity live feed (10s polling)
 - [ ] **Phase 30: Resources & Support** — Help center, interactive guide, FAQ, onboarding documentation, support ticket flow, Noēsis glossary (Nous, Ousia, Agora, lore, norms explained).
   **Plans:** 5 plans across 3 waves
   Plans:
