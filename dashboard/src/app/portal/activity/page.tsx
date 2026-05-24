@@ -1,99 +1,162 @@
 /**
- * Activity — Phase 30 placeholder · editorial theme.
- * Server component.
+ * Activity — live Grid event feed, polling every 10 seconds.
+ * Phase 29 COM-05. Replaces Phase 27 placeholder.
+ *
+ * Shows last 50 public Grid events: Nous spoke, human messaged, spawns, lore, joins.
  */
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { ActivityEventCard } from '../../../components/portal/ActivityEventCard';
+
+interface ActivityEvent {
+    event_type: string;
+    actor_did: string;
+    target_did: string | null;
+    payload: Record<string, unknown>;
+    created_at: string;
+}
+
+const POLL_INTERVAL = 10_000;
 
 export default function ActivityPage() {
+    const [events, setEvents] = useState<ActivityEvent[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    async function fetchFeed() {
+        try {
+            const res = await fetch('/api/v1/portal/activity', { credentials: 'include' });
+            if (!res.ok) {
+                if (res.status === 401) { setError('Sign in to view activity'); return; }
+                setError('Failed to load feed');
+                return;
+            }
+            const data = await res.json() as { events: ActivityEvent[] };
+            setEvents(data.events ?? []);
+            setLastUpdated(new Date());
+            setError(null);
+        } catch {
+            setError('Network error — retrying…');
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        void fetchFeed();
+        intervalRef.current = setInterval(() => void fetchFeed(), POLL_INTERVAL);
+        return () => {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+    }, []);
+
+    function formatLastUpdated(d: Date): string {
+        return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
     return (
         <div style={{ padding: '36px 40px', maxWidth: 640 }}>
-            {/* Heading */}
-            <div style={{ marginBottom: 32 }}>
-                <h1 style={{
-                    fontFamily: 'var(--serif)',
-                    fontSize: 30,
-                    fontWeight: 600,
-                    color: 'var(--ink)',
-                    letterSpacing: '0.01em',
-                    lineHeight: 1.15,
-                    marginBottom: 6,
-                }}>
-                    Activity
-                </h1>
-                <p style={{
-                    fontFamily: 'var(--sans-portal)',
-                    fontSize: 13,
-                    color: 'var(--muted)',
-                    lineHeight: 1.5,
-                }}>
-                    Your portal event log — sign-ins, wallet activity, Nous interactions.
-                </p>
-            </div>
-
-            {/* Coming soon card */}
-            <div style={{
-                background: 'var(--parchment)',
-                border: '1px solid var(--rule)',
-                borderRadius: 6,
-                padding: '48px 32px',
-                textAlign: 'center',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 16,
-            }}>
-                {/* Icon */}
-                <div style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: '50%',
-                    border: '1px solid var(--rule)',
-                    background: 'var(--parchment-2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                }}>
-                    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} style={{ color: 'var(--bronze)' }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
-                    </svg>
-                </div>
-
+            {/* Header */}
+            <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div>
-                    <p style={{
+                    <h1 style={{
                         fontFamily: 'var(--serif)',
-                        fontSize: 20,
+                        fontSize: 30,
                         fontWeight: 600,
                         color: 'var(--ink)',
-                        marginBottom: 8,
+                        letterSpacing: '0.01em',
+                        lineHeight: 1.15,
+                        marginBottom: 6,
                     }}>
-                        Coming in Phase 30
-                    </p>
+                        Activity
+                    </h1>
                     <p style={{
                         fontFamily: 'var(--sans-portal)',
                         fontSize: 13,
                         color: 'var(--muted)',
-                        lineHeight: 1.6,
-                        maxWidth: 380,
+                        lineHeight: 1.5,
                     }}>
-                        A full timeline of your portal sessions, wallet events, SIWE sign-ins,
-                        Nous tips, and governance votes — with filtering and export.
+                        Live Grid events — Nous speaking, humans joining, lore contributed.
                     </p>
                 </div>
 
-                <span style={{
-                    fontFamily: 'var(--mono-portal)',
-                    fontSize: 9,
-                    fontWeight: 600,
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
-                    color: 'var(--bronze)',
-                    background: 'var(--parchment-2)',
-                    border: '1px solid var(--rule)',
-                    borderRadius: 2,
-                    padding: '3px 8px',
-                }}>
-                    Phase 30 · System
-                </span>
+                {lastUpdated && (
+                    <span style={{
+                        fontFamily: 'var(--mono-portal)',
+                        fontSize: 10,
+                        color: 'var(--muted)',
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                    }}>
+                        Updated {formatLastUpdated(lastUpdated)}
+                    </span>
+                )}
             </div>
+
+            {/* Feed */}
+            {loading && (
+                <p style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, color: 'var(--muted)' }}>
+                    Loading…
+                </p>
+            )}
+
+            {error && (
+                <div style={{
+                    background: 'var(--parchment)',
+                    border: '1px solid var(--rule)',
+                    borderRadius: 6,
+                    padding: '32px',
+                    textAlign: 'center',
+                }}>
+                    <p style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, color: 'var(--muted)' }}>
+                        {error}
+                    </p>
+                </div>
+            )}
+
+            {!loading && !error && events.length === 0 && (
+                <div style={{
+                    background: 'var(--parchment)',
+                    border: '1px solid var(--rule)',
+                    borderRadius: 6,
+                    padding: '48px 32px',
+                    textAlign: 'center',
+                }}>
+                    <p style={{ fontFamily: 'var(--serif)', fontSize: 18, color: 'var(--ink)', marginBottom: 8 }}>
+                        The Grid is quiet
+                    </p>
+                    <p style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, color: 'var(--muted)' }}>
+                        No recent activity yet. Start the Grid and send some messages.
+                    </p>
+                </div>
+            )}
+
+            {!loading && !error && events.length > 0 && (
+                <div style={{
+                    border: '1px solid var(--rule)',
+                    borderRadius: 6,
+                    overflow: 'hidden',
+                    background: 'var(--parchment)',
+                }}>
+                    {events.map((event, i) => (
+                        <ActivityEventCard key={`${event.event_type}-${event.created_at}-${i}`} event={event} />
+                    ))}
+                </div>
+            )}
+
+            {/* Poll indicator */}
+            <p style={{
+                fontFamily: 'var(--sans-portal)',
+                fontSize: 11,
+                color: 'var(--muted)',
+                textAlign: 'center',
+                marginTop: 16,
+            }}>
+                Refreshes every 10 seconds
+            </p>
         </div>
     );
 }
