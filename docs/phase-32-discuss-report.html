@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Noēsis Phase 32 · Discuss Report</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --panel: #141414;
+    --panel-2: #1a1a1a;
+    --rule: #27272a;
+    --rule-soft: #1f1f1f;
+    --ink: #f5f5f4;
+    --ink-dim: #a8a29e;
+    --ink-faint: #57534e;
+    --terra: #D97757;
+    --terra-dark: #C06640;
+    --terra-bg: rgba(217,119,87,0.08);
+    --terra-border: rgba(217,119,87,0.30);
+    --ok: #4ade80;
+    --ok-bg: rgba(74,222,128,0.12);
+    --warn: #facc15;
+    --warn-bg: rgba(250,204,21,0.10);
+    --bad: #f87171;
+    --info: #60a5fa;
+    --info-bg: rgba(96,165,250,0.10);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 1180px; margin: 0 auto; padding: 40px 24px 80px; }
+  header { border-bottom: 1px solid var(--rule); padding-bottom: 22px; margin-bottom: 32px; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em;
+    font-size: 11px; font-weight: 700; color: var(--terra); margin-bottom: 10px;
+  }
+  h1 { font-size: 30px; line-height: 1.18; margin: 0 0 10px; letter-spacing: -0.015em; font-weight: 700; }
+  .subline { color: var(--ink-dim); font-size: 14px; max-width: 900px; }
+  h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--terra); margin: 40px 0 14px; font-weight: 700;
+  }
+  h2 .ko { color: var(--ink-dim); font-weight: 500; margin-left: 10px; text-transform: none; letter-spacing: 0; font-size: 12px; }
+  h3 { font-size: 16px; margin: 0 0 8px; font-weight: 700; color: var(--ink); }
+  p { margin: 0 0 12px; color: var(--ink-dim); }
+  code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 12.5px;
+    background: var(--panel-2); color: var(--terra); padding: 1.5px 5px;
+    border-radius: 3px; border: 1px solid var(--rule);
+  }
+  a { color: var(--terra); }
+  a:hover { color: #fff; }
+
+  /* Status badge */
+  .badge {
+    display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+    padding: 3px 9px; border-radius: 4px; text-transform: uppercase;
+  }
+  .b-done { background: var(--ok); color: #0a0a0a; }
+  .b-active { background: var(--terra); color: #fff; }
+  .b-next { background: var(--info); color: #0a0a0a; }
+  .b-soon { background: var(--warn); color: #0a0a0a; }
+  .b-defer { background: var(--ink-faint); color: #fff; }
+
+  /* Status summary band */
+  .status-band {
+    background: var(--ok-bg);
+    border: 1px solid rgba(74,222,128,0.30);
+    border-left: 3px solid var(--ok);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+  }
+  .status-band h3 { color: var(--ok); margin-bottom: 6px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.12em; }
+  .status-band ul { margin: 0; padding-left: 18px; color: var(--ink-dim); font-size: 13px; }
+  .status-band li { margin-bottom: 4px; }
+
+  /* Phase row table */
+  .phase-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .phase-table th {
+    text-align: left; padding: 9px 12px;
+    background: var(--rule-soft); color: var(--ink);
+    border-bottom: 1px solid var(--rule);
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    font-weight: 700;
+  }
+  .phase-table td {
+    padding: 11px 12px; border-bottom: 1px solid var(--rule);
+    color: var(--ink-dim); vertical-align: top;
+  }
+  .phase-table td.pid { font-family: "SF Mono", Menlo, monospace; color: var(--terra); font-weight: 700; font-size: 12px; }
+  .phase-table td.title { color: var(--ink); font-weight: 600; }
+  .phase-table td.eff { color: var(--ink-faint); font-family: "SF Mono", Menlo, monospace; font-size: 12px; white-space: nowrap; }
+  .phase-table tr.active td { background: rgba(217,119,87,0.05); }
+  .phase-table tr.done td { opacity: 0.7; }
+  .phase-table tr.next td { background: rgba(96,165,250,0.04); }
+
+  /* Decision sub-grid */
+  .sub-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px; margin-top: 10px;
+  }
+  .sub-card {
+    background: var(--panel); border: 1px solid var(--rule);
+    border-left: 3px solid var(--rule);
+    border-radius: 6px; padding: 12px 14px;
+  }
+  .sub-card.done { border-left-color: var(--ok); background: linear-gradient(135deg, var(--ok-bg) 0%, var(--panel) 60%); }
+  .sub-card.next { border-left-color: var(--info); background: linear-gradient(135deg, var(--info-bg) 0%, var(--panel) 60%); }
+  .sub-card.queue { border-left-color: var(--warn); }
+  .sub-card.defer { border-left-color: var(--ink-faint); opacity: 0.85; }
+  .sub-card.terra { border-left-color: var(--terra); background: linear-gradient(135deg, var(--terra-bg) 0%, var(--panel) 60%); }
+  .sub-card .label { font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+  .sub-card .meta {
+    font-family: "SF Mono", Menlo, monospace; font-size: 10.5px;
+    color: var(--ink-faint); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .sub-card .desc { font-size: 12px; color: var(--ink-dim); }
+
+  /* Bilingual two-up */
+  .bi { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+  .bi > div {
+    background: var(--panel-2); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 12px 14px; font-size: 12.5px; color: var(--ink-dim);
+  }
+  .bi .lang { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: var(--terra); margin-bottom: 6px; }
+  @media (max-width: 800px) { .bi { grid-template-columns: 1fr; } }
+
+  /* Critical-path callout */
+  .critical {
+    background: linear-gradient(135deg, rgba(217,119,87,0.10), transparent);
+    border: 1px solid var(--terra-border);
+    border-left: 3px solid var(--terra);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin: 12px 0;
+  }
+  .critical h4 { margin: 0 0 6px; color: var(--terra); font-size: 13px; }
+  .critical p { margin: 0; font-size: 12.5px; color: var(--ink-dim); }
+
+  /* Companion link chips */
+  .companion {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px; border: 1px solid var(--terra-border); border-radius: 5px;
+    color: var(--terra); text-decoration: none; font-size: 12px;
+    background: var(--terra-bg); margin: 4px 4px 0 0;
+  }
+  .companion::before { content: '→'; font-weight: 700; }
+  .companion:hover { background: var(--terra); color: #fff; }
+
+  /* Decision row table — used for D-32-* list */
+  .decision-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  .decision-table th {
+    text-align: left; padding: 9px 12px;
+    background: var(--rule-soft); color: var(--ink);
+    border-bottom: 1px solid var(--rule);
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    font-weight: 700;
+  }
+  .decision-table td {
+    padding: 11px 12px; border-bottom: 1px solid var(--rule);
+    color: var(--ink-dim); vertical-align: top;
+  }
+  .decision-table td.did { font-family: "SF Mono", Menlo, monospace; color: var(--terra); font-weight: 700; font-size: 11.5px; white-space: nowrap; }
+  .decision-table td.what { color: var(--ink); font-weight: 600; }
+
+  /* Metric tiles */
+  .metric-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px; margin: 14px 0 8px;
+  }
+  .metric {
+    background: var(--panel); border: 1px solid var(--rule);
+    border-radius: 6px; padding: 14px 16px;
+  }
+  .metric .num { font-size: 28px; font-weight: 700; color: var(--terra); font-family: "SF Mono", Menlo, monospace; }
+  .metric .lbl { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-dim); margin-top: 2px; }
+  .metric .sub { font-size: 11px; color: var(--ink-faint); margin-top: 4px; font-family: "SF Mono", Menlo, monospace; }
+
+  footer {
+    color: var(--ink-faint); font-size: 11px; text-align: center;
+    border-top: 1px solid var(--rule); padding-top: 22px; margin-top: 50px;
+  }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <div class="eyebrow">Noēsis v2.6 · Phase 32 · Discuss Report · 2026-05-24</div>
+  <h1>Phase 32 — Firehose Observability · Discussion Closed</h1>
+  <div class="subline">
+    18 implementation decisions captured across 7 sub-areas in a single interactive
+    discuss session. Phase 32 (the firehose-visibility leg of v2.6 GAP-A) is now
+    research-ready — CONTEXT.md, DISCUSSION-LOG.md, and STATE.md all committed and
+    pushed to <code>origin/main</code>. Next step: <code>/gsd-plan-phase 32</code>.
+  </div>
+  <div style="margin-top:14px;">
+    <a href="../.planning/phases/32-firehose-observability/32-CONTEXT.md" class="companion">32-CONTEXT.md · decisions</a>
+    <a href="../.planning/phases/32-firehose-observability/32-DISCUSSION-LOG.md" class="companion">32-DISCUSSION-LOG.md · audit trail</a>
+    <a href="../.planning/REQUIREMENTS.md" class="companion">REQUIREMENTS.md · OBS-05/06/07</a>
+    <a href="../.planning/ROADMAP.md" class="companion">ROADMAP.md · Phase 32 entry</a>
+    <a href="../.planning/research/v2.6/OBSERVABILITY-HARDENING.md" class="companion">v2.6 research</a>
+  </div>
+</header>
+
+<!-- ─── STATUS BAND ─────────────────────────────────────────── -->
+<section class="status-band">
+  <h3>Session outcome (2026-05-24)</h3>
+  <ul>
+    <li><strong>7 sub-areas explored</strong> — 4 user-selected up front + 3 emergent wiring concerns surfaced mid-session</li>
+    <li><strong>18 D-32 decisions locked</strong> in <code>32-CONTEXT.md</code> across frame counters · watchdog · status logic · CI gates · wiring · ctor contract · integration sequence</li>
+    <li><strong>Phase 31 inheritance respected</strong> — zero new <code>clock.onTick</code> subscriptions, <code>launcher.auditReconcile</code> getter API treated as frozen cross-phase surface</li>
+    <li><strong>Zero allowlist additions</strong> — Phase 32 ships pure observability; broadcast allowlist stays at <strong>53</strong></li>
+    <li><strong>2 commits pushed</strong> · <code>4be3c5c</code> docs(32) capture phase context · <code>1a23520</code> docs(state) record session · origin/main up to date</li>
+  </ul>
+</section>
+
+<!-- ─── METRICS ────────────────────────────────────────────── -->
+<div class="metric-row">
+  <div class="metric">
+    <div class="num">7</div>
+    <div class="lbl">Sub-areas discussed</div>
+    <div class="sub">4 planned · 3 emergent</div>
+  </div>
+  <div class="metric">
+    <div class="num">18</div>
+    <div class="lbl">Decisions locked</div>
+    <div class="sub">D-32-A1 .. G2</div>
+  </div>
+  <div class="metric">
+    <div class="num">3</div>
+    <div class="lbl">REQs covered</div>
+    <div class="sub">OBS-05 · 06 · 07</div>
+  </div>
+  <div class="metric">
+    <div class="num">0</div>
+    <div class="lbl">Allowlist Δ</div>
+    <div class="sub">stays at 53</div>
+  </div>
+  <div class="metric">
+    <div class="num">2</div>
+    <div class="lbl">Commits pushed</div>
+    <div class="sub">4be3c5c · 1a23520</div>
+  </div>
+</div>
+
+<!-- ─── PHASE GOAL ─────────────────────────────────────────── -->
+<h2>Phase Boundary <span class="ko">/ 페이즈 경계</span></h2>
+
+<p>
+  Make <em>"tick advances but zero frames delivered"</em> impossible to go unnoticed
+  for &gt;60 seconds. Three deliverables:
+</p>
+
+<div class="sub-grid">
+  <div class="sub-card terra">
+    <div class="label">Frame counters on WsFirehoseHub</div>
+    <div class="meta">OBS-05 · grid/src/audit/firehose-hub.ts</div>
+    <div class="desc">
+      <code>stats()</code> returns <code>{ client_count, frames_sent_total, frames_dropped_total, last_frame_at, watermark_bytes }</code>.
+      <code>frames_sent_total</code> increments AFTER successful <code>socket.send</code>
+      (R-32-03 anchor — backpressure-evicted entries never count as "sent").
+    </div>
+  </div>
+  <div class="sub-card terra">
+    <div class="label">GET /health/detailed</div>
+    <div class="meta">OBS-06 · grid/src/api/routes/health-detailed.ts</div>
+    <div class="desc">
+      JSON endpoint surfacing <code>{ status, audit, firehose, clock }</code> blocks.
+      MUST NOT block on DB — reads cached <code>persisted_max_id</code> from
+      <code>launcher.auditReconcile</code>. p95 &lt;50ms regardless of DB state.
+    </div>
+  </div>
+  <div class="sub-card terra">
+    <div class="label">HealthWatchdog</div>
+    <div class="meta">OBS-07 · grid/src/diagnostics/health-watchdog.ts</div>
+    <div class="desc">
+      Pure-pull helper class — no timer, no new <code>clock.onTick</code> subscription.
+      Computes <code>{ status: ok | degraded | critical, reasons }</code> on demand;
+      logs state transitions as <code>health_status_changed</code> events.
+    </div>
+  </div>
+</div>
+
+<div class="critical">
+  <h4>Inherits from Phase 31 (frozen contracts)</h4>
+  <p>
+    <code>launcher.auditReconcile.{lastReconcileAt, persistedMaxId, lastPersistError}</code>
+    getters · the single <code>clock.onTick</code> invariant · Pino singleton at
+    <code>grid/src/util/logger.ts</code> · existing <code>/health</code> route
+    (server.ts:284) stays unchanged for Docker healthcheck SLA · listener fan-out order
+    and zero-diff invariant on <code>AuditChain</code>.
+  </p>
+</div>
+
+<!-- ─── DISCUSSION ROUNDS ──────────────────────────────────── -->
+<h2>Discussion — round-by-round <span class="ko">/ 토론 라운드</span></h2>
+
+<table class="phase-table">
+  <thead>
+    <tr><th>Area</th><th>Sub-area</th><th>Questions</th><th>Decisions</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    <tr class="done">
+      <td class="pid">A1</td>
+      <td class="title">Frame counter eviction plumbing</td>
+      <td class="eff">4</td>
+      <td class="eff">D-32-A1..A4</td>
+      <td><span class="badge b-done">closed</span></td>
+    </tr>
+    <tr class="done">
+      <td class="pid">A2</td>
+      <td class="title">HealthWatchdog cadence + lifecycle</td>
+      <td class="eff">5</td>
+      <td class="eff">D-32-B1..B5</td>
+      <td><span class="badge b-done">closed</span></td>
+    </tr>
+    <tr class="done">
+      <td class="pid">A3</td>
+      <td class="title">/health/detailed status logic + threshold home</td>
+      <td class="eff">3</td>
+      <td class="eff">D-32-C1..C3</td>
+      <td><span class="badge b-done">closed</span></td>
+    </tr>
+    <tr class="done">
+      <td class="pid">A4</td>
+      <td class="title">CI gates + test/UAT depth</td>
+      <td class="eff">3</td>
+      <td class="eff">D-32-D1..D3</td>
+      <td><span class="badge b-done">closed</span></td>
+    </tr>
+    <tr class="done">
+      <td class="pid">A5</td>
+      <td class="title">HealthWatchdog ↔ FirehoseHub wiring (emergent)</td>
+      <td class="eff">1</td>
+      <td class="eff">D-32-E1..E2</td>
+      <td><span class="badge b-done">closed</span></td>
+    </tr>
+    <tr class="done">
+      <td class="pid">A6</td>
+      <td class="title">Watchdog constructor contract (emergent)</td>
+      <td class="eff">1</td>
+      <td class="eff">D-32-F1</td>
+      <td><span class="badge b-done">closed</span></td>
+    </tr>
+    <tr class="done">
+      <td class="pid">A7</td>
+      <td class="title">main.ts integration sequence (emergent)</td>
+      <td class="eff">1</td>
+      <td class="eff">D-32-G1..G2</td>
+      <td><span class="badge b-done">closed</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="bi">
+  <div>
+    <div class="lang">EN</div>
+    Cadence: a single interactive session ran 18 AskUserQuestion turns. The user picked
+    all 4 initially-presented gray areas, then accepted 3 more once early decisions
+    surfaced new wiring concerns (specifically: <em>how does <code>launcher.healthWatchdog</code>
+    reach <code>firehoseHub.stats()</code></em> when the launcher is constructed before
+    the hub?). One trade-off accepted explicitly — D-32-G2 deviates from the strict
+    <code>readonly</code> invariant locked in Phase 31 for <code>auditReconcile</code>.
+  </div>
+  <div>
+    <div class="lang">KO</div>
+    페이스: 단일 대화형 세션, 18회 AskUserQuestion. 초기 회색 영역 4개를 전부 선택했고,
+    초기 결정에서 새 배선 우려(<em>launcher가 hub보다 먼저 생성되는데 <code>launcher.healthWatchdog</code>이
+    어떻게 <code>firehoseHub.stats()</code>에 도달?</em>)가 드러나자 추가 3개 영역도 선택.
+    트레이드오프 1건 명시적 수용 — D-32-G2는 Phase 31의 <code>auditReconcile</code> 엄격
+    <code>readonly</code> 불변을 의도적으로 완화.
+  </div>
+</div>
+
+<!-- ─── DECISIONS TABLE ─────────────────────────────────────── -->
+<h2>Locked decisions · D-32-* <span class="ko">/ 잠긴 결정 D-32-*</span></h2>
+
+<table class="decision-table">
+  <thead>
+    <tr><th>ID</th><th>Decision</th><th>Rationale (one-liner)</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="did">D-32-A1</td>
+      <td class="what"><code>size===capacity</code> check in <code>ClientConnection.enqueue</code></td>
+      <td>Zero RingBuffer API change; locality stays in firehose layer; simplest read of intent.</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-A2</td>
+      <td class="what">Hub-level <code>metrics</code> + <code>HubMetricsSink</code> callbacks into ClientConnection</td>
+      <td>Counters survive client disconnects; <code>stats()</code> reads in O(1).</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-A3</td>
+      <td class="what"><code>frames_sent_total</code> increments AFTER <code>socket.send</code> inside try-before-catch</td>
+      <td>If send throws, increments never reached — satisfies R-32-03 directly.</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-A4</td>
+      <td class="what"><code>stats()</code> shape per OBS-05 exact</td>
+      <td><code>{ client_count, frames_sent_total, frames_dropped_total, last_frame_at, watermark_bytes }</code>.</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-B1</td>
+      <td class="what">Pure-pull HealthWatchdog — NO timer</td>
+      <td>Zero new <code>clock.onTick</code> subscriptions; R-32-02 trivially satisfied.</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-B2</td>
+      <td class="what"><code>class HealthWatchdog</code> at <code>grid/src/diagnostics/health-watchdog.ts</code></td>
+      <td>One-shot-settable field on <code>GenesisLauncher</code>; mirrors Phase 31 AuditReconcile shape.</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-B3</td>
+      <td class="what">State-transition warn logs only — <code>health_status_changed</code></td>
+      <td>Phase 31 <code>audit_reconcile_ok</code> heartbeat already covers "silence is signal" (R-32-01).</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-B4</td>
+      <td class="what">Cold-start grace window — first 60 ticks = <code>status: 'ok'</code></td>
+      <td>Avoids false-degraded on every fresh boot.</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-B5</td>
+      <td class="what">Constructor accepts <code>opts.now: () =&gt; number</code> + <code>opts.snapshotCadenceMs</code></td>
+      <td>Test seam; mirrors Phase 31 AuditReconcile time injection pattern.</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-C1</td>
+      <td class="what">Frozen <code>HEALTH_THRESHOLDS</code> module const in <code>health-watchdog.ts</code></td>
+      <td>REQ-locked policy, not deployment-tunable config; named export for test reference.</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-C2</td>
+      <td class="what">Pure helper <code>computeStatus()</code> — grace → critical → degraded → ok</td>
+      <td>Trivially unit-testable; reasons array reused by transition log (D-32-B3).</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-C3</td>
+      <td class="what">New file <code>grid/src/api/routes/health-detailed.ts</code>; main scope registration</td>
+      <td>Mirrors <code>tick-metrics.ts</code> pattern; NOT inside WebSocket-only scope.</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-D1</td>
+      <td class="what">2 CI gates · <code>check-observability-no-todo.mjs</code> + <code>check-interval-lifecycle.mjs</code></td>
+      <td>Scoped to <code>diagnostics/</code> + <code>audit/</code> + <code>db/</code>; wired into <code>rig-invariants.yml</code>.</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-D2</td>
+      <td class="what">4-file regression test set (counters · send-throws · route shape · transitions)</td>
+      <td>Clean separation of regressions; construction-order race test deferred (structure locks order).</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-D3</td>
+      <td class="what">Own <code>32-HUMAN-UAT.md</code> with 5 verification steps</td>
+      <td>Independent operator cutover playbook; mirrors Phase 31 D-31-D3 philosophy.</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-E1</td>
+      <td class="what"><code>attachFirehoseHub({ stats })</code> setter on <code>GenesisLauncher</code></td>
+      <td>Structural interface avoids <code>genesis/</code> → <code>audit/</code> import direction; mirrors Phase 9 D-9-04.</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-E2</td>
+      <td class="what">HealthWatchdog gains <code>attachFirehoseStats(fn)</code> companion setter</td>
+      <td>Before attach, firehose block returns all-zero sentinel; throws on double-attach.</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-F1</td>
+      <td class="what">Constructor: getter for <code>clockState</code>, by-reference for <code>auditReconcile</code></td>
+      <td>Tests don't need a full WorldClock; AuditReconcile getters designed for cross-phase access.</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-G1</td>
+      <td class="what"><code>buildServerWithHub</code> constructs HealthWatchdog AND attaches both</td>
+      <td>Single construction site; <code>main.ts</code> untouched by Phase 32.</td>
+    </tr>
+    <tr>
+      <td class="did">D-32-G2</td>
+      <td class="what"><code>healthWatchdog</code> is one-shot-settable, NOT strictly <code>readonly</code> at construction</td>
+      <td>Trade-off accepted: depends on <code>firehoseHub</code> which only exists after <code>buildServerWithHub</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ─── FILES PHASE 32 WILL CREATE ─────────────────────────── -->
+<h2>Files Phase 32 will create <span class="ko">/ Phase 32가 생성할 파일</span></h2>
+
+<div class="sub-grid">
+  <div class="sub-card next">
+    <div class="label">health-watchdog.ts</div>
+    <div class="meta">next · grid/src/diagnostics/</div>
+    <div class="desc">
+      <code>class HealthWatchdog</code> + <code>HEALTH_THRESHOLDS</code> frozen const +
+      <code>computeStatus()</code> pure helper + <code>HealthDetailedPayload</code> type.
+    </div>
+  </div>
+  <div class="sub-card next">
+    <div class="label">health-detailed.ts</div>
+    <div class="meta">next · grid/src/api/routes/</div>
+    <div class="desc">
+      <code>registerHealthDetailedRoute(app, services, launcher)</code> mirroring
+      <code>tick-metrics.ts</code> shape; one-liner handler calls
+      <code>launcher.healthWatchdog!.snapshot()</code>.
+    </div>
+  </div>
+  <div class="sub-card next">
+    <div class="label">check-observability-no-todo.mjs</div>
+    <div class="meta">next · scripts/ (CI gate)</div>
+    <div class="desc">
+      Greps for <code>(TODO|FIXME|XXX)</code> within 50 chars of observability keywords
+      across the three locked dirs. Fails build on match.
+    </div>
+  </div>
+  <div class="sub-card next">
+    <div class="label">check-interval-lifecycle.mjs</div>
+    <div class="meta">next · scripts/ (CI gate)</div>
+    <div class="desc">
+      Asserts every <code>setInterval(</code> in <code>diagnostics/audit/db/</code>
+      is stored in a class field. Locks discipline for future phases (D-32-B1 means
+      zero entries today).
+    </div>
+  </div>
+  <div class="sub-card next">
+    <div class="label">firehose-frame-counters.test.ts</div>
+    <div class="meta">next · grid/test/</div>
+    <div class="desc">
+      Asserts counter increments on send + drop + eviction; <code>last_frame_at</code>
+      ms-epoch freshness.
+    </div>
+  </div>
+  <div class="sub-card next">
+    <div class="label">firehose-send-throws.test.ts</div>
+    <div class="meta">next · grid/test/ · R-32-03 regression</div>
+    <div class="desc">
+      Injected <code>ClientConnection</code> where <code>socket.send</code> always
+      throws; asserts <code>frames_sent_total === 0</code> and other clients keep
+      receiving.
+    </div>
+  </div>
+  <div class="sub-card next">
+    <div class="label">health-detailed-route.test.ts</div>
+    <div class="meta">next · grid/test/</div>
+    <div class="desc">
+      Parametrized matrix over (ok / cold-start-ok / degraded / critical); shape
+      assertions + p95 &lt;50ms latency invariant from 100 calls.
+    </div>
+  </div>
+  <div class="sub-card next">
+    <div class="label">health-watchdog-transitions.test.ts</div>
+    <div class="meta">next · grid/test/</div>
+    <div class="desc">
+      Pino test-sink captures log events; asserts <code>warn</code> fires on transition
+      only, not on consecutive same-status snapshots.
+    </div>
+  </div>
+  <div class="sub-card next">
+    <div class="label">32-HUMAN-UAT.md</div>
+    <div class="meta">next · .planning/phases/32-firehose-observability/</div>
+    <div class="desc">
+      5-step operator playbook · payload shape · counter delta poll · half-closed-socket
+      harness · <code>docker stop noesis-mysql</code> degraded recovery · ab/wrk p95 check.
+    </div>
+  </div>
+</div>
+
+<!-- ─── v2.6 MILESTONE CONTEXT ─────────────────────────────── -->
+<h2>v2.6 milestone position <span class="ko">/ v2.6 마일스톤 위치</span></h2>
+
+<p>
+  Phase 32 is the 2nd of 5 sequential v2.6 phases. Phase 31 shipped 2026-05-24 (operator
+  UAT pending). Phase 33-35 all depend on Phase 32 in turn — most directly Phase 34
+  (Steward Console) which reads the <code>/health/detailed</code> payload shape this
+  phase locks.
+</p>
+
+<table class="phase-table">
+  <thead>
+    <tr><th>Phase</th><th>Title</th><th>REQs</th><th>Allowlist Δ</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    <tr class="done">
+      <td class="pid">31</td>
+      <td class="title">Audit Pipeline Persistence</td>
+      <td class="eff">OBS-01..04</td>
+      <td class="eff">0 (53)</td>
+      <td><span class="badge b-done">shipped 2026-05-24</span></td>
+    </tr>
+    <tr class="next">
+      <td class="pid">32</td>
+      <td class="title">Firehose Observability</td>
+      <td class="eff">OBS-05..07</td>
+      <td class="eff">0 (53)</td>
+      <td><span class="badge b-next">discuss closed · plan-ready</span></td>
+    </tr>
+    <tr>
+      <td class="pid">33</td>
+      <td class="title">portal.auth.* Producers</td>
+      <td class="eff">OBS-08..10</td>
+      <td class="eff">+2 (55)</td>
+      <td><span class="badge b-soon">queued</span></td>
+    </tr>
+    <tr>
+      <td class="pid">34</td>
+      <td class="title">Steward /system Health Surfaces</td>
+      <td class="eff">OBS-11..14</td>
+      <td class="eff">0 (55)</td>
+      <td><span class="badge b-soon">queued</span></td>
+    </tr>
+    <tr>
+      <td class="pid">35</td>
+      <td class="title">UAT Re-Verification + Doc Close-Out</td>
+      <td class="eff">OBS-15</td>
+      <td class="eff">0 (55)</td>
+      <td><span class="badge b-soon">queued</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="critical">
+  <h4>Critical path · v2.6 remaining</h4>
+  <p>
+    Strict sequential: <strong>32 (plan + execute) → 33 → 34 → 35</strong>. Phase 32 is
+    the gate — Phase 34 (Steward UI) can't begin until the
+    <code>/health/detailed</code> payload contract is frozen, and Phase 33 (auth
+    producers) wants the firehose visibility surface to verify wiring at cutover.
+  </p>
+</div>
+
+<!-- ─── DEFERRED ────────────────────────────────────────────── -->
+<h2>Deferred from this session <span class="ko">/ 이번 세션에서 보류</span></h2>
+
+<div class="sub-grid">
+  <div class="sub-card defer">
+    <div class="label">Per-client buffer_high_water_mark</div>
+    <div class="meta">defer · v2.7 candidate</div>
+    <div class="desc">
+      Per-ClientConnection max-buffer-size diagnostic. Out of OBS-05 scope; revisit
+      if Phase 34 Steward dashboards want it.
+    </div>
+  </div>
+  <div class="sub-card defer">
+    <div class="label">Construction-order race regression test</div>
+    <div class="meta">defer · structure-locked</div>
+    <div class="desc">
+      <code>firehose-subscribes-before-clock.test.ts</code> deferred — <code>buildServerWithHub</code>
+      already locks the order; regression would require touching <code>server.ts</code>
+      and would be caught by typecheck/lint.
+    </div>
+  </div>
+  <div class="sub-card defer">
+    <div class="label">Reasons array exposed in route payload</div>
+    <div class="meta">defer · Phase 34</div>
+    <div class="desc">
+      Internal <code>computeStatus().reasons</code> drives the transition log but is
+      NOT exposed in OBS-06 shape. If Phase 34 UI needs WHY a status is degraded,
+      add as an additive non-breaking key.
+    </div>
+  </div>
+  <div class="sub-card defer">
+    <div class="label">Configurable thresholds via launcher config</div>
+    <div class="meta">defer · YAGNI</div>
+    <div class="desc">
+      <code>HEALTH_THRESHOLDS</code> stays as frozen module const. Revisit only if
+      a real operational need surfaces — values are REQ-locked policy.
+    </div>
+  </div>
+  <div class="sub-card defer">
+    <div class="label">Per-client send-error counter</div>
+    <div class="meta">defer · covered by test</div>
+    <div class="desc">
+      R-32-03 send-throws regression test covers the failure mode without payload
+      surface expansion.
+    </div>
+  </div>
+</div>
+
+<!-- ─── COMMITS LANDED ──────────────────────────────────────── -->
+<h2>Commits landed this session <span class="ko">/ 이번 세션 커밋</span></h2>
+
+<table class="phase-table">
+  <thead>
+    <tr><th>Hash</th><th>Message</th><th>Files</th><th>Pushed</th></tr>
+  </thead>
+  <tbody>
+    <tr class="done">
+      <td class="pid">4be3c5c</td>
+      <td class="title">docs(32): capture phase context</td>
+      <td class="eff">32-CONTEXT.md · 32-DISCUSSION-LOG.md</td>
+      <td><span class="badge b-done">origin/main</span></td>
+    </tr>
+    <tr class="done">
+      <td class="pid">1a23520</td>
+      <td class="title">docs(state): record phase 32 context session</td>
+      <td class="eff">.planning/STATE.md</td>
+      <td><span class="badge b-done">origin/main</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="bi">
+  <div>
+    <div class="lang">EN</div>
+    Per the user-mandated "Always push to git after committing" rule, both commits
+    landed on <code>origin/main</code> within the same session as the local commit.
+    Checkpoint file <code>32-DISCUSS-CHECKPOINT.json</code> was written incrementally
+    during the discussion and cleaned up after CONTEXT.md was confirmed canonical.
+  </div>
+  <div>
+    <div class="lang">KO</div>
+    사용자 명시 규칙 "커밋 후 항상 push"에 따라, 두 커밋 모두 같은 세션 내에
+    <code>origin/main</code>까지 도달. 체크포인트 파일 <code>32-DISCUSS-CHECKPOINT.json</code>은
+    토론 중 점진적으로 기록한 후 CONTEXT.md가 정식 산출물로 확정되자 정리.
+  </div>
+</div>
+
+<!-- ─── NEXT STEPS ──────────────────────────────────────────── -->
+<h2>Next steps <span class="ko">/ 다음 단계</span></h2>
+
+<div class="critical">
+  <h4>Suggested · /gsd-plan-phase 32</h4>
+  <p>
+    <code>/clear</code> then <code>/gsd-plan-phase 32</code>. The planner reads
+    <code>32-CONTEXT.md</code>'s 18 locked decisions + the canonical refs section
+    (REQUIREMENTS.md OBS-05/06/07, ROADMAP.md Phase 32, Phase 31 CONTEXT.md,
+    research doc) and breaks the phase into executable plans. Allowlist budget = 0;
+    files-to-create list = 9 (see Files section above).
+  </p>
+</div>
+
+<div class="sub-grid">
+  <div class="sub-card">
+    <div class="label">/gsd-plan-phase 32</div>
+    <div class="meta">recommended · no extra flags</div>
+    <div class="desc">
+      Standard interactive planning. Researcher → Planner → Plan-checker chain.
+    </div>
+  </div>
+  <div class="sub-card">
+    <div class="label">/gsd-discuss-phase 32 --chain</div>
+    <div class="meta">option · auto plan+execute after</div>
+    <div class="desc">
+      Re-run discussion (no-op since CONTEXT.md exists — will offer "Skip"), then
+      auto-advance through plan-phase → execute-phase.
+    </div>
+  </div>
+  <div class="sub-card">
+    <div class="label">/gsd-plan-phase 32 --skip-research</div>
+    <div class="meta">option · faster</div>
+    <div class="desc">
+      Skip the dedicated research step (the v2.6 OBSERVABILITY-HARDENING.md research
+      already covers Phase 32 in depth).
+    </div>
+  </div>
+  <div class="sub-card">
+    <div class="label">Review/edit 32-CONTEXT.md first</div>
+    <div class="meta">option · safety check</div>
+    <div class="desc">
+      Open the file, sanity-check the 18 decisions in your head, edit anything that
+      reads wrong before locking the planner onto them.
+    </div>
+  </div>
+</div>
+
+<footer>
+  Noēsis v2.6 · Phase 32 discuss closed 2026-05-24 ·
+  18 decisions · 0 allowlist Δ · 2 commits pushed (<code>1a23520</code> head) ·
+  <a href="../.planning/phases/32-firehose-observability/32-CONTEXT.md">CONTEXT.md</a> ·
+  <a href="../.planning/phases/32-firehose-observability/32-DISCUSSION-LOG.md">DISCUSSION-LOG.md</a> ·
+  <a href="../.planning/ROADMAP.md">ROADMAP.md</a>
+</footer>
+
+</main>
+</body>
+</html>
