@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
 milestone: v2.6
-milestone_name: Resilience & Observability
-status: phase-planned
-stopped_at: v2.6 roadmap created — Phase 31 next
-last_updated: "2026-05-24T04:00:00.000Z"
-last_activity: 2026-05-24
+milestone_name: — Active)
+status: Phase planned
+stopped_at: Phase 31 context gathered
+last_updated: "2026-05-24T04:24:03.752Z"
+last_activity: 2026-05-24 — v2.6 ROADMAP.md written. 5 phases (31-35), 15 OBS-* REQs mapped 100%. Allowlist 53 → 55 in Phase 33.
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
-  percent: 0
 ---
 
 # Project State
@@ -33,6 +32,7 @@ Status: Phase planned
 Last activity: 2026-05-24 — v2.6 ROADMAP.md written. 5 phases (31-35), 15 OBS-* REQs mapped 100%. Allowlist 53 → 55 in Phase 33.
 
 Driving inputs for v2.6 (unchanged from milestone open):
+
 - GAP-2026-05-24-A — Audit pipeline silence (MySQL audit_trail flush stalled since 2026-05-22T06:57Z; firehose WS delivers zero event frames despite in-memory chain growth) — Phase 31 root-cause fix
 - GAP-2026-05-24-B — Missing portal.auth.login / portal.auth.register producers (read by /users + /humans/history but emitted nowhere; both consumer surfaces always empty) — Phase 33 fix
 
@@ -160,6 +160,7 @@ Total v2.6 allowlist growth: **+2 (53 → 55)**. Freeze-except-by-explicit-addit
 ### v2.6 forbidden-key additions (Phase 33)
 
 `PORTAL_AUTH_FORBIDDEN_KEYS` (13 keys) declared in Phase 33:
+
 - `ip_address`, `ip`, `user_agent`, `ua`, `session_id`, `token`, `jwt`, `cookie`
 - `email` (plaintext — vs `email_hash` allowed), `password_hash`
 - `nonce` (vs `nonce_hash` allowed), `signature`, `device_fingerprint`
@@ -216,6 +217,6 @@ Total v2.6 allowlist growth: **+2 (53 → 55)**. Freeze-except-by-explicit-addit
 
 ## Session Continuity
 
-Last session: 2026-05-24T04:00:00.000Z
-Stopped at: v2.6 ROADMAP.md written; Phase 31 next (`/gsd-plan-phase 31`)
-Resume file: None
+Last session: 2026-05-24T04:24:03.747Z
+Stopped at: Phase 31 context gathered
+Resume file: .planning/phases/31-audit-pipeline-persistence/31-CONTEXT.md
