@@ -4,8 +4,8 @@ milestone: v2.6
 milestone_name: — Active)
 status: executing
 stopped_at: Phase 31 context gathered
-last_updated: "2026-05-24T05:06:54.971Z"
-last_activity: 2026-05-24 -- Phase 31 planning complete
+last_updated: "2026-05-24T05:20:48.630Z"
+last_activity: 2026-05-24 -- Phase 31 execution started
 progress:
   total_phases: 5
   completed_phases: 0
@@ -23,14 +23,14 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 **Core value:** The first persistent Grid where Nous actually live — open to real human users since v2.5. Trust in the audit pipeline and observability surfaces is the foundation for everything that follows.
 **Current milestone:** v2.6 — Resilience & Observability
 **Previous milestone:** v2.5 Human Portal — SHIPPED 2026-05-24 (181/181 plans, allowlist 53)
-**Current focus:** v2.6 roadmap created. Phase 31 (Audit Pipeline Persistence) next — must land first before observability, producers, or Steward UI work.
+**Current focus:** Phase 31 — audit-pipeline-persistence
 
 ## Current Position
 
-Phase: 31 — Audit Pipeline Persistence
-Plan: — (planning pending — Phase 31 plans not yet generated)
-Status: Ready to execute
-Last activity: 2026-05-24 -- Phase 31 planning complete
+Phase: 31 (audit-pipeline-persistence) — EXECUTING
+Plan: 1 of 6
+Status: Executing Phase 31
+Last activity: 2026-05-24 -- Phase 31 execution started
 
 Driving inputs for v2.6 (unchanged from milestone open):
 
