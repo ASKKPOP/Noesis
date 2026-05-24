@@ -40,9 +40,9 @@ decisions:
   - "USDT_ADDR only has mainnet entry — plan specifies mainnet only for v2.5; falls back to mainnet if chainId not found"
   - "SeedCard SparkleIcon uses path-based inline SVG (4-pointed star) per plan discretion note; no external icon dependency"
 metrics:
-  duration: "~30 minutes"
+  duration: "~35 minutes"
   completed: "2026-05-23"
-  tasks_completed: 3
+  tasks_completed: 4
   tasks_total: 4
   files_created: 10
   files_modified: 0
@@ -157,6 +157,13 @@ None — all threat mitigations from the plan's STRIDE register were implemented
 - T-28-ui-04: Polling uses `cancelled` flag + 120s timeout; no runaway loop
 - T-28-ui-05: `dynamic({ ssr: false })` prevents hydration issues
 
+## Human Verification
+
+**Checkpoint type:** human-verify
+**Result:** APPROVED
+**Approved by:** User on 2026-05-23
+**What was verified:** Full 4-step spawn wizard at /portal/nous/spawn — all steps, seed cards, region select, payment flow, error states, and Coming Soon gate.
+
 ## Commits
 
 | Commit | Description |
@@ -164,6 +171,7 @@ None — all threat mitigations from the plan's STRIDE register were implemented
 | `594df38` | feat(28-04): wizard scaffold — page.tsx + SpawnWizardClient + StepIndicator |
 | `1cedfab` | feat(28-04): wizard steps 1-3 — StepName + StepSeed + SeedCard + StepRegion |
 | `bb8cb27` | feat(28-04): wizard step 4 — StepPay + WizardSummaryCard + PaymentPolling |
+| `d905ad2` | docs(28-04): complete spawn wizard plan summary |
 
 ## Self-Check: PASSED
 
@@ -183,3 +191,4 @@ None — all threat mitigations from the plan's STRIDE register were implemented
 - [x] No Tailwind color tokens in spawn/*.tsx
 - [x] Commits 594df38, 1cedfab, bb8cb27 — present in git log
 - [x] No STATE.md or ROADMAP.md modifications
+- [x] Human verification checkpoint approved (Task 4) — all 4 tasks complete
