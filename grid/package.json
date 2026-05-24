@@ -25,6 +25,7 @@
     "jose": "^6.2.3",
     "libsodium-wrappers": "^0.8.4",
     "mysql2": "^3.9.0",
+    "pino": "^10.0.0",
     "ethers": "^6.0.0",
     "siwe": "^3.0.0",
     "smol-toml": "^1.6.1",
@@ -35,6 +36,7 @@
     "@types/node": "^20.0.0",
     "@types/tar": "^6.1.13",
     "eslint": "^9.0.0",
+    "pino-pretty": "^11.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.5.0",
     "vitest": "^2.0.0"
