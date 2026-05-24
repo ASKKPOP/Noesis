@@ -74,8 +74,20 @@
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| OBS-01..04 | 31 | (filled by roadmap) |
-| OBS-05..07 | 32 | (filled by roadmap) |
-| OBS-08..10 | 33 | (filled by roadmap) |
-| OBS-11..14 | 34 | (filled by roadmap) |
-| OBS-15 | 35 | (filled by roadmap) |
+| OBS-01 | 31 | Pending |
+| OBS-02 | 31 | Pending |
+| OBS-03 | 31 | Pending |
+| OBS-04 | 31 | Pending |
+| OBS-05 | 32 | Pending |
+| OBS-06 | 32 | Pending |
+| OBS-07 | 32 | Pending |
+| OBS-08 | 33 | Pending |
+| OBS-09 | 33 | Pending |
+| OBS-10 | 33 | Pending |
+| OBS-11 | 34 | Pending |
+| OBS-12 | 34 | Pending |
+| OBS-13 | 34 | Pending |
+| OBS-14 | 34 | Pending |
+| OBS-15 | 35 | Pending |
+
+**Coverage:** 15/15 v2.6 REQs mapped to phases. Zero orphans. Zero duplicates.

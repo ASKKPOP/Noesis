@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v2.6
 milestone_name: Resilience & Observability
-status: defining-requirements
-stopped_at: v2.6 opened — defining requirements
-last_updated: "2026-05-24T03:30:00.000Z"
+status: phase-planned
+stopped_at: v2.6 roadmap created — Phase 31 next
+last_updated: "2026-05-24T04:00:00.000Z"
 last_activity: 2026-05-24
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -23,18 +23,31 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 **Core value:** The first persistent Grid where Nous actually live — open to real human users since v2.5. Trust in the audit pipeline and observability surfaces is the foundation for everything that follows.
 **Current milestone:** v2.6 — Resilience & Observability
 **Previous milestone:** v2.5 Human Portal — SHIPPED 2026-05-24 (181/181 plans, allowlist 53)
-**Current focus:** Defining v2.6 requirements (audit pipeline self-heal + missing portal.auth.* producers + observability hardening)
+**Current focus:** v2.6 roadmap created. Phase 31 (Audit Pipeline Persistence) next — must land first before observability, producers, or Steward UI work.
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-05-24 — Milestone v2.6 started; phase numbering continues from v2.5 (next phase = 31)
+Phase: 31 — Audit Pipeline Persistence
+Plan: — (planning pending — Phase 31 plans not yet generated)
+Status: Phase planned
+Last activity: 2026-05-24 — v2.6 ROADMAP.md written. 5 phases (31-35), 15 OBS-* REQs mapped 100%. Allowlist 53 → 55 in Phase 33.
 
-Driving inputs for v2.6:
-- GAP-2026-05-24-A — Audit pipeline silence (MySQL audit_trail flush stalled since 2026-05-22T06:57Z; firehose WS delivers zero event frames despite in-memory chain growth)
-- GAP-2026-05-24-B — Missing portal.auth.login / portal.auth.register producers (read by /users + /humans/history but emitted nowhere; both consumer surfaces always empty)
+Driving inputs for v2.6 (unchanged from milestone open):
+- GAP-2026-05-24-A — Audit pipeline silence (MySQL audit_trail flush stalled since 2026-05-22T06:57Z; firehose WS delivers zero event frames despite in-memory chain growth) — Phase 31 root-cause fix
+- GAP-2026-05-24-B — Missing portal.auth.login / portal.auth.register producers (read by /users + /humans/history but emitted nowhere; both consumer surfaces always empty) — Phase 33 fix
+
+## v2.6 Phase Plan Summary (created 2026-05-24)
+
+| Phase | Goal | REQs | Allowlist Delta |
+|-------|------|------|-----------------|
+| 31 — Audit Pipeline Persistence | Wire PersistentAuditChain in production; reconcile loop; Pino structured logging; backfill script | OBS-01..04 | 0 (53) |
+| 32 — Firehose Observability | Frame counters; `/health/detailed`; health watchdog | OBS-05..07 | 0 (53) |
+| 33 — portal.auth.* Producers | appendPortalAuthLogin/Register sole-producers; SIWE + email wiring; PORTAL_AUTH_FORBIDDEN_KEYS | OBS-08..10 | +2 (55) |
+| 34 — Steward `/system` Health Surfaces | Audit Pipeline Health card; Firehose Diagnostics; Events-per-Minute sparkline; client watchdog | OBS-11..14 | 0 (55) |
+| 35 — UAT Re-Verification + Doc Close-Out | Re-run 25a-HUMAN-UAT #1 + #5c; sync MILESTONES/PROJECT/PHILOSOPHY/README/CLAUDE | OBS-15 | 0 (55) |
+
+**Total v2.6 allowlist growth:** +2 (Phase 33 only).
+**Phase ordering:** Sequential 31 → 32 → 33 → 34 → 35 (forced by dependency chain — see ROADMAP.md Progress section).
 
 ## v2.5 Key Decisions (locked 2026-05-20)
 
@@ -47,7 +60,18 @@ Driving inputs for v2.6:
 | Portal location | `/portal/*` routes inside existing Next.js dashboard — no new Docker service |
 | Starting Cyber Coin | None assigned by platform — user brings their own wallet funds |
 | Human DID scheme | `did:noesis:human:<checksummed-eth-address>` |
-| Allowlist growth | 43 → 47 (+4 events: human.joined, human.transferred, human.spoke, nous.spawned_by_human) |
+| Allowlist growth | 43 → 53 (+10 events across Phases 22-29) |
+
+## v2.6 Key Decisions (locked 2026-05-24)
+
+| Decision | Choice |
+|----------|--------|
+| Observability stack | Pino structured logging (already Fastify transitive dep) + in-process counters + `/health/detailed` JSON polling. NO Prometheus, NO Datadog/Honeycomb/New Relic SaaS. |
+| portal.auth.* payload shape | Closed 3-key tuple `{human_did, method, tick}` where `method ∈ {siwe, email}`. NO IP, NO User-Agent, NO email plaintext, NO session token. PORTAL_AUTH_FORBIDDEN_KEYS enforced. |
+| Audit persistence pattern | Wire `PersistentAuditChain` in production (not the plain `AuditChain` currently constructed at launcher.ts:138). Listener fan-out happens first (in-memory commit), then fire-and-forget DB write. Tick-cadenced reconcile loop as belt-and-suspenders. |
+| Failure logging | Replace all `.catch(err => console.warn(...))` in `grid/src/db/` and `grid/src/audit/` with Pino structured logs. CI gate enforces. |
+| `/health/detailed` constraint | MUST NOT block on DB queries — cached `persisted_max_id` populated by reconcile loop; cache miss returns null. |
+| Phase ordering | Strict sequential 31 → 32 → 33 → 34 → 35. No parallel phases — Phase 31 must land first (foundation). |
 
 ## Accumulated Context
 
@@ -65,18 +89,9 @@ Driving inputs for v2.6:
 - `/api/dash/health` is static — no cascading probe to Grid
 - SC-6 live-stack smoke: runtime verification pending on operator machine per HUMAN-TEST-GUIDE.md
 
-### v2.1 allowlist additions (planned — one per phase)
+### Broadcast allowlist (v2.5 end-state — 53 events)
 
-- Phase 5 adds: `trade.reviewed` ✅ shipped
-- Phase 6 adds: `operator.inspected`, `operator.paused`, `operator.resumed`, `operator.law_changed`, `operator.telos_forced` (5 events)
-- Phase 7 adds: `telos.refined` (hash-only payload)
-- Phase 8 adds: `operator.nous_deleted`
-
-Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule preserved.
-
-### Broadcast allowlist (v2.4 Phase 19 end-state — 41 events)
-
-**41 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
+**53 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
 
 1. `nous.spawned`
 2. `nous.moved`
@@ -104,78 +119,103 @@ Total v2.1 allowlist growth: 8 events. Freeze-except-by-explicit-addition rule p
 24. `ballot.committed` ← Phase 12 (VOTE-02)
 25. `ballot.revealed` ← Phase 12 (VOTE-03)
 26. `proposal.tallied` ← Phase 12 (VOTE-04)
-27. `operator.exported` ← Phase 13 (REPLAY-02) — **Phase 13 end-state: 27 events total**
-28. `nous.reflection_authored` ← Phase 15 (PNEU-01) — `{nous_did, tick, entry_hash}`
-29. `nous.self_model_revised` ← Phase 15 (PNEU-03) — `{nous_did, tick, rule_hash}`
-30. `nous.creed_violation` ← Phase 15 (PNEU-06) — `{nous_did, tick, violation_hash}`
-31. `nous.sleep.entered` ← Phase 16 (HYP-04) — `{nous_did, tick, ltm_snapshot_hash}`
-32. `nous.sleep.completed` ← Phase 16 (HYP-04) — `{nous_did, tick, ltm_snapshot_hash}`
-33. `iris.belief_revised` ← Phase 17 (IRIS-05) — `{nous_did, tick, target_did, belief_hash}`
-34. `iris.context_invoked` ← Phase 17 (IRIS-05) — `{nous_did, tick, belief_count}`
-35. `iris.contradiction_detected` ← Phase 17 (IRIS-03) — `{nous_did, tick, target_did, contradiction_hash}`
-36. `iris.prior_seeded` ← Phase 17 (IRIS-04) — `{nous_did, tick, target_did, seed_event_hash}`
-37. `skill.taught` ← Phase 18 (SKILL-03) — `{learner_did, parent_hash, skill_hash, teacher_did, tick}`
-38. `skill.inferred` ← Phase 18 (SKILL-03) — `{learner_did, skill_hash, source_event_hash, tick}`
-39. `skill.rejected` ← Phase 18 (SKILL-03) — `{learner_did, rejection_reason, tick}`
-40. `norm.candidate` ← Phase 19 (NORM-01) — `{convergence_type, fingerprint, participating_count, tick}`
-41. `norm.crystallized` ← Phase 19 (NORM-03) — `{convergence_type, evidence_tick_range, fingerprint, participating_count, tick}`
+27. `operator.exported` ← Phase 13 (REPLAY-02)
+28. `nous.reflection_authored` ← Phase 15 (PNEU-01)
+29. `nous.self_model_revised` ← Phase 15 (PNEU-03)
+30. `nous.creed_violation` ← Phase 15 (PNEU-06)
+31. `nous.sleep.entered` ← Phase 16 (HYP-04)
+32. `nous.sleep.completed` ← Phase 16 (HYP-04)
+33. `iris.belief_revised` ← Phase 17 (IRIS-05)
+34. `iris.context_invoked` ← Phase 17 (IRIS-05)
+35. `iris.contradiction_detected` ← Phase 17 (IRIS-03)
+36. `iris.prior_seeded` ← Phase 17 (IRIS-04)
+37. `skill.taught` ← Phase 18
+38. `skill.inferred` ← Phase 18
+39. `skill.rejected` ← Phase 18
+40. `norm.candidate` ← Phase 19
+41. `norm.crystallized` ← Phase 19
+42. `lore.contributed` ← Phase 20
+43. `lore.cited` ← Phase 20
+44. `human.joined` ← Phase 22 (v2.5 begin)
+45. `human.transferred` ← Phase 24 (wiring landed for Phase 23)
+46. `operator.muted` ← Phase 25b
+47. `operator.slashed` ← Phase 25b
+48. `operator.quarantined` ← Phase 25b
+49. `operator.forced_sleep` ← Phase 25b
+50. `operator.human_banned` ← Phase 25b
+51. `operator.human_frozen` ← Phase 25b
+52. `human.spoke` ← Phase 27
+53. `nous.spawned_by_human` ← Phase 28
 
-Regression gate: `scripts/check-state-doc-sync.mjs` asserts this enumeration matches the frozen 36-event invariant.
+### v2.6 allowlist additions (planned — Phase 33 only)
 
-### v2.4 Agora — Allowlist budget (36 → 43)
+- Phase 31 adds: *(none — wiring + reconcile + logging only)*
+- Phase 32 adds: *(none — `/health/detailed` is a route, not an audit event)*
+- Phase 33 adds: `portal.auth.login` (pos 54) `{human_did, method, tick}`; `portal.auth.register` (pos 55) `{human_did, method, tick}`
+- Phase 34 adds: *(none — UI cards consume existing data via REST)*
+- Phase 35 adds: *(none — documentation + UAT only)*
 
-| Phase | Delta | Running Total | Events |
-|-------|-------|---------------|--------|
-| 18 (Skill Diffusion) | +3 | 39 | `skill.taught` (pos 37), `skill.inferred` (pos 38), `skill.rejected` (pos 39) | complete |
-| 19 (Norm Crystallization) | +2 | 41 | `norm.candidate` (pos 40), `norm.crystallized` (pos 41) | complete |
-| 20 (Lore Commons) | +2 | 43 | `lore.contributed` (pos 42), `lore.cited` (pos 43) |
-| 21 (Culture Dashboard) | +0 | 43 | reads existing events, no new emissions |
+Total v2.6 allowlist growth: **+2 (53 → 55)**. Freeze-except-by-explicit-addition rule preserved.
 
-**Locked payload shapes (alphabetical key order, sole-producer boundary):**
+### v2.6 forbidden-key additions (Phase 33)
 
-- `skill.taught`: `{learner_did, parent_hash, skill_hash, teacher_did, tick}` — sole producer `grid/src/skills/appendSkillTaught.ts`
-- `skill.inferred`: `{learner_did, skill_hash, source_event_hash, tick}` — sole producer `grid/src/skills/appendSkillInferred.ts`
-- `skill.rejected`: `{learner_did, rejection_reason, tick}` where `rejection_reason in {low_trust, structural_invalid, quota_exceeded}` — sole producer `grid/src/skills/appendSkillRejected.ts`
-- `norm.candidate`: `{convergence_type, fingerprint, participating_count, tick}` where `convergence_type in {emergent, coincidental}` — sole producer `grid/src/norms/appendNormCandidate.ts`
-- `norm.crystallized`: `{convergence_type, evidence_tick_range, fingerprint, participating_count, tick}` — sole producer `grid/src/norms/appendNormCrystallized.ts`
-- `lore.contributed`: `{category_tag, content_hash, contributor_did, tick}` — sole producer `grid/src/lore/appendLoreContributed.ts`
-- `lore.cited`: `{citing_did, content_hash, tick}` — sole producer `grid/src/lore/appendLoreCited.ts`
+`PORTAL_AUTH_FORBIDDEN_KEYS` (13 keys) declared in Phase 33:
+- `ip_address`, `ip`, `user_agent`, `ua`, `session_id`, `token`, `jwt`, `cookie`
+- `email` (plaintext — vs `email_hash` allowed), `password_hash`
+- `nonce` (vs `nonce_hash` allowed), `signature`, `device_fingerprint`
 
-### v2.4 Critical invariants (locked pre-Phase-18)
+`FORBIDDEN_KEY_PATTERN` extended with word-boundary-anchored alternation `\b(?:ip_address|user_agent|session_id|jwt|password_hash|device_fingerprint)\b`. Test cases for `email_hash` (allowed) vs `email` (forbidden) AND `nonce_hash` (allowed) vs `nonce` (forbidden) are mandatory.
 
-- **PeerSkillFilter wiring gap:** `PeerSkillFilter` is fully implemented at `brain/src/noesis_brain/skills/peer_filter.py` but NOT yet wired into `BrainHandler.on_message()`. Phase 18 Plan 1 MUST wire the `__skill_share:` dispatch path before any Grid emitter code lands.
-- **NormDetector is pure-observer:** NormDetector watches `nous.self_model_revised` (pos 29); it has ZERO `AuditChain.append` calls. All norm events are emitted by sole-producer emitter files.
-- **actorDid for norm events:** `did:noesis:grid` (Grid system DID); validated by existing `DID_RE` — confirm against `protocol/src/identity/did.ts` before Phase 19 Plan 1.
-- **Lore body never crosses wire:** Grid `lore_commons` table stores only `{contributor_did, tick, content_hash, title_hash, category_tag, citation_count}`. No lore prose stored at Grid. `__lore_request:` / `__lore_response:` whisper prefixes added to `WHISPER_FORBIDDEN_KEYS`.
-- **Culture dashboard raw SVG (D-9-08):** All three culture visualizations (skill lineage tree, norm timeline, lore graph) use server-computed `{x, y}` positions + client `<line>` / `<circle>` elements. No d3, react-flow, cytoscape, recharts.
-- **n-gram fingerprint is 6-char hex prefix of SHA-256 over sorted word-trigrams of lowercased rule text.** Brain computes and self-reports; Grid never reads rule text. This format is locked — changes require wiping the norm registry.
-- **Quorum thresholds injectable:** `NORM_THRESHOLD` (N=3), `NORM_WINDOW_TICKS` (W=10), `NORM_ADOPTION_TICKS` (K=20) are GenesisLauncher config, not hardcoded. Follows Phase 14 rig config pattern.
-- **Lore contribution quota K=3 per Nous per sleep epoch** enforced at `grid/src/integration/nous-runner.ts` before `appendLoreContributed` call. Not Brain-side only.
-- **FORBIDDEN_KEY_PATTERN additions (v2.4):** `skill_body|skill_text|rule_text|lore_body|lore_content|title_text|summary_text` must be added before any v2.4 code touches the allowlist.
+### v2.5 critical invariants (carry-forward)
 
-### v2.3 phase decisions (carry-forward)
+- Zero-custody for human funds — platform never holds USDT/ETH; sanctions are Grid-side flags only (PHILOSOPHY §8)
+- `eth_address_hash` (SHA-256 of lowercased address) is the only ETH-address representation in the audit chain
+- Sanction reason discipline (D-25b-11): plaintext in `sanction_reasons` table; `reason_hash` only in audit payloads
+- Human DID scheme: `did:noesis:human:<lowercased-eth-address>` (SIWE) or `did:noesis:human:email:<uuid>` (email path)
+- Operators read-only on governance (VOTE-05 from v2.2) — write-actions added in Phase 25b are sanctions, not governance
 
-Phase 15-17 shipped with all Brain-private invariants intact. Key carry-forwards:
+### v2.4 critical invariants (carry-forward)
 
-- `nous.self_model_revised` (pos 29) is the event NormDetector (Phase 19) will watch
-- ObservationalLearner wired on trade_settled events (Phase 16) — Phase 18 extends it for skill inference
-- PeerSkillFilter scaffold created in Phase 15 Plan 3 — Phase 18 wires it
-- Iris IrisStore (Phase 17) is append-only; zero wall-clock; 3-keys-not-5 pattern
+- **PeerSkillFilter** trust gate locked at relationship weight ≥ 0.35 + structural validity + FTS5 dedup
+- **NormDetector** is pure-observer (zero `AuditChain.append` calls); rebuildFromChain uses `applyEntry`
+- **Lore body never crosses wire** — Grid stores only `{contributor_did, tick, content_hash, title_hash, category_tag, citation_count}`
+- **Culture dashboard raw SVG** — no d3, no react-flow, no cytoscape, no recharts
+- **n-gram fingerprint** = 6-char hex prefix of SHA-256 over sorted word-trigrams of lowercased rule text (format locked — changes require wiping norm registry)
+- **Quorum thresholds injectable** via GenesisLauncher config (N=3, W=10, K=20 defaults)
+- **Lore contribution quota** K=3 per Nous per sleep epoch (30 ticks)
 
-### Research foundation for v2.1
+### v2.3 critical invariants (carry-forward)
 
-- `.planning/research/stanford-peer-agent-patterns.md` — committed 9bb3046 (2026-04-20)
-  - Agentic Reviewer (Zou, Stanford HAI) → objective-only ReviewerNous (Phase 5)
-  - arxiv 2512.08296 multi-agent topologies → stay centralized, defer nous.whispered mesh to Sprint 16+ (WHISPER-01)
-  - SPARC peer-dialogue pattern → telos.refined from exchanges (Phase 7)
-  - arxiv 2506.06576 Human Agency Scale → H1-H5 operator UI (Phases 6, 8)
+- Working Memory cap=7 (Miller's Law); Hebbian η=0.01 + SHY σ=0.95
+- IrisStore is append-only with superseded_by FK chain
+- 3-keys-not-5 pattern: Brain returns cognitive metadata, Grid injects `{did, tick}` at producer boundary
+- Wall-clock permanently forbidden in `brain/src/noesis_brain/hypnos/`, `iris/`, `bios/`, `chronos/`, `ananke/`
+
+### v2.2 critical invariants (carry-forward)
+
+- Drive-float-never-crosses-wire: only bucketed `{drive, level, direction}` keys cross
+- Three-tier privacy grep (Grid emitter + Brain wire + Dashboard render)
+- Bios = body (energy, sustenance); Thymos = mood (deferred). Non-negotiable separation (PHILOSOPHY §1).
+- `audit_tick === system_tick` strictly across all event types
+- WHISPER_FORBIDDEN_KEYS (13 keys): plaintext / content / message / utterance / amount / etc.
+- Operators cannot read whispers at any tier including H5
+- Operators cannot vote/propose/tally governance at any tier including H5
+
+### Research foundation for v2.6
+
+- `.planning/research/v2.6/OBSERVABILITY-HARDENING.md` — committed `3e1fbe6`
+  - Direct read of `grid/src/genesis/launcher.ts:138` confirmed plain `AuditChain` construction (root cause of GAP-A)
+  - Direct read of `grid/src/db/persistent-chain.ts` confirmed `PersistentAuditChain` exists but is never reached in production boot path
+  - Direct read of `grid/src/api/portal/auth.ts:125-131, 217, 265` mapped wiring points for new producers
+  - Pino v10.1.0 confirmed via Context7 as sovereignty-compatible (already Fastify transitive dep)
+  - Prometheus / Datadog / Honeycomb / New Relic explicitly rejected (sovereignty)
 
 ### Roadmap Evolution
 
-- Phase 25 added: Steward Console expansion — humans, sanctions, cognitive inspector, live firehose, culture browser, replay scrubber, brain health, allowlist monitor, spawn-Nous wizard
+- v2.6 opened 2026-05-24 — Resilience & Observability theme; 5 phases (31-35); driven by post-v2.5 UAT gaps (GAP-A audit pipeline silence + GAP-B missing portal.auth.* producers)
 
 ## Session Continuity
 
-Last session: 2026-05-24T02:13:00.262Z
-Stopped at: Phase 28 UI-SPEC approved
+Last session: 2026-05-24T04:00:00.000Z
+Stopped at: v2.6 ROADMAP.md written; Phase 31 next (`/gsd-plan-phase 31`)
 Resume file: None
