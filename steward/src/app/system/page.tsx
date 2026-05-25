@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import StewardShell from '@/components/StewardShell';
+import { useHealthDetailed } from '@/lib/use-health-detailed';
+import { getReasonLabel } from '@/lib/health-reason-labels';
+import { FrameCounterSparkline } from '@/components/FrameCounterSparkline';
+import { EventsPerMinuteSparkline } from '@/components/EventsPerMinuteSparkline';
 
 // Hardcoded allowlist from grid/src/audit/broadcast-allowlist.ts ALLOWLIST_MEMBERS (56 events as of Phase 33)
 const ALLOWLIST_STATIC: Array<{ position: number; eventType: string; producer: string }> = [
@@ -162,6 +166,33 @@ const btnSecondary: React.CSSProperties = {
     cursor: 'pointer',
 };
 
+// Phase 34 D-34-B3: reason key partitioning — audit card vs firehose card
+const AUDIT_REASONS = new Set([
+    'grace_period',
+    'divergence_above_critical',
+    'persist_error_with_divergence',
+    'divergence_above_degraded',
+    'reconcile_stale',
+]);
+const FIREHOSE_REASONS = new Set(['no_frames_with_clients', 'stale_frames']);
+
+function divergenceBand(div: number | null): { color: string; bg: string; border: string; band: 'green' | 'amber' | 'red' | 'muted' } {
+    if (div === null) return { color: 'var(--muted)', bg: 'transparent', border: 'rgba(0,0,0,0.05)', band: 'muted' };
+    if (div === 0) return { color: '#2d7a2d', bg: 'rgba(34,139,34,0.06)', border: 'rgba(34,139,34,0.3)', band: 'green' };
+    if (div <= 10) return { color: '#b88a2f', bg: 'rgba(184,138,47,0.08)', border: 'rgba(184,138,47,0.35)', band: 'amber' };
+    return { color: 'var(--terracotta)', bg: 'rgba(184,84,47,0.08)', border: 'rgba(184,84,47,0.4)', band: 'red' };
+}
+
+function formatFrameStaleMs(lastFrameAt: number | null): { text: string; red: boolean } {
+    if (lastFrameAt === null) return { text: '—', red: false };
+    const ms = Date.now() - lastFrameAt;
+    if (ms < 1000) return { text: `${ms}ms`, red: false };
+    const seconds = Math.floor(ms / 1000);
+    if (seconds < 60) return { text: `${seconds}s`, red: false };
+    const minutes = Math.floor(seconds / 60);
+    return { text: `${minutes}m ${seconds % 60}s`, red: true };
+}
+
 export default function SystemPage() {
     const [status, setStatus] = useState<GridStatus | null>(null);
     const [statusLoading, setStatusLoading] = useState(true);
@@ -306,6 +337,17 @@ export default function SystemPage() {
               { label: 'Audit Entries', value: status.auditEntries?.toLocaleString() ?? '—' },
           ]
         : [];
+
+    // Phase 34: health-detailed polling (OBS-11 / OBS-12)
+    const { data: health, error: healthError, isLoading: healthLoading, sentDeltas, droppedDeltas } = useHealthDetailed();
+    const divergence = health?.audit.divergence ?? null;
+    const divBand = divergenceBand(divergence);
+    const allReasons = health?.reasons ?? [];
+    const auditReasons = allReasons.filter((r) => AUDIT_REASONS.has(r));
+    const firehoseReasons = allReasons.filter((r) => FIREHOSE_REASONS.has(r));
+    const lastFrame = formatFrameStaleMs(health?.firehose.last_frame_at ?? null);
+    const clientsConnected = health?.firehose.client_count ?? 0;
+    const frameStale = clientsConnected > 0 && lastFrame.red;
 
     return (
         <StewardShell title="System" breadcrumb="Steward · System">
@@ -490,6 +532,152 @@ export default function SystemPage() {
                         </tbody>
                     </table>
                 )}
+            </div>
+
+            {/* Audit Pipeline Health (Phase 34 OBS-11) */}
+            <div className="steward-card" style={{ marginTop: 28, marginBottom: 20 }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--rule)', display: 'flex', alignItems: 'baseline', gap: 12 }}>
+                    <h2 style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)' }}>
+                        Audit Pipeline Health
+                    </h2>
+                    {health && (
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)' }}>
+                            status: {health.status}
+                        </span>
+                    )}
+                </div>
+                <div style={{ padding: '16px 20px' }}>
+                    {healthLoading ? (
+                        <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>Loading…</div>
+                    ) : healthError ? (
+                        <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>{healthError}</div>
+                    ) : (
+                        <>
+                            <div
+                                role="alert"
+                                style={{
+                                    background: divBand.bg,
+                                    border: `1px solid ${divBand.border}`,
+                                    borderLeft: divBand.band === 'red' ? '4px solid var(--terracotta)' : `1px solid ${divBand.border}`,
+                                    borderRadius: 10,
+                                    padding: '12px 16px',
+                                    marginBottom: 12,
+                                }}
+                            >
+                                <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
+                                    Divergence
+                                </div>
+                                <div
+                                    aria-live="polite"
+                                    style={{ fontFamily: 'var(--serif)', fontSize: 32, fontWeight: 400, color: divBand.color, lineHeight: 1 }}
+                                >
+                                    {divergence ?? '—'}
+                                </div>
+                                {/* D-34-B3 reasons sub-line. EXCEPTION: grace_period MAY render under status==='ok'. */}
+                                {auditReasons.length > 0 && (
+                                    <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)', marginTop: 6 }}>
+                                        {auditReasons.map(getReasonLabel).join(', ')}
+                                    </div>
+                                )}
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink)' }}>
+                                <span>In-memory: <strong>{health?.audit.in_memory_length ?? '—'}</strong></span>
+                                <span>Persisted: <strong>{health?.audit.persisted_max_id ?? '—'}</strong></span>
+                                {health?.audit.last_persist_error && (
+                                    <span style={{ color: 'var(--terracotta)' }}>
+                                        Last persist error: {health.audit.last_persist_error.code} at {new Date(health.audit.last_persist_error.at).toLocaleTimeString()}
+                                    </span>
+                                )}
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* Firehose Diagnostics (Phase 34 OBS-12) */}
+            <div className="steward-card" style={{ marginBottom: 20 }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--rule)', display: 'flex', alignItems: 'baseline', gap: 12 }}>
+                    <h2 style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)' }}>
+                        Firehose Diagnostics
+                    </h2>
+                </div>
+                <div style={{ padding: '16px 20px' }}>
+                    {healthLoading ? (
+                        <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>Loading…</div>
+                    ) : healthError ? (
+                        <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>{healthError}</div>
+                    ) : (
+                        <>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 16 }}>
+                                <div className="steward-stat-card">
+                                    <div style={{ padding: '14px 18px 18px' }}>
+                                        <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
+                                            Connected Clients
+                                        </div>
+                                        <div style={{ fontFamily: 'var(--serif)', fontSize: 32, fontWeight: 400, color: 'var(--ink)', lineHeight: 1 }}>
+                                            {clientsConnected}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="steward-stat-card">
+                                    <div style={{ padding: '14px 18px 18px' }}>
+                                        <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
+                                            Frames Sent (1m)
+                                        </div>
+                                        <div style={{ fontFamily: 'var(--serif)', fontSize: 32, fontWeight: 400, color: 'var(--ink)', lineHeight: 1 }}>
+                                            {sentDeltas.reduce((s, v) => s + v, 0)}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="steward-stat-card">
+                                    <div style={{ padding: '14px 18px 18px' }}>
+                                        <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
+                                            Time Since Last Frame
+                                        </div>
+                                        <div
+                                            aria-live="polite"
+                                            style={{
+                                                fontFamily: 'var(--serif)',
+                                                fontSize: 32,
+                                                fontWeight: 400,
+                                                color: frameStale ? 'var(--terracotta)' : 'var(--ink)',
+                                                lineHeight: 1,
+                                            }}
+                                        >
+                                            {lastFrame.text}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {/* D-34-B3 placement: firehoseReasons sub-line BETWEEN the 3-stat grid and the sparkline ("beneath the connected-clients gauge"). */}
+                            {firehoseReasons.length > 0 && (
+                                <div
+                                    role="alert"
+                                    aria-live="polite"
+                                    style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)', marginBottom: 12 }}
+                                >
+                                    {firehoseReasons.map(getReasonLabel).join(', ')}
+                                </div>
+                            )}
+                            <FrameCounterSparkline sentDeltas={sentDeltas} droppedDeltas={droppedDeltas} />
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* Events per Minute by Family (Phase 34 OBS-13) */}
+            <div className="steward-card" style={{ marginBottom: 20 }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--rule)', display: 'flex', alignItems: 'baseline', gap: 12 }}>
+                    <h2 style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)' }}>
+                        Events per Minute by Family
+                    </h2>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)' }}>
+                        last 5min · REST-driven · firehose-independent
+                    </span>
+                </div>
+                <div style={{ padding: '16px 20px' }}>
+                    <EventsPerMinuteSparkline />
+                </div>
             </div>
 
             {/* Allowlist Monitor */}
