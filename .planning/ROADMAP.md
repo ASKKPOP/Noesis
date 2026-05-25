@@ -100,7 +100,7 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
   - [x] 33-01-PLAN.md — Doc-sync (REQUIREMENTS + ROADMAP + STATE for allowlist 53→56 + OBS-08b; D-33-F1)
   - [x] 33-02-PLAN.md — Allowlist additions (+3 entries 54/55/56) + PORTAL_AUTH_FORBIDDEN_KEYS export + FORBIDDEN_KEY_PATTERN word-boundary extension (D-33-A1, D-33-B3, D-33-B4)
   - [x] 33-03-PLAN.md — 3 sole-producer files: append-portal-auth-login.ts, append-portal-auth-register.ts, append-human-identified.ts (D-33-A3, D-33-B1, D-33-B2)
-  - [ ] 33-04-PLAN.md — Wiring 4 call sites in grid/src/api/portal/auth.ts (SIWE first-connect + SIWE unconditional + email signup + email signin; D-33-A4, D-33-A5, D-33-A6)
+  - [x] 33-04-PLAN.md — Wiring 4 call sites in grid/src/api/portal/auth.ts (SIWE first-connect + SIWE unconditional + email signup + email signin; D-33-A4, D-33-A5, D-33-A6)
   - [ ] 33-05-PLAN.md — 6 test files: producer discipline (3) + forbidden-keys regression (12+ cases, R-33-01) + wiring emit-count/order + soft-log perf benchmark (D-33-C1)
   - [ ] 33-06-PLAN.md — 2 CI gates: scripts/check-sole-producer-discipline.mjs (NEW, D-33-D1) + scripts/check-state-doc-sync.mjs extension (D-33-D3) + rig-invariants.yml step
 
@@ -157,7 +157,7 @@ Dependencies form a strict chain. Rationale:
 |-------|----------------|--------|-----------|
 | 31. Audit Pipeline Persistence | 6/6 | Complete    | 2026-05-24 |
 | 32. Firehose Observability | 6/6 | Complete    | 2026-05-25 |
-| 33. portal.auth.* Producers | 3/6 | In Progress|  |
+| 33. portal.auth.* Producers | 4/6 | In Progress|  |
 | 34. Steward `/system` Health Surfaces | 0/? | Pending | — |
 | 35. UAT Re-Verification + Documentation Close-Out | 0/? | Pending | — |
 
