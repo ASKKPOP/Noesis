@@ -200,11 +200,11 @@
   <p class="subtitle">The first persistent Grid where Nous actually live — and where real humans can now enter via Web3 wallet auth, Cyber Coin, Sophia-guided onboarding, Nous chat, and personal Nous spawning.</p>
 
   <div class="stats">
-    <div class="stat"><div class="stat-label">Current milestone</div><div class="stat-value active">v2.5 · Human Portal</div></div>
-    <div class="stat"><div class="stat-label">Phases complete</div><div class="stat-value shipped">26 / 30</div></div>
-    <div class="stat"><div class="stat-label">Plans (shipped)</div><div class="stat-value shipped">158 / 158*</div></div>
-    <div class="stat"><div class="stat-label">Audit allowlist</div><div class="stat-value">51 events</div></div>
-    <div class="stat"><div class="stat-label">Last shipped</div><div class="stat-value">26 · 2026-05-22</div></div>
+    <div class="stat"><div class="stat-label">Current milestone</div><div class="stat-value active">v2.6 · Resilience &amp; Observability</div></div>
+    <div class="stat"><div class="stat-label">Phases complete</div><div class="stat-value shipped">32 / 34*</div></div>
+    <div class="stat"><div class="stat-label">Plans (shipped)</div><div class="stat-value shipped">170 / 170</div></div>
+    <div class="stat"><div class="stat-label">Audit allowlist</div><div class="stat-value">53 events</div></div>
+    <div class="stat"><div class="stat-label">Last shipped</div><div class="stat-value">32 · 2026-05-25</div></div>
   </div>
 
   <div class="legend">
@@ -216,13 +216,47 @@
 
 <h2 class="section">Active milestone</h2>
 
-<!-- v2.5 -->
+<!-- v2.6 — Resilience & Observability -->
 <details class="milestone active" open>
   <summary class="milestone-head">
     <span class="chev">▶</span>
-    <span class="milestone-title">v2.5 · Human Portal <small>Phases 22–30</small></span>
-    <span class="milestone-meta">opened 2026-05-20</span>
+    <span class="milestone-title">v2.6 · Resilience &amp; Observability <small>Phases 31–34</small></span>
+    <span class="milestone-meta">opened 2026-05-24</span>
     <span class="badge active">active</span>
+  </summary>
+  <div class="milestone-body">
+    <div class="goal">Audit pipeline persistence + firehose observability + auth/portal producers + Steward exposure. Trust in the audit pipeline and live operator surfaces are the foundation for everything that follows.</div>
+
+    <table class="phases">
+      <thead><tr><th style="width:80px">Phase</th><th>Title</th><th>Description</th><th style="width:140px">Allowlist Δ</th><th style="width:100px">Status</th></tr></thead>
+      <tbody>
+        <tr><td class="id">31</td><td class="name">Audit Pipeline Persistence</td><td class="desc">PersistentAuditChain wired into production main.ts; AuditReconcile loop every 60 ticks (cap 500/cycle); Pino structured logging replaces silent <code>.catch+console.warn</code>; OBS-03 CI gate (<code>check-no-silent-catch.mjs</code>); one-shot <code>backfill-audit-trail.mjs</code> recovers the 2026-05-22 stall window. R-31-01..03 mitigated.</td><td class="allow">0 (53/53)</td><td><span class="badge shipped">shipped 2026-05-24</span></td></tr>
+        <tr><td class="id">32</td><td class="name">Firehose Observability</td><td class="desc"><code>WsFirehoseHub.stats()</code> exposes 5-field FirehoseStats; <code>GET /health/detailed</code> at top-level of <code>buildServerWithHub</code> returns full audit/firehose/clock snapshot; pure-pull HealthWatchdog with grace window (zero <code>setInterval</code>, zero <code>clock.onTick</code>); R-32-03 counter placement contract pinned by send-throws regression; R-32-01 (no-TODO) + R-32-02 (interval-lifecycle) CI gates. 29 new tests GREEN.</td><td class="allow">0 (53/53)</td><td><span class="badge shipped">shipped 2026-05-25</span></td></tr>
+        <tr><td class="id">33</td><td class="name">Portal Auth Producers</td><td class="desc"><code>portal.auth.*</code> sole-producer audit event boundaries.</td><td class="allow">tbd</td><td><span class="badge pending">planned</span></td></tr>
+        <tr><td class="id">34</td><td class="name">Steward Observability Exposure</td><td class="desc">Surface <code>/health/detailed</code> + firehose metrics in Steward Console.</td><td class="allow">tbd</td><td><span class="badge pending">planned</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="invariants">
+      <div class="invariants-title">v2.6 locked decisions (so far)</div>
+      <ul>
+        <li>Zero-diff invariant: <code>super.append()</code> first, then fire-and-forget DB write — PersistentAuditChain preserves in-memory truth even on DB outage.</li>
+        <li>R-32-03 counter placement: increment <strong>AFTER</strong> <code>socket.send()</code>, <strong>BEFORE</strong> <code>catch</code>. <code>tryDrain</code> re-queue path untouched (Pitfall 3).</li>
+        <li>Pure-pull HealthWatchdog: zero timers, zero clock subscriptions. All state derived on <code>snapshot()</code>.</li>
+        <li>Existing <code>/health</code> endpoint at <code>server.ts:293</code> unchanged — Docker healthcheck SLA preserved across all v2.6 phases.</li>
+        <li>Allowlist growth: 53 frozen unchanged through Phases 31–32 (no new audit events introduced).</li>
+      </ul>
+    </div>
+  </div>
+</details>
+
+<!-- v2.5 -->
+<details class="milestone" open>
+  <summary class="milestone-head">
+    <span class="chev">▶</span>
+    <span class="milestone-title">v2.5 · Human Portal <small>Phases 22–30</small></span>
+    <span class="milestone-meta">opened 2026-05-20 · shipped 2026-05-24</span>
+    <span class="badge shipped">shipped</span>
   </summary>
   <div class="milestone-body">
     <div class="goal">First milestone where real human users can enter Noēsis: Web3 wallet auth (SIWE), Cyber Coin (real EVM crypto, user holds), Sophia-guided onboarding, Nous chat &amp; tips, personal Nous spawning, community, and help.</div>
