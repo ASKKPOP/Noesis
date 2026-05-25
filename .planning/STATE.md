@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v2.6
 milestone_name: — Active)
 status: executing
-stopped_at: Phase 33 context gathered
-last_updated: "2026-05-25T03:58:40.047Z"
-last_activity: 2026-05-25 -- Phase 33 planning complete
+stopped_at: Phase 33 doc-sync landed (plan 33-01)
+last_updated: "2026-05-25"
+last_activity: 2026-05-25 -- Phase 33 doc-sync complete (allowlist 53→56, OBS-08b locked)
 progress:
   total_phases: 5
   completed_phases: 2
@@ -43,11 +43,11 @@ Driving inputs for v2.6 (unchanged from milestone open):
 |-------|------|------|-----------------|
 | 31 — Audit Pipeline Persistence | Wire PersistentAuditChain in production; reconcile loop; Pino structured logging; backfill script | OBS-01..04 | 0 (53) |
 | 32 — Firehose Observability | Frame counters; `/health/detailed`; health watchdog | OBS-05..07 | 0 (53) |
-| 33 — portal.auth.* Producers | appendPortalAuthLogin/Register sole-producers; SIWE + email wiring; PORTAL_AUTH_FORBIDDEN_KEYS | OBS-08..10 | +2 (55) |
-| 34 — Steward `/system` Health Surfaces | Audit Pipeline Health card; Firehose Diagnostics; Events-per-Minute sparkline; client watchdog | OBS-11..14 | 0 (55) |
-| 35 — UAT Re-Verification + Doc Close-Out | Re-run 25a-HUMAN-UAT #1 + #5c; sync MILESTONES/PROJECT/PHILOSOPHY/README/CLAUDE | OBS-15 | 0 (55) |
+| 33 — portal.auth.* Producers | appendPortalAuthLogin/Register + appendHumanIdentified (`human.identified` pos 56) sole-producers; SIWE + email wiring; PORTAL_AUTH_FORBIDDEN_KEYS | OBS-08, OBS-08b, OBS-09, OBS-10 | +3 (56) |
+| 34 — Steward `/system` Health Surfaces | Audit Pipeline Health card; Firehose Diagnostics; Events-per-Minute sparkline; client watchdog | OBS-11..14 | 0 (56) |
+| 35 — UAT Re-Verification + Doc Close-Out | Re-run 25a-HUMAN-UAT #1 + #5c; sync MILESTONES/PROJECT/PHILOSOPHY/README/CLAUDE | OBS-15 | 0 (56) |
 
-**Total v2.6 allowlist growth:** +2 (Phase 33 only).
+**Total v2.6 allowlist growth:** +3 (Phase 33 only — portal.auth.login, portal.auth.register, human.identified).
 **Phase ordering:** Sequential 31 → 32 → 33 → 34 → 35 (forced by dependency chain — see ROADMAP.md Progress section).
 
 ## v2.5 Key Decisions (locked 2026-05-20)
@@ -152,11 +152,14 @@ Driving inputs for v2.6 (unchanged from milestone open):
 
 - Phase 31 adds: *(none — wiring + reconcile + logging only)*
 - Phase 32 adds: *(none — `/health/detailed` is a route, not an audit event)*
-- Phase 33 adds: `portal.auth.login` (pos 54) `{human_did, method, tick}`; `portal.auth.register` (pos 55) `{human_did, method, tick}`
+- Phase 33 adds:
+    - `portal.auth.login` (pos 54) `{human_did, method, tick}` where `method ∈ {'siwe', 'email'}` — sole producer `grid/src/audit/append-portal-auth-login.ts`. Fires on every SIWE verify success AND email signin success (unconditional). Allowlist position 54.
+    - `portal.auth.register` (pos 55) `{human_did, method, tick}` where `method ∈ {'siwe', 'email'}` — sole producer `grid/src/audit/append-portal-auth-register.ts`. Fires on SIWE first-connect (inside `if (!human)` block) AND email signup. Allowlist position 55.
+    - `human.identified` (pos 56) `{grid_name, human_did, identity_hash, identity_method, tick}` where `identity_method ∈ {'siwe', 'email'}` — sole producer `grid/src/audit/append-human-identified.ts`. Universal identity-stamp event added per D-33-A1 + OBS-08b. SIWE path: `identity_hash = sha256(ethAddress.toLowerCase())` (byte-identical to Phase 22 `eth_address_hash` for correlation with pre-Phase-33 `human.joined` entries). Email path: `identity_hash = sha256(email.toLowerCase().trim())`. Fires on SIWE first-connect (after `appendHumanJoined`) AND email signup (NO `human.joined` for email — Phase 22's SIWE-only contract preserved per D-33-A7). Pre-Phase-33 `human.joined` entries preserved unmodified per PHILOSOPHY §1 + Merkle invariant (`chain.ts:181`). Allowlist position 56.
 - Phase 34 adds: *(none — UI cards consume existing data via REST)*
 - Phase 35 adds: *(none — documentation + UAT only)*
 
-Total v2.6 allowlist growth: **+2 (53 → 55)**. Freeze-except-by-explicit-addition rule preserved.
+Total v2.6 allowlist growth: **+3 (53 → 56)**. Freeze-except-by-explicit-addition rule preserved.
 
 ### v2.6 forbidden-key additions (Phase 33)
 
@@ -243,6 +246,6 @@ Total v2.6 allowlist growth: **+2 (53 → 55)**. Freeze-except-by-explicit-addit
 
 ## Session Continuity
 
-Last session: 2026-05-25T02:39:35.377Z
-Stopped at: Phase 33 context gathered
-Resume file: .planning/phases/33-portal-auth-producers/33-CONTEXT.md
+Last session: 2026-05-25
+Stopped at: Phase 33 doc-sync landed (allowlist budget locked at +3 / 53→56 per D-33-F1); ready to execute producer plans 33-02..33-06
+Resume file: .planning/phases/33-portal-auth-producers/33-01-PLAN.md
