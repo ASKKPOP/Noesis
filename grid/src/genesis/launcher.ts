@@ -26,6 +26,8 @@ import type { GovernanceStore } from '../governance/store.js';
 import { LoreQuotaTracker } from '../lore/LoreQuotaTracker.js';
 import { GENESIS_SHOPS } from './presets.js';
 import type { GenesisConfig, GridState } from './types.js';
+import type { HealthWatchdog } from '../diagnostics/health-watchdog.js';
+import type { FirehoseStats } from '../audit/firehose-hub.js';
 
 /**
  * Phase 31 OBS-01 (D-31-A1): optional dependencies that can be supplied at
@@ -121,6 +123,20 @@ export class GenesisLauncher {
      */
     private normStorage: NormStorage | null;
     private normCfg: NormConfig;
+    /**
+     * Phase 32 OBS-07 (D-32-G2): one-shot-settable HealthWatchdog. NOT readonly
+     * because construction happens inside buildServerWithHub (after firehoseHub
+     * exists), not in the launcher constructor. Setter throws on second call
+     * preserving "set once at boot, immutable after" semantics.
+     */
+    private _healthWatchdog: HealthWatchdog | undefined;
+
+    /**
+     * Phase 32 OBS-05/07 (D-32-E1): one-shot-settable firehose hub reference.
+     * Typed as structural interface to avoid genesis to audit import direction
+     * (Pitfall 1 — RESEARCH.md).
+     */
+    private _firehoseHub: { stats(): FirehoseStats } | undefined;
     /**
      * Phase 12 Wave 3 — GovernanceEngine and its backing store.
      *
@@ -275,6 +291,44 @@ export class GenesisLauncher {
     /** Expose normStorage for API server wiring (mirrors relationshipStorage getter pattern). */
     get normStorageRef(): NormStorage | null {
         return this.normStorage;
+    }
+
+    /**
+     * Phase 32 OBS-07 (D-32-G2): accessor for the attached HealthWatchdog.
+     * Returns undefined during the narrow startup window before
+     * buildServerWithHub calls attachHealthWatchdog (Pitfall 4 — guarded
+     * by the route handler in registerHealthDetailedRoute).
+     */
+    get healthWatchdog(): HealthWatchdog | undefined {
+        return this._healthWatchdog;
+    }
+
+    /**
+     * Phase 32 OBS-07 (D-32-G2): attach a HealthWatchdog instance. Must be called
+     * exactly once, inside buildServerWithHub after the watchdog is constructed.
+     * Throws on second call.
+     */
+    attachHealthWatchdog(wd: HealthWatchdog): void {
+        if (this._healthWatchdog !== undefined) {
+            throw new Error('GenesisLauncher.attachHealthWatchdog called twice');
+        }
+        this._healthWatchdog = wd;
+    }
+
+    /**
+     * Phase 32 OBS-05/07 (D-32-E1): attach the firehose hub by structural
+     * interface. Wires the hub's stats() getter into the previously-attached
+     * HealthWatchdog so /health/detailed sees firehose metrics.
+     *
+     * Order: attachHealthWatchdog MUST be called before this method
+     * (buildServerWithHub enforces this). Throws on second call.
+     */
+    attachFirehoseHub(hub: { stats(): FirehoseStats }): void {
+        if (this._firehoseHub !== undefined) {
+            throw new Error('GenesisLauncher.attachFirehoseHub called twice');
+        }
+        this._firehoseHub = hub;
+        this._healthWatchdog?.attachFirehoseStats(() => hub.stats());
     }
 
     /**
