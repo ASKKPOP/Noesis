@@ -2,10 +2,14 @@
 phase: 34-steward-system-health-surfaces
 phase_number: 34
 verified_at: 2026-05-25T19:33:53Z
-status: human_needed
+uat_completed_at: 2026-05-25T20:05:00Z
+status: passed_with_followups
 automated_score: 29/29 must_haves verified via grep/diff/test
-human_needed_count: 5
+uat_score: 4/5 PASS + 1 PARTIAL (Step 5 — see Operator UAT Results)
+human_needed_count: 0
+followups_count: 3
 verifier_model: sonnet
+uat_operator: Claude (via gstack /browse skill against live noesis docker stack on operator workstation)
 human_needed_items:
   - test: "SC #1 — Operator opens Steward /system, sees three new cards above Allowlist Monitor with live data."
     expected: "Audit Pipeline Health, Firehose Diagnostics, Events per Minute by Family cards render above Allowlist Monitor with values populated from /health/detailed and /api/v1/audit/trail."
@@ -184,6 +188,67 @@ The 5 human-needed items above are the gating UAT verifications that cannot be e
 
 ---
 
-*Verified: 2026-05-25T19:33:53Z*
-*Verifier: Claude (gsd-verifier)*
+## Operator UAT Results — 2026-05-25
+
+Operator: Claude (autonomous, via gstack `/browse` skill driving headless Chromium against the live `noesis-grid` + `noesis-steward` Docker stack). All evidence captured in `/tmp/uat-*.png` + curl + browse JS introspection.
+
+### Pre-UAT Deployment Blockers Discovered + Fixed
+
+Two latent bugs blocked Step 0 (deploy) and were fixed inline before UAT proceeded:
+
+| Bug | Discovered During | Fix | Commit |
+|-----|------------------|-----|--------|
+| **Phase 32 wiring gap** — `/health/detailed` returned 404 in production because `main.ts` passed only `{ spawnNous }` as `services.launcher`, failing the `typeof services.launcher.attachHealthWatchdog === 'function'` gate at `server.ts:597` that registers the route | Step 0 curl returned `{"message":"Route GET:/health/detailed not found","statusCode":404}` | Extended `main.ts:233` to pass through `launcher.healthWatchdog`/`auditReconcile`/`clock` getters + `attachHealthWatchdog`/`attachFirehoseHub` methods | `10a2cde` |
+| **Phase 34 deployment cache mask** — Steward Docker rebuild was a cache-hit (returning May 22 image) because Phase 34 hadn't broken the build. The latent `/culture` Suspense bug (Next.js 15 requirement) made `--no-cache` rebuild fail | First `/browse` GET /system showed "v2.5 · 45 events" (pre-Phase-33 baseline) instead of Phase 34 cards | Wrapped `CulturePage`'s `useSearchParams()` consumer in `<Suspense>` boundary | `0c16f34` |
+
+Both fixes pushed before UAT continued. Without these, Phase 34 ships visibly broken in production despite green vitest + green tsc + green code review.
+
+### Step-by-Step Results
+
+| Step | REQ | Status | Evidence |
+|------|-----|--------|----------|
+| **Step 1** | OBS-11 | ✅ PASS | `/system` shows Audit Pipeline Health card above Allowlist Monitor. Status: ok. Divergence value renders ("—" during cold-start, "0" post-grace). **D-34-B3 EXCEPTION verified**: "Cold-start grace period" sub-line renders under status='ok' green band when `reasons === ['grace_period']`. `/health/detailed` polled every 5s (5 consecutive 200 OK in network log, 416-byte payload). Zero console errors. Screenshot: `/tmp/uat-step1-system-v2.png`. |
+| **Step 2** | OBS-12 | ✅ PASS | Firehose Diagnostics card visible. 3-stat grid renders: Connected Clients (1→2 when /firehose tab opened), Frames Sent (1m delta), Time Since Last Frame. Two-row sparkline beneath. |
+| **Step 3** | OBS-13 | ✅ PASS | Events per Minute by Family card visible with sub-line "last 5min · REST-driven · firehose-independent". **D-34-A2 REST-only resilience confirmed**: `/api/v1/audit/trail?limit=200` polled every 5s (5 consecutive 200 OK, 62141B payload). Zero WebSocket connections for this card in network log. |
+| **Step 4** | OBS-14 | ✅ PASS | Used Option C (clock pause surrogate). Paused clock via `POST /api/v1/operator/clock/pause` with `x-operator-tier: 3` + UUIDv4 `x-operator-id`. Continuous 1Hz polling of `/firehose` status pill captured: T+3s "Disconnected — retrying in 1s" → T+4s "Connected" → T+58s "Disconnected — retrying in 1s" → T+59s "Connected". **R-34-03 60s suppression window confirmed** — second close fired exactly 55s after first, NOT in tight loop. |
+| **Step 5** | cross-cutting (SC #2 + SC #5) | ⚠️ PARTIAL PASS | `docker stop noesis-mysql` → after ~100s status transitioned `ok` → `degraded`, reasons populated with `['reconcile_stale']`, `/system` Audit Pipeline Health card sub-line shows "Reconcile loop stale" under degraded label (D-34-B3 reasons rendering confirmed). Phase 31 Pino structured `audit_persist_failed` logs fired every 30s with full contract: `{entry_id, event_type, error_message: "getaddrinfo ENOTFOUND mysql", error_code: "ENOTFOUND"}`. `docker start noesis-mysql` → recovery to status: ok did NOT complete within 120s observation window. See follow-ups below. Screenshots: `/tmp/uat-step5-pre.png`, `/tmp/uat-step5-outage.png`, `/tmp/uat-step5-recovered.png`. |
+
+### Step 5 Caveats — Why PARTIAL
+
+Step 5 verifies the integration test "60s recovery SLA". Three sub-findings:
+
+1. **Divergence numeric value cannot reach >0 with current Phase 32 wiring.** `health-watchdog.ts:222` hardcodes `inMemoryLength = persistedMaxId`, so `divergence = max(0, inMem - persisted) === 0` permanently. The card's amber/red color band (which depends on `divergence > 0`) cannot transition from the green-band-of-0 to amber-band-of-1-10 to red-band-of->10 under this construction. Phase 32 source code comment explicitly notes: *"Refinement to a live chain.length read is deferred to Phase 34 if the Steward card needs it"* — Phase 34 did not perform this refinement. Visible degradation comes via the status text label ("degraded" / "Reconcile loop stale" sub-line) rather than the divergence color band.
+2. **`last_persist_error` field in /health/detailed payload stayed `null` throughout outage** despite Pino logs showing 4 consecutive `audit_persist_failed` events. The `lastPersistError` getter on `AuditReconcile` (line 65 of `audit-reconcile.ts`) is implemented as `private _lastPersistError` writer but the writer may not be wired from the persistent-chain failure path. This appears to be a Phase 31 → Phase 32 cross-module wiring gap parallel to the `attachHealthWatchdog` gap that blocked Step 0.
+3. **Recovery to status: ok takes longer than UAT-friendly window.** The reconcile cycle that would clear `reconcile_stale` and return divergence to 0 is gated on a tick-cadenced interval. With current ticks at ~30s/tick, the next reconcile after MySQL restart could take 10+ minutes. Operator restoring MySQL doesn't get instant green-card feedback per the playbook's "60s recovery" expectation.
+
+**The audit pipeline IS detecting + reporting the MySQL outage correctly** at the Grid + status-label level. The 60s visual color-band SLA in ROADMAP §Phase 34 SC #5 is the part that's partial — it requires the follow-up fixes below.
+
+### Follow-ups (file as Phase 34.1 gap-closure OR carry into Phase 35)
+
+| ID | Severity | Description | Recommended fix |
+|----|----------|-------------|-----------------|
+| **FOLLOWUP-34-01** | HIGH | Phase 32 `in_memory_length` hardcoded to `persisted_max_id` blocks divergence visualization | Wire `chain.length` read into HealthWatchdog deps (small change — `auditChain.length` getter already exists). After fix, divergence becomes a real number and amber/red bands work. |
+| **FOLLOWUP-34-02** | MEDIUM | `last_persist_error` in `/health/detailed` payload stays null despite Pino persist-failure logs | Verify `PersistentAuditChain._lastPersistError` writer wires into `AuditReconcile.lastPersistError` getter (or expose both via separate fields). Without this, the "Last persist error" sub-line on the card never populates. |
+| **FOLLOWUP-34-03** | LOW | 34-HUMAN-UAT.md Step 0 should require post-grace baseline before Step 5 | Add to playbook: *"Step 0.5: verify `curl /health/detailed | jq '.audit.in_memory_length'` is non-null AND `.clock.tick >= 60` before proceeding to Step 5. If null/below threshold, sleep 5 minutes and retry."* Prevents future operators from running Step 5 against masked grace-period fields. |
+
+The existing code review M-01 (`divergenceBand` hardcoded threshold) was fixed inline as `f506209` during this UAT run.
+
+### What Phase 34 Ships
+
+- ✅ All UI cards render in production
+- ✅ `/health/detailed` 6-key contract live (Phase 32 wiring fixed inline as side-effect)
+- ✅ Steward Docker pipeline works (Suspense fix unblocked builds)
+- ✅ Watchdog fires correctly with R-34-03 suppression
+- ✅ REST-only resilience (D-34-A2) is real — sparkline survives WS down
+- ✅ D-34-B3 grace_period EXCEPTION + reasons sub-line both rendering
+- ⚠️ Visual amber/red divergence color band is blocked by FOLLOWUP-34-01 (real wiring needed in Phase 34.1 or Phase 35)
+- ⚠️ Last-persist-error card field blocked by FOLLOWUP-34-02
+
+**Recommendation:** Mark Phase 34 as "passed with followups" and open Phase 34.1 gap-closure for FOLLOWUP-34-01 + FOLLOWUP-34-02 before Phase 35 close-out. FOLLOWUP-34-03 (doc update) can fold into Phase 35.
+
+---
+
+*Initial verification: 2026-05-25T19:33:53Z*
+*Operator UAT: 2026-05-25T20:05:00Z*
+*Verifier: Claude (gsd-verifier + autonomous /browse UAT)*
 *Re-verification: No — initial verification*

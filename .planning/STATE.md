@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v2.6
 milestone_name: — Active)
 status: executing
-stopped_at: Phase 34 all 5 plans landed; awaiting code-review + regression + verification gates + operator UAT
-last_updated: "2026-05-25T18:41:00.000Z"
-last_activity: 2026-05-25 -- Phase 34 Wave 3 doc-write complete; code-review + verification gates next
+stopped_at: Phase 34 SHIPPED (UAT complete, 4/5 PASS + 1 PARTIAL); 3 followups for Phase 34.1 or Phase 35
+last_updated: "2026-05-25T20:08:00.000Z"
+last_activity: 2026-05-25 -- Phase 34 UAT complete via autonomous /browse; discovered + fixed 2 Phase 32 latent bugs inline (route never registered in main.ts + Steward Docker cache mask); 3 followups filed
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 23
   completed_plans: 23
   percent: 100
@@ -23,14 +23,14 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 **Core value:** The first persistent Grid where Nous actually live — open to real human users since v2.5. Trust in the audit pipeline and observability surfaces is the foundation for everything that follows.
 **Current milestone:** v2.6 — Resilience & Observability
 **Previous milestone:** v2.5 Human Portal — SHIPPED 2026-05-24 (181/181 plans, allowlist 53)
-**Current focus:** Phase 34 — steward-system-health-surfaces
+**Current focus:** Phase 35 — uat-re-verification + 3 Phase 34 followups (FOLLOWUP-34-01 HIGH: wire chain.length into HealthWatchdog; FOLLOWUP-34-02 MEDIUM: last_persist_error payload wiring; FOLLOWUP-34-03 LOW: 34-HUMAN-UAT.md post-grace baseline check)
 
 ## Current Position
 
-Phase: 34 (steward-system-health-surfaces) — VERIFYING
-Plan: 5 of 5 complete (Task 1 doc shipped; Task 2 operator checkpoint pending)
-Status: Phase 34 code-side complete; code-review + regression + phase verification gates next; then operator UAT
-Last activity: 2026-05-25 -- Plan 34-05 Task 1 shipped (34-HUMAN-UAT.md operator playbook, 223 lines, 5 verification steps)
+Phase: 34 (steward-system-health-surfaces) — SHIPPED (with 3 followups for Phase 34.1 / Phase 35)
+Plan: 5 of 5 complete; UAT complete (4 PASS / 1 PARTIAL)
+Status: Phase 34 shipped; ready for Phase 35 OR Phase 34.1 gap-closure
+Last activity: 2026-05-25 -- Operator UAT complete via autonomous /browse against live Docker stack; fixed 2 latent Phase 32 bugs inline (10a2cde main.ts launcher surface + 0c16f34 Suspense /culture page); 3 followups filed in 34-VERIFICATION.md
 
 Driving inputs for v2.6 (unchanged from milestone open):
 

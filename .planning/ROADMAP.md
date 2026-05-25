@@ -24,7 +24,7 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
 - [x] **Phase 31: Audit Pipeline Persistence** — Fix GAP-A root cause. Wire `PersistentAuditChain` into production boot, add tick-cadenced reconcile loop, Pino structured logging on every persist attempt, one-shot backfill script for the 2026-05-22 → present stall. (allowlist unchanged 53) (completed 2026-05-24)
 - [x] **Phase 32: Firehose Observability** — Frame counters + `/health/detailed` endpoint + health watchdog. Make "tick advances but zero frames delivered" impossible to go unnoticed for >60s. (allowlist unchanged 53) (completed 2026-05-25)
 - [x] **Phase 33: portal.auth.* Producers** — Wire `appendPortalAuthLogin` + `appendPortalAuthRegister` + `appendHumanIdentified` sole-producers into SIWE verify + email signup/signin. Add `PORTAL_AUTH_FORBIDDEN_KEYS`. Allowlist 53 → 56 (+3). (completed 2026-05-25)
-- [ ] **Phase 34: Steward `/system` Health Surfaces** — Audit Pipeline Health card + Firehose Diagnostics card + Events per Minute by Family sparkline + client-side firehose watchdog. (allowlist unchanged 56)
+- [x] **Phase 34: Steward `/system` Health Surfaces** — Audit Pipeline Health card + Firehose Diagnostics card + Events per Minute by Family sparkline + client-side firehose watchdog. (allowlist unchanged 56) (UAT-completed 2026-05-25 with 3 followups; UAT also fixed 2 latent Phase 32 bugs inline — see 34-VERIFICATION.md)
 - [ ] **Phase 35: UAT Re-Verification + Documentation Close-Out** — Re-run 25a-HUMAN-UAT items #1 and #5c to PASS with live data. Atomic sync of MILESTONES, PROJECT, PHILOSOPHY, README, CLAUDE.md.
 
 ## Phase Details (v2.6)
