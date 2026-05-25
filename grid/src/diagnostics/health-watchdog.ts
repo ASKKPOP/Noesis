@@ -64,6 +64,7 @@ export interface ClockSnapshot {
  */
 export interface HealthDetailedPayload {
     readonly status: HealthStatus;
+    readonly reasons: readonly string[];
     readonly timestamp: number;
     readonly audit: {
         readonly in_memory_length: number | null;
@@ -269,6 +270,7 @@ export class HealthWatchdog {
 
         return {
             status,
+            reasons,
             timestamp: now,
             audit: {
                 in_memory_length: gracePeriodActive ? null : inMemoryLength,
