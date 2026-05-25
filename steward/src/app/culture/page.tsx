@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import StewardShell from '@/components/StewardShell';
 import { NousFilterBar } from './nous-filter-bar';
@@ -72,7 +72,7 @@ interface CitationsData {
     entries: LoreCitationEntry[];
 }
 
-export default function CulturePage() {
+function CulturePageContent() {
     const searchParams = useSearchParams();
     const nousParam = searchParams.get('nous') ?? '';
     const activeFilter = DID_REGEX.test(nousParam) ? nousParam : null;
@@ -165,5 +165,24 @@ export default function CulturePage() {
                 </div>
             )}
         </StewardShell>
+    );
+}
+
+// Suspense boundary required by Next.js 15 for client components that read
+// useSearchParams() during render. Inner CulturePageContent does the real work;
+// this default export only wraps it.
+export default function CulturePage() {
+    return (
+        <Suspense
+            fallback={
+                <StewardShell title="Culture" breadcrumb="Steward · Observatory · Culture">
+                    <div style={{ color: 'var(--muted)', fontFamily: 'var(--mono)', fontSize: 12 }}>
+                        Loading culture data…
+                    </div>
+                </StewardShell>
+            }
+        >
+            <CulturePageContent />
+        </Suspense>
     );
 }
