@@ -423,6 +423,35 @@ export const WHISPER_FORBIDDEN_KEYS = Object.freeze([
 ] as const);
 
 /**
+ * Phase 33 (OBS-10 / D-33-B3): portal-auth-leaf keys that MUST NOT appear in any
+ * portal.auth.* or human.identified payload. PII (IP, User-Agent, email plaintext,
+ * session tokens, JWT, cookies, password, nonce, signature, device fingerprint)
+ * is permanently forbidden from the audit chain.
+ * Only hash representations (email_hash, identity_hash) are permitted — never plaintext.
+ * Per D-33-B3 — exactly 13 keys. Do NOT add extras without a CONTEXT.md decision.
+ *
+ * Source-of-truth: declared here; referenced by Phase 33 producer files
+ * (append-portal-auth-login.ts, append-portal-auth-register.ts, append-human-identified.ts)
+ * via the global FORBIDDEN_KEY_PATTERN walker. The plaintext discipline is enforced at
+ * the producer boundary by payloadPrivacyCheck(cleanPayload) before audit.append(...).
+ */
+export const PORTAL_AUTH_FORBIDDEN_KEYS = Object.freeze([
+    'ip_address',
+    'ip',
+    'user_agent',
+    'ua',
+    'session_id',
+    'token',
+    'jwt',
+    'cookie',
+    'email',
+    'password_hash',
+    'nonce',
+    'signature',
+    'device_fingerprint',
+] as const);
+
+/**
  * Case-insensitive regex matching forbidden key substrings. Any payload
  * key that matches ANYWHERE (e.g., `user_prompt`, `Prompting`) is rejected.
  *
