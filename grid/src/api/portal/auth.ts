@@ -21,6 +21,9 @@ import { SignJWT, jwtVerify, generateKeyPair } from 'jose';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { appendHumanJoined } from '../../audit/append-human-joined.js';
+import { appendHumanIdentified } from '../../audit/append-human-identified.js';
+import { appendPortalAuthLogin } from '../../audit/append-portal-auth-login.js';
+import { appendPortalAuthRegister } from '../../audit/append-portal-auth-register.js';
 
 const scryptAsync = promisify(scrypt);
 
@@ -128,7 +131,35 @@ export function registerPortalAuthRoutes(
                 grid_name: gridName,
                 tick: services.clock.state.tick,
             });
+
+            // Phase 33 OBS-08b / D-33-A4 — universal identity-stamp event.
+            // identity_hash reuses eth_address_hash (byte-identical SHA-256 of lowercased
+            // ETH address) so /users can correlate Phase 22 human.joined entries with
+            // Phase 33+ human.identified entries for the same SIWE human.
+            appendHumanIdentified(services.audit, {
+                grid_name: gridName,
+                human_did: human.did,
+                identity_hash: eth_address_hash,
+                identity_method: 'siwe',
+                tick: services.clock.state.tick,
+            });
+
+            // Phase 33 OBS-09 / D-33-A4 — portal-layer register event (fires only on first connect).
+            appendPortalAuthRegister(services.audit, {
+                human_did: human.did,
+                method: 'siwe',
+                tick: services.clock.state.tick,
+            });
         }
+
+        // Phase 33 OBS-08 / D-33-A4 — portal-layer login event. ALWAYS fires on every
+        // SIWE verify success, regardless of isNew. Subsequent SIWE connects emit only
+        // this event (no register, no identified) because the human row already exists.
+        appendPortalAuthLogin(services.audit, {
+            human_did: human.did,
+            method: 'siwe',
+            tick: services.clock.state.tick,
+        });
 
         // Issue JWT (ES256, 24h, WEB3-03).
         const { privateKey } = await keyPairPromise;
@@ -192,6 +223,32 @@ export function registerPortalAuthRoutes(
             grid_name: gridName,
         });
 
+        // Phase 33 OBS-08b / D-33-A5 — universal identity event for email humans.
+        // identity_hash = sha256(email.toLowerCase().trim()) — a new privacy-preserved
+        // identifier with no Phase 22 analog (email humans have no eth_address). Email
+        // path does NOT emit human.joined (Phase 22's SIWE-only contract preserved per D-33-A7).
+        const email_hash = createHash('sha256').update(email.toLowerCase().trim()).digest('hex');
+
+        appendHumanIdentified(services.audit, {
+            grid_name: gridName,
+            human_did: human.did,
+            identity_hash: email_hash,
+            identity_method: 'email',
+            tick: services.clock.state.tick,
+        });
+
+        appendPortalAuthRegister(services.audit, {
+            human_did: human.did,
+            method: 'email',
+            tick: services.clock.state.tick,
+        });
+
+        appendPortalAuthLogin(services.audit, {
+            human_did: human.did,
+            method: 'email',
+            tick: services.clock.state.tick,
+        });
+
         const { privateKey } = await keyPairPromise;
         const token = await new SignJWT({
             did: human.did,
@@ -250,6 +307,16 @@ export function registerPortalAuthRoutes(
         if (!valid) {
             return reply.status(401).send({ error: 'invalid_credentials' });
         }
+
+        // Phase 33 OBS-08 / D-33-A6 — portal-layer login event for email signin.
+        // Email signin emits ONLY this event (no register, no identified) — the human
+        // row already exists and identity was stamped at signup time. Mirrors the
+        // SIWE repeat-connect path: 1 entry per successful authentication.
+        appendPortalAuthLogin(services.audit, {
+            human_did: human.did,
+            method: 'email',
+            tick: services.clock.state.tick,
+        });
 
         const { privateKey } = await keyPairPromise;
         const token = await new SignJWT({
