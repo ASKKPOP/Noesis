@@ -157,7 +157,7 @@ Dependencies form a strict chain. Rationale:
 |-------|----------------|--------|-----------|
 | 31. Audit Pipeline Persistence | 6/6 | Complete    | 2026-05-24 |
 | 32. Firehose Observability | 6/6 | Complete    | 2026-05-25 |
-| 33. portal.auth.* Producers | 6/6 | Complete   | 2026-05-25 |
+| 33. portal.auth.* Producers | 6/6 | Complete    | 2026-05-25 |
 | 34. Steward `/system` Health Surfaces | 0/? | Pending | — |
 | 35. UAT Re-Verification + Documentation Close-Out | 0/? | Pending | — |
 
