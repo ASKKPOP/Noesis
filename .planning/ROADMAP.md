@@ -23,7 +23,7 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
 
 - [x] **Phase 31: Audit Pipeline Persistence** — Fix GAP-A root cause. Wire `PersistentAuditChain` into production boot, add tick-cadenced reconcile loop, Pino structured logging on every persist attempt, one-shot backfill script for the 2026-05-22 → present stall. (allowlist unchanged 53) (completed 2026-05-24)
 - [x] **Phase 32: Firehose Observability** — Frame counters + `/health/detailed` endpoint + health watchdog. Make "tick advances but zero frames delivered" impossible to go unnoticed for >60s. (allowlist unchanged 53) (completed 2026-05-25)
-- [ ] **Phase 33: portal.auth.* Producers** — Wire `appendPortalAuthLogin` + `appendPortalAuthRegister` + `appendHumanIdentified` sole-producers into SIWE verify + email signup/signin. Add `PORTAL_AUTH_FORBIDDEN_KEYS`. Allowlist 53 → 56 (+3).
+- [x] **Phase 33: portal.auth.* Producers** — Wire `appendPortalAuthLogin` + `appendPortalAuthRegister` + `appendHumanIdentified` sole-producers into SIWE verify + email signup/signin. Add `PORTAL_AUTH_FORBIDDEN_KEYS`. Allowlist 53 → 56 (+3). (completed 2026-05-25)
 - [ ] **Phase 34: Steward `/system` Health Surfaces** — Audit Pipeline Health card + Firehose Diagnostics card + Events per Minute by Family sparkline + client-side firehose watchdog. (allowlist unchanged 56)
 - [ ] **Phase 35: UAT Re-Verification + Documentation Close-Out** — Re-run 25a-HUMAN-UAT items #1 and #5c to PASS with live data. Atomic sync of MILESTONES, PROJECT, PHILOSOPHY, README, CLAUDE.md.
 
@@ -101,8 +101,8 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
   - [x] 33-02-PLAN.md — Allowlist additions (+3 entries 54/55/56) + PORTAL_AUTH_FORBIDDEN_KEYS export + FORBIDDEN_KEY_PATTERN word-boundary extension (D-33-A1, D-33-B3, D-33-B4)
   - [x] 33-03-PLAN.md — 3 sole-producer files: append-portal-auth-login.ts, append-portal-auth-register.ts, append-human-identified.ts (D-33-A3, D-33-B1, D-33-B2)
   - [x] 33-04-PLAN.md — Wiring 4 call sites in grid/src/api/portal/auth.ts (SIWE first-connect + SIWE unconditional + email signup + email signin; D-33-A4, D-33-A5, D-33-A6)
-  - [ ] 33-05-PLAN.md — 6 test files: producer discipline (3) + forbidden-keys regression (12+ cases, R-33-01) + wiring emit-count/order + soft-log perf benchmark (D-33-C1)
-  - [ ] 33-06-PLAN.md — 2 CI gates: scripts/check-sole-producer-discipline.mjs (NEW, D-33-D1) + scripts/check-state-doc-sync.mjs extension (D-33-D3) + rig-invariants.yml step
+  - [x] 33-05-PLAN.md — 6 test files: producer discipline (3) + forbidden-keys regression (12+ cases, R-33-01) + wiring emit-count/order + soft-log perf benchmark (D-33-C1)
+  - [x] 33-06-PLAN.md — 2 CI gates: scripts/check-sole-producer-discipline.mjs (NEW, D-33-D1) + scripts/check-state-doc-sync.mjs extension (D-33-D3) + rig-invariants.yml step
 
 ### Phase 34: Steward `/system` Health Surfaces
 **Goal**: Operator viewing `/system` sees immediately if any of the three pipelines (in-memory chain, MySQL persistence, firehose fan-out) is degraded. Three cards above the existing Allowlist Monitor, plus a client-side firehose watchdog that recovers from "WS opens but never delivers" silently.
@@ -157,7 +157,7 @@ Dependencies form a strict chain. Rationale:
 |-------|----------------|--------|-----------|
 | 31. Audit Pipeline Persistence | 6/6 | Complete    | 2026-05-24 |
 | 32. Firehose Observability | 6/6 | Complete    | 2026-05-25 |
-| 33. portal.auth.* Producers | 4/6 | In Progress|  |
+| 33. portal.auth.* Producers | 6/6 | Complete   | 2026-05-25 |
 | 34. Steward `/system` Health Surfaces | 0/? | Pending | — |
 | 35. UAT Re-Verification + Documentation Close-Out | 0/? | Pending | — |
 
