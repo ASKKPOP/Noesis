@@ -176,10 +176,14 @@ const AUDIT_REASONS = new Set([
 ]);
 const FIREHOSE_REASONS = new Set(['no_frames_with_clients', 'stale_frames']);
 
-function divergenceBand(div: number | null): { color: string; bg: string; border: string; band: 'green' | 'amber' | 'red' | 'muted' } {
+function divergenceBand(div: number | null, threshold: number | null): { color: string; bg: string; border: string; band: 'green' | 'amber' | 'red' | 'muted' } {
     if (div === null) return { color: 'var(--muted)', bg: 'transparent', border: 'rgba(0,0,0,0.05)', band: 'muted' };
     if (div === 0) return { color: '#2d7a2d', bg: 'rgba(34,139,34,0.06)', border: 'rgba(34,139,34,0.3)', band: 'green' };
-    if (div <= 10) return { color: '#b88a2f', bg: 'rgba(184,138,47,0.08)', border: 'rgba(184,138,47,0.35)', band: 'amber' };
+    // Amber band: 1 .. divergence_threshold (Phase 32 D-32-C1 HEALTH_THRESHOLDS.DIVERGENCE_DEGRADED, currently 10).
+    // Threshold travels with each /health/detailed response so this band tracks the frozen contract automatically.
+    // Fallback to 10 if threshold is missing (defensive — server always emits it per Phase 32 D-32-C3).
+    const amberCap = threshold ?? 10;
+    if (div <= amberCap) return { color: '#b88a2f', bg: 'rgba(184,138,47,0.08)', border: 'rgba(184,138,47,0.35)', band: 'amber' };
     return { color: 'var(--terracotta)', bg: 'rgba(184,84,47,0.08)', border: 'rgba(184,84,47,0.4)', band: 'red' };
 }
 
@@ -341,7 +345,7 @@ export default function SystemPage() {
     // Phase 34: health-detailed polling (OBS-11 / OBS-12)
     const { data: health, error: healthError, isLoading: healthLoading, sentDeltas, droppedDeltas } = useHealthDetailed();
     const divergence = health?.audit.divergence ?? null;
-    const divBand = divergenceBand(divergence);
+    const divBand = divergenceBand(divergence, health?.audit.divergence_threshold ?? null);
     const allReasons = health?.reasons ?? [];
     const auditReasons = allReasons.filter((r) => AUDIT_REASONS.has(r));
     const firehoseReasons = allReasons.filter((r) => FIREHOSE_REASONS.has(r));
