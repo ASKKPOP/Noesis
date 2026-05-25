@@ -49,7 +49,7 @@ Make pipeline health visible on the Steward Console so an operator looking at `/
 
 - **D-34-B2:** **Snake_case keys** (matches `HealthWatchdog.computeStatus()` current output, matches the Pino `health_status_changed` warn-log shape from Phase 32 D-32-B3). Steward maps to human labels client-side. Known keys: `grace_period`, `divergence_above_critical`, `persist_error_with_divergence`, `divergence_above_degraded`, `no_frames_with_clients`, `stale_frames`, `reconcile_stale`. Mapping table lives in `steward/src/lib/health-reason-labels.ts`.
 
-- **D-34-B3:** **Visible sub-line under status banner** when status != 'ok'. Comma-separated muted text. Empty array on 'ok' renders nothing. No hover/tooltip required; no expandable panel. Operator sees the WHY immediately at glance distance. Display location: directly beneath the divergence big-number banner inside the Audit Pipeline Health card AND beneath the connected-clients gauge inside the Firehose Diagnostics card. Both cards consume the same `reasons` array — Steward filters which reasons render on which card by key prefix (audit-related → audit card, firehose-related → firehose card; cross-cutting reasons render on both).
+- **D-34-B3:** **Visible sub-line under status banner** when status != 'ok'. Comma-separated muted text. Empty array on 'ok' renders nothing. No hover/tooltip required; no expandable panel. Operator sees the WHY immediately at glance distance. Display location: directly beneath the divergence big-number banner inside the Audit Pipeline Health card AND beneath the connected-clients gauge inside the Firehose Diagnostics card. Both cards consume the same `reasons` array — Steward filters which reasons render on which card by key prefix (audit-related → audit card, firehose-related → firehose card; cross-cutting reasons render on both). **EXCEPTION:** `grace_period` MAY render under `status==='ok'` because it explains why the card is green (cold-start grace period, not verified healthy). All other reasons require `status !== 'ok'`.
 
 ### Area C — Stale Allowlist Monitor (in-phase fix)
 
@@ -237,3 +237,4 @@ No pending todos matched Phase 34 scope at discuss time (gsd-sdk query todo.matc
 
 *Phase: 34-steward-system-health-surfaces*
 *Context gathered: 2026-05-25*
+*D-34-B3 EXCEPTION clarified during revision iteration 1: 2026-05-25*
