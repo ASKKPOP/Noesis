@@ -27,6 +27,12 @@ jobs:
       - name: OBS-03 no-silent-catch gate (Phase 31)
         run: node scripts/check-no-silent-catch.mjs
 
+      - name: OBS-R-32-01 observability-no-TODO gate (Phase 32)
+        run: node scripts/check-observability-no-todo.mjs
+
+      - name: OBS-R-32-02 setInterval-lifecycle gate (Phase 32)
+        run: node scripts/check-interval-lifecycle.mjs
+
       - name: Fast Vitest rig suite (Wave 0/1/2 — NOESIS_RUN_NIGHTLY unset, rig-bench skips)
         working-directory: grid
         run: |
