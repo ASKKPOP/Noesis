@@ -201,10 +201,10 @@
 
   <div class="stats">
     <div class="stat"><div class="stat-label">Current milestone</div><div class="stat-value active">v2.6 · Resilience &amp; Observability</div></div>
-    <div class="stat"><div class="stat-label">Phases complete</div><div class="stat-value shipped">32 / 34*</div></div>
-    <div class="stat"><div class="stat-label">Plans (shipped)</div><div class="stat-value shipped">170 / 170</div></div>
-    <div class="stat"><div class="stat-label">Audit allowlist</div><div class="stat-value">53 events</div></div>
-    <div class="stat"><div class="stat-label">Last shipped</div><div class="stat-value">32 · 2026-05-25</div></div>
+    <div class="stat"><div class="stat-label">Phases complete</div><div class="stat-value shipped">33 / 35*</div></div>
+    <div class="stat"><div class="stat-label">Plans (shipped)</div><div class="stat-value shipped">176 / 176</div></div>
+    <div class="stat"><div class="stat-label">Audit allowlist</div><div class="stat-value">56 events</div></div>
+    <div class="stat"><div class="stat-label">Last shipped</div><div class="stat-value">33 · 2026-05-25</div></div>
   </div>
 
   <div class="legend">
@@ -220,20 +220,21 @@
 <details class="milestone active" open>
   <summary class="milestone-head">
     <span class="chev">▶</span>
-    <span class="milestone-title">v2.6 · Resilience &amp; Observability <small>Phases 31–34</small></span>
+    <span class="milestone-title">v2.6 · Resilience &amp; Observability <small>Phases 31–35</small></span>
     <span class="milestone-meta">opened 2026-05-24</span>
     <span class="badge active">active</span>
   </summary>
   <div class="milestone-body">
-    <div class="goal">Audit pipeline persistence + firehose observability + auth/portal producers + Steward exposure. Trust in the audit pipeline and live operator surfaces are the foundation for everything that follows.</div>
+    <div class="goal">Audit pipeline persistence + firehose observability + portal-auth producers + Steward health surfaces + UAT re-verification. Trust in the audit pipeline and live operator surfaces are the foundation for everything that follows.</div>
 
     <table class="phases">
       <thead><tr><th style="width:80px">Phase</th><th>Title</th><th>Description</th><th style="width:140px">Allowlist Δ</th><th style="width:100px">Status</th></tr></thead>
       <tbody>
-        <tr><td class="id">31</td><td class="name">Audit Pipeline Persistence</td><td class="desc">PersistentAuditChain wired into production main.ts; AuditReconcile loop every 60 ticks (cap 500/cycle); Pino structured logging replaces silent <code>.catch+console.warn</code>; OBS-03 CI gate (<code>check-no-silent-catch.mjs</code>); one-shot <code>backfill-audit-trail.mjs</code> recovers the 2026-05-22 stall window. R-31-01..03 mitigated.</td><td class="allow">0 (53/53)</td><td><span class="badge shipped">shipped 2026-05-24</span></td></tr>
+        <tr><td class="id">31</td><td class="name">Audit Pipeline Persistence</td><td class="desc">PersistentAuditChain wired into production main.ts; AuditReconcile loop every 60 ticks (cap 500/cycle); Pino structured logging replaces silent <code>.catch+console.warn</code>; OBS-03 CI gate (<code>check-no-silent-catch.mjs</code>); one-shot <code>backfill-audit-trail.mjs</code> recovers the 2026-05-22 stall window. R-31-01..03 mitigated.</td><td class="allow">0 (53/53)</td><td><span class="badge shipped">shipped 2026-05-25</span></td></tr>
         <tr><td class="id">32</td><td class="name">Firehose Observability</td><td class="desc"><code>WsFirehoseHub.stats()</code> exposes 5-field FirehoseStats; <code>GET /health/detailed</code> at top-level of <code>buildServerWithHub</code> returns full audit/firehose/clock snapshot; pure-pull HealthWatchdog with grace window (zero <code>setInterval</code>, zero <code>clock.onTick</code>); R-32-03 counter placement contract pinned by send-throws regression; R-32-01 (no-TODO) + R-32-02 (interval-lifecycle) CI gates. 29 new tests GREEN.</td><td class="allow">0 (53/53)</td><td><span class="badge shipped">shipped 2026-05-25</span></td></tr>
-        <tr><td class="id">33</td><td class="name">Portal Auth Producers</td><td class="desc"><code>portal.auth.*</code> sole-producer audit event boundaries.</td><td class="allow">tbd</td><td><span class="badge pending">planned</span></td></tr>
-        <tr><td class="id">34</td><td class="name">Steward Observability Exposure</td><td class="desc">Surface <code>/health/detailed</code> + firehose metrics in Steward Console.</td><td class="allow">tbd</td><td><span class="badge pending">planned</span></td></tr>
+        <tr><td class="id">33</td><td class="name">Portal Auth Producers</td><td class="desc">Three sole-producers — <code>appendPortalAuthLogin</code> + <code>appendPortalAuthRegister</code> (3-key closed payload <code>{human_did, method, tick}</code>) + <code>appendHumanIdentified</code> (5-key closed payload with HEX64 identity_hash guard) — wired into 4 call-sites in <code>grid/src/api/portal/auth.ts</code> (SIWE first/repeat + email signup/signin per D-33-A4/A5/A6). <code>PORTAL_AUTH_FORBIDDEN_KEYS</code> 13-key freeze + <code>FORBIDDEN_KEY_PATTERN</code> word-boundary clause for 6 collision-risk keys. CI gate <code>check-sole-producer-discipline.mjs</code> scans 38 sole-producer files across 10 subsystems. 520 audit/portal-auth tests GREEN. Resolves GAP-2026-05-24-B.</td><td class="allow">+3 (53→56)</td><td><span class="badge shipped">shipped 2026-05-25</span></td></tr>
+        <tr><td class="id">34</td><td class="name">Steward <code>/system</code> Health Surfaces</td><td class="desc">Audit Pipeline Health card; Firehose Diagnostics; Events-per-Minute sparkline; client watchdog. OBS-11..14.</td><td class="allow">0 (56/56)</td><td><span class="badge pending">planned</span></td></tr>
+        <tr><td class="id">35</td><td class="name">UAT Re-Verification + Doc Close-Out</td><td class="desc">Re-run 25a-HUMAN-UAT #1 + #5c; sync MILESTONES/PROJECT/PHILOSOPHY/README/CLAUDE. OBS-15.</td><td class="allow">0 (56/56)</td><td><span class="badge pending">planned</span></td></tr>
       </tbody>
     </table>
 
@@ -244,7 +245,10 @@
         <li>R-32-03 counter placement: increment <strong>AFTER</strong> <code>socket.send()</code>, <strong>BEFORE</strong> <code>catch</code>. <code>tryDrain</code> re-queue path untouched (Pitfall 3).</li>
         <li>Pure-pull HealthWatchdog: zero timers, zero clock subscriptions. All state derived on <code>snapshot()</code>.</li>
         <li>Existing <code>/health</code> endpoint at <code>server.ts:293</code> unchanged — Docker healthcheck SLA preserved across all v2.6 phases.</li>
-        <li>Allowlist growth: 53 frozen unchanged through Phases 31–32 (no new audit events introduced).</li>
+        <li>D-33-A4/A5/A6: SIWE first-connect emits 4 events (human.joined → human.identified → portal.auth.register → portal.auth.login); SIWE repeat emits only portal.auth.login; email signup emits 3 (no human.joined); email signin emits only portal.auth.login.</li>
+        <li>D-33-B1: <code>LOGIN_METHOD_ENUM</code> / <code>REGISTER_METHOD_ENUM</code> / <code>IDENTITY_METHOD_ENUM</code> all locked to <code>['siwe', 'email']</code> — closed-enum guard rejects any other method.</li>
+        <li>D-33-B4: <code>FORBIDDEN_KEY_PATTERN</code> word-boundary clause uses JS <code>\b...\b</code> semantics intentionally — compound forms like <code>user_agent_version</code> pass through (closed-tuple discipline at the producer is the boundary).</li>
+        <li>Allowlist growth: 53 frozen through Phases 31–32; +3 in Phase 33 (portal.auth.login, portal.auth.register, human.identified); 56 frozen for Phases 34–35.</li>
       </ul>
     </div>
   </div>
