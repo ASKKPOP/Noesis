@@ -22,7 +22,7 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
 ## Phases (v2.6 — Active)
 
 - [x] **Phase 31: Audit Pipeline Persistence** — Fix GAP-A root cause. Wire `PersistentAuditChain` into production boot, add tick-cadenced reconcile loop, Pino structured logging on every persist attempt, one-shot backfill script for the 2026-05-22 → present stall. (allowlist unchanged 53) (completed 2026-05-24)
-- [ ] **Phase 32: Firehose Observability** — Frame counters + `/health/detailed` endpoint + health watchdog. Make "tick advances but zero frames delivered" impossible to go unnoticed for >60s. (allowlist unchanged 53)
+- [x] **Phase 32: Firehose Observability** — Frame counters + `/health/detailed` endpoint + health watchdog. Make "tick advances but zero frames delivered" impossible to go unnoticed for >60s. (allowlist unchanged 53) (completed 2026-05-25)
 - [ ] **Phase 33: portal.auth.* Producers** — Wire `appendPortalAuthLogin` + `appendPortalAuthRegister` sole-producers into SIWE verify + email signup/signin. Add `PORTAL_AUTH_FORBIDDEN_KEYS`. Allowlist 53 → 55 (+2).
 - [ ] **Phase 34: Steward `/system` Health Surfaces** — Audit Pipeline Health card + Firehose Diagnostics card + Events per Minute by Family sparkline + client-side firehose watchdog. (allowlist unchanged 55)
 - [ ] **Phase 35: UAT Re-Verification + Documentation Close-Out** — Re-run 25a-HUMAN-UAT items #1 and #5c to PASS with live data. Atomic sync of MILESTONES, PROJECT, PHILOSOPHY, README, CLAUDE.md.
@@ -76,7 +76,7 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
   - [x] 32-03-PLAN.md — HealthWatchdog class + HEALTH_THRESHOLDS + computeStatus + transition logging (OBS-07)
   - [x] 32-04-PLAN.md — GenesisLauncher attach methods + buildServerWithHub wiring + /health/detailed route + integration test (OBS-06, OBS-07)
   - [x] 32-05-PLAN.md — Two CI gates (R-32-01 observability-no-TODO + R-32-02 setInterval-lifecycle) wired into rig-invariants.yml (OBS-05/06/07)
-  - [ ] 32-06-PLAN.md — 32-HUMAN-UAT.md operator playbook + uat-half-close-socket.mjs harness (OBS-05/06/07)
+  - [x] 32-06-PLAN.md — 32-HUMAN-UAT.md operator playbook + uat-half-close-socket.mjs harness (OBS-05/06/07)
 **UI hint**: yes
 
 ### Phase 33: portal.auth.* Producers
@@ -150,7 +150,7 @@ Dependencies form a strict chain. Rationale:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 31. Audit Pipeline Persistence | 6/6 | Complete    | 2026-05-24 |
-| 32. Firehose Observability | 5/6 | In Progress|  |
+| 32. Firehose Observability | 6/6 | Complete   | 2026-05-25 |
 | 33. portal.auth.* Producers | 0/? | Pending | — |
 | 34. Steward `/system` Health Surfaces | 0/? | Pending | — |
 | 35. UAT Re-Verification + Documentation Close-Out | 0/? | Pending | — |
