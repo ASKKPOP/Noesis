@@ -177,6 +177,15 @@ interface HealthWatchdogDeps {
     auditChain?: {
         readonly length: number;
         readonly lastPersistError?: { code: string; at: number } | null;
+        /**
+         * Phase 34.2 FOLLOWUP-34-04: live watermark of highest id successfully
+         * written to the store. Only present on PersistentAuditChain (not plain
+         * AuditChain). Merged with AuditReconcile.persistedMaxId via Math.max
+         * to give /health/detailed a live persistence view between reconcile
+         * cycles (60-tick cadence ≈ 17 min would otherwise leave the cached
+         * value stale despite sub-cadence writes succeeding).
+         */
+        readonly lastPersistedId?: number | null;
     };
 }
 
@@ -241,7 +250,18 @@ export class HealthWatchdog {
             if (chainError === null) return reconcileError;
             return chainError.at >= reconcileError.at ? chainError : reconcileError;
         })();
-        const persistedMaxId = reconcile?.persistedMaxId ?? null;
+        // Phase 34.2 FOLLOWUP-34-04: merge persistedMaxId from both sources via Math.max.
+        // reconcile.persistedMaxId is only refreshed per reconcile cycle (60-tick cadence ≈ 17 min);
+        // auditChain.lastPersistedId is the live watermark advanced on every successful
+        // PersistentAuditChain.append store write. Taking max gives a live view between
+        // reconcile cycles — divergence visualization no longer lags during normal operation.
+        const reconcilePersistedMaxId = reconcile?.persistedMaxId ?? null;
+        const chainLastPersistedId = auditChain?.lastPersistedId ?? null;
+        const persistedMaxId = ((): number | null => {
+            if (reconcilePersistedMaxId === null) return chainLastPersistedId;
+            if (chainLastPersistedId === null) return reconcilePersistedMaxId;
+            return Math.max(reconcilePersistedMaxId, chainLastPersistedId);
+        })();
         const lastReconcileAt = reconcile?.lastReconcileAt ?? 0;
 
         // Phase 34.1 FOLLOWUP-34-01: read in_memory_length from the live AuditChain when

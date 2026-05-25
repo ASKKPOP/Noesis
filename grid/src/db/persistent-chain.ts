@@ -29,6 +29,7 @@ const log = baseLogger.child({ module: 'persistent-chain' });
 
 export class PersistentAuditChain extends AuditChain {
     private _lastPersistError: { code: string; at: number } | null = null;
+    private _lastPersistedId: number | null = null;
 
     constructor(
         private readonly store: IAuditStore,
@@ -47,6 +48,24 @@ export class PersistentAuditChain extends AuditChain {
         return this._lastPersistError;
     }
 
+    /**
+     * Highest id known to have been successfully written to the store.
+     * Null until the first successful write.
+     *
+     * Phase 34.2 FOLLOWUP-34-04: HealthWatchdog reads this in addition to
+     * AuditReconcile.persistedMaxId (which only refreshes per reconcile cycle,
+     * causing /health/detailed.audit.persisted_max_id to lag between cycles
+     * even when sub-cadence PersistentAuditChain.append writes are succeeding).
+     * Merging via Math.max gives operators a live view: divergence stays small
+     * when persistence is healthy, only growing during real outages.
+     *
+     * Watermark semantics: only advances (entry.id > current) to tolerate
+     * out-of-order Promise resolution from concurrent appends.
+     */
+    get lastPersistedId(): number | null {
+        return this._lastPersistedId;
+    }
+
     override append(
         eventType: string,
         actorDid: string,
@@ -58,19 +77,28 @@ export class PersistentAuditChain extends AuditChain {
         // R-31-01: DO NOT reorder — see grid/src/audit/chain.ts:44-58.
         const entry = super.append(eventType, actorDid, payload, targetDid);
 
-        // Mirror to store asynchronously (fire-and-forget). On failure: structured
-        // Pino log + record lastPersistError for /health/detailed (Phase 32).
-        this.store.append(this.gridName, entry).catch((err: unknown) => {
-            const code = (err as { code?: string })?.code ?? 'UNKNOWN';
-            this._lastPersistError = { code, at: Date.now() };
-            log.warn({
-                event: 'audit_persist_failed',
-                entry_id: entry.id,
-                event_type: eventType,
-                error_message: err instanceof Error ? err.message : String(err),
-                error_code: code,
-            }, 'failed to persist audit entry');
-        });
+        // Mirror to store asynchronously (fire-and-forget). On success: advance
+        // lastPersistedId watermark. On failure: structured Pino log + record
+        // lastPersistError for /health/detailed (Phase 32).
+        this.store.append(this.gridName, entry).then(
+            () => {
+                // Watermark advance — tolerate out-of-order Promise resolution.
+                if (entry.id !== undefined && (this._lastPersistedId === null || entry.id > this._lastPersistedId)) {
+                    this._lastPersistedId = entry.id;
+                }
+            },
+            (err: unknown) => {
+                const code = (err as { code?: string })?.code ?? 'UNKNOWN';
+                this._lastPersistError = { code, at: Date.now() };
+                log.warn({
+                    event: 'audit_persist_failed',
+                    entry_id: entry.id,
+                    event_type: eventType,
+                    error_message: err instanceof Error ? err.message : String(err),
+                    error_code: code,
+                }, 'failed to persist audit entry');
+            },
+        );
 
         return entry;
     }

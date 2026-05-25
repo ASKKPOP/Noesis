@@ -602,15 +602,19 @@ export function buildServerWithHub(
         const healthWatchdog = new HealthWatchdog({
             auditReconcile: launcher.auditReconcile,
             clockState: () => ({ tick: launcher.clock.currentTick, running: launcher.clock.running }),
-            // Phase 34.1 FOLLOWUP-34-01 + FOLLOWUP-34-02: pass the live AuditChain ref so
+            // Phase 34.1 + 34.2 FOLLOWUP-34-01/02/04: pass the live AuditChain ref so
             // in_memory_length reads chain.length (not the persistedMaxId fallback that made
-            // divergence permanently 0), and lastPersistError merges tick-time failures
-            // from PersistentAuditChain (set on every persist failure) with reconcile-time
-            // failures from AuditReconcile (set on replay failure). The cast tolerates both
-            // plain AuditChain (no lastPersistError property) and PersistentAuditChain (has it).
+            // divergence permanently 0), lastPersistError merges tick-time failures from
+            // PersistentAuditChain (set on every persist failure) with reconcile-time
+            // failures from AuditReconcile, and lastPersistedId merges the live success
+            // watermark from PersistentAuditChain with the per-cycle reconcile.persistedMaxId
+            // (Phase 34.2 fixes the cached-value lag between reconcile cycles). The cast
+            // tolerates both plain AuditChain (no lastPersistError / lastPersistedId getters)
+            // and PersistentAuditChain (has both).
             auditChain: services.audit as {
                 readonly length: number;
                 readonly lastPersistError?: { code: string; at: number } | null;
+                readonly lastPersistedId?: number | null;
             },
         });
         launcher.attachHealthWatchdog(healthWatchdog);

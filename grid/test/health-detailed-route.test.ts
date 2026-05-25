@@ -73,11 +73,12 @@ async function buildTestServer(opts: {
     snapshotCadenceMs?: number;
     attachWatchdog?: boolean;          // default true
     attachFirehose?: boolean;          // default true
-    // Phase 34.1 FOLLOWUP-34-01 + 02: optional fake AuditChain ref. When provided,
-    // wired into HealthWatchdog deps so tests can exercise the live-chain path
-    // (chain.length for in_memory_length + chain.lastPersistError merge). Default
-    // undefined preserves Phase 32 behavior (fallback inMemoryLength = persistedMaxId).
-    fakeChain?: { readonly length: number; readonly lastPersistError?: { code: string; at: number } | null };
+    // Phase 34.1 FOLLOWUP-34-01 + 02 + Phase 34.2 FOLLOWUP-34-04: optional fake
+    // AuditChain ref. When provided, wired into HealthWatchdog deps so tests can
+    // exercise the live-chain path (chain.length for in_memory_length, chain.lastPersistError
+    // merge, chain.lastPersistedId merge with reconcile.persistedMaxId). Default
+    // undefined preserves Phase 32 behavior.
+    fakeChain?: { readonly length: number; readonly lastPersistError?: { code: string; at: number } | null; readonly lastPersistedId?: number | null };
 }): Promise<{ app: FastifyInstance; clock: WorldClock; launcher: FakeLauncher }> {
     const clock = new WorldClock({ tickRateMs: 100_000 });
     const _space = new SpatialMap();
@@ -313,6 +314,86 @@ describe('GET /health/detailed (OBS-06)', () => {
         const res = await app.inject({ method: 'GET', url: '/health/detailed' });
         const body = JSON.parse(res.body);
         expect(body.audit.last_persist_error).toEqual({ code: 'NEW_RECONCILE', at: now - 100 });
+    });
+
+    // ── Phase 34.2 FOLLOWUP-34-04 — persistedMaxId merge ───────────────────
+
+    it('FOLLOWUP-34-04: auditChain.lastPersistedId surfaces in payload when reconcile.persistedMaxId is stale', async () => {
+        const now = 6_000_000;
+        const built = await buildTestServer({
+            // Reconcile cycle last ran when only 50 entries were persisted (cached value).
+            auditReconcile: makeFakeReconcile({ lastReconcileAt: now - 1000, persistedMaxId: 50 }),
+            // PersistentAuditChain.append has succeeded for entries up to id 95 since then
+            // (sub-cadence writes via fire-and-forget). chain.length is also 95 (in sync).
+            fakeChain: { length: 95, lastPersistedId: 95 },
+            tick: 200, now: () => now,
+        });
+        app = built.app; clock = built.clock;
+        const res = await app.inject({ method: 'GET', url: '/health/detailed' });
+        const body = JSON.parse(res.body);
+        // Pre-34.2: persisted_max_id would have been 50 (cached) → divergence 45 → degraded
+        // (false alarm). Post-34.2: max(50, 95) = 95 → divergence 0 → ok.
+        expect(body.audit.persisted_max_id).toBe(95);
+        expect(body.audit.in_memory_length).toBe(95);
+        expect(body.audit.divergence).toBe(0);
+        expect(body.status).toBe('ok');
+        expect(body.reasons).toEqual([]);
+    });
+
+    it('FOLLOWUP-34-04: reconcile.persistedMaxId wins when newer than auditChain.lastPersistedId', async () => {
+        const now = 6_100_000;
+        const built = await buildTestServer({
+            // Reconcile just ran and queried MAX(id) = 120 from DB.
+            auditReconcile: makeFakeReconcile({ lastReconcileAt: now - 100, persistedMaxId: 120 }),
+            // But chain.lastPersistedId is still 95 (stale local watermark from an earlier
+            // moment — e.g., this Grid was restarted and the chain re-initialized but
+            // reconcile queried the live DB).
+            fakeChain: { length: 120, lastPersistedId: 95 },
+            tick: 200, now: () => now,
+        });
+        app = built.app; clock = built.clock;
+        const res = await app.inject({ method: 'GET', url: '/health/detailed' });
+        const body = JSON.parse(res.body);
+        // max(120, 95) = 120 → divergence 0 (in_mem=120 - persisted=120).
+        expect(body.audit.persisted_max_id).toBe(120);
+        expect(body.audit.divergence).toBe(0);
+    });
+
+    it('FOLLOWUP-34-04: real outage still surfaces as positive divergence (chain grows past lastPersistedId)', async () => {
+        const now = 6_200_000;
+        const built = await buildTestServer({
+            // Last reconcile saw 100 persisted.
+            auditReconcile: makeFakeReconcile({ lastReconcileAt: now - 1000, persistedMaxId: 100 }),
+            // Chain has grown to 150 entries but only 110 have been successfully persisted
+            // since (40 fire-and-forget writes failed during a MySQL blip).
+            fakeChain: { length: 150, lastPersistedId: 110 },
+            tick: 200, now: () => now,
+        });
+        app = built.app; clock = built.clock;
+        const res = await app.inject({ method: 'GET', url: '/health/detailed' });
+        const body = JSON.parse(res.body);
+        // max(100, 110) = 110 → divergence = 150 - 110 = 40 → degraded.
+        expect(body.audit.persisted_max_id).toBe(110);
+        expect(body.audit.in_memory_length).toBe(150);
+        expect(body.audit.divergence).toBe(40);
+        expect(body.status).toBe('degraded');
+        expect(body.reasons).toContain('divergence_above_degraded');
+    });
+
+    it('FOLLOWUP-34-04: chain.lastPersistedId alone (no reconcile) surfaces as persisted_max_id', async () => {
+        const now = 6_300_000;
+        const built = await buildTestServer({
+            // No reconcile (e.g., AuditReconcile not constructed because no DB or test scenario).
+            auditReconcile: undefined,
+            // But chain is a PersistentAuditChain with a live watermark.
+            fakeChain: { length: 50, lastPersistedId: 50 },
+            tick: 200, now: () => now,
+        });
+        app = built.app; clock = built.clock;
+        const res = await app.inject({ method: 'GET', url: '/health/detailed' });
+        const body = JSON.parse(res.body);
+        expect(body.audit.persisted_max_id).toBe(50);
+        expect(body.audit.divergence).toBe(0);
     });
 
     it('FOLLOWUP-34-01: when fakeChain absent (legacy/no-DB path), in_memory_length falls back to persistedMaxId', async () => {
