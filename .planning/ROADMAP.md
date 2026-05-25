@@ -97,7 +97,7 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
   - **R-33-03 (MEDIUM)**: SIWE first-connect emits register but not login (or vice versa) — wiring test asserts both events fire on first-connect; only login fires on subsequent connects.
 **Allowlist additions**: **+3**. Events: `portal.auth.login` (pos 54) `{human_did, method, tick}` where `method ∈ {siwe, email}`; `portal.auth.register` (pos 55) `{human_did, method, tick}`; `human.identified` (pos 56) `{grid_name, human_did, identity_hash, identity_method, tick}` where `identity_method ∈ {siwe, email}`. Running total: **56**.
 **Plans**: 6 plans (Plan 33-01 doc-sync revises allowlist budget to +3 / 53→56 per D-33-F1)
-  - [ ] 33-01-PLAN.md — Doc-sync (REQUIREMENTS + ROADMAP + STATE for allowlist 53→56 + OBS-08b; D-33-F1)
+  - [x] 33-01-PLAN.md — Doc-sync (REQUIREMENTS + ROADMAP + STATE for allowlist 53→56 + OBS-08b; D-33-F1)
   - [ ] 33-02-PLAN.md — Allowlist additions (+3 entries 54/55/56) + PORTAL_AUTH_FORBIDDEN_KEYS export + FORBIDDEN_KEY_PATTERN word-boundary extension (D-33-A1, D-33-B3, D-33-B4)
   - [ ] 33-03-PLAN.md — 3 sole-producer files: append-portal-auth-login.ts, append-portal-auth-register.ts, append-human-identified.ts (D-33-A3, D-33-B1, D-33-B2)
   - [ ] 33-04-PLAN.md — Wiring 4 call sites in grid/src/api/portal/auth.ts (SIWE first-connect + SIWE unconditional + email signup + email signin; D-33-A4, D-33-A5, D-33-A6)
@@ -157,7 +157,7 @@ Dependencies form a strict chain. Rationale:
 |-------|----------------|--------|-----------|
 | 31. Audit Pipeline Persistence | 6/6 | Complete    | 2026-05-24 |
 | 32. Firehose Observability | 6/6 | Complete    | 2026-05-25 |
-| 33. portal.auth.* Producers | 0/? | Pending | — |
+| 33. portal.auth.* Producers | 1/6 | In Progress|  |
 | 34. Steward `/system` Health Surfaces | 0/? | Pending | — |
 | 35. UAT Re-Verification + Documentation Close-Out | 0/? | Pending | — |
 

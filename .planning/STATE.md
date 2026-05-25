@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.6
 milestone_name: — Active)
 status: executing
-stopped_at: Phase 33 doc-sync landed (plan 33-01)
-last_updated: "2026-05-25"
-last_activity: 2026-05-25 -- Phase 33 doc-sync complete (allowlist 53→56, OBS-08b locked)
+stopped_at: Phase 33 doc-sync landed (allowlist budget locked at +3 / 53→56 per D-33-F1); ready to execute producer plans 33-02..33-06
+last_updated: "2026-05-25T04:35:44.904Z"
+last_activity: 2026-05-25 -- Phase 33 planning complete
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 18
-  completed_plans: 12
-  percent: 67
+  completed_plans: 13
+  percent: 72
 ---
 
 # Project State
@@ -246,6 +246,6 @@ Total v2.6 allowlist growth: **+3 (53 → 56)**. Freeze-except-by-explicit-addit
 
 ## Session Continuity
 
-Last session: 2026-05-25
+Last session: 2026-05-25T04:35:44.901Z
 Stopped at: Phase 33 doc-sync landed (allowlist budget locked at +3 / 53→56 per D-33-F1); ready to execute producer plans 33-02..33-06
-Resume file: .planning/phases/33-portal-auth-producers/33-01-PLAN.md
+Resume file: None
