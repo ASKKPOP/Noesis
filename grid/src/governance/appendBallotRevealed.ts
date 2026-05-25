@@ -15,6 +15,7 @@
  */
 
 import type { AuditChain } from '../audit/chain.js';
+import { payloadPrivacyCheck } from '../audit/broadcast-allowlist.js';
 import {
     BALLOT_REVEALED_KEYS,
     GOVERNANCE_FORBIDDEN_KEYS,
@@ -99,7 +100,13 @@ export async function appendBallotRevealed(
         }
     }
 
-    // 10. DB write FIRST
+    // 10. Privacy gate — belt-and-suspenders.
+    const privacy = payloadPrivacyCheck(payload as unknown as Record<string, unknown>);
+    if (!privacy.ok) {
+        throw new Error(`ballot.revealed: privacy violation — path=${privacy.offendingPath}, keyword=${privacy.offendingKeyword}`);
+    }
+
+    // 11. DB write FIRST
     await input.store.updateBallotReveal({
         proposal_id: input.proposal_id,
         voter_did: input.voter_did,
@@ -108,6 +115,6 @@ export async function appendBallotRevealed(
         revealed_tick: input.currentTick,
     });
 
-    // 11. Audit append (sole-producer line)
+    // 12. Audit append (sole-producer line)
     audit.append('ballot.revealed', input.voter_did, payload as unknown as Record<string, unknown>);
 }

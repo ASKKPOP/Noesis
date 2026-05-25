@@ -21,6 +21,7 @@
 
 import { createHash } from 'node:crypto';
 import type { AuditChain } from '../audit/chain.js';
+import { payloadPrivacyCheck } from '../audit/broadcast-allowlist.js';
 import type { LogosEngine } from '../logos/engine.js';
 import type { Law } from '../logos/types.js';
 import { LAW_TRIGGERED_KEYS, type LawTriggeredPayload } from '../logos/types.js';
@@ -81,6 +82,12 @@ export async function appendLawTriggered(
         }
     }
 
-    // 5. Audit append (sole producer line)
+    // 5. Privacy gate — belt-and-suspenders.
+    const privacy = payloadPrivacyCheck(payload as unknown as Record<string, unknown>);
+    if (!privacy.ok) {
+        throw new Error(`law.triggered: privacy violation — path=${privacy.offendingPath}, keyword=${privacy.offendingKeyword}`);
+    }
+
+    // 6. Audit append (sole producer line)
     audit.append('law.triggered', input.law.id, payload as unknown as Record<string, unknown>);
 }
