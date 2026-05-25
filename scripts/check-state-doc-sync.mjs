@@ -47,9 +47,11 @@ if (!existsSync(statePath)) {
 const state = readFileSync(statePath, 'utf8');
 const failures = [];
 
-// 1. Canonical "27 events" assertion must appear at least once in Accumulated Context.
-if (!/27\s+events/i.test(state)) {
-  failures.push('STATE.md does not mention "27 events" — Phase 13 allowlist count assertion missing.');
+// 1. Canonical "53 events" assertion must appear at least once in Accumulated Context.
+//    (Phase 13 established 27 events; STATE.md was restructured in Phase 33 Plan 33-01
+//    to enumerate all 53 v2.5-era events. The 53-event count is now the canonical marker.)
+if (!/53\s+events/i.test(state)) {
+  failures.push('STATE.md does not mention "53 events" — v2.5 allowlist count assertion missing.');
 }
 
 // 2. Phantom `trade.countered` must NOT appear as a live/shipped event.
@@ -112,6 +114,10 @@ const required = [
   // Phase 13 addition (REPLAY-02 / Plan 13-04 / D-13-09). Closed 6-tuple operator.exported event.
   // ALWAYS keep this in sync with grid/src/audit/broadcast-allowlist.ts ALLOWLIST_MEMBERS.
   'operator.exported',
+  // Phase 33 additions (D-33-A1 / OBS-08, OBS-09, OBS-08b):
+  'portal.auth.login',
+  'portal.auth.register',
+  'human.identified',
 ];
 for (const event of required) {
   const pattern = new RegExp(event.replace(/\./g, '\\.'));
@@ -192,6 +198,47 @@ function checkRigPrefixBan() {
   }
 }
 
+// 7. Phase 33 D-33-D3: ALLOWLIST_MEMBERS literal-count + 3 new event-name presence assertions.
+//    Phase 33 D-33-A1 expands the allowlist from 53 to 56 by adding
+//    portal.auth.login (pos 54), portal.auth.register (pos 55), human.identified (pos 56).
+function checkAllowlistCount() {
+  const allowlistPath = resolve(repoRoot, 'grid/src/audit/broadcast-allowlist.ts');
+  if (!existsSync(allowlistPath)) {
+    failures.push(`checkAllowlistCount: ${allowlistPath} not found — cannot verify count.`);
+    return;
+  }
+  const text = readFileSync(allowlistPath, 'utf8');
+
+  // Count quoted entries in ALLOWLIST_MEMBERS (each on its own line, starting with leading whitespace + quote).
+  // Phase 33 target: 56 members (positions 1-56).
+  const arrayMatch = text.match(/export const ALLOWLIST_MEMBERS:[^=]*=\s*\[([\s\S]*?)\] as const;/);
+  if (!arrayMatch) {
+    failures.push('checkAllowlistCount: could not locate ALLOWLIST_MEMBERS array literal in broadcast-allowlist.ts');
+    return;
+  }
+  const arrayBody = arrayMatch[1];
+  const members = arrayBody.match(/^\s+'[a-z][a-z0-9_.]+'/gm) ?? [];
+  if (members.length !== 56) {
+    failures.push(
+      `ALLOWLIST_MEMBERS count mismatch: expected 56 entries, found ${members.length}.\n` +
+      `  Phase 33 D-33-A1 revised allowlist from 53 to 56 (+3: portal.auth.login, portal.auth.register, human.identified).\n` +
+      `  Reference: .planning/phases/33-portal-auth-producers/33-CONTEXT.md §D-33-A1.`,
+    );
+  }
+
+  // Position-by-name checks for Phase 33's 3 new entries.
+  if (!text.includes("'portal.auth.login'")) {
+    failures.push('ALLOWLIST_MEMBERS missing portal.auth.login (Phase 33 D-33-A1, position 54).');
+  }
+  if (!text.includes("'portal.auth.register'")) {
+    failures.push('ALLOWLIST_MEMBERS missing portal.auth.register (Phase 33 D-33-A1, position 55).');
+  }
+  if (!text.includes("'human.identified'")) {
+    failures.push('ALLOWLIST_MEMBERS missing human.identified (Phase 33 D-33-A1, position 56).');
+  }
+}
+
+checkAllowlistCount();
 checkChronosPrefixBan();
 checkRigPrefixBan();
 
@@ -202,5 +249,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log('[state-doc-sync] OK — STATE.md is in sync with the 27-event allowlist.');
+console.log('[state-doc-sync] OK — STATE.md is in sync (v2.5: 53 events + Phase 33: 56 members in broadcast-allowlist.ts).');
 process.exit(0);

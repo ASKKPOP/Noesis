@@ -16,6 +16,7 @@
  */
 
 import type { AuditChain } from '../audit/chain.js';
+import { payloadPrivacyCheck } from '../audit/broadcast-allowlist.js';
 import type { LogosEngine } from '../logos/engine.js';
 import type { Law } from '../logos/types.js';
 import {
@@ -95,14 +96,20 @@ export async function appendProposalTallied(
         }
     }
 
-    // 9. DB write: UPDATE proposal to tallied status
+    // 9. Privacy gate — belt-and-suspenders.
+    const privacy = payloadPrivacyCheck(payload as unknown as Record<string, unknown>);
+    if (!privacy.ok) {
+        throw new Error(`proposal.tallied: privacy violation — path=${privacy.offendingPath}, keyword=${privacy.offendingKeyword}`);
+    }
+
+    // 10. DB write: UPDATE proposal to tallied status
     await input.store.updateProposalTallied({
         proposal_id: input.proposal_id,
         outcome: tally.outcome,
         tallied_at_tick: input.currentTick,
     });
 
-    // 10. Audit append (sole-producer line)
+    // 11. Audit append (sole-producer line)
     audit.append('proposal.tallied', input.proposal_id, payload as unknown as Record<string, unknown>);
 
     // 11. On outcome === 'passed': parse body_text as Law and trigger law.triggered

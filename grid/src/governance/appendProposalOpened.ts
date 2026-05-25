@@ -19,6 +19,7 @@
 
 import { createHash, randomUUID } from 'node:crypto';
 import type { AuditChain } from '../audit/chain.js';
+import { payloadPrivacyCheck } from '../audit/broadcast-allowlist.js';
 import {
     PROPOSAL_OPENED_KEYS,
     GOVERNANCE_FORBIDDEN_KEYS,
@@ -100,7 +101,13 @@ export async function appendProposalOpened(
         }
     }
 
-    // 7. DB write FIRST (so failed audit append leaves no orphan)
+    // 7. Privacy gate — belt-and-suspenders.
+    const privacy = payloadPrivacyCheck(payload as unknown as Record<string, unknown>);
+    if (!privacy.ok) {
+        throw new Error(`proposal.opened: privacy violation — path=${privacy.offendingPath}, keyword=${privacy.offendingKeyword}`);
+    }
+
+    // 8. DB write FIRST (so failed audit append leaves no orphan)
     await input.store.insertProposal({
         proposal_id,
         proposer_did: input.proposer_did,
@@ -112,7 +119,7 @@ export async function appendProposalOpened(
         opened_at_tick: input.currentTick,
     });
 
-    // 8. Audit append (sole-producer line — grep gate scans for this exact pattern)
+    // 9. Audit append (sole-producer line — grep gate scans for this exact pattern)
     audit.append('proposal.opened', input.proposer_did, payload as unknown as Record<string, unknown>);
 
     return { proposal_id, title_hash };
