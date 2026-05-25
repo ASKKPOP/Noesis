@@ -30,6 +30,8 @@ import { registerAuditFirehoseRoute } from './routes/audit-firehose.js';
 import { registerDriftAlertsRoute } from './routes/audit-drift-alerts.js';
 import { registerHumansRoutes } from './routes/humans.js';
 import { registerTickMetricsRoute } from './routes/tick-metrics.js';
+import { HealthWatchdog } from '../diagnostics/health-watchdog.js';
+import { registerHealthDetailedRoute } from './routes/health-detailed.js';
 import { registerOperatorRoutes } from './operator/index.js';
 import { registerPortalRoutes } from './portal/index.js';
 import { registerCognitiveSnapshotRoute } from './operator/cognitive-snapshot.js';
@@ -228,12 +230,19 @@ export interface GridServices {
         query(sql: string, values?: unknown[]): Promise<[unknown, unknown]>;
     };
     /**
-     * Phase 28 SPAWN-01: GenesisLauncher accessor for human-spawned Nous routes.
-     * When present, POST /api/v1/portal/nous/spawn delegates Nous creation here.
-     * When absent, spawnNous calls are no-ops (guard in portal/index.ts).
+     * Phase 28 SPAWN-01 + Phase 32 OBS-06/07 (D-32-G2): structural launcher contract
+     * exposed to API routes. Phase 32 adds the HealthWatchdog accessor + attach
+     * methods consumed by /health/detailed wiring. All Phase 32 fields are optional
+     * — existing tests that omit them keep working.
      */
     launcher?: {
         spawnNous(name: string, did: string, publicKey: string, region: string, humanOwner?: string, personalitySeed?: string): void;
+        // Phase 32 OBS-07: HealthWatchdog accessor + setters (optional for tests).
+        readonly healthWatchdog?: import('../diagnostics/health-watchdog.js').HealthWatchdog | undefined;
+        readonly auditReconcile?: import('../db/audit-reconcile.js').AuditReconcile | undefined;
+        readonly clock?: { readonly currentTick: number; readonly running: boolean };
+        attachHealthWatchdog?(wd: import('../diagnostics/health-watchdog.js').HealthWatchdog): void;
+        attachFirehoseHub?(hub: { stats(): import('../audit/firehose-hub.js').FirehoseStats }): void;
     };
     /**
      * Phase 28 SPAWN-01: EVM RPC tx confirmation function for payment verification.
@@ -573,6 +582,31 @@ export function buildServerWithHub(
     const driftDetector = new DriftDetector(services.audit);
     services.firehoseHub = firehoseHub;
     services.driftDetector = driftDetector;
+
+    // Phase 32 OBS-06/07 (D-32-G1): HealthWatchdog construction + wiring + route.
+    // Construction order is mandatory:
+    //   1. firehoseHub already exists (line above).
+    //   2. Construct HealthWatchdog with launcher.auditReconcile + clockState getter.
+    //   3. attachHealthWatchdog (must precede attachFirehoseHub).
+    //   4. attachFirehoseHub (this also calls healthWatchdog.attachFirehoseStats).
+    //   5. Register /health/detailed route at top level (NOT inside WS scope below).
+    // Guard: only wire when services.launcher exposes the Phase 32 surface — tests
+    // that pass a minimal launcher (or no launcher) skip Phase 32 entirely.
+    if (
+        services.launcher &&
+        typeof services.launcher.attachHealthWatchdog === 'function' &&
+        typeof services.launcher.attachFirehoseHub === 'function' &&
+        services.launcher.clock !== undefined
+    ) {
+        const launcher = services.launcher as unknown as import('../genesis/launcher.js').GenesisLauncher;
+        const healthWatchdog = new HealthWatchdog({
+            auditReconcile: launcher.auditReconcile,
+            clockState: () => ({ tick: launcher.clock.currentTick, running: launcher.clock.running }),
+        });
+        launcher.attachHealthWatchdog(healthWatchdog);
+        launcher.attachFirehoseHub(firehoseHub);
+        registerHealthDetailedRoute(app, services, launcher);
+    }
 
     // M5: Origin check deferred — v1 binds 127.0.0.1. See Phase 4 for 0.0.0.0 hardening.
     // When binding 0.0.0.0 behind a reverse proxy, pair GRID_WS_SECRET with an origin
