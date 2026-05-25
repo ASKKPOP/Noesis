@@ -203,6 +203,22 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     // {grid_name, nous_did, owner_human_did, tick}. Emitted ONLY via appendNousSpawnedByHuman()
     // (grid/src/audit/append-nous-spawned-by-human.ts). Running allowlist total: 53.
     'nous.spawned_by_human',   // (53)
+    // Phase 33 (OBS-08, OBS-09, OBS-08b / D-33-A1, D-33-B1, D-33-B2) — Portal auth lifecycle events. Allowlist 53 to 56.
+    // portal.auth.login: closed 3-key payload {human_did, method, tick} where method is 'siwe' or 'email'.
+    // Emitted ONLY via appendPortalAuthLogin() (grid/src/audit/append-portal-auth-login.ts).
+    // Fires on every SIWE verify success AND email signin success (unconditional, regardless of isNew).
+    'portal.auth.login',    // (54) {human_did, method, tick}
+    // portal.auth.register: closed 3-key payload {human_did, method, tick} where method is 'siwe' or 'email'.
+    // Emitted ONLY via appendPortalAuthRegister() (grid/src/audit/append-portal-auth-register.ts).
+    // Fires on SIWE first-connect (inside `if (!human)` block) AND email signup.
+    'portal.auth.register', // (55) {human_did, method, tick}
+    // human.identified: universal identity-stamp. Closed 5-key payload
+    // {grid_name, human_did, identity_hash, identity_method, tick} where identity_method is 'siwe' or 'email'.
+    // Emitted ONLY via appendHumanIdentified() (grid/src/audit/append-human-identified.ts).
+    // SIWE path: identity_hash = sha256(ethAddress.toLowerCase()) — byte-identical to Phase 22 eth_address_hash
+    // for correlation with pre-Phase-33 human.joined entries. Email path: identity_hash = sha256(email.toLowerCase().trim()).
+    // Coexists with Phase 22 human.joined (SIWE-only birth event preserved per D-33-A7 + PHILOSOPHY §1).
+    'human.identified',     // (56) {grid_name, human_did, identity_hash, identity_method, tick}
 ] as const;
 
 /**
@@ -407,6 +423,35 @@ export const WHISPER_FORBIDDEN_KEYS = Object.freeze([
 ] as const);
 
 /**
+ * Phase 33 (OBS-10 / D-33-B3): portal-auth-leaf keys that MUST NOT appear in any
+ * portal.auth.* or human.identified payload. PII (IP, User-Agent, email plaintext,
+ * session tokens, JWT, cookies, password, nonce, signature, device fingerprint)
+ * is permanently forbidden from the audit chain.
+ * Only hash representations (email_hash, identity_hash) are permitted — never plaintext.
+ * Per D-33-B3 — exactly 13 keys. Do NOT add extras without a CONTEXT.md decision.
+ *
+ * Source-of-truth: declared here; referenced by Phase 33 producer files
+ * (append-portal-auth-login.ts, append-portal-auth-register.ts, append-human-identified.ts)
+ * via the global FORBIDDEN_KEY_PATTERN walker. The plaintext discipline is enforced at
+ * the producer boundary by payloadPrivacyCheck(cleanPayload) before audit.append(...).
+ */
+export const PORTAL_AUTH_FORBIDDEN_KEYS = Object.freeze([
+    'ip_address',
+    'ip',
+    'user_agent',
+    'ua',
+    'session_id',
+    'token',
+    'jwt',
+    'cookie',
+    'email',
+    'password_hash',
+    'nonce',
+    'signature',
+    'device_fingerprint',
+] as const);
+
+/**
  * Case-insensitive regex matching forbidden key substrings. Any payload
  * key that matches ANYWHERE (e.g., `user_prompt`, `Prompting`) is rejected.
  *
@@ -440,8 +485,33 @@ export const WHISPER_FORBIDDEN_KEYS = Object.freeze([
  * Phase 20 (LORE-01 / D-20-13): extended with 4 LORE_FORBIDDEN_KEYS (lore_body|lore_content|title_text|summary_text).
  * Lore body text and title text are Brain-private and NEVER cross the Brain↔Grid wire. Only
  * content_hash (64-char hex) is permitted. Added before any lore emitter code lands.
+ *
+ * Phase 33 (OBS-10 / D-33-B4): extended with **word-boundary anchored** alternation
+ * \b(?:ip_address|user_agent|session_id|jwt|password_hash|device_fingerprint)\b
+ * for the 6 multi-word / collision-risk keys in PORTAL_AUTH_FORBIDDEN_KEYS. This is
+ * the FIRST use of \b...\b in this regex. Word boundaries are LOAD-BEARING:
+ *   - email_hash is allowed (no email match because email is enforced at the closed-tuple boundary, not in this regex).
+ *   - nonce_hash is allowed (same rationale — nonce isn't in this word-boundary clause).
+ *   - ip_country is allowed (no ip_address match) while ip_address is forbidden.
+ *   - agent_version is allowed (no user_agent match) while user_agent is forbidden.
+ *
+ * Note: `\b(?:user_agent)\b` does NOT match `user_agent_version` — JS regex `\b` does
+ * not fire between word characters, and `_` is `\w`. Only the EXACT key `user_agent`
+ * is forbidden by this clause. Compound forms like `user_agent_version` pass through
+ * (and should be hashed or omitted by the caller if sensitive). Same applies to
+ * `\bip_address\b`, `\bsession_id\b`, `\bjwt\b`, `\bpassword_hash\b`,
+ * `\bdevice_fingerprint\b` — each matches only the exact key, never `<key>_<suffix>`.
+ * Compound-form leakage is mitigated by the closed-tuple structural check at the
+ * producer boundary (the 3-key / 5-key tuples have no slot for `user_agent_version`).
+ *
+ * The other 7 keys in PORTAL_AUTH_FORBIDDEN_KEYS (email, ip, ua, token, cookie,
+ * nonce, signature) are NOT added to FORBIDDEN_KEY_PATTERN — they are short
+ * common substrings that would over-match (e.g., signature substring inside
+ * signatures_validated, email inside email_hash). They are enforced separately at the
+ * producer boundary via the closed-tuple structural check (no payload may contain a key
+ * literally named email because the closed 3-key tuple {human_did, method, tick} rejects it).
  */
-export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content(?!_hash)|message|utterance|plaintext|decrypted|payload_plain|description|rationale|proposal_text|law_text|body_text|weight|reputation|relationship_score|ousia_weight|belief_content|target_content|emotion_text|dimension_text|belief_prose|iris_content|ltm_content|concept_text|graph_data|episode_text|node_content|edge_content|skill_body|skill_text|rule_text|norm_text|fingerprint_text|rule_content|lore_body|lore_content|title_text|summary_text|reflexion_text|creed_text|whisper_plaintext/i;
+export const FORBIDDEN_KEY_PATTERN = /prompt|response|wiki|reflection|thought|emotion_delta|hunger|curiosity|safety|boredom|loneliness|drive_value|energy|sustenance|need_value|bios_value|subjective_multiplier|chronos_multiplier|subjective_tick|text|body|content(?!_hash)|message|utterance|plaintext|decrypted|payload_plain|description|rationale|proposal_text|law_text|body_text|weight|reputation|relationship_score|ousia_weight|belief_content|target_content|emotion_text|dimension_text|belief_prose|iris_content|ltm_content|concept_text|graph_data|episode_text|node_content|edge_content|skill_body|skill_text|rule_text|norm_text|fingerprint_text|rule_content|lore_body|lore_content|title_text|summary_text|reflexion_text|creed_text|whisper_plaintext|\b(?:ip_address|user_agent|session_id|jwt|password_hash|device_fingerprint)\b/i;
 
 export interface PrivacyCheckResult {
     ok: boolean;

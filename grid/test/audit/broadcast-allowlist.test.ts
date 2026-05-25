@@ -8,12 +8,12 @@ import {
 } from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast-allowlist: default-deny membership', () => {
-    it('has exactly 53 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27+Phase 28 event types', () => {
-        expect(ALLOWLIST.size).toBe(53);
+    it('has exactly 56 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27+Phase 28+Phase 33 event types', () => {
+        expect(ALLOWLIST.size).toBe(56);
     });
 
-    it('has frozen 53-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(53);
+    it('has frozen 56-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(56);
     });
 
     it.each([
@@ -68,6 +68,10 @@ describe('broadcast-allowlist: default-deny membership', () => {
         'human.spoke',
         // Phase 28 (SPAWN-04) — Personal Nous spawn by human.
         'nous.spawned_by_human',
+        // Phase 33 (OBS-08, OBS-09, OBS-08b / D-33-A1) — Portal auth lifecycle events.
+        'portal.auth.login',
+        'portal.auth.register',
+        'human.identified',
     ])('allows %s', (eventType) => {
         expect(isAllowlisted(eventType)).toBe(true);
     });
@@ -88,7 +92,7 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(() => (ALLOWLIST as Set<string>).add('law.bypassed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).delete('trade.reviewed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).clear()).toThrow(TypeError);
-        expect(ALLOWLIST.size).toBe(53);
+        expect(ALLOWLIST.size).toBe(56);
     });
 
     it('Phase 6 operator.* tuple order: inspected < paused < resumed < law_changed < telos_forced', () => {
@@ -110,6 +114,30 @@ describe('broadcast-allowlist: default-deny membership', () => {
 
     it('exposes nous.spawned_by_human via the frozen ALLOWLIST set', () => {
         expect(ALLOWLIST.has('nous.spawned_by_human')).toBe(true);
+    });
+
+    // Phase 33 (D-33-A1) — positions 54/55/56 (0-indexed 53/54/55)
+    it('includes portal.auth.login at position 54 (index 53)', () => {
+        expect(ALLOWLIST_MEMBERS.includes('portal.auth.login')).toBe(true);
+        expect(ALLOWLIST_MEMBERS[53]).toBe('portal.auth.login');
+    });
+
+    it('includes portal.auth.register at position 55 (index 54)', () => {
+        expect(ALLOWLIST_MEMBERS.includes('portal.auth.register')).toBe(true);
+        expect(ALLOWLIST_MEMBERS[54]).toBe('portal.auth.register');
+    });
+
+    it('includes human.identified at position 56 (index 55)', () => {
+        expect(ALLOWLIST_MEMBERS.includes('human.identified')).toBe(true);
+        expect(ALLOWLIST_MEMBERS[55]).toBe('human.identified');
+    });
+
+    it('Phase 33 entries appear after nous.spawned_by_human in declared order', () => {
+        const members = Array.from(ALLOWLIST);
+        const idx = (k: string): number => members.indexOf(k);
+        expect(idx('nous.spawned_by_human')).toBeLessThan(idx('portal.auth.login'));
+        expect(idx('portal.auth.login')).toBeLessThan(idx('portal.auth.register'));
+        expect(idx('portal.auth.register')).toBeLessThan(idx('human.identified'));
     });
 
     it('Phase 25b sanction events appear at positions 46-51 (0-indexed: 45-50) in declared order', () => {
