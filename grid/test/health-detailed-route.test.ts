@@ -73,6 +73,11 @@ async function buildTestServer(opts: {
     snapshotCadenceMs?: number;
     attachWatchdog?: boolean;          // default true
     attachFirehose?: boolean;          // default true
+    // Phase 34.1 FOLLOWUP-34-01 + 02: optional fake AuditChain ref. When provided,
+    // wired into HealthWatchdog deps so tests can exercise the live-chain path
+    // (chain.length for in_memory_length + chain.lastPersistError merge). Default
+    // undefined preserves Phase 32 behavior (fallback inMemoryLength = persistedMaxId).
+    fakeChain?: { readonly length: number; readonly lastPersistError?: { code: string; at: number } | null };
 }): Promise<{ app: FastifyInstance; clock: WorldClock; launcher: FakeLauncher }> {
     const clock = new WorldClock({ tickRateMs: 100_000 });
     const _space = new SpatialMap();
@@ -83,12 +88,16 @@ async function buildTestServer(opts: {
         clock, space: _space, logos: _logos, audit, gridName: 'test-grid',
         launcher,
     } as unknown as import('../src/api/server.js').GridServices;
-    // Manual mini-wiring (mirrors buildServerWithHub Phase 32 block):
+    // Manual mini-wiring (mirrors buildServerWithHub Phase 32 + 34.1 block):
     const app = Fastify({ logger: false });
     const firehoseHub = new WsFirehoseHub(audit, 'test-grid');
     if (opts.attachWatchdog !== false) {
         const wd = new HealthWatchdog(
-            { auditReconcile: launcher.auditReconcile, clockState: () => launcher.clock.state },
+            {
+                auditReconcile: launcher.auditReconcile,
+                clockState: () => launcher.clock.state,
+                ...(opts.fakeChain ? { auditChain: opts.fakeChain } : {}),
+            },
             { now: opts.now, snapshotCadenceMs: opts.snapshotCadenceMs ?? 30_000 },
         );
         launcher.attachHealthWatchdog(wd);
@@ -205,6 +214,124 @@ describe('GET /health/detailed (OBS-06)', () => {
         // Assert this branch — confirms the predicate's AND-gate. NOT triggered → status remains 'ok'.
         expect(body.status).toBe('ok');
         expect(body.reasons).toEqual([]);
+    });
+
+    // ── Phase 34.1 FOLLOWUP-34-01 + 02 — wired-chain path ──────────────────
+
+    it('FOLLOWUP-34-01: in_memory_length uses auditChain.length when wired (replaces persistedMaxId fallback)', async () => {
+        const now = 5_000_000;
+        const built = await buildTestServer({
+            auditReconcile: makeFakeReconcile({
+                lastReconcileAt: now - 1000,
+                persistedMaxId: 50,
+            }),
+            // Live chain has 100 entries; persisted is 50 → divergence MUST be 50 (was 0 in Phase 32).
+            fakeChain: { length: 100 },
+            tick: 200, now: () => now,
+        });
+        app = built.app; clock = built.clock;
+        const res = await app.inject({ method: 'GET', url: '/health/detailed' });
+        const body = JSON.parse(res.body);
+        expect(body.audit.in_memory_length).toBe(100);
+        expect(body.audit.persisted_max_id).toBe(50);
+        expect(body.audit.divergence).toBe(50);
+        // 50 > DIVERGENCE_DEGRADED(10) but <= DIVERGENCE_CRITICAL(100) → status 'degraded' with 'divergence_above_degraded'.
+        expect(body.status).toBe('degraded');
+        expect(body.reasons).toContain('divergence_above_degraded');
+    });
+
+    it('FOLLOWUP-34-01: divergence > DIVERGENCE_CRITICAL → status critical with divergence_above_critical', async () => {
+        const now = 5_100_000;
+        const built = await buildTestServer({
+            auditReconcile: makeFakeReconcile({
+                lastReconcileAt: now - 1000,
+                persistedMaxId: 50,
+            }),
+            // Live chain 200 entries vs persisted 50 → divergence 150 > CRITICAL (100).
+            fakeChain: { length: 200 },
+            tick: 200, now: () => now,
+        });
+        app = built.app; clock = built.clock;
+        const res = await app.inject({ method: 'GET', url: '/health/detailed' });
+        const body = JSON.parse(res.body);
+        expect(body.audit.divergence).toBe(150);
+        expect(body.status).toBe('critical');
+        expect(body.reasons).toContain('divergence_above_critical');
+    });
+
+    it('FOLLOWUP-34-02: auditChain.lastPersistError surfaces in payload even when reconcile error is null', async () => {
+        const now = 5_200_000;
+        const built = await buildTestServer({
+            auditReconcile: makeFakeReconcile({
+                lastReconcileAt: now - 1000,
+                persistedMaxId: 50,
+                lastPersistError: null,  // reconcile has NOT seen an error
+            }),
+            // But the chain (PersistentAuditChain) caught a tick-time persist failure.
+            fakeChain: { length: 50, lastPersistError: { code: 'ENOTFOUND', at: now - 500 } },
+            tick: 200, now: () => now,
+        });
+        app = built.app; clock = built.clock;
+        const res = await app.inject({ method: 'GET', url: '/health/detailed' });
+        const body = JSON.parse(res.body);
+        // Pre-34.1 this was always null because health-watchdog only read from reconcile.
+        expect(body.audit.last_persist_error).toEqual({ code: 'ENOTFOUND', at: now - 500 });
+    });
+
+    it('FOLLOWUP-34-02: most-recent-by-at wins when both auditChain and reconcile have lastPersistError', async () => {
+        const now = 5_300_000;
+        const built = await buildTestServer({
+            auditReconcile: makeFakeReconcile({
+                lastReconcileAt: now - 1000,
+                persistedMaxId: 50,
+                // Reconcile error is older.
+                lastPersistError: { code: 'OLD_RECONCILE', at: now - 2000 },
+            }),
+            // Chain error is newer.
+            fakeChain: { length: 50, lastPersistError: { code: 'NEW_CHAIN', at: now - 100 } },
+            tick: 200, now: () => now,
+        });
+        app = built.app; clock = built.clock;
+        const res = await app.inject({ method: 'GET', url: '/health/detailed' });
+        const body = JSON.parse(res.body);
+        expect(body.audit.last_persist_error).toEqual({ code: 'NEW_CHAIN', at: now - 100 });
+    });
+
+    it('FOLLOWUP-34-02: reconcile error wins when newer than auditChain error', async () => {
+        const now = 5_400_000;
+        const built = await buildTestServer({
+            auditReconcile: makeFakeReconcile({
+                lastReconcileAt: now - 1000,
+                persistedMaxId: 50,
+                // Reconcile error is newer.
+                lastPersistError: { code: 'NEW_RECONCILE', at: now - 100 },
+            }),
+            fakeChain: { length: 50, lastPersistError: { code: 'OLD_CHAIN', at: now - 2000 } },
+            tick: 200, now: () => now,
+        });
+        app = built.app; clock = built.clock;
+        const res = await app.inject({ method: 'GET', url: '/health/detailed' });
+        const body = JSON.parse(res.body);
+        expect(body.audit.last_persist_error).toEqual({ code: 'NEW_RECONCILE', at: now - 100 });
+    });
+
+    it('FOLLOWUP-34-01: when fakeChain absent (legacy/no-DB path), in_memory_length falls back to persistedMaxId', async () => {
+        const now = 5_500_000;
+        const built = await buildTestServer({
+            auditReconcile: makeFakeReconcile({
+                lastReconcileAt: now - 1000,
+                persistedMaxId: 42,
+            }),
+            // No fakeChain — backward-compat: Phase 32 fallback in_memory_length = persisted_max_id, divergence = 0.
+            tick: 200, now: () => now,
+        });
+        app = built.app; clock = built.clock;
+        const res = await app.inject({ method: 'GET', url: '/health/detailed' });
+        const body = JSON.parse(res.body);
+        expect(body.audit.in_memory_length).toBe(42);
+        expect(body.audit.persisted_max_id).toBe(42);
+        expect(body.audit.divergence).toBe(0);
+        expect(body.status).toBe('ok');
     });
 
     it('payload audit block exposes ONLY the OBS-06 contract keys (no leakage)', async () => {

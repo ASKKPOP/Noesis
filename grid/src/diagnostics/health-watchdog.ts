@@ -160,6 +160,24 @@ export function computeStatus(input: ComputeStatusInput): ComputeStatusResult {
 interface HealthWatchdogDeps {
     auditReconcile: AuditReconcile | undefined;
     clockState: () => ClockSnapshot;
+    /**
+     * Phase 34.1 FOLLOWUP-34-01 + FOLLOWUP-34-02:
+     * Optional live AuditChain reference. When present:
+     *   - `chain.length` is the source of truth for in_memory_length (replaces the
+     *     Phase 32 fallback `inMemoryLength = persistedMaxId`, which made divergence
+     *     permanently 0 by construction).
+     *   - `chain.lastPersistError` (only present on PersistentAuditChain) is merged
+     *     with AuditReconcile.lastPersistError, taking the most recent by `.at`
+     *     timestamp. This surfaces tick-time persist failures in /health/detailed
+     *     even before the reconcile loop has run a cycle (Phase 31 fires Pino logs
+     *     on every persist failure; Phase 34.1 fixes the gap that hid them from
+     *     /health/detailed).
+     * When absent (legacy tests, no-DB launchers): falls back to Phase 32 behavior.
+     */
+    auditChain?: {
+        readonly length: number;
+        readonly lastPersistError?: { code: string; at: number } | null;
+    };
 }
 
 interface HealthWatchdogOpts {
@@ -206,21 +224,35 @@ export class HealthWatchdog {
         const now = this.nowFn();
         const clock = this.deps.clockState();
         const reconcile = this.deps.auditReconcile;
+        const auditChain = this.deps.auditChain;
 
         // Cold-start grace (D-32-B4): no reconcile cycle has yet had a chance to run.
         const gracePeriodActive = clock.tick < 60;
 
-        // Audit block — null fields when reconcile is absent (no DB) or grace active.
-        const auditPersistError = reconcile?.lastPersistError ?? null;
+        // Phase 34.1 FOLLOWUP-34-02: merge persist errors from both sources, prefer most
+        // recent by .at timestamp. PersistentAuditChain.lastPersistError fires on every
+        // tick failure (sub-cadence visibility); AuditReconcile.lastPersistError fires
+        // on replay failure (per-reconcile-cycle visibility). Phase 32 only consumed
+        // reconcile's getter, which masked tick-time failures from /health/detailed.
+        const reconcileError = reconcile?.lastPersistError ?? null;
+        const chainError = auditChain?.lastPersistError ?? null;
+        const auditPersistError = ((): { code: string; at: number } | null => {
+            if (reconcileError === null) return chainError;
+            if (chainError === null) return reconcileError;
+            return chainError.at >= reconcileError.at ? chainError : reconcileError;
+        })();
         const persistedMaxId = reconcile?.persistedMaxId ?? null;
         const lastReconcileAt = reconcile?.lastReconcileAt ?? 0;
 
-        // in_memory_length: the AuditReconcile contract does not expose this directly
-        // in Phase 31 (see D-31-C3); deriving it here would require a chain reference.
-        // For Phase 32 the field is exposed as null when reconcile is absent and as
-        // persistedMaxId when present (best-effort cached value). Refinement to a
-        // live chain.length read is deferred to Phase 34 if the Steward card needs it.
-        const inMemoryLength: number | null = persistedMaxId;
+        // Phase 34.1 FOLLOWUP-34-01: read in_memory_length from the live AuditChain when
+        // injected. Phase 32 fell back to `inMemoryLength = persistedMaxId` because the
+        // chain reference wasn't plumbed through; that fallback made divergence permanently
+        // 0 by construction and broke the Steward Audit Pipeline Health amber/red band.
+        // When auditChain is absent (legacy tests, no-DB launchers): preserve Phase 32
+        // fallback (in_memory_length === persisted_max_id → divergence === 0).
+        const inMemoryLength: number | null = auditChain !== undefined
+            ? auditChain.length
+            : persistedMaxId;
         const divergence: number | null = gracePeriodActive
             ? null
             : inMemoryLength !== null && persistedMaxId !== null
