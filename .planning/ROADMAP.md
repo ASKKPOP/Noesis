@@ -4,7 +4,7 @@
 
 v2.5 opened the Grid to real human users (181/181 plans, allowlist 53). Post-ship UAT surfaced two operational gaps: the production `audit_trail` MySQL flush stalled silently on 2026-05-22T06:57Z, and the `/users` directory has been permanently empty because `portal.auth.login` / `portal.auth.register` are read by consumers but emitted by no producer.
 
-v2.6 closes both gaps and hardens the audit/observability pipeline end-to-end so operators and Steward Console surfaces always see what the Grid actually emits. Allowlist grows **53 → 55** (+2 events in Phase 33). All other v2.6 work adds observability fields and structured logging — zero new event types.
+v2.6 closes both gaps and hardens the audit/observability pipeline end-to-end so operators and Steward Console surfaces always see what the Grid actually emits. Allowlist grows **53 → 56** (+3 events in Phase 33). All other v2.6 work adds observability fields and structured logging — zero new event types.
 
 Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numbers`.
 
@@ -23,8 +23,8 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
 
 - [x] **Phase 31: Audit Pipeline Persistence** — Fix GAP-A root cause. Wire `PersistentAuditChain` into production boot, add tick-cadenced reconcile loop, Pino structured logging on every persist attempt, one-shot backfill script for the 2026-05-22 → present stall. (allowlist unchanged 53) (completed 2026-05-24)
 - [x] **Phase 32: Firehose Observability** — Frame counters + `/health/detailed` endpoint + health watchdog. Make "tick advances but zero frames delivered" impossible to go unnoticed for >60s. (allowlist unchanged 53) (completed 2026-05-25)
-- [ ] **Phase 33: portal.auth.* Producers** — Wire `appendPortalAuthLogin` + `appendPortalAuthRegister` sole-producers into SIWE verify + email signup/signin. Add `PORTAL_AUTH_FORBIDDEN_KEYS`. Allowlist 53 → 55 (+2).
-- [ ] **Phase 34: Steward `/system` Health Surfaces** — Audit Pipeline Health card + Firehose Diagnostics card + Events per Minute by Family sparkline + client-side firehose watchdog. (allowlist unchanged 55)
+- [ ] **Phase 33: portal.auth.* Producers** — Wire `appendPortalAuthLogin` + `appendPortalAuthRegister` + `appendHumanIdentified` sole-producers into SIWE verify + email signup/signin. Add `PORTAL_AUTH_FORBIDDEN_KEYS`. Allowlist 53 → 56 (+3).
+- [ ] **Phase 34: Steward `/system` Health Surfaces** — Audit Pipeline Health card + Firehose Diagnostics card + Events per Minute by Family sparkline + client-side firehose watchdog. (allowlist unchanged 56)
 - [ ] **Phase 35: UAT Re-Verification + Documentation Close-Out** — Re-run 25a-HUMAN-UAT items #1 and #5c to PASS with live data. Atomic sync of MILESTONES, PROJECT, PHILOSOPHY, README, CLAUDE.md.
 
 ## Phase Details (v2.6)
@@ -80,24 +80,24 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
 **UI hint**: yes
 
 ### Phase 33: portal.auth.* Producers
-**Goal**: Light up `/users` directory and `/humans/[did]/history siwe_sessions` by emitting `portal.auth.login` / `portal.auth.register` from sole-producer files wired into SIWE verify + email signup/signin success paths. PII (IP, UA, email, session token) stays permanently off the wire.
+**Goal**: Light up `/users` directory and `/humans/[did]/history siwe_sessions` by emitting `portal.auth.login` / `portal.auth.register` from sole-producer files wired into SIWE verify + email signup/signin success paths. PII (IP, UA, email, session token) stays permanently off the wire. Adds `human.identified` universal identity-stamp event (D-33-A1) so /users + Phase 34 surfaces can correlate SIWE-born humans (via shared identity_hash with Phase 22 `human.joined`) and email-born humans (via sha256(email)) under a single event type going forward.
 **Depends on**: Phase 31 (events would otherwise be in-memory-only and never reach MySQL for the consumer queries that already exist in `humans.ts:97-98`)
-**Requirements**: OBS-08, OBS-09, OBS-10
+**Requirements**: OBS-08, OBS-08b, OBS-09, OBS-10
 **Success Criteria** (what must be TRUE):
   1. After at least one human logs in via SIWE, `GET /api/v1/audit/trail?type=portal.auth.login&limit=10` returns at least one entry within 30 seconds, with closed 3-key payload `{human_did, method: 'siwe', tick}`. Same for email path: `method: 'email'` after an email signin.
-  2. First-time SIWE connect produces BOTH `portal.auth.register` AND `portal.auth.login` audit entries (register fires first, login fires immediately after). Subsequent SIWE logins for the same DID produce only `portal.auth.login`. Email signup produces both; email signin produces only login. UAT item #5c from `25a-HUMAN-UAT.md` (`/users → /humans/[did]` deep-link click) returns PASS — directory is non-empty.
+  2. First-time SIWE connect produces BOTH `portal.auth.register` AND `portal.auth.login` audit entries (register fires first, login fires immediately after). Subsequent SIWE logins for the same DID produce only `portal.auth.login`. Email signup produces both; email signin produces only login. UAT item #5c from `25a-HUMAN-UAT.md` (`/users → /humans/[did]` deep-link click) returns PASS — directory is non-empty. First-time SIWE connect ALSO emits `human.identified` (universal identity-stamp event, D-33-A1) immediately after `human.joined`, so /users can resolve both SIWE-born (via shared identity_hash with eth_address_hash) and email-born humans (sha256(email)) under one universal event. Email signup emits `human.identified` ONLY (NO `human.joined` — Phase 22's SIWE-only contract preserved per D-33-A7).
   3. Any attempt to emit a `portal.auth.login` or `portal.auth.register` payload containing `ip`, `ip_address`, `user_agent`, `ua`, `session_id`, `token`, `jwt`, `cookie`, `email` (plaintext), `password_hash`, `nonce`, `signature`, or `device_fingerprint` is rejected at the producer boundary before `audit.append` is called. Test cases verify `email_hash` (allowed) vs `email` (forbidden), and `nonce_hash` (allowed) vs `nonce` (forbidden) — word-boundary regex anchors prevent false positives.
-  4. `grid/src/audit/broadcast-allowlist.ts` ends at exactly 55 members: `'portal.auth.login'` at position 54, `'portal.auth.register'` at position 55. CI gate `scripts/check-state-doc-sync.mjs` asserts the literal count.
-  5. Only `grid/src/audit/append-portal-auth-login.ts` may call `audit.append('portal.auth.login', ...)` and only `grid/src/audit/append-portal-auth-register.ts` may call `audit.append('portal.auth.register', ...)` — `scripts/check-sole-producer-discipline.mjs` greps every `append-*.ts` file for the `Object.keys(payload).sort()` + `payloadPrivacyCheck` + `audit.append` triad and fails if any sole-producer file omits any of the three.
-**Scope (ships)**: OBS-08..10.
+  4. `grid/src/audit/broadcast-allowlist.ts` ends at exactly 56 members: `'portal.auth.login'` at position 54, `'portal.auth.register'` at position 55, `'human.identified'` at position 56. CI gate `scripts/check-state-doc-sync.mjs` asserts the literal count.
+  5. Only `grid/src/audit/append-portal-auth-login.ts` may call `audit.append('portal.auth.login', ...)`, only `grid/src/audit/append-portal-auth-register.ts` may call `audit.append('portal.auth.register', ...)`, and only `grid/src/audit/append-human-identified.ts` may call `audit.append('human.identified', ...)` — `scripts/check-sole-producer-discipline.mjs` greps every `append-*.ts` (and the equivalent sole-producer files across the audit-emitting subsystems) for the `Object.keys(payload).sort()` + `payloadPrivacyCheck` + `audit.append` triad and fails if any sole-producer file omits any of the three.
+**Scope (ships)**: OBS-08, OBS-08b, OBS-09, OBS-10.
 **Out of scope for this phase**: `ua_hash` / `ip_country` payload extensions (OBS-FUTURE-METRICS-01 deferred to v2.7+); analytics dashboards (separate work).
 **Risk**:
   - **R-33-01 (CRITICAL)**: PII leaks into payload via future widening — `PORTAL_AUTH_FORBIDDEN_KEYS` set + `FORBIDDEN_KEY_PATTERN` word-boundary alternation; 12+ regression tests for forbidden keys flat and nested.
   - **R-33-02 (HIGH)**: `portal.auth.login` event volume grows audit chain fast at scale (1000 humans × 1 login/day = 1000 entries/day from auth alone) — Phase 33 ships with a perf benchmark in `grid/src/__tests__/audit-query-perf.test.ts` populating 100k entries and asserting `audit.query({eventType: 'portal.auth.login', actorDid: ...})` p95 <50ms. If exceeded, OBS-FUTURE-INDEX-01 triggers as v2.7 work.
   - **R-33-03 (MEDIUM)**: SIWE first-connect emits register but not login (or vice versa) — wiring test asserts both events fire on first-connect; only login fires on subsequent connects.
-**Allowlist additions**: **+2**. Events: `portal.auth.login` (pos 54) `{human_did, method, tick}` where `method ∈ {siwe, email}`; `portal.auth.register` (pos 55) `{human_did, method, tick}`. Running total: **55**.
+**Allowlist additions**: **+3**. Events: `portal.auth.login` (pos 54) `{human_did, method, tick}` where `method ∈ {siwe, email}`; `portal.auth.register` (pos 55) `{human_did, method, tick}`; `human.identified` (pos 56) `{grid_name, human_did, identity_hash, identity_method, tick}` where `identity_method ∈ {siwe, email}`. Running total: **56**.
 **Plans**: 6 plans (Plan 33-01 doc-sync revises allowlist budget to +3 / 53→56 per D-33-F1)
-  - [ ] 33-01-PLAN.md — Doc-sync (REQUIREMENTS + ROADMAP + STATE for allowlist 53→56 + OBS-08b; D-33-F1)
+  - [x] 33-01-PLAN.md — Doc-sync (REQUIREMENTS + ROADMAP + STATE for allowlist 53→56 + OBS-08b; D-33-F1)
   - [ ] 33-02-PLAN.md — Allowlist additions (+3 entries 54/55/56) + PORTAL_AUTH_FORBIDDEN_KEYS export + FORBIDDEN_KEY_PATTERN word-boundary extension (D-33-A1, D-33-B3, D-33-B4)
   - [ ] 33-03-PLAN.md — 3 sole-producer files: append-portal-auth-login.ts, append-portal-auth-register.ts, append-human-identified.ts (D-33-A3, D-33-B1, D-33-B2)
   - [ ] 33-04-PLAN.md — Wiring 4 call sites in grid/src/api/portal/auth.ts (SIWE first-connect + SIWE unconditional + email signup + email signin; D-33-A4, D-33-A5, D-33-A6)
@@ -120,7 +120,7 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
   - **R-34-01 (HIGH)**: Polling `/health/detailed` every 5s from multiple Steward tabs overwhelms the Grid — endpoint is in-process and cached (no DB block); single SWR-style hook with abort-on-unmount; per-tab polling is acceptable at MVP, multi-tab dedup deferred.
   - **R-34-02 (MEDIUM)**: Events-per-Minute sparkline trusts WS data and goes blank during firehose failure — fixed at design time: card uses REST not WS. Regression test asserts the card renders non-empty when WS is disabled.
   - **R-34-03 (MEDIUM)**: Client-side watchdog reconnect storm if server stays unhealthy — exponential backoff between reconnect attempts; max 1 reconnect per 30s; gives up after 5 attempts and surfaces error to operator.
-**Allowlist additions**: **0**. Running total: **55**.
+**Allowlist additions**: **0**. Running total: **56**.
 **Plans**: TBD
 **UI hint**: yes
 
@@ -131,15 +131,15 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
 **Success Criteria** (what must be TRUE):
   1. UAT item #1 (`25a-HUMAN-UAT.md`): with at least one Nous running and the firehose page open, color-coded event rows render live (not just the `hello` frame) for at least 22 seconds of observation. Each event row shows the family color from `EVENT_FAMILY_COLORS`. Re-attempt passes without an asterisk.
   2. UAT item #5c (`25a-HUMAN-UAT.md`): the `/users` directory shows at least one registered human; clicking the row navigates to `/humans/[did]`; the History tab shows non-empty `siwe_sessions`. The original UAT block is updated from "passed-with-gap" to "passed".
-  3. `.planning/MILESTONES.md` has a "v2.6 Resilience & Observability — SHIPPED" entry with date, allowlist count 53 → 55, and one-line summaries for each of Phases 31-35. `.planning/PROJECT.md` "Most-Recent Milestone" section reflects v2.6 ship; OBS-01..14 moved to Validated; OBS-15 marked complete.
-  4. `PHILOSOPHY.md` broadcast-allowlist paragraph updated from "53 events" to "55 events, frozen as of Phase 33" with a sentence noting `PORTAL_AUTH_FORBIDDEN_KEYS` discipline. `README.md` Project Status section appends a v2.6 SHIPPED line. CLAUDE.md Documentation Sync Rule audit pass with cross-references verified.
+  3. `.planning/MILESTONES.md` has a "v2.6 Resilience & Observability — SHIPPED" entry with date, allowlist count 53 → 56, and one-line summaries for each of Phases 31-35. `.planning/PROJECT.md` "Most-Recent Milestone" section reflects v2.6 ship; OBS-01..15 moved to Validated; OBS-15 marked complete.
+  4. `PHILOSOPHY.md` broadcast-allowlist paragraph updated from "53 events" to "56 events, frozen as of Phase 33" with a sentence noting `PORTAL_AUTH_FORBIDDEN_KEYS` discipline and `human.identified` universal identity-stamp event. `README.md` Project Status section appends a v2.6 SHIPPED line. CLAUDE.md Documentation Sync Rule audit pass with cross-references verified.
   5. `grep -r "v2.5 Human Portal SHIPPED" .planning/ README.md PHILOSOPHY.md` returns only historical entries (under "Previous Milestone" sections); no current-status claim references v2.5 as the active milestone.
 **Scope (ships)**: OBS-15.
 **Out of scope for this phase**: New code (Phase 35 is documentation + UAT re-verification only); v2.7 milestone planning.
 **Risk**:
   - **R-35-01 (HIGH)**: Documentation drifts again because sync is forgotten on one of the 6+ files — `scripts/check-state-doc-sync.mjs` extended to cover any new invariants; commit must touch MILESTONES + PROJECT + PHILOSOPHY + README + CLAUDE.md atomically (single commit per the Documentation Sync Rule).
   - **R-35-02 (MEDIUM)**: UAT items pass in dev but fail in prod due to env-specific issue — manual UAT step explicitly runs against the production docker compose stack, not a test harness.
-**Allowlist additions**: **0**. Running total: **55**.
+**Allowlist additions**: **0**. Running total: **56**.
 **Plans**: TBD
 
 ## Progress (v2.6)
@@ -157,24 +157,24 @@ Dependencies form a strict chain. Rationale:
 |-------|----------------|--------|-----------|
 | 31. Audit Pipeline Persistence | 6/6 | Complete    | 2026-05-24 |
 | 32. Firehose Observability | 6/6 | Complete    | 2026-05-25 |
-| 33. portal.auth.* Producers | 0/? | Pending | — |
+| 33. portal.auth.* Producers | 1/6 | In Progress|  |
 | 34. Steward `/system` Health Surfaces | 0/? | Pending | — |
 | 35. UAT Re-Verification + Documentation Close-Out | 0/? | Pending | — |
 
 ## Coverage & Traceability (v2.6)
 
-### REQ → Phase Mapping (all 15 OBS-* REQs)
+### REQ → Phase Mapping (all 16 OBS-* REQs)
 
 | Theme | REQ IDs | Phase | Count |
 |-------|---------|-------|-------|
 | Audit Pipeline Persistence | OBS-01, OBS-02, OBS-03, OBS-04 | Phase 31 | 4 |
 | Firehose Observability | OBS-05, OBS-06, OBS-07 | Phase 32 | 3 |
-| portal.auth.* Producers | OBS-08, OBS-09, OBS-10 | Phase 33 | 3 |
+| portal.auth.* Producers | OBS-08, OBS-08b, OBS-09, OBS-10 | Phase 33 | 4 |
 | Steward `/system` Health Surfaces | OBS-11, OBS-12, OBS-13, OBS-14 | Phase 34 | 4 |
 | UAT Re-Verification + Doc Sync | OBS-15 | Phase 35 | 1 |
-| **Total** | | | **15** |
+| **Total** | | | **16** |
 
-Coverage: **15/15 REQs mapped** ✓. Zero orphans. Zero duplicates.
+Coverage: **16/16 REQs mapped** ✓. Zero orphans. Zero duplicates. (OBS-08b added Phase 33 D-33-F1.)
 
 ### Allowlist Growth Ledger (v2.6)
 
@@ -186,10 +186,11 @@ Starting: **53 events** (v2.5 frozen end-state).
 | 32 | *(none — `/health/detailed` is a route, not an audit event)* | — | 53 |
 | 33 | `portal.auth.login` (pos 54) | `{human_did, method, tick}` where `method ∈ {siwe, email}` | 54 |
 | 33 | `portal.auth.register` (pos 55) | `{human_did, method, tick}` | 55 |
-| 34 | *(none — UI cards consume existing data via REST)* | — | 55 |
-| 35 | *(none — documentation + UAT only)* | — | 55 |
+| 33 | `human.identified` (pos 56) | `{grid_name, human_did, identity_hash, identity_method, tick}` where `identity_method ∈ {siwe, email}` | 56 |
+| 34 | *(none — UI cards consume existing data via REST)* | — | 56 |
+| 35 | *(none — documentation + UAT only)* | — | 56 |
 
-**Total v2.6 allowlist growth: +2 (53 → 55).** Freeze-except-by-explicit-addition rule preserved. Both new events carry closed 3-key tuples; PII (IP, UA, email plaintext, session tokens, signatures, nonces) is permanently forbidden via `PORTAL_AUTH_FORBIDDEN_KEYS`.
+**Total v2.6 allowlist growth: +3 (53 → 56).** Freeze-except-by-explicit-addition rule preserved. `portal.auth.login` and `portal.auth.register` carry closed 3-key tuples; `human.identified` carries a closed 5-key tuple with `identity_hash` (SHA-256 of lowercased ETH address for SIWE — byte-identical to Phase 22 `eth_address_hash` for correlation — or SHA-256 of normalized email for email path). PII (IP, UA, email plaintext, session tokens, signatures, nonces) is permanently forbidden via `PORTAL_AUTH_FORBIDDEN_KEYS` + word-boundary alternation in `FORBIDDEN_KEY_PATTERN`.
 
 ## Research Artifacts (v2.6)
 
@@ -200,7 +201,7 @@ Primary source: `.planning/research/v2.6/OBSERVABILITY-HARDENING.md` (committed 
 - Phase ordering is forced — see Progress section above.
 
 Inherited from v2.5 (do not break):
-- Broadcast allowlist frozen-except-by-explicit-addition (53 events at v2.5 close; +2 in v2.6 Phase 33)
+- Broadcast allowlist frozen-except-by-explicit-addition (53 events at v2.5 close; +3 in v2.6 Phase 33)
 - Zero-diff audit chain unbroken since Phase 1 commit `29c3516`
 - Hash-only cross-boundary (eth-address-hash, reason-hash, content-hash)
 - Zero-custody invariant (PHILOSOPHY §8) — no v2.6 work touches user funds
@@ -299,4 +300,4 @@ See `.planning/MILESTONES.md` for full sprint-by-sprint summaries.
 
 ---
 
-*Last updated: 2026-05-24 — v2.6 Resilience & Observability roadmap created (5 phases, 15 OBS-* REQs, allowlist 53 → 55 in Phase 33). Phase numbering continues from v2.5.*
+*Last updated: 2026-05-25 — v2.6 Phase 33 scope expanded (+human.identified per D-33-A1 / OBS-08b). 5 phases, 16 OBS-* REQs, allowlist 53 → 56 in Phase 33. Phase numbering continues from v2.5.*

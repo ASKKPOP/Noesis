@@ -31,6 +31,7 @@
      Closed 3-key payloads, hash-only privacy — IP / UA / email / token never on the wire. -->
 
 - [ ] **OBS-08**: `appendPortalAuthLogin(audit, { human_did, method, tick })` sole-producer file lands at `grid/src/audit/append-portal-auth-login.ts`. Closed 3-key payload, `method ∈ {'siwe', 'email'}` (closed enum), DID_RE on `human_did`, integer guard on `tick`, structural `Object.keys(payload).sort()` strict-equality check, `payloadPrivacyCheck` runs before `audit.append('portal.auth.login', ...)`. Emits at allowlist position 54. Wired into SIWE verify success path (line ~131 in `grid/src/api/portal/auth.ts`) AND email signin success (line ~265). Mirror discipline of `append-human-joined.ts`.
+- [ ] **OBS-08b**: `appendHumanIdentified(audit, { grid_name, human_did, identity_hash, identity_method, tick })` sole-producer file lands at `grid/src/audit/append-human-identified.ts`. Closed 5-key payload, `identity_method ∈ {'siwe', 'email'}` (closed enum via `IDENTITY_METHOD_ENUM = ['email', 'siwe'] as const`), `DID_RE` on `human_did`, `HEX64_RE` on `identity_hash`, non-empty string on `grid_name`, non-negative integer guard on `tick`, structural `Object.keys(payload).sort()` strict-equality check, `payloadPrivacyCheck` runs before `audit.append('human.identified', ...)`. Emits at allowlist position **56**. Wired into SIWE verify FIRST-CONNECT path (after `appendHumanJoined`, only when `isNew === true`, with `identity_hash = sha256(ethAddress.toLowerCase())` — byte-identical to `eth_address_hash` for correlation with pre-Phase-33 `human.joined` entries) AND email signup success (with `identity_hash = sha256(email.toLowerCase().trim())`). Pre-Phase-33 `human.joined` entries preserved unmodified per PHILOSOPHY §1 + Merkle invariant (`chain.ts:181`). Mirror discipline of `append-human-joined.ts:50-114`.
 - [ ] **OBS-09**: `appendPortalAuthRegister(audit, { human_did, method, tick })` sole-producer file lands at `grid/src/audit/append-portal-auth-register.ts`. Same discipline as OBS-08. Emits at allowlist position 55. Wired into SIWE verify FIRST-CONNECT path (after `appendHumanJoined`, only when `isNew === true`) AND email signup success (line ~217).
 - [ ] **OBS-10**: `PORTAL_AUTH_FORBIDDEN_KEYS` set blocks: `ip_address`, `ip`, `user_agent`, `ua`, `session_id`, `token`, `jwt`, `cookie`, `email` (plaintext, vs `email_hash` allowed), `password_hash`, `nonce`, `signature`, `device_fingerprint`. `FORBIDDEN_KEY_PATTERN` extended with word-boundary-anchored alternation `\b(?:ip_address|user_agent|session_id|jwt|password_hash|device_fingerprint)\b`. Test cases for `email_hash` (allowed) vs `email` (forbidden) AND `nonce_hash` (allowed) vs `nonce` (forbidden).
 
@@ -82,6 +83,7 @@
 | OBS-06 | 32 | Pending |
 | OBS-07 | 32 | Pending |
 | OBS-08 | 33 | Pending |
+| OBS-08b | 33 | Pending |
 | OBS-09 | 33 | Pending |
 | OBS-10 | 33 | Pending |
 | OBS-11 | 34 | Pending |
@@ -90,4 +92,4 @@
 | OBS-14 | 34 | Pending |
 | OBS-15 | 35 | Pending |
 
-**Coverage:** 15/15 v2.6 REQs mapped to phases. Zero orphans. Zero duplicates.
+**Coverage:** 16/16 v2.6 REQs mapped to phases. Zero orphans. Zero duplicates. (OBS-08b added Phase 33 D-33-F1.)
