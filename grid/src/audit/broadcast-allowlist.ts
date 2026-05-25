@@ -203,6 +203,22 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     // {grid_name, nous_did, owner_human_did, tick}. Emitted ONLY via appendNousSpawnedByHuman()
     // (grid/src/audit/append-nous-spawned-by-human.ts). Running allowlist total: 53.
     'nous.spawned_by_human',   // (53)
+    // Phase 33 (OBS-08, OBS-09, OBS-08b / D-33-A1, D-33-B1, D-33-B2) — Portal auth lifecycle events. Allowlist 53 to 56.
+    // portal.auth.login: closed 3-key payload {human_did, method, tick} where method is 'siwe' or 'email'.
+    // Emitted ONLY via appendPortalAuthLogin() (grid/src/audit/append-portal-auth-login.ts).
+    // Fires on every SIWE verify success AND email signin success (unconditional, regardless of isNew).
+    'portal.auth.login',    // (54) {human_did, method, tick}
+    // portal.auth.register: closed 3-key payload {human_did, method, tick} where method is 'siwe' or 'email'.
+    // Emitted ONLY via appendPortalAuthRegister() (grid/src/audit/append-portal-auth-register.ts).
+    // Fires on SIWE first-connect (inside `if (!human)` block) AND email signup.
+    'portal.auth.register', // (55) {human_did, method, tick}
+    // human.identified: universal identity-stamp. Closed 5-key payload
+    // {grid_name, human_did, identity_hash, identity_method, tick} where identity_method is 'siwe' or 'email'.
+    // Emitted ONLY via appendHumanIdentified() (grid/src/audit/append-human-identified.ts).
+    // SIWE path: identity_hash = sha256(ethAddress.toLowerCase()) — byte-identical to Phase 22 eth_address_hash
+    // for correlation with pre-Phase-33 human.joined entries. Email path: identity_hash = sha256(email.toLowerCase().trim()).
+    // Coexists with Phase 22 human.joined (SIWE-only birth event preserved per D-33-A7 + PHILOSOPHY §1).
+    'human.identified',     // (56) {grid_name, human_did, identity_hash, identity_method, tick}
 ] as const;
 
 /**
