@@ -66,8 +66,8 @@ const EXPECTED_ORDER = [
 describe('broadcast allowlist — Phase 12 invariant (VOTE-01..04 D-12-01)', () => {
     it('has exactly 43 entries (Phase 20 extended from 41 — LORE-01/02 +2 lore.* events)', () => {
         // Note: allowlist has grown past 43 in later phases; this test now validates
-        // only the Phase 12 positional invariants remain intact (size check updated to 53).
-        expect(ALLOWLIST.size).toBe(53);
+        // only the Phase 12 positional invariants remain intact (size check updated to 56 in Phase 33).
+        expect(ALLOWLIST.size).toBe(56);
     });
 
     it('contains proposal.opened at position 23 (index 22)', () => {
