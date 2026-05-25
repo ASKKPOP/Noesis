@@ -56,6 +56,32 @@ Operator notes (fill in):
 - Deploy completed at: __________________
 - `/health/detailed` returns `reasons` field: [ ] yes / [ ] no
 
+### Step 0.5 — Post-grace baseline (REQUIRED before Step 5)
+
+The Phase 32 cold-start grace period (`tick < 60`) masks `audit.in_memory_length`, `audit.divergence`, and `audit.last_persist_error` to null. The Audit Pipeline Health card renders divergence as `—` and the reasons sub-line shows "Cold-start grace period" during this window. **Step 5 (MySQL outage cutover) cannot be meaningfully verified during grace because the card cannot transition through green→amber→red color bands when divergence is null.**
+
+Operator MUST verify both conditions before proceeding to Step 5:
+
+```sh
+curl -s http://localhost:8080/health/detailed | jq '{tick: .clock.tick, in_mem: .audit.in_memory_length, divergence: .audit.divergence, divergence_threshold: .audit.divergence_threshold}'
+```
+
+Expected output:
+- `.tick` ≥ 60
+- `.in_mem` is a positive number (not null) — confirms Phase 34.1 wiring shipped
+- `.divergence` is a number (typically 0 when MySQL healthy, not null)
+- `.divergence_threshold` is 10 (Phase 32 D-32-C1 HEALTH_THRESHOLDS.DIVERGENCE_DEGRADED)
+
+**If `.tick < 60`:** sleep 5 minutes and re-check. Production tick rate is typically ~30s/tick so grace expires at ~30 minutes uptime.
+
+**If `.in_mem` is null even with `.tick >= 60`:** Grid image is pre-Phase-34.1. Rebuild with `docker compose build grid && docker compose up -d grid` and re-verify.
+
+Operator notes:
+- Post-grace baseline confirmed at: __________________
+- `.tick` value: __________________
+- `.in_mem` value: __________________
+- `.divergence` value: __________________
+
 ---
 
 ## Step 1 — Audit Pipeline Health card visible on /system (OBS-11)

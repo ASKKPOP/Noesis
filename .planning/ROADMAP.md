@@ -17,7 +17,7 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
 - ✅ **v2.3 Living Minds — Phases 15-17** (shipped 2026-05-15, 16/16 plans)
 - ✅ **v2.4 Agora — Phases 18-21** (shipped 2026-05-20, 115/115 plans)
 - ✅ **v2.5 Human Portal — Phases 22-30** (shipped 2026-05-24, 181/181 plans, allowlist 53)
-- 🔄 **v2.6 Resilience & Observability — Phases 31-35** (opened 2026-05-24)
+- ✅ **v2.6 Resilience & Observability — Phases 31-35 + Phase 34.1** (shipped 2026-05-25, allowlist 53 → 56)
 
 ## Phases (v2.6 — Active)
 
@@ -26,7 +26,7 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
 - [x] **Phase 33: portal.auth.* Producers** — Wire `appendPortalAuthLogin` + `appendPortalAuthRegister` + `appendHumanIdentified` sole-producers into SIWE verify + email signup/signin. Add `PORTAL_AUTH_FORBIDDEN_KEYS`. Allowlist 53 → 56 (+3). (completed 2026-05-25)
 - [x] **Phase 34: Steward `/system` Health Surfaces** — Audit Pipeline Health card + Firehose Diagnostics card + Events per Minute by Family sparkline + client-side firehose watchdog. (allowlist unchanged 56) (UAT-completed 2026-05-25 with 3 followups; UAT also fixed 2 latent Phase 32 bugs inline — see 34-VERIFICATION.md)
 - [x] **Phase 34.1: HealthWatchdog wiring followups** — FOLLOWUP-34-01 (chain.length into in_memory_length) + FOLLOWUP-34-02 (PersistentAuditChain.lastPersistError merged into payload). Surgical fix to HealthWatchdogDeps with optional auditChain field; 6 new wired-chain tests + all 23 existing tests pass; live verification confirmed divergence grew 31→39 and last_persist_error populated with timestamp updates during a real MySQL outage. (allowlist unchanged 56)
-- [ ] **Phase 35: UAT Re-Verification + Documentation Close-Out** — Re-run 25a-HUMAN-UAT items #1 and #5c to PASS with live data. Atomic sync of MILESTONES, PROJECT, PHILOSOPHY, README, CLAUDE.md.
+- [x] **Phase 35: UAT Re-Verification + Documentation Close-Out** — Re-run 25a-HUMAN-UAT items #1 and #5c to PASS with live data. Atomic sync of MILESTONES, PROJECT, PHILOSOPHY, README, CLAUDE.md. (SHIPPED 2026-05-25 — both UAT items verified PASS via autonomous /browse; 5/5 ROADMAP SCs met; v2.6 milestone closed)
 
 ## Phase Details (v2.6)
 

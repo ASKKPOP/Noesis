@@ -545,11 +545,20 @@ See `.planning/phases/25a-observer-surfaces/25a-HUMAN-UAT.md` for full UAT closu
 
 ---
 
-## v2.6: Resilience & Observability (IN PROGRESS)
+## v2.6: Resilience & Observability — SHIPPED 2026-05-25
 
 **Opened:** 2026-05-24
-**Status:** 3/5 phases shipped (Phase 31 + 32 + 33), 2 remaining (Phase 34 + 35)
-**Driving inputs:** GAP-2026-05-24-A (audit pipeline silence) + GAP-2026-05-24-B (missing portal.auth.* producers) from v2.5 post-ship UAT.
+**Shipped:** 2026-05-25 (5/5 phases + Phase 34.1 followup all closed)
+**Allowlist:** 53 → 56 (+3 events in Phase 33: `portal.auth.login`, `portal.auth.register`, `human.identified`)
+**Driving inputs:** GAP-2026-05-24-A (audit pipeline silence) + GAP-2026-05-24-B (missing portal.auth.* producers) from v2.5 post-ship UAT. **Both gaps permanently closed and re-verified live in Phase 35.**
+
+**One-line per phase:**
+- Phase 31 — `PersistentAuditChain` wired in production + 60-tick reconcile + Pino structured logging + backfill script (OBS-01..04). Resolves GAP-A.
+- Phase 32 — `WsFirehoseHub.stats()` 5-field counters + `GET /health/detailed` JSON + pure-pull `HealthWatchdog` with grace window (OBS-05..07).
+- Phase 33 — Three sole-producers (`appendPortalAuthLogin`/`appendPortalAuthRegister`/`appendHumanIdentified`) wired into SIWE + email auth + `PORTAL_AUTH_FORBIDDEN_KEYS` 13-key freeze + `check-sole-producer-discipline.mjs` CI gate (OBS-08..10). Allowlist +3. Resolves GAP-B.
+- Phase 34 — Three Steward `/system` cards (Audit Pipeline Health + Firehose Diagnostics + Events per Minute by Family sparkline) + client-side firehose watchdog (OBS-11..14). UAT discovered + fixed 2 latent Phase 32 deployment bugs inline (`/health/detailed` route never registered in production main.ts; Steward Docker cache mask hid `/culture` Suspense bug).
+- Phase 34.1 — Followup gap-closure: wire `chain.length` into HealthWatchdog (FOLLOWUP-34-01 HIGH) + merge PersistentAuditChain.lastPersistError into payload (FOLLOWUP-34-02 MEDIUM). Both fixes verified live during MySQL outage re-run: divergence grew 31→39, last_persist_error populated with timestamp updates.
+- Phase 35 — UAT re-verification + atomic doc-sync close-out (OBS-15). 25a-HUMAN-UAT Items #1 + #5c upgraded from passed-with-postscript / passed-with-gap to **PASS**. MILESTONES + PROJECT + PHILOSOPHY + README + CLAUDE.md atomic commit per Documentation Sync Rule.
 
 ### Phase 31: Audit Pipeline Persistence — SHIPPED 2026-05-25 (operator UAT pending)
 

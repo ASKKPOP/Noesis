@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
 milestone: v2.6
-milestone_name: — Active)
-status: executing
-stopped_at: Phase 34.1 SHIPPED + verified live (divergence 31→39 + last_persist_error populated during MySQL outage); FOLLOWUP-34-03 (doc note) carries to Phase 35
-last_updated: "2026-05-25T21:48:00.000Z"
-last_activity: 2026-05-25 -- Phase 34.1 closed Phase 34 FOLLOWUP-34-01 (HIGH) + FOLLOWUP-34-02 (MEDIUM); 6 new tests + live MySQL outage verification
+milestone_name: Resilience & Observability — SHIPPED 2026-05-25
+status: shipped
+stopped_at: v2.6 SHIPPED — all 5 phases + Phase 34.1 followup closed; 25a-HUMAN-UAT Items #1 + #5c PASS; atomic doc-sync complete
+last_updated: "2026-05-25T22:08:00.000Z"
+last_activity: 2026-05-25 -- Phase 35 close-out; v2.6 milestone shipped (allowlist 53 → 56)
 progress:
   total_phases: 5
-  completed_phases: 4
-  total_plans: 24
-  completed_plans: 24
+  completed_phases: 5
+  total_plans: 25
+  completed_plans: 25
   percent: 100
 ---
 
@@ -23,14 +23,14 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 **Core value:** The first persistent Grid where Nous actually live — open to real human users since v2.5. Trust in the audit pipeline and observability surfaces is the foundation for everything that follows.
 **Current milestone:** v2.6 — Resilience & Observability
 **Previous milestone:** v2.5 Human Portal — SHIPPED 2026-05-24 (181/181 plans, allowlist 53)
-**Current focus:** Phase 35 — uat-re-verification + 1 carry-forward followup (FOLLOWUP-34-03 LOW: 34-HUMAN-UAT.md post-grace baseline check). Phase 34.1 closed FOLLOWUP-34-01 + FOLLOWUP-34-02.
+**Current focus:** v2.6 SHIPPED. Awaiting next milestone (v2.7) scoping. Carry-forward backlog: tighten Phase 31 reconcile cadence (60→5 ticks for faster recovery SLA) + Docker DNS handling for Grid container.
 
 ## Current Position
 
-Phase: 34.1 (followup-divergence-and-persist-error) — SHIPPED
-Plan: HealthWatchdog wiring fix complete; live MySQL outage verified divergence 31→39 + last_persist_error populated
-Status: Phase 34 + 34.1 both shipped; ready for Phase 35
-Last activity: 2026-05-25 -- Phase 34.1 closed FOLLOWUP-34-01 (HIGH) + FOLLOWUP-34-02 (MEDIUM); commit 93265ef; 6 new tests + live UAT Step 5 re-run verified the fix
+Phase: 35 (uat-reverification-and-doc-closeout) — SHIPPED
+Plan: 25a-HUMAN-UAT Items #1 + #5c re-verified PASS; atomic doc-sync (MILESTONES + PROJECT + PHILOSOPHY + README + CLAUDE.md + 2 HUMAN-UAT files); v2.6 milestone closed
+Status: v2.6 SHIPPED — all 5 phases + Phase 34.1 followup closed
+Last activity: 2026-05-25 -- Phase 35 close-out commit; 35-VERIFICATION.md PASS (5/5 SCs); ready for v2.7 milestone scoping
 
 Driving inputs for v2.6 (unchanged from milestone open):
 
