@@ -124,8 +124,8 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
 **Plans**: 5 plans
   - [x] 34-01-PLAN.md — Grid HealthDetailedPayload + route test extension for reasons[] (OBS-11/12 prerequisite; D-34-B1)
   - [x] 34-02-PLAN.md — Steward lib substrate: use-health-detailed hook + health-reason-labels + event-family-colors + ALLOWLIST_STATIC fix 45→56 (OBS-11/12 hook substrate + D-34-A3/B2/C1)
-  - [ ] 34-03-PLAN.md — Three /system cards: Audit Pipeline Health + Firehose Diagnostics + Events per Minute by Family + FrameCounterSparkline + EventsPerMinuteSparkline (OBS-11/12/13; D-34-A1/A2/A3/B3)
-  - [ ] 34-04-PLAN.md — /firehose client-side watchdog (OBS-14; R-34-03 suppression-window mitigation)
+  - [x] 34-03-PLAN.md — Three /system cards: Audit Pipeline Health + Firehose Diagnostics + Events per Minute by Family + FrameCounterSparkline + EventsPerMinuteSparkline (OBS-11/12/13; D-34-A1/A2/A3/B3)
+  - [x] 34-04-PLAN.md — /firehose client-side watchdog + EVENT_FAMILY_COLORS shared-lib import (OBS-14; R-34-03 suppression-window mitigation)
   - [ ] 34-05-PLAN.md — 34-HUMAN-UAT.md operator playbook with MySQL-outage cutover scenario (OBS-11..14 manual verification)
 **UI hint**: yes
 

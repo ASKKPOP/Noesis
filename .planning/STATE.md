@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.6
 milestone_name: — Active)
 status: executing
-stopped_at: Phase 34 Wave 1 complete (Plans 34-01 + 34-02 merged)
-last_updated: "2026-05-25T18:25:00.000Z"
-last_activity: 2026-05-25 -- Phase 34 Wave 1 complete; Wave 2 next
+stopped_at: Phase 34 Wave 2 complete (Plans 34-03 + 34-04 merged)
+last_updated: "2026-05-25T18:36:00.000Z"
+last_activity: 2026-05-25 -- Phase 34 Wave 2 complete; Wave 3 (34-05 HUMAN-UAT checkpoint) next
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 23
-  completed_plans: 20
-  percent: 87
+  completed_plans: 22
+  percent: 95
 ---
 
 # Project State
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 ## Current Position
 
 Phase: 34 (steward-system-health-surfaces) — EXECUTING
-Plan: 3 of 5 (Wave 1 complete, Wave 2 next: 34-03 + 34-04)
-Status: Executing Phase 34 — Wave 1 complete
-Last activity: 2026-05-25 -- Wave 1 merged (Plan 34-01 reasons[] extension + Plan 34-02 steward lib substrate + ALLOWLIST_STATIC 45→56)
+Plan: 5 of 5 (Waves 1+2 complete; Wave 3 next: 34-05 HUMAN-UAT checkpoint)
+Status: Executing Phase 34 — Waves 1+2 complete (4/5 plans shipped)
+Last activity: 2026-05-25 -- Wave 2 merged (Plan 34-03 three /system health cards + 2 sparklines + Plan 34-04 firehose watchdog + EVENT_FAMILY_COLORS shared-lib import)
 
 Driving inputs for v2.6 (unchanged from milestone open):
 
