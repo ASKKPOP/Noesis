@@ -33,6 +33,9 @@ jobs:
       - name: OBS-R-32-02 setInterval-lifecycle gate (Phase 32)
         run: node scripts/check-interval-lifecycle.mjs
 
+      - name: OBS-09 sole-producer-discipline gate (Phase 33)
+        run: node scripts/check-sole-producer-discipline.mjs
+
       - name: Fast Vitest rig suite (Wave 0/1/2 — NOESIS_RUN_NIGHTLY unset, rig-bench skips)
         working-directory: grid
         run: |
