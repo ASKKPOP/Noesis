@@ -628,8 +628,17 @@ describe('PORTAL_AUTH_FORBIDDEN_KEYS — word-boundary regression', () => {
     it('allows agent_version (no user_agent match)', () => {
         expect(payloadPrivacyCheck({ agent_version: '1.0' }).ok).toBe(true);
     });
-    it('rejects user_agent_version (user_agent prefix still matches \buser_agent\b)', () => {
-        expect(payloadPrivacyCheck({ user_agent_version: '1.0' }).ok).toBe(false);
+    it('ALLOWS user_agent_version — \\buser_agent\\b does NOT match (\\b requires \\W boundary; _ is \\w)', () => {
+        // JS regex \b fires between \w and \W (or string edge). Between user_agent and _version,
+        // the next char is _ (word char), so no boundary triggers. Plan 33-05 corrected this
+        // during revision iter 1 after CONTEXT.md D-33-B4 was found to be factually wrong.
+        expect(payloadPrivacyCheck({ user_agent_version: '1.0' }).ok).toBe(true);
+    });
+    it('ALLOWS ip_address_v6 — same \\b-after-_ reason', () => {
+        expect(payloadPrivacyCheck({ ip_address_v6: '::1' }).ok).toBe(true);
+    });
+    it('ALLOWS session_id_legacy — same \\b-after-_ reason', () => {
+        expect(payloadPrivacyCheck({ session_id_legacy: 'abc' }).ok).toBe(true);
     });
     // Nested object cases
     it('rejects email nested in object', () => {
@@ -660,8 +669,9 @@ import { AuditChain } from '../src/audit/chain.js';
 
 describe('SIWE first-connect — 4 audit entries in order', () => {
     it('emits human.joined → human.identified → portal.auth.register → portal.auth.login', () => {
-        // Use a real AuditChain + call appendHumanJoined/appendHumanIdentified/etc directly
-        // OR spin up buildServerWithHub + inject + POST /api/v1/portal/auth/verify
+        // Use a real AuditChain + call appendHumanJoined/appendHumanIdentified/etc directly.
+        // Do NOT use buildServerWithHub/app.inject — this is producer-level discipline, not
+        // integration testing. Direct invocation is simpler and avoids Fastify scaffolding.
         // Expected: chain.length === 4
         // chain.at(0).eventType === 'human.joined'
         // chain.at(1).eventType === 'human.identified'
@@ -690,7 +700,7 @@ describe('email signin — 1 audit entry', () => {
 });
 ```
 
-**Recommended approach:** Use `buildServerWithHub` + `app.inject()` (pattern from `grid/test/api.test.ts` lines 16-44) to spin up a real Fastify instance and hit the routes. This avoids mocking auth internals.
+**Recommended approach:** Direct producer invocation on an in-process `AuditChain` — import `appendHumanJoined`, `appendHumanIdentified`, `appendPortalAuthLogin`, `appendPortalAuthRegister` and call them in the order the wiring code does. NO Fastify scaffolding, NO `buildServerWithHub`, NO `app.inject()`. This is producer-level discipline testing (verifies the producer triad + emit order), not end-to-end HTTP integration testing. Plan 33-05 Task 3 enforces this with a `grep -c "buildServerWithHub\|app\.inject" → 0` acceptance criterion.
 
 ---
 

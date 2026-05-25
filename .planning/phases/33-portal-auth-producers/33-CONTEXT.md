@@ -171,11 +171,13 @@ Light up the `/users` directory and `/humans/[did]/history siwe_sessions` by emi
   // Phase 33 appends: |\b(?:ip_address|user_agent|session_id|jwt|password_hash|device_fingerprint)\b
   ```
 
-  Word-boundary regex `\b...\b` prevents false-positive matches on legitimate keys. Test fixtures REQUIRED (R-33-01 mitigation):
+  Word-boundary regex `\b...\b` matches the EXACT key only — JS regex `\b` fires between `\w` and `\W` (or string edge), and `_` is `\w`, so compound forms with `_`-suffixes are NOT matched. Test fixtures REQUIRED (R-33-01 mitigation):
     - `email_hash` (allowed in any payload) vs `email` (forbidden) — verifies non-word-boundary behavior on `email`
     - `nonce_hash` (allowed) vs `nonce` (forbidden) — verifies non-word-boundary behavior on `nonce`
     - `ip_country` (allowed — future OBS-FUTURE-METRICS-01) vs `ip_address` and `ip` (forbidden) — verifies `ip` non-bounded vs `ip_address` bounded
-    - `user_agent_version` (still forbidden — `\buser_agent\b` matches via leading boundary) vs `agent_version` (allowed)
+    - `user_agent_version` (**ALLOWED** — `\buser_agent\b` does NOT match because `_` between `user_agent` and `_version` is a word char; no boundary fires) vs `agent_version` (allowed; no `user_agent` substring)
+    - `ip_address_v6`, `session_id_legacy` (ALLOWED — same `_`-boundary reason) — pass-through pins for the `\b...\b` clauses
+    - Only the EXACT keys `user_agent`, `ip_address`, `session_id`, `jwt`, `password_hash`, `device_fingerprint` are caught by the word-boundary clauses. Callers that emit compound forms (`user_agent_version`, etc.) are responsible for hashing/omitting if sensitive.
 
   Test count: **at least 12 forbidden-keys regression test cases** (flat + nested object + nested array), per ROADMAP R-33-01.
 
