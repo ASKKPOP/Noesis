@@ -72,8 +72,8 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
 **Allowlist additions**: **0**. Running total: **53**.
 **Plans**: 6 plans
   - [x] 32-01-PLAN.md — Frame counters on WsFirehoseHub + stats() method + HubMetricsSink (OBS-05)
-  - [ ] 32-02-PLAN.md — R-32-03 regression test (firehose-send-throws.test.ts) pinning counter placement (OBS-05)
-  - [ ] 32-03-PLAN.md — HealthWatchdog class + HEALTH_THRESHOLDS + computeStatus + transition logging (OBS-07)
+  - [x] 32-02-PLAN.md — R-32-03 regression test (firehose-send-throws.test.ts) pinning counter placement (OBS-05)
+  - [x] 32-03-PLAN.md — HealthWatchdog class + HEALTH_THRESHOLDS + computeStatus + transition logging (OBS-07)
   - [ ] 32-04-PLAN.md — GenesisLauncher attach methods + buildServerWithHub wiring + /health/detailed route + integration test (OBS-06, OBS-07)
   - [x] 32-05-PLAN.md — Two CI gates (R-32-01 observability-no-TODO + R-32-02 setInterval-lifecycle) wired into rig-invariants.yml (OBS-05/06/07)
   - [ ] 32-06-PLAN.md — 32-HUMAN-UAT.md operator playbook + uat-half-close-socket.mjs harness (OBS-05/06/07)
@@ -150,7 +150,7 @@ Dependencies form a strict chain. Rationale:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 31. Audit Pipeline Persistence | 6/6 | Complete    | 2026-05-24 |
-| 32. Firehose Observability | 2/6 | In Progress|  |
+| 32. Firehose Observability | 4/6 | In Progress|  |
 | 33. portal.auth.* Producers | 0/? | Pending | — |
 | 34. Steward `/system` Health Surfaces | 0/? | Pending | — |
 | 35. UAT Re-Verification + Documentation Close-Out | 0/? | Pending | — |
