@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.6
 milestone_name: — Active)
 status: executing
-stopped_at: Phase 34 context gathered
-last_updated: "2026-05-25T17:44:50.809Z"
-last_activity: 2026-05-25 -- Phase 34 planning complete
+stopped_at: Phase 34 Wave 1 complete (Plans 34-01 + 34-02 merged)
+last_updated: "2026-05-25T18:25:00.000Z"
+last_activity: 2026-05-25 -- Phase 34 Wave 1 complete; Wave 2 next
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 23
-  completed_plans: 18
-  percent: 78
+  completed_plans: 20
+  percent: 87
 ---
 
 # Project State
@@ -23,14 +23,14 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 **Core value:** The first persistent Grid where Nous actually live — open to real human users since v2.5. Trust in the audit pipeline and observability surfaces is the foundation for everything that follows.
 **Current milestone:** v2.6 — Resilience & Observability
 **Previous milestone:** v2.5 Human Portal — SHIPPED 2026-05-24 (181/181 plans, allowlist 53)
-**Current focus:** Phase 33 — portal-auth-producers
+**Current focus:** Phase 34 — steward-system-health-surfaces
 
 ## Current Position
 
-Phase: 34
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-05-25 -- Phase 34 planning complete
+Phase: 34 (steward-system-health-surfaces) — EXECUTING
+Plan: 3 of 5 (Wave 1 complete, Wave 2 next: 34-03 + 34-04)
+Status: Executing Phase 34 — Wave 1 complete
+Last activity: 2026-05-25 -- Wave 1 merged (Plan 34-01 reasons[] extension + Plan 34-02 steward lib substrate + ALLOWLIST_STATIC 45→56)
 
 Driving inputs for v2.6 (unchanged from milestone open):
 
