@@ -96,7 +96,13 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
   - **R-33-02 (HIGH)**: `portal.auth.login` event volume grows audit chain fast at scale (1000 humans × 1 login/day = 1000 entries/day from auth alone) — Phase 33 ships with a perf benchmark in `grid/src/__tests__/audit-query-perf.test.ts` populating 100k entries and asserting `audit.query({eventType: 'portal.auth.login', actorDid: ...})` p95 <50ms. If exceeded, OBS-FUTURE-INDEX-01 triggers as v2.7 work.
   - **R-33-03 (MEDIUM)**: SIWE first-connect emits register but not login (or vice versa) — wiring test asserts both events fire on first-connect; only login fires on subsequent connects.
 **Allowlist additions**: **+2**. Events: `portal.auth.login` (pos 54) `{human_did, method, tick}` where `method ∈ {siwe, email}`; `portal.auth.register` (pos 55) `{human_did, method, tick}`. Running total: **55**.
-**Plans**: TBD
+**Plans**: 6 plans (Plan 33-01 doc-sync revises allowlist budget to +3 / 53→56 per D-33-F1)
+  - [ ] 33-01-PLAN.md — Doc-sync (REQUIREMENTS + ROADMAP + STATE for allowlist 53→56 + OBS-08b; D-33-F1)
+  - [ ] 33-02-PLAN.md — Allowlist additions (+3 entries 54/55/56) + PORTAL_AUTH_FORBIDDEN_KEYS export + FORBIDDEN_KEY_PATTERN word-boundary extension (D-33-A1, D-33-B3, D-33-B4)
+  - [ ] 33-03-PLAN.md — 3 sole-producer files: append-portal-auth-login.ts, append-portal-auth-register.ts, append-human-identified.ts (D-33-A3, D-33-B1, D-33-B2)
+  - [ ] 33-04-PLAN.md — Wiring 4 call sites in grid/src/api/portal/auth.ts (SIWE first-connect + SIWE unconditional + email signup + email signin; D-33-A4, D-33-A5, D-33-A6)
+  - [ ] 33-05-PLAN.md — 6 test files: producer discipline (3) + forbidden-keys regression (12+ cases, R-33-01) + wiring emit-count/order + soft-log perf benchmark (D-33-C1)
+  - [ ] 33-06-PLAN.md — 2 CI gates: scripts/check-sole-producer-discipline.mjs (NEW, D-33-D1) + scripts/check-state-doc-sync.mjs extension (D-33-D3) + rig-invariants.yml step
 
 ### Phase 34: Steward `/system` Health Surfaces
 **Goal**: Operator viewing `/system` sees immediately if any of the three pipelines (in-memory chain, MySQL persistence, firehose fan-out) is degraded. Three cards above the existing Allowlist Monitor, plus a client-side firehose watchdog that recovers from "WS opens but never delivers" silently.
