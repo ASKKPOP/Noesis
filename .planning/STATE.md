@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.6
 milestone_name: Resilience & Observability — SHIPPED 2026-05-25
 status: shipped
-stopped_at: v2.6 SHIPPED — all 5 phases + Phase 34.1 followup closed; 25a-HUMAN-UAT Items #1 + #5c PASS; atomic doc-sync complete
-last_updated: "2026-05-25T22:08:00.000Z"
-last_activity: 2026-05-25 -- Phase 35 close-out; v2.6 milestone shipped (allowlist 53 → 56)
+stopped_at: v2.6 SHIPPED + Phase 34.2 followup closed (live persisted_max_id watermark via PersistentAuditChain)
+last_updated: "2026-05-25T23:35:00.000Z"
+last_activity: 2026-05-25 -- Phase 34.2 closed FOLLOWUP-34-04 (cached persisted_max_id lag between reconcile cycles); commit bc28dcf; 4 new tests + live verification confirmed
 progress:
   total_phases: 5
   completed_phases: 5
-  total_plans: 25
-  completed_plans: 25
+  total_plans: 26
+  completed_plans: 26
   percent: 100
 ---
 
