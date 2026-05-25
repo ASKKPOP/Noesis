@@ -545,6 +545,69 @@ See `.planning/phases/25a-observer-surfaces/25a-HUMAN-UAT.md` for full UAT closu
 
 ---
 
+## v2.6: Resilience & Observability (IN PROGRESS)
+
+**Opened:** 2026-05-24
+**Status:** 3/5 phases shipped (Phase 31 + 32 + 33), 2 remaining (Phase 34 + 35)
+**Driving inputs:** GAP-2026-05-24-A (audit pipeline silence) + GAP-2026-05-24-B (missing portal.auth.* producers) from v2.5 post-ship UAT.
+
+### Phase 31: Audit Pipeline Persistence — SHIPPED 2026-05-25 (operator UAT pending)
+
+**Goal:** Wire `PersistentAuditChain` in production, add tick-cadenced reconcile loop, replace silent `.catch+console.warn` with Pino structured logging, ship `scripts/backfill-audit-trail.mjs` recovery tool.
+**Requirements delivered:** OBS-01, OBS-02, OBS-03, OBS-04
+**Plans:** 6/6
+**Allowlist delta:** 0 (53)
+**Key artifacts:** `grid/src/db/audit-reconcile.ts` (60-tick cadence, INSERT IGNORE idempotency, R-31-02 cap=500), Pino structured logging across `grid/src/db/` + `grid/src/audit/`, `scripts/check-no-silent-catch.mjs` CI gate, `scripts/backfill-audit-trail.mjs` (env-only creds, --dry-run mode)
+
+### Phase 32: Firehose Observability — SHIPPED 2026-05-25 (operator UAT approved)
+
+**Goal:** `WsFirehoseHub.stats()` 5-field counters, `GET /health/detailed` JSON endpoint at top-level of buildServerWithHub, pure-pull HealthWatchdog with grace window (zero `setInterval`, zero `clock.onTick`).
+**Requirements delivered:** OBS-05, OBS-06, OBS-07
+**Plans:** 6/6
+**Allowlist delta:** 0 (53)
+**Key artifacts:** `grid/src/diagnostics/health-watchdog.ts` (frozen HEALTH_THRESHOLDS, computeStatus cascade, idempotent attachFirehoseStats), `firehose-send-throws.test.ts` (R-32-03 counter-placement pin), R-32-01 (no-TODO) + R-32-02 (interval-lifecycle) CI gates in `rig-invariants.yml`
+
+### Phase 33: portal.auth.* Producers — SHIPPED 2026-05-25 (operator UAT pending)
+
+**Goal:** Wire 3 new sole-producers (`appendPortalAuthLogin`, `appendPortalAuthRegister`, `appendHumanIdentified`) into the SIWE + email auth flows in `grid/src/api/portal/auth.ts`. Lock down PII via `PORTAL_AUTH_FORBIDDEN_KEYS` + `FORBIDDEN_KEY_PATTERN` word-boundary extension. Resolves GAP-2026-05-24-B.
+**Requirements delivered:** OBS-08, OBS-08b, OBS-09, OBS-10
+**Plans:** 6/6
+**Allowlist delta:** +3 (53 → 56): `portal.auth.login` (54), `portal.auth.register` (55), `human.identified` (56)
+
+**Key locked decisions (D-33-*):**
+- D-33-A4: SIWE first-connect emits 4 events (human.joined → human.identified → portal.auth.register → portal.auth.login); reuses `eth_address_hash` as `identity_hash`
+- D-33-A5: Email signup computes `email_hash = sha256(email.toLowerCase().trim())` ONCE before `appendHumanIdentified`
+- D-33-A6: Email signin emits only `portal.auth.login` (no human.identified, no portal.auth.register)
+- D-33-B1: `LOGIN_METHOD_ENUM` / `REGISTER_METHOD_ENUM` / `IDENTITY_METHOD_ENUM` all locked to `['siwe', 'email']`
+- D-33-B3: `PORTAL_AUTH_FORBIDDEN_KEYS` frozen at exactly 13 entries
+- D-33-B4: `FORBIDDEN_KEY_PATTERN` word-boundary clause for 6 collision-risk keys (`ip_address|user_agent|session_id|jwt|password_hash|device_fingerprint`); JS `\b` semantics intentionally pass through compound forms like `user_agent_version` because `_` is `\w` — closed-tuple discipline at the producer enforces the boundary
+- D-33-C1: Perf benchmark is SOFT LOG ONLY (no `expect().toBeLessThan()` hard assertion)
+- D-33-E1: `console.warn` at auth.ts:308-312 and `console.error` at auth.ts:356 LEFT UNCHANGED (orthogonal to producer wiring)
+
+**Key artifacts:**
+- `grid/src/audit/append-portal-auth-login.ts` (sole producer, 3-key closed payload, LOGIN_METHOD_ENUM)
+- `grid/src/audit/append-portal-auth-register.ts` (sole producer, 3-key closed payload, REGISTER_METHOD_ENUM)
+- `grid/src/audit/append-human-identified.ts` (sole producer, 5-key closed payload with HEX64 identity_hash guard, IDENTITY_METHOD_ENUM)
+- `grid/src/audit/broadcast-allowlist.ts` — +3 allowlist members + `PORTAL_AUTH_FORBIDDEN_KEYS` export + `FORBIDDEN_KEY_PATTERN` word-boundary extension
+- `grid/src/api/portal/auth.ts` — 4 producer call-sites (SIWE first/repeat + email signup/signin)
+- `scripts/check-sole-producer-discipline.mjs` (NEW, 125 lines, scans 38 sole-producer files across 10 subsystems for the triad)
+- `scripts/check-state-doc-sync.mjs` — extended with `checkAllowlistCount(56)` + 3 new required-array entries
+- `.github/workflows/rig-invariants.yml` — new OBS-09 sole-producer-discipline step
+
+**Tests added:** 6 new test files (`portal-auth-login.test.ts`, `portal-auth-register.test.ts`, `human-identified.test.ts`, `portal-auth-forbidden-keys.test.ts`, `portal-auth-wiring.test.ts`, `audit-query-perf.test.ts`) + 6 sibling test files updated for 53→56 count assertion. 520 audit/portal-auth tests all GREEN.
+
+**Auto-deviations logged:**
+- 33-06 Wave 5: 5 Phase 12 governance files (`appendBallotCommitted`, `appendBallotRevealed`, `appendLawTriggered`, `appendProposalOpened`, `appendProposalTallied`) gained missing `payloadPrivacyCheck` triad calls (D-33-D2 allowed scope — the gate found pre-existing triad violations and fixed them)
+- 33-06 Wave 5: stale "27 events" literal in `check-state-doc-sync.mjs` updated to current STATE.md content
+- 33-02 Wave 2: `broadcast-allowlist.test.ts` count assertion updated 53→56
+- Orchestrator bridging: 6 sibling allowlist count assertions (53→56) in `test/audit/append-human-spoke.test.ts`, `allowlist-twenty-two.test.ts`, `allowlist-twenty-six.test.ts`, `allowlist-forty-five.test.ts`, `operator-exported-allowlist.test.ts`, `skill-allowlist.test.ts`
+
+**Operator UAT pending:** 6 items in `.planning/phases/33-portal-auth-producers/33-HUMAN-UAT.md` require live Docker + SIWE wallet + Fastify server (cannot be checked in vitest).
+
+**Code review:** 0 critical, 3 warnings (1 stale assertion in own gate, 1 not-wired-to-CI, 1 pre-existing Phase-12 governance bug surfaced by triad fix), 2 info.
+
+---
+
 ### Phase 25c: Replay Scrubber + Culture Browser — SHIPPED 2026-05-22
 
 **Shipped:** 2026-05-22
@@ -590,4 +653,4 @@ See `.planning/phases/25a-observer-surfaces/25a-HUMAN-UAT.md` for full UAT closu
 - Both failure sets pre-date Phase 25c; zero new regressions introduced
 
 ---
-*Last updated: 2026-05-24 — v2.5 Human Portal SHIPPED (181/181 plans, allowlist 53). Two post-ship gaps recorded for v2.6 backlog.*
+*Last updated: 2026-05-25 — v2.6 Phase 33 portal.auth.* Producers SHIPPED (6/6 plans, 13/13 automated must-haves verified, operator UAT pending). Allowlist 53 → 56 (+3 events). v2.6 progress: 3/5 phases (31 + 32 + 33 shipped, 34 + 35 remaining). Driving inputs GAP-2026-05-24-A (Phase 31) and GAP-2026-05-24-B (Phase 33) both resolved.*

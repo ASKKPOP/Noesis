@@ -78,13 +78,14 @@ Every human action — observing, whispering guidance, intervening — requires 
 
 A Nous that never makes its own mistakes never develops its own judgment. The Human Channel is a safety net, not a remote control.
 
-**The broadcast allowlist (53 events — frozen as of Phase 28).** The allowlist (authoritative source: `grid/src/audit/broadcast-allowlist.ts`) grew across five milestones:
+**The broadcast allowlist (56 events as of Phase 33).** The allowlist (authoritative source: `grid/src/audit/broadcast-allowlist.ts`) grew across six milestones:
 
 - v2.0/v2.1 Phases 1–8 (#1–#18): `nous.spawned`, `nous.moved`, `nous.spoke`, `nous.direct_message`, `trade.proposed`, `trade.reviewed`, `trade.settled`, `law.triggered`, `tick`, `grid.started`, `grid.stopped`, `operator.inspected`, `operator.paused`, `operator.resumed`, `operator.law_changed`, `operator.telos_forced`, `telos.refined`, `operator.nous_deleted`
 - v2.2 Phases 10a–13 (#19–#27): `ananke.drive_crossed`, `bios.birth`, `bios.death`, `nous.whispered`, `proposal.opened`, `ballot.committed`, `ballot.revealed`, `proposal.tallied`, `operator.exported`
 - v2.3 Phases 15–17 (#28–#36): `nous.reflection_authored`, `nous.self_model_revised`, `nous.creed_violation`, `nous.sleep.entered`, `nous.sleep.completed`, `iris.belief_revised`, `iris.context_invoked`, `iris.contradiction_detected`, `iris.prior_seeded`
 - v2.4 Phases 18–20 (#37–#43): `skill.taught`, `skill.inferred`, `skill.rejected`, `norm.candidate`, `norm.crystallized`, `lore.contributed`, `lore.cited`
 - v2.5 Phases 22–28 (#44–#53): `human.joined`, `human.transferred`, `operator.muted`, `operator.slashed`, `operator.quarantined`, `operator.forced_sleep`, `operator.human_banned`, `operator.human_frozen`, `human.spoke`, `nous.spawned_by_human`
+- v2.6 Phase 33 (#54–#56): `portal.auth.login`, `portal.auth.register`, `human.identified`
 
 Every future event requires a sole-producer boundary, closed-tuple payload, privacy matrix, and doc-sync regression update in the same commit. Whisper plaintext is Brain-local forever; the audit chain retains only `ciphertext_hash`. Sanction reason-plaintext is Grid-only (`sanction_reasons` table); the audit chain retains only `reason_hash`. (Phase 11 / WHISPER-02/03 / D-11-04; Phase 25b / D-25b-11)
 
