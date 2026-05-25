@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import StewardShell from '@/components/StewardShell';
 
-// Hardcoded allowlist from grid/src/audit/broadcast-allowlist.ts ALLOWLIST_MEMBERS (45 events as of Phase 24)
+// Hardcoded allowlist from grid/src/audit/broadcast-allowlist.ts ALLOWLIST_MEMBERS (56 events as of Phase 33)
 const ALLOWLIST_STATIC: Array<{ position: number; eventType: string; producer: string }> = [
     { position: 1,  eventType: 'nous.spawned',                 producer: 'grid/src/nous/' },
     { position: 2,  eventType: 'nous.moved',                   producer: 'grid/src/nous/' },
@@ -50,6 +50,17 @@ const ALLOWLIST_STATIC: Array<{ position: number; eventType: string; producer: s
     { position: 43, eventType: 'lore.cited',                   producer: 'grid/src/lore/appendLoreCited.ts' },
     { position: 44, eventType: 'human.joined',                 producer: 'grid/src/audit/append-human-joined.ts' },
     { position: 45, eventType: 'human.transferred',            producer: 'grid/src/audit/append-human-transferred.ts' },
+    { position: 46, eventType: 'operator.muted',               producer: 'grid/src/audit/append-operator-muted.ts' },
+    { position: 47, eventType: 'operator.slashed',             producer: 'grid/src/audit/append-operator-slashed.ts' },
+    { position: 48, eventType: 'operator.quarantined',         producer: 'grid/src/audit/append-operator-quarantined.ts' },
+    { position: 49, eventType: 'operator.forced_sleep',        producer: 'grid/src/audit/append-operator-forced-sleep.ts' },
+    { position: 50, eventType: 'operator.human_banned',        producer: 'grid/src/audit/append-operator-human-banned.ts' },
+    { position: 51, eventType: 'operator.human_frozen',        producer: 'grid/src/audit/append-operator-human-frozen.ts' },
+    { position: 52, eventType: 'human.spoke',                  producer: 'grid/src/audit/append-human-spoke.ts' },
+    { position: 53, eventType: 'nous.spawned_by_human',        producer: 'grid/src/audit/append-nous-spawned-by-human.ts' },
+    { position: 54, eventType: 'portal.auth.login',            producer: 'grid/src/audit/append-portal-auth-login.ts' },
+    { position: 55, eventType: 'portal.auth.register',         producer: 'grid/src/audit/append-portal-auth-register.ts' },
+    { position: 56, eventType: 'human.identified',             producer: 'grid/src/audit/append-human-identified.ts' },
 ];
 
 interface DriftAlert {
