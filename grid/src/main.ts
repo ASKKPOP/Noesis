@@ -230,8 +230,20 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         ...(humanPool ? { humanPool } : {}),
         // Phase 28 SPAWN-01: EVM tx confirmation + launcher accessor for human-spawn routes.
         ...(evmConfirmTx ? { evmConfirmTx } : {}),
-        launcher: { spawnNous: (name: string, did: string, pk: string, region: string, humanOwner?: string, personalitySeed?: string) =>
-            launcher.spawnNous(name, did, pk, region, humanOwner, personalitySeed) },
+        // Phase 34-01.1 (post-UAT-blocker fix): expose the Phase 32 OBS-07 launcher
+        // surface (healthWatchdog/auditReconcile/clock + attach*) so buildServerWithHub
+        // can register /health/detailed in production. Previously only `spawnNous`
+        // was passed, which silently failed the `services.launcher.attachHealthWatchdog`
+        // typeof check at server.ts:597 — Phase 32's route never registered at runtime.
+        launcher: {
+            spawnNous: (name: string, did: string, pk: string, region: string, humanOwner?: string, personalitySeed?: string) =>
+                launcher.spawnNous(name, did, pk, region, humanOwner, personalitySeed),
+            get healthWatchdog() { return launcher.healthWatchdog; },
+            get auditReconcile() { return launcher.auditReconcile; },
+            get clock() { return { currentTick: launcher.clock.currentTick, running: launcher.clock.running }; },
+            attachHealthWatchdog: (wd) => launcher.attachHealthWatchdog(wd),
+            attachFirehoseHub: (hub) => launcher.attachFirehoseHub(hub),
+        },
         // D-03: inject spawnNousDeps via _spawnNousDeps escape hatch (see spawn-system-nous.ts line 89).
         // Cast required because _spawnNousDeps is not on the public GridServices interface.
         ...({ _spawnNousDeps: spawnNousDeps } as unknown as { _spawnNousDeps: SpawnNousDeps }),
