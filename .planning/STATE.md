@@ -4,8 +4,8 @@ milestone: v2.6
 milestone_name: — Active)
 status: executing
 stopped_at: Phase 33 doc-sync landed (allowlist budget locked at +3 / 53→56 per D-33-F1); ready to execute producer plans 33-02..33-06
-last_updated: "2026-05-25T04:35:44.904Z"
-last_activity: 2026-05-25 -- Phase 33 planning complete
+last_updated: "2026-05-25T04:38:28.936Z"
+last_activity: 2026-05-25 -- Phase 33 execution started
 progress:
   total_phases: 5
   completed_phases: 2
@@ -23,14 +23,14 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 **Core value:** The first persistent Grid where Nous actually live — open to real human users since v2.5. Trust in the audit pipeline and observability surfaces is the foundation for everything that follows.
 **Current milestone:** v2.6 — Resilience & Observability
 **Previous milestone:** v2.5 Human Portal — SHIPPED 2026-05-24 (181/181 plans, allowlist 53)
-**Current focus:** Phase 31 — audit-pipeline-persistence
+**Current focus:** Phase 33 — portal-auth-producers
 
 ## Current Position
 
-Phase: 33
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-05-25 -- Phase 33 planning complete
+Phase: 33 (portal-auth-producers) — EXECUTING
+Plan: 1 of 6
+Status: Executing Phase 33
+Last activity: 2026-05-25 -- Phase 33 execution started
 
 Driving inputs for v2.6 (unchanged from milestone open):
 
