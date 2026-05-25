@@ -121,7 +121,12 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
   - **R-34-02 (MEDIUM)**: Events-per-Minute sparkline trusts WS data and goes blank during firehose failure — fixed at design time: card uses REST not WS. Regression test asserts the card renders non-empty when WS is disabled.
   - **R-34-03 (MEDIUM)**: Client-side watchdog reconnect storm if server stays unhealthy — exponential backoff between reconnect attempts; max 1 reconnect per 30s; gives up after 5 attempts and surfaces error to operator.
 **Allowlist additions**: **0**. Running total: **56**.
-**Plans**: TBD
+**Plans**: 5 plans
+  - [ ] 34-01-PLAN.md — Grid HealthDetailedPayload + route test extension for reasons[] (OBS-11/12 prerequisite; D-34-B1)
+  - [ ] 34-02-PLAN.md — Steward lib substrate: use-health-detailed hook + health-reason-labels + event-family-colors + ALLOWLIST_STATIC fix 45→56 (OBS-11/12 hook substrate + D-34-A3/B2/C1)
+  - [ ] 34-03-PLAN.md — Three /system cards: Audit Pipeline Health + Firehose Diagnostics + Events per Minute by Family + FrameCounterSparkline + EventsPerMinuteSparkline (OBS-11/12/13; D-34-A1/A2/A3/B3)
+  - [ ] 34-04-PLAN.md — /firehose client-side watchdog (OBS-14; R-34-03 suppression-window mitigation)
+  - [ ] 34-05-PLAN.md — 34-HUMAN-UAT.md operator playbook with MySQL-outage cutover scenario (OBS-11..14 manual verification)
 **UI hint**: yes
 
 ### Phase 35: UAT Re-Verification + Documentation Close-Out
@@ -158,7 +163,7 @@ Dependencies form a strict chain. Rationale:
 | 31. Audit Pipeline Persistence | 6/6 | Complete    | 2026-05-24 |
 | 32. Firehose Observability | 6/6 | Complete    | 2026-05-25 |
 | 33. portal.auth.* Producers | 6/6 | Complete    | 2026-05-25 |
-| 34. Steward `/system` Health Surfaces | 0/? | Pending | — |
+| 34. Steward `/system` Health Surfaces | 0/5 | Planned | — |
 | 35. UAT Re-Verification + Documentation Close-Out | 0/? | Pending | — |
 
 ## Coverage & Traceability (v2.6)
@@ -300,4 +305,4 @@ See `.planning/MILESTONES.md` for full sprint-by-sprint summaries.
 
 ---
 
-*Last updated: 2026-05-25 — v2.6 Phase 33 scope expanded (+human.identified per D-33-A1 / OBS-08b). 5 phases, 16 OBS-* REQs, allowlist 53 → 56 in Phase 33. Phase numbering continues from v2.5.*
+*Last updated: 2026-05-25 — Phase 34 planned as 5 plans across 3 waves. v2.6 Phase 33 scope expanded (+human.identified per D-33-A1 / OBS-08b). 5 phases, 16 OBS-* REQs, allowlist 53 → 56 in Phase 33. Phase numbering continues from v2.5.*
