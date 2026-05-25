@@ -2,44 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import StewardShell from '@/components/StewardShell';
+import { useHealthDetailed } from '@/lib/use-health-detailed';
+import { EVENT_FAMILY_COLORS, getFamilyColors, getFamilyName } from '@/lib/event-family-colors';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 
-// Event-Family Color Palette per UI-SPEC §"Event-Family Color Palette for /firehose"
-const EVENT_FAMILY_COLORS: Record<string, { leftBorder: string; badgeBg: string; badgeText: string }> = {
-    'operator.': { leftBorder: '#b8542f', badgeBg: 'rgba(184,84,47,0.10)', badgeText: '#b8542f' },
-    'nous.':     { leftBorder: '#3a7a5a', badgeBg: 'rgba(58,122,90,0.10)',  badgeText: '#2d6b4a' },
-    'trade.':    { leftBorder: '#8a6a2e', badgeBg: 'rgba(138,106,46,0.10)', badgeText: '#7a5a20' },
-    'law.':      { leftBorder: '#3a4a7a', badgeBg: 'rgba(58,74,122,0.10)',  badgeText: '#3a4a7a' },
-    'iris.':     { leftBorder: '#2a7a8a', badgeBg: 'rgba(42,122,138,0.10)', badgeText: '#1e6a7a' },
-    'skill.':    { leftBorder: '#7a6a2e', badgeBg: 'rgba(122,106,46,0.10)', badgeText: '#6a5a1e' },
-    'norm.':     { leftBorder: '#5a5a6a', badgeBg: 'rgba(90,90,106,0.10)',  badgeText: '#4a4a5a' },
-    'lore.':     { leftBorder: '#6a4a7a', badgeBg: 'rgba(106,74,122,0.10)', badgeText: '#5a3a6a' },
-    'human.':    { leftBorder: '#2a6a2a', badgeBg: 'rgba(42,106,42,0.10)',  badgeText: '#1e5a1e' },
-    'ananke.':   { leftBorder: '#7a3a6a', badgeBg: 'rgba(122,58,106,0.10)', badgeText: '#6a2a5a' },
-    'unknown':   { leftBorder: '#dbd8cc', badgeBg: 'rgba(219,216,204,0.30)', badgeText: '#8a8479' },
-};
-
 const MAX_EVENTS = 500;
 const MAX_BUFFER = 200;
-
-function getFamilyColors(eventType: string) {
-    for (const prefix of Object.keys(EVENT_FAMILY_COLORS)) {
-        if (prefix !== 'unknown' && eventType.startsWith(prefix)) {
-            return EVENT_FAMILY_COLORS[prefix];
-        }
-    }
-    return EVENT_FAMILY_COLORS['unknown'];
-}
-
-function getFamilyName(eventType: string): string {
-    for (const prefix of Object.keys(EVENT_FAMILY_COLORS)) {
-        if (prefix !== 'unknown' && eventType.startsWith(prefix)) {
-            return prefix.replace('.', '');
-        }
-    }
-    return 'unknown';
-}
 
 function truncateFirehoseDid(did: string): string {
     if (!did || did.length <= 16) return did ?? '';
@@ -84,6 +53,9 @@ export default function FirehosePage() {
     const isPausedRef = useRef(false);
 
     isPausedRef.current = isPaused;
+
+    const { data: health } = useHealthDetailed();
+    const lastWatchdogCloseAtRef = useRef<number | null>(null);
 
     function connect() {
         const wsUrl = GRID_ORIGIN.replace(/^http/, 'ws') + '/api/v1/audit/firehose';
@@ -175,6 +147,33 @@ export default function FirehosePage() {
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Phase 34 OBS-14: client-side firehose watchdog.
+    // Triggers wsRef.current.close() when the server reports the firehose has not delivered
+    // a frame in >60s despite client_count > 0. The existing ws.onclose → scheduleReconnect
+    // path handles the actual reconnect with the existing exponential backoff (R-34-03 spec).
+    // Suppression window prevents reconnect storm: after each watchdog-triggered close, wait
+    // at least 60_000ms before allowing another trigger.
+    useEffect(() => {
+        if (!health) return;
+        const lastFrameAt = health.firehose.last_frame_at;
+        const clientCount = health.firehose.client_count;
+        if (lastFrameAt === null) return;
+        if (clientCount <= 0) return;
+        const stalenessMs = Date.now() - lastFrameAt;
+        if (stalenessMs <= 60_000) return;
+
+        const lastClose = lastWatchdogCloseAtRef.current;
+        if (lastClose !== null && Date.now() - lastClose <= 60_000) {
+            // Suppression window active — already triggered a close within the last 60s.
+            return;
+        }
+
+        // Predicate satisfied. Close the socket; ws.onclose handler will reconnect via
+        // the existing scheduleReconnect path (unchanged).
+        lastWatchdogCloseAtRef.current = Date.now();
+        wsRef.current?.close();
+    }, [health]);
 
     // Auto-scroll effect
     useEffect(() => {
