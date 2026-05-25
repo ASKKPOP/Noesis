@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.6
 milestone_name: — Active)
 status: executing
-stopped_at: Phase 34 Wave 2 complete (Plans 34-03 + 34-04 merged)
-last_updated: "2026-05-25T18:36:00.000Z"
-last_activity: 2026-05-25 -- Phase 34 Wave 2 complete; Wave 3 (34-05 HUMAN-UAT checkpoint) next
+stopped_at: Phase 34 all 5 plans landed; awaiting code-review + regression + verification gates + operator UAT
+last_updated: "2026-05-25T18:41:00.000Z"
+last_activity: 2026-05-25 -- Phase 34 Wave 3 doc-write complete; code-review + verification gates next
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 23
-  completed_plans: 22
-  percent: 95
+  completed_plans: 23
+  percent: 100
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 
 ## Current Position
 
-Phase: 34 (steward-system-health-surfaces) — EXECUTING
-Plan: 5 of 5 (Waves 1+2 complete; Wave 3 next: 34-05 HUMAN-UAT checkpoint)
-Status: Executing Phase 34 — Waves 1+2 complete (4/5 plans shipped)
-Last activity: 2026-05-25 -- Wave 2 merged (Plan 34-03 three /system health cards + 2 sparklines + Plan 34-04 firehose watchdog + EVENT_FAMILY_COLORS shared-lib import)
+Phase: 34 (steward-system-health-surfaces) — VERIFYING
+Plan: 5 of 5 complete (Task 1 doc shipped; Task 2 operator checkpoint pending)
+Status: Phase 34 code-side complete; code-review + regression + phase verification gates next; then operator UAT
+Last activity: 2026-05-25 -- Plan 34-05 Task 1 shipped (34-HUMAN-UAT.md operator playbook, 223 lines, 5 verification steps)
 
 Driving inputs for v2.6 (unchanged from milestone open):
 
