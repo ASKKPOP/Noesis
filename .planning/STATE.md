@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.6
 milestone_name: — Active)
 status: executing
-stopped_at: Phase 32 context gathered
-last_updated: "2026-05-25T01:39:26.008Z"
+stopped_at: Phase 33 context gathered
+last_updated: "2026-05-25T02:39:35.380Z"
 last_activity: 2026-05-25
 progress:
   total_phases: 5
@@ -243,6 +243,6 @@ Total v2.6 allowlist growth: **+2 (53 → 55)**. Freeze-except-by-explicit-addit
 
 ## Session Continuity
 
-Last session: 2026-05-24T22:35:35.953Z
-Stopped at: Phase 32 context gathered
-Resume file: .planning/phases/32-firehose-observability/32-CONTEXT.md
+Last session: 2026-05-25T02:39:35.377Z
+Stopped at: Phase 33 context gathered
+Resume file: .planning/phases/33-portal-auth-producers/33-CONTEXT.md
