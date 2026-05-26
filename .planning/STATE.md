@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
-status: planning
+status: executing
 stopped_at: Phase 36 UI-SPEC approved (6/6 dimensions PASS + 3 non-blocking FLAGs); 20 D-36-* decisions + UI design contract locked
-last_updated: "2026-05-26T18:09:55.949Z"
+last_updated: "2026-05-26T19:20:26.407Z"
 progress:
   total_phases: 25
   completed_phases: 1
-  total_plans: 8
+  total_plans: 12
   completed_plans: 8
-  percent: 100
+  percent: 67
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 Phase: 37
 Plan: Not started
-Status: Ready to plan Phase 37 (DID Registry)
+Status: Ready to execute
 Next action: `/gsd-plan-phase 37` — DID Registry (Civic-DID + Business-DID + Issuer/Revocation)
 
 Driving inputs for v3.0 (locked at milestone open):

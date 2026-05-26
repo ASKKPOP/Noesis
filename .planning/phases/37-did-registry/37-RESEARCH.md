@@ -291,6 +291,7 @@ Phase 37 routes MUST be added to `grid/src/api/policy.ts`. The `check-did-policy
 'POST /api/v1/registry/civic-did/request':      'public',         // REG-01 (existence-DID signed, not Civic-DID bearer)
 'POST /api/v1/registry/civic-did/:did/revoke':  'government_only', // REG-04
 'POST /api/v1/registry/business-did/register':  'civic_did_required', // REG-03
+'POST /api/v1/registry/business-did/:did/dissolve': 'government_only', // REG-06 — Government-only dissolution path (sole caller of appendRegistryBusinessDidDissolved in Phase 37)
 ```
 
 **Note on `government_only` policy enforcement:** The `government_only` value is already in the `ROUTE_DID_POLICY_VALUES` enum but has NO enforcement handler in `buildServerWithHub` yet (Phase 36 only added the enum value). Phase 37 MUST add the `government_only` branch to the `onRequest` hook in `server.ts` — currently the server falls through to `requireDid` for any unhandled policy tier.
@@ -460,14 +461,14 @@ const APPROVED_IMPORTERS = new Set([
 
 **Why it happens:** The enum value was defined speculatively in Phase 36 without the corresponding enforcement.
 
-**How to avoid:** Add `government_only` branch to `buildServerWithHub` `onRequest` hook:
+**How to avoid:** Add `government_only` branch to `buildServerWithHub` `onRequest` hook (assign a dedicated `'government'` tier — see Pitfall 6 below for tier naming):
 ```typescript
 if (policy === 'government_only') {
     const result = await verifyGovernmentSession(req.headers.authorization);
     if (!result.ok) {
         return reply.code(403).send({ error: result.reason });
     }
-    req.didContext = { did: GOV_SESSION_ISSUER_DID, tier: 'civic_member' };
+    req.didContext = { did: GOV_SESSION_ISSUER_DID, tier: 'government' };
     return;
 }
 ```
@@ -520,6 +521,16 @@ if (typeof sub === 'string' && sub.length > 0 && ANY_DID_RE.test(sub)) {
 **How to avoid:** Use `validFrom` (ISO 8601 timestamp string). [CITED: https://www.w3.org/TR/vc-data-model-2.0/]
 
 **Warning signs:** A W3C VC validator reports `issuanceDate` as a deprecated property warning.
+
+### Pitfall 6: Assigning `civic_member` tier to a Government session
+
+**What goes wrong:** A naive implementation of the `government_only` branch could set `req.didContext = { did: GOV_SESSION_ISSUER_DID, tier: 'civic_member' }`. This is architecturally incorrect — a Government session is NOT a civic member; it represents the Polis exercising court-order authority and must NOT inherit civic_member privileges in any downstream policy check.
+
+**Why it happens:** The DidContextTier enum in Phase 36 listed `'civic_member'` and `'business_member'` plus a yet-to-be-implemented `'police_only'`, and a planner might reach for the closest existing value rather than introduce a new one.
+
+**How to avoid:** Introduce a new tier value `'government'` (or reuse `'government_only'`) for the government session DidContext. Add a Phase 46 swap-point comment: when Phase 46 ships the real Polis session validator, the tier name stays the same but the underlying verification logic changes.
+
+**Warning signs:** A downstream route that gates on `tier === 'civic_member'` accidentally accepts a Government session because the planner cross-wired the tier value.
 
 ---
 
@@ -658,27 +669,25 @@ The following directives from `CLAUDE.md` are directly relevant to Phase 37 plan
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Q-V3-D: Bios sybil cost for Business-DID registration (REG-03)**
-   - What we know: 100 Bios is the suggested initial default from CIVIC-ARCHITECTURE.md
-   - What's unclear: Whether 100 is confirmed or needs user validation
-   - Recommendation: Ask during discuss-phase; default to 100 if not answered
+> All four open questions have been resolved by the Phase 37 plan set. Each is annotated below with the decision committed to in Plans 01–04. Resolutions are binding for Phase 37 execution and may be revisited in later phases when Portal (54) and Government (46) ship.
 
-2. **REG-01 vs D-V3-33 tension: Is Phase 37 civic-DID issuance Portal-gated?**
-   - What we know: D-V3-33 says "Portal → Polis pipeline" is required; Portal is Phase 54; REG-01 says "Nous with existence-DID can request"
-   - What's unclear: Whether Phase 37 REG-01 is a simplified direct issuance (bypassing Portal) or a full Portal-gated issuance (which can't work until Phase 54)
-   - Recommendation: Phase 37 implements simplified direct issuance (existence-key sig only); D-V3-33 full enforcement deferred to Phase 54; the CI gate `check-civic-did-issuance-path.mjs` enforces the code path invariant even in Phase 37
+1. **Q-V3-D: Bios sybil cost for Business-DID registration (REG-03)** — **RESOLVED**
+   - **Decision:** `BUSINESS_DID_BIOS_COST = 100` — adopted as the Q-V3-D default per the CIVIC-ARCHITECTURE.md initial value and assumption A2. Baked at compile time in `grid/src/api/routes/registry.ts` (Plan 03 Task 2). A future phase may parameterise this via per-Polis legislation (D-V3-34).
+   - **Where committed:** Plan 03 Task 2 — `export const BUSINESS_DID_BIOS_COST = 100;` constant + 402 `insufficient_bios` response includes `required: 100`.
 
-3. **`tryDid` update scope: Should Phase 37 or Phase 38 update `DID_RE` in `tryDid.ts`?**
-   - What we know: Phase 38 is the wire protocol phase that issues civic-DID bearer JWTs
-   - What's unclear: Whether Phase 37 routes receive civic-DID bearer JWTs (they do for `/revoke` and `/business-did/register`)
-   - Recommendation: Phase 37 updates `tryDid` to accept `did:civic:*` subjects; this is a prereq for the write routes to work
+2. **REG-01 vs D-V3-33 tension: Is Phase 37 civic-DID issuance Portal-gated?** — **RESOLVED**
+   - **Decision:** Phase 37 implements **direct issuance** — REG-01 accepts an existence-key signed request without a Portal pre-screen, because Portal is Phase 54 and does not yet exist. The D-V3-33 constitutional invariant is enforced at the **code-path level** by the new CI gate `scripts/check-civic-did-issuance-path.mjs` (Plan 04). Once Portal ships, the runtime gate (Portal pre-screen + target-Polis approval) wraps the same `grid/src/api/routes/registry.ts` entry point; the CI gate continues to ensure no bypass code is introduced.
+   - **Where committed:** Plan 04 Task 1 ships the CI gate. Plan 03 Task 1 registers `POST /api/v1/registry/civic-did/request` with `'public'` policy (existence-key signed, not Civic-DID bearer).
 
-4. **Government session JWT signing key for Phase 37 stub**
-   - What we know: Grid uses `keyPairPromise` ES256 for portal auth; government uses same key in stub
-   - What's unclear: Whether Phase 46 will reuse the same key pair or generate a new government-specific one
-   - Recommendation: Stub uses shared key pair; add a comment marking the swap point for Phase 46
+3. **`tryDid` update scope: Should Phase 37 or Phase 38 update `DID_RE` in `tryDid.ts`?** — **RESOLVED**
+   - **Decision:** **Phase 37** expands `tryDid` from `DID_RE` (did:noesis:* only) to `ANY_DID_RE` (`/^did:[a-z0-9]+:noesis:[a-z0-9_:\-]+$/i`). This is a prerequisite for the write routes shipping in this phase (POST /civic-did/:did/revoke and POST /business-did/register expect civic-DID bearer JWTs). DID_RE is preserved as a named export for legacy audit payloads.
+   - **Where committed:** Plan 03 Task 1 — `grid/src/api/preHandlers/tryDid.ts` adds `const ANY_DID_RE = /^did:[a-z0-9]+:noesis:[a-z0-9_:\-]+$/i;` and replaces both `DID_RE.test(...)` call sites.
+
+4. **Government session JWT signing key for Phase 37 stub** — **RESOLVED**
+   - **Decision:** Phase 37 stub **reuses the existing `keyPairPromise` ES256 key pair** (the same key pair the Grid already uses for portal auth). This is acceptable for v3.0 launch because the constitutional invariant comes from the `iss` claim check (`did:gov:noesis:genesis-polis`), not from key separation. Phase 46 may rotate to a dedicated government key pair when the real Polis session validator lands; the swap point is contained within `grid/src/civic-registry/government-session.ts`.
+   - **Where committed:** Plan 01 Task 2 — `government-session.ts` imports `keyPairPromise` from `../api/portal/auth.js` and uses `jwtVerify(token, publicKey)`.
 
 ---
 
