@@ -196,6 +196,8 @@
 - [ ] **PORTAL-08**: Portal Wallet displays cross-Grid Bios balance + per-Grid Bios sub-balances. Cross-Grid Bios transferability (Q-V3-CROSS-1) initially: same Bios unit across Grids (single currency); per-Grid currencies deferred to v3.1+ if needed.
 - [ ] **PORTAL-09**: Portal maintains its own audit chain (separate from per-Grid chains). Audit events: `portal.grid_creation_*` × 3, `portal.registration_*` × 3, `portal.cross_grid_action_mediated` (v3.1+), `portal.account_*` × 2.
 - [ ] **PORTAL-10**: Portal reviewer panel composition open question (Q-V3-PORTAL-2): start with Henry + 2-3 invited human reviewers, transition to Nous-elected committee after Phase 46 Government ships. Reviewer decisions are audit-evident.
+- [ ] **PORTAL-11** (NEW per D-36-21): Portal accepts **Google OAuth** sign-in/sign-up via `POST /portal/auth/oauth/google` (PKCE flow per RFC 7636); on success, derives operator-DID `did:noesis:human:oauth:google:<sub>` (sub = Google account ID); creates or fetches Portal account; same Portal session token issued as SIWE/email paths. CI gate `scripts/check-no-did-exception-count.mjs` updated to assert 5 exception endpoints (was 3).
+- [ ] **PORTAL-12** (NEW per D-36-21): Portal accepts **Apple OAuth** sign-in/sign-up via `POST /portal/auth/oauth/apple` (Sign in with Apple — PKCE flow per Apple docs); on success, derives operator-DID `did:noesis:human:oauth:apple:<sub>`; creates or fetches Portal account; same Portal session token issued. Privacy invariant: only Apple-provided `sub` and (optional) `email` are stored; `name` is not persisted unless user explicitly fills profile later.
 
 ### MGR — 3-Tier Management Taxonomy (cross-phase — explicit naming per D-V3-36)
 
@@ -340,6 +342,8 @@
 | PORTAL-08 | 56 | Pending |
 | PORTAL-09 | 52 | Pending |
 | PORTAL-10 | 52 | Pending |
+| PORTAL-11 | 52 (OAuth Google) | Pending |
+| PORTAL-12 | 52 (OAuth Apple) | Pending |
 | ZONE-01 | 57 | Pending |
 | ZONE-02 | 57 | Pending |
 | ZONE-03 | 57 | Pending |

@@ -416,7 +416,8 @@ Full v3.0 decision list after all reshapes:
 | D-V3-08 | Allowlist budget (revised — +52 events for v3.0) | LOCKED (expanded) |
 | D-V3-09 | Bios sybil cost for founding | LOCKED |
 | D-V3-10 | Documentation Sync Rule | LOCKED |
-| D-V3-11..15 | Visit-vs-action axis (supplement) | LOCKED — D-V3-11 ROUTE_DID_POLICY enum refined to 6 values via D-36-17 (Phase 36 context) to support 3-tier visitor model (Anonymous / Human Visitor / Civic Member). |
+| D-V3-11..15 | Visit-vs-action axis (supplement) | LOCKED with two Phase 36 refinements: (a) D-V3-11 ROUTE_DID_POLICY enum refined to 6 values via D-36-17 to support 3-tier visitor model (Anonymous / Human Visitor / Civic Member); (b) D-V3-15 amended via D-36-21 — no-DID write exception endpoints grow from **3 → 5** (adds `/portal/auth/oauth/google` + `/portal/auth/oauth/apple` alongside the original SIWE + email signup + email signin). CI gate `scripts/check-no-did-exception-count.mjs` asserts 5. |
+| **Civic terminology (D-36-22)** | **Grid Charter** = immutable founding document published at Grid creation. **Laws of Themis** = Polis-legislated bills (bills become Laws of Themis upon `gov.law_enacted`). Themis (ethics Brain process from v2.6) becomes the named source/spirit of civic law. Visitor ToS copy verbatim: "By entering Genesis Grid, you agree to the Grid Charter and the Laws of Themis." | **NEW (Phase 36 reference-UI integration, 2026-05-25)** |
 | D-V3-16 | Local Brain with Local AI (Type A) | LOCKED |
 | D-V3-17 | Local Docker = dev/test; production = remote | LOCKED |
 | D-V3-18 | Constitutional operator framework (Henry bound) | LOCKED |

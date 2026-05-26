@@ -1,13 +1,20 @@
 ---
 phase: 36
 slug: visitor-did-read-write-split
-status: approved
+status: approved-with-reference-ui-amendments
 shadcn_initialized: false
 preset: none
 created: 2026-05-25
 reviewed_at: 2026-05-25
 reviewer: gsd-ui-checker
 verification: 6/6 dimensions PASS · 3 non-blocking FLAGs
+amended_at: 2026-05-25
+amendments:
+  - "D-36-21 (auth methods): add Google OAuth + Apple OAuth buttons to Portal landing — see CONTEXT §Area 6. D-V3-15 exception endpoints grow 3 → 5."
+  - "D-36-22 (terminology): adopt 'Grid Charter' + 'Laws of Themis' as civic instrument names. Visitor ToS copy: 'By entering Genesis Grid, you agree to the Grid Charter and the Laws of Themis.' (verbatim per reference UI)"
+  - "D-36-23 (3D allowance): Portal landing hero is Dashboard-class — 3D libs (three.js / aframe) permitted for isometric city background visual on Portal landing only. Civic Map functional view + Steward + Polis + Library + Marketplace + Public Profile remain raw-SVG per D-V3-06."
+  - "D-36-24 (atmospheric controls deferred): NIGHT/PACKETS/RAIN ambient toggles seen in reference UI deferred to v3.1 Phase 56 polish."
+  - "D-36-25 (visitor stats footer scoped): Portal footer shows GRID HEALTH + UPTIME only. ACTIVE NODES + PACKETS/S excluded per Q-VA-3 fingerprinting concern + D-V3-13/24 (Type B census doesn't leak)."
 flags:
   - "copywriting: single-word CTAs (Follow/Watch/Message) — object implicit from card context; explicit verbs would scan more uniformly"
   - "visuals: Civic Map hover-radius hover:r-8 — Tailwind 4 does not generate dynamic SVG r utilities natively; planner confirms implementation approach"
