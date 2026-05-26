@@ -208,6 +208,11 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // Phase 38 (WIRE-03 batch replay + WIRE-04 idempotency) — offline replay endpoint.
     // Same auth requirements as /brain/actions: Civic-DID bearer JWT.
     'POST /api/v1/brain/events/batch': 'civic_did_required',
+
+    // Phase 38 (WIRE-01 WSS + WIRE-05 per-DID filter) — Brain firehose subscription.
+    // WS upgrade routes are technically GET from Fastify's perspective.
+    // civic_did_required: Brain JWT must resolve to civic_member tier via tryDid.
+    'GET /api/v1/brain/firehose': 'civic_did_required',
 } as Record<string, RouteDIDPolicy>);
 
 /**

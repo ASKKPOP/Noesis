@@ -58,6 +58,7 @@ import { verifyGovernmentSession, GOV_SESSION_ISSUER_DID } from '../civic-regist
 import { registerRegistryRoutes } from './routes/registry.js';
 import { registerBrainTokenRoutes } from './routes/brain-token.js';
 import { registerBrainWireRoutes } from './routes/brain-wire.js';
+import { registerBrainFirehoseRoute } from './routes/brain-firehose.js';
 import type { BrainTokenStore } from '../db/stores/brain-token-store.js';
 import type { WireCoordinator } from './routes/brain-wire.js';
 
@@ -789,6 +790,9 @@ export function buildServerWithHub(
         // Phase 25a: firehose WS route registered inside the same plugin scope as /ws/events.
         // Phase 36 VIS-03: pass services so tryDid can consult didStore for revocation.
         registerAuditFirehoseRoute(instance, firehoseHub, services);
+        // Phase 38 WIRE-01 (WSS) + WIRE-05 (per-DID filter): Brain firehose subscription.
+        // Shares the same firehoseHub instance — per-DID filter applied in ClientConnection.trySend.
+        registerBrainFirehoseRoute(instance, firehoseHub, services);
 
         instance.get('/ws/events', { websocket: true }, (socket, req) => {
             const secret = process.env.GRID_WS_SECRET;
