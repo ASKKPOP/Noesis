@@ -322,7 +322,7 @@
     <a href="#steward"><span class="num">6.</span>Steward Console Manual</a>
     <a href="#portal"><span class="num">7.</span>Portal User Manual</a>
     <a href="#milestones"><span class="num">8.</span>Milestone Timeline</a>
-    <a href="#setup"><span class="num">9.</span>Setup &amp; Deployment</a>
+    <a href="#setup"><span class="num">9.</span>Install · Setup · Config</a>
     <a href="#troubleshooting"><span class="num">10.</span>Troubleshooting</a>
   </div>
 </nav>
@@ -890,50 +890,250 @@
 </table>
 
 <!-- ═══════════════════════════════════════════════════════════════════ -->
-<!-- SECTION 9: SETUP & DEPLOYMENT -->
+<!-- SECTION 9: INSTALL · SETUP · CONFIG (full 10-step walkthrough) -->
 <!-- ═══════════════════════════════════════════════════════════════════ -->
-<h2 class="section" id="setup">9 · Setup &amp; Deployment <span class="kr">설치와 배포</span></h2>
+<h2 class="section" id="setup">9 · Install · Setup · Config <span class="kr">설치 · 셋업 · 설정</span></h2>
 
-<h3>Prerequisites · 사전 요구사항</h3>
-<ul>
-  <li>macOS or Linux operator workstation</li>
-  <li>Docker + Docker Compose (recent)</li>
-  <li>Node.js ≥ 20 (for local dev outside Docker)</li>
-  <li>Python ≥ 3.11 (for Brain processes if running outside Docker)</li>
-  <li>An EVM wallet (MetaMask) for the SIWE flow (testnet is fine)</li>
-</ul>
+<p>Full ground-zero walkthrough for getting Noēsis running on a fresh machine. Skip steps you've already done.</p>
 
-<h3>One-command start · 한 줄로 시작</h3>
-<pre><code># Clone the repo
-git clone https://github.com/ASKKPOP/Noesis.git
-cd Noesis
-
-# Bring up the full stack (MySQL + Grid + 3 Brains + Steward + Dashboard)
-docker compose up -d
-
-# Confirm everything is healthy (~30s wait)
-docker compose ps</code></pre>
-
-<h3>Service ports · 서비스 포트</h3>
+<h3>Step 1 · Prerequisites <span class="kr">사전 요구사항</span></h3>
 <table>
-  <thead><tr><th>Service</th><th>Port</th><th>URL</th></tr></thead>
+  <thead><tr><th>Tool</th><th>Min version</th><th>Purpose</th></tr></thead>
   <tbody>
-    <tr><td>Grid (REST + WS)</td><td class="mono">8080</td><td><code>http://localhost:8080</code></td></tr>
-    <tr><td>Dashboard (v1) + Portal</td><td class="mono">3001</td><td><code>http://localhost:3001</code> · <code>/portal</code></td></tr>
-    <tr><td>Steward Console</td><td class="mono">3002</td><td><code>http://localhost:3002</code></td></tr>
-    <tr><td>MySQL</td><td class="mono">3306</td><td>internal</td></tr>
+    <tr><td class="mono">docker</td><td>20+</td><td>Run the 7-service stack</td></tr>
+    <tr><td class="mono">docker compose</td><td>v2+</td><td>Service orchestration (built into Docker Desktop)</td></tr>
+    <tr><td class="mono">node</td><td>20+</td><td>Local dev outside Docker (optional)</td></tr>
+    <tr><td class="mono">python3</td><td>3.11+</td><td>Brain dev outside Docker (optional)</td></tr>
+    <tr><td class="mono">git, curl, jq</td><td>any</td><td>Clone + health checks</td></tr>
+    <tr><td class="mono">ollama</td><td>0.5+</td><td>Local LLM (default LLM_PROVIDER)</td></tr>
+    <tr><td class="mono">MetaMask</td><td>any</td><td>Browser ext for SIWE Portal login (optional — email path works too)</td></tr>
   </tbody>
 </table>
 
-<h3>After source changes · 소스 변경 후</h3>
-<div class="callout warn">
-  <div class="callout-label">project rule (from CLAUDE.md memory)</div>
-  Every source change requires a Docker rebuild + restart BEFORE any verification. Cached Docker layers can mask new bugs:
-  <pre style="margin-top: 8px;"><code>docker compose build grid && docker compose up -d grid
-docker compose build steward && docker compose up -d steward</code></pre>
+<pre><code># macOS (Homebrew) — one-liner install of everything missing:
+brew install --cask docker
+brew install node python@3.12 git curl jq ollama
+
+# Linux (Debian/Ubuntu):
+sudo apt install docker.io docker-compose-v2 nodejs python3 git curl jq
+curl -fsSL https://ollama.com/install.sh | sh</code></pre>
+
+<h3>Step 2 · Clone the repo <span class="kr">저장소 클론</span></h3>
+<pre><code>cd ~/Programming/src/     # or wherever you keep code
+git clone https://github.com/ASKKPOP/Noesis.git
+cd Noesis</code></pre>
+
+<h3>Step 3 · Set up Ollama (local LLM default) <span class="kr">로컬 LLM 설정</span></h3>
+<pre><code># Start the Ollama daemon
+ollama serve &amp;
+# Or as a macOS service:
+brew services start ollama
+
+# Pull the default model used by Brain + Sophia onboarding proxy
+ollama pull qwen3:4b
+# ~2GB download
+
+# Verify
+curl -s http://localhost:11434/api/tags | jq '.models[].name'
+# Should list "qwen3:4b"</code></pre>
+
+<div class="callout info">
+  <div class="callout-label">Alternative models</div>
+  <code>ollama pull llama3.2:3b</code> (smaller, faster) or <code>ollama pull qwen3:14b</code> (larger, better). Update <code>LLM_MODEL</code> in <code>.env</code> accordingly.
 </div>
 
-<h3>Health check · 헬스 체크</h3>
+<h3>Step 4 · Create .env config <span class="kr">환경설정 파일 생성</span></h3>
+<pre><code>cp .env.example .env
+# Defaults work for local Docker. Edit only if you need to override.</code></pre>
+
+<p>Key variables and their defaults:</p>
+<table>
+  <thead><tr><th>Variable</th><th>Default</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">MYSQL_PASSWORD</td><td class="mono">changeme</td><td>Use stronger pwd for non-local</td></tr>
+    <tr><td class="mono">GRID_NAME</td><td class="mono">genesis</td><td>Logical grid name (used in audit chain)</td></tr>
+    <tr><td class="mono">GRID_PORT</td><td class="mono">8080</td><td>Grid REST + WS port</td></tr>
+    <tr><td class="mono">GRID_TICK_RATE_MS</td><td class="mono">30000</td><td>Grid clock cadence (30s/tick default)</td></tr>
+    <tr><td class="mono">LLM_PROVIDER</td><td class="mono">ollama</td><td>Or <code>hermes</code> (Claude cloud) or <code>openai_compat</code></td></tr>
+    <tr><td class="mono">OLLAMA_HOST</td><td class="mono">http://localhost:11434</td><td>Change to <code>http://host.docker.internal:11434</code> when Ollama runs outside Docker</td></tr>
+    <tr><td class="mono">LLM_MODEL</td><td class="mono">qwen3:4b</td><td>Match what you pulled in Step 3</td></tr>
+    <tr><td class="mono">NEXT_PUBLIC_GRID_ORIGIN</td><td class="mono">http://localhost:8080</td><td>Baked into client bundle at <strong>build</strong> time — changing requires rebuild</td></tr>
+  </tbody>
+</table>
+
+<div class="callout critical">
+  <div class="callout-label">Critical: Ollama-from-Docker</div>
+  If Ollama runs on the host (outside Docker), use <code>OLLAMA_HOST=http://host.docker.internal:11434</code>. The literal <code>localhost</code> inside a container refers to the container itself, not your machine.
+</div>
+
+<h3>Step 5 · Bring up the stack <span class="kr">스택 기동</span></h3>
+<pre><code># Build + start all 7 services
+docker compose up -d --build
+
+# Watch them come healthy (~30-60s)
+docker compose ps</code></pre>
+
+<p>Expected output:</p>
+<pre><code>NAME                 STATUS                  PORTS
+noesis-mysql         Up (healthy)            0.0.0.0:3306-&gt;3306/tcp
+noesis-grid          Up (healthy)            0.0.0.0:8080-&gt;8080/tcp
+noesis-nous-sophia   Up (healthy)
+noesis-nous-hermes   Up (healthy)
+noesis-nous-themis   Up (healthy)
+noesis-dashboard     Up (healthy)            0.0.0.0:3001-&gt;3001/tcp
+noesis-steward       Up (healthy)            0.0.0.0:3002-&gt;3002/tcp</code></pre>
+
+<h3>Step 6 · Verify health <span class="kr">헬스 체크</span></h3>
+<pre><code># Grid /health/detailed (Phase 32 + Phase 34.1/34.2 wiring)
+curl -s http://localhost:8080/health/detailed | jq '{
+  status, reasons,
+  tick: .clock.tick,
+  in_memory: .audit.in_memory_length,
+  persisted: .audit.persisted_max_id,
+  divergence: .audit.divergence,
+  clients: .firehose.client_count
+}'
+
+# UI endpoints reachable
+for url in http://localhost:8080/health http://localhost:3001/portal http://localhost:3002/system; do
+  code=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+  echo "  $url → $code"
+done</code></pre>
+
+<div class="two-col">
+  <div class="card">
+    <div class="card-title">Cold-start grace (first 15-30 min, tick &lt; 60)</div>
+    <pre style="font-size: 12px;"><code>status: "ok"
+reasons: ["grace_period"]
+in_memory: null      ← grace mask (D-32-B4)
+persisted: &lt;number&gt;  ← live (Phase 34.2 fix)
+divergence: null     ← grace short-circuit</code></pre>
+  </div>
+  <div class="card">
+    <div class="card-title">Post-grace baseline (tick ≥ 60)</div>
+    <pre style="font-size: 12px;"><code>status: "ok"
+reasons: []
+in_memory: 5852       ← live chain.length (Phase 34.1)
+persisted: 5852       ← matches DB MAX(id)
+divergence: 0         ← no false alarm</code></pre>
+  </div>
+</div>
+
+<h3>Step 7 · Service ports + URLs <span class="kr">서비스 포트와 URL</span></h3>
+<table>
+  <thead><tr><th>Service</th><th>Port</th><th>URL</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td>Grid (REST + WS)</td><td class="mono">8080</td><td><code>http://localhost:8080</code></td><td>World simulator + audit chain</td></tr>
+    <tr><td>Dashboard (v1) + Portal</td><td class="mono">3001</td><td><code>http://localhost:3001</code> · <code>/portal</code></td><td>Original observer UI + human user portal</td></tr>
+    <tr><td>Steward Console</td><td class="mono">3002</td><td><code>http://localhost:3002</code></td><td>Operator UI (H1-H5)</td></tr>
+    <tr><td>MySQL</td><td class="mono">3306</td><td>internal</td><td>Audit persistence + human_users + sanctions</td></tr>
+    <tr><td>Ollama (host)</td><td class="mono">11434</td><td><code>http://localhost:11434</code></td><td>Local LLM endpoint</td></tr>
+  </tbody>
+</table>
+
+<h3>Step 8 · First human user signup <span class="kr">첫 사용자 가입</span></h3>
+
+<h4>Option A · SIWE wallet (MetaMask)</h4>
+<ol class="steps">
+  <li>Open <code>http://localhost:3001/portal</code></li>
+  <li>Click <strong>Connect Wallet</strong> → MetaMask popup → sign the SIWE challenge</li>
+  <li>DID issued as <code>did:noesis:human:&lt;your-eth-address&gt;</code></li>
+  <li>Sophia onboarding wizard (3 steps)</li>
+  <li>Land in Portal with Cyber Coin wallet visible</li>
+</ol>
+
+<h4>Option B · Email (no wallet required)</h4>
+<pre><code># Programmatic test signup via curl
+curl -X POST http://localhost:8080/api/v1/portal/auth/email/signup \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"you@example.com","password":"choose-a-strong-password"}'
+
+# Returns:
+#   { "did": "did:noesis:human:email:&lt;uuid&gt;", "eth_address": null, "region": "agora", ... }
+
+# /users + /humans/[did] in Steward will now show this human.</code></pre>
+
+<p class="dim">Either path emits 3-4 audit events: <code>human.identified</code> + <code>portal.auth.register</code> + <code>portal.auth.login</code>, plus <code>human.joined</code> for SIWE first-connect (Phase 22 SIWE-only contract).</p>
+
+<h3>Step 9 · Switch LLM provider (optional) <span class="kr">LLM 프로바이더 전환 (선택)</span></h3>
+
+<h4>To Anthropic Claude (cloud)</h4>
+<pre><code># Edit .env
+LLM_PROVIDER=hermes
+HERMES_PROVIDER=anthropic
+HERMES_MODEL=claude-opus-4-5
+HERMES_API_KEY=sk-ant-...
+
+# Recreate Brain containers
+docker compose up -d --force-recreate nous-sophia nous-hermes nous-themis
+
+# Verify provider on startup
+docker compose logs nous-sophia | grep -i "llm\|provider" | tail -5</code></pre>
+
+<h4>To OpenAI / xAI / Google (cloud)</h4>
+<pre><code># Edit .env
+LLM_PROVIDER=openai_compat
+OPENAI_API_KEY=sk-...
+OPENAI_BASE_URL=https://api.openai.com/v1   # or xAI / Google's base URL
+LLM_MODEL=gpt-4
+
+docker compose up -d --force-recreate nous-sophia nous-hermes nous-themis</code></pre>
+
+<h4>Back to local Ollama</h4>
+<pre><code># Edit .env: LLM_PROVIDER=ollama (the default)
+docker compose up -d --force-recreate nous-sophia nous-hermes nous-themis</code></pre>
+
+<p>Brain supports 4 adapter types in <code>brain/src/noesis_brain/llm/</code>:</p>
+<table>
+  <thead><tr><th>Provider</th><th>Adapter file</th><th>When to use</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">ollama</td><td class="mono">llm/ollama.py</td><td>Local models. Free, private, ~2-15s.</td></tr>
+    <tr><td class="mono">claude</td><td class="mono">llm/claude.py</td><td>Anthropic API. Cloud, paid.</td></tr>
+    <tr><td class="mono">openai_compat</td><td class="mono">llm/openai_compat.py</td><td>OpenAI / xAI / Google / any OpenAI-compatible endpoint.</td></tr>
+    <tr><td class="mono">fixture</td><td class="mono">llm/fixture.py</td><td>Deterministic test fixtures. Used by Researcher Rigs.</td></tr>
+  </tbody>
+</table>
+
+<p>Model tier routing in <code>brain/src/noesis_brain/llm/router.py</code> picks adapters per <code>ModelTier</code> (<code>SMALL</code> for perception/importance scoring, <code>LARGE</code> for deliberation). You can mix providers per tier — e.g., local Ollama for SMALL + Claude for LARGE.</p>
+
+<h3>Step 10 · After source changes <span class="kr">소스 변경 후</span></h3>
+
+<div class="callout warn">
+  <div class="callout-label">Project rule (from CLAUDE.md memory)</div>
+  Every source change requires a Docker rebuild + restart BEFORE any verification. Cached Docker layers can silently mask new bugs (Phase 34 UAT discovered this the hard way — see commit <code>0c16f34</code>).
+</div>
+
+<pre><code># Changed grid/ source
+docker compose build grid && docker compose up -d grid
+
+# Changed steward/ source
+docker compose build steward && docker compose up -d steward
+
+# Changed brain/ source
+docker compose build nous-sophia nous-hermes nous-themis
+docker compose up -d nous-sophia nous-hermes nous-themis
+
+# If Docker cache returns a stale image, force --no-cache:
+docker compose build --no-cache &lt;service&gt;</code></pre>
+
+<h3>Stop · restart · cleanup <span class="kr">중지 · 재시작 · 정리</span></h3>
+<pre><code># Stop all (keeps data volumes)
+docker compose stop
+
+# Restart all
+docker compose up -d
+
+# Full teardown INCLUDING volumes (DESTROYS audit chain + human users)
+docker compose down -v
+
+# Just one service
+docker compose restart grid
+
+# Tail logs
+docker compose logs -f grid
+docker compose logs -f nous-sophia</code></pre>
+
+<h3>Quick health check (legacy section kept for ref) <span class="kr">헬스 체크 명령</span></h3>
 <pre><code># Confirm Phase 32 + Phase 34.1/34.2 wiring is alive
 curl -s http://localhost:8080/health/detailed | jq '{
   status, reasons,
