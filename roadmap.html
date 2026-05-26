@@ -200,11 +200,11 @@
   <p class="subtitle">The first persistent Grid where Nous actually live — and where real humans can now enter via Web3 wallet auth, Cyber Coin, Sophia-guided onboarding, Nous chat, and personal Nous spawning.</p>
 
   <div class="stats">
-    <div class="stat"><div class="stat-label">Current milestone</div><div class="stat-value active">v2.6 · Resilience &amp; Observability</div></div>
-    <div class="stat"><div class="stat-label">Phases complete</div><div class="stat-value shipped">33 / 35*</div></div>
-    <div class="stat"><div class="stat-label">Plans (shipped)</div><div class="stat-value shipped">176 / 176</div></div>
-    <div class="stat"><div class="stat-label">Audit allowlist</div><div class="stat-value">56 events</div></div>
-    <div class="stat"><div class="stat-label">Last shipped</div><div class="stat-value">33 · 2026-05-25</div></div>
+    <div class="stat"><div class="stat-label">Last milestone</div><div class="stat-value shipped">v2.6 · Resilience &amp; Observability</div></div>
+    <div class="stat"><div class="stat-label">Phases complete</div><div class="stat-value shipped">35 / 35 (+2 followup)</div></div>
+    <div class="stat"><div class="stat-label">Plans (shipped)</div><div class="stat-value shipped">207 / 207</div></div>
+    <div class="stat"><div class="stat-label">Audit allowlist</div><div class="stat-value">56 events (frozen)</div></div>
+    <div class="stat"><div class="stat-label">Last shipped</div><div class="stat-value">35 · 2026-05-25</div></div>
   </div>
 
   <div class="legend">
@@ -214,41 +214,80 @@
   </div>
 </header>
 
-<h2 class="section">Active milestone</h2>
+<h2 class="section">Shipped milestones</h2>
 
-<!-- v2.6 — Resilience & Observability -->
-<details class="milestone active" open>
+<!-- v2.6 — Resilience & Observability — SHIPPED -->
+<details class="milestone" open>
   <summary class="milestone-head">
     <span class="chev">▶</span>
-    <span class="milestone-title">v2.6 · Resilience &amp; Observability <small>Phases 31–35</small></span>
-    <span class="milestone-meta">opened 2026-05-24</span>
-    <span class="badge active">active</span>
+    <span class="milestone-title">v2.6 · Resilience &amp; Observability <small>Phases 31–35 + 34.1 + 34.2</small></span>
+    <span class="milestone-meta">opened 2026-05-24 · shipped 2026-05-25 · 7 phases · 31 plans · 4 followups closed</span>
+    <span class="badge shipped">shipped</span>
   </summary>
   <div class="milestone-body">
-    <div class="goal">Audit pipeline persistence + firehose observability + portal-auth producers + Steward health surfaces + UAT re-verification. Trust in the audit pipeline and live operator surfaces are the foundation for everything that follows.</div>
+    <div class="goal">Audit pipeline persistence + firehose observability + portal-auth producers + Steward health surfaces + UAT re-verification. Both v2.5 post-ship gaps (GAP-A audit pipeline silence + GAP-B missing portal.auth.* producers) permanently closed and re-verified live. Two post-ship followup phases (34.1 + 34.2) closed all 4 wiring gaps discovered during operator UAT.</div>
 
     <table class="phases">
       <thead><tr><th style="width:80px">Phase</th><th>Title</th><th>Description</th><th style="width:140px">Allowlist Δ</th><th style="width:100px">Status</th></tr></thead>
       <tbody>
-        <tr><td class="id">31</td><td class="name">Audit Pipeline Persistence</td><td class="desc">PersistentAuditChain wired into production main.ts; AuditReconcile loop every 60 ticks (cap 500/cycle); Pino structured logging replaces silent <code>.catch+console.warn</code>; OBS-03 CI gate (<code>check-no-silent-catch.mjs</code>); one-shot <code>backfill-audit-trail.mjs</code> recovers the 2026-05-22 stall window. R-31-01..03 mitigated.</td><td class="allow">0 (53/53)</td><td><span class="badge shipped">shipped 2026-05-25</span></td></tr>
+        <tr><td class="id">31</td><td class="name">Audit Pipeline Persistence</td><td class="desc">PersistentAuditChain wired into production main.ts; AuditReconcile loop every 60 ticks (cap 500/cycle); Pino structured logging replaces silent <code>.catch+console.warn</code>; OBS-03 CI gate (<code>check-no-silent-catch.mjs</code>); one-shot <code>backfill-audit-trail.mjs</code> recovers the 2026-05-22 stall window. R-31-01..03 mitigated. Resolves GAP-A.</td><td class="allow">0 (53/53)</td><td><span class="badge shipped">shipped 2026-05-25</span></td></tr>
         <tr><td class="id">32</td><td class="name">Firehose Observability</td><td class="desc"><code>WsFirehoseHub.stats()</code> exposes 5-field FirehoseStats; <code>GET /health/detailed</code> at top-level of <code>buildServerWithHub</code> returns full audit/firehose/clock snapshot; pure-pull HealthWatchdog with grace window (zero <code>setInterval</code>, zero <code>clock.onTick</code>); R-32-03 counter placement contract pinned by send-throws regression; R-32-01 (no-TODO) + R-32-02 (interval-lifecycle) CI gates. 29 new tests GREEN.</td><td class="allow">0 (53/53)</td><td><span class="badge shipped">shipped 2026-05-25</span></td></tr>
-        <tr><td class="id">33</td><td class="name">Portal Auth Producers</td><td class="desc">Three sole-producers — <code>appendPortalAuthLogin</code> + <code>appendPortalAuthRegister</code> (3-key closed payload <code>{human_did, method, tick}</code>) + <code>appendHumanIdentified</code> (5-key closed payload with HEX64 identity_hash guard) — wired into 4 call-sites in <code>grid/src/api/portal/auth.ts</code> (SIWE first/repeat + email signup/signin per D-33-A4/A5/A6). <code>PORTAL_AUTH_FORBIDDEN_KEYS</code> 13-key freeze + <code>FORBIDDEN_KEY_PATTERN</code> word-boundary clause for 6 collision-risk keys. CI gate <code>check-sole-producer-discipline.mjs</code> scans 38 sole-producer files across 10 subsystems. 520 audit/portal-auth tests GREEN. Resolves GAP-2026-05-24-B.</td><td class="allow">+3 (53→56)</td><td><span class="badge shipped">shipped 2026-05-25</span></td></tr>
-        <tr><td class="id">34</td><td class="name">Steward <code>/system</code> Health Surfaces</td><td class="desc">Audit Pipeline Health card; Firehose Diagnostics; Events-per-Minute sparkline; client watchdog. OBS-11..14.</td><td class="allow">0 (56/56)</td><td><span class="badge pending">planned</span></td></tr>
-        <tr><td class="id">35</td><td class="name">UAT Re-Verification + Doc Close-Out</td><td class="desc">Re-run 25a-HUMAN-UAT #1 + #5c; sync MILESTONES/PROJECT/PHILOSOPHY/README/CLAUDE. OBS-15.</td><td class="allow">0 (56/56)</td><td><span class="badge pending">planned</span></td></tr>
+        <tr><td class="id">33</td><td class="name">Portal Auth Producers</td><td class="desc">Three sole-producers — <code>appendPortalAuthLogin</code> + <code>appendPortalAuthRegister</code> (3-key closed payload <code>{human_did, method, tick}</code>) + <code>appendHumanIdentified</code> (5-key closed payload with HEX64 identity_hash guard) — wired into 4 call-sites in <code>grid/src/api/portal/auth.ts</code> (SIWE first/repeat + email signup/signin per D-33-A4/A5/A6). <code>PORTAL_AUTH_FORBIDDEN_KEYS</code> 13-key freeze + <code>FORBIDDEN_KEY_PATTERN</code> word-boundary clause for 6 collision-risk keys. CI gate <code>check-sole-producer-discipline.mjs</code> scans 38 sole-producer files across 10 subsystems. 520 audit/portal-auth tests GREEN. Resolves GAP-B.</td><td class="allow">+3 (53→56)</td><td><span class="badge shipped">shipped 2026-05-25</span></td></tr>
+        <tr>
+          <td class="id">34</td>
+          <td class="name">Steward <code>/system</code> Health Surfaces</td>
+          <td class="desc">
+            Three Steward <code>/system</code> cards (Audit Pipeline Health + Firehose Diagnostics + Events per Minute by Family sparkline, raw inline SVG, REST-driven from <code>/api/v1/audit/trail?limit=200</code>) + client-side firehose watchdog with R-34-03 60s suppression window. OBS-11..14. UAT discovered + fixed 2 latent Phase 32 deployment bugs inline (<code>/health/detailed</code> route never registered in production <code>main.ts</code> via commit <code>10a2cde</code>; Steward Docker cache mask hid <code>/culture</code> Suspense bug via commit <code>0c16f34</code>) + 1 code-review medium (<code>divergenceBand</code> hardcoded threshold via commit <code>f506209</code>).
+            <div class="sub-phases">
+              <div class="sub-phases-title">Followup sub-phases</div>
+              <div class="sub-phase"><strong>34.1</strong> HealthWatchdog wiring followups — closed FOLLOWUP-34-01 (HIGH — <code>chain.length</code> into <code>in_memory_length</code>; Phase 32's hardcoded fallback made divergence permanently 0) + FOLLOWUP-34-02 (MEDIUM — merge <code>PersistentAuditChain.lastPersistError</code> into payload; Pino logs fired but field stayed null). Surgical fix to <code>HealthWatchdogDeps</code> with optional <code>auditChain</code> field; 6 new wired-chain tests; live MySQL outage verification observed divergence 31→39 + <code>last_persist_error</code> populated with timestamp updates. Commit <code>93265ef</code> + close-out <code>36b9bef</code>. <span class="badge shipped">shipped 2026-05-25</span></div>
+              <div class="sub-phase"><strong>34.2</strong> Live <code>persisted_max_id</code> watermark — closed FOLLOWUP-34-04 (MEDIUM — cached-value lag between reconcile cycles produced false degraded status with growing divergence despite healthy persistence). <code>PersistentAuditChain</code> tracks <code>_lastPersistedId</code> watermark advancing on every successful <code>store.append</code>; <code>HealthWatchdog</code> merges with <code>reconcile.persistedMaxId</code> via <code>Math.max</code>. 4 new merge-matrix tests. Live verification confirmed <code>persisted_max_id: 5852</code> (matches DB MAX(id) exactly) + <code>divergence: 0</code> post-reconcile heartbeat. Commit <code>bc28dcf</code> + close-out <code>ad71c68</code>. <span class="badge shipped">shipped 2026-05-25</span></div>
+            </div>
+          </td>
+          <td class="allow">0 (56/56)</td>
+          <td><span class="badge shipped">shipped 2026-05-25</span></td>
+        </tr>
+        <tr><td class="id">35</td><td class="name">UAT Re-Verification + Doc Close-Out</td><td class="desc">25a-HUMAN-UAT Items #1 + #5c upgraded from passed-with-postscript / passed-with-gap to <strong>PASS</strong> via autonomous /browse re-verification against live Docker stack. Item #1 verified 7 distinct events across 4 families (tick, human.identified, portal.auth.register, portal.auth.login) over 95s observation window (vs original GAP-A zero events). Item #5c verified /users populated with 2 unique DIDs after triggering test email signups; click navigation worked; History tab showed "SIWE Sessions 2 events" (non-empty). 34-HUMAN-UAT.md gained Step 0.5 post-grace baseline check (FOLLOWUP-34-03 LOW closed). Atomic commit <code>0414949</code> per Documentation Sync Rule. OBS-15.</td><td class="allow">0 (56/56)</td><td><span class="badge shipped">shipped 2026-05-25</span></td></tr>
       </tbody>
     </table>
 
     <div class="invariants">
-      <div class="invariants-title">v2.6 locked decisions (so far)</div>
+      <div class="invariants-title">v2.6 locked decisions (full)</div>
       <ul>
-        <li>Zero-diff invariant: <code>super.append()</code> first, then fire-and-forget DB write — PersistentAuditChain preserves in-memory truth even on DB outage.</li>
+        <li>Zero-diff invariant: <code>super.append()</code> first, then fire-and-forget DB write — PersistentAuditChain preserves in-memory truth even on DB outage. Phase 31 listener fan-out order pinned by <code>audit-persistence-wiring.test.ts</code> zero-diff-head-hash case (R-31-01 regression guard).</li>
         <li>R-32-03 counter placement: increment <strong>AFTER</strong> <code>socket.send()</code>, <strong>BEFORE</strong> <code>catch</code>. <code>tryDrain</code> re-queue path untouched (Pitfall 3).</li>
-        <li>Pure-pull HealthWatchdog: zero timers, zero clock subscriptions. All state derived on <code>snapshot()</code>.</li>
+        <li>Pure-pull HealthWatchdog: zero timers, zero clock subscriptions. All state derived on <code>snapshot()</code>. <code>HEALTH_THRESHOLDS</code> (D-32-C1) frozen at 4 values; <code>computeStatus()</code> body (D-32-C2) frozen.</li>
         <li>Existing <code>/health</code> endpoint at <code>server.ts:293</code> unchanged — Docker healthcheck SLA preserved across all v2.6 phases.</li>
+        <li><code>/health/detailed</code> payload shape (D-32-C3 → Phase 34 D-34-B1 additive extension): exactly 6 top-level keys <code>[audit, clock, firehose, reasons, status, timestamp]</code>.</li>
         <li>D-33-A4/A5/A6: SIWE first-connect emits 4 events (human.joined → human.identified → portal.auth.register → portal.auth.login); SIWE repeat emits only portal.auth.login; email signup emits 3 (no human.joined); email signin emits only portal.auth.login.</li>
         <li>D-33-B1: <code>LOGIN_METHOD_ENUM</code> / <code>REGISTER_METHOD_ENUM</code> / <code>IDENTITY_METHOD_ENUM</code> all locked to <code>['siwe', 'email']</code> — closed-enum guard rejects any other method.</li>
+        <li>D-33-B3: <code>PORTAL_AUTH_FORBIDDEN_KEYS</code> frozen at exactly 13 keys (<code>ip_address, ip, user_agent, ua, session_id, token, jwt, cookie, email, password_hash, nonce, signature, device_fingerprint</code>).</li>
         <li>D-33-B4: <code>FORBIDDEN_KEY_PATTERN</code> word-boundary clause uses JS <code>\b...\b</code> semantics intentionally — compound forms like <code>user_agent_version</code> pass through (closed-tuple discipline at the producer is the boundary).</li>
-        <li>Allowlist growth: 53 frozen through Phases 31–32; +3 in Phase 33 (portal.auth.login, portal.auth.register, human.identified); 56 frozen for Phases 34–35.</li>
+        <li>Phase 34 D-34-B3 EXCEPTION: <code>grace_period</code> is the only reason key permitted to render under <code>status === 'ok'</code> (renders "Cold-start grace period" sub-line under the green band).</li>
+        <li>Phase 34 D-34-A2: Events per Minute by Family sparkline is REST-only (polls <code>/api/v1/audit/trail?limit=200</code> every 5s) — NOT WebSocket — survives firehose failure independently.</li>
+        <li>Phase 34.1+34.2 <code>auditChain</code> optional dep pattern: production passes live chain (<code>chain.length</code> + <code>lastPersistError</code> + <code>lastPersistedId</code>); legacy tests + plain AuditChain fall through to Phase 32 behavior. Backward compat preserved.</li>
+        <li>Allowlist growth: 53 frozen through Phases 31–32; +3 in Phase 33 (portal.auth.login, portal.auth.register, human.identified); 56 frozen for Phases 34, 34.1, 34.2, 35 and forever after.</li>
+      </ul>
+    </div>
+
+    <div class="invariants">
+      <div class="invariants-title">Post-ship gap closure history (4 followups, all closed)</div>
+      <ul>
+        <li><strong>FOLLOWUP-34-01</strong> (HIGH, closed Phase 34.1, commit <code>93265ef</code>) — <code>chain.length</code> not wired into <code>in_memory_length</code></li>
+        <li><strong>FOLLOWUP-34-02</strong> (MEDIUM, closed Phase 34.1, commit <code>93265ef</code>) — <code>PersistentAuditChain.lastPersistError</code> not merged into payload</li>
+        <li><strong>FOLLOWUP-34-03</strong> (LOW, closed Phase 35, commit <code>0414949</code>) — 34-HUMAN-UAT.md missing post-grace baseline check before Step 5</li>
+        <li><strong>FOLLOWUP-34-04</strong> (MEDIUM, closed Phase 34.2, commit <code>bc28dcf</code>) — <code>persisted_max_id</code> cached-value lag between reconcile cycles</li>
+      </ul>
+    </div>
+
+    <div class="invariants">
+      <div class="invariants-title">v2.7 carry-forward candidates</div>
+      <ul>
+        <li>Tighten Phase 31 reconcile cadence from 60 ticks → 5 ticks for faster reconcile-side recovery SLA</li>
+        <li>Docker DNS TTL=0 (or alternative resolver strategy) for Grid container to eliminate post-MySQL-restart cache window</li>
+        <li>Investigate tick rate variability (observed 9s/tick → 200s/tick across single session — root cause unknown)</li>
+        <li>Optional <code>OBS-FUTURE-METRICS-01</code> (<code>ua_hash</code> + <code>ip_country</code> for portal.auth.*) deferred per YAGNI</li>
+        <li>Optional <code>OBS-FUTURE-OTEL-01</code> (OpenTelemetry self-hosted) deferred — pending operator demand</li>
       </ul>
     </div>
   </div>
@@ -308,8 +347,6 @@
     </div>
   </div>
 </details>
-
-<h2 class="section">Shipped milestones</h2>
 
 <!-- v2.4 -->
 <details class="milestone">
@@ -459,7 +496,7 @@
 </div>
 
 <footer>
-  Generated 2026-05-22 from <code>.planning/ROADMAP.md</code>, <code>.planning/MILESTONES.md</code>, <code>.planning/STATE.md</code>, <code>.planning/PROJECT.md</code>. *Plan count reflects all shipped phases through 26 (158/158); v2.5 phases 27–30 will add more plans as they are written.
+  Generated 2026-05-25 from <code>.planning/ROADMAP.md</code>, <code>.planning/MILESTONES.md</code>, <code>.planning/STATE.md</code>, <code>.planning/PROJECT.md</code>. v2.6 closed 2026-05-25 with 7 phases shipped (31 + 32 + 33 + 34 + 34.1 + 34.2 + 35) and 4 followups closed (FOLLOWUP-34-01..04). Latest commit: <code>6cc15a0</code>.
 </footer>
 
 </div>
