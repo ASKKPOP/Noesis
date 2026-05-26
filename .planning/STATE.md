@@ -364,7 +364,7 @@ Total v3.0 allowlist growth: **+34 (56 → 90)**. Freeze-except-by-explicit-addi
 
 ## Session Continuity
 
-Last session: 2026-05-25T19:30:00.000Z
-Stopped at: v3.0 ROADMAP.md additions formalized — 15 phases (36-50) drafted with 69/69 REQ coverage + 4-wave dependency graph + allowlist growth ledger
-Resume file: .planning/ROADMAP.md (v3.0 section) + .planning/research/v3.0/CIVIC-ARCHITECTURE.md (architectural source-of-truth)
-Next action: `/gsd-plan-phase 36` to plan Phase 36 (Visitor/DID Read-Write Split, REQs VIS-01..05, +4 allowlist events)
+Last session: 2026-05-25T22:00:00.000Z
+Stopped at: Phase 36 context gathered (15 D-36-* decisions across 4 gray areas — visitor landing, rate limiting, edge cases, 6-zone Civic Map visibility)
+Resume file: .planning/phases/36-visitor-did-read-write-split/36-CONTEXT.md
+Next action: `/gsd-plan-phase 36` to draft executable plan(s) for VIS-01..05 (commit 9abac21 captured context + discussion log)
