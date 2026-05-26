@@ -25,8 +25,27 @@ SECURITY:
 import hashlib
 from nacl.bindings import crypto_box, crypto_box_open, crypto_box_seed_keypair  # type: ignore[import]
 from nacl.exceptions import CryptoError  # type: ignore[import]
+from nacl.signing import SigningKey  # type: ignore[import]
 
-__all__ = ["Keyring"]
+__all__ = ["Keyring", "derive_existence_signing_key"]
+
+
+def derive_existence_signing_key(existence_did: str) -> SigningKey:
+    """Derive a deterministic Ed25519 SigningKey from an existence-DID.
+
+    Phase 38 WIRE-02 — the JWT bearer token issued by GridWireClient is signed
+    with this key. Grid verifies against the matching public JWK stored in
+    brain_tokens (registered via POST /api/v1/brain/token/register).
+
+    Derivation: seed = SHA-256(UTF-8(existence_did)) — 32 bytes.
+    This is deterministic across process restarts: same DID → same key.
+    NOTE: Uses nacl.signing.SigningKey(seed) which treats the seed as a raw
+    Ed25519 scalar (different from crypto_box_seed_keypair which hashes the
+    seed via SHA-512 for X25519). Ed25519 and X25519 are separate key families;
+    their seeds must NOT be mixed.
+    """
+    seed = hashlib.sha256(existence_did.encode("utf-8")).digest()  # 32 bytes
+    return SigningKey(seed)
 
 
 class Keyring:

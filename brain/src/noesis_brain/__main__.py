@@ -283,6 +283,40 @@ def create_brain_app_from_env() -> BrainApp:
     )
     # Wire the HTTP server (requires BRAIN_HTTP_SECRET in env).
     app.http_server = _build_http_server(app.handler)
+
+    # Phase 38 WIRE-01 (D-38-A2): wire GridWireClient when GRID_URL + DID env vars are set.
+    # CIVIC_DID and NOUS_DID must both be present; otherwise, fall back to Unix-socket path.
+    if grid_url:
+        civic_did = os.environ.get("CIVIC_DID")
+        nous_did = os.environ.get("NOUS_DID", "").strip() or f"did:noesis:{_slugify_nous_name(os.environ.get('NOUS_NAME', 'sophia'))}"
+        if civic_did and nous_did:
+            from noesis_brain.wire.client import GridWireClient  # noqa: PLC0415
+            from noesis_brain.wire.token_manager import TokenManager  # noqa: PLC0415
+            from noesis_brain.whisper.keyring import derive_existence_signing_key  # noqa: PLC0415
+
+            # Derive the Ed25519 signing key from the existence-DID (D-38-A4).
+            # Same derivation used by the whisper keyring (SHA-256 of DID).
+            signing_key = derive_existence_signing_key(nous_did)
+            token_manager = TokenManager(
+                existence_did=nous_did,
+                civic_did=civic_did,
+                signing_key=signing_key,
+            )
+            grid_wire_client = GridWireClient(
+                grid_url=grid_url,
+                token_manager=token_manager,
+            )
+            app.handler._grid_wire_client = grid_wire_client
+            log.info(
+                "[Brain] GridWireClient wired: grid_url=%s civic_did=%s nous_did=%s",
+                grid_url, civic_did, nous_did,
+            )
+        else:
+            log.warning(
+                "[Brain] GRID_URL set but CIVIC_DID/NOUS_DID missing — "
+                "wire client disabled, Unix socket only"
+            )
+
     return app
 
 
