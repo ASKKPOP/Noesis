@@ -24,6 +24,7 @@ import { appendHumanJoined } from '../../audit/append-human-joined.js';
 import { appendHumanIdentified } from '../../audit/append-human-identified.js';
 import { appendPortalAuthLogin } from '../../audit/append-portal-auth-login.js';
 import { appendPortalAuthRegister } from '../../audit/append-portal-auth-register.js';
+import { registerOAuthStubRoutes } from './oauth-stub.js';
 
 const scryptAsync = promisify(scrypt);
 
@@ -347,6 +348,9 @@ export function registerPortalAuthRoutes(
             is_new: false,
         });
     });
+
+    // Phase 36 / D-36-21 — OAuth stubs (501 Not Implemented; full PKCE in Phase 52-54).
+    registerOAuthStubRoutes(app);
 
     // GET /api/v1/portal/auth/me
     app.get('/api/v1/portal/auth/me', async (req, reply) => {
