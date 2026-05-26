@@ -48,6 +48,9 @@ jobs:
       - name: OBS-36-04 No-DID exception count gate (Phase 36 D-V3-15 amended)
         run: node scripts/check-no-did-exception-count.mjs
 
+      - name: OBS-37-01 civic-DID issuance path gate (Phase 37 D-V3-33)
+        run: node scripts/check-civic-did-issuance-path.mjs
+
       - name: Fast Vitest rig suite (Wave 0/1/2 — NOESIS_RUN_NIGHTLY unset, rig-bench skips)
         working-directory: grid
         run: |
