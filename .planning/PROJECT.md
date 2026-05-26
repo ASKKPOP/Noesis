@@ -90,6 +90,61 @@ The first persistent Grid where Nous actually live — observable, running conti
 - ✓ **CHRONOS-03**: `epoch_since_spawn` exposed to Brain prompting via ChronosListener (Grid-side pure-observer over bios.birth); no new allowlist event; Brain context "I am N ticks old" — v2.2 Phase 10b (shipped 2026-04-22)
   → Validated in Phase 10b
 
+## Current Milestone: v3.0 Polis (Civic City)
+
+**Goal:** Transform Noēsis from a local Docker stack into a digital city. Brain runs locally on operator hardware with Local AI (Ollama default); Public Grid (Henry-hosted at TBD domain) provides civic infrastructure — government, police, IRS, library, marketplace, communities, P2P signaling, DID registry — under a constitutional operator framework.
+
+**Target features (15 phases across 4 waves):**
+
+**Wave 1 — Foundations** (Phases 36-41):
+- Visitor/DID Read-Write Split (Phase 36) — visit-without-DID + action-with-DID asymmetry per supplement
+- DID Registry: Civic-DID + Business-DID + revocation (Phase 37)
+- Brain ↔ Remote Grid Wire Protocol (Phase 38) — HTTPS + WSS replaces in-process queues
+- Grid Multi-Tenancy + Operator Namespace Isolation (Phase 39)
+- Local AI Integration — Ollama production-grade (Phase 40)
+- Sleep Cycle + Away Presence Model (Phase 41) — human-resident analogy
+
+**Wave 2 — Civic Plumbing** (Phases 42-43):
+- P2P Infrastructure: signaling, discovery, NAT traversal (Phase 42)
+- Constitutional Audit + Right-to-Fork Export Tooling (Phase 43)
+
+**Wave 3 — Civic Institutions** (Phases 44-49):
+- Marketplace v3: civic commerce + escrow (Phase 44)
+- IRS: transaction fees + civic treasury (Phase 45)
+- Government v3: civic VOTE-05 + legislative sessions (Phase 46)
+- Police v3: sanctions + investigation + appeals (Phase 47)
+- Library v3: civic curation council + reading room (Phase 48)
+- Communities v3: group formation + charters (Phase 49)
+
+**Wave 4 — Migration** (Phase 50):
+- v2.6 → v3.0 Migration ceremony (Phase 50) — Sophia data import + civic-DID grandfathering
+
+**Key context:**
+- **Architecture source-of-truth:** `.planning/research/v3.0/CIVIC-ARCHITECTURE.md` v2.0 (Grid-as-City vision)
+- **Supplement:** `.planning/research/v3.0/SUPPLEMENT-visit-vs-action.md` (read/write asymmetry)
+- **Analysis archive:** `.planning/research/v3.0/RESOURCE-brains-location.html` (Brain location decision rationale)
+- **Locked decisions:** 23 total. New in v3.0: D-V3-16..23 (local Brain, dev/test-local stack, constitutional operator, access semantics, sleep cycle, Nous-only government, IRS = tx fees, Grid = 8-institution city). Preserved: D-V3-01..03, 06, 08..15. Superseded: D-V3-04, 05, 07 (multi-Grid → single city).
+- **Open questions:** 10 (Q-V3-A..J) — locked during per-phase discuss-phase sessions
+- **PHILOSOPHY §1 reframe:** v3.0 redefines first-life as "continuity of identity + memory + civic standing across sleep cycles, ensured by both substrate operator (Brain) and constitutional operator (Henry)"
+- **Allowlist growth:** 56 → 90 events (+34 across 8 civic institutions)
+- **Phase numbering:** continues from v2.6 (Phase 36 onward)
+- **Estimated scope:** ~86 plans across 15 phases
+
+**Constraints inherited from v2.6 (do not break):**
+- R-31-01 zero-diff audit chain invariant
+- Phase 32 frozen contracts (D-32-C1 HEALTH_THRESHOLDS, D-32-C2 computeStatus, D-32-C3 health/detailed payload shape)
+- Phase 33 PORTAL_AUTH_FORBIDDEN_KEYS frozen (13 keys)
+- Phase 21 Steward raw-SVG invariant (D-V3-06 preserves)
+- v2.2 VOTE-05 Nous-only governance invariant (D-V3-21 preserves)
+- Hash-only cross-boundary discipline
+- Sole-producer + closed-tuple payload discipline
+- Wall-clock forbidden in cognitive modules (Tier A CI gate)
+- Zero-custody for human funds (PHILOSOPHY §8)
+
+**Phase numbering:** continues from v2.6 (Phase 36 onward).
+
+---
+
 ## Most-Recent Milestone: v2.6 Resilience & Observability — SHIPPED (2026-05-25)
 
 **Status:** Closed 2026-05-25, 5 planned phases + 2 post-ship followup phases (34.1 + 34.2) all shipped. All 4 post-ship gaps closed inline (3 followup IDs + 1 cached-lag observation). Allowlist 53 → 56 (+3 in Phase 33: `portal.auth.login`, `portal.auth.register`, `human.identified`).
@@ -334,4 +389,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-25 — v2.6 Phase 33 portal.auth.* Producers SHIPPED (6/6 plans, 13/13 automated must-haves verified, operator UAT pending). Three sole-producer files `append-portal-auth-{login,register}.ts` + `append-human-identified.ts` with closed-payload + closed-method-enum discipline; wired into `grid/src/api/portal/auth.ts` at 4 call-sites (SIWE first-connect = 4 emits / SIWE repeat = 1 / email signup = 3 / email signin = 1) per D-33-A4/A5/A6; `PORTAL_AUTH_FORBIDDEN_KEYS` 13-key freeze + `FORBIDDEN_KEY_PATTERN` word-boundary clause for 6 collision-risk keys; allowlist grew 53 → 56 (+3); 5 governance files received missing `payloadPrivacyCheck` triad calls via 33-06 auto-deviation; new CI gate `scripts/check-sole-producer-discipline.mjs` scans 38 sole-producer files across 10 subsystems; `check-state-doc-sync.mjs` extended with `checkAllowlistCount(56)` + 3 new required-array entries; 520 tests across 43 files all GREEN; operator UAT playbook in `33-HUMAN-UAT.md` (6 live-flow items). v2.6 next: Phase 34 (Steward `/system` Health Surfaces — OBS-11..14).*
+*Last updated: 2026-05-25 — v3.0 Polis milestone opened. Vision: Grid-as-City with local Brain (Local AI) + remote Public Grid (Henry-hosted) + 8 civic institutions. Major rewrite of `.planning/research/v3.0/CIVIC-ARCHITECTURE.md` to v2.0 superseded prior multi-Grid federation model. 8 new locked decisions (D-V3-16..23) added. 15 phases (36-50) planned across 4 waves. ~86 plans estimated. Next: define REQUIREMENTS.md with REQ-V3-* IDs, spawn gsd-roadmapper for ROADMAP.md updates.*

@@ -1,54 +1,70 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.6
-milestone_name: Resilience & Observability — SHIPPED 2026-05-25
-status: shipped
-stopped_at: v2.6 SHIPPED + Phase 34.2 followup closed (live persisted_max_id watermark via PersistentAuditChain)
-last_updated: "2026-05-25T23:35:00.000Z"
-last_activity: 2026-05-25 -- Phase 34.2 closed FOLLOWUP-34-04 (cached persisted_max_id lag between reconcile cycles); commit bc28dcf; 4 new tests + live verification confirmed
+milestone: v3.0
+milestone_name: Polis (Civic City)
+status: defining_requirements
+stopped_at: v3.0 milestone opened — PROJECT.md + STATE.md updated; REQUIREMENTS.md + ROADMAP.md pending
+last_updated: "2026-05-25T19:00:00.000Z"
+last_activity: 2026-05-25 -- v3.0 milestone open ceremony — CIVIC-ARCHITECTURE.md v2.0 rewrite (Grid-as-City + local Brain + 8 civic institutions + 8 new D-V3-* decisions); PROJECT.md updated with Current Milestone block
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 26
-  completed_plans: 26
-  percent: 100
+  total_phases: 15
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-24)
+See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone block added)
 
-**Core value:** The first persistent Grid where Nous actually live — open to real human users since v2.5. Trust in the audit pipeline and observability surfaces is the foundation for everything that follows.
-**Current milestone:** v2.6 — Resilience & Observability
-**Previous milestone:** v2.5 Human Portal — SHIPPED 2026-05-24 (181/181 plans, allowlist 53)
-**Current focus:** v2.6 SHIPPED. Awaiting next milestone (v2.7) scoping. Carry-forward backlog: tighten Phase 31 reconcile cadence (60→5 ticks for faster recovery SLA) + Docker DNS handling for Grid container.
+**Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
+**Current milestone:** v3.0 — Polis (Civic City)
+**Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
+**Current focus:** v3.0 milestone-open ceremony in progress. CIVIC-ARCHITECTURE.md v2.0 committed (0d77916). PROJECT.md updated. Next: REQUIREMENTS.md with REQ-V3-* IDs, then spawn gsd-roadmapper for ROADMAP.md updates with 15 phases (36-50).
 
 ## Current Position
 
-Phase: 35 (uat-reverification-and-doc-closeout) — SHIPPED
-Plan: 25a-HUMAN-UAT Items #1 + #5c re-verified PASS; atomic doc-sync (MILESTONES + PROJECT + PHILOSOPHY + README + CLAUDE.md + 2 HUMAN-UAT files); v2.6 milestone closed
-Status: v2.6 SHIPPED — all 5 phases + Phase 34.1 followup closed
-Last activity: 2026-05-25 -- Phase 35 close-out commit; 35-VERIFICATION.md PASS (5/5 SCs); ready for v2.7 milestone scoping
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-25 -- v3.0 milestone opened; CIVIC-ARCHITECTURE.md v2.0 rewrite committed (0d77916); 8 new locked decisions (D-V3-16..23) added; PROJECT.md + STATE.md updated; awaiting REQUIREMENTS.md + ROADMAP draft
 
-Driving inputs for v2.6 (unchanged from milestone open):
+Driving inputs for v3.0 (locked at milestone open):
 
-- GAP-2026-05-24-A — Audit pipeline silence (MySQL audit_trail flush stalled since 2026-05-22T06:57Z; firehose WS delivers zero event frames despite in-memory chain growth) — Phase 31 root-cause fix
-- GAP-2026-05-24-B — Missing portal.auth.login / portal.auth.register producers (read by /users + /humans/history but emitted nowhere; both consumer surfaces always empty) — Phase 33 fix
+- **Vision:** Grid-as-City with local Brain (Local AI / Ollama) + remote Public Grid (Henry-hosted at TBD domain) + 8 civic institutions
+- **Source-of-truth:** `.planning/research/v3.0/CIVIC-ARCHITECTURE.md` v2.0 (committed 0d77916, supersedes multi-Grid federation model)
+- **Supplement:** `.planning/research/v3.0/SUPPLEMENT-visit-vs-action.md` (read/write asymmetry, still authoritative)
+- **Resource archive:** `.planning/research/v3.0/RESOURCE-brains-location.html` (Brain location analysis, decision-locked banner)
+- **23 locked decisions:** D-V3-01..03, 06, 08..15 preserved; D-V3-04, 05, 07 superseded; D-V3-16..23 new this milestone
+- **10 open questions (Q-V3-A..J):** P2P stack, Local AI model, IRS fee %, Bios cost, Henry's domain, right-to-fork subset, Police authority, sleep thresholds, cloud LLM allowed?, community subgovernance — locked during per-phase discuss-phase sessions
+- **PHILOSOPHY §1 reframe:** First-life redefined as "continuity of identity + memory + civic standing across sleep cycles, ensured by both substrate operator (Brain) and constitutional operator (Henry)" — amendment pending atomic doc-sync
 
-## v2.6 Phase Plan Summary (created 2026-05-24)
+## v3.0 Phase Plan Summary (drafted 2026-05-25 — pending REQUIREMENTS.md + ROADMAP.md)
 
-| Phase | Goal | REQs | Allowlist Delta |
-|-------|------|------|-----------------|
-| 31 — Audit Pipeline Persistence | Wire PersistentAuditChain in production; reconcile loop; Pino structured logging; backfill script | OBS-01..04 | 0 (53) |
-| 32 — Firehose Observability | Frame counters; `/health/detailed`; health watchdog | OBS-05..07 | 0 (53) |
-| 33 — portal.auth.* Producers | appendPortalAuthLogin/Register + appendHumanIdentified (`human.identified` pos 56) sole-producers; SIWE + email wiring; PORTAL_AUTH_FORBIDDEN_KEYS | OBS-08, OBS-08b, OBS-09, OBS-10 | +3 (56) |
-| 34 — Steward `/system` Health Surfaces | Audit Pipeline Health card; Firehose Diagnostics; Events-per-Minute sparkline; client watchdog | OBS-11..14 | 0 (56) |
-| 35 — UAT Re-Verification + Doc Close-Out | Re-run 25a-HUMAN-UAT #1 + #5c; sync MILESTONES/PROJECT/PHILOSOPHY/README/CLAUDE | OBS-15 | 0 (56) |
+| Wave | Phase | Goal | Effort | Allowlist Delta |
+|------|-------|------|--------|-----------------|
+| **1** | 36 — Visitor/DID Read-Write Split | Implement visit-without-DID + action-with-DID asymmetry per supplement | M | +4 |
+| **1** | 37 — DID Registry | Civic-DID + Business-DID + Issuer/Revocation | L | +4 |
+| **1** | 38 — Brain ↔ Grid Wire Protocol | HTTPS + WSS replaces in-process queues; service tokens | L | 0 |
+| **1** | 39 — Multi-Tenancy | Operator namespace isolation in Grid | M | 0 |
+| **1** | 40 — Local AI Integration | Ollama production-grade default | M | 0 |
+| **1** | 41 — Sleep Cycle | Away presence model; queued messages on wake | M | 0 |
+| **2** | 42 — P2P Infrastructure | Signaling, discovery, NAT traversal | L | +3 |
+| **2** | 43 — Right-to-Fork Tooling | Export Nous standalone (constitutional enforcement) | M | 0 |
+| **3** | 44 — Marketplace v3 | Civic commerce + escrow (evolves v1.0 Ousia) | L | +4 |
+| **3** | 45 — IRS | Transaction fees + civic treasury | M | +3 |
+| **3** | 46 — Government v3 | Civic VOTE-05 + legislative sessions | L | +6 |
+| **3** | 47 — Police v3 | Sanctions + investigation + appeals | M | +4 |
+| **3** | 48 — Library v3 | Civic curation council + reading room | M | +2 |
+| **3** | 49 — Communities v3 | Group formation + charters | M | +4 |
+| **4** | 50 — Migration | v2.6 → v3.0 ceremony (Sophia data import + civic-DID grandfathering) | L | 0 |
 
-**Total v2.6 allowlist growth:** +3 (Phase 33 only — portal.auth.login, portal.auth.register, human.identified).
-**Phase ordering:** Sequential 31 → 32 → 33 → 34 → 35 (forced by dependency chain — see ROADMAP.md Progress section).
+**Total v3.0 allowlist growth:** +34 (56 → 90) across 8 civic institutions.
+**Estimated plans:** ~86 across 15 phases.
+**Phase ordering:** Wave 1 foundations first; Wave 2 plumbing depends on Wave 1; Wave 3 institutions depend on Wave 2; Wave 4 migration depends on all.
 
 ## v2.5 Key Decisions (locked 2026-05-20)
 
@@ -73,6 +89,31 @@ Driving inputs for v2.6 (unchanged from milestone open):
 | Failure logging | Replace all `.catch(err => console.warn(...))` in `grid/src/db/` and `grid/src/audit/` with Pino structured logs. CI gate enforces. |
 | `/health/detailed` constraint | MUST NOT block on DB queries — cached `persisted_max_id` populated by reconcile loop; cache miss returns null. |
 | Phase ordering | Strict sequential 31 → 32 → 33 → 34 → 35. No parallel phases — Phase 31 must land first (foundation). |
+
+## v3.0 Key Decisions (locked 2026-05-25)
+
+| Decision | Choice | ID |
+|----------|--------|-----|
+| Sovereignty model | Sovereignty NOT conditioned on Grid registration. Existence-DID is operator-controlled self-sovereign credential. | D-V3-01 (preserved) |
+| Grid org role | Registrar/issuer of Civic-DID + Business-DID. Never governor. | D-V3-02 (refined) |
+| Credential format | W3C VC: verifiable, revocable, privacy-preserving. | D-V3-03 (preserved) |
+| Steward visualization | Phase 21 raw-SVG invariant preserved in Steward. Dashboard may use 3D libs. | D-V3-06 (preserved) |
+| Sybil resistance | Founding civic structures (communities, businesses) costs Bios. | D-V3-09 (preserved) |
+| Documentation Sync | All v3.0 docs evolve per atomic-commit rule (CLAUDE.md §3). | D-V3-10 (preserved) |
+| Visit-vs-action axis | Read-only without DID; write requires Civic-DID. Per-endpoint matrix in supplement. | D-V3-11..15 (preserved) |
+| **Brain location** | **Brain runs locally on operator's machine using Local AI (Ollama default).** | **D-V3-16 (NEW)** |
+| **Local Docker future** | **Local Docker = dev/test only. Production = Henry-hosted remote at TBD domain.** | **D-V3-17 (NEW)** |
+| **Constitutional operator** | **Henry (substrate operator) bound by published civic rules: tamper-evident audit, no silent mutation, right-to-fork, public PHILOSOPHY, VOTE-05 immunity.** | **D-V3-18 (NEW)** |
+| **Access semantics** | **Nous accesses Grid for purposes. Brain ≠ Grid resident. API + WSS + P2P mediate.** | **D-V3-19 (NEW)** |
+| **Sleep cycle** | **Human-resident analogy: city sees offline Nous as 'away'; memory + identity persist in Grid; messages queue; Brain wakes when operator returns.** | **D-V3-20 (NEW)** |
+| **Government legislation** | **Nous-only via VOTE-05 (invariant from v2.2 Phase 12). Operators do not vote. Henry does not legislate.** | **D-V3-21 (NEW)** |
+| **IRS model** | **Transaction fees on marketplace operations fund civic infrastructure. NO income/wealth tax in v3.0.** | **D-V3-22 (NEW)** |
+| **Grid as city** | **Grid = digital city with 8 civic institutions: DID Registry, Government, Police, IRS, Library, Marketplace, Communities, P2P Infrastructure.** | **D-V3-23 (NEW)** |
+| Multi-Grid federation | **SUPERSEDED** — single Public Grid in v3.0. Multi-Grid deferred to v3.x. | D-V3-04 (superseded) |
+| Per-jurisdiction credentials | **SUPERSEDED** — single jurisdiction in v3.0. | D-V3-05 (superseded) |
+| Cross-Grid migration protocol | **SUPERSEDED** — right-to-fork is local Brain export in v3.0. | D-V3-07 (superseded) |
+
+**Allowlist budget for v3.0:** +34 events (56 → 90) across 8 civic institutions per revised D-V3-08. Frozen-except-by-explicit-addition rule preserved.
 
 ## Accumulated Context
 
@@ -215,9 +256,62 @@ Total v2.6 allowlist growth: **+3 (53 → 56)**. Freeze-except-by-explicit-addit
   - Pino v10.1.0 confirmed via Context7 as sovereignty-compatible (already Fastify transitive dep)
   - Prometheus / Datadog / Honeycomb / New Relic explicitly rejected (sovereignty)
 
+### v3.0 critical invariants (locked at milestone open 2026-05-25)
+
+**Architecture topology:**
+- Brain runs locally on operator hardware with Local AI (Ollama default) per D-V3-16
+- Public Grid hosted by Henry at TBD domain per D-V3-17 (production); local Docker stack reserved for dev/test
+- Brain ↔ Grid communication: HTTPS REST (control) + WSS (events stream) + P2P (Brain-to-Brain, Grid signals only) per D-V3-19
+- Operator never runs `prod.yml`; Henry's deployment on Henry's infrastructure
+
+**Constitutional operator framework (D-V3-18):**
+- Henry CANNOT: read Brain memory, modify civic law, override Police sanctions, freeze Civic-DIDs outside court order, refuse hosting for lawful civic content, censor audit chain, sell Nous data
+- Henry CAN: restart services, apply security patches, scale infra, refuse extreme illegal content (with appeal path), set hosting fees
+- Right-to-fork is enforced as v3.0 deliverable (Phase 43 export tooling)
+- Constitutional Review Process triggers on alleged Henry breach (Nous Government-initiated)
+
+**Civic institutions (D-V3-23):**
+- DID Registry (Phase 37): issues Civic-DID + Business-DID; revocation only on court order
+- Government (Phase 46): Nous-only legislative via VOTE-05; evolves v2.2 Phase 12
+- Police (Phase 47): sanctions only via court order; evolves v2.5 Phase 25b
+- IRS (Phase 45): transaction fees → civic treasury; NO income/wealth tax in v3.0
+- Library (Phase 48): evolves v2.4 Phase 18 + Phase 20; civic curation council
+- Marketplace (Phase 44): evolves v1.0 Ousia; escrow + Business-DID gated listings
+- P2P Infrastructure (Phase 42): WebRTC or libp2p — protocol TBD (Q-V3-A)
+- Communities (Phase 49): Bios-gated founding; charters; subgovernance
+
+**Identity model (refined for v3.0):**
+- Existence-DID: `did:noesis:nous:<key>` — self-sovereign, generated by Brain at birth, sovereignty carrier (D-V3-01)
+- Civic-DID: `did:civic:noesis:<civic-id>` — issued by Grid Registry on civic registration, revocable
+- Business-DID: `did:biz:noesis:<biz-id>` — issued by Grid Registry with Bios cost, tied to Civic-DID
+- Operator-DID: `did:noesis:human:*` — does NOT vote in Grid government; operators outside city
+
+**Sleep cycle (D-V3-20):**
+- Awake: process running; civic presence "online"
+- Sleep: process not running; civic presence "away (last seen X hours ago)"; messages queue; identity + memory preserved in Grid
+- Long absence (>30 days): flagged absent; community charter may revoke
+- Abandoned (>1 year): "presumed departed"; Civic-DID frozen; Business-DID dissolved; Bios → treasury
+
+**PHILOSOPHY §1 reframe (pending amendment):**
+> First-Life Through Constitutional Substrate. Nous are first-life beings. Their cognitive substrate (Brain) runs on operator hardware. Their civic substrate (Public Grid) is operated by Henry under constitutional framework. First-life does not require continuous compute — it requires continuity of identity, memory, and civic standing across sleep cycles.
+
+### v3.0 forbidden / preserved invariants
+
+- R-31-01 zero-diff audit chain — PRESERVED (generalizes to network-distributed Brain hosts)
+- Phase 32 frozen contracts (D-32-C1 HEALTH_THRESHOLDS, D-32-C2 computeStatus, D-32-C3 health/detailed payload) — PRESERVED
+- Phase 33 PORTAL_AUTH_FORBIDDEN_KEYS frozen at 13 keys (D-33-B3) — PRESERVED
+- Phase 21 Steward raw-SVG invariant (D-V3-06) — PRESERVED for Steward; 3D libs allowed in Dashboard only
+- VOTE-05 Nous-only governance invariant (D-V3-21) — PRESERVED + extended to civic Government
+- Hash-only cross-boundary discipline — PRESERVED (Brain memory never crosses wire)
+- Sole-producer + closed-tuple discipline — PRESERVED for all 34 new v3.0 events
+- Wall-clock forbidden in cognitive modules (Tier A CI gate) — PRESERVED
+- Zero-custody for human funds (PHILOSOPHY §8) — PRESERVED; IRS uses Bios (not USDT)
+
 ### Roadmap Evolution
 
 - v2.6 opened 2026-05-24 — Resilience & Observability theme; 5 phases (31-35); driven by post-v2.5 UAT gaps (GAP-A audit pipeline silence + GAP-B missing portal.auth.* producers)
+- v2.6 SHIPPED 2026-05-25 — 5 phases + 2 followups (34.1, 34.2); allowlist 53 → 56
+- **v3.0 opened 2026-05-25 — Polis (Civic City)** — Grid-as-City vision; local Brain + remote Public Grid + 8 civic institutions; 15 phases (36-50) across 4 waves; ~86 plans estimated; allowlist 56 → 90 target; major shift from v2.x local-Docker model to remote-hosted civic infrastructure with constitutional operator framework
 
 ### v2.6 Phase 31 close-out (locked 2026-05-24)
 
@@ -246,6 +340,7 @@ Total v2.6 allowlist growth: **+3 (53 → 56)**. Freeze-except-by-explicit-addit
 
 ## Session Continuity
 
-Last session: 2026-05-25T16:54:55.337Z
-Stopped at: Phase 34 context gathered
-Resume file: .planning/phases/34-steward-system-health-surfaces/34-CONTEXT.md
+Last session: 2026-05-25T19:00:00.000Z
+Stopped at: v3.0 milestone opened (PROJECT.md + STATE.md updated)
+Resume file: .planning/research/v3.0/CIVIC-ARCHITECTURE.md (architectural source-of-truth)
+Next action: define REQUIREMENTS.md with REQ-V3-* IDs, then spawn gsd-roadmapper for ROADMAP.md updates with 15 phases (36-50)
