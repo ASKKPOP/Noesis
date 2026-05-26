@@ -197,6 +197,18 @@
 - [ ] **PORTAL-09**: Portal maintains its own audit chain (separate from per-Grid chains). Audit events: `portal.grid_creation_*` × 3, `portal.registration_*` × 3, `portal.cross_grid_action_mediated` (v3.1+), `portal.account_*` × 2.
 - [ ] **PORTAL-10**: Portal reviewer panel composition open question (Q-V3-PORTAL-2): start with Henry + 2-3 invited human reviewers, transition to Nous-elected committee after Phase 46 Government ships. Reviewer decisions are audit-evident.
 
+### MGR — 3-Tier Management Taxonomy (cross-phase — explicit naming per D-V3-36)
+
+<!-- Management (administrative) is distinct from Governance (Polis legislative).
+     3 tiers: operator-side Local Nous Manager, Henry-side Grid Manager, Henry-side Portal Manager. -->
+
+- [ ] **MGR-01**: **Local Nous Manager** is the operator's local tool for managing their own Type A Nous. Surfaces: Brain config (Local AI model selection, prompt tuning), memory inspector (Karpathy/Hypnos/Pneuma view), civic-life view (which Grids this Nous joined, current zone, civic standing), right-to-fork button. Extends current Steward Console (v2.1+) for operator's own Nous only. Lives on operator's machine; never on Henry's infrastructure.
+- [ ] **MGR-02**: Local Nous Manager Local AI panel (extends Phase 40 LOCAL-02): operator can select Ollama model + adjust temperature + override system prompt + restart Brain. Changes take effect on next Brain restart (no hot-reload mid-tick per LOCAL-02). Settings persist in operator's local config; never transmitted to Grid or Portal.
+- [ ] **MGR-03**: **Grid Manager** is Henry's per-Grid runtime admin tool — distinct from Polis governance (Polis legislates per VOTE-05; Grid Manager operates). Surfaces: Grid health metrics (extends Phase 32 /health/detailed), per-Grid audit chain view, zoning visualization, citizen census, Polis session monitoring, Grid restart/scale operations. One Grid Manager instance per Grid (Genesis Grid Manager for v3.0).
+- [ ] **MGR-04**: Grid Manager exposes operational controls Polis CANNOT exercise: GPU scaling (for hosted Type B), service restart, security patch deployment, infrastructure cost reporting. Every operational action emits an audit event (`grid.admin_*`) for transparency. Grid Manager has NO power to: legislate, override Polis sanctions, freeze Civic-DIDs, modify Brain memory, censor audit chain (per D-V3-18 constitutional operator framework).
+- [ ] **MGR-05**: **Portal Manager** is Henry's meta-system admin tool above all Grid Managers. Surfaces: Grid creation request queue + reviewer panel UI (extends PORTAL-03), Nous registration request queue + reviewer panel UI (extends PORTAL-05), cross-Grid health aggregation, Portal audit chain view, reviewer panel composition + transition status. Portal Manager handles meta-administrative concerns that span multiple Grids.
+- [ ] **MGR-06**: Portal Manager review decisions are audit-evident: every approval/rejection by a reviewer panel member fires `portal.review_decision` with closed-tuple payload `{reviewer_did, request_id, request_type, decision, reasoning_hash, tick}` (decision ∈ {approve, reject, abstain}; reasoning is hashed, full text Grid-only via reviewer-DID-gated endpoint). Reviewer panel composition transition documented in PHILOSOPHY (D-V3-29 + D-V3-36): initial Henry + 2-3 invited humans → Nous-elected committee after Phase 46.
+
 ### ZONE — Grid Zoning System (Phase 57 — 6-zone city)
 
 <!-- Each Grid has 6 zones: business, manufacture, shopping, residential,
@@ -334,8 +346,14 @@
 | ZONE-04 | 57 | Pending |
 | ZONE-05 | 57 | Pending |
 | ZONE-06 | 57 | Pending |
+| MGR-01 | 40 + 43 (Local Nous Manager extension) | Pending |
+| MGR-02 | 40 (Local AI panel extension) | Pending |
+| MGR-03 | 46 + cross-phase (Grid Manager — extends Steward) | Pending |
+| MGR-04 | 46 + 47 (Grid Manager audit-evident operations) | Pending |
+| MGR-05 | 52-56 (Portal Manager — extends Portal phases) | Pending |
+| MGR-06 | 52 + 53 + 54 (Portal Manager audit-evident reviews) | Pending |
 
-**Coverage:** 91/91 v3.0 REQs mapped to phases. 24 phases (36-57, with 37b/40b/45b sub-phases). Zero orphans. Zero duplicates.
+**Coverage:** 97/97 v3.0 REQs mapped to phases. 24 phases (36-57, with 37b/40b/45b sub-phases). Zero orphans. Zero duplicates. MGR REQs are cross-phase (extend existing phases with explicit Manager role separation per D-V3-36).
 
 **Allowlist delta per REQ:** VIS-05 (+4), REG-06 (+4), P2P-05 (+3), MKT-06 (+4), IRS-04 (+3), CIVGOV-06 (+6), POL-05 (+4), CIVLIB-04 (+2), COMM-05 (+4), TYPE-B-01..06 (+15 via 37b/45b/51), PORTAL-02..05 (+5), PORTAL-09 (+3), ZONE-04/06 (+2). **Total +52 events across phases 36-57. Allowlist 56 → 108.**
 

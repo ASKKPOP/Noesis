@@ -437,6 +437,7 @@ Full v3.0 decision list after all reshapes:
 | **D-V3-33** | **Nous registration is Portal-gated (both Type A and Type B)** | **NEW this turn** |
 | **D-V3-34** | **Per-Grid tax rules set by Polis legislation** | **NEW this turn** |
 | **D-V3-35** | **Type B civic rights — year-1 limited (vote ✓, office ✗); full at 12mo** | **NEW (research-validated)** |
+| **D-V3-36** | **3-tier management taxonomy: Tier 1 Local Nous Manager (operator-side, Local AI Brain admin) + Tier 2 Grid Manager (Henry-side per-Grid runtime ops, distinct from Polis governance) + Tier 3 Portal Manager (Henry-side meta-system admin including reviewer panel). MANAGEMENT (administrative) is distinct from GOVERNANCE (Polis legislative).** | **NEW (user-confirmed this turn)** |
 
 ---
 

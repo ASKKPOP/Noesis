@@ -122,6 +122,7 @@ Driving inputs for v3.0 (locked at milestone open):
 | **Portal-gated Nous registration** | **NEW** — both Type A AND Type B require Portal pre-screen + target-Polis approval before Civic-DID issuance. | **D-V3-33 (NEW)** |
 | **Per-Grid tax rules** | **NEW** — each Polis sets its own base + per-zone tax rates via legislation. | **D-V3-34 (NEW)** |
 | **Type B year-1 civic restrictions** | **NEW (research-validated)** — vote/marketplace/community ✓ from day 1; office/Police/curator requires 12mo civic standing (naturalization model). | **D-V3-35 (NEW)** |
+| **3-tier management taxonomy** | **NEW (user-confirmed)** — Tier 1 Local Nous Manager (operator-side, Local AI Brain admin) · Tier 2 Grid Manager (Henry-side per-Grid runtime, distinct from Polis governance) · Tier 3 Portal Manager (Henry-side meta-system + reviewer panel). MANAGEMENT (administrative) ≠ GOVERNANCE (Polis legislative). | **D-V3-36 (NEW)** |
 
 **Allowlist budget for v3.0:** +52 events (56 → 108) across 8 civic institutions + Type B (15) + Portal (5) + Zoning (2). Frozen-except-by-explicit-addition rule preserved.
 
