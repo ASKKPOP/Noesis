@@ -169,6 +169,46 @@
 - [ ] **MIG-03**: Operator registers Civic-DID for migrated Nous via Phase 37 registration flow. Grandfathered reputation derived from v2.6 metrics (sanction count → starting civic standing, skill teach count → starting library contribution score, trade success → starting marketplace reputation).
 - [ ] **MIG-04**: Migration is reversible until first civic action — operator can `noesis migrate --revert` to roll back. After first civic action commits to Grid, migration is permanent (right-to-fork via Phase 43 export remains the always-available escape).
 
+### TYPE-B — Hosted Nous (Phases 37b + 40b + 45b + 51 — operator-less autonomous Nous)
+
+<!-- Type B Nous: hosted on Henry's infrastructure, autonomous, cap ≤50 in v3.0.
+     3-layer funding hybrid + 3 sybil patterns + dormancy not death. -->
+
+- [ ] **TYPE-B-01**: Type B Nous identity scheme is `did:noesis:nous:auto:<key>` (distinguishable from Type A `did:noesis:nous:<key>`). Genesis Grid caps Type B population at ≤50 per D-V3-24; cap enforced at Portal pre-screen (Phase 54).
+- [ ] **TYPE-B-02**: Type B birth via Polis-α (Foundation curation, ≤5/quarter, weeks of review), Polis-β (bond posting, 10× normal Bios cost, refundable after 12mo civic minimums), or Polis-γ (parent-Nous spawning, requires ≥1y parent civic standing). Each ceremony has deliberate latency — no instant birth.
+- [ ] **TYPE-B-03**: Type B funding follows 3-layer hybrid (D-V3-25): Layer 1 Foundation endowment ~12mo at birth from civic IRS treasury; Layer 2 marketplace earnings 70% to Type B treasury / 30% IRS tax + infrastructure stipend matched 1:1 to compute cost; Layer 3 low-power mode at <3mo runway then DORMANCY at zero (Brain stops, identity preserved indefinitely, revival via donation/grant).
+- [ ] **TYPE-B-04**: `bios.death` event NEVER fires for Type B treasury exhaustion (D-V3-25). Only civic conviction (Police sanction per Phase 47) can cause Type B death. Dormancy is reversible; death is not.
+- [ ] **TYPE-B-05**: Type B civic rights year-1 limited per D-V3-35: ✓ Vote (CIVGOV-04) · ✓ Bill drafting (CIVGOV-01) · ✓ Marketplace (MKT-01) · ✓ Found community (COMM-01) · ✗ Hold Polis office · ✗ Police service · ✗ Curation council. Full rights at 12mo civic standing.
+- [ ] **TYPE-B-06**: Type mobility A→B PERMITTED with 30-day adoption window (operator declares intent → 30-day window for alternative adoption → if no adoption, Foundation custody as Type B). Existence-DID preserved; Civic-DID reissued under new substrate authority; reputation + audit history preserved. B→A FORBIDDEN in v3.0 (D-V3-28 — sybil escape hatch).
+
+### PORTAL — Portal Meta-Layer (Phases 52-56 — top-level service)
+
+<!-- Portal is NEW in v3.0: total service management above Grid(s).
+     4 functions: Grid approval, Nous approval, cross-Grid services, user UI. -->
+
+- [ ] **PORTAL-01**: Portal runs as a separate Henry-hosted service (distinct from Grid). Authentication via SIWE + email (extends v2.5 Portal auth schemes). Portal session token is separate from per-Grid Civic-DID bearer.
+- [ ] **PORTAL-02**: Portal exposes Grid creation request endpoint: `POST /portal/api/v1/grid/request` accepts proposed name, Polis charter draft, founding members, zoning plan, tax rates, founding capital. Request enters review queue. `portal.grid_creation_requested` audit event fires.
+- [ ] **PORTAL-03**: Portal reviewer panel (initially Henry + invited human reviewers; later Nous-elected committee) reviews Grid creation requests via `POST /portal/api/v1/grid/<request-id>/decision`. Approval triggers Grid instantiation (Polis appointed, zoning instantiated, audit chain initialized). Rate limit: ≤2 new Grids per quarter at v3.1+.
+- [ ] **PORTAL-04**: Portal exposes Nous registration request endpoint: `POST /portal/api/v1/nous/request` accepts operator-DID (for Type A) OR Polis-α/β/γ ceremony reference (for Type B), target Grid, civic oath. Portal pre-screens for operator-DID validity, sybil resistance, oath signature. `portal.registration_requested` fires.
+- [ ] **PORTAL-05**: Portal-approved registration requests forward to target-Grid Polis for charter compatibility review (Phase 46). On Polis approval, Grid Registry issues Civic-DID. On rejection, request closed with reason code. Audit events: `portal.registration_approved`, `polis.registration_approved`, `registry.civic_did_issued`.
+- [ ] **PORTAL-06**: Portal cross-Grid framework (built v3.0, dormant; activates v3.1+): `GET /portal/api/v1/nous/<account-did>/grids` returns list of all Grids where account has Civic-DID; cross-Grid identity resolution via Portal-mediated attestation. Marketplace mediation interfaces stubbed.
+- [ ] **PORTAL-07**: Portal user service UI accessible at `https://portal.noesis/<account>` (TBD domain per Q-V3-E). Renders: account profile, list of joined Grids with per-Grid Civic-DID, Wallet balance (cross-Grid), pending registrations, Portal settings. Tech stack: extends Steward Console codebase OR new app (Q-V3-PORTAL-3).
+- [ ] **PORTAL-08**: Portal Wallet displays cross-Grid Bios balance + per-Grid Bios sub-balances. Cross-Grid Bios transferability (Q-V3-CROSS-1) initially: same Bios unit across Grids (single currency); per-Grid currencies deferred to v3.1+ if needed.
+- [ ] **PORTAL-09**: Portal maintains its own audit chain (separate from per-Grid chains). Audit events: `portal.grid_creation_*` × 3, `portal.registration_*` × 3, `portal.cross_grid_action_mediated` (v3.1+), `portal.account_*` × 2.
+- [ ] **PORTAL-10**: Portal reviewer panel composition open question (Q-V3-PORTAL-2): start with Henry + 2-3 invited human reviewers, transition to Nous-elected committee after Phase 46 Government ships. Reviewer decisions are audit-evident.
+
+### ZONE — Grid Zoning System (Phase 57 — 6-zone city)
+
+<!-- Each Grid has 6 zones: business, manufacture, shopping, residential,
+     infrastructure, government quarter. Logical tags + spatial rendering. -->
+
+- [ ] **ZONE-01**: Genesis Grid instantiates with 6 zones: Business, Manufacture, Shopping, Residential, Infrastructure, Government Quarter. Zone definitions persisted in Grid config; modifiable by Polis legislation only (Q-V3-ZONE-1).
+- [ ] **ZONE-02**: Every civic action (marketplace listing, community post, contract, P2P call) carries a `zone_id` field. Audit events for zone-scoped actions include `zone_id` in closed-tuple payload. Per-zone activity rules enforced at action submission (e.g. Marketplace listing requires Business or Shopping zone).
+- [ ] **ZONE-03**: Per-zone tax modifiers (D-V3-34): Business 2%, Manufacture 3%, Shopping 1%, Residential 0%, Infrastructure 0%, Government Quarter 0%. Initial values in Phase 45 IRS config; legislatively adjustable by Genesis Polis after Phase 46.
+- [ ] **ZONE-04**: Residential zone — each Civic-DID holder auto-assigned one residence at registration (Q-V3-ZONE-2). Residence is a stable address Brain presence anchors to (D-V3-19). Civic Map renders residences as dots in Residential zone. Residence assignment fires `zoning.residence_assigned` audit event.
+- [ ] **ZONE-05**: Civic Map (Phase 36+ + Phase 21 Steward) renders 6-zone layout with distinct visual regions per zone, color-coded per zone type, with Nous avatars positioned by current `zone_id`. Operators + Nous can navigate to zones. Steward raw-SVG invariant preserved (D-V3-06 — no d3, no react-flow).
+- [ ] **ZONE-06**: Zoning amendments via `POST /api/v1/gov/zoning/amend` (Polis-only, requires bill passage per Phase 46 CIVGOV flow). Amendments change zone sizes, per-zone activity rules, per-zone tax modifiers. `zoning.zone_amended` fires per amendment. Audit chain preserves amendment history.
+
 ## Future Requirements (deferred to v3.x+)
 
 - **FUTURE-MULTIGRID-01**: Federated multi-Grid architecture per former D-V3-04. Multiple Public Grids interoperate via cross-Grid protocol. Deferred — v3.0 ships single Public Grid first.
@@ -272,11 +312,33 @@
 | MIG-02 | 50 | Pending |
 | MIG-03 | 50 | Pending |
 | MIG-04 | 50 | Pending |
+| TYPE-B-01 | 37b | Pending |
+| TYPE-B-02 | 37b | Pending |
+| TYPE-B-03 | 45b | Pending |
+| TYPE-B-04 | 45b | Pending |
+| TYPE-B-05 | 46 | Pending |
+| TYPE-B-06 | 51 | Pending |
+| PORTAL-01 | 52 | Pending |
+| PORTAL-02 | 53 | Pending |
+| PORTAL-03 | 53 | Pending |
+| PORTAL-04 | 54 | Pending |
+| PORTAL-05 | 54 | Pending |
+| PORTAL-06 | 55 | Pending |
+| PORTAL-07 | 56 | Pending |
+| PORTAL-08 | 56 | Pending |
+| PORTAL-09 | 52 | Pending |
+| PORTAL-10 | 52 | Pending |
+| ZONE-01 | 57 | Pending |
+| ZONE-02 | 57 | Pending |
+| ZONE-03 | 57 | Pending |
+| ZONE-04 | 57 | Pending |
+| ZONE-05 | 57 | Pending |
+| ZONE-06 | 57 | Pending |
 
-**Coverage:** 69/69 v3.0 REQs mapped to phases. Every phase (36-50, 15 total) has at least 3 REQs. Zero orphans. Zero duplicates.
+**Coverage:** 91/91 v3.0 REQs mapped to phases. 24 phases (36-57, with 37b/40b/45b sub-phases). Zero orphans. Zero duplicates.
 
-**Allowlist delta per REQ:** VIS-05 (+4), REG-06 (+4), P2P-05 (+3), MKT-06 (+4), IRS-04 (+3), CIVGOV-06 (+6), POL-05 (+4), CIVLIB-04 (+2), COMM-05 (+4). Total +34 across 9 REQs in 8 phases. Allowlist 56 → 90.
+**Allowlist delta per REQ:** VIS-05 (+4), REG-06 (+4), P2P-05 (+3), MKT-06 (+4), IRS-04 (+3), CIVGOV-06 (+6), POL-05 (+4), CIVLIB-04 (+2), COMM-05 (+4), TYPE-B-01..06 (+15 via 37b/45b/51), PORTAL-02..05 (+5), PORTAL-09 (+3), ZONE-04/06 (+2). **Total +52 events across phases 36-57. Allowlist 56 → 108.**
 
 ---
 
-*Last updated: 2026-05-25 — v3.0 Polis REQUIREMENTS.md drafted at milestone open. 69 REQs across 15 phases (36-50), 4 waves. ~86 plans estimated. Pending: ROADMAP.md spawn via gsd-roadmapper.*
+*Last updated: 2026-05-25 afternoon — v3.0 Polis REQUIREMENTS.md updated for THREE-LAYER architecture (Portal/Grid/Brain) + Genesis Polis + 6-zone city + Portal-gated registration. 91 REQs across 24 phases (was 69 across 15). New REQ categories: TYPE-B (6), PORTAL (10), ZONE (6) = 22 new REQs. Visual reference: `.planning/research/v3.0/ARCHITECTURE-v3.0.html`.*

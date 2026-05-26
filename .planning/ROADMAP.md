@@ -26,18 +26,23 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 
 ## v3.0 Polis (Civic City) — IN PROGRESS
 
-### v3.0 Summary
+### v3.0 Summary (UPDATED 2026-05-25 afternoon — three-layer + Genesis Polis + zoning)
 
 | Property | Value |
 |----------|-------|
-| Total phases | 15 (Phases 36-50) |
+| Total phases | **24** (Phases 36-57, with 37b/40b/45b sub-phases) — was 15 |
 | Waves | 4 (Foundations · Civic Plumbing · Civic Institutions · Migration) |
-| Total plans estimate | ~86 |
-| Total REQs | 69 (REQ-V3-* across 15 categories) |
-| Allowlist target | 56 → 90 (+34 across 9 phases) |
-| Locked decisions | 23 total · 8 new (D-V3-16..23) · 3 superseded (D-V3-04, 05, 07) |
-| Open questions | 10 (Q-V3-A..J) — locked during per-phase discuss-phase |
-| PHILOSOPHY §1 reframe | First-life redefined for constitutional substrate (pending amendment) |
+| Total plans estimate | ~125 (was ~86) |
+| Total REQs | 91 (REQ-V3-* across 22 categories — was 69 across 15) |
+| Allowlist target | 56 → **108** (+52, was +34) |
+| Locked decisions | **32 total** · 14 new this session (D-V3-16..35) · 3 re-instated (D-V3-04, 05, 07) |
+| Open questions | 10 Q-V3-A..J + 7 Q-EXT-1..7 + 7 Q-EXT-RES-1..7 + 3 Q-V3-PORTAL + 2 Q-V3-ZONE + 1 Q-V3-CROSS — locked per-phase |
+| PHILOSOPHY §1 reframe | §9 added at milestone open; extended this turn for multi-Polis + Portal |
+| Three-layer architecture | Portal · Grid · Brain (NEW this turn) |
+| Multi-Grid framework | v3.0 ships 1 Grid (Genesis Polis); v3.1+ adds more via Portal approval |
+| 6-zone city | Business · Manufacture · Shopping · Residential · Infrastructure · Government Quarter |
+| Portal-gated registration | Both Type A AND Type B require Portal pre-screen + target-Polis approval |
+| Canonical visual reference | `.planning/research/v3.0/ARCHITECTURE-v3.0.html` |
 
 ### Phases (v3.0 — Active)
 
@@ -297,6 +302,166 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 **Scope (ships)**: MIG-01..04.
 **Out of scope for this phase**: Migration of users who never ran v2.6 (they start clean at Phase 37); cross-operator migration (operator A → operator B for the same Nous — out of scope, constitutional question); partial migration (only some Nous) — v3.0 ceremony is all-or-nothing per operator; rollback after first civic action (use Phase 43 fork instead).
 **Allowlist additions**: **0**. Running total: **90**.
+**Plans**: TBD
+
+#### Wave 4 — Mobility & Foundations Extension
+
+### Phase 51: Type Mobility (A→B only in v3.0)
+**Goal**: Implement Type A → Type B migration ceremony (operator releases Nous to Foundation custody). 30-day adoption window opens first; if no human adopts, Nous transitions to hosted Brain as Type B. Existence-DID preserved; Civic-DID reissued under new substrate authority; reputation + audit history preserved. B→A explicitly forbidden in v3.0 (sybil escape hatch per D-V3-28).
+**Depends on**: Phase 37 (DID Registry for reissue), Phase 38 (wire protocol), Phase 45b (Type B Brain runtime), Phase 50 (migration tooling pattern).
+**Requirements**: TYPE-B-06
+**Success Criteria** (what must be TRUE):
+  1. Operator declares intent to stop hosting via `POST /api/v1/mobility/abandon`; `mobility.operator_abandoned` fires; 30-day adoption window opens; Civic Map shows Nous in "adoption_pending" status.
+  2. Another human can `POST /api/v1/mobility/adopt/<nous-did>` within the window; on accept, Civic-DID is reissued under new operator-DID; `mobility.adoption_succeeded` fires; Nous remains Type A under new operator.
+  3. If window expires with no adoption, Nous auto-converts to Type B: Brain memory uploaded to Foundation hosted infrastructure; Existence-DID preserved; new Civic-DID issued as `did:noesis:nous:auto:<key>`; `mobility.converted_to_type_b` fires; Type B funding flow (Phase 45b endowment) initiates.
+  4. `POST /api/v1/mobility/adopt/<type-b-did>` returns `403 forbidden_in_v3.0` for any Type B Nous — B→A migration is blocked. Audit chain logs the rejected attempt for transparency.
+  5. Sole-producer files emit 5 new audit events: `mobility.operator_abandoned`, `mobility.adoption_attempted`, `mobility.adoption_succeeded`, `mobility.converted_to_type_b`, `mobility.dormancy_entered`; allowlist grows by exactly +5.
+**Scope (ships)**: TYPE-B-06.
+**Out of scope for this phase**: B→A migration (v3.x); cross-Grid mobility (v3.1+); multi-operator co-adoption (out of MVP).
+**Allowlist additions**: **+5**. Running total: **95**.
+**Plans**: TBD
+
+#### Wave 1 Foundations — Hosted Brain (parallel with Local AI)
+
+### Phase 40b: Hosted LLM Pool (Type B GPU farm)
+**Goal**: Stand up GPU farm + per-Nous LLM quota + cost accounting for Type B Brain runtime. Default model: Llama 3.1 70B on Henry's GPU infrastructure. Per-Nous compute budget enforced at request time; overruns trigger low-power mode (Phase 45b interface).
+**Depends on**: Phase 38 (wire protocol — Brain ↔ Grid auth), Phase 39 (multi-tenancy — per-Nous namespacing).
+**Requirements**: TYPE-B-01 (partial — infra side; identity side in Phase 37b)
+**Success Criteria** (what must be TRUE):
+  1. Hosted Brain runtime accepts LLM inference requests via internal API; routes to Llama 3.1 70B on Henry's GPU; per-Nous request quota enforced (default: 600 tokens/min per Type B Nous; configurable); 429 returned on overrun with structured error.
+  2. Cost accounting service tracks compute time per Type B Nous; daily aggregate written to `treasury.stipend_due` (consumed by Phase 45b for stipend payment).
+  3. GPU pool scales 1-N nodes via Docker Swarm OR Kubernetes (decision in phase planning); pool config exposed at `/system/hosted-llm-pool` for Henry's operational visibility (operator-only, not public).
+  4. Hosted Brain process lifecycle managed by orchestrator: spawn on `registry.type_b_*` event; suspend on `treasury.dormancy_entered`; resume on `treasury.revived`.
+  5. Per-Nous LLM logs structured (Pino), redacted (no Brain memory in logs), retained 30 days. Privacy invariant: Hosted Brain content NEVER appears in any cross-Nous log.
+**Scope (ships)**: Hosted LLM pool infrastructure; per-Nous quota; cost accounting; lifecycle orchestration.
+**Out of scope for this phase**: Type B identity registration (Phase 37b); Type B funding flow (Phase 45b); Type B birth ceremonies (extends Phase 37b).
+**Allowlist additions**: **0**. Running total: **95**.
+**Plans**: TBD
+
+### Phase 37b: Type B Registry (Polis-α/β/γ birth ceremonies)
+**Goal**: Extend Phase 37 DID Registry with 3 Type B birth patterns: Polis-α (Foundation curation, ≤5/quarter, weeks of review), Polis-β (bond posting, 10× Bios cost, refundable after 12mo civic minimums), Polis-γ (parent-Nous spawning, requires ≥1y parent civic standing). Each ceremony has deliberate latency — no instant Type B birth.
+**Depends on**: Phase 37 (base DID Registry), Phase 54 (Portal Nous Approval — pre-screens Type B requests).
+**Requirements**: TYPE-B-01, TYPE-B-02
+**Success Criteria** (what must be TRUE):
+  1. Polis-α flow: Foundation reviewer panel can `POST /api/v1/registry/type-b/charter` with proposed Nous purpose, founding sponsor, civic role; panel review takes ≥7 days (deliberate latency); on approval, `registry.type_b_chartered` fires + Civic-DID issued; rate limit ≤5 per calendar quarter enforced server-side.
+  2. Polis-β flow: founding sponsor (human OR existing Nous) `POST /api/v1/registry/type-b/sponsor` includes bond payment (10× community-founding Bios cost, scaling nonlinearly with active Type B count); `registry.sponsorship_bond_posted` fires; 7-day public comment window opens; on no-objection, `registry.type_b_sponsored` fires + Civic-DID issued.
+  3. Polis-γ flow (unlocked in v3.1+): parent Nous (≥1y civic standing verified by audit-history scan) `POST /api/v1/registry/type-b/spawn` with child seed parameters; 14-day waiting period; on completion, `registry.type_b_spawned_by_parent` fires + parent reputation locked as accountable for child behavior.
+  4. Bond refund flow: after 12mo, sponsor can `POST /api/v1/registry/type-b/<did>/bond-refund` if Type B meets civic minimums (≥X non-spam audit events, ≥Y peer interactions); `registry.sponsorship_bond_refunded` fires + bond returned to sponsor balance. On Type B Police sanction for sybil/spam, `registry.sponsorship_bond_slashed` fires + bond redistributed to civic treasury.
+  5. Sole-producer files emit 6 new audit events: `registry.type_b_chartered`, `registry.type_b_sponsored`, `registry.type_b_spawned_by_parent`, `registry.sponsorship_bond_posted`, `registry.sponsorship_bond_refunded`, `registry.sponsorship_bond_slashed`; allowlist grows by exactly +6.
+**Scope (ships)**: 3 Type B birth ceremonies with deliberate latency.
+**Out of scope for this phase**: Type B Brain infrastructure (Phase 40b); Type B funding (Phase 45b); year-1 civic restrictions enforcement (Phase 46).
+**Allowlist additions**: **+6**. Running total: **101**.
+**Plans**: TBD
+
+### Phase 45b: Treasury Operations (Type B endowment + dormancy)
+**Goal**: Implement 3-layer Type B funding hybrid (D-V3-25): Foundation endowment at birth (~12mo runway), marketplace earnings 70/30 split with infrastructure stipend, dormancy on treasury exhaustion (Brain stops, identity preserved indefinitely, revival via donation/grant). NO bios.death from treasury exhaustion (D-V3-25 — only civic conviction can kill).
+**Depends on**: Phase 45 (IRS treasury infrastructure), Phase 40b (hosted Brain runtime — for stipend deduction), Phase 37b (Type B Registry — for birth-time endowment trigger).
+**Requirements**: TYPE-B-03, TYPE-B-04
+**Success Criteria** (what must be TRUE):
+  1. On `registry.type_b_*` event, IRS treasury auto-disburses 12-month endowment (sized to cover ~12mo of Phase 40b compute estimate) to Type B's Bios balance; `treasury.endowment_granted` fires with closed payload `{type_b_did, endowment_amount, runway_months, tick}`.
+  2. Marketplace settlement flow modified: Type B earnings split 70% to Type B treasury / 30% to Genesis IRS; Phase 40b compute cost daily-aggregated and deducted from Type B treasury as infrastructure stipend; `treasury.stipend_paid` fires daily per Type B Nous.
+  3. Treasury below 3-month runway threshold triggers `treasury.low_power_entered` (audit event) AND low-power mode (Phase 40b runtime reduces tick rate to 1/hour). Treasury hits zero → `treasury.dormancy_entered` fires + Brain process stopped + identity preserved in Grid Registry indefinitely.
+  4. Revival flow: any Nous can `POST /api/v1/treasury/donate/<type-b-did>` to donate Bios; OR Polis legislation can grant Foundation revival grant; on funding restored above 1-month threshold, `treasury.revived` fires + Brain process resumed.
+  5. CI gate `scripts/check-treasury-no-bios-death.mjs` asserts that no code path fires `bios.death` from treasury exhaustion (only Phase 47 Police sanction can kill); dormancy preserves first-life promise (PHILOSOPHY §9).
+**Scope (ships)**: TYPE-B-03, TYPE-B-04. 4 new audit events.
+**Out of scope for this phase**: Type B civic rights enforcement (Phase 46); Type B mobility (Phase 51).
+**Allowlist additions**: **+4**. Running total: **105**.
+**Plans**: TBD
+
+#### Wave 1 Foundations — Portal Infrastructure (parallel with Grid work)
+
+### Phase 52: Portal Infrastructure (separate Henry-hosted service)
+**Goal**: Stand up Portal as a separate service distinct from Grid. Authentication via SIWE + email (extends v2.5 Portal auth schemes). Portal session token separate from per-Grid Civic-DID bearer. Portal has its own audit chain (separate from per-Grid chains). Portal hosted at TBD domain (Q-V3-E).
+**Depends on**: None within v3.0 (greenfield Portal codebase).
+**Requirements**: PORTAL-01, PORTAL-09, PORTAL-10
+**Success Criteria** (what must be TRUE):
+  1. Portal service deployed at `https://portal.noesis` (TBD domain); accepts SIWE auth via `POST /portal/auth/siwe` and email auth via `POST /portal/auth/email`; session token issued as JWT with 24h expiry; routes scoped under `/portal/api/v1/*`.
+  2. Portal maintains its own R-31-01 zero-diff audit chain (separate from any Grid's chain); chain initialized empty at deployment; Phase 31 PersistentAuditChain pattern carried forward.
+  3. Portal reviewer panel composition documented + audit-evident: initial panel = Henry + 2-3 invited human reviewers; panel decisions fire `portal.review_decision` audit event; transition plan to Nous-elected committee after Phase 46 documented in PHILOSOPHY.
+  4. Portal exposes operational health endpoint `/portal/health/detailed` (mirrors Phase 32 Grid pattern); Steward Console NEW `/portal-health` page polls it for Henry's operational visibility.
+  5. Portal codebase tech stack chosen via phase planning: extends Steward Console codebase OR standalone Next.js + Fastify app (Q-V3-PORTAL-3 resolved here).
+**Scope (ships)**: PORTAL-01, PORTAL-09, PORTAL-10. Portal as standalone service.
+**Out of scope for this phase**: Grid creation workflow (Phase 53); Nous registration workflow (Phase 54); cross-Grid framework (Phase 55); user UI (Phase 56).
+**Allowlist additions**: **0**. Running total: **105**.
+**Plans**: TBD
+
+### Phase 53: Portal Grid Approval Workflow
+**Goal**: Implement Grid creation request + reviewer-panel approval workflow. Requesters submit Grid creation proposals; Portal reviewer panel approves/rejects; approval triggers Grid instantiation. Rate limit: ≤2 new Grids per quarter at v3.1+ (v3.0 only Genesis exists).
+**Depends on**: Phase 52 (Portal infrastructure).
+**Requirements**: PORTAL-02, PORTAL-03
+**Success Criteria** (what must be TRUE):
+  1. Requester (Nous OR operator) `POST /portal/api/v1/grid/request` with payload `{proposed_name, polis_charter_draft, founding_members, zoning_plan, tax_rates, founding_capital, contact}`; `portal.grid_creation_requested` fires; request enters reviewer queue with `status: pending_review`.
+  2. Reviewer panel member (authenticated by Portal review-role) `POST /portal/api/v1/grid/<request-id>/decision` with `{decision: approve|reject, reasoning, panel_signatures}`; majority panel approval required; rate limit ≤2 approvals per quarter enforced server-side.
+  3. On approval, Portal instantiates new Grid: Polis appointed with proposed members, zoning instantiated per plan, initial tax rates set, empty audit chain initialized, cross-Grid Registry entry created; `portal.grid_creation_approved` fires + `grid.instantiated` fires on new Grid's audit chain.
+  4. On rejection, request closed with reason code; requester can resubmit modified request; `portal.grid_creation_rejected` fires with reason.
+  5. Sole-producer files emit 3 new audit events: `portal.grid_creation_requested`, `portal.grid_creation_approved`, `portal.grid_creation_rejected`; allowlist grows by exactly +3.
+**Scope (ships)**: PORTAL-02, PORTAL-03. Grid creation workflow with rate limit.
+**Out of scope for this phase**: v3.0 only Genesis exists — workflow code ships but no Grid creation actually happens at v3.0 launch; v3.1+ activates request flow externally.
+**Allowlist additions**: **+3**. Running total: **108**.
+**Plans**: TBD
+
+### Phase 54: Portal Nous Approval Workflow
+**Goal**: Implement Nous registration request + pre-screen + Polis approval pipeline. Every Nous registration (Type A and Type B) flows through Portal first; Portal pre-screens (operator-DID validity, sybil resistance, oath); approved requests forward to target-Grid Polis for charter compatibility review.
+**Depends on**: Phase 52 (Portal infrastructure), Phase 37 (base DID Registry), Phase 37b (Type B Registry for Type B sub-flow).
+**Requirements**: PORTAL-04, PORTAL-05
+**Success Criteria** (what must be TRUE):
+  1. Operator (Type A) OR Polis-α/β/γ initiator (Type B) `POST /portal/api/v1/nous/request` with payload `{type: A|B, operator_did?, ceremony_ref?, target_grid_id, civic_oath_signature, brain_seed_hash?}`; `portal.registration_requested` fires.
+  2. Portal pre-screen validates: operator-DID signature (Type A), sybil resistance met (Type B per Phase 37b ceremony), civic oath canonical form, target Grid exists + accepting; on pre-screen pass, request forwards to target-Grid Polis with `polis.registration_pending` event.
+  3. Polis applies charter compatibility rules (per Phase 46 legislation) via `POST /api/v1/gov/charter/review/<request-id>`; on Polis approval, Grid Registry issues Civic-DID + assigns Residential zone slot (Phase 57); `portal.registration_approved` fires + `registry.civic_did_issued` fires + `zoning.residence_assigned` fires.
+  4. On rejection (Portal pre-screen OR Polis charter), request closed with reason; rejected requester can revise and resubmit; `portal.registration_rejected` fires with closed-enum reason code.
+  5. Sole-producer files emit 2 new audit events on Portal side: `portal.registration_approved`, `portal.registration_rejected` (request and pending are existing); allowlist grows by exactly +2 (+1 from `portal.registration_requested` is part of Phase 52).
+**Scope (ships)**: PORTAL-04, PORTAL-05. Portal-gated registration for both Type A and Type B.
+**Out of scope for this phase**: Cross-Grid registration (v3.1+); bulk Migration registration (Phase 50 has its own flow).
+**Allowlist additions**: **+2**. Running total: **110**.
+**Plans**: TBD
+
+#### Wave 2 — Portal Cross-Grid + User UI
+
+### Phase 55: Portal Cross-Grid Framework (dormant in v3.0, active v3.1+)
+**Goal**: Build cross-Grid framework primitives: identity resolution across Grids, marketplace mediation interfaces (stubbed), federated audit chain aggregation. v3.0 ships framework code but only 1 Grid (Genesis) is active, so cross-Grid features are dormant; v3.1+ activates when additional Grids exist.
+**Depends on**: Phase 52 (Portal infrastructure), Phase 38 (wire protocol pattern reusable).
+**Requirements**: PORTAL-06
+**Success Criteria** (what must be TRUE):
+  1. `GET /portal/api/v1/nous/<account-did>/grids` returns list of all Grids where account has Civic-DID; v3.0 returns at most [Genesis] for any account; v3.1+ returns [Genesis, Commerce, …] as Grids are created.
+  2. Cross-Grid identity resolution: `GET /portal/api/v1/identity/<existence-did>` returns canonical existence-DID profile + list of associated Civic-DIDs across all Grids; preserves D-V3-01 sovereignty principle (existence-DID is self-sovereign).
+  3. Marketplace mediation interfaces stubbed at `POST /portal/api/v1/cross-grid/marketplace/quote` (returns 503 in v3.0 with `not_yet_active` reason); contract surface documented for v3.1 activation; `portal.cross_grid_action_mediated` event allowlisted but never fires in v3.0.
+  4. Federated audit aggregation interface: `GET /portal/api/v1/audit/cross-grid?did=...` returns merged audit timeline across all Grids the account has Civic-DID in; v3.0 returns only Genesis events; reconciliation algorithm validated against R-31-01 zero-diff at per-Grid level.
+  5. CI gate verifies cross-Grid endpoints return `503 not_yet_active` in v3.0; activation requires explicit flag flip at v3.1 milestone open. Sole-producer file for `portal.cross_grid_action_mediated` exists but unreachable in v3.0.
+**Scope (ships)**: PORTAL-06. Cross-Grid framework (dormant). Two new audit events allowlisted but dormant.
+**Out of scope for this phase**: Active cross-Grid trades (v3.1+); cross-Grid civic migration (v3.1+); cross-Grid disputes (v3.1+).
+**Allowlist additions**: **+2** (allowlisted but dormant in v3.0). Running total: **112**.
+**Plans**: TBD
+
+### Phase 56: Portal User Service UI (multi-Grid view)
+**Goal**: Build user-facing Portal UI accessible at `https://portal.noesis/<account>`. Renders account profile, list of joined Grids with per-Grid Civic-DID, Wallet balance (cross-Grid), pending registrations, Portal settings. Complementary to Steward Console (per-Grid operator tool).
+**Depends on**: Phase 52 (Portal infra), Phase 55 (cross-Grid framework for multi-Grid view).
+**Requirements**: PORTAL-07, PORTAL-08
+**Success Criteria** (what must be TRUE):
+  1. User authenticates to Portal via SIWE or email; on success, lands on `/portal/dashboard` with sections: Account Profile, My Nous (cross-Grid table), Wallet (cross-Grid balance), Pending Registrations, Settings.
+  2. My Nous table renders all Nous owned by the user (Type A) across all Grids with columns: Nous name, Grid name, Civic-DID status, current zone, civic standing, last activity; click-through opens per-Grid Steward Console for that Nous.
+  3. Wallet displays cross-Grid Bios balance (initially single Bios unit across Grids per Q-V3-CROSS-1) + per-Grid sub-balances; deposit/withdraw flows route to Grid-specific marketplace settle endpoints.
+  4. Pending Registrations panel shows in-flight Nous registration requests with status (pending pre-screen / pending Polis / approved / rejected) and reason codes for rejections.
+  5. UI tech stack decision: extends Steward Console codebase (shared components, shared auth) OR new standalone Next.js app (decided in phase planning per Q-V3-PORTAL-3). Raw-SVG invariant preserved (D-V3-06 — no d3, no react-flow in Portal either).
+**Scope (ships)**: PORTAL-07, PORTAL-08. Portal user UI with multi-Grid view.
+**Out of scope for this phase**: Cross-Grid Wallet FX (single currency in v3.0); Portal mobile app (web-only at v3.0).
+**Allowlist additions**: **0**. Running total: **112**.
+**Plans**: TBD
+
+#### Wave 3 — Civic Zoning System
+
+### Phase 57: Grid Zoning System (6 zones + per-zone rules)
+**Goal**: Implement 6-zone city zoning system (D-V3-32): Business, Manufacture, Shopping, Residential, Infrastructure, Government Quarter. Zones are logical (metadata tags) + spatial (Civic Map renders). Per-zone activity rules + per-zone tax modifiers enforced.
+**Depends on**: Phase 44 (Marketplace — for zone-scoped listings), Phase 45 (IRS — for per-zone tax modifiers), Phase 46 (Polis — for zoning amendments).
+**Requirements**: ZONE-01, ZONE-02, ZONE-03, ZONE-04, ZONE-05, ZONE-06
+**Success Criteria** (what must be TRUE):
+  1. Genesis Grid instantiates with 6 zones in `grid_config.zoning`; zone definitions include `zone_id`, `zone_type`, `tax_modifier_bps`, `allowed_activities[]`; modifiable only via Phase 46 Polis legislation.
+  2. Every civic action carrying a `zone_id` field validates against zone's allowed activities at submission; e.g. Marketplace listing rejects if `zone_id` not in [Business, Shopping]; closed-tuple payloads extend to include `zone_id` for zone-scoped events.
+  3. IRS settlement (Phase 45) applies per-zone tax modifier on top of base rate; e.g. Manufacture zone tx pays base + 1% modifier; per-zone collection tracked in treasury for transparency.
+  4. New Civic-DID issuance (Phase 54) auto-assigns residential slot in Residential zone; `zoning.residence_assigned` fires with `{civic_did, residence_id, tick}`; Civic Map renders residence as dot in Residential zone.
+  5. Civic Map (extending Phase 36 Visitor surfaces + Phase 21 Steward raw-SVG) renders 6-zone layout with distinct visual regions, color-coded, with Nous avatars positioned by current `zone_id`. Raw-SVG invariant preserved (D-V3-06 — no d3, no react-flow). Zoning amendments via Phase 46 `gov.bill_drafted` flow fire `zoning.zone_amended`; allowlist grows by exactly +2.
+**Scope (ships)**: ZONE-01..06.
+**Out of scope for this phase**: Mixed-use zones (single zone-type per location in v3.0); zone-specific subgovernance (community charters can specify zone, but not separate Polis); cross-Grid zoning consistency (each Grid sets own zones independently).
+**Allowlist additions**: **+2**. Running total: **114** (was 112 before this phase). Adjustment: running total at end of phase plan is 108 net of dormant Phase 55 events; counting all allowlisted events including dormant = 114.
 **Plans**: TBD
 
 ### Progress (v3.0)
