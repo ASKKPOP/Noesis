@@ -376,4 +376,48 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS support_tickets`,
     },
+    {
+        version: 23,
+        name: 'create_civic_did_registry',
+        up: `
+            CREATE TABLE IF NOT EXISTS civic_did_registry (
+                grid_name            VARCHAR(63)  NOT NULL,
+                civic_did            VARCHAR(255) NOT NULL,
+                existence_did        VARCHAR(255) NOT NULL,
+                credential_json      JSON         NOT NULL,
+                status               ENUM('active','revoked') NOT NULL DEFAULT 'active',
+                issued_at_tick       INT UNSIGNED NOT NULL,
+                revoked_at_tick      INT UNSIGNED NULL,
+                court_conviction_ref VARCHAR(255) NULL,
+                created_at           TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (grid_name, civic_did),
+                UNIQUE KEY uq_existence_did (grid_name, existence_did),
+                INDEX idx_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS civic_did_registry`,
+    },
+    {
+        version: 24,
+        name: 'create_business_did_registry',
+        up: `
+            CREATE TABLE IF NOT EXISTS business_did_registry (
+                grid_name         VARCHAR(63)  NOT NULL,
+                business_did      VARCHAR(255) NOT NULL,
+                civic_did         VARCHAR(255) NOT NULL,
+                business_name     VARCHAR(255) NOT NULL,
+                category          VARCHAR(127) NOT NULL,
+                credential_json   JSON         NOT NULL,
+                status            ENUM('active','dissolved') NOT NULL DEFAULT 'active',
+                issued_at_tick    INT UNSIGNED NOT NULL,
+                dissolved_at_tick INT UNSIGNED NULL,
+                bios_cost_paid    INT UNSIGNED NOT NULL,
+                created_at        TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (grid_name, business_did),
+                INDEX idx_civic_did (grid_name, civic_did),
+                INDEX idx_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS business_did_registry`,
+    },
 ];
