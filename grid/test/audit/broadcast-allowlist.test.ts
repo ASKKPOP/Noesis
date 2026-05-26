@@ -8,12 +8,12 @@ import {
 } from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast-allowlist: default-deny membership', () => {
-    it('has exactly 56 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27+Phase 28+Phase 33 event types', () => {
-        expect(ALLOWLIST.size).toBe(56);
+    it('has exactly 60 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27+Phase 28+Phase 33+Phase 36 event types', () => {
+        expect(ALLOWLIST.size).toBe(60);
     });
 
-    it('has frozen 56-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(56);
+    it('has frozen 60-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(60);
     });
 
     it.each([
@@ -92,7 +92,7 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(() => (ALLOWLIST as Set<string>).add('law.bypassed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).delete('trade.reviewed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).clear()).toThrow(TypeError);
-        expect(ALLOWLIST.size).toBe(56);
+        expect(ALLOWLIST.size).toBe(60);
     });
 
     it('Phase 6 operator.* tuple order: inspected < paused < resumed < law_changed < telos_forced', () => {
@@ -138,6 +138,17 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(idx('nous.spawned_by_human')).toBeLessThan(idx('portal.auth.login'));
         expect(idx('portal.auth.login')).toBeLessThan(idx('portal.auth.register'));
         expect(idx('portal.auth.register')).toBeLessThan(idx('human.identified'));
+    });
+
+    it('Phase 36 VIS-05 additions are present', () => {
+        expect(ALLOWLIST_MEMBERS.includes('portal.did_issued')).toBe(true);
+        expect(ALLOWLIST_MEMBERS.includes('portal.did_revoked')).toBe(true);
+        expect(ALLOWLIST_MEMBERS.includes('grid.recognition_granted')).toBe(true);
+        expect(ALLOWLIST_MEMBERS.includes('grid.recognition_revoked')).toBe(true);
+    });
+
+    it('portal.notification_dispatched is intentionally NOT on the broadcast allowlist (D-36-19 private queue event)', () => {
+        expect(ALLOWLIST_MEMBERS.includes('portal.notification_dispatched')).toBe(false);
     });
 
     it('Phase 25b sanction events appear at positions 46-51 (0-indexed: 45-50) in declared order', () => {
