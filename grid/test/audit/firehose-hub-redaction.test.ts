@@ -13,7 +13,6 @@
 import { describe, it, expect } from 'vitest';
 import { AuditChain } from '../../src/audit/chain.js';
 import { WsFirehoseHub } from '../../src/audit/firehose-hub.js';
-import { appendPortalAuthLogin } from '../../src/audit/append-portal-auth-login.js';
 
 // Minimal mock socket — captures all sent messages.
 class MockSocket {
@@ -45,12 +44,12 @@ describe('WsFirehoseHub — visitor redaction', () => {
         hub.onConnect(civicSocket as unknown as Parameters<typeof hub.onConnect>[0], civicCtx as unknown as Parameters<typeof hub.onConnect>[1]);
         hub.onConnect(anonSocket as unknown as Parameters<typeof hub.onConnect>[0], anonCtx as unknown as Parameters<typeof hub.onConnect>[1]);
 
-        // Trigger an audit event
-        appendPortalAuthLogin(chain, {
-            human_did: 'did:noesis:human:0xabc',
-            method: 'siwe',
-            tick: 5,
-        });
+        // Trigger an audit event where the civic_member is the actor.
+        // Phase 38 WIRE-05: civic_member subscribers only receive events where
+        // actorDid === did, targetDid === did, eventType === 'tick', or community.* actor === did.
+        // We append directly to keep the test self-contained without a specific
+        // audit-append helper needing the DID to match.
+        chain.append('nous.moved', 'did:civic:noesis:test1', { to: 'regionA' });
 
         // Allow microtask queue to flush
         await new Promise<void>((r) => queueMicrotask(r));
@@ -83,6 +82,6 @@ describe('WsFirehoseHub — visitor redaction', () => {
 
         // family = first segment of event_type (split on '.')
         expect(anonFrame.entry).toHaveProperty('family');
-        expect(anonFrame.entry.family).toBe('portal');
+        expect(anonFrame.entry.family).toBe('nous');
     });
 });
