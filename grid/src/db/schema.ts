@@ -442,4 +442,28 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS brain_tokens`,
     },
+    // Phase 38 WIRE-03/WIRE-04 — Brain event ingest dedup gate.
+    // Idempotency key (CHAR(64) sha256 hex, per D-38-A8) is the PRIMARY KEY.
+    // INSERT IGNORE on duplicate idempotency_key → affectedRows=0 → counted as duplicate.
+    // This table is the dedup gate; it is NOT the audit chain (R-31-01 preserved).
+    // Accepted events are forwarded to NousRunner.executeActions after ingest.
+    {
+        version: 26,
+        name: 'create_brain_event_ingest',
+        up: `
+            CREATE TABLE IF NOT EXISTS brain_event_ingest (
+                grid_name       VARCHAR(63)  NOT NULL,
+                idempotency_key CHAR(64)     NOT NULL,
+                brain_did       VARCHAR(255) NOT NULL,
+                tick            INT UNSIGNED NOT NULL,
+                event_type      VARCHAR(63)  NOT NULL,
+                payload         JSON         NOT NULL,
+                received_at     BIGINT       NOT NULL,
+                PRIMARY KEY (grid_name, idempotency_key),
+                INDEX idx_brain_did_tick (grid_name, brain_did, tick),
+                INDEX idx_received_at   (grid_name, received_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS brain_event_ingest`,
+    },
 ];

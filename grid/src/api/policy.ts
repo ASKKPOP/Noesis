@@ -204,6 +204,10 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // civic_did_required: the JWT subject is a Civic-DID; the issuer is the
     // existence-DID (verified against brain_tokens public key in tryDid).
     'POST /api/v1/brain/actions': 'civic_did_required',
+
+    // Phase 38 (WIRE-03 batch replay + WIRE-04 idempotency) — offline replay endpoint.
+    // Same auth requirements as /brain/actions: Civic-DID bearer JWT.
+    'POST /api/v1/brain/events/batch': 'civic_did_required',
 } as Record<string, RouteDIDPolicy>);
 
 /**
