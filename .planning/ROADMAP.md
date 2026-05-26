@@ -111,7 +111,12 @@ Plans:
 **Scope (ships)**: REG-01..06.
 **Out of scope for this phase**: Government court process itself (Phase 46); Bios cost amount as legislation (Q-V3-D resolved during discuss-phase, initial value baked); existence-DID issuance (already self-sovereign — D-V3-01).
 **Allowlist additions**: **+4**. Running total: **64**.
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 37-01-PLAN.md — DB migrations v23/v24 + civic-registry service layer (vc-builder, government-session stub, CivicDidStore, BusinessDidStore) — REG-01..04 foundations
+- [ ] 37-02-PLAN.md — 4 sole-producer audit event files + allowlist 60 → 64 + producer unit tests — REG-06
+- [ ] 37-03-PLAN.md — 5 registry routes + ROUTE_DID_POLICY +5 + government_only enforcement branch + tryDid ANY_DID_RE — REG-01..05
+- [ ] 37-04-PLAN.md — scripts/check-civic-did-issuance-path.mjs CI gate + rig-invariants.yml step + gate test — REG-06 (D-V3-33 lock-in)
 
 ### Phase 38: Brain ↔ Grid Wire Protocol
 **Goal**: Replace v2.x in-process queues with a network wire protocol. Brain on operator hardware speaks to the remote Public Grid via HTTPS REST (control) + WSS (events stream). Operator-signed bearer tokens authenticate Brain; idempotent replay on reconnect prevents duplicates after network loss.
@@ -492,7 +497,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 36. Visitor/DID Read-Write Split | 8/8 | Complete    | 2026-05-26 |
-| 37. DID Registry | 0/? | Not started | — |
+| 37. DID Registry | 0/4 | Planned | — |
 | 38. Brain ↔ Grid Wire Protocol | 0/? | Not started | — |
 | 39. Grid Multi-Tenancy | 0/? | Not started | — |
 | 40. Local AI Integration | 0/? | Not started | — |
