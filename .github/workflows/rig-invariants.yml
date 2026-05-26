@@ -36,6 +36,18 @@ jobs:
       - name: OBS-09 sole-producer-discipline gate (Phase 33)
         run: node scripts/check-sole-producer-discipline.mjs
 
+      - name: OBS-36-01 ROUTE_DID_POLICY coverage gate (Phase 36 VIS-04)
+        run: node scripts/check-did-policy-coverage.mjs
+
+      - name: OBS-36-02 /admin/* policy isolation gate (Phase 36 D-36-10)
+        run: node scripts/check-admin-policy-isolation.mjs
+
+      - name: OBS-36-03 WS firehose zero-diff regression gate (Phase 36 R-31-01)
+        run: node scripts/check-ws-redaction-zero-diff.mjs
+
+      - name: OBS-36-04 No-DID exception count gate (Phase 36 D-V3-15 amended)
+        run: node scripts/check-no-did-exception-count.mjs
+
       - name: Fast Vitest rig suite (Wave 0/1/2 — NOESIS_RUN_NIGHTLY unset, rig-bench skips)
         working-directory: grid
         run: |
