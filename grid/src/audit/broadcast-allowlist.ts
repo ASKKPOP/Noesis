@@ -219,6 +219,21 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     // for correlation with pre-Phase-33 human.joined entries. Email path: identity_hash = sha256(email.toLowerCase().trim()).
     // Coexists with Phase 22 human.joined (SIWE-only birth event preserved per D-33-A7 + PHILOSOPHY §1).
     'human.identified',     // (56) {grid_name, human_did, identity_hash, identity_method, tick}
+    // Phase 36 (VIS-05 / D-36-17) — Portal DID lifecycle + Grid recognition events. Allowlist 56 → 60.
+    // portal.did_issued: closed 3-key {human_or_nous_did, issued_at_tick, issuer_portal_id}.
+    //   Emitted ONLY via appendPortalDidIssued (grid/src/audit/append-portal-did-issued.ts).
+    // portal.did_revoked: closed 3-key {human_or_nous_did, revoked_at_tick, revoker_portal_id}.
+    //   Emitted ONLY via appendPortalDidRevoked (grid/src/audit/append-portal-did-revoked.ts).
+    // grid.recognition_granted: closed 3-key {granted_at_tick, grid_name, nous_did}.
+    //   Emitted ONLY via appendGridRecognitionGranted (grid/src/audit/append-grid-recognition-granted.ts).
+    // grid.recognition_revoked: closed 3-key {grid_name, nous_did, revoked_at_tick}.
+    //   Emitted ONLY via appendGridRecognitionRevoked (grid/src/audit/append-grid-recognition-revoked.ts).
+    // NOTE: portal.notification_dispatched (D-36-19) is intentionally NOT here — private personal-queue event,
+    // delivered via REST poll, not WS broadcast. See 36-VALIDATION.md Wave 0 Allowlist-Count Decision (60, NOT 61).
+    'portal.did_issued',        // (57) {human_or_nous_did, issued_at_tick, issuer_portal_id}
+    'portal.did_revoked',       // (58) {human_or_nous_did, revoked_at_tick, revoker_portal_id}
+    'grid.recognition_granted', // (59) {granted_at_tick, grid_name, nous_did}
+    'grid.recognition_revoked', // (60) {grid_name, nous_did, revoked_at_tick}
 ] as const;
 
 /**
@@ -422,6 +437,7 @@ export const WHISPER_FORBIDDEN_KEYS = Object.freeze([
     'payload_plain',
 ] as const);
 
+// Phase 36 review (2026-05-25): all 5 new VIS-05 producer payloads reviewed; none contain forbidden keys. 13-key set preserved.
 /**
  * Phase 33 (OBS-10 / D-33-B3): portal-auth-leaf keys that MUST NOT appear in any
  * portal.auth.* or human.identified payload. PII (IP, User-Agent, email plaintext,
