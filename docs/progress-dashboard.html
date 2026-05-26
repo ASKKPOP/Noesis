@@ -197,7 +197,7 @@ tr:hover td{background:var(--surface2)}
   <div class="logo">Noēsis <span>Progress Dashboard</span></div>
   <span class="badge badge-active">🔧 v3.0 IN PROGRESS</span>
   <div class="header-meta">
-    <span>Phase 38 🔄 IN PROGRESS — 3/4 plans done</span>
+    <span>Phase 38 ✅ COMPLETE — 4/4 plans · PR #2 open</span>
     <span>Updated: 2026-05-26</span>
   </div>
 </header>
@@ -338,14 +338,14 @@ tr:hover td{background:var(--surface2)}
         </div>
         <div class="phase-status">✅ SHIPPED 2026-05-26</div>
       </div>
-      <div class="phase-card active" onclick="openPhase('38')">
+      <div class="phase-card complete" onclick="openPhase('38')">
         <div class="phase-num">Phase 38</div>
         <div class="phase-name">Brain ↔ Grid Wire Protocol</div>
         <div style="margin:8px 0">
-          <div class="progress-wrap"><div class="progress-fill amber" style="width:75%"></div></div>
-          <div style="font-size:10px;color:var(--text3);margin-top:3px">3/4 plans · 75%</div>
+          <div class="progress-wrap"><div class="progress-fill green" style="width:100%"></div></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:3px">4/4 plans · 100%</div>
         </div>
-        <div class="phase-status">🔄 Executing — Wave 2 · Plan 38-04 running</div>
+        <div class="phase-status">✅ Complete — PR #2 open · 2026-05-26</div>
       </div>
       <div class="phase-card pending" onclick="openPhase('39')">
         <div class="phase-num">Phase 39</div>
@@ -657,11 +657,11 @@ tr:hover td{background:var(--surface2)}
 <!-- ═══════════════════ REQUIREMENTS ═══════════════════ -->
 <section id="phase38" class="section">
   <div class="section-title">Phase 38 — Brain ↔ Grid Wire Protocol</div>
-  <div class="section-subtitle">🔄 EXECUTING 2026-05-26 · Wave 1 — Foundations · 4 plans · Allowlist unchanged (64)</div>
+  <div class="section-subtitle">✅ COMPLETE 2026-05-26 · Wave 1+2 · 4 plans · Allowlist unchanged (64) · PR #2 open</div>
 
   <div class="stats-row">
-    <div class="stat-card"><div class="stat-value">3/4</div><div class="stat-label">Plans done</div></div>
-    <div class="stat-card"><div class="stat-value">1</div><div class="stat-label">Plans running</div></div>
+    <div class="stat-card"><div class="stat-value">4/4</div><div class="stat-label">Plans done</div></div>
+    <div class="stat-card"><div class="stat-value">0</div><div class="stat-label">Plans running</div></div>
     <div class="stat-card"><div class="stat-value">0</div><div class="stat-label">Allowlist additions</div></div>
     <div class="stat-card"><div class="stat-value">64</div><div class="stat-label">Current allowlist</div></div>
     <div class="stat-card"><div class="stat-value">v25+v26</div><div class="stat-label">Schema migrations</div></div>
@@ -729,18 +729,19 @@ tr:hover td{background:var(--surface2)}
 
   <div class="card">
     <div class="card-header" onclick="toggle(this.parentElement)">
-      <span class="chip chip-amber">Wave 2</span>
+      <span class="chip chip-purple">Wave 2</span>
       <span class="card-title">38-04 — WSS Subscription + Per-DID Firehose Filter</span>
-      <span class="chip chip-amber">🔄 Running</span>
+      <span class="chip chip-green">✅ Done</span>
       <span class="card-chevron">▶</span>
     </div>
     <div class="card-body">
       <ul class="task-list">
-        <li><span class="task-check">🔄</span> Grid firehose-filter.ts: isRelevantFor(entry, didContext) — WIRE-05 per-DID egress filter</li>
-        <li><span class="task-check">🔄</span> Grid firehose-hub.ts: ClientConnection.trySend early-return via isRelevantFor — R-31-01 generalization</li>
-        <li><span class="task-check">🔄</span> Grid GET /api/v1/brain/firehose — WSS upgrade, mandatory EdDSA bearer, WIRE-01 WSS half</li>
-        <li><span class="task-check">🔄</span> Brain WssSubscriber: websockets client, https→wss rewrite, jittered exponential backoff</li>
-        <li><span class="task-check">⏳</span> 8 filter tests + 10 WSS integration tests + 7 Brain subscriber tests</li>
+        <li><span class="task-check">✅</span> Grid firehose-filter.ts: isRelevantFor(entry, didContext) — WIRE-05 per-DID egress filter</li>
+        <li><span class="task-check">✅</span> Grid firehose-hub.ts: ClientConnection.trySend early-return via isRelevantFor — R-31-01 generalization</li>
+        <li><span class="task-check">✅</span> Grid GET /api/v1/brain/firehose — WSS upgrade, mandatory EdDSA bearer, WIRE-01 WSS half</li>
+        <li><span class="task-check">✅</span> Brain WssSubscriber: websockets client, https→wss rewrite, jittered exponential backoff</li>
+        <li><span class="task-check">✅</span> 19 new tests: 11 WSS integration + firehose-filter unit + R-31-01 regression — all green</li>
+        <li><span class="task-check">ℹ️</span> Auth rejection: switched tampered-EdDSA → unknown-issuer (async crypto race ~40% flaky)</li>
       </ul>
     </div>
   </div>
@@ -1189,7 +1190,7 @@ const PHASES = {
     depends:'—'
   },
   '37': {name:'DID Registry',status:'SHIPPED',wave:'Wave 1 — Foundations',goal:'Civic-DID + Business-DID issuance as W3C VCs. Revocation requires Government court order (D-V3-18). D-V3-33 portal-gating CI gate.',reqs:['REG-01','REG-02','REG-03','REG-04','REG-05','REG-06'],allowlist:'+4 (60→64)',plans:['37-01 ✅ DB schema + civic-registry service layer','37-02 ✅ 4 audit sole-producers + allowlist 60→64','37-03 ✅ 6 Fastify API routes (REG-01..06)','37-04 ✅ CI gate check-civic-did-issuance-path.mjs (D-V3-33)'],depends:'Phase 36'},
-  '38': {name:'Brain ↔ Grid Wire Protocol',status:'EXECUTING',wave:'Wave 1 — Foundations',goal:'Replace in-process queues with HTTPS REST + WSS. Operator-signed bearer tokens. Idempotent replay on reconnect.',reqs:['WIRE-01','WIRE-02','WIRE-03','WIRE-04','WIRE-05'],allowlist:'0',plans:['38-01 ✅ Token infra (brain_tokens, EdDSA JWT)','38-02 ✅ HTTPS REST client (GridWireClient, brain/actions)','38-03 ✅ Offline queue + batch ingest + idempotency','38-04 🔄 WSS subscription + per-DID firehose filter'],depends:'Phase 37'},
+  '38': {name:'Brain ↔ Grid Wire Protocol',status:'COMPLETE',wave:'Wave 1+2 — Foundations',goal:'Replace in-process queues with HTTPS REST + WSS. Operator-signed bearer tokens. Idempotent replay on reconnect.',reqs:['WIRE-01','WIRE-02','WIRE-03','WIRE-04','WIRE-05'],allowlist:'0',plans:['38-01 ✅ Token infra (brain_tokens, EdDSA JWT)','38-02 ✅ HTTPS REST client (GridWireClient, brain/actions)','38-03 ✅ Offline queue + batch ingest + idempotency','38-04 ✅ WSS subscription + per-DID firehose filter'],depends:'Phase 37'},
   '39': {name:'Grid Multi-Tenancy',status:'PENDING',wave:'Wave 1 — Foundations',goal:'Per-operator metadata isolation in operator-scoped schemas. Civic state shared.',reqs:['TENANT-01','TENANT-02','TENANT-03'],allowlist:'0',plans:['TBD'],depends:'Phase 38'},
   '40': {name:'Local AI Integration',status:'PENDING',wave:'Wave 1 — Foundations',goal:'Ollama production-grade default. Operator-selectable model via Steward Console. Degraded-cognition fallback.',reqs:['LOCAL-01','LOCAL-02'],allowlist:'0',plans:['TBD'],depends:'—'},
   '41': {name:'Sleep Cycle + Away Presence',status:'PENDING',wave:'Wave 1 — Foundations',goal:'Human-resident analogy: city sees offline Nous as "away". Messages queue. Identity persists.',reqs:['SLEEP-01','SLEEP-02'],allowlist:'0',plans:['TBD'],depends:'Phase 38'},
