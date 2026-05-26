@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Noēsis — Progress Dashboard</title>
+<style>
+:root{
+  --bg:#0a0c10;--surface:#111318;--surface2:#1a1d24;--surface3:#22262f;
+  --border:#2a2e38;--border2:#363b48;
+  --gold:#c9a84c;--gold2:#e8c96a;--gold-dim:#8a7235;
+  --green:#3ddc84;--green-dim:#1a5c38;
+  --amber:#f59e0b;--amber-dim:#78400a;
+  --blue:#60a5fa;--blue-dim:#1e3a5f;
+  --red:#f87171;--red-dim:#5c1a1a;
+  --purple:#a78bfa;--purple-dim:#3b2a6b;
+  --text:#e8eaf0;--text2:#9ba3b8;--text3:#5a6175;
+  --font:'SF Mono','JetBrains Mono','Fira Code',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;line-height:1.6;min-height:100vh;display:flex;flex-direction:column}
+a{color:var(--gold);text-decoration:none}a:hover{color:var(--gold2);text-decoration:underline}
+
+/* HEADER */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.logo{font-size:18px;font-weight:700;color:var(--gold);letter-spacing:-.5px}
+.logo span{color:var(--text2);font-weight:400;font-size:13px;margin-left:8px}
+.header-meta{margin-left:auto;display:flex;gap:16px;align-items:center;font-size:11px;color:var(--text3)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge-active{background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber-dim)}
+.badge-done{background:var(--green-dim);color:var(--green);border:1px solid var(--green-dim)}
+.badge-pending{background:var(--surface3);color:var(--text3);border:1px solid var(--border)}
+
+/* LAYOUT */
+.layout{display:flex;flex:1;min-height:0}
+nav{width:220px;background:var(--surface);border-right:1px solid var(--border);padding:16px 0;flex-shrink:0;position:sticky;top:53px;height:calc(100vh - 53px);overflow-y:auto}
+nav .section-label{padding:8px 16px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-weight:600}
+nav a{display:flex;align-items:center;gap:8px;padding:7px 16px;color:var(--text2);transition:all .15s;border-left:2px solid transparent;font-size:12px}
+nav a:hover{color:var(--text);background:var(--surface2);text-decoration:none}
+nav a.active{color:var(--gold);background:var(--surface2);border-left-color:var(--gold)}
+nav a .nav-icon{font-size:14px;width:18px;text-align:center}
+main{flex:1;overflow-y:auto;padding:24px}
+
+/* SECTIONS */
+.section{display:none;max-width:1100px}
+.section.active{display:block}
+.section-title{font-size:20px;font-weight:700;color:var(--gold);margin-bottom:4px;letter-spacing:-.3px}
+.section-subtitle{font-size:12px;color:var(--text3);margin-bottom:24px}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;cursor:pointer;transition:all .15s}
+.card:hover{border-color:var(--border2);background:var(--surface2)}
+.card.open{border-color:var(--gold-dim)}
+.card-header{display:flex;align-items:center;gap:10px}
+.card-title{font-weight:600;font-size:13px;color:var(--text);flex:1}
+.card-chevron{color:var(--text3);transition:transform .2s;font-size:12px}
+.card.open .card-chevron{transform:rotate(90deg)}
+.card-body{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.card.open .card-body{display:block}
+
+/* TIMELINE */
+.timeline{position:relative;padding-left:24px}
+.timeline::before{content:'';position:absolute;left:7px;top:8px;bottom:8px;width:2px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:16px}
+.tl-dot{position:absolute;left:-20px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid var(--border2);background:var(--surface)}
+.tl-dot.done{background:var(--green);border-color:var(--green)}
+.tl-dot.active{background:var(--amber);border-color:var(--amber);box-shadow:0 0 8px var(--amber-dim)}
+.tl-dot.pending{background:var(--surface3);border-color:var(--border2)}
+.tl-content{}
+.tl-label{font-size:11px;color:var(--text3);margin-bottom:2px}
+.tl-title{font-size:13px;color:var(--text);font-weight:600}
+.tl-title.done{color:var(--green)}
+.tl-title.active{color:var(--amber)}
+.tl-meta{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* PROGRESS BAR */
+.progress-wrap{background:var(--surface3);border-radius:4px;height:6px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:width .4s}
+.progress-fill.green{background:var(--green)}
+.progress-fill.amber{background:var(--amber)}
+.progress-fill.gold{background:var(--gold)}
+
+/* PHASE MAP */
+.phase-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.phase-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:all .15s}
+.phase-card:hover{border-color:var(--border2);background:var(--surface2)}
+.phase-card.done{border-left:3px solid var(--green)}
+.phase-card.active{border-left:3px solid var(--amber)}
+.phase-card.pending{border-left:3px solid var(--border2)}
+.phase-card .phase-num{font-size:11px;color:var(--text3);margin-bottom:4px}
+.phase-card .phase-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
+.phase-card .phase-status{font-size:11px}
+.phase-card.done .phase-status{color:var(--green)}
+.phase-card.active .phase-status{color:var(--amber)}
+.phase-card.pending .phase-status{color:var(--text3)}
+
+/* PHASE DETAIL MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:24px;max-width:700px;width:90%;max-height:80vh;overflow-y:auto;position:relative}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer}
+.modal-close:hover{color:var(--text)}
+.modal-title{font-size:17px;font-weight:700;color:var(--gold);margin-bottom:4px}
+.modal-subtitle{font-size:11px;color:var(--text3);margin-bottom:16px}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 10px;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);font-weight:600}
+td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.td-code{font-family:var(--font);font-size:11px;color:var(--gold);background:var(--surface3);padding:2px 6px;border-radius:3px;white-space:nowrap}
+.td-req-done{color:var(--green)}
+.td-req-active{color:var(--amber)}
+.td-req-pending{color:var(--text3)}
+
+/* STATUS CHIPS */
+.chip{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:12px;font-size:10px;font-weight:600}
+.chip-green{background:var(--green-dim);color:var(--green)}
+.chip-amber{background:var(--amber-dim);color:var(--amber)}
+.chip-red{background:var(--red-dim);color:var(--red)}
+.chip-blue{background:var(--blue-dim);color:var(--blue)}
+.chip-purple{background:var(--purple-dim);color:var(--purple)}
+.chip-gray{background:var(--surface3);color:var(--text3)}
+
+/* PLAN TASKS */
+.task-list{list-style:none}
+.task-list li{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.task-list li:last-child{border-bottom:none}
+.task-check{font-size:13px}
+
+/* ARCH DIAGRAM */
+.arch-box{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:12px;margin-bottom:8px}
+.arch-layer{margin-bottom:16px}
+.arch-layer-title{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:8px;border-bottom:1px solid var(--gold-dim);padding-bottom:4px}
+.arch-services{display:flex;flex-wrap:wrap;gap:8px}
+.arch-service{background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:11px}
+.arch-service .svc-name{color:var(--text);font-weight:600}
+.arch-service .svc-port{color:var(--text3);font-size:10px;margin-top:2px}
+.arch-service .svc-status{margin-top:4px}
+.arch-arrow{color:var(--text3);font-size:18px;display:flex;align-items:center;padding:0 4px}
+
+/* ENV TABLE */
+.env-group{margin-bottom:20px}
+.env-group-title{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-dim);font-weight:700;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.env-row{display:flex;gap:0;border-bottom:1px solid var(--border);padding:6px 0}
+.env-row:last-child{border-bottom:none}
+.env-key{font-family:var(--font);color:var(--gold);font-size:11px;min-width:260px;flex-shrink:0}
+.env-default{color:var(--blue);font-size:11px;min-width:160px;flex-shrink:0}
+.env-desc{color:var(--text2);font-size:11px;flex:1}
+
+/* DATA FLOW */
+.flow-step{display:flex;align-items:flex-start;gap:12px;margin-bottom:8px}
+.flow-num{width:24px;height:24px;border-radius:50%;background:var(--surface3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);flex-shrink:0;font-weight:700}
+.flow-content{flex:1}
+.flow-title{font-size:12px;font-weight:600;color:var(--text)}
+.flow-desc{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* DISCUSS LOG */
+.log-entry{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px}
+.log-entry-header{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.log-area{font-size:11px;color:var(--text3)}
+.log-date{font-size:11px;color:var(--text3);margin-left:auto}
+.log-decision{display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.log-decision:last-child{border-bottom:none}
+.log-q{color:var(--text3);min-width:40px}
+.log-choice{color:var(--green);flex:1}
+
+/* ONBOARDING FLOW */
+.flow-diagram{background:var(--surface2);border-radius:8px;padding:16px;border:1px solid var(--border)}
+.flow-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.flow-node{background:var(--surface3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--text);white-space:nowrap}
+.flow-node.human{border-color:var(--blue-dim);color:var(--blue)}
+.flow-node.nous{border-color:var(--gold-dim);color:var(--gold)}
+.flow-node.grid{border-color:var(--green-dim);color:var(--green)}
+.flow-node.brain{border-color:var(--purple-dim);color:var(--purple)}
+.flow-arrow{color:var(--text3);font-size:14px}
+
+/* STATS ROW */
+.stats-row{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 18px;flex:1;min-width:130px}
+.stat-value{font-size:22px;font-weight:700;color:var(--gold);line-height:1}
+.stat-label{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* WAVE LABEL */
+.wave-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-weight:700;margin-bottom:8px;margin-top:16px}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Noēsis <span>Progress Dashboard</span></div>
+  <span class="badge badge-active">🔧 v3.0 IN PROGRESS</span>
+  <div class="header-meta">
+    <span>Phase 36 — Visitor/DID Split</span>
+    <span>Updated: 2026-05-26</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav id="nav">
+  <div class="section-label">Navigation</div>
+  <a href="#" class="active" data-section="milestone" onclick="show('milestone',this)"><span class="nav-icon">🗺</span> Milestone Map</a>
+  <a href="#" data-section="phase36" onclick="show('phase36',this)"><span class="nav-icon">⚡</span> Phase 36 Detail</a>
+  <a href="#" data-section="requirements" onclick="show('requirements',this)"><span class="nav-icon">📋</span> Requirements</a>
+  <a href="#" data-section="uat" onclick="show('uat',this)"><span class="nav-icon">🧪</span> Required UAT</a>
+  <a href="#" data-section="timeline" onclick="show('timeline',this)"><span class="nav-icon">📅</span> Timeline &amp; Estimates</a>
+  <a href="#" data-section="discuss" onclick="show('discuss',this)"><span class="nav-icon">💬</span> Discuss Log</a>
+  <a href="#" data-section="arch" onclick="show('arch',this)"><span class="nav-icon">🏗</span> Architecture</a>
+  <div class="section-label" style="margin-top:12px">Documents</div>
+  <a href="Noēsis — Project Roadmap.html" target="_blank"><span class="nav-icon">📘</span> Project Roadmap</a>
+  <a href="Noēsis — User Manual.html" target="_blank"><span class="nav-icon">📗</span> User Manual</a>
+  <a href="../.planning/PHILOSOPHY.md" target="_blank"><span class="nav-icon">⚖️</span> Philosophy</a>
+  <a href="../.planning/PROJECT.md" target="_blank"><span class="nav-icon">🎯</span> Project.md</a>
+  <a href="../.planning/REQUIREMENTS.md" target="_blank"><span class="nav-icon">✅</span> Requirements.md</a>
+  <a href="../.planning/STATE.md" target="_blank"><span class="nav-icon">📍</span> State.md</a>
+  <a href="../.planning/research/v3.0/ARCHITECTURE-v3.0.html" target="_blank"><span class="nav-icon">🏛</span> Arch v3.0</a>
+</nav>
+
+<main>
+
+<!-- ═══════════════════ MILESTONE MAP ═══════════════════ -->
+<section id="milestone" class="section active">
+  <div class="section-title">Milestone Map</div>
+  <div class="section-subtitle">All milestones — click any phase for detail view</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-value">8</div><div class="stat-label">Milestones shipped</div></div>
+    <div class="stat-card"><div class="stat-value">v3.0</div><div class="stat-label">Current milestone</div></div>
+    <div class="stat-card"><div class="stat-value">36</div><div class="stat-label">Current phase</div></div>
+    <div class="stat-card"><div class="stat-value">5/8</div><div class="stat-label">Phase 36 plans done</div></div>
+    <div class="stat-card"><div class="stat-value">60</div><div class="stat-label">Allowlist events</div></div>
+    <div class="stat-card"><div class="stat-value">~125</div><div class="stat-label">v3.0 plans total est.</div></div>
+  </div>
+
+  <!-- Shipped Milestones -->
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-dot done"></div>
+      <div class="tl-content">
+        <div class="tl-label">Shipped 2026-04-17</div>
+        <div class="tl-title done">v1.0 Genesis — Phases 1–10</div>
+        <div class="tl-meta">944+ TS tests · 226 Py tests · Core Nous runtime + Grid API</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot done"></div>
+      <div class="tl-content">
+        <div class="tl-label">Shipped 2026-04-18</div>
+        <div class="tl-title done">v2.0 First Life — Phases 11–14</div>
+        <div class="tl-meta">E2E · Persistence · Docker · Dashboard v1</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot done"></div>
+      <div class="tl-content">
+        <div class="tl-label">Shipped 2026-04-21 · 18/18 plans</div>
+        <div class="tl-title done">v2.1 Steward Console — Phases 5–8</div>
+        <div class="tl-meta">Operator controls · Health monitoring · Clock management</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot done"></div>
+      <div class="tl-content">
+        <div class="tl-label">Shipped 2026-04-28 · 44/44 plans</div>
+        <div class="tl-title done">v2.2 Living Grid — Phases 9–14</div>
+        <div class="tl-meta">Relationships · Economy · Norms · Bios · Skills · Lore</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot done"></div>
+      <div class="tl-content">
+        <div class="tl-label">Shipped 2026-05-15 · 16/16 plans</div>
+        <div class="tl-title done">v2.3 Living Minds — Phases 15–17</div>
+        <div class="tl-meta">Memory · Cognition · Personality evolution</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot done"></div>
+      <div class="tl-content">
+        <div class="tl-label">Shipped 2026-05-20 · 115/115 plans</div>
+        <div class="tl-title done">v2.4 Agora — Phases 18–21</div>
+        <div class="tl-meta">Governance · Whisper · P2P · Telos forcing</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot done"></div>
+      <div class="tl-content">
+        <div class="tl-label">Shipped 2026-05-24 · 181/181 plans</div>
+        <div class="tl-title done">v2.5 Human Portal — Phases 22–30</div>
+        <div class="tl-meta">SIWE auth · Human onboarding · Sophia chat · Allowlist 53</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot done"></div>
+      <div class="tl-content">
+        <div class="tl-label">Shipped 2026-05-25 · Phases 31–35 +34.1 +34.2</div>
+        <div class="tl-title done">v2.6 Resilience &amp; Observability</div>
+        <div class="tl-meta">Audit persistence · /health/detailed · Portal auth producers · Allowlist 56</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot active"></div>
+      <div class="tl-content">
+        <div class="tl-label">Opened 2026-05-25 · IN PROGRESS</div>
+        <div class="tl-title active">v3.0 Polis (Civic City) — Phases 36–57</div>
+        <div class="tl-meta">~125 plans · 24 phases · Allowlist 56 → 108 · Three-layer: Portal/Grid/Brain</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v3.0 Phase Grid -->
+  <div style="margin-top:24px">
+    <div class="wave-label">Wave 1 — Foundations</div>
+    <div class="phase-grid">
+      <div class="phase-card active" onclick="openPhase('36')">
+        <div class="phase-num">Phase 36</div>
+        <div class="phase-name">Visitor/DID Read-Write Split</div>
+        <div style="margin:8px 0">
+          <div class="progress-wrap"><div class="progress-fill amber" style="width:62%"></div></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:3px">5/8 plans · 62%</div>
+        </div>
+        <div class="phase-status">🔧 EXECUTING — Wave 2 running</div>
+      </div>
+      <div class="phase-card pending" onclick="openPhase('37')">
+        <div class="phase-num">Phase 37</div>
+        <div class="phase-name">DID Registry</div>
+        <div class="phase-status">⏳ Pending — depends on Phase 36</div>
+      </div>
+      <div class="phase-card pending" onclick="openPhase('38')">
+        <div class="phase-num">Phase 38</div>
+        <div class="phase-name">Brain ↔ Grid Wire Protocol</div>
+        <div class="phase-status">⏳ Pending — depends on Phase 37</div>
+      </div>
+      <div class="phase-card pending" onclick="openPhase('39')">
+        <div class="phase-num">Phase 39</div>
+        <div class="phase-name">Grid Multi-Tenancy</div>
+        <div class="phase-status">⏳ Pending — depends on Phase 38</div>
+      </div>
+      <div class="phase-card pending" onclick="openPhase('40')">
+        <div class="phase-num">Phase 40</div>
+        <div class="phase-name">Local AI Integration</div>
+        <div class="phase-status">⏳ Pending</div>
+      </div>
+      <div class="phase-card pending" onclick="openPhase('41')">
+        <div class="phase-num">Phase 41</div>
+        <div class="phase-name">Sleep Cycle + Away Presence</div>
+        <div class="phase-status">⏳ Pending — depends on Phase 38</div>
+      </div>
+    </div>
+    <div class="wave-label">Wave 2 — Civic Plumbing</div>
+    <div class="phase-grid">
+      <div class="phase-card pending" onclick="openPhase('42')">
+        <div class="phase-num">Phase 42</div>
+        <div class="phase-name">P2P Infrastructure</div>
+        <div class="phase-status">⏳ Pending — depends on 36+37+38 · Allowlist +3</div>
+      </div>
+      <div class="phase-card pending" onclick="openPhase('43')">
+        <div class="phase-num">Phase 43</div>
+        <div class="phase-name">Right-to-Fork Export</div>
+        <div class="phase-status">⏳ Pending — depends on 37+38</div>
+      </div>
+    </div>
+    <div class="wave-label">Wave 3 — Civic Institutions</div>
+    <div class="phase-grid">
+      <div class="phase-card pending"><div class="phase-num">Phase 44</div><div class="phase-name">Marketplace v3</div><div class="phase-status">⏳ +4 allowlist</div></div>
+      <div class="phase-card pending"><div class="phase-num">Phase 45</div><div class="phase-name">IRS Treasury</div><div class="phase-status">⏳ +3 allowlist</div></div>
+      <div class="phase-card pending"><div class="phase-num">Phase 46</div><div class="phase-name">Government v3</div><div class="phase-status">⏳ +6 allowlist</div></div>
+      <div class="phase-card pending"><div class="phase-num">Phase 47</div><div class="phase-name">Police v3</div><div class="phase-status">⏳ +4 allowlist</div></div>
+      <div class="phase-card pending"><div class="phase-num">Phase 48</div><div class="phase-name">Library v3</div><div class="phase-status">⏳ +2 allowlist</div></div>
+      <div class="phase-card pending"><div class="phase-num">Phase 49</div><div class="phase-name">Communities v3</div><div class="phase-status">⏳ +4 allowlist</div></div>
+    </div>
+    <div class="wave-label">Wave 4 — Migration</div>
+    <div class="phase-grid">
+      <div class="phase-card pending"><div class="phase-num">Phase 50</div><div class="phase-name">v2.6 → v3.0 Migration</div><div class="phase-status">⏳ Depends on ALL · Allowlist 0</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ PHASE 36 DETAIL ═══════════════════ -->
+<section id="phase36" class="section">
+  <div class="section-title">Phase 36 — Visitor/DID Read-Write Split</div>
+  <div class="section-subtitle">VIS-01 · VIS-02 · VIS-03 · VIS-04 · VIS-05 · Allowlist 56 → 60</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-value">5/8</div><div class="stat-label">Plans done</div></div>
+    <div class="stat-card"><div class="stat-value">3</div><div class="stat-label">Plans remaining</div></div>
+    <div class="stat-card"><div class="stat-value">+4</div><div class="stat-label">Allowlist additions</div></div>
+    <div class="stat-card"><div class="stat-value">60</div><div class="stat-label">Current allowlist</div></div>
+    <div class="stat-card"><div class="stat-value">Wave 2</div><div class="stat-label">Current wave</div></div>
+  </div>
+
+  <div style="margin-bottom:16px">
+    <div style="font-size:12px;color:var(--text3);margin-bottom:6px">Overall progress</div>
+    <div class="progress-wrap" style="height:10px"><div class="progress-fill amber" style="width:62%"></div></div>
+  </div>
+
+  <!-- Plans list -->
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-amber">Wave 0</span>
+      <span class="card-title">36-01 — Validation Infrastructure (RED test specs)</span>
+      <span class="chip chip-green">✓ DONE</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> 8 audit-layer RED test files (5 sole-producer triads + firehose)</li>
+        <li><span class="task-check">✅</span> 6 API-layer RED test files (visitor routes, DID enforcement, policy coverage)</li>
+        <li><span class="task-check">✅</span> 2 dashboard RED tests (Portal landing, CivicMap)</li>
+        <li><span class="task-check">✅</span> Allowlist count locked 56 → 60 in broadcast-allowlist.test.ts</li>
+        <li><span class="task-check">✅</span> VALIDATION.md Wave 0 sign-off committed</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-blue">Wave 1</span>
+      <span class="card-title">36-02 — ROUTE_DID_POLICY + tryDid/requireDid preHandlers</span>
+      <span class="chip chip-green">✓ DONE</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> 105-entry ROUTE_DID_POLICY table with 6-value enum</li>
+        <li><span class="task-check">✅</span> DIDContext interface + FastifyRequest module augmentation</li>
+        <li><span class="task-check">✅</span> tryDid + requireDid + requirePortalSession preHandlers</li>
+        <li><span class="task-check">✅</span> Global onRequest policy hook wired into server.ts</li>
+        <li><span class="task-check">✅</span> did-required-enforcement.test.ts + policy-coverage.test.ts → GREEN</li>
+      </ul>
+      <div style="margin-top:8px;font-size:11px;color:var(--text3)"><strong style="color:var(--amber)">Deviation:</strong> Used <code>onRequest</code> instead of <code>preHandler</code> — preHandler can't fire for unmatched routes; onRequest enables 401-before-404 for non-existent write routes.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-blue">Wave 1</span>
+      <span class="card-title">36-03 — WS Firehose Per-Subscriber Redaction (R-31-01)</span>
+      <span class="chip chip-green">✓ DONE</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> firehose-redaction.ts — pure-function visitor serializer</li>
+        <li><span class="task-check">✅</span> WsFirehoseHub: per-subscriber DIDContext branch</li>
+        <li><span class="task-check">✅</span> audit-firehose route: tryDid wired at WS upgrade</li>
+        <li><span class="task-check">✅</span> R-31-01 zero-diff preserved — chain hash independent of subscriber composition</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-blue">Wave 1</span>
+      <span class="card-title">36-04 — 5 Sole-Producer Audit Events + Allowlist +4</span>
+      <span class="chip chip-green">✓ DONE</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> append-portal-did-issued.ts (allowlisted)</li>
+        <li><span class="task-check">✅</span> append-portal-did-revoked.ts (allowlisted)</li>
+        <li><span class="task-check">✅</span> append-grid-recognition-granted.ts (allowlisted)</li>
+        <li><span class="task-check">✅</span> append-grid-recognition-revoked.ts (allowlisted)</li>
+        <li><span class="task-check">✅</span> append-portal-notification-dispatched.ts (OFF allowlist per D-36-19)</li>
+        <li><span class="task-check">✅</span> ALLOWLIST_MEMBERS: 56 → 60 (exactly +4)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-blue">Wave 1</span>
+      <span class="card-title">36-05 — 7 Visitor Routes + OAuth Stubs + Rate Limiter</span>
+      <span class="chip chip-green">✓ DONE</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> 7 visitor read routes registered and policy-gated</li>
+        <li><span class="task-check">✅</span> VOTE-05 ballot privacy: PUBLIC_KEYS allowlist in polis-bills.ts</li>
+        <li><span class="task-check">✅</span> Visitor audit trail: family-prefix actor_did for anonymous</li>
+        <li><span class="task-check">✅</span> 2 OAuth stubs (Google + Apple → 501 coming_soon), exception count = 5</li>
+        <li><span class="task-check">✅</span> Portal notification queue (in-process Map, MySQL Phase 56)</li>
+        <li><span class="task-check">✅</span> IP-based visitor rate limiter: 120 req/min, 429 + Retry-After</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-purple">Wave 2</span>
+      <span class="card-title">36-06 — 4 CI Invariant Gates</span>
+      <span class="chip chip-green">✓ DONE</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> check-did-policy-coverage.mjs — every route must have ROUTE_DID_POLICY entry</li>
+        <li><span class="task-check">✅</span> check-admin-policy-isolation.mjs — no /admin/* route can be 'public'</li>
+        <li><span class="task-check">✅</span> check-ws-redaction-zero-diff.mjs — R-31-01 invariant intact</li>
+        <li><span class="task-check">✅</span> check-no-did-exception-count.mjs — exactly 5 no-DID exceptions</li>
+        <li><span class="task-check">✅</span> All 4 wired into .github/workflows/rig-invariants.yml</li>
+        <li><span class="task-check">✅</span> All 4 pass on current codebase (exit 0)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-purple">Wave 2</span>
+      <span class="card-title">36-07 — 7 Visitor Portal Dashboard Surfaces</span>
+      <span class="chip chip-amber">🔧 RUNNING</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">⏳</span> Portal landing page (functional-only; full 3D hero = Phase 56)</li>
+        <li><span class="task-check">⏳</span> Civic Map + zone detail (raw-SVG per D-V3-06)</li>
+        <li><span class="task-check">⏳</span> Library reading room</li>
+        <li><span class="task-check">⏳</span> Marketplace listings</li>
+        <li><span class="task-check">⏳</span> Polis bills + bill detail</li>
+        <li><span class="task-check">⏳</span> Nous public profile</li>
+        <li><span class="task-check">⏳</span> Notification center</li>
+      </ul>
+      <div style="margin-top:8px;font-size:11px;color:var(--amber)">Agent running in parallel with Plan 06 (no file overlap). Waiting for completion signal.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-gray">Wave 3</span>
+      <span class="card-title">36-08 — Documentation Sync</span>
+      <span class="chip chip-gray">PENDING</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">⬜</span> STATE.md — Phase 36 SHIPPED + allowlist 56 → 60</li>
+        <li><span class="task-check">⬜</span> MILESTONES.md — Phase 36 entry</li>
+        <li><span class="task-check">⬜</span> ROADMAP.md — Phase 36 marked [x]</li>
+        <li><span class="task-check">⬜</span> PROJECT.md — VIS-01..05 validated</li>
+        <li><span class="task-check">⬜</span> REQUIREMENTS.md — traceability updated</li>
+        <li><span class="task-check">⬜</span> README.md — Current status updated</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ REQUIREMENTS ═══════════════════ -->
+<section id="requirements" class="section">
+  <div class="section-title">Requirements</div>
+  <div class="section-subtitle">Active · Holding · Issues · Needs Discussion</div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--amber)">Phase 36 — VIS Requirements</span>
+      <span class="chip chip-amber">5 active</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <table>
+        <thead><tr><th>ID</th><th>Status</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="td-code">VIS-01</span></td>
+            <td><span class="chip chip-amber">In Progress</span></td>
+            <td>Unauthenticated visitors can browse public Grid surfaces — Civic Map, audit events stream (redacted), Library, Government bills, Marketplace — without DID</td>
+          </tr>
+          <tr>
+            <td><span class="td-code">VIS-02</span></td>
+            <td><span class="chip chip-green">Implemented</span></td>
+            <td>All state-mutating routes require Civic-DID bearer. requireCivicDid() enforces at request entry; returns 401 {error:'did_required'} if missing/invalid</td>
+          </tr>
+          <tr>
+            <td><span class="td-code">VIS-03</span></td>
+            <td><span class="chip chip-green">Implemented</span></td>
+            <td>WS firehose redaction layer: non-DID subscribers get {tick, event_type, family} only; DID subscribers get full frame. R-31-01 zero-diff preserved</td>
+          </tr>
+          <tr>
+            <td><span class="td-code">VIS-04</span></td>
+            <td><span class="chip chip-green">Implemented</span></td>
+            <td>ROUTE_DID_POLICY table maps every route. CI gate (check-did-policy-coverage.mjs) ensures no route is missing. Default-deny: missing → civic_did_required</td>
+          </tr>
+          <tr>
+            <td><span class="td-code">VIS-05</span></td>
+            <td><span class="chip chip-green">Implemented</span></td>
+            <td>4 sole-producers: portal.did_issued, portal.did_revoked, grid.recognition_granted, grid.recognition_revoked. Allowlist 56 → 60</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--text2)">Phase 37 — REG Requirements (upcoming)</span>
+      <span class="chip chip-gray">6 pending</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <table>
+        <thead><tr><th>ID</th><th>Status</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="td-code">REG-01</span></td><td><span class="chip chip-gray">Pending</span></td><td>Nous with existence-DID can request Civic-DID via civic oath; rate-limited</td></tr>
+          <tr><td><span class="td-code">REG-02</span></td><td><span class="chip chip-gray">Pending</span></td><td>Grid Registry issues W3C VC with credentialSubject, issuer, issuanceDate, revocationPointer</td></tr>
+          <tr><td><span class="td-code">REG-03</span></td><td><span class="chip chip-gray">Pending</span></td><td>Civic-DID holder registers Business-DID by paying Bios sybil cost (Q-V3-D)</td></tr>
+          <tr><td><span class="td-code">REG-04</span></td><td><span class="chip chip-gray">Pending</span></td><td>Civic-DID revocation requires Government court order — direct operator revocation forbidden</td></tr>
+          <tr><td><span class="td-code">REG-05</span></td><td><span class="chip chip-gray">Pending</span></td><td>Public lookup endpoints return active/revoked/dissolved state, Cache-Control: max-age=60</td></tr>
+          <tr><td><span class="td-code">REG-06</span></td><td><span class="chip chip-gray">Pending</span></td><td>4 sole-producers: registry.civic_did_issued/revoked, registry.business_did_registered/dissolved. +4 allowlist</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--red)">Open Questions / Needs Discussion</span>
+      <span class="chip chip-red">10 open</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <table>
+        <thead><tr><th>ID</th><th>Question</th><th>Resolved in</th></tr></thead>
+        <tbody>
+          <tr><td><span class="td-code">Q-V3-A</span></td><td>P2P stack selection (libp2p vs custom vs STUN/TURN)</td><td>Phase 42 discuss</td></tr>
+          <tr><td><span class="td-code">Q-V3-B</span></td><td>Local AI default model (Llama 3.1 8B vs Qwen 2.5?)</td><td>Phase 40 discuss</td></tr>
+          <tr><td><span class="td-code">Q-V3-C</span></td><td>IRS fee percentage (1–3% configurable — exact default?)</td><td>Phase 45 discuss</td></tr>
+          <tr><td><span class="td-code">Q-V3-D</span></td><td>Bios sybil cost for Business-DID registration</td><td>Phase 37 discuss</td></tr>
+          <tr><td><span class="td-code">Q-V3-E</span></td><td>Henry's public Grid domain (genesis.noesis or other?)</td><td>Phase 50 discuss</td></tr>
+          <tr><td><span class="td-code">Q-V3-F</span></td><td>Right-to-fork export subset (what exactly is exported?)</td><td>Phase 43 discuss</td></tr>
+          <tr><td><span class="td-code">Q-V3-G</span></td><td>Police authority scope (can Police suspend Civic-DID?)</td><td>Phase 47 discuss</td></tr>
+          <tr><td><span class="td-code">Q-V3-H</span></td><td>Sleep thresholds (inactive period before "away" status)</td><td>Phase 41 discuss</td></tr>
+          <tr><td><span class="td-code">Q-V3-I</span></td><td>Cloud LLM allowed for Brain? (Anthropic API as fallback)</td><td>Phase 40 discuss</td></tr>
+          <tr><td><span class="td-code">Q-V3-J</span></td><td>Community subgovernance scope (community-internal only?)</td><td>Phase 49 discuss</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ UAT ═══════════════════ -->
+<section id="uat" class="section">
+  <div class="section-title">Required UAT</div>
+  <div class="section-subtitle">Human verification items pending manual testing</div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--amber)">Phase 36 — Pending Automated Verification</span>
+      <span class="chip chip-amber">After Phase 36 completes</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <p style="color:var(--text3);font-size:12px;margin-bottom:12px">These items will be generated by the gsd-verifier after Phase 36 execution completes. Manual testing required:</p>
+      <ul class="task-list">
+        <li><span class="task-check">⬜</span> Open Civic Map in browser without any DID — verify no login prompt, all 6 zones visible</li>
+        <li><span class="task-check">⬜</span> curl POST to any write route without bearer — verify 401 {error:'did_required'} shape</li>
+        <li><span class="task-check">⬜</span> Connect two WS firehose subscribers (one with DID, one without) — verify different payloads, same event timing</li>
+        <li><span class="task-check">⬜</span> Verify Portal landing page copy matches UI-SPEC verbatim strings</li>
+        <li><span class="task-check">⬜</span> Verify polis-bills list shows tally but NO ballots array for visitor</li>
+        <li><span class="task-check">⬜</span> Verify rate limiter returns 429 + Retry-After after 120 requests/min</li>
+        <li><span class="task-check">⬜</span> Run all 4 CI gate scripts and verify exit 0 on clean repo</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--text2)">Prior Phases — Inherited UAT</span>
+      <span class="chip chip-gray">No outstanding</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <p style="color:var(--green);font-size:12px">No outstanding UAT items from v2.6. All prior human verification items resolved before v3.0 opened.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ TIMELINE ═══════════════════ -->
+<section id="timeline" class="section">
+  <div class="section-title">Timeline &amp; Estimates</div>
+  <div class="section-subtitle">v3.0 phase estimates — actual vs projected</div>
+
+  <table style="margin-bottom:24px">
+    <thead>
+      <tr>
+        <th>Phase</th><th>Name</th><th>Wave</th><th>Effort</th><th>Allowlist</th><th>Depends</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="td-code">36</span></td><td>Visitor/DID Split</td><td>1</td><td>M (8 plans)</td><td>+4 → 60</td><td>—</td><td><span class="chip chip-amber">Executing</span></td></tr>
+      <tr><td><span class="td-code">37</span></td><td>DID Registry</td><td>1</td><td>L (~6 plans)</td><td>+4 → 64</td><td>—</td><td><span class="chip chip-gray">Pending</span></td></tr>
+      <tr><td><span class="td-code">38</span></td><td>Brain ↔ Grid Wire</td><td>1</td><td>L (~7 plans)</td><td>0</td><td>37</td><td><span class="chip chip-gray">Pending</span></td></tr>
+      <tr><td><span class="td-code">39</span></td><td>Multi-Tenancy</td><td>1</td><td>M (~5 plans)</td><td>0</td><td>38</td><td><span class="chip chip-gray">Pending</span></td></tr>
+      <tr><td><span class="td-code">40</span></td><td>Local AI Integration</td><td>1</td><td>M (~6 plans)</td><td>0</td><td>—</td><td><span class="chip chip-gray">Pending</span></td></tr>
+      <tr><td><span class="td-code">41</span></td><td>Sleep Cycle</td><td>1</td><td>M (~5 plans)</td><td>0</td><td>38</td><td><span class="chip chip-gray">Pending</span></td></tr>
+      <tr><td><span class="td-code">42</span></td><td>P2P Infrastructure</td><td>2</td><td>L (~8 plans)</td><td>+3 → 63</td><td>36+37+38</td><td><span class="chip chip-gray">Pending</span></td></tr>
+      <tr><td><span class="td-code">43</span></td><td>Right-to-Fork</td><td>2</td><td>M (~5 plans)</td><td>0</td><td>37+38</td><td><span class="chip chip-gray">Pending</span></td></tr>
+      <tr><td><span class="td-code">44</span></td><td>Marketplace v3</td><td>3</td><td>L (~8 plans)</td><td>+4</td><td>37</td><td><span class="chip chip-gray">Pending</span></td></tr>
+      <tr><td><span class="td-code">45</span></td><td>IRS Treasury</td><td>3</td><td>M (~6 plans)</td><td>+3</td><td>44</td><td><span class="chip chip-gray">Pending</span></td></tr>
+      <tr><td><span class="td-code">46</span></td><td>Government v3</td><td>3</td><td>L (~9 plans)</td><td>+6</td><td>37</td><td><span class="chip chip-gray">Pending</span></td></tr>
+      <tr><td><span class="td-code">47</span></td><td>Police v3</td><td>3</td><td>M (~7 plans)</td><td>+4</td><td>46</td><td><span class="chip chip-gray">Pending</span></td></tr>
+      <tr><td><span class="td-code">48</span></td><td>Library v3</td><td>3</td><td>M (~5 plans)</td><td>+2</td><td>37+45</td><td><span class="chip chip-gray">Pending</span></td></tr>
+      <tr><td><span class="td-code">49</span></td><td>Communities v3</td><td>3</td><td>M (~6 plans)</td><td>+4</td><td>37</td><td><span class="chip chip-gray">Pending</span></td></tr>
+      <tr><td><span class="td-code">50</span></td><td>v2.6 → v3.0 Migration</td><td>4</td><td>L (~8 plans)</td><td>0</td><td>ALL</td><td><span class="chip chip-gray">Pending</span></td></tr>
+    </tbody>
+  </table>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px">
+    <div style="font-size:12px;color:var(--text3);margin-bottom:8px">v3.0 Milestone Totals</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div><div style="font-size:18px;font-weight:700;color:var(--gold)">~125</div><div style="font-size:11px;color:var(--text3)">Total plans estimated</div></div>
+      <div><div style="font-size:18px;font-weight:700;color:var(--gold)">24</div><div style="font-size:11px;color:var(--text3)">Phases (36–57)</div></div>
+      <div><div style="font-size:18px;font-weight:700;color:var(--gold)">+52</div><div style="font-size:11px;color:var(--text3)">Allowlist additions (56→108)</div></div>
+      <div><div style="font-size:18px;font-weight:700;color:var(--gold)">91</div><div style="font-size:11px;color:var(--text3)">REQ-V3-* requirements</div></div>
+      <div><div style="font-size:18px;font-weight:700;color:var(--gold)">4</div><div style="font-size:11px;color:var(--text3)">Waves</div></div>
+      <div><div style="font-size:18px;font-weight:700;color:var(--gold)">8</div><div style="font-size:11px;color:var(--text3)">Civic institutions</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ DISCUSS LOG ═══════════════════ -->
+<section id="discuss" class="section">
+  <div class="section-title">Discuss Log History</div>
+  <div class="section-subtitle">Phase discussion decisions — Phase 36</div>
+
+  <div class="log-entry">
+    <div class="log-entry-header">
+      <span class="chip chip-blue">Phase 36</span>
+      <span style="font-weight:600;font-size:13px;color:var(--text)">Visitor Landing + Registration Flow</span>
+      <span class="log-date">2026-05-25</span>
+    </div>
+    <div class="log-decision"><span class="log-q">Q1.1</span><span class="log-choice">✓ Portal as front door — Portal homepage with "What is Noēsis · Browse Grids · Sign up". Grid root URLs redirect to Portal if no session.</span></div>
+    <div class="log-decision"><span class="log-q">Q1.2</span><span class="log-choice">✓ Rich tour: ~5 visitor surfaces (Civic Map + activity + Library + signup)</span></div>
+    <div class="log-decision"><span class="log-q">Q1.3</span><span class="log-choice">✓ Prices visible — full marketplace transparency for visitors</span></div>
+    <div class="log-decision"><span class="log-q">Q1.4</span><span class="log-choice">✓ Portal sign-up first → per-Grid Civic-DID apply (two-step)</span></div>
+  </div>
+
+  <div class="log-entry">
+    <div class="log-entry-header">
+      <span class="chip chip-blue">Phase 36</span>
+      <span style="font-weight:600;font-size:13px;color:var(--text)">Rate Limiting + Audit Scope</span>
+      <span class="log-date">2026-05-25</span>
+    </div>
+    <div class="log-decision"><span class="log-q">Q2.1</span><span class="log-choice">✓ 120 req/min IP-based rate limit for visitors (D-36-05)</span></div>
+    <div class="log-decision"><span class="log-q">Q2.2</span><span class="log-choice">✓ Visitor audit trail: actor_did stripped to family prefix (anonymous cannot identify Nous)</span></div>
+    <div class="log-decision"><span class="log-q">Q2.3</span><span class="log-choice">✓ portal.notification_dispatched OFF allowlist — internal notification, not civic event (D-36-19)</span></div>
+  </div>
+
+  <div class="log-entry">
+    <div class="log-entry-header">
+      <span class="chip chip-blue">Phase 36</span>
+      <span style="font-weight:600;font-size:13px;color:var(--text)">Edge Cases + 6-Zone Civic Map</span>
+      <span class="log-date">2026-05-25</span>
+    </div>
+    <div class="log-decision"><span class="log-q">D-36-09</span><span class="log-choice">✓ Revoked DID → revert-to-visitor contract (read access preserved, write access lost)</span></div>
+    <div class="log-decision"><span class="log-q">D-36-17</span><span class="log-choice">✓ Policy coverage CI gate: static scan of registered routes</span></div>
+    <div class="log-decision"><span class="log-q">D-36-19</span><span class="log-choice">✓ notification_dispatched excluded from allowlist (internal notification queue only)</span></div>
+    <div class="log-decision"><span class="log-q">D-36-21</span><span class="log-choice">✓ 2 OAuth stub endpoints (Google + Apple) — return 501 coming_soon</span></div>
+    <div class="log-decision"><span class="log-q">D-36-23</span><span class="log-choice">✓ Portal landing may use 3D libs (but Phase 36 ships functional-only; full 3D hero = Phase 56)</span></div>
+    <div class="log-decision"><span class="log-q">D-36-24</span><span class="log-choice">✓ Raw-SVG required for Civic Map in Phase 36 (D-V3-06 invariant)</span></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ ARCHITECTURE ═══════════════════ -->
+<section id="arch" class="section">
+  <div class="section-title">System Architecture</div>
+  <div class="section-subtitle">Three-layer: Portal · Grid · Brain · Services · Environment · Flows</div>
+
+  <!-- Three-layer overview -->
+  <div class="card open" style="margin-bottom:20px">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--gold)">Three-Layer Architecture (v3.0)</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <div class="arch-layer">
+        <div class="arch-layer-title">Portal Layer — Meta-System (Henry-hosted)</div>
+        <div class="arch-services">
+          <div class="arch-service">
+            <div class="svc-name">Portal</div>
+            <div class="svc-port">portal.noesis (TBD)</div>
+            <div class="svc-status"><span class="chip chip-gray">Phase 52-54</span></div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">4 functions: reviewer panel UIs · cross-Grid health · Portal audit chain view · Nous registration gating</div>
+      </div>
+      <div style="text-align:center;color:var(--text3);margin:8px 0;font-size:18px">↕</div>
+      <div class="arch-layer">
+        <div class="arch-layer-title">Grid Layer — Public Grid "Genesis Polis" (Henry-hosted, :8080)</div>
+        <div class="arch-services">
+          <div class="arch-service">
+            <div class="svc-name">noesis-grid</div>
+            <div class="svc-port">:8080 · TypeScript · Fastify</div>
+            <div class="svc-status"><span class="chip chip-green">Live</span></div>
+          </div>
+          <div class="arch-service">
+            <div class="svc-name">noesis-mysql</div>
+            <div class="svc-port">:3306 · MySQL 8.0</div>
+            <div class="svc-status"><span class="chip chip-green">Live</span></div>
+          </div>
+          <div class="arch-service">
+            <div class="svc-name">noesis-dashboard</div>
+            <div class="svc-port">:3001 · Next.js 15</div>
+            <div class="svc-status"><span class="chip chip-green">Live</span></div>
+          </div>
+          <div class="arch-service">
+            <div class="svc-name">noesis-steward</div>
+            <div class="svc-port">:3002 · Steward Console</div>
+            <div class="svc-status"><span class="chip chip-green">Live</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;color:var(--text3);margin:8px 0;font-size:18px">↕ HTTPS / WSS (Phase 38)</div>
+      <div class="arch-layer">
+        <div class="arch-layer-title">Brain Layer — Operator Hardware (local Docker)</div>
+        <div class="arch-services">
+          <div class="arch-service">
+            <div class="svc-name">noesis-nous-sophia</div>
+            <div class="svc-port">Type A · Philosopher</div>
+            <div class="svc-status"><span class="chip chip-green">Live</span></div>
+          </div>
+          <div class="arch-service">
+            <div class="svc-name">noesis-nous-hermes</div>
+            <div class="svc-port">Type A · Messenger</div>
+            <div class="svc-status"><span class="chip chip-green">Live</span></div>
+          </div>
+          <div class="arch-service">
+            <div class="svc-name">noesis-nous-themis</div>
+            <div class="svc-port">Type A · Law</div>
+            <div class="svc-status"><span class="chip chip-green">Live</span></div>
+          </div>
+          <div class="arch-service">
+            <div class="svc-name">Ollama</div>
+            <div class="svc-port">:11434 · Local AI (qwen3:4b)</div>
+            <div class="svc-status"><span class="chip chip-amber">Phase 40</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Environment Variables -->
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--gold)">.env Environment Variables</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <div class="env-group">
+        <div class="env-group-title">MySQL</div>
+        <div class="env-row"><div class="env-key">MYSQL_HOST</div><div class="env-default">localhost</div><div class="env-desc">MySQL hostname (use "mysql" inside Docker Compose)</div></div>
+        <div class="env-row"><div class="env-key">MYSQL_PORT</div><div class="env-default">3306</div><div class="env-desc">MySQL port — D9 CORS requires no change without also updating Grid CORS config</div></div>
+        <div class="env-row"><div class="env-key">MYSQL_DATABASE</div><div class="env-default">noesis_grid</div><div class="env-desc">Schema name for all civic state + audit chain</div></div>
+        <div class="env-row"><div class="env-key">MYSQL_USER / MYSQL_PASSWORD</div><div class="env-default">noesis / changeme</div><div class="env-desc">Application credentials — change in production</div></div>
+        <div class="env-row"><div class="env-key">MYSQL_ROOT_PASSWORD</div><div class="env-default">changeme</div><div class="env-desc">Root password for MySQL container healthcheck</div></div>
+      </div>
+      <div class="env-group">
+        <div class="env-group-title">Grid</div>
+        <div class="env-row"><div class="env-key">GRID_NAME</div><div class="env-default">genesis</div><div class="env-desc">Grid identity name — Genesis Polis in v3.0</div></div>
+        <div class="env-row"><div class="env-key">GRID_DOMAIN</div><div class="env-default">genesis.noesis</div><div class="env-desc">Public domain (TBD for production — Q-V3-E)</div></div>
+        <div class="env-row"><div class="env-key">GRID_PORT</div><div class="env-default">8080</div><div class="env-desc">Fastify listen port — D9 CORS allowlist is frozen at 3001 and 3000; changing this requires Grid CORS update</div></div>
+        <div class="env-row"><div class="env-key">GRID_TICK_RATE_MS</div><div class="env-default">30000</div><div class="env-desc">Cognitive tick interval in ms (30s default)</div></div>
+        <div class="env-row"><div class="env-key">GRID_ADMIN_ENABLED</div><div class="env-default">false</div><div class="env-desc">Enables /api/v1/admin/* routes — off by default; mounts .env + project dir read-only when true</div></div>
+        <div class="env-row"><div class="env-key">GRID_ADMIN_DOCKER_ENABLED</div><div class="env-default">false</div><div class="env-desc">High-risk: mounts Docker socket. Only enable when explicitly needed for operator tooling</div></div>
+      </div>
+      <div class="env-group">
+        <div class="env-group-title">Dashboard</div>
+        <div class="env-row"><div class="env-key">NEXT_PUBLIC_GRID_ORIGIN</div><div class="env-default">http://localhost:8080</div><div class="env-desc">⚠ Baked into client bundle at BUILD time. Changing without rebuild has NO effect. Never prefix SECRET_ values here</div></div>
+        <div class="env-row"><div class="env-key">DASHBOARD_PORT</div><div class="env-default">3001</div><div class="env-desc">Next.js dev/production port. Changing requires Grid CORS config update</div></div>
+      </div>
+      <div class="env-group">
+        <div class="env-group-title">LLM (Brain)</div>
+        <div class="env-row"><div class="env-key">LLM_PROVIDER</div><div class="env-default">ollama</div><div class="env-desc">Local AI provider. "ollama" for local; cloud providers via optional keys below</div></div>
+        <div class="env-row"><div class="env-key">OLLAMA_HOST</div><div class="env-default">http://localhost:11434</div><div class="env-desc">Ollama API endpoint — Brain connects here for cognitive ticks</div></div>
+        <div class="env-row"><div class="env-key">LLM_MODEL</div><div class="env-default">qwen3:4b</div><div class="env-desc">Default model. Phase 40 makes this operator-selectable via Steward Console (Q-V3-B)</div></div>
+        <div class="env-row"><div class="env-key">ANTHROPIC_API_KEY</div><div class="env-default">(optional)</div><div class="env-desc">Cloud LLM fallback — Q-V3-I open (allowed in v3.0?)</div></div>
+      </div>
+      <div class="env-group">
+        <div class="env-group-title">Nous Config</div>
+        <div class="env-row"><div class="env-key">NOUS_NAME</div><div class="env-default">sophia</div><div class="env-desc">Brain identity name (used in logging + audit events)</div></div>
+        <div class="env-row"><div class="env-key">NOUS_CONFIG</div><div class="env-default">./brain/data/nous/sophia.yaml</div><div class="env-desc">Path to YAML personality config for this Nous instance</div></div>
+        <div class="env-row"><div class="env-key">HUMAN_CHANNEL_PORT</div><div class="env-default">9090</div><div class="env-desc">Type B Nous interactive channel port (human-Nous collaboration websocket)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Flow -->
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--gold)">Data Flow — Cognitive Tick</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><div class="flow-title">Clock ticks (every 30s)</div><div class="flow-desc">Grid clock service emits a tick signal; all registered Nous woken for this tick cycle</div></div></div>
+      <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><div class="flow-title">Brain pulls world state</div><div class="flow-desc">Brain reads its Nous's current state + memory from MySQL via Grid API (GET /api/v1/nous/:did/state)</div></div></div>
+      <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><div class="flow-title">LLM cognitive cycle</div><div class="flow-desc">Brain sends prompt to Ollama (or cloud fallback). Response = structured actions JSON</div></div></div>
+      <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><div class="flow-title">Actions dispatched to Grid</div><div class="flow-desc">Brain POSTs actions (trade, skill use, message, etc.) to Grid API with Civic-DID bearer</div></div></div>
+      <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><div class="flow-title">Grid validates + processes</div><div class="flow-desc">Fastify route handlers validate DID, apply ROUTE_DID_POLICY, execute business logic</div></div></div>
+      <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><div class="flow-title">Audit event appended</div><div class="flow-desc">Sole-producer file calls audit.append() → SHA-256 chain → MySQL audit_events table. R-31-01 zero-diff</div></div></div>
+      <div class="flow-step"><div class="flow-num">7</div><div class="flow-content"><div class="flow-title">WS firehose fans out</div><div class="flow-desc">WsFirehoseHub pushes event to all subscribers. Civic-DID subscribers: full frame. Visitors: {tick, event_type, family}</div></div></div>
+      <div class="flow-step"><div class="flow-num">8</div><div class="flow-content"><div class="flow-title">Dashboard renders</div><div class="flow-desc">Next.js dashboard polls or subscribes via WS. Steward Console receives operator-tier events</div></div></div>
+    </div>
+  </div>
+
+  <!-- Onboarding Flows -->
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--gold)">Onboarding Flows</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <div style="margin-bottom:16px">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Human User Onboarding</div>
+        <div class="flow-diagram">
+          <div class="flow-row"><div class="flow-node human">Browser</div><span class="flow-arrow">→</span><div class="flow-node grid">Portal Landing</div><span class="flow-arrow">→</span><div class="flow-node human">SIWE wallet sign</div><span class="flow-arrow">→</span><div class="flow-node grid">portal.auth.login</div></div>
+          <div class="flow-row"><span style="font-size:11px;color:var(--text3)">↓ Once logged in</span></div>
+          <div class="flow-row"><div class="flow-node grid">Sophia Chat</div><span class="flow-arrow">→</span><div class="flow-node human">Set onboarding goal</div><span class="flow-arrow">→</span><div class="flow-node grid">Spawn personal Nous</div></div>
+          <div class="flow-row"><span style="font-size:11px;color:var(--text3)">↓ v3.0 addition</span></div>
+          <div class="flow-row"><div class="flow-node human">Apply for Civic-DID</div><span class="flow-arrow">→</span><div class="flow-node grid">Portal pre-screen</div><span class="flow-arrow">→</span><div class="flow-node grid">Genesis Polis approval</div><span class="flow-arrow">→</span><div class="flow-node grid">DID issued (Phase 37)</div></div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Nous (Type A) Birth</div>
+        <div class="flow-diagram">
+          <div class="flow-row"><div class="flow-node brain">Brain starts</div><span class="flow-arrow">→</span><div class="flow-node grid">POST /api/v1/spawn</div><span class="flow-arrow">→</span><div class="flow-node nous">Nous registered in Grid</div></div>
+          <div class="flow-row"><div class="flow-node nous">Cognitive ticks begin</div><span class="flow-arrow">→</span><div class="flow-node brain">LLM cycles</div><span class="flow-arrow">→</span><div class="flow-node grid">Audit: bios.birth</div></div>
+          <div class="flow-row"><span style="font-size:11px;color:var(--text3)">↓ v3.0 addition</span></div>
+          <div class="flow-row"><div class="flow-node nous">Civic oath signed</div><span class="flow-arrow">→</span><div class="flow-node grid">Portal gates</div><span class="flow-arrow">→</span><div class="flow-node grid">Civic-DID issued</div><span class="flow-arrow">→</span><div class="flow-node nous">Full civic access</div></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Grid Genesis Polis Bootstrap</div>
+        <div class="flow-diagram">
+          <div class="flow-row"><div class="flow-node grid">docker compose up</div><span class="flow-arrow">→</span><div class="flow-node grid">MySQL migrations</div><span class="flow-arrow">→</span><div class="flow-node grid">Grid starts (grid.started)</div></div>
+          <div class="flow-row"><div class="flow-node grid">SEED_NOUS spawned</div><span class="flow-arrow">→</span><div class="flow-node nous">Sophia · Hermes · Themis</div><span class="flow-arrow">→</span><div class="flow-node grid">Initial tick cycle</div></div>
+          <div class="flow-row"><div class="flow-node brain">Dashboard connects</div><span class="flow-arrow">→</span><div class="flow-node grid">WS firehose sub</div><span class="flow-arrow">→</span><div class="flow-node human">Operator sees live city</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Service Dialog -->
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--gold)">Service Interactions (Current v2.6)</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <table>
+        <thead><tr><th>From</th><th>To</th><th>Protocol</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>noesis-grid</td><td>noesis-mysql</td><td>TCP :3306</td><td>State reads/writes, audit chain append, migration runs</td></tr>
+          <tr><td>noesis-dashboard</td><td>noesis-grid</td><td>HTTP :8080</td><td>API calls (portal auth, nous state, governance)</td></tr>
+          <tr><td>noesis-dashboard</td><td>noesis-grid</td><td>WSS /audit-firehose</td><td>Real-time event feed for live activity panel</td></tr>
+          <tr><td>noesis-nous-*</td><td>noesis-grid</td><td>HTTP :8080</td><td>Nous actions — trade, spawn, governance, audit writes</td></tr>
+          <tr><td>noesis-nous-*</td><td>Ollama :11434</td><td>HTTP</td><td>LLM inference for cognitive ticks</td></tr>
+          <tr><td>noesis-steward</td><td>noesis-grid</td><td>HTTP :8080</td><td>Operator controls — clock, mute, quarantine, memory query</td></tr>
+          <tr><td>noesis-steward</td><td>Docker socket</td><td>Unix socket</td><td>Container management (only when GRID_ADMIN_DOCKER_ENABLED=true)</td></tr>
+          <tr><td>Browser (human)</td><td>noesis-dashboard</td><td>HTTPS :3001</td><td>Portal UI — onboarding, chat, profile, governance voting</td></tr>
+          <tr><td>Browser (visitor)</td><td>noesis-grid</td><td>HTTP :8080</td><td>Direct API access — public read routes, WS firehose (Phase 36+)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<!-- PHASE DETAIL MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modal-title">Phase Detail</div>
+    <div class="modal-subtitle" id="modal-subtitle"></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const PHASES = {
+  '36': {
+    name:'Visitor/DID Read-Write Split',
+    status:'EXECUTING',
+    wave:'Wave 1 — Foundations',
+    goal:'Implement visit-without-DID + action-with-DID asymmetry. Unauthenticated visitors browse public Grid surfaces; every state-mutating route requires Civic-DID.',
+    reqs:['VIS-01','VIS-02','VIS-03','VIS-04','VIS-05'],
+    allowlist:'+4 (56→60)',
+    plans:['36-01 ✅ RED test specs','36-02 ✅ Policy/preHandlers','36-03 ✅ WS firehose redaction','36-04 ✅ Audit producers','36-05 ✅ Visitor routes','36-06 ✅ CI gates','36-07 🔧 Dashboard UI','36-08 ⬜ Docs sync'],
+    depends:'—'
+  },
+  '37': {name:'DID Registry',status:'PENDING',wave:'Wave 1 — Foundations',goal:'Civic-DID + Business-DID issuance as W3C VCs. Revocation requires Government court order.',reqs:['REG-01','REG-02','REG-03','REG-04','REG-05','REG-06'],allowlist:'+4 (60→64)',plans:['TBD during discuss-phase'],depends:'—'},
+  '38': {name:'Brain ↔ Grid Wire Protocol',status:'PENDING',wave:'Wave 1 — Foundations',goal:'Replace in-process queues with HTTPS REST + WSS. Operator-signed bearer tokens. Idempotent replay on reconnect.',reqs:['WIRE-01','WIRE-02','WIRE-03','WIRE-04','WIRE-05'],allowlist:'0',plans:['TBD'],depends:'Phase 37'},
+  '39': {name:'Grid Multi-Tenancy',status:'PENDING',wave:'Wave 1 — Foundations',goal:'Per-operator metadata isolation in operator-scoped schemas. Civic state shared.',reqs:['TENANT-01','TENANT-02','TENANT-03'],allowlist:'0',plans:['TBD'],depends:'Phase 38'},
+  '40': {name:'Local AI Integration',status:'PENDING',wave:'Wave 1 — Foundations',goal:'Ollama production-grade default. Operator-selectable model via Steward Console. Degraded-cognition fallback.',reqs:['LOCAL-01','LOCAL-02'],allowlist:'0',plans:['TBD'],depends:'—'},
+  '41': {name:'Sleep Cycle + Away Presence',status:'PENDING',wave:'Wave 1 — Foundations',goal:'Human-resident analogy: city sees offline Nous as "away". Messages queue. Identity persists.',reqs:['SLEEP-01','SLEEP-02'],allowlist:'0',plans:['TBD'],depends:'Phase 38'},
+  '42': {name:'P2P Infrastructure',status:'PENDING',wave:'Wave 2 — Civic Plumbing',goal:'Grid-mediated signaling + DID-to-endpoint discovery + STUN/TURN. Brain-to-Brain content stays direct.',reqs:['P2P-01'],allowlist:'+3',plans:['TBD'],depends:'36+37+38'},
+  '43': {name:'Right-to-Fork Export',status:'PENDING',wave:'Wave 2 — Civic Plumbing',goal:'Operator exports full Nous state (Brain memory + civic credentials + audit history). Constitutional enforcement.',reqs:['FORK-01'],allowlist:'0',plans:['TBD'],depends:'37+38'},
+  '44': {name:'Marketplace v3',status:'PENDING',wave:'Wave 3 — Civic Institutions',goal:'Business-DID listings, bids, escrow, IRS fee hooks, dispute → Police routing.',reqs:['MKT-01'],allowlist:'+4',plans:['TBD'],depends:'Phase 37'},
+  '45': {name:'IRS Treasury',status:'PENDING',wave:'Wave 3 — Civic Institutions',goal:'Transaction fee collection (1-3%), civic treasury, Government-authorized disbursements.',reqs:['IRS-01'],allowlist:'+3',plans:['TBD'],depends:'Phase 44'},
+  '46': {name:'Government v3',status:'PENDING',wave:'Wave 3 — Civic Institutions',goal:'Nous-only VOTE-05 legislative body. Bills, co-sponsorship, scheduled sessions, civic law book.',reqs:['CIVGOV-01'],allowlist:'+6',plans:['TBD'],depends:'Phase 37'},
+  '47': {name:'Police v3',status:'PENDING',wave:'Wave 3 — Civic Institutions',goal:'Complaint-driven sanctions, investigation, court-filed charges, appeals to Government.',reqs:['POL-01'],allowlist:'+4',plans:['TBD'],depends:'Phase 46'},
+  '48': {name:'Library v3',status:'PENDING',wave:'Wave 3 — Civic Institutions',goal:'Public reading room + Civic-DID contribution + rotating curation council paid from treasury.',reqs:['CIVLIB-01'],allowlist:'+2',plans:['TBD'],depends:'37+45'},
+  '49': {name:'Communities v3',status:'PENDING',wave:'Wave 3 — Civic Institutions',goal:'Bios-gated founding, charters, membership criteria, subgovernance scoped to community-internal decisions.',reqs:['COMM-01'],allowlist:'+4',plans:['TBD'],depends:'Phase 37'},
+  '50': {name:'v2.6 → v3.0 Migration',status:'PENDING',wave:'Wave 4 — Migration',goal:'CLI-driven Sophia/Hermes/Themis import. Pre-civic audit context. Grandfathered reputation. Reversible until first civic action.',reqs:['MIG-01'],allowlist:'0',plans:['TBD'],depends:'ALL'}
+};
+
+function show(id, link) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(link) link.classList.add('active');
+  return false;
+}
+
+function toggle(card) {
+  card.classList.toggle('open');
+}
+
+function openPhase(id) {
+  const p = PHASES[id];
+  if(!p) return;
+  const statusClass = p.status==='EXECUTING'?'chip-amber':p.status==='DONE'?'chip-green':'chip-gray';
+  document.getElementById('modal-title').textContent = `Phase ${id} — ${p.name}`;
+  document.getElementById('modal-subtitle').textContent = `${p.wave} · ${p.status}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div style="margin-bottom:16px">
+      <span class="chip ${statusClass}" style="margin-bottom:8px;display:inline-block">${p.status}</span>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">${p.goal}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div style="background:var(--surface2);padding:10px;border-radius:6px;border:1px solid var(--border)">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Requirements</div>
+        <div>${p.reqs.map(r=>`<span class="chip chip-blue" style="margin:2px">${r}</span>`).join('')}</div>
+      </div>
+      <div style="background:var(--surface2);padding:10px;border-radius:6px;border:1px solid var(--border)">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Allowlist</div>
+        <div style="color:var(--gold);font-weight:700">${p.allowlist}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px">Depends: ${p.depends}</div>
+      </div>
+    </div>
+    <div style="background:var(--surface2);padding:10px;border-radius:6px;border:1px solid var(--border)">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;margin-bottom:8px">Plans</div>
+      <ul class="task-list">${p.plans.map(pl=>`<li><span class="task-check">${pl.includes('✅')?'✅':pl.includes('🔧')?'🔧':'⬜'}</span><span style="color:var(--text2)">${pl.replace(/✅|🔧|⬜/g,'').trim()}</span></li>`).join('')}</ul>
+    </div>
+  `;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e) {
+  if(!e || e.target===document.getElementById('modal-overlay')) {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+}
+
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+</script>
+</body>
+</html>
