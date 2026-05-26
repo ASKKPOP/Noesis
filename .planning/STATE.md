@@ -4,8 +4,8 @@ milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
 stopped_at: Phase 36 UI-SPEC approved (6/6 dimensions PASS + 3 non-blocking FLAGs); 20 D-36-* decisions + UI design contract locked
-last_updated: "2026-05-26T06:29:50.259Z"
-last_activity: 2026-05-26 -- Phase 36 planning complete
+last_updated: "2026-05-26T16:06:16.430Z"
+last_activity: 2026-05-26 -- Phase 36 execution started
 progress:
   total_phases: 25
   completed_phases: 0
@@ -23,14 +23,14 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** v3.0 ROADMAP.md formalized 2026-05-25. 15 phases (36-50) with 69/69 REQ coverage, 4-wave dependency graph, allowlist growth ledger (56 → 90). Ready to spawn `/gsd-plan-phase 36` (Visitor/DID Read-Write Split).
+**Current focus:** Phase 36 — visitor-did-read-write-split
 
 ## Current Position
 
-Phase: Not started (ready to plan Phase 36)
-Plan: —
-Status: Ready to execute
-Last activity: 2026-05-26 -- Phase 36 planning complete
+Phase: 36 (visitor-did-read-write-split) — EXECUTING
+Plan: 1 of 8
+Status: Executing Phase 36
+Last activity: 2026-05-26 -- Phase 36 execution started
 
 Driving inputs for v3.0 (locked at milestone open):
 
