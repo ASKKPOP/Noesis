@@ -77,6 +77,7 @@ async def test_post_actions_sends_bearer_and_json() -> None:
     client = GridWireClient(
         grid_url="https://test.grid",
         token_manager=token_manager,
+        brain_did="did:noesis:nous:test",
     )
 
     # Capture the outgoing request via httpx.MockTransport.
@@ -93,7 +94,9 @@ async def test_post_actions_sends_bearer_and_json() -> None:
     client._client = inner_client
 
     actions = [{"action_type": "noop", "channel": "", "text": "", "metadata": {}}]
-    resp = await client.post_actions(actions, tick=42)
+    # post_actions now returns None (Plan 38-03: queue-on-error wraps the response).
+    # Verify via _do_post_actions for the raw response assertion.
+    resp = await client._do_post_actions(actions, tick=42)
 
     assert resp.status_code == 200
     assert len(captured) == 1
@@ -131,6 +134,7 @@ async def test_post_actions_uses_rotated_token_after_23h() -> None:
     client = GridWireClient(
         grid_url="https://test.grid",
         token_manager=token_manager,
+        brain_did="did:noesis:nous:test",
     )
 
     captured_tokens: list[str] = []
@@ -144,14 +148,16 @@ async def test_post_actions_uses_rotated_token_after_23h() -> None:
     transport = httpx.MockTransport(handler)
     client._client = httpx.AsyncClient(transport=transport, timeout=10.0)
 
+    actions = [{"action_type": "noop", "channel": "", "text": "", "metadata": {}}]
+
     # First call — clock at t=0, creates the initial token.
-    await client.post_actions([], tick=1)
+    await client._do_post_actions(actions, tick=1)
 
     # Advance clock to 23h + 1s (past the rotation threshold: 24h - 1h = 23h).
     clock_state["now"] = 23 * 3600 + 1.0
 
     # Second call — TokenManager should rotate and issue a new token.
-    await client.post_actions([], tick=2)
+    await client._do_post_actions(actions, tick=2)
 
     assert len(captured_tokens) == 2
     # The second request must carry a DIFFERENT token (new JWT after rotation).
