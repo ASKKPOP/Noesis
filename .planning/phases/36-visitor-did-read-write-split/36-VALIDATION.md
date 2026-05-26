@@ -2,8 +2,8 @@
 phase: 36
 slug: visitor-did-read-write-split
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-05-25
 ---
 
@@ -11,6 +11,16 @@ created: 2026-05-25
 
 > Per-phase validation contract for feedback sampling during execution.
 > Derived from `36-RESEARCH.md` §Validation Architecture.
+
+---
+
+### Wave 0 Allowlist-Count Decision (LOCKED)
+
+**Decision (2026-05-25):** `ALLOWLIST_MEMBERS.length === 60` after Phase 36.
+
+**Rationale:** Per D-36-19, `portal.notification_dispatched` is a personal-queue event (server-pushed-via-poll to one operator-DID), NOT a broadcast city event. It enters the audit chain but does NOT enter `ALLOWLIST_MEMBERS`. Final allowlist additions for Phase 36: 4 (portal.did_issued, portal.did_revoked, grid.recognition_granted, grid.recognition_revoked). Pre-phase count: 56. Post-phase count: **60**. ROADMAP entry "Allowlist count grows 56 → 60" stands.
+
+**Open Question 1 (Allowlist count target: 60 or 61?): RESOLVED → 60.**
 
 ---
 
@@ -108,20 +118,17 @@ CI gate scripts (smoke tests are the scripts themselves on the clean repo):
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags (Vitest `run` only, never `watch`)
-- [ ] Feedback latency < 45 seconds for rig sampling
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags (Vitest `run` only, never `watch`)
+- [x] Feedback latency < 45 seconds for rig sampling
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-05-25 (Wave 0 plan 36-01)
 
 ---
 
 ## Open Questions (resolve in Wave 0)
 
-1. **Allowlist count target:** 60 or 61?
-   - Researcher's recommendation: `portal.notification_dispatched` (D-36-19) is a *private queue* event (person-to-person), not a broadcast city event → keep OFF the broadcast allowlist → count = 60.
-   - Alternative interpretation: every audit event the chain emits gets broadcast → count = 61.
-   - Wave 0 must lock this and update both the allowlist test assertion AND the ROADMAP "Allowlist count grows 56 → 60" line if revised.
+~~1. **Allowlist count target: 60 or 61?**~~ → **RESOLVED to 60** (see "Wave 0 Allowlist-Count Decision (LOCKED)" above).
