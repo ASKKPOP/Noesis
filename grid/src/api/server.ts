@@ -56,6 +56,8 @@ import { requireDid, requirePortalSession } from './preHandlers/requireDid.js';
 import './preHandlers/types.js'; // module augmentation side-effect
 import { verifyGovernmentSession, GOV_SESSION_ISSUER_DID } from '../civic-registry/index.js';
 import { registerRegistryRoutes } from './routes/registry.js';
+import { registerBrainTokenRoutes } from './routes/brain-token.js';
+import type { BrainTokenStore } from '../db/stores/brain-token-store.js';
 
 /**
  * Phase 6 AGENCY-02: normalized memory entry shape crossing the RPC boundary.
@@ -289,6 +291,13 @@ export interface GridServices {
      * Production wiring passes new BusinessDidStore(pool) from genesis/launcher.
      */
     businessDidStore?: import('../civic-registry/business-did-store.js').BusinessDidStore;
+    /**
+     * Phase 38 WIRE-02: Brain bearer-token persistence store.
+     * When present, brain-token routes use this for upsert/revoke operations.
+     * When absent, brain-token routes return 503 brain_token_store_unavailable.
+     * Production wiring passes new BrainTokenStore(pool) from genesis/launcher.
+     */
+    brainTokenStore?: BrainTokenStore;
     /**
      * Phase 36 VIS-01 VOTE-05: optional Polis bill store.
      * When present, polis-bills route queries getBill/listBills.
@@ -573,6 +582,11 @@ export function buildServerWithHub(
     // Six endpoints under /api/v1/registry/* for Civic-DID + Business-DID lifecycle.
     // Policy enforcement (public, government_only, civic_did_required) delegated to onRequest hook.
     void registerRegistryRoutes(app, services);
+
+    // --- Phase 38 WIRE-02: Brain bearer-token routes ---
+    // Two endpoints: POST /api/v1/brain/token/{register,revoke}.
+    // Policy enforcement delegated to onRequest hook (public / government_only).
+    void registerBrainTokenRoutes(app, services);
 
     // --- Phase 6 Plan 04: Operator routes (AGENCY-02 H3 + AGENCY-03) ---
     // All operator.* audit writes inside this registrar go through

@@ -420,4 +420,26 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS business_did_registry`,
     },
+    // Phase 38 WIRE-02 — Brain bearer-token storage.
+    // One row per Brain (keyed by grid_name + brain_did).
+    // upsert clears prior revocation when Brain re-registers a rotated public key.
+    {
+        version: 25,
+        name: 'create_brain_tokens',
+        up: `
+            CREATE TABLE IF NOT EXISTS brain_tokens (
+                grid_name       VARCHAR(63)  NOT NULL,
+                brain_did       VARCHAR(255) NOT NULL,
+                public_key_jwk  JSON         NOT NULL,
+                issued_at       BIGINT       NOT NULL,
+                expires_at      BIGINT       NOT NULL,
+                revoked         TINYINT(1)   NOT NULL DEFAULT 0,
+                revoked_at_tick INT UNSIGNED NULL,
+                created_at      TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (grid_name, brain_did),
+                INDEX idx_revoked (grid_name, revoked)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS brain_tokens`,
+    },
 ];

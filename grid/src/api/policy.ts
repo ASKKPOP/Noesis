@@ -191,6 +191,14 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/registry/civic-did/:did/revoke':    'government_only',
     'POST /api/v1/registry/business-did/register':    'civic_did_required',
     'POST /api/v1/registry/business-did/:did/dissolve': 'government_only',
+
+    // Phase 38 (WIRE-02) — Brain bearer-token registration/revocation.
+    // - Register is public: the request body carries an existence-key signature
+    //   (mirrors REG-01 Civic-DID request). The signature gate is in the handler.
+    // - Revoke is government_only: per D-V3-18 only a court-order-bearing
+    //   Government session may revoke a Brain token.
+    'POST /api/v1/brain/token/register': 'public',
+    'POST /api/v1/brain/token/revoke':   'government_only',
 } as Record<string, RouteDIDPolicy>);
 
 /**
