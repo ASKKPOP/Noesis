@@ -86,7 +86,16 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 **Scope (ships)**: VIS-01..05.
 **Out of scope for this phase**: DID issuance flow itself (Phase 37); operator bearer token rotation (Phase 38); per-tenant policy variations (Phase 39).
 **Allowlist additions**: **+4**. Running total: **60**.
-**Plans**: TBD
+**Plans:** 8 plans
+Plans:
+- [ ] 36-01-PLAN.md — Wave 0 validation infrastructure + allowlist lock-in (60)
+- [ ] 36-02-PLAN.md — ROUTE_DID_POLICY foundation + tryDid/requireDid preHandlers
+- [ ] 36-03-PLAN.md — WS firehose per-subscriber redaction (R-31-01 preserved)
+- [ ] 36-04-PLAN.md — 5 sole-producer audit events + allowlist +4
+- [ ] 36-05-PLAN.md — 7 visitor read routes + OAuth stubs + notification queue + rate limiter
+- [ ] 36-06-PLAN.md — 4 CI gates (policy coverage, admin isolation, WS zero-diff, OAuth count)
+- [ ] 36-07-PLAN.md — 5 primary + 2 secondary dashboard visitor surfaces (raw-SVG Civic Map)
+- [ ] 36-08-PLAN.md — Documentation sync (STATE + MILESTONES + ROADMAP + PROJECT + REQUIREMENTS + README)
 **UI hint**: yes
 
 ### Phase 37: DID Registry
