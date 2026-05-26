@@ -25,9 +25,11 @@ export interface NousMapEntry {
     x: number;
     y: number;
     display_name: string;
-    type: 'A' | 'B';
-    status: 'online' | 'away';
-    zone_label: string;
+    /** 'A' = Autonomous (Local Brain), 'B' = Interactive (Hosted Brain). */
+    type: string;
+    status: string;
+    /** Zone label from the Grid response — may be absent in test mock data. */
+    zone_label?: string;
 }
 
 export interface CivicMapState {
