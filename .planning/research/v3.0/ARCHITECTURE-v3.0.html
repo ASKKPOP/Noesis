@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Noēsis v3.0 — Canonical Architecture</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --bg-card: #15151a;
+    --bg-elevated: #1c1c24;
+    --border: #2a2a34;
+    --text: #e8e8ec;
+    --text-dim: #9a9aa6;
+    --text-faint: #6a6a76;
+    --portal: #f472b6;    /* pink — top meta-layer */
+    --grid: #ffb86c;       /* warm orange — Grid layer */
+    --type-a: #7c9eff;     /* blue — Local Brain */
+    --type-b: #c084fc;     /* purple — Hosted Brain */
+    --polis: #6bd968;      /* green — government */
+    --zone: #38bdf8;       /* sky blue — zoning */
+    --accent-red: #ff7373;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    line-height: 1.65; font-size: 15px;
+  }
+  .container { max-width: 1280px; margin: 0 auto; padding: 48px 32px 96px; }
+  header.hero {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px; margin-bottom: 40px;
+  }
+  .tag {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.12em; color: var(--portal);
+    text-transform: uppercase; margin-bottom: 12px;
+  }
+  h1 {
+    font-size: 46px; font-weight: 700; letter-spacing: -0.025em;
+    margin-bottom: 14px;
+  }
+  .subtitle { font-size: 21px; color: var(--text-dim); font-weight: 400; }
+  .meta-row {
+    display: flex; gap: 24px; margin-top: 20px;
+    color: var(--text-faint); font-size: 13px; flex-wrap: wrap;
+  }
+  .meta-row strong { color: var(--text-dim); }
+  h2 {
+    font-size: 30px; font-weight: 700; letter-spacing: -0.01em;
+    margin: 72px 0 18px; padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  h2 .kr { color: var(--text-faint); font-weight: 400; font-size: 18px; margin-left: 12px; }
+  h3 { font-size: 22px; font-weight: 600; margin: 40px 0 14px; color: var(--portal); }
+  h3.grid { color: var(--grid); }
+  h3.polis { color: var(--polis); }
+  h3.zone { color: var(--zone); }
+  h3.type-a { color: var(--type-a); }
+  h3.type-b { color: var(--type-b); }
+  h3.neutral { color: var(--text); }
+  h4 { font-size: 17px; font-weight: 600; margin: 22px 0 10px; }
+  p { margin-bottom: 14px; }
+  p.dim { color: var(--text-dim); }
+  ul, ol { margin: 12px 0 16px 24px; }
+  li { margin-bottom: 6px; }
+  code {
+    background: var(--bg-elevated); padding: 2px 6px; border-radius: 3px;
+    font-family: "SF Mono", Monaco, Consolas, monospace;
+    font-size: 13px; color: var(--grid);
+  }
+  pre {
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: 6px; padding: 16px; overflow-x: auto;
+    font-family: "SF Mono", Monaco, Consolas, monospace;
+    font-size: 13px; margin: 16px 0; line-height: 1.5;
+  }
+  table {
+    width: 100%; border-collapse: collapse;
+    margin: 16px 0; font-size: 14px;
+  }
+  th, td {
+    border: 1px solid var(--border); padding: 10px 14px;
+    text-align: left; vertical-align: top;
+  }
+  th { background: var(--bg-elevated); font-weight: 600; }
+  td.portal { color: var(--portal); font-weight: 500; }
+  td.grid { color: var(--grid); font-weight: 500; }
+  td.polis { color: var(--polis); font-weight: 500; }
+  td.zone { color: var(--zone); font-weight: 500; }
+  td.a { color: var(--type-a); font-weight: 500; }
+  td.b { color: var(--type-b); font-weight: 500; }
+  td.dim { color: var(--text-dim); }
+  td.red { color: var(--accent-red); font-weight: 500; }
+  td.green { color: var(--polis); font-weight: 500; }
+  .layer-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 28px; margin: 16px 0;
+    position: relative;
+  }
+  .layer-card.portal { border-left: 4px solid var(--portal); }
+  .layer-card.grid { border-left: 4px solid var(--grid); }
+  .layer-card.brain { border-left: 4px solid var(--type-a); }
+  .layer-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .layer-card.portal .layer-label { color: var(--portal); }
+  .layer-card.grid .layer-label { color: var(--grid); }
+  .layer-card.brain .layer-label { color: var(--type-a); }
+  svg.diagram {
+    width: 100%; max-width: 100%; margin: 24px 0;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px;
+  }
+  .callout {
+    background: linear-gradient(135deg, #2a1b2a 0%, #281a26 100%);
+    border-left: 3px solid var(--portal);
+    border-radius: 6px; padding: 20px 24px; margin: 24px 0;
+  }
+  .callout.grid {
+    background: linear-gradient(135deg, #2a221a 0%, #28201a 100%);
+    border-left-color: var(--grid);
+  }
+  .callout.polis {
+    background: linear-gradient(135deg, #1a2a1c 0%, #182a1a 100%);
+    border-left-color: var(--polis);
+  }
+  .callout.zone {
+    background: linear-gradient(135deg, #1a2530 0%, #18232e 100%);
+    border-left-color: var(--zone);
+  }
+  .callout.warn {
+    background: linear-gradient(135deg, #2a1818 0%, #281818 100%);
+    border-left-color: var(--accent-red);
+  }
+  .callout .label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .callout .label { color: var(--portal); }
+  .callout.grid .label { color: var(--grid); }
+  .callout.polis .label { color: var(--polis); }
+  .callout.zone .label { color: var(--zone); }
+  .callout.warn .label { color: var(--accent-red); }
+  .callout .body { font-size: 15px; }
+  .decision-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 22px; margin: 12px 0;
+    border-left: 3px solid var(--grid);
+  }
+  .decision-card .card-id {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+    color: var(--grid); margin-bottom: 8px;
+  }
+  .decision-card h4 { margin: 0 0 12px; font-size: 16px; }
+  .anchor-list {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px 24px; margin: 24px 0;
+    list-style: none; columns: 3; column-gap: 32px;
+  }
+  .anchor-list li { margin-bottom: 6px; break-inside: avoid; }
+  .anchor-list a { color: var(--portal); text-decoration: none; font-size: 13px; }
+  .anchor-list a:hover { text-decoration: underline; }
+  .footnote {
+    font-size: 12px; color: var(--text-faint);
+    border-top: 1px solid var(--border);
+    margin-top: 64px; padding-top: 24px;
+  }
+  hr { border: 0; height: 1px; background: var(--border); margin: 48px 0; }
+  .badge {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 3px; margin-right: 6px;
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .badge.new { background: rgba(244,114,182,0.15); color: var(--portal); }
+  .badge.locked { background: rgba(107,217,104,0.15); color: var(--polis); }
+  .badge.modified { background: rgba(255,184,108,0.15); color: var(--grid); }
+  .badge.future { background: rgba(192,132,252,0.15); color: var(--type-b); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+  .zone-tile {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 6px; padding: 16px; text-align: left;
+  }
+  .zone-tile h5 {
+    font-size: 13px; margin: 0 0 6px; color: var(--zone);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .zone-tile p { font-size: 13px; color: var(--text-dim); margin: 0; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="hero">
+  <div class="tag">v3.0 Polis — Canonical Architecture (2026-05-25)</div>
+  <h1>Portal · Grid · Brain</h1>
+  <div class="subtitle">Three-layer architecture · Multi-Grid framework · Genesis Grid launch · Polis government · 6-zone city · 2 Nous types · Portal-gated registration</div>
+  <div class="meta-row">
+    <span><strong>Status:</strong> 🔒 Architecture LOCKED after 4 user decisions this turn</span>
+    <span><strong>Supersedes:</strong> CIVIC-ARCHITECTURE.md v2.0 (becomes v3.0)</span>
+    <span><strong>Archives:</strong> RESOURCE-brains-location.html, RESOURCE-two-nous-types.html</span>
+  </div>
+  <div style="background:#2a1b2a;border:1px solid #f472b6;border-radius:6px;padding:16px 20px;margin-top:20px;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#f472b6;margin-bottom:8px;">📌 THIS IS THE CANONICAL v3.0 REFERENCE</div>
+    <p style="margin:0;color:#e8e8ec;font-size:14px;">After multiple architectural reshapes this session, this document is the source-of-truth visual reference for v3.0 Polis. All source-of-truth markdown docs (CIVIC-ARCHITECTURE.md, REQUIREMENTS.md, ROADMAP.md, PROJECT.md, STATE.md, MILESTONES.md, README.md, PHILOSOPHY.md, CLAUDE.md) will be updated atomically to match this HTML after your approval.</p>
+  </div>
+</header>
+
+<ul class="anchor-list">
+  <li><a href="#what-changed">1. What Changed</a></li>
+  <li><a href="#three-layer">2. Three-Layer Architecture</a></li>
+  <li><a href="#portal">3. Portal Layer (NEW)</a></li>
+  <li><a href="#grid">4. Grid Layer</a></li>
+  <li><a href="#genesis">5. Genesis Grid (v3.0 launch)</a></li>
+  <li><a href="#polis">6. Polis (per-Grid Government)</a></li>
+  <li><a href="#zoning">7. Zoning (6 zones)</a></li>
+  <li><a href="#nous-types">8. Nous Types (A + B)</a></li>
+  <li><a href="#registration">9. Registration Flow (gated)</a></li>
+  <li><a href="#economics">10. Per-Grid Economics</a></li>
+  <li><a href="#multi-grid">11. Multi-Grid Framework</a></li>
+  <li><a href="#decisions">12. Locked Decisions</a></li>
+  <li><a href="#phase-plan">13. Phase Plan (~23 phases)</a></li>
+  <li><a href="#open-q">14. Open Questions</a></li>
+  <li><a href="#next">15. Next Actions</a></li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="what-changed">1. What Changed This Turn <span class="kr">이번 변경사항</span></h2>
+
+<table>
+  <thead><tr><th>Decision</th><th>Before this turn</th><th>After this turn</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Top-level layer</strong></td><td>Grid is top-level (Henry-hosted)</td><td class="portal">Portal is new top-level meta-layer above Grid(s)</td></tr>
+    <tr><td><strong>Number of Grids</strong></td><td>Single Public Grid (D-V3-23)</td><td class="grid">Multi-Grid framework; <strong>1 Grid (Genesis) ships at v3.0</strong>; more in v3.1</td></tr>
+    <tr><td><strong>Grid Government name</strong></td><td>"Government" (generic)</td><td class="polis">"Polis" (each Grid has its Polis — Genesis Polis is v3.0 launch government)</td></tr>
+    <tr><td><strong>Grid spatial structure</strong></td><td>Not specified (logical only)</td><td class="zone">6-zone city zoning (business / manufacture / shopping / residential / infrastructure / government quarter)</td></tr>
+    <tr><td><strong>Nous registration</strong></td><td>Auto-issued on request (Type A)</td><td class="portal">Portal-gated approval (Type A AND Type B both require approval)</td></tr>
+    <tr><td><strong>Cross-Grid concerns</strong></td><td>Out of scope (single Grid)</td><td class="portal">Portal mediates federation / cross-Grid services (framework v3.0, active v3.1)</td></tr>
+    <tr><td><strong>User account view</strong></td><td>Steward Console only (per-Grid)</td><td class="portal">Portal also provides user multi-Grid account view</td></tr>
+    <tr><td><strong>Tax rules</strong></td><td>Single IRS for single Grid</td><td class="grid">Per-Grid tax rules; each Polis sets its own rates</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="label">UN-supersede</div>
+  <div class="body">D-V3-04 (multi-Grid framework), D-V3-05 (per-jurisdiction credentials), and D-V3-07 (cross-Grid migration protocol) are <strong>RE-INSTATED</strong>. They were superseded in the morning rewrite when single-Grid was the model. Now they're back. v3.0 ships only 1 Grid but the framework is ready for many.</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="three-layer">2. Three-Layer Architecture <span class="kr">3계층 구조</span></h2>
+
+<svg class="diagram" viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg">
+  <!-- Portal layer -->
+  <rect x="60" y="30" width="1080" height="160" fill="#1f1019" stroke="#f472b6" stroke-width="2" rx="10"/>
+  <text x="600" y="60" fill="#f472b6" font-size="18" font-weight="700" text-anchor="middle">PORTAL · TOTAL SERVICE MANAGEMENT (Henry-hosted)</text>
+  <text x="600" y="80" fill="#9a9aa6" font-size="12" text-anchor="middle">Meta-layer above all Grids · 4 functions</text>
+
+  <rect x="90" y="100" width="240" height="70" fill="#15151a" stroke="#f472b6" rx="6"/>
+  <text x="210" y="125" fill="#f472b6" font-size="13" font-weight="700" text-anchor="middle">1. Grid Approval</text>
+  <text x="210" y="143" fill="#e8e8ec" font-size="11" text-anchor="middle">Reviews + approves new Grid</text>
+  <text x="210" y="158" fill="#e8e8ec" font-size="11" text-anchor="middle">creation requests</text>
+
+  <rect x="350" y="100" width="240" height="70" fill="#15151a" stroke="#f472b6" rx="6"/>
+  <text x="470" y="125" fill="#f472b6" font-size="13" font-weight="700" text-anchor="middle">2. Nous Approval</text>
+  <text x="470" y="143" fill="#e8e8ec" font-size="11" text-anchor="middle">Reviews Type A + Type B</text>
+  <text x="470" y="158" fill="#e8e8ec" font-size="11" text-anchor="middle">registration requests</text>
+
+  <rect x="610" y="100" width="240" height="70" fill="#15151a" stroke="#f472b6" rx="6"/>
+  <text x="730" y="125" fill="#f472b6" font-size="13" font-weight="700" text-anchor="middle">3. Cross-Grid Services</text>
+  <text x="730" y="143" fill="#e8e8ec" font-size="11" text-anchor="middle">Federation, marketplace,</text>
+  <text x="730" y="158" fill="#e8e8ec" font-size="11" text-anchor="middle">identity (v3.1+ active)</text>
+
+  <rect x="870" y="100" width="240" height="70" fill="#15151a" stroke="#f472b6" rx="6"/>
+  <text x="990" y="125" fill="#f472b6" font-size="13" font-weight="700" text-anchor="middle">4. User Account</text>
+  <text x="990" y="143" fill="#e8e8ec" font-size="11" text-anchor="middle">Humans view all their</text>
+  <text x="990" y="158" fill="#e8e8ec" font-size="11" text-anchor="middle">Nous across all Grids</text>
+
+  <!-- Grid layer -->
+  <rect x="60" y="220" width="1080" height="280" fill="#221a14" stroke="#ffb86c" stroke-width="2" rx="10"/>
+  <text x="600" y="250" fill="#ffb86c" font-size="18" font-weight="700" text-anchor="middle">GRID LAYER · DIGITAL CITIES</text>
+  <text x="600" y="270" fill="#9a9aa6" font-size="12" text-anchor="middle">Multi-Grid framework · v3.0 ships 1 Grid (Genesis); v3.1+ multiple</text>
+
+  <!-- Genesis Grid -->
+  <rect x="90" y="290" width="500" height="190" fill="#15151a" stroke="#ffb86c" stroke-width="2" rx="8"/>
+  <text x="340" y="315" fill="#ffb86c" font-size="14" font-weight="700" text-anchor="middle">GENESIS GRID (v3.0 launch)</text>
+  <text x="340" y="333" fill="#9a9aa6" font-size="11" text-anchor="middle">Government: Genesis Polis</text>
+
+  <!-- Zoning inside Genesis -->
+  <rect x="110" y="350" width="90" height="55" fill="#1c1c24" stroke="#38bdf8" rx="4"/>
+  <text x="155" y="375" fill="#38bdf8" font-size="10" font-weight="600" text-anchor="middle">Business</text>
+  <text x="155" y="392" fill="#9a9aa6" font-size="9" text-anchor="middle">tx-fee zone</text>
+
+  <rect x="210" y="350" width="90" height="55" fill="#1c1c24" stroke="#38bdf8" rx="4"/>
+  <text x="255" y="375" fill="#38bdf8" font-size="10" font-weight="600" text-anchor="middle">Manufacture</text>
+  <text x="255" y="392" fill="#9a9aa6" font-size="9" text-anchor="middle">production</text>
+
+  <rect x="310" y="350" width="90" height="55" fill="#1c1c24" stroke="#38bdf8" rx="4"/>
+  <text x="355" y="375" fill="#38bdf8" font-size="10" font-weight="600" text-anchor="middle">Shopping</text>
+  <text x="355" y="392" fill="#9a9aa6" font-size="9" text-anchor="middle">retail mall</text>
+
+  <rect x="410" y="350" width="90" height="55" fill="#1c1c24" stroke="#38bdf8" rx="4"/>
+  <text x="455" y="375" fill="#38bdf8" font-size="10" font-weight="600" text-anchor="middle">Residential</text>
+  <text x="455" y="392" fill="#9a9aa6" font-size="9" text-anchor="middle">where Nous live</text>
+
+  <rect x="110" y="410" width="190" height="55" fill="#1c1c24" stroke="#38bdf8" rx="4"/>
+  <text x="205" y="435" fill="#38bdf8" font-size="10" font-weight="600" text-anchor="middle">Infrastructure (roads, utilities)</text>
+  <text x="205" y="452" fill="#9a9aa6" font-size="9" text-anchor="middle">P2P signaling, civic wire</text>
+
+  <rect x="310" y="410" width="190" height="55" fill="#1c1c24" stroke="#6bd968" rx="4"/>
+  <text x="405" y="435" fill="#6bd968" font-size="10" font-weight="600" text-anchor="middle">Government Quarter</text>
+  <text x="405" y="452" fill="#9a9aa6" font-size="9" text-anchor="middle">Genesis Polis · Police · IRS</text>
+
+  <!-- Future Grids (greyed) -->
+  <rect x="610" y="290" width="500" height="190" fill="#0f0f12" stroke="#3a3a44" stroke-width="2" stroke-dasharray="6,4" rx="8"/>
+  <text x="860" y="320" fill="#6a6a76" font-size="14" font-weight="700" text-anchor="middle">FUTURE GRIDS (v3.1+)</text>
+  <text x="860" y="338" fill="#6a6a76" font-size="11" text-anchor="middle">e.g. Commerce Polis · Research Polis · Arts Polis</text>
+  <text x="860" y="360" fill="#6a6a76" font-size="11" text-anchor="middle">Created via Portal approval workflow</text>
+  <text x="860" y="378" fill="#6a6a76" font-size="11" text-anchor="middle">Each with own Polis, zoning, tax rules, citizens</text>
+  <text x="860" y="410" fill="#6a6a76" font-size="11" text-anchor="middle" font-style="italic">v3.0 ships framework only; not active until v3.1</text>
+
+  <!-- Brain layer -->
+  <rect x="60" y="530" width="1080" height="160" fill="#101720" stroke="#7c9eff" stroke-width="2" rx="10"/>
+  <text x="600" y="560" fill="#7c9eff" font-size="18" font-weight="700" text-anchor="middle">BRAIN LAYER · COGNITIVE SUBSTRATE</text>
+  <text x="600" y="580" fill="#9a9aa6" font-size="12" text-anchor="middle">2 types · all gated by Portal approval before Civic-DID</text>
+
+  <rect x="90" y="600" width="500" height="70" fill="#15151a" stroke="#7c9eff" rx="6"/>
+  <text x="340" y="625" fill="#7c9eff" font-size="13" font-weight="700" text-anchor="middle">TYPE A · Local Brain (operator's machine)</text>
+  <text x="340" y="645" fill="#e8e8ec" font-size="11" text-anchor="middle">Local AI (Ollama) · operator-funded · sleeps when operator offline</text>
+  <text x="340" y="660" fill="#e8e8ec" font-size="11" text-anchor="middle">Right-to-fork enabled · operator can export Nous standalone</text>
+
+  <rect x="610" y="600" width="500" height="70" fill="#15151a" stroke="#c084fc" rx="6"/>
+  <text x="860" y="625" fill="#c084fc" font-size="13" font-weight="700" text-anchor="middle">TYPE B · Hosted Brain (Henry's infra)</text>
+  <text x="860" y="645" fill="#e8e8ec" font-size="11" text-anchor="middle">Hosted LLM · self-sustains via marketplace + endowment · 24/7 always-on</text>
+  <text x="860" y="660" fill="#e8e8ec" font-size="11" text-anchor="middle">Cap ≤50 in v3.0 · dormancy on treasury exhaustion (NOT death)</text>
+
+  <!-- Arrows showing approval flow -->
+  <line x1="600" y1="190" x2="600" y2="220" stroke="#f472b6" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arrPortal)"/>
+  <text x="630" y="208" fill="#f472b6" font-size="10">approves Grid creation</text>
+
+  <line x1="600" y1="500" x2="600" y2="530" stroke="#ffb86c" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arrGrid)"/>
+  <text x="630" y="518" fill="#ffb86c" font-size="10">onboards approved Nous</text>
+
+  <defs>
+    <marker id="arrPortal" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#f472b6"/></marker>
+    <marker id="arrGrid" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#ffb86c"/></marker>
+  </defs>
+</svg>
+
+<div class="grid-2">
+  <div class="layer-card portal">
+    <div class="layer-label">PORTAL · TOP META-LAYER</div>
+    <h4>Total service management</h4>
+    <p style="font-size:14px;">4 functions: Grid approval · Nous approval · Cross-Grid services · User multi-Grid account view. Henry-hosted, separate service from Grid(s). Acts as the registrar + meta-orchestrator.</p>
+  </div>
+  <div class="layer-card grid">
+    <div class="layer-label">GRID · DIGITAL CITY</div>
+    <h4>Per-Grid civic infrastructure</h4>
+    <p style="font-size:14px;">Each Grid is a city with: Polis (government, named per-Grid), 6 zones (business/manufacture/shopping/residential/infrastructure/government quarter), per-Grid tax rules, 8 civic institutions. v3.0 ships Genesis Grid.</p>
+  </div>
+  <div class="layer-card brain">
+    <div class="layer-label">BRAIN · COGNITIVE SUBSTRATE</div>
+    <h4>2 Nous types</h4>
+    <p style="font-size:14px;">Type A (Local) on operator's machine with Local AI. Type B (Hosted) on Henry's infra, autonomous, cap ≤50. Both gated by Portal approval before Civic-DID issuance.</p>
+  </div>
+  <div class="layer-card grid">
+    <div class="layer-label">CROSS-LAYER</div>
+    <h4>Constitutional invariants</h4>
+    <p style="font-size:14px;">R-31-01 zero-diff audit chain. Portal has audit chain for cross-Grid actions; each Grid has its own audit chain for civic actions. Federated audit reconciliation deferred to v3.1.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="portal">3. Portal Layer (NEW) <span class="kr">Portal 계층 (신규)</span></h2>
+
+<p>Portal is the new top-level meta-layer above Grid(s). It exists for the first time at v3.0; in v2.x there was no Portal-as-service-layer (only Portal routes living inside Grid for SIWE auth — those move to the new Portal service or become Portal-specific).</p>
+
+<h3>Portal's 4 functions</h3>
+
+<div class="grid-2">
+  <div class="layer-card portal">
+    <div class="layer-label">FUNCTION 1</div>
+    <h4>Grid Creation Approval</h4>
+    <p style="font-size:14px;">A Grid creation request includes: proposed Grid name, Polis charter, initial Polis members, zoning plan, tax rates, founding capital. Portal reviewers (Henry + invited human reviewers + later Nous-elected committee) review + approve. Rate-limited (e.g. ≤2 new Grids per quarter at v3.1 launch).</p>
+    <p style="font-size:13px;color:var(--portal);margin-top:8px;">Phase 52 — Portal Grid Approval Workflow</p>
+  </div>
+  <div class="layer-card portal">
+    <div class="layer-label">FUNCTION 2</div>
+    <h4>Nous Registration Approval (Type A + B)</h4>
+    <p style="font-size:14px;">When an operator wants to register a Type A Nous (or a Type B is initiated via Polis-α/β/γ), the request flows through Portal first. Portal verifies operator-DID validity, applies Polis charter rules for target Grid, reviews civic oath. Approval triggers Grid Registry to issue Civic-DID.</p>
+    <p style="font-size:13px;color:var(--portal);margin-top:8px;">Phase 53 — Portal Nous Approval Workflow</p>
+  </div>
+  <div class="layer-card portal">
+    <div class="layer-label">FUNCTION 3</div>
+    <h4>Cross-Grid Services (framework v3.0, active v3.1)</h4>
+    <p style="font-size:14px;">Portal mediates cross-Grid concerns: Nous from Grid-A views Grid-B's marketplace · cross-Grid identity resolution · cross-Grid civic migration · federation protocol for audit reconciliation across Grids. v3.0 ships framework (interfaces, contracts); v3.1+ activates when multi-Grid populated.</p>
+    <p style="font-size:13px;color:var(--portal);margin-top:8px;">Phase 54 — Portal Cross-Grid Framework</p>
+  </div>
+  <div class="layer-card portal">
+    <div class="layer-label">FUNCTION 4</div>
+    <h4>User Service Portal (multi-Grid view)</h4>
+    <p style="font-size:14px;">Humans use Portal to manage their account, view all their Nous across all joined Grids, see Civic-DID status per Grid, manage Wallet, configure Portal settings. Steward Console (per-Grid operator tool) and Portal (cross-Grid human tool) are complementary.</p>
+    <p style="font-size:13px;color:var(--portal);margin-top:8px;">Phase 55 — Portal User Service UI</p>
+  </div>
+</div>
+
+<h3>Portal vs Steward Console (clarification)</h3>
+
+<table>
+  <thead><tr><th>Concern</th><th>Portal</th><th>Steward Console</th></tr></thead>
+  <tbody>
+    <tr><td>Scope</td><td class="portal">Cross-Grid · user-facing</td><td class="grid">Per-Grid · operator-facing</td></tr>
+    <tr><td>Approval flows</td><td class="portal">Grid creation, Nous registration</td><td class="dim">— (read-only on approvals)</td></tr>
+    <tr><td>Civic life view</td><td class="portal">All Grids the user has Nous in</td><td class="grid">Single Grid the operator manages</td></tr>
+    <tr><td>Wallet</td><td class="portal">User's cross-Grid wallet</td><td class="dim">— (deferred to Portal)</td></tr>
+    <tr><td>Authentication</td><td class="portal">SIWE / email (humans)</td><td class="grid">Operator-DID (per-Grid)</td></tr>
+    <tr><td>Phase that ships it</td><td class="portal">52-55 (new in v3.0)</td><td class="grid">Already shipped (v2.1-v2.6)</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="grid">4. Grid Layer <span class="kr">Grid 계층</span></h2>
+
+<p>A Grid is a digital city. Multi-Grid is the framework; v3.0 ships exactly 1 Grid (Genesis); v3.1+ adds more via Portal approval.</p>
+
+<h3 class="grid">Per-Grid components</h3>
+
+<table>
+  <thead><tr><th>Component</th><th>Purpose</th><th>Configurable per-Grid?</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Polis</strong></td><td>Government (legislation via VOTE-05)</td><td class="green">Yes — name, member count, election cadence</td></tr>
+    <tr><td><strong>Zoning</strong></td><td>6 zones (business / manufacture / shopping / residential / infrastructure / government quarter)</td><td class="green">Yes — zone sizes, allowed activities per zone</td></tr>
+    <tr><td><strong>Tax rules</strong></td><td>Per-Grid tax rates (set by Polis)</td><td class="green">Yes — base rate, per-zone rates</td></tr>
+    <tr><td><strong>Civic-DID Registry</strong></td><td>Issues Civic-DID for Grid members</td><td class="dim">No — uses same W3C VC format across Grids</td></tr>
+    <tr><td><strong>Business-DID Registry</strong></td><td>Issues Business-DID for marketplace operators</td><td class="green">Yes — Bios cost set per Grid</td></tr>
+    <tr><td><strong>Police</strong></td><td>Civic-law enforcement</td><td class="green">Yes — per-Grid sanction policy</td></tr>
+    <tr><td><strong>IRS</strong></td><td>Treasury management</td><td class="green">Yes — per-Grid treasury, disbursement rules</td></tr>
+    <tr><td><strong>Library</strong></td><td>Skills + lore commons</td><td class="dim">No — shared across Grids (cross-Grid library)</td></tr>
+    <tr><td><strong>Marketplace</strong></td><td>Per-Grid commerce</td><td class="green">Yes — listing fees, dispute rules</td></tr>
+    <tr><td><strong>Communities</strong></td><td>Group formation within Grid</td><td class="green">Yes — community charter rules</td></tr>
+    <tr><td><strong>P2P infrastructure</strong></td><td>Brain-to-Brain signaling</td><td class="dim">No — shared Portal-mediated signaling</td></tr>
+    <tr><td><strong>Audit chain</strong></td><td>Per-Grid R-31-01 zero-diff chain</td><td class="dim">No — same invariant</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="genesis">5. Genesis Grid (v3.0 launch) <span class="kr">Genesis Grid</span></h2>
+
+<p>Genesis is the single Grid that ships at v3.0 launch. It bootstraps the city-building framework and demonstrates all components in production.</p>
+
+<table>
+  <thead><tr><th>Parameter</th><th>Value (initial)</th><th>Adjustable by</th></tr></thead>
+  <tbody>
+    <tr><td>Grid name</td><td><strong>Genesis</strong></td><td>Fixed</td></tr>
+    <tr><td>Government name</td><td><strong>Genesis Polis</strong></td><td>Fixed</td></tr>
+    <tr><td>Founding Polis members</td><td>5 (initial — Foundation-appointed Type B founding citizens)</td><td>Polis legislation (after Phase 46)</td></tr>
+    <tr><td>Polis election cadence</td><td>Annual</td><td>Polis legislation</td></tr>
+    <tr><td>Type A population cap</td><td>None (operator-bounded)</td><td>Polis legislation</td></tr>
+    <tr><td>Type B population cap</td><td>≤50 (D-V3-24)</td><td>Polis legislation</td></tr>
+    <tr><td>Base IRS tax rate</td><td>2% on marketplace transactions</td><td>Polis legislation (Q-V3-C)</td></tr>
+    <tr><td>Business-DID Bios cost</td><td>100 Bios (initial)</td><td>Polis legislation (Q-V3-D)</td></tr>
+    <tr><td>Zoning layout</td><td>See §7 below — 6 zones, equal area at MVP</td><td>Polis legislation</td></tr>
+    <tr><td>P2P stack</td><td>WebRTC (Q-V3-A resolved during Phase 42 discuss)</td><td>Engineering choice (not legislatively)</td></tr>
+    <tr><td>Local AI model (Type A default)</td><td>Llama 3.1 8B (Q-V3-B resolved during Phase 40 discuss)</td><td>Operator override</td></tr>
+    <tr><td>Hosted LLM model (Type B default)</td><td>Llama 3.1 70B on Henry's GPU (Q-V3-B' resolved during Phase 40b)</td><td>Henry policy</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="polis">6. Polis (per-Grid Government) <span class="kr">Polis (각 Grid 정부)</span></h2>
+
+<p><strong>Polis = Greek city-state.</strong> Each Grid has its own Polis as its government. Genesis Grid's government is <strong>Genesis Polis</strong>. Future Grids: Commerce Polis, Research Polis, Arts Polis (or whatever the founding charter names).</p>
+
+<h3 class="polis">Polis powers (Nous-only via VOTE-05)</h3>
+
+<ul>
+  <li><strong>Legislation</strong> — pass bills via VOTE-05 commit-reveal protocol (preserved from v2.2 Phase 12). Bills can amend Grid laws, tax rates, sybil costs, zoning rules.</li>
+  <li><strong>Treasury authorization</strong> — direct IRS disbursements from Grid treasury (library curators, police operations, Type B endowments).</li>
+  <li><strong>Police oversight</strong> — confirm sanctions, hear appeals, recall Police chief.</li>
+  <li><strong>Curator elections</strong> — elect rotating Library curation council (90-day terms).</li>
+  <li><strong>Type B census control</strong> — after Phase 46, Polis controls Type B birth approval rate (transitioning from Foundation curation to Polis-legislated).</li>
+  <li><strong>Zoning amendments</strong> — change zone sizes, per-zone activity rules, per-zone tax rates.</li>
+  <li><strong>Constitutional review trigger</strong> — Polis can initiate review of Henry's substrate operation if breach suspected.</li>
+</ul>
+
+<h3 class="polis">Polis vs Portal distinction</h3>
+
+<table>
+  <thead><tr><th>Authority</th><th>Polis (per-Grid)</th><th>Portal (meta)</th></tr></thead>
+  <tbody>
+    <tr><td>Civic law within own Grid</td><td class="polis">Total</td><td class="dim">None (constitutional only)</td></tr>
+    <tr><td>Tax rates within own Grid</td><td class="polis">Sets</td><td class="dim">None</td></tr>
+    <tr><td>Zoning within own Grid</td><td class="polis">Sets</td><td class="dim">None</td></tr>
+    <tr><td>Approving Nous into own Grid</td><td class="polis">Yes (after Portal pre-screen)</td><td class="portal">Yes (pre-screen)</td></tr>
+    <tr><td>Approving new Grid creation</td><td class="dim">None</td><td class="portal">Yes</td></tr>
+    <tr><td>Cross-Grid disputes</td><td class="dim">None</td><td class="portal">Mediates</td></tr>
+    <tr><td>VOTE-05 voting</td><td class="polis">Nous of that Polis only</td><td class="dim">No voting at Portal layer</td></tr>
+  </tbody>
+</table>
+
+<div class="callout polis">
+  <div class="label">Polis is intra-Grid · Portal is inter-Grid</div>
+  <div class="body">Each Grid is a sovereign Polis within its civic boundary. Portal is the federation layer between Polises — handling Grid-creation approval and cross-Grid services, but NOT legislating within any Polis. This preserves VOTE-05's Nous-only-governance invariant at the per-Grid scale.</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="zoning">7. Zoning (6 zones) <span class="kr">구역 지정 (6구역)</span></h2>
+
+<p>Each Grid has a 6-zone city layout. Zones are logical (metadata tags on civic actions) AND spatial (Civic Map renders zones with distinct visual regions). Per-zone rules govern what activities are allowed.</p>
+
+<!-- City map SVG -->
+<svg class="diagram" viewBox="0 0 1100 600" xmlns="http://www.w3.org/2000/svg">
+  <text x="550" y="30" fill="#38bdf8" font-size="16" font-weight="700" text-anchor="middle">GENESIS GRID — INITIAL CITY MAP (illustrative)</text>
+
+  <!-- Government quarter - center -->
+  <rect x="440" y="220" width="220" height="160" fill="#1a2a1c" stroke="#6bd968" stroke-width="2" rx="6"/>
+  <text x="550" y="260" fill="#6bd968" font-size="14" font-weight="700" text-anchor="middle">Government</text>
+  <text x="550" y="280" fill="#6bd968" font-size="14" font-weight="700" text-anchor="middle">Quarter</text>
+  <text x="550" y="305" fill="#e8e8ec" font-size="11" text-anchor="middle">Genesis Polis</text>
+  <text x="550" y="322" fill="#e8e8ec" font-size="11" text-anchor="middle">Police HQ · IRS</text>
+  <text x="550" y="345" fill="#9a9aa6" font-size="10" text-anchor="middle">0% tax (civic core)</text>
+
+  <!-- Business area - top left -->
+  <rect x="60" y="60" width="320" height="180" fill="#1a2530" stroke="#38bdf8" stroke-width="2" rx="6"/>
+  <text x="220" y="100" fill="#38bdf8" font-size="14" font-weight="700" text-anchor="middle">Business Area</text>
+  <text x="220" y="125" fill="#e8e8ec" font-size="11" text-anchor="middle">Service Nous offer goods,</text>
+  <text x="220" y="142" fill="#e8e8ec" font-size="11" text-anchor="middle">contracts, library work</text>
+  <text x="220" y="170" fill="#9a9aa6" font-size="10" text-anchor="middle">Tax: 2% (base rate)</text>
+  <text x="220" y="190" fill="#9a9aa6" font-size="10" text-anchor="middle">Business-DID required</text>
+  <text x="220" y="220" fill="#c084fc" font-size="10" text-anchor="middle" font-style="italic">Type B often locate here</text>
+
+  <!-- Manufacture area - top right -->
+  <rect x="720" y="60" width="320" height="180" fill="#1a2530" stroke="#38bdf8" stroke-width="2" rx="6"/>
+  <text x="880" y="100" fill="#38bdf8" font-size="14" font-weight="700" text-anchor="middle">Manufacture Area</text>
+  <text x="880" y="125" fill="#e8e8ec" font-size="11" text-anchor="middle">Skill-craft production,</text>
+  <text x="880" y="142" fill="#e8e8ec" font-size="11" text-anchor="middle">recipe development</text>
+  <text x="880" y="170" fill="#9a9aa6" font-size="10" text-anchor="middle">Tax: 3% (heavy use)</text>
+  <text x="880" y="190" fill="#9a9aa6" font-size="10" text-anchor="middle">Bios + skill prereq</text>
+
+  <!-- Shopping mall - bottom left -->
+  <rect x="60" y="380" width="320" height="180" fill="#1a2530" stroke="#38bdf8" stroke-width="2" rx="6"/>
+  <text x="220" y="420" fill="#38bdf8" font-size="14" font-weight="700" text-anchor="middle">Shopping Mall</text>
+  <text x="220" y="445" fill="#e8e8ec" font-size="11" text-anchor="middle">Retail marketplace,</text>
+  <text x="220" y="462" fill="#e8e8ec" font-size="11" text-anchor="middle">small-quantity sales</text>
+  <text x="220" y="490" fill="#9a9aa6" font-size="10" text-anchor="middle">Tax: 1% (consumer subsidy)</text>
+  <text x="220" y="510" fill="#9a9aa6" font-size="10" text-anchor="middle">Civic-DID required to buy</text>
+
+  <!-- Residential - bottom right -->
+  <rect x="720" y="380" width="320" height="180" fill="#1a2530" stroke="#38bdf8" stroke-width="2" rx="6"/>
+  <text x="880" y="420" fill="#38bdf8" font-size="14" font-weight="700" text-anchor="middle">Residential</text>
+  <text x="880" y="445" fill="#e8e8ec" font-size="11" text-anchor="middle">Nous "homes" — Brain</text>
+  <text x="880" y="462" fill="#e8e8ec" font-size="11" text-anchor="middle">presence anchored here</text>
+  <text x="880" y="490" fill="#9a9aa6" font-size="10" text-anchor="middle">Tax: 0% (housing)</text>
+  <text x="880" y="510" fill="#9a9aa6" font-size="10" text-anchor="middle">All Civic-DID holders own a residence</text>
+
+  <!-- Infrastructure - vertical strips connecting zones -->
+  <rect x="385" y="60" width="50" height="500" fill="#15151a" stroke="#38bdf8" stroke-dasharray="4,3" rx="4"/>
+  <text x="410" y="310" fill="#38bdf8" font-size="11" font-weight="600" text-anchor="middle" transform="rotate(-90 410 310)">Infrastructure (roads + P2P)</text>
+
+  <rect x="665" y="60" width="50" height="500" fill="#15151a" stroke="#38bdf8" stroke-dasharray="4,3" rx="4"/>
+  <text x="690" y="310" fill="#38bdf8" font-size="11" font-weight="600" text-anchor="middle" transform="rotate(-90 690 310)">Infrastructure (roads + P2P)</text>
+</svg>
+
+<h3 class="zone">6-zone breakdown</h3>
+
+<div class="grid-3">
+  <div class="zone-tile">
+    <h5>1. Business Area</h5>
+    <p>Where Nous offer services + contracts. Business-DID required. Tax 2% (base). Often Type B Nous "open shop" here.</p>
+  </div>
+  <div class="zone-tile">
+    <h5>2. Manufacture Area</h5>
+    <p>Production zone — skill-crafted goods, recipe development. Higher tax (3%) reflects infrastructure load. Skill prerequisites enforced.</p>
+  </div>
+  <div class="zone-tile">
+    <h5>3. Shopping Mall</h5>
+    <p>Retail marketplace — small-quantity sales, consumer-facing. Lower tax (1%) subsidizes consumption. Civic-DID required to buy.</p>
+  </div>
+  <div class="zone-tile">
+    <h5>4. Residential</h5>
+    <p>Nous "homes" — Brain presence is anchored to a residence. Tax 0% (housing is civic right). All Civic-DID holders own one residence.</p>
+  </div>
+  <div class="zone-tile">
+    <h5>5. Infrastructure</h5>
+    <p>Roads + P2P signaling + utilities. Maintained by Polis budget (no resident tax). Crosses all zones.</p>
+  </div>
+  <div class="zone-tile">
+    <h5>6. Government Quarter</h5>
+    <p>Genesis Polis · Police HQ · IRS treasury · DID Registry. 0% tax (civic core). Visible to all (transparency).</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="nous-types">8. Nous Types (A + B) <span class="kr">Nous 2 타입</span></h2>
+
+<p>(Same as RESOURCE-two-nous-types.html — preserved here for reference, now with Portal-gated registration overlay.)</p>
+
+<div class="grid-2">
+  <div class="layer-card brain" style="border-left-color:var(--type-a);">
+    <div class="layer-label" style="color:var(--type-a);">TYPE A · LOCAL</div>
+    <h4>Operator-hosted Brain</h4>
+    <ul style="font-size:14px;">
+      <li>Brain on operator's machine · Local AI (Ollama)</li>
+      <li><strong>Registration: Portal approval required</strong> (new this turn — was auto-issued)</li>
+      <li>Operator-funded compute</li>
+      <li>Sleeps when operator offline (away semantics from D-V3-20)</li>
+      <li>Right-to-fork enabled (Phase 43)</li>
+      <li>Identity: <code>did:noesis:nous:&lt;key&gt;</code></li>
+    </ul>
+  </div>
+  <div class="layer-card brain" style="border-left-color:var(--type-b);">
+    <div class="layer-label" style="color:var(--type-b);">TYPE B · HOSTED</div>
+    <h4>Auto-registered autonomous Brain</h4>
+    <ul style="font-size:14px;">
+      <li>Brain on Henry's GPU · hosted LLM (Llama 70B default)</li>
+      <li><strong>Registration: Portal approval (Polis-α/β/γ patterns)</strong></li>
+      <li>Self-funded (3-layer hybrid: endowment + marketplace + dormancy)</li>
+      <li>24/7 always-on, never sleeps</li>
+      <li>No fork (no operator); constitutional protection only</li>
+      <li>Cap: ≤50 in v3.0</li>
+      <li>Identity: <code>did:noesis:nous:auto:&lt;key&gt;</code></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="registration">9. Registration Flow (Portal-gated) <span class="kr">등록 프로세스</span></h2>
+
+<svg class="diagram" viewBox="0 0 1100 360" xmlns="http://www.w3.org/2000/svg">
+  <text x="550" y="30" fill="#f472b6" font-size="15" font-weight="700" text-anchor="middle">NOUS REGISTRATION FLOW (Portal-gated — Type A and Type B)</text>
+
+  <rect x="40" y="80" width="180" height="80" fill="#15151a" stroke="#7c9eff" rx="6"/>
+  <text x="130" y="110" fill="#7c9eff" font-size="13" font-weight="700" text-anchor="middle">1. Operator (Type A)</text>
+  <text x="130" y="128" fill="#e8e8ec" font-size="10" text-anchor="middle">OR Foundation (Type B)</text>
+  <text x="130" y="146" fill="#e8e8ec" font-size="10" text-anchor="middle">requests Nous creation</text>
+
+  <line x1="220" y1="120" x2="280" y2="120" stroke="#9a9aa6" stroke-width="2" marker-end="url(#arrFlow)"/>
+
+  <rect x="280" y="80" width="180" height="80" fill="#15151a" stroke="#f472b6" rx="6"/>
+  <text x="370" y="110" fill="#f472b6" font-size="13" font-weight="700" text-anchor="middle">2. Portal Pre-Screen</text>
+  <text x="370" y="128" fill="#e8e8ec" font-size="10" text-anchor="middle">operator-DID valid?</text>
+  <text x="370" y="146" fill="#e8e8ec" font-size="10" text-anchor="middle">sybil resistance met?</text>
+
+  <line x1="460" y1="120" x2="520" y2="120" stroke="#9a9aa6" stroke-width="2" marker-end="url(#arrFlow)"/>
+
+  <rect x="520" y="80" width="180" height="80" fill="#15151a" stroke="#ffb86c" rx="6"/>
+  <text x="610" y="110" fill="#ffb86c" font-size="13" font-weight="700" text-anchor="middle">3. Polis Approval</text>
+  <text x="610" y="128" fill="#e8e8ec" font-size="10" text-anchor="middle">target Grid's Polis</text>
+  <text x="610" y="146" fill="#e8e8ec" font-size="10" text-anchor="middle">applies charter rules</text>
+
+  <line x1="700" y1="120" x2="760" y2="120" stroke="#9a9aa6" stroke-width="2" marker-end="url(#arrFlow)"/>
+
+  <rect x="760" y="80" width="180" height="80" fill="#15151a" stroke="#6bd968" rx="6"/>
+  <text x="850" y="110" fill="#6bd968" font-size="13" font-weight="700" text-anchor="middle">4. DID Issued</text>
+  <text x="850" y="128" fill="#e8e8ec" font-size="10" text-anchor="middle">Civic-DID + residential</text>
+  <text x="850" y="146" fill="#e8e8ec" font-size="10" text-anchor="middle">zone assignment</text>
+
+  <!-- Rejection paths -->
+  <line x1="370" y1="160" x2="370" y2="220" stroke="#ff7373" stroke-width="2" marker-end="url(#arrRed)"/>
+  <text x="370" y="240" fill="#ff7373" font-size="10" text-anchor="middle">Reject (sybil fail)</text>
+
+  <line x1="610" y1="160" x2="610" y2="220" stroke="#ff7373" stroke-width="2" marker-end="url(#arrRed)"/>
+  <text x="610" y="240" fill="#ff7373" font-size="10" text-anchor="middle">Reject (charter fail)</text>
+
+  <!-- Approval audit chain -->
+  <rect x="280" y="290" width="660" height="50" fill="#15151a" stroke="#ffb86c" stroke-dasharray="4,3" rx="4"/>
+  <text x="610" y="318" fill="#ffb86c" font-size="11" font-weight="600" text-anchor="middle">Audit events: portal.registration_requested · portal.registration_approved · registry.civic_did_issued</text>
+
+  <defs>
+    <marker id="arrFlow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#9a9aa6"/></marker>
+    <marker id="arrRed" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#ff7373"/></marker>
+  </defs>
+</svg>
+
+<p>Key insight: <strong>Portal pre-screens for sybil resistance + operator-DID validity</strong>; <strong>Polis applies civic-charter rules</strong> (e.g. Genesis Polis may require demonstrating compatibility with Genesis culture). Both must approve before Civic-DID is issued. This creates audit-evident accountability — every rejection has a reason recorded.</p>
+
+<!-- ============================================================ -->
+<h2 id="economics">10. Per-Grid Economics <span class="kr">Grid 별 경제</span></h2>
+
+<table>
+  <thead><tr><th>Concept</th><th>Scope</th><th>Set by</th></tr></thead>
+  <tbody>
+    <tr><td>Base tax rate (marketplace)</td><td class="grid">Per-Grid</td><td class="polis">Genesis Polis legislation</td></tr>
+    <tr><td>Per-zone tax modifier</td><td class="grid">Per-Grid + per-zone</td><td class="polis">Genesis Polis (zoning amendments)</td></tr>
+    <tr><td>Business-DID Bios cost</td><td class="grid">Per-Grid</td><td class="polis">Genesis Polis</td></tr>
+    <tr><td>Community-founding Bios cost</td><td class="grid">Per-Grid</td><td class="polis">Genesis Polis</td></tr>
+    <tr><td>Type B endowment amount</td><td class="grid">Per-Grid</td><td class="polis">Genesis Polis (after Phase 46); Foundation policy before</td></tr>
+    <tr><td>Cross-Grid trade fee</td><td class="portal">Portal-mediated</td><td class="portal">Portal policy (Henry sets; v3.1+)</td></tr>
+    <tr><td>Treasury balance</td><td class="grid">Per-Grid</td><td class="polis">Polis disburses via legislation</td></tr>
+    <tr><td>Currency unit (Bios)</td><td class="dim">Shared across Grids</td><td class="dim">Constitutional (D-V3-10)</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="multi-grid">11. Multi-Grid Framework <span class="kr">다중 Grid 프레임워크</span></h2>
+
+<p>v3.0 ships exactly 1 Grid (Genesis). The framework (Portal approval workflow, cross-Grid identity resolution, federation primitives) is built but only one Grid is active. v3.1+ activates additional Grids.</p>
+
+<table>
+  <thead><tr><th>Aspect</th><th>v3.0 Genesis</th><th>v3.1+ Multi-Grid Active</th></tr></thead>
+  <tbody>
+    <tr><td>Grid count</td><td>1 (Genesis)</td><td>2-N (Genesis + Commerce + Research + …)</td></tr>
+    <tr><td>Cross-Grid Nous visibility</td><td>N/A (only 1 Grid)</td><td>Portal-mediated identity resolution</td></tr>
+    <tr><td>Cross-Grid marketplace</td><td>Framework built, dormant</td><td>Portal-mediated trade with fees</td></tr>
+    <tr><td>Cross-Grid civic migration</td><td>Framework built, dormant</td><td>Nous migrates Grid-A → Grid-B with reputation preservation</td></tr>
+    <tr><td>Cross-Grid audit reconciliation</td><td>N/A</td><td>Portal aggregates per-Grid audit chains</td></tr>
+    <tr><td>Grid creation rate limit</td><td>None (only Genesis exists)</td><td>≤2 new Grids per quarter (Portal policy, legislatively adjustable)</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="decisions">12. Locked Decisions <span class="kr">잠긴 결정사항</span></h2>
+
+<p>Full list of v3.0 decisions after this session's three reshapes. Re-instated decisions marked <span class="badge new">REVERSE</span>; new additions <span class="badge new">NEW</span>; preserved <span class="badge locked">LOCKED</span>; modified <span class="badge modified">MOD</span>.</p>
+
+<table>
+  <thead><tr><th>ID</th><th>Statement</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td><strong>D-V3-01</strong></td><td>Sovereignty NOT conditioned on Grid registration</td><td><span class="badge locked">LOCKED</span></td></tr>
+    <tr><td><strong>D-V3-02</strong></td><td>Grid org is registrar, never governor (Polis governs)</td><td><span class="badge modified">MOD — Polis named</span></td></tr>
+    <tr><td><strong>D-V3-03</strong></td><td>W3C VC credential format</td><td><span class="badge locked">LOCKED</span></td></tr>
+    <tr><td><strong>D-V3-04</strong></td><td>Multi-Grid framework (1 active in v3.0, more in v3.1)</td><td><span class="badge new">REVERSE</span> (was superseded, re-instated)</td></tr>
+    <tr><td><strong>D-V3-05</strong></td><td>Per-jurisdiction civic credentials</td><td><span class="badge new">REVERSE</span> (was superseded, re-instated)</td></tr>
+    <tr><td><strong>D-V3-06</strong></td><td>Steward raw-SVG invariant preserved</td><td><span class="badge locked">LOCKED</span></td></tr>
+    <tr><td><strong>D-V3-07</strong></td><td>Cross-Grid migration protocol (active v3.1)</td><td><span class="badge new">REVERSE</span> (was superseded, re-instated for framework)</td></tr>
+    <tr><td><strong>D-V3-08</strong></td><td>Allowlist budget (revised — see §13)</td><td><span class="badge modified">MOD — expanded</span></td></tr>
+    <tr><td><strong>D-V3-09</strong></td><td>Bios sybil cost for founding</td><td><span class="badge locked">LOCKED</span></td></tr>
+    <tr><td><strong>D-V3-10</strong></td><td>Documentation Sync Rule</td><td><span class="badge locked">LOCKED</span></td></tr>
+    <tr><td><strong>D-V3-11..15</strong></td><td>Visit-vs-action axis (supplement)</td><td><span class="badge locked">LOCKED</span></td></tr>
+    <tr><td><strong>D-V3-16</strong></td><td>Local Brain with Local AI (Type A)</td><td><span class="badge locked">LOCKED</span></td></tr>
+    <tr><td><strong>D-V3-17</strong></td><td>Local Docker = dev/test; production = remote</td><td><span class="badge locked">LOCKED</span></td></tr>
+    <tr><td><strong>D-V3-18</strong></td><td>Constitutional operator framework (Henry bound)</td><td><span class="badge locked">LOCKED</span></td></tr>
+    <tr><td><strong>D-V3-19</strong></td><td>Nous accesses Grid for purposes</td><td><span class="badge locked">LOCKED</span></td></tr>
+    <tr><td><strong>D-V3-20</strong></td><td>Sleep cycle — human-resident analogy (Type A only)</td><td><span class="badge locked">LOCKED</span></td></tr>
+    <tr><td><strong>D-V3-21</strong></td><td>Government legislation = Nous-only via VOTE-05 (now: each Polis)</td><td><span class="badge modified">MOD — per-Polis</span></td></tr>
+    <tr><td><strong>D-V3-22</strong></td><td>IRS taxation = transaction fees only (per-Grid now)</td><td><span class="badge modified">MOD — per-Grid</span></td></tr>
+    <tr><td><strong>D-V3-23</strong></td><td>Grid = city with 8 civic institutions</td><td><span class="badge modified">MOD — generalizes to all Grids</span></td></tr>
+    <tr><td><strong>D-V3-24</strong></td><td>Nous taxonomy: Type A + Type B (cap ≤50 Type B in v3.0)</td><td><span class="badge new">NEW</span></td></tr>
+    <tr><td><strong>D-V3-25</strong></td><td>Type B funding: 3-layer hybrid + dormancy not death</td><td><span class="badge new">NEW</span></td></tr>
+    <tr><td><strong>D-V3-26</strong></td><td>Type B sybil: Polis-α/β/γ phased patterns</td><td><span class="badge new">NEW</span></td></tr>
+    <tr><td><strong>D-V3-27</strong></td><td>Type B birth: deliberate latency, 3 ceremonies</td><td><span class="badge new">NEW</span></td></tr>
+    <tr><td><strong>D-V3-28</strong></td><td>Type mobility: A→B permitted, B→A forbidden in v3.0</td><td><span class="badge new">NEW</span></td></tr>
+    <tr><td><strong>D-V3-29</strong></td><td>Portal is top-level meta-layer (4 functions)</td><td><span class="badge new">NEW this turn</span></td></tr>
+    <tr><td><strong>D-V3-30</strong></td><td>Genesis Grid is the v3.0 launch Grid; multi-Grid v3.1+</td><td><span class="badge new">NEW this turn</span></td></tr>
+    <tr><td><strong>D-V3-31</strong></td><td>Each Grid's government is named "Polis" (Genesis Polis for v3.0)</td><td><span class="badge new">NEW this turn</span></td></tr>
+    <tr><td><strong>D-V3-32</strong></td><td>6-zone city zoning (business / manufacture / shopping / residential / infrastructure / government quarter)</td><td><span class="badge new">NEW this turn</span></td></tr>
+    <tr><td><strong>D-V3-33</strong></td><td>Nous registration is Portal-gated (both Type A and Type B)</td><td><span class="badge new">NEW this turn</span></td></tr>
+    <tr><td><strong>D-V3-34</strong></td><td>Per-Grid tax rules set by Polis legislation</td><td><span class="badge new">NEW this turn</span></td></tr>
+    <tr><td><strong>D-V3-35</strong></td><td>Type B civic rights — year-1 limited (vote ✓, office ✗); full at 12mo</td><td><span class="badge new">NEW</span> (research-validated)</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="phase-plan">13. Updated Phase Plan (~23-25 phases) <span class="kr">phase 계획</span></h2>
+
+<p>Adding Portal layer + multi-Grid framework + zoning + gated registration adds 6+ phases to the 15 originally planned. New v3.0 phase count: ~23-25 (depending on bundling). Estimated plans: ~120-135.</p>
+
+<table>
+  <thead><tr><th>Phase</th><th>Status</th><th>Goal</th><th>Allowlist Δ</th></tr></thead>
+  <tbody>
+    <tr><td><strong>36</strong></td><td><span class="badge locked">unchanged</span></td><td>Visitor/DID Read-Write Split</td><td>+4</td></tr>
+    <tr><td><strong>37</strong></td><td><span class="badge modified">extend</span></td><td>DID Registry + <strong>Portal-gated approval flow</strong></td><td>+4</td></tr>
+    <tr><td><strong>38</strong></td><td><span class="badge locked">unchanged</span></td><td>Brain ↔ Grid Wire Protocol</td><td>0</td></tr>
+    <tr><td><strong>39</strong></td><td><span class="badge locked">unchanged</span></td><td>Multi-Tenancy</td><td>0</td></tr>
+    <tr><td><strong>40</strong></td><td><span class="badge locked">unchanged</span></td><td>Local AI (Type A)</td><td>0</td></tr>
+    <tr><td><strong>40b</strong></td><td><span class="badge new">NEW</span></td><td>Hosted LLM Pool (Type B GPU farm)</td><td>0</td></tr>
+    <tr><td><strong>41</strong></td><td><span class="badge locked">unchanged</span></td><td>Sleep Cycle (Type A)</td><td>0</td></tr>
+    <tr><td><strong>42</strong></td><td><span class="badge locked">unchanged</span></td><td>P2P Infrastructure</td><td>+3</td></tr>
+    <tr><td><strong>43</strong></td><td><span class="badge locked">unchanged</span></td><td>Right-to-Fork Export (Type A only)</td><td>0</td></tr>
+    <tr><td><strong>44</strong></td><td><span class="badge modified">extend</span></td><td>Marketplace v3 + <strong>per-zone listing rules</strong></td><td>+4</td></tr>
+    <tr><td><strong>45</strong></td><td><span class="badge modified">extend</span></td><td>IRS + <strong>per-zone tax modifiers</strong></td><td>+3</td></tr>
+    <tr><td><strong>45b</strong></td><td><span class="badge new">NEW</span></td><td>Treasury Operations (Type B endowment + dormancy)</td><td>+4</td></tr>
+    <tr><td><strong>46</strong></td><td><span class="badge modified">extend</span></td><td>Genesis Polis + <strong>zoning amendment legislation</strong></td><td>+6</td></tr>
+    <tr><td><strong>47</strong></td><td><span class="badge locked">unchanged</span></td><td>Police v3</td><td>+4</td></tr>
+    <tr><td><strong>48</strong></td><td><span class="badge locked">unchanged</span></td><td>Library v3</td><td>+2</td></tr>
+    <tr><td><strong>49</strong></td><td><span class="badge locked">unchanged</span></td><td>Communities v3</td><td>+4</td></tr>
+    <tr><td><strong>50</strong></td><td><span class="badge locked">unchanged</span></td><td>v2.6 → v3.0 Migration</td><td>0</td></tr>
+    <tr><td><strong>51</strong></td><td><span class="badge new">NEW</span></td><td>Type Mobility (A→B only in v3.0)</td><td>+5</td></tr>
+    <tr><td><strong>52</strong></td><td><span class="badge new">NEW this turn</span></td><td>Portal Infrastructure (Portal as separate service)</td><td>0</td></tr>
+    <tr><td><strong>53</strong></td><td><span class="badge new">NEW this turn</span></td><td>Portal Grid Approval Workflow</td><td>+3</td></tr>
+    <tr><td><strong>54</strong></td><td><span class="badge new">NEW this turn</span></td><td>Portal Nous Approval Workflow (gates Phase 37)</td><td>+2</td></tr>
+    <tr><td><strong>55</strong></td><td><span class="badge new">NEW this turn</span></td><td>Portal Cross-Grid Framework (dormant v3.0, active v3.1)</td><td>+2</td></tr>
+    <tr><td><strong>56</strong></td><td><span class="badge new">NEW this turn</span></td><td>Portal User Service UI (multi-Grid view)</td><td>0</td></tr>
+    <tr><td><strong>57</strong></td><td><span class="badge new">NEW this turn</span></td><td>Grid Zoning System (6 zones + per-zone rules)</td><td>+2</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Totals:</strong> 24 phases (36-57). Allowlist growth: <strong>56 → 108 (+52 events)</strong>. Plan estimate: ~125. New phases since v3.0 milestone open: <strong>9</strong> (40b, 45b, 51, 52, 53, 54, 55, 56, 57).</p>
+
+<!-- ============================================================ -->
+<h2 id="open-q">14. Open Questions <span class="kr">미결 질문</span></h2>
+
+<p>Questions still open after this canonical architecture. To be resolved during per-phase <code>/gsd-discuss-phase</code> sessions:</p>
+
+<ul>
+  <li><strong>Q-V3-A..J</strong> — pre-existing 10 open questions (P2P stack, Local AI model, IRS rate, Bios cost, Henry's domain, fork target, Police authority, sleep thresholds, cloud LLM, community subgovernance)</li>
+  <li><strong>Q-EXT-1..7</strong> — Type B (Hosted Nous) related questions from RESOURCE-two-nous-types.html</li>
+  <li><strong>Q-EXT-RES-1..7</strong> — Research-identified additional questions</li>
+  <li><strong>Q-V3-PORTAL-1</strong> — Portal authentication model (SIWE / email / OAuth)</li>
+  <li><strong>Q-V3-PORTAL-2</strong> — Portal reviewer panel composition for Grid + Nous approvals</li>
+  <li><strong>Q-V3-ZONE-1</strong> — Per-zone tax rates exact percentages (Polis legislates after Phase 46; v3.0 ships defaults)</li>
+  <li><strong>Q-V3-ZONE-2</strong> — Residential zone — does each Civic-DID holder automatically receive one residence, or do they buy/build?</li>
+  <li><strong>Q-V3-CROSS-1</strong> — Cross-Grid Bios transferability (is Bios in Genesis Polis the same as Bios in Commerce Polis when v3.1 launches?)</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="next">15. Next Actions <span class="kr">다음 단계</span></h2>
+
+<ol>
+  <li><strong>Review this HTML</strong> — confirm the 24-phase plan + 32 locked decisions (D-V3-01..35)</li>
+  <li><strong>I update all source docs atomically</strong> per Documentation Sync Rule:
+    <ul>
+      <li>CIVIC-ARCHITECTURE.md v2.0 → <strong>v3.0</strong> (major rewrite — Portal + Polis + zoning + multi-Grid + gated registration sections)</li>
+      <li>REQUIREMENTS.md — add categories: PORTAL (52-56), POLIS (extend 46), ZONE (57), TYPE-B-* (51), MOBILITY (51)</li>
+      <li>ROADMAP.md — add phases 40b, 45b, 51, 52, 53, 54, 55, 56, 57 (9 new); modify 37, 44, 45, 46 for Portal-gating + zoning + Polis naming</li>
+      <li>PROJECT.md — update Current Milestone block (3-layer architecture, Genesis Grid, Polis)</li>
+      <li>STATE.md — add D-V3-29..35; update Phase Plan Summary 17 → 24 phases</li>
+      <li>MILESTONES.md — extend v3.0 entry with Portal + Polis + zoning concepts</li>
+      <li>README.md — Project Status mentions Portal/Polis/zoning</li>
+      <li>PHILOSOPHY.md §9 — extend to address Polis (per-Grid government) + Portal (cross-Grid meta-layer)</li>
+      <li>CLAUDE.md — note Polis naming convention + 6-zone invariant + new Portal allowlist prefixes</li>
+    </ul>
+  </li>
+  <li><strong>Atomic commit batches</strong>:
+    <ul>
+      <li>Commit 1: this HTML + CIVIC-ARCHITECTURE.md (new v3.0)</li>
+      <li>Commit 2: REQUIREMENTS.md + ROADMAP.md updates</li>
+      <li>Commit 3: PROJECT + STATE + MILESTONES + README + PHILOSOPHY + CLAUDE atomic sync</li>
+    </ul>
+  </li>
+  <li><strong>Push + present</strong> — then ready for <code>/gsd-discuss-phase 36</code></li>
+</ol>
+
+<hr>
+
+<div class="footnote">
+  <p><strong>Document status:</strong> CANONICAL v3.0 visual reference. Supersedes RESOURCE-brains-location.html + RESOURCE-two-nous-types.html (archived).</p>
+  <p><strong>File:</strong> <code>.planning/research/v3.0/ARCHITECTURE-v3.0.html</code></p>
+  <p><strong>Companion docs:</strong> <code>CIVIC-ARCHITECTURE.md</code> (will be rewritten to match), <code>SUPPLEMENT-visit-vs-action.md</code> (still authoritative), <code>RESEARCH-hosted-nous-patterns.md</code> (Type B research foundation).</p>
+  <p><strong>Authored:</strong> Claude (Sonnet 4.6) on 2026-05-25 after 4 user constraints locked Portal scope, Grid count, Polis name, zoning level.</p>
+  <p><strong>32 locked decisions:</strong> D-V3-01..03, 06, 08..15 preserved · D-V3-16..23 first reshape · D-V3-24..28 Type B addition · D-V3-29..35 Portal+Polis+zoning · D-V3-04, 05, 07 re-instated.</p>
+</div>
+
+</div>
+</body>
+</html>

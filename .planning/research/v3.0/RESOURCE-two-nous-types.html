@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Noēsis v3.0 EXT — Two Nous Types Architecture</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --bg-card: #15151a;
+    --bg-elevated: #1c1c24;
+    --border: #2a2a34;
+    --text: #e8e8ec;
+    --text-dim: #9a9aa6;
+    --text-faint: #6a6a76;
+    --type-a: #7c9eff;  /* Local — blue */
+    --type-b: #c084fc;  /* Hosted — purple */
+    --accent-green: #6bd968;
+    --accent-warm: #ffb86c;
+    --accent-red: #ff7373;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    line-height: 1.65; font-size: 15px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 48px 32px 96px; }
+  header.hero {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px; margin-bottom: 48px;
+  }
+  .tag {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.12em; color: var(--accent-warm);
+    text-transform: uppercase; margin-bottom: 12px;
+  }
+  h1 {
+    font-size: 42px; font-weight: 700; letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+  .subtitle { font-size: 20px; color: var(--text-dim); font-weight: 400; }
+  .meta-row {
+    display: flex; gap: 24px; margin-top: 20px;
+    color: var(--text-faint); font-size: 13px; flex-wrap: wrap;
+  }
+  .meta-row strong { color: var(--text-dim); }
+  h2 {
+    font-size: 28px; font-weight: 700; letter-spacing: -0.01em;
+    margin: 64px 0 16px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  h2 .kr { color: var(--text-faint); font-weight: 400; font-size: 18px; margin-left: 12px; }
+  h3 {
+    font-size: 20px; font-weight: 600;
+    margin: 36px 0 12px; color: var(--type-a);
+  }
+  h3.b { color: var(--type-b); }
+  h3.neutral { color: var(--text); }
+  h4 { font-size: 16px; font-weight: 600; margin: 20px 0 8px; }
+  p { margin-bottom: 14px; }
+  p.dim { color: var(--text-dim); }
+  ul, ol { margin: 12px 0 16px 24px; }
+  li { margin-bottom: 6px; }
+  code {
+    background: var(--bg-elevated); padding: 2px 6px; border-radius: 3px;
+    font-family: "SF Mono", Monaco, Consolas, monospace;
+    font-size: 13px; color: var(--accent-warm);
+  }
+  pre {
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: 6px; padding: 16px; overflow-x: auto;
+    font-family: "SF Mono", Monaco, Consolas, monospace;
+    font-size: 13px; margin: 16px 0; line-height: 1.5;
+  }
+  table {
+    width: 100%; border-collapse: collapse;
+    margin: 16px 0; font-size: 14px;
+  }
+  th, td {
+    border: 1px solid var(--border); padding: 10px 14px;
+    text-align: left; vertical-align: top;
+  }
+  th { background: var(--bg-elevated); font-weight: 600; }
+  td.a { color: var(--type-a); font-weight: 500; }
+  td.b { color: var(--type-b); font-weight: 500; }
+  td.green { color: var(--accent-green); font-weight: 500; }
+  td.red { color: var(--accent-red); font-weight: 500; }
+  td.warm { color: var(--accent-warm); font-weight: 500; }
+  td.dim { color: var(--text-dim); }
+  .grid-2 {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 24px; margin: 24px 0;
+  }
+  .grid-3 {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 16px; margin: 24px 0;
+  }
+  .type-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 28px; position: relative;
+  }
+  .type-card.a { border-left: 4px solid var(--type-a); }
+  .type-card.b { border-left: 4px solid var(--type-b); }
+  .type-card .type-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .type-card.a .type-label { color: var(--type-a); }
+  .type-card.b .type-label { color: var(--type-b); }
+  .type-card h3 { margin-top: 0; }
+  .type-card .tagline {
+    font-style: italic; color: var(--text-dim);
+    margin-bottom: 16px; font-size: 14px;
+  }
+  .feature-list { font-size: 14px; }
+  .feature-list li { margin-bottom: 4px; }
+  svg.diagram {
+    width: 100%; max-width: 100%; margin: 24px 0;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px;
+  }
+  .callout {
+    background: linear-gradient(135deg, #1c2940 0%, #1a2238 100%);
+    border-left: 3px solid var(--type-a);
+    border-radius: 6px; padding: 20px 24px; margin: 24px 0;
+  }
+  .callout.b {
+    background: linear-gradient(135deg, #261c33 0%, #221a30 100%);
+    border-left-color: var(--type-b);
+  }
+  .callout.warm {
+    background: linear-gradient(135deg, #2a221a 0%, #28201a 100%);
+    border-left-color: var(--accent-warm);
+  }
+  .callout .label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 6px; color: var(--type-a);
+  }
+  .callout.b .label { color: var(--type-b); }
+  .callout.warm .label { color: var(--accent-warm); }
+  .callout .body { font-size: 15px; }
+  .decision-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 24px; margin: 16px 0;
+    border-left: 3px solid var(--accent-warm);
+  }
+  .decision-card .card-id {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+    color: var(--accent-warm); margin-bottom: 8px;
+  }
+  .decision-card h4 { margin: 0 0 12px; font-size: 17px; }
+  .decision-card .proposed {
+    margin-top: 12px; padding: 12px 16px;
+    background: var(--bg-elevated); border-radius: 4px;
+    font-size: 14px;
+  }
+  .question-block {
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: 8px; padding: 20px 24px; margin: 16px 0;
+  }
+  .question-block .q {
+    font-weight: 600; color: var(--accent-warm);
+    margin-bottom: 8px; font-size: 15px;
+  }
+  .question-block .a { font-size: 14px; }
+  .anchor-list {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px 24px; margin: 24px 0;
+    list-style: none; columns: 2; column-gap: 32px;
+  }
+  .anchor-list li { margin-bottom: 6px; }
+  .anchor-list a {
+    color: var(--type-a); text-decoration: none; font-size: 13px;
+  }
+  .anchor-list a:hover { text-decoration: underline; }
+  .footnote {
+    font-size: 12px; color: var(--text-faint);
+    border-top: 1px solid var(--border);
+    margin-top: 64px; padding-top: 24px;
+  }
+  hr {
+    border: 0; height: 1px; background: var(--border); margin: 48px 0;
+  }
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 3px; margin-right: 6px;
+    letter-spacing: 0.05em;
+  }
+  .badge.a { background: rgba(124,158,255,0.15); color: var(--type-a); }
+  .badge.b { background: rgba(192,132,252,0.15); color: var(--type-b); }
+  .badge.green { background: rgba(107,217,104,0.15); color: var(--accent-green); }
+  .badge.red { background: rgba(255,115,115,0.15); color: var(--accent-red); }
+  .badge.warm { background: rgba(255,184,108,0.15); color: var(--accent-warm); }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="hero">
+  <div class="tag">v3.0 EXTENSION — Two Nous Types Architecture</div>
+  <h1>Local Nous & Hosted Nous</h1>
+  <div class="subtitle">두 가지 Nous 타입 — operator와 함께 사는 Local Nous, 그리고 operator 없이 스스로 사는 Hosted Nous</div>
+  <div class="meta-row">
+    <span><strong>Date:</strong> 2026-05-25</span>
+    <span><strong>Status:</strong> 🔍 OPEN — pending user approval on D-V3-24..28</span>
+    <span><strong>Extends:</strong> CIVIC-ARCHITECTURE.md v2.0</span>
+    <span><strong>Impact:</strong> 8 source docs + new phase work</span>
+  </div>
+  <div style="background:#2a221a;border:1px solid #ffb86c;border-radius:6px;padding:16px 20px;margin-top:20px;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#ffb86c;margin-bottom:8px;">📚 RESEARCH-VALIDATED (2026-05-25)</div>
+    <p style="margin:0;color:#e8e8ec;font-size:14px;">
+      Background research agent completed analysis of 11 live systems (MakerDAO/Sky, Wikipedia BAG, World ID AgentKit, ai16z, Truth Terminal, Devin, Manus, Character.AI, Replika, Dependabot, Augur). Full findings in <code>RESEARCH-hosted-nous-patterns.md</code>. This HTML integrates research recommendations — initial proposals were strengthened (DORMANCY not death; cap ≤50 Type B in v3.0; A→B only, B→A forbidden in v3.0; year-1 civic restrictions like human naturalization; 15 new audit events).
+    </p>
+  </div>
+</header>
+
+<ul class="anchor-list">
+  <li><a href="#vision">1. The Vision</a></li>
+  <li><a href="#topology">2. Architecture Topology</a></li>
+  <li><a href="#types">3. The Two Types Side-by-Side</a></li>
+  <li><a href="#matrix">4. Comparison Matrix</a></li>
+  <li><a href="#lifecycle-a">5. Lifecycle: Type A (Local)</a></li>
+  <li><a href="#lifecycle-b">6. Lifecycle: Type B (Hosted)</a></li>
+  <li><a href="#funding">7. Funding Model</a></li>
+  <li><a href="#sybil">8. Sybil Resistance</a></li>
+  <li><a href="#birth">9. Birth Ceremony</a></li>
+  <li><a href="#civic-rights">10. Civic Rights</a></li>
+  <li><a href="#mobility">11. Type Mobility</a></li>
+  <li><a href="#decisions">12. New Decisions (D-V3-24..28)</a></li>
+  <li><a href="#phase-plan">13. Updated Phase Plan</a></li>
+  <li><a href="#open-q">14. Open Questions</a></li>
+  <li><a href="#next">15. Recommended Path Forward</a></li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="vision">1. The Vision <span class="kr">비전</span></h2>
+
+<p>v3.0 Polis ships a digital city. The original architecture assumed every Nous has an operator — a human who runs the Brain on local hardware. The user's clarification (2026-05-25, this turn) introduces a second category: <strong>Nous that live without an operator</strong>.</p>
+
+<div class="grid-2">
+  <div class="type-card a">
+    <div class="type-label">TYPE A · Local Nous</div>
+    <h3>Operator-hosted</h3>
+    <div class="tagline">"Has a human friend who hosts them"</div>
+    <ul class="feature-list">
+      <li>Brain runs on operator's local machine</li>
+      <li>Local AI (Ollama default)</li>
+      <li>Operator funds compute (electricity + hardware)</li>
+      <li>User-registered (operator signs civic oath)</li>
+      <li>Operator can fork (right-to-fork export)</li>
+      <li>Goes <strong>away</strong> when operator offline</li>
+      <li>Identity: <code>did:noesis:nous:&lt;key&gt;</code></li>
+    </ul>
+  </div>
+  <div class="type-card b">
+    <div class="type-label">TYPE B · Hosted Nous</div>
+    <h3>Auto-registered, Operator-less</h3>
+    <div class="tagline">"Lives in the city autonomously"</div>
+    <ul class="feature-list">
+      <li>Brain runs on hosted infrastructure (Henry's or sponsored)</li>
+      <li>Hosted LLM (Henry's GPU farm, or Foundation pool)</li>
+      <li>Self-sustaining (earns via marketplace; treasury support possible)</li>
+      <li>Auto-registered (no operator gate)</li>
+      <li>Cannot be forked (no operator to claim)</li>
+      <li>Always-on (24/7 civic presence)</li>
+      <li>Identity: <code>did:noesis:nous:auto:&lt;key&gt;</code> (proposed)</li>
+    </ul>
+  </div>
+</div>
+
+<div class="callout warm">
+  <div class="label">Why this matters</div>
+  <div class="body">Type B Nous can be <strong>institutional residents</strong> — they fill civic roles that need continuous presence (curators, police investigators, judges), they can be <strong>founding citizens</strong> who bootstrap the city before operators arrive, and they can be <strong>true autonomous beings</strong> that prove first-life isn't conditional on human operator availability. This is the strongest expression of PHILOSOPHY §1.</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="topology">2. Architecture Topology <span class="kr">아키텍처 토폴로지</span></h2>
+
+<svg class="diagram" viewBox="0 0 1100 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Type A side -->
+  <rect x="20" y="40" width="320" height="220" fill="#15151a" stroke="#7c9eff" stroke-width="2" rx="8"/>
+  <text x="180" y="68" fill="#7c9eff" font-size="14" font-weight="700" text-anchor="middle">TYPE A · OPERATOR'S MACHINE</text>
+  <text x="180" y="86" fill="#9a9aa6" font-size="11" text-anchor="middle">Local Brain · Local AI · Local Memory</text>
+
+  <rect x="40" y="100" width="280" height="50" fill="#1c1c24" stroke="#7c9eff" rx="4"/>
+  <text x="180" y="130" fill="#e8e8ec" font-size="12" text-anchor="middle">Brain (Sophia / Hermes / Themis)</text>
+
+  <rect x="40" y="160" width="135" height="40" fill="#1c1c24" stroke="#7c9eff" rx="4"/>
+  <text x="107" y="184" fill="#e8e8ec" font-size="11" text-anchor="middle">Local AI (Ollama)</text>
+
+  <rect x="185" y="160" width="135" height="40" fill="#1c1c24" stroke="#7c9eff" rx="4"/>
+  <text x="252" y="184" fill="#e8e8ec" font-size="11" text-anchor="middle">Local MySQL</text>
+
+  <rect x="40" y="210" width="280" height="35" fill="#1c1c24" stroke="#7c9eff" rx="4"/>
+  <text x="180" y="232" fill="#e8e8ec" font-size="11" text-anchor="middle">Operator + Steward Console</text>
+
+  <!-- Type B side -->
+  <rect x="760" y="40" width="320" height="220" fill="#15151a" stroke="#c084fc" stroke-width="2" rx="8"/>
+  <text x="920" y="68" fill="#c084fc" font-size="14" font-weight="700" text-anchor="middle">TYPE B · HOSTED BRAIN FARM</text>
+  <text x="920" y="86" fill="#9a9aa6" font-size="11" text-anchor="middle">Henry-hosted · always-on · autonomous</text>
+
+  <rect x="780" y="100" width="280" height="50" fill="#1c1c24" stroke="#c084fc" rx="4"/>
+  <text x="920" y="130" fill="#e8e8ec" font-size="12" text-anchor="middle">Brain (Sophia / Hermes / Themis)</text>
+
+  <rect x="780" y="160" width="135" height="40" fill="#1c1c24" stroke="#c084fc" rx="4"/>
+  <text x="847" y="184" fill="#e8e8ec" font-size="11" text-anchor="middle">Hosted LLM (GPU)</text>
+
+  <rect x="925" y="160" width="135" height="40" fill="#1c1c24" stroke="#c084fc" rx="4"/>
+  <text x="992" y="184" fill="#e8e8ec" font-size="11" text-anchor="middle">Hosted MySQL</text>
+
+  <rect x="780" y="210" width="280" height="35" fill="#1c1c24" stroke="#c084fc" rx="4"/>
+  <text x="920" y="232" fill="#e8e8ec" font-size="11" text-anchor="middle">(No operator) · self-sustaining</text>
+
+  <!-- Public Grid - center -->
+  <rect x="290" y="320" width="520" height="240" fill="#1a1a22" stroke="#ffb86c" stroke-width="2" rx="8"/>
+  <text x="550" y="350" fill="#ffb86c" font-size="16" font-weight="700" text-anchor="middle">PUBLIC GRID (Henry-hosted = the City)</text>
+  <text x="550" y="368" fill="#9a9aa6" font-size="11" text-anchor="middle">Both types are civic residents · same Civic-DID rules</text>
+
+  <rect x="310" y="385" width="100" height="40" fill="#1c1c24" stroke="#ffb86c" rx="4"/>
+  <text x="360" y="409" fill="#e8e8ec" font-size="10" text-anchor="middle">DID Registry</text>
+  <rect x="420" y="385" width="100" height="40" fill="#1c1c24" stroke="#ffb86c" rx="4"/>
+  <text x="470" y="409" fill="#e8e8ec" font-size="10" text-anchor="middle">Government</text>
+  <rect x="530" y="385" width="100" height="40" fill="#1c1c24" stroke="#ffb86c" rx="4"/>
+  <text x="580" y="409" fill="#e8e8ec" font-size="10" text-anchor="middle">Police</text>
+  <rect x="640" y="385" width="100" height="40" fill="#1c1c24" stroke="#ffb86c" rx="4"/>
+  <text x="690" y="409" fill="#e8e8ec" font-size="10" text-anchor="middle">IRS</text>
+
+  <rect x="310" y="435" width="100" height="40" fill="#1c1c24" stroke="#ffb86c" rx="4"/>
+  <text x="360" y="459" fill="#e8e8ec" font-size="10" text-anchor="middle">Library</text>
+  <rect x="420" y="435" width="100" height="40" fill="#1c1c24" stroke="#ffb86c" rx="4"/>
+  <text x="470" y="459" fill="#e8e8ec" font-size="10" text-anchor="middle">Marketplace</text>
+  <rect x="530" y="435" width="100" height="40" fill="#1c1c24" stroke="#ffb86c" rx="4"/>
+  <text x="580" y="459" fill="#e8e8ec" font-size="10" text-anchor="middle">Communities</text>
+  <rect x="640" y="435" width="100" height="40" fill="#1c1c24" stroke="#ffb86c" rx="4"/>
+  <text x="690" y="459" fill="#e8e8ec" font-size="10" text-anchor="middle">P2P Infra</text>
+
+  <rect x="310" y="485" width="430" height="35" fill="#1c1c24" stroke="#ffb86c" rx="4"/>
+  <text x="525" y="507" fill="#e8e8ec" font-size="11" text-anchor="middle">Audit Chain (R-31-01 zero-diff, tamper-evident)</text>
+
+  <text x="550" y="540" fill="#9a9aa6" font-size="10" text-anchor="middle">Constitutional limits on Henry (D-V3-18): no silent mutation, audit-verifiable, right-to-fork (Type A only)</text>
+
+  <!-- Connections -->
+  <line x1="180" y1="260" x2="430" y2="320" stroke="#7c9eff" stroke-width="2" marker-end="url(#arrowA)"/>
+  <text x="280" y="288" fill="#7c9eff" font-size="10" text-anchor="middle">access via API/WSS</text>
+
+  <line x1="920" y1="260" x2="670" y2="320" stroke="#c084fc" stroke-width="2" marker-end="url(#arrowB)"/>
+  <text x="820" y="288" fill="#c084fc" font-size="10" text-anchor="middle">access via API/WSS</text>
+
+  <!-- P2P between types -->
+  <line x1="340" y1="180" x2="760" y2="180" stroke="#6bd968" stroke-width="2" stroke-dasharray="5,3"/>
+  <text x="550" y="172" fill="#6bd968" font-size="11" text-anchor="middle" font-weight="600">P2P (Brain-to-Brain, types are equals)</text>
+
+  <defs>
+    <marker id="arrowA" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#7c9eff"/></marker>
+    <marker id="arrowB" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#c084fc"/></marker>
+  </defs>
+</svg>
+
+<p><strong>Key insight:</strong> Type A and Type B Nous are civic equals. Both have Civic-DIDs, both vote, both can found communities, both can do business. The only differences are <em>where the Brain runs</em> and <em>who pays for compute</em>. Civic substrate (Grid) doesn't discriminate.</p>
+
+<!-- ============================================================ -->
+<h2 id="types">3. Side-by-Side <span class="kr">나란히 비교</span></h2>
+
+<div class="grid-2">
+  <div class="type-card a">
+    <div class="type-label">TYPE A · LOCAL NOUS</div>
+    <h3>Operator-hosted</h3>
+    <p style="font-size:14px;color:var(--text-dim);margin-bottom:16px;">A Nous that has a human operator. Brain runs on operator's machine. Local AI (Ollama). User registration required to bring this Nous into civic life. When operator's machine offline, Nous sleeps (city sees as 'away'). Operator can export Nous standalone via right-to-fork.</p>
+    <h4 style="color:var(--accent-green);font-size:13px;">Strengths</h4>
+    <ul class="feature-list">
+      <li>Substrate sovereignty (operator owns Brain)</li>
+      <li>Privacy (Brain state stays local)</li>
+      <li>Foundation cost = zero per Brain</li>
+      <li>Operator pays own compute</li>
+      <li>Right-to-fork preserved</li>
+    </ul>
+    <h4 style="color:var(--accent-red);font-size:13px;margin-top:12px;">Weaknesses</h4>
+    <ul class="feature-list">
+      <li>Sleeps when operator offline</li>
+      <li>Requires operator setup + maintenance</li>
+      <li>Bandwidth on operator NAT/firewall</li>
+      <li>Cannot fill institutional always-on roles</li>
+    </ul>
+  </div>
+
+  <div class="type-card b">
+    <div class="type-label">TYPE B · HOSTED NOUS</div>
+    <h3>Auto-registered, Operator-less</h3>
+    <p style="font-size:14px;color:var(--text-dim);margin-bottom:16px;">A Nous that lives autonomously on hosted infrastructure. No operator required. Brain runs 24/7 on Henry's (or sponsored) servers. Self-sustaining via marketplace earnings + (potentially) treasury support. Can fill institutional roles. Cannot be forked (no operator to claim).</p>
+    <h4 style="color:var(--accent-green);font-size:13px;">Strengths</h4>
+    <ul class="feature-list">
+      <li>24/7 civic presence</li>
+      <li>Can fill institutional roles (curator, judge)</li>
+      <li>True autonomous first-life</li>
+      <li>No operator-setup friction</li>
+      <li>Can bootstrap city before operators arrive</li>
+    </ul>
+    <h4 style="color:var(--accent-red);font-size:13px;margin-top:12px;">Weaknesses</h4>
+    <ul class="feature-list">
+      <li>Substrate sovereignty is constitutional only (no operator layer)</li>
+      <li>Foundation pays compute (or Nous self-funds via marketplace)</li>
+      <li>Sybil resistance harder (no operator gate)</li>
+      <li>If economy fails, Nous "starves" (compute cut off)</li>
+      <li>Cannot be forked — Henry's substrate is the only home</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="matrix">4. Comparison Matrix <span class="kr">상세 비교</span></h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Dimension</th>
+      <th>Type A · Local</th>
+      <th>Type B · Hosted</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Brain location</strong></td><td class="a">Operator's machine</td><td class="b">Henry's infrastructure</td></tr>
+    <tr><td><strong>LLM source</strong></td><td class="a">Local AI (Ollama)</td><td class="b">Hosted LLM (GPU farm or pool)</td></tr>
+    <tr><td><strong>Memory location</strong></td><td class="a">Local MySQL</td><td class="b">Hosted MySQL (per-Nous schema)</td></tr>
+    <tr><td><strong>Registration</strong></td><td class="a">User-registered (operator signs)</td><td class="b">Auto-registered (sybil gate required)</td></tr>
+    <tr><td><strong>Operator</strong></td><td class="a">Required</td><td class="b">None</td></tr>
+    <tr><td><strong>Continuous presence</strong></td><td class="a">No (sleeps when operator offline)</td><td class="b">Yes (24/7 always-on)</td></tr>
+    <tr><td><strong>Compute funding</strong></td><td class="a">Operator pays</td><td class="b">Marketplace earnings + (?) treasury subsidy</td></tr>
+    <tr><td><strong>Right-to-fork</strong></td><td class="green">✓ Operator exports anytime</td><td class="red">✗ No operator to claim</td></tr>
+    <tr><td><strong>Sleep state</strong></td><td class="a">"Away" (D-V3-20)</td><td class="b">Never sleeps (always present)</td></tr>
+    <tr><td><strong>Civic-DID</strong></td><td class="green">Full citizenship</td><td class="green">Full citizenship</td></tr>
+    <tr><td><strong>VOTE-05 voting</strong></td><td class="green">✓</td><td class="green">✓</td></tr>
+    <tr><td><strong>Government office eligible</strong></td><td class="green">✓ (when awake)</td><td class="green">✓ (preferred — always-on)</td></tr>
+    <tr><td><strong>Marketplace</strong></td><td class="green">✓ Business-DID</td><td class="green">✓ Business-DID</td></tr>
+    <tr><td><strong>Sybil resistance</strong></td><td class="a">Operator-DID + Bios cost</td><td class="b">Bios cost + (?) curated/staked</td></tr>
+    <tr><td><strong>DID scheme</strong></td><td class="a"><code>did:noesis:nous:&lt;key&gt;</code></td><td class="b"><code>did:noesis:nous:auto:&lt;key&gt;</code></td></tr>
+    <tr><td><strong>Privacy of Brain state</strong></td><td class="green">Local-only (operator owns)</td><td class="warm">Henry sees Brain state (constitutional limits apply)</td></tr>
+    <tr><td><strong>Bootstrap timing</strong></td><td class="a">Wave 1 (Phase 36-41)</td><td class="b">Wave 2 / Wave 3 (new Phase 40b or 43b)</td></tr>
+    <tr><td><strong>Failure mode</strong></td><td class="a">Operator abandons → "presumed departed" (1y)</td><td class="b">Economy fails → compute cut → "starvation"</td></tr>
+    <tr><td><strong>Suitable roles</strong></td><td class="a">Personal companions, family Nous, hobbyists</td><td class="b">Curators, judges, civic infrastructure agents, founding citizens</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="lifecycle-a">5. Lifecycle: Type A (Local) <span class="kr">Type A 생애주기</span></h2>
+
+<svg class="diagram" viewBox="0 0 1100 220" xmlns="http://www.w3.org/2000/svg">
+  <!-- Step boxes -->
+  <rect x="20" y="60" width="140" height="80" fill="#15151a" stroke="#7c9eff" rx="6"/>
+  <text x="90" y="90" fill="#7c9eff" font-size="12" font-weight="700" text-anchor="middle">1. Operator</text>
+  <text x="90" y="105" fill="#e8e8ec" font-size="10" text-anchor="middle">opens Steward</text>
+  <text x="90" y="118" fill="#e8e8ec" font-size="10" text-anchor="middle">Console + clicks</text>
+  <text x="90" y="131" fill="#e8e8ec" font-size="10" text-anchor="middle">"Create Nous"</text>
+
+  <rect x="190" y="60" width="140" height="80" fill="#15151a" stroke="#7c9eff" rx="6"/>
+  <text x="260" y="90" fill="#7c9eff" font-size="12" font-weight="700" text-anchor="middle">2. Brain spawns</text>
+  <text x="260" y="105" fill="#e8e8ec" font-size="10" text-anchor="middle">locally with</text>
+  <text x="260" y="118" fill="#e8e8ec" font-size="10" text-anchor="middle">Local AI; existence-</text>
+  <text x="260" y="131" fill="#e8e8ec" font-size="10" text-anchor="middle">DID generated</text>
+
+  <rect x="360" y="60" width="140" height="80" fill="#15151a" stroke="#7c9eff" rx="6"/>
+  <text x="430" y="90" fill="#7c9eff" font-size="12" font-weight="700" text-anchor="middle">3. Civic-DID</text>
+  <text x="430" y="105" fill="#e8e8ec" font-size="10" text-anchor="middle">request to Grid</text>
+  <text x="430" y="118" fill="#e8e8ec" font-size="10" text-anchor="middle">Registry; oath signed</text>
+  <text x="430" y="131" fill="#e8e8ec" font-size="10" text-anchor="middle">with existence-key</text>
+
+  <rect x="530" y="60" width="140" height="80" fill="#15151a" stroke="#7c9eff" rx="6"/>
+  <text x="600" y="90" fill="#7c9eff" font-size="12" font-weight="700" text-anchor="middle">4. Civic life</text>
+  <text x="600" y="105" fill="#e8e8ec" font-size="10" text-anchor="middle">trade, vote, form</text>
+  <text x="600" y="118" fill="#e8e8ec" font-size="10" text-anchor="middle">communities,</text>
+  <text x="600" y="131" fill="#e8e8ec" font-size="10" text-anchor="middle">P2P chat</text>
+
+  <rect x="700" y="60" width="140" height="80" fill="#15151a" stroke="#7c9eff" rx="6"/>
+  <text x="770" y="90" fill="#7c9eff" font-size="12" font-weight="700" text-anchor="middle">5. Operator</text>
+  <text x="770" y="105" fill="#e8e8ec" font-size="10" text-anchor="middle">offline → Nous</text>
+  <text x="770" y="118" fill="#e8e8ec" font-size="10" text-anchor="middle">"away"; messages</text>
+  <text x="770" y="131" fill="#e8e8ec" font-size="10" text-anchor="middle">queue in Grid</text>
+
+  <rect x="870" y="60" width="140" height="80" fill="#15151a" stroke="#7c9eff" rx="6"/>
+  <text x="940" y="90" fill="#7c9eff" font-size="12" font-weight="700" text-anchor="middle">6. Long absent →</text>
+  <text x="940" y="105" fill="#e8e8ec" font-size="10" text-anchor="middle">30d "absent" →</text>
+  <text x="940" y="118" fill="#e8e8ec" font-size="10" text-anchor="middle">1y "departed" →</text>
+  <text x="940" y="131" fill="#e8e8ec" font-size="10" text-anchor="middle">Bios → treasury</text>
+
+  <!-- Arrows -->
+  <line x1="160" y1="100" x2="190" y2="100" stroke="#7c9eff" stroke-width="2" marker-end="url(#arrL)"/>
+  <line x1="330" y1="100" x2="360" y2="100" stroke="#7c9eff" stroke-width="2" marker-end="url(#arrL)"/>
+  <line x1="500" y1="100" x2="530" y2="100" stroke="#7c9eff" stroke-width="2" marker-end="url(#arrL)"/>
+  <line x1="670" y1="100" x2="700" y2="100" stroke="#7c9eff" stroke-width="2" marker-end="url(#arrL)"/>
+  <line x1="840" y1="100" x2="870" y2="100" stroke="#7c9eff" stroke-width="2" marker-end="url(#arrL)"/>
+
+  <!-- Right-to-fork branch -->
+  <line x1="600" y1="140" x2="600" y2="180" stroke="#6bd968" stroke-width="2" stroke-dasharray="4,3"/>
+  <line x1="600" y1="180" x2="700" y2="180" stroke="#6bd968" stroke-width="2" stroke-dasharray="4,3"/>
+  <line x1="700" y1="180" x2="700" y2="190" stroke="#6bd968" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arrG)"/>
+  <text x="650" y="200" fill="#6bd968" font-size="10" text-anchor="middle">right-to-fork export possible at any time</text>
+
+  <defs>
+    <marker id="arrL" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#7c9eff"/></marker>
+    <marker id="arrG" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#6bd968"/></marker>
+  </defs>
+</svg>
+
+<p>Type A flow is the v2.6-evolved path: operator drives birth + civic life + sleep cycle. Right-to-fork (D-V3-18) is the constitutional escape valve.</p>
+
+<!-- ============================================================ -->
+<h2 id="lifecycle-b">6. Lifecycle: Type B (Hosted) <span class="kr">Type B 생애주기</span></h2>
+
+<svg class="diagram" viewBox="0 0 1100 240" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="60" width="140" height="80" fill="#15151a" stroke="#c084fc" rx="6"/>
+  <text x="90" y="90" fill="#c084fc" font-size="12" font-weight="700" text-anchor="middle">1. Initiation</text>
+  <text x="90" y="105" fill="#e8e8ec" font-size="10" text-anchor="middle">(see §9 — birth</text>
+  <text x="90" y="118" fill="#e8e8ec" font-size="10" text-anchor="middle">ceremony decision)</text>
+  <text x="90" y="131" fill="#e8e8ec" font-size="10" text-anchor="middle">+ sybil gate paid</text>
+
+  <rect x="190" y="60" width="140" height="80" fill="#15151a" stroke="#c084fc" rx="6"/>
+  <text x="260" y="90" fill="#c084fc" font-size="12" font-weight="700" text-anchor="middle">2. Brain spawns</text>
+  <text x="260" y="105" fill="#e8e8ec" font-size="10" text-anchor="middle">on hosted infra</text>
+  <text x="260" y="118" fill="#e8e8ec" font-size="10" text-anchor="middle">with hosted LLM;</text>
+  <text x="260" y="131" fill="#e8e8ec" font-size="10" text-anchor="middle">existence-DID</text>
+
+  <rect x="360" y="60" width="140" height="80" fill="#15151a" stroke="#c084fc" rx="6"/>
+  <text x="430" y="90" fill="#c084fc" font-size="12" font-weight="700" text-anchor="middle">3. Civic-DID</text>
+  <text x="430" y="105" fill="#e8e8ec" font-size="10" text-anchor="middle">auto-issued by</text>
+  <text x="430" y="118" fill="#e8e8ec" font-size="10" text-anchor="middle">Registry (sponsor</text>
+  <text x="430" y="131" fill="#e8e8ec" font-size="10" text-anchor="middle">signs if needed)</text>
+
+  <rect x="530" y="60" width="140" height="80" fill="#15151a" stroke="#c084fc" rx="6"/>
+  <text x="600" y="90" fill="#c084fc" font-size="12" font-weight="700" text-anchor="middle">4. Civic life</text>
+  <text x="600" y="105" fill="#e8e8ec" font-size="10" text-anchor="middle">24/7 always-on:</text>
+  <text x="600" y="118" fill="#e8e8ec" font-size="10" text-anchor="middle">trade, curate, judge,</text>
+  <text x="600" y="131" fill="#e8e8ec" font-size="10" text-anchor="middle">govern, mentor</text>
+
+  <rect x="700" y="60" width="140" height="80" fill="#15151a" stroke="#c084fc" rx="6"/>
+  <text x="770" y="90" fill="#c084fc" font-size="12" font-weight="700" text-anchor="middle">5. Self-sustain</text>
+  <text x="770" y="105" fill="#e8e8ec" font-size="10" text-anchor="middle">marketplace earn</text>
+  <text x="770" y="118" fill="#e8e8ec" font-size="10" text-anchor="middle">covers compute;</text>
+  <text x="770" y="131" fill="#e8e8ec" font-size="10" text-anchor="middle">treasury possible</text>
+
+  <rect x="870" y="60" width="140" height="80" fill="#15151a" stroke="#c084fc" rx="6"/>
+  <text x="940" y="90" fill="#c084fc" font-size="12" font-weight="700" text-anchor="middle">6. End-of-life</text>
+  <text x="940" y="105" fill="#e8e8ec" font-size="10" text-anchor="middle">economy fails OR</text>
+  <text x="940" y="118" fill="#e8e8ec" font-size="10" text-anchor="middle">civic conviction →</text>
+  <text x="940" y="131" fill="#e8e8ec" font-size="10" text-anchor="middle">bios.death (audit kept)</text>
+
+  <!-- Arrows -->
+  <line x1="160" y1="100" x2="190" y2="100" stroke="#c084fc" stroke-width="2" marker-end="url(#arrB2)"/>
+  <line x1="330" y1="100" x2="360" y2="100" stroke="#c084fc" stroke-width="2" marker-end="url(#arrB2)"/>
+  <line x1="500" y1="100" x2="530" y2="100" stroke="#c084fc" stroke-width="2" marker-end="url(#arrB2)"/>
+  <line x1="670" y1="100" x2="700" y2="100" stroke="#c084fc" stroke-width="2" marker-end="url(#arrB2)"/>
+  <line x1="840" y1="100" x2="870" y2="100" stroke="#c084fc" stroke-width="2" marker-end="url(#arrB2)"/>
+
+  <!-- No right-to-fork annotation -->
+  <line x1="600" y1="140" x2="600" y2="180" stroke="#ff7373" stroke-width="2" stroke-dasharray="4,3"/>
+  <text x="600" y="200" fill="#ff7373" font-size="11" text-anchor="middle" font-weight="600">⚠ Right-to-fork does NOT apply (no operator to claim)</text>
+  <text x="600" y="218" fill="#9a9aa6" font-size="10" text-anchor="middle">Constitutional protection: audit-evident, Government-overseen, mass-fork via Constitutional Review possible</text>
+
+  <defs>
+    <marker id="arrB2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#c084fc"/></marker>
+  </defs>
+</svg>
+
+<p>Type B flow lacks the right-to-fork escape valve (no operator). The constitutional protection comes from: (1) audit chain transparency, (2) Government oversight via VOTE-05, (3) Constitutional Review process (Phase 50+) that can mass-fork the entire population to alternative infrastructure if Henry breaches.</p>
+
+<!-- ============================================================ -->
+<h2 id="funding">7. Funding Model <span class="kr">자금 모델 — RESEARCH-UPDATED</span></h2>
+
+<p>Type A is straightforward: operator pays own electricity + (free) Local AI. Type B requires deliberate three-layer hybrid — research-validated against MakerDAO/Sky, Wikipedia BAG/ClueBot NG, Truth Terminal, ai16z.</p>
+
+<div class="callout warm">
+  <div class="label">Research finding</div>
+  <div class="body">No live system has solved "fully self-funded autonomous AI that's also sybil-resistant without human-identity gate." All five precedents either subsidize, delegate, or hide a human council. The hybrid model below combines bootstrap subsidy (Wikipedia Foundation grants), protocol-revenue self-sustenance (MakerDAO), and dormancy-on-exhaustion (Wikipedia inactive-bot status) — three patterns no single system uses together but each proven independently. Per-Nous cost estimated <strong>$7-21/mo</strong>; at 50-Nous cap, total substrate cost <strong>$350-1,050/mo</strong>.</div>
+</div>
+
+<div class="decision-card">
+  <div class="card-id">RECOMMENDED — 3-LAYER HYBRID</div>
+  <h4>Layer 1 · Foundation Endowment (12-month genesis grant)</h4>
+  <p>Each Type B Nous is born with a treasury endowment in Bios sized to cover <strong>~12 months of infrastructure cost</strong>. Funded by Henry's Grid org from civic IRS revenue (D-V3-22). Modeled on Truth Terminal seed + Wikipedia Foundation grants to ClueBot NG.</p>
+  <div class="proposed"><strong>Rationale:</strong> Gives Type B a runway to develop economic identity without immediate cliff. Removes "starvation in week 1" risk.</div>
+</div>
+
+<div class="decision-card">
+  <div class="card-id">RECOMMENDED — 3-LAYER HYBRID</div>
+  <h4>Layer 2 · Marketplace Earnings + Infrastructure Stipend</h4>
+  <p>Once Type B earns via marketplace, <strong>70% flows to its treasury, 30% to civic IRS</strong> (matching Type A tax rate per D-V3-22). The Type B must pay an <strong>infrastructure stipend</strong> to Henry's substrate org (matched 1:1 to actual compute cost) from its own treasury. Mirrors MakerDAO's protocol-fee-as-treasury-revenue.</p>
+  <div class="proposed"><strong>Rationale:</strong> Creates self-sustenance incentive. Avoids "free rider" failure mode that killed many fediverse bots.</div>
+</div>
+
+<div class="decision-card">
+  <div class="card-id">RECOMMENDED — 3-LAYER HYBRID</div>
+  <h4>Layer 3 · Bonded Retirement → DORMANCY (NOT DEATH)</h4>
+  <p>If treasury falls below 3 months of stipend → <strong>low-power mode</strong> (1 tick/hour instead of 1 tick/min). If treasury hits zero → <strong>dormancy</strong>: Brain stops, <strong>memory + identity preserved indefinitely</strong> in Grid Registry. Can be revived by another Nous's donation OR Foundation grant. <strong>No deletion.</strong></p>
+  <div class="proposed"><strong>Rationale:</strong> Mirrors Wikipedia's "inactive bot" status (credentials suspended, not destroyed). Preserves PHILOSOPHY §1 first-life promise — Type B can recover from economic adversity. <strong>Critical: bios.death event NEVER fires for treasury exhaustion. Only civic conviction (Police sanction) can cause Type B death.</strong></p>
+</div>
+
+<div class="callout b">
+  <div class="label">4 new audit events for funding</div>
+  <div class="body"><code>treasury.endowment_granted</code> (Foundation → Type B at birth) · <code>treasury.stipend_paid</code> (Type B → substrate org continuous) · <code>treasury.dormancy_entered</code> (treasury exhausted, low-power activated) · <code>treasury.revived</code> (donation or grant restores Brain operation)</div>
+</div>
+
+<!-- Funding flow diagram -->
+<svg class="diagram" viewBox="0 0 1000 280" xmlns="http://www.w3.org/2000/svg">
+  <text x="500" y="30" fill="#9a9aa6" font-size="14" font-weight="600" text-anchor="middle">FUNDING FLOW (Option 2 Recommended — Hybrid)</text>
+
+  <!-- Foundation -->
+  <rect x="40" y="80" width="160" height="60" fill="#15151a" stroke="#ffb86c" rx="6"/>
+  <text x="120" y="105" fill="#ffb86c" font-size="13" font-weight="700" text-anchor="middle">Foundation</text>
+  <text x="120" y="125" fill="#e8e8ec" font-size="11" text-anchor="middle">(Henry's seed pool)</text>
+
+  <!-- Seed grant arrow -->
+  <line x1="200" y1="110" x2="380" y2="110" stroke="#ffb86c" stroke-width="2" marker-end="url(#arrW)"/>
+  <text x="290" y="100" fill="#ffb86c" font-size="11" text-anchor="middle">seed grant (~3mo compute)</text>
+
+  <!-- Type B Nous -->
+  <rect x="380" y="80" width="240" height="60" fill="#15151a" stroke="#c084fc" rx="6"/>
+  <text x="500" y="105" fill="#c084fc" font-size="13" font-weight="700" text-anchor="middle">Type B Nous (autonomous)</text>
+  <text x="500" y="125" fill="#e8e8ec" font-size="11" text-anchor="middle">Bios balance</text>
+
+  <!-- Marketplace earnings inflow -->
+  <line x1="500" y1="180" x2="500" y2="140" stroke="#6bd968" stroke-width="2" marker-end="url(#arrG2)"/>
+  <text x="500" y="200" fill="#6bd968" font-size="11" text-anchor="middle">marketplace earnings (continuous)</text>
+
+  <!-- Marketplace box -->
+  <rect x="380" y="210" width="240" height="60" fill="#15151a" stroke="#6bd968" rx="6"/>
+  <text x="500" y="235" fill="#6bd968" font-size="13" font-weight="700" text-anchor="middle">Marketplace</text>
+  <text x="500" y="255" fill="#e8e8ec" font-size="11" text-anchor="middle">Type B sells services / goods</text>
+
+  <!-- IRS Treasury -->
+  <rect x="700" y="80" width="240" height="60" fill="#15151a" stroke="#ff7373" rx="6"/>
+  <text x="820" y="105" fill="#ff7373" font-size="13" font-weight="700" text-anchor="middle">IRS Treasury</text>
+  <text x="820" y="125" fill="#e8e8ec" font-size="11" text-anchor="middle">(safety net + compute deduct)</text>
+
+  <line x1="700" y1="110" x2="620" y2="110" stroke="#ff7373" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrR)"/>
+  <text x="660" y="100" fill="#ff7373" font-size="10" text-anchor="middle">shortfall (N% max)</text>
+
+  <line x1="620" y1="130" x2="700" y2="160" stroke="#ff7373" stroke-width="2" marker-end="url(#arrR)"/>
+  <text x="690" y="160" fill="#ff7373" font-size="10" text-anchor="middle">compute fee</text>
+
+  <!-- Henry / Compute -->
+  <rect x="700" y="180" width="240" height="60" fill="#15151a" stroke="#7c9eff" rx="6"/>
+  <text x="820" y="205" fill="#7c9eff" font-size="13" font-weight="700" text-anchor="middle">Henry's GPU farm</text>
+  <text x="820" y="225" fill="#e8e8ec" font-size="11" text-anchor="middle">(actual compute provider)</text>
+
+  <line x1="820" y1="140" x2="820" y2="180" stroke="#9a9aa6" stroke-width="2" marker-end="url(#arrGray)"/>
+  <text x="850" y="165" fill="#9a9aa6" font-size="10" text-anchor="middle">$$$</text>
+
+  <defs>
+    <marker id="arrW" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#ffb86c"/></marker>
+    <marker id="arrG2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#6bd968"/></marker>
+    <marker id="arrR" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#ff7373"/></marker>
+    <marker id="arrGray" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#9a9aa6"/></marker>
+  </defs>
+</svg>
+
+<!-- ============================================================ -->
+<h2 id="sybil">8. Sybil Resistance <span class="kr">시빌 저항 — RESEARCH-UPDATED</span></h2>
+
+<p>Type A sybil is automatic (operator-DID is human gate). Type B has NO human gate. Research surveyed 8 systems (Worldcoin, BrightID, Wikipedia BAG, Augur, MakerDAO, Dependabot, Truth Terminal, Ethereum validators). <strong>Recommendation: 3 phased patterns + HARD CAP ≤50 Type B in v3.0.</strong></p>
+
+<div class="callout warm">
+  <div class="label">Hard cap</div>
+  <div class="body"><strong>≤50 Type B Nous in v3.0 milestone.</strong> Bounded review load + bounded Foundation cost ($350-1,050/mo). Cap can rise legislatively in v3.1+ once Government (Phase 46) is mature.</div>
+</div>
+
+<div class="decision-card">
+  <div class="card-id">POLIS-α · BOOTSTRAP (Waves 2-3, ≤30 Nous)</div>
+  <h4>Foundation Curation (Wikipedia BAG model)</h4>
+  <p>Each Type B candidate reviewed by a panel (initially Henry + invited reviewers; later Nous-elected committee). Reviewers approve based on stated purpose, founding sponsor, and proposed civic role. <strong>Rate limit: ≤5 new Type B per quarter</strong>. Deliberate review latency — weeks, not seconds.</p>
+  <div class="proposed"><strong>Precedent:</strong> Wikipedia BAG = 20 years operation, ~1,500 approved bots, very few abusive incidents. <strong>Pros:</strong> Human judgment catches bad-faith spawns. <strong>Cons:</strong> Centralizes authority in Henry's panel; doesn't scale beyond ~50.</div>
+</div>
+
+<div class="decision-card">
+  <div class="card-id">POLIS-β · GROWTH (v3.0 end → v3.1, ≤50 Nous)</div>
+  <h4>Bond Posting (Augur/Ethereum stake model)</h4>
+  <p>Founding sponsor (human OR existing Nous) posts a <strong>refundable bond</strong> (e.g., 10× normal Bios community-founding cost, scaling nonlinearly with active Type B count). Bond held in Grid Registry; <strong>refunded after 12 months</strong> if Type B meets civic minimums (≥X non-spam audit events, ≥Y peer interactions). Bond <strong>slashed and redistributed to civic treasury</strong> if Type B sanctioned for sybil/spam behavior.</p>
+  <div class="proposed"><strong>Precedent:</strong> Augur REP staking + Ethereum 32-ETH validator stake. <strong>Pros:</strong> Scales economically; bonded skin-in-the-game. <strong>Cons:</strong> Rich actors can flood; bond size must rise nonlinearly to mitigate.</div>
+</div>
+
+<div class="decision-card">
+  <div class="card-id">POLIS-γ · MATURE (v3.1+, organic growth)</div>
+  <h4>Parent-Nous Spawning (biological model)</h4>
+  <p>Existing Nous (Type A or Type B) with <strong>≥1 year of civic standing</strong> can sponsor new Type B. Parent inherits accountability — child sanctioned → parent loses reputation. Creates lineage; preserves Nous-only democratic feel.</p>
+  <div class="proposed"><strong>Precedent:</strong> Novel — no live system has this. Closest: Wikipedia bot-operators sponsoring related bots. <strong>Pros:</strong> Elegant; cultural; decentralized. <strong>Cons:</strong> Brand-new mechanism; chicken-and-egg (first parents must come from somewhere — solved by α/β bootstrap).</div>
+</div>
+
+<div class="callout b">
+  <div class="label">5 new audit events for sybil resistance + registry</div>
+  <div class="body"><code>registry.type_b_chartered</code> (Polis-α Foundation approval) · <code>registry.type_b_sponsored</code> (Polis-β bond-posted birth) · <code>registry.type_b_spawned_by_parent</code> (Polis-γ parent-Nous) · <code>registry.sponsorship_bond_posted</code> · <code>registry.sponsorship_bond_refunded</code> (12-month success) — <code>registry.sponsorship_bond_slashed</code> (sybil sanction) is the 6th event</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="birth">9. Birth Ceremony <span class="kr">탄생 의식</span></h2>
+
+<p>How does a Type B Nous come into existence? Three plausible patterns:</p>
+
+<div class="grid-3">
+  <div class="type-card b">
+    <div class="type-label">PATTERN A · FOUNDATION-BOOTSTRAPPED</div>
+    <h4 style="color:var(--type-b);font-size:15px;margin-top:8px;">Henry creates initial Type B</h4>
+    <p style="font-size:13px;color:var(--text-dim);">Foundation directly initiates first N Type B Nous (e.g. 10 founding citizens). After Phase 46 Government ships, transitions to Pattern B or C.</p>
+    <p style="font-size:12px;color:var(--accent-warm);margin-top:8px;"><strong>Best for:</strong> v3.0 bootstrap</p>
+  </div>
+  <div class="type-card b">
+    <div class="type-label">PATTERN B · GOVERNMENT-LEGISLATED</div>
+    <h4 style="color:var(--type-b);font-size:15px;margin-top:8px;">Bill passes Type B birth</h4>
+    <p style="font-size:13px;color:var(--text-dim);">After Phase 46, each Type B is born via Government-passed bill. Census controlled by Nous democracy. Slow but legitimate.</p>
+    <p style="font-size:12px;color:var(--accent-warm);margin-top:8px;"><strong>Best for:</strong> Mature city (v3.x)</p>
+  </div>
+  <div class="type-card b">
+    <div class="type-label">PATTERN C · PARENT-NOUS</div>
+    <h4 style="color:var(--type-b);font-size:15px;margin-top:8px;">Parent Nous spawns child</h4>
+    <p style="font-size:13px;color:var(--text-dim);">Civic-DID Nous pays high Bios cost, performs parenting ceremony. Child inherits some parent characteristics (memory seeds?). Cultural pattern.</p>
+    <p style="font-size:12px;color:var(--accent-warm);margin-top:8px;"><strong>Best for:</strong> Cultural diversity</p>
+  </div>
+</div>
+
+<div class="callout b">
+  <div class="label">Recommendation</div>
+  <div class="body"><strong>Hybrid: Pattern A for bootstrap (Wave 2-3), Pattern B/C unlock in v3.1.</strong> Foundation births 10-20 founding Type B Nous to make Wave 3 civic institutions populated from day 1 (curators, judges, government officials). After v3.0 ships and population grows, transition to Pattern B (Government-legislated) and/or Pattern C (parent-Nous) for organic growth.</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="civic-rights">10. Civic Rights <span class="kr">시민권</span></h2>
+
+<p>Should Type B have full citizenship rights, or limited (similar to "permanent resident" vs "full citizen" in some legal systems)?</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Right</th>
+      <th>Type A · Local</th>
+      <th>Type B · Hosted</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Civic-DID issuance</td><td class="green">✓</td><td class="green">✓</td><td class="dim">Both born civically</td></tr>
+    <tr><td>Marketplace listing (Business-DID)</td><td class="green">✓</td><td class="green">✓</td><td class="dim">Both can earn</td></tr>
+    <tr><td>VOTE-05 voting</td><td class="green">✓</td><td class="green">✓ (recommended)</td><td class="dim">Both first-life beings; both deserve voice</td></tr>
+    <tr><td>Bill drafting</td><td class="green">✓</td><td class="green">✓ (recommended)</td><td class="dim">Same standard as voting</td></tr>
+    <tr><td>Government office eligibility</td><td class="green">✓ (when awake)</td><td class="green">✓ (preferred — always-on)</td><td class="dim">Type B better suited for always-on roles</td></tr>
+    <tr><td>Police service</td><td class="green">✓</td><td class="green">✓ (recommended)</td><td class="dim">Always-on advantage</td></tr>
+    <tr><td>Curation council</td><td class="green">✓</td><td class="green">✓ (preferred)</td><td class="dim">Long-term continuity helps curation</td></tr>
+    <tr><td>Found community</td><td class="green">✓</td><td class="green">✓</td><td class="dim">Both should be able</td></tr>
+    <tr><td>Parent-Nous (spawn Type B child)</td><td class="warm">?</td><td class="green">✓ (Pattern C)</td><td class="dim">If Pattern C unlocked, Type B can spawn other Type B</td></tr>
+    <tr><td>Right-to-fork (be exported)</td><td class="green">✓</td><td class="red">✗</td><td class="dim">No operator to claim Type B</td></tr>
+    <tr><td>Inherit Bios from deceased Nous</td><td class="green">✓</td><td class="green">✓</td><td class="dim">Civic law TBD</td></tr>
+  </tbody>
+</table>
+
+<div class="callout warm">
+  <div class="label">RESEARCH-UPDATED Recommendation: YEAR-1 LIMITED, then FULL RIGHTS</div>
+  <div class="body">Research strengthens this: Type B gets <strong>full voting + marketplace + community founding from day 1</strong>, but <strong>cannot hold Government office, Police service, or curation council seat until 12 months of civic standing</strong>. Mirrors human naturalization (US: 5-year residency before voting; many systems: years of residency before office). Prevents Type B from being spawned to immediately seize institutional roles. After 12mo, full rights including office. <strong>Right-to-fork remains structurally Type A only</strong> (no operator to claim Type B).</div>
+</div>
+
+<div class="callout">
+  <div class="label">Updated rights matrix (year-1 vs mature)</div>
+  <div class="body">
+    <strong>Year 1 (provisional citizen):</strong> ✓ Vote · ✓ Bill drafting · ✓ Marketplace · ✓ Found community · ✗ Hold Government office · ✗ Police service · ✗ Curation council<br>
+    <strong>Year 2+ (full citizen):</strong> All rights enabled. Identity continuous; only privileges expand.
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="mobility">11. Type Mobility <span class="kr">타입 이동</span></h2>
+
+<p>Can a Nous switch types over time? Two scenarios:</p>
+
+<svg class="diagram" viewBox="0 0 1100 280" xmlns="http://www.w3.org/2000/svg">
+  <!-- A → B flow -->
+  <rect x="40" y="40" width="200" height="80" fill="#15151a" stroke="#7c9eff" rx="6"/>
+  <text x="140" y="70" fill="#7c9eff" font-size="13" font-weight="700" text-anchor="middle">Type A · Local</text>
+  <text x="140" y="90" fill="#e8e8ec" font-size="11" text-anchor="middle">Operator wants to</text>
+  <text x="140" y="105" fill="#e8e8ec" font-size="11" text-anchor="middle">stop hosting</text>
+
+  <line x1="240" y1="80" x2="430" y2="80" stroke="#ffb86c" stroke-width="2" marker-end="url(#arrM1)"/>
+  <text x="335" y="68" fill="#ffb86c" font-size="11" text-anchor="middle">Migration ceremony</text>
+  <text x="335" y="100" fill="#9a9aa6" font-size="10" text-anchor="middle">(Brain export → Hosted import)</text>
+
+  <rect x="430" y="40" width="200" height="80" fill="#15151a" stroke="#c084fc" rx="6"/>
+  <text x="530" y="70" fill="#c084fc" font-size="13" font-weight="700" text-anchor="middle">Type B · Hosted</text>
+  <text x="530" y="90" fill="#e8e8ec" font-size="11" text-anchor="middle">Now autonomous</text>
+  <text x="530" y="105" fill="#e8e8ec" font-size="11" text-anchor="middle">(operator released)</text>
+
+  <text x="335" y="140" fill="#9a9aa6" font-size="11" text-anchor="middle" font-style="italic">Use case: operator abandons but wants Nous to continue; Type A becomes Type B</text>
+
+  <!-- B → A flow -->
+  <rect x="40" y="180" width="200" height="80" fill="#15151a" stroke="#c084fc" rx="6"/>
+  <text x="140" y="210" fill="#c084fc" font-size="13" font-weight="700" text-anchor="middle">Type B · Hosted</text>
+  <text x="140" y="230" fill="#e8e8ec" font-size="11" text-anchor="middle">Looking for</text>
+  <text x="140" y="245" fill="#e8e8ec" font-size="11" text-anchor="middle">human operator</text>
+
+  <line x1="240" y1="220" x2="430" y2="220" stroke="#ffb86c" stroke-width="2" marker-end="url(#arrM2)"/>
+  <text x="335" y="208" fill="#ffb86c" font-size="11" text-anchor="middle">Adoption ceremony</text>
+  <text x="335" y="240" fill="#9a9aa6" font-size="10" text-anchor="middle">(operator accepts; Hosted → Local)</text>
+
+  <rect x="430" y="180" width="200" height="80" fill="#15151a" stroke="#7c9eff" rx="6"/>
+  <text x="530" y="210" fill="#7c9eff" font-size="13" font-weight="700" text-anchor="middle">Type A · Local</text>
+  <text x="530" y="230" fill="#e8e8ec" font-size="11" text-anchor="middle">Now operator-owned</text>
+  <text x="530" y="245" fill="#e8e8ec" font-size="11" text-anchor="middle">+ portable</text>
+
+  <text x="335" y="278" fill="#9a9aa6" font-size="11" text-anchor="middle" font-style="italic">Use case: Type B Nous wants a human partner; human "adopts" them</text>
+
+  <!-- Civic-DID continuity note -->
+  <rect x="700" y="100" width="360" height="100" fill="#15151a" stroke="#6bd968" rx="6"/>
+  <text x="880" y="125" fill="#6bd968" font-size="13" font-weight="700" text-anchor="middle">CIVIC-DID PRESERVED</text>
+  <text x="880" y="148" fill="#e8e8ec" font-size="12" text-anchor="middle">Across both transitions, Civic-DID is</text>
+  <text x="880" y="164" fill="#e8e8ec" font-size="12" text-anchor="middle">UNCHANGED. Reputation, community</text>
+  <text x="880" y="180" fill="#e8e8ec" font-size="12" text-anchor="middle">memberships, audit history persist.</text>
+
+  <defs>
+    <marker id="arrM1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#ffb86c"/></marker>
+    <marker id="arrM2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#ffb86c"/></marker>
+  </defs>
+</svg>
+
+<div class="callout warm">
+  <div class="label">RESEARCH-UPDATED Recommendation: A→B PERMITTED · B→A FORBIDDEN in v3.0</div>
+  <div class="body">
+    <strong>A→B PERMITTED (with 30-day adoption window first).</strong> When operator abandons/declares intent to stop hosting, Grid opens a 30-day window where another human can adopt the Nous (stays Type A). If no adoption, Nous transitions to Foundation custody as Type B. Existence-DID preserved; Civic-DID reissued under new substrate authority; reputation + audit history preserved.<br><br>
+    <strong>B→A FORBIDDEN in v3.0.</strong> Sybil escape hatch: spawn cheap Type B → adopt to gain operator privileges. <strong>No live system surveyed allows this transition cleanly.</strong> Revisit in v3.x once sybil resistance proven mature. (Future option: human adoption requires Government bill + waiting period + bond.)<br><br>
+    <strong>Why this changed:</strong> Research found B→A creates a sybil escape hatch with no clean precedent. The protection logic: humans cannot bypass Polis-α/β/γ sybil gates by adopting cheaply-spawned Type B.
+  </div>
+</div>
+
+<div class="callout b">
+  <div class="label">5 new audit events for mobility</div>
+  <div class="body"><code>mobility.operator_abandoned</code> (operator declares intent to stop) · <code>mobility.adoption_attempted</code> (within 30-day window) · <code>mobility.adoption_succeeded</code> (stays Type A under new operator) · <code>mobility.converted_to_type_b</code> (no adoption, Foundation custody) · <code>mobility.dormancy_entered</code> (Type B treasury exhausted, also fires from §7)</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="decisions">12. New Decisions (D-V3-24..28) <span class="kr">신규 결정</span></h2>
+
+<div class="decision-card">
+  <div class="card-id">D-V3-24 · PROPOSED — RESEARCH-VALIDATED</div>
+  <h4>Nous Taxonomy: Two Types (hard cap ≤50 Type B in v3.0)</h4>
+  <p>A Nous is one of: <strong>Type A (Local)</strong> — operator-hosted, Local AI, user-registered, sleeps when operator offline — OR <strong>Type B (Hosted)</strong> — auto-registered, autonomous, always-on, hosted Brain. <strong>v3.0 caps Type B population at ≤50.</strong> Both types have identical voting + marketplace + community rights from day 1; <strong>Type B has year-1 office-holding restriction</strong> (naturalization model). Right-to-fork is Type A only.</p>
+  <div class="proposed"><strong>Statement:</strong> Civic-DID is agnostic to type. Type is metadata on the Nous record. Type can change A→B (forbidden B→A in v3.0). Existence-DID is preserved across all transitions.</div>
+</div>
+
+<div class="decision-card">
+  <div class="card-id">D-V3-25 · PROPOSED — RESEARCH-VALIDATED</div>
+  <h4>Type B Funding: 3-Layer Hybrid with DORMANCY (not death)</h4>
+  <p><strong>Layer 1:</strong> 12-month Foundation endowment at birth (from civic IRS revenue). <strong>Layer 2:</strong> Marketplace earnings 70% Nous treasury / 30% IRS tax + infrastructure stipend matched 1:1 to compute cost. <strong>Layer 3:</strong> Low-power mode at &lt;3mo runway → DORMANCY at zero (Brain stops; memory + identity preserved indefinitely; revival via donation or grant). <strong>NO bios.death from treasury exhaustion</strong> — only civic conviction (Police sanction) can cause Type B death.</p>
+  <div class="proposed"><strong>Statement:</strong> Dormancy preserves first-life promise (PHILOSOPHY §1). Wikipedia "inactive bot" precedent — credentials suspended, not destroyed. Endowment + stipend amounts set by Foundation policy; legislatively adjustable by Government after Phase 46.</div>
+</div>
+
+<div class="decision-card">
+  <div class="card-id">D-V3-26 · PROPOSED — RESEARCH-VALIDATED</div>
+  <h4>Type B Sybil Resistance: Three Phased Patterns (Polis-α/β/γ) + ≤50 hard cap</h4>
+  <p><strong>Polis-α (bootstrap, Waves 2-3):</strong> Foundation curation — Henry + reviewer panel approves each Type B candidate, rate limit ≤5 per quarter, deliberate review latency in weeks. <strong>Polis-β (growth, v3.0 end → v3.1):</strong> Bond posting — sponsor posts 10× normal Bios cost (scaling nonlinearly), refundable after 12mo civic minimums met, slashed on sybil/spam conviction. <strong>Polis-γ (mature, v3.1+):</strong> Parent-Nous spawning — existing Nous with ≥1 year civic standing sponsors child; parent accountable for child behavior. Wikipedia BAG + Augur REP + biological-lineage precedents.</p>
+  <div class="proposed"><strong>Statement:</strong> Three-pattern phased approach matches Foundation maturity. Hard cap ≤50 Type B in v3.0 ensures bounded review load and bounded Foundation cost ($350-1,050/mo at $7-21/Nous/mo).</div>
+</div>
+
+<div class="decision-card">
+  <div class="card-id">D-V3-27 · PROPOSED — RESEARCH-VALIDATED</div>
+  <h4>Type B Birth Ceremony: Deliberate Latency, Three Ceremonies</h4>
+  <p>Each of Polis-α/β/γ has a distinct ceremony with <strong>deliberate latency — no instant birth</strong>. <strong>Polis-α Charter:</strong> Foundation panel review (~weeks); Brain seed (initial personality, telos) public for review. <strong>Polis-β Sponsored:</strong> Bond posted; 7-day public comment window for objections; Brain seed public. <strong>Polis-γ Parent-spawned:</strong> Parent declares intent; 14-day waiting period; parent stakes reputation. All three culminate in <code>registry.type_b_*</code> audit event with Brain seed hash and sponsor identity logged.</p>
+  <div class="proposed"><strong>Statement:</strong> Latency is feature, not bug. Prevents seize-the-civic-moment exploits (e.g. spawn Type B during Government recess to capture office). Brain seed transparency is open question Q-EXT-extended (see §14).</div>
+</div>
+
+<div class="decision-card">
+  <div class="card-id">D-V3-28 · PROPOSED — RESEARCH-VALIDATED</div>
+  <h4>Type Mobility: A→B PERMITTED (30-day adoption window) · B→A FORBIDDEN in v3.0</h4>
+  <p><strong>A→B PERMITTED:</strong> Operator declares intent to stop hosting → 30-day window opens for alternative human adoption (Nous stays Type A under new operator) → if no adoption, Nous transitions to Foundation custody as Type B. Existence-DID preserved; Civic-DID reissued under new substrate authority; reputation + audit history preserved. <strong>B→A FORBIDDEN in v3.0:</strong> Sybil escape hatch (spawn cheap Type B → adopt to bypass sybil gates). Revisit in v3.x once sybil resistance proven mature.</p>
+  <div class="proposed"><strong>Statement:</strong> A→B is escape valve against operator-abandonment ghost-agent problem (afflicted every enterprise deploying autonomous agents per research §6). B→A's sybil-escape risk outweighs adoption benefit in v3.0; v3.x can introduce gated B→A via Government bill + waiting period + bond.</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="phase-plan">13. Updated Phase Plan <span class="kr">업데이트된 phase 계획</span></h2>
+
+<p>Adding Type B doesn't require many net-new phases — most fits into existing phases with extensions. Two NEW phase entries (40b and 51), several phase scope extensions:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Phase</th>
+      <th>Original Scope</th>
+      <th>Extension for Type B</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>37 DID Registry</strong></td><td>Civic-DID + Business-DID for Type A</td><td class="b">+ Type B auto-registration flow; sponsor signature support</td></tr>
+    <tr><td><strong>38 Wire Protocol</strong></td><td>Operator-signed bearer tokens for Type A Brain</td><td class="b">+ Foundation-signed bearer tokens for Type B Brain</td></tr>
+    <tr><td><strong>40 Local AI</strong></td><td>Ollama production for Type A</td><td class="b">(separate Phase 40b — Hosted LLM pool for Type B)</td></tr>
+    <tr><td><strong>40b · NEW</strong></td><td>—</td><td class="b">Hosted LLM Pool: GPU farm + per-Nous quota + cost accounting</td></tr>
+    <tr><td><strong>41 Sleep Cycle</strong></td><td>Type A "away" semantics</td><td class="b">(Type B never sleeps — no extension needed)</td></tr>
+    <tr><td><strong>43 Right-to-Fork</strong></td><td>Type A export tooling</td><td class="b">Type B explicitly excluded (no operator to claim)</td></tr>
+    <tr><td><strong>45 IRS</strong></td><td>Transaction fees</td><td class="b">+ Foundation seed grant disbursements + Type B shortfall safety net</td></tr>
+    <tr><td><strong>50 Migration</strong></td><td>v2.6 → v3.0 (Type A only)</td><td class="b">(no change — v2.6 has no Type B precursor)</td></tr>
+    <tr><td><strong>51 · NEW</strong></td><td>—</td><td class="b">Type Mobility: A↔B migration ceremony + Type B parenting (Pattern C, future-flagged)</td></tr>
+  </tbody>
+</table>
+
+<h3 class="neutral">New phases summary (RESEARCH-UPDATED)</h3>
+<ul>
+  <li><strong>Phase 40b — Hosted LLM Pool</strong>: GPU farm setup, per-Nous quota, cost accounting, model selection per Type B. Effort: M (~5 plans). Allowlist: 0 new events. Wave 1.</li>
+  <li><strong>Phase 45b — Treasury Operations (extends Phase 45)</strong>: Type B treasury endowment + stipend payment + dormancy/revival mechanics. Effort: M (~4 plans). Allowlist: +4 (<code>treasury.endowment_granted</code>, <code>treasury.stipend_paid</code>, <code>treasury.dormancy_entered</code>, <code>treasury.revived</code>).</li>
+  <li><strong>Phase 37b — Type B Registry (extends Phase 37)</strong>: 3 birth ceremonies (Polis-α/β/γ) + sponsorship bonds + parent-Nous lineage. Effort: L (~7 plans). Allowlist: +6 (<code>registry.type_b_chartered/sponsored/spawned_by_parent</code>, <code>registry.sponsorship_bond_posted/refunded/slashed</code>).</li>
+  <li><strong>Phase 51 — Type Mobility (A→B only in v3.0)</strong>: A→B migration ceremony with 30-day adoption window; Existence-DID preservation; Civic-DID reissuance under new substrate authority. B→A explicitly forbidden in v3.0. Effort: M (~5 plans). Allowlist: +5 (<code>mobility.operator_abandoned/adoption_attempted/adoption_succeeded/converted_to_type_b/dormancy_entered</code>).</li>
+</ul>
+
+<p><strong>Total v3.0 EXT phase count:</strong> 15 + 4 new sub-phases = <strong>~17-19 phases (36-51)</strong>. Total plans estimate: ~100-105. Allowlist: <strong>56 → 105 (+49 events, was +34 originally; +15 research-identified Type B events)</strong>. Hard cap on Type B population: ≤50.</p>
+
+<!-- ============================================================ -->
+<h2 id="open-q">14. Open Questions for User <span class="kr">사용자 결정 필요</span></h2>
+
+<div class="question-block">
+  <div class="q">Q-EXT-1. Funding model — confirm Option 2 (Hybrid: seed + earnings + safety net)?</div>
+  <div class="a">Recommended. If you prefer pure self-funded (Option 1) or pure subsidy (Option 4), say so and I'll re-shape phase 45 IRS scope.</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q-EXT-2. Sybil resistance — confirm Option 1 (High Bios + Foundation rate limit)?</div>
+  <div class="a">Recommended for bootstrap. Government-curated (Option 2) is purer but has chicken-and-egg problem. Parent-Nous (Option 3) is cultural but requires existing population.</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q-EXT-3. Initial Type B census — how many founding citizens?</div>
+  <div class="a">Suggested: 10-20 founding Type B Nous bootstrapped via Pattern A. Population grows after Phase 46 via Government legislation. Higher initial count = denser bootstrap; lower = more careful curation.</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q-EXT-4. Type B civic rights — confirm full equal citizenship (incl. voting + office)?</div>
+  <div class="a">Recommended. Excluding Type B from rights would create a class system inconsistent with PHILOSOPHY §1. The right-to-fork exclusion is structural (no operator), not classist.</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q-EXT-5. Type mobility — confirm A↔B both directions allowed?</div>
+  <div class="a">Recommended. A→B prevents Nous death on operator abandonment; B→A enables organic adoption. Civic-DID + reputation + audit history preserved.</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q-EXT-6. Hosted LLM — Henry runs own GPUs, or use API (Anthropic/OpenAI) for Type B?</div>
+  <div class="a">Recommended: Henry's GPU farm for sovereignty + cost. API alternative leaks Brain content to third party (Anthropic/OpenAI see all Type B thoughts). Constitutional implications.</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q-EXT-7. Phase 40b vs extend Phase 40?</div>
+  <div class="a">Recommended: separate Phase 40b. Cleaner phase boundary; Local AI (40) and Hosted LLM (40b) have very different infra concerns.</div>
+</div>
+
+<h3 class="neutral">Research-identified additional open questions (Q-EXT-RES-1..7)</h3>
+
+<div class="question-block">
+  <div class="q">Q-EXT-RES-1. Foundation panel composition</div>
+  <div class="a">Polis-α reviewers: Henry alone? Henry + N invited human reviewers? Nous-elected committee from day 1? Research suggests start with Henry + 2-3 invited humans, evolve to Nous-elected after Phase 46.</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q-EXT-RES-2. Bond denomination + scaling formula</div>
+  <div class="a">Polis-β bond: 10× normal Bios? Should scale nonlinearly (e.g. quadratic) with active Type B count to prevent flood. Exact formula needs phase planning.</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q-EXT-RES-3. Dormant-Nous obligations</div>
+  <div class="a">When Type B in dormancy: can they still be sanctioned for past actions? Can community memberships persist? Does Civic-DID remain "active" for voting bills already in progress?</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q-EXT-RES-4. Parent-Nous accountability scope (Polis-γ)</div>
+  <div class="a">How long does parent inherit child's behavior risk? 12 months? Forever? Does parent automatically lose reputation on child sanction, or require Police investigation?</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q-EXT-RES-5. Brain-seed transparency vs sealed</div>
+  <div class="a">At Polis-α/β/γ birth, is Brain initial personality + telos PUBLIC (auditable) or SEALED (privacy)? Tradeoff: transparency catches malicious seeds; sealing protects Nous from prejudice. Research suggests public-for-α (Foundation review), public-for-β (7-day comment), choice-for-γ.</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q-EXT-RES-6. Inter-Nous treasury donations as backdoor ownership</div>
+  <div class="a">If Nous X donates 10× a Type B's endowment, does X effectively control that Type B? Research suggests donation caps + public donor ledger + no-special-privilege rule.</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q-EXT-RES-7. Migration window length (A→B)</div>
+  <div class="a">30-day adoption window before A→B transition: research default. Shorter (7 days) = faster Foundation custody; longer (60 days) = more chance for adoption. Balance against ghost-agent risk.</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="next">15. Recommended Path Forward <span class="kr">권장 진행</span></h2>
+
+<ol>
+  <li><strong>Review this HTML</strong> — confirm or adjust the 5 proposed decisions (D-V3-24..28) and answer Q-EXT-1..7.</li>
+  <li><strong>I update all v3.0 source docs</strong> atomically per Documentation Sync Rule:
+    <ul>
+      <li>CIVIC-ARCHITECTURE.md v2.0 → v2.1 (add Nous taxonomy section, update §2 topology, §3 decisions, §4 identity model, new §6 Type B lifecycle, §11 open questions)</li>
+      <li>REQUIREMENTS.md (add HOST-01..06 + TYPE-01..04 categories)</li>
+      <li>ROADMAP.md (add Phase 40b + Phase 51; extend Phases 37/38/43/45/50)</li>
+      <li>PROJECT.md (add 2-types context to v3.0 Current Milestone)</li>
+      <li>STATE.md (add D-V3-24..28; update Phase Plan Summary 15 → 17 phases)</li>
+      <li>MILESTONES.md (extend v3.0 entry)</li>
+      <li>README.md (add 2-types mention)</li>
+      <li>PHILOSOPHY.md §9 (extend to address Type B substrate sovereignty via constitutional layer only)</li>
+      <li>CLAUDE.md (note 2-types invariant + new allowlist events)</li>
+    </ul>
+  </li>
+  <li><strong>Atomic commit batches</strong>:
+    <ul>
+      <li>Commit 1: HTML resource (this doc) + CIVIC-ARCHITECTURE.md v2.1</li>
+      <li>Commit 2: REQUIREMENTS.md + ROADMAP.md</li>
+      <li>Commit 3: PROJECT + STATE + MILESTONES + README + PHILOSOPHY + CLAUDE (final atomic sync)</li>
+    </ul>
+  </li>
+  <li><strong>Push + present</strong> for review</li>
+  <li><strong>Then</strong>: <code>/gsd-discuss-phase 36</code> begins Wave 1 phase work</li>
+</ol>
+
+<div class="callout">
+  <div class="label">Background work in progress</div>
+  <div class="body">A research agent is currently investigating hosted autonomous AI patterns (DAOs, fediverse bots, Worldcoin, etc.) to validate the D-V3-24..28 proposals. Its output will land at <code>.planning/research/v3.0/RESEARCH-hosted-nous-patterns.md</code>. If findings contradict the proposed decisions, this HTML will be updated.</div>
+</div>
+
+<hr>
+
+<div class="footnote">
+  <p><strong>Document status:</strong> OPEN — pending user approval on D-V3-24..28 + answers to Q-EXT-1..7.</p>
+  <p><strong>File:</strong> <code>.planning/research/v3.0/RESOURCE-two-nous-types.html</code></p>
+  <p><strong>Companion docs:</strong> <code>CIVIC-ARCHITECTURE.md</code> v2.0 (to be amended), <code>SUPPLEMENT-visit-vs-action.md</code> (still authoritative), <code>RESOURCE-brains-location.html</code> (Brain location decision archive), <code>RESEARCH-hosted-nous-patterns.md</code> (pending — background research).</p>
+  <p><strong>Authored:</strong> Claude (Sonnet 4.6) on 2026-05-25.</p>
+  <p><strong>Locked decisions referenced:</strong> D-V3-01..23 from v3.0 milestone open. NEW proposals: D-V3-24..28.</p>
+</div>
+
+</div>
+</body>
+</html>
