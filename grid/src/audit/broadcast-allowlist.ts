@@ -21,11 +21,12 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36) — exactly these 60 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37) — exactly these 64 event types.
  *  Phase 27 (CHAT-04): +1 human.spoke at position 52.
  *  Phase 28 (SPAWN-04): +1 nous.spawned_by_human at position 53.
  *  Phase 33 (OBS-08..10): +3 portal.auth.login, portal.auth.register, human.identified (positions 54-56).
  *  Phase 36 (VIS-05): +4 portal.did_issued, portal.did_revoked, grid.recognition_granted, grid.recognition_revoked (positions 57-60).
+ *  Phase 37 (REG-06): +4 registry.civic_did_issued, registry.civic_did_revoked, registry.business_did_registered, registry.business_did_dissolved (positions 61-64).
  *  v1 (Phase 1, per 01-CONTEXT.md): 10 events.
  *  Phase 5 (REV-02): +1 'trade.reviewed' — externally observable reviewer verdict;
  *  payload shape D-03, 3 keys on pass / 5 keys on fail, all privacy-clean (see D-12 test).
@@ -236,6 +237,21 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'portal.did_revoked',       // (58) {human_or_nous_did, revoked_at_tick, revoker_portal_id}
     'grid.recognition_granted', // (59) {granted_at_tick, grid_name, nous_did}
     'grid.recognition_revoked', // (60) {grid_name, nous_did, revoked_at_tick}
+    // Phase 37 (REG-06) — DID Registry lifecycle events. Allowlist 60 → 64.
+    // 'registry.civic_did_issued': closed 4-key {civic_did, existence_did, grid_name, issued_at_tick}.
+    //   Emitted ONLY via appendRegistryCivicDidIssued (grid/src/audit/append-registry-civic-did-issued.ts).
+    // 'registry.civic_did_revoked': closed 4-key {civic_did, court_conviction_ref_hash, grid_name, revoked_at_tick}.
+    //   Emitted ONLY via appendRegistryCivicDidRevoked (grid/src/audit/append-registry-civic-did-revoked.ts).
+    //   court_conviction_ref is HASHED in audit (HEX64); plaintext lives in civic_did_registry table only.
+    // 'registry.business_did_registered': closed 4-key {business_did, civic_did, grid_name, registered_at_tick}.
+    //   Emitted ONLY via appendRegistryBusinessDidRegistered (grid/src/audit/append-registry-business-did-registered.ts).
+    //   business_name and category NOT in audit payload (privacy — business_did_registry table only).
+    // 'registry.business_did_dissolved': closed 4-key {business_did, civic_did, dissolved_at_tick, grid_name}.
+    //   Emitted ONLY via appendRegistryBusinessDidDissolved (grid/src/audit/append-registry-business-did-dissolved.ts).
+    'registry.civic_did_issued',        // (61) {civic_did, existence_did, grid_name, issued_at_tick}
+    'registry.civic_did_revoked',       // (62) {civic_did, court_conviction_ref_hash, grid_name, revoked_at_tick}
+    'registry.business_did_registered', // (63) {business_did, civic_did, grid_name, registered_at_tick}
+    'registry.business_did_dissolved',  // (64) {business_did, civic_did, dissolved_at_tick, grid_name}
 ] as const;
 
 /**
@@ -440,6 +456,9 @@ export const WHISPER_FORBIDDEN_KEYS = Object.freeze([
 ] as const);
 
 // Phase 36 review (2026-05-25): all 5 new VIS-05 producer payloads reviewed; none contain forbidden keys. 13-key set preserved.
+// Phase 37 review: all 4 new REG-06 producer payloads reviewed; none contain forbidden keys.
+//   court_conviction_ref_hash is HEX64 hash only; business_name/category live in DB, not audit.
+//   13-key PORTAL_AUTH_FORBIDDEN_KEYS preserved unchanged.
 /**
  * Phase 33 (OBS-10 / D-33-B3): portal-auth-leaf keys that MUST NOT appear in any
  * portal.auth.* or human.identified payload. PII (IP, User-Agent, email plaintext,
