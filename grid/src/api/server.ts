@@ -317,6 +317,14 @@ export interface GridServices {
      * Production wiring passes the live GridCoordinator from GenesisLauncher.
      */
     coordinator?: WireCoordinator;
+    /**
+     * Phase 38 WIRE-03/WIRE-04: Brain event ingest store for offline replay dedup.
+     * When present, POST /api/v1/brain/events/batch uses INSERT IGNORE to deduplicate
+     * replayed events before dispatching to NousRunner.
+     * When absent, the batch endpoint dispatches without dedup (test/unit mode only).
+     * Production wiring passes new BrainEventIngestStore({gridName, pool}) from GenesisLauncher.
+     */
+    brainEventIngestStore?: import('../db/stores/brain-event-ingest-store.js').BrainEventIngestStore;
 }
 
 /**
