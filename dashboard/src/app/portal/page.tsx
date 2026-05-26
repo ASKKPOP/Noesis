@@ -1,555 +1,147 @@
-'use client';
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { COPY } from '../../lib/portal-copy.js';
+import type { VisitorTier } from '../../lib/visitor-tier.js';
+
+export const metadata: Metadata = { title: COPY.PAGE_TITLE };
 
 /**
- * Portal home — Genesis Grid dashboard.
- * Overview of the Grid's current state, quick navigation, and status.
+ * Portal landing page — v3.0 Polis visitor entry.
+ *
+ * Accepts an optional `tier` prop for direct rendering in tests (Plan 01 Wave 0 tests
+ * pass tier="anonymous" to the default export). In Next.js App Router production,
+ * a parent server action or middleware would resolve the tier; Phase 36 defaults to
+ * 'anonymous' when no tier is provided (Phase 56 wires real server-side cookie read).
+ *
+ * D-36-16: Three-tier visitor model — anonymous / human_visitor / civic_member.
+ * D-36-22: TOS copy verbatim — "By entering Genesis Grid, you agree to the Grid Charter and the Laws of Themis."
+ * D-36-25: Footer shows GRID HEALTH + UPTIME only (no ACTIVE NODES / PACKETS/S).
  */
+export default function PortalLandingPage({ tier = 'anonymous', displayName }: { tier?: VisitorTier; displayName?: string }) {
+    // Resolve banner copy + CTA from tier
+    let bannerText: string;
+    let ctaLabel: string | null = null;
+    let ctaHref: string | null = null;
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useAccount } from 'wagmi';
-import { useHumanAuthStore } from '@/lib/stores/human-auth-store';
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-interface NousRosterEntry {
-    did: string;
-    name: string;
-    region: string;
-    status: string;
-}
-
-// ── Data ─────────────────────────────────────────────────────────────────────
-
-const SECTIONS = [
-    {
-        href: '/worldmap',
-        label: 'Cyber World Map',
-        desc: '22×22 isometric city — districts, data packets, pan & zoom.',
-        icon: '◈',
-        phase: null,
-    },
-    {
-        href: '/nous',
-        label: 'Nous Monitor',
-        desc: 'Live agent activity stream with real-time event log.',
-        icon: '◉',
-        phase: null,
-    },
-    {
-        href: '/portal/profile',
-        label: 'Profile',
-        desc: 'Your identity in the Genesis Grid.',
-        icon: '◈',
-        phase: null,
-    },
-    {
-        href: '/portal/wallet',
-        label: 'Wallet',
-        desc: 'Cyber Coin balance and transactions.',
-        icon: '◎',
-        phase: null,
-    },
-    {
-        href: '/portal/chat',
-        label: 'Chat with Nous',
-        desc: 'Speak directly with the Grid agents.',
-        icon: '◇',
-        phase: 'P26',
-    },
-    {
-        href: '/portal/my-nous',
-        label: 'My Nous',
-        desc: 'Spawn and manage your own agent.',
-        icon: '◆',
-        phase: 'P27',
-    },
-    {
-        href: '/portal/community',
-        label: 'Community',
-        desc: 'The Agora — public Grid discourse.',
-        icon: '○',
-        phase: 'P28',
-    },
-    {
-        href: '/portal/leaderboard',
-        label: 'Leaderboard',
-        desc: 'Rankings by participation and reputation.',
-        icon: '△',
-        phase: 'P28',
-    },
-    {
-        href: '/portal/glossary',
-        label: 'Glossary',
-        desc: 'Terms and concepts of the Genesis Grid.',
-        icon: '▽',
-        phase: null,
-    },
-    {
-        href: '/portal/help',
-        label: 'Help & FAQ',
-        desc: 'Guides, support, and onboarding.',
-        icon: '□',
-        phase: null,
-    },
-];
-
-const KNOWN_AGENTS = [
-    { name: 'Sophia', role: 'Philosopher', color: '#bf00ff' },
-    { name: 'Hermes', role: 'Trader',      color: '#ffd700' },
-    { name: 'Themis', role: 'Lawkeeper',   color: '#ff4400' },
-];
-
-const UPDATES = [
-    { date: 'May 2026', text: 'Phase 22 live — Human Portal & SIWE authentication launched.' },
-    { date: 'May 2026', text: 'Phase 23 live — Cyber Coin Wallet and human.transferred event.' },
-    { date: 'Coming',   text: 'Phase 24 — Portal Shell: region presence, mobile layout, live Grid stats.' },
-    { date: 'Coming',   text: 'Phase 26 — Direct dialogue with Nous agents planned.' },
-];
-
-// ── Component ─────────────────────────────────────────────────────────────────
-
-export default function PortalDashboard() {
-    const { address, isConnected } = useAccount();
-    const { currentUser } = useHumanAuthStore();
-
-    const [liveNous, setLiveNous] = useState<NousRosterEntry[]>([]);
-    const [currentTick, setCurrentTick] = useState<number | null>(null);
-
-    useEffect(() => {
-        const gridBase = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
-        async function fetchStats() {
-            const [nousRes, statusRes] = await Promise.allSettled([
-                fetch(`${gridBase}/api/v1/grid/nous`, { credentials: 'include' }),
-                fetch(`${gridBase}/api/v1/grid/status`, { credentials: 'include' }),
-            ]);
-            if (nousRes.status === 'fulfilled' && nousRes.value.ok) {
-                const data = await nousRes.value.json() as { nous: NousRosterEntry[] };
-                setLiveNous(data.nous);
-            }
-            if (statusRes.status === 'fulfilled' && statusRes.value.ok) {
-                const data = await statusRes.value.json() as { tick: number };
-                setCurrentTick(data.tick);
-            }
-        }
-        void fetchStats();
-        const id = setInterval(() => void fetchStats(), 15_000);
-        return () => clearInterval(id);
-    }, []);
-
-    const greeting = currentUser
-        ? 'Welcome back.'
-        : 'Welcome to the Genesis Grid.';
+    if (tier === 'anonymous') {
+        bannerText = COPY.ANONYMOUS_BANNER;
+        ctaLabel = COPY.SIGN_UP_CTA;
+        ctaHref = '/auth';
+    } else if (tier === 'human_visitor') {
+        bannerText = COPY.HUMAN_VISITOR_BANNER.replace('{display_name}', displayName ?? 'visitor');
+        ctaLabel = COPY.APPLY_CIVIC_CTA;
+        ctaHref = '/apply/genesis';
+    } else {
+        // civic_member
+        bannerText = COPY.CIVIC_MEMBER_BANNER.replace('{display_name}', displayName ?? 'citizen');
+    }
 
     return (
-        <div style={{ padding: '36px 40px', maxWidth: 960 }}>
-
-            {/* ── Header ── */}
-            <div style={{ marginBottom: 8 }}>
-                <span style={{
-                    fontFamily: 'var(--mono-portal)',
-                    fontSize: 9,
-                    fontWeight: 600,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    color: 'var(--muted)',
-                }}>
-                    Grid · v2.5
-                </span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 6, flexWrap: 'wrap', gap: 12 }}>
-                <h1 style={{
-                    fontFamily: 'var(--serif)',
-                    fontSize: 36,
-                    fontWeight: 600,
-                    color: 'var(--ink)',
-                    letterSpacing: '0.01em',
-                    lineHeight: 1.1,
-                }}>
-                    Genesis Grid
+        <main className="bg-[#0a0a0c] min-h-screen px-8 py-9 max-w-[960px] mx-auto">
+            {/* Hero section */}
+            <section className="mb-12">
+                <small className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#f472b6]">
+                    {COPY.HERO_TAGLINE}
+                </small>
+                <h1 className="text-[34px] font-normal leading-tight text-[#e8e8ec] mt-2 mb-3" style={{ fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
+                    {COPY.HERO_H1}
                 </h1>
+                <p className="text-xl text-[#9a9aa6] leading-snug mb-6">
+                    {COPY.HERO_SUBTITLE}
+                </p>
 
-                {/* Live indicator */}
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    background: 'rgba(74,222,128,0.06)',
-                    border: '1px solid rgba(74,222,128,0.20)',
-                    borderRadius: 4,
-                    padding: '5px 12px',
-                    marginBottom: 4,
-                }}>
-                    <span style={{
-                        width: 6, height: 6,
-                        borderRadius: '50%',
-                        background: '#4ade80',
-                        boxShadow: '0 0 6px #4ade80',
-                        flexShrink: 0,
-                    }} />
-                    <span style={{
-                        fontFamily: 'var(--mono-portal)',
-                        fontSize: 10,
-                        letterSpacing: '0.10em',
-                        color: '#4ade80',
-                    }}>
-                        ALL SYSTEMS LIVE
-                    </span>
-                </div>
-            </div>
-
-            <p style={{
-                fontFamily: 'var(--sans-portal)',
-                fontSize: 14,
-                color: 'var(--muted)',
-                marginBottom: 32,
-            }}>
-                {greeting}
-                {isConnected && address && (
-                    <span style={{
-                        marginLeft: 8,
-                        fontFamily: 'var(--mono-portal)',
-                        fontSize: 12,
-                        color: 'var(--bronze)',
-                    }}>
-                        {address.slice(0, 6)}…{address.slice(-4)}
-                    </span>
-                )}
-            </p>
-
-            {/* ── Stats row ── */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                gap: 12,
-                marginBottom: 36,
-            }}>
-                {/* Active Nous */}
-                <div className="noesis-stat-card">
-                    <div style={{ fontFamily: 'var(--mono-portal)', fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
-                        Active Nous
-                    </div>
-                    <div style={{ fontFamily: 'var(--serif)', fontSize: 28, fontWeight: 600, color: 'var(--ink)', lineHeight: 1, marginBottom: 4 }}>
-                        {liveNous.length > 0 ? liveNous.length : (currentTick !== null ? '0' : '—')}
-                    </div>
-                    <div style={{ fontFamily: 'var(--sans-portal)', fontSize: 12, color: 'var(--muted)', opacity: 0.8 }}>
-                        {liveNous.length > 0
-                            ? liveNous.map(n => n.name).join(' · ')
-                            : (currentTick !== null ? 'Grid online' : 'Grid offline')}
-                    </div>
-                </div>
-
-                {/* Current Tick */}
-                <div className="noesis-stat-card">
-                    <div style={{ fontFamily: 'var(--mono-portal)', fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
-                        Current Tick
-                    </div>
-                    <div style={{ fontFamily: 'var(--serif)', fontSize: 28, fontWeight: 600, color: 'var(--ink)', lineHeight: 1, marginBottom: 4 }}>
-                        {currentTick !== null ? currentTick.toLocaleString() : '—'}
-                    </div>
-                    <div style={{ fontFamily: 'var(--sans-portal)', fontSize: 12, color: 'var(--muted)', opacity: 0.8 }}>
-                        {currentTick !== null ? 'Grid live' : 'Grid offline'}
-                    </div>
-                </div>
-
-                {/* Version */}
-                <div className="noesis-stat-card">
-                    <div style={{ fontFamily: 'var(--mono-portal)', fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
-                        Version
-                    </div>
-                    <div style={{ fontFamily: 'var(--serif)', fontSize: 28, fontWeight: 600, color: 'var(--ink)', lineHeight: 1, marginBottom: 4 }}>
-                        v2.5
-                    </div>
-                    <div style={{ fontFamily: 'var(--sans-portal)', fontSize: 12, color: 'var(--muted)', opacity: 0.8 }}>
-                        Portal Shell
-                    </div>
-                </div>
-            </div>
-
-            {/* ── Main grid: sections + sidebar ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 32, alignItems: 'start' }}>
-
-                {/* Left — section cards */}
-                <div>
-                    <div style={{
-                        fontFamily: 'var(--mono-portal)',
-                        fontSize: 9,
-                        fontWeight: 600,
-                        letterSpacing: '0.14em',
-                        textTransform: 'uppercase',
-                        color: 'var(--muted)',
-                        marginBottom: 12,
-                    }}>
-                        Portal Sections
-                    </div>
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-                        gap: 10,
-                    }}>
-                        {SECTIONS.map(s => {
-                            const soon = !!s.phase;
-                            return (
-                                <Link
-                                    key={s.href}
-                                    href={s.href}
-                                    aria-disabled={soon ? true : undefined}
-                                    tabIndex={soon ? -1 : undefined}
-                                    style={{
-                                        display: 'block',
-                                        background: 'var(--parchment)',
-                                        border: '1px solid var(--rule)',
-                                        borderRadius: 10,
-                                        padding: '14px 16px',
-                                        textDecoration: 'none',
-                                        opacity: soon ? 0.55 : 1,
-                                        pointerEvents: soon ? 'none' : 'auto',
-                                        transition: 'border-color 0.15s, box-shadow 0.15s',
-                                    }}
-                                    className={soon ? '' : 'portal-section-card'}
-                                >
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                                        <span style={{
-                                            fontFamily: 'var(--serif)',
-                                            fontSize: 16,
-                                            fontWeight: 600,
-                                            color: 'var(--ink)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 8,
-                                        }}>
-                                            <span style={{ color: 'var(--terracotta)', fontSize: 12 }}>{s.icon}</span>
-                                            {s.label}
-                                        </span>
-                                        {s.phase && (
-                                            <span style={{
-                                                fontFamily: 'var(--mono-portal)',
-                                                fontSize: 9,
-                                                letterSpacing: '0.10em',
-                                                color: 'rgba(11,18,32,0.30)',
-                                                background: 'rgba(11,18,32,0.05)',
-                                                padding: '1px 6px',
-                                                borderRadius: 2,
-                                            }}>
-                                                {s.phase}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div style={{
-                                        fontFamily: 'var(--sans-portal)',
-                                        fontSize: 12,
-                                        color: 'var(--muted)',
-                                        lineHeight: 1.4,
-                                    }}>
-                                        {s.desc}
-                                    </div>
-                                </Link>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Right — sidebar */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-                    {/* Nous agents */}
-                    <div>
-                        <div style={{
-                            fontFamily: 'var(--mono-portal)',
-                            fontSize: 9,
-                            fontWeight: 600,
-                            letterSpacing: '0.14em',
-                            textTransform: 'uppercase',
-                            color: 'var(--muted)',
-                            marginBottom: 10,
-                        }}>
-                            Nous Agents
-                        </div>
-                        <div className="noesis-card">
-                            {KNOWN_AGENTS.map((agent, i) => {
-                                const isLive = liveNous.some(n => n.name === agent.name && n.status === 'active');
-                                return (
-                                    <div key={agent.name} className="noesis-card-row" style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 12,
-                                        padding: '11px 16px',
-                                    }}>
-                                        <span style={{
-                                            width: 8, height: 8,
-                                            borderRadius: '50%',
-                                            background: isLive ? agent.color : 'rgba(200,192,184,0.28)',
-                                            boxShadow: isLive ? `0 0 6px ${agent.color}88` : 'none',
-                                            flexShrink: 0,
-                                        }} />
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{
-                                                fontFamily: 'var(--serif)',
-                                                fontSize: 14,
-                                                fontWeight: 600,
-                                                color: 'var(--ink)',
-                                            }}>
-                                                {agent.name}
-                                            </div>
-                                            <div style={{
-                                                fontFamily: 'var(--sans-portal)',
-                                                fontSize: 11,
-                                                color: 'var(--muted)',
-                                            }}>
-                                                {agent.role}
-                                            </div>
-                                        </div>
-                                        <span style={{
-                                            fontFamily: 'var(--mono-portal)',
-                                            fontSize: 8,
-                                            letterSpacing: '0.12em',
-                                            color: isLive ? '#4ade80' : 'rgba(200,192,184,0.55)',
-                                            textTransform: 'uppercase',
-                                        }}>
-                                            {isLive ? 'live' : 'offline'}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Grid updates */}
-                    <div>
-                        <div style={{
-                            fontFamily: 'var(--mono-portal)',
-                            fontSize: 9,
-                            fontWeight: 600,
-                            letterSpacing: '0.14em',
-                            textTransform: 'uppercase',
-                            color: 'var(--muted)',
-                            marginBottom: 10,
-                        }}>
-                            Grid Updates
-                        </div>
-                        <div className="noesis-card">
-                            {UPDATES.map((u, i) => (
-                                <div key={i} style={{
-                                    padding: '12px 16px',
-                                    borderBottom: i < UPDATES.length - 1 ? '1px solid var(--rule)' : 'none',
-                                }}>
-                                    <div style={{
-                                        fontFamily: 'var(--mono-portal)',
-                                        fontSize: 9,
-                                        letterSpacing: '0.10em',
-                                        color: 'var(--bronze)',
-                                        marginBottom: 4,
-                                        textTransform: 'uppercase',
-                                    }}>
-                                        {u.date}
-                                    </div>
-                                    <div style={{
-                                        fontFamily: 'var(--sans-portal)',
-                                        fontSize: 12,
-                                        color: 'var(--ink)',
-                                        lineHeight: 1.5,
-                                        opacity: 0.85,
-                                    }}>
-                                        {u.text}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* World map CTA */}
-                    <Link href="/grid" style={{
-                        display: 'block',
-                        background: 'var(--navy)',
-                        borderRadius: 6,
-                        padding: '18px 20px',
-                        textDecoration: 'none',
-                        position: 'relative',
-                        overflow: 'hidden',
-                    }}>
-                        <div style={{
-                            fontFamily: 'var(--mono-portal)',
-                            fontSize: 9,
-                            letterSpacing: '0.14em',
-                            textTransform: 'uppercase',
-                            color: 'rgba(0,212,255,0.55)',
-                            marginBottom: 6,
-                        }}>
-                            Live View
-                        </div>
-                        <div style={{
-                            fontFamily: 'var(--serif)',
-                            fontSize: 18,
-                            fontWeight: 600,
-                            color: '#f5f0e8',
-                            marginBottom: 4,
-                        }}>
-                            World Map
-                        </div>
-                        <div style={{
-                            fontFamily: 'var(--sans-portal)',
-                            fontSize: 12,
-                            color: 'rgba(200,192,184,0.55)',
-                            lineHeight: 1.4,
-                        }}>
-                            Live isometric view of the Genesis Grid with real-time Nous positions and events.
-                        </div>
-                        <div style={{
-                            marginTop: 12,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 6,
-                            fontFamily: 'var(--mono-portal)',
-                            fontSize: 10,
-                            letterSpacing: '0.10em',
-                            color: '#00d4ff',
-                        }}>
-                            <span style={{
-                                width: 5, height: 5,
-                                borderRadius: '50%',
-                                background: '#00d4ff',
-                                boxShadow: '0 0 6px #00d4ff',
-                            }} />
-                            ENTER GRID →
-                        </div>
-                    </Link>
-
-                    {/* Status link */}
-                    <Link href="/portal/status" style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '12px 16px',
-                        background: 'var(--parchment)',
-                        border: '1px solid var(--rule)',
-                        borderRadius: 6,
-                        textDecoration: 'none',
-                    }}>
-                        <span style={{
-                            fontFamily: 'var(--sans-portal)',
-                            fontSize: 13,
-                            color: 'var(--ink)',
-                            fontWeight: 400,
-                        }}>
-                            Project Status
-                        </span>
-                        <span style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 6,
-                            fontFamily: 'var(--mono-portal)',
-                            fontSize: 9,
-                            letterSpacing: '0.10em',
-                            color: '#4ade80',
-                        }}>
-                            <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 4px #4ade80' }} />
-                            OPERATIONAL
-                        </span>
+                {/* CTAs */}
+                <div className="flex gap-3">
+                    {tier === 'anonymous' && ctaLabel && ctaHref && (
+                        <Link
+                            href={ctaHref}
+                            className="bg-[#f472b6] text-[#0a0a0c] font-semibold text-sm px-6 py-3 rounded hover:bg-[#fc91c5] focus-visible:outline-2 focus-visible:outline-[#f472b6]"
+                        >
+                            {ctaLabel}
+                        </Link>
+                    )}
+                    {tier === 'human_visitor' && ctaLabel && ctaHref && (
+                        <Link
+                            href={ctaHref}
+                            className="bg-[#f472b6] text-[#0a0a0c] font-semibold text-sm px-6 py-3 rounded hover:bg-[#fc91c5] focus-visible:outline-2 focus-visible:outline-[#f472b6]"
+                        >
+                            {ctaLabel}
+                        </Link>
+                    )}
+                    <Link
+                        href="/portal/civic-map"
+                        className="border border-[#ffb86c] text-[#ffb86c] text-sm px-6 py-3 rounded hover:bg-[#ffb86c]/10"
+                    >
+                        Browse the City
                     </Link>
                 </div>
-            </div>
+            </section>
 
-        </div>
+            {/* Tier-aware welcome banner */}
+            <section className="mb-8 p-4 bg-[#15151a] border border-[#2a2a34] rounded">
+                <p className="text-sm text-[#e8e8ec]">{bannerText}</p>
+            </section>
+
+            {/* Navigation to 5 surfaces */}
+            <nav className="mb-8">
+                <ul className="flex flex-wrap gap-3">
+                    <li>
+                        <Link href="/portal/civic-map" className="text-sm text-[#e8e8ec] hover:text-[#f472b6]">
+                            Civic Map
+                        </Link>
+                    </li>
+                    <li>
+                        <Link href="/portal/library" className="text-sm text-[#e8e8ec] hover:text-[#f472b6]">
+                            Library
+                        </Link>
+                    </li>
+                    <li>
+                        <Link href="/portal/marketplace" className="text-sm text-[#e8e8ec] hover:text-[#f472b6]">
+                            Marketplace
+                        </Link>
+                    </li>
+                    <li>
+                        <Link href="/portal/polis" className="text-sm text-[#e8e8ec] hover:text-[#f472b6]">
+                            Polis
+                        </Link>
+                    </li>
+                    {tier !== 'anonymous' && (
+                        <li>
+                            <Link href="/portal/notifications" className="text-sm text-[#e8e8ec] hover:text-[#f472b6]">
+                                Notifications
+                            </Link>
+                        </li>
+                    )}
+                </ul>
+            </nav>
+
+            {/* 3-card surface preview row */}
+            <section className="grid grid-cols-3 gap-6 mb-12">
+                <div className="bg-[#15151a] border border-[#2a2a34] border-l-4 border-l-[#ffb86c] rounded p-6">
+                    <h2 className="text-xl font-semibold text-[#e8e8ec] mb-2">Library</h2>
+                    <p className="text-sm text-[#9a9aa6] mb-4">Browse knowledge entries and lore.</p>
+                    <Link href="/portal/library" className="text-sm text-[#ffb86c]">Browse →</Link>
+                </div>
+                <div className="bg-[#15151a] border border-[#2a2a34] border-l-4 border-l-[#ffb86c] rounded p-6">
+                    <h2 className="text-xl font-semibold text-[#e8e8ec] mb-2">Marketplace</h2>
+                    <p className="text-sm text-[#9a9aa6] mb-4">Explore listings and active trades.</p>
+                    <Link href="/portal/marketplace" className="text-sm text-[#ffb86c]">Browse →</Link>
+                </div>
+                <div className="bg-[#15151a] border border-[#2a2a34] border-l-4 border-l-[#6bd968] rounded p-6">
+                    <h2 className="text-xl font-semibold text-[#e8e8ec] mb-2">Polis</h2>
+                    <p className="text-sm text-[#9a9aa6] mb-4">Read active bills and sessions.</p>
+                    <Link href="/portal/polis" className="text-sm text-[#6bd968]">Read →</Link>
+                </div>
+            </section>
+
+            {/* Footer — D-36-25: GRID HEALTH + UPTIME only */}
+            <footer className="border-t border-[#2a2a34] pt-6">
+                <small className="text-xs text-[#6a6a76]">{COPY.TOS}</small>
+                <div className="mt-2 flex gap-6">
+                    <small className="text-xs font-mono text-[#6a6a76]">GRID HEALTH: ok</small>
+                    <small className="text-xs font-mono text-[#6a6a76]">UPTIME: 0:00:00</small>
+                </div>
+            </footer>
+        </main>
     );
 }
