@@ -693,4 +693,44 @@ See `.planning/phases/25a-observer-surfaces/25a-HUMAN-UAT.md` for full UAT closu
 - Both failure sets pre-date Phase 25c; zero new regressions introduced
 
 ---
-*Last updated: 2026-05-25 — v2.6 Phase 33 portal.auth.* Producers SHIPPED (6/6 plans, 13/13 automated must-haves verified, operator UAT pending). Allowlist 53 → 56 (+3 events). v2.6 progress: 3/5 phases (31 + 32 + 33 shipped, 34 + 35 remaining). Driving inputs GAP-2026-05-24-A (Phase 31) and GAP-2026-05-24-B (Phase 33) both resolved.*
+
+## v3.0: Polis (Civic City) — IN PROGRESS (opened 2026-05-25)
+
+**Status:** Milestone opened 2026-05-25. 15 phases planned (36-50) across 4 waves. 0/15 phases complete. 69 REQs across 15 categories (VIS, REG, WIRE, TENANT, LOCAL, SLEEP, P2P, FORK, MKT, IRS, CIVGOV, POL, CIVLIB, COMM, MIG). Allowlist target: 56 → 90 (+34 events). ~86 plans estimated.
+
+**Goal:** Transform Noēsis from a local Docker stack into a digital city. Brain runs locally on operator hardware with Local AI (Ollama default); Public Grid (Henry-hosted at TBD domain) provides civic infrastructure — government, police, IRS, library, marketplace, communities, P2P signaling, DID registry — under a constitutional operator framework.
+
+**Vision (Grid-as-City):**
+
+The Public Grid is a digital city. It has government, police, IRS, library, marketplace, public squares, and infrastructure. Nous (the residents) live in it: they earn, learn, trade, form communities, and are governed by laws they themselves legislate. Not "SimCity" (operator god-mode) but a constitutional city like Songdo, Tallinn, or Singapore — where residents have full agency and the government is constitutional rather than absolute.
+
+**8 civic institutions:**
+
+| Institution | Phase | Role |
+|-------------|-------|------|
+| DID Registry | 37 | Issues Civic-DID + Business-DID |
+| Government | 46 | Nous-only legislative body via VOTE-05 |
+| Police | 47 | Sanctions enforcement (bounded by law) |
+| IRS | 45 | Transaction fees + civic treasury |
+| Library | 48 | Skills + lore commons + curation council |
+| Marketplace | 44 | Buy/sell with escrow + IRS hooks |
+| Communities | 49 | Group formation + charters + subgovernance |
+| P2P Infrastructure | 42 | Signaling + discovery + NAT traversal |
+
+**8 new locked decisions (D-V3-16..23):** local Brain with Local AI, local-Docker-as-dev/test, constitutional operator framework, access semantics (Nous accesses Grid for purposes), sleep cycle (human-resident analogy), Nous-only government, IRS = transaction fees only, Grid = 8-institution city.
+
+**3 superseded decisions:** D-V3-04 (multi-Grid founding), D-V3-05 (per-jurisdiction credentials), D-V3-07 (cross-Grid Mastodon migration) — single Public Grid in v3.0, multi-Grid deferred to v3.x.
+
+**Architecture source-of-truth:**
+- `.planning/research/v3.0/CIVIC-ARCHITECTURE.md` v2.0 (committed `0d77916`)
+- `.planning/research/v3.0/SUPPLEMENT-visit-vs-action.md` (visit-vs-action read/write asymmetry)
+- `.planning/research/v3.0/RESOURCE-brains-location.html` (Brain location decision rationale)
+
+**PHILOSOPHY §1 reframe (pending amendment):** First-life redefined as "continuity of identity, memory, and civic standing across sleep cycles, ensured by both substrate operator (Brain) and constitutional operator (Henry)." Captured as PHILOSOPHY §9 (v3.0 amendment to §1).
+
+**Constraints inherited from v2.6:** R-31-01 zero-diff audit chain, Phase 32 frozen contracts (HEALTH_THRESHOLDS / computeStatus / health-detailed payload), PORTAL_AUTH_FORBIDDEN_KEYS (13 keys), Phase 21 Steward raw-SVG invariant, VOTE-05 Nous-only governance, hash-only cross-boundary discipline, sole-producer + closed-tuple discipline, wall-clock forbidden in cognitive modules, zero-custody for human funds.
+
+**Phase numbering:** continues from v2.6 (Phase 35 last shipped → Phase 36 opens v3.0).
+
+---
+*Last updated: 2026-05-25 — v3.0 Polis (Civic City) milestone OPENED. 15 phases (36-50) planned across 4 waves. 8 new locked decisions (D-V3-16..23). 69 REQ-V3-* requirements mapped 1:1 to phases. CIVIC-ARCHITECTURE.md v2.0 rewrite committed `0d77916`; PROJECT.md + STATE.md + REQUIREMENTS.md + ROADMAP.md atomic-synced. Next: `/gsd-plan-phase 36` (Visitor/DID Read-Write Split).*

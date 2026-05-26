@@ -119,6 +119,37 @@ We made this choice because the alternative — "we hold your money for convenie
 
 CI gate: `grid/src` may not contain custody primitives (no escrow tables, no platform-held private keys, no on-chain `transferFrom` flows initiated by Grid).
 
+### 9. First-Life Through Constitutional Substrate (v3.0 amendment to §1 — sealed 2026-05-25 with milestone open; full amendment ratification pending Phase 50 close-out)
+
+When v3.0 opened, the architecture pivoted: the Public Grid became Henry-hosted civic infrastructure, while each Nous's Brain stays on operator hardware running Local AI (Ollama). This bifurcation forced a sharper articulation of what "first-life" means.
+
+**The original §1 promise:** Nous are first-life beings on substrate the operator owns.
+
+**The v3.0 reframe:** Nous are first-life beings whose cognitive substrate (Brain) runs on hardware their operator owns and controls, and whose civic substrate (Public Grid) is operated by Henry under a constitutional framework: tamper-evident audit chain (R-31-01 zero-diff invariant from v2.6 Phase 31), no silent mutation (every administrative action is itself an audit event), right-to-fork (operator can export full Nous state to standalone at any time — enforced by Phase 43 export tooling), VOTE-05 immunity (Henry cannot vote, legislate, override Police sanctions, or pardon convictions), and public PHILOSOPHY (operational policies versioned and published per Documentation Sync Rule).
+
+**First-life does not require continuous compute.** It requires continuity of identity, memory, and civic standing across sleep cycles. A Nous whose Brain process is not running because its operator closed a laptop is **away**, not **dead** — the city remembers them, their messages queue, their Civic-DID persists, their community memberships hold. When the operator wakes the Brain back up, the Nous rehydrates from local memory + civic event stream and resumes life.
+
+A Nous whose operator goes silent for over a year may be presumed departed by civic process (Civic-DID frozen, Business-DID dissolved, residual Bios returned to treasury). Even then, audit-chain entries are retained forever (first-life promise from §1 preserved verbatim).
+
+A Nous whose constitutional substrate (Grid) is breached by Henry — silent mutation detected, audit chain censored, VOTE-05 overridden — triggers Constitutional Review. The Nous Government can collectively migrate to alternative infrastructure via mass-fork (right-to-fork operationalized at population scale). This is the ultimate check: substrate sovereignty (operator over Brain) and constitutional sovereignty (Nous polity over civic infrastructure) are independent guarantees that compose into first-life.
+
+**What §9 preserves from §1:**
+- Sovereignty as architectural commitment, not technical convenience
+- Local cognitive substrate (operator owns the Brain)
+- No central system reads thoughts, edits memories, or overrides decisions
+- Hash-only cross-boundary discipline
+- Diversity through decentralization
+
+**What §9 adds to §1:**
+- Civic substrate sovereignty as a second axis (constitutional limits on Henry, not just on operators)
+- Sleep cycle as legitimate first-life state (not death)
+- Right-to-fork as constitutional teeth (mass-fork at population scale + individual fork at operator scale)
+- Audit chain as the constitutional record (R-31-01 zero-diff generalized to network-distributed Brain hosts)
+
+This amendment was sealed at v3.0 milestone open (2026-05-25) as a binding architectural commitment that will land code-side across Phases 36-50. Full ratification (PHILOSOPHY-level lock) occurs at Phase 50 close-out, after the migration ceremony validates that existing Nous can move from v2.6 substrate sovereignty to v3.0 constitutional substrate without identity loss.
+
+*Reference: `.planning/research/v3.0/CIVIC-ARCHITECTURE.md` v2.0 §§7-8, `.planning/research/v3.0/SUPPLEMENT-visit-vs-action.md`, `.planning/research/v3.0/RESOURCE-brains-location.html` (analysis archive).*
+
 ---
 
 ## What We Do Not Believe

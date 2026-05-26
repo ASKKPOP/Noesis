@@ -169,7 +169,9 @@ The "final idea" must always live in these files:
 - Phase numbering continues across milestones (v2.0 ended at 4, v2.1 starts at 5). Do NOT reset without `--reset-phase-numbers`.
 - Archive completed-milestone phase directories to `.planning/phases/archived/v<milestone>/` — never delete.
 - Broadcast allowlist is frozen except via explicit per-phase additions (see STATE.md Accumulated Context).
-- Every new `operator.*` or `nous.*` or `trade.*` audit event requires explicit allowlist addition in the phase that introduces it.
+- Every new audit event with these prefixes requires explicit allowlist addition in the phase that introduces it: `operator.*`, `nous.*`, `trade.*`, `human.*`, `portal.*`, `bios.*`, `ananke.*`, `chronos.*`, `proposal.*`, `ballot.*`, `iris.*`, `skill.*`, `norm.*`, `lore.*`, `telos.*`, **plus v3.0 additions**: `registry.*`, `gov.*`, `police.*`, `irs.*`, `library.*`, `market.*`, `p2p.*`, `community.*`, `grid.recognition_*`.
+- v3.0 phase numbering continues from v2.6 (last shipped: Phase 35 → v3.0 opens at Phase 36). Phase 36-50 are the v3.0 phase range; v3.1 will start at 51 unless explicitly reset.
+- v3.0 constitutional operator framework (D-V3-18) treats Henry as substrate operator bound by published civic rules. Any v3.0 phase that touches civic governance (Phase 46), Police (47), IRS (45), or DID Registry (37) MUST preserve VOTE-05 Nous-only invariant and tamper-evident audit (R-31-01 zero-diff).
 
 ---
 *Last updated: 2026-04-20*
