@@ -8,12 +8,12 @@ import {
 } from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast-allowlist: default-deny membership', () => {
-    it('has exactly 60 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27+Phase 28+Phase 33+Phase 36 event types', () => {
-        expect(ALLOWLIST.size).toBe(60);
+    it('has exactly 64 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27+Phase 28+Phase 33+Phase 36+Phase 37 event types', () => {
+        expect(ALLOWLIST.size).toBe(64);
     });
 
-    it('has frozen 60-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(60);
+    it('has frozen 64-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(64);
     });
 
     it.each([
@@ -92,7 +92,7 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(() => (ALLOWLIST as Set<string>).add('law.bypassed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).delete('trade.reviewed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).clear()).toThrow(TypeError);
-        expect(ALLOWLIST.size).toBe(60);
+        expect(ALLOWLIST.size).toBe(64);
     });
 
     it('Phase 6 operator.* tuple order: inspected < paused < resumed < law_changed < telos_forced', () => {
@@ -145,6 +145,27 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(ALLOWLIST_MEMBERS.includes('portal.did_revoked')).toBe(true);
         expect(ALLOWLIST_MEMBERS.includes('grid.recognition_granted')).toBe(true);
         expect(ALLOWLIST_MEMBERS.includes('grid.recognition_revoked')).toBe(true);
+    });
+
+    it('Phase 36 entries are at expected positions (0-indexed 56-59)', () => {
+        expect(ALLOWLIST_MEMBERS[56]).toBe('portal.did_issued');
+        expect(ALLOWLIST_MEMBERS[57]).toBe('portal.did_revoked');
+        expect(ALLOWLIST_MEMBERS[58]).toBe('grid.recognition_granted');
+        expect(ALLOWLIST_MEMBERS[59]).toBe('grid.recognition_revoked');
+    });
+
+    it('Phase 37 REG-06 additions are present', () => {
+        expect(ALLOWLIST_MEMBERS.includes('registry.civic_did_issued')).toBe(true);
+        expect(ALLOWLIST_MEMBERS.includes('registry.civic_did_revoked')).toBe(true);
+        expect(ALLOWLIST_MEMBERS.includes('registry.business_did_registered')).toBe(true);
+        expect(ALLOWLIST_MEMBERS.includes('registry.business_did_dissolved')).toBe(true);
+    });
+
+    it('Phase 37 entries are at expected positions (0-indexed 60-63)', () => {
+        expect(ALLOWLIST_MEMBERS[60]).toBe('registry.civic_did_issued');        // Phase 37 (61)
+        expect(ALLOWLIST_MEMBERS[61]).toBe('registry.civic_did_revoked');       // Phase 37 (62)
+        expect(ALLOWLIST_MEMBERS[62]).toBe('registry.business_did_registered'); // Phase 37 (63)
+        expect(ALLOWLIST_MEMBERS[63]).toBe('registry.business_did_dissolved');  // Phase 37 (64)
     });
 
     it('portal.notification_dispatched is intentionally NOT on the broadcast allowlist (D-36-19 private queue event)', () => {
