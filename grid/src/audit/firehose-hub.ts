@@ -25,6 +25,8 @@ import { isAllowlisted } from './broadcast-allowlist.js';
 import { RingBuffer } from '../util/ring-buffer.js';
 import type { ServerSocket } from '../api/ws-hub.js';
 import type { ByeFrame, ServerFrame } from '../api/ws-protocol.js';
+import { serializeVisitorFrame, serializeFullFrame } from './firehose-redaction.js';
+import type { DIDContext } from '../api/preHandlers/types.js';
 
 /**
  * Phase 32 OBS-05 (D-32-A2): callbacks ClientConnection invokes when a send
@@ -61,6 +63,7 @@ const DEFAULT_WATERMARK_BYTES = 1_048_576;
 class ClientConnection {
     readonly socket: ServerSocket;
     readonly watermarkBytes: number;
+    readonly didContext: DIDContext | null;
     private readonly buffer: RingBuffer<AuditEntry>;
     private readonly metrics: HubMetricsSink;
     closed = false;
@@ -70,20 +73,27 @@ class ClientConnection {
         watermarkBytes: number,
         bufferCapacity: number,
         metrics: HubMetricsSink,  // D-32-A2
+        didContext: DIDContext | null,
     ) {
         this.socket = socket;
         this.watermarkBytes = watermarkBytes;
         this.buffer = new RingBuffer<AuditEntry>(bufferCapacity);
         this.metrics = metrics;
+        this.didContext = didContext;
     }
 
     /**
      * Best-effort send of a ServerFrame. Never throws.
+     * Phase 36 VIS-03: branches on tier — civic_member gets full frame,
+     * visitors get {tick, event_type, family} only (R-31-01 zero-diff preserved).
      */
     trySend(frame: ServerFrame): void {
         if (this.closed) return;
         try {
-            this.socket.send(JSON.stringify(frame));
+            const wire = this.didContext?.tier === 'civic_member'
+                ? serializeFullFrame(frame)
+                : serializeVisitorFrame(frame);
+            this.socket.send(wire);
             this.metrics.incrementSent();    // D-32-A3
             this.metrics.touchLastFrame();   // D-32-A3
         } catch {
@@ -158,6 +168,7 @@ export class WsFirehoseHub {
     private readonly _clients: Set<ClientConnection> = new Set();
     private readonly unsubscribeAudit: Unsubscribe;
     private closing = false;
+    private _visitorCount = 0;
 
     // Phase 32 OBS-05 (D-32-A2): per-hub frame counters. Mutated only via the
     // HubMetricsSink callbacks passed into ClientConnection at construction time.
@@ -197,8 +208,11 @@ export class WsFirehoseHub {
 
     /**
      * Attach a freshly-upgraded socket. Sends HelloFrame, wires close/error handlers.
+     *
+     * Phase 36 VIS-03: accepts optional DIDContext. Visitors (null or non-civic_member)
+     * receive redacted frames via serializeVisitorFrame(); civic members get full frames.
      */
-    onConnect(socket: ServerSocket): void {
+    onConnect(socket: ServerSocket, didContext: DIDContext | null = null): void {
         if (this.closing) {
             try {
                 socket.close(1001, 'shutting down');
@@ -217,8 +231,14 @@ export class WsFirehoseHub {
                 incrementDropped: () => { this.metrics.frames_dropped_total++; },
                 touchLastFrame: () => { this.metrics.last_frame_at = Date.now(); },
             },
+            didContext,
         );
         this._clients.add(client);
+
+        // Track visitor count (non-civic subscribers)
+        if (didContext === null || didContext.tier !== 'civic_member') {
+            this._visitorCount++;
+        }
 
         // Hello frame — no lastEntryId (density-first design, no replay)
         try {
@@ -234,6 +254,10 @@ export class WsFirehoseHub {
         }
 
         socket.on('close', () => {
+            // Decrement visitor counter before cleanup
+            if (client.didContext === null || client.didContext.tier !== 'civic_member') {
+                this._visitorCount = Math.max(0, this._visitorCount - 1);
+            }
             client.markClosed();
             this._clients.delete(client);
         });
@@ -244,12 +268,21 @@ export class WsFirehoseHub {
     }
 
     /**
+     * Returns the number of currently active visitor (non-civic_member) subscribers.
+     * INTERNAL ONLY — not surfaced via FirehoseStats (Pitfall 6: would leak via /health/detailed).
+     */
+    visitorCountActive(): number {
+        return this._visitorCount;
+    }
+
+    /**
      * Called from the audit listener. Never awaits. Never throws.
      * Enforces the broadcast allowlist — non-allowlisted entries are dropped.
      */
     private onAuditEvent(entry: AuditEntry): void {
         try {
             if (!isAllowlisted(entry.eventType)) return;
+            // R-31-01 zero-diff: do NOT redact here. Full entry fans out to every client; per-subscriber redaction lives in ClientConnection.trySend() via serializeVisitorFrame(). Modifying entry before this loop breaks the chain-head-hash invariant.
             for (const client of this._clients) {
                 try {
                     client.enqueue(entry);

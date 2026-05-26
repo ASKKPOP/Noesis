@@ -699,7 +699,8 @@ export function buildServerWithHub(
 
     app.register(async (instance) => {
         // Phase 25a: firehose WS route registered inside the same plugin scope as /ws/events.
-        registerAuditFirehoseRoute(instance, firehoseHub);
+        // Phase 36 VIS-03: pass services so tryDid can consult didStore for revocation.
+        registerAuditFirehoseRoute(instance, firehoseHub, services);
 
         instance.get('/ws/events', { websocket: true }, (socket, req) => {
             const secret = process.env.GRID_WS_SECRET;
