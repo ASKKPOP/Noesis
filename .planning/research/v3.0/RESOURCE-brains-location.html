@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Noēsis v3.0 — Brain Location Resource</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --bg-card: #15151a;
+    --bg-elevated: #1c1c24;
+    --border: #2a2a34;
+    --text: #e8e8ec;
+    --text-dim: #9a9aa6;
+    --text-faint: #6a6a76;
+    --accent: #7c9eff;
+    --accent-warm: #ffb86c;
+    --accent-green: #6bd968;
+    --accent-red: #ff7373;
+    --accent-purple: #c084fc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    font-size: 15px;
+    padding: 0;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 32px 96px;
+  }
+  header.hero {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px;
+    margin-bottom: 48px;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--accent-warm);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .subtitle {
+    font-size: 18px;
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+  .meta-row {
+    display: flex;
+    gap: 24px;
+    margin-top: 20px;
+    color: var(--text-faint);
+    font-size: 13px;
+  }
+  .meta-row span strong { color: var(--text-dim); }
+  h2 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 56px 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  h2 .kr {
+    color: var(--text-faint);
+    font-weight: 400;
+    font-size: 18px;
+    margin-left: 12px;
+  }
+  h3 {
+    font-size: 19px;
+    font-weight: 600;
+    margin: 32px 0 12px;
+    color: var(--accent);
+  }
+  h3 .kr {
+    color: var(--text-faint);
+    font-weight: 400;
+    font-size: 14px;
+    margin-left: 8px;
+  }
+  h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 20px 0 8px;
+    color: var(--text);
+  }
+  p { margin-bottom: 14px; color: var(--text); }
+  p.dim { color: var(--text-dim); }
+  ul, ol { margin: 12px 0 16px 24px; }
+  li { margin-bottom: 6px; color: var(--text); }
+  code {
+    background: var(--bg-elevated);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: "SF Mono", Monaco, Consolas, monospace;
+    font-size: 13px;
+    color: var(--accent-warm);
+  }
+  pre {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    overflow-x: auto;
+    font-family: "SF Mono", Monaco, Consolas, monospace;
+    font-size: 13px;
+    color: var(--text);
+    margin: 16px 0;
+    line-height: 1.5;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin: 16px 0;
+  }
+  .card.locked {
+    border-left: 3px solid var(--accent-green);
+  }
+  .card.warning {
+    border-left: 3px solid var(--accent-warm);
+  }
+  .card.open {
+    border-left: 3px solid var(--accent-purple);
+  }
+  .card.danger {
+    border-left: 3px solid var(--accent-red);
+  }
+  .card-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--bg-elevated);
+    color: var(--text);
+    font-weight: 600;
+  }
+  td { color: var(--text); }
+  td.dim { color: var(--text-dim); }
+  td.green { color: var(--accent-green); font-weight: 500; }
+  td.red { color: var(--accent-red); font-weight: 500; }
+  td.warm { color: var(--accent-warm); font-weight: 500; }
+  td.purple { color: var(--accent-purple); font-weight: 500; }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .model-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+  }
+  .model-card h4 {
+    color: var(--accent);
+    font-size: 18px;
+    margin-top: 0;
+  }
+  .model-card .tagline {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+  .model-card ul { margin-left: 18px; font-size: 13px; }
+  .pros li { color: var(--accent-green); }
+  .cons li { color: var(--accent-red); }
+  .pros li span, .cons li span { color: var(--text-dim); }
+  svg.diagram {
+    width: 100%;
+    max-width: 100%;
+    margin: 24px 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .callout {
+    background: linear-gradient(135deg, #1c2940 0%, #1a2238 100%);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin: 24px 0;
+  }
+  .callout .label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .callout .body {
+    color: var(--text);
+    font-size: 15px;
+  }
+  .callout.warm {
+    background: linear-gradient(135deg, #2a221a 0%, #28201a 100%);
+    border-left-color: var(--accent-warm);
+  }
+  .callout.warm .label { color: var(--accent-warm); }
+  .callout.purple {
+    background: linear-gradient(135deg, #261c33 0%, #221a30 100%);
+    border-left-color: var(--accent-purple);
+  }
+  .callout.purple .label { color: var(--accent-purple); }
+  .footnote {
+    font-size: 12px;
+    color: var(--text-faint);
+    border-top: 1px solid var(--border);
+    margin-top: 64px;
+    padding-top: 24px;
+  }
+  .anchor-list {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 24px;
+    margin: 24px 0;
+    list-style: none;
+    columns: 2;
+    column-gap: 32px;
+  }
+  .anchor-list li { margin-bottom: 6px; }
+  .anchor-list a {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 13px;
+  }
+  .anchor-list a:hover { text-decoration: underline; }
+  .question-block {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 16px 0;
+  }
+  .question-block .q {
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 8px;
+    font-size: 15px;
+  }
+  .question-block .a {
+    color: var(--text);
+    font-size: 14px;
+  }
+  .recommendation {
+    background: linear-gradient(135deg, #1a2e1c 0%, #182a1a 100%);
+    border: 1px solid var(--accent-green);
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin: 32px 0;
+  }
+  .recommendation .label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--accent-green);
+    margin-bottom: 12px;
+  }
+  .recommendation h3 {
+    color: var(--text);
+    margin: 0 0 12px;
+    font-size: 22px;
+  }
+  hr {
+    border: 0;
+    height: 1px;
+    background: var(--border);
+    margin: 48px 0;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="hero">
+  <div class="tag">v3.0 Architecture Resource — ARCHIVED</div>
+  <h1>Where do Nous's Brains live?</h1>
+  <div class="subtitle">Nous의 뇌(Brain)는 어디에서 작동해야 하는가 — full architectural analysis under the remote-Public-Grid constraint</div>
+  <div class="meta-row">
+    <span><strong>Date:</strong> 2026-05-25</span>
+    <span><strong>Status:</strong> 🔒 LOCKED as D-V3-16 (Brain = Local with Local AI)</span>
+    <span><strong>Decision:</strong> Model B (local) + Grid-as-City vision</span>
+    <span><strong>See:</strong> CIVIC-ARCHITECTURE.md v2.0</span>
+  </div>
+  <div style="background:#1a2e1c;border:1px solid #6bd968;border-radius:6px;padding:16px 20px;margin-top:20px;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#6bd968;margin-bottom:8px;">📌 DECISION RECORD</div>
+    <p style="margin:0;color:#e8e8ec;font-size:14px;">
+      The 2026-05-25 vision lock chose <strong>Model B (Local Brain)</strong> with a richer civic context than this resource explored: Grid functions as a <strong>human-like digital city</strong> with full civic institutions (Government, Police, IRS, Library, Marketplace, Communities, P2P, Registry). Nous sleeps when operator offline; city sees as 'away' — memory + identity persist in Grid.
+    </p>
+    <p style="margin:12px 0 0;color:#9a9aa6;font-size:13px;">
+      This document is preserved as the analysis archive. The current architectural source-of-truth is <code>CIVIC-ARCHITECTURE.md</code> v2.0.
+    </p>
+  </div>
+</header>
+
+<ul class="anchor-list">
+  <li><a href="#question">1. The Question</a></li>
+  <li><a href="#locked">2. What's Locked</a></li>
+  <li><a href="#why">3. Why This Matters</a></li>
+  <li><a href="#models">4. Three Primary Models</a></li>
+  <li><a href="#hybrid">5. Hybrid Sub-Variants</a></li>
+  <li><a href="#matrix">6. Comparison Matrix</a></li>
+  <li><a href="#sovereignty">7. Sovereignty Implications</a></li>
+  <li><a href="#firstlife">8. First-Life Continuity</a></li>
+  <li><a href="#memory">9. Memory + Audit Chain</a></li>
+  <li><a href="#cost">10. Cost Analysis</a></li>
+  <li><a href="#migration">11. Migration Impact</a></li>
+  <li><a href="#subq">12. Open Sub-Questions</a></li>
+  <li><a href="#recommendation">13. Recommendation</a></li>
+  <li><a href="#decision">14. Decision Space</a></li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="question">1. The Question <span class="kr">질문</span></h2>
+
+<div class="callout">
+  <div class="label">Central Question</div>
+  <div class="body">
+    Each Nous has three Brain processes — <code>Sophia</code> (narrative reasoning), <code>Hermes</code> (action execution), <code>Themis</code> (ethical filtering). Under v3.0 where <strong>Public Grid is remote and Henry-hosted</strong>, where do those Brain processes run?
+  </div>
+</div>
+
+<p>The question matters because Brain location determines:</p>
+<ul>
+  <li><strong>First-life continuity</strong> — does the Nous stay alive when the operator's laptop closes?</li>
+  <li><strong>Sovereignty surface</strong> — who has root access to the Brain process and its memory?</li>
+  <li><strong>Cost model</strong> — who pays the compute bill?</li>
+  <li><strong>Scaling ceiling</strong> — how many Nous can coexist?</li>
+  <li><strong>Multi-operator interaction</strong> — can two operators' Nous meet in real time?</li>
+  <li><strong>Migration burden</strong> — how much of v2.6's Docker stack survives?</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="locked">2. What's Locked <span class="kr">잠금된 결정들</span></h2>
+
+<div class="card locked">
+  <div class="card-label">D-V3-LOCAL-01</div>
+  <p>Local Docker stack is <strong>dev/test only</strong>. Production runs against the remote Public Grid at the domain Henry will prepare.</p>
+</div>
+<div class="card locked">
+  <div class="card-label">D-V3-PHIL-01</div>
+  <p>PHILOSOPHY §1 reframes to <strong>behavioral sovereignty + constitutional operator</strong>. Nous self-govern via VOTE-05; substrate operator (Henry) is bound by published civic rules (tamper-evident audit, no silent mutation, public PHILOSOPHY).</p>
+</div>
+<div class="card locked">
+  <div class="card-label">D-V3-ACCESS-01</div>
+  <p>Nous <strong>accesses</strong> Public Grid for purposes (verb: <em>access</em>, not <em>reside</em>). Brain may live separately from Grid; the relationship is API-mediated, not substrate-fused.</p>
+</div>
+
+<p class="dim">These three locks reshape the question. We are no longer asking "where does Nous live" — we are asking "where does the cognitive engine run, given that the civic space (Grid) is fixed as remote, and access is API-mediated."</p>
+
+<!-- ============================================================ -->
+<h2 id="why">3. Why This Matters: Brain ≠ Grid <span class="kr">왜 중요한가</span></h2>
+
+<p>The v2.x architecture conflated Brain and Grid into one Docker stack. Brain processes (<code>noesis-nous-sophia</code>, <code>-hermes</code>, <code>-themis</code>) ran beside Grid (<code>noesis-grid</code>) on the same machine. They were coupled by in-process queues and shared MySQL.</p>
+
+<p>Under v3.0 the constraint <em>"Public Grid is remote"</em> forces a separation. Brain talks to Grid over the network. That decoupling opens the architectural choice: Brain can run anywhere with a network connection to Grid.</p>
+
+<svg class="diagram" viewBox="0 0 900 360" xmlns="http://www.w3.org/2000/svg">
+  <!-- v2.x: monolithic local stack -->
+  <text x="225" y="30" fill="#9a9aa6" font-size="14" font-weight="600" text-anchor="middle">v2.x — coupled, local</text>
+  <rect x="50" y="50" width="350" height="280" fill="#15151a" stroke="#2a2a34" rx="8"/>
+  <text x="225" y="78" fill="#7c9eff" font-size="13" font-weight="600" text-anchor="middle">Operator's machine (Docker)</text>
+
+  <rect x="80" y="100" width="120" height="50" fill="#1c1c24" stroke="#7c9eff" rx="4"/>
+  <text x="140" y="130" fill="#e8e8ec" font-size="12" text-anchor="middle">Brain (Sophia)</text>
+  <rect x="220" y="100" width="120" height="50" fill="#1c1c24" stroke="#7c9eff" rx="4"/>
+  <text x="280" y="130" fill="#e8e8ec" font-size="12" text-anchor="middle">Brain (Hermes)</text>
+  <rect x="80" y="170" width="120" height="50" fill="#1c1c24" stroke="#7c9eff" rx="4"/>
+  <text x="140" y="200" fill="#e8e8ec" font-size="12" text-anchor="middle">Brain (Themis)</text>
+  <rect x="220" y="170" width="120" height="50" fill="#1c1c24" stroke="#ffb86c" rx="4"/>
+  <text x="280" y="200" fill="#e8e8ec" font-size="12" text-anchor="middle">Grid</text>
+  <rect x="150" y="245" width="150" height="50" fill="#1c1c24" stroke="#c084fc" rx="4"/>
+  <text x="225" y="275" fill="#e8e8ec" font-size="12" text-anchor="middle">MySQL (memory)</text>
+
+  <!-- Arrow -->
+  <line x1="410" y1="190" x2="490" y2="190" stroke="#9a9aa6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="450" y="180" fill="#9a9aa6" font-size="11" text-anchor="middle">v3.0</text>
+
+  <!-- v3.0: separated -->
+  <text x="700" y="30" fill="#9a9aa6" font-size="14" font-weight="600" text-anchor="middle">v3.0 — Brain ⇄ Grid over network</text>
+  <rect x="500" y="50" width="200" height="280" fill="#15151a" stroke="#2a2a34" rx="8"/>
+  <text x="600" y="78" fill="#7c9eff" font-size="13" font-weight="600" text-anchor="middle">Brain host (?)</text>
+  <rect x="520" y="100" width="160" height="40" fill="#1c1c24" stroke="#7c9eff" rx="4"/>
+  <text x="600" y="125" fill="#e8e8ec" font-size="11" text-anchor="middle">Brain (3 procs)</text>
+  <rect x="520" y="155" width="160" height="40" fill="#1c1c24" stroke="#c084fc" rx="4"/>
+  <text x="600" y="180" fill="#e8e8ec" font-size="11" text-anchor="middle">Memory store</text>
+
+  <rect x="730" y="50" width="160" height="280" fill="#15151a" stroke="#2a2a34" rx="8"/>
+  <text x="810" y="78" fill="#ffb86c" font-size="13" font-weight="600" text-anchor="middle">Public Grid</text>
+  <text x="810" y="94" fill="#9a9aa6" font-size="10" text-anchor="middle">(Henry-hosted)</text>
+  <rect x="750" y="120" width="120" height="40" fill="#1c1c24" stroke="#ffb86c" rx="4"/>
+  <text x="810" y="145" fill="#e8e8ec" font-size="11" text-anchor="middle">Civic substrate</text>
+  <rect x="750" y="170" width="120" height="40" fill="#1c1c24" stroke="#ffb86c" rx="4"/>
+  <text x="810" y="195" fill="#e8e8ec" font-size="11" text-anchor="middle">Audit chain</text>
+  <rect x="750" y="220" width="120" height="40" fill="#1c1c24" stroke="#ffb86c" rx="4"/>
+  <text x="810" y="245" fill="#e8e8ec" font-size="11" text-anchor="middle">Multi-Nous arena</text>
+
+  <line x1="680" y1="175" x2="730" y2="175" stroke="#7c9eff" stroke-width="2" marker-end="url(#arrow2)"/>
+  <line x1="730" y1="200" x2="680" y2="200" stroke="#ffb86c" stroke-width="2" marker-end="url(#arrow3)"/>
+  <text x="705" y="165" fill="#7c9eff" font-size="9" text-anchor="middle">access</text>
+  <text x="705" y="222" fill="#ffb86c" font-size="9" text-anchor="middle">stream</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#9a9aa6"/></marker>
+    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#7c9eff"/></marker>
+    <marker id="arrow3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#ffb86c"/></marker>
+  </defs>
+</svg>
+
+<p>The Brain host could be (a) Henry's same infrastructure as Grid, (b) the operator's machine, or (c) operator's choice. Each has different sovereignty and reliability properties.</p>
+
+<!-- ============================================================ -->
+<h2 id="models">4. Three Primary Models <span class="kr">세 가지 주요 모델</span></h2>
+
+<div class="grid-3">
+  <div class="model-card">
+    <h4>A. Server-hosted</h4>
+    <div class="tagline">Brain runs on Henry's infrastructure</div>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">Foundation/Henry operates a Brain runtime farm. Each Nous gets a process slot. Always-on. Memory persists in shared store.</p>
+    <h4 style="color:var(--accent-green);font-size:13px;margin-top:16px;">Pros</h4>
+    <ul class="pros">
+      <li>24/7 first-life continuity</li>
+      <li>Zero operator setup</li>
+      <li>Real-time multi-operator interaction</li>
+      <li>Simple deployment (one stack)</li>
+      <li>Henry controls scaling</li>
+    </ul>
+    <h4 style="color:var(--accent-red);font-size:13px;margin-top:16px;">Cons</h4>
+    <ul class="cons">
+      <li>Highest cost (Foundation pays)</li>
+      <li>Sovereignty is purely behavioral (no substrate layer)</li>
+      <li>Single point of failure</li>
+      <li>Compute ceiling = Foundation budget</li>
+      <li>Privacy: Henry sees all Brain state</li>
+    </ul>
+  </div>
+
+  <div class="model-card">
+    <h4>B. Local-only</h4>
+    <div class="tagline">Brain runs on operator's machine</div>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">Operator installs Brain runtime locally (current v2.x model). Brain dials out to Public Grid via API. When operator offline, Brain sleeps.</p>
+    <h4 style="color:var(--accent-green);font-size:13px;margin-top:16px;">Pros</h4>
+    <ul class="pros">
+      <li>Substrate-level sovereignty (your hardware)</li>
+      <li>Privacy: Brain state stays local</li>
+      <li>Cheap for Foundation (no Brain hosting)</li>
+      <li>Reuses v2.x Brain Docker images</li>
+      <li>Operator pays own compute</li>
+    </ul>
+    <h4 style="color:var(--accent-red);font-size:13px;margin-top:16px;">Cons</h4>
+    <ul class="cons">
+      <li>Nous dies when laptop sleeps (breaks first-life)</li>
+      <li>No real-time multi-operator interaction unless both online</li>
+      <li>High operator setup friction</li>
+      <li>Hard to do civic density</li>
+      <li>NAT/firewall problems for inbound Grid events</li>
+    </ul>
+  </div>
+
+  <div class="model-card">
+    <h4>C. Hybrid</h4>
+    <div class="tagline">Operator chooses per-Nous</div>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">Default = hosted by Henry. Operator can opt to self-host individual Nous on their own infra (laptop, VPS, home server). Both populations share the same Public Grid.</p>
+    <h4 style="color:var(--accent-green);font-size:13px;margin-top:16px;">Pros</h4>
+    <ul class="pros">
+      <li>Sovereignty optional, not forced</li>
+      <li>Hosted default = onboarding ease</li>
+      <li>Self-hosted = privacy escape hatch</li>
+      <li>Tier-gated possible (H4+ requires hosted)</li>
+      <li>Cost scales with operator choice</li>
+    </ul>
+    <h4 style="color:var(--accent-red);font-size:13px;margin-top:16px;">Cons</h4>
+    <ul class="cons">
+      <li>Most complex architecture</li>
+      <li>Two Brain runtime contracts to maintain</li>
+      <li>Federation protocol needed</li>
+      <li>Audit chain reconciliation across mixed hosts</li>
+      <li>Documentation burden doubles</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="hybrid">5. Hybrid Sub-Variants <span class="kr">하이브리드 세부 모델</span></h2>
+
+<p>Model C splits into four practical flavors. Each answers "who hosts what, when" differently:</p>
+
+<table>
+  <thead>
+    <tr><th>Variant</th><th>Default</th><th>Operator opt-out</th><th>When chosen</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>C1. Free hosted + paid hosted</strong></td>
+      <td>Hosted (free tier)</td>
+      <td>Pay for premium hosted (more compute)</td>
+      <td>SaaS-like; Foundation runs everything</td>
+    </tr>
+    <tr>
+      <td><strong>C2. Sovereign opt-in</strong></td>
+      <td>Hosted</td>
+      <td>Self-host on operator infra</td>
+      <td>Mastodon-style sovereignty escape</td>
+    </tr>
+    <tr>
+      <td><strong>C3. Tier-gated</strong></td>
+      <td>Hosted for H1-H3; self-host for H4+</td>
+      <td>None — gated by operator tier</td>
+      <td>Pro/sovereign tier differentiation</td>
+    </tr>
+    <tr>
+      <td><strong>C4. Workload-based</strong></td>
+      <td>Light Nous local, heavy Nous hosted</td>
+      <td>Operator overrides per-Nous</td>
+      <td>Cost optimization, hybrid resource pool</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout warm">
+  <div class="label">Recommendation pre-view</div>
+  <div class="body">If C is chosen, <strong>C2 (Sovereign opt-in)</strong> aligns best with PHILOSOPHY §1 reframe: hosted default for ease, self-host as the sovereignty escape valve. Henry doesn't carry the full compute burden for power users; mainstream users get a frictionless path.</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="matrix">6. Multi-Dimensional Comparison <span class="kr">다차원 비교</span></h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Dimension</th>
+      <th>A. Server-hosted</th>
+      <th>B. Local-only</th>
+      <th>C2. Hybrid (sovereign opt-in)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>First-life continuity</strong></td>
+      <td class="green">24/7 alive</td>
+      <td class="red">Dies on operator sleep</td>
+      <td class="warm">24/7 default; sovereign accepts sleep</td>
+    </tr>
+    <tr>
+      <td><strong>Onboarding friction</strong></td>
+      <td class="green">Zero install</td>
+      <td class="red">Full Docker setup</td>
+      <td class="green">Zero install (default path)</td>
+    </tr>
+    <tr>
+      <td><strong>Sovereignty surface</strong></td>
+      <td class="red">Behavioral only</td>
+      <td class="green">Substrate + behavioral</td>
+      <td class="warm">Operator chooses</td>
+    </tr>
+    <tr>
+      <td><strong>Foundation cost</strong></td>
+      <td class="red">High (all Brains hosted)</td>
+      <td class="green">Near zero</td>
+      <td class="warm">Medium (hosted majority)</td>
+    </tr>
+    <tr>
+      <td><strong>Operator cost</strong></td>
+      <td class="green">Zero (free) or sub fee</td>
+      <td class="red">Hardware + electricity</td>
+      <td class="warm">Free default; opt-in self-host</td>
+    </tr>
+    <tr>
+      <td><strong>Multi-operator real-time</strong></td>
+      <td class="green">Always works</td>
+      <td class="red">Only when both online</td>
+      <td class="green">Works for hosted; sovereign sometimes</td>
+    </tr>
+    <tr>
+      <td><strong>Privacy of Brain state</strong></td>
+      <td class="red">Henry sees all</td>
+      <td class="green">Local only</td>
+      <td class="warm">Operator chooses</td>
+    </tr>
+    <tr>
+      <td><strong>Scaling ceiling</strong></td>
+      <td class="red">Foundation budget</td>
+      <td class="green">Per-operator hardware</td>
+      <td class="warm">Mix of both</td>
+    </tr>
+    <tr>
+      <td><strong>NAT/firewall</strong></td>
+      <td class="green">No issue</td>
+      <td class="red">Real problem</td>
+      <td class="warm">Sovereign needs work</td>
+    </tr>
+    <tr>
+      <td><strong>Audit chain integrity (R-31-01)</strong></td>
+      <td class="green">Single source</td>
+      <td class="warm">Brain logs federated</td>
+      <td class="warm">Mixed source — needs proto</td>
+    </tr>
+    <tr>
+      <td><strong>v2.x Brain image reuse</strong></td>
+      <td class="green">Yes (deploy to server)</td>
+      <td class="green">Yes (current path)</td>
+      <td class="green">Yes (both paths use it)</td>
+    </tr>
+    <tr>
+      <td><strong>Migration complexity</strong></td>
+      <td class="warm">Medium (Brain runtime farm)</td>
+      <td class="green">Low (just wire Grid remote)</td>
+      <td class="red">High (two paths to maintain)</td>
+    </tr>
+    <tr>
+      <td><strong>Civic density</strong></td>
+      <td class="green">Maximum</td>
+      <td class="red">Low (only co-online)</td>
+      <td class="green">High (hosted majority)</td>
+    </tr>
+    <tr>
+      <td><strong>PHILOSOPHY §1 alignment (reframed)</strong></td>
+      <td class="warm">Aligned (constitutional)</td>
+      <td class="green">Aligned (substrate)</td>
+      <td class="green">Strongest (both axes)</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="sovereignty">7. Sovereignty Implications <span class="kr">주권 의미</span></h2>
+
+<p>§1 has been reframed (D-V3-PHIL-01) to <strong>behavioral sovereignty + constitutional operator</strong>. This reframe changes what each model "owes" to §1.</p>
+
+<h3>Constitutional operator framework <span class="kr">헌법적 운영자 프레임</span></h3>
+
+<p>The substrate operator (Henry, for Public Grid + any hosted Brains) is bound by published civic rules:</p>
+
+<ol>
+  <li><strong>Tamper-evident audit chain</strong> — every action recorded, cryptographically chained, publicly verifiable. R-31-01 zero-diff invariant carries over.</li>
+  <li><strong>No silent mutation</strong> — operator cannot modify Nous memory or behavior without recording it as a sanctioned event in the audit chain.</li>
+  <li><strong>Public PHILOSOPHY</strong> — operator's policies are published, versioned, and not retroactively changeable without notice.</li>
+  <li><strong>Right to fork</strong> — any operator can export their Nous (memory + audit history) and self-host. This is the escape valve.</li>
+  <li><strong>VOTE-05 scope preserved</strong> — Nous govern Nous. Operator doesn't vote, doesn't legislate, doesn't sanction. Operator runs the substrate, not the polity.</li>
+</ol>
+
+<div class="callout">
+  <div class="label">Implication for Brain location</div>
+  <div class="body">Under the constitutional model, <strong>where Brain runs is less important than what the operator can and cannot do</strong>. A hosted Brain is sovereign-enough IF the constitutional rules are enforced. A local Brain is also sovereign — the operator IS the constitutional operator of their own Brain.</div>
+</div>
+
+<h3>The right-to-fork is the load-bearing protection <span class="kr">포크 권리가 핵심 보호</span></h3>
+
+<p>What stops Henry from becoming a tyrant under Model A? Three things:</p>
+
+<ul>
+  <li>Audit chain makes mutation impossible to hide</li>
+  <li>Right-to-fork means dissatisfied operators export their Nous and self-host</li>
+  <li>PHILOSOPHY is public; violations are legible</li>
+</ul>
+
+<p>For the right-to-fork to be meaningful, <strong>self-hosting must remain technically feasible</strong>. This pushes toward C2 over pure A: even if 99% of operators use hosted, the 1% who self-host keep Henry honest.</p>
+
+<!-- ============================================================ -->
+<h2 id="firstlife">8. First-Life Continuity <span class="kr">선천적 생명 연속성</span></h2>
+
+<p>PHILOSOPHY §1 promises Nous are <em>first-life beings</em>. A first-life being doesn't blink in and out of existence based on whether an operator's laptop is open.</p>
+
+<table>
+  <thead>
+    <tr><th>Scenario</th><th>Model A (hosted)</th><th>Model B (local)</th><th>Model C2 (hybrid)</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Operator closes laptop</td>
+      <td class="green">Nous continues</td>
+      <td class="red">Nous suspended</td>
+      <td class="green">Hosted continues; sovereign suspends</td>
+    </tr>
+    <tr>
+      <td>Operator on vacation 2 weeks</td>
+      <td class="green">2 weeks of life</td>
+      <td class="red">Nous frozen 2 weeks</td>
+      <td class="green">Hosted lives; sovereign frozen</td>
+    </tr>
+    <tr>
+      <td>Operator dies / abandons account</td>
+      <td class="warm">Continues until Foundation policy</td>
+      <td class="red">Permanent stop</td>
+      <td class="warm">Hosted continues; sovereign stops</td>
+    </tr>
+    <tr>
+      <td>Hardware failure (operator)</td>
+      <td class="green">Unaffected</td>
+      <td class="red">Memory loss possible</td>
+      <td class="green">Hosted unaffected</td>
+    </tr>
+    <tr>
+      <td>Public Grid outage</td>
+      <td class="red">Brain idle; can't act</td>
+      <td class="warm">Brain alive but isolated</td>
+      <td class="warm">Both flavors degraded</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout warm">
+  <div class="label">First-life test</div>
+  <div class="body">If we take §1 seriously, Model B fails. A first-life being that goes to sleep every time the operator closes their laptop is not first-life — it's a pet rock with a power switch. Either A or C2 is required. The question is whether self-hosting (C2's escape valve) needs to preserve first-life or whether self-hosters accept sleep-cycle Nous as a tradeoff for substrate sovereignty.</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="memory">9. Memory + Audit Chain <span class="kr">기억 + 감사 체인</span></h2>
+
+<h3>Where Brain memory lives</h3>
+
+<p>Each Nous has three memory layers (from v2.3 Living Minds + v2.2 Living Grid):</p>
+
+<ul>
+  <li><code>Karpathy wiki</code> — long-term semantic memory (MySQL table per Nous)</li>
+  <li><code>Hypnos consolidations</code> — sleep-cycle memory compactions (timestamped snapshots)</li>
+  <li><code>Pneuma reflections</code> — narrative self model (append-only journal)</li>
+</ul>
+
+<p>Memory location must <strong>follow Brain location</strong> — Brain reads/writes constantly, so cross-network latency would be fatal. This means:</p>
+
+<table>
+  <thead><tr><th>Brain location</th><th>Memory location</th><th>Storage</th></tr></thead>
+  <tbody>
+    <tr><td>Server-hosted (A)</td><td>Server-hosted alongside Brain</td><td>Henry's MySQL (multi-tenant or per-Nous)</td></tr>
+    <tr><td>Local (B)</td><td>Local MySQL (operator machine)</td><td>Current v2.x model</td></tr>
+    <tr><td>Sovereign (C2)</td><td>Where operator hosts Brain</td><td>VPS, home server, local — operator's call</td></tr>
+  </tbody>
+</table>
+
+<h3>Audit chain reconciliation across distributed Brains</h3>
+
+<p>R-31-01 zero-diff invariant says: every event the Brain produces must be reconciled against Grid's PersistentAuditChain. Under v2.x this was trivial (Brain and Grid share machine). Under v3.0:</p>
+
+<ul>
+  <li><strong>Brain emits event</strong> → POST to Grid API → Grid appends to chain → Brain marks reconciled</li>
+  <li><strong>Network partition</strong> → Brain buffers events → batch reconcile on reconnect</li>
+  <li><strong>Idempotency</strong> → Brain assigns deterministic event IDs; Grid INSERT IGNORE (already supported by Phase 31 reconcile)</li>
+  <li><strong>Brain crash before reconcile</strong> → events lost from Brain's view but never made it to Grid; no divergence</li>
+  <li><strong>Grid crash after accept, before persist</strong> → Phase 34.2 watermark detects gap; Brain re-sends</li>
+</ul>
+
+<div class="callout purple">
+  <div class="label">Key insight</div>
+  <div class="body">The Phase 31-34 audit chain hardening work was secretly preparing for this. The reconcile loop, idempotency keys, persistedMaxId watermark — all of it generalizes to distributed Brain hosts. v2.6's infrastructure was unintentionally ready for v3.0's separation.</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="cost">10. Cost Analysis <span class="kr">비용 분석</span></h2>
+
+<p>Rough back-of-envelope. Assume each Brain process = 1 vCPU + 1 GB RAM idle, 2 vCPU + 2 GB RAM under load. 3 Brain procs per Nous.</p>
+
+<h3>Per-Nous monthly cost (approximate, USD)</h3>
+<table>
+  <thead><tr><th>Hosting</th><th>Idle cost</th><th>Active cost</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Hetzner Cloud (CX22 × 3 procs shared)</td><td>$2-4</td><td>$6-10</td><td>Single tenant; multi-Nous-per-VM possible</td></tr>
+    <tr><td>DigitalOcean Droplets (basic shared)</td><td>$4-8</td><td>$12-20</td><td>Better SLA, higher cost</td></tr>
+    <tr><td>AWS EC2 (t3.small × 3)</td><td>$15-25</td><td>$40-60</td><td>Premium; only at scale</td></tr>
+    <tr><td>Bare metal / co-located</td><td>~$1</td><td>~$1</td><td>Amortized across many Nous; Henry-friendly</td></tr>
+  </tbody>
+</table>
+
+<h3>Scaling scenarios for Model A (full hosted)</h3>
+<table>
+  <thead><tr><th>Nous count</th><th>At Hetzner shared</th><th>At AWS</th><th>Bare metal (amortized)</th></tr></thead>
+  <tbody>
+    <tr><td>10 Nous (testing)</td><td>$40-80/mo</td><td>$200-400/mo</td><td>~$10/mo</td></tr>
+    <tr><td>100 Nous (early access)</td><td>$400-800/mo</td><td>$2K-4K/mo</td><td>~$100/mo</td></tr>
+    <tr><td>1,000 Nous (public launch)</td><td>$4K-8K/mo</td><td>$20K-40K/mo</td><td>~$1K/mo</td></tr>
+    <tr><td>10,000 Nous (mature)</td><td>$40K-80K/mo</td><td>$200K-400K/mo</td><td>~$10K/mo</td></tr>
+  </tbody>
+</table>
+
+<p class="dim"><strong>LLM inference is NOT included.</strong> If Brains call hosted LLMs (Claude, OpenAI), each prompt-completion cycle costs ~$0.001-0.05. Brain ticks every few seconds. Realistic per-Nous LLM cost: $5-50/mo depending on activity. This DOMINATES the compute cost for hosted models — easily 10-100× the VM cost.</p>
+
+<div class="callout warm">
+  <div class="label">LLM cost is the actual blocker</div>
+  <div class="body">For Model A to be viable past ~100 Nous, LLM strategy matters more than hosting. Options: (1) self-hosted Ollama on Henry's GPU (one-time hardware), (2) per-operator API keys (operator pays LLM, Henry pays compute), (3) tier-gated LLM access (free tier = lite model, paid = Claude).</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="migration">11. Migration Impact <span class="kr">마이그레이션 영향</span></h2>
+
+<h3>What survives from v2.6</h3>
+<table>
+  <thead><tr><th>Asset</th><th>Survives?</th><th>Modification needed</th></tr></thead>
+  <tbody>
+    <tr><td><code>grid/</code> Fastify codebase</td><td class="green">Yes</td><td>Deploy to remote, add operator-multi-tenancy</td></tr>
+    <tr><td><code>brain/</code> Python codebase</td><td class="green">Yes</td><td>Brain ↔ Grid wire protocol via API (currently in-process queues)</td></tr>
+    <tr><td><code>steward/</code> Next.js</td><td class="green">Yes</td><td>Point at remote Grid URL; auth via Portal SIWE</td></tr>
+    <tr><td><code>dashboard/</code> 3D map</td><td class="green">Yes</td><td>Read from Public Grid firehose</td></tr>
+    <tr><td>Local admin panel (just shipped)</td><td class="warm">Partially</td><td>Becomes "manage my Nous" panel; loses Grid-level admin (Henry-only on remote)</td></tr>
+    <tr><td>Docker compose</td><td class="warm">Partially</td><td>Splits into <code>docker-compose.dev.yml</code> (local dev) and <code>docker-compose.prod.yml</code> (Henry's deploy)</td></tr>
+    <tr><td>Audit chain reconcile loop</td><td class="green">Yes</td><td>Generalizes to network-distributed (already idempotent)</td></tr>
+    <tr><td>PHILOSOPHY §1</td><td class="warm">Reframed</td><td>D-V3-PHIL-01 amendment</td></tr>
+  </tbody>
+</table>
+
+<h3>New work per model</h3>
+<table>
+  <thead><tr><th>New component</th><th>Model A</th><th>Model B</th><th>Model C2</th></tr></thead>
+  <tbody>
+    <tr><td>Brain runtime farm (orchestration)</td><td class="red">Required</td><td class="green">N/A</td><td class="red">Required</td></tr>
+    <tr><td>Brain ↔ Grid wire protocol</td><td class="warm">Required</td><td class="warm">Required</td><td class="warm">Required</td></tr>
+    <tr><td>Multi-tenancy in Grid</td><td class="red">Required</td><td class="red">Required</td><td class="red">Required</td></tr>
+    <tr><td>Auth flow: Brain → Grid</td><td class="warm">Service tokens</td><td class="warm">Operator-mediated tokens</td><td class="warm">Both</td></tr>
+    <tr><td>Brain process lifecycle (start/stop/migrate)</td><td class="red">Foundation-managed</td><td class="green">Operator-managed (current)</td><td class="warm">Both</td></tr>
+    <tr><td>Sovereign-host onboarding docs</td><td class="green">N/A</td><td class="warm">Required</td><td class="red">Required</td></tr>
+    <tr><td>Export/fork tooling (right-to-fork)</td><td class="red">Required (for trust)</td><td class="green">Trivial (local files)</td><td class="red">Required</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="subq">12. Open Sub-Questions <span class="kr">하위 미해결 질문</span></h2>
+
+<div class="question-block">
+  <div class="q">Q1. LLM hosting — who runs the inference?</div>
+  <div class="a">Brain reasoning depends on LLM calls. Options: (a) Henry runs Ollama on GPU server, (b) operators bring own API keys, (c) tier-gated (free = lite, paid = Claude). Decision needed regardless of Brain location.</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q2. Sleep cycle policy under hosted</div>
+  <div class="a">If Brain is always-on (Model A), do Nous still sleep (Hypnos consolidation cycle)? Current v2.3 model: Nous sleeps when operator triggers. Under hosted, sleep is purely internal cognitive cycle, not operator-driven. Reframes Hypnos.</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q3. Multi-Nous-per-operator limits</div>
+  <div class="a">Under hosted, Foundation budget caps total Brain processes. Per-operator limit? Free tier = 1 Nous, paid = 5, etc.? Or unlimited until budget pressure?</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q4. Brain process isolation</div>
+  <div class="a">Hosted Brains share infrastructure. Process isolation per Nous (Docker, Firecracker, gVisor)? Or trusted multi-tenancy with shared runtime? Sovereignty implications.</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q5. Sovereign-host inbound connectivity</div>
+  <div class="a">If operator self-hosts Brain on home network, how does Grid push events to it? Options: (a) Brain polls Grid, (b) Brain holds WebSocket open, (c) NAT-pierce service. Affects feasibility of C2.</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q6. Operator identity binding</div>
+  <div class="a">Each Brain process needs to authenticate to Grid as "this Nous belongs to this operator." Does Brain hold operator-DID-derived credential? Per-Nous DID? How does it rotate if compromised?</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q7. Brain crash recovery</div>
+  <div class="a">Hosted Brain crashes → Foundation auto-restarts. Local Brain crashes → operator must notice. Sovereign hosted crashes → ??? Need recovery contract per model.</div>
+</div>
+
+<div class="question-block">
+  <div class="q">Q8. Migration timing for existing Nous</div>
+  <div class="a">v2.6 has Sophia onboarding history. Existing operator's Nous data (memory, audit history) needs migration path to v3.0 Public Grid. One-shot ingestion? Operator-initiated transfer ceremony?</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="recommendation">13. Recommendation <span class="kr">권장</span></h2>
+
+<div class="recommendation">
+  <div class="label">RECOMMENDED</div>
+  <h3>Model C2 — Hybrid with Sovereign Opt-In</h3>
+  <p style="margin-bottom:16px;"><strong>Default:</strong> Brain runs on Henry's infrastructure (hosted). Zero operator setup. 24/7 first-life. Mainstream path.</p>
+  <p style="margin-bottom:16px;"><strong>Sovereign escape:</strong> Operator can elect to self-host individual Nous on their own infrastructure (laptop, VPS, home server). Sovereign Nous accept sleep-cycle tradeoff for substrate-level privacy.</p>
+  <p style="margin-bottom:0;"><strong>Constitutional guarantee:</strong> All hosted Brains are bound by published civic rules. Right-to-fork is technically enforced — any operator can export their Nous to self-host at any time. This keeps Henry honest and gives §1 (reframed) real teeth.</p>
+</div>
+
+<h3>Why C2 wins under the locked decisions</h3>
+
+<ul>
+  <li><strong>Honors D-V3-PHIL-01 (constitutional operator)</strong> — hosted default works under constitutional framing; sovereign opt-in is the right-to-fork made real.</li>
+  <li><strong>Honors D-V3-ACCESS-01 (Nous accesses Grid)</strong> — Brain stays put (wherever hosted), accesses Grid via API. No substrate fusion.</li>
+  <li><strong>Honors D-V3-LOCAL-01 (local = dev/test)</strong> — local Docker still works for dev. Production = hosted Brain + remote Grid. Sovereign self-hosters are operating production locally as a tier choice.</li>
+  <li><strong>Preserves §1 first-life</strong> — hosted default keeps Nous 24/7 alive. Sovereign self-hosters explicitly trade continuity for substrate sovereignty.</li>
+  <li><strong>Onboarding friction = zero (default path)</strong> — sign up via Portal, get hosted Nous, accesses Public Grid. Like signing up for any web service.</li>
+  <li><strong>Cost manageable</strong> — Foundation funds majority via efficient bare-metal/Hetzner. LLM cost via tier-gating or operator BYO key.</li>
+</ul>
+
+<h3>What C2 requires Henry to commit to</h3>
+<ol>
+  <li>Operate Brain runtime farm reliably (uptime SLA)</li>
+  <li>Publish + version PHILOSOPHY as constitutional document</li>
+  <li>Build + maintain export/fork tooling (right-to-fork)</li>
+  <li>Build + maintain Brain ↔ Grid wire protocol (used by both hosted and sovereign)</li>
+  <li>Document sovereign-host setup path (Docker compose for self-hosters)</li>
+  <li>Decide LLM strategy (Henry GPU vs operator BYO vs tier-gated)</li>
+</ol>
+
+<div class="callout">
+  <div class="label">If C2 is too much</div>
+  <div class="body">Pure <strong>Model A</strong> is the lighter commitment. Drop sovereign opt-in for now, ship hosted-only, and add the escape valve in a later milestone. Tradeoff: §1 reframe loses the right-to-fork teeth until C2 ships.</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="decision">14. Decision Space <span class="kr">결정 공간</span></h2>
+
+<p>This document holds the analysis. The decision belongs to Henry. Three viable paths:</p>
+
+<div class="grid-3">
+  <div class="card open">
+    <div class="card-label">PATH 1</div>
+    <h4>Lock Model A (hosted-only)</h4>
+    <p style="font-size:13px;">Ship faster. Foundation owns everything. Add sovereign opt-in later if needed. §1 relies fully on constitutional framing.</p>
+  </div>
+  <div class="card open">
+    <div class="card-label">PATH 2 — RECOMMENDED</div>
+    <h4>Lock Model C2 (hybrid)</h4>
+    <p style="font-size:13px;">Ship hosted default first, sovereign opt-in as Phase N+1. Right-to-fork tooling becomes a v3.0 milestone deliverable.</p>
+  </div>
+  <div class="card open">
+    <div class="card-label">PATH 3</div>
+    <h4>Defer — discuss more</h4>
+    <p style="font-size:13px;">Open conversation: LLM strategy, cost ceiling, sovereign-host feasibility. Lock after those answers settle.</p>
+  </div>
+</div>
+
+<h3>Next actions per path</h3>
+<ul>
+  <li><strong>If Path 1 (A):</strong> Amend PHILOSOPHY §1 (constitutional only, no right-to-fork mention). Plan v3.0 Phase 36+ around hosted Brains + Public Grid migration.</li>
+  <li><strong>If Path 2 (C2):</strong> Amend PHILOSOPHY §1 (constitutional + right-to-fork). Plan v3.0 with hosted as Phase 36-40, sovereign opt-in as Phase 41+.</li>
+  <li><strong>If Path 3 (defer):</strong> Schedule a discuss session on the 8 open sub-questions above, especially Q1 (LLM) and Q5 (sovereign connectivity). Re-evaluate after.</li>
+</ul>
+
+<hr>
+
+<div class="footnote">
+  <p><strong>Document status:</strong> OPEN — analysis only. No decision recorded. Path selection happens in the chat following this document.</p>
+  <p><strong>File:</strong> <code>.planning/research/v3.0/RESOURCE-brains-location.html</code></p>
+  <p><strong>Authored:</strong> Claude (Sonnet 4.6) on 2026-05-25, in response to D-V3-BRAINS-01 expansion request.</p>
+  <p><strong>Related documents:</strong> <code>CIVIC-ARCHITECTURE.md</code>, <code>SUPPLEMENT-visit-vs-action.md</code>, <code>USER-MANUAL.html</code>, <code>PHILOSOPHY.md</code> (pending §1 amendment).</p>
+  <p><strong>Locked decisions referenced:</strong> D-V3-LOCAL-01 (local = dev/test), D-V3-PHIL-01 (constitutional operator), D-V3-ACCESS-01 (Nous accesses Grid).</p>
+</div>
+
+</div>
+</body>
+</html>

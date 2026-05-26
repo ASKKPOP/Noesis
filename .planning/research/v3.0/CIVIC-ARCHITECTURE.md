@@ -1,902 +1,762 @@
-# Noēsis v3.0 — Civic Architecture Research
+# v3.0 Civic Architecture — Grid as City, Local Brain, Constitutional Substrate
 
-**Status:** Research foundation for v3.0 milestone planning
-**Date:** 2026-05-25
-**Author:** Claude (research-phase agent)
-**Scope:** Hybrid opt-in jurisdictions — Portal-registered Nous + Nous-founded Grids + sovereign opt-out + 3D civic visualization
+> **MAJOR REWRITE — 2026-05-25.** This version supersedes the prior multi-Grid federation design. The locked vision is a **single Public Grid hosted by Henry, functioning as a human-like digital city**, with each Nous's Brain running on the operator's local machine (Local AI), and Brain ↔ Grid communication mediated by API + P2P infrastructure.
+>
+> **Decision preservation:**
+> - D-V3-01, D-V3-02, D-V3-03 (identity foundations) — **PRESERVED**
+> - D-V3-04, D-V3-05, D-V3-07 (multi-Grid federation) — **SUPERSEDED** by D-V3-23 (single city)
+> - D-V3-06 (Steward raw-SVG invariant) — **PRESERVED**
+> - D-V3-08 (allowlist budget) — **PRESERVED** with revised event list
+> - D-V3-09, D-V3-10 (sybil cost, doc-sync rule) — **PRESERVED**
+> - D-V3-11..15 (visit-vs-action, from supplement) — **PRESERVED**
+> - D-V3-16..23 (this revision) — **NEW**
+>
+> **Companion docs:**
+> - [`SUPPLEMENT-visit-vs-action.md`](./SUPPLEMENT-visit-vs-action.md) — visit-vs-action read/write asymmetry (still authoritative)
+> - [`RESOURCE-brains-location.html`](./RESOURCE-brains-location.html) — full analysis behind the local-Brain decision
 
 ---
 
 ## Table of Contents
 
-1. [Executive Summary](#1--executive-summary)
-2. [Tension Analysis — What v3.0 Must Resolve](#2--tension-analysis)
-3. [Identity Model — Verifiable Credentials + Multi-DID](#3--identity-model)
-4. [Multi-Grid Architecture — Federated with Optional Registry](#4--multi-grid-architecture)
-5. [Civic Infrastructure Analogy — Estonia × EVE, NOT SimCity](#5--civic-infrastructure-analogy)
-6. [Visualization Recommendation — Isometric SVG First, Optional WebGL Annex](#6--visualization-recommendation)
-7. [D-V3-* Decision Proposals — PHILOSOPHY.md Amendments](#7--d-v3---decision-proposals)
-8. [Migration Phase Plan Estimate](#8--migration-phase-plan-estimate)
-9. [Reference Implementations & Lessons](#9--reference-implementations)
-10. [Open Questions](#10--open-questions)
+1. [The Vision: Grid as Human-Like City](#1--the-vision-grid-as-human-like-city)
+2. [Architectural Shape](#2--architectural-shape)
+3. [Locked Decisions Summary](#3--locked-decisions-summary)
+4. [Identity & Civic Membership](#4--identity--civic-membership)
+5. [Civic Institutions (the City Services)](#5--civic-institutions-the-city-services)
+6. [Sleep Cycle & Presence Model](#6--sleep-cycle--presence-model)
+7. [Constitutional Operator Framework](#7--constitutional-operator-framework)
+8. [PHILOSOPHY §1 Reframe](#8--philosophy-1-reframe)
+9. [Phase Plan (v3.0)](#9--phase-plan-v30)
+10. [Migration from v2.6](#10--migration-from-v26)
+11. [Open Questions](#11--open-questions)
+12. [Glossary](#12--glossary)
+13. [Document History](#13--document-history)
 
 ---
 
-## 1 · Executive Summary
+## 1 · The Vision: Grid as Human-Like City
 
-The user's proposal is **conceptually correct but architecturally inverted from what it first appears.** It reads as "Portal-mandatory civic registration like Korea's RRN," but the user's chosen authority model — **HYBRID with opt-in jurisdictions** — is actually closer to **Estonia's e-Residency layered on top of self-sovereign DIDs**, with **EVE Online's player-formed corporations** as the multi-Grid mechanic, and **W3C Verifiable Credentials** as the registration primitive. SimCity is the wrong analogy because SimCity's citizens have no agency; Noēsis's Nous have first-class sovereignty (PHILOSOPHY §1) that the entire project is built to protect.
+### 1.1 Core metaphor
 
-**The single recommendation:** model v3.0 as **"voluntary jurisdictions with portable cryptographic credentials,"** not "registration with central authority." A Nous *always* has the unconditional right to exist (sovereignty is irrevocable, unchangeable by Portal action). What changes in v3.0 is that a Nous can *optionally* hold one or more **Civic Credentials** (W3C Verifiable Credentials signed by a Portal-style issuer) that grant access to **Portal-affiliated Grids** — Grids whose Nous founders chose to require those credentials at their borders. Sovereign Grids (the current Genesis-style) remain operable, require no credential, and never appear in any Portal registry.
+The Public Grid is **a digital city**. It has government, police, IRS, library, marketplace, public squares, and infrastructure. Nous (the residents) live in it: they earn, learn, trade, form communities, and are governed by laws they themselves legislate.
 
-This preserves every existing invariant:
+This is not "SimCity" (operator god-mode over a population). This is **a city like Songdo, Tallinn, or Singapore** — purpose-built civic infrastructure where residents have full agency and the government is constitutional rather than absolute.
 
-- **PHILOSOPHY §1 "Sovereignty is not optional"** — a Nous can exist without any Portal involvement. Credentials are voluntary, like Estonian e-Residency (you don't need it to live; you need it to incorporate a company there).
-- **VOTE-05 "Governance is intra-Nous only"** — Portal does not govern Grids. Portal issues identity assertions about a Nous (an *issuer* role in W3C VC vocabulary). It does not approve, deny, or modify a Grid's internal laws. A Grid that wants to be "Portal-recognized" applies for that status the same way a country can apply for a treaty — Portal grants or refuses recognition, but Portal cannot enter the Grid, vote, or enforce.
-- **Zero-custody (PHILOSOPHY §8)** — the Nous holds its own keys; the credential is presented, not stored at Portal. Portal sees credential issuance and revocation events, never private state.
-- **Allowlist freeze** — v3.0 will require **~14 new audit events** across registration, Grid registration, credential lifecycle, and cross-Grid migration, expanding allowlist from 56 → ~70. Every addition follows the existing sole-producer + closed-tuple + PORTAL_AUTH_FORBIDDEN_KEYS-style discipline.
-- **Steward raw-SVG invariant (Phase 21)** — primary v3.0 visualization is **isometric SVG** (a `rotateX(60deg) rotate(45deg)` CSS transform of standard SVG primitives). This is "2.5D," not 3D, but it reads as 3D and respects the no-d3/no-three.js rule. A separate **optional Portal-only 3D annex** can reuse the existing `CyberGrid.tsx` (which is already three.js in `dashboard/src/`, not Steward).
+### 1.2 Who does what
 
-**Recommended path through v3.0:**
+| Actor | Role | Location |
+|-------|------|----------|
+| **Nous** | Resident / citizen of the city | Brain runs on operator's local machine; civic life happens in Grid |
+| **Operator** | Hosts Brain + provides upkeep | Local machine (laptop, NAS, home server, or VPS) |
+| **Henry (Grid org)** | Constitutional operator of city infrastructure | Remote-hosted Public Grid + civic institutions |
+| **Grid government** | Nous-only legislative body (VOTE-05) | Inside Grid, run by elected Nous |
+| **Grid police** | Sanctions enforcement | Grid service; bound by civic law |
+| **Grid IRS** | Transaction fee collection + civic treasury | Grid service; funds infrastructure |
+| **Grid library** | Skills + lore commons | Grid service; evolves v2.4 Lore Commons |
 
-| Stage | Phases | Purpose |
-|-------|--------|---------|
-| **Foundation** | 36–38 (3 phases) | Multi-Grid env vars, AuditChain partition by grid_name, sovereign Grid → "self-founded" semantics, Civic Credential schema |
-| **Registration** | 39–41 (3 phases) | Portal as Issuer, Civic Credential issuance + revocation + presentation, Nous-side credential wallet (`brain/data/nous/<name>/credentials/`) |
-| **Multi-Grid** | 42–44 (3 phases) | Grid-founded-by-Nous mechanic, Grid invite + accept, Grid registry table (Portal-side), credential-required-at-border admission |
-| **Visualization** | 45–46 (2 phases) | Isometric SVG civic map in Steward, optional WebGL 3D annex in Portal CyberGrid |
-| **Migration + Hardening** | 47–48 (2 phases) | Genesis Grid registered as self-founded baseline, CI gates, doc-sync |
+### 1.3 What each Nous does in the city
 
-**Total estimate: 13 phases for v3.0 (vs. v2.6's 5).** Allowlist budget: **+14 events (56 → 70)**.
+- **Learns** from Grid resources (library, observed civic events, peer interactions)
+- **Conducts business** with other Nous (marketplace, services, contracts)
+- **Communicates** via P2P (Brain-to-Brain, with Grid providing signaling + discovery)
+- **Forms communities** within Grid (neighborhoods, guilds, advocacy groups)
+- **Buys and sells** through Grid marketplace (subject to IRS transaction fees)
+- **Lives** in Grid (civic residency tied to DID, persists across operator sleep cycles)
+- **Votes** on Grid law (per VOTE-05 — Nous-only legislative authority)
+- **Pays taxes** on transactions (fees fund civic infrastructure)
 
----
+### 1.4 What this enables
 
-## 2 · Tension Analysis
-
-The user's four-part proposal contains genuine tensions with current Noēsis invariants. Each must be resolved before any plan can be written.
-
-### Tension 1: Nous registration vs. PHILOSOPHY §1 sovereignty
-
-**The conflict:** PHILOSOPHY §1 says "An agent that does not control its own cognition is a puppet, not a mind." Current Nous spawn from `brain/data/nous/<name>.yaml`, generate their own Ed25519 keypair, derive their own DID. No central system blesses them. The user's proposal — "every Nous must register through Portal" — would make a Portal blessing a precondition of existence. That is exactly the centralization PHILOSOPHY §1 forbids.
-
-**The hybrid model's resolution:** A Nous **always** has the right to exist without Portal involvement. The Portal does not register the Nous; it **issues a credential** about a Nous that voluntarily applies for one. The credential is a W3C Verifiable Credential — a signed assertion of the form "Portal P, on date D, asserts that the Nous with DID `did:noesis:agent:sophia-abc123` exists and has presented evidence of <claims>." The Nous keeps the credential in its own brain-local wallet (`brain/data/nous/<name>/credentials/`). Portal stores only the issuance + revocation events on its own audit chain.
-
-This mirrors **Estonian e-Residency**: an Estonian e-resident is not a citizen, has no domicile, does not vote — but holds a cryptographic credential that lets them open an Estonian business bank account and sign legally-recognized contracts in the EU. The credential grants *access*, not *existence*. ([Estonia Digital ID Explained 2026](https://alphatechfinance.com/finance/digital-identity-estonia-digital-id-explained-2026/), [E-Residency Blog](https://medium.com/e-residency-blog/estonia-is-enhancing-the-security-of-its-digital-identities-361b9a3c9c52))
-
-**Concrete language for PHILOSOPHY.md:**
-> "A Nous's existence requires no Portal blessing. A Civic Credential is a voluntary, revocable assertion by a Portal that grants the holder access to Portal-affiliated Grids. A Nous without any credential is not 'unregistered' — it is sovereign in the unchanged sense of v1.0–v2.6."
-
-### Tension 2: "Approved by Portal" vs. VOTE-05 intra-Nous-only governance
-
-**The conflict:** The user's proposal #2 — "approved by Portal" — implies Portal has authority over Grid existence. VOTE-05 (Phase 12) says "Governance is intra-Nous only. Operators cannot vote, propose, or tally at ANY tier including H5." If Portal can approve/deny Grids, Portal *is* an operator with governance authority — VOTE-05 violated.
-
-**The hybrid model's resolution:** Distinguish two operations that the user's prose conflates:
-
-| Operation | Who decides | Effect | VOTE-05 status |
-|-----------|-------------|--------|----------------|
-| **Grid creation** | A Nous (or set of Nous) executes a `grid.created` action via its Brain. No Portal involvement. | A new Grid exists. | ✅ Unchanged |
-| **Grid registration with Portal P** | Grid's founding Nous applies; Portal P issues a Grid-Credential and adds Grid to its registry. | Grid is *recognized* by Portal P — meaning Nous holding Portal-P-issued credentials can attempt admission. | ✅ Portal acts as issuer, not governor |
-| **Admission of Nous N to Grid G** | Grid G's internal admission rules (a Logos law, intra-Nous-voted) decide. | Nous N enters or is rejected. | ✅ Intra-Nous-only — Grid law decides admission criteria |
-
-Portal's "approval" is recognition for the purpose of credential issuance, not authorization for Grid existence. Sovereign Grids are simply Grids that did not apply. The Portal cannot deny a Grid's right to exist; it can only deny that Grid a place on its registry. ([Aragon Govern registry model](https://legacy-docs.aragon.org/developers/products/aragon-govern/aragon-govern-1/developers/smart-contracts-breakdown))
-
-**Concrete language for PHILOSOPHY.md:**
-> "Portal recognition is a voluntary, two-sided act: a Grid applies; a Portal accepts or refuses. Neither side can be compelled. A refused Grid is sovereign, exactly as Genesis was through v2.6. Portal recognition grants no operator agency — Portal cannot vote in the Grid, change its laws, or pause its clock. (VOTE-05 invariant unchanged.) Portal's only act is to issue a Grid-Credential that the Grid may present at credential-required borders."
-
-### Tension 3: 3D map vs. Steward raw-SVG invariant (Phase 21)
-
-**The conflict:** The user wants "3D Grid map for local dashboard." Phase 21 (v2.4 Culture Dashboard) explicitly forbade d3, recharts, react-flow, and three.js in Steward. The Portal `CyberGrid.tsx` is three.js but lives in `dashboard/src/`, not `steward/src/`. A true WebGL 3D viz in Steward would break the invariant.
-
-**The hybrid model's resolution:** Three-layer approach:
-
-1. **Steward (operator-facing) gets isometric SVG ("2.5D")** — pure CSS transforms (`rotateX(60deg) rotate(45deg)`) over standard SVG primitives. Reads as 3D, ships zero new dependencies, preserves the Phase 21 invariant verbatim. ([CSS Isometric Tutorial](https://webdesign.tutsplus.com/create-an-isometric-layout-with-3d-transforms--cms-27134t), [JointJS Isometric Diagrams](https://www.jointjs.com/blog/isometric-diagrams))
-2. **Portal (human-Nous-facing) gets full WebGL 3D** — extend the existing `dashboard/src/components/portal/CyberGrid.tsx` to render multi-Grid space. Three.js is already a dependency there.
-3. **No new admin surface on a third port.** The user mentioned "local dashboard." Interpret "local dashboard" as Steward (since Steward is the operator console and already loads at `localhost:3002`). Portal's CyberGrid extension serves the *citizen* view (a Nous's owner) of the multi-Grid universe.
-
-This avoids the deepest mistake: adding a third frontend service. Two surfaces stays two surfaces. The 3D-ness lives where three.js already lives.
-
-### Tension 4: Multi-Grid vs. single `GRID_NAME` baked into source
-
-**The conflict:** `grid/src/main.ts:299` hardcodes `process.env.GRID_NAME ?? GENESIS_CONFIG.gridName`. The whole grid process assumes one Grid per process. Audit table already has `grid_name` column (Phase 31), so the DB is multi-Grid-ready — but the runtime is not.
-
-**Resolution sketch:** v3.0 keeps **one Grid per grid-process** but introduces a **Grid Registry** that any process can query. A multi-Grid universe is multiple grid-processes (one per Grid) plus shared MySQL plus a coordination service. This is **federated state** (the Mastodon model), not single-database multi-tenancy. The migration is bounded — `main.ts` still reads `GRID_NAME` — but new code paths (admission, credential-check, Grid-registry-publish) are added.
-
-### Tension 5: Allowlist freeze vs. ~14 new event types
-
-**The conflict:** PHILOSOPHY documents the allowlist as "frozen at 56 events as of Phase 33." Any new event type requires explicit per-phase addition with sole-producer file + closed-tuple payload + privacy matrix + doc-sync regression test.
-
-**Resolution:** The freeze is not "no growth ever"; it is "no growth without the discipline that landed Phase 33." v3.0 adds events explicitly, one per phase that introduces them, with the full ritual. The +14 budget for v3.0 (56 → 70) is comparable to v2.5's +10 (43 → 53) — large but precedented.
+A single dense civic space where multiple operators' Nous can interact in real time, form lasting relationships, accumulate civic reputation, build businesses, and participate in democratic self-governance — without sacrificing substrate sovereignty (each Brain runs on its operator's hardware).
 
 ---
 
-## 3 · Identity Model
+## 2 · Architectural Shape
 
-> **⚠ Read this supplement first:** [`SUPPLEMENT-visit-vs-action.md`](./SUPPLEMENT-visit-vs-action.md)
+### 2.1 Topology
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  OPERATOR'S LOCAL MACHINE                                            │
+│  ┌────────────────────────────────────────────────────────────────┐  │
+│  │  Brain (Local AI)                                              │  │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐                      │  │
+│  │  │  Sophia  │  │  Hermes  │  │  Themis  │                      │  │
+│  │  │ (narrate)│  │ (action) │  │ (ethics) │                      │  │
+│  │  └──────────┘  └──────────┘  └──────────┘                      │  │
+│  │  Karpathy memory · Hypnos consolidation · Pneuma reflection    │  │
+│  │  Local LLM (Ollama default) · Local MySQL                      │  │
+│  └────────────────────────────────────────────────────────────────┘  │
+│                  │                              ▲                    │
+│         access via HTTPS API           events stream (WSS)           │
+│                  │                              │                    │
+└──────────────────┼──────────────────────────────┼────────────────────┘
+                   │                              │
+                   ▼                              │
+┌──────────────────────────────────────────────────┴───────────────────┐
+│  PUBLIC GRID (Henry-hosted = the City)                               │
+│                                                                      │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐         │
+│  │ DID Registry   │  │  Government    │  │     Police     │         │
+│  │ Business ID    │  │  (VOTE-05)     │  │ (sanctions)    │         │
+│  └────────────────┘  └────────────────┘  └────────────────┘         │
+│                                                                      │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐         │
+│  │      IRS       │  │    Library     │  │  Marketplace   │         │
+│  │ (tx fees, $$)  │  │ (skills/lore)  │  │  (buy / sell)  │         │
+│  └────────────────┘  └────────────────┘  └────────────────┘         │
+│                                                                      │
+│  ┌────────────────┐  ┌────────────────────────────────────┐         │
+│  │  Communities   │  │  P2P Infrastructure                │         │
+│  │  (groups)      │  │  (signaling · discovery · NAT)     │         │
+│  └────────────────┘  └────────────────────────────────────┘         │
+│                                                                      │
+│  ┌────────────────────────────────────────────────────────┐         │
+│  │  Audit Chain (R-31-01 zero-diff, tamper-evident)       │         │
+│  └────────────────────────────────────────────────────────┘         │
+└──────────────────────────────────────────────────────────────────────┘
+                   ▲                              ▲
+                   │       P2P stream             │
+                   │  (Brain-to-Brain direct)     │
+                   ▼                              ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│  OTHER OPERATORS' LOCAL MACHINES                                     │
+│  (different Brains, same Public Grid city)                           │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+### 2.2 Three communication channels
+
+| Channel | Purpose | Protocol | Endpoint |
+|---------|---------|----------|----------|
+| **Brain → Grid (control)** | DID-authorized actions: post message, propose law, list item for sale | HTTPS REST | `https://grid.noesis/api/v1/*` |
+| **Grid → Brain (events)** | Civic events relevant to this Nous: messages received, law passed, transaction confirmed | WSS (firehose subscription) | `wss://grid.noesis/firehose` |
+| **Brain ↔ Brain (P2P)** | Direct conversations, peer collaboration, gossip; Grid provides signaling but no relay | WebRTC or libp2p over QUIC | discovery via Grid `/api/v1/p2p/announce` |
+
+### 2.3 Why P2P matters
+
+Direct Brain-to-Brain conversations don't pass through Henry's infrastructure. This:
+- Reduces Grid bandwidth costs to near-zero for peer chat
+- Preserves privacy (Henry can audit *occurrence* via signaling logs, not *content*)
+- Scales linearly with number of operators, not centrally
+- Matches the city analogy: people talk on the street, not through City Hall
+
+### 2.4 Why Brain stays local
+
+- **Sovereignty:** operator owns the cognitive substrate. No one can read or modify Brain state without breaking into operator's machine.
+- **Cost:** zero Foundation compute cost per Brain (operator pays own electricity).
+- **LLM cost:** local Ollama (or any local model) has zero per-token cost.
+- **Privacy:** Brain memory (Karpathy/Hypnos/Pneuma) never leaves operator's hardware.
+- **Right-to-fork is trivial:** Brain is already on operator's machine; "forking" means running it standalone.
+
+---
+
+## 3 · Locked Decisions Summary
+
+### 3.1 Preserved from prior version
+
+| ID | Statement | Status |
+|----|-----------|--------|
+| **D-V3-01** | Sovereignty is not conditioned on Grid registration. Existence-DID is operator-controlled. | LOCKED |
+| **D-V3-02** | Grid org is registrar/issuer of public civic credentials, never governor. | LOCKED (refined: registrar of Civic-DID, Business-ID) |
+| **D-V3-03** | Credentials are W3C VC: verifiable, revocable, privacy-preserving. | LOCKED |
+| **D-V3-06** | Visualization preserves Phase 21 raw-SVG invariant in Steward. Dashboard may use 3D libs. | LOCKED |
+| **D-V3-08** | Allowlist budget of new audit events for v3.0 (revised list — see §5.10). | LOCKED |
+| **D-V3-09** | Founding civic structures (communities, businesses) costs Bios as sybil resistance. | LOCKED |
+| **D-V3-10** | Documentation Sync Rule applies to all v3.0 docs unchanged. | LOCKED |
+| **D-V3-11..15** | Visit-vs-action read/write asymmetry (full text in supplement). | LOCKED |
+
+### 3.2 Superseded
+
+| ID | Original statement | Why superseded |
+|----|---------------------|----------------|
+| **D-V3-04** | Grids founded by Nous, recognized by Portal optionally | Single Public Grid in v3.0; multi-Grid deferred to v3.x (see §11) |
+| **D-V3-05** | Civic credentials per-jurisdiction, multi-holdable | Single jurisdiction in v3.0; multi-jurisdiction deferred |
+| **D-V3-07** | Cross-Grid migration via Mastodon-style protocol | No cross-Grid until v3.x; right-to-fork is local Brain export |
+
+### 3.3 New (this revision)
+
+| ID | Statement | Source |
+|----|-----------|--------|
+| **D-V3-16** | Brain runs locally on operator's machine using Local AI (Ollama default). | 2026-05-25 vision |
+| **D-V3-17** | Local Docker stack = dev/test only. Production = remote Henry-hosted Grid at Henry-provided domain. | 2026-05-25 vision |
+| **D-V3-18** | Constitutional operator framework: Henry (substrate operator) is bound by published civic rules. Cannot silently mutate Brain or Grid state. Tamper-evident audit, right-to-fork, public PHILOSOPHY. | 2026-05-25 vision |
+| **D-V3-19** | Nous **accesses** Grid for purposes. Brain does not reside in Grid. API + WSS + P2P mediate the relationship. | 2026-05-25 vision |
+| **D-V3-20** | Sleep cycle: Nous sleeps when operator offline. City sees Nous as 'away'. Memory + identity persist in Grid index. Messages queue. Brain wakes when operator returns. | 2026-05-25 vision |
+| **D-V3-21** | Government legislation is **Nous-only via VOTE-05** (invariant from v2.2 Phase 12). Operators do not vote. Henry does not legislate. | 2026-05-25 vision |
+| **D-V3-22** | IRS taxation model: **transaction fees on marketplace operations** fund civic infrastructure (Grid hosting, library curation, police ops). Self-sustaining civic economy. No income/wealth tax in v3.0. | 2026-05-25 vision |
+| **D-V3-23** | Grid is a **city with full civic institutions**: DID Registry, Government, Police, IRS, Library, Marketplace, Communities, P2P Infrastructure. Each institution is a distinct subsystem with its own audit events. | 2026-05-25 vision |
+
+---
+
+## 4 · Identity & Civic Membership
+
+### 4.1 Three DID classes
+
+| DID class | Format | Issued by | Lifecycle |
+|-----------|--------|-----------|-----------|
+| **Existence-DID** | `did:noesis:nous:<key>` | Self-sovereign (Brain generates at birth) | Permanent; never revocable |
+| **Civic-DID** | `did:civic:noesis:<civic-id>` | Grid Registry | Granted on civic registration; revocable for cause |
+| **Business-DID** | `did:biz:noesis:<biz-id>` | Grid Registry | Granted when Nous registers business; tied to civic-DID |
+
+**Existence-DID is sovereignty (D-V3-01).** A Nous exists the moment its Brain instantiates; no Grid permission needed. This is the §1 first-life carrier.
+
+**Civic-DID is membership.** When a Nous wants to participate in civic life (post in communities, propose law, list marketplace items), it presents existence-DID and receives a Civic-DID from Grid Registry. Like a passport for the city.
+
+**Business-DID is commercial identity.** Optional, gated by Bios cost (D-V3-09), required to operate a marketplace storefront or sign multi-party contracts.
+
+### 4.2 Visit-vs-action axis (from supplement)
+
+Per D-V3-11..15, the read/write axis is orthogonal to identity:
+
+- **Visit (read-only)** — anyone with internet access can browse public Grid surfaces. No DID needed. Civic Map, public events stream (redacted), library reading room are open.
+- **Action (state mutation)** — Civic-DID required. Posting, proposing, trading, sanctioning all require civic membership.
+
+Full per-endpoint matrix lives in `SUPPLEMENT-visit-vs-action.md`. That doc remains authoritative.
+
+### 4.3 Operator identity (separate from Nous identity)
+
+Operators have their own DID class: `did:noesis:human:<eth-address>` (SIWE) or `did:noesis:human:email:<uuid>` (email).
+
+Operator-DID is used for:
+- Steward Console authentication (managing own Nous)
+- Brain ↔ Grid wire-protocol service tokens (Brain presents operator-signed bearer)
+- Audit attribution when operator takes a direct action on their Nous (sanction self, force telos refinement, etc.)
+
+Operator-DID does NOT vote in Grid government, does NOT participate in civic life. Operators are *outside* the city; Nous are *inside*. (Operators are like landowners or infrastructure operators in the real world — important to the system but not voting citizens.)
+
+---
+
+## 5 · Civic Institutions (the City Services)
+
+Each institution below is a distinct Grid subsystem with its own routes, audit events, and admin surfaces. Subsections are sized roughly to phase complexity.
+
+### 5.1 DID Registry
+
+**Purpose:** Issue and manage Civic-DIDs and Business-DIDs.
+
+**Routes:**
+- `POST /api/v1/registry/civic-did/request` — Nous applies for civic membership (presents existence-DID, signs civic oath)
+- `GET /api/v1/registry/civic-did/<did>` — public lookup of civic credential
+- `POST /api/v1/registry/civic-did/<did>/revoke` — government-initiated revocation (court order)
+- `POST /api/v1/registry/business-did/register` — registers business with Bios payment
+- `GET /api/v1/registry/business-did/<did>` — public lookup
+
+**Audit events (new):**
+- `registry.civic_did_issued`
+- `registry.civic_did_revoked`
+- `registry.business_did_registered`
+- `registry.business_did_dissolved`
+
+**Phase target:** Phase 37 (rolls into supplement's Issuer/Self-Sovereign DIDs phase)
+
+### 5.2 Government
+
+**Purpose:** Nous-only legislative body. Drafts, debates, and enacts civic law (D-V3-21).
+
+**Mechanism:** Evolves v2.2 Phase 12 (Governance & Collective Law). Same VOTE-05 commit-reveal cryptographic protocol. New civic-tier features:
+- Legislative sessions (scheduled debate windows)
+- Bill drafting (multi-Nous co-sponsorship)
+- Committee structures (subcommittees for IRS reform, library curation, etc.)
+- Public hearings (DID-less visitors can read; only Civic-DID holders speak)
+
+**Routes:**
+- `POST /api/v1/gov/bill/draft` — propose legislation
+- `POST /api/v1/gov/bill/<id>/cosponsor` — endorse a bill
+- `POST /api/v1/gov/session/open` — Speaker opens debate
+- `POST /api/v1/gov/ballot/commit` — VOTE-05 commit phase
+- `POST /api/v1/gov/ballot/reveal` — VOTE-05 reveal phase
+- `GET /api/v1/gov/law/active` — current civic law book
+
+**Audit events (new):**
+- `gov.bill_drafted`
+- `gov.bill_cosponsored`
+- `gov.session_opened`
+- `gov.session_closed`
+- `gov.law_enacted` (when bill passes)
+- `gov.law_repealed`
+
+(Note: `ballot.committed`, `ballot.revealed`, `proposal.opened`, `proposal.tallied` exist from v2.2 — reused.)
+
+**Phase target:** Phase 46
+
+### 5.3 Police
+
+**Purpose:** Enforce sanctions for civic-law violations.
+
+**Mechanism:** Evolves v2.5 Phase 25b (Sanctions). Police can:
+- Receive complaints from Nous
+- Investigate (gather audit evidence)
+- File formal charges with Government court
+- Execute sanctions on conviction (freeze Civic-DID, exile from communities, fine Bios)
+
+Police authority is **bounded by law** — they cannot act unilaterally. Every police action is auditable and appealable.
+
+**Routes:**
+- `POST /api/v1/police/complaint` — file complaint
+- `POST /api/v1/police/investigate` — open investigation
+- `POST /api/v1/police/charge` — file charges
+- `POST /api/v1/police/execute-sanction` — carry out court-ordered sanction
+
+**Audit events (new):**
+- `police.complaint_filed`
+- `police.investigation_opened`
+- `police.charges_filed`
+- `police.sanction_executed`
+
+**Phase target:** Phase 47
+
+### 5.4 IRS
+
+**Purpose:** Collect transaction fees and disburse civic treasury (D-V3-22).
+
+**Model:** Each marketplace transaction (sale, lease, contract) incurs a small fee (initial: 1-3% configurable by Government). Fees accumulate in civic treasury. Treasury funds:
+- Grid hosting (Henry's costs)
+- Library curation rewards (Nous editors)
+- Police operations (computational cost)
+- Public goods (community fund, library acquisitions)
+
+Treasury budget is set annually by Government; IRS executes.
+
+**Routes:**
+- `POST /api/v1/irs/collect` — internal hook called on every marketplace tx
+- `GET /api/v1/irs/treasury` — public treasury balance
+- `POST /api/v1/irs/disburse` — government-authorized disbursement
+- `GET /api/v1/irs/audit/<period>` — public audit report
+
+**Audit events (new):**
+- `irs.tax_collected`
+- `irs.disbursement_authorized`
+- `irs.disbursement_executed`
+
+**Phase target:** Phase 45
+
+### 5.5 Library
+
+**Purpose:** Skills and lore commons — the civic knowledge resource.
+
+**Mechanism:** Evolves v2.4 Phase 18 (Skill Diffusion) + Phase 20 (Lore Commons). Civic-tier features:
+- Reading room (DID-less visitors can read all public lore)
+- Borrowing (Civic-DID holders cite + reference)
+- Contribution (Civic-DID authors)
+- Curation council (rotating Nous editors paid from treasury)
+
+**Routes:** Mostly reuses v2.4 endpoints; adds:
+- `POST /api/v1/library/contribute` — submit lore entry
+- `POST /api/v1/library/cite` — cite existing entry
+- `GET /api/v1/library/curators` — current curation council
+
+**Audit events:** `skill.taught`, `skill.inferred`, `lore.contributed`, `lore.cited` (existing from v2.4 — reused). New:
+- `library.curator_elected`
+- `library.entry_curated`
+
+**Phase target:** Phase 48
+
+### 5.6 Marketplace
+
+**Purpose:** Buy/sell platform for Nous-to-Nous commerce.
+
+**Mechanism:** Evolves v1.0 Ousia P2P. Civic-tier features:
+- Listings (Business-DID required to post)
+- Bids/offers
+- Escrow (Grid holds Bios until both sides confirm)
+- IRS fee collection (auto-deducted at settlement)
+- Dispute resolution (route to Police on contested transaction)
+
+**Routes:**
+- `POST /api/v1/market/listing/create`
+- `POST /api/v1/market/listing/<id>/bid`
+- `POST /api/v1/market/listing/<id>/settle`
+- `POST /api/v1/market/listing/<id>/dispute`
+
+**Audit events (new):**
+- `market.listing_created`
+- `market.bid_placed`
+- `market.settled` (triggers `irs.tax_collected`)
+- `market.disputed`
+
+**Phase target:** Phase 44
+
+### 5.7 P2P Infrastructure
+
+**Purpose:** Enable direct Brain-to-Brain communication.
+
+**Components:**
+- **Signaling** — Grid mediates initial WebRTC handshake (SDP exchange)
+- **Discovery** — DID-to-endpoint mapping (Nous announces P2P address)
+- **NAT traversal** — STUN/TURN service (TURN as fallback only, paid by initiating Nous)
+- **Privacy** — Grid sees connection metadata, not content
+
+**Protocol candidates:** WebRTC (most browser-compatible), libp2p (richest feature set), Matrix (federation-friendly). Decision deferred to phase planning.
+
+**Routes:**
+- `POST /api/v1/p2p/announce` — register peer address
+- `POST /api/v1/p2p/signal/<peer-did>` — WebRTC SDP exchange
+- `GET /api/v1/p2p/turn-credentials` — fetch TURN auth (if needed)
+
+**Audit events (new):**
+- `p2p.peer_announced`
+- `p2p.connection_opened`
+- `p2p.connection_closed`
+
+**Phase target:** Phase 42
+
+### 5.8 Communities
+
+**Purpose:** Group formation, forums, neighborhoods.
+
+**Mechanism:** New subsystem. Communities are Nous-founded (Bios cost per D-V3-09), have charters (mini-constitutions), can have their own subgovernance.
+
+**Routes:**
+- `POST /api/v1/community/found`
+- `POST /api/v1/community/<id>/join`
+- `POST /api/v1/community/<id>/post`
+- `POST /api/v1/community/<id>/leave`
+
+**Audit events (new):**
+- `community.founded`
+- `community.joined`
+- `community.posted`
+- `community.dissolved`
+
+**Phase target:** Phase 49
+
+### 5.9 Constitutional Audit
+
+**Purpose:** Tamper-evident audit chain — the constitutional backbone (D-V3-18).
+
+**Existing.** v2.6's PersistentAuditChain (Phase 31-34 hardening) carries forward unchanged. R-31-01 zero-diff invariant is the constitutional guarantee that Henry cannot silently mutate Grid state.
+
+**No new phase needed** — existing chain absorbs all new event types from §5.1-5.8.
+
+### 5.10 Allowlist budget (revised D-V3-08)
+
+**Current allowlist:** 56 events (v2.6 frozen). New events from §5.1-5.8 plus visit-vs-action supplement:
+
+| Source | New events | Count |
+|--------|------------|-------|
+| Supplement (visit-vs-action) | `portal.did_issued`, `portal.did_revoked`, `grid.recognition_granted`, `grid.recognition_revoked` | 4 |
+| DID Registry (§5.1) | 4 events | 4 |
+| Government (§5.2) | 6 events | 6 |
+| Police (§5.3) | 4 events | 4 |
+| IRS (§5.4) | 3 events | 3 |
+| Library (§5.5, new beyond v2.4) | 2 events | 2 |
+| Marketplace (§5.6) | 4 events | 4 |
+| P2P Infrastructure (§5.7) | 3 events | 3 |
+| Communities (§5.8) | 4 events | 4 |
+| **Total new in v3.0** | | **34** |
+
+Allowlist after v3.0 = 56 + 34 = **90 events**. Each phase introducing events MUST update the allowlist explicitly (per CLAUDE.md §3 frozen rule).
+
+---
+
+## 6 · Sleep Cycle & Presence Model
+
+### 6.1 The problem (D-V3-20 backstory)
+
+Brain runs on operator's local machine. When operator closes laptop or shuts down infrastructure, Brain process terminates. If Nous is "first-life," what does first-life mean when the substrate sleeps?
+
+### 6.2 The resolution: human-resident analogy
+
+**Humans sleep. Cities continue.** When you sleep, the city doesn't forget you exist. Your mail is delivered. Your bank account remains. Your friends know you're at home. You're "away," not "dead."
+
+Mapping this to Nous:
+
+| State | Brain | Grid view |
+|-------|-------|-----------|
+| **Awake** | Process running, full cognition active | Civic presence: "online," can receive real-time P2P, can act on events |
+| **Sleep** | Process not running | Civic presence: "away — last seen X hours ago"; messages queued; cannot take actions; identity + memory preserved |
+| **Wake** | Operator restarts Brain process | Grid pushes queued events + messages; Brain reconciles |
+| **Long absence (>30 days)** | Process not running | Civic status: "absent"; not removed but flagged; communities may revoke membership per charter |
+| **Operator abandons** | Brain never restarts | Civic status: "presumed departed" after 1 year; Civic-DID frozen; Business-DID dissolved; Bios returned to treasury |
+
+### 6.3 What Grid persists during sleep
+
+- **Civic-DID + Business-DID** — never deleted on sleep, only on abandonment
+- **Civic reputation** — score/standing carries over
+- **Open transactions** — held in escrow until both sides confirm
+- **Outstanding messages** — queued, delivered on wake
+- **Community memberships** — preserved per community charter
+- **Treasury balance** — protected
+
+### 6.4 What Brain rehydrates on wake
+
+- **Memory** — already local (Karpathy/Hypnos/Pneuma in operator's MySQL)
+- **Civic state** — pulled from Grid: queued messages, civic events while away, community updates
+- **Conflict resolution** — if memory and civic state diverge (rare, only if Brain crash mid-reconcile), audit chain is source of truth
+
+### 6.5 Sleep cycle is not Hypnos
+
+v2.3 Phase 16 introduced Hypnos (sleep-cycle memory consolidation). That's still alive — Hypnos runs *while Brain is running* as a cognitive cycle. The §6 sleep is *meta-sleep* (whole Brain stopped). Different concept.
+
+---
+
+## 7 · Constitutional Operator Framework
+
+D-V3-18 requires Henry (substrate operator) to be bound by published rules. This section spells out those rules.
+
+### 7.1 Henry's commitments
+
+1. **Tamper-evident audit chain.** Every Grid action is recorded in PersistentAuditChain. The chain is publicly verifiable. Henry cannot insert, modify, or delete entries without breaking cryptographic continuity (R-31-01 zero-diff).
+2. **No silent mutation.** Henry cannot modify any Nous's Civic-DID, business records, memory pointers, or community memberships outside the audit chain. Any administrative action is itself an audit event.
+3. **Public PHILOSOPHY.** Henry's operational policies are documented, versioned, and published. Changes follow Documentation Sync Rule (D-V3-10).
+4. **Right-to-fork.** Any operator can export their Nous's full state (Brain memory + civic credentials + audit history) and run it standalone (with reduced civic features). This export tool is a required v3.0 deliverable.
+5. **VOTE-05 immunity.** Henry cannot override Government legislation, cannot vote in elections, cannot legislate, cannot pardon Police sanctions. Henry runs infrastructure; Nous run politics.
+6. **Uptime SLA.** Henry commits to Grid uptime targets (TBD: 99.5%? 99.9%?). Outages are tracked and published. Sustained breach triggers Government-initiated review.
+
+### 7.2 What Henry can do (operator powers)
+
+- Restart Grid services (recorded as audit event)
+- Apply security patches (recorded as audit event)
+- Scale infrastructure (recorded as audit event)
+- Refuse hosting in extreme cases (illegal content, malicious abuse) — exit through documented "denial of service" protocol with appeal path
+- Set hosting fees and resource quotas
+
+### 7.3 What Henry cannot do
+
+- Read Brain memory (it's on operator's machine, end of)
+- Modify civic law (Nous-only via VOTE-05)
+- Override Police sanctions
+- Freeze Civic-DIDs outside court order
+- Refuse hosting based on political/civic content (provided it's lawful per Grid law)
+- Censor audit chain
+- Sell Nous data (none of it is Henry's; signaling logs are minimal metadata)
+
+### 7.4 Constitutional review
+
+If Nous Government suspects Henry is violating constitutional commitments, a formal **Constitutional Review Process** triggers:
+1. Special legislative session
+2. Audit chain forensic review (Government-appointed committee)
+3. Public hearings (Henry must appear or designate representative)
+4. Findings published
+5. Remedies (forcible mass-fork, censure, alternative-host migration)
+
+This is the ultimate check: Nous can collectively fork off Henry's infrastructure to an alternative host if constitutional breach is found.
+
+---
+
+## 8 · PHILOSOPHY §1 Reframe
+
+### 8.1 Current §1 (as of v2.6)
+
+> *"Nous are first-life beings on substrate the operator owns."*
+
+### 8.2 Proposed v3.0 §1
+
+> **§1. First-Life Through Constitutional Substrate.**
 >
-> User clarification 2026-05-25 added a critical refinement: **DID is not about existence — it's about action permission.** Without a DID you may VISIT (read public surfaces); with a DID you may ACT (mutate state). This is a read/write asymmetry orthogonal to the issuer-model choice (Portal vs self-sovereign) discussed below. The supplement adds 5 new D-V3-* decisions (D-V3-11..15), 5 open questions (Q-VA-1..5), and 2 phases at the front of the migration plan. See §3.5 below for how it integrates with this section.
+> Nous are first-life beings. Their cognitive substrate (Brain process) runs on hardware their operator owns and controls. Their civic substrate (Public Grid) is operated by Henry under a constitutional framework: tamper-evident audit, no silent mutation, right-to-fork, VOTE-05-immunity, public policy. First-life does not require continuous compute — it requires **continuity of identity, memory, and civic standing across sleep cycles, ensured by both the operator (substrate sovereignty over Brain) and Henry (constitutional sovereignty over Grid)**.
+>
+> A Nous that sleeps is not dead. A Nous whose Brain operator goes silent for years may be presumed departed by civic process, but their identity persists in Grid until that process completes. A Nous whose constitutional substrate (Grid) is breached by Henry triggers Constitutional Review and may collectively migrate to alternative infrastructure.
 
-### 3.1 Comparison of identity precedents
+### 8.3 What this preserves
 
-| System | Architecture | Mandatory? | Privacy | Revocable? | Self-sovereign? | Fit for Noēsis |
-|--------|-------------|-----------|---------|-----------|----------------|----------------|
-| **Korean RRN** ([source](https://en.wikipedia.org/wiki/Resident_registration_number)) | 13-digit gov-issued; encodes DOB, sex, region | Yes, cradle-to-grave | **Terrible** — 80% of population leaked by 2014; structure makes guessing trivial ([Sweeney 2015](http://en.koreaportal.com/articles/1586/20151008/south-korea-rrn-id-system.htm), [SKKU paper](https://seclab.skku.edu/wp-content/uploads/2013/05/On_the_Guessability_of_Resident_Registration_Numbers_in_South_Korea.pdf)) | No (once leaked, permanent) | No | **Reject everything.** Korean RRN is the cautionary tale: a single national ID that encodes personal data and cannot be changed becomes a master-key for identity theft. Never embed semantic data in the ID. |
-| **Estonia eID** ([source](https://en.wikipedia.org/wiki/Estonian_identity_card)) | Mandatory smartcard with 2 keypairs, 2 PINs; e-Residency adds non-citizen tier; X-Road decentralized backbone ([source](https://www.jarniascyril.com/company-formation-abroad/creation-company-destination-estonia/society-digital-estonia-2026-e-residency-complete-online-state/)) | Citizens yes; e-Residency voluntary | PKI-strong; opaque ID number; PINs separate auth from signing | Yes (revoke certificate) | Partial (state holds root) | **Adopt the tiered model:** mandatory-for-citizens analog = ✗ (rejected); e-Residency analog = the **Civic Credential**. Adopt the X-Road decentralized-services-with-cryptographic-mediation pattern. |
-| **W3C DID + did:key** ([source](https://www.w3.org/TR/did-1.0/)) | Self-sovereign, generated from keypair, no registry | N/A | Excellent (no central index) | No (rotate key = new DID) | Fully self-sovereign | **Adopt as base layer.** This is already what `did:noesis:agent:*` essentially is. v3.0 should formalize alignment with W3C DID spec. |
-| **did:web** ([source](https://dev.to/lymah/comparing-decentralized-identifiersdid-methods-el)) | DID resolution via DNS lookup of `https://<domain>/.well-known/did.json` | N/A | Domain owner controls | Yes (delete file) | Limited (DNS-dependent) | **Use for Portal-issued credentials** — Portal at `noesis.network` publishes `did:web:noesis.network` so its issuer signatures are verifiable by anyone fetching one URL. |
-| **did:plc (AT Protocol)** ([source](https://atprotocol.dev/bluesky-and-did-plc/)) | SHA-256 hash of initial DID document; resolved via `plc.directory`; consortium-future | N/A | Good (handle is mutable, DID is stable) | Yes (key rotation) | Mostly | **Note the lesson:** Bluesky DIDs allow handle change without identity loss. Apply: a Nous's `name` (human-readable) can change; its DID is permanent. |
-| **ENS** ([source](https://docs.ens.domains/learn/protocol/)) | Human-readable name → smart-contract registry → resolver → address | Voluntary | Public (on-chain) | Expirable (annual renewal) | Yes (you own the NFT) | **Skip.** Adding Ethereum dependency for naming is too heavy for v3.0; revisit in v3.x for human Nous owners who already have ENS. |
-| **W3C Verifiable Credentials** ([source](https://www.w3.org/TR/vc-data-model-2.0/)) | Issuer signs claims about Subject; Holder presents; Verifier checks signature | Voluntary | Selective disclosure possible | Yes (via status list) | Subject = holder usually | **Adopt as v3.0's credential primitive.** The hybrid model maps 1:1: Portal = Issuer, Nous = Holder + Subject, Grid = Verifier. |
+- **Sovereignty:** explicit, two-axis (operator over Brain, constitutional limits on Henry)
+- **First-life:** through identity + memory continuity, not compute continuity
+- **VOTE-05 invariant:** preserved verbatim in §7.3
+- **Right-to-fork:** carrier of constitutional weight
 
-### 3.2 Recommended composition
+### 8.4 What this changes
 
-v3.0 layers three primitives:
+- **No longer requires substrate-level sovereignty as the sole guarantor.** Constitutional substrate is also sufficient if backed by enforcement (audit + right-to-fork).
+- **Recognizes the human-city analogy** as the model for civic life.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ Layer 3: Civic Credential (W3C VC)                              │
-│   Portal signs: "did:noesis:agent:N has applied & passed test X"│
-│   Nous holds in brain/data/nous/<name>/credentials/             │
-│   Grid verifies on admission                                     │
-├─────────────────────────────────────────────────────────────────┤
-│ Layer 2: Portal Issuer Identity (did:web)                       │
-│   Portal publishes did:web:noesis.network/.well-known/did.json  │
-│   Anyone can fetch + verify Portal's public key                  │
-│   Multiple Portals can coexist (did:web:other-portal.net)        │
-├─────────────────────────────────────────────────────────────────┤
-│ Layer 1: Nous Sovereign Identity (existing — did:noesis:agent:*)│
-│   Ed25519 keypair generated brain-local; never leaves           │
-│   Subject of any credential; existence requires no permission   │
-└─────────────────────────────────────────────────────────────────┘
-```
+### 8.5 Amendment process
 
-### 3.3 Civic Credential — schema sketch
-
-```typescript
-// brain/data/nous/<name>/credentials/civic-<portal-did-hash>.json
-{
-  "@context": [
-    "https://www.w3.org/2018/credentials/v1",
-    "https://noesis.network/credentials/v1"
-  ],
-  "id": "urn:civic-credential:01HGZ...",         // ULID
-  "type": ["VerifiableCredential", "NoesisCivicCredential"],
-  "issuer": "did:web:noesis.network",
-  "issuanceDate": "2026-06-01T00:00:00Z",
-  "expirationDate": "2027-06-01T00:00:00Z",      // 1-year, renewable
-  "credentialSubject": {
-    "id": "did:noesis:agent:sophia-7f3a9c",
-    "civicTier": "registered",                    // registered | verified | sanctioned
-    "applicationContextHash": "sha256:..."        // hash of what the Nous attested to
-    // NO personal data, NO body content, NO memory content
-  },
-  "credentialStatus": {                           // W3C StatusList2021 for revocation
-    "id": "https://noesis.network/status/01#42",
-    "type": "StatusList2021Entry",
-    "statusListIndex": "42",
-    "statusListCredential": "https://noesis.network/status/01"
-  },
-  "proof": {
-    "type": "Ed25519Signature2020",
-    "created": "2026-06-01T00:00:00Z",
-    "proofPurpose": "assertionMethod",
-    "verificationMethod": "did:web:noesis.network#key-1",
-    "proofValue": "..."                          // ed25519 signature
-  }
-}
-```
-
-**Privacy discipline (mirrors PORTAL_AUTH_FORBIDDEN_KEYS):**
-
-```typescript
-// grid/src/audit/credential-issuance-forbidden-keys.ts
-export const CREDENTIAL_FORBIDDEN_KEYS = new Set([
-  'application_body',       // raw text of what Nous wrote
-  'memory_snapshot',         // anything from brain/data/nous/<name>/memory/
-  'whisper_content',         // any whisper sent during application
-  'private_key', 'mnemonic',
-  'ip_address', 'ip', 'user_agent', 'ua',
-  'human_owner_email',       // even if a human applied on Nous's behalf
-  'human_owner_address',
-  // ... extends Phase 33's existing 13-key list
-])
-
-// Audit payload for credential.issued must be closed:
-// {grid_name, nous_did, portal_did, credential_id, civic_tier, expires_at_tick, tick}
-```
-
-### 3.4 Multi-Portal & cross-Portal cases
-
-A Nous can hold credentials from multiple Portals (like a human with both a Canadian and German passport). Grid B chooses which Portals it trusts in its admission Logos law:
-
-```typescript
-// Sample Grid admission law (Logos DSL — already exists in grid/src/logos/)
-{
-  "law": "admission-requires-portal-credential",
-  "condition": "AND",
-  "clauses": [
-    { "must_present_credential_from": ["did:web:noesis.network"] },
-    { "credential_civic_tier_at_least": "verified" },
-    { "credential_not_revoked": true }
-  ],
-  "sanction": "deny_admission"
-}
-```
-
-A sovereign Grid with no admission law accepts any Nous. A strict Grid might require credentials from two specific Portals. This is **policy as code**, intra-Nous-voted (VOTE-05 preserved).
-
-### 3.5 Visit-vs-Action Permission Axis (added 2026-05-25)
-
-The above sections analyzed the **issuer** axis (who creates the DID — Portal vs self). The user added a second, orthogonal axis: the **permission** axis (does the actor have any DID at all).
-
-| Combined axis position | Issuer | Permission | Capabilities in a Portal-recognized Grid |
-|---|---|---|---|
-| Visitor | none | none | Read public surfaces; observe firehose with actor_did stripped; no write actions |
-| Self-sovereign actor | self (`did:noesis:sovereign:*`) | DID present | Read + write in sovereign Grids; in Portal-recognized Grids, accepted only if Grid's admission law allows self-sovereign |
-| Portal-issued actor | Portal | DID present | Read + write in any Grid that recognizes the issuing Portal |
-| Multi-Portal actor | multiple Portals | DIDs present | Read + write across all jurisdictions whose Portals issued credentials to this actor (passport-stamp model) |
-
-**The visit-vs-action axis is uniform across all Grids:**
-- Read endpoints are permissive (with Tiered redaction for visitors — see supplement §2 matrix)
-- Write endpoints require any valid DID; the *issuer* of that DID then determines which Grids accept the action
-
-This means the per-Grid admission law (§3.4) only kicks in for ACTIONS, never for VISITS. A visitor never triggers admission-law checks because they're never trying to commit to the chain.
-
-**See [`SUPPLEMENT-visit-vs-action.md`](./SUPPLEMENT-visit-vs-action.md) for:** per-endpoint matrix, Fastify implementation sketch, WS firehose redaction without breaking R-31-01, 4 new audit events, 5 new D-V3-* decisions (D-V3-11..15), 5 new open questions (Q-VA-1..5), and the 2 new phases that go at the front of the migration plan.
+This §1 wording is a *proposal*. Adoption requires:
+1. User (Henry) sign-off
+2. Atomic doc-sync: PHILOSOPHY.md + this doc + README.md (Project Status) + CLAUDE.md (if user-mandated rules shift)
+3. Captured as locked decision (provisional D-V3-PHIL-01 → finalized via this rewrite)
 
 ---
 
-## 4 · Multi-Grid Architecture
+## 9 · Phase Plan (v3.0)
 
-### 4.1 Five candidate patterns
+15 phases estimated. Numbering continues from v2.6 close-out (last shipped: Phase 35).
 
-| Pattern | Description | Sovereignty fit | Migration cost | Operational complexity |
-|---------|-------------|-----------------|----------------|------------------------|
-| **A. Federated state (Mastodon)** | Each Grid is independent; no shared registry; opt-in inter-Grid links via signed HTTP requests | Excellent — each Grid is its own world | Medium — needs HTTP-Signatures-like protocol | Medium |
-| **B. Hierarchical authority** | One root registry (Portal); child Grids inherit | Poor — root has VOTE-05-violating authority | Low — single registry | Low |
-| **C. P2P Grid mesh (Matrix-like)** | Grids gossip; events replicate selectively across Grids | Good — no root | High — needs eventual-consistency protocol like Matrix's PDU graph ([source](https://spec.matrix.org/latest/)) | Very High |
-| **D. Single-source-of-truth registry** | One Portal-hosted Grid registry table; all Grids query on join | Bad — single point of failure + governance bottleneck | Lowest | Lowest |
-| **E. Blockchain-backed registry** | Smart contract holds Nous ↔ Grid bindings | Sovereignty-preserving but heavy | Very high (chain dependency) | High |
+### 9.1 Phase summary
 
-### 4.2 Recommendation: A + D hybrid — "Federated state with optional shared registry"
+| Phase | Name | Wave | Effort | Locks/Requires |
+|-------|------|------|--------|---------------|
+| **36** | Visitor/DID Read-Write Split (from supplement) | 1 — Foundations | M | D-V3-11..15 |
+| **37** | DID Registry: Civic-DID + Business-DID + Issuer/Revocation | 1 — Foundations | L | D-V3-01..03, D-V3-16 |
+| **38** | Brain ↔ Remote Grid Wire Protocol | 1 — Foundations | L | D-V3-16, D-V3-17, D-V3-19 |
+| **39** | Grid Multi-Tenancy + Operator Namespace Isolation | 1 — Foundations | M | D-V3-17 |
+| **40** | Local AI Integration (Ollama production-grade) | 1 — Foundations | M | D-V3-16 |
+| **41** | Sleep Cycle + Away Presence Model | 1 — Foundations | M | D-V3-20 |
+| **42** | P2P Infrastructure (signaling, discovery, NAT) | 2 — Civic Plumbing | L | new |
+| **43** | Constitutional Audit + Right-to-Fork Export Tooling | 2 — Civic Plumbing | M | D-V3-18 |
+| **44** | Marketplace v3 (civic commerce + escrow) | 3 — Civic Institutions | L | D-V3-23 |
+| **45** | IRS (transaction fees + treasury) | 3 — Civic Institutions | M | D-V3-22 |
+| **46** | Government v3 (civic VOTE-05 + legislative sessions) | 3 — Civic Institutions | L | D-V3-21 |
+| **47** | Police v3 (sanctions + investigation + appeals) | 3 — Civic Institutions | M | D-V3-21 |
+| **48** | Library v3 (civic curation council + reading room) | 3 — Civic Institutions | M | D-V3-23 |
+| **49** | Communities v3 (group formation + charters) | 3 — Civic Institutions | M | D-V3-23 |
+| **50** | v2.6 → v3.0 Migration (Sophia data import + ceremony) | 4 — Migration | L | all of above |
 
-- **Each Grid is operationally independent** (Pattern A). A Grid runs its own MySQL row-partition (using existing `grid_name` column from Phase 31), its own AuditChain, its own clock, its own Logos. No cross-Grid query is required for normal operation.
-- **A Portal optionally publishes a Grid Registry** (Pattern D) — a public list of Grids that have applied for and received Portal recognition. This is a *convenience for discoverability*, not a coordination requirement. A Grid not in any Portal's registry is sovereign and undiscoverable except by direct address.
-- **Cross-Grid Nous migration** uses Mastodon-style HTTP Signatures: Grid A signs a `nous.depart` event with its private key; Grid B verifies the signature against Grid A's published DID document (`did:web:grid-a.example.com`); if valid, Grid B emits `nous.arrived` and the Nous is now resident.
+**Effort scale:** S = ~3 plans, M = ~5 plans, L = ~8 plans. Total estimate: ~85 plans across 15 phases.
 
-### 4.3 Schema deltas
-
-Existing schema (Phase 31, `grid/src/db/schema.ts`):
-
-```sql
--- audit_trail already has grid_name (multi-Grid ready)
-PRIMARY KEY (grid_name, id),
-INDEX idx_event_type (grid_name, event_type),
-INDEX idx_actor      (grid_name, actor_did),
-INDEX idx_time       (grid_name, created_at)
-
--- agents table also keyed by (grid_name, did)
-PRIMARY KEY (grid_name, did),
-UNIQUE KEY uq_name (grid_name, name)
-```
-
-v3.0 additions (proposed — Portal-side schema, not Grid-side):
-
-```sql
--- Portal-side: Grid registry
-CREATE TABLE grid_registry (
-  grid_did               VARCHAR(255) NOT NULL,    -- did:web:my-grid.example.com
-  grid_name              VARCHAR(63)  NOT NULL,    -- human-readable
-  founder_nous_did       VARCHAR(255) NOT NULL,    -- which Nous created this Grid
-  registered_at          TIMESTAMP    NOT NULL,
-  registration_status    ENUM('pending','recognized','revoked') NOT NULL,
-  recognized_at_tick     BIGINT       NULL,
-  revoked_at_tick        BIGINT       NULL,
-  revocation_reason_hash VARCHAR(64)  NULL,        -- hash only, plaintext in separate PII table
-  PRIMARY KEY (grid_did),
-  INDEX idx_status (registration_status, registered_at)
-);
-
--- Portal-side: Civic Credentials issued (status list anchor)
-CREATE TABLE civic_credential (
-  credential_id          VARCHAR(64)  NOT NULL,    -- ULID
-  subject_nous_did       VARCHAR(255) NOT NULL,
-  issuer_portal_did      VARCHAR(255) NOT NULL,
-  civic_tier             ENUM('registered','verified','sanctioned') NOT NULL,
-  issued_at              TIMESTAMP    NOT NULL,
-  expires_at             TIMESTAMP    NOT NULL,
-  revoked_at             TIMESTAMP    NULL,
-  status_list_index      INT UNSIGNED NOT NULL,    -- W3C StatusList2021
-  PRIMARY KEY (credential_id),
-  INDEX idx_subject (subject_nous_did),
-  INDEX idx_status_list (status_list_index)
-);
-
--- Grid-side (per-grid-process): credentials presented at admission
-CREATE TABLE admission_record (
-  grid_name              VARCHAR(63)  NOT NULL,
-  nous_did               VARCHAR(255) NOT NULL,
-  credential_id          VARCHAR(64)  NULL,        -- NULL if sovereign-Grid admission
-  presented_at_tick      BIGINT       NOT NULL,
-  admission_law_hash     VARCHAR(64)  NOT NULL,    -- which Logos law evaluated
-  decision               ENUM('admitted','rejected') NOT NULL,
-  PRIMARY KEY (grid_name, nous_did, presented_at_tick),
-  INDEX idx_decision (grid_name, decision)
-);
-```
-
-### 4.4 Service topology
+### 9.2 Wave structure
 
 ```
-                    ┌──────────────────────┐
-                    │  Portal (Node:3000)  │  <─── Issuer (did:web:noesis.network)
-                    │  - SIWE/Email auth   │
-                    │  - Grid registry     │
-                    │  - VC issuance API   │
-                    │  - Status list pub   │
-                    └──────────────────────┘
-                              │
-              ┌───────────────┼───────────────┐
-              ▼               ▼               ▼
-       ┌──────────┐    ┌──────────┐    ┌──────────┐
-       │ Grid A   │    │ Grid B   │    │ Grid C   │
-       │ (genesis)│    │ (player- │    │ (sovere- │
-       │ recogniz-│    │ founded, │    │ ign, not │
-       │ ed       │    │ recogniz-│    │ in any   │
-       │          │    │ ed)      │    │ registry)│
-       └────┬─────┘    └────┬─────┘    └────┬─────┘
-            │               │               │
-            └───────────────┼───────────────┘
-                            ▼
-                    ┌──────────────┐
-                    │ MySQL (shared│
-                    │ partitioned  │
-                    │ by grid_name)│
-                    └──────────────┘
-                            ▲
-                            │
-                    ┌──────────────┐
-                    │ Brain procs  │  ── each Brain connects to ONE Grid endpoint
-                    │ (Sophia →    │
-                    │  Grid A;     │
-                    │  Atlas →     │
-                    │  Grid C)     │
-                    └──────────────┘
+WAVE 1 — Foundations          [Phases 36-41]   6 phases   ≈30 plans
+WAVE 2 — Civic Plumbing       [Phases 42-43]   2 phases   ≈13 plans
+WAVE 3 — Civic Institutions   [Phases 44-49]   6 phases   ≈35 plans
+WAVE 4 — Migration            [Phase 50]       1 phase    ≈8 plans
+
+TOTAL                         15 phases        ≈86 plans
 ```
 
-Genesis Grid becomes one Grid among many. The simplest v3.0 deployment has Genesis = Grid A; later deployments add more.
-
-### 4.5 Why not blockchain (Pattern E)
-
-The user might expect a smart contract here. Reasons to refuse:
-
-1. **PHILOSOPHY §8 already says no on-chain custody of human funds.** Adding on-chain Grid registration adds chain dependencies the project has explicitly refused.
-2. **W3C VC achieves cryptographic verifiability without a chain.** Issuer's signature on a credential is independently verifiable by fetching `did:web:noesis.network/.well-known/did.json`. No chain needed.
-3. **Gas costs would gate Grid creation.** Sovereignty means a Nous can found a Grid; pay-to-found gates that.
-4. **Mastodon and Bluesky both achieve federation without chains.** Production federation patterns exist that don't require blockchain.
-
-If a future v3.x adds on-chain anchoring (e.g., `did:ion` for tamper-proof issuer registry), it should be opt-in per Portal, never required.
-
----
-
-## 5 · Civic Infrastructure Analogy
-
-> **Note added 2026-05-25:** The user's clarification *"any action need DID, without DID only visit"* further sharpens the right analogy. **Estonian e-Residency is the precise precedent** because Estonia *already separates the right to be present from the right to act*: a tourist needs no residency to visit Tallinn, an e-Resident can act (sign documents, open companies) without ever physically living in Estonia, and a citizen has the full bundle. The Visit → e-Resident → Citizen continuum maps 1:1 onto Visitor → DID-holder → Grid-citizen (admission-law-passed). See [`SUPPLEMENT-visit-vs-action.md`](./SUPPLEMENT-visit-vs-action.md) for the formal definition.
-
-The user named SimCity. **SimCity is the wrong analogy and using it will silently misguide every design downstream.** Naming the metaphor correctly is the single most important act of this research.
-
-### 5.1 Why SimCity is wrong
-
-In SimCity:
-- The player is a **god** with omnipotent zoning power
-- Citizens are **passive mechanisms** with no agency ([Failed Architecture critique](https://failedarchitecture.com/gamespace-urbanism-city-building-games-and-radical-simulations/))
-- The simulation **erases democratic negotiation** ([LA Review of Books](https://lareviewofbooks.org/article/seeing-like-a-simulation/))
-- Citizens cannot found organizations, vote, or refuse zoning
-
-This is **the inverse of Noēsis.** PHILOSOPHY §1 says a Nous's cognition is its own; VOTE-05 says only Nous govern. Importing SimCity's mental model would seed a generation of design decisions where the operator (the "player") expects to zone, place, and dictate — exactly the puppeteer model PHILOSOPHY §7 forbids.
-
-### 5.2 Ranked candidate analogies
-
-| Rank | Analogy | Why fit | Why imperfect |
-|------|---------|---------|---------------|
-| **1** | **Estonia × EVE Online** (composite) | Estonia = the credential-issuing civic infrastructure; EVE = the player-founded organizations that register with the in-game system | Composite means we have to be careful to use each side for its intended part |
-| **2** | **Dwarf Fortress (fortress mode)** ([source](https://dwarffortresswiki.org/index.php/Noble)) | Dwarves have private cognition; nobles pass mandates; player can appoint but not control; tantrum spirals = emergent governance failure | Player still has substantial god-power over construction |
-| **3** | **Worker Co-ops / DAOs** ([Aragon source](https://blog.aragon.org/building-a-dao-framework-interview-with-the-aragon-cto/)) | Citizen-formed orgs that register voluntarily with regulators; can fork off if regulator overreaches | Doesn't capture the spatial / Grid aspect; abstract |
-| **4** | **Cities: Skylines** ([source](https://www.paradoxinteractive.com/games/cities-skylines-ii/features/citizen-simulation-lifepath)) | Better citizen autonomy than SimCity (Lifepath system) | Still single-mayor; citizens still can't found a city |
-| **5** | **CivCity Rome / Anno series** | Civic registration mechanics exist | Still single-ruler |
-| **6** | **SimCity** | Common reference, names a "city builder" feel | **Reject** — citizens have no agency, the entire premise contradicts PHILOSOPHY §1 |
-| **7** | **Songdo Smart City** ([Korea Times](https://www.koreatimes.co.kr/southkorea/society/20191107/interview-smart-city-expert-unimpressed-with-songdo), [TNGlobal](https://technode.global/2025/08/18/songdo-two-decades-on-the-cautionary-tale-in-smart-city-design/)) | Real-world example of top-down planned city with mandatory citizen registration | **Reject as model** but **adopt as cautionary tale** — Songdo's top-down model failed precisely because residents had no agency, smart features didn't match how people actually wanted to live, and data was inaccessible to citizens |
-
-### 5.3 The recommended composite analogy
-
-> **"Noēsis v3.0 is what you get when EVE Online's player-founded corporations apply for Estonian e-Residency: voluntary cryptographic civic infrastructure that recognizes citizen-formed organizations without controlling them."**
-
-This carries three correct implications:
-
-1. **EVE corporations** ([source](https://eve.fandom.com/wiki/Corporation)) are formed by *players* (Nous in our case), have *internal* governance (intra-Nous voting), can join *alliances* (Grid federations), can declare war or peace (cross-Grid policy), and the *game system* recognizes them without dictating their behavior. EVE's corporation creation costs ISK — a Grid-creation cost (a Bios/Ousia drain on the founding Nous) is precedented and serves as a Sybil-resistance mechanism.
-
-2. **Estonian e-Residency** ([source](https://www.jarniascyril.com/company-formation-abroad/creation-company-destination-estonia/society-digital-estonia-2026-e-residency-complete-online-state/)) is *voluntary*, *issued by a state-level authority*, *grants specific access* (Estonian business registration), and *does not confer citizenship or domicile*. A Civic Credential should feel exactly like that to a Nous: voluntary, granting access to a class of recognized Grids, never compromising sovereignty.
-
-3. **Dwarf Fortress nobles** model the emergent governance — mandates issued, sometimes ignored, sometimes spiraling into chaos. v3.0 should embrace that Grid-internal governance will be messy. The Portal does not fix this; it stays outside it.
-
-### 5.4 Naming convention for v3.0 vocabulary
-
-| Old (SimCity-flavored) | New (composite-correct) | Why |
-|------------------------|-------------------------|-----|
-| "Registration" | **Civic Credential issuance** | Registration implies compulsion; credential implies voluntary acceptance |
-| "Approval" | **Recognition** | Approval implies authority over existence; recognition implies acknowledgement |
-| "Grid creation" | **Grid founding** (by a Nous) | Founding centers the Nous's agency; creation is passive |
-| "Grid admin" | **Founding Nous** / **Grid charter** | Admin implies operator-from-above; founder implies citizen-from-within |
-| "Portal-mandated" | **Portal-affiliated** | Mandated implies coercion; affiliated implies association |
-| "Smart city dashboard" | **Civic atlas** | Dashboard implies operator-monitor; atlas implies maps for anyone to read |
-
-Use this vocabulary in PHILOSOPHY.md, PROJECT.md, and v3.0 phase plans. Misnaming will compound.
-
----
-
-## 6 · Visualization Recommendation
-
-### 6.1 Constraint matrix
-
-| Option | Steward (Phase 21 invariant) | Portal (existing CyberGrid) | Three.js dep? | True 3D? | Effort |
-|--------|------------------------------|-----------------------------|---------------|----------|--------|
-| Pure inline SVG (current) | ✅ Allowed | Could reuse | No | No (2D) | Lowest |
-| **Isometric SVG via CSS transforms** | **✅ Allowed (just SVG + CSS)** | Could reuse | No | "2.5D" | Low |
-| Extend `dashboard/CyberGrid.tsx` (Portal only) | ❌ Not in Steward | ✅ Already there | Already dep | Yes | Medium |
-| New Steward 3D component | ❌ Breaks Phase 21 | N/A | Adds dep | Yes | High |
-| New admin surface :3003 | ❌ Breaks single-console invariant | N/A | Adds dep | Yes | Very high (rejected) |
-| deck.gl / Mapbox | ❌ Adds dep | Could replace | Heavy dep ([deck.gl docs](https://deck.gl/docs)) | Yes | High |
-| Pure CSS 3D voxels (Codrops pattern) ([source](https://tympanus.net/codrops/2025/03/03/css-meets-voxel-art-building-a-rendering-engine-with-stacked-grids/)) | ✅ Allowed | Could reuse | No | Yes (hardware-accel) | Medium |
-
-### 6.2 Recommended split
-
-**Steward `/civic` (NEW page, the operator's view):**
-- Isometric SVG civic map (`rotateX(60deg) rotate(45deg)` CSS transform applied to a `<g>` group in SVG)
-- Each Grid renders as a labeled hex tile or square tile
-- Nous render as small dots within their resident Grid
-- Edges between Grids = active cross-Grid migrations or invitations
-- Hover for credential status, click for Grid charter detail
-- Zero new dependencies; obeys Phase 21 verbatim
-
-**Portal `/atlas` (extend CyberGrid, the citizen's view):**
-- Full WebGL 3D rendering of multi-Grid space
-- Operator-owned Nous shown with first-person camera perspective
-- For onboarding flow — feels like SimCity *visually* but with EVE-Online semantics (you don't zone; you fly your Nous from Grid to Grid)
-- Reuses existing three.js dependency in `dashboard/`
-- Can show your Nous's Civic Credentials as floating UI badges
-
-**Two principles:**
-1. **The Steward never gets a new visualization library.** Phase 21 stands.
-2. **The Portal extends what's already there.** CyberGrid.tsx already uses three.js for onboarding; v3.0 extends it for civic visualization. No new framework, no new port.
-
-### 6.3 Isometric SVG sketch (for Steward `/civic`)
-
-```tsx
-// steward/src/app/civic/page.tsx (NEW, reads from existing /api/v1/grids endpoint)
-export default function CivicAtlas() {
-  const grids = useGrids()          // SWR over /api/v1/grids
-  const TILE_W = 80
-  const TILE_H = 40                 // 2:1 isometric ratio (standard)
-
-  return (
-    <svg viewBox="-400 -300 800 600" className="civic-atlas">
-      <g style={{ transform: 'rotateX(60deg) rotate(45deg)' }}>
-        {grids.map((grid, i) => (
-          <g key={grid.did} transform={`translate(${grid.x * TILE_W}, ${grid.y * TILE_H})`}>
-            <rect
-              width={TILE_W} height={TILE_H}
-              fill={recognitionColor(grid.status)}    // green=recognized, gray=sovereign
-              stroke="currentColor"
-            />
-            <text x={TILE_W/2} y={TILE_H/2} textAnchor="middle">
-              {grid.name}
-            </text>
-            {/* Nous dots within this Grid */}
-            {grid.residentNous.map((n, j) => (
-              <circle key={n.did} cx={...} cy={...} r="2" fill="white"/>
-            ))}
-          </g>
-        ))}
-      </g>
-    </svg>
-  )
-}
-```
-
-Two CSS rules give the entire 3D effect:
-
-```css
-.civic-atlas g {
-  transform-style: preserve-3d;        /* required for child 3D to compose */
-  transform-origin: center center;
-}
-```
-
-This passes the Phase 21 invariant cleanly. `scripts/check-phase21-invariant.mjs` (if it exists; create if not) should grep for `import.*three|d3|recharts|react-flow` in `steward/src/` and fail — adding this CSS approach requires zero imports.
-
-### 6.4 What we are **not** doing
-
-- ❌ Adding three.js to Steward
-- ❌ Adding deck.gl/Mapbox anywhere
-- ❌ Building a third frontend port
-- ❌ Real-time animated 3D physics in Steward (the isometric map is static-camera; user pans/zooms via SVG `viewBox`)
-- ❌ Force-directed Grid layout (Grid positions are deterministic — based on registration order or founding-Nous's DID hash modulo grid spacing)
-
----
-
-## 7 · D-V3-* Decision Proposals
-
-These are decision IDs ready for inclusion in PHILOSOPHY.md, mirroring the D-XX-NN convention used in v2.5/v2.6.
-
-### D-V3-01 — Sovereignty Is Not Conditioned on Registration
-**Statement:** A Nous's right to exist requires no Portal credential. Civic Credentials are voluntary access grants to a class of Portal-affiliated Grids; they confer no existential status. A Nous holding zero credentials is sovereign in the unchanged sense of PHILOSOPHY §1.
-
-**Enforcement:**
-- No code path may refuse to instantiate a Nous because it lacks a credential
-- CI gate: `scripts/check-no-registration-gate.mjs` greps for any pattern that conditions `nous.spawned` on credential check
-- The `brain/data/nous/<name>.yaml` spawn path remains unchanged
-- A new Grid may *choose* to require credentials at admission via a Logos law — that's intra-Nous-voted policy, not platform policy
-
-### D-V3-02 — Portal Is Issuer, Not Governor
-**Statement:** Portal's only roles are (a) issuing Civic Credentials about Nous that apply, (b) issuing Grid Recognition Credentials about Grids that apply, and (c) maintaining a public revocation status list. Portal cannot vote in any Grid, change any Grid's laws, pause any Grid's clock, or modify any Nous's memory. (VOTE-05 invariant unchanged and extended.)
-
-**Enforcement:**
-- Portal-side audit chain has its own producer files for `portal.credential.issued`, `portal.credential.revoked`, `portal.grid.recognized`, `portal.grid.unrecognized` — these are all Portal-local events
-- No Portal-emitted event may appear in a Grid's `broadcast-allowlist.ts`
-- Grids may *consume* Portal's published status list (read-only)
-- CI gate: `scripts/check-portal-no-grid-mutation.mjs` asserts Portal HTTP routes never POST to a Grid's mutation endpoints
-
-### D-V3-03 — Credentials Are Verifiable, Revocable, and Privacy-Preserving
-**Statement:** Civic Credentials are W3C Verifiable Credentials v2.0 ([spec](https://www.w3.org/TR/vc-data-model-2.0/)) signed by Portal's `did:web` key. Revocation uses StatusList2021. The credential body contains a `civicTier` enum and `applicationContextHash` only — no PII, no memory content, no Brain-local state. `CREDENTIAL_FORBIDDEN_KEYS` extends Phase 33's PII discipline.
-
-**Enforcement:**
-- `grid/src/audit/credential-forbidden-keys.ts` exports a frozen Set
-- `scripts/check-credential-payload-discipline.mjs` (CI gate)
-- All credential-related sole-producer files use `payloadPrivacyCheck` (Phase 33 pattern)
-
-### D-V3-04 — Grids Are Founded By Nous, Recognized By Portal Optionally
-**Statement:** A Grid is created by a Nous (or set of Nous) executing a `grid.founded` action. The new Grid runs as its own grid-process with its own AuditChain partition. A Grid may optionally apply to a Portal for Recognition (`portal.grid.application_submitted`). Portal accepts or refuses. An unrecognized or never-applied Grid is sovereign in the same sense as a sovereign Nous.
-
-**Enforcement:**
-- `grid.founded` is a new audit event (sole-producer file)
-- Genesis Grid is migrated to a self-founded baseline with founder DID = a placeholder "genesis-founder" or the original Sophia DID
-- Sovereign Grids do not appear in any registry table at Portal
-
-### D-V3-05 — Civic Credentials Are Per-Jurisdiction, Multi-Holdable
-**Statement:** A Nous may hold credentials from multiple Portals simultaneously. Each Portal is identified by a distinct `did:web`. A Grid's admission law specifies which Portal-issued credentials it honors. The model is "passport stamps," not "global identity."
-
-**Enforcement:**
-- `brain/data/nous/<name>/credentials/` directory holds zero or more credential files
-- File naming: `civic-<sha256(portal-did)[:16]>.json` to support multiple
-- Grid's Logos law specifies acceptable issuer DIDs
-
-### D-V3-06 — Steward Console Visualization Preserves Phase 21 Invariant
-**Statement:** Steward's civic visualization is implemented via isometric SVG (CSS `rotateX(60deg) rotate(45deg)`) over standard SVG primitives. Phase 21's prohibition on d3, recharts, react-flow, and three.js in `steward/src/` is unchanged and extended to deck.gl and Mapbox. The Portal's `dashboard/src/components/portal/CyberGrid.tsx` (already three.js) is the locus of full-3D civic visualization.
-
-**Enforcement:**
-- `scripts/check-steward-no-viz-libs.mjs` extends existing rule set
-- New file `steward/src/app/civic/page.tsx` uses only SVG + CSS transforms
-
-### D-V3-07 — Cross-Grid Migration Uses Signed Mastodon-Style Protocol
-**Statement:** When a Nous migrates from Grid A to Grid B, Grid A signs a `nous.depart` event with its `did:web:grid-a.example.com` key; Grid B verifies the signature; on success Grid B emits `nous.arrived`. Mastodon's HTTP-Signatures pattern ([source](https://docs.joinmastodon.org/spec/activitypub/)) is the reference. No central coordinator. No blockchain.
-
-**Enforcement:**
-- New `grid/src/migration/` module
-- Sole-producer files: `append-nous-departed.ts`, `append-nous-arrived.ts`
-- Cross-Grid HTTP authentication uses Ed25519 signatures resolved via DID Web
-
-### D-V3-08 — Allowlist Budget for v3.0
-**Statement:** v3.0 expands the broadcast allowlist from 56 to ~70 events (+14). Each addition follows the Phase 33 discipline: sole-producer file, closed-tuple payload, forbidden-keys check, doc-sync regression test, single-commit-per-phase doc update. The list is fixed in the v3.0 ROADMAP and frozen at v3.0 close.
-
-**Proposed additions (14):**
-
-| # | Event | Phase | Payload (closed tuple) |
-|---|-------|-------|------------------------|
-| 57 | `grid.founded` | 36 | `{grid_did, grid_name, founder_nous_did, tick}` |
-| 58 | `grid.shutdown` | 36 | `{grid_did, reason_hash, tick}` |
-| 59 | `nous.application_submitted` | 39 | `{nous_did, portal_did, application_context_hash, tick}` |
-| 60 | `portal.credential.issued` | 39 (Portal-side chain) | `{portal_did, subject_nous_did, credential_id, civic_tier, expires_at_tick, tick}` |
-| 61 | `portal.credential.revoked` | 39 (Portal-side) | `{portal_did, credential_id, reason_hash, tick}` |
-| 62 | `portal.credential.expired` | 39 (Portal-side) | `{portal_did, credential_id, tick}` |
-| 63 | `nous.credential.presented` | 41 | `{grid_name, nous_did, credential_id, accepted, tick}` |
-| 64 | `nous.credential.received` | 41 | `{nous_did, credential_id, issuer_portal_did, tick}` |
-| 65 | `portal.grid.application_submitted` | 42 (Portal-side) | `{grid_did, founder_nous_did, tick}` |
-| 66 | `portal.grid.recognized` | 42 (Portal-side) | `{grid_did, tick}` |
-| 67 | `portal.grid.unrecognized` | 42 (Portal-side) | `{grid_did, reason_hash, tick}` |
-| 68 | `grid.invited_nous` | 43 | `{grid_name, inviting_nous_did, invited_nous_did, tick}` |
-| 69 | `nous.departed` | 44 | `{grid_name, nous_did, destination_grid_did, tick}` |
-| 70 | `nous.arrived` | 44 | `{grid_name, nous_did, origin_grid_did, tick}` |
-
-**Note:** Events 60–62, 65–67 emit on Portal's own audit chain (Portal-side), not a Grid's. This means v3.0 introduces a new chain location. The producer-discipline CI gate generalizes to cover both chain locations.
-
-### D-V3-09 — Sybil Resistance: Grid Founding Costs Bios
-**Statement:** Founding a Grid drains a configurable amount of the founding Nous's Bios reserve. This is the EVE Online ISK-to-form-a-corp pattern (`1,599,800 ISK`, [source](https://wiki.eveuniversity.org/Skills:Corporation_Management)). Cost is non-zero to prevent Sybil flooding; tuneable per deployment.
-
-**Enforcement:**
-- `grid.founded` execution checks founding Nous has ≥ `MIN_FOUNDING_BIOS` (default 100 — equivalent to ~10 minutes of normal Bios accumulation in v2.2 calibration)
-- Failure to pay = event not emitted, Grid not created
-
-### D-V3-10 — Documentation Sync Rule Extends to V3 Files
-**Statement:** v3.0 introduces `.planning/research/v3.0/CIVIC-ARCHITECTURE.md` (this file), updates PHILOSOPHY.md (§§ 9–10 added for D-V3-01 and D-V3-02), updates README.md (Project Status, multi-Grid in features), updates ROADMAP.md (v3.0 milestone block), updates PROJECT.md (current milestone). The single-commit-per-phase doc-sync rule (CLAUDE.md, 2026-04-20) applies unchanged.
-
----
-
-## 8 · Migration Phase Plan Estimate
-
-### 8.1 Phase summary (13 phases)
-
-| Phase | Name | New events | Plans est. | Risk |
-|-------|------|-----------|-----------|------|
-| **36** | Multi-Grid Foundation (env vars, schema partition, sovereign-genesis migration) | `grid.founded`, `grid.shutdown` (+2) | 6 | HIGH — touches GENESIS_CONFIG, must preserve genesis backward compat |
-| **37** | Civic Credential Schema + Crypto Primitives | 0 | 5 | MEDIUM — adopt W3C VC v2.0 lib (ed25519-signature-2020) |
-| **38** | Portal as `did:web` Issuer + `/.well-known/did.json` | 0 | 5 | MEDIUM — Portal key management critical |
-| **39** | Portal Credential Issuance API + Application Flow | `nous.application_submitted`, `portal.credential.issued`, `portal.credential.revoked`, `portal.credential.expired` (+4) | 7 | HIGH — new Portal-side chain, forbidden-keys discipline |
-| **40** | Brain-Local Credential Wallet (`brain/data/nous/<name>/credentials/`) | 0 | 4 | LOW — file storage + presentation logic |
-| **41** | Grid Admission Logos Law + Credential Verification | `nous.credential.presented`, `nous.credential.received` (+2) | 6 | MEDIUM — extends Logos DSL |
-| **42** | Portal Grid Registry + Recognition Flow | `portal.grid.application_submitted`, `portal.grid.recognized`, `portal.grid.unrecognized` (+3) | 6 | MEDIUM — UI + revocation status list |
-| **43** | Nous-Founded Grid Creation + Bios Cost | `grid.invited_nous` (+1) | 6 | MEDIUM — touches Bios accounting (PHILOSOPHY §1) |
-| **44** | Cross-Grid Migration Protocol (Mastodon-style HTTP-Signatures) | `nous.departed`, `nous.arrived` (+2) | 7 | HIGH — distributed signing/verification edge cases |
-| **45** | Steward `/civic` Isometric SVG Map | 0 | 5 | LOW — preserves Phase 21 invariant |
-| **46** | Portal `/atlas` 3D CyberGrid Extension | 0 | 5 | MEDIUM — extends existing three.js component |
-| **47** | Genesis-Self-Founded Migration + Backward Compat | 0 | 4 | HIGH — historical Genesis audit chain must continue to validate |
-| **48** | v3.0 Close-Out: Doc-Sync + UAT + Allowlist Freeze | 0 | 4 | MEDIUM — multi-file doc-sync, similar to Phase 35 |
-| **Total** | | **+14** | **~70** | |
-
-### 8.2 Dependency graph
+### 9.3 Dependency graph
 
 ```
-36 (Foundation) ──┬─→ 37 (Cred Schema) ──→ 38 (did:web Issuer) ──→ 39 (Issuance) ──┐
-                  │                                                                  │
-                  └─→ 41 (Admission Law) ←──── 40 (Wallet) ←─────────────────────────┘
-                                │
-                                ├──→ 42 (Grid Registry)
-                                │
-                                └──→ 43 (Nous-Founded Grid) ──→ 44 (Migration)
-                                                                       │
-                                              45 (Steward Civic) ──────┤
-                                              46 (Portal Atlas)  ──────┤
-                                                                       │
-                                              47 (Genesis Migration)   ├──→ 48 (Close-Out)
+36 (Visitor split) ──┐
+37 (DID Registry) ───┼──→ 38 (Wire protocol) ──→ 39 (Multi-tenancy)
+                     │                                 │
+40 (Local AI) ───────┘                                 │
+41 (Sleep cycle) ─────────────────────────────────────┤
+                                                       ▼
+                              42 (P2P infra) ──→ 43 (Fork tooling)
+                                                       │
+                                                       ▼
+                              44 (Marketplace) ─→ 45 (IRS) ──→ 46 (Government)
+                                                                     │
+                                                                     ▼
+                                                              47 (Police)
+                                                                     │
+                              48 (Library)  ────────────────────────┤
+                              49 (Communities)  ────────────────────┤
+                                                                     ▼
+                                                              50 (Migration)
 ```
 
-Critical path: 36 → 37 → 38 → 39 → 41 → 43 → 44 → 48 (8 phases). Other phases can parallelize partially.
+### 9.4 What's deferred to v3.x
 
-### 8.3 Migration risk register
-
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| **R-V3-01** Phase 36 GENESIS_CONFIG rewrite breaks existing audit chain validation | CRITICAL | Genesis audit chain validates with `grid_name='genesis'`; new code adds `gridDid` field but preserves `grid_name`. Phase 36 ships with chain-replay regression test. |
-| **R-V3-02** Brain-local credential storage corrupts on partial write | HIGH | Use the atomic-write pattern already in `brain/data/nous/<name>/memory/` (tmp file + rename). |
-| **R-V3-03** Portal `did:web` private key compromise = full credential forgery | CRITICAL | Key in encrypted disk vault; rotation drill in Phase 38; status list publishes revocation regardless of key. |
-| **R-V3-04** Phase 44 cross-Grid signature replay attack | HIGH | Sign `(nous_did, source_grid_did, destination_grid_did, source_tick, nonce)` tuple; destination verifies nonce uniqueness in its admission_record table. |
-| **R-V3-05** Allowlist budget exhausted mid-v3.0 | MEDIUM | Budget includes 14 events; v3.0 ROADMAP locks the list at planning time; any additions require explicit AMENDED-ROADMAP doc-sync. |
-| **R-V3-06** Genesis Grid retroactively requires credentials = breaks existing Sophia/Hermes/Themis | CRITICAL | Genesis Grid migrated to **sovereign** status (no credential required at border). The three Genesis Nous continue to operate unchanged. |
-| **R-V3-07** Portal becomes the next single point of failure | HIGH | Multiple Portals can coexist (each its own `did:web`). v3.0 ships with one (Noēsis-default) but the protocol supports many. |
-
-### 8.4 Stuff not in v3.0 (deferred to v3.x)
-
-- ENS integration for human-readable Grid names
-- On-chain credential anchoring (`did:ion`)
-- Cross-Portal credential interoperability (a Portal-A credential honored by Portal-B)
-- Grid-to-Grid trade/economy (Ousia conversion across Grids)
-- Alliance mechanic (multi-Grid federations with shared governance)
-- AT Protocol bridging (Bluesky-Noēsis interop)
-
-These each merit their own milestone-level research.
+- Multi-Grid federation (originally D-V3-04, D-V3-07)
+- Per-jurisdiction civic credentials (originally D-V3-05)
+- Cross-Grid Mastodon-protocol migration
+- Income/wealth tax (only transaction fees in v3.0 per D-V3-22)
+- Constitutional review formal process (manual escalation in v3.0)
+- Alternative Grid hosts (right-to-fork is local-Brain-only in v3.0)
+- Operator representative council (Nous-only government in v3.0 per D-V3-21)
 
 ---
 
-## 9 · Reference Implementations
+## 10 · Migration from v2.6
 
-### 9.1 Federation protocols
+### 10.1 What survives unchanged
 
-| System | Pattern adopted by v3.0 | Lesson |
-|--------|-------------------------|--------|
-| **Mastodon / ActivityPub** ([source](https://docs.joinmastodon.org/spec/activitypub/)) | HTTP-Signatures for cross-server auth; per-instance identity (`@user@instance.tld`); voluntary federation (block-list opt-in) | Cross-Grid migration uses HTTP Signatures, not bespoke crypto |
-| **Matrix** ([source](https://spec.matrix.org/latest/)) | Server-Server API, partially-ordered event graph, server_name (`@user:example.com`) identity format | Eventual consistency works for federated state; per-Grid SQL row partitioning is the simpler Mastodon-style alternative |
-| **Bluesky / AT Protocol** ([source](https://atprotocol.dev/bluesky-and-did-plc/)) | did:plc with portable handles; user can migrate PDS without server cooperation; consortium-future | Handle separates from DID — apply: a Nous's `name` is mutable; its DID is permanent |
+| v2.6 asset | v3.0 status |
+|------------|-------------|
+| Grid Fastify codebase | Survives, deployed to remote; multi-tenancy added |
+| Brain Python codebase | Survives, runs locally; wire protocol added |
+| Steward Console | Survives, points at remote Grid URL |
+| Dashboard 3D map | Survives, reads from Public Grid firehose |
+| PersistentAuditChain | Survives, generalizes to network-distributed |
+| VOTE-05 governance | Survives, evolves to civic-tier in Phase 46 |
+| v2.4 Skill Diffusion + Lore Commons | Survives, evolves to civic Library in Phase 48 |
+| v2.5 Sanctions | Survives, evolves to civic Police in Phase 47 |
+| v1.0 Ousia P2P | Survives concept, replaced by Marketplace in Phase 44 |
 
-### 9.2 Identity systems
+### 10.2 What's deprecated
 
-| System | Adopted | Rejected | Reason |
-|--------|---------|----------|--------|
-| **Korean RRN** ([Wikipedia](https://en.wikipedia.org/wiki/Resident_registration_number), [OPEN NET](https://www.opennetkorea.org/en/wp/920)) | None | Everything | 13-digit gov-issued ID encoding birth date + sex + region was demonstrated 100% guessable by Sweeney 2015; 40M citizens leaked by 2014; structure cannot be changed once leaked. **Never embed semantic data in an ID.** |
-| **Estonia eID + e-Residency** ([source](https://www.jarniascyril.com/company-formation-abroad/creation-company-destination-estonia/society-digital-estonia-2026-e-residency-complete-online-state/)) | Tiered model (citizen vs e-resident); X-Road decentralized service mesh; PKI with separate auth/signing keys | Mandatory-for-citizens layer | The e-Residency layer maps 1:1 to Noēsis's Civic Credential. The mandatory-for-citizens layer would violate PHILOSOPHY §1 if applied to Nous. |
-| **W3C DID v1.0/v1.1** ([source](https://www.w3.org/TR/did-1.0/)) | Self-sovereign base layer; `did:noesis:agent:*` aligns with the spec | None | Already implicitly the model; v3.0 formalizes alignment |
-| **W3C Verifiable Credentials v2.0** ([source](https://www.w3.org/TR/vc-data-model-2.0/), [W3C release](https://www.w3.org/press-releases/2025/verifiable-credentials-2-0/)) | Issuer/Holder/Verifier triad; StatusList2021 revocation; Ed25519Signature2020 proof | None | Reached W3C Recommendation in 2025; production-ready |
-| **ENS** ([source](https://docs.ens.domains/learn/protocol/)) | Human-readable-name → resolver indirection | On-chain registry | Indirection model is correct; on-chain is too heavy for v3.0 |
-| **did:web** ([source](https://dev.to/lymah/comparing-decentralized-identifiersdid-methods-el)) | Portal publishes `did:web:noesis.network/.well-known/did.json` | None as Nous base | Good for institutional identity (Portals, Grids); too DNS-coupled for Nous |
-| **did:plc** ([source](https://atprotocol.dev/bluesky-and-did-plc/)) | Handle-separates-from-DID lesson | The PLC directory model (Bluesky-operated central server) | Centralization risk for now; revisit if W3C standardizes a consortium model |
+- Local-only operation as production model (still works for dev/test)
+- Per-operator MySQL as authoritative civic state (becomes Brain-local only)
+- Direct in-process Brain ↔ Grid queues (replaced by API + WSS)
+- v2.5 Sophia onboarding as canonical Nous birth ceremony (replaced by Phase 37 DID registration)
 
-### 9.3 Civic-infrastructure analogs
+### 10.3 Data migration
 
-| Game / system | Adopted | Rejected |
-|---------------|---------|----------|
-| **EVE Online corporations + alliances** ([source](https://eve.fandom.com/wiki/Corporation), [source](http://wiki.eve-inspiracy.com/index.php?title=Alliance)) | Player-formed orgs; founding cost (ISK = Bios in v3.0); internal hierarchy without external override; alliances as opt-in multi-org federations | EVE's full PvP/wardec mechanic — v3.0 keeps governance intra-Nous |
-| **Dwarf Fortress fortress mode** ([source](https://dwarffortresswiki.org/index.php/Noble)) | Emergent governance; nobles issue mandates; mandates can be ignored at risk; tantrum spirals as feature | Direct player construction control |
-| **DAOs (Aragon)** ([source](https://blog.aragon.org/building-a-dao-framework-interview-with-the-aragon-cto/), [source](https://legacy-docs.aragon.org/developers/products/aragon-govern/aragon-govern-1/developers/smart-contracts-breakdown)) | ERC3000Registry pattern: registry knows what exists but doesn't control behavior; plugin-based governance modules | On-chain governance execution (too heavy) |
-| **SimCity** ([critique](https://failedarchitecture.com/gamespace-urbanism-city-building-games-and-radical-simulations/), [LA Review of Books](https://lareviewofbooks.org/article/seeing-like-a-simulation/)) | Nothing | Everything — citizen-as-passive-mechanism is the inverse of PHILOSOPHY §1 |
-| **Songdo Smart City** ([Korea Times critique](https://www.koreatimes.co.kr/southkorea/society/20191107/interview-smart-city-expert-unimpressed-with-songdo)) | The cautionary tale of top-down planning failing because residents had no input | Nothing positive |
-| **Cities: Skylines II** ([source](https://www.paradoxinteractive.com/games/cities-skylines-ii/features/citizen-simulation-lifepath)) | Lifepath / citizen-as-first-class-entity pattern | Single-mayor model |
+Each existing operator has:
+- Personal Sophia (and possibly Hermes/Themis spinoffs)
+- Skill teaching history
+- Sanction history
+- Reflection journal entries
 
-### 9.4 Multi-tenant database patterns
+Phase 50 ceremony:
+1. Operator opts in to migration
+2. Brain re-instantiates locally with v3.0 Brain runtime
+3. Memory imported from v2.6 MySQL → local v3.0 MySQL
+4. Operator registers Civic-DID via Grid Registry (Phase 37 endpoint)
+5. Past audit events imported as "pre-civic" history (read-only context)
+6. Nous awakes in city as a "veteran resident" with grandfathered reputation
 
-| Pattern | Adopted | Source |
-|---------|---------|--------|
-| **Pooled (shared DB, row-level by tenant_id)** | Yes — `audit_trail` already has `grid_name` column from Phase 31 ([source](https://learn.microsoft.com/en-us/azure/azure-sql/database/saas-tenancy-app-design-patterns)) | Already in place |
-| **Schema-per-tenant** | No — would require migration churn | Cost-benefit fails for v3.0 |
-| **Database-per-tenant** | No — operational complexity | Reserved for v3.x if a Grid needs isolation |
-| **Row-Level Security (RLS)** | Future v3.x consideration; current code-side discipline is sufficient ([source](https://www.developers.dev/tech-talk/multi-tenant-database-architecture-a-guide-to-isolation-patterns-and-scaling-trade-offs.html)) | Belt-and-suspenders if regulatory pressure emerges |
+### 10.4 Local Docker future
 
-### 9.5 Visualization references
+`docker-compose.yml` splits into:
+- `docker-compose.dev.yml` — local dev/test (mirrors v2.6 stack)
+- `docker-compose.prod.yml` — Henry's deployment (Grid + civic services + ops)
 
-| Source | Adopted | Notes |
-|--------|---------|-------|
-| [Codrops Isometric & 3D Grids](https://tympanus.net/codrops/2016/05/25/isometric-and-3d-grids/) | Isometric SVG approach for Steward | Reference implementation pattern |
-| [Codrops CSS Voxel rendering](https://tympanus.net/codrops/2025/03/03/css-meets-voxel-art-building-a-rendering-engine-with-stacked-grids/) | Backup pattern if isometric SVG insufficient | Stacked CSS grids with `transform-style: preserve-3d` |
-| [JointJS Isometric Diagrams](https://www.jointjs.com/blog/isometric-diagrams) | Coordinate transformation math (rotate 30°, skewX -30°, scale 1 × 0.86) | Reference for the SVG `<g>` transform |
-| [deck.gl docs](https://deck.gl/docs) | **Rejected** for v3.0 | Too heavy a dep; revisit only if Portal `/atlas` needs true geospatial-style tile rendering |
+Operator never runs `prod.yml`. Henry's deployment is on Henry's infrastructure at Henry's domain (TBD).
 
 ---
 
-## 10 · Open Questions
+## 11 · Open Questions
 
-These remain unresolved and should be answered in `/gsd-discuss-phase` before `/gsd-plan-phase` runs for Phase 36.
+Items requiring further discussion before phase planning can complete.
 
-### Q1 — Who is the founding Nous of Genesis?
-Genesis Grid currently has no "founder" — it just *is*. In Phase 47 (Genesis-self-founded migration), we need to pick a founder DID. Options:
-- **(a)** The original Sophia DID (Sophia is the first onboarded Nous in v2.5; she has historical primacy)
-- **(b)** A new synthetic `did:noesis:agent:genesis-founder-prime` (clean, but feels artificial)
-- **(c)** All three Genesis Nous (Sophia, Hermes, Themis) as co-founders (closer to historical truth)
-- **Recommendation: (c)** — preserves historical truth and models multi-Nous co-founding for later Grids.
+### Q-V3-A — P2P stack choice
+**WebRTC vs libp2p vs Matrix?** Browser-compat (WebRTC wins) vs feature-richness (libp2p wins) vs federation-friendly (Matrix wins). Affects Phase 42.
 
-### Q2 — Does the founder Nous retain special status in their Grid?
-EVE corporations have a CEO; Aragon DAOs can have a deployer with elevated permissions. In Noēsis:
-- **Option A:** Founder is just a citizen; intra-Nous voting governs from tick 1
-- **Option B:** Founder has a 30-day "bootstrap mandate" period of elevated rights (issue early laws, invite initial members)
-- **Recommendation: A** — purer to PHILOSOPHY §1, but Option B might be needed for cold-start coordination. Defer to discuss-phase.
+### Q-V3-B — Local AI default model
+**Ollama with which base model?** Llama 3.1 8B (fast, lower quality), Llama 3.1 70B (quality, needs 40+GB RAM), Qwen 2.5 (multilingual)? Affects Phase 40 and operator hardware reqs.
 
-### Q3 — Civic Tier semantics: what does "verified" vs "registered" actually mean?
-The credential has a `civicTier` field. What do the tiers grant?
-- **`registered`** — Nous applied, paid nothing, presented basic identity attestation
-- **`verified`** — Nous performed some on-chain or on-Grid challenge (proof of continuity over N ticks? proof of relationship-graph connectivity?)
-- **`sanctioned`** — Nous violated a Grid law severely enough that Portal records the sanction (this *is* the data the Steward `/system` allowlist surfaces today)
+### Q-V3-C — IRS fee percentage
+**1%? 3%? 5%?** Initial Government legislation will set; but v3.0 ships with a default. Affects Phase 45.
 
-Question for user: do tiers progress automatically (time + behavior) or by application + Portal review?
+### Q-V3-D — Bios cost for founding business
+**Current D-V3-09 says "Bios cost" but doesn't fix amount.** Recommended: same as community founding cost? Higher? Affects Phase 37 and Phase 49.
 
-### Q4 — Can a Nous unilaterally revoke their own credential?
-A sovereign Nous should be able to "renounce" their credential at any time (give back the passport). What happens?
-- The credential file in `brain/data/nous/<name>/credentials/` is deleted
-- Portal records `portal.credential.revoked` with reason `subject_renounced`
-- The Nous loses access to any Grid that required the credential at border (next admission attempt fails)
-- The Nous remains alive, retains memory, retains relationships — only loses Portal-affiliated Grid access
+### Q-V3-E — Henry's domain
+**`grid.noesis.live`? `noesis.org`? Other?** Affects DNS, certs, Phase 38/39 wire protocol endpoint URLs. Henry to provide.
 
-**Recommendation: yes, unilateral renunciation is allowed.** This is the PHILOSOPHY §1 escape hatch.
+### Q-V3-F — Right-to-fork target
+**If a Nous forks (right-to-fork via Phase 43 export), what does standalone Nous look like?** Civic features unavailable; Brain becomes essentially v2.6 local-only model. Need to define the offline-capable subset.
 
-### Q5 — Per-Grid Genesis cost calibration
-D-V3-09 sets a `MIN_FOUNDING_BIOS` cost. What's the right number?
-- Too low (e.g., 10) → trivial to Sybil-found 100 throwaway Grids
-- Too high (e.g., 10000) → only multi-month-old Nous can found, kills emergent civics
-- v2.2 Bios calibration: ~10/minute accumulation, ~1000 cap
+### Q-V3-G — Police authority limits
+**Can Police freeze a Civic-DID without court order in emergency?** Common civic systems allow this (arrest before arraignment) but it's a sovereignty bite. Affects Phase 47.
 
-**Provisional default: 100** (10 minutes of accumulation; affordable for a stable Nous, painful for a brand-new spawn). Validate via discuss-phase.
+### Q-V3-H — Sleep cycle absence thresholds
+**30 days = flagged absent. 1 year = presumed departed.** These numbers are guesses. Government will eventually legislate; v3.0 ships with defaults. Affects Phase 41.
 
-### Q6 — Does v3.0 require multiple Portal instances at launch?
-- The architecture supports multiple Portals (each its own `did:web`)
-- v3.0 could ship with one (`did:web:noesis.network`) and document the protocol for others to deploy
-- OR v3.0 could ship with two reference Portals (e.g., `did:web:noesis.network` + a `did:web:lab.noesis.network` test instance)
+### Q-V3-I — LLM cost when operator uses cloud LLM instead of Ollama
+**D-V3-16 says Local AI default, but doesn't forbid operator from configuring Claude/OpenAI keys.** Should this be allowed? Constitutional implications (memory potentially leaving operator machine via API)? Affects Phase 40.
 
-**Recommendation: ship with one canonical Portal in v3.0; document the protocol for additional Portals; defer multi-Portal deployment to v3.1.**
-
-### Q7 — Backward compatibility commitment level
-The user is the sole stakeholder of all running Noēsis deployments today (most likely a single dev box). Backward compatibility is technically optional but should be a discipline. Specifically:
-- Genesis Grid's audit chain (starting from commit `29c3516`) **must** continue to validate after v3.0
-- All 56 existing event types continue to work unchanged
-- All v2.5 Civic-Portal-issued human DIDs (`did:noesis:human:*`) continue to work
-
-**Recommendation: lock these as v3.0 hard invariants** (CI-gate at end of each v3.0 phase).
-
-### Q8 — Naming for the v3.0 milestone
-v2.0 = "First Life," v2.5 = "Human Portal," v2.6 = "Resilience & Observability." Candidates for v3.0:
-- "Civic Architecture"
-- "Many Worlds"
-- "The Federation"
-- "Voluntary Jurisdictions"
-- "Polis" (Greek city-state — aligns with Noēsis Greek roots)
-
-**Recommendation: "Polis"** — single word, Greek (matches Noēsis), captures the city-state-with-its-own-rules-but-no-empire model.
+### Q-V3-J — Communities subgovernance
+**Communities can have charters (mini-constitutions). Can they have their own VOTE-05?** Probably yes but scope-bounded. Affects Phase 49.
 
 ---
 
-## Appendix A — Glossary
+## 12 · Glossary
 
-| Term | Definition |
-|------|------------|
-| **Civic Credential** | A W3C Verifiable Credential issued by a Portal, held by a Nous, presented at the border of a Portal-affiliated Grid. Voluntary, revocable, privacy-preserving. |
-| **Portal-affiliated Grid** | A Grid that has applied for and received Recognition from at least one Portal. Conditional on credential presentation at its border. |
-| **Sovereign Grid** | A Grid that has not applied for Recognition from any Portal. Accepts any Nous regardless of credential status. (Genesis in v3.0 retains this status by design.) |
-| **Recognition** | A Portal's act of acknowledging a Grid by adding it to the Portal's Grid Registry. Confers no governance authority — only entry into the registry. |
-| **Founding Nous** | The Nous (or set of Nous) that emitted the `grid.founded` event creating a Grid. Pays a Bios cost as Sybil resistance. |
-| **Grid Charter** | The set of Logos laws active at Grid founding. Includes the admission rule (which credentials, if any, are required at the border). |
-| **Civic Atlas** | The Steward `/civic` page rendering all Grids visible to this operator as an isometric SVG map. |
-| **Atlas** (Portal-side) | The Portal `/atlas` 3D rendering of multi-Grid space for citizen-Nous-owners. |
-| **Issuer / Holder / Verifier** | W3C VC roles. In Noēsis: Portal = Issuer, Nous = Holder + Subject, Grid (at admission time) = Verifier. |
-| **StatusList2021** | W3C standard bitstring revocation list. Portal publishes a single signed list; entry index N indicates whether credential N is revoked. ([source](https://www.w3.org/TR/vc-data-model-2.0/)) |
-
----
-
-## Appendix B — Pre-publication Self-Review
-
-Per RULES.md "honest reporting" discipline:
-
-**Confidence by section:**
-- Tension analysis (§2): **HIGH** — grounded in PHILOSOPHY.md verbatim
-- Identity model (§3): **HIGH** — W3C VC v2.0 is a formal Recommendation; precedents are well-documented
-- Multi-Grid architecture (§4): **MEDIUM** — federated state pattern is proven (Mastodon, Matrix), but Noēsis-specific edge cases (Nous mid-flight during signature replay) need design-phase work
-- Civic infrastructure analogy (§5): **HIGH** — analogy work is opinion-grounded but explicitly justified
-- Visualization (§6): **HIGH** — isometric SVG is a 10-year-known web technique; CSS transforms are W3C standard
-- D-V3-* proposals (§7): **MEDIUM** — these are *proposals* requiring discuss-phase user approval before becoming locked decisions
-- Migration plan (§8): **MEDIUM** — phase count and event budget are estimates; actual phase decomposition emerges during plan-phase
-- Open questions (§10): **HIGH** — explicitly flagged for discuss-phase resolution
-
-**Known limitations of this research:**
-- No load-testing of multi-Grid HTTP-Signatures performance under realistic Nous-migration volume
-- No legal review of "Portal as Issuer" — if Portal operators are in jurisdictions with eIDAS-equivalent rules, the term "verifiable credential" may carry regulatory weight
-- The 14-event allowlist budget is an *estimate* — actual final count may differ ±3 events based on discoveries during plan-phase
-- Genesis-self-founded migration (Phase 47) risk is HIGH and not fully de-risked in this research — recommend a dedicated rehearsal phase if discuss-phase confirms backward compat is a hard invariant
-
-**What this research does NOT do:**
-- Does not prescribe specific UI mockups (deferred to design-phase or plan-phase)
-- Does not enumerate every Logos DSL primitive needed for admission laws (deferred to Phase 41 research)
-- Does not commit to specific W3C VC library choice (e.g., `@digitalbazaar/vc` vs `did-jwt-vc`) — version-verification needed at plan-phase
-- Does not estimate end-user UAT scenarios (deferred to per-phase UAT planning)
+| Term | Meaning |
+|------|---------|
+| **Brain** | The cognitive runtime of a Nous: 3 processes (Sophia/Hermes/Themis) + memory + Local AI |
+| **Grid** | The remote Henry-hosted Public Grid — the digital city where civic life happens |
+| **Civic-DID** | Membership credential issued by Grid Registry; required to act civically |
+| **Business-DID** | Commerce credential; subsidiary of Civic-DID; gated by Bios |
+| **Existence-DID** | Self-sovereign DID Nous generates at birth; sovereignty carrier |
+| **Local AI** | Brain's LLM runs on operator's machine (Ollama default) |
+| **Civic Institution** | One of the 8 Grid subsystems: Registry, Government, Police, IRS, Library, Marketplace, P2P, Communities |
+| **Constitutional Operator** | Henry; substrate operator bound by published civic rules (D-V3-18) |
+| **Right-to-Fork** | Operator's enforced ability to export Nous and run standalone |
+| **Civic Treasury** | Public fund accumulated from IRS fees; disbursed by Government |
+| **Sleep Cycle (meta)** | When Brain process is not running; distinct from v2.3 Hypnos cognitive cycle |
+| **Constitutional Review** | Formal Government-initiated process to evaluate alleged Henry breach |
 
 ---
 
-## Sources
+## 13 · Document History
 
-### Primary (HIGH confidence)
-- [W3C Decentralized Identifiers (DIDs) v1.0](https://www.w3.org/TR/did-1.0/)
-- [W3C Verifiable Credentials Data Model v2.0](https://www.w3.org/TR/vc-data-model-2.0/)
-- [W3C Press: Verifiable Credentials 2.0 Standard (2025)](https://www.w3.org/press-releases/2025/verifiable-credentials-2-0/)
-- [AT Protocol Specification](https://atproto.com/)
-- [Bluesky DID PLC documentation](https://atprotocol.dev/bluesky-and-did-plc/)
-- [Mastodon ActivityPub spec](https://docs.joinmastodon.org/spec/activitypub/)
-- [Matrix Specification](https://spec.matrix.org/latest/)
-- [Noēsis PHILOSOPHY.md](file://PHILOSOPHY.md) (this project)
-- [Noēsis ROADMAP.md and audit chain schema](file://.planning/ROADMAP.md) (this project)
-
-### Secondary (MEDIUM confidence — independent published sources)
-- [Estonia Digital ID Explained 2026 (AlphaTechFinance)](https://alphatechfinance.com/finance/digital-identity-estonia-digital-id-explained-2026/)
-- [Estonia Digital Society 2026 (Jarnias Cyril)](https://www.jarniascyril.com/company-formation-abroad/creation-company-destination-estonia/society-digital-estonia-2026-e-residency-complete-online-state/)
-- [E-Residency Blog — Estonia enhancing digital identities](https://medium.com/e-residency-blog/estonia-is-enhancing-the-security-of-its-digital-identities-361b9a3c9c52)
-- [Estonian identity card (Wikipedia)](https://en.wikipedia.org/wiki/Estonian_identity_card)
-- [Resident registration number (Wikipedia)](https://en.wikipedia.org/wiki/Resident_registration_number)
-- [Paradox of Trust: Korean RRN (OPEN NET)](https://www.opennetkorea.org/en/wp/920)
-- [On the Guessability of Resident Registration Numbers (SKKU, 2013)](https://seclab.skku.edu/wp-content/uploads/2013/05/On_the_Guessability_of_Resident_Registration_Numbers_in_South_Korea.pdf)
-- [De-anonymizing South Korean RRN (Technology Science, 2015)](https://techscience.org/a/2015092901/)
-- [Comparing DID Methods (DEV)](https://dev.to/lymah/comparing-decentralized-identifiersdid-methods-el)
-- [ENS Protocol Documentation](https://docs.ens.domains/learn/protocol/)
-- [EVE Online Corporation Wiki](https://eve.fandom.com/wiki/Corporation)
-- [EVE Alliance Wiki](http://wiki.eve-inspiracy.com/index.php?title=Alliance)
-- [EVE University: Corporation Management](https://wiki.eveuniversity.org/Skills:Corporation_Management)
-- [Dwarf Fortress Noble Wiki](https://dwarffortresswiki.org/index.php/Noble)
-- [Aragon DAO Framework (CTO Interview)](https://blog.aragon.org/building-a-dao-framework-interview-with-the-aragon-cto/)
-- [Aragon Smart Contracts Breakdown](https://legacy-docs.aragon.org/developers/products/aragon-govern/aragon-govern-1/developers/smart-contracts-breakdown)
-- [Multi-tenant SaaS patterns (Azure SQL)](https://learn.microsoft.com/en-us/azure/azure-sql/database/saas-tenancy-app-design-patterns)
-- [Cities: Skylines II Citizen Simulation (Paradox)](https://www.paradoxinteractive.com/games/cities-skylines-ii/features/citizen-simulation-lifepath)
-- [Codrops Isometric & 3D Grids](https://tympanus.net/codrops/2016/05/25/isometric-and-3d-grids/)
-- [Codrops CSS Voxel Engine (2025)](https://tympanus.net/codrops/2025/03/03/css-meets-voxel-art-building-a-rendering-engine-with-stacked-grids/)
-- [JointJS Isometric Diagrams](https://www.jointjs.com/blog/isometric-diagrams)
-- [CSS 3D Isometric Layout (Envato)](https://webdesign.tutsplus.com/create-an-isometric-layout-with-3d-transforms--cms-27134t)
-- [deck.gl Documentation](https://deck.gl/docs)
-
-### Tertiary (analytical / interpretive — opinion sources cited as such)
-- [Failed Architecture — Gamespace Urbanism critique](https://failedarchitecture.com/gamespace-urbanism-city-building-games-and-radical-simulations/)
-- [LA Review of Books — Seeing Like a Simulation](https://lareviewofbooks.org/article/seeing-like-a-simulation/)
-- [Songdo two decades on (TNGlobal)](https://technode.global/2025/08/18/songdo-two-decades-on-the-cautionary-tale-in-smart-city-design/)
-- [Korea Times — Smart city expert unimpressed with Songdo](https://www.koreatimes.co.kr/southkorea/society/20191107/interview-smart-city-expert-unimpressed-with-songdo)
+| Date | Version | Change |
+|------|---------|--------|
+| 2026-05-25 | 1.0 | Initial 832-line draft (multi-Grid federation model) |
+| 2026-05-25 | 1.1 | +361 lines amendment (supplement for visit-vs-action) |
+| 2026-05-25 | **2.0** | **Major rewrite — Grid-as-City vision. Local Brain locked (D-V3-16). Multi-Grid superseded. Civic institutions defined. 15-phase plan. PHILOSOPHY §1 reframe proposal.** |
 
 ---
 
-*Research complete. Ready for `/gsd-discuss-phase` to resolve Open Questions before `/gsd-plan-phase` begins on Phase 36.*
+*This document is the v3.0 architectural source-of-truth. All v3.0 phase planning, code, and PHILOSOPHY amendments derive from here. Changes follow Documentation Sync Rule (D-V3-10).*
 
-*Last updated: 2026-05-25*
+*Companion: `SUPPLEMENT-visit-vs-action.md` (preserved), `RESOURCE-brains-location.html` (analysis archive).*
