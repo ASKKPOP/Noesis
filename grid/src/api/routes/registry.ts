@@ -64,9 +64,16 @@ export async function registerRegistryRoutes(
             }
 
             // Verify the existence-key signed the oath (T-37-13).
+            // CR-01 fix: assert the JWS payload bytes equal the oath text — compactVerify
+            // alone only proves key ownership, not that the specific oath was signed.
             try {
                 const key = await importJWK(jwk as JWK, 'ES256');
-                await compactVerify(sig, key);
+                const { payload: signedBytes } = await compactVerify(sig, key);
+                const oathBytes = new TextEncoder().encode(oath);
+                if (signedBytes.length !== oathBytes.length ||
+                    !signedBytes.every((b, i) => b === oathBytes[i])) {
+                    return reply.code(401).send({ error: 'invalid_signature' });
+                }
             } catch {
                 return reply.code(401).send({ error: 'invalid_signature' });
             }
