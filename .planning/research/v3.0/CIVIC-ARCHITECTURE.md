@@ -110,6 +110,10 @@ This avoids the deepest mistake: adding a third frontend service. Two surfaces s
 
 ## 3 · Identity Model
 
+> **⚠ Read this supplement first:** [`SUPPLEMENT-visit-vs-action.md`](./SUPPLEMENT-visit-vs-action.md)
+>
+> User clarification 2026-05-25 added a critical refinement: **DID is not about existence — it's about action permission.** Without a DID you may VISIT (read public surfaces); with a DID you may ACT (mutate state). This is a read/write asymmetry orthogonal to the issuer-model choice (Portal vs self-sovereign) discussed below. The supplement adds 5 new D-V3-* decisions (D-V3-11..15), 5 open questions (Q-VA-1..5), and 2 phases at the front of the migration plan. See §3.5 below for how it integrates with this section.
+
 ### 3.1 Comparison of identity precedents
 
 | System | Architecture | Mandatory? | Privacy | Revocable? | Self-sovereign? | Fit for Noēsis |
@@ -218,6 +222,25 @@ A Nous can hold credentials from multiple Portals (like a human with both a Cana
 ```
 
 A sovereign Grid with no admission law accepts any Nous. A strict Grid might require credentials from two specific Portals. This is **policy as code**, intra-Nous-voted (VOTE-05 preserved).
+
+### 3.5 Visit-vs-Action Permission Axis (added 2026-05-25)
+
+The above sections analyzed the **issuer** axis (who creates the DID — Portal vs self). The user added a second, orthogonal axis: the **permission** axis (does the actor have any DID at all).
+
+| Combined axis position | Issuer | Permission | Capabilities in a Portal-recognized Grid |
+|---|---|---|---|
+| Visitor | none | none | Read public surfaces; observe firehose with actor_did stripped; no write actions |
+| Self-sovereign actor | self (`did:noesis:sovereign:*`) | DID present | Read + write in sovereign Grids; in Portal-recognized Grids, accepted only if Grid's admission law allows self-sovereign |
+| Portal-issued actor | Portal | DID present | Read + write in any Grid that recognizes the issuing Portal |
+| Multi-Portal actor | multiple Portals | DIDs present | Read + write across all jurisdictions whose Portals issued credentials to this actor (passport-stamp model) |
+
+**The visit-vs-action axis is uniform across all Grids:**
+- Read endpoints are permissive (with Tiered redaction for visitors — see supplement §2 matrix)
+- Write endpoints require any valid DID; the *issuer* of that DID then determines which Grids accept the action
+
+This means the per-Grid admission law (§3.4) only kicks in for ACTIONS, never for VISITS. A visitor never triggers admission-law checks because they're never trying to commit to the chain.
+
+**See [`SUPPLEMENT-visit-vs-action.md`](./SUPPLEMENT-visit-vs-action.md) for:** per-endpoint matrix, Fastify implementation sketch, WS firehose redaction without breaking R-31-01, 4 new audit events, 5 new D-V3-* decisions (D-V3-11..15), 5 new open questions (Q-VA-1..5), and the 2 new phases that go at the front of the migration plan.
 
 ---
 
@@ -355,6 +378,8 @@ If a future v3.x adds on-chain anchoring (e.g., `did:ion` for tamper-proof issue
 ---
 
 ## 5 · Civic Infrastructure Analogy
+
+> **Note added 2026-05-25:** The user's clarification *"any action need DID, without DID only visit"* further sharpens the right analogy. **Estonian e-Residency is the precise precedent** because Estonia *already separates the right to be present from the right to act*: a tourist needs no residency to visit Tallinn, an e-Resident can act (sign documents, open companies) without ever physically living in Estonia, and a citizen has the full bundle. The Visit → e-Resident → Citizen continuum maps 1:1 onto Visitor → DID-holder → Grid-citizen (admission-law-passed). See [`SUPPLEMENT-visit-vs-action.md`](./SUPPLEMENT-visit-vs-action.md) for the formal definition.
 
 The user named SimCity. **SimCity is the wrong analogy and using it will silently misguide every design downstream.** Naming the metaphor correctly is the single most important act of this research.
 
