@@ -416,7 +416,7 @@ Full v3.0 decision list after all reshapes:
 | D-V3-08 | Allowlist budget (revised — +52 events for v3.0) | LOCKED (expanded) |
 | D-V3-09 | Bios sybil cost for founding | LOCKED |
 | D-V3-10 | Documentation Sync Rule | LOCKED |
-| D-V3-11..15 | Visit-vs-action axis (supplement) | LOCKED |
+| D-V3-11..15 | Visit-vs-action axis (supplement) | LOCKED — D-V3-11 ROUTE_DID_POLICY enum refined to 6 values via D-36-17 (Phase 36 context) to support 3-tier visitor model (Anonymous / Human Visitor / Civic Member). |
 | D-V3-16 | Local Brain with Local AI (Type A) | LOCKED |
 | D-V3-17 | Local Docker = dev/test; production = remote | LOCKED |
 | D-V3-18 | Constitutional operator framework (Henry bound) | LOCKED |

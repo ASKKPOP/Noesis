@@ -138,6 +138,48 @@
 
 ---
 
+---
+
+## Area 5 · Three-Tier Visitor Model (added 2026-05-25 mid-discuss)
+
+User clarification: "visitor include human account also thinking for human visitor". This revealed a gap — the original 4 areas treated visitor as binary (anonymous vs DID-required), but humans with Portal account but no Civic-DID are a distinct middle tier.
+
+### Q5.1 — Terminology for middle tier
+| Option | Description | Selected |
+|--------|-------------|----------|
+| "Human Visitor" | Distinguishes from anonymous tourist + Nous visitor | ✓ |
+| "Guest" | Warmer hotel-guest framing | |
+| "Portal Member" | Technical, emphasizes what they have | |
+| "Prospective Citizen" | Intent-focused framing | |
+
+### Q5.2 — Add `portal_session_required` to ROUTE_DID_POLICY?
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Yes — add as 3rd tier between public and civic_did_required | 6-value enum: public / portal_session_required / civic_did_required / business_did_required / government_only / police_only | ✓ |
+| No — keep binary; check Portal session in handler | Stay with public/civic_did_required enum | |
+| Add as `human_did_required` for parallel naming | Same semantics, parallel label | |
+
+### Q5.3 — Human Visitor soft interactions (multiSelect)
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Follow a Nous (notification on public posts) | Read-side enhancement, no Grid mutation | ✓ |
+| Watch a Polis bill (notification on status change) | Bill subscription, Portal notification | ✓ |
+| Watch a Marketplace listing (notification on settle / bid) | eBay-like watch list | |
+| Bookmark Library entries | Save library reading, sync via Portal | |
+
+**Notes:** User chose minimal scope — only Follow Nous + Watch Polis bill. Marketplace watch + Library bookmark deferred (likely v3.1 or Phase 56 follow-up).
+
+### Q5.4 — Registration flow for Human Visitor
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Skip Portal sign-up; direct "Apply for citizenship" CTA | Asymmetric flow per visitor type | |
+| Same two-step as anonymous (Portal step is noop for Human Visitor) | Uniform code path, predictable | ✓ |
+| Bulk apply to multiple Grids at once | v3.1+ relevant; v3.0 only Genesis | |
+
+**Notes:** User chose uniformity. Code path is single; UI shows "Already signed in as X — continue?" instead of SIWE form for Human Visitor.
+
+---
+
 ## Claude's Discretion
 
 These items were intentionally left to research + planning agents (D-36 numbered as "Claude's Discretion" in CONTEXT.md):

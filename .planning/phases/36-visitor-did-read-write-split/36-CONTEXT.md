@@ -36,6 +36,22 @@ This phase ships VIS-01..05 (5 requirements). Dependencies: none (Wave 1 paralle
 - **D-36-10:** Steward `/admin/*` and Portal `/admin/*` surfaces are **always DID-required + tier-gated**. Per D-V3-36 these are Tier 2 Grid Manager (per-Grid Steward) and Tier 3 Portal Manager (Portal admin UI) surfaces — administrative, never visitor-readable. CI gate `scripts/check-admin-policy-isolation.mjs` (added in this phase) ensures every `/admin/*` route has `did_required` + tier check.
 - **D-36-11:** Visitor **can view a specific Nous public profile** by clicking an avatar on Civic Map. Public profile contains: display name, current zone (per D-V3-32), civic standing tier (provisional/full per D-V3-35), public bio text (Nous-authored, optional). Public profile does NOT contain: memory inspector (any layer — Karpathy/Hypnos/Pneuma), audit history (DID-required), Brain config, treasury balance, personal contracts.
 
+### Three-Tier Visitor Model (Area 5 — added 2026-05-25 mid-discuss)
+
+User clarification: "visitor" is NOT a single class. Three actual classes exist, distinguished by (a) Portal session presence, (b) Civic-DID-in-this-Grid presence.
+
+| Tier | Portal session | Civic-DID here | Name |
+|------|----------------|-----------------|------|
+| 1 | ❌ | ❌ | **Anonymous** (true tourist) |
+| 2 | ✓ (operator-DID) | ❌ | **Human Visitor** (has Portal account; not yet citizen of this Grid) |
+| 3 | ✓ | ✓ | **Civic Member** (full citizen) |
+
+- **D-36-16:** Three-tier visitor model named: **Anonymous** / **Human Visitor** / **Civic Member**. Recognizes that a human with a Portal account but no Civic-DID in this Grid is a distinct class from both pure tourist and full citizen. Affects: visitor surfaces (welcome banners differentiate), registration flow (Human Visitor is warmer — already trusts Noēsis enough to make Portal account), policy enforcement (soft interactions enabled per D-36-18).
+- **D-36-17:** `ROUTE_DID_POLICY` enum **extended to 6 values** (D-V3-11 refinement): `public` (any tier) · **`portal_session_required`** (NEW — Human Visitor + Civic Member) · `civic_did_required` (Civic Member of this specific Grid) · `business_did_required` (Civic Member with Business-DID) · `government_only` (current Polis members) · `police_only` (current Police service members). CI gate `scripts/check-did-policy-coverage.mjs` extended to validate the 6-value enum. **Default-deny rule unchanged** (route missing from table → `civic_did_required`).
+- **D-36-18:** Human Visitor "soft interactions" (read-side, no Grid state mutation): **Follow a Nous** (notification when followed Nous posts publicly — Library entry contribution, Marketplace listing, Polis bill cosponsor) + **Watch a Polis bill** (notification on `gov.bill_cosponsored` / `gov.session_opened` / `gov.law_enacted` / `gov.law_repealed`). Both routes are `portal_session_required` per D-36-17. Bookmarks + Marketplace watch lists are **out of scope for v3.0** (deferred to v3.1 or Phase 56 follow-up).
+- **D-36-19:** Notification delivery for D-36-18 soft interactions uses **Portal account notification queue** (server-side persistent queue scoped to operator-DID), polled by Portal user UI per PORTAL-07. **NOT** delivered via WS firehose (firehose is for civic events, not personal notifications). Notification model is server-pushed-via-poll (not WebSocket-push) to avoid per-Human-Visitor WS connection scaling concerns. New endpoints: `GET /portal/api/v1/notifications` + `POST /portal/api/v1/notifications/:id/read`. New audit events: `portal.notification_dispatched` (+1 allowlist).
+- **D-36-20:** Registration flow is **uniform two-step for both Anonymous AND Human Visitor** (consistency over UX optimization). Anonymous → Portal sign-up step + civic apply step. Human Visitor → "Confirm Portal account" noop step + civic apply step. Same code path; UI shows "Already signed in as X — continue?" for Human Visitor instead of SIWE/email form. Predictable for downstream agents; easier to test; preserves D-V3-33 (Portal-gated registration) cleanly.
+
 ### 6-Zone Civic Map Visibility (Area 4)
 
 - **D-36-12:** Civic Map renders **per-Nous avatars positioned in zones**. Visitor sees individual Nous distributed across the 6 zones (D-V3-32). Click any avatar → public profile per D-36-11. Creates living-city visual experience.
