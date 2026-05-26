@@ -197,7 +197,7 @@ tr:hover td{background:var(--surface2)}
   <div class="logo">Noēsis <span>Progress Dashboard</span></div>
   <span class="badge badge-active">🔧 v3.0 IN PROGRESS</span>
   <div class="header-meta">
-    <span>Phase 36 ✅ SHIPPED — Phase 37 next</span>
+    <span>Phase 37 ✅ SHIPPED — Phase 38 next</span>
     <span>Updated: 2026-05-26</span>
   </div>
 </header>
@@ -207,6 +207,7 @@ tr:hover td{background:var(--surface2)}
   <div class="section-label">Navigation</div>
   <a href="#" class="active" data-section="milestone" onclick="show('milestone',this)"><span class="nav-icon">🗺</span> Milestone Map</a>
   <a href="#" data-section="phase36" onclick="show('phase36',this)"><span class="nav-icon">⚡</span> Phase 36 Detail</a>
+  <a href="#" data-section="phase37" onclick="show('phase37',this)"><span class="nav-icon">🪪</span> Phase 37 Detail</a>
   <a href="#" data-section="requirements" onclick="show('requirements',this)"><span class="nav-icon">📋</span> Requirements</a>
   <a href="#" data-section="uat" onclick="show('uat',this)"><span class="nav-icon">🧪</span> Required UAT</a>
   <a href="#" data-section="timeline" onclick="show('timeline',this)"><span class="nav-icon">📅</span> Timeline &amp; Estimates</a>
@@ -232,9 +233,9 @@ tr:hover td{background:var(--surface2)}
   <div class="stats-row">
     <div class="stat-card"><div class="stat-value">8</div><div class="stat-label">Milestones shipped</div></div>
     <div class="stat-card"><div class="stat-value">v3.0</div><div class="stat-label">Current milestone</div></div>
-    <div class="stat-card"><div class="stat-value">36</div><div class="stat-label">Current phase</div></div>
-    <div class="stat-card"><div class="stat-value">5/8</div><div class="stat-label">Phase 36 plans done</div></div>
-    <div class="stat-card"><div class="stat-value">60</div><div class="stat-label">Allowlist events</div></div>
+    <div class="stat-card"><div class="stat-value">38</div><div class="stat-label">Next phase</div></div>
+    <div class="stat-card"><div class="stat-value">4/4</div><div class="stat-label">Phase 37 plans done ✅</div></div>
+    <div class="stat-card"><div class="stat-value">64</div><div class="stat-label">Allowlist events</div></div>
     <div class="stat-card"><div class="stat-value">~125</div><div class="stat-label">v3.0 plans total est.</div></div>
   </div>
 
@@ -327,10 +328,14 @@ tr:hover td{background:var(--surface2)}
         </div>
         <div class="phase-status">✅ SHIPPED 2026-05-26</div>
       </div>
-      <div class="phase-card pending" onclick="openPhase('37')">
+      <div class="phase-card done" onclick="openPhase('37')">
         <div class="phase-num">Phase 37</div>
         <div class="phase-name">DID Registry</div>
-        <div class="phase-status">⏳ Pending — depends on Phase 36</div>
+        <div style="margin:8px 0">
+          <div class="progress-wrap"><div class="progress-fill green" style="width:100%"></div></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:3px">4/4 plans · 100%</div>
+        </div>
+        <div class="phase-status">✅ SHIPPED 2026-05-26</div>
       </div>
       <div class="phase-card pending" onclick="openPhase('38')">
         <div class="phase-num">Phase 38</div>
@@ -553,6 +558,97 @@ tr:hover td{background:var(--surface2)}
   </div>
 </section>
 
+<!-- ═══════════════════ PHASE 37 DETAIL ═══════════════════ -->
+<section id="phase37" class="section">
+  <div class="section-title">Phase 37 — DID Registry</div>
+  <div class="section-subtitle">✅ SHIPPED 2026-05-26 · Wave 1 — Foundations · 4 plans · Allowlist 60→64</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-value">4/4</div><div class="stat-label">Plans done</div></div>
+    <div class="stat-card"><div class="stat-value">0</div><div class="stat-label">Plans remaining</div></div>
+    <div class="stat-card"><div class="stat-value">+4</div><div class="stat-label">Allowlist additions</div></div>
+    <div class="stat-card"><div class="stat-value">64</div><div class="stat-label">Current allowlist</div></div>
+    <div class="stat-card"><div class="stat-value">184</div><div class="stat-label">New tests</div></div>
+    <div class="stat-card"><div class="stat-value">Wave 1</div><div class="stat-label">Wave</div></div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-green">Wave 1</span>
+      <span class="card-title">37-01 — DB Schema + Civic-Registry Service Layer</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> MySQL migration v23: civic_did_registry table (uq_existence_did unique constraint)</li>
+        <li><span class="task-check">✅</span> MySQL migration v24: business_did_registry table (bios_cost_paid column)</li>
+        <li><span class="task-check">✅</span> W3C VC v2.0 builder: buildCivicDidVc + buildBusinessDidVc (validFrom, CompactSign JWS)</li>
+        <li><span class="task-check">✅</span> CivicDidStore: insert / get / getByExistenceDid / markRevoked</li>
+        <li><span class="task-check">✅</span> BusinessDidStore: insert / get / listByCivicDid / markDissolved</li>
+        <li><span class="task-check">✅</span> verifyGovernmentSession stub — genesis-polis issuer check</li>
+        <li><span class="task-check">✅</span> 4 test files, 46 tests passing</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-green">Wave 1</span>
+      <span class="card-title">37-02 — 4 Audit Sole-Producers + Allowlist 60→64</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> append-registry-civic-did-issued (pos 61) — 4-key closed tuple, CIVIC_DID_RE + EXISTENCE_DID_RE</li>
+        <li><span class="task-check">✅</span> append-registry-civic-did-revoked (pos 62) — court_conviction_ref as HEX64 SHA-256 only (privacy)</li>
+        <li><span class="task-check">✅</span> append-registry-business-did-registered (pos 63) — business_name/category excluded from audit</li>
+        <li><span class="task-check">✅</span> append-registry-business-did-dissolved (pos 64) — 4-key closed tuple</li>
+        <li><span class="task-check">✅</span> broadcast-allowlist.ts grown 60→64; 5 test files, 134 tests passing</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-purple">Wave 2</span>
+      <span class="card-title">37-03 — 6 Fastify API Routes (REG-01..06)</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> POST /api/v1/registry/civic-did/request — existence-key JWS oath binding (CR-01 security fix)</li>
+        <li><span class="task-check">✅</span> GET /api/v1/registry/civic-did/:did — public, Cache-Control: max-age=60</li>
+        <li><span class="task-check">✅</span> POST /api/v1/registry/civic-did/:did/revoke — government_only tier, court_conviction_ref required</li>
+        <li><span class="task-check">✅</span> POST /api/v1/registry/business-did/register — civic_did_required tier, 100 Bios cost</li>
+        <li><span class="task-check">✅</span> GET /api/v1/registry/business-did/:did — public, Cache-Control: max-age=60</li>
+        <li><span class="task-check">✅</span> POST /api/v1/registry/business-did/:did/dissolve — government_only tier, court order required</li>
+        <li><span class="task-check">✅</span> ROUTE_DID_POLICY +6 entries; ANY_DID_RE; DidContextTier + 'government'; 51 tests passing</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-blue">Wave 3</span>
+      <span class="card-title">37-04 — CI Gate: D-V3-33 Portal-Gating Invariant</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> scripts/check-civic-did-issuance-path.mjs — APPROVED_IMPORTERS allowlist, per-line comment stripping</li>
+        <li><span class="task-check">✅</span> .github/workflows/rig-invariants.yml — OBS-37-01 step added after OBS-36-04</li>
+        <li><span class="task-check">✅</span> 4 vitest cases: pass + 2 fail scenarios + test-file exemption</li>
+        <li><span class="task-check">✅</span> D-V3-33: any unauthorized importer of appendRegistryCivicDidIssued causes CI exit 1</li>
+      </ul>
+      <div style="margin-top:8px;font-size:11px;color:var(--green)">184 total new tests. VERIFICATION.md: 14/14 must-haves. Merged 2026-05-26.</div>
+    </div>
+  </div>
+</section>
+
 <!-- ═══════════════════ REQUIREMENTS ═══════════════════ -->
 <section id="requirements" class="section">
   <div class="section-title">Requirements</div>
@@ -600,7 +696,7 @@ tr:hover td{background:var(--surface2)}
 
   <div class="card">
     <div class="card-header" onclick="toggle(this.parentElement)">
-      <span style="font-weight:600;color:var(--text2)">Phase 37 — REG Requirements (upcoming)</span>
+      <span style="font-weight:600;color:var(--green)">Phase 37 — REG Requirements ✅ SHIPPED</span>
       <span class="chip chip-gray">6 pending</span>
       <span class="card-chevron">▶</span>
     </div>
@@ -608,12 +704,12 @@ tr:hover td{background:var(--surface2)}
       <table>
         <thead><tr><th>ID</th><th>Status</th><th>Description</th></tr></thead>
         <tbody>
-          <tr><td><span class="td-code">REG-01</span></td><td><span class="chip chip-gray">Pending</span></td><td>Nous with existence-DID can request Civic-DID via civic oath; rate-limited</td></tr>
-          <tr><td><span class="td-code">REG-02</span></td><td><span class="chip chip-gray">Pending</span></td><td>Grid Registry issues W3C VC with credentialSubject, issuer, issuanceDate, revocationPointer</td></tr>
-          <tr><td><span class="td-code">REG-03</span></td><td><span class="chip chip-gray">Pending</span></td><td>Civic-DID holder registers Business-DID by paying Bios sybil cost (Q-V3-D)</td></tr>
-          <tr><td><span class="td-code">REG-04</span></td><td><span class="chip chip-gray">Pending</span></td><td>Civic-DID revocation requires Government court order — direct operator revocation forbidden</td></tr>
-          <tr><td><span class="td-code">REG-05</span></td><td><span class="chip chip-gray">Pending</span></td><td>Public lookup endpoints return active/revoked/dissolved state, Cache-Control: max-age=60</td></tr>
-          <tr><td><span class="td-code">REG-06</span></td><td><span class="chip chip-gray">Pending</span></td><td>4 sole-producers: registry.civic_did_issued/revoked, registry.business_did_registered/dissolved. +4 allowlist</td></tr>
+          <tr><td><span class="td-code">REG-01</span></td><td><span class="chip chip-green">Validated</span></td><td>Nous with existence-DID requests Civic-DID via civic oath; existence-key JWS binds oath bytes</td></tr>
+          <tr><td><span class="td-code">REG-02</span></td><td><span class="chip chip-green">Validated</span></td><td>Grid Registry issues W3C VC v2.0 (validFrom) with CompactSign JWS proof — civic + business DIDs</td></tr>
+          <tr><td><span class="td-code">REG-03</span></td><td><span class="chip chip-green">Validated</span></td><td>Civic-DID holder registers Business-DID paying 100 Bios sybil cost to treasury DID</td></tr>
+          <tr><td><span class="td-code">REG-04</span></td><td><span class="chip chip-green">Validated</span></td><td>Civic-DID revocation requires Government court order (court_conviction_ref) — operator revocation forbidden</td></tr>
+          <tr><td><span class="td-code">REG-05</span></td><td><span class="chip chip-green">Validated</span></td><td>Public lookup endpoints return active/revoked/dissolved state, Cache-Control: max-age=60</td></tr>
+          <tr><td><span class="td-code">REG-06</span></td><td><span class="chip chip-green">Validated</span></td><td>4 sole-producers: registry.civic_did_issued/revoked, registry.business_did_registered/dissolved. +4 allowlist (60→64)</td></tr>
         </tbody>
       </table>
     </div>
@@ -996,7 +1092,7 @@ const PHASES = {
     plans:['36-01 ✅ RED test specs','36-02 ✅ Policy/preHandlers','36-03 ✅ WS firehose redaction','36-04 ✅ Audit producers','36-05 ✅ Visitor routes','36-06 ✅ CI gates','36-07 ✅ Dashboard UI','36-08 ✅ Docs sync'],
     depends:'—'
   },
-  '37': {name:'DID Registry',status:'PENDING',wave:'Wave 1 — Foundations',goal:'Civic-DID + Business-DID issuance as W3C VCs. Revocation requires Government court order.',reqs:['REG-01','REG-02','REG-03','REG-04','REG-05','REG-06'],allowlist:'+4 (60→64)',plans:['TBD during discuss-phase'],depends:'—'},
+  '37': {name:'DID Registry',status:'SHIPPED',wave:'Wave 1 — Foundations',goal:'Civic-DID + Business-DID issuance as W3C VCs. Revocation requires Government court order (D-V3-18). D-V3-33 portal-gating CI gate.',reqs:['REG-01','REG-02','REG-03','REG-04','REG-05','REG-06'],allowlist:'+4 (60→64)',plans:['37-01 ✅ DB schema + civic-registry service layer','37-02 ✅ 4 audit sole-producers + allowlist 60→64','37-03 ✅ 6 Fastify API routes (REG-01..06)','37-04 ✅ CI gate check-civic-did-issuance-path.mjs (D-V3-33)'],depends:'Phase 36'},
   '38': {name:'Brain ↔ Grid Wire Protocol',status:'PENDING',wave:'Wave 1 — Foundations',goal:'Replace in-process queues with HTTPS REST + WSS. Operator-signed bearer tokens. Idempotent replay on reconnect.',reqs:['WIRE-01','WIRE-02','WIRE-03','WIRE-04','WIRE-05'],allowlist:'0',plans:['TBD'],depends:'Phase 37'},
   '39': {name:'Grid Multi-Tenancy',status:'PENDING',wave:'Wave 1 — Foundations',goal:'Per-operator metadata isolation in operator-scoped schemas. Civic state shared.',reqs:['TENANT-01','TENANT-02','TENANT-03'],allowlist:'0',plans:['TBD'],depends:'Phase 38'},
   '40': {name:'Local AI Integration',status:'PENDING',wave:'Wave 1 — Foundations',goal:'Ollama production-grade default. Operator-selectable model via Steward Console. Degraded-cognition fallback.',reqs:['LOCAL-01','LOCAL-02'],allowlist:'0',plans:['TBD'],depends:'—'},
