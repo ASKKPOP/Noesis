@@ -250,6 +250,14 @@ def _build_http_server(handler: BrainHandler) -> BrainHttpServer:
 
 def create_brain_app_from_env() -> BrainApp:
     """Create BrainApp from environment variables."""
+    # Phase 38 WIRE-01 (Pitfall 5): validate GRID_URL scheme at config-load time,
+    # BEFORE BrainApp construction. Raises ValueError synchronously so the process
+    # exits with a clear error message rather than failing silently on the first tick.
+    grid_url = os.environ.get("GRID_URL")
+    if grid_url:
+        from noesis_brain.wire.client import validate_grid_url  # noqa: PLC0415
+        validate_grid_url(grid_url)  # raises ValueError before BrainApp constructs
+
     nous_name = os.environ.get("NOUS_NAME", "sophia")
     config_path_str = os.environ.get("NOUS_CONFIG")
 
