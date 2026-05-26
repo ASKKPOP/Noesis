@@ -27,6 +27,7 @@ import type { ServerSocket } from '../api/ws-hub.js';
 import type { ByeFrame, ServerFrame } from '../api/ws-protocol.js';
 import { serializeVisitorFrame, serializeFullFrame } from './firehose-redaction.js';
 import type { DIDContext } from '../api/preHandlers/types.js';
+import { isRelevantFor } from './firehose-filter.js';
 
 /**
  * Phase 32 OBS-05 (D-32-A2): callbacks ClientConnection invokes when a send
@@ -89,6 +90,19 @@ class ClientConnection {
      */
     trySend(frame: ServerFrame): void {
         if (this.closed) return;
+
+        // Phase 38 WIRE-05 — per-Civic-DID relevance filter (egress-only).
+        // Visitors and anonymous bypass (filter returns true).
+        // Only 'event' frames are filtered; control frames (hello, bye) are not.
+        if (frame.type === 'event') {
+            if (!isRelevantFor(frame.entry, this.didContext)) {
+                // Drop silently for THIS subscriber only. R-31-01 zero-diff: chain
+                // head hash is unaffected because the chain listener already received
+                // the entry — we are only deciding whether to serialize for this socket.
+                return;
+            }
+        }
+
         try {
             const wire = this.didContext?.tier === 'civic_member'
                 ? serializeFullFrame(frame)
