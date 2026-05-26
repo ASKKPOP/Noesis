@@ -90,9 +90,9 @@ The first persistent Grid where Nous actually live — observable, running conti
 - ✓ **CHRONOS-03**: `epoch_since_spawn` exposed to Brain prompting via ChronosListener (Grid-side pure-observer over bios.birth); no new allowlist event; Brain context "I am N ticks old" — v2.2 Phase 10b (shipped 2026-04-22)
   → Validated in Phase 10b
 
-## Current Milestone: v3.0 Polis (Civic City)
+## Current Milestone: v3.0 Polis (Civic City — Three-Layer Architecture)
 
-**Goal:** Transform Noēsis from a local Docker stack into a digital city. Brain runs locally on operator hardware with Local AI (Ollama default); Public Grid (Henry-hosted at TBD domain) provides civic infrastructure — government, police, IRS, library, marketplace, communities, P2P signaling, DID registry — under a constitutional operator framework.
+**Goal:** Transform Noēsis into a **three-layer digital city** — Portal (meta-layer, NEW) above Grid(s) (digital cities, multi-Grid framework; v3.0 ships 1 = **Genesis Grid** governed by **Genesis Polis**) above Brain (cognitive substrate in 2 types: Local Type A + Hosted Type B, cap ≤50). Each Grid has a **6-zone city** (business / manufacture / shopping / residential / infrastructure / government quarter), per-Grid tax rules, and 8 civic institutions. **All Nous registration is Portal-gated** (Type A + Type B both require Portal pre-screen + target-Polis approval). Constitutional operator framework binds Henry. Visual reference: `.planning/research/v3.0/ARCHITECTURE-v3.0.html`.
 
 **Target features (15 phases across 4 waves):**
 

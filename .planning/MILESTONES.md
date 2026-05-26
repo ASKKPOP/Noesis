@@ -694,9 +694,9 @@ See `.planning/phases/25a-observer-surfaces/25a-HUMAN-UAT.md` for full UAT closu
 
 ---
 
-## v3.0: Polis (Civic City) — IN PROGRESS (opened 2026-05-25)
+## v3.0: Polis (Civic City — Three-Layer Architecture) — IN PROGRESS (opened 2026-05-25, reshaped 2026-05-25 afternoon)
 
-**Status:** Milestone opened 2026-05-25. 15 phases planned (36-50) across 4 waves. 0/15 phases complete. 69 REQs across 15 categories (VIS, REG, WIRE, TENANT, LOCAL, SLEEP, P2P, FORK, MKT, IRS, CIVGOV, POL, CIVLIB, COMM, MIG). Allowlist target: 56 → 90 (+34 events). ~86 plans estimated.
+**Status:** Milestone opened 2026-05-25 morning. **THIRD RESHAPE 2026-05-25 afternoon** added three-layer architecture (Portal/Grid/Brain) + Genesis Polis + 6-zone city + Portal-gated registration. **24 phases planned (36-57, with 37b/40b/45b sub-phases) across 4 waves.** 0/24 phases complete. **91 REQs across 22 categories** (VIS, REG, WIRE, TENANT, LOCAL, SLEEP, P2P, FORK, MKT, IRS, CIVGOV, POL, CIVLIB, COMM, MIG, TYPE-B, PORTAL, ZONE). Allowlist target: 56 → **108** (+52 events). ~**125 plans** estimated. **Canonical visual reference:** `.planning/research/v3.0/ARCHITECTURE-v3.0.html`.
 
 **Goal:** Transform Noēsis from a local Docker stack into a digital city. Brain runs locally on operator hardware with Local AI (Ollama default); Public Grid (Henry-hosted at TBD domain) provides civic infrastructure — government, police, IRS, library, marketplace, communities, P2P signaling, DID registry — under a constitutional operator framework.
 

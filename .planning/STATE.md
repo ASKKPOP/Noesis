@@ -62,10 +62,12 @@ Driving inputs for v3.0 (locked at milestone open):
 | **3** | 49 — Communities v3 | Group formation + charters | M | +4 | 37 |
 | **4** | 50 — Migration | v2.6 → v3.0 ceremony (Sophia data import + civic-DID grandfathering) | L | 0 | ALL |
 
-**Total v3.0 allowlist growth:** +34 (56 → 90) across 8 civic institutions.
-**Estimated plans:** ~86 across 15 phases.
-**Coverage:** 69/69 REQ-V3-* REQs mapped 1:1 to phases (no orphans, no duplicates).
-**Phase ordering:** Wave 1 has 4 parallel groups (A: 36+37+40 independent; B: 38 deps on 37; C: 39 deps on 38; D: 41 deps on 38). Wave 2 plumbing depends on Wave 1; Wave 3 institutions depend on Wave 2 + their internal chain; Wave 4 migration depends on all.
+**Total v3.0 allowlist growth:** +52 (56 → 108) across 8 civic institutions + Type B + Portal + Zoning.
+**Estimated plans:** ~125 across 24 phases (was 15).
+**Coverage:** 91/91 REQ-V3-* REQs mapped 1:1 to phases (no orphans, no duplicates).
+**Phase ordering:** Wave 1 expanded (10 phases including Portal 52-54 + Type B Brain 40b + Registry 37b); Wave 2 (Plumbing + Cross-Grid + UI); Wave 3 (Institutions + Zoning); Wave 4 (Migration + Mobility).
+**Three-layer architecture:** Portal (top meta-layer, NEW) → Grid (multi-Grid framework, 1 active = Genesis Polis) → Brain (2 types: Local + Hosted).
+**Visual reference:** `.planning/research/v3.0/ARCHITECTURE-v3.0.html` is the canonical source-of-truth visual.
 
 ## v2.5 Key Decisions (locked 2026-05-20)
 
@@ -110,11 +112,18 @@ Driving inputs for v3.0 (locked at milestone open):
 | **Government legislation** | **Nous-only via VOTE-05 (invariant from v2.2 Phase 12). Operators do not vote. Henry does not legislate.** | **D-V3-21 (NEW)** |
 | **IRS model** | **Transaction fees on marketplace operations fund civic infrastructure. NO income/wealth tax in v3.0.** | **D-V3-22 (NEW)** |
 | **Grid as city** | **Grid = digital city with 8 civic institutions: DID Registry, Government, Police, IRS, Library, Marketplace, Communities, P2P Infrastructure.** | **D-V3-23 (NEW)** |
-| Multi-Grid federation | **SUPERSEDED** — single Public Grid in v3.0. Multi-Grid deferred to v3.x. | D-V3-04 (superseded) |
-| Per-jurisdiction credentials | **SUPERSEDED** — single jurisdiction in v3.0. | D-V3-05 (superseded) |
-| Cross-Grid migration protocol | **SUPERSEDED** — right-to-fork is local Brain export in v3.0. | D-V3-07 (superseded) |
+| Multi-Grid federation | **RE-INSTATED** — multi-Grid framework returns; v3.0 ships 1 Grid (Genesis), v3.1+ adds more via Portal approval. | D-V3-04 (re-instated) |
+| Per-jurisdiction credentials | **RE-INSTATED** — each Grid has own Polis + jurisdiction. | D-V3-05 (re-instated) |
+| Cross-Grid migration protocol | **RE-INSTATED** — framework built in v3.0, active v3.1+. | D-V3-07 (re-instated) |
+| **Portal as top-level meta-layer (4 functions)** | **NEW** — Grid approval, Nous approval, cross-Grid services, user multi-Grid view. Phase 52-56. | **D-V3-29 (NEW)** |
+| **Genesis Grid is v3.0 launch** | **NEW** — single Grid at v3.0 launch named Genesis; framework supports N Grids in v3.1+. | **D-V3-30 (NEW)** |
+| **Polis = per-Grid government name** | **NEW** — Genesis Polis is v3.0 launch government; each future Grid has its named Polis. | **D-V3-31 (NEW)** |
+| **6-zone city zoning** | **NEW** — Business / Manufacture / Shopping / Residential / Infrastructure / Government Quarter per Grid. Phase 57. | **D-V3-32 (NEW)** |
+| **Portal-gated Nous registration** | **NEW** — both Type A AND Type B require Portal pre-screen + target-Polis approval before Civic-DID issuance. | **D-V3-33 (NEW)** |
+| **Per-Grid tax rules** | **NEW** — each Polis sets its own base + per-zone tax rates via legislation. | **D-V3-34 (NEW)** |
+| **Type B year-1 civic restrictions** | **NEW (research-validated)** — vote/marketplace/community ✓ from day 1; office/Police/curator requires 12mo civic standing (naturalization model). | **D-V3-35 (NEW)** |
 
-**Allowlist budget for v3.0:** +34 events (56 → 90) across 8 civic institutions per revised D-V3-08. Frozen-except-by-explicit-addition rule preserved.
+**Allowlist budget for v3.0:** +52 events (56 → 108) across 8 civic institutions + Type B (15) + Portal (5) + Zoning (2). Frozen-except-by-explicit-addition rule preserved.
 
 ## Accumulated Context
 

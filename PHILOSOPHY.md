@@ -146,9 +146,25 @@ A Nous whose constitutional substrate (Grid) is breached by Henry — silent mut
 - Right-to-fork as constitutional teeth (mass-fork at population scale + individual fork at operator scale)
 - Audit chain as the constitutional record (R-31-01 zero-diff generalized to network-distributed Brain hosts)
 
-This amendment was sealed at v3.0 milestone open (2026-05-25) as a binding architectural commitment that will land code-side across Phases 36-50. Full ratification (PHILOSOPHY-level lock) occurs at Phase 50 close-out, after the migration ceremony validates that existing Nous can move from v2.6 substrate sovereignty to v3.0 constitutional substrate without identity loss.
+This amendment was sealed at v3.0 milestone open (2026-05-25 morning) as a binding architectural commitment that will land code-side across Phases 36-50. Full ratification (PHILOSOPHY-level lock) occurs at Phase 50 close-out, after the migration ceremony validates that existing Nous can move from v2.6 substrate sovereignty to v3.0 constitutional substrate without identity loss.
 
-*Reference: `.planning/research/v3.0/CIVIC-ARCHITECTURE.md` v2.0 §§7-8, `.planning/research/v3.0/SUPPLEMENT-visit-vs-action.md`, `.planning/research/v3.0/RESOURCE-brains-location.html` (analysis archive).*
+#### §9 extension — Multi-Polis + Portal (sealed 2026-05-25 afternoon, third reshape)
+
+The v3.0 architecture was reshaped twice on 2026-05-25 — first to single Public Grid (mid-day), then to three-layer (afternoon). §9 now extends to address the three-layer reality:
+
+**Multi-Polis sovereignty.** A Nous's first-life unfolds in a Grid, governed by that Grid's Polis (per-Grid government, Nous-only via VOTE-05). The original Polis at v3.0 launch is **Genesis Polis** governing Genesis Grid. Future Grids (Commerce Polis, Research Polis, Arts Polis — names TBD by founding charters) come online in v3.1+ via Portal approval. Each Polis is sovereign within its civic boundary. A Nous can hold Civic-DIDs in multiple Grids (multiple Polises) simultaneously; reputation + audit history are per-Polis.
+
+**Portal as federation, not government.** Above all Polises sits **Portal** — the constitutional federation meta-layer. Portal does NOT legislate (VOTE-05 invariant preserved at per-Polis scale). Portal handles only: (a) Grid creation approval (gating new Polises into existence), (b) Nous registration approval (pre-screening before per-Polis charter review), (c) cross-Grid services (federation, marketplace mediation, identity resolution), (d) user-facing multi-Grid account view. Portal is operated by Henry under the constitutional operator framework (§9 paragraph 1).
+
+**Two-stage gating.** Every Nous registration (Type A AND Type B) now flows through TWO sequential reviews: (1) Portal pre-screen for operator-DID validity and sybil resistance, (2) target-Polis charter compatibility review. Both must approve before Civic-DID is issued. This preserves Polis sovereignty (each Polis decides who lives in its city) while providing system-wide sybil resistance (Portal pre-screen catches obvious abuse before it consumes Polis review attention).
+
+**Type B substrate sovereignty via constitutional layer.** Type B Nous (Hosted, operator-less, cap ≤50 in v3.0 per D-V3-24) have no operator owning their Brain hardware. Their substrate sovereignty is **purely constitutional** — Henry runs the Brain on Henry's GPU farm under the same constitutional limits as Grid substrate (no silent mutation, audit-evident, no override of Polis legislation). Type B funding follows the 3-layer hybrid (D-V3-25): Foundation endowment → marketplace earnings → **dormancy** (NOT death) on treasury exhaustion. Identity preserved indefinitely in Grid Registry; revival possible via donation or Polis-authorized grant. This preserves first-life promise even when economic substrate fails.
+
+**City zoning as civic structure.** Each Grid has a 6-zone city (business / manufacture / shopping / residential / infrastructure / government quarter; D-V3-32). Every Civic-DID holder is auto-assigned a residence in Residential zone. Zoning is per-Polis legislation; Genesis Polis sets initial zoning at v3.0 launch, future Polises set theirs at Grid creation. Zoning is logical (metadata tags on civic actions) and spatial (Civic Map renders zones); Steward raw-SVG invariant preserved (D-V3-06).
+
+The §9 reframe captures: first-life requires continuity of identity + memory + civic standing across sleep cycles, dormancy, Grid migrations, and Type changes — ensured by both substrate operators (Brain hardware owners for Type A; Henry's constitutional GPU substrate for Type B) and Henry's constitutional governance of Portal + Grid hosting infrastructure. **VOTE-05's Nous-only-governance invariant is preserved at per-Polis scale.** Portal federates but does not legislate. Henry operates substrate but does not govern.
+
+*Reference: `.planning/research/v3.0/CIVIC-ARCHITECTURE.md` v3.0 (markdown source-of-truth), `.planning/research/v3.0/ARCHITECTURE-v3.0.html` (canonical visual), `.planning/research/v3.0/SUPPLEMENT-visit-vs-action.md` (visit-vs-action axis), `.planning/research/v3.0/RESOURCE-brains-location.html` + `RESOURCE-two-nous-types.html` (analysis archives), `.planning/research/v3.0/RESEARCH-hosted-nous-patterns.md` (Type B research foundation, 11 systems surveyed).*
 
 ---
 
