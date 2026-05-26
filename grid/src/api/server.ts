@@ -54,6 +54,7 @@ import { lookupPolicy } from './policy.js';
 import { tryDid } from './preHandlers/tryDid.js';
 import { requireDid, requirePortalSession } from './preHandlers/requireDid.js';
 import './preHandlers/types.js'; // module augmentation side-effect
+import { verifyGovernmentSession, GOV_SESSION_ISSUER_DID } from '../civic-registry/index.js';
 
 /**
  * Phase 6 AGENCY-02: normalized memory entry shape crossing the RPC boundary.
@@ -339,7 +340,21 @@ export function buildServerWithHub(
             req.didContext = ctx;
             return;
         }
-        // civic_did_required, business_did_required, government_only, police_only
+        // Phase 37 (REG-04 / Pitfall 1 / Pitfall 6): government_only branch — enforces
+        // court-order discipline before any civic-DID revoke or business-DID dissolve
+        // handler is reached. Operators cannot revoke or dissolve (constitutional invariant
+        // D-V3-18). The branch must run BEFORE the generic requireDid fall-through.
+        // tier='government' (NOT 'civic_member') keeps Government sessions out of
+        // civic_did_required-gated routes (Pitfall 6).
+        if (policy === 'government_only') {
+            const result = await verifyGovernmentSession(req.headers.authorization);
+            if (!result.ok) {
+                return reply.code(403).send({ error: result.reason });
+            }
+            req.didContext = { did: GOV_SESSION_ISSUER_DID, tier: 'government' };
+            return;
+        }
+        // civic_did_required, business_did_required, police_only
         // (Plan 05/06 layer the sub-tier checks; this plan enforces civic_did_required minimum)
         const ctx = await requireDid(req, reply, { didStore: services.didStore });
         if (!ctx) return;

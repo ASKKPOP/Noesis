@@ -176,6 +176,21 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'PUT /api/v1/admin/config': 'public',
     'POST /api/v1/admin/notifications': 'public',
     'POST /api/v1/admin/restart/:service': 'public',
+
+    // Phase 37 (REG-01..06) — DID Registry routes.
+    // - Public lookups are visitor-accessible (REG-05).
+    // - Civic-DID request is public because the request is signed with the existence-key
+    //   (not a Civic-DID bearer); REG-01 explicitly requires this asymmetry.
+    // - Civic-DID revocation requires a government_only session (REG-04 court-order gate).
+    // - Business registration requires civic_did_required tier (REG-03).
+    // - Business dissolution requires government_only — same court-order discipline as civic revoke.
+    //   This is the SOLE caller of appendRegistryBusinessDidDissolved in Phase 37 (REG-06).
+    'GET /api/v1/registry/civic-did/:did':            'public',
+    'GET /api/v1/registry/business-did/:did':         'public',
+    'POST /api/v1/registry/civic-did/request':        'public',
+    'POST /api/v1/registry/civic-did/:did/revoke':    'government_only',
+    'POST /api/v1/registry/business-did/register':    'civic_did_required',
+    'POST /api/v1/registry/business-did/:did/dissolve': 'government_only',
 } as Record<string, RouteDIDPolicy>);
 
 /**
