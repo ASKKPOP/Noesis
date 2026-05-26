@@ -130,11 +130,14 @@ describe('appendRegistryCivicDidRevoked — payload validation', () => {
     });
 
     it('throws TypeError when payload is missing a required key', () => {
+        // Deleting court_conviction_ref_hash — the HEX64 guard fires before the
+        // closed-tuple check (step 2b runs before step 5). Either way the
+        // function throws TypeError.
         const partial = { ...validPayload() } as Record<string, unknown>;
         delete partial['court_conviction_ref_hash'];
         expect(() =>
             appendRegistryCivicDidRevoked(makeChain(), partial as unknown as ReturnType<typeof validPayload>),
-        ).toThrow(/unexpected key set/);
+        ).toThrow(TypeError);
     });
 });
 

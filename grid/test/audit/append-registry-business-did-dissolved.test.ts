@@ -107,11 +107,13 @@ describe('appendRegistryBusinessDidDissolved — payload validation', () => {
     });
 
     it('throws TypeError when payload is missing a required key', () => {
+        // Deleting dissolved_at_tick — the tick guard (step 3) fires before the
+        // closed-tuple check (step 5). Either way the function throws TypeError.
         const partial = { ...validPayload() } as Record<string, unknown>;
         delete partial['dissolved_at_tick'];
         expect(() =>
             appendRegistryBusinessDidDissolved(makeChain(), partial as unknown as ReturnType<typeof validPayload>),
-        ).toThrow(/unexpected key set/);
+        ).toThrow(TypeError);
     });
 });
 

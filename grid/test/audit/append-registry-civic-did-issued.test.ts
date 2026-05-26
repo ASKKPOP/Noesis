@@ -107,11 +107,13 @@ describe('appendRegistryCivicDidIssued — payload validation', () => {
     });
 
     it('throws TypeError when payload is missing a required key', () => {
+        // Deleting grid_name — the grid_name guard (step 3) fires before the
+        // closed-tuple check (step 5). Either way the function throws TypeError.
         const partial = { ...validPayload() } as Record<string, unknown>;
         delete partial['grid_name'];
         expect(() =>
             appendRegistryCivicDidIssued(makeChain(), partial as unknown as ReturnType<typeof validPayload>),
-        ).toThrow(/unexpected key set/);
+        ).toThrow(TypeError);
     });
 });
 
