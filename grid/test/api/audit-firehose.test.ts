@@ -126,7 +126,12 @@ describe('GET /api/v1/audit/firehose (WebSocket)', () => {
         audit.append('nous.moved', 'did:noesis:alice', { to: 'regionB' });
         const ev = await c.next();
         expect(ev.type).toBe('event');
-        expect(ev.entry.eventType).toBe('nous.moved');
+        // Phase 36 VIS-03: anonymous WS clients receive visitor-redacted frames
+        // with event_type (snake_case) and family only — actorDid and payload stripped.
+        expect(ev.entry.event_type).toBe('nous.moved');
+        expect(ev.entry.family).toBe('nous');
+        expect(ev.entry).not.toHaveProperty('actorDid');
+        expect(ev.entry).not.toHaveProperty('payload');
         c.ws.close();
     });
 
