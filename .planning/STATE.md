@@ -2,16 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
-status: phase_36_shipped_ready_to_plan_phase_37
-stopped_at: Phase 36 SHIPPED 2026-05-26; allowlist 56 → 60 (+4); 8 plans; visit/action enforcement live with CI gates
-last_updated: "2026-05-26T19:00:00.000Z"
-last_activity: Phase 36 (Visitor/DID Read-Write Split) SHIPPED. 8 plans (36-01..36-08). ROUTE_DID_POLICY + WS firehose redaction + 5 sole producers + 4 CI gates + visitor surfaces. R-31-01 zero-diff preserved. Ready for Phase 37 (DID Registry).
+status: planning
+stopped_at: Phase 36 UI-SPEC approved (6/6 dimensions PASS + 3 non-blocking FLAGs); 20 D-36-* decisions + UI design contract locked
+last_updated: "2026-05-26T18:09:55.949Z"
 progress:
   total_phases: 25
   completed_phases: 1
   total_plans: 8
   completed_plans: 8
-  percent: 4
+  percent: 100
 ---
 
 # Project State
@@ -27,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: Phase 36 SHIPPED 2026-05-26
-Plan: 36-01..36-08 all complete
+Phase: 37
+Plan: Not started
 Status: Ready to plan Phase 37 (DID Registry)
 Next action: `/gsd-plan-phase 37` — DID Registry (Civic-DID + Business-DID + Issuer/Revocation)
 

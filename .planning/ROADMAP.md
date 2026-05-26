@@ -86,7 +86,7 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 **Scope (ships)**: VIS-01..05.
 **Out of scope for this phase**: DID issuance flow itself (Phase 37); operator bearer token rotation (Phase 38); per-tenant policy variations (Phase 39).
 **Allowlist additions**: **+4**. Running total: **60**.
-**Plans:** 8 plans
+**Plans:** 8/8 plans complete
 Plans:
 - [x] 36-01-PLAN.md — Wave 0 validation infrastructure + allowlist lock-in (16 test files; ALLOWLIST count locked to 60)
 - [x] 36-02-PLAN.md — ROUTE_DID_POLICY foundation + tryDid/requireDid preHandlers (VIS-02 + VIS-04)
@@ -491,7 +491,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 36. Visitor/DID Read-Write Split | 5/8 | In Progress|  |
+| 36. Visitor/DID Read-Write Split | 8/8 | Complete    | 2026-05-26 |
 | 37. DID Registry | 0/? | Not started | — |
 | 38. Brain ↔ Grid Wire Protocol | 0/? | Not started | — |
 | 39. Grid Multi-Tenancy | 0/? | Not started | — |
