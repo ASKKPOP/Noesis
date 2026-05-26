@@ -2,7 +2,7 @@
 
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { DIDContext } from './types.js';
-import type { DidStoreRef } from './tryDid.js';
+import type { DidStoreRef, TryDidServices } from './tryDid.js';
 import { tryDid } from './tryDid.js';
 
 /**
@@ -16,7 +16,7 @@ import { tryDid } from './tryDid.js';
 export async function requireDid(
     req: FastifyRequest,
     reply: FastifyReply,
-    services?: { didStore?: DidStoreRef },
+    services?: TryDidServices,
 ): Promise<DIDContext | null> {
     const ctx = await tryDid(req, services);
     if (!ctx || ctx.tier !== 'civic_member') {
@@ -40,7 +40,7 @@ export async function requireDid(
 export async function requirePortalSession(
     req: FastifyRequest,
     reply: FastifyReply,
-    services?: { didStore?: DidStoreRef },
+    services?: TryDidServices,
 ): Promise<DIDContext | null> {
     const ctx = await tryDid(req, services);
     if (!ctx) {

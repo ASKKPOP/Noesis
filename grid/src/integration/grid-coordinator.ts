@@ -12,6 +12,11 @@ import type { NousRunner } from './nous-runner.js';
 
 export class GridCoordinator {
     private readonly runners = new Map<string, NousRunner>(); // keyed by nousDid
+    // Phase 38 WIRE-02: secondary index keyed by Civic-DID for Brain-wire route lookup.
+    // Populated via registerCivicDid() when a Civic-DID is bound to a Nous DID.
+    // Late-binding is safe: the Brain-wire route only fires AFTER a Brain is online,
+    // which requires a registered Civic-DID per the Portal-gating invariant (D-V3-33).
+    private readonly civicDidIndex = new Map<string, NousRunner>(); // keyed by civicDid
     private tickListenerActive = false;
 
     constructor(private readonly launcher: GenesisLauncher) {}
@@ -29,6 +34,39 @@ export class GridCoordinator {
     /** Remove a runner (Nous left or disconnected). */
     removeRunner(nousDid: string): void {
         this.runners.delete(nousDid);
+        // Phase 38 WIRE-02: clean up the civic_did secondary index entry for this runner.
+        for (const [civicDid, runner] of this.civicDidIndex) {
+            if (runner.nousDid === nousDid) {
+                this.civicDidIndex.delete(civicDid);
+                break;
+            }
+        }
+    }
+
+    /**
+     * Phase 38 WIRE-02: bind a Civic-DID to an already-registered NousRunner.
+     *
+     * Called when a Civic-DID is issued/confirmed for a Nous. The Brain-wire route
+     * uses this secondary index to look up the NousRunner by Civic-DID (the JWT sub
+     * field). Late-binding is safe: the Brain starts after Civic-DID registration.
+     *
+     * If the Nous DID is not yet registered, the call is a no-op (race-safe).
+     */
+    registerCivicDid(civicDid: string, nousDid: string): void {
+        const runner = this.runners.get(nousDid);
+        if (runner) {
+            this.civicDidIndex.set(civicDid, runner);
+        }
+    }
+
+    /**
+     * Phase 38 WIRE-02: look up a NousRunner by its owner's Civic-DID.
+     *
+     * Returns undefined when no runner is currently registered for this Civic-DID,
+     * which the brain-wire route maps to 404.
+     */
+    getRunnerByCivicDid(civicDid: string): NousRunner | undefined {
+        return this.civicDidIndex.get(civicDid);
     }
 
     /**

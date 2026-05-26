@@ -135,6 +135,10 @@ class BrainHandler:
         self._last_sleep_tick: int = 0
         # Pending SLEEP_COMPLETED hash from async task (drained on next tick). D-16-Q1.
         self._pending_sleep_completed: str | None = None
+        # Phase 38 WIRE-01: optional GridWireClient for Brain → Grid HTTPS dispatch.
+        # Set by __main__.py when GRID_URL + CIVIC_DID + NOUS_DID are all available.
+        # When None: Unix-socket-only path (legacy dev/test default, D-38-A2).
+        self._grid_wire_client: "Any | None" = None
         # Phase 20 — Lore Commons (D-20-01, D-20-06, D-20-09)
         _lore_capacity = int(getattr(memory, "lore_capacity", 50)) if memory is not None else 50
         _lore_poll_interval = 30  # ticks between discovery polls (D-20-06)
@@ -340,7 +344,31 @@ class BrainHandler:
             channel=channel,
             text=reply_text,
         )
-        return [action.to_dict()]
+        result_actions = [action.to_dict()]
+
+        # Phase 38 WIRE-01 (D-38-A2): parallel HTTPS dispatch from on_message.
+        # Same discipline as on_tick: forward to Grid when _grid_wire_client is set.
+        if self._grid_wire_client is not None:
+            import asyncio as _asyncio
+
+            async def _fire_message_actions(
+                client: "Any" = self._grid_wire_client,
+                acts: list = list(result_actions),
+            ) -> None:
+                try:
+                    resp = await client.post_actions(acts, tick=0)  # tick=0 for message-triggered
+                    if resp.status_code >= 400:
+                        log.warning(
+                            "[Brain] grid_wire on_message post_actions non-2xx: status=%d body=%s",
+                            resp.status_code,
+                            resp.text[:200],
+                        )
+                except Exception as exc:
+                    log.exception("[Brain] grid_wire on_message post_actions raised: %s", exc)
+
+            _asyncio.create_task(_fire_message_actions())
+
+        return result_actions
 
     async def on_tick(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle world clock tick — opportunity for autonomous action.
@@ -697,25 +725,52 @@ class BrainHandler:
             actions.append(_pa.to_dict())
         self._pending_actions.clear()
 
-        if actions:
-            # Advisory logging (D-10a-06): drive-vs-action divergence is
-            # PURE OBSERVATION. This call MUST NOT mutate `actions`.
-            # PHILOSOPHY §6 Nous sovereignty: drives inform, never coerce.
-            self._advisory_log_divergence(self.did, runtime.state, actions)
-            return actions
+        if not actions:
+            # Pre-Phase-7 NOOP fallback preserved verbatim for additive-widening
+            # compatibility (matches test_get_state_widening strict-superset rule).
+            top_goals = self.telos.top_priority(1)
+            if not top_goals:
+                actions.append(Action(action_type=ActionType.NOOP).to_dict())
+            else:
+                # Could generate autonomous action based on goals
+                # For Sprint 5, just acknowledge the tick
+                actions.append(Action(action_type=ActionType.NOOP).to_dict())
 
-        # Pre-Phase-7 NOOP fallback preserved verbatim for additive-widening
-        # compatibility (matches test_get_state_widening strict-superset rule).
-        top_goals = self.telos.top_priority(1)
-        if not top_goals:
-            actions.append(Action(action_type=ActionType.NOOP).to_dict())
-        else:
-            # Could generate autonomous action based on goals
-            # For Sprint 5, just acknowledge the tick
-            actions.append(Action(action_type=ActionType.NOOP).to_dict())
+        # Advisory logging (D-10a-06): drive-vs-action divergence is
+        # PURE OBSERVATION. This call MUST NOT mutate `actions`.
+        # PHILOSOPHY §6 Nous sovereignty: drives inform, never coerce.
         # Advisory logging also runs on the NOOP path — a HIGH drive coupled
         # with a NOOP primary is the canonical divergence case.
         self._advisory_log_divergence(self.did, runtime.state, actions)
+
+        # Phase 38 WIRE-01 (D-38-A2): parallel HTTPS dispatch path.
+        # When _grid_wire_client is set (GRID_URL configured), forward the
+        # action batch to Grid via HTTPS REST in addition to returning it
+        # over the Unix socket RPC. BOTH paths receive identical actions.
+        # The Unix-socket path is NEVER removed — this is the parallel-path
+        # discipline per D-38-A2. Plan 38-03 will queue on network error.
+        if self._grid_wire_client is not None and actions:
+            import asyncio as _asyncio
+
+            async def _fire_and_forward(
+                client: "Any" = self._grid_wire_client,
+                acts: list = list(actions),
+                t: int = int(params.get("tick", 0)),
+            ) -> None:
+                try:
+                    resp = await client.post_actions(acts, tick=t)
+                    if resp.status_code >= 400:
+                        log.warning(
+                            "[Brain] grid_wire post_actions non-2xx: status=%d body=%s",
+                            resp.status_code,
+                            resp.text[:200],
+                        )
+                        # Plan 38-03 will queue here; for now, log + continue.
+                except Exception as exc:
+                    log.exception("[Brain] grid_wire post_actions raised: %s", exc)
+
+            _asyncio.create_task(_fire_and_forward())
+
         return actions
 
     async def on_event(self, params: dict[str, Any]) -> None:

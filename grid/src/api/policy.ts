@@ -199,6 +199,11 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     //   Government session may revoke a Brain token.
     'POST /api/v1/brain/token/register': 'public',
     'POST /api/v1/brain/token/revoke':   'government_only',
+
+    // Phase 38 (WIRE-01 REST + WIRE-02 bearer) — Brain action dispatch.
+    // civic_did_required: the JWT subject is a Civic-DID; the issuer is the
+    // existence-DID (verified against brain_tokens public key in tryDid).
+    'POST /api/v1/brain/actions': 'civic_did_required',
 } as Record<string, RouteDIDPolicy>);
 
 /**
