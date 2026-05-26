@@ -32,6 +32,15 @@ import { registerHumansRoutes } from './routes/humans.js';
 import { registerTickMetricsRoute } from './routes/tick-metrics.js';
 import { HealthWatchdog } from '../diagnostics/health-watchdog.js';
 import { registerHealthDetailedRoute } from './routes/health-detailed.js';
+import { registerCivicMapRoute } from './routes/civic-map.js';
+import { registerCivicMapZoneRoute } from './routes/civic-map-zone.js';
+import { registerLibraryEntriesRoute } from './routes/library-entries.js';
+import { registerMarketListingsRoute } from './routes/market-listings.js';
+import { registerPolisBillsRoute } from './routes/polis-bills.js';
+import { registerNousPublicProfileRoute } from './routes/nous-public-profile.js';
+import { registerVisitorAuditTrailRoute } from './routes/visitor-audit-trail.js';
+import { registerVisitorRateLimit } from './rate-limit/visitor-bucket.js';
+import { registerPortalNotificationsRoutes } from './portal/notifications.js';
 import { registerAdminConfigRoutes } from './admin/config.js';
 import { registerAdminRestartRoute } from './admin/restart.js';
 import { registerAdminNotificationsRoute } from './admin/notifications.js';
@@ -264,6 +273,15 @@ export interface GridServices {
      * When absent, revocation is skipped — Plan 05 wires the concrete store.
      */
     didStore?: { isRevoked(did: string): boolean | Promise<boolean> };
+    /**
+     * Phase 36 VIS-01 VOTE-05: optional Polis bill store.
+     * When present, polis-bills route queries getBill/listBills.
+     * When absent, the route returns empty stubs (Phase 46 wires real Polis data).
+     */
+    polisStore?: {
+        getBill(id: string): Record<string, unknown> | null;
+        listBills(): Array<Record<string, unknown>>;
+    };
 }
 
 /**
@@ -291,6 +309,10 @@ export function buildServerWithHub(
 
     // Phase 22: @fastify/cookie required for portal JWT cookie support (WEB3-03).
     void app.register(fastifyCookie);
+
+    // Phase 36 D-36-05/07: visitor rate limiter — registered FIRST (before policy hook).
+    // 120 req/min per IP. In-process Map; Phase 39 refactors to per-DID buckets.
+    registerVisitorRateLimit(app);
 
     // Phase 36 VIS-02/VIS-04: global policy enforcement hook.
     // Uses onRequest (not preHandler) so it fires for ALL requests, including routes
@@ -338,17 +360,6 @@ export function buildServerWithHub(
 
     app.get('/health', async () => {
         return { status: 'ok', timestamp: Date.now() };
-    });
-
-    // --- Phase 36 VIS-02: OAuth stubs (public, not yet implemented) ---
-    // These are listed in ROUTE_DID_POLICY as 'public'. Return 501 to indicate
-    // OAuth is planned but not implemented in v3.0. Policy gate passes them through
-    // because they are public routes (no auth required to reach the 501 response).
-    app.post('/portal/auth/oauth/google', async (_req, reply) => {
-        return reply.code(501).send({ error: 'oauth_not_implemented' });
-    });
-    app.post('/portal/auth/oauth/apple', async (_req, reply) => {
-        return reply.code(501).send({ error: 'oauth_not_implemented' });
     });
 
     // --- Grid Status ---
@@ -537,8 +548,23 @@ export function buildServerWithHub(
     // --- Phase 22: Portal auth routes (WEB3-01 to WEB3-06) ---
     registerPortalRoutes(app, services);
 
+    // --- Phase 36 D-36-19: Portal notification queue endpoints ---
+    registerPortalNotificationsRoutes(app, services);
+
     // --- Phase 25a OBS-HUMANS: Human profile + history routes ---
     registerHumansRoutes(app, services);
+
+    // --- Phase 36 VIS-01: Visitor read routes ---
+    // Registered AFTER humans routes; BEFORE governance/laws block.
+    // Order: civic-map, civic-map-zone, library-entries, market-listings,
+    //        polis-bills, nous-public-profile, visitor-audit-trail.
+    registerCivicMapRoute(app, services);
+    registerCivicMapZoneRoute(app, services);
+    registerLibraryEntriesRoute(app, services);
+    registerMarketListingsRoute(app, services);
+    registerPolisBillsRoute(app, services);
+    registerNousPublicProfileRoute(app, services);
+    registerVisitorAuditTrailRoute(app, services);
 
     // --- Phase 25a OBS-BRAIN-HEALTH: Tick-metrics route ---
     registerTickMetricsRoute(app, services);
@@ -602,19 +628,9 @@ export function buildServerWithHub(
     }
 
     // --- Audit ---
-
-    app.get<{ Querystring: { type?: string; actor?: string; limit?: string; offset?: string } }>(
-        '/api/v1/audit/trail',
-        async (req) => {
-            const entries = services.audit.query({
-                eventType: req.query.type,
-                actorDid: req.query.actor,
-                limit: req.query.limit ? parseInt(req.query.limit, 10) : 50,
-                offset: req.query.offset ? parseInt(req.query.offset, 10) : 0,
-            });
-            return { entries, total: services.audit.length };
-        },
-    );
+    // NOTE: GET /api/v1/audit/trail is now registered by registerVisitorAuditTrailRoute
+    // (Phase 36 VIS-01 — see route registration block above). The previous inline route
+    // is removed here to prevent duplicate route registration.
 
     app.get('/api/v1/audit/verify', async () => {
         const result = services.audit.verify();
