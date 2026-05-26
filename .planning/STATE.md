@@ -4,7 +4,7 @@ milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
 stopped_at: Phase 36 UI-SPEC approved (6/6 dimensions PASS + 3 non-blocking FLAGs); 20 D-36-* decisions + UI design contract locked
-last_updated: "2026-05-26T19:20:26.407Z"
+last_updated: "2026-05-26T19:28:32.585Z"
 progress:
   total_phases: 25
   completed_phases: 1
@@ -22,13 +22,13 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** Phase 36 — visitor-did-read-write-split
+**Current focus:** Phase 37 — did-registry
 
 ## Current Position
 
-Phase: 37
-Plan: Not started
-Status: Ready to execute
+Phase: 37 (did-registry) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 37
 Next action: `/gsd-plan-phase 37` — DID Registry (Civic-DID + Business-DID + Issuer/Revocation)
 
 Driving inputs for v3.0 (locked at milestone open):

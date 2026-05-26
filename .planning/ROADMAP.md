@@ -48,7 +48,7 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 
 **Wave 1 — Foundations (Phases 36-41)**
 - [x] **Phase 36: Visitor/DID Read-Write Split** — Implement visit-without-DID + action-with-DID asymmetry per supplement. Adds `requireCivicDid()` decorator + `ROUTE_DID_POLICY` table + WS firehose redaction layer. (allowlist +4) (SHIPPED 2026-05-26)
-- [ ] **Phase 37: DID Registry** — Civic-DID + Business-DID issuance, W3C VC format, court-only revocation. (allowlist +4)
+- [x] **Phase 37: DID Registry** — Civic-DID + Business-DID issuance, W3C VC format, court-only revocation. (allowlist +4) (completed 2026-05-26)
 - [ ] **Phase 38: Brain ↔ Grid Wire Protocol** — HTTPS REST (control) + WSS (events) replaces in-process queues; operator-signed bearer tokens; idempotent replay on reconnect. (allowlist 0)
 - [ ] **Phase 39: Grid Multi-Tenancy** — Per-operator metadata isolation in operator-scoped schemas; civic state remains shared; per-operator quotas. (allowlist 0)
 - [ ] **Phase 40: Local AI Integration** — Ollama production-grade with operator-selectable model + degraded-cognition fallback. (allowlist 0)
@@ -111,12 +111,12 @@ Plans:
 **Scope (ships)**: REG-01..06.
 **Out of scope for this phase**: Government court process itself (Phase 46); Bios cost amount as legislation (Q-V3-D resolved during discuss-phase, initial value baked); existence-DID issuance (already self-sovereign — D-V3-01).
 **Allowlist additions**: **+4**. Running total: **64**.
-**Plans:** 4 plans
+**Plans:** 4/4 plans complete
 Plans:
-- [ ] 37-01-PLAN.md — DB migrations v23/v24 + civic-registry service layer (vc-builder, government-session stub, CivicDidStore, BusinessDidStore) — REG-01..04 foundations
-- [ ] 37-02-PLAN.md — 4 sole-producer audit event files + allowlist 60 → 64 + producer unit tests — REG-06
-- [ ] 37-03-PLAN.md — 5 registry routes + ROUTE_DID_POLICY +5 + government_only enforcement branch + tryDid ANY_DID_RE — REG-01..05
-- [ ] 37-04-PLAN.md — scripts/check-civic-did-issuance-path.mjs CI gate + rig-invariants.yml step + gate test — REG-06 (D-V3-33 lock-in)
+- [x] 37-01-PLAN.md — DB migrations v23/v24 + civic-registry service layer (vc-builder, government-session stub, CivicDidStore, BusinessDidStore) — REG-01..04 foundations
+- [x] 37-02-PLAN.md — 4 sole-producer audit event files + allowlist 60 → 64 + producer unit tests — REG-06
+- [x] 37-03-PLAN.md — 5 registry routes + ROUTE_DID_POLICY +5 + government_only enforcement branch + tryDid ANY_DID_RE — REG-01..05
+- [x] 37-04-PLAN.md — scripts/check-civic-did-issuance-path.mjs CI gate + rig-invariants.yml step + gate test — REG-06 (D-V3-33 lock-in)
 
 ### Phase 38: Brain ↔ Grid Wire Protocol
 **Goal**: Replace v2.x in-process queues with a network wire protocol. Brain on operator hardware speaks to the remote Public Grid via HTTPS REST (control) + WSS (events stream). Operator-signed bearer tokens authenticate Brain; idempotent replay on reconnect prevents duplicates after network loss.
@@ -497,7 +497,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 36. Visitor/DID Read-Write Split | 8/8 | Complete    | 2026-05-26 |
-| 37. DID Registry | 0/4 | Planned | — |
+| 37. DID Registry | 4/4 | Complete   | 2026-05-26 |
 | 38. Brain ↔ Grid Wire Protocol | 0/? | Not started | — |
 | 39. Grid Multi-Tenancy | 0/? | Not started | — |
 | 40. Local AI Integration | 0/? | Not started | — |
