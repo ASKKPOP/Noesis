@@ -11,12 +11,16 @@
 
 import type { FastifyInstance } from 'fastify';
 import type { WsFirehoseHub } from '../../audit/firehose-hub.js';
+import { tryDid } from '../preHandlers/tryDid.js';
+
+type ServicesWithDidStore = { didStore?: { isRevoked(did: string): boolean | Promise<boolean> } };
 
 export function registerAuditFirehoseRoute(
     instance: FastifyInstance,
     firehoseHub: WsFirehoseHub,
+    services?: ServicesWithDidStore,
 ): void {
-    instance.get('/api/v1/audit/firehose', { websocket: true }, (socket, req) => {
+    instance.get('/api/v1/audit/firehose', { websocket: true }, async (socket, req) => {
         // GRID_WS_SECRET gate — cloned verbatim from server.ts /ws/events block.
         const secret = process.env.GRID_WS_SECRET;
         if (secret) {
@@ -36,6 +40,14 @@ export function registerAuditFirehoseRoute(
                 return;
             }
         }
+
+        // Phase 36 VIS-03: resolve DIDContext at WS upgrade time.
+        // The WS upgrade request carries the same Authorization header / cookie as HTTP requests.
+        // req.didContext may already be populated by the global onRequest hook for some flows;
+        // prefer it if available, otherwise call tryDid directly.
+        const didContext = req.didContext !== undefined
+            ? req.didContext
+            : await tryDid(req, { didStore: services?.didStore });
 
         // ServerSocket adapter — cloned verbatim from server.ts /ws/events block.
         const adapter = {
@@ -59,6 +71,6 @@ export function registerAuditFirehoseRoute(
             },
         };
 
-        firehoseHub.onConnect(adapter);
+        firehoseHub.onConnect(adapter, didContext);
     });
 }
