@@ -110,6 +110,14 @@ export default function StewardShell({ title, breadcrumb, children }: StewardShe
                 <NavItem href="/system" label="System" />
                 <NavItem href="/map" label="World Map" />
 
+                {/* Local Admin section (post-v2.6 Local Management Site) */}
+                <NavSection title="Local Admin" />
+                <NavItem href="/admin" label="Overview" />
+                <NavItem href="/admin/setup" label="Setup &amp; Config" />
+                <NavItem href="/admin/audit" label="Monitoring" />
+                <NavItem href="/admin/chat" label="Nous Chat" />
+                <NavItem href="/admin/skills" label="Skills &amp; APIs" />
+
                 {/* Spacer */}
                 <div style={{ flex: 1 }} />
 

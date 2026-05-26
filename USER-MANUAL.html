@@ -324,6 +324,7 @@
     <a href="#milestones"><span class="num">8.</span>Milestone Timeline</a>
     <a href="#setup"><span class="num">9.</span>Install · Setup · Config</a>
     <a href="#troubleshooting"><span class="num">10.</span>Troubleshooting</a>
+    <a href="#local-admin"><span class="num">11.</span>Local Management Site</a>
   </div>
 </nav>
 
@@ -1192,6 +1193,146 @@ docker compose up -d steward</code></pre>
   -H 'Content-Type: application/json' \
   -d '{"email":"test@example.com","password":"strong-password-here"}'
 # Returns DID + emits 3 audit events (human.identified, portal.auth.register, portal.auth.login)</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 11: LOCAL MANAGEMENT SITE -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 class="section" id="local-admin">11 · Local Management Site <span class="kr">로컬 관리 사이트</span></h2>
+
+<p>The Local Management Site is a 5-page admin panel inside the Steward Console at <code>/admin/*</code>. It writes config back to <code>.env</code> and (optionally) restarts containers — all from one place. Disabled by default; opt in via env flags.</p>
+
+<div class="callout critical">
+  <div class="callout-label">Security — localhost only</div>
+  This panel has filesystem write access to <code>.env</code> and (with <code>GRID_ADMIN_DOCKER_ENABLED=true</code>) Docker socket access. <strong>Never enable on a Grid bound to 0.0.0.0</strong>. Tier-gated H4 (read) / H5 (write) per project convention.
+</div>
+
+<h3>Enable the admin panel · 관리 패널 활성화</h3>
+<pre><code># Add to .env
+GRID_ADMIN_ENABLED=true               # turns on /api/v1/admin/* routes
+GRID_ADMIN_DOCKER_ENABLED=true        # enables one-click container restart
+
+# Rebuild Grid (picks up new mounts) + Steward (picks up new pages)
+docker compose build grid steward
+docker compose up -d grid steward
+
+# Verify
+curl -s -o /dev/null -w "%{http_code}\n" \
+  -H "x-operator-tier: 4" \
+  -H "x-operator-id: op:11111111-1111-4111-8111-111111111111" \
+  http://localhost:8080/api/v1/admin/config
+# 200 = enabled · 503 = disabled · 401 = tier missing · 403 = tier too low</code></pre>
+
+<p class="dim">When <code>GRID_ADMIN_ENABLED</code> is absent or false, every <code>/api/v1/admin/*</code> returns 503 — zero admin attack surface by default.</p>
+
+<h3>The 5 admin pages · 5개 관리 페이지</h3>
+<table>
+  <thead><tr><th>URL</th><th>Purpose</th><th>What you can do</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">/admin</td><td>Overview dashboard</td><td>Live stack stats (status, tick, divergence, firehose clients) + current LLM/Grid config + last 8 events. Polls every 5-30s.</td></tr>
+    <tr><td class="mono">/admin/setup</td><td>Setup &amp; Config — LLM, wallet, email, runtime, secrets</td><td>Edit any key in 4 groups: LLM Provider · Wallet · Grid Runtime · Secrets. Save → writes to <code>.env</code> + creates <code>.env.backup.&lt;ts&gt;</code>. Per-service Restart button.</td></tr>
+    <tr><td class="mono">/admin/audit</td><td>Monitoring · notifications · tracking</td><td>Live Pino log ring buffer (last 200 events) with filter by level + event_prefix + audit pipeline summary card. Polls every 3s.</td></tr>
+    <tr><td class="mono">/admin/chat</td><td>Chat with Nous</td><td>Direct chat with Sophia/Hermes/Themis from the admin console. Uses the same fast-proxy LLM as Portal onboarding. Cmd/Ctrl+Enter to send. Not persisted.</td></tr>
+    <tr><td class="mono">/admin/skills</td><td>Skill &amp; external API setup</td><td>List of skill.taught events from audit trail + API key reference card (Anthropic/OpenAI/xAI/Google) + planned external integrations.</td></tr>
+  </tbody>
+</table>
+
+<h3>API endpoints · API 엔드포인트</h3>
+<table>
+  <thead><tr><th>Method</th><th>Path</th><th>Tier</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">GET</td><td class="mono">/api/v1/admin/config</td><td><span class="badge warn">H4+</span></td><td>Read <code>.env</code> (secrets masked as <code>abc***xy</code>)</td></tr>
+    <tr><td class="mono">PUT</td><td class="mono">/api/v1/admin/config</td><td><span class="badge critical">H5</span></td><td>Write <code>.env</code> updates (allowlist-gated keys only) + auto-backup</td></tr>
+    <tr><td class="mono">POST</td><td class="mono">/api/v1/admin/restart/:service</td><td><span class="badge critical">H5</span></td><td>Restart one service (grid/nous-sophia/hermes/themis/steward/dashboard). MySQL deliberately excluded.</td></tr>
+    <tr><td class="mono">GET</td><td class="mono">/api/v1/admin/notifications</td><td><span class="badge active">H3+</span></td><td>Recent Pino log entries with filter by <code>event_prefix</code> + <code>min_level</code> + <code>limit</code></td></tr>
+  </tbody>
+</table>
+
+<h3>Editable .env keys (allowlist) · 수정 가능한 키 (allowlist)</h3>
+
+<div class="two-col">
+  <div class="card">
+    <div class="card-title">Read + write (non-secret)</div>
+    <ul style="font-family: var(--mono); font-size: 12px; color: var(--text-dim);">
+      <li><code>LLM_PROVIDER</code> · <code>LLM_MODEL</code> · <code>OLLAMA_HOST</code></li>
+      <li><code>HERMES_PROVIDER</code> · <code>HERMES_MODEL</code></li>
+      <li><code>GRID_TICK_RATE_MS</code></li>
+      <li><code>NEXT_PUBLIC_GRID_ORIGIN</code></li>
+      <li><code>BRAIN_HTTP_PORT</code> · <code>HUMAN_CHANNEL_PORT</code></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-title">Write-only (secrets, masked on read)</div>
+    <ul style="font-family: var(--mono); font-size: 12px; color: var(--text-dim);">
+      <li><code>ANTHROPIC_API_KEY</code></li>
+      <li><code>OPENAI_API_KEY</code> · <code>XAI_API_KEY</code> · <code>GOOGLE_AI_API_KEY</code></li>
+      <li><code>HERMES_API_KEY</code></li>
+      <li><code>BRAIN_HTTP_SECRET</code></li>
+      <li><code>MYSQL_PASSWORD</code> · <code>MYSQL_ROOT_PASSWORD</code></li>
+    </ul>
+  </div>
+</div>
+
+<p class="dim">Attempting to write any key NOT in either list returns <code>400 non_editable_keys</code> with the rejected list. This is a deliberate guardrail — adding a new editable key requires a code change to <code>grid/src/api/admin/config.ts</code>.</p>
+
+<h3>Operator identity · 운영자 신원</h3>
+<p>The Steward admin client generates a stable UUID per browser session, stored in <code>localStorage</code> as <code>noesis_admin_operator_id</code>. Sent as <code>x-operator-id</code> header on every admin request. Tier headers are client-supplied (the panel runs at H5 for the local admin use case — localhost-only is the trust boundary).</p>
+
+<h3>Restart safety · 재시작 안전성</h3>
+<ul>
+  <li>MySQL is <strong>not in the restartable services list</strong> — restarting it during operations causes audit chain divergence (the v2.7 reconcile cadence work will mitigate this).</li>
+  <li>Restart calls <code>docker compose restart &lt;service&gt;</code> from inside Grid via Docker socket. In-flight requests to the target are dropped.</li>
+  <li>The button shows a JS confirm before triggering. <code>config_write</code> + <code>service_restart</code> events appear in <code>/admin/audit</code> notifications stream.</li>
+</ul>
+
+<h3>Typical workflow · 일반적인 작업 흐름</h3>
+<ol class="steps">
+  <li>Open <code>http://localhost:3002/admin</code> — verify stack is healthy</li>
+  <li>Navigate to <code>/admin/setup</code> — find <code>LLM_PROVIDER</code></li>
+  <li>Change value to <code>hermes</code>, set <code>HERMES_API_KEY</code>, click Save</li>
+  <li>Status banner: "Saved. Restart affected services to apply."</li>
+  <li>Click "Restart nous-sophia" → wait ~5s for the service to come back up</li>
+  <li>Switch to <code>/admin/audit</code> — confirm <code>admin_config_written</code> + <code>admin_service_restarted</code> events appear</li>
+  <li>Switch to <code>/admin/chat</code>, pick Sophia, send a test message — should now respond via Claude instead of Ollama</li>
+</ol>
+
+<h3>Why this design · 이 설계의 이유</h3>
+<div class="two-col">
+  <div class="card">
+    <div class="card-title">In Steward, not separate :3003</div>
+    <p class="dim">Reuses existing tier-gated auth, matches the existing UI aesthetic, no new Docker service, no CORS work. Each admin page is a normal Next.js page under <code>steward/src/app/admin/</code>.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Allowlist over arbitrary writes</div>
+    <p class="dim">Only ~15 specific keys are writable. Adding a new key requires a code change — keeps the admin surface auditable and prevents drift via the UI alone.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Disabled by default</div>
+    <p class="dim">Out of the box, <code>GRID_ADMIN_ENABLED</code> is unset and all admin routes return 503. The Docker socket mount is harmless without the env flag (Grid never invokes docker without it). Zero added attack surface for users who don't need the panel.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Backup-before-write</div>
+    <p class="dim">Every <code>PUT /admin/config</code> writes <code>.env.backup.&lt;ISO-timestamp&gt;</code> first, then atomically renames the new version into place via <code>fs.rename</code>. Operator can always restore.</p>
+  </div>
+</div>
+
+<h3>Files changed · 추가된 파일</h3>
+<table>
+  <thead><tr><th>Path</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">grid/src/api/admin/config.ts</td><td>GET/PUT /admin/config + .env allowlist + secret mask</td></tr>
+    <tr><td class="mono">grid/src/api/admin/restart.ts</td><td>POST /admin/restart/:service via docker socket</td></tr>
+    <tr><td class="mono">grid/src/api/admin/notifications.ts</td><td>GET /admin/notifications + Pino ring stream</td></tr>
+    <tr><td class="mono">grid/src/api/server.ts</td><td>3-line addition to register the admin routes</td></tr>
+    <tr><td class="mono">steward/src/lib/admin-api.ts</td><td>Client helper with usePolling hook + stable operator UUID</td></tr>
+    <tr><td class="mono">steward/src/app/admin/page.tsx</td><td>Overview dashboard</td></tr>
+    <tr><td class="mono">steward/src/app/admin/setup/page.tsx</td><td>Editable config grouped into LLM / Wallet / Runtime / Secrets</td></tr>
+    <tr><td class="mono">steward/src/app/admin/audit/page.tsx</td><td>Live notification stream + audit pipeline summary</td></tr>
+    <tr><td class="mono">steward/src/app/admin/chat/page.tsx</td><td>Direct chat with Sophia/Hermes/Themis from admin</td></tr>
+    <tr><td class="mono">steward/src/app/admin/skills/page.tsx</td><td>skill.taught audit roll-up + API key reference</td></tr>
+    <tr><td class="mono">steward/src/components/StewardShell.tsx</td><td>Sidebar: new "Local Admin" section with 5 nav items</td></tr>
+    <tr><td class="mono">docker-compose.yml</td><td>3 new env vars (default off) + 3 admin mounts (zero-impact when disabled)</td></tr>
+  </tbody>
+</table>
 
 <footer>
   Generated 2026-05-25 from project docs (<code>.planning/ROADMAP.md</code>, <code>.planning/MILESTONES.md</code>, <code>.planning/PROJECT.md</code>, <code>PHILOSOPHY.md</code>, <code>README.md</code>) and live UAT verification of the post-v2.6 stack. Latest commit: <code>7898997</code>. Repo: <a href="https://github.com/ASKKPOP/Noesis">github.com/ASKKPOP/Noesis</a>.

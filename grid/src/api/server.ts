@@ -32,6 +32,9 @@ import { registerHumansRoutes } from './routes/humans.js';
 import { registerTickMetricsRoute } from './routes/tick-metrics.js';
 import { HealthWatchdog } from '../diagnostics/health-watchdog.js';
 import { registerHealthDetailedRoute } from './routes/health-detailed.js';
+import { registerAdminConfigRoutes } from './admin/config.js';
+import { registerAdminRestartRoute } from './admin/restart.js';
+import { registerAdminNotificationsRoute } from './admin/notifications.js';
 import { registerOperatorRoutes } from './operator/index.js';
 import { registerPortalRoutes } from './portal/index.js';
 import { registerCognitiveSnapshotRoute } from './operator/cognitive-snapshot.js';
@@ -632,6 +635,13 @@ export function buildServerWithHub(
     //   - If unset: permissive (developer default, 127.0.0.1 bind).
     // Phase 25a: REST drift-alerts route (registered at top-level, not inside WS scope).
     registerDriftAlertsRoute(app, services);
+
+    // Local Management Site admin routes (post-v2.6, gated by GRID_ADMIN_ENABLED env).
+    // When the env is absent or false, every /api/v1/admin/* returns 503 — admin
+    // attack surface is fully gated and zero-overhead by default.
+    registerAdminConfigRoutes(app);
+    registerAdminRestartRoute(app);
+    registerAdminNotificationsRoute(app);
 
     app.register(async (instance) => {
         // Phase 25a: firehose WS route registered inside the same plugin scope as /ws/events.

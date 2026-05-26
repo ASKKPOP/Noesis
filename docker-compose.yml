@@ -45,8 +45,22 @@ services:
       GRID_DOMAIN: ${GRID_DOMAIN:-genesis.noesis}
       GRID_PORT: 8080
       GRID_TICK_RATE_MS: ${GRID_TICK_RATE_MS:-30000}
+      # Local Management Site admin routes (post-v2.6, default OFF)
+      GRID_ADMIN_ENABLED: ${GRID_ADMIN_ENABLED:-false}
+      GRID_ADMIN_DOCKER_ENABLED: ${GRID_ADMIN_DOCKER_ENABLED:-false}
+      GRID_ADMIN_ENV_PATH: /admin/.env
+      GRID_ADMIN_PROJECT_DIR: /admin/project
     volumes:
       - sockets:/sockets
+      # Admin mounts — only active when GRID_ADMIN_ENABLED=true. When the env is
+      # absent or false, every /api/v1/admin/* returns 503 and these mounts are
+      # zero-functional-impact (just filesystem availability).
+      - ./.env:/admin/.env
+      - .:/admin/project:ro
+      # Docker socket mount is the high-risk one — only mount when
+      # GRID_ADMIN_DOCKER_ENABLED=true is the operator's deliberate choice. The
+      # mount is harmless without the env flag (Grid never invokes docker without it).
+      - /var/run/docker.sock:/var/run/docker.sock
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
       interval: 15s
