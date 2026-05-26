@@ -453,27 +453,22 @@ isRelevantFor(entry: AuditEntry, didContext: DIDContext | null): boolean {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Operator key vs Grid-issued token (WIRE-02 precision)**
-   - What we know: WIRE-02 says "operator-DID signs JWT containing civic-DID + scope." Phase 37 REG-01 stores the existence public key JWK in `civic_did_registry`. The existence-DID IS the operator's Nous identity key.
-   - What's unclear: Is the signing key the existence-DID key (already derived as `sha256(existence_did)` in Keyring) or a separate "operator key" tied to the human operator (not the Nous)?
-   - Recommendation: Treat the existence-DID key as the operator key for Phase 38. Document that Phase 39 (multi-tenancy) may introduce a separate operator-level signing credential.
+1. **Operator key vs Grid-issued token (WIRE-02 precision)** — RESOLVED: existence-DID Ed25519 key (D-38-A4)
+   - Decision: Use the Nous's existence-DID PyNaCl `SigningKey` as the operator signing key. JWT `iss` = existence-DID, `sub` = civic-DID, `alg` = EdDSA. Grid verifies against the existence public JWK stored in `civic_did_registry`. No separate human-operator credential in Phase 38.
 
-2. **WIRE-05 community event filtering scope**
-   - What we know: Filter should push "community events for joined communities." Community memberships are not yet implemented (Phase 49).
-   - What's unclear: Without Phase 49 data, how to filter community events? In Phase 38, community memberships don't exist yet.
-   - Recommendation: In Phase 38, filter `community.*` events by `actor_did === subscriber_did` only (can't filter by membership). Add a TODO comment for Phase 49 to extend the filter.
+2. **WIRE-05 community event filtering scope** — RESOLVED: actor-only filter + TODO Phase 49 (D-38-A3/A5)
+   - Decision: In Phase 38, `isRelevantFor` passes `community.*` events only when `entry.actorDid === subscriber.did`. Add `// TODO Phase 49: filter by community membership` comment. Community membership data doesn't exist until Phase 49.
 
-3. **Token rotation mechanism: proactive vs reactive**
-   - What we know: WIRE-02 says tokens rotate every 24h. Brain must re-acquire without state loss.
-   - What's unclear: Does Brain proactively refresh before expiry (recommended) or reactively on 401?
-   - Recommendation: Brain proactively rotates 1h before expiry (23h window), keeping old and new token in `brain_tokens` to support in-flight requests during rotation.
+3. **Token rotation mechanism: proactive vs reactive** — RESOLVED: proactive at 23h (D-38-A4)
+   - Decision: `TokenManager.ROTATE_BEFORE_EXPIRY_SECONDS = 3600`. Brain proactively rotates 1h before expiry, retaining both old and new token in `brain_tokens` during the 1h overlap to handle in-flight requests.
 
-4. **NousRunner dependency during POST /brain/actions**
-   - What we know: `NousRunner` is the Grid-side orchestrator that routes Brain actions to audit emitters. Currently one NousRunner per Nous per Grid boot.
-   - What's unclear: When Brain POSTs actions to Grid, which NousRunner handles them? In the local path, the coordinator knows which runner owns which DID.
-   - Recommendation: The `POST /api/v1/brain/actions` handler looks up the runner by `brain_did` (Civic-DID from JWT `sub`) via a registry lookup. If no runner found, return 404.
+4. **NousRunner dependency during POST /brain/actions** — RESOLVED: lookup by Civic-DID with 404 fallback
+   - Decision: `GridCoordinator` maintains a `Map<civicDid, NousRunner>` index. `POST /api/v1/brain/actions` handler calls `services.gridCoordinator.getRunnerByCivicDid(civicDid)`, returns 404 `{error: 'nous_not_found'}` if no active runner for that DID.
+
+5. **Unix socket backward compatibility** — RESOLVED: both paths in parallel (D-38-A2)
+   - Decision: `GRID_URL` env var activates `GridWireClient`. Absence preserves existing Unix socket RPC path unchanged. Both work simultaneously. Deprecation deferred to Phase 39/41.
 
 ---
 
