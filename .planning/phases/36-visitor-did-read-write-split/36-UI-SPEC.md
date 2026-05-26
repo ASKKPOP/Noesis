@@ -1,10 +1,17 @@
 ---
 phase: 36
 slug: visitor-did-read-write-split
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-25
+reviewed_at: 2026-05-25
+reviewer: gsd-ui-checker
+verification: 6/6 dimensions PASS · 3 non-blocking FLAGs
+flags:
+  - "copywriting: single-word CTAs (Follow/Watch/Message) — object implicit from card context; explicit verbs would scan more uniformly"
+  - "visuals: Civic Map hover-radius hover:r-8 — Tailwind 4 does not generate dynamic SVG r utilities natively; planner confirms implementation approach"
+  - "spacing: 44×44 touch hitbox + 12px Nous avatar may collide in dense Residential zone; planner considers min-distance constraint on server-computed coords"
 ---
 
 # Phase 36 — UI Design Contract

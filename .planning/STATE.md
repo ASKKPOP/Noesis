@@ -364,7 +364,7 @@ Total v3.0 allowlist growth: **+34 (56 → 90)**. Freeze-except-by-explicit-addi
 
 ## Session Continuity
 
-Last session: 2026-05-25T22:00:00.000Z
-Stopped at: Phase 36 context gathered (15 D-36-* decisions across 4 gray areas — visitor landing, rate limiting, edge cases, 6-zone Civic Map visibility)
-Resume file: .planning/phases/36-visitor-did-read-write-split/36-CONTEXT.md
-Next action: `/gsd-plan-phase 36` to draft executable plan(s) for VIS-01..05 (commit 9abac21 captured context + discussion log)
+Last session: 2026-05-25T23:00:00.000Z
+Stopped at: Phase 36 UI-SPEC approved (6/6 dimensions PASS + 3 non-blocking FLAGs); 20 D-36-* decisions + UI design contract locked
+Resume file: .planning/phases/36-visitor-did-read-write-split/36-UI-SPEC.md (816 lines, 5 primary surfaces × 3 visitor tiers, raw-SVG invariant preserved)
+Next action: `/gsd-plan-phase 36` to draft executable plan(s) for VIS-01..05 with UI-SPEC as canonical design context
