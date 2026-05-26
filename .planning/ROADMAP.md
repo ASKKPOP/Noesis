@@ -47,7 +47,7 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 ### Phases (v3.0 — Active)
 
 **Wave 1 — Foundations (Phases 36-41)**
-- [ ] **Phase 36: Visitor/DID Read-Write Split** — Implement visit-without-DID + action-with-DID asymmetry per supplement. Adds `requireCivicDid()` decorator + `ROUTE_DID_POLICY` table + WS firehose redaction layer. (allowlist +4)
+- [x] **Phase 36: Visitor/DID Read-Write Split** — Implement visit-without-DID + action-with-DID asymmetry per supplement. Adds `requireCivicDid()` decorator + `ROUTE_DID_POLICY` table + WS firehose redaction layer. (allowlist +4) (SHIPPED 2026-05-26)
 - [ ] **Phase 37: DID Registry** — Civic-DID + Business-DID issuance, W3C VC format, court-only revocation. (allowlist +4)
 - [ ] **Phase 38: Brain ↔ Grid Wire Protocol** — HTTPS REST (control) + WSS (events) replaces in-process queues; operator-signed bearer tokens; idempotent replay on reconnect. (allowlist 0)
 - [ ] **Phase 39: Grid Multi-Tenancy** — Per-operator metadata isolation in operator-scoped schemas; civic state remains shared; per-operator quotas. (allowlist 0)
@@ -86,16 +86,16 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 **Scope (ships)**: VIS-01..05.
 **Out of scope for this phase**: DID issuance flow itself (Phase 37); operator bearer token rotation (Phase 38); per-tenant policy variations (Phase 39).
 **Allowlist additions**: **+4**. Running total: **60**.
-**Plans:** 7/8 plans executed
+**Plans:** 8 plans
 Plans:
-- [x] 36-01-PLAN.md — Wave 0 validation infrastructure + allowlist lock-in (60)
-- [x] 36-02-PLAN.md — ROUTE_DID_POLICY foundation + tryDid/requireDid preHandlers
-- [x] 36-03-PLAN.md — WS firehose per-subscriber redaction (R-31-01 preserved)
-- [x] 36-04-PLAN.md — 5 sole-producer audit events + allowlist +4
-- [x] 36-05-PLAN.md — 7 visitor read routes + OAuth stubs + notification queue + rate limiter
-- [x] 36-06-PLAN.md — 4 CI gates (policy coverage, admin isolation, WS zero-diff, OAuth count)
-- [x] 36-07-PLAN.md — 5 primary + 2 secondary dashboard visitor surfaces (raw-SVG Civic Map)
-- [ ] 36-08-PLAN.md — Documentation sync (STATE + MILESTONES + ROADMAP + PROJECT + REQUIREMENTS + README)
+- [x] 36-01-PLAN.md — Wave 0 validation infrastructure + allowlist lock-in (16 test files; ALLOWLIST count locked to 60)
+- [x] 36-02-PLAN.md — ROUTE_DID_POLICY foundation + tryDid/requireDid preHandlers (VIS-02 + VIS-04)
+- [x] 36-03-PLAN.md — WS firehose per-subscriber redaction (VIS-03; R-31-01 zero-diff preserved)
+- [x] 36-04-PLAN.md — 5 sole-producer audit events + allowlist +4 (VIS-05; notification_dispatched OFF allowlist per D-36-19)
+- [x] 36-05-PLAN.md — 7 visitor read routes + OAuth stubs (x2) + notification queue + 120/min rate limiter (VIS-01 + VIS-02)
+- [x] 36-06-PLAN.md — 4 CI gates (policy coverage, admin isolation, WS redaction zero-diff, OAuth exception count)
+- [x] 36-07-PLAN.md — 5 primary + 2 secondary dashboard visitor surfaces + raw-SVG Civic Map + 3-tier banner (VIS-01)
+- [x] 36-08-PLAN.md — Documentation sync (STATE + MILESTONES + ROADMAP + PROJECT + REQUIREMENTS + README)
 **UI hint**: yes
 
 ### Phase 37: DID Registry

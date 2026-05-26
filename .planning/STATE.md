@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
-status: executing
-stopped_at: Phase 36 UI-SPEC approved (6/6 dimensions PASS + 3 non-blocking FLAGs); 20 D-36-* decisions + UI design contract locked
-last_updated: "2026-05-26T16:06:16.430Z"
-last_activity: 2026-05-26 -- Phase 36 execution started
+status: phase_36_shipped_ready_to_plan_phase_37
+stopped_at: Phase 36 SHIPPED 2026-05-26; allowlist 56 → 60 (+4); 8 plans; visit/action enforcement live with CI gates
+last_updated: "2026-05-26T19:00:00.000Z"
+last_activity: Phase 36 (Visitor/DID Read-Write Split) SHIPPED. 8 plans (36-01..36-08). ROUTE_DID_POLICY + WS firehose redaction + 5 sole producers + 4 CI gates + visitor surfaces. R-31-01 zero-diff preserved. Ready for Phase 37 (DID Registry).
 progress:
   total_phases: 25
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 8
-  completed_plans: 0
-  percent: 0
+  completed_plans: 8
+  percent: 4
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 36 (visitor-did-read-write-split) — EXECUTING
-Plan: 1 of 8
-Status: Executing Phase 36
-Last activity: 2026-05-26 -- Phase 36 execution started
+Phase: Phase 36 SHIPPED 2026-05-26
+Plan: 36-01..36-08 all complete
+Status: Ready to plan Phase 37 (DID Registry)
+Next action: `/gsd-plan-phase 37` — DID Registry (Civic-DID + Business-DID + Issuer/Revocation)
 
 Driving inputs for v3.0 (locked at milestone open):
 
@@ -126,6 +126,31 @@ Driving inputs for v3.0 (locked at milestone open):
 
 **Allowlist budget for v3.0:** +52 events (56 → 108) across 8 civic institutions + Type B (15) + Portal (5) + Zoning (2). Frozen-except-by-explicit-addition rule preserved.
 
+## v3.0 Phase 36 close-out (locked 2026-05-26)
+
+- **Phase 36 SHIPPED.** Plans 36-01 through 36-08 all complete. Allowlist 56 → 60 (+4: `portal.did_issued`, `portal.did_revoked`, `grid.recognition_granted`, `grid.recognition_revoked`). `portal.notification_dispatched` intentionally OFF allowlist (D-36-19 private queue event).
+
+- **Inherits to Phases 37+:**
+  1. `ROUTE_DID_POLICY` table now extant in `grid/src/api/policy.ts` (105 entries, 6-value enum); Phase 37 routes MUST add entries.
+  2. `tryDid` / `requireDid` preHandlers wired globally via `onRequest` hook; Phase 37 DID-required routes inherit enforcement.
+  3. `WsFirehoseHub.onConnect` accepts `didContext` parameter; per-subscriber redaction active for Phase 37+ Civic-DID holders.
+  4. 4 CI gates enforced in `.github/workflows/rig-invariants.yml`: `check-did-policy-coverage.mjs`, `check-admin-policy-isolation.mjs`, `check-ws-redaction-zero-diff.mjs`, `check-no-did-exception-count.mjs`.
+  5. Visitor read surfaces extant in `dashboard/src/app/portal/` (8 page files: civic-map, zone, library, marketplace, polis, bill, nous-profile, notifications).
+
+- **Mitigations carried forward:**
+  - R-31-01 zero-diff preserved: `serializeVisitorFrame()` is post-chain egress only; audit chain hash is independent of subscriber composition. Regression test + `check-ws-redaction-zero-diff.mjs` CI gate.
+  - VOTE-05 ballot privacy preserved: `PUBLIC_KEYS` allowlist in `grid/src/api/routes/polis-bills.ts` structurally excludes `.ballots` field; client receives proposals list only.
+  - D-36-09 revert-to-visitor: `tryDid` re-checks revocation on every request; revoked DID falls back to visitor tier without error (no 401 for revoked — just loses write access).
+
+- **Cross-phase deferred:**
+  - Real Polis data → Phase 46 (Government v3)
+  - Real Library data → Phase 48 (Library v3)
+  - Real Marketplace data → Phase 44 (Marketplace v3)
+  - Civic Map per-Nous data → Phase 37 (Civic-DID registry)
+  - 3D Portal landing hero → Phase 56 (D-36-23/24 deferred per D-V3-06 raw-SVG invariant)
+  - `civic_member` tier upgrade in `resolveVisitorTier()` → Phase 37 (needs Civic-DID issuance)
+  - Per-DID rate limiting → Phase 39 (multi-tenancy)
+
 ## Accumulated Context
 
 ### Carry-forward from v2.0
@@ -207,7 +232,7 @@ Driving inputs for v3.0 (locked at milestone open):
 
 Per ROADMAP.md Allowlist Growth Ledger:
 
-- **Phase 36** (+4): `portal.did_issued`, `portal.did_revoked`, `grid.recognition_granted`, `grid.recognition_revoked` → 60
+- **Phase 36** (+4): `portal.did_issued`, `portal.did_revoked`, `grid.recognition_granted`, `grid.recognition_revoked` → 60 **→ SHIPPED 2026-05-26**
 - **Phase 37** (+4): `registry.civic_did_issued`, `registry.civic_did_revoked`, `registry.business_did_registered`, `registry.business_did_dissolved` → 64
 - **Phase 38** (0): wire protocol is transport, not new events → 64
 - **Phase 39** (0): tenancy is access control → 64

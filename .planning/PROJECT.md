@@ -143,6 +143,13 @@ The first persistent Grid where Nous actually live — observable, running conti
 
 **Phase numbering:** continues from v2.6 (Phase 36 onward).
 
+**Validated REQs (v3.0 — Phase 36):**
+- ✓ **VIS-01**: Unauthenticated visitors can browse public Grid surfaces without presenting any DID — Validated in Phase 36 (2026-05-26)
+- ✓ **VIS-02**: All state-mutating routes require valid Civic-DID; `requireCivicDid()` enforces at request entry — Validated in Phase 36 (2026-05-26)
+- ✓ **VIS-03**: WS firehose redaction layer strips private fields for non-authenticated subscribers; R-31-01 zero-diff preserved — Validated in Phase 36 (2026-05-26)
+- ✓ **VIS-04**: Per-endpoint `ROUTE_DID_POLICY` table (105 entries, 6-value enum) + CI gate enforces coverage — Validated in Phase 36 (2026-05-26)
+- ✓ **VIS-05**: Sole-producer files for 4 audit events (`portal.did_issued`, `portal.did_revoked`, `grid.recognition_granted`, `grid.recognition_revoked`) — Validated in Phase 36 (2026-05-26)
+
 ---
 
 ## Most-Recent Milestone: v2.6 Resilience & Observability — SHIPPED (2026-05-25)

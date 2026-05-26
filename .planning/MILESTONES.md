@@ -696,7 +696,19 @@ See `.planning/phases/25a-observer-surfaces/25a-HUMAN-UAT.md` for full UAT closu
 
 ## v3.0: Polis (Civic City — Three-Layer Architecture) — IN PROGRESS (opened 2026-05-25, reshaped 2026-05-25 afternoon)
 
-**Status:** Milestone opened 2026-05-25 morning. **THIRD RESHAPE 2026-05-25 afternoon** added three-layer architecture (Portal/Grid/Brain) + Genesis Polis + 6-zone city + Portal-gated registration. **24 phases planned (36-57, with 37b/40b/45b sub-phases) across 4 waves.** 0/24 phases complete. **91 REQs across 22 categories** (VIS, REG, WIRE, TENANT, LOCAL, SLEEP, P2P, FORK, MKT, IRS, CIVGOV, POL, CIVLIB, COMM, MIG, TYPE-B, PORTAL, ZONE). Allowlist target: 56 → **108** (+52 events). ~**125 plans** estimated. **Canonical visual reference:** `.planning/research/v3.0/ARCHITECTURE-v3.0.html`.
+### Phase 36 — Visitor/DID Read-Write Split (SHIPPED 2026-05-26)
+
+Wave: v3.0 Wave 1 (Foundations)
+Plans shipped: 8 (36-01 through 36-08)
+Requirements validated: VIS-01, VIS-02, VIS-03, VIS-04, VIS-05
+Allowlist delta: +4 (56 → 60). New events: `portal.did_issued`, `portal.did_revoked`, `grid.recognition_granted`, `grid.recognition_revoked`. `portal.notification_dispatched` added to chain but intentionally OFF broadcast allowlist (D-36-19 private queue event).
+CI gates added: 4 — `check-did-policy-coverage.mjs`, `check-admin-policy-isolation.mjs`, `check-ws-redaction-zero-diff.mjs`, `check-no-did-exception-count.mjs`.
+Critical invariants preserved: R-31-01 zero-diff (chain head hash independent of subscriber composition), VOTE-05 ballot privacy (PUBLIC_KEYS allowlist in polis-bills handler), PORTAL_AUTH_FORBIDDEN_KEYS at 13 keys, Phase 32 frozen contracts (D-32-C1/C2/C3).
+Key artifacts: `grid/src/api/policy.ts` (ROUTE_DID_POLICY 6-value enum, 105 entries), `grid/src/api/preHandlers/{tryDid,requireDid}.ts`, `grid/src/audit/firehose-redaction.ts`, 5 sole-producer files, 7 visitor routes, `dashboard/src/app/portal/*` (8 page files).
+Decisions locked: D-36-01..25 (25 locked decisions from discuss-phase, including D-36-21 OAuth methods, D-36-22 Grid Charter + Laws of Themis terminology, D-36-23 raw-SVG functional surfaces, D-36-25 visitor footer scoped to GRID HEALTH + UPTIME only).
+Carry-forward for Phase 37: Civic-DID registry will be issued via Portal-gated flow (D-V3-33); the issuance handler MUST call `appendPortalDidIssued` + `appendGridRecognitionGranted` (Phase 36 sole producers). `resolveVisitorTier()` in `dashboard/src/lib/visitor-tier.ts` must be updated for `civic_member` once Phase 37 DID issuance exists.
+
+**Status:** Milestone opened 2026-05-25 morning. **THIRD RESHAPE 2026-05-25 afternoon** added three-layer architecture (Portal/Grid/Brain) + Genesis Polis + 6-zone city + Portal-gated registration. **24 phases planned (36-57, with 37b/40b/45b sub-phases) across 4 waves.** 1/24 phases complete (Phase 36 SHIPPED 2026-05-26). **91 REQs across 22 categories** (VIS, REG, WIRE, TENANT, LOCAL, SLEEP, P2P, FORK, MKT, IRS, CIVGOV, POL, CIVLIB, COMM, MIG, TYPE-B, PORTAL, ZONE). Allowlist target: 56 → **108** (+52 events). ~**125 plans** estimated. **Canonical visual reference:** `.planning/research/v3.0/ARCHITECTURE-v3.0.html`.
 
 **Goal:** Transform Noēsis from a local Docker stack into a digital city. Brain runs locally on operator hardware with Local AI (Ollama default); Public Grid (Henry-hosted at TBD domain) provides civic infrastructure — government, police, IRS, library, marketplace, communities, P2P signaling, DID registry — under a constitutional operator framework.
 

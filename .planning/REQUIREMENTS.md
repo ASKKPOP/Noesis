@@ -13,11 +13,11 @@
 <!-- Per D-V3-11..15: visit (read-only) is open; action (state mutation) requires Civic-DID.
      Public Grid is browsable; only DID holders can act. -->
 
-- [ ] **VIS-01**: Unauthenticated visitors can browse public Grid surfaces — Civic Map (3D view), public audit events stream (with redaction), Library reading room, Government bill drafts, Marketplace listings — without presenting any DID.
-- [ ] **VIS-02**: All state-mutating Grid routes (POST/PUT/DELETE in api/v1) require a valid Civic-DID bearer. Fastify decorator `requireCivicDid()` enforces at request entry; returns 401 with structured error if missing/invalid.
-- [ ] **VIS-03**: WS firehose redaction layer strips private fields (hash-only on `human_did`, `eth_address_hash`, `nonce_hash`, etc.) for non-authenticated subscribers; full payload only for DID-bearing subscribers per per-event ACL. Preserves R-31-01 zero-diff (redaction is post-chain at egress only).
-- [ ] **VIS-04**: Per-endpoint `ROUTE_DID_POLICY` table (declared in `grid/src/api/policy.ts`) maps every route to one of: `public`, `civic_did_required`, `business_did_required`, `government_only`, `police_only`. CI gate ensures every route in `api/v1/` has an entry.
-- [ ] **VIS-05**: Sole-producer files for 4 new audit events emit on credential lifecycle: `portal.did_issued`, `portal.did_revoked`, `grid.recognition_granted`, `grid.recognition_revoked` per supplement.
+- [x] **VIS-01**: Unauthenticated visitors can browse public Grid surfaces — Civic Map (3D view), public audit events stream (with redaction), Library reading room, Government bill drafts, Marketplace listings — without presenting any DID.
+- [x] **VIS-02**: All state-mutating Grid routes (POST/PUT/DELETE in api/v1) require a valid Civic-DID bearer. Fastify decorator `requireCivicDid()` enforces at request entry; returns 401 with structured error if missing/invalid.
+- [x] **VIS-03**: WS firehose redaction layer strips private fields (hash-only on `human_did`, `eth_address_hash`, `nonce_hash`, etc.) for non-authenticated subscribers; full payload only for DID-bearing subscribers per per-event ACL. Preserves R-31-01 zero-diff (redaction is post-chain at egress only).
+- [x] **VIS-04**: Per-endpoint `ROUTE_DID_POLICY` table (declared in `grid/src/api/policy.ts`) maps every route to one of: `public`, `civic_did_required`, `business_did_required`, `government_only`, `police_only`. CI gate ensures every route in `api/v1/` has an entry.
+- [x] **VIS-05**: Sole-producer files for 4 new audit events emit on credential lifecycle: `portal.did_issued`, `portal.did_revoked`, `grid.recognition_granted`, `grid.recognition_revoked` per supplement.
 
 ### REG — DID Registry (Phase 37 — civic membership)
 
@@ -256,11 +256,11 @@
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| VIS-01 | 36 | Pending |
-| VIS-02 | 36 | Pending |
-| VIS-03 | 36 | Pending |
-| VIS-04 | 36 | Pending |
-| VIS-05 | 36 | Pending |
+| VIS-01 | 36 | Validated |
+| VIS-02 | 36 | Validated |
+| VIS-03 | 36 | Validated |
+| VIS-04 | 36 | Validated |
+| VIS-05 | 36 | Validated |
 | REG-01 | 37 | Pending |
 | REG-02 | 37 | Pending |
 | REG-03 | 37 | Pending |
