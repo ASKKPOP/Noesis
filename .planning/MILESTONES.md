@@ -548,17 +548,48 @@ See `.planning/phases/25a-observer-surfaces/25a-HUMAN-UAT.md` for full UAT closu
 ## v2.6: Resilience & Observability — SHIPPED 2026-05-25
 
 **Opened:** 2026-05-24
-**Shipped:** 2026-05-25 (5/5 phases + Phase 34.1 followup all closed)
+**Shipped:** 2026-05-25 (5 planned phases + 2 post-ship followup phases = 7 total, all closed)
 **Allowlist:** 53 → 56 (+3 events in Phase 33: `portal.auth.login`, `portal.auth.register`, `human.identified`)
 **Driving inputs:** GAP-2026-05-24-A (audit pipeline silence) + GAP-2026-05-24-B (missing portal.auth.* producers) from v2.5 post-ship UAT. **Both gaps permanently closed and re-verified live in Phase 35.**
+**Post-ship gaps closed:** 3 followups discovered during operator UAT + post-ship "waiting" observation — all fixed in micro-phases (34.1, 34.2) with surgical changes + 8 new tests.
 
 **One-line per phase:**
-- Phase 31 — `PersistentAuditChain` wired in production + 60-tick reconcile + Pino structured logging + backfill script (OBS-01..04). Resolves GAP-A.
-- Phase 32 — `WsFirehoseHub.stats()` 5-field counters + `GET /health/detailed` JSON + pure-pull `HealthWatchdog` with grace window (OBS-05..07).
-- Phase 33 — Three sole-producers (`appendPortalAuthLogin`/`appendPortalAuthRegister`/`appendHumanIdentified`) wired into SIWE + email auth + `PORTAL_AUTH_FORBIDDEN_KEYS` 13-key freeze + `check-sole-producer-discipline.mjs` CI gate (OBS-08..10). Allowlist +3. Resolves GAP-B.
-- Phase 34 — Three Steward `/system` cards (Audit Pipeline Health + Firehose Diagnostics + Events per Minute by Family sparkline) + client-side firehose watchdog (OBS-11..14). UAT discovered + fixed 2 latent Phase 32 deployment bugs inline (`/health/detailed` route never registered in production main.ts; Steward Docker cache mask hid `/culture` Suspense bug).
-- Phase 34.1 — Followup gap-closure: wire `chain.length` into HealthWatchdog (FOLLOWUP-34-01 HIGH) + merge PersistentAuditChain.lastPersistError into payload (FOLLOWUP-34-02 MEDIUM). Both fixes verified live during MySQL outage re-run: divergence grew 31→39, last_persist_error populated with timestamp updates.
-- Phase 35 — UAT re-verification + atomic doc-sync close-out (OBS-15). 25a-HUMAN-UAT Items #1 + #5c upgraded from passed-with-postscript / passed-with-gap to **PASS**. MILESTONES + PROJECT + PHILOSOPHY + README + CLAUDE.md atomic commit per Documentation Sync Rule.
+- **Phase 31** (✓ shipped 2026-05-25) — `PersistentAuditChain` wired in production + 60-tick reconcile + Pino structured logging + backfill script (OBS-01..04). Resolves GAP-A.
+- **Phase 32** (✓ shipped 2026-05-25) — `WsFirehoseHub.stats()` 5-field counters + `GET /health/detailed` JSON + pure-pull `HealthWatchdog` with grace window (OBS-05..07).
+- **Phase 33** (✓ shipped 2026-05-25) — Three sole-producers (`appendPortalAuthLogin`/`appendPortalAuthRegister`/`appendHumanIdentified`) wired into SIWE + email auth + `PORTAL_AUTH_FORBIDDEN_KEYS` 13-key freeze + `check-sole-producer-discipline.mjs` CI gate (OBS-08..10). Allowlist +3. Resolves GAP-B.
+- **Phase 34** (✓ shipped 2026-05-25) — Three Steward `/system` cards (Audit Pipeline Health + Firehose Diagnostics + Events per Minute by Family sparkline) + client-side firehose watchdog (OBS-11..14). UAT discovered + fixed 2 latent Phase 32 deployment bugs inline (`/health/detailed` route never registered in production main.ts via commit `10a2cde`; Steward Docker cache mask hid `/culture` Suspense bug via commit `0c16f34`) + 1 code-review medium (`divergenceBand` hardcoded threshold via commit `f506209`).
+- **Phase 34.1** (✓ shipped 2026-05-25, followup) — Closed FOLLOWUP-34-01 (HIGH — `chain.length` into `in_memory_length`; Phase 32's hardcoded fallback made divergence permanently 0) + FOLLOWUP-34-02 (MEDIUM — merge `PersistentAuditChain.lastPersistError` into payload; Pino logs fired but field stayed null). Surgical fix to `HealthWatchdogDeps` with optional `auditChain` field; 6 new wired-chain tests; live MySQL outage verification observed divergence 31→39 + `last_persist_error` populated with timestamp updates. Commit `93265ef` + close-out `36b9bef`.
+- **Phase 34.2** (✓ shipped 2026-05-25, followup) — Closed FOLLOWUP-34-04 (MEDIUM — `persisted_max_id` cached-value lag between reconcile cycles produced false degraded status with growing divergence despite healthy persistence). `PersistentAuditChain` tracks `_lastPersistedId` watermark advancing on every successful `store.append`; `HealthWatchdog` merges with `reconcile.persistedMaxId` via `Math.max`. 4 new merge-matrix tests. Live verification confirmed `persisted_max_id: 5852` (matches DB MAX(id)) + `divergence: 0` post-reconcile heartbeat. Commit `bc28dcf` + close-out `ad71c68`.
+- **Phase 35** (✓ shipped 2026-05-25) — UAT re-verification + atomic doc-sync close-out (OBS-15). 25a-HUMAN-UAT Items #1 + #5c upgraded from passed-with-postscript / passed-with-gap to **PASS** via autonomous /browse re-verification against live Docker stack. 34-HUMAN-UAT.md gained Step 0.5 post-grace baseline check (FOLLOWUP-34-03 LOW closed). Atomic commit `0414949` across MILESTONES + PROJECT + PHILOSOPHY + README + 2 HUMAN-UAT + 35-VERIFICATION.md per Documentation Sync Rule.
+
+**Post-ship gap closure history (in order discovered):**
+
+| Followup | Severity | Discovered | Closed | Commit |
+|----------|----------|-----------|--------|--------|
+| Phase 32 `/health/detailed` route never registered in main.ts | UAT-BLOCKER | Phase 34 UAT prep | Phase 34 inline | `10a2cde` |
+| Steward Docker cache mask of `/culture` Suspense bug | UAT-BLOCKER | Phase 34 UAT prep | Phase 34 inline | `0c16f34` |
+| Code review M-01: `divergenceBand` hardcoded threshold | MEDIUM | Phase 34 code review | Phase 34 inline | `f506209` |
+| FOLLOWUP-34-01: `chain.length` not wired into `in_memory_length` | HIGH | Phase 34 UAT Step 5 | Phase 34.1 | `93265ef` |
+| FOLLOWUP-34-02: `lastPersistError` payload field stayed null | MEDIUM | Phase 34 UAT Step 5 | Phase 34.1 | `93265ef` |
+| FOLLOWUP-34-03: 34-HUMAN-UAT.md missing post-grace baseline check | LOW | Phase 34 UAT Step 5 | Phase 35 | `0414949` |
+| FOLLOWUP-34-04: `persisted_max_id` cached-value lag between reconcile cycles | MEDIUM | Post-ship "waiting" observation | Phase 34.2 | `bc28dcf` |
+
+**Test coverage delta this milestone:** +8 health-watchdog tests (4 wired-chain + 4 merge-matrix), all 33/33 pass. Pre-existing 16 transition tests + 7 original route tests + 4 persistence-wiring tests all green. tsc clean.
+
+**Frozen contracts (preserved through 7 phases):**
+- Phase 31 zero-diff invariant (`chain.ts` listener fan-out unchanged since commit `29c3516`)
+- Phase 32 D-32-C1 `HEALTH_THRESHOLDS` (4 locked values)
+- Phase 32 D-32-C2 `computeStatus()` cascade body
+- Phase 32 D-32-C3 → D-34-B1 `/health/detailed` payload shape (6 keys: `audit`, `clock`, `firehose`, `reasons`, `status`, `timestamp`)
+- Phase 33 D-33-B3 `PORTAL_AUTH_FORBIDDEN_KEYS` 13-key freeze
+- Phase 34.1+34.2 `auditChain` optional dep pattern (backward compat: plain `AuditChain` falls through to Phase 32 behavior)
+
+**Carry-forward to v2.7:**
+- Tighten Phase 31 reconcile cadence from 60 ticks → 5 ticks for faster reconcile-side recovery SLA
+- Docker DNS TTL=0 (or alternative resolver strategy) for Grid container to eliminate the ~2min post-MySQL-restart cache window observed during Phase 34 UAT
+- Investigate tick rate variability (observed 9s/tick → 200s/tick across session — root cause unknown)
+- Optional `OBS-FUTURE-METRICS-01` (`ua_hash` + `ip_country` for portal.auth.*) deferred per YAGNI
+- Optional `OBS-FUTURE-OTEL-01` (OpenTelemetry self-hosted) deferred — pending operator demand
 
 ### Phase 31: Audit Pipeline Persistence — SHIPPED 2026-05-25 (operator UAT pending)
 

@@ -92,14 +92,15 @@ The first persistent Grid where Nous actually live — observable, running conti
 
 ## Most-Recent Milestone: v2.6 Resilience & Observability — SHIPPED (2026-05-25)
 
-**Status:** Closed 2026-05-25, 5/5 phases + Phase 34.1 followup all shipped. Allowlist 53 → 56 (+3 in Phase 33: `portal.auth.login`, `portal.auth.register`, `human.identified`).
+**Status:** Closed 2026-05-25, 5 planned phases + 2 post-ship followup phases (34.1 + 34.2) all shipped. All 4 post-ship gaps closed inline (3 followup IDs + 1 cached-lag observation). Allowlist 53 → 56 (+3 in Phase 33: `portal.auth.login`, `portal.auth.register`, `human.identified`).
 
 **Delivered:**
 - **Phase 31 — Audit Pipeline Persistence** (2026-05-25): `PersistentAuditChain` wired in production main.ts (Phase 34.1 followup fix), tick-cadenced reconcile loop (60-tick cadence, `INSERT IGNORE` idempotency, R-31-02 cap=500), Pino structured logging replaces silent `.catch+console.warn`, one-shot backfill script (`scripts/backfill-audit-trail.mjs`). CI gate `check-no-silent-catch.mjs`. Resolves GAP-A.
 - **Phase 32 — Firehose Observability** (2026-05-25): `WsFirehoseHub.stats()` 5-field counters via `HubMetricsSink` callbacks, `GET /health/detailed` JSON endpoint, pure-pull `HealthWatchdog` with grace window (zero `setInterval`, zero `clock.onTick`). R-32-01 + R-32-02 CI gates.
 - **Phase 33 — portal.auth.* Producers** (2026-05-25): Three sole-producers (`appendPortalAuthLogin` + `appendPortalAuthRegister` + `appendHumanIdentified`) wired into SIWE + email auth flows per D-33-A4/A5/A6. `PORTAL_AUTH_FORBIDDEN_KEYS` 13-key freeze + `FORBIDDEN_KEY_PATTERN` word-boundary clause. CI gate `check-sole-producer-discipline.mjs` scans 38 files across 10 subsystems. Allowlist +3 (54/55/56). Resolves GAP-B.
 - **Phase 34 — Steward `/system` Health Surfaces** (2026-05-25): Three cards (Audit Pipeline Health + Firehose Diagnostics + Events per Minute by Family sparkline, raw SVG, REST-driven) + client-side firehose watchdog with R-34-03 60s suppression window. UAT discovered + fixed 2 latent Phase 32 deployment bugs inline (`/health/detailed` route never registered in production main.ts; Steward Docker cache mask hid `/culture` Suspense bug).
-- **Phase 34.1 — HealthWatchdog wiring followups** (2026-05-25): Closed FOLLOWUP-34-01 (HIGH — `chain.length` into `in_memory_length`) + FOLLOWUP-34-02 (MEDIUM — `PersistentAuditChain.lastPersistError` merged into payload with most-recent-by-`.at` wins). Surgical fix to `HealthWatchdogDeps` with optional `auditChain` field. Live UAT verification: divergence grew 31→39 during MySQL outage; `last_persist_error` populated with timestamp updates through 4 cycles.
+- **Phase 34.1 — HealthWatchdog wiring followups** (2026-05-25): Closed FOLLOWUP-34-01 (HIGH — `chain.length` into `in_memory_length`) + FOLLOWUP-34-02 (MEDIUM — `PersistentAuditChain.lastPersistError` merged into payload with most-recent-by-`.at` wins). Surgical fix to `HealthWatchdogDeps` with optional `auditChain` field. 6 new wired-chain tests; live UAT verification: divergence grew 31→39 during MySQL outage; `last_persist_error` populated with timestamp updates through 4 cycles. Commit `93265ef` + close-out `36b9bef`.
+- **Phase 34.2 — Live `persisted_max_id` watermark followup** (2026-05-25): Closed FOLLOWUP-34-04 (MEDIUM — `persisted_max_id` cached-value lag between reconcile cycles produced false "degraded" status with growing divergence despite healthy persistence). `PersistentAuditChain` gets new `_lastPersistedId` watermark advancing on every successful `store.append` (with out-of-order Promise resolution guard); `HealthWatchdog.snapshot()` merges via `Math.max(reconcile.persistedMaxId, chain.lastPersistedId)`. 4 new merge-matrix tests. Live verification confirmed `persisted_max_id: 5852` (matches DB MAX(id) exactly) + `divergence: 0` post-reconcile heartbeat. Commit `bc28dcf` + close-out `ad71c68`.
 - **Phase 35 — UAT Re-Verification + Documentation Close-Out** (2026-05-25): 25a-HUMAN-UAT Items #1 + #5c upgraded from passed-with-postscript / passed-with-gap to **PASS** via autonomous /browse re-verification. Atomic doc-sync commit across MILESTONES + PROJECT + PHILOSOPHY + README + CLAUDE.md per Documentation Sync Rule.
 
 **Key locked invariants (added in v2.6):**
@@ -111,9 +112,16 @@ The first persistent Grid where Nous actually live — observable, running conti
 - `PORTAL_AUTH_FORBIDDEN_KEYS` frozen at exactly 13 keys (D-33-B3)
 - Phase 34.1 `auditChain` optional dep pattern: production passes the live chain; legacy tests omit (backward compat)
 
-**Post-ship followups (carry into v2.7+):**
-- FOLLOWUP-34-03 (LOW, closed in Phase 35): 34-HUMAN-UAT.md Step 0 now requires post-grace baseline check before Step 5
-- v2.7 candidate: tighten Phase 31 reconcile cadence from 60 ticks → 5 ticks for faster recovery SLA; Docker DNS TTL=0 for Grid container
+**Post-ship followups (history — all closed):**
+- FOLLOWUP-34-01 (HIGH, closed Phase 34.1): `chain.length` wired into `in_memory_length`
+- FOLLOWUP-34-02 (MEDIUM, closed Phase 34.1): `PersistentAuditChain.lastPersistError` merged into payload
+- FOLLOWUP-34-03 (LOW, closed Phase 35): 34-HUMAN-UAT.md Step 0.5 post-grace baseline check
+- FOLLOWUP-34-04 (MEDIUM, closed Phase 34.2): `persisted_max_id` live watermark from `PersistentAuditChain.lastPersistedId`
+
+**v2.7 carry-forward candidates:**
+- Tighten Phase 31 reconcile cadence from 60 ticks → 5 ticks for faster recovery SLA
+- Docker DNS TTL=0 (or alternative resolver) for Grid container to eliminate post-MySQL-restart cache window
+- Investigate tick rate variability (observed 9s/tick → 200s/tick across session)
 
 ## Original v2.6 Scope (archived)
 
