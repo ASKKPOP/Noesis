@@ -41,6 +41,10 @@ import { registerCognitiveSnapshotRoute } from './operator/cognitive-snapshot.js
 import { tombstoneCheck, TombstonedDidError } from '../registry/tombstone-check.js';
 import type { HumanRegistry } from '../human/index.js';
 import fastifyCookie from '@fastify/cookie';
+import { lookupPolicy } from './policy.js';
+import { tryDid } from './preHandlers/tryDid.js';
+import { requireDid, requirePortalSession } from './preHandlers/requireDid.js';
+import './preHandlers/types.js'; // module augmentation side-effect
 
 /**
  * Phase 6 AGENCY-02: normalized memory entry shape crossing the RPC boundary.
@@ -253,6 +257,13 @@ export interface GridServices {
      * When absent, confirmTxPaid always returns { confirmed: false }.
      */
     evmConfirmTx?: (txHash: string) => Promise<{ confirmed: boolean; amountUsdt?: string; from?: string }>;
+    /**
+     * Phase 36 VIS-02: optional DID revocation store.
+     * When present, tryDid consults isRevoked() after bearer verification.
+     * Revoked Civic-DIDs are demoted to visitor tier (D-36-09).
+     * When absent, revocation is skipped — Plan 05 wires the concrete store.
+     */
+    didStore?: { isRevoked(did: string): boolean | Promise<boolean> };
 }
 
 /**
@@ -281,6 +292,38 @@ export function buildServerWithHub(
     // Phase 22: @fastify/cookie required for portal JWT cookie support (WEB3-03).
     void app.register(fastifyCookie);
 
+    // Phase 36 VIS-02/VIS-04: global policy enforcement hook.
+    // Uses onRequest (not preHandler) so it fires for ALL requests, including routes
+    // that are not yet registered (e.g., future Plan 05 visitor routes). This ensures
+    // default-deny: any unregistered route that matches civic_did_required will 401
+    // before Fastify can return a 404.
+    // Registration order: after cookie plugin so cookies are parsed, before route registration.
+    void app.addHook('onRequest', async (req, reply) => {
+        // CORS preflight requests must pass through — they carry no auth and are handled
+        // by @fastify/cors before reaching any route handler.
+        if (req.method === 'OPTIONS') return;
+
+        const routePath = (req as { routeOptions?: { url?: string } }).routeOptions?.url ?? req.url.split('?')[0];
+        const policy = lookupPolicy(req.method, routePath);
+        if (policy === 'public') {
+            // Public routes: still resolve context for downstream handlers that conditionally redact.
+            const ctx = await tryDid(req, { didStore: services.didStore });
+            req.didContext = ctx;
+            return;
+        }
+        if (policy === 'portal_session_required') {
+            const ctx = await requirePortalSession(req, reply, { didStore: services.didStore });
+            if (!ctx) return; // 401 already sent
+            req.didContext = ctx;
+            return;
+        }
+        // civic_did_required, business_did_required, government_only, police_only
+        // (Plan 05/06 layer the sub-tier checks; this plan enforces civic_did_required minimum)
+        const ctx = await requireDid(req, reply, { didStore: services.didStore });
+        if (!ctx) return;
+        req.didContext = ctx;
+    });
+
     // Dashboard CORS (dev): Next.js dev server runs on :3001 per 03-VALIDATION.md.
     // :3000 is included because `next dev` falls back to :3000 when :3001 is taken.
     // :3002 is the Steward Console.
@@ -295,6 +338,17 @@ export function buildServerWithHub(
 
     app.get('/health', async () => {
         return { status: 'ok', timestamp: Date.now() };
+    });
+
+    // --- Phase 36 VIS-02: OAuth stubs (public, not yet implemented) ---
+    // These are listed in ROUTE_DID_POLICY as 'public'. Return 501 to indicate
+    // OAuth is planned but not implemented in v3.0. Policy gate passes them through
+    // because they are public routes (no auth required to reach the 501 response).
+    app.post('/portal/auth/oauth/google', async (_req, reply) => {
+        return reply.code(501).send({ error: 'oauth_not_implemented' });
+    });
+    app.post('/portal/auth/oauth/apple', async (_req, reply) => {
+        return reply.code(501).send({ error: 'oauth_not_implemented' });
     });
 
     // --- Grid Status ---

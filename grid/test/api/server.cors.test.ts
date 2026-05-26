@@ -73,12 +73,15 @@ describe('Grid API — CORS allowlist', () => {
     });
 
     it('does not affect same-origin requests (no Origin header)', async () => {
+        // Use a public route (/health) — /api/v1/grid/regions now requires Civic-DID auth
+        // per Phase 36 VIS-02 ROUTE_DID_POLICY enforcement. CORS behaviour is unchanged;
+        // only the authentication gate was added upstream of the route handler.
         const res = await app.inject({
             method: 'GET',
-            url: '/api/v1/grid/regions',
+            url: '/health',
         });
         expect(res.statusCode).toBe(200);
         const body = res.json();
-        expect(Array.isArray(body.regions)).toBe(true);
+        expect(typeof body.status).toBe('string');
     });
 });
