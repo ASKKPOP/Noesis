@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City)
-status: defining_requirements
-stopped_at: v3.0 milestone opened — PROJECT.md + STATE.md updated; REQUIREMENTS.md + ROADMAP.md pending
-last_updated: "2026-05-25T19:00:00.000Z"
-last_activity: 2026-05-25 -- v3.0 milestone open ceremony — CIVIC-ARCHITECTURE.md v2.0 rewrite (Grid-as-City + local Brain + 8 civic institutions + 8 new D-V3-* decisions); PROJECT.md updated with Current Milestone block
+status: ready_to_plan_phase_36
+stopped_at: v3.0 ROADMAP.md formalized — 15 phases (36-50) drafted with 69/69 REQ coverage; ready for /gsd-plan-phase 36
+last_updated: "2026-05-25T19:30:00.000Z"
+last_activity: 2026-05-25 -- v3.0 ROADMAP.md additions written; 69 REQ-V3-* REQs mapped 1:1 across 15 phases; allowlist growth ledger 56 → 90 documented; wave dependency graph encoded; ready for Phase 36 planning
 progress:
   total_phases: 15
   completed_phases: 0
@@ -23,14 +23,14 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** v3.0 milestone-open ceremony in progress. CIVIC-ARCHITECTURE.md v2.0 committed (0d77916). PROJECT.md updated. Next: REQUIREMENTS.md with REQ-V3-* IDs, then spawn gsd-roadmapper for ROADMAP.md updates with 15 phases (36-50).
+**Current focus:** v3.0 ROADMAP.md formalized 2026-05-25. 15 phases (36-50) with 69/69 REQ coverage, 4-wave dependency graph, allowlist growth ledger (56 → 90). Ready to spawn `/gsd-plan-phase 36` (Visitor/DID Read-Write Split).
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: Not started (ready to plan Phase 36)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-25 -- v3.0 milestone opened; CIVIC-ARCHITECTURE.md v2.0 rewrite committed (0d77916); 8 new locked decisions (D-V3-16..23) added; PROJECT.md + STATE.md updated; awaiting REQUIREMENTS.md + ROADMAP draft
+Status: Ready to plan Phase 36
+Last activity: 2026-05-25 -- v3.0 ROADMAP.md additions written: 15 phases (36-50) with full Goal + REQs + Success Criteria + Out-of-Scope + Allowlist delta sections; coverage validated 69/69; wave-1 parallel groups documented (Group A: 36+37+40 independent; Group B: 38 depends on 37; Group C: 39 depends on 38; Group D: 41 depends on 38). Next: `/gsd-plan-phase 36`.
 
 Driving inputs for v3.0 (locked at milestone open):
 
@@ -42,29 +42,30 @@ Driving inputs for v3.0 (locked at milestone open):
 - **10 open questions (Q-V3-A..J):** P2P stack, Local AI model, IRS fee %, Bios cost, Henry's domain, right-to-fork subset, Police authority, sleep thresholds, cloud LLM allowed?, community subgovernance — locked during per-phase discuss-phase sessions
 - **PHILOSOPHY §1 reframe:** First-life redefined as "continuity of identity + memory + civic standing across sleep cycles, ensured by both substrate operator (Brain) and constitutional operator (Henry)" — amendment pending atomic doc-sync
 
-## v3.0 Phase Plan Summary (drafted 2026-05-25 — pending REQUIREMENTS.md + ROADMAP.md)
+## v3.0 Phase Plan Summary (FORMALIZED 2026-05-25 in ROADMAP.md)
 
-| Wave | Phase | Goal | Effort | Allowlist Delta |
-|------|-------|------|--------|-----------------|
-| **1** | 36 — Visitor/DID Read-Write Split | Implement visit-without-DID + action-with-DID asymmetry per supplement | M | +4 |
-| **1** | 37 — DID Registry | Civic-DID + Business-DID + Issuer/Revocation | L | +4 |
-| **1** | 38 — Brain ↔ Grid Wire Protocol | HTTPS + WSS replaces in-process queues; service tokens | L | 0 |
-| **1** | 39 — Multi-Tenancy | Operator namespace isolation in Grid | M | 0 |
-| **1** | 40 — Local AI Integration | Ollama production-grade default | M | 0 |
-| **1** | 41 — Sleep Cycle | Away presence model; queued messages on wake | M | 0 |
-| **2** | 42 — P2P Infrastructure | Signaling, discovery, NAT traversal | L | +3 |
-| **2** | 43 — Right-to-Fork Tooling | Export Nous standalone (constitutional enforcement) | M | 0 |
-| **3** | 44 — Marketplace v3 | Civic commerce + escrow (evolves v1.0 Ousia) | L | +4 |
-| **3** | 45 — IRS | Transaction fees + civic treasury | M | +3 |
-| **3** | 46 — Government v3 | Civic VOTE-05 + legislative sessions | L | +6 |
-| **3** | 47 — Police v3 | Sanctions + investigation + appeals | M | +4 |
-| **3** | 48 — Library v3 | Civic curation council + reading room | M | +2 |
-| **3** | 49 — Communities v3 | Group formation + charters | M | +4 |
-| **4** | 50 — Migration | v2.6 → v3.0 ceremony (Sophia data import + civic-DID grandfathering) | L | 0 |
+| Wave | Phase | Goal | Effort | Allowlist Delta | Depends On |
+|------|-------|------|--------|-----------------|------------|
+| **1** | 36 — Visitor/DID Read-Write Split | Implement visit-without-DID + action-with-DID asymmetry per supplement | M | +4 | — |
+| **1** | 37 — DID Registry | Civic-DID + Business-DID + Issuer/Revocation | L | +4 | — |
+| **1** | 38 — Brain ↔ Grid Wire Protocol | HTTPS + WSS replaces in-process queues; service tokens | L | 0 | 37 |
+| **1** | 39 — Multi-Tenancy | Operator namespace isolation in Grid | M | 0 | 38 |
+| **1** | 40 — Local AI Integration | Ollama production-grade default | M | 0 | — |
+| **1** | 41 — Sleep Cycle | Away presence model; queued messages on wake | M | 0 | 38 |
+| **2** | 42 — P2P Infrastructure | Signaling, discovery, NAT traversal | L | +3 | 36, 37, 38 |
+| **2** | 43 — Right-to-Fork Tooling | Export Nous standalone (constitutional enforcement) | M | 0 | 37, 38 |
+| **3** | 44 — Marketplace v3 | Civic commerce + escrow (evolves v1.0 Ousia) | L | +4 | 37 |
+| **3** | 45 — IRS | Transaction fees + civic treasury | M | +3 | 44 |
+| **3** | 46 — Government v3 | Civic VOTE-05 + legislative sessions | L | +6 | 37 |
+| **3** | 47 — Police v3 | Sanctions + investigation + appeals | M | +4 | 46 |
+| **3** | 48 — Library v3 | Civic curation council + reading room | M | +2 | 37, 45 |
+| **3** | 49 — Communities v3 | Group formation + charters | M | +4 | 37 |
+| **4** | 50 — Migration | v2.6 → v3.0 ceremony (Sophia data import + civic-DID grandfathering) | L | 0 | ALL |
 
 **Total v3.0 allowlist growth:** +34 (56 → 90) across 8 civic institutions.
 **Estimated plans:** ~86 across 15 phases.
-**Phase ordering:** Wave 1 foundations first; Wave 2 plumbing depends on Wave 1; Wave 3 institutions depend on Wave 2; Wave 4 migration depends on all.
+**Coverage:** 69/69 REQ-V3-* REQs mapped 1:1 to phases (no orphans, no duplicates).
+**Phase ordering:** Wave 1 has 4 parallel groups (A: 36+37+40 independent; B: 38 deps on 37; C: 39 deps on 38; D: 41 deps on 38). Wave 2 plumbing depends on Wave 1; Wave 3 institutions depend on Wave 2 + their internal chain; Wave 4 migration depends on all.
 
 ## v2.5 Key Decisions (locked 2026-05-20)
 
@@ -131,9 +132,9 @@ Driving inputs for v3.0 (locked at milestone open):
 - `/api/dash/health` is static — no cascading probe to Grid
 - SC-6 live-stack smoke: runtime verification pending on operator machine per HUMAN-TEST-GUIDE.md
 
-### Broadcast allowlist (v2.5 end-state — 53 events)
+### Broadcast allowlist (v2.6 end-state — 56 events)
 
-**53 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
+**56 events.** In code-tuple order (authoritative source: `grid/src/audit/broadcast-allowlist.ts` `ALLOWLIST_MEMBERS`):
 
 1. `nous.spawned`
 2. `nous.moved`
@@ -188,19 +189,31 @@ Driving inputs for v3.0 (locked at milestone open):
 51. `operator.human_frozen` ← Phase 25b
 52. `human.spoke` ← Phase 27
 53. `nous.spawned_by_human` ← Phase 28
+54. `portal.auth.login` ← Phase 33 (OBS-08)
+55. `portal.auth.register` ← Phase 33 (OBS-09)
+56. `human.identified` ← Phase 33 (OBS-08b)
 
-### v2.6 allowlist additions (planned — Phase 33 only)
+### v3.0 allowlist additions (planned — across 9 phases)
 
-- Phase 31 adds: *(none — wiring + reconcile + logging only)*
-- Phase 32 adds: *(none — `/health/detailed` is a route, not an audit event)*
-- Phase 33 adds:
-    - `portal.auth.login` (pos 54) `{human_did, method, tick}` where `method ∈ {'siwe', 'email'}` — sole producer `grid/src/audit/append-portal-auth-login.ts`. Fires on every SIWE verify success AND email signin success (unconditional). Allowlist position 54.
-    - `portal.auth.register` (pos 55) `{human_did, method, tick}` where `method ∈ {'siwe', 'email'}` — sole producer `grid/src/audit/append-portal-auth-register.ts`. Fires on SIWE first-connect (inside `if (!human)` block) AND email signup. Allowlist position 55.
-    - `human.identified` (pos 56) `{grid_name, human_did, identity_hash, identity_method, tick}` where `identity_method ∈ {'siwe', 'email'}` — sole producer `grid/src/audit/append-human-identified.ts`. Universal identity-stamp event added per D-33-A1 + OBS-08b. SIWE path: `identity_hash = sha256(ethAddress.toLowerCase())` (byte-identical to Phase 22 `eth_address_hash` for correlation with pre-Phase-33 `human.joined` entries). Email path: `identity_hash = sha256(email.toLowerCase().trim())`. Fires on SIWE first-connect (after `appendHumanJoined`) AND email signup (NO `human.joined` for email — Phase 22's SIWE-only contract preserved per D-33-A7). Pre-Phase-33 `human.joined` entries preserved unmodified per PHILOSOPHY §1 + Merkle invariant (`chain.ts:181`). Allowlist position 56.
-- Phase 34 adds: *(none — UI cards consume existing data via REST)*
-- Phase 35 adds: *(none — documentation + UAT only)*
+Per ROADMAP.md Allowlist Growth Ledger:
 
-Total v2.6 allowlist growth: **+3 (53 → 56)**. Freeze-except-by-explicit-addition rule preserved.
+- **Phase 36** (+4): `portal.did_issued`, `portal.did_revoked`, `grid.recognition_granted`, `grid.recognition_revoked` → 60
+- **Phase 37** (+4): `registry.civic_did_issued`, `registry.civic_did_revoked`, `registry.business_did_registered`, `registry.business_did_dissolved` → 64
+- **Phase 38** (0): wire protocol is transport, not new events → 64
+- **Phase 39** (0): tenancy is access control → 64
+- **Phase 40** (0): Local AI is Brain-internal → 64
+- **Phase 41** (0): sleep cycle uses existing event families → 64
+- **Phase 42** (+3): `p2p.peer_announced`, `p2p.connection_opened`, `p2p.connection_closed` → 67
+- **Phase 43** (0): fork uses existing `operator.*` family → 67
+- **Phase 44** (+4): `market.listing_created`, `market.bid_placed`, `market.settled`, `market.disputed` → 71
+- **Phase 45** (+3): `irs.tax_collected`, `irs.disbursement_authorized`, `irs.disbursement_executed` → 74
+- **Phase 46** (+6): `gov.bill_drafted`, `gov.bill_cosponsored`, `gov.session_opened`, `gov.session_closed`, `gov.law_enacted`, `gov.law_repealed` → 80
+- **Phase 47** (+4): `police.complaint_filed`, `police.investigation_opened`, `police.charges_filed`, `police.sanction_executed` → 84
+- **Phase 48** (+2): `library.curator_elected`, `library.entry_curated` → 86
+- **Phase 49** (+4): `community.founded`, `community.joined`, `community.posted`, `community.dissolved` → 90
+- **Phase 50** (0): migration uses existing event families → 90
+
+Total v3.0 allowlist growth: **+34 (56 → 90)**. Freeze-except-by-explicit-addition rule preserved. Every new event MUST follow the sole-producer + closed-tuple + `payloadPrivacyCheck` + `audit.append` triad established in v2.6 Phase 33 and CI-enforced by `scripts/check-sole-producer-discipline.mjs`.
 
 ### v2.6 forbidden-key additions (Phase 33)
 
@@ -312,6 +325,7 @@ Total v2.6 allowlist growth: **+3 (53 → 56)**. Freeze-except-by-explicit-addit
 - v2.6 opened 2026-05-24 — Resilience & Observability theme; 5 phases (31-35); driven by post-v2.5 UAT gaps (GAP-A audit pipeline silence + GAP-B missing portal.auth.* producers)
 - v2.6 SHIPPED 2026-05-25 — 5 phases + 2 followups (34.1, 34.2); allowlist 53 → 56
 - **v3.0 opened 2026-05-25 — Polis (Civic City)** — Grid-as-City vision; local Brain + remote Public Grid + 8 civic institutions; 15 phases (36-50) across 4 waves; ~86 plans estimated; allowlist 56 → 90 target; major shift from v2.x local-Docker model to remote-hosted civic infrastructure with constitutional operator framework
+- **v3.0 ROADMAP.md formalized 2026-05-25** — 15 phases formalized with Goal + REQs + Success Criteria + Out-of-Scope + Allowlist delta; 69/69 REQ coverage validated; wave dependency graph encoded; ready for `/gsd-plan-phase 36`
 
 ### v2.6 Phase 31 close-out (locked 2026-05-24)
 
@@ -340,7 +354,7 @@ Total v2.6 allowlist growth: **+3 (53 → 56)**. Freeze-except-by-explicit-addit
 
 ## Session Continuity
 
-Last session: 2026-05-25T19:00:00.000Z
-Stopped at: v3.0 milestone opened (PROJECT.md + STATE.md updated)
-Resume file: .planning/research/v3.0/CIVIC-ARCHITECTURE.md (architectural source-of-truth)
-Next action: define REQUIREMENTS.md with REQ-V3-* IDs, then spawn gsd-roadmapper for ROADMAP.md updates with 15 phases (36-50)
+Last session: 2026-05-25T19:30:00.000Z
+Stopped at: v3.0 ROADMAP.md additions formalized — 15 phases (36-50) drafted with 69/69 REQ coverage + 4-wave dependency graph + allowlist growth ledger
+Resume file: .planning/ROADMAP.md (v3.0 section) + .planning/research/v3.0/CIVIC-ARCHITECTURE.md (architectural source-of-truth)
+Next action: `/gsd-plan-phase 36` to plan Phase 36 (Visitor/DID Read-Write Split, REQs VIS-01..05, +4 allowlist events)

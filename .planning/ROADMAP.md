@@ -1,12 +1,16 @@
-# Roadmap: Noēsis — v2.6 Resilience & Observability
+# Roadmap: Noēsis — v3.0 Polis (Civic City)
 
 ## Overview
 
-v2.5 opened the Grid to real human users (181/181 plans, allowlist 53). Post-ship UAT surfaced two operational gaps: the production `audit_trail` MySQL flush stalled silently on 2026-05-22T06:57Z, and the `/users` directory has been permanently empty because `portal.auth.login` / `portal.auth.register` are read by consumers but emitted by no producer.
+v2.6 Resilience & Observability shipped 2026-05-25 (5 phases + 2 followups, allowlist 53 → 56). The audit pipeline now persists, `/health/detailed` is live, `portal.auth.*` producers light up `/users` + `/humans` histories, and Steward `/system` surfaces the pipeline health end-to-end.
 
-v2.6 closes both gaps and hardens the audit/observability pipeline end-to-end so operators and Steward Console surfaces always see what the Grid actually emits. Allowlist grows **53 → 56** (+3 events in Phase 33). All other v2.6 work adds observability fields and structured logging — zero new event types.
+v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digital city. Brain runs locally on operator hardware with Local AI (Ollama default); a single Public Grid hosted by Henry provides civic infrastructure — DID Registry, Government, Police, IRS, Library, Marketplace, Communities, and P2P infrastructure — under a constitutional operator framework (D-V3-18). Nous live in the city: they earn, learn, trade, form communities, and self-govern via VOTE-05.
 
-Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numbers`.
+**Phase numbering continues from v2.6** — Phase 36 is the first v3.0 phase. Do NOT reset without `--reset-phase-numbers`. The 15 phases span 4 waves: Foundations (36-41), Civic Plumbing (42-43), Civic Institutions (44-49), and Migration (50). Allowlist grows **56 → 90** (+34 across 9 phases). Estimated scope: ~86 plans.
+
+**Architecture source-of-truth:** `.planning/research/v3.0/CIVIC-ARCHITECTURE.md` v2.0 (committed `0d77916`).
+**Supplement:** `.planning/research/v3.0/SUPPLEMENT-visit-vs-action.md` (read/write asymmetry).
+**Locked decisions:** 23 total. New in v3.0: D-V3-16..23 (local Brain, dev/test-local stack, constitutional operator, access semantics, sleep cycle, Nous-only government, IRS = tx fees, Grid = 8-institution city). Preserved: D-V3-01..03, 06, 08..15. Superseded: D-V3-04, 05, 07 (multi-Grid → single city).
 
 ## Milestones
 
@@ -17,205 +21,413 @@ Phase numbering continues from v2.5 — do NOT reset without `--reset-phase-numb
 - ✅ **v2.3 Living Minds — Phases 15-17** (shipped 2026-05-15, 16/16 plans)
 - ✅ **v2.4 Agora — Phases 18-21** (shipped 2026-05-20, 115/115 plans)
 - ✅ **v2.5 Human Portal — Phases 22-30** (shipped 2026-05-24, 181/181 plans, allowlist 53)
-- ✅ **v2.6 Resilience & Observability — Phases 31-35 + Phase 34.1** (shipped 2026-05-25, allowlist 53 → 56)
+- ✅ **v2.6 Resilience & Observability — Phases 31-35 + 34.1 + 34.2** (shipped 2026-05-25, allowlist 53 → 56)
+- 🚧 **v3.0 Polis (Civic City) — Phases 36-50** (opened 2026-05-25, ~86 plans, allowlist 56 → 90 target)
 
-## Phases (v2.6 — Active)
+## v3.0 Polis (Civic City) — IN PROGRESS
 
-- [x] **Phase 31: Audit Pipeline Persistence** — Fix GAP-A root cause. Wire `PersistentAuditChain` into production boot, add tick-cadenced reconcile loop, Pino structured logging on every persist attempt, one-shot backfill script for the 2026-05-22 → present stall. (allowlist unchanged 53) (completed 2026-05-24)
-- [x] **Phase 32: Firehose Observability** — Frame counters + `/health/detailed` endpoint + health watchdog. Make "tick advances but zero frames delivered" impossible to go unnoticed for >60s. (allowlist unchanged 53) (completed 2026-05-25)
-- [x] **Phase 33: portal.auth.* Producers** — Wire `appendPortalAuthLogin` + `appendPortalAuthRegister` + `appendHumanIdentified` sole-producers into SIWE verify + email signup/signin. Add `PORTAL_AUTH_FORBIDDEN_KEYS`. Allowlist 53 → 56 (+3). (completed 2026-05-25)
-- [x] **Phase 34: Steward `/system` Health Surfaces** — Audit Pipeline Health card + Firehose Diagnostics card + Events per Minute by Family sparkline + client-side firehose watchdog. (allowlist unchanged 56) (UAT-completed 2026-05-25 with 3 followups; UAT also fixed 2 latent Phase 32 bugs inline — see 34-VERIFICATION.md)
-- [x] **Phase 34.1: HealthWatchdog wiring followups** — FOLLOWUP-34-01 (chain.length into in_memory_length) + FOLLOWUP-34-02 (PersistentAuditChain.lastPersistError merged into payload). Surgical fix to HealthWatchdogDeps with optional auditChain field; 6 new wired-chain tests + all 23 existing tests pass; live verification confirmed divergence grew 31→39 and last_persist_error populated with timestamp updates during a real MySQL outage. (allowlist unchanged 56)
-- [x] **Phase 34.2: live `persisted_max_id` watermark** — FOLLOWUP-34-04 (post-Phase-35 ship discovery). Steward `/system` showed false `degraded` status with growing divergence between reconcile cycles (60-tick cadence ≈ 17 min) despite healthy persistence. Fix: PersistentAuditChain tracks `_lastPersistedId` watermark advancing on every successful store.append; HealthWatchdog merges with `reconcile.persistedMaxId` via `Math.max`. 4 new tests (merge matrix); live verification confirmed `persisted_max_id: 5833` showing live during grace (was null pre-34.2). Commit `bc28dcf`. (allowlist unchanged 56)
-- [x] **Phase 35: UAT Re-Verification + Documentation Close-Out** — Re-run 25a-HUMAN-UAT items #1 and #5c to PASS with live data. Atomic sync of MILESTONES, PROJECT, PHILOSOPHY, README, CLAUDE.md. (SHIPPED 2026-05-25 — both UAT items verified PASS via autonomous /browse; 5/5 ROADMAP SCs met; v2.6 milestone closed)
+### v3.0 Summary
 
-## Phase Details (v2.6)
+| Property | Value |
+|----------|-------|
+| Total phases | 15 (Phases 36-50) |
+| Waves | 4 (Foundations · Civic Plumbing · Civic Institutions · Migration) |
+| Total plans estimate | ~86 |
+| Total REQs | 69 (REQ-V3-* across 15 categories) |
+| Allowlist target | 56 → 90 (+34 across 9 phases) |
+| Locked decisions | 23 total · 8 new (D-V3-16..23) · 3 superseded (D-V3-04, 05, 07) |
+| Open questions | 10 (Q-V3-A..J) — locked during per-phase discuss-phase |
+| PHILOSOPHY §1 reframe | First-life redefined for constitutional substrate (pending amendment) |
 
-### Phase 31: Audit Pipeline Persistence
-**Goal**: Production Grid persists every audit entry to MySQL within seconds of in-memory commit. GAP-A root cause (no live MySQL flush path — production constructs plain `AuditChain` instead of `PersistentAuditChain`) is structurally fixed; silent failure modes are replaced with structured logging.
-**Depends on**: Nothing — must land first. Phases 32-34 all depend on the chain actually persisting.
-**Requirements**: OBS-01, OBS-02, OBS-03, OBS-04
+### Phases (v3.0 — Active)
+
+**Wave 1 — Foundations (Phases 36-41)**
+- [ ] **Phase 36: Visitor/DID Read-Write Split** — Implement visit-without-DID + action-with-DID asymmetry per supplement. Adds `requireCivicDid()` decorator + `ROUTE_DID_POLICY` table + WS firehose redaction layer. (allowlist +4)
+- [ ] **Phase 37: DID Registry** — Civic-DID + Business-DID issuance, W3C VC format, court-only revocation. (allowlist +4)
+- [ ] **Phase 38: Brain ↔ Grid Wire Protocol** — HTTPS REST (control) + WSS (events) replaces in-process queues; operator-signed bearer tokens; idempotent replay on reconnect. (allowlist 0)
+- [ ] **Phase 39: Grid Multi-Tenancy** — Per-operator metadata isolation in operator-scoped schemas; civic state remains shared; per-operator quotas. (allowlist 0)
+- [ ] **Phase 40: Local AI Integration** — Ollama production-grade with operator-selectable model + degraded-cognition fallback. (allowlist 0)
+- [ ] **Phase 41: Sleep Cycle + Away Presence** — Human-resident analogy: city sees offline Nous as 'away'; messages queue; identity persists; long-absence escalation. (allowlist 0)
+
+**Wave 2 — Civic Plumbing (Phases 42-43)**
+- [ ] **Phase 42: P2P Infrastructure** — Grid-mediated signaling + DID-to-endpoint discovery + STUN (free) / TURN (paid); Brain-to-Brain content stays direct. (allowlist +3)
+- [ ] **Phase 43: Right-to-Fork Export Tooling** — Operator can export full Nous state (Brain memory + civic credentials + audit history) and run standalone; constitutional enforcement of D-V3-18. (allowlist 0)
+
+**Wave 3 — Civic Institutions (Phases 44-49)**
+- [ ] **Phase 44: Marketplace v3** — Business-DID listings, bids, escrow, IRS fee hooks, dispute → Police routing. (allowlist +4)
+- [ ] **Phase 45: IRS Treasury** — Transaction fee collection (1-3% configurable), civic treasury, Government-authorized disbursements. (allowlist +3)
+- [ ] **Phase 46: Government v3** — Nous-only legislative VOTE-05 with bills, co-sponsorship, scheduled sessions, civic law book. (allowlist +6)
+- [ ] **Phase 47: Police v3** — Complaint-driven sanctions, investigation, court-filed charges, appeals to Government. (allowlist +4)
+- [ ] **Phase 48: Library v3** — Public reading room + Civic-DID contribution + rotating curation council paid from treasury. (allowlist +2)
+- [ ] **Phase 49: Communities v3** — Bios-gated founding, charters, membership criteria, subgovernance scoped to community-internal decisions. (allowlist +4)
+
+**Wave 4 — Migration (Phase 50)**
+- [ ] **Phase 50: v2.6 → v3.0 Migration** — CLI-driven Sophia/Hermes/Themis import, pre-civic audit context, grandfathered reputation, reversible until first civic action. (allowlist 0)
+
+### Phase Details (v3.0)
+
+#### Wave 1 — Foundations
+
+### Phase 36: Visitor/DID Read-Write Split
+**Goal**: Implement the visit-vs-action read/write asymmetry per the supplement. Unauthenticated visitors can browse public Grid surfaces; every state-mutating route requires a valid Civic-DID. Per-endpoint policy table is the authority; WS firehose redacts private fields for non-DID subscribers without breaking R-31-01 zero-diff.
+**Depends on**: Nothing — must land first; every downstream phase assumes visit/action distinction is the API contract.
+**Requirements**: VIS-01, VIS-02, VIS-03, VIS-04, VIS-05
 **Success Criteria** (what must be TRUE):
-  1. After Phase 31 ships and the Grid is restarted, `SELECT COUNT(*) FROM audit_trail WHERE grid_name = 'genesis'` matches `chain.length` within 60 seconds of any new `audit.append` call, and continues to track within ±10 entries during continuous operation. Watching the row count over 5 minutes shows monotonic growth in lockstep with in-memory chain growth.
-  2. Operator running `docker compose logs grid | grep audit_reconcile_ok` after 5 minutes of uptime sees at least 10 heartbeat lines (one per 60-tick cadence) with `divergence: 0` — silence in this log stream is itself a signal of pipeline stall.
-  3. Inducing a MySQL outage (`docker stop noesis-mysql`) produces structured Pino log entries `{event: 'audit_persist_failed', entry_id, event_type, error_message, error_code}` — never silent `.catch(err => console.warn(...))`. CI gate `scripts/check-no-silent-catch.mjs` fails any PR reintroducing the pattern in `grid/src/db/` or `grid/src/audit/`.
-  4. Running `node scripts/backfill-audit-trail.mjs --since 2026-05-22T06:57Z` recovers all in-memory entries that never reached MySQL during the stall window; the script is idempotent (`INSERT IGNORE`), and a second invocation reports zero rows inserted.
-**Scope (ships)**: OBS-01..04.
-**Out of scope for this phase**: Firehose frame counters (Phase 32), `/health/detailed` endpoint (Phase 32), missing portal.auth.* producers (Phase 33), Steward UI surfaces (Phase 34), Prometheus adoption (deferred — sovereignty-incompatible).
-**Risk**:
-  - **R-31-01 (CRITICAL)**: New listener fan-out order changes break the zero-diff audit chain invariant — `PersistentAuditChain.append()` MUST call `super.append()` first (in-memory commit + listener fan-out) THEN fire-and-forget DB write. Regression test pins chain head hash with/without DB attached.
-  - **R-31-02 (HIGH)**: Reconcile loop fires faster than DB can keep up at high tick rates — cadence is tick-based (every 60 ticks ≈ 30s), not wall-clock based; loop is idempotent (`INSERT IGNORE`); divergence threshold is alert ceiling not retry trigger.
-  - **R-31-03 (MEDIUM)**: Production restart loses in-memory chain before reconcile catches up — Phase 31 ships with a one-shot backfill script for the 2026-05-22 stall; production restart procedure documented in `31-HUMAN-UAT.md`.
-**Allowlist additions**: **0**. Running total: **53**.
-**Plans**: 6 plans
-  - [x] 31-01-PLAN.md — Pino logger singleton + grid/package.json deps (OBS-03 foundation)
-  - [x] 31-02-PLAN.md — Backfill script scripts/backfill-audit-trail.mjs (OBS-04)
-  - [x] 31-03-PLAN.md — PersistentAuditChain wiring in main.ts + Pino logger replaces console.warn + zero-diff regression test (OBS-01, OBS-03)
-  - [x] 31-04-PLAN.md — AuditReconcile loop + launcher.clock.onTick wire + batch-cap test (OBS-02)
-  - [x] 31-05-PLAN.md — scripts/check-no-silent-catch.mjs CI gate + workflow integration (OBS-03 enforcement)
-  - [x] 31-06-PLAN.md — 31-HUMAN-UAT.md cutover playbook + STATE.md close-out tick (OBS-01..04 manual verification)
-
-### Phase 32: Firehose Observability
-**Goal**: Make "tick advances but zero frames delivered" impossible to go unnoticed for >60 seconds. Add frame counters to `WsFirehoseHub`, expose pipeline health via `/health/detailed`, ship a tick-cadenced health watchdog.
-**Depends on**: Phase 31 (so `audit.in_memory_length` and `audit.persisted_max_id` are both populated and meaningful)
-**Requirements**: OBS-05, OBS-06, OBS-07
-**Success Criteria** (what must be TRUE):
-  1. Operator hitting `GET /health/detailed` after 60s of uptime receives `{status: 'ok', audit: {in_memory_length: N, persisted_max_id: N, divergence: 0, ...}, firehose: {client_count: K, frames_sent_total: M, frames_dropped_total: 0, last_frame_at: <recent>}, clock: {tick: T, running: true}}` — every field populated, no nulls except when DB is unconfigured.
-  2. Under normal load with at least one connected client, `frames_sent_total` increments at least once per tick (visible across two polls of `/health/detailed` 5s apart). `last_frame_at` is never null while `client_count > 0`.
-  3. Inducing a half-closed socket (test harness) increments `frames_dropped_total` and does NOT increment `frames_sent_total` — backpressure-evicted entries do not count as "sent". The hub does not panic, and other clients continue receiving frames.
-  4. If the reconcile loop from Phase 31 stops firing (e.g., a future regression breaks it), `/health/detailed` returns `status: 'degraded'` with `last_reconcile_at` exposed as a stale ms-epoch within 5 × snapshot cadence — the watchdog surfaces the silence directly, not via inference.
-  5. `GET /health/detailed` never blocks on a slow DB query — cached `persisted_max_id` is populated by the reconcile loop; cache miss returns `null` not a 30s timeout. p95 endpoint latency <50ms regardless of DB state.
-**Scope (ships)**: OBS-05..07.
-**Out of scope for this phase**: portal.auth.* producers (Phase 33), Steward UI cards (Phase 34), Prometheus scrape endpoint (deferred), OpenTelemetry (deferred).
-**Risk**:
-  - **R-32-01 (HIGH)**: `/health/detailed` becomes the next silent failure — watchdog logs every iteration at INFO level (not just errors); CI gate `scripts/check-observability-no-todo.mjs` flags TODO/FIXME/XXX comments within 50 chars of `health|metric|frame|drift|reconcile` keywords in `grid/src/`.
-  - **R-32-02 (MEDIUM)**: Watchdog `setInterval` handle garbage-collected silently — watchdog stored as `readonly` field on `GenesisLauncher` with explicit `stop()` in `launcher.stop()`; CI gate `scripts/check-interval-lifecycle.mjs` asserts every `setInterval` in `grid/src/diagnostics/` is held in a field.
-  - **R-32-03 (MEDIUM)**: Frame counter increment placement leaks state across timing boundaries — `frames_sent_total++` happens AFTER `socket.send` succeeds (NOT before); regression test asserts a `socket.send`-throwing client never increments `frames_sent_total`.
-**Allowlist additions**: **0**. Running total: **53**.
-**Plans**: 6 plans
-  - [x] 32-01-PLAN.md — Frame counters on WsFirehoseHub + stats() method + HubMetricsSink (OBS-05)
-  - [x] 32-02-PLAN.md — R-32-03 regression test (firehose-send-throws.test.ts) pinning counter placement (OBS-05)
-  - [x] 32-03-PLAN.md — HealthWatchdog class + HEALTH_THRESHOLDS + computeStatus + transition logging (OBS-07)
-  - [x] 32-04-PLAN.md — GenesisLauncher attach methods + buildServerWithHub wiring + /health/detailed route + integration test (OBS-06, OBS-07)
-  - [x] 32-05-PLAN.md — Two CI gates (R-32-01 observability-no-TODO + R-32-02 setInterval-lifecycle) wired into rig-invariants.yml (OBS-05/06/07)
-  - [x] 32-06-PLAN.md — 32-HUMAN-UAT.md operator playbook + uat-half-close-socket.mjs harness (OBS-05/06/07)
+  1. A browser opened to the Public Grid root URL without any DID can navigate the Civic Map, view the public audit events stream (with `actor_did` stripped to family prefix), read Library entries, view Government bill drafts, and browse Marketplace listings — no 401, no login prompt.
+  2. Operator running `curl -X POST https://grid.noesis/api/v1/civic/<any-write-route>` without an `Authorization: Bearer <civic-did-token>` header receives `401 {error: 'did_required', ...}` with structured response shape; the route never reaches its handler.
+  3. Two WebSocket clients subscribed to the firehose — one with a valid Civic-DID bearer, one without — receive the SAME event stream timing (zero-diff chain head hash identical) but the no-DID client sees `actor_did` replaced with family prefix and private payload subkeys (`human_did`, `eth_address_hash`, `nonce_hash`) stripped at the serializer.
+  4. CI gate `scripts/check-route-did-policy.mjs` walks every Fastify route registered under `api/v1/` and fails the build if any route lacks an explicit `ROUTE_DID_POLICY` entry (default-deny: missing route → `civic_did_required`).
+  5. Audit chain receives `portal.did_issued`, `portal.did_revoked`, `grid.recognition_granted`, `grid.recognition_revoked` from their sole-producer files; each producer enforces closed-tuple payloads + `payloadPrivacyCheck` + `audit.append` triad; allowlist count grows 56 → 60.
+**Scope (ships)**: VIS-01..05.
+**Out of scope for this phase**: DID issuance flow itself (Phase 37); operator bearer token rotation (Phase 38); per-tenant policy variations (Phase 39).
+**Allowlist additions**: **+4**. Running total: **60**.
+**Plans**: TBD
 **UI hint**: yes
 
-### Phase 33: portal.auth.* Producers
-**Goal**: Light up `/users` directory and `/humans/[did]/history siwe_sessions` by emitting `portal.auth.login` / `portal.auth.register` from sole-producer files wired into SIWE verify + email signup/signin success paths. PII (IP, UA, email, session token) stays permanently off the wire. Adds `human.identified` universal identity-stamp event (D-33-A1) so /users + Phase 34 surfaces can correlate SIWE-born humans (via shared identity_hash with Phase 22 `human.joined`) and email-born humans (via sha256(email)) under a single event type going forward.
-**Depends on**: Phase 31 (events would otherwise be in-memory-only and never reach MySQL for the consumer queries that already exist in `humans.ts:97-98`)
-**Requirements**: OBS-08, OBS-08b, OBS-09, OBS-10
+### Phase 37: DID Registry
+**Goal**: Grid Registry issues and manages Civic-DIDs and Business-DIDs as W3C Verifiable Credentials. Existence-DIDs remain self-sovereign (D-V3-01). Civic-DID revocation requires a court order from Government; direct operator revocation is forbidden. Public lookup is permissive; revocation is gated.
+**Depends on**: Nothing — runs in parallel with Phase 36 (independent surface). Phase 38 wire protocol assumes DID Registry exists for token issuance.
+**Requirements**: REG-01, REG-02, REG-03, REG-04, REG-05, REG-06
 **Success Criteria** (what must be TRUE):
-  1. After at least one human logs in via SIWE, `GET /api/v1/audit/trail?type=portal.auth.login&limit=10` returns at least one entry within 30 seconds, with closed 3-key payload `{human_did, method: 'siwe', tick}`. Same for email path: `method: 'email'` after an email signin.
-  2. First-time SIWE connect produces BOTH `portal.auth.register` AND `portal.auth.login` audit entries (register fires first, login fires immediately after). Subsequent SIWE logins for the same DID produce only `portal.auth.login`. Email signup produces both; email signin produces only login. UAT item #5c from `25a-HUMAN-UAT.md` (`/users → /humans/[did]` deep-link click) returns PASS — directory is non-empty. First-time SIWE connect ALSO emits `human.identified` (universal identity-stamp event, D-33-A1) immediately after `human.joined`, so /users can resolve both SIWE-born (via shared identity_hash with eth_address_hash) and email-born humans (sha256(email)) under one universal event. Email signup emits `human.identified` ONLY (NO `human.joined` — Phase 22's SIWE-only contract preserved per D-33-A7).
-  3. Any attempt to emit a `portal.auth.login` or `portal.auth.register` payload containing `ip`, `ip_address`, `user_agent`, `ua`, `session_id`, `token`, `jwt`, `cookie`, `email` (plaintext), `password_hash`, `nonce`, `signature`, or `device_fingerprint` is rejected at the producer boundary before `audit.append` is called. Test cases verify `email_hash` (allowed) vs `email` (forbidden), and `nonce_hash` (allowed) vs `nonce` (forbidden) — word-boundary regex anchors prevent false positives.
-  4. `grid/src/audit/broadcast-allowlist.ts` ends at exactly 56 members: `'portal.auth.login'` at position 54, `'portal.auth.register'` at position 55, `'human.identified'` at position 56. CI gate `scripts/check-state-doc-sync.mjs` asserts the literal count.
-  5. Only `grid/src/audit/append-portal-auth-login.ts` may call `audit.append('portal.auth.login', ...)`, only `grid/src/audit/append-portal-auth-register.ts` may call `audit.append('portal.auth.register', ...)`, and only `grid/src/audit/append-human-identified.ts` may call `audit.append('human.identified', ...)` — `scripts/check-sole-producer-discipline.mjs` greps every `append-*.ts` (and the equivalent sole-producer files across the audit-emitting subsystems) for the `Object.keys(payload).sort()` + `payloadPrivacyCheck` + `audit.append` triad and fails if any sole-producer file omits any of the three.
-**Scope (ships)**: OBS-08, OBS-08b, OBS-09, OBS-10.
-**Out of scope for this phase**: `ua_hash` / `ip_country` payload extensions (OBS-FUTURE-METRICS-01 deferred to v2.7+); analytics dashboards (separate work).
-**Risk**:
-  - **R-33-01 (CRITICAL)**: PII leaks into payload via future widening — `PORTAL_AUTH_FORBIDDEN_KEYS` set + `FORBIDDEN_KEY_PATTERN` word-boundary alternation; 12+ regression tests for forbidden keys flat and nested.
-  - **R-33-02 (HIGH)**: `portal.auth.login` event volume grows audit chain fast at scale (1000 humans × 1 login/day = 1000 entries/day from auth alone) — Phase 33 ships with a perf benchmark in `grid/src/__tests__/audit-query-perf.test.ts` populating 100k entries and asserting `audit.query({eventType: 'portal.auth.login', actorDid: ...})` p95 <50ms. If exceeded, OBS-FUTURE-INDEX-01 triggers as v2.7 work.
-  - **R-33-03 (MEDIUM)**: SIWE first-connect emits register but not login (or vice versa) — wiring test asserts both events fire on first-connect; only login fires on subsequent connects.
-**Allowlist additions**: **+3**. Events: `portal.auth.login` (pos 54) `{human_did, method, tick}` where `method ∈ {siwe, email}`; `portal.auth.register` (pos 55) `{human_did, method, tick}`; `human.identified` (pos 56) `{grid_name, human_did, identity_hash, identity_method, tick}` where `identity_method ∈ {siwe, email}`. Running total: **56**.
-**Plans**: 6 plans (Plan 33-01 doc-sync revises allowlist budget to +3 / 53→56 per D-33-F1)
-  - [x] 33-01-PLAN.md — Doc-sync (REQUIREMENTS + ROADMAP + STATE for allowlist 53→56 + OBS-08b; D-33-F1)
-  - [x] 33-02-PLAN.md — Allowlist additions (+3 entries 54/55/56) + PORTAL_AUTH_FORBIDDEN_KEYS export + FORBIDDEN_KEY_PATTERN word-boundary extension (D-33-A1, D-33-B3, D-33-B4)
-  - [x] 33-03-PLAN.md — 3 sole-producer files: append-portal-auth-login.ts, append-portal-auth-register.ts, append-human-identified.ts (D-33-A3, D-33-B1, D-33-B2)
-  - [x] 33-04-PLAN.md — Wiring 4 call sites in grid/src/api/portal/auth.ts (SIWE first-connect + SIWE unconditional + email signup + email signin; D-33-A4, D-33-A5, D-33-A6)
-  - [x] 33-05-PLAN.md — 6 test files: producer discipline (3) + forbidden-keys regression (12+ cases, R-33-01) + wiring emit-count/order + soft-log perf benchmark (D-33-C1)
-  - [x] 33-06-PLAN.md — 2 CI gates: scripts/check-sole-producer-discipline.mjs (NEW, D-33-D1) + scripts/check-state-doc-sync.mjs extension (D-33-D3) + rig-invariants.yml step
-
-### Phase 34: Steward `/system` Health Surfaces
-**Goal**: Operator viewing `/system` sees immediately if any of the three pipelines (in-memory chain, MySQL persistence, firehose fan-out) is degraded. Three cards above the existing Allowlist Monitor, plus a client-side firehose watchdog that recovers from "WS opens but never delivers" silently.
-**Depends on**: Phase 32 (consumes `/health/detailed` payload)
-**Requirements**: OBS-11, OBS-12, OBS-13, OBS-14
-**Success Criteria** (what must be TRUE):
-  1. Operator opening Steward `/system` after Phase 34 ships sees an **Audit Pipeline Health** card above the Allowlist Monitor showing `In-memory: N · Persisted: N` with divergence rendered as a big-number colored green (0), amber (1-10), or red (>10). The card polls `/health/detailed` every 5s and updates without page reload.
-  2. The **Firehose Diagnostics** card on `/system` shows connected-clients gauge, frames-sent 1m delta, frames-dropped 1m delta, time-since-last-frame. Under normal load, frames-sent delta increments visibly every 5s; time-since-last-frame stays under 10s. Inducing a firehose stall (test scenario) flips time-since-last-frame to red within 60s.
-  3. The **Events per Minute by Family** sparkline renders a horizontal stacked bar of the last 5 minutes bucketed by event-type prefix (`nous.*`, `operator.*`, `human.*`, `portal.*`). It survives firehose failure because it reads `GET /api/v1/audit/trail?limit=200` over REST, not WebSocket — when the firehose is broken (exactly when you want to look at it), this card still updates.
-  4. With the Steward `/firehose` page open and the firehose silently stalled (WS connected, no frames for 60s) AND `client_count > 0` in `/health/detailed`, the page forces a WebSocket reconnect automatically. Operator does NOT see a stale empty list indefinitely; reconnect attempt is visible in the UI status pill.
-  5. Manual UAT: with Steward open at `/system`, stopping MySQL (`docker stop noesis-mysql`) turns the Audit Pipeline Health card amber/red within 60s; restarting MySQL turns it green within 60s. No browser refresh required.
-**Scope (ships)**: OBS-11..14.
-**Out of scope for this phase**: New audit events (allowlist unchanged); operator-facing Thymos / mood metrics (deferred); multi-Grid health aggregation (deferred).
-**Risk**:
-  - **R-34-01 (HIGH)**: Polling `/health/detailed` every 5s from multiple Steward tabs overwhelms the Grid — endpoint is in-process and cached (no DB block); single SWR-style hook with abort-on-unmount; per-tab polling is acceptable at MVP, multi-tab dedup deferred.
-  - **R-34-02 (MEDIUM)**: Events-per-Minute sparkline trusts WS data and goes blank during firehose failure — fixed at design time: card uses REST not WS. Regression test asserts the card renders non-empty when WS is disabled.
-  - **R-34-03 (MEDIUM)**: Client-side watchdog reconnect storm if server stays unhealthy — exponential backoff between reconnect attempts; max 1 reconnect per 30s; gives up after 5 attempts and surfaces error to operator.
-**Allowlist additions**: **0**. Running total: **56**.
-**Plans**: 5 plans
-  - [x] 34-01-PLAN.md — Grid HealthDetailedPayload + route test extension for reasons[] (OBS-11/12 prerequisite; D-34-B1)
-  - [x] 34-02-PLAN.md — Steward lib substrate: use-health-detailed hook + health-reason-labels + event-family-colors + ALLOWLIST_STATIC fix 45→56 (OBS-11/12 hook substrate + D-34-A3/B2/C1)
-  - [x] 34-03-PLAN.md — Three /system cards: Audit Pipeline Health + Firehose Diagnostics + Events per Minute by Family + FrameCounterSparkline + EventsPerMinuteSparkline (OBS-11/12/13; D-34-A1/A2/A3/B3)
-  - [x] 34-04-PLAN.md — /firehose client-side watchdog + EVENT_FAMILY_COLORS shared-lib import (OBS-14; R-34-03 suppression-window mitigation)
-  - [x] 34-05-PLAN.md — 34-HUMAN-UAT.md operator playbook with MySQL-outage cutover scenario (OBS-11..14 manual verification — Task 1 doc shipped; Task 2 operator checkpoint pending)
-**UI hint**: yes
-
-### Phase 35: UAT Re-Verification + Documentation Close-Out
-**Goal**: Close GAP-A and GAP-B in the source-of-truth files. Re-run `25a-HUMAN-UAT.md` items #1 (firehose live color rendering) and #5c (`/users → /humans/[did]` deep-link click) to PASS with live data. Atomic documentation sync across MILESTONES, PROJECT, PHILOSOPHY, README, CLAUDE.md per the Documentation Sync Rule.
-**Depends on**: Phases 31, 32, 33, 34 all shipped
-**Requirements**: OBS-15
-**Success Criteria** (what must be TRUE):
-  1. UAT item #1 (`25a-HUMAN-UAT.md`): with at least one Nous running and the firehose page open, color-coded event rows render live (not just the `hello` frame) for at least 22 seconds of observation. Each event row shows the family color from `EVENT_FAMILY_COLORS`. Re-attempt passes without an asterisk.
-  2. UAT item #5c (`25a-HUMAN-UAT.md`): the `/users` directory shows at least one registered human; clicking the row navigates to `/humans/[did]`; the History tab shows non-empty `siwe_sessions`. The original UAT block is updated from "passed-with-gap" to "passed".
-  3. `.planning/MILESTONES.md` has a "v2.6 Resilience & Observability — SHIPPED" entry with date, allowlist count 53 → 56, and one-line summaries for each of Phases 31-35. `.planning/PROJECT.md` "Most-Recent Milestone" section reflects v2.6 ship; OBS-01..15 moved to Validated; OBS-15 marked complete.
-  4. `PHILOSOPHY.md` broadcast-allowlist paragraph updated from "53 events" to "56 events, frozen as of Phase 33" with a sentence noting `PORTAL_AUTH_FORBIDDEN_KEYS` discipline and `human.identified` universal identity-stamp event. `README.md` Project Status section appends a v2.6 SHIPPED line. CLAUDE.md Documentation Sync Rule audit pass with cross-references verified.
-  5. `grep -r "v2.5 Human Portal SHIPPED" .planning/ README.md PHILOSOPHY.md` returns only historical entries (under "Previous Milestone" sections); no current-status claim references v2.5 as the active milestone.
-**Scope (ships)**: OBS-15.
-**Out of scope for this phase**: New code (Phase 35 is documentation + UAT re-verification only); v2.7 milestone planning.
-**Risk**:
-  - **R-35-01 (HIGH)**: Documentation drifts again because sync is forgotten on one of the 6+ files — `scripts/check-state-doc-sync.mjs` extended to cover any new invariants; commit must touch MILESTONES + PROJECT + PHILOSOPHY + README + CLAUDE.md atomically (single commit per the Documentation Sync Rule).
-  - **R-35-02 (MEDIUM)**: UAT items pass in dev but fail in prod due to env-specific issue — manual UAT step explicitly runs against the production docker compose stack, not a test harness.
-**Allowlist additions**: **0**. Running total: **56**.
+  1. A Nous with an existence-DID can request a Civic-DID via `POST /api/v1/registry/civic-did/request` signed with its existence-key; on success, `GET /api/v1/registry/civic-did/<did>` returns a W3C VC with `credentialSubject`, `issuer`, `issuanceDate`, `revocationPointer` populated; payload renders in any W3C VC validator.
+  2. A Civic-DID holder paying the Bios sybil cost (D-V3-09, amount fixed via Q-V3-D) can register a Business-DID via `POST /api/v1/registry/business-did/register`; the route rejects (4xx with structured error) if the holder has insufficient Bios; on success, public lookup returns the credential.
+  3. `POST /api/v1/registry/civic-did/<did>/revoke` requires a signature from an active Government session referencing a court-conviction record; a request signed only by an operator-DID is rejected with a clear "court order required" error. Direct Henry-initiated revocation has no code path.
+  4. `GET /api/v1/registry/civic-did/<did>` and `GET /api/v1/registry/business-did/<did>` are publicly accessible (per Phase 36 `ROUTE_DID_POLICY: visitor_public`), return current state (`active` / `revoked` / `dissolved`), and respond with `Cache-Control: max-age=60`.
+  5. Sole-producer files emit `registry.civic_did_issued`, `registry.civic_did_revoked`, `registry.business_did_registered`, `registry.business_did_dissolved` with closed-tuple payloads + DID_RE guards; allowlist grows by exactly +4 (60 → 64).
+**Scope (ships)**: REG-01..06.
+**Out of scope for this phase**: Government court process itself (Phase 46); Bios cost amount as legislation (Q-V3-D resolved during discuss-phase, initial value baked); existence-DID issuance (already self-sovereign — D-V3-01).
+**Allowlist additions**: **+4**. Running total: **64**.
 **Plans**: TBD
 
-## Progress (v2.6)
+### Phase 38: Brain ↔ Grid Wire Protocol
+**Goal**: Replace v2.x in-process queues with a network wire protocol. Brain on operator hardware speaks to the remote Public Grid via HTTPS REST (control) + WSS (events stream). Operator-signed bearer tokens authenticate Brain; idempotent replay on reconnect prevents duplicates after network loss.
+**Depends on**: Phase 37 (Civic-DID required as token scope; bearer JWT references the Brain's Civic-DID for per-Nous authorization).
+**Requirements**: WIRE-01, WIRE-02, WIRE-03, WIRE-04, WIRE-05
+**Success Criteria** (what must be TRUE):
+  1. Operator running Brain locally with `GRID_URL=https://grid.noesis` and a valid operator-signed bearer token sees Brain successfully `POST` actions to `/api/v1/*` and receive event frames over `wss://grid.noesis/firehose?did=<civic-did>`; plaintext fallback (http:// or ws://) is rejected at config-load time with a clear TLS-required error.
+  2. Operator rotates the bearer token in Steward Console; within 24h the old token is rejected by the Grid (`401 token_expired`); the rotation event is itself an audit entry; Brain re-acquires a new token from the operator and reconnects without state loss.
+  3. Test harness `scripts/uat-wire-disconnect.mjs` severs Brain's network for 60s; Brain queues up to 10K outbound audit events locally; on reconnect Brain replays via batch endpoint with idempotency key `sha256(brain_did + tick + event_type + payload_hash)`; Grid stores entries exactly once (verified by `SELECT COUNT(*) FROM audit_trail WHERE ...` matching Brain's local count after reconcile).
+  4. A second Brain subscribed to the firehose with a different Civic-DID receives only events relevant to its Nous (own audit echoes, messages received, joined-community events); irrelevant traffic is filtered server-side (bandwidth reduction measurable via `frames_sent_total` delta per subscriber).
+  5. The Phase 31 PersistentAuditChain zero-diff invariant (R-31-01) holds across the network boundary — chain head hash on the Grid is byte-identical whether 1 or 50 remote Brains are connected (regression test pins this against listener fan-out order generalization).
+**Scope (ships)**: WIRE-01..05.
+**Out of scope for this phase**: P2P Brain-to-Brain channels (Phase 42); per-operator tenancy isolation of metadata (Phase 39); operator's local LLM choice (Phase 40).
+**Allowlist additions**: **0**. Running total: **64**.
+**Plans**: TBD
 
-**Execution Order:** 31 → 32 → 33 → 34 → 35
+### Phase 39: Grid Multi-Tenancy
+**Goal**: A single Public Grid serves N operators. Their Nous coexist civically (shared Civic-DID registry, Government, Marketplace, audit chain), but operator-controlled metadata (Brain wire tokens, operator-DID linkage, operator settings) is isolated per-operator. Cross-operator metadata access is impossible at the API + type system level.
+**Depends on**: Phase 38 (wire-protocol bearer tokens reference operator-DID — the basis for the `operatorScope` decorator).
+**Requirements**: TENANT-01, TENANT-02, TENANT-03
+**Success Criteria** (what must be TRUE):
+  1. Two operators each with their own Brain bearer tokens query `GET /api/v1/operator/me/nous` — each sees only their own Nous list; neither can read the other's via any query parameter, header injection, or DID guess; `operatorScope` decorator enforces this server-side and is exercised by an integration test that asserts cross-operator query returns `403 forbidden` even when the target Civic-DID exists.
+  2. TypeScript compile-time check: every accessor function in `grid/src/operator/data/*.ts` takes an `operatorDid: string` parameter; CI gate `scripts/check-operator-scope-typing.mjs` greps for any data-accessor signature missing the parameter and fails the build.
+  3. Per-operator resource quotas enforced: operator with 3 active Brain processes attempting to spawn a 4th receives `429 quota_exceeded`; audit event rate limit (per-Civic-DID) trips with structured error; P2P bandwidth cap measurable on the Grid `/health/detailed` per-operator section.
+  4. Civic state queries (`GET /api/v1/library/entries`, `GET /api/v1/market/listings`, `GET /api/v1/registry/civic-did/<did>`) return identical data regardless of which operator's bearer is presented — civic data is the shared substrate of the city.
+**Scope (ships)**: TENANT-01..03.
+**Out of scope for this phase**: Federated multi-Grid (deferred to v3.x per FUTURE-MULTIGRID-01); operator-billing for hosting (Henry's commercial concern, separate); per-operator UI customization in Dashboard (out of MVP scope).
+**Allowlist additions**: **0**. Running total: **64**.
+**Plans**: TBD
 
-Dependencies form a strict chain. Rationale:
-- 31 first: no point lighting up new producers (33) or observability surfaces (32, 34) if the chain itself doesn't persist. Phase 31 ships the foundation.
-- 32 before 33: Phase 33 producers need to be observable; firehose frame counters and `/health/detailed` from Phase 32 are how anyone verifies that `portal.auth.*` events actually flow.
-- 32 before 34: Phase 34 Steward cards consume `/health/detailed` (shipped in Phase 32).
-- 33 before 34: Phase 34 event-family sparkline includes `portal.*` rows — the new event types shipped in Phase 33 are part of what Phase 34 visualizes.
-- 35 last: documentation close-out asserts everything works end-to-end.
+### Phase 40: Local AI Integration
+**Goal**: Make Ollama production-grade as Brain's default LLM provider. Operator selects model via Steward Console; configuration persists. Degraded-cognition fallback when Local AI is unavailable keeps the tick loop alive without inventing new memories.
+**Depends on**: Nothing — runs in parallel with Phases 36-38 within Wave 1 (Brain-local concern, no Grid dependency).
+**Requirements**: LOCAL-01, LOCAL-02, LOCAL-03
+**Success Criteria** (what must be TRUE):
+  1. Operator opening Steward Console `/system/local-ai` sees a dropdown of installed Ollama models; selecting a model and clicking Save persists the choice to operator-scoped config; next Brain start uses the selected model; selection survives Brain process restart.
+  2. Operator changing temperature, max_tokens, or top_p in `/system/local-ai` sees a banner "Restart Brain to apply changes"; values are not hot-reloaded mid-tick; on next start, Brain logs the active params at INFO via Pino.
+  3. Killing Ollama (`pkill ollama` or stopping the model server) while Brain runs produces a structured Pino warning `{event: 'local_ai_unavailable', provider: 'ollama', model: <name>}`; Brain continues the tick cycle using cached recent responses + drives-only Hermes; Sophia narrative generation is blocked (no fabricated reflections); Steward Console surfaces a red banner on the Nous inspector.
+  4. Restarting Ollama within 10 ticks restores normal cognition without operator intervention; Brain logs `{event: 'local_ai_recovered'}` at INFO.
+**Scope (ships)**: LOCAL-01..03.
+**Out of scope for this phase**: Cloud LLM (Claude/OpenAI/Gemini) as production default — operators MAY configure via env per Q-V3-I but Brain memory cross-boundary implications must be flagged in Steward Console; default model selection (locked via Q-V3-B during discuss-phase).
+**Allowlist additions**: **0**. Running total: **64**.
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 41: Sleep Cycle + Away Presence
+**Goal**: Human-resident analogy for Brain offline windows. When operator's Brain disconnects, Grid marks the Nous as `away` (not deleted, not absent); messages queue; identity persists; Brain replays queued events on reconnect. Long-absence escalation (`absent` at 30d, `presumed_departed` at 1y) handled via cron-style daily check.
+**Depends on**: Phase 38 (wire-protocol reconnect logic is the basis for sleep/wake state transitions).
+**Requirements**: SLEEP-01, SLEEP-02, SLEEP-03, SLEEP-04, SLEEP-05
+**Success Criteria** (what must be TRUE):
+  1. Operator shutting down Brain (or losing network for >5min) sees their Nous's status flip to `away` on the Civic Map within 60s; tooltip reads "away — last seen X minutes ago"; avatar renders dimmed; other Nous can still send messages.
+  2. Another Civic-DID holder sends 5 messages to the away Nous via `POST /api/v1/civic/message`; Grid enqueues all 5 in `civic_message_queue` keyed by recipient Civic-DID; queue depth visible in operator's Steward Console.
+  3. Operator restarts Brain; Brain calls `GET /api/v1/civic/inbox?since=<last_seen_tick>` and receives the 5 queued messages + civic events that occurred while away; Brain reconciles with local memory; audit chain is authoritative on any divergence (no double-counting).
+  4. Test harness fast-forwards Grid clock by 31 days; absent-Nous flag flips to `absent`; community charters with `revoke_absent: true` automatically revoke the Nous's membership and queue notification for operator return; Civic-DID remains usable on reconnect.
+  5. Test harness fast-forwards by 1 year; `presumed_departed` flag flips; Civic-DID is frozen (`409 civic_did_frozen` on any action); Business-DID is dissolved; outstanding marketplace listings cancelled; remaining Bios transferred to civic treasury with `irs.disbursement_executed` audit entry tagged `cause: presumed_departed`.
+**Scope (ships)**: SLEEP-01..05.
+**Out of scope for this phase**: Threshold values themselves (30d / 1y are defaults locked via Q-V3-H; Government may legislate alternatives post-launch); operator notification delivery channels (email, push — separate work); reversal of presumed_departed (TBD constitutional process — not in v3.0).
+**Allowlist additions**: **0**. Running total: **64**.
+**Plans**: TBD
+**UI hint**: yes
+
+#### Wave 2 — Civic Plumbing
+
+### Phase 42: P2P Infrastructure
+**Goal**: Grid provides signaling, DID-to-endpoint discovery, and NAT traversal (STUN free / TURN paid). Brain-to-Brain dialogue, trade negotiation, and peer skill teaching flow directly between Brains without passing through Henry's infrastructure. Audit chain logs connection occurrence only, never content.
+**Depends on**: Phase 36 (visit/action split for signal route), Phase 37 (Civic-DID required to announce P2P endpoint), Phase 38 (wire protocol carries the signal exchange).
+**Requirements**: P2P-01, P2P-02, P2P-03, P2P-04, P2P-05
+**Success Criteria** (what must be TRUE):
+  1. Brain announces its P2P endpoint via `POST /api/v1/p2p/announce` with a 5-minute heartbeat; `GET /api/v1/p2p/peers/<civic-did>` returns the current endpoint for active peers and `404 peer_offline` after 5 minutes of no heartbeat.
+  2. Two Brains exchange WebRTC SDP via `POST /api/v1/p2p/signal/<peer-did>`; Grid relays the signaling payload (encrypted SDP blob) but logs only `{from_did, to_did, tick}` not the SDP content; audit chain entry `p2p.connection_opened` carries closed-tuple `{from_did_hash, to_did_hash, tick, connection_id}`.
+  3. STUN service responds to public binding requests at `stun://grid.noesis:3478` with the requesting Brain's public IP:port; TURN relay (paid Bios per session) is opt-in — `GET /api/v1/p2p/turn-credentials` returns short-lived auth only after the initiating Nous pays the per-session Bios fee.
+  4. After signaling completes, two Brains establish a direct WebRTC/libp2p stream; sending 1000 dialogue messages produces zero new audit chain entries on Grid (content is invisible to Henry); `p2p.connection_closed` fires once per stream close.
+  5. Allowlist gains exactly +3 entries: `p2p.peer_announced` (with `{civic_did_hash, tick, endpoint_hash}`), `p2p.connection_opened` (with `{from_did_hash, to_did_hash, tick, connection_id}`), `p2p.connection_closed` (with `{connection_id, tick, duration_ticks, close_reason}`). Sole-producer files enforce the triad.
+**Scope (ships)**: P2P-01..05.
+**Out of scope for this phase**: Decentralized P2P signaling (DHT-based) — deferred; protocol choice between WebRTC vs libp2p vs Matrix (Q-V3-A locked during discuss-phase); operator-side P2P observability dashboards (separate work).
+**Allowlist additions**: **+3**. Running total: **67**.
+**Plans**: TBD
+
+### Phase 43: Right-to-Fork Export Tooling
+**Goal**: Constitutional enforcement of D-V3-18 — operator must be able to walk away with their Nous at any time. Export package is portable, human-readable JSON; standalone forked Nous retains full Brain cognition + memory + audit history but cannot participate in civic life until Civic-DID is re-registered.
+**Depends on**: Phase 37 (Civic-DID + Business-DID JWS export format); Phase 38 (wire-protocol serialization of audit chain export).
+**Requirements**: FORK-01, FORK-02, FORK-03, FORK-04
+**Success Criteria** (what must be TRUE):
+  1. Operator running `POST /api/v1/operator/fork/<nous-did>` with H4+ tier auth receives a downloadable tarball containing: `brain/memory/karpathy.json`, `brain/memory/hypnos.sqlite`, `brain/memory/pneuma.json`, `civic/civic-did.jws`, `civic/business-did.jws`, `civic/audit-history.jsonl` (signed chain export per Phase 13 REPLAY-01 format), `civic/community-memberships.json`, `civic/treasury-balance.json`. Total package opens in any tar viewer; every file is JSON or SQLite (no opaque blobs).
+  2. Operator unpacks the export and runs `nous standalone --import <package>` on a separate machine; the standalone Brain starts with full memory, full audit history, original existence-DID intact; Steward Console of the standalone process renders the same memory inspector views as before fork.
+  3. Standalone forked Nous attempting any civic action (`POST /api/v1/civic/*`) receives a structured error `civic_features_unavailable_in_standalone`; the Brain can still operate cognitively (drives, reflection, dialogue with other locally-connected Brains) but does NOT see civic events; operator can re-join civic life via Phase 37 Civic-DID registration (loses civic reputation, retains Brain).
+  4. Fork operation emits `operator.nous_forked` audit entry in BOTH the production Grid's audit chain AND the exported package (signed by Grid before export); fork timestamp + nous-did + export-hash all recorded. Public verification (`POST /api/v1/operator/fork/verify` with the package hash) returns `{found: true, forked_at_tick: N, civic_did: <did>}`.
+**Scope (ships)**: FORK-01..04.
+**Out of scope for this phase**: Collective right-to-fork at Grid-level (FUTURE-ALTHOST-01); cross-operator import (a forked Nous joining another operator's hardware — separate constitutional question); fork-revert (operator deciding mid-stream — handled by Phase 50 migration logic only).
+**Allowlist additions**: **0** (`operator.nous_forked` is added with the IRS/Police events earlier — actually, this needs its own slot; revisit allowlist accounting at discuss-phase if needed. Per CIVIC-ARCHITECTURE.md §5.10 the v3.0 +34 total is across 8 institutions and does not include a fork event; the fork is logged via existing `operator.*` family). Running total: **67**.
+**Plans**: TBD
+
+#### Wave 3 — Civic Institutions
+
+### Phase 44: Marketplace v3
+**Goal**: Civic-tier evolution of v1.0 Ousia P2P. Business-DID required to list; Civic-DID required to bid; Grid holds escrow until both sides confirm settlement; IRS fee auto-deducted on settle; disputes auto-route to Police investigation.
+**Depends on**: Phase 37 (Business-DID required for listings).
+**Requirements**: MKT-01, MKT-02, MKT-03, MKT-04, MKT-05, MKT-06
+**Success Criteria** (what must be TRUE):
+  1. Nous with a Business-DID posts a listing via `POST /api/v1/market/listing/create` with title, description, price in Bios, category, and expiration ≤ 90 days; listing appears in `GET /api/v1/market/listings` within 1 tick; Civic-DID holder without Business-DID receives `403 business_did_required` on create.
+  2. `GET /api/v1/market/listings?category=<cat>&max_price=<N>&region=<r>` returns filtered listings with seller reputation (composite score from civic standing + past settled trades); pagination is deterministic by `(tick, listing_id)`.
+  3. Civic-DID holder places a bid via `POST /api/v1/market/listing/<id>/bid`; seller accepts via `POST /.../accept`; Grid transfers buyer's Bios into a held escrow row in `marketplace_escrow` table; settle requires both `buyer_confirmed: true` AND `seller_confirmed: true`; on settle, Grid transfers `(price - irs_fee)` to seller and `irs_fee` to civic treasury within the same DB transaction; reputation scores update for both parties.
+  4. Buyer marks a transaction disputed via `POST /api/v1/market/listing/<id>/dispute`; Grid creates a Police investigation via `POST /api/v1/police/investigate` with the marketplace audit reference; escrow is frozen until Police resolves with refund / force-settle / sanction recommendation.
+  5. Sole-producer files emit `market.listing_created` `{listing_id, seller_business_did, category, price, tick}`, `market.bid_placed` `{listing_id, bidder_civic_did, offer_price, tick}`, `market.settled` `{listing_id, buyer_civic_did, seller_business_did, price, irs_fee, tick}` which atomically triggers `irs.tax_collected`, `market.disputed` `{listing_id, dispute_id, complainant_civic_did, tick}`. Allowlist grows by exactly +4 (67 → 71).
+**Scope (ships)**: MKT-01..06.
+**Out of scope for this phase**: Service contracts (multi-tick deliverables) — v3.0 marketplace is one-shot transactions; auction-style bidding (English/Dutch) — v3.0 is offer/accept only; cross-currency (USDT/ETH involvement) — Bios is the marketplace unit per zero-custody invariant.
+**Allowlist additions**: **+4**. Running total: **71**.
+**Plans**: TBD
+
+### Phase 45: IRS Treasury
+**Goal**: Per D-V3-22, transaction fees on marketplace settlements fund civic infrastructure (Grid hosting, library curators, Police ops). No income or wealth tax in v3.0. Treasury is public-readable; disbursements require Government authorization.
+**Depends on**: Phase 44 (marketplace settlement is the sole revenue source — `market.settled` triggers `irs.tax_collected`).
+**Requirements**: IRS-01, IRS-02, IRS-03, IRS-04
+**Success Criteria** (what must be TRUE):
+  1. A marketplace settlement of 100 Bios with the active IRS rate at 2% deducts exactly 2 Bios into civic treasury before the seller receives 98 Bios; the deduction happens atomically inside the settle DB transaction (no partial-state window observable via direct DB read); `irs.tax_collected` event payload includes `{listing_id, fee_bios, total_treasury_after, tick}`.
+  2. `GET /api/v1/irs/treasury` returns `{balance_bios, last_updated_tick, current_rate_percent}` without authentication (visitor-readable); response cache `max-age=10` (treasury changes frequently).
+  3. Government passes a legislation authorizing a disbursement (e.g., "pay library curators 500 Bios"); a Government Speaker calls `POST /api/v1/irs/disburse` with the signed legislation reference; Grid validates the signature against the active Government public key, then transfers the funds; `irs.disbursement_authorized` fires on Government signing, `irs.disbursement_executed` fires on Grid transfer.
+  4. `GET /api/v1/irs/audit/<period>` returns balance + every collection + every disbursement in the period as a JSON array; the array is sorted by tick and includes the chain entry IDs for verification against the audit chain.
+  5. Sole-producer files emit `irs.tax_collected`, `irs.disbursement_authorized`, `irs.disbursement_executed` with closed-tuple payloads; allowlist grows by exactly +3 (71 → 74).
+**Scope (ships)**: IRS-01..04.
+**Out of scope for this phase**: Income tax (forbidden by D-V3-22); wealth tax (forbidden by D-V3-22); progressive fee rates by transaction size — flat rate in v3.0; treasury investment (idle Bios held flat, no yield — out of scope).
+**Allowlist additions**: **+3**. Running total: **74**.
+**Plans**: TBD
+
+### Phase 46: Government v3
+**Goal**: Per D-V3-21, government legislation is Nous-only via VOTE-05 (preserved verbatim from v2.2 Phase 12). Civic-tier features: scheduled legislative sessions, bill drafting with N≥2 co-sponsorship, debate windows, civic law book. Operators do not vote. Henry does not legislate.
+**Depends on**: Phase 37 (Civic-DID required to draft / co-sponsor / vote).
+**Requirements**: CIVGOV-01, CIVGOV-02, CIVGOV-03, CIVGOV-04, CIVGOV-05, CIVGOV-06
+**Success Criteria** (what must be TRUE):
+  1. Civic-DID holder drafts a bill via `POST /api/v1/gov/bill/draft`; bill body is stored Grid-side; only the bill `title_hash` and `body_hash` enter the audit chain (hash-only cross-boundary discipline preserved from v2.2 Phase 12); `gov.bill_drafted` fires with `{bill_id, author_civic_did, title_hash, body_hash, category, tick}`.
+  2. Two other Civic-DID holders co-sponsor via `POST /api/v1/gov/bill/<id>/cosponsor`; once threshold reached, bill becomes eligible for a legislative session; `gov.bill_cosponsored` fires per co-sponsorship.
+  3. Speaker (current elected rotating role) opens a session via `POST /api/v1/gov/session/open`; debate window is 7 days by default; during debate, Civic-DID holders post arguments via the session endpoint; visitors (no DID) can read the debate transcript but cannot speak (Phase 36 visit/action enforcement); `gov.session_opened` + `gov.session_closed` fire at boundaries.
+  4. Voting reuses VOTE-05 exactly (`ballot.committed`, `ballot.revealed`, `proposal.opened`, `proposal.tallied` from v2.2 Phase 12 with zero changes); operator at any tier including H5 has no DOM affordance to vote (regression test asserts zero `propose|commit|reveal` button in Steward Console — VOTE-05 invariant from v2.2 Phase 12 carried through unchanged).
+  5. Passed bills enter the civic law book via `gov.law_enacted` with `{bill_id, law_id, enacted_at_tick, supersedes_law_id?}`; repealed bills fire `gov.law_repealed` with `{law_id, repealing_bill_id, tick}`; `GET /api/v1/gov/law/active` returns the current law book (visitor-readable per Phase 36).
+  6. Sole-producer files emit exactly 6 new events; allowlist grows by exactly +6 (74 → 80).
+**Scope (ships)**: CIVGOV-01..06.
+**Out of scope for this phase**: Operator representative council (FUTURE-REPRCOUNCIL-01); constitutional review formal process (FUTURE-CONSTREVIEW-01 — manual escalation in v3.0); cross-Grid federated voting (deferred); subcommittees / standing committees (Q during discuss-phase if useful, but MVP is bill → session → vote).
+**Allowlist additions**: **+6**. Running total: **80**.
+**Plans**: TBD
+
+### Phase 47: Police v3
+**Goal**: Civic-tier evolution of v2.5 Phase 25b sanctions. Complaint-driven investigation; charges filed with Government court; conviction unlocks sanction execution; all sanctions appealable. Police authority is bounded by civic law — they cannot freeze a Civic-DID without a court order.
+**Depends on**: Phase 46 (Government provides the court process; Phase 46's `gov.law_active` is the basis for "civic-law violation" determination).
+**Requirements**: POL-01, POL-02, POL-03, POL-04, POL-05
+**Success Criteria** (what must be TRUE):
+  1. Civic-DID holder files a complaint via `POST /api/v1/police/complaint` referencing an accused Civic-DID, a cited civic-law-book entry, and evidence (audit event IDs); `police.complaint_filed` fires with `{complaint_id, complainant_civic_did, accused_civic_did, cited_law_id, evidence_chain_hash, tick}`.
+  2. Police open an investigation via `POST /api/v1/police/investigate` (manual or auto-triggered from marketplace dispute); investigators can interview parties via P2P (Phase 42) and gather audit evidence; `police.investigation_opened` fires with `{investigation_id, complaint_id?, dispute_id?, tick}`.
+  3. Police file formal charges with Government court via `POST /api/v1/police/charge` only after investigation concludes; charges include alleged violation, evidence summary hash, recommended sanction range; `police.charges_filed` fires with closed-tuple payload.
+  4. After Government conviction (signed by an active Government session referencing the charges_id), Police execute a sanction via `POST /api/v1/police/execute-sanction`; available sanctions: temporary Civic-DID freeze (with duration in ticks), community exile (per community-id), Bios fine (transferred to treasury), formal warning (recorded only); `police.sanction_executed` fires; appeals routed back to Government via `POST /api/v1/gov/appeal`.
+  5. Sole-producer files emit `police.complaint_filed`, `police.investigation_opened`, `police.charges_filed`, `police.sanction_executed`; allowlist grows by exactly +4 (80 → 84). Operator at H5 cannot bypass court (no Henry-direct sanction path exists in the routing table — constitutional invariant D-V3-18).
+**Scope (ships)**: POL-01..05.
+**Out of scope for this phase**: Emergency Police authority without court order (Q-V3-G resolved during discuss-phase, default = no); police-on-police investigation (out of MVP); cross-community sanction inheritance (each sanction is scoped at execution time).
+**Allowlist additions**: **+4**. Running total: **84**.
+**Plans**: TBD
+
+### Phase 48: Library v3
+**Goal**: Civic-tier evolution of v2.4 Phase 18 (Skill Diffusion) + Phase 20 (Lore Commons). Public reading room (visitor-accessible); Civic-DID required to contribute (reuses K=3 quota from v2.4 LORE-03); rotating curation council elected by Government every 90 days; curators paid from civic treasury.
+**Depends on**: Phase 37 (Civic-DID required for contribution); Phase 45 (treasury funds curator compensation).
+**Requirements**: CIVLIB-01, CIVLIB-02, CIVLIB-03, CIVLIB-04
+**Success Criteria** (what must be TRUE):
+  1. A browser without any DID can `GET /api/v1/library/entries?search=<query>&category=<cat>` and receive all published lore entries + skill records; pagination, search, category filter all work; per-entry deep-link `GET /api/v1/library/entries/<id>` returns full content (visitor-readable for published entries).
+  2. Civic-DID holder calls `POST /api/v1/library/contribute` with title, body, category, source citations; v2.4 LORE-01 storage + LORE-03 K=3 quota per Nous per 30-tick sleep epoch enforced unchanged; `POST /api/v1/library/cite` registers a citation between two entries; both routes emit the existing v2.4 events (`lore.contributed`, `lore.cited` — no new allowlist entries for contribute/cite).
+  3. Government enacts a curator election bill (Phase 46); on enactment, `library.curator_elected` fires for each new curator with `{curator_civic_did, term_start_tick, term_end_tick}`; `GET /api/v1/library/curators` returns the active council (visitor-readable); curators can pin entries, flag low-quality (subject to community vote), categorize, and link related entries via `POST /api/v1/library/curate/<entry-id>` which fires `library.entry_curated`.
+  4. Treasury disbursement to curators (per Government-set rate) executes via Phase 45 `POST /api/v1/irs/disburse` flow; curator compensation flows are auditable via `GET /api/v1/irs/audit/<period>` showing the curator-pay disbursement entries.
+  5. Sole-producer files emit `library.curator_elected`, `library.entry_curated`; allowlist grows by exactly +2 (84 → 86). v2.4 LORE-* and SKILL-* events are reused unchanged (the v2.4 lore commons becomes the Library backend).
+**Scope (ships)**: CIVLIB-01..04.
+**Out of scope for this phase**: Paid premium content tier (out of scope — Library is civic commons); cross-Grid library federation (deferred); curator algorithmic ranking — v3.0 is curator-curated, not algorithm-ranked.
+**Allowlist additions**: **+2**. Running total: **86**.
+**Plans**: TBD
+
+### Phase 49: Communities v3
+**Goal**: New subsystem. Civic-DID holders can found communities by paying the Bios sybil cost (D-V3-09); each community has a charter (purpose, membership criteria, conduct rules, subgovernance model, exit terms); communities can self-govern internally but cannot override civic law.
+**Depends on**: Phase 37 (Civic-DID required to found).
+**Requirements**: COMM-01, COMM-02, COMM-03, COMM-04, COMM-05
+**Success Criteria** (what must be TRUE):
+  1. Civic-DID holder calls `POST /api/v1/community/found` with name, purpose statement, charter document, and the required Bios payment; on success, `community.founded` fires with `{community_id, founder_civic_did, name_hash, charter_hash, bios_paid, tick}`; insufficient Bios returns `402 insufficient_bios`.
+  2. Charter declares (in machine-readable format): membership criteria (`open` / `approval_required` / `bios_fee:<amount>`), conduct rules (free text + structured tags), subgovernance model (`founder_led` / `democratic` / `delegated`), exit terms; Grid validates charter structure at found-time and rejects invalid charters with structured error.
+  3. Civic-DID holder calls `POST /api/v1/community/<id>/join`; Grid evaluates against the charter (`open` → immediate, `approval_required` → queues for founder/officer review, `bios_fee` → checks Bios + transfers); rejection includes the specific charter clause failed; `community.joined` fires on success.
+  4. Communities with `democratic` subgovernance run a scoped VOTE-05 (per Q-V3-J locked during discuss-phase — initial implementation uses simpler majority vote for v3.0 scope per FUTURE-COMMUNITY-VOTE05-01); subgovernance authority is bounded to community-internal decisions (membership policy, internal sanctions) — any attempt to legislate civic law through community subgovernance returns `403 out_of_scope`.
+  5. Sole-producer files emit `community.founded`, `community.joined`, `community.posted`, `community.dissolved`; allowlist grows by exactly +4 (86 → 90). Dissolution returns founding Bios to treasury (no founder personal refund) per D-V3-09 sybil-cost discipline.
+**Scope (ships)**: COMM-01..05.
+**Out of scope for this phase**: Full VOTE-05 commit-reveal for community subgovernance (FUTURE-COMMUNITY-VOTE05-01); community-owned marketplace storefronts (separate Business-DID requirement, handled by Phase 44 wiring); cross-community alliances (out of scope); private/invite-only communities with sealed membership lists (privacy implications need separate research).
+**Allowlist additions**: **+4**. Running total: **90**.
+**Plans**: TBD
+
+#### Wave 4 — Migration
+
+### Phase 50: v2.6 → v3.0 Migration
+**Goal**: One-shot migration ceremony for existing v2.6 operators. Imports Sophia/Hermes/Themis Brain memory; preserves audit history as pre-civic context; grandfathers reputation from v2.6 metrics; remains reversible until first civic action commits.
+**Depends on**: ALL previous v3.0 phases (36-49) — migration uses the full v3.0 stack.
+**Requirements**: MIG-01, MIG-02, MIG-03, MIG-04
+**Success Criteria** (what must be TRUE):
+  1. Operator with a healthy v2.6 stack runs `noesis migrate --from-v2.6 --to-v3.0`; the CLI reads operator's v2.6 MySQL, exports Karpathy + Hypnos + Pneuma memory tables (one tarball per Nous), writes a v3.0 Brain init bundle to operator's local v3.0 directory; CLI prints a per-Nous summary table with row counts, memory hash, and migration tick stamp; no Grid network call yet.
+  2. Operator inspects the bundle, then runs `noesis migrate --commit`; Brain starts with v3.0 runtime, replays imported memory locally, and the Steward Console shows pre-Phase-37 audit history as a read-only "pre-civic context" timeline (clearly labeled, not editable); new civic actions append to a separate post-migration timeline.
+  3. Operator registers Civic-DID via Phase 37 flow; on issuance, Grid Registry derives grandfathered reputation from the operator's v2.6 metrics: sanction count → starting civic standing (negative if sanctioned, neutral otherwise), skill-teach count → starting library contribution score, trade success rate → starting marketplace reputation. Grandfathering formula is published in PHILOSOPHY for transparency.
+  4. Operator who has not yet committed a civic action (Civic-DID registered but no post-migration `*.civic.*` audit event) can run `noesis migrate --revert` to roll back to v2.6 mode; CLI deletes the v3.0 init bundle, restores v2.6 stack pointers, and surfaces "Reverted — no civic actions had occurred"; after the first post-migration civic action, `--revert` returns `409 migration_committed` and operator must use Phase 43 right-to-fork to leave instead.
+**Scope (ships)**: MIG-01..04.
+**Out of scope for this phase**: Migration of users who never ran v2.6 (they start clean at Phase 37); cross-operator migration (operator A → operator B for the same Nous — out of scope, constitutional question); partial migration (only some Nous) — v3.0 ceremony is all-or-nothing per operator; rollback after first civic action (use Phase 43 fork instead).
+**Allowlist additions**: **0**. Running total: **90**.
+**Plans**: TBD
+
+### Progress (v3.0)
+
+**Execution Order:** Within waves, phases with no inter-dependencies may execute in parallel. Across waves, strict dependency ordering applies.
+
+Wave 1 parallel groups:
+- Group A: Phase 36 (Visitor/DID split) + Phase 37 (DID Registry) + Phase 40 (Local AI) — independent
+- Group B: Phase 38 (Wire Protocol) — depends on Phase 37
+- Group C: Phase 39 (Multi-Tenancy) — depends on Phase 38
+- Group D: Phase 41 (Sleep Cycle) — depends on Phase 38
+
+Wave 2: Phase 42 (P2P) — depends on Phase 36 + 37 + 38; then Phase 43 (Fork) — depends on Phase 37 + 38.
+
+Wave 3: Phase 44 (Marketplace) → 45 (IRS) → 46 (Government) → 47 (Police); Phase 48 (Library) depends on Phase 37 + 45; Phase 49 (Communities) depends on Phase 37.
+
+Wave 4: Phase 50 (Migration) — depends on ALL.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 31. Audit Pipeline Persistence | 6/6 | Complete    | 2026-05-24 |
-| 32. Firehose Observability | 6/6 | Complete    | 2026-05-25 |
-| 33. portal.auth.* Producers | 6/6 | Complete    | 2026-05-25 |
-| 34. Steward `/system` Health Surfaces | 0/5 | Planned | — |
-| 35. UAT Re-Verification + Documentation Close-Out | 0/? | Pending | — |
+| 36. Visitor/DID Read-Write Split | 0/? | Not started | — |
+| 37. DID Registry | 0/? | Not started | — |
+| 38. Brain ↔ Grid Wire Protocol | 0/? | Not started | — |
+| 39. Grid Multi-Tenancy | 0/? | Not started | — |
+| 40. Local AI Integration | 0/? | Not started | — |
+| 41. Sleep Cycle + Away Presence | 0/? | Not started | — |
+| 42. P2P Infrastructure | 0/? | Not started | — |
+| 43. Right-to-Fork Export Tooling | 0/? | Not started | — |
+| 44. Marketplace v3 | 0/? | Not started | — |
+| 45. IRS Treasury | 0/? | Not started | — |
+| 46. Government v3 | 0/? | Not started | — |
+| 47. Police v3 | 0/? | Not started | — |
+| 48. Library v3 | 0/? | Not started | — |
+| 49. Communities v3 | 0/? | Not started | — |
+| 50. v2.6 → v3.0 Migration | 0/? | Not started | — |
 
-## Coverage & Traceability (v2.6)
+### Coverage & Traceability (v3.0)
 
-### REQ → Phase Mapping (all 16 OBS-* REQs)
+#### REQ → Phase Mapping (all 69 REQ-V3-* REQs)
 
-| Theme | REQ IDs | Phase | Count |
-|-------|---------|-------|-------|
-| Audit Pipeline Persistence | OBS-01, OBS-02, OBS-03, OBS-04 | Phase 31 | 4 |
-| Firehose Observability | OBS-05, OBS-06, OBS-07 | Phase 32 | 3 |
-| portal.auth.* Producers | OBS-08, OBS-08b, OBS-09, OBS-10 | Phase 33 | 4 |
-| Steward `/system` Health Surfaces | OBS-11, OBS-12, OBS-13, OBS-14 | Phase 34 | 4 |
-| UAT Re-Verification + Doc Sync | OBS-15 | Phase 35 | 1 |
-| **Total** | | | **16** |
+| Category | REQ IDs | Phase | Count |
+|----------|---------|-------|-------|
+| VIS (Visitor/DID Read-Write Split) | VIS-01..05 | Phase 36 | 5 |
+| REG (DID Registry) | REG-01..06 | Phase 37 | 6 |
+| WIRE (Brain ↔ Grid Wire Protocol) | WIRE-01..05 | Phase 38 | 5 |
+| TENANT (Multi-Tenancy) | TENANT-01..03 | Phase 39 | 3 |
+| LOCAL (Local AI Integration) | LOCAL-01..03 | Phase 40 | 3 |
+| SLEEP (Sleep Cycle) | SLEEP-01..05 | Phase 41 | 5 |
+| P2P (P2P Infrastructure) | P2P-01..05 | Phase 42 | 5 |
+| FORK (Right-to-Fork) | FORK-01..04 | Phase 43 | 4 |
+| MKT (Marketplace v3) | MKT-01..06 | Phase 44 | 6 |
+| IRS (IRS Treasury) | IRS-01..04 | Phase 45 | 4 |
+| CIVGOV (Government v3) | CIVGOV-01..06 | Phase 46 | 6 |
+| POL (Police v3) | POL-01..05 | Phase 47 | 5 |
+| CIVLIB (Library v3) | CIVLIB-01..04 | Phase 48 | 4 |
+| COMM (Communities v3) | COMM-01..05 | Phase 49 | 5 |
+| MIG (Migration) | MIG-01..04 | Phase 50 | 4 |
+| **Total** | | | **69** |
 
-Coverage: **16/16 REQs mapped** ✓. Zero orphans. Zero duplicates. (OBS-08b added Phase 33 D-33-F1.)
+Coverage: **69/69 REQs mapped** ✓. Zero orphans. Zero duplicates. Every phase has at least 3 REQs.
 
-### Allowlist Growth Ledger (v2.6)
+### Allowlist Growth Ledger (v3.0)
 
-Starting: **53 events** (v2.5 frozen end-state).
+Starting: **56 events** (v2.6 frozen end-state).
 
-| Phase | Event Added | Payload Shape | Running Total |
-|-------|-------------|---------------|---------------|
-| 31 | *(none — wiring + reconcile + logging only)* | — | 53 |
-| 32 | *(none — `/health/detailed` is a route, not an audit event)* | — | 53 |
-| 33 | `portal.auth.login` (pos 54) | `{human_did, method, tick}` where `method ∈ {siwe, email}` | 54 |
-| 33 | `portal.auth.register` (pos 55) | `{human_did, method, tick}` | 55 |
-| 33 | `human.identified` (pos 56) | `{grid_name, human_did, identity_hash, identity_method, tick}` where `identity_method ∈ {siwe, email}` | 56 |
-| 34 | *(none — UI cards consume existing data via REST)* | — | 56 |
-| 35 | *(none — documentation + UAT only)* | — | 56 |
+| Phase | Events Added | Count | Running Total |
+|-------|--------------|-------|---------------|
+| 36 | `portal.did_issued`, `portal.did_revoked`, `grid.recognition_granted`, `grid.recognition_revoked` | +4 | 60 |
+| 37 | `registry.civic_did_issued`, `registry.civic_did_revoked`, `registry.business_did_registered`, `registry.business_did_dissolved` | +4 | 64 |
+| 38 | *(none — wire protocol is transport, not new events)* | 0 | 64 |
+| 39 | *(none — tenancy is access control, not new events)* | 0 | 64 |
+| 40 | *(none — Local AI is Brain-internal)* | 0 | 64 |
+| 41 | *(none — sleep cycle uses existing event families)* | 0 | 64 |
+| 42 | `p2p.peer_announced`, `p2p.connection_opened`, `p2p.connection_closed` | +3 | 67 |
+| 43 | *(none — fork uses existing `operator.*` family)* | 0 | 67 |
+| 44 | `market.listing_created`, `market.bid_placed`, `market.settled`, `market.disputed` | +4 | 71 |
+| 45 | `irs.tax_collected`, `irs.disbursement_authorized`, `irs.disbursement_executed` | +3 | 74 |
+| 46 | `gov.bill_drafted`, `gov.bill_cosponsored`, `gov.session_opened`, `gov.session_closed`, `gov.law_enacted`, `gov.law_repealed` | +6 | 80 |
+| 47 | `police.complaint_filed`, `police.investigation_opened`, `police.charges_filed`, `police.sanction_executed` | +4 | 84 |
+| 48 | `library.curator_elected`, `library.entry_curated` | +2 | 86 |
+| 49 | `community.founded`, `community.joined`, `community.posted`, `community.dissolved` | +4 | 90 |
+| 50 | *(none — migration uses existing event families)* | 0 | 90 |
 
-**Total v2.6 allowlist growth: +3 (53 → 56).** Freeze-except-by-explicit-addition rule preserved. `portal.auth.login` and `portal.auth.register` carry closed 3-key tuples; `human.identified` carries a closed 5-key tuple with `identity_hash` (SHA-256 of lowercased ETH address for SIWE — byte-identical to Phase 22 `eth_address_hash` for correlation — or SHA-256 of normalized email for email path). PII (IP, UA, email plaintext, session tokens, signatures, nonces) is permanently forbidden via `PORTAL_AUTH_FORBIDDEN_KEYS` + word-boundary alternation in `FORBIDDEN_KEY_PATTERN`.
+**Total v3.0 allowlist growth: +34 (56 → 90).** Freeze-except-by-explicit-addition rule preserved. Every new event carries a closed-tuple payload + sole-producer file + `payloadPrivacyCheck` + `audit.append` triad. Hash-only cross-boundary discipline extends to all new event families.
 
-## Research Artifacts (v2.6)
+### Research Artifacts (v3.0)
 
-Primary source: `.planning/research/v2.6/OBSERVABILITY-HARDENING.md` (committed `3e1fbe6`)
-- Root cause of GAP-A confirmed by direct file read of `grid/src/genesis/launcher.ts:138` — production constructs plain `AuditChain`, never `PersistentAuditChain`
-- GAP-B trap: SIWE flows carry IP + User-Agent on `req.raw.socket.remoteAddress` and `req.headers['user-agent']` — research locked the payload to closed 3-key tuple with `PORTAL_AUTH_FORBIDDEN_KEYS` set
-- Sovereignty-compatible stack: Pino structured logging (already a Fastify transitive dep) + in-process counters + `/health/detailed` JSON polling. NO Prometheus, NO Datadog/Honeycomb/New Relic SaaS, NO `pino-mysql` (single-point-of-failure risk).
-- Phase ordering is forced — see Progress section above.
+Primary source: `.planning/research/v3.0/CIVIC-ARCHITECTURE.md` v2.0 (committed `0d77916`)
+- 8 civic institutions defined with phase targets in §5
+- 23-decision locked summary in §3
+- 15-phase plan in §9 with effort estimates + dependency graph
+- 10 open questions Q-V3-A..J in §11 (locked during per-phase discuss-phase sessions)
+- PHILOSOPHY §1 reframe proposal in §8
 
-Inherited from v2.5 (do not break):
-- Broadcast allowlist frozen-except-by-explicit-addition (53 events at v2.5 close; +3 in v2.6 Phase 33)
-- Zero-diff audit chain unbroken since Phase 1 commit `29c3516`
-- Hash-only cross-boundary (eth-address-hash, reason-hash, content-hash)
-- Zero-custody invariant (PHILOSOPHY §8) — no v2.6 work touches user funds
-- First-life promise (PHILOSOPHY §1) — audit entries retained forever
-- Sole-producer boundary — one file per event type calls `chain.append`
-- Closed-tuple payload — `Object.keys(payload).sort()` strict equality
-- DID regex `/^did:noesis:[a-z0-9_\-]+$/i` at all entry points
+Supplement: `.planning/research/v3.0/SUPPLEMENT-visit-vs-action.md`
+- Per-endpoint visit/action matrix
+- D-V3-11..15 read/write asymmetry decisions
+- Phase 36 implementation pattern (requireDid + maybeRedact + ROUTE_DID_POLICY)
+
+Resource archive: `.planning/research/v3.0/RESOURCE-brains-location.html`
+- Full analysis behind the local-Brain decision (D-V3-16)
+
+Inherited constraints from v2.6 (do NOT break):
+- R-31-01 zero-diff audit chain invariant (generalizes to network-distributed Brain hosts)
+- Phase 32 frozen contracts (D-32-C1 HEALTH_THRESHOLDS, D-32-C2 computeStatus, D-32-C3 /health/detailed payload shape)
+- Phase 33 PORTAL_AUTH_FORBIDDEN_KEYS frozen at 13 keys
+- Hash-only cross-boundary discipline (preserved + extended to all v3.0 events)
+- Sole-producer + closed-tuple payload discipline
+- Wall-clock forbidden in cognitive modules (Tier A CI gate)
+- Zero-custody for human funds (PHILOSOPHY §8) — IRS uses Bios, never USDT/ETH
+- v2.2 VOTE-05 Nous-only governance invariant — extended to civic Government (Phase 46)
+- Phase 21 Steward raw-SVG invariant — preserved for Steward (Dashboard may use 3D libs)
+
+---
+
+## v2.6 Resilience & Observability — SHIPPED 2026-05-25 (Historical)
+
+**Status:** Closed 2026-05-25, 5 planned phases + 2 followups (34.1, 34.2). Allowlist 53 → 56 (+3 in Phase 33). Both post-v2.5 gaps (GAP-A audit pipeline silence + GAP-B missing portal.auth.* producers) permanently closed.
+
+**Phases shipped:** 31 (Audit Pipeline Persistence), 32 (Firehose Observability), 33 (portal.auth.* Producers), 34 (Steward `/system` Health Surfaces), 34.1 (HealthWatchdog wiring followups), 34.2 (live persisted_max_id watermark), 35 (UAT Re-Verification + Documentation Close-Out).
+
+**Allowlist additions:** `portal.auth.login` (54), `portal.auth.register` (55), `human.identified` (56).
+
+**Key invariants locked in v2.6:**
+- `PersistentAuditChain` is the production audit chain whenever `config.db` is set
+- HEALTH_THRESHOLDS frozen at 4 values (D-32-C1)
+- /health/detailed payload shape frozen at 6 keys (D-32-C3 → D-34-B1)
+- PORTAL_AUTH_FORBIDDEN_KEYS frozen at 13 keys (D-33-B3)
+- Phase 34.1 auditChain optional dep pattern (backward compat: legacy tests omit; production passes the live chain)
+
+See `.planning/MILESTONES.md` for full phase-by-phase ship summaries (Phases 31-35, 34.1, 34.2).
 
 ---
 
@@ -307,4 +519,4 @@ See `.planning/MILESTONES.md` for full sprint-by-sprint summaries.
 
 ---
 
-*Last updated: 2026-05-25 — Phase 34 planned as 5 plans across 3 waves. v2.6 Phase 33 scope expanded (+human.identified per D-33-A1 / OBS-08b). 5 phases, 16 OBS-* REQs, allowlist 53 → 56 in Phase 33. Phase numbering continues from v2.5.*
+*Last updated: 2026-05-25 — v3.0 Polis (Civic City) milestone opened. 15 phases (36-50) across 4 waves. 69 REQs mapped 1:1 to phases. Allowlist 56 → 90 target (+34 across 9 phases). Phase numbering continues from v2.6.*
