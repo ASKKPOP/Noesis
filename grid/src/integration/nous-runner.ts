@@ -271,8 +271,11 @@ export class NousRunner {
         await this.executeActions(actions, tick);
     }
 
-    /** Execute a list of actions returned by the brain. */
-    private async executeActions(actions: BrainAction[], tick: number): Promise<void> {
+    /** Execute a list of actions returned by the brain.
+     * Phase 38 WIRE-01: promoted from private to public so the brain-wire route
+     * can dispatch externally-received BrainAction[] through the same sole-producer
+     * path (R-31-01). Do NOT call audit.append directly from route handlers. */
+    async executeActions(actions: BrainAction[], tick: number): Promise<void> {
         for (const action of actions) {
             switch (action.action_type) {
                 case 'speak':

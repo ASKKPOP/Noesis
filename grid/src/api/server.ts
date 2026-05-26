@@ -57,7 +57,9 @@ import './preHandlers/types.js'; // module augmentation side-effect
 import { verifyGovernmentSession, GOV_SESSION_ISSUER_DID } from '../civic-registry/index.js';
 import { registerRegistryRoutes } from './routes/registry.js';
 import { registerBrainTokenRoutes } from './routes/brain-token.js';
+import { registerBrainWireRoutes } from './routes/brain-wire.js';
 import type { BrainTokenStore } from '../db/stores/brain-token-store.js';
+import type { WireCoordinator } from './routes/brain-wire.js';
 
 /**
  * Phase 6 AGENCY-02: normalized memory entry shape crossing the RPC boundary.
@@ -307,6 +309,14 @@ export interface GridServices {
         getBill(id: string): Record<string, unknown> | null;
         listBills(): Array<Record<string, unknown>>;
     };
+    /**
+     * Phase 38 WIRE-01: GridCoordinator accessor for the Brain-wire action dispatch route.
+     * When present, POST /api/v1/brain/actions looks up the NousRunner via
+     * coordinator.getRunnerByCivicDid(civicDid) and calls executeActions.
+     * When absent, the route returns 503 coordinator_unavailable.
+     * Production wiring passes the live GridCoordinator from GenesisLauncher.
+     */
+    coordinator?: WireCoordinator;
 }
 
 /**
@@ -354,7 +364,7 @@ export function buildServerWithHub(
         const policy = lookupPolicy(req.method, routePath);
         if (policy === 'public') {
             // Public routes: still resolve context for downstream handlers that conditionally redact.
-            const ctx = await tryDid(req, { didStore: services.didStore });
+            const ctx = await tryDid(req, { didStore: services.didStore, brainTokenStore: services.brainTokenStore });
             req.didContext = ctx;
             return;
         }
@@ -380,7 +390,7 @@ export function buildServerWithHub(
         }
         // civic_did_required, business_did_required, police_only
         // (Plan 05/06 layer the sub-tier checks; this plan enforces civic_did_required minimum)
-        const ctx = await requireDid(req, reply, { didStore: services.didStore });
+        const ctx = await requireDid(req, reply, { didStore: services.didStore, brainTokenStore: services.brainTokenStore });
         if (!ctx) return;
         req.didContext = ctx;
     });
@@ -587,6 +597,11 @@ export function buildServerWithHub(
     // Two endpoints: POST /api/v1/brain/token/{register,revoke}.
     // Policy enforcement delegated to onRequest hook (public / government_only).
     void registerBrainTokenRoutes(app, services);
+
+    // --- Phase 38 WIRE-01: Brain action dispatch route ---
+    // POST /api/v1/brain/actions — civic_did_required (onRequest hook enforces).
+    // Dispatches BrainAction[] through NousRunner.executeActions (R-31-01 sole-producer path).
+    registerBrainWireRoutes(app, services);
 
     // --- Phase 6 Plan 04: Operator routes (AGENCY-02 H3 + AGENCY-03) ---
     // All operator.* audit writes inside this registrar go through
