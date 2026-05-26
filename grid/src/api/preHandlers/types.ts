@@ -6,12 +6,20 @@
  */
 
 /**
- * The three tiers of identity that can be attached to a request.
+ * The tiers of identity that can be attached to a request.
  * - anonymous: no token, no cookie
  * - human_visitor: valid portal session cookie (Type B human logged in)
  * - civic_member: valid Civic-DID bearer JWT
+ * - government: verified government session (Phase 37 REG-04 / Pitfall 6)
+ *   Distinct from 'civic_member' so downstream civic_did_required gates do not
+ *   accidentally accept Government sessions. Phase 46 swaps in the real validator
+ *   without renaming the tier.
  */
-export type VisitorTier = 'anonymous' | 'human_visitor' | 'civic_member';
+export type VisitorTier =
+    | 'anonymous'
+    | 'human_visitor'
+    | 'civic_member'
+    | 'government'; // Phase 37 (REG-04 / D-V3-18 / Pitfall 6) — Phase 46 swap point
 
 /**
  * Resolved identity context attached to every request by the global onRequest hook.

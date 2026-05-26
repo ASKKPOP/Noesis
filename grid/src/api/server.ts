@@ -54,6 +54,8 @@ import { lookupPolicy } from './policy.js';
 import { tryDid } from './preHandlers/tryDid.js';
 import { requireDid, requirePortalSession } from './preHandlers/requireDid.js';
 import './preHandlers/types.js'; // module augmentation side-effect
+import { verifyGovernmentSession, GOV_SESSION_ISSUER_DID } from '../civic-registry/index.js';
+import { registerRegistryRoutes } from './routes/registry.js';
 
 /**
  * Phase 6 AGENCY-02: normalized memory entry shape crossing the RPC boundary.
@@ -274,6 +276,20 @@ export interface GridServices {
      */
     didStore?: { isRevoked(did: string): boolean | Promise<boolean> };
     /**
+     * Phase 37 REG-01..04: Civic-DID persistence store.
+     * When present, registry routes use this for insert/get/revoke operations.
+     * When absent, registry routes return 503 civic_registry_unavailable.
+     * Production wiring passes new CivicDidStore(pool) from genesis/launcher.
+     */
+    civicDidStore?: import('../civic-registry/civic-did-store.js').CivicDidStore;
+    /**
+     * Phase 37 REG-03..06: Business-DID persistence store.
+     * When present, business-did routes use this for insert/get/dissolve operations.
+     * When absent, business routes return 503 business_registry_unavailable.
+     * Production wiring passes new BusinessDidStore(pool) from genesis/launcher.
+     */
+    businessDidStore?: import('../civic-registry/business-did-store.js').BusinessDidStore;
+    /**
      * Phase 36 VIS-01 VOTE-05: optional Polis bill store.
      * When present, polis-bills route queries getBill/listBills.
      * When absent, the route returns empty stubs (Phase 46 wires real Polis data).
@@ -339,7 +355,21 @@ export function buildServerWithHub(
             req.didContext = ctx;
             return;
         }
-        // civic_did_required, business_did_required, government_only, police_only
+        // Phase 37 (REG-04 / Pitfall 1 / Pitfall 6): government_only branch — enforces
+        // court-order discipline before any civic-DID revoke or business-DID dissolve
+        // handler is reached. Operators cannot revoke or dissolve (constitutional invariant
+        // D-V3-18). The branch must run BEFORE the generic requireDid fall-through.
+        // tier='government' (NOT 'civic_member') keeps Government sessions out of
+        // civic_did_required-gated routes (Pitfall 6).
+        if (policy === 'government_only') {
+            const result = await verifyGovernmentSession(req.headers.authorization);
+            if (!result.ok) {
+                return reply.code(403).send({ error: result.reason });
+            }
+            req.didContext = { did: GOV_SESSION_ISSUER_DID, tier: 'government' };
+            return;
+        }
+        // civic_did_required, business_did_required, police_only
         // (Plan 05/06 layer the sub-tier checks; this plan enforces civic_did_required minimum)
         const ctx = await requireDid(req, reply, { didStore: services.didStore });
         if (!ctx) return;
@@ -538,6 +568,11 @@ export function buildServerWithHub(
         }
         return law;
     });
+
+    // --- Phase 37 REG-01..06: DID Registry routes ---
+    // Six endpoints under /api/v1/registry/* for Civic-DID + Business-DID lifecycle.
+    // Policy enforcement (public, government_only, civic_did_required) delegated to onRequest hook.
+    void registerRegistryRoutes(app, services);
 
     // --- Phase 6 Plan 04: Operator routes (AGENCY-02 H3 + AGENCY-03) ---
     // All operator.* audit writes inside this registrar go through
