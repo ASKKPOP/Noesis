@@ -22,6 +22,7 @@ export interface BrainTokenRecord {
     issuedAt: number;                        // unix seconds
     expiresAt: number;                       // unix seconds
     revoked: boolean;
+    operatorDid: string | null;             // Phase 39 TENANT-01 — null until claimed via /operator/me/brains
 }
 
 interface BrainTokenRow extends RowDataPacket {
@@ -30,6 +31,7 @@ interface BrainTokenRow extends RowDataPacket {
     issued_at: number;
     expires_at: number;
     revoked: number;  // TINYINT(1) — mysql2 returns as number
+    operator_did: string | null;
 }
 
 function rowToRecord(row: BrainTokenRow): BrainTokenRecord {
@@ -43,6 +45,7 @@ function rowToRecord(row: BrainTokenRow): BrainTokenRecord {
         issuedAt: row.issued_at,
         expiresAt: row.expires_at,
         revoked: row.revoked === 1,
+        operatorDid: row.operator_did ?? null,
     };
 }
 
@@ -141,5 +144,47 @@ export class BrainTokenStore {
         );
         if (!rows[0]) return false;
         return rows[0].revoked === 1;
+    }
+
+    /**
+     * Phase 39 TENANT-01 — Claim ownership of a Brain token.
+     *
+     * Atomic UPDATE WHERE operator_did IS NULL — first claimer wins (T-39-02-01).
+     * Returns true if the claim succeeded, false if the Brain is already owned or unknown.
+     */
+    async setOwner(brainDid: string, operatorDid: string): Promise<boolean> {
+        const [result] = await this.pool.query<ResultSetHeader>(
+            `UPDATE brain_tokens SET operator_did = ?
+             WHERE grid_name = ? AND brain_did = ? AND operator_did IS NULL`,
+            [operatorDid, this.gridName, brainDid],
+        );
+        return result.affectedRows === 1;
+    }
+
+    /**
+     * Phase 39 TENANT-01 — List active (non-revoked) tokens owned by an operator.
+     */
+    async findByOperator(operatorDid: string): Promise<BrainTokenRecord[]> {
+        const [rows] = await this.pool.query<BrainTokenRow[]>(
+            `SELECT brain_did, public_key_jwk, issued_at, expires_at, revoked, operator_did
+             FROM brain_tokens
+             WHERE grid_name = ? AND operator_did = ? AND revoked = 0`,
+            [this.gridName, operatorDid],
+        );
+        return rows.map(rowToRecord);
+    }
+
+    /**
+     * Phase 39 TENANT-01 / D-39-06 — Count active non-expired tokens for an operator.
+     * Used for quota enforcement at claim time.
+     */
+    async countActiveByOperator(operatorDid: string): Promise<number> {
+        const [rows] = await this.pool.query<Array<{ cnt: number } & RowDataPacket>>(
+            `SELECT COUNT(*) AS cnt FROM brain_tokens
+             WHERE grid_name = ? AND operator_did = ? AND revoked = 0
+               AND expires_at > UNIX_TIMESTAMP()`,
+            [this.gridName, operatorDid],
+        );
+        return rows[0]?.cnt ?? 0;
     }
 }

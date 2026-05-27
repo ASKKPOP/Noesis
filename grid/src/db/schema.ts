@@ -466,4 +466,42 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS brain_event_ingest`,
     },
+    // Phase 39 TENANT-01 — Operator-Brain ownership linkage (D-39-01).
+    // Adds nullable operator_did column to brain_tokens so a Portal-authenticated
+    // operator can claim ownership of a Brain via POST /api/v1/operator/me/brains.
+    // NULL = unclaimed (functional but unowned per D-39-02).
+    {
+        version: 27,
+        name: 'add_operator_did_to_brain_tokens',
+        up: `
+            ALTER TABLE brain_tokens
+              ADD COLUMN operator_did VARCHAR(255) NULL DEFAULT NULL,
+              ADD INDEX idx_operator_did (grid_name, operator_did)
+        `,
+        down: `
+            ALTER TABLE brain_tokens
+              DROP INDEX idx_operator_did,
+              DROP COLUMN operator_did
+        `,
+    },
+    // Phase 39 TENANT-03 — Per-operator quota overrides (D-39-07 / D-39-08).
+    // When no row exists for an operator, getQuotaLimit() falls back to
+    // grid_config 'quota.brain_processes_default' (global default = 3 per D-39-07).
+    {
+        version: 28,
+        name: 'create_operator_quota_overrides',
+        up: `
+            CREATE TABLE IF NOT EXISTS operator_quota_overrides (
+                grid_name                  VARCHAR(63)     NOT NULL,
+                operator_did               VARCHAR(255)    NOT NULL,
+                brain_process_limit        INT UNSIGNED NOT NULL DEFAULT 3,
+                event_rate_per_did_per_min INT UNSIGNED NOT NULL DEFAULT 600,
+                p2p_bandwidth_cap_bytes    BIGINT UNSIGNED NULL DEFAULT NULL,
+                updated_at   TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+                                 ON UPDATE CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (grid_name, operator_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS operator_quota_overrides`,
+    },
 ];
