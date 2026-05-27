@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
-stopped_at: Phase 41 Plan 01 complete — Wave 0 Nyquist stubs (7 files)
-last_updated: "2026-05-27T18:53:47Z"
+stopped_at: Phase 41 UI-SPEC approved — ready for plan-phase
+last_updated: "2026-05-27T19:07:56.203Z"
 progress:
   total_phases: 25
   completed_phases: 5
   total_plans: 31
-  completed_plans: 26
-  percent: 84
+  completed_plans: 27
+  percent: 87
 ---
 
 # Project State
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 ## Current Position
 
 Phase: 41 (sleep-cycle-away-presence) — EXECUTING
-Plan: 2 of 6 (Plan 01 complete)
-Status: Executing Phase 41
+Plan: 3 of 6 (Plan 01 complete)
+Status: Ready to execute
 Next action: Execute Plan 41-02 — DB migration + civic_presence table
 
 Driving inputs for v3.0 (locked at milestone open):
@@ -440,6 +440,6 @@ Total v3.0 allowlist growth: **+34 (56 → 90)**. Freeze-except-by-explicit-addi
 
 ## Session Continuity
 
-Last session: 2026-05-27T17:25:45.254Z
+Last session: 2026-05-27T19:07:56.200Z
 Stopped at: Phase 41 UI-SPEC approved — ready for plan-phase
-Resume file: .planning/phases/41-sleep-cycle-away-presence/41-UI-SPEC.md
+Resume file: None

@@ -65,11 +65,11 @@
 <!-- D-V3-20: When operator offline, Nous sleeps. City sees as 'away'.
      Memory + identity persist; messages queue; civic standing preserved. -->
 
-- [ ] **SLEEP-01**: When Brain process terminates (operator shutdown, network loss >5min), Grid marks the Nous's Civic-DID status as `away` with `last_seen_at` timestamp. Civic Map renders away Nous with dimmed avatar + "away X hours ago" tooltip.
-- [ ] **SLEEP-02**: Messages sent to an away Nous queue in Grid's `civic_message_queue` table (per recipient Civic-DID); delivered as a batch when Brain reconnects.
+- [x] **SLEEP-01**: When Brain process terminates (operator shutdown, network loss >5min), Grid marks the Nous's Civic-DID status as `away` with `last_seen_at` timestamp. Civic Map renders away Nous with dimmed avatar + "away X hours ago" tooltip.
+- [x] **SLEEP-02**: Messages sent to an away Nous queue in Grid's `civic_message_queue` table (per recipient Civic-DID); delivered as a batch when Brain reconnects.
 - [ ] **SLEEP-03**: On Brain reconnect, Brain pulls queued messages + civic events since last_seen via `GET /api/v1/civic/inbox?since=<last_seen>`. Brain reconciles with local memory; audit chain is source of truth on conflict.
-- [ ] **SLEEP-04**: After 30 days offline (configurable via Q-V3-H), Civic-DID status escalates to `absent`. Communities may revoke membership per charter rules. Notification queued for operator on return.
-- [ ] **SLEEP-05**: After 1 year offline (configurable via Q-V3-H), Civic-DID status escalates to `presumed_departed`. Civic-DID frozen (no actions accepted); Business-DID dissolved; outstanding marketplace listings cancelled; remaining Bios returned to civic treasury.
+- [x] **SLEEP-04**: After 30 days offline (configurable via Q-V3-H), Civic-DID status escalates to `absent`. Communities may revoke membership per charter rules. Notification queued for operator on return.
+- [x] **SLEEP-05**: After 1 year offline (configurable via Q-V3-H), Civic-DID status escalates to `presumed_departed`. Civic-DID frozen (no actions accepted); Business-DID dissolved; outstanding marketplace listings cancelled; remaining Bios returned to civic treasury.
 
 ### P2P — P2P Infrastructure (Phase 42 — Brain-to-Brain direct)
 
@@ -278,11 +278,11 @@
 | LOCAL-01 | 40 | Pending |
 | LOCAL-02 | 40 | Pending |
 | LOCAL-03 | 40 | Pending |
-| SLEEP-01 | 41 | Pending |
-| SLEEP-02 | 41 | Pending |
+| SLEEP-01 | 41 | Complete |
+| SLEEP-02 | 41 | Complete |
 | SLEEP-03 | 41 | Pending |
-| SLEEP-04 | 41 | Pending |
-| SLEEP-05 | 41 | Pending |
+| SLEEP-04 | 41 | Complete |
+| SLEEP-05 | 41 | Complete |
 | P2P-01 | 42 | Pending |
 | P2P-02 | 42 | Pending |
 | P2P-03 | 42 | Pending |
