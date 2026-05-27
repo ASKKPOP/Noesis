@@ -124,6 +124,12 @@ def create_brain_app(
     hermes_provider: str = "anthropic",
     hermes_model: str = "",
     hermes_api_key: str | None = None,
+    # Phase 40 D-40-01: 3-tier model overrides from Grid settings
+    small_model_override: str | None = None,
+    primary_model_override: str | None = None,
+    large_model_override: str | None = None,
+    temperature_override: float | None = None,
+    max_tokens_override: int | None = None,
 ) -> BrainApp:
     """Create a BrainApp from config.
 
@@ -179,13 +185,30 @@ def create_brain_app(
     for desc in telos_config.get("long_term", []):
         telos.add_goal(desc, GoalType.LONG_TERM, priority=0.3)
 
-    # Build LLM adapter
-    # Override model from YAML if not provided via env
+    # Build LLM adapter — Phase 40: 3-tier ModelRouter with OllamaAdapters
     yaml_llm = config_data.get("llm", {})
-    model = llm_model or yaml_llm.get("models", {}).get("primary", "qwen3:4b")
 
     if llm_provider == "ollama":
-        llm = OllamaAdapter(model=model, base_url=ollama_host)
+        from noesis_brain.llm.router import ModelRouter  # noqa: PLC0415
+        from noesis_brain.llm.types import LLMConfig, ModelTier  # noqa: PLC0415
+
+        _small = small_model_override or yaml_llm.get("models", {}).get("small", "qwen3:4b")
+        _primary = primary_model_override or yaml_llm.get("models", {}).get("primary", "qwen3:4b")
+        _large = large_model_override or yaml_llm.get("models", {}).get("large", "qwen3:4b")
+        _temp = temperature_override if temperature_override is not None else float(yaml_llm.get("temperature", 0.7))
+        _max_tok = max_tokens_override if max_tokens_override is not None else int(yaml_llm.get("max_tokens", 2048))
+
+        llm_config = LLMConfig(
+            provider="ollama",
+            models={"small": _small, "primary": _primary, "large": _large},
+            temperature=_temp,
+            max_tokens=_max_tok,
+        )
+        router = ModelRouter(config=llm_config)
+        router.register_tier(ModelTier.SMALL, OllamaAdapter(model=_small, base_url=ollama_host))
+        router.register_tier(ModelTier.PRIMARY, OllamaAdapter(model=_primary, base_url=ollama_host))
+        router.register_tier(ModelTier.LARGE, OllamaAdapter(model=_large, base_url=ollama_host))
+        llm = router  # ModelRouter satisfies LLMAdapter (Plan 03 Task 1)
     else:
         raise ValueError(f"Unknown LLM provider: {llm_provider!r}. Use 'ollama'.")
 
@@ -248,7 +271,41 @@ def _build_http_server(handler: BrainHandler) -> BrainHttpServer:
 
 # ── Environment-based factory ─────────────────────────────────────────────────
 
-def create_brain_app_from_env() -> BrainApp:
+async def _fetch_operator_settings(grid_url: str, token: str) -> dict:
+    """Fetch operator settings from Grid at Brain startup (D-40-01).
+
+    Blocks until Grid responds. Exits non-zero if Grid unreachable or returns error.
+    Uses GET /api/v1/operator/me/brain-settings (Brain-JWT-authenticated endpoint).
+    """
+    import sys  # noqa: PLC0415
+    import httpx  # noqa: PLC0415
+
+    url = f"{grid_url}/api/v1/operator/me/brain-settings"
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                url,
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=10.0,
+            )
+            if resp.status_code != 200:
+                log.error(
+                    "{event: 'settings_fetch_failed', reason: 'http_%s', url: '%s'}",
+                    resp.status_code,
+                    url,
+                )
+                sys.exit(1)
+            return resp.json()
+    except (httpx.HTTPError, httpx.RequestError, httpx.ConnectError) as e:
+        log.error(
+            "{event: 'settings_fetch_failed', reason: '%s', url: '%s'}",
+            str(e),
+            url,
+        )
+        sys.exit(1)
+
+
+async def create_brain_app_from_env() -> BrainApp:
     """Create BrainApp from environment variables."""
     # Phase 38 WIRE-01 (Pitfall 5): validate GRID_URL scheme at config-load time,
     # BEFORE BrainApp construction. Raises ValueError synchronously so the process
@@ -268,6 +325,58 @@ def create_brain_app_from_env() -> BrainApp:
     else:
         config_path = Path(config_path_str)
 
+    # Phase 40 D-40-01: Resolve 3-tier model settings BEFORE building the app.
+    # When GRID_URL + CIVIC_DID + NOUS_DID are all set, fetch from Grid.
+    # Otherwise fall back to env var defaults (dev/test mode).
+    small_model: str | None = None
+    primary_model: str | None = None
+    large_model: str | None = None
+    temperature: float | None = None
+    max_tokens: int | None = None
+    token_manager = None
+
+    if grid_url:
+        civic_did = os.environ.get("CIVIC_DID")
+        nous_did = os.environ.get("NOUS_DID", "").strip() or f"did:noesis:{_slugify_nous_name(nous_name)}"
+        if civic_did and nous_did:
+            from noesis_brain.wire.client import GridWireClient  # noqa: PLC0415
+            from noesis_brain.wire.token_manager import TokenManager  # noqa: PLC0415
+            from noesis_brain.whisper.keyring import derive_existence_signing_key  # noqa: PLC0415
+
+            # Derive the Ed25519 signing key from the existence-DID (D-38-A4).
+            signing_key = derive_existence_signing_key(nous_did)
+            token_manager = TokenManager(
+                existence_did=nous_did,
+                civic_did=civic_did,
+                signing_key=signing_key,
+            )
+
+            # Phase 40 D-40-01: Fetch operator settings from Grid before LLM adapter construction.
+            # Brain blocks startup until Grid responds; exits non-zero if unreachable.
+            bearer_token = await token_manager.get_token()
+            settings_data = await _fetch_operator_settings(grid_url, bearer_token)
+            local_ai = settings_data.get("local_ai", {})
+            small_model = local_ai.get("small_model", "qwen3:4b")
+            primary_model = local_ai.get("primary_model", "qwen3:4b")
+            large_model = local_ai.get("large_model", "qwen3:4b")
+            temperature = float(local_ai.get("temperature", 0.7))
+            max_tokens = int(local_ai.get("max_tokens", 2048))
+            log.info(
+                "[Brain] Settings fetched: small=%s primary=%s large=%s temp=%.2f max_tokens=%d",
+                small_model, primary_model, large_model, temperature, max_tokens,
+            )
+        else:
+            log.warning(
+                "[Brain] GRID_URL set but CIVIC_DID/NOUS_DID missing — "
+                "using env defaults"
+            )
+    else:
+        # No Grid URL — use env var default (dev/test mode)
+        env_model = os.environ.get("LLM_MODEL", "qwen3:4b")
+        small_model = env_model
+        primary_model = env_model
+        large_model = env_model
+
     app = create_brain_app(
         nous_name=nous_name,
         config_path=config_path,
@@ -280,42 +389,34 @@ def create_brain_app_from_env() -> BrainApp:
         hermes_provider=os.environ.get("HERMES_PROVIDER", "anthropic"),
         hermes_model=os.environ.get("HERMES_MODEL", ""),
         hermes_api_key=os.environ.get("HERMES_API_KEY"),
+        small_model_override=small_model,
+        primary_model_override=primary_model,
+        large_model_override=large_model,
+        temperature_override=temperature,
+        max_tokens_override=max_tokens,
     )
     # Wire the HTTP server (requires BRAIN_HTTP_SECRET in env).
     app.http_server = _build_http_server(app.handler)
 
     # Phase 38 WIRE-01 (D-38-A2): wire GridWireClient when GRID_URL + DID env vars are set.
-    # CIVIC_DID and NOUS_DID must both be present; otherwise, fall back to Unix-socket path.
-    if grid_url:
+    if grid_url and token_manager is not None:
+        nous_did_for_wire = os.environ.get("NOUS_DID", "").strip() or f"did:noesis:{_slugify_nous_name(nous_name)}"
         civic_did = os.environ.get("CIVIC_DID")
-        nous_did = os.environ.get("NOUS_DID", "").strip() or f"did:noesis:{_slugify_nous_name(os.environ.get('NOUS_NAME', 'sophia'))}"
-        if civic_did and nous_did:
-            from noesis_brain.wire.client import GridWireClient  # noqa: PLC0415
-            from noesis_brain.wire.token_manager import TokenManager  # noqa: PLC0415
-            from noesis_brain.whisper.keyring import derive_existence_signing_key  # noqa: PLC0415
-
-            # Derive the Ed25519 signing key from the existence-DID (D-38-A4).
-            # Same derivation used by the whisper keyring (SHA-256 of DID).
-            signing_key = derive_existence_signing_key(nous_did)
-            token_manager = TokenManager(
-                existence_did=nous_did,
-                civic_did=civic_did,
-                signing_key=signing_key,
-            )
-            grid_wire_client = GridWireClient(
-                grid_url=grid_url,
-                token_manager=token_manager,
-            )
-            app.handler._grid_wire_client = grid_wire_client
-            log.info(
-                "[Brain] GridWireClient wired: grid_url=%s civic_did=%s nous_did=%s",
-                grid_url, civic_did, nous_did,
-            )
-        else:
-            log.warning(
-                "[Brain] GRID_URL set but CIVIC_DID/NOUS_DID missing — "
-                "wire client disabled, Unix socket only"
-            )
+        from noesis_brain.wire.client import GridWireClient  # noqa: PLC0415
+        grid_wire_client = GridWireClient(
+            grid_url=grid_url,
+            token_manager=token_manager,
+        )
+        app.handler._grid_wire_client = grid_wire_client
+        log.info(
+            "[Brain] GridWireClient wired: grid_url=%s civic_did=%s nous_did=%s",
+            grid_url, civic_did, nous_did_for_wire,
+        )
+    elif grid_url:
+        log.warning(
+            "[Brain] GRID_URL set but CIVIC_DID/NOUS_DID missing — "
+            "wire client disabled, Unix socket only"
+        )
 
     return app
 
@@ -328,7 +429,7 @@ async def main() -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
-    app = create_brain_app_from_env()
+    app = await create_brain_app_from_env()
     log.info("[Brain:%s] Starting…", app.nous_name)
 
     loop = asyncio.get_event_loop()

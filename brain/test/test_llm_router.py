@@ -257,3 +257,75 @@ class TestRouterIntegration:
 
         with pytest.raises(LLMError, match="All providers exhausted"):
             await router.generate("Test", tier=ModelTier.SMALL)
+
+
+class TestModelRouterLLMAdapterProtocol:
+    """Tests for ModelRouter(LLMAdapter) inheritance — Plan 03 Task 1."""
+
+    def test_is_instance_of_llm_adapter(self):
+        """ModelRouter must be an instance of LLMAdapter."""
+        router = ModelRouter(_make_config())
+        assert isinstance(router, LLMAdapter)
+
+    @pytest.mark.asyncio
+    async def test_generate_without_tier_routes_to_primary(self):
+        """ModelRouter.generate(prompt, options) without tier param routes to PRIMARY."""
+        router = ModelRouter(_make_config())
+        router.register_tier(ModelTier.PRIMARY, _make_adapter("ollama", "primary via protocol"))
+
+        resp = await router.generate("Hello")
+        assert resp.text == "primary via protocol"
+
+    @pytest.mark.asyncio
+    async def test_generate_with_tier_kwarg_still_works(self):
+        """ModelRouter.generate(prompt, tier=SMALL) still routes to SMALL tier."""
+        router = ModelRouter(_make_config())
+        router.register_tier(ModelTier.SMALL, _make_adapter("ollama", "small response"))
+
+        resp = await router.generate("Hello", tier=ModelTier.SMALL)
+        assert resp.text == "small response"
+
+    def test_provider_name_delegates_to_primary(self):
+        """ModelRouter.provider_name returns provider_name of PRIMARY adapter."""
+        primary_adapter = _make_adapter("ollama")
+        primary_adapter.provider_name = "ollama"
+        router = ModelRouter(_make_config())
+        router.register_tier(ModelTier.PRIMARY, primary_adapter)
+
+        assert router.provider_name == "ollama"
+
+    def test_provider_name_when_no_primary_registered(self):
+        """ModelRouter.provider_name returns 'model_router' when PRIMARY not registered."""
+        router = ModelRouter(_make_config())
+        assert router.provider_name == "model_router"
+
+    @pytest.mark.asyncio
+    async def test_list_models_delegates_to_primary(self):
+        """ModelRouter.list_models() delegates to PRIMARY tier adapter."""
+        primary_adapter = _make_adapter("ollama")
+        primary_adapter.list_models = AsyncMock(return_value=["qwen3:4b", "qwen3:14b"])
+        router = ModelRouter(_make_config())
+        router.register_tier(ModelTier.PRIMARY, primary_adapter)
+
+        models = await router.list_models()
+        assert models == ["qwen3:4b", "qwen3:14b"]
+
+    @pytest.mark.asyncio
+    async def test_list_models_returns_empty_when_no_primary(self):
+        """ModelRouter.list_models() returns [] when PRIMARY not registered."""
+        router = ModelRouter(_make_config())
+        assert await router.list_models() == []
+
+    @pytest.mark.asyncio
+    async def test_is_available_delegates_to_primary(self):
+        """ModelRouter.is_available() delegates to PRIMARY tier adapter."""
+        router = ModelRouter(_make_config())
+        router.register_tier(ModelTier.PRIMARY, _make_adapter("ollama", available=True))
+
+        assert await router.is_available() is True
+
+    @pytest.mark.asyncio
+    async def test_is_available_returns_false_when_no_primary(self):
+        """ModelRouter.is_available() returns False when PRIMARY not registered."""
+        router = ModelRouter(_make_config())
+        assert await router.is_available() is False
