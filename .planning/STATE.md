@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
-stopped_at: Phase 41 UI-SPEC approved — ready for plan-phase
-last_updated: "2026-05-27T19:28:46.044Z"
+stopped_at: Phase 41 SHIPPED — ready for Phase 42 plan-phase
+last_updated: "2026-05-27"
 progress:
   total_phases: 25
-  completed_phases: 5
-  total_plans: 31
-  completed_plans: 30
+  completed_phases: 6
+  total_plans: 37
+  completed_plans: 36
   percent: 97
 ---
 
@@ -22,14 +22,14 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** Phase 41 — sleep-cycle-away-presence
+**Current focus:** Phase 42 — P2P Infrastructure
 
 ## Current Position
 
-Phase: 41 (sleep-cycle-away-presence) — EXECUTING
-Plan: 6 of 6 (Plan 06 in progress — Tasks 1-4 complete)
-Status: AT CHECKPOINT — Tasks 1-4 committed and pushed; Task 5 (human-verify) pending
-Next action: Human verification of Civic Map 4-state presence + Steward Section 4 + presence-overview API
+Phase: 42 (P2P Infrastructure) — NOT STARTED
+Previous: Phase 41 (sleep-cycle-away-presence) — SHIPPED 2026-05-27
+Status: Ready for `/gsd-plan-phase 42`
+Next action: Plan Phase 42 (P2P Infrastructure — Grid-mediated signaling + DID-to-endpoint discovery + STUN/TURN)
 
 Driving inputs for v3.0 (locked at milestone open):
 
@@ -149,6 +149,37 @@ Driving inputs for v3.0 (locked at milestone open):
   - 3D Portal landing hero → Phase 56 (D-36-23/24 deferred per D-V3-06 raw-SVG invariant)
   - `civic_member` tier upgrade in `resolveVisitorTier()` → Phase 37 (needs Civic-DID issuance)
   - Per-DID rate limiting → Phase 39 (multi-tenancy)
+
+## v3.0 Phase 41 close-out (locked 2026-05-27)
+
+- **Phase 41 SHIPPED.** Plans 41-01 through 41-06 all complete. Allowlist **unchanged at 64** (0 Phase 41 additions — `irs.disbursement_executed` is audit-chain-only, NOT in ALLOWLIST_MEMBERS; Phase 45 owns the +3 delta).
+
+- **What shipped:**
+  1. **TDD stubs (Plan 01):** 7 test files (4 Vitest + 3 pytest), 22 skip stubs covering SLEEP-01..05 + T-41-01..05 — all transitioned to passing.
+  2. **DB layer (Plan 02):** Migration v30 — 5 presence columns on `civic_did_registry` (`presence_status ENUM`, `last_seen_at`, `last_seen_tick`, `away_grace_expires_at`, `frozen TINYINT`). Migration v31 — `civic_message_queue` table. Types module, `GraceTimerRegistry`, `PresenceStore`, `MessageQueueStore`, `CivicDidStore.markFrozen`. `appendIrsDisbursementExecuted` sole-producer (8-step, audit-chain-only).
+  3. **PresenceService + escalation (Plan 03):** `PresenceService` facade composes all stores + timer + audit. `runEscalationCheck` marks absent/presumed_departed + dissolves Business-DIDs. `WsFirehoseHub` reports civic_member connect/disconnect. `GenesisLauncher` schedules 24h escalation setInterval (OBS-R-32-02 paired clearInterval).
+  4. **Grid routes (Plan 04):** 6 routes — `POST /civic/presence`, `GET /civic/presence`, `GET /civic/presence/me`, `GET /civic/inbox`, `PATCH /civic/inbox/ack`, `POST /civic/message`. `requireDid` preHandler extended with 409 `civic_did_frozen` gate (T-41-04). All 6 entries in ROUTE_DID_POLICY.
+  5. **Brain wire (Plan 05):** `WireQueue` kv_store for `last_seen_tick` persistence. `GridWireClient.post_presence_heartbeat()` every 60s. `WssSubscriber._compute_connect_url()` appends `?since=<last_seen_tick>`. `BrainApp` schedules heartbeat asyncio.Task at startup, cancels at shutdown.
+  6. **UI surfaces (Plan 06):** `GET /api/v1/grid-manager/presence-overview` endpoint (Steward Section 4). Civic Map 4-state rendering (awake/away/absent/presumed_departed) per UI-SPEC. Steward `/system/operators` Section 4 "Message Queue Depth" with threshold colors. `useCivicMap` polling 5s→30s.
+
+- **Post-verification fixes (caught during human-verify):**
+  - `main.ts` missing PresenceService wiring — executor created all classes but never passed `presenceService`/`pool`/`currentTick` to `buildServer()`. Fixed in `f0ba6b7`.
+  - Dashboard build failures: `[id]` vs `[civic_did_hash]` dynamic route conflict, `.js` extension imports incompatible with `moduleResolution: bundler`, missing `public/` dir, App Router no-custom-props constraint on `portal/page.tsx`. Fixed in `f129993`, `c5b6c93`, `b57aa31`.
+  - Steward build failure: `StewardShell` missing `title`/`breadcrumb` props. Fixed in `5d4ec18`.
+
+- **Inherits to Phase 42+:**
+  1. `PresenceService` is fully wired — routes, firehose, escalation loop all live.
+  2. `civic_message_queue` table and inbox/ack routes are the message delivery backbone for any future cross-Nous communication.
+  3. **CARRY-FORWARD:** `services.currentTick` is passed as `() => launcher.clock.currentTick` — confirmed working. No additional wiring needed for Phase 42.
+  4. Civic Map now polls every 30s and renders presence state — Phase 42 P2P connections will share this polling infrastructure.
+
+- **Key invariants:**
+  - Broadcast allowlist frozen at 64. Phase 41 adds 0 events.
+  - `irs.disbursement_executed` intentionally OFF allowlist (audit-chain-only; Phase 45 owns IRS allowlist additions).
+  - OBS-R-32-02: `_escalationInterval` has paired clearInterval in `launcher.stop()`. `GraceTimerRegistry.clear()` called in `presenceService.shutdown()`.
+  - T-41-04: frozen Civic-DID returns 409 on any `civic_member`-tier request (preHandler check, not route-level).
+  - VOTE-05 Nous-only governance invariant — PRESERVED.
+  - R-31-01 zero-diff audit chain — PRESERVED.
 
 ## v3.0 Phase 40 close-out (locked 2026-05-27)
 

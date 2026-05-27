@@ -28,15 +28,13 @@ decisions:
 metrics:
   duration: "10 minutes"
   completed_date: "2026-05-27"
-  tasks_completed: 4
+  tasks_completed: 5
   tasks_total: 5
   files_modified: 7
   files_created: 1
 ---
 
-# Phase 41 Plan 06: Civic Map 4-State + Steward Section 4 + Grid Manager API — Summary (PARTIAL)
-
-Tasks 1-4 complete. Task 5 (human-verify) pending orchestrator checkpoint.
+# Phase 41 Plan 06: Civic Map 4-State + Steward Section 4 + Grid Manager API — Summary
 
 ## What Was Built
 
@@ -107,19 +105,19 @@ None — plan executed exactly as written. `gridName` was already on `GridServic
 - Pre-existing: `dashboard/src/app/portal/civic-map/CivicMap.test.tsx` fails with OXC JSX parse error. Not caused by Task 3. Out of scope.
 - Pre-existing: 64 grid test failures (unchanged before/after Tasks 1-4).
 
-## Task 5: Human Verify — PENDING
+## Task 5: Human Verify — APPROVED 2026-05-27
 
-Task 5 (checkpoint:human-verify) is the orchestrator checkpoint. Awaiting human verification of:
-1. Portal Civic Map 4 visual presence states
-2. Steward Section 4 Message Queue Depth table
-3. GET /api/v1/grid-manager/presence-overview JSON response
+Checkpoint approved. Verified:
+1. ✅ Portal Civic Map 4 visual presence states (awake/away/absent/presumed_departed)
+2. ✅ Steward Console /system/operators Section 4 "Message Queue Depth" table
+3. ✅ GET /api/v1/grid-manager/presence-overview returns 401 (route live, portal_session_required)
 
-## Post-Task-5 Actions (DO NOT run until after human approval)
-
-- Update ROADMAP.md: Phase 41 plans 0/6 → 6/6 complete
-- Update STATE.md: shift focus to Phase 42
-- Update REQUIREMENTS.md: SLEEP-01..05 marked Validated
-- Update MILESTONES.md: append Phase 41 ship summary
+**Post-approval fixes committed:**
+- `f0ba6b7` — fix(41): wire PresenceService + pool into buildServer in main.ts (executor missed main.ts wiring)
+- `f129993` — fix(dashboard): resolve Next.js build failures (route conflict [id] vs [civic_did_hash], .js extension imports)
+- `c5b6c93` — fix(dashboard): PortalLandingView extraction for App Router no-custom-props constraint
+- `b57aa31` — fix(dashboard): create public/ dir required by Dockerfile COPY
+- `5d4ec18` — fix(steward): StewardShell missing title+breadcrumb props in operators page
 
 ## Commits
 

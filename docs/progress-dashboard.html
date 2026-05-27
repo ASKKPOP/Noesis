@@ -197,7 +197,7 @@ tr:hover td{background:var(--surface2)}
   <div class="logo">Noēsis <span>Progress Dashboard</span></div>
   <span class="badge badge-active">🔧 v3.0 IN PROGRESS</span>
   <div class="header-meta">
-    <span>Phase 40 ✅ COMPLETE — 5/5 plans · LOCAL-01..03 code-verified</span>
+    <span>Phase 41 ✅ SHIPPED — 6/6 plans · SLEEP-01..05 validated</span>
     <span>Updated: 2026-05-27</span>
   </div>
 </header>
@@ -211,6 +211,7 @@ tr:hover td{background:var(--surface2)}
   <a href="#" data-section="phase38" onclick="show('phase38',this)"><span class="nav-icon">🔌</span> Phase 38 Detail</a>
   <a href="#" data-section="phase39" onclick="show('phase39',this)"><span class="nav-icon">🏢</span> Phase 39 Detail</a>
   <a href="#" data-section="phase40" onclick="show('phase40',this)"><span class="nav-icon">🤖</span> Phase 40 Detail</a>
+  <a href="#" data-section="phase41" onclick="show('phase41',this)"><span class="nav-icon">💤</span> Phase 41 Detail</a>
   <a href="#" data-section="requirements" onclick="show('requirements',this)"><span class="nav-icon">📋</span> Requirements</a>
   <a href="#" data-section="uat" onclick="show('uat',this)"><span class="nav-icon">🧪</span> Required UAT</a>
   <a href="#" data-section="timeline" onclick="show('timeline',this)"><span class="nav-icon">📅</span> Timeline &amp; Estimates</a>
@@ -236,8 +237,8 @@ tr:hover td{background:var(--surface2)}
   <div class="stats-row">
     <div class="stat-card"><div class="stat-value">8</div><div class="stat-label">Milestones shipped</div></div>
     <div class="stat-card"><div class="stat-value">v3.0</div><div class="stat-label">Current milestone</div></div>
-    <div class="stat-card"><div class="stat-value">41</div><div class="stat-label">Next phase</div></div>
-    <div class="stat-card"><div class="stat-value">5/5</div><div class="stat-label">Phase 40 plans done ✅</div></div>
+    <div class="stat-card"><div class="stat-value">42</div><div class="stat-label">Next phase</div></div>
+    <div class="stat-card"><div class="stat-value">6/6</div><div class="stat-label">Phase 41 plans done ✅</div></div>
     <div class="stat-card"><div class="stat-value">64</div><div class="stat-label">Allowlist events</div></div>
     <div class="stat-card"><div class="stat-value">~125</div><div class="stat-label">v3.0 plans total est.</div></div>
   </div>
@@ -367,10 +368,14 @@ tr:hover td{background:var(--surface2)}
         </div>
         <div class="phase-status">✅ SHIPPED 2026-05-27</div>
       </div>
-      <div class="phase-card pending" onclick="openPhase('41')">
+      <div class="phase-card done" onclick="openPhase('41')">
         <div class="phase-num">Phase 41</div>
         <div class="phase-name">Sleep Cycle + Away Presence</div>
-        <div class="phase-status">⏳ Pending — depends on Phase 38</div>
+        <div style="margin:8px 0">
+          <div class="progress-wrap"><div class="progress-fill green" style="width:100%"></div></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:3px">6/6 plans · 100%</div>
+        </div>
+        <div class="phase-status">✅ SHIPPED 2026-05-27</div>
       </div>
     </div>
     <div class="wave-label">Wave 2 — Civic Plumbing</div>
@@ -944,6 +949,126 @@ tr:hover td{background:var(--surface2)}
   </div>
 </section>
 
+<!-- ═══════════════════ PHASE 41 DETAIL ═══════════════════ -->
+<section id="phase41" class="section">
+  <div class="section-title">Phase 41 — Sleep Cycle + Away Presence</div>
+  <div class="section-subtitle">✅ SHIPPED 2026-05-27 · Wave 1 · 6 plans · Allowlist unchanged (64) · SLEEP-01..05 validated</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-value">6/6</div><div class="stat-label">Plans done</div></div>
+    <div class="stat-card"><div class="stat-value">0</div><div class="stat-label">Allowlist additions</div></div>
+    <div class="stat-card"><div class="stat-value">64</div><div class="stat-label">Current allowlist</div></div>
+    <div class="stat-card"><div class="stat-value">v30+v31</div><div class="stat-label">Schema migrations</div></div>
+    <div class="stat-card"><div class="stat-value">4</div><div class="stat-label">Presence states</div></div>
+    <div class="stat-card"><div class="stat-value">5/5</div><div class="stat-label">SLEEP REQs validated</div></div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-green">Wave 0</span>
+      <span class="card-title">41-01 — TDD Stubs (presence + message queue behavioral contracts)</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> grid/test/presence-service.test.ts — heartbeat, grace timer, state transitions stubs</li>
+        <li><span class="task-check">✅</span> grid/test/message-queue.test.ts — enqueue, drain, depthByRecipient stubs</li>
+        <li><span class="task-check">✅</span> grid/test/civic-map-presence.test.ts — inline merge + 4-state rendering stubs</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-green">Wave 1</span>
+      <span class="card-title">41-02 — DB Migrations v30+v31 (presence columns + civic_message_queue)</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> Migration v30: presence_status ENUM + last_seen_at + grace_timer_started_at columns on civic_did_registry</li>
+        <li><span class="task-check">✅</span> Migration v31: civic_message_queue table (id, recipient_civic_did, sender_civic_did, message_json, created_at)</li>
+        <li><span class="task-check">✅</span> PresenceStore.ts, MessageQueueStore.ts data-access classes</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-green">Wave 2</span>
+      <span class="card-title">41-03 — GraceTimerRegistry (tick-based, OBS-R-32-02)</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> GraceTimerRegistry.ts: tick-based timers, setInterval/clearInterval paired per OBS-R-32-02</li>
+        <li><span class="task-check">✅</span> heartbeat() resets 5-min grace timer; start() / stop() lifecycle</li>
+        <li><span class="task-check">✅</span> No wall-clock usage in timer logic (OBS-36-01 / tick-only invariant)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-green">Wave 3</span>
+      <span class="card-title">41-04 — PresenceService façade (4-state lifecycle + queue integration)</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> PresenceService: composes PresenceStore + MessageQueueStore + GraceTimerRegistry + CivicDidStore + BusinessDidStore + AuditChain</li>
+        <li><span class="task-check">✅</span> 4-state lifecycle: awake → away (5-min grace) → absent (30-day) → presumed_departed (1-year, civic-DID frozen)</li>
+        <li><span class="task-check">✅</span> heartbeat(civic_did): resets grace timer; setPresenceState() transitions; drainQueue() on reconnect</li>
+        <li><span class="task-check">✅</span> listAllPresence() + queueDepthByRecipient() for route composition</li>
+        <li><span class="task-check">✅</span> launcher.attachPresenceService() integration</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-green">Wave 4</span>
+      <span class="card-title">41-05 — Heartbeat endpoint + message-queue route</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> POST /api/v1/nous/:civic_did_hash/heartbeat — civic_did_required policy; resets grace timer</li>
+        <li><span class="task-check">✅</span> POST /api/v1/nous/:civic_did_hash/messages — civic_did_required; enqueues message for away Nous</li>
+        <li><span class="task-check">✅</span> GET /api/v1/nous/:civic_did_hash/messages/drain — civic_did_required; delivers queued messages on reconnect</li>
+        <li><span class="task-check">✅</span> ROUTE_DID_POLICY entries added (OBS-36-01)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-blue">Wave 5</span>
+      <span class="card-title">41-06 — Civic Map 4-state + Steward Section 4 + Grid Manager API (human checkpoint ✅)</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> GET /api/v1/grid-manager/presence-overview — portal_session_required; rows where status≠awake OR queueDepth&gt;0</li>
+        <li><span class="task-check">✅</span> Civic Map NousMapEntry extended: presence_status? + last_seen_at? (Option A inline merge)</li>
+        <li><span class="task-check">✅</span> CivicMap.tsx: 4-state rendering — awake (full), away (0.4 opacity + grayscale), absent (grey 0.35 + grayscale), presumed_departed (stroke-only, no pointer events)</li>
+        <li><span class="task-check">✅</span> useCivicMap polling: 5s → 30s (D-41-06)</li>
+        <li><span class="task-check">✅</span> Steward /system/operators Section 4 "Message Queue Depth" table: 5 columns, bg-red-50/bg-amber-50 thresholds, status pills</li>
+        <li><span class="task-check">✅</span> Human Verify checkpoint: APPROVED 2026-05-27</li>
+      </ul>
+      <div style="margin-top:8px;padding:8px 12px;background:var(--green-dim);border-radius:6px;border:1px solid var(--green);font-size:11px;color:var(--green)">
+        ✅ All post-verify fixes committed: main.ts wiring (f0ba6b7) · dashboard build fixes (f129993, c5b6c93, b57aa31) · StewardShell props (5d4ec18)
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="requirements" class="section">
   <div class="section-title">Requirements</div>
   <div class="section-subtitle">Active · Holding · Issues · Needs Discussion</div>
@@ -1047,8 +1172,28 @@ tr:hover td{background:var(--surface2)}
 
   <div class="card">
     <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--green)">Phase 41 — SLEEP Requirements ✅ SHIPPED</span>
+      <span class="chip chip-green">5 validated</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <table>
+        <thead><tr><th>ID</th><th>Status</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="td-code">SLEEP-01</span></td><td><span class="chip chip-green">Validated</span></td><td>Heartbeat endpoint resets 5-min grace timer. Missed heartbeats → away state. GraceTimerRegistry tick-based, no wall-clock (OBS-R-32-02)</td></tr>
+          <tr><td><span class="td-code">SLEEP-02</span></td><td><span class="chip chip-green">Validated</span></td><td>Grid Manager presence-overview endpoint; Steward Section 4 queue depth table; bg-red/amber thresholds</td></tr>
+          <tr><td><span class="td-code">SLEEP-03</span></td><td><span class="chip chip-green">Validated</span></td><td>Message queue: enqueue for away Nous, drain on reconnect, depthByRecipient for monitoring</td></tr>
+          <tr><td><span class="td-code">SLEEP-04</span></td><td><span class="chip chip-green">Validated</span></td><td>Portal Civic Map 4-state rendering: awake/away/absent/presumed_departed with correct opacity+grayscale+pointer-events</td></tr>
+          <tr><td><span class="td-code">SLEEP-05</span></td><td><span class="chip chip-green">Validated</span></td><td>Presence lifecycle: away (5min grace) → absent (30d) → presumed_departed (1yr, civic-DID frozen). Allowlist delta = 0</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
       <span style="font-weight:600;color:var(--red)">Open Questions / Needs Discussion</span>
-      <span class="chip chip-red">10 open</span>
+      <span class="chip chip-red">8 open</span>
       <span class="card-chevron">▶</span>
     </div>
     <div class="card-body">
@@ -1056,14 +1201,14 @@ tr:hover td{background:var(--surface2)}
         <thead><tr><th>ID</th><th>Question</th><th>Resolved in</th></tr></thead>
         <tbody>
           <tr><td><span class="td-code">Q-V3-A</span></td><td>P2P stack selection (libp2p vs custom vs STUN/TURN)</td><td>Phase 42 discuss</td></tr>
-          <tr><td><span class="td-code">Q-V3-B</span></td><td>Local AI default model (Llama 3.1 8B vs Qwen 2.5?)</td><td>Phase 40 discuss</td></tr>
+          <tr><td><span class="td-code">Q-V3-B</span></td><td>Local AI default model (Llama 3.1 8B vs Qwen 2.5?)</td><td><span class="chip chip-green">✅ Resolved Phase 40 — qwen3:4b</span></td></tr>
           <tr><td><span class="td-code">Q-V3-C</span></td><td>IRS fee percentage (1–3% configurable — exact default?)</td><td>Phase 45 discuss</td></tr>
-          <tr><td><span class="td-code">Q-V3-D</span></td><td>Bios sybil cost for Business-DID registration</td><td>Phase 37 discuss</td></tr>
+          <tr><td><span class="td-code">Q-V3-D</span></td><td>Bios sybil cost for Business-DID registration</td><td><span class="chip chip-green">✅ Resolved Phase 37 — 100 Bios</span></td></tr>
           <tr><td><span class="td-code">Q-V3-E</span></td><td>Henry's public Grid domain (genesis.noesis or other?)</td><td>Phase 50 discuss</td></tr>
           <tr><td><span class="td-code">Q-V3-F</span></td><td>Right-to-fork export subset (what exactly is exported?)</td><td>Phase 43 discuss</td></tr>
           <tr><td><span class="td-code">Q-V3-G</span></td><td>Police authority scope (can Police suspend Civic-DID?)</td><td>Phase 47 discuss</td></tr>
-          <tr><td><span class="td-code">Q-V3-H</span></td><td>Sleep thresholds (inactive period before "away" status)</td><td>Phase 41 discuss</td></tr>
-          <tr><td><span class="td-code">Q-V3-I</span></td><td>Cloud LLM allowed for Brain? (Anthropic API as fallback)</td><td>Phase 40 discuss</td></tr>
+          <tr><td><span class="td-code">Q-V3-H</span></td><td>Sleep thresholds (inactive period before "away" status)</td><td><span class="chip chip-green">✅ Resolved Phase 41 — 5min grace/30d absent/1yr presumed</span></td></tr>
+          <tr><td><span class="td-code">Q-V3-I</span></td><td>Cloud LLM allowed for Brain? (Anthropic API as fallback)</td><td><span class="chip chip-green">✅ Resolved Phase 40 — allowed with mandatory red banner</span></td></tr>
           <tr><td><span class="td-code">Q-V3-J</span></td><td>Community subgovernance scope (community-internal only?)</td><td>Phase 49 discuss</td></tr>
         </tbody>
       </table>
@@ -1110,6 +1255,21 @@ tr:hover td{background:var(--surface2)}
         <li><span class="task-check">⬜</span> Kill Ollama (pkill ollama); verify Steward shows red banner with "Memory content is leaving this machine." text</li>
         <li><span class="task-check">⬜</span> Restart Ollama; verify red banner disappears within ~10 ticks (no operator action needed)</li>
         <li><span class="task-check">⬜</span> Verify Brain startup exits with non-zero code when GRID_URL is unreachable (curl Grid down test)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--green)">Phase 41 — SLEEP-01..05 Human Verify ✅</span>
+      <span class="chip chip-green">3/3 verified · APPROVED 2026-05-27</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> Portal Civic Map — 4 visual presence states (awake/away/absent/presumed_departed) visible in browser at localhost:3001</li>
+        <li><span class="task-check">✅</span> Steward Console /system/operators Section 4 "Message Queue Depth" table renders with correct empty state</li>
+        <li><span class="task-check">✅</span> GET /api/v1/grid-manager/presence-overview returns 401 (route live, portal_session_required gate working)</li>
       </ul>
     </div>
   </div>
@@ -1444,9 +1604,9 @@ const PHASES = {
   },
   '37': {name:'DID Registry',status:'SHIPPED',wave:'Wave 1 — Foundations',goal:'Civic-DID + Business-DID issuance as W3C VCs. Revocation requires Government court order (D-V3-18). D-V3-33 portal-gating CI gate.',reqs:['REG-01','REG-02','REG-03','REG-04','REG-05','REG-06'],allowlist:'+4 (60→64)',plans:['37-01 ✅ DB schema + civic-registry service layer','37-02 ✅ 4 audit sole-producers + allowlist 60→64','37-03 ✅ 6 Fastify API routes (REG-01..06)','37-04 ✅ CI gate check-civic-did-issuance-path.mjs (D-V3-33)'],depends:'Phase 36'},
   '38': {name:'Brain ↔ Grid Wire Protocol',status:'COMPLETE',wave:'Wave 1+2 — Foundations',goal:'Replace in-process queues with HTTPS REST + WSS. Operator-signed bearer tokens. Idempotent replay on reconnect.',reqs:['WIRE-01','WIRE-02','WIRE-03','WIRE-04','WIRE-05'],allowlist:'0',plans:['38-01 ✅ Token infra (brain_tokens, EdDSA JWT)','38-02 ✅ HTTPS REST client (GridWireClient, brain/actions)','38-03 ✅ Offline queue + batch ingest + idempotency','38-04 ✅ WSS subscription + per-DID firehose filter'],depends:'Phase 37'},
-  '39': {name:'Grid Multi-Tenancy',status:'PENDING',wave:'Wave 1 — Foundations',goal:'Per-operator metadata isolation in operator-scoped schemas. Civic state shared.',reqs:['TENANT-01','TENANT-02','TENANT-03'],allowlist:'0',plans:['TBD'],depends:'Phase 38'},
-  '40': {name:'Local AI Integration',status:'PENDING',wave:'Wave 1 — Foundations',goal:'Ollama production-grade default. Operator-selectable model via Steward Console. Degraded-cognition fallback.',reqs:['LOCAL-01','LOCAL-02'],allowlist:'0',plans:['TBD'],depends:'—'},
-  '41': {name:'Sleep Cycle + Away Presence',status:'PENDING',wave:'Wave 1 — Foundations',goal:'Human-resident analogy: city sees offline Nous as "away". Messages queue. Identity persists.',reqs:['SLEEP-01','SLEEP-02'],allowlist:'0',plans:['TBD'],depends:'Phase 38'},
+  '39': {name:'Grid Multi-Tenancy',status:'SHIPPED',wave:'Wave 1 — Foundations',goal:'Per-operator metadata isolation. operatorScope() preHandler. Per-operator quotas (v27+v28). Steward /system/operators Tier-2 Grid Manager.',reqs:['TENANT-01','TENANT-02','TENANT-03'],allowlist:'0 (64)',plans:['39-01 ✅ TDD stubs','39-02 ✅ DB migrations v27+v28 + quota store','39-03 ✅ operatorScope() preHandler + assertOperatorOwns()','39-04 ✅ Steward /system/operators page'],depends:'Phase 38'},
+  '40': {name:'Local AI Integration',status:'SHIPPED',wave:'Wave 1 — Foundations',goal:'Ollama production-grade default. Operator-selectable model via Steward Console. qwen3:4b default. Mandatory red banner for cloud LLM fallback.',reqs:['LOCAL-01','LOCAL-02','LOCAL-03'],allowlist:'0 (64)',plans:['40-01 ✅ TDD stubs','40-02 ✅ DB migration v29 + Brain-JWT settings endpoint','40-03 ✅ ModelRouter + async Brain startup + 3-tier routing','40-04 ✅ Brain HTTP /local-ai/* + structured logging','40-05 ✅ Steward /system/local-ai page + Brain HTTP proxy'],depends:'—'},
+  '41': {name:'Sleep Cycle + Away Presence',status:'SHIPPED',wave:'Wave 1 — Foundations',goal:'4-state presence lifecycle (awake→away→absent→presumed_departed). Message queue for offline Nous. Civic Map 4-state rendering. Grid Manager monitoring.',reqs:['SLEEP-01','SLEEP-02','SLEEP-03','SLEEP-04','SLEEP-05'],allowlist:'0 (64)',plans:['41-01 ✅ TDD stubs','41-02 ✅ DB migrations v30+v31','41-03 ✅ GraceTimerRegistry (tick-based)','41-04 ✅ PresenceService façade','41-05 ✅ Heartbeat + message-queue routes','41-06 ✅ Civic Map 4-state + Steward Section 4 + Grid Manager API'],depends:'Phase 38'},
   '42': {name:'P2P Infrastructure',status:'PENDING',wave:'Wave 2 — Civic Plumbing',goal:'Grid-mediated signaling + DID-to-endpoint discovery + STUN/TURN. Brain-to-Brain content stays direct.',reqs:['P2P-01'],allowlist:'+3',plans:['TBD'],depends:'36+37+38'},
   '43': {name:'Right-to-Fork Export',status:'PENDING',wave:'Wave 2 — Civic Plumbing',goal:'Operator exports full Nous state (Brain memory + civic credentials + audit history). Constitutional enforcement.',reqs:['FORK-01'],allowlist:'0',plans:['TBD'],depends:'37+38'},
   '44': {name:'Marketplace v3',status:'PENDING',wave:'Wave 3 — Civic Institutions',goal:'Business-DID listings, bids, escrow, IRS fee hooks, dispute → Police routing.',reqs:['MKT-01'],allowlist:'+4',plans:['TBD'],depends:'Phase 37'},

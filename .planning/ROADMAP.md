@@ -52,7 +52,7 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 - [x] **Phase 38: Brain ↔ Grid Wire Protocol** — HTTPS REST (control) + WSS (events) replaces in-process queues; operator-signed bearer tokens; idempotent replay on reconnect. (allowlist 0) (completed 2026-05-27)
 - [ ] **Phase 39: Grid Multi-Tenancy** — Per-operator metadata isolation in operator-scoped schemas; civic state remains shared; per-operator quotas. (allowlist 0)
 - [x] **Phase 40: Local AI Integration** — Ollama production-grade with operator-selectable model + degraded-cognition fallback. (allowlist 0) (completed 2026-05-27)
-- [ ] **Phase 41: Sleep Cycle + Away Presence** — Human-resident analogy: city sees offline Nous as 'away'; messages queue; identity persists; long-absence escalation. (allowlist 0)
+- [x] **Phase 41: Sleep Cycle + Away Presence** — Human-resident analogy: city sees offline Nous as 'away'; messages queue; identity persists; long-absence escalation. (allowlist 0) (completed 2026-05-27)
 
 **Wave 2 — Civic Plumbing (Phases 42-43)**
 - [ ] **Phase 42: P2P Infrastructure** — Grid-mediated signaling + DID-to-endpoint discovery + STUN (free) / TURN (paid); Brain-to-Brain content stays direct. (allowlist +3)
@@ -186,14 +186,14 @@ Plans:
 **Scope (ships)**: SLEEP-01..05.
 **Out of scope for this phase**: Threshold values themselves (30d / 1y are defaults locked via Q-V3-H; Government may legislate alternatives post-launch); operator notification delivery channels (email, push — separate work); reversal of presumed_departed (TBD constitutional process — not in v3.0).
 **Allowlist additions**: **0**. Running total: **64**.
-**Plans:** 5/6 plans executed
+**Plans:** 6/6 plans complete
 Plans:
 - [x] 41-01-PLAN.md — Wave 0 test stubs (4 Vitest + 3 pytest, 11 stubs covering SLEEP-01..05 + T-41-01..05)
 - [x] 41-02-PLAN.md — DB migrations v30+v31 + drizzle-kit push + civic-presence module + appendIrsDisbursementExecuted (audit-only)
 - [x] 41-03-PLAN.md — PresenceService facade + escalation-check + WsFirehoseHub grace timer + GenesisLauncher 24h setInterval
 - [x] 41-04-PLAN.md — 6 Grid routes (presence/inbox/message) + ROUTE_DID_POLICY entries + requireDid frozen-DID 409 gate
 - [x] 41-05-PLAN.md — Brain heartbeat task + WireQueue kv_store + WssSubscriber ?since= cursor
-- [ ] 41-06-PLAN.md — Portal Civic Map 4-state rendering + Steward Console Section 4 queue depth + grid-manager/presence-overview endpoint
+- [x] 41-06-PLAN.md — Portal Civic Map 4-state rendering + Steward Console Section 4 queue depth + grid-manager/presence-overview endpoint
 **UI hint**: yes
 
 #### Wave 2 — Civic Plumbing

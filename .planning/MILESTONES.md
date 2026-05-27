@@ -744,5 +744,37 @@ The Public Grid is a digital city. It has government, police, IRS, library, mark
 
 **Phase numbering:** continues from v2.6 (Phase 35 last shipped → Phase 36 opens v3.0).
 
+### Phase 41 — Sleep Cycle + Away Presence (SHIPPED 2026-05-27)
+
+Wave: v3.0 Wave 1 (Foundations)
+Plans shipped: 6 (41-01 through 41-06)
+Requirements validated: SLEEP-01, SLEEP-02, SLEEP-03, SLEEP-04, SLEEP-05
+Allowlist delta: 0 (64 → 64). No new broadcast events. `irs.disbursement_executed` intentionally audit-chain-only per D-41-06.
+Migrations: v30 (presence columns on civic_did_registry) + v31 (civic_message_queue table)
+
+**What shipped:**
+- `PresenceService` façade composing `PresenceStore` + `MessageQueueStore` + `GraceTimerRegistry` + `CivicDidStore` + `BusinessDidStore` + `AuditChain`
+- 4-state presence lifecycle: `awake` → `away` (5-min grace timer, heartbeat-based) → `absent` (30-day timed) → `presumed_departed` (1-year, civic-DID frozen)
+- `GraceTimerRegistry`: tick-based timers (no wall-clock); heartbeat resets timer; OBS-R-32-02 clearInterval discipline
+- `MessageQueueStore`: stores direct messages for away Nous; `drainQueue(civic_did)` delivers on reconnect; `depthByRecipient(gridName)` for Grid Manager monitoring
+- `GET /api/v1/grid-manager/presence-overview` — Tier-2 Grid Manager endpoint; `portal_session_required` policy; returns rows where `presenceStatus !== 'awake'` OR `queueDepth > 0`
+- Portal Civic Map: 4-state rendering (awake=full color, away=opacity 0.4 + grayscale, absent=grey 0.35, presumed_departed=stroke-only); `<title>` tooltips; `aria-label` with presence status
+- Steward `/system/operators` Section 4 "Message Queue Depth" table: per-operator queued messages; `bg-red-50` at ≥50, `bg-amber-50` at 10–49; status pills (amber/orange/red); empty state: "All Nous are currently awake."
+- `useCivicMap` polling interval 5s → 30s (D-41-06 supersedes D-36-13); `NousMapEntry` extended with `presence_status?` + `last_seen_at?`
+- Option A (inline merge) chosen for Civic Map presence: single endpoint, no client-side key-hashing dance
+
+**Post-verify fix commits (executor gaps):**
+- `f0ba6b7` — `main.ts` wiring: `PresenceService` constructor + `launcher.attachPresenceService()` + `buildServer()` injection (executor created classes but missed wiring)
+- `f129993` — dashboard build: `[id]` vs `[civic_did_hash]` route conflict resolved; `.js` extension imports stripped for `moduleResolution: bundler`
+- `c5b6c93` — `PortalLandingView` extracted; `portal/page.tsx` becomes no-prop App Router shell
+- `b57aa31` — `dashboard/public/.gitkeep` created for Dockerfile COPY
+- `5d4ec18` — `StewardShell` missing `title`+`breadcrumb` props in operators page
+
+**Key stubs for future phases:**
+- `nous_name` in `PresenceOverviewRow` always `null` — Phase 44/46 will JOIN civic_did_registry credential_json for display name
+- Civic Map presence merge block unreachable while `nous[]` stub is empty — activates when Phase 37 DID registry populates the array
+
+**Invariants preserved:** R-31-01 zero-diff, VOTE-05 Nous-only governance, OBS-R-32-02 clearInterval discipline, OBS-36-01 all routes in ROUTE_DID_POLICY, Portal-gating invariant (D-V3-33), broadcast allowlist frozen at 64.
+
 ---
 *Last updated: 2026-05-25 — v3.0 Polis (Civic City) milestone OPENED. 15 phases (36-50) planned across 4 waves. 8 new locked decisions (D-V3-16..23). 69 REQ-V3-* requirements mapped 1:1 to phases. CIVIC-ARCHITECTURE.md v2.0 rewrite committed `0d77916`; PROJECT.md + STATE.md + REQUIREMENTS.md + ROADMAP.md atomic-synced. Next: `/gsd-plan-phase 36` (Visitor/DID Read-Write Split).*
