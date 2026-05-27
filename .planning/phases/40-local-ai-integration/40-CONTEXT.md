@@ -150,6 +150,7 @@ Brain polls `OllamaAdapter.is_available()` once per tick when in fallback mode. 
 - Red banner in Steward Console must include: which cloud provider is active + "Memory content is leaving this machine" — both mandatory
 - "Restart Brain to apply" banner is informational only (no auto-restart) — operator manually restarts
 - Model dropdown should show model name + size hint if available from `list_models()` response
+- Ollama data directory is `~/.ollama` (models stored at `~/.ollama/models/`). The API still serves at `http://localhost:11434`. Planner should document this for operators and use it when validating Ollama installation.
 
 </specifics>
 
