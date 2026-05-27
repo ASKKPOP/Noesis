@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
-stopped_at: Phase 40 planned — 5 plans ready for execution
-last_updated: "2026-05-27T05:00:00.000Z"
+stopped_at: Phase 40 COMPLETE — 5/5 plans · LOCAL-01..03 validated · UAT pending live testing
+last_updated: "2026-05-27T10:00:00.000Z"
 progress:
   total_phases: 25
-  completed_phases: 4
-  total_plans: 25
-  completed_plans: 20
-  percent: 84
+  completed_phases: 5
+  total_plans: 30
+  completed_plans: 25
+  percent: 83
 ---
 
 # Project State
@@ -22,13 +22,13 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** Phase 40 — Local AI Integration (ready to execute — 5 plans)
+**Current focus:** Phase 41 — Sleep Cycle + Away Presence (next to plan/execute)
 
 ## Current Position
 
-Phase: 40 (local-ai-integration) — PLANNED (2026-05-27)
-Status: Phase 40 planned — 5 plans, 4 waves, verification PASSED
-Next action: `/gsd-execute-phase 40` — Local AI Integration
+Phase: 40 (local-ai-integration) — COMPLETE (2026-05-27)
+Status: Phase 40 complete — 5/5 plans shipped · Human UAT items filed in 40-HUMAN-UAT.md
+Next action: `/gsd-plan-phase 41` — Sleep Cycle + Away Presence
 
 Driving inputs for v3.0 (locked at milestone open):
 
@@ -148,6 +148,31 @@ Driving inputs for v3.0 (locked at milestone open):
   - 3D Portal landing hero → Phase 56 (D-36-23/24 deferred per D-V3-06 raw-SVG invariant)
   - `civic_member` tier upgrade in `resolveVisitorTier()` → Phase 37 (needs Civic-DID issuance)
   - Per-DID rate limiting → Phase 39 (multi-tenancy)
+
+## v3.0 Phase 40 close-out (locked 2026-05-27)
+
+- **Phase 40 SHIPPED.** Plans 40-01 through 40-05 all complete. Allowlist **unchanged at 64** (0 Phase 40 additions — Local AI is Brain-internal).
+
+- **What shipped:**
+  1. **TDD stubs (Plan 01):** 3 test stub files with 15 behavioral contracts — `operator-me-settings.test.ts` (Grid), `test_startup_settings.py` (Brain), `test_local_ai_http.py` (Brain).
+  2. **Grid DB + Brain-JWT endpoint (Plan 02):** DB migration v29 — `operator_settings` table (composite PK `grid_name + operator_did`, JSON settings, `ON UPDATE CURRENT_TIMESTAMP`). Real `operator-settings-store.ts` replacing Phase 39 stub — `getSettings()` (SELECT + default, no write-on-read) + `updateSettings()` (`INSERT … ON DUPLICATE KEY UPDATE`). New endpoint `GET /api/v1/operator/me/brain-settings` with EdDSA Brain JWT bearer auth (self-handled auth, `policy: 'public'`, verifies against `brain_tokens` table). Default model: `qwen3:4b` for all 3 tiers (small/primary/large).
+  3. **ModelRouter wiring (Plan 03):** `ModelRouter` extended to implement `LLMAdapter` ABC (4 delegating methods: `provider_name`, `list_models`, `is_available`, `check_recovery`). `create_brain_app_from_env()` made async. `_fetch_operator_settings()` fetches `GET /api/v1/operator/me/brain-settings` on startup — exits non-zero if Grid unreachable (D-40-01). 3-tier routing wired: `SMALL`, `PRIMARY`, `LARGE` `OllamaAdapter` instances from Grid-fetched settings.
+  4. **Brain HTTP (Plan 04):** `GET /local-ai/models` (X-Brain-Secret auth, graceful on Ollama offline → `{"models":[],"ollama_available":false}`) + `GET /local-ai/status` (`{"status":"ok"|"degraded","provider":"ollama","fallback_provider":null}`). `check_recovery()` called from `on_tick()` handler. Structured logs `local_ai_unavailable` + `local_ai_recovered`.
+  5. **Steward Console (Plan 05):** `steward/src/app/system/local-ai/page.tsx` — Tier-1 Local Nous Manager (D-V3-36): 3 model dropdowns (small/primary/large from Brain), temperature + max_tokens inputs, Save → `PATCH /api/v1/operator/me/settings`, amber "Restart Brain to apply" banner post-save, **red Q-V3-I banner** (hardcoded: "Local AI offline — using {fallback_provider} fallback. Memory content is leaving this machine."), 10s polling of `/api/brain/local-ai/status`. Brain HTTP proxy: `steward/src/app/api/brain/[...path]/route.ts` — server-side only, injects `X-Brain-Secret` from `process.env.BRAIN_HTTP_SECRET` (NO `NEXT_PUBLIC_` prefix). "Local AI" nav link added to `StewardShell.tsx`.
+
+- **Inherits to Phase 41+:**
+  1. `operator_settings` table (migration v29) and `operator-settings-store.ts` module now own the canonical operator Local AI settings.
+  2. Brain startup is async (`create_brain_app_from_env()`); any future startup work should use this async factory.
+  3. `BRAIN_HTTP_SECRET` env var is the authentication mechanism between Steward and Brain HTTP. MUST remain server-side only — no `NEXT_PUBLIC_` prefix ever.
+  4. `GET /api/v1/operator/me/brain-settings` endpoint is the canonical settings fetch path for Brain JWT auth context.
+
+- **Key invariants:**
+  - Q-V3-I mandatory text preserved: "Memory content is leaving this machine." hardcoded in red banner — grep-verifiable in `steward/src/app/system/local-ai/page.tsx`.
+  - D-40-01: Brain MUST NOT read settings from local file; exits non-zero if Grid unreachable at startup.
+  - D-V3-36 3-tier taxonomy: `/system/local-ai` is Tier-1 Local Nous Manager surface (operator-side).
+  - Broadcast allowlist frozen at 64. Phase 40 adds 0 events.
+  - VOTE-05 Nous-only governance invariant — PRESERVED.
+  - R-31-01 zero-diff audit chain — PRESERVED.
 
 ## v3.0 Phase 39 close-out (locked 2026-05-27)
 
@@ -414,6 +439,6 @@ Total v3.0 allowlist growth: **+34 (56 → 90)**. Freeze-except-by-explicit-addi
 
 ## Session Continuity
 
-Last session: 2026-05-27T03:00:00.000Z
-Stopped at: Phase 39 COMPLETE — 4/4 plans, 26 tests GREEN, ROADMAP+STATE synced
-Resume file: .planning/phases/39-grid-multi-tenancy/39-VERIFICATION.md
+Last session: 2026-05-27T10:00:00.000Z
+Stopped at: Phase 40 COMPLETE — 5/5 plans shipped · Q-V3-I banner hardcoded · 40-HUMAN-UAT.md filed
+Resume file: .planning/phases/40-local-ai-integration/40-HUMAN-UAT.md

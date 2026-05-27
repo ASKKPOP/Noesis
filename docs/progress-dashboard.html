@@ -197,8 +197,8 @@ tr:hover td{background:var(--surface2)}
   <div class="logo">Noēsis <span>Progress Dashboard</span></div>
   <span class="badge badge-active">🔧 v3.0 IN PROGRESS</span>
   <div class="header-meta">
-    <span>Phase 38 ✅ COMPLETE — 4/4 plans · PR #2 open</span>
-    <span>Updated: 2026-05-26</span>
+    <span>Phase 40 ✅ COMPLETE — 5/5 plans · LOCAL-01..03 code-verified</span>
+    <span>Updated: 2026-05-27</span>
   </div>
 </header>
 
@@ -209,6 +209,8 @@ tr:hover td{background:var(--surface2)}
   <a href="#" data-section="phase36" onclick="show('phase36',this)"><span class="nav-icon">⚡</span> Phase 36 Detail</a>
   <a href="#" data-section="phase37" onclick="show('phase37',this)"><span class="nav-icon">🪪</span> Phase 37 Detail</a>
   <a href="#" data-section="phase38" onclick="show('phase38',this)"><span class="nav-icon">🔌</span> Phase 38 Detail</a>
+  <a href="#" data-section="phase39" onclick="show('phase39',this)"><span class="nav-icon">🏢</span> Phase 39 Detail</a>
+  <a href="#" data-section="phase40" onclick="show('phase40',this)"><span class="nav-icon">🤖</span> Phase 40 Detail</a>
   <a href="#" data-section="requirements" onclick="show('requirements',this)"><span class="nav-icon">📋</span> Requirements</a>
   <a href="#" data-section="uat" onclick="show('uat',this)"><span class="nav-icon">🧪</span> Required UAT</a>
   <a href="#" data-section="timeline" onclick="show('timeline',this)"><span class="nav-icon">📅</span> Timeline &amp; Estimates</a>
@@ -234,8 +236,8 @@ tr:hover td{background:var(--surface2)}
   <div class="stats-row">
     <div class="stat-card"><div class="stat-value">8</div><div class="stat-label">Milestones shipped</div></div>
     <div class="stat-card"><div class="stat-value">v3.0</div><div class="stat-label">Current milestone</div></div>
-    <div class="stat-card"><div class="stat-value">38</div><div class="stat-label">Next phase</div></div>
-    <div class="stat-card"><div class="stat-value">4/4</div><div class="stat-label">Phase 37 plans done ✅</div></div>
+    <div class="stat-card"><div class="stat-value">41</div><div class="stat-label">Next phase</div></div>
+    <div class="stat-card"><div class="stat-value">5/5</div><div class="stat-label">Phase 40 plans done ✅</div></div>
     <div class="stat-card"><div class="stat-value">64</div><div class="stat-label">Allowlist events</div></div>
     <div class="stat-card"><div class="stat-value">~125</div><div class="stat-label">v3.0 plans total est.</div></div>
   </div>
@@ -347,15 +349,23 @@ tr:hover td{background:var(--surface2)}
         </div>
         <div class="phase-status">✅ Complete — PR #2 open · 2026-05-26</div>
       </div>
-      <div class="phase-card pending" onclick="openPhase('39')">
+      <div class="phase-card done" onclick="openPhase('39')">
         <div class="phase-num">Phase 39</div>
         <div class="phase-name">Grid Multi-Tenancy</div>
-        <div class="phase-status">⏳ Pending — depends on Phase 38</div>
+        <div style="margin:8px 0">
+          <div class="progress-wrap"><div class="progress-fill green" style="width:100%"></div></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:3px">4/4 plans · 100%</div>
+        </div>
+        <div class="phase-status">✅ SHIPPED 2026-05-27</div>
       </div>
-      <div class="phase-card pending" onclick="openPhase('40')">
+      <div class="phase-card done" onclick="openPhase('40')">
         <div class="phase-num">Phase 40</div>
         <div class="phase-name">Local AI Integration</div>
-        <div class="phase-status">⏳ Pending</div>
+        <div style="margin:8px 0">
+          <div class="progress-wrap"><div class="progress-fill green" style="width:100%"></div></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:3px">5/5 plans · 100%</div>
+        </div>
+        <div class="phase-status">✅ SHIPPED 2026-05-27</div>
       </div>
       <div class="phase-card pending" onclick="openPhase('41')">
         <div class="phase-num">Phase 41</div>
@@ -747,6 +757,193 @@ tr:hover td{background:var(--surface2)}
   </div>
 </section>
 
+<!-- ═══════════════════ PHASE 39 DETAIL ═══════════════════ -->
+<section id="phase39" class="section">
+  <div class="section-title">Phase 39 — Grid Multi-Tenancy</div>
+  <div class="section-subtitle">✅ COMPLETE 2026-05-27 · Wave 1 · 4 plans · Allowlist unchanged (64)</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-value">4/4</div><div class="stat-label">Plans done</div></div>
+    <div class="stat-card"><div class="stat-value">0</div><div class="stat-label">Allowlist additions</div></div>
+    <div class="stat-card"><div class="stat-value">64</div><div class="stat-label">Current allowlist</div></div>
+    <div class="stat-card"><div class="stat-value">v27+v28</div><div class="stat-label">Schema migrations</div></div>
+    <div class="stat-card"><div class="stat-value">26</div><div class="stat-label">New tests GREEN</div></div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-green">Wave 0</span>
+      <span class="card-title">39-01 — TDD Stubs (7 test files, TENANT behavioral contracts)</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> 7 it.todo / pytest.mark.skip stub files across Grid + Brain + Steward</li>
+        <li><span class="task-check">✅</span> 15+ behavioral contracts covering cross-operator isolation, quota enforcement, civic data sharing</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-green">Wave 1</span>
+      <span class="card-title">39-02 — DB Layer: Migrations v27+v28 + BrainTokenStore ownership</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> Migration v27: operator_did VARCHAR(255) NULL + idx_operator_did on brain_tokens</li>
+        <li><span class="task-check">✅</span> Migration v28: operator_quota_overrides table (per-operator limit overrides)</li>
+        <li><span class="task-check">✅</span> BrainTokenStore gains setOwner, findByOperator, countActiveByOperator</li>
+        <li><span class="task-check">✅</span> grid/src/operator/data/: operator-brain-store.ts, operator-quota-store.ts, operator-settings-store.ts (Phase 40 stub)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-purple">Wave 2</span>
+      <span class="card-title">39-03 — API Layer: operatorScope + 5 operator/me/* routes + quota</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> operatorScope() preHandler — extracts operatorDid from Portal session DIDContext; sends 403 if absent</li>
+        <li><span class="task-check">✅</span> assertOperatorOwns() — cross-operator ownership check with Pino warn</li>
+        <li><span class="task-check">✅</span> 5 routes added to ROUTE_DID_POLICY as portal_session_required: GET/POST/GET/GET/PATCH operator/me/*</li>
+        <li><span class="task-check">✅</span> Per-DID 600 req/min rate limit bucket layered on per-IP 120 req/min</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-blue">Wave 3</span>
+      <span class="card-title">39-04 — CI Gate + Steward /system/operators + 26 integration tests GREEN</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> scripts/check-operator-scope-typing.mjs — walks operator/data/*.ts, asserts every exported fn has operatorDid: string param</li>
+        <li><span class="task-check">✅</span> .github/workflows/rig-invariants.yml — TENANT-02 check-operator-scope-typing step added</li>
+        <li><span class="task-check">✅</span> steward/src/app/system/operators/page.tsx — Tier-2 Grid Manager (D-V3-36): Unowned Brains, Per-Operator Quota, Override Controls</li>
+        <li><span class="task-check">✅</span> 26 behavioral integration tests — cross-operator 403, quota 429, civic route isolation verified</li>
+      </ul>
+      <div style="margin-top:8px;font-size:11px;color:var(--green)">26 tests passing. TENANT-01/02/03 code-verified. Merged 2026-05-27.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ PHASE 40 DETAIL ═══════════════════ -->
+<section id="phase40" class="section">
+  <div class="section-title">Phase 40 — Local AI Integration</div>
+  <div class="section-subtitle">✅ COMPLETE 2026-05-27 · Wave 1+2+3 · 5 plans · Allowlist unchanged (64) · UAT pending live testing</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-value">5/5</div><div class="stat-label">Plans done</div></div>
+    <div class="stat-card"><div class="stat-value">0</div><div class="stat-label">Allowlist additions</div></div>
+    <div class="stat-card"><div class="stat-value">64</div><div class="stat-label">Current allowlist</div></div>
+    <div class="stat-card"><div class="stat-value">v29</div><div class="stat-label">Schema migrations</div></div>
+    <div class="stat-card"><div class="stat-value">5</div><div class="stat-label">UAT items pending</div></div>
+    <div class="stat-card"><div class="stat-value">Q-V3-I</div><div class="stat-label">Constitutional banner ✅</div></div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-green">Wave 0</span>
+      <span class="card-title">40-01 — TDD Stubs (3 test files, 15 behavioral contracts)</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> grid/test/operator-me-settings.test.ts — 6 it.todo stubs for settings GET/PATCH + Brain-JWT endpoint</li>
+        <li><span class="task-check">✅</span> brain/test/test_startup_settings.py — 4 pytest.mark.skip stubs for _fetch_operator_settings()</li>
+        <li><span class="task-check">✅</span> brain/test/test_local_ai_http.py — 5 pytest.mark.skip stubs for /local-ai/models + /local-ai/status</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-green">Wave 1</span>
+      <span class="card-title">40-02 — Grid DB Migration v29 + Brain-JWT Settings Endpoint</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> Migration v29: operator_settings table (grid_name + operator_did PK, JSON settings, ON UPDATE CURRENT_TIMESTAMP)</li>
+        <li><span class="task-check">✅</span> operator-settings-store.ts: getSettings() (SELECT + default, no write-on-read) + updateSettings() (INSERT ... ON DUPLICATE KEY UPDATE)</li>
+        <li><span class="task-check">✅</span> Default model: qwen3:4b for all 3 tiers (small/primary/large)</li>
+        <li><span class="task-check">✅</span> GET /api/v1/operator/me/brain-settings — EdDSA Brain JWT bearer auth, policy: 'public', verifies against brain_tokens table</li>
+        <li><span class="task-check">✅</span> 9 passing tests in operator-me-settings.test.ts (expanded from stubs)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-purple">Wave 2a</span>
+      <span class="card-title">40-03 — ModelRouter→LLMAdapter + Async Brain Startup + 3-Tier Routing</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> ModelRouter(LLMAdapter) — 4 delegating methods: provider_name, list_models, is_available, check_recovery (delegates to PRIMARY tier)</li>
+        <li><span class="task-check">✅</span> create_brain_app_from_env() made async (was sync)</li>
+        <li><span class="task-check">✅</span> _fetch_operator_settings(): httpx.AsyncClient GET /api/v1/operator/me/brain-settings; sys.exit(1) on non-200 or network error (D-40-01)</li>
+        <li><span class="task-check">✅</span> 3-tier wiring: router.register_tier(SMALL/PRIMARY/LARGE, OllamaAdapter(model=..., base_url=ollama_host))</li>
+        <li><span class="task-check">✅</span> test_startup_settings.py — 4 real passing tests (expanded from stubs)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-purple">Wave 2b</span>
+      <span class="card-title">40-04 — Brain HTTP /local-ai/* + Structured Logging + Recovery</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> brain/src/noesis_brain/http/local_ai.py — handle_local_ai_models (X-Brain-Secret auth, LLMError → {"models":[],"ollama_available":false})</li>
+        <li><span class="task-check">✅</span> handle_local_ai_status — {"status":"ok"|"degraded","provider":"ollama","fallback_provider":null}</li>
+        <li><span class="task-check">✅</span> GET /local-ai/models + GET /local-ai/status routes registered in server.py</li>
+        <li><span class="task-check">✅</span> check_recovery() called from on_tick() handler</li>
+        <li><span class="task-check">✅</span> Structured logs: local_ai_unavailable (first fallback) + local_ai_recovered (recovery)</li>
+        <li><span class="task-check">✅</span> test_local_ai_http.py — 10 real passing tests (expanded from stubs)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-blue">Wave 3</span>
+      <span class="card-title">40-05 — Steward /system/local-ai Page + Brain HTTP Proxy (human checkpoint)</span>
+      <span class="chip chip-green">✅ Done</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">✅</span> steward/src/app/api/brain/[...path]/route.ts — server-side Brain HTTP proxy, injects X-Brain-Secret from process.env.BRAIN_HTTP_SECRET (NO NEXT_PUBLIC_ prefix)</li>
+        <li><span class="task-check">✅</span> steward/src/app/system/local-ai/page.tsx — Tier-1 Local Nous Manager (D-V3-36): small/primary/large model dropdowns from /api/brain/local-ai/models</li>
+        <li><span class="task-check">✅</span> Save → PATCH /api/v1/operator/me/settings; amber "Restart Brain to apply changes." banner post-save</li>
+        <li><span class="task-check">✅</span> <strong style="color:var(--red)">Q-V3-I MANDATORY:</strong> Hardcoded red banner: "Local AI offline — using {fallback_provider} fallback. Memory content is leaving this machine."</li>
+        <li><span class="task-check">✅</span> 10s polling of /api/brain/local-ai/status for live banner state</li>
+        <li><span class="task-check">✅</span> "Local AI" nav link added to StewardShell.tsx</li>
+      </ul>
+      <div style="margin-top:8px;font-size:11px;color:var(--amber)">⚠️ 5 UAT items pending live testing — see 40-HUMAN-UAT.md</div>
+    </div>
+  </div>
+</section>
+
 <section id="requirements" class="section">
   <div class="section-title">Requirements</div>
   <div class="section-subtitle">Active · Holding · Issues · Needs Discussion</div>
@@ -814,6 +1011,42 @@ tr:hover td{background:var(--surface2)}
 
   <div class="card">
     <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--green)">Phase 39 — TENANT Requirements ✅ SHIPPED</span>
+      <span class="chip chip-green">3 validated</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <table>
+        <thead><tr><th>ID</th><th>Status</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="td-code">TENANT-01</span></td><td><span class="chip chip-green">Validated</span></td><td>Per-operator metadata isolation: operatorScope() preHandler + assertOperatorOwns(); cross-operator query returns 403 forbidden</td></tr>
+          <tr><td><span class="td-code">TENANT-02</span></td><td><span class="chip chip-green">Validated</span></td><td>TypeScript compile-time scope typing: every accessor in operator/data/*.ts has operatorDid: string parameter; CI gate check-operator-scope-typing.mjs wired into rig-invariants.yml</td></tr>
+          <tr><td><span class="td-code">TENANT-03</span></td><td><span class="chip chip-green">Validated</span></td><td>Per-operator quotas: migrations v27+v28; per-DID 600 req/min; quota 429 on overrun; Steward /system/operators Tier-2 Grid Manager; civic data queries return identical data regardless of bearer</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--green)">Phase 40 — LOCAL Requirements ✅ SHIPPED</span>
+      <span class="chip chip-amber">3 code-verified · UAT pending</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <table>
+        <thead><tr><th>ID</th><th>Status</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="td-code">LOCAL-01</span></td><td><span class="chip chip-amber">⚠️ Code-verified</span></td><td>Operator selects small/primary/large model via /system/local-ai; persists to operator_settings (v29); Brain startup fetches from Brain-JWT endpoint; 3-tier ModelRouter wired. Live runtime UAT pending.</td></tr>
+          <tr><td><span class="td-code">LOCAL-02</span></td><td><span class="chip chip-amber">⚠️ Code-verified</span></td><td>Temperature/max_tokens changes show amber "Restart Brain to apply" banner. Q-V3-I constitutional red banner hardcoded: "Memory content is leaving this machine." Live runtime UAT pending.</td></tr>
+          <tr><td><span class="td-code">LOCAL-03</span></td><td><span class="chip chip-amber">⚠️ Code-verified</span></td><td>Ollama unavailable → structured log local_ai_unavailable; /local-ai/status → {"status":"degraded"}; Steward red banner; recovery within 10 ticks logs local_ai_recovered. Live runtime UAT pending.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
       <span style="font-weight:600;color:var(--red)">Open Questions / Needs Discussion</span>
       <span class="chip chip-red">10 open</span>
       <span class="card-chevron">▶</span>
@@ -863,6 +1096,24 @@ tr:hover td{background:var(--surface2)}
     </div>
   </div>
 
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--amber)">Phase 40 — LOCAL-01..03 Live Runtime UAT</span>
+      <span class="chip chip-amber">5 items pending</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <p style="color:var(--text3);font-size:12px;margin-bottom:12px">See <code>.planning/phases/40-local-ai-integration/40-HUMAN-UAT.md</code> for full details. Requires running Brain + Ollama stack:</p>
+      <ul class="task-list">
+        <li><span class="task-check">⬜</span> Open /system/local-ai — verify model dropdowns load from Ollama; select model; Save; restart Brain; verify Brain log shows selected model</li>
+        <li><span class="task-check">⬜</span> Change temperature/max_tokens; Save; verify amber "Restart Brain to apply changes." banner appears</li>
+        <li><span class="task-check">⬜</span> Kill Ollama (pkill ollama); verify Steward shows red banner with "Memory content is leaving this machine." text</li>
+        <li><span class="task-check">⬜</span> Restart Ollama; verify red banner disappears within ~10 ticks (no operator action needed)</li>
+        <li><span class="task-check">⬜</span> Verify Brain startup exits with non-zero code when GRID_URL is unreachable (curl Grid down test)</li>
+      </ul>
+    </div>
+  </div>
+
   <div class="card">
     <div class="card-header" onclick="toggle(this.parentElement)">
       <span style="font-weight:600;color:var(--text2)">Prior Phases — Inherited UAT</span>
@@ -887,12 +1138,12 @@ tr:hover td{background:var(--surface2)}
       </tr>
     </thead>
     <tbody>
-      <tr><td><span class="td-code">36</span></td><td>Visitor/DID Split</td><td>1</td><td>M (8 plans)</td><td>+4 → 60</td><td>—</td><td><span class="chip chip-amber">Executing</span></td></tr>
-      <tr><td><span class="td-code">37</span></td><td>DID Registry</td><td>1</td><td>L (~6 plans)</td><td>+4 → 64</td><td>—</td><td><span class="chip chip-gray">Pending</span></td></tr>
-      <tr><td><span class="td-code">38</span></td><td>Brain ↔ Grid Wire</td><td>1</td><td>L (~7 plans)</td><td>0</td><td>37</td><td><span class="chip chip-gray">Pending</span></td></tr>
-      <tr><td><span class="td-code">39</span></td><td>Multi-Tenancy</td><td>1</td><td>M (~5 plans)</td><td>0</td><td>38</td><td><span class="chip chip-gray">Pending</span></td></tr>
-      <tr><td><span class="td-code">40</span></td><td>Local AI Integration</td><td>1</td><td>M (~6 plans)</td><td>0</td><td>—</td><td><span class="chip chip-gray">Pending</span></td></tr>
-      <tr><td><span class="td-code">41</span></td><td>Sleep Cycle</td><td>1</td><td>M (~5 plans)</td><td>0</td><td>38</td><td><span class="chip chip-gray">Pending</span></td></tr>
+      <tr><td><span class="td-code">36</span></td><td>Visitor/DID Split</td><td>1</td><td>M (8 plans)</td><td>+4 → 60</td><td>—</td><td><span class="chip chip-green">✅ Shipped 2026-05-26</span></td></tr>
+      <tr><td><span class="td-code">37</span></td><td>DID Registry</td><td>1</td><td>L (4 plans)</td><td>+4 → 64</td><td>—</td><td><span class="chip chip-green">✅ Shipped 2026-05-26</span></td></tr>
+      <tr><td><span class="td-code">38</span></td><td>Brain ↔ Grid Wire</td><td>1</td><td>L (4 plans)</td><td>0</td><td>37</td><td><span class="chip chip-green">✅ Shipped 2026-05-27</span></td></tr>
+      <tr><td><span class="td-code">39</span></td><td>Multi-Tenancy</td><td>1</td><td>M (4 plans)</td><td>0</td><td>38</td><td><span class="chip chip-green">✅ Shipped 2026-05-27</span></td></tr>
+      <tr><td><span class="td-code">40</span></td><td>Local AI Integration</td><td>1</td><td>M (5 plans)</td><td>0</td><td>—</td><td><span class="chip chip-green">✅ Shipped 2026-05-27</span></td></tr>
+      <tr><td><span class="td-code">41</span></td><td>Sleep Cycle</td><td>1</td><td>M (~5 plans)</td><td>0</td><td>38</td><td><span class="chip chip-amber">Next up</span></td></tr>
       <tr><td><span class="td-code">42</span></td><td>P2P Infrastructure</td><td>2</td><td>L (~8 plans)</td><td>+3 → 63</td><td>36+37+38</td><td><span class="chip chip-gray">Pending</span></td></tr>
       <tr><td><span class="td-code">43</span></td><td>Right-to-Fork</td><td>2</td><td>M (~5 plans)</td><td>0</td><td>37+38</td><td><span class="chip chip-gray">Pending</span></td></tr>
       <tr><td><span class="td-code">44</span></td><td>Marketplace v3</td><td>3</td><td>L (~8 plans)</td><td>+4</td><td>37</td><td><span class="chip chip-gray">Pending</span></td></tr>
@@ -1032,7 +1283,7 @@ tr:hover td{background:var(--surface2)}
           <div class="arch-service">
             <div class="svc-name">Ollama</div>
             <div class="svc-port">:11434 · Local AI (qwen3:4b)</div>
-            <div class="svc-status"><span class="chip chip-amber">Phase 40</span></div>
+            <div class="svc-status"><span class="chip chip-green">✅ Phase 40 shipped</span></div>
           </div>
         </div>
       </div>
@@ -1072,8 +1323,10 @@ tr:hover td{background:var(--surface2)}
         <div class="env-group-title">LLM (Brain)</div>
         <div class="env-row"><div class="env-key">LLM_PROVIDER</div><div class="env-default">ollama</div><div class="env-desc">Local AI provider. "ollama" for local; cloud providers via optional keys below</div></div>
         <div class="env-row"><div class="env-key">OLLAMA_HOST</div><div class="env-default">http://localhost:11434</div><div class="env-desc">Ollama API endpoint — Brain connects here for cognitive ticks</div></div>
-        <div class="env-row"><div class="env-key">LLM_MODEL</div><div class="env-default">qwen3:4b</div><div class="env-desc">Default model. Phase 40 makes this operator-selectable via Steward Console (Q-V3-B)</div></div>
-        <div class="env-row"><div class="env-key">ANTHROPIC_API_KEY</div><div class="env-default">(optional)</div><div class="env-desc">Cloud LLM fallback — Q-V3-I open (allowed in v3.0?)</div></div>
+        <div class="env-row"><div class="env-key">LLM_MODEL</div><div class="env-default">qwen3:4b</div><div class="env-desc">Startup default — overridden by operator_settings from Grid at Brain startup (Phase 40 ✅). Small/Primary/Large model selectable via /system/local-ai</div></div>
+        <div class="env-row"><div class="env-key">BRAIN_HTTP_SECRET</div><div class="env-default">(required)</div><div class="env-desc">⚠️ Server-side ONLY — shared secret between Steward HTTP proxy and Brain HTTP server. NEVER prefix with NEXT_PUBLIC_</div></div>
+        <div class="env-row"><div class="env-key">BRAIN_HTTP_URL</div><div class="env-default">http://localhost:8090</div><div class="env-desc">Brain HTTP server URL — Steward proxy target for /api/brain/* routes (Phase 40 ✅)</div></div>
+        <div class="env-row"><div class="env-key">ANTHROPIC_API_KEY</div><div class="env-default">(optional)</div><div class="env-desc">Cloud LLM fallback — Q-V3-I: if set, Steward shows red "Memory content is leaving this machine." banner (Q-V3-I mandatory text hardcoded)</div></div>
       </div>
       <div class="env-group">
         <div class="env-group-title">Nous Config</div>

@@ -51,7 +51,7 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 - [x] **Phase 37: DID Registry** — Civic-DID + Business-DID issuance, W3C VC format, court-only revocation. (allowlist +4) (completed 2026-05-26)
 - [x] **Phase 38: Brain ↔ Grid Wire Protocol** — HTTPS REST (control) + WSS (events) replaces in-process queues; operator-signed bearer tokens; idempotent replay on reconnect. (allowlist 0) (completed 2026-05-27)
 - [ ] **Phase 39: Grid Multi-Tenancy** — Per-operator metadata isolation in operator-scoped schemas; civic state remains shared; per-operator quotas. (allowlist 0)
-- [ ] **Phase 40: Local AI Integration** — Ollama production-grade with operator-selectable model + degraded-cognition fallback. (allowlist 0)
+- [x] **Phase 40: Local AI Integration** — Ollama production-grade with operator-selectable model + degraded-cognition fallback. (allowlist 0) (completed 2026-05-27)
 - [ ] **Phase 41: Sleep Cycle + Away Presence** — Human-resident analogy: city sees offline Nous as 'away'; messages queue; identity persists; long-absence escalation. (allowlist 0)
 
 **Wave 2 — Civic Plumbing (Phases 42-43)**
@@ -164,13 +164,13 @@ Plans:
 **Scope (ships)**: LOCAL-01..03.
 **Out of scope for this phase**: Cloud LLM (Claude/OpenAI/Gemini) as production default — operators MAY configure via env per Q-V3-I but Brain memory cross-boundary implications must be flagged in Steward Console; default model selection (locked via Q-V3-B during discuss-phase).
 **Allowlist additions**: **0**. Running total: **64**.
-**Plans:** 5 plans
+**Plans:** 5/5 plans complete
 Plans:
-- [ ] 40-01-PLAN.md — Wave 0: test stubs for Grid settings + Brain startup + Brain HTTP
-- [ ] 40-02-PLAN.md — Grid DB migration v29 + operator-settings-store + Brain-JWT settings endpoint
-- [ ] 40-03-PLAN.md — ModelRouter extends LLMAdapter + async Brain startup + 3-tier routing wiring
-- [ ] 40-04-PLAN.md — Brain HTTP /local-ai/models + /local-ai/status + structured logging + recovery
-- [ ] 40-05-PLAN.md — Steward Console /system/local-ai page + Brain HTTP proxy (checkpoint)
+- [x] 40-01-PLAN.md — Wave 0: test stubs for Grid settings + Brain startup + Brain HTTP
+- [x] 40-02-PLAN.md — Grid DB migration v29 + operator-settings-store + Brain-JWT settings endpoint
+- [x] 40-03-PLAN.md — ModelRouter extends LLMAdapter + async Brain startup + 3-tier routing wiring
+- [x] 40-04-PLAN.md — Brain HTTP /local-ai/models + /local-ai/status + structured logging + recovery
+- [x] 40-05-PLAN.md — Steward Console /system/local-ai page + Brain HTTP proxy (checkpoint)
 **UI hint**: yes
 
 ### Phase 41: Sleep Cycle + Away Presence
@@ -511,7 +511,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 37. DID Registry | 4/4 | Complete   | 2026-05-26 |
 | 38. Brain ↔ Grid Wire Protocol | 4/4 | Complete    | 2026-05-27 |
 | 39. Grid Multi-Tenancy | 4/4 | Complete    | 2026-05-27 |
-| 40. Local AI Integration | 0/5 | Planned      | — |
+| 40. Local AI Integration | 5/5 | Complete     | 2026-05-27 |
 | 41. Sleep Cycle + Away Presence | 0/? | Not started | — |
 | 42. P2P Infrastructure | 0/? | Not started | — |
 | 43. Right-to-Fork Export Tooling | 0/? | Not started | — |

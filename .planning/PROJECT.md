@@ -164,6 +164,16 @@ The first persistent Grid where Nous actually live — observable, running conti
 - ✓ **WIRE-04**: Canonical idempotency key `sha256(brain_did:tick:event_type:payload_hash)`; Grid deduplicates via `INSERT IGNORE` on `(grid_name, idempotency_key)` PK — Validated in Phase 38 (2026-05-26)
 - ✓ **WIRE-05**: Per-Civic-DID egress filter in `firehose-filter.isRelevantFor()` applied at `ClientConnection.trySend`; R-31-01 zero-diff preserved (chain head hash unaffected by subscriber count); `check-ws-redaction-zero-diff.mjs` CI gate passes — Validated in Phase 38 (2026-05-26)
 
+**Validated REQs (v3.0 — Phase 39):**
+- ✓ **TENANT-01**: Per-operator metadata isolation: `operatorScope()` preHandler extracts `operatorDid` from Portal session DIDContext; `assertOperatorOwns()` cross-operator check returns `403 forbidden`; operators cannot read each other's Brain tokens, Nous lists, or settings — Validated in Phase 39 (2026-05-27)
+- ✓ **TENANT-02**: TypeScript compile-time scope typing: every accessor function in `grid/src/operator/data/*.ts` takes `operatorDid: string` parameter; CI gate `scripts/check-operator-scope-typing.mjs` wired into `rig-invariants.yml` (TENANT-02 step); fails build if any data-accessor signature is missing the parameter — Validated in Phase 39 (2026-05-27)
+- ✓ **TENANT-03**: Per-operator resource quotas: migrations v27 (`operator_did` on `brain_tokens`) + v28 (`operator_quota_overrides`); per-DID 600 req/min rate limit bucket; quota 429 on overrun; Steward Console `/system/operators` Tier-2 Grid Manager surface with quota override controls; civic data queries (`library`, `market`, `registry`) return identical data regardless of which operator's bearer — Validated in Phase 39 (2026-05-27)
+
+**Validated REQs (v3.0 — Phase 40):**
+- ✓ **LOCAL-01**: Operator opens Steward Console `/system/local-ai`; selects small/primary/large model from Ollama model list (fetched via Brain HTTP proxy); clicks Save → `PATCH /api/v1/operator/me/settings`; selection persists to `operator_settings` table (migration v29); next Brain start fetches settings from `GET /api/v1/operator/me/brain-settings` (EdDSA Brain JWT bearer) and wires 3-tier `ModelRouter` — Code-verified in Phase 40 (2026-05-27); live runtime UAT pending in 40-HUMAN-UAT.md
+- ✓ **LOCAL-02**: Changing temperature/max_tokens shows amber "Restart Brain to apply changes." banner after Save; values are not hot-reloaded mid-tick; Q-V3-I constitutional requirement implemented: mandatory red banner "Memory content is leaving this machine." hardcoded in `steward/src/app/system/local-ai/page.tsx` when cloud fallback is active — Code-verified in Phase 40 (2026-05-27); live runtime UAT pending in 40-HUMAN-UAT.md
+- ✓ **LOCAL-03**: Ollama unavailable → `ModelRouter` catches `LLMError`, logs `{event:'local_ai_unavailable'}` at first fallback, emits `{event:'local_ai_recovered'}` on recovery; `GET /local-ai/status` returns `{"status":"degraded"}` when Ollama offline; Steward Console polls status every 10s and shows red banner; recovery within 10 ticks restores normal cognition without operator intervention — Code-verified in Phase 40 (2026-05-27); live runtime UAT pending in 40-HUMAN-UAT.md
+
 ---
 
 ## Most-Recent Milestone: v2.6 Resilience & Observability — SHIPPED (2026-05-25)
@@ -410,4 +420,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-27 — Phase 38 (Brain ↔ Grid Wire Protocol) complete. WIRE-01..05 validated: TLS enforcement, EdDSA JWT bearer auth, offline SQLite queue + batch ingest, idempotency, per-DID firehose filter. Allowlist unchanged at 64. Phase 37 REG-01..05 also recorded (DID Registry). Next: Phase 39 — Grid Multi-Tenancy.*
+*Last updated: 2026-05-27 — Phase 40 (Local AI Integration) complete. LOCAL-01..03 code-verified: Ollama model selection persists to operator_settings (migration v29), Brain-JWT endpoint for startup settings fetch, ModelRouter→LLMAdapter extension, 3-tier routing (SMALL/PRIMARY/LARGE OllamaAdapter), Brain HTTP /local-ai/models+status, Steward /system/local-ai page with Q-V3-I mandatory red banner. Phase 39 TENANT-01..03 also recorded. Allowlist unchanged at 64. Next: Phase 41 — Sleep Cycle + Away Presence.*
