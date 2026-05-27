@@ -51,6 +51,9 @@ jobs:
       - name: OBS-37-01 civic-DID issuance path gate (Phase 37 D-V3-33)
         run: node scripts/check-civic-did-issuance-path.mjs
 
+      - name: TENANT-02 check-operator-scope-typing (Phase 39)
+        run: node scripts/check-operator-scope-typing.mjs
+
       - name: Fast Vitest rig suite (Wave 0/1/2 — NOESIS_RUN_NIGHTLY unset, rig-bench skips)
         working-directory: grid
         run: |
