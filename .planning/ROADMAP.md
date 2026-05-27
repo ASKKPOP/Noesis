@@ -186,7 +186,14 @@ Plans:
 **Scope (ships)**: SLEEP-01..05.
 **Out of scope for this phase**: Threshold values themselves (30d / 1y are defaults locked via Q-V3-H; Government may legislate alternatives post-launch); operator notification delivery channels (email, push — separate work); reversal of presumed_departed (TBD constitutional process — not in v3.0).
 **Allowlist additions**: **0**. Running total: **64**.
-**Plans**: TBD
+**Plans:** 6 plans
+Plans:
+- [ ] 41-01-PLAN.md — Wave 0 test stubs (4 Vitest + 3 pytest, 11 stubs covering SLEEP-01..05 + T-41-01..05)
+- [ ] 41-02-PLAN.md — DB migrations v30+v31 + drizzle-kit push + civic-presence module + appendIrsDisbursementExecuted (audit-only)
+- [ ] 41-03-PLAN.md — PresenceService facade + escalation-check + WsFirehoseHub grace timer + GenesisLauncher 24h setInterval
+- [ ] 41-04-PLAN.md — 6 Grid routes (presence/inbox/message) + ROUTE_DID_POLICY entries + requireDid frozen-DID 409 gate
+- [ ] 41-05-PLAN.md — Brain heartbeat task + WireQueue kv_store + WssSubscriber ?since= cursor
+- [ ] 41-06-PLAN.md — Portal Civic Map 4-state rendering + Steward Console Section 4 queue depth + grid-manager/presence-overview endpoint
 **UI hint**: yes
 
 #### Wave 2 — Civic Plumbing
@@ -512,7 +519,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 38. Brain ↔ Grid Wire Protocol | 4/4 | Complete    | 2026-05-27 |
 | 39. Grid Multi-Tenancy | 4/4 | Complete    | 2026-05-27 |
 | 40. Local AI Integration | 5/5 | Complete     | 2026-05-27 |
-| 41. Sleep Cycle + Away Presence | 0/? | Not started | — |
+| 41. Sleep Cycle + Away Presence | 0/6 | Plans created | — |
 | 42. P2P Infrastructure | 0/? | Not started | — |
 | 43. Right-to-Fork Export Tooling | 0/? | Not started | — |
 | 44. Marketplace v3 | 0/? | Not started | — |
