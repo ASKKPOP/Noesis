@@ -345,6 +345,17 @@ export interface GridServices {
      * operator/me/* routes call operator-settings-store.ts functions directly via services.pool.
      */
     operatorSettingsStore?: import('../operator/data/operator-settings-store.js').OperatorSettings;
+    /**
+     * Phase 41 SLEEP-01..05: presence + inbox service facade.
+     * When absent, Phase 41 routes return 503 presence_service_unavailable.
+     */
+    presenceService?: import('../civic-presence/presence-service.js').PresenceService;
+    /**
+     * Phase 41 — current tick accessor for routes that write last_seen_tick.
+     * Production: launcher passes `() => this.clock.currentTick`.
+     * Tests: `() => 0` or a fixture tick.
+     */
+    currentTick?: () => number;
 }
 
 /**

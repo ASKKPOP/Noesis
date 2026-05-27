@@ -228,6 +228,15 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // Brain startup uses Phase 38 EdDSA bearer token, not a portal session cookie.
     // T-40-02-01: Brain JWT verified against registered public key in brain_tokens table.
     'GET /api/v1/operator/me/brain-settings': 'public',
+
+    // Phase 41 Sleep Cycle (SLEEP-01..05) — presence + inbox + queue-aware send.
+    // All 6 routes registered explicitly per OBS-36-01.
+    'POST /api/v1/civic/presence':        'civic_did_required', // Brain JWT heartbeat (T-41-01)
+    'GET /api/v1/civic/presence':         'public',             // Civic Map polling — no auth
+    'GET /api/v1/civic/presence/me':      'civic_did_required', // Brain JWT — own DID only
+    'GET /api/v1/civic/inbox':            'civic_did_required', // Brain JWT — scoped (T-41-05)
+    'PATCH /api/v1/civic/inbox/ack':      'civic_did_required', // Brain JWT — scoped (T-41-05)
+    'POST /api/v1/civic/message':         'civic_did_required', // Civic-DID send (T-41-02)
 } as Record<string, RouteDIDPolicy>);
 
 /**
