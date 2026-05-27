@@ -90,7 +90,54 @@ class TestFetchOperatorSettings:
 
 
 class TestRecoveryDetection:
-    @pytest.mark.skip(reason="Wave 0 stub — implemented in Plan 04")
+    @pytest.mark.asyncio
     async def test_logs_recovered_after_unavailable(self, caplog: pytest.LogCaptureFixture) -> None:
         """When is_available() returns True after a False period, logs 'local_ai_recovered'."""
-        pass
+        import logging
+        from unittest.mock import AsyncMock
+        from noesis_brain.llm.types import LLMConfig
+
+        config = LLMConfig(
+            provider="ollama",
+            models={"small": "qwen3:4b", "primary": "qwen3:4b", "large": "qwen3:4b"},
+            temperature=0.7,
+            max_tokens=2048,
+        )
+        router = ModelRouter(config)
+
+        # Make primary unavailable so it enters fallback mode
+        from unittest.mock import MagicMock
+        primary = MagicMock()
+        primary.provider_name = "ollama"
+        primary.is_available = AsyncMock(return_value=False)
+        primary._model = "qwen3:4b"
+
+        from noesis_brain.llm.base import LLMError
+        primary.generate = AsyncMock(side_effect=LLMError("ollama", "unavailable"))
+        primary.list_models = AsyncMock(return_value=[])
+
+        cloud = MagicMock()
+        cloud.provider_name = "claude"
+        cloud.is_available = AsyncMock(return_value=True)
+        cloud.generate = AsyncMock(return_value=MagicMock(
+            text="cloud response", model="claude", provider="claude",
+            usage={}, latency_ms=100.0,
+        ))
+
+        router.register_tier(ModelTier.SMALL, primary)
+        router.register_tier(ModelTier.PRIMARY, primary)
+        router.register_tier(ModelTier.LARGE, primary)
+        router.set_fallback(cloud)
+
+        # First generate falls through to cloud — triggers fallback mode
+        await router.generate("test")
+        assert router._in_fallback_mode is True
+
+        # Now primary recovers
+        primary.is_available = AsyncMock(return_value=True)
+
+        with caplog.at_level(logging.INFO, logger="noesis_brain.llm.router"):
+            result = await router.check_recovery()
+
+        assert result is True
+        assert "local_ai_recovered" in caplog.text
