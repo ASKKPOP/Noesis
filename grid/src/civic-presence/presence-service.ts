@@ -117,6 +117,11 @@ export class PresenceService {
         });
     }
 
+    /** Plan 06 SLEEP-02 — Steward Console queue depth aggregator. */
+    async queueDepthByRecipient(): Promise<Record<string, number>> {
+        return this.deps.messageQueueStore.depthByRecipient(this.deps.gridName);
+    }
+
     /** OBS-R-32-02 — called by launcher.stop() to clear all pending grace timers. */
     shutdown(): void {
         this.deps.graceTimerRegistry.clear();

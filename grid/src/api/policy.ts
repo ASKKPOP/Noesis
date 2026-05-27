@@ -237,6 +237,9 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/civic/inbox':            'civic_did_required', // Brain JWT — scoped (T-41-05)
     'PATCH /api/v1/civic/inbox/ack':      'civic_did_required', // Brain JWT — scoped (T-41-05)
     'POST /api/v1/civic/message':         'civic_did_required', // Civic-DID send (T-41-02)
+
+    // Phase 41 — Grid Manager presence overview (Steward Console Section 4).
+    'GET /api/v1/grid-manager/presence-overview': 'portal_session_required',
 } as Record<string, RouteDIDPolicy>);
 
 /**

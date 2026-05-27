@@ -67,6 +67,7 @@ import { registerDidRateLimit } from './rate-limit/visitor-bucket.js';
 import { registerCivicPresenceRoutes } from './routes/civic-presence.js';
 import { registerCivicInboxRoutes } from './routes/civic-inbox.js';
 import { registerCivicMessageRoute } from './routes/civic-message.js';
+import { registerGridManagerPresenceRoute } from './routes/grid-manager-presence.js';
 
 /**
  * Phase 6 AGENCY-02: normalized memory entry shape crossing the RPC boundary.
@@ -663,6 +664,10 @@ export function buildServerWithHub(
     void registerCivicPresenceRoutes(app, services);
     void registerCivicInboxRoutes(app, services);
     void registerCivicMessageRoute(app, services);
+
+    // --- Phase 41 SLEEP-02: Grid Manager presence overview (Steward Console Section 4) ---
+    // GET /api/v1/grid-manager/presence-overview — portal_session_required (D-V3-36 Tier-2).
+    void registerGridManagerPresenceRoute(app, services);
 
     // --- Phase 38 WIRE-01: Brain action dispatch route ---
     // POST /api/v1/brain/actions — civic_did_required (onRequest hook enforces).
