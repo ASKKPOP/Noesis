@@ -183,6 +183,7 @@ export class WsFirehoseHub {
     private readonly unsubscribeAudit: Unsubscribe;
     private closing = false;
     private _visitorCount = 0;
+    private _presenceService: import('../civic-presence/presence-service.js').PresenceService | undefined;
 
     // Phase 32 OBS-05 (D-32-A2): per-hub frame counters. Mutated only via the
     // HubMetricsSink callbacks passed into ClientConnection at construction time.
@@ -221,6 +222,20 @@ export class WsFirehoseHub {
     }
 
     /**
+     * Phase 41 — attach the PresenceService for civic_member connect/disconnect tracking.
+     * Must be called at most once. Throws on second call with a different service.
+     */
+    attachPresenceService(
+        svc: import('../civic-presence/presence-service.js').PresenceService,
+    ): void {
+        if (this._presenceService !== undefined) {
+            if (this._presenceService === svc) return;
+            throw new Error('WsFirehoseHub.attachPresenceService called twice with different services');
+        }
+        this._presenceService = svc;
+    }
+
+    /**
      * Attach a freshly-upgraded socket. Sends HelloFrame, wires close/error handlers.
      *
      * Phase 36 VIS-03: accepts optional DIDContext. Visitors (null or non-civic_member)
@@ -254,6 +269,11 @@ export class WsFirehoseHub {
             this._visitorCount++;
         }
 
+        // Phase 41 — civic_member WSS connection refcount
+        if (didContext?.tier === 'civic_member' && didContext.did) {
+            this._presenceService?.onWsConnect(didContext.did);
+        }
+
         // Hello frame — no lastEntryId (density-first design, no replay)
         try {
             socket.send(
@@ -271,6 +291,10 @@ export class WsFirehoseHub {
             // Decrement visitor counter before cleanup
             if (client.didContext === null || client.didContext.tier !== 'civic_member') {
                 this._visitorCount = Math.max(0, this._visitorCount - 1);
+            }
+            // Phase 41 — civic_member WSS disconnect refcount
+            if (client.didContext?.tier === 'civic_member' && client.didContext.did) {
+                this._presenceService?.onWsDisconnect(client.didContext.did);
             }
             client.markClosed();
             this._clients.delete(client);

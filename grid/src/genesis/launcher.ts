@@ -138,6 +138,13 @@ export class GenesisLauncher {
      */
     private _firehoseHub: { stats(): FirehoseStats } | undefined;
     /**
+     * Phase 41 — PresenceService facade. One-shot-settable after construction,
+     * before start(). Drives 24h escalation loop (SLEEP-04/05) and shutdown cleanup.
+     */
+    private _presenceService: import('../civic-presence/presence-service.js').PresenceService | undefined;
+    /** Phase 41 — OBS-R-32-02: paired clearInterval handle for the escalation loop. */
+    private _escalationInterval: NodeJS.Timeout | undefined;
+    /**
      * Phase 12 Wave 3 — GovernanceEngine and its backing store.
      *
      * Uses an in-memory store by default (no MySQL required for unit tests or
@@ -332,6 +339,20 @@ export class GenesisLauncher {
     }
 
     /**
+     * Phase 41 — attach PresenceService. Must be called at most once, before start().
+     * Throws on second call with a different service instance.
+     */
+    attachPresenceService(
+        svc: import('../civic-presence/presence-service.js').PresenceService,
+    ): void {
+        if (this._presenceService !== undefined) {
+            if (this._presenceService === svc) return;
+            throw new Error('GenesisLauncher.attachPresenceService called twice with different services');
+        }
+        this._presenceService = svc;
+    }
+
+    /**
      * Bootstrap the Grid — seed regions, laws, Nous, then wire the clock.
      *
      * Options:
@@ -504,10 +525,29 @@ export class GenesisLauncher {
         this.startedAt = Date.now();
         this.clock.start();
         this.audit.append('grid.started', 'system', { tick: this.clock.currentTick });
+
+        // Phase 41 — 24h escalation loop (SLEEP-04/05). OBS-R-32-02: paired clearInterval in stop().
+        if (this._presenceService !== undefined) {
+            const ESCALATION_MS = 24 * 60 * 60 * 1000;
+            this._escalationInterval = setInterval(() => {
+                const svc = this._presenceService;
+                if (svc === undefined) return;
+                void svc.runEscalationCheck(new Date(), this.clock.currentTick)
+                    .catch(() => {});
+            }, ESCALATION_MS);
+        }
     }
 
     /** Stop the Grid clock. */
     stop(): void {
+        // Phase 41 — OBS-R-32-02: clear escalation interval before stopping clock.
+        if (this._escalationInterval !== undefined) {
+            clearInterval(this._escalationInterval);
+            this._escalationInterval = undefined;
+        }
+        if (this._presenceService !== undefined) {
+            this._presenceService.shutdown();
+        }
         this.audit.append('grid.stopped', 'system', { tick: this.clock.currentTick });
         this.clock.stop();
     }
