@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
-stopped_at: Phase 36 UI-SPEC approved (6/6 dimensions PASS + 3 non-blocking FLAGs); 20 D-36-* decisions + UI design contract locked
-last_updated: "2026-05-26T21:30:29.039Z"
+stopped_at: Phase 38 complete — Brain↔Grid wire protocol (WIRE-01..05), EdDSA JWT auth, offline queue, batch ingest, per-DID firehose filter. 9/9 UAT passed. Ready to plan Phase 39.
+last_updated: "2026-05-27T00:07:01.195Z"
 progress:
   total_phases: 25
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 16
-  completed_plans: 12
-  percent: 75
+  completed_plans: 16
+  percent: 100
 ---
 
 # Project State
@@ -22,14 +22,14 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** Phase 38 — Brain ↔ Grid Wire Protocol
+**Current focus:** Phase 39 — Grid Multi-Tenancy
 
 ## Current Position
 
-Phase: 38 (Brain ↔ Grid Wire Protocol) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 38
-Next action: `/gsd-plan-phase 37` — DID Registry (Civic-DID + Business-DID + Issuer/Revocation)
+Phase: 39
+Plan: Not started
+Status: Ready to plan Phase 39
+Next action: `/gsd-discuss-phase 39` or `/gsd-plan-phase 39` — Grid Multi-Tenancy
 
 Driving inputs for v3.0 (locked at milestone open):
 
@@ -393,7 +393,6 @@ Total v3.0 allowlist growth: **+34 (56 → 90)**. Freeze-except-by-explicit-addi
 
 ## Session Continuity
 
-Last session: 2026-05-25T23:00:00.000Z
-Stopped at: Phase 36 UI-SPEC approved (6/6 dimensions PASS + 3 non-blocking FLAGs); 20 D-36-* decisions + UI design contract locked
-Resume file: .planning/phases/36-visitor-did-read-write-split/36-UI-SPEC.md (816 lines, 5 primary surfaces × 3 visitor tiers, raw-SVG invariant preserved)
-Next action: `/gsd-plan-phase 36` to draft executable plan(s) for VIS-01..05 with UI-SPEC as canonical design context
+Last session: 2026-05-27T00:00:00.000Z
+Stopped at: Phase 38 complete — Brain↔Grid wire protocol (WIRE-01..05) UAT passed 9/9. Phase 39 (Grid Multi-Tenancy) ready to plan.
+Resume file: None

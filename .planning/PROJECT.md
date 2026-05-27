@@ -150,6 +150,20 @@ The first persistent Grid where Nous actually live — observable, running conti
 - ✓ **VIS-04**: Per-endpoint `ROUTE_DID_POLICY` table (105 entries, 6-value enum) + CI gate enforces coverage — Validated in Phase 36 (2026-05-26)
 - ✓ **VIS-05**: Sole-producer files for 4 audit events (`portal.did_issued`, `portal.did_revoked`, `grid.recognition_granted`, `grid.recognition_revoked`) — Validated in Phase 36 (2026-05-26)
 
+**Validated REQs (v3.0 — Phase 37):**
+- ✓ **REG-01**: Civic-DID issuance via `POST /api/v1/registry/civic-did/request` — existence-key verified, W3C VC v2.0 with JWS proof, stored in `civic_did_registry` (migration v23) — Validated in Phase 37 (2026-05-26)
+- ✓ **REG-02**: Business-DID issuance via `POST /api/v1/registry/business-did/register` — Civic-DID required, stored in `business_did_registry` (migration v24) — Validated in Phase 37 (2026-05-26)
+- ✓ **REG-03**: Court-only revocation/dissolution — `verifyGovernmentSession()` enforces `iss = did:gov:noesis:genesis-polis` + `court_conviction_ref`; public lookup routes cached with `Cache-Control: max-age=60` — Validated in Phase 37 (2026-05-26)
+- ✓ **REG-04**: Portal-gating invariant (D-V3-33) enforced by `scripts/check-civic-did-issuance-path.mjs` CI gate; 3 approved issuers, 4 forbidden import tokens, wired into `rig-invariants.yml` as OBS-37-01 — Validated in Phase 37 (2026-05-26)
+- ✓ **REG-05**: Allowlist +4 (60→64): `registry.civic_did_issued`, `registry.civic_did_revoked`, `registry.business_did_registered`, `registry.business_did_dissolved` — sole-producer 8-step discipline; closed-tuple payloads — Validated in Phase 37 (2026-05-26)
+
+**Validated REQs (v3.0 — Phase 38):**
+- ✓ **WIRE-01**: Brain ↔ Grid HTTPS REST (`POST /api/v1/brain/actions`) + WSS firehose (`GET /api/v1/brain/firehose`) channels; TLS enforced at Brain config-load (ValueError on `http://` GRID_URL) — Validated in Phase 38 (2026-05-26)
+- ✓ **WIRE-02**: EdDSA JWT bearer token: Brain's `TokenManager` signs 24h JWTs, proactively rotates at 23h; Grid's `BrainTokenStore` (migration v25) + `tryDid` EdDSA branch verifies via `importJWK + jwtVerify`; revocation via court-gated `POST /api/v1/brain/token/revoke` — Validated in Phase 38 (2026-05-26)
+- ✓ **WIRE-03**: Brain-side SQLite `WireQueue` (10K FIFO, survives restarts); transport errors → enqueue; reconnect drains via `POST /api/v1/brain/events/batch` backed by MySQL `brain_event_ingest` (migration v26) — Validated in Phase 38 (2026-05-26)
+- ✓ **WIRE-04**: Canonical idempotency key `sha256(brain_did:tick:event_type:payload_hash)`; Grid deduplicates via `INSERT IGNORE` on `(grid_name, idempotency_key)` PK — Validated in Phase 38 (2026-05-26)
+- ✓ **WIRE-05**: Per-Civic-DID egress filter in `firehose-filter.isRelevantFor()` applied at `ClientConnection.trySend`; R-31-01 zero-diff preserved (chain head hash unaffected by subscriber count); `check-ws-redaction-zero-diff.mjs` CI gate passes — Validated in Phase 38 (2026-05-26)
+
 ---
 
 ## Most-Recent Milestone: v2.6 Resilience & Observability — SHIPPED (2026-05-25)
@@ -396,4 +410,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-25 — v3.0 Polis milestone opened. Vision: Grid-as-City with local Brain (Local AI) + remote Public Grid (Henry-hosted) + 8 civic institutions. Major rewrite of `.planning/research/v3.0/CIVIC-ARCHITECTURE.md` to v2.0 superseded prior multi-Grid federation model. 8 new locked decisions (D-V3-16..23) added. 15 phases (36-50) planned across 4 waves. ~86 plans estimated. Next: define REQUIREMENTS.md with REQ-V3-* IDs, spawn gsd-roadmapper for ROADMAP.md updates.*
+*Last updated: 2026-05-27 — Phase 38 (Brain ↔ Grid Wire Protocol) complete. WIRE-01..05 validated: TLS enforcement, EdDSA JWT bearer auth, offline SQLite queue + batch ingest, idempotency, per-DID firehose filter. Allowlist unchanged at 64. Phase 37 REG-01..05 also recorded (DID Registry). Next: Phase 39 — Grid Multi-Tenancy.*
