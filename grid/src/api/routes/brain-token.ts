@@ -137,12 +137,15 @@ export async function registerBrainTokenRoutes(
             }
 
             // Upsert — rotation path; clears any prior revocation on new key registration
+            // operatorDid is NOT set here per D-39-01: ownership is claimed separately via
+            // POST /api/v1/operator/me/brains (two-step Portal-gated claim model).
             await store.upsert({
                 brainDid: brain_did,
                 publicKeyJwk: jwk,
                 issuedAt: issued_at,
                 expiresAt: expires_at,
                 revoked: false,
+                operatorDid: null,
             });
 
             // Structured log (no audit event — Phase 38 allowlist delta is 0)
