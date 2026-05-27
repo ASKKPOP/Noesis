@@ -145,12 +145,12 @@ Plans:
 **Scope (ships)**: TENANT-01..03.
 **Out of scope for this phase**: Federated multi-Grid (deferred to v3.x per FUTURE-MULTIGRID-01); operator-billing for hosting (Henry's commercial concern, separate); per-operator UI customization in Dashboard (out of MVP scope).
 **Allowlist additions**: **0**. Running total: **64**.
-**Plans:** 4 plans
+**Plans:** 4/4 plans executed
 Plans:
-- [ ] 39-01-PLAN.md — Wave 0 test infrastructure (7 stub files; behavioral contracts for TENANT-01/02/03)
-- [ ] 39-02-PLAN.md — DB layer: migrations v27+v28 + BrainTokenStore ownership methods + operator/data/ module (TENANT-01)
-- [ ] 39-03-PLAN.md — API layer: operatorScope preHandler + 5 operator/me/* routes + policy.ts entries + per-DID rate-limit refactor (TENANT-02/03)
-- [ ] 39-04-PLAN.md — CI gate check-operator-scope-typing.mjs + Steward Console /system/operators page + test stubs to GREEN (TENANT-02/03)
+- [x] 39-01-PLAN.md — Wave 0 test infrastructure (7 stub files; behavioral contracts for TENANT-01/02/03)
+- [x] 39-02-PLAN.md — DB layer: migrations v27+v28 + BrainTokenStore ownership methods + operator/data/ module (TENANT-01)
+- [x] 39-03-PLAN.md — API layer: operatorScope preHandler + 5 operator/me/* routes + policy.ts entries + per-DID rate-limit refactor (TENANT-02/03)
+- [x] 39-04-PLAN.md — CI gate check-operator-scope-typing.mjs + Steward Console /system/operators page + 26 behavioral tests GREEN (TENANT-02/03)
 
 ### Phase 40: Local AI Integration
 **Goal**: Make Ollama production-grade as Brain's default LLM provider. Operator selects model via Steward Console; configuration persists. Degraded-cognition fallback when Local AI is unavailable keeps the tick loop alive without inventing new memories.
@@ -504,7 +504,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 36. Visitor/DID Read-Write Split | 8/8 | Complete    | 2026-05-26 |
 | 37. DID Registry | 4/4 | Complete   | 2026-05-26 |
 | 38. Brain ↔ Grid Wire Protocol | 4/4 | Complete    | 2026-05-27 |
-| 39. Grid Multi-Tenancy | 0/? | Not started | — |
+| 39. Grid Multi-Tenancy | 4/4 | Complete    | 2026-05-27 |
 | 40. Local AI Integration | 0/? | Not started | — |
 | 41. Sleep Cycle + Away Presence | 0/? | Not started | — |
 | 42. P2P Infrastructure | 0/? | Not started | — |

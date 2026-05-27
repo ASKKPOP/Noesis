@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
-status: planning
-stopped_at: Phase 39 planned — 4 plans ready
-last_updated: "2026-05-27T12:00:00.000Z"
+status: executing
+stopped_at: Phase 39 complete — ready for Phase 40
+last_updated: "2026-05-27T03:00:00.000Z"
 progress:
   total_phases: 25
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 20
-  completed_plans: 16
-  percent: 80
+  completed_plans: 20
+  percent: 84
 ---
 
 # Project State
@@ -22,14 +22,13 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** Phase 39 — Grid Multi-Tenancy
+**Current focus:** Phase 40 — Local AI Integration (next)
 
 ## Current Position
 
-Phase: 39
-Plan: 4/4 plans ready (Waves 1-4)
-Status: Ready to execute Phase 39
-Next action: `/gsd-execute-phase 39` — Grid Multi-Tenancy
+Phase: 39 (grid-multi-tenancy) — COMPLETE (2026-05-27)
+Status: Phase 39 shipped — 4/4 plans complete, 26 behavioral tests GREEN
+Next action: `/gsd-execute-phase 40` — Local AI Integration
 
 Driving inputs for v3.0 (locked at milestone open):
 
@@ -149,6 +148,28 @@ Driving inputs for v3.0 (locked at milestone open):
   - 3D Portal landing hero → Phase 56 (D-36-23/24 deferred per D-V3-06 raw-SVG invariant)
   - `civic_member` tier upgrade in `resolveVisitorTier()` → Phase 37 (needs Civic-DID issuance)
   - Per-DID rate limiting → Phase 39 (multi-tenancy)
+
+## v3.0 Phase 39 close-out (locked 2026-05-27)
+
+- **Phase 39 SHIPPED.** Plans 39-01 through 39-04 all complete. Allowlist **unchanged at 64** (0 Phase 39 additions — tenancy is access control, not new event types).
+
+- **What shipped:**
+  1. **DB layer (Plan 02):** Migration v27 — `operator_did VARCHAR(255) NULL` + `idx_operator_did` on `brain_tokens`. Migration v28 — `operator_quota_overrides` table (per-operator limit overrides with fallback to `grid_config`). `BrainTokenStore` gains `setOwner`, `findByOperator`, `countActiveByOperator`. New module `grid/src/operator/data/` with 3 stores: `operator-brain-store.ts`, `operator-quota-store.ts`, `operator-settings-store.ts` (Phase 40 placeholder).
+  2. **API layer (Plan 03):** `operatorScope()` preHandler — extracts `operatorDid` from Portal session DIDContext or sends 403. `assertOperatorOwns()` — cross-operator ownership check with Pino warn. 5 routes added to `ROUTE_DID_POLICY` as `portal_session_required`: GET/POST/GET/GET/PATCH `operator/me/*`. Per-DID 600 req/min rate limit bucket layered on top of per-IP 120 req/min.
+  3. **CI gate (Plan 04):** `scripts/check-operator-scope-typing.mjs` — walks `grid/src/operator/data/*.ts`, asserts every exported function has `operatorDid: string` parameter. Registered in `.github/workflows/rig-invariants.yml` as `TENANT-02 check-operator-scope-typing (Phase 39)`.
+  4. **Steward Console (Plan 04):** `steward/src/app/system/operators/page.tsx` — Tier-2 Grid Manager surface (D-V3-36) with Unowned Brains, Per-Operator Quota, Quota Override Controls.
+  5. **Tests (Plan 04 gap closure):** 26 behavioral integration tests across 5 files — all passing. Cross-operator 403, quota 429, civic route isolation all verified.
+
+- **Inherits to Phase 40+:**
+  1. `operator-settings-store.ts` is a known stub returning `{ local_ai: null, _version: 1 }`. Phase 40 (Local AI Integration) wires real Ollama settings persistence.
+  2. `GET /api/v1/grid-manager/operator-overview` endpoint (Steward Console data API) is not yet built. Page shows graceful error state. Wire in the Grid Manager phase.
+  3. P2P bandwidth cap is stored in `operator_quota_overrides.p2p_bandwidth_cap_bytes` and returned by `GET /api/v1/operator/me/quota`. Not yet surfaced in `/health/detailed` — deferred to Grid Manager phase.
+  4. `brain-token.ts` route (Phase 38) remains frozen per D-39-01 — ownership claimed via separate `POST /api/v1/operator/me/brains` route (two-step model).
+
+- **Key invariants:**
+  - `operatorDid` in DIDContext is ALWAYS set for Portal session cookies (`did:noesis:human:...` → `operatorDid = did`). It is NOT set for plain ES256 Civic-DID Bearer JWTs.
+  - The Phase 38 `brain-token.ts` register route sets `operatorDid: null` explicitly — ownership is the Phase 39 two-step claim model.
+  - Broadcast allowlist frozen at 64. Phase 39 adds 0 events.
 
 ## Accumulated Context
 
@@ -393,6 +414,6 @@ Total v3.0 allowlist growth: **+34 (56 → 90)**. Freeze-except-by-explicit-addi
 
 ## Session Continuity
 
-Last session: 2026-05-27T01:00:20.863Z
-Stopped at: Phase 39 context gathered
-Resume file: .planning/phases/39-grid-multi-tenancy/39-CONTEXT.md
+Last session: 2026-05-27T03:00:00.000Z
+Stopped at: Phase 39 COMPLETE — 4/4 plans, 26 tests GREEN, ROADMAP+STATE synced
+Resume file: .planning/phases/39-grid-multi-tenancy/39-VERIFICATION.md
