@@ -49,7 +49,7 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 **Wave 1 — Foundations (Phases 36-41)**
 - [x] **Phase 36: Visitor/DID Read-Write Split** — Implement visit-without-DID + action-with-DID asymmetry per supplement. Adds `requireCivicDid()` decorator + `ROUTE_DID_POLICY` table + WS firehose redaction layer. (allowlist +4) (SHIPPED 2026-05-26)
 - [x] **Phase 37: DID Registry** — Civic-DID + Business-DID issuance, W3C VC format, court-only revocation. (allowlist +4) (completed 2026-05-26)
-- [ ] **Phase 38: Brain ↔ Grid Wire Protocol** — HTTPS REST (control) + WSS (events) replaces in-process queues; operator-signed bearer tokens; idempotent replay on reconnect. (allowlist 0)
+- [x] **Phase 38: Brain ↔ Grid Wire Protocol** — HTTPS REST (control) + WSS (events) replaces in-process queues; operator-signed bearer tokens; idempotent replay on reconnect. (allowlist 0) (completed 2026-05-27)
 - [ ] **Phase 39: Grid Multi-Tenancy** — Per-operator metadata isolation in operator-scoped schemas; civic state remains shared; per-operator quotas. (allowlist 0)
 - [ ] **Phase 40: Local AI Integration** — Ollama production-grade with operator-selectable model + degraded-cognition fallback. (allowlist 0)
 - [ ] **Phase 41: Sleep Cycle + Away Presence** — Human-resident analogy: city sees offline Nous as 'away'; messages queue; identity persists; long-absence escalation. (allowlist 0)
@@ -498,7 +498,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 |-------|----------------|--------|-----------|
 | 36. Visitor/DID Read-Write Split | 8/8 | Complete    | 2026-05-26 |
 | 37. DID Registry | 4/4 | Complete   | 2026-05-26 |
-| 38. Brain ↔ Grid Wire Protocol | 0/? | Not started | — |
+| 38. Brain ↔ Grid Wire Protocol | 4/4 | Complete    | 2026-05-27 |
 | 39. Grid Multi-Tenancy | 0/? | Not started | — |
 | 40. Local AI Integration | 0/? | Not started | — |
 | 41. Sleep Cycle + Away Presence | 0/? | Not started | — |
