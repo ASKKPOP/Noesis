@@ -213,6 +213,14 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // WS upgrade routes are technically GET from Fastify's perspective.
     // civic_did_required: Brain JWT must resolve to civic_member tier via tryDid.
     'GET /api/v1/brain/firehose': 'civic_did_required',
+
+    // Phase 39 — operator/me/* fleet management (D-39-04 / D-39-05)
+    // These routes accept Portal session token only. Brain JWTs are for action dispatch only.
+    'GET  /api/v1/operator/me/nous':      'portal_session_required',
+    'POST /api/v1/operator/me/brains':    'portal_session_required',
+    'GET  /api/v1/operator/me/quota':     'portal_session_required',
+    'GET  /api/v1/operator/me/settings':  'portal_session_required',
+    'PATCH /api/v1/operator/me/settings': 'portal_session_required',
 } as Record<string, RouteDIDPolicy>);
 
 /**

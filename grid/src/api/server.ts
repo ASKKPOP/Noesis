@@ -61,6 +61,8 @@ import { registerBrainWireRoutes } from './routes/brain-wire.js';
 import { registerBrainFirehoseRoute } from './routes/brain-firehose.js';
 import type { BrainTokenStore } from '../db/stores/brain-token-store.js';
 import type { WireCoordinator } from './routes/brain-wire.js';
+import { registerOperatorMeRoutes } from './routes/operator-me/index.js';
+import { registerDidRateLimit } from './rate-limit/visitor-bucket.js';
 
 /**
  * Phase 6 AGENCY-02: normalized memory entry shape crossing the RPC boundary.
@@ -326,6 +328,23 @@ export interface GridServices {
      * Production wiring passes new BrainEventIngestStore({gridName, pool}) from GenesisLauncher.
      */
     brainEventIngestStore?: import('../db/stores/brain-event-ingest-store.js').BrainEventIngestStore;
+    /**
+     * Phase 39 TENANT-01/02/03: MySQL Pool for operator/me/* routes.
+     * When present, operator/me/* routes use operator/data/ accessors for DB queries.
+     * When absent, operator/me/* routes return 503 db_unavailable.
+     * Production wiring passes the pool from GenesisLauncher.
+     */
+    pool?: import('mysql2/promise').Pool;
+    /**
+     * Phase 39 TENANT-01: per-operator quota store (optional; field reserved for Steward Console wiring).
+     * operator/me/* routes call operator-quota-store.ts functions directly via services.pool.
+     */
+    operatorQuotaStore?: import('../operator/data/operator-quota-store.js').QuotaRecord;
+    /**
+     * Phase 39 TENANT-01: per-operator settings store (optional; field reserved for Steward Console wiring).
+     * operator/me/* routes call operator-settings-store.ts functions directly via services.pool.
+     */
+    operatorSettingsStore?: import('../operator/data/operator-settings-store.js').OperatorSettings;
 }
 
 /**
@@ -403,6 +422,11 @@ export function buildServerWithHub(
         if (!ctx) return;
         req.didContext = ctx;
     });
+
+    // Phase 39 D-39-08: per-DID rate limit hook.
+    // Registered AFTER the policy onRequest hook above so req.didContext is already populated.
+    // DID-authenticated requests get 600 req/min (5× the anonymous visitor 120/min IP limit).
+    registerDidRateLimit(app);
 
     // Dashboard CORS (dev): Next.js dev server runs on :3001 per 03-VALIDATION.md.
     // :3000 is included because `next dev` falls back to :3000 when :3001 is taken.
@@ -606,6 +630,10 @@ export function buildServerWithHub(
     // Two endpoints: POST /api/v1/brain/token/{register,revoke}.
     // Policy enforcement delegated to onRequest hook (public / government_only).
     void registerBrainTokenRoutes(app, services);
+
+    // --- Phase 39 TENANT-02/03: Operator fleet management routes ---
+    // Five endpoints under /api/v1/operator/me/*. All portal_session_required.
+    void registerOperatorMeRoutes(app, services);
 
     // --- Phase 38 WIRE-01: Brain action dispatch route ---
     // POST /api/v1/brain/actions — civic_did_required (onRequest hook enforces).

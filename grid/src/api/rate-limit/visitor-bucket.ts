@@ -1,27 +1,31 @@
 // Phase 36 / D-36-05 + D-36-07 — visitor rate-limit 120 req/min per IP.
-// In-process Map; single-server v3.0 scope.
-// Phase 39 will refactor to per-DID buckets + multi-instance backend.
+// Phase 39 / D-39-08 — per-DID rate-limit 600 req/min layered on top of IP bucket.
 //
 // Behavior:
-//   - Window: 60_000 ms (1 minute), max 120 requests per source IP.
+//   - IP bucket: 60_000 ms window, max 120 req/min per source IP (D-36-05).
+//   - DID bucket: 60_000 ms window, max 600 req/min per DID string (D-39-08).
 //   - Bucket exhaustion: HTTP 429 + Retry-After header (D-36-07).
 //   - Lazy eviction: entries older than 2 windows are cleaned on each check.
-//   - Applies to ALL requests at onRequest (before preHandler/DID resolution).
-//   - Phase 39: refactor to per-DID buckets (DID holders get higher limits).
+//   - IP bucket applies to ALL requests at onRequest (before DID resolution).
+//   - DID bucket must be registered AFTER the policy onRequest hook so req.didContext is set.
 
 import type { FastifyInstance } from 'fastify';
 
-/** Rate-limit bucket entry per IP. */
+/** Rate-limit bucket entry per IP or DID. */
 interface Bucket {
     count: number;
     windowStart: number;
 }
 
-const WINDOW_MS = 60_000; // 1 minute
-const MAX_REQUESTS = 120; // D-36-05
+const WINDOW_MS = 60_000;      // 1 minute
+const MAX_REQUESTS = 120;       // D-36-05 — IP bucket
+const DID_MAX_REQUESTS = 600;   // D-39-08 — 5× visitor rate for DID-authenticated requests
 
-/** Module-scoped IP bucket map. Phase 39 replaces with per-DID buckets. */
+/** Module-scoped IP bucket map. */
 const buckets = new Map<string, Bucket>();
+
+/** Per-DID bucket map. Phase 39 addition. Key = operatorDid or civic DID. */
+const didBuckets = new Map<string, Bucket>();
 
 /**
  * Register the visitor rate-limit onRequest hook.
@@ -66,6 +70,47 @@ export function registerVisitorRateLimit(app: FastifyInstance): void {
                 error: 'rate_limit_exceeded',
                 retry_after: secondsRemaining,
             });
+        }
+    });
+}
+
+/**
+ * Register the per-DID rate-limit onRequest hook (D-39-08).
+ *
+ * Must be registered AFTER the policy onRequest hook so req.didContext is populated.
+ * DID-authenticated requests get 600 req/min. Anonymous visitors keep the 120/min IP bucket.
+ */
+export function registerDidRateLimit(app: FastifyInstance): void {
+    void app.addHook('onRequest', async (req, reply) => {
+        // CORS preflight passes through.
+        if (req.method === 'OPTIONS') return;
+
+        const did = req.didContext?.did;
+        if (!did) return; // No DID — anonymous visitors are handled by IP bucket
+
+        const now = Date.now();
+        const existing = didBuckets.get(did);
+        if (!existing || now - existing.windowStart >= WINDOW_MS) {
+            didBuckets.set(did, { count: 1, windowStart: now });
+            return;
+        }
+        existing.count += 1;
+        if (existing.count > DID_MAX_REQUESTS) {
+            const retryAfter = Math.ceil((WINDOW_MS - (now - existing.windowStart)) / 1000);
+            reply.header('Retry-After', String(retryAfter));
+            return reply.code(429).send({
+                error: 'rate_limit_exceeded',
+                limit: DID_MAX_REQUESTS,
+                window: '1m',
+                retry_after_seconds: retryAfter,
+            });
+        }
+
+        // Lazy eviction: clean up stale DID buckets
+        if (didBuckets.size > 5_000) {
+            for (const [k, v] of didBuckets) {
+                if (now - v.windowStart > WINDOW_MS * 2) didBuckets.delete(k);
+            }
         }
     });
 }
