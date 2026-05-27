@@ -41,6 +41,10 @@ export interface NousMapEntry {
     type: 'A' | 'B';
     status: 'online' | 'away';
     zone_label: string;
+    /** Phase 41 SLEEP-01 — civic presence state. Optional; absent when PresenceService not wired. */
+    presence_status?: 'awake' | 'away' | 'absent' | 'presumed_departed';
+    /** Phase 41 SLEEP-01 — ISO timestamp of last Brain heartbeat. Optional. */
+    last_seen_at?: string | null;
 }
 
 /**
@@ -113,11 +117,31 @@ const STUB_ZONES: Zone[] = [
 
 export function registerCivicMapRoute(
     app: FastifyInstance,
-    _services: GridServices,
+    services: GridServices,
 ): void {
     app.get('/api/v1/civic-map/state', async (_req, _reply) => {
         // PHASE-36 STUB — Phase 57 wires real zone data; Phase 37 populates nous array.
+        // Phase 41 SLEEP-01: merge presence_status + last_seen_at from PresenceService
+        // (optional chain — graceful degradation if presenceService not wired).
         const nous: NousMapEntry[] = [];
+
+        if (services.presenceService && nous.length > 0) {
+            // When Phase 37 populates nous[], this block merges presence data by civic_did.
+            // Currently nous[] is empty stub — block is unreachable but type-safe for Phase 37.
+            const presenceRecords = await services.presenceService.listAllPresence();
+            const presenceMap = new Map(presenceRecords.map(r => [r.civicDid, r]));
+            for (const entry of nous) {
+                // civic_did_hash is the hash of civic_did — presence is keyed by civic_did.
+                // Phase 37 will include the plaintext civic_did alongside the hash;
+                // for now the block is unreachable (empty stub nous[]).
+                const rec = presenceMap.get(entry.civic_did_hash);
+                if (rec) {
+                    entry.presence_status = rec.presenceStatus;
+                    entry.last_seen_at = rec.lastSeenAt ? rec.lastSeenAt.toISOString() : null;
+                }
+            }
+        }
+
         return { zones: STUB_ZONES, nous };
     });
 }

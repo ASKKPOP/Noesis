@@ -1,4 +1,5 @@
-// D-36-13: 5-second polling via plain useState/useEffect/AbortController. NO SWR, NO react-query (v2.1 invariant).
+// D-41-06: 30-second polling via plain useState/useEffect/AbortController.
+// Supersedes D-36-13's 5-second cadence. NO SWR, NO react-query (v2.1 invariant).
 
 'use client';
 
@@ -30,6 +31,10 @@ export interface NousMapEntry {
     status: string;
     /** Zone label from the Grid response — may be absent in test mock data. */
     zone_label?: string;
+    /** Phase 41 SLEEP-01 — civic presence state. Absent on pre-Phase-41 responses. */
+    presence_status?: 'awake' | 'away' | 'absent' | 'presumed_departed';
+    /** Phase 41 SLEEP-01 — ISO timestamp of last Brain heartbeat or reconnect. */
+    last_seen_at?: string | null;
 }
 
 export interface CivicMapState {
@@ -78,7 +83,7 @@ export function useCivicMap(): UseCivicMapResult {
         }
 
         fetchCivicMap();
-        const interval = setInterval(fetchCivicMap, 5000);
+        const interval = setInterval(fetchCivicMap, 30_000);
 
         return () => {
             cancelled = true;
