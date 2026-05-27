@@ -4,13 +4,13 @@ milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
 stopped_at: Phase 41 UI-SPEC approved — ready for plan-phase
-last_updated: "2026-05-27T19:17:29.545Z"
+last_updated: "2026-05-27T19:28:46.044Z"
 progress:
   total_phases: 25
   completed_phases: 5
   total_plans: 31
-  completed_plans: 29
-  percent: 94
+  completed_plans: 30
+  percent: 97
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 ## Current Position
 
 Phase: 41 (sleep-cycle-away-presence) — EXECUTING
-Plan: 5 of 6 (Plan 01 complete)
+Plan: 6 of 6 (Plan 01 complete)
 Status: Ready to execute
 Next action: Execute Plan 41-02 — DB migration + civic_presence table
 
@@ -440,6 +440,6 @@ Total v3.0 allowlist growth: **+34 (56 → 90)**. Freeze-except-by-explicit-addi
 
 ## Session Continuity
 
-Last session: 2026-05-27T19:17:29.542Z
+Last session: 2026-05-27T19:28:46.041Z
 Stopped at: Phase 41 UI-SPEC approved — ready for plan-phase
 Resume file: None
