@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
-stopped_at: Phase 40 context gathered — ready for plan-phase
-last_updated: "2026-05-27T04:00:00.000Z"
+stopped_at: Phase 40 planned — 5 plans ready for execution
+last_updated: "2026-05-27T05:00:00.000Z"
 progress:
   total_phases: 25
   completed_phases: 4
-  total_plans: 20
+  total_plans: 25
   completed_plans: 20
   percent: 84
 ---
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** Phase 40 — Local AI Integration (next)
+**Current focus:** Phase 40 — Local AI Integration (ready to execute — 5 plans)
 
 ## Current Position
 
-Phase: 39 (grid-multi-tenancy) — COMPLETE (2026-05-27)
-Status: Phase 39 shipped — 4/4 plans complete, 26 behavioral tests GREEN
+Phase: 40 (local-ai-integration) — PLANNED (2026-05-27)
+Status: Phase 40 planned — 5 plans, 4 waves, verification PASSED
 Next action: `/gsd-execute-phase 40` — Local AI Integration
 
 Driving inputs for v3.0 (locked at milestone open):
