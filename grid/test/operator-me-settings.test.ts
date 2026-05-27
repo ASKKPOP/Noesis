@@ -1,6 +1,7 @@
 /**
  * Phase 40 — Operator settings route tests (LOCAL-01, LOCAL-02)
  * Tests GET + PATCH /api/v1/operator/me/settings with LocalAiSettings shape (D-40-02).
+ * Tests GET /api/v1/operator/me/brain-settings with Brain JWT bearer auth (D-40-01).
  * Tests operator-settings-store unit behavior (getSettings default, updateSettings merge).
  * TDD: RED tests written in Plan 02.
  */
@@ -17,11 +18,12 @@ import { SpatialMap } from '../src/space/map.js';
 import { LogosEngine } from '../src/logos/engine.js';
 import { AuditChain } from '../src/audit/chain.js';
 import { NousRegistry } from '../src/registry/registry.js';
-import { SignJWT } from 'jose';
+import { SignJWT, generateKeyPair, exportJWK } from 'jose';
 import { COOKIE_NAME, keyPairPromise } from '../src/api/portal/auth.js';
 import type { FastifyInstance } from 'fastify';
 import { getSettings, updateSettings } from '../src/operator/data/operator-settings-store.js';
 import type { LocalAiSettings, OperatorSettings } from '../src/operator/data/operator-settings-store.js';
+import type { BrainTokenRecord } from '../src/db/stores/brain-token-store.js';
 
 // Use did:portal:noesis:* format — matches ANY_DID_RE used by tryDid cookie path.
 const OP_A_DID = 'did:portal:noesis:operator-a';
@@ -185,5 +187,119 @@ describe('operator-settings-store (unit)', () => {
         expect(result.local_ai.temperature).toBe(1.5);
         expect(result.local_ai.small_model).toBe('qwen3:4b'); // merged, not replaced
         expect(result._version).toBe(2);
+    });
+});
+
+// ── Brain JWT helper ──────────────────────────────────────────────────────────
+
+async function makeBrainJwt(opts: {
+    iss: string;
+    sub: string;
+    privateKeyOverride?: CryptoKey;
+}): Promise<{ jwt: string; publicKeyJwk: Record<string, unknown> }> {
+    const { privateKey, publicKey } = await generateKeyPair('EdDSA', { crv: 'Ed25519' });
+    const actualPriv = opts.privateKeyOverride ?? privateKey;
+    const jwk = await exportJWK(publicKey);
+    const publicKeyJwk = { kty: jwk.kty, crv: jwk.crv, x: jwk.x, alg: 'EdDSA' } as Record<string, unknown>;
+
+    const jwt = await new SignJWT({ sub: opts.sub })
+        .setProtectedHeader({ alg: 'EdDSA' })
+        .setIssuer(opts.iss)
+        .setIssuedAt()
+        .setExpirationTime('1h')
+        .sign(actualPriv);
+
+    return { jwt, publicKeyJwk };
+}
+
+function makeBrainTokenStore(opts: {
+    rec: BrainTokenRecord | null;
+    revokedDids?: string[];
+}) {
+    return {
+        async getByDid(brainDid: string) {
+            if (opts.rec && opts.rec.brainDid === brainDid) return opts.rec;
+            return null;
+        },
+        async isRevoked(brainDid: string) {
+            return (opts.revokedDids ?? []).includes(brainDid);
+        },
+    } as unknown as import('../src/db/stores/brain-token-store.js').BrainTokenStore;
+}
+
+const BRAIN_DID = 'did:noesis:nous:brain-001';
+const CIVIC_DID = 'did:civic:noesis:member-001';
+const OPERATOR_DID = 'did:portal:noesis:operator-a';
+
+describe('GET /api/v1/operator/me/brain-settings (Brain JWT auth gap — D-40-01)', () => {
+    // Build a single app with brainTokenStore wired.
+    // Individual tests that need a different store reconfigure via the mock.
+    let brainApp: FastifyInstance;
+    let brainJwt: string;
+    let brainRec: BrainTokenRecord;
+
+    beforeAll(async () => {
+        const { jwt, publicKeyJwk } = await makeBrainJwt({ iss: BRAIN_DID, sub: CIVIC_DID });
+        brainJwt = jwt;
+        brainRec = {
+            brainDid: BRAIN_DID,
+            publicKeyJwk,
+            issuedAt: Math.floor(Date.now() / 1000),
+            expiresAt: Math.floor(Date.now() / 1000) + 3600,
+            revoked: false,
+            operatorDid: OPERATOR_DID,
+        };
+
+        brainApp = buildServer({
+            clock: new WorldClock({ tickRateMs: 100_000 }),
+            space: new SpatialMap(),
+            logos: new LogosEngine(),
+            audit: new AuditChain(),
+            gridName: 'genesis',
+            registry: new NousRegistry(),
+            pool: {} as import('mysql2/promise').Pool,
+            brainTokenStore: makeBrainTokenStore({ rec: brainRec }),
+        });
+        await brainApp.ready();
+    });
+
+    afterAll(async () => {
+        await brainApp.close();
+    });
+
+    it('returns 200 with LocalAiSettings shape when valid Brain JWT bearer provided', async () => {
+        vi.mocked(getSettings).mockResolvedValue(DEFAULT_SETTINGS);
+
+        const res = await brainApp.inject({
+            method: 'GET',
+            url: '/api/v1/operator/me/brain-settings',
+            headers: { authorization: `Bearer ${brainJwt}` },
+        });
+
+        expect(res.statusCode).toBe(200);
+        const body = res.json<OperatorSettings>();
+        expect(body._version).toBe(2);
+        expect(body.local_ai.small_model).toBe('qwen3:4b');
+    });
+
+    it('returns 401 without Authorization header', async () => {
+        const res = await brainApp.inject({
+            method: 'GET',
+            url: '/api/v1/operator/me/brain-settings',
+        });
+
+        expect(res.statusCode).toBe(401);
+    });
+
+    it('returns 401 with portal session cookie (wrong auth type for brain-settings)', async () => {
+        const cookie = await makePortalCookie(OP_A_DID);
+
+        const res = await brainApp.inject({
+            method: 'GET',
+            url: '/api/v1/operator/me/brain-settings',
+            cookies: { [COOKIE_NAME]: cookie },
+        });
+
+        expect(res.statusCode).toBe(401);
     });
 });
