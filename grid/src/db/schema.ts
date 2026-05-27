@@ -523,4 +523,54 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS operator_settings`,
     },
+    // Phase 41 SLEEP-01 / SLEEP-02 — Civic presence lifecycle columns on civic_did_registry.
+    // Tracks awake/away/absent/presumed_departed state, last_seen markers, and frozen flag.
+    // frozen=1 is set when presence_status flips to 'presumed_departed' (T-41-04 mitigation).
+    {
+        version: 30,
+        name: 'add_presence_to_civic_did_registry',
+        up: `
+            ALTER TABLE civic_did_registry
+              ADD COLUMN presence_status ENUM('awake','away','absent','presumed_departed')
+                                         NOT NULL DEFAULT 'awake',
+              ADD COLUMN last_seen_at TIMESTAMP(3) NULL,
+              ADD COLUMN last_seen_tick INT UNSIGNED NULL,
+              ADD COLUMN away_grace_expires_at TIMESTAMP(3) NULL,
+              ADD COLUMN frozen TINYINT(1) NOT NULL DEFAULT 0,
+              ADD INDEX idx_presence_status (grid_name, presence_status),
+              ADD INDEX idx_last_seen_at (grid_name, last_seen_at)
+        `,
+        down: `
+            ALTER TABLE civic_did_registry
+              DROP INDEX idx_last_seen_at,
+              DROP INDEX idx_presence_status,
+              DROP COLUMN frozen,
+              DROP COLUMN away_grace_expires_at,
+              DROP COLUMN last_seen_tick,
+              DROP COLUMN last_seen_at,
+              DROP COLUMN presence_status
+        `,
+    },
+    // Phase 41 SLEEP-02 / SLEEP-04 — Message queue for Nous-to-Nous messages during sleep.
+    // Messages sent while recipient is away/absent queue here; delivered on wake (SLEEP-04).
+    // Per-recipient cap of 1000 pending rows enforced at application layer (T-41-02 mitigation).
+    {
+        version: 31,
+        name: 'create_civic_message_queue',
+        up: `
+            CREATE TABLE IF NOT EXISTS civic_message_queue (
+                id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                grid_name           VARCHAR(63) NOT NULL,
+                recipient_civic_did VARCHAR(255) NOT NULL,
+                sender_civic_did    VARCHAR(255) NOT NULL,
+                message_json        JSON NOT NULL,
+                sent_at_tick        INT UNSIGNED NOT NULL,
+                sent_at             TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                status              ENUM('pending','delivered') NOT NULL DEFAULT 'pending',
+                INDEX idx_recipient_status (grid_name, recipient_civic_did, status),
+                INDEX idx_sent_at_tick (grid_name, recipient_civic_did, sent_at_tick)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS civic_message_queue`,
+    },
 ];

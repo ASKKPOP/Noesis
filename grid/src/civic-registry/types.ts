@@ -15,6 +15,12 @@ export interface CivicDidRecord {
     readonly issuedAtTick: number;
     readonly revokedAtTick?: number;
     readonly courtConvictionRef?: string;
+    // Phase 41 presence (optional — present if migration v30 applied)
+    presenceStatus?: 'awake' | 'away' | 'absent' | 'presumed_departed';
+    lastSeenAt?: Date | null;
+    lastSeenTick?: number | null;
+    awayGraceExpiresAt?: Date | null;
+    frozen?: boolean;
 }
 
 export interface BusinessDidRecord {

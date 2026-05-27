@@ -19,6 +19,11 @@ interface CivicDidRow extends RowDataPacket {
     issued_at_tick: number;
     revoked_at_tick: number | null;
     court_conviction_ref: string | null;
+    presence_status?: 'awake' | 'away' | 'absent' | 'presumed_departed';
+    last_seen_at?: Date | null;
+    last_seen_tick?: number | null;
+    away_grace_expires_at?: Date | null;
+    frozen?: 0 | 1;
 }
 
 function rowToRecord(row: CivicDidRow): CivicDidRecord {
@@ -34,6 +39,11 @@ function rowToRecord(row: CivicDidRow): CivicDidRecord {
         issuedAtTick: row.issued_at_tick,
         revokedAtTick: row.revoked_at_tick ?? undefined,
         courtConvictionRef: row.court_conviction_ref ?? undefined,
+        presenceStatus: row.presence_status,
+        lastSeenAt: row.last_seen_at ?? null,
+        lastSeenTick: row.last_seen_tick ?? null,
+        awayGraceExpiresAt: row.away_grace_expires_at ?? null,
+        frozen: row.frozen === 1,
     };
 }
 
@@ -82,6 +92,20 @@ export class CivicDidStore {
              SET status='revoked', revoked_at_tick = ?, court_conviction_ref = ?
              WHERE grid_name = ? AND civic_did = ? AND status = 'active'`,
             [revokedAtTick, courtConvictionRef, gridName, civicDid],
+        );
+        return result.affectedRows === 1;
+    }
+
+    /**
+     * Phase 41 / SLEEP-05 — set frozen=1 on presumed_departed escalation.
+     * T-41-04 mitigation: requireCivicDid preHandler checks frozen on every write route.
+     */
+    async markFrozen(gridName: string, civicDid: string, frozenAtTick: number): Promise<boolean> {
+        const [result] = await this.pool.query<ResultSetHeader>(
+            `UPDATE civic_did_registry
+             SET frozen = 1, presence_status = 'presumed_departed', last_seen_tick = ?
+             WHERE grid_name = ? AND civic_did = ?`,
+            [frozenAtTick, gridName, civicDid],
         );
         return result.affectedRows === 1;
     }
