@@ -14,7 +14,9 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '..');
-const TARGET_DIR = join(ROOT, 'grid', 'src', 'operator', 'data');
+const TARGET_DIR = process.env['CHECK_OPERATOR_SCOPE_TARGET_DIR']
+    ? join(ROOT, process.env['CHECK_OPERATOR_SCOPE_TARGET_DIR'])
+    : join(ROOT, 'grid', 'src', 'operator', 'data');
 
 // Matches: export function foo(   OR   export async function foo(
 const EXPORT_FN_RE = /export\s+(?:async\s+)?function\s+(\w+)\s*\(/g;
