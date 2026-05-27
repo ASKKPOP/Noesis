@@ -504,4 +504,23 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS operator_quota_overrides`,
     },
+    // Phase 40 LOCAL-01 / LOCAL-02 — Operator Local AI settings persistence.
+    // One row per (grid_name, operator_did). Single JSON column stores OperatorSettings v2.
+    // Follows the grid_config table pattern (migration v5): JSON blob per key.
+    // getSettings() returns DEFAULT_LOCAL_AI when no row exists (no write-on-read).
+    {
+        version: 29,
+        name: 'create_operator_settings',
+        up: `
+            CREATE TABLE IF NOT EXISTS operator_settings (
+                grid_name    VARCHAR(63)  NOT NULL,
+                operator_did VARCHAR(255) NOT NULL,
+                settings     JSON         NOT NULL,
+                updated_at   TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+                                 ON UPDATE CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (grid_name, operator_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS operator_settings`,
+    },
 ];

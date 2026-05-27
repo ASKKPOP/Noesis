@@ -221,6 +221,13 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/operator/me/quota':     'portal_session_required',
     'GET /api/v1/operator/me/settings':  'portal_session_required',
     'PATCH /api/v1/operator/me/settings': 'portal_session_required',
+
+    // Phase 40 — Brain-JWT-authenticated settings fetch (D-40-01).
+    // Policy: 'public' — the route performs its own EdDSA JWT verification internally
+    // (same pattern as POST /api/v1/brain/token/register and GET /portal/auth/me).
+    // Brain startup uses Phase 38 EdDSA bearer token, not a portal session cookie.
+    // T-40-02-01: Brain JWT verified against registered public key in brain_tokens table.
+    'GET /api/v1/operator/me/brain-settings': 'public',
 } as Record<string, RouteDIDPolicy>);
 
 /**
