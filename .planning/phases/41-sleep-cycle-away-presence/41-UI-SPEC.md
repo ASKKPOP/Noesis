@@ -30,6 +30,10 @@ data-dense, developer/admin-facing. Dark theme (Portal Civic Map) and light parc
 | Font (dashboard / portal) | Inter Tight (400, 500, 600) + JetBrains Mono (400, 500) |
 | Font (steward) | Inter Tight (300, 400, 500, 600) + JetBrains Mono |
 
+> **Note — Steward system weights:** The Steward surface ships with weights 300, 400, 500, 600
+> as part of its pre-existing design system. These are **inherited system weights — not
+> introduced by Phase 41.** Phase 41 asserts only 500 and 600 (see Typography table below).
+
 **Rationale:** Neither `dashboard` nor `steward` has `components.json`. Neither uses Radix UI or
 any icon library package. Steward has zero UI dependencies (`package.json` confirms: only
 `next`, `react`, `react-dom`). All component patterns are hand-rolled inline styles and Tailwind
@@ -70,12 +74,19 @@ and `dashboard/src/app/globals.css`). No new tokens added by Phase 41.
 
 Inherits established typography. Phase 41 introduces no new text roles.
 
-| Role | Size | Weight | Line Height | Font | Usage |
-|------|------|--------|-------------|------|-------|
-| Body | 14px | 400 | 1.5 | Inter Tight | Steward table rows, section descriptions |
-| Label | 12px | 500 | 1.4 | Inter Tight | Column headers, status pills, badge text |
-| Heading | 18px | 600 | 1.2 | Inter Tight | Section headings (`<h2>`) in Steward queue section |
+**Phase 41 new elements use exactly 2 weights: 500 and 600.**
+
+| Role | Size | Weight | Line Height | Font | Usage in Phase 41 |
+|------|------|--------|-------------|------|-------------------|
+| Label / Body | 12–14px | **500** | 1.4–1.5 | Inter Tight | Column headers, status pills, table rows, section descriptions |
+| Heading | 18px | **600** | 1.2 | Inter Tight | Section heading (`<h2>`) in Steward queue section |
 | Mono | 11–13px | 400–500 | 1.3 | JetBrains Mono | DID values in Steward queue table; `last_seen` timestamps |
+
+> **Inherited system weights — not introduced by Phase 41:**
+> The Steward Console surface uses Inter Tight 300 (fine print / muted captions) and 400
+> (prose body) as pre-existing system weights. Phase 41 does not introduce 300 or 400 in any
+> new element it adds. Weight 400 appears in JetBrains Mono only (DID/timestamp monospace),
+> which is a separate font face and does not count toward the Inter Tight weight budget.
 
 **Portal Civic Map SVG text** (existing, unchanged):
 - Zone labels: `fontSize="14"`, `fontFamily="Inter Tight, sans-serif"`, `fontWeight="600"`
@@ -265,7 +276,7 @@ Operator DID  |  Nous  |  Status  |  Last Seen  |  Queued Messages
 
 ### Status pills
 
-Small inline pill, `text-[11px] font-mono font-medium px-1.5 py-0.5 rounded`:
+Small inline pill, `text-[11px] font-mono font-medium px-2 py-1 rounded`:
 
 | Status | Classes |
 |--------|---------|
@@ -400,3 +411,5 @@ No third-party component blocks are introduced by Phase 41.
 | Claude's discretion | Steward queue depth added to existing operators page (not new /system/presence page) |
 | Claude's discretion | Queue depth thresholds: 0 = normal, 1–9 = normal, 10–49 = amber, 50+ = red |
 | Claude's discretion | presumed_departed click disabled on Civic Map (non-navigable ghost) |
+| Revision 2026-05-27 | Typography: collapsed to 2 weights (500+600) — weight 300/400 scoped as inherited system |
+| Revision 2026-05-27 | Status pill padding: px-1.5 py-0.5 → px-2 py-1 (grid-aligned 8px/4px) |
