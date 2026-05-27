@@ -22,6 +22,11 @@ import {
     MIGRATIONS,
 } from './db/index.js';
 import { AuditReconcile } from './db/audit-reconcile.js';
+import { CivicDidStore, BusinessDidStore } from './civic-registry/index.js';
+import { PresenceStore } from './civic-presence/presence-store.js';
+import { MessageQueueStore } from './civic-presence/message-queue-store.js';
+import { GraceTimerRegistry } from './civic-presence/grace-timer-registry.js';
+import { PresenceService } from './civic-presence/presence-service.js';
 import type { GenesisConfig } from './genesis/types.js';
 import type { FastifyInstance } from 'fastify';
 import type { SpawnNousDeps } from './api/operator/spawn-system-nous.js';
@@ -185,6 +190,29 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     // queries on GET /me and PATCH /me. Follows the humanSanctionStore closure pattern.
     const humanPool = dbConn ? dbConn.getPool() : undefined;
 
+    // Phase 41 — PresenceService wiring (SLEEP-01..05).
+    // Only constructed when a DB connection is available (mirrors loreStorage / humanPool pattern).
+    let presenceService: PresenceService | undefined;
+    if (dbConn) {
+        const presencePool = dbConn.getPool();
+        const presenceStore = new PresenceStore(presencePool);
+        const messageQueueStore = new MessageQueueStore(presencePool);
+        const graceTimerRegistry = new GraceTimerRegistry();
+        const civicDidStore = new CivicDidStore(presencePool);
+        const businessDidStore = new BusinessDidStore(presencePool);
+        presenceService = new PresenceService({
+            gridName: config.genesisConfig.gridName,
+            presenceStore,
+            messageQueueStore,
+            graceTimerRegistry,
+            civicDidStore,
+            businessDidStore,
+            audit: chain!,
+            currentTick: () => launcher.clock.currentTick,
+        });
+        launcher.attachPresenceService(presenceService);
+    }
+
     // Phase 28 SPAWN-01: EVM RPC client for payment confirmation.
     // Only wired when GRID_EVM_RPC_URL is present — tests and DB-less envs omit it.
     // Uses raw JSON-RPC (eth_getTransactionReceipt + eth_getTransactionByHash) so that
@@ -244,6 +272,10 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
             attachHealthWatchdog: (wd) => launcher.attachHealthWatchdog(wd),
             attachFirehoseHub: (hub) => launcher.attachFirehoseHub(hub),
         },
+        // Phase 39 TENANT-01: MySQL pool for operator/me/* routes (wired here rather than Phase 39 to keep diff minimal).
+        // Phase 41 SLEEP-01: PresenceService + currentTick for presence/inbox/message routes.
+        ...(dbConn ? { pool: dbConn.getPool() } : {}),
+        ...(presenceService ? { presenceService, currentTick: () => launcher.clock.currentTick } : {}),
         // D-03: inject spawnNousDeps via _spawnNousDeps escape hatch (see spawn-system-nous.ts line 89).
         // Cast required because _spawnNousDeps is not on the public GridServices interface.
         ...({ _spawnNousDeps: spawnNousDeps } as unknown as { _spawnNousDeps: SpawnNousDeps }),
