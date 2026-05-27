@@ -88,7 +88,7 @@ export default function OperatorsPage() {
     }, []);
 
     return (
-        <StewardShell>
+        <StewardShell title="Operator Management" breadcrumb="System / Operators">
             <div className="p-6 max-w-5xl mx-auto">
                 <h1 className="text-2xl font-bold mb-1">Operator Management</h1>
                 <p className="text-sm text-gray-500 mb-6">
