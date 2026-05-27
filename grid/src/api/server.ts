@@ -63,6 +63,9 @@ import type { BrainTokenStore } from '../db/stores/brain-token-store.js';
 import type { WireCoordinator } from './routes/brain-wire.js';
 import { registerOperatorMeRoutes } from './routes/operator-me/index.js';
 import { registerDidRateLimit } from './rate-limit/visitor-bucket.js';
+import { registerCivicPresenceRoutes } from './routes/civic-presence.js';
+import { registerCivicInboxRoutes } from './routes/civic-inbox.js';
+import { registerCivicMessageRoute } from './routes/civic-message.js';
 
 /**
  * Phase 6 AGENCY-02: normalized memory entry shape crossing the RPC boundary.
@@ -645,6 +648,14 @@ export function buildServerWithHub(
     // --- Phase 39 TENANT-02/03: Operator fleet management routes ---
     // Five endpoints under /api/v1/operator/me/*. All portal_session_required.
     void registerOperatorMeRoutes(app, services);
+
+    // --- Phase 41 SLEEP-01..05: Civic presence + inbox + message routes ---
+    // Six endpoints: POST/GET /civic/presence, GET /civic/presence/me,
+    // GET /civic/inbox, PATCH /civic/inbox/ack, POST /civic/message.
+    // Policy enforcement delegated to onRequest hook per ROUTE_DID_POLICY.
+    void registerCivicPresenceRoutes(app, services);
+    void registerCivicInboxRoutes(app, services);
+    void registerCivicMessageRoute(app, services);
 
     // --- Phase 38 WIRE-01: Brain action dispatch route ---
     // POST /api/v1/brain/actions — civic_did_required (onRequest hook enforces).
