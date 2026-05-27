@@ -117,6 +117,7 @@ export default function StewardShell({ title, breadcrumb, children }: StewardShe
                 <NavItem href="/admin/audit" label="Monitoring" />
                 <NavItem href="/admin/chat" label="Nous Chat" />
                 <NavItem href="/admin/skills" label="Skills &amp; APIs" />
+                <NavItem href="/system/local-ai" label="Local AI" />
 
                 {/* Spacer */}
                 <div style={{ flex: 1 }} />
