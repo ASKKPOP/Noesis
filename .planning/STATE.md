@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
-status: planning
+status: executing
 stopped_at: Phase 41 UI-SPEC approved — ready for plan-phase
-last_updated: "2026-05-27T17:25:45.257Z"
+last_updated: "2026-05-27T18:39:13.409Z"
 progress:
   total_phases: 25
   completed_phases: 5
-  total_plans: 25
+  total_plans: 31
   completed_plans: 25
-  percent: 100
+  percent: 81
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 ## Current Position
 
 Phase: 41 (sleep-cycle-away-presence) — IN PROGRESS (context gathered 2026-05-27)
-Status: Phase 41 context gathered — 0/TBD plans · ready to plan
+Status: Ready to execute
 Next action: `/gsd-plan-phase 41` — Sleep Cycle + Away Presence
 
 Driving inputs for v3.0 (locked at milestone open):
