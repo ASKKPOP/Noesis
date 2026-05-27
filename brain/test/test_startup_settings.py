@@ -1,10 +1,17 @@
 """
 Phase 40 — Brain startup settings tests (LOCAL-01, LOCAL-03)
-Tests _fetch_operator_settings() + 3-tier ModelRouter wiring + recovery detection (D-40-01, D-40-07).
-Wave 0 stubs — implemented in Plan 03.
+Tests _fetch_operator_settings() + 3-tier ModelRouter wiring (D-40-01).
+Wave 0 stubs for recovery detection implemented in Plan 04.
 """
 from __future__ import annotations
+
+import sys
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
+
+from noesis_brain.llm.router import ModelRouter
+from noesis_brain.llm.types import ModelTier
 
 
 DEFAULT_SETTINGS = {
@@ -21,20 +28,65 @@ DEFAULT_SETTINGS = {
 
 
 class TestFetchOperatorSettings:
-    @pytest.mark.skip(reason="Wave 0 stub — implemented in Plan 03")
+    @pytest.mark.asyncio
     async def test_returns_settings_on_200(self) -> None:
         """_fetch_operator_settings() returns parsed settings dict on HTTP 200."""
-        pass
+        from noesis_brain.__main__ import _fetch_operator_settings
 
-    @pytest.mark.skip(reason="Wave 0 stub — implemented in Plan 03")
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = DEFAULT_SETTINGS
+
+        mock_client = AsyncMock()
+        mock_client.get.return_value = mock_resp
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
+
+        with patch("httpx.AsyncClient", return_value=mock_client):
+            result = await _fetch_operator_settings("https://grid.example.com", "test-token")
+
+        assert result == DEFAULT_SETTINGS
+        mock_client.get.assert_called_once_with(
+            "https://grid.example.com/api/v1/operator/me/brain-settings",
+            headers={"Authorization": "Bearer test-token"},
+            timeout=10.0,
+        )
+
+    @pytest.mark.asyncio
     async def test_exits_on_non_200(self) -> None:
         """_fetch_operator_settings() calls sys.exit(1) when Grid returns non-200."""
-        pass
+        from noesis_brain.__main__ import _fetch_operator_settings
 
-    @pytest.mark.skip(reason="Wave 0 stub — implemented in Plan 03")
+        mock_resp = MagicMock()
+        mock_resp.status_code = 503
+
+        mock_client = AsyncMock()
+        mock_client.get.return_value = mock_resp
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
+
+        with patch("httpx.AsyncClient", return_value=mock_client):
+            with pytest.raises(SystemExit) as exc_info:
+                await _fetch_operator_settings("https://grid.example.com", "test-token")
+
+        assert exc_info.value.code == 1
+
+    @pytest.mark.asyncio
     async def test_exits_on_network_error(self) -> None:
         """_fetch_operator_settings() calls sys.exit(1) when Grid is unreachable."""
-        pass
+        import httpx
+        from noesis_brain.__main__ import _fetch_operator_settings
+
+        mock_client = AsyncMock()
+        mock_client.get.side_effect = httpx.ConnectError("connection refused")
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
+
+        with patch("httpx.AsyncClient", return_value=mock_client):
+            with pytest.raises(SystemExit) as exc_info:
+                await _fetch_operator_settings("https://grid.example.com", "test-token")
+
+        assert exc_info.value.code == 1
 
 
 class TestRecoveryDetection:
