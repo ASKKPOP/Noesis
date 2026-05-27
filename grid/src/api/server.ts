@@ -53,6 +53,7 @@ import fastifyCookie from '@fastify/cookie';
 import { lookupPolicy } from './policy.js';
 import { tryDid } from './preHandlers/tryDid.js';
 import { requireDid, requirePortalSession } from './preHandlers/requireDid.js';
+import type { RequireDidServices } from './preHandlers/requireDid.js';
 import './preHandlers/types.js'; // module augmentation side-effect
 import { verifyGovernmentSession, GOV_SESSION_ISSUER_DID } from '../civic-registry/index.js';
 import { registerRegistryRoutes } from './routes/registry.js';
@@ -432,7 +433,13 @@ export function buildServerWithHub(
         }
         // civic_did_required, business_did_required, police_only
         // (Plan 05/06 layer the sub-tier checks; this plan enforces civic_did_required minimum)
-        const ctx = await requireDid(req, reply, { didStore: services.didStore, brainTokenStore: services.brainTokenStore });
+        // Phase 41 T-41-04: pass presenceService so frozen Civic-DIDs get 409.
+        const requireDidServices: RequireDidServices = {
+            didStore: services.didStore,
+            brainTokenStore: services.brainTokenStore,
+            presenceService: services.presenceService,
+        };
+        const ctx = await requireDid(req, reply, requireDidServices);
         if (!ctx) return;
         req.didContext = ctx;
     });

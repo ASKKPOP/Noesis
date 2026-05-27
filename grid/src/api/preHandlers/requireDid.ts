@@ -6,17 +6,28 @@ import type { DidStoreRef, TryDidServices } from './tryDid.js';
 import { tryDid } from './tryDid.js';
 
 /**
+ * Phase 41 SLEEP-04 frozen-DID deps — extends TryDidServices with optional
+ * PresenceService for isFrozen() check.
+ * Uses dynamic import type to avoid circular dependency with presence-service.ts
+ * (mirrors firehose-hub.ts pattern).
+ */
+export interface RequireDidServices extends TryDidServices {
+    presenceService?: import('../../civic-presence/presence-service.js').PresenceService;
+}
+
+/**
  * requireDid — enforce civic_did_required policy.
  *
  * Returns the DIDContext if the request carries a valid Civic-DID bearer JWT.
  * Returns null and sends 401 if the context is missing or has insufficient tier.
+ * Returns null and sends 409 if the Civic-DID is frozen (Phase 41 T-41-04).
  *
  * Used by the global onRequest hook for civic_did_required (and higher) policies.
  */
 export async function requireDid(
     req: FastifyRequest,
     reply: FastifyReply,
-    services?: TryDidServices,
+    services?: RequireDidServices,
 ): Promise<DIDContext | null> {
     const ctx = await tryDid(req, services);
     if (!ctx || ctx.tier !== 'civic_member') {
@@ -25,6 +36,14 @@ export async function requireDid(
             accepted_methods: ['civic_did_bearer', 'portal_session'],
         });
         return null;
+    }
+    // Phase 41 T-41-04: frozen Civic-DID gate — 409 before any handler runs.
+    if (services?.presenceService !== undefined) {
+        const frozen = await services.presenceService.isFrozen(ctx.did);
+        if (frozen) {
+            await reply.code(409).send({ error: 'civic_did_frozen' });
+            return null;
+        }
     }
     return ctx;
 }
