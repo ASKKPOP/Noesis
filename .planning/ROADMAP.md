@@ -164,7 +164,13 @@ Plans:
 **Scope (ships)**: LOCAL-01..03.
 **Out of scope for this phase**: Cloud LLM (Claude/OpenAI/Gemini) as production default — operators MAY configure via env per Q-V3-I but Brain memory cross-boundary implications must be flagged in Steward Console; default model selection (locked via Q-V3-B during discuss-phase).
 **Allowlist additions**: **0**. Running total: **64**.
-**Plans**: TBD
+**Plans:** 5 plans
+Plans:
+- [ ] 40-01-PLAN.md — Wave 0: test stubs for Grid settings + Brain startup + Brain HTTP
+- [ ] 40-02-PLAN.md — Grid DB migration v29 + operator-settings-store + Brain-JWT settings endpoint
+- [ ] 40-03-PLAN.md — ModelRouter extends LLMAdapter + async Brain startup + 3-tier routing wiring
+- [ ] 40-04-PLAN.md — Brain HTTP /local-ai/models + /local-ai/status + structured logging + recovery
+- [ ] 40-05-PLAN.md — Steward Console /system/local-ai page + Brain HTTP proxy (checkpoint)
 **UI hint**: yes
 
 ### Phase 41: Sleep Cycle + Away Presence
@@ -505,7 +511,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 37. DID Registry | 4/4 | Complete   | 2026-05-26 |
 | 38. Brain ↔ Grid Wire Protocol | 4/4 | Complete    | 2026-05-27 |
 | 39. Grid Multi-Tenancy | 4/4 | Complete    | 2026-05-27 |
-| 40. Local AI Integration | 0/? | Not started | — |
+| 40. Local AI Integration | 0/5 | Planned      | — |
 | 41. Sleep Cycle + Away Presence | 0/? | Not started | — |
 | 42. P2P Infrastructure | 0/? | Not started | — |
 | 43. Right-to-Fork Export Tooling | 0/? | Not started | — |
