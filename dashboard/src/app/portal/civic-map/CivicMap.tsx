@@ -102,41 +102,86 @@ export default function CivicMap({ zones: propZones, nous: propNous }: CivicMapP
             ))}
 
             {/* Nous avatars — rendered above zones */}
-            {nous.map((n) => (
-                <g key={n.civic_did_hash}>
-                    {/* 44×44 invisible hitbox for WCAG 2.5.5 pointer target minimum */}
-                    <rect
-                        x={n.x - 22}
-                        y={n.y - 22}
-                        width="44"
-                        height="44"
-                        fill="transparent"
-                        className="cursor-pointer"
-                        onClick={() => router.push(`/portal/nous/${n.civic_did_hash}`)}
-                        onMouseEnter={() => setHoveredNousId(n.civic_did_hash)}
-                        onMouseLeave={() => setHoveredNousId(null)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                router.push(`/portal/nous/${n.civic_did_hash}`);
-                            }
-                        }}
-                        tabIndex={0}
-                        role="button"
-                        aria-label={`Nous ${n.display_name}, type ${n.type}, status ${n.status}`}
-                    />
-                    {/* Nous avatar circle — React-state radius (Pitfall 3: NOT Tailwind hover:r-8) */}
-                    <circle
-                        cx={n.x}
-                        cy={n.y}
-                        r={hoveredNousId === n.civic_did_hash ? 8 : 6}
-                        fill={n.type === 'A' ? '#7c9eff' : '#c084fc'}
-                        opacity={n.status === 'online' ? 1 : 0.4}
-                        stroke="#0a0a0c"
-                        strokeWidth="1"
-                        style={{ pointerEvents: 'none' }}
-                    />
-                </g>
-            ))}
+            {nous.map((n) => {
+                // Phase 41 SLEEP-01 — presence-aware avatar rendering per 41-UI-SPEC.md.
+                const presence = n.presence_status ?? 'awake';
+                const isAway = presence === 'away';
+                const isAbsent = presence === 'absent';
+                const isPresumed = presence === 'presumed_departed';
+
+                const minutesAgo = n.last_seen_at
+                    ? Math.round((Date.now() - new Date(n.last_seen_at).getTime()) / 60_000)
+                    : null;
+                const daysAgo = n.last_seen_at
+                    ? Math.round((Date.now() - new Date(n.last_seen_at).getTime()) / 86_400_000)
+                    : null;
+                const tooltipText =
+                    isAway && minutesAgo !== null ? `away — last seen ${minutesAgo} min ago` :
+                    isAbsent && daysAgo !== null ? `absent — last seen ${daysAgo} days ago` :
+                    isPresumed && daysAgo !== null ? `presumed departed — last seen ${daysAgo} days ago` :
+                    '';
+
+                return (
+                    <g key={n.civic_did_hash}>
+                        {tooltipText && <title>{tooltipText}</title>}
+                        {/* 44×44 invisible hitbox for WCAG 2.5.5 pointer target minimum */}
+                        <rect
+                            x={n.x - 22}
+                            y={n.y - 22}
+                            width="44"
+                            height="44"
+                            fill="transparent"
+                            style={{ cursor: isPresumed ? 'default' : 'pointer', pointerEvents: isPresumed ? 'none' : 'auto' }}
+                            onClick={isPresumed ? undefined : () => router.push(`/portal/nous/${n.civic_did_hash}`)}
+                            onMouseEnter={isPresumed ? undefined : () => setHoveredNousId(n.civic_did_hash)}
+                            onMouseLeave={isPresumed ? undefined : () => setHoveredNousId(null)}
+                            onKeyDown={isPresumed ? undefined : (e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    router.push(`/portal/nous/${n.civic_did_hash}`);
+                                }
+                            }}
+                            tabIndex={isPresumed ? undefined : 0}
+                            role={isPresumed ? undefined : 'button'}
+                            aria-label={`Nous ${n.display_name}, type ${n.type}, status ${presence}`}
+                        />
+                        {/* Nous avatar circle — React-state radius (Pitfall 3: NOT Tailwind hover:r-8) */}
+                        {isPresumed ? (
+                            <circle
+                                cx={n.x}
+                                cy={n.y}
+                                r={6}
+                                fill="none"
+                                stroke="#6a6a76"
+                                strokeWidth="1.5"
+                                opacity={1}
+                                style={{ pointerEvents: 'none' }}
+                            />
+                        ) : isAbsent ? (
+                            <circle
+                                cx={n.x}
+                                cy={n.y}
+                                r={hoveredNousId === n.civic_did_hash ? 8 : 6}
+                                fill="#6a6a76"
+                                opacity={0.35}
+                                stroke="#0a0a0c"
+                                strokeWidth="1"
+                                style={{ pointerEvents: 'none', filter: 'grayscale(100%)' }}
+                            />
+                        ) : (
+                            <circle
+                                cx={n.x}
+                                cy={n.y}
+                                r={hoveredNousId === n.civic_did_hash ? 8 : 6}
+                                fill={n.type === 'A' ? '#7c9eff' : '#c084fc'}
+                                opacity={isAway ? 0.4 : 1}
+                                stroke="#0a0a0c"
+                                strokeWidth="1"
+                                style={{ pointerEvents: 'none', filter: isAway ? 'grayscale(100%)' : 'none' }}
+                            />
+                        )}
+                    </g>
+                );
+            })}
         </svg>
     );
 }
