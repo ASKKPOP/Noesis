@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
-stopped_at: Phase 41 UI-SPEC approved — ready for plan-phase
-last_updated: "2026-05-27T18:39:13.409Z"
+stopped_at: Phase 41 Plan 01 complete — Wave 0 Nyquist stubs (7 files)
+last_updated: "2026-05-27T18:53:47Z"
 progress:
   total_phases: 25
   completed_phases: 5
   total_plans: 31
-  completed_plans: 25
-  percent: 81
+  completed_plans: 26
+  percent: 84
 ---
 
 # Project State
@@ -22,13 +22,14 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** Phase 41 — Sleep Cycle + Away Presence (context gathered — ready to plan)
+**Current focus:** Phase 41 — sleep-cycle-away-presence
 
 ## Current Position
 
-Phase: 41 (sleep-cycle-away-presence) — IN PROGRESS (context gathered 2026-05-27)
-Status: Ready to execute
-Next action: `/gsd-plan-phase 41` — Sleep Cycle + Away Presence
+Phase: 41 (sleep-cycle-away-presence) — EXECUTING
+Plan: 2 of 6 (Plan 01 complete)
+Status: Executing Phase 41
+Next action: Execute Plan 41-02 — DB migration + civic_presence table
 
 Driving inputs for v3.0 (locked at milestone open):
 
