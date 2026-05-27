@@ -11,7 +11,7 @@ from noesis_brain.llm.types import GenerateOptions, LLMConfig, LLMResponse, Mode
 log = logging.getLogger(__name__)
 
 
-class ModelRouter:
+class ModelRouter(LLMAdapter):
     """Routes LLM requests to the appropriate model tier.
 
     Tier routing:
@@ -85,6 +85,30 @@ class ModelRouter:
             f"All providers exhausted for tier={tier.value}. "
             f"Last error: {last_error}",
         )
+
+    # ── LLMAdapter protocol implementation (for BrainHandler compatibility) ────────
+
+    @property
+    def provider_name(self) -> str:
+        """Return provider name of the PRIMARY tier adapter, or 'model_router' if unregistered."""
+        primary = self._adapters.get(ModelTier.PRIMARY)
+        if primary is not None:
+            return primary.provider_name
+        return "model_router"
+
+    async def list_models(self) -> list[str]:
+        """List models from the PRIMARY tier adapter. Returns [] if PRIMARY not registered."""
+        primary = self._adapters.get(ModelTier.PRIMARY)
+        if primary is None:
+            return []
+        return await primary.list_models()
+
+    async def is_available(self) -> bool:
+        """Check availability of the PRIMARY tier adapter. Returns False if unregistered."""
+        primary = self._adapters.get(ModelTier.PRIMARY)
+        if primary is None:
+            return False
+        return await primary.is_available()
 
     def _build_fallback_chain(self, tier: ModelTier) -> list[LLMAdapter]:
         """Build ordered list of adapters to try."""
