@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
-status: executing
-stopped_at: Phase 38 complete — Brain↔Grid wire protocol (WIRE-01..05), EdDSA JWT auth, offline queue, batch ingest, per-DID firehose filter. 9/9 UAT passed. Ready to plan Phase 39.
-last_updated: "2026-05-27T00:07:01.195Z"
+status: planning
+stopped_at: Phase 39 context gathered
+last_updated: "2026-05-27T01:00:20.866Z"
 progress:
   total_phases: 25
   completed_phases: 3
@@ -393,6 +393,6 @@ Total v3.0 allowlist growth: **+34 (56 → 90)**. Freeze-except-by-explicit-addi
 
 ## Session Continuity
 
-Last session: 2026-05-27T00:00:00.000Z
-Stopped at: Phase 38 complete — Brain↔Grid wire protocol (WIRE-01..05) UAT passed 9/9. Phase 39 (Grid Multi-Tenancy) ready to plan.
-Resume file: None
+Last session: 2026-05-27T01:00:20.863Z
+Stopped at: Phase 39 context gathered
+Resume file: .planning/phases/39-grid-multi-tenancy/39-CONTEXT.md
