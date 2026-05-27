@@ -10,7 +10,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
-import CivicMap from './CivicMap.js';
+import CivicMap from './CivicMap';
 
 // D-V3-32 zone names — exactly these 6, in this order.
 const SIX_ZONE_NAMES = [

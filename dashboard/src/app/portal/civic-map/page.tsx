@@ -1,4 +1,4 @@
-import CivicMap from './CivicMap.js';
+import CivicMap from './CivicMap';
 
 /**
  * Civic Map page — server component shell.

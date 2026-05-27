@@ -1,10 +1,10 @@
 'use client';
 import { useState } from 'react';
-import HeroCard from '../nous/[id]/HeroCard';
-import ProfileTabBar from '../nous/[id]/ProfileTabBar';
-import SkillsTab from '../nous/[id]/SkillsTab';
-import LoreTab from '../nous/[id]/LoreTab';
-import NormsTab from '../nous/[id]/NormsTab';
+import HeroCard from '../nous/_shared/HeroCard';
+import ProfileTabBar from '../nous/_shared/ProfileTabBar';
+import SkillsTab from '../nous/_shared/SkillsTab';
+import LoreTab from '../nous/_shared/LoreTab';
+import NormsTab from '../nous/_shared/NormsTab';
 import OwnerInfoSection from './OwnerInfoSection';
 
 type Tab = 'skills' | 'lore' | 'norms';

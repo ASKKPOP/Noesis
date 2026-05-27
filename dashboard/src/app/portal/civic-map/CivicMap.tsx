@@ -4,9 +4,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { COPY } from '../../../lib/portal-copy.js';
-import { useCivicMap } from '../../../lib/use-civic-map.js';
-import type { Zone, NousMapEntry } from '../../../lib/use-civic-map.js';
+import { COPY } from '../../../lib/portal-copy';
+import { useCivicMap } from '../../../lib/use-civic-map';
+import type { Zone, NousMapEntry } from '../../../lib/use-civic-map';
 
 interface CivicMapProps {
     /** Pre-fetched zones data (optional — for testing or SSR-passed data). */

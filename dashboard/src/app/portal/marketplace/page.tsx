@@ -6,7 +6,7 @@
  * D-36-03: Marketplace listings show full price to all visitor tiers — no
  * price obfuscation. Bid/buy actions require Civic-DID (Phase 44 wiring).
  */
-import { COPY } from '../../../lib/portal-copy.js';
+import { COPY } from '../../../lib/portal-copy';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 

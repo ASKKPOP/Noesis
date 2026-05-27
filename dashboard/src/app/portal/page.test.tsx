@@ -13,7 +13,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
-import PortalLandingPage from './page.js';
+import PortalLandingPage from './page';
 
 describe('PortalLandingPage — verbatim copy strings (anonymous tier)', () => {
     it('document title contains "Noēsis · Polis"', () => {

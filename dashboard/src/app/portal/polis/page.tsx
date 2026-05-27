@@ -4,7 +4,7 @@
  * Ballots are redacted from the listing view (shown as tally only when tallied).
  * Color accent: Polis green (#6bd968) per UI-SPEC §Color.
  */
-import { COPY } from '../../../lib/portal-copy.js';
+import { COPY } from '../../../lib/portal-copy';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 

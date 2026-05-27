@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { COPY } from '../../lib/portal-copy.js';
-import type { VisitorTier } from '../../lib/visitor-tier.js';
+import { COPY } from '../../lib/portal-copy';
+import type { VisitorTier } from '../../lib/visitor-tier';
 
 export const metadata: Metadata = { title: COPY.PAGE_TITLE };
 

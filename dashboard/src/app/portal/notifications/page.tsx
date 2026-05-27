@@ -3,7 +3,7 @@
  * Server component: requires portal session. Anonymous visitors see a sign-in stub.
  * Authenticated visitors see their notification list with read/unread state.
  */
-import { resolveVisitorTier } from '../../../lib/visitor-tier.js';
+import { resolveVisitorTier } from '../../../lib/visitor-tier';
 import { cookies } from 'next/headers';
 
 const PORTAL_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';

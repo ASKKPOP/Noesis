@@ -3,7 +3,7 @@
  * Server component: visitor browses skills + lore entries.
  * Color accent: Grid orange (#ffb86c) for card left-border per UI-SPEC §Color.
  */
-import { COPY } from '../../../lib/portal-copy.js';
+import { COPY } from '../../../lib/portal-copy';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 

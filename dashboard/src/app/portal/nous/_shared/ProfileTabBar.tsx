@@ -1,6 +1,6 @@
 'use client';
 
-import { type ProfileTab } from './page';
+export type ProfileTab = 'skills' | 'lore' | 'norms';
 
 interface ProfileTabBarProps {
     activeTab: ProfileTab;
