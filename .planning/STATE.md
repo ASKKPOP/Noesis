@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
-stopped_at: Phase 40 COMPLETE — 5/5 plans · LOCAL-01..03 validated · UAT pending live testing
-last_updated: "2026-05-27T10:00:00.000Z"
+stopped_at: Phase 41 context gathered — ready for /gsd-plan-phase 41
+last_updated: "2026-05-27T12:00:00.000Z"
 progress:
   total_phases: 25
   completed_phases: 5
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** Phase 41 — Sleep Cycle + Away Presence (next to plan/execute)
+**Current focus:** Phase 41 — Sleep Cycle + Away Presence (context gathered — ready to plan)
 
 ## Current Position
 
-Phase: 40 (local-ai-integration) — COMPLETE (2026-05-27)
-Status: Phase 40 complete — 5/5 plans shipped · Human UAT items filed in 40-HUMAN-UAT.md
+Phase: 41 (sleep-cycle-away-presence) — IN PROGRESS (context gathered 2026-05-27)
+Status: Phase 41 context gathered — 0/TBD plans · ready to plan
 Next action: `/gsd-plan-phase 41` — Sleep Cycle + Away Presence
 
 Driving inputs for v3.0 (locked at milestone open):
@@ -439,6 +439,6 @@ Total v3.0 allowlist growth: **+34 (56 → 90)**. Freeze-except-by-explicit-addi
 
 ## Session Continuity
 
-Last session: 2026-05-27T10:00:00.000Z
-Stopped at: Phase 40 COMPLETE — 5/5 plans shipped · Q-V3-I banner hardcoded · 40-HUMAN-UAT.md filed
-Resume file: .planning/phases/40-local-ai-integration/40-HUMAN-UAT.md
+Last session: 2026-05-27T12:00:00.000Z
+Stopped at: Phase 41 context gathered — hybrid grace timer, direct-message-only queue, SQLite last_seen_tick, 30s polling civic map
+Resume file: .planning/phases/41-sleep-cycle-away-presence/41-CONTEXT.md
