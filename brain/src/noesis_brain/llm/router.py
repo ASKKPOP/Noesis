@@ -26,6 +26,9 @@ class ModelRouter(LLMAdapter):
         self._config = config
         self._adapters: dict[ModelTier, LLMAdapter] = {}
         self._fallback: LLMAdapter | None = None
+        # Phase 40 D-40-05: fallback state tracking for structured availability events.
+        # True when Ollama PRIMARY is unavailable and cloud fallback is active.
+        self._in_fallback_mode: bool = False
 
     def register_tier(self, tier: ModelTier, adapter: LLMAdapter) -> None:
         """Register an adapter for a specific model tier."""
@@ -66,6 +69,17 @@ class ModelRouter(LLMAdapter):
                         adapter.provider_name,
                     )
                     continue
+                # Phase 40 D-40-05: emit local_ai_unavailable on first cloud fallback activation.
+                if adapter is self._fallback and not self._in_fallback_mode:
+                    self._in_fallback_mode = True
+                    primary_adapter = self._adapters.get(ModelTier.PRIMARY)
+                    model_name = getattr(primary_adapter, "_model", "unknown") if primary_adapter else "unknown"
+                    fallback_name = getattr(self._fallback, "provider_name", "unknown")
+                    log.warning(
+                        "{event: 'local_ai_unavailable', provider: 'ollama', model: '%s', fallback: '%s'}",
+                        model_name,
+                        fallback_name,
+                    )
                 response = await adapter.generate(prompt, opts)
                 return LLMResponse(
                     text=response.text,
@@ -109,6 +123,31 @@ class ModelRouter(LLMAdapter):
         if primary is None:
             return False
         return await primary.is_available()
+
+    async def check_recovery(self) -> bool:
+        """Poll PRIMARY tier Ollama availability. Call once per tick while in fallback mode (D-40-07).
+
+        Returns True if recovery was detected (switches back to local mode).
+        Emits 'local_ai_recovered' log event on first True after False.
+        No-op if not in fallback mode.
+        """
+        if not self._in_fallback_mode:
+            return False
+
+        primary = self._adapters.get(ModelTier.PRIMARY)
+        if primary is None:
+            return False
+
+        available = await primary.is_available()
+        if available:
+            self._in_fallback_mode = False
+            model_name = getattr(primary, "_model", "unknown")
+            log.info(
+                "{event: 'local_ai_recovered', provider: 'ollama', model: '%s'}",
+                model_name,
+            )
+            return True
+        return False
 
     def _build_fallback_chain(self, tier: ModelTier) -> list[LLMAdapter]:
         """Build ordered list of adapters to try."""

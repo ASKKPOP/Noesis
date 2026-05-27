@@ -329,3 +329,73 @@ class TestModelRouterLLMAdapterProtocol:
         """ModelRouter.is_available() returns False when PRIMARY not registered."""
         router = ModelRouter(_make_config())
         assert await router.is_available() is False
+
+
+class TestModelRouterAvailabilityEvents:
+    """Phase 40 D-40-05: structured availability events + per-tick recovery detection."""
+
+    @pytest.mark.asyncio
+    async def test_first_fallback_emits_local_ai_unavailable(self, caplog: pytest.LogCaptureFixture) -> None:
+        """First generate() that falls through to cloud fallback emits local_ai_unavailable."""
+        import logging
+        router = ModelRouter(_make_config())
+        # PRIMARY is unavailable → falls through to cloud fallback
+        router.register_tier(ModelTier.PRIMARY, _make_adapter("ollama", available=False))
+        cloud = _make_adapter("claude", "cloud response")
+        router.set_fallback(cloud)
+
+        with caplog.at_level(logging.WARNING, logger="noesis_brain.llm.router"):
+            await router.generate("Test")
+
+        assert "local_ai_unavailable" in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_subsequent_fallbacks_do_not_repeat_event(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Second and further generate() calls in fallback mode do NOT emit local_ai_unavailable again."""
+        import logging
+        router = ModelRouter(_make_config())
+        router.register_tier(ModelTier.PRIMARY, _make_adapter("ollama", available=False))
+        router.set_fallback(_make_adapter("claude", "cloud response"))
+
+        with caplog.at_level(logging.WARNING, logger="noesis_brain.llm.router"):
+            await router.generate("First call")
+            caplog.clear()
+            await router.generate("Second call")
+
+        assert "local_ai_unavailable" not in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_recovery_emits_local_ai_recovered(self, caplog: pytest.LogCaptureFixture) -> None:
+        """check_recovery() emits local_ai_recovered when is_available() returns True after False."""
+        import logging
+        primary = _make_adapter("ollama", available=False)
+        router = ModelRouter(_make_config())
+        router.register_tier(ModelTier.PRIMARY, primary)
+        router.set_fallback(_make_adapter("claude", "cloud response"))
+
+        # Trigger fallback mode
+        await router.generate("Test")
+        assert router._in_fallback_mode is True
+
+        # Now primary comes back online
+        primary.is_available = AsyncMock(return_value=True)
+
+        with caplog.at_level(logging.INFO, logger="noesis_brain.llm.router"):
+            recovered = await router.check_recovery()
+
+        assert recovered is True
+        assert router._in_fallback_mode is False
+        assert "local_ai_recovered" in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_check_recovery_noop_when_not_in_fallback(self) -> None:
+        """check_recovery() returns False and does not call is_available() when not in fallback mode."""
+        primary = _make_adapter("ollama", available=True)
+        router = ModelRouter(_make_config())
+        router.register_tier(ModelTier.PRIMARY, primary)
+
+        result = await router.check_recovery()
+
+        assert result is False
+        # is_available should NOT have been called since we're not in fallback mode
+        primary.is_available.assert_not_called()
