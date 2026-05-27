@@ -743,6 +743,11 @@ class BrainHandler:
         # with a NOOP primary is the canonical divergence case.
         self._advisory_log_divergence(self.did, runtime.state, actions)
 
+        # Phase 40 D-40-07: poll Ollama recovery once per tick when in fallback mode.
+        # hasattr guard makes this safe for older tests that pass a plain OllamaAdapter.
+        if hasattr(self.llm, "check_recovery"):
+            await self.llm.check_recovery()
+
         # Phase 38 WIRE-01 (D-38-A2): parallel HTTPS dispatch path.
         # When _grid_wire_client is set (GRID_URL configured), forward the
         # action batch to Grid via HTTPS REST in addition to returning it
