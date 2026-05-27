@@ -169,6 +169,46 @@ class GridWireClient:
             },
         )
 
+    # ── Presence heartbeat ────────────────────────────────────────────────────
+
+    async def post_presence_heartbeat(self) -> None:
+        """Phase 41 SLEEP-01 / D-41-02 — POST /api/v1/civic/presence keep-alive.
+
+        Called every 60 seconds by the heartbeat task in Brain startup. The Grid
+        resets its grace timer for our Civic-DID on receipt. On 2xx response,
+        persists last_seen_tick to WireQueue SQLite for reconnect cursor.
+
+        Errors logged at WARNING; NEVER raised — grace timer is the safety net.
+        """
+        try:
+            token = self._token_manager.get_valid_token()
+            client = await self._get_client()
+            resp = await client.post(
+                f"{self._base_url}/api/v1/civic/presence",
+                json={},
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
+            )
+            if 200 <= resp.status_code < 300:
+                if self._queue is not None:
+                    try:
+                        data = resp.json()
+                    except Exception:
+                        data = {}
+                    if isinstance(data, dict) and "last_seen_tick" in data:
+                        tick = data["last_seen_tick"]
+                        if isinstance(tick, int):
+                            self._queue.set_last_seen_tick(tick)
+            else:
+                log.warning(
+                    "[Brain] presence heartbeat non-2xx: status=%s",
+                    resp.status_code,
+                )
+        except Exception as exc:
+            log.warning("[Brain] presence heartbeat error: %s", exc)
+
     # ── Queue helpers ──────────────────────────────────────────────────────────
 
     def _enqueue_all(self, actions: list[dict[str, Any]], tick: int) -> None:

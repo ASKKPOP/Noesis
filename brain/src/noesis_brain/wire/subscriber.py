@@ -23,6 +23,7 @@ from typing import Awaitable, Callable, Optional
 import websockets
 
 from .token_manager import TokenManager
+from .queue import WireQueue
 
 __all__ = ["WssSubscriber"]
 
@@ -56,6 +57,7 @@ class WssSubscriber:
         grid_url: str,
         token_manager: TokenManager,
         on_frame: Callable[[dict], Awaitable[None]],  # type: ignore[type-arg]
+        queue: Optional[WireQueue] = None,
     ) -> None:
         # Accept https:// or wss:// — internally always wss.
         if grid_url.startswith("https://"):
@@ -69,6 +71,7 @@ class WssSubscriber:
         self._url = f"{base.rstrip('/')}/api/v1/brain/firehose"
         self._token_manager = token_manager
         self._on_frame = on_frame
+        self._queue = queue
         self._stop = asyncio.Event()
         self._task: Optional[asyncio.Task] = None  # type: ignore[type-arg]
 
@@ -124,12 +127,22 @@ class WssSubscriber:
 
             attempt = min(attempt + 1, 6)  # cap so delay never exceeds 60 s base
 
+    def _compute_connect_url(self) -> str:
+        """Phase 41 SLEEP-03 — build WSS connect URL with optional ?since= cursor.
+
+        When WireQueue.get_last_seen_tick() returns a value, appends ?since=<tick>
+        so the Grid firehose replays missed events from that tick onward.
+        """
+        since_tick = self._queue.get_last_seen_tick() if self._queue is not None else None
+        return self._url if since_tick is None else f"{self._url}?since={since_tick}"
+
     async def _connect_once(self) -> None:
         """Open one WebSocket session and receive frames until disconnect or stop."""
         token = self._token_manager.get_valid_token()
         headers = {"Authorization": f"Bearer {token}"}
-        async with websockets.connect(self._url, additional_headers=headers) as ws:
-            log.info("[Brain] WSS connected to %s", self._url)
+        connect_url = self._compute_connect_url()
+        async with websockets.connect(connect_url, additional_headers=headers) as ws:
+            log.info("[Brain] WSS connected to %s", connect_url)
             while not self._stop.is_set():
                 try:
                     raw = await asyncio.wait_for(ws.recv(), timeout=1.0)

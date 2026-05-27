@@ -130,6 +130,14 @@ class WireQueue:
         self._conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_enqueued_at ON wire_queue (enqueued_at)"
         )
+        self._conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS kv_store (
+                key   TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+            """
+        )
 
     # ── Core API ───────────────────────────────────────────────────────────────
 
@@ -231,6 +239,30 @@ class WireQueue:
                 f"DELETE FROM wire_queue WHERE id IN ({placeholders})",
                 row_ids,
             )
+
+    def set_last_seen_tick(self, tick: int) -> None:
+        """Phase 41 SLEEP-03 — persist Brain's last_seen_tick to local SQLite.
+
+        Called by GridWireClient.post_presence_heartbeat after a successful 2xx
+        response. INSERT OR REPLACE semantics — overwrite any previous value.
+        Survives Brain process restart; consumed by WssSubscriber on reconnect.
+        """
+        with self._conn:
+            self._conn.execute(
+                "INSERT OR REPLACE INTO kv_store (key, value) VALUES ('last_seen_tick', ?)",
+                (str(tick),),
+            )
+
+    def get_last_seen_tick(self) -> int | None:
+        """Phase 41 SLEEP-03 — read Brain's last_seen_tick from local SQLite.
+
+        Returns None if never set (fresh DB or SQLite wiped).
+        """
+        cur = self._conn.execute(
+            "SELECT value FROM kv_store WHERE key = 'last_seen_tick'"
+        )
+        row = cur.fetchone()
+        return int(row[0]) if row else None
 
     def close(self) -> None:
         """Close the underlying SQLite connection."""

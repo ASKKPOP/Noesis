@@ -57,6 +57,16 @@ log = logging.getLogger(__name__)
 
 # ── App container ─────────────────────────────────────────────────────────────
 
+async def _heartbeat_loop(client: "GridWireClient") -> None:
+    """Phase 41 SLEEP-01 — POST /api/v1/civic/presence every 60s."""
+    while True:
+        try:
+            await client.post_presence_heartbeat()
+        except Exception as exc:
+            log.warning("[Brain] heartbeat loop iteration error: %s", exc)
+        await asyncio.sleep(60)
+
+
 class BrainApp:
     """Container for the running Brain application."""
 
@@ -72,18 +82,42 @@ class BrainApp:
         self.nous_name = nous_name
         self.http_server = http_server
         self._running = False
+        # Phase 41 — optional wire components set by create_brain_app_from_env
+        self._wss_subscriber: Any | None = None
+        self._heartbeat_task: asyncio.Task | None = None  # type: ignore[type-arg]
 
     async def start(self) -> None:
         """Start RPC server (and HTTP server if configured) and begin listening."""
         await self.rpc.start()
         if self.http_server is not None:
             await self.http_server.start()
+        # Phase 41: start WSS subscriber and heartbeat task if wired
+        if self._wss_subscriber is not None:
+            await self._wss_subscriber.start()
+            log.info("[Brain:%s] WssSubscriber started", self.nous_name)
+        if self._heartbeat_task is None and hasattr(self.handler, "_grid_wire_client") and self.handler._grid_wire_client is not None:
+            self._heartbeat_task = asyncio.create_task(
+                _heartbeat_loop(self.handler._grid_wire_client)
+            )
+            log.info("[Brain:%s] presence heartbeat task started (60s interval)", self.nous_name)
         self._running = True
         log.info("[Brain:%s] RPC server started", self.nous_name)
 
     async def stop(self) -> None:
         """Graceful shutdown."""
         self._running = False
+        # Phase 41: cancel heartbeat task and stop WSS subscriber
+        if self._heartbeat_task is not None:
+            self._heartbeat_task.cancel()
+            try:
+                await self._heartbeat_task
+            except (asyncio.CancelledError, Exception):
+                pass
+            self._heartbeat_task = None
+            log.info("[Brain:%s] presence heartbeat task cancelled", self.nous_name)
+        if self._wss_subscriber is not None:
+            await self._wss_subscriber.stop()
+            log.info("[Brain:%s] WssSubscriber stopped", self.nous_name)
         if self.http_server is not None:
             await self.http_server.stop()
         await self.rpc.stop()
@@ -403,13 +437,38 @@ async def create_brain_app_from_env() -> BrainApp:
         nous_did_for_wire = os.environ.get("NOUS_DID", "").strip() or f"did:noesis:{_slugify_nous_name(nous_name)}"
         civic_did = os.environ.get("CIVIC_DID")
         from noesis_brain.wire.client import GridWireClient  # noqa: PLC0415
+        from noesis_brain.wire.queue import WireQueue  # noqa: PLC0415
+        from noesis_brain.wire.subscriber import WssSubscriber  # noqa: PLC0415
+
+        # Phase 41 SLEEP-03: create shared WireQueue for kv_store (last_seen_tick)
+        wire_queue_path = os.path.join(
+            os.environ.get("SOCKET_DIR", "/tmp"),
+            f"noesis-nous-{_slugify_nous_name(nous_name)}-wire.db",
+        )
+        wire_queue = WireQueue(wire_queue_path)
+
         grid_wire_client = GridWireClient(
             grid_url=grid_url,
             token_manager=token_manager,
+            brain_did=nous_did_for_wire,
+            queue=wire_queue,  # Phase 41 — enables kv_store last_seen_tick
         )
         app.handler._grid_wire_client = grid_wire_client
+
+        # Phase 41 SLEEP-03: wire WssSubscriber with queue= for ?since= reconnect cursor
+        async def _noop_on_frame(frame: dict) -> None:
+            pass  # Grid event handler — extended in future phases
+
+        wss_subscriber = WssSubscriber(
+            grid_url=grid_url,
+            token_manager=token_manager,
+            on_frame=_noop_on_frame,
+            queue=wire_queue,  # Phase 41 — enables ?since= reconnect cursor
+        )
+        app._wss_subscriber = wss_subscriber
+
         log.info(
-            "[Brain] GridWireClient wired: grid_url=%s civic_did=%s nous_did=%s",
+            "[Brain] GridWireClient + WssSubscriber wired: grid_url=%s civic_did=%s nous_did=%s",
             grid_url, civic_did, nous_did_for_wire,
         )
     elif grid_url:
