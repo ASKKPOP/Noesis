@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 ## Current Position
 
 Phase: 41 (sleep-cycle-away-presence) — EXECUTING
-Plan: 6 of 6 (Plan 01 complete)
-Status: Ready to execute
-Next action: Execute Plan 41-02 — DB migration + civic_presence table
+Plan: 6 of 6 (Plan 06 in progress — Tasks 1-4 complete)
+Status: AT CHECKPOINT — Tasks 1-4 committed and pushed; Task 5 (human-verify) pending
+Next action: Human verification of Civic Map 4-state presence + Steward Section 4 + presence-overview API
 
 Driving inputs for v3.0 (locked at milestone open):
 
