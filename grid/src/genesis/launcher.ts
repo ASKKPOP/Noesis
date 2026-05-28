@@ -28,6 +28,9 @@ import { GENESIS_SHOPS } from './presets.js';
 import type { GenesisConfig, GridState } from './types.js';
 import type { HealthWatchdog } from '../diagnostics/health-watchdog.js';
 import type { FirehoseStats } from '../audit/firehose-hub.js';
+import { P2PPeerStore } from '../p2p/p2p-peer-store.js';
+import { SdpInboxStore } from '../p2p/sdp-inbox-store.js';
+import type { P2PService } from '../p2p/types.js';
 
 /**
  * Phase 31 OBS-01 (D-31-A1): optional dependencies that can be supplied at
@@ -144,6 +147,10 @@ export class GenesisLauncher {
     private _presenceService: import('../civic-presence/presence-service.js').PresenceService | undefined;
     /** Phase 41 — OBS-R-32-02: paired clearInterval handle for the escalation loop. */
     private _escalationInterval: NodeJS.Timeout | undefined;
+    /** Phase 42 P2P-01 (OBS-R-32-02) — paired clearInterval handle for the P2P peer cleanup loop. */
+    private _p2pCleanupInterval: NodeJS.Timeout | null = null;
+    /** Phase 42 P2P-01..05 — in-memory P2P peer store + SDP inbox. */
+    private _p2pService: P2PService | undefined;
     /**
      * Phase 12 Wave 3 — GovernanceEngine and its backing store.
      *
@@ -238,6 +245,17 @@ export class GenesisLauncher {
         // NousRunner can receive loreDeps: { quotaTracker: this.loreQuotaTracker } and
         // enforce K=3 per epoch. Default k=3, epochLength=30 (D-20-03/D-20-13).
         this.loreQuotaTracker = new LoreQuotaTracker();
+
+        // Phase 42 P2P-01..05 — construct in-memory P2P state.
+        // P2PService is in-memory (no DB); constructed at launcher creation so it
+        // is available before start() is called (main.ts wires into GridServices before start()).
+        // The 60s cleanup setInterval is registered in start() per OBS-R-32-02.
+        const turnSharedSecret = process.env.TURN_STATIC_AUTH_SECRET ?? 'changeme-turn-secret';
+        this._p2pService = {
+            peerStore: new P2PPeerStore(),
+            sdpInboxStore: new SdpInboxStore(),
+            turnSharedSecret,
+        };
     }
 
     /**
@@ -536,6 +554,21 @@ export class GenesisLauncher {
                     .catch(() => {});
             }, ESCALATION_MS);
         }
+
+        // Phase 42 P2P-01 (OBS-R-32-02 paired interval) — clean expired peers every 60s.
+        // Paired clearInterval is in stop() per OBS-R-32-02.
+        this._p2pCleanupInterval = setInterval(() => {
+            try {
+                this._p2pService?.peerStore.cleanup();
+            } catch {
+                // Swallow cleanup errors — non-fatal; next tick will retry expired entries
+            }
+        }, 60_000);
+    }
+
+    /** Phase 42 P2P-01..05 — accessor for main.ts to wire P2PService into GridServices. */
+    get p2pService(): P2PService {
+        return this._p2pService!;
     }
 
     /** Stop the Grid clock. */
@@ -544,6 +577,11 @@ export class GenesisLauncher {
         if (this._escalationInterval !== undefined) {
             clearInterval(this._escalationInterval);
             this._escalationInterval = undefined;
+        }
+        // Phase 42 P2P-01 (OBS-R-32-02 paired interval) — clear P2P cleanup interval.
+        if (this._p2pCleanupInterval !== null) {
+            clearInterval(this._p2pCleanupInterval);
+            this._p2pCleanupInterval = null;
         }
         if (this._presenceService !== undefined) {
             this._presenceService.shutdown();
