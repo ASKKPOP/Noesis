@@ -8,12 +8,12 @@ import {
 } from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast-allowlist: default-deny membership', () => {
-    it('has exactly 68 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27+Phase 28+Phase 33+Phase 36+Phase 37+Phase 42+Phase 43 event types', () => {
-        expect(ALLOWLIST.size).toBe(68);
+    it('has exactly 72 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27+Phase 28+Phase 33+Phase 36+Phase 37+Phase 42+Phase 43+Phase 44 event types', () => {
+        expect(ALLOWLIST.size).toBe(72);
     });
 
-    it('has frozen 68-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(68);
+    it('has frozen 72-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(72);
     });
 
     it.each([
@@ -92,7 +92,7 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(() => (ALLOWLIST as Set<string>).add('law.bypassed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).delete('trade.reviewed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).clear()).toThrow(TypeError);
-        expect(ALLOWLIST.size).toBe(68);
+        expect(ALLOWLIST.size).toBe(72);
     });
 
     it('Phase 6 operator.* tuple order: inspected < paused < resumed < law_changed < telos_forced', () => {
@@ -221,8 +221,8 @@ describe('broadcast-allowlist: Phase 6 operator.* payload privacy (representativ
 });
 
 describe('ALLOWLIST_MEMBERS Phase 42 (Plan 03)', () => {
-    it('has count 68 after Phase 43 adds operator.nous_forked (Phase 42 already added p2p.* events)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(68);
+    it('has count 72 after Phase 44 adds market.* events (Phase 42 added p2p.*, Phase 43 added operator.nous_forked)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(72);
     });
     it('includes p2p.peer_announced at position 65 (index 64)', () => {
         expect(ALLOWLIST_MEMBERS[64]).toBe('p2p.peer_announced');
@@ -239,8 +239,8 @@ describe('ALLOWLIST_MEMBERS Phase 42 (Plan 03)', () => {
 });
 
 describe('ALLOWLIST_MEMBERS Phase 43 (Plan 01 — FORK-04)', () => {
-    it('has count 68 after Phase 43 adds operator.nous_forked', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(68);
+    it('has count 72 after Phase 44 adds market.* events (Phase 43 base was 68)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(72);
     });
     it('includes operator.nous_forked at position 68 (index 67)', () => {
         expect(ALLOWLIST_MEMBERS[67]).toBe('operator.nous_forked');
