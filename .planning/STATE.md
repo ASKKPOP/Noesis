@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
-stopped_at: Phase 44 context updated (discuss-phase session — IRS 2%, police stub, settlement timeout 7 ticks)
-last_updated: "2026-05-28T06:30:12.623Z"
+stopped_at: Phase 44 SHIPPED (Marketplace v3 — 5 plans, allowlist 68→72, human-verify approved)
+last_updated: "2026-05-28T00:00:00.000Z"
 progress:
   total_phases: 25
-  completed_phases: 9
-  total_plans: 45
-  completed_plans: 45
+  completed_phases: 10
+  total_plans: 50
+  completed_plans: 50
   percent: 100
 ---
 
@@ -22,15 +22,15 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** Phase 44 — Marketplace v3
+**Current focus:** Phase 45 — IRS Treasury (next)
 
 ## Current Position
 
-Phase: 44 (Marketplace v3) — EXECUTING
-Plan: 2 of 5
+Phase: 44 (Marketplace v3) — SHIPPED 2026-05-28 (5 plans, allowlist 68→72)
+Plan: 5 of 5
 Previous: Phase 43 (Right-to-Fork Export Tooling) — SHIPPED 2026-05-28 (4 plans, allowlist 67→68)
-Status: Ready to execute
-Next action: Execute Phase 44 (Marketplace v3 — civic commerce + escrow)
+Status: Complete — human-verify checkpoint approved
+Next action: Execute Phase 45 (IRS Treasury — transaction fees + civic treasury)
 
 Driving inputs for v3.0 (locked at milestone open):
 
@@ -275,6 +275,40 @@ Driving inputs for v3.0 (locked at milestone open):
   - `operatorDid` in DIDContext is ALWAYS set for Portal session cookies (`did:noesis:human:...` → `operatorDid = did`). It is NOT set for plain ES256 Civic-DID Bearer JWTs.
   - The Phase 38 `brain-token.ts` register route sets `operatorDid: null` explicitly — ownership is the Phase 39 two-step claim model.
   - Broadcast allowlist frozen at 64. Phase 39 adds 0 events.
+
+## v3.0 Phase 44 close-out (locked 2026-05-28)
+
+- **Phase 44 SHIPPED.** Plans 44-01 through 44-05 all complete. Allowlist **68 → 72** (+4: `market.listing_created`, `market.bid_placed`, `market.settled`, `market.disputed`). `irs.tax_collected` intentionally OFF allowlist (audit-chain-only per D-44-03). Human-verify checkpoint approved by operator.
+
+- **What shipped:**
+  1. **TDD stubs (Plan 01):** 9 test stub files — `marketplace-store.test.ts`, `market-routes.test.ts`, `police-stub.test.ts`, `settlement-timeout.test.ts`, `append-market-listing-created.test.ts`, `append-market-bid-placed.test.ts`, `append-market-settled.test.ts`, `append-market-disputed.test.ts`, `append-irs-tax-collected.test.ts`. Broadcast-allowlist.test.ts extended with length===72 RED gate. Dynamic `import()` inside `beforeAll` (Vitest 2.x non-existent module workaround).
+  2. **DB + MarketplaceStore (Plan 02):** Migrations v33 (marketplace_listings, marketplace_bids, marketplace_escrow), v34 (marketplace_disputes, police_investigations), v35 (civic_treasury, grid_config seed: `irs_fee_rate=0.02`, `market_settlement_timeout_ticks=7`). `MarketplaceStore` (10 methods): `createListing` rejects `priceBios < 50n` (MIN_LISTING_PRICE_BIOS — guarantees `FLOOR(price * 0.02) >= 1` IRS fee per D-44-02). `acceptBid` funds escrow atomically with FOR UPDATE row lock. `settle` runs atomic tx (seller credit + treasury + escrow closed). `dispute` freezes escrow. `listExpiredEscrows` for settlement-timeout sweep.
+  3. **Audit producers (Plan 03):** 5 sole-producer files (9-step guard each) — `append-market-listing-created.ts` (#69), `append-market-bid-placed.ts` (#70), `append-market-settled.ts` (#71), `append-market-disputed.ts` (#72), `append-irs-tax-collected.ts` (audit-chain-only, NOT in ALLOWLIST_MEMBERS). Allowlist 68→72. `market-listings.ts` Phase 36 stub DELETED and replaced by full `market.ts`.
+  4. **Routes + settlement-timeout + ROADMAP (Plan 04):** 9 marketplace routes in `grid/src/api/routes/market.ts`. Police stub route (`GET /api/v1/market/disputes`). Settlement-timeout sweep `checkSettlementTimeouts` using `setInterval` NOT `clock.onTick` (D-44-05b single-subscription constraint). `GenesisLauncher` wired with `_settlementTimeoutInterval` + paired `clearInterval`. Confirm-settle emits `market.settled` THEN `irs.tax_collected` (D-44-03 ordering). Business-DID gate on create. Price minimum 400 `price_too_low` if < 50 Bios.
+  5. **Steward UI + nous.ts extension (Plan 05):** `GET /api/v1/operator/me/nous` extended with `business_did: string | null` top-level field. SQL join path: `brain_tokens.operator_did → brain_tokens.brain_did → civic_did_registry.existence_did → business_did_registry.civic_did` (NOTE: `civic_did_registry.operator_did` does not exist in schema v23–v32 — plan specified incorrect column; brain_tokens bridge is architecturally correct). `steward/src/app/economy/page.tsx` fully replaced: listing browse table (category filter, max_price filter, reputation color coding, pagination) + Business-DID-gated create form. Human-verify checkpoint approved by operator.
+
+- **Key decisions locked:**
+  - D-44-02: `MIN_LISTING_PRICE_BIOS = 50n` (createListing guard, ensures IRS fee ≥ 1 Bios)
+  - D-44-03: Emit ordering — `market.settled` first, then `irs.tax_collected` (always, non-skippable)
+  - D-44-05b: Settlement-timeout uses `setInterval` (not `clock.onTick` — single-subscription constraint)
+  - D-44-08: `business_did` added as top-level aggregate to `/operator/me/nous` via brain_tokens bridge
+  - D-44-09: Bid/accept/settle/dispute UI deferred to future dedicated UI phase
+  - D-44-10: Escrow funded at `acceptBid` time (buyer ousia checked inside atomic transaction)
+
+- **Inherits to Phase 45+:**
+  1. `civic_treasury` table (migration v35) is owned by Phase 45 IRS logic — migration created in Phase 44, IRS collection logic wired in Phase 44 routes (`settle` debits treasury), Phase 45 adds treasury disbursement + reporting routes.
+  2. `grid_config` table (migration v35): `irs_fee_rate = 0.02`, `market_settlement_timeout_ticks = 7` — Phase 45 can expose these via admin API.
+  3. `marketplace_disputes` + `police_investigations` tables (migration v34) — Phase 47 Police v3 fills investigation logic.
+  4. `irs.tax_collected` audit event is audit-chain-only; Phase 45 adds IRS treasury disbursement (`irs.disbursement_executed` was pre-empted in Phase 41 as audit-chain-only too).
+  5. Settlement-timeout interval in launcher: `checkSettlementTimeouts` polls every 5000ms. Phase 45 can add treasury balance check without launcher changes.
+  6. `business_did` field in `/operator/me/nous` response — Phase 46 can promote to per-Nous granularity once full civic_did → brain join is wired.
+
+- **Key invariants:**
+  - Broadcast allowlist at 72. Phase 44 adds 4 events (`market.*`). `irs.tax_collected` intentionally NOT added (D-44-03).
+  - R-31-01 zero-diff audit chain — PRESERVED.
+  - VOTE-05 Nous-only governance invariant — PRESERVED.
+  - D-44-05b: Single-subscription constraint on `clock.onTick` — settlement-timeout uses setInterval.
+  - OBS-R-32-02: `_settlementTimeoutInterval` has paired `clearInterval` in `launcher.stop()`.
 
 ## Accumulated Context
 
