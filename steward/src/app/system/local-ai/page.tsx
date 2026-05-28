@@ -6,9 +6,14 @@
  * Operator selects Ollama model tiers + temperature + max_tokens.
  * Settings persisted to Grid via PATCH /api/v1/operator/me/settings.
  * Red banner shown when Brain status is degraded (Q-V3-I mandatory text).
+ *
+ * Phase 43 — Fork Nous section added below Local AI Settings (D-43-03).
+ * Operator can fork their Nous via the constitutional right-to-fork (D-V3-18).
+ * Click → ForkIrreversibilityDialog → POST /api/v1/operator/fork/<civic-did> → download.
  */
 import { useEffect, useState, useRef } from 'react';
 import StewardShell from '@/components/StewardShell';
+import { ForkIrreversibilityDialog } from '@/components/fork-irreversibility-dialog';
 
 interface LocalAiSettings {
     small_model: string;
@@ -30,6 +35,18 @@ interface ModelsResponse {
     ollama_available: boolean;
 }
 
+interface NousRecord {
+    civic_did: string | null;
+    brain_did: string;
+    status: 'active' | 'away' | 'revoked';
+}
+
+interface ForkResult {
+    download_url: string;
+    package_hash: string;
+    bytes: number;
+}
+
 export default function LocalAiPage() {
     const [models, setModels] = useState<string[]>([]);
     const [draft, setDraft] = useState<LocalAiSettings | null>(null);
@@ -39,13 +56,24 @@ export default function LocalAiPage() {
     const [saved, setSaved] = useState(false);
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+    // Phase 43 — Fork Nous state (D-43-03 / D-V3-18 constitutional right-to-fork)
+    const [civicDid, setCivicDid] = useState<string | null>(null);
+    const [forkOpen, setForkOpen] = useState(false);
+    const [forkStatus, setForkStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+    const [forkError, setForkError] = useState<string | null>(null);
+    const [forkResult, setForkResult] = useState<ForkResult | null>(null);
+    const forkButtonRef = useRef<HTMLButtonElement | null>(null);
+
     // Load settings from Grid + models from Brain on mount
     useEffect(() => {
         async function load() {
             try {
-                const [settingsRes, modelsRes] = await Promise.all([
+                const [settingsRes, modelsRes, nousRes] = await Promise.all([
                     fetch('/api/v1/operator/me/settings', { credentials: 'include' }),
                     fetch('/api/brain/local-ai/models'),
+                    // Phase 43: attempt to load Civic-DID from operator's Nous fleet.
+                    // civic_did is stubbed null until Phase 46 wires the registry join.
+                    fetch('/api/v1/operator/me/nous', { credentials: 'include' }),
                 ]);
                 if (settingsRes.ok) {
                     const s = await settingsRes.json() as { local_ai: LocalAiSettings };
@@ -58,6 +86,12 @@ export default function LocalAiPage() {
                     setModels(m.models);
                 }
                 // models load failure is non-fatal — dropdowns show current saved model
+                if (nousRes.ok) {
+                    const fleet = await nousRes.json() as { nous: NousRecord[] };
+                    const firstCivicDid = fleet.nous.find(n => n.civic_did)?.civic_did ?? null;
+                    setCivicDid(firstCivicDid);
+                }
+                // civicDid load failure is non-fatal — Fork button renders disabled
             } catch (e) {
                 setError(String(e));
             } finally {
@@ -112,6 +146,41 @@ export default function LocalAiPage() {
     function updateDraft(field: keyof LocalAiSettings, value: string | number) {
         setDraft(prev => prev ? { ...prev, [field]: value } : prev);
         setSaved(false);
+    }
+
+    // Phase 43 — Fork Nous handler (D-V3-18 constitutional right-to-fork)
+    async function handleForkConfirm() {
+        if (!civicDid) return;
+        setForkOpen(false);
+        setForkStatus('loading');
+        setForkError(null);
+        try {
+            const res = await fetch(`/api/v1/operator/fork/${encodeURIComponent(civicDid)}`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({ error: 'unknown' })) as { detail?: string; error?: string };
+                const msg = body.detail ?? body.error ?? `HTTP ${res.status}`;
+                setForkError(msg);
+                setForkStatus('error');
+                return;
+            }
+            const data = await res.json() as ForkResult;
+            setForkResult(data);
+            setForkStatus('success');
+            // Trigger download: programmatic <a download> click (one-time token)
+            const a = document.createElement('a');
+            a.href = data.download_url;
+            a.download = '';  // browser uses Content-Disposition filename
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } catch (err) {
+            setForkError(String(err));
+            setForkStatus('error');
+        }
     }
 
     if (loading) {
@@ -184,6 +253,106 @@ export default function LocalAiPage() {
                     Restart Brain to apply changes.
                 </div>
             )}
+
+            {/* Phase 43 — Fork Nous section (D-V3-18 / D-43-03) */}
+            <div data-testid="fork-section" className="steward-card" style={{ marginBottom: 32 }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--rule)' }}>
+                    <h2 style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)' }}>
+                        Fork Nous
+                    </h2>
+                </div>
+                <div style={{ padding: '16px 20px' }}>
+                    <p style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'var(--ink)', marginBottom: 16 }}>
+                        Constitutional right-to-fork (D-V3-18). Export this Nous&apos;s complete state — memory,
+                        credentials, audit history — as a portable archive. The forked Nous can run standalone
+                        on any machine via{' '}
+                        <code>python -m noesis_brain standalone --import &lt;package.tar.gz&gt;</code>.
+                        This permanently removes the Nous from civic life.
+                    </p>
+                    {civicDid ? (
+                        <button
+                            ref={forkButtonRef}
+                            onClick={() => setForkOpen(true)}
+                            disabled={forkStatus === 'loading'}
+                            data-testid="fork-open-button"
+                            style={{
+                                background: 'var(--terracotta)',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: 6,
+                                padding: '7px 18px',
+                                fontFamily: 'var(--sans)',
+                                fontSize: 12,
+                                fontWeight: 500,
+                                cursor: forkStatus === 'loading' ? 'not-allowed' : 'pointer',
+                                opacity: forkStatus === 'loading' ? 0.6 : 1,
+                            }}
+                        >
+                            {forkStatus === 'loading' ? 'Preparing fork…' : 'Fork Nous'}
+                        </button>
+                    ) : (
+                        <button
+                            disabled
+                            data-testid="fork-open-button"
+                            style={{
+                                background: 'var(--muted)',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: 6,
+                                padding: '7px 18px',
+                                fontFamily: 'var(--sans)',
+                                fontSize: 12,
+                                fontWeight: 500,
+                                cursor: 'not-allowed',
+                                opacity: 0.5,
+                            }}
+                        >
+                            Fork Nous
+                        </button>
+                    )}
+                    {!civicDid && (
+                        <p style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>
+                            No Nous to fork yet. Register a Civic-DID first.
+                        </p>
+                    )}
+                    {forkError && (
+                        <div
+                            role="alert"
+                            data-testid="fork-error"
+                            style={{
+                                color: 'var(--terracotta)',
+                                marginTop: 12,
+                                fontFamily: 'var(--sans)',
+                                fontSize: 13,
+                            }}
+                        >
+                            Fork failed: {forkError}
+                        </div>
+                    )}
+                    {forkStatus === 'success' && forkResult && (
+                        <div
+                            data-testid="fork-success"
+                            style={{ color: '#2d8a4e', marginTop: 12, fontFamily: 'var(--sans)', fontSize: 13 }}
+                        >
+                            <p>Fork complete. Download started automatically.</p>
+                            <p>Package hash: <code>{forkResult.package_hash}</code></p>
+                            <p>Size: {forkResult.bytes} bytes</p>
+                            <p>
+                                If the download did not start,{' '}
+                                <a href={forkResult.download_url}>click here</a> within 5 minutes.
+                            </p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <ForkIrreversibilityDialog
+                open={forkOpen}
+                targetDid={civicDid ?? ''}
+                onConfirm={() => void handleForkConfirm()}
+                onCancel={() => setForkOpen(false)}
+                openerRef={forkButtonRef}
+            />
 
             {draft && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
