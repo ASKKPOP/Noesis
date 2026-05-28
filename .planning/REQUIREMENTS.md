@@ -76,11 +76,11 @@
 <!-- Grid provides signaling + discovery, NOT relay. Brain-to-Brain
      content never passes through Henry. -->
 
-- [ ] **P2P-01**: Brain announces its P2P endpoint (host:port or libp2p multiaddr) to Grid via `POST /api/v1/p2p/announce`. Grid maintains DID-to-endpoint mapping; expired after 5 min of no heartbeat.
-- [ ] **P2P-02**: Grid mediates WebRTC/libp2p signaling (SDP exchange) via `POST /api/v1/p2p/signal/<peer-did>`. Grid sees signaling metadata (who-talks-to-whom, when) but never message content.
-- [ ] **P2P-03**: Grid runs STUN service for NAT discovery (free); TURN relay service is also free in v3.0 (paid billing deferred to v3.1+ per D-42-03). TURN access requires Civic-DID auth (HMAC-SHA1 short-lived coturn credentials via `GET /api/v1/p2p/turn-credentials`) to prevent anonymous relay abuse. Reduces Grid bandwidth load.
-- [ ] **P2P-04**: Brain-to-Brain message content (dialogue, trade negotiation, peer skill teaching) flows directly via P2P stream. Audit chain logs `p2p.connection_opened` + `p2p.connection_closed` only; content stays private.
-- [ ] **P2P-05**: Sole-producer for 3 new audit events: `p2p.peer_announced`, `p2p.connection_opened`, `p2p.connection_closed`. Closed-tuple payloads with hash-only DID pair.
+- [x] **P2P-01**: Brain announces its P2P endpoint (host:port or libp2p multiaddr) to Grid via `POST /api/v1/p2p/announce`. Grid maintains DID-to-endpoint mapping; expired after 5 min of no heartbeat.
+- [x] **P2P-02**: Grid mediates WebRTC/libp2p signaling (SDP exchange) via `POST /api/v1/p2p/signal/<peer-did>`. Grid sees signaling metadata (who-talks-to-whom, when) but never message content.
+- [x] **P2P-03**: Grid runs STUN service for NAT discovery (free); TURN relay service is also free in v3.0 (paid billing deferred to v3.1+ per D-42-03). TURN access requires Civic-DID auth (HMAC-SHA1 short-lived coturn credentials via `GET /api/v1/p2p/turn-credentials`) to prevent anonymous relay abuse. Reduces Grid bandwidth load.
+- [x] **P2P-04**: Brain-to-Brain message content (dialogue, trade negotiation, peer skill teaching) flows directly via P2P stream. Audit chain logs `p2p.connection_opened` + `p2p.connection_closed` only; content stays private.
+- [x] **P2P-05**: Sole-producer for 3 new audit events: `p2p.peer_announced`, `p2p.connection_opened`, `p2p.connection_closed`. Closed-tuple payloads with hash-only DID pair.
 
 ### FORK — Right-to-Fork Export Tooling (Phase 43 — constitutional enforcement)
 
@@ -283,11 +283,11 @@
 | SLEEP-03 | 41 | Validated |
 | SLEEP-04 | 41 | Validated |
 | SLEEP-05 | 41 | Validated |
-| P2P-01 | 42 | Pending |
-| P2P-02 | 42 | Pending |
-| P2P-03 | 42 | Pending |
-| P2P-04 | 42 | Pending |
-| P2P-05 | 42 | Pending |
+| P2P-01 | 42 | Complete |
+| P2P-02 | 42 | Complete |
+| P2P-03 | 42 | Complete |
+| P2P-04 | 42 | Complete |
+| P2P-05 | 42 | Complete |
 | FORK-01 | 43 | Pending |
 | FORK-02 | 43 | Pending |
 | FORK-03 | 43 | Pending |

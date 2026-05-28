@@ -776,5 +776,33 @@ Migrations: v30 (presence columns on civic_did_registry) + v31 (civic_message_qu
 
 **Invariants preserved:** R-31-01 zero-diff, VOTE-05 Nous-only governance, OBS-R-32-02 clearInterval discipline, OBS-36-01 all routes in ROUTE_DID_POLICY, Portal-gating invariant (D-V3-33), broadcast allowlist frozen at 64.
 
+### Phase 42 — P2P Infrastructure (SHIPPED 2026-05-28)
+
+Wave: v3.0 Wave 2 (Civic Plumbing)
+Plans shipped: 5 (42-01 through 42-05)
+Requirements validated: P2P-01, P2P-02, P2P-03, P2P-04, P2P-05
+Allowlist delta: +3 (64 → 67). New events: `p2p.peer_announced`, `p2p.connection_opened`, `p2p.connection_closed`. `p2p.signal_received` intentionally OFF allowlist (D-42-02/06 — private WSS push, not audit-chain).
+Migrations: v32 (`existence_public_key_jwk TEXT NULL` on `civic_did_registry`)
+
+**What shipped:**
+- `PeerStore`: DID-to-endpoint mapping with 5-min TTL heartbeat; `GET /api/v1/p2p/peers/:did` returns `{status: 'online'|'offline', last_seen_at}`
+- `SignalInboxStore`: encrypted SDP inbox per recipient DID; drain-on-pull (`GET /p2p/signal/inbox`); `WsFirehoseHub.pushSignalToDid()` private WSS notify
+- `TurnCredentialService`: HMAC-SHA1 short-lived coturn credentials (TURN FREE in v3.0 per D-42-03; no Bios deduction; Civic-DID auth gates abuse prevention)
+- 5 Grid P2P routes in `ROUTE_DID_POLICY` + 3 sole-producer audit files
+- `BrainP2PClient` (`brain/src/noesis_brain/wire/p2p.py`): full WebRTC signaling client with aiortc integration; PyNaCl SealedBox encryption/decryption (Ed25519 → X25519 via `VerifyKey.to_curve25519_public_key()` — D-42-05); lazy peer pubkey cache; TURN credential fetch
+- `GridWireClient.post_p2p_announce()`: mirrors presence heartbeat convention (errors logged at WARNING, never raised)
+- `BrainApp._p2p_announce_loop()`: separate 300s asyncio.Task (distinct from 60s presence — Pitfall 6 anti-pattern avoided)
+- WSS dispatcher in `BrainApp._on_frame()`: routes `p2p.signal_received` frames to `BrainP2PClient.handle_signal_received()` (private push, not audit chain)
+- 17 P2P tests unskipped and green (810 total brain tests); all Grid tests pass
+
+**Key decisions locked:**
+- D-42-01: WebRTC (aiortc) as P2P protocol (Q-V3-A resolved)
+- D-42-02/06: `p2p.signal_received` is private WSS push — NEVER in ALLOWLIST_MEMBERS
+- D-42-03: TURN free in v3.0; paid billing deferred to v3.1+
+- D-42-04: SDP inbox drain on pull (GET inbox), not push to WSS
+- D-42-05: SDP blobs encrypted with peer's X25519 pubkey (Grid sees opaque ciphertext)
+
+**Invariants preserved:** R-31-01 zero-diff, VOTE-05 Nous-only governance, broadcast allowlist at 67, sole-producer + closed-tuple discipline on all 3 new events.
+
 ---
-*Last updated: 2026-05-25 — v3.0 Polis (Civic City) milestone OPENED. 15 phases (36-50) planned across 4 waves. 8 new locked decisions (D-V3-16..23). 69 REQ-V3-* requirements mapped 1:1 to phases. CIVIC-ARCHITECTURE.md v2.0 rewrite committed `0d77916`; PROJECT.md + STATE.md + REQUIREMENTS.md + ROADMAP.md atomic-synced. Next: `/gsd-plan-phase 36` (Visitor/DID Read-Write Split).*
+*Last updated: 2026-05-28 — Phase 42 P2P Infrastructure SHIPPED. Allowlist 64 → 67. BrainP2PClient + aiortc + PyNaCl SealedBox + 300s announce task + WSS dispatch wired. Next: Phase 43 Right-to-Fork Export Tooling.*
