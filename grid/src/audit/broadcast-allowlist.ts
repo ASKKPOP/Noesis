@@ -21,7 +21,19 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37) — exactly these 64 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42) — exactly these 67 event types.
+ *  Phase 42 (P2P-05 / D-42-07): +3 P2P audit events (allowlist 64 → 67).
+ *   - p2p.peer_announced (65): closed 3-key {civic_did_hash, endpoint_hash, tick}.
+ *     endpoint_hash = sha256('online') — static sentinel (no IP/port leakage per D-42-02).
+ *     Emitted ONLY via appendP2pPeerAnnounced (grid/src/audit/append-p2p-peer-announced.ts).
+ *   - p2p.connection_opened (66): closed 4-key {connection_id, from_did_hash, tick, to_did_hash}.
+ *     Emitted ONLY via appendP2pConnectionOpened (grid/src/audit/append-p2p-connection-opened.ts).
+ *   - p2p.connection_closed (67): closed 4-key {close_reason, connection_id, duration_ticks, tick}.
+ *     close_reason ∈ {completed, timeout, error, initiated}.
+ *     Emitted ONLY via appendP2pConnectionClosed (grid/src/audit/append-p2p-connection-closed.ts).
+ *  IMPORTANT: p2p.signal_received is NOT in the allowlist (D-42-06) — it is a
+ *  private WSS push delivered only to the recipient Brain by hub.pushSignalToDid().
+ *  It is a real-time notification, NOT an audit chain event.
  *  Phase 27 (CHAT-04): +1 human.spoke at position 52.
  *  Phase 28 (SPAWN-04): +1 nous.spawned_by_human at position 53.
  *  Phase 33 (OBS-08..10): +3 portal.auth.login, portal.auth.register, human.identified (positions 54-56).
@@ -252,6 +264,20 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'registry.civic_did_revoked',       // (62) {civic_did, court_conviction_ref_hash, grid_name, revoked_at_tick}
     'registry.business_did_registered', // (63) {business_did, civic_did, grid_name, registered_at_tick}
     'registry.business_did_dissolved',  // (64) {business_did, civic_did, dissolved_at_tick, grid_name}
+    // Phase 42 (P2P-05 / D-42-07) — +3 P2P audit events. Allowlist 64 → 67.
+    // IMPORTANT: p2p.signal_received is NOT in the allowlist (D-42-06) — it is a
+    // private WSS push delivered only to the recipient Brain by hub.pushSignalToDid().
+    //   p2p.peer_announced: closed 3-key {civic_did_hash, endpoint_hash, tick}.
+    //     endpoint_hash = sha256('online') — static sentinel (no IP/port leakage per D-42-02).
+    //     Emitted ONLY via appendP2pPeerAnnounced (grid/src/audit/append-p2p-peer-announced.ts).
+    //   p2p.connection_opened: closed 4-key {connection_id, from_did_hash, tick, to_did_hash}.
+    //     Emitted ONLY via appendP2pConnectionOpened (grid/src/audit/append-p2p-connection-opened.ts).
+    //   p2p.connection_closed: closed 4-key {close_reason, connection_id, duration_ticks, tick}.
+    //     close_reason ∈ {completed, timeout, error, initiated}.
+    //     Emitted ONLY via appendP2pConnectionClosed (grid/src/audit/append-p2p-connection-closed.ts).
+    'p2p.peer_announced',      // (65) {civic_did_hash, endpoint_hash, tick}
+    'p2p.connection_opened',   // (66) {connection_id, from_did_hash, tick, to_did_hash}
+    'p2p.connection_closed',   // (67) {close_reason, connection_id, duration_ticks, tick}
 ] as const;
 
 /**
