@@ -420,4 +420,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-27 — Phase 40 (Local AI Integration) complete. LOCAL-01..03 code-verified: Ollama model selection persists to operator_settings (migration v29), Brain-JWT endpoint for startup settings fetch, ModelRouter→LLMAdapter extension, 3-tier routing (SMALL/PRIMARY/LARGE OllamaAdapter), Brain HTTP /local-ai/models+status, Steward /system/local-ai page with Q-V3-I mandatory red banner. Phase 39 TENANT-01..03 also recorded. Allowlist unchanged at 64. Next: Phase 41 — Sleep Cycle + Away Presence.*
+*Last updated: 2026-05-28 — Phase 43 (Right-to-Fork Export Tooling) complete. FORK-01..04 all shipped: operator.nous_forked audit event (allowlist 68), POST /operator/fork/:nousDid endpoint with one-time download token, ForkIrreversibilityDialog in Steward, Brain standalone --import CLI with path-traversal defense + civic-action gate. Allowlist 67 → 68. Phase 44 next: Marketplace v3.*
