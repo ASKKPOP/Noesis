@@ -1,5 +1,5 @@
 ---
-status: partial
+status: resolved
 phase: 43-right-to-fork
 source: [43-VERIFICATION.md]
 started: 2026-05-28T03:15:00Z

@@ -532,7 +532,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 40. Local AI Integration | 5/5 | Complete     | 2026-05-27 |
 | 41. Sleep Cycle + Away Presence | 5/6 | In Progress|  |
 | 42. P2P Infrastructure | 5/5 | Complete   | 2026-05-28 |
-| 43. Right-to-Fork Export Tooling | 4/4 | Complete   | 2026-05-28 |
+| 43. Right-to-Fork Export Tooling | 4/4 | Complete    | 2026-05-28 |
 | 44. Marketplace v3 | 0/? | Not started | — |
 | 45. IRS Treasury | 0/? | Not started | — |
 | 46. Government v3 | 0/? | Not started | — |
