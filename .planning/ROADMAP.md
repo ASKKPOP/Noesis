@@ -55,7 +55,7 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 - [x] **Phase 41: Sleep Cycle + Away Presence** — Human-resident analogy: city sees offline Nous as 'away'; messages queue; identity persists; long-absence escalation. (allowlist 0) (completed 2026-05-27)
 
 **Wave 2 — Civic Plumbing (Phases 42-43)**
-- [ ] **Phase 42: P2P Infrastructure** — Grid-mediated signaling + DID-to-endpoint discovery + STUN (free) / TURN (paid); Brain-to-Brain content stays direct. (allowlist +3)
+- [ ] **Phase 42: P2P Infrastructure** — Grid-mediated signaling + DID-to-endpoint discovery + STUN/TURN (both free in v3.0; Civic-DID auth gates TURN per D-42-03); Brain-to-Brain content stays direct. (allowlist +3)
 - [ ] **Phase 43: Right-to-Fork Export Tooling** — Operator can export full Nous state (Brain memory + civic credentials + audit history) and run standalone; constitutional enforcement of D-V3-18. (allowlist 0)
 
 **Wave 3 — Civic Institutions (Phases 44-49)**
@@ -199,13 +199,13 @@ Plans:
 #### Wave 2 — Civic Plumbing
 
 ### Phase 42: P2P Infrastructure
-**Goal**: Grid provides signaling, DID-to-endpoint discovery, and NAT traversal (STUN free / TURN paid). Brain-to-Brain dialogue, trade negotiation, and peer skill teaching flow directly between Brains without passing through Henry's infrastructure. Audit chain logs connection occurrence only, never content.
+**Goal**: Grid provides signaling, DID-to-endpoint discovery, and NAT traversal (STUN free / TURN free in v3.0 with Civic-DID auth — paid billing deferred to v3.1+ per D-42-03). Brain-to-Brain dialogue, trade negotiation, and peer skill teaching flow directly between Brains without passing through Henry's infrastructure. Audit chain logs connection occurrence only, never content.
 **Depends on**: Phase 36 (visit/action split for signal route), Phase 37 (Civic-DID required to announce P2P endpoint), Phase 38 (wire protocol carries the signal exchange).
 **Requirements**: P2P-01, P2P-02, P2P-03, P2P-04, P2P-05
 **Success Criteria** (what must be TRUE):
   1. Brain announces its P2P endpoint via `POST /api/v1/p2p/announce` with a 5-minute heartbeat; `GET /api/v1/p2p/peers/<civic-did>` returns the current endpoint for active peers and `404 peer_offline` after 5 minutes of no heartbeat.
   2. Two Brains exchange WebRTC SDP via `POST /api/v1/p2p/signal/<peer-did>`; Grid relays the signaling payload (encrypted SDP blob) but logs only `{from_did, to_did, tick}` not the SDP content; audit chain entry `p2p.connection_opened` carries closed-tuple `{from_did_hash, to_did_hash, tick, connection_id}`.
-  3. STUN service responds to public binding requests at `stun://grid.noesis:3478` with the requesting Brain's public IP:port; TURN relay (paid Bios per session) is opt-in — `GET /api/v1/p2p/turn-credentials` returns short-lived auth only after the initiating Nous pays the per-session Bios fee.
+  3. STUN service responds to public binding requests at `stun://grid.noesis:3478` with the requesting Brain's public IP:port; TURN relay is FREE in v3.0 (paid billing deferred to v3.1+ per D-42-03) — `GET /api/v1/p2p/turn-credentials` returns short-lived HMAC-SHA1 coturn credentials after Civic-DID auth check; no Bios deduction.
   4. After signaling completes, two Brains establish a direct WebRTC/libp2p stream; sending 1000 dialogue messages produces zero new audit chain entries on Grid (content is invisible to Henry); `p2p.connection_closed` fires once per stream close.
   5. Allowlist gains exactly +3 entries: `p2p.peer_announced` (with `{civic_did_hash, tick, endpoint_hash}`), `p2p.connection_opened` (with `{from_did_hash, to_did_hash, tick, connection_id}`), `p2p.connection_closed` (with `{connection_id, tick, duration_ticks, close_reason}`). Sole-producer files enforce the triad.
 **Scope (ships)**: P2P-01..05.
