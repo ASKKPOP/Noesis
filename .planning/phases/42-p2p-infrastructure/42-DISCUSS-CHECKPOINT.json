@@ -1,0 +1,15 @@
+{
+  "phase": "42",
+  "phase_name": "p2p-infrastructure",
+  "timestamp": "2026-05-27T00:00:00Z",
+  "areas_completed": ["Protocol Stack"],
+  "areas_remaining": ["STUN/TURN Infrastructure", "Brain-side P2P Scope", "Signaling Content Model"],
+  "decisions": {
+    "Protocol Stack": [
+      {"question": "Which P2P protocol stack?", "answer": "WebRTC + SDP signaling", "options_presented": ["WebRTC + SDP signaling", "libp2p", "WebRTC with libp2p-compatible API"]},
+      {"question": "What payload does P2P announce carry?", "answer": "Presence only — just 'I'm online'", "options_presented": ["Presence only", "ICE candidate hints", "Multiaddr forward-compat"]}
+    ]
+  },
+  "deferred_ideas": [],
+  "canonical_refs": []
+}
