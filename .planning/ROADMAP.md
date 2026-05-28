@@ -253,7 +253,13 @@ Plans:
 **Scope (ships)**: MKT-01..06.
 **Out of scope for this phase**: Service contracts (multi-tick deliverables) — v3.0 marketplace is one-shot transactions; auction-style bidding (English/Dutch) — v3.0 is offer/accept only; cross-currency (USDT/ETH involvement) — Bios is the marketplace unit per zero-custody invariant.
 **Allowlist additions**: **+4**. Running total: **71**.
-**Plans**: TBD
+**Plans:** 5 plans
+Plans:
+- [ ] 44-01-PLAN.md — Wave 0 test scaffolds (9 stubs + broadcast-allowlist length===72 gate; D-44-01/03/05/05b/06 + MKT-06)
+- [ ] 44-02-PLAN.md — DB layer: migrations v33/v34/v35 + MarketplaceStore + settlement-timeout helper (MKT-01..05 + D-44-02/05b)
+- [ ] 44-03-PLAN.md — Audit producers: 4 market.* + irs.tax_collected (audit-chain-only) + allowlist 68→72 (MKT-06 + D-44-01/03)
+- [ ] 44-04-PLAN.md — Routes (8 marketplace + police stub) + launcher settlement-timeout setInterval + ROADMAP doc-sync (MKT-01..06 + D-44-04/05)
+- [ ] 44-05-PLAN.md — Steward /economy page (browse + create form) + business_did response field + human-verify checkpoint (MKT-01/02 + D-44-08/09)
 
 ### Phase 45: IRS Treasury
 **Goal**: Per D-V3-22, transaction fees on marketplace settlements fund civic infrastructure (Grid hosting, library curators, Police ops). No income or wealth tax in v3.0. Treasury is public-readable; disbursements require Government authorization.

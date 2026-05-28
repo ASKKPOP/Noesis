@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
-status: planning
-stopped_at: Phase 44 context updated (discuss-phase session — IRS 2%, police stub, settlement timeout 7 ticks)
-last_updated: "2026-05-28T04:24:57.543Z"
+status: ready_to_execute
+stopped_at: Phase 44 planned — 5 plans in 4 waves, verification passed, ready to execute
+last_updated: "2026-05-28T06:00:00.000Z"
 progress:
   total_phases: 25
   completed_phases: 8
-  total_plans: 40
+  total_plans: 45
   completed_plans: 40
-  percent: 100
+  percent: 89
 ---
 
 # Project State
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 ## Current Position
 
 Phase: 44
-Plan: Not started
+Plan: Ready to execute (5 plans created, verification passed)
 Previous: Phase 43 (Right-to-Fork Export Tooling) — SHIPPED 2026-05-28 (4 plans, allowlist 67→68)
-Status: Ready to plan Phase 44
+Status: Phase 44 planned — 5 plans in 4 waves
 Next action: Execute Phase 44 (Marketplace v3 — civic commerce + escrow)
 
 Driving inputs for v3.0 (locked at milestone open):
