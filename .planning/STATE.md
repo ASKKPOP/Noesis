@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
-status: Ready to execute
-stopped_at: Phase 43 planned (4 plans)
-last_updated: "2026-05-27T00:00:00.000Z"
+status: executing
+stopped_at: Phase 42 context gathered
+last_updated: "2026-05-28T01:56:53.060Z"
 progress:
   total_phases: 25
   completed_phases: 6
-  total_plans: 42
-  completed_plans: 31
-  percent: 74
+  total_plans: 40
+  completed_plans: 34
+  percent: 85
 ---
 
 # Project State
@@ -22,13 +22,14 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** Phase 43 — Right-to-Fork Export Tooling
+**Current focus:** Phase 43 — right-to-fork
 
 ## Current Position
 
-Phase: 43 (Right-to-Fork Export Tooling) — Ready to execute (4 plans)
+Phase: 43 (right-to-fork) — EXECUTING
+Plan: 1 of 4
 Previous: Phase 42 (P2P Infrastructure) — PLANNED (4 plans, not yet executed)
-Status: Ready for `/gsd-execute-phase 43`
+Status: Executing Phase 43
 Next action: Execute Phase 43 (constitutional D-V3-18 enforcement — fork endpoint, Brain standalone mode, Steward fork UI)
 
 Driving inputs for v3.0 (locked at milestone open):
@@ -335,7 +336,7 @@ Total v3.0 allowlist growth: **+34 (56 → 90)**. Freeze-except-by-explicit-addi
 - `email` (plaintext — vs `email_hash` allowed), `password_hash`
 - `nonce` (vs `nonce_hash` allowed), `signature`, `device_fingerprint`
 
-`FORBIDDEN_KEY_PATTERN` extended with word-boundary-anchored alternation `\b(?:ip_address|user_agent|session_id|jwt|password_hash|device_fingerprint)\b`. Test cases for `email_hash` (allowed) vs `email` (forbidden) AND `nonce_hash` (allowed) vs `nonce` (forbidden) are mandatory.
+`FORBIDDEN_KEY_PATTERN` extended with word-boundary-anchored alternation `(?:ip_address|user_agent|session_id|jwt|password_hash|device_fingerprint)`. Test cases for `email_hash` (allowed) vs `email` (forbidden) AND `nonce_hash` (allowed) vs `nonce` (forbidden) are mandatory.
 
 ### v2.5 critical invariants (carry-forward)
 
