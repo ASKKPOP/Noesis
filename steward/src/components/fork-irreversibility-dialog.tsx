@@ -59,6 +59,9 @@ export function ForkIrreversibilityDialog({
     // The exact-match comparison uses this ref, NOT the latest prop value.
     // Guards the race where a new DID prop arrives while the dialog is open.
     const capturedDidRef = useRef<string>(targetDid);
+    // WR-01: tracks whether the dialog closed via the confirm path (not cancel).
+    // Prevents the close-event handler from firing onCancel after a confirmed fork.
+    const confirmedRef = useRef(false);
 
     // Open/close lifecycle — driven by the `open` prop.
     useEffect(() => {
@@ -67,6 +70,7 @@ export function ForkIrreversibilityDialog({
         if (open && !dlg.open) {
             // Snapshot at open time (D-22 race safety)
             capturedDidRef.current = targetDid;
+            confirmedRef.current = false;  // reset on each open
             setTyped('');
             dlg.showModal();
         } else if (!open && dlg.open) {
@@ -78,13 +82,16 @@ export function ForkIrreversibilityDialog({
     // (ESC, backdrop click, Cancel button click, programmatic .close()).
     // Registering on the close event prevents double-fire that would occur
     // if individual handlers each called onCancel.
+    // WR-01: gated on !confirmedRef so confirm paths do not fire onCancel.
     useEffect(() => {
         const dlg = dialogRef.current;
         if (!dlg) return;
         const handleClose = () => {
             // Restore focus to opener (Phase 6 D-07 pattern)
             openerRef?.current?.focus();
-            onCancel();
+            if (!confirmedRef.current) {
+                onCancel();
+            }
         };
         dlg.addEventListener('close', handleClose);
         return () => dlg.removeEventListener('close', handleClose);
@@ -183,8 +190,8 @@ export function ForkIrreversibilityDialog({
                 </button>
                 <button
                     type="button"
-                    data-testid="irrev-delete"
-                    onClick={onConfirm}
+                    data-testid="irrev-confirm"
+                    onClick={() => { confirmedRef.current = true; onConfirm(); }}
                     aria-disabled={matched ? 'false' : 'true'}
                     disabled={!matched}
                     aria-label={CONFIRM_ARIA}

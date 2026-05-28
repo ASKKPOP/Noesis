@@ -15,6 +15,16 @@ import { useEffect, useState, useRef } from 'react';
 import StewardShell from '@/components/StewardShell';
 import { ForkIrreversibilityDialog } from '@/components/fork-irreversibility-dialog';
 
+// WR-02: guard against javascript: URIs or off-origin URLs in server-returned download_url
+function isSafeDownloadUrl(url: string): boolean {
+    try {
+        const parsed = new URL(url, window.location.origin);
+        return parsed.origin === window.location.origin;
+    } catch {
+        return false;
+    }
+}
+
 interface LocalAiSettings {
     small_model: string;
     primary_model: string;
@@ -168,6 +178,12 @@ export default function LocalAiPage() {
                 return;
             }
             const data = await res.json() as ForkResult;
+            // WR-02: validate download_url is same-origin before use
+            if (!isSafeDownloadUrl(data.download_url)) {
+                setForkError('Server returned an invalid download URL');
+                setForkStatus('error');
+                return;
+            }
             setForkResult(data);
             setForkStatus('success');
             // Trigger download: programmatic <a download> click (one-time token)
@@ -337,10 +353,12 @@ export default function LocalAiPage() {
                             <p>Fork complete. Download started automatically.</p>
                             <p>Package hash: <code>{forkResult.package_hash}</code></p>
                             <p>Size: {forkResult.bytes} bytes</p>
-                            <p>
-                                If the download did not start,{' '}
-                                <a href={forkResult.download_url}>click here</a> within 5 minutes.
-                            </p>
+                            {isSafeDownloadUrl(forkResult.download_url) && (
+                                <p>
+                                    If the download did not start,{' '}
+                                    <a href={forkResult.download_url}>click here</a> within 5 minutes.
+                                </p>
+                            )}
                         </div>
                     )}
                 </div>

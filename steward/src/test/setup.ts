@@ -3,24 +3,12 @@ import { afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
 // HTMLDialogElement shim — jsdom 26 has partial <dialog> support but showModal/close
-// are not fully implemented. This shim patches the prototype to allow testing.
+// are not fully implemented. Patch unconditionally so open flag and close event work.
 if (typeof HTMLDialogElement !== 'undefined') {
     const proto = HTMLDialogElement.prototype as HTMLDialogElement & {
         showModal: () => void;
         close: () => void;
     };
-    if (!proto.showModal || proto.showModal.toString().includes('[native code]') === false) {
-        proto.showModal = function (this: HTMLDialogElement) {
-            (this as unknown as { open: boolean }).open = true;
-        };
-    }
-    if (!proto.close || proto.close.toString().includes('[native code]') === false) {
-        proto.close = function (this: HTMLDialogElement) {
-            (this as unknown as { open: boolean }).open = false;
-            this.dispatchEvent(new Event('close'));
-        };
-    }
-    // Patch showModal unconditionally (jsdom showModal doesn't set .open)
     proto.showModal = function (this: HTMLDialogElement) {
         (this as unknown as { open: boolean }).open = true;
     };

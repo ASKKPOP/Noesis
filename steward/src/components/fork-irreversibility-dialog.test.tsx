@@ -50,7 +50,7 @@ describe('ForkIrreversibilityDialog — D-43-03 verbatim copy (Plan 04 / T-43-co
         renderDialog();
         // Button text is the visible content; aria-label is for screen readers only.
         // Use getByTestId to find the confirm button by its stable test identifier.
-        const confirmBtn = screen.getByTestId('irrev-delete');
+        const confirmBtn = screen.getByTestId('irrev-confirm');
         expect(confirmBtn.textContent).toBe(D43_03_CONFIRM);
     });
     it('43-04-01d: cancel button label is exact literal "Keep on Grid"', () => {
@@ -85,14 +85,14 @@ describe('ForkIrreversibilityDialog — typed confirmation gate (Plan 04)', () =
         renderDialog();
         const input = screen.getByTestId('irrev-did-input');
         fireEvent.change(input, { target: { value: 'wrong:did:value' } });
-        const confirmBtn = screen.getByTestId('irrev-delete');
+        const confirmBtn = screen.getByTestId('irrev-confirm');
         expect(confirmBtn).toBeDisabled();
     });
     it('43-04-03b: Fork forever button enabled when typed value === targetDid exactly (closure-captured)', () => {
         renderDialog();
         const input = screen.getByTestId('irrev-did-input');
         fireEvent.change(input, { target: { value: TEST_CIVIC_DID } });
-        const confirmBtn = screen.getByTestId('irrev-delete');
+        const confirmBtn = screen.getByTestId('irrev-confirm');
         expect(confirmBtn).not.toBeDisabled();
     });
     it('43-04-03c: clicking Cancel calls onCancel prop', () => {
