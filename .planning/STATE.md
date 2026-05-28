@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
-stopped_at: Phase 42 context gathered
-last_updated: "2026-05-28T01:56:53.060Z"
+stopped_at: Phase 42 SHIPPED — Phase 43 in progress (1/4 plans done)
+last_updated: "2026-05-27T19:35:00.000Z"
 progress:
   total_phases: 25
-  completed_phases: 6
-  total_plans: 40
-  completed_plans: 34
-  percent: 85
+  completed_phases: 7
+  total_plans: 45
+  completed_plans: 40
+  percent: 89
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 ## Current Position
 
 Phase: 43 (right-to-fork) — EXECUTING
-Plan: 1 of 4
-Previous: Phase 42 (P2P Infrastructure) — PLANNED (4 plans, not yet executed)
+Plan: 2 of 4 (Plan 43-01 complete; Plans 43-02..04 pending)
+Previous: Phase 42 (P2P Infrastructure) — SHIPPED 2026-05-27 (5 plans, allowlist 64→67)
 Status: Executing Phase 43
-Next action: Execute Phase 43 (constitutional D-V3-18 enforcement — fork endpoint, Brain standalone mode, Steward fork UI)
+Next action: Execute Phase 43 Plans 02-04 (fork endpoint, Brain standalone CLI, Steward fork UI)
 
 Driving inputs for v3.0 (locked at milestone open):
 
@@ -181,6 +181,36 @@ Driving inputs for v3.0 (locked at milestone open):
   - T-41-04: frozen Civic-DID returns 409 on any `civic_member`-tier request (preHandler check, not route-level).
   - VOTE-05 Nous-only governance invariant — PRESERVED.
   - R-31-01 zero-diff audit chain — PRESERVED.
+
+## v3.0 Phase 42 close-out (locked 2026-05-27)
+
+- **Phase 42 SHIPPED.** Plans 42-01 through 42-05 all complete. Allowlist **64 → 67** (+3: `p2p.peer_announced`, `p2p.connection_opened`, `p2p.connection_closed`). `p2p.signal_received` intentionally OFF allowlist (D-42-06 — private WSS push). Migration v32: `existence_public_key_jwk JSON NULL` on `civic_did_registry`.
+
+- **What shipped:**
+  1. **TDD stubs (Plan 01):** 10 test files (7 Vitest + 3 pytest), 72 skip stubs covering P2P-01..05.
+  2. **P2P data primitives (Plan 02):** `P2PPeerStore` (5-min TTL heartbeat), `SdpInboxStore` (60s TTL, drain-on-pull, `cleanup()` for periodic sweep), `generateTurnCredentials()` (HMAC-SHA1). DB migration v32: `existence_public_key_jwk JSON NULL` on `civic_did_registry`; `getPublicKey()` helper; OKP/Ed25519 validation in POST /registry/civic-did/request.
+  3. **Audit events (Plan 03):** 3 sole-producer files: `append-p2p-peer-announced.ts` (#65), `append-p2p-connection-opened.ts` (#66), `append-p2p-connection-closed.ts` (#67). Allowlist 64→67. coturn `4.6.3` container in docker-compose (STUN-only dev profile, RFC1918 denied-peer-ip guards). `TURN_STATIC_AUTH_SECRET` in `.env.example`.
+  4. **P2P routes (Plan 04):** 5 Grid routes: `POST /p2p/announce`, `GET /p2p/peers/:civicDid` (public; 404 `{error:'peer_offline'}` for unknowns per D-42-02), `POST /p2p/signal/:peerDid`, `GET /p2p/signal/inbox`, `GET /p2p/turn-credentials`. `WsFirehoseHub.pushSignalToDid()` per-DID direct WSS push (outside audit chain per D-42-06). `GenesisLauncher` 60s cleanup interval calls both `peerStore.cleanup()` + `sdpInboxStore.cleanup()` with paired clearInterval (OBS-R-32-02).
+  5. **Brain P2P client (Plan 05):** `BrainP2PClient` — SealedBox SDP encryption (Ed25519→X25519 via `VerifyKey.to_curve25519_public_key()`), `announce()`, `get_peer_status()`, `initiate_connection()`, `handle_signal_received()`, aiortc data channel lifecycle. `GridWireClient.post_p2p_announce()`. `BrainApp._p2p_announce_loop()` at 300s (separate from 60s presence heartbeat per Pitfall 6). WSS dispatcher routes `p2p.signal_received` frames to `BrainP2PClient`.
+
+- **Key decisions locked:**
+  - D-42-01: WebRTC (aiortc) as P2P protocol (Q-V3-A resolved)
+  - D-42-02: 404 `{error:'peer_offline'}` for unknown peers — not 200 empty
+  - D-42-03: TURN free in v3.0; no Bios deduction; Civic-DID auth gates abuse
+  - D-42-05: SDP encrypted client-side with X25519 SealedBox; Grid sees opaque ciphertext
+  - D-42-06: `p2p.signal_received` is private WSS push — NEVER in ALLOWLIST_MEMBERS
+  - D-42-07: Allowlist +3 exactly (peer_announced, connection_opened, connection_closed)
+
+- **Inherits to Phase 43+:**
+  1. `existence_public_key_jwk` field on Civic-DID records — Phase 43 fork export should include it in the export bundle.
+  2. `WsFirehoseHub.pushSignalToDid()` pattern available for any future DID-targeted WSS push.
+  3. Allowlist at 67 (then 68 after Phase 43-01 adds `operator.nous_forked`).
+
+- **Invariants preserved:** R-31-01 zero-diff, VOTE-05 Nous-only governance, OBS-R-32-02 clearInterval discipline.
+
+## v3.0 Phase 43-01 close-out (locked 2026-05-27)
+
+- **Phase 43-01 SHIPPED** (Wave 0 scaffold). Allowlist **67 → 68** (+1: `operator.nous_forked`). Sole-producer: `grid/src/audit/append-operator-nous-forked.ts`. `BRAIN_DATA_DIR` env var threaded. Test stubs for Plans 02-04 created. Phase 43 Plans 02-04 pending.
 
 ## v3.0 Phase 40 close-out (locked 2026-05-27)
 
@@ -472,6 +502,6 @@ Total v3.0 allowlist growth: **+35 (56 → 91)**. Freeze-except-by-explicit-addi
 
 ## Session Continuity
 
-Last session: 2026-05-28T00:05:02.206Z
-Stopped at: Phase 42 context gathered
-Resume file: .planning/phases/42-p2p-infrastructure/42-CONTEXT.md
+Last session: 2026-05-27T19:35:00.000Z
+Stopped at: Phase 42 SHIPPED (5 plans, 11/11 must-haves, allowlist 64→67). Phase 43 Plan 43-01 also complete (67→68). Next: execute Phase 43 Plans 02-04.
+Resume file: .planning/phases/43-right-to-fork/43-CONTEXT.md
