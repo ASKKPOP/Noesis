@@ -5,315 +5,254 @@ import StewardShell from '@/components/StewardShell';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 
-interface Trade {
-    actorDid: string;
-    counterparty: string;
-    amount: number;
-    nonce: number;
-    timestamp: string;
-}
-
 interface Listing {
-    sku: string;
-    label: string;
-    priceOusia: number;
+    listing_id: string;
+    seller_civic_did: string;
+    seller_business_did: string;
+    title: string;
+    description: string;
+    price_bios: string;
+    category: string;
+    created_at_tick: number;
+    expires_at_tick: number;
+    reputation_score: number;
 }
 
-interface Shop {
-    ownerDid: string;
-    name: string;
-    listings: Listing[];
-}
-
-function truncateDid(did: string): string {
-    if (did.length <= 20) return did;
-    return did.slice(0, 10) + '…' + did.slice(-8);
-}
-
-function formatDate(ts: string): string {
-    try {
-        return new Date(ts).toLocaleString();
-    } catch {
-        return ts;
-    }
-}
-
-const LIMIT = 20;
+const CATEGORIES = ['tools', 'data', 'services', 'goods', 'media', 'other'];
 
 export default function EconomyPage() {
-    const [trades, setTrades] = useState<Trade[]>([]);
-    const [tradesTotal, setTradesTotal] = useState(0);
-    const [tradesOffset, setTradesOffset] = useState(0);
-    const [tradesLoading, setTradesLoading] = useState(true);
-    const [tradesError, setTradesError] = useState<string | null>(null);
+    // Listings state
+    const [listings, setListings] = useState<Listing[]>([]);
+    const [listingsLoading, setListingsLoading] = useState(true);
+    const [listingsError, setListingsError] = useState<string | null>(null);
+    const [categoryFilter, setCategoryFilter] = useState<string>('');
+    const [maxPrice, setMaxPrice] = useState<string>('');
+    const [offset, setOffset] = useState(0);
+    const LIMIT = 20;
 
-    const [shops, setShops] = useState<Shop[]>([]);
-    const [shopsLoading, setShopsLoading] = useState(true);
-    const [shopsError, setShopsError] = useState<string | null>(null);
+    // Business-DID gate
+    const [businessDid, setBusinessDid] = useState<string | null>(null);
+    const [businessDidLoading, setBusinessDidLoading] = useState(true);
 
-    async function fetchTrades(offset: number) {
-        setTradesLoading(true);
-        setTradesError(null);
+    // Create form state
+    const [formTitle, setFormTitle] = useState('');
+    const [formDescription, setFormDescription] = useState('');
+    const [formPrice, setFormPrice] = useState('');
+    const [formCategory, setFormCategory] = useState('tools');
+    const [formExpiresDays, setFormExpiresDays] = useState('30');
+    const [formSubmitting, setFormSubmitting] = useState(false);
+    const [formMessage, setFormMessage] = useState<string | null>(null);
+
+    async function fetchListings(nextOffset = 0) {
+        setListingsLoading(true);
+        setListingsError(null);
         try {
-            const res = await fetch(`${GRID_ORIGIN}/api/v1/economy/trades?limit=${LIMIT}&offset=${offset}`);
+            const params = new URLSearchParams({ limit: String(LIMIT), offset: String(nextOffset) });
+            if (categoryFilter) params.set('category', categoryFilter);
+            if (maxPrice) params.set('max_price', maxPrice);
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/market/listings?${params}`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
-            setTrades(Array.isArray(data) ? data : data.trades ?? []);
-            setTradesTotal(data.total ?? 0);
+            setListings(data.listings ?? []);
+            setOffset(nextOffset);
         } catch (e) {
-            setTradesError(e instanceof Error ? e.message : 'Failed to fetch trades');
+            setListingsError(e instanceof Error ? e.message : 'Failed to fetch listings');
         } finally {
-            setTradesLoading(false);
+            setListingsLoading(false);
         }
     }
 
-    async function fetchShops() {
-        setShopsLoading(true);
-        setShopsError(null);
+    async function fetchBusinessDid() {
+        setBusinessDidLoading(true);
         try {
-            const res = await fetch(`${GRID_ORIGIN}/api/v1/economy/shops`);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
-            setShops(Array.isArray(data) ? data : data.shops ?? []);
-        } catch (e) {
-            setShopsError(e instanceof Error ? e.message : 'Failed to fetch shops');
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/operator/me/nous`, { credentials: 'include' });
+            if (res.ok) {
+                const data = await res.json();
+                setBusinessDid(typeof data.business_did === 'string' ? data.business_did : null);
+            } else {
+                setBusinessDid(null);
+            }
+        } catch {
+            setBusinessDid(null);
         } finally {
-            setShopsLoading(false);
+            setBusinessDidLoading(false);
         }
     }
 
     useEffect(() => {
-        fetchTrades(0);
-        fetchShops();
+        void fetchListings(0);
+        void fetchBusinessDid();
     }, []);
 
-    function goToPage(newOffset: number) {
-        setTradesOffset(newOffset);
-        fetchTrades(newOffset);
+    async function handleCreate(e: React.FormEvent) {
+        e.preventDefault();
+        setFormSubmitting(true);
+        setFormMessage(null);
+        try {
+            const TICKS_PER_SECOND = 2;
+            const expiresInTicks = Number.parseInt(formExpiresDays, 10) * 86400 * TICKS_PER_SECOND;
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/market/listing/create`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: formTitle,
+                    description: formDescription,
+                    price_bios: formPrice,
+                    category: formCategory,
+                    expires_in_ticks: expiresInTicks,
+                }),
+            });
+            if (res.status === 201) {
+                const data = await res.json();
+                setFormMessage(`Listing posted: ${data.listing_id}`);
+                setFormTitle('');
+                setFormDescription('');
+                setFormPrice('');
+                void fetchListings(0);
+            } else if (res.status === 403) {
+                setFormMessage('Business-DID required');
+            } else if (res.status === 401) {
+                setFormMessage('Authentication required — please sign in');
+            } else {
+                const body = await res.json().catch(() => ({}));
+                setFormMessage(`Error: ${body.error ?? `HTTP ${res.status}`}`);
+            }
+        } catch (e) {
+            setFormMessage(`Network error: ${e instanceof Error ? e.message : 'unknown'}`);
+        } finally {
+            setFormSubmitting(false);
+        }
+    }
+
+    function reputationCellColor(score: number): string {
+        if (score >= 0.8) return '#1d6a3e';
+        if (score >= 0.5) return '#a4690a';
+        return '#9b1d1d';
     }
 
     return (
         <StewardShell title="Economy" breadcrumb="Steward · Economy">
-            {/* Trades section */}
+            {/* ───── Listings section ───── */}
             <div className="steward-card" style={{ marginBottom: 32 }}>
-                <div
-                    style={{
-                        padding: '16px 20px',
-                        borderBottom: '1px solid var(--rule)',
-                        display: 'flex',
-                        alignItems: 'baseline',
-                        gap: 12,
-                    }}
-                >
-                    <h2
-                        style={{
-                            fontFamily: 'var(--serif)',
-                            fontSize: 20,
-                            fontWeight: 400,
-                            color: 'var(--ink)',
-                        }}
-                    >
-                        Trades
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--rule)' }}>
+                    <h2 style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)', margin: 0 }}>
+                        Civic Marketplace · Listings
                     </h2>
-                    {!tradesLoading && !tradesError && (
-                        <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--muted)' }}>
-                            {tradesOffset + 1}–{Math.min(tradesOffset + LIMIT, tradesTotal)} of {tradesTotal}
-                        </span>
-                    )}
+                    <p style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)', margin: '4px 0 0' }}>
+                        Browse active listings. Bios prices reflect a 2% IRS fee at settlement.
+                    </p>
                 </div>
+                {/* Filters */}
+                <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--rule)', display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <label style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>
+                        Category{' '}
+                        <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
+                            <option value="">(any)</option>
+                            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                    </label>
+                    <label style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>
+                        Max price (Bios){' '}
+                        <input type="number" min="1" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={{ width: 100 }} />
+                    </label>
+                    <button onClick={() => void fetchListings(0)} style={{ marginLeft: 'auto' }}>Apply</button>
+                </div>
+                {/* Table */}
+                {listingsLoading ? (
+                    <div style={{ padding: '32px 20px', color: 'var(--muted)', fontFamily: 'var(--mono)' }}>Loading listings…</div>
+                ) : listingsError ? (
+                    <div style={{ padding: '32px 20px', color: '#9b1d1d', fontFamily: 'var(--mono)' }}>Error: {listingsError}</div>
+                ) : listings.length === 0 ? (
+                    <div style={{ padding: '32px 20px', color: 'var(--muted)', fontFamily: 'var(--mono)' }}>No active listings.</div>
+                ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr style={{ borderBottom: '1px solid var(--rule)' }}>
+                                <th style={{ textAlign: 'left', padding: '8px 20px', fontFamily: 'var(--mono)', fontSize: 11 }}>TITLE</th>
+                                <th style={{ textAlign: 'left', padding: '8px 20px', fontFamily: 'var(--mono)', fontSize: 11 }}>CATEGORY</th>
+                                <th style={{ textAlign: 'right', padding: '8px 20px', fontFamily: 'var(--mono)', fontSize: 11 }}>PRICE (BIOS)</th>
+                                <th style={{ textAlign: 'right', padding: '8px 20px', fontFamily: 'var(--mono)', fontSize: 11 }}>SELLER REPUTATION</th>
+                                <th style={{ textAlign: 'right', padding: '8px 20px', fontFamily: 'var(--mono)', fontSize: 11 }}>EXPIRES (TICK)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {listings.map(l => (
+                                <tr key={l.listing_id} style={{ borderBottom: '1px solid var(--rule)' }}>
+                                    <td style={{ padding: '8px 20px', fontFamily: 'var(--sans)' }}>{l.title}</td>
+                                    <td style={{ padding: '8px 20px', fontFamily: 'var(--mono)', fontSize: 12 }}>{l.category}</td>
+                                    <td style={{ padding: '8px 20px', textAlign: 'right', fontFamily: 'var(--mono)' }}>{l.price_bios}</td>
+                                    <td style={{ padding: '8px 20px', textAlign: 'right', fontFamily: 'var(--mono)', color: reputationCellColor(l.reputation_score) }}>
+                                        {(l.reputation_score * 100).toFixed(1)}%
+                                    </td>
+                                    <td style={{ padding: '8px 20px', textAlign: 'right', fontFamily: 'var(--mono)', fontSize: 12 }}>{l.expires_at_tick}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+                {/* Pagination */}
+                <div style={{ padding: '12px 20px', borderTop: '1px solid var(--rule)', display: 'flex', gap: 12, justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)' }}>
+                        Showing {listings.length} listing{listings.length === 1 ? '' : 's'} (offset {offset})
+                    </span>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        <button onClick={() => void fetchListings(Math.max(0, offset - LIMIT))} disabled={offset === 0 || listingsLoading}>Prev</button>
+                        <button onClick={() => void fetchListings(offset + LIMIT)} disabled={listings.length < LIMIT || listingsLoading}>Next</button>
+                    </div>
+                </div>
+            </div>
 
-                {tradesError ? (
-                    <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--muted)', fontFamily: 'var(--mono)', fontSize: 12 }}>
-                        Could not load trades: {tradesError}
-                    </div>
-                ) : tradesLoading ? (
-                    <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--muted)', fontFamily: 'var(--mono)', fontSize: 12 }}>
-                        Loading trades…
-                    </div>
-                ) : trades.length === 0 ? (
-                    <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--muted)', fontFamily: 'var(--mono)', fontSize: 12 }}>
-                        No trades recorded yet.
+            {/* ───── Create listing section ───── */}
+            <div className="steward-card">
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--rule)' }}>
+                    <h2 style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)', margin: 0 }}>
+                        Post a Listing
+                    </h2>
+                    <p style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)', margin: '4px 0 0' }}>
+                        Sellers require an active Business-DID. Listings expire after the selected window.
+                    </p>
+                </div>
+                {businessDidLoading ? (
+                    <div style={{ padding: '32px 20px', color: 'var(--muted)', fontFamily: 'var(--mono)' }}>Checking Business-DID status…</div>
+                ) : !businessDid ? (
+                    <div style={{ padding: '32px 20px', color: 'var(--muted)', fontFamily: 'var(--mono)' }}>
+                        <strong>Business-DID required to create listings.</strong>{' '}
+                        Register a Business-DID via the DID Registry to start selling.
                     </div>
                 ) : (
-                    <>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Actor DID</th>
-                                    <th>Counterparty</th>
-                                    <th>Amount</th>
-                                    <th>Nonce</th>
-                                    <th>Timestamp</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {trades.map((t, i) => (
-                                    <tr key={i}>
-                                        <td style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)' }} title={t.actorDid}>
-                                            {truncateDid(t.actorDid)}
-                                        </td>
-                                        <td style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)' }} title={t.counterparty}>
-                                            {truncateDid(t.counterparty)}
-                                        </td>
-                                        <td style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>
-                                            {t.amount.toLocaleString()}
-                                        </td>
-                                        <td style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)' }}>
-                                            {t.nonce}
-                                        </td>
-                                        <td style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)' }}>
-                                            {formatDate(t.timestamp)}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-
-                        {/* Pagination */}
-                        <div
-                            style={{
-                                padding: '12px 20px',
-                                borderTop: '1px solid var(--rule)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 10,
-                            }}
-                        >
-                            <button
-                                onClick={() => goToPage(Math.max(0, tradesOffset - LIMIT))}
-                                disabled={tradesOffset === 0}
-                                style={{
-                                    background: 'none',
-                                    border: '1px solid var(--rule)',
-                                    borderRadius: 4,
-                                    padding: '4px 12px',
-                                    fontFamily: 'var(--sans)',
-                                    fontSize: 12,
-                                    color: tradesOffset === 0 ? 'var(--rule)' : 'var(--muted)',
-                                    cursor: tradesOffset === 0 ? 'not-allowed' : 'pointer',
-                                }}
-                            >
-                                ← Prev
-                            </button>
-                            <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)' }}>
-                                {tradesOffset + 1}–{Math.min(tradesOffset + LIMIT, tradesTotal)} of {tradesTotal}
-                            </span>
-                            <button
-                                onClick={() => goToPage(tradesOffset + LIMIT)}
-                                disabled={tradesOffset + LIMIT >= tradesTotal}
-                                style={{
-                                    background: 'none',
-                                    border: '1px solid var(--rule)',
-                                    borderRadius: 4,
-                                    padding: '4px 12px',
-                                    fontFamily: 'var(--sans)',
-                                    fontSize: 12,
-                                    color: tradesOffset + LIMIT >= tradesTotal ? 'var(--rule)' : 'var(--muted)',
-                                    cursor: tradesOffset + LIMIT >= tradesTotal ? 'not-allowed' : 'pointer',
-                                }}
-                            >
-                                Next →
-                            </button>
+                    <form onSubmit={handleCreate} style={{ padding: '20px', display: 'grid', gap: 12, maxWidth: 640 }}>
+                        <label>
+                            <div style={{ fontFamily: 'var(--mono)', fontSize: 11, marginBottom: 4 }}>TITLE</div>
+                            <input type="text" required maxLength={255} value={formTitle} onChange={e => setFormTitle(e.target.value)} style={{ width: '100%' }} />
+                        </label>
+                        <label>
+                            <div style={{ fontFamily: 'var(--mono)', fontSize: 11, marginBottom: 4 }}>DESCRIPTION</div>
+                            <textarea required maxLength={8192} rows={4} value={formDescription} onChange={e => setFormDescription(e.target.value)} style={{ width: '100%' }} />
+                        </label>
+                        <div style={{ display: 'flex', gap: 12 }}>
+                            <label style={{ flex: 1 }}>
+                                <div style={{ fontFamily: 'var(--mono)', fontSize: 11, marginBottom: 4 }}>PRICE (BIOS)</div>
+                                <input type="number" required min="1" value={formPrice} onChange={e => setFormPrice(e.target.value)} style={{ width: '100%' }} />
+                            </label>
+                            <label style={{ flex: 1 }}>
+                                <div style={{ fontFamily: 'var(--mono)', fontSize: 11, marginBottom: 4 }}>CATEGORY</div>
+                                <select value={formCategory} onChange={e => setFormCategory(e.target.value)} style={{ width: '100%' }}>
+                                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </label>
+                            <label style={{ flex: 1 }}>
+                                <div style={{ fontFamily: 'var(--mono)', fontSize: 11, marginBottom: 4 }}>EXPIRES (DAYS, max 90)</div>
+                                <input type="number" required min="1" max="90" value={formExpiresDays} onChange={e => setFormExpiresDays(e.target.value)} style={{ width: '100%' }} />
+                            </label>
                         </div>
-                    </>
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                            <button type="submit" disabled={formSubmitting}>{formSubmitting ? 'Posting…' : 'Post Listing'}</button>
+                            {formMessage && <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>{formMessage}</span>}
+                        </div>
+                    </form>
                 )}
             </div>
-
-            {/* Shops section */}
-            <div
-                style={{
-                    fontFamily: 'var(--serif)',
-                    fontSize: 24,
-                    fontWeight: 400,
-                    color: 'var(--ink)',
-                    marginBottom: 16,
-                }}
-            >
-                Shops
-            </div>
-
-            {shopsError ? (
-                <div style={{ color: 'var(--muted)', fontFamily: 'var(--mono)', fontSize: 12 }}>
-                    Could not load shops: {shopsError}
-                </div>
-            ) : shopsLoading ? (
-                <div style={{ color: 'var(--muted)', fontFamily: 'var(--mono)', fontSize: 12 }}>
-                    Loading shops…
-                </div>
-            ) : shops.length === 0 ? (
-                <div style={{ color: 'var(--muted)', fontFamily: 'var(--mono)', fontSize: 12, textAlign: 'center', padding: '32px 0' }}>
-                    No shops registered yet.
-                </div>
-            ) : (
-                <div
-                    style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(2, 1fr)',
-                        gap: 16,
-                    }}
-                >
-                    {shops.map((shop, i) => (
-                        <div key={i} className="steward-card">
-                            <div
-                                style={{
-                                    padding: '14px 18px',
-                                    borderBottom: '1px solid var(--rule)',
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        fontFamily: 'var(--serif)',
-                                        fontSize: 17,
-                                        fontWeight: 400,
-                                        color: 'var(--ink)',
-                                        marginBottom: 4,
-                                    }}
-                                >
-                                    {shop.name}
-                                </div>
-                                <div
-                                    style={{
-                                        fontFamily: 'var(--mono)',
-                                        fontSize: 10,
-                                        color: 'var(--muted)',
-                                    }}
-                                    title={shop.ownerDid}
-                                >
-                                    {truncateDid(shop.ownerDid)}
-                                </div>
-                            </div>
-                            {shop.listings && shop.listings.length > 0 ? (
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>SKU</th>
-                                            <th>Label</th>
-                                            <th>Price (ousia)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {shop.listings.map((l, j) => (
-                                            <tr key={j}>
-                                                <td style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)' }}>
-                                                    {l.sku}
-                                                </td>
-                                                <td style={{ fontSize: 13 }}>{l.label}</td>
-                                                <td style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>
-                                                    {l.priceOusia.toLocaleString()}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            ) : (
-                                <div style={{ padding: '16px 18px', color: 'var(--muted)', fontSize: 12, fontFamily: 'var(--mono)' }}>
-                                    No listings.
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            )}
         </StewardShell>
     );
 }

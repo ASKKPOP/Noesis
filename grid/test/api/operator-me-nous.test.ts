@@ -142,6 +142,26 @@ describe('Phase 39: GET /api/v1/operator/me/nous — operator isolation (TENANT-
         expect(typeof entry['token_expires_at']).toBe('number');
     });
 
+    // Phase 44 D-44-08 — business_did top-level field must be present in the response.
+    // The mock pool ({}) causes the SQL to fail; the route catches gracefully → null.
+    it('returns top-level business_did field (null when pool mock cannot execute query)', async () => {
+        vi.mocked(findByOperator).mockResolvedValue([BRAIN_A]);
+        vi.mocked(getQuotaLimit).mockResolvedValue(3);
+
+        const cookie = await makePortalCookie(OP_A_DID);
+        const res = await app.inject({
+            method: 'GET',
+            url: '/api/v1/operator/me/nous',
+            cookies: { [COOKIE_NAME]: cookie },
+        });
+
+        expect(res.statusCode).toBe(200);
+        const body = res.json<{ nous: unknown[]; business_did: string | null }>();
+        // Field must exist at top level; value is null in test environment (no real DB)
+        expect(body).toHaveProperty('business_did');
+        expect(body.business_did === null || typeof body.business_did === 'string').toBe(true);
+    });
+
     it('returns only operator A brains — not operator B brains — even when both are registered', async () => {
         vi.mocked(findByOperator).mockImplementation(
             (_pool, _gridName, did) => Promise.resolve(did === OP_A_DID ? [BRAIN_A] : [BRAIN_B]),
