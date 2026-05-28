@@ -220,6 +220,24 @@ describe('broadcast-allowlist: Phase 6 operator.* payload privacy (representativ
     });
 });
 
+describe.skip('ALLOWLIST_MEMBERS Phase 42 (Plan 03 will unskip)', () => {
+    it('has count 67 after Phase 42 adds p2p.{peer_announced,connection_opened,connection_closed}', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(67);
+    });
+    it('includes p2p.peer_announced at position 65 (index 64)', () => {
+        expect(ALLOWLIST_MEMBERS[64]).toBe('p2p.peer_announced');
+    });
+    it('includes p2p.connection_opened at position 66 (index 65)', () => {
+        expect(ALLOWLIST_MEMBERS[65]).toBe('p2p.connection_opened');
+    });
+    it('includes p2p.connection_closed at position 67 (index 66)', () => {
+        expect(ALLOWLIST_MEMBERS[66]).toBe('p2p.connection_closed');
+    });
+    it('does NOT include p2p.signal_received (private WSS push, not audit per D-42-06)', () => {
+        expect(ALLOWLIST_MEMBERS).not.toContain('p2p.signal_received');
+    });
+});
+
 describe('broadcast-allowlist: payloadPrivacyCheck', () => {
     it('passes benign numeric/currency payload', () => {
         expect(payloadPrivacyCheck({ amount: 10, currency: 'ousia' })).toEqual({ ok: true });
