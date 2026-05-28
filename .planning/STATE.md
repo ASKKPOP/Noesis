@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 Phase: 43 (right-to-fork) — EXECUTING
 Plan: 1 of 4
-Previous: Phase 42 (P2P Infrastructure) — PLANNED (4 plans, not yet executed)
+Previous: Phase 42 (P2P Infrastructure) — COMPLETE (5 plans, SHIPPED 2026-05-28)
 Status: Executing Phase 43
 Next action: Execute Phase 43 (constitutional D-V3-18 enforcement — fork endpoint, Brain standalone mode, Steward fork UI)
 
@@ -150,6 +150,37 @@ Driving inputs for v3.0 (locked at milestone open):
   - 3D Portal landing hero → Phase 56 (D-36-23/24 deferred per D-V3-06 raw-SVG invariant)
   - `civic_member` tier upgrade in `resolveVisitorTier()` → Phase 37 (needs Civic-DID issuance)
   - Per-DID rate limiting → Phase 39 (multi-tenancy)
+
+## v3.0 Phase 42 close-out (locked 2026-05-28)
+
+- **Phase 42 SHIPPED.** Plans 42-01 through 42-05 all complete. Allowlist **64 → 67** (+3: `p2p.peer_announced`, `p2p.connection_opened`, `p2p.connection_closed`).
+
+- **What shipped:**
+  1. **TDD stubs (Plan 01):** 8 grid test files + 2 brain test files (`test_p2p.py`, `test_p2p_crypto.py`); allowlist count locked at 64; PyNaCl SealedBox sanity test green.
+  2. **Data layer (Plan 02):** DB migration v32 — `existence_public_key_jwk TEXT NULL` on `civic_did_registry`. P2P data primitives: `PeerStore` (5-min TTL heartbeat), `SignalInboxStore` (encrypted SDP inbox with per-DID drain), `TurnCredentialService` (HMAC-SHA1 short-lived coturn credentials, Civic-DID auth, no Bios deduction per D-42-03).
+  3. **Audit events (Plan 03):** 3 sole-producer files — `append-p2p-peer-announced.ts`, `append-p2p-connection-opened.ts`, `append-p2p-connection-closed.ts`. Each with closed-tuple `{*_did_hash, tick, ...}` payloads. Allowlist 64 → 67. coturn docker-compose fragment (STUN-only dev profile, TURN in dev only).
+  4. **Grid routes (Plan 04):** 5 P2P routes — `POST /p2p/announce`, `GET /p2p/peers/:did`, `POST /p2p/signal/:peerDid`, `GET /p2p/signal/inbox`, `GET /p2p/turn-credentials`. ROUTE_DID_POLICY +5. `WsFirehoseHub.pushSignalToDid()` private WSS push method. Launcher cleanup interval for expired peer entries (OBS-R-32-02 paired clearInterval).
+  5. **BrainP2PClient (Plan 05 — this plan):** `brain/src/noesis_brain/wire/p2p.py` — `BrainP2PClient` class with `announce`, `get_peer_status`, `get_peer_public_key`, `initiate_connection`, `handle_signal_received`, `_process_remote_sdp`, `get_turn_credentials`, `close`. PyNaCl SealedBox encryption: Ed25519 JWK → `VerifyKey.to_curve25519_public_key()` → `SealedBox.encrypt()` (D-42-05). `ANNOUNCE_INTERVAL_SECONDS = 300`. `aiortc>=1.13.0,<2` added to `brain/pyproject.toml`. `post_p2p_announce()` on `GridWireClient`. 300s separate announce asyncio.Task in `BrainApp`. WSS dispatcher routes `p2p.signal_received` → `BrainP2PClient.handle_signal_received()` (private push, NOT audit-chain per D-42-06). 17 P2P tests unskipped and passing (810 total brain tests).
+
+- **Key decisions locked (Phase 42):**
+  - D-42-01: Protocol = WebRTC (aiortc) — settled Q-V3-A
+  - D-42-02: p2p.signal_received is private WSS push, NEVER in ALLOWLIST_MEMBERS
+  - D-42-03: TURN is FREE in v3.0; paid billing deferred to v3.1+; no Bios deduction
+  - D-42-04: SDP inbox drain on pull (GET), not push to WSS
+  - D-42-05: SDP blobs encrypted with peer's X25519 pubkey (derived from Ed25519 JWK via PyNaCl); Grid sees opaque ciphertext only
+  - D-42-06: p2p.signal_received is NOT an audit-chain event
+
+- **Inherits to Phase 43+:**
+  1. `existence_public_key_jwk` column in `civic_did_registry` is the public-key lookup source for P2P encryption.
+  2. `BrainP2PClient` shares the underlying `httpx.AsyncClient` from `GridWireClient` (via `await grid_wire_client._get_client()`).
+  3. 300s announce task is independent of 60s presence heartbeat — MUST remain separate asyncio.Tasks.
+  4. `p2p.signal_received` must NEVER appear in `ALLOWLIST_MEMBERS` — CI-enforceable invariant.
+
+- **Key invariants preserved:**
+  - Broadcast allowlist now at 67. Freeze-except-by-explicit-addition preserved.
+  - R-31-01 zero-diff audit chain — PRESERVED.
+  - VOTE-05 Nous-only governance — PRESERVED.
+  - Hash-only cross-boundary discipline — PRESERVED (SDP content encrypted, Grid sees only ciphertext blob).
 
 ## v3.0 Phase 41 close-out (locked 2026-05-27)
 
