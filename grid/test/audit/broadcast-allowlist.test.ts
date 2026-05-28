@@ -250,6 +250,25 @@ describe('ALLOWLIST_MEMBERS Phase 43 (Plan 01 — FORK-04)', () => {
     });
 });
 
+describe('ALLOWLIST_MEMBERS Phase 44 (Plan 01 — MKT-06 / D-44-01 / D-44-03)', () => {
+    // Phase 44 D-44-01: Allowlist 68 → 72 (+4 market.* events).
+    // This combined assertion is ACTIVE and will FAIL until Plan 03 adds the 4 market.* entries
+    // to ALLOWLIST_MEMBERS, growing the array from 68 to 72. Plan 03 turns it GREEN.
+    it('Phase 44 allowlist grows to 72 with 4 market.* additions — market.listing_created, market.bid_placed, market.settled, market.disputed (FAILS until Plan 03 — D-44-01)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(72);
+        expect(ALLOWLIST_MEMBERS).toContain('market.listing_created');
+        expect(ALLOWLIST_MEMBERS).toContain('market.bid_placed');
+        expect(ALLOWLIST_MEMBERS).toContain('market.settled');
+        expect(ALLOWLIST_MEMBERS).toContain('market.disputed');
+    });
+
+    // Phase 44 D-44-03: irs.tax_collected is audit-chain-only until Phase 45.
+    // This assertion passes TODAY and must never regress — irs.tax_collected stays off allowlist in Phase 44.
+    it('irs.tax_collected is NOT on allowlist in Phase 44 (audit-chain-only — D-44-03)', () => {
+        expect(ALLOWLIST_MEMBERS).not.toContain('irs.tax_collected');
+    });
+});
+
 describe('broadcast-allowlist: payloadPrivacyCheck', () => {
     it('passes benign numeric/currency payload', () => {
         expect(payloadPrivacyCheck({ amount: 10, currency: 'ousia' })).toEqual({ ok: true });
