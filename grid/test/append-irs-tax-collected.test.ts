@@ -19,7 +19,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 
 // Wave 0 stub: skipped until Plan 03 implementation lands.
-describe.skip('appendIrsTaxCollected — 9-step guard discipline (irs.tax_collected, audit-chain-only)', () => {
+describe('appendIrsTaxCollected — 9-step guard discipline (irs.tax_collected, audit-chain-only)', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let appendIrsTaxCollected: (audit: any, payload: any) => any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

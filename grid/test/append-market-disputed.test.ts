@@ -14,7 +14,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 
 // Wave 0 stub: skipped until Plan 03 implementation lands.
-describe.skip('appendMarketDisputed — 9-step guard discipline (market.disputed)', () => {
+describe('appendMarketDisputed — 9-step guard discipline (market.disputed)', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let appendMarketDisputed: (audit: any, payload: any) => any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

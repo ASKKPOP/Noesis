@@ -21,7 +21,7 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42 + Phase 43) — exactly these 68 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42 + Phase 43 + Phase 44) — exactly these 72 event types.
  *  Phase 42 (P2P-05 / D-42-07): +3 P2P audit events (allowlist 64 → 67).
  *   - p2p.peer_announced (65): closed 3-key {civic_did_hash, endpoint_hash, tick}.
  *     endpoint_hash = sha256('online') — static sentinel (no IP/port leakage per D-42-02).
@@ -284,6 +284,20 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   Event is recorded in BOTH the Grid's audit chain AND the exported fork package (manifest.json).
     //   Emitted ONLY via appendOperatorNousForked (grid/src/audit/append-operator-nous-forked.ts).
     'operator.nous_forked',    // (68) {civic_did_hash, fork_reason, operator_did_hash, package_hash, tick}
+    // Phase 44 (MKT-06 / D-44-01) — Civic marketplace audit events. Allowlist 68 → 72.
+    // market.listing_created (69): closed 5-key {category, listing_id, price_bios, seller_business_did_hash, tick}.
+    //   Sole-producer: grid/src/audit/append-market-listing-created.ts. actorDid=seller_business_did_hash.
+    // market.bid_placed (70): closed 4-key {bidder_civic_did_hash, listing_id, offer_price_bios, tick}.
+    //   Sole-producer: grid/src/audit/append-market-bid-placed.ts. actorDid=bidder_civic_did_hash.
+    // market.settled (71): closed 6-key {buyer_civic_did_hash, irs_fee_bios, listing_id, price_bios, seller_business_did_hash, tick}.
+    //   Sole-producer: grid/src/audit/append-market-settled.ts. actorDid=buyer_civic_did_hash.
+    //   After emit, appendIrsTaxCollected fires audit-chain-only (NOT on allowlist until Phase 45 — D-44-03).
+    // market.disputed (72): closed 4-key {complainant_civic_did_hash, dispute_id, listing_id, tick}.
+    //   Sole-producer: grid/src/audit/append-market-disputed.ts. actorDid=complainant_civic_did_hash.
+    'market.listing_created', // (69)
+    'market.bid_placed',      // (70)
+    'market.settled',         // (71)
+    'market.disputed',        // (72)
 ] as const;
 
 /**
