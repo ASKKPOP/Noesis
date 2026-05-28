@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
-status: executing
-stopped_at: "Phase 43 SHIPPED (4 plans, PASS_WITH_NOTES, allowlist 67→68). v3.0 Wave 2 complete. Next: Phase 44 (Marketplace v3)."
-last_updated: "2026-05-28T04:30:00.000Z"
+status: planning
+stopped_at: Phase 44 context gathered
+last_updated: "2026-05-28T04:00:21.218Z"
 progress:
   total_phases: 25
   completed_phases: 8
-  total_plans: 44
-  completed_plans: 44
-  percent: 35
+  total_plans: 40
+  completed_plans: 40
+  percent: 100
 ---
 
 # Project State
@@ -519,6 +519,6 @@ Total v3.0 allowlist growth: **+35 (56 → 91)**. Freeze-except-by-explicit-addi
 
 ## Session Continuity
 
-Last session: 2026-05-27T19:35:00.000Z
-Stopped at: Phase 42 SHIPPED (5 plans, 11/11 must-haves, allowlist 64→67). Phase 43 Plan 43-01 also complete (67→68). Next: execute Phase 43 Plans 02-04.
-Resume file: .planning/phases/43-right-to-fork/43-CONTEXT.md
+Last session: 2026-05-28T04:00:21.209Z
+Stopped at: Phase 44 context gathered
+Resume file: .planning/phases/44-marketplace-v3/44-CONTEXT.md
