@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: planning
-stopped_at: Phase 44 context gathered
-last_updated: "2026-05-28T04:00:21.218Z"
+stopped_at: Phase 44 context updated (discuss-phase session — IRS 2%, police stub, settlement timeout 7 ticks)
+last_updated: "2026-05-28T04:24:57.543Z"
 progress:
   total_phases: 25
   completed_phases: 8
@@ -519,6 +519,6 @@ Total v3.0 allowlist growth: **+35 (56 → 91)**. Freeze-except-by-explicit-addi
 
 ## Session Continuity
 
-Last session: 2026-05-28T04:00:21.209Z
-Stopped at: Phase 44 context gathered
+Last session: 2026-05-28T04:24:57.539Z
+Stopped at: Phase 44 context updated (discuss-phase session — IRS 2%, police stub, settlement timeout 7 ticks)
 Resume file: .planning/phases/44-marketplace-v3/44-CONTEXT.md
