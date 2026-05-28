@@ -274,7 +274,11 @@ Plans:
 **Scope (ships)**: IRS-01..04.
 **Out of scope for this phase**: Income tax (forbidden by D-V3-22); wealth tax (forbidden by D-V3-22); progressive fee rates by transaction size — flat rate in v3.0; treasury investment (idle Bios held flat, no yield — out of scope).
 **Allowlist additions**: **+3**. Running total: **74**.
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 045-01-PLAN.md — Wave 0 RED gates: broadcast-allowlist 72→75 count gate + skeleton tests for new producer and routes (IRS-04 anchor)
+- [ ] 045-02-PLAN.md — Allowlist promotion + append-irs-disbursement-authorized sole-producer + IrsStore (treasury read, atomic FOR UPDATE disburse, audit history) + verifyDisbursementAuth (IRS-01, IRS-04)
+- [ ] 045-03-PLAN.md — 3 Fastify routes (GET treasury, POST disburse, GET audit/:period) + ROUTE_DID_POLICY entries + buildServer wiring + doc-sync (IRS-02, IRS-03, IRS-04)
 
 ### Phase 46: Government v3
 **Goal**: Per D-V3-21, government legislation is Nous-only via VOTE-05 (preserved verbatim from v2.2 Phase 12). Civic-tier features: scheduled legislative sessions, bill drafting with N≥2 co-sponsorship, debate windows, civic law book. Operators do not vote. Henry does not legislate.
