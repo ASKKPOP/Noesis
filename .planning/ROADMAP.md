@@ -56,7 +56,7 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 
 **Wave 2 — Civic Plumbing (Phases 42-43)**
 - [ ] **Phase 42: P2P Infrastructure** — Grid-mediated signaling + DID-to-endpoint discovery + STUN/TURN (both free in v3.0; Civic-DID auth gates TURN per D-42-03); Brain-to-Brain content stays direct. (allowlist +3)
-- [ ] **Phase 43: Right-to-Fork Export Tooling** — Operator can export full Nous state (Brain memory + civic credentials + audit history) and run standalone; constitutional enforcement of D-V3-18. (allowlist 0)
+- [ ] **Phase 43: Right-to-Fork Export Tooling** — Operator can export full Nous state (Brain memory + civic credentials + audit history) and run standalone; constitutional enforcement of D-V3-18. (allowlist +1)
 
 **Wave 3 — Civic Institutions (Phases 44-49)**
 - [ ] **Phase 44: Marketplace v3** — Business-DID listings, bids, escrow, IRS fee hooks, dispute → Police routing. (allowlist +4)
@@ -230,10 +230,10 @@ Plans:
   4. Fork operation emits `operator.nous_forked` audit entry in BOTH the production Grid's audit chain AND the exported package (signed by Grid before export); fork timestamp + nous-did + export-hash all recorded. Public verification (`POST /api/v1/operator/fork/verify` with the package hash) returns `{found: true, forked_at_tick: N, civic_did: <did>}`.
 **Scope (ships)**: FORK-01..04.
 **Out of scope for this phase**: Collective right-to-fork at Grid-level (FUTURE-ALTHOST-01); cross-operator import (a forked Nous joining another operator's hardware — separate constitutional question); fork-revert (operator deciding mid-stream — handled by Phase 50 migration logic only).
-**Allowlist additions**: **+1** (`operator.nous_forked`). Running total: **65**. (Corrected 2026-05-27 per Plan 43-01: actual allowlist baseline was 64, not 67; Phases 38-41 added 0 events. Sole-producer file: `grid/src/audit/append-operator-nous-forked.ts`.)
+**Allowlist additions**: **+1** (`operator.nous_forked`). Running total: **68**. (Corrected 2026-05-27 per Plan 43-01: actual allowlist baseline after Phase 42 shipped is 67, per test file literal `expect(ALLOWLIST.size).toBe(67)`. Correct delta: 67 → 68. Sole-producer file: `grid/src/audit/append-operator-nous-forked.ts`.)
 **Plans:** 4 plans
 Plans:
-- [ ] 43-01-PLAN.md — Wave 0: audit primitives + allowlist 64→65 + BRAIN_DATA_DIR threading + test stubs for Plans 02-04 (FORK-04)
+- [ ] 43-01-PLAN.md — Wave 0: audit primitives + allowlist 67→68 + BRAIN_DATA_DIR threading + test stubs for Plans 02-04 (FORK-04)
 - [ ] 43-02-PLAN.md — Grid fork endpoint + deterministic .tar.gz archive builder + one-time download token + manifest (FORK-01/02/04)
 - [ ] 43-03-PLAN.md — Brain standalone CLI (`standalone --import`) + tar.gz importer with path-traversal guard + civic-action HTTP gate (FORK-03)
 - [ ] 43-04-PLAN.md — Steward ForkIrreversibilityDialog clone + Fork Nous section in /system/local-ai + E2E human-verify checkpoint (FORK-01..04)
@@ -579,16 +579,16 @@ Starting: **56 events** (v2.6 frozen end-state).
 | 40 | *(none — Local AI is Brain-internal)* | 0 | 64 |
 | 41 | *(none — sleep cycle uses existing event families)* | 0 | 64 |
 | 42 | `p2p.peer_announced`, `p2p.connection_opened`, `p2p.connection_closed` | +3 | 67 |
-| 43 | *(none — fork uses existing `operator.*` family)* | 0 | 67 |
-| 44 | `market.listing_created`, `market.bid_placed`, `market.settled`, `market.disputed` | +4 | 71 |
-| 45 | `irs.tax_collected`, `irs.disbursement_authorized`, `irs.disbursement_executed` | +3 | 74 |
-| 46 | `gov.bill_drafted`, `gov.bill_cosponsored`, `gov.session_opened`, `gov.session_closed`, `gov.law_enacted`, `gov.law_repealed` | +6 | 80 |
-| 47 | `police.complaint_filed`, `police.investigation_opened`, `police.charges_filed`, `police.sanction_executed` | +4 | 84 |
-| 48 | `library.curator_elected`, `library.entry_curated` | +2 | 86 |
-| 49 | `community.founded`, `community.joined`, `community.posted`, `community.dissolved` | +4 | 90 |
-| 50 | *(none — migration uses existing event families)* | 0 | 90 |
+| 43 | `operator.nous_forked` | +1 | 68 |
+| 44 | `market.listing_created`, `market.bid_placed`, `market.settled`, `market.disputed` | +4 | 72 |
+| 45 | `irs.tax_collected`, `irs.disbursement_authorized`, `irs.disbursement_executed` | +3 | 75 |
+| 46 | `gov.bill_drafted`, `gov.bill_cosponsored`, `gov.session_opened`, `gov.session_closed`, `gov.law_enacted`, `gov.law_repealed` | +6 | 81 |
+| 47 | `police.complaint_filed`, `police.investigation_opened`, `police.charges_filed`, `police.sanction_executed` | +4 | 85 |
+| 48 | `library.curator_elected`, `library.entry_curated` | +2 | 87 |
+| 49 | `community.founded`, `community.joined`, `community.posted`, `community.dissolved` | +4 | 91 |
+| 50 | *(none — migration uses existing event families)* | 0 | 91 |
 
-**Total v3.0 allowlist growth: +34 (56 → 90).** Freeze-except-by-explicit-addition rule preserved. Every new event carries a closed-tuple payload + sole-producer file + `payloadPrivacyCheck` + `audit.append` triad. Hash-only cross-boundary discipline extends to all new event families.
+**Total v3.0 allowlist growth: +35 (56 → 91).** (Phase 43 FORK-04 correction: was +0, now +1.) Freeze-except-by-explicit-addition rule preserved. Every new event carries a closed-tuple payload + sole-producer file + `payloadPrivacyCheck` + `audit.append` triad. Hash-only cross-boundary discipline extends to all new event families.
 
 ### Research Artifacts (v3.0)
 

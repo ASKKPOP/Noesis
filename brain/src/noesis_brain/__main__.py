@@ -13,6 +13,8 @@ Environment variables:
     OLLAMA_HOST     - Ollama base URL (default: http://localhost:11434)
     LLM_MODEL       - Model name override (ollama only)
     SOCKET_DIR      - Directory for Unix socket (default: /tmp)
+    BRAIN_DATA_DIR  - Directory for SQLite DB files (default: in-memory; Phase 43 D-43-06)
+    BRAIN_STANDALONE - When "1", skip Grid wire init (standalone mode; Phase 43 D-43-05)
 
     Hermes-specific (only used when LLM_PROVIDER=hermes):
     HERMES_PROVIDER - LLM provider key passed to Hermes (default: anthropic)
@@ -53,6 +55,15 @@ def _slugify_nous_name(name: str) -> str:
     return re.sub(r"[^a-z0-9_-]+", "-", name.lower()).strip("-")
 
 log = logging.getLogger(__name__)
+
+# Phase 43 D-43-06: BRAIN_DATA_DIR — persists SQLite DB files on disk.
+# When unset, falls back to in-memory ":memory:" (dev / walltime-test default).
+# Set to e.g. ~/.noesis/brain/data/ for production persistence.
+BRAIN_DATA_DIR_ENV = "BRAIN_DATA_DIR"
+
+# Phase 43 D-43-05: BRAIN_STANDALONE — when "1", skip Grid wire initialization.
+# Set by the `standalone --import` subcommand or directly in env.
+BRAIN_STANDALONE_ENV = "BRAIN_STANDALONE"
 
 
 # ── App container ─────────────────────────────────────────────────────────────
@@ -164,6 +175,9 @@ def create_brain_app(
     large_model_override: str | None = None,
     temperature_override: float | None = None,
     max_tokens_override: int | None = None,
+    # Phase 43 D-43-06: data directory for SQLite persistence.
+    # None → ":memory:" (in-process, ephemeral). A path → writes nous.db there.
+    data_dir: str | Path | None = None,
 ) -> BrainApp:
     """Create a BrainApp from config.
 
@@ -246,8 +260,16 @@ def create_brain_app(
     else:
         raise ValueError(f"Unknown LLM provider: {llm_provider!r}. Use 'ollama'.")
 
-    # Build memory store (in-memory SQLite by default; Phase 4 does not persist).
-    memory_store = MemoryStream(MemoryStore(":memory:"))
+    # Build memory store — Phase 43 D-43-06: use data_dir for on-disk persistence.
+    # When data_dir is set, create the directory tree and write nous.db there.
+    # When unset (None), fall back to ":memory:" (ephemeral, walltime-test safe).
+    if data_dir is not None:
+        _data_path = Path(data_dir)
+        _data_path.mkdir(parents=True, exist_ok=True)
+        _nous_db_path = str(_data_path / "nous.db")
+    else:
+        _nous_db_path = ":memory:"
+    memory_store = MemoryStream(MemoryStore(_nous_db_path))
 
     # Resolve the Nous DID: honour NOUS_DID env override; otherwise derive
     # did:noesis:<slug(nous_name)> inline (no existing slug helper in the codebase).
@@ -411,6 +433,9 @@ async def create_brain_app_from_env() -> BrainApp:
         primary_model = env_model
         large_model = env_model
 
+    # Phase 43 D-43-06: read BRAIN_DATA_DIR for on-disk SQLite persistence.
+    brain_data_dir: str | None = os.environ.get(BRAIN_DATA_DIR_ENV) or None
+
     app = create_brain_app(
         nous_name=nous_name,
         config_path=config_path,
@@ -428,6 +453,7 @@ async def create_brain_app_from_env() -> BrainApp:
         large_model_override=large_model,
         temperature_override=temperature,
         max_tokens_override=max_tokens,
+        data_dir=brain_data_dir,
     )
     # Wire the HTTP server (requires BRAIN_HTTP_SECRET in env).
     app.http_server = _build_http_server(app.handler)
