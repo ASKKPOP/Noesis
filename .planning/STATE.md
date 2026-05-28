@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
-status: executing
-stopped_at: Phase 41 SHIPPED — ready for Phase 42 plan-phase
-last_updated: "2026-05-27"
+status: Ready for `/gsd-plan-phase 42`
+stopped_at: Phase 42 context gathered
+last_updated: "2026-05-28T00:05:02.210Z"
 progress:
   total_phases: 25
   completed_phases: 6
-  total_plans: 37
-  completed_plans: 36
-  percent: 97
+  total_plans: 31
+  completed_plans: 31
+  percent: 100
 ---
 
 # Project State
@@ -471,6 +471,6 @@ Total v3.0 allowlist growth: **+34 (56 → 90)**. Freeze-except-by-explicit-addi
 
 ## Session Continuity
 
-Last session: 2026-05-27T19:28:46.041Z
-Stopped at: Phase 41 UI-SPEC approved — ready for plan-phase
-Resume file: None
+Last session: 2026-05-28T00:05:02.206Z
+Stopped at: Phase 42 context gathered
+Resume file: .planning/phases/42-p2p-infrastructure/42-CONTEXT.md
