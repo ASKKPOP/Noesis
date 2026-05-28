@@ -69,6 +69,7 @@ import { registerCivicInboxRoutes } from './routes/civic-inbox.js';
 import { registerCivicMessageRoute } from './routes/civic-message.js';
 import { registerGridManagerPresenceRoute } from './routes/grid-manager-presence.js';
 import { registerP2pRoutes } from './routes/p2p.js';
+import { registerForkNousRoute } from './operator/fork-nous.js';
 
 /**
  * Phase 6 AGENCY-02: normalized memory entry shape crossing the RPC boundary.
@@ -367,6 +368,20 @@ export interface GridServices {
      * When absent, Phase 42 routes return 503 p2p_service_unavailable.
      */
     p2pService?: import('../p2p/types.js').P2PService;
+    /**
+     * Phase 43 FORK-01 (T-43-auth): injectable operator ownership checker.
+     * When present, fork route verifies operator owns the target Nous before building archive.
+     * When absent, fork route rejects all requests with 403 cross_operator_forbidden (fail-safe).
+     * Production: wires brainTokenStore.findByOperator + civicDidStore lookup.
+     * Tests: inject a stub that returns true/false based on test scenario.
+     */
+    checkOperatorOwnsNous?: (operatorId: string, nousDid: string) => Promise<boolean>;
+    /**
+     * Phase 43 FORK-01: injectable existence-DID resolver for the fork manifest.
+     * When absent, manifest uses 'did:noesis:nous:unknown' placeholder.
+     * Production: wires civicDidStore to look up the existence-DID for the Civic-DID.
+     */
+    getExistenceDid?: (civicDid: string) => Promise<string>;
 }
 
 /**
@@ -680,6 +695,12 @@ export function buildServerWithHub(
     // GET /p2p/signal/inbox, GET /p2p/turn-credentials.
     // Policy enforcement delegated to onRequest hook per ROUTE_DID_POLICY (5 entries added in policy.ts).
     void registerP2pRoutes(app, services);
+
+    // --- Phase 43 FORK-01: Right-to-fork endpoint ---
+    // POST /api/v1/operator/fork/:nousDid — H4+ header-trust, builds .tar.gz, issues one-time token.
+    // GET /api/v1/operator/fork/:nousDid/download?token=X — one-time archive download.
+    // Policy: 'public' (header-trust handles auth internally, per all operator.* routes).
+    registerForkNousRoute(app, services);
 
     // --- Phase 38 WIRE-01: Brain action dispatch route ---
     // POST /api/v1/brain/actions — civic_did_required (onRequest hook enforces).

@@ -249,6 +249,12 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/p2p/signal/:peerDid':    'civic_did_required',  // Brain JWT SDP relay
     'GET /api/v1/p2p/signal/inbox':        'civic_did_required',  // Brain JWT SDP inbox drain
     'GET /api/v1/p2p/turn-credentials':    'civic_did_required',  // Brain JWT TURN auth
+
+    // Phase 43 FORK-01 — Fork endpoint (2 entries)
+    // header-trust pattern: both routes use x-operator-tier / x-operator-id auth internally.
+    // 'public' is the established policy for all operator.* routes (D-25b-NEW-1).
+    'POST /api/v1/operator/fork/:nousDid':          'public',  // H4+ header-trust, builds .tar.gz
+    'GET /api/v1/operator/fork/:nousDid/download':  'public',  // one-time-token download
 } as Record<string, RouteDIDPolicy>);
 
 /**
