@@ -316,16 +316,16 @@ Per ROADMAP.md Allowlist Growth Ledger:
 - **Phase 40** (0): Local AI is Brain-internal → 64
 - **Phase 41** (0): sleep cycle uses existing event families → 64
 - **Phase 42** (+3): `p2p.peer_announced`, `p2p.connection_opened`, `p2p.connection_closed` → 67
-- **Phase 43** (0): fork uses existing `operator.*` family → 67
-- **Phase 44** (+4): `market.listing_created`, `market.bid_placed`, `market.settled`, `market.disputed` → 71
-- **Phase 45** (+3): `irs.tax_collected`, `irs.disbursement_authorized`, `irs.disbursement_executed` → 74
-- **Phase 46** (+6): `gov.bill_drafted`, `gov.bill_cosponsored`, `gov.session_opened`, `gov.session_closed`, `gov.law_enacted`, `gov.law_repealed` → 80
-- **Phase 47** (+4): `police.complaint_filed`, `police.investigation_opened`, `police.charges_filed`, `police.sanction_executed` → 84
-- **Phase 48** (+2): `library.curator_elected`, `library.entry_curated` → 86
-- **Phase 49** (+4): `community.founded`, `community.joined`, `community.posted`, `community.dissolved` → 90
-- **Phase 50** (0): migration uses existing event families → 90
+- **Phase 43** (+1): `operator.nous_forked` → 68
+- **Phase 44** (+4): `market.listing_created`, `market.bid_placed`, `market.settled`, `market.disputed` → 72
+- **Phase 45** (+3): `irs.tax_collected`, `irs.disbursement_authorized`, `irs.disbursement_executed` → 75
+- **Phase 46** (+6): `gov.bill_drafted`, `gov.bill_cosponsored`, `gov.session_opened`, `gov.session_closed`, `gov.law_enacted`, `gov.law_repealed` → 81
+- **Phase 47** (+4): `police.complaint_filed`, `police.investigation_opened`, `police.charges_filed`, `police.sanction_executed` → 85
+- **Phase 48** (+2): `library.curator_elected`, `library.entry_curated` → 87
+- **Phase 49** (+4): `community.founded`, `community.joined`, `community.posted`, `community.dissolved` → 91
+- **Phase 50** (0): migration uses existing event families → 91
 
-Total v3.0 allowlist growth: **+34 (56 → 90)**. Freeze-except-by-explicit-addition rule preserved. Every new event MUST follow the sole-producer + closed-tuple + `payloadPrivacyCheck` + `audit.append` triad established in v2.6 Phase 33 and CI-enforced by `scripts/check-sole-producer-discipline.mjs`.
+Total v3.0 allowlist growth: **+35 (56 → 91)**. (Phase 43 FORK-04 correction: was +0, now +1.) Freeze-except-by-explicit-addition rule preserved. Every new event MUST follow the sole-producer + closed-tuple + `payloadPrivacyCheck` + `audit.append` triad established in v2.6 Phase 33 and CI-enforced by `scripts/check-sole-producer-discipline.mjs`.
 
 ### v2.6 forbidden-key additions (Phase 33)
 

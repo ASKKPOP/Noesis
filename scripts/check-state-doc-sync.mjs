@@ -47,11 +47,12 @@ if (!existsSync(statePath)) {
 const state = readFileSync(statePath, 'utf8');
 const failures = [];
 
-// 1. Canonical "53 events" assertion must appear at least once in Accumulated Context.
+// 1. Canonical event count assertion must appear at least once in STATE.md.
 //    (Phase 13 established 27 events; STATE.md was restructured in Phase 33 Plan 33-01
-//    to enumerate all 53 v2.5-era events. The 53-event count is now the canonical marker.)
-if (!/53\s+events/i.test(state)) {
-  failures.push('STATE.md does not mention "53 events" — v2.5 allowlist count assertion missing.');
+//    to enumerate all 53 v2.5-era events. v3.0 STATE.md tracks 56 (v2.6 end-state) → 68 (Phase 43).
+//    Accept any of: "53 events" (v2.5), "56 events" (v2.6), or "68 events" (v3.0 Phase 43).)
+if (!/(?:53|56|68)\s+events/i.test(state)) {
+  failures.push('STATE.md does not mention "53 events" / "56 events" / "68 events" — allowlist count assertion missing.');
 }
 
 // 2. Phantom `trade.countered` must NOT appear as a live/shipped event.
@@ -118,6 +119,8 @@ const required = [
   'portal.auth.login',
   'portal.auth.register',
   'human.identified',
+  // Phase 43 addition (FORK-04 / D-43-04): operator.nous_forked at position 68.
+  'operator.nous_forked',
 ];
 for (const event of required) {
   const pattern = new RegExp(event.replace(/\./g, '\\.'));
@@ -210,7 +213,7 @@ function checkAllowlistCount() {
   const text = readFileSync(allowlistPath, 'utf8');
 
   // Count quoted entries in ALLOWLIST_MEMBERS (each on its own line, starting with leading whitespace + quote).
-  // Phase 33 target: 56 members (positions 1-56).
+  // Phase 43 target: 68 members (67 before + operator.nous_forked).
   const arrayMatch = text.match(/export const ALLOWLIST_MEMBERS:[^=]*=\s*\[([\s\S]*?)\] as const;/);
   if (!arrayMatch) {
     failures.push('checkAllowlistCount: could not locate ALLOWLIST_MEMBERS array literal in broadcast-allowlist.ts');
@@ -218,15 +221,15 @@ function checkAllowlistCount() {
   }
   const arrayBody = arrayMatch[1];
   const members = arrayBody.match(/^\s+'[a-z][a-z0-9_.]+'/gm) ?? [];
-  if (members.length !== 56) {
+  if (members.length !== 68) {
     failures.push(
-      `ALLOWLIST_MEMBERS count mismatch: expected 56 entries, found ${members.length}.\n` +
-      `  Phase 33 D-33-A1 revised allowlist from 53 to 56 (+3: portal.auth.login, portal.auth.register, human.identified).\n` +
-      `  Reference: .planning/phases/33-portal-auth-producers/33-CONTEXT.md §D-33-A1.`,
+      `ALLOWLIST_MEMBERS count mismatch: expected 68 entries, found ${members.length}.\n` +
+      `  Phase 43 D-43-04 adds operator.nous_forked (+1: 67 → 68).\n` +
+      `  Reference: .planning/phases/43-right-to-fork/43-CONTEXT.md §D-43-04.`,
     );
   }
 
-  // Position-by-name checks for Phase 33's 3 new entries.
+  // Position-by-name checks for Phase 33's 3 entries (preserved).
   if (!text.includes("'portal.auth.login'")) {
     failures.push('ALLOWLIST_MEMBERS missing portal.auth.login (Phase 33 D-33-A1, position 54).');
   }
@@ -235,6 +238,10 @@ function checkAllowlistCount() {
   }
   if (!text.includes("'human.identified'")) {
     failures.push('ALLOWLIST_MEMBERS missing human.identified (Phase 33 D-33-A1, position 56).');
+  }
+  // Phase 43 D-43-04: operator.nous_forked at position 68 (index 67).
+  if (!text.includes("'operator.nous_forked'")) {
+    failures.push('ALLOWLIST_MEMBERS missing operator.nous_forked (Phase 43 D-43-04, position 68).');
   }
 }
 
@@ -249,5 +256,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log('[state-doc-sync] OK — STATE.md is in sync (v2.5: 53 events + Phase 33: 56 members in broadcast-allowlist.ts).');
+console.log('[state-doc-sync] OK — STATE.md is in sync (v2.5: 53 events + Phase 43: 68 members in broadcast-allowlist.ts).');
 process.exit(0);

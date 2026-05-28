@@ -21,7 +21,7 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42) — exactly these 67 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42 + Phase 43) — exactly these 68 event types.
  *  Phase 42 (P2P-05 / D-42-07): +3 P2P audit events (allowlist 64 → 67).
  *   - p2p.peer_announced (65): closed 3-key {civic_did_hash, endpoint_hash, tick}.
  *     endpoint_hash = sha256('online') — static sentinel (no IP/port leakage per D-42-02).
@@ -278,6 +278,12 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'p2p.peer_announced',      // (65) {civic_did_hash, endpoint_hash, tick}
     'p2p.connection_opened',   // (66) {connection_id, from_did_hash, tick, to_did_hash}
     'p2p.connection_closed',   // (67) {close_reason, connection_id, duration_ticks, tick}
+    // Phase 43 (FORK-04 / D-43-04) — Right-to-fork constitutional enforcement (D-V3-18). Allowlist 67 → 68.
+    // operator.nous_forked: closed 5-key payload {civic_did_hash, fork_reason, operator_did_hash, package_hash, tick}.
+    //   fork_reason ∈ {operator_exit}. All three hash fields are SHA-256 hex (HEX64_RE).
+    //   Event is recorded in BOTH the Grid's audit chain AND the exported fork package (manifest.json).
+    //   Emitted ONLY via appendOperatorNousForked (grid/src/audit/append-operator-nous-forked.ts).
+    'operator.nous_forked',    // (68) {civic_did_hash, fork_reason, operator_did_hash, package_hash, tick}
 ] as const;
 
 /**

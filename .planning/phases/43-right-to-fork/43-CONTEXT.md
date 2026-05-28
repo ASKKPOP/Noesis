@@ -84,11 +84,11 @@ Fork is consent-gated in Steward's Local Nous Manager page (Phase 40, `/system/l
 - **Typed confirmation:** Operator types the full Civic-DID string. Paste is suppressed (keyboard input only). String must match exactly before the `Fork forever` button activates.
 - **Pattern:** Direct clone of `dashboard/src/components/agency/irreversibility-dialog.tsx` (Phase 13/8 pattern).
 
-### D-43-04: Allowlist — +1 (operator.nous_forked), 64 → 65 (CORRECTED)
+### D-43-04: Allowlist — +1 (operator.nous_forked), 67 → 68 (CORRECTED)
 
 ROADMAP listed +0 but this was a planning oversight. FORK-04 requires `operator.nous_forked` in the Grid's audit chain. The allowlist discipline requires explicit addition for every event regardless of namespace family.
 
-**Allowlist accounting correction:** CONTEXT.md previously stated 67 → 68. Research verified actual baseline is **64** (Phase 37 set it to 64; Phases 38–42 all add 0 events). Phase 42 plans exist but are untracked/not yet executed. Correct delta: **64 → 65**.
+**Amendment 2026-05-27 (Plan 43-01 execution correction):** Plan 43-01 was written with baseline "64 → 65" (based on research that said Phase 42 was untracked/not yet executed). At execution time, Plan 43-01 found that Phase 42 HAS shipped: the test file literal `expect(ALLOWLIST.size).toBe(67)` in `grid/test/audit/broadcast-allowlist.test.ts` is authoritative. Correct delta: **67 → 68**. All 5 source-of-truth files updated with 67 → 68 by Plan 43-01.
 
 **New event:**
 | Event | Payload | Sole producer |
@@ -103,9 +103,9 @@ ROADMAP listed +0 but this was a planning oversight. FORK-04 requires `operator.
 
 This event is also embedded INSIDE the fork package (`manifest.json` contains the Grid audit entry for the fork event, satisfying FORK-04's "BOTH chain AND package" requirement).
 
-**Running allowlist total after Phase 43:** 65
+**Running allowlist total after Phase 43:** 68
 
-**ROADMAP and STATE.md must be updated** in the first plan to reflect +1 instead of +0, and correct the allowlist baseline to 64 → 65.
+**ROADMAP and STATE.md were updated** in Plan 43-01 to reflect +1 instead of +0, and the allowlist baseline corrected to 67 → 68.
 
 ### D-43-06: Brain data persistence prerequisite — BRAIN_DATA_DIR env var
 
@@ -159,7 +159,7 @@ New Brain startup mode: `python -m noesis_brain standalone --import <path-to-zip
 - `dashboard/src/components/agency/irreversibility-dialog.tsx` — Phase 43 fork consent gate is a direct clone of this component
 
 ### Allowlist (MUST update in Plan 01)
-- `grid/src/audit/broadcast-allowlist.ts` — add `operator.nous_forked` at next position (currently 67 entries after Phase 42). Running total 67 → 68. Update count assertion comment.
+- `grid/src/audit/broadcast-allowlist.ts` — add `operator.nous_forked` at position 67 (array index, 0-based; current length 67). Running total 67 → 68. Update count assertion comment.
 - `grid/src/audit/append-operator-exported.ts` — sole-producer pattern reference for new `append-operator-nous-forked.ts`
 
 ### Phase 38 Wire Protocol (Brain auth pattern)
@@ -208,7 +208,7 @@ New Brain startup mode: `python -m noesis_brain standalone --import <path-to-zip
 
 ### Integration Points
 - `grid/src/api/server.ts` — register `POST /api/v1/operator/fork/:nousDid` route with Brain EdDSA bearer auth
-- `grid/src/audit/broadcast-allowlist.ts` — add `operator.nous_forked` at position 68
+- `grid/src/audit/broadcast-allowlist.ts` — add `operator.nous_forked` at position 67 (array index, 0-based)
 - `steward/src/app/system/local-ai/page.tsx` — add "Fork Nous" section with IrreversibilityDialog clone
 - `brain/src/noesis_brain/__main__.py` — add `standalone` subcommand with `--import <zip>` argument
 - `brain/src/noesis_brain/wire/` — standalone mode gate: if `BRAIN_STANDALONE=1`, skip client/subscriber/token_manager initialization
