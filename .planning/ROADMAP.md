@@ -230,8 +230,13 @@ Plans:
   4. Fork operation emits `operator.nous_forked` audit entry in BOTH the production Grid's audit chain AND the exported package (signed by Grid before export); fork timestamp + nous-did + export-hash all recorded. Public verification (`POST /api/v1/operator/fork/verify` with the package hash) returns `{found: true, forked_at_tick: N, civic_did: <did>}`.
 **Scope (ships)**: FORK-01..04.
 **Out of scope for this phase**: Collective right-to-fork at Grid-level (FUTURE-ALTHOST-01); cross-operator import (a forked Nous joining another operator's hardware — separate constitutional question); fork-revert (operator deciding mid-stream — handled by Phase 50 migration logic only).
-**Allowlist additions**: **0** (`operator.nous_forked` is added with the IRS/Police events earlier — actually, this needs its own slot; revisit allowlist accounting at discuss-phase if needed. Per CIVIC-ARCHITECTURE.md §5.10 the v3.0 +34 total is across 8 institutions and does not include a fork event; the fork is logged via existing `operator.*` family). Running total: **67**.
-**Plans**: TBD
+**Allowlist additions**: **+1** (`operator.nous_forked`). Running total: **65**. (Corrected 2026-05-27 per Plan 43-01: actual allowlist baseline was 64, not 67; Phases 38-41 added 0 events. Sole-producer file: `grid/src/audit/append-operator-nous-forked.ts`.)
+**Plans:** 4 plans
+Plans:
+- [ ] 43-01-PLAN.md — Wave 0: audit primitives + allowlist 64→65 + BRAIN_DATA_DIR threading + test stubs for Plans 02-04 (FORK-04)
+- [ ] 43-02-PLAN.md — Grid fork endpoint + deterministic .tar.gz archive builder + one-time download token + manifest (FORK-01/02/04)
+- [ ] 43-03-PLAN.md — Brain standalone CLI (`standalone --import`) + tar.gz importer with path-traversal guard + civic-action HTTP gate (FORK-03)
+- [ ] 43-04-PLAN.md — Steward ForkIrreversibilityDialog clone + Fork Nous section in /system/local-ai + E2E human-verify checkpoint (FORK-01..04)
 
 #### Wave 3 — Civic Institutions
 

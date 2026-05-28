@@ -752,37 +752,25 @@ if __name__ == "__main__":
 
 **If this table has many entries that flip to verified before Plan 01:** confidence levels in this document upgrade from MEDIUM to HIGH.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **ZIP vs .tar.gz format**
-   - What we know: CONTEXT.md D-43-02 specifies ZIP. Grid already has `tar` library; ZIP would require a new dependency. Phase 13 uses tar with deterministic discipline.
-   - What's unclear: Whether the "ZIP" decision was deliberate (operator UX — Windows users prefer ZIP) or default (no alternative considered).
-   - Recommendation: Revisit with user during planning. Recommend `.tar.gz` for inheritance of Phase 13 discipline. If user insists on ZIP, add `archiver` dependency (mature, deterministic options available).
+   - RESOLVED: Use `.tar.gz` — D-43-02 amended during planning. `.tar` already in `grid/package.json` (inherited from Phase 13 with full determinism discipline). No new npm dependency required.
 
 2. **Brain runs `:memory:` in v3.0 — does Phase 43 ship with `BRAIN_DATA_DIR`?**
-   - What we know: Current Brain uses `:memory:` SQLite. Fork export from `:memory:` produces empty memory.
-   - What's unclear: Whether Phase 43 should add `BRAIN_DATA_DIR` env var (refactor) or assume separate Phase ships persistence first.
-   - Recommendation: Phase 43 MUST add `BRAIN_DATA_DIR` threading — otherwise the feature is non-functional. This is a "hidden Wave 0" prerequisite for Plan 01.
+   - RESOLVED: Yes — Phase 43 Plan 01 Task 3 ships `BRAIN_DATA_DIR` env var threading through `MemoryStore`, `LtmStore`, and `IrisStore` in `brain/src/noesis_brain/__main__.py`. This is a mandatory prerequisite for a functional fork export (D-43-06).
 
 3. **H4 vs H5 tier for fork**
-   - What we know: CONTEXT.md does not lock the tier. Export-replay is H5. Delete-nous is H5.
-   - What's unclear: Whether fork warrants the same maximum tier or a lower one.
-   - Recommendation: H4+ (fork is more routine than deletion; H5 should reserve for "deletes Nous forever"). Planner confirms.
+   - RESOLVED: H4+ tier gate. Fork is more routine than deletion (H5). Plans 02–04 implement the H4+ gate via header-trust `x-operator-tier` check (`tier < 4` → 403).
 
 4. **Civic-DID vs existence-DID in audit hash**
-   - What we know: CONTEXT.md says `civic_did_hash`. The Nous has BOTH civic_did and existence_did.
-   - What's unclear: Whether the audit should hash civic_did (revocable, changes on re-registration) or existence_did (permanent identity).
-   - Recommendation: Existence-DID is the operator-controlled identity per D-V3-01; fork is an existence-level action. Suggest `existence_did_hash` instead, or BOTH in the payload. Discuss with user.
+   - RESOLVED: Use `civic_did_hash` as locked in CONTEXT.md D-43-05. The 5-key payload tuple is `{civic_did_hash, fork_reason, operator_did_hash, package_hash, tick}` (alphabetical order, locked in Plan 01 Task 1 `EXPECTED_KEYS`).
 
 5. **Cross-process SQLite read safety**
-   - What we know: Brain SQLite uses WAL mode, allowing concurrent readers.
-   - What's unclear: Whether Grid's direct file read is atomic, or if a Brain-side `/api/brain/snapshot` HTTP endpoint is required.
-   - Recommendation: Use SQLite's online backup API (`source.backup(target)`) for safety. If Grid cannot run this (different process), add a Brain HTTP endpoint that returns the backup bytes.
+   - RESOLVED: Direct file read from `BRAIN_DATA_DIR` (single-host v3.0 assumption — Brain and Grid on same machine in dev/test). Grid reads `.db` files from the path returned by `GET /api/v1/operator/me/brain-data-dir`. WAL mode allows concurrent reader; no online backup API needed for v3.0. Deferred to v3.1 for multi-host safety.
 
 6. **What happens to wire queue undelivered actions at fork time?**
-   - What we know: Brain has `noesis-nous-<slug>-wire.db` for offline-queued actions.
-   - What's unclear: Should fork export include these (they reference a Grid the standalone Nous cannot reach) or discard them?
-   - Recommendation: EXCLUDE from export. Log warning if non-empty: "Discarding N undelivered civic actions at fork time."
+   - RESOLVED: EXCLUDE from export. Plan 02 Task 1 logs `"Discarding N undelivered civic actions at fork time"` (Pino structured log, `module: 'fork'`) if wire queue `noesis-nous-<slug>-wire.db` is non-empty. Wire DB not included in the fork archive.
 
 ## Environment Availability
 

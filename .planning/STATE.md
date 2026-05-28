@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
-status: Ready for `/gsd-execute-phase 42`
-stopped_at: Phase 42 planned — 5 plans across 4 waves (Wave 0→1→2→3)
+status: Ready to execute
+stopped_at: Phase 43 planned (4 plans)
 last_updated: "2026-05-27T00:00:00.000Z"
 progress:
   total_phases: 25
   completed_phases: 6
-  total_plans: 36
+  total_plans: 42
   completed_plans: 31
-  percent: 86
+  percent: 74
 ---
 
 # Project State
@@ -22,14 +22,14 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** Phase 42 — P2P Infrastructure
+**Current focus:** Phase 43 — Right-to-Fork Export Tooling
 
 ## Current Position
 
-Phase: 42 (P2P Infrastructure) — PLANNED (5 plans, 4 waves — ready to execute)
-Previous: Phase 41 (sleep-cycle-away-presence) — SHIPPED 2026-05-27
-Status: Ready for `/gsd-execute-phase 42`
-Next action: Execute Phase 42 (P2P Infrastructure — Grid WebRTC signaling, DID discovery, STUN/TURN, BrainP2PClient)
+Phase: 43 (Right-to-Fork Export Tooling) — Ready to execute (4 plans)
+Previous: Phase 42 (P2P Infrastructure) — PLANNED (4 plans, not yet executed)
+Status: Ready for `/gsd-execute-phase 43`
+Next action: Execute Phase 43 (constitutional D-V3-18 enforcement — fork endpoint, Brain standalone mode, Steward fork UI)
 
 Driving inputs for v3.0 (locked at milestone open):
 

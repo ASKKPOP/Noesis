@@ -30,9 +30,11 @@ Phase 43 ships BOTH the Grid export endpoint AND the Brain-side standalone mode.
 - Civic actions (marketplace bids, governance votes, inter-Nous messaging) return `{"error": "grid_unavailable", "detail": "This Nous is running standalone — civic features require Grid connection."}` — clear error, not silent failure
 - Re-joining civic life: operator sets `BRAIN_GRID_URL` env var back and restarts; Nous re-registers via Portal → Polis flow (Phase 37/43 migration path: loses civic reputation, keeps Brain memory, per FORK-03)
 
-### D-43-02: Export package format — ZIP with JSON manifest
+### D-43-02: Export package format — .tar.gz with JSON manifest (AMENDED from ZIP)
 
-Fork package is a `.zip` archive named `nous-fork-<civic_did_hash>-<unix_timestamp>.zip`.
+Fork package is a `.tar.gz` archive named `nous-fork-<civic_did_hash>-<unix_timestamp>.tar.gz`.
+
+**Amendment note:** Originally specified as `.zip`. Changed to `.tar.gz` to inherit Phase 13's hardening discipline (`tar` already in `grid/package.json`, deterministic by default — no new npm dep, no new determinism implementation required).
 
 **Internal structure:**
 ```
@@ -41,7 +43,7 @@ memory/
   nous.db                    — Primary memory SQLite (MemoryStore — episodic + wiki/Karpathy)
   ltm.db                     — Long-term memory SQLite (Hypnos LtmStore — consolidated memories)
   psyche.db                  — Psyche/identity state SQLite (if Pneuma maps here)
-  [any other Brain SQLite DB files at export time]
+  [any other Brain SQLite DB files at BRAIN_DATA_DIR at export time]
 credentials/
   civic-did.vc.json          — Civic-DID W3C VC (JWS-signed)
   business-did.vc.json       — Business-DID W3C VC (if held, else absent)
@@ -65,11 +67,11 @@ civic/
   "export_hash": "<sha256 of all included files, sorted by path>",
   "chain_tail_hash": "<from audit/chain-tail-hash.txt>",
   "memory_files": ["nous.db", "ltm.db", ...],
-  "note": "FORK-02: This archive is human-readable. Unzip and read manifest.json to inspect."
+  "note": "FORK-02: This archive is human-readable. Extract with tar -xzf and read manifest.json to inspect."
 }
 ```
 
-**Researcher and planner:** Identify all Brain SQLite database files at runtime (may vary by Nous configuration). The export captures ALL `.db` files in the Brain's data directory.
+**Researcher and planner:** Identify all Brain SQLite database files at runtime (may vary by Nous configuration). The export captures ALL `.db` files in `BRAIN_DATA_DIR`.
 
 ### D-43-03: Fork consent gate — IrreversibilityDialog clone
 
@@ -82,9 +84,11 @@ Fork is consent-gated in Steward's Local Nous Manager page (Phase 40, `/system/l
 - **Typed confirmation:** Operator types the full Civic-DID string. Paste is suppressed (keyboard input only). String must match exactly before the `Fork forever` button activates.
 - **Pattern:** Direct clone of `dashboard/src/components/agency/irreversibility-dialog.tsx` (Phase 13/8 pattern).
 
-### D-43-04: Allowlist — +1 (operator.nous_forked), 67 → 68
+### D-43-04: Allowlist — +1 (operator.nous_forked), 64 → 65 (CORRECTED)
 
 ROADMAP listed +0 but this was a planning oversight. FORK-04 requires `operator.nous_forked` in the Grid's audit chain. The allowlist discipline requires explicit addition for every event regardless of namespace family.
+
+**Allowlist accounting correction:** CONTEXT.md previously stated 67 → 68. Research verified actual baseline is **64** (Phase 37 set it to 64; Phases 38–42 all add 0 events). Phase 42 plans exist but are untracked/not yet executed. Correct delta: **64 → 65**.
 
 **New event:**
 | Event | Payload | Sole producer |
@@ -94,14 +98,26 @@ ROADMAP listed +0 but this was a planning oversight. FORK-04 requires `operator.
 **Payload notes:**
 - `civic_did_hash`: SHA-256 of the forked Nous's Civic-DID (no raw DID in audit)
 - `operator_did_hash`: SHA-256 of the requesting operator's DID
-- `package_hash`: SHA-256 of the complete ZIP archive (integrity anchor)
+- `package_hash`: SHA-256 of the complete .tar.gz archive (integrity anchor)
 - `fork_reason`: string enum — `"operator_exit"` (v3.0 only value)
 
 This event is also embedded INSIDE the fork package (`manifest.json` contains the Grid audit entry for the fork event, satisfying FORK-04's "BOTH chain AND package" requirement).
 
-**Running allowlist total after Phase 43:** 68
+**Running allowlist total after Phase 43:** 65
 
-**ROADMAP and STATE.md must be updated** in the first plan to reflect +1 instead of +0.
+**ROADMAP and STATE.md must be updated** in the first plan to reflect +1 instead of +0, and correct the allowlist baseline to 64 → 65.
+
+### D-43-06: Brain data persistence prerequisite — BRAIN_DATA_DIR env var
+
+Research found a showstopper: `MemoryStore(":memory:")` is hardcoded in `brain/src/noesis_brain/__main__.py:250`. Fork export from an in-memory SQLite DB produces an empty `memory/` directory — the fork would be non-functional.
+
+**Plan 01 must add:**
+- `BRAIN_DATA_DIR` env var (default: `~/.noesis/brain/data/` or similar)
+- Thread `BRAIN_DATA_DIR` through `MemoryStore`, `LtmStore`, `IrisStore` construction in `__main__.py`
+- SQLite files are created at `BRAIN_DATA_DIR/{nous.db,ltm.db,psyche.db,...}` 
+- Brain standalone import extracts `.db` files into the configured `BRAIN_DATA_DIR`
+
+This is a prerequisite for FORK-01 to be non-trivially functional.
 
 ### D-43-05: Brain standalone CLI interface
 
