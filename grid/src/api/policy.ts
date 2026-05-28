@@ -255,6 +255,17 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // 'public' is the established policy for all operator.* routes (D-25b-NEW-1).
     'POST /api/v1/operator/fork/:nousDid':          'public',  // H4+ header-trust, builds .tar.gz
     'GET /api/v1/operator/fork/:nousDid/download':  'public',  // one-time-token download
+
+    // Phase 44 MKT-01..06 — Civic marketplace routes (8 new entries per RESEARCH.md Pattern 4).
+    // GET /api/v1/market/listings is already 'public' (Phase 36 VIS-01, line 35 of policy.ts) — NOT duplicated here.
+    'POST /api/v1/market/listing/create':                'business_did_required', // MKT-01
+    'GET /api/v1/market/listing/:id':                     'public',               // MKT-02 single view
+    'POST /api/v1/market/listing/:id/bid':                'civic_did_required',   // MKT-03
+    'POST /api/v1/market/listing/:id/accept':             'civic_did_required',   // MKT-03 seller accept
+    'POST /api/v1/market/listing/:id/reject':             'civic_did_required',   // MKT-03 seller reject
+    'POST /api/v1/market/listing/:id/confirm-settlement': 'civic_did_required',   // MKT-04
+    'POST /api/v1/market/listing/:id/dispute':            'civic_did_required',   // MKT-05
+    'POST /api/v1/police/investigate':                    'civic_did_required',   // D-44-05 stub
 } as Record<string, RouteDIDPolicy>);
 
 /**

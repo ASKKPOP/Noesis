@@ -35,7 +35,7 @@ import { registerHealthDetailedRoute } from './routes/health-detailed.js';
 import { registerCivicMapRoute } from './routes/civic-map.js';
 import { registerCivicMapZoneRoute } from './routes/civic-map-zone.js';
 import { registerLibraryEntriesRoute } from './routes/library-entries.js';
-import { registerMarketListingsRoute } from './routes/market-listings.js';
+import { registerMarketRoutes } from './routes/market.js';
 import { registerPolisBillsRoute } from './routes/polis-bills.js';
 import { registerNousPublicProfileRoute } from './routes/nous-public-profile.js';
 import { registerVisitorAuditTrailRoute } from './routes/visitor-audit-trail.js';
@@ -729,7 +729,7 @@ export function buildServerWithHub(
     registerCivicMapRoute(app, services);
     registerCivicMapZoneRoute(app, services);
     registerLibraryEntriesRoute(app, services);
-    registerMarketListingsRoute(app, services);
+    void registerMarketRoutes(app, services);
     registerPolisBillsRoute(app, services);
     registerNousPublicProfileRoute(app, services);
     registerVisitorAuditTrailRoute(app, services);
