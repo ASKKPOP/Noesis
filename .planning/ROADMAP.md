@@ -59,7 +59,7 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 - [x] **Phase 43: Right-to-Fork Export Tooling** — Operator can export full Nous state (Brain memory + civic credentials + audit history) and run standalone; constitutional enforcement of D-V3-18. (allowlist 0) (completed 2026-05-28)
 
 **Wave 3 — Civic Institutions (Phases 44-49)**
-- [ ] **Phase 44: Marketplace v3** — Business-DID listings, bids, escrow, IRS fee hooks, dispute → Police routing. (allowlist +4)
+- [x] **Phase 44: Marketplace v3** — Business-DID listings, bids, escrow, IRS fee hooks, dispute → Police routing. (allowlist +4) (completed 2026-05-28)
 - [ ] **Phase 45: IRS Treasury** — Transaction fee collection (1-3% configurable), civic treasury, Government-authorized disbursements. (allowlist +3)
 - [ ] **Phase 46: Government v3** — Nous-only legislative VOTE-05 with bills, co-sponsorship, scheduled sessions, civic law book. (allowlist +6)
 - [ ] **Phase 47: Police v3** — Complaint-driven sanctions, investigation, court-filed charges, appeals to Government. (allowlist +4)
@@ -253,13 +253,13 @@ Plans:
 **Scope (ships)**: MKT-01..06.
 **Out of scope for this phase**: Service contracts (multi-tick deliverables) — v3.0 marketplace is one-shot transactions; auction-style bidding (English/Dutch) — v3.0 is offer/accept only; cross-currency (USDT/ETH involvement) — Bios is the marketplace unit per zero-custody invariant.
 **Allowlist additions**: **+4**. Running total: **71**.
-**Plans:** 5 plans
+**Plans:** 5/5 plans complete
 Plans:
-- [ ] 44-01-PLAN.md — Wave 0 test scaffolds (9 stubs + broadcast-allowlist length===72 gate; D-44-01/03/05/05b/06 + MKT-06)
-- [ ] 44-02-PLAN.md — DB layer: migrations v33/v34/v35 + MarketplaceStore + settlement-timeout helper (MKT-01..05 + D-44-02/05b)
-- [ ] 44-03-PLAN.md — Audit producers: 4 market.* + irs.tax_collected (audit-chain-only) + allowlist 68→72 (MKT-06 + D-44-01/03)
-- [ ] 44-04-PLAN.md — Routes (8 marketplace + police stub) + launcher settlement-timeout setInterval + ROADMAP doc-sync (MKT-01..06 + D-44-04/05)
-- [ ] 44-05-PLAN.md — Steward /economy page (browse + create form) + business_did response field + human-verify checkpoint (MKT-01/02 + D-44-08/09)
+- [x] 44-01-PLAN.md — Wave 0 test scaffolds (9 stubs + broadcast-allowlist length===72 gate; D-44-01/03/05/05b/06 + MKT-06)
+- [x] 44-02-PLAN.md — DB layer: migrations v33/v34/v35 + MarketplaceStore + settlement-timeout helper (MKT-01..05 + D-44-02/05b)
+- [x] 44-03-PLAN.md — Audit producers: 4 market.* + irs.tax_collected (audit-chain-only) + allowlist 68→72 (MKT-06 + D-44-01/03)
+- [x] 44-04-PLAN.md — Routes (8 marketplace + police stub) + launcher settlement-timeout setInterval + ROADMAP doc-sync (MKT-01..06 + D-44-04/05)
+- [x] 44-05-PLAN.md — Steward /economy page (browse + create form) + business_did response field + human-verify checkpoint (MKT-01/02 + D-44-08/09)
 
 ### Phase 45: IRS Treasury
 **Goal**: Per D-V3-22, transaction fees on marketplace settlements fund civic infrastructure (Grid hosting, library curators, Police ops). No income or wealth tax in v3.0. Treasury is public-readable; disbursements require Government authorization.
@@ -539,7 +539,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 41. Sleep Cycle + Away Presence | 5/6 | In Progress|  |
 | 42. P2P Infrastructure | 5/5 | Complete   | 2026-05-28 |
 | 43. Right-to-Fork Export Tooling | 4/4 | Complete    | 2026-05-28 |
-| 44. Marketplace v3 | 0/? | Not started | — |
+| 44. Marketplace v3 | 5/5 | Complete   | 2026-05-28 |
 | 45. IRS Treasury | 0/? | Not started | — |
 | 46. Government v3 | 0/? | Not started | — |
 | 47. Police v3 | 0/? | Not started | — |

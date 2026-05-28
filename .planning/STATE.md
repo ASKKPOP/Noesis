@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
-status: ready_to_execute
-stopped_at: Phase 44 planned — 5 plans in 4 waves, verification passed, ready to execute
-last_updated: "2026-05-28T06:00:00.000Z"
+status: executing
+stopped_at: Phase 44 context updated (discuss-phase session — IRS 2%, police stub, settlement timeout 7 ticks)
+last_updated: "2026-05-28T06:30:12.623Z"
 progress:
   total_phases: 25
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 45
-  completed_plans: 40
-  percent: 89
+  completed_plans: 45
+  percent: 100
 ---
 
 # Project State
@@ -26,10 +26,10 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 44
-Plan: Ready to execute (5 plans created, verification passed)
+Phase: 44 (Marketplace v3) — EXECUTING
+Plan: 2 of 5
 Previous: Phase 43 (Right-to-Fork Export Tooling) — SHIPPED 2026-05-28 (4 plans, allowlist 67→68)
-Status: Phase 44 planned — 5 plans in 4 waves
+Status: Ready to execute
 Next action: Execute Phase 44 (Marketplace v3 — civic commerce + escrow)
 
 Driving inputs for v3.0 (locked at milestone open):
@@ -519,6 +519,6 @@ Total v3.0 allowlist growth: **+35 (56 → 91)**. Freeze-except-by-explicit-addi
 
 ## Session Continuity
 
-Last session: 2026-05-28T04:24:57.539Z
+Last session: 2026-05-28T06:30:12.618Z
 Stopped at: Phase 44 context updated (discuss-phase session — IRS 2%, police stub, settlement timeout 7 ticks)
-Resume file: .planning/phases/44-marketplace-v3/44-CONTEXT.md
+Resume file: None
