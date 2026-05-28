@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
-status: Ready for `/gsd-plan-phase 43`
-stopped_at: Phase 43 context gathered
-last_updated: "2026-05-28T00:30:00.000Z"
+status: Ready for `/gsd-execute-phase 42`
+stopped_at: Phase 42 planned — 5 plans across 4 waves (Wave 0→1→2→3)
+last_updated: "2026-05-27T00:00:00.000Z"
 progress:
   total_phases: 25
   completed_phases: 6
-  total_plans: 31
+  total_plans: 36
   completed_plans: 31
-  percent: 100
+  percent: 86
 ---
 
 # Project State
@@ -26,10 +26,10 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 42 (P2P Infrastructure) — NOT STARTED
+Phase: 42 (P2P Infrastructure) — PLANNED (5 plans, 4 waves — ready to execute)
 Previous: Phase 41 (sleep-cycle-away-presence) — SHIPPED 2026-05-27
-Status: Ready for `/gsd-plan-phase 42`
-Next action: Plan Phase 42 (P2P Infrastructure — Grid-mediated signaling + DID-to-endpoint discovery + STUN/TURN)
+Status: Ready for `/gsd-execute-phase 42`
+Next action: Execute Phase 42 (P2P Infrastructure — Grid WebRTC signaling, DID discovery, STUN/TURN, BrainP2PClient)
 
 Driving inputs for v3.0 (locked at milestone open):
 
