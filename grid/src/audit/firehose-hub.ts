@@ -333,6 +333,29 @@ export class WsFirehoseHub {
         }
     }
 
+    /**
+     * Phase 42 P2P-02 / D-42-06 — push a private frame ONLY to the subscriber whose
+     * didContext.did matches recipientDid. NOT an audit chain event; NOT allowlist-gated.
+     * Bypasses onAuditEvent() entirely — this is a private real-time notification.
+     *
+     * Frame type 'p2p.signal_received' MUST NOT appear in ALLOWLIST_MEMBERS.
+     * Verified by grid/test/audit/broadcast-allowlist.test.ts (Phase 42 describe block).
+     */
+    pushSignalToDid(recipientDid: string, frame: object): void {
+        const payload = JSON.stringify(frame);
+        for (const client of this._clients) {
+            if (client.didContext?.did === recipientDid) {
+                try {
+                    client.socket.send(payload);
+                    this.metrics.frames_sent_total++;
+                    this.metrics.last_frame_at = Date.now();
+                } catch {
+                    // Swallow broken socket — matches trySend pattern
+                }
+            }
+        }
+    }
+
     async close(): Promise<void> {
         if (this.closing) return;
         this.closing = true;

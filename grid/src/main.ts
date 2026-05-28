@@ -276,6 +276,10 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         // Phase 41 SLEEP-01: PresenceService + currentTick for presence/inbox/message routes.
         ...(dbConn ? { pool: dbConn.getPool() } : {}),
         ...(presenceService ? { presenceService, currentTick: () => launcher.clock.currentTick } : {}),
+        // Phase 42 P2P-01..05: P2P peer store + SDP inbox + TURN credentials.
+        // launcher.p2pService is populated by launcher.start() and accessible here for GridServices wiring.
+        // Wired unconditionally — P2PService is in-memory and requires no DB connection.
+        ...(launcher.p2pService ? { p2pService: launcher.p2pService } : {}),
         // D-03: inject spawnNousDeps via _spawnNousDeps escape hatch (see spawn-system-nous.ts line 89).
         // Cast required because _spawnNousDeps is not on the public GridServices interface.
         ...({ _spawnNousDeps: spawnNousDeps } as unknown as { _spawnNousDeps: SpawnNousDeps }),

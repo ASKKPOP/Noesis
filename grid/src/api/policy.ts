@@ -240,6 +240,15 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
 
     // Phase 41 — Grid Manager presence overview (Steward Console Section 4).
     'GET /api/v1/grid-manager/presence-overview': 'portal_session_required',
+
+    // Phase 42 P2P-01..03 — P2P signaling routes (5 entries)
+    // Per D-42-03: TURN is FREE in v3.0; Civic-DID auth required to prevent anonymous relay abuse.
+    // Per D-42-06: p2p/signal/inbox is scoped to bearer's Civic-DID (route handler drains its own DID only).
+    'POST /api/v1/p2p/announce':           'civic_did_required',  // Brain JWT heartbeat
+    'GET /api/v1/p2p/peers/:civicDid':     'public',              // public peer presence lookup
+    'POST /api/v1/p2p/signal/:peerDid':    'civic_did_required',  // Brain JWT SDP relay
+    'GET /api/v1/p2p/signal/inbox':        'civic_did_required',  // Brain JWT SDP inbox drain
+    'GET /api/v1/p2p/turn-credentials':    'civic_did_required',  // Brain JWT TURN auth
 } as Record<string, RouteDIDPolicy>);
 
 /**

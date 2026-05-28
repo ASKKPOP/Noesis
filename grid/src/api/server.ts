@@ -68,6 +68,7 @@ import { registerCivicPresenceRoutes } from './routes/civic-presence.js';
 import { registerCivicInboxRoutes } from './routes/civic-inbox.js';
 import { registerCivicMessageRoute } from './routes/civic-message.js';
 import { registerGridManagerPresenceRoute } from './routes/grid-manager-presence.js';
+import { registerP2pRoutes } from './routes/p2p.js';
 
 /**
  * Phase 6 AGENCY-02: normalized memory entry shape crossing the RPC boundary.
@@ -361,6 +362,11 @@ export interface GridServices {
      * Tests: `() => 0` or a fixture tick.
      */
     currentTick?: () => number;
+    /**
+     * Phase 42 P2P-01..05: P2P peer store + SDP inbox + TURN shared secret.
+     * When absent, Phase 42 routes return 503 p2p_service_unavailable.
+     */
+    p2pService?: import('../p2p/types.js').P2PService;
 }
 
 /**
@@ -668,6 +674,12 @@ export function buildServerWithHub(
     // --- Phase 41 SLEEP-02: Grid Manager presence overview (Steward Console Section 4) ---
     // GET /api/v1/grid-manager/presence-overview — portal_session_required (D-V3-36 Tier-2).
     void registerGridManagerPresenceRoute(app, services);
+
+    // --- Phase 42 P2P-01..05: P2P signaling routes ---
+    // Five endpoints: POST /p2p/announce, GET /p2p/peers/:did, POST /p2p/signal/:did,
+    // GET /p2p/signal/inbox, GET /p2p/turn-credentials.
+    // Policy enforcement delegated to onRequest hook per ROUTE_DID_POLICY (5 entries added in policy.ts).
+    void registerP2pRoutes(app, services);
 
     // --- Phase 38 WIRE-01: Brain action dispatch route ---
     // POST /api/v1/brain/actions — civic_did_required (onRequest hook enforces).
