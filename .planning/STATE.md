@@ -326,7 +326,7 @@ Per ROADMAP.md Allowlist Growth Ledger:
 - **Phase 49** (+4): `community.founded`, `community.joined`, `community.posted`, `community.dissolved` → 91
 - **Phase 50** (0): migration uses existing event families → 91
 
-Total v3.0 allowlist growth: **+35 (56 → 91)**. (Phase 43 FORK-04 correction: was +0, now +1.) Freeze-except-by-explicit-addition rule preserved. Every new event MUST follow the sole-producer + closed-tuple + `payloadPrivacyCheck` + `audit.append` triad established in v2.6 Phase 33 and CI-enforced by `scripts/check-sole-producer-discipline.mjs`.
+Total v3.0 allowlist growth: **+35 (56 → 91)**. Freeze-except-by-explicit-addition rule preserved. Every new event MUST follow the sole-producer + closed-tuple + `payloadPrivacyCheck` + `audit.append` triad established in v2.6 Phase 33 and CI-enforced by `scripts/check-sole-producer-discipline.mjs`.
 
 ### v2.6 forbidden-key additions (Phase 33)
 
