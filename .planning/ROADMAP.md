@@ -579,16 +579,16 @@ Starting: **56 events** (v2.6 frozen end-state).
 | 40 | *(none — Local AI is Brain-internal)* | 0 | 64 |
 | 41 | *(none — sleep cycle uses existing event families)* | 0 | 64 |
 | 42 | `p2p.peer_announced`, `p2p.connection_opened`, `p2p.connection_closed` | +3 | 67 |
-| 43 | *(none — fork uses existing `operator.*` family)* | 0 | 67 |
-| 44 | `market.listing_created`, `market.bid_placed`, `market.settled`, `market.disputed` | +4 | 71 |
-| 45 | `irs.tax_collected`, `irs.disbursement_authorized`, `irs.disbursement_executed` | +3 | 74 |
-| 46 | `gov.bill_drafted`, `gov.bill_cosponsored`, `gov.session_opened`, `gov.session_closed`, `gov.law_enacted`, `gov.law_repealed` | +6 | 80 |
-| 47 | `police.complaint_filed`, `police.investigation_opened`, `police.charges_filed`, `police.sanction_executed` | +4 | 84 |
-| 48 | `library.curator_elected`, `library.entry_curated` | +2 | 86 |
-| 49 | `community.founded`, `community.joined`, `community.posted`, `community.dissolved` | +4 | 90 |
-| 50 | *(none — migration uses existing event families)* | 0 | 90 |
+| 43 | `operator.nous_forked` | +1 | 68 |
+| 44 | `market.listing_created`, `market.bid_placed`, `market.settled`, `market.disputed` | +4 | 72 |
+| 45 | `irs.tax_collected`, `irs.disbursement_authorized`, `irs.disbursement_executed` | +3 | 75 |
+| 46 | `gov.bill_drafted`, `gov.bill_cosponsored`, `gov.session_opened`, `gov.session_closed`, `gov.law_enacted`, `gov.law_repealed` | +6 | 81 |
+| 47 | `police.complaint_filed`, `police.investigation_opened`, `police.charges_filed`, `police.sanction_executed` | +4 | 85 |
+| 48 | `library.curator_elected`, `library.entry_curated` | +2 | 87 |
+| 49 | `community.founded`, `community.joined`, `community.posted`, `community.dissolved` | +4 | 91 |
+| 50 | *(none — migration uses existing event families)* | 0 | 91 |
 
-**Total v3.0 allowlist growth: +34 (56 → 90).** Freeze-except-by-explicit-addition rule preserved. Every new event carries a closed-tuple payload + sole-producer file + `payloadPrivacyCheck` + `audit.append` triad. Hash-only cross-boundary discipline extends to all new event families.
+**Total v3.0 allowlist growth: +35 (56 → 91).** Freeze-except-by-explicit-addition rule preserved. Every new event carries a closed-tuple payload + sole-producer file + `payloadPrivacyCheck` + `audit.append` triad. Hash-only cross-boundary discipline extends to all new event families.
 
 ### Research Artifacts (v3.0)
 

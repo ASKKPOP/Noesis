@@ -288,10 +288,10 @@
 | P2P-03 | 42 | Complete |
 | P2P-04 | 42 | Complete |
 | P2P-05 | 42 | Complete |
-| FORK-01 | 43 | Pending |
-| FORK-02 | 43 | Pending |
-| FORK-03 | 43 | Pending |
-| FORK-04 | 43 | Pending |
+| FORK-01 | 43 | Complete |
+| FORK-02 | 43 | Complete |
+| FORK-03 | 43 | Complete |
+| FORK-04 | 43 | Complete |
 | MKT-01 | 44 | Pending |
 | MKT-02 | 44 | Pending |
 | MKT-03 | 44 | Pending |
