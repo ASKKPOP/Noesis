@@ -21,6 +21,8 @@ export interface CivicDidRecord {
     lastSeenTick?: number | null;
     awayGraceExpiresAt?: Date | null;
     frozen?: boolean;
+    // Phase 42 P2P-01..05 — Ed25519 JWK for P2P SDP encryption (migration v32; NULL = P2P unavailable)
+    existencePublicKeyJwk?: object | null;
 }
 
 export interface BusinessDidRecord {

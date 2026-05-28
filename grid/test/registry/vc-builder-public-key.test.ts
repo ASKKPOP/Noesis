@@ -1,31 +1,36 @@
-import { describe, it } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { buildCivicDidVc } from '../../src/civic-registry/vc-builder.js';
 
 // buildCivicDidVc — Phase 42 Plan 02
 // existencePublicKeyJwk is a new optional param added to credentialSubject
 // so Brain can include its Ed25519 public key in the Civic-DID VC for P2P peer discovery.
 
 describe('buildCivicDidVc public key (Phase 42 Plan 02)', () => {
-    it.skip('buildCivicDidVc with existencePublicKeyJwk param includes it in credentialSubject', () => {
-        // const jwk = { kty: 'OKP', crv: 'Ed25519', x: 'base64urlvalue' };
-        // const vc = buildCivicDidVc({ civicDid: 'did:civic:noesis:abc', existencePublicKeyJwk: jwk, ... });
-        // expect(vc.credentialSubject.existencePublicKeyJwk).toEqual(jwk);
+    const BASE_PARAMS = {
+        civicDid: 'did:civic:noesis:test-abc',
+        existenceDid: 'did:noesis:nous:test-abc',
+        issuedAtTick: 1,
+    };
+
+    it('buildCivicDidVc with existencePublicKeyJwk param includes it in credentialSubject', async () => {
+        const jwk = { kty: 'OKP', crv: 'Ed25519', x: 'base64urlvalue' };
+        const vc = await buildCivicDidVc({ ...BASE_PARAMS, existencePublicKeyJwk: jwk }) as any;
+        expect(vc.credentialSubject.existencePublicKeyJwk).toEqual(jwk);
     });
 
-    it.skip('buildCivicDidVc with existencePublicKeyJwk: null OMITS key from credentialSubject (backward compat)', () => {
-        // const vc = buildCivicDidVc({ civicDid: 'did:civic:noesis:abc', existencePublicKeyJwk: null, ... });
-        // expect(vc.credentialSubject).not.toHaveProperty('existencePublicKeyJwk');
+    it('buildCivicDidVc with existencePublicKeyJwk: null OMITS key from credentialSubject (backward compat)', async () => {
+        const vc = await buildCivicDidVc({ ...BASE_PARAMS, existencePublicKeyJwk: null }) as any;
+        expect(vc.credentialSubject).not.toHaveProperty('existencePublicKeyJwk');
     });
 
-    it.skip('buildCivicDidVc with valid OKP JWK {kty:"OKP",crv:"Ed25519",x:"base64url"} preserves structure exactly', () => {
-        // const jwk = { kty: 'OKP', crv: 'Ed25519', x: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' };
-        // const vc = buildCivicDidVc({ civicDid: 'did:civic:noesis:abc', existencePublicKeyJwk: jwk, ... });
-        // expect(vc.credentialSubject.existencePublicKeyJwk).toStrictEqual(jwk);
+    it('buildCivicDidVc with valid OKP JWK {kty:"OKP",crv:"Ed25519",x:"base64url"} preserves structure exactly', async () => {
+        const jwk = { kty: 'OKP', crv: 'Ed25519', x: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' };
+        const vc = await buildCivicDidVc({ ...BASE_PARAMS, existencePublicKeyJwk: jwk }) as any;
+        expect(vc.credentialSubject.existencePublicKeyJwk).toStrictEqual(jwk);
     });
 
-    it.skip('existing call sites passing only original params still work (param is optional, backward compat)', () => {
-        // // No existencePublicKeyJwk passed — should not throw
-        // expect(() => buildCivicDidVc({ civicDid: 'did:civic:noesis:abc', ... })).not.toThrow();
-        // const vc = buildCivicDidVc({ civicDid: 'did:civic:noesis:abc', ... });
-        // expect(vc.credentialSubject).not.toHaveProperty('existencePublicKeyJwk');
+    it('existing call sites passing only original params still work (param is optional, backward compat)', async () => {
+        const vc = await buildCivicDidVc(BASE_PARAMS) as any;
+        expect(vc.credentialSubject).not.toHaveProperty('existencePublicKeyJwk');
     });
 });

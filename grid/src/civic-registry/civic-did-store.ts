@@ -24,12 +24,20 @@ interface CivicDidRow extends RowDataPacket {
     last_seen_tick?: number | null;
     away_grace_expires_at?: Date | null;
     frozen?: 0 | 1;
+    // Phase 42 P2P-01..05 — existence public key JWK for SDP encryption (migration v32)
+    existence_public_key_jwk?: string | object | null;
 }
 
 function rowToRecord(row: CivicDidRow): CivicDidRecord {
     const credentialJson = typeof row.credential_json === 'string'
         ? JSON.parse(row.credential_json)
         : row.credential_json;
+    // Phase 42 — parse JSON column back to object (MySQL may return string or object)
+    const existencePublicKeyJwk = row.existence_public_key_jwk
+        ? (typeof row.existence_public_key_jwk === 'string'
+            ? JSON.parse(row.existence_public_key_jwk)
+            : row.existence_public_key_jwk)
+        : null;
     return {
         gridName: row.grid_name,
         civicDid: row.civic_did,
@@ -44,6 +52,7 @@ function rowToRecord(row: CivicDidRow): CivicDidRecord {
         lastSeenTick: row.last_seen_tick ?? null,
         awayGraceExpiresAt: row.away_grace_expires_at ?? null,
         frozen: row.frozen === 1,
+        existencePublicKeyJwk,
     };
 }
 
@@ -53,16 +62,35 @@ export class CivicDidStore {
     async insert(record: CivicDidRecord): Promise<void> {
         await this.pool.query(
             `INSERT INTO civic_did_registry
-                (grid_name, civic_did, existence_did, credential_json, status, issued_at_tick)
-             VALUES (?, ?, ?, ?, 'active', ?)`,
+                (grid_name, civic_did, existence_did, credential_json, status, issued_at_tick,
+                 existence_public_key_jwk)
+             VALUES (?, ?, ?, ?, 'active', ?, ?)`,
             [
                 record.gridName,
                 record.civicDid,
                 record.existenceDid,
                 JSON.stringify(record.credentialJson),
                 record.issuedAtTick,
+                record.existencePublicKeyJwk ? JSON.stringify(record.existencePublicKeyJwk) : null,
             ],
         );
+    }
+
+    /**
+     * Phase 42 P2P-01..05 — fetch the Brain's Ed25519 public key JWK for SDP encryption (D-42-05).
+     * Returns null for pre-Phase-42 registrations (NULL = P2P unavailable for that DID).
+     */
+    async getPublicKey(gridName: string, civicDid: string): Promise<object | null> {
+        const [rows] = await this.pool.query(
+            `SELECT existence_public_key_jwk FROM civic_did_registry
+             WHERE grid_name = ? AND civic_did = ? LIMIT 1`,
+            [gridName, civicDid],
+        );
+        const r = (rows as any[])[0];
+        if (!r || !r.existence_public_key_jwk) return null;
+        // MySQL JSON column returns parsed object already; guard string form too
+        const v = r.existence_public_key_jwk;
+        return typeof v === 'string' ? JSON.parse(v) : v;
     }
 
     async get(gridName: string, civicDid: string): Promise<CivicDidRecord | null> {

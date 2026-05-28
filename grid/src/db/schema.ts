@@ -573,4 +573,20 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS civic_message_queue`,
     },
+    // Phase 42 P2P-01..05 — Public key column on civic_did_registry.
+    // Allows Brain A to fetch Brain B's Ed25519 public key for SDP encryption (D-42-05).
+    // NULL allowed for existing Phase 37 rows (NULL = P2P unavailable for that DID).
+    // Re-registration is required to gain P2P capability for pre-Phase-42 rows.
+    {
+        version: 32,
+        name: 'add_public_key_to_civic_did_registry',
+        up: `
+            ALTER TABLE civic_did_registry
+              ADD COLUMN existence_public_key_jwk JSON NULL
+        `,
+        down: `
+            ALTER TABLE civic_did_registry
+              DROP COLUMN existence_public_key_jwk
+        `,
+    },
 ];

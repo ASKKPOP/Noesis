@@ -83,9 +83,28 @@ export async function registerRegistryRoutes(
                 return reply.code(409).send({ error: 'already_registered', civic_did: existing.civicDid });
             }
 
+            // Phase 42 D-42-05 — validate optional P2P public key shape (T-42-02-04 mitigation).
+            // `jwk` (the existence key used for signature verification above) is the same key we
+            // embed in the VC for P2P SDP encryption. Validate it is an OKP/Ed25519 JWK.
+            const p2pJwk = body['existence_public_key_jwk'];
+            let existencePublicKeyJwk: object | null = null;
+            if (p2pJwk !== undefined && p2pJwk !== null) {
+                const k = p2pJwk as Record<string, unknown>;
+                if (
+                    typeof k !== 'object' ||
+                    k.kty !== 'OKP' ||
+                    k.crv !== 'Ed25519' ||
+                    typeof k.x !== 'string' ||
+                    k.x.length === 0
+                ) {
+                    return reply.code(400).send({ error: 'invalid_existence_public_key_jwk' });
+                }
+                existencePublicKeyJwk = p2pJwk as object;
+            }
+
             const civicDid = `did:civic:noesis:${randomUUID()}`;
             const issuedAtTick = currentTick(services);
-            const credential = await buildCivicDidVc({ civicDid, existenceDid, issuedAtTick });
+            const credential = await buildCivicDidVc({ civicDid, existenceDid, issuedAtTick, existencePublicKeyJwk });
 
             try {
                 await store.insert({
@@ -95,6 +114,7 @@ export async function registerRegistryRoutes(
                     credentialJson: credential,
                     status: 'active',
                     issuedAtTick,
+                    existencePublicKeyJwk,
                 });
             } catch (err) {
                 const code = (err as { code?: string }).code;

@@ -23,6 +23,7 @@ export async function buildCivicDidVc(params: {
     civicDid: string;
     existenceDid: string;
     issuedAtTick: number;
+    existencePublicKeyJwk?: object | null;   // Phase 42 D-42-05 — Ed25519 JWK for P2P SDP encryption
 }): Promise<object> {
     const { privateKey } = await keyPairPromise;
     const vcId = `urn:noesis:vc:${randomUUID()}`;
@@ -39,6 +40,11 @@ export async function buildCivicDidVc(params: {
             existenceDid: params.existenceDid,
             civicRole: 'resident',
             issuedAtTick: params.issuedAtTick,
+            // Conditional spread: if JWK absent or null, key is OMITTED (not set to null).
+            // Backward compat: Phase 37 callers that don't pass existencePublicKeyJwk get clean VCs.
+            ...(params.existencePublicKeyJwk
+                ? { existencePublicKeyJwk: params.existencePublicKeyJwk }
+                : {}),
         },
         credentialStatus: {
             id: `${GRID_REGISTRY_DID}/status/${params.civicDid}`,
