@@ -56,7 +56,7 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 
 **Wave 2 — Civic Plumbing (Phases 42-43)**
 - [x] **Phase 42: P2P Infrastructure** — Grid-mediated signaling + DID-to-endpoint discovery + STUN/TURN (both free in v3.0; Civic-DID auth gates TURN per D-42-03); Brain-to-Brain content stays direct. (allowlist +3) (completed 2026-05-28)
-- [ ] **Phase 43: Right-to-Fork Export Tooling** — Operator can export full Nous state (Brain memory + civic credentials + audit history) and run standalone; constitutional enforcement of D-V3-18. (allowlist 0)
+- [x] **Phase 43: Right-to-Fork Export Tooling** — Operator can export full Nous state (Brain memory + civic credentials + audit history) and run standalone; constitutional enforcement of D-V3-18. (allowlist 0) (completed 2026-05-28)
 
 **Wave 3 — Civic Institutions (Phases 44-49)**
 - [ ] **Phase 44: Marketplace v3** — Business-DID listings, bids, escrow, IRS fee hooks, dispute → Police routing. (allowlist +4)
@@ -231,12 +231,12 @@ Plans:
 **Scope (ships)**: FORK-01..04.
 **Out of scope for this phase**: Collective right-to-fork at Grid-level (FUTURE-ALTHOST-01); cross-operator import (a forked Nous joining another operator's hardware — separate constitutional question); fork-revert (operator deciding mid-stream — handled by Phase 50 migration logic only).
 **Allowlist additions**: **+1** (`operator.nous_forked`). Running total: **68** (64 pre-Phase-42 + 3 from Phase 42 + 1 from Phase 43-01). Sole-producer file: `grid/src/audit/append-operator-nous-forked.ts`.
-**Plans:** 4 plans
+**Plans:** 4/4 plans complete
 Plans:
 - [x] 43-01-PLAN.md — Wave 0: audit primitives + allowlist 67→68 + BRAIN_DATA_DIR threading + test stubs for Plans 02-04 (FORK-04) (completed 2026-05-27)
-- [ ] 43-02-PLAN.md — Grid fork endpoint + deterministic .tar.gz archive builder + one-time download token + manifest (FORK-01/02/04)
-- [ ] 43-03-PLAN.md — Brain standalone CLI (`standalone --import`) + tar.gz importer with path-traversal guard + civic-action HTTP gate (FORK-03)
-- [ ] 43-04-PLAN.md — Steward ForkIrreversibilityDialog clone + Fork Nous section in /system/local-ai + E2E human-verify checkpoint (FORK-01..04)
+- [x] 43-02-PLAN.md — Grid fork endpoint + deterministic .tar.gz archive builder + one-time download token + manifest (FORK-01/02/04)
+- [x] 43-03-PLAN.md — Brain standalone CLI (`standalone --import`) + tar.gz importer with path-traversal guard + civic-action HTTP gate (FORK-03)
+- [x] 43-04-PLAN.md — Steward ForkIrreversibilityDialog clone + Fork Nous section in /system/local-ai + E2E human-verify checkpoint (FORK-01..04)
 
 #### Wave 3 — Civic Institutions
 
@@ -532,7 +532,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 40. Local AI Integration | 5/5 | Complete     | 2026-05-27 |
 | 41. Sleep Cycle + Away Presence | 5/6 | In Progress|  |
 | 42. P2P Infrastructure | 5/5 | Complete   | 2026-05-28 |
-| 43. Right-to-Fork Export Tooling | 0/? | Not started | — |
+| 43. Right-to-Fork Export Tooling | 4/4 | Complete   | 2026-05-28 |
 | 44. Marketplace v3 | 0/? | Not started | — |
 | 45. IRS Treasury | 0/? | Not started | — |
 | 46. Government v3 | 0/? | Not started | — |

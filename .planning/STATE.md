@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
-stopped_at: Phase 42 SHIPPED — Phase 43 in progress (1/4 plans done)
-last_updated: "2026-05-27T19:35:00.000Z"
+stopped_at: "Phase 42 SHIPPED (5 plans, 11/11 must-haves, allowlist 64→67). Phase 43 Plan 43-01 also complete (67→68). Next: execute Phase 43 Plans 02-04."
+last_updated: "2026-05-28T02:49:21.477Z"
 progress:
   total_phases: 25
   completed_phases: 7
-  total_plans: 45
-  completed_plans: 40
-  percent: 89
+  total_plans: 40
+  completed_plans: 39
+  percent: 98
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 ## Current Position
 
 Phase: 43 (right-to-fork) — EXECUTING
-Plan: 2 of 4 (Plan 43-01 complete; Plans 43-02..04 pending)
+Plan: 1 of 4
 Previous: Phase 42 (P2P Infrastructure) — SHIPPED 2026-05-27 (5 plans, allowlist 64→67)
 Status: Executing Phase 43
 Next action: Execute Phase 43 Plans 02-04 (fork endpoint, Brain standalone CLI, Steward fork UI)
