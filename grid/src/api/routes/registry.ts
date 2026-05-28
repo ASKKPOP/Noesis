@@ -83,23 +83,27 @@ export async function registerRegistryRoutes(
                 return reply.code(409).send({ error: 'already_registered', civic_did: existing.civicDid });
             }
 
-            // Phase 42 D-42-05 — validate optional P2P public key shape (T-42-02-04 mitigation).
-            // `jwk` (the existence key used for signature verification above) is the same key we
-            // embed in the VC for P2P SDP encryption. Validate it is an OKP/Ed25519 JWK.
-            const p2pJwk = body['existence_public_key_jwk'];
+            // Phase 42 D-42-05 — extract optional P2P public key JWK (T-42-02-04 mitigation).
+            // When present and shaped as OKP/Ed25519, store for P2P SDP encryption.
+            // When missing, null, or non-OKP format: store null (backward compat — Phase 37
+            // callers using ES256 signing keys are unaffected; NULL = P2P unavailable for that DID).
+            // Return 400 only if the field is present, non-null, non-object, OR if kty/crv is OKP
+            // but the x field is missing/empty (malformed OKP key).
+            const p2pJwkRaw = body['existence_public_key_jwk'];
             let existencePublicKeyJwk: object | null = null;
-            if (p2pJwk !== undefined && p2pJwk !== null) {
-                const k = p2pJwk as Record<string, unknown>;
-                if (
-                    typeof k !== 'object' ||
-                    k.kty !== 'OKP' ||
-                    k.crv !== 'Ed25519' ||
-                    typeof k.x !== 'string' ||
-                    k.x.length === 0
-                ) {
+            if (p2pJwkRaw !== undefined && p2pJwkRaw !== null) {
+                if (typeof p2pJwkRaw !== 'object') {
                     return reply.code(400).send({ error: 'invalid_existence_public_key_jwk' });
                 }
-                existencePublicKeyJwk = p2pJwk as object;
+                const k = p2pJwkRaw as Record<string, unknown>;
+                if (k.kty === 'OKP') {
+                    // OKP key present — validate it has the required Ed25519 fields
+                    if (k.crv !== 'Ed25519' || typeof k.x !== 'string' || k.x.length === 0) {
+                        return reply.code(400).send({ error: 'invalid_existence_public_key_jwk' });
+                    }
+                    existencePublicKeyJwk = p2pJwkRaw as object;
+                }
+                // Non-OKP keys (e.g. ES256) are accepted for backward compat but not stored for P2P
             }
 
             const civicDid = `did:civic:noesis:${randomUUID()}`;

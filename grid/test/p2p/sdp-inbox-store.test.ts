@@ -1,38 +1,62 @@
-import { describe, it } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { SdpInboxStore } from '../../src/p2p/sdp-inbox-store.js';
+import type { InboxEntry } from '../../src/p2p/types.js';
 
-describe('SdpInboxStore (Phase 42 Plan 04)', () => {
-    it.skip('push() appends an InboxEntry under toDid key', () => {
-        // const store = new SdpInboxStore();
-        // store.push('did:civic:noesis:bob', { fromDid: 'did:civic:noesis:alice', blob: 'sdp-offer', expiresAt: Date.now() + 60_000 });
-        // expect(store.buckets.get('did:civic:noesis:bob')?.length).toBe(1);
+function makeEntry(overrides: Partial<InboxEntry> = {}): InboxEntry {
+    return {
+        connectionId: '00000000-0000-0000-0000-000000000001',
+        fromDid: 'did:civic:noesis:alice',
+        encryptedBlob: 'encrypted-sdp-offer',
+        expiresAt: Date.now() + 60_000,
+        ...overrides,
+    };
+}
+
+describe('SdpInboxStore (Phase 42 Plan 02)', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
     });
 
-    it.skip('drain(toDid) returns all non-expired entries AND clears the toDid bucket', () => {
-        // const store = new SdpInboxStore();
-        // store.push('did:civic:noesis:bob', { fromDid: 'did:civic:noesis:alice', blob: 'sdp-offer', expiresAt: Date.now() + 60_000 });
-        // const entries = store.drain('did:civic:noesis:bob');
-        // expect(entries.length).toBe(1);
-        // expect(store.buckets.has('did:civic:noesis:bob')).toBe(false);
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
-    it.skip('drain() filters out entries past expiresAt (60s TTL)', () => {
-        // const store = new SdpInboxStore();
-        // store.push('did:civic:noesis:bob', { fromDid: 'did:civic:noesis:alice', blob: 'sdp-offer', expiresAt: Date.now() - 1 });
-        // const entries = store.drain('did:civic:noesis:bob');
-        // expect(entries.length).toBe(0);
+    it('push() appends an InboxEntry under toDid key', () => {
+        const store = new SdpInboxStore();
+        store.push('did:civic:noesis:bob', makeEntry());
+        // drain returns the entry (proving it was stored)
+        const entries = store.drain('did:civic:noesis:bob');
+        expect(entries.length).toBe(1);
     });
 
-    it.skip('drain() on unknown DID returns []', () => {
-        // const store = new SdpInboxStore();
-        // expect(store.drain('did:civic:noesis:nobody')).toEqual([]);
+    it('drain(toDid) returns all non-expired entries AND clears the toDid bucket', () => {
+        const store = new SdpInboxStore();
+        store.push('did:civic:noesis:bob', makeEntry());
+        const entries = store.drain('did:civic:noesis:bob');
+        expect(entries.length).toBe(1);
+        // After drain, bucket is cleared
+        const entries2 = store.drain('did:civic:noesis:bob');
+        expect(entries2.length).toBe(0);
     });
 
-    it.skip('multiple pushes to same recipient preserve order', () => {
-        // const store = new SdpInboxStore();
-        // store.push('did:civic:noesis:bob', { fromDid: 'did:civic:noesis:alice', blob: 'first', expiresAt: Date.now() + 60_000 });
-        // store.push('did:civic:noesis:bob', { fromDid: 'did:civic:noesis:carol', blob: 'second', expiresAt: Date.now() + 60_000 });
-        // const entries = store.drain('did:civic:noesis:bob');
-        // expect(entries[0].blob).toBe('first');
-        // expect(entries[1].blob).toBe('second');
+    it('drain() filters out entries past expiresAt (60s TTL)', () => {
+        const store = new SdpInboxStore();
+        store.push('did:civic:noesis:bob', makeEntry({ expiresAt: Date.now() - 1 }));
+        const entries = store.drain('did:civic:noesis:bob');
+        expect(entries.length).toBe(0);
+    });
+
+    it('drain() on unknown DID returns []', () => {
+        const store = new SdpInboxStore();
+        expect(store.drain('did:civic:noesis:nobody')).toEqual([]);
+    });
+
+    it('multiple pushes to same recipient preserve order', () => {
+        const store = new SdpInboxStore();
+        store.push('did:civic:noesis:bob', makeEntry({ encryptedBlob: 'first', connectionId: '00000000-0000-0000-0000-000000000001' }));
+        store.push('did:civic:noesis:bob', makeEntry({ encryptedBlob: 'second', connectionId: '00000000-0000-0000-0000-000000000002' }));
+        const entries = store.drain('did:civic:noesis:bob');
+        expect(entries[0]!.encryptedBlob).toBe('first');
+        expect(entries[1]!.encryptedBlob).toBe('second');
     });
 });
