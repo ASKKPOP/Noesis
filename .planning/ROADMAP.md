@@ -211,11 +211,11 @@ Plans:
 **Scope (ships)**: P2P-01..05.
 **Out of scope for this phase**: Decentralized P2P signaling (DHT-based) — deferred; protocol choice between WebRTC vs libp2p vs Matrix (Q-V3-A locked during discuss-phase); operator-side P2P observability dashboards (separate work).
 **Allowlist additions**: **+3**. Running total: **67**.
-**Plans:** 5 plans
+**Plans:** 3/5 plans executed
 Plans:
-- [ ] 42-01-PLAN.md — Wave 0 test scaffolds (8 grid test files + 2 brain test files; allowlist count locked at 64; PyNaCl sanity test green)
-- [ ] 42-02-PLAN.md — Migration v32 existence_public_key_jwk + P2P data primitives (peer store, SDP inbox, TURN credentials)
-- [ ] 42-03-PLAN.md — 3 sole-producer audit events + allowlist 64 → 67 + coturn docker-compose (STUN-only dev profile)
+- [x] 42-01-PLAN.md — Wave 0 test scaffolds (8 grid test files + 2 brain test files; allowlist count locked at 64; PyNaCl sanity test green)
+- [x] 42-02-PLAN.md — Migration v32 existence_public_key_jwk + P2P data primitives (peer store, SDP inbox, TURN credentials)
+- [x] 42-03-PLAN.md — 3 sole-producer audit events + allowlist 64 → 67 + coturn docker-compose (STUN-only dev profile)
 - [ ] 42-04-PLAN.md — 5 P2P routes + ROUTE_DID_POLICY +5 + WsFirehoseHub.pushSignalToDid + launcher cleanup interval (OBS-R-32-02)
 - [ ] 42-05-PLAN.md — BrainP2PClient (aiortc + PyNaCl SealedBox) + 300s announce task + doc-sync (ROADMAP/REQUIREMENTS/STATE/MILESTONES)
 
@@ -531,7 +531,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 39. Grid Multi-Tenancy | 4/4 | Complete    | 2026-05-27 |
 | 40. Local AI Integration | 5/5 | Complete     | 2026-05-27 |
 | 41. Sleep Cycle + Away Presence | 5/6 | In Progress|  |
-| 42. P2P Infrastructure | 0/? | Not started | — |
+| 42. P2P Infrastructure | 3/5 | In Progress|  |
 | 43. Right-to-Fork Export Tooling | 0/? | Not started | — |
 | 44. Marketplace v3 | 0/? | Not started | — |
 | 45. IRS Treasury | 0/? | Not started | — |
