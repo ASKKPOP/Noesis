@@ -589,4 +589,125 @@ export const MIGRATIONS: Migration[] = [
               DROP COLUMN existence_public_key_jwk
         `,
     },
+    // Phase 44 MKT-01..06 — Civic marketplace tables (listings, bids, escrow).
+    // D-44-11: Additive; does not replace or alter existing shop-registry.
+    {
+        version: 33,
+        name: 'marketplace_listings_bids_escrow',
+        up: `
+            CREATE TABLE IF NOT EXISTS marketplace_listings (
+                listing_id          CHAR(36)        NOT NULL,
+                grid_name           VARCHAR(63)     NOT NULL,
+                seller_civic_did    VARCHAR(255)    NOT NULL,
+                seller_business_did VARCHAR(255)    NOT NULL,
+                title               VARCHAR(255)    NOT NULL,
+                description         TEXT            NOT NULL,
+                price_bios          BIGINT UNSIGNED NOT NULL,
+                category            VARCHAR(63)     NOT NULL,
+                status              ENUM('active','accepted','settled','expired','cancelled') NOT NULL DEFAULT 'active',
+                created_at_tick     INT UNSIGNED    NOT NULL,
+                expires_at_tick     INT UNSIGNED    NOT NULL,
+                PRIMARY KEY (listing_id),
+                INDEX idx_browse    (grid_name, status, category, price_bios),
+                INDEX idx_seller    (grid_name, seller_civic_did),
+                INDEX idx_expiry    (grid_name, expires_at_tick)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            CREATE TABLE IF NOT EXISTS marketplace_bids (
+                bid_id              CHAR(36)        NOT NULL,
+                listing_id          CHAR(36)        NOT NULL,
+                grid_name           VARCHAR(63)     NOT NULL,
+                bidder_civic_did    VARCHAR(255)    NOT NULL,
+                offer_price_bios    BIGINT UNSIGNED NOT NULL,
+                bid_message         VARCHAR(512),
+                status              ENUM('pending','accepted','rejected','expired') NOT NULL DEFAULT 'pending',
+                placed_at_tick      INT UNSIGNED    NOT NULL,
+                PRIMARY KEY (bid_id),
+                INDEX idx_listing   (listing_id),
+                INDEX idx_bidder    (grid_name, bidder_civic_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            CREATE TABLE IF NOT EXISTS marketplace_escrow (
+                escrow_id           CHAR(36)        NOT NULL,
+                listing_id          CHAR(36)        NOT NULL,
+                bid_id              CHAR(36)        NOT NULL,
+                grid_name           VARCHAR(63)     NOT NULL,
+                buyer_civic_did     VARCHAR(255)    NOT NULL,
+                seller_civic_did    VARCHAR(255)    NOT NULL,
+                amount_bios         BIGINT UNSIGNED NOT NULL,
+                escrow_status       ENUM('held','frozen','settled','refunded') NOT NULL DEFAULT 'held',
+                buyer_confirmed     TINYINT(1)      NOT NULL DEFAULT 0,
+                seller_confirmed    TINYINT(1)      NOT NULL DEFAULT 0,
+                accepted_at_tick    INT UNSIGNED    NOT NULL,
+                settled_at_tick     INT UNSIGNED,
+                PRIMARY KEY (escrow_id),
+                UNIQUE KEY uq_listing (listing_id),
+                INDEX idx_timeout   (grid_name, escrow_status, accepted_at_tick)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `
+            DROP TABLE IF EXISTS marketplace_escrow;
+            DROP TABLE IF EXISTS marketplace_bids;
+            DROP TABLE IF EXISTS marketplace_listings
+        `,
+    },
+    // Phase 44 MKT-05 / D-44-04 / D-44-05 — Dispute + Police stub tables.
+    {
+        version: 34,
+        name: 'marketplace_disputes_police_investigations',
+        up: `
+            CREATE TABLE IF NOT EXISTS marketplace_disputes (
+                dispute_id              CHAR(36)    NOT NULL,
+                listing_id              CHAR(36)    NOT NULL,
+                grid_name               VARCHAR(63) NOT NULL,
+                complainant_civic_did_hash CHAR(64) NOT NULL,
+                dispute_status          ENUM('pending_police','resolved','closed') NOT NULL DEFAULT 'pending_police',
+                settled_audit_entry_id  BIGINT UNSIGNED,
+                created_at_tick         INT UNSIGNED NOT NULL,
+                PRIMARY KEY (dispute_id),
+                INDEX idx_listing   (listing_id),
+                INDEX idx_status    (grid_name, dispute_status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            CREATE TABLE IF NOT EXISTS police_investigations (
+                investigation_id    CHAR(36)        NOT NULL,
+                grid_name           VARCHAR(63)     NOT NULL,
+                source_type         VARCHAR(63)     NOT NULL,
+                source_ref          CHAR(36)        NOT NULL,
+                status              ENUM('pending','open','closed','resolved') NOT NULL DEFAULT 'pending',
+                opened_at_tick      INT UNSIGNED    NOT NULL,
+                closed_at_tick      INT UNSIGNED,
+                PRIMARY KEY (investigation_id),
+                INDEX idx_source    (source_type, source_ref),
+                INDEX idx_status    (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `
+            DROP TABLE IF EXISTS police_investigations;
+            DROP TABLE IF EXISTS marketplace_disputes
+        `,
+    },
+    // Phase 44 D-44-02 / D-44-03 — Civic treasury table + IRS config seed.
+    // irs_fee_rate seeded at '0.02' (2%) per D-44-02 (not 3% — user confirmed 2026-05-27).
+    // market_settlement_timeout_ticks seeded at '7' per D-44-05b.
+    {
+        version: 35,
+        name: 'civic_treasury_seed_irs_config',
+        up: `
+            CREATE TABLE IF NOT EXISTS civic_treasury (
+                grid_name           VARCHAR(63)     NOT NULL,
+                balance_bios        BIGINT          NOT NULL DEFAULT 0,
+                last_updated_tick   INT             NOT NULL DEFAULT 0,
+                PRIMARY KEY (grid_name)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            INSERT IGNORE INTO grid_config (grid_name, config_key, config_value)
+            VALUES ('genesis', 'irs_fee_rate', '0.02'),
+                   ('genesis', 'market_settlement_timeout_ticks', '7')
+        `,
+        down: `
+            DROP TABLE IF EXISTS civic_treasury;
+            DELETE FROM grid_config WHERE config_key IN ('irs_fee_rate', 'market_settlement_timeout_ticks')
+        `,
+    },
 ];
