@@ -1,6 +1,6 @@
 # Phase 44: Marketplace v3 - Context
 
-**Gathered:** 2026-05-27
+**Gathered:** 2026-05-27 (updated 2026-05-27 — discuss-phase session)
 **Status:** Ready for planning
 
 <domain>
@@ -21,12 +21,15 @@ Does NOT ship: bid/accept/settle/dispute in Steward UI (API-only); full Police i
 - **D-44-01:** Allowlist baseline is **68** (not 67 — Phase 43 added `operator.nous_forked` → 68). Phase 44 adds +4: `market.listing_created`, `market.bid_placed`, `market.settled`, `market.disputed`. New total: **72**. ROADMAP has a stale "67 → 71" that must be corrected to "68 → 72" in the same commit that ships Phase 44.
 
 ### IRS Fee Integration
-- **D-44-02:** IRS fee rate is **NOT hardcoded**. Read from `grid_config` table (key: `irs_fee_rate`), seeded at `0.03` (3%) in the Phase 44 DB migration. Phase 45 replaces this with full treasury management. The `market.settled` sole-producer deducts fee in the same DB transaction that transfers escrow to seller.
-- **D-44-03:** `irs.tax_collected` sole-producer is **created in Phase 44** (same discipline: 9-step guard, closed-tuple payload `{amount_bios, listing_id, payer_civic_did_hash, tick}`). It is appended to the audit chain atomically after `market.settled`. It is **NOT added to broadcast-allowlist in Phase 44** — it stays audit-chain-only until Phase 45 adds it (+3 allowlist delta). This mirrors the Phase 41 `irs.disbursement_executed` pattern.
+- **D-44-02:** IRS fee rate is **NOT hardcoded**. Read from `grid_config` table (key: `irs_fee_rate`), seeded at `0.02` (**2%**) in the Phase 44 DB migration. Phase 45 replaces this with full treasury management. The `market.settled` sole-producer deducts fee in the same DB transaction that transfers escrow to seller. (Discuss-phase session 2026-05-27: user chose 2%, not 3% — corrected from earlier draft.)
+- **D-44-03:** `irs.tax_collected` sole-producer is **created in Phase 44** (same discipline: 9-step guard, closed-tuple payload `{amount_bios, listing_id, payer_civic_did_hash, tick, total_treasury_after}`). It is appended to the audit chain atomically after `market.settled`. It is **NOT added to broadcast-allowlist in Phase 44** — it stays audit-chain-only until Phase 45 adds it (+3 allowlist delta). This mirrors the Phase 41 `irs.disbursement_executed` pattern. Phase 44 creates a minimal `civic_treasury` table (columns: `grid_name, balance_bios BIGINT, last_updated_tick INT`) to hold the actual Bios — Phase 45 inherits and extends it.
 
 ### Police Forward-Compatibility
 - **D-44-04:** Phase 44 creates a `marketplace_disputes` DB table (migration v33+). Columns: `dispute_id UUID PK`, `listing_id`, `complainant_civic_did_hash`, `dispute_status ENUM('pending_police','resolved','closed')`, `settled_audit_entry_id` (FK to audit_trail), `created_at_tick INT`. When buyer raises dispute, Grid: (1) emits `market.disputed`, (2) freezes the escrow row (`escrow_status = 'frozen'`), (3) inserts into `marketplace_disputes` with `dispute_status = 'pending_police'`. Phase 47 reads from `marketplace_disputes` to populate its investigation queue. Route returns `{dispute_id}` so both phases share a stable identifier.
-- **D-44-05:** No `POST /api/v1/police/investigate` call in Phase 44 — Police route does not exist yet. The `marketplace_disputes` table is the integration contract Phase 47 consumes.
+- **D-44-05:** Phase 44 **ships a stub `POST /api/v1/police/investigate` endpoint** (ROUTE_DID_POLICY: `civic_did_required`). It accepts `{source_type: 'marketplace_dispute', source_ref: dispute_id}`, inserts a row into `police_investigations` table with `status = 'pending'`, and returns `{investigation_id}`. No investigation logic — Phase 47 activates full logic. This ensures the route exists and is callable from the marketplace dispute handler. Phase 47 reads `police_investigations WHERE status = 'pending'` for its queue. (Discuss-phase session 2026-05-27: user chose stub approach over audit-event-only.)
+
+### Settlement Timeout
+- **D-44-05b:** If both `buyer_confirmed` and `seller_confirmed` don't arrive within the settlement timeout, Grid **automatically fires `market.disputed`** and calls `POST /api/v1/police/investigate`. Default: **7 ticks** stored as `grid_config` key `market_settlement_timeout_ticks`. Polis-configurable via Phase 46 legislation. Chronos tick listener checks open escrow rows: `WHERE status = 'accepted' AND accepted_at_tick + timeout_ticks < current_tick`. No auto-refund — escrow stays frozen until Police resolves (Phase 47).
 
 ### Reputation Scoring
 - **D-44-06:** Seller reputation = `settled_count / (settled_count + disputed_count)` as a `FLOAT(5,4)` (0.0–1.0). Stored as a materialized column `reputation_score` on the `marketplace_sellers` view (or computed per-query from `marketplace_trades` table — Claude's discretion on whether to materialize or compute). Default for new sellers: **1.0** (no disputes = perfect).
@@ -107,9 +110,10 @@ Does NOT ship: bid/accept/settle/dispute in Steward UI (API-only); full Police i
 <specifics>
 ## Specific Ideas
 
-- IRS fee rate must be configurable from day 1 (user explicitly rejected hardcoding). Stored in `grid_config`, seeded at 3%.
+- IRS fee rate must be configurable from day 1 (user explicitly rejected hardcoding). Stored in `grid_config` as `irs_fee_rate`, seeded at **2%** (0.02). Range 1-3% per IRS-01; Polis can legislate a change via Phase 46.
 - New sellers start at `1.0` reputation (100%), decays when disputes land.
-- Police integration is via `marketplace_disputes` table only — no runtime call to Police routes in Phase 44.
+- Police integration: stub `POST /api/v1/police/investigate` ships in Phase 44; it creates a `police_investigations` row with `status = 'pending'`. Phase 47 activates full investigation.
+- Settlement timeout: 7 ticks default, grid_config key `market_settlement_timeout_ticks`. Chronos tick handler fires auto-dispute on expiry.
 - Economy page URL `/economy` kept (user prefers upgrading in-place over new `/marketplace` route).
 
 </specifics>
