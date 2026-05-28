@@ -31,6 +31,7 @@ import type { FirehoseStats } from '../audit/firehose-hub.js';
 import { P2PPeerStore } from '../p2p/p2p-peer-store.js';
 import { SdpInboxStore } from '../p2p/sdp-inbox-store.js';
 import type { P2PService } from '../p2p/types.js';
+import { checkSettlementTimeouts } from '../marketplace/settlement-timeout.js';
 
 /**
  * Phase 31 OBS-01 (D-31-A1): optional dependencies that can be supplied at
@@ -151,6 +152,10 @@ export class GenesisLauncher {
     private _p2pCleanupInterval: NodeJS.Timeout | null = null;
     /** Phase 42 P2P-01..05 — in-memory P2P peer store + SDP inbox. */
     private _p2pService: P2PService | undefined;
+    /** Phase 44 D-44-05b — MySQL pool stored at attachRelationshipStorage() for settlement-timeout loop. */
+    private _pool: Pool | undefined;
+    /** Phase 44 D-44-05b (OBS-R-32-02) — paired clearInterval handle for settlement-timeout sweep loop. */
+    private _settlementTimeoutInterval: NodeJS.Timeout | null = null;
     /**
      * Phase 12 Wave 3 — GovernanceEngine and its backing store.
      *
@@ -284,6 +289,8 @@ export class GenesisLauncher {
             );
         }
         this.relationshipStorage = new RelationshipStorage(pool);
+        // Phase 44 D-44-05b — store pool for settlement-timeout loop in start().
+        this._pool = pool;
     }
 
     /**
@@ -565,6 +572,21 @@ export class GenesisLauncher {
                 // Swallow cleanup errors — non-fatal; next tick will retry expired entries
             }
         }, 60_000);
+
+        // Phase 44 MKT-04/05 (D-44-05b) — settlement timeout sweep every 1s.
+        // Identifies escrows where accepted_at_tick + market_settlement_timeout_ticks < currentTick.
+        // Auto-disputes on buyer's behalf + routes to police investigation.
+        // IMPORTANT: setInterval NOT clock.onTick — single-onTick-subscription invariant (line ~461 comment).
+        // OBS-R-32-02 paired clearInterval is in stop() below.
+        this._settlementTimeoutInterval = setInterval(() => {
+            const pool = this._pool;
+            const tick = this.clock.currentTick;
+            if (!pool) return;
+            void checkSettlementTimeouts(pool, this.audit, tick, this.gridName)
+                .catch(() => {
+                    // Swallow settlement-timeout errors — non-fatal; loop continues next interval.
+                });
+        }, 1_000);
     }
 
     /** Phase 42 P2P-01..05 — accessor for main.ts to wire P2PService into GridServices. */
@@ -583,6 +605,11 @@ export class GenesisLauncher {
         if (this._p2pCleanupInterval !== null) {
             clearInterval(this._p2pCleanupInterval);
             this._p2pCleanupInterval = null;
+        }
+        // Phase 44 OBS-R-32-02 — clear settlement timeout sweep interval.
+        if (this._settlementTimeoutInterval !== null) {
+            clearInterval(this._settlementTimeoutInterval);
+            this._settlementTimeoutInterval = null;
         }
         if (this._presenceService !== undefined) {
             this._presenceService.shutdown();
