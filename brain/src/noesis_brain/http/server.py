@@ -11,6 +11,7 @@ Auth is enforced via X-Brain-Secret header.
 from __future__ import annotations
 
 import logging
+import os
 from typing import TYPE_CHECKING
 
 from aiohttp import web
@@ -19,6 +20,44 @@ if TYPE_CHECKING:
     from ..rpc.handler import BrainHandler
 
 log = logging.getLogger(__name__)
+
+# Phase 43 D-43-01 + RESEARCH.md Pitfall 6:
+# In standalone mode (BRAIN_STANDALONE=1), civic-action endpoints MUST return 503 grid_unavailable
+# at the HTTP boundary. Handler-internal `if self._grid_wire_client is not None:` guards make
+# wire calls no-ops, but without this gate the HTTP response would silently succeed.
+#
+# No civic-action endpoints exist on Brain HTTP today — this gate is wired as forward-compatible
+# infrastructure. Phase 44/46/49 endpoints (when added) automatically receive standalone protection
+# by registering their paths in this set.
+CIVIC_ACTION_PATHS: set[str] = set()
+
+
+def _is_standalone() -> bool:
+    """Return True when Brain is running in standalone mode (BRAIN_STANDALONE=1)."""
+    return os.environ.get("BRAIN_STANDALONE") == "1"
+
+
+def _civic_unavailable_response() -> web.Response:
+    """Return 503 grid_unavailable JSON response for civic actions in standalone mode."""
+    return web.json_response(
+        {
+            "error": "grid_unavailable",
+            "detail": "This Nous is running standalone — civic features require Grid connection.",
+        },
+        status=503,
+    )
+
+
+@web.middleware
+async def civic_action_gate(request: web.Request, handler) -> web.StreamResponse:  # type: ignore[type-arg]
+    """Intercept civic-action requests in standalone mode and return 503.
+
+    Phase 43 D-43-01: CIVIC_ACTION_PATHS is currently empty (no civic endpoints on Brain HTTP
+    today). Middleware is wired so future civic endpoints receive protection automatically.
+    """
+    if _is_standalone() and request.path in CIVIC_ACTION_PATHS:
+        return _civic_unavailable_response()
+    return await handler(request)
 
 
 class BrainHttpServer:
@@ -35,7 +74,7 @@ class BrainHttpServer:
         self._handler = handler
         self._secret = secret
         self._port = port
-        self._app = web.Application()
+        self._app = web.Application(middlewares=[civic_action_gate])
 
         # Import handlers here to keep circular-import surface minimal.
         from .cognitive_snapshot import handle_cognitive_snapshot  # noqa: PLC0415
