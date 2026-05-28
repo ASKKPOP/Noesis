@@ -443,22 +443,27 @@ Note: `legislation_ref` (plaintext) is stored only in an IRS disbursements table
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **`irs.disbursement_authorized` payload shape — 5-key or 6-key?**
+> All open questions were resolved during planning (Plans 045-01/02/03). Resolutions are locked as Phase 45 decisions (D-45-01..03) and reflected in the plan actions + STATE.md Phase 45 close-out.
+
+1. **`irs.disbursement_authorized` payload shape — 5-key or 6-key?** — **RESOLVED → 5 keys (D-45-01).**
    - What we know: Phase 44 `irs.tax_collected` uses a 5-key payload. Phase 41 `irs.disbursement_executed` uses a 5-key payload. SC-3 says "disbursement_authorized fires on Government signing."
    - What's unclear: Should the payload include the disbursement recipient (e.g., `recipient_civic_did_hash`) or keep it off-chain for privacy? Including it adds a 6th key.
    - Recommendation: Keep 5 keys (amount, authorized_by_hash, grid_name, legislation_ref_hash, tick). Recipient is an operational detail stored in an `irs_disbursements` DB table, not an audit concern — mirrors how `business_name` is off-chain in `registry.business_did_registered`.
+   - **Resolution (D-45-01):** Locked to 5-key closed tuple `{amount_bios, authorized_by_civic_did_hash, grid_name, legislation_ref_hash, tick}`. Recipient stays off-chain. Implemented by Plan 02 in `grid/src/audit/append-irs-disbursement-authorized.ts`.
 
-2. **`period` format for `/irs/audit/:period`**
+2. **`period` format for `/irs/audit/:period`** — **RESOLVED → tick-range format `<fromTick>-<toTick>` or literal `current` (D-45-02).**
    - What we know: SC-4 says "balance + every collection + every disbursement in the period as a JSON array sorted by tick."
    - What's unclear: Is `period` a tick range, a calendar month, or an opaque "epoch" concept?
    - Recommendation: Use `<fromTick>-<toTick>` format for v3.0. `current` alias returns last 1000 IRS events. Calendar dates require Phase 45 to know tick→wall-clock mapping which is not exposed via current AuditEntry structure.
+   - **Resolution (D-45-02):** Locked to strict regex `/^(\d+)-(\d+)$/` or the literal string `current` (which maps to the last 1000 ticks). Garbage period strings return HTTP 400 `invalid_period`. Calendar-date support is explicitly deferred (no tick→wall-clock mapping ships in v3.0). Implemented by Plan 03 in `grid/src/api/routes/irs.ts` (GET /irs/audit/:period handler).
 
-3. **Does `POST /api/v1/irs/disburse` need to track recipients?**
+3. **Does `POST /api/v1/irs/disburse` need to track recipients?** — **RESOLVED → No `irs_disbursements` table in Phase 45 (D-45-03).**
    - What we know: SC-3 says "pay library curators 500 Bios" — the legislation authorizes a specific payment with a target.
    - What's unclear: Does Phase 45 store a separate `irs_disbursements` table with recipient details, or just deduct from treasury with an audit event?
    - Recommendation: Create a lightweight `irs_disbursements` table (migration v36) to track `{disbursement_id, grid_name, amount_bios, legislation_ref, authorized_at_tick, executed_at_tick}`. This supports SC-4's requirement that the audit history is queryable and includes chain entry IDs. The `irs_disbursements` table is the plain-text record; the audit chain has hash-only.
+   - **Resolution (D-45-03):** Reversed the recommendation — Phase 45 ships NO `irs_disbursements` table. The `audit_trail` query (via `IrsStore.getAuditHistory` with explicit `event_type IN (...)`) is the canonical disbursement history and already includes chain entry IDs per SC-4. Adding a separate table would force migration v36 with zero operational value beyond what audit_trail provides. Recipient identity remains off-chain in the JWT's `legislation_ref` payload, never persisted by Phase 45. Implemented by Plan 02 (`IrsStore.getAuditHistory`).
 
 ---
 
