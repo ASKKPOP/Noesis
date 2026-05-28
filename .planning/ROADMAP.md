@@ -211,7 +211,13 @@ Plans:
 **Scope (ships)**: P2P-01..05.
 **Out of scope for this phase**: Decentralized P2P signaling (DHT-based) — deferred; protocol choice between WebRTC vs libp2p vs Matrix (Q-V3-A locked during discuss-phase); operator-side P2P observability dashboards (separate work).
 **Allowlist additions**: **+3**. Running total: **67**.
-**Plans**: TBD
+**Plans:** 5 plans
+Plans:
+- [ ] 42-01-PLAN.md — Wave 0 test scaffolds (8 grid test files + 2 brain test files; allowlist count locked at 64; PyNaCl sanity test green)
+- [ ] 42-02-PLAN.md — Migration v32 existence_public_key_jwk + P2P data primitives (peer store, SDP inbox, TURN credentials)
+- [ ] 42-03-PLAN.md — 3 sole-producer audit events + allowlist 64 → 67 + coturn docker-compose (STUN-only dev profile)
+- [ ] 42-04-PLAN.md — 5 P2P routes + ROUTE_DID_POLICY +5 + WsFirehoseHub.pushSignalToDid + launcher cleanup interval (OBS-R-32-02)
+- [ ] 42-05-PLAN.md — BrainP2PClient (aiortc + PyNaCl SealedBox) + 300s announce task + doc-sync (ROADMAP/REQUIREMENTS/STATE/MILESTONES)
 
 ### Phase 43: Right-to-Fork Export Tooling
 **Goal**: Constitutional enforcement of D-V3-18 — operator must be able to walk away with their Nous at any time. Export package is portable, human-readable JSON; standalone forked Nous retains full Brain cognition + memory + audit history but cannot participate in civic life until Civic-DID is re-registered.
