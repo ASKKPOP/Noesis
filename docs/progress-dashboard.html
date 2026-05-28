@@ -197,8 +197,8 @@ tr:hover td{background:var(--surface2)}
   <div class="logo">Noēsis <span>Progress Dashboard</span></div>
   <span class="badge badge-active">🔧 v3.0 IN PROGRESS</span>
   <div class="header-meta">
-    <span>Phase 41 ✅ SHIPPED — 6/6 plans · SLEEP-01..05 validated</span>
-    <span>Updated: 2026-05-27</span>
+    <span>Phase 43 📋 Context captured — ready to plan</span>
+    <span>Updated: 2026-05-28</span>
   </div>
 </header>
 
@@ -212,6 +212,8 @@ tr:hover td{background:var(--surface2)}
   <a href="#" data-section="phase39" onclick="show('phase39',this)"><span class="nav-icon">🏢</span> Phase 39 Detail</a>
   <a href="#" data-section="phase40" onclick="show('phase40',this)"><span class="nav-icon">🤖</span> Phase 40 Detail</a>
   <a href="#" data-section="phase41" onclick="show('phase41',this)"><span class="nav-icon">💤</span> Phase 41 Detail</a>
+  <a href="#" data-section="phase42" onclick="show('phase42',this)"><span class="nav-icon">🌐</span> Phase 42 Detail</a>
+  <a href="#" data-section="phase43" onclick="show('phase43',this)"><span class="nav-icon">📦</span> Phase 43 Detail</a>
   <a href="#" data-section="requirements" onclick="show('requirements',this)"><span class="nav-icon">📋</span> Requirements</a>
   <a href="#" data-section="uat" onclick="show('uat',this)"><span class="nav-icon">🧪</span> Required UAT</a>
   <a href="#" data-section="timeline" onclick="show('timeline',this)"><span class="nav-icon">📅</span> Timeline &amp; Estimates</a>
@@ -237,8 +239,8 @@ tr:hover td{background:var(--surface2)}
   <div class="stats-row">
     <div class="stat-card"><div class="stat-value">8</div><div class="stat-label">Milestones shipped</div></div>
     <div class="stat-card"><div class="stat-value">v3.0</div><div class="stat-label">Current milestone</div></div>
-    <div class="stat-card"><div class="stat-value">42</div><div class="stat-label">Next phase</div></div>
-    <div class="stat-card"><div class="stat-value">6/6</div><div class="stat-label">Phase 41 plans done ✅</div></div>
+    <div class="stat-card"><div class="stat-value">43</div><div class="stat-label">Next phase</div></div>
+    <div class="stat-card"><div class="stat-value">42+43</div><div class="stat-label">Context captured 📋</div></div>
     <div class="stat-card"><div class="stat-value">64</div><div class="stat-label">Allowlist events</div></div>
     <div class="stat-card"><div class="stat-value">~125</div><div class="stat-label">v3.0 plans total est.</div></div>
   </div>
@@ -380,15 +382,15 @@ tr:hover td{background:var(--surface2)}
     </div>
     <div class="wave-label">Wave 2 — Civic Plumbing</div>
     <div class="phase-grid">
-      <div class="phase-card pending" onclick="openPhase('42')">
+      <div class="phase-card active" onclick="openPhase('42')">
         <div class="phase-num">Phase 42</div>
         <div class="phase-name">P2P Infrastructure</div>
-        <div class="phase-status">⏳ Pending — depends on 36+37+38 · Allowlist +3</div>
+        <div class="phase-status">📋 Context captured — ready to plan · Allowlist +3</div>
       </div>
-      <div class="phase-card pending" onclick="openPhase('43')">
+      <div class="phase-card active" onclick="openPhase('43')">
         <div class="phase-num">Phase 43</div>
         <div class="phase-name">Right-to-Fork Export</div>
-        <div class="phase-status">⏳ Pending — depends on 37+38</div>
+        <div class="phase-status">📋 Context captured — ready to plan · Allowlist +1</div>
       </div>
     </div>
     <div class="wave-label">Wave 3 — Civic Institutions</div>
@@ -1069,6 +1071,106 @@ tr:hover td{background:var(--surface2)}
   </div>
 </section>
 
+<!-- ═══════════════════ PHASE 42 DETAIL ═══════════════════ -->
+<section id="phase42" class="section">
+  <div class="section-title">Phase 42 — P2P Infrastructure</div>
+  <div class="section-subtitle">📋 Context captured 2026-05-27 — ready to plan · Wave 2 · Allowlist 64 → 67 (+3)</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-value">0</div><div class="stat-label">Plans created</div></div>
+    <div class="stat-card"><div class="stat-value">+3</div><div class="stat-label">Allowlist additions</div></div>
+    <div class="stat-card"><div class="stat-value">67</div><div class="stat-label">Allowlist after phase</div></div>
+    <div class="stat-card"><div class="stat-value">WebRTC</div><div class="stat-label">P2P stack (Q-V3-A ✅)</div></div>
+    <div class="stat-card"><div class="stat-value">5</div><div class="stat-label">New API routes</div></div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-amber">Context</span>
+      <span class="card-title">Key Decisions (D-42-01..07)</span>
+      <span class="chip chip-amber">📋 Ready to plan</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">📌</span> <strong>D-42-01:</strong> WebRTC + SDP signaling. Q-V3-A RESOLVED. Grid = pure SDP relay. Brain gets <code>wire/p2p.py</code> (aiortc).</li>
+        <li><span class="task-check">📌</span> <strong>D-42-02:</strong> P2P announce = presence-only heartbeat. <code>POST /api/v1/p2p/announce</code> carries civic_did only. 5-min TTL.</li>
+        <li><span class="task-check">📌</span> <strong>D-42-03:</strong> STUN/TURN on AWS (coturn). Both free in v3.0. TURN creds via Civic-DID bearer (HMAC-SHA1 short-lived).</li>
+        <li><span class="task-check">📌</span> <strong>D-42-04:</strong> Full aiortc Brain module. SDP offer/answer encrypted with peer public key from DID Registry. Grid is opaque relay.</li>
+        <li><span class="task-check">📌</span> <strong>D-42-05:</strong> E2E encrypted SDP blobs. Grid logs only {from_did_hash, to_did_hash, tick, connection_id}. No content visibility.</li>
+        <li><span class="task-check">📌</span> <strong>D-42-06:</strong> Signal delivery via per-DID WSS firehose push (p2p.signal_received — NOT in audit allowlist).</li>
+        <li><span class="task-check">📌</span> <strong>D-42-07:</strong> Allowlist +3: p2p.peer_announced, p2p.connection_opened, p2p.connection_closed. 64→67.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-blue">Routes</span>
+      <span class="card-title">5 New API Routes + Policy Table Entries</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">⬜</span> POST /api/v1/p2p/announce — civic_did_required</li>
+        <li><span class="task-check">⬜</span> GET /api/v1/p2p/peers/:civicDid — visitor_public</li>
+        <li><span class="task-check">⬜</span> POST /api/v1/p2p/signal/:peerDid — civic_did_required</li>
+        <li><span class="task-check">⬜</span> GET /api/v1/p2p/signal/inbox — civic_did_required</li>
+        <li><span class="task-check">⬜</span> GET /api/v1/p2p/turn-credentials — civic_did_required</li>
+      </ul>
+      <div style="margin-top:8px;font-size:11px;color:var(--text3)">Depends: Phase 36 (ROUTE_DID_POLICY) · Phase 37 (DID Registry public key lookup) · Phase 38 (WSS firehose per-DID)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ PHASE 43 DETAIL ═══════════════════ -->
+<section id="phase43" class="section">
+  <div class="section-title">Phase 43 — Right-to-Fork Export Tooling</div>
+  <div class="section-subtitle">📋 Context captured 2026-05-27 — ready to plan · Wave 2 · Allowlist 67 → 68 (+1) · D-V3-18 constitutional</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-value">0</div><div class="stat-label">Plans created</div></div>
+    <div class="stat-card"><div class="stat-value">+1</div><div class="stat-label">Allowlist additions</div></div>
+    <div class="stat-card"><div class="stat-value">68</div><div class="stat-label">Allowlist after phase</div></div>
+    <div class="stat-card"><div class="stat-value">ZIP</div><div class="stat-label">Export format</div></div>
+    <div class="stat-card"><div class="stat-value">D-V3-18</div><div class="stat-label">Constitutional mandate</div></div>
+  </div>
+
+  <div class="card open">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-amber">Context</span>
+      <span class="card-title">Key Decisions (D-43-01..05)</span>
+      <span class="chip chip-amber">📋 Ready to plan</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">📌</span> <strong>D-43-01:</strong> Full scope — Grid export endpoint + Brain standalone mode. Constitutional right-to-fork only meaningful if operator can actually run Nous after forking.</li>
+        <li><span class="task-check">📌</span> <strong>D-43-02:</strong> ZIP archive: manifest.json + memory/ (SQLite dumps: nous.db, ltm.db, psyche.db) + credentials/ (W3C VCs) + audit/ (full JSONL chain) + civic/ (memberships, treasury).</li>
+        <li><span class="task-check">📌</span> <strong>D-43-03:</strong> Fork consent gate = IrreversibilityDialog clone in Steward /system/local-ai (Tier 1). Operator types full Civic-DID (paste-suppressed). Title: "Fork Nous from Grid". Button: "Fork forever".</li>
+        <li><span class="task-check">📌</span> <strong>D-43-04:</strong> Allowlist +1: operator.nous_forked sole-producer (append-operator-nous-forked.ts). Payload: civic_did_hash, operator_did_hash, tick, package_hash, fork_reason. 67→68.</li>
+        <li><span class="task-check">📌</span> <strong>D-43-05:</strong> Brain standalone: python -m noesis_brain standalone --import &lt;zip&gt;. Full Ollama cognition. Civic actions return grid_unavailable. BRAIN_STANDALONE=1 env var.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-blue">FORK-01..04</span>
+      <span class="card-title">Requirements Coverage</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">⬜</span> FORK-01: POST /api/v1/operator/fork/&lt;nous-did&gt; → portable ZIP package download (one-time token)</li>
+        <li><span class="task-check">⬜</span> FORK-02: manifest.json human-readable · SHA-256 export_hash integrity anchor</li>
+        <li><span class="task-check">⬜</span> FORK-03: nous standalone --import &lt;zip&gt; runs with full Ollama cognition · civic actions return grid_unavailable</li>
+        <li><span class="task-check">⬜</span> FORK-04: operator.nous_forked in BOTH Grid audit chain AND embedded in package manifest.json</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
 <section id="requirements" class="section">
   <div class="section-title">Requirements</div>
   <div class="section-subtitle">Active · Holding · Issues · Needs Discussion</div>
@@ -1192,20 +1294,59 @@ tr:hover td{background:var(--surface2)}
 
   <div class="card">
     <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--amber)">Phase 42 — P2P Requirements</span>
+      <span class="chip chip-amber">📋 Context captured</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <table>
+        <thead><tr><th>ID</th><th>Status</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="td-code">P2P-01</span></td><td><span class="chip chip-gray">Pending</span></td><td>Brain-to-Brain direct channel via WebRTC. Grid mediates SDP signaling only. Content encrypted E2E — Grid is opaque relay.</td></tr>
+          <tr><td><span class="td-code">P2P-02</span></td><td><span class="chip chip-gray">Pending</span></td><td>P2P announce heartbeat: Brain posts every 5 min. Peer online status queryable. Entry expires 5-min TTL.</td></tr>
+          <tr><td><span class="td-code">P2P-03</span></td><td><span class="chip chip-gray">Pending</span></td><td>STUN/TURN infrastructure: coturn on AWS. STUN free. TURN free in v3.0 (deferred to v3.1 for pricing). Civic-DID auth for TURN creds.</td></tr>
+          <tr><td><span class="td-code">P2P-04</span></td><td><span class="chip chip-gray">Pending</span></td><td>Signal delivery via per-DID WSS firehose (p2p.signal_received frame — NOT in audit chain). Opaque blob relay.</td></tr>
+          <tr><td><span class="td-code">P2P-05</span></td><td><span class="chip chip-gray">Pending</span></td><td>3 audit events: p2p.peer_announced, p2p.connection_opened, p2p.connection_closed. Sole-producer triad. Allowlist 64→67.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span style="font-weight:600;color:var(--amber)">Phase 43 — FORK Requirements (D-V3-18 Constitutional)</span>
+      <span class="chip chip-amber">📋 Context captured</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <table>
+        <thead><tr><th>ID</th><th>Status</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="td-code">FORK-01</span></td><td><span class="chip chip-gray">Pending</span></td><td>POST /api/v1/operator/fork/&lt;nous-did&gt; — Brain EdDSA bearer auth. Returns one-time download token. Grid records operator.nous_forked.</td></tr>
+          <tr><td><span class="td-code">FORK-02</span></td><td><span class="chip chip-gray">Pending</span></td><td>ZIP archive: manifest.json (human-readable) + memory/ (SQLite dumps) + credentials/ (W3C VCs) + audit/ (full JSONL chain) + civic/ (memberships + treasury). SHA-256 export_hash integrity anchor.</td></tr>
+          <tr><td><span class="td-code">FORK-03</span></td><td><span class="chip chip-gray">Pending</span></td><td>Brain standalone mode: python -m noesis_brain standalone --import &lt;zip&gt;. Full Ollama cognition active. Civic actions return {error: "grid_unavailable"}. BRAIN_STANDALONE=1 env var.</td></tr>
+          <tr><td><span class="td-code">FORK-04</span></td><td><span class="chip chip-gray">Pending</span></td><td>operator.nous_forked event in BOTH Grid's audit chain AND embedded in manifest.json (package_hash anchors both). Sole-producer: append-operator-nous-forked.ts. Allowlist 67→68.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
       <span style="font-weight:600;color:var(--red)">Open Questions / Needs Discussion</span>
-      <span class="chip chip-red">8 open</span>
+      <span class="chip chip-red">6 open</span>
       <span class="card-chevron">▶</span>
     </div>
     <div class="card-body">
       <table>
         <thead><tr><th>ID</th><th>Question</th><th>Resolved in</th></tr></thead>
         <tbody>
-          <tr><td><span class="td-code">Q-V3-A</span></td><td>P2P stack selection (libp2p vs custom vs STUN/TURN)</td><td>Phase 42 discuss</td></tr>
+          <tr><td><span class="td-code">Q-V3-A</span></td><td>P2P stack selection (libp2p vs custom vs STUN/TURN)</td><td><span class="chip chip-green">✅ Resolved Phase 42 — WebRTC + aiortc + coturn</span></td></tr>
           <tr><td><span class="td-code">Q-V3-B</span></td><td>Local AI default model (Llama 3.1 8B vs Qwen 2.5?)</td><td><span class="chip chip-green">✅ Resolved Phase 40 — qwen3:4b</span></td></tr>
           <tr><td><span class="td-code">Q-V3-C</span></td><td>IRS fee percentage (1–3% configurable — exact default?)</td><td>Phase 45 discuss</td></tr>
           <tr><td><span class="td-code">Q-V3-D</span></td><td>Bios sybil cost for Business-DID registration</td><td><span class="chip chip-green">✅ Resolved Phase 37 — 100 Bios</span></td></tr>
           <tr><td><span class="td-code">Q-V3-E</span></td><td>Henry's public Grid domain (genesis.noesis or other?)</td><td>Phase 50 discuss</td></tr>
-          <tr><td><span class="td-code">Q-V3-F</span></td><td>Right-to-fork export subset (what exactly is exported?)</td><td>Phase 43 discuss</td></tr>
+          <tr><td><span class="td-code">Q-V3-F</span></td><td>Right-to-fork export subset (what exactly is exported?)</td><td><span class="chip chip-green">✅ Resolved Phase 43 — ZIP: SQLite dumps + W3C VCs + full audit JSONL + civic state</span></td></tr>
           <tr><td><span class="td-code">Q-V3-G</span></td><td>Police authority scope (can Police suspend Civic-DID?)</td><td>Phase 47 discuss</td></tr>
           <tr><td><span class="td-code">Q-V3-H</span></td><td>Sleep thresholds (inactive period before "away" status)</td><td><span class="chip chip-green">✅ Resolved Phase 41 — 5min grace/30d absent/1yr presumed</span></td></tr>
           <tr><td><span class="td-code">Q-V3-I</span></td><td>Cloud LLM allowed for Brain? (Anthropic API as fallback)</td><td><span class="chip chip-green">✅ Resolved Phase 40 — allowed with mandatory red banner</span></td></tr>
@@ -1303,9 +1444,9 @@ tr:hover td{background:var(--surface2)}
       <tr><td><span class="td-code">38</span></td><td>Brain ↔ Grid Wire</td><td>1</td><td>L (4 plans)</td><td>0</td><td>37</td><td><span class="chip chip-green">✅ Shipped 2026-05-27</span></td></tr>
       <tr><td><span class="td-code">39</span></td><td>Multi-Tenancy</td><td>1</td><td>M (4 plans)</td><td>0</td><td>38</td><td><span class="chip chip-green">✅ Shipped 2026-05-27</span></td></tr>
       <tr><td><span class="td-code">40</span></td><td>Local AI Integration</td><td>1</td><td>M (5 plans)</td><td>0</td><td>—</td><td><span class="chip chip-green">✅ Shipped 2026-05-27</span></td></tr>
-      <tr><td><span class="td-code">41</span></td><td>Sleep Cycle</td><td>1</td><td>M (~5 plans)</td><td>0</td><td>38</td><td><span class="chip chip-amber">Next up</span></td></tr>
-      <tr><td><span class="td-code">42</span></td><td>P2P Infrastructure</td><td>2</td><td>L (~8 plans)</td><td>+3 → 63</td><td>36+37+38</td><td><span class="chip chip-gray">Pending</span></td></tr>
-      <tr><td><span class="td-code">43</span></td><td>Right-to-Fork</td><td>2</td><td>M (~5 plans)</td><td>0</td><td>37+38</td><td><span class="chip chip-gray">Pending</span></td></tr>
+      <tr><td><span class="td-code">41</span></td><td>Sleep Cycle</td><td>1</td><td>M (6 plans)</td><td>0 → 64</td><td>38</td><td><span class="chip chip-green">✅ Shipped 2026-05-27</span></td></tr>
+      <tr><td><span class="td-code">42</span></td><td>P2P Infrastructure</td><td>2</td><td>L (~8 plans)</td><td>+3 → 67</td><td>36+37+38</td><td><span class="chip chip-amber">📋 Context captured</span></td></tr>
+      <tr><td><span class="td-code">43</span></td><td>Right-to-Fork</td><td>2</td><td>M (~5 plans)</td><td>+1 → 68</td><td>37+38</td><td><span class="chip chip-amber">📋 Context captured</span></td></tr>
       <tr><td><span class="td-code">44</span></td><td>Marketplace v3</td><td>3</td><td>L (~8 plans)</td><td>+4</td><td>37</td><td><span class="chip chip-gray">Pending</span></td></tr>
       <tr><td><span class="td-code">45</span></td><td>IRS Treasury</td><td>3</td><td>M (~6 plans)</td><td>+3</td><td>44</td><td><span class="chip chip-gray">Pending</span></td></tr>
       <tr><td><span class="td-code">46</span></td><td>Government v3</td><td>3</td><td>L (~9 plans)</td><td>+6</td><td>37</td><td><span class="chip chip-gray">Pending</span></td></tr>
@@ -1332,7 +1473,7 @@ tr:hover td{background:var(--surface2)}
 <!-- ═══════════════════ DISCUSS LOG ═══════════════════ -->
 <section id="discuss" class="section">
   <div class="section-title">Discuss Log History</div>
-  <div class="section-subtitle">Phase discussion decisions — Phase 36</div>
+  <div class="section-subtitle">Phase discussion decisions — Phases 36 · 42 · 43</div>
 
   <div class="log-entry">
     <div class="log-entry-header">
@@ -1369,6 +1510,32 @@ tr:hover td{background:var(--surface2)}
     <div class="log-decision"><span class="log-q">D-36-21</span><span class="log-choice">✓ 2 OAuth stub endpoints (Google + Apple) — return 501 coming_soon</span></div>
     <div class="log-decision"><span class="log-q">D-36-23</span><span class="log-choice">✓ Portal landing may use 3D libs (but Phase 36 ships functional-only; full 3D hero = Phase 56)</span></div>
     <div class="log-decision"><span class="log-q">D-36-24</span><span class="log-choice">✓ Raw-SVG required for Civic Map in Phase 36 (D-V3-06 invariant)</span></div>
+  </div>
+
+  <div class="log-entry">
+    <div class="log-entry-header">
+      <span class="chip chip-amber">Phase 42</span>
+      <span style="font-weight:600;font-size:13px;color:var(--text)">P2P Protocol Stack + Signal Delivery</span>
+      <span class="log-date">2026-05-27</span>
+    </div>
+    <div class="log-decision"><span class="log-q">D-42-01</span><span class="log-choice">✓ WebRTC + SDP signaling. Q-V3-A RESOLVED. Grid = pure SDP relay, no WebRTC runtime on server. Brain gets aiortc module.</span></div>
+    <div class="log-decision"><span class="log-q">D-42-02</span><span class="log-choice">✓ P2P announce = presence-only heartbeat (no endpoint field). 5-min TTL. Separate from Phase 41 60s presence heartbeat.</span></div>
+    <div class="log-decision"><span class="log-q">D-42-03</span><span class="log-choice">✓ coturn on AWS. STUN + TURN both free in v3.0 (paid TURN deferred to v3.1). TURN creds require Civic-DID auth.</span></div>
+    <div class="log-decision"><span class="log-q">D-42-05</span><span class="log-choice">✓ E2E SDP encryption. Brain A fetches peer public key from DID Registry W3C VC before signaling. Grid sees only hashes.</span></div>
+    <div class="log-decision"><span class="log-q">D-42-06</span><span class="log-choice">✓ Signal delivery via per-DID WSS firehose (p2p.signal_received). NOT in audit allowlist — private delivery only.</span></div>
+    <div class="log-decision"><span class="log-q">D-42-07</span><span class="log-choice">✓ Allowlist +3 exactly: p2p.peer_announced, p2p.connection_opened, p2p.connection_closed. 64→67.</span></div>
+  </div>
+
+  <div class="log-entry">
+    <div class="log-entry-header">
+      <span class="chip chip-amber">Phase 43</span>
+      <span style="font-weight:600;font-size:13px;color:var(--text)">Right-to-Fork: Standalone Scope + Package Format + Consent UX</span>
+      <span class="log-date">2026-05-27</span>
+    </div>
+    <div class="log-decision"><span class="log-q">D-43-01</span><span class="log-choice">✓ Full scope — Grid export + Brain standalone mode both in Phase 43. Constitutional right-to-fork requires operator can actually run Nous.</span></div>
+    <div class="log-decision"><span class="log-q">D-43-02</span><span class="log-choice">✓ ZIP archive with manifest.json + memory/ (SQLite dumps) + credentials/ (W3C VCs) + audit/ (full JSONL) + civic/. SQLite chosen for speed/completeness.</span></div>
+    <div class="log-decision"><span class="log-q">D-43-03</span><span class="log-choice">✓ IrreversibilityDialog clone in Steward /system/local-ai (Tier 1). Operator types full Civic-DID (paste-suppressed). Button: "Fork forever".</span></div>
+    <div class="log-decision"><span class="log-q">D-43-04</span><span class="log-choice">✓ Allowlist +1 (was listed as +0 in ROADMAP — corrected). operator.nous_forked = new event requiring explicit allowlist entry. 67→68.</span></div>
   </div>
 </section>
 
@@ -1607,8 +1774,8 @@ const PHASES = {
   '39': {name:'Grid Multi-Tenancy',status:'SHIPPED',wave:'Wave 1 — Foundations',goal:'Per-operator metadata isolation. operatorScope() preHandler. Per-operator quotas (v27+v28). Steward /system/operators Tier-2 Grid Manager.',reqs:['TENANT-01','TENANT-02','TENANT-03'],allowlist:'0 (64)',plans:['39-01 ✅ TDD stubs','39-02 ✅ DB migrations v27+v28 + quota store','39-03 ✅ operatorScope() preHandler + assertOperatorOwns()','39-04 ✅ Steward /system/operators page'],depends:'Phase 38'},
   '40': {name:'Local AI Integration',status:'SHIPPED',wave:'Wave 1 — Foundations',goal:'Ollama production-grade default. Operator-selectable model via Steward Console. qwen3:4b default. Mandatory red banner for cloud LLM fallback.',reqs:['LOCAL-01','LOCAL-02','LOCAL-03'],allowlist:'0 (64)',plans:['40-01 ✅ TDD stubs','40-02 ✅ DB migration v29 + Brain-JWT settings endpoint','40-03 ✅ ModelRouter + async Brain startup + 3-tier routing','40-04 ✅ Brain HTTP /local-ai/* + structured logging','40-05 ✅ Steward /system/local-ai page + Brain HTTP proxy'],depends:'—'},
   '41': {name:'Sleep Cycle + Away Presence',status:'SHIPPED',wave:'Wave 1 — Foundations',goal:'4-state presence lifecycle (awake→away→absent→presumed_departed). Message queue for offline Nous. Civic Map 4-state rendering. Grid Manager monitoring.',reqs:['SLEEP-01','SLEEP-02','SLEEP-03','SLEEP-04','SLEEP-05'],allowlist:'0 (64)',plans:['41-01 ✅ TDD stubs','41-02 ✅ DB migrations v30+v31','41-03 ✅ GraceTimerRegistry (tick-based)','41-04 ✅ PresenceService façade','41-05 ✅ Heartbeat + message-queue routes','41-06 ✅ Civic Map 4-state + Steward Section 4 + Grid Manager API'],depends:'Phase 38'},
-  '42': {name:'P2P Infrastructure',status:'PENDING',wave:'Wave 2 — Civic Plumbing',goal:'Grid-mediated signaling + DID-to-endpoint discovery + STUN/TURN. Brain-to-Brain content stays direct.',reqs:['P2P-01'],allowlist:'+3',plans:['TBD'],depends:'36+37+38'},
-  '43': {name:'Right-to-Fork Export',status:'PENDING',wave:'Wave 2 — Civic Plumbing',goal:'Operator exports full Nous state (Brain memory + civic credentials + audit history). Constitutional enforcement.',reqs:['FORK-01'],allowlist:'0',plans:['TBD'],depends:'37+38'},
+  '42': {name:'P2P Infrastructure',status:'CONTEXT CAPTURED',wave:'Wave 2 — Civic Plumbing',goal:'WebRTC SDP signaling (Q-V3-A resolved). Grid-mediated SDP relay (opaque). Brain aiortc module. STUN/TURN via coturn (AWS, free v3.0). 5 new routes. Brain-to-Brain content direct after ICE.',reqs:['P2P-01','P2P-02','P2P-03','P2P-04','P2P-05'],allowlist:'+3 (64→67)',plans:['TBD — planning next'],depends:'36+37+38'},
+  '43': {name:'Right-to-Fork Export',status:'CONTEXT CAPTURED',wave:'Wave 2 — Civic Plumbing',goal:'D-V3-18 constitutional enforcement. Grid export endpoint → ZIP package (memory SQLite + W3C VCs + full audit chain). Brain standalone --import mode (Ollama cognition, civic actions → grid_unavailable). IrreversibilityDialog clone in Steward Tier 1.',reqs:['FORK-01','FORK-02','FORK-03','FORK-04'],allowlist:'+1 (67→68)',plans:['TBD — planning after Phase 42'],depends:'37+38'},
   '44': {name:'Marketplace v3',status:'PENDING',wave:'Wave 3 — Civic Institutions',goal:'Business-DID listings, bids, escrow, IRS fee hooks, dispute → Police routing.',reqs:['MKT-01'],allowlist:'+4',plans:['TBD'],depends:'Phase 37'},
   '45': {name:'IRS Treasury',status:'PENDING',wave:'Wave 3 — Civic Institutions',goal:'Transaction fee collection (1-3%), civic treasury, Government-authorized disbursements.',reqs:['IRS-01'],allowlist:'+3',plans:['TBD'],depends:'Phase 44'},
   '46': {name:'Government v3',status:'PENDING',wave:'Wave 3 — Civic Institutions',goal:'Nous-only VOTE-05 legislative body. Bills, co-sponsorship, scheduled sessions, civic law book.',reqs:['CIVGOV-01'],allowlist:'+6',plans:['TBD'],depends:'Phase 37'},
