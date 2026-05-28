@@ -8,12 +8,12 @@ import {
 } from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast-allowlist: default-deny membership', () => {
-    it('has exactly 64 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27+Phase 28+Phase 33+Phase 36+Phase 37 event types', () => {
-        expect(ALLOWLIST.size).toBe(64);
+    it('has exactly 67 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27+Phase 28+Phase 33+Phase 36+Phase 37+Phase 42 event types', () => {
+        expect(ALLOWLIST.size).toBe(67);
     });
 
-    it('has frozen 64-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(64);
+    it('has frozen 67-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(67);
     });
 
     it.each([
@@ -92,7 +92,7 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(() => (ALLOWLIST as Set<string>).add('law.bypassed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).delete('trade.reviewed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).clear()).toThrow(TypeError);
-        expect(ALLOWLIST.size).toBe(64);
+        expect(ALLOWLIST.size).toBe(67);
     });
 
     it('Phase 6 operator.* tuple order: inspected < paused < resumed < law_changed < telos_forced', () => {
@@ -220,7 +220,7 @@ describe('broadcast-allowlist: Phase 6 operator.* payload privacy (representativ
     });
 });
 
-describe.skip('ALLOWLIST_MEMBERS Phase 42 (Plan 03 will unskip)', () => {
+describe('ALLOWLIST_MEMBERS Phase 42 (Plan 03)', () => {
     it('has count 67 after Phase 42 adds p2p.{peer_announced,connection_opened,connection_closed}', () => {
         expect(ALLOWLIST_MEMBERS.length).toBe(67);
     });

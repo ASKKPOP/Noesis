@@ -50,6 +50,10 @@ services:
       GRID_ADMIN_DOCKER_ENABLED: ${GRID_ADMIN_DOCKER_ENABLED:-false}
       GRID_ADMIN_ENV_PATH: /admin/.env
       GRID_ADMIN_PROJECT_DIR: /admin/project
+      # Phase 42 P2P-03 — coturn TURN credential generation
+      TURN_STATIC_AUTH_SECRET: ${TURN_STATIC_AUTH_SECRET:-changeme-turn-secret}
+      TURN_HOST: ${TURN_HOST:-coturn}
+      TURN_PORT: ${TURN_PORT:-3478}
     volumes:
       - sockets:/sockets
       # Admin mounts — only active when GRID_ADMIN_ENABLED=true. When the env is
@@ -192,6 +196,44 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    restart: unless-stopped
+
+  # ── coturn STUN/TURN (Phase 42 P2P-03 / D-42-03) ────────────────────────────
+  # TURN is FREE in v3.0 per D-42-03. Civic-DID auth (HMAC-SHA1 short-lived
+  # credentials via GET /api/v1/p2p/turn-credentials) gates abuse, not billing.
+  #
+  # Dev profile: STUN + TURN on UDP 3478 / TCP 3478 / TURNS 5349.
+  # The UDP 49152-65535 relay range is OMITTED in dev (macOS Docker Desktop
+  # cannot map large UDP port ranges efficiently — RESEARCH §Pitfall macOS UDP).
+  # For production AWS:
+  #   - open security group UDP 3478 + UDP 49152-65535
+  #   - uncomment the "49152-65535:49152-65535/udp" port mapping below
+  #   - or run coturn host-network mode for full relay capability.
+  coturn:
+    image: coturn/coturn:4.6.3
+    container_name: noesis-coturn
+    ports:
+      - "3478:3478"
+      - "3478:3478/udp"
+      - "5349:5349"
+      - "5349:5349/udp"
+      # Production-only — uncomment for AWS deployment with security group rule:
+      # - "49152-65535:49152-65535/udp"
+    environment:
+      DETECT_EXTERNAL_IP: "yes"
+      STATIC_AUTH_SECRET: "${TURN_STATIC_AUTH_SECRET:-changeme-turn-secret}"
+    command: >
+      -f
+      --use-auth-secret
+      --realm=noesis.grid
+      --static-auth-secret=${TURN_STATIC_AUTH_SECRET:-changeme-turn-secret}
+      --min-port=49152
+      --max-port=65535
+      --no-multicast-peers
+      --denied-peer-ip=10.0.0.0-10.255.255.255
+      --denied-peer-ip=192.168.0.0-192.168.255.255
+      --denied-peer-ip=172.16.0.0-172.31.255.255
+      --denied-peer-ip=127.0.0.0-127.255.255.255
     restart: unless-stopped
 
 volumes:
