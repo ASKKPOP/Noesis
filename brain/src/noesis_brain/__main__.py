@@ -28,6 +28,7 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import logging
 import os
@@ -531,5 +532,51 @@ async def main() -> None:
     await app.serve_forever()
 
 
+async def _run_standalone(import_archive: Path) -> None:
+    """Standalone Brain entry — no Grid connection. D-43-05."""
+    from noesis_brain.standalone.importer import verify_and_unpack  # noqa: PLC0415
+    from noesis_brain.standalone.factory import create_brain_app_standalone  # noqa: PLC0415
+
+    # Determine standalone data dir — default to a temp-like path if not set
+    import_dir = Path(
+        os.environ.get("BRAIN_DATA_DIR", "/tmp/noesis-brain-standalone")
+    ).resolve()
+
+    log.info("[Brain] Standalone mode — importing %s into %s", import_archive, import_dir)
+    manifest = verify_and_unpack(import_archive, import_dir)
+    log.info(
+        "[Brain] Manifest verified — nous_did=%s, exported_at_tick=%d",
+        manifest["nous_existence_did"],
+        manifest["exported_at_tick"],
+    )
+
+    app = await create_brain_app_standalone(import_dir)
+    log.info("[Brain] Standalone BrainApp ready — running tick loop without Grid")
+    await app.serve_forever()
+
+
+def main_entry() -> None:
+    """Argparse entry point — dispatches to standalone or normal mode."""
+    parser = argparse.ArgumentParser(prog="noesis_brain")
+    subparsers = parser.add_subparsers(dest="mode", required=False)
+    standalone_p = subparsers.add_parser(
+        "standalone",
+        help="Run forked Brain offline (D-43-05). Imports a .tar.gz fork archive and runs without Grid connection.",
+    )
+    standalone_p.add_argument(
+        "--import",
+        dest="import_archive",
+        required=True,
+        type=Path,
+        help="Path to .tar.gz fork archive (from POST /api/v1/operator/fork/:nousDid)",
+    )
+    args = parser.parse_args()
+    if args.mode == "standalone":
+        asyncio.run(_run_standalone(args.import_archive))
+    else:
+        # PRESERVE existing default behavior — do not break normal mode
+        asyncio.run(main())
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    main_entry()

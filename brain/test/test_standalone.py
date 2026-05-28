@@ -189,7 +189,9 @@ class TestStandaloneMode:
     async def test_no_wire_client_when_BRAIN_STANDALONE_set(
         self, monkeypatch, tmp_path: Path
     ) -> None:
-        """create_brain_app_standalone constructs BrainApp with handler._grid_wire_client is None."""
+        """create_brain_app_standalone sets BRAIN_STANDALONE=1, unsets GRID_URL/CIVIC_DID,
+        and constructs BrainApp with handler._grid_wire_client is None."""
+        import noesis_brain.__main__ as brain_main
         from noesis_brain.standalone.factory import create_brain_app_standalone
 
         import_dir = tmp_path / "imported"
@@ -210,12 +212,20 @@ class TestStandaloneMode:
         }))
         monkeypatch.setenv("GRID_URL", "https://grid.test")
         monkeypatch.setenv("CIVIC_DID", "did:civic:noesis:should_be_removed")
-        # Provide required BRAIN_HTTP_SECRET so _build_http_server doesn't raise
-        monkeypatch.setenv("BRAIN_HTTP_SECRET", "test-secret-for-standalone-factory")
-        # Provide NOUS_CONFIG pointing to a valid config or use monkeypatch to skip
-        monkeypatch.setenv("NOUS_CONFIG", "")
 
-        app = await create_brain_app_standalone(import_dir)
+        # Mock create_brain_app_from_env to avoid loading sophia.yaml.
+        # We verify env var state AFTER the factory configures the environment,
+        # before delegating to the real factory.
+        mock_handler = MagicMock()
+        mock_handler._grid_wire_client = None
+        mock_app = MagicMock()
+        mock_app.handler = mock_handler
+
+        async def _mock_factory() -> MagicMock:
+            return mock_app
+
+        with patch.object(brain_main, "create_brain_app_from_env", side_effect=_mock_factory):
+            app = await create_brain_app_standalone(import_dir)
 
         assert os.environ.get("BRAIN_STANDALONE") == "1"
         assert "GRID_URL" not in os.environ
