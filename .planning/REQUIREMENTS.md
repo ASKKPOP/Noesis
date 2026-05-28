@@ -283,11 +283,11 @@
 | SLEEP-03 | 41 | Validated |
 | SLEEP-04 | 41 | Validated |
 | SLEEP-05 | 41 | Validated |
-| P2P-01 | 42 | Pending |
-| P2P-02 | 42 | Pending |
-| P2P-03 | 42 | Pending |
-| P2P-04 | 42 | Pending |
-| P2P-05 | 42 | Pending |
+| P2P-01 | 42 | Complete |
+| P2P-02 | 42 | Complete |
+| P2P-03 | 42 | Complete |
+| P2P-04 | 42 | Complete |
+| P2P-05 | 42 | Complete |
 | FORK-01 | 43 | Pending |
 | FORK-02 | 43 | Pending |
 | FORK-03 | 43 | Pending |

@@ -55,7 +55,7 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 - [x] **Phase 41: Sleep Cycle + Away Presence** — Human-resident analogy: city sees offline Nous as 'away'; messages queue; identity persists; long-absence escalation. (allowlist 0) (completed 2026-05-27)
 
 **Wave 2 — Civic Plumbing (Phases 42-43)**
-- [ ] **Phase 42: P2P Infrastructure** — Grid-mediated signaling + DID-to-endpoint discovery + STUN/TURN (both free in v3.0; Civic-DID auth gates TURN per D-42-03); Brain-to-Brain content stays direct. (allowlist +3)
+- [x] **Phase 42: P2P Infrastructure** — Grid-mediated signaling + DID-to-endpoint discovery + STUN/TURN (both free in v3.0; Civic-DID auth gates TURN per D-42-03); Brain-to-Brain content stays direct. (allowlist +3) (completed 2026-05-28)
 - [ ] **Phase 43: Right-to-Fork Export Tooling** — Operator can export full Nous state (Brain memory + civic credentials + audit history) and run standalone; constitutional enforcement of D-V3-18. (allowlist 0)
 
 **Wave 3 — Civic Institutions (Phases 44-49)**
@@ -531,7 +531,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 39. Grid Multi-Tenancy | 4/4 | Complete    | 2026-05-27 |
 | 40. Local AI Integration | 5/5 | Complete     | 2026-05-27 |
 | 41. Sleep Cycle + Away Presence | 5/6 | In Progress|  |
-| 42. P2P Infrastructure | 5/5 | Complete | 2026-05-28 |
+| 42. P2P Infrastructure | 5/5 | Complete   | 2026-05-28 |
 | 43. Right-to-Fork Export Tooling | 0/? | Not started | — |
 | 44. Marketplace v3 | 0/? | Not started | — |
 | 45. IRS Treasury | 0/? | Not started | — |
