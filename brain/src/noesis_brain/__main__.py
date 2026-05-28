@@ -85,6 +85,21 @@ class BrainApp:
         # Phase 41 — optional wire components set by create_brain_app_from_env
         self._wss_subscriber: Any | None = None
         self._heartbeat_task: asyncio.Task | None = None  # type: ignore[type-arg]
+        # Phase 42 — P2P announce task (300s cadence, separate from 60s presence heartbeat)
+        self._p2p_announce_task: asyncio.Task | None = None  # type: ignore[type-arg]
+        self.p2p_client: Any | None = None  # BrainP2PClient set by create_brain_app_from_env
+
+    async def _p2p_announce_loop(self) -> None:
+        """Phase 42 — 300s P2P announce heartbeat, separate from 60s presence (Pitfall 6)."""
+        wire_client = getattr(self.handler, "_grid_wire_client", None)
+        if wire_client is None:
+            return
+        while self._running:
+            try:
+                await wire_client.post_p2p_announce()
+            except Exception as exc:
+                log.warning("[Brain:%s] p2p announce loop error: %s", self.nous_name, exc)
+            await asyncio.sleep(300.0)
 
     async def start(self) -> None:
         """Start RPC server (and HTTP server if configured) and begin listening."""
@@ -100,12 +115,31 @@ class BrainApp:
                 _heartbeat_loop(self.handler._grid_wire_client)
             )
             log.info("[Brain:%s] presence heartbeat task started (60s interval)", self.nous_name)
+        # Phase 42: start P2P announce task (300s — separate from 60s presence)
+        if self._p2p_announce_task is None and hasattr(self.handler, "_grid_wire_client") and self.handler._grid_wire_client is not None:
+            self._p2p_announce_task = asyncio.create_task(self._p2p_announce_loop())
+            log.info("[Brain:%s] p2p announce task started (300s interval)", self.nous_name)
         self._running = True
         log.info("[Brain:%s] RPC server started", self.nous_name)
 
     async def stop(self) -> None:
         """Graceful shutdown."""
         self._running = False
+        # Phase 42: cancel P2P announce task and close P2P client
+        if self._p2p_announce_task is not None:
+            self._p2p_announce_task.cancel()
+            try:
+                await self._p2p_announce_task
+            except (asyncio.CancelledError, Exception):
+                pass
+            self._p2p_announce_task = None
+            log.info("[Brain:%s] p2p announce task cancelled", self.nous_name)
+        if self.p2p_client is not None:
+            try:
+                await self.p2p_client.close()
+            except Exception as exc:
+                log.warning("[Brain:%s] p2p_client.close error: %s", self.nous_name, exc)
+            self.p2p_client = None
         # Phase 41: cancel heartbeat task and stop WSS subscriber
         if self._heartbeat_task is not None:
             self._heartbeat_task.cancel()
@@ -455,14 +489,35 @@ async def create_brain_app_from_env() -> BrainApp:
         )
         app.handler._grid_wire_client = grid_wire_client
 
-        # Phase 41 SLEEP-03: wire WssSubscriber with queue= for ?since= reconnect cursor
-        async def _noop_on_frame(frame: dict) -> None:
-            pass  # Grid event handler — extended in future phases
+        # Phase 42 P2P-01..05: wire BrainP2PClient (shares shared httpx.AsyncClient)
+        from noesis_brain.wire.p2p import BrainP2PClient  # noqa: PLC0415
+        # Derive the existence signing key for SDP decryption (D-42-05)
+        # We use the same signing_key that was derived above for the token_manager
+        shared_http_client = await grid_wire_client._get_client()
+        p2p_client = BrainP2PClient(
+            grid_url=grid_url,
+            token_manager=token_manager,
+            civic_did=civic_did or "",
+            signing_key=signing_key,
+            client=shared_http_client,
+        )
+        app.p2p_client = p2p_client
+
+        # Phase 41 SLEEP-03 + Phase 42: wire WssSubscriber with queue= and p2p dispatch
+        async def _on_frame(frame: dict) -> None:
+            """Route incoming WSS frames — Phase 42 dispatches p2p.signal_received."""
+            event_type = frame.get("type") or frame.get("event_type", "")
+            # Phase 42 D-42-06: private signal push — NOT audit chain event
+            if event_type == "p2p.signal_received":
+                if app.p2p_client is not None:
+                    await app.p2p_client.handle_signal_received(frame)
+                return  # Do NOT fall through to other handlers
+            # Future: additional event_type branches here
 
         wss_subscriber = WssSubscriber(
             grid_url=grid_url,
             token_manager=token_manager,
-            on_frame=_noop_on_frame,
+            on_frame=_on_frame,  # Phase 42 — routes p2p.signal_received + future events
             queue=wire_queue,  # Phase 41 — enables ?since= reconnect cursor
         )
         app._wss_subscriber = wss_subscriber

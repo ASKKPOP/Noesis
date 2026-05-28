@@ -209,6 +209,38 @@ class GridWireClient:
         except Exception as exc:
             log.warning("[Brain] presence heartbeat error: %s", exc)
 
+    # ── P2P announce heartbeat ────────────────────────────────────────────────
+
+    async def post_p2p_announce(self) -> None:
+        """Phase 42 P2P-01 — POST /api/v1/p2p/announce, 300s cadence.
+
+        Separate from the 60s presence heartbeat (post_presence_heartbeat).
+        The P2P peer store TTL is 5 minutes; one announce per 300s keeps the
+        entry live without flooding the audit chain with p2p.peer_announced events.
+
+        Errors logged at WARNING; NEVER raised — caller continues normally.
+        """
+        try:
+            token = self._token_manager.get_valid_token()
+            client = await self._get_client()
+            resp = await client.post(
+                f"{self._base_url}/api/v1/p2p/announce",
+                json={},
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
+            )
+            if 200 <= resp.status_code < 300:
+                # No state to update — Grid acks success
+                pass
+            else:
+                log.warning(
+                    "[Brain] p2p announce non-2xx: status=%s", resp.status_code
+                )
+        except Exception as exc:
+            log.warning("[Brain] p2p announce error: %s", exc)
+
     # ── Queue helpers ──────────────────────────────────────────────────────────
 
     def _enqueue_all(self, actions: list[dict[str, Any]], tick: int) -> None:
