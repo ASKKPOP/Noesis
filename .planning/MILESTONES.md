@@ -805,4 +805,37 @@ Migrations: v32 (`existence_public_key_jwk TEXT NULL` on `civic_did_registry`)
 **Invariants preserved:** R-31-01 zero-diff, VOTE-05 Nous-only governance, broadcast allowlist at 67, sole-producer + closed-tuple discipline on all 3 new events.
 
 ---
-*Last updated: 2026-05-28 — Phase 42 P2P Infrastructure SHIPPED. Allowlist 64 → 67. BrainP2PClient + aiortc + PyNaCl SealedBox + 300s announce task + WSS dispatch wired. Next: Phase 43 Right-to-Fork Export Tooling.*
+*Last updated: 2026-05-28 — Phase 42 P2P Infrastructure SHIPPED. Allowlist 64 → 67. BrainP2PClient + aiortc + PyNaCl SealedBox + 300s announce task + WSS dispatch wired.*
+
+---
+
+### Phase 43 — Right-to-Fork Export Tooling (SHIPPED 2026-05-28)
+
+Wave: v3.0 Wave 2 (Civic Plumbing)
+Plans shipped: 4 (43-01 through 43-04)
+Requirements validated: FORK-01, FORK-02, FORK-03, FORK-04 (PASS_WITH_NOTES — SC4 fork/verify endpoint deferred)
+Allowlist delta: +1 (67 → 68). New event: `operator.nous_forked`. Sole-producer: `grid/src/audit/append-operator-nous-forked.ts`.
+Migrations: none (BRAIN_DATA_DIR env var — no DB schema change)
+
+**What shipped:**
+- **Grid fork endpoint** (`POST /api/v1/operator/fork/:nousDid`): H4+ header-trust auth, D-30 audit order (archive→audit→token→response), deterministic `.tar.gz` archive (EPOCH mtime, portable, noPax), one-time download token (5-min TTL, atomic consume). `buildForkArchive()` + `createForkManifest()` + `forkTokenStore` singleton.
+- **Audit event** (`operator.nous_forked`): 9-step closed-tuple discipline with `civic_did_hash + operator_did_hash + package_hash + fork_reason:operator_exit + tick`. Position 68 in allowlist.
+- **Brain standalone CLI** (`python -m noesis_brain standalone --import <pkg.tar.gz>`): path-traversal guard (T-43-slip), manifest `export_hash` verification, `BRAIN_DATA_DIR` env threading, `BRAIN_STANDALONE=1` isolation, civic-action gate middleware (forward-compat with empty `CIVIC_ACTION_PATHS`), `503 grid_unavailable` for future civic endpoints.
+- **Steward fork UI** (`ForkIrreversibilityDialog`): D-43-03 verbatim copy locked (4 constants), `capturedDidRef` closure-capture, `confirmedRef` gate (WR-01 fix), paste suppressed (D-05), Enter blocked (D-03), autoFocus on Cancel (D-04), `isSafeDownloadUrl()` origin guard (WR-02). Fork Nous section in `/system/local-ai` with click→dialog→POST→download chain. 10 tests green. Vitest testing infra bootstrapped in Steward.
+
+**Key decisions locked:**
+- D-43-02: Archive format is `.tar.gz` (deterministic; NOT zip)
+- D-43-03: Verbatim copy lock on 4 dialog strings — tests enforce exact literals
+- D-43-04: H4+ (not H5) tier required for fork — operator-initiated action
+- D-43-05: SealedBox-encrypted SDP blobs from Phase 42 included in export bundle
+
+**Deferred / known gaps:**
+- SC4: `POST /api/v1/operator/fork/verify` not implemented — third-party fork verification requires audit chain lookup; no later Phase 44-57 entry currently addresses this
+- `civicVcJson` in archive is a stub placeholder — Phase 49 will wire real Civic-DID VC fetch
+- `checkOperatorOwnsNous` not wired in production launcher — default-deny until Phase 49
+- Empty `CIVIC_ACTION_PATHS` — civic gate fires only when Phase 46/47 endpoints are registered
+
+**Invariants preserved:** R-31-01 zero-diff, VOTE-05 Nous-only governance, broadcast allowlist at 68, sole-producer + closed-tuple discipline on `operator.nous_forked`.
+
+---
+*Last updated: 2026-05-28 — Phase 43 Right-to-Fork Export Tooling SHIPPED. Allowlist 67 → 68. Constitutional D-V3-18 enforcement complete. v3.0 Wave 2 (Civic Plumbing) done. Next: Phase 44 Marketplace v3.*

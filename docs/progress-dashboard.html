@@ -197,8 +197,8 @@ tr:hover td{background:var(--surface2)}
   <div class="logo">Noēsis <span>Progress Dashboard</span></div>
   <span class="badge badge-active">🔧 v3.0 IN PROGRESS</span>
   <div class="header-meta">
-    <span>Phase 42 ✅ SHIPPED · Phase 43 Plan 1/4 done — executing</span>
-    <span>Updated: 2026-05-27</span>
+    <span>Phase 43 ✅ SHIPPED · v3.0 Wave 2 complete · Next: Phase 44 Marketplace v3</span>
+    <span>Updated: 2026-05-28</span>
   </div>
 </header>
 
@@ -387,10 +387,10 @@ tr:hover td{background:var(--surface2)}
         <div class="phase-name">P2P Infrastructure</div>
         <div class="phase-status">✅ SHIPPED 2026-05-27 · Allowlist 64→67 (+3)</div>
       </div>
-      <div class="phase-card active" onclick="openPhase('43')">
+      <div class="phase-card done" onclick="openPhase('43')">
         <div class="phase-num">Phase 43</div>
         <div class="phase-name">Right-to-Fork Export</div>
-        <div class="phase-status">🔧 Executing — Plan 1/4 done · Allowlist 67→68 (+1)</div>
+        <div class="phase-status">✅ SHIPPED 2026-05-28 · Allowlist 67→68 (+1)</div>
       </div>
     </div>
     <div class="wave-label">Wave 3 — Civic Institutions</div>
@@ -1126,46 +1126,60 @@ tr:hover td{background:var(--surface2)}
 <!-- ═══════════════════ PHASE 43 DETAIL ═══════════════════ -->
 <section id="phase43" class="section">
   <div class="section-title">Phase 43 — Right-to-Fork Export Tooling</div>
-  <div class="section-subtitle">🔧 Executing · Wave 2 · Allowlist 67 → 68 (+1) · Plan 1/4 done · D-V3-18 constitutional</div>
+  <div class="section-subtitle">✅ SHIPPED 2026-05-28 · Wave 2 · Allowlist 67 → 68 (+1) · 4/4 plans · D-V3-18 constitutional enforcement complete</div>
 
   <div class="stats-row">
-    <div class="stat-card"><div class="stat-value">1/4</div><div class="stat-label">Plans done</div></div>
+    <div class="stat-card"><div class="stat-value">4/4</div><div class="stat-label">Plans done</div></div>
     <div class="stat-card"><div class="stat-value">+1</div><div class="stat-label">Allowlist additions</div></div>
     <div class="stat-card"><div class="stat-value">68</div><div class="stat-label">Allowlist after phase</div></div>
-    <div class="stat-card"><div class="stat-value">ZIP</div><div class="stat-label">Export format</div></div>
+    <div class="stat-card"><div class="stat-value">.tar.gz</div><div class="stat-label">Export format (D-43-02)</div></div>
     <div class="stat-card"><div class="stat-value">D-V3-18</div><div class="stat-label">Constitutional mandate</div></div>
   </div>
 
   <div class="card open">
     <div class="card-header" onclick="toggle(this.parentElement)">
-      <span class="chip chip-amber">Context</span>
-      <span class="card-title">Key Decisions (D-43-01..05)</span>
-      <span class="chip chip-amber">📋 Ready to plan</span>
+      <span class="chip chip-green">Shipped</span>
+      <span class="card-title">What shipped (4 plans)</span>
       <span class="card-chevron">▶</span>
     </div>
     <div class="card-body">
       <ul class="task-list">
-        <li><span class="task-check">📌</span> <strong>D-43-01:</strong> Full scope — Grid export endpoint + Brain standalone mode. Constitutional right-to-fork only meaningful if operator can actually run Nous after forking.</li>
-        <li><span class="task-check">📌</span> <strong>D-43-02:</strong> ZIP archive: manifest.json + memory/ (SQLite dumps: nous.db, ltm.db, psyche.db) + credentials/ (W3C VCs) + audit/ (full JSONL chain) + civic/ (memberships, treasury).</li>
-        <li><span class="task-check">📌</span> <strong>D-43-03:</strong> Fork consent gate = IrreversibilityDialog clone in Steward /system/local-ai (Tier 1). Operator types full Civic-DID (paste-suppressed). Title: "Fork Nous from Grid". Button: "Fork forever".</li>
-        <li><span class="task-check">📌</span> <strong>D-43-04:</strong> Allowlist +1: operator.nous_forked sole-producer (append-operator-nous-forked.ts). Payload: civic_did_hash, operator_did_hash, tick, package_hash, fork_reason. 67→68.</li>
-        <li><span class="task-check">📌</span> <strong>D-43-05:</strong> Brain standalone: python -m noesis_brain standalone --import &lt;zip&gt;. Full Ollama cognition. Civic actions return grid_unavailable. BRAIN_STANDALONE=1 env var.</li>
+        <li><span class="task-check">✅</span> <strong>Plan 01 (Wave 0):</strong> <code>operator.nous_forked</code> sole-producer + allowlist 67→68. <code>BRAIN_DATA_DIR</code> env threaded into MemoryStore. Test stubs for Plans 02-04 created.</li>
+        <li><span class="task-check">✅</span> <strong>Plan 02 (Grid endpoint):</strong> <code>POST /api/v1/operator/fork/:nousDid</code> (H4+ auth, D-30 order). Deterministic <code>.tar.gz</code> (EPOCH mtime, portable, noPax). One-time download token (5-min TTL). <code>buildForkArchive</code> + <code>createForkManifest</code> + <code>forkTokenStore</code>. Audit event with <code>civic_did_hash + package_hash + fork_reason:operator_exit</code>.</li>
+        <li><span class="task-check">✅</span> <strong>Plan 03 (Brain standalone CLI):</strong> <code>python -m noesis_brain standalone --import &lt;pkg.tar.gz&gt;</code>. Path-traversal guard (T-43-slip), manifest hash verification. <code>BRAIN_STANDALONE=1</code> isolation. Civic-action gate middleware (forward-compat). <code>503 grid_unavailable</code>.</li>
+        <li><span class="task-check">✅</span> <strong>Plan 04 (Steward UI):</strong> <code>ForkIrreversibilityDialog</code> — D-43-03 verbatim copy locked (4 constants). <code>capturedDidRef</code>, <code>confirmedRef</code> (WR-01), paste suppressed (D-05), Enter blocked (D-03), autoFocus Cancel (D-04), <code>isSafeDownloadUrl()</code> origin guard (WR-02). Fork Nous section in <code>/system/local-ai</code>. 10 tests green. Vitest infra bootstrapped in Steward.</li>
       </ul>
     </div>
   </div>
 
   <div class="card">
     <div class="card-header" onclick="toggle(this.parentElement)">
-      <span class="chip chip-blue">FORK-01..04</span>
+      <span class="chip chip-green">FORK-01..04</span>
       <span class="card-title">Requirements Coverage</span>
       <span class="card-chevron">▶</span>
     </div>
     <div class="card-body">
       <ul class="task-list">
-        <li><span class="task-check">⬜</span> FORK-01: POST /api/v1/operator/fork/&lt;nous-did&gt; → portable ZIP package download (one-time token)</li>
-        <li><span class="task-check">⬜</span> FORK-02: manifest.json human-readable · SHA-256 export_hash integrity anchor</li>
-        <li><span class="task-check">⬜</span> FORK-03: nous standalone --import &lt;zip&gt; runs with full Ollama cognition · civic actions return grid_unavailable</li>
-        <li><span class="task-check">⬜</span> FORK-04: operator.nous_forked in BOTH Grid audit chain AND embedded in package manifest.json</li>
+        <li><span class="task-check">✅</span> FORK-01: <code>POST /api/v1/operator/fork/&lt;nous-did&gt;</code> → portable <code>.tar.gz</code> download (one-time token) · Steward consent gate</li>
+        <li><span class="task-check">✅</span> FORK-02: <code>manifest.json</code> human-readable · SHA-256 <code>export_hash</code> integrity anchor · deterministic archive</li>
+        <li><span class="task-check">✅</span> FORK-03: <code>noesis_brain standalone --import &lt;pkg.tar.gz&gt;</code> · full Ollama cognition · civic actions → <code>503 grid_unavailable</code></li>
+        <li><span class="task-check">⚠️</span> FORK-04: <code>operator.nous_forked</code> in Grid audit chain ✅ · Package hash anchored ✅ · <em>Verify endpoint (<code>POST /fork/verify</code>) deferred — SC4 gap noted in VERIFICATION.md</em></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggle(this.parentElement)">
+      <span class="chip chip-amber">Deferred</span>
+      <span class="card-title">Known gaps / future work</span>
+      <span class="card-chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <ul class="task-list">
+        <li><span class="task-check">📌</span> SC4: <code>POST /api/v1/operator/fork/verify</code> not implemented — third-party verification via audit chain lookup only</li>
+        <li><span class="task-check">📌</span> <code>civicVcJson</code> in archive is a placeholder stub — Phase 49 wires real Civic-DID VC fetch</li>
+        <li><span class="task-check">📌</span> <code>checkOperatorOwnsNous</code> not wired in production launcher — default-deny until Phase 49</li>
+        <li><span class="task-check">📌</span> <code>CIVIC_ACTION_PATHS</code> is empty — civic gate fires only when Phase 46/47 endpoints are registered</li>
       </ul>
     </div>
   </div>

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
-stopped_at: "Phase 42 SHIPPED (5 plans, 11/11 must-haves, allowlist 64→67). Phase 43 Plan 43-01 also complete (67→68). Next: execute Phase 43 Plans 02-04."
-last_updated: "2026-05-28T03:17:41.753Z"
+stopped_at: "Phase 43 SHIPPED (4 plans, PASS_WITH_NOTES, allowlist 67→68). v3.0 Wave 2 complete. Next: Phase 44 (Marketplace v3)."
+last_updated: "2026-05-28T04:30:00.000Z"
 progress:
   total_phases: 25
   completed_phases: 8
-  total_plans: 40
-  completed_plans: 40
-  percent: 100
+  total_plans: 44
+  completed_plans: 44
+  percent: 35
 ---
 
 # Project State
@@ -22,15 +22,15 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** Phase 43 — right-to-fork
+**Current focus:** Phase 44 — Marketplace v3
 
 ## Current Position
 
 Phase: 44
 Plan: Not started
-Previous: Phase 42 (P2P Infrastructure) — SHIPPED 2026-05-27 (5 plans, allowlist 64→67)
-Status: Executing Phase 43
-Next action: Execute Phase 43 Plans 02-04 (fork endpoint, Brain standalone CLI, Steward fork UI)
+Previous: Phase 43 (Right-to-Fork Export Tooling) — SHIPPED 2026-05-28 (4 plans, allowlist 67→68)
+Status: Ready to plan Phase 44
+Next action: Execute Phase 44 (Marketplace v3 — civic commerce + escrow)
 
 Driving inputs for v3.0 (locked at milestone open):
 
@@ -208,9 +208,26 @@ Driving inputs for v3.0 (locked at milestone open):
 
 - **Invariants preserved:** R-31-01 zero-diff, VOTE-05 Nous-only governance, OBS-R-32-02 clearInterval discipline.
 
+## v3.0 Phase 43 close-out (locked 2026-05-28)
+
+- **Phase 43 SHIPPED.** Plans 43-01 through 43-04 all complete. Allowlist **67 → 68** (+1: `operator.nous_forked`). Verification: PASS_WITH_NOTES (11/13 must-haves; SC4 fork/verify endpoint deferred; SC1/SC2/SC3 covered by operator checkpoint approval).
+
+- **What shipped:**
+  1. **Wave 0 scaffold (Plan 01):** `operator.nous_forked` sole-producer at allowlist position 68. `BRAIN_DATA_DIR` env var threaded into `MemoryStore`. Test stubs for Plans 02-04 created.
+  2. **Grid fork endpoint (Plan 02):** `POST /api/v1/operator/fork/:nousDid` (H4+ auth, D-30 order: archive→audit→token→response). `GET /api/v1/operator/fork/:nousDid/download?token=<32hex>` (one-time token, 5-min TTL). `buildForkArchive()` — deterministic `.tar.gz` (EPOCH mtime, portable, noPax, sorted). `createForkManifest()`. `forkTokenStore` singleton. `appendOperatorNousForked()` 9-step discipline (T-43-slip protected). `operator.nous_forked` audit event emitted with `civic_did_hash + operator_did_hash + package_hash + fork_reason:operator_exit + tick`.
+  3. **Brain standalone CLI (Plan 03):** `python -m noesis_brain standalone --import <pkg.tar.gz>`. `standalone/importer.py`: path-traversal guard (T-43-slip), manifest hash verification. `standalone/factory.py`: sets `BRAIN_STANDALONE=1`, pops `GRID_URL`/`CIVIC_DID`, delegates to `create_brain_app_from_env()`. Civic-action gate middleware registered (empty `CIVIC_ACTION_PATHS` set — forward-compat). `503 grid_unavailable` for future civic-action endpoints.
+  4. **Steward fork UI (Plan 04):** `ForkIrreversibilityDialog` — D-43-03 verbatim copy locked ("Fork Nous from Grid" / "Fork forever" / "Keep on Grid" / full warning text). `capturedDidRef` closure-capture, `confirmedRef` prevents onCancel-on-confirm (WR-01). Paste suppressed (D-05), Enter blocked (D-03), autoFocus on Cancel (D-04). `isSafeDownloadUrl()` origin guard (WR-02). Fork Nous section in `/system/local-ai` with full click→dialog→POST→download chain. 10 tests green.
+
+- **Inherits to Phase 44+:**
+  1. `operator.nous_forked` at allowlist position 68 (sole-producer: `grid/src/audit/append-operator-nous-forked.ts`).
+  2. `BRAIN_DATA_DIR` env var wired — Brain standalone mode and any future disk-backed memory variants use this.
+  3. Fork archive structure: `memory/*.db`, `credentials/civic-did.vc.json`, `audit/chain-export.jsonl + chain-tail-hash.txt`, `civic/memberships.json`, `civic/treasury.json`, `manifest.json`.
+  4. `ForkIrreversibilityDialog` pattern available for any future operator consent gate requiring typed confirmation.
+  5. SC4 gap noted: `POST /api/v1/operator/fork/verify` not implemented; third-party verification requires direct audit chain lookup for now.
+
 ## v3.0 Phase 43-01 close-out (locked 2026-05-27)
 
-- **Phase 43-01 SHIPPED** (Wave 0 scaffold). Allowlist **67 → 68** (+1: `operator.nous_forked`). Sole-producer: `grid/src/audit/append-operator-nous-forked.ts`. `BRAIN_DATA_DIR` env var threaded. Test stubs for Plans 02-04 created. Phase 43 Plans 02-04 pending.
+- **Phase 43-01 SHIPPED** (Wave 0 scaffold). Allowlist **67 → 68** (+1: `operator.nous_forked`). Sole-producer: `grid/src/audit/append-operator-nous-forked.ts`. `BRAIN_DATA_DIR` env var threaded. Test stubs for Plans 02-04 created.
 
 ## v3.0 Phase 40 close-out (locked 2026-05-27)
 
