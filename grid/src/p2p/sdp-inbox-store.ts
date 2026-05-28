@@ -30,6 +30,22 @@ export class SdpInboxStore {
     }
 
     /**
+     * Remove all expired entries across all DID buckets; delete empty buckets.
+     * Called periodically by the launcher cleanup interval (OBS-R-32-02).
+     */
+    cleanup(): void {
+        const now = Date.now();
+        for (const [did, entries] of this.inbox) {
+            const live = entries.filter(e => e.expiresAt > now);
+            if (live.length === 0) {
+                this.inbox.delete(did);
+            } else {
+                this.inbox.set(did, live);
+            }
+        }
+    }
+
+    /**
      * Helper for Plan 04 routes to compute expiresAt using the standard 60s TTL.
      */
     static computeExpiresAt(): number {

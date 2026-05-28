@@ -560,6 +560,7 @@ export class GenesisLauncher {
         this._p2pCleanupInterval = setInterval(() => {
             try {
                 this._p2pService?.peerStore.cleanup();
+                this._p2pService?.sdpInboxStore.cleanup();
             } catch {
                 // Swallow cleanup errors — non-fatal; next tick will retry expired entries
             }
