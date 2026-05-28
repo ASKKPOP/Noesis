@@ -14,7 +14,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 
 // Wave 0 stub: skipped until Plan 03 implementation lands.
-describe.skip('appendMarketListingCreated — 9-step guard discipline (market.listing_created)', () => {
+describe('appendMarketListingCreated — 9-step guard discipline (market.listing_created)', () => {
     // Plan 03 un-skips this block and populates these via dynamic import.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let appendMarketListingCreated: (audit: any, payload: any) => any;
