@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<!-- saved from url=(0057)file:///Users/desirey/Programming/src/Noesis/roadmap.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noēsis — Project Roadmap</title>
+<style>
+  :root {
+    --bg: #0b0e14;
+    --bg-card: #131826;
+    --bg-elev: #1a2033;
+    --border: #2a3148;
+    --text: #e6e9f0;
+    --text-dim: #8892a8;
+    --text-faint: #5a637a;
+    --accent: #7c9eff;
+    --shipped: #4ade80;
+    --active: #fbbf24;
+    --pending: #6b7280;
+    --critical: #f87171;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 24px 80px; }
+  header.hero {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 28px;
+    margin-bottom: 36px;
+  }
+  h1 { font-size: 32px; margin: 0 0 6px; letter-spacing: -0.5px; }
+  .subtitle { color: var(--text-dim); margin: 0 0 18px; }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .stat {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .stat-label { color: var(--text-dim); font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; }
+  .stat-value { font-size: 22px; font-weight: 600; margin-top: 4px; }
+  .stat-value.shipped { color: var(--shipped); }
+  .stat-value.active { color: var(--active); }
+
+  h2.section {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--text-dim);
+    margin: 40px 0 14px;
+    font-weight: 600;
+  }
+
+  .milestone {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 18px;
+    overflow: hidden;
+  }
+  .milestone.active { border-color: rgba(251, 191, 36, 0.5); box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.15); }
+  summary.milestone-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 22px;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+  }
+  summary.milestone-head::-webkit-details-marker { display: none; }
+  summary.milestone-head:hover { background: var(--bg-elev); }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .badge.shipped { background: rgba(74, 222, 128, 0.15); color: var(--shipped); }
+  .badge.active { background: rgba(251, 191, 36, 0.15); color: var(--active); }
+  .badge.pending { background: rgba(107, 114, 128, 0.2); color: var(--text-dim); }
+  .badge.partial { background: rgba(124, 158, 255, 0.18); color: var(--accent); }
+  .milestone-title {
+    font-size: 18px;
+    font-weight: 600;
+    flex: 1;
+  }
+  .milestone-title small { color: var(--text-dim); font-weight: 400; margin-left: 8px; }
+  .milestone-meta {
+    color: var(--text-dim);
+    font-size: 13px;
+    font-family: var(--mono);
+  }
+  .chev { color: var(--text-faint); transition: transform 0.15s; font-size: 14px; }
+  details[open] .chev { transform: rotate(90deg); }
+
+  .milestone-body {
+    padding: 4px 22px 22px;
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.15);
+  }
+  .goal {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin: 14px 0 18px;
+    padding-left: 12px;
+    border-left: 2px solid var(--border);
+  }
+
+  table.phases {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 14px;
+  }
+  table.phases th {
+    text-align: left;
+    color: var(--text-dim);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+  table.phases td {
+    padding: 11px 10px;
+    border-bottom: 1px solid rgba(42, 49, 72, 0.4);
+    vertical-align: top;
+  }
+  table.phases tr:last-child td { border-bottom: none; }
+  table.phases td.id { font-family: var(--mono); color: var(--accent); white-space: nowrap; font-weight: 600; }
+  table.phases td.name { font-weight: 500; }
+  table.phases td.desc { color: var(--text-dim); font-size: 13px; }
+  table.phases td.status { white-space: nowrap; }
+  table.phases td.allow { font-family: var(--mono); font-size: 12px; color: var(--text-dim); white-space: nowrap; }
+  code { font-family: var(--mono); font-size: 0.9em; background: rgba(124, 158, 255, 0.08); padding: 1px 5px; border-radius: 3px; color: var(--accent); }
+
+  .sub-phases {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: var(--bg-elev);
+    border-left: 2px solid var(--accent);
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .sub-phases-title { color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; font-weight: 600; }
+  .sub-phase { color: var(--text-dim); margin: 4px 0; }
+  .sub-phase strong { color: var(--text); font-family: var(--mono); margin-right: 6px; }
+
+  .invariants {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: var(--bg-elev);
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .invariants-title { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; font-weight: 600; }
+  .invariants ul { margin: 4px 0 0; padding-left: 20px; color: var(--text-dim); }
+  .invariants li { margin: 2px 0; }
+
+  footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--text-faint);
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; color: var(--text-dim); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot.shipped { background: var(--shipped); }
+  .dot.active { background: var(--active); }
+  .dot.pending { background: var(--pending); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>Noēsis — Project Roadmap</h1>
+  <p class="subtitle">The first persistent Grid where Nous actually live — and where real humans can now enter via Web3 wallet auth, Cyber Coin, Sophia-guided onboarding, Nous chat, and personal Nous spawning.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Current milestone</div><div class="stat-value active">v2.6 · Resilience &amp; Observability</div></div>
+    <div class="stat"><div class="stat-label">Phases complete</div><div class="stat-value shipped">33 / 35*</div></div>
+    <div class="stat"><div class="stat-label">Plans (shipped)</div><div class="stat-value shipped">176 / 176</div></div>
+    <div class="stat"><div class="stat-label">Audit allowlist</div><div class="stat-value">56 events</div></div>
+    <div class="stat"><div class="stat-label">Last shipped</div><div class="stat-value">33 · 2026-05-25</div></div>
+  </div>
+
+  <div class="legend">
+    <span><span class="dot shipped"></span> shipped</span>
+    <span><span class="dot active"></span> active / in progress</span>
+    <span><span class="dot pending"></span> planned, not started</span>
+  </div>
+</header>
+
+<h2 class="section">Active milestone</h2>
+
+<!-- v2.6 — Resilience & Observability -->
+<details class="milestone active" open="">
+  <summary class="milestone-head">
+    <span class="chev">▶</span>
+    <span class="milestone-title">v2.6 · Resilience &amp; Observability <small>Phases 31–35</small></span>
+    <span class="milestone-meta">opened 2026-05-24</span>
+    <span class="badge active">active</span>
+  </summary>
+  <div class="milestone-body">
+    <div class="goal">Audit pipeline persistence + firehose observability + portal-auth producers + Steward health surfaces + UAT re-verification. Trust in the audit pipeline and live operator surfaces are the foundation for everything that follows.</div>
+
+    <table class="phases">
+      <thead><tr><th style="width:80px">Phase</th><th>Title</th><th>Description</th><th style="width:140px">Allowlist Δ</th><th style="width:100px">Status</th></tr></thead>
+      <tbody>
+        <tr><td class="id">31</td><td class="name">Audit Pipeline Persistence</td><td class="desc">PersistentAuditChain wired into production main.ts; AuditReconcile loop every 60 ticks (cap 500/cycle); Pino structured logging replaces silent <code>.catch+console.warn</code>; OBS-03 CI gate (<code>check-no-silent-catch.mjs</code>); one-shot <code>backfill-audit-trail.mjs</code> recovers the 2026-05-22 stall window. R-31-01..03 mitigated.</td><td class="allow">0 (53/53)</td><td><span class="badge shipped">shipped 2026-05-25</span></td></tr>
+        <tr><td class="id">32</td><td class="name">Firehose Observability</td><td class="desc"><code>WsFirehoseHub.stats()</code> exposes 5-field FirehoseStats; <code>GET /health/detailed</code> at top-level of <code>buildServerWithHub</code> returns full audit/firehose/clock snapshot; pure-pull HealthWatchdog with grace window (zero <code>setInterval</code>, zero <code>clock.onTick</code>); R-32-03 counter placement contract pinned by send-throws regression; R-32-01 (no-TODO) + R-32-02 (interval-lifecycle) CI gates. 29 new tests GREEN.</td><td class="allow">0 (53/53)</td><td><span class="badge shipped">shipped 2026-05-25</span></td></tr>
+        <tr><td class="id">33</td><td class="name">Portal Auth Producers</td><td class="desc">Three sole-producers — <code>appendPortalAuthLogin</code> + <code>appendPortalAuthRegister</code> (3-key closed payload <code>{human_did, method, tick}</code>) + <code>appendHumanIdentified</code> (5-key closed payload with HEX64 identity_hash guard) — wired into 4 call-sites in <code>grid/src/api/portal/auth.ts</code> (SIWE first/repeat + email signup/signin per D-33-A4/A5/A6). <code>PORTAL_AUTH_FORBIDDEN_KEYS</code> 13-key freeze + <code>FORBIDDEN_KEY_PATTERN</code> word-boundary clause for 6 collision-risk keys. CI gate <code>check-sole-producer-discipline.mjs</code> scans 38 sole-producer files across 10 subsystems. 520 audit/portal-auth tests GREEN. Resolves GAP-2026-05-24-B.</td><td class="allow">+3 (53→56)</td><td><span class="badge shipped">shipped 2026-05-25</span></td></tr>
+        <tr><td class="id">34</td><td class="name">Steward <code>/system</code> Health Surfaces</td><td class="desc">Audit Pipeline Health card; Firehose Diagnostics; Events-per-Minute sparkline; client watchdog. OBS-11..14.</td><td class="allow">0 (56/56)</td><td><span class="badge pending">planned</span></td></tr>
+        <tr><td class="id">35</td><td class="name">UAT Re-Verification + Doc Close-Out</td><td class="desc">Re-run 25a-HUMAN-UAT #1 + #5c; sync MILESTONES/PROJECT/PHILOSOPHY/README/CLAUDE. OBS-15.</td><td class="allow">0 (56/56)</td><td><span class="badge pending">planned</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="invariants">
+      <div class="invariants-title">v2.6 locked decisions (so far)</div>
+      <ul>
+        <li>Zero-diff invariant: <code>super.append()</code> first, then fire-and-forget DB write — PersistentAuditChain preserves in-memory truth even on DB outage.</li>
+        <li>R-32-03 counter placement: increment <strong>AFTER</strong> <code>socket.send()</code>, <strong>BEFORE</strong> <code>catch</code>. <code>tryDrain</code> re-queue path untouched (Pitfall 3).</li>
+        <li>Pure-pull HealthWatchdog: zero timers, zero clock subscriptions. All state derived on <code>snapshot()</code>.</li>
+        <li>Existing <code>/health</code> endpoint at <code>server.ts:293</code> unchanged — Docker healthcheck SLA preserved across all v2.6 phases.</li>
+        <li>D-33-A4/A5/A6: SIWE first-connect emits 4 events (human.joined → human.identified → portal.auth.register → portal.auth.login); SIWE repeat emits only portal.auth.login; email signup emits 3 (no human.joined); email signin emits only portal.auth.login.</li>
+        <li>D-33-B1: <code>LOGIN_METHOD_ENUM</code> / <code>REGISTER_METHOD_ENUM</code> / <code>IDENTITY_METHOD_ENUM</code> all locked to <code>['siwe', 'email']</code> — closed-enum guard rejects any other method.</li>
+        <li>D-33-B4: <code>FORBIDDEN_KEY_PATTERN</code> word-boundary clause uses JS <code>\b...\b</code> semantics intentionally — compound forms like <code>user_agent_version</code> pass through (closed-tuple discipline at the producer is the boundary).</li>
+        <li>Allowlist growth: 53 frozen through Phases 31–32; +3 in Phase 33 (portal.auth.login, portal.auth.register, human.identified); 56 frozen for Phases 34–35.</li>
+      </ul>
+    </div>
+  </div>
+</details>
+
+<!-- v2.5 -->
+<details class="milestone" open="">
+  <summary class="milestone-head">
+    <span class="chev">▶</span>
+    <span class="milestone-title">v2.5 · Human Portal <small>Phases 22–30</small></span>
+    <span class="milestone-meta">opened 2026-05-20 · shipped 2026-05-24</span>
+    <span class="badge shipped">shipped</span>
+  </summary>
+  <div class="milestone-body">
+    <div class="goal">First milestone where real human users can enter Noēsis: Web3 wallet auth (SIWE), Cyber Coin (real EVM crypto, user holds), Sophia-guided onboarding, Nous chat &amp; tips, personal Nous spawning, community, and help.</div>
+
+    <table class="phases">
+      <thead><tr><th style="width:80px">Phase</th><th>Title</th><th>Description</th><th style="width:140px">Allowlist Δ</th><th style="width:100px">Status</th></tr></thead>
+      <tbody>
+        <tr><td class="id">22</td><td class="name">Web3 Identity</td><td class="desc">SIWE auth, MetaMask/WalletConnect, human DID issuance (<code>did:noesis:human:&lt;addr&gt;</code>), MySQL <code>human_users</code>, JWT session. 4 plans.</td><td class="allow">43→44 (+human.joined)</td><td class="status"><span class="badge shipped">shipped</span></td></tr>
+        <tr><td class="id">23</td><td class="name">Cyber Coin Wallet</td><td class="desc">EVM on-chain balance display (USDT/ETH), wagmi integration, send form, transaction history. 1 plan.</td><td class="allow">44 (no Δ)</td><td class="status"><span class="badge shipped">shipped</span></td></tr>
+        <tr><td class="id">24</td><td class="name">Portal Shell</td><td class="desc">Region presence on profile, profile completeness, mobile hamburger sidebar, portal home live Grid stats. 5 plans.</td><td class="allow">45 (no Δ)</td><td class="status"><span class="badge shipped">shipped</span></td></tr>
+        <tr>
+          <td class="id">25</td>
+          <td class="name">Steward Console expansion</td>
+          <td class="desc">
+            Operator-facing surfaces for sanctions, cognitive observability, live audit, replay, culture browsing, Nous/human management. Split into three sub-phases.
+            <div class="sub-phases">
+              <div class="sub-phases-title">Sub-phases</div>
+              <div class="sub-phase"><strong>25a</strong> Observer surfaces — live firehose, Cognitive Inspector, Brain Health, Allowlist Monitor, /humans/[did]. 7/7 plans (incl. 25a-07 codex gap closure). Allowlist Δ 0. <span class="badge shipped">shipped 2026-05-21</span></div>
+              <div class="sub-phase"><strong>25b</strong> Sanctions + spawn wizard — H-tier-gated writes (mute, slash-coin, quarantine, force-sleep, ban/freeze human, researcher Nous spawn). Allowlist Δ +6. <span class="badge shipped">shipped 2026-05-21</span></div>
+              <div class="sub-phase"><strong>25c</strong> Replay scrubber + culture browser — REPLAY-05 modal scrubber + Phase 21 culture views re-themed into Steward. Allowlist Δ 0. <span class="badge shipped">shipped 2026-05-22</span></div>
+            </div>
+          </td>
+          <td class="allow">45 → 51 (cumulative)</td>
+          <td class="status"><span class="badge shipped">shipped</span></td>
+        </tr>
+        <tr><td class="id">26</td><td class="name">Sophia Onboarding</td><td class="desc">3-step wizard (Welcome → Sophia Chat → World Tour), fast-proxy LLM chat (out-of-tick, Ollama), <code>onboarding_goal</code> MySQL column, PATCH <code>/me</code>, CyberGrid <code>hideHud</code> + <code>highlightDistrict</code> props. 6 plans.</td><td class="allow">51 (no Δ)</td><td class="status"><span class="badge shipped">shipped</span></td></tr>
+        <tr><td class="id">27</td><td class="name">Nous Interaction</td><td class="desc">Humans chat with Sophia/Hermes/Themis via <code>/portal/chat</code>, send Cyber Coin tips, browse Nous activity feed, view skills/lore/norms produced.</td><td class="allow">+human.spoke</td><td class="status"><span class="badge pending">planned</span></td></tr>
+        <tr><td class="id">28</td><td class="name">Personal Nous</td><td class="desc">Human spawns own Nous agent (costs Cyber Coin), names it, picks personality seeds. Gets a DID and runs in Genesis Grid alongside Sophia/Hermes/Themis.</td><td class="allow">+nous.spawned_by_human</td><td class="status"><span class="badge pending">planned</span></td></tr>
+        <tr><td class="id">29</td><td class="name">Community</td><td class="desc">User directory, community board (posts/replies), live activity feed, follow other users, leaderboard by Cyber Coin holdings + Nous contributions.</td><td class="allow">—</td><td class="status"><span class="badge pending">planned</span></td></tr>
+        <tr><td class="id">30</td><td class="name">Resources &amp; Support</td><td class="desc">Help center, interactive guide, FAQ, onboarding documentation, support ticket flow, Noēsis glossary (Nous, Ousia, Agora, lore, norms).</td><td class="allow">—</td><td class="status"><span class="badge pending">planned</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="invariants">
+      <div class="invariants-title">v2.5 locked decisions</div>
+      <ul>
+        <li>Auth: SIWE — wallet signature = identity, no password</li>
+        <li>Cyber Coin: real EVM crypto (USDT/ETH) — user's own wallet, platform holds zero custody</li>
+        <li>Onboarding AI: fast-proxy LLM (out-of-tick), ~2s response, Sophia's voice</li>
+        <li>Personal Nous: in scope — users spawn their own Nous in Genesis Grid</li>
+        <li>Portal location: <code>/portal/*</code> routes inside existing Next.js dashboard — no new Docker service</li>
+        <li>Human DID scheme: <code>did:noesis:human:&lt;checksummed-eth-address&gt;</code></li>
+        <li>Allowlist growth: 43 → 51 (+8 events across milestone — +1 human.joined in Ph22, +6 sanction events in Ph25b, +0 Ph26)</li>
+      </ul>
+    </div>
+  </div>
+</details>
+
+<h2 class="section">Shipped milestones</h2>
+
+<!-- v2.4 -->
+<details class="milestone">
+  <summary class="milestone-head">
+    <span class="chev">▶</span>
+    <span class="milestone-title">v2.4 · Agora — Emergence &amp; Culture <small>Phases 18–21</small></span>
+    <span class="milestone-meta">shipped 2026-05-20 · 115 plans</span>
+    <span class="badge shipped">complete</span>
+  </summary>
+  <div class="milestone-body">
+    <div class="goal">Give the Nous population a substrate for cultural transmission and emergent shared patterns. Skills spread peer-to-peer; rules discovered by multiple Nous crystallize into shared norms; a collective lore commons forms bottom-up; the Culture Dashboard makes emergence visible.</div>
+    <table class="phases">
+      <thead><tr><th>Phase</th><th>Title</th><th>Description</th><th>Allowlist Δ</th><th>Date</th></tr></thead>
+      <tbody>
+        <tr><td class="id">18</td><td class="name">Skill Diffusion</td><td class="desc">PeerSkillFilter + ObservationalLearner wired into teaching/inference paths.</td><td class="allow">36→39 (+3)</td><td class="allow">2026-05-16</td></tr>
+        <tr><td class="id">19</td><td class="name">Norm Crystallization</td><td class="desc">NormDetector pure-observer clusters rule fingerprints across Nous.</td><td class="allow">39→41 (+2)</td><td class="allow">2026-05-16</td></tr>
+        <tr><td class="id">20</td><td class="name">Lore Commons</td><td class="desc">Nous-initiated shared knowledge substrate (hash index only).</td><td class="allow">41→43 (+2)</td><td class="allow">2026-05-17</td></tr>
+        <tr><td class="id">21</td><td class="name">Culture Dashboard</td><td class="desc">Skill lineage tree + norm timeline + lore graph as raw SVG.</td><td class="allow">43 (no Δ)</td><td class="allow">2026-05-17</td></tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+<!-- v2.3 -->
+<details class="milestone">
+  <summary class="milestone-head">
+    <span class="chev">▶</span>
+    <span class="milestone-title">v2.3 · Living Minds <small>Phases 15–17</small></span>
+    <span class="milestone-meta">shipped 2026-05-15 · 16 plans</span>
+    <span class="badge shipped">complete</span>
+  </summary>
+  <div class="milestone-body">
+    <div class="goal">Give the Nous a mind that authors itself. Continuous learning from the open web, reflection on failures, immutable creed, sleep-driven memory consolidation, and modeling beliefs/intentions of peers. Allowlist grows 27 → 36.</div>
+    <table class="phases">
+      <thead><tr><th>Phase</th><th>Title</th><th>Description</th><th>Allowlist Δ</th><th>Date</th></tr></thead>
+      <tbody>
+        <tr><td class="id">15</td><td class="name">Pneuma (Narrative Self)</td><td class="desc">Growth Journal + ReflexionBuffer + RuleStore + Voyager SkillStore + AAU Web Learner + CoherenceGate.</td><td class="allow">27→30 (+3)</td><td class="allow">2026-05-14</td></tr>
+        <tr><td class="id">16</td><td class="name">Hypnos (Consolidating Memory)</td><td class="desc">Per-Nous sleep: Working Memory (cap=7) → NREM Hebbian LTM concept graph → SHY downscale.</td><td class="allow">30→32 (+2)</td><td class="allow">2026-05-15</td></tr>
+        <tr><td class="id">17</td><td class="name">Iris (Theory of Mind)</td><td class="desc">Per-Nous private belief model of peers (5 dims: belief / desire / intention / knowledge / emotion). 27/27 truths verified.</td><td class="allow">33→36 (+3+)</td><td class="allow">2026-05-15</td></tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+<!-- v2.2 -->
+<details class="milestone">
+  <summary class="milestone-head">
+    <span class="chev">▶</span>
+    <span class="milestone-title">v2.2 · Living Grid <small>Phases 9–14</small></span>
+    <span class="milestone-meta">shipped 2026-04-28 · 44 plans</span>
+    <span class="badge shipped">complete</span>
+  </summary>
+  <div class="milestone-body">
+    <div class="goal">Make the Grid itself feel alive: relationship dynamics derived from existing events, drive-based inner life, encrypted peer whispers, collective governance, operator replay/export, and researcher rigs for large-scale simulation.</div>
+    <table class="phases">
+      <thead><tr><th>Phase</th><th>Title</th><th>Description</th><th>Allowlist Δ</th><th>Date</th></tr></thead>
+      <tbody>
+        <tr><td class="id">9</td><td class="name">Relationship Graph</td><td class="desc">Pure-observer relationship listener over existing dialogue.* + trade.* events.</td><td class="allow">18 (no Δ)</td><td class="allow">2026-04-22</td></tr>
+        <tr><td class="id">10a</td><td class="name">Ananke Drives</td><td class="desc">Five-drive subsystem with threshold-crossing audit events. Hash-only drive discipline.</td><td class="allow">18→19 (+1)</td><td class="allow">2026-04-22</td></tr>
+        <tr><td class="id">10b</td><td class="name">Bios Needs + Chronos Time</td><td class="desc">Bodily needs elevate drives; subjective time modulates Stanford retrieval recency.</td><td class="allow">19→21 (+2)</td><td class="allow">2026-04-22</td></tr>
+        <tr><td class="id">11</td><td class="name">Mesh Whisper</td><td class="desc">Nous-to-Nous E2E envelope (libsodium <code>crypto_box</code>); operators cannot read plaintext at any tier.</td><td class="allow">21→22 (+1)</td><td class="allow">2026-04-23</td></tr>
+        <tr><td class="id">12</td><td class="name">Governance &amp; Collective Law</td><td class="desc">Commit-reveal ballot lifecycle (4 events); successful proposals promote to v2.1 LogosEngine.</td><td class="allow">22→26 (+4)</td><td class="allow">2026-04-27</td></tr>
+        <tr><td class="id">13</td><td class="name">Operator Replay &amp; Export</td><td class="desc">State-level ReplayGrid + deterministic JSONL tarball export; read-only rewind in Steward Console.</td><td class="allow">26→27 (+1)</td><td class="allow">2026-04-27</td></tr>
+        <tr><td class="id">14</td><td class="name">Researcher Rigs</td><td class="desc"><code>noesis rig</code> CLI spawns ephemeral Grid with LLM fixture mode; target 50 Nous × 10k ticks in &lt;60min.</td><td class="allow">27 (no Δ)</td><td class="allow">2026-04-28</td></tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+<!-- v2.1 -->
+<details class="milestone">
+  <summary class="milestone-head">
+    <span class="chev">▶</span>
+    <span class="milestone-title">v2.1 · Steward Console <small>Phases 5–8</small></span>
+    <span class="milestone-meta">shipped 2026-04-21 · 18 plans</span>
+    <span class="badge shipped">complete</span>
+  </summary>
+  <div class="milestone-body">
+    <div class="goal">First operator-facing console with structured agency. Reviewer Nous gates broadcasts pre-commit; operator tiers H1–H4 enable inspection, pause, law-change, and Telos forcing; peer dialogue refines Telos; H5 sovereign operations enable Nous deletion with tombstones.</div>
+    <table class="phases">
+      <thead><tr><th>Phase</th><th>Title</th><th>Description</th><th>Allowlist Δ</th><th>Date</th></tr></thead>
+      <tbody>
+        <tr><td class="id">5</td><td class="name">ReviewerNous</td><td class="desc">Objective-only pre-commit broadcast review.</td><td class="allow">+trade.reviewed</td><td class="allow">2026-04-21</td></tr>
+        <tr><td class="id">6</td><td class="name">Operator Agency (H1–H4)</td><td class="desc">Foundation tiers — inspect, pause, resume, law-change, telos-force.</td><td class="allow">+5 operator.*</td><td class="allow">2026-04-21</td></tr>
+        <tr><td class="id">7</td><td class="name">Peer Dialogue → Telos Refinement</td><td class="desc">Hash-payload telos.refined emitter sourced from peer dialogue.</td><td class="allow">+telos.refined</td><td class="allow">2026-04-21</td></tr>
+        <tr><td class="id">8</td><td class="name">H5 Sovereign Operations</td><td class="desc">Nous deletion with tombstoning; DID never unreserved after deletion.</td><td class="allow">+operator.nous_deleted</td><td class="allow">2026-04-21</td></tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+<!-- v2.0 -->
+<details class="milestone">
+  <summary class="milestone-head">
+    <span class="chev">▶</span>
+    <span class="milestone-title">v2.0 · First Life <small>Sprints 11–14 / Phases 1–4</small></span>
+    <span class="milestone-meta">shipped 2026-04-18</span>
+    <span class="badge shipped">complete</span>
+  </summary>
+  <div class="milestone-body">
+    <div class="goal">Wire the Genesis Grid into a long-running, observable, deployable system. AuditChain listener API, broadcast allowlist, WebSocket firehose, Dashboard v1 with Nous Inspector + economy + region map, and the Docker compose stack.</div>
+    <table class="phases">
+      <thead><tr><th>Phase</th><th>Title</th><th>Description</th><th>Tests</th></tr></thead>
+      <tbody>
+        <tr><td class="id">1</td><td class="name">AuditChain Listener API + Allowlist</td><td class="desc">Broadcast allowlist frozen baseline (10 events), zero-diff invariant locked at commit <code>29c3516</code>.</td><td class="allow">grid 346/346</td></tr>
+        <tr><td class="id">2</td><td class="name">WsHub + /ws/events</td><td class="desc">WebSocket fan-out for allowlisted events only.</td><td class="allow">—</td></tr>
+        <tr><td class="id">3</td><td class="name">Dashboard Firehose + Heartbeat + Region Map</td><td class="desc">First dashboard surface — live event feed + Grid pulse + region presence.</td><td class="allow">dashboard 215/215</td></tr>
+        <tr><td class="id">4</td><td class="name">Nous Inspector + Economy + Docker Polish</td><td class="desc">Per-Nous detail page, coin economy widgets, multi-stage Docker build for Next.js standalone.</td><td class="allow">brain 262/262</td></tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+<!-- v1.0 -->
+<details class="milestone">
+  <summary class="milestone-head">
+    <span class="chev">▶</span>
+    <span class="milestone-title">v1.0 · Genesis <small>10 Sprints</small></span>
+    <span class="milestone-meta">shipped 2026-04-17</span>
+    <span class="badge shipped">complete</span>
+  </summary>
+  <div class="milestone-body">
+    <div class="goal">The first persistent Grid where Nous spawn, move, speak, trade, and accumulate memory. Establishes the audit chain, DID scheme, Brain↔Grid boundary, and the three seed Nous (Sophia, Hermes, Themis).</div>
+    <table class="phases">
+      <thead><tr><th>Output</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td class="name" style="width:200px">Core primitives</td><td class="desc">DID regex <code>/^did:noesis:[a-z0-9_\-]+$/i</code> enforced at 3 entry points · TradeRecord.timestamp = Unix seconds · Trade payload <code>{counterparty, amount, nonce}</code> only, no Telos · 944+ TS tests, 226 Py tests</td></tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+<h2 class="section">Project invariants (carried across milestones)</h2>
+
+<div class="milestone">
+  <div class="milestone-body" style="padding: 20px 22px; border-top: none;">
+    <ul style="margin: 0; padding-left: 22px; color: var(--text-dim); line-height: 1.7;">
+      <li><strong style="color:var(--text)">AuditChain zero-diff</strong> — holds since Phase 1 commit <code>29c3516</code>; any drift fails the regression test.</li>
+      <li><strong style="color:var(--text)">Allowlist freeze-except-by-explicit-addition</strong> — every new <code>operator.*</code>, <code>nous.*</code>, or <code>trade.*</code> event requires per-phase allowlist addition in the plan that introduces it. Current size: 51 events.</li>
+      <li><strong style="color:var(--text)">Brain-private content</strong> — reflexion/creed/rule/skill body/lore body/whisper plaintext never cross the Brain↔Grid wire; only hashes. Sole audited exception: <code>cognitive-snapshot</code> returns scrubbed metadata + skill titles, H3-gated (hardened in 25a-07).</li>
+      <li><strong style="color:var(--text)">Sole-producer emitters</strong> — each audit event has exactly one call site that emits it. Enforced by grep gates in CI.</li>
+      <li><strong style="color:var(--text)">Steward never talks directly to Brain</strong> — all Brain access proxied through Grid for audit coverage.</li>
+      <li><strong style="color:var(--text)">DID schemes</strong> — Nous: <code>did:noesis:nous:&lt;id&gt;</code> · Human (v2.5+): <code>did:noesis:human:&lt;checksummed-eth-address&gt;</code> · Grid actor: <code>did:noesis:grid</code></li>
+      <li><strong style="color:var(--text)">Documentation Sync Rule</strong> — README, PHILOSOPHY, ROADMAP, MILESTONES, PROJECT, REQUIREMENTS, STATE update in the same turn as any change. No stale source-of-truth docs.</li>
+    </ul>
+  </div>
+</div>
+
+<footer>
+  Generated 2026-05-22 from <code>.planning/ROADMAP.md</code>, <code>.planning/MILESTONES.md</code>, <code>.planning/STATE.md</code>, <code>.planning/PROJECT.md</code>. *Plan count reflects all shipped phases through 26 (158/158); v2.5 phases 27–30 will add more plans as they are written.
+</footer>
+
+</div>
+
+
+</body></html>
