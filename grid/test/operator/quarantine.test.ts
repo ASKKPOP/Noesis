@@ -231,6 +231,7 @@ describe('POST /api/v1/operator/nous/:did/quarantine — success path', () => {
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/quarantine`,
             headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
+            payload: { reason: 'policy violation' },
         });
 
         const recordAfter = registry.get(TARGET_DID);
@@ -313,22 +314,25 @@ describe('POST /api/v1/operator/nous/:did/quarantine — reason discipline', () 
         expect(insertCalls[0]?.operator_id).toBe(OPERATOR);
     });
 
-    it('uses empty-string reason and SHA-256 of empty when reason is absent', async () => {
+    it('rejects an absent reason with 400 reason_required and emits no event (WR-02)', async () => {
         let audit: AuditChain;
         let insertCalls: Array<Record<string, unknown>>;
 
         ({ app, audit, insertCalls } = buildTestApp({}));
         await app.ready();
 
-        await app.inject({
+        const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/quarantine`,
             headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
         });
 
-        const quarantined = audit.query({ eventType: 'operator.quarantined' });
-        expect((quarantined[0].payload as Record<string, unknown>).reason_hash).toBe(sha256(''));
-        expect(insertCalls[0]?.plaintext).toBe('');
+        // WR-02: reason (>= 10 chars) is mandatory; an absent reason is rejected
+        // server-side and must not produce an audit event or a sanction_reasons row.
+        expect(res.statusCode).toBe(400);
+        expect(res.json()).toEqual({ error: 'reason_required' });
+        expect(audit.query({ eventType: 'operator.quarantined' })).toHaveLength(0);
+        expect(insertCalls).toHaveLength(0);
     });
 });
 
@@ -425,6 +429,7 @@ describe('POST /api/v1/operator/nous/:did/quarantine — peer-discovery filter (
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/quarantine`,
             headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
+            payload: { reason: 'policy violation' },
         });
         expect(res.statusCode).toBe(200);
 

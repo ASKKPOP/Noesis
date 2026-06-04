@@ -311,7 +311,7 @@ describe('POST /api/v1/operator/nous/:did/slash — success path', () => {
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
             headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
-            payload: { amount: 10 },
+            payload: { amount: 10, reason: 'fraud detected' },
         });
         expect(res.statusCode).toBe(200);
         expect(res.json().ok).toBe(true);
@@ -326,7 +326,7 @@ describe('POST /api/v1/operator/nous/:did/slash — success path', () => {
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
             headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
-            payload: { amount: 30 },
+            payload: { amount: 30, reason: 'fraud detected' },
         });
 
         const record = registry.get(TARGET_DID);
@@ -342,7 +342,7 @@ describe('POST /api/v1/operator/nous/:did/slash — success path', () => {
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
             headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
-            payload: { amount: 50 },
+            payload: { amount: 50, reason: 'fraud detected' },
         });
         // Slash always completes — debit to 0 (punitive, no 409)
         expect(res.statusCode).toBe(200);
