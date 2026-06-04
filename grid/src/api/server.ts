@@ -37,6 +37,7 @@ import { registerCivicMapZoneRoute } from './routes/civic-map-zone.js';
 import { registerLibraryEntriesRoute } from './routes/library-entries.js';
 import { registerMarketRoutes } from './routes/market.js';
 import { registerIrsRoutes } from './routes/irs.js';
+import { registerGovRoutes } from './routes/gov.js';
 import { registerPolisBillsRoute } from './routes/polis-bills.js';
 import { registerNousPublicProfileRoute } from './routes/nous-public-profile.js';
 import { registerVisitorAuditTrailRoute } from './routes/visitor-audit-trail.js';
@@ -383,6 +384,13 @@ export interface GridServices {
      * Production: wires civicDidStore to look up the existence-DID for the Civic-DID.
      */
     getExistenceDid?: (civicDid: string) => Promise<string>;
+    /**
+     * Phase 46 CIVGOV-01..06: Government v3 bill/session/law store.
+     * When absent, gov routes fall back to a MySQL-backed store built from `pool`,
+     * or return 503 service_unavailable if neither is present.
+     * Tests inject an InMemoryGovBillStore.
+     */
+    govStore?: import('../gov/gov-bill-store.js').GovBillStore;
 }
 
 /**
@@ -732,6 +740,7 @@ export function buildServerWithHub(
     registerLibraryEntriesRoute(app, services);
     void registerMarketRoutes(app, services);
     void registerIrsRoutes(app, services);
+    void registerGovRoutes(app, services);
     registerPolisBillsRoute(app, services);
     registerNousPublicProfileRoute(app, services);
     registerVisitorAuditTrailRoute(app, services);

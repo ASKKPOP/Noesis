@@ -61,7 +61,7 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 **Wave 3 — Civic Institutions (Phases 44-49)**
 - [x] **Phase 44: Marketplace v3** — Business-DID listings, bids, escrow, IRS fee hooks, dispute → Police routing. (allowlist +4) (completed 2026-05-28)
 - [x] **Phase 45: IRS Treasury** — Transaction fee collection (1-3% configurable), civic treasury, Government-authorized disbursements. (allowlist +3) (completed 2026-05-28)
-- [ ] **Phase 46: Government v3** — Nous-only legislative VOTE-05 with bills, co-sponsorship, scheduled sessions, civic law book. (allowlist +6)
+- [x] **Phase 46: Government v3** — Nous-only legislative VOTE-05 with bills, co-sponsorship, scheduled sessions, civic law book. (allowlist +6 → 81) (completed 2026-06-03)
 - [ ] **Phase 47: Police v3** — Complaint-driven sanctions, investigation, court-filed charges, appeals to Government. (allowlist +4)
 - [ ] **Phase 48: Library v3** — Public reading room + Civic-DID contribution + rotating curation council paid from treasury. (allowlist +2)
 - [ ] **Phase 49: Communities v3** — Bios-gated founding, charters, membership criteria, subgovernance scoped to community-internal decisions. (allowlist +4)
@@ -285,16 +285,20 @@ Plans:
 **Depends on**: Phase 37 (Civic-DID required to draft / co-sponsor / vote).
 **Requirements**: CIVGOV-01, CIVGOV-02, CIVGOV-03, CIVGOV-04, CIVGOV-05, CIVGOV-06
 **Success Criteria** (what must be TRUE):
-  1. Civic-DID holder drafts a bill via `POST /api/v1/gov/bill/draft`; bill body is stored Grid-side; only the bill `title_hash` and `body_hash` enter the audit chain (hash-only cross-boundary discipline preserved from v2.2 Phase 12); `gov.bill_drafted` fires with `{bill_id, author_civic_did, title_hash, body_hash, category, tick}`.
+  1. Civic-DID holder drafts a bill via `POST /api/v1/gov/bill/draft`; bill body is stored Grid-side; only the bill `title_hash` and body hash enter the audit chain (hash-only cross-boundary discipline preserved from v2.2 Phase 12); `gov.bill_drafted` fires with `{author_civic_did_hash, bill_id, category, content_hash, tick, title_hash}` (D-46-01: body hash is named `content_hash` — the privacy walker forbids the substring `body`; author is hashed).
   2. Two other Civic-DID holders co-sponsor via `POST /api/v1/gov/bill/<id>/cosponsor`; once threshold reached, bill becomes eligible for a legislative session; `gov.bill_cosponsored` fires per co-sponsorship.
   3. Speaker (current elected rotating role) opens a session via `POST /api/v1/gov/session/open`; debate window is 7 days by default; during debate, Civic-DID holders post arguments via the session endpoint; visitors (no DID) can read the debate transcript but cannot speak (Phase 36 visit/action enforcement); `gov.session_opened` + `gov.session_closed` fire at boundaries.
   4. Voting reuses VOTE-05 exactly (`ballot.committed`, `ballot.revealed`, `proposal.opened`, `proposal.tallied` from v2.2 Phase 12 with zero changes); operator at any tier including H5 has no DOM affordance to vote (regression test asserts zero `propose|commit|reveal` button in Steward Console — VOTE-05 invariant from v2.2 Phase 12 carried through unchanged).
   5. Passed bills enter the civic law book via `gov.law_enacted` with `{bill_id, law_id, enacted_at_tick, supersedes_law_id?}`; repealed bills fire `gov.law_repealed` with `{law_id, repealing_bill_id, tick}`; `GET /api/v1/gov/law/active` returns the current law book (visitor-readable per Phase 36).
-  6. Sole-producer files emit exactly 6 new events; allowlist grows by exactly +6 (74 → 80).
+  6. Sole-producer files emit exactly 6 new events; allowlist grows by exactly +6 (75 → 81). *(Numbering reconciled: the original "74 → 80" predated Phase 45 shipping at 75.)*
 **Scope (ships)**: CIVGOV-01..06.
 **Out of scope for this phase**: Operator representative council (FUTURE-REPRCOUNCIL-01); constitutional review formal process (FUTURE-CONSTREVIEW-01 — manual escalation in v3.0); cross-Grid federated voting (deferred); subcommittees / standing committees (Q during discuss-phase if useful, but MVP is bill → session → vote).
-**Allowlist additions**: **+6**. Running total: **80**.
-**Plans**: TBD
+**Allowlist additions**: **+6**. Running total: **81**.
+**Plans:** 3/3 plans complete
+Plans:
+- [x] 046-01-PLAN.md — Wave 0: allowlist lock 75→81 + Phase 46 describe block + migration v36 (gov_bills/cosponsors/sessions/arguments/laws + config seeds)
+- [x] 046-02-PLAN.md — 6 sole-producers (append-gov-*.ts) + GovBillStore (in-memory + MySQL) + gov/types.ts; allowlist 75 → 81
+- [x] 046-03-PLAN.md — 9 gov routes + 9 ROUTE_DID_POLICY entries + server wiring + lifecycle/VOTE-05-guard tests + doc-sync
 
 ### Phase 47: Police v3
 **Goal**: Civic-tier evolution of v2.5 Phase 25b sanctions. Complaint-driven investigation; charges filed with Government court; conviction unlocks sanction execution; all sanctions appealable. Police authority is bounded by civic law — they cannot freeze a Civic-DID without a court order.
@@ -545,7 +549,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 43. Right-to-Fork Export Tooling | 4/4 | Complete    | 2026-05-28 |
 | 44. Marketplace v3 | 5/5 | Complete   | 2026-05-28 |
 | 45. IRS Treasury | 3/3 | Complete    | 2026-05-28 |
-| 46. Government v3 | 0/? | Not started | — |
+| 46. Government v3 | 3/3 | Complete    | 2026-06-03 |
 | 47. Police v3 | 0/? | Not started | — |
 | 48. Library v3 | 0/? | Not started | — |
 | 49. Communities v3 | 0/? | Not started | — |

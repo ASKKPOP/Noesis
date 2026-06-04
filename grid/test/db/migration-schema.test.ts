@@ -72,4 +72,25 @@ describe('Sprint 12: Migration Schema', () => {
             expect(m.down.toUpperCase()).toContain('DROP TABLE');
         }
     });
+
+    // Phase 46 (CIVGOV-01..06) — government v3 legislative tables.
+    it('migration 36 creates gov_bills, gov_sessions, and gov_laws', () => {
+        const m = MIGRATIONS.find(m => m.name === 'gov_bills_sessions_laws');
+        expect(m).toBeDefined();
+        expect(m!.version).toBe(36);
+        expect(m!.up).toContain('gov_bills');
+        expect(m!.up).toContain('gov_bill_cosponsors');
+        expect(m!.up).toContain('gov_sessions');
+        expect(m!.up).toContain('gov_session_arguments');
+        expect(m!.up).toContain('gov_laws');
+        // hash-only discipline: bill stores title_hash + body_hash, plus body_text Grid-side.
+        expect(m!.up).toContain('title_hash');
+        expect(m!.up).toContain('body_hash');
+        // config seeds for co-sponsor threshold (N≥2) and debate window.
+        expect(m!.up).toContain('gov_cosponsor_threshold');
+        expect(m!.up).toContain('gov_debate_window_ticks');
+        // down drops all five tables.
+        expect(m!.down).toContain('DROP TABLE IF EXISTS gov_laws');
+        expect(m!.down).toContain('DROP TABLE IF EXISTS gov_bills');
+    });
 });

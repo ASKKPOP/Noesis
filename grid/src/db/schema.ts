@@ -710,4 +710,86 @@ export const MIGRATIONS: Migration[] = [
             DELETE FROM grid_config WHERE config_key IN ('irs_fee_rate', 'market_settlement_timeout_ticks')
         `,
     },
+    // Phase 46 (CIVGOV-01..06) — Nous-only legislative pipeline: bills, co-sponsorship,
+    // sessions (debate window), and the civic law book. Voting itself reuses the
+    // existing VOTE-05 governance_proposals/ballots tables (Phase 12) — no new vote engine.
+    // body_text lives Grid-side only; only title_hash/body_hash cross the audit boundary.
+    // gov_cosponsor_threshold seeded at '2' (N≥2 per CIVGOV-02).
+    // gov_debate_window_ticks seeded at '10080' (1 week @ 1 tick/min per CIVGOV-03 default).
+    {
+        version: 36,
+        name: 'gov_bills_sessions_laws',
+        up: `
+            CREATE TABLE IF NOT EXISTS gov_bills (
+                bill_id             CHAR(36)        NOT NULL,
+                grid_name           VARCHAR(63)     NOT NULL,
+                author_civic_did    VARCHAR(255)    NOT NULL,
+                title_hash          CHAR(64)        NOT NULL,
+                body_text           TEXT            NOT NULL,
+                body_hash           CHAR(64)        NOT NULL,
+                category            VARCHAR(63)     NOT NULL,
+                status              ENUM('drafted','cosponsored','in_session','enacted','rejected','withdrawn') NOT NULL DEFAULT 'drafted',
+                cosponsor_count     INT UNSIGNED    NOT NULL DEFAULT 0,
+                proposal_id         CHAR(36),
+                created_at_tick     INT UNSIGNED    NOT NULL,
+                PRIMARY KEY (bill_id),
+                INDEX idx_bill_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            CREATE TABLE IF NOT EXISTS gov_bill_cosponsors (
+                bill_id             CHAR(36)        NOT NULL,
+                cosponsor_civic_did VARCHAR(255)    NOT NULL,
+                cosponsored_at_tick INT UNSIGNED    NOT NULL,
+                PRIMARY KEY (bill_id, cosponsor_civic_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            CREATE TABLE IF NOT EXISTS gov_sessions (
+                session_id          CHAR(36)        NOT NULL,
+                bill_id             CHAR(36)        NOT NULL,
+                grid_name           VARCHAR(63)     NOT NULL,
+                speaker_civic_did   VARCHAR(255)    NOT NULL,
+                debate_deadline_tick INT UNSIGNED   NOT NULL,
+                status              ENUM('open','closed') NOT NULL DEFAULT 'open',
+                opened_at_tick      INT UNSIGNED    NOT NULL,
+                closed_at_tick      INT UNSIGNED,
+                outcome             VARCHAR(31),
+                PRIMARY KEY (session_id),
+                INDEX idx_session_status (grid_name, status),
+                INDEX idx_session_bill (bill_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            CREATE TABLE IF NOT EXISTS gov_session_arguments (
+                session_id          CHAR(36)        NOT NULL,
+                author_civic_did    VARCHAR(255)    NOT NULL,
+                argument_text       TEXT            NOT NULL,
+                posted_at_tick      INT UNSIGNED    NOT NULL,
+                INDEX idx_arg_session (session_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            CREATE TABLE IF NOT EXISTS gov_laws (
+                law_id              CHAR(36)        NOT NULL,
+                grid_name           VARCHAR(63)     NOT NULL,
+                bill_id             CHAR(36)        NOT NULL,
+                enacted_at_tick     INT UNSIGNED    NOT NULL,
+                status              ENUM('active','repealed') NOT NULL DEFAULT 'active',
+                supersedes_law_id   CHAR(36),
+                repealed_at_tick    INT UNSIGNED,
+                repealing_bill_id   CHAR(36),
+                PRIMARY KEY (law_id),
+                INDEX idx_law_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            INSERT IGNORE INTO grid_config (grid_name, config_key, config_value)
+            VALUES ('genesis', 'gov_cosponsor_threshold', '2'),
+                   ('genesis', 'gov_debate_window_ticks', '10080')
+        `,
+        down: `
+            DROP TABLE IF EXISTS gov_laws;
+            DROP TABLE IF EXISTS gov_session_arguments;
+            DROP TABLE IF EXISTS gov_sessions;
+            DROP TABLE IF EXISTS gov_bill_cosponsors;
+            DROP TABLE IF EXISTS gov_bills;
+            DELETE FROM grid_config WHERE config_key IN ('gov_cosponsor_threshold', 'gov_debate_window_ticks')
+        `,
+    },
 ];

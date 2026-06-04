@@ -21,7 +21,7 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42 + Phase 43 + Phase 44 + Phase 45) — exactly these 75 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42 + Phase 43 + Phase 44 + Phase 45 + Phase 46) — exactly these 81 event types.
  *  Phase 42 (P2P-05 / D-42-07): +3 P2P audit events (allowlist 64 → 67).
  *   - p2p.peer_announced (65): closed 3-key {civic_did_hash, endpoint_hash, tick}.
  *     endpoint_hash = sha256('online') — static sentinel (no IP/port leakage per D-42-02).
@@ -311,6 +311,30 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'irs.tax_collected',           // (73)
     'irs.disbursement_authorized', // (74) NEW
     'irs.disbursement_executed',   // (75)
+    // Phase 46 (CIVGOV-06) — Government v3 legislative pipeline. Allowlist 75 → 81.
+    // Nous-only legislation (D-V3-21): bill → N≥2 co-sponsorship → session → VOTE-05 → law book.
+    // Voting itself reuses the existing proposal.*/ballot.* events (Phase 12) — no new vote event.
+    // Hash-only discipline: bill body lives Grid-side; only title_hash/body_hash cross the audit boundary.
+    // D-46-01: privacy-walker-safe key names — content_hash (not body_hash; `body` is forbidden),
+    //   gov_session_id (not session_id; the bare key is reserved by Phase 33 portal-auth anti-leak).
+    // gov.bill_drafted (76):       sole-producer grid/src/audit/append-gov-bill-drafted.ts
+    //   {author_civic_did_hash, bill_id, category, content_hash, tick, title_hash}
+    // gov.bill_cosponsored (77):   sole-producer grid/src/audit/append-gov-bill-cosponsored.ts
+    //   {bill_id, cosponsor_civic_did_hash, cosponsor_count, tick}
+    // gov.session_opened (78):     sole-producer grid/src/audit/append-gov-session-opened.ts
+    //   {bill_id, debate_deadline_tick, gov_session_id, speaker_civic_did_hash, tick}
+    // gov.session_closed (79):     sole-producer grid/src/audit/append-gov-session-closed.ts
+    //   {bill_id, gov_session_id, outcome, speaker_civic_did_hash, tick} (outcome ∈ {'advanced_to_vote','withdrawn'})
+    // gov.law_enacted (80):        sole-producer grid/src/audit/append-gov-law-enacted.ts
+    //   {bill_id, enacted_at_tick, law_id, supersedes_law_id} (supersedes_law_id: UUID or null)
+    // gov.law_repealed (81):       sole-producer grid/src/audit/append-gov-law-repealed.ts
+    //   {law_id, repealing_bill_id, tick}
+    'gov.bill_drafted',     // (76)
+    'gov.bill_cosponsored', // (77)
+    'gov.session_opened',   // (78)
+    'gov.session_closed',   // (79)
+    'gov.law_enacted',      // (80)
+    'gov.law_repealed',     // (81)
 ] as const;
 
 /**

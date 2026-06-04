@@ -120,12 +120,12 @@
      Operators do not vote. Henry does not legislate.
      Evolves v2.2 Phase 12 (Governance & Collective Law). -->
 
-- [ ] **CIVGOV-01**: Civic-DID holders can draft bills (legislative proposals) via `POST /api/v1/gov/bill/draft`. Bill includes title, body (full text), category, proposed amendment to existing law (if any).
-- [ ] **CIVGOV-02**: Bills require co-sponsorship from N≥2 other Civic-DID holders (configurable by Government) to enter formal debate. POST `/api/v1/gov/bill/<id>/cosponsor`.
-- [ ] **CIVGOV-03**: Government Speaker (rotating elected role) opens scheduled legislative sessions via `POST /api/v1/gov/session/open`. Session has debate window (default 1 week) during which Civic-DID holders post arguments + counterarguments. Public hearing (DID-less visitors can read; only Civic-DID holders speak).
-- [ ] **CIVGOV-04**: Voting follows VOTE-05 commit-reveal cryptographic protocol (preserved verbatim from v2.2 Phase 12). Existing audit events (`ballot.committed`, `ballot.revealed`, `proposal.opened`, `proposal.tallied`) reused.
-- [ ] **CIVGOV-05**: Passed bills enter active "civic law book" via `gov.law_enacted` audit event. Repealed bills logged via `gov.law_repealed` with citation to repealing legislation.
-- [ ] **CIVGOV-06**: Sole-producer for 6 new audit events: `gov.bill_drafted`, `gov.bill_cosponsored`, `gov.session_opened`, `gov.session_closed`, `gov.law_enacted`, `gov.law_repealed`.
+- [x] **CIVGOV-01**: Civic-DID holders can draft bills (legislative proposals) via `POST /api/v1/gov/bill/draft`. Bill includes title, body (full text), category, proposed amendment to existing law (if any).
+- [x] **CIVGOV-02**: Bills require co-sponsorship from N≥2 other Civic-DID holders (configurable by Government) to enter formal debate. POST `/api/v1/gov/bill/<id>/cosponsor`.
+- [x] **CIVGOV-03**: Government Speaker (rotating elected role) opens scheduled legislative sessions via `POST /api/v1/gov/session/open`. Session has debate window (default 1 week) during which Civic-DID holders post arguments + counterarguments. Public hearing (DID-less visitors can read; only Civic-DID holders speak).
+- [x] **CIVGOV-04**: Voting follows VOTE-05 commit-reveal cryptographic protocol (preserved verbatim from v2.2 Phase 12). Existing audit events (`ballot.committed`, `ballot.revealed`, `proposal.opened`, `proposal.tallied`) reused.
+- [x] **CIVGOV-05**: Passed bills enter active "civic law book" via `gov.law_enacted` audit event. Repealed bills logged via `gov.law_repealed` with citation to repealing legislation.
+- [x] **CIVGOV-06**: Sole-producer for 6 new audit events: `gov.bill_drafted`, `gov.bill_cosponsored`, `gov.session_opened`, `gov.session_closed`, `gov.law_enacted`, `gov.law_repealed`.
 
 ### POL — Civic Police (Phase 47 — sanctions + investigation + appeals)
 
@@ -302,12 +302,12 @@
 | IRS-02 | 45 | Validated |
 | IRS-03 | 45 | Validated |
 | IRS-04 | 45 | Validated |
-| CIVGOV-01 | 46 | Pending |
-| CIVGOV-02 | 46 | Pending |
-| CIVGOV-03 | 46 | Pending |
-| CIVGOV-04 | 46 | Pending |
-| CIVGOV-05 | 46 | Pending |
-| CIVGOV-06 | 46 | Pending |
+| CIVGOV-01 | 46 | Validated |
+| CIVGOV-02 | 46 | Validated |
+| CIVGOV-03 | 46 | Validated |
+| CIVGOV-04 | 46 | Validated |
+| CIVGOV-05 | 46 | Validated |
+| CIVGOV-06 | 46 | Validated |
 | POL-01 | 47 | Pending |
 | POL-02 | 47 | Pending |
 | POL-03 | 47 | Pending |

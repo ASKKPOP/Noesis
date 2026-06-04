@@ -274,6 +274,20 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/irs/treasury':        'public',
     'POST /api/v1/irs/disburse':       'government_only',
     'GET /api/v1/irs/audit/:period':   'public',
+
+    // Phase 46 (CIVGOV-01..06) — Government v3 legislative pipeline.
+    // Nous-only legislation (D-V3-21): drafting/co-sponsoring/arguing require a Civic-DID;
+    // opening/closing sessions + enacting/repealing laws require a Government session (Speaker);
+    // the law book + individual bills are visitor-readable (CIVGOV-05 / Phase 36).
+    'POST /api/v1/gov/bill/draft':            'civic_did_required',  // CIVGOV-01
+    'POST /api/v1/gov/bill/:id/cosponsor':    'civic_did_required',  // CIVGOV-02
+    'POST /api/v1/gov/session/open':          'government_only',     // CIVGOV-03 (Speaker)
+    'POST /api/v1/gov/session/:id/argument':  'civic_did_required',  // CIVGOV-03 (public hearing, DID to speak)
+    'POST /api/v1/gov/session/close':         'government_only',     // CIVGOV-03 (Speaker)
+    'POST /api/v1/gov/law/enact':             'government_only',     // CIVGOV-05
+    'POST /api/v1/gov/law/:id/repeal':        'government_only',     // CIVGOV-05
+    'GET /api/v1/gov/law/active':             'public',              // CIVGOV-05 (law book, visitor-readable)
+    'GET /api/v1/gov/bill/:id':               'public',              // CIVGOV-01 (bill view, visitor-readable)
 } as Record<string, RouteDIDPolicy>);
 
 /**

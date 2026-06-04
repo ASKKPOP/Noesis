@@ -8,12 +8,12 @@ import {
 } from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast-allowlist: default-deny membership', () => {
-    it('has exactly 75 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27+Phase 28+Phase 33+Phase 36+Phase 37+Phase 42+Phase 43+Phase 44+Phase 45 event types', () => {
-        expect(ALLOWLIST.size).toBe(75);
+    it('has exactly 81 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27+Phase 28+Phase 33+Phase 36+Phase 37+Phase 42+Phase 43+Phase 44+Phase 45+Phase 46 event types', () => {
+        expect(ALLOWLIST.size).toBe(81);
     });
 
-    it('has frozen 75-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(75);
+    it('has frozen 81-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(81);
     });
 
     it.each([
@@ -92,7 +92,7 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(() => (ALLOWLIST as Set<string>).add('law.bypassed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).delete('trade.reviewed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).clear()).toThrow(TypeError);
-        expect(ALLOWLIST.size).toBe(75);
+        expect(ALLOWLIST.size).toBe(81);
     });
 
     it('Phase 6 operator.* tuple order: inspected < paused < resumed < law_changed < telos_forced', () => {
@@ -221,8 +221,8 @@ describe('broadcast-allowlist: Phase 6 operator.* payload privacy (representativ
 });
 
 describe('ALLOWLIST_MEMBERS Phase 42 (Plan 03)', () => {
-    it('has count 75 after Phase 45 adds irs.* events (Phase 42 added p2p.*, Phase 43 added operator.nous_forked)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(75);
+    it('has count 81 after Phase 46 adds gov.* events (Phase 42 added p2p.*, Phase 43 added operator.nous_forked)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(81);
     });
     it('includes p2p.peer_announced at position 65 (index 64)', () => {
         expect(ALLOWLIST_MEMBERS[64]).toBe('p2p.peer_announced');
@@ -239,8 +239,8 @@ describe('ALLOWLIST_MEMBERS Phase 42 (Plan 03)', () => {
 });
 
 describe('ALLOWLIST_MEMBERS Phase 43 (Plan 01 — FORK-04)', () => {
-    it('has count 75 after Phase 45 adds irs.* events (Phase 43 base was 68)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(75);
+    it('has count 81 after Phase 46 adds gov.* events (Phase 43 base was 68)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(81);
     });
     it('includes operator.nous_forked at position 68 (index 67)', () => {
         expect(ALLOWLIST_MEMBERS[67]).toBe('operator.nous_forked');
@@ -255,7 +255,7 @@ describe('ALLOWLIST_MEMBERS Phase 44 (Plan 01 — MKT-06 / D-44-01 / D-44-03)', 
     // This combined assertion is ACTIVE and will FAIL until Plan 03 adds the 4 market.* entries
     // to ALLOWLIST_MEMBERS, growing the array from 68 to 72. Plan 03 turns it GREEN.
     it('Phase 44 allowlist grows to 72 with 4 market.* additions — market.listing_created, market.bid_placed, market.settled, market.disputed (FAILS until Plan 03 — D-44-01)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(75);
+        expect(ALLOWLIST_MEMBERS.length).toBe(81);
         expect(ALLOWLIST_MEMBERS).toContain('market.listing_created');
         expect(ALLOWLIST_MEMBERS).toContain('market.bid_placed');
         expect(ALLOWLIST_MEMBERS).toContain('market.settled');
@@ -352,7 +352,7 @@ describe('broadcast-allowlist: payloadPrivacyCheck', () => {
 
 describe('ALLOWLIST_MEMBERS Phase 45 (IRS-04)', () => {
     it('Phase 45 allowlist grows to 75 with 3 IRS additions (72 → 75)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(75);
+        expect(ALLOWLIST_MEMBERS.length).toBe(81);
         expect(ALLOWLIST_MEMBERS).toContain('irs.tax_collected');
         expect(ALLOWLIST_MEMBERS).toContain('irs.disbursement_authorized');
         expect(ALLOWLIST_MEMBERS).toContain('irs.disbursement_executed');
@@ -376,5 +376,49 @@ describe('ALLOWLIST_MEMBERS Phase 45 (IRS-04)', () => {
         expect(idx('market.disputed')).toBeLessThan(idx('irs.tax_collected'));
         expect(idx('irs.tax_collected')).toBeLessThan(idx('irs.disbursement_authorized'));
         expect(idx('irs.disbursement_authorized')).toBeLessThan(idx('irs.disbursement_executed'));
+    });
+});
+
+describe('ALLOWLIST_MEMBERS Phase 46 (CIVGOV-06)', () => {
+    // Phase 46 D-46 / numbering reconciliation: ROADMAP literal "74 → 80" is stale
+    // (Phase 45 actually shipped at 75). Correct delta is +6 → 75 → 81.
+    it('Phase 46 allowlist grows to 81 with 6 gov.* additions (75 → 81)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(81);
+        expect(ALLOWLIST_MEMBERS).toContain('gov.bill_drafted');
+        expect(ALLOWLIST_MEMBERS).toContain('gov.bill_cosponsored');
+        expect(ALLOWLIST_MEMBERS).toContain('gov.session_opened');
+        expect(ALLOWLIST_MEMBERS).toContain('gov.session_closed');
+        expect(ALLOWLIST_MEMBERS).toContain('gov.law_enacted');
+        expect(ALLOWLIST_MEMBERS).toContain('gov.law_repealed');
+    });
+
+    it('gov.bill_drafted is at position 76 (index 75)', () => {
+        expect(ALLOWLIST_MEMBERS[75]).toBe('gov.bill_drafted');
+    });
+    it('gov.bill_cosponsored is at position 77 (index 76)', () => {
+        expect(ALLOWLIST_MEMBERS[76]).toBe('gov.bill_cosponsored');
+    });
+    it('gov.session_opened is at position 78 (index 77)', () => {
+        expect(ALLOWLIST_MEMBERS[77]).toBe('gov.session_opened');
+    });
+    it('gov.session_closed is at position 79 (index 78)', () => {
+        expect(ALLOWLIST_MEMBERS[78]).toBe('gov.session_closed');
+    });
+    it('gov.law_enacted is at position 80 (index 79)', () => {
+        expect(ALLOWLIST_MEMBERS[79]).toBe('gov.law_enacted');
+    });
+    it('gov.law_repealed is at position 81 (index 80)', () => {
+        expect(ALLOWLIST_MEMBERS[80]).toBe('gov.law_repealed');
+    });
+
+    it('Phase 46 gov entries appear in order after irs.disbursement_executed', () => {
+        const members = Array.from(ALLOWLIST);
+        const idx = (k: string): number => members.indexOf(k);
+        expect(idx('irs.disbursement_executed')).toBeLessThan(idx('gov.bill_drafted'));
+        expect(idx('gov.bill_drafted')).toBeLessThan(idx('gov.bill_cosponsored'));
+        expect(idx('gov.bill_cosponsored')).toBeLessThan(idx('gov.session_opened'));
+        expect(idx('gov.session_opened')).toBeLessThan(idx('gov.session_closed'));
+        expect(idx('gov.session_closed')).toBeLessThan(idx('gov.law_enacted'));
+        expect(idx('gov.law_enacted')).toBeLessThan(idx('gov.law_repealed'));
     });
 });

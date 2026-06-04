@@ -130,6 +130,13 @@ const required = [
   'irs.tax_collected',
   'irs.disbursement_authorized',
   'irs.disbursement_executed',
+  // Phase 46 additions (CIVGOV-06): gov.* at positions 76-81.
+  'gov.bill_drafted',
+  'gov.bill_cosponsored',
+  'gov.session_opened',
+  'gov.session_closed',
+  'gov.law_enacted',
+  'gov.law_repealed',
 ];
 for (const event of required) {
   const pattern = new RegExp(event.replace(/\./g, '\\.'));
@@ -222,7 +229,7 @@ function checkAllowlistCount() {
   const text = readFileSync(allowlistPath, 'utf8');
 
   // Count quoted entries in ALLOWLIST_MEMBERS (each on its own line, starting with leading whitespace + quote).
-  // Phase 45 target: 75 members (Phase 43: 68 → Phase 44 +4 market.* = 72 → Phase 45 +3 irs.* = 75).
+  // Phase 46 target: 81 members (Phase 44 +4 market.* = 72 → Phase 45 +3 irs.* = 75 → Phase 46 +6 gov.* = 81).
   const arrayMatch = text.match(/export const ALLOWLIST_MEMBERS:[^=]*=\s*\[([\s\S]*?)\] as const;/);
   if (!arrayMatch) {
     failures.push('checkAllowlistCount: could not locate ALLOWLIST_MEMBERS array literal in broadcast-allowlist.ts');
@@ -230,10 +237,10 @@ function checkAllowlistCount() {
   }
   const arrayBody = arrayMatch[1];
   const members = arrayBody.match(/^\s+'[a-z][a-z0-9_.]+'/gm) ?? [];
-  if (members.length !== 75) {
+  if (members.length !== 81) {
     failures.push(
-      `ALLOWLIST_MEMBERS count mismatch: expected 75 entries, found ${members.length}.\n` +
-      `  Phase 44 D-44-01 adds 4 market.* (68 → 72); Phase 45 IRS-04 adds 3 irs.* (72 → 75).\n` +
+      `ALLOWLIST_MEMBERS count mismatch: expected 81 entries, found ${members.length}.\n` +
+      `  Phase 45 IRS-04 adds 3 irs.* (72 → 75); Phase 46 CIVGOV-06 adds 6 gov.* (75 → 81).\n` +
       `  Reference: .planning/phases/045-irs-treasury/045-03-PLAN.md.`,
     );
   }
@@ -247,6 +254,15 @@ function checkAllowlistCount() {
   }
   if (!text.includes("'irs.disbursement_executed'")) {
     failures.push('ALLOWLIST_MEMBERS missing irs.disbursement_executed (Phase 45 IRS-04, position 75).');
+  }
+  // Phase 46 CIVGOV-06: the 6 gov.* events at positions 76-81.
+  for (const [name, pos] of [
+    ['gov.bill_drafted', 76], ['gov.bill_cosponsored', 77], ['gov.session_opened', 78],
+    ['gov.session_closed', 79], ['gov.law_enacted', 80], ['gov.law_repealed', 81],
+  ]) {
+    if (!text.includes(`'${name}'`)) {
+      failures.push(`ALLOWLIST_MEMBERS missing ${name} (Phase 46 CIVGOV-06, position ${pos}).`);
+    }
   }
 
   // Position-by-name checks for Phase 33's 3 entries (preserved).
@@ -276,5 +292,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log('[state-doc-sync] OK — STATE.md is in sync (v2.5: 53 events + Phase 45: 75 members in broadcast-allowlist.ts).');
+console.log('[state-doc-sync] OK — STATE.md is in sync (v2.5: 53 events + Phase 46: 81 members in broadcast-allowlist.ts).');
 process.exit(0);

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: ready_to_execute
-stopped_at: Phase 45 SHIPPED (IRS Treasury — 3 plans, allowlist 72→75)
-last_updated: "2026-05-28T18:00:00.000Z"
+stopped_at: Phase 46 SHIPPED (Government v3 — 3 plans, allowlist 75→81)
+last_updated: "2026-06-03T18:30:00.000Z"
 progress:
   total_phases: 25
-  completed_phases: 11
-  total_plans: 53
-  completed_plans: 53
-  percent: 44
+  completed_phases: 12
+  total_plans: 56
+  completed_plans: 56
+  percent: 48
 ---
 
 # Project State
@@ -22,15 +22,15 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** Phase 46 — Government v3 (next — Nous-only VOTE-05 legislation, sessions, civic law book)
+**Current focus:** Phase 47 — Police v3 (next — complaint-driven sanctions, investigation, court-filed charges, appeals to Government)
 
 ## Current Position
 
-Phase: 45 (IRS Treasury) — SHIPPED 2026-05-28 (3 plans, allowlist 72→75)
+Phase: 46 (Government v3) — SHIPPED 2026-06-03 (3 plans, allowlist 75→81)
 Plan: 3 of 3
-Previous: Phase 44 (Marketplace v3) — SHIPPED 2026-05-28 (5 plans, allowlist 68→72)
-Status: Complete — all IRS routes wired, broadcast allowlist 75
-Next action: Execute Phase 46 (Government v3 — Nous-only legislative VOTE-05 with bills, sessions, civic law book)
+Previous: Phase 45 (IRS Treasury) — SHIPPED 2026-05-28 (3 plans, allowlist 72→75)
+Status: Complete — 9 gov routes wired, broadcast allowlist 81, VOTE-05 reused verbatim
+Next action: Execute Phase 47 (Police v3 — complaint-driven sanctions, investigation, charges, appeals)
 
 Driving inputs for v3.0 (locked at milestone open):
 
@@ -345,6 +345,32 @@ Driving inputs for v3.0 (locked at milestone open):
   - Pitfall 4 honored (audit_trail query enumerates 3 IRS event types — no `LIKE 'irs.%'`).
   - Pitfall 6 honored (sole-producer functions called by multiple sites; `audit.append('irs.…', …)` appears exactly once per event type).
 
+## v3.0 Phase 46 close-out (locked 2026-06-03)
+
+- **Phase 46 SHIPPED.** Plans 046-01 through 046-03 all complete. Allowlist **75 → 81** (+6 gov.*: `gov.bill_drafted` (76), `gov.bill_cosponsored` (77), `gov.session_opened` (78), `gov.session_closed` (79), `gov.law_enacted` (80), `gov.law_repealed` (81)). Nous-only legislative pipeline (D-V3-21) layered on top of the **unchanged** VOTE-05 commit-reveal engine.
+
+- **Numbering reconciliation:** ROADMAP Phase 46 detail said "+6 (74 → 80)" — stale (predated Phase 45 shipping at 75). Corrected to **75 → 81** in ROADMAP this phase.
+
+- **What shipped:**
+  1. **Wave 0 + migration (Plan 01):** allowlist test locked `.toBe(75)` → `.toBe(81)` + Phase 46 describe block (positions 76-81 + ordering after irs.disbursement_executed). Migration **v36** (`gov_bills`, `gov_bill_cosponsors`, `gov_sessions`, `gov_session_arguments`, `gov_laws` + config seeds `gov_cosponsor_threshold='2'`, `gov_debate_window_ticks='10080'`). migration-schema.test asserts v36 GREEN.
+  2. **Producers + store (Plan 02):** 6 sole-producers `grid/src/audit/append-gov-*.ts` (9-step discipline). `grid/src/gov/types.ts` (6 closed tuples). `grid/src/gov/gov-bill-store.ts` — `GovBillStore` interface + `InMemoryGovBillStore` (tests) + `MySqlGovBillStore` (prod). Sole-producer gate 58 → 64 files.
+  3. **Routes + doc-sync (Plan 03):** 9 routes in `grid/src/api/routes/gov.ts` — `POST /gov/bill/draft` (civic), `POST /gov/bill/:id/cosponsor` (civic), `POST /gov/session/open` (gov), `POST /gov/session/:id/argument` (civic), `POST /gov/session/close` (gov), `POST /gov/law/enact` (gov), `POST /gov/law/:id/repeal` (gov), `GET /gov/law/active` (public), `GET /gov/bill/:id` (public). +9 ROUTE_DID_POLICY entries; `registerGovRoutes` wired into `buildServerWithHub`. `check-state-doc-sync.mjs` 75 → 81.
+
+- **Key decisions locked:**
+  - **D-46-01** (privacy-walker collision, execution-discovered): the frozen `FORBIDDEN_KEY_PATTERN` forbids the substring `body` and the exact key `session_id` (Phase 33 portal-auth anti-leak). The bill-body-hash audit key is therefore `content_hash` (uses the pattern's `content(?!_hash)` escape hatch, same as lore), and the session-id audit key is `gov_session_id` (word-boundary makes the prefixed form safe). DB column stays `session_id`. The security control was NOT weakened.
+  - **D-46-02:** legislative `government_only` routes (session open/close, law enact/repeal) reuse the existing Phase 37 `verifyGovernmentSession` gate (iss `did:gov:noesis:genesis-polis` + a session-ref claim — `court_conviction_ref` in the bootstrap stub). No shared-verifier change. The elected-Speaker keypair replaces the bootstrap key in a later iteration (per government-session.ts comment).
+  - **D-46-03:** the bill→vote bridge is a single `gov_bills.proposal_id` column set on `session/close` outcome `advanced_to_vote`. The vote itself runs through the EXISTING civic `/governance/*` commit-reveal routes — Phase 46 re-implements NO voting (CIVGOV-04 / VOTE-05 verbatim).
+  - **D-46-04:** the speaker hash on `gov.session_opened`/`closed` is `sha256(GOV_SESSION_ISSUER_DID)` (mirrors Phase 45's `authorized_by_civic_did_hash`). Producers hash the DID (HEX64), so the D-45-06 CIVIC_DID_RE trap does NOT recur.
+
+- **Key invariants preserved:**
+  - Broadcast allowlist at 81. Phase 46 added exactly +6 at positions 76-81.
+  - **VOTE-05 Nous-only (CIVGOV-04)** — PRESERVED. gov.ts introduces no propose/commit/reveal affordance (asserted by a source-scan guard test); operators do not vote.
+  - R-31-01 zero-diff audit chain — PRESERVED (no listener fan-out change).
+  - Hash-only cross-boundary (T-09-12 carry-forward) — bill `body_text` lives Grid-side + visitor-readable HTTP; only `title_hash`/`content_hash` enter audit.
+  - D-V3-18 constitutional operator — every `government_only` action emits an audit event; Henry cannot legislate.
+  - Wall-clock ban — every tick from `services.currentTick()`; `randomUUID` used only for opaque ids.
+  - Pre-existing (not Phase 46): migration-schema test "DROP TABLE for all migrations" fails on older `ALTER TABLE ... DROP COLUMN` down-SQL (v15+) — confirmed identical on HEAD; v36 down correctly uses DROP TABLE.
+
 ## Accumulated Context
 
 ### Carry-forward from v2.0
@@ -436,7 +462,7 @@ Per ROADMAP.md Allowlist Growth Ledger:
 - **Phase 43** (+1): `operator.nous_forked` → 68
 - **Phase 44** (+4): `market.listing_created`, `market.bid_placed`, `market.settled`, `market.disputed` → 72
 - **Phase 45** (+3): `irs.tax_collected`, `irs.disbursement_authorized`, `irs.disbursement_executed` → 75
-- **Phase 46** (+6): `gov.bill_drafted`, `gov.bill_cosponsored`, `gov.session_opened`, `gov.session_closed`, `gov.law_enacted`, `gov.law_repealed` → 81
+- **Phase 46** (+6): `gov.bill_drafted`, `gov.bill_cosponsored`, `gov.session_opened`, `gov.session_closed`, `gov.law_enacted`, `gov.law_repealed` → 81 **→ SHIPPED 2026-06-03**
 - **Phase 47** (+4): `police.complaint_filed`, `police.investigation_opened`, `police.charges_filed`, `police.sanction_executed` → 85
 - **Phase 48** (+2): `library.curator_elected`, `library.entry_curated` → 87
 - **Phase 49** (+4): `community.founded`, `community.joined`, `community.posted`, `community.dissolved` → 91
