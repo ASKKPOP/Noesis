@@ -35,6 +35,11 @@ const didBuckets = new Map<string, Bucket>();
  * any other processing.
  */
 export function registerVisitorRateLimit(app: FastifyInstance): void {
+    // Production default is 120/min/IP (D-36-05). Overridable via env for operators
+    // who front the Grid with their own edge limiter, and for connection-churn stress
+    // tests (the WS leak-guard opens thousands of sockets from one loopback IP).
+    const envMax = Number.parseInt(process.env.GRID_IP_RATE_LIMIT_MAX ?? '', 10);
+    const maxRequests = Number.isFinite(envMax) && envMax > 0 ? envMax : MAX_REQUESTS;
     void app.addHook('onRequest', async (req, reply) => {
         // CORS preflight passes through (no client content to rate-limit).
         if (req.method === 'OPTIONS') return;
@@ -60,7 +65,7 @@ export function registerVisitorRateLimit(app: FastifyInstance): void {
         // Within existing window.
         bucket.count++;
 
-        if (bucket.count > MAX_REQUESTS) {
+        if (bucket.count > maxRequests) {
             // Rate limit exceeded — compute seconds remaining in window.
             const windowElapsedMs = now - bucket.windowStart;
             const secondsRemaining = Math.ceil((WINDOW_MS - windowElapsedMs) / 1000);

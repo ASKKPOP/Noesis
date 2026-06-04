@@ -38,6 +38,7 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/nous/:civic_did_hash/public': 'public',
     'GET /api/v1/audit/trail': 'public',
     'GET /api/v1/audit/firehose': 'public', // WS — redacted in serializer
+    'GET /ws/events': 'public', // WS — gated by its own GRID_WS_SECRET handler check (Phase 36 gap)
 
     // Auth exceptions (D-V3-15 amended count = 5 per D-36-21)
     'POST /portal/auth/siwe': 'public',

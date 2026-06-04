@@ -89,7 +89,9 @@ describe('WsFirehoseHub', () => {
         expect(sock.sent.length).toBe(2);
         const evt = JSON.parse(sock.sent[1]);
         expect(evt.type).toBe('event');
-        expect(evt.entry.eventType).toBe('nous.moved');
+        // Phase 36 VIS-03: a no-DID subscriber gets the redacted visitor wire shape
+        // {tick, event_type, family} — event_type is snake_case, not eventType.
+        expect(evt.entry.event_type).toBe('nous.moved');
     });
 
     it('forwards allowlisted entry to multiple connected clients', () => {
@@ -103,8 +105,8 @@ describe('WsFirehoseHub', () => {
         // Each: hello + 1 event
         expect(sock1.sent.length).toBe(2);
         expect(sock2.sent.length).toBe(2);
-        expect(JSON.parse(sock1.sent[1]).entry.eventType).toBe('nous.spawned');
-        expect(JSON.parse(sock2.sent[1]).entry.eventType).toBe('nous.spawned');
+        expect(JSON.parse(sock1.sent[1]).entry.event_type).toBe('nous.spawned');
+        expect(JSON.parse(sock2.sent[1]).entry.event_type).toBe('nous.spawned');
     });
 
     it('does NOT forward non-allowlisted entry', () => {

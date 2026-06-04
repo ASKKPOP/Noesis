@@ -110,6 +110,10 @@ describe('WS integration', () => {
     let port: number;
 
     async function setup(): Promise<void> {
+        // The leak-guard test opens ~10K sockets from one loopback IP, which would trip
+        // the 120/min/IP visitor rate limiter (Phase 36 D-36-05). Raise the cap for this
+        // transport-level suite; the limiter itself is covered by its own unit tests.
+        process.env.GRID_IP_RATE_LIMIT_MAX = '100000000';
         clock = new WorldClock({ tickRateMs: 100_000 });
         const space = new SpatialMap();
         const logos = new LogosEngine();
@@ -130,6 +134,7 @@ describe('WS integration', () => {
 
     afterEach(async () => {
         delete process.env.GRID_WS_SECRET;
+        delete process.env.GRID_IP_RATE_LIMIT_MAX;
         try {
             await app.close();
         } catch {
