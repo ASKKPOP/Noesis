@@ -121,6 +121,15 @@ const required = [
   'human.identified',
   // Phase 43 addition (FORK-04 / D-43-04): operator.nous_forked at position 68.
   'operator.nous_forked',
+  // Phase 44 additions (MKT-06 / D-44-01): market.* at positions 69-72.
+  'market.listing_created',
+  'market.bid_placed',
+  'market.settled',
+  'market.disputed',
+  // Phase 45 additions (IRS-04): irs.* at positions 73-75.
+  'irs.tax_collected',
+  'irs.disbursement_authorized',
+  'irs.disbursement_executed',
 ];
 for (const event of required) {
   const pattern = new RegExp(event.replace(/\./g, '\\.'));
@@ -213,7 +222,7 @@ function checkAllowlistCount() {
   const text = readFileSync(allowlistPath, 'utf8');
 
   // Count quoted entries in ALLOWLIST_MEMBERS (each on its own line, starting with leading whitespace + quote).
-  // Phase 43 target: 68 members (67 before + operator.nous_forked).
+  // Phase 45 target: 75 members (Phase 43: 68 → Phase 44 +4 market.* = 72 → Phase 45 +3 irs.* = 75).
   const arrayMatch = text.match(/export const ALLOWLIST_MEMBERS:[^=]*=\s*\[([\s\S]*?)\] as const;/);
   if (!arrayMatch) {
     failures.push('checkAllowlistCount: could not locate ALLOWLIST_MEMBERS array literal in broadcast-allowlist.ts');
@@ -221,12 +230,23 @@ function checkAllowlistCount() {
   }
   const arrayBody = arrayMatch[1];
   const members = arrayBody.match(/^\s+'[a-z][a-z0-9_.]+'/gm) ?? [];
-  if (members.length !== 68) {
+  if (members.length !== 75) {
     failures.push(
-      `ALLOWLIST_MEMBERS count mismatch: expected 68 entries, found ${members.length}.\n` +
-      `  Phase 43 D-43-04 adds operator.nous_forked (+1: 67 → 68).\n` +
-      `  Reference: .planning/phases/43-right-to-fork/43-CONTEXT.md §D-43-04.`,
+      `ALLOWLIST_MEMBERS count mismatch: expected 75 entries, found ${members.length}.\n` +
+      `  Phase 44 D-44-01 adds 4 market.* (68 → 72); Phase 45 IRS-04 adds 3 irs.* (72 → 75).\n` +
+      `  Reference: .planning/phases/045-irs-treasury/045-03-PLAN.md.`,
     );
+  }
+
+  // Phase 45 IRS-04: the 3 irs.* events at positions 73-75.
+  if (!text.includes("'irs.tax_collected'")) {
+    failures.push('ALLOWLIST_MEMBERS missing irs.tax_collected (Phase 45 IRS-04, position 73).');
+  }
+  if (!text.includes("'irs.disbursement_authorized'")) {
+    failures.push('ALLOWLIST_MEMBERS missing irs.disbursement_authorized (Phase 45 IRS-04, position 74).');
+  }
+  if (!text.includes("'irs.disbursement_executed'")) {
+    failures.push('ALLOWLIST_MEMBERS missing irs.disbursement_executed (Phase 45 IRS-04, position 75).');
   }
 
   // Position-by-name checks for Phase 33's 3 entries (preserved).
@@ -256,5 +276,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log('[state-doc-sync] OK — STATE.md is in sync (v2.5: 53 events + Phase 43: 68 members in broadcast-allowlist.ts).');
+console.log('[state-doc-sync] OK — STATE.md is in sync (v2.5: 53 events + Phase 45: 75 members in broadcast-allowlist.ts).');
 process.exit(0);

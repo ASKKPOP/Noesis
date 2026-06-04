@@ -21,7 +21,7 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42 + Phase 43 + Phase 44) — exactly these 72 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42 + Phase 43 + Phase 44 + Phase 45) — exactly these 75 event types.
  *  Phase 42 (P2P-05 / D-42-07): +3 P2P audit events (allowlist 64 → 67).
  *   - p2p.peer_announced (65): closed 3-key {civic_did_hash, endpoint_hash, tick}.
  *     endpoint_hash = sha256('online') — static sentinel (no IP/port leakage per D-42-02).
@@ -298,6 +298,19 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'market.bid_placed',      // (70)
     'market.settled',         // (71)
     'market.disputed',        // (72)
+    // Phase 45 (IRS-04) — IRS treasury lifecycle events. Allowlist 72 → 75.
+    // irs.tax_collected (73): pre-empted in Phase 44 (D-44-03); Phase 45 promotes to broadcast.
+    //   Sole-producer: grid/src/audit/append-irs-tax-collected.ts
+    //   Closed 5-key payload: {amount_bios, listing_id, payer_civic_did_hash, tick, total_treasury_after}
+    // irs.disbursement_authorized (74): NEW in Phase 45 — Government-signed legislation authorization.
+    //   Sole-producer: grid/src/audit/append-irs-disbursement-authorized.ts
+    //   Closed 5-key payload: {amount_bios, authorized_by_civic_did_hash, grid_name, legislation_ref_hash, tick}
+    // irs.disbursement_executed (75): pre-empted in Phase 41 (SLEEP-05); Phase 45 promotes to broadcast.
+    //   Sole-producer: grid/src/audit/append-irs-disbursement-executed.ts
+    //   Closed 5-key payload: {amount_bios, cause, civic_did, grid_name, tick} (cause ∈ {'presumed_departed','government_disbursement'})
+    'irs.tax_collected',           // (73)
+    'irs.disbursement_authorized', // (74) NEW
+    'irs.disbursement_executed',   // (75)
 ] as const;
 
 /**

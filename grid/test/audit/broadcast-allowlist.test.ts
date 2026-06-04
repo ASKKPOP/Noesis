@@ -8,12 +8,12 @@ import {
 } from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast-allowlist: default-deny membership', () => {
-    it('has exactly 72 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27+Phase 28+Phase 33+Phase 36+Phase 37+Phase 42+Phase 43+Phase 44 event types', () => {
-        expect(ALLOWLIST.size).toBe(72);
+    it('has exactly 75 locked v1+Phase 5+Phase 6+Phase 7+Phase 8+Phase 10a+Phase 10b+Phase 11+Phase 12+Phase 13+Phase 15+Phase 16+Phase 17+Phase 18+Phase 19+Phase 22+Phase 23+Phase 25b+Phase 27+Phase 28+Phase 33+Phase 36+Phase 37+Phase 42+Phase 43+Phase 44+Phase 45 event types', () => {
+        expect(ALLOWLIST.size).toBe(75);
     });
 
-    it('has frozen 72-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(72);
+    it('has frozen 75-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(75);
     });
 
     it.each([
@@ -92,7 +92,7 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(() => (ALLOWLIST as Set<string>).add('law.bypassed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).delete('trade.reviewed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).clear()).toThrow(TypeError);
-        expect(ALLOWLIST.size).toBe(72);
+        expect(ALLOWLIST.size).toBe(75);
     });
 
     it('Phase 6 operator.* tuple order: inspected < paused < resumed < law_changed < telos_forced', () => {
@@ -221,8 +221,8 @@ describe('broadcast-allowlist: Phase 6 operator.* payload privacy (representativ
 });
 
 describe('ALLOWLIST_MEMBERS Phase 42 (Plan 03)', () => {
-    it('has count 72 after Phase 44 adds market.* events (Phase 42 added p2p.*, Phase 43 added operator.nous_forked)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(72);
+    it('has count 75 after Phase 45 adds irs.* events (Phase 42 added p2p.*, Phase 43 added operator.nous_forked)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(75);
     });
     it('includes p2p.peer_announced at position 65 (index 64)', () => {
         expect(ALLOWLIST_MEMBERS[64]).toBe('p2p.peer_announced');
@@ -239,8 +239,8 @@ describe('ALLOWLIST_MEMBERS Phase 42 (Plan 03)', () => {
 });
 
 describe('ALLOWLIST_MEMBERS Phase 43 (Plan 01 — FORK-04)', () => {
-    it('has count 72 after Phase 44 adds market.* events (Phase 43 base was 68)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(72);
+    it('has count 75 after Phase 45 adds irs.* events (Phase 43 base was 68)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(75);
     });
     it('includes operator.nous_forked at position 68 (index 67)', () => {
         expect(ALLOWLIST_MEMBERS[67]).toBe('operator.nous_forked');
@@ -255,17 +255,18 @@ describe('ALLOWLIST_MEMBERS Phase 44 (Plan 01 — MKT-06 / D-44-01 / D-44-03)', 
     // This combined assertion is ACTIVE and will FAIL until Plan 03 adds the 4 market.* entries
     // to ALLOWLIST_MEMBERS, growing the array from 68 to 72. Plan 03 turns it GREEN.
     it('Phase 44 allowlist grows to 72 with 4 market.* additions — market.listing_created, market.bid_placed, market.settled, market.disputed (FAILS until Plan 03 — D-44-01)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(72);
+        expect(ALLOWLIST_MEMBERS.length).toBe(75);
         expect(ALLOWLIST_MEMBERS).toContain('market.listing_created');
         expect(ALLOWLIST_MEMBERS).toContain('market.bid_placed');
         expect(ALLOWLIST_MEMBERS).toContain('market.settled');
         expect(ALLOWLIST_MEMBERS).toContain('market.disputed');
     });
 
-    // Phase 44 D-44-03: irs.tax_collected is audit-chain-only until Phase 45.
-    // This assertion passes TODAY and must never regress — irs.tax_collected stays off allowlist in Phase 44.
-    it('irs.tax_collected is NOT on allowlist in Phase 44 (audit-chain-only — D-44-03)', () => {
-        expect(ALLOWLIST_MEMBERS).not.toContain('irs.tax_collected');
+    // Phase 44 D-44-03: irs.tax_collected was audit-chain-only until Phase 45.
+    // Phase 45 (IRS-04) promotes it to the broadcast allowlist (position 73) — see the
+    // 'ALLOWLIST_MEMBERS Phase 45 (IRS-04)' describe block below.
+    it('irs.tax_collected IS on allowlist as of Phase 45 (promoted from Phase 44 audit-chain-only — D-44-03 → IRS-04)', () => {
+        expect(ALLOWLIST_MEMBERS).toContain('irs.tax_collected');
     });
 });
 
@@ -346,5 +347,34 @@ describe('broadcast-allowlist: payloadPrivacyCheck', () => {
         expect(payloadPrivacyCheck(null)).toEqual({ ok: true });
         expect(payloadPrivacyCheck('a string')).toEqual({ ok: true });
         expect(payloadPrivacyCheck(42)).toEqual({ ok: true });
+    });
+});
+
+describe('ALLOWLIST_MEMBERS Phase 45 (IRS-04)', () => {
+    it('Phase 45 allowlist grows to 75 with 3 IRS additions (72 → 75)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(75);
+        expect(ALLOWLIST_MEMBERS).toContain('irs.tax_collected');
+        expect(ALLOWLIST_MEMBERS).toContain('irs.disbursement_authorized');
+        expect(ALLOWLIST_MEMBERS).toContain('irs.disbursement_executed');
+    });
+
+    it('irs.tax_collected is at position 73 (index 72)', () => {
+        expect(ALLOWLIST_MEMBERS[72]).toBe('irs.tax_collected');
+    });
+
+    it('irs.disbursement_authorized is at position 74 (index 73)', () => {
+        expect(ALLOWLIST_MEMBERS[73]).toBe('irs.disbursement_authorized');
+    });
+
+    it('irs.disbursement_executed is at position 75 (index 74)', () => {
+        expect(ALLOWLIST_MEMBERS[74]).toBe('irs.disbursement_executed');
+    });
+
+    it('Phase 45 IRS entries appear in order after market.disputed', () => {
+        const members = Array.from(ALLOWLIST);
+        const idx = (k: string): number => members.indexOf(k);
+        expect(idx('market.disputed')).toBeLessThan(idx('irs.tax_collected'));
+        expect(idx('irs.tax_collected')).toBeLessThan(idx('irs.disbursement_authorized'));
+        expect(idx('irs.disbursement_authorized')).toBeLessThan(idx('irs.disbursement_executed'));
     });
 });

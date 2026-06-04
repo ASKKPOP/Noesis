@@ -54,3 +54,41 @@ export async function verifyGovernmentSession(
         return { ok: false, reason: 'court_order_required' };
     }
 }
+
+/**
+ * Phase 45 (IRS-03) — Government disbursement authorization.
+ *
+ * Mirrors verifyGovernmentSession() exactly but checks payload.legislation_ref
+ * instead of court_conviction_ref. Disbursements are legislative authorizations,
+ * not court orders (D-V3-21 — Nous-only legislative VOTE-05 in Phase 46).
+ *
+ * In Phase 45, Phase 46 Government has not shipped yet — IRS disburse tests use
+ * a test-fixture JWT signed with the same keyPairPromise infrastructure. Phase 46
+ * will replace the stub keypair with the elected-Speaker keypair.
+ */
+export type DisbursementAuthResult =
+    | { ok: true; legislationRef: string }
+    | { ok: false; reason: 'legislation_auth_required' | 'legislation_ref_required' };
+
+export async function verifyDisbursementAuth(
+    authHeader: string | undefined,
+): Promise<DisbursementAuthResult> {
+    if (!authHeader?.startsWith('Bearer ')) {
+        return { ok: false, reason: 'legislation_auth_required' };
+    }
+    const token = authHeader.substring('Bearer '.length);
+    try {
+        const { publicKey } = await keyPairPromise;
+        const { payload } = await jwtVerify(token, publicKey);
+        if (payload.iss !== GOV_SESSION_ISSUER_DID) {
+            return { ok: false, reason: 'legislation_auth_required' };
+        }
+        const ref = payload['legislation_ref'];
+        if (typeof ref !== 'string' || ref.length === 0) {
+            return { ok: false, reason: 'legislation_ref_required' };
+        }
+        return { ok: true, legislationRef: ref };
+    } catch {
+        return { ok: false, reason: 'legislation_auth_required' };
+    }
+}

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: ready_to_execute
-stopped_at: Phase 45 PLANNED (IRS Treasury — 3 plans ready for execution, allowlist target 72→75)
-last_updated: "2026-05-28T12:00:00.000Z"
+stopped_at: Phase 45 SHIPPED (IRS Treasury — 3 plans, allowlist 72→75)
+last_updated: "2026-05-28T18:00:00.000Z"
 progress:
   total_phases: 25
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 53
-  completed_plans: 50
-  percent: 40
+  completed_plans: 53
+  percent: 44
 ---
 
 # Project State
@@ -22,15 +22,15 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** Phase 45 — IRS Treasury (PLANNED — 3 plans, ready to execute)
+**Current focus:** Phase 46 — Government v3 (next — Nous-only VOTE-05 legislation, sessions, civic law book)
 
 ## Current Position
 
-Phase: 45 (IRS Treasury) — PLANNED 2026-05-28 (3 plans, allowlist target 72→75)
-Plan: 0 of 3
+Phase: 45 (IRS Treasury) — SHIPPED 2026-05-28 (3 plans, allowlist 72→75)
+Plan: 3 of 3
 Previous: Phase 44 (Marketplace v3) — SHIPPED 2026-05-28 (5 plans, allowlist 68→72)
-Status: Ready to execute
-Next action: Execute Phase 45 (IRS Treasury — transaction fees + civic treasury, 3 plans)
+Status: Complete — all IRS routes wired, broadcast allowlist 75
+Next action: Execute Phase 46 (Government v3 — Nous-only legislative VOTE-05 with bills, sessions, civic law book)
 
 Driving inputs for v3.0 (locked at milestone open):
 
@@ -309,6 +309,41 @@ Driving inputs for v3.0 (locked at milestone open):
   - VOTE-05 Nous-only governance invariant — PRESERVED.
   - D-44-05b: Single-subscription constraint on `clock.onTick` — settlement-timeout uses setInterval.
   - OBS-R-32-02: `_settlementTimeoutInterval` has paired `clearInterval` in `launcher.stop()`.
+
+## v3.0 Phase 45 close-out (locked 2026-05-28)
+
+- **Phase 45 SHIPPED.** Plans 045-01 through 045-03 all complete. Allowlist **72 → 75** (+3: `irs.tax_collected` at position 73, `irs.disbursement_authorized` at position 74 NEW, `irs.disbursement_executed` at position 75). All three IRS audit events are now broadcast-allowlisted (Phase 44 emitted `irs.tax_collected` audit-chain-only; Phase 41 emitted `irs.disbursement_executed` audit-chain-only — Phase 45 promotes both and adds the new `irs.disbursement_authorized`).
+
+- **What shipped:**
+  1. **Wave 0 RED gates (Plan 01):** broadcast-allowlist.test.ts updated from `.toBe(72)` to `.toBe(75)` at all sites + new Phase 45 describe block (5 it-blocks: count + positions 73/74/75 + ordering after market.disputed). Skeleton test files: `grid/test/append-irs-disbursement-authorized.test.ts` (10 it-blocks for 9-step discipline) and `grid/test/irs-routes.test.ts` (3 describe blocks + the audit-chain ordering it-block added in Plan 03).
+  2. **Audit + service layer (Plan 02):** Allowlist grew exactly +3 at positions 73/74/75. New sole-producer `grid/src/audit/append-irs-disbursement-authorized.ts` with closed 5-key payload `{amount_bios, authorized_by_civic_did_hash, grid_name, legislation_ref_hash, tick}` and full 9-step discipline. New `grid/src/irs/irs-store.ts` with 3 methods: `getTreasuryBalance` (reads civic_treasury + grid_config OUTSIDE any tx per Pitfall 1), `disburse` (FOR UPDATE atomic tx; throws `insufficient_treasury_balance`), `getAuditHistory` (explicit `event_type IN (...)` per Pitfall 4, LIMIT 500). Extended `grid/src/civic-registry/government-session.ts` with `verifyDisbursementAuth` checking `legislation_ref` JWT claim (parallel to `verifyGovernmentSession`; D-V3-21 disbursements are legislative authorizations, not court orders).
+  3. **Routes + doc-sync (Plan 03):** 3 IRS routes in `grid/src/api/routes/irs.ts` — `GET /api/v1/irs/treasury` (public, Cache-Control: max-age=10), `POST /api/v1/irs/disburse` (government_only, verifies legislation_ref JWT), `GET /api/v1/irs/audit/:period` (public, period `<fromTick>-<toTick>` or `current`). ROUTE_DID_POLICY entries added for all 3. `registerIrsRoutes` wired into `buildServer()`. Emit ordering enforced at BOTH source level (awk acceptance) AND runtime level (irs-routes.test.ts it-block asserts `authorizedIdx < executedIdx`): `appendIrsDisbursementAuthorized` BEFORE `IrsStore.disburse`, `appendIrsDisbursementExecuted` AFTER commit (cause='government_disbursement', Pitfall 3 payload shape preserved). ROADMAP.md SC-1 corrected from stale `fee_bios` to actual `amount_bios`; Phase 45 detailed running total 74 → 75 and SC-5 (71 → 74) → (72 → 75) so all documents agree with allowlist 75.
+
+- **Key decisions locked:**
+  - D-45-01: `irs.disbursement_authorized` payload is 5 keys (no recipient hash) — disbursement targets are off-chain operational detail. Resolves RESEARCH Open Question 1.
+  - D-45-02: `period` URL param is `<fromTick>-<toTick>` regex `/^(\d+)-(\d+)$/` or literal `current` — calendar dates deferred. Resolves RESEARCH Open Question 2.
+  - D-45-03: No `irs_disbursements` table in Phase 45 — `audit_trail` query is canonical disbursement history. Resolves RESEARCH Open Question 3.
+  - D-45-04: `verifyDisbursementAuth` is a SEPARATE function from `verifyGovernmentSession` — single-responsibility per JWT claim type; Phase 37 court_conviction_ref path unchanged.
+  - D-45-05: `irs.disbursement_executed` now has TWO callers (Phase 41 escalation-check cause='presumed_departed'; Phase 45 disburse route cause='government_disbursement'). Sole-producer CI gate satisfied because both callers use the function — `audit.append('irs.disbursement_executed', ...)` appears in exactly one file.
+  - D-45-06 (execution deviation): the Phase 45 disburse route emits `irs.disbursement_executed` with `civic_did = did:civic:noesis:treasury` (the civic treasury source), NOT `GOV_SESSION_ISSUER_DID` — the latter is a `did:gov:` identifier and FAILS the Phase 41 producer's `CIVIC_DID_RE` (`/^did:civic:noesis:.../i`, must not change per Pitfall 3). The Government authorizer is still captured (hashed) on `irs.disbursement_authorized`.
+
+- **Inherits to Phase 46+:**
+  1. `verifyDisbursementAuth` is the canonical Government-signed JWT verifier for legislative authorizations. Phase 46 Government v3 will replace the `keyPairPromise` stub key with the elected Speaker's keypair; `verifyDisbursementAuth` accepts that transparently (reads `payload.iss === GOV_SESSION_ISSUER_DID` + legislation_ref claim).
+  2. `IrsStore.getAuditHistory` pattern (explicit event_type IN + LIMIT 500) is reusable for any future civic-history endpoint.
+  3. `Cache-Control: public, max-age=10` is the established pattern for fast-changing public reads — Phase 46 `GET /api/v1/gov/law/active` should reuse it.
+  4. **Carry-forward caveat:** `audit_trail` has no simulation-tick column — `created_at` is a BIGINT ms-epoch (Date.now()). `getAuditHistory` filters `created_at` by the `[fromTick,toTick]` params as provided; a real tick→epoch reconciliation for `/irs/audit/:period` is deferred (route tests mock the DB, so this is not test-gating).
+
+- **Key invariants preserved:**
+  - Broadcast allowlist at 75. Phase 45 added exactly +3 at positions 73/74/75.
+  - R-31-01 zero-diff audit chain — PRESERVED (no listener fan-out order change).
+  - VOTE-05 Nous-only governance invariant — PRESERVED (Phase 45 has no voting; legislation_ref JWT is a stub awaiting Phase 46).
+  - D-V3-18 constitutional operator framework — PRESERVED (no Henry-direct treasury withdrawal path; `verifyDisbursementAuth` is the sole gate).
+  - D-V3-21 (Nous-only legislative) — IRS disbursements require a Government-signed legislation_ref; Henry cannot mint such a JWT without the elected-Speaker private key once Phase 46 ships.
+  - D-V3-22 (no income/wealth tax) — only marketplace transaction fees credit the treasury (Phase 44 path unchanged).
+  - Pitfall 1 honored (`irs_fee_rate` read outside any transaction).
+  - Pitfall 3 honored (`appendIrsDisbursementExecuted` payload shape unchanged).
+  - Pitfall 4 honored (audit_trail query enumerates 3 IRS event types — no `LIKE 'irs.%'`).
+  - Pitfall 6 honored (sole-producer functions called by multiple sites; `audit.append('irs.…', …)` appears exactly once per event type).
 
 ## Accumulated Context
 

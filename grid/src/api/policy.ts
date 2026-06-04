@@ -266,6 +266,14 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/market/listing/:id/confirm-settlement': 'civic_did_required',   // MKT-04
     'POST /api/v1/market/listing/:id/dispute':            'civic_did_required',   // MKT-05
     'POST /api/v1/police/investigate':                    'civic_did_required',   // D-44-05 stub
+
+    // Phase 45 (IRS-01..04) — IRS treasury routes.
+    // GET /api/v1/irs/treasury: public per SC-2 (no auth required, Cache-Control: max-age=10).
+    // POST /api/v1/irs/disburse: government_only — requires Government legislation_ref JWT per D-V3-21.
+    // GET /api/v1/irs/audit/:period: public per SC-4 (public transparency required).
+    'GET /api/v1/irs/treasury':        'public',
+    'POST /api/v1/irs/disburse':       'government_only',
+    'GET /api/v1/irs/audit/:period':   'public',
 } as Record<string, RouteDIDPolicy>);
 
 /**

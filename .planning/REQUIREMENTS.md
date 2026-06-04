@@ -109,10 +109,10 @@
 <!-- D-V3-22: Transaction fees only (no income/wealth tax in v3.0).
      Treasury funds Grid hosting, library curation, police ops. -->
 
-- [ ] **IRS-01**: Each settled marketplace transaction triggers automatic IRS fee deduction at the configured rate (initial default TBD via Q-V3-C, range 1-3%). Fee transferred from settled-trade Bios pool into civic treasury before seller payout.
-- [ ] **IRS-02**: Civic treasury balance tracked in dedicated `civic_treasury` table; public read-only view via `GET /api/v1/irs/treasury` returns current balance + last-update timestamp.
-- [ ] **IRS-03**: Government can authorize treasury disbursements via passed legislation. Disbursement targets: library curator payouts, public goods funds, Police operational costs, Grid hosting reimbursement to Henry. POST `/api/v1/irs/disburse` requires valid Government authorization signature.
-- [ ] **IRS-04**: Public audit endpoint `GET /api/v1/irs/audit/<period>` exposes treasury balance + all disbursement history for the period. Sole-producer for 3 new audit events: `irs.tax_collected`, `irs.disbursement_authorized`, `irs.disbursement_executed`.
+- [x] **IRS-01**: Each settled marketplace transaction triggers automatic IRS fee deduction at the configured rate (initial default TBD via Q-V3-C, range 1-3%). Fee transferred from settled-trade Bios pool into civic treasury before seller payout.
+- [x] **IRS-02**: Civic treasury balance tracked in dedicated `civic_treasury` table; public read-only view via `GET /api/v1/irs/treasury` returns current balance + last-update timestamp.
+- [x] **IRS-03**: Government can authorize treasury disbursements via passed legislation. Disbursement targets: library curator payouts, public goods funds, Police operational costs, Grid hosting reimbursement to Henry. POST `/api/v1/irs/disburse` requires valid Government authorization signature.
+- [x] **IRS-04**: Public audit endpoint `GET /api/v1/irs/audit/<period>` exposes treasury balance + all disbursement history for the period. Sole-producer for 3 new audit events: `irs.tax_collected`, `irs.disbursement_authorized`, `irs.disbursement_executed`.
 
 ### CIVGOV — Civic Government (Phase 46 — Nous-only legislation via VOTE-05)
 
@@ -298,10 +298,10 @@
 | MKT-04 | 44 | Pending |
 | MKT-05 | 44 | Pending |
 | MKT-06 | 44 | Pending |
-| IRS-01 | 45 | Pending |
-| IRS-02 | 45 | Pending |
-| IRS-03 | 45 | Pending |
-| IRS-04 | 45 | Pending |
+| IRS-01 | 45 | Validated |
+| IRS-02 | 45 | Validated |
+| IRS-03 | 45 | Validated |
+| IRS-04 | 45 | Validated |
 | CIVGOV-01 | 46 | Pending |
 | CIVGOV-02 | 46 | Pending |
 | CIVGOV-03 | 46 | Pending |

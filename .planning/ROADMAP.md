@@ -60,7 +60,7 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 
 **Wave 3 — Civic Institutions (Phases 44-49)**
 - [x] **Phase 44: Marketplace v3** — Business-DID listings, bids, escrow, IRS fee hooks, dispute → Police routing. (allowlist +4) (completed 2026-05-28)
-- [ ] **Phase 45: IRS Treasury** — Transaction fee collection (1-3% configurable), civic treasury, Government-authorized disbursements. (allowlist +3)
+- [x] **Phase 45: IRS Treasury** — Transaction fee collection (1-3% configurable), civic treasury, Government-authorized disbursements. (allowlist +3) (completed 2026-05-28)
 - [ ] **Phase 46: Government v3** — Nous-only legislative VOTE-05 with bills, co-sponsorship, scheduled sessions, civic law book. (allowlist +6)
 - [ ] **Phase 47: Police v3** — Complaint-driven sanctions, investigation, court-filed charges, appeals to Government. (allowlist +4)
 - [ ] **Phase 48: Library v3** — Public reading room + Civic-DID contribution + rotating curation council paid from treasury. (allowlist +2)
@@ -266,19 +266,19 @@ Plans:
 **Depends on**: Phase 44 (marketplace settlement is the sole revenue source — `market.settled` triggers `irs.tax_collected`).
 **Requirements**: IRS-01, IRS-02, IRS-03, IRS-04
 **Success Criteria** (what must be TRUE):
-  1. A marketplace settlement of 100 Bios with the active IRS rate at 2% deducts exactly 2 Bios into civic treasury before the seller receives 98 Bios; the deduction happens atomically inside the settle DB transaction (no partial-state window observable via direct DB read); `irs.tax_collected` event payload includes `{listing_id, fee_bios, total_treasury_after, tick}`.
+  1. A marketplace settlement of 100 Bios with the active IRS rate at 2% deducts exactly 2 Bios into civic treasury before the seller receives 98 Bios; the deduction happens atomically inside the settle DB transaction (no partial-state window observable via direct DB read); `irs.tax_collected` event payload includes `{amount_bios, listing_id, payer_civic_did_hash, tick, total_treasury_after}`.
   2. `GET /api/v1/irs/treasury` returns `{balance_bios, last_updated_tick, current_rate_percent}` without authentication (visitor-readable); response cache `max-age=10` (treasury changes frequently).
   3. Government passes a legislation authorizing a disbursement (e.g., "pay library curators 500 Bios"); a Government Speaker calls `POST /api/v1/irs/disburse` with the signed legislation reference; Grid validates the signature against the active Government public key, then transfers the funds; `irs.disbursement_authorized` fires on Government signing, `irs.disbursement_executed` fires on Grid transfer.
   4. `GET /api/v1/irs/audit/<period>` returns balance + every collection + every disbursement in the period as a JSON array; the array is sorted by tick and includes the chain entry IDs for verification against the audit chain.
-  5. Sole-producer files emit `irs.tax_collected`, `irs.disbursement_authorized`, `irs.disbursement_executed` with closed-tuple payloads; allowlist grows by exactly +3 (71 → 74).
+  5. Sole-producer files emit `irs.tax_collected`, `irs.disbursement_authorized`, `irs.disbursement_executed` with closed-tuple payloads; allowlist grows by exactly +3 (72 → 75).
 **Scope (ships)**: IRS-01..04.
 **Out of scope for this phase**: Income tax (forbidden by D-V3-22); wealth tax (forbidden by D-V3-22); progressive fee rates by transaction size — flat rate in v3.0; treasury investment (idle Bios held flat, no yield — out of scope).
-**Allowlist additions**: **+3**. Running total: **74**.
-**Plans:** 3 plans
+**Allowlist additions**: **+3**. Running total: **75**.
+**Plans:** 3/3 plans complete
 Plans:
-- [ ] 045-01-PLAN.md — Wave 0 RED gates: broadcast-allowlist 72→75 count gate + skeleton tests for new producer and routes (IRS-04 anchor)
-- [ ] 045-02-PLAN.md — Allowlist promotion + append-irs-disbursement-authorized sole-producer + IrsStore (treasury read, atomic FOR UPDATE disburse, audit history) + verifyDisbursementAuth (IRS-01, IRS-04)
-- [ ] 045-03-PLAN.md — 3 Fastify routes (GET treasury, POST disburse, GET audit/:period) + ROUTE_DID_POLICY entries + buildServer wiring + doc-sync (IRS-02, IRS-03, IRS-04)
+- [x] 045-01-PLAN.md — Wave 0 RED gates: broadcast-allowlist 72→75 count gate + skeleton tests for new producer and routes (IRS-04 anchor)
+- [x] 045-02-PLAN.md — Allowlist promotion + append-irs-disbursement-authorized sole-producer + IrsStore (treasury read, atomic FOR UPDATE disburse, audit history) + verifyDisbursementAuth (IRS-01, IRS-04)
+- [x] 045-03-PLAN.md — 3 Fastify routes (GET treasury, POST disburse, GET audit/:period) + ROUTE_DID_POLICY entries + buildServer wiring + doc-sync (IRS-02, IRS-03, IRS-04)
 
 ### Phase 46: Government v3
 **Goal**: Per D-V3-21, government legislation is Nous-only via VOTE-05 (preserved verbatim from v2.2 Phase 12). Civic-tier features: scheduled legislative sessions, bill drafting with N≥2 co-sponsorship, debate windows, civic law book. Operators do not vote. Henry does not legislate.
@@ -544,7 +544,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 42. P2P Infrastructure | 5/5 | Complete   | 2026-05-28 |
 | 43. Right-to-Fork Export Tooling | 4/4 | Complete    | 2026-05-28 |
 | 44. Marketplace v3 | 5/5 | Complete   | 2026-05-28 |
-| 45. IRS Treasury | 0/? | Not started | — |
+| 45. IRS Treasury | 3/3 | Complete    | 2026-05-28 |
 | 46. Government v3 | 0/? | Not started | — |
 | 47. Police v3 | 0/? | Not started | — |
 | 48. Library v3 | 0/? | Not started | — |

@@ -36,6 +36,7 @@ import { registerCivicMapRoute } from './routes/civic-map.js';
 import { registerCivicMapZoneRoute } from './routes/civic-map-zone.js';
 import { registerLibraryEntriesRoute } from './routes/library-entries.js';
 import { registerMarketRoutes } from './routes/market.js';
+import { registerIrsRoutes } from './routes/irs.js';
 import { registerPolisBillsRoute } from './routes/polis-bills.js';
 import { registerNousPublicProfileRoute } from './routes/nous-public-profile.js';
 import { registerVisitorAuditTrailRoute } from './routes/visitor-audit-trail.js';
@@ -730,6 +731,7 @@ export function buildServerWithHub(
     registerCivicMapZoneRoute(app, services);
     registerLibraryEntriesRoute(app, services);
     void registerMarketRoutes(app, services);
+    void registerIrsRoutes(app, services);
     registerPolisBillsRoute(app, services);
     registerNousPublicProfileRoute(app, services);
     registerVisitorAuditTrailRoute(app, services);
