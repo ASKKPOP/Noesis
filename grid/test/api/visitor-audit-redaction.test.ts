@@ -71,13 +71,23 @@ describe('visitor audit trail — actor_did redaction by tier', () => {
     });
 
     it('civic-DID bearer request receives full actor_did', async () => {
-        // Note: this sub-test will also fail RED until auth + route integration lands.
-        // It demonstrates the expected contract for Plan 03.
+        // tryDid (preHandlers/tryDid.ts step 1b) resolves an ES256 JWT whose `sub` is a
+        // valid DID to the civic_member tier, which makes the trail return un-redacted
+        // (full) actor_did. Mint a real token signed with the Grid keypair.
+        const { SignJWT } = await import('jose');
+        const { keyPairPromise } = await import('../../src/api/portal/auth.js');
+        const { privateKey } = await keyPairPromise;
+        const token = await new SignJWT({})
+            .setProtectedHeader({ alg: 'ES256' })
+            .setSubject(CIVIC_DID)
+            .setIssuedAt()
+            .setExpirationTime('1h')
+            .sign(privateKey);
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/audit/trail',
             headers: {
-                authorization: `Bearer mock-civic-token-for-${CIVIC_DID}`,
+                authorization: `Bearer ${token}`,
             },
         });
         expect(res.statusCode).toBe(200);

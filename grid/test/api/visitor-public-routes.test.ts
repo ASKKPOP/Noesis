@@ -26,7 +26,20 @@ function buildTestServer(): FastifyInstance {
     const space = new SpatialMap();
     const logos = new LogosEngine();
     const audit = new AuditChain();
-    return buildServer({ clock, space, logos, audit, gridName: GRID_NAME });
+    // Phase 44 made GET /api/v1/market/listings a real DB-backed route; a visitor
+    // request needs a pool to return {listings:[]} rather than 503. Supply a minimal
+    // mock pool that yields no rows (empty marketplace).
+    const pool = {
+        query: async () => [[], []],
+        getConnection: async () => ({
+            query: async () => [[], []],
+            beginTransaction: async () => {},
+            commit: async () => {},
+            rollback: async () => {},
+            release: () => {},
+        }),
+    } as unknown as import('mysql2/promise').Pool;
+    return buildServer({ clock, space, logos, audit, gridName: GRID_NAME, pool, currentTick: () => 0 });
 }
 
 describe('visitor public routes — unauthenticated access returns 200', () => {

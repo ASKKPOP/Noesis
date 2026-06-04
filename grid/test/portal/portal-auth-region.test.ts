@@ -90,8 +90,10 @@ describe('GET /api/v1/portal/auth/me — region + created_at fields', () => {
         expect(res.json().region).toBe('market');
     });
 
-    it('falls back to agora for old tokens without region', async () => {
-        // Old-style JWT without region or created_at fields
+    it('returns region null for old tokens without a region claim (WR-04)', async () => {
+        // Old-style JWT without region or created_at fields. Per WR-04, /me does NOT
+        // assume 'agora' for pre-migration tokens — region is null when the claim is absent.
+        // (New signups DO default to agora at issuance per D-03/D-07.)
         const token = await makeJwt({
             did: 'did:noesis:human:0xabcdef1234567890abcdef1234567890abcdef12',
             eth_address: '0xabcdef1234567890abcdef1234567890abcdef12',
@@ -105,7 +107,7 @@ describe('GET /api/v1/portal/auth/me — region + created_at fields', () => {
         });
 
         expect(res.statusCode).toBe(200);
-        expect(res.json().region).toBe('agora');
+        expect(res.json().region).toBe(null);
     });
 
     it('falls back to null for old tokens without created_at', async () => {

@@ -33,7 +33,7 @@ const baseRecord: CivicDidRecord = {
 };
 
 describe('CivicDidStore.insert', () => {
-    it('executes one INSERT with 5 positional params in correct order', async () => {
+    it('executes one INSERT with 6 positional params in correct order', async () => {
         const { pool, queries } = makeMockPool();
         const store = new CivicDidStore(pool);
         await store.insert(baseRecord);
@@ -41,7 +41,7 @@ describe('CivicDidStore.insert', () => {
         expect(queries).toHaveLength(1);
         const q = queries[0];
         expect(q.sql).toMatch(/INSERT INTO civic_did_registry/);
-        expect(q.params).toHaveLength(5);
+        expect(q.params).toHaveLength(6);
         expect(q.params[0]).toBe('genesis');            // gridName
         expect(q.params[1]).toBe('did:civic:noesis:abc-123'); // civicDid
         expect(q.params[2]).toBe('did:noesis:nous:key-abc');  // existenceDid
@@ -49,6 +49,8 @@ describe('CivicDidStore.insert', () => {
         expect(typeof q.params[3]).toBe('string');
         expect(JSON.parse(q.params[3] as string)).toEqual(baseRecord.credentialJson);
         expect(q.params[4]).toBe(100);                  // issuedAtTick
+        // Phase 42 P2P-05 (migration v32): existence_public_key_jwk — null when absent.
+        expect(q.params[5]).toBe(null);
     });
 
     it('stringifies credentialJson before passing to query', async () => {

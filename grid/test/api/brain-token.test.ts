@@ -200,8 +200,10 @@ describe('POST /api/v1/brain/token/register — error cases', () => {
         const expires_at = now + 86400;
         const signature = signCanonical(BRAIN_DID, CIVIC_DID, publicKeyJwk, issued_at, expires_at);
 
-        // Flip the last char to corrupt the signature
-        const badSig = signature.slice(0, -1) + (signature.endsWith('A') ? 'B' : 'A');
+        // Corrupt a LEADING (significant) base64url char. Flipping the *last* char only
+        // toggles padding bits of a 64-byte Ed25519 signature ('A'/'B' decode identically),
+        // which leaves the signature valid — so corrupt the first char instead.
+        const badSig = (signature[0] === 'A' ? 'B' : 'A') + signature.slice(1);
 
         const res = await app.inject({
             method: 'POST',
