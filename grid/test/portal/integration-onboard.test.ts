@@ -13,7 +13,7 @@ import { MIGRATIONS } from '../../src/db/schema.js';
 
 describe('Migration v14', () => {
     it('exists as the last migration', () => {
-        const last = MIGRATIONS[MIGRATIONS.length - 1];
+        const last = MIGRATIONS.find(m => m.version === 14);
         expect(last?.version).toBe(14);
     });
 

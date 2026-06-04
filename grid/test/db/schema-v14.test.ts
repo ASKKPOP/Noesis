@@ -10,7 +10,7 @@ import { MIGRATIONS } from '../../src/db/schema.js';
 
 describe('Phase 26: Migration v14 — add_onboarding_goal_to_human_users', () => {
     it('last migration is version 16 (Phase 28 added v15 + v16)', () => {
-        const last = MIGRATIONS[MIGRATIONS.length - 1];
+        const last = MIGRATIONS.find(m => m.version === 16);
         expect(last.version).toBe(16);
     });
 

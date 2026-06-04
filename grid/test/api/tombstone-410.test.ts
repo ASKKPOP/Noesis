@@ -83,7 +83,8 @@ describe('AGENCY-05 tombstoned DID → HTTP 410 Gone on all DID-scoped routes (D
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/memory/query`,
-            payload: { tier: 'H2', operator_id: OPERATOR_H2, query: 'test' },
+            headers: { 'x-operator-tier': '2', 'x-operator-id': OPERATOR_H2 },
+            payload: { query: 'test' },
         });
         expect(res.statusCode).toBe(410);
         expect(res.json().error).toBe('gone');
@@ -98,7 +99,8 @@ describe('AGENCY-05 tombstoned DID → HTTP 410 Gone on all DID-scoped routes (D
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/telos/force`,
-            payload: { tier: 'H4', operator_id: OPERATOR_H4, new_telos: { goals: [] } },
+            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR_H4 },
+            payload: { new_telos: { goals: [] } },
         });
         expect(res.statusCode).toBe(410);
         expect(res.json().error).toBe('gone');
@@ -114,7 +116,8 @@ describe('AGENCY-05 tombstoned DID → HTTP 410 Gone on all DID-scoped routes (D
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            payload: { tier: 'H5', operator_id: OPERATOR_H5 },
+            headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR_H5 },
+            payload: {},
         });
         expect(res.statusCode).toBe(410);
         expect(res.json().error).toBe('gone');

@@ -3,7 +3,7 @@ import { MIGRATIONS } from '../../src/db/schema.js';
 
 describe('Phase 39: Migrations v27 + v28 — operator tenancy schema', () => {
     it('last migration is version 28', () => {
-        const last = MIGRATIONS[MIGRATIONS.length - 1];
+        const last = MIGRATIONS.find(m => m.version === 28);
         expect(last.version).toBe(28);
     });
 

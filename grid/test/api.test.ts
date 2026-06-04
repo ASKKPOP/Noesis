@@ -115,32 +115,39 @@ describe('Grid API', () => {
         expect(res.statusCode).toBe(404);
     });
 
-    it('GET /api/v1/audit/trail returns entries', async () => {
+    // Phase 36 D-36-06: GET /api/v1/audit/trail is now a visitor surface — a redacted,
+    // limit-bounded sliding window. A no-DID request gets redacted entries
+    // {tick, event_type, actor_did(family), payload:{}}. There is no `total`, no `type`
+    // filter, and no offset pagination (those were the pre-Phase-36 contract).
+    it('GET /api/v1/audit/trail returns the redacted recent window', async () => {
         const res = await app.inject({ method: 'GET', url: '/api/v1/audit/trail' });
         expect(res.statusCode).toBe(200);
         const body = res.json();
         expect(body.entries).toHaveLength(2);
-        expect(body.total).toBe(2);
+        const types = body.entries.map((e: { event_type: string }) => e.event_type);
+        expect(types).toContain('domain.register');
+        expect(types).toContain('grid.started');
     });
 
-    it('GET /api/v1/audit/trail filters by type', async () => {
+    it('GET /api/v1/audit/trail does not filter by type (visitor sliding window)', async () => {
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/audit/trail?type=domain.register',
         });
         const body = res.json();
-        expect(body.entries).toHaveLength(1);
-        expect(body.entries[0].eventType).toBe('domain.register');
+        // The visitor trail ignores an unsupported `type` param and returns the window.
+        expect(body.entries).toHaveLength(2);
     });
 
-    it('GET /api/v1/audit/trail paginates', async () => {
+    it('GET /api/v1/audit/trail limit returns the most recent entries', async () => {
         const res = await app.inject({
             method: 'GET',
-            url: '/api/v1/audit/trail?limit=1&offset=1',
+            url: '/api/v1/audit/trail?limit=1',
         });
         const body = res.json();
         expect(body.entries).toHaveLength(1);
-        expect(body.entries[0].eventType).toBe('grid.started');
+        // Sliding window from the end → the most recently appended event.
+        expect(body.entries[0].event_type).toBe('grid.started');
     });
 
     it('GET /api/v1/audit/verify returns chain integrity', async () => {

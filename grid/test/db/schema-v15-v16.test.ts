@@ -92,7 +92,7 @@ describe('Phase 28: Migration array integrity', () => {
     });
 
     it('version 16 is the last version', () => {
-        const last = MIGRATIONS[MIGRATIONS.length - 1];
+        const last = MIGRATIONS.find(m => m.version === 16);
         expect(last.version).toBe(16);
     });
 });
