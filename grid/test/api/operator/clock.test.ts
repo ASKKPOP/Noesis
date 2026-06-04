@@ -83,7 +83,7 @@ describe('POST /api/v1/operator/clock/pause — AGENCY-02 H3', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/clock/pause',
-            payload: { tier: 'H3', operator_id: VALID_OP_ID },
+            headers: { 'x-operator-tier': '3', 'x-operator-id': VALID_OP_ID },
         });
         expect(res.statusCode).toBe(200);
         expect(res.json()).toEqual({ ok: true, paused: true });
@@ -96,26 +96,26 @@ describe('POST /api/v1/operator/clock/pause — AGENCY-02 H3', () => {
         });
     });
 
-    it('Test 3: 400 invalid_tier when tier field is missing — no audit event', async () => {
+    it('Test 3: 401 tier_missing when x-operator-tier header is absent — no audit event', async () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/clock/pause',
-            payload: { operator_id: VALID_OP_ID },
+            headers: { 'x-operator-id': VALID_OP_ID },
         });
-        expect(res.statusCode).toBe(400);
-        expect(res.json()).toEqual({ error: 'invalid_tier' });
+        expect(res.statusCode).toBe(401);
+        expect(res.json()).toEqual({ error: 'tier_missing' });
         expect(services.audit.query({ eventType: 'operator.paused' }).length).toBe(0);
         expect(services.clock.isPaused).toBe(false);
     });
 
-    it('Test 4: 400 invalid_tier when tier is not H3 (endpoint is H3-only per D-09)', async () => {
+    it('Test 4: 403 tier_too_low when tier < 3 (endpoint is H3-only per D-09)', async () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/clock/pause',
-            payload: { tier: 'H2', operator_id: VALID_OP_ID },
+            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OP_ID },
         });
-        expect(res.statusCode).toBe(400);
-        expect(res.json()).toEqual({ error: 'invalid_tier' });
+        expect(res.statusCode).toBe(403);
+        expect(res.json()).toEqual({ error: 'tier_too_low' });
         expect(services.audit.query({ eventType: 'operator.paused' }).length).toBe(0);
     });
 
@@ -123,7 +123,7 @@ describe('POST /api/v1/operator/clock/pause — AGENCY-02 H3', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/clock/pause',
-            payload: { tier: 'H3', operator_id: 'not-a-uuid' },
+            headers: { 'x-operator-tier': '3', 'x-operator-id': 'not-a-uuid' },
         });
         expect(res.statusCode).toBe(400);
         expect(res.json()).toEqual({ error: 'invalid_operator_id' });
@@ -134,7 +134,7 @@ describe('POST /api/v1/operator/clock/pause — AGENCY-02 H3', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/clock/pause',
-            payload: { tier: 'H3', operator_id: 'did:noesis:op' },
+            headers: { 'x-operator-tier': '3', 'x-operator-id': 'did:noesis:op' },
         });
         expect(res.statusCode).toBe(400);
         expect(res.json()).toEqual({ error: 'invalid_operator_id' });
@@ -145,12 +145,12 @@ describe('POST /api/v1/operator/clock/pause — AGENCY-02 H3', () => {
         const r1 = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/clock/pause',
-            payload: { tier: 'H3', operator_id: VALID_OP_ID },
+            headers: { 'x-operator-tier': '3', 'x-operator-id': VALID_OP_ID },
         });
         const r2 = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/clock/pause',
-            payload: { tier: 'H3', operator_id: VALID_OP_ID_2 },
+            headers: { 'x-operator-tier': '3', 'x-operator-id': VALID_OP_ID_2 },
         });
         expect(r1.statusCode).toBe(200);
         expect(r2.statusCode).toBe(200);
@@ -165,7 +165,7 @@ describe('POST /api/v1/operator/clock/pause — AGENCY-02 H3', () => {
         await app.inject({
             method: 'POST',
             url: '/api/v1/operator/clock/pause',
-            payload: { tier: 'H3', operator_id: VALID_OP_ID },
+            headers: { 'x-operator-tier': '3', 'x-operator-id': VALID_OP_ID },
         });
         const entry = services.audit.query({ eventType: 'operator.paused' })[0];
         expect(entry.payload.tier).toBe('H3');
@@ -200,7 +200,7 @@ describe('POST /api/v1/operator/clock/resume — AGENCY-02 H3', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/clock/resume',
-            payload: { tier: 'H3', operator_id: VALID_OP_ID },
+            headers: { 'x-operator-tier': '3', 'x-operator-id': VALID_OP_ID },
         });
         expect(res.statusCode).toBe(200);
         expect(res.json()).toEqual({ ok: true, paused: false });
@@ -218,7 +218,7 @@ describe('POST /api/v1/operator/clock/resume — AGENCY-02 H3', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/clock/resume',
-            payload: { tier: 'H3', operator_id: VALID_OP_ID },
+            headers: { 'x-operator-tier': '3', 'x-operator-id': VALID_OP_ID },
         });
         expect(res.statusCode).toBe(200);
         expect(services.audit.query({ eventType: 'operator.resumed' }).length).toBe(0);
@@ -242,7 +242,7 @@ describe('operator.paused broadcast over WsHub — D-10 allowlist integration (T
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/clock/pause',
-            payload: { tier: 'H3', operator_id: VALID_OP_ID },
+            headers: { 'x-operator-tier': '3', 'x-operator-id': VALID_OP_ID },
         });
         expect(res.statusCode).toBe(200);
 

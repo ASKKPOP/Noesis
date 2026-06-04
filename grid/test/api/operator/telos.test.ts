@@ -99,6 +99,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
+            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
             payload: {
                 tier: 'H4',
                 operator_id: VALID_OP_ID,
@@ -128,6 +129,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
+            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
             payload: {
                 tier: 'H4',
                 operator_id: VALID_OP_ID,
@@ -151,6 +153,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
+            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
             payload: {
                 tier: 'H4',
                 operator_id: VALID_OP_ID,
@@ -168,18 +171,15 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         expect(serialised).not.toContain('long_term');
     });
 
-    it('Test 4: invalid tier → 400 invalid_tier, no audit event', async () => {
+    it('Test 4: tier < 4 → 403 tier_too_low, no audit event', async () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
-            payload: {
-                tier: 'H2',
-                operator_id: VALID_OP_ID,
-                new_telos: {},
-            },
+            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OP_ID },
+            payload: { new_telos: {} },
         });
-        expect(res.statusCode).toBe(400);
-        expect(res.json()).toEqual({ error: 'invalid_tier' });
+        expect(res.statusCode).toBe(403);
+        expect(res.json()).toEqual({ error: 'tier_too_low' });
         expect(services.audit.query({ eventType: 'operator.telos_forced' }).length).toBe(0);
     });
 
@@ -187,11 +187,8 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
-            payload: {
-                tier: 'H4',
-                operator_id: 'not-a-uuid',
-                new_telos: {},
-            },
+            headers: { 'x-operator-tier': '4', 'x-operator-id': 'not-a-uuid' },
+            payload: { new_telos: {} },
         });
         expect(res.statusCode).toBe(400);
         expect(res.json()).toEqual({ error: 'invalid_operator_id' });
@@ -202,6 +199,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/nous/garbage-did/telos/force',
+            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
             payload: { tier: 'H4', operator_id: VALID_OP_ID, new_telos: {} },
         });
         expect(res.statusCode).toBe(400);
@@ -213,6 +211,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
+            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
             payload: { tier: 'H4', operator_id: VALID_OP_ID },
         });
         expect(res.statusCode).toBe(400);
@@ -224,6 +223,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
+            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
             payload: {
                 tier: 'H4',
                 operator_id: VALID_OP_ID,
@@ -238,6 +238,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/nous/did:noesis:nobody/telos/force',
+            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
             payload: { tier: 'H4', operator_id: VALID_OP_ID, new_telos: {} },
         });
         expect(res.statusCode).toBe(404);
@@ -257,6 +258,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
+            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
             payload: { tier: 'H4', operator_id: VALID_OP_ID, new_telos: {} },
         });
         expect(res.statusCode).toBe(503);
@@ -279,6 +281,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
+            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
             payload: { tier: 'H4', operator_id: VALID_OP_ID, new_telos: {} },
         });
         expect(res.statusCode).toBe(503);
@@ -306,6 +309,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
+            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
             payload: { tier: 'H4', operator_id: VALID_OP_ID, new_telos: {} },
         });
         expect(res.statusCode).toBe(503);
