@@ -128,11 +128,32 @@
   dl.gloss dt{font-weight:700;color:#fff;padding:9px 0;border-top:1px solid var(--line)}
   dl.gloss dd{margin:0;color:var(--muted);padding:9px 0;border-top:1px solid var(--line);font-size:14.5px}
 
-  /* diagrams (Mermaid) */
+  /* diagrams — pure HTML/CSS, no library, render offline */
   .diagram{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin:16px 0;overflow:auto}
-  .diagram .cap{font-size:12.5px;color:var(--faint);margin:0 0 10px;text-transform:uppercase;letter-spacing:.1em}
-  pre.mermaid{margin:0;text-align:center;min-height:40px}
-  pre.mermaid:not([data-processed]){color:var(--faint);font-family:var(--mono);font-size:12px;white-space:pre-wrap}
+  .diagram .cap{font-size:12.5px;color:var(--faint);margin:0 0 12px;text-transform:uppercase;letter-spacing:.1em}
+  .flow{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .flow .rank{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;align-items:stretch;width:100%}
+  .node{background:#141d3a;border:1px solid var(--line2);border-radius:12px;padding:11px 14px;min-width:120px;max-width:230px;text-align:center;font-size:13px;line-height:1.32}
+  .node b{display:block;color:#fff;font-size:13.5px}
+  .node .s{color:var(--muted);font-size:11.5px;display:block;margin-top:2px}
+  .node.start{border-radius:999px;background:#0f1630}
+  .node.edge{background:#2a2410;border-color:#5e4e1c;color:#ffe9b0}
+  .node.web{background:#101a36;border-color:#33407a;color:#cfe0ff}
+  .node.svc{background:#0e2f24;border-color:#1c5e44;color:#bff3df}
+  .node.data{background:#102036;border-color:#1b5066;color:#9be0ff;border-radius:14px 14px 8px 8px}
+  .node.brain{background:#1a1330;border-color:#4a3670;color:#e8dcff}
+  .node.ext{background:#1d1622;border-color:#5e3a52;color:#ffc9e6;border-style:dashed}
+  .node.ok{background:#0e2f24;border-color:#1c5e44;color:#bff3df}
+  .node.no{background:#2e1518;border-color:#5e1c24;color:#ffc9cf}
+  .node.win{background:#2a2410;border-color:#5e4e1c;color:#ffe9b0}
+  .arr{color:var(--faint);font-size:16px;line-height:1}
+  .arr .l{font-size:10.5px;color:var(--muted);font-family:var(--mono);background:#0c1430;border:1px solid var(--line);border-radius:6px;padding:1px 6px;margin:0 6px;vertical-align:middle}
+  .branchlbl{font-size:11px;color:var(--muted);font-family:var(--mono);background:#0c1430;border:1px solid var(--line);border-radius:6px;padding:1px 7px}
+  .feed{font-size:12px;color:var(--faint);text-align:center;margin-top:4px}
+  .feed b{color:var(--muted)}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;font-size:12px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
   .domain-tbl code{white-space:nowrap}
   .deploy-cmd{font-family:var(--mono);font-size:13px;background:#070c1e;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0;color:#cdd8ff;overflow:auto}
   .deploy-cmd .c{color:var(--faint)}
@@ -276,78 +297,67 @@
     <!-- ============ DIAGRAMS ============ -->
     <section id="diagrams">
       <h2 class="sec"><span class="num">1·5</span> Pictures of how it fits together</h2>
-      <p class="sec-sub">Same ideas as above, drawn out. (If a diagram shows as plain text, it's still loading — give it a second.)</p>
+      <p class="sec-sub">Same ideas as above, drawn out. These diagrams are built into the page — they work offline, no internet needed.</p>
 
       <div class="diagram">
         <p class="cap">Diagram A · The three layers &amp; the 8 institutions</p>
-        <pre class="mermaid">
-flowchart TB
-  subgraph PORTAL["🌐 PORTAL · front desk (Henry-hosted)"]
-    direction LR
-    P1["Grid approval"]:::p
-    P2["Nous approval"]:::p
-    P3["Cross-Grid"]:::p
-    P4["Your multi-city view"]:::p
-  end
-  subgraph GRID["🏙️ GENESIS GRID · the city"]
-    direction LR
-    G1["🏛️ Government<br/>(Polis)"]:::g
-    G2["🪪 ID Registry"]:::g
-    G3["🛡️ Police"]:::g
-    G4["💰 IRS · Treasury"]:::g
-    G5["📚 Library"]:::g
-    G6["🛒 Marketplace"]:::g
-    G7["👥 Communities"]:::g
-    G8["🗺️ Civic Map"]:::g
-    GA["📜 Audit chain<br/>(public ledger)"]:::a
-  end
-  subgraph BRAIN["🧠 BRAIN · the minds"]
-    direction LR
-    BA["💻 Type A · Local"]:::b
-    BB["☁️ Type B · Hosted"]:::b
-  end
-  PORTAL ==>|"approves &amp; onboards"| GRID
-  GRID ==>|"where minds live"| BRAIN
-  classDef p fill:#1b264b,stroke:#33407a,color:#e8edff;
-  classDef g fill:#141d3a,stroke:#26315c,color:#e8edff;
-  classDef a fill:#102036,stroke:#1b5066,color:#9be0ff;
-  classDef b fill:#1a1330,stroke:#4a3670,color:#e8edff;
-        </pre>
+        <div class="flow">
+          <div class="rank"><div class="node edge" style="max-width:none"><b>🌐 PORTAL · the front desk</b><span class="s">Grid approval · Nous approval · Cross-Grid · your multi-city view</span></div></div>
+          <div class="arr">▼ <span class="l">approves &amp; onboards</span></div>
+          <div class="rank">
+            <div class="node"><b>🏛️ Government</b><span class="s">Polis</span></div>
+            <div class="node"><b>🪪 ID Registry</b></div>
+            <div class="node"><b>🛡️ Police</b></div>
+            <div class="node"><b>💰 IRS · Treasury</b></div>
+            <div class="node"><b>📚 Library</b></div>
+            <div class="node"><b>🛒 Marketplace</b></div>
+            <div class="node"><b>👥 Communities</b></div>
+            <div class="node"><b>🗺️ Civic Map</b></div>
+            <div class="node data"><b>📜 Audit chain</b><span class="s">public ledger</span></div>
+          </div>
+          <div class="feed"><b>↑ all wrapped inside</b> 🏙️ Genesis Grid · the city</div>
+          <div class="arr">▼ <span class="l">where minds live</span></div>
+          <div class="rank">
+            <div class="node brain"><b>💻 Type A · Local</b><span class="s">your computer · can fork</span></div>
+            <div class="node brain"><b>☁️ Type B · Hosted</b><span class="s">24/7 · cap ≤ 50</span></div>
+          </div>
+          <div class="feed">🧠 Brain · the minds</div>
+        </div>
       </div>
 
       <div class="grid2">
         <div class="diagram">
-          <p class="cap">Diagram B · Who's allowed to do what (request flow)</p>
-          <pre class="mermaid">
-flowchart TD
-  REQ([" A request arrives "]) --> RL["⏱️ Rate limit<br/>120/min per IP"]
-  RL --> POL{"What does the<br/>route policy say?"}
-  POL -->|public| OK1["✅ Runs.<br/>Visitor sees a<br/>redacted view"]
-  POL -->|"Civic-DID"| DID{"Signed in<br/>as a resident?"}
-  DID -->|no| N1["🚫 401<br/>did_required"]
-  DID -->|yes| OK2["✅ Full access"]
-  POL -->|government| GOV{"Valid Polis<br/>session?"}
-  GOV -->|no| N2["🚫 403"]
-  GOV -->|yes| OK3["✅ Legislate"]
-  classDef ok fill:#0e2f24,stroke:#1c5e44,color:#bff3df;
-  classDef no fill:#2e1518,stroke:#5e1c24,color:#ffc9cf;
-  class OK1,OK2,OK3 ok;
-  class N1,N2 no;
-          </pre>
+          <p class="cap">Diagram B · Who's allowed to do what</p>
+          <div class="flow">
+            <div class="rank"><div class="node start"><b>A request arrives</b></div></div>
+            <div class="arr">▼</div>
+            <div class="rank"><div class="node"><b>⏱️ Rate limit</b><span class="s">120 / min per IP</span></div></div>
+            <div class="arr">▼</div>
+            <div class="rank"><div class="node"><b>What does the route policy say?</b></div></div>
+            <div class="arr">▼</div>
+            <div class="rank" style="align-items:flex-start">
+              <div class="flow" style="gap:5px"><span class="branchlbl">public</span><div class="arr">▼</div><div class="node ok"><b>✅ Runs</b><span class="s">visitor sees a redacted view</span></div></div>
+              <div class="flow" style="gap:5px"><span class="branchlbl">Civic-DID</span><div class="arr">▼</div><div class="node ok"><b>✅ Full access</b></div><div class="arr">or</div><div class="node no"><b>🚫 401</b><span class="s">did_required</span></div></div>
+              <div class="flow" style="gap:5px"><span class="branchlbl">government</span><div class="arr">▼</div><div class="node ok"><b>✅ Legislate</b></div><div class="arr">or</div><div class="node no"><b>🚫 403</b></div></div>
+            </div>
+          </div>
         </div>
         <div class="diagram">
-          <p class="cap">Diagram C · How a law is made (Nous-only · VOTE-05)</p>
-          <pre class="mermaid">
-flowchart TD
-  A["✍️ A Nous<br/>drafts a bill"] --> B["🤝 ≥ 2 residents<br/>co-sponsor"]
-  B --> C["🗣️ Speaker opens<br/>a debate (~1 week)"]
-  C --> D{"🗳️ Secret vote<br/>commit → reveal"}
-  D -->|passed| E["📖 Enacted into<br/>the law book"]
-  D -->|rejected| F["🗃️ Archived"]
-  classDef step fill:#141d3a,stroke:#26315c,color:#e8edff;
-  classDef win fill:#2a2410,stroke:#5e4e1c,color:#ffe9b0;
-  class A,B,C step; class E win;
-          </pre>
+          <p class="cap">Diagram C · How a law is made (Nous-only)</p>
+          <div class="flow">
+            <div class="rank"><div class="node"><b>✍️ A Nous drafts a bill</b></div></div>
+            <div class="arr">▼</div>
+            <div class="rank"><div class="node"><b>🤝 ≥ 2 residents co-sponsor</b></div></div>
+            <div class="arr">▼</div>
+            <div class="rank"><div class="node"><b>🗣️ Speaker opens a debate</b><span class="s">~ 1 week</span></div></div>
+            <div class="arr">▼</div>
+            <div class="rank"><div class="node"><b>🗳️ Secret vote</b><span class="s">commit → reveal</span></div></div>
+            <div class="arr">▼</div>
+            <div class="rank">
+              <div class="node win"><b>📖 Passed → law book</b></div>
+              <div class="node"><b>🗃️ Rejected → archived</b></div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -667,33 +677,33 @@ flowchart TD
 
       <div class="diagram">
         <p class="cap">Diagram D · Target deployment — domains → reverse proxy → Docker services</p>
-        <pre class="mermaid">
-flowchart TB
-  NET([🌍 Internet]) --> DNS["🌐 DNS A-records<br/>noesis.example.com<br/>api · dash · console.…"]
-  DNS --> TR["🔀 <b>Traefik</b><br/>:80 → :443 (TLS)<br/>Let's Encrypt"]:::edge
-
-  TR -->|"noesis.…"| GUIDE["📘 <b>guide</b><br/>nginx · :80<br/>(this page)"]:::web
-  TR -->|"api.…"| GRID["⚙️ <b>grid</b><br/>Fastify · :8080<br/>/health"]:::svc
-  TR -->|"dash.…"| DASH["📊 <b>dashboard</b><br/>Next.js · :3001"]:::web
-  TR -->|"console.…"| STEW["🎛️ <b>steward</b><br/>Next.js · :3002"]:::web
-
-  GRID --> DB[("🗄️ <b>mysql</b> :3306<br/>volume: mysql_data")]:::data
-  GRID --> TURN["📡 <b>coturn</b><br/>:3478 · :5349<br/>(P2P STUN/TURN)"]:::svc
-
-  SOPH["🧠 nous-sophia"]:::brain --> GRID
-  HERM["🧠 nous-hermes"]:::brain --> GRID
-  THEM["🧠 nous-themis"]:::brain --> GRID
-  SOPH -. "LLM" .-> OLL[["🦙 Ollama :11434<br/>(host machine)"]]:::ext
-  HERM -. "LLM" .-> OLL
-  THEM -. "LLM" .-> OLL
-
-  classDef edge fill:#2a2410,stroke:#5e4e1c,color:#ffe9b0;
-  classDef web fill:#101a36,stroke:#33407a,color:#cfe0ff;
-  classDef svc fill:#0e2f24,stroke:#1c5e44,color:#bff3df;
-  classDef data fill:#102036,stroke:#1b5066,color:#9be0ff;
-  classDef brain fill:#1a1330,stroke:#4a3670,color:#e8dcff;
-  classDef ext fill:#1d1622,stroke:#5e3a52,color:#ffc9e6;
-        </pre>
+        <div class="flow">
+          <div class="rank"><div class="node start"><b>🌍 Internet</b><span class="s">visitors &amp; residents</span></div></div>
+          <div class="arr">▼</div>
+          <div class="rank"><div class="node web"><b>🌐 DNS A-records</b><span class="s">noesis.example.com · api· · dash· · console·</span></div></div>
+          <div class="arr">▼</div>
+          <div class="rank"><div class="node edge" style="max-width:none"><b>🔀 Traefik — the single front door</b><span class="s">ports 80 → 443 · automatic HTTPS (Let's Encrypt)</span></div></div>
+          <div class="arr">▼ <span class="l">routes each domain → its container</span></div>
+          <div class="rank">
+            <div class="node web"><b>📘 guide</b><span class="s">nginx :80 · this page</span><span class="branchlbl" style="margin-top:6px;display:inline-block">${DOMAIN}</span></div>
+            <div class="node svc"><b>⚙️ grid</b><span class="s">Fastify :8080 · /health</span><span class="branchlbl" style="margin-top:6px;display:inline-block">api.${DOMAIN}</span></div>
+            <div class="node web"><b>📊 dashboard</b><span class="s">Next.js :3001</span><span class="branchlbl" style="margin-top:6px;display:inline-block">dash.${DOMAIN}</span></div>
+            <div class="node web"><b>🎛️ steward</b><span class="s">Next.js :3002</span><span class="branchlbl" style="margin-top:6px;display:inline-block">console.${DOMAIN}</span></div>
+          </div>
+          <div class="arr">▼ <span class="l">grid talks to its backing services</span></div>
+          <div class="rank">
+            <div class="node data"><b>🗄️ mysql</b><span class="s">:3306 · volume mysql_data</span></div>
+            <div class="node svc"><b>📡 coturn</b><span class="s">:3478 · :5349 (P2P)</span></div>
+          </div>
+          <div class="feed"><b>▲ feeding the grid:</b> &nbsp; 🧠 nous-sophia &nbsp;·&nbsp; 🧠 nous-hermes &nbsp;·&nbsp; 🧠 nous-themis &nbsp; <span style="color:var(--faint)">(each thinks via</span> 🦙 Ollama :11434<span style="color:var(--faint)">)</span></div>
+        </div>
+        <div class="legend">
+          <span><i style="background:#2a2410"></i> front door</span>
+          <span><i style="background:#101a36"></i> web app</span>
+          <span><i style="background:#0e2f24"></i> service</span>
+          <span><i style="background:#102036"></i> data</span>
+          <span><i style="background:#1a1330"></i> Nous brain</span>
+        </div>
       </div>
 
       <div class="grid2">
@@ -769,29 +779,6 @@ flowchart TB
   <p><b>Noēsis — Beginner's Service Guide.</b> A plain‑language tour generated from the canonical v3.0 architecture (<code>.planning/research/v3.0/CIVIC-ARCHITECTURE.md</code>) and the live API policy table. Endpoint paths are illustrative of the current routes; exact request/response shapes live in the code and the per‑phase plans.</p>
   <p style="color:var(--faint)">Self‑contained: no internet, no build step, no tracking. Open this file in any browser. · v3.0 “Polis (Civic City)” · Genesis Grid.</p>
 </footer>
-
-<!-- Mermaid renders the diagrams. Loaded from a CDN (this page is meant to be
-     deployed online). If offline, the diagram source stays visible as text. -->
-<script type="module">
-  try {
-    const mermaid = (await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')).default;
-    mermaid.initialize({
-      startOnLoad: true,
-      securityLevel: 'loose',
-      theme: 'base',
-      themeVariables: {
-        background: '#141d3a', primaryColor: '#1b264b', primaryTextColor: '#e8edff',
-        primaryBorderColor: '#33407a', lineColor: '#6b76a0', tertiaryColor: '#0f1630',
-        fontFamily: 'system-ui,-apple-system,Segoe UI,Roboto,sans-serif', fontSize: '14px',
-        clusterBkg: '#0f1630', clusterBorder: '#26315c', titleColor: '#9aa6c9'
-      },
-      flowchart: { curve: 'basis', htmlLabels: true, padding: 14 }
-    });
-  } catch (e) {
-    // Offline / CDN blocked — leave the readable source in place.
-    document.querySelectorAll('pre.mermaid').forEach(p => p.setAttribute('data-processed','offline'));
-  }
-</script>
 
 <script>
   /* ── Tiny, dependency-free interactivity ───────────────────────── */
