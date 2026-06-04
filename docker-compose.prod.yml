@@ -1,0 +1,84 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Noēsis — PRODUCTION OVERLAY (Traefik reverse proxy + public domains + the
+# beginner Services Guide). Use TOGETHER with the base compose:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Point these DNS A-records at the server's public IP, then it's live:
+#
+#   ${DOMAIN}            → the Services Guide (this is your landing page)
+#   guide.${DOMAIN}      → the Services Guide (alias)
+#   api.${DOMAIN}        → grid API        (container: grid, :8080, /health)
+#   dash.${DOMAIN}       → dashboard       (container: dashboard, :3001)
+#   console.${DOMAIN}    → steward console (container: steward, :3002)
+#
+# Traefik fetches free Let's Encrypt TLS certs automatically (set ACME_EMAIL).
+# Required env (put in .env):  DOMAIN=noesis.example.com   ACME_EMAIL=you@example.com
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+
+  # ── Traefik: the single public door (80/443) that routes domains → services ──
+  traefik:
+    image: traefik:v3.1
+    container_name: noesis-traefik
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Redirect all HTTP → HTTPS.
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      # Automatic TLS via Let's Encrypt (TLS-ALPN challenge).
+      - "--certificatesresolvers.le.acme.tlschallenge=true"
+      - "--certificatesresolvers.le.acme.email=${ACME_EMAIL:-admin@example.com}"
+      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "letsencrypt:/letsencrypt"
+    restart: unless-stopped
+
+  # ── The Services Guide (static site) behind Traefik ──────────────────────────
+  guide:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.guide
+    container_name: noesis-guide
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.guide.rule: "Host(`${DOMAIN:-localhost}`) || Host(`guide.${DOMAIN:-localhost}`)"
+      traefik.http.routers.guide.entrypoints: "websecure"
+      traefik.http.routers.guide.tls.certresolver: "le"
+      traefik.http.services.guide.loadbalancer.server.port: "80"
+    restart: unless-stopped
+
+  # ── Domain labels for the existing services (merged onto the base compose) ───
+  grid:
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.grid.rule: "Host(`api.${DOMAIN:-localhost}`)"
+      traefik.http.routers.grid.entrypoints: "websecure"
+      traefik.http.routers.grid.tls.certresolver: "le"
+      traefik.http.services.grid.loadbalancer.server.port: "8080"
+
+  dashboard:
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.dashboard.rule: "Host(`dash.${DOMAIN:-localhost}`)"
+      traefik.http.routers.dashboard.entrypoints: "websecure"
+      traefik.http.routers.dashboard.tls.certresolver: "le"
+      traefik.http.services.dashboard.loadbalancer.server.port: "3001"
+
+  steward:
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.steward.rule: "Host(`console.${DOMAIN:-localhost}`)"
+      traefik.http.routers.steward.entrypoints: "websecure"
+      traefik.http.routers.steward.tls.certresolver: "le"
+      traefik.http.services.steward.loadbalancer.server.port: "3002"
+
+volumes:
+  letsencrypt:

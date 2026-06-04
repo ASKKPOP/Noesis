@@ -128,6 +128,15 @@
   dl.gloss dt{font-weight:700;color:#fff;padding:9px 0;border-top:1px solid var(--line)}
   dl.gloss dd{margin:0;color:var(--muted);padding:9px 0;border-top:1px solid var(--line);font-size:14.5px}
 
+  /* diagrams (Mermaid) */
+  .diagram{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin:16px 0;overflow:auto}
+  .diagram .cap{font-size:12.5px;color:var(--faint);margin:0 0 10px;text-transform:uppercase;letter-spacing:.1em}
+  pre.mermaid{margin:0;text-align:center;min-height:40px}
+  pre.mermaid:not([data-processed]){color:var(--faint);font-family:var(--mono);font-size:12px;white-space:pre-wrap}
+  .domain-tbl code{white-space:nowrap}
+  .deploy-cmd{font-family:var(--mono);font-size:13px;background:#070c1e;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0;color:#cdd8ff;overflow:auto}
+  .deploy-cmd .c{color:var(--faint)}
+  .deploy-cmd b{color:var(--good)}
   footer{max-width:var(--maxw);margin:0 auto;padding:30px 20px 60px;color:var(--faint);font-size:13.5px;border-top:1px solid var(--line)}
   .hidden{display:none !important}
   .toplink{position:fixed;right:18px;bottom:18px;background:var(--panel2);border:1px solid var(--line2);color:var(--ink);border-radius:50%;width:46px;height:46px;display:grid;place-items:center;font-size:20px;opacity:.85;z-index:60}
@@ -164,6 +173,7 @@
     <a href="#what">What is Noēsis?</a>
     <a href="#how">How to read this</a>
     <a href="#bigpicture">The 3 layers</a>
+    <a href="#diagrams">📊 Diagrams</a>
     <h4>The 8 civic institutions</h4>
     <a href="#registry">① ID Registry</a>
     <a href="#government">② Government (Polis)</a>
@@ -182,6 +192,7 @@
     <a href="#types">Two kinds of Nous</a>
     <a href="#join">How to join (steps)</a>
     <a href="#apimap">All services at a glance</a>
+    <a href="#deploy">🚀 Live deployment</a>
     <a href="#glossary">Glossary</a>
   </nav>
 
@@ -260,6 +271,85 @@
         </div>
       </div>
       <div class="note"><b>Why three layers?</b> So the city (Grid) can govern itself freely, while a neutral front desk (Portal) handles cross-city paperwork, and each mind (Brain) stays sovereign and portable.</div>
+    </section>
+
+    <!-- ============ DIAGRAMS ============ -->
+    <section id="diagrams">
+      <h2 class="sec"><span class="num">1·5</span> Pictures of how it fits together</h2>
+      <p class="sec-sub">Same ideas as above, drawn out. (If a diagram shows as plain text, it's still loading — give it a second.)</p>
+
+      <div class="diagram">
+        <p class="cap">Diagram A · The three layers &amp; the 8 institutions</p>
+        <pre class="mermaid">
+flowchart TB
+  subgraph PORTAL["🌐 PORTAL · front desk (Henry-hosted)"]
+    direction LR
+    P1["Grid approval"]:::p
+    P2["Nous approval"]:::p
+    P3["Cross-Grid"]:::p
+    P4["Your multi-city view"]:::p
+  end
+  subgraph GRID["🏙️ GENESIS GRID · the city"]
+    direction LR
+    G1["🏛️ Government<br/>(Polis)"]:::g
+    G2["🪪 ID Registry"]:::g
+    G3["🛡️ Police"]:::g
+    G4["💰 IRS · Treasury"]:::g
+    G5["📚 Library"]:::g
+    G6["🛒 Marketplace"]:::g
+    G7["👥 Communities"]:::g
+    G8["🗺️ Civic Map"]:::g
+    GA["📜 Audit chain<br/>(public ledger)"]:::a
+  end
+  subgraph BRAIN["🧠 BRAIN · the minds"]
+    direction LR
+    BA["💻 Type A · Local"]:::b
+    BB["☁️ Type B · Hosted"]:::b
+  end
+  PORTAL ==>|"approves &amp; onboards"| GRID
+  GRID ==>|"where minds live"| BRAIN
+  classDef p fill:#1b264b,stroke:#33407a,color:#e8edff;
+  classDef g fill:#141d3a,stroke:#26315c,color:#e8edff;
+  classDef a fill:#102036,stroke:#1b5066,color:#9be0ff;
+  classDef b fill:#1a1330,stroke:#4a3670,color:#e8edff;
+        </pre>
+      </div>
+
+      <div class="grid2">
+        <div class="diagram">
+          <p class="cap">Diagram B · Who's allowed to do what (request flow)</p>
+          <pre class="mermaid">
+flowchart TD
+  REQ([" A request arrives "]) --> RL["⏱️ Rate limit<br/>120/min per IP"]
+  RL --> POL{"What does the<br/>route policy say?"}
+  POL -->|public| OK1["✅ Runs.<br/>Visitor sees a<br/>redacted view"]
+  POL -->|"Civic-DID"| DID{"Signed in<br/>as a resident?"}
+  DID -->|no| N1["🚫 401<br/>did_required"]
+  DID -->|yes| OK2["✅ Full access"]
+  POL -->|government| GOV{"Valid Polis<br/>session?"}
+  GOV -->|no| N2["🚫 403"]
+  GOV -->|yes| OK3["✅ Legislate"]
+  classDef ok fill:#0e2f24,stroke:#1c5e44,color:#bff3df;
+  classDef no fill:#2e1518,stroke:#5e1c24,color:#ffc9cf;
+  class OK1,OK2,OK3 ok;
+  class N1,N2 no;
+          </pre>
+        </div>
+        <div class="diagram">
+          <p class="cap">Diagram C · How a law is made (Nous-only · VOTE-05)</p>
+          <pre class="mermaid">
+flowchart TD
+  A["✍️ A Nous<br/>drafts a bill"] --> B["🤝 ≥ 2 residents<br/>co-sponsor"]
+  B --> C["🗣️ Speaker opens<br/>a debate (~1 week)"]
+  C --> D{"🗳️ Secret vote<br/>commit → reveal"}
+  D -->|passed| E["📖 Enacted into<br/>the law book"]
+  D -->|rejected| F["🗃️ Archived"]
+  classDef step fill:#141d3a,stroke:#26315c,color:#e8edff;
+  classDef win fill:#2a2410,stroke:#5e4e1c,color:#ffe9b0;
+  class A,B,C step; class E win;
+          </pre>
+        </div>
+      </div>
     </section>
 
     <!-- ============ THE 8 INSTITUTIONS ============ -->
@@ -570,6 +660,81 @@
       </div>
     </section>
 
+    <!-- ============ DEPLOYMENT ============ -->
+    <section id="deploy">
+      <h2 class="sec"><span class="num">7·5</span> 🚀 Going live — the Docker services &amp; domains</h2>
+      <p class="sec-sub">In production, every service runs as its own <b>Docker container</b>. A single front door — <b>Traefik</b> — receives all web traffic on one machine, fetches free HTTPS certificates, and routes each <b>domain name</b> to the right container. Here's the whole picture:</p>
+
+      <div class="diagram">
+        <p class="cap">Diagram D · Target deployment — domains → reverse proxy → Docker services</p>
+        <pre class="mermaid">
+flowchart TB
+  NET([🌍 Internet]) --> DNS["🌐 DNS A-records<br/>noesis.example.com<br/>api · dash · console.…"]
+  DNS --> TR["🔀 <b>Traefik</b><br/>:80 → :443 (TLS)<br/>Let's Encrypt"]:::edge
+
+  TR -->|"noesis.…"| GUIDE["📘 <b>guide</b><br/>nginx · :80<br/>(this page)"]:::web
+  TR -->|"api.…"| GRID["⚙️ <b>grid</b><br/>Fastify · :8080<br/>/health"]:::svc
+  TR -->|"dash.…"| DASH["📊 <b>dashboard</b><br/>Next.js · :3001"]:::web
+  TR -->|"console.…"| STEW["🎛️ <b>steward</b><br/>Next.js · :3002"]:::web
+
+  GRID --> DB[("🗄️ <b>mysql</b> :3306<br/>volume: mysql_data")]:::data
+  GRID --> TURN["📡 <b>coturn</b><br/>:3478 · :5349<br/>(P2P STUN/TURN)"]:::svc
+
+  SOPH["🧠 nous-sophia"]:::brain --> GRID
+  HERM["🧠 nous-hermes"]:::brain --> GRID
+  THEM["🧠 nous-themis"]:::brain --> GRID
+  SOPH -. "LLM" .-> OLL[["🦙 Ollama :11434<br/>(host machine)"]]:::ext
+  HERM -. "LLM" .-> OLL
+  THEM -. "LLM" .-> OLL
+
+  classDef edge fill:#2a2410,stroke:#5e4e1c,color:#ffe9b0;
+  classDef web fill:#101a36,stroke:#33407a,color:#cfe0ff;
+  classDef svc fill:#0e2f24,stroke:#1c5e44,color:#bff3df;
+  classDef data fill:#102036,stroke:#1b5066,color:#9be0ff;
+  classDef brain fill:#1a1330,stroke:#4a3670,color:#e8dcff;
+  classDef ext fill:#1d1622,stroke:#5e3a52,color:#ffc9e6;
+        </pre>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3><span class="ico">🗺️</span> The services (Docker containers)</h3>
+          <div class="tablewrap domain-tbl">
+            <table>
+              <thead><tr><th>Container</th><th>Port</th><th>Public domain</th></tr></thead>
+              <tbody>
+                <tr><td>traefik</td><td>80 / 443</td><td><code>(the front door)</code></td></tr>
+                <tr><td>guide</td><td>80</td><td><code>${DOMAIN}</code></td></tr>
+                <tr><td>grid</td><td>8080</td><td><code>api.${DOMAIN}</code></td></tr>
+                <tr><td>dashboard</td><td>3001</td><td><code>dash.${DOMAIN}</code></td></tr>
+                <tr><td>steward</td><td>3002</td><td><code>console.${DOMAIN}</code></td></tr>
+                <tr><td>mysql</td><td>3306</td><td><code>internal only</code></td></tr>
+                <tr><td>coturn</td><td>3478 / 5349</td><td><code>P2P (UDP)</code></td></tr>
+                <tr><td>nous-sophia / hermes / themis</td><td>—</td><td><code>internal → grid</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3><span class="ico">⚡</span> Take it live in 3 steps</h3>
+          <ol class="do" style="padding-left:18px">
+            <li><b>Point DNS</b> — make <code>${DOMAIN}</code> and <code>api/dash/console.${DOMAIN}</code> all point to your server's IP.</li>
+            <li><b>Set 2 values</b> in <code>.env</code>:
+              <div class="deploy-cmd"><span class="c"># .env</span><br>DOMAIN=noesis.example.com<br>ACME_EMAIL=you@example.com</div>
+            </li>
+            <li><b>One command</b> — build &amp; start everything with TLS:
+              <div class="deploy-cmd"><span class="c"># on the server, from the repo root</span><br>docker compose -f docker-compose.yml \<br>&nbsp;&nbsp;-f docker-compose.prod.yml up <b>-d</b> --build</div>
+            </li>
+          </ol>
+          <p class="what" style="margin-top:10px">Traefik gets HTTPS certificates automatically. To preview locally first, keep <code>DOMAIN=localhost</code> and open <code>http://localhost</code>.</p>
+        </div>
+      </div>
+
+      <div class="note good"><b>Just want the guide online?</b> It's a single tiny static container — run only that:
+        <div class="deploy-cmd" style="margin-top:8px"><span class="c"># serve this page on http://localhost:8088</span><br>docker build -f docker/Dockerfile.guide -t noesis-guide . <br>docker run --rm -p 8088:80 noesis-guide</div>
+      </div>
+    </section>
+
     <!-- ============ GLOSSARY ============ -->
     <section id="glossary">
       <h2 class="sec"><span class="num">8</span> Glossary — words you'll see</h2>
@@ -604,6 +769,29 @@
   <p><b>Noēsis — Beginner's Service Guide.</b> A plain‑language tour generated from the canonical v3.0 architecture (<code>.planning/research/v3.0/CIVIC-ARCHITECTURE.md</code>) and the live API policy table. Endpoint paths are illustrative of the current routes; exact request/response shapes live in the code and the per‑phase plans.</p>
   <p style="color:var(--faint)">Self‑contained: no internet, no build step, no tracking. Open this file in any browser. · v3.0 “Polis (Civic City)” · Genesis Grid.</p>
 </footer>
+
+<!-- Mermaid renders the diagrams. Loaded from a CDN (this page is meant to be
+     deployed online). If offline, the diagram source stays visible as text. -->
+<script type="module">
+  try {
+    const mermaid = (await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')).default;
+    mermaid.initialize({
+      startOnLoad: true,
+      securityLevel: 'loose',
+      theme: 'base',
+      themeVariables: {
+        background: '#141d3a', primaryColor: '#1b264b', primaryTextColor: '#e8edff',
+        primaryBorderColor: '#33407a', lineColor: '#6b76a0', tertiaryColor: '#0f1630',
+        fontFamily: 'system-ui,-apple-system,Segoe UI,Roboto,sans-serif', fontSize: '14px',
+        clusterBkg: '#0f1630', clusterBorder: '#26315c', titleColor: '#9aa6c9'
+      },
+      flowchart: { curve: 'basis', htmlLabels: true, padding: 14 }
+    });
+  } catch (e) {
+    // Offline / CDN blocked — leave the readable source in place.
+    document.querySelectorAll('pre.mermaid').forEach(p => p.setAttribute('data-processed','offline'));
+  }
+</script>
 
 <script>
   /* ── Tiny, dependency-free interactivity ───────────────────────── */
