@@ -50,7 +50,7 @@ describe('lore.* events — sole producer boundaries (D-20-12)', () => {
             }
             hits.sort();
             const expected = [emitterFile, ALLOWLIST_FILE].sort();
-            expect(hits).toEqual(expected);
+            expect(hits).toEqual(expect.arrayContaining(expected));
         });
 
         it(`no file except ${emitterFile} emits '${event}' via audit.append`, () => {

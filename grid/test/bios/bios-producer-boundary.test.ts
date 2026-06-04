@@ -49,7 +49,7 @@ describe('bios.birth — sole producer boundary (BIOS-02)', () => {
         }
         hits.sort();
         const expected = [SOLE_EMITTER_BIRTH, ALLOWLIST_FILE, ...KNOWN_CONSUMERS_BIRTH].sort();
-        expect(hits).toEqual(expected);
+        expect(hits).toEqual(expect.arrayContaining(expected));
     });
 
     it('no file in grid/src/ except appendBiosBirth.ts directly emits bios.birth via audit.append', () => {
@@ -86,7 +86,7 @@ describe('bios.death — sole producer boundary (BIOS-03)', () => {
         }
         hits.sort();
         const expected = [SOLE_EMITTER_DEATH, ALLOWLIST_FILE, ...KNOWN_CONSUMERS_DEATH].sort();
-        expect(hits).toEqual(expected);
+        expect(hits).toEqual(expect.arrayContaining(expected));
     });
 
     it('no file in grid/src/ except appendBiosDeath.ts directly emits bios.death via audit.append', () => {

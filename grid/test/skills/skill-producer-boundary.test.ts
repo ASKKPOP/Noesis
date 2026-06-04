@@ -31,8 +31,15 @@ function walk(dir: string): string[] {
     for (const entry of readdirSync(dir)) {
         const full = join(dir, entry);
         const st = statSync(full);
-        if (st.isDirectory()) out.push(...walk(full));
-        else if (full.endsWith('.ts') && !full.endsWith('.d.ts')) out.push(full);
+        // Exclude test fixtures (.test.ts / __tests__): tests legitimately call
+        // audit.append(...) directly for setup, which is not a production sole-producer
+        // violation. Mirrors the .test.ts exclusion in check-sole-producer-discipline.mjs.
+        if (st.isDirectory()) {
+            if (entry === '__tests__') continue;
+            out.push(...walk(full));
+        } else if (full.endsWith('.ts') && !full.endsWith('.d.ts') && !full.endsWith('.test.ts')) {
+            out.push(full);
+        }
     }
     return out;
 }
@@ -43,16 +50,19 @@ describe('skill.* events — sole producer boundaries', () => {
     for (const [event, emitterFile] of Object.entries(SOLE_EMITTERS)) {
         const escapedEvent = event.replace('.', '\\.');
 
-        it(`'${event}' string appears only in allowlist and sole emitter`, () => {
+        it(`'${event}' is registered in the allowlist and referenced by its sole emitter`, () => {
             const hits: string[] = [];
             for (const file of allFiles) {
                 const rel = relative(GRID_SRC, file).replace(/\\/g, '/');
                 const src = readFileSync(file, 'utf8');
                 if (new RegExp(escapedEvent).test(src)) hits.push(rel);
             }
-            hits.sort();
-            const expected = [emitterFile, ALLOWLIST_FILE].sort();
-            expect(hits).toEqual(expected);
+            // The allowlist registration and the sole emitter MUST both reference the event.
+            // Read-only consumers (e.g. culture/portal surfaces that filter by event_type)
+            // may also reference the string; emission-uniqueness is enforced by the
+            // companion 'via audit.append' test below + check-sole-producer-discipline.mjs.
+            const expected = [emitterFile, ALLOWLIST_FILE];
+            expect(hits).toEqual(expect.arrayContaining(expected));
         });
 
         it(`no file except ${emitterFile} emits '${event}' via audit.append`, () => {
