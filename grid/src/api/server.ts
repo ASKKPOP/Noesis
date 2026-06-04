@@ -818,8 +818,24 @@ export function buildServerWithHub(
 
     // --- WebSocket: /ws/events ---
 
+    // Custom preClose replaces @fastify/websocket's defaultPreClose, which has a
+    // double-`done()` bug: it calls `server.close(done)` AND `done()` synchronously.
+    // When the underlying HTTP server was never `listen`ed (every `app.inject()` test
+    // teardown), ws's `close(cb)` invokes the callback with `Error('The server is not
+    // running')`, which rejects `app.close()` and fails the test in afterEach. We close
+    // clients then call `server.close(() => done())` exactly once, swallowing that error.
     void app.register(fastifyWebsocket, {
         options: { maxPayload: 1_048_576 },
+        preClose: function preClose(done: () => void): void {
+            const server = (this as { websocketServer?: { clients?: Set<{ close(): void }>; close(cb?: () => void): void } }).websocketServer;
+            if (server?.clients) {
+                for (const client of server.clients) {
+                    try { client.close(); } catch { /* socket already closing */ }
+                }
+            }
+            if (!server) { done(); return; }
+            server.close(() => done());
+        },
     });
 
     const wsHub = new WsHub({

@@ -148,6 +148,9 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // Relationship graph
     'GET /api/v1/nous/:did/relationships': 'public',
     'GET /api/v1/nous/:did/relationships/inspect': 'public',
+    // H2 operator inspect is a POST (operator/relationships.ts); the DID hook must pass
+    // it through to the x-operator-tier handler, not default-deny it (Phase 36 gap).
+    'POST /api/v1/nous/:did/relationships/inspect': 'public',
     'GET /api/v1/grid/relationships/graph': 'public',
 
     // Operator routes — use their own x-operator-tier/x-operator-id auth mechanism
@@ -165,9 +168,11 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/operator/nous/:did/slash': 'public',
     'POST /api/v1/operator/nous/:did/force-sleep': 'public',
     'POST /api/v1/operator/nous/:did/telos/force': 'public',
-    'GET /api/v1/operator/nous/:did/cognitive-snapshot': 'public',
+    // cognitive-snapshot is registered as POST (cognitive-snapshot.ts), not GET.
+    'POST /api/v1/operator/nous/:did/cognitive-snapshot': 'public',
     'POST /api/v1/operator/nous/:did/memory/query': 'public',
-    'POST /api/v1/operator/relationships/:edge_key/events': 'public',
+    // operator relationship-events is registered as GET (operator/relationships.ts), not POST.
+    'GET /api/v1/operator/relationships/:edge_key/events': 'public',
     'POST /api/v1/operator/replay/export': 'public',
     'POST /api/v1/operator/spawn-system-nous': 'public',
 
