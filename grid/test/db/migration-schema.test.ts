@@ -67,9 +67,18 @@ describe('Sprint 12: Migration Schema', () => {
         expect(m!.up).toContain('region_id');
     });
 
-    it('down SQL contains DROP TABLE for all non-meta migrations', () => {
+    it('down SQL reverses up for every non-meta migration', () => {
+        // A migration that CREATEs a table must DROP it in its down. But ALTER-only
+        // migrations (ADD COLUMN, ADD INDEX) legitimately reverse via ALTER/DROP COLUMN
+        // and have no DROP TABLE — requiring one of them was an over-broad assertion that
+        // failed on add_region_to_human_users, add_onboarding_goal_to_human_users, etc.
         for (const m of MIGRATIONS) {
-            expect(m.down.toUpperCase()).toContain('DROP TABLE');
+            if (/CREATE TABLE/i.test(m.up)) {
+                expect(m.down.toUpperCase()).toContain('DROP TABLE');
+            } else {
+                // Column/index-only migration: down must be a non-empty reversal.
+                expect(m.down.trim().length).toBeGreaterThan(0);
+            }
         }
     });
 
