@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Noēsis — Deployment Runbook (askkpop server)</title>
+<meta name="description" content="Full step-by-step guide to deploy the Noēsis Grid on the shared askkpop.com server: public vs local services, Apache reverse proxy, Docker, DNS, and verification." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#0b1220; --navy:#16213d; --parchment:#f1ead8; --parchment-2:#e8dfc8; --vellum:#faf6ec;
+    --terracotta:#b8542f; --terracotta-2:#d97a4f; --bronze:#8a6a3b;
+    --rule:rgba(11,18,32,.18); --rule-soft:rgba(11,18,32,.10); --rule-on-dark:rgba(241,234,216,.18);
+    --muted:rgba(11,18,32,.62); --muted-on-dark:rgba(241,234,216,.62);
+    --serif:"Cormorant Garamond","EB Garamond",Georgia,serif;
+    --sans:"Inter Tight","Helvetica Neue",Helvetica,Arial,sans-serif;
+    --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+    --maxw:980px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:78px}
+  body{margin:0;background:var(--parchment);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--terracotta);color:var(--vellum)}
+  .shell{max-width:var(--maxw);margin:0 auto;padding:0 clamp(20px,5vw,48px)}
+  a{color:var(--terracotta)}
+  code{font-family:var(--mono);font-size:.86em;background:color-mix(in oklab,var(--parchment-2) 80%,white);border:1px solid var(--rule-soft);border-radius:4px;padding:1px 6px;color:var(--ink)}
+
+  header.top{position:sticky;top:0;z-index:30;background:color-mix(in oklab,var(--parchment) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule-soft)}
+  header.top .row{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:14px;height:60px;padding:0 clamp(20px,5vw,48px)}
+  .brand{font-family:var(--serif);font-size:22px;display:flex;align-items:center;gap:9px}
+  .brand .mk{width:18px;height:18px;border:1px solid var(--ink);border-radius:50%;position:relative}
+  .brand .mk::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--ink)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  header .eyebrow{margin-left:auto}
+
+  .hero{padding:64px 0 28px}
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(38px,6vw,68px);line-height:1.04;letter-spacing:-.02em;margin:.15em 0}
+  h1 em{font-style:italic;color:var(--terracotta)}
+  .lede{font-family:var(--serif);font-size:clamp(20px,2.4vw,27px);line-height:1.35;color:var(--ink);max-width:40ch;margin-top:14px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .chip{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--rule);border-radius:999px;padding:5px 12px;color:var(--muted)}
+
+  h2{font-family:var(--serif);font-weight:500;font-size:clamp(26px,3.4vw,40px);line-height:1.1;letter-spacing:-.015em;margin:8px 0 6px;scroll-margin-top:78px}
+  h2 .n{font-family:var(--mono);font-size:13px;color:var(--terracotta);border:1px solid var(--rule);border-radius:7px;padding:2px 9px;vertical-align:middle;margin-right:12px}
+  h3{font-family:var(--serif);font-weight:500;font-size:23px;margin:26px 0 6px}
+  section{padding:30px 0;border-top:1px solid var(--rule);position:relative}
+  p{max-width:68ch}
+  .muted{color:var(--muted)}
+
+  /* command blocks */
+  .cmd{position:relative;background:var(--ink);color:#e7e1cf;border-radius:12px;padding:16px 16px 16px 18px;margin:14px 0;font-family:var(--mono);font-size:13px;line-height:1.6;overflow:auto}
+  .cmd .c{color:var(--muted-on-dark)}
+  .cmd .k{color:var(--terracotta-2)}
+  .cmd b{color:#fff;font-weight:500}
+  .cmd .copy{position:absolute;top:9px;right:9px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-on-dark);background:transparent;border:1px solid var(--rule-on-dark);border-radius:6px;padding:3px 8px;cursor:pointer}
+  .cmd .copy:hover{color:#fff;border-color:var(--terracotta)}
+  .file-label{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--terracotta);margin:16px 0 -6px}
+
+  /* table */
+  .scroll{overflow:auto;border:1px solid var(--rule);border-radius:12px;margin:16px 0}
+  table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:560px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);background:var(--parchment-2)}
+  tr:last-child td{border-bottom:0}
+  td.pub{color:#2e6f4e;font-weight:600} td.loc{color:var(--terracotta);font-weight:600}
+
+  .note{border-left:3px solid var(--terracotta);background:color-mix(in oklab,var(--terracotta) 8%,transparent);padding:12px 16px;border-radius:0 10px 10px 0;margin:16px 0}
+  .note.warn{border-color:var(--bronze);background:color-mix(in oklab,var(--bronze) 10%,transparent)}
+  .note b{color:var(--ink)}
+  ol.steps{counter-reset:s;list-style:none;padding:0}
+  ol.steps>li{position:relative;padding-left:14px;margin:.4em 0}
+  ul.check{list-style:none;padding:0}
+  ul.check li{padding-left:26px;position:relative;margin:.3em 0}
+  ul.check li::before{content:"✓";position:absolute;left:0;color:#2e6f4e;font-weight:700}
+  footer{border-top:1px solid var(--rule);padding:30px 0 60px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="row">
+    <span class="brand"><span class="mk"></span> Noēsis</span>
+    <span class="eyebrow">Deployment Runbook</span>
+  </div>
+</header>
+
+<div class="shell">
+
+  <div class="hero">
+    <div class="eyebrow">askkpop.com · AWS · CentOS 7 · shared host</div>
+    <h1>Deploy the <em>Grid</em>, step by step.</h1>
+    <p class="lede">The full path to putting the public Noēsis Grid live on your existing server — without disturbing the other 14 sites it already runs.</p>
+    <div class="meta">
+      <span class="chip">Host 54.193.144.100</span>
+      <span class="chip">Apache front · localhost containers</span>
+      <span class="chip">TLS at the ALB</span>
+      <span class="chip">2 cores · 15 GB</span>
+    </div>
+  </div>
+
+  <!-- 0 -->
+  <section id="model">
+    <h2><span class="n">00</span>The model — public vs local</h2>
+    <p>Your box already follows one clean pattern, and the Grid must follow it too: <b>Apache (:80/:443) is the single public door</b>; it reverse-proxies each domain to a service that listens only on <code>127.0.0.1</code>. TLS is handled by the <b>ALB</b> in front. So “public” = <i>has an Apache vhost</i>; “local” = <i>localhost-bound only</i>.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Service</th><th>Port</th><th>Exposure</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td><b>Grid API</b> <span class="muted">(grid)</span></td><td>8080</td><td class="pub">PUBLIC → api.askkpop.com</td><td>The Grid itself. Visitors, residents &amp; remote Brains call it (REST + WebSocket). The one you truly need.</td></tr>
+          <tr><td>Dashboard</td><td>3001</td><td class="pub">public (optional) → dash.askkpop.com</td><td>Read-only civic dashboard</td></tr>
+          <tr><td>Steward Console</td><td>3002</td><td class="pub">public — lock down → console.askkpop.com</td><td>Operator tool. Auth / IP-restrict it.</td></tr>
+          <tr><td><b>MySQL</b></td><td>3306</td><td class="loc">LOCAL — internal only</td><td>Database. Only the Grid talks to it. Never public.</td></tr>
+          <tr><td>Nous Brains</td><td>—</td><td class="loc">LOCAL — no inbound</td><td>They connect <i>out</i> to the Grid. Often on the operator's own machine.</td></tr>
+          <tr><td>Ollama / LLM</td><td>11434</td><td class="loc">LOCAL — run off this box</td><td>2 cores can't run a real model. Use a GPU box or a cloud LLM.</td></tr>
+          <tr><td>coturn (P2P)</td><td>3478/5349</td><td class="loc">network-public if used</td><td>Only for P2P. Needs UDP/TCP security-group rules. Skip for v1.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note"><b>Two senses of “local”.</b> (1) <b>Operator-local</b> — Type A Brains + their AI run on each user's own computer and call your public Grid over the internet; your server never hosts them. (2) <b>Server-internal</b> — MySQL etc. run on the box but bound to <code>127.0.0.1</code>.</div>
+    <div class="note warn"><b>Do NOT use the Traefik compose here.</b> The earlier <code>docker-compose.prod.yml</code> makes Traefik own ports 80/443 — that collides with Apache on this shared box. On <i>this</i> server use the native pattern below: Grid bound to <code>127.0.0.1:8080</code> + an Apache vhost.</div>
+  </section>
+
+  <!-- 1 -->
+  <section id="prereqs">
+    <h2><span class="n">01</span>Prerequisites &amp; decisions</h2>
+    <ul class="check">
+      <li>SSH in: <code>~/shell/ask.sh</code> → <code>centos@54.193.144.100</code></li>
+      <li>Docker 23 already present on the box (confirmed)</li>
+      <li>Pick a subdomain — this runbook uses <code>api.askkpop.com</code></li>
+      <li>The Noēsis repo needs to reach the server (step 02)</li>
+    </ul>
+    <p>Choose a home on the server that won't clash with the other apps:</p>
+    <div class="cmd"><button class="copy">copy</button><span class="c"># on the server</span><br>sudo mkdir -p /home/centos/noesis && sudo chown centos:centos /home/centos/noesis<br>cd /home/centos/noesis</div>
+  </section>
+
+  <!-- 2 -->
+  <section id="code">
+    <h2><span class="n">02</span>Get the code onto the server</h2>
+    <p>Build happens <i>on the box</i> (your Mac has no Docker). Two ways to get the source there:</p>
+    <h3>Option A — clone from git (if the repo is hosted)</h3>
+    <div class="cmd"><button class="copy">copy</button>cd /home/centos/noesis<br>git clone &lt;your-noesis-repo-url&gt; .</div>
+    <h3>Option B — rsync from your Mac</h3>
+    <div class="cmd"><button class="copy">copy</button><span class="c"># from your Mac, in the repo root</span><br>rsync -avz --exclude node_modules --exclude .git -e <span class="k">"ssh -i ~/shell/sierrabiolab-aws.pem"</span> \<br>&nbsp;&nbsp;./ centos@54.193.144.100:/home/centos/noesis/</div>
+  </section>
+
+  <!-- 3 -->
+  <section id="env">
+    <h2><span class="n">03</span>Configure environment</h2>
+    <p>Copy the example and set the essentials. Use strong DB passwords.</p>
+    <div class="cmd"><button class="copy">copy</button>cd /home/centos/noesis<br>cp .env.example .env<br>nano .env</div>
+    <p class="file-label">.env — the values that matter</p>
+    <div class="cmd"><button class="copy">copy</button>MYSQL_ROOT_PASSWORD=<b>&lt;strong-secret&gt;</b><br>MYSQL_DATABASE=noesis_grid<br>MYSQL_USER=noesis<br>MYSQL_PASSWORD=<b>&lt;strong-secret&gt;</b><br>GRID_NAME=Genesis<br>GRID_DOMAIN=api.askkpop.com<br>GRID_PORT=8080</div>
+  </section>
+
+  <!-- 4 -->
+  <section id="compose">
+    <h2><span class="n">04</span>Minimal stack — Grid + MySQL only</h2>
+    <p>Create a small compose for just the two services you need. The Grid is published to <code>127.0.0.1:8080</code> (not public); MySQL stays on the private network. This is the safe, native pattern for this box.</p>
+    <p class="file-label">/home/centos/noesis/docker-compose.askkpop.yml</p>
+    <div class="cmd"><button class="copy">copy</button>services:<br>&nbsp;&nbsp;mysql:<br>&nbsp;&nbsp;&nbsp;&nbsp;image: mysql:8.0<br>&nbsp;&nbsp;&nbsp;&nbsp;container_name: noesis-mysql<br>&nbsp;&nbsp;&nbsp;&nbsp;environment:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MYSQL_ROOT_PASSWORD: <span class="k">${MYSQL_ROOT_PASSWORD}</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MYSQL_DATABASE: <span class="k">${MYSQL_DATABASE}</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MYSQL_USER: <span class="k">${MYSQL_USER}</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MYSQL_PASSWORD: <span class="k">${MYSQL_PASSWORD}</span><br>&nbsp;&nbsp;&nbsp;&nbsp;volumes: [ "noesis_db:/var/lib/mysql" ]<br>&nbsp;&nbsp;&nbsp;&nbsp;restart: unless-stopped<br><br>&nbsp;&nbsp;grid:<br>&nbsp;&nbsp;&nbsp;&nbsp;build: { context: ., dockerfile: docker/Dockerfile.grid }<br>&nbsp;&nbsp;&nbsp;&nbsp;container_name: noesis-grid<br>&nbsp;&nbsp;&nbsp;&nbsp;depends_on: [ mysql ]<br>&nbsp;&nbsp;&nbsp;&nbsp;environment:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MYSQL_HOST: mysql<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MYSQL_PORT: 3306<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MYSQL_DATABASE: <span class="k">${MYSQL_DATABASE}</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MYSQL_USER: <span class="k">${MYSQL_USER}</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MYSQL_PASSWORD: <span class="k">${MYSQL_PASSWORD}</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GRID_NAME: <span class="k">${GRID_NAME}</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GRID_PORT: 8080<br>&nbsp;&nbsp;&nbsp;&nbsp;ports: [ <b>"127.0.0.1:8080:8080"</b> ]&nbsp;&nbsp;<span class="c"># localhost only — Apache will front it</span><br>&nbsp;&nbsp;&nbsp;&nbsp;restart: unless-stopped<br><br>volumes: { noesis_db: {} }</div>
+
+    <p>Build and start:</p>
+    <div class="cmd"><button class="copy">copy</button>cd /home/centos/noesis<br>docker compose --env-file .env -f docker-compose.askkpop.yml up <b>-d</b> --build</div>
+    <p>Confirm the Grid is healthy on localhost (not yet public):</p>
+    <div class="cmd"><button class="copy">copy</button>curl -s http://127.0.0.1:8080/health<br><span class="c"># → {"status":"ok", ...}</span></div>
+  </section>
+
+  <!-- 5 -->
+  <section id="vhost">
+    <h2><span class="n">05</span>Make it public — Apache vhost</h2>
+    <p>Add a <b>new, separate</b> config file (never edit the shared ones). Include the WebSocket upgrade so the live audit firehose works.</p>
+    <p class="file-label">/etc/httpd/conf.d/noesis.conf</p>
+    <div class="cmd"><button class="copy">copy</button>&lt;VirtualHost *:80&gt;<br>&nbsp;&nbsp;ServerName api.askkpop.com<br><br>&nbsp;&nbsp;<span class="c"># WebSocket upgrade (firehose / live events)</span><br>&nbsp;&nbsp;RewriteEngine On<br>&nbsp;&nbsp;RewriteCond %{HTTP:Upgrade} websocket [NC]<br>&nbsp;&nbsp;RewriteCond %{HTTP:Connection} upgrade [NC]<br>&nbsp;&nbsp;RewriteRule ^/?(.*) "ws://127.0.0.1:8080/$1" [P,L]<br><br>&nbsp;&nbsp;ProxyPreserveHost On<br>&nbsp;&nbsp;ProxyPass        / http://127.0.0.1:8080/<br>&nbsp;&nbsp;ProxyPassReverse / http://127.0.0.1:8080/<br>&lt;/VirtualHost&gt;</div>
+    <p>Test the config <b>before</b> reloading (so you never break the other sites), then reload:</p>
+    <div class="cmd"><button class="copy">copy</button>sudo apachectl configtest<br><span class="c"># → Syntax OK</span><br>sudo systemctl reload httpd</div>
+    <div class="note"><b>Modules.</b> If <code>configtest</code> complains, enable proxy modules once: <code>proxy</code>, <code>proxy_http</code>, <code>proxy_wstunnel</code>, <code>rewrite</code> (usually already on, since the other apps proxy too).</div>
+  </section>
+
+  <!-- 6 -->
+  <section id="dns">
+    <h2><span class="n">06</span>DNS &amp; the load balancer</h2>
+    <ol class="steps">
+      <li><b>1.</b> Point <code>api.askkpop.com</code> at the same ALB the other sites use (CNAME to the ALB DNS name, or A/ALIAS).</li>
+      <li><b>2.</b> On the ALB: make sure the listener forwards <code>api.askkpop.com</code> (host-based rule) to the target group that points at this instance on :80/:443 — same as the existing sites.</li>
+      <li><b>3.</b> TLS: the ALB already terminates HTTPS, so nothing to do on the instance.</li>
+    </ol>
+  </section>
+
+  <!-- 7 -->
+  <section id="verify">
+    <h2><span class="n">07</span>Verify it's live</h2>
+    <div class="cmd"><button class="copy">copy</button>curl -s https://api.askkpop.com/health<br><span class="c"># → {"status":"ok"}</span><br><br><span class="c"># a public read endpoint</span><br>curl -s https://api.askkpop.com/api/v1/grid/status</div>
+    <p>WebSocket (firehose) quick check, if you have <code>websocat</code>:</p>
+    <div class="cmd"><button class="copy">copy</button>websocat wss://api.askkpop.com/ws/events</div>
+  </section>
+
+  <!-- 8 -->
+  <section id="brains">
+    <h2><span class="n">08</span>The minds (optional)</h2>
+    <p>The Grid runs on its own. To add Nous:</p>
+    <ul class="check">
+      <li><b>Operator-local (recommended):</b> each person runs their Brain on their own machine with <code>GRID_ENDPOINT=https://api.askkpop.com</code> and a local Ollama. Nothing to host here.</li>
+      <li><b>Demo Brains on the box:</b> add the <code>nous-*</code> services from the main <code>docker-compose.yml</code>, pointing <code>GRID_ENDPOINT=http://grid:8080</code> and <code>OLLAMA_HOST</code> at an <i>external</i> Ollama (this box can't run the model).</li>
+    </ul>
+  </section>
+
+  <!-- 9 -->
+  <section id="ops">
+    <h2><span class="n">09</span>Operations</h2>
+    <div class="cmd"><button class="copy">copy</button><span class="c"># logs</span><br>docker logs -f noesis-grid<br><span class="c"># restart</span><br>docker compose -f docker-compose.askkpop.yml restart grid<br><span class="c"># update (after new code)</span><br>git pull &amp;&amp; docker compose --env-file .env -f docker-compose.askkpop.yml up -d --build grid<br><span class="c"># database backup</span><br>docker exec noesis-mysql sh -c 'exec mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" noesis_grid' &gt; backup.sql</div>
+    <h3>Rollback the web routing</h3>
+    <div class="cmd"><button class="copy">copy</button>sudo rm /etc/httpd/conf.d/noesis.conf &amp;&amp; sudo systemctl reload httpd<br>docker compose -f docker-compose.askkpop.yml down</div>
+  </section>
+
+  <!-- 10 -->
+  <section id="security">
+    <h2><span class="n">10</span>Safety checklist</h2>
+    <ul class="check">
+      <li>Only <b>80 / 443</b> are public in the AWS security group (already true). Don't open 8080 or 3306.</li>
+      <li>Grid &amp; MySQL bind to <b>127.0.0.1</b> / the private docker network — never <code>0.0.0.0</code>.</li>
+      <li>Use a <b>separate</b> <code>noesis.conf</code>; run <code>apachectl configtest</code> before every reload so the other 14 sites stay up.</li>
+      <li>Give Noēsis its <b>own</b> MySQL container (don't reuse another app's DB).</li>
+      <li>If you expose the Steward Console, put it behind auth / an IP allowlist.</li>
+      <li>Keep real <b>secrets</b> out of git — they live in <code>.env</code> on the server only.</li>
+    </ul>
+  </section>
+
+</div>
+
+<div class="shell"><footer>Noēsis — Deployment Runbook · Genesis Grid v3.0 · askkpop.com</footer></div>
+
+<script>
+  // click-to-copy on command blocks
+  document.querySelectorAll('.cmd .copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const block = btn.parentElement.cloneNode(true);
+      block.querySelectorAll('.copy').forEach(b => b.remove());
+      const text = block.innerText.trim();
+      navigator.clipboard?.writeText(text).then(() => {
+        const old = btn.textContent; btn.textContent = 'copied'; setTimeout(() => btn.textContent = old, 1200);
+      });
+    });
+  });
+</script>
+</body>
+</html>
