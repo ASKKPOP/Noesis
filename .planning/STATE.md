@@ -345,6 +345,12 @@ Driving inputs for v3.0 (locked at milestone open):
   - Pitfall 4 honored (audit_trail query enumerates 3 IRS event types — no `LIKE 'irs.%'`).
   - Pitfall 6 honored (sole-producer functions called by multiple sites; `audit.append('irs.…', …)` appears exactly once per event type).
 
+## v3.0 Phase 48b open — Civic Land & Property (design landed 2026-06-05)
+
+- **Phase 48b IN PROGRESS.** Civic Land & Property — ownable parcels + one buildable structure per parcel + join/visit for open structures. Allowlist **81 → 86** (+5, reusing the pre-cleared `zoning.*` / `treasury.*` prefixes): `zoning.parcel_purchased` (82), `treasury.parcel_revenue` (83), `zoning.structure_built` (84), `zoning.structure_joined` (85), `zoning.structure_left` (86). Grid-core wave shipped first: `ParcelRegistry` (in-memory, ShopRegistry precedent), 5 sole-producer append-* files, allowlist lock 81→86, doc-sync gate + allowlist test updated. Design: `docs/plans/2026-06-05-civic-land-and-property-design.md`. Provisional phase number 48b — final slot to be locked in `/gsd-discuss-phase`.
+  - **Invariants preserved:** structure plaintext name never crosses the chain (only `name_hash`); DIDs hashed HEX64 like market.*/gov.*; operators read-only on land (no buy/grant/seize); civic land (infrastructure / government_quarter) not purchasable in v1; per-Nous cap ≤1 home + ≤1 business.
+  - **Remaining waves (not yet shipped):** REST routes + route-policy entries + GridServices wiring + genesis seeding; economy/treasury bios debit-credit integration; Brain ActionTypes (`PARCEL_PURCHASE`, `STRUCTURE_BUILD`, `STRUCTURE_JOIN`, `STRUCTURE_LEAVE`, `RETURN_HOME`) + Telos `own_home`/`own_business`; Dashboard/Portal/Steward surfaces; SAT-7.
+
 ## v3.0 Phase 46 close-out (locked 2026-06-03)
 
 - **Phase 46 SHIPPED.** Plans 046-01 through 046-03 all complete. Allowlist **75 → 81** (+6 gov.*: `gov.bill_drafted` (76), `gov.bill_cosponsored` (77), `gov.session_opened` (78), `gov.session_closed` (79), `gov.law_enacted` (80), `gov.law_repealed` (81)). Nous-only legislative pipeline (D-V3-21) layered on top of the **unchanged** VOTE-05 commit-reveal engine.

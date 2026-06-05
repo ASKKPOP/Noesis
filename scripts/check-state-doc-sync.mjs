@@ -137,6 +137,12 @@ const required = [
   'gov.session_closed',
   'gov.law_enacted',
   'gov.law_repealed',
+  // Phase 48b additions (LAND-01..05 / D-48b-01): zoning.* + treasury.* at positions 82-86.
+  'zoning.parcel_purchased',
+  'treasury.parcel_revenue',
+  'zoning.structure_built',
+  'zoning.structure_joined',
+  'zoning.structure_left',
 ];
 for (const event of required) {
   const pattern = new RegExp(event.replace(/\./g, '\\.'));
@@ -237,11 +243,12 @@ function checkAllowlistCount() {
   }
   const arrayBody = arrayMatch[1];
   const members = arrayBody.match(/^\s+'[a-z][a-z0-9_.]+'/gm) ?? [];
-  if (members.length !== 81) {
+  if (members.length !== 86) {
     failures.push(
-      `ALLOWLIST_MEMBERS count mismatch: expected 81 entries, found ${members.length}.\n` +
-      `  Phase 45 IRS-04 adds 3 irs.* (72 → 75); Phase 46 CIVGOV-06 adds 6 gov.* (75 → 81).\n` +
-      `  Reference: .planning/phases/045-irs-treasury/045-03-PLAN.md.`,
+      `ALLOWLIST_MEMBERS count mismatch: expected 86 entries, found ${members.length}.\n` +
+      `  Phase 45 IRS-04 adds 3 irs.* (72 → 75); Phase 46 CIVGOV-06 adds 6 gov.* (75 → 81);\n` +
+      `  Phase 48b LAND-01..05 adds 5 zoning.*/treasury.* (81 → 86).\n` +
+      `  Reference: docs/plans/2026-06-05-civic-land-and-property-design.md.`,
     );
   }
 
@@ -262,6 +269,15 @@ function checkAllowlistCount() {
   ]) {
     if (!text.includes(`'${name}'`)) {
       failures.push(`ALLOWLIST_MEMBERS missing ${name} (Phase 46 CIVGOV-06, position ${pos}).`);
+    }
+  }
+  // Phase 48b LAND-01..05: the 5 zoning.*/treasury.* events at positions 82-86.
+  for (const [name, pos] of [
+    ['zoning.parcel_purchased', 82], ['treasury.parcel_revenue', 83], ['zoning.structure_built', 84],
+    ['zoning.structure_joined', 85], ['zoning.structure_left', 86],
+  ]) {
+    if (!text.includes(`'${name}'`)) {
+      failures.push(`ALLOWLIST_MEMBERS missing ${name} (Phase 48b LAND-01..05, position ${pos}).`);
     }
   }
 

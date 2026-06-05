@@ -335,6 +335,26 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'gov.session_closed',   // (79)
     'gov.law_enacted',      // (80)
     'gov.law_repealed',     // (81)
+    // Phase 48b (LAND-01..05 / D-48b-01) — Civic Land & Property. Allowlist 81 → 86.
+    // Ownable parcels (treasury-sale acquisition) + one buildable structure per parcel +
+    // join/visit for open structures. Reuses the pre-cleared zoning.* / treasury.* prefixes.
+    // Hash-only discipline: structure plaintext name lives Grid-side (ParcelRegistry/NDS);
+    //   only name_hash crosses the audit boundary. DIDs are hashed (HEX64) like market.*/gov.*.
+    // zoning.parcel_purchased (82): sole-producer grid/src/audit/append-zoning-parcel-purchased.ts
+    //   closed 5-key {buyer_civic_did_hash, parcel_id, price_bios, tick, zone_id}
+    // treasury.parcel_revenue (83): sole-producer grid/src/audit/append-treasury-parcel-revenue.ts
+    //   closed 3-key {amount_bios, parcel_id, tick}
+    // zoning.structure_built (84): sole-producer grid/src/audit/append-zoning-structure-built.ts
+    //   closed 6-key {name_hash, owner_civic_did_hash, parcel_id, structure_type, tick, visibility}
+    // zoning.structure_joined (85): sole-producer grid/src/audit/append-zoning-structure-joined.ts
+    //   closed 3-key {parcel_id, tick, visitor_civic_did_hash}
+    // zoning.structure_left (86): sole-producer grid/src/audit/append-zoning-structure-left.ts
+    //   closed 3-key {parcel_id, tick, visitor_civic_did_hash}
+    'zoning.parcel_purchased',  // (82)
+    'treasury.parcel_revenue',  // (83)
+    'zoning.structure_built',   // (84)
+    'zoning.structure_joined',  // (85)
+    'zoning.structure_left',    // (86)
 ] as const;
 
 /**

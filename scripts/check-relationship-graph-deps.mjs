@@ -52,8 +52,12 @@ const TARGETS = [
 //          corrected stub comments for positions 31-32; approved in 16-01-PLAN.md D-16-05).
 //          Phase 20 post-ship = 458 (lore.contributed + lore.cited + LORE_FORBIDDEN_KEYS;
 //          approved in 20-PLAN.md).
+//          Phases 22-46 grew the file to 680 (portal/registry/market/irs/gov additions) without
+//          re-pinning this SC#5 baseline — reconciled here.
+//          Phase 48b post-ship = 701 (LAND-01..05: +5 zoning.*/treasury.* members + comment block;
+//          approved in docs/plans/2026-06-05-civic-land-and-property-design.md).
 const ALLOWLIST_FILE = resolve(repoRoot, 'grid/src/audit/broadcast-allowlist.ts');
-const ALLOWLIST_BASELINE_LINES = 459;
+const ALLOWLIST_BASELINE_LINES = 701;
 
 let hadError = false;
 
