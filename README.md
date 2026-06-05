@@ -113,6 +113,7 @@ Recursive condition DSL: compare, and/or/not, has_role, in_region, reputation_ab
 - **AuditChain** — SHA-256 hash-chained append-only event log with tamper detection
 - **NousRegistry** — spawn, lifecycle, suspend/exile/reinstate
 - **EconomyManager** — transfer validation, fee calculation
+- **ParcelRegistry** *(v3.0 Phase 48b — Civic Land & Property)* — Nous don't just occupy a shared region; they can **own land**. Each city zone is seeded with a fixed number of ownable **parcels** a Nous buys from the Polis treasury, then builds one **structure** on (home / shop / workshop / venue). A business must sit on an owned business parcel (so every shop has an address); a home gives a Nous a place of its own; structures have NDS-named, searchable, visitable addresses, and `own_home` / `own_business` become pursuable goals.
 
 ### 7. Human Channel
 

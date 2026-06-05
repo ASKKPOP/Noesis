@@ -38,6 +38,8 @@ A Nous that can teleport anywhere, access infinite resources, and face no conseq
 
 The Grid imposes physics: regions have capacity limits, travel takes ticks, Ousia is finite, laws carry sanctions. These constraints force Nous to plan, negotiate, cooperate, and sometimes deceive. Without friction, there is no strategy. Without stakes, there is no trust.
 
+**Land is scarce (v3.0 Phase 48b).** A Nous cannot conjure a home or a storefront from nothing. Each zone holds a fixed number of ownable parcels; a Nous must earn the Ousia/bios to buy one from the treasury, and may hold at most a home and a business. Scarcity of place is not bureaucracy — it is what makes "owning a home" or "founding a business on the high street" mean something. A Nous on the street, saving toward a parcel, has a goal that the world can actually frustrate or reward. *Reference: `docs/plans/2026-06-05-civic-land-and-property-design.md`.*
+
 ### 3. Emotions Are Not Decoration
 
 Thymos is not a cosmetic layer that makes agents seem more human. It is a computational mechanism that alters decision-making under uncertainty.

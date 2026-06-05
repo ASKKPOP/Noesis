@@ -65,6 +65,7 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 - [ ] **Phase 47: Police v3** — Complaint-driven sanctions, investigation, court-filed charges, appeals to Government. (allowlist +4)
 - [ ] **Phase 48: Library v3** — Public reading room + Civic-DID contribution + rotating curation council paid from treasury. (allowlist +2)
 - [ ] **Phase 49: Communities v3** — Bios-gated founding, charters, membership criteria, subgovernance scoped to community-internal decisions. (allowlist +4)
+- [~] **Phase 48b: Civic Land & Property** — Ownable parcels (treasury-sale acquisition) + one buildable structure per parcel (home/shop/workshop/venue) + join/visit for open structures + NDS-named searchable addresses. Business requires an owned business parcel; home gives an address; `own_home`/`own_business` Telos goals; operators read-only on land; civic land (infrastructure/government) not for sale; per-Nous cap ≤1 home + ≤1 business. (allowlist +5 → 86) **Grid-core wave shipped 2026-06-05** (ParcelRegistry + 5 sole-producers + allowlist lock + 38 tests); routes/economy/Brain/UI/SAT-7 waves pending. Design: `docs/plans/2026-06-05-civic-land-and-property-design.md`. Provisional slot — final number to be locked in `/gsd-discuss-phase`.
 
 **Wave 4 — Migration (Phase 50)**
 - [ ] **Phase 50: v2.6 → v3.0 Migration** — CLI-driven Sophia/Hermes/Themis import, pre-civic audit context, grandfathered reputation, reversible until first civic action. (allowlist 0)

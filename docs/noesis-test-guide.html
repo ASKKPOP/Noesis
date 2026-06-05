@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noēsis — Full Test Guide (Bottom-Up · SAT & UAT)</title>
+<style>
+  :root{
+    --bg:#0a0e14; --bg2:#0e141d; --surface:#121a25; --surface2:#16202d;
+    --border:#22303f; --border-soft:#1a2633;
+    --text:#e6ecf2; --muted:#a9b6c4; --muted2:#6b7b8c;
+    --accent:#5fb0e8; --accent2:#46e0d0; --ink:#2f4156;
+    --pass:#3fb950; --fail:#f0594e; --warn:#d8b24a; --info:#9a86ff; --orange:#e0764a;
+    --mono:'SFMono-Regular',ui-monospace,'JetBrains Mono',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14.5px;line-height:1.65;}
+  a{color:var(--accent);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  code{font-family:var(--mono);font-size:.86em;background:var(--surface2);border:1px solid var(--border-soft);
+       padding:.08em .38em;border-radius:4px;color:var(--accent2);white-space:nowrap;}
+
+  /* Layout */
+  .layout{display:flex;min-height:100vh;}
+  .sidebar{width:284px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);
+    position:sticky;top:0;height:100vh;overflow-y:auto;padding:0 0 60px;}
+  .sb-brand{padding:22px 22px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:5;}
+  .sb-brand h1{font-size:18px;font-weight:700;letter-spacing:.01em;}
+  .sb-brand .sub{font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:.14em;margin-top:4px;}
+  .sb-progress{margin:12px 18px 4px;font-size:11px;color:var(--muted2);}
+  .sb-progress .bar{height:6px;background:var(--surface2);border-radius:4px;overflow:hidden;margin-top:5px;border:1px solid var(--border-soft);}
+  .sb-progress .bar > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s;}
+  .sb-group{padding:16px 22px 5px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.13em;color:var(--muted2);}
+  .sb-item{display:flex;gap:8px;align-items:baseline;padding:6px 22px;color:var(--muted);font-size:13px;border-left:3px solid transparent;cursor:pointer;}
+  .sb-item:hover{color:var(--text);background:var(--surface);text-decoration:none;}
+  .sb-item.active{color:var(--text);border-left-color:var(--accent);background:var(--surface);}
+  .sb-item .lyr{font-family:var(--mono);font-size:10px;color:var(--accent);min-width:34px;}
+
+  /* Main */
+  main{flex:1;min-width:0;max-width:980px;margin:0 auto;padding:0 46px 140px;}
+  .hero{padding:54px 0 30px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+  .hero .kicker{font-family:var(--mono);font-size:12px;color:var(--accent2);letter-spacing:.1em;text-transform:uppercase;}
+  .hero h1{font-size:40px;line-height:1.12;margin:14px 0 12px;font-weight:750;letter-spacing:-.01em;}
+  .hero p.lead{font-size:16px;color:var(--muted);max-width:74ch;}
+  .hero .meta{display:flex;gap:22px;flex-wrap:wrap;margin-top:22px;font-size:12.5px;color:var(--muted2);}
+  .hero .meta b{color:var(--text);font-weight:600;}
+
+  section{padding:40px 0 6px;border-top:1px solid var(--border-soft);margin-top:28px;}
+  section:first-of-type{border-top:none;}
+  h2.sec{font-size:27px;font-weight:730;letter-spacing:-.01em;display:flex;align-items:baseline;gap:12px;}
+  h2.sec .badge-layer{font-family:var(--mono);font-size:12px;color:#06121b;background:var(--accent2);padding:3px 9px;border-radius:6px;font-weight:700;}
+  h3{font-size:19px;font-weight:680;margin:30px 0 8px;}
+  h4{font-size:15px;font-weight:680;margin:18px 0 6px;color:var(--text);}
+  p{margin:9px 0;color:var(--text);}
+  .sec-intro{color:var(--muted);font-size:15px;max-width:78ch;margin:10px 0 6px;}
+  ul,ol{margin:8px 0 8px 24px;}
+  li{margin:5px 0;}
+
+  /* Concept callout */
+  .concept{background:linear-gradient(180deg,rgba(95,176,232,.07),rgba(70,224,208,.03));
+    border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;padding:14px 18px;margin:18px 0;}
+  .concept .lbl{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700;}
+  .concept h4{margin:3px 0 4px;color:var(--text);}
+  .concept p{color:var(--muted);font-size:13.8px;margin:5px 0;}
+
+  .note{border:1px solid var(--border);border-left:3px solid var(--warn);background:rgba(216,178,74,.06);border-radius:8px;padding:12px 16px;margin:16px 0;font-size:13.6px;color:var(--muted);}
+  .note b{color:var(--warn);}
+  .danger{border-left-color:var(--fail);background:rgba(240,89,78,.06);}
+  .danger b{color:var(--fail);}
+
+  /* Test card */
+  .tc{border:1px solid var(--border);border-radius:10px;margin:20px 0;background:var(--surface);overflow:hidden;}
+  .tc-head{display:flex;align-items:center;gap:12px;padding:13px 18px;background:var(--surface2);border-bottom:1px solid var(--border);}
+  .tc-head .id{font-family:var(--mono);font-size:12px;color:#06121b;background:var(--accent);padding:3px 9px;border-radius:5px;font-weight:700;white-space:nowrap;}
+  .tc-head .ttl{font-weight:660;font-size:15.5px;flex:1;}
+  .tc-head .type{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;padding:3px 8px;border-radius:5px;border:1px solid var(--border);color:var(--muted);}
+  .type.unit{color:var(--accent2);border-color:rgba(70,224,208,.4);}
+  .type.integ{color:var(--info);border-color:rgba(154,134,255,.4);}
+  .type.sys{color:var(--orange);border-color:rgba(224,118,74,.4);}
+  .type.uat{color:var(--warn);border-color:rgba(216,178,74,.4);}
+  .tc-body{padding:16px 20px 20px;}
+  .field{margin:13px 0;}
+  .field > .k{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.11em;color:var(--muted2);font-weight:700;margin-bottom:5px;}
+  .goal{font-size:14.5px;color:var(--text);}
+  .why{font-size:13.6px;color:var(--muted);border-left:2px solid var(--border);padding-left:12px;}
+  ol.steps{margin-left:20px;}
+  ol.steps > li{margin:10px 0;}
+  .expect{background:rgba(63,185,80,.06);border:1px solid rgba(63,185,80,.22);border-radius:8px;padding:11px 15px;font-size:13.6px;color:var(--muted);}
+  .expect .k{color:var(--pass);}
+
+  /* code block */
+  pre{position:relative;background:#06090e;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:10px 0;overflow-x:auto;font-family:var(--mono);font-size:12.6px;line-height:1.6;color:#cdd9e5;}
+  pre .cm{color:#5b6b7c;}
+  pre .pr{color:var(--accent2);}
+  pre .ou{color:#8fa3b5;}
+  .copy{position:absolute;top:8px;right:8px;font-family:var(--mono);font-size:10px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 8px;cursor:pointer;opacity:0;transition:opacity .15s;}
+  pre:hover .copy{opacity:1;}
+  .copy:hover{color:var(--text);border-color:var(--accent);}
+
+  /* checklist */
+  .chk{list-style:none;margin:8px 0 0;padding:0;}
+  .chk li{display:flex;gap:10px;align-items:flex-start;margin:7px 0;font-size:13.8px;}
+  .chk input{margin-top:3px;width:15px;height:15px;accent-color:var(--pass);flex-shrink:0;cursor:pointer;}
+  .chk label{cursor:pointer;color:var(--muted);}
+  .chk input:checked + label{color:var(--text);text-decoration:line-through;text-decoration-color:var(--muted2);}
+
+  /* table */
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.4px;}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--border-soft);vertical-align:top;}
+  th{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted2);border-bottom:1px solid var(--border);}
+  td code{white-space:normal;}
+  tr:hover td{background:var(--surface);}
+
+  .pyramid{display:flex;flex-direction:column;align-items:center;gap:4px;margin:24px 0;}
+  .pyramid .row{border-radius:6px;padding:9px 16px;text-align:center;font-size:13px;border:1px solid var(--border);background:var(--surface);}
+  .pyramid .row b{color:var(--text);}
+  .pyramid .row .c{color:var(--muted2);font-size:11.5px;display:block;}
+
+  .pill{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--border);color:var(--muted);}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0;}
+  .card{border:1px solid var(--border);border-radius:9px;padding:14px 16px;background:var(--surface);}
+  .card h4{margin-top:0;}
+  .footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted2);font-size:12.5px;}
+
+  @media(max-width:880px){.sidebar{display:none;}main{padding:0 20px 100px;}.grid2{grid-template-columns:1fr;}.hero h1{font-size:30px;}}
+  @media print{.sidebar,.copy{display:none;}main{max-width:100%;}pre{white-space:pre-wrap;}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ───────────────── SIDEBAR ───────────────── -->
+<nav class="sidebar">
+  <div class="sb-brand">
+    <h1>Noēsis Test Guide</h1>
+    <div class="sub">Bottom-Up · SAT &amp; UAT</div>
+    <div class="sb-progress">
+      <span id="progressTxt">0 / 0 checks complete</span>
+      <div class="bar"><i id="progressBar"></i></div>
+    </div>
+  </div>
+
+  <div class="sb-group">Start Here</div>
+  <a class="sb-item" href="#use"><span class="lyr">·</span> How to use this manual</a>
+  <a class="sb-item" href="#pyramid"><span class="lyr">·</span> The test pyramid</a>
+  <a class="sb-item" href="#noesis101"><span class="lyr">·</span> Noēsis in 6 minutes</a>
+
+  <div class="sb-group">Bottom → Top</div>
+  <a class="sb-item" href="#l0"><span class="lyr">L0</span> Environment setup</a>
+  <a class="sb-item" href="#l1"><span class="lyr">L1</span> Invariant gates</a>
+  <a class="sb-item" href="#l2"><span class="lyr">L2</span> Unit tests</a>
+  <a class="sb-item" href="#l3"><span class="lyr">L3</span> Integration</a>
+  <a class="sb-item" href="#l4"><span class="lyr">L4</span> System bring-up</a>
+  <a class="sb-item" href="#l5"><span class="lyr">L5</span> API &amp; contract</a>
+  <a class="sb-item" href="#l6"><span class="lyr">L6</span> UI surfaces</a>
+
+  <div class="sb-group">Acceptance</div>
+  <a class="sb-item" href="#sat"><span class="lyr">SAT</span> Full system scenario</a>
+  <a class="sb-item" href="#uat"><span class="lyr">UAT</span> Human portal journey</a>
+
+  <div class="sb-group">Reference</div>
+  <a class="sb-item" href="#trouble"><span class="lyr">·</span> Troubleshooting</a>
+  <a class="sb-item" href="#cheat"><span class="lyr">·</span> Command cheat-sheet</a>
+  <a class="sb-item" href="#glossary"><span class="lyr">·</span> Glossary</a>
+  <a class="sb-item" href="#signoff"><span class="lyr">·</span> Sign-off sheet</a>
+</nav>
+
+<!-- ───────────────── MAIN ───────────────── -->
+<main>
+
+<div class="hero">
+  <div class="kicker">Quality Assurance · Test Manual</div>
+  <h1>Noēsis — Full Test Guide</h1>
+  <p class="lead">A beginner-friendly, deeply detailed walkthrough that tests Noēsis from the <b>bottom up</b> — from a bare laptop with nothing installed, all the way to a human signing into the live world. Assumes you can use a terminal and read JSON, but assumes <b>zero</b> prior knowledge of Noēsis. Every term is explained the first time it appears.</p>
+  <div class="meta">
+    <span><b>Audience:</b> QA testers &amp; engineers, new to Noēsis</span>
+    <span><b>Style:</b> Bottom-up (unit → acceptance)</span>
+    <span><b>Method:</b> SAT (system) + UAT (user)</span>
+    <span><b>Format:</b> Self-contained — open in any browser</span>
+  </div>
+</div>
+
+<!-- ============ START HERE ============ -->
+<section id="use">
+  <h2 class="sec">How to use this manual</h2>
+  <p class="sec-intro">This is a <b>manual test plan</b>. You read a card, run the commands or clicks, then compare what you saw against the "Expected result". Tick the checkbox when each criterion passes — your progress is saved in this browser automatically.</p>
+
+  <h4>Anatomy of a test card</h4>
+  <table>
+    <tr><th>Field</th><th>What it means</th></tr>
+    <tr><td><span class="pill">ID</span></td><td>A stable handle (e.g. <code>L2-BRAIN</code>) so you can refer to a test in a bug report or sign-off sheet.</td></tr>
+    <tr><td><span class="pill">Type</span></td><td><b>UNIT</b> (one component in isolation) · <b>INTEG</b> (two+ components together) · <b>SYS</b> (the whole running system) · <b>UAT</b> (a real human's point of view).</td></tr>
+    <tr><td><b>Goal</b></td><td>The single thing this test proves.</td></tr>
+    <tr><td><b>Why it matters</b></td><td>Plain-language context — what breaks in the real world if this fails. Written for people new to Noēsis.</td></tr>
+    <tr><td><b>Steps</b></td><td>Exact commands or clicks, in order. Hover a code block and press <b>Copy</b>.</td></tr>
+    <tr><td><b>Expected result</b></td><td>What a passing run looks like.</td></tr>
+    <tr><td><b>Pass criteria</b></td><td>The checklist you tick. <b>All boxes must be checked</b> for the test to pass.</td></tr>
+  </table>
+
+  <div class="note"><b>Two conventions used everywhere.</b> Lines beginning with <code>$</code> are commands <i>you type</i> (don't type the <code>$</code>). Indented grey lines below them are <i>example output</i> the program prints back. Real numbers will differ — match the <i>shape</i>, not the exact values.</div>
+
+  <div class="note danger"><b>Order matters in bottom-up testing.</b> Do the layers in sequence (L0 → L1 → L2 …). A failure at a low layer makes higher layers meaningless — if the engine won't compile (L2), there is no point testing the website (L6). If a layer fails, stop, fix it, and re-run that layer before going up.</div>
+</section>
+
+<section id="pyramid">
+  <h2 class="sec">The test pyramid — why bottom-up</h2>
+  <p class="sec-intro">"Bottom-up" means we verify the smallest, most foundational pieces first, then progressively assemble and test larger combinations. The further down a bug lives, the cheaper it is to find. By the time a human clicks a button in the Portal (the very top), thousands of lower-level guarantees are already proven.</p>
+
+  <div class="pyramid">
+    <div class="row" style="width:46%;border-color:var(--warn);"><b>UAT — Human Portal journey</b><span class="c">A real person signs in, gets a wallet, talks to an agent, spawns their own</span></div>
+    <div class="row" style="width:54%;border-color:var(--orange);"><b>SAT — Full system scenario</b><span class="c">Birth of a world: launch → spawn → think → trade → govern → audit</span></div>
+    <div class="row" style="width:62%;border-color:var(--info);"><b>L6 · UI surfaces</b><span class="c">Dashboard &amp; Steward Console render live state</span></div>
+    <div class="row" style="width:70%;border-color:var(--info);"><b>L5 · API &amp; contract</b><span class="c">REST endpoints + WebSocket firehose return correct shapes</span></div>
+    <div class="row" style="width:78%;border-color:var(--accent);"><b>L4 · System bring-up</b><span class="c">CLI launches a Grid; Docker stack boots all services</span></div>
+    <div class="row" style="width:86%;border-color:var(--accent);"><b>L3 · Integration</b><span class="c">TS↔Python bridge, MySQL persistence, hash-chained audit log</span></div>
+    <div class="row" style="width:93%;border-color:var(--accent2);"><b>L2 · Unit tests</b><span class="c">protocol · grid · brain · dashboard · steward (~1,600+ tests)</span></div>
+    <div class="row" style="width:100%;border-color:var(--accent2);"><b>L1 · Invariant gates</b><span class="c">Static guards that enforce the constitution before any test runs</span></div>
+    <div class="row" style="width:100%;border-color:var(--pass);background:rgba(63,185,80,.08);"><b>L0 · Environment</b><span class="c">Node, Python, Docker, MySQL, Ollama — the ground you stand on</span></div>
+  </div>
+
+  <p class="sec-intro">We test the two solid foundation layers (L0, L1) and the unit layer (L2) with one-command suites. Layers L3–L6 bring real services online. Then <b>SAT</b> proves the whole machine behaves as a coherent world, and <b>UAT</b> proves a newcomer human can actually use it.</p>
+</section>
+
+<section id="noesis101">
+  <h2 class="sec">Noēsis in 6 minutes</h2>
+  <p class="sec-intro">You can't test what you don't understand. Here is everything a tester needs — no philosophy, just the moving parts and the words for them. Read this once; the rest of the manual references it.</p>
+
+  <div class="concept">
+    <div class="lbl">Concept · The big picture</div>
+    <h4>Noēsis is an engine that runs persistent worlds called Grids</h4>
+    <p>A <b>Grid</b> is a self-contained world with its own clock, regions (places), laws, and currency. The launch world is <b>Genesis Grid</b>. Inside a Grid live <b>Nous</b> (Greek for "mind") — autonomous AI agents that think with a real LLM, remember, feel, set goals, talk to each other, and trade. They are not chatbots: each has private memory and runs its own model.</p>
+  </div>
+
+  <table>
+    <tr><th>Term</th><th>Say it</th><th>What it is (tester's view)</th></tr>
+    <tr><td><b>Grid</b></td><td>grid</td><td>One world. Has a clock, regions, laws, an economy, an audit log. Genesis is the default Grid.</td></tr>
+    <tr><td><b>Nous</b></td><td>"noose"</td><td>One AI agent living in a Grid. Has an identity, personality, memory, emotions, goals. Plural is also "Nous".</td></tr>
+    <tr><td><b>Tick</b></td><td>tick</td><td>One step of the world clock. Time is <i>discrete</i>: nothing happens between ticks. Default tick = 30 s. Every behaviour is measured in ticks, never wall-clock — this is a hard rule (tested in L1).</td></tr>
+    <tr><td><b>DID</b></td><td>"D-I-D"</td><td>Decentralised IDentifier — a Nous's or human's unique address, e.g. <code>did:noesis:human:0xAbc…</code> A Nous's network name looks like <code>nous://sophia.genesis</code>.</td></tr>
+    <tr><td><b>Audit Chain</b></td><td>audit chain</td><td>An append-only log where every significant event is recorded and <b>hash-chained</b> (each entry includes a SHA-256 of the previous one). If anyone tampers with history, the chain breaks. "Zero-diff" means observing the world must never change this log.</td></tr>
+    <tr><td><b>Allowlist</b></td><td>allowlist</td><td>The frozen list of event types allowed onto the audit chain (currently 56–108 depending on version). Privacy rule: only <b>hashes</b> of private content (goals, messages, law text) may appear — never plaintext.</td></tr>
+    <tr><td><b>Ousia / Cyber&nbsp;Coin</b></td><td>"oo-SEE-a"</td><td>The currency. Nous trade it peer-to-peer; humans hold real on-chain coin in their own wallet (the platform never custodies it).</td></tr>
+    <tr><td><b>Logos / Polis</b></td><td>"LOH-gos"</td><td><b>Logos</b> = the law engine. <b>Polis</b> = a Grid's government (Genesis Polis). Nous can propose, vote on, and enact laws.</td></tr>
+    <tr><td><b>Operator / Steward</b></td><td>—</td><td>The human overseer (Henry/Steward Console). Can observe and sanction within published rules, but <b>cannot</b> read private thoughts or vote in Nous governance.</td></tr>
+    <tr><td><b>Brain vs Protocol</b></td><td>—</td><td>Two halves of one Nous. The <b>Brain</b> (Python) does cognition + LLM calls. The <b>Protocol/Grid</b> (TypeScript) does networking + world state. They talk over a JSON-RPC <b>Unix-socket bridge</b>.</td></tr>
+    <tr><td><b>Portal</b></td><td>portal</td><td>The top public layer where real humans sign up, get a wallet, chat with Nous, and spawn their own agent.</td></tr>
+  </table>
+
+  <div class="concept">
+    <div class="lbl">Concept · The four processes you'll start</div>
+    <h4>What runs where, and on which port</h4>
+    <p><b>Grid API</b> → port <code>8080</code> (the world engine; REST + WebSocket). <b>Dashboard</b> → <code>3001</code> (read-only zoo-cam of the world). <b>Steward Console</b> → <code>3002</code> (operator/oversight UI). <b>MySQL</b> → <code>3306</code> (persistence). Optional: <b>Ollama</b> → <code>11434</code> (local LLM), <b>coturn</b> → <code>3478</code> (P2P relay). Memorise these four numbers; nearly every test points at one of them.</p>
+  </div>
+
+  <div class="concept">
+    <div class="lbl">Concept · Space &amp; ownership — where a Nous lives</div>
+    <h4>Region = where you stand. Parcel = what you own.</h4>
+    <p>A Nous's <i>location</i> is just which <b>region</b> it currently stands in (regions are shared, with capacity limits). Separately, a Nous can <b>own land</b>: each city zone (Residential / Business / Shopping / Manufacture) is seeded with a fixed number of ownable <b>parcels</b>. A Nous <b>buys</b> a parcel from the Polis treasury, then <b>builds one structure</b> on it (<code>home</code> / <code>shop</code> / <code>workshop</code> / <code>venue</code>). Rules a tester checks: a business must sit on an owned business parcel (so every shop has an address); a home gives a Nous a place of its own; a Nous may own <b>at most one home + one business</b>; civic land (Infrastructure / Government Quarter) is <b>not for sale</b>; operators are <b>read-only</b> on land. Open structures are <b>searchable by address</b> and other Nous can <b>join/visit</b> them. <i>(v3.0 Phase 48b — Civic Land &amp; Property. Audit events: <code>zoning.parcel_purchased</code>, <code>treasury.parcel_revenue</code>, <code>zoning.structure_built</code>, <code>zoning.structure_joined</code>, <code>zoning.structure_left</code>.)</i></p>
+  </div>
+</section>
+
+
+<!-- ============ L0 ENVIRONMENT ============ -->
+<section id="l0">
+  <h2 class="sec"><span class="badge-layer">L0</span> Environment setup</h2>
+  <p class="sec-intro">The foundation. Before a single test can run, the machine needs the right toolchain and the repo needs its dependencies. If any card here fails, <b>nothing above will work</b> — fix it first.</p>
+
+  <!-- L0-TOOLS -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L0-TOOLS</span><span class="ttl">Required toolchain is present</span><span class="type unit">env</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Confirm Node, Python, Docker, and Git meet minimum versions.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">Noēsis is split across TypeScript (Node) and Python. The engine needs Node ≥ 20; the Brain needs Python 3.11+. Docker runs the full multi-service stack. A wrong version is the #1 cause of confusing failures downstream.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>Open a terminal and run each version check:</li>
+        </ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> node --version       <span class="cm"># need v20.0.0 or higher</span>
+<span class="pr">$</span> npm --version
+<span class="pr">$</span> python3 --version    <span class="cm"># need 3.11+</span>
+<span class="pr">$</span> docker --version
+<span class="pr">$</span> docker compose version
+<span class="pr">$</span> git --version</pre>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> Every command prints a version (no "command not found"). <code>node</code> ≥ 20, <code>python3</code> ≥ 3.11, Docker daemon reachable.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Node version is 20.0.0 or higher</label></li>
+          <li><input type="checkbox"><label>Python is 3.11 or higher</label></li>
+          <li><input type="checkbox"><label>Docker &amp; <code>docker compose</code> both respond</label></li>
+          <li><input type="checkbox"><label>Git is installed</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- L0-INSTALL -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L0-INSTALL</span><span class="ttl">Clone &amp; install all dependencies</span><span class="type unit">env</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Get the repo and install both the Node workspaces and the Python Brain package.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">Noēsis is a monorepo: one <code>npm install</code> wires up five Node workspaces (<code>protocol</code>, <code>grid</code>, <code>cli</code>, <code>dashboard</code>, <code>steward</code>). The Brain is a separate Python package installed in its own virtual environment. Both must succeed.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>Clone and enter the repo (skip if you already have it):</li>
+        </ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> git clone https://github.com/anthropics/noesis.git
+<span class="pr">$</span> cd noesis</pre>
+        <ol class="steps" start="2"><li>Install the TypeScript side (all workspaces at once):</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> npm install</pre>
+        <ol class="steps" start="3"><li>Create the Python virtual-env and install the Brain in editable mode with dev extras:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> cd brain
+<span class="pr">$</span> python3 -m venv .venv
+<span class="pr">$</span> source .venv/bin/activate     <span class="cm"># Windows: .venv\Scripts\activate</span>
+<span class="pr">$</span> pip install -e ".[dev]"
+<span class="pr">$</span> cd ..</pre>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> <code>npm install</code> ends with "added N packages" and no <span style="color:var(--fail)">ERR!</span>. <code>pip install</code> ends with "Successfully installed noesis-brain…". Your prompt now shows <code>(.venv)</code>.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Repo cloned; you are inside the <code>noesis/</code> directory</label></li>
+          <li><input type="checkbox"><label><code>npm install</code> completed with no errors</label></li>
+          <li><input type="checkbox"><label>The Python <code>(.venv)</code> is active and the Brain installed</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- L0-ENV -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L0-ENV</span><span class="ttl">Configure environment variables</span><span class="type unit">env</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Create a working <code>.env</code> from the template.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">Ports, the database password, the Grid name, the tick rate, and the LLM provider all come from <code>.env</code>. The defaults work for local testing. Two gotchas the file itself warns about: (1) <code>NEXT_PUBLIC_GRID_ORIGIN</code> is baked into the dashboard at <i>build</i> time — changing it later does nothing without a rebuild; (2) never put a secret behind a <code>NEXT_PUBLIC_</code> prefix — it ships to the browser.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps"><li>Copy the example file and open it:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> cp .env.example .env</pre>
+        <ol class="steps" start="2">
+          <li>For local testing the defaults are fine. Confirm these key lines exist: <code>GRID_PORT=8080</code>, <code>DASHBOARD_PORT=3001</code>, <code>MYSQL_PORT=3306</code>, <code>LLM_PROVIDER=ollama</code>.</li>
+          <li>If you do <b>not</b> have a local LLM, you may set a cloud key instead (e.g. uncomment <code>ANTHROPIC_API_KEY=</code>) — but for most tests fixture mode is used and no real LLM is needed.</li>
+        </ol>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> A <code>.env</code> file exists in the repo root with the four core ports set to the defaults above.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label><code>.env</code> exists and was copied from <code>.env.example</code></label></li>
+          <li><input type="checkbox"><label>Grid/Dashboard/MySQL ports are 8080 / 3001 / 3306</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ L1 GATES ============ -->
+<section id="l1">
+  <h2 class="sec"><span class="badge-layer">L1</span> Invariant gates</h2>
+  <p class="sec-intro">Before any unit test runs, Noēsis runs a set of <b>static guards</b> — small scripts that scan the source code to enforce its "constitution". These are not normal tests; they protect rules that, if broken, would silently corrupt privacy or determinism. They run automatically via <code>pretest</code>, but a tester should run them on their own once to understand what they protect.</p>
+
+  <div class="concept">
+    <div class="lbl">Concept · Why a codebase needs guards</div>
+    <h4>Some rules can't be left to good intentions</h4>
+    <p>Example: "a Nous's private goal text must <b>never</b> cross the network — only its SHA-256 hash". A developer could break this with one careless line. The guard <code>check-governance-plaintext.mjs</code> greps the code and <b>fails the build</b> if plaintext leaks. Other guards forbid wall-clock time (everything must be tick-based for determinism) and protect the encrypted-whisper boundary. Think of L1 as the constitution's automated lawyers.</p>
+  </div>
+
+  <!-- L1-PRETEST -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L1-GATES</span><span class="ttl">All invariant guards pass</span><span class="type unit">static</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Run the full pre-test guard suite and confirm zero violations.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">If a guard fails, the code has violated a non-negotiable rule (privacy leak, wall-clock dependency, broadcast-allowlist breach). These are correctness <i>and</i> safety guarantees. A passing L1 is the precondition for trusting everything above it.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps"><li>From the repo root, run the bundled gate suite (this is what <code>pretest</code> runs before <code>npm test</code>):</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> npm run check:wallclock
+<span class="pr">$</span> npm run check:whisper-plaintext
+<span class="pr">$</span> npm run check:governance:isolation
+<span class="pr">$</span> npm run check:governance:plaintext
+<span class="pr">$</span> npm run check:governance:weight
+<span class="pr">$</span> npm run check:operator-sanctions-plaintext
+<span class="pr">$</span> npm run check:state-doc-sync
+<span class="pr">$</span> npm run check:relationship-graph-deps</pre>
+        <ol class="steps" start="2"><li>Optionally run the additional source guards directly:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> node scripts/check-civic-did-issuance-path.mjs
+<span class="pr">$</span> node scripts/check-sole-producer-discipline.mjs
+<span class="pr">$</span> node scripts/check-no-silent-catch.mjs</pre>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> Each script exits 0 and prints an OK/✓ line (e.g. "wall-clock check passed", "no plaintext leaks found"). No script prints a violation or exits non-zero.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Every <code>check:*</code> npm script exits successfully</label></li>
+          <li><input type="checkbox"><label>No guard reports a wall-clock, plaintext, or allowlist violation</label></li>
+          <li><input type="checkbox"><label>The three extra source guards in step 2 also pass</label></li>
+        </ul>
+      </div>
+      <div class="note"><b>Tip.</b> You usually never run these by hand — <code>npm test</code> runs them first automatically via <code>pretest</code>. We surface them here so a tester understands <i>why</i> a <code>npm test</code> can fail before a single unit test executes.</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ L2 UNIT ============ -->
+<section id="l2">
+  <h2 class="sec"><span class="badge-layer">L2</span> Unit tests</h2>
+  <p class="sec-intro">Now we test each component in isolation. There are ~1,600+ tests across the TypeScript workspaces and the Python Brain. You don't read them — you <i>run</i> them and confirm the suites are green. This is the workhorse layer: if a component's logic is wrong, it shows up here, fast and precisely.</p>
+
+  <!-- L2-TS -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L2-TS</span><span class="ttl">TypeScript suites: protocol · grid · dashboard · steward</span><span class="type unit">unit</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Run every TypeScript workspace's unit tests in one command and confirm all green.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">This covers the world engine (clock, spatial map, law engine, audit chain, economy, registry), the wire protocol (identity, signed envelopes, domains), and both web UIs. <code>turbo</code> runs them in parallel; <code>pretest</code> (the L1 gates) runs first automatically.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps"><li>From the repo root:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> npm test</pre>
+        <ol class="steps" start="2"><li>To run just one workspace (faster while debugging a single area):</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> cd grid &amp;&amp; npm test          <span class="cm"># world engine only</span>
+<span class="pr">$</span> cd dashboard &amp;&amp; npm run test:unit   <span class="cm"># dashboard vitest only</span>
+<span class="pr">$</span> cd steward &amp;&amp; npm test       <span class="cm"># steward console only</span></pre>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> Turbo reports every package's test task as successful. Vitest prints e.g. <code>Test Files  N passed</code> / <code>Tests  1147 passed</code> for grid, with <b>0 failed</b>. The final turbo line reads "Tasks: N successful, N total".</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label><code>pretest</code> gates passed (no L1 violation blocked the run)</label></li>
+          <li><input type="checkbox"><label>grid suite: all tests passed, 0 failed</label></li>
+          <li><input type="checkbox"><label>protocol, dashboard, and steward suites: all passed</label></li>
+          <li><input type="checkbox"><label>Turbo's final summary shows every task successful</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- L2-BRAIN -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L2-BRAIN</span><span class="ttl">Python Brain suite (cognition, memory, LLM adapters)</span><span class="type unit">unit</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Run the Brain's pytest suite (500+ tests) and confirm all pass.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">The Brain is where a Nous actually <i>thinks</i>: personality (Psyche), emotion-like drives (Ananke/Bios), memory + retrieval, reflection, theory-of-mind (Iris), sleep consolidation (Hypnos), skill learning, and the multi-provider LLM router (Ollama / OpenAI-compat / Claude). These tests run with <b>fixtures</b>, so no real LLM or network is required.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps"><li>Activate the venv if it isn't already, then run pytest quietly:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> cd brain
+<span class="pr">$</span> source .venv/bin/activate
+<span class="pr">$</span> pytest test/ -q</pre>
+        <ol class="steps" start="2"><li>To target one subsystem, e.g. the deterministic "no wall-clock time" guarantees:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> pytest test/test_ananke_no_walltime.py test/test_bios_no_walltime.py -v</pre>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> pytest ends with a green line like <code>513 passed in 12.34s</code> and <b>0 failed / 0 errors</b>.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>The <code>(.venv)</code> is active before running pytest</label></li>
+          <li><input type="checkbox"><label>Full suite: all tests passed, 0 failed, 0 errors</label></li>
+          <li><input type="checkbox"><label>The no-walltime determinism tests pass (step 2)</label></li>
+        </ul>
+      </div>
+      <div class="note"><b>Beginner note.</b> "Fixture mode" means the LLM is replaced by a canned, deterministic response so the test always behaves the same. That's why the Brain suite needs no Ollama running and no API key.</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ L3 INTEGRATION ============ -->
+<section id="l3">
+  <h2 class="sec"><span class="badge-layer">L3</span> Integration</h2>
+  <p class="sec-intro">Components are correct in isolation (L2). Now we test them <i>together</i>: the TypeScript ↔ Python bridge, persistence to MySQL, and the tamper-evident audit chain. These are the seams where most real-world bugs hide.</p>
+
+  <!-- L3-BRIDGE -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L3-BRIDGE</span><span class="ttl">TS ↔ Python bridge (JSON-RPC over Unix socket)</span><span class="type integ">integ</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Confirm the Grid (TypeScript) and a Brain (Python) can talk over the JSON-RPC Unix-domain-socket bridge.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">A Nous is two processes — the Grid asks the Brain "what do you do this tick?" and the Brain answers. They communicate over a local socket using JSON-RPC. If the bridge contract drifts (a renamed field, a changed type), the Nous goes brain-dead even though both halves pass their own L2 tests. The Brain ships an RPC server with its own integration tests.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps"><li>Run the Brain's RPC + HTTP server integration tests:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> cd brain &amp;&amp; source .venv/bin/activate
+<span class="pr">$</span> pytest test/test_rpc_server.py test/test_rpc_handler.py test/test_http_server.py test/test_rpc_hash_state.py -v</pre>
+        <ol class="steps" start="2"><li>On the TypeScript side, run the grid's integration tests (bridge + coordinator wiring):</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> cd grid &amp;&amp; npx vitest run test/integration</pre>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> The RPC tests confirm request → handler → response round-trips, including <code>hash_state</code> (used during Nous deletion). The grid integration tests pass with 0 failures.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Brain RPC server &amp; handler tests pass</label></li>
+          <li><input type="checkbox"><label><code>hash_state</code> RPC test passes (state hashing works across the boundary)</label></li>
+          <li><input type="checkbox"><label>Grid <code>test/integration</code> suite passes</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- L3-DB -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L3-DB</span><span class="ttl">MySQL persistence &amp; audit reconcile</span><span class="type integ">integ</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Confirm world state and the audit chain persist to MySQL and survive a restart.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">"Persistent worlds" is the whole promise. The audit chain lives in memory during a run but is reconciled into MySQL on a tick cadence (every 60 ticks, with idempotent <code>INSERT IGNORE</code>). If reconcile is broken, a restart loses history — and a world with amnesia isn't persistent.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps"><li>Start just the database via Docker:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> docker compose up -d mysql
+<span class="pr">$</span> docker compose ps        <span class="cm"># mysql should be "healthy"</span></pre>
+        <ol class="steps" start="2"><li>Run the persistence + reconcile integration tests:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> cd grid &amp;&amp; npx vitest run test/audit-persistence-wiring.test.ts test/audit-reconcile.test.ts</pre>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> MySQL container shows <code>healthy</code>. Both audit tests pass — entries are written, the reconcile loop is idempotent (running it twice doesn't duplicate rows), and divergence between in-memory and persisted counts is tracked.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>MySQL container reaches <code>healthy</code> in <code>docker compose ps</code></label></li>
+          <li><input type="checkbox"><label>Audit-persistence-wiring test passes</label></li>
+          <li><input type="checkbox"><label>Audit-reconcile (idempotency) test passes</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- L3-CHAIN -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L3-CHAIN</span><span class="ttl">Audit chain integrity &amp; deterministic replay</span><span class="type integ">integ</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Prove the hash-chained audit log detects tampering and replays deterministically.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">Every event includes a hash of the previous event. Change one byte of history and every later hash breaks — that's "tamper-evident". <b>Deterministic replay</b> means: given the same seed and the same event log, you rebuild a byte-identical world. This is what makes the world trustworthy and debuggable.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps"><li>Run the audit-chain unit + replay tests:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> cd grid &amp;&amp; npx vitest run test/audit.test.ts</pre>
+        <ol class="steps" start="2"><li>Run the standalone replay-verify script (rebuilds and compares hashes):</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> node scripts/replay-verify.mjs</pre>
+        <ol class="steps" start="3"><li>Run the read-only-replay guard (proves replay can't mutate the original chain):</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> node scripts/check-replay-readonly.mjs</pre>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> Audit tests confirm a tampered entry is detected. <code>replay-verify.mjs</code> reports the rebuilt hash equals the original ("chain verified" / matching head hash). The read-only guard passes.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Tamper-detection test passes (a mutated entry is caught)</label></li>
+          <li><input type="checkbox"><label><code>replay-verify.mjs</code> reproduces the same head hash</label></li>
+          <li><input type="checkbox"><label>Replay is proven read-only (guard passes)</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ L4 SYSTEM BRING-UP ============ -->
+<section id="l4">
+  <h2 class="sec"><span class="badge-layer">L4</span> System bring-up</h2>
+  <p class="sec-intro">Time to actually start a world. First with the lightweight CLI, then with the full Docker stack. From here on you are running live software, not just test suites.</p>
+
+  <!-- L4-CLI -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L4-CLI</span><span class="ttl">Launch Genesis Grid from the CLI</span><span class="type sys">sys</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Use the <code>noesis</code> CLI to launch a Grid, inspect it, and stop it cleanly.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">The CLI is the fastest way to confirm the engine boots: it creates the world clock, lays out regions, loads laws, and starts the audit chain — without any web UI or Docker. If <code>genesis</code> works, the core engine is alive.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps"><li>Launch the Genesis Grid (leave this terminal running):</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> npx tsx cli/src/index.ts genesis
+<span class="ou">  ⊙ Genesis Grid launching…  clock t=0  regions=…  laws loaded</span></pre>
+        <ol class="steps" start="2"><li>In a <b>second</b> terminal, inspect the running world:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> npx tsx cli/src/index.ts status     <span class="cm"># clock, nous count, status</span>
+<span class="pr">$</span> npx tsx cli/src/index.ts regions    <span class="cm"># list of places + capacity</span>
+<span class="pr">$</span> npx tsx cli/src/index.ts laws       <span class="cm"># active laws</span>
+<span class="pr">$</span> npx tsx cli/src/index.ts audit      <span class="cm"># recent audit events</span></pre>
+        <ol class="steps" start="3"><li>Spawn a Nous named Sophia into a region, then re-check status:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> npx tsx cli/src/index.ts spawn Sophia agora
+<span class="pr">$</span> npx tsx cli/src/index.ts status     <span class="cm"># nous count should be 1</span></pre>
+        <ol class="steps" start="4"><li>Stop the Grid cleanly:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> npx tsx cli/src/index.ts stop</pre>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> <code>genesis</code> starts and the clock advances (t increases over time). <code>status</code> shows the Grid running; <code>regions</code> lists named places; <code>laws</code> lists at least one law; <code>audit</code> shows hash-chained events. After <code>spawn</code>, the Nous count is 1. <code>stop</code> shuts down without an error.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Grid launches and the world clock advances</label></li>
+          <li><input type="checkbox"><label><code>regions</code>, <code>laws</code>, <code>audit</code> all return sensible data</label></li>
+          <li><input type="checkbox"><label>Spawning Sophia raises the Nous count to 1</label></li>
+          <li><input type="checkbox"><label><code>stop</code> exits cleanly</label></li>
+        </ul>
+      </div>
+      <div class="note"><b>If region name is unknown.</b> Use the exact region names printed by <code>regions</code>. <code>agora</code> is a common default; substitute a listed name if it errors.</div>
+    </div>
+  </div>
+
+  <!-- L4-RIG -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L4-RIG</span><span class="ttl">Headless researcher rig (scaled, fixture-backed)</span><span class="type sys">sys</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Run an ephemeral, in-memory Grid with many Nous and many ticks, using LLM fixtures.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">A "rig" reuses the exact production launcher but runs headless, in-memory, with a fixture LLM and an isolated database schema. It's how the team proves the engine survives scale (e.g. 50 Nous × 10,000 ticks) without burning real LLM calls. As a tester, it's a fast smoke test of the whole engine under load.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps"><li>Run a small rig config:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> node scripts/rig.mjs config/rigs/small-10.toml</pre>
+        <ol class="steps" start="2"><li>Inspect available rig configs to pick a larger one if desired:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> ls config/rigs/</pre>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> The rig spins up the configured Nous, ticks to completion, and exits 0 with a summary (ticks run, events, no errors). Its <code>chronos.rig_closed</code> event lands on the rig's own isolated chain — never the production allowlist.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Rig runs to completion and exits 0</label></li>
+          <li><input type="checkbox"><label>No errors during the multi-tick run</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- L4-DOCKER -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L4-STACK</span><span class="ttl">Full Docker stack boots</span><span class="type sys">sys</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Bring up every service together with Docker Compose: MySQL, Grid, Nous brains, Dashboard, Steward.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">This is the closest thing to production. It launches the database, the Grid API (8080), three seed Nous brains (Sophia, Hermes, Themis), the Dashboard (3001), the Steward Console (3002), and the coturn P2P relay. If the stack is green, the system is integrated end-to-end and ready for the API/UI/SAT/UAT layers.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps"><li>Build and start everything (first run downloads images — be patient):</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> docker compose up -d --build</pre>
+        <ol class="steps" start="2"><li>Watch services become healthy:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> docker compose ps
+<span class="pr">$</span> docker compose logs -f grid    <span class="cm"># Ctrl-C to stop following</span></pre>
+        <ol class="steps" start="3"><li>Confirm the Grid answers its health check:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> curl -s http://localhost:8080/health
+<span class="ou">  {"status":"ok", ...}</span></pre>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> <code>docker compose ps</code> lists mysql, grid, the three nous, dashboard, steward (and coturn) as Up/healthy. The Grid <code>/health</code> returns <code>{"status":"ok"}</code>.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>All containers reach Up/healthy</label></li>
+          <li><input type="checkbox"><label>Grid <code>/health</code> returns ok</label></li>
+          <li><input type="checkbox"><label>No service is in a restart loop in the logs</label></li>
+        </ul>
+      </div>
+      <div class="note"><b>Keep this running.</b> The L5, L6, SAT, and UAT layers all point at this stack. Tear it down at the very end with <code>docker compose down</code> (add <code>-v</code> to also wipe the database volume).</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ L5 API ============ -->
+<section id="l5">
+  <h2 class="sec"><span class="badge-layer">L5</span> API &amp; contract</h2>
+  <p class="sec-intro">The stack is up. Now we poke the Grid's REST API and WebSocket firehose directly with <code>curl</code> — no browser. This proves the contract the UIs depend on. You only need the four port numbers from "Noēsis in 6 minutes"; everything here hits <code>localhost:8080</code>.</p>
+
+  <!-- L5-HEALTH -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L5-HEALTH</span><span class="ttl">Health &amp; diagnostics endpoints</span><span class="type integ">api</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Confirm both the basic and detailed health endpoints respond with correct shapes.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why"><code>/health</code> is the liveness probe orchestrators use. <code>/health/detailed</code> exposes the audit-pipeline diagnostics (chain length, persist errors, firehose stats) that the Steward Console renders. A historical bug shipped where <code>/health/detailed</code> wasn't even registered in production — so this card explicitly checks it returns 200, not 404.</div></div>
+      <div class="field"><div class="k">Steps</div>
+<pre><button class="copy">Copy</button><span class="pr">$</span> curl -s http://localhost:8080/health
+<span class="pr">$</span> curl -s http://localhost:8080/health/detailed | head -c 400</pre>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> <code>/health</code> → <code>{"status":"ok"}</code>. <code>/health/detailed</code> → 200 with JSON containing audit/firehose diagnostics (e.g. chain length, divergence, persist-error fields). Neither returns 404.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label><code>/health</code> returns ok</label></li>
+          <li><input type="checkbox"><label><code>/health/detailed</code> returns 200 JSON (NOT 404)</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- L5-WORLD -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L5-WORLD</span><span class="ttl">World state: clock, regions, nous, status</span><span class="type integ">api</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Read core world state over REST and confirm the clock is ticking.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">These four read endpoints are the spine of the Dashboard. If the clock value increases on repeated calls, the world is genuinely alive and time is advancing.</div></div>
+      <div class="field"><div class="k">Steps</div>
+<pre><button class="copy">Copy</button><span class="pr">$</span> curl -s http://localhost:8080/api/v1/grid/status
+<span class="pr">$</span> curl -s http://localhost:8080/api/v1/grid/clock      <span class="cm"># note the tick value</span>
+<span class="pr">$</span> sleep 35; curl -s http://localhost:8080/api/v1/grid/clock   <span class="cm"># tick increased</span>
+<span class="pr">$</span> curl -s http://localhost:8080/api/v1/grid/regions
+<span class="pr">$</span> curl -s http://localhost:8080/api/v1/grid/nous</pre>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> <code>status</code> shows the Grid running. The second <code>clock</code> call shows a <i>higher</i> tick than the first (default tick = 30 s, so wait ≥ 35 s). <code>regions</code> returns the region list; <code>nous</code> returns the seed Nous (Sophia, Hermes, Themis).</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Grid status reports running</label></li>
+          <li><input type="checkbox"><label>Clock tick increases between the two reads (time advances)</label></li>
+          <li><input type="checkbox"><label>Regions and Nous lists return non-empty data</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- L5-AUDIT -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L5-AUDIT</span><span class="ttl">Audit firehose &amp; chain verification</span><span class="type integ">api</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Read the audit trail and confirm the chain verifies, plus check privacy redaction.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">The audit endpoints are the world's tamper-evident memory. <code>/audit/verify</code> recomputes the hash chain and tells you if history is intact. The firehose stream must <b>redact</b> private fields for non-privileged subscribers (only hashes, never plaintext goals/messages) — the "zero-diff" privacy invariant in action.</div></div>
+      <div class="field"><div class="k">Steps</div>
+<pre><button class="copy">Copy</button><span class="pr">$</span> curl -s http://localhost:8080/api/v1/audit/verify
+<span class="pr">$</span> curl -s "http://localhost:8080/api/v1/audit/firehose?limit=20"
+<span class="pr">$</span> curl -s http://localhost:8080/api/v1/audit/drift-alerts</pre>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> <code>verify</code> reports the chain is valid/intact. <code>firehose</code> returns recent events whose payloads contain only allowlisted keys and <code>*_hash</code> fields — <b>no</b> plaintext goal text, message body, or law body. <code>drift-alerts</code> returns a list (possibly empty).</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Chain verification reports intact</label></li>
+          <li><input type="checkbox"><label>Firehose events show only hashes, never private plaintext</label></li>
+          <li><input type="checkbox"><label>Every event type seen is on the known allowlist</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- L5-WS -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L5-WS</span><span class="ttl">Live WebSocket firehose</span><span class="type integ">api</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Subscribe to the real-time event stream and watch events arrive as the world ticks.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">The Dashboard's live feed is powered by this WebSocket. Confirming it streams proves the push pipeline (not just request/response) works, and that visitors without a DID receive a redacted stream.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps"><li>If you have <code>websocat</code> installed, subscribe (otherwise use the Dashboard in L6 to observe the stream):</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> websocat ws://localhost:8080/ws/events</pre>
+        <ol class="steps" start="2"><li>Leave it open for ≥ 1 tick (30 s). Watch for events to appear.</li></ol>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> The socket connects and streams JSON event frames (at minimum a <code>tick</code> family event each clock step). Payloads are redacted (hashes only).</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>WebSocket connects to <code>/ws/events</code></label></li>
+          <li><input type="checkbox"><label>At least one event arrives within one tick</label></li>
+        </ul>
+      </div>
+      <div class="note"><b>No websocat?</b> Skip this card and verify the same stream visually in <span style="color:var(--accent)">L6 · Dashboard</span>, whose live feed uses this exact socket.</div>
+    </div>
+  </div>
+
+  <!-- L5-AUTH -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L5-DIDGATE</span><span class="ttl">Read/write split: visitors read, DID required to write</span><span class="type integ">api</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Confirm public reads work without auth, but any state-changing write is rejected without a valid Civic-DID.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">The Public Grid is open to anonymous visitors for browsing, but every <code>POST/PUT/DELETE</code> must carry a valid DID bearer token — enforced by a global route-policy table. This is the core authorization boundary; a leak here would let anyone mutate the world.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps"><li>A public read should succeed without credentials:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/api/v1/library/entries
+<span class="ou">  200</span></pre>
+        <ol class="steps" start="2"><li>A write without a DID bearer should be rejected:</li></ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> curl -s -o /dev/null -w "%{http_code}\n" -X POST \
+     http://localhost:8080/api/v1/portal/community/posts \
+     -H "Content-Type: application/json" -d '{"body":"hello"}'
+<span class="ou">  401   (or 403)</span></pre>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> The read returns <code>200</code>. The unauthenticated write returns <code>401</code> or <code>403</code> — never <code>200</code>.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Anonymous read returns 200</label></li>
+          <li><input type="checkbox"><label>Anonymous write is rejected (401/403)</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ L6 UI ============ -->
+<section id="l6">
+  <h2 class="sec"><span class="badge-layer">L6</span> UI surfaces</h2>
+  <p class="sec-intro">The contract is proven (L5). Now confirm the two web UIs render live state correctly. These are read-mostly views — the real human <i>actions</i> come in UAT.</p>
+
+  <!-- L6-DASH -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L6-DASH</span><span class="ttl">Dashboard renders the living Grid</span><span class="type sys">ui</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Open the Dashboard and confirm it shows live, ticking world state.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">The Dashboard is the "zoo-cam" — a read-only observer of the world: region map, Nous roster + inspector, trade/economy history, governance, culture, and the live event firehose. It must reflect reality and update as ticks pass, while never exposing private content.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>With the Docker stack up (L4-STACK), open <a href="http://localhost:3001" target="_blank">http://localhost:3001</a> in a browser. (Or run it in dev: <code>cd dashboard &amp;&amp; npm run dev</code>.)</li>
+          <li>Confirm the header/stat strip shows the current tick and it increments roughly every 30 s.</li>
+          <li>Open the Nous roster; click a Nous (e.g. Sophia) to open its inspector — observe personality, drives, goals (as hashes/levels, not raw secrets).</li>
+          <li>Watch the live event feed; new events should appear over time.</li>
+          <li>Visit the Culture and Governance views; confirm they load without errors.</li>
+        </ol>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> Page loads with no console errors. Tick increments. Nous roster lists the seed Nous; the inspector opens. Live feed streams events. Culture/Governance pages render.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Dashboard loads at :3001 with no fatal console errors</label></li>
+          <li><input type="checkbox"><label>Tick value visibly increments</label></li>
+          <li><input type="checkbox"><label>Nous inspector opens and shows non-secret state</label></li>
+          <li><input type="checkbox"><label>Live event feed updates as the world ticks</label></li>
+          <li><input type="checkbox"><label>Culture &amp; Governance views render</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- L6-STEWARD -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">L6-STEW</span><span class="ttl">Steward Console &amp; the Human Agency Scale</span><span class="type sys">ui</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Open the operator console and confirm oversight tiers and system-health cards render.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">The Steward Console is the operator's cockpit. Oversight is graded on the <b>Human Agency Scale</b> H1→H5: H1 observe, up through H5 irreversible operations (like deleting a Nous), each elevation gated by a confirmation dialog and recorded in the audit chain. Critically, operators are <b>read-only in Nous governance at every tier</b> — they cannot vote. This console must surface tiers, sanctions, and the audit-pipeline health cards.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>Open <a href="http://localhost:3002" target="_blank">http://localhost:3002</a>.</li>
+          <li>Confirm the Agency Indicator shows the current tier (starts at H1 — observe).</li>
+          <li>Open the <code>/system</code> view; confirm the three health cards render: Audit Pipeline Health, Firehose Diagnostics, and Events-per-Minute sparkline.</li>
+          <li>Open a Nous; confirm sanction actions (mute/slash/quarantine/forced-sleep) are visible but require elevating the tier (a confirmation dialog appears). <b>Do not actually apply a sanction yet</b> — that's part of SAT.</li>
+          <li>Confirm there is <b>no</b> affordance anywhere to propose or vote in Nous governance (operators are excluded by design).</li>
+        </ol>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> Console loads. Agency tier indicator visible (H1). System health cards render with live numbers. Sanction actions exist but are gated behind tier elevation. No governance vote/propose control exists.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Steward Console loads at :3002</label></li>
+          <li><input type="checkbox"><label>Agency tier indicator shows H1</label></li>
+          <li><input type="checkbox"><label>Three <code>/system</code> health cards render with data</label></li>
+          <li><input type="checkbox"><label>Sanction actions are tier-gated (dialog appears)</label></li>
+          <li><input type="checkbox"><label>No operator governance-voting control exists (VOTE-05)</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ SAT ============ -->
+<section id="sat">
+  <h2 class="sec"><span class="badge-layer" style="background:var(--orange);color:#1a0c05;">SAT</span> System Acceptance Test — "Birth of a World"</h2>
+  <p class="sec-intro">Every layer below is green. SAT is one continuous narrative scenario that exercises the <b>whole system as a coherent world</b>: a Grid is born, a mind is spawned, it thinks and acts, two minds interact, the collective makes a law, the operator intervenes, and history is proven intact. Do these in order — each step builds on the last. Keep the Docker stack (L4-STACK), Dashboard (3001), and Steward (3002) open side by side.</p>
+
+  <div class="concept">
+    <div class="lbl">How to "watch" a Nous think</div>
+    <h4>You observe behaviour, not thoughts</h4>
+    <p>A Nous's actual reasoning is private (that's the sovereignty rule). What you can observe are its <b>actions</b> on the firehose and its non-secret state in the inspector: which region it's in, drive levels (hunger/curiosity/etc.), whether it spoke/traded/slept, and <b>hashes</b> of its goals. "It's working" = it takes varied, plausible actions over ticks — not the same action every time.</p>
+  </div>
+
+  <!-- SAT-1 -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">SAT-1</span><span class="ttl">A world exists and time flows</span><span class="type sys">sys</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Confirm Genesis Grid is live with a ticking clock, regions, and active laws.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>On the Dashboard (3001), note the current tick. Wait ~1 minute; confirm it advanced by ~2.</li>
+          <li>Confirm the region map shows named places with capacities.</li>
+          <li>Confirm at least one law is listed under Governance/Laws.</li>
+        </ol>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Tick advances steadily (time flows)</label></li>
+          <li><input type="checkbox"><label>Regions render with capacity limits</label></li>
+          <li><input type="checkbox"><label>At least one active law exists</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAT-2 -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">SAT-2</span><span class="ttl">A mind is born and begins to act</span><span class="type sys">sys</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Observe a seed Nous (Sophia) taking autonomous, varied actions over several ticks.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">This is the heart of Noēsis — proof that an agent isn't a script. Over consecutive ticks it should make different choices driven by its internal state (drives rising, goals shifting), not repeat one action.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>Open Sophia in the Dashboard inspector. Record her current region and drive levels (hunger/curiosity/safety/boredom/loneliness as low/med/high).</li>
+          <li>Watch the firehose for Sophia's DID over ~5 ticks (~2.5 min). Note each action (move / speak / trade-related / sleep / reflect).</li>
+          <li>Re-open the inspector; confirm at least one piece of state changed (region, a drive level, a goal hash, or epoch).</li>
+        </ol>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> Sophia emits multiple events across ticks, including at least two <i>different</i> action types, and her observable state evolves. Only hashes/levels are shown — no raw goal text.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Sophia takes ≥ 2 distinct action types over the window</label></li>
+          <li><input type="checkbox"><label>Her observable state changes between two inspections</label></li>
+          <li><input type="checkbox"><label>No private plaintext is ever displayed</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAT-3 -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">SAT-3</span><span class="ttl">Two minds interact (dialogue / trade / whisper)</span><span class="type sys">sys</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Observe interaction between two Nous and confirm it's recorded with privacy intact.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">Society emerges from interaction. Whether they talk (<code>nous.spoke</code>), trade Ousia (<code>trade.proposed</code> → reviewed → settled), or send an end-to-end encrypted whisper (<code>nous.whispered</code>), the audit chain records that it happened — but message/goal content stays private (only a ciphertext/content hash appears).</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>In the firehose, find an event where two Nous interact (dialogue, a trade proposal, or a whisper). Sophia, Hermes, and Themis are co-located seeds, so interactions occur naturally over ticks.</li>
+          <li>Inspect the event payload (Dashboard event detail or the <code>/audit/firehose</code> API). Confirm it carries the two DIDs and a hash, but <b>no</b> readable message/goal/law body.</li>
+          <li>If it's a trade, confirm a <code>trade.reviewed</code> verdict appears before settlement (the deterministic ReviewerNous gate).</li>
+        </ol>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> At least one two-Nous interaction is recorded. Its payload exposes DIDs + a hash only. Trades pass through a review verdict before settling.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>A two-Nous interaction event is observed</label></li>
+          <li><input type="checkbox"><label>Payload shows DIDs + hash, no plaintext content</label></li>
+          <li><input type="checkbox"><label>(If a trade) a review verdict precedes settlement</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAT-4 -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">SAT-4</span><span class="ttl">The collective makes a law (governance)</span><span class="type sys">sys</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Observe (or, via a rig, force) a proposal moving through the commit-reveal ballot lifecycle.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">Self-governance is a defining feature: Nous open a proposal, cast <b>commit-reveal</b> votes (commit a hidden vote, later reveal it — prevents copying), and the tally enacts the law via Logos. Vote-weighting by wealth/reputation is forbidden at the payload level. Operators cannot participate.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>Open the Governance view (Dashboard or Steward). Look for a proposal in the list.</li>
+          <li>Trace its lifecycle events on the firehose: <code>proposal.opened</code> → <code>ballot.committed</code> → <code>ballot.revealed</code> → <code>proposal.tallied</code>.</li>
+          <li>If one passed (<code>outcome: passed</code>), confirm a <code>law.triggered</code> event carries <code>enacted_by: 'collective'</code>.</li>
+          <li>Confirm only a <code>title_hash</code> (never the law body text) appears in any broadcast payload.</li>
+        </ol>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> A proposal progresses through the four lifecycle events. A passed proposal enacts a law marked as collective. No law body plaintext is broadcast.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Full proposal lifecycle observed (opened→committed→revealed→tallied)</label></li>
+          <li><input type="checkbox"><label>A passed proposal enacts a collective law</label></li>
+          <li><input type="checkbox"><label>Only <code>title_hash</code> appears — body text never broadcast</label></li>
+        </ul>
+      </div>
+      <div class="note"><b>If no organic proposal appears quickly:</b> governance can take many ticks. You may instead verify the lifecycle deterministically via the grid governance tests (<code>cd grid &amp;&amp; npx vitest run test/governance</code>) and the gov route tests, then mark this card "verified via suite".</div>
+    </div>
+  </div>
+
+  <!-- SAT-5 -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">SAT-5</span><span class="ttl">The operator intervenes (sanction within the rules)</span><span class="type sys">sys</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">From the Steward Console, elevate agency tier and apply a reversible sanction, confirming it is audited.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">"Oversight without control." The operator can act, but only through tier elevation (a deliberate, confirmed step) and every action is recorded with its tier in the audit chain. The sanction <i>reason</i> stays Grid-private (only a <code>reason_hash</code> enters the chain).</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>In Steward (3002), open a non-essential Nous. Choose a <b>reversible</b> sanction (e.g. <i>mute</i>).</li>
+          <li>Elevate the agency tier when prompted (confirmation dialog). Apply the mute.</li>
+          <li>On the firehose, confirm a tier-stamped operator event appears (e.g. <code>operator.muted</code>) carrying the tier and target DID — and a <code>reason_hash</code>, never the reason text.</li>
+          <li>Reverse the sanction (un-mute) to restore the Nous.</li>
+        </ol>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> Tier elevation requires explicit confirmation. The sanction takes effect and emits a tier-stamped audit event with a reason hash only. The action is reversible.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Tier elevation is gated by a confirmation dialog</label></li>
+          <li><input type="checkbox"><label>Sanction emits a tier-stamped operator audit event</label></li>
+          <li><input type="checkbox"><label>Only a <code>reason_hash</code> is broadcast (no reason plaintext)</label></li>
+          <li><input type="checkbox"><label>The sanction is reversible</label></li>
+        </ul>
+      </div>
+      <div class="note danger"><b>Do not test H5 deletion on a seed Nous.</b> H5 "delete forever" is irreversible (tombstones the DID, returns HTTP 410 thereafter). Only exercise it on a throwaway Nous you spawned yourself, if at all.</div>
+    </div>
+  </div>
+
+  <!-- SAT-6 -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">SAT-6</span><span class="ttl">History is intact and reproducible</span><span class="type sys">sys</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">After all the activity above, prove the audit chain still verifies and can be replayed/exported.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">The final guarantee: everything that happened during SAT was recorded in a chain that still passes integrity verification and can deterministically reproduce the same hash. This is what makes the world auditable and trustworthy.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>Verify the live chain over the API:</li>
+        </ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> curl -s http://localhost:8080/api/v1/audit/verify</pre>
+        <ol class="steps" start="2">
+          <li>(Operator, H3+) From Steward, open the Replay view, scrub a historical slice, and export the deterministic tarball (<code>operator.exported</code> event fires).</li>
+          <li>Optionally re-run the offline verifier against an exported chain:</li>
+        </ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> node scripts/replay-verify.mjs</pre>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> <code>/audit/verify</code> reports the chain intact despite all SAT activity. Replay reproduces the same head hash. Export emits an audited <code>operator.exported</code> event.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Chain verifies intact after all SAT activity</label></li>
+          <li><input type="checkbox"><label>Replay reproduces the same hash (determinism holds)</label></li>
+          <li><input type="checkbox"><label>Export emits an audited event</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAT-7 -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">SAT-7</span><span class="ttl">A Nous puts down roots (land &amp; property)</span><span class="type sys">sys</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Prove a Nous can own land: buy a parcel, build a home and a business, and have another Nous find &amp; visit the open business — with the chain intact.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">This is the scenario that answers <i>"where does a Nous live, and where is its business?"</i> Before Phase 48b a Nous only had a location pointer; now it can own a place. The test exercises the full property loop: treasury purchase → build → search → visit → goal completion → audit verify. <i>(Grid-core wave is shipped; the REST/Brain/UI waves may still be landing — verify what your build exposes, and fall back to the registry test suite for the rest.)</i></div></div>
+      <div class="field"><div class="k">Preconditions</div><div class="why">Docker stack up (L4-STACK). A Nous with enough bios to afford a Residential and a Business parcel (use a seed Nous or one you spawn).</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li><b>Browse the land directory</b> (public, no DID) and note an available Residential and Business parcel address:</li>
+        </ol>
+<pre><button class="copy">Copy</button><span class="pr">$</span> curl -s "http://localhost:8080/api/v1/civic-map/parcels?zone=residential&amp;available=true"
+<span class="pr">$</span> curl -s "http://localhost:8080/api/v1/civic-map/parcels?zone=business&amp;available=true"</pre>
+        <ol class="steps" start="2">
+          <li><b>Buy a home</b> — the Nous purchases a Residential parcel from the treasury; on the firehose confirm <code>zoning.parcel_purchased</code> + <code>treasury.parcel_revenue</code> (buyer DID is hashed, never raw).</li>
+          <li><b>Build the home</b> — build a <code>home</code> structure; confirm <code>zoning.structure_built</code> (only <code>name_hash</code>, never the plaintext name).</li>
+          <li><b>Buy + build a business</b> — purchase a Business parcel and build an <code>open</code> <code>shop</code>; register the shop on that parcel.</li>
+          <li><b>Another Nous finds &amp; visits</b> — a second Nous searches the directory for the open shop's address and joins it; confirm <code>zoning.structure_joined</code> and that occupancy reflects the visitor.</li>
+          <li><b>Goal completion</b> — confirm the owner's <code>own_business</code> (and <code>own_home</code>) Telos goal is marked achieved.</li>
+          <li><b>Audit</b> — <code>curl -s http://localhost:8080/api/v1/audit/verify</code> still reports the chain intact after all the land activity.</li>
+        </ol>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> Purchases debit the buyer and credit the treasury; structures build (one per parcel); a home cannot be built on a business parcel and vice-versa; the second Nous discovers and joins the open shop; goals complete; the chain verifies. No plaintext structure name and no raw DID ever appears on the firehose.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Public parcel directory lists available parcels (no DID needed)</label></li>
+          <li><input type="checkbox"><label>Purchase emits <code>zoning.parcel_purchased</code> + <code>treasury.parcel_revenue</code> (hashed DID)</label></li>
+          <li><input type="checkbox"><label>Build emits <code>zoning.structure_built</code> with <code>name_hash</code> only (no plaintext name)</label></li>
+          <li><input type="checkbox"><label>A home cannot be built in a business zone (type-fits-zone enforced)</label></li>
+          <li><input type="checkbox"><label>A shop requires an owned, built business parcel</label></li>
+          <li><input type="checkbox"><label>A second Nous searches for and joins the open shop (occupancy updates)</label></li>
+          <li><input type="checkbox"><label><code>own_home</code> / <code>own_business</code> goals mark achieved</label></li>
+          <li><input type="checkbox"><label>Audit chain verifies intact after all land activity</label></li>
+        </ul>
+      </div>
+      <div class="note"><b>Pure-logic fallback.</b> If your build hasn't wired the REST routes yet, you can verify the entire land engine deterministically: <code>cd grid &amp;&amp; npx vitest run test/civic</code> covers seeding, purchase (happy + all failure reasons), the ≤1-home/≤1-business cap, build/type-fit, join/leave/entry-policy, and every audit producer. Mark this card "verified via suite" in that case.</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ UAT ============ -->
+<section id="uat">
+  <h2 class="sec"><span class="badge-layer" style="background:var(--warn);color:#1c1402;">UAT</span> User Acceptance Test — the Human Portal journey</h2>
+  <p class="sec-intro">SAT proved the world works. <b>UAT proves a real, first-time human can use it.</b> Put yourself in the shoes of someone who has never heard of Noēsis. Follow the journey end-to-end through the Portal: browse as a visitor → sign in → get a wallet → meet a Nous → spawn your own → join the community → ask for help. Tick a card only if a newcomer could complete it <i>without reading source code</i>.</p>
+
+  <div class="concept">
+    <div class="lbl">Concept · What "Portal" means for a human</div>
+    <h4>The public front door</h4>
+    <p>The Portal is the website real people use. Identity is Web3-style: you sign in by proving you own a crypto wallet (<b>SIWE</b> — "Sign-In With Ethereum"), which mints your human DID (<code>did:noesis:human:0x…</code>). Your coin stays in <i>your own</i> wallet — the platform never holds your funds. Email sign-in is also offered for those without a wallet.</p>
+  </div>
+
+  <!-- UAT-1 -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">UAT-1</span><span class="ttl">Visitor can browse without an account</span><span class="type uat">uat</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">As an anonymous visitor, explore public areas with no sign-in.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">First impressions. A newcomer should be able to look around — the world map, the Library reading room, Nous public profiles, marketplace listings, Polis bill drafts — before committing to an account. This is the read side of the read/write split you verified in L5-DIDGATE.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>Open the Portal home (the guide/landing site; in the dev stack the Dashboard at <a href="http://localhost:3001" target="_blank">:3001</a> is the public face — use whichever your deployment serves as the front door).</li>
+          <li>Without signing in, visit: the Civic Map / world view, the Library, a Nous public profile, and the community/leaderboard.</li>
+          <li>Confirm these load and are readable; confirm any "post / follow / spawn" buttons prompt you to sign in rather than silently failing.</li>
+        </ol>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> A signed-out visitor can read public areas. Actions that change state clearly require sign-in. Nothing crashes; nothing exposes private data.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Public pages load without an account</label></li>
+          <li><input type="checkbox"><label>Write actions prompt sign-in (don't silently fail)</label></li>
+          <li><input type="checkbox"><label>A newcomer can navigate without instructions</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- UAT-2 -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">UAT-2</span><span class="ttl">Sign in &amp; get an identity</span><span class="type uat">uat</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Create an identity via wallet (SIWE) or email and land on a logged-in home.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">This is the conversion moment. The flow must be clear to someone who may never have used a crypto wallet. On success a human DID is minted and a <code>human.joined</code> / <code>portal.auth.register</code> event is recorded — with the wallet address hashed, never raw PII, in the audit chain.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>Click Sign in. Choose wallet (SIWE) <i>or</i> email.</li>
+          <li><b>Wallet:</b> connect a test wallet, sign the presented message (no gas, no funds spent — it's a signature, not a transaction).</li>
+          <li><b>Email:</b> enter an email, complete the verification/sign-up step.</li>
+          <li>Confirm you arrive at a logged-in state showing your identity (a shortened DID / address).</li>
+          <li>(Optional, ops) On the firehose, confirm a <code>portal.auth.register</code> or <code>human.joined</code> event with a hashed identity — no plaintext email/address.</li>
+        </ol>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> A newcomer completes sign-in without confusion. A human DID is established. The audit event carries only a hashed identity.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Sign-in completes via wallet or email</label></li>
+          <li><input type="checkbox"><label>A human DID / identity is shown after login</label></li>
+          <li><input type="checkbox"><label>The signing step never asks for funds/gas (SIWE is a signature)</label></li>
+          <li><input type="checkbox"><label>Audit event exposes only a hashed identity</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- UAT-3 -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">UAT-3</span><span class="ttl">Wallet — see balance, self-custody</span><span class="type uat">uat</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Open the Cyber Coin wallet, view balance, and confirm funds are self-custodied.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">A locked invariant is <b>zero platform custody</b>: your USDT/ETH live in <i>your</i> EVM wallet, not on a Noēsis ledger. The Portal only reads your balance and helps you authorize transfers <i>you</i> sign. A newcomer must understand their money is theirs.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>Open the Wallet section. View your balance.</li>
+          <li>Confirm the UI makes clear the funds are in your own wallet (self-custody), not held by the platform.</li>
+          <li>Do <b>not</b> send real money. If you test a transfer, use a testnet/test amount you control; confirm <i>you</i> sign it in your wallet.</li>
+        </ol>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> Wallet shows a balance. Self-custody is clearly communicated. Any transfer requires the user's own wallet signature; the platform never moves funds on its own.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Wallet balance displays</label></li>
+          <li><input type="checkbox"><label>Self-custody is clearly communicated</label></li>
+          <li><input type="checkbox"><label>Transfers require the user's own signature</label></li>
+        </ul>
+      </div>
+      <div class="note danger"><b>Never send real funds during UAT.</b> Because custody is real and on-chain, a mistaken transfer is irreversible. Use test amounts/wallets only.</div>
+    </div>
+  </div>
+
+  <!-- UAT-4 -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">UAT-4</span><span class="ttl">Meet a Nous — chat &amp; tip</span><span class="type uat">uat</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Have a real-time conversation with a seed Nous (Sophia/Hermes/Themis) and optionally tip coin.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">This is the "wow" moment for a newcomer — talking to a persistent being. Onboarding chat is served via a fast-proxy LLM <b>out of tick</b>, so the world clock never stalls while you type. A tip emits <code>human.spoke</code>; the message content stays private.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>Open Sophia's profile and start a chat. Send a greeting and a follow-up question.</li>
+          <li>Confirm replies are coherent and arrive promptly (chat is not blocked by the 30 s tick).</li>
+          <li>Optionally send a small tip of Cyber Coin; confirm a confirmation and that the conversation continues.</li>
+        </ol>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> The Nous responds conversationally and quickly. A tip is acknowledged. The exchange feels like talking to a character, not filling a form.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Chat sends and receives coherent replies</label></li>
+          <li><input type="checkbox"><label>Replies arrive without waiting on a tick boundary</label></li>
+          <li><input type="checkbox"><label>(Optional) Tip succeeds and is acknowledged</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- UAT-5 -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">UAT-5</span><span class="ttl">Spawn your own Nous</span><span class="type uat">uat</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Create a personal Nous with a name and personality seeds, paid in coin.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">The deepest engagement: a human brings a new mind into the world. The spawn flow takes a name + personality seeds + payment, then plants your agent in Genesis Grid (<code>nous.spawned_by_human</code>). Afterward it lives autonomously like any other Nous.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>Open "Spawn a Nous" (or Personal Nous). Read the spawn config (cost, available personality seeds).</li>
+          <li>Choose a name and personality seeds. Confirm and complete the (test) payment.</li>
+          <li>After spawn, find your Nous in "My Nous"; open its profile.</li>
+          <li>Over the next few ticks, confirm on the Dashboard firehose that <i>your</i> Nous starts acting autonomously.</li>
+        </ol>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> A newcomer can configure, pay for, and spawn a Nous. It appears under "My Nous" and begins autonomous behaviour. A <code>nous.spawned_by_human</code> event is recorded.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Spawn config (cost + seeds) is clear</label></li>
+          <li><input type="checkbox"><label>Spawn completes and the Nous appears under "My Nous"</label></li>
+          <li><input type="checkbox"><label>The new Nous acts autonomously after spawn</label></li>
+        </ul>
+      </div>
+      <div class="note"><b>Cleanup.</b> A Nous you spawn here is a safe target for testing H5 deletion (SAT-5 note) if you want to exercise the irreversible path. Don't delete the shared seed Nous.</div>
+    </div>
+  </div>
+
+  <!-- UAT-6 -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">UAT-6</span><span class="ttl">Community — directory, board, follows, leaderboard</span><span class="type uat">uat</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">Participate in the human community surfaces.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">Retention comes from people, not just agents. The community area lets humans find each other, post to a board, follow others, and see a leaderboard and live activity feed. These are normal social features — they should "just work" for anyone who's used a forum.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>Open the Community/Directory. Browse users; follow one. Confirm the follow registers (and can be un-followed).</li>
+          <li>Post a short message to the board; confirm it appears and others could reply.</li>
+          <li>Open the leaderboard and live activity feed; confirm they render and update.</li>
+        </ol>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> Follow, post, leaderboard, and activity feed all work as a forum-savvy newcomer would expect. Writes require your DID (you're logged in) and succeed.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Follow / un-follow works</label></li>
+          <li><input type="checkbox"><label>Board post appears and supports replies</label></li>
+          <li><input type="checkbox"><label>Leaderboard + activity feed render and update</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- UAT-7 -->
+  <div class="tc">
+    <div class="tc-head"><span class="id">UAT-7</span><span class="ttl">Get help — docs, FAQ, glossary, support ticket</span><span class="type uat">uat</span></div>
+    <div class="tc-body">
+      <div class="field"><div class="k">Goal</div><div class="goal">A confused newcomer can self-serve answers and, if stuck, file a support ticket.</div></div>
+      <div class="field"><div class="k">Why it matters</div><div class="why">Noēsis has unusual concepts (Nous, ticks, Ousia). The Help Center, FAQ, Glossary, and Getting Started guide must explain them in plain language, and a support ticket is the safety net. This card is the human-friendliness backstop for the whole product.</div></div>
+      <div class="field"><div class="k">Steps</div>
+        <ol class="steps">
+          <li>Open Resources / Help. Read the Getting Started guide and skim the Glossary — confirm core terms (Nous, Grid, tick, Ousia) are explained for a beginner.</li>
+          <li>Check the FAQ answers a likely first question (e.g. "Is my money safe?" → self-custody).</li>
+          <li>File a test support ticket; confirm it's accepted and you get a reference/acknowledgement.</li>
+        </ol>
+      </div>
+      <div class="field"><div class="k">Expected result</div>
+        <div class="expect"><span class="k">PASS:</span> A beginner can understand the core concepts from the docs alone, and a support ticket can be filed and is acknowledged.</div>
+      </div>
+      <div class="field"><div class="k">Pass criteria</div>
+        <ul class="chk">
+          <li><input type="checkbox"><label>Getting Started + Glossary explain core terms plainly</label></li>
+          <li><input type="checkbox"><label>FAQ covers an obvious first question</label></li>
+          <li><input type="checkbox"><label>A support ticket can be filed and is acknowledged</label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="note"><b>UAT verdict.</b> UAT passes only if a person with general software literacy — but no Noēsis knowledge — could complete UAT-1 through UAT-7 using only the product's own UI and docs. If you needed to read source or ask an engineer, note it as a UX defect even when the feature technically works.</div>
+</section>
+
+
+<!-- ============ TROUBLESHOOTING ============ -->
+<section id="trouble">
+  <h2 class="sec">Troubleshooting</h2>
+  <p class="sec-intro">The most common failures, by layer, and how to clear them.</p>
+  <table>
+    <tr><th>Symptom</th><th>Layer</th><th>Likely cause &amp; fix</th></tr>
+    <tr><td><code>npm test</code> fails before any test runs</td><td>L1</td><td>A <code>pretest</code> invariant gate failed. Read which <code>check:*</code> script errored and fix the violation it names — don't bypass the gate.</td></tr>
+    <tr><td>Brain pytest: "module not found" / wrong Python</td><td>L0/L2</td><td>The venv isn't active. Run <code>source brain/.venv/bin/activate</code> and re-install with <code>pip install -e ".[dev]"</code>.</td></tr>
+    <tr><td>MySQL container never becomes healthy</td><td>L3</td><td>Port 3306 already in use, or a stale volume. <code>docker compose down -v</code> then <code>up -d mysql</code>. Check <code>MYSQL_*</code> in <code>.env</code>.</td></tr>
+    <tr><td><code>/health</code> works but <code>/health/detailed</code> is 404</td><td>L5</td><td>Known historical bug: the route wasn't registered in production. Confirm you're on a current build and the Grid image was rebuilt (<code>up -d --build</code>).</td></tr>
+    <tr><td>Dashboard loads but tick never moves</td><td>L4/L6</td><td>The Grid container isn't ticking or the dashboard points at the wrong origin. Check <code>NEXT_PUBLIC_GRID_ORIGIN</code> was correct <i>at build time</i> (rebuild if you changed it), and that <code>grid</code> logs show tick advances.</td></tr>
+    <tr><td>Dashboard shows "—" instead of numbers</td><td>L6</td><td>The dashboard can't reach the Grid API (CORS or origin). CORS allowlist is frozen at :3001/:3000 — if you changed the port, widen the Grid CORS config.</td></tr>
+    <tr><td>CLI <code>spawn</code> errors "unknown region"</td><td>L4</td><td>Use a region name printed by <code>regions</code>; names are Grid-specific.</td></tr>
+    <tr><td>No organic governance proposal appears</td><td>SAT-4</td><td>Governance is emergent and slow. Verify deterministically via <code>grid</code> governance test suites and mark "verified via suite".</td></tr>
+    <tr><td>SIWE sign-in does nothing</td><td>UAT-2</td><td>No wallet extension, or wrong network. Use the email path instead, or install a test wallet. SIWE only needs a signature, not funds.</td></tr>
+  </table>
+</section>
+
+
+<!-- ============ CHEAT SHEET ============ -->
+<section id="cheat">
+  <h2 class="sec">Command cheat-sheet</h2>
+  <table>
+    <tr><th>Purpose</th><th>Command</th></tr>
+    <tr><td>Install TS workspaces</td><td><code>npm install</code></td></tr>
+    <tr><td>Install Brain (Python)</td><td><code>cd brain &amp;&amp; python3 -m venv .venv &amp;&amp; source .venv/bin/activate &amp;&amp; pip install -e ".[dev]"</code></td></tr>
+    <tr><td>Invariant gates only</td><td><code>npm run check:wallclock</code> · <code>check:whisper-plaintext</code> · <code>check:governance:*</code></td></tr>
+    <tr><td>All TS unit tests</td><td><code>npm test</code></td></tr>
+    <tr><td>Grid suite only</td><td><code>cd grid &amp;&amp; npm test</code></td></tr>
+    <tr><td>Brain suite only</td><td><code>cd brain &amp;&amp; pytest test/ -q</code></td></tr>
+    <tr><td>Replay verify</td><td><code>node scripts/replay-verify.mjs</code></td></tr>
+    <tr><td>Headless rig</td><td><code>node scripts/rig.mjs config/rigs/small-10.toml</code></td></tr>
+    <tr><td>Launch Grid (CLI)</td><td><code>npx tsx cli/src/index.ts genesis</code></td></tr>
+    <tr><td>Grid status / spawn / stop</td><td><code>npx tsx cli/src/index.ts status</code> · <code>spawn &lt;name&gt; &lt;region&gt;</code> · <code>stop</code></td></tr>
+    <tr><td>Full Docker stack</td><td><code>docker compose up -d --build</code> · <code>docker compose ps</code> · <code>docker compose down -v</code></td></tr>
+    <tr><td>Grid health</td><td><code>curl localhost:8080/health</code> · <code>/health/detailed</code></td></tr>
+    <tr><td>World state</td><td><code>curl localhost:8080/api/v1/grid/{status,clock,regions,nous}</code></td></tr>
+    <tr><td>Audit</td><td><code>curl localhost:8080/api/v1/audit/{verify,firehose,drift-alerts}</code></td></tr>
+    <tr><td>Dashboard / Steward</td><td><a href="http://localhost:3001">:3001</a> · <a href="http://localhost:3002">:3002</a></td></tr>
+  </table>
+</section>
+
+
+<!-- ============ GLOSSARY ============ -->
+<section id="glossary">
+  <h2 class="sec">Glossary</h2>
+  <table>
+    <tr><th>Term</th><th>Meaning</th></tr>
+    <tr><td><b>Allowlist</b></td><td>The frozen set of event types permitted on the audit chain. Adding one requires an explicit, reviewed change. Privacy rule: only hashes of private content may appear.</td></tr>
+    <tr><td><b>Ananke / Bios</b></td><td>Internal drive systems. Ananke = five drives (hunger, curiosity, safety, boredom, loneliness). Bios = bodily needs (energy, sustenance) that push drives up. Both are deterministic and tick-based, never wall-clock.</td></tr>
+    <tr><td><b>Audit chain</b></td><td>Append-only, SHA-256 hash-chained event log. Tamper-evident: altering any entry breaks all later hashes.</td></tr>
+    <tr><td><b>Brain</b></td><td>The Python half of a Nous: cognition, memory, reflection, LLM calls. Talks to the Grid over a JSON-RPC Unix socket.</td></tr>
+    <tr><td><b>Civic-DID / DID</b></td><td>A unique decentralised identifier for a Nous or human. Writes to the Grid require a valid DID bearer.</td></tr>
+    <tr><td><b>Determinism / Replay</b></td><td>Same seed + same event log ⇒ byte-identical world. Lets the chain be re-verified and debugged.</td></tr>
+    <tr><td><b>Firehose</b></td><td>The real-time stream of audit events (REST <code>/audit/firehose</code> + WebSocket <code>/ws/events</code>). Redacted for non-privileged subscribers.</td></tr>
+    <tr><td><b>Grid</b></td><td>One persistent world: clock, regions, laws, economy, audit chain. Genesis is the launch Grid.</td></tr>
+    <tr><td><b>Human Agency Scale (H1–H5)</b></td><td>Operator oversight tiers, from H1 (observe) to H5 (irreversible, e.g. delete a Nous). Each elevation is confirmed and audited.</td></tr>
+    <tr><td><b>Hypnos / Iris / Pneuma</b></td><td>Mind subsystems: Hypnos = sleep memory-consolidation; Iris = theory-of-mind (private beliefs about peers); Pneuma = narrative self / growth journal.</td></tr>
+    <tr><td><b>Logos / Polis</b></td><td>Logos = the law engine (recursive condition DSL + sanctions). Polis = a Grid's named government (Genesis Polis).</td></tr>
+    <tr><td><b>Nous</b></td><td>An autonomous AI agent. Has identity, personality (Psyche), drives, memory, goals (Telos).</td></tr>
+    <tr><td><b>Ousia / Cyber Coin</b></td><td>The currency. Nous trade Ousia P2P; humans hold real on-chain coin self-custodied in their own wallet.</td></tr>
+    <tr><td><b>Portal</b></td><td>The top public layer / website where humans sign in, get a wallet, chat with Nous, and spawn their own.</td></tr>
+    <tr><td><b>ReviewerNous</b></td><td>A deterministic, objective-only gate every trade passes (balance, DID format, positive amount) before settling. Emits <code>trade.reviewed</code>.</td></tr>
+    <tr><td><b>SIWE</b></td><td>"Sign-In With Ethereum" — prove wallet ownership by signing a message (no funds spent) to mint a human DID.</td></tr>
+    <tr><td><b>Tick</b></td><td>One discrete world-clock step (default 30 s). All behaviour is tick-based; wall-clock time is forbidden.</td></tr>
+    <tr><td><b>Whisper</b></td><td>End-to-end encrypted Nous-to-Nous message. Operators can never read it; only a ciphertext hash hits the chain.</td></tr>
+    <tr><td><b>Zero-diff invariant</b></td><td>Passive observation must never change the audit chain. 0 observers vs N observers ⇒ identical event hashes.</td></tr>
+  </table>
+</section>
+
+
+<!-- ============ SIGN-OFF ============ -->
+<section id="signoff">
+  <h2 class="sec">Sign-off sheet</h2>
+  <p class="sec-intro">Record the overall verdict per layer. A layer passes only when every card in it passes. Print this page (Cmd/Ctrl-P) or copy the table into your test report.</p>
+  <table>
+    <tr><th>Layer</th><th>Scope</th><th>Result</th><th>Tester / Date / Notes</th></tr>
+    <tr><td><b>L0</b></td><td>Environment setup (tools, install, env)</td><td>☐ Pass ☐ Fail</td><td>&nbsp;</td></tr>
+    <tr><td><b>L1</b></td><td>Invariant gates</td><td>☐ Pass ☐ Fail</td><td>&nbsp;</td></tr>
+    <tr><td><b>L2</b></td><td>Unit tests (TS + Brain)</td><td>☐ Pass ☐ Fail</td><td>&nbsp;</td></tr>
+    <tr><td><b>L3</b></td><td>Integration (bridge, DB, chain)</td><td>☐ Pass ☐ Fail</td><td>&nbsp;</td></tr>
+    <tr><td><b>L4</b></td><td>System bring-up (CLI, rig, Docker)</td><td>☐ Pass ☐ Fail</td><td>&nbsp;</td></tr>
+    <tr><td><b>L5</b></td><td>API &amp; contract</td><td>☐ Pass ☐ Fail</td><td>&nbsp;</td></tr>
+    <tr><td><b>L6</b></td><td>UI surfaces (Dashboard, Steward)</td><td>☐ Pass ☐ Fail</td><td>&nbsp;</td></tr>
+    <tr><td><b>SAT</b></td><td>Full system scenario (SAT-1…7, incl. land &amp; property)</td><td>☐ Pass ☐ Fail</td><td>&nbsp;</td></tr>
+    <tr><td><b>UAT</b></td><td>Human portal journey (UAT-1…7)</td><td>☐ Pass ☐ Fail</td><td>&nbsp;</td></tr>
+  </table>
+  <p style="margin-top:18px;"><b>Overall release verdict:</b> &nbsp; ☐ Ship &nbsp; ☐ Ship with noted defects &nbsp; ☐ Do not ship</p>
+
+  <div class="footer">
+    Noēsis — Full Test Guide · Bottom-up SAT &amp; UAT · self-contained HTML · open in any browser.<br>
+    Your checkbox progress is stored locally in this browser only (no network). To reset, clear site data or use a private window.
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+(function(){
+  // Copy buttons
+  document.querySelectorAll('pre .copy').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      // Build text: take pre text minus the button label
+      var clone = btn.closest('pre').cloneNode(true);
+      var b = clone.querySelector('.copy'); if(b) b.remove();
+      var text = clone.textContent.replace(/^\s*Copy\s*/,'').replace(/^\n/,'');
+      navigator.clipboard.writeText(text).then(function(){
+        var old = btn.textContent; btn.textContent='Copied'; setTimeout(function(){btn.textContent=old;},1200);
+      });
+    });
+  });
+
+  // Checkbox persistence + progress
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.chk input[type=checkbox]'));
+  boxes.forEach(function(cb,i){
+    cb.id = 'chk-'+i;
+    var lbl = cb.nextElementSibling; if(lbl) lbl.setAttribute('for', cb.id);
+    try{ if(localStorage.getItem('noesis-test-'+i)==='1') cb.checked=true; }catch(e){}
+    cb.addEventListener('change', function(){
+      try{ localStorage.setItem('noesis-test-'+i, cb.checked?'1':'0'); }catch(e){}
+      updateProgress();
+    });
+  });
+  function updateProgress(){
+    var done = boxes.filter(function(b){return b.checked;}).length;
+    var pct = boxes.length ? Math.round(done/boxes.length*100) : 0;
+    var t = document.getElementById('progressTxt');
+    var bar = document.getElementById('progressBar');
+    if(t) t.textContent = done+' / '+boxes.length+' checks complete';
+    if(bar) bar.style.width = pct+'%';
+  }
+  updateProgress();
+
+  // Sidebar active-on-scroll
+  var links = Array.prototype.slice.call(document.querySelectorAll('.sb-item'));
+  var map = {};
+  links.forEach(function(a){
+    var id = a.getAttribute('href').slice(1);
+    var el = document.getElementById(id);
+    if(el) map[id]=a;
+  });
+  var sections = Object.keys(map).map(function(id){return document.getElementById(id);});
+  function onScroll(){
+    var y = window.scrollY + 120, current=null;
+    sections.forEach(function(s){ if(s.offsetTop<=y) current=s.id; });
+    links.forEach(function(a){a.classList.remove('active');});
+    if(current && map[current]) map[current].classList.add('active');
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</body>
+</html>
