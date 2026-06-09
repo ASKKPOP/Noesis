@@ -228,41 +228,45 @@
 
 <section id="domains">
   <h2>Public hosting — domains for the Noēsis Portal (hosted side)</h2>
-  <p class="lead">Only the <b style="color:var(--hosted)">Noēsis Portal</b> (hosted) needs public domains. The <b style="color:var(--local)">Nous Console</b> (your machine) needs <b>none</b>. The shipped layout is a <b>hybrid</b>: <code>api.</code> and <code>traefik.</code> get their own <b>subdomains</b>; guide / dashboard / steward share the <b>apex domain on paths</b>.</p>
+  <p class="lead">Only the <b style="color:var(--hosted)">Noēsis Portal</b> (hosted) needs public domains. The <b style="color:var(--local)">Nous Console</b> (your machine) needs <b>none</b>. Deployment target: <b>AWS</b> — Route 53 → ALB (TLS via ACM) → an in-host <b>nginx</b> reverse proxy → containers. nginx routes by host: <code>api.</code> as a subdomain, guide / dashboard / steward as apex paths.</p>
 
-  <div class="note" style="border-left-color:var(--local)"><b style="color:var(--local)">Implemented:</b> the production overlay (<code>docker-compose.prod.yml</code>) ships this <b>hybrid layout</b> — two subdomains (<code>api.</code>, <code>traefik.</code>) + apex paths for the web UIs.</div>
+  <div class="note" style="border-left-color:var(--local)"><b style="color:var(--local)">Implemented (AWS):</b> <code>docker-compose.aws.yml</code> + <code>docker/nginx.noesiis.conf.template</code>. The ALB terminates TLS; nginx speaks plain HTTP. (The Traefik overlay <code>docker-compose.prod.yml</code> remains as the self-managed-TLS alternative.)</div>
 
-  <h3>The shipped hybrid layout</h3>
+  <h3>The topology</h3>
+<pre style="background:#06090e;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:10px 0;font-family:var(--mono);font-size:12.6px;line-height:1.6;color:#cdd9e5;overflow-x:auto;">Route 53 ──HTTPS:443 (ACM cert)──▶ AWS ALB ──HTTP──▶ EC2 nginx :${NGINX_HTTP_PORT} ──▶ containers
+                                                         │  Host: noesiis.com      → guide /, dashboard /dash, steward /console
+                                                         └─ Host: api.noesiis.com  → grid (REST + WS + Portal)</pre>
+
+  <h3>The shipped layout</h3>
   <table>
-    <tr><th>URL</th><th>→ Container</th><th>Kind</th><th>Notes</th></tr>
-    <tr><td><code>noesiis.com/</code></td><td>guide (landing)</td><td><span class="badge b-host" style="color:var(--local);border-color:var(--local)">apex path</span></td><td>Static site · Traefik catch-all (priority 1).</td></tr>
-    <tr><td><code>noesiis.com/dash</code></td><td>dashboard</td><td><span class="badge b-host" style="color:var(--local);border-color:var(--local)">apex path</span></td><td>Next <code>basePath=/dash</code> · <code>PathPrefix(/dash)</code> · calls <code>api.</code>.</td></tr>
-    <tr><td><code>noesiis.com/console</code></td><td>steward</td><td><span class="badge b-host" style="color:var(--local);border-color:var(--local)">apex path</span></td><td>Next <code>basePath=/console</code> · <code>PathPrefix(/console)</code>.</td></tr>
-    <tr><td><code>api.noesiis.com</code> <b>← required</b></td><td>grid (Portal + Grid)</td><td><span class="badge b-host" style="color:var(--hosted);border-color:var(--hosted)">subdomain</span></td><td>Whole host → grid (REST + WS + Portal). Must be public — the browser calls it.</td></tr>
-    <tr><td><code>traefik.noesiis.com</code></td><td>Traefik admin UI</td><td><span class="badge" style="color:var(--warn);border-color:var(--warn)">subdomain · auth</span></td><td><code>api@internal</code> behind <b>basic-auth</b> (<code>TRAEFIK_DASHBOARD_AUTH</code>).</td></tr>
-    <tr><td><code>turn:coturn.noesiis.com:3478</code></td><td>coturn (TURN/STUN)</td><td><span class="badge" style="color:var(--orange);border-color:var(--orange)">direct</span></td><td><b>Not HTTP.</b> Direct A-record to the IP, bypasses Traefik. Open UDP/TCP 3478 / TLS 5349.</td></tr>
+    <tr><th>URL</th><th>→ Container</th><th>nginx routing</th><th>Notes</th></tr>
+    <tr><td><code>noesiis.com/</code></td><td>guide (landing)</td><td><span class="badge b-host" style="color:var(--local);border-color:var(--local)">apex path</span></td><td><code>server_name noesiis.com</code> · <code>location /</code>.</td></tr>
+    <tr><td><code>noesiis.com/dash</code></td><td>dashboard</td><td><span class="badge b-host" style="color:var(--local);border-color:var(--local)">apex path</span></td><td>Next <code>basePath=/dash</code> · <code>location /dash</code> (passthrough).</td></tr>
+    <tr><td><code>noesiis.com/console</code></td><td>steward</td><td><span class="badge b-host" style="color:var(--local);border-color:var(--local)">apex path</span></td><td>Next <code>basePath=/console</code> · <code>location /console</code>.</td></tr>
+    <tr><td><code>api.noesiis.com</code> <b>← required</b></td><td>grid (Portal + Grid)</td><td><span class="badge b-host" style="color:var(--hosted);border-color:var(--hosted)">subdomain</span></td><td><code>server_name api.noesiis.com</code> · WebSocket upgrade for <code>/ws</code>.</td></tr>
+    <tr><td><code>turn:coturn.noesiis.com:3478</code></td><td>coturn (TURN/STUN)</td><td><span class="badge" style="color:var(--orange);border-color:var(--orange)">not via ALB</span></td><td><b>Not HTTP.</b> ALB is L7 — TURN needs an <b>NLB</b> or the EC2 elastic IP. Open UDP/TCP 3478 / TLS 5349. Only if P2P.</td></tr>
   </table>
-  <div class="note"><b>Why not paths for everything?</b> <code>api.</code> is its own subdomain so the Grid owns a whole host (cleanest for REST + WebSocket + Portal). <code>traefik.</code> must be a host (the admin UI is served by <code>api@internal</code>, not a container path). The web UIs <i>can</i> be apex paths, so they are. <b>coturn</b> is never a path (no URLs — host:port only).</div>
+  <div class="note"><b>Why this shape on AWS.</b> The ALB owns the cert (ACM) and forwards plain HTTP to one nginx, which demuxes by <code>Host</code>. <code>api.</code> is a whole host (cleanest for REST + WebSocket). The web UIs are apex paths. <b>coturn</b> can't sit behind the ALB at all (L7 HTTP only) — give it an NLB/elastic-IP. No Let's Encrypt / Traefik here.</div>
 
-  <div class="note"><b>Cross-origin (CORS).</b> The web UIs are served from <code>https://noesiis.com</code> but call the Grid at <code>https://api.noesiis.com</code> — different host = cross-origin. The overlay wires <code>GRID_CORS_ORIGINS=https://noesiis.com</code> automatically from <code>DOMAIN</code>, so the Grid accepts those requests.</div>
+  <div class="note"><b>Cross-origin (CORS).</b> The UIs load from <code>https://noesiis.com</code> but call <code>https://api.noesiis.com</code> — cross-origin. <code>docker-compose.aws.yml</code> wires <code>GRID_CORS_ORIGINS=https://noesiis.com</code> from <code>DOMAIN</code>, so the Grid accepts them.</div>
 
-  <h3>DNS — three A-records (+ coturn), one IP</h3>
-<pre style="background:#06090e;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:10px 0;font-family:var(--mono);font-size:12.6px;line-height:1.6;color:#cdd9e5;overflow-x:auto;">noesiis.com           A   &lt;server-ip&gt;   <span style="color:#5b6b7c">(guide / · dash /dash · steward /console)</span>
-api.noesiis.com       A   &lt;server-ip&gt;   <span style="color:#5b6b7c">(grid · REQUIRED)</span>
-traefik.noesiis.com   A   &lt;server-ip&gt;   <span style="color:#5b6b7c">(Traefik admin UI · basic-auth)</span>
-coturn.noesiis.com    A   &lt;server-ip&gt;   <span style="color:#5b6b7c">(coturn · DIRECT, not Traefik — only if P2P)</span></pre>
+  <div class="note"><b>Ports.</b> nginx publishes <code>${NGINX_HTTP_PORT:-80}</code> on the host (point the ALB target group at it). Your other host services use <code>3000 / 5000 / 5001 / 7001</code> — nginx avoids them; the app containers (<code>3001/3002/8080/3306</code>) are reachable only inside Docker + the EC2 security group, never via the ALB.</div>
 
-  <h3>Deploy it</h3>
-<pre style="background:#06090e;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:10px 0;font-family:var(--mono);font-size:12.6px;line-height:1.6;color:#cdd9e5;overflow-x:auto;"><span style="color:#5b6b7c"># 1) point the A-records above at your server IP</span>
-<span style="color:#5b6b7c"># 2) .env:</span>
+  <h3>Route 53 records (point at the ALB)</h3>
+<pre style="background:#06090e;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:10px 0;font-family:var(--mono);font-size:12.6px;line-height:1.6;color:#cdd9e5;overflow-x:auto;">noesiis.com           ALIAS  → ALB   <span style="color:#5b6b7c">(guide / · dash /dash · steward /console)</span>
+api.noesiis.com       ALIAS  → ALB   <span style="color:#5b6b7c">(grid · REQUIRED)</span>
+coturn.noesiis.com    A      → NLB / EC2 IP   <span style="color:#5b6b7c">(coturn · direct, only if P2P)</span></pre>
+
+  <h3>Deploy it (on the host, folder <code>noesiis</code>)</h3>
+<pre style="background:#06090e;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:10px 0;font-family:var(--mono);font-size:12.6px;line-height:1.6;color:#cdd9e5;overflow-x:auto;"><span style="color:#5b6b7c"># ACM cert on the ALB must cover noesiis.com + api.noesiis.com (or *.noesiis.com).</span>
+<span style="color:#5b6b7c"># .env:</span>
 DOMAIN=noesiis.com
-ACME_EMAIL=you@example.com
-TRAEFIK_DASHBOARD_AUTH=admin:$2y$05$...   <span style="color:#5b6b7c"># htpasswd -nbB admin 'pass'</span>
-<span style="color:#5b6b7c"># 3) build + launch the hosted Portal+Grid (no brain containers — those are local):</span>
-docker compose -f docker-compose.yml -f docker-compose.prod.yml \
-  up -d --build traefik guide mysql grid dashboard steward
-<span style="color:#5b6b7c"># add 'coturn' to that list only if you want Brain-to-Brain P2P</span></pre>
-  <div class="note"><b>Why <code>--build</code> is mandatory.</b> <code>NEXT_PUBLIC_BASE_PATH</code> (<code>/dash</code>, <code>/console</code>) and <code>NEXT_PUBLIC_GRID_ORIGIN=https://api.${DOMAIN}</code> are <b>baked into the dashboard/steward bundles at build time</b>. Change the domain → rebuild.</div>
+NGINX_HTTP_PORT=80        <span style="color:#5b6b7c"># the ALB target port (change if 80 is taken)</span>
+<span style="color:#5b6b7c"># build + launch (no brain containers — those are local Nous Consoles):</span>
+docker compose -f docker-compose.yml -f docker-compose.aws.yml \
+  up -d --build nginx guide mysql grid dashboard steward
+<span style="color:#5b6b7c"># add 'coturn' only if you want Brain-to-Brain P2P</span></pre>
+  <div class="note"><b>Why <code>--build</code> is mandatory.</b> <code>NEXT_PUBLIC_BASE_PATH</code> (<code>/dash</code>, <code>/console</code>) and <code>NEXT_PUBLIC_GRID_ORIGIN=https://api.${DOMAIN}</code> are <b>baked into the dashboard/steward bundles at build time</b>. ALB health check → <code>noesiis.com/</code> (guide) or <code>api.noesiis.com/health</code>.</div>
 </section>
 
 <section id="key">

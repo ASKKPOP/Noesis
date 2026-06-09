@@ -1,0 +1,62 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Noēsis — nginx reverse proxy (sits BEHIND an AWS Application Load Balancer).
+#
+#   Route 53 ── HTTPS:443 (ACM cert) ──▶ ALB ── HTTP ──▶ this nginx :80 ──▶ containers
+#
+# The ALB terminates TLS, so nginx speaks plain HTTP. Routing is by Host header:
+#   ${DOMAIN}        → guide (/) · dashboard (/dash) · steward (/console)
+#   api.${DOMAIN}    → grid (Portal + Grid · REST + WS + Portal)
+#
+# Rendered from this template by the nginx image entrypoint (envsubst) — only the
+# ${DOMAIN} token is substituted (NGINX_ENVSUBST_FILTER=^DOMAIN$); every nginx
+# runtime $variable below is preserved.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# WebSocket upgrade plumbing (for api.${DOMAIN}/ws/events).
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+upstream noesis_guide     { server guide:80; }
+upstream noesis_dashboard { server dashboard:3001; }
+upstream noesis_steward   { server steward:3002; }
+upstream noesis_grid      { server grid:8080; }
+
+# ── Apex: guide + dashboard (/dash) + steward (/console) ─────────────────────
+server {
+    listen 80;
+    server_name ${DOMAIN};
+
+    # ALB already terminated TLS — tell upstreams the original scheme.
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_http_version 1.1;
+
+    # Next.js apps are built with basePath=/dash and /console, so the prefix is
+    # passed through unchanged (no rewrite).
+    location /dash    { proxy_pass http://noesis_dashboard; }
+    location /console { proxy_pass http://noesis_steward; }
+    location /        { proxy_pass http://noesis_guide; }
+}
+
+# ── api subdomain → grid (REST + WebSocket firehose + Portal) ────────────────
+server {
+    listen 80;
+    server_name api.${DOMAIN};
+
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_http_version 1.1;
+
+    # WebSocket upgrade for /ws/events (and any future WS routes).
+    proxy_set_header Upgrade    $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_read_timeout 3600s;   # keep the firehose alive
+
+    location / { proxy_pass http://noesis_grid; }
+}
