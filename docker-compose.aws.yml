@@ -66,3 +66,28 @@ services:
         NEXT_PUBLIC_GRID_ORIGIN: "https://api.${DOMAIN:-localhost}"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3002/console/api/health"]
+
+  # ── coturn (P2P) — behind a SEPARATE AWS NLB (NOT the ALB) ──────────────────
+  # The ALB is L7/HTTP and cannot carry STUN/TURN. Create an NLB (L4) and point
+  # coturn.${DOMAIN} at it. The relay range is shrunk so total NLB listeners stay
+  # under the default ~50 quota: 44 relay (UDP 49152-49195) + 3478 udp/tcp + 5349
+  # tcp = 47 listeners. coturn advertises the NLB's IP via --external-ip.
+  # Only needed when Brain-to-Brain P2P is enabled.
+  coturn:
+    environment:
+      DETECT_EXTERNAL_IP: "no"
+    command: >
+      -f
+      --use-auth-secret
+      --realm=noesis.grid
+      --static-auth-secret=${TURN_STATIC_AUTH_SECRET:-changeme-turn-secret}
+      --min-port=${TURN_RELAY_MIN:-49152}
+      --max-port=${TURN_RELAY_MAX:-49195}
+      --external-ip=${TURN_EXTERNAL_IP:-127.0.0.1}
+      --no-multicast-peers
+      --denied-peer-ip=10.0.0.0-10.255.255.255
+      --denied-peer-ip=192.168.0.0-192.168.255.255
+      --denied-peer-ip=172.16.0.0-172.31.255.255
+      --denied-peer-ip=127.0.0.0-127.255.255.255
+    ports:
+      - "${TURN_RELAY_MIN:-49152}-${TURN_RELAY_MAX:-49195}:${TURN_RELAY_MIN:-49152}-${TURN_RELAY_MAX:-49195}/udp"
