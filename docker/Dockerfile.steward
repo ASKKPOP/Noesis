@@ -7,6 +7,9 @@ WORKDIR /app
 
 ARG NEXT_PUBLIC_GRID_ORIGIN=http://localhost:8080
 ENV NEXT_PUBLIC_GRID_ORIGIN=${NEXT_PUBLIC_GRID_ORIGIN}
+# Apex-path hosting (e.g. "/console"). Empty in dev → app served at root.
+ARG NEXT_PUBLIC_BASE_PATH=
+ENV NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH}
 
 RUN apk add --no-cache python3 make g++
 
