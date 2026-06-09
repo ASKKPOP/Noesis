@@ -44,6 +44,14 @@ services:
       - "${NGINX_HTTP_PORT:-80}:80"
     restart: unless-stopped
 
+  # ── Services Guide (static landing) — reached internally by the proxy ───────
+  guide:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.guide
+    container_name: noesis-guide
+    restart: unless-stopped
+
   # ── Portal + Grid (api.${DOMAIN}). Allow the apex origin (cross-origin) ─────
   grid:
     environment:
