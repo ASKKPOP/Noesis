@@ -483,9 +483,21 @@ export function buildServerWithHub(
     // Dashboard CORS (dev): Next.js dev server runs on :3001 per 03-VALIDATION.md.
     // :3000 is included because `next dev` falls back to :3000 when :3001 is taken.
     // :3002 is the Steward Console.
-    // Production hardening (0.0.0.0 bind, stricter origin list) is Phase 4.
+    // Production (subdomain hosting): the dashboard/steward live on different
+    // origins (dash./console.${DOMAIN}) so requests to api.${DOMAIN} are
+    // cross-origin. Add those HTTPS origins via GRID_CORS_ORIGINS (comma-
+    // separated); the localhost defaults are always kept for dev.
+    const corsOrigins = [
+        'http://localhost:3001',
+        'http://localhost:3000',
+        'http://localhost:3002',
+        ...(process.env.GRID_CORS_ORIGINS ?? '')
+            .split(',')
+            .map((o) => o.trim())
+            .filter((o) => o.length > 0),
+    ];
     void app.register(cors, {
-        origin: ['http://localhost:3001', 'http://localhost:3000', 'http://localhost:3002'],
+        origin: corsOrigins,
         credentials: true,
         methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
     });

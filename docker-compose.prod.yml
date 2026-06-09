@@ -1,34 +1,37 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Noēsis — PRODUCTION OVERLAY · SINGLE-APEX PATH HOSTING (one domain, paths).
-# Traefik routes everything under ONE apex domain by path. Use with the base:
+# Noēsis — PRODUCTION OVERLAY · SUBDOMAIN HOSTING (one service per subdomain).
+# Use TOGETHER with the base compose:
 #
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build \
 #       traefik guide mysql grid dashboard steward   # (add coturn for P2P)
 #
-# Point ONE DNS A-record at the server's public IP:
+# Point these DNS A-records at the server's public IP, then it's live:
 #
-#   ${DOMAIN}/            → Services Guide   (container: guide,   :80)
-#   ${DOMAIN}/api  …      → Portal + Grid    (container: grid,    :8080)  ← REQUIRED
-#   ${DOMAIN}/ws   …      → Grid WebSocket firehose (grid)
-#   ${DOMAIN}/portal …    → Portal auth/routes (grid)
-#   ${DOMAIN}/health      → Grid health (grid)
-#   ${DOMAIN}/dash …      → Dashboard        (container: dashboard, :3001, Next basePath=/dash)
-#   ${DOMAIN}/console …   → Steward Console  (container: steward,   :3002, Next basePath=/console)
+#   ${DOMAIN}            → Services Guide   (container: guide,   :80)
+#   guide.${DOMAIN}      → Services Guide   (alias)
+#   api.${DOMAIN}        → Portal + Grid    (container: grid,    :8080)  ← REQUIRED
+#   dash.${DOMAIN}       → Dashboard        (container: dashboard, :3001)
+#   console.${DOMAIN}    → Steward Console  (container: steward,   :3002)
+#   traefik.${DOMAIN}    → Traefik dashboard (admin UI, basic-auth protected)
 #
-# coturn is NOT routed here — it is not HTTP. Give it a direct A-record (or reuse
-# the apex name) and reach it at turn:${DOMAIN}:3478 / :5349; open those ports.
+# coturn is NOT routed by Traefik — it is not HTTP. Give it a direct A-record
+#   coturn.${DOMAIN}  → server IP   (or reuse the apex name) and reach it at
+#   turn:coturn.${DOMAIN}:3478 / :5349 — open UDP/TCP 3478 + TLS 5349.
 #
-# Single-apex = SAME ORIGIN, so there is NO CORS between the apps and the Grid.
-# Dashboard/Steward are rebuilt with NEXT_PUBLIC_GRID_ORIGIN=https://${DOMAIN}
-# and NEXT_PUBLIC_BASE_PATH=/dash|/console (Next inlines these at BUILD time —
-# you MUST `--build` after changing DOMAIN).
+# CORS: subdomains are cross-origin, so the Grid must allow the dashboard/steward
+# origins — wired below via GRID_CORS_ORIGINS. The dashboard/steward bundles are
+# rebuilt with NEXT_PUBLIC_GRID_ORIGIN=https://api.${DOMAIN} (Next inlines this at
+# BUILD time — you MUST `--build` after changing DOMAIN).
 #
 # Traefik fetches free Let's Encrypt TLS certs automatically (set ACME_EMAIL).
-# Required env (.env):  DOMAIN=noesiis.com   ACME_EMAIL=you@example.com
+# Required env (.env):
+#   DOMAIN=noesiis.com
+#   ACME_EMAIL=you@example.com
+#   TRAEFIK_DASHBOARD_AUTH=admin:$$apr1$$....   # htpasswd -nbB admin 'pass' (escape $ as $$ if inline)
 # ─────────────────────────────────────────────────────────────────────────────
 services:
 
-  # ── Traefik: the single public door (80/443) that routes domains → services ──
+  # ── Traefik: the single public door (80/443). Also serves its own admin UI ──
   traefik:
     image: traefik:v3.1
     container_name: noesis-traefik
@@ -44,15 +47,27 @@ services:
       - "--certificatesresolvers.le.acme.tlschallenge=true"
       - "--certificatesresolvers.le.acme.email=${ACME_EMAIL:-admin@example.com}"
       - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+      # Enable the Traefik dashboard (served via the internal api@internal service).
+      - "--api.dashboard=true"
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "letsencrypt:/letsencrypt"
+    labels:
+      traefik.enable: "true"
+      # traefik.${DOMAIN} → the admin dashboard (api@internal), behind basic-auth.
+      traefik.http.routers.traefik.rule: "Host(`traefik.${DOMAIN:-localhost}`)"
+      traefik.http.routers.traefik.entrypoints: "websecure"
+      traefik.http.routers.traefik.tls.certresolver: "le"
+      traefik.http.routers.traefik.service: "api@internal"
+      traefik.http.routers.traefik.middlewares: "traefik-auth"
+      # htpasswd users — set TRAEFIK_DASHBOARD_AUTH in .env (user:hashed-pass).
+      traefik.http.middlewares.traefik-auth.basicauth.users: "${TRAEFIK_DASHBOARD_AUTH:-admin:$$apr1$$changeme$$changeme}"
     restart: unless-stopped
 
-  # ── Services Guide (static) — catch-all for the apex, LOWEST priority ────────
+  # ── Services Guide (static) — apex + guide. alias ───────────────────────────
   guide:
     build:
       context: .
@@ -60,54 +75,43 @@ services:
     container_name: noesis-guide
     labels:
       traefik.enable: "true"
-      # Bare Host() matches every path on the apex; priority 1 means the longer
-      # path routers below (/api /ws /portal /health /dash /console) win first.
-      traefik.http.routers.guide.rule: "Host(`${DOMAIN:-localhost}`)"
-      traefik.http.routers.guide.priority: "1"
+      traefik.http.routers.guide.rule: "Host(`${DOMAIN:-localhost}`) || Host(`guide.${DOMAIN:-localhost}`)"
       traefik.http.routers.guide.entrypoints: "websecure"
       traefik.http.routers.guide.tls.certresolver: "le"
       traefik.http.services.guide.loadbalancer.server.port: "80"
     restart: unless-stopped
 
-  # ── Portal + Grid — apex paths /api /ws /portal /health (no strip) ───────────
+  # ── Portal + Grid → api.${DOMAIN}. CORS allows the dashboard/steward origins ─
   grid:
+    environment:
+      GRID_CORS_ORIGINS: "https://${DOMAIN:-localhost},https://dash.${DOMAIN:-localhost},https://console.${DOMAIN:-localhost}"
     labels:
       traefik.enable: "true"
-      traefik.http.routers.grid.rule: "Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api`) || PathPrefix(`/ws`) || PathPrefix(`/portal`) || PathPrefix(`/health`))"
-      traefik.http.routers.grid.priority: "100"
+      traefik.http.routers.grid.rule: "Host(`api.${DOMAIN:-localhost}`)"
       traefik.http.routers.grid.entrypoints: "websecure"
       traefik.http.routers.grid.tls.certresolver: "le"
       traefik.http.services.grid.loadbalancer.server.port: "8080"
 
-  # ── Dashboard — apex path /dash (Next basePath=/dash, same-origin API) ───────
+  # ── Dashboard → dash.${DOMAIN}. Client calls api.${DOMAIN} (baked at build) ──
   dashboard:
     build:
       args:
-        NEXT_PUBLIC_BASE_PATH: "/dash"
-        NEXT_PUBLIC_GRID_ORIGIN: "https://${DOMAIN:-localhost}"
-    # Next serves everything (incl. /api/dash/health) under the basePath.
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/dash/api/dash/health"]
+        NEXT_PUBLIC_GRID_ORIGIN: "https://api.${DOMAIN:-localhost}"
     labels:
       traefik.enable: "true"
-      traefik.http.routers.dashboard.rule: "Host(`${DOMAIN:-localhost}`) && PathPrefix(`/dash`)"
-      traefik.http.routers.dashboard.priority: "50"
+      traefik.http.routers.dashboard.rule: "Host(`dash.${DOMAIN:-localhost}`)"
       traefik.http.routers.dashboard.entrypoints: "websecure"
       traefik.http.routers.dashboard.tls.certresolver: "le"
       traefik.http.services.dashboard.loadbalancer.server.port: "3001"
 
-  # ── Steward Console — apex path /console (Next basePath=/console) ────────────
+  # ── Steward Console → console.${DOMAIN} ─────────────────────────────────────
   steward:
     build:
       args:
-        NEXT_PUBLIC_BASE_PATH: "/console"
-        NEXT_PUBLIC_GRID_ORIGIN: "https://${DOMAIN:-localhost}"
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3002/console/api/health"]
+        NEXT_PUBLIC_GRID_ORIGIN: "https://api.${DOMAIN:-localhost}"
     labels:
       traefik.enable: "true"
-      traefik.http.routers.steward.rule: "Host(`${DOMAIN:-localhost}`) && PathPrefix(`/console`)"
-      traefik.http.routers.steward.priority: "50"
+      traefik.http.routers.steward.rule: "Host(`console.${DOMAIN:-localhost}`)"
       traefik.http.routers.steward.entrypoints: "websecure"
       traefik.http.routers.steward.tls.certresolver: "le"
       traefik.http.services.steward.loadbalancer.server.port: "3002"

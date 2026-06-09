@@ -228,39 +228,41 @@
 
 <section id="domains">
   <h2>Public hosting — domains for the Noēsis Portal (hosted side)</h2>
-  <p class="lead">Only the <b style="color:var(--hosted)">Noēsis Portal</b> (hosted) needs public domains. The <b style="color:var(--local)">Nous Console</b> (your machine) needs <b>none</b> — it dials out to the Portal, nothing dials in. Traefik (the reverse proxy) owns ports <code>:80/:443</code> and routes requests to the right container by <b>host + path</b> — so a single domain can serve all of them.</p>
+  <p class="lead">Only the <b style="color:var(--hosted)">Noēsis Portal</b> (hosted) needs public domains. The <b style="color:var(--local)">Nous Console</b> (your machine) needs <b>none</b> — it dials out to the Portal, nothing dials in. Traefik (the reverse proxy) owns ports <code>:80/:443</code> and routes each <b>subdomain</b> to the right container.</p>
 
-  <div class="note" style="border-left-color:var(--local)"><b style="color:var(--local)">Implemented:</b> the production overlay (<code>docker-compose.prod.yml</code>) now ships the <b>single-apex path layout</b> below — one domain, everything on paths. (Subdomains were the earlier default; the table shows why each service can or can't be a path.)</div>
+  <div class="note" style="border-left-color:var(--local)"><b style="color:var(--local)">Implemented:</b> the production overlay (<code>docker-compose.prod.yml</code>) ships the <b>subdomain layout</b> below — one subdomain per service, plus the Traefik admin dashboard.</div>
 
-  <h3>Can each service be a path? (the why)</h3>
+  <h3>The shipped subdomain layout</h3>
   <table>
-    <tr><th>Service</th><th>Apex path</th><th>Path-able?</th><th>How / why</th></tr>
-    <tr><td><b>Guide</b> (landing)</td><td><code>noesiis.com/</code></td><td><span class="badge b-host" style="color:var(--local);border-color:var(--local)">yes — trivial</span></td><td>Static site at <code>/</code> (Traefik catch-all, priority 1).</td></tr>
-    <tr><td><b>Grid API</b> (Portal + Grid) <b>← required</b></td><td><code>/api /ws /portal /health</code></td><td><span class="badge b-host" style="color:var(--local);border-color:var(--local)">yes — easy</span></td><td>HTTP. Same-origin ⇒ <b>no CORS</b>. <b>Must be public</b> — the dashboards call it from the browser.</td></tr>
-    <tr><td><b>Dashboard</b></td><td><code>noesiis.com/dash</code></td><td><span class="badge b-host" style="color:var(--local);border-color:var(--local)">wired ✓</span></td><td>Next.js <code>basePath:'/dash'</code> (env-driven) + Traefik <code>PathPrefix(/dash)</code>, priority 50. Baked at build.</td></tr>
-    <tr><td><b>Steward</b></td><td><code>noesiis.com/console</code></td><td><span class="badge b-host" style="color:var(--local);border-color:var(--local)">wired ✓</span></td><td>Next.js <code>basePath:'/console'</code> + <code>PathPrefix(/console)</code>, priority 50.</td></tr>
-    <tr><td><b>coturn</b> (TURN/STUN)</td><td><code>turn:noesiis.com:3478</code></td><td><span class="badge" style="color:var(--orange);border-color:var(--orange)">no — impossible</span></td><td><b>Not HTTP.</b> Host + port, not a path. Direct A-record to the server IP, <b>bypasses Traefik</b>. Open UDP/TCP 3478 / TLS 5349.</td></tr>
+    <tr><th>Subdomain</th><th>→ Container</th><th>Via Traefik?</th><th>Notes</th></tr>
+    <tr><td><code>noesiis.com</code> &amp; <code>guide.noesiis.com</code></td><td>guide (landing)</td><td><span class="badge b-host" style="color:var(--local);border-color:var(--local)">yes</span></td><td>Static site.</td></tr>
+    <tr><td><code>api.noesiis.com</code> <b>← required</b></td><td>grid (Portal + Grid)</td><td><span class="badge b-host" style="color:var(--local);border-color:var(--local)">yes</span></td><td>REST + WS + Portal. The dashboards call it from the browser, so it <b>must</b> be public.</td></tr>
+    <tr><td><code>dash.noesiis.com</code></td><td>dashboard</td><td><span class="badge b-host" style="color:var(--local);border-color:var(--local)">yes</span></td><td>Built with <code>NEXT_PUBLIC_GRID_ORIGIN=https://api.noesiis.com</code>.</td></tr>
+    <tr><td><code>console.noesiis.com</code></td><td>steward</td><td><span class="badge b-host" style="color:var(--local);border-color:var(--local)">yes</span></td><td>Same — points at <code>api.</code>.</td></tr>
+    <tr><td><code>traefik.noesiis.com</code></td><td>Traefik admin UI</td><td><span class="badge" style="color:var(--warn);border-color:var(--warn)">yes — auth</span></td><td><code>api@internal</code> behind <b>basic-auth</b> (<code>TRAEFIK_DASHBOARD_AUTH</code>). Routing/health visibility.</td></tr>
+    <tr><td><code>coturn.noesiis.com</code></td><td>coturn (TURN/STUN)</td><td><span class="badge" style="color:var(--orange);border-color:var(--orange)">no — direct</span></td><td><b>Not HTTP.</b> Direct A-record to the server IP; reach via <code>turn:coturn.noesiis.com:3478</code>. Open UDP/TCP 3478 / TLS 5349.</td></tr>
   </table>
-  <div class="note"><b>Two things people get wrong.</b> (1) <b>Traefik needs no domain of its own</b> — it <i>is</i> the front door (owns :80/:443 and terminates every domain); only its optional admin UI would sit at <code>traefik.noesiis.com</code>, and it's off by default. (2) <b>coturn can never be a path</b> — a TURN server has no URLs; WebRTC clients connect to host:port, so it shares the apex name on its own ports and is reached directly, not through Traefik.</div>
+  <div class="note"><b>Cross-origin (CORS).</b> With subdomains the dashboard (<code>dash.</code>) and Grid (<code>api.</code>) are <b>different origins</b>, so the Grid must allow them. The prod overlay wires <code>GRID_CORS_ORIGINS=https://noesiis.com,https://dash.noesiis.com,https://console.noesiis.com</code> automatically from <code>DOMAIN</code>. <b>coturn</b> still can't be a Traefik route — it has no URLs; WebRTC connects to host:port directly.</div>
 
-  <h3>The shipped single-apex layout</h3>
-<pre style="background:#06090e;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:10px 0;font-family:var(--mono);font-size:12.6px;line-height:1.6;color:#cdd9e5;overflow-x:auto;">noesiis.com/            → guide      <span style="color:#5b6b7c">(static · catch-all, priority 1)</span>
-noesiis.com/api …       → grid       <span style="color:#5b6b7c">(Portal+Grid · /api /ws /portal /health, priority 100)</span>
-noesiis.com/dash …      → dashboard  <span style="color:#5b6b7c">(Next basePath=/dash, priority 50)</span>
-noesiis.com/console …   → steward    <span style="color:#5b6b7c">(Next basePath=/console, priority 50)</span>
-turn:noesiis.com:3478   → coturn     <span style="color:#5b6b7c">(ports, NOT a path — direct, bypasses Traefik)</span></pre>
+  <h3>DNS — six records, one IP</h3>
+<pre style="background:#06090e;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:10px 0;font-family:var(--mono);font-size:12.6px;line-height:1.6;color:#cdd9e5;overflow-x:auto;">noesiis.com           A   &lt;server-ip&gt;   <span style="color:#5b6b7c">(guide · Traefik)</span>
+api.noesiis.com       A   &lt;server-ip&gt;   <span style="color:#5b6b7c">(grid · Traefik · REQUIRED)</span>
+dash.noesiis.com      A   &lt;server-ip&gt;   <span style="color:#5b6b7c">(dashboard · Traefik)</span>
+console.noesiis.com   A   &lt;server-ip&gt;   <span style="color:#5b6b7c">(steward · Traefik)</span>
+traefik.noesiis.com   A   &lt;server-ip&gt;   <span style="color:#5b6b7c">(Traefik admin UI · basic-auth)</span>
+coturn.noesiis.com    A   &lt;server-ip&gt;   <span style="color:#5b6b7c">(coturn · DIRECT, not Traefik)</span></pre>
 
   <h3>Deploy it</h3>
-<pre style="background:#06090e;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:10px 0;font-family:var(--mono);font-size:12.6px;line-height:1.6;color:#cdd9e5;overflow-x:auto;"><span style="color:#5b6b7c"># 1) one DNS A-record: noesiis.com → your server IP</span>
+<pre style="background:#06090e;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:10px 0;font-family:var(--mono);font-size:12.6px;line-height:1.6;color:#cdd9e5;overflow-x:auto;"><span style="color:#5b6b7c"># 1) point the six A-records above at your server IP</span>
 <span style="color:#5b6b7c"># 2) .env:</span>
 DOMAIN=noesiis.com
 ACME_EMAIL=you@example.com
-<span style="color:#5b6b7c"># 3) build + launch hosted Portal+Grid (no brain containers — those are local):</span>
+TRAEFIK_DASHBOARD_AUTH=admin:$2y$05$...   <span style="color:#5b6b7c"># htpasswd -nbB admin 'pass'</span>
+<span style="color:#5b6b7c"># 3) build + launch the hosted Portal+Grid (no brain containers — those are local):</span>
 docker compose -f docker-compose.yml -f docker-compose.prod.yml \
   up -d --build traefik guide mysql grid dashboard steward
 <span style="color:#5b6b7c"># add 'coturn' to that list only if you want Brain-to-Brain P2P</span></pre>
-  <div class="note"><b>Why <code>--build</code> is mandatory.</b> <code>NEXT_PUBLIC_BASE_PATH</code> (<code>/dash</code>, <code>/console</code>) and <code>NEXT_PUBLIC_GRID_ORIGIN=https://${DOMAIN}</code> are <b>baked into the dashboard/steward bundles at build time</b>. Change the domain → rebuild, or the apps will point at the wrong origin. Healthchecks are pre-adjusted for the basePath (<code>/dash/api/dash/health</code>, <code>/console/api/health</code>).</div>
-  <p class="lead" style="font-size:13.5px"><b>Recommendation:</b> start with <b>subdomains</b> (zero config, already wired in <code>docker-compose.prod.yml</code>). Switch to apex-paths only if owning a single name matters more than the per-app <code>basePath</code> + rebuild cost. Either way, coturn lives on ports under the bare name, and <code>api.</code> (the Grid) <b>must</b> be publicly reachable.</p>
+  <div class="note"><b>Why <code>--build</code> is mandatory.</b> <code>NEXT_PUBLIC_GRID_ORIGIN=https://api.${DOMAIN}</code> is <b>baked into the dashboard/steward bundles at build time</b>. Change the domain → rebuild, or the apps point at the wrong API origin.</div>
 </section>
 
 <section id="key">
