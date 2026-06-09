@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noēsis — Remote Services &amp; Installation (v1)</title>
+<style>
+  :root{
+    --bg:#0a0e14; --bg2:#0e141d; --surface:#121a25; --surface2:#16202d;
+    --border:#22303f; --border-soft:#1a2633;
+    --text:#e6ecf2; --muted:#a9b6c4; --muted2:#6b7b8c;
+    --accent:#5fb0e8; --accent2:#46e0d0; --orange:#e0764a; --warn:#d8b24a;
+    --req:#3fb950; --opt:#9a86ff; --defer:#6b7b8c; --prod:#e0764a;
+    --mono:'SFMono-Regular',ui-monospace,'JetBrains Mono',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14.5px;line-height:1.65;}
+  a{color:var(--accent);text-decoration:none;} a:hover{text-decoration:underline;}
+  code{font-family:var(--mono);font-size:.85em;background:var(--surface2);border:1px solid var(--border-soft);padding:.08em .38em;border-radius:4px;color:var(--accent2);}
+  main{max-width:1040px;margin:0 auto;padding:0 40px 120px;}
+  .hero{padding:50px 0 26px;border-bottom:1px solid var(--border);}
+  .hero .kicker{font-family:var(--mono);font-size:12px;color:var(--accent2);letter-spacing:.1em;text-transform:uppercase;}
+  .hero h1{font-size:38px;line-height:1.12;margin:14px 0 12px;font-weight:750;}
+  .hero p{font-size:16px;color:var(--muted);max-width:80ch;}
+  section{padding:36px 0 4px;border-top:1px solid var(--border-soft);margin-top:26px;}
+  h2{font-size:25px;font-weight:720;letter-spacing:-.01em;}
+  h3{font-size:18px;font-weight:660;margin:24px 0 6px;}
+  p{margin:9px 0;}
+  .lead{color:var(--muted);font-size:15px;max-width:82ch;margin:8px 0;}
+  ul,ol{margin:8px 0 8px 22px;} li{margin:5px 0;}
+
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:16px 0;font-size:12.5px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;color:var(--muted);}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block;}
+  .badge{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;border-radius:5px;border:1px solid var(--border);font-weight:700;}
+  .b-req{color:var(--req);border-color:rgba(63,185,80,.45);} .b-opt{color:var(--opt);border-color:rgba(154,134,255,.45);}
+  .b-defer{color:var(--defer);border-color:var(--border);} .b-prod{color:var(--prod);border-color:rgba(224,118,74,.45);}
+
+  .diagram-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;margin:18px 0;overflow-x:auto;}
+  svg{display:block;margin:0 auto;min-width:880px;}
+  .svgbox{fill:var(--surface);stroke:var(--border);stroke-width:1.2;}
+  .svgband{fill:rgba(255,255,255,.018);stroke:var(--border-soft);stroke-width:1;stroke-dasharray:4 4;}
+  text{font-family:var(--sans);fill:var(--text);}
+  .t-title{font-size:13px;font-weight:700;}
+  .t-sub{font-size:10.5px;fill:var(--muted);font-family:var(--mono);}
+  .t-band{font-size:11px;fill:var(--muted2);font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;}
+  .edge{stroke:var(--muted2);stroke-width:1.4;fill:none;}
+  .edge-acc{stroke:var(--accent);stroke-width:1.6;fill:none;}
+  .edge-lbl{font-size:9.5px;fill:var(--muted2);font-family:var(--mono);}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.4px;}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--border-soft);vertical-align:top;}
+  th{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted2);border-bottom:1px solid var(--border);}
+  tr:hover td{background:var(--surface);}
+
+  .svc{border:1px solid var(--border);border-radius:10px;margin:16px 0;background:var(--surface);overflow:hidden;}
+  .svc-head{display:flex;align-items:center;gap:12px;padding:12px 18px;background:var(--surface2);border-bottom:1px solid var(--border);}
+  .svc-head .n{font-weight:680;font-size:15.5px;flex:1;}
+  .svc-body{padding:14px 18px;}
+  .kv{display:grid;grid-template-columns:120px 1fr;gap:6px 14px;font-size:13.6px;margin:4px 0;}
+  .kv .k{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted2);padding-top:2px;}
+  .kv .v{color:var(--muted);} .kv .v b{color:var(--text);}
+
+  pre{position:relative;background:#06090e;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:10px 0;overflow-x:auto;font-family:var(--mono);font-size:12.6px;line-height:1.6;color:#cdd9e5;}
+  pre .cm{color:#5b6b7c;} pre .pr{color:var(--accent2);}
+  .note{border:1px solid var(--border);border-left:3px solid var(--warn);background:rgba(216,178,74,.06);border-radius:8px;padding:12px 16px;margin:14px 0;font-size:13.6px;color:var(--muted);}
+  .note b{color:var(--warn);}
+  .step{border:1px solid var(--border);border-radius:10px;padding:4px 20px 14px;margin:14px 0;background:var(--surface);}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .step h3 .num{font-family:var(--mono);font-size:12px;background:var(--accent);color:#06121b;border-radius:6px;padding:3px 9px;font-weight:700;}
+  .footer{margin-top:50px;padding-top:20px;border-top:1px solid var(--border);color:var(--muted2);font-size:12.5px;}
+  @media(max-width:760px){main{padding:0 18px 80px;}.kv{grid-template-columns:1fr;}.hero h1{font-size:28px;}}
+  @media print{body{background:#fff;}}
+</style>
+</head>
+<body>
+<main>
+
+<div class="hero">
+  <div class="kicker">Deployment · First Version (v1)</div>
+  <h1>Noēsis — Remote Services &amp; Installation</h1>
+  <p>What external/remote services Noēsis needs to run, a topology diagram of how they connect, and a step-by-step first-version install. Grounded in the repo's actual <code>docker-compose.yml</code>, <code>docker-compose.prod.yml</code>, and <code>.env.example</code> — not generic advice.</p>
+</div>
+
+<!-- ============ OVERVIEW ============ -->
+<section id="what">
+  <h2>What is a "remote service" here?</h2>
+  <p class="lead">Noēsis ships its own apps (Grid API, Brains, Dashboard, Steward, Guide) as Docker images. A <b>remote/external service</b> is anything you must <i>provision or point at</i> that the app does not build itself — a database, an LLM, a TURN relay, a TLS authority, a DNS zone, a blockchain RPC. This page covers exactly those, and marks each one for the first version:</p>
+  <div class="legend">
+    <span><i class="dot" style="background:var(--req)"></i> <b style="color:var(--req)">REQUIRED</b> — v1 won't run without it</span>
+    <span><i class="dot" style="background:var(--prod)"></i> <b style="color:var(--prod)">PROD</b> — only for a public deployment</span>
+    <span><i class="dot" style="background:var(--opt)"></i> <b style="color:var(--opt)">OPTIONAL</b> — enables a feature (e.g. on-chain wallet)</span>
+    <span><i class="dot" style="background:var(--defer)"></i> <b style="color:var(--defer)">DEFERRED</b> — stubbed in v1, not needed yet</span>
+  </div>
+</section>
+
+<!-- ============ DIAGRAM ============ -->
+<section id="diagram">
+  <h2>Service install diagram</h2>
+  <p class="lead">How the pieces connect. The dashed bands are deployment tiers. Boxes in the top band are remote services you provision; the rest are containers Docker Compose builds.</p>
+  <div class="legend">
+    <span><i class="dot" style="background:var(--accent2)"></i> <b style="color:var(--accent2)">PUBLIC</b> — has a domain, reachable from the internet (via Traefik)</span>
+    <span><i class="dot" style="background:var(--muted2)"></i> <b style="color:var(--muted2)">LOCAL</b> — internal Docker network only, no public domain</span>
+  </div>
+
+  <div class="diagram-wrap">
+  <svg viewBox="0 0 900 660" width="900" height="660" role="img" aria-label="Noēsis service topology diagram">
+    <!-- ===== BAND: remote/external ===== -->
+    <rect class="svgband" x="10" y="28" width="880" height="118" rx="8"/>
+    <text class="t-band" x="22" y="22">Remote / external — you provision &amp; point at</text>
+
+    <!-- DNS -->
+    <rect class="svgbox" x="26" y="46" width="120" height="84" rx="7" style="stroke:var(--prod)"/>
+    <text class="t-title" x="86" y="78" text-anchor="middle">DNS</text>
+    <text class="t-sub"  x="86" y="96" text-anchor="middle">A-records</text>
+    <text class="t-sub"  x="86" y="110" text-anchor="middle" style="fill:var(--prod)">PROD</text>
+
+    <!-- Let's Encrypt -->
+    <rect class="svgbox" x="160" y="46" width="130" height="84" rx="7" style="stroke:var(--prod)"/>
+    <text class="t-title" x="225" y="74" text-anchor="middle">Let's Encrypt</text>
+    <text class="t-sub"  x="225" y="92" text-anchor="middle">TLS certs (ACME)</text>
+    <text class="t-sub"  x="225" y="110" text-anchor="middle" style="fill:var(--prod)">PROD</text>
+
+    <!-- LLM provider -->
+    <rect class="svgbox" x="304" y="46" width="160" height="84" rx="7" style="stroke:var(--req)"/>
+    <text class="t-title" x="384" y="72" text-anchor="middle">LLM Provider</text>
+    <text class="t-sub"  x="384" y="90" text-anchor="middle">Ollama :11434  ·  or</text>
+    <text class="t-sub"  x="384" y="103" text-anchor="middle">cloud API key</text>
+    <text class="t-sub"  x="384" y="120" text-anchor="middle" style="fill:var(--req)">REQUIRED (one)</text>
+
+    <!-- EVM RPC -->
+    <rect class="svgbox" x="478" y="46" width="150" height="84" rx="7" style="stroke:var(--opt)"/>
+    <text class="t-title" x="553" y="72" text-anchor="middle">EVM RPC</text>
+    <text class="t-sub"  x="553" y="90" text-anchor="middle">Infura / Alchemy</text>
+    <text class="t-sub"  x="553" y="103" text-anchor="middle">GRID_EVM_RPC_URL</text>
+    <text class="t-sub"  x="553" y="120" text-anchor="middle" style="fill:var(--opt)">OPTIONAL</text>
+
+    <!-- End-user wallet -->
+    <rect class="svgbox" x="642" y="46" width="150" height="84" rx="7" style="stroke:var(--opt)"/>
+    <text class="t-title" x="717" y="72" text-anchor="middle">End-user Wallet</text>
+    <text class="t-sub"  x="717" y="90" text-anchor="middle">MetaMask (SIWE)</text>
+    <text class="t-sub"  x="717" y="103" text-anchor="middle">self-custody</text>
+    <text class="t-sub"  x="717" y="120" text-anchor="middle" style="fill:var(--opt)">OPTIONAL</text>
+
+    <!-- Browser -->
+    <rect class="svgbox" x="806" y="46" width="84" height="84" rx="7"/>
+    <text class="t-title" x="848" y="80" text-anchor="middle" style="font-size:11px">Browser</text>
+    <text class="t-sub"  x="848" y="98" text-anchor="middle">user</text>
+
+    <!-- ===== BAND: edge (prod) ===== -->
+    <rect class="svgband" x="10" y="176" width="880" height="74" rx="8"/>
+    <text class="t-band" x="22" y="170">Edge (production overlay)</text>
+    <rect class="svgbox" x="340" y="190" width="220" height="48" rx="7" style="stroke:var(--prod)"/>
+    <text class="t-title" x="450" y="210" text-anchor="middle">Traefik reverse proxy</text>
+    <text class="t-sub"  x="450" y="226" text-anchor="middle">:80 → :443 (TLS)  ·  routes domains</text>
+
+    <!-- ===== BAND: app containers ===== -->
+    <rect class="svgband" x="10" y="280" width="880" height="98" rx="8" style="stroke:var(--accent2)"/>
+    <text class="t-band" x="22" y="274" style="fill:var(--accent2)">App containers — PUBLIC, served on a domain via Traefik</text>
+    <rect class="svgbox" x="26" y="298" width="150" height="64" rx="7" style="stroke:var(--accent2)"/>
+    <text class="t-title" x="101" y="319" text-anchor="middle">Guide</text>
+    <text class="t-sub"  x="101" y="335" text-anchor="middle">:80 static</text>
+    <text class="t-sub"  x="101" y="352" text-anchor="middle" style="fill:var(--accent2)">${DOMAIN}</text>
+    <rect class="svgbox" x="190" y="298" width="160" height="64" rx="7" style="stroke:var(--accent2)"/>
+    <text class="t-title" x="270" y="319" text-anchor="middle">Dashboard</text>
+    <text class="t-sub"  x="270" y="335" text-anchor="middle">:3001 read-only</text>
+    <text class="t-sub"  x="270" y="352" text-anchor="middle" style="fill:var(--accent2)">dash.${DOMAIN}</text>
+    <rect class="svgbox" x="364" y="298" width="160" height="64" rx="7" style="stroke:var(--accent2)"/>
+    <text class="t-title" x="444" y="319" text-anchor="middle">Steward</text>
+    <text class="t-sub"  x="444" y="335" text-anchor="middle">:3002 operator</text>
+    <text class="t-sub"  x="444" y="352" text-anchor="middle" style="fill:var(--accent2)">console.${DOMAIN}</text>
+    <rect class="svgbox" x="538" y="298" width="200" height="64" rx="7" style="stroke:var(--accent)"/>
+    <text class="t-title" x="638" y="319" text-anchor="middle">Grid API</text>
+    <text class="t-sub"  x="638" y="335" text-anchor="middle">:8080 REST + WS · engine</text>
+    <text class="t-sub"  x="638" y="352" text-anchor="middle" style="fill:var(--accent2)">api.${DOMAIN}</text>
+
+    <!-- ===== BAND: cognition ===== -->
+    <rect class="svgband" x="10" y="408" width="880" height="86" rx="8"/>
+    <text class="t-band" x="22" y="402">Cognition — Brain containers · LOCAL network only (no public domain)</text>
+    <rect class="svgbox" x="538" y="424" width="120" height="56" rx="7"/>
+    <text class="t-title" x="598" y="447" text-anchor="middle" style="font-size:12px">Brain · Sophia</text>
+    <text class="t-sub"  x="598" y="464" text-anchor="middle">python</text>
+    <rect class="svgbox" x="666" y="424" width="110" height="56" rx="7"/>
+    <text class="t-title" x="721" y="447" text-anchor="middle" style="font-size:12px">Brain · Hermes</text>
+    <rect class="svgbox" x="784" y="424" width="100" height="56" rx="7"/>
+    <text class="t-title" x="834" y="447" text-anchor="middle" style="font-size:11px">Brain · Themis</text>
+
+    <!-- ===== BAND: data/infra ===== -->
+    <rect class="svgband" x="10" y="524" width="880" height="92" rx="8"/>
+    <text class="t-band" x="22" y="518">Data &amp; infrastructure — LOCAL network (coturn needs a public IP for P2P)</text>
+    <rect class="svgbox" x="538" y="542" width="150" height="58" rx="7" style="stroke:var(--req)"/>
+    <text class="t-title" x="613" y="563" text-anchor="middle">MySQL 8.0</text>
+    <text class="t-sub"  x="613" y="579" text-anchor="middle">:3306 · required</text>
+    <text class="t-sub"  x="613" y="593" text-anchor="middle" style="fill:var(--muted2)">local / internal</text>
+    <rect class="svgbox" x="702" y="542" width="182" height="58" rx="7" style="stroke:var(--opt)"/>
+    <text class="t-title" x="793" y="563" text-anchor="middle">coturn (STUN/TURN)</text>
+    <text class="t-sub"  x="793" y="579" text-anchor="middle">:3478 / :5349 · P2P relay</text>
+    <text class="t-sub"  x="793" y="593" text-anchor="middle" style="fill:var(--opt)">turn.${DOMAIN} (public IP)</text>
+
+    <!-- ===== EDGES ===== -->
+    <!-- browser -> traefik -->
+    <path class="edge-acc" d="M848,130 L848,160 L450,160 L450,190"/>
+    <text class="edge-lbl" x="455" y="156">HTTPS</text>
+    <!-- DNS -> traefik -->
+    <path class="edge" d="M86,130 L86,164 L340,206" />
+    <!-- LE -> traefik -->
+    <path class="edge" d="M225,130 L225,168 L344,200"/>
+    <!-- traefik -> app row -->
+    <path class="edge" d="M390,238 L101,298"/>
+    <path class="edge" d="M420,238 L270,298"/>
+    <path class="edge" d="M460,238 L444,298"/>
+    <path class="edge-acc" d="M500,238 L620,298"/>
+    <!-- grid -> mysql -->
+    <path class="edge-acc" d="M630,362 L620,542"/>
+    <text class="edge-lbl" x="628" y="455">SQL</text>
+    <!-- grid -> brains (unix socket) -->
+    <path class="edge" d="M640,362 L610,424"/>
+    <text class="edge-lbl" x="612" y="398">unix socket</text>
+    <!-- brains -> LLM -->
+    <path class="edge" d="M620,424 L430,130"/>
+    <text class="edge-lbl" x="470" y="300" style="fill:var(--accent)">LLM calls</text>
+    <!-- brains <-> coturn -->
+    <path class="edge" d="M740,480 L780,542"/>
+    <text class="edge-lbl" x="772" y="516">P2P</text>
+    <!-- grid -> EVM RPC -->
+    <path class="edge" d="M700,298 L560,130"/>
+    <text class="edge-lbl" x="640" y="220" style="fill:var(--opt)">confirm tx</text>
+  </svg>
+  </div>
+  <p class="lead" style="font-size:13px;color:var(--muted2)">Solid blue = primary data path · grey = supporting · Brains talk to the Grid over a shared <b>Unix-domain socket</b> (a Docker volume), not TCP. Each Brain makes its own LLM calls.</p>
+
+  <h3>Domain map — who is public, who is local</h3>
+  <p class="lead">In production, Traefik routes four subdomains of your <code>${DOMAIN}</code> to four containers. Everything else has <b>no domain</b> — it lives on the internal Docker network and is never exposed.</p>
+  <table>
+    <tr><th>Domain</th><th>→ Service</th><th>Internal port</th><th>Exposure</th></tr>
+    <tr><td><code>${DOMAIN}</code> &amp; <code>guide.${DOMAIN}</code></td><td>Guide (landing site)</td><td>:80</td><td><span class="badge b-opt" style="color:var(--accent2);border-color:var(--accent2)">public</span></td></tr>
+    <tr><td><code>api.${DOMAIN}</code></td><td>Grid API (REST + WebSocket)</td><td>:8080</td><td><span class="badge b-opt" style="color:var(--accent2);border-color:var(--accent2)">public</span></td></tr>
+    <tr><td><code>dash.${DOMAIN}</code></td><td>Dashboard</td><td>:3001</td><td><span class="badge b-opt" style="color:var(--accent2);border-color:var(--accent2)">public</span></td></tr>
+    <tr><td><code>console.${DOMAIN}</code></td><td>Steward Console</td><td>:3002</td><td><span class="badge b-opt" style="color:var(--accent2);border-color:var(--accent2)">public</span></td></tr>
+    <tr><td><i>— no domain —</i></td><td>MySQL</td><td>:3306</td><td><span class="badge b-defer">local only</span></td></tr>
+    <tr><td><i>— no domain —</i></td><td>Brain containers (Sophia / Hermes / Themis)</td><td>unix socket</td><td><span class="badge b-defer">local only</span></td></tr>
+    <tr><td><code>turn.${DOMAIN}</code> <span style="color:var(--muted2)">(optional)</span></td><td>coturn STUN/TURN</td><td>:3478 / :5349</td><td><span class="badge b-opt">public IP for P2P</span></td></tr>
+  </table>
+  <div class="note"><b>Security note.</b> In production only <b>Traefik</b> should bind public ports (80/443); it reaches the app containers by service name over the internal Docker network. The base <code>docker-compose.yml</code> publishes <code>:3001/:3002/:8080/:3306</code> to the host for <i>local dev convenience</i> — for a public server, drop those host port mappings (or bind them to <code>127.0.0.1</code>) so MySQL and the apps are reachable only through Traefik. The Brains never publish a port (they use a socket). coturn is the one exception that genuinely needs a routable public IP (ideally a <code>turn.</code> record), because WebRTC relaying can't work behind the HTTP proxy.</div>
+</section>
+
+<!-- ============ MATRIX ============ -->
+<section id="matrix">
+  <h2>Required vs optional — the v1 checklist</h2>
+  <table>
+    <tr><th>Service</th><th>Role</th><th>v1 status</th><th>How provided</th><th>Key env / port</th></tr>
+    <tr><td><b>MySQL 8.0</b></td><td>Persistence (world state, audit chain, portal data)</td><td><span class="badge b-req">required</span></td><td>Compose (dev) or managed DB (prod)</td><td><code>MYSQL_*</code> · 3306</td></tr>
+    <tr><td><b>LLM provider</b></td><td>Nous cognition (the actual thinking)</td><td><span class="badge b-req">required</span></td><td>Ollama on host/remote <i>or</i> cloud API key</td><td><code>LLM_PROVIDER</code>,<code>OLLAMA_HOST</code> · 11434</td></tr>
+    <tr><td><b>Traefik</b></td><td>Reverse proxy + TLS termination</td><td><span class="badge b-prod">prod</span></td><td>Compose (prod overlay)</td><td>— · 80/443</td></tr>
+    <tr><td><b>Let's Encrypt</b></td><td>Free TLS certificates (remote CA)</td><td><span class="badge b-prod">prod</span></td><td>Automatic via Traefik (ACME)</td><td><code>ACME_EMAIL</code></td></tr>
+    <tr><td><b>DNS provider</b></td><td>Public domain → server IP</td><td><span class="badge b-prod">prod</span></td><td>Your registrar (A-records)</td><td><code>DOMAIN</code></td></tr>
+    <tr><td><b>coturn</b></td><td>STUN/TURN relay for Brain↔Brain P2P (WebRTC)</td><td><span class="badge b-opt">optional</span></td><td>Compose (self-hosted)</td><td><code>TURN_*</code> · 3478/5349</td></tr>
+    <tr><td><b>EVM RPC endpoint</b></td><td>Confirm on-chain USDT/ETH (wallet, paid spawn)</td><td><span class="badge b-opt">optional</span></td><td>Infura / Alchemy / own node</td><td><code>GRID_EVM_RPC_URL</code></td></tr>
+    <tr><td><b>User EVM wallet</b></td><td>SIWE login + self-custody payments</td><td><span class="badge b-opt">optional</span></td><td>End-user's browser (MetaMask)</td><td>client-side</td></tr>
+    <tr><td><b>OAuth (Google/Apple)</b></td><td>Social portal login</td><td><span class="badge b-defer">deferred</span></td><td>Stubbed — returns 501 (Phase 52–54)</td><td>—</td></tr>
+    <tr><td><b>Email / SMTP</b></td><td>Email signup</td><td><span class="badge b-defer">deferred</span></td><td>Not wired in v1</td><td>—</td></tr>
+  </table>
+  <div class="note"><b>Bottom line for v1.</b> To stand up a working Grid you need exactly <b>two</b> remote services: a <b>MySQL database</b> and an <b>LLM provider</b>. Everything else is either for a <i>public</i> deployment (Traefik + Let's Encrypt + DNS) or for an <i>optional feature</i> (coturn for P2P, EVM RPC for on-chain payments).</p></div>
+</section>
+
+<!-- ============ PER-SERVICE ============ -->
+<section id="services">
+  <h2>Each service — what, why, how to install</h2>
+
+  <!-- MySQL -->
+  <div class="svc">
+    <div class="svc-head"><span class="n">MySQL 8.0</span><span class="badge b-req">required</span></div>
+    <div class="svc-body">
+      <div class="kv"><span class="k">Why</span><span class="v">Persistent worlds need persistent storage. Holds world state, the hash-chained <b>audit trail</b> (reconciled every 60 ticks), portal/human data, treasury, parcels.</span></div>
+      <div class="kv"><span class="k">Install (dev)</span><span class="v">Comes up automatically as a Compose service — nothing to install separately.</span></div>
+      <div class="kv"><span class="k">Install (prod)</span><span class="v">Use the Compose container <i>or</i> a managed DB (AWS RDS / Cloud SQL). Set <code>MYSQL_HOST</code> to the managed endpoint and remove the <code>mysql</code> service from compose.</span></div>
+      <div class="kv"><span class="k">Config</span><span class="v"><code>MYSQL_HOST</code> · <code>MYSQL_PORT=3306</code> · <code>MYSQL_DATABASE</code> · <code>MYSQL_USER</code> · <code>MYSQL_PASSWORD</code> · <code>MYSQL_ROOT_PASSWORD</code></span></div>
+    </div>
+  </div>
+
+  <!-- LLM -->
+  <div class="svc">
+    <div class="svc-head"><span class="n">LLM Provider — Ollama (local) or Cloud API</span><span class="badge b-req">required</span></div>
+    <div class="svc-body">
+      <div class="kv"><span class="k">Why</span><span class="v">Each Nous thinks with a real LLM. <b>One</b> provider is mandatory or Brains can't act. Sovereignty model = one model per Nous; default is local Ollama.</span></div>
+      <div class="kv"><span class="k">Option A · Ollama</span><span class="v"><b>Self-hosted, free, private.</b> Install Ollama on the host (or a GPU box), pull a model, point Brains at it. Brains reach it at <code>OLLAMA_HOST</code> (default <code>http://host.docker.internal:11434</code>).</span></div>
+      <div class="kv"><span class="k">Option B · Cloud</span><span class="v">Set <code>LLM_PROVIDER</code> + an API key: <code>ANTHROPIC_API_KEY</code> / <code>OPENAI_API_KEY</code> / <code>GOOGLE_AI_API_KEY</code> / <code>XAI_API_KEY</code>. Easier, costs money, less private. Can be a fallback (see <code>fallback_provider</code> in each Nous YAML).</span></div>
+      <div class="kv"><span class="k">Install Ollama</span><span class="v"><code>curl -fsSL https://ollama.com/install.sh | sh</code> then <code>ollama pull qwen3:4b</code></span></div>
+      <div class="kv"><span class="k">Config</span><span class="v"><code>LLM_PROVIDER=ollama</code> · <code>OLLAMA_HOST</code> · <code>LLM_MODEL=qwen3:4b</code></span></div>
+    </div>
+  </div>
+
+  <!-- Traefik + LE + DNS -->
+  <div class="svc">
+    <div class="svc-head"><span class="n">Traefik + Let's Encrypt + DNS</span><span class="badge b-prod">prod only</span></div>
+    <div class="svc-body">
+      <div class="kv"><span class="k">Why</span><span class="v">For a <b>public</b> deployment. Traefik is the single door on :80/:443; it auto-redirects HTTP→HTTPS and fetches free Let's Encrypt certs. DNS A-records map your domain to the server.</span></div>
+      <div class="kv"><span class="k">Install</span><span class="v">Provided by <code>docker-compose.prod.yml</code> (Traefik v3.1 container). No manual cert work — TLS-ALPN challenge is automatic once DNS resolves and ports 80/443 are open.</span></div>
+      <div class="kv"><span class="k">DNS records</span><span class="v">Point these A-records at the server IP: <code>${DOMAIN}</code>, <code>api.</code>, <code>dash.</code>, <code>console.</code>, <code>guide.</code></span></div>
+      <div class="kv"><span class="k">Config</span><span class="v"><code>DOMAIN=noesis.example.com</code> · <code>ACME_EMAIL=you@example.com</code></span></div>
+    </div>
+  </div>
+
+  <!-- coturn -->
+  <div class="svc">
+    <div class="svc-head"><span class="n">coturn — STUN/TURN relay</span><span class="badge b-opt">optional</span></div>
+    <div class="svc-body">
+      <div class="kv"><span class="k">Why</span><span class="v">Powers <b>Brain-to-Brain P2P</b> (WebRTC, Phase 42). Only needed if Nous talk directly peer-to-peer; the Grid itself runs fine without it. Skip it for a first bring-up.</span></div>
+      <div class="kv"><span class="k">Install</span><span class="v">Provided as a Compose service (<code>coturn/coturn:4.6.3</code>). For real P2P it needs a reachable public IP and open UDP/TCP <code>3478</code>.</span></div>
+      <div class="kv"><span class="k">Config</span><span class="v"><code>TURN_STATIC_AUTH_SECRET</code> (≥20 chars, HMAC creds) · <code>TURN_HOST</code> · <code>TURN_PORT=3478</code></span></div>
+    </div>
+  </div>
+
+  <!-- EVM RPC -->
+  <div class="svc">
+    <div class="svc-head"><span class="n">EVM Blockchain RPC</span><span class="badge b-opt">optional</span></div>
+    <div class="svc-body">
+      <div class="kv"><span class="k">Why</span><span class="v">Only for the <b>Human Portal money features</b> — confirming on-chain USDT/ETH for paid Nous spawning, wallet transfers, and tips. The Grid reads it via raw JSON-RPC (<code>eth_getTransactionReceipt</code>). <b>If <code>GRID_EVM_RPC_URL</code> is unset, payment confirmation is simply disabled</b> and everything else works.</span></div>
+      <div class="kv"><span class="k">Install</span><span class="v">No install — get an HTTPS endpoint from Infura / Alchemy / QuickNode, or run your own node. Self-custody is preserved: the platform never holds funds; it only <i>reads</i> the chain.</span></div>
+      <div class="kv"><span class="k">Config</span><span class="v"><code>GRID_EVM_RPC_URL=https://…</code> · <code>SPAWN_COST_USDT=50</code></span></div>
+    </div>
+  </div>
+
+  <!-- Deferred -->
+  <div class="svc">
+    <div class="svc-head"><span class="n">OAuth (Google/Apple) &amp; Email</span><span class="badge b-defer">deferred — not needed in v1</span></div>
+    <div class="svc-body">
+      <div class="kv"><span class="k">Status</span><span class="v">OAuth routes return <b>501 Not Implemented</b> (real PKCE flow is Phase 52–54). Email signup is referenced but no SMTP provider is wired. <b>Do not provision these for v1.</b> Portal identity in v1 is <b>SIWE</b> (wallet) — which needs no server-side provider.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INSTALL ============ -->
+<section id="install">
+  <h2>Installation — first version</h2>
+  <p class="lead">Two tracks. <b>Track A</b> = a working Grid on one machine (the minimum). <b>Track B</b> = add the public production edge on top. Track B is Track A + 3 extra steps.</p>
+
+  <h3 style="color:var(--req)">Track A — local / single machine (the minimum)</h3>
+
+  <div class="step">
+    <h3><span class="num">A1</span> Prerequisites</h3>
+    <p>Docker + Docker Compose, and an LLM. Install Ollama and pull a small model:</p>
+<pre><span class="pr">$</span> docker --version &amp;&amp; docker compose version
+<span class="pr">$</span> curl -fsSL https://ollama.com/install.sh | sh
+<span class="pr">$</span> ollama pull qwen3:4b</pre>
+  </div>
+
+  <div class="step">
+    <h3><span class="num">A2</span> Clone &amp; create <code>.env</code></h3>
+<pre><span class="pr">$</span> git clone https://github.com/anthropics/noesis.git &amp;&amp; cd noesis
+<span class="pr">$</span> cp .env.example .env</pre>
+    <p>The two remote services live in <code>.env</code>. Minimum viable settings:</p>
+<pre><span class="cm"># ── MySQL (the Compose container uses these) ──</span>
+MYSQL_DATABASE=noesis_grid
+MYSQL_USER=noesis
+MYSQL_PASSWORD=change-me
+MYSQL_ROOT_PASSWORD=change-me-too
+
+<span class="cm"># ── LLM (local Ollama on the host) ──</span>
+LLM_PROVIDER=ollama
+OLLAMA_HOST=http://host.docker.internal:11434
+LLM_MODEL=qwen3:4b
+
+<span class="cm"># ── leave EVM/OAuth/email unset for v1 ──</span></pre>
+  </div>
+
+  <div class="step">
+    <h3><span class="num">A3</span> Bring the stack up</h3>
+<pre><span class="pr">$</span> docker compose up -d --build
+<span class="pr">$</span> docker compose ps          <span class="cm"># mysql, grid, 3 brains, dashboard, steward, coturn</span></pre>
+  </div>
+
+  <div class="step">
+    <h3><span class="num">A4</span> Verify</h3>
+<pre><span class="pr">$</span> curl -s http://localhost:8080/health           <span class="cm"># {"status":"ok"}</span>
+<span class="pr">$</span> curl -s http://localhost:8080/health/detailed   <span class="cm"># audit pipeline diagnostics</span></pre>
+    <p>Then open the <b>Dashboard</b> at <a href="http://localhost:3001">localhost:3001</a> and the <b>Steward Console</b> at <a href="http://localhost:3002">localhost:3002</a>. If the tick advances, you're live.</p>
+    <div class="note"><b>That's the whole first version.</b> Two remote services (MySQL + Ollama), one <code>docker compose up</code>. coturn starts too but is idle until P2P is used.</div>
+  </div>
+
+  <h3 style="color:var(--prod)">Track B — add the public production edge</h3>
+
+  <div class="step">
+    <h3><span class="num">B1</span> DNS</h3>
+    <p>Point five A-records at your server's public IP:</p>
+<pre>noesis.example.com        A   &lt;server-ip&gt;
+api.noesis.example.com    A   &lt;server-ip&gt;
+dash.noesis.example.com   A   &lt;server-ip&gt;
+console.noesis.example.com A  &lt;server-ip&gt;
+guide.noesis.example.com  A   &lt;server-ip&gt;</pre>
+  </div>
+
+  <div class="step">
+    <h3><span class="num">B2</span> Set domain + ACME email in <code>.env</code></h3>
+<pre>DOMAIN=noesis.example.com
+ACME_EMAIL=you@example.com</pre>
+    <p>Open ports 80 and 443 on the server firewall (Traefik needs them for routing + the TLS-ALPN challenge).</p>
+  </div>
+
+  <div class="step">
+    <h3><span class="num">B3</span> Launch with the production overlay</h3>
+<pre><span class="pr">$</span> docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build</pre>
+    <p>Traefik fetches Let's Encrypt certs automatically. Within a minute: <code>https://noesis.example.com</code> (guide), <code>https://api.…</code> (grid), <code>https://dash.…</code> (dashboard), <code>https://console.…</code> (steward).</p>
+  </div>
+
+  <div class="step">
+    <h3><span class="num">B4</span> (Optional) enable on-chain payments</h3>
+    <p>Only if you want paid Nous spawning / wallet. Add an RPC endpoint:</p>
+<pre>GRID_EVM_RPC_URL=https://mainnet.infura.io/v3/&lt;key&gt;
+SPAWN_COST_USDT=50</pre>
+    <p>Restart the <code>grid</code> service. Leave unset to keep v1 free + custody-free.</p>
+  </div>
+</section>
+
+<section id="summary">
+  <h2>One-line summary</h2>
+  <p class="lead"><b>First version = MySQL + an LLM, via one <code>docker compose up</code>.</b> Go public by adding DNS + Traefik/Let's Encrypt (the prod overlay). coturn (P2P) and an EVM RPC (on-chain money) are optional add-ons you can switch on later — and OAuth/email are deferred, so don't provision them yet.</p>
+  <div class="footer">
+    Noēsis — Remote Services &amp; Installation (v1) · self-contained HTML · sourced from <code>docker-compose.yml</code>, <code>docker-compose.prod.yml</code>, <code>.env.example</code>, and <code>grid/src/main.ts</code>.
+  </div>
+</section>
+
+</main>
+</body>
+</html>
