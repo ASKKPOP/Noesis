@@ -14,6 +14,7 @@ import { registerPortalNousRoutes } from './nous.js';
 import { registerSpawnRoutes } from './spawn.js';
 import { registerCommunityRoutes } from './community.js';
 import { registerSupportRoutes } from './support.js';
+import { registerPortalCivicRoutes } from './civic.js';
 
 export function registerPortalRoutes(
     app: FastifyInstance,
@@ -26,6 +27,8 @@ export function registerPortalRoutes(
     registerPortalWalletRoutes(app, services);
     registerPortalChatRoutes(app, services);
     registerPortalNousRoutes(app, services);
+    // Human Civic-DID applications (D-V3-33 Portal → Polis → Registry pipeline).
+    registerPortalCivicRoutes(app, services);
     // Phase 28: human-spawned Nous routes (SPAWN-01..06).
     // Deps are constructed inline; audit/tick/gridName are optional (skipped when humanPool absent).
     void registerSpawnRoutes(app, {

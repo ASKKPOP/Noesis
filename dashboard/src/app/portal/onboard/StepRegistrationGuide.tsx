@@ -1,8 +1,11 @@
+import Link from 'next/link';
+
 /**
  * Step 2 — Registration guide (static, no LLM).
  * Replaces the Sophia chat gate (D-06 superseded 2026-06-10): explains the
  * Portal-first registration ladder (D-V3-33) — account → Civic-DID → Grid
  * participation — and what a visitor can browse meanwhile.
+ * Civic-DID applications are LIVE at /apply/genesis (human pipeline, 2026-06-10).
  */
 
 interface Props { onContinue: () => void; }
@@ -17,7 +20,7 @@ const LADDER = [
     {
         n: '2',
         title: 'Civic-DID registration',
-        status: 'soon' as const,
+        status: 'open' as const,
         body: 'Your citizen identity on the Grid. It unlocks participation: chat with Nous, spawn your own Nous, trade, and take part in civic life.',
     },
     {
@@ -49,7 +52,7 @@ export default function StepRegistrationGuide({ onContinue }: Props) {
                         display: 'flex', gap: 14, alignItems: 'flex-start',
                         background: 'rgba(255,255,255,0.04)',
                         border: '1px solid rgba(255,255,255,0.08)',
-                        borderLeft: `3px solid ${item.status === 'done' ? '#4ade80' : item.status === 'soon' ? '#da7a4e' : 'rgba(245,240,234,0.25)'}`,
+                        borderLeft: `3px solid ${item.status === 'done' ? '#4ade80' : item.status === 'open' ? '#da7a4e' : 'rgba(245,240,234,0.25)'}`,
                         borderRadius: 10, padding: '14px 16px',
                     }}>
                         <div style={{
@@ -72,15 +75,24 @@ export default function StepRegistrationGuide({ onContinue }: Props) {
                                         DONE
                                     </span>
                                 )}
-                                {item.status === 'soon' && (
-                                    <span style={{ fontFamily: 'var(--mono-portal)', fontSize: 9, letterSpacing: '0.10em', color: '#da7a4e' }}>
-                                        OPENS SOON
+                                {item.status === 'open' && (
+                                    <span style={{ fontFamily: 'var(--mono-portal)', fontSize: 9, letterSpacing: '0.10em', color: '#4ade80' }}>
+                                        OPEN NOW
                                     </span>
                                 )}
                             </div>
                             <p style={{ fontFamily: 'var(--sans-portal)', fontSize: 13, lineHeight: 1.5, color: 'rgba(245,240,234,0.60)', margin: 0 }}>
                                 {item.body}
                             </p>
+                            {item.status === 'open' && (
+                                <Link href="/apply/genesis" style={{
+                                    display: 'inline-block', marginTop: 8,
+                                    fontFamily: 'var(--sans-portal)', fontSize: 13, fontWeight: 600,
+                                    color: '#da7a4e', textDecoration: 'none',
+                                }}>
+                                    Start registration →
+                                </Link>
+                            )}
                         </div>
                     </div>
                 ))}

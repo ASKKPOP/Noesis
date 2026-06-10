@@ -90,6 +90,10 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // Portal wallet — uses portal session auth internally
     'POST /api/v1/portal/wallet/transfer': 'public',
 
+    // Human Civic-DID applications — use portal session auth internally (D-V3-33 pipeline)
+    'POST /api/v1/portal/civic/apply': 'public',
+    'GET /api/v1/portal/civic/application': 'public',
+
     // Portal chat — uses portal session auth internally
     'POST /api/v1/portal/chat/onboard': 'public',
     'POST /api/v1/portal/chat/nous/:nousId': 'public',

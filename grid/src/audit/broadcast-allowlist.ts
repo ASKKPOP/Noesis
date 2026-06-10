@@ -355,6 +355,30 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'zoning.structure_built',   // (84)
     'zoning.structure_joined',  // (85)
     'zoning.structure_left',    // (86)
+    // Human Civic-DID application pipeline (2026-06-10, brings Phase 54's human track
+    // forward per D-36-04/D-36-16/D-36-20). Allowlist 86 → 91. D-V3-33 pipeline shape:
+    // Portal pre-screen → Polis charter review → Registry issuance. Pre-cleared prefixes
+    // portal.registration_* / polis.registration_* (CLAUDE.md v3.0 afternoon additions).
+    // Privacy: application statement text NEVER crosses the audit boundary — closed
+    // reason_code set on rejection; human_did follows portal.auth.* precedent (54-56).
+    // portal.registration_requested (87): sole-producer grid/src/audit/append-portal-registration-requested.ts
+    //   closed 4-key {application_id, grid_name, human_did, requested_at_tick}
+    // polis.registration_pending (88): sole-producer grid/src/audit/append-polis-registration-pending.ts
+    //   closed 3-key {application_id, forwarded_at_tick, grid_name}
+    // portal.registration_approved (89): sole-producer grid/src/audit/append-portal-registration-approved.ts
+    //   closed 4-key {application_id, approved_at_tick, grid_name, human_did}
+    // portal.registration_rejected (90): sole-producer grid/src/audit/append-portal-registration-rejected.ts
+    //   closed 4-key {application_id, grid_name, reason_code, rejected_at_tick}
+    //   reason_code ∈ {account_sanctioned, already_registered, oath_mismatch, statement_invalid}
+    // registry.civic_did_issued_human (91): sole-producer grid/src/audit/append-registry-civic-did-issued-human.ts
+    //   closed 4-key {civic_did, grid_name, human_did, issued_at_tick}
+    //   Distinct from registry.civic_did_issued (61), whose producer regex-guards
+    //   existence_did as did:noesis:nous:* — Nous-only by construction.
+    'portal.registration_requested',   // (87)
+    'polis.registration_pending',      // (88)
+    'portal.registration_approved',    // (89)
+    'portal.registration_rejected',    // (90)
+    'registry.civic_did_issued_human', // (91)
 ] as const;
 
 /**

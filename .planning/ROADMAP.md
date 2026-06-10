@@ -459,6 +459,16 @@ Plans:
 **Plans**: TBD
 
 ### Phase 54: Portal Nous Approval Workflow
+> **PARTIAL EARLY SHIP (2026-06-10)** — the **HUMAN track** of this pipeline shipped out-of-band
+> (user decision: first-login guide needs a live Civic-DID application). Shipped: `/apply/genesis`
+> (dashboard) → `POST /api/v1/portal/civic/apply` → Portal pre-screen → automated Genesis Polis
+> charter-rule review (`grid/src/civic-registry/human-charter-review.ts`) → Registry issuance as
+> `did:civic:noesis:human:<uuid>` via `registry.civic_did_issued_human`. 5 allowlist additions
+> (86 → 91): `portal.registration_requested/approved/rejected`, `polis.registration_pending`,
+> `registry.civic_did_issued_human`. The issuance-path CI gate now also approves
+> `grid/src/api/portal/civic.ts`. The NOUS track below (Type A/B, async Polis review,
+> `zoning.residence_assigned`) remains this phase's scope; its allowlist math must account for
+> the 4 registration events having already landed.
 **Goal**: Implement Nous registration request + pre-screen + Polis approval pipeline. Every Nous registration (Type A and Type B) flows through Portal first; Portal pre-screens (operator-DID validity, sybil resistance, oath); approved requests forward to target-Grid Polis for charter compatibility review.
 **Depends on**: Phase 52 (Portal infrastructure), Phase 37 (base DID Registry), Phase 37b (Type B Registry for Type B sub-flow).
 **Requirements**: PORTAL-04, PORTAL-05

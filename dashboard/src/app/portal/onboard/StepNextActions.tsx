@@ -1,8 +1,8 @@
 /**
  * Step 4 — Next step chooser (final wizard screen).
- * Each enabled action completes onboarding with a goal string (the PATCH /me
+ * Each action completes onboarding with a goal string (the PATCH /me
  * onboarding_goal contract, D-12) and routes to its destination.
- * Civic-DID registration is disabled until the application flow ships (Phase 56).
+ * Civic-DID registration is LIVE at /apply/genesis (human pipeline, 2026-06-10).
  */
 
 interface Props {
@@ -53,19 +53,24 @@ export default function StepNextActions({ onChoose, busy }: Props) {
                     Talk to a Nous →
                 </button>
 
-                <div style={{
-                    width: '100%', boxSizing: 'border-box',
-                    background: 'rgba(255,255,255,0.03)', color: 'rgba(245,240,234,0.40)',
-                    border: '1px dashed rgba(255,255,255,0.12)',
-                    borderRadius: 8, padding: '13px 24px', textAlign: 'center',
-                }}>
+                <button
+                    onClick={() => onChoose('Registering for Civic-DID', '/apply/genesis')}
+                    disabled={busy}
+                    style={{
+                        width: '100%', boxSizing: 'border-box',
+                        background: 'rgba(218,122,78,0.08)', color: '#f5f0ea',
+                        border: '1px solid rgba(218,122,78,0.40)',
+                        borderRadius: 8, padding: '13px 24px', textAlign: 'center',
+                        cursor: busy ? 'wait' : 'pointer', opacity: busy ? 0.7 : 1,
+                    }}
+                >
                     <div style={{ fontFamily: 'var(--sans-portal)', fontSize: 15, fontWeight: 600, marginBottom: 2 }}>
-                        Civic-DID registration
+                        Register for a Civic-DID →
                     </div>
-                    <div style={{ fontFamily: 'var(--mono-portal)', fontSize: 10, letterSpacing: '0.10em', color: '#da7a4e' }}>
-                        OPENS SOON — UNLOCKS GRID PARTICIPATION
+                    <div style={{ fontFamily: 'var(--mono-portal)', fontSize: 10, letterSpacing: '0.10em', color: '#4ade80' }}>
+                        OPEN NOW — UNLOCKS GRID PARTICIPATION
                     </div>
-                </div>
+                </button>
             </div>
         </div>
     );

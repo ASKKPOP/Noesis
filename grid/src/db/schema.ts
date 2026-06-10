@@ -792,4 +792,33 @@ export const MIGRATIONS: Migration[] = [
             DELETE FROM grid_config WHERE config_key IN ('gov_cosponsor_threshold', 'gov_debate_window_ticks')
         `,
     },
+    // Human Civic-DID applications (2026-06-10) — brings Phase 54's HUMAN track forward
+    // (D-36-04 two-step registration; D-V3-33 Portal → Polis → Registry pipeline).
+    // One row per (grid, human): rejected applicants may re-apply (row returns to 'pending').
+    // statement is Grid-side only — it never crosses the audit boundary (closed reason_code
+    // set on rejection). civic_did is filled on approval; the issued credential itself lives
+    // in civic_did_registry (existence_did column carries the human operator-DID).
+    {
+        version: 37,
+        name: 'human_civic_applications',
+        up: `
+            CREATE TABLE IF NOT EXISTS human_civic_applications (
+                application_id      CHAR(36)        NOT NULL,
+                grid_name           VARCHAR(63)     NOT NULL,
+                human_did           VARCHAR(255)    NOT NULL,
+                statement           TEXT            NOT NULL,
+                status              ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+                reason_code         VARCHAR(63),
+                civic_did           VARCHAR(255),
+                requested_at_tick   INT UNSIGNED    NOT NULL,
+                decided_at_tick     INT UNSIGNED,
+                PRIMARY KEY (application_id),
+                UNIQUE KEY uq_civic_app_human (grid_name, human_did),
+                INDEX idx_civic_app_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `
+            DROP TABLE IF EXISTS human_civic_applications
+        `,
+    },
 ];

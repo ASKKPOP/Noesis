@@ -40,6 +40,8 @@ const SCAN_ROOT = join(ROOT, 'grid', 'src');
 
 const FORBIDDEN_IMPORT_TOKENS = [
     'append-registry-civic-did-issued',
+    // NOTE: 'append-registry-civic-did-issued' above prefix-matches the human
+    // variant 'append-registry-civic-did-issued-human' too — both are guarded.
     'append-registry-civic-did-revoked',
     'append-registry-business-did-registered',
     'append-registry-business-did-dissolved',
@@ -49,10 +51,15 @@ const APPROVED_IMPORTERS = new Set([
     'grid/src/api/routes/registry.ts',
     'grid/src/civic-registry/civic-did-store.ts',
     'grid/src/civic-registry/business-did-store.ts',
+    // Human Civic-DID application pipeline (2026-06-10) — the D-V3-33
+    // Portal → Polis → Registry route for HUMAN citizens. Issues
+    // registry.civic_did_issued_human only after charter review approves.
+    'grid/src/api/portal/civic.ts',
 ]);
 
 const PRODUCER_FILES = new Set([
     'grid/src/audit/append-registry-civic-did-issued.ts',
+    'grid/src/audit/append-registry-civic-did-issued-human.ts',
     'grid/src/audit/append-registry-civic-did-revoked.ts',
     'grid/src/audit/append-registry-business-did-registered.ts',
     'grid/src/audit/append-registry-business-did-dissolved.ts',

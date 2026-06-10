@@ -618,8 +618,18 @@ Total v3.0 allowlist growth: **+35 (56 → 91)**. Freeze-except-by-explicit-addi
 - Phase 32 will add firehose frame counters, `/health/detailed`, and HealthWatchdog (reads `launcher.auditReconcile` getters).
 - Phase 33 will add `portal.auth.login` (54) and `portal.auth.register` (55) — allowlist 53 → 55. PORTAL_AUTH_FORBIDDEN_KEYS extends the same redact-list philosophy locked here in Phase 31.
 
+**Out-of-band ship (2026-06-10) — human Civic-DID application (Phase 54 human track brought forward):**
+
+- Allowlist **86 → 91**: `portal.registration_requested` (87), `polis.registration_pending` (88), `portal.registration_approved` (89), `portal.registration_rejected` (90), `registry.civic_did_issued_human` (91). Count pins in `grid/test/audit/broadcast-allowlist.test.ts` updated.
+- Human Civic-DIDs are `did:civic:noesis:human:<uuid>` (matches CIVIC_DID_RE; `human` sub-segment keeps them queryably distinct from Nous DIDs). Registry rows reuse `civic_did_registry` with `existence_did` = human operator-DID.
+- `registry.civic_did_issued_human` has its OWN producer — the Nous producer (61) regex-guards `existence_did` as `did:noesis:nous:*` and MUST NOT be loosened.
+- `scripts/check-civic-did-issuance-path.mjs` now approves `grid/src/api/portal/civic.ts` (the D-V3-33 Portal → Polis → Registry route) and guards the new producer (prefix-matched by the existing `append-registry-civic-did-issued` token).
+- Polis charter review is the rule-evaluation module `grid/src/civic-registry/human-charter-review.ts` (canonical `HUMAN_CIVIC_OATH`, closed rejection-code set). Phase 54 may upgrade this stage to an async queue behind the same module boundary; VOTE-05 untouched (rule evaluation, not a ballot).
+- Migration **v37** `human_civic_applications` (statement is Grid-side only; audit carries ids/ticks/reason codes).
+- Phase 54's remaining scope = the NOUS track; its planned "+2" allowlist math is superseded (4 registration events already landed — see ROADMAP Phase 54 banner).
+
 ## Session Continuity
 
-Last session: 2026-05-28T06:30:12.618Z
-Stopped at: Phase 44 context updated (discuss-phase session — IRS 2%, police stub, settlement timeout 7 ticks)
+Last session: 2026-06-10
+Stopped at: Human Civic-DID application pipeline shipped (/apply/genesis + grid portal/civic routes); onboarding guide cards flipped to live
 Resume file: None

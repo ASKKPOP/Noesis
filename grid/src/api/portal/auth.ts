@@ -382,12 +382,29 @@ export function registerPortalAuthRoutes(
                 console.warn('[/me] onboarding_goal query failed, defaulting to onboarded=false', err);
             }
 
+            // Human Civic-DID (2026-06-10) — civic_member signal for the dashboard
+            // (D-36-16 third tier). Fail-safe: lookup failure reports null (visitor).
+            let civicDid: string | null = null;
+            try {
+                const civicStore = services.civicDidStore;
+                if (civicStore) {
+                    const civic = await civicStore.getByExistenceDid(
+                        services.gridName,
+                        payload['did'] as string,
+                    );
+                    if (civic && civic.status === 'active') civicDid = civic.civicDid;
+                }
+            } catch (err) {
+                console.warn('[/me] civic_did lookup failed, defaulting to null', err);
+            }
+
             return reply.send({
                 did: payload['did'],
                 eth_address: payload['eth_address'],
                 region: (payload['region'] as string | undefined) ?? null,           // null for pre-migration tokens (WR-04)
                 created_at: (payload['created_at'] as string | undefined) ?? null,  // NEW — per D-07
                 onboarded,
+                civic_did: civicDid,                                                 // active human Civic-DID or null
             });
         } catch {
             return reply.status(401).send({ error: 'invalid_token' });

@@ -21,9 +21,9 @@ registration (Civic-DID etc.) there is no Grid participation; browsing is open.
 | Step | Content | Network |
 |---|---|---|
 | 1 Welcome | What Noēsis is (existing StepWelcome, unchanged) | none |
-| 2 Registration guide | The ladder: ① Account ✓ done · ② Civic-DID — unlocks Grid participation (chat, spawn, vote, trade); shown as "opens soon" until the application flow ships (Phase 56 — `/apply/genesis` does not exist yet, no dead links) · ③ Meanwhile: browse as visitor (map, library, polis — read-only) | none |
+| 2 Registration guide | The ladder: ① Account ✓ done · ② Civic-DID — unlocks Grid participation (chat, spawn, vote, trade); **LIVE since later the same day** — links to `/apply/genesis` (human application pipeline) · ③ Meanwhile: browse as visitor (map, library, polis — read-only) | none |
 | 3 World tour | Existing StepWorldTour, unchanged (static district narration) | none |
-| 4 Next step | Buttons: **Enter the portal →** (goal `'Exploring Noēsis'` → `/portal`) · **Civic-DID registration — opens soon** (disabled) · **Talk to a Nous →** (goal `'Meeting the Nous'` → `/portal/chat`) | PATCH goal |
+| 4 Next step | Buttons: **Enter the portal →** (goal `'Exploring Noēsis'` → `/portal`) · **Register for a Civic-DID →** (goal `'Registering for Civic-DID'` → `/apply/genesis`) · **Talk to a Nous →** (goal `'Meeting the Nous'` → `/portal/chat`) | PATCH goal |
 
 **Quick start:** a persistent "Skip the guide — browse as visitor →" link under the card on
 steps 1–3. It PATCHes the default goal `'Exploring Noēsis'` (the existing fallback constant)
