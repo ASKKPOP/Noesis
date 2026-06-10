@@ -146,7 +146,8 @@ export default function LandingView() {
                     justifyContent: 'space-between',
                     flexWrap: 'wrap',
                     gap: 16,
-                    padding: '24px 0',
+                    // Extra top padding clears the fixed AgencyIndicator chip (top-4 right-4, z-50).
+                    padding: '52px 0 24px',
                 }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
                         <span style={{
