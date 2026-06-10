@@ -4,7 +4,7 @@
 #   Route 53 ── HTTPS:443 (ACM cert) ──▶ ALB ── HTTP ──▶ this nginx :80 ──▶ containers
 #
 # The ALB terminates TLS, so nginx speaks plain HTTP. Routing is by Host header:
-#   ${DOMAIN}        → guide (/) · dashboard (/dash) · steward (/console)
+#   ${DOMAIN}        → dashboard (/, landing page) · guide (/docs) · steward (/console)
 #   api.${DOMAIN}    → grid (Portal + Grid · REST + WS + Portal)
 #
 # Rendered from this template by the nginx image entrypoint (envsubst) — only the
@@ -23,7 +23,7 @@ upstream noesis_dashboard { server dashboard:3001; }
 upstream noesis_steward   { server steward:3002; }
 upstream noesis_grid      { server grid:8080; }
 
-# ── Apex: guide + dashboard (/dash) + steward (/console) ─────────────────────
+# ── Apex: dashboard (/) + guide docs (/docs) + steward (/console) ────────────
 server {
     listen 80;
     server_name ${DOMAIN};
@@ -35,11 +35,13 @@ server {
     proxy_set_header X-Forwarded-Proto https;
     proxy_http_version 1.1;
 
-    # Next.js apps are built with basePath=/dash and /console, so the prefix is
-    # passed through unchanged (no rewrite).
-    location /dash    { proxy_pass http://noesis_dashboard; }
+    # Dashboard owns the apex (no basePath); steward keeps basePath=/console so
+    # its prefix passes through unchanged (no rewrite). Static docs (the services
+    # guide et al.) stay reachable under /docs/ via the guide container.
+    location /docs/   { proxy_pass http://noesis_guide; }
+    location = /docs  { return 302 /docs/noesis-services-beginner-guide.html; }
     location /console { proxy_pass http://noesis_steward; }
-    location /        { proxy_pass http://noesis_guide; }
+    location /        { proxy_pass http://noesis_dashboard; }
 }
 
 # ── api subdomain → grid (REST + WebSocket firehose + Portal) ────────────────

@@ -10,7 +10,7 @@
 #   Route 53 ─HTTPS:443(ACM)─▶ ALB ─HTTP─▶ EC2:${NGINX_HTTP_PORT} (nginx) ─▶ containers
 #
 # Hostname routing (nginx server_name):
-#   ${DOMAIN}        → guide (/) · dashboard (/dash) · steward (/console)
+#   ${DOMAIN}        → dashboard (/, the landing page) · guide (/docs) · steward (/console)
 #   api.${DOMAIN}    → grid (Portal + Grid)                       ← REQUIRED
 #   coturn.${DOMAIN} → coturn — NOT through the ALB/nginx (TURN is not HTTP).
 #                      Use an NLB or the EC2 elastic IP; open UDP/TCP 3478 + TLS 5349.
@@ -44,7 +44,7 @@ services:
       - "${NGINX_HTTP_PORT:-80}:80"
     restart: unless-stopped
 
-  # ── Services Guide (static landing) — reached internally by the proxy ───────
+  # ── Services Guide (static docs at /docs) — reached internally by the proxy ─
   guide:
     build:
       context: .
@@ -57,14 +57,14 @@ services:
     environment:
       GRID_CORS_ORIGINS: "https://${DOMAIN:-localhost}"
 
-  # ── Dashboard → ${DOMAIN}/dash (Next basePath=/dash; API at api.${DOMAIN}) ──
+  # ── Dashboard → ${DOMAIN}/ (apex — the landing page is the first page) ──────
   dashboard:
     build:
       args:
-        NEXT_PUBLIC_BASE_PATH: "/dash"
+        NEXT_PUBLIC_BASE_PATH: ""
         NEXT_PUBLIC_GRID_ORIGIN: "https://api.${DOMAIN:-localhost}"
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/dash/api/dash/health"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/api/dash/health"]
 
   # ── Steward Console → ${DOMAIN}/console (Next basePath=/console) ────────────
   steward:

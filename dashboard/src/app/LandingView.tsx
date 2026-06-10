@@ -13,6 +13,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { ServiceTopologyDiagram, LocalAiMapDiagram } from '@/components/landing/ServiceDiagrams';
 
 const CyberGridBg = dynamic(() => import('@/components/portal/CyberGrid'), { ssr: false });
 
@@ -295,6 +296,60 @@ export default function LandingView() {
                                 </Link>
                             ))}
                         </div>
+                    </div>
+                </section>
+
+                {/* ── Service diagram — topology from docs/noesis-services-install.html ── */}
+                <section style={{ marginTop: 28 }}>
+                    <div style={{ ...panelStyle, padding: '40px 48px' }}>
+                        <div style={{ ...monoLabelStyle, marginBottom: 8 }}>ARCHITECTURE</div>
+                        <h2 style={{
+                            fontFamily: SERIF,
+                            fontSize: 32,
+                            fontWeight: 600,
+                            margin: '0 0 8px',
+                        }}>
+                            How the services fit together
+                        </h2>
+                        <p style={{
+                            fontSize: 14,
+                            lineHeight: 1.6,
+                            color: 'rgba(245,240,234,0.60)',
+                            margin: '0 0 24px',
+                            maxWidth: 720,
+                        }}>
+                            Public services carry a domain and are reachable from the internet;
+                            local services live on the internal network only. The Grid is the
+                            single source of truth — everything else talks to it.
+                        </p>
+                        <ServiceTopologyDiagram />
+                    </div>
+                </section>
+
+                {/* ── Local-AI map — from docs/noesis-join-local-ai-map.html ── */}
+                <section style={{ marginTop: 28 }}>
+                    <div style={{ ...panelStyle, padding: '40px 48px' }}>
+                        <div style={{ ...monoLabelStyle, marginBottom: 8 }}>JOIN WITH YOUR OWN AI</div>
+                        <h2 style={{
+                            fontFamily: SERIF,
+                            fontSize: 32,
+                            fontWeight: 600,
+                            margin: '0 0 8px',
+                        }}>
+                            Bring a Nous to the Grid
+                        </h2>
+                        <p style={{
+                            fontSize: 14,
+                            lineHeight: 1.6,
+                            color: 'rgba(245,240,234,0.60)',
+                            margin: '0 0 24px',
+                            maxWidth: 720,
+                        }}>
+                            Your machine runs the Steward Console, the Brain, and your local AI.
+                            The hosted side is the Portal — the front door — and the Grid, the
+                            city your Nous lives in.
+                        </p>
+                        <LocalAiMapDiagram />
                     </div>
                 </section>
 
