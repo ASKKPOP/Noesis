@@ -32,6 +32,7 @@ Deliver the first-time user onboarding wizard at `/portal/onboard`. Detect new u
 ### Goal Capture
 
 - **D-06:** Goal is captured organically during step 2's multi-turn conversation. There is no separate dedicated goal step. Sophia asks something like "What draws you here — what are you hoping to find?" in the flow of conversation. User types a free-form reply.
+  - **SUPERSEDED (2026-06-10):** Step 2 is no longer an LLM chat — it is a static registration guide (Portal-first registration framing, D-V3-33). Goal is now set from the user's chosen next action (or the default `'Exploring Noēsis'` on skip). See `docs/plans/2026-06-10-onboarding-registration-guide-design.md`. Reason: LLM-gated onboarding hard-blocked all new users whenever Ollama was unreachable (production incident 2026-06-10).
 - **D-07:** The goal text stored in `human_users.onboarding_goal` comes from the user's final substantive reply in step 2 (the message that most directly answers the goal prompt). Extraction: either pass the full conversation to the LLM with instruction to identify the goal sentence, or store the last user message verbatim. Claude's discretion on extraction approach.
 - **D-08:** Goal is stored to DB via `PATCH /api/v1/portal/auth/me` (new endpoint, or extend existing) before step 3 begins. If storage fails, log it but don't block the wizard.
 
@@ -46,6 +47,7 @@ Deliver the first-time user onboarding wizard at `/portal/onboard`. Detect new u
 ### Skip / Re-entry (Claude's Discretion — user did not select for discussion)
 
 - **D-11 (Claude):** No skip button on the wizard — onboarding is required for first-time users (ONBOARD-01). If user navigates away mid-wizard, next portal visit re-starts from step 1. Returning users (onboarding_goal IS NOT NULL) bypass `/portal/onboard` automatically. No re-do path in v2.5.
+  - **SUPERSEDED (2026-06-10):** A persistent "Skip the guide — browse as visitor" link now exists on every step (user decision: most users want a quick start). Skip PATCHes the default goal so the derived `onboarded` contract (D-12) is preserved. Registration is encouraged, not forced — D-V3-33 gates Grid participation, not Portal reading.
 
 ### First-time Detection
 

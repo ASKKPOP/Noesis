@@ -1,9 +1,9 @@
-interface Props { currentStep: 1 | 2 | 3; }
+interface Props { currentStep: 1 | 2 | 3 | 4; }
 
 export default function WizardStepIndicator({ currentStep }: Props) {
     return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, marginBottom: 16 }}>
-            {[1, 2, 3].map((n, i) => (
+            {[1, 2, 3, 4].map((n, i) => (
                 <div key={n} style={{ display: 'flex', alignItems: 'center' }}>
                     {i > 0 && (
                         <div style={{ width: 24, height: 1, background: 'rgba(218,122,78,0.25)' }} />

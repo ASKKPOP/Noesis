@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useHumanAuthStore } from '@/lib/stores/human-auth-store';
 import WizardStepIndicator from './WizardStepIndicator';
 import StepWelcome from './StepWelcome';
-import StepSophiaChat from './StepSophiaChat';
+import StepRegistrationGuide from './StepRegistrationGuide';
 import StepWorldTour from './StepWorldTour';
+import StepNextActions from './StepNextActions';
 
 const CyberGridBg = dynamic(() => import('@/components/portal/CyberGrid'), { ssr: false });
 
@@ -17,11 +18,15 @@ type DistrictId = 'AI_CORE' | 'HUB' | 'DATA' | 'DARKWEB' | 'RESIDENTIAL';
 
 const DISTRICT_ORDER: readonly DistrictId[] = ['AI_CORE', 'HUB', 'DATA', 'DARKWEB', 'RESIDENTIAL'] as const;
 
+/** Default goal stored on quick-start skip (D-06 superseded 2026-06-10). */
+const DEFAULT_GOAL = 'Exploring Noēsis';
+
 function PortalOnboardPage() {
     const router = useRouter();
     const { currentUser, setUser } = useHumanAuthStore();
-    const [step, setStep] = useState<1 | 2 | 3>(1);
+    const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
     const [currentDistrict, setCurrentDistrict] = useState<DistrictId | null>(null);
+    const [completing, setCompleting] = useState(false);
 
     // Guard: already onboarded — go to portal
     useEffect(() => {
@@ -30,28 +35,35 @@ function PortalOnboardPage() {
         }
     }, [currentUser, router]);
 
-    const handleSophiaDone = useCallback(async (lastUserMessage: string) => {
-        // D-08: store goal non-blocking, then advance to step 3
+    /**
+     * Complete onboarding: store the goal (D-08: non-blocking — the PATCH is what
+     * makes /me return onboarded:true per D-12), mark the store, navigate.
+     * Used by both the step-4 actions and the quick-start skip link.
+     */
+    const completeOnboarding = useCallback(async (goal: string, dest: string) => {
+        if (completing) return;
+        setCompleting(true);
         try {
             await fetch(`${GRID_BASE}/api/v1/portal/auth/me`, {
                 method: 'PATCH',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ onboarding_goal: lastUserMessage || 'Exploring Noēsis' }),
+                body: JSON.stringify({ onboarding_goal: goal }),
             });
         } catch (err) {
             console.warn('[onboard] goal storage failed (non-blocking):', err);
         }
-        setStep(3);
-    }, []);
-
-    const handleWizardComplete = useCallback(() => {
-        // Update store so redirect guard doesn't fire again
+        // Update store so the redirect guard doesn't bounce back here
         if (currentUser) {
             setUser({ ...currentUser, onboarded: true });
         }
-        router.push('/portal');
-    }, [currentUser, router, setUser]);
+        router.push(dest);
+    }, [completing, currentUser, router, setUser]);
+
+    const handleTourComplete = useCallback(() => {
+        setCurrentDistrict(null);
+        setStep(4);
+    }, []);
 
     return (
         <div style={{
@@ -72,13 +84,35 @@ function PortalOnboardPage() {
             <div style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 520 }}>
                 <WizardStepIndicator currentStep={step} />
                 {step === 1 && <StepWelcome onContinue={() => setStep(2)} />}
-                {step === 2 && <StepSophiaChat onDone={handleSophiaDone} />}
+                {step === 2 && <StepRegistrationGuide onContinue={() => setStep(3)} />}
                 {step === 3 && (
                     <StepWorldTour
                         districtOrder={DISTRICT_ORDER}
                         onDistrictChange={setCurrentDistrict}
-                        onComplete={handleWizardComplete}
+                        onComplete={handleTourComplete}
                     />
+                )}
+                {step === 4 && (
+                    <StepNextActions onChoose={completeOnboarding} busy={completing} />
+                )}
+
+                {/* Quick start — always available before the final step (D-11 superseded 2026-06-10) */}
+                {step < 4 && (
+                    <div style={{ textAlign: 'center', marginTop: 16 }}>
+                        <button
+                            onClick={() => completeOnboarding(DEFAULT_GOAL, '/portal')}
+                            disabled={completing}
+                            style={{
+                                background: 'none', border: 'none', padding: 4,
+                                fontFamily: 'var(--sans-portal)', fontSize: 13,
+                                color: 'rgba(245,240,234,0.55)',
+                                cursor: completing ? 'wait' : 'pointer',
+                                textDecoration: 'underline', textUnderlineOffset: 3,
+                            }}
+                        >
+                            {completing ? 'Entering…' : 'Skip the guide — browse as visitor →'}
+                        </button>
+                    </div>
                 )}
             </div>
         </div>
