@@ -82,7 +82,11 @@ function PortalAuthPage() {
 
     const pendingRef = useRef(false);
 
-    const [tab, setTab] = useState<Tab>('signin');
+    // ?tab=join opens the Join tab (used by landing-page Sign Up CTAs).
+    // Safe to read window directly — this page is loaded with ssr:false.
+    const [tab, setTab] = useState<Tab>(() =>
+        new URLSearchParams(window.location.search).get('tab') === 'join' ? 'join' : 'signin'
+    );
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [socialPending, setSocialPending] = useState<'google' | 'apple' | null>(null);
