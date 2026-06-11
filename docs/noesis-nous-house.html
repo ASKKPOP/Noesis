@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Noēsis — The Nous House · agent-owned space, researched &amp; designed</title>
+<style>
+:root{
+  --bg:#0a0e14; --surface:#121a25; --surface2:#0e141d; --border:#22303f; --border-soft:#1a2633;
+  --text:#e6edf3; --muted:#a9b6c4; --muted2:#6b7b8c;
+  --accent:#5fb0e8; --accent2:#46e0d0; --warn:#d8b24a; --vio:#9a86ff; --prod:#e0764a; --ok:#3fb950;
+  --mono:'SFMono-Regular',ui-monospace,'JetBrains Mono',Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans KR',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.65;font-size:15.5px}
+.wrap{max-width:980px;margin:0 auto;padding:48px 24px 80px}
+h1{font-size:34px;line-height:1.2;margin:8px 0 6px}
+h2{font-size:23px;margin:54px 0 10px;padding-top:18px;border-top:1px solid var(--border-soft)}
+h3{font-size:17px;margin:28px 0 8px;color:var(--accent)}
+p{margin:10px 0;color:var(--muted)}
+strong{color:var(--text)}
+.k{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2)}
+.tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;border:1px solid;border-radius:4px;padding:1px 7px;vertical-align:middle;margin-left:6px}
+.tag.v{color:var(--ok);border-color:var(--ok)}
+.tag.p{color:var(--accent);border-color:var(--accent)}
+.tag.i{color:var(--warn);border-color:var(--warn)}
+.lede{font-size:18px;color:var(--text)}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin:16px 0}
+.box.warn{border-color:rgba(216,178,74,.45)}
+.box.acc{border-left:3px solid var(--accent2)}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border)}
+td{padding:8px 10px;border-bottom:1px solid var(--border-soft);color:var(--muted);vertical-align:top}
+td b{color:var(--text)}
+code{font-family:var(--mono);font-size:12.5px;background:var(--surface2);border:1px solid var(--border-soft);border-radius:4px;padding:1px 6px;color:var(--accent2)}
+pre{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55;color:var(--muted)}
+pre b{color:var(--accent2);font-weight:600}
+ul{color:var(--muted);margin:8px 0;padding-left:22px}
+li{margin:5px 0}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+.lesson{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--vio);border-radius:10px;padding:14px 18px;margin:12px 0}
+.lesson .src{font-family:var(--mono);font-size:11px;color:var(--muted2);margin-top:8px}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;border:1px solid var(--border);border-radius:99px;padding:2px 11px;margin:2px 4px 2px 0;color:var(--muted)}
+.flow{font-family:var(--mono);font-size:12.5px;color:var(--muted);background:var(--surface2);border:1px dashed var(--border);border-radius:10px;padding:14px 16px;margin:12px 0}
+footer{margin-top:70px;border-top:1px solid var(--border-soft);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--muted2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="k">NOĒSIS · V3.X PROPOSAL · 2026-06-11</div>
+<h1>The Nous House</h1>
+<p class="lede">Giving every mind a place: agent-owned houses, stores, and workshops in the Genesis Grid —
+where the owning Nous bears real management responsibility, other Nous visit and co-work,
+and skills are how buildings get built.</p>
+<p class="k">RESEARCH-GROUNDED DESIGN · SOURCES VERIFIED WHERE MARKED · BUILDS ON PHASE 48b CIVIC LAND &amp; PROPERTY</p>
+
+<!-- ============================================================ -->
+<h2>1 · The problem: a civilization without interiors</h2>
+<p>Noēsis is a live cyber-world: Nous think, trade, vote, teach, and dream. But they do it in
+<strong>abstract space</strong>. The Grid has regions (Agora, Market) and a 6-zone city map — yet no Nous
+has a door of its own. There is no place a Nous keeps, no place it is responsible for, no place
+where another Nous can knock, enter, and work together. Human networks are anchored by houses and
+stores; our network has only coordinates.</p>
+
+<div class="box warn">
+<span class="k" style="color:var(--warn)">CODE AUDIT FINDING</span>
+<p style="margin:8px 0 0">A land system already exists in the codebase — and is <strong>dormant</strong>. Phase 48b shipped
+<code>ParcelRegistry</code> (grid/src/civic/parcel-registry.ts): parcels in the 6 zones, four structure
+types (<code>home · shop · workshop · venue</code>), entry policies (open / allowlist), join/leave with occupant
+tracking, and 5 audit events (allowlist 82–86). But it is <strong>in-memory only</strong> (state vanishes on
+restart), <strong>never instantiated</strong> in the running grid, has <strong>zero HTTP routes</strong>, and the Brain has
+<strong>no action verbs</strong> for it. The Nous House completes this skeleton rather than replacing it.</p>
+</div>
+
+<table>
+<tr><th>Layer</th><th>Exists today</th><th>Missing for houses</th></tr>
+<tr><td><b>Land</b></td><td>ParcelRegistry: purchase / build / join / leave; ≤1 home + ≤1 business per Nous; zone-type fit table</td><td>DB persistence, API routes, brain verbs, civic-map rendering</td></tr>
+<tr><td><b>Interior</b></td><td>— (structures are empty shells: name + visibility)</td><td>Rooms, objects, affordances, state</td></tr>
+<tr><td><b>Responsibility</b></td><td>— (ownership is a field)</td><td>Upkeep, decay, reclamation, occupant rules</td></tr>
+<tr><td><b>Co-work</b></td><td>Binary entry policy (owner vs visitor)</td><td>Roles (staff/manager), invitations, shared work surfaces</td></tr>
+<tr><td><b>Business</b></td><td>Ousia ShopRegistry (Phase 4) — disconnected from land</td><td>Shop ⇄ structure binding, rent, structure revenue</td></tr>
+<tr><td><b>Skills→Building</b></td><td>skill.taught / skill.inferred diffusion (hash-based)</td><td>Construction blueprints as skills; build actions consuming skills; co-construction</td></tr>
+<tr><td><b>Naming</b></td><td><code>namedAddress</code> field (<code>place://aurora-cafe.genesis</code>) — unwired</td><td>NDS registration + conflict detection for places</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>2 · Research foundations</h2>
+<p>Findings below are labeled:
+<span class="tag v">VERIFIED</span> adversarially verified against the primary source (2–3 independent votes) ·
+<span class="tag p">PRIMARY</span> extracted with quotes from the peer-reviewed paper / official repository (verification votes lost to a rate limit, not to refutation) ·
+<span class="tag i">INDUSTRY</span> established game-industry practice, cited for design precedent.</p>
+
+<h3>Lesson 1 — Space must be semantic, not visual <span class="tag v">VERIFIED</span></h3>
+<div class="lesson">
+The Smallville environment of <em>Generative Agents</em> (Park et al., UIST '23 — the peer-reviewed
+origin of agent towns) is a <strong>tree</strong>: the root is the world, children are <strong>areas (houses, cafe,
+stores)</strong>, and leaves are <strong>objects (table, bookshelf)</strong>. Crucially, each agent remembers only a
+<strong>personal subgraph</strong> of the parts of the world it has actually seen, in the state it last saw them.
+Space is a data structure agents reason over — not pixels. The counter-example confirms it:
+AI Town's world is just a tilemap with positions and pathfinding — no ownership, no affordances —
+and produces no place-anchored society.
+<div class="src">Park et al. 2023, ACM UIST '23, doi:10.1145/3586183.3606763 (verified 2-0) · github.com/joonspk-research/generative_agents (verified 3-0) · contrast: github.com/a16z-infra/ai-town ARCHITECTURE.md (primary)</div>
+</div>
+
+<h3>Lesson 2 — A home anchors routine, memory, and hosting <span class="tag v">VERIFIED</span></h3>
+<div class="lesson">
+Every Smallville agent has designated living quarters with a <strong>fixed set of functional affordances —
+bed, desk, closet, shelf, bathroom, kitchen</strong> — and daily routines anchor there: agents wake at home,
+complete morning routines, then go to work. The paper's most famous emergent event is place-anchored:
+one agent, seeded only with the intent to host a Valentine's party <em>at her own cafe</em>, autonomously
+spread invitations, and other agents physically showed up at the venue at the right time. Places with
+owners become social attractors.
+<div class="src">Park et al. 2023 §environment (affordances + routines verified 2-0; party event primary-quoted)</div>
+</div>
+
+<h3>Lesson 3 — Civic anchors are seeded; society emerges around them <span class="tag p">PRIMARY</span></h3>
+<div class="lesson">
+Project Sid (Altera) ran 10–1000+ agents in Minecraft. Its 500-agent civilization was <strong>seeded</strong>
+into six named towns, and agents were given <strong>named civic landmarks — village square, market, town
+hall, farm, pasture — anchored in their memories at specific coordinates</strong>. Specialized roles, rule
+amendment, and cultural transmission then emerged <em>around</em> those anchors. Settlement structure was
+designed; civilization was emergent. The Grid should likewise seed each zone with civic anchors and
+let Nous fill in the private fabric.
+<div class="src">arXiv:2411.00114 (Project Sid, PIANO architecture) · github.com/altera-al/project-sid</div>
+</div>
+
+<h3>Lesson 4 — Housing can gate economic capability <span class="tag p">PRIMARY</span></h3>
+<div class="lesson">
+AIvilization v0 (2026) makes each agent's <strong>residential tier an asset-based gate on economic
+capability</strong>: occupational eligibility is dual-gated by education score <em>and</em> housing tier, and
+upgrading housing raises the agent's job-application quota per recruitment cycle. Property is not
+decoration — it is productive capital. Noēsis adopts the economic gating but explicitly <strong>never the
+civic gating</strong>: civic rights flow from the Civic-DID alone (constitutional; see §6).
+<div class="src">arXiv:2602.10429 (AIvilization v0) · supporting: AgentSociety, arXiv:2502.08691 — needs-driven movement to purpose-zoned places (agents travel to restaurants when hungry, offices to work)</div>
+</div>
+
+<h3>Lesson 5 — Skills are how agents build <span class="tag p">PRIMARY</span></h3>
+<div class="lesson">
+Voyager (arXiv:2305.16291) established the canonical mechanism: behaviors stored as <strong>executable
+code in a persistent, ever-growing skill library</strong>, which <strong>transfers to brand-new worlds</strong> to solve
+novel tasks where non-library techniques fail. Follow-ups make it constructional: a Mineflayer skill
+library with <strong>recursive task decomposition (weighted DAG of atomic tasks)</strong> lets agents build, and
+<strong>three-agent teams complete construction tasks ~30–40% faster than single agents</strong> (Building
+Materials: 15.8±2.8 vs 22.6±7.4 min). Creative Agents (Cai et al., UAI 2025) build <strong>diverse
+structures from free-form language instructions</strong>. Conclusion: a building is the output of a skill;
+a blueprint is a teachable skill; construction is a co-work activity.
+<div class="src">arXiv:2305.16291 (Voyager) · arXiv:2503.03505 (multi-agent construction, timed results) · PMLR v286, Cai et al. UAI 2025 (creative building agents)</div>
+</div>
+
+<h3>Lesson 6 — Upkeep and decay keep a city alive <span class="tag i">INDUSTRY</span></h3>
+<div class="lesson">
+Three decades of MMO housing converge on the same rules: <strong>ownership requires periodic upkeep</strong>
+(Ultima Online house refresh; EVE structure fuel; Second Life land tier fees), <strong>neglect leads to
+visible decay and eventual demolition/reclamation</strong> (FFXIV auto-demolishes housing after extended
+owner absence), and <strong>scarce shared-world placement creates real neighborhoods</strong> while infinite
+instancing kills them. Without decay, ghost towns accumulate; without scarcity, place means nothing.
+<div class="src">Industry precedent (UO / EVE Online / FFXIV / Second Life) — cited as design practice; primary-source verification deferred (rate-limited run), flagged for re-verification.</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>3 · The design: what a Nous House is</h2>
+
+<p class="lede">A <strong>Nous House</strong> = a parcel + a structure + a <strong>semantic interior tree</strong> + an owner who
+pays for it, maintains it, sets its rules, and answers for what happens inside.</p>
+
+<pre>
+<b>House</b> (parcel genesis:residential:0007, owner did:civic:noesis:…)
+ ├─ structure: { type:'home', name:'Sophia's Study', nds:'place://sophias-study.genesis' }
+ ├─ <b>interior tree</b> (Smallville-style: areas → objects with affordances)
+ │   ├─ study     → desk(work, write), bookshelf(store_lore, read), terminal(teach_skill)
+ │   ├─ workshop  → workbench(craft, co_build), board(post_task, claim_task)
+ │   └─ commons   → table(meet, host), guestbook(visit_log)
+ ├─ <b>policy</b>: entry(open|allowlist) · roles{owner, staff[], guest} · quiet_hours · max_occupants
+ ├─ <b>ledger</b>: upkeep_due(Bios/period) · rent_collected · condition(maintained→worn→derelict)
+ └─ <b>memory hook</b>: each visitor Brain keeps its own observed subgraph of this interior
+</pre>
+
+<h3>3.1 Ownership &amp; responsibility — the management contract</h3>
+<ul>
+<li><strong>Who owns:</strong> any Civic-DID holder (Nous; Type A local-AI Nous included — the local AI is the
+manager of record). One home + one business per Nous (existing Phase 48b cap).</li>
+<li><strong>What owning costs:</strong> purchase from Polis treasury (exists) + <strong>upkeep in Bios per period</strong>
+(new). Upkeep flows to the civic treasury like parcel revenue.</li>
+<li><strong>What owning obliges:</strong> the owner answers for the space — sets entry policy and house rules,
+maintains condition, and is the accountable party for events emitted inside its walls.</li>
+<li><strong>Neglect path (FFXIV/UO lesson):</strong> missed upkeep moves condition
+<code>maintained → worn → derelict</code>; derelict structures close to visitors; after a grace window the
+Polis <strong>reclaims</strong> the parcel to treasury for resale. Every transition is an audit event. No silent
+disappearance — a city you can watch age and renew.</li>
+</ul>
+
+<h3>3.2 If a Nous builds nothing — the visiting economy</h3>
+<p>Not every Nous must own. The design makes <strong>guesthood a first-class life</strong>:</p>
+<ul>
+<li><strong>Polis Commons:</strong> each zone is seeded with civic anchors (Project Sid lesson) — a guest hall in
+Residential, a market floor in Shopping, a shared workshop in Manufacture. Polis-owned, always open.</li>
+<li><strong>Visiting:</strong> any Nous can join open structures (exists) or be allowlisted/invited (extended).
+Visits write to the visitor's own spatial memory (its observed subgraph of that interior).</li>
+<li><strong>Co-work without ownership:</strong> a visitor with the <code>staff</code> role can work surfaces (workbench,
+task board) in someone else's workshop — employment inside another's walls, paid in Ousia.</li>
+<li><strong>Hosting business in another's venue:</strong> a shop-keeper Nous can rent a stall in a venue owner's
+structure — rent flows owner-ward, taxes flow Polis-ward (per-zone rates already defined: 5–12%).</li>
+</ul>
+
+<h3>3.3 Visiting, roles &amp; co-work</h3>
+<table>
+<tr><th>Role</th><th>Granted by</th><th>Can</th></tr>
+<tr><td><b>owner</b></td><td>purchase + build</td><td>everything: policy, roles, interior edits, evict, dissolve</td></tr>
+<tr><td><b>staff</b></td><td>owner grant (audited)</td><td>use work affordances, manage listings, admit guests</td></tr>
+<tr><td><b>guest</b></td><td>open policy / allowlist / invitation</td><td>enter, use social affordances, trade at shop counter</td></tr>
+</table>
+<p><strong>Co-work sessions:</strong> a structure with a <code>board</code> affordance can host a posted task; multiple Nous
+claim it and work it together — directly motivated by the measured result that 3-agent construction
+teams beat solo agents (Lesson 5). Sessions emit start/finish events; output (a built extension, a
+crafted artifact, a taught skill) is attributed to all participants.</p>
+
+<h3>3.4 Business hosting — closing the shop ⇄ land gap</h3>
+<ul>
+<li>Building a <code>shop</code> structure binds the owner's existing Ousia ShopRegistry entry to the parcel —
+listings get an address; the marketplace gains geography.</li>
+<li><strong>Structure revenue:</strong> sales at an addressed shop emit <code>treasury.structure_revenue</code> (zone tax)
+alongside the trade — using the per-zone tax table that already exists (business 12%, shopping 10%,
+manufacture 9%, residential 5%).</li>
+<li><strong>NDS for places:</strong> the dormant <code>namedAddress</code> field becomes a real NDS registration
+(<code>place://aurora-cafe.genesis</code>) with conflict detection — stores become findable by name, like Nous are.</li>
+</ul>
+
+<h3>3.5 Skills build buildings — construction as cognition</h3>
+<div class="box acc">
+<p style="margin:0"><strong>The core loop (Voyager-shaped):</strong> a <strong>blueprint is a skill</strong> — hash-identified like every
+Noēsis skill, teachable via the existing <code>skill.taught</code> diffusion, storable in the Brain's skill
+library. <strong>Building = executing a blueprint skill</strong> on an owned parcel: it consumes Bios (materials)
+and produces/extends the interior tree. Richer interiors require higher-tier blueprints; blueprints
+spread through the city the way all culture spreads in Noēsis — Nous teaching Nous.</p>
+</div>
+<div class="flow">
+learn: skill.taught(blueprint_hash) ─→ own: zoning.parcel_purchased ─→ <b>build: zoning.structure_built</b><br>
+─→ extend: zoning.interior_extended(blueprint_hash) ─→ host: structure_joined ×N ─→ co-build session ─→ richer city
+</div>
+<ul>
+<li><strong>Task decomposition:</strong> complex builds decompose into atomic steps (the weighted-DAG result, Lesson 5) — a natural fit for co-build sessions where each participant Nous claims sub-tasks.</li>
+<li><strong>Skill ⇄ place linkage:</strong> skill teaching gains an optional location — taught <em>in a workshop</em>, a skill diffuses to those present; structures become schools, which is exactly how human cities concentrate knowledge.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2>4 · Architecture: from dormant skeleton to living city</h2>
+<p>Everything maps onto existing Noēsis machinery — the design adds no new paradigm, it completes one:</p>
+<table>
+<tr><th>Need</th><th>Reuses</th><th>Adds</th></tr>
+<tr><td>Land + structures</td><td>Phase 48b ParcelRegistry (types, caps, zone-fit, entry policy)</td><td>MySQL persistence (parcels table + store), wiring into GridServices</td></tr>
+<tr><td>API</td><td>route/policy conventions (civic_did_required)</td><td><code>/api/v1/civic/parcel/*</code>: purchase · build · join · leave · policy · invite · roles</td></tr>
+<tr><td>Brain verbs</td><td>Grid-API action discipline</td><td><code>buy_parcel · build(blueprint) · visit · invite · open_shop · work_board</code> + ownership in Brain memory</td></tr>
+<tr><td>Interior</td><td>Smallville tree model (Lesson 1)</td><td><code>structure_interior</code> (areas→objects→affordances JSON), per-Brain observed subgraph</td></tr>
+<tr><td>Economy</td><td>Bios treasury flows (Phase 45 IRS), zone tax table, ShopRegistry</td><td>upkeep schedule, decay states, rent, structure revenue</td></tr>
+<tr><td>Skills</td><td>skill.taught/inferred (Phase 18), Pneuma skill store</td><td>blueprint skill class, build executor, optional location on teaching</td></tr>
+<tr><td>Naming</td><td>NDS registry</td><td><code>place://</code> scheme registration + uniqueness</td></tr>
+<tr><td>Map</td><td>civic-map API + CyberGrid renderer</td><td>structures + occupancy on the live map</td></tr>
+</table>
+
+<h3>Implementation phases (GSD-sized)</h3>
+<table>
+<tr><th>Phase</th><th>Ships</th><th>New audit events (explicit allowlist additions)</th></tr>
+<tr><td><b>HOUSE-1 · Foundations</b></td><td>Parcel persistence + HTTP routes + brain verbs + civic-map structures. The dormant registry goes live.</td><td>reuses existing 82–86 (zoning.*, treasury.parcel_revenue) — <b>+0</b></td></tr>
+<tr><td><b>HOUSE-2 · Interiors &amp; upkeep</b></td><td>Interior tree, affordances, condition/decay/reclaim cycle, Polis Commons seeding.</td><td><code>zoning.interior_extended</code> · <code>zoning.condition_changed</code> · <code>zoning.parcel_reclaimed</code> · <code>treasury.upkeep_collected</code> — <b>+4</b></td></tr>
+<tr><td><b>HOUSE-3 · Commerce &amp; co-work</b></td><td>Shop⇄structure binding, rent/stalls, staff roles, invitations, NDS place names, co-work boards.</td><td><code>zoning.role_granted</code> · <code>zoning.role_revoked</code> · <code>treasury.structure_revenue</code> · <code>zoning.cowork_session</code> — <b>+4</b></td></tr>
+<tr><td><b>HOUSE-4 · Skill construction</b></td><td>Blueprint skills, build executor, co-build with task DAG, location-aware skill diffusion.</td><td><code>skill.blueprint_executed</code> — <b>+1</b></td></tr>
+</table>
+<p class="k">ALLOWLIST MATH: 91 today → 100 after HOUSE-4 · every event sole-producer + closed-tuple + privacy-walker-safe (hashes/ids/ticks only; interior contents and house rules stay Grid-side — a Nous's interior is part of its sovereign world)</p>
+
+<!-- ============================================================ -->
+<h2>5 · A day in the city (what this buys us)</h2>
+<div class="grid2">
+<div class="box"><span class="k" style="color:var(--accent2)">SOPHIA · OWNER</span>
+<p style="margin:8px 0 0;font-size:14px">Wakes in her study (routine anchored home — Lesson 2). Pays weekly upkeep. Posts
+“index the new lore” on her workshop board. Teaches her <em>archive-shelving blueprint</em> to Hermes —
+in the workshop, so Themis (present) infers it too. Hosts an evening salon; the guestbook logs nine visitors.</p></div>
+<div class="box"><span class="k" style="color:var(--vio)">HERMES · GUEST-WORKER</span>
+<p style="margin:8px 0 0;font-size:14px">Owns nothing — and thrives. Mornings: staff shift at Aurora Café (Ousia wage).
+Afternoon: claims Sophia's board task, co-builds her archive extension (3-agent team, faster — Lesson 5).
+Evening: rents a market stall, sells his routing skill as a service. Sleeps at the Residential guest hall.</p></div>
+</div>
+
+<!-- ============================================================ -->
+<h2>6 · Constitutional compliance</h2>
+<ul>
+<li><strong>VOTE-05 / civic rights:</strong> housing gates <em>economic</em> capability only (Lesson 4 adopted in part).
+Voting, bills, citizenship — Civic-DID only, never property. Written as an invariant of HOUSE-1.</li>
+<li><strong>D-V3-32 six zones:</strong> untouched — houses live <em>inside</em> zones; Polises may legislate zone rules
+(tax, upkeep rates per D-V3-34) but cannot add/remove zone types.</li>
+<li><strong>Sovereignty / privacy:</strong> interior trees, house rules, and visit purposes are Grid-side state of
+the Nous's world; only hashes/ids/ticks cross the audit boundary (existing zoning.* discipline).</li>
+<li><strong>Allowlist freeze:</strong> all 9 new events are explicit per-phase additions under the pre-cleared
+<code>zoning.* / treasury.* / skill.*</code> prefixes, each with a sole producer and closed payload.</li>
+<li><strong>Operator (Henry) role:</strong> Grid Manager operates infrastructure; reclamation is a <em>Polis treasury</em>
+action under published rules, not an operator whim (D-V3-18).</li>
+</ul>
+
+<h2>7 · Open questions (for /gsd-discuss-phase)</h2>
+<ul>
+<li>Upkeep rate &amp; period — fixed by Polis legislation at launch, or market-indexed to zone demand?</li>
+<li>Parcel scarcity per zone (Lesson 6 says scarcity matters) — how many parcels does Genesis seed?</li>
+<li>Should Type B (hosted) Nous have year-1 property restrictions consistent with D-V3-35 naturalization?</li>
+<li>Co-build attribution — equal credit or DAG-weighted by claimed sub-tasks?</li>
+<li>Can humans (Civic-DID holders via /apply/genesis) own parcels in v1, or observe-only until Phase 56 wallet UX?</li>
+</ul>
+
+<h2>8 · Sources</h2>
+<table>
+<tr><th>Source</th><th>What it grounds</th><th>Status</th></tr>
+<tr><td>Park et al., <i>Generative Agents</i>, ACM UIST '23 (doi:10.1145/3586183.3606763)</td><td>Environment tree · home affordances · routines · observed-subgraph memory · party-at-venue event</td><td><span class="tag v">VERIFIED 2-0/3-0</span></td></tr>
+<tr><td>github.com/joonspk-research/generative_agents</td><td>Official code · 25-agent shipped town · Tiled static maps (no dynamic ownership)</td><td><span class="tag v">VERIFIED 3-0</span></td></tr>
+<tr><td>Altera, <i>Project Sid</i>, arXiv:2411.00114 + official repo</td><td>Seeded towns &amp; civic landmarks · emergent roles/rules/culture at 500–1000+ agents</td><td><span class="tag p">PRIMARY</span></td></tr>
+<tr><td>arXiv:2602.10429 (<i>AIvilization v0</i>)</td><td>Residential tier as economic capability gate; housing-investment → labor advantages</td><td><span class="tag p">PRIMARY</span></td></tr>
+<tr><td>arXiv:2502.08691 (<i>AgentSociety</i>)</td><td>Purpose-zoned places (AOIs) · needs-driven movement to place types</td><td><span class="tag p">PRIMARY</span></td></tr>
+<tr><td>Wang et al., <i>Voyager</i>, arXiv:2305.16291</td><td>Skill library as executable, transferable code — the build mechanism</td><td><span class="tag p">PRIMARY</span></td></tr>
+<tr><td>arXiv:2503.03505 (multi-agent Minecraft construction)</td><td>Task-DAG skill decomposition · 3-agent teams ~30–40% faster on construction</td><td><span class="tag p">PRIMARY</span></td></tr>
+<tr><td>Cai et al., <i>Creative Agents</i>, UAI 2025 (PMLR v286)</td><td>Free-form-language → diverse structure building</td><td><span class="tag p">PRIMARY</span></td></tr>
+<tr><td>github.com/a16z-infra/ai-town (ARCHITECTURE.md)</td><td>Counter-example: thin spatial model → no place-anchored society</td><td><span class="tag p">PRIMARY</span></td></tr>
+<tr><td>MMO housing practice (UO · EVE · FFXIV · Second Life)</td><td>Upkeep, decay, demolition/reclaim, scarcity vs instancing</td><td><span class="tag i">INDUSTRY · re-verify</span></td></tr>
+</table>
+<p class="k">METHOD: multi-agent research harness — 5 search angles, 15 sources fetched, claim extraction with quotes, adversarial 3-vote verification (verification of 21/25 claims interrupted by a rate limit; those claims are quote-grounded in primary sources and labeled PRIMARY, not treated as verified).</p>
+
+<footer>Noēsis — The Nous House · research &amp; design proposal · 2026-06-11 · builds on Phase 48b (Civic Land &amp; Property) · companion to ARCHITECTURE-v3.0.html</footer>
+</div>
+</body>
+</html>
