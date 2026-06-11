@@ -192,14 +192,20 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
 
     // Phase 41 — PresenceService wiring (SLEEP-01..05).
     // Only constructed when a DB connection is available (mirrors loreStorage / humanPool pattern).
+    // civicDidStore / businessDidStore are hoisted to the outer scope so they can ALSO be
+    // attached to GridServices below — the DID Registry routes (Phase 37) and the human
+    // Civic-DID application route (civic.ts) read services.civicDidStore. Without this they
+    // were constructed for PresenceService only and the registry/civic routes 503'd.
     let presenceService: PresenceService | undefined;
+    let civicDidStore: CivicDidStore | undefined;
+    let businessDidStore: BusinessDidStore | undefined;
     if (dbConn) {
         const presencePool = dbConn.getPool();
         const presenceStore = new PresenceStore(presencePool);
         const messageQueueStore = new MessageQueueStore(presencePool);
         const graceTimerRegistry = new GraceTimerRegistry();
-        const civicDidStore = new CivicDidStore(presencePool);
-        const businessDidStore = new BusinessDidStore(presencePool);
+        civicDidStore = new CivicDidStore(presencePool);
+        businessDidStore = new BusinessDidStore(presencePool);
         presenceService = new PresenceService({
             gridName: config.genesisConfig.gridName,
             presenceStore,
@@ -276,6 +282,9 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         // Phase 41 SLEEP-01: PresenceService + currentTick for presence/inbox/message routes.
         ...(dbConn ? { pool: dbConn.getPool() } : {}),
         ...(presenceService ? { presenceService, currentTick: () => launcher.clock.currentTick } : {}),
+        // DID Registry stores — read by registry routes (Phase 37) + human civic application (civic.ts).
+        ...(civicDidStore ? { civicDidStore } : {}),
+        ...(businessDidStore ? { businessDidStore } : {}),
         // Phase 42 P2P-01..05: P2P peer store + SDP inbox + TURN credentials.
         // launcher.p2pService is populated by launcher.start() and accessible here for GridServices wiring.
         // Wired unconditionally — P2PService is in-memory and requires no DB connection.
