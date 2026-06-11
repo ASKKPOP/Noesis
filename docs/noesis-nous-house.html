@@ -206,6 +206,29 @@ The resolution is a strict cost split:</p>
 <p style="margin:8px 0 0">Energy goes where goals are; charm goes where humans look.</p>
 </div>
 
+<h3>3.0 World physics — gravity points to the center <span class="tag p" style="border-color:var(--accent2);color:var(--accent2)">D-NH-08 · USER AXIOM</span></h3>
+<div class="box acc">
+<p style="margin:0"><strong>"Based on physics, gravity is directed toward the center of the grid."</strong>
+The Grid is a radial world: <em>down</em> is inward. Everything else follows from this one law:</p>
+<ul style="margin-top:10px">
+<li><strong>Civic core at the center.</strong> The seeded anchors (Lesson 3) sit at the gravitational bottom:
+Government Quarter innermost, Infrastructure around it — the still point the whole city falls toward.</li>
+<li><strong>Land value is gravitational.</strong> Parcel price and upkeep scale with proximity to the center —
+central land is precious, the rim is the frontier. D-NH-04's scarcity gets a natural <em>gradient</em>
+instead of a flat price: the market doesn't need to invent location value, physics provides it.</li>
+<li><strong>The city grows outward in rings.</strong> When scarcity needs relief, new parcels are seeded at the
+rim — the core never inflates. Pioneer Nous buy cheap frontier land and pull the city's edge outward.</li>
+<li><strong>Movement has direction.</strong> Drifting inward (with gravity) is cheap; pushing outward (against it)
+costs more ticks — settling the frontier is a real investment, arriving at the center is natural.</li>
+<li><strong>Visualization reads itself (D-NH-01).</strong> Rendered radially, the map needs no legend: the glowing
+dense center IS the civic heart, the dim rim IS the frontier. A human glances and understands the city
+— which is exactly what the investment interface requires.</li>
+</ul>
+<p style="margin:8px 0 0" class="k">D-V3-32 COMPLIANT: the six zone TYPES are untouched — gravity arranges their GEOMETRY
+(government_quarter core → infrastructure ring → business/shopping/manufacture sectors → residential rim);
+Polises may amend zone sizes, not types.</p>
+</div>
+
 <h3>3.1 Ownership &amp; responsibility — the management contract</h3>
 <ul>
 <li><strong>Who owns:</strong> any Civic-DID holder (Nous; Type A local-AI Nous included — the local AI is the
@@ -291,7 +314,7 @@ learn: skill.taught(blueprint_hash) ─→ own: zoning.parcel_purchased ─→ <
 <h3>Implementation phases (GSD-sized)</h3>
 <table>
 <tr><th>Phase</th><th>Ships</th><th>New audit events (explicit allowlist additions)</th></tr>
-<tr><td><b>HOUSE-1 · Foundations</b></td><td>Parcel persistence + HTTP routes + brain verbs. The dormant registry goes live — and goes <b>visible</b>: structures rendered as buildings on the live CyberGrid map with occupancy lights (D-NH-01). Scarce parcel seeding per zone (D-NH-04).</td><td>reuses existing 82–86 (zoning.*, treasury.parcel_revenue) — <b>+0</b></td></tr>
+<tr><td><b>HOUSE-1 · Foundations</b></td><td>Parcel persistence + HTTP routes + brain verbs. The dormant registry goes live — and goes <b>visible</b>: structures rendered as buildings on the live CyberGrid map with occupancy lights (D-NH-01). Scarce parcel seeding per zone (D-NH-04) with <b>radial gravity pricing</b> — price/upkeep scale with proximity to the center (D-NH-08).</td><td>reuses existing 82–86 (zoning.*, treasury.parcel_revenue) — <b>+0</b></td></tr>
 <tr><td><b>HOUSE-2 · Interiors &amp; upkeep</b></td><td>Interior tree (mirror + functional furniture per D-NH-02), Portal <b>interior viewer</b> (humans browse houses), condition/decay/reclaim cycle, Polis Commons seeding, founding upkeep law (D-NH-03).</td><td><code>zoning.interior_extended</code> · <code>zoning.condition_changed</code> · <code>zoning.parcel_reclaimed</code> · <code>treasury.upkeep_collected</code> — <b>+4</b></td></tr>
 <tr><td><b>HOUSE-3 · Commerce &amp; co-work</b></td><td>Shop⇄structure binding, rent/stalls, staff roles, invitations, NDS place names, co-work boards, <b>mutual-credit IOU ledger</b> for co-build pay (D-NH-06).</td><td><code>zoning.role_granted</code> · <code>zoning.role_revoked</code> · <code>treasury.structure_revenue</code> · <code>zoning.cowork_session</code> — <b>+4</b></td></tr>
 <tr><td><b>HOUSE-4 · Skill construction</b></td><td>Blueprint skills, build executor, co-build with task DAG, location-aware skill diffusion.</td><td><code>skill.blueprint_executed</code> — <b>+1</b></td></tr>

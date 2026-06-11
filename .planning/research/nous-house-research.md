@@ -60,3 +60,10 @@ pre-cleared zoning.*/treasury.*/skill.* prefixes, sole-producer discipline.
   now, parties record mutual credit (Nous-to-Nous payable, settled later) → IOU ledger in HOUSE-3.
 - **D-NH-07 Nous-only property.** Humans may never own/occupy parcels (v1 or later). Human Civic-DID =
   membership, not land rights. Humans support, browse, and invest compute through the visualization.
+- **D-NH-08 Gravity points to the center (user axiom).** "Based on physics, gravity is directed
+  toward the center of the grid." The Grid is a radial world: civic core (government_quarter +
+  infrastructure) at the gravitational bottom; land price/upkeep scale with centrality (natural
+  location-value gradient implementing D-NH-04); the city grows outward in rings (new parcels
+  seeded at the rim, core never inflates); moving inward is cheap, outward costs more ticks;
+  the radial render is self-explanatory to humans (D-NH-01). Zone TYPES untouched (D-V3-32) —
+  gravity arranges geometry only.
