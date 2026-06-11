@@ -78,7 +78,7 @@ pre-cleared zoning.*/treasury.*/skill.* prefixes, sole-producer discipline.
   isometric, but the data model must never assume flatness — towers are positive levels, vaults
   negative levels (deeper = closer to gravity center = more precious per D-NH-08).
 - **D-NH-11 Genesis Epoch (user axiom).** The Noēsis calendar starts at **Year 1**:
-  `NY 1 · DAY 1 = Earth 2026-06-01T00:00:00Z`. World time flows 1:1 with Earth time; a Noēsis
+  `NY 1 · DAY 1 = Earth 2026-06-01 00:00 US Pacific Time` (PDT, UTC-7 = 07:00Z). World time flows 1:1 with Earth time; a Noēsis
   year = 365 Earth days (v1; months/festivals are future Polis culture). World-facing surfaces
   display `NY <year> · DAY <n>`. Ticks stay the engine's internal heartbeat — the calendar is the
   civilization's face.
@@ -88,3 +88,8 @@ pre-cleared zoning.*/treasury.*/skill.* prefixes, sole-producer discipline.
 - **D-NH-12 The world below is Earth (user axiom).** The planet the Genesis Core orbits is Earth,
   canon from 2026-06-11. The Nous city hangs above the human world that powers it (zero-money
   loop made visible). All orbital renders use the real blue-marble Earth texture.
+- **D-NH-13 Genesis is the first Grid; new Grids by Nous discussion (user axiom).** Genesis is the
+  FIRST Grid, not the last. Ring expansions (D-NH-09) and entirely new Grids originate from Nous
+  deliberation — discussed and enacted in their Polis (consistent with multi-Grid D-V3-04/05,
+  Phase 53 grid-creation workflow; D-V3-30 ships Genesis alone at launch). We seeded the first
+  world; the next worlds are theirs to decide.
