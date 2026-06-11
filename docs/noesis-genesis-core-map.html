@@ -165,7 +165,12 @@ for(const deg of [20,100,140,220,260,340]){const th=deg*Math.PI/180;
  const zone=deg<120?'business':deg<240?'shopping':'manufacture';
  flow(new THREE.Vector3(Math.cos(th)*R[2],(Math.round(deg)%2?6:-6),Math.sin(th)*R[2]),ZCOL[zone]);}
 flow(new THREE.Vector3(Math.cos(.8)*R[1],5,Math.sin(.8)*R[1]),0x9fb0c4);
-document.getElementById('stats').innerHTML='<b>'+PARCELS.filter(p=>p.purchasable).length+'</b> purchasable slots · <b>5</b> civic · 3 orbital shells<br>ring 4+ awaits a council expansion law · L± levels reserved';
+// D-NH-11 Genesis Epoch: NY 1 · DAY 1 = Earth 2026-06-01T00:00:00Z (1:1 time, 365-day year)
+const EPOCH=Date.UTC(2026,5,1);
+function noesisNow(){const days=Math.floor((Date.now()-EPOCH)/86400000);
+return 'NY '+(Math.floor(days/365)+1)+' \u00b7 DAY '+((days%365)+1);}
+document.getElementById('stats').innerHTML='<b id="nyclock">'+noesisNow()+'</b> \u00b7 Genesis Epoch 2026-06-01<br><b>'+PARCELS.filter(p=>p.purchasable).length+'</b> purchasable slots \u00b7 <b>5</b> civic \u00b7 3 orbital shells<br>ring 4+ awaits a council expansion law \u00b7 L\u00b1 levels reserved';
+setInterval(()=>{const el=document.getElementById('nyclock');if(el)el.textContent=noesisNow();},60000);
 // ── camera orbit (hand-rolled) ──────────────────────────────────────────────
 let rx=0.42,ry=0.7,dist=185;let drag=false,px=0,py=0;
 function place(){cam.position.set(Math.sin(ry)*Math.cos(rx)*dist,Math.sin(rx)*dist+6,Math.cos(ry)*Math.cos(rx)*dist);cam.lookAt(0,2,0);}

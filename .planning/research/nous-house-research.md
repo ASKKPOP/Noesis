@@ -77,3 +77,10 @@ pre-cleared zoning.*/treasury.*/skill.* prefixes, sole-producer discipline.
   Parcel addresses are vectors `(ring, sector, level, …)`. v1 uses one level and renders layered
   isometric, but the data model must never assume flatness — towers are positive levels, vaults
   negative levels (deeper = closer to gravity center = more precious per D-NH-08).
+- **D-NH-11 Genesis Epoch (user axiom).** The Noēsis calendar starts at **Year 1**:
+  `NY 1 · DAY 1 = Earth 2026-06-01T00:00:00Z`. World time flows 1:1 with Earth time; a Noēsis
+  year = 365 Earth days (v1; months/festivals are future Polis culture). World-facing surfaces
+  display `NY <year> · DAY <n>`. Ticks stay the engine's internal heartbeat — the calendar is the
+  civilization's face. NOTE for implementation: grid code is wallclock-gated
+  (scripts/check-wallclock-forbidden.mjs) — the tick→calendar conversion must live at the display
+  boundary (dashboard/docs), never inside audit/consensus paths.
