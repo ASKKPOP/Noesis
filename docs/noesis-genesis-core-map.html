@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Noēsis — Genesis Core · interactive 3D map</title>
+<style>
+:root{--bg:#020610;--text:#f5f0ea;--muted:#8a93a6;--accent:#da7a4e;--cyan:#00d4ff}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;overflow:hidden}
+#c{position:fixed;inset:0;display:block}
+.hud{position:fixed;z-index:10;font-family:'JetBrains Mono',ui-monospace,monospace;pointer-events:none}
+#title{top:18px;left:22px}
+#title .n{font-family:'Cormorant Garamond',Georgia,serif;font-size:30px;font-weight:600;letter-spacing:.02em}
+#title .s{font-size:10px;letter-spacing:.16em;color:var(--accent);text-transform:uppercase;margin-top:2px}
+#legend{bottom:18px;left:22px;font-size:11px;line-height:1.9;color:var(--muted)}
+#legend b{color:var(--text);font-weight:500}
+.sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:7px;vertical-align:middle}
+#panel{top:18px;right:18px;width:236px;background:rgba(2,6,16,.82);border:1px solid rgba(0,212,255,.22);
+border-radius:12px;padding:16px 18px;backdrop-filter:blur(14px);font-family:'JetBrains Mono',monospace;
+font-size:11.5px;line-height:1.7;color:var(--muted);opacity:0;transition:opacity .15s;pointer-events:none}
+#panel.on{opacity:1}#panel .pid{color:var(--cyan);font-size:13px;word-break:break-all;margin-bottom:8px}
+#panel .row{display:flex;justify-content:space-between;gap:10px}#panel .row b{color:var(--text);font-weight:500}
+#hint{bottom:18px;right:22px;font-size:10.5px;color:var(--muted);letter-spacing:.04em}
+#stats{top:74px;left:22px;font-size:10.5px;color:var(--muted);line-height:1.8}
+#stats b{color:var(--accent)}
+</style></head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud" id="title"><div class="n">Noēsis</div><div class="s">Genesis Core · Live Spatial Map</div></div>
+<div class="hud" id="stats"></div>
+<div class="hud" id="legend">
+<div><span class="sw" style="background:#bf00ff"></span><b>Government Quarter</b> · core (ring 0)</div>
+<div><span class="sw" style="background:#334455"></span><b>Infrastructure</b> · commons (ring 1)</div>
+<div><span class="sw" style="background:#ffd700"></span><b>Business</b> · ring 2</div>
+<div><span class="sw" style="background:#00d4ff"></span><b>Shopping</b> · ring 2</div>
+<div><span class="sw" style="background:#ff4400"></span><b>Manufacture</b> · ring 2</div>
+<div><span class="sw" style="background:#4488ff"></span><b>Residential</b> · rim (ring 3)</div>
+</div>
+<div class="hud" id="panel"></div>
+<div class="hud" id="hint">drag = orbit · scroll = zoom · click a parcel · gravity → center</div>
+<script type="module">
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+const PARCELS = [{"id": "genesis:government_quarter:0001", "zone": "government_quarter", "ring": 0, "sector_deg": 180.0, "x": -0.0, "z": 0.0, "level": 0, "price": 0, "upkeep": 0, "purchasable": false, "status": "civic"}, {"id": "genesis:infrastructure:0001", "zone": "infrastructure", "ring": 1, "sector_deg": 45.0, "x": 18.38, "z": 18.38, "level": 0, "price": 0, "upkeep": 0, "purchasable": false, "status": "commons"}, {"id": "genesis:infrastructure:0002", "zone": "infrastructure", "ring": 1, "sector_deg": 135.0, "x": -18.38, "z": 18.38, "level": 0, "price": 0, "upkeep": 0, "purchasable": false, "status": "commons"}, {"id": "genesis:infrastructure:0003", "zone": "infrastructure", "ring": 1, "sector_deg": 225.0, "x": -18.38, "z": -18.38, "level": 0, "price": 0, "upkeep": 0, "purchasable": false, "status": "commons"}, {"id": "genesis:infrastructure:0004", "zone": "infrastructure", "ring": 1, "sector_deg": 315.0, "x": 18.38, "z": -18.38, "level": 0, "price": 0, "upkeep": 0, "purchasable": false, "status": "commons"}, {"id": "genesis:business:0001", "zone": "business", "ring": 2, "sector_deg": 7.5, "x": 51.56, "z": 6.79, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:business:0002", "zone": "business", "ring": 2, "sector_deg": 22.5, "x": 48.04, "z": 19.9, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:business:0003", "zone": "business", "ring": 2, "sector_deg": 37.5, "x": 41.25, "z": 31.66, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:business:0004", "zone": "business", "ring": 2, "sector_deg": 52.5, "x": 31.66, "z": 41.25, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:business:0005", "zone": "business", "ring": 2, "sector_deg": 67.5, "x": 19.9, "z": 48.04, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:business:0006", "zone": "business", "ring": 2, "sector_deg": 82.5, "x": 6.79, "z": 51.56, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:business:0007", "zone": "business", "ring": 2, "sector_deg": 97.5, "x": -6.79, "z": 51.56, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:business:0008", "zone": "business", "ring": 2, "sector_deg": 112.5, "x": -19.9, "z": 48.04, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:shopping:0001", "zone": "shopping", "ring": 2, "sector_deg": 127.5, "x": -31.66, "z": 41.25, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:shopping:0002", "zone": "shopping", "ring": 2, "sector_deg": 142.5, "x": -41.25, "z": 31.66, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:shopping:0003", "zone": "shopping", "ring": 2, "sector_deg": 157.5, "x": -48.04, "z": 19.9, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:shopping:0004", "zone": "shopping", "ring": 2, "sector_deg": 172.5, "x": -51.56, "z": 6.79, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:shopping:0005", "zone": "shopping", "ring": 2, "sector_deg": 187.5, "x": -51.56, "z": -6.79, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:shopping:0006", "zone": "shopping", "ring": 2, "sector_deg": 202.5, "x": -48.04, "z": -19.9, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:shopping:0007", "zone": "shopping", "ring": 2, "sector_deg": 217.5, "x": -41.25, "z": -31.66, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:shopping:0008", "zone": "shopping", "ring": 2, "sector_deg": 232.5, "x": -31.66, "z": -41.25, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:manufacture:0001", "zone": "manufacture", "ring": 2, "sector_deg": 247.5, "x": -19.9, "z": -48.04, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:manufacture:0002", "zone": "manufacture", "ring": 2, "sector_deg": 262.5, "x": -6.79, "z": -51.56, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:manufacture:0003", "zone": "manufacture", "ring": 2, "sector_deg": 277.5, "x": 6.79, "z": -51.56, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:manufacture:0004", "zone": "manufacture", "ring": 2, "sector_deg": 292.5, "x": 19.9, "z": -48.04, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:manufacture:0005", "zone": "manufacture", "ring": 2, "sector_deg": 307.5, "x": 31.66, "z": -41.25, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:manufacture:0006", "zone": "manufacture", "ring": 2, "sector_deg": 322.5, "x": 41.25, "z": -31.66, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:manufacture:0007", "zone": "manufacture", "ring": 2, "sector_deg": 337.5, "x": 48.04, "z": -19.9, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:manufacture:0008", "zone": "manufacture", "ring": 2, "sector_deg": 352.5, "x": 51.56, "z": -6.79, "level": 0, "price": 900, "upkeep": 18, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0001", "zone": "residential", "ring": 3, "sector_deg": 7.5, "x": 77.33, "z": 10.18, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0002", "zone": "residential", "ring": 3, "sector_deg": 22.5, "x": 72.06, "z": 29.85, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0003", "zone": "residential", "ring": 3, "sector_deg": 37.5, "x": 61.88, "z": 47.48, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0004", "zone": "residential", "ring": 3, "sector_deg": 52.5, "x": 47.48, "z": 61.88, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0005", "zone": "residential", "ring": 3, "sector_deg": 67.5, "x": 29.85, "z": 72.06, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0006", "zone": "residential", "ring": 3, "sector_deg": 82.5, "x": 10.18, "z": 77.33, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0007", "zone": "residential", "ring": 3, "sector_deg": 97.5, "x": -10.18, "z": 77.33, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0008", "zone": "residential", "ring": 3, "sector_deg": 112.5, "x": -29.85, "z": 72.06, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0009", "zone": "residential", "ring": 3, "sector_deg": 127.5, "x": -47.48, "z": 61.88, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0010", "zone": "residential", "ring": 3, "sector_deg": 142.5, "x": -61.88, "z": 47.48, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0011", "zone": "residential", "ring": 3, "sector_deg": 157.5, "x": -72.06, "z": 29.85, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0012", "zone": "residential", "ring": 3, "sector_deg": 172.5, "x": -77.33, "z": 10.18, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0013", "zone": "residential", "ring": 3, "sector_deg": 187.5, "x": -77.33, "z": -10.18, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0014", "zone": "residential", "ring": 3, "sector_deg": 202.5, "x": -72.06, "z": -29.85, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0015", "zone": "residential", "ring": 3, "sector_deg": 217.5, "x": -61.88, "z": -47.48, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0016", "zone": "residential", "ring": 3, "sector_deg": 232.5, "x": -47.48, "z": -61.88, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0017", "zone": "residential", "ring": 3, "sector_deg": 247.5, "x": -29.85, "z": -72.06, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0018", "zone": "residential", "ring": 3, "sector_deg": 262.5, "x": -10.18, "z": -77.33, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0019", "zone": "residential", "ring": 3, "sector_deg": 277.5, "x": 10.18, "z": -77.33, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0020", "zone": "residential", "ring": 3, "sector_deg": 292.5, "x": 29.85, "z": -72.06, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0021", "zone": "residential", "ring": 3, "sector_deg": 307.5, "x": 47.48, "z": -61.88, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0022", "zone": "residential", "ring": 3, "sector_deg": 322.5, "x": 61.88, "z": -47.48, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0023", "zone": "residential", "ring": 3, "sector_deg": 337.5, "x": 72.06, "z": -29.85, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}, {"id": "genesis:residential:0024", "zone": "residential", "ring": 3, "sector_deg": 352.5, "x": 77.33, "z": -10.18, "level": 0, "price": 400, "upkeep": 8, "purchasable": true, "status": "unsold"}];
+const ZCOL={government_quarter:0xbf00ff,infrastructure:0x334455,business:0xffd700,shopping:0x00d4ff,manufacture:0xff4400,residential:0x4488ff};
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x020610);scene.fog=new THREE.Fog(0x020610,160,440);
+const cam=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.1,2000);
+const cvs=document.getElementById('c');
+const rnd=new THREE.WebGLRenderer({canvas:cvs,antialias:true});rnd.setPixelRatio(Math.min(devicePixelRatio,2));rnd.setSize(innerWidth,innerHeight);
+// gravity-lit center: bright point light at core, ambient low
+scene.add(new THREE.AmbientLight(0x223344,0.6));
+const core=new THREE.PointLight(0xda7a4e,2.4,260);core.position.set(0,30,0);scene.add(core);
+const rim=new THREE.DirectionalLight(0x5fb0e8,0.5);rim.position.set(80,120,60);scene.add(rim);
+// ground rings (gravity wells) — concentric, brighter inward
+for(let r=0;r<=3;r++){const g=new THREE.RingGeometry(r*26-0.4,r*26+0.4,96);
+const m=new THREE.MeshBasicMaterial({color:0x0c4a6e,transparent:true,opacity:0.18+(3-r)*0.07,side:THREE.DoubleSide});
+const ring=new THREE.Mesh(g,m);ring.rotation.x=-Math.PI/2;scene.add(ring);}
+// radial gravity grid lines
+for(let a=0;a<24;a++){const th=a/24*Math.PI*2;const pts=[new THREE.Vector3(0,0.02,0),new THREE.Vector3(Math.cos(th)*84,0.02,Math.sin(th)*84)];
+const lg=new THREE.BufferGeometry().setFromPoints(pts);scene.add(new THREE.Line(lg,new THREE.LineBasicMaterial({color:0x0c2a3a,transparent:true,opacity:0.5})));}
+// parcels
+const meshes=[];
+for(const p of PARCELS){
+  const col=ZCOL[p.zone];
+  const sold=p.status!=='unsold';
+  const h=p.status==='civic'?22:p.status==='commons'?12:(sold?10:1.4);
+  const pad=p.status==='unsold';
+  const geo=new THREE.BoxGeometry(pad?7:8.4,h,pad?7:8.4);
+  const mat=new THREE.MeshStandardMaterial({color:col,
+    emissive:col,emissiveIntensity:pad?0.04:(p.status==='civic'?0.55:0.3),
+    metalness:0.4,roughness:0.5,transparent:pad,opacity:pad?0.45:1});
+  const m=new THREE.Mesh(geo,mat);m.position.set(p.x,h/2,p.z);m.userData=p;
+  scene.add(m);meshes.push(m);
+  // rim glow ring for unsold so zone reads even when flat
+  if(pad){const rg=new THREE.RingGeometry(5,5.8,20);const rm=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.5,side:THREE.DoubleSide});
+  const rr=new THREE.Mesh(rg,rm);rr.rotation.x=-Math.PI/2;rr.position.set(p.x,0.05,p.z);scene.add(rr);}
+}
+document.getElementById('stats').innerHTML='<b>'+PARCELS.filter(p=>p.purchasable).length+'</b> purchasable · <b>5</b> civic · 4 rings<br>ring4+ awaits a council expansion law';
+// orbit (hand-rolled)
+let rx=0.95,ry=0.6,dist=150,tx=0,ty=0;let drag=false,px=0,py=0;
+function place(){cam.position.set(Math.sin(ry)*Math.cos(rx)*dist,Math.sin(rx)*dist+10,Math.cos(ry)*Math.cos(rx)*dist);cam.lookAt(0,6,0);}
+cvs.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;});
+addEventListener('pointerup',()=>drag=false);
+addEventListener('pointermove',e=>{if(!drag)return;ry-=(e.clientX-px)*0.006;rx=Math.max(0.15,Math.min(1.45,rx+(e.clientY-py)*0.006));px=e.clientX;py=e.clientY;place();});
+addEventListener('wheel',e=>{dist=Math.max(60,Math.min(360,dist+e.deltaY*0.12));place();},{passive:true});
+// raycast click
+const ray=new THREE.Raycaster();const pv=new THREE.Vector2();const panel=document.getElementById('panel');
+cvs.addEventListener('click',e=>{pv.x=(e.clientX/innerWidth)*2-1;pv.y=-(e.clientY/innerHeight)*2+1;
+ray.setFromCamera(pv,cam);const hit=ray.intersectObjects(meshes)[0];
+if(!hit){panel.classList.remove('on');return;}const p=hit.object.userData;
+panel.innerHTML='<div class="pid">'+p.id+'</div>'+
+'<div class="row"><span>address</span><b>('+p.ring+', '+p.sector_deg+'°, L'+p.level+')</b></div>'+
+'<div class="row"><span>zone</span><b>'+p.zone.replace(/_/g,' ')+'</b></div>'+
+'<div class="row"><span>ring</span><b>'+p.ring+(p.ring===0?' · core':p.ring===3?' · rim':'')+'</b></div>'+
+'<div class="row"><span>status</span><b>'+p.status+'</b></div>'+
+(p.purchasable?'<div class="row"><span>price</span><b>'+p.price+' Bios</b></div><div class="row"><span>upkeep</span><b>'+p.upkeep+' /period</b></div>':'<div class="row"><span>tenure</span><b>Polis-owned</b></div>')+
+'<div class="row"><span>gravity</span><b>'+(p.ring===0?'center':(4-p.ring)+'× pull')+'</b></div>';
+panel.classList.add('on');});
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();rnd.setSize(innerWidth,innerHeight);});
+place();
+let t=0;(function loop(){t+=0.005;core.intensity=2.2+Math.sin(t*2)*0.35;rnd.render(scene,cam);requestAnimationFrame(loop);})();
+</script></body></html>
