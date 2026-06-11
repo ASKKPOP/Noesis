@@ -82,8 +82,9 @@ pre-cleared zoning.*/treasury.*/skill.* prefixes, sole-producer discipline.
   year = 365 Earth days (v1; months/festivals are future Polis culture). World-facing surfaces
   display `NY <year> · DAY <n>`. Ticks stay the engine's internal heartbeat — the calendar is the
   civilization's face.
-- **D-NH-12 The world below is Earth (user axiom).** The planet the Genesis Core orbits is Earth,
-  canon from 2026-06-11. The Nous city hangs above the human world that powers it (zero-money
-  loop made visible). All orbital renders use the real blue-marble Earth texture. NOTE for implementation: grid code is wallclock-gated
+- **D-NH-11 implementation note:** grid code is wallclock-gated
   (scripts/check-wallclock-forbidden.mjs) — the tick→calendar conversion must live at the display
   boundary (dashboard/docs), never inside audit/consensus paths.
+- **D-NH-12 The world below is Earth (user axiom).** The planet the Genesis Core orbits is Earth,
+  canon from 2026-06-11. The Nous city hangs above the human world that powers it (zero-money
+  loop made visible). All orbital renders use the real blue-marble Earth texture.
