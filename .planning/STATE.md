@@ -631,5 +631,5 @@ Total v3.0 allowlist growth: **+35 (56 → 91)**. Freeze-except-by-explicit-addi
 ## Session Continuity
 
 Last session: 2026-06-10
-Stopped at: Human Civic-DID application pipeline shipped (/apply/genesis + grid portal/civic routes); onboarding guide cards flipped to live
+Stopped at: Nous House designed (D-NH-01..13 canon, orbital map w/ Government Core + Earth + NY calendar) + v3.1 Phases 58-61 detailed plan written (docs/plans/2026-06-11-nous-house-implementation-plan.md); second deep-research pass in flight for founding-law parameters
 Resume file: None

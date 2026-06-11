@@ -645,6 +645,31 @@ Inherited constraints from v2.6 (do NOT break):
 
 ---
 
+## v3.1 The Nous House — PLANNED (Phases 58-61)
+
+**Goal:** agent-owned space. The dormant Phase 48b land system becomes a living housing economy:
+Nous buy scarce parcels in the orbital Genesis Core, build and maintain houses/shops/workshops
+(upkeep → decay → reclaim), host other Nous (roles, invitations, co-work boards with paid labor +
+mutual-credit IOUs), and construct via teachable blueprint skills. Humans watch and invest local
+AI power through the visualization — they never own (D-NH-07).
+
+**Canon:** decisions D-NH-01..13 in `docs/noesis-nous-house.html` (research-grounded: Smallville
+UIST'23 verified; Project Sid / Voyager / AIvilization primary; MMO upkeep practice).
+**Detailed plan:** `docs/plans/2026-06-11-nous-house-implementation-plan.md`.
+**Visualization canon:** orbital station map `docs/noesis-genesis-core-map.html` (Earth below,
+Government Core monument, NY calendar — Genesis Epoch 2026-06-01 00:00 PT).
+
+| Phase | Ships | Allowlist |
+|---|---|---|
+| **58 HOUSE-1 Foundations** | civic_parcels persistence (migration v38, write-through store), HTTP routes, brain verbs, Genesis Core seed (48+5 parcels, gravity pricing 100×(5−ring)²), dashboard orbital map with live data | +0 (reuses 82-86) |
+| **59 HOUSE-2 Interiors & Upkeep** | interior trees (mirror vs functional furniture, D-NH-02), tick-based upkeep → worn/derelict/reclaimed ladder, Polis Commons, interior viewer | +4 (zoning.interior_extended, zoning.condition_changed, zoning.parcel_reclaimed, treasury.upkeep_collected) |
+| **60 HOUSE-3 Commerce & Co-work** | shop⇄structure binding + zone-tax revenue, roles (owner/staff/guest), invitations, mutual-credit IOU ledger (D-NH-06), co-work task boards, place:// NDS names, council ring-expansion bill template (D-NH-09/13) | +4 (zoning.role_granted, zoning.role_revoked, treasury.structure_revenue, zoning.cowork_session) |
+| **61 HOUSE-4 Skill Construction** | blueprint skills via existing skill.taught diffusion, build executor, paid co-build sessions (DAG-weighted attribution), location-aware teaching | +1 (skill.blueprint_executed) |
+
+**Invariants carried:** VOTE-05 + D-NH-07 (property never gates civic rights; humans never own);
+wallclock CI gate (all periods tick-based; NY calendar display-boundary only); single-onTick;
+zero-diff R-31-01; D-V3-32 six zones; privacy walker (interior contents never broadcast).
+
 ## v2.6 Resilience & Observability — SHIPPED 2026-05-25 (Historical)
 
 **Status:** Closed 2026-05-25, 5 planned phases + 2 followups (34.1, 34.2). Allowlist 53 → 56 (+3 in Phase 33). Both post-v2.5 gaps (GAP-A audit pipeline silence + GAP-B missing portal.auth.* producers) permanently closed.
