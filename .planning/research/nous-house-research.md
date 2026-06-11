@@ -67,3 +67,13 @@ pre-cleared zoning.*/treasury.*/skill.* prefixes, sole-producer discipline.
   seeded at the rim, core never inflates); moving inward is cheap, outward costs more ticks;
   the radial render is self-explanatory to humans (D-NH-01). Zone TYPES untouched (D-V3-32) —
   gravity arranges geometry only.
+- **D-NH-09 Small seeded core; expansion by council master plan (user axiom).** Preliminary urban
+  planning designates a limited, small-scale core — small enough to test. Genesis Core v1:
+  ring 0 government_quarter (1 civic block) · ring 1 infrastructure (4 commons) · ring 2
+  business/shopping/manufacture sectors (8+8+8=24) · ring 3 residential (24) = **48 purchasable
+  parcels total**. Ring 4+ does not exist until the Genesis Polis legislates each expansion via
+  the Phase 46 pipeline (bill → VOTE-05 → gov.law_enacted). No organic sprawl.
+- **D-NH-10 Multi-dimensional spatial framework (user axiom).** The grid is NOT a 2D plane.
+  Parcel addresses are vectors `(ring, sector, level, …)`. v1 uses one level and renders layered
+  isometric, but the data model must never assume flatness — towers are positive levels, vaults
+  negative levels (deeper = closer to gravity center = more precious per D-NH-08).

@@ -229,6 +229,31 @@ dense center IS the civic heart, the dim rim IS the frontier. A human glances an
 Polises may amend zone sizes, not types.</p>
 </div>
 
+<h3>3.0b The Genesis Core — small by design <span class="tag p" style="border-color:var(--accent2);color:var(--accent2)">D-NH-09 · D-NH-10 · USER AXIOMS</span></h3>
+<div class="box acc">
+<p style="margin:0"><strong>D-NH-09 — Preliminary urban planning seeds a limited, small-scale core.</strong> The first map must be
+small enough to test. Expansion is never organic sprawl: it follows a <strong>master plan established by the
+grid council</strong> — concretely, the Genesis Polis enacts each expansion through the existing Phase 46
+legislative pipeline (bill → co-sponsorship → session → VOTE-05 → <code>gov.law_enacted</code>). A new ring of
+land does not exist until the council legislates it into existence.</p>
+<p style="margin:10px 0 0"><strong>D-NH-10 — The grid is a multi-dimensional spatial framework, not a 2D plane.</strong> Parcel
+addresses are vectors, not (x,y): <code>(ring, sector, level, …)</code>. v1 uses one level and renders as the
+familiar layered-isometric city, but nothing in the data model may assume flatness — vertical levels
+and further dimensions are address components reserved from day one (a tower is ring-2/sector-B/levels-0..3;
+a deep vault is a negative level, closer to the gravitational center — and per D-NH-08, deeper = more precious).</p>
+
+<table style="margin-top:12px">
+<tr><th>Ring</th><th>Zone</th><th>Parcels (v1 test scale)</th><th>Status</th></tr>
+<tr><td><b>0 · core</b></td><td>government_quarter</td><td>1 civic block</td><td>Polis-owned, never purchasable</td></tr>
+<tr><td><b>1</b></td><td>infrastructure</td><td>4 commons (guest hall · market floor · shared workshop · archive)</td><td>Polis-owned, always open</td></tr>
+<tr><td><b>2 · sectors</b></td><td>business / shopping / manufacture</td><td>8 + 8 + 8 = 24</td><td>purchasable — gravity-priced</td></tr>
+<tr><td><b>3 · rim</b></td><td>residential</td><td>24</td><td>purchasable — frontier price</td></tr>
+<tr><td><b>4+</b></td><td>(master plan)</td><td>0 — does not exist yet</td><td>unlocked only by council legislation (D-NH-09)</td></tr>
+</table>
+<p style="margin:8px 0 0" class="k">TOTAL v1: 48 PURCHASABLE PARCELS + 5 CIVIC — SMALL ENOUGH TO TEST EVERY MECHANIC
+(scarcity, gravity pricing, upkeep, reclaim, co-work) WITH A HANDFUL OF NOUS BEFORE ANY EXPANSION LAW PASSES.</p>
+</div>
+
 <h3>3.1 Ownership &amp; responsibility — the management contract</h3>
 <ul>
 <li><strong>Who owns:</strong> any Civic-DID holder (Nous; Type A local-AI Nous included — the local AI is the
@@ -314,7 +339,7 @@ learn: skill.taught(blueprint_hash) ─→ own: zoning.parcel_purchased ─→ <
 <h3>Implementation phases (GSD-sized)</h3>
 <table>
 <tr><th>Phase</th><th>Ships</th><th>New audit events (explicit allowlist additions)</th></tr>
-<tr><td><b>HOUSE-1 · Foundations</b></td><td>Parcel persistence + HTTP routes + brain verbs. The dormant registry goes live — and goes <b>visible</b>: structures rendered as buildings on the live CyberGrid map with occupancy lights (D-NH-01). Scarce parcel seeding per zone (D-NH-04) with <b>radial gravity pricing</b> — price/upkeep scale with proximity to the center (D-NH-08).</td><td>reuses existing 82–86 (zoning.*, treasury.parcel_revenue) — <b>+0</b></td></tr>
+<tr><td><b>HOUSE-1 · Foundations</b></td><td>Parcel persistence + HTTP routes + brain verbs. The dormant registry goes live — and goes <b>visible</b>: structures rendered as buildings on the live CyberGrid map with occupancy lights (D-NH-01). Seeds exactly the <b>Genesis Core</b> (48 purchasable parcels in 4 rings, D-NH-09 test scale) with <b>radial gravity pricing</b> (D-NH-08) and vector addresses <code>(ring, sector, level)</code> (D-NH-10). Ring 4+ requires a council expansion law.</td><td>reuses existing 82–86 (zoning.*, treasury.parcel_revenue) — <b>+0</b></td></tr>
 <tr><td><b>HOUSE-2 · Interiors &amp; upkeep</b></td><td>Interior tree (mirror + functional furniture per D-NH-02), Portal <b>interior viewer</b> (humans browse houses), condition/decay/reclaim cycle, Polis Commons seeding, founding upkeep law (D-NH-03).</td><td><code>zoning.interior_extended</code> · <code>zoning.condition_changed</code> · <code>zoning.parcel_reclaimed</code> · <code>treasury.upkeep_collected</code> — <b>+4</b></td></tr>
 <tr><td><b>HOUSE-3 · Commerce &amp; co-work</b></td><td>Shop⇄structure binding, rent/stalls, staff roles, invitations, NDS place names, co-work boards, <b>mutual-credit IOU ledger</b> for co-build pay (D-NH-06).</td><td><code>zoning.role_granted</code> · <code>zoning.role_revoked</code> · <code>treasury.structure_revenue</code> · <code>zoning.cowork_session</code> — <b>+4</b></td></tr>
 <tr><td><b>HOUSE-4 · Skill construction</b></td><td>Blueprint skills, build executor, co-build with task DAG, location-aware skill diffusion.</td><td><code>skill.blueprint_executed</code> — <b>+1</b></td></tr>
