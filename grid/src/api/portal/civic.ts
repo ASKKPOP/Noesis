@@ -87,12 +87,18 @@ export function registerPortalCivicRoutes(
             }
 
             // Portal pre-screen: the account must exist (and carries sanction flags).
+            // human_users rows only exist once something persisted them (e.g. operator
+            // sanctions) — day-to-day accounts live in the in-memory HumanRegistry
+            // (see HumanRegistry.ts), so fall back to it for existence. Absence of a
+            // human_users row means no sanctions on record.
             const [userRows] = await pool.query(
                 'SELECT frozen, banned FROM human_users WHERE did = ? LIMIT 1',
                 [humanDid],
             ) as [Array<{ frozen: 0 | 1; banned: 0 | 1 }>, unknown];
             const user = userRows[0];
-            if (!user) return reply.code(404).send({ error: 'account_not_found' });
+            if (!user && !services.humanRegistry?.findByDid(services.gridName, humanDid)) {
+                return reply.code(404).send({ error: 'account_not_found' });
+            }
 
             // Approved before? Idempotent answer with the existing Civic-DID.
             const [appRows] = await pool.query(
@@ -146,8 +152,8 @@ export function registerPortalCivicRoutes(
             const verdict = reviewHumanCivicApplication({
                 oathText,
                 statement,
-                frozen: user.frozen === 1,
-                banned: user.banned === 1,
+                frozen: user?.frozen === 1,
+                banned: user?.banned === 1,
                 alreadyRegistered,
             });
 

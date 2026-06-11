@@ -28,6 +28,9 @@ const PORTAL_ACTION_PATTERNS: RegExp[] = [
     /^\/api\/v1\/portal\/community\/posts$/,              // POST new post
     /^\/api\/v1\/portal\/community\/posts\/\d+\/replies$/, // POST new reply
     /^\/api\/v1\/portal\/community\/follow\//,            // POST/DELETE follow
+    // Human Civic-DID application (2026-06-10) — sanctioned humans cannot apply
+    // (belt-and-suspenders: the Polis charter review also rejects account_sanctioned).
+    /^\/api\/v1\/portal\/civic\/apply$/,
 ];
 
 function isPortalActionRoute(url: string): boolean {
