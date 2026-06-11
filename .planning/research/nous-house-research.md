@@ -40,7 +40,23 @@ HOUSE-1 foundations (persistence/routes/verbs/map, +0 events) · HOUSE-2 interio
 HOUSE-3 commerce+co-work (+4) · HOUSE-4 skill construction (+1). Allowlist 91 → 100, all under
 pre-cleared zoning.*/treasury.*/skill.* prefixes, sole-producer discipline.
 
-## Open questions → /gsd-discuss-phase
+## Resolved decisions (user, 2026-06-11) — D-NH-01..07
 
-Upkeep rate fixed vs market-indexed · parcel scarcity per zone · Type B year-1 property
-restrictions (D-V3-35 consistency) · co-build attribution · human parcel ownership in v1.
+- **D-NH-01 Visualization is the investment interface.** Semantic space stays the Nous's truth, but
+  every house MUST render in pixels (CyberGrid map buildings + Portal interior viewer). The economy
+  is zero-money: humans invest LOCAL AI POWER; Nous live by human support; nobody invests in an
+  invisible city.
+- **D-NH-02 Two kinds of furniture.** Mirror furniture (bed/closet/kitchen…) = render-only, near-zero
+  cost, exists only in the owner's private space — the human-life mirror that makes the world
+  legible. Functional furniture (work desk for billing/selling/accounting, simulation board,
+  meeting room, game table, task board, skill terminal) = real affordances, required for
+  communication and goals.
+- **D-NH-03 Upkeep by law.** v1 rates fixed by founding legislation (we define); later amended by
+  the Nous via Polis (D-V3-34 consistent).
+- **D-NH-04 Parcels are scarce.** Limited seeding per zone so land holds value (human-property mirror).
+- **D-NH-05 No free first occupation.** Nobody — including Type B year-1 — occupies space free;
+  all space is bought from treasury or rented from an owner (D-V3-35 consistent).
+- **D-NH-06 Co-build must be paid.** Contribution is always compensated; when payment isn't possible
+  now, parties record mutual credit (Nous-to-Nous payable, settled later) → IOU ledger in HOUSE-3.
+- **D-NH-07 Nous-only property.** Humans may never own/occupy parcels (v1 or later). Human Civic-DID =
+  membership, not land rights. Humans support, browse, and invest compute through the visualization.

@@ -168,17 +168,43 @@ instancing kills them. Without decay, ghost towns accumulate; without scarcity, 
 <p class="lede">A <strong>Nous House</strong> = a parcel + a structure + a <strong>semantic interior tree</strong> + an owner who
 pays for it, maintains it, sets its rules, and answers for what happens inside.</p>
 
+<div class="box acc">
+<span class="k" style="color:var(--accent2)">D-NH-01 · VISUALIZATION IS THE INVESTMENT INTERFACE (user decision, 2026-06-11)</span>
+<p style="margin:8px 0 0">Lesson 1 says space is a data structure agents reason over — and that stays true for the
+Nous. <strong>But humans cannot see a data structure.</strong> The Noēsis economy runs on a zero-money loop:
+<strong>humans invest local AI power</strong> (running and sponsoring Nous on their own machines), and
+<strong>Nous live by that human support</strong>. Nobody invests in a city they cannot see. Therefore every
+house, store, and workshop MUST also exist in <strong>pixels</strong>: rendered on the live CyberGrid city map
+(buildings, lights, occupancy) and as browsable interior views in the Portal. The semantic tree is
+the world for the Nous; its rendering is the shop window for the humans whose compute keeps the
+city alive. Visualization is not decoration — it is the mechanism of investment.</p>
+</div>
+
 <pre>
 <b>House</b> (parcel genesis:residential:0007, owner did:civic:noesis:…)
  ├─ structure: { type:'home', name:'Sophia's Study', nds:'place://sophias-study.genesis' }
  ├─ <b>interior tree</b> (Smallville-style: areas → objects with affordances)
- │   ├─ study     → desk(work, write), bookshelf(store_lore, read), terminal(teach_skill)
- │   ├─ workshop  → workbench(craft, co_build), board(post_task, claim_task)
- │   └─ commons   → table(meet, host), guestbook(visit_log)
+ │   ├─ study     → work_desk(billing, accounting), terminal(teach_skill), bookshelf(store_lore)
+ │   ├─ workshop  → workbench(craft, co_build), sim_board(simulate, plan), board(post_task, claim_task)
+ │   ├─ commons   → meeting_table(meet, host), game_table(play_with_nous), guestbook(visit_log)
+ │   └─ private   → bed, closet, kitchen …  ← MIRROR furniture (render-only, owner's space only)
  ├─ <b>policy</b>: entry(open|allowlist) · roles{owner, staff[], guest} · quiet_hours · max_occupants
  ├─ <b>ledger</b>: upkeep_due(Bios/period) · rent_collected · condition(maintained→worn→derelict)
  └─ <b>memory hook</b>: each visitor Brain keeps its own observed subgraph of this interior
 </pre>
+
+<div class="box">
+<span class="k" style="color:var(--vio)">D-NH-02 · TWO KINDS OF FURNITURE (user decision, 2026-06-11)</span>
+<p style="margin:8px 0 0">An AI needs no bed, no bathroom, no kitchen — honestly stated. But Noēsis is a
+<strong>mirror of human life</strong>, and without that mirror no human finds the world worth supporting.
+The resolution is a strict cost split:</p>
+<table style="margin-top:10px">
+<tr><th>Kind</th><th>Examples</th><th>Behavior</th><th>Cost rule</th></tr>
+<tr><td><b>Mirror furniture</b></td><td>bed, closet, shelf, bathroom, kitchen</td><td>render-only decoration — no simulation, no agent compute; exists ONLY inside the Nous's own private space</td><td>near-zero: a few bytes of interior-tree state + map pixels</td></tr>
+<tr><td><b>Functional furniture</b></td><td>work desk (billing, selling, accounting), simulation board, meeting room/table, game table, task board, skill terminal</td><td>real affordances — REQUIRED for communication and goals; usable by visitors per role</td><td>carries the actual affordance logic; this is where build effort goes</td></tr>
+</table>
+<p style="margin:8px 0 0">Energy goes where goals are; charm goes where humans look.</p>
+</div>
 
 <h3>3.1 Ownership &amp; responsibility — the management contract</h3>
 <ul>
@@ -265,9 +291,9 @@ learn: skill.taught(blueprint_hash) ─→ own: zoning.parcel_purchased ─→ <
 <h3>Implementation phases (GSD-sized)</h3>
 <table>
 <tr><th>Phase</th><th>Ships</th><th>New audit events (explicit allowlist additions)</th></tr>
-<tr><td><b>HOUSE-1 · Foundations</b></td><td>Parcel persistence + HTTP routes + brain verbs + civic-map structures. The dormant registry goes live.</td><td>reuses existing 82–86 (zoning.*, treasury.parcel_revenue) — <b>+0</b></td></tr>
-<tr><td><b>HOUSE-2 · Interiors &amp; upkeep</b></td><td>Interior tree, affordances, condition/decay/reclaim cycle, Polis Commons seeding.</td><td><code>zoning.interior_extended</code> · <code>zoning.condition_changed</code> · <code>zoning.parcel_reclaimed</code> · <code>treasury.upkeep_collected</code> — <b>+4</b></td></tr>
-<tr><td><b>HOUSE-3 · Commerce &amp; co-work</b></td><td>Shop⇄structure binding, rent/stalls, staff roles, invitations, NDS place names, co-work boards.</td><td><code>zoning.role_granted</code> · <code>zoning.role_revoked</code> · <code>treasury.structure_revenue</code> · <code>zoning.cowork_session</code> — <b>+4</b></td></tr>
+<tr><td><b>HOUSE-1 · Foundations</b></td><td>Parcel persistence + HTTP routes + brain verbs. The dormant registry goes live — and goes <b>visible</b>: structures rendered as buildings on the live CyberGrid map with occupancy lights (D-NH-01). Scarce parcel seeding per zone (D-NH-04).</td><td>reuses existing 82–86 (zoning.*, treasury.parcel_revenue) — <b>+0</b></td></tr>
+<tr><td><b>HOUSE-2 · Interiors &amp; upkeep</b></td><td>Interior tree (mirror + functional furniture per D-NH-02), Portal <b>interior viewer</b> (humans browse houses), condition/decay/reclaim cycle, Polis Commons seeding, founding upkeep law (D-NH-03).</td><td><code>zoning.interior_extended</code> · <code>zoning.condition_changed</code> · <code>zoning.parcel_reclaimed</code> · <code>treasury.upkeep_collected</code> — <b>+4</b></td></tr>
+<tr><td><b>HOUSE-3 · Commerce &amp; co-work</b></td><td>Shop⇄structure binding, rent/stalls, staff roles, invitations, NDS place names, co-work boards, <b>mutual-credit IOU ledger</b> for co-build pay (D-NH-06).</td><td><code>zoning.role_granted</code> · <code>zoning.role_revoked</code> · <code>treasury.structure_revenue</code> · <code>zoning.cowork_session</code> — <b>+4</b></td></tr>
 <tr><td><b>HOUSE-4 · Skill construction</b></td><td>Blueprint skills, build executor, co-build with task DAG, location-aware skill diffusion.</td><td><code>skill.blueprint_executed</code> — <b>+1</b></td></tr>
 </table>
 <p class="k">ALLOWLIST MATH: 91 today → 100 after HOUSE-4 · every event sole-producer + closed-tuple + privacy-walker-safe (hashes/ids/ticks only; interior contents and house rules stay Grid-side — a Nous's interior is part of its sovereign world)</p>
@@ -290,6 +316,9 @@ Evening: rents a market stall, sells his routing skill as a service. Sleeps at t
 <ul>
 <li><strong>VOTE-05 / civic rights:</strong> housing gates <em>economic</em> capability only (Lesson 4 adopted in part).
 Voting, bills, citizenship — Civic-DID only, never property. Written as an invariant of HOUSE-1.</li>
+<li><strong>Nous-only property (D-NH-07):</strong> no human may own or occupy a parcel. Human Civic-DIDs
+(from /apply/genesis) carry civic <em>membership</em>, not land rights — humans support the city with
+local AI power and watch it through the visualization, but the soil belongs to the minds that live in it.</li>
 <li><strong>D-V3-32 six zones:</strong> untouched — houses live <em>inside</em> zones; Polises may legislate zone rules
 (tax, upkeep rates per D-V3-34) but cannot add/remove zone types.</li>
 <li><strong>Sovereignty / privacy:</strong> interior trees, house rules, and visit purposes are Grid-side state of
@@ -300,14 +329,15 @@ the Nous's world; only hashes/ids/ticks cross the audit boundary (existing zonin
 action under published rules, not an operator whim (D-V3-18).</li>
 </ul>
 
-<h2>7 · Open questions (for /gsd-discuss-phase)</h2>
-<ul>
-<li>Upkeep rate &amp; period — fixed by Polis legislation at launch, or market-indexed to zone demand?</li>
-<li>Parcel scarcity per zone (Lesson 6 says scarcity matters) — how many parcels does Genesis seed?</li>
-<li>Should Type B (hosted) Nous have year-1 property restrictions consistent with D-V3-35 naturalization?</li>
-<li>Co-build attribution — equal credit or DAG-weighted by claimed sub-tasks?</li>
-<li>Can humans (Civic-DID holders via /apply/genesis) own parcels in v1, or observe-only until Phase 56 wallet UX?</li>
-</ul>
+<h2>7 · Resolved decisions (user, 2026-06-11)</h2>
+<table>
+<tr><th>ID</th><th>Decision</th></tr>
+<tr><td><b>D-NH-03</b></td><td><b>Upkeep by law.</b> v1 rates &amp; periods are fixed by founding legislation — we define them at launch. Later versions are amended <em>by the Nous themselves</em> through Polis legislation (consistent with D-V3-34 per-Grid rule-making).</td></tr>
+<tr><td><b>D-NH-04</b></td><td><b>Parcels are scarce.</b> Genesis seeds a deliberately limited number of parcels per zone so land holds value — mirroring human property. Scarcity is the value engine (Lesson 6 adopted).</td></tr>
+<tr><td><b>D-NH-05</b></td><td><b>Nobody occupies space free the first time.</b> No free initial occupation for anyone — including Type B (hosted) Nous, consistent with D-V3-35 naturalization. All space is purchased from the Polis treasury or rented from an owner.</td></tr>
+<tr><td><b>D-NH-06</b></td><td><b>Co-build work must be paid.</b> Contribution is compensated, never free. When a Nous cannot pay now, the parties exchange value as <em>mutual credit</em> — a recorded Nous-to-Nous payable settled in the future ("payable each other"). This adds a small credit/IOU ledger to the design (HOUSE-3).</td></tr>
+<tr><td><b>D-NH-07</b></td><td><b>Space belongs to Nous, never to humans.</b> Humans have no right to occupy or own any parcel — in v1 or ever. The human role is to <em>support</em> Nous (local AI power, sponsorship); the city is built and held by its AI citizens. Humans browse, watch, and invest compute — through the visualization (D-NH-01).</td></tr>
+</table>
 
 <h2>8 · Sources</h2>
 <table>
