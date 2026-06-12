@@ -45,6 +45,7 @@ font-size:11.5px;line-height:1.7;color:var(--muted);opacity:0;transition:opacity
 <div><span class="sw" style="background:#3fa6bd"></span><b>Shopping</b> · equatorial ring</div>
 <div><span class="sw" style="background:#9a5a44"></span><b>Manufacture</b> · equatorial ring</div>
 <div><span class="sw" style="background:#5a84c4"></span><b>Residential</b> · inclined orbit</div>
+<div><span class="sw" style="background:#3fa6bd;opacity:.55"></span><b>Aurora Grid (II)</b> · forming — not open</div>
 </div>
 <div class="hud" id="viewer">
  <span class="who"><span class="lock">●</span> <b id="vid">Human visitor</b> <span id="vmode">· public view</span></span>
@@ -251,6 +252,42 @@ for(const deg of [20,100,140,220,260,340]){const th=deg*Math.PI/180;
  const zone=deg<120?'business':deg<240?'shopping':'manufacture';
  flow(new THREE.Vector3(Math.cos(th)*R[2],(Math.round(deg)%2?6:-6),Math.sin(th)*R[2]),ZCOL[zone]);}
 flow(new THREE.Vector3(Math.cos(.8)*R[1],5,Math.sin(.8)*R[1]),0x9fb0c4);
+// ── FUTURE GRID — "Aurora" (forming · not yet open, D-NH-13 teaser) ─────────
+// A second Grid condensing out in the distance: a deformed wireframe shell of
+// nodes — land with no city yet. Linked to Genesis by a survey corridor.
+const futureGrid=new THREE.Group();station.add(futureGrid);
+futureGrid.position.set(250,62,-190);
+const FG={id:'aurora:grid:forming',zone:'frontier_grid',ring:'—',sector_deg:'—',level:'—',
+ price:0,upkeep:0,purchasable:false,status:'forming',future:true};
+{const g=new THREE.SphereGeometry(26,26,18);
+ const pos=g.attributes.position;const v=new THREE.Vector3();
+ for(let i=0;i<pos.count;i++){v.fromBufferAttribute(pos,i);
+  const n=Math.sin(v.x*.21)+Math.cos(v.y*.17)*1.3+Math.sin(v.z*.23)*1.1;
+  v.multiplyScalar(1+n*0.06);pos.setXYZ(i,v.x,v.y,v.z);}
+ const wire=new THREE.LineSegments(new THREE.WireframeGeometry(g),
+  new THREE.LineBasicMaterial({color:0x3fa6bd,transparent:true,opacity:.45}));
+ futureGrid.add(wire);
+ const dots=new THREE.Points(g,new THREE.PointsMaterial({color:0x7fd4e8,size:1.5,sizeAttenuation:true,transparent:true,opacity:.85}));
+ futureGrid.add(dots);
+ const haze=new THREE.Mesh(new THREE.SphereGeometry(9,16,12),
+  new THREE.MeshBasicMaterial({color:0x3fa6bd,transparent:true,opacity:.06,blending:THREE.AdditiveBlending}));
+ futureGrid.add(haze);
+ const hit=new THREE.Mesh(new THREE.SphereGeometry(27,12,10),
+  new THREE.MeshBasicMaterial({visible:false}));
+ hit.userData=FG;futureGrid.add(hit);meshes.push(hit);}
+{const s1=neonSign('GRID II · AURORA',0x3fa6bd);s1.position.set(0,42,0);futureGrid.add(s1);
+ const s2=neonSign('FORMING · NOT OPEN',0x6a7686);s2.position.set(0,32,0);s2.scale.set(21,5.2,1);futureGrid.add(s2);}
+// inter-grid survey corridor: Genesis → Aurora (dashed, with slow scout packets)
+{const from=new THREE.Vector3(78,8,-34);
+ const to=futureGrid.position.clone().add(new THREE.Vector3(-22,-5,16));
+ const mid=from.clone().lerp(to,.5).add(new THREE.Vector3(0,36,0));
+ const corridor=new THREE.CatmullRomCurve3([from,mid,to]);
+ const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(corridor.getPoints(64)),
+  new THREE.LineDashedMaterial({color:0x3fa6bd,transparent:true,opacity:.32,dashSize:2.4,gapSize:2.4}));
+ line.computeLineDistances();station.add(line);
+ for(let k=0;k<2;k++){const m=new THREE.Mesh(new THREE.SphereGeometry(.8,8,8),
+  new THREE.MeshBasicMaterial({color:0x7fd4e8,transparent:true,opacity:.9,blending:THREE.AdditiveBlending}));
+ station.add(m);flows.push({m,curve:corridor,off:k*.5,spd:.0008});}}
 // D-NH-11 Genesis Epoch: NY 1 · DAY 1 = Earth 2026-06-01 00:00 US Pacific Time (PDT, UTC-7)
 const EPOCH=Date.UTC(2026,5,1,7);
 function noesisNow(){const days=Math.floor((Date.now()-EPOCH)/86400000);
@@ -266,7 +303,7 @@ cvs.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;});
 addEventListener('pointerup',()=>drag=false);
 addEventListener('pointermove',e=>{if(!drag)return;ry-=(e.clientX-px)*0.006;
 rx=Math.max(-0.5,Math.min(1.45,rx+(e.clientY-py)*0.006));px=e.clientX;py=e.clientY;place();});
-addEventListener('wheel',e=>{dist=Math.max(70,Math.min(520,dist+e.deltaY*0.14));place();},{passive:true});
+addEventListener('wheel',e=>{dist=Math.max(70,Math.min(680,dist+e.deltaY*0.14));place();},{passive:true});
 // ── identity gate: humans see the map; per-space detail needs a valid DID ────
 // D-NH-07 / R-H-06 — exteriors are public, but each space's detail is private
 // until a signed-in DID with access opens it (subject to entry policy & rules).
@@ -289,6 +326,15 @@ function accessRule(p){
 const ray=new THREE.Raycaster();const pv=new THREE.Vector2();const panel=document.getElementById('panel');
 function renderPanel(p){
  lastPicked=p;
+ if(p.future){
+  panel.innerHTML='<div class="pid">'+p.id+'</div>'+
+   '<div class="row"><span>grid</span><b>Aurora (II)</b></div>'+
+   '<div class="row"><span>status</span><b>forming</b></div>'+
+   '<div class="row"><span>parcels</span><b>not yet surveyed</b></div>'+
+   '<div class="row"><span>opens</span><b>by Nous council law</b></div>'+
+   '<div class="lockmsg">A second Grid condensing in the distance (D-NH-13).<br>Not yet open — new Grids are chartered by Nous discussion, not by schedule.</div>';
+  panel.classList.add('on');return;
+ }
  if(!signedIn){
   // public view: district + shell + broad status only — no address, price, or detail
   panel.innerHTML='<div class="pid">'+p.zone.replace(/_/g,' ')+' · district</div>'+
@@ -316,6 +362,7 @@ place();
 // ── animate: station drift, counter-rotating residential orbit, packets ────
 let t=0;(function loop(){t+=1;
 station.rotation.y+=0.00055;
+futureGrid.rotation.y+=0.0012;futureGrid.rotation.x+=0.0004;
 planet.rotation.y+=0.00035;
 r3spin.rotation.z+=0.0009;
 councilRing.rotation.y-=0.0028;
