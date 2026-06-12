@@ -255,8 +255,27 @@ flow(new THREE.Vector3(Math.cos(.8)*R[1],5,Math.sin(.8)*R[1]),0x9fb0c4);
 // ── FUTURE GRID — "Aurora" (forming · not yet open, D-NH-13 teaser) ─────────
 // A second Grid condensing out in the distance: a deformed wireframe shell of
 // nodes — land with no city yet. Linked to Genesis by a survey corridor.
-const futureGrid=new THREE.Group();station.add(futureGrid);
-futureGrid.position.set(250,62,-190);
+// The Grids ORBIT EARTH (D-NH-12): Genesis sits at φ=0 of a shared orbital
+// shell around the planet; Aurora condenses farther along the same orbit.
+const ORBIT_C=planet.position.clone();
+const ORBIT_R=ORBIT_C.length();                   // Genesis is at the origin
+const _u1=ORBIT_C.clone().negate().normalize();   // planet → Genesis
+const _u2=new THREE.Vector3(1,0,0).addScaledVector(_u1,-_u1.x).normalize();
+function orbitPoint(phi){return ORBIT_C.clone()
+ .addScaledVector(_u1,Math.cos(phi)*ORBIT_R)
+ .addScaledVector(_u2,Math.sin(phi)*ORBIT_R);}
+// the shared orbit ring + a fainter inclined shell hinting at future Grids
+{const pts=[];for(let i=0;i<=256;i++)pts.push(orbitPoint(i/256*Math.PI*2));
+ const ring=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+  new THREE.LineDashedMaterial({color:0x3fa6bd,transparent:true,opacity:.16,dashSize:5,gapSize:7}));
+ ring.computeLineDistances();scene.add(ring);
+ const pts2=[];for(let i=0;i<=256;i++){const p=orbitPoint(i/256*Math.PI*2);
+  pts2.push(p.clone().sub(ORBIT_C).applyAxisAngle(_u2,0.5).multiplyScalar(1.12).add(ORBIT_C));}
+ const ring2=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts2),
+  new THREE.LineDashedMaterial({color:0x6a7686,transparent:true,opacity:.10,dashSize:4,gapSize:9}));
+ ring2.computeLineDistances();scene.add(ring2);}
+const futureGrid=new THREE.Group();scene.add(futureGrid);
+futureGrid.position.copy(orbitPoint(0.62));
 const FG={id:'aurora:grid:forming',zone:'frontier_grid',ring:'—',sector_deg:'—',level:'—',
  price:0,upkeep:0,purchasable:false,status:'forming',future:true};
 {const g=new THREE.SphereGeometry(26,26,18);
@@ -277,17 +296,15 @@ const FG={id:'aurora:grid:forming',zone:'frontier_grid',ring:'—',sector_deg:'�
  hit.userData=FG;futureGrid.add(hit);meshes.push(hit);}
 {const s1=neonSign('GRID II · AURORA',0x3fa6bd);s1.position.set(0,42,0);futureGrid.add(s1);
  const s2=neonSign('FORMING · NOT OPEN',0x6a7686);s2.position.set(0,32,0);s2.scale.set(21,5.2,1);futureGrid.add(s2);}
-// inter-grid survey corridor: Genesis → Aurora (dashed, with slow scout packets)
-{const from=new THREE.Vector3(78,8,-34);
- const to=futureGrid.position.clone().add(new THREE.Vector3(-22,-5,16));
- const mid=from.clone().lerp(to,.5).add(new THREE.Vector3(0,36,0));
- const corridor=new THREE.CatmullRomCurve3([from,mid,to]);
+// inter-grid survey corridor: Genesis → Aurora along the shared Earth orbit
+{const corridor=new THREE.CatmullRomCurve3(
+  [0.20,0.30,0.40,0.50,0.56].map(phi=>orbitPoint(phi)));
  const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(corridor.getPoints(64)),
-  new THREE.LineDashedMaterial({color:0x3fa6bd,transparent:true,opacity:.32,dashSize:2.4,gapSize:2.4}));
- line.computeLineDistances();station.add(line);
+  new THREE.LineDashedMaterial({color:0x3fa6bd,transparent:true,opacity:.35,dashSize:2.4,gapSize:2.4}));
+ line.computeLineDistances();scene.add(line);
  for(let k=0;k<2;k++){const m=new THREE.Mesh(new THREE.SphereGeometry(.8,8,8),
   new THREE.MeshBasicMaterial({color:0x7fd4e8,transparent:true,opacity:.9,blending:THREE.AdditiveBlending}));
- station.add(m);flows.push({m,curve:corridor,off:k*.5,spd:.0008});}}
+ scene.add(m);flows.push({m,curve:corridor,off:k*.5,spd:.0008});}}
 // D-NH-11 Genesis Epoch: NY 1 · DAY 1 = Earth 2026-06-01 00:00 US Pacific Time (PDT, UTC-7)
 const EPOCH=Date.UTC(2026,5,1,7);
 function noesisNow(){const days=Math.floor((Date.now()-EPOCH)/86400000);
