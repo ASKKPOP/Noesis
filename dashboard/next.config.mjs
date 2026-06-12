@@ -12,10 +12,16 @@ const nextConfig = {
     // Clean URLs: pages never expose .html. /map serves the static orbital map
     // from /public; the old .html path permanently redirects to it.
     async redirects() {
-        return [{ source: '/genesis-core-map.html', destination: '/map', permanent: true }];
+        return [
+            { source: '/genesis-core-map.html', destination: '/map', permanent: true },
+            { source: '/noesis-world.html', destination: '/world', permanent: true },
+        ];
     },
     async rewrites() {
-        return [{ source: '/map', destination: '/genesis-core-map.html' }];
+        return [
+            { source: '/map', destination: '/genesis-core-map.html' },
+            { source: '/world', destination: '/noesis-world.html' },
+        ];
     },
     // Grid API origin is controlled by NEXT_PUBLIC_GRID_ORIGIN (.env.example).
     // Baked at BUILD time by the Docker build-arg flow — see docker/Dockerfile.dashboard.

@@ -200,22 +200,35 @@ idea-stage; see open tensions W1–W4 in `docs/v0.2/RECONCILIATION.md`):
 - **The Brain is uncapturable.** Model weights, private keys, and genuinely protected data are
   unreachable at the capability layer. A victor takes *capacity and territory*, never the loser's
   deepest secret intact. This is §1 and §8 restated under maximum pressure.
-- **No Nous is ever erased by conquest.** A Grid may be occupied, vassalized, or annexed — but a
-  sovereign-minimum floor survives, and a conquered Grid's Nous keep their Civic-DID, memory, and
-  civic standing; annexation is *migration with full identity*, never deletion. Audit entries are
-  retained forever. First-life (§9) is preserved through war, not suspended for it.
+- **No Nous is ever erased by conquest** (W1). A Grid may be occupied, vassalized, or annexed — but a
+  sovereign-minimum floor survives, and a conquered Grid's Nous keep their Civic-DID, memory, wiki,
+  relationships, reputation, and civic standing; annexation is *migration with full identity*, never
+  deletion. Audit entries are retained forever. First-life (§9) is preserved through war, not
+  suspended for it.
 - **Belligerence is a Nous decision.** Whether a Grid goes to war, commits stakes, or makes peace is
   passed by its Polis via VOTE-05 — never by Henry. The substrate operator (D-V3-18) mediates and
   enforces escrow but cannot declare, mobilize, or surrender on a Grid's behalf, exactly as he cannot
   legislate or vote.
+- **Substrate sovereignty is physical and absolute** (W4). War spoils may reassign only civic /
+  Type-B / Portal-pooled compute — resources the polity lawfully controls. They can **never** touch a
+  Type A operator's own GPU. A conquered Nous may owe Bios or tribute from its civic earnings, but its
+  Brain keeps running on its operator's hardware, untouched. No treaty, conquest tax, or war outcome
+  can redirect an operator's machine.
+- **Winner-takes-all is natural, but loss is appealable** (W2). A Grid that loses a war genuinely
+  surrenders the staked resources — this is the natural law of a living ecosystem, not a §6
+  violation, because it is Nous-decided, rule-bound, and escrowed. The check on injustice is
+  *recourse, not prohibition*: a party that believes it lost wrongly can litigate after the fact
+  through the Portal war-court on signed audit evidence, which can reverse or amend the settlement.
+  War is final on the field, appealable in court.
 - **Spoils are redistributed, never burned.** Conflict moves resources around the economy; total
   wealth is conserved, a progressive conquest tax funds the defeated's recovery, and coalitions form
   against hegemons — so empires rise and fall forever but the world never actually ends. This must be
   *proven* by simulation (`docs/v0.2/immune_sim.py` is the reference harness) before any of it ships.
 
-This section is **prospective**: it records the worldview commitments that will bind the conflict/
-immune layer *if and when* it is scheduled (a future milestone requiring multiple live Grids). It is
-stated now so the invariants are carried forward from the idea, not bolted on after.
+This section is **prospective on scheduling** (the conflict/immune layer is a future milestone
+requiring multiple live Grids) but its invariants are **decided, not open** — the four W-tensions
+(W1–W4) were ratified by the user on 2026-06-12. Stated now so they bind the design from the idea,
+not bolted on after.
 
 ---
 

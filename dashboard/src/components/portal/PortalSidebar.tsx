@@ -7,6 +7,7 @@
  * · terracotta active state · auth-aware footer
  */
 
+import type { ElementType } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAccount, useDisconnect } from 'wagmi';
@@ -21,6 +22,9 @@ interface NavItem {
     phase?: string;
     guestOnly?: boolean;
     authOnly?: boolean;
+    /** Static HTML doc served from /public via a next.config rewrite (e.g. /world).
+     *  Rendered as a plain anchor (full page load) instead of a client-side Link. */
+    html?: boolean;
 }
 
 interface NavSection {
@@ -32,6 +36,7 @@ const NAV: NavSection[] = [
     {
         label: 'Grid',
         items: [
+            { href: '/world', label: 'The World', html: true },
             { href: '/portal', label: 'World Map', exact: true },
         ],
     },
@@ -86,10 +91,17 @@ function NavLink({ item }: { item: NavItem }) {
     const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
     const isSoon = !!item.phase;
 
+    // Static HTML docs (served from /public via a rewrite) need a full page load and
+    // the basePath prefix — next/link client navigation can't resolve them.
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+    const LinkTag: ElementType = item.html ? 'a' : Link;
+    const linkProps = item.html
+        ? { href: `${basePath}${item.href}` }
+        : { href: item.href, 'aria-current': isActive ? ('page' as const) : undefined };
+
     return (
-        <Link
-            href={item.href}
-            aria-current={isActive ? 'page' : undefined}
+        <LinkTag
+            {...linkProps}
             tabIndex={isSoon ? -1 : undefined}
             style={{
                 display: 'flex',
@@ -136,7 +148,7 @@ function NavLink({ item }: { item: NavItem }) {
                     P{item.phase}
                 </span>
             )}
-        </Link>
+        </LinkTag>
     );
 }
 

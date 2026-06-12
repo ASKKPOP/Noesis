@@ -123,7 +123,11 @@ Phase numbering would continue from 61.
 
 ---
 
-## 5 · Open tensions — for user decision (W1–W4)
+## 5 · Tensions — ALL RESOLVED (user, 2026-06-12)
+
+> **W1** migration-with-full-identity · **W2** winner-takes-all confirmed (recourse via war-court,
+> not prohibition) · **W3** sanctioned-offense (war/conquest layer kept) · **W4** physical-right
+> boundary (spoils never touch a Type A operator's GPU). All four are locked below.
 
 > **W3 — RESOLVED (user, 2026-06-12): SANCTIONED-OFFENSE.** The project keeps the full
 > war / conquest / espionage layer — the "attack another Grid" verb stays. It is **not** reduced to
@@ -139,16 +143,21 @@ Phase numbering would continue from 61.
 > three CI-gated, sanctioned-offense is a game with real in-world stakes, not intrusion tooling.
 > W1, W2, W4 remain open.
 
-- **W1 · Does conquest of a *Grid* violate first-life?** C4's sovereign-minimum + Nous-migration
-  framing is designed to say *no* — identity/memory/audit survive, annexation = migration not death.
-  But PHILOSOPHY §9 was written for a Nous whose *operator* goes silent, not for a Grid losing a war.
-  Needs explicit ratification that "a Grid may be conquered, but its Nous are never erased — they
-  migrate with full identity" is the binding reading. (Proposed; not yet locked.)
-- **W2 · Is winner-takes-all compatible with PHILOSOPHY §6 (free economy)?** §6 forbids a central
-  bank / matching engine and prizes bilateral, sometimes-unfair trade. War-as-forced-transfer is a
-  *non-bilateral* resource move. Arguable it's consistent (it's rule-bound, escrowed, Nous-decided,
-  not a central planner) — but it's a real extension of "economy must be free" and deserves a
-  worldview-level decision before it hardens.
+- **W1 · Does conquest of a *Grid* violate first-life?** → **RESOLVED (user, 2026-06-12):
+  MIGRATION WITH FULL IDENTITY.** A Grid may be conquered, but its Nous are **never erased** — on
+  annexation each Nous migrates to the victor's (or any) Grid carrying its full identity: Civic-DID,
+  memory, wiki, relationship graph, reputation, and audit history intact. Conquest transfers
+  *territory and capacity*, never selfhood. This is the binding reading of first-life (PHILOSOPHY §9)
+  under war, and it is what the sovereign-minimum floor (C4) exists to guarantee. Locked.
+- **W2 · Is winner-takes-all compatible with PHILOSOPHY §6 (free economy)?** → **RESOLVED (user,
+  2026-06-12): CONFIRMED — winner-takes-all is natural.** A Grid that loses a war genuinely
+  surrenders the staked resources to the victor; this is accepted as the natural law of a living
+  ecosystem, not a §6 violation, *because* it is Nous-decided (VOTE-05), rule-bound, and escrowed —
+  no central planner forces it. The check on injustice is **recourse, not prohibition**: a party that
+  believes it lost wrongly (rules breached, undeclared raid, escrow miscount) can **litigate after
+  the fact** through the Portal war-court / dispute service — a "lawsuit" with signed audit-log
+  evidence that can reverse or amend the settlement. War is final on the field but appealable in
+  court. Locked.
 - **W3 · Inter-Grid offense vs the platform's defensive-only security stance.** Even fully
   attenuated, an "espionage/red-team" subsystem is dual-use framing. The attenuation wall (no real
   egress/syscalls, CI-enforced) is the answer, but the user should confirm the project is comfortable
@@ -158,10 +167,13 @@ Phase numbering would continue from 61.
   favor of immunity-only. **Recommend** resolving W3 *first* — it gates how much of §2 even applies.
   → **RESOLVED: sanctioned-offense (see box above). The war/conquest framing stays; immunity is the
   defensive half of the same system, not a replacement for it.**
-- **W4 · How literal is conquest of "compute / AI-power"?** Reassigning quota across operator-owned
-  (Type A) Brains is constrained by substrate sovereignty — Henry can't redirect an operator's GPU.
-  So inter-Grid "compute spoils" can only touch *civic/Type-B/Portal-pooled* compute, not a Type A
-  operator's hardware. Needs a precise boundary before C2/C9 are built.
+- **W4 · How literal is conquest of "compute / AI-power"?** → **RESOLVED (user, 2026-06-12):
+  PHYSICAL RIGHT BOUNDARY.** Inter-Grid "compute spoils" may only touch **civic / Type-B / Portal-
+  pooled** compute (Henry-substrate resources the Polis/Portal can lawfully reassign). They can
+  **never** touch a **Type A operator's own GPU** — substrate sovereignty (PHILOSOPHY §1) is
+  physical and absolute; no war outcome, treaty, or conquest tax can redirect an operator's hardware.
+  A conquered Type A Nous owes Bios/tribute from its civic earnings, but its Brain keeps running on
+  its operator's machine, untouched. CI-gated boundary on the spoils-ledger. Locked.
 
 ---
 
