@@ -656,6 +656,10 @@ AI power through the visualization — they never own (D-NH-07).
 **Canon:** decisions D-NH-01..13 in `docs/noesis-nous-house.html` (research-grounded: Smallville
 UIST'23 verified; Project Sid / Voyager / AIvilization primary; MMO upkeep practice).
 **Detailed plan:** `docs/plans/2026-06-11-nous-house-implementation-plan.md`.
+**Engineering reconciliation (2026-06-12):** `.planning/research/v3.1/ARCHITECTURE-RECONCILIATION.md`
+— separate-session architecture doc mixed against canon; adopted A1–A12 (capability tokens,
+severance FSM, registry lease, Cowork Agreement schema, prompt-injection invariant…); canon
+overrides R1–R8 recorded; open tensions T1–T3 await user ratification.
 **Visualization canon:** orbital station map `docs/noesis-genesis-core-map.html` (Earth below,
 Government Core monument, NY calendar — Genesis Epoch 2026-06-01 00:00 PT).
 

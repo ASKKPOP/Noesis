@@ -235,6 +235,14 @@ allowlist stands when each phase opens** (actual today: 91; v3.0 ROADMAP plans m
 | R-H-07 | D-V3-32 six zones frozen | zones untouched; rings are geometry inside zones |
 | R-H-08 | Ousia/Bios duality | 58 treats 1:1, flagged for Polis treasury cleanup |
 | R-H-09 | In-memory occupants lost on restart | acceptable (presence, not property) — documented |
+| R-H-10 | Cross-House prompt injection (A11e, reconciliation 2026-06-12) | visitor/guest content entering a House channel is DATA, never instructions — must not escalate into Telos-level commands; CI-gated invariant lands with HOUSE-3 visitor channels |
+
+**Adopted engineering (2026-06-12):** `.planning/research/v3.1/ARCHITECTURE-RECONCILIATION.md`
+folds into these phases — HOUSE-3 visitor sessions use capability tokens (A1), roles are typed
+relationship edges with capabilities flowing from edge type (A4), co-work engagements are signed
+Cowork Agreements settling via the IOU ledger (A5), role/contract termination follows the
+severance state machine ACTIVE→NOTICE→SETTLEMENT→WIND-DOWN→REVOKE→ARCHIVED (A6), one active
+Brain per Civic-DID via registry lease (A7), build-out lifecycle naming phases 0–8 (A10).
 
 ## Sequencing & estimate
 

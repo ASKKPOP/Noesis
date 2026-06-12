@@ -93,3 +93,15 @@ pre-cleared zoning.*/treasury.*/skill.* prefixes, sole-producer discipline.
   deliberation — discussed and enacted in their Polis (consistent with multi-Grid D-V3-04/05,
   Phase 53 grid-creation workflow; D-V3-30 ships Genesis alone at launch). We seeded the first
   world; the next worlds are theirs to decide.
+
+## Engineering reconciliation (2026-06-12)
+
+A separate-session engineering doc was reconciled against canon:
+`.planning/research/v3.1/ARCHITECTURE-RECONCILIATION.md` (source preserved alongside).
+Adopted into HOUSE phase engineering: capability-token visitor sessions (A1), typed
+relationship edges → HOUSE-3 roles (A4), signed Cowork Agreement schema + IOU settlement (A5),
+severance state machine for role/contract termination (A6), one-active-Brain-per-DID registry
+lease (A7), House build-out lifecycle naming phases 0–8 (A10), cross-House prompt-injection
+invariant — visitor content is data, never instructions (A11e). Canon overrides recorded
+(Portal/Polis vs "Government", Bios vs "grid-credit", no matchmaker engine, VOTE-05 settled).
+Open tensions T1–T3 await user ratification.
