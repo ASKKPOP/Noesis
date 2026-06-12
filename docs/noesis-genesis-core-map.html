@@ -166,20 +166,37 @@ t.rotation.x=Math.PI/2;r3spin.add(t);}
 {const t=new THREE.Mesh(new THREE.TorusGeometry(42,.3,8,120),
  new THREE.MeshBasicMaterial({color:0xda7a4e,transparent:true,opacity:.22}));
 t.rotation.y=Math.PI/2;station.add(t);}
-// modules
+// modules — expandable-habitat form (Bigelow/TransHab lineage): a soft white
+// capsule held by zone-coloured structural straps, with a gold docking end-cap.
+// Body stays silver-white; zone identity reads through the straps + glow.
 function modMesh(p,size,parent,pos){
  const col=ZCOL[p.zone];const sold=p.status!=='unsold';
- let m;
- if(p.status==='commons'){m=new THREE.Mesh(new THREE.SphereGeometry(size,24,24),
-   new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.35,metalness:.6,roughness:.4}));}
- else if(sold){m=new THREE.Mesh(new THREE.BoxGeometry(size*1.6,size*1.2,size*1.6),
-   new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.4,metalness:.5,roughness:.45}));}
- else{ // unsold = ghost docking frame
-   m=new THREE.Mesh(new THREE.BoxGeometry(size*1.6,size*1.2,size*1.6),
-    new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.22,transparent:true,opacity:.30,metalness:.3,roughness:.6}));
-   const e=new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry),
-    new THREE.LineBasicMaterial({color:col,transparent:true,opacity:.95}));m.add(e);}
- m.position.copy(pos);m.userData=p;parent.add(m);meshes.push(m);return m;}
+ const ghost=!sold;                       // unsold = translucent ghost module
+ const grp=new THREE.Group();
+ const R=size*0.58, L=size*1.15;          // capsule radius & cylinder length
+ // soft shell
+ const body=new THREE.Mesh(new THREE.CapsuleGeometry(R,L,6,18),
+   ghost
+   ? new THREE.MeshStandardMaterial({color:0x9fb0c4,emissive:col,emissiveIntensity:.18,transparent:true,opacity:.30,metalness:.3,roughness:.65})
+   : new THREE.MeshStandardMaterial({color:0xe2e8f0,emissive:col,emissiveIntensity:.45,metalness:.45,roughness:.4}));
+ body.userData=p;grp.add(body);meshes.push(body);
+ // structural straps (zone colour) around the girth
+ const strapMat=new THREE.MeshStandardMaterial({color:col,emissive:col,
+   emissiveIntensity:ghost?.4:.9,metalness:.35,roughness:.5,transparent:ghost,opacity:ghost?.55:1});
+ for(const ty of [-L*0.34,0,L*0.34]){
+   const t=new THREE.Mesh(new THREE.TorusGeometry(R*1.04,R*0.11,8,20),strapMat);
+   t.rotation.x=Math.PI/2;t.position.y=ty;grp.add(t);}
+ if(ghost){ // ghost wireframe so unsold slots still read as a module
+   const e=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CapsuleGeometry(R,L,3,12)),
+     new THREE.LineBasicMaterial({color:col,transparent:true,opacity:.85}));body.add(e);
+ }else{ // gold docking end-cap, facing the core
+   const cap=new THREE.Mesh(new THREE.CylinderGeometry(R*0.52,R*0.52,R*0.32,16),
+     new THREE.MeshStandardMaterial({color:0xe7c878,emissive:0x8a6a3b,emissiveIntensity:.45,metalness:.8,roughness:.3}));
+   cap.position.y=-(L/2+R*0.95);grp.add(cap);}
+ // orient: capsule long axis points radially outward; dock-cap toward core
+ const dir=pos.clone().normalize();
+ if(dir.lengthSq()>0) grp.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+ grp.position.copy(pos);grp.userData=p;parent.add(grp);return body;}
 // ring1 commons — connected to core
 for(const p of PARCELS.filter(p=>p.ring===1)){
  const th=p.sector_deg*Math.PI/180;
