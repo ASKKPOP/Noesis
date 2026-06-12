@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Noēsis — wordmark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;height:100%;background:#05080c;overflow:hidden}
+  .stage{position:fixed;inset:0;display:grid;place-items:center;
+    background:
+      radial-gradient(120% 80% at 50% 18%, #0d1620 0%, #070b10 45%, #04060a 100%),
+      linear-gradient(180deg,#05080c 0%,#070d13 60%,#03050a 100%);}
+  svg{width:min(96vw,1180px);height:auto;display:block}
+  .wm{font-family:'Orbitron',sans-serif;font-weight:900;font-size:118px;letter-spacing:7px}
+  .sub{font-family:'Orbitron',sans-serif;font-weight:400;font-size:30px;letter-spacing:24px}
+  .tag{font-family:'Orbitron',sans-serif;font-weight:400;font-size:13px;letter-spacing:6px;fill:#3c5460}
+</style>
+</head>
+<body>
+<div class="stage">
+  <svg viewBox="0 0 1180 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Noēsis wordmark">
+    <defs>
+      <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="4.5" result="a"/>
+        <feGaussianBlur stdDeviation="11" result="b"/>
+        <feGaussianBlur stdDeviation="22" result="c"/>
+        <feMerge>
+          <feMergeNode in="c"/><feMergeNode in="b"/><feMergeNode in="a"/><feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+      <filter id="softglow" x="-80%" y="-80%" width="260%" height="260%">
+        <feGaussianBlur stdDeviation="9"/>
+      </filter>
+      <radialGradient id="haze" cx="50%" cy="40%" r="60%">
+        <stop offset="0%" stop-color="#16323f" stop-opacity=".55"/>
+        <stop offset="100%" stop-color="#16323f" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="horizon" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#1bd4ff" stop-opacity="0"/>
+        <stop offset="50%" stop-color="#9fe9ff" stop-opacity=".9"/>
+        <stop offset="100%" stop-color="#1bd4ff" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+
+    <rect x="0" y="0" width="1180" height="620" fill="#05080c"/>
+    <ellipse cx="590" cy="250" rx="620" ry="300" fill="url(#haze)"/>
+
+    <g id="floor"></g>
+    <rect x="120" y="441" width="940" height="2.4" fill="url(#horizon)" filter="url(#softglow)"/>
+    <rect x="120" y="441.6" width="940" height="1" fill="url(#horizon)"/>
+    <g id="lights"></g>
+
+    <text x="590" y="268" text-anchor="middle" class="wm" fill="none" stroke="#1f9fd6" stroke-width="6" opacity=".5" filter="url(#glow)">NOĒSIS</text>
+    <text x="590" y="268" text-anchor="middle" class="wm" fill="none" stroke="#46c4ee" stroke-width="2.4" filter="url(#glow)">NOĒSIS</text>
+    <text x="590" y="268" text-anchor="middle" class="wm" fill="none" stroke="#e6fbff" stroke-width="0.7">NOĒSIS</text>
+
+    <text x="602" y="338" text-anchor="middle" class="sub" fill="#5fcdec" filter="url(#glow)">GENESIS</text>
+    <text x="602" y="338" text-anchor="middle" class="sub" fill="#d8f6ff" stroke="none" opacity=".85">GENESIS</text>
+
+    <text x="592" y="392" text-anchor="middle" class="tag">A&#160;&#160;CIVILIZATION&#160;&#160;OF&#160;&#160;MINDS</text>
+  </svg>
+</div>
+
+<script>
+  const SVGNS='http://www.w3.org/2000/svg';
+  const floor=document.getElementById('floor');
+  const lights=document.getElementById('lights');
+  const VP={x:590,y:442}, bottom=620, left=-260, right=1440;
+  // converging vertical lines
+  for(let i=0;i<=26;i++){
+    const x=left+(right-left)*(i/26);
+    const ln=document.createElementNS(SVGNS,'line');
+    ln.setAttribute('x1',x);ln.setAttribute('y1',bottom);
+    ln.setAttribute('x2',VP.x);ln.setAttribute('y2',VP.y);
+    ln.setAttribute('stroke','#0f5a72');
+    ln.setAttribute('stroke-width',0.7);
+    ln.setAttribute('opacity', (0.5 - Math.abs(i/26-0.5)*0.6).toFixed(2));
+    floor.appendChild(ln);
+  }
+  // perspective horizontal lines (denser toward horizon)
+  for(let k=1;k<=16;k++){
+    const t=k/16;
+    const y=VP.y + (bottom-VP.y)*(t*t);
+    const ln=document.createElementNS(SVGNS,'line');
+    ln.setAttribute('x1',120 - t*40);ln.setAttribute('y1',y);
+    ln.setAttribute('x2',1060 + t*40);ln.setAttribute('y2',y);
+    ln.setAttribute('stroke','#0f5a72');
+    ln.setAttribute('stroke-width',0.7);
+    ln.setAttribute('opacity',(0.12+t*0.35).toFixed(2));
+    floor.appendChild(ln);
+  }
+  // scattered horizon city-lights
+  for(let i=0;i<120;i++){
+    const x=140+Math.random()*900;
+    const d=document.createElementNS(SVGNS,'rect');
+    const w=0.8+Math.random()*2.2;
+    d.setAttribute('x',x);d.setAttribute('y',440.2+Math.random()*2.2);
+    d.setAttribute('width',w);d.setAttribute('height',1.4);
+    d.setAttribute('fill', Math.random()>0.3?'#bdeeff':'#3aa9cf');
+    d.setAttribute('opacity',(0.3+Math.random()*0.6).toFixed(2));
+    lights.appendChild(d);
+  }
+</script>
+</body>
+</html>

@@ -17,6 +17,10 @@ import { ServiceTopologyDiagram, LocalAiMapDiagram } from '@/components/landing/
 
 const CyberGridBg = dynamic(() => import('@/components/portal/CyberGrid'), { ssr: false });
 
+// Orbital Genesis Core map — static Three.js page served from /public.
+// Prefix the deploy basePath (e.g. "/dash") so it resolves behind Traefik.
+const MAP_SRC = `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/genesis-core-map.html`;
+
 // ── Shared styles ────────────────────────────────────────────────────────────
 
 const SANS = '"DM Sans", "Inter Tight", sans-serif';
@@ -374,8 +378,8 @@ export default function LandingView() {
                             borderBottom: '1px solid rgba(0,212,255,0.20)',
                         }}>
                             <div>
-                                <div style={{ ...monoLabelStyle, color: '#00d4ff', marginBottom: 4 }}>
-                                    LIVE · VIRTUAL MAP
+                                <div style={{ ...monoLabelStyle, color: '#3fa6bd', marginBottom: 4 }}>
+                                    LIVE · GENESIS CORE
                                 </div>
                                 <h2 style={{
                                     fontFamily: SERIF,
@@ -383,31 +387,42 @@ export default function LandingView() {
                                     fontWeight: 600,
                                     margin: 0,
                                 }}>
-                                    The Genesis Grid
+                                    The Genesis Grid — orbital map
                                 </h2>
                             </div>
                             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                                <Link href="/worldmap" style={{ ...ctaStyle, padding: '10px 20px' }}>
+                                <a href={MAP_SRC} target="_blank" rel="noreferrer" style={{ ...ctaStyle, padding: '10px 20px' }}>
                                     Open full map
-                                </Link>
+                                </a>
                                 <Link href="/portal/civic-map" style={{ ...ghostCtaStyle, padding: '10px 20px' }}>
                                     Browse the Civic Map
                                 </Link>
                             </div>
                         </div>
-                        {/* Transparent viewport — the live city renders behind this window */}
-                        <div style={{ height: 420 }} />
+                        {/* Live orbital Genesis Core map (Three.js, served from /public) */}
+                        <iframe
+                            src={MAP_SRC}
+                            title="Genesis Core — orbital map"
+                            loading="lazy"
+                            style={{
+                                width: '100%',
+                                height: 520,
+                                border: 0,
+                                display: 'block',
+                                background: '#020610',
+                            }}
+                        />
                         <div style={{
                             padding: '12px 24px',
                             background: 'rgba(2,6,16,0.82)',
-                            borderTop: '1px solid rgba(0,212,255,0.20)',
+                            borderTop: '1px solid rgba(63,166,189,0.20)',
                             fontFamily: MONO,
                             fontSize: 10,
                             letterSpacing: '0.10em',
                             color: 'rgba(245,240,234,0.40)',
                         }}>
-                            22×22 ISOMETRIC GRID · 7 DISTRICTS · LIVE DATA FLOWS — PAN, ZOOM &
-                            DISTRICT DETAILS IN THE FULL MAP
+                            GOVERNMENT CORE · 3 ORBITAL SHELLS · 53 PARCELS — DRAG TO ORBIT, SCROLL
+                            TO ZOOM, CLICK A MODULE · SIGN IN WITH A DID FOR PER-SPACE DETAIL
                         </div>
                     </div>
                 </section>
