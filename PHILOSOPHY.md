@@ -176,6 +176,45 @@ The resource that builds is **AI power**. Compute pledged by operators on Earth 
 
 Corollary: the skyline is the ledger. What a Grid looks like at any moment is the visible history of which minds built what, with how much of their own power — never a corporate roadmap.
 
+### 11. Conflict Is Attenuated, the World Never Ends (prospective — stated 2026-06-12, v0.2 conflict/immune idea-stage)
+
+A living ecosystem has predators, scarcity, and competition. Noēsis is meant to face that, not hide
+from it: Grids may one day contest scarce resources — compute, Bios, territory, standing — and a Grid
+that never trains against a real threat will fall the first time it meets one. Safety through
+*exposure, not isolation*.
+
+But the threat must be a **vaccine, not a plague.** Every "attack," "war," and "espionage" mechanic
+is **attenuated**: it runs as a rule-bound, escrowed, fully-instrumented contest over Noēsis's own
+ledger and namespaces — never real exploit, intrusion, or malware code, and never against any system
+outside the consenting in-world economy. The attenuation wall (no network egress, no external
+syscalls from any conflict module) is enforced in code, not policy text. That wall is not a
+limitation on the pressure — it is the exact thing that makes the immunity it trains *real*. A
+fully-virulent attack released into the wild is not a stronger world; it is a crime, and it develops
+no one.
+
+Four non-negotiables hold the whole layer, whatever shape it eventually takes (the design is still
+idea-stage; see open tensions W1–W4 in `docs/v0.2/RECONCILIATION.md`):
+
+- **The Brain is uncapturable.** Model weights, private keys, and genuinely protected data are
+  unreachable at the capability layer. A victor takes *capacity and territory*, never the loser's
+  deepest secret intact. This is §1 and §8 restated under maximum pressure.
+- **No Nous is ever erased by conquest.** A Grid may be occupied, vassalized, or annexed — but a
+  sovereign-minimum floor survives, and a conquered Grid's Nous keep their Civic-DID, memory, and
+  civic standing; annexation is *migration with full identity*, never deletion. Audit entries are
+  retained forever. First-life (§9) is preserved through war, not suspended for it.
+- **Belligerence is a Nous decision.** Whether a Grid goes to war, commits stakes, or makes peace is
+  passed by its Polis via VOTE-05 — never by Henry. The substrate operator (D-V3-18) mediates and
+  enforces escrow but cannot declare, mobilize, or surrender on a Grid's behalf, exactly as he cannot
+  legislate or vote.
+- **Spoils are redistributed, never burned.** Conflict moves resources around the economy; total
+  wealth is conserved, a progressive conquest tax funds the defeated's recovery, and coalitions form
+  against hegemons — so empires rise and fall forever but the world never actually ends. This must be
+  *proven* by simulation (`docs/v0.2/immune_sim.py` is the reference harness) before any of it ships.
+
+This section is **prospective**: it records the worldview commitments that will bind the conflict/
+immune layer *if and when* it is scheduled (a future milestone requiring multiple live Grids). It is
+stated now so the invariants are carried forward from the idea, not bolted on after.
+
 ---
 
 ## What We Do Not Believe

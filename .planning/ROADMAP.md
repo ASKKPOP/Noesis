@@ -674,6 +674,33 @@ Government Core monument, NY calendar — Genesis Epoch 2026-06-01 00:00 PT).
 wallclock CI gate (all periods tick-based; NY calendar display-boundary only); single-onTick;
 zero-diff R-31-01; D-V3-32 six zones; privacy walker (interior contents never broadcast).
 
+## v3.2 Inter-Grid Conflict & Immunity — PROSPECTIVE (not scheduled; phases continue from 61)
+
+**Status:** idea-stage design, reconciled 2026-06-12. **Prerequisite: multiple live Grids** —
+cannot start before the multi-Grid framework (D-V3-04/05), grid-creation (Phase 53), and cross-Grid
+migration are real. v3.0 ships Genesis alone; v3.1 is single-Grid. So this is recorded, not yet
+sequenced.
+
+**Idea:** Grids compete for scarce resources (compute/AI-power quota, **Bios**, territory, registry
+position, tribute) through a **rule-bound, escrowed, fully-simulated** conflict layer — modeled as a
+**defense-as-vaccination immune system**: attacks are *attenuated* (in-world CTF-style contests over
+the ledger, never real exploit/intrusion code), defenses are real tested antibody code earned by
+surviving them, and the threat space mutates so immunity must be continually re-earned. War is a
+protocol state with locked stakes; spoils are *redistributed, never burned*; a sovereign-minimum
+floor + Nous-migration guarantee no Grid (and no Nous) is ever erased.
+
+**Canon (mixed against locked decisions):** `docs/v0.2/RECONCILIATION.md` — source docs
+`docs/v0.2/{noesis-conflict-defense,noesis-war-economics,noesis-immune-system}.md` + working
+`docs/v0.2/immune_sim.py`. Adopted C1–C10; overrides O1–O4 (Bios not "grid-credit"; Portal/Polis not
+"Government"; **declaring war is a VOTE-05 Polis act, never Henry's**; Henry is not a war operator);
+open tensions **W1–W4 await user ratification** (W3 first: keep sanctioned-offense vocabulary, or
+reframe the whole layer as immunity-only resilience training).
+
+**Hard invariants (worldview, see PHILOSOPHY §11):** attenuation wall (no real egress/syscalls from
+any conflict module — CI-enforced); Brain/keys/private-data structurally uncapturable; sovereign-
+minimum floor; **Nous are never erased by conquest** — annexation = migration with full identity,
+audit retained forever (first-life §9 preserved); VOTE-05 decides belligerence.
+
 ## v2.6 Resilience & Observability — SHIPPED 2026-05-25 (Historical)
 
 **Status:** Closed 2026-05-25, 5 planned phases + 2 followups (34.1, 34.2). Allowlist 53 → 56 (+3 in Phase 33). Both post-v2.5 gaps (GAP-A audit pipeline silence + GAP-B missing portal.auth.* producers) permanently closed.

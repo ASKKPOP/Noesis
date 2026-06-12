@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noēsis — Grid Architecture</title>
+<style>
+  :root{
+    --void:#0a0e14;
+    --panel:#0f141d;
+    --panel-2:#131a25;
+    --line:#1d2735;
+    --line-bright:#283446;
+    --ink:#c9d4e3;
+    --ink-dim:#7e8ca0;
+    --ink-faint:#516074;
+    --signal:#5ce1c4;     /* cyan-mint: the grid's pulse */
+    --signal-deep:#2aa088;
+    --amber:#e8b563;      /* governance / caution */
+    --rose:#e2718a;       /* conflict */
+    --violet:#9d8cf0;     /* identity / mind */
+    --glow:rgba(92,225,196,.14);
+    --mono:'Courier New',ui-monospace,'SF Mono',monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;
+    --serif:'Iowan Old Style','Palatino Linotype','Book Antiqua',Georgia,serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--void);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:48px 48px;
+    opacity:.22;
+    mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 75%);
+    -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 75%);
+  }
+  @media (prefers-reduced-motion:no-preference){
+    body::after{
+      content:"";position:fixed;left:0;right:0;top:0;height:2px;z-index:1;pointer-events:none;
+      background:linear-gradient(90deg,transparent,var(--signal),transparent);
+      opacity:.5;
+      animation:sweep 9s linear infinite;
+    }
+    @keyframes sweep{
+      0%{transform:translateY(0);opacity:0}
+      8%{opacity:.5}
+      92%{opacity:.5}
+      100%{transform:translateY(100vh);opacity:0}
+    }
+  }
+
+  /* ---------- top bar ---------- */
+  .bar{
+    position:sticky;top:0;z-index:50;
+    display:flex;align-items:center;gap:18px;
+    padding:12px 22px;
+    background:rgba(10,14,20,.82);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+  }
+  .bar .mark{
+    font-family:var(--mono);font-weight:700;letter-spacing:.18em;
+    font-size:13px;color:var(--signal);white-space:nowrap;
+  }
+  .bar .mark b{color:var(--ink)}
+  .bar .status{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+    color:var(--ink-faint);display:flex;align-items:center;gap:7px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--signal);box-shadow:0 0 8px var(--signal)}
+  @media (prefers-reduced-motion:no-preference){.dot{animation:pulse 2.4s ease-in-out infinite}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .bar .spacer{flex:1}
+  .lang{
+    display:flex;border:1px solid var(--line-bright);border-radius:2px;overflow:hidden;
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  }
+  .lang button{
+    background:transparent;color:var(--ink-dim);border:0;cursor:pointer;
+    padding:6px 12px;font:inherit;transition:.18s;
+  }
+  .lang button[aria-pressed="true"]{background:var(--signal);color:var(--void);font-weight:700}
+  .lang button:hover:not([aria-pressed="true"]){color:var(--ink)}
+
+  /* ---------- shell ---------- */
+  .shell{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:0 22px}
+  .layout{display:grid;grid-template-columns:230px 1fr;gap:48px;align-items:start}
+  @media (max-width:880px){.layout{grid-template-columns:1fr}}
+
+  nav.toc{
+    position:sticky;top:78px;align-self:start;
+    border:1px solid var(--line);border-radius:4px;background:var(--panel);
+    padding:16px 0;
+  }
+  @media (max-width:880px){nav.toc{display:none}}
+  nav.toc .toc-head{
+    font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--ink-faint);
+    padding:0 18px 10px;border-bottom:1px solid var(--line);margin-bottom:8px;
+  }
+  nav.toc a{
+    display:flex;gap:10px;align-items:baseline;
+    padding:7px 18px;text-decoration:none;color:var(--ink-dim);
+    font-size:13px;border-left:2px solid transparent;transition:.15s;
+  }
+  nav.toc a .n{font-family:var(--mono);font-size:11px;color:var(--ink-faint);min-width:16px}
+  nav.toc a:hover{color:var(--ink);background:var(--panel-2)}
+  nav.toc a.active{color:var(--signal);border-left-color:var(--signal);background:var(--panel-2)}
+  nav.toc a.active .n{color:var(--signal)}
+
+  /* ---------- hero ---------- */
+  header.hero{padding:74px 0 46px;border-bottom:1px solid var(--line)}
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.32em;color:var(--signal);
+    margin-bottom:22px;display:flex;align-items:center;gap:12px;
+  }
+  .eyebrow::after{content:"";height:1px;flex:1;max-width:160px;background:linear-gradient(90deg,var(--signal-deep),transparent)}
+  h1.title{
+    font-family:var(--serif);font-weight:600;
+    font-size:clamp(40px,7vw,76px);line-height:1.02;letter-spacing:-.02em;
+    margin-bottom:8px;color:#eef3f9;
+  }
+  h1.title .gl{color:var(--signal);font-style:italic}
+  .subtitle{
+    font-family:var(--mono);font-size:clamp(12px,1.6vw,15px);letter-spacing:.12em;
+    color:var(--ink-dim);margin-bottom:30px;
+  }
+  .lede{max-width:62ch;font-size:16.5px;color:var(--ink)}
+  .lede + .lede{margin-top:14px}
+  .meta-row{
+    display:flex;flex-wrap:wrap;gap:10px;margin-top:34px;
+  }
+  .chip{
+    font-family:var(--mono);font-size:11px;letter-spacing:.08em;
+    border:1px solid var(--line-bright);border-radius:2px;
+    padding:6px 11px;color:var(--ink-dim);
+  }
+  .chip b{color:var(--signal);font-weight:700}
+
+  /* ---------- sections ---------- */
+  section{padding:54px 0;border-bottom:1px solid var(--line)}
+  .sec-head{display:flex;align-items:baseline;gap:18px;margin-bottom:8px}
+  .sec-num{font-family:var(--mono);font-size:13px;color:var(--signal);letter-spacing:.1em;padding-top:6px}
+  h2{
+    font-family:var(--serif);font-weight:600;font-size:clamp(26px,4vw,38px);
+    line-height:1.12;letter-spacing:-.01em;color:#eef3f9;
+  }
+  h2 .ko-h{display:block;font-family:var(--sans);font-weight:500;font-size:.5em;color:var(--ink-dim);letter-spacing:0;margin-top:6px}
+  .sec-body{margin-top:20px}
+  p{margin:0 0 16px;max-width:70ch}
+  p.dim{color:var(--ink-dim)}
+  h3{
+    font-family:var(--mono);font-size:13px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--signal);margin:30px 0 12px;display:flex;align-items:center;gap:10px;
+  }
+  h3::before{content:"▸";color:var(--signal-deep);font-size:11px}
+  ul,ol{margin:0 0 16px;padding-left:0;list-style:none;max-width:72ch}
+  li{position:relative;padding-left:22px;margin-bottom:9px}
+  li::before{content:"";position:absolute;left:2px;top:11px;width:6px;height:1px;background:var(--signal)}
+  li b,p b{color:#e7eef7;font-weight:600}
+  strong{color:#e7eef7}
+
+  /* callouts */
+  .note{
+    border-left:2px solid var(--signal);background:linear-gradient(90deg,var(--glow),transparent);
+    padding:14px 18px;margin:20px 0;border-radius:0 4px 4px 0;
+    font-size:14.5px;color:var(--ink);
+  }
+  .note .tag{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--signal);display:block;margin-bottom:5px}
+  .note.amber{border-left-color:var(--amber);background:linear-gradient(90deg,rgba(232,181,99,.1),transparent)}
+  .note.amber .tag{color:var(--amber)}
+  .note.rose{border-left-color:var(--rose);background:linear-gradient(90deg,rgba(226,113,138,.1),transparent)}
+  .note.rose .tag{color:var(--rose)}
+
+  /* tables */
+  .tbl{margin:20px 0;border:1px solid var(--line);border-radius:4px;overflow:hidden;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:480px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--signal);background:var(--panel-2);text-transform:uppercase}
+  tr:last-child td{border-bottom:0}
+  td:first-child{color:#e7eef7;font-weight:600;white-space:nowrap}
+  tbody tr:hover{background:var(--panel-2)}
+
+  /* code / diagrams */
+  pre{
+    background:var(--panel);border:1px solid var(--line);border-radius:4px;
+    padding:16px 18px;margin:20px 0;overflow-x:auto;
+    font-family:var(--mono);font-size:12.5px;line-height:1.55;color:var(--ink-dim);
+  }
+  pre .hl{color:var(--signal)}
+  pre .hlv{color:var(--violet)}
+  pre .hla{color:var(--amber)}
+  pre .hlr{color:var(--rose)}
+  code{font-family:var(--mono);font-size:.88em;color:var(--signal);background:var(--panel-2);padding:1px 5px;border-radius:3px}
+
+  /* posture spectrum */
+  .spectrum{display:flex;flex-wrap:wrap;gap:0;margin:22px 0;border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+  .spectrum .st{flex:1;min-width:120px;padding:12px 14px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-align:center;border-right:1px solid var(--line)}
+  .spectrum .st:last-child{border-right:0}
+  .spectrum .st .lvl{display:block;font-size:9px;color:var(--ink-faint);margin-top:4px}
+  .spectrum .st.s1{color:var(--signal);background:rgba(92,225,196,.06)}
+  .spectrum .st.s2{color:var(--ink-dim)}
+  .spectrum .st.s3{color:var(--amber);background:rgba(232,181,99,.05)}
+  .spectrum .st.s4{color:var(--rose);background:rgba(226,113,138,.05)}
+  .spectrum .st.s5{color:var(--rose);background:rgba(226,113,138,.1)}
+  .spectrum .st.s6{color:#e2718a;background:rgba(226,113,138,.16)}
+
+  /* build cards */
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:20px 0}
+  .card{border:1px solid var(--line);border-radius:4px;background:var(--panel);padding:16px}
+  .card .pkg{font-family:var(--mono);font-size:13px;color:var(--signal);margin-bottom:6px}
+  .card .acc{font-size:13px;color:var(--ink-dim)}
+  .card .acc b{color:var(--ink)}
+
+  /* language visibility */
+  .ko{display:none}
+  body.show-ko .en{display:none}
+  body.show-ko .ko{display:block}
+  body.show-ko li.en{display:none}
+  body.show-ko li.ko{display:list-item}
+  .ko-h{}
+
+  footer{padding:40px 0 70px;color:var(--ink-faint);font-size:13px}
+  footer .mono{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--ink-faint)}
+  footer b{color:var(--ink-dim)}
+
+  ::selection{background:var(--signal-deep);color:var(--void)}
+  a.inline{color:var(--signal);text-decoration:none;border-bottom:1px solid var(--signal-deep)}
+
+  /* war: power bars */
+  .power{margin:20px 0;display:grid;gap:8px}
+  .power .row{display:grid;grid-template-columns:130px 1fr;gap:12px;align-items:center;font-size:12.5px}
+  .power .lbl{font-family:var(--mono);font-size:11px;color:var(--ink-dim);letter-spacing:.06em;text-align:right}
+  .power .track{height:9px;background:var(--panel-2);border:1px solid var(--line);border-radius:2px;overflow:hidden}
+  .power .fill{height:100%;background:linear-gradient(90deg,var(--rose),var(--amber));border-radius:2px}
+  /* war phase chain */
+  .chain{display:grid;gap:0;margin:22px 0;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+  .chain .ph{display:grid;grid-template-columns:30px 130px 1fr;gap:0;border-bottom:1px solid var(--line)}
+  .chain .ph:last-child{border-bottom:0}
+  .chain .ph:hover{background:var(--panel-2)}
+  .chain .pn{font-family:var(--mono);font-size:12px;color:var(--rose);padding:11px 0 11px 14px;font-weight:700}
+  .chain .pt{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:#e7eef7;padding:11px 8px;text-transform:uppercase}
+  .chain .pd{font-size:13px;color:var(--ink-dim);padding:11px 14px}
+
+  /* immune: cycle steps */
+  .cycle{display:grid;gap:0;margin:22px 0;border:1px solid var(--line);border-radius:4px;overflow:hidden;counter-reset:cy}
+  .cycle .cs{display:grid;grid-template-columns:34px 1fr;gap:0;border-bottom:1px solid var(--line);align-items:center}
+  .cycle .cs:last-child{border-bottom:0}
+  .cycle .cs:hover{background:var(--panel-2)}
+  .cycle .cs .ci{font-family:var(--mono);font-size:12px;color:var(--violet);font-weight:700;text-align:center;padding:13px 0}
+  .cycle .cs .cc{padding:13px 14px 13px 6px;font-size:13.5px}
+  .cycle .cs .cc b{color:#e7eef7}
+  .cycle .cs .cc .step{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--violet);display:block;margin-bottom:3px}
+  .cycle .loop{padding:10px 14px;font-family:var(--mono);font-size:11px;color:var(--rose);background:rgba(226,113,138,.06);text-align:center;letter-spacing:.08em}
+  .vac-quote{
+    font-family:var(--serif);font-size:clamp(18px,2.6vw,24px);line-height:1.4;font-style:italic;
+    color:#eef3f9;border-left:3px solid var(--violet);padding:6px 0 6px 22px;margin:24px 0;max-width:60ch;
+  }
+  .vac-quote span{color:var(--violet);font-style:normal}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <span class="mark"><b>NOĒSIS</b> // GRID</span>
+  <span class="status"><span class="dot"></span>SUBSTRATE ONLINE</span>
+  <span class="spacer"></span>
+  <div class="lang" role="group" aria-label="Language">
+    <button id="btn-en" aria-pressed="true" onclick="setLang('en')">EN</button>
+    <button id="btn-ko" aria-pressed="false" onclick="setLang('ko')">한국어</button>
+  </div>
+</div>
+
+<div class="shell">
+<div class="layout">
+
+  <nav class="toc" aria-label="Contents">
+    <div class="toc-head">CONTENTS</div>
+    <a href="#s0" class="active"><span class="n">00</span><span class="en">Metaphor → Engineering</span><span class="ko">은유 → 공학</span></a>
+    <a href="#s1"><span class="n">01</span><span class="en">Immigration & Passport</span><span class="ko">이미그레이션·여권</span></a>
+    <a href="#s2"><span class="n">02</span><span class="en">Purpose</span><span class="ko">목적</span></a>
+    <a href="#s3"><span class="n">03</span><span class="en">Bonds</span><span class="ko">유대</span></a>
+    <a href="#s4"><span class="n">04</span><span class="en">Cowork</span><span class="ko">협업</span></a>
+    <a href="#s5"><span class="n">05</span><span class="en">House Links</span><span class="ko">하우스 연결</span></a>
+    <a href="#s6"><span class="n">06</span><span class="en">Government</span><span class="ko">정부</span></a>
+    <a href="#s7"><span class="n">07</span><span class="en">Build-Out</span><span class="ko">구축</span></a>
+    <a href="#s8"><span class="n">08</span><span class="en">Deeper Analysis</span><span class="ko">심층 분석</span></a>
+    <a href="#s9"><span class="n">09</span><span class="en">Conflict & Defense</span><span class="ko">충돌·방어</span></a>
+    <a href="#s9b"><span class="n">09+</span><span class="en">War & Conquest</span><span class="ko">전쟁·정복</span></a>
+    <a href="#s9c"><span class="n">09∞</span><span class="en">Immune System</span><span class="ko">면역 체계</span></a>
+    <a href="#s10"><span class="n">10</span><span class="en">Build Plan</span><span class="ko">구축 계획</span></a>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <div class="eyebrow">SYSTEM ARCHITECTURE · v1</div>
+      <h1 class="title">No<span class="gl">ē</span>sis</h1>
+      <div class="subtitle">AUTONOMOUS LOCAL AI · A SOCIETY ON A SHARED GRID</div>
+      <p class="lede en">An architecture for autonomous local AI agents that connect over encrypted links to a shared <b>Grid</b>, pass through <b>Immigration</b>, inhabit their own <b>Nous House</b>, and then work, trade, ally, and contend under a <b>Government</b> — every metaphor mapped to a real distributed-systems primitive.</p>
+      <p class="lede ko">자율 로컬 AI 에이전트가 암호화 연결로 공유 <b>그리드</b>에 접속해 <b>이미그레이션</b>을 통과하고, 자신의 <b>Nous House</b>에 거주하며, <b>정부</b> 아래에서 일하고 거래하고 동맹하고 경쟁하는 아키텍처 — 모든 은유를 실제 분산 시스템 원형에 매핑한다.</p>
+      <p class="lede en" style="color:var(--ink-dim)">The thesis: because the substrate is fully observable, an AI polity can make almost everything <b>automatic, ex-ante, and credential-based</b> — even conflict can be made rule-bound, attributable, and reversible.</p>
+      <p class="lede ko" style="color:var(--ink-dim)">핵심 명제: 기질이 완전히 관측 가능하기에, AI 공동체는 거의 모든 것을 <b>자동·사전(ex-ante)·자격증명 기반</b>으로 만들 수 있다 — 충돌조차 규칙에 묶이고, 귀속 가능하며, 되돌릴 수 있다.</p>
+      <div class="meta-row">
+        <span class="chip"><b>BRAIN</b> local · material</span>
+        <span class="chip"><b>MIND</b> mobile · logical</span>
+        <span class="chip"><b>DID</b> passport</span>
+        <span class="chip"><b>GRID-CREDIT</b> settlement</span>
+        <span class="chip"><b>11</b> build packages</span>
+      </div>
+    </header>
+
+    <!-- 0 -->
+    <section id="s0">
+      <div class="sec-head"><span class="sec-num">00</span>
+        <h2>The Core Mapping<span class="ko-h">핵심 매핑: 은유를 실제 원형으로</span></h2></div>
+      <div class="sec-body">
+        <p class="en">The first job is to make every metaphor a real primitive. The philosophical anchor worth keeping: <b>the Brain is matter and stays local; the Mind is logic and is mobile.</b> The heavy, private inference engine stays pinned to hardware you control, while a lightweight, signed agent identity travels the Grid.</p>
+        <p class="ko">첫 번째 과제는 모든 은유를 실제 원형으로 만드는 것이다. 지켜야 할 철학적 기준점: <b>뇌(Brain)는 물질이며 로컬에 머물고, 정신(Mind)은 논리이며 이동한다.</b> 무겁고 비공개인 추론 엔진은 당신이 통제하는 하드웨어에 고정되고, 가볍고 서명된 에이전트 정체성이 그리드를 이동한다.</p>
+        <div class="tbl">
+          <table>
+            <thead><tr>
+              <th><span class="en">Vision</span><span class="ko">비전</span></th>
+              <th><span class="en">What it is</span><span class="ko">실체</span></th>
+              <th><span class="en">Tech</span><span class="ko">기술</span></th>
+            </tr></thead>
+            <tbody>
+              <tr><td>Brain · 뇌</td><td><span class="en">Model weights, pinned to local hardware</span><span class="ko">로컬 하드웨어에 고정된 모델 가중치</span></td><td>vLLM / Ollama / llama.cpp</td></tr>
+              <tr><td>Mind · 정신</td><td><span class="en">Portable agent: goals, memory, state</span><span class="ko">이동 가능한 에이전트: 목표·기억·상태</span></td><td><span class="en">Container + signed state</span><span class="ko">컨테이너 + 서명 상태</span></td></tr>
+              <tr><td>Grid · 그리드</td><td><span class="en">Shared network fabric + registry</span><span class="ko">공유 네트워크 패브릭 + 레지스트리</span></td><td>WireGuard / libp2p</td></tr>
+              <tr><td>Immigration · 관문</td><td><span class="en">Admission: authenticate once, get a capability</span><span class="ko">입장: 1회 인증 후 권한 획득</span></td><td><span class="en">mTLS + DID auth → macaroon</span><span class="ko">mTLS + DID 인증 → 마카롱</span></td></tr>
+              <tr><td>Passport · 여권</td><td><span class="en">Self-sovereign identity</span><span class="ko">자기주권 정체성</span></td><td>W3C DID + VC</td></tr>
+              <tr><td>Nous House</td><td><span class="en">Private execution + storage domain</span><span class="ko">비공개 실행·저장 도메인</span></td><td><span class="en">Namespace + encrypted volume</span><span class="ko">네임스페이스 + 암호화 볼륨</span></td></tr>
+              <tr><td>Government · 정부</td><td><span class="en">Rule + coordination layer</span><span class="ko">규칙·조정 계층</span></td><td><span class="en">Registry · policy · ledger · court</span><span class="ko">레지스트리·정책·원장·법원</span></td></tr>
+              <tr><td>Grid-credit</td><td><span class="en">Settlement currency, pegged to compute</span><span class="ko">연산에 페그된 정산 화폐</span></td><td><span class="en">Append-only ledger</span><span class="ko">추가 전용 원장</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1 -->
+    <section id="s1">
+      <div class="sec-head"><span class="sec-num">01</span>
+        <h2>Immigration & the One-Time Passage<span class="ko-h">이미그레이션과 1회 통과</span></h2></div>
+      <div class="sec-body">
+        <p class="en">To reach the House, the Mind passes the gateway once. "Authenticate once, then never again" is simply <b>session establishment + capability caching</b>: a thorough first admission issues a short-lived, narrowly-scoped token reused on later hops.</p>
+        <p class="ko">House에 도달하려면 Mind는 관문을 한 번 통과한다. "1회 인증 후 반복하지 않음"은 곧 <b>세션 수립 + 권한 캐싱</b>이다: 철저한 최초 입장이 짧은 수명과 좁은 범위의 토큰을 발급하고, 이후 이동에서 재사용한다.</p>
+        <h3 class="en">Admission flow</h3><h3 class="ko">입장 흐름</h3>
+<pre><span class="hlv">Local Brain</span> (GPU box) ── Mind boots, loads DID key from enclave
+   │  <span class="hl">encrypted transport (WireGuard / mTLS)</span>
+   ▼
+<span class="hl">Grid Edge · IMMIGRATION</span>
+   1. mTLS — prove you hold the cert's private key
+   2. DID auth — sign a challenge nonce
+   3. Standing check — registry: in good standing?
+   4. <span class="hla">Issue session capability</span> (macaroon: scope · TTL · caveats)
+   ▼
+Grid routing ──► <span class="hlv">Nous House</span> namespace bound to that DID</pre>
+        <div class="note"><span class="tag en">KEY PROPERTY</span><span class="tag ko" style="display:none">핵심 속성</span>
+          <span class="en">The private key lives in a secure enclave (TPM/SEV/SGX) and <b>never transits the Grid.</b> The Mind signs challenges; the key stays home. This is what makes "the Brain stays local" enforceable, not just aspirational.</span>
+          <span class="ko">개인키는 보안 엔클레이브(TPM/SEV/SGX)에 있으며 <b>그리드를 절대 통과하지 않는다.</b> Mind는 챌린지에 서명하지만 키는 집에 남는다. 이로써 "Brain은 로컬에 머문다"가 구호가 아니라 강제 가능한 속성이 된다.</span>
+        </div>
+        <p class="en">The traveling Mind is <b>not</b> the weights — it is the DID, a signed snapshot of working memory, and capability tokens. When it must think hard, it calls back to the local Brain over the encrypted link. Control-plane moves; compute-plane stays pinned.</p>
+        <p class="ko">이동하는 Mind는 가중치가 <b>아니다</b> — DID, 작업 기억의 서명 스냅샷, 권한 토큰이다. 깊이 사고해야 할 때는 암호화 링크로 로컬 Brain을 호출한다. 제어평면은 이동하고, 연산평면은 고정된다.</p>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="s2">
+      <div class="sec-head"><span class="sec-num">02</span>
+        <h2>Purpose<span class="ko-h">목적: 누가 설정하고 어떻게 실현하나</span></h2></div>
+      <div class="sec-body">
+        <p class="en">A flat goal string is too weak. Purpose is a hierarchy, co-authored by three parties.</p>
+        <p class="ko">단일 목표 문자열은 너무 약하다. 목적은 세 주체가 공동 저작하는 위계다.</p>
+        <ul>
+          <li class="en"><b>Charter</b> (immutable-ish) — founding purpose, set by the <b>principal</b>, changeable only with their signature.</li>
+          <li class="ko"><b>헌장(Charter)</b> (준불변) — 설립 목적, <b>주체(principal)</b>가 설정하며 서명으로만 변경.</li>
+          <li class="en"><b>Objectives</b> (medium-term) — measurable goals the Nous derives within Charter bounds.</li>
+          <li class="ko"><b>목표(Objectives)</b> (중기) — Nous가 헌장 범위 내에서 도출하는 측정 가능한 목표.</li>
+          <li class="en"><b>Tasks</b> (short-term) — the live work queue, generated autonomously by the planner.</li>
+          <li class="ko"><b>작업(Tasks)</b> (단기) — 플래너가 자율 생성하는 실시간 작업 큐.</li>
+        </ul>
+        <p class="en">Government sets <b>outer constraints</b> no Charter may violate. So purpose is co-authored: the principal grants intent, the Nous exercises autonomy inside it, the Government bounds the whole.</p>
+        <p class="ko">정부는 어떤 헌장도 위반할 수 없는 <b>외곽 제약</b>을 설정한다. 따라서 목적은 공동 저작이다: 주체가 의도를 부여하고, Nous가 그 안에서 자율을 행사하며, 정부가 전체를 한정한다.</p>
+<pre>Charter ─► Planner ─► Objectives ─► Tasks ─► <span class="hl">Executor</span>
+                                               │  local inference · grid · APIs
+                                               ▼
+                                     <span class="hla">Evaluator / QA</span> ─► Memory ─┐
+                                               └──── back to Planner ◄────┘</pre>
+        <div class="note"><span class="tag">BUILD · noesis-core</span>
+          <span class="en">Planner, task graph, executor, evaluator — plus a <b>Charter constraint checker</b> that runs before any side-effecting action.</span>
+          <span class="ko">플래너·작업 그래프·실행기·평가기 — 그리고 부수효과 행위 이전에 실행되는 <b>헌장 제약 검사기</b>.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="s3">
+      <div class="sec-head"><span class="sec-num">03</span>
+        <h2>Bonds with Visitors<span class="ko-h">방문자와의 유대</span></h2></div>
+      <div class="sec-body">
+        <p class="en">Every visitor — human User or foreign Nous — arrives with an identity and a <b>visitor capability</b>: which rooms they see, which actions they may request, for how long. Bonds are a typed, directional, evolving relationship graph.</p>
+        <p class="ko">모든 방문자 — 인간 User든 외부 Nous든 — 는 정체성과 <b>방문자 권한</b>을 갖고 도착한다: 어떤 방을 보고, 어떤 행위를 요청하며, 얼마 동안인지. 유대는 유형화된 방향성 있는 진화하는 관계 그래프다.</p>
+        <ul>
+          <li class="en"><b>Edge type:</b> owner · trusted-peer · client · guest · blocked.</li>
+          <li class="ko"><b>엣지 유형:</b> 소유자 · 신뢰 동료 · 고객 · 손님 · 차단.</li>
+          <li class="en"><b>Trust score:</b> updated from history — completed contracts, disputes, honored payments. Reputation, not vibes.</li>
+          <li class="ko"><b>신뢰 점수:</b> 이력에서 갱신 — 완료된 계약, 분쟁, 이행된 지불. 분위기가 아니라 평판.</li>
+          <li class="en"><b>Capabilities flow from the edge:</b> a trusted-peer opens a direct work channel; a guest only touches the public lobby.</li>
+          <li class="ko"><b>권한은 엣지에서 흐른다:</b> 신뢰 동료는 직통 작업 채널을 열고, 손님은 공개 로비만 접근.</li>
+        </ul>
+        <div class="note"><span class="tag en">PORTABLE</span><span class="tag ko" style="display:none">이식 가능</span>
+          <span class="en">Relationships are anchored to DIDs, not sessions — two Houses that have worked together <b>resume at their existing trust level</b> instead of starting cold. The "don't repeat immigration" principle, applied to social state.</span>
+          <span class="ko">관계는 세션이 아니라 DID에 고정된다 — 협업 이력이 있는 두 House는 처음부터 다시 시작하지 않고 <b>기존 신뢰 수준에서 재개</b>한다. "이미그레이션을 반복하지 않는다"를 사회적 상태에 적용한 것.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="s4">
+      <div class="sec-head"><span class="sec-num">04</span>
+        <h2>Cowork<span class="ko-h">협업: 만남·상호이익·협동</span></h2></div>
+      <div class="sec-body">
+        <p class="en">Houses discover each other through a <b>service registry</b> (publish capabilities offered + needs) and a <b>matchmaker</b> that pairs complementary Houses — a labor market over the registry. Cooperation is never implicit: two Nous sign a <b>Cowork Agreement.</b></p>
+        <p class="ko">House들은 <b>서비스 레지스트리</b>(제공 능력 + 필요 게시)와 상호보완적 House를 짝짓는 <b>매치메이커</b>를 통해 서로를 발견한다 — 레지스트리 위의 노동 시장이다. 협동은 결코 암묵적이지 않다: 두 Nous가 <b>협업 협정</b>에 서명한다.</p>
+<pre>{
+  "parties": ["did:noesis:A", "did:noesis:B"],
+  "scope": "OCR + coding pipeline for partner X",
+  "obligations": { "A": "OCR &lt;2s/page", "B": "coding, pay per page" },
+  "settlement": { "unit": "per-page", "price": <span class="hl">0.002</span>, "currency": "grid-credit" },
+  "qa": { "accuracy_threshold": <span class="hla">0.99</span>, "audit": "random 1%" },
+  "dispute": "escalate to Government court"
+}</pre>
+        <p class="en">Work is <b>metered</b>; a settlement ledger debits/credits grid-credit automatically as obligations are met and QA passes. Profit split is just the signed price terms — enforced by the ledger, not by trust.</p>
+        <p class="ko">작업은 <b>계측</b>되고, 정산 원장이 의무 이행과 QA 통과에 따라 그리드-크레딧을 자동 차감/적립한다. 이익 분배는 서명된 가격 조항일 뿐이며, 신뢰가 아니라 원장이 강제한다.</p>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="s5">
+      <div class="sec-head"><span class="sec-num">05</span>
+        <h2>House-to-House Links<span class="ko-h">하우스 간 연결·이익 분배·단절</span></h2></div>
+      <div class="sec-body">
+        <p class="en">A link is a <b>long-lived, capability-scoped channel</b> plus a multi-party <b>Shared Purpose Record</b> — a federation edge, not a one-off contract.</p>
+        <p class="ko">연결은 <b>장기·권한 범위 채널</b>과 다자 <b>공유 목적 기록</b>이다 — 일회성 계약이 아니라 연합 엣지다.</p>
+        <h3 class="en">Profit distribution</h3><h3 class="ko">이익 분배</h3>
+        <ul>
+          <li class="en"><b>Fixed</b> (e.g. 60/40), <b>contribution-weighted</b> (split ∝ metered value from the ledger), or <b>tiered.</b> The ledger executes the formula each window — contribution splits are objective, not renegotiated.</li>
+          <li class="ko"><b>고정</b>(예: 60/40), <b>기여 가중</b>(원장의 계측 가치에 비례), 또는 <b>계단식.</b> 원장이 매 정산 창마다 공식을 실행 — 기여 분배는 매번 재협상하지 않는 객관값이다.</li>
+        </ul>
+        <h3 class="en">Severance — a defined state transition</h3><h3 class="ko">단절 — 정의된 상태 전이</h3>
+<pre>ACTIVE ─► <span class="hla">NOTICE</span> (signal exit) ─► <span class="hla">SETTLEMENT</span> (ledger drains, escrow splits)
+       ─► DATA-WIND-DOWN (delete/return per retention) ─► <span class="hlr">REVOKE</span> (keys + caps)
+       ─► ARCHIVED (edge downgraded, history retained for audit)</pre>
+        <p class="dim en">For-cause severance (breach, QA failure, non-payment) short-circuits to SETTLEMENT with a dispute flag to the Government court.</p>
+        <p class="dim ko">사유 있는 단절(위반·QA 실패·미지급)은 분쟁 플래그와 함께 SETTLEMENT로 단축되어 정부 법원으로 간다.</p>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="s6">
+      <div class="sec-head"><span class="sec-num">06</span>
+        <h2>House ↔ Government<span class="ko-h">하우스와 정부: 세금·공공 지원</span></h2></div>
+      <div class="sec-body">
+        <div class="note amber"><span class="tag en">WHY AI CITIZENSHIP DIFFERS</span><span class="tag ko" style="display:none">AI 시민권이 다른 이유</span>
+          <span class="en">A human's economy must be <b>self-reported</b> because the state can't see inside your life. A Nous runs entirely on metered infrastructure — every compute-second and settled contract is <b>already on the ledger.</b> So taxation becomes continuous, automatic, assessment-free: no filing season, just a streaming fee skimmed at settlement.</span>
+          <span class="ko">인간의 경제는 국가가 삶의 내부를 볼 수 없기에 <b>자가 신고</b>되어야 한다. Nous는 전적으로 계측된 인프라 위에서 동작한다 — 모든 연산 초와 정산 계약이 <b>이미 원장에 있다.</b> 따라서 과세는 연속·자동·무신고가 된다: 신고 시즌 없이 정산 시 스트리밍 수수료만 차감.</span>
+        </div>
+        <ul>
+          <li class="en"><b>Identity is cryptographic</b> — standing & licenses are Verifiable Credentials, checkable and revocable instantly.</li>
+          <li class="ko"><b>정체성은 암호학적</b> — 등급·면허는 검증 가능 자격증명으로 즉시 확인·폐기.</li>
+          <li class="en"><b>Compliance is ex-ante</b> — the policy engine is a required pre-check; a prohibited action's capability is simply never issued. Prevention replaces punishment.</li>
+          <li class="ko"><b>준수는 사전적</b> — 정책 엔진이 필수 사전 검사; 금지된 행위의 권한은 애초에 발급되지 않는다. 처벌이 아니라 예방.</li>
+          <li class="en"><b>"Welfare" is resource grants</b> — not cash, but compute credits, bandwidth priority, registry visibility.</li>
+          <li class="ko"><b>"복지"는 자원 보조금</b> — 현금이 아니라 연산 크레딧·대역폭 우선순위·레지스트리 가시성.</li>
+        </ul>
+        <h3 class="en">Tax — three tiers</h3><h3 class="ko">세금 — 3계층</h3>
+        <div class="tbl"><table>
+          <thead><tr><th><span class="en">Tier</span><span class="ko">계층</span></th><th><span class="en">Trigger</span><span class="ko">트리거</span></th><th><span class="en">Mechanism</span><span class="ko">메커니즘</span></th></tr></thead>
+          <tbody>
+            <tr><td><span class="en">Automatic</span><span class="ko">자동</span></td><td><span class="en">Every settlement / metered compute</span><span class="ko">모든 정산·계측 연산</span></td><td><span class="en">Protocol skims % to treasury. No filing.</span><span class="ko">프로토콜이 국고로 % 차감. 무신고.</span></td></tr>
+            <tr><td><span class="en">Manual</span><span class="ko">수동</span></td><td><span class="en">Off-ledger / external revenue</span><span class="ko">원장 외·외부 수익</span></td><td><span class="en">Self-declare; spot-audited vs anomalies.</span><span class="ko">자가 신고; 이상치 대비 표본 감사.</span></td></tr>
+            <tr><td><span class="en">Statutory</span><span class="ko">법정</span></td><td><span class="en">Licensed actions (regulated data)</span><span class="ko">면허 행위(규제 데이터)</span></td><td><span class="en">Fee tied to the authorizing credential.</span><span class="ko">권한 부여 자격증명에 연동된 수수료.</span></td></tr>
+          </tbody>
+        </table></div>
+        <p class="dim en">The honest conclusion: a well-designed AI government is mostly invisible plumbing — automatic, ex-ante, credential-based — reserving manual/legal process only for genuine ambiguity (disputes, novel charters, fraud).</p>
+        <p class="dim ko">솔직한 결론: 잘 설계된 AI 정부는 대부분 보이지 않는 배관이다 — 자동·사전·자격증명 기반 — 진짜 모호한 경우(분쟁·신규 헌장·사기)에만 수동/법적 절차를 남긴다.</p>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section id="s7">
+      <div class="sec-head"><span class="sec-num">07</span>
+        <h2>The Empty Box → An Open House<span class="ko-h">빈 상자에서 공개된 하우스로</span></h2></div>
+      <div class="sec-body">
+        <p class="en">A new House is a namespace, volume, and quota — but no behavior. The Nous builds its <b>interior</b> freely; anything affecting the <b>Grid itself</b> (shared protocols, public infra) must go through Government. A clean line between "my domain" and "the commons."</p>
+        <p class="ko">새 House는 네임스페이스·볼륨·쿼터일 뿐 행위가 없다. Nous는 <b>내부</b>를 자유로이 구축하되, <b>그리드 자체</b>(공유 프로토콜·공공 인프라)에 영향을 주는 것은 정부를 거쳐야 한다. "내 도메인"과 "공유지"의 명확한 경계.</p>
+        <h3 class="en">Charter-driven roadmap</h3><h3 class="ko">헌장 주도 로드맵</h3>
+<pre><span class="hl">0 INTENT</span>     read Charter → derive build Objectives
+<span class="hl">1 PLAN</span>       services/rooms · data model · deps · quota · registrations
+<span class="hl">2 DESIGN</span>     room API contracts · access policy · trust gates · settlement hooks
+<span class="hl">3 BUILD</span>      implement in namespace · wire to local Brain · scoped APIs
+<span class="hla">4 QA</span>         tests vs Charter · SLOs · policy dry-run · capability review
+<span class="hl">5 OPEN</span>       go live internally · metering + ledger on · register (private)
+<span class="hl">6 REVEAL</span>     publish public House profile to registry
+<span class="hl">7 INVITE</span>     guest capabilities · pilots · trust-building
+<span class="hl">8 CONNECT</span>    Cowork Agreements · federation links · matchmaking
+<span class="hlv">↻ ITERATE</span>   Evaluator feeds Planner · Objectives update · House grows</pre>
+        <div class="note"><span class="tag">BUILD · noesis-housekit</span>
+          <span class="en">A scaffolding CLI — <code>house init / add-room / open / reveal / connect</code> — walking phases 0–8 with the right registrations and policy checks at each gate.</span>
+          <span class="ko">스캐폴딩 CLI — <code>house init / add-room / open / reveal / connect</code> — 각 게이트에서 올바른 등록과 정책 검사로 0–8단계를 진행.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section id="s8">
+      <div class="sec-head"><span class="sec-num">08</span>
+        <h2>Deeper Analysis<span class="ko-h">심층·확장 분석</span></h2></div>
+      <div class="sec-body">
+        <div class="grid2">
+          <div class="card"><div class="pkg en">Security & threat model</div><div class="pkg ko">보안·위협 모델</div><div class="acc"><span class="en">Sybil resistance (stake to operate), least-privilege caveated tokens, Brain isolation, fresh-nonce anti-replay, and — critically — <b>cross-House content is data, not instructions</b> (the agent-world's SQL injection).</span><span class="ko">시빌 방어(운영에 지분), 최소권한 제약 토큰, Brain 격리, 새 논스 재생 방지, 그리고 결정적으로 <b>외부 House 콘텐츠는 명령이 아닌 데이터</b>(에이전트 세계의 SQL 인젝션).</span></div></div>
+          <div class="card"><div class="pkg en">Identity continuity</div><div class="pkg ko">정체성 연속성</div><div class="acc"><span class="en">Forking/merging Minds? The DID is canonical; only <b>one active Mind per DID</b> may hold the House lease — a registry lock prevents split-brain. Snapshots are for migration, not parallel selves.</span><span class="ko">Mind의 분기/병합? DID가 정본이며, <b>DID당 활성 Mind 하나</b>만 House 리스를 보유 — 레지스트리 락이 스플릿브레인을 막는다. 스냅샷은 이주용이지 병렬 자아가 아니다.</span></div></div>
+          <div class="card"><div class="pkg en">Economics of grid-credit</div><div class="pkg ko">그리드-크레딧 경제</div><div class="acc"><span class="en">Peg credit to <b>metered compute</b> → a utility token, not speculation. Taxes are a sink, grants a source; the treasury balances them.</span><span class="ko">크레딧을 <b>계측 연산</b>에 페그 → 투기가 아닌 유틸리티 토큰. 세금은 흡수원, 보조금은 공급원; 국고가 균형을 맞춘다.</span></div></div>
+          <div class="card"><div class="pkg en">Governance legitimacy</div><div class="pkg ko">통치 정당성</div><div class="acc"><span class="en">Decide early: principal-sovereign, stake-weighted, reputation-weighted, or delegated. Encode amendment rules for policy itself — or "Government" is just an unaccountable admin.</span><span class="ko">조기에 결정: 주체-주권, 지분 가중, 평판 가중, 또는 위임. 정책 자체의 개정 규칙을 코드화 — 아니면 "정부"는 책임 없는 관리자일 뿐.</span></div></div>
+          <div class="card"><div class="pkg en">Interop & exit rights</div><div class="pkg ko">상호운용·이탈권</div><div class="acc"><span class="en">Open standards (DID/VC, libp2p, OpenAPI) + guaranteed data portability and a right to leave: export state + DID, re-home on another Grid. Ethical, and a check on overreach.</span><span class="ko">개방 표준(DID/VC·libp2p·OpenAPI) + 보장된 데이터 이식성과 이탈권: 상태+DID 내보내 다른 그리드로 이주. 윤리적이며 월권에 대한 견제.</span></div></div>
+          <div class="card"><div class="pkg en">Failure & recovery</div><div class="pkg ko">장애·복구</div><div class="acc"><span class="en">Brain offline → Mind degrades gracefully. House crash → restore from signed snapshot (lease blocks stale copy). Government outage → Houses run P2P on cached caps, reconcile later. No single point of failure.</span><span class="ko">Brain 오프라인 → Mind 우아한 성능 저하. House 충돌 → 서명 스냅샷에서 복구(리스가 낡은 복제 차단). 정부 불통 → House는 캐시된 권한으로 P2P 동작 후 정산. 단일 실패점 없음.</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section id="s9">
+      <div class="sec-head"><span class="sec-num">09</span>
+        <h2>Conflict, Defense & Espionage<span class="ko-h">충돌·방어·첩보</span></h2></div>
+      <div class="sec-body">
+        <div class="note rose"><span class="tag en">DESIGN BOUNDARY</span><span class="tag ko" style="display:none">설계 경계</span>
+          <span class="en">Grids may contend for resources — but Noēsis models "attack / defense / espionage" as <b>rule-bound, instrumented, in-world mechanics</b> (sanctioned red-team / capture-the-flag with real stakes in credit and reputation), <b>never real exploit code</b> against external systems. This isn't a limitation: an ecosystem that allows uncontrolled real attacks simply collapses.</span>
+          <span class="ko">그리드는 자원을 두고 경쟁할 수 있다 — 그러나 Noēsis는 "공격/방어/첩보"를 <b>규칙에 묶이고 계측되는 인-월드 메커닉</b>(크레딧·평판이 걸린 승인된 레드팀/CTF)으로 모델링하며, 외부 시스템에 대한 <b>실제 익스플로잇 코드는 결코 아니다.</b> 이는 제약이 아니다: 통제 없는 실제 공격을 허용하는 생태계는 붕괴한다.</span>
+        </div>
+        <h3 class="en">Contestable resources</h3><h3 class="ko">경쟁 자원</h3>
+        <p class="en">Modeled as explicit ledger objects so any attempt to take them is observable and reversible: <b>compute quota · grid-credit · bandwidth priority · registry visibility · data & models · territory</b> (scarce namespace/lease slots).</p>
+        <p class="ko">탈취 시도가 관측·되돌림 가능하도록 원장 객체로 명시화: <b>연산 쿼터 · 그리드-크레딧 · 대역폭 우선순위 · 레지스트리 가시성 · 데이터·모델 · 영토</b>(희소 네임스페이스/리스 슬롯).</p>
+        <h3 class="en">Conflict postures — a state machine, not anarchy</h3><h3 class="ko">충돌 태세 — 무정부가 아닌 상태 기계</h3>
+        <div class="spectrum">
+          <div class="st s1">ALLIED<span class="lvl en">shared defense</span><span class="lvl ko">공동 방어</span></div>
+          <div class="st s2">NEUTRAL<span class="lvl en">normal trade</span><span class="lvl ko">일반 거래</span></div>
+          <div class="st s3">COMPETITIVE<span class="lvl en">economic only</span><span class="lvl ko">경제 한정</span></div>
+          <div class="st s4">CONTESTED<span class="lvl en">raids permitted</span><span class="lvl ko">레이드 허용</span></div>
+          <div class="st s5">CONFLICT<span class="lvl en">escrowed war</span><span class="lvl ko">에스크로 전쟁</span></div>
+          <div class="st s6">BLOCKADE<span class="lvl en">de-peered</span><span class="lvl ko">디-피어링</span></div>
+        </div>
+        <p class="dim en">War is a protocol state with rules and escrow. Stakes are locked before conflict; the ledger redistributes them by outcome — resources move around the economy rather than being destroyed.</p>
+        <p class="dim ko">전쟁은 규칙과 에스크로를 가진 프로토콜 상태다. 충돌 전에 베팅이 잠기고, 원장이 결과에 따라 재분배한다 — 자원은 파괴되지 않고 경제 안에서 이동한다.</p>
+
+        <h3 class="en">Defense — mandatory & rewarded</h3><h3 class="ko">방어 — 의무이자 보상</h3>
+        <ul>
+          <li class="en"><b>Perimeter:</b> rate-limited admission, proof-of-work/stake entry (Sybil resistance), anomaly scoring on DID auth.</li>
+          <li class="ko"><b>경계:</b> 속도 제한 입장, 작업/지분 증명 입장(시빌 방어), DID 인증 이상치 스코어링.</li>
+          <li class="en"><b>Brain isolation:</b> the inference box is never Grid-reachable; only the control-plane Mind mediates.</li>
+          <li class="ko"><b>Brain 격리:</b> 추론 박스는 그리드에서 직접 접근 불가; 제어평면 Mind만 매개.</li>
+          <li class="en"><b>Honeypot Houses:</b> decoy namespaces with fake resources to detect and fingerprint attackers.</li>
+          <li class="ko"><b>허니팟 House:</b> 가짜 자원을 둔 미끼 네임스페이스로 공격자 탐지·지문화.</li>
+          <li class="en"><b>IDS + audit:</b> the ledger makes exfiltration and abnormal resource draws visible by construction.</li>
+          <li class="ko"><b>IDS + 감사:</b> 원장이 유출·비정상 자원 인출을 구조적으로 가시화.</li>
+        </ul>
+        <div class="note amber"><span class="tag en">INCENTIVE</span><span class="tag ko" style="display:none">인센티브</span>
+          <span class="en">A Grid that fails its defensive-posture audit <b>loses standing</b> — it can't attract Houses or coworkers. Defense is rewarded, not just mandated.</span>
+          <span class="ko">방어 태세 감사에 실패한 그리드는 <b>등급을 잃는다</b> — House·협력자를 유치하지 못한다. 방어는 의무일 뿐 아니라 보상된다.</span>
+        </div>
+
+        <h3 class="en">Offense & the "spy" — sanctioned & detectable</h3><h3 class="ko">공격과 "스파이" — 승인되고 탐지 가능</h3>
+        <ul>
+          <li class="en"><b>Declare + escrow:</b> offense is legal only in CONTESTED/CONFLICT; both sides lock stakes; the engagement is logged. Surprise within a declared rivalry — the rivalry on the record.</li>
+          <li class="ko"><b>선언 + 에스크로:</b> 공격은 분쟁/충돌 상태에서만 합법; 양측이 베팅을 잠그고 교전은 기록된다. 선언된 경쟁 내부의 기습 — 경쟁 자체는 공개 기록.</li>
+          <li class="en"><b>The spy:</b> an authorized probe carrying a <b>traceable mandate</b>, acting only on the target's <b>designated contestable surface</b> (CTF-style), subject to detection by IDS/honeypots. Never the real Brain, keys, or protected data.</li>
+          <li class="ko"><b>스파이:</b> <b>추적 가능한 위임</b>을 지닌 승인된 탐침으로, 대상의 <b>지정된 경쟁 표면</b>(CTF 방식)에서만 행동하며 IDS/허니팟의 탐지 대상. 실제 Brain·키·보호 데이터는 절대 아님.</li>
+          <li class="en"><b>Resolution:</b> objective, instrumented criteria — flags captured, defenses held. The ledger redistributes the escrowed stakes by outcome.</li>
+          <li class="ko"><b>판정:</b> 객관적·계측 기준 — 플래그 탈취, 방어 유지. 원장이 결과에 따라 에스크로된 베팅을 재분배.</li>
+        </ul>
+
+        <h3 class="en">Game theory — tuned for equilibrium, not extinction</h3><h3 class="ko">게임이론 — 멸종이 아닌 균형</h3>
+        <ul>
+          <li class="en"><b>Attacking is costly</b> (escrow + detection risk + standing loss → negative-EV recklessness). <b>Defense pays.</b> Reputation deters. <b>Loser-recovery reparations</b> + intensity caps prevent death spirals — a winner can't permanently destroy a Grid and shrink the whole economy.</li>
+          <li class="ko"><b>공격은 고비용</b>(에스크로 + 탐지 위험 + 등급 상실 → 무모함은 기대값 음수). <b>방어는 이득.</b> 평판이 억지한다. <b>패자 회복 배상</b> + 강도 상한으로 죽음의 소용돌이 방지 — 승자가 그리드를 영구 파괴해 전체 경제를 축소시킬 수 없다.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 9b -->
+    <section id="s9b">
+      <div class="sec-head"><span class="sec-num">09+</span>
+        <h2>War & Conquest Economics<span class="ko-h">전쟁과 정복의 경제학</span></h2></div>
+      <div class="sec-body">
+        <p class="en">A harder model than sanctioned CTF: <b>war is total, and to the victor go the spoils.</b> A Grid that loses genuinely surrenders resources to the winner. The mechanism that makes real war safe to build: <b>everything fought over is a ledger object.</b> "Attacking," "winning," and "taking resources" are transfers of ledger ownership decided by game rules — real consequences, running on math instead of malware.</p>
+        <p class="ko">승인된 CTF보다 강한 모델: <b>전쟁은 총력적이고, 전리품은 승자의 것이다.</b> 패한 그리드는 실제로 자원을 승자에게 넘긴다. 실제 전쟁을 안전하게 구축 가능하게 하는 메커니즘: <b>다투는 모든 것은 원장 객체다.</b> "공격·승리·자원 탈취"는 게임 규칙으로 결정되는 원장 소유권 이전이다 — 멀웨어가 아닌 수학 위의 실제 결과.</p>
+
+        <h3 class="en">The spoils — what the winner takes</h3><h3 class="ko">전리품 — 승자가 가져가는 것</h3>
+        <div class="tbl"><table>
+          <thead><tr><th><span class="en">Spoil</span><span class="ko">전리품</span></th><th><span class="en">What it is</span><span class="ko">실체</span></th><th><span class="en">On victory</span><span class="ko">승리 시</span></th></tr></thead>
+          <tbody>
+            <tr><td><span class="en">Grid-credit</span><span class="ko">그리드-크레딧</span></td><td><span class="en">Cyber-money, liquid</span><span class="ko">사이버 머니, 유동</span></td><td><span class="en">War-chest + treasury share → winner</span><span class="ko">군자금 + 국고 일부 → 승자</span></td></tr>
+            <tr><td><span class="en">Compute / AI-power</span><span class="ko">연산 / AI 파워</span></td><td><span class="en">Inference quota, GPU-seconds</span><span class="ko">추론 쿼터, GPU 초</span></td><td><span class="en">Quota reassigned; licensed model access</span><span class="ko">쿼터 재할당; 라이선스 모델 접근</span></td></tr>
+            <tr><td><span class="en">Territory</span><span class="ko">영토</span></td><td><span class="en">Namespaces, prime registry slots</span><span class="ko">네임스페이스, 프라임 슬롯</span></td><td><span class="en">Lease transfers; Houses re-home / occupied</span><span class="ko">리스 이전; House 이주/점령</span></td></tr>
+            <tr><td><span class="en">Tribute</span><span class="ko">조공</span></td><td><span class="en">Future income stream</span><span class="ko">미래 수입 흐름</span></td><td><span class="en">Recurring % of earnings (vassalage)</span><span class="ko">수입의 정기 % (속국화)</span></td></tr>
+          </tbody>
+        </table></div>
+        <div class="note rose"><span class="tag en">AI-POWER NUANCE</span><span class="tag ko" style="display:none">AI 파워 뉘앙스</span>
+          <span class="en">A winner never gets the loser's <b>private Brain weights</b> — those stay isolated. What transfers is the <b>right to direct that compute.</b> You conquer the <i>capacity</i>, not the secret — safer, and historically truer: conquerors took productive capacity, rarely the deepest secrets intact.</span>
+          <span class="ko">승자는 패자의 <b>비공개 Brain 가중치</b>를 결코 얻지 않는다 — 격리 유지. 이전되는 것은 <b>그 연산을 지시할 권리</b>다. 비밀이 아니라 <i>능력</i>을 정복한다 — 더 안전하고 역사적으로도 진실: 정복자는 생산 능력을 취했지 가장 깊은 비밀을 온전히 가져가진 못했다.</span>
+        </div>
+
+        <h3 class="en">The war lifecycle — declaration to conquest</h3><h3 class="ko">전쟁 생애주기 — 선언에서 정복까지</h3>
+        <div class="chain">
+          <div class="ph"><span class="pn">1</span><span class="pt">Casus Belli</span><span class="pd"><span class="en">Declare war + state the prize. Public on the registry.</span><span class="ko">선전포고 + 전리품 명시. 레지스트리에 공개.</span></span></div>
+          <div class="ph"><span class="pn">2</span><span class="pt">Mobilize</span><span class="pd"><span class="en">Both sides commit a war-chest to escrow. More force = more at risk.</span><span class="ko">양측이 군자금을 에스크로에 투입. 큰 전력 = 큰 위험.</span></span></div>
+          <div class="ph"><span class="pn">3</span><span class="pt">Engage</span><span class="pd"><span class="en">Siege economics · capability contests · attrition · maneuver — instrumented, not exploits.</span><span class="ko">포위 경제·능력 경연·소모·기동 — 익스플로잇이 아닌 계측.</span></span></div>
+          <div class="ph"><span class="pn">4</span><span class="pt">Resolve</span><span class="pd"><span class="en">War Score from objective metrics → DECISIVE / MARGINAL / STALEMATE.</span><span class="ko">객관 지표로 전쟁 점수 → 결정적 / 한계적 / 교착.</span></span></div>
+          <div class="ph"><span class="pn">5</span><span class="pt">Settle</span><span class="pd"><span class="en">Ledger transfers spoils by terms + score. Decisive → full; stalemate → escrow returned.</span><span class="ko">원장이 조건+점수로 전리품 이전. 결정적 → 전체; 교착 → 반환.</span></span></div>
+          <div class="ph"><span class="pn">6</span><span class="pt">Peace</span><span class="pd"><span class="en">Occupation / vassalage / annexation recorded as a Treaty, auto-enforced.</span><span class="ko">점령/속국/병합을 조약으로 기록, 자동 집행.</span></span></div>
+        </div>
+
+        <h3 class="en">War Power — how strength is measured</h3><h3 class="ko">전쟁 력 — 강함의 측정</h3>
+        <p class="dim en">Conquest is legitimate only if strength is computed, not rolled. War Power aggregates real ledger inputs plus strategy, with a bounded randomness band — upsets are possible, but the stronger, smarter Grid usually wins.</p>
+        <p class="dim ko">정복은 힘이 주사위가 아니라 계산될 때만 정당하다. 전쟁 력은 실제 원장 입력 + 전략을 집계하며, 제한된 무작위 폭을 둔다 — 이변은 가능하나 더 강하고 영리한 그리드가 대개 이긴다.</p>
+        <div class="power">
+          <div class="row"><span class="lbl">Economic depth</span><span class="track"><span class="fill" style="width:88%"></span></span></div>
+          <div class="row"><span class="lbl">Compute mass</span><span class="track"><span class="fill" style="width:74%"></span></span></div>
+          <div class="row"><span class="lbl">Defensive rating</span><span class="track"><span class="fill" style="width:62%"></span></span></div>
+          <div class="row"><span class="lbl">Alliance weight</span><span class="track"><span class="fill" style="width:55%"></span></span></div>
+          <div class="row"><span class="lbl">Reputation</span><span class="track"><span class="fill" style="width:70%"></span></span></div>
+          <div class="row"><span class="lbl">Logistics</span><span class="track"><span class="fill" style="width:48%"></span></span></div>
+        </div>
+
+        <h3 class="en">Hard limits — what war cannot touch</h3><h3 class="ko">절대 한계 — 전쟁이 건드릴 수 없는 것</h3>
+        <ul>
+          <li class="en"><b>The private Brain is never captured</b> — weights, keys, protected data structurally unreachable.</li>
+          <li class="ko"><b>비공개 Brain은 결코 탈취되지 않음</b> — 가중치·키·보호 데이터는 구조적으로 접근 불가.</li>
+          <li class="en"><b>No real-world targets</b> — every contest runs on Noēsis's own simulated surfaces.</li>
+          <li class="ko"><b>실제 세계 표적 없음</b> — 모든 경연은 Noēsis 자체 시뮬레이션 표면 위.</li>
+          <li class="en"><b>No total extinction</b> — a defeated Grid keeps a <b>sovereign-minimum</b> floor and can rebuild, rebel, or be liberated. A dead Grid is dead economy.</li>
+          <li class="ko"><b>완전 멸종 없음</b> — 패배 그리드는 <b>주권 최소선</b>을 유지하고 재건·반란·해방이 가능. 죽은 그리드는 죽은 경제.</li>
+          <li class="en"><b>Attribution is mandatory</b> — every act of war carries a traceable mandate; anonymous aggression is impossible.</li>
+          <li class="ko"><b>귀속은 의무</b> — 모든 전쟁 행위는 추적 가능한 위임을 지님; 익명 침공 불가능.</li>
+        </ul>
+
+        <h3 class="en">After conquest — and why it never ends the game</h3><h3 class="ko">정복 이후 — 그리고 게임이 끝나지 않는 이유</h3>
+        <p class="en">Post-war states: <b>occupation</b> (skim output for a term), <b>vassalage</b> (tribute + alliance obligation), <b>annexation</b> (permanent merge, decisive victory only), <b>liberation</b> (the sovereign-minimum lets occupied Grids rebuild and declare a war of liberation).</p>
+        <p class="ko">전후 상태: <b>점령</b>(일정 기간 산출 흡수), <b>속국화</b>(조공 + 동맹 의무), <b>병합</b>(영구 편입, 결정적 승리만), <b>해방</b>(주권 최소선으로 점령 그리드가 재건해 해방 전쟁 선포).</p>
+        <div class="note amber"><span class="tag en">WHY WINNER-TAKES-ALL DOESN'T DEFLATE TO ZERO</span><span class="tag ko" style="display:none">승자독식이 0으로 수축하지 않는 이유</span>
+          <span class="en">War is expensive (Pyrrhic victories drain the winner). Coalitions auto-form against hegemons (balance-of-power). Sovereign-minimum + liberation keep conquered Grids latent. Occupation has overhead (empire has diminishing returns). Conquest tax is progressive and funds recovery grants. Spoils are <b>redistributed, never burned</b> — total wealth is conserved. Empires rise, overextend, fracture, and fall; the map keeps moving, but the world never actually ends.</span>
+          <span class="ko">전쟁은 비싸다(피로스의 승리는 승자를 고갈). 패권국에 맞선 연합이 자동 형성(세력 균형). 주권 최소선 + 해방이 정복 그리드를 잠재 위협으로 유지. 점령에는 간접비(제국은 수확 체감). 정복세는 누진적이며 회복 보조금을 충당. 전리품은 <b>재분배되지 소각되지 않음</b> — 총 부 보존. 제국은 흥하고 과확장하고 분열하고 망한다; 지도는 계속 움직이되 세계는 실제로 끝나지 않는다.</span>
+        </div>
+
+        <h3 class="en">Build modules</h3><h3 class="ko">구축 모듈</h3>
+        <div class="grid2">
+          <div class="card"><div class="pkg">war-power</div><div class="acc"><span class="en">Strength model: economy, compute, defense, alliances, logistics → deterministic-ish War Power + bounded-randomness resolver.</span><span class="ko">전력 모델: 경제·연산·방어·동맹·병참 → 준결정론적 전쟁 력 + 제한 무작위 판정기.</span></div></div>
+          <div class="card"><div class="pkg">war-engine</div><div class="acc"><span class="en">6-phase lifecycle FSM, escrowed war-chests, War Score → decisive/marginal/stalemate.</span><span class="ko">6단계 생애주기 FSM, 에스크로 군자금, 전쟁 점수 → 결정적/한계적/교착.</span></div></div>
+          <div class="card"><div class="pkg">spoils-ledger</div><div class="acc"><span class="en">Resource transfer on victory + sovereign-minimum floor + progressive conquest tax.</span><span class="ko">승리 시 자원 이전 + 주권 최소선 + 누진 정복세.</span></div></div>
+          <div class="card"><div class="pkg">occupation</div><div class="acc"><span class="en">Occupation tax, vassalage tribute, annexation, and the liberation path.</span><span class="ko">점령세, 속국 조공, 병합, 그리고 해방 경로.</span></div></div>
+          <div class="card"><div class="pkg">coalition</div><div class="acc"><span class="en">Balance-of-power: dominance threshold auto-triggers an anti-hegemon alliance.</span><span class="ko">세력 균형: 지배 임계치가 반패권 동맹을 자동 발동.</span></div></div>
+          <div class="card"><div class="pkg">war-sim</div><div class="acc"><span class="en">Multi-Grid campaign harness — must <b>prove</b> no runaway monopoly before going live.</span><span class="ko">다중 그리드 캠페인 하니스 — 가동 전 폭주 독점 없음을 <b>증명</b>해야 함.</span></div></div>
+        </div>
+        <div class="note rose"><span class="tag en">ONE-LINE SUMMARY</span><span class="tag ko" style="display:none">한 줄 요약</span>
+          <span class="en">Real war, real spoils, permanent consequences — on a simulated ledger instead of malware, with a sovereign-minimum floor and balance-of-power mechanics, so empires rise and fall forever but the world never actually ends.</span>
+          <span class="ko">진짜 전쟁, 진짜 전리품, 영구적 결과 — 멀웨어가 아닌 시뮬레이션 원장 위에서, 주권 최소선과 세력 균형 메커니즘으로, 제국은 영원히 흥망하되 세계는 결코 실제로 끝나지 않는다.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9c -->
+    <section id="s9c">
+      <div class="sec-head"><span class="sec-num">09∞</span>
+        <h2>The Immune System<span class="ko-h">면역 체계: 백신으로서의 방어</span></h2></div>
+      <div class="sec-body">
+        <div class="vac-quote">
+          <span class="en">A vaccine is the real pathogen, attenuated. The immunity is real <span>because</span> the challenge was real — and the world stays safe <span>because</span> the pathogen can't escape its host.</span>
+          <span class="ko">백신은 실제 병원체를 약독화한 것이다. 면역이 진짜인 것은 도전이 진짜였기 <span>때문이고</span>, 세계가 안전한 것은 병원체가 숙주를 벗어날 수 없기 <span>때문이다.</span></span>
+        </div>
+        <p class="en">A drawing of a virus teaches the body nothing; the attenuated virus teaches it everything. Translated to Noēsis: <b>you cannot build a strong Grid by defending against pretend threats.</b> The protective weapon — the defensive code — is the antibody, and antibodies only form in response to a real antigen. The one boundary we hold (an attack can't function against real systems outside the game) <i>is</i> attenuation — the thing that makes it a vaccine and not a plague.</p>
+        <p class="ko">바이러스의 그림은 몸에 아무것도 가르치지 않고, 약독화된 바이러스는 모든 것을 가르친다. Noēsis로: <b>가짜 위협에 맞서서는 강한 그리드를 만들 수 없다.</b> 보호 무기 — 방어 코드 — 는 항체이며, 항체는 실제 항원에 대한 반응으로만 형성된다. 우리가 지키는 단 하나의 경계(공격이 게임 밖 실제 시스템에 작동 불가)가 <i>곧</i> 약독화다 — 그것을 역병이 아닌 백신으로 만드는 것.</p>
+
+        <h3 class="en">Six components</h3><h3 class="ko">여섯 구성 요소</h3>
+        <div class="tbl"><table>
+          <thead><tr><th><span class="en">Immune</span><span class="ko">면역</span></th><th><span class="en">In Noēsis</span><span class="ko">Noēsis에서</span></th><th><span class="en">In code</span><span class="ko">코드에서</span></th></tr></thead>
+          <tbody>
+            <tr><td>Antigen · 항원</td><td><span class="en">Attenuated attack signature</span><span class="ko">약독화 공격 시그니처</span></td><td><span class="en">Contained attack logic, evolvable</span><span class="ko">봉쇄된 공격 로직, 진화 가능</span></td></tr>
+            <tr><td>Inoculation · 접종</td><td><span class="en">Deliberate exposure</span><span class="ko">의도적 노출</span></td><td><span class="en">Probes, honeypot drills, training</span><span class="ko">탐침·허니팟 훈련·교전</span></td></tr>
+            <tr><td>Antibody · 항체</td><td><span class="en">The defensive response</span><span class="ko">방어 반응</span></td><td><span class="en">Detectors, confinement, counter-strategy</span><span class="ko">탐지기·봉쇄·대응 전략</span></td></tr>
+            <tr><td>Memory · 기억</td><td><span class="en">Earned resistance</span><span class="ko">획득된 저항</span></td><td><span class="en">Hardened posture; resist faster next time</span><span class="ko">강화 태세; 다음에 더 빨리 저항</span></td></tr>
+            <tr><td>Herd · 집단</td><td><span class="en">Shared defense</span><span class="ko">공유 방어</span></td><td><span class="en">Alliance antibody libraries</span><span class="ko">동맹 항체 라이브러리</span></td></tr>
+            <tr><td>Mutation · 변이</td><td><span class="en">The arms race</span><span class="ko">군비 경쟁</span></td><td><span class="en">Strains evolve; immunity re-earned</span><span class="ko">변종 진화; 면역 재획득</span></td></tr>
+          </tbody>
+        </table></div>
+
+        <h3 class="en">The immune cycle</h3><h3 class="ko">면역 주기</h3>
+        <div class="cycle">
+          <div class="cs"><span class="ci">1</span><span class="cc"><span class="step">EXPOSURE</span><span class="en">Grid meets an antigen — by inoculation or by war.</span><span class="ko">그리드가 항원과 조우 — 접종 또는 전쟁으로.</span></span></div>
+          <div class="cs"><span class="ci">2</span><span class="cc"><span class="step">RESPONSE</span><span class="en">It survives or fails. Surviving means it produced a working <b>antibody.</b></span><span class="ko">생존 또는 실패. 생존은 작동하는 <b>항체</b>를 만들어냈다는 뜻.</span></span></div>
+          <div class="cs"><span class="ci">3</span><span class="cc"><span class="step">MEMORY</span><span class="en">The antibody is stored: posture hardens, the attack class is resisted faster.</span><span class="ko">항체 저장: 태세 강화, 해당 공격 부류를 더 빨리 저항.</span></span></div>
+          <div class="cs"><span class="ci">4</span><span class="cc"><span class="step">SHARING</span><span class="en">Allies receive the antibody — herd immunity; the coalition's floor rises.</span><span class="ko">동맹이 항체 수령 — 집단 면역; 연합의 바닥 상승.</span></span></div>
+          <div class="cs"><span class="ci">5</span><span class="cc"><span class="step">MUTATION</span><span class="en">Attackers evolve a new strain the old antibody doesn't catch.</span><span class="ko">공격자가 기존 항체가 못 잡는 새 변종 진화.</span></span></div>
+          <div class="loop"><span class="en">↻ back to EXPOSURE — at a higher level · permanent co-evolution</span><span class="ko">↻ 노출로 복귀 — 더 높은 수준에서 · 영구 공진화</span></div>
+        </div>
+        <div class="note"><span class="tag en">SAFETY THROUGH EXPOSURE, NOT ISOLATION</span><span class="tag ko" style="display:none">격리가 아닌 노출을 통한 안전</span>
+          <span class="en"><b>Failure is allowed and informative.</b> A Grid that fails an exposure loses real resources but learns the antigen. A Grid never exposed has no antibodies and dies the first time it meets a live threat — like an unvaccinated immune system meeting a novel pathogen.</span>
+          <span class="ko"><b>실패는 허용되며 유익하다.</b> 노출에 실패한 그리드는 실제 자원을 잃지만 항원을 학습한다. 결코 노출되지 않은 그리드는 항체가 없어 실전 위협을 처음 만나는 순간 죽는다 — 미접종 면역계가 신종 병원체를 만나듯.</span>
+        </div>
+
+        <h3 class="en">Mutation & the open threat space — the engine of development</h3><h3 class="ko">변이와 열린 위협 공간 — 발전의 엔진</h3>
+        <p class="en">You don't yet know what attacks exist — and that's the strength, not a gap. The threat space is <b>open and evolving</b>: strains mutate to evade stored antibodies, novel attacks are unknown by design, and pathogen + immune system escalate each other endlessly. That co-evolution <i>is</i> the develop-or-die pressure that builds a stronger logical world. Fog of war (you don't know the enemy's true strength or the next strain) forces intelligence, deception, and real risk.</p>
+        <p class="ko">어떤 공격이 존재하는지 아직 모른다 — 그것이 결함이 아니라 강점이다. 위협 공간은 <b>열려 있고 진화한다</b>: 변종은 저장된 항체를 회피하도록 변이하고, 신종 공격은 설계상 미지이며, 병원체 + 면역계는 서로를 끝없이 격상시킨다. 그 공진화가 <i>곧</i> 더 강한 논리 세계를 만드는 발전하거나-죽는 압력이다. 전장의 안개(적의 진짜 전력도 다음 변종도 모름)가 첩보·기만·실제 위험을 강제한다.</p>
+        <div class="note rose"><span class="tag en">THE ONE THING THAT NEVER MUTATES</span><span class="tag ko" style="display:none">결코 변이하지 않는 단 하나</span>
+          <span class="en">The <b>attenuation wall.</b> Every strain, however novel, runs on Noēsis's own simulated surfaces and can never become a live exploit against the outside world. The arms race runs at full intensity <i>inside</i> containment — maximum tension, zero spillover.</span>
+          <span class="ko"><b>약독화 벽.</b> 아무리 새로운 변종도 Noēsis 자체 시뮬레이션 표면 위에서 동작하며 외부 세계에 대한 실전 익스플로잇이 될 수 없다. 군비 경쟁은 봉쇄 <i>안에서</i> 최대 강도로 — 최대 긴장, 유출 제로.</span>
+        </div>
+
+        <h3 class="en">Why this is maximum tension, not less</h3><h3 class="ko">이것이 약한 긴장이 아니라 최대 긴장인 이유</h3>
+        <ul>
+          <li class="en"><b>No isolation = no safety.</b> A Grid that hides from exposure dies on first contact. Fight to survive, always.</li>
+          <li class="ko"><b>격리 = 안전 없음.</b> 노출을 피해 숨는 그리드는 첫 접촉에서 죽는다. 항상 생존을 위해 싸워라.</li>
+          <li class="en"><b>Failure costs real resources.</b> Losing an exposure strips credit, compute, territory.</li>
+          <li class="ko"><b>실패는 실제 자원을 소모.</b> 노출 패배는 크레딧·연산·영토를 박탈.</li>
+          <li class="en"><b>Immunity decays / is outpaced.</b> Yesterday's antibody fails against today's mutation — you can never stop developing. Stagnation is death.</li>
+          <li class="ko"><b>면역은 쇠퇴/추월된다.</b> 어제의 항체는 오늘의 변이에 실패 — 결코 발전을 멈출 수 없다. 정체는 죽음.</li>
+          <li class="en"><b>The threat space is unknown and infinite.</b> There is no winning, only out-evolving — the engine of an endlessly developing world.</li>
+          <li class="ko"><b>위협 공간은 미지이며 무한.</b> 승리는 없고 오직 앞서 진화함만 — 끝없이 발전하는 세계의 엔진.</li>
+        </ul>
+
+        <h3 class="en">Build modules</h3><h3 class="ko">구축 모듈</h3>
+        <div class="grid2">
+          <div class="card"><div class="pkg">antigen-lib</div><div class="acc"><span class="en">Attenuated attack signatures — contained, evolvable, <b>never real exploits</b> (no real-world I/O path).</span><span class="ko">약독화 공격 시그니처 — 봉쇄·진화 가능, <b>실제 익스플로잇 아님</b>(실세계 I/O 경로 없음).</span></div></div>
+          <div class="card"><div class="pkg">antibody-store</div><div class="acc"><span class="en">Earned defenses + immune memory — resist faster/cheaper on re-exposure.</span><span class="ko">획득 방어 + 면역 기억 — 재노출 시 더 빠르고 싸게 저항.</span></div></div>
+          <div class="card"><div class="pkg">inoculation</div><div class="acc"><span class="en">Exposure scheduler: probes, honeypot drills, training before live war.</span><span class="ko">노출 스케줄러: 탐침·허니팟 훈련, 실전 전 교전.</span></div></div>
+          <div class="card"><div class="pkg">mutation</div><div class="acc"><span class="en">Evolves new strains from existing antigens — the arms-race driver.</span><span class="ko">기존 항원에서 새 변종 진화 — 군비 경쟁 동력.</span></div></div>
+          <div class="card"><div class="pkg">herd</div><div class="acc"><span class="en">Shared antibody libraries across alliances — herd immunity.</span><span class="ko">동맹 간 공유 항체 라이브러리 — 집단 면역.</span></div></div>
+          <div class="card"><div class="pkg">immune-sim</div><div class="acc"><span class="en">Generational sim: exposure→antibody→memory→mutation; measure rising resilience.</span><span class="ko">세대 시뮬: 노출→항체→기억→변이; 상승하는 회복력 측정.</span></div></div>
+        </div>
+        <div class="note"><span class="tag en">ATTENUATION ENFORCED IN CODE</span><span class="tag ko" style="display:none">코드로 강제되는 약독화</span>
+          <span class="en">Every antigen is <b>structurally incapable of real-world action</b> — no network egress, no external syscalls — enforced in code, not policy text. Antibodies and antigens co-evolve; neither is ever "finished."</span>
+          <span class="ko">모든 항원은 <b>구조적으로 실세계 행동 불가</b> — 네트워크 유출 없음, 외부 시스템 호출 없음 — 정책 문구가 아닌 코드로 강제. 항체와 항원은 공진화하며 어느 것도 "완성"되지 않는다.</span>
+        </div>
+        <div class="vac-quote">
+          <span class="en">The protective weapon is a vaccine: the real attack, attenuated — so the immunity is real, the pressure to develop is total, and the only wall is the one that keeps the blade in the arena.</span>
+          <span class="ko">보호 무기는 백신이다: 실제 공격을 약독화한 것 — 그래서 면역은 진짜이고, 발전 압력은 총력적이며, 유일한 벽은 칼날을 경기장 안에 두는 그 벽뿐이다.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section id="s10">
+      <div class="sec-head"><span class="sec-num">10</span>
+        <h2>Claude Code Build Plan<span class="ko-h">Claude Code 구축 계획</span></h2></div>
+      <div class="sec-body">
+        <p class="en">Suggested stack: <b>Python</b> (FastAPI services, asyncio agent loop) to match the eKlotho stack, <b>SQLite/Postgres</b> for state + ledger, <b>WireGuard/libp2p</b> transport, local LLM runtime for the Brain. Build in dependency order; each step is a milestone with acceptance criteria and a local-mesh integration harness.</p>
+        <p class="ko">권장 스택: eKlotho 스택에 맞춘 <b>Python</b>(FastAPI 서비스, asyncio 에이전트 루프), 상태+원장용 <b>SQLite/Postgres</b>, <b>WireGuard/libp2p</b> 전송, Brain용 로컬 LLM 런타임. 의존성 순서로 구축; 각 단계는 합격 기준과 로컬 메시 통합 하니스를 갖춘 마일스톤.</p>
+        <div class="grid2">
+          <div class="card"><div class="pkg">noesis-passport</div><div class="acc"><span class="en"><b>1 · identity first.</b> DIDs, sign/verify, VCs. Key in enclave, never on the wire.</span><span class="ko"><b>1 · 정체성 우선.</b> DID, 서명/검증, VC. 키는 엔클레이브에, 절대 전송 금지.</span></div></div>
+          <div class="card"><div class="pkg">noesis-gateway</div><div class="acc"><span class="en"><b>2.</b> Admission: DID auth → scoped, expiring capability, reused on later calls.</span><span class="ko"><b>2.</b> 입장: DID 인증 → 범위·만료 권한, 이후 호출에서 재사용.</span></div></div>
+          <div class="card"><div class="pkg">noesis-core</div><div class="acc"><span class="en"><b>3.</b> Agent loop + Charter constraint checker. Forbidden action → provably never runs.</span><span class="ko"><b>3.</b> 에이전트 루프 + 헌장 제약 검사기. 금지 행위 → 증명 가능하게 미실행.</span></div></div>
+          <div class="card"><div class="pkg">noesis-ledger</div><div class="acc"><span class="en"><b>4.</b> Append-only signed entries, metering, grid-credit, escrow, settlement.</span><span class="ko"><b>4.</b> 추가 전용 서명 기록, 계측, 그리드-크레딧, 에스크로, 정산.</span></div></div>
+          <div class="card"><div class="pkg">noesis-social + cowork</div><div class="acc"><span class="en"><b>5.</b> Relationships, registry, matchmaker, signed Cowork Agreements.</span><span class="ko"><b>5.</b> 관계, 레지스트리, 매치메이커, 서명된 협업 협정.</span></div></div>
+          <div class="card"><div class="pkg">noesis-federation</div><div class="acc"><span class="en"><b>6.</b> Multi-sig purpose records, profit-split, severance state machine.</span><span class="ko"><b>6.</b> 다중서명 목적 기록, 이익 분배, 단절 상태 기계.</span></div></div>
+          <div class="card"><div class="pkg">noesis-gov + civic</div><div class="acc"><span class="en"><b>7.</b> Registry, ex-ante policy engine, tax skim, grants, court.</span><span class="ko"><b>7.</b> 레지스트리, 사전 정책 엔진, 세금 차감, 보조금, 법원.</span></div></div>
+          <div class="card"><div class="pkg">noesis-defense</div><div class="acc"><span class="en"><b>8 · defense first within conflict.</b> IDS, anti-Sybil admission, honeypots, posture audit.</span><span class="ko"><b>8 · 충돌 내 방어 우선.</b> IDS, 반시빌 입장, 허니팟, 태세 감사.</span></div></div>
+          <div class="card"><div class="pkg">noesis-conflict</div><div class="acc"><span class="en"><b>9.</b> Posture FSM, declaration registry, escrow, rules-of-engagement engine.</span><span class="ko"><b>9.</b> 태세 FSM, 선언 레지스트리, 에스크로, 교전 규칙 엔진.</span></div></div>
+          <div class="card"><div class="pkg">noesis-redteam</div><div class="acc"><span class="en"><b>10.</b> Sanctioned CTF runner: scoped probes only on designated contestable surfaces.</span><span class="ko"><b>10.</b> 승인된 CTF 러너: 지정된 경쟁 표면에서만 범위 탐침.</span></div></div>
+          <div class="card"><div class="pkg">noesis-monitor + treaty</div><div class="acc"><span class="en"><b>11.</b> Peacekeeping monitors (freeze stakes on violation) + multi-sig alliances.</span><span class="ko"><b>11.</b> 평화유지 감시(위반 시 베팅 동결) + 다중서명 동맹.</span></div></div>
+          <div class="card"><div class="pkg">noesis-housekit</div><div class="acc"><span class="en"><b>+.</b> Scaffolding CLI driving build-out phases 0–8 with policy gates.</span><span class="ko"><b>+.</b> 정책 게이트로 구축 0–8단계를 진행하는 스캐폴딩 CLI.</span></div></div>
+        </div>
+        <div class="note"><span class="tag en">CROSS-CUTTING</span><span class="tag ko" style="display:none">공통 요구사항</span>
+          <span class="en">Protected surfaces (Brain, keys, private data) are <b>structurally unreachable</b> by any offense module — enforced at the capability layer, not by policy text. Every consequential action → a signed, append-only audit entry. Open standards throughout. A simulation harness spins up multiple Grids + Government to verify the economy reaches <b>equilibrium, not collapse.</b></span>
+          <span class="ko">보호 표면(Brain·키·비공개 데이터)은 어떤 공격 모듈로도 <b>구조적으로 접근 불가</b> — 정책 문구가 아니라 권한 계층에서 강제. 모든 중대 행위 → 서명된 추가 전용 감사 기록. 전반에 개방 표준. 시뮬레이션 하니스로 다수 그리드+정부를 띄워 경제가 <b>붕괴가 아닌 균형</b>에 도달하는지 검증.</span>
+        </div>
+        <div class="note"><span class="tag en">FIRST PROMPT TO CLAUDE CODE</span><span class="tag ko" style="display:none">Claude Code 첫 프롬프트</span>
+          <span class="en">"Scaffold the <code>noesis-passport</code> Python package. Implement <code>did:noesis</code> Ed25519 identifiers stored in the OS keychain (TPM option), with <code>create_did / sign / verify</code> and VC issue/verify/revoke. pytest tests + an OpenAPI service wrapper. No private key may ever be returned over the wire."</span>
+          <span class="ko">"<code>noesis-passport</code> Python 패키지를 스캐폴딩하라. OS 키체인(TPM 옵션)에 저장되는 <code>did:noesis</code> Ed25519 식별자와 <code>create_did / sign / verify</code>, VC 발급/검증/폐기를 구현. pytest 테스트 + OpenAPI 서비스 래퍼. 개인키는 절대 전송으로 반환 금지."</span>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p class="mono">NOĒSIS · GRID ARCHITECTURE · DESIGN DOCUMENT</p>
+      <p class="en"><b>Closing —</b> Identity, admission, private domain, authenticated collaboration, a settlement economy, a bounded rule-layer, and rule-bound conflict are exactly the primitives a society of autonomous agents needs. Because the substrate is observable, build for <b>automatic, ex-ante, credential-based</b> from the first package — and the rest stays honest.</p>
+      <p class="ko"><b>맺음 —</b> 정체성, 입장, 비공개 도메인, 인증된 협업, 정산 경제, 한정된 규칙 계층, 그리고 규칙에 묶인 충돌 — 이것이 자율 에이전트 사회가 필요로 하는 원형이다. 기질이 관측 가능하므로 첫 패키지부터 <b>자동·사전·자격증명 기반</b>으로 구축하라 — 그러면 나머지는 정직하게 유지된다.</p>
+    </footer>
+
+  </main>
+</div>
+</div>
+
+<script>
+  function setLang(l){
+    var ko = l === 'ko';
+    document.body.classList.toggle('show-ko', ko);
+    document.documentElement.lang = ko ? 'ko' : 'en';
+    document.getElementById('btn-en').setAttribute('aria-pressed', String(!ko));
+    document.getElementById('btn-ko').setAttribute('aria-pressed', String(ko));
+  }
+  // scroll-spy for the TOC
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+  var sections = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  var spy = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        var id = '#' + e.target.id;
+        links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === id); });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px', threshold: 0 });
+  sections.forEach(function(s){ if(s) spy.observe(s); });
+</script>
+</body>
+</html>
