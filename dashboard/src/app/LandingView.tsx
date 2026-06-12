@@ -171,9 +171,9 @@ export default function LandingView() {
                     padding: '52px 0 24px',
                 }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-                        <span style={wordmarkStyle}>
+                        <Link href="/" aria-label="Noēsis home" style={{ ...wordmarkStyle, textDecoration: 'none' }}>
                             NOĒSIS
-                        </span>
+                        </Link>
                         <span style={{
                             ...monoLabelStyle,
                             border: '1px solid rgba(218,122,78,0.50)',

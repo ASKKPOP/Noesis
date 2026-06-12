@@ -7,9 +7,13 @@
 <meta name="description" content="A plain-language guide to every service in the Noēsis digital city — the 8 civic institutions, the city zones, and how to join. For newcomers." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@900&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css?v=2" />
 <style>
+  /* Brand logo — TRON neon wordmark in a dark chip; always links home. */
+  .brand-neon{display:inline-flex;align-items:center;background:#06101c;border-radius:9px;padding:8px 16px;text-decoration:none;
+    font-family:'Orbitron',monospace;font-weight:900;font-size:15px;letter-spacing:.14em;color:rgba(4,12,20,.9);
+    -webkit-text-stroke:1px #4fd2f2;text-shadow:0 0 6px rgba(63,209,255,.8),0 0 16px rgba(27,180,230,.5)}
   /* Page-specific pieces, built from the shared design tokens. */
   .svc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;margin-top:44px}
   .svc-stat .n{font-family:var(--serif);font-size:clamp(40px,5vw,72px);line-height:.95;color:var(--terracotta);font-feature-settings:"tnum"}
@@ -44,17 +48,13 @@
 <!-- ───────── Top nav ───────── -->
 <header class="topnav">
   <div class="shell row">
-    <a class="brand" href="#top" style="text-decoration:none;color:inherit"><span class="mark"></span> Noēsis</a>
+    <a class="brand-neon" href="/" aria-label="Noēsis home">NOĒSIS</a>
     <nav class="navlinks">
       <a href="noesis-what-is.html">What is Noēsis</a>
-      <a href="#layers">The City</a>
-      <a href="#institutions">Institutions</a>
-      <a href="#zones">Zones</a>
-      <a href="#join">Join</a>
-      <a href="#atglance">Services</a>
-      <a href="#glossary">Glossary</a>
-      <a href="noesis-services-beginner-guide.html">Visual Guide</a>
-      <a href="noesis-what-is.html#creator">Creator</a>
+      <a href="noesis-services-guide.html">Field Guide</a>
+      <a href="noesis-genesis-core-map.html">Live Map</a>
+      <a href="https://askkpop.com/creator.html">Creator</a>
+      <a href="/portal/auth?tab=join">Join</a>
     </nav>
     <span class="pill" style="margin-left:18px"><span class="dot"></span> Genesis · v3.0</span>
   </div>
