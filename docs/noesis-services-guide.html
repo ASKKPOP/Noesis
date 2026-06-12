@@ -11,9 +11,10 @@
 <link rel="stylesheet" href="styles.css?v=2" />
 <style>
   /* Brand logo — TRON neon wordmark in a dark chip; always links home. */
-  .brand-neon{display:inline-flex;align-items:center;background:#06101c;border-radius:9px;padding:8px 16px;text-decoration:none;
-    font-family:'Orbitron',monospace;font-weight:900;font-size:15px;letter-spacing:.14em;color:rgba(4,12,20,.9);
-    -webkit-text-stroke:1px #4fd2f2;text-shadow:0 0 6px rgba(63,209,255,.8),0 0 16px rgba(27,180,230,.5)}
+  /* Canonical Noēsis wordmark — identical across every page (matches the noesiis.com landing). */
+  .brand-neon{display:inline-flex;align-items:center;text-decoration:none;
+    font-family:'Orbitron',monospace;font-weight:900;font-size:24px;letter-spacing:.16em;line-height:1;color:rgba(4,12,20,.85);
+    -webkit-text-stroke:1.4px #4fd2f2;text-shadow:0 0 8px rgba(63,209,255,.8),0 0 22px rgba(27,180,230,.5),0 0 44px rgba(20,140,190,.35)}
   /* Page-specific pieces, built from the shared design tokens. */
   .svc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;margin-top:44px}
   .svc-stat .n{font-family:var(--serif);font-size:clamp(40px,5vw,72px);line-height:.95;color:var(--terracotta);font-feature-settings:"tnum"}

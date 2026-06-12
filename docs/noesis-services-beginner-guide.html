@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Noēsis — A Beginner's Guide to Every Service</title>
 <meta name="description" content="A plain-language tour of every service in the Noēsis digital city: Portal, Grid, Brain, and all 8 civic institutions — written for complete beginners.">
+<!-- Canonical Noēsis wordmark font (online enhancement; degrades to monospace offline). -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap" rel="stylesheet">
 <style>
   /* ─────────────────────────────────────────────────────────────
      Noēsis Services — Beginner Guide
@@ -34,6 +36,10 @@
   .top .row{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:14px;padding:12px 20px}
   .logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.2px}
   .logo .dot{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 22px rgba(122,162,255,.5)}
+  /* Canonical Noēsis wordmark — identical across every page (matches the noesiis.com landing). */
+  .brand-neon{display:inline-flex;align-items:center;text-decoration:none;
+    font-family:'Orbitron',monospace;font-weight:900;font-size:24px;letter-spacing:.16em;line-height:1;color:rgba(4,12,20,.85);
+    -webkit-text-stroke:1.4px #4fd2f2;text-shadow:0 0 8px rgba(63,209,255,.8),0 0 22px rgba(27,180,230,.5),0 0 44px rgba(20,140,190,.35)}
   .top .spacer{flex:1}
   .search{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 10px;min-width:220px}
   .search input{background:transparent;border:0;outline:0;color:var(--ink);font-size:14px;width:100%}
@@ -176,7 +182,7 @@
 
 <header class="top">
   <div class="row">
-    <div class="logo"><span class="dot"></span> Noēsis</div>
+    <a class="brand-neon" href="/" aria-label="Noēsis home">NOĒSIS</a>
     <span class="pill">Beginner's Service Guide</span>
     <div class="spacer"></div>
     <label class="search" title="Type to filter the service cards below">

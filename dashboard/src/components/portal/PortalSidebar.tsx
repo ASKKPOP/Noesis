@@ -7,7 +7,6 @@
  * · terracotta active state · auth-aware footer
  */
 
-import type { ElementType } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAccount, useDisconnect } from 'wagmi';
@@ -22,9 +21,6 @@ interface NavItem {
     phase?: string;
     guestOnly?: boolean;
     authOnly?: boolean;
-    /** Static HTML doc served from /public via a next.config rewrite (e.g. /world).
-     *  Rendered as a plain anchor (full page load) instead of a client-side Link. */
-    html?: boolean;
 }
 
 interface NavSection {
@@ -36,7 +32,6 @@ const NAV: NavSection[] = [
     {
         label: 'Grid',
         items: [
-            { href: '/world', label: 'The World', html: true },
             { href: '/portal', label: 'World Map', exact: true },
         ],
     },
@@ -91,17 +86,10 @@ function NavLink({ item }: { item: NavItem }) {
     const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
     const isSoon = !!item.phase;
 
-    // Static HTML docs (served from /public via a rewrite) need a full page load and
-    // the basePath prefix — next/link client navigation can't resolve them.
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
-    const LinkTag: ElementType = item.html ? 'a' : Link;
-    const linkProps = item.html
-        ? { href: `${basePath}${item.href}` }
-        : { href: item.href, 'aria-current': isActive ? ('page' as const) : undefined };
-
     return (
-        <LinkTag
-            {...linkProps}
+        <Link
+            href={item.href}
+            aria-current={isActive ? 'page' : undefined}
             tabIndex={isSoon ? -1 : undefined}
             style={{
                 display: 'flex',
@@ -148,7 +136,7 @@ function NavLink({ item }: { item: NavItem }) {
                     P{item.phase}
                 </span>
             )}
-        </LinkTag>
+        </Link>
     );
 }
 
@@ -199,15 +187,18 @@ export function PortalSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
                 borderBottom: '1px solid rgba(255,255,255,0.07)',
                 position: 'relative',
             }}>
+                {/* Canonical Noēsis wordmark — identical across every page (matches noesiis.com). */}
                 <div style={{
-                    fontFamily: 'var(--serif)',
-                    fontSize: 20,
-                    fontWeight: 600,
-                    color: '#f5f0e8',
-                    letterSpacing: '0.01em',
-                    lineHeight: 1.1,
+                    fontFamily: '"Orbitron", monospace',
+                    fontSize: 24,
+                    fontWeight: 900,
+                    letterSpacing: '0.16em',
+                    lineHeight: 1,
+                    color: 'rgba(4,12,20,0.85)',
+                    WebkitTextStroke: '1.4px #4fd2f2',
+                    textShadow: '0 0 8px rgba(63,209,255,0.8), 0 0 22px rgba(27,180,230,0.5), 0 0 44px rgba(20,140,190,0.35)',
                 }}>
-                    Noēsis
+                    NOĒSIS
                 </div>
                 <div style={{
                     fontFamily: 'var(--mono-portal)',
