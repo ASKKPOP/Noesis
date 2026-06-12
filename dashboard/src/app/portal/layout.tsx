@@ -42,6 +42,17 @@ const PortalWagmiShell = dynamic(
     { ssr: false, loading: () => <PortalSkeleton /> },
 );
 
+const PortalAuthGate = dynamic(
+    () => import('@/components/portal/PortalAuthGate'),
+    { ssr: false, loading: () => <PortalSkeleton /> },
+);
+
 export default function PortalLayout({ children }: { children: ReactNode }) {
-    return <PortalWagmiShell>{children}</PortalWagmiShell>;
+    // Auth gate wraps the shell: anonymous visitors are redirected to
+    // /portal/auth before any portal UI renders (see PortalAuthGate).
+    return (
+        <PortalAuthGate>
+            <PortalWagmiShell>{children}</PortalWagmiShell>
+        </PortalAuthGate>
+    );
 }

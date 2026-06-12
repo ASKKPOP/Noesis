@@ -87,6 +87,14 @@ function PortalAuthPage() {
     const [tab, setTab] = useState<Tab>(() =>
         new URLSearchParams(window.location.search).get('tab') === 'join' ? 'join' : 'signin'
     );
+
+    // Post-login destination — honours ?next= (set by PortalAuthGate when an
+    // anonymous visitor hits a gated page). Internal /portal paths only, so
+    // the param can never become an open redirect.
+    const nextDest = () => {
+        const next = new URLSearchParams(window.location.search).get('next');
+        return next && next.startsWith('/portal') ? next : '/portal';
+    };
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [socialPending, setSocialPending] = useState<'google' | 'apple' | null>(null);
@@ -103,7 +111,7 @@ function PortalAuthPage() {
         if (currentUser.onboarded === false) {
             router.push('/portal/onboard');
         } else {
-            router.push('/portal');
+            router.push(nextDest());
         }
     }, [currentUser, router]);
 
@@ -145,15 +153,15 @@ function PortalAuthPage() {
                     if (!meData.onboarded) {
                         router.push('/portal/onboard');
                     } else {
-                        router.push('/portal');
+                        router.push(nextDest());
                     }
                 } else {
                     // /me failed but sign-in succeeded — go to portal
-                    router.push('/portal');
+                    router.push(nextDest());
                 }
             } catch {
                 // /me failed — store retains the partial user from /verify; non-fatal
-                router.push('/portal');
+                router.push(nextDest());
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'sign_in_failed');
@@ -214,13 +222,13 @@ function PortalAuthPage() {
                     if (!meData.onboarded) {
                         router.push('/portal/onboard');
                     } else {
-                        router.push('/portal');
+                        router.push(nextDest());
                     }
                 } else {
-                    router.push('/portal');
+                    router.push(nextDest());
                 }
             } catch {
-                router.push('/portal');
+                router.push(nextDest());
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : (isJoinTab ? 'sign_up_failed' : 'sign_in_failed'));
