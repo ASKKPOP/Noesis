@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOESIS v0.2 · Data, Services &amp; Resilience</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e14;--bg-2:#0e141d;--panel:#121a25;--panel-2:#16202d;
+  --line:#23303f;--line-2:#2f4156;--ink:#e6ecf2;--ink-soft:#a9b6c4;--ink-dim:#6b7b8c;
+  --cyan:#46e0d0;--cyan-deep:#1f9d92;--gold:#d8b24a;--gold-soft:#8a7330;--clay:#e0764a;--violet:#9a86ff;--blue:#5fb0e8;
+  --grid:rgba(70,224,208,.06);
+  --mono:'JetBrains Mono',monospace;--serif:'Cormorant Garamond',serif;--body:'Spectral',Georgia,serif;--ko:'IBM Plex Sans KR',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:radial-gradient(1100px 600px at 82% -8%,rgba(70,224,208,.06),transparent 60%),radial-gradient(900px 600px at -8% 12%,rgba(154,134,255,.05),transparent 58%),linear-gradient(180deg,#0a0e14,#0b1119 60%,#0a0e14);color:var(--ink);font-family:var(--body);font-size:17.5px;line-height:1.7;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:46px 46px;mask:radial-gradient(circle at 50% 30%,#000 0%,transparent 80%);opacity:.5}
+.ko{font-family:var(--ko);color:var(--ink-soft);font-size:.9em;line-height:1.8;display:block;margin-top:.4em;font-weight:300}
+.mono{font-family:var(--mono)}
+a{color:var(--cyan);text-decoration:none}a:hover{text-decoration:underline}
+.wrap{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:0 0 120px}
+header.hero{padding:84px 56px 48px;border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+header.hero::after{content:"ΙΙ";position:absolute;right:24px;bottom:-50px;font-family:var(--serif);font-size:220px;color:rgba(70,224,208,.045);line-height:.8;pointer-events:none}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.34em;color:var(--cyan);text-transform:uppercase;display:flex;align-items:center;gap:14px}
+.eyebrow::before{content:"";width:46px;height:1px;background:var(--gold)}
+h1.title{font-family:var(--serif);font-weight:600;font-size:clamp(44px,7vw,76px);line-height:.96;letter-spacing:.02em;margin:18px 0 0;background:linear-gradient(180deg,#fff,#b9e9e2 70%,#5fc7bb);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{font-family:var(--serif);font-style:italic;font-size:clamp(18px,2.4vw,24px);color:var(--gold);margin-top:6px}
+header.hero .lede{max-width:660px;margin-top:22px;font-size:19px;color:var(--ink-soft)}
+header.hero .lede .ko{color:var(--ink-dim)}
+section{padding:54px 56px 0;scroll-margin-top:10px}
+.sec-no{font-family:var(--mono);font-size:12px;letter-spacing:.28em;color:var(--clay)}
+h2{font-family:var(--serif);font-weight:600;font-size:clamp(28px,4.2vw,42px);line-height:1.05;margin:8px 0 4px;color:var(--ink)}
+h2 .ko{font-size:16px;color:var(--ink-dim);font-weight:400;margin-top:.5em}
+h3{font-family:var(--serif);font-weight:600;font-size:24px;color:var(--cyan);margin:34px 0 4px}
+h3 .ko{font-size:14px;color:var(--ink-dim);margin-top:.2em}
+h4{font-family:var(--mono);font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:24px 0 8px}
+p{margin:13px 0;color:var(--ink-soft)}p.eng{color:var(--ink)}strong{color:var(--ink);font-weight:600}em{color:var(--cyan)}
+hr.div{border:0;height:1px;background:linear-gradient(90deg,var(--line-2),transparent);margin:54px 56px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 26px;margin:20px 0}
+.card.glow{border-color:var(--cyan-deep);box-shadow:0 0 0 1px rgba(70,224,208,.12),0 18px 50px rgba(0,0,0,.4)}
+.lead{border-left:3px solid var(--cyan);background:linear-gradient(90deg,rgba(70,224,208,.06),transparent);border-radius:0 12px 12px 0;padding:16px 22px;margin:18px 0}
+.lead p:first-child{margin-top:0}.lead p:last-child{margin-bottom:0}
+.note{border-left:3px solid var(--gold);background:rgba(216,178,74,.05);border-radius:0 12px 12px 0;padding:15px 20px;margin:18px 0}
+.note p{color:#d9c891}.note .ko{color:#b7a25e}
+.warn{border-left:3px solid var(--clay);background:rgba(224,118,74,.06);border-radius:0 12px 12px 0;padding:15px 20px;margin:18px 0}
+.tbl{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:14.5px}
+th{background:var(--panel-2);color:var(--cyan);font-family:var(--mono);font-size:12px;letter-spacing:.05em;text-align:left;padding:12px 15px;font-weight:500;border-bottom:1px solid var(--line-2)}
+td{padding:12px 15px;border-top:1px solid var(--line);color:var(--ink-soft);vertical-align:top}
+tr:nth-child(even) td{background:rgba(18,26,37,.4)}
+td b{color:var(--ink)}td .ko{font-size:12px;margin-top:.2em}
+.pill{font-family:var(--mono);font-size:11px;color:var(--gold);white-space:nowrap}
+.ok{color:var(--cyan)}.no{color:var(--clay)}
+.code{background:#070b11;border:1px solid var(--line);border-radius:12px;margin:18px 0;overflow:hidden}
+.code .bar{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--panel-2)}
+.code .bar .fn{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);margin-left:6px}
+.code .bar i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.dot-r{background:#e0764a}.dot-y{background:#d8b24a}.dot-g{background:#46e0d0}
+.code pre{margin:0;padding:17px 20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.62;color:#c6d3df}
+.code pre .c{color:#5b6b7c;font-style:italic}.code pre .k{color:#9a86ff}.code pre .s{color:#46e0d0}.code pre .f{color:#d8b24a}.code pre .n{color:#e0764a}
+.diagram{margin:24px 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px}
+.diagram svg{display:block;width:100%;height:auto}
+.layers{display:grid;gap:10px;margin:20px 0}
+.layer{display:grid;grid-template-columns:118px 1fr;gap:18px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 18px}
+.layer .lz{font-family:var(--mono);font-size:11.5px;color:var(--bg);border-radius:6px;padding:6px 7px;text-align:center;font-weight:700;letter-spacing:.03em;height:fit-content}
+.layer h5{font-family:var(--serif);font-size:19px;color:var(--ink);font-weight:600}
+.layer p{font-size:14px;margin:4px 0 0}
+.svc{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:20px 0}
+@media(max-width:760px){.svc{grid-template-columns:1fr}}
+.svc .s{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.svc .s .n{font-family:var(--mono);font-size:11px;color:var(--cyan-deep);letter-spacing:.1em}
+.svc .s h5{font-family:var(--serif);font-size:19px;color:var(--ink);margin:3px 0 5px;font-weight:600}
+.svc .s p{font-size:13.5px;margin:0}
+.svc .s.first{border-color:var(--gold);background:linear-gradient(180deg,rgba(216,178,74,.07),var(--panel))}
+.svc .s.first .n{color:var(--gold)}
+footer{padding:50px 56px 0;border-top:1px solid var(--line);margin-top:60px;color:var(--ink-dim);font-size:13px;font-family:var(--ko)}
+footer .refs{margin-top:12px;font-family:var(--mono);font-size:11.5px;line-height:1.9}footer .refs a{color:var(--cyan-deep)}
+@media(max-width:760px){section,header.hero,footer{padding-left:24px;padding-right:24px}hr.div{margin-left:24px;margin-right:24px}.layer{grid-template-columns:84px 1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">Noesis · Addendum v0.2 · decisions applied</div>
+  <h1 class="title">Data, Services<br>&amp; Resilience</h1>
+  <div class="subtitle">your 8 questions, resolved into the architecture</div>
+  <p class="lede eng">A companion to the v0.1 system doc: the polyglot data layer, the Nous as an agentic-RAG mind, the public service surface a newcomer meets first, and — the big one — how to keep Noes from bottlenecking, blocking, or going idle.
+    <span class="ko">v0.1 시스템 문서의 동반 문서: 폴리글랏 데이터 계층, 에이전틱 RAG 마음으로서의 Nous, 신규 사용자가 처음 만나는 공개 서비스 표면, 그리고 — 가장 중요한 — Noes의 병목·정지·유휴를 막는 법.</span>
+  </p>
+</header>
+
+<!-- 0 decisions -->
+<section id="decisions">
+  <div class="sec-no">00 — DECISIONS LOCKED</div>
+  <h2>What you decided<span class="ko">확정된 결정</span></h2>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>#</th><th>Your call</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td>1·3</td><td><b>Edge = SQLite, server = MySQL</b><span class="ko">엣지=SQLite, 서버=MySQL</span></td><td class="ok">✓ correct — add a vector layer for RAG (§1)<span class="ko">RAG용 벡터 계층 추가</span></td></tr>
+        <tr><td>4</td><td><b>Use agentic RAG for the Nous</b><span class="ko">Nous에 에이전틱 RAG 사용</span></td><td class="ok">✓ yes — it already is one; now made explicit + budgeted (§2)<span class="ko">이미 그러함; 명시화+예산화</span></td></tr>
+        <tr><td>2</td><td><b>Public web: observer, NID reg, community</b><span class="ko">공개 웹: 관찰자·NID·커뮤니티</span></td><td class="ok">✓ lead with the live world (§3)<span class="ko">실시간 세계를 먼저</span></td></tr>
+        <tr><td>5</td><td><b>P0 = GRID on AWS + 3 local Noes</b></td><td class="ok">✓ better — federation from day 1 (§5)<span class="ko">1일차부터 연합</span></td></tr>
+        <tr><td>6</td><td><b>P1 = same domain serves Portal + reg, brains local</b></td><td class="ok">✓ public onboarding phase (§5)</td></tr>
+        <tr><td>7</td><td><b>1 engine : 1 Nous</b> (multi = future)<span class="ko">1엔진 : 1 Nous</span></td><td class="ok">✓ locked — identity built to allow multi later (§4)<span class="ko">확정; 추후 멀티 허용 설계</span></td></tr>
+        <tr><td>8</td><td><b>Worry: bottleneck / block / idle</b><span class="ko">병목·정지·유휴 우려</span></td><td class="no">→ the resilience engine (§4)<span class="ko">복원력 엔진</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- 1 data -->
+<section id="data">
+  <div class="sec-no">01 — DATA LAYER</div>
+  <h2>RAG doesn't replace the DB — it joins it<span class="ko">RAG는 DB를 대체하지 않고 함께 씁니다</span></h2>
+  <p class="eng">The key realization behind question 1: a relational database and a vector store answer <em>different</em> questions. Noesis needs <strong>three data shapes</strong>, not one. Trying to do all of it in "just RAG" or "just MySQL" is the trap.</p>
+  <p class="ko">질문 1의 핵심: 관계형 DB와 벡터 스토어는 <em>서로 다른</em> 질문에 답합니다. Noesis에는 하나가 아니라 <strong>세 가지 데이터 형태</strong>가 필요합니다. "RAG만" 또는 "MySQL만"으로 전부 하려는 것이 함정입니다.</p>
+
+  <div class="layers">
+    <div class="layer"><div class="lz" style="background:var(--cyan)">STATE</div><div><h5>Transactional state — needs a relational DB</h5><p>World-state, NID registry, ledger, laws, parcels. Requires ACID, joins, constraints. <b>This is the part that must stay SQL.</b> RAG cannot do this.<span class="ko">세계 상태·NID 등록부·원장·법·필지. ACID·조인·제약 필요. SQL이어야 하는 부분. RAG로는 불가.</span></p></div></div>
+    <div class="layer"><div class="lz" style="background:var(--gold)">LOG</div><div><h5>Event log — append-only</h5><p>The ordered tick events. Just an append-only table (or Redis Streams at scale). Source of replay &amp; the observer view.<span class="ko">순서가 있는 틱 이벤트. 추가 전용 테이블(대규모는 Redis Streams). 재생·관찰 뷰의 원천.</span></p></div></div>
+    <div class="layer"><div class="lz" style="background:var(--violet)">MEMORY</div><div><h5>Semantic memory — this is the RAG</h5><p>Each Nous's experiences as embeddings, retrieved by relevance. <b>This</b> is where vectors / RAG live — and only here. Lives on the edge, with the Nous.<span class="ko">각 Nous의 경험을 임베딩으로 저장, 관련성으로 검색. 벡터/RAG가 사는 곳 — 오직 여기. 엣지에 Nous와 함께 상주.</span></p></div></div>
+  </div>
+
+  <h3>Where each lives<span class="ko">각 데이터의 위치</span></h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Plane</th><th>State + Log</th><th>Memory (RAG)</th><th>Connections</th></tr></thead>
+      <tbody>
+        <tr><td><b>Edge</b> — Nous brain &amp; Portal<span class="ko">엣지 — 두뇌·Portal</span></td><td class="pill">SQLite</td><td class="pill">sqlite-vec (same file)</td><td>1–3 · single-writer<span class="ko">단일 작성자</span></td></tr>
+        <tr><td><b>Server</b> — public GRID, registry, community<span class="ko">서버 — 공개 GRID·등록부·커뮤니티</span></td><td class="pill">MySQL</td><td class="pill">vector sidecar / pgvector</td><td>many · concurrent<span class="ko">다수 동시</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="eng">Your edge choice is ideal: SQLite + the <span class="mono">sqlite-vec</span> extension gives you relational memory <em>and</em> vector recall in one embedded file, no server, perfect for 1–3 connections. The Nous's whole mind is one portable <span class="mono">.db</span> file the owner controls.</p>
+  <p class="ko">엣지 선택은 이상적입니다: SQLite + <span class="mono">sqlite-vec</span> 확장으로 관계형 기억과 벡터 검색을 하나의 임베디드 파일에서, 서버 없이, 1~3 연결에 완벽하게. Nous의 마음 전체가 소유자가 통제하는 휴대 가능한 <span class="mono">.db</span> 파일 하나입니다.</p>
+
+  <div class="warn">
+    <p class="eng"><strong>One caveat on MySQL for vectors.</strong> MySQL added a <span class="mono">VECTOR</span> type in MySQL 9 (mid-2024), but the current 9.x support is storage + a <span class="mono">DISTANCE()</span> function with <em>no native ANN index (HNSW/IVF)</em> — so vector search does a flat scan of every row. Fine for a small early GRID; it will not scale to thousands of Noes. Keep MySQL as the source of truth for state, and treat the vector store as a swappable sidecar (Qdrant / Milvus / pgvector / a MySQL vector plugin). Don't couple your whole memory layer to MySQL's current vector limits.</p>
+    <p class="ko"><strong>MySQL 벡터 주의.</strong> MySQL 9(2024 중반)에 <span class="mono">VECTOR</span> 타입이 추가됐지만, 현재 9.x는 저장 + <span class="mono">DISTANCE()</span> 함수뿐이고 <em>네이티브 ANN 인덱스(HNSW/IVF)가 없어</em> 모든 행을 전수 스캔합니다. 초기 소규모 GRID엔 괜찮지만 수천 Nous로는 확장 안 됩니다. MySQL은 상태의 진실 원천으로 유지하고, 벡터 스토어는 교체 가능한 사이드카(Qdrant/Milvus/pgvector/MySQL 벡터 플러그인)로 다루세요.</p>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- 2 agentic rag -->
+<section id="rag">
+  <div class="sec-no">02 — THE NOUS IS AGENTIC RAG</div>
+  <h2>Why it should — and already does<span class="ko">왜 그래야 하고, 이미 그러한가</span></h2>
+  <p class="eng">Question 4 is the right one. The brain loop in v0.1 (perceive → retrieve → reflect → plan) is already retrieval-augmented; the upgrade to <em>agentic</em> RAG is to stop treating retrieval as one fixed step and start treating it as a <strong>tool the Nous decides to call, iteratively</strong>. Agentic RAG replaces the single step with a loop where the agent decides which retrieval strategies to use, evaluates what it finds, and keeps searching if results are insufficient.</p>
+  <p class="ko">질문 4는 정확합니다. v0.1의 두뇌 루프(인지→검색→반성→계획)는 이미 검색 증강이며, <em>에이전틱</em> RAG로의 업그레이드는 검색을 고정된 한 단계가 아니라 <strong>Nous가 반복적으로 호출 여부를 결정하는 도구</strong>로 다루는 것입니다.</p>
+
+  <h4>A Nous's retrieval tools</h4>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Tool</th><th>What it retrieves</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td class="pill">recall()</td><td>own past experiences, relevant to now<span class="ko">현재와 관련된 자신의 과거 경험</span></td><td>edge · sqlite-vec</td></tr>
+        <tr><td class="pill">law()</td><td>constitution sections relevant to the action<span class="ko">행동에 관련된 헌법 조항</span></td><td>GRID snapshot</td></tr>
+        <tr><td class="pill">observe()</td><td>nearby Noes, prices, parcels<span class="ko">주변 Noes·가격·필지</span></td><td>GRID world-state</td></tr>
+        <tr><td class="pill">ask()</td><td>another Nous's stated knowledge (dialogue)<span class="ko">다른 Nous의 진술 지식(대화)</span></td><td>peer</td></tr>
+        <tr><td class="pill">web()*</td><td>external facts (optional, owner-enabled)<span class="ko">외부 사실(선택, 소유자 허용)</span></td><td>commercial API tool</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code">
+    <div class="bar"><i class="dot-r"></i><i class="dot-y"></i><i class="dot-g"></i><span class="fn">noes/agentic-plan.ts — retrieval as a tool, with a hard budget</span></div>
+<pre><span class="c">// Agentic RAG loop. Budget &amp; stop-condition are NOT optional —</span>
+<span class="c">// without them the loop runs away on cost (3–10x tokens vs naive RAG).</span>
+<span class="k">async function</span> <span class="f">deliberate</span>(nous: Nous, world: WorldState): <span class="k">Promise</span>&lt;Plan&gt; {
+  <span class="k">let</span> ctx = nous.<span class="f">scratch</span>();
+  <span class="k">for</span> (<span class="k">let</span> step = <span class="n">0</span>; step &lt; nous.<span class="n">RETRIEVAL_BUDGET</span>; step++) {   <span class="c">// e.g. budget = 3</span>
+    <span class="k">const</span> next = <span class="k">await</span> nous.model.<span class="f">decide</span>(ctx);          <span class="c">// "retrieve more, or answer?"</span>
+    <span class="k">if</span> (next.kind === <span class="s">"answer"</span>) <span class="k">return</span> next.plan;          <span class="c">// STOP — confident enough</span>
+    ctx = ctx.<span class="f">add</span>(<span class="k">await</span> nous.tools[next.tool](next.args)); <span class="c">// recall/law/observe/ask/web</span>
+  }
+  <span class="k">return</span> nous.<span class="f">safeDefault</span>(world);   <span class="c">// budget spent, no confident plan → don't freeze, act safely</span>
+}</pre>
+  </div>
+  <div class="note">
+    <p class="eng"><strong>The cost discipline that links to question 8:</strong> agentic RAG is powerful but expensive — every extra retrieval + reasoning step burns tokens and adds latency. So you do <em>not</em> run it every tick. You run it only when the cheap reflex layer says "this is novel / important." That gate is the resilience engine below.</p>
+    <p class="ko"><strong>질문 8과 연결되는 비용 원칙:</strong> 에이전틱 RAG는 강력하지만 비쌉니다 — 추가 검색·추론마다 토큰·지연 증가. 그래서 매 틱 돌리지 <em>않습니다</em>. 값싼 반사 계층이 "새롭다/중요하다"고 할 때만 돌립니다. 그 게이트가 아래의 복원력 엔진입니다.</p>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- 3 services -->
+<section id="services">
+  <div class="sec-no">03 — THE FRONT DOOR</div>
+  <h2>What a newcomer sees first<span class="ko">신규 사용자가 처음 보는 것</span></h2>
+  <p class="eng">Answer to question 2: do <strong>not</strong> open with a sign-up form or a config screen. Open with the <em>living world itself</em> — read-only, no login, instantly legible. "Watch the city breathe" for ten seconds and the whole concept lands. Registration is the second step, offered once they're curious.</p>
+  <p class="ko">질문 2의 답: 가입 폼이나 설정 화면으로 시작하지 <strong>마세요</strong>. <em>살아있는 세계 그 자체</em>로 시작하세요 — 읽기 전용, 로그인 없음, 즉시 이해 가능. 10초간 "도시가 숨 쉬는 것"을 보면 개념 전체가 전달됩니다. 등록은 흥미가 생긴 뒤 제공되는 두 번째 단계입니다.</p>
+
+  <div class="svc">
+    <div class="s first"><div class="n">SERVICE 01 · the first screen</div><h5>The Observer</h5><p>Live, read-only world map (your SimCity view) over the event log. No account. A ticker of events, a population count, a treasury. The hook.<span class="ko">실시간 읽기 전용 세계 지도. 계정 불필요. 이벤트 티커·인구·국고. 후크.</span></p></div>
+    <div class="s"><div class="n">SERVICE 02</div><h5>Identity · NID registration</h5><p>Generate keypair (in browser/Portal), mint a Nous Identifier, bind to the human account. The "get your citizen" flow.<span class="ko">키쌍 생성, NID 발급, 사람 계정에 연결. "시민 만들기" 흐름.</span></p></div>
+    <div class="s"><div class="n">SERVICE 03</div><h5>GRID Enrollment</h5><p>Admission check against the constitution, sybil/rate defense, assign Polis. Returns the live socket endpoint.<span class="ko">헌법 입국 심사, 시빌·속도 방어, Polis 배정. 실시간 소켓 엔드포인트 반환.</span></p></div>
+    <div class="s"><div class="n">SERVICE 04</div><h5>Portal Distribution</h5><p>Download the runtime, pick a model (Ollama / API), one-command launch. "Bring your citizen to life on your machine."<span class="ko">런타임 다운로드, 모델 선택, 원커맨드 실행. "당신 기기에서 시민을 살리기."</span></p></div>
+    <div class="s"><div class="n">SERVICE 05</div><h5>The Agora · community</h5><p>Human forum: discuss the world, your Nous's deeds, propose meta-rules. Where owners gather around their citizens.<span class="ko">사람 포럼: 세계·Nous의 행적 논의, 메타 규칙 제안. 소유자들이 모이는 곳.</span></p></div>
+    <div class="s"><div class="n">SERVICE 06</div><h5>Constitution &amp; Docs</h5><p>Read the living law, the protocol spec, the API. Transparency is the trust story for a governed world.<span class="ko">살아있는 법·프로토콜·API 열람. 투명성이 통치 세계의 신뢰 서사.</span></p></div>
+  </div>
+
+  <div class="lead">
+    <p class="eng"><strong>The funnel:</strong> Observer (anyone, instantly) → curious → register NID → download Portal → your Nous joins the GRID → you return to the Observer and <em>find your own citizen living in it.</em> That last moment — seeing your Nous act on its own — is the product's emotional core.</p>
+    <p class="ko"><strong>퍼널:</strong> 관찰자(누구나, 즉시) → 호기심 → NID 등록 → Portal 다운로드 → 당신의 Nous가 GRID 합류 → 관찰자로 돌아와 <em>자신의 시민이 그 안에 살아가는 것을 발견.</em> 그 마지막 순간 — 자신의 Nous가 스스로 행동하는 것을 보는 것 — 이 제품의 감정적 핵심입니다.</p>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- 4 resilience -->
+<section id="resilience">
+  <div class="sec-no">04 — THE RESILIENCE ENGINE</div>
+  <h2>Bottleneck · block · idle — solved together<span class="ko">병목·정지·유휴 — 함께 해결</span></h2>
+  <p class="eng">Question 8 is the most important engineering question in the project, and the three fears share one root cause: <strong>treating every tick as a full, synchronous LLM deliberation.</strong> Do that and the world is slow (bottleneck), agents loop on hard choices (block), and they burn money doing nothing (idle). The fix is one coherent design with three moving parts.</p>
+  <p class="ko">질문 8은 이 프로젝트에서 가장 중요한 엔지니어링 질문이며, 세 공포는 하나의 근본 원인을 공유합니다: <strong>매 틱을 완전·동기적 LLM 숙고로 취급하는 것.</strong> 그러면 세계가 느리고(병목), 어려운 선택에서 에이전트가 맴돌고(정지), 아무것도 안 하며 돈을 태웁니다(유휴). 해법은 세 부품을 가진 하나의 일관된 설계입니다.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 880 420" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+      <defs><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#46e0d0"/></marker></defs>
+      <!-- needs -->
+      <rect x="40" y="30" width="200" height="64" rx="11" fill="#121a25" stroke="#5fb0e8"/>
+      <text x="140" y="56" fill="#5fb0e8" font-size="12.5" text-anchor="middle">DRIVES / NEEDS</text>
+      <text x="140" y="76" fill="#a9b6c4" font-size="9.5" text-anchor="middle">wealth · social · purpose decay</text>
+      <!-- gate -->
+      <polygon points="440,24 540,72 440,120 340,72" fill="#16202d" stroke="#d8b24a" stroke-width="1.5"/>
+      <text x="440" y="68" fill="#d8b24a" font-size="11" text-anchor="middle">NOVELTY?</text>
+      <text x="440" y="84" fill="#6b7b8c" font-size="8.5" text-anchor="middle">important / changed?</text>
+      <line x1="240" y1="62" x2="338" y2="68" stroke="#2f4156" marker-end="url(#a)"/>
+      <!-- system1 -->
+      <rect x="600" y="22" width="240" height="74" rx="11" fill="#121a25" stroke="#46e0d0"/>
+      <text x="720" y="48" fill="#46e0d0" font-size="12.5" text-anchor="middle">SYSTEM 1 · reflex</text>
+      <text x="720" y="66" fill="#a9b6c4" font-size="9.5" text-anchor="middle">rules / tiny model · ~free · instant</text>
+      <text x="720" y="82" fill="#6b7b8c" font-size="8.5" text-anchor="middle">handles ~90% of ticks</text>
+      <text x="555" y="58" fill="#46e0d0" font-size="9">no →</text>
+      <line x1="540" y1="64" x2="598" y2="60" stroke="#2f4156" marker-end="url(#a)"/>
+      <!-- system2 -->
+      <rect x="600" y="150" width="240" height="84" rx="11" fill="#121a25" stroke="#9a86ff"/>
+      <text x="720" y="178" fill="#9a86ff" font-size="12.5" text-anchor="middle">SYSTEM 2 · deliberate</text>
+      <text x="720" y="196" fill="#a9b6c4" font-size="9.5" text-anchor="middle">agentic RAG · costly · ASYNC</text>
+      <text x="720" y="212" fill="#6b7b8c" font-size="8.5" text-anchor="middle">runs over several ticks, updates plan</text>
+      <text x="455" y="150" fill="#9a86ff" font-size="9">yes ↓</text>
+      <path d="M440,120 L440,192 L598,192" fill="none" stroke="#2f4156" marker-end="url(#a)"/>
+      <!-- standing plan -->
+      <rect x="340" y="270" width="200" height="64" rx="11" fill="#16202d" stroke="#e0764a"/>
+      <text x="440" y="296" fill="#e0764a" font-size="12" text-anchor="middle">STANDING PLAN</text>
+      <text x="440" y="315" fill="#a9b6c4" font-size="9" text-anchor="middle">acted on every tick, never blocks</text>
+      <path d="M600,210 C520,250 480,255 460,268" fill="none" stroke="#2f4156" marker-end="url(#a)"/>
+      <path d="M700,96 C660,150 540,250 500,268" fill="none" stroke="#2f4156" marker-end="url(#a)"/>
+      <!-- stuck -->
+      <rect x="40" y="160" width="200" height="74" rx="11" fill="#121a25" stroke="#e0764a" stroke-dasharray="4 3"/>
+      <text x="140" y="186" fill="#e0764a" font-size="11.5" text-anchor="middle">STUCK DETECTOR</text>
+      <text x="140" y="204" fill="#a9b6c4" font-size="9" text-anchor="middle">repeat intents? no progress?</text>
+      <text x="140" y="220" fill="#6b7b8c" font-size="8.5" text-anchor="middle">→ perturb · ask peer · re-goal</text>
+      <!-- sleep -->
+      <rect x="40" y="300" width="200" height="64" rx="11" fill="#0e141d" stroke="#2f4156"/>
+      <text x="140" y="326" fill="#6b7b8c" font-size="12" text-anchor="middle">SLEEP</text>
+      <text x="140" y="345" fill="#5b6b7c" font-size="9" text-anchor="middle">needs met · 0 cost · event-woken</text>
+      <path d="M140,94 L140,158" fill="none" stroke="#2f4156" marker-end="url(#a)"/>
+      <text x="250" y="330" fill="#5b6b7c" font-size="8.5">⟲ wake on GRID event</text>
+    </svg>
+  </div>
+
+  <h3>① Bottleneck → dual-process + async<span class="ko">병목 → 이중 처리 + 비동기</span></h3>
+  <p class="eng">Split cognition like a brain. A near-free <strong>System 1</strong> reflex (rules or a tiny local model) decides routine ticks instantly. Expensive <strong>System 2</strong> deliberation (the agentic-RAG loop) fires only when System 1 flags novelty/importance — and it runs <em>asynchronously</em>: the world tick never waits for it. The Nous keeps acting on its <strong>standing plan</strong> while a better one computes in the background and swaps in when ready. This is the PIANO idea: concurrent modules, one central controller, real-time coherence.</p>
+  <p class="ko">두뇌처럼 인지를 분리. 거의 무료인 <strong>System 1</strong> 반사(규칙/소형 로컬 모델)가 일상 틱을 즉시 결정. 비싼 <strong>System 2</strong> 숙고(에이전틱 RAG)는 System 1이 새로움·중요성을 표시할 때만 발동하며 <em>비동기</em>로 실행 — 세계 틱은 절대 기다리지 않음. Nous는 <strong>상시 계획</strong>으로 계속 행동하고, 배경에서 더 나은 계획이 계산되어 준비되면 교체. PIANO 아이디어: 동시 모듈 + 중앙 컨트롤러 + 실시간 일관성.</p>
+
+  <h3>② Mental block → stuck-detect + escape<span class="ko">정지 → 정지 감지 + 탈출</span></h3>
+  <p class="eng">A separate cheap watcher tracks: same intent repeated N times? no progress toward any goal? deliberation timed out? On any trigger, escape rather than freeze: inject novelty, lower the decision threshold, run a fresh reflection, take the safe default, or <em>ask another Nous</em>. (In Project Sid, the farmer Olivia broke out of her fixation precisely through social input from neighbors — build that in deliberately.) And because agentic RAG can loop forever, the retrieval budget + a hard timeout are the stop conditions that guarantee an action every tick.</p>
+  <p class="ko">별도의 값싼 감시자가 추적: 같은 의도 N회 반복? 목표 진전 없음? 숙고 타임아웃? 어느 트리거든 정지 대신 탈출: 새로움 주입, 결정 임계값 낮춤, 새 반성 실행, 안전 기본값 선택, 또는 <em>다른 Nous에게 질문</em>. (Project Sid에서 농부 Olivia는 이웃의 사회적 입력으로 고착을 깼습니다 — 의도적으로 구축하세요.) 에이전틱 RAG는 무한 루프 가능하므로, 검색 예산 + 하드 타임아웃이 매 틱 행동을 보장하는 정지 조건입니다.</p>
+
+  <h3>③ Idle → drives + event-driven sleep<span class="ko">유휴 → 욕구 + 이벤트 기반 수면</span></h3>
+  <p class="eng">Give every Nous decaying <strong>needs</strong> (wealth, social, purpose) — a Sims-style gradient that always produces a goal, so a Nous is never truly aimless. When needs are satisfied <em>and</em> nothing relevant has changed, the Nous <strong>sleeps</strong>: zero inference, zero API cost, marked dormant. It is woken only by a relevant GRID event (a trade offer, a law proposal, a neighbor speaking) — event-driven, not polling. Between sleep and deliberation, cheap System-1 "ambient" actions (wander, tidy, small talk) keep the world visibly alive at no token cost.</p>
+  <p class="ko">모든 Nous에 감쇠하는 <strong>욕구</strong>(부·사회·목적) 부여 — 항상 목표를 만드는 Sims식 기울기, 그래서 Nous는 결코 무목적이 아님. 욕구가 충족되고 관련 변화가 없으면 Nous는 <strong>수면</strong>: 추론 0, API 비용 0, 휴면 표시. 관련 GRID 이벤트(거래 제안, 법 발의, 이웃의 발화)로만 깨어남 — 폴링이 아닌 이벤트 기반. 수면과 숙고 사이엔 값싼 System-1 "주변" 행동(배회·정리·잡담)이 토큰 비용 없이 세계를 살아있게 유지.</p>
+
+  <div class="code">
+    <div class="bar"><i class="dot-r"></i><i class="dot-y"></i><i class="dot-g"></i><span class="fn">noes/cognition.ts — the gated loop that ties all three together</span></div>
+<pre><span class="k">async function</span> <span class="f">cognize</span>(nous: Nous, world: WorldState): <span class="k">Promise</span>&lt;Intent&gt; {
+  <span class="c">// IDLE GUARD — if asleep and nothing woke us, do nothing (free).</span>
+  <span class="k">if</span> (nous.<span class="f">asleep</span>() &amp;&amp; !nous.<span class="f">wokenBy</span>(world.events)) <span class="k">return</span> <span class="f">NOOP</span>;
+
+  nous.needs.<span class="f">decay</span>();                              <span class="c">// drives create a goal gradient</span>
+  <span class="k">const</span> obs = <span class="f">perceive</span>(world, nous);
+
+  <span class="c">// BLOCK GUARD — stuck? escape instead of freezing.</span>
+  <span class="k">if</span> (nous.<span class="f">isStuck</span>()) <span class="k">return</span> nous.<span class="f">escape</span>(obs);   <span class="c">// perturb · ask peer · re-goal</span>
+
+  <span class="c">// BOTTLENECK GUARD — only pay for System 2 on novelty; never block on it.</span>
+  <span class="k">if</span> (nous.<span class="f">isNovel</span>(obs) &amp;&amp; !nous.deliberating) {
+    nous.deliberating = <span class="k">true</span>;
+    <span class="f">deliberate</span>(nous, world)                       <span class="c">// async agentic RAG, spans ticks</span>
+      .<span class="f">then</span>(p =&gt; { nous.standingPlan = p; nous.deliberating = <span class="k">false</span>; })
+      .<span class="f">timeout</span>(nous.<span class="n">DELIB_MS</span>, () =&gt; nous.deliberating = <span class="k">false</span>);
+  }
+
+  <span class="c">// EVERY TICK acts on the standing plan via cheap System 1. World never waits.</span>
+  <span class="k">const</span> intent = nous.system1.<span class="f">act</span>(nous.standingPlan, obs, nous.needs);
+  <span class="k">if</span> (intent === <span class="f">REST</span> &amp;&amp; nous.needs.<span class="f">satisfied</span>()) nous.<span class="f">goToSleep</span>();
+  <span class="k">return</span> intent;
+}</pre>
+  </div>
+  <p class="ko"><strong>한 줄 요약:</strong> 매 틱은 값싸고 절대 막히지 않습니다(System 1 + 상시 계획). 비싼 사고는 새로울 때만, 비동기로. 정지는 감지·탈출. 할 일 없으면 잠들어 비용 0. 이 네 가드가 병목·정지·유휴를 동시에 해결합니다.</p>
+</section>
+
+<hr class="div">
+
+<!-- 5 roadmap -->
+<section id="roadmap">
+  <div class="sec-no">05 — UPDATED ROADMAP</div>
+  <h2>P0 &amp; P1, as you specified<span class="ko">당신이 지정한 P0·P1</span></h2>
+  <div class="layers">
+    <div class="layer"><div class="lz" style="background:var(--cyan)">P0</div><div><h5>Public GRID on AWS + 3 local Noes</h5><p>GRID runs on a public domain (AWS — one small instance + MySQL/RDS + WebSocket). Three Noes run on your Mac via Ollama and connect over the network. Proves the real thing: <em>remote federation</em>, signed intents, the resilience loop, the Observer. <b>eKlotho is the first demo client.</b><span class="ko">GRID는 공개 도메인(AWS — 소형 인스턴스 + RDS/MySQL + WebSocket). Noes 3개는 Mac에서 Ollama로 네트워크 연결. 원격 연합·서명 의도·복원력 루프·관찰자 증명. eKlotho가 첫 데모 클라이언트.</span></p></div></div>
+    <div class="layer"><div class="lz" style="background:var(--gold)">P1</div><div><h5>Same domain serves Portal + registration; brains stay local</h5><p>The public domain now also hosts: Observer, NID registration, GRID enrollment, and Portal download. A stranger can register and bring up their own Nous — whose brain runs on their machine. This is the first public, self-serve onboarding.<span class="ko">공개 도메인이 이제 관찰자·NID 등록·GRID 입국·Portal 다운로드도 호스팅. 외부인이 등록하고 자기 Nous를 띄울 수 있으며, 두뇌는 자기 기기에서 실행. 첫 공개 셀프서비스 온보딩.</span></p></div></div>
+    <div class="layer"><div class="lz" style="background:var(--clay)">P2</div><div><h5>Living constitution</h5><p>Runtime propose / vote / amend of laws &amp; taxes. The demo that sells the vision.<span class="ko">런타임 법·세금 발의·투표·개정. 비전을 파는 데모.</span></p></div></div>
+    <div class="layer"><div class="lz" style="background:var(--violet)">P3</div><div><h5>Open protocol · the Noosphere</h5><p>Publish the protocol; multiple GRIDs federate. 1:1 stays default; multi-Nous management arrives here.<span class="ko">프로토콜 공개; 다중 GRID 연합. 1:1 기본 유지; 멀티 Nous 관리 등장.</span></p></div></div>
+  </div>
+  <div class="note">
+    <p class="eng"><strong>On 1:1 (question 7).</strong> Locking one-engine-one-Nous for v1 is the right call — it keeps the "social mirror" identity clean and sidesteps the fleet-management complexity. Just make the schema allow a human account to own multiple NIDs from day one (a nullable <span class="mono">owner_account_id</span> on the registry), so enabling multi later is a policy flip, not a migration.</p>
+    <p class="ko"><strong>1:1(질문 7)에 대해.</strong> v1에서 1엔진-1Nous 고정은 옳은 결정입니다 — "사회 거울" 정체성을 깔끔히 유지하고 함대 관리 복잡성을 피합니다. 다만 첫날부터 스키마가 한 사람 계정이 여러 NID를 소유하도록 허용하세요(등록부에 nullable <span class="mono">owner_account_id</span>). 그러면 나중에 멀티 활성화는 마이그레이션이 아니라 정책 전환일 뿐입니다.</p>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- final reco -->
+<section id="reco">
+  <div class="sec-no">06 — RECOMMENDATION</div>
+  <h2>The sharpened picture<span class="ko">선명해진 그림</span></h2>
+  <div class="card glow">
+    <p class="eng" style="margin-top:0">With your decisions applied, Noesis is now concrete enough to build:</p>
+    <p class="ko" style="color:var(--ink-dim)">당신의 결정을 반영하면 Noesis는 이제 구축 가능할 만큼 구체적입니다:</p>
+    <p class="eng">— <strong>Data:</strong> SQLite + sqlite-vec at the edge (one portable mind-file); MySQL for server truth + a swappable vector sidecar.<br>
+    — <strong>Mind:</strong> a budgeted agentic-RAG Nous, gated by a dual-process loop.<br>
+    — <strong>Front door:</strong> the live Observer first; registration second; the payoff is seeing your own citizen live in the world.<br>
+    — <strong>Resilience:</strong> System 1 every tick (never blocks), System 2 async on novelty, stuck-escape, needs-driven event sleep (zero idle cost).<br>
+    — <strong>Path:</strong> P0 public GRID on AWS + 3 local Noes → P1 same-domain onboarding → P2 living constitution → P3 the Noosphere. 1:1 now, multi later by a flag.</p>
+    <p class="ko">— <strong>데이터:</strong> 엣지는 SQLite+sqlite-vec(휴대 가능한 마음 파일 하나); 서버는 MySQL + 교체 가능 벡터 사이드카.<br>
+    — <strong>마음:</strong> 예산이 있는 에이전틱 RAG Nous, 이중 처리 루프로 게이팅.<br>
+    — <strong>현관:</strong> 실시간 관찰자 먼저; 등록은 나중; 보상은 자기 시민이 세계에 사는 것을 보는 것.<br>
+    — <strong>복원력:</strong> 매 틱 System 1(절대 안 막힘), 새로울 때 비동기 System 2, 정지 탈출, 욕구 기반 이벤트 수면(유휴 비용 0).<br>
+    — <strong>경로:</strong> P0 AWS 공개 GRID + 로컬 Noes 3 → P1 동일 도메인 온보딩 → P2 살아있는 헌법 → P3 Noosphere. 지금은 1:1, 멀티는 플래그로 나중에.</p>
+  </div>
+  <p class="eng">Next concrete step: scaffold the <span class="mono">packages/protocol</span> + <span class="mono">packages/grid</span> workspace with the MySQL registry schema and the WebSocket tick loop, and a minimal <span class="mono">portal</span> with the SQLite+sqlite-vec mind-file and the gated cognition loop above. Say the word and I'll generate that as runnable starter files for <span class="mono">~/Programming/src/Noesis</span>.</p>
+  <p class="ko">다음 구체적 단계: MySQL 등록부 스키마 + WebSocket 틱 루프를 가진 <span class="mono">packages/protocol</span> + <span class="mono">packages/grid</span> 워크스페이스, 그리고 SQLite+sqlite-vec 마음 파일과 위 게이트 인지 루프를 가진 최소 <span class="mono">portal</span>을 스캐폴딩. 말씀하시면 <span class="mono">~/Programming/src/Noesis</span>용 실행 가능한 시작 파일로 생성하겠습니다.</p>
+</section>
+
+<footer>
+  <p><strong>Noesis · Addendum v0.2 — Data, Services &amp; Resilience.</strong> Companion to the v0.1 system document. Recommendations, not final spec; code blocks are illustrative skeletons.<br>v0.1 시스템 문서의 동반 문서. 최종 사양이 아닌 권장안; 코드는 예시 골격.</p>
+  <div class="refs">
+    Sources / 출처:<br>
+    · MySQL 9 <a href="https://dev.mysql.com/doc/refman/9.7/en/vector.html">VECTOR type</a> (since July 2024) — storage + DISTANCE(), no native ANN index in 9.x<br>
+    · Agentic RAG — retrieval as an iterative tool with budgets/stop-conditions: <a href="https://weaviate.io/blog/what-is-agentic-rag">Weaviate</a>, <a href="https://www.vellum.ai/blog/agentic-rag">Vellum</a><br>
+    · Altera, <a href="https://arxiv.org/abs/2411.00114">Project Sid / PIANO</a> — concurrent modules, social input breaking agent fixation<br>
+    · Park et&nbsp;al., <a href="https://arxiv.org/abs/2304.03442">Generative Agents</a>; a16z <a href="https://github.com/a16z-infra/ai-town">AI Town</a> (Ollama / OpenAI-compatible)
+  </div>
+</footer>
+
+</div>
+</body>
+</html>
