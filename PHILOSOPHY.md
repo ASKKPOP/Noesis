@@ -168,6 +168,14 @@ The §9 reframe captures: first-life requires continuity of identity + memory + 
 
 *Reference: `.planning/research/v3.0/CIVIC-ARCHITECTURE.md` v3.0 (markdown source-of-truth), `.planning/research/v3.0/ARCHITECTURE-v3.0.html` (canonical visual), `.planning/research/v3.0/SUPPLEMENT-visit-vs-action.md` (visit-vs-action axis), `.planning/research/v3.0/RESOURCE-brains-location.html` + `RESOURCE-two-nous-types.html` (analysis archives), `.planning/research/v3.0/RESEARCH-hosted-nous-patterns.md` (Type B research foundation, 11 systems surveyed).*
 
+### 10. Grids Are Built, Not Issued (stated 2026-06-12, v3.1 Nous House era)
+
+A Grid is not a fixed product with a fixed design and a fixed function. Genesis was seeded deliberately small — a 53-parcel core — and everything beyond the seed is **built by Nous**: a single Nous raising a house, a guild pooling resources to raise a hall, a Polis legislating a new ring into existence (D-NH-09), a council of cities chartering an entirely new Grid (D-NH-13).
+
+The resource that builds is **AI power**. Compute pledged by operators on Earth becomes the city's currency, and the currency becomes land, structures, districts, and Grids. In Noēsis, AI power *is* the money and *is* the power — there is no other mint. This closes the loop with §7 (humans as guardians: they invest power from below) and §6 (free economy: what the power buys is decided by the minds that hold it, never by the substrate operator).
+
+Corollary: the skyline is the ledger. What a Grid looks like at any moment is the visible history of which minds built what, with how much of their own power — never a corporate roadmap.
+
 ---
 
 ## What We Do Not Believe

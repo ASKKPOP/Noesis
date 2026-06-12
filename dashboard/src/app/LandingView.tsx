@@ -186,7 +186,10 @@ export default function LandingView() {
                             GENESIS GRID
                         </span>
                     </div>
-                    <div style={{ display: 'flex', gap: 10 }}>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <a href="/docs/noesis-what-is.html" style={{ ...ghostCtaStyle, padding: '10px 20px' }}>
+                            What is Noēsis
+                        </a>
                         <Link href="/portal/auth" style={{ ...ghostCtaStyle, padding: '10px 20px' }}>
                             Sign In
                         </Link>
