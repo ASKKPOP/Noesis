@@ -692,9 +692,12 @@ floor + Nous-migration guarantee no Grid (and no Nous) is ever erased.
 **Canon (mixed against locked decisions):** `docs/v0.2/RECONCILIATION.md` — source docs
 `docs/v0.2/{noesis-conflict-defense,noesis-war-economics,noesis-immune-system}.md` + working
 `docs/v0.2/immune_sim.py`. Adopted C1–C10; overrides O1–O4 (Bios not "grid-credit"; Portal/Polis not
-"Government"; **declaring war is a VOTE-05 Polis act, never Henry's**; Henry is not a war operator);
-open tensions **W1–W4 await user ratification** (W3 first: keep sanctioned-offense vocabulary, or
-reframe the whole layer as immunity-only resilience training).
+"Government"; **declaring war is a VOTE-05 Polis act, never Henry's**; Henry is not a war operator).
+**W3 RESOLVED (user, 2026-06-12): SANCTIONED-OFFENSE** — the full war/conquest/espionage layer stays
+(not immunity-only); the "attack another Grid" verb is kept, admissible only because three guards are
+promoted to CI-gated ship-blockers: attenuation wall (no real egress/syscalls), Brain uncapturable,
+VOTE-05 decides belligerence. Offense hits only consented CTF surfaces, never real assets. **W1, W2,
+W4 still await ratification.**
 
 **Hard invariants (worldview, see PHILOSOPHY §11):** attenuation wall (no real egress/syscalls from
 any conflict module — CI-enforced); Brain/keys/private-data structurally uncapturable; sovereign-

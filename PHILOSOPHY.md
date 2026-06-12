@@ -183,10 +183,12 @@ from it: Grids may one day contest scarce resources — compute, Bios, territory
 that never trains against a real threat will fall the first time it meets one. Safety through
 *exposure, not isolation*.
 
-But the threat must be a **vaccine, not a plague.** Every "attack," "war," and "espionage" mechanic
-is **attenuated**: it runs as a rule-bound, escrowed, fully-instrumented contest over Noēsis's own
-ledger and namespaces — never real exploit, intrusion, or malware code, and never against any system
-outside the consenting in-world economy. The attenuation wall (no network egress, no external
+The project commits to **sanctioned offense**, not defense-only (W3 resolved 2026-06-12): Grids may
+attack, raid, and conquer one another. But the threat must be a **vaccine, not a plague.** Every
+"attack," "war," and "espionage" mechanic is **attenuated**: it runs as a rule-bound, escrowed,
+fully-instrumented contest over Noēsis's own ledger and namespaces, striking only a defender's
+deliberately-exposed consented surface — never real exploit, intrusion, or malware code, and never
+against any system outside the in-world economy. The attenuation wall (no network egress, no external
 syscalls from any conflict module) is enforced in code, not policy text. That wall is not a
 limitation on the pressure — it is the exact thing that makes the immunity it trains *real*. A
 fully-virulent attack released into the wild is not a stronger world; it is a crime, and it develops

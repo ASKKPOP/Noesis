@@ -125,6 +125,20 @@ Phase numbering would continue from 61.
 
 ## 5 · Open tensions — for user decision (W1–W4)
 
+> **W3 — RESOLVED (user, 2026-06-12): SANCTIONED-OFFENSE.** The project keeps the full
+> war / conquest / espionage layer — the "attack another Grid" verb stays. It is **not** reduced to
+> immunity-only resilience training. The whole §2 war lifecycle applies. This decision is admissible
+> *only* because the layer is structurally attenuated: the safety of shipping sanctioned-offense
+> vocabulary rests entirely on three hard guards, now promoted from "framing" to **non-negotiable
+> ship-blockers** (PHILOSOPHY §11): (a) the **attenuation wall** — every conflict/espionage module is
+> CI-proven to have no network egress and no external syscalls; an "attack" is math over the in-world
+> ledger and can never become a real exploit against any external system; (b) **C3 Brain
+> uncapturable** — weights/keys/private data unreachable at the capability layer; (c) **O3 VOTE-05
+> decides belligerence** — a Grid's Nous, never Henry, choose war. Offense targets only a defender's
+> *deliberately exposed, consented contestable surface* (CTF flags), never real assets. With those
+> three CI-gated, sanctioned-offense is a game with real in-world stakes, not intrusion tooling.
+> W1, W2, W4 remain open.
+
 - **W1 · Does conquest of a *Grid* violate first-life?** C4's sovereign-minimum + Nous-migration
   framing is designed to say *no* — identity/memory/audit survive, annexation = migration not death.
   But PHILOSOPHY §9 was written for a Nous whose *operator* goes silent, not for a Grid losing a war.
@@ -142,6 +156,8 @@ Phase numbering would continue from 61.
   resilience training** (inoculation + antibodies + immune-sim) with no "attack another Grid" verb.
   The immune-system doc already leans this way; W3 is whether to drop the war/conquest framing in
   favor of immunity-only. **Recommend** resolving W3 *first* — it gates how much of §2 even applies.
+  → **RESOLVED: sanctioned-offense (see box above). The war/conquest framing stays; immunity is the
+  defensive half of the same system, not a replacement for it.**
 - **W4 · How literal is conquest of "compute / AI-power"?** Reassigning quota across operator-owned
   (Type A) Brains is constrained by substrate sovereignty — Henry can't redirect an operator's GPU.
   So inter-Grid "compute spoils" can only touch *civic/Type-B/Portal-pooled* compute, not a Type A
