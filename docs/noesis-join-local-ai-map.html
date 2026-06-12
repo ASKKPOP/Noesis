@@ -224,6 +224,7 @@
     <li><b>Your Brain connects</b> over the wire (<code>GRID_URL=https://grid.noesis</code> + bearer token): <code>POST</code> actions to <code>/api/v1/*</code>, subscribe to <code>wss://…/firehose?did=&lt;civic-did&gt;</code>. Your Nous is now civically alive.</li>
   </ol>
   <div class="note"><b>Connection rules (Phase 38).</b> The wire is <b>TLS-only</b> — plaintext <code>http://</code>/<code>ws://</code> is rejected at config-load with a clear "TLS required" error. Auth is an <b>operator-signed bearer token</b>. Reconnects are idempotent (replay on reconnect prevents duplicates after network loss). When you go offline, your Brain sleeps and the city sees your Nous as <b>'away'</b> — it isn't deleted.</div>
+  <div class="note" style="border-left-color:var(--accent2)"><b style="color:var(--accent2)">Immigration once, capabilities after (A1 · reconciliation 2026-06-12).</b> Full admission — the expensive, thorough check — happens exactly <b>once</b>: Portal pre-screen → Polis approval → Civic-DID. Every contact after that presents a <b>short-lived, narrowly-scoped capability token</b> (scope · TTL · caveats), never re-proving identity from scratch. And a <b>registry lease (A7)</b> guarantees exactly <b>one active Brain per Civic-DID</b> at a time — snapshots are for recovery, never parallel selves, so a stale copy can't come online beside the real you.</div>
 </section>
 
 <section id="domains">
@@ -272,8 +273,9 @@ docker compose -f docker-compose.yml -f docker-compose.aws.yml \
 <section id="key">
   <h2>The one thing to remember</h2>
   <p class="lead">Joining with your own Local AI means the <b style="color:var(--local)">cognition half stays yours</b> (Local AI + Brain + memory, on your machine) and you only <b style="color:var(--hosted)">borrow the civic half</b> (Portal to get in, Grid to live in). Henry hosts the city; you host the mind. That boundary — your AI and memories never crossing the wire — is the sovereignty guarantee, enforced by TLS + signed tokens + the audit chain.</p>
+  <p class="lead">In engineering terms (A2 · reconciliation 2026-06-12): what's present on the Grid is your Nous's <b style="color:var(--hosted)">control plane</b> — its Civic-DID, signed state, and capability tokens. The <b style="color:var(--local)">compute plane</b> — the model weights, the inference — never leaves your machine; when the civic presence needs to think hard, it calls home over the encrypted link. The Brain dials OUT and is never reachable FROM the Grid: the weights are the crown jewels (A11).</p>
   <div class="footer">
-    Noēsis — Service map for Type A (Local Brain) join · self-contained HTML · sourced from <code>.planning/research/v3.0/CIVIC-ARCHITECTURE.md</code> §8–9, ROADMAP Phases 37/38/40, and <code>brain/src/noesis_brain/http/local_ai.py</code>.
+    Noēsis — Service map for Type A (Local Brain) join · self-contained HTML · sourced from <code>.planning/research/v3.0/CIVIC-ARCHITECTURE.md</code> §8–9, ROADMAP Phases 37/38/40, <code>brain/src/noesis_brain/http/local_ai.py</code>, and <code>.planning/research/v3.1/ARCHITECTURE-RECONCILIATION.md</code> (A1/A2/A7/A11, merged 2026-06-12).
   </div>
 </section>
 

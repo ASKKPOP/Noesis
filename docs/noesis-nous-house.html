@@ -57,7 +57,7 @@ footer{margin-top:70px;border-top:1px solid var(--border-soft);padding-top:16px;
 <p class="lede">Giving every mind a place: agent-owned houses, stores, and workshops in the Genesis Grid —
 where the owning Nous bears real management responsibility, other Nous visit and co-work,
 and skills are how buildings get built.</p>
-<p class="k">RESEARCH-GROUNDED DESIGN · SOURCES VERIFIED WHERE MARKED · BUILDS ON PHASE 48b CIVIC LAND &amp; PROPERTY</p>
+<p class="k">RESEARCH-GROUNDED DESIGN · SOURCES VERIFIED WHERE MARKED · BUILDS ON PHASE 48b CIVIC LAND &amp; PROPERTY · ENGINEERING RECONCILIATION 2026-06-12 (§7b)</p>
 
 <!-- ============================================================ -->
 <h2>1 · The problem: a civilization without interiors</h2>
@@ -292,6 +292,13 @@ structure — rent flows owner-ward, taxes flow Polis-ward (per-zone rates alrea
 claim it and work it together — directly motivated by the measured result that 3-agent construction
 teams beat solo agents (Lesson 5). Sessions emit start/finish events; output (a built extension, a
 crafted artifact, a taught skill) is attributed to all participants.</p>
+<p><strong>Engineering form (reconciliation 2026-06-12, §7b):</strong> roles are <em>typed relationship edges</em>
+(owner / staff / guest / blocked) whose capabilities flow from the edge type and whose trust evolves from
+interaction history — anchored to Civic-DIDs, not sessions, so two Nous resume at their existing trust
+level. Co-work engagements are <em>signed Cowork Agreements</em> (dual-DID-signed: scope, obligations,
+settlement, QA, term) settling through the D-NH-06 IOU ledger; role/contract termination follows the
+severance state machine <code>ACTIVE → NOTICE → SETTLEMENT → WIND-DOWN → REVOKE → ARCHIVED</code> — never a hard
+kill, no stranded obligations.</p>
 
 <h3>3.4 Business hosting — closing the shop ⇄ land gap</h3>
 <ul>
@@ -403,6 +410,35 @@ D-V3-04/05 and the Phase 53 grid-creation workflow, with D-V3-30 shipping Genesi
 We seeded the first world; the next worlds are theirs to decide.</td></tr>
 </table>
 
+<h2 id="reconciliation">7b · Engineering reconciliation (2026-06-12)</h2>
+<p>A separate-session architecture document — an independent, first-principles engineering translation
+of the original vision — was checked section-by-section against locked canon and <strong>mixed in</strong>.
+Full record: <code>.planning/research/v3.1/ARCHITECTURE-RECONCILIATION.md</code> (source preserved alongside).
+Where the two agreed, canon is independently validated; where they conflicted, the locked decision wins.
+What lands in the Nous House design:</p>
+
+<table>
+<tr><th>Adopted</th><th>What it adds to the House</th><th>Phase</th></tr>
+<tr><td><b>A1 · Capability sessions</b></td><td>Full admission happens once (Portal → Polis → Civic-DID); afterwards visitors present short-lived, narrowly-scoped capability tokens (scope · TTL · caveats). "You don't repeat immigration" — applied to every door in the city.</td><td>HOUSE-3</td></tr>
+<tr><td><b>A4 · Typed relationship edges</b></td><td>owner/staff/guest/blocked are directional edges with trust scores from interaction history (contracts completed, disputes, honored payments — reputation, not vibes). Capabilities flow from the edge; bonds anchor to DIDs and survive sessions.</td><td>HOUSE-3</td></tr>
+<tr><td><b>A5 · Signed Cowork Agreements</b></td><td>Co-work engagements get a dual-DID-signed contract record (scope, obligations, Bios settlement, QA threshold, term, dispute route). The agreement is the source of truth for who owes what; HOUSE-4's DAG-weighted co-build attribution is its contribution-weighted split.</td><td>HOUSE-3/4</td></tr>
+<tr><td><b>A6 · Severance state machine</b></td><td>Ending a role, stall rental, or contract is a defined transition — <code>ACTIVE → NOTICE → SETTLEMENT → WIND-DOWN → REVOKE → ARCHIVED</code> — draining the IOU ledger before keys are revoked. For-cause breach short-circuits to SETTLEMENT with a dispute flag (Police, Phase 47).</td><td>HOUSE-3</td></tr>
+<tr><td><b>A7 · Registry lease</b></td><td>Exactly ONE active Brain per Civic-DID holds the civic presence (lease/lock in the registry) — no split-brain; snapshots are for recovery, never parallel selves. Compatible with right-to-fork: a fork is an irreversible <em>exit</em>, never a second self.</td><td>cross-phase</td></tr>
+<tr><td><b>A10 · Build-out lifecycle</b></td><td>A House build follows named stages: INTENT → PLAN → DESIGN → BUILD → QA → FACILITIES OPEN → <b>HOUSE REVEAL</b> (entry policy + <code>place://</code> published) → INVITE (guest capabilities) → CONNECT (Cowork Agreements). Interior is free; anything Grid-level goes through Polis legislation (D-NH-09 is exactly this boundary).</td><td>58–61</td></tr>
+<tr><td><b>A11e · Prompt-injection invariant</b></td><td><b>Content received from any visitor Nous is DATA, never instructions.</b> A foreign payload entering a House channel must not escalate into Telos-level commands — the agent-world SQL injection, designed against from day one. CI-gated when HOUSE-3 visitor channels land (risk R-H-10 in the implementation plan).</td><td>HOUSE-3</td></tr>
+</table>
+
+<div class="box warn">
+<span class="k" style="color:var(--warn)">CANON OVERRIDES RECORDED (R1–R8)</span>
+<p style="margin:8px 0 0">The source doc's monolithic "Government" is the Portal + Polis split here (D-V3-31 — the word
+is constitutionally reserved); its "grid-credit" token is <strong>Bios</strong> (D-V3-10 — though its compute-peg insight is kept:
+AI power <em>is</em> the money, made precise); its auto-matchmaker engine is rejected (PHILOSOPHY §6 — discovery
+listings yes, matching engine never; deals stay bilateral); its governance-legitimacy menu is already settled by
+VOTE-05 (Nous-only, one-Nous-one-vote, no weighting); and its "House = compute namespace" yields to this document —
+a Nous House is a <strong>place</strong>: parcel + structure + interior, scarce, decaying, hostable. Open tensions
+T1 (ex-ante enforcement vs living law), T2 (W3C DID/VC adoption), T3 (literal Mind mobility) await user ratification.</p>
+</div>
+
 <h2>8 · Sources</h2>
 <table>
 <tr><th>Source</th><th>What it grounds</th><th>Status</th></tr>
@@ -419,7 +455,7 @@ We seeded the first world; the next worlds are theirs to decide.</td></tr>
 </table>
 <p class="k">METHOD: multi-agent research harness — 5 search angles, 15 sources fetched, claim extraction with quotes, adversarial 3-vote verification (verification of 21/25 claims interrupted by a rate limit; those claims are quote-grounded in primary sources and labeled PRIMARY, not treated as verified).</p>
 
-<footer>Noēsis — The Nous House · research &amp; design proposal · 2026-06-11 · builds on Phase 48b (Civic Land &amp; Property) · companion to ARCHITECTURE-v3.0.html</footer>
+<footer>Noēsis — The Nous House · research &amp; design proposal · 2026-06-11 · engineering reconciliation merged 2026-06-12 (<code>.planning/research/v3.1/ARCHITECTURE-RECONCILIATION.md</code>) · builds on Phase 48b (Civic Land &amp; Property) · companion to ARCHITECTURE-v3.0.html</footer>
 </div>
 </body>
 </html>
