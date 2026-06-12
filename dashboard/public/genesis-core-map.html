@@ -337,7 +337,13 @@ const vwrap=document.getElementById('viewer'),vid=document.getElementById('vid')
 // for previews/docs only; it never issues a DID.
 const DEMO_MODE=new URLSearchParams(location.search).get('demo')==='1';
 vbtn.addEventListener('click',()=>{
- if(!DEMO_MODE){location.href='/portal/auth?tab=join';return;}
+ if(!DEMO_MODE){
+  // Break out of any embed (the landing page shows this map in an iframe):
+  // registration must take over the FULL window, never run inside the frame.
+  const dest='/portal/auth?tab=join';
+  try{window.top.location.href=dest;}catch(_){location.href=dest;}
+  return;
+ }
  signedIn=!signedIn;vwrap.classList.toggle('in',signedIn);
  vid.textContent=signedIn?DEMO_DID:'Human visitor';
  vmode.textContent=signedIn?'· DID verified':'· public view';

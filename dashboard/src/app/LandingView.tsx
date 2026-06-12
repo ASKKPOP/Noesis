@@ -202,7 +202,7 @@ export default function LandingView() {
                 {/* ── Hero ── */}
                 <section style={{ ...panelStyle, padding: '56px 48px', marginTop: 24, textAlign: 'center' }}>
                     <div style={{ ...monoLabelStyle, marginBottom: 16 }}>
-                        PORTAL · NOĒSIS V3.0
+                        PORTAL · NOĒSIS V0.2
                     </div>
                     <h1 style={{
                         fontFamily: SERIF,
