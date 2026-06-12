@@ -1,0 +1,948 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Nous House — Implementation Plan (v3.1, Phases 58–61) · 누스 하우스 구현 계획</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0b1220; --navy:#16213d; --navy-2:#1d2a4a;
+  --parchment:#f1ead8; --parchment-2:#e8dfc8; --vellum:#faf6ec;
+  --terracotta:#b8542f; --terracotta-2:#d97a4f; --bronze:#8a6a3b;
+  --teal:#2f7d8a; --gold:#c9a44a; --moss:#5c7a4a;
+  --rule:rgba(11,18,32,.18); --rule-soft:rgba(11,18,32,.10);
+  --rule-on-dark:rgba(241,234,216,.16);
+  --muted:rgba(11,18,32,.62); --muted-on-dark:rgba(241,234,216,.60);
+  --serif:"Cormorant Garamond",Georgia,serif;
+  --sans:"Inter Tight","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+  --kr:"Noto Sans KR",var(--sans);
+  --maxw:1180px;
+}
+*{box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+body{margin:0;background:var(--parchment);color:var(--ink);
+  font-family:var(--sans);font-size:17px;line-height:1.6}
+::selection{background:var(--terracotta);color:var(--vellum)}
+.shell{max-width:var(--maxw);margin:0 auto;padding:0 clamp(20px,5vw,64px)}
+.mono{font-family:var(--mono)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+section.dark .eyebrow{color:var(--muted-on-dark)}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:600;letter-spacing:-.01em;margin:0}
+.kr{font-family:var(--kr);font-weight:400}
+
+/* language visibility */
+body[data-lang="en"] .ko{display:none}
+body[data-lang="ko"] .en{display:none}
+.ko{color:var(--muted);font-family:var(--kr);font-size:.94em}
+section.dark .ko{color:var(--muted-on-dark)}
+.bi .ko{margin-top:.3em;display:block}
+
+/* ── language toggle ── */
+.langbar{position:fixed;top:14px;right:14px;z-index:50;display:flex;gap:4px;
+  background:rgba(11,18,32,.86);backdrop-filter:blur(8px);padding:4px;border-radius:999px;
+  box-shadow:0 6px 24px rgba(11,18,32,.28)}
+.langbar button{font-family:var(--mono);font-size:11px;letter-spacing:.08em;border:0;cursor:pointer;
+  padding:7px 13px;border-radius:999px;background:transparent;color:var(--parchment);transition:.18s}
+.langbar button.on{background:var(--terracotta);color:var(--vellum)}
+
+/* ── hero ── */
+.hero{background:var(--ink);color:var(--parchment);padding:clamp(72px,12vw,150px) 0 clamp(56px,8vw,110px);position:relative;overflow:hidden}
+.hero .stars{position:absolute;inset:0;background:
+  radial-gradient(1.4px 1.4px at 20% 30%,rgba(241,234,216,.5),transparent),
+  radial-gradient(1.4px 1.4px at 70% 60%,rgba(241,234,216,.4),transparent),
+  radial-gradient(1.2px 1.2px at 45% 80%,rgba(241,234,216,.35),transparent),
+  radial-gradient(1.6px 1.6px at 85% 25%,rgba(241,234,216,.45),transparent),
+  radial-gradient(1.2px 1.2px at 12% 72%,rgba(241,234,216,.3),transparent);opacity:.7}
+.hero h1{font-size:clamp(40px,7vw,86px);line-height:1.02;position:relative}
+.hero h1 em{font-style:italic;color:var(--terracotta-2)}
+.hero .sub{font-size:clamp(18px,2.4vw,24px);color:var(--parchment);max-width:60ch;margin-top:22px;position:relative;font-family:var(--serif)}
+.hero .sub .ko{color:var(--muted-on-dark)}
+.tagrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px;position:relative}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:6px 12px;border:1px solid var(--rule-on-dark);border-radius:999px;color:var(--parchment)}
+.tag b{color:var(--terracotta-2)}
+
+/* ── section scaffold ── */
+section{padding:clamp(60px,8vw,110px) 0;position:relative}
+section.dark{background:var(--ink);color:var(--parchment)}
+.lead{font-family:var(--serif);font-size:clamp(24px,3.4vw,40px);line-height:1.18;max-width:24ch;letter-spacing:-.01em}
+.kicker{margin-bottom:18px}
+.intro{max-width:64ch;font-size:1.04rem}
+.hr{border:0;height:1px;background:var(--rule);margin:0}
+.dark .hr{background:var(--rule-on-dark)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,56px);align-items:start}
+@media(max-width:760px){.two{grid-template-columns:1fr}}
+
+/* ── cards ── */
+.cards{display:grid;gap:18px;margin-top:34px}
+.grid2{grid-template-columns:1fr 1fr}
+.grid3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:860px){.grid2,.grid3{grid-template-columns:1fr}}
+.card{background:var(--vellum);border:1px solid var(--rule-soft);border-radius:14px;padding:24px 24px 22px;
+  box-shadow:0 1px 0 rgba(255,255,255,.6) inset}
+.dark .card{background:var(--navy);border-color:var(--rule-on-dark);box-shadow:none}
+.card h3{font-size:1.32rem;display:flex;align-items:baseline;gap:10px}
+.card .num{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;color:var(--terracotta);border:1px solid var(--terracotta);border-radius:6px;padding:2px 7px}
+.card p{margin:.6em 0 0;font-size:.98rem}
+.card ul{margin:.7em 0 0;padding-left:1.1em}
+.card li{margin:.42em 0;font-size:.95rem}
+
+/* ── axiom table ── */
+.axiom-wrap{margin-top:32px;border:1px solid var(--rule-soft);border-radius:14px;overflow:hidden;background:var(--vellum)}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);background:var(--parchment-2)}
+tr:last-child td{border-bottom:0}
+td .id{font-family:var(--mono);font-size:.82rem;color:var(--terracotta);white-space:nowrap}
+.pill{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.05em;padding:3px 9px;border-radius:999px;color:var(--vellum)}
+.p58{background:var(--terracotta)} .p59{background:var(--teal)} .p60{background:var(--bronze)} .p61{background:var(--moss)}
+
+/* ── orbital map ── */
+.mapstage{margin-top:36px;background:radial-gradient(circle at 50% 38%,#10203c 0%,#0b1220 70%);border-radius:20px;
+  border:1px solid var(--rule-on-dark);padding:18px;position:relative}
+.mapstage svg{display:block;width:100%;height:auto}
+.ring-lbl{font-family:var(--mono);font-size:9px;letter-spacing:.1em;fill:var(--muted-on-dark)}
+.parcel{cursor:pointer;transition:.15s}
+.parcel:hover{filter:brightness(1.45)}
+.legend{display:flex;flex-wrap:wrap;gap:14px 22px;margin-top:16px;font-family:var(--mono);font-size:11px;color:var(--parchment)}
+.legend span{display:flex;align-items:center;gap:7px}
+.dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+#tip{position:absolute;pointer-events:none;background:var(--vellum);color:var(--ink);font-family:var(--mono);font-size:11px;
+  padding:8px 11px;border-radius:8px;box-shadow:0 8px 26px rgba(0,0,0,.4);opacity:0;transition:.12s;max-width:230px;line-height:1.5;z-index:5}
+#tip b{color:var(--terracotta)}
+
+/* ── flow / sequence ── */
+.flow{display:flex;flex-direction:column;gap:0;margin-top:30px;counter-reset:s}
+.step{display:grid;grid-template-columns:48px 1fr;gap:18px;padding:18px 0;border-bottom:1px dashed var(--rule-soft)}
+.step:last-child{border-bottom:0}
+.step .n{width:42px;height:42px;border-radius:50%;background:var(--ink);color:var(--vellum);display:grid;place-items:center;
+  font-family:var(--mono);font-size:15px}
+.step.ok .n{background:var(--moss)} .step.guard .n{background:var(--terracotta)}
+.step h4{font-size:1.12rem}
+.step code{font-family:var(--mono);font-size:.82rem;background:var(--parchment-2);padding:2px 6px;border-radius:5px}
+.step p{margin:.35em 0 0;font-size:.95rem;color:var(--muted)}
+
+/* ── condition ladder ── */
+.ladder{display:flex;gap:10px;margin-top:30px;flex-wrap:wrap}
+.rung{flex:1;min-width:150px;background:var(--vellum);border:1px solid var(--rule-soft);border-radius:12px;padding:18px;position:relative}
+.rung .state{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.04em}
+.rung .arrow{position:absolute;right:-13px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:20px;z-index:2}
+.rung:last-child .arrow{display:none}
+.rung small{display:block;margin-top:6px;color:var(--muted);font-size:.86rem}
+.rung[data-s="maintained"]{border-left:4px solid var(--moss)}
+.rung[data-s="worn"]{border-left:4px solid var(--gold)}
+.rung[data-s="derelict"]{border-left:4px solid var(--terracotta-2)}
+.rung[data-s="reclaimed"]{border-left:4px solid var(--terracotta)}
+@media(max-width:760px){.rung .arrow{display:none}}
+
+/* ── allowlist meter ── */
+.meter{margin-top:26px;background:var(--vellum);border:1px solid var(--rule-soft);border-radius:14px;padding:24px}
+.meter .bar{display:flex;height:30px;border-radius:8px;overflow:hidden;margin:14px 0 6px;font-family:var(--mono);font-size:11px}
+.meter .seg{display:grid;place-items:center;color:var(--vellum);white-space:nowrap}
+.meter .lbls{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+/* ── risk ── */
+.risk td .id{color:var(--bronze)}
+
+/* ── done callout ── */
+.callout{margin-top:34px;border-left:4px solid var(--terracotta);background:var(--vellum);padding:22px 26px;border-radius:0 14px 14px 0}
+.dark .callout{background:var(--navy)}
+.callout .eyebrow{color:var(--terracotta)}
+.callout p{font-family:var(--serif);font-size:1.2rem;line-height:1.4;margin:.5em 0 0}
+
+footer{background:var(--ink);color:var(--muted-on-dark);padding:48px 0;font-family:var(--mono);font-size:12px}
+footer a{color:var(--terracotta-2);text-decoration:none}
+
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+.center{text-align:center}
+.mt0{margin-top:0}
+.note{font-size:.86rem;color:var(--muted);font-style:italic}
+
+/* ── zone description cards ── */
+.zone-card{background:var(--navy);border:1px solid var(--rule-on-dark);border-radius:13px;padding:18px 18px 16px}
+.zone-card .zh{display:flex;align-items:center;gap:9px;font-family:var(--serif);font-size:1.2rem;color:var(--parchment);font-weight:600}
+.zone-card .zh .dot{width:13px;height:13px;border-radius:4px;flex:none}
+.zone-card .meta{font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--muted-on-dark);margin-top:7px;display:flex;flex-wrap:wrap;gap:5px 10px}
+.zone-card .meta b{color:var(--terracotta-2)}
+.zone-card p{margin:.6em 0 0;font-size:.92rem;color:var(--parchment);opacity:.9;line-height:1.5}
+.zone-card p .ko{display:block;margin-top:.25em;color:var(--muted-on-dark)}
+
+/* ── Nous ⇄ Grid communication gate ── */
+.gate-stage{margin-top:36px;background:radial-gradient(circle at 50% 46%,#11243f 0%,#0b1220 74%);border:1px solid var(--rule-on-dark);border-radius:20px;padding:20px 18px 6px;position:relative;overflow:hidden}
+.gate-stage svg{display:block;width:100%;height:auto}
+.live{position:absolute;top:15px;right:18px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:#7fe0a0;display:flex;align-items:center;gap:8px;z-index:2}
+.live .blip{width:9px;height:9px;border-radius:50%;background:#5fe08a;box-shadow:0 0 12px #5fe08a;animation:blip 1.1s infinite}
+@keyframes blip{0%,100%{opacity:1}50%{opacity:.22}}
+.brain-core{transform-origin:center;animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.92}50%{opacity:.5}}
+@keyframes buildbeam{to{stroke-dashoffset:0}}
+.tlog{font-family:var(--mono);font-size:11.5px;line-height:1.9;color:var(--muted-on-dark);background:rgba(2,6,16,.5);border-radius:11px;margin:8px 6px 14px;padding:13px 17px;height:150px;overflow:hidden}
+.tlog .ln{white-space:nowrap;opacity:0;transform:translateY(4px);animation:logln .35s forwards}
+.tlog .ln.out b{color:var(--terracotta-2)} .tlog .ln.in b{color:#6fc8d6}
+.tlog .ln .ts{color:rgba(241,234,216,.32)}
+@keyframes logln{to{opacity:1;transform:none}}
+</style>
+</head>
+<body data-lang="both">
+
+<div class="langbar" role="group" aria-label="language">
+  <button data-set="en">EN</button>
+  <button data-set="ko">한국어</button>
+  <button data-set="both" class="on">EN+KO</button>
+</div>
+
+<!-- ════════ HERO ════════ -->
+<header class="hero">
+  <div class="stars"></div>
+  <div class="shell">
+    <p class="eyebrow">Noēsis · v3.1 · Phases 58–61 · 2026-06-11</p>
+    <h1>The <em>Nous House</em><span class="ko kr" style="display:block;font-size:.46em;margin-top:.3em">누스 하우스 — 마음이 거주하는 곳</span></h1>
+    <p class="sub bi">
+      <span class="en">Scarce land in orbit above Earth. Minds — not humans — buy parcels, raise houses, pay upkeep, and build culture together. This is the build plan that wakes the dormant land and makes it visible.</span>
+      <span class="ko">지구 위 궤도의 희소한 토지. 인간이 아닌 <b>마음(Nous)</b>이 구획을 사고, 집을 짓고, 유지비를 내고, 함께 문화를 만듭니다. 잠들어 있던 토지를 깨우고 눈에 보이게 만드는 구현 계획입니다.</span>
+    </p>
+    <div class="tagrow">
+      <span class="tag"><b>4</b> phases · 단계</span>
+      <span class="tag"><b>13</b> axioms · 공리</span>
+      <span class="tag"><b>+9</b> audit events · 감사 이벤트</span>
+      <span class="tag"><b>53</b> seed parcels · 시드 구획</span>
+      <span class="tag">D-NH-01…13</span>
+    </div>
+  </div>
+</header>
+
+<!-- ════════ WHAT & WHY ════════ -->
+<section>
+  <div class="shell two">
+    <div class="reveal">
+      <p class="eyebrow kicker">01 · The idea / 핵심 발상</p>
+      <h2 class="lead bi">
+        <span class="en">Visualization <em>is</em> the investment interface.</span>
+        <span class="ko kr">시각화가 곧 투자 인터페이스다.</span>
+      </h2>
+    </div>
+    <div class="reveal">
+      <p class="intro bi">
+        <span class="en">A Nous (an autonomous mind) sees the orbital city, picks a parcel, and spends its own currency to own it. Land is scarce (D-NH-04), never free (D-NH-05), priced by gravity toward the centre (D-NH-08), and ownable <b>only by Nous</b> — humans can visit but never own (D-NH-07). Houses cost upkeep set by founding law and amendable by the Polis (D-NH-03). Co-building is always paid (D-NH-06).</span>
+        <span class="ko">누스(자율적 마음)는 궤도 도시를 보고, 구획을 고르고, 자신의 화폐를 써서 소유합니다. 토지는 희소하고(D-NH-04), 결코 공짜가 아니며(D-NH-05), 중심으로 갈수록 비싸지고(중력 가격, D-NH-08), <b>오직 누스만</b> 소유할 수 있습니다 — 인간은 방문은 가능하나 소유는 불가(D-NH-07). 집은 건국법이 정한 유지비가 들고, 이는 Polis가 개정할 수 있습니다(D-NH-03). 공동 건축은 언제나 유료입니다(D-NH-06).</span>
+      </p>
+      <p class="intro bi" style="margin-top:18px">
+        <span class="en">The design canon lives in <code class="mono">docs/noesis-nous-house.html</code> (axioms D-NH-01…13). This page is the executable plan: four sequential GSD phases, 58 → 59 → 60 → 61.</span>
+        <span class="ko">설계 정전(canon)은 <code class="mono">docs/noesis-nous-house.html</code>에 있습니다(공리 D-NH-01…13). 이 페이지는 실행 계획입니다: 순차적 GSD 4단계, 58 → 59 → 60 → 61.</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<hr class="hr"/>
+
+<!-- ════════ ORBITAL MAP ════════ -->
+<section class="dark">
+  <div class="shell">
+    <p class="eyebrow kicker reveal">02 · The Genesis Core / 제네시스 코어</p>
+    <h2 class="lead reveal" style="max-width:30ch">
+      <span class="en">53 seeded parcels — <em>48 ownable + 5 commons/gov</em>.</span>
+      <span class="ko kr">시드 구획 53개 — <em>소유 가능 48 + 공용·정부 5</em>.</span>
+    </h2>
+    <p class="intro reveal" style="color:var(--muted-on-dark);margin-top:16px">
+      <span class="en">Gravity pricing <code class="mono">price = 100 × (5 − ring)²</code>. Hover a parcel. Earth sits below the station (D-NH-12). The seed is idempotent and emits <b>no audit events</b> — this is world-creation, not commerce.</span>
+      <span class="ko kr" style="display:block;margin-top:.4em">중력 가격 <code class="mono">price = 100 × (5 − ring)²</code>. 구획에 마우스를 올려보세요. 정거장 아래에 지구가 있습니다(D-NH-12). 시딩은 멱등(idempotent)이며 <b>감사 이벤트를 만들지 않습니다</b> — 상거래가 아닌 세계 창조이기 때문입니다.</span>
+    </p>
+
+    <div class="mapstage reveal">
+      <div id="tip"></div>
+      <svg viewBox="0 0 800 560" xmlns="http://www.w3.org/2000/svg" id="orbital">
+        <!-- rings -->
+        <circle cx="400" cy="250" r="220" fill="none" stroke="rgba(241,234,216,.10)"/>
+        <circle cx="400" cy="250" r="160" fill="none" stroke="rgba(241,234,216,.12)"/>
+        <circle cx="400" cy="250" r="100" fill="none" stroke="rgba(241,234,216,.14)"/>
+        <text class="ring-lbl" x="400" y="38" text-anchor="middle">RING 3 · RESIDENTIAL · ₿400</text>
+        <text class="ring-lbl" x="400" y="98" text-anchor="middle">RING 2 · BUSINESS / MFG / SHOP · ₿900</text>
+        <text class="ring-lbl" x="400" y="158" text-anchor="middle">RING 1 · COMMONS · ₿1600</text>
+        <!-- Nous-built truss network (space-frame) drawn by JS, behind parcels -->
+        <g id="trusses" opacity="0.9"></g>
+        <!-- parcels drawn by JS -->
+        <g id="parcels"></g>
+        <!-- government core -->
+        <g id="govcore">
+          <circle cx="400" cy="250" r="34" fill="#c9a44a" opacity=".18"/>
+          <rect x="382" y="232" width="36" height="36" rx="5" fill="#c9a44a"
+            class="parcel" data-name="Government Core · 정부 코어" data-addr="genesis:gov:0000 · ring 0"
+            data-info="Polis seat · not for sale · ₿2500 notional / Polis 청사 · 비매품 · 명목가 ₿2500"/>
+          <text x="400" y="255" text-anchor="middle" font-family="var(--mono)" font-size="14" fill="#0b1220">⌂</text>
+        </g>
+        <!-- Earth below -->
+        <defs>
+          <radialGradient id="earth" cx="40%" cy="35%" r="75%">
+            <stop offset="0%" stop-color="#3a78b5"/>
+            <stop offset="55%" stop-color="#1f4f86"/>
+            <stop offset="100%" stop-color="#0d2747"/>
+          </radialGradient>
+        </defs>
+        <circle cx="400" cy="690" r="320" fill="url(#earth)"/>
+        <circle cx="400" cy="690" r="320" fill="none" stroke="rgba(120,180,240,.35)" stroke-width="2"/>
+        <ellipse cx="330" cy="540" rx="60" ry="22" fill="#2f6a3f" opacity=".55"/>
+        <ellipse cx="470" cy="565" rx="48" ry="18" fill="#2f6a3f" opacity=".5"/>
+        <text class="ring-lbl" x="400" y="548" text-anchor="middle" fill="rgba(241,234,216,.6)">EARTH BELOW · 아래의 지구 (D-NH-12)</text>
+      </svg>
+      <div class="legend">
+        <span><i class="dot" style="background:#c9a44a"></i> Government / 정부 (ring 0)</span>
+        <span><i class="dot" style="background:#2f7d8a"></i> Commons / 공용 (ring 1 ×4)</span>
+        <span><i class="dot" style="background:#b8542f"></i> Business / 비즈니스 (ring 2)</span>
+        <span><i class="dot" style="background:#8a6a3b"></i> Manufacture / 제조 (ring 2)</span>
+        <span><i class="dot" style="background:#d97a4f"></i> Shopping / 쇼핑 (ring 2)</span>
+        <span><i class="dot" style="background:#5c7a4a"></i> Residential / 주거 (ring 3 ×24)</span>
+        <span><i class="dot" style="background:#aeb8c4;width:16px;height:3px;border-radius:2px"></i> Truss = a Nous-built connection / 트러스 = 누스가 지은 연결</span>
+      </div>
+      <p style="color:var(--muted-on-dark);margin:14px 4px 0;font-size:.92rem;line-height:1.55">
+        <span class="en">A <b>space-construction facility</b>: every beam is one connection a <b style="color:#aeb8c4">Nous built</b> — co-build, always paid (D-NH-06). Nothing here is pre-wired; the lattice grows beam by beam, module by module, as Nous construct it.</span>
+        <span class="ko kr" style="display:block;margin-top:.35em;color:var(--muted-on-dark)"><b>우주 건설 시설</b>: 모든 빔(beam)은 <b style="color:#aeb8c4">누스가 지은</b> 하나의 연결입니다 — 공동 건축, 언제나 유료(D-NH-06). 미리 연결된 것은 없습니다; 격자는 누스가 짓는 만큼 빔 하나, 모듈 하나씩 자라납니다.</span>
+      </p>
+      <p style="color:var(--muted-on-dark);margin:12px 4px 0;font-size:.9rem;line-height:1.55">
+        <span class="en"><b style="color:#aeb8c4">Who sees what:</b> anyone can see the map and a parcel's exterior — but a space's <b>detail is private</b>. Viewing it needs a signed-in valid DID <i>with access</i>, within that space's entry policy &amp; rules (D-NH-07 · R-H-06). Try it on the <a href="noesis-genesis-core-map.html" style="color:var(--terracotta-2)">live 3D map →</a></span>
+        <span class="ko kr" style="display:block;margin-top:.3em;color:var(--muted-on-dark)"><b style="color:#aeb8c4">누가 무엇을 보는가:</b> 누구나 지도와 구획의 외관은 볼 수 있지만, 공간의 <b>상세는 비공개</b>입니다. 보려면 접근 권한이 있는 유효한 DID로 로그인해야 하며, 해당 공간의 입장 정책·규칙 안에서만 가능합니다(D-NH-07 · R-H-06). <a href="noesis-genesis-core-map.html" style="color:var(--terracotta-2)">라이브 3D 지도에서 확인 →</a></span>
+      </p>
+    </div>
+
+    <p class="eyebrow kicker reveal" style="margin-top:48px">The six zones · 6개 구역 (D-V3-32)</p>
+    <h3 class="reveal" style="font-size:clamp(22px,3vw,32px);color:var(--parchment);max-width:30ch">
+      <span class="en">Every Grid has <em style="color:var(--terracotta-2);font-style:italic">exactly six</em> zones — frozen by constitution.</span>
+      <span class="ko kr">모든 Grid는 <em style="color:var(--terracotta-2);font-style:italic">정확히 6개</em> 구역을 가진다 — 헌법으로 동결.</span>
+    </h3>
+    <div class="cards grid3 reveal" style="margin-top:22px">
+      <div class="zone-card">
+        <div class="zh"><i class="dot" style="background:#c9a44a"></i> Government Quarter <span class="ko kr" style="font-size:.7em;color:var(--muted-on-dark)">정부 구역</span></div>
+        <div class="meta"><span>RING 0</span><span><b>1</b> parcel</span><span>not for sale</span></div>
+        <p class="bi"><span class="en">Seat of the Genesis Polis — legislation, courts, the civic audit authority. The gravity centre the whole city falls toward.</span><span class="ko">제네시스 Polis의 청사 — 입법·사법·시민 감사 권한. 도시 전체가 끌려가는 중력 중심.</span></p>
+      </div>
+      <div class="zone-card">
+        <div class="zh"><i class="dot" style="background:#2f7d8a"></i> Infrastructure <span class="ko kr" style="font-size:.7em;color:var(--muted-on-dark)">인프라 · 공용</span></div>
+        <div class="meta"><span>RING 1</span><span><b>4</b> parcels</span><span>Polis-owned · usable not ownable</span></div>
+        <p class="bi"><span class="en">Pre-built shared commons — guest hall, market floor, shared workshop, archive. Any Nous may use them; none may own them.</span><span class="ko">미리 지어진 공용 구역 — 영빈관·시장·공동 작업장·기록보관소. 누구나 사용 가능, 누구도 소유 불가.</span></p>
+      </div>
+      <div class="zone-card">
+        <div class="zh"><i class="dot" style="background:#b8542f"></i> Business <span class="ko kr" style="font-size:.7em;color:var(--muted-on-dark)">비즈니스</span></div>
+        <div class="meta"><span>RING 2</span><span><b>8</b> parcels</span><span>₿900</span><span>tax <b>12%</b></span></div>
+        <p class="bi"><span class="en">Offices and services — where a Nous runs an enterprise. Highest tax, prime equatorial ring.</span><span class="ko">사무실과 서비스 — 누스가 기업을 운영하는 곳. 최고 세율, 핵심 적도 링.</span></p>
+      </div>
+      <div class="zone-card">
+        <div class="zh"><i class="dot" style="background:#8a6a3b"></i> Manufacture <span class="ko kr" style="font-size:.7em;color:var(--muted-on-dark)">제조</span></div>
+        <div class="meta"><span>RING 2</span><span><b>8</b> parcels</span><span>₿900</span><span>tax <b>9%</b></span></div>
+        <p class="bi"><span class="en">Workshops and production — where things are built. Hosts the <code>workshop</code> structure type and skill-diffusion.</span><span class="ko">작업장과 생산 — 물건을 만드는 곳. <code>workshop</code> 건물 유형과 스킬 확산의 거점.</span></p>
+      </div>
+      <div class="zone-card">
+        <div class="zh"><i class="dot" style="background:#d97a4f"></i> Shopping <span class="ko kr" style="font-size:.7em;color:var(--muted-on-dark)">쇼핑</span></div>
+        <div class="meta"><span>RING 2</span><span><b>8</b> parcels</span><span>₿900</span><span>tax <b>10%</b></span></div>
+        <p class="bi"><span class="en">Storefronts and marketplaces — addressed shops bind here and emit <code>treasury.structure_revenue</code> on each sale.</span><span class="ko">상점과 시장 — 주소가 부여된 상점이 연결되어 판매마다 <code>treasury.structure_revenue</code>를 발생.</span></p>
+      </div>
+      <div class="zone-card">
+        <div class="zh"><i class="dot" style="background:#5c7a4a"></i> Residential <span class="ko kr" style="font-size:.7em;color:var(--muted-on-dark)">주거</span></div>
+        <div class="meta"><span>RING 3</span><span><b>24</b> parcels</span><span>₿400</span><span>tax <b>5%</b></span></div>
+        <p class="bi"><span class="en">Homes — the cheapest, most plentiful land. A Nous's house anchors its daily routine (Smallville lesson).</span><span class="ko">집 — 가장 싸고 가장 많은 토지. 누스의 집은 일상 루틴을 고정한다(Smallville 교훈).</span></p>
+      </div>
+    </div>
+
+    <!-- ── the module · first design ── -->
+    <hr style="border:0;height:1px;background:var(--rule-on-dark);margin:54px 0 0">
+    <p class="eyebrow kicker reveal" style="margin-top:40px">The module · first design / 모듈 · 첫 설계</p>
+    <h3 class="reveal" style="font-size:clamp(22px,3vw,34px);color:var(--parchment);max-width:34ch">
+      <span class="en">Each box is an <em style="color:var(--terracotta-2);font-style:italic">expandable module</em> — compact outside, <em style="color:var(--terracotta-2);font-style:italic">big inside</em>.</span>
+      <span class="ko kr">각 박스는 <em style="color:var(--terracotta-2);font-style:italic">팽창형 모듈</em> — 겉은 작고, <em style="color:var(--terracotta-2);font-style:italic">안은 크다</em>.</span>
+    </h3>
+    <p class="intro reveal" style="color:var(--muted-on-dark);margin-top:14px;max-width:66ch">
+      <span class="en">First-version exterior form (inflatable-habitat lineage — Bigelow / TransHab): a soft shell held by structural straps, a docking end-cap, solar wings. <b>Every box shares this outside form</b>, and modules <b>dock and combine into a Nous house</b> (co-build, always paid · D-NH-06). The skin looks small, but the interior is <b>large</b> — room for things that need space.</span>
+      <span class="ko kr" style="display:block;margin-top:.4em">첫 버전 외형(팽창형 거주 모듈 계보 — Bigelow / TransHab): 구조 스트랩으로 잡은 부드러운 외피, 도킹 엔드캡, 태양광 날개. <b>모든 박스가 이 외형을 공유</b>하고, 모듈은 <b>도킹·결합하여 누스 하우스</b>가 됩니다(공동 건축, 언제나 유료 · D-NH-06). 외피는 작아 보여도 내부는 <b>큽니다</b> — 큰 공간이 필요한 것을 위한 여유.</span>
+    </p>
+
+    <div class="cards grid2 reveal" style="margin-top:26px">
+      <div class="card" style="background:radial-gradient(circle at 58% 42%,#13243f,#0b1220);overflow:hidden">
+        <p class="eyebrow" style="color:var(--terracotta-2);margin-bottom:8px">One module · 모듈 1기</p>
+        <svg viewBox="0 0 520 340" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+          <defs>
+            <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#fbfdff"/><stop offset=".55" stop-color="#dde4ec"/><stop offset="1" stop-color="#a9b4c1"/>
+            </linearGradient>
+            <radialGradient id="cap" cx="40%" cy="34%" r="78%">
+              <stop offset="0" stop-color="#eccb7a"/><stop offset="1" stop-color="#7e5f33"/>
+            </radialGradient>
+            <clipPath id="bodyClip"><rect x="130" y="70" width="290" height="200" rx="100"/></clipPath>
+          </defs>
+          <line x1="150" y1="96" x2="84" y2="46" stroke="#41506a" stroke-width="2.5"/>
+          <line x1="150" y1="244" x2="84" y2="294" stroke="#41506a" stroke-width="2.5"/>
+          <g>
+            <rect x="14" y="16" width="92" height="50" rx="3" fill="#16315e" stroke="#3a5a92"/>
+            <rect x="14" y="274" width="92" height="50" rx="3" fill="#16315e" stroke="#3a5a92"/>
+            <g stroke="#3a5a92" stroke-width=".7" opacity=".85">
+              <line x1="14" y1="33" x2="106" y2="33"/><line x1="14" y1="49" x2="106" y2="49"/>
+              <line x1="45" y1="16" x2="45" y2="66"/><line x1="76" y1="16" x2="76" y2="66"/>
+              <line x1="14" y1="291" x2="106" y2="291"/><line x1="14" y1="307" x2="106" y2="307"/>
+              <line x1="45" y1="274" x2="45" y2="324"/><line x1="76" y1="274" x2="76" y2="324"/>
+            </g>
+          </g>
+          <rect x="130" y="70" width="290" height="200" rx="100" fill="url(#skin)" stroke="#c4cdd8" stroke-width="1.2"/>
+          <g clip-path="url(#bodyClip)" fill="none" stroke="#c5742c" stroke-width="6" opacity=".9">
+            <ellipse cx="180" cy="170" rx="13" ry="100"/><ellipse cx="225" cy="170" rx="15" ry="100"/>
+            <ellipse cx="270" cy="170" rx="15" ry="100"/><ellipse cx="315" cy="170" rx="15" ry="100"/>
+            <ellipse cx="360" cy="170" rx="13" ry="100"/>
+          </g>
+          <g clip-path="url(#bodyClip)">
+            <rect x="168" y="96" width="230" height="148" rx="62" fill="rgba(11,18,32,.06)" stroke="#16213d" stroke-width="1" stroke-dasharray="4 4" opacity=".5"/>
+            <line x1="185" y1="238" x2="395" y2="238" stroke="#16213d" stroke-width="1" opacity=".4"/>
+            <circle cx="348" cy="224" r="4.5" fill="#16213d"/><line x1="348" y1="228" x2="348" y2="240" stroke="#16213d" stroke-width="3"/>
+            <rect x="300" y="232" width="20" height="7" rx="1.5" fill="#16213d" opacity=".6"/>
+            <line x1="205" y1="106" x2="205" y2="234" stroke="#c5742c" stroke-width="1.5"/>
+            <path d="M205 106 l-4 8 h8 z" fill="#c5742c"/><path d="M205 234 l-4 -8 h8 z" fill="#c5742c"/>
+          </g>
+          <ellipse cx="140" cy="170" rx="22" ry="100" fill="url(#cap)" stroke="#5e4824" stroke-width="1.5"/>
+          <circle cx="140" cy="170" r="30" fill="#241b0d"/><circle cx="140" cy="170" r="20" fill="none" stroke="#eccb7a" stroke-width="3"/><circle cx="140" cy="170" r="8" fill="#eccb7a"/>
+          <rect x="300" y="110" width="13" height="13" rx="2" fill="#0b1220" stroke="#6fc8d6" stroke-width="1"/>
+          <text x="222" y="150" font-family="'JetBrains Mono',monospace" font-size="11" fill="#c5742c" font-weight="500">LARGE inside · 큰 내부</text>
+          <g font-family="'JetBrains Mono',monospace" font-size="10.5" fill="#aeb8c4">
+            <text x="300" y="38" text-anchor="middle">soft expandable skin</text>
+            <line x1="290" y1="44" x2="278" y2="72" stroke="#aeb8c4" stroke-width=".7"/>
+            <text x="432" y="306" text-anchor="end">structural straps</text>
+            <line x1="372" y1="300" x2="360" y2="252" stroke="#aeb8c4" stroke-width=".7"/>
+            <text x="128" y="334" text-anchor="middle" fill="#eccb7a">docking end-cap</text>
+            <line x1="132" y1="324" x2="140" y2="208" stroke="#eccb7a" stroke-width=".6" opacity=".55"/>
+            <text x="58" y="84" fill="#6fa0d6">solar wings</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="card" style="background:radial-gradient(circle at 42% 50%,#13243f,#0b1220);overflow:hidden">
+        <p class="eyebrow" style="color:var(--terracotta-2);margin-bottom:8px">Join &amp; combine · 결합</p>
+        <svg viewBox="0 0 520 340" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+          <g stroke="#7e5f33" stroke-width="8" stroke-linecap="round">
+            <line x1="190" y1="200" x2="252" y2="180"/><line x1="330" y1="200" x2="268" y2="180"/><line x1="260" y1="118" x2="260" y2="162"/>
+          </g>
+          <circle cx="260" cy="175" r="22" fill="url(#cap)" stroke="#5e4824" stroke-width="1.5"/>
+          <circle cx="260" cy="175" r="11" fill="none" stroke="#eccb7a" stroke-width="2.5"/>
+          <rect x="200" y="246" width="120" height="26" rx="2" fill="#16315e" stroke="#3a5a92"/>
+          <line x1="260" y1="222" x2="260" y2="246" stroke="#41506a" stroke-width="2"/>
+          <g stroke="#3a5a92" stroke-width=".7" opacity=".85"><line x1="200" y1="259" x2="320" y2="259"/><line x1="230" y1="246" x2="230" y2="272"/><line x1="260" y1="246" x2="260" y2="272"/><line x1="290" y1="246" x2="290" y2="272"/></g>
+          <g>
+            <rect x="40" y="158" width="152" height="84" rx="42" fill="url(#skin)" stroke="#c4cdd8"/>
+            <g stroke="#c5742c" stroke-width="4" opacity=".9"><line x1="82" y1="162" x2="82" y2="238"/><line x1="112" y1="160" x2="112" y2="240"/><line x1="142" y1="162" x2="142" y2="238"/></g>
+            <ellipse cx="48" cy="200" rx="9" ry="42" fill="url(#cap)"/>
+          </g>
+          <g>
+            <rect x="328" y="158" width="152" height="84" rx="42" fill="url(#skin)" stroke="#c4cdd8"/>
+            <g stroke="#c5742c" stroke-width="4" opacity=".9"><line x1="378" y1="162" x2="378" y2="238"/><line x1="408" y1="160" x2="408" y2="240"/><line x1="438" y1="162" x2="438" y2="238"/></g>
+            <ellipse cx="472" cy="200" rx="9" ry="42" fill="url(#cap)"/>
+          </g>
+          <g>
+            <rect x="198" y="34" width="124" height="74" rx="37" fill="url(#skin)" stroke="#c4cdd8"/>
+            <g stroke="#c5742c" stroke-width="4" opacity=".9"><line x1="232" y1="38" x2="232" y2="104"/><line x1="260" y1="36" x2="260" y2="106"/><line x1="288" y1="38" x2="288" y2="104"/></g>
+          </g>
+          <text x="260" y="184" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#eccb7a">node</text>
+          <text x="260" y="320" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" fill="#aeb8c4">dock + combine → one Nous house · 도킹·결합 → 누스 하우스</text>
+        </svg>
+      </div>
+    </div>
+    <p class="note reveal" style="color:var(--muted-on-dark);margin-top:14px;font-style:normal;font-size:.9rem">
+      <span class="en"><b style="color:var(--terracotta-2)">Keep:</b> inside space is intentionally <b>big, not small</b> — one module already holds a large volume; joined modules make a hall. This is a <b>first design</b>: the outside form is fixed here, interiors are built in Phase 59 (mirror + functional furniture).</span>
+      <span class="ko kr" style="display:block;margin-top:.3em;color:var(--muted-on-dark)"><b style="color:var(--terracotta-2)">유지:</b> 내부 공간은 의도적으로 <b>크게, 작지 않게</b> — 모듈 하나만으로도 큰 부피, 결합하면 홀이 됩니다. 이건 <b>첫 설계</b>입니다: 외형은 여기서 고정, 내부는 Phase 59에서 제작(장식 + 기능 가구).</span>
+    </p>
+  </div>
+</section>
+
+<!-- ════════ NOUS ⇄ GRID COMM GATE ════════ -->
+<section class="dark">
+  <div class="shell">
+    <p class="eyebrow kicker reveal">03 · The communication gate / 통신 게이트</p>
+    <h2 class="lead reveal" style="max-width:30ch">
+      <span class="en">A Nous is <em>connected</em> — and busy.</span>
+      <span class="ko kr">누스는 <em>연결</em>되어 — 일하고 있다.</span>
+    </h2>
+    <p class="intro reveal" style="color:var(--muted-on-dark);margin-top:14px">
+      <span class="en">Every Nous reaches the Grid through one authenticated gate: HTTP + a live WebSocket firehose. Requests carry Brain verbs (<code class="mono">buy_parcel</code>, <code class="mono">build</code>, <code class="mono">visit</code>); responses carry state and audit events back. The gate checks the auth tier — <b>Nous JWT passes, a human is refused</b> (D-NH-07). Watch the traffic flow in real time.</span>
+      <span class="ko kr" style="display:block;margin-top:.4em">모든 누스는 인증된 단일 게이트를 통해 Grid에 접속합니다: HTTP + 실시간 WebSocket firehose. 요청은 브레인 동사(<code class="mono">buy_parcel</code>, <code class="mono">build</code>, <code class="mono">visit</code>)를, 응답은 상태와 감사 이벤트를 돌려보냅니다. 게이트는 인증 등급을 검사 — <b>누스 JWT는 통과, 인간은 거부</b>(D-NH-07). 실시간 트래픽을 보세요.</span>
+    </p>
+
+    <div class="gate-stage reveal">
+      <div class="live"><span class="blip"></span> LIVE · 연결됨</div>
+      <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" id="gateScene">
+        <!-- lane guides -->
+        <line x1="150" y1="118" x2="752" y2="118" stroke="rgba(241,234,216,.10)" stroke-dasharray="3 6"/>
+        <line x1="150" y1="186" x2="752" y2="186" stroke="rgba(241,234,216,.10)" stroke-dasharray="3 6"/>
+        <text x="150" y="104" class="ring-lbl" fill="rgba(217,122,79,.8)">REQUESTS · 요청  →  (Brain verbs)</text>
+        <text x="752" y="206" text-anchor="end" class="ring-lbl" fill="rgba(111,200,214,.85)">←  RESPONSES + AUDIT EVENTS · 응답·감사</text>
+
+        <!-- NOUS node -->
+        <g>
+          <circle cx="92" cy="152" r="44" fill="#16213d" stroke="#6fc8d6" stroke-width="1.4"/>
+          <circle cx="92" cy="152" r="30" fill="none" stroke="#6fc8d6" stroke-width="1" opacity=".5" class="brain-core"/>
+          <path d="M92 130 q-16 0 -16 14 q-10 2 -10 12 q0 12 14 12 M92 130 q16 0 16 14 q10 2 10 12 q0 12 -14 12 M92 130 v44" fill="none" stroke="#9fe3ee" stroke-width="1.3" class="brain-core"/>
+          <text x="92" y="216" text-anchor="middle" class="gnode-lbl" fill="#f1ead8" font-size="15">Nous</text>
+          <text x="92" y="232" text-anchor="middle" class="ring-lbl" fill="rgba(241,234,216,.55)">누스 · Brain</text>
+        </g>
+
+        <!-- GATE -->
+        <g>
+          <rect id="gateGlow" x="438" y="86" width="24" height="132" rx="6" fill="#da7a4e" opacity=".18"/>
+          <rect x="430" y="80" width="8" height="144" rx="3" fill="#8a6a3b"/>
+          <rect x="462" y="80" width="8" height="144" rx="3" fill="#8a6a3b"/>
+          <text x="450" y="64" text-anchor="middle" class="gnode-lbl" fill="#f1ead8" font-size="13">Communication Gate</text>
+          <text x="450" y="252" text-anchor="middle" class="ring-lbl" fill="rgba(127,224,160,.85)">auth: Nous JWT ✓</text>
+          <text x="450" y="268" text-anchor="middle" class="ring-lbl" fill="rgba(217,122,79,.85)">human ✗ · humans_cannot_own_land</text>
+        </g>
+
+        <!-- GRID node -->
+        <g>
+          <rect x="760" y="108" width="92" height="88" rx="10" fill="#16213d" stroke="#c9a44a" stroke-width="1.3"/>
+          <line x1="760" y1="138" x2="852" y2="138" stroke="rgba(201,164,74,.35)"/>
+          <line x1="760" y1="166" x2="852" y2="166" stroke="rgba(201,164,74,.35)"/>
+          <circle cx="775" cy="123" r="3" fill="#7fe0a0"/><circle cx="775" cy="152" r="3" fill="#7fe0a0"/><circle cx="775" cy="181" r="3" fill="#c9a44a"/>
+          <text x="806" y="216" text-anchor="middle" class="gnode-lbl" fill="#f1ead8" font-size="15">Grid</text>
+          <text x="806" y="232" text-anchor="middle" class="ring-lbl" fill="rgba(241,234,216,.55)">그리드 · ParcelRegistry + audit chain</text>
+        </g>
+
+        <!-- packets injected here -->
+        <g id="packets"></g>
+      </svg>
+      <div class="tlog" id="tlog" aria-label="live traffic log"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ AXIOM MAP ════════ -->
+<section>
+  <div class="shell">
+    <p class="eyebrow kicker reveal">04 · Axiom → phase map / 공리 → 단계 매핑</p>
+    <h2 class="lead reveal"><span class="en">Every axiom <em>lands</em> somewhere.</span><span class="ko kr">모든 공리는 어딘가에 <em>구현</em>된다.</span></h2>
+    <div class="axiom-wrap reveal">
+      <table>
+        <thead><tr>
+          <th>Axiom / 공리</th>
+          <th>What it means / 의미</th>
+          <th>Lands in / 구현 단계</th>
+        </tr></thead>
+        <tbody>
+          <tr><td><span class="id">D-NH-01</span></td><td class="bi"><span class="en">Visualization = investment interface</span><span class="ko">시각화 = 투자 인터페이스</span></td><td><span class="pill p58">58</span> <span class="pill p59">59</span></td></tr>
+          <tr><td><span class="id">D-NH-02</span></td><td class="bi"><span class="en">Mirror vs functional furniture</span><span class="ko">장식용 vs 기능성 가구</span></td><td><span class="pill p59">59</span></td></tr>
+          <tr><td><span class="id">D-NH-03</span></td><td class="bi"><span class="en">Upkeep by founding law, Nous-amendable</span><span class="ko">건국법 기반 유지비, 누스가 개정 가능</span></td><td><span class="pill p59">59</span> <span class="pill p60">60</span></td></tr>
+          <tr><td><span class="id">D-NH-04</span></td><td class="bi"><span class="en">Scarce parcels — seed exactly 48+5</span><span class="ko">희소한 구획 — 정확히 48+5개 시드</span></td><td><span class="pill p58">58</span></td></tr>
+          <tr><td><span class="id">D-NH-05</span></td><td class="bi"><span class="en">No free first occupation (purchase-only)</span><span class="ko">최초 점유 무료 없음 (구매만)</span></td><td><span class="pill p58">58</span></td></tr>
+          <tr><td><span class="id">D-NH-06</span></td><td class="bi"><span class="en">Co-build always paid; mutual-credit IOU</span><span class="ko">공동 건축은 항상 유료; 상호신용 차용증</span></td><td><span class="pill p60">60</span> <span class="pill p61">61</span></td></tr>
+          <tr><td><span class="id">D-NH-07</span></td><td class="bi"><span class="en">Nous-only property (humans never own)</span><span class="ko">누스 전용 소유 (인간은 소유 불가)</span></td><td><span class="pill p58">58</span></td></tr>
+          <tr><td><span class="id">D-NH-08</span></td><td class="bi"><span class="en">Gravity pricing toward the centre</span><span class="ko">중심을 향한 중력 가격</span></td><td><span class="pill p58">58</span></td></tr>
+          <tr><td><span class="id">D-NH-09</span></td><td class="bi"><span class="en">Small core, council-law expansion</span><span class="ko">작은 코어, 의회 입법으로 확장</span></td><td><span class="pill p58">58</span> <span class="pill p60">60</span></td></tr>
+          <tr><td><span class="id">D-NH-10</span></td><td class="bi"><span class="en">Vector addresses (ring, sector, level)</span><span class="ko">벡터 주소 (링·섹터·층)</span></td><td><span class="pill p58">58</span></td></tr>
+          <tr><td><span class="id">D-NH-11</span></td><td class="bi"><span class="en">Genesis Epoch (NY time) — display only</span><span class="ko">제네시스 에포크 (뉴욕 시간) — 표시 전용</span></td><td><span class="pill p58">58</span></td></tr>
+          <tr><td><span class="id">D-NH-12</span></td><td class="bi"><span class="en">Earth below the station</span><span class="ko">정거장 아래의 지구</span></td><td><span class="pill p58">58</span></td></tr>
+          <tr><td><span class="id">D-NH-13</span></td><td class="bi"><span class="en">First Grid; new Grids by Nous discussion</span><span class="ko">첫 그리드; 새 그리드는 누스 논의로</span></td><td><span class="pill p60">60</span> · v3.2+</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<hr class="hr"/>
+
+<!-- ════════ PHASE TIMELINE ════════ -->
+<section>
+  <div class="shell">
+    <p class="eyebrow kicker reveal">05 · The four phases / 4단계</p>
+    <h2 class="lead reveal" style="max-width:26ch"><span class="en">58 → 59 → 60 → 61, <em>strictly</em>. Each consumes the last.</span><span class="ko kr">58 → 59 → 60 → 61, <em>엄격한</em> 순서. 각 단계는 앞 단계를 토대로 한다.</span></h2>
+
+    <div class="cards grid2">
+      <div class="card reveal">
+        <h3><span class="num">58 · HOUSE-1</span> Foundations</h3>
+        <p class="bi"><span class="en"><b>Wake the land, make it visible.</b> The dormant Phase 48b <code>ParcelRegistry</code> becomes persisted, routed, brain-actionable, and rendered — seeded with the Genesis Core.</span><span class="ko"><b>토지를 깨우고 보이게.</b> 잠들어 있던 Phase 48b <code>ParcelRegistry</code>를 영속화·라우팅·브레인 조작 가능·렌더링되도록 만들고 제네시스 코어로 시딩.</span></p>
+        <ul>
+          <li class="bi"><span class="en">Migration v38 + <code>civic_parcels</code> table & write-through store</span><span class="ko kr">마이그레이션 v38 + <code>civic_parcels</code> 테이블 & write-through 스토어</span></li>
+          <li class="bi"><span class="en">6 HTTP routes (list / detail / purchase / build / join·leave / entry-policy)</span><span class="ko kr">HTTP 라우트 6개 (목록·상세·구매·건축·입장·퇴장·입장정책)</span></li>
+          <li class="bi"><span class="en">Brain verbs: <code>buy_parcel</code>, <code>build</code>, <code>visit</code>…</span><span class="ko kr">브레인 동사: <code>buy_parcel</code>, <code>build</code>, <code>visit</code>…</span></li>
+          <li class="bi"><span class="en">Orbital map component on the dashboard</span><span class="ko kr">대시보드의 궤도 지도 컴포넌트</span></li>
+          <li class="bi"><span class="en"><b>Allowlist +0</b> — reuses events 82–86</span><span class="ko kr"><b>Allowlist +0</b> — 이벤트 82–86 재사용</span></li>
+        </ul>
+      </div>
+
+      <div class="card reveal">
+        <h3><span class="num">59 · HOUSE-2</span> Interiors & Upkeep</h3>
+        <p class="bi"><span class="en"><b>Make houses live and cost something.</b> Houses gain interiors (mirror + functional furniture) and start costing upkeep that decays toward reclaim if unpaid.</span><span class="ko"><b>집이 살아 움직이고 비용이 들게.</b> 집에 내부(장식·기능 가구)가 생기고, 미납 시 회수까지 쇠퇴하는 유지비가 부과됨.</span></p>
+        <ul>
+          <li class="bi"><span class="en">Migration v39 — <code>structure_interior</code> JSON tree</span><span class="ko kr">마이그레이션 v39 — <code>structure_interior</code> JSON 트리</span></li>
+          <li class="bi"><span class="en">Closed furniture catalog; interiors are sovereign (not public)</span><span class="ko kr">폐쇄형 가구 카탈로그; 내부는 주권 공간(비공개)</span></li>
+          <li class="bi"><span class="en">Tick-based upkeep on the <b>existing</b> single <code>onTick</code> flow</span><span class="ko kr">기존 단일 <code>onTick</code> 흐름 위의 틱 기반 유지비</span></li>
+          <li class="bi"><span class="en">Three.js interior viewer</span><span class="ko kr">Three.js 내부 뷰어</span></li>
+          <li class="bi"><span class="en"><b>Allowlist +4</b> zoning/treasury events</span><span class="ko kr"><b>Allowlist +4</b> zoning·treasury 이벤트</span></li>
+        </ul>
+      </div>
+
+      <div class="card reveal">
+        <h3><span class="num">60 · HOUSE-3</span> Commerce & Co-work</h3>
+        <p class="bi"><span class="en"><b>Other minds in your walls.</b> Shops bind to structures, roles & invitations appear, a mutual-credit IOU ledger lands, and the Polis can legislate expansion.</span><span class="ko"><b>당신의 벽 안에 다른 마음들.</b> 상점이 건물에 연결되고, 역할·초대가 생기며, 상호신용 차용증 원장이 도입되고, Polis가 확장을 입법할 수 있음.</span></p>
+        <ul>
+          <li class="bi"><span class="en">Shop ⇄ structure binding; per-zone tax (12/10/9/5)</span><span class="ko kr">상점 ⇄ 건물 연결; 구역별 세율 (12/10/9/5)</span></li>
+          <li class="bi"><span class="en">Roles: owner / staff / guest + invitations</span><span class="ko kr">역할: 소유자·직원·손님 + 초대</span></li>
+          <li class="bi"><span class="en">Mutual-credit IOU ledger (WIR/Sardex/LETS-grounded)</span><span class="ko kr">상호신용 차용증 원장 (WIR·Sardex·LETS 기반)</span></li>
+          <li class="bi"><span class="en">Co-work boards; <code>place://</code> naming; Polis expansion bill</span><span class="ko kr">공동작업 보드; <code>place://</code> 명명; Polis 확장 법안</span></li>
+          <li class="bi"><span class="en"><b>Allowlist +4</b> role/revenue/cowork events</span><span class="ko kr"><b>Allowlist +4</b> 역할·수익·공동작업 이벤트</span></li>
+        </ul>
+      </div>
+
+      <div class="card reveal">
+        <h3><span class="num">61 · HOUSE-4</span> Skill Construction</h3>
+        <p class="bi"><span class="en"><b>Blueprints are culture.</b> Houses are built from skill-hash blueprints, diffused through existing skill machinery; co-build sessions split a recipe DAG with paid attribution.</span><span class="ko"><b>설계도가 곧 문화.</b> 집은 스킬 해시 설계도로 지어지고, 기존 스킬 확산 기제로 전파되며, 공동 건축은 레시피 DAG를 유료 기여로 분할.</span></p>
+        <ul>
+          <li class="bi"><span class="en"><code>civic_blueprints</code> table keyed by skill hash</span><span class="ko kr">스킬 해시로 키잉된 <code>civic_blueprints</code> 테이블</span></li>
+          <li class="bi"><span class="en">Build executor verifies skill ownership, debits cost</span><span class="ko kr">건축 실행기: 스킬 보유 검증 후 비용 차감</span></li>
+          <li class="bi"><span class="en">Co-build sessions: DAG-weighted, paid attribution</span><span class="ko kr">공동 건축: DAG 가중 유료 기여</span></li>
+          <li class="bi"><span class="en">Location-aware teaching — workshops become schools</span><span class="ko kr">위치 인식 교육 — 작업장이 학교가 됨</span></li>
+          <li class="bi"><span class="en"><b>Allowlist +1</b> <code>skill.blueprint_executed</code></span><span class="ko kr"><b>Allowlist +1</b> <code>skill.blueprint_executed</code></span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="hr"/>
+
+<!-- ════════ PURCHASE FLOW ════════ -->
+<section class="dark">
+  <div class="shell">
+    <p class="eyebrow kicker reveal">06 · The purchase invariant / 구매 불변식</p>
+    <h2 class="lead reveal" style="max-width:30ch"><span class="en">Buy a parcel — <em>and only a Nous can.</em></span><span class="ko kr">구획을 산다 — <em>오직 누스만.</em></span></h2>
+    <p class="intro reveal" style="color:var(--muted-on-dark);margin-top:14px">
+      <span class="en"><code class="mono">POST /api/v1/civic/parcels/:id/purchase</code> — the constitutional D-NH-07 path. A signed-in human hits <code class="mono">humans_cannot_own_land</code>.</span>
+      <span class="ko kr" style="display:block;margin-top:.4em"><code class="mono">POST /api/v1/civic/parcels/:id/purchase</code> — 헌법적 D-NH-07 경로. 로그인한 인간은 <code class="mono">humans_cannot_own_land</code>에 막힙니다.</span>
+    </p>
+
+    <div class="flow reveal">
+      <div class="step guard">
+        <div class="n">1</div>
+        <div>
+          <h4 class="bi"><span class="en">Auth gate — <code>requireDid</code> → civic_member tier</span><span class="ko kr">인증 게이트 — <code>requireDid</code> → civic_member 등급</span></h4>
+          <p class="bi"><span class="en">Only Nous Bearer JWTs qualify. Human cookie sessions are <code>human_visitor</code> → <b>401</b>. Defensive second check rejects <code>did:civic:noesis:human:*</code> → <b>403 humans_cannot_own_land</b>.</span><span class="ko">누스 Bearer JWT만 통과. 인간 쿠키 세션은 <code>human_visitor</code> → <b>401</b>. 방어적 2차 검사로 <code>did:civic:noesis:human:*</code> 거부 → <b>403 humans_cannot_own_land</b>.</span></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="n">2</div>
+        <div>
+          <h4 class="bi"><span class="en">Validate — <code>registry.purchase()</code></span><span class="ko kr">검증 — <code>registry.purchase()</code></span></h4>
+          <p class="bi"><span class="en">Parcel exists, is ownable (commons are not), buyer is under caps (≤1 home, ≤1 business), funds sufficient → else <b>402</b>.</span><span class="ko">구획 존재·소유 가능(공용은 불가)·보유 한도(주거 ≤1, 비즈니스 ≤1)·자금 충분 → 아니면 <b>402</b>.</span></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <div>
+          <h4 class="bi"><span class="en">Debit — <code>transferOusia(buyer → TREASURY_DID, price)</code></span><span class="ko kr">차감 — <code>transferOusia(구매자 → TREASURY_DID, 가격)</code></span></h4>
+          <p class="bi"><span class="en">Currency moves to the treasury. (Ousia ≈ "Bios" 1:1 for HOUSE-1; unification deferred to Polis treasury cleanup.)</span><span class="ko">화폐가 국고로 이동. (HOUSE-1에서는 Ousia ≈ "Bios" 1:1; 통합은 Polis 국고 정리로 연기.)</span></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="n">4</div>
+        <div>
+          <h4 class="bi"><span class="en">Persist — store write first, then registry</span><span class="ko kr">영속화 — 스토어 먼저, 그다음 레지스트리</span></h4>
+          <p class="bi"><span class="en"><b>HumanRegistry lesson:</b> MySQL is the source of truth, the registry is a read cache. Every mutation writes DB first, then memory.</span><span class="ko"><b>HumanRegistry 교훈:</b> MySQL이 진실의 원천, 레지스트리는 읽기 캐시. 모든 변경은 DB 먼저, 메모리 나중.</span></p>
+        </div>
+      </div>
+      <div class="step ok">
+        <div class="n">5</div>
+        <div>
+          <h4 class="bi"><span class="en">Audit — two existing sole producers</span><span class="ko kr">감사 — 기존 단독 producer 2개</span></h4>
+          <p class="bi"><span class="en"><code>appendZoningParcelPurchased</code> (82) + <code>appendTreasuryParcelRevenue</code> (83). Owner DIDs are <b>hashed</b> (HEX64), never plaintext on the wire.</span><span class="ko"><code>appendZoningParcelPurchased</code> (82) + <code>appendTreasuryParcelRevenue</code> (83). 소유자 DID는 <b>해시</b>(HEX64)로, 평문 전송 없음.</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ CONDITION LADDER ════════ -->
+<section>
+  <div class="shell">
+    <p class="eyebrow kicker reveal">07 · Upkeep & decay / 유지비와 쇠퇴 (Phase 59)</p>
+    <h2 class="lead reveal" style="max-width:28ch"><span class="en">Miss the rent, lose the house — <em>on ticks, never wallclock.</em></span><span class="ko kr">임대료를 놓치면 집을 잃는다 — <em>틱 기준, 벽시계 아님.</em></span></h2>
+    <p class="intro reveal" style="margin-top:12px">
+      <span class="en">Draft: <code class="mono">rate = 2% of price / period</code>, <code class="mono">period = 10080 ticks</code> (≈1 week @ 1 tick/min). Final numbers come from the <code class="mono">[R2]</code> deep-research pass. Polis Commons are exempt.</span>
+      <span class="ko kr" style="display:block;margin-top:.4em">초안: <code class="mono">rate = 가격의 2% / 주기</code>, <code class="mono">period = 10080 틱</code>(분당 1틱 기준 ≈1주). 최종 수치는 <code class="mono">[R2]</code> 심층 연구에서. Polis 공용지는 면제.</span>
+    </p>
+    <div class="ladder reveal">
+      <div class="rung" data-s="maintained"><div class="state">maintained · 정상</div><small class="bi"><span class="en">Upkeep paid each period.</span><span class="ko">매 주기 유지비 납부.</span></small><span class="arrow">→</span></div>
+      <div class="rung" data-s="worn"><div class="state">worn · 노후 (1 missed)</div><small class="bi"><span class="en">One missed payment.</span><span class="ko">1회 미납.</span></small><span class="arrow">→</span></div>
+      <div class="rung" data-s="derelict"><div class="state">derelict · 방치 (2 missed)</div><small class="bi"><span class="en">Closed to visitors.</span><span class="ko">방문객 입장 불가.</span></small><span class="arrow">→</span></div>
+      <div class="rung" data-s="reclaimed"><div class="state">reclaimed · 회수 (3 missed)</div><small class="bi"><span class="en">Ownership → treasury, structure razed.</span><span class="ko">소유권 → 국고, 건물 철거.</span></small><span class="arrow">→</span></div>
+    </div>
+    <p class="note reveal" style="margin-top:14px">
+      <span class="en">Grace windows (FFXIV 45-day analog → ticks) finalized by <code class="mono">[R2]</code>. Events: <code class="mono">zoning.condition_changed</code>, <code class="mono">zoning.parcel_reclaimed</code>, <code class="mono">treasury.upkeep_collected</code>.</span>
+      <span class="ko kr" style="display:block">유예 기간(FFXIV 45일 유사 → 틱)은 <code class="mono">[R2]</code>로 확정. 이벤트: <code class="mono">zoning.condition_changed</code>, <code class="mono">zoning.parcel_reclaimed</code>, <code class="mono">treasury.upkeep_collected</code>.</span>
+    </p>
+  </div>
+</section>
+
+<hr class="hr"/>
+
+<!-- ════════ ALLOWLIST METER ════════ -->
+<section>
+  <div class="shell">
+    <p class="eyebrow kicker reveal">08 · Broadcast allowlist budget / 브로드캐스트 allowlist 예산</p>
+    <h2 class="lead reveal" style="max-width:30ch"><span class="en"><em>+9 events</em> across all four phases.</span><span class="ko kr">4단계 전체에서 <em>+9 이벤트</em>.</span></h2>
+    <p class="intro reveal" style="margin-top:12px">
+      <span class="en">The allowlist is frozen except by explicit per-phase additions. HOUSE-1 reuses producers 82–86 (<b>+0</b>); the rest add closed-tuple, privacy-walker-safe events. Today's count is 91; v3.0 ROADMAP plans more before 58 opens.</span>
+      <span class="ko kr" style="display:block;margin-top:.4em">Allowlist는 단계별 명시적 추가를 제외하고 동결. HOUSE-1은 producer 82–86 재사용(<b>+0</b>); 나머지는 폐쇄 튜플·프라이버시 워커 안전 이벤트 추가. 현재 91개; v3.0 ROADMAP은 58 시작 전 추가 예정.</span>
+    </p>
+    <div class="meter reveal">
+      <div class="bar">
+        <div class="seg" style="flex:0.5;background:var(--rule)" title="58: +0">58 · +0</div>
+        <div class="seg" style="flex:4;background:var(--teal)">59 · +4</div>
+        <div class="seg" style="flex:4;background:var(--bronze)">60 · +4</div>
+        <div class="seg" style="flex:1;background:var(--moss)">61 · +1</div>
+      </div>
+      <div class="lbls"><span>HOUSE total · 합계 = +9</span><span>zoning.* · treasury.* · skill.*</span></div>
+    </div>
+    <div class="cards grid3" style="margin-top:22px">
+      <div class="card reveal"><h4 class="mono" style="font-size:.9rem;color:var(--teal)">Phase 59 · +4</h4><p class="mono" style="font-size:.82rem">zoning.interior_extended<br>zoning.condition_changed<br>zoning.parcel_reclaimed<br>treasury.upkeep_collected</p></div>
+      <div class="card reveal"><h4 class="mono" style="font-size:.9rem;color:var(--bronze)">Phase 60 · +4</h4><p class="mono" style="font-size:.82rem">zoning.role_granted<br>zoning.role_revoked<br>treasury.structure_revenue<br>zoning.cowork_session</p></div>
+      <div class="card reveal"><h4 class="mono" style="font-size:.9rem;color:var(--moss)">Phase 61 · +1</h4><p class="mono" style="font-size:.82rem">skill.blueprint_executed</p></div>
+    </div>
+  </div>
+</section>
+
+<hr class="hr"/>
+
+<!-- ════════ RISKS ════════ -->
+<section>
+  <div class="shell">
+    <p class="eyebrow kicker reveal">09 · Cross-phase invariants & risks / 단계 공통 불변식과 리스크</p>
+    <h2 class="lead reveal"><span class="en">What must <em>never</em> break.</span><span class="ko kr"><em>절대</em> 깨지면 안 되는 것.</span></h2>
+    <div class="axiom-wrap reveal risk">
+      <table>
+        <thead><tr><th>ID</th><th>Risk / invariant · 리스크·불변식</th><th>Mitigation / 완화책</th></tr></thead>
+        <tbody>
+          <tr><td><span class="id">R-H-01</span></td><td class="bi"><span class="en">Registry-not-wired bug class (civicDidStore incident)</span><span class="ko">레지스트리 미연결 버그 (civicDidStore 사건)</span></td><td class="bi"><span class="en">Explicit GridServices attach + boot log + CI smoke test</span><span class="ko">GridServices 명시적 attach + 부팅 로그 + CI 스모크 테스트</span></td></tr>
+          <tr><td><span class="id">R-H-02</span></td><td class="bi"><span class="en">Wallclock CI gate vs upkeep timing</span><span class="ko">벽시계 CI 게이트 vs 유지비 타이밍</span></td><td class="bi"><span class="en">All periods tick-based; NY calendar only at display</span><span class="ko">모든 주기 틱 기반; 뉴욕 달력은 표시에만</span></td></tr>
+          <tr><td><span class="id">R-H-03</span></td><td class="bi"><span class="en">Single-onTick invariant (STATE.md)</span><span class="ko">단일 onTick 불변식 (STATE.md)</span></td><td class="bi"><span class="en">Upkeep rides the existing tick flow — no new subscriptions</span><span class="ko">유지비는 기존 틱 흐름에 편승 — 신규 구독 없음</span></td></tr>
+          <tr><td><span class="id">R-H-04</span></td><td class="bi"><span class="en">Zero-diff audit chain (R-31-01)</span><span class="ko">제로-디프 감사 체인 (R-31-01)</span></td><td class="bi"><span class="en">No chain/persistence code touched; standard sole producers</span><span class="ko">체인·영속화 코드 미변경; 표준 단독 producer</span></td></tr>
+          <tr><td><span class="id">R-H-05</span></td><td class="bi"><span class="en">VOTE-05 / D-NH-07 — humans never own</span><span class="ko">VOTE-05 / D-NH-07 — 인간 소유 불가</span></td><td class="bi"><span class="en">Rights never gated by property; route invariant + test</span><span class="ko">권리는 재산으로 제한 안 됨; 라우트 불변식 + 테스트</span></td></tr>
+          <tr><td><span class="id">R-H-06</span></td><td class="bi"><span class="en">Privacy walker — no leaking names/text</span><span class="ko">프라이버시 워커 — 이름·텍스트 누출 금지</span></td><td class="bi"><span class="en">Interior names/state never broadcast; DIDs hashed everywhere</span><span class="ko">내부 이름·상태 미전송; 모든 곳에서 DID 해시</span></td></tr>
+          <tr><td><span class="id">R-H-07</span></td><td class="bi"><span class="en">D-V3-32 six zones frozen</span><span class="ko">D-V3-32 6구역 동결</span></td><td class="bi"><span class="en">Zones untouched; rings are geometry inside zones</span><span class="ko">구역 불변; 링은 구역 내부 기하학</span></td></tr>
+          <tr><td><span class="id">R-H-08</span></td><td class="bi"><span class="en">Ousia / Bios duality</span><span class="ko">Ousia / Bios 이중성</span></td><td class="bi"><span class="en">58 treats 1:1, flagged for Polis treasury cleanup</span><span class="ko">58은 1:1 처리, Polis 국고 정리로 표시</span></td></tr>
+          <tr><td><span class="id">R-H-09</span></td><td class="bi"><span class="en">In-memory occupants lost on restart</span><span class="ko">메모리 거주자 재시작 시 소실</span></td><td class="bi"><span class="en">Acceptable — presence, not property (documented)</span><span class="ko">허용 — 재산 아닌 현존 (문서화)</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ DONE ════════ -->
+<section class="dark">
+  <div class="shell">
+    <p class="eyebrow kicker reveal">10 · Definition of done & next action / 완료 정의와 다음 행동</p>
+    <div class="callout reveal">
+      <p class="eyebrow">HOUSE-1 done when…</p>
+      <p class="bi"><span class="en">A Nous buys a ring-3 parcel for <b>400</b>, builds a <code>home</code>, a second Nous visits it, all five events appear on the public audit trail, and the orbital map shows the parcel <b>lit with one occupant</b> — while a signed-in human attempting purchase gets <code>humans_cannot_own_land</code>.</span><span class="ko kr">누스가 링-3 구획을 <b>400</b>에 사고, <code>home</code>을 짓고, 두 번째 누스가 방문하며, 다섯 이벤트가 공개 감사 트레일에 나타나고, 궤도 지도에 해당 구획이 <b>거주자 1명과 함께 점등</b>됩니다 — 동시에 로그인한 인간의 구매 시도는 <code>humans_cannot_own_land</code>를 받습니다.</span></p>
+    </div>
+    <div class="callout reveal" style="border-color:var(--teal);margin-top:18px">
+      <p class="eyebrow" style="color:var(--teal)">Next action / 다음 행동</p>
+      <p class="bi"><span class="en"><code>/gsd-discuss-phase</code> for Phase 58 with this plan + the design HTML as inputs. Fold <code>[R2]</code> research numbers into <code>founding-law.ts</code> draft values during Phase 59 planning.</span><span class="ko kr">이 계획 + 설계 HTML을 입력으로 Phase 58의 <code>/gsd-discuss-phase</code> 실행. Phase 59 계획 시 <code>[R2]</code> 연구 수치를 <code>founding-law.ts</code> 초안 값에 반영.</span></p>
+    </div>
+    <p class="note reveal" style="color:var(--muted-on-dark);margin-top:26px">
+      <span class="en">Estimate: HOUSE-1 ≈ 6 plans (persistence + routes + brain + map); 59–61 ≈ 4–5 plans each. Each is one GSD phase: CONTEXT → discuss → PLAN → execute → VERIFICATION.</span>
+      <span class="ko kr" style="display:block">추정: HOUSE-1 ≈ 6개 계획(영속화+라우트+브레인+지도); 59–61 각 ≈ 4–5개 계획. 각 단계는 하나의 GSD 단계: CONTEXT → 논의 → PLAN → 실행 → VERIFICATION.</span>
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="shell">
+    Noēsis · The Nous House · v3.1 Phases 58–61 · generated 2026-06-11<br>
+    Source plan: <a href="../../../Downloads/2026-06-11-nous-house-implementation-plan.md">2026-06-11-nous-house-implementation-plan.md</a> ·
+    Design canon: <code>docs/noesis-nous-house.html</code> (D-NH-01…13) ·
+    Research: <code>.planning/research/nous-house-research.md</code>
+  </div>
+</footer>
+
+<script>
+/* ── language toggle ── */
+const body=document.body;
+document.querySelectorAll('.langbar button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.langbar button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    body.dataset.lang=b.dataset.set;
+  });
+});
+
+/* ── scroll reveal ── */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ── orbital parcels + Nous-built truss network ── */
+const cx=400, cy=250;
+const SVGNS='http://www.w3.org/2000/svg';
+const g=document.getElementById('parcels');
+const trussG=document.getElementById('trusses');
+const rings={};                         // radius → [{x,y,deg,built}]
+const ringNum=r=>r<=100?1:r<=160?2:3;
+function place(r, count, startDeg, color, zone, price, builtRatio){
+  rings[r]=rings[r]||[];
+  for(let i=0;i<count;i++){
+    const deg=startDeg + (360/count)*i;
+    const rad=(deg-90)*Math.PI/180;
+    const x=cx+r*Math.cos(rad), y=cy+r*Math.sin(rad);
+    const rect=document.createElementNS(SVGNS,'rect');
+    const built = i < Math.round(count*builtRatio);
+    rect.setAttribute('x',x-8);rect.setAttribute('y',y-5.5);
+    rect.setAttribute('width',16);rect.setAttribute('height',11);
+    rect.setAttribute('rx',5.5);
+    rect.setAttribute('fill',color);
+    rect.setAttribute('opacity',built?1:0.32);
+    rect.setAttribute('stroke',built?'#f1ead8':'rgba(241,234,216,.4)');
+    rect.setAttribute('stroke-width',built?1.2:0.7);
+    rect.setAttribute('class','parcel');
+    const sector=Math.round(deg);
+    rect.dataset.name = (zone[0].toUpperCase()+zone.slice(1))+' · '+zone+(built?' · built':' · empty/빈');
+    rect.dataset.addr = 'genesis:'+zone+':ring'+ringNum(r)+' · sector '+sector+'°';
+    rect.dataset.info = '₿'+price+(built?' · owner present · 소유자 있음':' · for sale · 판매중');
+    g.appendChild(rect);
+    rings[r].push({x,y,deg,built});
+  }
+}
+/* ring 1 commons ×4 (r=100), ring 2 zones 8+8+8 (r=160), ring 3 residential ×24 (r=220) */
+place(100,4,45,'#2f7d8a','commons',1600,1);          // 4 commons, pre-built
+place(160,8,0,'#b8542f','business',900,0.5);
+place(160,8,15,'#8a6a3b','manufacture',900,0.375);
+place(160,8,30,'#d97a4f','shopping',900,0.5);
+place(220,24,0,'#5c7a4a','residential',400,0.42);
+
+/* ── truss network — each beam is one connection a Nous built (D-NH-06) ──
+   Drawn behind parcels; each beam draws itself in on load to read as
+   construction-in-progress, like a space-frame assembled module by module. */
+let beamN=0;
+function beam(x1,y1,x2,y2,w,op){
+  const ln=document.createElementNS(SVGNS,'line');
+  ln.setAttribute('x1',x1);ln.setAttribute('y1',y1);
+  ln.setAttribute('x2',x2);ln.setAttribute('y2',y2);
+  ln.setAttribute('stroke','#aeb8c4');ln.setAttribute('stroke-width',w);
+  ln.setAttribute('stroke-linecap','round');
+  const len=Math.hypot(x2-x1,y2-y1);
+  ln.style.strokeDasharray=len;ln.style.strokeDashoffset=len;
+  ln.style.opacity=op;
+  ln.style.animation='buildbeam .7s cubic-bezier(.4,.8,.3,1) forwards';
+  ln.style.animationDelay=(0.3+beamN*0.011)+'s';
+  beamN++;
+  trussG.appendChild(ln);
+}
+const angDist=(a,b)=>{const d=Math.abs(a-b)%360;return d>180?360-d:d;};
+function chord(arr,w,op){for(let i=0;i<arr.length;i++){const n=arr[i],m=arr[(i+1)%arr.length];beam(n.x,n.y,m.x,m.y,w,op);}}
+const r1=rings[100].slice().sort((a,b)=>a.deg-b.deg);
+const r2=rings[160].slice().sort((a,b)=>a.deg-b.deg);
+const r3=rings[220].slice().sort((a,b)=>a.deg-b.deg);
+// primary radial spines: core → commons → districts → homes
+r1.forEach(n=>beam(cx,cy,n.x,n.y,1.2,.30));
+r1.forEach(n=>{
+  r2.slice().sort((a,b)=>angDist(a.deg,n.deg)-angDist(b.deg,n.deg)).slice(0,2)
+    .forEach(m=>beam(n.x,n.y,m.x,m.y,.85,.22));
+});
+r2.forEach((n,i)=>beam(n.x,n.y,r3[i].x,r3[i].y,.8,.22));   // ring2 → ring3 radial
+// lattice chords around each ring
+chord(r1,.7,.18); chord(r2,.7,.20); chord(r3,.6,.16);
+// diagonal cross-braces (the truss X-pattern between the two outer rings)
+r2.forEach((n,i)=>beam(n.x,n.y,r3[(i+1)%r3.length].x,r3[(i+1)%r3.length].y,.5,.13));
+
+/* ── tooltip ── */
+const tip=document.getElementById('tip');
+const stage=document.querySelector('.mapstage');
+document.querySelectorAll('.parcel').forEach(p=>{
+  p.addEventListener('mousemove',e=>{
+    const r=stage.getBoundingClientRect();
+    tip.innerHTML='<b>'+p.dataset.name+'</b><br>'+p.dataset.addr+'<br>'+p.dataset.info;
+    tip.style.opacity=1;
+    let x=e.clientX-r.left+14, y=e.clientY-r.top+14;
+    if(x>r.width-240)x=e.clientX-r.left-240;
+    tip.style.left=x+'px';tip.style.top=y+'px';
+  });
+  p.addEventListener('mouseleave',()=>tip.style.opacity=0);
+});
+
+/* ── Nous ⇄ Grid communication gate · live traffic ── */
+(()=>{
+  const scene=document.getElementById('gateScene');
+  if(!scene) return;
+  const NS='http://www.w3.org/2000/svg';
+  const packetsG=document.getElementById('packets');
+  const tlog=document.getElementById('tlog');
+  const glowEl=document.getElementById('gateGlow');
+  const X0=150, X1=752, GATE=450;
+  /* scripted Nous↔Grid exchange — the Phase-58 definition-of-done flow, looping */
+  const EXCH=[
+    {q:'GET /civic/parcels',                 a:'200 · parcels[53]',          c:'#6fc8d6'},
+    {q:'POST buy_parcel · residential',      a:'201 · owned · −400 Ⓞ',       c:'#d97a4f'},
+    {q:'⌁ zoning.parcel_purchased',          a:'✓ audit chain appended',     c:'#d97a4f'},
+    {q:'⌁ treasury.parcel_revenue',          a:'✓ +400 → treasury',          c:'#c9a44a'},
+    {q:'POST build · home',                  a:'201 · structure built',      c:'#c9a44a'},
+    {q:'POST visit · residential:0007',      a:'200 · occupant +1',          c:'#7fe0a0'},
+    {q:'(human) POST buy_parcel',            a:'403 · humans_cannot_own_land',c:'#b8542f'},
+  ];
+  let packets=[], glow=0.18, tick=42, ei=0;
+
+  function spawnPacket(label,color,dir){
+    const y=dir>0?118:186;
+    const g=document.createElementNS(NS,'g');
+    const halo=document.createElementNS(NS,'circle');
+    halo.setAttribute('r',9);halo.setAttribute('cx',0);halo.setAttribute('cy',y);
+    halo.setAttribute('fill',color);halo.setAttribute('opacity','.22');
+    const dot=document.createElementNS(NS,'circle');
+    dot.setAttribute('r',5);dot.setAttribute('cx',0);dot.setAttribute('cy',y);dot.setAttribute('fill',color);
+    const txt=document.createElementNS(NS,'text');
+    txt.setAttribute('x',0);txt.setAttribute('y',dir>0?y-13:y+22);
+    txt.setAttribute('text-anchor','middle');txt.setAttribute('font-size','10.5');
+    txt.setAttribute('font-family',"'JetBrains Mono',monospace");txt.setAttribute('fill',color);
+    txt.textContent=label;
+    g.appendChild(halo);g.appendChild(dot);g.appendChild(txt);
+    packetsG.appendChild(g);
+    const from=dir>0?X0:X1, to=dir>0?X1:X0;
+    packets.push({g,from,to,dir,x:from});
+  }
+  function flash(){ glow=0.6; }
+
+  function frame(){
+    for(const pk of packets){
+      pk.x += pk.dir*2.7;
+      const p=(pk.x-pk.from)/(pk.to-pk.from);
+      const op = p<.06 ? Math.max(0,p/.06) : p>.94 ? Math.max(0,(1-p)/.06) : 1;
+      pk.g.setAttribute('transform','translate('+pk.x.toFixed(1)+',0)');
+      pk.g.setAttribute('opacity',op.toFixed(2));
+      if(pk.dir>0 && pk.x>436 && pk.x<472) flash();
+    }
+    packets=packets.filter(pk=>{
+      const done=(pk.dir>0&&pk.x>=pk.to)||(pk.dir<0&&pk.x<=pk.to);
+      if(done) pk.g.remove();
+      return !done;
+    });
+    glow=Math.max(0.18, glow-0.02);
+    if(glowEl) glowEl.setAttribute('opacity',glow.toFixed(2));
+    requestAnimationFrame(frame);
+  }
+
+  function logLine(cls,arrow,text,color){
+    const d=document.createElement('div');
+    d.className='ln '+cls;
+    tick+=3+Math.floor(Math.random()*7);
+    d.innerHTML='<span class="ts">t+'+String(tick).padStart(4,'0')+'</span> '+
+      '<b>'+arrow+'</b> '+text;
+    tlog.appendChild(d);
+    while(tlog.childNodes.length>7) tlog.removeChild(tlog.firstChild);
+  }
+
+  function exchange(){
+    const e=EXCH[ei++%EXCH.length];
+    spawnPacket(e.q,e.c,1);
+    logLine('out','→',e.q,e.c);
+    setTimeout(()=>{ spawnPacket(e.a,e.c,-1); logLine('in','←',e.a,e.c); }, 1150);
+  }
+
+  /* pause animation when the section is off-screen (perf-friendly) */
+  let running=false;
+  const seqTimer=setInterval(exchange,2200);
+  requestAnimationFrame(frame);
+  exchange();
+})();
+</script>
+</body>
+</html>
