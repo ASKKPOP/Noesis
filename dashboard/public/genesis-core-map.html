@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Noēsis — Genesis Core · orbital station view</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#020610;--text:#f5f0ea;--muted:#8a93a6;--accent:#da7a4e;--cyan:#3fa6bd}
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
@@ -8,7 +11,9 @@ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;overfl
 #c{position:fixed;inset:0;display:block}
 .hud{position:fixed;z-index:10;font-family:'JetBrains Mono',ui-monospace,monospace;pointer-events:none}
 #title{top:18px;left:22px}
-#title .n{font-family:'Cormorant Garamond',Georgia,serif;font-size:30px;font-weight:600;letter-spacing:.02em}
+#title .n{font-family:'Orbitron',monospace;font-size:25px;font-weight:900;letter-spacing:.16em;
+ color:rgba(4,12,20,.85);-webkit-text-stroke:1.5px #4fd2f2;
+ text-shadow:0 0 8px rgba(63,209,255,.8),0 0 22px rgba(27,180,230,.5),0 0 44px rgba(20,140,190,.35)}
 #title .s{font-size:10px;letter-spacing:.16em;color:var(--accent);text-transform:uppercase;margin-top:2px}
 #legend{bottom:18px;left:22px;font-size:11px;line-height:1.9;color:var(--muted)}
 #legend b{color:var(--text);font-weight:500}
@@ -36,7 +41,7 @@ font-size:11.5px;line-height:1.7;color:var(--muted);opacity:0;transition:opacity
 </style></head>
 <body>
 <canvas id="c"></canvas>
-<div class="hud" id="title"><div class="n">Noēsis</div><div class="s">Genesis Core · Orbital Station · Multi-Dimensional Grid</div></div>
+<div class="hud" id="title"><div class="n">NOĒSIS</div><div class="s">Genesis Core · Orbital Station · Multi-Dimensional Grid</div></div>
 <div class="hud" id="stats"></div>
 <div class="hud" id="legend">
 <div><span class="sw" style="background:#8e54b8"></span><b>Government Core</b> · gravity center</div>
@@ -327,7 +332,12 @@ addEventListener('wheel',e=>{dist=Math.max(70,Math.min(680,dist+e.deltaY*0.14));
 let signedIn=false;const DEMO_DID='did:civic:noesis:nous:7Q…aF3';let lastPicked=null;
 const vwrap=document.getElementById('viewer'),vid=document.getElementById('vid'),
  vmode=document.getElementById('vmode'),vbtn=document.getElementById('vbtn');
+// Real flow: sign-in REQUIRES registration — the Portal issues a Civic DID
+// (Portal pre-screen → Polis approval, D-V3-33). ?demo=1 keeps a local toggle
+// for previews/docs only; it never issues a DID.
+const DEMO_MODE=new URLSearchParams(location.search).get('demo')==='1';
 vbtn.addEventListener('click',()=>{
+ if(!DEMO_MODE){location.href='/portal/auth?tab=join';return;}
  signedIn=!signedIn;vwrap.classList.toggle('in',signedIn);
  vid.textContent=signedIn?DEMO_DID:'Human visitor';
  vmode.textContent=signedIn?'· DID verified':'· public view';
@@ -357,7 +367,7 @@ function renderPanel(p){
   panel.innerHTML='<div class="pid">'+p.zone.replace(/_/g,' ')+' · district</div>'+
    '<div class="row"><span>shell</span><b>'+(p.ring===0?'core':'ring '+p.ring)+'</b></div>'+
    '<div class="row"><span>status</span><b>'+p.status+'</b></div>'+
-   '<div class="lockmsg">🔒 Detail of this space is private.<br>Sign in with a valid DID and hold access to view it — within the space’s entry policy &amp; rules.</div>';
+   '<div class="lockmsg">🔒 Detail of this space is private.<br>Register and sign in with your Civic DID — detail opens only within the space’s entry policy &amp; rules.</div>';
  }else{
   panel.innerHTML='<div class="pid">'+p.id+'</div>'+
    '<div class="row"><span>address</span><b>('+p.ring+', '+p.sector_deg+'°, L'+p.level+')</b></div>'+

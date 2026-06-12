@@ -27,6 +27,19 @@ const SANS = '"DM Sans", "Inter Tight", sans-serif';
 const SERIF = '"Cormorant Garamond", Georgia, serif';
 const MONO = '"JetBrains Mono", monospace';
 
+// TRON-style neon wordmark — the Noēsis brand mark, shared with the world map
+// HUD and docs/noesis-logo.html. Hollow Orbitron letters + cyan tube glow.
+const wordmarkStyle: React.CSSProperties = {
+    fontFamily: '"Orbitron", monospace',
+    fontSize: 24,
+    fontWeight: 900,
+    letterSpacing: '0.16em',
+    lineHeight: 1,
+    color: 'rgba(4,12,20,0.85)',
+    WebkitTextStroke: '1.4px #4fd2f2',
+    textShadow: '0 0 8px rgba(63,209,255,0.8), 0 0 22px rgba(27,180,230,0.5), 0 0 44px rgba(20,140,190,0.35)',
+};
+
 const panelStyle: React.CSSProperties = {
     background: 'rgba(2,6,16,0.82)',
     border: '1px solid rgba(0,212,255,0.15)',
@@ -130,6 +143,9 @@ export default function LandingView() {
             fontFamily: SANS,
             color: '#f5f0ea',
         }}>
+            {/* Orbitron — required by the neon wordmark */}
+            <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap" rel="stylesheet" />
+
             {/* Live isometric city — full-screen non-interactive background */}
             <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
                 <CyberGridBg hideHud />
@@ -155,14 +171,8 @@ export default function LandingView() {
                     padding: '52px 0 24px',
                 }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-                        <span style={{
-                            fontFamily: SERIF,
-                            fontSize: 28,
-                            fontWeight: 600,
-                            letterSpacing: '0.02em',
-                            lineHeight: 1,
-                        }}>
-                            Noēsis
+                        <span style={wordmarkStyle}>
+                            NOĒSIS
                         </span>
                         <span style={{
                             ...monoLabelStyle,
