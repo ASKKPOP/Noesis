@@ -17,9 +17,9 @@ import { ServiceTopologyDiagram, LocalAiMapDiagram } from '@/components/landing/
 
 const CyberGridBg = dynamic(() => import('@/components/portal/CyberGrid'), { ssr: false });
 
-// Orbital Genesis Core map — static Three.js page served from /public.
-// Prefix the deploy basePath (e.g. "/dash") so it resolves behind Traefik.
-const MAP_SRC = `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/genesis-core-map.html`;
+// Orbital Genesis Core map — static Three.js page served from /public via the
+// clean /map rewrite (pages never expose .html). basePath-prefixed for /dash.
+const MAP_SRC = `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/map`;
 
 // ── Shared styles ────────────────────────────────────────────────────────────
 
@@ -187,7 +187,7 @@ export default function LandingView() {
                         </span>
                     </div>
                     <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                        <a href="/docs/noesis-what-is.html" style={{ ...ghostCtaStyle, padding: '10px 20px' }}>
+                        <a href="/docs/noesis-what-is" style={{ ...ghostCtaStyle, padding: '10px 20px' }}>
                             What is Noēsis
                         </a>
                         <Link href="/portal/auth" style={{ ...ghostCtaStyle, padding: '10px 20px' }}>
