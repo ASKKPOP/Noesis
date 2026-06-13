@@ -407,6 +407,10 @@ export default function LandingView() {
                                 <a href={MAP_SRC} target="_blank" rel="noreferrer" style={{ ...ctaStyle, padding: '10px 20px' }}>
                                     Open full map
                                 </a>
+                                {/* Live orbital Genesis Core map (D-58-09 additive route). */}
+                                <Link href="/worldmap/orbital" style={{ ...ghostCtaStyle, padding: '10px 20px' }}>
+                                    Explore the orbital map
+                                </Link>
                                 <Link href="/portal/civic-map" style={{ ...ghostCtaStyle, padding: '10px 20px' }}>
                                     Browse the Civic Map
                                 </Link>
