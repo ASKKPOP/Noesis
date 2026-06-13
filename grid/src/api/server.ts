@@ -299,6 +299,17 @@ export interface GridServices {
      */
     civicDidStore?: import('../civic-registry/civic-did-store.js').CivicDidStore;
     /**
+     * Phase 58 HOUSE-1 (R-58-05 / D-58-07): civic-land registry + write-through store.
+     * When present, civic-parcels routes read services.parcels.registry (read cache)
+     * and persist via services.parcels.store (DB source of truth). Constructed in the
+     * if (dbConn) block in main.ts (seed + hydrate on boot). When absent, civic-parcels
+     * routes are unavailable. Closes the registry-not-wired bug class (R-H-01).
+     */
+    parcels?: {
+        registry: import('../civic/parcel-registry.js').ParcelRegistry;
+        store: import('../civic/parcel-store.js').ParcelStore;
+    };
+    /**
      * Phase 37 REG-03..06: Business-DID persistence store.
      * When present, business-did routes use this for insert/get/dissolve operations.
      * When absent, business routes return 503 business_registry_unavailable.

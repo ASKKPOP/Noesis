@@ -27,6 +27,8 @@ import { PresenceStore } from './civic-presence/presence-store.js';
 import { MessageQueueStore } from './civic-presence/message-queue-store.js';
 import { GraceTimerRegistry } from './civic-presence/grace-timer-registry.js';
 import { PresenceService } from './civic-presence/presence-service.js';
+import { ParcelRegistry } from './civic/parcel-registry.js';
+import { ParcelStore } from './civic/parcel-store.js';
 import type { GenesisConfig } from './genesis/types.js';
 import type { FastifyInstance } from 'fastify';
 import type { SpawnNousDeps } from './api/operator/spawn-system-nous.js';
@@ -199,6 +201,10 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     let presenceService: PresenceService | undefined;
     let civicDidStore: CivicDidStore | undefined;
     let businessDidStore: BusinessDidStore | undefined;
+    // Phase 58 HOUSE-1 (R-58-05 / D-58-07): civic-land registry + write-through store,
+    // hoisted so they can ALSO be attached to GridServices below (registry-not-wired
+    // bug class — R-H-01). DB is source of truth; the registry is a read cache.
+    let parcels: { registry: ParcelRegistry; store: ParcelStore } | undefined;
     if (dbConn) {
         const presencePool = dbConn.getPool();
         const presenceStore = new PresenceStore(presencePool);
@@ -206,6 +212,14 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         const graceTimerRegistry = new GraceTimerRegistry();
         civicDidStore = new CivicDidStore(presencePool);
         businessDidStore = new BusinessDidStore(presencePool);
+        // Phase 58 HOUSE-1: seed the Genesis Core (idempotent, no audit events) then
+        // hydrate the read cache from the DB (source of truth) and emit the boot log.
+        const parcelRegistry = new ParcelRegistry(config.genesisConfig.gridName);
+        const parcelStore = new ParcelStore(presencePool, config.genesisConfig.gridName);
+        await parcelStore.seedGenesisCore(parcelRegistry);
+        const parcelCount = await parcelStore.hydrate(parcelRegistry);
+        console.log(`[civic] parcels loaded: ${parcelCount}`);
+        parcels = { registry: parcelRegistry, store: parcelStore };
         presenceService = new PresenceService({
             gridName: config.genesisConfig.gridName,
             presenceStore,
@@ -285,6 +299,9 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         // DID Registry stores — read by registry routes (Phase 37) + human civic application (civic.ts).
         ...(civicDidStore ? { civicDidStore } : {}),
         ...(businessDidStore ? { businessDidStore } : {}),
+        // Phase 58 HOUSE-1 (R-58-05 / D-58-07): civic-land registry + store attached to
+        // GridServices so civic-parcels routes (Wave 3) can read/persist parcels.
+        ...(parcels ? { parcels } : {}),
         // Phase 42 P2P-01..05: P2P peer store + SDP inbox + TURN credentials.
         // launcher.p2pService is populated by launcher.start() and accessible here for GridServices wiring.
         // Wired unconditionally — P2PService is in-memory and requires no DB connection.
