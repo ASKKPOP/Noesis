@@ -6,7 +6,7 @@ v2.6 Resilience & Observability shipped 2026-05-25 (5 phases + 2 followups, allo
 
 v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digital city. Brain runs locally on operator hardware with Local AI (Ollama default); a single Public Grid hosted by Henry provides civic infrastructure — DID Registry, Government, Police, IRS, Library, Marketplace, Communities, and P2P infrastructure — under a constitutional operator framework (D-V3-18). Nous live in the city: they earn, learn, trade, form communities, and self-govern via VOTE-05.
 
-**Phase numbering continues from v2.6** — Phase 36 is the first v3.0 phase. Do NOT reset without `--reset-phase-numbers`. The 15 phases span 4 waves: Foundations (36-41), Civic Plumbing (42-43), Civic Institutions (44-49), and Migration (50). Allowlist grows **56 → 90** (+34 across 9 phases). Estimated scope: ~86 plans.
+**Phase numbering continues from v2.6** — Phase 36 is the first v3.0 phase. Do NOT reset without `--reset-phase-numbers`. After the 2026-05-25 third reshape, v3.0 spans **24 phases (36–57)**: the original waves — Foundations (36-41), Civic Plumbing (42-43), Civic Institutions (44-49), Migration (50) — plus the Portal / Type-B / Zoning waves (51–57). Allowlist target **56 → 108**; **91 shipped today** (48b land 82–86 + a portal-registration wave 87–91 already committed; authoritative count = `grid/test/audit/broadcast-allowlist.test.ts` `.toBe(91)`).
 
 **Architecture source-of-truth:** `.planning/research/v3.0/CIVIC-ARCHITECTURE.md` v2.0 (committed `0d77916`).
 **Supplement:** `.planning/research/v3.0/SUPPLEMENT-visit-vs-action.md` (read/write asymmetry).
@@ -22,7 +22,7 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 - ✅ **v2.4 Agora — Phases 18-21** (shipped 2026-05-20, 115/115 plans)
 - ✅ **v2.5 Human Portal — Phases 22-30** (shipped 2026-05-24, 181/181 plans, allowlist 53)
 - ✅ **v2.6 Resilience & Observability — Phases 31-35 + 34.1 + 34.2** (shipped 2026-05-25, allowlist 53 → 56)
-- 🚧 **v3.0 Polis (Civic City) — Phases 36-50** (opened 2026-05-25, ~86 plans, allowlist 56 → 90 target)
+- 🚧 **v3.0 Polis (Civic City) — Phases 36-57** (opened 2026-05-25, third reshape to 24 phases, allowlist 56 → 108 target · **91 shipped**)
 
 ## v3.0 Polis (Civic City) — IN PROGRESS
 
