@@ -72,6 +72,7 @@ import { registerCivicMessageRoute } from './routes/civic-message.js';
 import { registerGridManagerPresenceRoute } from './routes/grid-manager-presence.js';
 import { registerP2pRoutes } from './routes/p2p.js';
 import { registerForkNousRoute } from './operator/fork-nous.js';
+import { registerCivicParcelRoutes } from './routes/civic-parcels.js';
 
 /**
  * Phase 6 AGENCY-02: normalized memory entry shape crossing the RPC boundary.
@@ -733,6 +734,14 @@ export function buildServerWithHub(
     // GET /api/v1/operator/fork/:nousDid/download?token=X — one-time archive download.
     // Policy: 'public' (header-trust handles auth internally, per all operator.* routes).
     registerForkNousRoute(app, services);
+
+    // --- Phase 58 HOUSE-1 (NH1-06): Civic-parcels routes ---
+    // GET feeds public; purchase/build/join/leave/entry-policy civic_did_required
+    // (D-NH-07 Nous-only land). Registered only when the parcels service is wired
+    // (mirrors the optional civicDidStore-style registrations).
+    if (services.parcels) {
+        registerCivicParcelRoutes(app, services);
+    }
 
     // --- Phase 38 WIRE-01: Brain action dispatch route ---
     // POST /api/v1/brain/actions — civic_did_required (onRequest hook enforces).

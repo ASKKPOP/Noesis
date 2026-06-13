@@ -14,9 +14,13 @@
  *         CI route smoke check closing the registry-not-wired bug class — R-H-01).
  */
 import { describe, it, expect, vi } from 'vitest';
+import Fastify from 'fastify';
 import type { Pool } from 'mysql2/promise';
 import { ParcelRegistry } from '../../src/civic/parcel-registry.js';
 import { ParcelStore } from '../../src/civic/parcel-store.js';
+import { AuditChain } from '../../src/audit/chain.js';
+import { registerCivicParcelRoutes } from '../../src/api/routes/civic-parcels.js';
+import type { GridServices } from '../../src/api/server.js';
 
 function makeMockPool(): Pool {
     return { query: vi.fn().mockResolvedValue([[], []]) } as unknown as Pool;
@@ -37,12 +41,39 @@ describe('GridServices.parcels wiring (D-58-07 / R-58-05)', () => {
     });
 });
 
-// Wave 3 (58-04) lands GET /api/v1/civic/parcels. The 200 smoke check below stays
-// gated until that route is registered — un-skipped together with the route.
-describe.skip('GET /api/v1/civic/parcels — registry-not-wired smoke check (R-H-01 / R-58-05)', () => {
-    it('GET /api/v1/civic/parcels returns 200 with a parcels array', () => {
-        // Public map feed: { parcels: [...] }. Catches the civicDidStore-not-wired bug class.
+// Wave 3 (58-04) lands GET /api/v1/civic/parcels. The 200 smoke check is now active —
+// the route exists. Catches the registry-not-wired bug class (R-H-01).
+describe('GET /api/v1/civic/parcels — registry-not-wired smoke check (R-H-01 / R-58-05)', () => {
+    it('GET /api/v1/civic/parcels returns 200 with a parcels array', async () => {
+        const registry = new ParcelRegistry('genesis');
+        const store = new ParcelStore(makeMockPool(), 'genesis');
+        const app = Fastify({ logger: false });
+        registerCivicParcelRoutes(app, {
+            audit: new AuditChain(),
+            gridName: 'genesis',
+            parcels: { registry, store },
+        } as GridServices);
+        await app.ready();
+        const res = await app.inject({ method: 'GET', url: '/api/v1/civic/parcels' });
+        expect(res.statusCode).toBe(200);
+        expect(res.json()).toMatchObject({ parcels: expect.any(Array) });
+        await app.close();
     });
 
-    it('the returned parcels array is non-empty on a seeded Genesis Core (53 rows)', () => {});
+    it('the returned parcels array reflects the seeded registry (non-empty after seedZone)', async () => {
+        const registry = new ParcelRegistry('genesis');
+        registry.seedZone({ zoneId: 'residential', count: 24, priceBios: 400, ring: 3 });
+        const store = new ParcelStore(makeMockPool(), 'genesis');
+        const app = Fastify({ logger: false });
+        registerCivicParcelRoutes(app, {
+            audit: new AuditChain(),
+            gridName: 'genesis',
+            parcels: { registry, store },
+        } as GridServices);
+        await app.ready();
+        const res = await app.inject({ method: 'GET', url: '/api/v1/civic/parcels' });
+        expect(res.statusCode).toBe(200);
+        expect((res.json() as { parcels: unknown[] }).parcels.length).toBe(24);
+        await app.close();
+    });
 });

@@ -298,6 +298,18 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/gov/law/:id/repeal':        'government_only',     // CIVGOV-05
     'GET /api/v1/gov/law/active':             'public',              // CIVGOV-05 (law book, visitor-readable)
     'GET /api/v1/gov/bill/:id':               'public',              // CIVGOV-01 (bill view, visitor-readable)
+
+    // Phase 58 (NH1-06 / R-58-06) — civic-parcels HOUSE-1 routes.
+    // The two GET feeds are public (map view, owner DIDs hashed HEX64); the five
+    // write routes are civic_did_required (D-NH-07 Nous-only land; the route adds a
+    // defensive 403 humans_cannot_own_land for did:civic:noesis:human:* DIDs).
+    'GET /api/v1/civic/parcels':                  'public',
+    'GET /api/v1/civic/parcels/:id':              'public',
+    'POST /api/v1/civic/parcels/:id/purchase':     'civic_did_required',
+    'POST /api/v1/civic/parcels/:id/build':        'civic_did_required',
+    'POST /api/v1/civic/parcels/:id/join':         'civic_did_required',
+    'POST /api/v1/civic/parcels/:id/leave':        'civic_did_required',
+    'POST /api/v1/civic/parcels/:id/entry-policy': 'civic_did_required',
 } as Record<string, RouteDIDPolicy>);
 
 /**
