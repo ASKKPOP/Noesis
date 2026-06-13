@@ -345,6 +345,27 @@ Driving inputs for v3.0 (locked at milestone open):
   - Pitfall 4 honored (audit_trail query enumerates 3 IRS event types — no `LIKE 'irs.%'`).
   - Pitfall 6 honored (sole-producer functions called by multiple sites; `audit.append('irs.…', …)` appears exactly once per event type).
 
+## v3.1 Phase 58 HOUSE-1 BUILT ahead of schedule (2026-06-13)
+
+- **Phase 58 Nous House HOUSE-1 Foundations is implemented + verified** — built ahead of the v3.0
+  remaining phases (it depends only on the already-shipped Phase 48b `ParcelRegistry` skeleton +
+  events 82–86, NOT on Phases 47/49–57). The v3.0 current-position above (Phase 46 shipped, 47/48b
+  next) is unchanged; Phase 58 was built out-of-sequence because its dependency was already present.
+- **Built via the Planner→Generator→Evaluator harness, 7 waves (0–6), all green:** migration v38
+  `civic_parcels` (write-through store, vector address ring/sector/level per D-NH-10), `founding-law.ts`
+  gravity pricing `100×(5−ring)²` (ring3=400, ring2=900) + 53-parcel Genesis Core seed, GridServices
+  wiring + boot log, 7 civic-parcels HTTP routes (dual-registry funds flow — `nousRegistry.transferOusia`
+  moves Ousia, `parcelRegistry.purchase` only validates; D-NH-07 `humans_cannot_own_land` 401/403),
+  6 brain ActionType verbs + `my_places` prompt block, orbital map `/worldmap/orbital`, E2E DoD.
+- **Invariants held:** allowlist **+0** (reuses 82–86; `broadcast-allowlist.test.ts` byte-for-byte
+  unchanged at 91), zero-diff R-31-01 (no `scripts/` or `grid/src/audit/` change across the phase),
+  wallclock + civic-did-issuance + sole-producer + privacy-walker gates green, full grid suite
+  326 files / 3078 tests passing. Artifacts: `.planning/phases/58-house-1-foundations/`.
+- **Side-fix (committed `9c155fe`):** dashboard vitest JSX transform was pre-existing broken
+  (vitest-4/rolldown dropped `oxc.jsx`); fixed by switching to `@vitejs/plugin-react-swc` — restored
+  40 of 49 broken `.test.tsx` files. Remaining 9 are pre-existing logic/source issues (a `whisper.tsx`
+  invalid-JSX-text bug spun off as a separate task).
+
 ## v3.0 Phase 48b open — Civic Land & Property (design landed 2026-06-05)
 
 - **Phase 48b IN PROGRESS.** Civic Land & Property — ownable parcels + one buildable structure per parcel + join/visit for open structures. Allowlist **81 → 86** (+5, reusing the pre-cleared `zoning.*` / `treasury.*` prefixes): `zoning.parcel_purchased` (82), `treasury.parcel_revenue` (83), `zoning.structure_built` (84), `zoning.structure_joined` (85), `zoning.structure_left` (86). Grid-core wave shipped first: `ParcelRegistry` (in-memory, ShopRegistry precedent), 5 sole-producer append-* files, allowlist lock 81→86, doc-sync gate + allowlist test updated. Design: `docs/plans/2026-06-05-civic-land-and-property-design.md`. Provisional phase number 48b — final slot to be locked in `/gsd-discuss-phase`.
