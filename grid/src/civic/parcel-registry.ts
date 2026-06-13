@@ -32,6 +32,10 @@ export interface SeedZoneInput {
     zoneId: ZoneId;
     count: number;
     priceBios: number;
+    /** D-NH-10 vector-address ring this band belongs to (0 = Government Core). */
+    ring: number;
+    /** D-NH-10 vector-address level (defaults to 0). */
+    level?: number;
 }
 
 export class ParcelRegistry {
@@ -49,13 +53,19 @@ export class ParcelRegistry {
         if (!Number.isInteger(input.priceBios) || input.priceBios <= 0) {
             throw new Error(`seedZone: priceBios must be a positive integer, got ${input.priceBios}`);
         }
+        const level = input.level ?? 0;
         for (let i = 0; i < input.count; i++) {
             const seq = String(i + 1).padStart(4, '0');
             const id = `${this.gridId}:${input.zoneId}:${seq}`;
+            // Spread the band's parcels evenly around the ring (D-NH-10 sector in degrees).
+            const sector = input.count > 0 ? (360 * i) / input.count : 0;
             this.parcels.set(id, {
                 id,
                 gridId: this.gridId,
                 zoneId: input.zoneId,
+                ring: input.ring,
+                sector,
+                level,
                 ownerDid: null,
                 priceBios: input.priceBios,
                 structure: null,
@@ -63,6 +73,16 @@ export class ParcelRegistry {
                 acquiredAtTick: null,
             });
         }
+    }
+
+    /**
+     * Insert or replace a fully-formed parcel directly (used by ParcelStore for
+     * hydrate-on-boot and seed-mirror). The store owns DB persistence; this only
+     * mirrors the authoritative row into the in-memory read cache. Presence
+     * (occupants) is never touched here — it is memory-only by design (R-H-09).
+     */
+    upsert(parcel: Parcel): void {
+        this.parcels.set(parcel.id, this.clone(parcel));
     }
 
     /** All parcels, optionally filtered. Returns deep copies so callers cannot mutate state. */

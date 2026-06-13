@@ -16,7 +16,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 
 type FoundingLaw = typeof import('../../src/civic/founding-law.js');
 
-describe.skip('founding-law — gravity pricing (D-58-04 / R-58-03)', () => {
+describe('founding-law — gravity pricing (D-58-04 / R-58-03)', () => {
     let mod: FoundingLaw;
     beforeAll(async () => {
         mod = await import('../../src/civic/founding-law.js');
@@ -45,7 +45,7 @@ describe.skip('founding-law — gravity pricing (D-58-04 / R-58-03)', () => {
     });
 });
 
-describe.skip('founding-law — GENESIS_CORE_SEED_PLAN shape (R-58-02 / R-58-03)', () => {
+describe('founding-law — GENESIS_CORE_SEED_PLAN shape (R-58-02 / R-58-03)', () => {
     let mod: FoundingLaw;
     beforeAll(async () => {
         mod = await import('../../src/civic/founding-law.js');

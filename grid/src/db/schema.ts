@@ -821,4 +821,38 @@ export const MIGRATIONS: Migration[] = [
             DROP TABLE IF EXISTS human_civic_applications
         `,
     },
+    // Phase 58 HOUSE-1 (NH1-01 / D-58-02) — civic_parcels: one row per parcel with the
+    // structure embedded (one-structure-per-parcel makes a separate table unnecessary).
+    // D-NH-10 vector address: ring / sector_deg / level. owner_civic_did NULL = treasury.
+    // structure_name is plaintext Grid-side only (never crosses the audit chain).
+    // Occupants are NOT persisted — presence is memory-only (R-H-09), so no column for it.
+    // named_address is wired in Phase 60. Write-through store; registry hydrated on boot.
+    {
+        version: 38,
+        name: 'create_civic_parcels',
+        up: `
+            CREATE TABLE IF NOT EXISTS civic_parcels (
+                parcel_id        VARCHAR(127)    NOT NULL,
+                grid_name        VARCHAR(63)     NOT NULL,
+                zone_id          VARCHAR(31)     NOT NULL,
+                ring             TINYINT         NOT NULL,
+                sector_deg       DECIMAL(6,2)    NOT NULL,
+                level            SMALLINT        NOT NULL DEFAULT 0,
+                owner_civic_did  VARCHAR(255)    NULL,
+                price_bios       BIGINT UNSIGNED NOT NULL,
+                acquired_at_tick INT UNSIGNED    NULL,
+                structure_name   VARCHAR(255)    NULL,
+                structure_type   ENUM('home','shop','workshop','venue') NULL,
+                visibility       ENUM('open','private') NULL,
+                built_at_tick    INT UNSIGNED    NULL,
+                named_address    VARCHAR(255)    NULL,
+                entry_policy     ENUM('open','allowlist') NOT NULL DEFAULT 'open',
+                entry_allowlist  JSON            NULL,
+                PRIMARY KEY (parcel_id),
+                INDEX idx_parcel_owner (owner_civic_did),
+                INDEX idx_parcel_zone (grid_name, zone_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS civic_parcels`,
+    },
 ];
