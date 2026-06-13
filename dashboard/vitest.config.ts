@@ -1,20 +1,40 @@
 import { defineConfig, type Plugin } from 'vitest/config';
+import react from '@vitejs/plugin-react-swc';
 import path from 'node:path';
 import fs from 'node:fs';
 
 /**
- * Vitest 2.x JSX transform via esbuild.
+ * JSX transform.
  *
- * Note: the previous config attempted to use a top-level `oxc` option which is
- * not a valid vitest 2.x config key — it had no effect, causing all .tsx test
- * files to fail with "React is not defined" (JSX not transformed).
+ * History: under vitest 2.x the JSX transform was configured via the top-level
+ * `esbuild: { jsx: 'automatic' }` option. The project later upgraded to vitest
+ * 4.x (rolldown-vite), which ignores that esbuild option — so all .tsx test
+ * files began failing to parse JSX ("Unexpected JSX expression"), 49/78 suites.
  *
- * Fix (Plan 07 Rule 3 auto-fix): configure esbuild jsx transform via the
- * `esbuild` config option available in vitest/vite 2.x. Sets jsx to 'react-jsx'
- * (automatic runtime) so .tsx files are correctly transformed without needing
- * to import React manually.
+ * Fix (2026-06-13): use `@vitejs/plugin-react-swc`, NOT `@vitejs/plugin-react`.
  *
- * Plan 07 Rule 3 fix #2: tsJsAliasPlugin resolves relative `.js` imports to
+ * Why plugin-react does NOT work here:
+ *   - plugin-react@4.x in its automatic-runtime path does not transform JSX
+ *     itself; it configures `esbuild: { jsx: 'automatic' }` and delegates the
+ *     actual JSX stripping to vite's built-in oxc transform (rolldown-vite
+ *     converts esbuild.jsx -> oxc.jsx). Its own `transform` hook only adds
+ *     react-refresh, and is even deleted when fast-refresh is skipped (SSR).
+ *   - Vitest 4's config hook (vitest/dist/chunks/cli-api...js) REPLACES the
+ *     resolved `oxc` option with `{ target: viteConfig.oxc?.target || 'node18' }`
+ *     — it drops `oxc.jsx` entirely. So the built-in oxc transform never gets a
+ *     JSX runtime, JSX reaches rolldown's `parseAstAsync` in `ssrTransform`
+ *     untransformed, and parsing dies with "Unexpected JSX expression".
+ *   This is why adding `@vitejs/plugin-react`'s `react()` changed nothing.
+ *
+ * Why plugin-react-swc works:
+ *   - It transforms JSX/TS in its own `transform` hook via @swc/core, fully
+ *     independent of vite's oxc/esbuild pipeline. Vitest's oxc.jsx stripping is
+ *     irrelevant — SWC has already produced plain JS before parseAst runs.
+ *   - It declares peer `vite ^4 || ... || ^8`, so it supports the bundled
+ *     rolldown-vite 8.x that vitest 4.1 ships (plugin-react@4.7 caps at ^7).
+ *
+ *
+ * tsJsAliasPlugin resolves relative `.js` imports to
  * their `.tsx`/`.ts` counterparts. Needed because page.test.tsx uses
  * `require('./page.js')` inside a test body — the static ESM import at top-level
  * works via resolve.extensions, but the CJS require() call bypasses that path.
@@ -45,11 +65,7 @@ function tsJsAliasPlugin(): Plugin {
 }
 
 export default defineConfig({
-    plugins: [tsJsAliasPlugin()],
-    esbuild: {
-        jsx: 'automatic',
-        jsxImportSource: 'react',
-    },
+    plugins: [react(), tsJsAliasPlugin()],
     test: {
         globalSetup: ['./src/test/globalSetup.ts'],
         environment: 'jsdom',
