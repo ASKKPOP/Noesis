@@ -61,6 +61,24 @@ class ActionType(str, Enum):
     LORE_DISCOVER   = "lore_discover"    # Brain-internal; triggers background poll via asyncio.create_task; never forwarded to Grid
     LORE_REQUEST    = "lore_request"     # Brain-internal; becomes __lore_request:{hash} whisper text
     LORE_RESPONSE   = "lore_response"    # Brain-internal; decoded from __lore_response:{hash}:{base64} whisper
+    # Phase 58 Wave 4 — D-58-10 / R-58-10: Nous House HOUSE-1 civic-land verbs.
+    # These are CAPABILITIES (not autoplay scripts): the Nous chooses to emit them,
+    # GridWireClient dispatches them to POST /api/v1/brain/actions, and the Grid
+    # action handler routes each to its civic-parcels route (see wire/client.py
+    # CIVIC_LAND_ROUTES). Decision pressure stays with the Nous.
+    # Metadata shapes (the capability builder build_civic_land_action validates them):
+    #   buy_parcel       {zone, max_price}
+    #   build            {parcel, type, name}
+    #   visit            {parcel}
+    #   set_entry_policy {parcel, policy, allowlist?}
+    #   list_parcels     {} (no metadata)
+    #   leave            {} (no metadata)
+    LIST_PARCELS     = "list_parcels"      # GET /api/v1/civic/parcels (public map feed)
+    BUY_PARCEL       = "buy_parcel"        # -> :id/purchase. Metadata: {zone, max_price}
+    BUILD            = "build"             # -> :id/build. Metadata: {parcel, type, name}
+    VISIT            = "visit"             # -> :id/join. Metadata: {parcel}
+    LEAVE            = "leave"             # -> :id/leave. No metadata.
+    SET_ENTRY_POLICY = "set_entry_policy"  # -> :id/entry-policy. Metadata: {parcel, policy, allowlist?}
 
 
 # JSON-RPC error codes
@@ -146,3 +164,59 @@ class Action:
             "text": self.text,
             "metadata": self.metadata,
         }
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Phase 58 Wave 4 — D-58-10 / R-58-10: civic-land capability builder.
+#
+# build_civic_land_action() is the SCHEMA GATE for the six civic-land verbs.
+# It validates the documented metadata shape and raises ValueError when a
+# required key is missing, so a malformed action fails locally before it
+# ever reaches the Grid action handler (and the civic-parcels routes).
+#
+# This is a CAPABILITY constructor, not a script: it only builds an Action
+# when a caller (the Nous's chosen behaviour) asks for one. Nothing here
+# auto-buys or auto-builds — decision pressure stays with the Nous.
+# ──────────────────────────────────────────────────────────────────────────
+
+# Required metadata keys per verb. Verbs absent from this map (list_parcels,
+# leave) take no metadata. set_entry_policy's `allowlist` is OPTIONAL and so
+# is not listed as required.
+_CIVIC_LAND_REQUIRED_KEYS: dict[ActionType, tuple[str, ...]] = {
+    ActionType.BUY_PARCEL: ("zone", "max_price"),
+    ActionType.BUILD: ("parcel", "type", "name"),
+    ActionType.VISIT: ("parcel",),
+    ActionType.SET_ENTRY_POLICY: ("parcel", "policy"),
+}
+
+_CIVIC_LAND_VERBS: frozenset[ActionType] = frozenset({
+    ActionType.LIST_PARCELS,
+    ActionType.BUY_PARCEL,
+    ActionType.BUILD,
+    ActionType.VISIT,
+    ActionType.LEAVE,
+    ActionType.SET_ENTRY_POLICY,
+})
+
+
+def build_civic_land_action(action_type: ActionType, **metadata: Any) -> Action:
+    """Build a validated civic-land Action (capability, not autoplay).
+
+    Validates the documented metadata shape for the given verb and raises
+    ``ValueError`` when a required key is missing or when ``action_type`` is
+    not a civic-land verb. ``list_parcels`` and ``leave`` accept no metadata;
+    ``set_entry_policy.allowlist`` is optional.
+
+    Returns an :class:`Action` ready for ``GridWireClient`` dispatch (the
+    Grid action handler routes by ``action_type`` to the civic-parcels route).
+    """
+    if action_type not in _CIVIC_LAND_VERBS:
+        raise ValueError(f"{action_type!r} is not a civic-land verb")
+    required = _CIVIC_LAND_REQUIRED_KEYS.get(action_type, ())
+    missing = [k for k in required if k not in metadata or metadata[k] is None]
+    if missing:
+        raise ValueError(
+            f"{action_type.value} action missing required metadata key(s): "
+            f"{', '.join(missing)}"
+        )
+    return Action(action_type=action_type, metadata=dict(metadata))

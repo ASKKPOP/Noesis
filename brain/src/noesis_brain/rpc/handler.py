@@ -20,7 +20,7 @@ from noesis_brain.telos.hashing import compute_active_telos_hash
 from noesis_brain.telos.manager import TelosManager
 from noesis_brain.thymos.tracker import ThymosTracker
 from noesis_brain.thymos.types import Emotion
-from noesis_brain.rpc.types import Action, ActionType
+from noesis_brain.rpc.types import Action, ActionType, build_civic_land_action
 from noesis_brain.iris.priors import seed_priors
 from pathlib import Path
 from noesis_brain.iris.store import IrisStore
@@ -1349,6 +1349,30 @@ class BrainHandler:
             "medium_term": demoted,
             "long_term": [],
         }
+
+    # ────────────────────────────────────────────────────────────────────
+    # Phase 58 Wave 4 — D-58-10 / R-58-10: Nous House civic-land capabilities.
+    #
+    # These verbs are CAPABILITIES, not autoplay. The handler produces a
+    # civic-land Action only when the Nous (its chosen behaviour) asks for
+    # one — there is NO loop here that auto-buys or auto-builds. The produced
+    # Action rides the normal post_actions batch; the Grid action handler
+    # routes it by action_type to the civic-parcels route (see wire/client.py
+    # CIVIC_LAND_ROUTES). build_civic_land_action() is the local schema gate.
+    # ────────────────────────────────────────────────────────────────────
+
+    def produce_civic_land_action(
+        self, action_type: ActionType, **metadata: Any
+    ) -> Action:
+        """Produce a validated civic-land capability Action (no autoplay).
+
+        Thin routing precedent over build_civic_land_action: validates the
+        verb's metadata shape and returns an Action for GridWireClient to
+        dispatch. Raises ValueError on a malformed shape so the action never
+        reaches the Grid. The Nous decides whether/when to call this — the
+        Brain never invokes it on the Nous's behalf.
+        """
+        return build_civic_land_action(action_type, **metadata)
 
     # ────────────────────────────────────────────────────────────────────
     # Phase 6 AGENCY-02 — operator-agency handlers (H2 Reviewer, H4 Driver)

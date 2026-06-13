@@ -43,6 +43,11 @@ def build_system_prompt(
     # Phase 20 additive-widening: Lore Commons top-k entries from LoreStore.retrieve().
     # None = LoreStore disabled; [] = enabled but empty; list = entries to inject.
     lore_entries: "list | None" = None,
+    # Phase 58 additive-widening (D-58-10): the Nous's owned-land state.
+    # my_places: list of {parcel, structure_type?, structure_name?} dicts.
+    # None/[] → block omitted (no land yet). Smallville Lesson 2: home anchors
+    # routine, so ownership enters prompt context to ground daily behaviour.
+    my_places: "list | None" = None,
 ) -> str:
     """Build the full system prompt that defines who this Nous is.
 
@@ -120,6 +125,13 @@ def build_system_prompt(
     # None = disabled; [] = enabled but empty (no injection).
     if lore_entries:
         section = _lore_commons_section(lore_entries)
+        if section:
+            sections.append(section)
+
+    # Phase 58 (D-58-10): inject the my_places ownership block before directives.
+    # None/[] → omitted (no land yet); otherwise anchors routine (Smallville L2).
+    if my_places:
+        section = build_my_places_section(my_places)
         if section:
             sections.append(section)
 
@@ -307,6 +319,41 @@ def _lore_commons_section(lore_entries: list) -> str:
     if not blocks:
         return ""
     return "## Lore Commons\n\n" + "\n\n".join(blocks)
+
+
+def build_my_places_section(my_places: "list | None") -> str:
+    """Render the Nous's owned-land block (Phase 58 D-58-10).
+
+    Smallville Lesson 2: home is the anchor for daily routine, so the Nous's
+    parcels (and any built structures) enter prompt context. Returns "" when
+    the Nous owns no land (None or empty list) so the block is omitted.
+
+    Each entry is a dict with at least ``parcel`` (vector address). Optional
+    ``structure_type`` / ``structure_name`` describe a built structure; an
+    unbuilt parcel still renders its address (the anchor) without inventing a
+    structure name.
+    """
+    if not my_places:
+        return ""
+    lines = ["## My Places"]
+    for place in my_places:
+        if not isinstance(place, dict):
+            continue
+        parcel = place.get("parcel")
+        if not parcel:
+            continue
+        structure_name = place.get("structure_name")
+        structure_type = place.get("structure_type")
+        if structure_name and structure_type:
+            lines.append(
+                f'- I own {parcel} — my {structure_type} "{structure_name}" is built here.'
+            )
+        elif structure_type:
+            lines.append(f"- I own {parcel} — my {structure_type} is built here.")
+        else:
+            lines.append(f"- I own {parcel} — empty parcel, nothing built yet.")
+    # Guard: header-only (every entry malformed) → omit the block.
+    return "\n".join(lines) if len(lines) > 1 else ""
 
 
 def _directives_section(psyche: Psyche) -> str:

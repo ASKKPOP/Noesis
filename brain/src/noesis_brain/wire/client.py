@@ -30,15 +30,64 @@ from urllib.parse import urlparse
 
 import httpx
 
+from noesis_brain.rpc.types import ActionType
+
 from .token_manager import TokenManager
 from .queue import WireQueue, QueuedEvent
 
-__all__ = ["GridWireClient", "validate_grid_url"]
+__all__ = [
+    "GridWireClient",
+    "validate_grid_url",
+    "CIVIC_LAND_ROUTES",
+    "civic_land_route",
+]
 
 log = logging.getLogger(__name__)
 
 # wss:// is reserved for Plan 38-04 (WSS subscriber).
 ALLOWED_SCHEMES = {"https", "wss"}
+
+# ──────────────────────────────────────────────────────────────────────────
+# Phase 58 Wave 4 — D-58-10 / R-58-10: civic-land verb → Grid route map.
+#
+# Civic-land Actions travel inside the normal POST /api/v1/brain/actions
+# batch (post_actions). The Grid action handler reads each action_type and
+# routes it to the matching civic-parcels route. This table is the Brain-side
+# source of truth for that routing contract — it is asserted by
+# test_civic_land_verbs.py and mirrors grid/src/api/routes/civic-parcels.ts.
+#
+# Per-parcel verbs use the "{id}" placeholder, filled from the action's
+# parcel id at dispatch time. list_parcels is the only GET (the public feed).
+# ──────────────────────────────────────────────────────────────────────────
+CIVIC_LAND_ROUTES: dict[ActionType, tuple[str, str]] = {
+    ActionType.LIST_PARCELS: ("GET", "/api/v1/civic/parcels"),
+    ActionType.BUY_PARCEL: ("POST", "/api/v1/civic/parcels/{id}/purchase"),
+    ActionType.BUILD: ("POST", "/api/v1/civic/parcels/{id}/build"),
+    ActionType.VISIT: ("POST", "/api/v1/civic/parcels/{id}/join"),
+    ActionType.LEAVE: ("POST", "/api/v1/civic/parcels/{id}/leave"),
+    ActionType.SET_ENTRY_POLICY: ("POST", "/api/v1/civic/parcels/{id}/entry-policy"),
+}
+
+
+def civic_land_route(
+    action_type: ActionType, parcel_id: Optional[str] = None
+) -> tuple[str, str]:
+    """Resolve a civic-land verb to its ``(method, path)`` Grid route.
+
+    Per-parcel verbs (everything except ``list_parcels``) require ``parcel_id``;
+    omitting it raises ``ValueError`` rather than dispatching to a malformed
+    "{id}" path. ``list_parcels`` ignores ``parcel_id`` (public feed).
+    """
+    if action_type not in CIVIC_LAND_ROUTES:
+        raise ValueError(f"{action_type!r} is not a civic-land verb")
+    method, template = CIVIC_LAND_ROUTES[action_type]
+    if "{id}" in template:
+        if not parcel_id:
+            raise ValueError(
+                f"{action_type.value} route requires a parcel_id"
+            )
+        return method, template.replace("{id}", parcel_id)
+    return method, template
 
 
 def validate_grid_url(url: str) -> None:
