@@ -303,6 +303,28 @@ export class ParcelStore {
         );
     }
 
+    /* ───────────────── Shop⇄structure binding + place name (v40 / D-60-03/07) ─────────────────
+     * DB-first write-through for the Phase 60 HOUSE-3 land columns. `bound_shop_id` is new
+     * in v40; `named_address` is the dormant Phase 58 column wired here. hydrate() already
+     * reads both via rowToParcel — these are the writers. The caller mirrors memory after.
+     */
+
+    /** Persist the shop⇄structure binding DB-first (bound_shop_id; NULL on unbind). */
+    async persistBoundShop(parcelId: string, shopId: string | null): Promise<void> {
+        await this.pool.query<ResultSetHeader>(
+            `UPDATE civic_parcels SET bound_shop_id = ? WHERE parcel_id = ?`,
+            [shopId, parcelId],
+        );
+    }
+
+    /** Persist a place:// name DB-first onto the dormant Phase 58 named_address column. */
+    async persistNamedAddress(parcelId: string, namedAddress: string): Promise<void> {
+        await this.pool.query<ResultSetHeader>(
+            `UPDATE civic_parcels SET named_address = ? WHERE parcel_id = ?`,
+            [namedAddress, parcelId],
+        );
+    }
+
     /* ───────────────────── Role edges (v40 / D-60-01 / R-60-02) ─────────────────────
      * DB-first write-through, mirroring the persist* pattern above. The owner edge is
      * NEVER written here (implicit from owner_civic_did). A revoke marks the row as

@@ -22,7 +22,7 @@ const OWNER = 'did:civic:noesis:alice';
 const OTHER = 'did:civic:noesis:bob';
 const SHOP_PARCEL = 'genesis:shopping:0001';
 
-describe.skip('Phase 60 HOUSE-3 — bind-shop owner-only + structure type shop [Wave 3 un-skips]', () => {
+describe('Phase 60 HOUSE-3 — bind-shop owner-only + structure type shop [Wave 3 un-skips]', () => {
     it('bind-shop sets structure.boundShopId and stamps parcel_id on the shop', async () => {
         const { ParcelRegistry } = await loadRegistry();
         const registry = new ParcelRegistry('genesis');
@@ -53,7 +53,7 @@ describe.skip('Phase 60 HOUSE-3 — bind-shop owner-only + structure type shop [
     });
 });
 
-describe.skip('Phase 60 HOUSE-3 — structureRevenueDue zone-tax math [Wave 3 un-skips]', () => {
+describe('Phase 60 HOUSE-3 — structureRevenueDue zone-tax math [Wave 3 un-skips]', () => {
     it('ZONE_TAX_BPS rates: business 1200 / shopping 1000 / manufacture 900 / residential 500', async () => {
         const { ZONE_TAX_BPS } = await loadLaw();
         expect(ZONE_TAX_BPS.business).toBe(1200);
@@ -80,7 +80,7 @@ describe.skip('Phase 60 HOUSE-3 — structureRevenueDue zone-tax math [Wave 3 un
     });
 });
 
-describe.skip('Phase 60 HOUSE-3 — unbind-shop routes through the severance FSM [Wave 3 un-skips]', () => {
+describe('Phase 60 HOUSE-3 — unbind-shop routes through the severance FSM [Wave 3 un-skips]', () => {
     it('unbind-shop traverses the severance FSM (not a hard kill)', async () => {
         const { ParcelRegistry } = await loadRegistry();
         const registry = new ParcelRegistry('genesis');

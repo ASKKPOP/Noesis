@@ -18,7 +18,7 @@ const loadPlace = () => import('../../src/civic/place-registry.js');
 
 const PARCEL = 'genesis:shopping:0001';
 
-describe.skip('Phase 60 HOUSE-3 — registerPlace uniqueness + addressing [Wave 3 un-skips]', () => {
+describe('Phase 60 HOUSE-3 — registerPlace uniqueness + addressing [Wave 3 un-skips]', () => {
     it('registerPlace returns place://<name>.<grid> for a fresh name', async () => {
         const { registerPlace } = await loadPlace();
         expect(registerPlace('aurora-cafe', PARCEL, 10)).toBe('place://aurora-cafe.genesis');

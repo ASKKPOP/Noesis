@@ -106,3 +106,31 @@ export const IOU_PAIR_CAP_BIOS = 1000;
 
 /** Global per-Nous cap: the max a single debtor may owe across ALL counterparties. */
 export const IOU_GLOBAL_CAP_BIOS = 5000;
+
+/* ──────────────── Structure revenue / zone tax (D-60-04 / D-V3-34 / R-60-06) ────────────────
+ * A sale at a parcel-bound shop skims a per-zone tax at settlement (streaming, never filed).
+ * The rates MIRROR the v3.0 Polis tax table (D-V3-34) and live ONLY here — the SINGLE
+ * Polis-amendable patch point. Wave 5 Polis amendments edit this table and nothing else;
+ * the marketplace settlement path reads structureRevenueDue exclusively. Civic zones
+ * (infrastructure / government_quarter) carry no commercial shops, so they are not taxed.
+ */
+export const ZONE_TAX_BPS = {
+    business: 1200,
+    shopping: 1000,
+    manufacture: 900,
+    residential: 500,
+} as const;
+
+/** A zone with a defined structure-revenue tax rate (the 4 purchasable, commerce-bearing zones). */
+type TaxableZoneId = keyof typeof ZONE_TAX_BPS;
+
+/**
+ * Structure revenue owed on a sale at a parcel-bound shop =
+ *   floor(saleAmountBios × ZONE_TAX_BPS[parcel.zoneId] / 10000).
+ * Untaxed (civic) zones with no entry in the table yield 0.
+ */
+export function structureRevenueDue(parcel: Parcel, saleAmountBios: number): number {
+    const bps = ZONE_TAX_BPS[parcel.zoneId as TaxableZoneId];
+    if (bps === undefined) return 0;
+    return Math.floor((saleAmountBios * bps) / 10000);
+}

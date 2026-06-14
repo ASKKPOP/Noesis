@@ -29,8 +29,15 @@ import { appendMarketSettled } from '../../audit/append-market-settled.js';
 import { appendMarketDisputed } from '../../audit/append-market-disputed.js';
 import { appendIrsTaxCollected } from '../../audit/append-irs-tax-collected.js';
 import { MarketplaceStore, MIN_LISTING_PRICE_BIOS } from '../../marketplace/marketplace-store.js';
+import { structureRevenueDue, ZONE_TAX_BPS } from '../../civic/founding-law.js';
 
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9-]+$/;
+
+/**
+ * The Polis treasury DID structure-revenue is skimmed to (D-60-04). Defined locally so the
+ * market route never depends on the civic registry module (mirrors parcel-registry's copy).
+ */
+const TREASURY_DID = 'did:noesis:system:treasury';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CATEGORY_RE = /^[a-z0-9_-]{1,63}$/i;
 
@@ -403,6 +410,35 @@ export async function registerMarketRoutes(
             tick: currentTick,
             total_treasury_after: Number(settleResult.totalTreasuryAfter),
         });
+        // ── Phase 60 HOUSE-3 (D-60-04 / R-60-06): structure-revenue zone-tax skim ──
+        // ADDITIVE — runs AFTER the existing trade settlement above, never altering it. If
+        // the seller's shop is bound to a parcel, skim the per-zone tax to the treasury
+        // (streaming, collected at settlement, never filed). Fully guarded: when the civic
+        // services aren't wired or the shop is unbound, this is a no-op and the legacy
+        // settlement behavior is unchanged.
+        const shop = services.shops?.getByOwner(settleResult.sellerCivicDid);
+        const parcelId = shop?.parcel_id;
+        if (parcelId && services.parcels && services.registry) {
+            const parcel = services.parcels.registry.get(parcelId);
+            if (parcel) {
+                const saleAmount = Number(settleResult.priceBios);
+                const skim = structureRevenueDue(parcel, saleAmount);
+                if (skim > 0) {
+                    // Route the skim to TREASURY_DID (streaming). transferOusia is atomic and
+                    // a no-op on failure (e.g. seller absent from the ousia registry), so the
+                    // trade settlement above is never disturbed.
+                    services.registry.transferOusia(settleResult.sellerCivicDid, TREASURY_DID, skim);
+                    // ── WAVE-4 EMIT POINT (treasury.structure_revenue) ──────────────────
+                    // The producer (append-treasury-structure-revenue.ts, allowlist 95→99)
+                    // lands in Wave 4. Closed tuple to emit here then:
+                    //   { amount_bios: skim, parcel_id: parcelId,
+                    //     tick: currentTick, zone_tax_bps: ZONE_TAX_BPS[parcel.zoneId] }
+                    // Do NOT emit yet — the event is not on the allowlist until Wave 4.
+                    void ZONE_TAX_BPS;
+                }
+            }
+        }
+
         return reply.code(200).send({
             settled: true,
             seller_payout_bios: settleResult.sellerPayout.toString(),
