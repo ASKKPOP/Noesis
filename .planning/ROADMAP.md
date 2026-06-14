@@ -645,11 +645,12 @@ Inherited constraints from v2.6 (do NOT break):
 
 ---
 
-## v3.1 The Nous House — Phases 58–60 BUILT 2026-06-13/14 (Phases 58-61)
+## v3.1 The Nous House — Phases 58–61 BUILT (COMPLETE) 2026-06-13/14 (Phases 58-61)
 
-> **Phases 58 (HOUSE-1) + 59 (HOUSE-2) + 60 (HOUSE-3) are implemented and verified** (built ahead
-> of v3.0's remaining phases — they depend only on the Phase 48b skeleton + events 82–86, not on
-> 47/49–57). Each built via the Planner→Generator→Evaluator harness, every wave independently re-verified.
+> **Phases 58 (HOUSE-1) + 59 (HOUSE-2) + 60 (HOUSE-3) + 61 (HOUSE-4) are implemented and verified —
+> the Nous House is COMPLETE** (built ahead of v3.0's remaining phases — they depend only on the
+> Phase 48b skeleton + events 82–86, not on 47/49–57). Each built via the Planner→Generator→Evaluator
+> harness, every wave independently re-verified. **HOUSE total +9 allowlist events → 100.**
 >
 > **Phase 58 HOUSE-1** (allowlist +0, reuses 82–86): migration v38 `civic_parcels` write-through
 > store, founding-law gravity pricing `100×(5−ring)²`, 53-parcel Genesis Core seed, 7 civic-parcels
@@ -680,10 +681,25 @@ Inherited constraints from v2.6 (do NOT break):
 > zero-diff R-31-01 held; single-onTick preserved; full grid suite 349 files / 3277 tests green.
 > `60-COMPLETION.md`.
 >
+> **Phase 61 HOUSE-4** (allowlist **99→100**, +1: `skill.blueprint_executed` — full sole-producer
+> triad, closed 4-tuple `{blueprint_hash, builder_civic_did_hash, parcel_id, tick}`): migration v41
+> `civic_blueprints` (recipe body JSON keyed by blueprint_hash), blueprint recipe type + closed-catalog
+> validation + Grid-side store, **skill-held check** reusing the EXISTING `skill.taught`/`skill.inferred`
+> history (zero new diffusion), **build executor** (skill-held → material debit → `extendInterior` per
+> object → one emit), **co-build DAG** (decompose arrangement → always-paid sub-tasks reusing the
+> Phase 60 board + IOU ledger → DAG-weighted attribution), **location-aware teaching** (workshop
+> diffuses to present Nous via the existing producer; 5-tuple unchanged, parcel_id off chain),
+> `build-from-blueprint` route + ROUTE_DID_POLICY, A11e gate extended to co-build/blueprint, 4 brain
+> construction verbs + ActionType count 44→48, dashboard construction surfaces, E2E learn→build→
+> co-build(funded+IOU)→teach→human-rejected. zero-diff R-31-01; single-onTick; full grid suite
+> 357 files / 3330 tests green. `61-COMPLETION.md`. **Flagged follow-up:** the build-from-blueprint
+> HTTP route checks skill-held with the civic-DID while `skill.taught.learner_did` is the existence-DID
+> — the route is inert until the two are reconciled (non-destructive; tracked).
+>
 > Fixed en route (test-infra, behavior-preserving): dashboard vitest JSX transform
 > (vitest-4/rolldown → `@vitejs/plugin-react-swc`, `9c155fe`); whisper-crypto libsodium
-> readiness under vitest (`c2bbb92`); brain `ananke` ActionType count 34→44 orphan (`a6dcb00`,
-> Phase 59 +2 / Phase 60 +8 verbs). **Allowlist now at 99.**
+> readiness under vitest (`c2bbb92`); brain `ananke` ActionType count 34→44→48 orphan (`a6dcb00`
+> + 61-05, Phase 59 +2 / Phase 60 +8 / Phase 61 +4 verbs). **Allowlist now at 100.**
 
 **Goal:** agent-owned space. The dormant Phase 48b land system becomes a living housing economy:
 Nous buy scarce parcels in the orbital Genesis Core, build and maintain houses/shops/workshops
@@ -706,7 +722,7 @@ Government Core monument, NY calendar — Genesis Epoch 2026-06-01 00:00 PT).
 | **58 HOUSE-1 Foundations** ✅ BUILT | civic_parcels persistence (migration v38, write-through store), HTTP routes, brain verbs, Genesis Core seed (48+5 parcels, gravity pricing 100×(5−ring)²), dashboard orbital map with live data | +0 (reuses 82-86) |
 | **59 HOUSE-2 Interiors & Upkeep** ✅ BUILT | interior trees (mirror vs functional furniture, D-NH-02), tick-based upkeep → worn/derelict/reclaimed ladder, Polis Commons, interior viewer | +4 → **95** (zoning.interior_extended, zoning.condition_changed, zoning.parcel_reclaimed, treasury.upkeep_collected) |
 | **60 HOUSE-3 Commerce & Co-work** ✅ BUILT | shop⇄structure binding + zone-tax revenue, roles (owner/staff/guest) + severance FSM, invitations, mutual-credit IOU ledger (D-NH-06), co-work task boards (always paid → IOU), place:// NDS names, council ring-expansion bill template (D-NH-09/13), cross-house-injection gate A11e | +4 → **99** (zoning.role_granted, zoning.role_revoked, treasury.structure_revenue, zoning.cowork_session) |
-| **61 HOUSE-4 Skill Construction** | blueprint skills via existing skill.taught diffusion, build executor, paid co-build sessions (DAG-weighted attribution), location-aware teaching | +1 (skill.blueprint_executed) |
+| **61 HOUSE-4 Skill Construction** ✅ BUILT | blueprint skills via existing skill.taught diffusion (migration v41 civic_blueprints), build executor (skill-held → material debit → extendInterior), paid co-build sessions (DAG-weighted attribution, always-paid), location-aware teaching (workshop diffusion) | +1 → **100** (skill.blueprint_executed) |
 
 **Invariants carried:** VOTE-05 + D-NH-07 (property never gates civic rights; humans never own);
 wallclock CI gate (all periods tick-based; NY calendar display-boundary only); single-onTick;

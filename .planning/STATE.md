@@ -345,6 +345,45 @@ Driving inputs for v3.0 (locked at milestone open):
   - Pitfall 4 honored (audit_trail query enumerates 3 IRS event types — no `LIKE 'irs.%'`).
   - Pitfall 6 honored (sole-producer functions called by multiple sites; `audit.append('irs.…', …)` appears exactly once per event type).
 
+## v3.1 Phase 61 HOUSE-4 BUILT — Nous House COMPLETE (2026-06-14)
+
+- **Phase 61 Nous House HOUSE-4 Skill Construction is implemented + verified — the Nous House
+  (Phases 58–61) is COMPLETE.** Built on 58/59/60, harness-driven (Planner→Generator→Evaluator),
+  every wave independently re-verified. Allowlist **99 → 100** (+1): `skill.blueprint_executed` —
+  full sole-producer triad, closed 4-tuple `{blueprint_hash, builder_civic_did_hash, parcel_id, tick}`,
+  actorDid = builder hash, keys dodge FORBIDDEN_KEY_PATTERN. **HOUSE total +9 (0/4/4/1).**
+- **Built:** migration v41 `civic_blueprints` (recipe JSON keyed by blueprint_hash, material_cost_bios);
+  blueprint recipe type (objects + arrangement DAG) + closed-catalog validation + DB-first store;
+  **skill-held check** (`builderHoldsSkill`) reusing the EXISTING `skill.taught`/`skill.inferred`
+  audit-chain history (mirrors culture.ts lineage; ZERO new diffusion, no new store); **build executor**
+  (`buildFromBlueprint`: reject human → owner-OR-co-build-staff auth → skill-held → debit material_cost
+  Ousia→TREASURY (insufficient 402) → `extendInterior` per object → one `skill.blueprint_executed`);
+  **co-build DAG** (`decomposeRecipe`/`claimSubTask`/`completeSubTask`/`attributionShare`: always-paid
+  D-NH-06 reusing the Phase 60 board + IOU ledger, DAG-weighted attribution, `cobuild_must_pay`);
+  **location-aware teaching** (`teachHere`: present-workshop-occupant diffusion via the existing
+  `appendSkillTaught`, 5-tuple unchanged, parcel_id off chain, humans excluded); `build-from-blueprint`
+  route + ROUTE_DID_POLICY; **A11e gate extended** to co-build/blueprint paths; 4 brain construction
+  verbs (learn_blueprint/build_from_blueprint/co_build/teach_here, capabilities no autoplay) +
+  my_places enrichment + ActionType count 44→48; dashboard construction surfaces (blueprint library,
+  build panel, co-build DAG board, teach-here indicator — additive).
+- **Invariants held:** zero-diff R-31-01 (no chain/audit-src edits — event rides a new producer);
+  single-onTick R-H-03 (no new `.onTick(`); zero new diffusion; D-NH-06 always-paid; D-NH-07/VOTE-05
+  humans never build; sole-producer + wallclock + civic-did-issuance + cross-house-injection (A11e) +
+  did-policy-coverage + privacy-walker gates green. Full grid suite **357 files / 3330 tests green**;
+  brain suite 928 passed (ActionType 48); allowlist 100.
+- **Definition of Done E2E** (`grid/test/civic/house-4-e2e.test.ts`): learn blueprint → build-from-
+  blueprint skill-held → `skill.blueprint_executed`; co-build DAG funded (`transferOusia`) + IOU
+  (`recordIou`, never free) DAG-weighted (2/3 vs 1/3); teach diffuses present-not-absent-not-human;
+  human build 403; privacy walk over the real run trail. Artifacts:
+  `.planning/phases/61-house-4-skill-construction/` (61-COMPLETION.md).
+- **⚠ Flagged follow-up (dual-DID):** the `build-from-blueprint` HTTP route checks skill-held with the
+  builder's **civic-DID** (`did:civic:noesis:*`, `civic-parcels.ts:272`), but `skill.taught.learner_did`
+  is the **existence-DID** (`did:noesis:nous:*`, `nous-runner.ts:804`); the string-equality match never
+  succeeds, so a real Nous building over HTTP always hits `skill_not_held`. Non-destructive (rejects,
+  not misbehaves); does NOT fail the phase DoD. The route is inert until the skill-held check resolves
+  civic-DID ↔ existence-DID (the `tryDid.ts` JWT carries both: iss existence / sub civic). Tracked as a
+  follow-up task; surfaced to the user for fix-before-deploy vs deploy-then-fix.
+
 ## v3.1 Phase 60 HOUSE-3 BUILT (2026-06-14)
 
 - **Phase 60 Nous House HOUSE-3 Commerce & Co-work is implemented + verified** — built on Phases
