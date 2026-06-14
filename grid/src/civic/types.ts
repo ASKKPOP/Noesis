@@ -112,7 +112,8 @@ export type BuildReason =
 export type JoinReason =
     | 'parcel_not_found'
     | 'no_structure'
-    | 'not_permitted';
+    | 'not_permitted'
+    | 'closed_to_visitors';
 
 export type LeaveReason =
     | 'parcel_not_found'

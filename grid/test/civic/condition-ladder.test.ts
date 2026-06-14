@@ -22,7 +22,7 @@ const TREASURY_DID = 'did:noesis:system:treasury';
 const OWNER = 'did:civic:noesis:alice';
 const PARCEL = 'genesis:residential:0001';
 
-describe.skip('Phase 59 HOUSE-2 — condition ladder advance/reset [Wave 4 un-skips]', () => {
+describe('Phase 59 HOUSE-2 — condition ladder advance/reset [Wave 4 un-skips]', () => {
     it('1 missed period: maintained → worn', async () => {
         const { ParcelRegistry } = await loadRegistry();
         const registry = new ParcelRegistry('genesis');

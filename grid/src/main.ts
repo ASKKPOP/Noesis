@@ -29,6 +29,7 @@ import { GraceTimerRegistry } from './civic-presence/grace-timer-registry.js';
 import { PresenceService } from './civic-presence/presence-service.js';
 import { ParcelRegistry } from './civic/parcel-registry.js';
 import { ParcelStore } from './civic/parcel-store.js';
+import { TREASURY_DID } from './api/routes/registry.js';
 import type { GenesisConfig } from './genesis/types.js';
 import type { FastifyInstance } from 'fastify';
 import type { SpawnNousDeps } from './api/operator/spawn-system-nous.js';
@@ -220,6 +221,23 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         const parcelCount = await parcelStore.hydrate(parcelRegistry);
         console.log(`[civic] parcels loaded: ${parcelCount}`);
         parcels = { registry: parcelRegistry, store: parcelStore };
+        // Phase 59 HOUSE-2 (D-59-06 / R-H-03): late-wire the upkeep scanner now that the
+        // parcel registry/store exist. It rides the EXISTING clock.onTick block in the
+        // launcher (no new subscription). The facade composes parcel-registry ladder +
+        // store persist + Nous-registry balance/transfer; treasury = TREASURY_DID.
+        launcher.attachUpkeepScanner({
+            registry: {
+                list: (filter) => parcelRegistry.list(filter),
+                get: (did) => launcher.registry.get(did),
+                transferOusia: (from, to, amount) => launcher.registry.transferOusia(from, to, amount),
+                advanceCondition: (address) => parcelRegistry.advanceCondition(address),
+                resetCondition: (address) => parcelRegistry.resetCondition(address),
+                persistUpkeep: (parcel) => parcelStore.persistUpkeep(parcel),
+                persistReclaim: (parcel) => parcelStore.persistReclaim(parcel),
+            },
+            audit: chain!,
+            treasuryDid: TREASURY_DID,
+        });
         presenceService = new PresenceService({
             gridName: config.genesisConfig.gridName,
             presenceStore,

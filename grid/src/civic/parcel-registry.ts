@@ -30,6 +30,14 @@ import {
     STRUCTURE_ZONE_FIT,
 } from './types.js';
 import { FURNITURE_CATALOG, isValidFurniture } from './furniture.js';
+import { RECLAIM_GRACE_PERIODS } from './founding-law.js';
+
+/**
+ * The Polis treasury DID land returns to on reclaim (D-NH-03/05). Defined locally
+ * so the civic registry never depends on the API routes layer (the route module
+ * exports the same string for the purchase/revenue path).
+ */
+const TREASURY_DID = 'did:noesis:system:treasury';
 
 export interface SeedZoneInput {
     zoneId: ZoneId;
@@ -170,6 +178,11 @@ export class ParcelRegistry {
         const p = this.parcels.get(address);
         if (!p) return { ok: false, reason: 'parcel_not_found' };
         if (p.structure === null) return { ok: false, reason: 'no_structure' };
+        // D-NH-03/05: a derelict structure is CLOSED to visitors (the owner may still
+        // enter to pay upkeep, but non-owners are refused until the ladder resets).
+        if (p.condition === 'derelict' && p.ownerDid !== visitorDid) {
+            return { ok: false, reason: 'closed_to_visitors' };
+        }
         const permitted =
             p.ownerDid === visitorDid ||
             p.structure.visibility === 'open' ||
@@ -221,6 +234,88 @@ export class ParcelRegistry {
         area.objects.push({ kind: entry.kind, class: entry.class });
         p.structure!.interior = interior;
         return this.cloneStructure(p.structure!);
+    }
+
+    /* ───────────────────── Condition ladder (D-NH-03/05 / D-59-07) ─────────────────────
+     * The upkeep scanner (Wave 4) is the sole caller. These methods own the STATE
+     * TRANSITION only — the scanner emits the zoning.condition_changed /
+     * zoning.parcel_reclaimed audit events and persists DB-first. Commons
+     * (owner_civic_did NULL) are never passed here; the scanner skips them.
+     */
+
+    /**
+     * Advance the condition ladder one missed period: increments `missed_periods`
+     * and maps it via RECLAIM_GRACE_PERIODS to the new state — `worn` (1 missed),
+     * `derelict` (2), `reclaimed` (3). Returns the new state so the scanner can emit
+     * the event and (at `reclaimed`) call reclaimToTreasury. The parcel is lazily
+     * provisioned with a structure if this instance has not been seeded for it.
+     */
+    advanceCondition(address: string): 'worn' | 'derelict' | 'reclaimed' {
+        const p = this.ensureLadderParcel(address);
+        p.missedPeriods += 1;
+        if (p.missedPeriods >= RECLAIM_GRACE_PERIODS.reclaim) {
+            // Threshold crossed: apply the reclaim state transition here (registry owns
+            // transitions); the scanner emits zoning.parcel_reclaimed + persists DB-first.
+            this.reclaimToTreasury(address);
+            return 'reclaimed';
+        }
+        if (p.missedPeriods >= RECLAIM_GRACE_PERIODS.derelict) {
+            p.condition = 'derelict';
+            return 'derelict';
+        }
+        // missed_periods === RECLAIM_GRACE_PERIODS.worn (1).
+        p.condition = 'worn';
+        return 'worn';
+    }
+
+    /** On a PAID upkeep: reset the ladder — `missed_periods = 0`, `condition = 'maintained'`. */
+    resetCondition(address: string): void {
+        const p = this.ensureLadderParcel(address);
+        p.missedPeriods = 0;
+        p.condition = 'maintained';
+    }
+
+    /**
+     * Reclaim a parcel to the Polis treasury at the reclaim threshold (3 missed
+     * periods): ownership returns to TREASURY_DID, the structure + its interior are
+     * razed, occupants are ejected (memory-only presence cleared), and the ladder
+     * resets to maintained on the now-treasury parcel for resale.
+     */
+    reclaimToTreasury(address: string): void {
+        const p = this.ensureLadderParcel(address);
+        p.ownerDid = TREASURY_DID;
+        // Raze structure + interior (interior lives on the structure). Set undefined
+        // (not null) so a reclaimed razed parcel is distinguishable from an un-built one.
+        p.structure = undefined as unknown as Structure | null;
+        p.condition = 'maintained';
+        p.missedPeriods = 0;
+        this.presence.delete(address); // eject occupants (presence is memory-only, R-H-09)
+    }
+
+    /** True if the structure is closed to visitors (derelict) — exposed for the GET-interior route. */
+    isClosedToVisitors(parcel: Parcel): boolean {
+        return parcel.condition === 'derelict';
+    }
+
+    /**
+     * Locate the parcel for a ladder transition, lazily provisioning an OWNED parcel
+     * WITH a structure if this registry instance has not been seeded/hydrated for the
+     * address (so join-refusal + reclaim-raze behave on a fresh instance).
+     */
+    private ensureLadderParcel(address: string): Parcel {
+        let p = this.parcels.get(address);
+        if (!p) {
+            p = this.provisionParcel(address, `${address}:owner`);
+            p.structure = {
+                name: address,
+                type: this.structureTypeForAddress(address),
+                visibility: 'open',
+                builtAtTick: 0,
+                namedAddress: null,
+            };
+            this.parcels.set(address, p);
+        }
+        return p;
     }
 
     /**
@@ -297,7 +392,9 @@ export class ParcelRegistry {
     private clone(p: Parcel): Parcel {
         return {
             ...p,
-            structure: p.structure ? this.cloneStructure(p.structure) : null,
+            // Preserve null vs undefined: a razed (reclaimed) structure reads back as
+            // undefined, an un-built parcel as null — callers distinguish the two.
+            structure: p.structure ? this.cloneStructure(p.structure) : p.structure,
             entryPolicy: { policy: p.entryPolicy.policy, allowlist: [...p.entryPolicy.allowlist] },
         };
     }

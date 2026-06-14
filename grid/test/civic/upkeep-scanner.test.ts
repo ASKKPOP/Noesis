@@ -26,7 +26,7 @@ const TREASURY_DID = 'did:noesis:system:treasury';
 const OWNER = 'did:civic:noesis:alice';
 const OWNED = 'genesis:residential:0001';
 
-describe.skip('Phase 59 HOUSE-2 — upkeep founding-law constants [Wave 1 un-skips]', () => {
+describe('Phase 59 HOUSE-2 — upkeep founding-law constants [Wave 1 un-skips]', () => {
     it('UPKEEP_PERIOD_TICKS is 10080 (1 week @ 1 tick/min)', async () => {
         const { UPKEEP_PERIOD_TICKS } = await loadFoundingLaw();
         expect(UPKEEP_PERIOD_TICKS).toBe(10080);
@@ -44,7 +44,7 @@ describe.skip('Phase 59 HOUSE-2 — upkeep founding-law constants [Wave 1 un-ski
     });
 });
 
-describe.skip('Phase 59 HOUSE-2 — upkeep scanner period-boundary debit [Wave 4 un-skips]', () => {
+describe('Phase 59 HOUSE-2 — upkeep scanner period-boundary debit [Wave 4 un-skips]', () => {
     it('on a period boundary it debits upkeepDue owner → TREASURY_DID and emits treasury.upkeep_collected', async () => {
         const { onUpkeepTick } = await loadScanner();
         const transferOusia = vi.fn().mockReturnValue({ ok: true });
@@ -103,7 +103,7 @@ describe.skip('Phase 59 HOUSE-2 — upkeep scanner period-boundary debit [Wave 4
     });
 });
 
-describe.skip('Phase 59 HOUSE-2 — single-onTick invariant (R-H-03) [Wave 4 un-skips]', () => {
+describe('Phase 59 HOUSE-2 — single-onTick invariant (R-H-03) [Wave 4 un-skips]', () => {
     it('onUpkeepTick is a plain exported function (called from the EXISTING clock.onTick)', async () => {
         const { onUpkeepTick } = await loadScanner();
         expect(typeof onUpkeepTick).toBe('function');

@@ -32,6 +32,7 @@ import { P2PPeerStore } from '../p2p/p2p-peer-store.js';
 import { SdpInboxStore } from '../p2p/sdp-inbox-store.js';
 import type { P2PService } from '../p2p/types.js';
 import { checkSettlementTimeouts } from '../marketplace/settlement-timeout.js';
+import { onUpkeepTick, type UpkeepScannerDeps } from '../civic/upkeep-scanner.js';
 
 /**
  * Phase 31 OBS-01 (D-31-A1): optional dependencies that can be supplied at
@@ -156,6 +157,13 @@ export class GenesisLauncher {
     private _pool: Pool | undefined;
     /** Phase 44 D-44-05b (OBS-R-32-02) — paired clearInterval handle for settlement-timeout sweep loop. */
     private _settlementTimeoutInterval: NodeJS.Timeout | null = null;
+    /**
+     * Phase 59 HOUSE-2 (D-59-06 / R-H-03) — upkeep-scanner deps, late-wired by
+     * main.ts after the parcel registry/store are constructed (they are built AFTER
+     * bootstrap()). Checked inside the EXISTING clock.onTick block so upkeep rides
+     * the single tick callback — NO new clock.onTick subscription is created.
+     */
+    private _upkeepScannerDeps: UpkeepScannerDeps | undefined;
     /**
      * Phase 12 Wave 3 — GovernanceEngine and its backing store.
      *
@@ -378,6 +386,20 @@ export class GenesisLauncher {
     }
 
     /**
+     * Phase 59 HOUSE-2 (D-59-06 / R-H-03) — attach the upkeep-scanner deps. Called by
+     * main.ts after the parcel registry/store are constructed (post-bootstrap). The
+     * scanner then rides the EXISTING clock.onTick block (no new subscription).
+     * Idempotent on the same deps; throws on a second call with different deps.
+     */
+    attachUpkeepScanner(deps: UpkeepScannerDeps): void {
+        if (this._upkeepScannerDeps !== undefined) {
+            if (this._upkeepScannerDeps === deps) return;
+            throw new Error('GenesisLauncher.attachUpkeepScanner called twice with different deps');
+        }
+        this._upkeepScannerDeps = deps;
+    }
+
+    /**
      * Bootstrap the Grid — seed regions, laws, Nous, then wire the clock.
      *
      * Options:
@@ -482,6 +504,15 @@ export class GenesisLauncher {
             // is never blocked on async I/O. Missed tallies are non-recoverable in v2.2
             // (in-memory store) but acceptable per D-12-03 pessimistic-quorum contract.
             void this.governance.onTickClosed(event.tick);
+
+            // Phase 59 HOUSE-2 (D-59-06 / R-H-03): upkeep scanner rides THIS existing
+            // tick callback — no second clock.onTick subscription. Fire-and-forget,
+            // mirroring governance.onTickClosed above; the clock is never blocked on
+            // the lazy period-boundary debit/ladder/reclaim sweep. Only active once
+            // main.ts has late-wired the parcel-backed deps via attachUpkeepScanner.
+            if (this._upkeepScannerDeps !== undefined) {
+                void onUpkeepTick(event.tick, this._upkeepScannerDeps);
+            }
 
             // D-9-03: Snapshot every N ticks (default 100). Fire-and-forget per OQ-2 —
             // tick is never blocked on MySQL I/O. Missed snapshots are losslessly
