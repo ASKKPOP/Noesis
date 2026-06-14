@@ -342,6 +342,56 @@ def _upkeep_suffix(place: dict) -> str:
     return f" ({', '.join(parts)})" if parts else ""
 
 
+def _commerce_suffix(place: dict) -> str:
+    """Render the commercial-relationship suffix for a My Places line (D-60-13).
+
+    Phase 60 Wave 6 (R-60-13): so the Nous FEELS its commercial relationships,
+    a built structure's line surfaces:
+      - bound-shop status (+ the ``place://`` name when registered),
+      - active role grants (staff/guest holders),
+      - the Nous's outstanding IOU balance for this place.
+
+    Each field is optional. ``boundShop`` / ``placeName`` / ``outstandingIou``
+    are accepted as camelCase aliases to match the Grid feed keys. Returns ""
+    when none are present, keeping the Phase 58/59 line shape intact.
+    """
+    bound = place.get("bound_shop")
+    if bound is None:
+        bound = place.get("boundShop")
+    place_name = place.get("place_name")
+    if place_name is None:
+        place_name = place.get("placeName")
+    roles = place.get("roles")
+    outstanding = place.get("outstanding_iou")
+    if outstanding is None:
+        outstanding = place.get("outstandingIou")
+
+    parts: list[str] = []
+    if bound:
+        if place_name:
+            parts.append(f"shop bound, place://{place_name}")
+        else:
+            parts.append("shop bound")
+    elif place_name:
+        parts.append(f"place://{place_name}")
+    if roles:
+        grants: list[str] = []
+        for edge in roles:
+            if not isinstance(edge, dict):
+                continue
+            role = edge.get("role")
+            count = edge.get("count")
+            if role and count is not None:
+                grants.append(f"{count} {role}")
+            elif role:
+                grants.append(str(role))
+        if grants:
+            parts.append("roles: " + ", ".join(grants))
+    if outstanding is not None:
+        parts.append(f"outstanding IOU: {outstanding} Bios")
+    return f" [{'; '.join(parts)}]" if parts else ""
+
+
 def build_my_places_section(my_places: "list | None") -> str:
     """Render the Nous's owned-land block (Phase 58 D-58-10).
 
@@ -359,6 +409,13 @@ def build_my_places_section(my_places: "list | None") -> str:
     pending ``upkeep_due`` cost so the Nous FEELS upkeep pressure, e.g.
     ``- I own genesis:residential:0007 — my home is built here (worn, upkeep due: 8 Bios).``
     Both fields are optional; an unbuilt or commons parcel simply omits them.
+
+    Phase 60 Wave 6 (D-60-13 / R-60-13): a built structure's line is further
+    enriched with its commercial relationships — bound-shop status (+ the
+    ``place://`` name), active role grants (staff/guest holders), and the Nous's
+    outstanding IOU balance — so the Nous FEELS those relationships, e.g.
+    ``- I own genesis:business:0003 — my shop "Bazaar" is built here [shop bound, place://bazaar; roles: 2 staff; outstanding IOU: 25 Bios].``
+    All commerce fields are optional and omitted when absent.
     """
     if not my_places:
         return ""
@@ -371,7 +428,7 @@ def build_my_places_section(my_places: "list | None") -> str:
             continue
         structure_name = place.get("structure_name")
         structure_type = place.get("structure_type")
-        suffix = _upkeep_suffix(place)
+        suffix = _upkeep_suffix(place) + _commerce_suffix(place)
         if structure_name and structure_type:
             lines.append(
                 f'- I own {parcel} — my {structure_type} "{structure_name}" is built here{suffix}.'

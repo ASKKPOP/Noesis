@@ -88,6 +88,28 @@ class ActionType(str, Enum):
     #   view_interior   {parcel}
     EXTEND_INTERIOR  = "extend_interior"   # -> :id/interior/extend. Metadata: {area, kind}
     VIEW_INTERIOR    = "view_interior"     # -> :id/interior. Metadata: {parcel}
+    # Phase 60 Wave 6 — D-60-13 / R-60-13: Nous House HOUSE-3 commerce / role /
+    # co-work / place verbs. CAPABILITIES (not autoplay): the Nous chooses to
+    # grant a role, invite a peer, bind a shop, name a place, or run the co-work
+    # board; GridWireClient dispatches each to its Wave-4 Grid route. The Grid
+    # validates roles, shop type, place uniqueness, and board access; the Brain
+    # only gates metadata presence. Metadata shapes (build_civic_land_action):
+    #   grant_role    {parcel, nous, role}
+    #   revoke_role   {parcel, nous}
+    #   invite        {nous, parcel}
+    #   bind_shop     {parcel, shop}
+    #   name_place    {parcel, name}
+    #   post_task     {parcel, task, pay}
+    #   claim_task    {task}
+    #   complete_task {task}
+    GRANT_ROLE    = "grant_role"     # -> :id/roles. Metadata: {parcel, nous, role}
+    REVOKE_ROLE   = "revoke_role"    # -> :id/roles/revoke. Metadata: {parcel, nous}
+    INVITE        = "invite"         # -> :id/invite. Metadata: {nous, parcel}
+    BIND_SHOP     = "bind_shop"      # -> :id/bind-shop. Metadata: {parcel, shop}
+    NAME_PLACE    = "name_place"     # -> :id/name. Metadata: {parcel, name}
+    POST_TASK     = "post_task"      # -> :id/board/post. Metadata: {parcel, task, pay}
+    CLAIM_TASK    = "claim_task"     # -> :id/board/claim. Metadata: {task}
+    COMPLETE_TASK = "complete_task"  # -> :id/board/complete. Metadata: {task}
 
 
 # JSON-RPC error codes
@@ -200,6 +222,17 @@ _CIVIC_LAND_REQUIRED_KEYS: dict[ActionType, tuple[str, ...]] = {
     # Grid against the closed furniture catalog; the Brain only gates presence.
     ActionType.EXTEND_INTERIOR: ("area", "kind"),
     ActionType.VIEW_INTERIOR: ("parcel",),
+    # Phase 60 Wave 6 (D-60-13): commerce / role / co-work / place verbs. The
+    # Grid validates role membership, shop type, and board access; the Brain
+    # only gates presence of the documented metadata keys.
+    ActionType.GRANT_ROLE: ("parcel", "nous", "role"),
+    ActionType.REVOKE_ROLE: ("parcel", "nous"),
+    ActionType.INVITE: ("nous", "parcel"),
+    ActionType.BIND_SHOP: ("parcel", "shop"),
+    ActionType.NAME_PLACE: ("parcel", "name"),
+    ActionType.POST_TASK: ("parcel", "task", "pay"),
+    ActionType.CLAIM_TASK: ("task",),
+    ActionType.COMPLETE_TASK: ("task",),
 }
 
 _CIVIC_LAND_VERBS: frozenset[ActionType] = frozenset({
@@ -211,6 +244,15 @@ _CIVIC_LAND_VERBS: frozenset[ActionType] = frozenset({
     ActionType.SET_ENTRY_POLICY,
     ActionType.EXTEND_INTERIOR,
     ActionType.VIEW_INTERIOR,
+    # Phase 60 Wave 6 (D-60-13): commerce / role / co-work / place verbs.
+    ActionType.GRANT_ROLE,
+    ActionType.REVOKE_ROLE,
+    ActionType.INVITE,
+    ActionType.BIND_SHOP,
+    ActionType.NAME_PLACE,
+    ActionType.POST_TASK,
+    ActionType.CLAIM_TASK,
+    ActionType.COMPLETE_TASK,
 })
 
 

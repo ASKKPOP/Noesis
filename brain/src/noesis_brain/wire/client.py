@@ -69,6 +69,19 @@ CIVIC_LAND_ROUTES: dict[ActionType, tuple[str, str]] = {
     # Phase 59 Wave 5 — D-59-10 / R-59-10: HOUSE-2 interior verbs (capabilities).
     ActionType.EXTEND_INTERIOR: ("POST", "/api/v1/civic/parcels/{id}/interior/extend"),
     ActionType.VIEW_INTERIOR: ("GET", "/api/v1/civic/parcels/{id}/interior"),
+    # Phase 60 Wave 6 — D-60-13 / R-60-13: HOUSE-3 commerce / role / co-work /
+    # place verbs (capabilities). Each maps to its Wave-4 civic-parcels route.
+    # The board verbs (post/claim/complete) all hang off the parcel that owns
+    # the co-work board, so they carry the "{id}" placeholder like every other
+    # per-parcel verb; the dispatcher fills it from the action's parcel id.
+    ActionType.GRANT_ROLE: ("POST", "/api/v1/civic/parcels/{id}/roles"),
+    ActionType.REVOKE_ROLE: ("POST", "/api/v1/civic/parcels/{id}/roles/revoke"),
+    ActionType.INVITE: ("POST", "/api/v1/civic/parcels/{id}/invite"),
+    ActionType.BIND_SHOP: ("POST", "/api/v1/civic/parcels/{id}/bind-shop"),
+    ActionType.NAME_PLACE: ("POST", "/api/v1/civic/parcels/{id}/name"),
+    ActionType.POST_TASK: ("POST", "/api/v1/civic/parcels/{id}/board/post"),
+    ActionType.CLAIM_TASK: ("POST", "/api/v1/civic/parcels/{id}/board/claim"),
+    ActionType.COMPLETE_TASK: ("POST", "/api/v1/civic/parcels/{id}/board/complete"),
 }
 
 

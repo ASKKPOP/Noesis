@@ -45,6 +45,36 @@ export interface ParcelFeedEntry {
     // Phase 59 HOUSE-2 (D-59-08): the public feed exposes the upkeep condition.
     // exterior + condition only; the interior tree is NEVER on this feed.
     condition?: 'maintained' | 'worn' | 'derelict';
+    // Phase 60 HOUSE-3 (D-60-14): optional commerce surfaces the Grid feed MAY
+    // serve for an owned parcel. All privacy-safe — place name (public), the
+    // bound-shop flag, role counts + trust, board status counts, IOU totals.
+    // Raw board/task CONTENT and raw DIDs are NEVER on this feed (Grid-side).
+    place_name?: string | null; // the place:// name when registered
+    bound_shop?: boolean; // a shop structure bound to this parcel
+    roles?: RoleEdgeView[]; // granted staff/guest edges (owner is implicit)
+    board?: BoardSummary; // co-work board status counts (no task text)
+    ious?: IouView[]; // outstanding bilateral IOU balances
+}
+
+// Granted role edge as served by the feed — hashed holder + derived trust.
+// NEVER a raw holder DID; the owner edge is implicit and not listed here.
+export interface RoleEdgeView {
+    role: 'staff' | 'guest';
+    holder_civic_did_hash: string; // HEX64 — NEVER a raw DID
+    trust_score: number;
+}
+
+// Co-work board status counts ONLY (D-60-12) — no task_ref / scope text.
+export interface BoardSummary {
+    posted: number;
+    claimed: number;
+    completed: number;
+}
+
+// Outstanding bilateral IOU balance — hashed counterparty + total only.
+export interface IouView {
+    counterparty_civic_did_hash: string; // HEX64 — NEVER a raw DID
+    outstanding_bios: number;
 }
 
 // ── Interior tree shape (matches GET :id/interior in civic-parcels.ts) ──────────
@@ -268,6 +298,24 @@ export function OrbitalGenesisMap(): React.ReactElement {
         [parcels],
     );
 
+    // Phase 60 HOUSE-3 (D-60-14): owned parcels that carry any commerce surface
+    // (a bound shop / place name / role edges / board / IOUs). Additive — when
+    // the feed omits these fields (the Phase 58/59 feed, or an offline seed),
+    // the commerce overlay simply does not render.
+    const commerceParcels = useMemo(
+        () =>
+            parcels.filter(
+                (p) =>
+                    isOwned(p) &&
+                    (p.bound_shop ||
+                        (p.place_name != null && p.place_name !== '') ||
+                        (p.roles != null && p.roles.length > 0) ||
+                        p.board != null ||
+                        (p.ious != null && p.ious.length > 0)),
+            ),
+        [parcels],
+    );
+
     return (
         <div
             data-testid="orbital-genesis-map"
@@ -478,6 +526,173 @@ export function OrbitalGenesisMap(): React.ReactElement {
                     </div>
                 ))}
             </div>
+
+            {/* ── Commerce surfaces (D-60-14) — ADDITIVE panel, top-right. ──
+                Shop badge + place:// name, roles + trust, co-work board status,
+                and the IOU strip. Renders ONLY when the feed serves commerce
+                fields for an owned parcel; the Phase 58 exterior + Phase 59
+                interior viewer are untouched. No raw DID / no raw task text. */}
+            {commerceParcels.length > 0 && (
+                <div
+                    data-testid="commerce-overlay"
+                    style={{
+                        position: 'absolute',
+                        top: 18,
+                        right: 18,
+                        zIndex: 12,
+                        width: 252,
+                        maxHeight: 'calc(100% - 36px)',
+                        overflowY: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 12,
+                        fontSize: 11,
+                    }}
+                >
+                    {commerceParcels.map((p) => (
+                        <div
+                            key={`commerce-${p.id}`}
+                            data-testid="commerce-card"
+                            data-parcel-id={p.id}
+                            style={{
+                                border: '1px solid rgba(63,209,255,0.28)',
+                                borderRadius: 8,
+                                padding: 12,
+                                background: 'rgba(4,12,24,0.82)',
+                                color: '#cdd6df',
+                            }}
+                        >
+                            {/* Shop module: place:// name + bound-shop badge */}
+                            <div data-testid="shop-module" data-parcel-id={p.id}>
+                                <div
+                                    style={{
+                                        fontSize: 10,
+                                        letterSpacing: '0.14em',
+                                        textTransform: 'uppercase',
+                                        color: '#8a93a6',
+                                    }}
+                                >
+                                    {p.zone.replace(/_/g, ' ')} · shop
+                                </div>
+                                <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                    {p.place_name && (
+                                        <span style={{ color: '#4fd2f2', fontWeight: 600 }}>
+                                            place://{p.place_name}
+                                        </span>
+                                    )}
+                                    {p.bound_shop && (
+                                        <span
+                                            data-testid="bound-shop-badge"
+                                            style={{
+                                                fontSize: 9.5,
+                                                letterSpacing: '0.1em',
+                                                textTransform: 'uppercase',
+                                                color: '#7fe0a0',
+                                                border: '1px solid rgba(127,224,160,0.5)',
+                                                borderRadius: 4,
+                                                padding: '1px 6px',
+                                            }}
+                                        >
+                                            shop bound
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Roles panel: staff/guest edges + trust_score */}
+                            {p.roles && p.roles.length > 0 && (
+                                <div data-testid="roles-panel" style={{ marginTop: 10 }}>
+                                    <div
+                                        style={{
+                                            fontSize: 9.5,
+                                            letterSpacing: '0.12em',
+                                            textTransform: 'uppercase',
+                                            color: '#8a93a6',
+                                            marginBottom: 4,
+                                        }}
+                                    >
+                                        Roles
+                                    </div>
+                                    {p.roles.map((edge) => (
+                                        <div
+                                            key={`${p.id}:${edge.role}:${edge.holder_civic_did_hash}`}
+                                            data-testid="role-edge"
+                                            data-role={edge.role}
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                gap: 8,
+                                                padding: '2px 0',
+                                            }}
+                                        >
+                                            <span style={{ textTransform: 'capitalize' }}>{edge.role}</span>
+                                            <span style={{ color: '#8a93a6', fontFamily: 'monospace' }}>
+                                                {edge.holder_civic_did_hash.slice(0, 8)} · trust {edge.trust_score.toFixed(2)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Co-work board panel: posted/claimed/completed status only */}
+                            {p.board && (
+                                <div data-testid="cowork-board" style={{ marginTop: 10 }}>
+                                    <div
+                                        style={{
+                                            fontSize: 9.5,
+                                            letterSpacing: '0.12em',
+                                            textTransform: 'uppercase',
+                                            color: '#8a93a6',
+                                            marginBottom: 4,
+                                        }}
+                                    >
+                                        Co-work board
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 10 }}>
+                                        <span data-testid="board-posted">posted {p.board.posted}</span>
+                                        <span data-testid="board-claimed">claimed {p.board.claimed}</span>
+                                        <span data-testid="board-completed">completed {p.board.completed}</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* IOU strip: outstanding bilateral balances */}
+                            {p.ious && p.ious.length > 0 && (
+                                <div data-testid="iou-strip" style={{ marginTop: 10 }}>
+                                    <div
+                                        style={{
+                                            fontSize: 9.5,
+                                            letterSpacing: '0.12em',
+                                            textTransform: 'uppercase',
+                                            color: '#8a93a6',
+                                            marginBottom: 4,
+                                        }}
+                                    >
+                                        Outstanding IOUs
+                                    </div>
+                                    {p.ious.map((iou) => (
+                                        <div
+                                            key={`${p.id}:${iou.counterparty_civic_did_hash}`}
+                                            data-testid="iou-entry"
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                gap: 8,
+                                                padding: '2px 0',
+                                            }}
+                                        >
+                                            <span style={{ color: '#8a93a6', fontFamily: 'monospace' }}>
+                                                {iou.counterparty_civic_did_hash.slice(0, 8)}
+                                            </span>
+                                            <span style={{ color: '#da7a4e' }}>{iou.outstanding_bios} Bios</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* ── Interior viewer overlay (D-59-11) — click-to-enter, additive. ── */}
             {closed && (
