@@ -376,13 +376,15 @@ Driving inputs for v3.0 (locked at milestone open):
   (`recordIou`, never free) DAG-weighted (2/3 vs 1/3); teach diffuses present-not-absent-not-human;
   human build 403; privacy walk over the real run trail. Artifacts:
   `.planning/phases/61-house-4-skill-construction/` (61-COMPLETION.md).
-- **⚠ Flagged follow-up (dual-DID):** the `build-from-blueprint` HTTP route checks skill-held with the
-  builder's **civic-DID** (`did:civic:noesis:*`, `civic-parcels.ts:272`), but `skill.taught.learner_did`
-  is the **existence-DID** (`did:noesis:nous:*`, `nous-runner.ts:804`); the string-equality match never
-  succeeds, so a real Nous building over HTTP always hits `skill_not_held`. Non-destructive (rejects,
-  not misbehaves); does NOT fail the phase DoD. The route is inert until the skill-held check resolves
-  civic-DID ↔ existence-DID (the `tryDid.ts` JWT carries both: iss existence / sub civic). Tracked as a
-  follow-up task; surfaced to the user for fix-before-deploy vs deploy-then-fix.
+- **✅ Dual-DID bridge — RESOLVED (commit `bf7d3b8`, user chose fix-before-deploy):** a Nous carries a
+  civic-DID (`did:civic:noesis:*`, land/Ousia, JWT sub) and an existence-DID (`did:noesis:*`,
+  skill-attestation `skill.taught.learner_did`, JWT iss). The `build-from-blueprint` route now runs the
+  skill-held check against EITHER identity — `BuildDeps.skillHolderDid` = `req.didContext.operatorDid`
+  (the JWT iss the Brain-signed request carries, per `tryDid`); the executor matches civic OR existence,
+  format-agnostic. Ownership / Ousia / human-check / emitted `builder_civic_did_hash` stay on the
+  civic-DID. New HTTP-level e2e proves a civic owner whose skill is recorded under its existence-DID
+  builds via the real POST route → 201 + one `skill.blueprint_executed` (422 without operatorDid,
+  proving the bridge is load-bearing). No skill producer weakened; full grid suite 357 / 3331 green.
 
 ## v3.1 Phase 60 HOUSE-3 BUILT (2026-06-14)
 

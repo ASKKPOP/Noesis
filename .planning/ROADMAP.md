@@ -692,9 +692,9 @@ Inherited constraints from v2.6 (do NOT break):
 > `build-from-blueprint` route + ROUTE_DID_POLICY, A11e gate extended to co-build/blueprint, 4 brain
 > construction verbs + ActionType count 44→48, dashboard construction surfaces, E2E learn→build→
 > co-build(funded+IOU)→teach→human-rejected. zero-diff R-31-01; single-onTick; full grid suite
-> 357 files / 3330 tests green. `61-COMPLETION.md`. **Flagged follow-up:** the build-from-blueprint
-> HTTP route checks skill-held with the civic-DID while `skill.taught.learner_did` is the existence-DID
-> — the route is inert until the two are reconciled (non-destructive; tracked).
+> 357 files / 3331 tests green. `61-COMPLETION.md`. **Dual-DID bridge RESOLVED** (`bf7d3b8`): the
+> build-from-blueprint route now checks skill-held against EITHER the civic-DID OR the existence-DID
+> (`req.didContext.operatorDid` = JWT iss), so a real Nous builds over HTTP; new HTTP-level e2e proves it.
 >
 > Fixed en route (test-infra, behavior-preserving): dashboard vitest JSX transform
 > (vitest-4/rolldown → `@vitejs/plugin-react-swc`, `9c155fe`); whisper-crypto libsodium
