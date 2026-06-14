@@ -24,7 +24,7 @@ const GUEST = 'did:civic:noesis:carol';
 const HUMAN = 'did:civic:noesis:human:dave';
 const PARCEL = 'genesis:business:0001';
 
-describe.skip('Phase 60 HOUSE-3 — ROLE_CAPABILITIES closed table [Wave 1 un-skips]', () => {
+describe('Phase 60 HOUSE-3 — ROLE_CAPABILITIES closed table [Wave 1 un-skips]', () => {
     it('ROLE_CAPABILITIES is a closed table with owner ⊇ staff ⊇ guest affordances', async () => {
         const { ROLE_CAPABILITIES } = await loadRoles();
         const owner = new Set(ROLE_CAPABILITIES.owner);
@@ -56,7 +56,7 @@ describe.skip('Phase 60 HOUSE-3 — ROLE_CAPABILITIES closed table [Wave 1 un-sk
     });
 });
 
-describe.skip('Phase 60 HOUSE-3 — grantRole / revokeRole / roleOf [Wave 1 un-skips]', () => {
+describe('Phase 60 HOUSE-3 — grantRole / revokeRole / roleOf [Wave 1 un-skips]', () => {
     it('grantRole mints a RoleEdge anchored to the holder Civic-DID; roleOf reflects it', async () => {
         const { ParcelRegistry } = await loadRegistry();
         const registry = new ParcelRegistry('genesis');

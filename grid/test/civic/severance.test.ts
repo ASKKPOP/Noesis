@@ -20,7 +20,7 @@ const HOST = 'did:civic:noesis:alice';
 const HOLDER = 'did:civic:noesis:bob';
 const PARCEL = 'genesis:business:0001';
 
-describe.skip('Phase 60 HOUSE-3 — severance FSM ordered traversal [Wave 1 un-skips]', () => {
+describe('Phase 60 HOUSE-3 — severance FSM ordered traversal [Wave 1 un-skips]', () => {
     it('advances ACTIVE → NOTICE → SETTLEMENT → WIND_DOWN → REVOKE → ARCHIVED in order', async () => {
         const { advanceSeverance } = await loadSeverance();
         const ctx = { state: 'ACTIVE' as const, parcel_id: PARCEL, host: HOST, holder: HOLDER, forCause: false };

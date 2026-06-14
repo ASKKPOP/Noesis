@@ -879,4 +879,75 @@ export const MIGRATIONS: Migration[] = [
               DROP COLUMN structure_interior
         `,
     },
+    // Phase 60 HOUSE-3 (NH3-01 / D-60-12 / R-60-01) — relationship + commerce storage.
+    // Three tables + one column, all in one migration so v40 is atomic:
+    //   - civic_parcel_roles : typed role edges (A4 / D-60-01). owner is NEVER a row here —
+    //     it is implicit from civic_parcels.owner_civic_did (never stored twice). role ENUM is
+    //     {staff,guest} only. trust_score is a derived float (honored settlements). The PK is
+    //     (parcel_id, holder_civic_did) so a re-grant resumes the SAME row → trust continuity.
+    //     revoked_tick stamps history at ARCHIVED — the row is kept, never hard-deleted (D-60-02).
+    //   - civic_credit_ledger : bilateral mutual-credit IOU payables (D-60-05 / D-NH-06). Wave 2
+    //     wires recordIou/settleIou; the table is created here so v40 is one migration.
+    //   - civic_cowork_agreements : signed dual-DID Cowork Agreements + board tasks (D-60-06 / A5).
+    //     Wave 2 wires post/claim/complete; created here.
+    //   - civic_parcels.bound_shop_id : the shop⇄structure binding (D-60-03 / R-60-05). named_address
+    //     already exists from v38 (Phase 58) — reused, NOT re-added.
+    // Write-through store; hydrate-on-boot reads civic_parcel_roles. Applies cleanly on top of v39.
+    {
+        version: 40,
+        name: 'house3_roles_credit_cowork_bound_shop',
+        up: `
+            CREATE TABLE IF NOT EXISTS civic_parcel_roles (
+                parcel_id           VARCHAR(63)     NOT NULL,
+                holder_civic_did    VARCHAR(255)    NOT NULL,
+                role                ENUM('staff','guest') NOT NULL,
+                granted_by_civic_did VARCHAR(255)   NOT NULL,
+                granted_tick        INT UNSIGNED    NOT NULL,
+                trust_score         FLOAT           NOT NULL DEFAULT 0,
+                revoked_tick        INT UNSIGNED    NULL,
+                PRIMARY KEY (parcel_id, holder_civic_did),
+                INDEX idx_roles_holder (holder_civic_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            CREATE TABLE IF NOT EXISTS civic_credit_ledger (
+                iou_id              CHAR(36)        NOT NULL,
+                grid_name           VARCHAR(63)     NOT NULL,
+                creditor_civic_did  VARCHAR(255)    NOT NULL,
+                debtor_civic_did    VARCHAR(255)    NOT NULL,
+                amount_bios         BIGINT UNSIGNED NOT NULL,
+                reason_ref          VARCHAR(255)    NOT NULL,
+                created_tick        INT UNSIGNED    NOT NULL,
+                settled_tick        INT UNSIGNED    NULL,
+                PRIMARY KEY (iou_id),
+                INDEX idx_iou_creditor (grid_name, creditor_civic_did),
+                INDEX idx_iou_debtor   (grid_name, debtor_civic_did),
+                INDEX idx_iou_pair     (grid_name, creditor_civic_did, debtor_civic_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            CREATE TABLE IF NOT EXISTS civic_cowork_agreements (
+                agreement_id        CHAR(36)        NOT NULL,
+                grid_name           VARCHAR(63)     NOT NULL,
+                parcel_id           VARCHAR(63)     NOT NULL,
+                host_civic_did      VARCHAR(255)    NOT NULL,
+                worker_civic_did    VARCHAR(255)    NULL,
+                scope_ref           VARCHAR(255)    NOT NULL,
+                settlement_amount_bios BIGINT UNSIGNED NOT NULL,
+                term_ticks          INT UNSIGNED    NOT NULL,
+                status              ENUM('posted','claimed','completed','cancelled') NOT NULL DEFAULT 'posted',
+                created_tick        INT UNSIGNED    NOT NULL,
+                completed_tick      INT UNSIGNED    NULL,
+                PRIMARY KEY (agreement_id),
+                INDEX idx_cowork_parcel (grid_name, parcel_id),
+                INDEX idx_cowork_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            ALTER TABLE civic_parcels ADD COLUMN bound_shop_id VARCHAR(63) NULL
+        `,
+        down: `
+            ALTER TABLE civic_parcels DROP COLUMN bound_shop_id;
+            DROP TABLE IF EXISTS civic_cowork_agreements;
+            DROP TABLE IF EXISTS civic_credit_ledger;
+            DROP TABLE IF EXISTS civic_parcel_roles
+        `,
+    },
 ];

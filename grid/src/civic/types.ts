@@ -69,6 +69,7 @@ export interface Structure {
     builtAtTick: number;
     namedAddress: string | null;  // optional NDS name, e.g. "place://aurora-cafe.genesis"
     interior?: Interior;          // Phase 59 HOUSE-2: furnished interior tree (Grid-side only)
+    boundShopId?: string;         // Phase 60 HOUSE-3: bound ShopRegistry shop id (D-60-03)
 }
 
 /** The upkeep condition ladder (D-NH-03): maintained → worn → derelict (→ reclaimed). */

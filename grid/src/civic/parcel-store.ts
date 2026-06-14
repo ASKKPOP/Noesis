@@ -14,6 +14,7 @@
 import type { Pool, RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import type { ParcelRegistry } from './parcel-registry.js';
 import type { Parcel, ZoneId, StructureType, Visibility, Interior, ParcelCondition } from './types.js';
+import type { Role, RoleEdge } from './roles.js';
 import { gravityPrice, GENESIS_CORE_SEED_PLAN, PURCHASABLE_RINGS } from './founding-law.js';
 
 /** A civic_parcels DB row (snake_case columns as returned by mysql2). */
@@ -39,6 +40,19 @@ export interface ParcelRow extends RowDataPacket {
     condition: ParcelCondition;
     last_upkeep_tick: number | null;
     missed_periods: number;
+    // Phase 60 HOUSE-3 (v40) — shop⇄structure binding.
+    bound_shop_id: string | null;
+}
+
+/** A civic_parcel_roles DB row (snake_case columns as returned by mysql2). */
+export interface ParcelRoleRow extends RowDataPacket {
+    parcel_id: string;
+    holder_civic_did: string;
+    role: Role;
+    granted_by_civic_did: string;
+    granted_tick: number;
+    trust_score: string | number;   // mysql2 returns FLOAT predictably as number, defensive cast
+    revoked_tick: number | null;
 }
 
 /** Map a DB row into the in-memory Parcel shape (entry_allowlist may arrive as JSON text). */
@@ -66,6 +80,7 @@ function rowToParcel(row: ParcelRow): Parcel {
                 builtAtTick: row.built_at_tick ?? 0,
                 namedAddress: row.named_address,
                 ...(interior ? { interior } : {}),
+                ...(row.bound_shop_id ? { boundShopId: row.bound_shop_id } : {}),
             }
             : null,
         entryPolicy: { policy: row.entry_policy, allowlist },
@@ -140,6 +155,18 @@ export class ParcelStore {
         );
         for (const row of rows) {
             registry.upsert(rowToParcel(row));
+        }
+        // Phase 60 HOUSE-3 (v40 / D-60-01) — rehydrate role edges anchored to Civic-DIDs
+        // so two Nous resume at their existing trust level after a restart. Revoked edges
+        // (revoked_tick set) are retained as history; the registry resolves them to no role.
+        const [roleRows] = await this.pool.query<ParcelRoleRow[]>(
+            `SELECT r.* FROM civic_parcel_roles r
+                JOIN civic_parcels p ON p.parcel_id = r.parcel_id
+              WHERE p.grid_name = ?`,
+            [this.gridName],
+        );
+        for (const r of roleRows) {
+            registry.upsertRoleEdge(rowToRoleEdge(r));
         }
         return rows.length;
     }
@@ -229,6 +256,61 @@ export class ParcelStore {
             [parcel.id],
         );
     }
+
+    /* ───────────────────── Role edges (v40 / D-60-01 / R-60-02) ─────────────────────
+     * DB-first write-through, mirroring the persist* pattern above. The owner edge is
+     * NEVER written here (implicit from owner_civic_did). A revoke marks the row as
+     * history (revoked_tick) and KEEPS it — trust continuity, never a hard-delete.
+     */
+
+    /**
+     * Persist a role grant DB-first (UPSERT civic_parcel_roles). On a re-grant the PK
+     * (parcel_id, holder_civic_did) collides and we refresh the role/grantor/tick while
+     * preserving the existing trust_score and clearing any prior revoked_tick (the edge
+     * is active again). The caller mirrors the edge into the registry after this returns.
+     */
+    async persistRole(parcelId: string, edge: RoleEdge): Promise<void> {
+        await this.pool.query<ResultSetHeader>(
+            `INSERT INTO civic_parcel_roles
+                (parcel_id, holder_civic_did, role, granted_by_civic_did, granted_tick, trust_score, revoked_tick)
+             VALUES (?, ?, ?, ?, ?, ?, NULL)
+             ON DUPLICATE KEY UPDATE
+                role = VALUES(role),
+                granted_by_civic_did = VALUES(granted_by_civic_did),
+                granted_tick = VALUES(granted_tick),
+                revoked_tick = NULL`,
+            [parcelId, edge.holder_civic_did, edge.role, edge.granted_by_civic_did, edge.granted_tick, edge.trust_score],
+        );
+    }
+
+    /**
+     * Persist a role revoke DB-first: stamp revoked_tick so the edge becomes retained
+     * history. The row is KEPT (do NOT hard-delete) so a later re-grant resumes the
+     * holder's trust_score (D-60-02 — severance is never a hard kill).
+     */
+    async persistRoleRevoke(parcelId: string, holderDid: string, revokedTick: number): Promise<void> {
+        await this.pool.query<ResultSetHeader>(
+            `UPDATE civic_parcel_roles
+                SET revoked_tick = ?
+              WHERE parcel_id = ? AND holder_civic_did = ?`,
+            [revokedTick, parcelId, holderDid],
+        );
+    }
+}
+
+/** Map a civic_parcel_roles DB row into the in-memory RoleEdge shape. */
+function rowToRoleEdge(row: ParcelRoleRow): RoleEdge {
+    return {
+        parcel_id: row.parcel_id,
+        holder_civic_did: row.holder_civic_did,
+        role: row.role,
+        granted_by_civic_did: row.granted_by_civic_did,
+        granted_tick: row.granted_tick,
+        trust_score: Number(row.trust_score),
+        ...(row.revoked_tick !== null && row.revoked_tick !== undefined
+            ? { revoked_tick: row.revoked_tick }
+            : {}),
+    };
 }
 
 /**
