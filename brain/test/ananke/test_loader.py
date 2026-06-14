@@ -67,7 +67,10 @@ def test_action_type_drive_crossed_present() -> None:
     # + 4 (Phase 17: IRIS_*) + 3 (Phase 18: SKILL_TAUGHT, SKILL_INFERRED, SKILL_REJECTED)
     # + 5 (Phase 20: LORE_CONTRIBUTE, LORE_CITED, LORE_DISCOVER, LORE_REQUEST, LORE_RESPONSE)
     # + 6 (Phase 58: LIST_PARCELS, BUY_PARCEL, BUILD, VISIT, LEAVE, SET_ENTRY_POLICY) = 34
-    assert len(list(ActionType)) == 34
+    # + 2 (Phase 59: EXTEND_INTERIOR, VIEW_INTERIOR) = 36
+    # + 8 (Phase 60: GRANT_ROLE, REVOKE_ROLE, INVITE, BIND_SHOP, NAME_PLACE,
+    #      POST_TASK, CLAIM_TASK, COMPLETE_TASK) = 44
+    assert len(list(ActionType)) == 44
 
 
 def test_action_type_drive_crossed_position() -> None:
