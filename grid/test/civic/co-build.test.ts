@@ -46,7 +46,7 @@ beforeEach(async () => {
     _resetCoBuild();
 });
 
-describe.skip('Phase 61 HOUSE-4 — decomposeRecipe → atomic sub-task DAG [Wave 2 un-skips]', () => {
+describe('Phase 61 HOUSE-4 — decomposeRecipe → atomic sub-task DAG [Wave 2 un-skips]', () => {
     it('turns the recipe arrangement into atomic sub-tasks (node = catalog object(s) + edges + weight)', async () => {
         const { decomposeRecipe } = await loadCoBuild();
         const nodes = decomposeRecipe(recipe());
@@ -63,7 +63,7 @@ describe.skip('Phase 61 HOUSE-4 — decomposeRecipe → atomic sub-task DAG [Wav
     });
 });
 
-describe.skip('Phase 61 HOUSE-4 — every sub-task ALWAYS settles (never free, D-NH-06) [Wave 2 un-skips]', () => {
+describe('Phase 61 HOUSE-4 — every sub-task ALWAYS settles (never free, D-NH-06) [Wave 2 un-skips]', () => {
     it('settles in Ousia via transferOusia when the host is funded', async () => {
         const { decomposeRecipe, createCoBuildSession, completeNode } = await loadCoBuild();
         const session = createCoBuildSession({
@@ -91,7 +91,7 @@ describe.skip('Phase 61 HOUSE-4 — every sub-task ALWAYS settles (never free, D
     });
 });
 
-describe.skip('Phase 61 HOUSE-4 — DAG-weighted attribution [Wave 2 un-skips]', () => {
+describe('Phase 61 HOUSE-4 — DAG-weighted attribution [Wave 2 un-skips]', () => {
     it('attributionShare = Σ(completed-node weights for did) ÷ Σ(all-node weights)', async () => {
         const { decomposeRecipe, createCoBuildSession, completeNode, attributionShare } = await loadCoBuild();
         const session = createCoBuildSession({
@@ -104,7 +104,7 @@ describe.skip('Phase 61 HOUSE-4 — DAG-weighted attribution [Wave 2 un-skips]',
     });
 });
 
-describe.skip('Phase 61 HOUSE-4 — reuses zoning.cowork_session; one skill.blueprint_executed on full completion [Wave 2 un-skips]', () => {
+describe('Phase 61 HOUSE-4 — reuses zoning.cowork_session; one skill.blueprint_executed on full completion [Wave 2 un-skips]', () => {
     it('sub-task settlement reuses the Phase 60 zoning.cowork_session event (NO new allowlist event)', async () => {
         const { decomposeRecipe } = await loadCoBuild();
         // co-build adds NO new producer — it reuses the Phase 60 cowork board + zoning.cowork_session.

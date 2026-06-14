@@ -15,10 +15,21 @@
  * blueprint_hash in the audit chain — the same lineage query culture.ts uses). The Brain
  * attests, the Grid confirms. No new skill store, no new event.
  */
+import { createHash } from 'node:crypto';
 import type { AuditEntry } from '../audit/types.js';
 import { FURNITURE_CATALOG } from './furniture.js';
+import { isHumanDid } from './roles.js';
+import type { ParcelRegistry } from './parcel-registry.js';
+import type { Structure } from './types.js';
 
 const HEX64 = /^[0-9a-f]{64}$/;
+
+/**
+ * The Polis treasury DID that material_cost_bios is debited to (D-NH-03/05). Defined
+ * locally so the civic blueprint executor never depends on the API routes layer — the
+ * same string the registry / civic-parcels route use (`api/routes/registry.ts`).
+ */
+const TREASURY_DID = 'did:noesis:system:treasury';
 
 /** A single recipe object — `kind` MUST be a Phase 59 furniture-catalog kind. */
 export interface BlueprintObject {
@@ -140,4 +151,121 @@ export function builderHoldsSkill(
             const p = e.payload as { learner_did?: string; skill_hash?: string };
             return p.learner_did === builderDid && p.skill_hash === blueprint_hash;
         });
+}
+
+/* ───────────────── build executor (A10 BUILD lifecycle / D-61-02 / R-61-04) ─────────────────
+ * buildFromBlueprint is the SINGLE recipe-apply caller: it verifies skill-held, debits the
+ * material cost to TREASURY_DID, then replays ParcelRegistry.extendInterior once per recipe
+ * object (the interior tree mutation is Grid-side — no per-object chain event). The whole
+ * build emits ONE skill.blueprint_executed via the injected emit SEAM (Wave 3 attaches the
+ * real sole producer; this wave constructs the call site + the closed 4-tuple payload).
+ */
+
+/** sha256 hex — the HEX64 hashed-DID discipline the skill.* producers expect. */
+function sha256Hex(input: string): string {
+    return createHash('sha256').update(input).digest('hex');
+}
+
+/** The closed skill.blueprint_executed payload (keys ALPHABETICAL) — Wave 3 emits it. */
+export interface BlueprintExecutedPayload {
+    blueprint_hash: string;
+    builder_civic_did_hash: string;
+    parcel_id: string;
+    tick: number;
+}
+
+/**
+ * Deps for buildFromBlueprint:
+ *  - `registry` is the SINGLE recipe-apply surface (extendInterior + roleOf authorization).
+ *  - `transferOusia` moves the material cost builder → TREASURY_DID; `{success:false}` (the
+ *     builder cannot cover it) maps to insufficient_funds (402).
+ *  - `audit` is the existing skill-event history surface for the skill-held check.
+ *  - `coBuildStaffOf?` is the co-build authorization read (a staff Nous in an active session
+ *     for this parcel); absent ⇒ owner-only authorization.
+ *  - `emitBlueprintExecuted?` is the Wave-3 emit SEAM — the executor constructs the payload
+ *     and calls it; Wave 3 attaches the real sole producer.
+ */
+export interface BuildDeps {
+    registry: ParcelRegistry;
+    transferOusia(from: string, to: string, amount: number): { success: boolean };
+    audit: { all(): AuditEntry[] };
+    /** True iff `did` is a staff Nous in an active co-build session for `addr` (co-build authz). */
+    coBuildStaffOf?(addr: string, did: string): boolean;
+    /** Wave-3 emit seam — the real sole producer attaches here. */
+    emitBlueprintExecuted?(payload: BlueprintExecutedPayload): void;
+}
+
+/**
+ * Execute a build from a held blueprint skill (D-61-02 / R-61-04):
+ *   1. reject a human builder (VOTE-05 / D-NH-07) — builder_forbidden_human.
+ *   2. authorize: the builder is the parcel owner OR a staff Nous in an active co-build
+ *      session for this parcel; else not_authorized (403).
+ *   3. getBlueprint → blueprint_not_found when absent.
+ *   4. builderHoldsSkill (existing skill-event history) → skill_not_held when false.
+ *   5. debit recipe.material_cost_bios builder → TREASURY_DID via transferOusia; a failed
+ *      transfer (cannot cover) → insufficient_funds (402).
+ *   6. apply the recipe: extendInterior(addr, builderDid, {area, kind}) once per recipe
+ *      object (the SINGLE caller; the interior mutation emits NO per-object chain event).
+ *   7. construct the skill.blueprint_executed payload (hashed builder, no recipe body) and
+ *      call the Wave-3 emit seam.
+ *   8. return the updated Structure.
+ */
+export function buildFromBlueprint(
+    addr: string,
+    builderDid: string,
+    blueprint_hash: string,
+    tick: number,
+    deps: BuildDeps,
+): Structure {
+    // 1. Humans NEVER build (VOTE-05 / D-NH-07).
+    if (isHumanDid(builderDid)) {
+        throw new Error(`builder_forbidden_human: ${builderDid} may not build`);
+    }
+    // 2. Authorize: owner OR staff Nous in an active co-build session for this parcel.
+    const isOwner = deps.registry.roleOf(addr, builderDid) === 'owner';
+    const isCoBuildStaff = deps.coBuildStaffOf?.(addr, builderDid) === true;
+    if (!isOwner && !isCoBuildStaff) {
+        throw new Error('not_authorized: builder is neither owner nor co-build staff (403)');
+    }
+    // 3. Resolve the recipe.
+    const recipe = getBlueprint(blueprint_hash);
+    if (!recipe) {
+        throw new Error(`blueprint_not_found: ${blueprint_hash}`);
+    }
+    // 4. Confirm the builder HOLDS the skill (existing skill-event history; Brain attests).
+    if (!builderHoldsSkill(blueprint_hash, builderDid, { audit: deps.audit })) {
+        throw new Error(`skill_not_held: ${builderDid} does not hold ${blueprint_hash}`);
+    }
+    // 5. Debit the material cost builder → TREASURY_DID (insufficient → 402).
+    if (recipe.material_cost_bios > 0) {
+        const moved = deps.transferOusia(builderDid, TREASURY_DID, recipe.material_cost_bios);
+        if (!moved.success) {
+            throw new Error('insufficient_funds: builder cannot cover material_cost_bios (402)');
+        }
+    }
+    // 6. Apply the recipe — the SINGLE recipe-apply caller; no per-object chain event.
+    //    extendInterior mutates the OWNER's interior tree (a co-build staff builds on behalf
+    //    of the owner), so resolve the parcel owner for the recipe-apply DID.
+    const ownerDid = deps.registry.get(addr)?.ownerDid ?? builderDid;
+    let structure: Structure | undefined;
+    for (const object of recipe.objects) {
+        structure = deps.registry.extendInterior(addr, ownerDid, {
+            area: object.area,
+            kind: object.kind,
+        });
+    }
+    // 7. Construct the closed skill.blueprint_executed payload + call the Wave-3 emit seam.
+    const payload: BlueprintExecutedPayload = {
+        blueprint_hash,
+        builder_civic_did_hash: sha256Hex(builderDid),
+        parcel_id: addr,
+        tick,
+    };
+    deps.emitBlueprintExecuted?.(payload);
+    // 8. Return the updated structure. A recipe always carries ≥1 object (validated at store
+    //    time), so `structure` is set after the loop; the fallback reads the existing structure.
+    const existing = deps.registry.get(addr)?.structure;
+    if (structure) return structure;
+    if (existing) return existing;
+    throw new Error('blueprint_empty_recipe: recipe applied no objects');
 }
