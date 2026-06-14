@@ -20,7 +20,7 @@ const loadChain = () => import('../../src/audit/chain.js');
 const PARCEL = 'genesis:shopping:0001';
 const valid = { amount_bios: 100, parcel_id: PARCEL, tick: 7, zone_tax_bps: 1000 };
 
-describe.skip('Phase 60 — appendTreasuryStructureRevenue sole producer [Wave 4 un-skips]', () => {
+describe('Phase 60 — appendTreasuryStructureRevenue sole producer [Wave 4 un-skips]', () => {
     it('lands a valid event with the parcel_id as actor (NO buyer/seller DID — mirrors #83)', async () => {
         const { appendTreasuryStructureRevenue } = await loadProducer();
         const { AuditChain } = await loadChain();

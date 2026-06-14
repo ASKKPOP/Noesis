@@ -24,7 +24,7 @@ const valid = {
     tick: 7,
 };
 
-describe.skip('Phase 60 — appendZoningRoleRevoked sole producer [Wave 4 un-skips]', () => {
+describe('Phase 60 — appendZoningRoleRevoked sole producer [Wave 4 un-skips]', () => {
     it('lands a valid event with the parcel_id as actor', async () => {
         const { appendZoningRoleRevoked } = await loadProducer();
         const { AuditChain } = await loadChain();

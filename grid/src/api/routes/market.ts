@@ -28,6 +28,7 @@ import { appendMarketBidPlaced } from '../../audit/append-market-bid-placed.js';
 import { appendMarketSettled } from '../../audit/append-market-settled.js';
 import { appendMarketDisputed } from '../../audit/append-market-disputed.js';
 import { appendIrsTaxCollected } from '../../audit/append-irs-tax-collected.js';
+import { appendTreasuryStructureRevenue } from '../../audit/append-treasury-structure-revenue.js';
 import { MarketplaceStore, MIN_LISTING_PRICE_BIOS } from '../../marketplace/marketplace-store.js';
 import { structureRevenueDue, ZONE_TAX_BPS } from '../../civic/founding-law.js';
 
@@ -428,13 +429,16 @@ export async function registerMarketRoutes(
                     // a no-op on failure (e.g. seller absent from the ousia registry), so the
                     // trade settlement above is never disturbed.
                     services.registry.transferOusia(settleResult.sellerCivicDid, TREASURY_DID, skim);
-                    // ── WAVE-4 EMIT POINT (treasury.structure_revenue) ──────────────────
-                    // The producer (append-treasury-structure-revenue.ts, allowlist 95→99)
-                    // lands in Wave 4. Closed tuple to emit here then:
-                    //   { amount_bios: skim, parcel_id: parcelId,
-                    //     tick: currentTick, zone_tax_bps: ZONE_TAX_BPS[parcel.zoneId] }
-                    // Do NOT emit yet — the event is not on the allowlist until Wave 4.
-                    void ZONE_TAX_BPS;
+                    // ── Phase 60 Wave 4 EMIT POINT (treasury.structure_revenue #98) ─────
+                    // Sole-producer append (allowlist 95→99). actorDid = parcel_id (mirrors
+                    // #83 — NO buyer/seller DID on chain; identity already audited via the
+                    // market.settled trade above). Only the skimmed tax + the per-zone bps.
+                    appendTreasuryStructureRevenue(audit, {
+                        amount_bios: skim,
+                        parcel_id: parcelId,
+                        tick: currentTick,
+                        zone_tax_bps: ZONE_TAX_BPS[parcel.zoneId as keyof typeof ZONE_TAX_BPS],
+                    });
                 }
             }
         }

@@ -320,6 +320,21 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     //   never see private interiors). 'public' lets the DID hook pass through to it.
     'POST /api/v1/civic/parcels/:id/interior/extend': 'civic_did_required',
     'GET /api/v1/civic/parcels/:id/interior':         'public',
+
+    // Phase 60 (NH3-04/05/08/09 / R-60-04..09) — civic-parcels HOUSE-3 commerce routes.
+    // All write routes are civic_did_required (D-NH-07 Nous-only; the handlers add their
+    // own owner/staff/guest authorization via parcelRegistry.roleOf + reject humans from
+    // every role edge with a defensive 403 humans_cannot_hold_role). Co-work/board content,
+    // scope_ref bodies, and place names stay Grid-side (D-60-10).
+    'POST /api/v1/civic/parcels/:id/bind-shop':       'civic_did_required',
+    'POST /api/v1/civic/parcels/:id/unbind-shop':     'civic_did_required',
+    'POST /api/v1/civic/parcels/:id/name':            'civic_did_required',
+    'POST /api/v1/civic/parcels/:id/invite':          'civic_did_required',
+    'POST /api/v1/civic/parcels/:id/roles':           'civic_did_required',
+    'POST /api/v1/civic/parcels/:id/roles/revoke':    'civic_did_required',
+    'POST /api/v1/civic/parcels/:id/board/post':      'civic_did_required',
+    'POST /api/v1/civic/parcels/:id/board/claim':     'civic_did_required',
+    'POST /api/v1/civic/parcels/:id/board/complete':  'civic_did_required',
 } as Record<string, RouteDIDPolicy>);
 
 /**

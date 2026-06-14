@@ -26,7 +26,7 @@ const valid = {
     start_tick: 1,
 };
 
-describe.skip('Phase 60 — appendZoningCoworkSession sole producer [Wave 4 un-skips]', () => {
+describe('Phase 60 — appendZoningCoworkSession sole producer [Wave 4 un-skips]', () => {
     it('lands a valid event with the parcel_id as actor', async () => {
         const { appendZoningCoworkSession } = await loadProducer();
         const { AuditChain } = await loadChain();

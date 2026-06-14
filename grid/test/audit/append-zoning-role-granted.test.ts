@@ -25,7 +25,7 @@ const valid = {
     tick: 7,
 };
 
-describe.skip('Phase 60 — appendZoningRoleGranted sole producer [Wave 4 un-skips]', () => {
+describe('Phase 60 — appendZoningRoleGranted sole producer [Wave 4 un-skips]', () => {
     it('lands a valid event with grantor_civic_did_hash as actor', async () => {
         const { appendZoningRoleGranted } = await loadProducer();
         const { AuditChain } = await loadChain();

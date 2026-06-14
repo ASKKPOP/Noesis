@@ -41,6 +41,11 @@ import { appendZoningStructureBuilt } from '../../audit/append-zoning-structure-
 import { appendZoningStructureJoined } from '../../audit/append-zoning-structure-joined.js';
 import { appendZoningStructureLeft } from '../../audit/append-zoning-structure-left.js';
 import { appendZoningInteriorExtended } from '../../audit/append-zoning-interior-extended.js';
+import { appendZoningRoleGranted } from '../../audit/append-zoning-role-granted.js';
+import { appendZoningRoleRevoked } from '../../audit/append-zoning-role-revoked.js';
+import { appendZoningCoworkSession } from '../../audit/append-zoning-cowork-session.js';
+import { isHumanDid } from '../../civic/roles.js';
+import { postTask, claimTask, completeTask } from '../../civic/cowork.js';
 
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 const HUMAN_CIVIC_DID_RE = /^did:civic:noesis:human:/i;
@@ -431,6 +436,321 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             interior: interiorView,
         });
     });
+
+    /* ───────────────────── Phase 60 HOUSE-3 commerce / role / cowork / place ─────────────────────
+     * Shop⇄structure binding (D-60-03), place:// naming (D-60-07), invitations + role edges
+     * (D-60-01..04), and the executable task board (D-60-06). Owner/staff/guest authorization
+     * flows from the closed ROLE_CAPABILITIES table via parcelRegistry.roleOf; humans are
+     * rejected from every role edge (VOTE-05 / D-NH-07). The 3 chain-emitting routes call their
+     * Wave-4 sole producers; invite/name add NO chain event of their own (name has none; invite
+     * rides zoning.role_granted via the minted guest edge). Board/scope CONTENT stays Grid-side.
+     */
+
+    // --- POST /api/v1/civic/parcels/:id/bind-shop (owner-only) ---
+    app.post<{ Params: { id: string }; Body: Record<string, unknown> }>(
+        '/api/v1/civic/parcels/:id/bind-shop',
+        async (req, reply) => {
+            const guarded = requireCivicWriter(req, reply, services);
+            if (!guarded) return reply;
+            const { parcelRegistry, buyerDid } = guarded;
+            const addr = req.params.id;
+            const body = (req.body ?? {}) as Record<string, unknown>;
+            const shopId = body['shop_id'];
+            if (typeof shopId !== 'string' || shopId.length === 0) {
+                return reply.code(400).send({ error: 'invalid_shop_id' });
+            }
+            const result = parcelRegistry.bindShop(addr, shopId, buyerDid);
+            if (!result.ok) {
+                if (result.reason === 'not_owner') return reply.code(403).send({ error: 'not_owner' });
+                // A non-shop structure is a 422 (D-60-03 — bind requires structure type shop).
+                return reply.code(422).send({ error: 'structure_not_shop' });
+            }
+            await guarded.store.persistBuild(result.parcel);
+            return reply.code(200).send({ bound: true, parcel_id: addr, shop_id: shopId });
+        },
+    );
+
+    // --- POST /api/v1/civic/parcels/:id/unbind-shop (owner-only, routes through severance) ---
+    app.post<{ Params: { id: string } }>(
+        '/api/v1/civic/parcels/:id/unbind-shop',
+        async (req, reply) => {
+            const guarded = requireCivicWriter(req, reply, services);
+            if (!guarded) return reply;
+            const { parcelRegistry, buyerDid } = guarded;
+            const addr = req.params.id;
+            const tick = currentTick(services);
+            const result = parcelRegistry.unbindShop(addr, buyerDid, tick);
+            if (!result.ok) {
+                if (result.reason === 'not_owner') return reply.code(403).send({ error: 'not_owner' });
+                return reply.code(422).send({ error: 'structure_not_shop' });
+            }
+            await guarded.store.persistBuild(result.parcel);
+            return reply.code(200).send({ unbound: true, parcel_id: addr, severance_state: result.severanceState });
+        },
+    );
+
+    // --- POST /api/v1/civic/parcels/:id/name (owner-only; place:// NDS; NO chain event) ---
+    app.post<{ Params: { id: string }; Body: Record<string, unknown> }>(
+        '/api/v1/civic/parcels/:id/name',
+        async (req, reply) => {
+            const guarded = requireCivicWriter(req, reply, services);
+            if (!guarded) return reply;
+            const { parcelRegistry, buyerDid } = guarded;
+            const addr = req.params.id;
+            const body = (req.body ?? {}) as Record<string, unknown>;
+            const placeName = body['place_name'];
+            if (typeof placeName !== 'string' || placeName.length === 0) {
+                return reply.code(400).send({ error: 'invalid_place_name' });
+            }
+            const tick = currentTick(services);
+            let result: { ok: true; placeAddress: string } | { ok: false; reason: 'not_owner' };
+            try {
+                result = parcelRegistry.namePlace(addr, buyerDid, placeName, tick);
+            } catch (err) {
+                // The place-registry throws place_name_taken on a duplicate → 409.
+                if (err instanceof Error && err.message.startsWith('place_name_taken')) {
+                    return reply.code(409).send({ error: 'place_name_taken' });
+                }
+                throw err;
+            }
+            if (!result.ok) return reply.code(403).send({ error: 'not_owner' });
+            // Place names stay Grid-side (name_hash discipline) — NO chain event (D-60-07).
+            await guarded.store.persistBuild(parcelRegistry.get(addr)!);
+            return reply.code(200).send({ named: true, parcel_id: addr, place_address: result.placeAddress });
+        },
+    );
+
+    // --- POST /api/v1/civic/parcels/:id/invite (owner or staff; entry allowlist + guest edge) ---
+    app.post<{ Params: { id: string }; Body: Record<string, unknown> }>(
+        '/api/v1/civic/parcels/:id/invite',
+        async (req, reply) => {
+            const guarded = requireCivicWriter(req, reply, services);
+            if (!guarded) return reply;
+            const { parcelRegistry, buyerDid } = guarded;
+            const addr = req.params.id;
+            const body = (req.body ?? {}) as Record<string, unknown>;
+            const invitee = body['invitee_civic_did'];
+            if (typeof invitee !== 'string' || !CIVIC_DID_RE.test(invitee)) {
+                return reply.code(400).send({ error: 'invalid_invitee' });
+            }
+            // A human invitee is rejected from the role edge (VOTE-05 / D-NH-07) — the
+            // allowlist itself never holds a role, so we refuse BEFORE touching either.
+            if (HUMAN_CIVIC_DID_RE.test(invitee)) {
+                return reply.code(403).send({ error: 'humans_cannot_hold_role' });
+            }
+            // Inviter must be the owner OR a staff edge holder (board/admit affordance).
+            const inviterRole = parcelRegistry.roleOf(addr, buyerDid);
+            if (inviterRole !== 'owner' && inviterRole !== 'staff') {
+                return reply.code(403).send({ error: 'not_owner_or_staff' });
+            }
+            const tick = currentTick(services);
+            // 1. Append the invitee to the Phase 58 entry allowlist (ephemeral admission).
+            const parcel = parcelRegistry.get(addr);
+            const existing = parcel?.entryPolicy.allowlist ?? [];
+            const nextAllowlist = existing.includes(invitee) ? existing : [...existing, invitee];
+            const policyResult = parcelRegistry.setEntryPolicy(addr, parcel?.ownerDid ?? buyerDid, {
+                policy: 'allowlist',
+                allowlist: nextAllowlist,
+            });
+            if (policyResult.ok) await guarded.store.persistEntryPolicy(policyResult.parcel);
+            // 2. Mint the durable guest role edge (the social bond beside the allowlist entry).
+            const grantor = parcel?.ownerDid ?? buyerDid;
+            const edge = parcelRegistry.grantRole(addr, invitee, 'guest', grantor, tick);
+            // 3. Emit zoning.role_granted (96) — DIDs HEX64; raw DIDs never cross.
+            appendZoningRoleGranted(services.audit, {
+                grantor_civic_did_hash: sha256Hex(edge.granted_by_civic_did),
+                holder_civic_did_hash: sha256Hex(edge.holder_civic_did),
+                parcel_id: addr,
+                role: 'guest',
+                tick,
+            });
+            return reply.code(200).send({ invited: true, parcel_id: addr });
+        },
+    );
+
+    // --- POST /api/v1/civic/parcels/:id/roles (grant; owner-only; role ∈ {staff,guest}) ---
+    app.post<{ Params: { id: string }; Body: Record<string, unknown> }>(
+        '/api/v1/civic/parcels/:id/roles',
+        async (req, reply) => {
+            const guarded = requireCivicWriter(req, reply, services);
+            if (!guarded) return reply;
+            const { parcelRegistry, buyerDid } = guarded;
+            const addr = req.params.id;
+            const body = (req.body ?? {}) as Record<string, unknown>;
+            const holder = body['holder_civic_did'];
+            const role = body['role'];
+            if (typeof holder !== 'string' || !CIVIC_DID_RE.test(holder)) {
+                return reply.code(400).send({ error: 'invalid_holder' });
+            }
+            if (role !== 'staff' && role !== 'guest') {
+                return reply.code(422).send({ error: 'invalid_role' });
+            }
+            // A human holder is rejected (humans never hold a role edge — D-NH-07).
+            if (HUMAN_CIVIC_DID_RE.test(holder) || isHumanDid(holder)) {
+                return reply.code(403).send({ error: 'humans_cannot_hold_role' });
+            }
+            // Owner-only grant.
+            if (parcelRegistry.roleOf(addr, buyerDid) !== 'owner') {
+                return reply.code(403).send({ error: 'not_owner' });
+            }
+            const tick = currentTick(services);
+            const edge = parcelRegistry.grantRole(addr, holder, role, buyerDid, tick);
+            appendZoningRoleGranted(services.audit, {
+                grantor_civic_did_hash: sha256Hex(edge.granted_by_civic_did),
+                holder_civic_did_hash: sha256Hex(edge.holder_civic_did),
+                parcel_id: addr,
+                role,
+                tick,
+            });
+            return reply.code(200).send({ granted: true, parcel_id: addr, role });
+        },
+    );
+
+    // --- POST /api/v1/civic/parcels/:id/roles/revoke (owner-only; routes through severance) ---
+    app.post<{ Params: { id: string }; Body: Record<string, unknown> }>(
+        '/api/v1/civic/parcels/:id/roles/revoke',
+        async (req, reply) => {
+            const guarded = requireCivicWriter(req, reply, services);
+            if (!guarded) return reply;
+            const { parcelRegistry, buyerDid } = guarded;
+            const addr = req.params.id;
+            const body = (req.body ?? {}) as Record<string, unknown>;
+            const holder = body['holder_civic_did'];
+            const rawReason = body['reason'];
+            if (typeof holder !== 'string' || !CIVIC_DID_RE.test(holder)) {
+                return reply.code(400).send({ error: 'invalid_holder' });
+            }
+            // A human can never hold a role edge → never has one to revoke (D-NH-07).
+            if (HUMAN_CIVIC_DID_RE.test(holder) || isHumanDid(holder)) {
+                return reply.code(403).send({ error: 'humans_cannot_hold_role' });
+            }
+            if (parcelRegistry.roleOf(addr, buyerDid) !== 'owner') {
+                return reply.code(403).send({ error: 'not_owner' });
+            }
+            // for_cause short-circuits the FSM to SETTLEMENT with a dispute flag; otherwise the
+            // event reason is owner_revoked (the audit reason mirrors the severance outcome).
+            const forCause = rawReason === 'for_cause';
+            const tick = currentTick(services);
+            parcelRegistry.revokeRole(addr, holder, forCause ? 'for_cause' : 'owner_revoked', tick);
+            appendZoningRoleRevoked(services.audit, {
+                holder_civic_did_hash: sha256Hex(holder),
+                parcel_id: addr,
+                reason: forCause ? 'for_cause' : 'owner_revoked',
+                tick,
+            });
+            return reply.code(200).send({ revoked: true, parcel_id: addr });
+        },
+    );
+
+    // --- POST /api/v1/civic/parcels/:id/board/post (owner/staff post a task) ---
+    app.post<{ Params: { id: string }; Body: Record<string, unknown> }>(
+        '/api/v1/civic/parcels/:id/board/post',
+        async (req, reply) => {
+            const guarded = requireCivicWriter(req, reply, services);
+            if (!guarded) return reply;
+            const { parcelRegistry, buyerDid } = guarded;
+            const addr = req.params.id;
+            const body = (req.body ?? {}) as Record<string, unknown>;
+            const taskRef = body['task_ref'];
+            const payBios = body['pay_bios'];
+            if (typeof taskRef !== 'string' || taskRef.length === 0) {
+                return reply.code(400).send({ error: 'invalid_task_ref' });
+            }
+            if (!Number.isInteger(payBios) || (payBios as number) <= 0) {
+                return reply.code(400).send({ error: 'invalid_pay_bios' });
+            }
+            // Owner/staff only (the board-post affordance).
+            const role = parcelRegistry.roleOf(addr, buyerDid);
+            if (role !== 'owner' && role !== 'staff') {
+                return reply.code(403).send({ error: 'not_owner_or_staff' });
+            }
+            // scope_ref body stays Grid-side — only the agreement id crosses back to the caller.
+            const agreement = postTask({
+                parcel_id: addr,
+                parties: [buyerDid, ''],
+                scope_ref: taskRef,
+                settlement_amount_bios: payBios as number,
+                term_ticks: 0,
+            });
+            return reply.code(200).send({ posted: true, parcel_id: addr, task_id: agreement.agreement_id });
+        },
+    );
+
+    // --- POST /api/v1/civic/parcels/:id/board/claim (any role with board access) ---
+    app.post<{ Params: { id: string }; Body: Record<string, unknown> }>(
+        '/api/v1/civic/parcels/:id/board/claim',
+        async (req, reply) => {
+            const guarded = requireCivicWriter(req, reply, services);
+            if (!guarded) return reply;
+            const { parcelRegistry, buyerDid } = guarded;
+            const addr = req.params.id;
+            const body = (req.body ?? {}) as Record<string, unknown>;
+            const taskId = body['task_id'];
+            if (typeof taskId !== 'string' || taskId.length === 0) {
+                return reply.code(400).send({ error: 'invalid_task_id' });
+            }
+            // Board access: any role (owner/staff/guest) on this parcel.
+            if (parcelRegistry.roleOf(addr, buyerDid) === null) {
+                return reply.code(403).send({ error: 'no_board_access' });
+            }
+            try {
+                const agreement = claimTask(taskId, buyerDid);
+                return reply.code(200).send({ claimed: true, task_id: agreement.agreement_id });
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : 'cowork_error';
+                if (msg.startsWith('cowork_not_found')) return reply.code(404).send({ error: 'task_not_found' });
+                return reply.code(409).send({ error: msg.split(':')[0] });
+            }
+        },
+    );
+
+    // --- POST /api/v1/civic/parcels/:id/board/complete (host confirms; ALWAYS settles) ---
+    app.post<{ Params: { id: string }; Body: Record<string, unknown> }>(
+        '/api/v1/civic/parcels/:id/board/complete',
+        async (req, reply) => {
+            const guarded = requireCivicWriter(req, reply, services);
+            if (!guarded) return reply;
+            const { parcelRegistry, buyerDid } = guarded;
+            const addr = req.params.id;
+            const body = (req.body ?? {}) as Record<string, unknown>;
+            const taskId = body['task_id'];
+            if (typeof taskId !== 'string' || taskId.length === 0) {
+                return reply.code(400).send({ error: 'invalid_task_id' });
+            }
+            const startTick = currentTick(services);
+            const endTick = startTick;
+            try {
+                // D-NH-06 — completion ALWAYS settles: Ousia when funded, else an IOU. The
+                // Ousia move rides the existing transfer path; the IOU rides credit-ledger.
+                const nous = services.registry;
+                const agreement = completeTask(taskId, buyerDid, {
+                    funded: !!nous,
+                    start_tick: startTick,
+                    end_tick: endTick,
+                    transferOusia: nous
+                        ? (from, to, amount) => { nous.transferOusia(from, to, amount); }
+                        : undefined,
+                    bumpTrust: (parcelId, workerDid, delta) => parcelRegistry.bumpTrust(parcelId, workerDid, delta),
+                });
+                // Emit zoning.cowork_session (99) — participants HASHED (single hash over the
+                // sorted DID set); NO raw DIDs, NO board/task/scope text crosses (D-60-10).
+                const participants = [agreement.parties[0], agreement.parties[1]].sort();
+                appendZoningCoworkSession(services.audit, {
+                    end_tick: endTick,
+                    parcel_id: addr,
+                    participant_count: participants.length,
+                    participants_hash: sha256Hex(participants.join('|')),
+                    start_tick: startTick,
+                });
+                return reply.code(200).send({ completed: true, task_id: agreement.agreement_id });
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : 'cowork_error';
+                if (msg.startsWith('cowork_not_found')) return reply.code(404).send({ error: 'task_not_found' });
+                if (msg.startsWith('cowork_not_host')) return reply.code(403).send({ error: 'not_host' });
+                return reply.code(409).send({ error: msg.split(':')[0] });
+            }
+        },
+    );
 }
 
 /**

@@ -400,6 +400,28 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'zoning.condition_changed',  // (93)
     'zoning.parcel_reclaimed',   // (94)
     'treasury.upkeep_collected', // (95)
+    // Phase 60 (HOUSE-3 / D-60-09) — Commerce & co-work. Allowlist 95 → 99.
+    // Four sole-producer events under the pre-cleared zoning.* / treasury.* prefixes.
+    // Role/agreement/IOU/board CONTENT (raw Civic-DIDs, board/task text, scope_ref bodies,
+    // place names) NEVER cross the audit boundary (D-60-10) — only hashed DIDs (or the
+    // aggregated participants_hash) + counts + ids + ticks + the role/reason/zone_tax_bps
+    // enums/ints. Parcel-attributed events use parcel_id as actorDid (mirrors #83).
+    // zoning.role_granted (96): sole-producer grid/src/audit/append-zoning-role-granted.ts
+    //   closed 5-key {grantor_civic_did_hash, holder_civic_did_hash, parcel_id, role, tick};
+    //   role ∈ {staff, guest} (owner implicit, never granted); actorDid = grantor_civic_did_hash.
+    // zoning.role_revoked (97): sole-producer grid/src/audit/append-zoning-role-revoked.ts
+    //   closed 4-key {holder_civic_did_hash, parcel_id, reason, tick};
+    //   reason ∈ {owner_revoked, for_cause, severance_complete}; actorDid = parcel_id.
+    // treasury.structure_revenue (98): sole-producer grid/src/audit/append-treasury-structure-revenue.ts
+    //   closed 4-key {amount_bios, parcel_id, tick, zone_tax_bps}; actorDid = parcel_id
+    //   (mirrors treasury.parcel_revenue #83 — NO buyer/seller DID on chain).
+    // zoning.cowork_session (99): sole-producer grid/src/audit/append-zoning-cowork-session.ts
+    //   closed 5-key {end_tick, parcel_id, participant_count, participants_hash, start_tick};
+    //   participants_hash = single HEX64 hash over the sorted DID set; actorDid = parcel_id.
+    'zoning.role_granted',        // (96)
+    'zoning.role_revoked',        // (97)
+    'treasury.structure_revenue', // (98)
+    'zoning.cowork_session',      // (99)
 ] as const;
 
 /**
