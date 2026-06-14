@@ -21,6 +21,12 @@ import { NousRegistry } from '../../src/registry/registry.js';
 import { GovernanceEngine } from '../../src/governance/engine.js';
 import { createInMemoryStore } from '../../src/governance/store.js';
 import { appendProposalOpened } from '../../src/governance/appendProposalOpened.js';
+import {
+    getZoneTaxBps,
+    recordPolisOverride,
+    _resetPolisOverrides,
+    ZONE_TAX_BPS,
+} from '../../src/civic/founding-law.js';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -160,5 +166,130 @@ describe('GovernanceEngine.onTickClosed — proposal lifecycle', () => {
         const { engine } = freshDeps();
         // Should not throw
         await expect(engine.onTickClosed(999)).resolves.toBeUndefined();
+    });
+});
+
+// ── Phase 60 HOUSE-3 (D-60-08 / R-60-10) — ring-expansion template fires from the dispatch ──
+//
+// These tests prove the template is invoked from the GENUINE enactment site (onTickClosed →
+// appendProposalTallied passed-branch via the late-wired ringDeps), NOT just in isolation: an
+// actually-enacted seed_ring/amend_law bill drives seedZone / a Polis override end-to-end.
+
+/**
+ * A bill body that is BOTH a valid JSON Law (appendLawTriggered reads it) AND carries the
+ * ring-expansion template fields (the template re-parses the same body_text). Extra fields are
+ * harmless to both parsers.
+ */
+function billBody(extra: Record<string, unknown>): string {
+    return JSON.stringify({
+        id: 'law-ring-test',
+        title: 'Ring Expansion Bill',
+        description: 'Test',
+        ruleLogic: { condition: { type: 'true' }, action: 'allow', sanction_on_violation: 'none' },
+        severity: 'info',
+        status: 'active',
+        ...extra,
+    });
+}
+
+/** Commit + reveal `yes` for the first N registered Nous so the proposal passes (quorum+SM). */
+async function enactYes(
+    store: ReturnType<typeof createInMemoryStore>,
+    proposalId: string,
+    count: number,
+) {
+    for (let i = 0; i < count; i++) {
+        const voter = `did:noesis:eng-${i}`;
+        await store.insertBallotCommit({
+            proposal_id: proposalId,
+            voter_did: voter,
+            commit_hash: `hash-${i}`,
+            committed_tick: 2,
+        });
+        await store.updateBallotReveal({
+            proposal_id: proposalId,
+            voter_did: voter,
+            choice: 'yes',
+            nonce: `nonce-${i}`,
+            revealed_tick: 3,
+        });
+    }
+}
+
+describe('GovernanceEngine — ring-expansion template fires from the enactment dispatch', () => {
+    it('an enacted {action:seed_ring} bill calls seedZone via onTickClosed (not in isolation)', async () => {
+        const { audit, store, engine } = freshDeps();
+        const seeded: number[] = [];
+        engine.attachRingExpansion({
+            seedZone: (ring) => { seeded.push(ring); },
+            alreadySeeded: () => false,
+        });
+
+        await appendProposalOpened(audit, {
+            proposer_did: PROPOSER,
+            body_text: billBody({ action: 'seed_ring', ring: 4 }),
+            deadline_tick: 100,
+            currentTick: 1,
+            store,
+            _proposalIdOverride: 'prop-seed-ring',
+        });
+        // 4 of 5 Nous vote yes → quorum (>=3) + supermajority (>=67%) met → 'passed'.
+        await enactYes(store, 'prop-seed-ring', 4);
+
+        await engine.onTickClosed(100);
+
+        const tallied = audit.query({ eventType: 'proposal.tallied' });
+        expect(tallied).toHaveLength(1);
+        expect(tallied[0].payload.outcome).toBe('passed');
+        // The template fired FROM the dispatch — seedZone was driven by the enacted bill.
+        expect(seeded).toEqual([4]);
+    });
+
+    it('an enacted {action:amend_law} bill records a Polis override picked up by getZoneTaxBps', async () => {
+        _resetPolisOverrides();
+        const { audit, store, engine } = freshDeps();
+        // Wire the REAL founding-law read-through (recordPolisOverride) as amendConstant.
+        engine.attachRingExpansion({
+            amendConstant: (key, value) => { recordPolisOverride(key, value); },
+        });
+
+        // Default before enactment.
+        expect(getZoneTaxBps('business')).toBe(ZONE_TAX_BPS.business);
+
+        await appendProposalOpened(audit, {
+            proposer_did: PROPOSER,
+            body_text: billBody({ action: 'amend_law', key: 'ZONE_TAX_BPS.business', value: 1300 }),
+            deadline_tick: 100,
+            currentTick: 1,
+            store,
+            _proposalIdOverride: 'prop-amend-law',
+        });
+        await enactYes(store, 'prop-amend-law', 4);
+
+        await engine.onTickClosed(100);
+
+        expect(audit.query({ eventType: 'proposal.tallied' })[0].payload.outcome).toBe('passed');
+        // The Polis override took effect through the read-through indirection.
+        expect(getZoneTaxBps('business')).toBe(1300);
+        _resetPolisOverrides();
+    });
+
+    it('a REJECTED bill never fires the template (only enacted laws reach the hook)', async () => {
+        const { audit, store, engine } = freshDeps();
+        const seeded: number[] = [];
+        engine.attachRingExpansion({ seedZone: (ring) => { seeded.push(ring); } });
+
+        await appendProposalOpened(audit, {
+            proposer_did: PROPOSER,
+            body_text: billBody({ action: 'seed_ring', ring: 4 }),
+            deadline_tick: 100,
+            currentTick: 1,
+            store,
+        });
+        // No reveals → quorum fails → not 'passed' → template must NOT fire.
+        await engine.onTickClosed(100);
+
+        expect(audit.query({ eventType: 'proposal.tallied' })[0].payload.outcome).not.toBe('passed');
+        expect(seeded).toEqual([]);
     });
 });

@@ -80,6 +80,36 @@ export const UPKEEP_PERIOD_TICKS = 10080;
 /** Upkeep charge per period = 2% (200 bps) of the parcel's price_bios. */
 export const UPKEEP_RATE_BPS = 200;
 
+/* ──────────────── Polis amendment read-through (D-60-08 / D-NH-03 / R-60-10) ────────────────
+ * The ring-expansion template's sibling hook: a `{action:'amend_law', key, value}` enacted bill
+ * records a Polis override here, and the read-through accessors below return that override if set,
+ * else the founding-law constant (the DEFAULT FALLBACK). The single patch point is preserved —
+ * downstream reads go through getUpkeepRateBps() / getZoneTaxBps(zoneId), never the raw constant.
+ */
+const polisOverrides = new Map<string, number>();
+
+/**
+ * Record a Polis override of an amendable founding-law constant (ring-expansion `amend_law` hook).
+ * `key` is `UPKEEP_RATE_BPS` (scalar) or `ZONE_TAX_BPS.<zoneId>` (per-zone). Off-list keys are
+ * ignored so a malformed bill can never patch an unintended value.
+ */
+export function recordPolisOverride(key: string, value: number): void {
+    if (!Number.isInteger(value) || value < 0) return;
+    if (key === 'UPKEEP_RATE_BPS' || /^ZONE_TAX_BPS\.[a-z_]+$/.test(key)) {
+        polisOverrides.set(key, value);
+    }
+}
+
+/** Test/replay isolation helper — clears all Polis overrides (production never calls this). */
+export function _resetPolisOverrides(): void {
+    polisOverrides.clear();
+}
+
+/** Read-through: the Polis override of UPKEEP_RATE_BPS if amended, else the constant default. */
+export function getUpkeepRateBps(): number {
+    return polisOverrides.get('UPKEEP_RATE_BPS') ?? UPKEEP_RATE_BPS;
+}
+
 /**
  * Condition-ladder grace thresholds, keyed by the number of MISSED periods at which
  * each transition fires: worn at 1 missed, derelict at 2, reclaim at 3 (D-NH-03/05).
@@ -91,7 +121,7 @@ export const RECLAIM_GRACE_PERIODS = { worn: 1, derelict: 2, reclaim: 3 } as con
  * Commons (price 0 / treasury-owned) yield 0 and are exempt at the scanner.
  */
 export function upkeepDue(parcel: Parcel): number {
-    return Math.floor((parcel.priceBios * UPKEEP_RATE_BPS) / 10000);
+    return Math.floor((parcel.priceBios * getUpkeepRateBps()) / 10000);
 }
 
 /* ──────────────── Mutual-credit IOU caps (D-60-05 / D-NH-06 / R-60-07) ────────────────
@@ -125,12 +155,23 @@ export const ZONE_TAX_BPS = {
 type TaxableZoneId = keyof typeof ZONE_TAX_BPS;
 
 /**
+ * Read-through: the per-zone tax rate, returning the Polis override (`ZONE_TAX_BPS.<zoneId>`)
+ * if amended, else the constant default. Civic zones with no table entry return 0 (untaxed).
+ * The constants stay the DEFAULT FALLBACK; this is the single patch point downstream reads use.
+ */
+export function getZoneTaxBps(zoneId: string): number {
+    const override = polisOverrides.get(`ZONE_TAX_BPS.${zoneId}`);
+    if (override !== undefined) return override;
+    return ZONE_TAX_BPS[zoneId as TaxableZoneId] ?? 0;
+}
+
+/**
  * Structure revenue owed on a sale at a parcel-bound shop =
  *   floor(saleAmountBios × ZONE_TAX_BPS[parcel.zoneId] / 10000).
  * Untaxed (civic) zones with no entry in the table yield 0.
  */
 export function structureRevenueDue(parcel: Parcel, saleAmountBios: number): number {
-    const bps = ZONE_TAX_BPS[parcel.zoneId as TaxableZoneId];
-    if (bps === undefined) return 0;
+    const bps = getZoneTaxBps(parcel.zoneId);
+    if (bps === 0) return 0;
     return Math.floor((saleAmountBios * bps) / 10000);
 }

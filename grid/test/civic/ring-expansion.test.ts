@@ -19,7 +19,7 @@ import { describe, it, expect } from 'vitest';
 
 const loadRing = () => import('../../src/civic/ring-expansion.js');
 
-describe.skip('Phase 60 HOUSE-3 — ring-expansion template consumes gov.law_enacted [Wave 5 un-skips]', () => {
+describe('Phase 60 HOUSE-3 — ring-expansion template consumes gov.law_enacted [Wave 5 un-skips]', () => {
     it('a {action:seed_ring, ring:N} bill body seeds ring N via seedZone + gravity formula', async () => {
         const { onLawEnacted } = await loadRing();
         const seeded: number[] = [];

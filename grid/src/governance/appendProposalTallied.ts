@@ -29,6 +29,7 @@ import { appendLawTriggered } from './appendLawTriggered.js';
 import type { GovernanceStore } from './store.js';
 import { GovernanceError } from './errors.js';
 import type { NousRegistry } from '../registry/registry.js';
+import { onLawEnacted as ringExpansionOnLawEnacted, type RingExpansionDeps } from '../civic/ring-expansion.js';
 
 export interface AppendProposalTalliedInput {
     proposal_id: string;
@@ -36,6 +37,16 @@ export interface AppendProposalTalliedInput {
     store: GovernanceStore;
     registry: NousRegistry;
     logos: LogosEngine;
+    /**
+     * Phase 60 HOUSE-3 (D-60-08 / R-60-10) — OPTIONAL ring-expansion template deps. When
+     * present, an enacted bill's body is handed to the ring-expansion template at the EXISTING
+     * `gov.law_enacted` dispatch (right after appendLawTriggered). The template fires ONLY on its
+     * own body shapes ({action:'seed_ring',ring} → seedZone; {action:'amend_law',key,value} →
+     * Polis override) and IGNORES everything else. Absent in callers that don't wire civic land
+     * (e.g. pure-governance tests). NOT a new event / governance path / clock.onTick (R-31-01,
+     * VOTE-05, single-onTick preserved); side-effect-only, no append.
+     */
+    ringDeps?: RingExpansionDeps;
 }
 
 export async function appendProposalTallied(
@@ -126,5 +137,12 @@ export async function appendProposalTallied(
             currentTick: input.currentTick,
             logos: input.logos,
         });
+        // Phase 60 HOUSE-3 (D-60-08 / R-60-10) — fire-and-forget the ring-expansion TEMPLATE at
+        // the EXISTING gov.law_enacted dispatch. It rides the SAME enacted body verbatim and
+        // fires only on its own shapes (seed_ring / amend_law); ordinary laws are untouched.
+        // Side-effect-only (no append, no new event, no clock.onTick): R-31-01 + VOTE-05 hold.
+        if (input.ringDeps) {
+            ringExpansionOnLawEnacted(proposal.body_text, input.ringDeps);
+        }
     }
 }

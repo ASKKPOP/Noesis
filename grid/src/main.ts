@@ -29,6 +29,7 @@ import { GraceTimerRegistry } from './civic-presence/grace-timer-registry.js';
 import { PresenceService } from './civic-presence/presence-service.js';
 import { ParcelRegistry } from './civic/parcel-registry.js';
 import { ParcelStore } from './civic/parcel-store.js';
+import { gravityPrice, recordPolisOverride } from './civic/founding-law.js';
 import { TREASURY_DID } from './api/routes/registry.js';
 import type { GenesisConfig } from './genesis/types.js';
 import type { FastifyInstance } from 'fastify';
@@ -237,6 +238,25 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
             },
             audit: chain!,
             treasuryDid: TREASURY_DID,
+        });
+        // Phase 60 HOUSE-3 (D-60-08 / R-60-10): late-wire the ring-expansion TEMPLATE onto the
+        // governance engine now that the parcel registry + founding-law read-through exist. The
+        // template fires from the EXISTING gov.law_enacted dispatch (onTickClosed →
+        // appendProposalTallied passed-branch) — NO new event / governance path / clock.onTick.
+        // seedZone seeds the legislated frontier ring at its gravity price (residential band),
+        // idempotently (alreadySeeded = ring already has parcels); amendConstant records a Polis
+        // override via founding-law.recordPolisOverride. No audit emit (world-creation, R-31-01).
+        launcher.governance.attachRingExpansion({
+            seedZone: (ring) => {
+                parcelRegistry.seedZone({
+                    zoneId: 'residential',
+                    count: 24,
+                    priceBios: gravityPrice(ring),
+                    ring,
+                });
+            },
+            alreadySeeded: (ring) => parcelRegistry.list().some(p => p.ring === ring),
+            amendConstant: (key, value) => recordPolisOverride(key, value),
         });
         presenceService = new PresenceService({
             gridName: config.genesisConfig.gridName,
