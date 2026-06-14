@@ -82,6 +82,23 @@ CIVIC_LAND_ROUTES: dict[ActionType, tuple[str, str]] = {
     ActionType.POST_TASK: ("POST", "/api/v1/civic/parcels/{id}/board/post"),
     ActionType.CLAIM_TASK: ("POST", "/api/v1/civic/parcels/{id}/board/claim"),
     ActionType.COMPLETE_TASK: ("POST", "/api/v1/civic/parcels/{id}/board/complete"),
+    # Phase 61 Wave 4 — D-61-09 / R-61-09: HOUSE-4 skill-construction verbs
+    # (capabilities). build_from_blueprint maps to the Wave-3 build executor
+    # route; co_build reuses the Phase 60 co-work board (a co-build sub-task is
+    # a board task — claim it here, then complete via complete_task). The
+    # build executor itself emits the single skill.blueprint_executed event.
+    #
+    # learn_blueprint and teach_here are NOT in this table on purpose: a
+    # blueprint diffuses via the EXISTING Phase 18 skill machinery (the
+    # skill_taught / skill_learn dispatch), and teach_here only adds the
+    # location (parcel) selector to that same teach dispatch — ZERO new
+    # diffusion route (D-61-04). They travel in the normal actions batch like
+    # skill_taught, not as a civic-parcels REST route.
+    ActionType.BUILD_FROM_BLUEPRINT: (
+        "POST",
+        "/api/v1/civic/parcels/{id}/build-from-blueprint",
+    ),
+    ActionType.CO_BUILD: ("POST", "/api/v1/civic/parcels/{id}/board/claim"),
 }
 
 

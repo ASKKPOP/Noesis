@@ -110,6 +110,23 @@ class ActionType(str, Enum):
     POST_TASK     = "post_task"      # -> :id/board/post. Metadata: {parcel, task, pay}
     CLAIM_TASK    = "claim_task"     # -> :id/board/claim. Metadata: {task}
     COMPLETE_TASK = "complete_task"  # -> :id/board/complete. Metadata: {task}
+    # Phase 61 Wave 4 — D-61-09 / R-61-09: Nous House HOUSE-4 skill-construction
+    # verbs. CAPABILITIES (not autoplay): a build is the EXECUTION of a taught
+    # blueprint skill, and construction is a co-work activity that decomposes
+    # into a sub-task DAG; a workshop where a skill is taught becomes a school.
+    # The Nous chooses to learn a blueprint, build from it, co-build a sub-task,
+    # or teach where it stands; GridWireClient dispatches each to its route. The
+    # Grid validates skill-held status, the closed furniture catalog, the co-work
+    # board, and the present-occupant learner set; the Brain only gates metadata
+    # presence. Metadata shapes (build_civic_land_action is the schema gate):
+    #   learn_blueprint      {blueprint_hash}
+    #   build_from_blueprint {parcel, blueprint_hash}
+    #   co_build             {parcel, node_id}
+    #   teach_here           {parcel, skill_hash}
+    LEARN_BLUEPRINT      = "learn_blueprint"       # rides the existing skill machinery. Metadata: {blueprint_hash}
+    BUILD_FROM_BLUEPRINT = "build_from_blueprint"  # -> :id/build-from-blueprint. Metadata: {parcel, blueprint_hash}
+    CO_BUILD             = "co_build"              # -> :id/board/claim|complete. Metadata: {parcel, node_id}
+    TEACH_HERE           = "teach_here"            # rides the existing skill/teach dispatch. Metadata: {parcel, skill_hash}
 
 
 # JSON-RPC error codes
@@ -233,6 +250,13 @@ _CIVIC_LAND_REQUIRED_KEYS: dict[ActionType, tuple[str, ...]] = {
     ActionType.POST_TASK: ("parcel", "task", "pay"),
     ActionType.CLAIM_TASK: ("task",),
     ActionType.COMPLETE_TASK: ("task",),
+    # Phase 61 Wave 4 (D-61-09): skill-construction verbs. The Grid validates
+    # skill-held status, the closed furniture catalog, and the co-work board;
+    # the Brain only gates presence of the documented metadata keys.
+    ActionType.LEARN_BLUEPRINT: ("blueprint_hash",),
+    ActionType.BUILD_FROM_BLUEPRINT: ("parcel", "blueprint_hash"),
+    ActionType.CO_BUILD: ("parcel", "node_id"),
+    ActionType.TEACH_HERE: ("parcel", "skill_hash"),
 }
 
 _CIVIC_LAND_VERBS: frozenset[ActionType] = frozenset({
@@ -253,6 +277,11 @@ _CIVIC_LAND_VERBS: frozenset[ActionType] = frozenset({
     ActionType.POST_TASK,
     ActionType.CLAIM_TASK,
     ActionType.COMPLETE_TASK,
+    # Phase 61 Wave 4 (D-61-09): skill-construction verbs.
+    ActionType.LEARN_BLUEPRINT,
+    ActionType.BUILD_FROM_BLUEPRINT,
+    ActionType.CO_BUILD,
+    ActionType.TEACH_HERE,
 })
 
 

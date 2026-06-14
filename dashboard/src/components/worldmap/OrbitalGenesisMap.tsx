@@ -54,6 +54,40 @@ export interface ParcelFeedEntry {
     roles?: RoleEdgeView[]; // granted staff/guest edges (owner is implicit)
     board?: BoardSummary; // co-work board status counts (no task text)
     ious?: IouView[]; // outstanding bilateral IOU balances
+    // Phase 61 HOUSE-4 (D-61-09): optional construction surfaces the Grid feed
+    // MAY serve for an owned parcel. All privacy-safe — held blueprint hashes
+    // (HEX64 skill hashes), a build view (build-from-blueprint skill-held status
+    // + material cost), and the co-build sub-task DAG (per-node claim/complete
+    // state + DAG-weighted attribution shares). The recipe BODY, raw sub-task
+    // content, and raw DIDs are NEVER on this feed (Grid-side, D-61-06).
+    held_blueprints?: string[]; // HEX64 skill hashes the Nous HOLDS
+    build?: BuildView; // build-from-blueprint skill-held status + material cost
+    cobuild?: CoBuildDag; // the sub-task DAG (per-node state + attribution)
+}
+
+// Build-from-blueprint view: the skill-held check status + the recipe material
+// cost. No recipe body — only whether the builder holds the blueprint skill and
+// what the build costs in Bios.
+export interface BuildView {
+    blueprint_hash: string; // HEX64 skill hash being built
+    skill_held: boolean; // does the builder HOLD the blueprint skill?
+    material_cost_bios: number; // recipe material_cost_bios
+}
+
+// Co-build sub-task DAG: per-node claim/complete state + the DAG-weighted
+// attribution shares. NEVER carries the recipe body or raw sub-task content.
+export interface CoBuildNode {
+    node_id: string;
+    weight: number; // the node's DAG weight (drives attribution)
+    state: 'open' | 'claimed' | 'completed';
+}
+export interface CoBuildShare {
+    holder_civic_did_hash: string; // HEX64 — NEVER a raw DID
+    share: number; // DAG-weighted attribution share (0..1)
+}
+export interface CoBuildDag {
+    nodes: CoBuildNode[];
+    attribution: CoBuildShare[];
 }
 
 // Granted role edge as served by the feed — hashed holder + derived trust.
@@ -316,6 +350,22 @@ export function OrbitalGenesisMap(): React.ReactElement {
         [parcels],
     );
 
+    // Phase 61 HOUSE-4 (D-61-09): owned parcels that carry any construction
+    // surface (held blueprints / a build view / a co-build DAG). Additive — when
+    // the feed omits these fields (the Phase 58/59/60 feed, or an offline seed),
+    // the construction overlay simply does not render.
+    const constructionParcels = useMemo(
+        () =>
+            parcels.filter(
+                (p) =>
+                    isOwned(p) &&
+                    ((p.held_blueprints != null && p.held_blueprints.length > 0) ||
+                        p.build != null ||
+                        (p.cobuild != null && p.cobuild.nodes.length > 0)),
+            ),
+        [parcels],
+    );
+
     return (
         <div
             data-testid="orbital-genesis-map"
@@ -459,6 +509,27 @@ export function OrbitalGenesisMap(): React.ReactElement {
                                     style={{ filter: 'drop-shadow(0 0 3px #7fe0a0)' }}
                                 />
                             ))}
+                            {/* Phase 61 (D-61-09): teach-here indicator — a workshop is a
+                                school (a skill taught here diffuses to the Nous present). A
+                                small mortarboard mark sits above the module. Additive — only
+                                workshop structures carry it. */}
+                            {p.structure?.type === 'workshop' && (
+                                <g
+                                    data-testid="teach-here-indicator"
+                                    data-parcel-id={p.id}
+                                    aria-label="teach here · school"
+                                >
+                                    <circle
+                                        cx={x + size - 1}
+                                        cy={y - size + 1}
+                                        r={2.6}
+                                        fill="#e7c75a"
+                                        stroke="#020610"
+                                        strokeWidth={0.6}
+                                        style={{ filter: 'drop-shadow(0 0 3px #e7c75a)' }}
+                                    />
+                                </g>
+                            )}
                         </g>
                     );
                 })}
@@ -687,6 +758,208 @@ export function OrbitalGenesisMap(): React.ReactElement {
                                             <span style={{ color: '#da7a4e' }}>{iou.outstanding_bios} Bios</span>
                                         </div>
                                     ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* ── Construction surfaces (D-61-09) — ADDITIVE panel, bottom-right. ──
+                Blueprint library (held HEX64 skill hashes, short labels), a build
+                panel (build-from-blueprint skill-held status + material cost), and
+                a co-build DAG board (per-node claim/complete state + DAG-weighted
+                attribution shares). Renders ONLY when the feed serves construction
+                fields for an owned parcel; the Phase 58 exterior, Phase 59 interior
+                viewer, and Phase 60 commerce overlay are untouched. No recipe body,
+                no raw sub-task content, no raw DID. */}
+            {constructionParcels.length > 0 && (
+                <div
+                    data-testid="construction-overlay"
+                    style={{
+                        position: 'absolute',
+                        bottom: 18,
+                        right: 18,
+                        zIndex: 12,
+                        width: 252,
+                        maxHeight: 'calc(100% - 36px)',
+                        overflowY: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 12,
+                        fontSize: 11,
+                    }}
+                >
+                    {constructionParcels.map((p) => (
+                        <div
+                            key={`construction-${p.id}`}
+                            data-testid="construction-card"
+                            data-parcel-id={p.id}
+                            style={{
+                                border: '1px solid rgba(231,199,90,0.32)',
+                                borderRadius: 8,
+                                padding: 12,
+                                background: 'rgba(4,12,24,0.82)',
+                                color: '#cdd6df',
+                            }}
+                        >
+                            <div
+                                style={{
+                                    fontSize: 10,
+                                    letterSpacing: '0.14em',
+                                    textTransform: 'uppercase',
+                                    color: '#8a93a6',
+                                }}
+                            >
+                                {p.zone.replace(/_/g, ' ')} · construction
+                            </div>
+
+                            {/* Blueprint library: held HEX64 skill hashes (short labels) */}
+                            {p.held_blueprints && p.held_blueprints.length > 0 && (
+                                <div data-testid="blueprint-library" style={{ marginTop: 10 }}>
+                                    <div
+                                        style={{
+                                            fontSize: 9.5,
+                                            letterSpacing: '0.12em',
+                                            textTransform: 'uppercase',
+                                            color: '#8a93a6',
+                                            marginBottom: 4,
+                                        }}
+                                    >
+                                        Blueprint library
+                                    </div>
+                                    {p.held_blueprints.map((hash) => (
+                                        <div
+                                            key={`${p.id}:bp:${hash}`}
+                                            data-testid="blueprint-entry"
+                                            data-blueprint-hash={hash}
+                                            style={{
+                                                fontFamily: 'monospace',
+                                                color: '#e7c75a',
+                                                padding: '2px 0',
+                                            }}
+                                        >
+                                            {hash.slice(0, 12)}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Build panel: build-from-blueprint skill-held status + cost */}
+                            {p.build && (
+                                <div data-testid="build-panel" style={{ marginTop: 10 }}>
+                                    <div
+                                        style={{
+                                            fontSize: 9.5,
+                                            letterSpacing: '0.12em',
+                                            textTransform: 'uppercase',
+                                            color: '#8a93a6',
+                                            marginBottom: 4,
+                                        }}
+                                    >
+                                        Build from blueprint
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                                        <span style={{ fontFamily: 'monospace', color: '#8a93a6' }}>
+                                            {p.build.blueprint_hash.slice(0, 12)}
+                                        </span>
+                                        <span
+                                            data-testid="skill-held-status"
+                                            data-skill-held={p.build.skill_held ? 'true' : 'false'}
+                                            style={{ color: p.build.skill_held ? '#7fe0a0' : '#da7a4e' }}
+                                        >
+                                            {p.build.skill_held ? 'skill held' : 'not held'}
+                                        </span>
+                                    </div>
+                                    <div
+                                        data-testid="material-cost"
+                                        style={{ marginTop: 2, color: '#da7a4e' }}
+                                    >
+                                        material cost: {p.build.material_cost_bios} Bios
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Co-build DAG board: per-node claim/complete + attribution */}
+                            {p.cobuild && p.cobuild.nodes.length > 0 && (
+                                <div data-testid="cobuild-board" style={{ marginTop: 10 }}>
+                                    <div
+                                        style={{
+                                            fontSize: 9.5,
+                                            letterSpacing: '0.12em',
+                                            textTransform: 'uppercase',
+                                            color: '#8a93a6',
+                                            marginBottom: 4,
+                                        }}
+                                    >
+                                        Co-build DAG
+                                    </div>
+                                    {p.cobuild.nodes.map((node) => (
+                                        <div
+                                            key={`${p.id}:node:${node.node_id}`}
+                                            data-testid="cobuild-node"
+                                            data-node-id={node.node_id}
+                                            data-state={node.state}
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                gap: 8,
+                                                padding: '2px 0',
+                                            }}
+                                        >
+                                            <span>{node.node_id}</span>
+                                            <span
+                                                style={{
+                                                    color:
+                                                        node.state === 'completed'
+                                                            ? '#7fe0a0'
+                                                            : node.state === 'claimed'
+                                                              ? '#4fd2f2'
+                                                              : '#8a93a6',
+                                                }}
+                                            >
+                                                {node.state} · w{node.weight}
+                                            </span>
+                                        </div>
+                                    ))}
+                                    {p.cobuild.attribution.length > 0 && (
+                                        <div
+                                            data-testid="cobuild-attribution"
+                                            style={{ marginTop: 6 }}
+                                        >
+                                            <div
+                                                style={{
+                                                    fontSize: 9,
+                                                    letterSpacing: '0.1em',
+                                                    textTransform: 'uppercase',
+                                                    color: '#8a93a6',
+                                                    marginBottom: 2,
+                                                }}
+                                            >
+                                                Attribution (DAG-weighted)
+                                            </div>
+                                            {p.cobuild.attribution.map((s) => (
+                                                <div
+                                                    key={`${p.id}:attr:${s.holder_civic_did_hash}`}
+                                                    data-testid="attribution-share"
+                                                    data-holder-hash={s.holder_civic_did_hash}
+                                                    style={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        gap: 8,
+                                                        padding: '1px 0',
+                                                    }}
+                                                >
+                                                    <span style={{ fontFamily: 'monospace', color: '#8a93a6' }}>
+                                                        {s.holder_civic_did_hash.slice(0, 8)}
+                                                    </span>
+                                                    <span style={{ color: '#e7c75a' }}>
+                                                        {(s.share * 100).toFixed(0)}%
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

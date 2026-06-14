@@ -8,6 +8,10 @@
  * OrbitalGenesisMap, which live-fetches GET /api/v1/civic/parcels (embedded
  * 53-parcel seed fallback), shows Earth below, the Government Core monument,
  * ghost-vs-lit modules, occupancy lights, and the NY clock at the display boundary.
+ *
+ * Phase 60 added the commerce overlay (shop badge / roles / board / IOUs) and
+ * Phase 61 the construction overlay (blueprint library / build panel / co-build
+ * DAG board) + the workshop teach-here indicator — both ADDITIVE inside the map.
  */
 
 import dynamic from 'next/dynamic';

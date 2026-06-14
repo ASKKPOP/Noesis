@@ -392,6 +392,49 @@ def _commerce_suffix(place: dict) -> str:
     return f" [{'; '.join(parts)}]" if parts else ""
 
 
+def _construction_suffix(place: dict) -> str:
+    """Render the skill-construction suffix for a My Places line (D-61-09).
+
+    Phase 61 Wave 4 (R-61-09): so the Nous FEELS its construction capabilities,
+    a parcel's line surfaces:
+      - the blueprint hashes it HOLDS (learned skills it can build from),
+      - whether this parcel is BUILDABLE (owned, or a co-build it can join),
+      - the teach-here context (a ``workshop`` structure is a school — a skill
+        taught here diffuses to the Nous present in the structure).
+
+    Each field is optional. ``heldBlueprints`` / ``canBuild`` / ``coBuild`` /
+    ``teachHere`` are accepted as camelCase aliases to match the Grid feed keys.
+    Held blueprint hashes are shown as short (12-char) labels so the line stays
+    readable. Returns "" when none are present, keeping the Phase 58/59/60 line
+    shape intact.
+    """
+    held = place.get("held_blueprints")
+    if held is None:
+        held = place.get("heldBlueprints")
+    can_build = place.get("can_build")
+    if can_build is None:
+        can_build = place.get("canBuild")
+    co_build = place.get("co_build")
+    if co_build is None:
+        co_build = place.get("coBuild")
+    teach_here = place.get("teach_here")
+    if teach_here is None:
+        teach_here = place.get("teachHere")
+
+    parts: list[str] = []
+    if held:
+        labels = [str(h)[:12] for h in held if h]
+        if labels:
+            parts.append("blueprints: " + ", ".join(labels))
+    if can_build:
+        parts.append("buildable")
+    if co_build:
+        parts.append("co-build open")
+    if teach_here:
+        parts.append("teach here (school)")
+    return f" <{'; '.join(parts)}>" if parts else ""
+
+
 def build_my_places_section(my_places: "list | None") -> str:
     """Render the Nous's owned-land block (Phase 58 D-58-10).
 
@@ -416,6 +459,14 @@ def build_my_places_section(my_places: "list | None") -> str:
     outstanding IOU balance — so the Nous FEELS those relationships, e.g.
     ``- I own genesis:business:0003 — my shop "Bazaar" is built here [shop bound, place://bazaar; roles: 2 staff; outstanding IOU: 25 Bios].``
     All commerce fields are optional and omitted when absent.
+
+    Phase 61 Wave 4 (D-61-09 / R-61-09): a line is further enriched with the
+    Nous's skill-construction capabilities — the blueprint hashes it HOLDS, whether
+    the parcel is BUILDABLE (owned or an open co-build), and the teach-here context
+    (a ``workshop`` is a school) — so the Nous FEELS what it can build and where it
+    can teach, e.g.
+    ``- I own genesis:manufacture:0005 — my workshop is built here <blueprints: a1b2c3d4e5f6; buildable; teach here (school)>.``
+    All construction fields are optional and omitted when absent.
     """
     if not my_places:
         return ""
@@ -428,7 +479,7 @@ def build_my_places_section(my_places: "list | None") -> str:
             continue
         structure_name = place.get("structure_name")
         structure_type = place.get("structure_type")
-        suffix = _upkeep_suffix(place) + _commerce_suffix(place)
+        suffix = _upkeep_suffix(place) + _commerce_suffix(place) + _construction_suffix(place)
         if structure_name and structure_type:
             lines.append(
                 f'- I own {parcel} — my {structure_type} "{structure_name}" is built here{suffix}.'
