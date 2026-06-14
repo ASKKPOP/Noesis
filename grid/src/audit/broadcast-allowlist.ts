@@ -379,6 +379,27 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'portal.registration_approved',    // (89)
     'portal.registration_rejected',    // (90)
     'registry.civic_did_issued_human', // (91)
+    // Phase 59 (HOUSE-2 / D-59-01) — Nous House interiors & upkeep. Allowlist 91 → 95.
+    // Four sole-producer events under the pre-cleared zoning.* / treasury.* prefixes.
+    // INTERIOR CONTENTS (object names, state, the area/object tree) NEVER cross the
+    // audit boundary (D-59-08) — only the object_class/object_kind enums + counts.
+    // DIDs are hashed (HEX64) like market.*/gov.*; parcel-attributed events use the
+    // parcel_id as actorDid (mirrors treasury.parcel_revenue #83 land-attribution).
+    // zoning.interior_extended (92): sole-producer grid/src/audit/append-zoning-interior-extended.ts
+    //   closed 4-key {object_class, object_kind, parcel_id, tick}; actorDid = parcel_id.
+    //   object_class ∈ {mirror, functional}; object_kind ∈ furniture catalog kinds.
+    // zoning.condition_changed (93): sole-producer grid/src/audit/append-zoning-condition-changed.ts
+    //   closed 4-key {condition, owner_civic_did_hash, parcel_id, tick}; actorDid = owner_civic_did_hash.
+    //   condition ∈ {maintained, worn, derelict}.
+    // zoning.parcel_reclaimed (94): sole-producer grid/src/audit/append-zoning-parcel-reclaimed.ts
+    //   closed 4-key {former_owner_civic_did_hash, parcel_id, reason, tick}; actorDid = parcel_id.
+    //   reason ∈ {upkeep_default} (the land returns to treasury).
+    // treasury.upkeep_collected (95): sole-producer grid/src/audit/append-treasury-upkeep-collected.ts
+    //   closed 4-key {amount_bios, owner_civic_did_hash, parcel_id, tick}; actorDid = parcel_id.
+    'zoning.interior_extended',  // (92)
+    'zoning.condition_changed',  // (93)
+    'zoning.parcel_reclaimed',   // (94)
+    'treasury.upkeep_collected', // (95)
 ] as const;
 
 /**

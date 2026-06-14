@@ -20,7 +20,7 @@ const HEX64 = 'a'.repeat(64);
 const PARCEL = 'genesis:residential:0001';
 const valid = { amount_bios: 8, owner_civic_did_hash: HEX64, parcel_id: PARCEL, tick: 10080 };
 
-describe.skip('Phase 59 — appendTreasuryUpkeepCollected sole producer [Wave 4 un-skips]', () => {
+describe('Phase 59 — appendTreasuryUpkeepCollected sole producer [Wave 4 un-skips]', () => {
     it('lands a valid event with the parcel_id as actor (mirrors #83 land-attribution)', async () => {
         const { appendTreasuryUpkeepCollected } = await loadProducer();
         const { AuditChain } = await loadChain();

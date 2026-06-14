@@ -19,7 +19,7 @@ const HEX64 = 'a'.repeat(64);
 const PARCEL = 'genesis:residential:0001';
 const valid = { condition: 'worn' as const, owner_civic_did_hash: HEX64, parcel_id: PARCEL, tick: 10080 };
 
-describe.skip('Phase 59 — appendZoningConditionChanged sole producer [Wave 4 un-skips]', () => {
+describe('Phase 59 — appendZoningConditionChanged sole producer [Wave 4 un-skips]', () => {
     it('lands a valid event with the owner hash as actor', async () => {
         const { appendZoningConditionChanged } = await loadProducer();
         const { AuditChain } = await loadChain();

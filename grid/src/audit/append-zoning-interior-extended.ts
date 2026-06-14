@@ -1,8 +1,9 @@
 /**
  * Phase 59 HOUSE-2 (D-59-01.1 / D-59-08 / R-59-04/09) — sole-producer for
- * zoning.interior_extended. Allowlist position 92 (the allowlist MEMBER is added in
- * Wave 4; this producer file lands in Wave 1 because the interior-tree contract test
- * verifies the closed-tuple + interior-never-broadcast boundary against it).
+ * zoning.interior_extended. Allowlist position 92 (the producer file landed in Wave 1
+ * because the interior-tree contract test verifies the closed-tuple +
+ * interior-never-broadcast boundary against it; the allowlist MEMBER + route emit
+ * land in Wave 3).
  *
  * Closed 4-key payload: {object_class, object_kind, parcel_id, tick}. actorDid =
  * parcel_id (the owner identity is already audited via zoning.structure_built #84).

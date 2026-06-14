@@ -19,7 +19,7 @@ const loadChain = () => import('../../src/audit/chain.js');
 const PARCEL = 'genesis:residential:0001';
 const valid = { object_class: 'mirror' as const, object_kind: 'bed', parcel_id: PARCEL, tick: 7 };
 
-describe.skip('Phase 59 — appendZoningInteriorExtended sole producer [Wave 4 un-skips]', () => {
+describe('Phase 59 — appendZoningInteriorExtended sole producer [Wave 4 un-skips]', () => {
     it('lands a valid event with the parcel_id as actor (object owner already audited via #84)', async () => {
         const { appendZoningInteriorExtended } = await loadProducer();
         const { AuditChain } = await loadChain();

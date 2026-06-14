@@ -40,6 +40,7 @@ import { appendTreasuryParcelRevenue } from '../../audit/append-treasury-parcel-
 import { appendZoningStructureBuilt } from '../../audit/append-zoning-structure-built.js';
 import { appendZoningStructureJoined } from '../../audit/append-zoning-structure-joined.js';
 import { appendZoningStructureLeft } from '../../audit/append-zoning-structure-left.js';
+import { appendZoningInteriorExtended } from '../../audit/append-zoning-interior-extended.js';
 
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 const HUMAN_CIVIC_DID_RE = /^did:civic:noesis:human:/i;
@@ -353,20 +354,17 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             const structure = parcelRegistry.extendInterior(addr, buyerDid, { area, kind });
             await store.persistInterior(parcelRegistry.get(addr)!);
 
-            // EMIT SEAM (Wave 4): zoning.interior_extended carries ONLY the closed 4-tuple
+            // EMIT (Wave 3): zoning.interior_extended carries ONLY the closed 4-tuple
             // {object_class, object_kind, parcel_id, tick} — catalog enums, NEVER interior
-            // names/state. The allowlist member + appendZoningInteriorExtended land in Wave 4;
-            // until then we materialize the exact payload shape but do NOT emit (the allowlist
-            // would throw on a non-member event).
+            // names/state (D-59-08). The seam helper materializes the exact frozen shape;
+            // appendZoningInteriorExtended re-validates + commits via the sole producer.
             const tick = currentTick(services);
-            // TODO(Wave 4): replace with appendZoningInteriorExtended(services.audit, payload).
-            const _emitPayload = INTERIOR_EXTEND_EMIT_SEAM({
+            appendZoningInteriorExtended(services.audit, INTERIOR_EXTEND_EMIT_SEAM({
                 objectClass: FURNITURE_CATALOG[kind].class,
                 objectKind: FURNITURE_CATALOG[kind].kind,
                 parcelId: parcel.id,
                 tick,
-            });
-            void _emitPayload;
+            }));
 
             // 200 with the OWNER-visible structure summary (full tree — the owner may see it).
             return reply.code(200).send({
