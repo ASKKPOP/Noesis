@@ -1,0 +1,52 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Overview · Noēsis Handbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>:root{--ink:#0b1220;--navy:#16213d;--parchment:#f1ead8;--vellum:#faf6ec;--terracotta:#b8542f;--bronze:#8a6a3b;--rule:rgba(11,18,32,.16);--muted:rgba(11,18,32,.62);--serif:"Cormorant Garamond","EB Garamond",Georgia,serif;--sans:"Inter Tight","Helvetica Neue",Arial,sans-serif;--mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace}
+*{box-sizing:border-box}html{-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--parchment);color:var(--ink);font-family:var(--serif);font-size:18px;line-height:1.6}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px 120px}
+header.top{background:var(--ink);color:var(--parchment);padding:14px 28px;position:sticky;top:0;z-index:10;border-bottom:1px solid rgba(241,234,216,.18)}
+header.top .nav{max-width:1080px;margin:0 auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:12px;letter-spacing:.04em}
+header.top a{color:var(--parchment);text-decoration:none;opacity:.7;padding:4px 8px;border-radius:5px}
+header.top a:hover{opacity:1;background:rgba(241,234,216,.1)}
+header.top a.active{opacity:1;background:var(--terracotta);color:var(--vellum)}
+header.top .brand{font-family:var(--serif);font-size:18px;font-weight:600;opacity:1;margin-right:auto}
+h1{font-size:clamp(34px,5vw,52px);font-weight:600;line-height:1.08;margin:48px 0 8px;letter-spacing:-.01em}
+h2{font-size:30px;font-weight:600;margin:56px 0 12px;padding-top:20px;border-top:1px solid var(--rule)}
+h3{font-size:23px;font-weight:600;margin:32px 0 6px;color:var(--navy)}
+h4{font-family:var(--mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--bronze);margin:20px 0 4px}
+p{margin:10px 0;max-width:74ch}a{color:var(--terracotta)}
+ul,ol{max-width:74ch;margin:8px 0;padding-left:24px}li{margin:3px 0}
+hr{border:0;height:1px;background:var(--rule);margin:28px 0}
+blockquote{margin:16px 0;padding:10px 18px;border-left:3px solid var(--terracotta);background:var(--vellum);color:var(--muted);font-style:italic}
+code{font-family:var(--mono);font-size:.82em;background:rgba(138,106,59,.12);padding:1px 5px;border-radius:4px;color:var(--navy)}
+pre.code{background:var(--ink);color:var(--parchment);padding:16px 18px;border-radius:8px;overflow-x:auto;font-size:13px}
+pre.code code{background:none;color:inherit;padding:0;font-size:13px}
+pre.mermaid{background:var(--vellum);border:1px solid var(--rule);border-radius:8px;padding:20px;text-align:center;overflow-x:auto;margin:18px 0}
+table{border-collapse:collapse;width:100%;margin:16px 0;font-family:var(--sans);font-size:14px}
+th,td{border:1px solid var(--rule);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--navy);color:var(--parchment);font-weight:600;font-size:12px;letter-spacing:.03em;text-transform:uppercase}
+tr:nth-child(even) td{background:var(--vellum)}
+.foot{margin-top:64px;padding-top:20px;border-top:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--muted)}</style></head>
+<body>
+<header class="top"><div class="nav"><span class="brand">Noēsis · v3.0 Handbook</span><a href="index.html" class="active">Overview</a><a href="01-civic-institutions.html">The Eight Civic Institutions</a><a href="02-services.html">Services</a><a href="03-communication-flows.html">Communication Flows</a><a href="04-creator-system-guide.html">Creator / System Service Guide</a></div></header>
+<div class="wrap"><h1>Noēsis v3.0 — System Handbook</h1>
+<p>A code-grounded reference for the Portal / Grid / Brain digital city. Every page is generated from the markdown in <code>docs/handbook/</code> and cites the real source under <code>grid/src</code> and <code>brain/src</code>.</p>
+<h2>Contents</h2>
+<ol>
+<li><a href="01-civic-institutions.html">The Eight Civic Institutions</a></li>
+<li><a href="02-services.html">Services — Public & Local AI</a></li>
+<li><a href="03-communication-flows.html">Communication Flows & Diagrams</a></li>
+<li><a href="04-creator-system-guide.html">Creator / System Service Guide</a></li>
+</ol>
+<h3>The three layers at a glance</h3>
+<ul>
+<li><strong>Portal</strong> — Henry-hosted meta-layer: Grid approval, Nous approval, cross-Grid, user multi-Grid view.</li>
+<li><strong>Grid</strong> — the public service (Fastify/TS). Genesis Grid hosts the eight civic institutions, the audit chain, and the world clock.</li>
+<li><strong>Brain</strong> — the local AI service (Python), one per Nous. Type A (local Ollama) or Type B (hosted LLM).</li>
+</ul>
+<blockquote>Source of truth for architecture: <code>.planning/research/v3.0/CIVIC-ARCHITECTURE.md</code>. Markdown source for these pages: <code>docs/handbook/*.md</code>.</blockquote><div class="foot">Generated from <code>docs/handbook/*.md</code> · code-grounded against <code>grid/src</code>, <code>brain/src</code> · Noēsis v3.0 Genesis Grid</div></div>
+
+</body></html>
