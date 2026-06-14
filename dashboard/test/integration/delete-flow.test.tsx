@@ -96,6 +96,23 @@ vi.mock('@/lib/hooks/use-ananke-levels', () => ({
     ]),
 }));
 
+// Phase 10b: BiosSection subscribes to useBiosLevels → useFirehose →
+// StoresProvider. Short-circuit with the baseline need map so this integration
+// test keeps working without a StoresProvider (mirrors Phase 10a ananke pattern).
+vi.mock('@/lib/hooks/use-bios-levels', () => ({
+    useBiosLevels: () => new Map([
+        ['energy',     { level: 'low', direction: null }],
+        ['sustenance', { level: 'low', direction: null }],
+    ]),
+}));
+
+// Phase 11: WhisperSection subscribes to useWhisperCounts → useFirehose →
+// StoresProvider. Short-circuit with the zero-state so this integration test
+// keeps working without a StoresProvider (mirrors Phase 10b bios pattern).
+vi.mock('@/lib/hooks/use-whisper-counts', () => ({
+    useWhisperCounts: () => ({ sent: 0, received: 0, lastTick: null, topPartners: [] }),
+}));
+
 // ── Test harness ───────────────────────────────────────────────────────────────
 let localStore: SelectionStore;
 

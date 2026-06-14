@@ -49,12 +49,12 @@ export function WhisperSection({ did }: { did: string }): React.ReactElement {
                 <dt>Top partners</dt>
                 <dd>
                     {topPartners.length === 0 ? (
-                        <span>\u2014</span>
+                        <span>{'\u2014'}</span>
                     ) : (
                         <ul>
                             {topPartners.map(p => (
                                 <li key={p.did}>
-                                    {truncateDid(p.did)}{'\u00a0'}\u2014{'\u00a0'}{p.count}
+                                    {truncateDid(p.did)}{'\u00a0'}{'\u2014'}{'\u00a0'}{p.count}
                                 </li>
                             ))}
                         </ul>
