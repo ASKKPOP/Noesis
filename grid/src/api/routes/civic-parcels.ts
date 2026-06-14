@@ -268,6 +268,11 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             }
 
             const tick = currentTick(services);
+            // Skills are attested under the EXISTENCE-DID (skill.taught.learner_did, nous-runner),
+            // not the civic-DID land identity. A Brain-signed request carries the existence-DID as
+            // req.didContext.operatorDid (= JWT iss). The skill-held check runs against it; land
+            // ownership / Ousia / the human check / the emitted civic hash stay on buyerDid.
+            const skillHolderDid = req.didContext?.operatorDid;
             try {
                 const structure = buildFromBlueprint(addr, buyerDid, blueprintHash, tick, {
                     registry: parcelRegistry,
@@ -275,6 +280,8 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
                     // a failed transfer (cannot cover) → insufficient_funds (mapped to 402 below).
                     transferOusia: (from, to, amount) => nousRegistry.transferOusia(from, to, amount),
                     audit: services.audit,
+                    // Existence-DID for the skill-held check ONLY (defaults to buyerDid in the executor).
+                    skillHolderDid,
                     // Co-build authorization: a staff Nous in an active co-build session for addr.
                     coBuildStaffOf,
                     // Wave-3 emit seam — the SINGLE skill.blueprint_executed sole producer. The

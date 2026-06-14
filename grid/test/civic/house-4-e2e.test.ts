@@ -7,19 +7,18 @@
  * buildGenesisCoreParcels, real NousRegistry balance/transfer, ParcelStore over a mock mysql2
  * Pool, treasury = TREASURY_DID, swappable per-request didContext).
  *
- * DID-FORM NOTE (documented source gap): two DID forms coexist in the civic stack —
- *   • the Phase-18 skill machinery (appendSkillTaught / builderHoldsSkill / teachHere) enforces
- *     the project DID_RE `/^did:noesis:[a-z0-9_-]+$/i` (learner self-report);
- *   • the HTTP write routes (requireCivicWriter) enforce the Civic-DID form `did:civic:noesis:*`.
- * The build-from-blueprint route passes the caller's `did:civic:noesis:` DID straight into
- * `builderHoldsSkill`, where it must equal a `skill.taught.learner_did` — but the skill producer
- * rejects the civic form, so a skill-held build CANNOT be reached through the HTTP route from a
- * mock-pool e2e (the same class of gap house-3-e2e hit with structure_revenue / gov.law_enacted).
- * Per HARNESS R6 (no source rewrite) the skill-held BUILD + CO-BUILD + TEACH branches are driven
- * through the SAME production composition the route runs — `buildFromBlueprint` / the co-build
- * module fns / `teachHere` with the real deps, using `did:noesis:` Nous — exactly how house-2/3
- * drove onUpkeepTick / structureRevenueDue directly. The HUMAN-rejected branch is exercised BOTH
- * directly (executor) AND through the real HTTP route (403). No production file was edited.
+ * DID-FORM NOTE (dual-DID bridge — RESOLVED): a Nous carries two identities — a civic-DID
+ *   (`did:civic:noesis:*`, the land/Ousia identity = JWT sub) and an existence-DID
+ *   (`did:noesis:*`, the skill-attestation identity = JWT iss). Skills are attested under the
+ *   existence-DID (`skill.taught.learner_did`, nous-runner), while the HTTP write routes identify
+ *   the caller by the civic-DID. The `build-from-blueprint` route now runs the skill-held check
+ *   against EITHER identity (the civic `did` OR the existence `operatorDid` the Brain-signed JWT
+ *   carries — see `tryDid` `{did: sub, operatorDid: iss}` and `BuildDeps.skillHolderDid`), so a
+ *   skill-held build SUCCEEDS over the real HTTP route. The first `it` drives the BUILD + CO-BUILD
+ *   + TEACH branches through the production composition with `did:noesis:` Nous (the form the
+ *   skill machinery accepts); the dedicated HTTP `it` below proves the end-to-end route bridge
+ *   (civic owner, existence-DID skill, build via POST → 201 + one skill.blueprint_executed). No
+ *   skill producer was weakened; the fix is the route + executor skill-identity bridge only.
  *
  *   1. LEARN — a Nous learns a blueprint_hash via the EXISTING skill.taught machinery (no new
  *      event); a civic_blueprints recipe row holds catalog-kind objects + the arrangement DAG +
@@ -429,6 +428,67 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
         expect(topics.has('skill.blueprint_executed')).toBe(true);
         expect(topics.has('skill.taught')).toBe(true);
         expect(topics.has('zoning.cowork_session')).toBe(true);
+
+        await app.close();
+    });
+
+    it('builds over the REAL HTTP route — the civic-DID caller bridges to its existence-DID skill via didContext.operatorDid (dual-DID fix)', async () => {
+        const env = buildGenesisApp();
+        await env.ready;
+        const { app, audit, parcelRegistry, nousRegistry } = env;
+
+        // A Nous carries TWO identities: a civic-DID (land/Ousia identity = JWT sub) and an
+        // existence-DID (skill-attestation identity = JWT iss = didContext.operatorDid). The
+        // build route owns/charges by civic-DID but must verify skill-held against the existence
+        // identity, because skill.taught.learner_did is recorded under the existence-DID.
+        const BUILDER_CIVIC = 'did:civic:noesis:zara';
+        const BUILDER_EXIST = 'did:noesis:zara';
+        const HTTP_PARCEL = 'genesis:residential:0003';
+
+        // Fund the civic-DID and give it ownership of the parcel (the land/Ousia identity).
+        nousRegistry.spawn({ name: 'zara', did: BUILDER_CIVIC, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 10_000);
+        parcelRegistry.purchase(HTTP_PARCEL, BUILDER_CIVIC, 10_000);
+
+        // The recipe lives Grid-side; the skill is attested under the EXISTENCE-DID (the form the
+        // Phase-18 skill machinery records via skill.taught.learner_did).
+        storeBlueprint(homeRecipe());
+        appendSkillTaught(audit, BUILDER_EXIST, {
+            learner_did: BUILDER_EXIST,
+            skill_hash: BLUEPRINT_HASH,
+            parent_hash: PARENT_HASH,
+            teacher_did: OWNER,
+            tick: TICK,
+        });
+        const before = audit.all().filter((e) => e.eventType === 'skill.blueprint_executed').length;
+
+        // Without the existence identity (operatorDid absent) the civic-DID alone cannot match the
+        // existence-DID learner_did → skill_not_held. This proves the bridge is load-bearing.
+        env.setCtx({ did: BUILDER_CIVIC, tier: 'civic_member' });
+        const noBridge = await POST(app, `/api/v1/civic/parcels/${HTTP_PARCEL}/build-from-blueprint`, {
+            blueprint_hash: BLUEPRINT_HASH,
+        });
+        expect(noBridge.statusCode).toBe(422);
+        expect(noBridge.json()).toMatchObject({ error: 'skill_not_held' });
+
+        // With operatorDid = the existence-DID (exactly what a Brain-signed JWT carries:
+        // sub=civic, iss=existence), the skill-held check bridges and the build SUCCEEDS via HTTP.
+        env.setCtx({ did: BUILDER_CIVIC, tier: 'civic_member', operatorDid: BUILDER_EXIST });
+        const built = await POST(app, `/api/v1/civic/parcels/${HTTP_PARCEL}/build-from-blueprint`, {
+            blueprint_hash: BLUEPRINT_HASH,
+        });
+        expect(built.statusCode).toBe(201);
+        expect(built.json()).toMatchObject({ built: true, parcel_id: HTTP_PARCEL });
+
+        // Exactly ONE new skill.blueprint_executed, hashed to the builder's CIVIC identity (the
+        // land actor) — and no raw DID crosses the chain.
+        const minted = audit.all().filter((e) => e.eventType === 'skill.blueprint_executed');
+        expect(minted.length).toBe(before + 1);
+        const last = minted[minted.length - 1];
+        expect(last.payload).toMatchObject({ blueprint_hash: BLUEPRINT_HASH, parcel_id: HTTP_PARCEL, tick: TICK });
+        const builderHash = (last.payload as Record<string, unknown>).builder_civic_did_hash as string;
+        expect(builderHash).toBe(sha256Hex(BUILDER_CIVIC));
+        expect(HEX64.test(builderHash)).toBe(true);
+        expect(JSON.stringify(last.payload)).not.toContain('did:');
 
         await app.close();
     });

@@ -191,6 +191,15 @@ export interface BuildDeps {
     audit: { all(): AuditEntry[] };
     /** True iff `did` is a staff Nous in an active co-build session for `addr` (co-build authz). */
     coBuildStaffOf?(addr: string, did: string): boolean;
+    /**
+     * The builder's EXISTENCE-DID (`did:noesis:nous:*`) for the skill-held check ONLY.
+     * Skills are attested under the existence-DID (`skill.taught.learner_did`, nous-runner),
+     * while land ownership / Ousia / the human check / the emitted `builder_civic_did_hash`
+     * are keyed by the civic-DID (`builderDid`). For a Brain-signed request the route reads
+     * this from `req.didContext.operatorDid` (= the JWT `iss`). Defaults to `builderDid` when
+     * absent (e.g. tests/ES256 tokens where the two DID forms coincide).
+     */
+    skillHolderDid?: string;
     /** Wave-3 emit seam — the real sole producer attaches here. */
     emitBlueprintExecuted?(payload: BlueprintExecutedPayload): void;
 }
@@ -233,8 +242,19 @@ export function buildFromBlueprint(
         throw new Error(`blueprint_not_found: ${blueprint_hash}`);
     }
     // 4. Confirm the builder HOLDS the skill (existing skill-event history; Brain attests).
-    if (!builderHoldsSkill(blueprint_hash, builderDid, { audit: deps.audit })) {
-        throw new Error(`skill_not_held: ${builderDid} does not hold ${blueprint_hash}`);
+    //    Skills are attested under the builder's EXISTENCE-DID (skill.taught.learner_did,
+    //    nous-runner), while the route identifies the builder by its civic-DID. A Brain-signed
+    //    request carries the existence identity as skillHolderDid (req.didContext.operatorDid =
+    //    JWT iss). Match EITHER identity so the check works whichever namespace the skill landed
+    //    in — without coupling to a single DID format.
+    const skillIdentities = deps.skillHolderDid
+        ? [builderDid, deps.skillHolderDid]
+        : [builderDid];
+    const holdsSkill = skillIdentities.some((did) =>
+        builderHoldsSkill(blueprint_hash, did, { audit: deps.audit }),
+    );
+    if (!holdsSkill) {
+        throw new Error(`skill_not_held: ${skillIdentities.join('/')} does not hold ${blueprint_hash}`);
     }
     // 5. Debit the material cost builder → TREASURY_DID (insufficient → 402).
     if (recipe.material_cost_bios > 0) {
