@@ -11,7 +11,7 @@
  *   - v1 is BOOKKEEPING: no interest accrues over ticks; an IOU is NOT transferable to a 3rd DID.
  *   - recording an IOU emits NOTHING on chain; only settlement that moves Ousia rides the existing transfer path.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 const loadLedger = () => import('../../src/civic/credit-ledger.js');
 const loadLaw = () => import('../../src/civic/founding-law.js');
@@ -20,7 +20,12 @@ const CREDITOR = 'did:civic:noesis:alice';
 const DEBTOR = 'did:civic:noesis:bob';
 const THIRD = 'did:civic:noesis:carol';
 
-describe.skip('Phase 60 HOUSE-3 — IOU record / settle / outstanding [Wave 2 un-skips]', () => {
+beforeEach(async () => {
+    const { _resetLedger } = await loadLedger();
+    _resetLedger();
+});
+
+describe('Phase 60 HOUSE-3 — IOU record / settle / outstanding [Wave 2 un-skips]', () => {
     it('recordIou creates a bilateral payable with settled_tick=null; outstandingFor totals it', async () => {
         const { recordIou, outstandingFor } = await loadLedger();
         const entry = recordIou(CREDITOR, DEBTOR, 100, 'cowork:agreement:1', 10);
@@ -48,7 +53,7 @@ describe.skip('Phase 60 HOUSE-3 — IOU record / settle / outstanding [Wave 2 un
     });
 });
 
-describe.skip('Phase 60 HOUSE-3 — IOU caps + v1 bookkeeping invariants [Wave 2 un-skips]', () => {
+describe('Phase 60 HOUSE-3 — IOU caps + v1 bookkeeping invariants [Wave 2 un-skips]', () => {
     it('per-pair cap IOU_PAIR_CAP_BIOS rejects an over-cap record', async () => {
         const { recordIou } = await loadLedger();
         const { IOU_PAIR_CAP_BIOS } = await loadLaw();
@@ -79,7 +84,7 @@ describe.skip('Phase 60 HOUSE-3 — IOU caps + v1 bookkeeping invariants [Wave 2
     });
 });
 
-describe.skip('Phase 60 HOUSE-3 — IOU recording emits nothing on chain [Wave 2 un-skips]', () => {
+describe('Phase 60 HOUSE-3 — IOU recording emits nothing on chain [Wave 2 un-skips]', () => {
     it('recording an IOU emits NOTHING on chain (no audit append for a recordIou)', async () => {
         const { recordIou } = await loadLedger();
         const { AuditChain } = await import('../../src/audit/chain.js');

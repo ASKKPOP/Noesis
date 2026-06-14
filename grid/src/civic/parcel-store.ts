@@ -16,6 +16,8 @@ import type { ParcelRegistry } from './parcel-registry.js';
 import type { Parcel, ZoneId, StructureType, Visibility, Interior, ParcelCondition } from './types.js';
 import type { Role, RoleEdge } from './roles.js';
 import { gravityPrice, GENESIS_CORE_SEED_PLAN, PURCHASABLE_RINGS } from './founding-law.js';
+import { upsertIou, type IouEntry } from './credit-ledger.js';
+import { upsertAgreement, type CoworkAgreement } from './cowork.js';
 
 /** A civic_parcels DB row (snake_case columns as returned by mysql2). */
 export interface ParcelRow extends RowDataPacket {
@@ -53,6 +55,31 @@ export interface ParcelRoleRow extends RowDataPacket {
     granted_tick: number;
     trust_score: string | number;   // mysql2 returns FLOAT predictably as number, defensive cast
     revoked_tick: number | null;
+}
+
+/** A civic_credit_ledger DB row (snake_case columns as returned by mysql2). */
+export interface CreditLedgerRow extends RowDataPacket {
+    iou_id: string;
+    creditor_civic_did: string;
+    debtor_civic_did: string;
+    amount_bios: string | number;   // mysql2 returns BIGINT UNSIGNED as string
+    reason_ref: string;
+    created_tick: number;
+    settled_tick: number | null;
+}
+
+/** A civic_cowork_agreements DB row (snake_case columns as returned by mysql2). */
+export interface CoworkAgreementRow extends RowDataPacket {
+    agreement_id: string;
+    parcel_id: string;
+    host_civic_did: string;
+    worker_civic_did: string | null;
+    scope_ref: string;
+    settlement_amount_bios: string | number;
+    term_ticks: number;
+    status: 'posted' | 'claimed' | 'completed' | 'cancelled';
+    created_tick: number;
+    completed_tick: number | null;
 }
 
 /** Map a DB row into the in-memory Parcel shape (entry_allowlist may arrive as JSON text). */
@@ -167,6 +194,25 @@ export class ParcelStore {
         );
         for (const r of roleRows) {
             registry.upsertRoleEdge(rowToRoleEdge(r));
+        }
+        // Phase 60 HOUSE-3 (v40 / D-60-05) — rehydrate the bilateral IOU ledger so
+        // outstanding payables + caps survive a restart (DB is source of truth).
+        const [iouRows] = await this.pool.query<CreditLedgerRow[]>(
+            `SELECT * FROM civic_credit_ledger WHERE grid_name = ?`,
+            [this.gridName],
+        );
+        for (const r of iouRows) {
+            upsertIou(rowToIou(r));
+        }
+        // Phase 60 HOUSE-3 (v40 / D-60-06) — rehydrate the signed dual-DID Cowork
+        // Agreements + board tasks. The DB 'completed' enum maps to the in-memory
+        // 'settled' status once a completed_tick is stamped (settlement is recorded).
+        const [coworkRows] = await this.pool.query<CoworkAgreementRow[]>(
+            `SELECT * FROM civic_cowork_agreements WHERE grid_name = ?`,
+            [this.gridName],
+        );
+        for (const r of coworkRows) {
+            upsertAgreement(rowToCowork(r));
         }
         return rows.length;
     }
@@ -296,6 +342,104 @@ export class ParcelStore {
             [revokedTick, parcelId, holderDid],
         );
     }
+
+    /* ───────────────── IOU ledger (v40 / D-60-05 / R-60-07) ─────────────────
+     * DB-first write-through for the bilateral mutual-credit ledger. Recording an IOU
+     * persists the payable; settlement / counter-net stamps settled_tick. Recording
+     * emits NOTHING on chain (private bookkeeping); the caller mirrors memory after.
+     */
+
+    /**
+     * Persist an IOU DB-first (UPSERT civic_credit_ledger). On a counter-net the amount +
+     * settled_tick may change, so an existing iou_id refreshes those fields in place.
+     */
+    async persistIou(entry: IouEntry): Promise<void> {
+        await this.pool.query<ResultSetHeader>(
+            `INSERT INTO civic_credit_ledger
+                (iou_id, grid_name, creditor_civic_did, debtor_civic_did,
+                 amount_bios, reason_ref, created_tick, settled_tick)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+                amount_bios = VALUES(amount_bios),
+                settled_tick = VALUES(settled_tick)`,
+            [
+                entry.iou_id, this.gridName, entry.creditor_civic_did, entry.debtor_civic_did,
+                entry.amount_bios, entry.reason_ref, entry.created_tick, entry.settled_tick,
+            ],
+        );
+    }
+
+    /** Persist an IOU settlement DB-first (stamp settled_tick). */
+    async persistIouSettle(iouId: string, settledTick: number): Promise<void> {
+        await this.pool.query<ResultSetHeader>(
+            `UPDATE civic_credit_ledger SET settled_tick = ? WHERE iou_id = ?`,
+            [settledTick, iouId],
+        );
+    }
+
+    /* ─────────────── Cowork Agreements (v40 / D-60-06 / R-60-08) ───────────────
+     * DB-first write-through for the signed dual-DID agreements + board tasks. The
+     * in-memory 'settled' status maps to the DB 'completed' enum + a completed_tick
+     * stamp (the DB enum has no 'settled' member — settlement is recorded as a tick).
+     */
+
+    /** Persist a cowork agreement DB-first (UPSERT civic_cowork_agreements). */
+    async persistCowork(agreement: CoworkAgreement, ticks: { created: number; completed?: number }): Promise<void> {
+        const worker = agreement.parties[1] || null;
+        const dbStatus = agreement.status === 'settled' ? 'completed' : agreement.status;
+        const completedTick = agreement.status === 'settled' || agreement.status === 'completed'
+            ? ticks.completed ?? null
+            : null;
+        await this.pool.query<ResultSetHeader>(
+            `INSERT INTO civic_cowork_agreements
+                (agreement_id, grid_name, parcel_id, host_civic_did, worker_civic_did,
+                 scope_ref, settlement_amount_bios, term_ticks, status, created_tick, completed_tick)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+                worker_civic_did = VALUES(worker_civic_did),
+                status = VALUES(status),
+                completed_tick = VALUES(completed_tick)`,
+            [
+                agreement.agreement_id, this.gridName, agreement.parcel_id, agreement.parties[0], worker,
+                agreement.scope_ref, agreement.settlement_amount_bios, agreement.term_ticks,
+                dbStatus, ticks.created, completedTick,
+            ],
+        );
+    }
+}
+
+/** Map a civic_credit_ledger DB row into the in-memory IouEntry shape. */
+function rowToIou(row: CreditLedgerRow): IouEntry {
+    return {
+        iou_id: row.iou_id,
+        creditor_civic_did: row.creditor_civic_did,
+        debtor_civic_did: row.debtor_civic_did,
+        amount_bios: Number(row.amount_bios),
+        reason_ref: row.reason_ref,
+        created_tick: row.created_tick,
+        settled_tick: row.settled_tick,
+    };
+}
+
+/**
+ * Map a civic_cowork_agreements DB row into the in-memory CoworkAgreement shape. The DB
+ * 'completed' enum + a completed_tick stamp resolves to the in-memory 'settled' status
+ * (settlement is recorded once a session completes); an empty worker reads as '' (unclaimed).
+ */
+function rowToCowork(row: CoworkAgreementRow): CoworkAgreement {
+    const status: CoworkAgreement['status'] =
+        row.status === 'completed' && row.completed_tick !== null ? 'settled'
+            : row.status === 'cancelled' ? 'completed'  // closed terminal — no in-memory 'cancelled'
+                : row.status;
+    return {
+        agreement_id: row.agreement_id,
+        parcel_id: row.parcel_id,
+        parties: [row.host_civic_did, row.worker_civic_did ?? ''],
+        scope_ref: row.scope_ref,
+        settlement_amount_bios: Number(row.settlement_amount_bios),
+        term_ticks: row.term_ticks,
+        status,
+    };
 }
 
 /** Map a civic_parcel_roles DB row into the in-memory RoleEdge shape. */

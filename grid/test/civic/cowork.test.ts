@@ -13,7 +13,7 @@
  *   - a completed session emits zoning.cowork_session carrying ONLY {end_tick, parcel_id,
  *     participant_count, participants_hash, start_tick} — no board/task text, no raw DIDs.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 const loadCowork = () => import('../../src/civic/cowork.js');
 
@@ -21,7 +21,12 @@ const HOST = 'did:civic:noesis:alice';
 const WORKER = 'did:civic:noesis:bob';
 const PARCEL = 'genesis:business:0001';
 
-describe.skip('Phase 60 HOUSE-3 — CoworkAgreement dual-DID schema [Wave 2 un-skips]', () => {
+beforeEach(async () => {
+    const { _resetCowork } = await loadCowork();
+    _resetCowork();
+});
+
+describe('Phase 60 HOUSE-3 — CoworkAgreement dual-DID schema [Wave 2 un-skips]', () => {
     it('CoworkAgreement is the signed dual-DID source of truth with the closed field set', async () => {
         const { createAgreement } = await loadCowork();
         const agreement = createAgreement({
@@ -34,7 +39,7 @@ describe.skip('Phase 60 HOUSE-3 — CoworkAgreement dual-DID schema [Wave 2 un-s
     });
 });
 
-describe.skip('Phase 60 HOUSE-3 — task board post / claim / complete [Wave 2 un-skips]', () => {
+describe('Phase 60 HOUSE-3 — task board post / claim / complete [Wave 2 un-skips]', () => {
     it('post (owner/staff) → claim (board access) → complete (host) transitions status', async () => {
         const { createAgreement, claimTask, completeTask } = await loadCowork();
         const posted = createAgreement({ parcel_id: PARCEL, parties: [HOST, WORKER], scope_ref: 'task:x', settlement_amount_bios: 50, term_ticks: 100 });

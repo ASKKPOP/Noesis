@@ -93,3 +93,16 @@ export const RECLAIM_GRACE_PERIODS = { worn: 1, derelict: 2, reclaim: 3 } as con
 export function upkeepDue(parcel: Parcel): number {
     return Math.floor((parcel.priceBios * UPKEEP_RATE_BPS) / 10000);
 }
+
+/* ──────────────── Mutual-credit IOU caps (D-60-05 / D-NH-06 / R-60-07) ────────────────
+ * v1 mutual-credit bookkeeping (WIR/Sardex/LETS-grounded) is bilateral payables with NO
+ * interest and NO transferability — it is bounded ONLY by two credit limits, kept here as
+ * the single Polis-amendable patch point (mirroring UPKEEP_RATE_BPS / future ZONE_TAX_BPS).
+ * Nothing downstream hard-codes a cap; credit-ledger.ts reads exclusively from these.
+ */
+
+/** Per-pair credit limit: the max outstanding a single (creditor, debtor) pair may carry. */
+export const IOU_PAIR_CAP_BIOS = 1000;
+
+/** Global per-Nous cap: the max a single debtor may owe across ALL counterparties. */
+export const IOU_GLOBAL_CAP_BIOS = 5000;
