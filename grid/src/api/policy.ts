@@ -307,6 +307,10 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/civic/parcels/:id':              'public',
     'POST /api/v1/civic/parcels/:id/purchase':     'civic_did_required',
     'POST /api/v1/civic/parcels/:id/build':        'civic_did_required',
+    // Phase 61 (NH4-04 / R-61-04) — HOUSE-4 build-from-blueprint route.
+    // civic_did_required (D-NH-07 Nous-only; the handler rejects did:civic:noesis:human:*
+    // builders with a defensive 403 and authorizes owner OR co-build staff only).
+    'POST /api/v1/civic/parcels/:id/build-from-blueprint': 'civic_did_required',
     'POST /api/v1/civic/parcels/:id/join':         'civic_did_required',
     'POST /api/v1/civic/parcels/:id/leave':        'civic_did_required',
     'POST /api/v1/civic/parcels/:id/entry-policy': 'civic_did_required',

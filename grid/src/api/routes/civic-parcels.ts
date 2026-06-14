@@ -44,8 +44,11 @@ import { appendZoningInteriorExtended } from '../../audit/append-zoning-interior
 import { appendZoningRoleGranted } from '../../audit/append-zoning-role-granted.js';
 import { appendZoningRoleRevoked } from '../../audit/append-zoning-role-revoked.js';
 import { appendZoningCoworkSession } from '../../audit/append-zoning-cowork-session.js';
+import { appendSkillBlueprintExecuted } from '../../audit/append-skill-blueprint-executed.js';
 import { isHumanDid } from '../../civic/roles.js';
 import { postTask, claimTask, completeTask } from '../../civic/cowork.js';
+import { buildFromBlueprint } from '../../civic/blueprint.js';
+import { coBuildStaffOf } from '../../civic/co-build.js';
 
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 const HUMAN_CIVIC_DID_RE = /^did:civic:noesis:human:/i;
@@ -239,6 +242,70 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             });
 
             return reply.code(201).send({ built: true, parcel_id: parcel.id });
+        },
+    );
+
+    // --- POST /api/v1/civic/parcels/:id/build-from-blueprint (civic_did_required) ---
+    // Phase 61 HOUSE-4 (D-61-02 / R-61-04). The builder is the owner OR a staff Nous in an
+    // active co-build session; a human builder → 403 (humans never build); a non-authorized
+    // Nous → 403 not_authorized; a builder who does not hold the skill → 422 skill_not_held;
+    // insufficient Ousia → 402 insufficient_funds. On success the Wave-2 buildFromBlueprint
+    // executor's emit seam fires the SINGLE skill.blueprint_executed producer (attached here).
+    // The blueprint_hash is the ONLY untrusted input — it is a structured DATA field passed as
+    // a function argument, never woven into any directive (A11e / D-61-06).
+    app.post<{ Params: { id: string }; Body: Record<string, unknown> }>(
+        '/api/v1/civic/parcels/:id/build-from-blueprint',
+        async (req, reply) => {
+            const guarded = requireCivicWriter(req, reply, services);
+            if (!guarded) return reply;
+            const { parcelRegistry, store, nousRegistry, buyerDid } = guarded;
+            const addr = req.params.id;
+
+            const body = (req.body ?? {}) as Record<string, unknown>;
+            const blueprintHash = body['blueprint_hash'];
+            if (typeof blueprintHash !== 'string' || blueprintHash.length === 0) {
+                return reply.code(400).send({ error: 'invalid_blueprint_hash' });
+            }
+
+            const tick = currentTick(services);
+            try {
+                const structure = buildFromBlueprint(addr, buyerDid, blueprintHash, tick, {
+                    registry: parcelRegistry,
+                    // Material cost rides the existing Ousia transfer path (builder → treasury);
+                    // a failed transfer (cannot cover) → insufficient_funds (mapped to 402 below).
+                    transferOusia: (from, to, amount) => nousRegistry.transferOusia(from, to, amount),
+                    audit: services.audit,
+                    // Co-build authorization: a staff Nous in an active co-build session for addr.
+                    coBuildStaffOf,
+                    // Wave-3 emit seam — the SINGLE skill.blueprint_executed sole producer. The
+                    // executor builds the closed 4-tuple (hashed builder, no recipe body); the
+                    // producer re-validates + commits to the chain exactly once.
+                    emitBlueprintExecuted: (payload) => {
+                        appendSkillBlueprintExecuted(services.audit, payload);
+                    },
+                });
+                // Persist the mutated interior tree (DB-first then memory, Phase 59 discipline).
+                await store.persistInterior(parcelRegistry.get(addr)!);
+                return reply.code(201).send({ built: true, parcel_id: addr, areas: structure.interior?.areas.length ?? 0 });
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : 'build_error';
+                if (msg.startsWith('builder_forbidden_human')) {
+                    return reply.code(403).send({ error: 'humans_cannot_own_land' });
+                }
+                if (msg.startsWith('not_authorized')) {
+                    return reply.code(403).send({ error: 'not_authorized' });
+                }
+                if (msg.startsWith('blueprint_not_found')) {
+                    return reply.code(404).send({ error: 'blueprint_not_found' });
+                }
+                if (msg.startsWith('skill_not_held')) {
+                    return reply.code(422).send({ error: 'skill_not_held' });
+                }
+                if (msg.startsWith('insufficient_funds')) {
+                    return reply.code(402).send({ error: 'insufficient_funds' });
+                }
+                return reply.code(409).send({ error: msg.split(':')[0] });
+            }
         },
     );
 

@@ -15,10 +15,18 @@
  *   - grid/src/civic/cowork.ts                  (scope_ref / task / board content)
  *   - grid/src/api/routes/civic-parcels.ts      (invite + board/post|claim|complete routes)
  *   - grid/src/civic/place-registry.ts          (visitor-supplied place names, if present)
+ *   - grid/src/civic/co-build.ts                (Phase 61: co-build board content + sub-task arrangement)
+ *   - grid/src/civic/blueprint.ts              (Phase 61: recipe arrangement DAG + objects)
+ *
+ * Phase 61 (A11e / D-61-06) — the co-build board content + the recipe `arrangement` DAG are
+ *   DATA, never instructions: a recipe / arrangement / sub-task field MUST NOT be woven into a
+ *   Telos/Charter command interpreter or any prompt-assembly path that could escalate the
+ *   (potentially peer-supplied) blueprint content into an instruction the Nous would obey.
  *
  * What counts as a VIOLATION (on a single code statement):
  *   a CONTENT token (task_ref/taskRef/scope_ref/scopeRef/invitee/board text/place_name/
- *   visitor*) appears in the SAME interpolation or `+` concatenation as a DIRECTIVE token
+ *   visitor / arrangement / recipe / blueprint / sub_task / node objects) appears in the SAME
+ *   interpolation or `+` concatenation as a DIRECTIVE token
  *   (Telos/Charter/directive/prompt/instruction/command/system_prompt/persona) — i.e. the
  *   untrusted content is being woven into an instruction string.
  *
@@ -45,6 +53,9 @@ const SCANNED_FILES = [
     'grid/src/civic/cowork.ts',
     'grid/src/api/routes/civic-parcels.ts',
     'grid/src/civic/place-registry.ts',
+    // Phase 61 (A11e / D-61-06) — co-build board content + recipe arrangement DAG paths.
+    'grid/src/civic/co-build.ts',
+    'grid/src/civic/blueprint.ts',
 ];
 
 // ── Untrusted CONTENT tokens (visitor/guest/board supplied) ──────────────────────
@@ -56,6 +67,12 @@ const CONTENT_TOKENS = [
     /\bplace_?name\b/i,
     /\bvisitor[A-Za-z_]*\b/i,
     /\bguest[A-Za-z_]*content\b/i,
+    // Phase 61 (A11e / D-61-06) — co-build / blueprint content tokens (recipe arrangement DAG,
+    // sub-task fields, and the blueprint hash/recipe body are DATA, never instructions).
+    /\barrangement\b/i,
+    /\brecipe\b/i,
+    /\bblueprint[A-Za-z_]*\b/i,
+    /\bsub_?task[A-Za-z_]*\b/i,
 ];
 
 // ── DIRECTIVE / prompt-assembly tokens (instruction surfaces) ────────────────────

@@ -422,6 +422,14 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'zoning.role_revoked',        // (97)
     'treasury.structure_revenue', // (98)
     'zoning.cowork_session',      // (99)
+    // Phase 61 (HOUSE-4 / D-61-05) — Skill construction. Allowlist 99 → 100 (+1, the ONE
+    // new HOUSE-4 event under the pre-cleared skill.* prefix). A build is the execution of a
+    // taught/diffused blueprint SKILL; only the hash/hashed-builder/parcel/tick cross — the
+    // recipe body, sub-task content, and teaching location stay Grid-side (D-61-06).
+    // skill.blueprint_executed (100): sole-producer grid/src/audit/append-skill-blueprint-executed.ts
+    //   closed 4-key {blueprint_hash, builder_civic_did_hash, parcel_id, tick}; actorDid = builder_civic_did_hash.
+    //   blueprint_hash is the Phase 18 skill hash (HEX64); builder_civic_did_hash is HEX64.
+    'skill.blueprint_executed',   // (100)
 ] as const;
 
 /**

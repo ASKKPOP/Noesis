@@ -28,7 +28,7 @@ const valid = {
     tick: 7,
 };
 
-describe.skip('Phase 61 — appendSkillBlueprintExecuted sole producer [Wave 3 un-skips]', () => {
+describe('Phase 61 — appendSkillBlueprintExecuted sole producer [Wave 3 un-skips]', () => {
     it('lands a valid event with the builder_civic_did_hash as actorDid', async () => {
         const { appendSkillBlueprintExecuted } = await loadProducer();
         const { AuditChain } = await loadChain();
