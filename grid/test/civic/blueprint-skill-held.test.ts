@@ -21,16 +21,19 @@ const loadSkillTaught = () => import('../../src/skills/appendSkillTaught.js');
 
 const BLUEPRINT_HASH = 'a'.repeat(64);
 const PARENT_HASH = 'b'.repeat(64);
-const BUILDER = 'did:civic:noesis:alice';
-const OTHER = 'did:civic:noesis:bob';
+const SOURCE_HASH = 'c'.repeat(64);
+// Builder/teacher DIDs must match the Phase 7 DID_RE (/^did:noesis:[a-z0-9_\-]+$/i)
+// enforced by the appendSkill* sole producers. learner_did === actorDid (self-report).
+const BUILDER = 'did:noesis:alice';
+const OTHER = 'did:noesis:bob';
 
-describe.skip('Phase 61 HOUSE-4 — builderHoldsSkill via EXISTING skill-event history [Wave 1 un-skips]', () => {
+describe('Phase 61 HOUSE-4 — builderHoldsSkill via EXISTING skill-event history [Wave 1 un-skips]', () => {
     it('returns true when a skill.taught with learner_did === builder for blueprint_hash exists', async () => {
         const { builderHoldsSkill } = await loadBlueprint();
         const { AuditChain } = await loadChain();
         const { appendSkillTaught } = await loadSkillTaught();
         const audit = new AuditChain();
-        appendSkillTaught(audit, {
+        appendSkillTaught(audit, BUILDER, {
             learner_did: BUILDER, parent_hash: PARENT_HASH, skill_hash: BLUEPRINT_HASH,
             teacher_did: OTHER, tick: 1,
         });
@@ -42,8 +45,8 @@ describe.skip('Phase 61 HOUSE-4 — builderHoldsSkill via EXISTING skill-event h
         const { AuditChain } = await loadChain();
         const { appendSkillInferred } = await import('../../src/skills/appendSkillInferred.js');
         const audit = new AuditChain();
-        appendSkillInferred(audit, {
-            learner_did: BUILDER, skill_hash: BLUEPRINT_HASH, tick: 1,
+        appendSkillInferred(audit, BUILDER, {
+            learner_did: BUILDER, skill_hash: BLUEPRINT_HASH, source_event_hash: SOURCE_HASH, tick: 1,
         });
         expect(builderHoldsSkill(BLUEPRINT_HASH, BUILDER, { audit })).toBe(true);
     });
@@ -60,7 +63,7 @@ describe.skip('Phase 61 HOUSE-4 — builderHoldsSkill via EXISTING skill-event h
         const { AuditChain } = await loadChain();
         const { appendSkillTaught } = await loadSkillTaught();
         const audit = new AuditChain();
-        appendSkillTaught(audit, {
+        appendSkillTaught(audit, OTHER, {
             learner_did: OTHER, parent_hash: PARENT_HASH, skill_hash: BLUEPRINT_HASH,
             teacher_did: BUILDER, tick: 1,
         });
@@ -68,7 +71,7 @@ describe.skip('Phase 61 HOUSE-4 — builderHoldsSkill via EXISTING skill-event h
     });
 });
 
-describe.skip('Phase 61 HOUSE-4 — NO new skill store; reads the existing history only [Wave 1 un-skips]', () => {
+describe('Phase 61 HOUSE-4 — NO new skill store; reads the existing history only [Wave 1 un-skips]', () => {
     it('the blueprint module does NOT introduce a new skill store (reads the audit chain)', async () => {
         const mod = await loadBlueprint();
         expect(mod).not.toHaveProperty('SkillStore');

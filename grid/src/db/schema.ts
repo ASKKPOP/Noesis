@@ -950,4 +950,27 @@ export const MIGRATIONS: Migration[] = [
             DROP TABLE IF EXISTS civic_parcel_roles
         `,
     },
+    // Phase 61 HOUSE-4 (NH4-01 / D-61-08 / R-61-01) — civic_blueprints: one row per
+    // blueprint_hash holding the Grid-side recipe BODY the build executor applies
+    // (objects + arrangement DAG as recipe_json, plus the material_cost_bios build debit).
+    // A blueprint_hash IS a Phase 18 skill hash; the skill HASH diffuses via the existing
+    // skill.taught/skill.inferred lineage (audit chain) — this table stores only the recipe
+    // body. The row write emits NO chain event (Grid-side recipe storage). Write-through
+    // store; cache hydrated on boot. Applies cleanly on top of v40.
+    {
+        version: 41,
+        name: 'create_civic_blueprints',
+        up: `
+            CREATE TABLE IF NOT EXISTS civic_blueprints (
+                blueprint_hash      CHAR(64)        NOT NULL,
+                grid_name           VARCHAR(63)     NOT NULL,
+                recipe_json         JSON            NOT NULL,
+                material_cost_bios  BIGINT UNSIGNED NOT NULL,
+                created_tick        INT UNSIGNED    NOT NULL,
+                PRIMARY KEY (blueprint_hash),
+                INDEX idx_blueprint_grid (grid_name)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS civic_blueprints`,
+    },
 ];

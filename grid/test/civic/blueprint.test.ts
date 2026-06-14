@@ -44,13 +44,13 @@ beforeEach(async () => {
     _resetBlueprints();
 });
 
-describe.skip('Phase 61 HOUSE-4 — blueprint_hash IS a Phase 18 skill hash [Wave 1 un-skips]', () => {
+describe('Phase 61 HOUSE-4 — blueprint_hash IS a Phase 18 skill hash [Wave 1 un-skips]', () => {
     it('a blueprint_hash is a 64-char hex skill hash (HEX64)', () => {
         expect(BLUEPRINT_HASH).toMatch(HEX64);
     });
 });
 
-describe.skip('Phase 61 HOUSE-4 — civic_blueprints recipe storage [Wave 1 un-skips]', () => {
+describe('Phase 61 HOUSE-4 — civic_blueprints recipe storage [Wave 1 un-skips]', () => {
     it('storeBlueprint(recipe) write-through stores the recipe; getBlueprint reads it back', async () => {
         const { storeBlueprint, getBlueprint } = await loadBlueprint();
         storeBlueprint(recipe());
@@ -67,7 +67,7 @@ describe.skip('Phase 61 HOUSE-4 — civic_blueprints recipe storage [Wave 1 un-s
     });
 });
 
-describe.skip('Phase 61 HOUSE-4 — recipe kinds restricted to the Phase 59 furniture catalog [Wave 1 un-skips]', () => {
+describe('Phase 61 HOUSE-4 — recipe kinds restricted to the Phase 59 furniture catalog [Wave 1 un-skips]', () => {
     it('a recipe object referencing a non-catalog kind is REJECTED by the existing furniture gate', async () => {
         const { storeBlueprint } = await loadBlueprint();
         const bad = recipe();
@@ -78,13 +78,15 @@ describe.skip('Phase 61 HOUSE-4 — recipe kinds restricted to the Phase 59 furn
     it('every catalog kind in the recipe passes isValidFurniture (the SINGLE validation gate)', async () => {
         const { isValidFurniture } = await loadFurniture();
         for (const o of recipe().objects) {
-            // functional kinds are valid in any structure type
-            expect(isValidFurniture(o.kind, 'workshop')).toBe(true);
+            // The recipe mixes a functional kind (work_desk — valid anywhere) and a mirror
+            // kind (shelf — home-only). A 'home' structure accepts both classes, so every
+            // catalog kind in the recipe passes the SINGLE validation gate there.
+            expect(isValidFurniture(o.kind, 'home')).toBe(true);
         }
     });
 });
 
-describe.skip('Phase 61 HOUSE-4 — civic_blueprints row write emits NO chain event [Wave 1 un-skips]', () => {
+describe('Phase 61 HOUSE-4 — civic_blueprints row write emits NO chain event [Wave 1 un-skips]', () => {
     it('storing a blueprint recipe does NOT append any audit-chain event (Grid-side storage)', async () => {
         const { storeBlueprint } = await loadBlueprint();
         const { AuditChain } = await import('../../src/audit/chain.js');
@@ -95,7 +97,7 @@ describe.skip('Phase 61 HOUSE-4 — civic_blueprints row write emits NO chain ev
     });
 });
 
-describe.skip('Phase 61 HOUSE-4 — diffusion reuses EXISTING skill machinery, ZERO new diffusion code [Wave 1 un-skips]', () => {
+describe('Phase 61 HOUSE-4 — diffusion reuses EXISTING skill machinery, ZERO new diffusion code [Wave 1 un-skips]', () => {
     it('blueprints diffuse via the EXISTING skill.taught / skill.inferred producers (no new diffusion module)', async () => {
         // The blueprint module exposes recipe storage only; it does NOT export a new diffusion producer.
         const mod = await loadBlueprint();
