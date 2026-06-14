@@ -12,7 +12,7 @@
  * D-58-03 (Genesis Core seed, D-NH-04/09): exactly 53 parcels (48 purchasable + 5 civic).
  */
 
-import type { ZoneId, StructureType, Visibility } from './types.js';
+import type { ZoneId, StructureType, Visibility, Parcel } from './types.js';
 
 /**
  * Gravity pricing (D-58-04 / D-NH-08): land nearer the Government Core (lower ring)
@@ -66,3 +66,30 @@ export const GENESIS_CORE_SEED_PLAN: readonly SeedPlanEntry[] = [
     // Ring 3 — residential homes (purchasable @ gravityPrice(3) = 400).
     { ring: 3, zoneId: 'residential', count: 24 },
 ];
+
+/* ───────────────────────── Upkeep (D-59-05 / D-NH-03) ─────────────────────────
+ * Ownership carries an ongoing upkeep burden. These constants are the SINGLE patch
+ * point — Phase 60 Polis amendments edit only this file; nothing downstream
+ * hard-codes a rate, period, or grace window. All periods are tick-based (the
+ * wallclock CI gate forbids NY-calendar arithmetic outside the display boundary).
+ */
+
+/** One upkeep period = 10080 ticks (1 week @ 1 tick/min; matches the gov debate window). */
+export const UPKEEP_PERIOD_TICKS = 10080;
+
+/** Upkeep charge per period = 2% (200 bps) of the parcel's price_bios. */
+export const UPKEEP_RATE_BPS = 200;
+
+/**
+ * Condition-ladder grace thresholds, keyed by the number of MISSED periods at which
+ * each transition fires: worn at 1 missed, derelict at 2, reclaim at 3 (D-NH-03/05).
+ */
+export const RECLAIM_GRACE_PERIODS = { worn: 1, derelict: 2, reclaim: 3 } as const;
+
+/**
+ * Upkeep owed per period for a parcel = floor(price_bios × UPKEEP_RATE_BPS / 10000).
+ * Commons (price 0 / treasury-owned) yield 0 and are exempt at the scanner.
+ */
+export function upkeepDue(parcel: Parcel): number {
+    return Math.floor((parcel.priceBios * UPKEEP_RATE_BPS) / 10000);
+}

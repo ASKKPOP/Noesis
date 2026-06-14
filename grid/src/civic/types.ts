@@ -40,13 +40,39 @@ export interface EntryPolicy {
     allowlist: string[];
 }
 
+/** A single placed furniture object inside an interior area (D-NH-02 / Phase 59). */
+export interface InteriorObject {
+    kind: string;                 // a FURNITURE_CATALOG kind
+    class: 'mirror' | 'functional';
+    state?: string;               // optional render/use state (unused in v1)
+}
+
+/** A named area (room/zone) holding furniture objects. */
+export interface InteriorArea {
+    name: string;
+    objects: InteriorObject[];
+}
+
+/**
+ * The Smallville-shaped interior tree (D-NH-02). Lives Grid-side ONLY — its
+ * contents are NEVER serialized onto the audit chain; only object_kind/object_class
+ * enums ever cross the boundary (D-59-08).
+ */
+export interface Interior {
+    areas: InteriorArea[];
+}
+
 export interface Structure {
     name: string;                 // plaintext; lives Grid-side only (never on the audit chain raw)
     type: StructureType;
     visibility: Visibility;
     builtAtTick: number;
     namedAddress: string | null;  // optional NDS name, e.g. "place://aurora-cafe.genesis"
+    interior?: Interior;          // Phase 59 HOUSE-2: furnished interior tree (Grid-side only)
 }
+
+/** The upkeep condition ladder (D-NH-03): maintained → worn → derelict (→ reclaimed). */
+export type ParcelCondition = 'maintained' | 'worn' | 'derelict';
 
 export interface Parcel {
     id: string;                   // canonical slug address, e.g. "genesis:residential:0007"
@@ -60,6 +86,9 @@ export interface Parcel {
     structure: Structure | null;
     entryPolicy: EntryPolicy;
     acquiredAtTick: number | null;
+    condition: ParcelCondition;   // Phase 59 HOUSE-2: upkeep ladder state (default 'maintained')
+    lastUpkeepTick?: number;      // last tick upkeep was collected (undefined until first charge)
+    missedPeriods: number;        // consecutive missed upkeep periods (default 0)
 }
 
 /** Discriminated result for the registry's expected-failure operations. */

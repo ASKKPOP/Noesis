@@ -13,6 +13,8 @@
 import {
     type Parcel,
     type Structure,
+    type StructureType,
+    type Interior,
     type ZoneId,
     type EntryPolicy,
     type BuildInput,
@@ -27,6 +29,7 @@ import {
     BUSINESS_ZONES,
     STRUCTURE_ZONE_FIT,
 } from './types.js';
+import { FURNITURE_CATALOG, isValidFurniture } from './furniture.js';
 
 export interface SeedZoneInput {
     zoneId: ZoneId;
@@ -71,6 +74,8 @@ export class ParcelRegistry {
                 structure: null,
                 entryPolicy: { policy: 'open', allowlist: [] },
                 acquiredAtTick: null,
+                condition: 'maintained',
+                missedPeriods: 0,
             });
         }
     }
@@ -186,6 +191,95 @@ export class ParcelRegistry {
         return { ok: true, parcel: this.clone(p) };
     }
 
+    /**
+     * Furnish a structure interior by appending one catalog furniture object to an
+     * area (D-NH-02 / D-59-03). Owner-only (defense in depth — the route also checks).
+     * Validates `kind` against the closed catalog + structure-type fit via the single
+     * `isValidFurniture` gate; on rejection throws `invalid_furniture`. The area is
+     * created if absent; the object is appended (class copied from the catalog).
+     *
+     * Returns the mutated Structure. The interior tree lives ONLY in registry/DB
+     * state — it is NEVER handed to an append-* producer (only object_kind/object_class
+     * cross the audit boundary, wired in Wave 4).
+     *
+     * If the parcel/structure is not yet materialized in this registry instance, it is
+     * lazily provisioned (zone inferred from the address; caller treated as owner) so
+     * interior mutation works against a hydrated or freshly-built home.
+     */
+    extendInterior(address: string, ownerDid: string, opts: { area: string; kind: string }): Structure {
+        const p = this.ensureOwnedStructure(address, ownerDid);
+        if (!isValidFurniture(opts.kind, p.structure!.type)) {
+            throw new Error(`invalid_furniture: ${opts.kind} not valid in ${p.structure!.type}`);
+        }
+        const entry = FURNITURE_CATALOG[opts.kind];
+        const interior: Interior = p.structure!.interior ?? { areas: [] };
+        let area = interior.areas.find(a => a.name === opts.area);
+        if (!area) {
+            area = { name: opts.area, objects: [] };
+            interior.areas.push(area);
+        }
+        area.objects.push({ kind: entry.kind, class: entry.class });
+        p.structure!.interior = interior;
+        return this.cloneStructure(p.structure!);
+    }
+
+    /**
+     * Locate the owned parcel + its structure, lazily provisioning both if this
+     * registry instance has not been seeded/hydrated for the address. Throws
+     * `not_owner` when an existing parcel belongs to someone else.
+     */
+    private ensureOwnedStructure(address: string, ownerDid: string): Parcel {
+        let p = this.parcels.get(address);
+        if (!p) {
+            p = this.provisionParcel(address, ownerDid);
+            this.parcels.set(address, p);
+        }
+        if (p.ownerDid !== ownerDid) {
+            throw new Error(`not_owner: ${ownerDid} does not own ${address}`);
+        }
+        if (p.structure === null) {
+            p.structure = {
+                name: address,
+                type: this.structureTypeForAddress(address),
+                visibility: 'open',
+                builtAtTick: 0,
+                namedAddress: null,
+            };
+        }
+        return p;
+    }
+
+    /** Build a minimal owned parcel for an address (used by lazy interior provisioning). */
+    private provisionParcel(address: string, ownerDid: string): Parcel {
+        const zoneId = this.zoneForAddress(address);
+        return {
+            id: address,
+            gridId: this.gridId,
+            zoneId,
+            ring: 0,
+            sector: 0,
+            level: 0,
+            ownerDid,
+            priceBios: 0,
+            structure: null,
+            entryPolicy: { policy: 'open', allowlist: [] },
+            acquiredAtTick: null,
+            condition: 'maintained',
+            missedPeriods: 0,
+        };
+    }
+
+    /** Parse the zone segment from a `grid:zone:seq` address. */
+    private zoneForAddress(address: string): ZoneId {
+        return address.split(':')[1] as ZoneId;
+    }
+
+    /** A representative structure type for the address's zone (home for residential). */
+    private structureTypeForAddress(address: string): StructureType {
+        const zoneId = this.zoneForAddress(address);
+        return zoneId === 'residential' ? 'home' : 'shop';
+    }
+
     /** Total parcels seeded. */
     get count(): number {
         return this.parcels.size;
@@ -203,8 +297,22 @@ export class ParcelRegistry {
     private clone(p: Parcel): Parcel {
         return {
             ...p,
-            structure: p.structure ? { ...p.structure } : null,
+            structure: p.structure ? this.cloneStructure(p.structure) : null,
             entryPolicy: { policy: p.entryPolicy.policy, allowlist: [...p.entryPolicy.allowlist] },
+        };
+    }
+
+    private cloneStructure(s: Structure): Structure {
+        return {
+            ...s,
+            interior: s.interior
+                ? {
+                    areas: s.interior.areas.map(a => ({
+                        name: a.name,
+                        objects: a.objects.map(o => ({ ...o })),
+                    })),
+                }
+                : undefined,
         };
     }
 }

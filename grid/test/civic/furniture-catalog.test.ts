@@ -23,7 +23,7 @@ const FUNCTIONAL_KINDS = [
 // Deferred dynamic import — never resolved while the suite is skipped (Wave 1 ships the module).
 const loadFurniture = () => import('../../src/civic/furniture.js');
 
-describe.skip('Phase 59 HOUSE-2 — furniture catalog (closed v1) [Wave 1 un-skips]', () => {
+describe('Phase 59 HOUSE-2 — furniture catalog (closed v1) [Wave 1 un-skips]', () => {
     // ── catalog shape: 6 mirror + 7 functional (13 total) ──────────────────────
     it('FURNITURE_CATALOG has EXACTLY the 6 mirror kinds', async () => {
         const { FURNITURE_CATALOG } = await loadFurniture();

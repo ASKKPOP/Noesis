@@ -13,7 +13,7 @@
  */
 import type { Pool, RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import type { ParcelRegistry } from './parcel-registry.js';
-import type { Parcel, ZoneId, StructureType, Visibility } from './types.js';
+import type { Parcel, ZoneId, StructureType, Visibility, Interior, ParcelCondition } from './types.js';
 import { gravityPrice, GENESIS_CORE_SEED_PLAN, PURCHASABLE_RINGS } from './founding-law.js';
 
 /** A civic_parcels DB row (snake_case columns as returned by mysql2). */
@@ -34,6 +34,11 @@ export interface ParcelRow extends RowDataPacket {
     named_address: string | null;
     entry_policy: 'open' | 'allowlist';
     entry_allowlist: string[] | string | null;
+    // Phase 59 HOUSE-2 (v39) — interiors + upkeep columns.
+    structure_interior: Interior | string | null;
+    condition: ParcelCondition;
+    last_upkeep_tick: number | null;
+    missed_periods: number;
 }
 
 /** Map a DB row into the in-memory Parcel shape (entry_allowlist may arrive as JSON text). */
@@ -43,6 +48,7 @@ function rowToParcel(row: ParcelRow): Parcel {
         : typeof row.entry_allowlist === 'string' && row.entry_allowlist.length > 0
             ? (JSON.parse(row.entry_allowlist) as string[])
             : [];
+    const interior = parseInterior(row.structure_interior);
     return {
         id: row.parcel_id,
         gridId: row.grid_name,
@@ -59,11 +65,27 @@ function rowToParcel(row: ParcelRow): Parcel {
                 visibility: row.visibility ?? 'open',
                 builtAtTick: row.built_at_tick ?? 0,
                 namedAddress: row.named_address,
+                ...(interior ? { interior } : {}),
             }
             : null,
         entryPolicy: { policy: row.entry_policy, allowlist },
         acquiredAtTick: row.acquired_at_tick,
+        condition: row.condition ?? 'maintained',
+        ...(row.last_upkeep_tick !== null && row.last_upkeep_tick !== undefined
+            ? { lastUpkeepTick: row.last_upkeep_tick }
+            : {}),
+        missedPeriods: row.missed_periods ?? 0,
     };
+}
+
+/** Parse the structure_interior JSON column (mysql2 may return it as text). */
+function parseInterior(raw: Interior | string | null | undefined): Interior | undefined {
+    if (raw === null || raw === undefined) return undefined;
+    if (typeof raw === 'string') {
+        if (raw.length === 0) return undefined;
+        return JSON.parse(raw) as Interior;
+    }
+    return raw;
 }
 
 export class ParcelStore {
@@ -156,6 +178,57 @@ export class ParcelStore {
             [parcel.entryPolicy.policy, JSON.stringify(parcel.entryPolicy.allowlist), parcel.id],
         );
     }
+
+    /**
+     * Persist a furnished interior DB-first (Phase 59 HOUSE-2). The interior tree is
+     * Grid-side JSON — it lives in this column and NEVER crosses the audit chain.
+     * The caller mirrors the new tree into memory after this write returns.
+     */
+    async persistInterior(parcel: Parcel): Promise<void> {
+        const interior = parcel.structure?.interior ?? null;
+        await this.pool.query<ResultSetHeader>(
+            `UPDATE civic_parcels
+                SET structure_interior = ?
+              WHERE parcel_id = ?`,
+            [interior ? JSON.stringify(interior) : null, parcel.id],
+        );
+    }
+
+    /** Persist a condition-ladder change DB-first (condition + missed_periods). Wave 4. */
+    async persistCondition(parcel: Parcel): Promise<void> {
+        await this.pool.query<ResultSetHeader>(
+            `UPDATE civic_parcels
+                SET condition = ?, missed_periods = ?
+              WHERE parcel_id = ?`,
+            [parcel.condition, parcel.missedPeriods, parcel.id],
+        );
+    }
+
+    /** Persist an upkeep collection DB-first (last_upkeep_tick + missed_periods). Wave 4. */
+    async persistUpkeep(parcel: Parcel): Promise<void> {
+        await this.pool.query<ResultSetHeader>(
+            `UPDATE civic_parcels
+                SET last_upkeep_tick = ?, missed_periods = ?
+              WHERE parcel_id = ?`,
+            [parcel.lastUpkeepTick ?? null, parcel.missedPeriods, parcel.id],
+        );
+    }
+
+    /**
+     * Persist a reclaim DB-first (Wave 4): ownership returns to the treasury, the
+     * interior + structure are razed, and the condition ladder resets to maintained.
+     */
+    async persistReclaim(parcel: Parcel): Promise<void> {
+        await this.pool.query<ResultSetHeader>(
+            `UPDATE civic_parcels
+                SET owner_civic_did = NULL,
+                    structure_interior = NULL,
+                    condition = 'maintained',
+                    missed_periods = 0
+              WHERE parcel_id = ?`,
+            [parcel.id],
+        );
+    }
 }
 
 /**
@@ -192,6 +265,8 @@ export function buildGenesisCoreParcels(gridName: string): Parcel[] {
                     : null,
                 entryPolicy: { policy: 'open', allowlist: [] },
                 acquiredAtTick: null,
+                condition: 'maintained',
+                missedPeriods: 0,
             });
         }
     }

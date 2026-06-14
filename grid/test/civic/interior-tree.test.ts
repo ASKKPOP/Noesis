@@ -20,7 +20,7 @@ const loadRegistry = () => import('../../src/civic/parcel-registry.js');
 const OWNER = 'did:civic:noesis:alice';
 const HOME = 'genesis:residential:0001';
 
-describe.skip('Phase 59 HOUSE-2 — interior tree mutation (extendInterior) [Wave 1 un-skips]', () => {
+describe('Phase 59 HOUSE-2 — interior tree mutation (extendInterior) [Wave 1 un-skips]', () => {
     it('extendInterior on an owned home creates the area when absent and appends the object', async () => {
         const { ParcelRegistry } = await loadRegistry();
         const registry = new ParcelRegistry('genesis');

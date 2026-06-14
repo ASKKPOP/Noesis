@@ -855,4 +855,28 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS civic_parcels`,
     },
+    // Phase 59 HOUSE-2 (NH2-01 / D-59-02 / R-59-01) — interiors + upkeep columns.
+    // structure_interior holds the D-NH-02 Smallville interior tree (Grid-side JSON;
+    // never crosses the audit chain). condition walks the upkeep ladder
+    // (maintained → worn → derelict); last_upkeep_tick + missed_periods drive the
+    // tick-based upkeep scanner (Wave 4). Applies cleanly on top of v38.
+    // Write-through store; registry hydrated on boot reads all four columns.
+    {
+        version: 39,
+        name: 'add_interior_upkeep_to_civic_parcels',
+        up: `
+            ALTER TABLE civic_parcels
+              ADD COLUMN structure_interior JSON NULL,
+              ADD COLUMN condition ENUM('maintained','worn','derelict') NOT NULL DEFAULT 'maintained',
+              ADD COLUMN last_upkeep_tick INT UNSIGNED NULL,
+              ADD COLUMN missed_periods TINYINT UNSIGNED NOT NULL DEFAULT 0
+        `,
+        down: `
+            ALTER TABLE civic_parcels
+              DROP COLUMN missed_periods,
+              DROP COLUMN last_upkeep_tick,
+              DROP COLUMN condition,
+              DROP COLUMN structure_interior
+        `,
+    },
 ];
