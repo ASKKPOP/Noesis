@@ -345,6 +345,44 @@ Driving inputs for v3.0 (locked at milestone open):
   - Pitfall 4 honored (audit_trail query enumerates 3 IRS event types — no `LIKE 'irs.%'`).
   - Pitfall 6 honored (sole-producer functions called by multiple sites; `audit.append('irs.…', …)` appears exactly once per event type).
 
+## v3.1 Phase 60 HOUSE-3 BUILT (2026-06-14)
+
+- **Phase 60 Nous House HOUSE-3 Commerce & Co-work is implemented + verified** — built on Phases
+  58+59, harness-driven (Planner→Generator→Evaluator), every wave independently re-verified.
+  Allowlist **95 → 99** (+4): `zoning.role_granted`, `zoning.role_revoked`,
+  `treasury.structure_revenue`, `zoning.cowork_session` — each a full sole-producer triad
+  (closed-tuple + no-spread + payloadPrivacyCheck). No board/task/scope/place content on the chain.
+- **Built:** migration v40 (`civic_parcel_roles` / `civic_credit_ledger` / `civic_cowork_agreements`
+  + shop `bound_shop_id`); closed `ROLE_CAPABILITIES` (owner⊇staff⊇guest, `isHumanDid` rejection
+  D-NH-07); **severance FSM** (ACTIVE→NOTICE→SETTLEMENT→WIND_DOWN→REVOKE→ARCHIVED); mutual-credit
+  **IOU ledger** (D-NH-06, caps `IOU_PAIR_CAP_BIOS=1000`/`IOU_GLOBAL_CAP_BIOS=5000`, co-work always
+  paid → `recordIou` when unfunded, `settleIou`/`outstandingFor`); **co-work task boards**
+  (post/claim/complete, `cowork_must_pay`); `place://name.genesis` NDS names (`place_name_taken` 409,
+  `_resetPlace` test helper); **shop⇄structure binding** (`bound_shop_id`, per-zone tax
+  `ZONE_TAX_BPS` business 1200 / shopping 1000 / manufacture 900 / residential 500,
+  `structureRevenueDue` skim → `treasury.structure_revenue`); **ring-expansion TEMPLATE**
+  (`onLawEnacted` consumes the EXISTING Phase 46 `gov.law_enacted` — `seed_ring` + `amend_law`
+  UPKEEP_RATE_BPS/ZONE_TAX_BPS; NO new governance path/event/onTick; constants are default fallback);
+  NEW CI gate **A11e** `check-cross-house-injection.mjs` (visitor/board content is DATA never
+  instructions); 8 brain commerce verbs (grant_role/revoke_role/invite/bind_shop/name_place/
+  post_task/claim_task/complete_task) + commerce `my_places`; dashboard commerce surfaces
+  (shop badge + place name, roles panel, co-work board, IOU strip — additive).
+- **Invariants held:** zero-diff R-31-01 (no chain/audit-src edits — events ride new producers);
+  single-onTick R-H-03 preserved (no new `.onTick(`); VOTE-05; D-NH-07 humans never own/staff;
+  wallclock + sole-producer + civic-did-issuance + cross-house-injection + privacy-walker gates
+  green. Full grid suite **349 files / 3277 tests green**; allowlist 99.
+- **Definition of Done E2E** (`grid/test/civic/house-3-e2e.test.ts`): grant staff role →
+  co-work funded (`transferOusia`) + IOU (`recordIou`, never free) → `cowork_session`; bind+name
+  shop → sale → `structure_revenue` at zone tax; duplicate name 409; ring-expansion enacts ring 4;
+  revoke → IOU drain → severance FSM ARCHIVED → `role_revoked`; human rejected 403; privacy walk
+  over the real run's trail. Artifacts: `.planning/phases/60-house-3-commerce-cowork/` (60-COMPLETION.md).
+- **Note:** revoke route emits `reason:'owner_revoked'` (not the plan's misnamed `'severance_complete'`);
+  E2E asserts the real value per R6 (no source rewrite). `'severance_complete'` stays a valid
+  un-emitted enum member.
+- **Side-fix (test-infra, behavior-preserving):** brain `ananke` ActionType count 34→44 orphan
+  (`a6dcb00`) — Phase 59 (+2 interior) / Phase 60 (+8 commerce) grew the closed enum; full brain
+  suite 904 passed.
+
 ## v3.1 Phase 59 HOUSE-2 BUILT (2026-06-14)
 
 - **Phase 59 Nous House HOUSE-2 Interiors & Upkeep is implemented + verified** — built on Phase 58,

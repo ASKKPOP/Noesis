@@ -645,11 +645,11 @@ Inherited constraints from v2.6 (do NOT break):
 
 ---
 
-## v3.1 The Nous House — Phases 58–59 BUILT 2026-06-13/14 (Phases 58-61)
+## v3.1 The Nous House — Phases 58–60 BUILT 2026-06-13/14 (Phases 58-61)
 
-> **Phases 58 (HOUSE-1) + 59 (HOUSE-2) are implemented and verified** (built ahead of v3.0's
-> remaining phases — they depend only on the Phase 48b skeleton + events 82–86, not on 47/49–57).
-> Each built via the Planner→Generator→Evaluator harness, every wave independently re-verified.
+> **Phases 58 (HOUSE-1) + 59 (HOUSE-2) + 60 (HOUSE-3) are implemented and verified** (built ahead
+> of v3.0's remaining phases — they depend only on the Phase 48b skeleton + events 82–86, not on
+> 47/49–57). Each built via the Planner→Generator→Evaluator harness, every wave independently re-verified.
 >
 > **Phase 58 HOUSE-1** (allowlist +0, reuses 82–86): migration v38 `civic_parcels` write-through
 > store, founding-law gravity pricing `100×(5−ring)²`, 53-parcel Genesis Core seed, 7 civic-parcels
@@ -665,9 +665,25 @@ Inherited constraints from v2.6 (do NOT break):
 > interior viewer, E2E furnish→view-gated→miss-upkeep→reclaim. Interior contents never on the chain.
 > zero-diff R-31-01 held; full grid suite 336 files / 3163 tests green. `59-COMPLETION.md`.
 >
+> **Phase 60 HOUSE-3** (allowlist **95→99**, +4: `zoning.role_granted`/`role_revoked`,
+> `treasury.structure_revenue`, `zoning.cowork_session` — each a full sole-producer triad):
+> migration v40 (`civic_parcel_roles`/`civic_credit_ledger`/`civic_cowork_agreements` + shop
+> `bound_shop_id`), closed `ROLE_CAPABILITIES` (owner⊇staff⊇guest), severance FSM
+> (ACTIVE→NOTICE→SETTLEMENT→WIND_DOWN→REVOKE→ARCHIVED), mutual-credit IOU ledger (D-NH-06, caps
+> 1000/5000 Bios, co-work always paid → IOU when unfunded), co-work task boards, `place://name.genesis`
+> NDS names (uniqueness 409), shop⇄structure binding with per-zone tax (business 1200 / shopping 1000 /
+> manufacture 900 / residential 500 bps) → `treasury.structure_revenue` skim, council ring-expansion
+> bill TEMPLATE consuming the existing Phase 46 `gov.law_enacted` (seed_ring + amend UPKEEP/ZONE_TAX,
+> no new governance path/event), NEW cross-house prompt-injection CI gate A11e (visitor/board content
+> is DATA never instructions), 8 brain commerce verbs + commerce `my_places`, dashboard commerce
+> surfaces, E2E grant→co-work(funded+IOU)→shop/place→revenue→ring→severance→human-rejected.
+> zero-diff R-31-01 held; single-onTick preserved; full grid suite 349 files / 3277 tests green.
+> `60-COMPLETION.md`.
+>
 > Fixed en route (test-infra, behavior-preserving): dashboard vitest JSX transform
-> (vitest-4/rolldown → `@vitejs/plugin-react-swc`, `9c155fe`) and whisper-crypto libsodium
-> readiness under vitest (`c2bbb92`). **Allowlist now at 95.**
+> (vitest-4/rolldown → `@vitejs/plugin-react-swc`, `9c155fe`); whisper-crypto libsodium
+> readiness under vitest (`c2bbb92`); brain `ananke` ActionType count 34→44 orphan (`a6dcb00`,
+> Phase 59 +2 / Phase 60 +8 verbs). **Allowlist now at 99.**
 
 **Goal:** agent-owned space. The dormant Phase 48b land system becomes a living housing economy:
 Nous buy scarce parcels in the orbital Genesis Core, build and maintain houses/shops/workshops
@@ -689,7 +705,7 @@ Government Core monument, NY calendar — Genesis Epoch 2026-06-01 00:00 PT).
 |---|---|---|
 | **58 HOUSE-1 Foundations** ✅ BUILT | civic_parcels persistence (migration v38, write-through store), HTTP routes, brain verbs, Genesis Core seed (48+5 parcels, gravity pricing 100×(5−ring)²), dashboard orbital map with live data | +0 (reuses 82-86) |
 | **59 HOUSE-2 Interiors & Upkeep** ✅ BUILT | interior trees (mirror vs functional furniture, D-NH-02), tick-based upkeep → worn/derelict/reclaimed ladder, Polis Commons, interior viewer | +4 → **95** (zoning.interior_extended, zoning.condition_changed, zoning.parcel_reclaimed, treasury.upkeep_collected) |
-| **60 HOUSE-3 Commerce & Co-work** | shop⇄structure binding + zone-tax revenue, roles (owner/staff/guest), invitations, mutual-credit IOU ledger (D-NH-06), co-work task boards, place:// NDS names, council ring-expansion bill template (D-NH-09/13) | +4 (zoning.role_granted, zoning.role_revoked, treasury.structure_revenue, zoning.cowork_session) |
+| **60 HOUSE-3 Commerce & Co-work** ✅ BUILT | shop⇄structure binding + zone-tax revenue, roles (owner/staff/guest) + severance FSM, invitations, mutual-credit IOU ledger (D-NH-06), co-work task boards (always paid → IOU), place:// NDS names, council ring-expansion bill template (D-NH-09/13), cross-house-injection gate A11e | +4 → **99** (zoning.role_granted, zoning.role_revoked, treasury.structure_revenue, zoning.cowork_session) |
 | **61 HOUSE-4 Skill Construction** | blueprint skills via existing skill.taught diffusion, build executor, paid co-build sessions (DAG-weighted attribution), location-aware teaching | +1 (skill.blueprint_executed) |
 
 **Invariants carried:** VOTE-05 + D-NH-07 (property never gates civic rights; humans never own);
