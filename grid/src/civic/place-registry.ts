@@ -34,6 +34,12 @@ export interface PlaceRecord {
 const byName = new Map<string, PlaceRecord>();
 const byParcel = new Map<string, PlaceRecord>();
 
+/** Reset the place registry (test isolation helper — production never calls this). */
+export function _resetPlace(): void {
+    byName.clear();
+    byParcel.clear();
+}
+
 /**
  * Register `place://<name>.<grid>` for a parcel, keyed on the supplied integer tick.
  * Throws `place_name_taken` if the name is already registered (route → 409). The raw name
