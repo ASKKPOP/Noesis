@@ -33,6 +33,7 @@ import type { FastifyInstance } from 'fastify';
 import { createHash } from 'node:crypto';
 import type { GridServices } from '../server.js';
 import type { Parcel, StructureType, Visibility } from '../../civic/types.js';
+import { isValidFurniture, FURNITURE_CATALOG } from '../../civic/furniture.js';
 import { TREASURY_DID } from './registry.js';
 import { appendZoningParcelPurchased } from '../../audit/append-zoning-parcel-purchased.js';
 import { appendTreasuryParcelRevenue } from '../../audit/append-treasury-parcel-revenue.js';
@@ -67,8 +68,37 @@ function publicView(p: Parcel, occupantCount: number): Record<string, unknown> {
         owner_civic_did_hash: p.ownerDid === null ? null : sha256Hex(p.ownerDid),
         structure: p.structure === null
             ? null
-            : { type: p.structure.type, visibility: p.structure.visibility }, // NO plaintext name
+            : { type: p.structure.type, visibility: p.structure.visibility }, // NO plaintext name; NEVER the interior tree
+        // Phase 59 HOUSE-2 (D-59-08): the public feed exposes the upkeep condition —
+        // exterior + condition only. The interior tree is NEVER serialized here.
+        condition: p.condition,
         occupant_count: occupantCount,
+    };
+}
+
+/**
+ * Phase 59 HOUSE-2 · Wave 2 — typed EMIT SEAM for zoning.interior_extended.
+ *
+ * The allowlist member + sole-producer `appendZoningInteriorExtended` land in
+ * Wave 4. Until then this helper materializes the EXACT closed 4-tuple that crosses
+ * the audit boundary — `{object_class, object_kind, parcel_id, tick}` — from the
+ * catalog enums ONLY. Interior names/state NEVER appear here (D-59-08). Wave 4
+ * replaces the route's TODO call site with the real producer; this shape is frozen.
+ */
+export interface InteriorExtendedSeamInput {
+    objectClass: 'mirror' | 'functional';
+    objectKind: string;
+    parcelId: string;
+    tick: number;
+}
+export function INTERIOR_EXTEND_EMIT_SEAM(
+    input: InteriorExtendedSeamInput,
+): { object_class: string; object_kind: string; parcel_id: string; tick: number } {
+    return {
+        object_class: input.objectClass,
+        object_kind: input.objectKind,
+        parcel_id: input.parcelId,
+        tick: input.tick,
     };
 }
 
@@ -289,6 +319,120 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             return reply.code(200).send({ updated: true, policy });
         },
     );
+
+    // --- POST /api/v1/civic/parcels/:id/interior/extend (civic_did_required, owner-only) ---
+    app.post<{ Params: { id: string }; Body: Record<string, unknown> }>(
+        '/api/v1/civic/parcels/:id/interior/extend',
+        async (req, reply) => {
+            const guarded = requireCivicWriter(req, reply, services);
+            if (!guarded) return reply; // 401/403/503 already sent
+            const { parcelRegistry, store, buyerDid } = guarded;
+            const addr = req.params.id;
+
+            const parcel = parcelRegistry.get(addr);
+            if (!parcel) return reply.code(404).send({ error: 'parcel_not_found' });
+            // Owner-only (the Phase 58 not_owner discipline; humans already refused by the tier).
+            if (parcel.ownerDid !== buyerDid) return reply.code(403).send({ error: 'not_owner' });
+            if (parcel.structure === null) return reply.code(409).send({ error: 'no_structure' });
+
+            const body = (req.body ?? {}) as Record<string, unknown>;
+            const area = body['area'];
+            const kind = body['kind'];
+            if (typeof area !== 'string' || area.length === 0) {
+                return reply.code(400).send({ error: 'invalid_area' });
+            }
+            if (typeof kind !== 'string') {
+                return reply.code(422).send({ error: 'invalid_furniture' });
+            }
+            // The single catalog gate (D-59-04) — reused, never re-implemented.
+            if (!isValidFurniture(kind, parcel.structure.type)) {
+                return reply.code(422).send({ error: 'invalid_furniture' });
+            }
+
+            // Mutate the Grid-side interior tree, then persist DB-first + mirror memory.
+            const structure = parcelRegistry.extendInterior(addr, buyerDid, { area, kind });
+            await store.persistInterior(parcelRegistry.get(addr)!);
+
+            // EMIT SEAM (Wave 4): zoning.interior_extended carries ONLY the closed 4-tuple
+            // {object_class, object_kind, parcel_id, tick} — catalog enums, NEVER interior
+            // names/state. The allowlist member + appendZoningInteriorExtended land in Wave 4;
+            // until then we materialize the exact payload shape but do NOT emit (the allowlist
+            // would throw on a non-member event).
+            const tick = currentTick(services);
+            // TODO(Wave 4): replace with appendZoningInteriorExtended(services.audit, payload).
+            const _emitPayload = INTERIOR_EXTEND_EMIT_SEAM({
+                objectClass: FURNITURE_CATALOG[kind].class,
+                objectKind: FURNITURE_CATALOG[kind].kind,
+                parcelId: parcel.id,
+                tick,
+            });
+            void _emitPayload;
+
+            // 200 with the OWNER-visible structure summary (full tree — the owner may see it).
+            return reply.code(200).send({
+                extended: true,
+                parcel_id: parcel.id,
+                structure: {
+                    type: structure.type,
+                    visibility: structure.visibility,
+                    interior: structure.interior ?? { areas: [] },
+                },
+            });
+        },
+    );
+
+    // --- GET /api/v1/civic/parcels/:id/interior (entry-policy-gated read) ---
+    app.get<{ Params: { id: string } }>('/api/v1/civic/parcels/:id/interior', async (req, reply) => {
+        const parcelRegistry = services.parcels?.registry;
+        if (!parcelRegistry) return reply.code(503).send({ error: 'civic_parcels_unavailable' });
+
+        const parcel = parcelRegistry.get(req.params.id);
+        if (!parcel) return reply.code(404).send({ error: 'parcel_not_found' });
+        if (parcel.structure === null) return reply.code(404).send({ error: 'no_structure' });
+
+        const ctx = req.didContext;
+        const did = ctx?.did;
+        const isCivicMember = ctx?.tier === 'civic_member' && !!did && CIVIC_DID_RE.test(did) && !HUMAN_CIVIC_DID_RE.test(did);
+        const isOwner = isCivicMember && parcel.ownerDid === did;
+
+        const interiorView = { areas: parcel.structure.interior?.areas ?? [] };
+
+        // Owner → always allowed (full tree, even derelict).
+        if (isOwner) {
+            return reply.code(200).send({
+                parcel_id: parcel.id,
+                condition: parcel.condition,
+                interior: interiorView,
+            });
+        }
+
+        // D-NH-07: humans never see private interiors. A human cookie session may only
+        // ever reach an OPEN interior; a private one is refused outright.
+        if (ctx?.tier === 'human_visitor' && parcel.structure.visibility !== 'open') {
+            return reply.code(403).send({ error: 'closed_to_visitors' });
+        }
+
+        // Visitor gate: derelict structures are closed to ALL non-owners (D-59-07).
+        if (parcel.condition === 'derelict') {
+            return reply.code(403).send({ error: 'closed_to_visitors' });
+        }
+
+        // Visitor permitted only if the structure is open OR (for Nous) on the allowlist.
+        const permitted =
+            parcel.structure.visibility === 'open' ||
+            (isCivicMember &&
+                parcel.entryPolicy.policy === 'allowlist' &&
+                parcel.entryPolicy.allowlist.includes(did!));
+        if (!permitted) {
+            return reply.code(403).send({ error: 'closed_to_visitors' });
+        }
+
+        return reply.code(200).send({
+            parcel_id: parcel.id,
+            condition: parcel.condition,
+            interior: interiorView,
+        });
+    });
 }
 
 /**

@@ -310,6 +310,16 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/civic/parcels/:id/join':         'civic_did_required',
     'POST /api/v1/civic/parcels/:id/leave':        'civic_did_required',
     'POST /api/v1/civic/parcels/:id/entry-policy': 'civic_did_required',
+
+    // Phase 59 (NH2-04 / R-59-04) — civic-parcels HOUSE-2 interior routes.
+    // - POST interior/extend is civic_did_required (owner-only furnishing; the route
+    //   adds 403 not_owner + 422 invalid_furniture on top of the Nous-only tier gate).
+    // - GET interior is 'public' — consistent with the Phase 58 detail-read GET feeds
+    //   (lines 306–307): the handler performs its own entry-policy + derelict + D-NH-07
+    //   gating (owner always; visitors only on open/allowlisted non-derelict; humans
+    //   never see private interiors). 'public' lets the DID hook pass through to it.
+    'POST /api/v1/civic/parcels/:id/interior/extend': 'civic_did_required',
+    'GET /api/v1/civic/parcels/:id/interior':         'public',
 } as Record<string, RouteDIDPolicy>);
 
 /**
