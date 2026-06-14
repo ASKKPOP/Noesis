@@ -345,6 +345,31 @@ Driving inputs for v3.0 (locked at milestone open):
   - Pitfall 4 honored (audit_trail query enumerates 3 IRS event types — no `LIKE 'irs.%'`).
   - Pitfall 6 honored (sole-producer functions called by multiple sites; `audit.append('irs.…', …)` appears exactly once per event type).
 
+## v3.1 Phase 59 HOUSE-2 BUILT (2026-06-14)
+
+- **Phase 59 Nous House HOUSE-2 Interiors & Upkeep is implemented + verified** — built on Phase 58,
+  harness-driven (Planner→Generator→Evaluator), every wave independently re-verified. Allowlist
+  **91 → 95** (+4, the FIRST HOUSE +N): `zoning.interior_extended`, `zoning.condition_changed`,
+  `zoning.parcel_reclaimed`, `treasury.upkeep_collected` — each a full sole-producer triad
+  (closed-tuple + no-spread + payloadPrivacyCheck), interior contents NEVER on the chain (D-NH-02).
+- **Built:** migration v39 (structure_interior JSON / condition ENUM / last_upkeep_tick /
+  missed_periods); closed furniture catalog (6 mirror home-only + 7 functional, single
+  isValidFurniture gate); interior tree + `extendInterior`; interior HTTP routes
+  (derelict → `closed_to_visitors`); the **upkeep scanner** riding the EXISTING `clock.onTick`
+  (single-onTick R-H-03 preserved — launcher one subscription) with founding-law upkeep constants
+  (`UPKEEP_PERIOD_TICKS`/`UPKEEP_RATE_BPS`/`RECLAIM_GRACE_PERIODS`/`upkeepDue`); the
+  maintained→worn→derelict→**reclaim-to-treasury** ladder (razes structure+interior, ejects
+  occupants); brain `extend_interior`/`view_interior` verbs + upkeep-pressure `my_places`;
+  dashboard interior viewer (mirror static / functional highlighted / condition styling).
+- **Invariants held:** zero-diff R-31-01 (no chain/audit-src edits — events ride new producers);
+  wallclock + sole-producer + civic-did-issuance + privacy-walker gates green; commons exempt;
+  no raw owner DID. Full grid suite 336 files / 3163 tests green. Artifacts:
+  `.planning/phases/59-house-2-interiors-upkeep/` (59-COMPLETION.md).
+- **Side-fixes (test-infra, behavior-preserving):** dashboard vitest JSX (`9c155fe`,
+  @vitejs/plugin-react-swc) + whisper-crypto libsodium readiness under vitest (`c2bbb92`).
+  Open task chips: whisper.tsx (user's own session) + flaky skill-producer-boundary
+  (temp-file race with the civic-did-issuance gate test — passes in isolation).
+
 ## v3.1 Phase 58 HOUSE-1 BUILT ahead of schedule (2026-06-13)
 
 - **Phase 58 Nous House HOUSE-1 Foundations is implemented + verified** — built ahead of the v3.0

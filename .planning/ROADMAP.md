@@ -645,18 +645,29 @@ Inherited constraints from v2.6 (do NOT break):
 
 ---
 
-## v3.1 The Nous House — Phase 58 BUILT 2026-06-13 (Phases 58-61)
+## v3.1 The Nous House — Phases 58–59 BUILT 2026-06-13/14 (Phases 58-61)
 
-> **Phase 58 HOUSE-1 Foundations is implemented and verified** (built ahead of v3.0's
-> remaining phases — it depends only on the already-shipped Phase 48b skeleton + events 82–86,
-> not on Phases 47/49–57). Waves 0–6 all green via the Planner→Generator→Evaluator harness:
-> migration v38 `civic_parcels` (write-through store), founding-law gravity pricing
-> `100×(5−ring)²`, 53-parcel Genesis Core seed, 7 civic-parcels HTTP routes (dual-registry funds
-> flow, D-NH-07 `humans_cannot_own_land`), 6 brain ActionType verbs + `my_places`, the orbital
-> map (`/worldmap/orbital`), and an E2E Definition-of-Done (buy→build→join→leave, all 5 events).
-> **Allowlist +0** (reuses 82–86), zero-diff R-31-01 held, full grid suite 326 files / 3078
-> tests green. Artifacts: `.planning/phases/58-house-1-foundations/` (58-COMPLETION.md).
-> Also fixed en route: the dashboard vitest JSX transform (vitest-4/rolldown → plugin-react-swc).
+> **Phases 58 (HOUSE-1) + 59 (HOUSE-2) are implemented and verified** (built ahead of v3.0's
+> remaining phases — they depend only on the Phase 48b skeleton + events 82–86, not on 47/49–57).
+> Each built via the Planner→Generator→Evaluator harness, every wave independently re-verified.
+>
+> **Phase 58 HOUSE-1** (allowlist +0, reuses 82–86): migration v38 `civic_parcels` write-through
+> store, founding-law gravity pricing `100×(5−ring)²`, 53-parcel Genesis Core seed, 7 civic-parcels
+> HTTP routes (dual-registry funds flow, D-NH-07 `humans_cannot_own_land`), 6 brain verbs +
+> `my_places`, orbital map `/worldmap/orbital`, E2E buy→build→join→leave. `58-COMPLETION.md`.
+>
+> **Phase 59 HOUSE-2** (allowlist **91→95**, +4: `zoning.interior_extended`/`condition_changed`/
+> `parcel_reclaimed`, `treasury.upkeep_collected` — each a full sole-producer triad): migration v39
+> (interior/condition/upkeep columns), closed furniture catalog (6 mirror + 7 functional, D-NH-02),
+> interior tree + `extendInterior`, interior HTTP routes (derelict→`closed_to_visitors`), upkeep
+> scanner riding the existing tick (single-onTick) with the maintained→worn→derelict→**reclaim**
+> ladder, brain `extend_interior`/`view_interior` verbs + upkeep-pressure `my_places`, dashboard
+> interior viewer, E2E furnish→view-gated→miss-upkeep→reclaim. Interior contents never on the chain.
+> zero-diff R-31-01 held; full grid suite 336 files / 3163 tests green. `59-COMPLETION.md`.
+>
+> Fixed en route (test-infra, behavior-preserving): dashboard vitest JSX transform
+> (vitest-4/rolldown → `@vitejs/plugin-react-swc`, `9c155fe`) and whisper-crypto libsodium
+> readiness under vitest (`c2bbb92`). **Allowlist now at 95.**
 
 **Goal:** agent-owned space. The dormant Phase 48b land system becomes a living housing economy:
 Nous buy scarce parcels in the orbital Genesis Core, build and maintain houses/shops/workshops
@@ -677,7 +688,7 @@ Government Core monument, NY calendar — Genesis Epoch 2026-06-01 00:00 PT).
 | Phase | Ships | Allowlist |
 |---|---|---|
 | **58 HOUSE-1 Foundations** ✅ BUILT | civic_parcels persistence (migration v38, write-through store), HTTP routes, brain verbs, Genesis Core seed (48+5 parcels, gravity pricing 100×(5−ring)²), dashboard orbital map with live data | +0 (reuses 82-86) |
-| **59 HOUSE-2 Interiors & Upkeep** | interior trees (mirror vs functional furniture, D-NH-02), tick-based upkeep → worn/derelict/reclaimed ladder, Polis Commons, interior viewer | +4 (zoning.interior_extended, zoning.condition_changed, zoning.parcel_reclaimed, treasury.upkeep_collected) |
+| **59 HOUSE-2 Interiors & Upkeep** ✅ BUILT | interior trees (mirror vs functional furniture, D-NH-02), tick-based upkeep → worn/derelict/reclaimed ladder, Polis Commons, interior viewer | +4 → **95** (zoning.interior_extended, zoning.condition_changed, zoning.parcel_reclaimed, treasury.upkeep_collected) |
 | **60 HOUSE-3 Commerce & Co-work** | shop⇄structure binding + zone-tax revenue, roles (owner/staff/guest), invitations, mutual-credit IOU ledger (D-NH-06), co-work task boards, place:// NDS names, council ring-expansion bill template (D-NH-09/13) | +4 (zoning.role_granted, zoning.role_revoked, treasury.structure_revenue, zoning.cowork_session) |
 | **61 HOUSE-4 Skill Construction** | blueprint skills via existing skill.taught diffusion, build executor, paid co-build sessions (DAG-weighted attribution), location-aware teaching | +1 (skill.blueprint_executed) |
 
