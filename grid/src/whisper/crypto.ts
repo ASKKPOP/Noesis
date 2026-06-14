@@ -31,13 +31,54 @@ import { createHash } from 'node:crypto';
 let _readyPromise: Promise<typeof sodium> | null = null;
 
 /**
+ * The fully-ready sodium object, captured from `await sodium.ready`.
+ *
+ * libsodium-wrappers is a CJS module that mutates its own exports object
+ * asynchronously after `.ready` resolves. Under some ESM-interop layers
+ * (e.g. vitest/esbuild) the default-import binding `sodium` can reflect a
+ * pre-ready snapshot whose crypto functions are still undefined, while the
+ * value the `.ready` promise resolves to is the fully-populated object.
+ *
+ * We therefore capture and use that resolved reference for all operations.
+ */
+let _sodium: typeof sodium | null = null;
+
+/**
  * Memoized sodium ready promise. Second call resolves instantly via cached promise.
  * Must be awaited before any libsodium operation.
+ *
+ * Captures the fully-ready sodium object so synchronous callers use a reference
+ * that is guaranteed to have the crypto functions populated, independent of the
+ * default-import binding's interop behavior.
  */
 export function initSodium(): Promise<typeof sodium> {
     if (_readyPromise) return _readyPromise;
-    _readyPromise = sodium.ready.then(() => sodium);
+    _readyPromise = sodium.ready.then(() => {
+        // `sodium.ready` resolves to undefined; the populated API lives on the
+        // module object itself once ready, so capture `sodium`. If an interop
+        // layer ever resolves the promise with the object, prefer it.
+        _sodium = sodium;
+        return _sodium;
+    });
     return _readyPromise;
+}
+
+// Kick off initialization eagerly at import time (fire-and-forget). Production
+// callers still await initSodium() before use; this just ensures libsodium's
+// lazy self-init has started as early as possible. Module stays CommonJS-safe
+// (no top-level await).
+void initSodium();
+
+/**
+ * Returns the fully-ready sodium object captured by initSodium().
+ * Throws a clear error if called before initSodium() has resolved, instead of
+ * the opaque "x is not a function" produced by a stale default-import binding.
+ */
+function s(): typeof sodium {
+    if (_sodium === null) {
+        throw new Error('sodium not initialized — await initSodium() before calling whisper crypto functions');
+    }
+    return _sodium;
 }
 
 // Callers must await initSodium() before using any synchronous function in this module.
@@ -64,7 +105,7 @@ function sha256(input: Uint8Array | string): Uint8Array {
  * Synchronous — safe to call after initSodium() has resolved.
  */
 export function deriveKeypairFromSeed(seed: Uint8Array): { publicKey: Uint8Array; privateKey: Uint8Array } {
-    const kp = sodium.crypto_box_seed_keypair(seed);
+    const kp = s().crypto_box_seed_keypair(seed);
     return { publicKey: kp.publicKey, privateKey: kp.privateKey };
 }
 
@@ -110,7 +151,7 @@ export function deriveNonce(senderPrivSeed: Uint8Array, tick: number, counter: n
     input.set(tickBuf, senderPrivSeed.length);
     input.set(ctrBuf, senderPrivSeed.length + 8);
     // crypto_generichash = blake2b; 24-byte output; null key = keyless BLAKE2b
-    return sodium.crypto_generichash(24, input, null);
+    return s().crypto_generichash(24, input, null);
 }
 
 // ── AEAD encrypt / decrypt ────────────────────────────────────────────────────
@@ -130,7 +171,7 @@ export function encryptFor(
     plaintext: Uint8Array,
     nonce: Uint8Array,
 ): Uint8Array {
-    return sodium.crypto_box_easy(plaintext, nonce, recipientPub, senderPriv);
+    return s().crypto_box_easy(plaintext, nonce, recipientPub, senderPriv);
 }
 
 /**
@@ -147,7 +188,7 @@ export function decryptFrom(
     nonce: Uint8Array,
 ): Uint8Array {
     // crypto_box_open_easy throws on MAC failure (libsodium convention)
-    return sodium.crypto_box_open_easy(ciphertext, nonce, senderPub, recipientPriv);
+    return s().crypto_box_open_easy(ciphertext, nonce, senderPub, recipientPriv);
 }
 
 // ── Ciphertext hash ───────────────────────────────────────────────────────────
