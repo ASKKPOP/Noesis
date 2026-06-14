@@ -271,7 +271,7 @@ export class ParcelStore {
     async persistCondition(parcel: Parcel): Promise<void> {
         await this.pool.query<ResultSetHeader>(
             `UPDATE civic_parcels
-                SET condition = ?, missed_periods = ?
+                SET \`condition\` = ?, missed_periods = ?
               WHERE parcel_id = ?`,
             [parcel.condition, parcel.missedPeriods, parcel.id],
         );
@@ -296,7 +296,7 @@ export class ParcelStore {
             `UPDATE civic_parcels
                 SET owner_civic_did = NULL,
                     structure_interior = NULL,
-                    condition = 'maintained',
+                    \`condition\` = 'maintained',
                     missed_periods = 0
               WHERE parcel_id = ?`,
             [parcel.id],

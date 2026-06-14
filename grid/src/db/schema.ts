@@ -867,7 +867,7 @@ export const MIGRATIONS: Migration[] = [
         up: `
             ALTER TABLE civic_parcels
               ADD COLUMN structure_interior JSON NULL,
-              ADD COLUMN condition ENUM('maintained','worn','derelict') NOT NULL DEFAULT 'maintained',
+              ADD COLUMN \`condition\` ENUM('maintained','worn','derelict') NOT NULL DEFAULT 'maintained',
               ADD COLUMN last_upkeep_tick INT UNSIGNED NULL,
               ADD COLUMN missed_periods TINYINT UNSIGNED NOT NULL DEFAULT 0
         `,
@@ -875,7 +875,7 @@ export const MIGRATIONS: Migration[] = [
             ALTER TABLE civic_parcels
               DROP COLUMN missed_periods,
               DROP COLUMN last_upkeep_tick,
-              DROP COLUMN condition,
+              DROP COLUMN \`condition\`,
               DROP COLUMN structure_interior
         `,
     },
