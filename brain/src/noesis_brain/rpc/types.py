@@ -79,6 +79,15 @@ class ActionType(str, Enum):
     VISIT            = "visit"             # -> :id/join. Metadata: {parcel}
     LEAVE            = "leave"             # -> :id/leave. No metadata.
     SET_ENTRY_POLICY = "set_entry_policy"  # -> :id/entry-policy. Metadata: {parcel, policy, allowlist?}
+    # Phase 59 Wave 5 — D-59-10 / R-59-10: Nous House HOUSE-2 interior verbs.
+    # CAPABILITIES (not autoplay): the Nous chooses to furnish or inspect an
+    # interior; GridWireClient dispatches them to the interior routes. The Grid
+    # validates `kind` against the closed furniture catalog (furniture.ts).
+    # Metadata shapes (build_civic_land_action is the schema gate):
+    #   extend_interior {area, kind}
+    #   view_interior   {parcel}
+    EXTEND_INTERIOR  = "extend_interior"   # -> :id/interior/extend. Metadata: {area, kind}
+    VIEW_INTERIOR    = "view_interior"     # -> :id/interior. Metadata: {parcel}
 
 
 # JSON-RPC error codes
@@ -187,6 +196,10 @@ _CIVIC_LAND_REQUIRED_KEYS: dict[ActionType, tuple[str, ...]] = {
     ActionType.BUILD: ("parcel", "type", "name"),
     ActionType.VISIT: ("parcel",),
     ActionType.SET_ENTRY_POLICY: ("parcel", "policy"),
+    # Phase 59 Wave 5 (D-59-10): interior verbs. `kind` is validated by the
+    # Grid against the closed furniture catalog; the Brain only gates presence.
+    ActionType.EXTEND_INTERIOR: ("area", "kind"),
+    ActionType.VIEW_INTERIOR: ("parcel",),
 }
 
 _CIVIC_LAND_VERBS: frozenset[ActionType] = frozenset({
@@ -196,6 +209,8 @@ _CIVIC_LAND_VERBS: frozenset[ActionType] = frozenset({
     ActionType.VISIT,
     ActionType.LEAVE,
     ActionType.SET_ENTRY_POLICY,
+    ActionType.EXTEND_INTERIOR,
+    ActionType.VIEW_INTERIOR,
 })
 
 

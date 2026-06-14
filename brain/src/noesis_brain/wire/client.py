@@ -66,6 +66,9 @@ CIVIC_LAND_ROUTES: dict[ActionType, tuple[str, str]] = {
     ActionType.VISIT: ("POST", "/api/v1/civic/parcels/{id}/join"),
     ActionType.LEAVE: ("POST", "/api/v1/civic/parcels/{id}/leave"),
     ActionType.SET_ENTRY_POLICY: ("POST", "/api/v1/civic/parcels/{id}/entry-policy"),
+    # Phase 59 Wave 5 — D-59-10 / R-59-10: HOUSE-2 interior verbs (capabilities).
+    ActionType.EXTEND_INTERIOR: ("POST", "/api/v1/civic/parcels/{id}/interior/extend"),
+    ActionType.VIEW_INTERIOR: ("GET", "/api/v1/civic/parcels/{id}/interior"),
 }
 
 

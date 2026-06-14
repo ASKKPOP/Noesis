@@ -42,6 +42,26 @@ export interface ParcelFeedEntry {
     owner_civic_did_hash: string | null; // HEX64 or null — NEVER a raw DID
     structure: { type: string; visibility: string } | null;
     occupant_count: number;
+    // Phase 59 HOUSE-2 (D-59-08): the public feed exposes the upkeep condition.
+    // exterior + condition only; the interior tree is NEVER on this feed.
+    condition?: 'maintained' | 'worn' | 'derelict';
+}
+
+// ── Interior tree shape (matches GET :id/interior in civic-parcels.ts) ──────────
+// Served ONLY via the entry-policy-gated GET route; never on the public feed.
+interface InteriorObject {
+    kind: string;
+    class: 'mirror' | 'functional';
+    state?: string;
+}
+interface InteriorArea {
+    name: string;
+    objects: InteriorObject[];
+}
+interface InteriorView {
+    parcel_id: string;
+    condition: 'maintained' | 'worn' | 'derelict';
+    interior: { areas: InteriorArea[] };
 }
 
 // ── Zone colours (mirror docs/noesis-genesis-core-map.html ZCOL) ───────────────
@@ -151,11 +171,64 @@ function isOwned(p: ParcelFeedEntry): boolean {
     return p.owner_civic_did_hash !== null && p.owner_civic_did_hash !== undefined;
 }
 
+// ── Condition styling (D-59-11): maintained normal / worn faded / derelict closed.
+// Applied additively to the exterior module fill — the Phase 58 ghost-vs-lit
+// language is preserved; condition only tints the OWNED (lit) modules.
+function conditionOpacity(condition?: string): number {
+    if (condition === 'derelict') return 0.4; // boarded / dimmed
+    if (condition === 'worn') return 0.6; // faded / cracked
+    return 0.92; // maintained — full Phase 58 lit opacity
+}
+
+// A structure is browsable (humans can enter) only when it is OPEN and NOT
+// derelict (D-NH-07 + D-59-07). Derelict structures are CLOSED to all visitors.
+function isBrowsable(p: ParcelFeedEntry): boolean {
+    return (
+        p.structure !== null &&
+        p.structure.visibility === 'open' &&
+        p.condition !== 'derelict'
+    );
+}
+
 // ── Component ───────────────────────────────────────────────────────────────────
 export function OrbitalGenesisMap(): React.ReactElement {
     const [parcels, setParcels] = useState<ParcelFeedEntry[]>(GENESIS_SEED);
     const [source, setSource] = useState<'live' | 'seed'>('seed');
     const [clock, setClock] = useState<string>(noesisNow);
+    // Phase 59 (D-59-11): click-to-enter interior overlay state (additive).
+    // `interior` holds the fetched tree; `closed` marks a derelict/closed click.
+    const [interior, setInterior] = useState<InteriorView | null>(null);
+    const [closed, setClosed] = useState<string | null>(null);
+
+    // Click-to-enter: fetch GET :id/interior for a browsable (open, non-derelict)
+    // structure; a derelict/closed structure shows the "closed" state and does
+    // NOT open. Capability-gated read — never opens a private interior to humans.
+    async function enterInterior(p: ParcelFeedEntry): Promise<void> {
+        if (!isBrowsable(p)) {
+            // Derelict or non-open structure → closed; do not open the interior.
+            setInterior(null);
+            setClosed(p.id);
+            return;
+        }
+        setClosed(null);
+        try {
+            const res = await fetch(
+                `${GRID_ORIGIN}/api/v1/civic/parcels/${p.id}/interior`,
+                { cache: 'no-store' },
+            );
+            if (!res.ok) {
+                // Entry-policy refused (403) or no structure (404) → closed.
+                setInterior(null);
+                setClosed(p.id);
+                return;
+            }
+            const view = (await res.json()) as InteriorView;
+            setInterior(view);
+        } catch {
+            setInterior(null);
+            setClosed(p.id);
+        }
+    }
 
     // Live fetch with embedded-seed fallback.
     useEffect(() => {
@@ -281,6 +354,7 @@ export function OrbitalGenesisMap(): React.ReactElement {
                     const owned = isOwned(p);
                     const color = ZONE_COLOR[p.zone] ?? '#8a98ac';
                     const size = p.ring === 1 ? 11 : p.ring === 2 ? 8 : 6.5;
+                    const browsable = isBrowsable(p);
                     return (
                         <g
                             key={p.id}
@@ -291,6 +365,10 @@ export function OrbitalGenesisMap(): React.ReactElement {
                             data-owned={owned ? 'true' : 'false'}
                             data-occupants={p.occupant_count}
                             data-owner-hash={p.owner_civic_did_hash ?? ''}
+                            data-condition={p.condition ?? 'maintained'}
+                            data-browsable={browsable ? 'true' : 'false'}
+                            onClick={() => void enterInterior(p)}
+                            style={{ cursor: browsable ? 'pointer' : 'not-allowed' }}
                         >
                             {/* spoke from the shell anchor */}
                             <line
@@ -310,7 +388,7 @@ export function OrbitalGenesisMap(): React.ReactElement {
                                 height={size * 2}
                                 rx={size * 0.45}
                                 fill={owned ? color : 'none'}
-                                fillOpacity={owned ? 0.92 : 0.12}
+                                fillOpacity={owned ? conditionOpacity(p.condition) : 0.12}
                                 stroke={color}
                                 strokeOpacity={owned ? 1 : 0.45}
                                 strokeWidth={owned ? 1.6 : 1}
@@ -400,6 +478,104 @@ export function OrbitalGenesisMap(): React.ReactElement {
                     </div>
                 ))}
             </div>
+
+            {/* ── Interior viewer overlay (D-59-11) — click-to-enter, additive. ── */}
+            {closed && (
+                <div
+                    data-testid="interior-closed"
+                    onClick={() => setClosed(null)}
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'rgba(2,6,16,0.82)',
+                        zIndex: 30,
+                        cursor: 'pointer',
+                    }}
+                >
+                    <div
+                        style={{
+                            border: '1.4px dashed #9a5a44',
+                            borderRadius: 8,
+                            padding: '20px 28px',
+                            color: '#da7a4e',
+                            fontSize: 13,
+                            letterSpacing: '0.12em',
+                            textTransform: 'uppercase',
+                            background: 'repeating-linear-gradient(45deg, rgba(154,90,68,0.12) 0 8px, transparent 8px 16px)',
+                        }}
+                    >
+                        Closed · structure boarded up
+                    </div>
+                </div>
+            )}
+
+            {interior && (
+                <div
+                    data-testid="interior-viewer"
+                    data-condition={interior.condition}
+                    onClick={() => setInterior(null)}
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(2,6,16,0.9)',
+                        zIndex: 30,
+                        overflowY: 'auto',
+                        padding: 28,
+                        cursor: 'pointer',
+                    }}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ maxWidth: 520, margin: '0 auto', cursor: 'default' }}
+                    >
+                        <div style={{ fontSize: 11, color: '#8a93a6', letterSpacing: '0.16em', textTransform: 'uppercase' }}>
+                            Interior · {interior.condition}
+                        </div>
+                        {interior.interior.areas.map((area) => (
+                            <div key={area.name} data-testid="interior-area" style={{ marginTop: 16 }}>
+                                <div style={{ fontSize: 12, color: '#cdd6df', marginBottom: 8 }}>
+                                    {area.name}
+                                </div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                                    {area.objects.map((obj) => {
+                                        const highlighted = obj.class === 'functional';
+                                        return (
+                                            <div
+                                                key={`${area.name}:${obj.kind}`}
+                                                data-testid={`interior-object-${obj.kind}`}
+                                                data-furniture-class={obj.class}
+                                                data-highlighted={highlighted ? 'true' : 'false'}
+                                                style={{
+                                                    // Functional = HIGHLIGHTED (affordance-carrying);
+                                                    // mirror = STATIC mesh (render-only, dimmed).
+                                                    border: highlighted
+                                                        ? '1.6px solid #4fd2f2'
+                                                        : '1px solid rgba(138,147,166,0.4)',
+                                                    borderRadius: 6,
+                                                    padding: '8px 12px',
+                                                    fontSize: 12,
+                                                    color: highlighted ? '#4fd2f2' : '#8a93a6',
+                                                    background: highlighted
+                                                        ? 'rgba(63,209,255,0.12)'
+                                                        : 'rgba(138,147,166,0.06)',
+                                                    boxShadow: highlighted
+                                                        ? '0 0 8px rgba(63,209,255,0.4)'
+                                                        : 'none',
+                                                }}
+                                            >
+                                                {obj.kind}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

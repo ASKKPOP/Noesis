@@ -321,6 +321,27 @@ def _lore_commons_section(lore_entries: list) -> str:
     return "## Lore Commons\n\n" + "\n\n".join(blocks)
 
 
+def _upkeep_suffix(place: dict) -> str:
+    """Render the upkeep-pressure suffix for a built My Places line (D-59-10).
+
+    Surfaces ``condition`` (maintained/worn/derelict) and the pending
+    ``upkeep_due`` cost (Bios) when present, e.g. " (worn, upkeep due: 8 Bios)".
+    Returns "" when neither field is set (unbuilt/commons parcels), keeping the
+    Phase 58 line shape intact. ``upkeepDue`` is accepted as an alias of
+    ``upkeep_due`` to match the Grid feed key.
+    """
+    condition = place.get("condition")
+    upkeep = place.get("upkeep_due")
+    if upkeep is None:
+        upkeep = place.get("upkeepDue")
+    parts: list[str] = []
+    if condition:
+        parts.append(str(condition))
+    if upkeep is not None:
+        parts.append(f"upkeep due: {upkeep} Bios")
+    return f" ({', '.join(parts)})" if parts else ""
+
+
 def build_my_places_section(my_places: "list | None") -> str:
     """Render the Nous's owned-land block (Phase 58 D-58-10).
 
@@ -332,6 +353,12 @@ def build_my_places_section(my_places: "list | None") -> str:
     ``structure_type`` / ``structure_name`` describe a built structure; an
     unbuilt parcel still renders its address (the anchor) without inventing a
     structure name.
+
+    Phase 59 Wave 5 (D-59-10 / R-59-10): when a built structure carries upkeep
+    state, its line surfaces the ``condition`` (maintained/worn/derelict) and the
+    pending ``upkeep_due`` cost so the Nous FEELS upkeep pressure, e.g.
+    ``- I own genesis:residential:0007 — my home is built here (worn, upkeep due: 8 Bios).``
+    Both fields are optional; an unbuilt or commons parcel simply omits them.
     """
     if not my_places:
         return ""
@@ -344,12 +371,13 @@ def build_my_places_section(my_places: "list | None") -> str:
             continue
         structure_name = place.get("structure_name")
         structure_type = place.get("structure_type")
+        suffix = _upkeep_suffix(place)
         if structure_name and structure_type:
             lines.append(
-                f'- I own {parcel} — my {structure_type} "{structure_name}" is built here.'
+                f'- I own {parcel} — my {structure_type} "{structure_name}" is built here{suffix}.'
             )
         elif structure_type:
-            lines.append(f"- I own {parcel} — my {structure_type} is built here.")
+            lines.append(f"- I own {parcel} — my {structure_type} is built here{suffix}.")
         else:
             lines.append(f"- I own {parcel} — empty parcel, nothing built yet.")
     # Guard: header-only (every entry malformed) → omit the block.
