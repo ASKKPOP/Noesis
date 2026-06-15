@@ -6,7 +6,7 @@ import os
 import time
 
 from noesis_brain.llm.base import LLMAdapter, LLMError
-from noesis_brain.llm.types import GenerateOptions, LLMResponse
+from noesis_brain.llm.types import GenerateOptions, LLMResponse, ToolCall, ToolSpec
 
 _FIXTURE_MODE_VAR = "NOESIS_FIXTURE_MODE"
 
@@ -79,6 +79,55 @@ class ClaudeAdapter(LLMAdapter):
             provider="claude",
             usage=usage,
             latency_ms=elapsed,
+        )
+
+    async def generate_with_tools(
+        self,
+        messages: list[dict],
+        tools: list[ToolSpec],
+        options: GenerateOptions | None = None,
+    ) -> LLMResponse:
+        opts = options or GenerateOptions()
+        start = time.monotonic()
+        client = self._get_client()
+
+        kwargs: dict = {
+            "model": self._model,
+            "max_tokens": opts.max_tokens,
+            "temperature": opts.temperature,
+            "messages": messages,
+            "tools": [t.to_anthropic() for t in tools],
+        }
+        if opts.system_prompt:
+            kwargs["system"] = opts.system_prompt
+
+        try:
+            response = await client.messages.create(**kwargs)
+        except Exception as e:
+            raise LLMError("claude", f"API error: {e}") from e
+
+        elapsed = (time.monotonic() - start) * 1000
+        text_parts: list[str] = []
+        tool_calls: list[ToolCall] = []
+        for block in response.content or []:
+            if getattr(block, "type", None) == "tool_use":
+                tool_calls.append(ToolCall(id=block.id, name=block.name, input=block.input))
+            elif getattr(block, "type", None) == "text":
+                text_parts.append(block.text)
+
+        usage = {}
+        if response.usage:
+            usage["prompt_tokens"] = response.usage.input_tokens
+            usage["completion_tokens"] = response.usage.output_tokens
+
+        return LLMResponse(
+            text="".join(text_parts),
+            model=self._model,
+            provider="claude",
+            usage=usage,
+            latency_ms=elapsed,
+            tool_calls=tool_calls,
+            stop_reason=getattr(response, "stop_reason", None),
         )
 
     async def list_models(self) -> list[str]:

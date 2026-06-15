@@ -23,10 +23,23 @@ class MockContent:
 
 
 @dataclass
+class MockToolUse:
+    id: str = "toolu_1"
+    name: str = "web_search"
+    input: dict = None  # type: ignore
+    type: str = "tool_use"
+
+    def __post_init__(self):
+        if self.input is None:
+            self.input = {"query": "noesis"}
+
+
+@dataclass
 class MockResponse:
     content: list = None  # type: ignore
     usage: MockUsage = None  # type: ignore
     model: str = "claude-sonnet-4-6"
+    stop_reason: str = "end_turn"
 
     def __post_init__(self):
         if self.content is None:
@@ -134,6 +147,51 @@ class TestClaudeAdapter:
         adapter._client = mock_client
 
         assert await adapter.is_available() is False
+
+    @pytest.mark.asyncio
+    async def test_generate_with_tools_maps_tool_use_block(self):
+        from noesis_brain.llm.types import ToolSpec
+
+        adapter = ClaudeAdapter(api_key="test-key")
+        mock_client = AsyncMock()
+        mock_client.messages.create = AsyncMock(
+            return_value=MockResponse(content=[MockToolUse()], stop_reason="tool_use")
+        )
+        adapter._client = mock_client
+
+        tools = [
+            ToolSpec("web_search", "search", {"type": "object", "properties": {}}),
+        ]
+        resp = await adapter.generate_with_tools(
+            [{"role": "user", "content": "search noesis"}], tools
+        )
+
+        assert resp.stop_reason == "tool_use"
+        assert len(resp.tool_calls) == 1
+        assert resp.tool_calls[0].id == "toolu_1"
+        assert resp.tool_calls[0].name == "web_search"
+        assert resp.tool_calls[0].input == {"query": "noesis"}
+
+        call_kwargs = mock_client.messages.create.call_args[1]
+        assert call_kwargs["tools"] == [
+            {"name": "web_search", "description": "search",
+             "input_schema": {"type": "object", "properties": {}}}
+        ]
+        assert call_kwargs["messages"] == [{"role": "user", "content": "search noesis"}]
+
+    @pytest.mark.asyncio
+    async def test_generate_with_tools_maps_text_block(self):
+        adapter = ClaudeAdapter(api_key="test-key")
+        mock_client = AsyncMock()
+        mock_client.messages.create = AsyncMock(
+            return_value=MockResponse(content=[MockContent(text="all done")], stop_reason="end_turn")
+        )
+        adapter._client = mock_client
+
+        resp = await adapter.generate_with_tools([{"role": "user", "content": "hi"}], [])
+        assert resp.stop_reason == "end_turn"
+        assert resp.text == "all done"
+        assert resp.tool_calls == []
 
     @pytest.mark.asyncio
     async def test_close(self):
