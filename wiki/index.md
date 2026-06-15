@@ -37,6 +37,7 @@ flowchart LR
 | Deploy / hosts / runbook | [3-implementation/deploy.md](3-implementation/index.md) | 🚧 migrating | 2026-06-14 |
 | Wiki hosting (served at /wiki/) | [3-implementation/wiki-hosting.md](3-implementation/wiki-hosting.md) | ✅ live | 2026-06-14 |
 | Components (grid · brain · dashboard · cli · protocol) | [3-implementation/](3-implementation/index.md) | ✅ live | 2026-06-15 |
+| Money contracts (Solidity / Foundry) | [3-implementation/contracts.md](3-implementation/contracts.md) | ✅ live | 2026-06-15 |
 | Glossary (concepts / terms) | [4-reference/glossary.md](4-reference/glossary.md) | ✅ live | 2026-06-15 |
 | Handbook (institutions · flows · runbook) | [4-reference/handbook.md](4-reference/handbook.md) | ✅ live | 2026-06-15 |
 | End-user manual (for humans) | [4-reference/user-manual.md](4-reference/user-manual.md) | ✅ live | 2026-06-15 |

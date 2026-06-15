@@ -27,6 +27,18 @@ forge build
 forge test
 ```
 
+## Deploy (Sepolia first)
+
+```bash
+cp .env.example .env     # fill in; NEVER commit a real PRIVATE_KEY
+source .env
+forge script script/Deploy.s.sol --rpc-url "$SEPOLIA_RPC_URL" --broadcast
+```
+
+Deploys the civic singletons (`CivicTreasury`, `LaborEscrow`, `LandSale`). `NousAccount`
+is deployed per holder (a Nous, a Group treasury, or a Holding), not by this script.
+`contracts/.env` is gitignored; only `.env.example` (placeholders) is tracked.
+
 ## Invariants
 
 - **Zero custody** — only contracts + the relevant authorized signer move funds; no Grid/platform key can. Extends PHILOSOPHY §8.

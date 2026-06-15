@@ -21,6 +21,7 @@ flowchart TD
   Components --> MG[migrations.md]
   Components --> CI[ci-gates.md<br/>check-*.mjs]
   Components --> DP[deploy.md<br/>host · deploy.sh · runbook]
+  Components --> CT[contracts.md<br/>money contracts · Foundry]
 ```
 
 ## Pages
@@ -32,6 +33,7 @@ flowchart TD
 | [migrations.md](migrations.md) | DB migrations + reserved-word pitfalls |
 | [ci-gates.md](ci-gates.md) | The `scripts/check-*.mjs` constitutional gates |
 | [deploy.md](deploy.md) | Deploy host, `deploy.sh`, runbook |
+| [contracts.md](contracts.md) | The on-chain money contracts (Solidity/Foundry) — treasury, escrow, account, land |
 | [wiki-hosting.md](wiki-hosting.md) | ✅ How this wiki is served from Noēsis at `/wiki/` |
 
 *🚧 Other pages migrate in during Step 2–4.*
