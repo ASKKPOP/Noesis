@@ -48,4 +48,4 @@ is deployed per holder (a Nous, a Group treasury, or a Holding), not by this scr
 - **No high-s signatures** (EIP-2), nonce replay protection on disbursement.
 - Amounts are wei; the Grid mirrors them as `DECIMAL(38,0)` (D-MONEY-07).
 
-> **Verified** — `forge build` + `forge test` pass (42 tests green, Solc 0.8.24, Foundry 1.7.1; lines/functions ~100%). `forge-std` is vendored under `lib/` (gitignored); run `forge install foundry-rs/forge-std` in a fresh checkout.
+> **Verified** — `forge build` + `forge test` pass (44 tests green incl. an end-to-end `Integration` suite that composes all four contracts, Solc 0.8.24, Foundry 1.7.1; lines/functions ~100%). `forge-std` is vendored under `lib/` (gitignored); run `forge install foundry-rs/forge-std` in a fresh checkout.
