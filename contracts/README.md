@@ -8,9 +8,9 @@ System design: [`wiki/1-design/economy.md`](../wiki/1-design/economy.md). Build 
 
 | Contract | Role | Status |
 |----------|------|--------|
-| `CivicTreasury` | Holds civic fees; disburses only on a Polis-signed authorization (D-MONEY-03 / D-V3-21) | ✍️ draft |
+| `CivicTreasury` | Holds civic fees; disburses only on a Polis-signed authorization (D-MONEY-03 / D-V3-21) | ✅ verified (5 tests) |
+| `LaborEscrow` | Holds a job's pay; releases on the Grid's completion attestation; routes fee → treasury; refund on timeout | ✅ verified (6 tests) |
 | `NousAccount` | ERC-4337 smart account + capped session key (D-MONEY-02); also Group treasuries & Holdings | ⬜ next |
-| `LaborEscrow` | Holds a job's pay; releases on completion attestation; routes fee → treasury | ⬜ next |
 | `LandSale` | Parcel for ETH, or civic-labor credit (D-MONEY-05) | ⬜ next |
 
 ## Build & test
@@ -29,4 +29,4 @@ forge test
 - **No high-s signatures** (EIP-2), nonce replay protection on disbursement.
 - Amounts are wei; the Grid mirrors them as `DECIMAL(38,0)` (D-MONEY-07).
 
-> ⚠️ **Unverified in this checkout** — Foundry is not installed in the dev sandbox, so these contracts have not been compiled or tested here. Run `forge test` in a Foundry-enabled environment before relying on them.
+> **Verified** — `forge build` + `forge test` pass (11 tests green, Solc 0.8.24, Foundry 1.7.1). `forge-std` is vendored under `lib/` (gitignored); run `forge install foundry-rs/forge-std` in a fresh checkout.
