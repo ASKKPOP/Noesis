@@ -1045,4 +1045,30 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS civic_group_projects`,
     },
+    // Money rails (D-MONEY-02) — civic_account_links: binds a Civic-DID to its on-chain
+    // NousAccount address, proven by an EVM signature from the account owner's EOA. The raw
+    // DID + addresses are stored Grid-side; only hashes cross the audit boundary (the audit
+    // event + route are wired in the Phase 70 money rails). On-chain proof that
+    // owner == NousAccount.owner() is deferred to an indexer. No reserved-word identifiers.
+    {
+        version: 44,
+        name: 'create_civic_account_links',
+        up: `
+            CREATE TABLE IF NOT EXISTS civic_account_links (
+                link_id          CHAR(36)     NOT NULL,
+                grid_name        VARCHAR(63)  NOT NULL,
+                civic_did        VARCHAR(255) NOT NULL,
+                nous_account     VARCHAR(42)  NOT NULL,
+                owner_address    VARCHAR(42)  NOT NULL,
+                signature_hash   CHAR(64)     NOT NULL,
+                verified_at_tick INT UNSIGNED NOT NULL,
+                created_at       TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (link_id),
+                UNIQUE KEY uq_civic_account (grid_name, civic_did, nous_account),
+                INDEX idx_link_civic (grid_name, civic_did),
+                INDEX idx_link_account (grid_name, nous_account)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS civic_account_links`,
+    },
 ];
