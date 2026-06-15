@@ -32,5 +32,6 @@ flowchart TD
 | [migrations.md](migrations.md) | DB migrations + reserved-word pitfalls |
 | [ci-gates.md](ci-gates.md) | The `scripts/check-*.mjs` constitutional gates |
 | [deploy.md](deploy.md) | Deploy host, `deploy.sh`, runbook |
+| [wiki-hosting.md](wiki-hosting.md) | ✅ How this wiki is served from Noēsis at `/wiki/` |
 
-*🚧 Pages migrate in during Step 2–4.*
+*🚧 Other pages migrate in during Step 2–4.*

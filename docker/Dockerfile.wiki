@@ -1,0 +1,32 @@
+# ── Noēsis Wiki — MkDocs Material static site container ──────────────────────
+# Builds wiki/ (markdown) → static HTML and serves it under /wiki/ via nginx.
+# The single source of truth (design · planning · implementation · reference),
+# reachable from the Noēsis top menu.
+#
+# Build (from repo root):  docker build -f docker/Dockerfile.wiki -t noesis-wiki .
+# Run:                     docker run --rm -p 8089:80 noesis-wiki  →  http://localhost:8089/wiki/
+FROM python:3.12-slim AS build
+WORKDIR /build
+COPY requirements-wiki.txt .
+RUN pip install --no-cache-dir -r requirements-wiki.txt
+COPY mkdocs.yml .
+COPY wiki/ ./wiki/
+# No .git in the build context → git-revision-date falls back to build date
+# (fallback_to_build_date: true in mkdocs.yml). Build is non-strict: links to
+# not-yet-migrated docs are expected during migration.
+RUN mkdocs build --site-dir /site
+
+FROM nginx:1.27-alpine
+LABEL org.opencontainers.image.title="Noesis Wiki"
+LABEL org.opencontainers.image.description="Single source of truth — MkDocs Material"
+
+RUN rm -f /etc/nginx/conf.d/default.conf
+COPY docker/nginx.wiki.conf /etc/nginx/conf.d/wiki.conf
+
+# Serve the built site under /wiki/ (matches the nginx proxy route).
+COPY --from=build /site /usr/share/nginx/html/wiki/
+
+EXPOSE 80
+
+HEALTHCHECK --interval=15s --timeout=4s --start-period=5s --retries=3 \
+  CMD wget -qO- http://127.0.0.1/healthz || exit 1

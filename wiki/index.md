@@ -33,6 +33,7 @@ flowchart LR
 | Milestones / Requirements / State | [2-planning/](2-planning/index.md) | 🚧 migrating | 2026-06-14 |
 | Phases (GSD workflow) | [2-planning/phases/](2-planning/index.md) | 🚧 migrating | 2026-06-14 |
 | Deploy / hosts / runbook | [3-implementation/deploy.md](3-implementation/index.md) | 🚧 migrating | 2026-06-14 |
+| Wiki hosting (served at /wiki/) | [3-implementation/wiki-hosting.md](3-implementation/wiki-hosting.md) | ✅ live | 2026-06-14 |
 | Components (grid/brain/dashboard) | [3-implementation/](3-implementation/index.md) | 🚧 migrating | 2026-06-14 |
 | Handbook / glossary / guides | [4-reference/](4-reference/index.md) | 🚧 migrating | 2026-06-14 |
 

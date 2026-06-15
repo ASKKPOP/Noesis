@@ -190,6 +190,9 @@ export default function LandingView() {
                         <a href="/docs/noesis-what-is" style={{ ...ghostCtaStyle, padding: '10px 20px' }}>
                             What is Noēsis
                         </a>
+                        <a href="/wiki/" style={{ ...ghostCtaStyle, padding: '10px 20px' }}>
+                            Wiki
+                        </a>
                         <Link href="/portal/auth" style={{ ...ghostCtaStyle, padding: '10px 20px' }}>
                             Sign In
                         </Link>

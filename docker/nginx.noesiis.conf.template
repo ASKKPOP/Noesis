@@ -4,7 +4,7 @@
 #   Route 53 ── HTTPS:443 (ACM cert) ──▶ ALB ── HTTP ──▶ this nginx :80 ──▶ containers
 #
 # The ALB terminates TLS, so nginx speaks plain HTTP. Routing is by Host header:
-#   ${DOMAIN}        → dashboard (/, landing page) · guide (/docs) · steward (/console)
+#   ${DOMAIN}        → dashboard (/, landing page) · guide (/docs) · wiki (/wiki) · steward (/console)
 #   api.${DOMAIN}    → grid (Portal + Grid · REST + WS + Portal)
 #
 # Rendered from this template by the nginx image entrypoint (envsubst) — only the
@@ -19,6 +19,7 @@ map $http_upgrade $connection_upgrade {
 }
 
 upstream noesis_guide     { server guide:80; }
+upstream noesis_wiki      { server wiki:80; }
 upstream noesis_dashboard { server dashboard:3001; }
 upstream noesis_steward   { server steward:3002; }
 upstream noesis_grid      { server grid:8080; }
@@ -40,6 +41,9 @@ server {
     # guide et al.) stay reachable under /docs/ via the guide container.
     location /docs/   { proxy_pass http://noesis_guide; }
     location = /docs  { return 302 /docs/noesis-services-beginner-guide.html; }
+    # Wiki (single source of truth — MkDocs static site) under /wiki/.
+    location /wiki/   { proxy_pass http://noesis_wiki; }
+    location = /wiki  { return 302 /wiki/; }
     location /console { proxy_pass http://noesis_steward; }
     location /        { proxy_pass http://noesis_dashboard; }
 }

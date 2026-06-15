@@ -31,6 +31,7 @@ services:
     container_name: noesis-nginx
     depends_on:
       - guide
+      - wiki
       - grid
       - dashboard
       - steward
@@ -50,6 +51,14 @@ services:
       context: .
       dockerfile: docker/Dockerfile.guide
     container_name: noesis-guide
+    restart: unless-stopped
+
+  # ── Wiki (single source of truth — MkDocs static at /wiki) ──────────────────
+  wiki:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.wiki
+    container_name: noesis-wiki
     restart: unless-stopped
 
   # ── Portal + Grid (api.${DOMAIN}). Allow the apex origin (cross-origin) ─────
