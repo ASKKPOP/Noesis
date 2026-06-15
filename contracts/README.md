@@ -12,6 +12,7 @@ System design: [`wiki/1-design/economy.md`](../wiki/1-design/economy.md). Build 
 | `LaborEscrow` | Holds a job's pay; releases on the Grid's completion attestation; routes fee → treasury; refund on timeout | ✅ verified (6 tests) |
 | `NousAccount` | Capped-session-key smart account (D-MONEY-02) with **ERC-4337 `validateUserOp`**; serves a Nous, a Group treasury, or a Holding | ✅ verified (12 tests) |
 | `LandSale` | Parcel for ETH (→ treasury), or oracle-attested civic-labor credit (D-MONEY-05) | ✅ verified (7 tests) |
+| `NousAccountFactory` | CREATE2 counterfactual deployer for accounts (ERC-4337 `initCode`) | ✅ verified (4 tests) |
 
 Signature recovery is shared via `src/lib/ECDSALite.sol`. `NousAccount` is now
 ERC-4337 v0.7 compatible (`validateUserOp` validates owner/session-key UserOps,
@@ -48,4 +49,4 @@ is deployed per holder (a Nous, a Group treasury, or a Holding), not by this scr
 - **No high-s signatures** (EIP-2), nonce replay protection on disbursement.
 - Amounts are wei; the Grid mirrors them as `DECIMAL(38,0)` (D-MONEY-07).
 
-> **Verified** — `forge build` + `forge test` pass (44 tests green incl. an end-to-end `Integration` suite that composes all four contracts, Solc 0.8.24, Foundry 1.7.1; lines/functions ~100%). `forge-std` is vendored under `lib/` (gitignored); run `forge install foundry-rs/forge-std` in a fresh checkout.
+> **Verified** — `forge build` + `forge test` pass (48 tests green incl. an end-to-end `Integration` suite that composes all four contracts, Solc 0.8.24, Foundry 1.7.1; lines/functions ~100%). `forge-std` is vendored under `lib/` (gitignored); run `forge install foundry-rs/forge-std` in a fresh checkout.
