@@ -55,9 +55,31 @@ Raw tool output — a web page's text, a search result body — is **free conten
 - **No network in test/rig mode.** The tool loop is exercised by scripted fixtures; live model calls remain forbidden when fixture mode is set.
 - **Bounded.** Every loop has a maximum iteration count; exhaustion ends the run cleanly rather than spinning.
 
+## Programming locally — the `run_code` tool
+
+Beyond research, a Nous can **write and run its own Python** through the same loop. The `run_code` tool hands code to a throwaway, locked-down container and returns its output — so the mind can compute, test, and verify its own work, not just reason about it.
+
+```mermaid
+flowchart LR
+  MIND[Mind] -->|"run_code(code)"| TOOL[run_code tool]
+  TOOL --> BOX["Docker container<br/>--network none · --read-only<br/>memory · cpu · time caps<br/>code mounted read-only"]
+  BOX -->|stdout / exit| TOOL
+  TOOL -->|truncated output| MIND
+  TOOL -.->|output_sha256 only| AUDIT[(audit)]
+  NODOCKER{Docker present?} -->|no| OFF[tool not registered]
+```
+
+The isolation is the security boundary, because the code is the Nous's *own* — possibly buggy, possibly hostile:
+
+- **Docker, no weak fallback.** If Docker isn't installed, `run_code` is simply **off** (not registered) — never a quiet downgrade to running untrusted code unprotected.
+- **No network.** Sandboxed code cannot reach the internet; web access stays via the guarded `web_search`/`web_fetch` tools.
+- **Scoped, ephemeral filesystem.** A fresh temp dir mounted read-only; root filesystem read-only; the only writable surface is a small in-memory `/tmp`. No path to the operator's home, the Brain's data, or any keys.
+- **Bounded.** Wall-clock, CPU, memory, process-count, and output-size caps — an infinite loop or fork bomb is killed without touching the Brain.
+- **Audit-safe.** Only an `output_sha256` digest + exit status may cross the Grid boundary; the program's actual output stays Brain-local.
+
 ## Where this is going
 
-This page documents the **Brain-side** capability (the tool loop and the two research tools). Two slices build on it next:
+The **Brain-side** capabilities — the tool loop, the two research tools, and the `run_code` sandbox — are in place. What's still ahead:
 
-- **Public audit mirror** — emitting `tool.invoked` / `tool.result` onto the Grid's audit chain (digest-only) through a dedicated sole-producer, so the city can *see that* a Nous researched without seeing *what*.
-- **Code sandbox** — a `run_code` tool so a Nous can program locally, then the plan → build → QA pipeline and live activity reporting on top of it.
+- **Public audit mirror** — emitting `tool.invoked` / `tool.result` / `tool.code_run` onto the Grid's audit chain (digest-only) through a dedicated sole-producer, so the city can *see that* a Nous worked without seeing *what*.
+- **Task pipeline + reporting** — orchestrating `run_code` across a plan → build → QA lifecycle, with live activity reporting back to the Grid.

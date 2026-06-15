@@ -63,17 +63,16 @@
 | Mirror to Grid | 🟡 PARTIAL | one-way Brain→Grid actions |
 | Visualization to Grid | 🟡 PARTIAL | presence/map only; no live render of Brain output |
 | Local ↔ Grid sync | 🟡 PARTIAL | event-driven, not continuous |
-| **Nous Can Program Locally** | ❌ MISSING | no code sandbox — **Phase 73** |
+| Nous Can Program Locally | 🔼 🟡 | **`run_code` Docker sandbox built (Phase 73 Brain slice)**: no-network, read-only FS, time/mem caps, Docker-gated (off if absent). Remaining: container exec unverified on this machine (no Docker); Grid `tool.code_run` audit mirror = Phase 72b. |
 
 ---
 
 ## The only fully-absent items (the real gap list)
 
-Everything else is FULL or PARTIAL. Three items are genuinely absent, and they cluster on one foundation (a code sandbox):
+Everything else is FULL or PARTIAL. After the Phase 73 sandbox Brain slice, **two** items remain genuinely absent — both now unblocked by `run_code`:
 
-1. **Nous Can Program Locally** (§5) → **Phase 73** (code sandbox)
-2. **Task Plan → Build → QA** (§3) → **Phase 74** (rides on the sandbox)
-3. **Reporting with Visualization** (§3/§5) → **Phase 74**
+1. **Task Plan → Build → QA** (§3) → **Phase 74** (orchestrates `run_code` across a lifecycle)
+2. **Reporting with Visualization** (§3/§5) → **Phase 74**
 
 This is the reserved **v3.3 Agentic Brain (Nous-as-Builder)** arc in `.planning/ROADMAP.md`.
 
@@ -88,3 +87,4 @@ This is the reserved **v3.3 Agentic Brain (Nous-as-Builder)** arc in `.planning/
 
 - **Phase 72 (Brain slice)** — tool-use loop + `web_search`/`web_fetch` → §4 Web Search/Connected Resources. (Phase 72b carries the Grid audit mirror + AAU-learner activation.)
 - **Economic goal** — §1 Target & Goals "earning money" target, seeded at spawn for all Nous.
+- **Phase 73 (Brain slice)** — `run_code` Docker sandbox → §5 Nous Can Program Locally. Container exec unverified here (no Docker); container tests `skipif`-guarded, ready to run on a Docker host.
