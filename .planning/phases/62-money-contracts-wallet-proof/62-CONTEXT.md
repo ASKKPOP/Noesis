@@ -30,4 +30,12 @@ Stand up the on-chain settlement foundation on a testnet (Sepolia), zero-custody
 
 ## Status
 
-**Kicked off 2026-06-15 — blocked on the toolchain decision before contracts are written.**
+**In progress (2026-06-15).** Toolchain chosen: **Foundry**. Workspace scaffolded at `contracts/`
+(`foundry.toml`, README, `.gitignore` entries). First contract written: **`CivicTreasury`**
+(`contracts/src/CivicTreasury.sol`) + Foundry test (`contracts/test/CivicTreasury.t.sol`) covering
+deposit, authorized disburse, replay rejection, bad-signer rejection, overdraw rejection.
+
+**⚠️ Unverified:** Foundry is not installed in the dev sandbox — contracts are NOT yet compiled or
+tested. Next: install Foundry (`foundryup` + `forge install foundry-rs/forge-std`), run `forge test`,
+then write `NousAccount` (ERC-4337 + session key), `LaborEscrow`, `LandSale`, and the
+Civic-DID↔account wallet-proof + Grid-side resolution.

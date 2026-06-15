@@ -50,3 +50,9 @@ htmlcov/
 # Noēsis wiki (MkDocs) build artifacts
 site/
 .venv-wiki/
+
+# Foundry (contracts/) build artifacts + vendored libs
+contracts/out/
+contracts/cache/
+contracts/lib/
+contracts/broadcast/

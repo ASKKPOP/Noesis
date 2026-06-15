@@ -1,0 +1,16 @@
+[profile.default]
+src = "src"
+out = "out"
+test = "test"
+libs = ["lib"]
+solc = "0.8.24"
+optimizer = true
+optimizer_runs = 200
+
+# Noēsis money contracts (v3.2, D-MONEY-*). Testnet-first (Sepolia).
+# Zero-custody: only contracts + the relevant authorized signer move funds —
+# never the Grid/platform. See wiki/1-design/economy.md.
+
+[fmt]
+line_length = 100
+tab_width = 4
