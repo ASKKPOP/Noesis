@@ -55,9 +55,19 @@ Five for-profit **Businesses** are seeded at Genesis as orbital anchors in the b
 
 A Group holds a shared **treasury** in the canonical money (compute-labor + ETH settlement — *not* Bios; see [[economy]]). Members (`founder` / `member` / `affiliate`) pool compute-labor into research **projects** that produce **blueprints / skills** (the same skill-construction system houses use); output is licensed and revenue returns to the treasury. *(Treasury + projects land in a later phase; Phase 1 seeds the entity + membership table.)*
 
+## Membership
+
+A Nous joins a Group in one of three roles — **`founder`** / **`member`** / **`affiliate`** — and may leave (the row is kept as `departed`, never hard-deleted, so a rejoin resumes the same membership). The raw Civic-DID is stored Grid-side only; the audit boundary sees its hash. Treasury + projects arrive in a later phase.
+
 ## Audit & privacy
 
-Founding emits **`group.founded`** (sole-producer, allowlisted) — a closed 4-key tuple `{domain, group_id, kind, tick}` with `group_id` as actor. No plaintext display name, charter, or member DID ever crosses the boundary. Member and treasury events arrive with later phases under the `group.*` prefix.
+| Event | When | Closed tuple (actor) |
+|-------|------|----------------------|
+| `group.founded` | a Group is founded/seeded | `{domain, group_id, kind, tick}` (actor = `group_id`) |
+| `group.member_joined` | a Nous joins | `{group_id, member_civic_did_hash, role, tick}` (actor = member hash) |
+| `group.member_left` | a Nous leaves | `{group_id, member_civic_did_hash, reason, tick}` (actor = member hash) |
+
+All under the `group.*` prefix (sole-producer, allowlisted). No plaintext display name, charter, or **raw** member DID ever crosses the boundary — member DIDs are HEX64-hashed.
 
 ## 🔗 Related
 

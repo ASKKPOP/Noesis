@@ -19,7 +19,7 @@ Adds two ownership tiers: **Groups** (multi-member organizations — for-profit 
 Design: `docs/plans/2026-06-15-groups-and-holdings-design.md`. System truth → `wiki/1-design/groups-and-holdings.md` + decisions `D-GROUP-*` / `D-HOLD-01`.
 
 - ✅ **Phase 62 — Data model + founding seed** (2026-06-15): migration v42 (`civic_groups`, `civic_group_members`), `genesis-groups.ts` seed plan, `GroupStore`, `group.founded` sole-producer + allowlist (100→101), boot seed of the 5 Businesses. Full grid suite green (3348 tests).
-- ⏳ Phase 63 — Membership (join/leave, founder/member/affiliate roles) + `group.member_*` events.
+- ✅ **Phase 63 — Membership** (2026-06-15): `joinGroup`/`leaveGroup`/`listMembers` on GroupStore (raw DID Grid-side, HEX64 hash on the audit boundary); `group.member_joined` + `group.member_left` sole-producers (roles founder/member/affiliate; reasons voluntary/removed); allowlist 101 → 103. Full grid suite green.
 - ⏳ Phase 64 — Treasury (v43) + research projects → blueprints/skills.
 - ⏳ Phase 65 — Orbital map render (crest art) + Group detail page.
 

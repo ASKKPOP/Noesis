@@ -438,6 +438,15 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   events using parcel_id as actor). NO plaintext display name / charter / member DID
     //   crosses — only the id + domain/kind enums + tick.
     'group.founded',              // (101)
+    // Groups & Holdings · Phase 63 (D-GROUP-01) — membership. Allowlist 101 → 103.
+    // group.member_joined (102): sole-producer grid/src/audit/append-group-member-joined.ts
+    //   closed 4-key {group_id, member_civic_did_hash, role, tick}; role ∈ {founder,member,
+    //   affiliate}; actorDid = member_civic_did_hash (raw DID never crosses).
+    // group.member_left (103): sole-producer grid/src/audit/append-group-member-left.ts
+    //   closed 4-key {group_id, member_civic_did_hash, reason, tick}; reason ∈ {voluntary,removed};
+    //   actorDid = member_civic_did_hash.
+    'group.member_joined',        // (102)
+    'group.member_left',          // (103)
 ] as const;
 
 /**
