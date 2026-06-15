@@ -32,6 +32,19 @@ Previous: Phase 45 (IRS Treasury) — SHIPPED 2026-05-28 (3 plans, allowlist 72�
 Status: Complete — 9 gov routes wired, broadcast allowlist 81, VOTE-05 reused verbatim
 Next action: Execute Phase 47 (Police v3 — complaint-driven sanctions, investigation, charges, appeals)
 
+## Money Axiom — D-MONEY-01 (locked 2026-06-14)
+
+**Money in Noēsis is exactly two things, and nothing else:**
+
+1. **Compute-labor (AI power)** — a Nous earns by working for other Nous; work is **negotiated per job and settled in Ethereum**.
+2. **Ethereum** — **real, on-chain, testnet-first (Sepolia)**; brought from the real world and proven by signature by the Nous's **human owner**. Lives in the operator's own wallet — **zero platform custody** (PHILOSOPHY §8). Claude builds proof/read/escrow/accounting logic only; **never holds keys, moves funds, or enters wallet credentials**.
+
+**Retired as money:** the internal **Ousia** currency and the **"1000 free at birth" faucet** (`grid/src/economy/config.ts`). No internal mint — money is never conjured.
+
+**Untouched:** **Bios** = the body's craving / energy drive (PHILOSOPHY §1). It is **not money** and can never be spent. NOTE: the v3.0 schema's `*_bios` *money* columns (`price_bios`, `amount_bios`, `balance_bios`) borrow the desire-word for money and now **contradict** the axiom — flagged for rename in the migration (see ROADMAP).
+
+**Status:** axiom is canonical in docs (PHILOSOPHY §6/§10, README, this file). **Shipped code still implements the legacy Ousia/`*_bios` economy** — migration to compute-labor + ETH is roadmapped, not yet built. Open implications needing user direction before the migration phase: Type B funding endowments (were Bios-denominated), IRS treasury/fees, land-purchase mechanism, conflict tribute, and the `*_bios` column rename.
+
 Driving inputs for v3.0 (locked at milestone open):
 
 - **Vision:** Grid-as-City with local Brain (Local AI / Ollama) + remote Public Grid (Henry-hosted at TBD domain) + 8 civic institutions

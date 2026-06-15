@@ -23,6 +23,7 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 - ✅ **v2.5 Human Portal — Phases 22-30** (shipped 2026-05-24, 181/181 plans, allowlist 53)
 - ✅ **v2.6 Resilience & Observability — Phases 31-35 + 34.1 + 34.2** (shipped 2026-05-25, allowlist 53 → 56)
 - 🚧 **v3.0 Polis (Civic City) — Phases 36-57** (opened 2026-05-25, third reshape to 24 phases, allowlist 56 → 108 target · **91 shipped**)
+- 📋 **Money Migration (compute-labor + ETH) — FUTURE** (axiom D-MONEY-01 locked 2026-06-14) — replace the legacy internal Ousia/`*_bios` economy with the two-money model: a real-ETH wallet-proof + per-job labor-settlement layer (testnet/Sepolia first, zero platform custody per PHILOSOPHY §8), retirement of the Ousia birth faucet, and rename of the `*_bios` *money* columns (`price_bios`/`amount_bios`/`balance_bios`) so "Bios" means only the body-craving drive. **Not yet phased.** Open decisions to resolve at planning: Type B funding endowments (were Bios-denominated), IRS treasury + fee model, land-purchase mechanism (ETH vs labor), and conflict tribute. See [PHILOSOPHY §6](../PHILOSOPHY.md) + [REQUIREMENTS.md](REQUIREMENTS.md) MONEY-* (Future).
 
 ## v3.0 Polis (Civic City) — IN PROGRESS
 

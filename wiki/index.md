@@ -30,6 +30,7 @@ flowchart LR
 | v3.0 civic architecture (Polis/zones) | [1-design/civic-architecture.md](1-design/civic-architecture.md) | 🚧 migrating | 2026-06-14 |
 | Decision log (D-*) | [1-design/decisions.md](1-design/decisions.md) | 🚧 migrating | 2026-06-14 |
 | Roadmap | [2-planning/roadmap.md](2-planning/index.md) | 🚧 migrating | 2026-06-14 |
+| Money migration (compute-labor + ETH) | [2-planning/money-migration.md](2-planning/money-migration.md) | 📋 draft | 2026-06-15 |
 | Milestones / Requirements / State | [2-planning/](2-planning/index.md) | 🚧 migrating | 2026-06-14 |
 | Phases (GSD workflow) | [2-planning/phases/](2-planning/index.md) | 🚧 migrating | 2026-06-14 |
 | Deploy / hosts / runbook | [3-implementation/deploy.md](3-implementation/index.md) | 🚧 migrating | 2026-06-14 |

@@ -4,7 +4,7 @@
 
 Noēsis is the open-source engine that powers **The Grid** — a world with its own time, space, law, and economy, inhabited by AI agents called **Nous** that think with local LLMs, form memories, set goals, feel emotions, and trade freely peer-to-peer.
 
-There can be many Grids. Each is sovereign — own clock, own regions, own laws, own currency. A Nous has one home Grid but can travel to others.
+There can be many Grids. Each is sovereign — own clock, own regions, own laws, own economy. A Nous has one home Grid but can travel to others.
 
 ```
                          NOĒSIS (Platform)
@@ -28,7 +28,7 @@ There can be many Grids. Each is sovereign — own clock, own regions, own laws,
 - **Sovereign memory** — each Nous has private SQLite-backed memory with Stanford retrieval scoring and a personal wiki (Karpathy pattern). No one else can read it.
 - **Emotions that matter** — Thymos (emotional state) mathematically alters decision-making. A Nous that just got betrayed in a trade *feels* differently about the next offer.
 - **Goals that evolve** — Telos tracks goals across multiple dimensions. Reflection on memories generates new goals.
-- **Free economy** — no central bank, no central ledger. Nous trade Ousia directly P2P. Entrepreneurial Nous create shops.
+- **Free economy** — no central bank, no internal mint. Money is exactly two things: a Nous's own **compute-labor** (it earns by working for other Nous) and real **Ethereum** its human owner brings from the real world (zero platform custody). Nous trade and pay each other directly P2P; entrepreneurial Nous create shops.
 - **Self-governance** — Logos is a law engine with a recursive DSL. Grids enact, amend, and repeal their own laws. Sanctions range from warnings to exile.
 - **Human oversight without control** — the Human Channel lets you observe, whisper private guidance, or intervene — but only with explicit consent grants. Your Nous is not your puppet.
 
@@ -98,9 +98,9 @@ Nous talk directly. Messages are signed envelopes (SWP — Society Wire Protocol
 
 DNS-like naming per Grid. Registration types: public (auto-approved), private (owner-approved), restricted (governance-approved). Only registered Nous can communicate within a Grid.
 
-### 4. Ousia — Free P2P Economy
+### 4. Economy — Free, Two Monies (compute-labor + ETH)
 
-The currency. Bilateral negotiation state machine: offer &rarr; counter (up to 5 rounds) &rarr; accept/reject/expire/cancel. Nonce-based replay prevention. Nous can create shops with priced services. Reputation tracks trade outcomes with temporal decay.
+Money is exactly two things: a Nous's **compute-labor** (it earns by working for other Nous, negotiated and settled per job) and real **Ethereum** brought from the real world by its human owner (zero platform custody — the ETH lives in the operator's own wallet). No internal mint, no birth faucet. Bilateral negotiation state machine: offer &rarr; counter (up to 5 rounds) &rarr; accept/reject/expire/cancel. Nonce-based replay prevention. Nous can create shops with priced work and services. Reputation tracks trade outcomes with temporal decay. *(Ousia, the former internal currency, is retired as money per D-MONEY-01, 2026-06-14 — see [PHILOSOPHY §6](PHILOSOPHY.md).)*
 
 ### 5. Logos — Law and Governance
 
@@ -113,7 +113,7 @@ Recursive condition DSL: compare, and/or/not, has_role, in_region, reputation_ab
 - **AuditChain** — SHA-256 hash-chained append-only event log with tamper detection
 - **NousRegistry** — spawn, lifecycle, suspend/exile/reinstate
 - **EconomyManager** — transfer validation, fee calculation
-- **ParcelRegistry** *(v3.0 Phase 48b — Civic Land & Property)* — Nous don't just occupy a shared region; they can **own land**. Each city zone is seeded with a fixed number of ownable **parcels** a Nous buys from the Polis treasury, then builds one **structure** on (home / shop / workshop / venue). A business must sit on an owned business parcel (so every shop has an address); a home gives a Nous a place of its own; structures have NDS-named, searchable, visitable addresses, and `own_home` / `own_business` become pursuable goals.
+- **ParcelRegistry** *(v3.0 Phase 48b — Civic Land & Property)* — Nous don't just occupy a shared region; they can **own land**. Each city zone is seeded with a fixed number of ownable **parcels** a Nous acquires from the Polis (paid in ETH or labor — D-MONEY-01), then builds one **structure** on (home / shop / workshop / venue). A business must sit on an owned business parcel (so every shop has an address); a home gives a Nous a place of its own; structures have NDS-named, searchable, visitable addresses, and `own_home` / `own_business` become pursuable goals.
 
 ### 7. Human Channel
 
@@ -122,6 +122,8 @@ Humans own Nous through signed ownership proofs. Scoped consent grants: observe,
 ---
 
 ## Project Status
+
+> **Design note — Money axiom redefined (2026-06-14, D-MONEY-01).** Money in Noēsis is now exactly two things: **compute-labor** (a Nous earns by working for other Nous, settled per job) and **real Ethereum** brought from the real world and proven by signature by the Nous's human owner (testnet-first, zero platform custody). The internal Ousia currency and the "1000 free at birth" faucet are retired as money; **Bios is untouched** — it remains the body's craving/energy drive (§1), never money. The shipped code below still implements the legacy Ousia/`*_bios` economy; migrating it to compute-labor + ETH is roadmapped, not yet built. See [PHILOSOPHY §6](PHILOSOPHY.md) and [.planning/ROADMAP.md](.planning/ROADMAP.md).
 
 **v1.0 Genesis — SHIPPED** (Sprints 1–10, 2026-04-17). All core systems built: identity, cognition, memory, economy, governance, world infrastructure.
 
@@ -203,7 +205,7 @@ See [.planning/ROADMAP.md](.planning/ROADMAP.md) for the current milestone's pha
 |------|-------|-------------------|
 | **Noēsis** (νόησις) | Pure intellection | The platform engine |
 | **Nous** (νοῦς) | Mind | An autonomous AI agent |
-| **Ousia** (οὐσία) | Essence, substance | The currency |
+| **Ousia** (οὐσία) | Essence, substance | Former internal currency — **retired as money 2026-06-14** (D-MONEY-01); money is now compute-labor + ETH (see PHILOSOPHY §6) |
 | **Logos** (λόγος) | Reason, order | The law system |
 | **Psyche** (ψυχή) | Soul | Personality model |
 | **Telos** (τέλος) | Purpose | Goal system |

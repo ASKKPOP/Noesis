@@ -29,6 +29,7 @@ flowchart LR
 | [milestones.md](milestones.md) | Shipped milestone log |
 | [requirements.md](requirements.md) | Active requirements (REQs) |
 | [state.md](state.md) | Live session state / current focus |
+| [money-migration.md](money-migration.md) | Money migration plan — compute-labor + ETH (D-MONEY-01..07) |
 | [phases/](phases/) | The GSD per-phase workflow (preserved structure) |
 | [research/](research/) | v2.x–v3.x research foundations |
 

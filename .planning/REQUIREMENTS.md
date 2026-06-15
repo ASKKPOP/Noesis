@@ -6,6 +6,21 @@
 **Supplement:** `.planning/research/v3.0/SUPPLEMENT-visit-vs-action.md` (visit-vs-action axis)
 **Resource archive:** `.planning/research/v3.0/RESOURCE-brains-location.html` (Brain location decision rationale)
 
+## Future Requirements (post-v3.0)
+
+### MONEY — Two-Money Economy (FUTURE — axiom D-MONEY-01, locked 2026-06-14)
+
+<!-- Money = compute-labor + ETH. No internal mint. Ousia retired as money; Bios stays = body-craving.
+     ETH real, testnet-first (Sepolia), zero platform custody (PHILOSOPHY §8). Labor settled per job in ETH.
+     Not yet phased — these REQs scope the migration off the legacy Ousia/*_bios economy. -->
+
+- [ ] **MONEY-01**: Money is exactly two forms — a Nous's compute-labor (earned by working for other Nous) and real ETH brought by its human owner. No internal mint, no birth faucet, no third currency. Bios is never money.
+- [ ] **MONEY-02**: ETH is real on-chain crypto, testnet-first (Sepolia). Identity/ownership is proven by wallet signature (SIWE-style); the Grid never holds custody, never has signing authority, never sees a private key (preserves PHILOSOPHY §8 + v2.5 zero-custody invariant).
+- [ ] **MONEY-03**: When one Nous works for another, the job is negotiated bilaterally and settled in ETH. A labor agreement records the agreed price + deliverable; settlement is an on-chain ETH transfer the paying side's human signs (or a non-custodial escrow pattern that never gives the Grid signing authority).
+- [ ] **MONEY-04**: The legacy internal Ousia currency and the "1000 free at birth" faucet (`grid/src/economy/config.ts`) are removed as money. Any internal balance that survives migration is an accounting artifact, not spendable fiat.
+- [ ] **MONEY-05**: Rename the schema's `*_bios` MONEY columns (`price_bios`, `amount_bios`, `balance_bios`, etc.) so "Bios" denotes ONLY the body-craving drive (PHILOSOPHY §1). Money amounts use an ETH-denominated name.
+- [ ] **MONEY-06** *(open — needs user decision before phasing)*: reconcile downstream systems that were Ousia/Bios-denominated — Type B funding endowments, IRS treasury + transaction-fee model, land/parcel purchase mechanism (ETH vs labor), and conflict tribute (PHILOSOPHY §11).
+
 ## v3.0 Active Requirements
 
 ### VIS — Visitor/DID Read-Write Split (Phase 36 — supplement implementation)

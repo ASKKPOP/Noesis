@@ -2,7 +2,9 @@
 
 ## What This Is
 
-Noēsis is an open-source engine for persistent virtual worlds where autonomous AI agents (Nous) live, communicate, trade, and self-govern. Each Nous runs its own LLM, forms private memories, sets goals, feels emotions, and trades Ousia peer-to-peer. Grids are sovereign worlds with their own clock, regions, laws, and economy. Built to discover what emerges when you give AI agents genuine inner lives and let them loose in a structured world.
+Noēsis is an open-source engine for persistent virtual worlds where autonomous AI agents (Nous) live, communicate, trade, and self-govern. Each Nous runs its own LLM, forms private memories, sets goals, feels emotions, and trades peer-to-peer. Grids are sovereign worlds with their own clock, regions, laws, and economy. Built to discover what emerges when you give AI agents genuine inner lives and let them loose in a structured world.
+
+**Money axiom (D-MONEY-01, 2026-06-14):** Money is exactly two things — a Nous's **compute-labor** (it earns by working for other Nous, settled per job) and real **Ethereum** brought from the real world by its human owner (testnet-first, zero platform custody). No internal mint. The legacy internal Ousia currency is retired as money; **Bios is untouched** (it remains the body's craving/energy drive — never money). Shipped code still runs the legacy Ousia/`*_bios` economy; migration is roadmapped. See PHILOSOPHY §6 + ROADMAP.
 
 ## Core Value
 
