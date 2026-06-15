@@ -36,6 +36,12 @@ Stand up the on-chain settlement foundation on a testnet (Sepolia), zero-custody
 - **`CivicTreasury`** ✅ (5 tests) — fee deposit, Polis-signed disburse, replay/ bad-signer/ overdraw rejection.
 - **`LaborEscrow`** ✅ (6 tests) — fund, oracle-attested release + fee→treasury, refund-after-deadline, and rejections (bad oracle, post-deadline confirm, early refund, non-payer refund).
 
-**Next:** `NousAccount` (ERC-4337 + capped session key — also Group treasuries & Holdings), `LandSale`
-(ETH or civic-labor credit), and the Civic-DID↔account wallet-proof + Grid-side resolution + the
-`*_bios`→`*_wei` schema rename (Phase 66).
+**All four contracts done — 25 tests green** (`forge test`):
+
+- **`NousAccount`** ✅ (7 tests) — capped/expiring session keys; owner unrestricted, session key bounded by cap + expiry; serves a Nous, a Group treasury, or a Holding. Effects-before-interaction.
+- **`LandSale`** ✅ (7 tests) — buy a Polis-priced parcel (ETH → treasury) or claim via an oracle-attested civic-labor credit; one owner per parcel.
+
+**Remaining for Phase 62:** the Civic-DID↔account **wallet-proof** + Grid-side resolution (a `schema.ts`
+change — **deferred** while a parallel workstream is actively editing `grid/src/db/schema.ts`, to avoid
+conflict). **Follow-ups:** full ERC-4337 EntryPoint/UserOp wiring on `NousAccount`; the `*_bios`→`*_wei`
+rename is Phase 66.

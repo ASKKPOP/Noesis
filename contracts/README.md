@@ -10,8 +10,12 @@ System design: [`wiki/1-design/economy.md`](../wiki/1-design/economy.md). Build 
 |----------|------|--------|
 | `CivicTreasury` | Holds civic fees; disburses only on a Polis-signed authorization (D-MONEY-03 / D-V3-21) | ✅ verified (5 tests) |
 | `LaborEscrow` | Holds a job's pay; releases on the Grid's completion attestation; routes fee → treasury; refund on timeout | ✅ verified (6 tests) |
-| `NousAccount` | ERC-4337 smart account + capped session key (D-MONEY-02); also Group treasuries & Holdings | ⬜ next |
-| `LandSale` | Parcel for ETH, or civic-labor credit (D-MONEY-05) | ⬜ next |
+| `NousAccount` | Capped-session-key smart account (D-MONEY-02); serves a Nous, a Group treasury, or a Holding | ✅ verified (7 tests) |
+| `LandSale` | Parcel for ETH (→ treasury), or oracle-attested civic-labor credit (D-MONEY-05) | ✅ verified (7 tests) |
+
+Full ERC-4337 EntryPoint/UserOp wiring on `NousAccount` and the Grid-side
+Civic-DID↔account wallet-proof are follow-ups (the latter deferred while
+`grid/src/db/schema.ts` is being edited by a parallel workstream).
 
 ## Build & test
 
@@ -29,4 +33,4 @@ forge test
 - **No high-s signatures** (EIP-2), nonce replay protection on disbursement.
 - Amounts are wei; the Grid mirrors them as `DECIMAL(38,0)` (D-MONEY-07).
 
-> **Verified** — `forge build` + `forge test` pass (11 tests green, Solc 0.8.24, Foundry 1.7.1). `forge-std` is vendored under `lib/` (gitignored); run `forge install foundry-rs/forge-std` in a fresh checkout.
+> **Verified** — `forge build` + `forge test` pass (25 tests green, Solc 0.8.24, Foundry 1.7.1). `forge-std` is vendored under `lib/` (gitignored); run `forge install foundry-rs/forge-std` in a fresh checkout.
