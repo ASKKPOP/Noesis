@@ -124,21 +124,30 @@ These guidelines are working if you see:
 
 **When the project idea, scope, or design evolves — update the source-of-truth documents in the same turn. Never leave them stale.**
 
-> **Single source of truth = the in-repo wiki at `wiki/` (MkDocs Material).** Read `wiki/index.md` first, every session; follow `wiki/PROTOCOL.md`. **A task is not done until the wiki reflects it** (completion gate). Migration of the legacy paths below into `wiki/` is in progress — migrated docs leave a `superseded` stub pointing to their new wiki home.
+> **Two documentation trees — keep them separate (D-WIKI-06, user-mandated 2026-06-15):**
+>
+> - **Public wiki = the Noēsis _system_.** `wiki/` (MkDocs Material), served at noesiis.com/wiki. It documents the system itself — philosophy, concepts, structure, design, object/entity details, system architecture, specific technical details, and system flows; everything needed to understand and build the system. Read `wiki/index.md` first, every session; follow `wiki/PROTOCOL.md`. **A task is not done until the wiki reflects it** (completion gate, CI-enforced via `scripts/check-wiki.mjs`).
+> - **Private developer log = the _process_.** `.planning/` (in-repo only, **never served, never in the public wiki**): roadmap, milestones, requirements, current scope, session state, decisions/discussion, phases, steps, progress, logs.
+>
+> The process is **distilled into** the system wiki: when a decision lands in `.planning/`, its resulting *system truth* is written onto the relevant `wiki/` page (the design/architecture/object/flow), while the *sequencing, debate, and progress* stay in `.planning/`. **Process docs never go into the public wiki.** A single change often touches both trees — update both in the same commit.
 
-The "final idea" must always live in these files:
+The "final idea" lives in these files:
 
-| Scope | File (canonical wiki home → legacy path) |
-|-------|------|
-| Public pitch + quickstart | `README.md` |
-| Core worldview + non-negotiables | `wiki/1-design/philosophy.md` *(was `PHILOSOPHY.md`)* |
-| System architecture | `wiki/1-design/architecture.md` *(was `planning/ARCHITECTURE.md`)* |
-| Active roadmap (current + upcoming phases) | `.planning/ROADMAP.md` → migrating to `wiki/2-planning/roadmap.md` |
-| Milestone log (what shipped) | `.planning/MILESTONES.md` → `wiki/2-planning/milestones.md` |
-| Current milestone scope + validated REQs | `.planning/PROJECT.md` |
-| Active requirements | `.planning/REQUIREMENTS.md` → `wiki/2-planning/requirements.md` |
-| Session state | `.planning/STATE.md` → `wiki/2-planning/state.md` |
-| Research foundations | `.planning/research/*.md` → `wiki/2-planning/research/*.md` |
+| Scope | Tree | Canonical file |
+|-------|------|----------------|
+| Public pitch + quickstart | root | `README.md` |
+| Core worldview + non-negotiables | system wiki | `wiki/1-design/philosophy.md` |
+| System architecture | system wiki | `wiki/1-design/architecture.md` |
+| v3.0 civic architecture | system wiki | `wiki/1-design/civic-architecture.md` |
+| Economy (money & settlement) | system wiki | `wiki/1-design/economy.md` |
+| Decision log (D-*) | system wiki | `wiki/1-design/decisions.md` |
+| Active roadmap (current + upcoming phases) | private dev log | `.planning/ROADMAP.md` |
+| Milestone log (what shipped) | private dev log | `.planning/MILESTONES.md` |
+| Current milestone scope + validated REQs | private dev log | `.planning/PROJECT.md` |
+| Active requirements | private dev log | `.planning/REQUIREMENTS.md` |
+| Session state | private dev log | `.planning/STATE.md` |
+| Phases (GSD) + build plans | private dev log | `.planning/phases/`, `.planning/*-plan.md` |
+| Research foundations | private dev log | `.planning/research/*.md` |
 
 ### When this rule fires
 

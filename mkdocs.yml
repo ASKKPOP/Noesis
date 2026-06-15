@@ -1,5 +1,5 @@
 site_name: Noēsis Wiki
-site_description: Single source of truth — design, planning, implementation, reference.
+site_description: The Noēsis system — design, implementation, reference. (Developer process is private, in-repo, not served here.)
 docs_dir: wiki
 site_dir: site
 

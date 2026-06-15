@@ -10,6 +10,19 @@ owners: [henry, claude]
 
 > **The wiki only stays trustworthy if it is read first and updated every task.** This page is the contract for both Henry and Claude.
 
+## Scope — what belongs here (D-WIKI-06)
+
+This wiki is the **Noēsis _system_** documentation, and **only** that: philosophy, concepts, structure, design, object/entity details, system architecture, specific technical details, and system flows — everything needed to understand and build the system.
+
+The **developer _process_** — roadmap, milestones, requirements, current scope, session state, decisions/discussion, phases, steps, progress, logs — lives privately in [`.planning/`](../.planning/) **in-repo only and is never served here**. When a decision lands in `.planning/`, its resulting *system truth* is distilled onto the relevant wiki page; the *sequencing, debate, and progress* stay in `.planning/`. **Process docs never enter this wiki.**
+
+| Belongs in the wiki (system) | Belongs in `.planning/` (process) |
+|------------------------------|-----------------------------------|
+| philosophy · concepts · invariants | roadmap · milestones |
+| architecture · structure · flows | requirements · current scope · state |
+| object/entity & technical details | phases · build plans · steps · progress |
+| the decision *log* (what is true now) | the decision *discussion* · session logs |
+
 ## 🗺️ At a glance
 
 ```mermaid

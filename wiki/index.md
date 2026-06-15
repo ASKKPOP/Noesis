@@ -9,16 +9,18 @@ owners: [henry, claude]
 # Noēsis Wiki — Home
 
 > **The map. Read this first, every session.** One topic = one canonical doc. If two docs claim the same truth, that is a bug ([D-WIKI-04](1-design/decisions.md)).
+>
+> **Scope:** this public wiki documents the **Noēsis system** — philosophy, concepts, architecture, object/entity details, technical details, and system flows. The **developer process** (roadmap, milestones, decisions/discussion, phases, steps, progress, logs) lives privately in [`.planning/`](https://github.com/) **in-repo only and is never served here** ([D-WIKI-06](1-design/decisions.md)).
 
 ## 🗺️ At a glance
 
 ```mermaid
 flowchart LR
   H[🏠 Home / index.md] --> D[1 · Design<br/>why & what]
-  H --> P[2 · Planning<br/>when & how much]
   H --> I[3 · Implementation<br/>the build]
   H --> R[4 · Reference<br/>look it up]
   H -.reads first.-> PR[PROTOCOL.md<br/>follow & update loop]
+  H -.private · not served.-> DV[.planning/<br/>developer log]
 ```
 
 ## Canonical map
@@ -28,11 +30,9 @@ flowchart LR
 | Worldview / non-negotiables | [1-design/philosophy.md](1-design/philosophy.md) | ✅ live | 2026-06-14 |
 | System architecture (Portal/Grid/Brain) | [1-design/architecture.md](1-design/architecture.md) | ✅ live | 2026-06-14 |
 | v3.0 civic architecture (Polis/zones) | [1-design/civic-architecture.md](1-design/civic-architecture.md) | 🚧 migrating | 2026-06-14 |
+| Economy (money & settlement) | [1-design/economy.md](1-design/economy.md) | 📋 draft | 2026-06-15 |
 | Decision log (D-*) | [1-design/decisions.md](1-design/decisions.md) | 🚧 migrating | 2026-06-14 |
-| Roadmap | [2-planning/roadmap.md](2-planning/index.md) | 🚧 migrating | 2026-06-14 |
-| Money migration (compute-labor + ETH) | [2-planning/money-migration.md](2-planning/money-migration.md) | 📋 draft | 2026-06-15 |
-| Milestones / Requirements / State | [2-planning/](2-planning/index.md) | 🚧 migrating | 2026-06-14 |
-| Phases (GSD workflow) | [2-planning/phases/](2-planning/index.md) | 🚧 migrating | 2026-06-14 |
+| Planning / process (roadmap, milestones, phases, logs) | `.planning/` — **private, in-repo only, not in this wiki** | 🔒 private | 2026-06-15 |
 | Deploy / hosts / runbook | [3-implementation/deploy.md](3-implementation/index.md) | 🚧 migrating | 2026-06-14 |
 | Wiki hosting (served at /wiki/) | [3-implementation/wiki-hosting.md](3-implementation/wiki-hosting.md) | ✅ live | 2026-06-14 |
 | Components (grid/brain/dashboard) | [3-implementation/](3-implementation/index.md) | 🚧 migrating | 2026-06-14 |
