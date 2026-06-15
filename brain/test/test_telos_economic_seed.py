@@ -1,4 +1,9 @@
-"""Economic goal — Task 2: auto-seed for all spawned Nous (config path), opt-out."""
+"""Economic goal — Task 2: seed_economic_goal() + the spawn-only contract.
+
+Seeding happens once at SPAWN (see test_main.py::test_goals_loaded_from_config,
+which goes through the __main__ build path). from_yaml is a *rebuild* contract
+(operator force_telos + dialogue refinement) and must NOT seed.
+"""
 from __future__ import annotations
 
 from noesis_brain.telos.manager import ECONOMIC_GOAL_TEXT, TelosManager
@@ -14,18 +19,20 @@ def test_bare_manager_is_not_seeded() -> None:
     assert TelosManager().all_goals() == []
 
 
-def test_from_yaml_auto_seeds_economic_goal_by_default() -> None:
-    mgr = TelosManager.from_yaml({"short_term": ["Wake up"]})
-    econ = _economic(mgr)
-    assert len(econ) == 1
-    assert econ[0].goal_type == GoalType.LONG_TERM
-    assert econ[0].description == ECONOMIC_GOAL_TEXT
-    assert econ[0].is_active()
+def test_seed_economic_goal_adds_long_term_economic_target() -> None:
+    mgr = TelosManager()
+    g = mgr.seed_economic_goal()
+    assert g.goal_type == GoalType.LONG_TERM
+    assert g.domain == GoalDomain.ECONOMIC
+    assert g.description == ECONOMIC_GOAL_TEXT
+    assert mgr.economic_goals() == [g]
 
 
-def test_from_yaml_opt_out_disables_seed() -> None:
-    mgr = TelosManager.from_yaml({"earn_money": False, "short_term": ["Wake up"]})
-    assert _economic(mgr) == []
+def test_from_yaml_does_not_seed_rebuild_contract_is_literal() -> None:
+    # Operator force_telos / dialogue refinement rebuild via from_yaml — literal,
+    # so an empty payload yields zero goals (no auto-seed).
+    assert TelosManager.from_yaml({}).all_goals() == []
+    assert _economic(TelosManager.from_yaml({"short_term": ["Wake up"]})) == []
 
 
 def test_economic_goal_text_is_axiom_aligned() -> None:
@@ -36,6 +43,7 @@ def test_economic_goal_text_is_axiom_aligned() -> None:
 
 
 def test_seed_is_deterministic() -> None:
-    a = TelosManager.from_yaml({})
-    b = TelosManager.from_yaml({})
+    a, b = TelosManager(), TelosManager()
+    a.seed_economic_goal()
+    b.seed_economic_goal()
     assert [g.description for g in _economic(a)] == [g.description for g in _economic(b)]

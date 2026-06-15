@@ -115,11 +115,10 @@ class TestTelosManager:
             ],
         }
         mgr = TelosManager.from_yaml(config)
-        # 6 config goals + 1 auto-seeded economic (long-term) goal = 7
-        assert len(mgr.active_goals()) == 7
+        assert len(mgr.active_goals()) == 6
         assert len(mgr.goals_by_type(GoalType.SHORT_TERM)) == 2
         assert len(mgr.goals_by_type(GoalType.MEDIUM_TERM)) == 2
-        assert len(mgr.goals_by_type(GoalType.LONG_TERM)) == 3  # 2 config + 1 economic
+        assert len(mgr.goals_by_type(GoalType.LONG_TERM)) == 2
 
         # Short-term goals should have higher priority
         short = mgr.goals_by_type(GoalType.SHORT_TERM)
@@ -142,8 +141,7 @@ class TestTelosManager:
             ],
         }
         mgr = TelosManager.from_yaml(config)
-        # 6 config goals + 1 auto-seeded economic goal = 7
-        assert len(mgr.active_goals()) == 7
+        assert len(mgr.active_goals()) == 6
         top = mgr.top_priority(1)
         # Should be a short-term goal
         assert top[0].goal_type == GoalType.SHORT_TERM

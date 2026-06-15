@@ -87,7 +87,8 @@ class TelosManager:
                 base_priority = {"short_term": 0.8, "medium_term": 0.5, "long_term": 0.3}
                 priority = base_priority.get(type_key, 0.5) - (i * 0.05)
                 manager.add_goal(desc, goal_type, priority=max(0.1, priority))
-        # Auto-seed the economic target for all Nous (opt out with earn_money: false).
-        if data.get("earn_money", True):
-            manager.seed_economic_goal()
+        # NOTE: from_yaml is a *rebuild* contract (operator force_telos + Nous
+        # dialogue refinement). It must NOT auto-seed the economic goal — doing so
+        # breaks literal operator overrides and duplicates the goal on every
+        # refinement. The economic target is seeded once at SPAWN (__main__).
         return manager
