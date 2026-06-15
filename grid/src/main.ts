@@ -29,6 +29,7 @@ import { GraceTimerRegistry } from './civic-presence/grace-timer-registry.js';
 import { PresenceService } from './civic-presence/presence-service.js';
 import { ParcelRegistry } from './civic/parcel-registry.js';
 import { ParcelStore } from './civic/parcel-store.js';
+import { GroupStore } from './economy/group-store.js';
 import { gravityPrice, recordPolisOverride } from './civic/founding-law.js';
 import { TREASURY_DID } from './api/routes/registry.js';
 import type { GenesisConfig } from './genesis/types.js';
@@ -222,6 +223,12 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         const parcelCount = await parcelStore.hydrate(parcelRegistry);
         console.log(`[civic] parcels loaded: ${parcelCount}`);
         parcels = { registry: parcelRegistry, store: parcelStore };
+        // Groups & Holdings · Phase 1 (D-GROUP-04): seed the five founding Businesses as
+        // orbital anchors in the business sector (idempotent). Each freshly-inserted row
+        // emits one group.founded onto the audit chain (founding at genesis tick 0).
+        const groupStore = new GroupStore(presencePool, config.genesisConfig.gridName);
+        const groupsSeeded = await groupStore.seedGenesisGroups(chain!, 0);
+        console.log(`[civic] groups seeded: ${groupsSeeded}`);
         // Phase 59 HOUSE-2 (D-59-06 / R-H-03): late-wire the upkeep scanner now that the
         // parcel registry/store exist. It rides the EXISTING clock.onTick block in the
         // launcher (no new subscription). The facade composes parcel-registry ladder +

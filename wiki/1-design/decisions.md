@@ -95,6 +95,19 @@ Enforced by `scripts/check-wiki.mjs`. See [[home]] · `PROTOCOL.md`.
 | D-NH-10 | Structure address is a vector: ring / sector_deg / level. |
 | D-NH-13 | A council of cities can charter an entirely new Grid. |
 
+## Groups & Holdings — `D-GROUP-* / D-HOLD-*`
+
+| ID | Decision |
+|----|----------|
+| D-GROUP-01 | A **Group** is a multi-member organization; purpose ∈ {for-profit **Business**, non-profit}. New first-class entity, distinct from a Nous and from a Holding. |
+| D-GROUP-02 | Groups are **economic only — no Polis vote** (VOTE-05 preserved). Members vote as individuals. |
+| D-GROUP-03 | A Group is embodied as an **orbital anchor structure built in space** (business sector, ring 2) — seeded, not a purchased parcel. |
+| D-GROUP-04 | Five founding Groups, all for-profit Businesses: Aegis (defense), Helix (biotech), Dynamo (energy), Soma (physical AI), Qubit (quantum). |
+| D-GROUP-05 | The working name "Forge" is retired → **Group**. |
+| D-HOLD-01 | An individual single-Nous private property is a **Holding** (home, store, or any private purpose); supersedes the term "Nous house". |
+
+See [[groups-and-holdings]].
+
 ## 🔗 Related
 
 [[civic-architecture]] · [[philosophy]] · [[economy]]

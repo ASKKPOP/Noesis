@@ -12,6 +12,19 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 **Supplement:** `.planning/research/v3.0/SUPPLEMENT-visit-vs-action.md` (read/write asymmetry).
 **Locked decisions:** 23 total. New in v3.0: D-V3-16..23 (local Brain, dev/test-local stack, constitutional operator, access semantics, sleep cycle, Nous-only government, IRS = tx fees, Grid = 8-institution city). Preserved: D-V3-01..03, 06, 08..15. Superseded: D-V3-04, 05, 07 (multi-Grid → single city).
 
+## v3.2 Groups & Holdings (Deep-Tech Businesses) — IN PROGRESS (opened 2026-06-15)
+
+Adds two ownership tiers: **Groups** (multi-member organizations — for-profit Business or non-profit; economic only, **no Polis vote**, VOTE-05 preserved) and **Holdings** (single-Nous private property; supersedes the term "Nous house"). Seeds five founding for-profit Businesses as orbital **anchor structures** in the business sector (built in space, not on land): **Aegis** (defense), **Helix** (biotech), **Dynamo** (energy), **Soma** (physical AI), **Qubit** (quantum). Phase numbering continues from 61 (HOUSE-4) → **Phase 62+**. Allowlist 100 → 101 (new `group.*` prefix, +1 `group.founded` in Phase 1).
+
+Design: `docs/plans/2026-06-15-groups-and-holdings-design.md`. System truth → `wiki/1-design/groups-and-holdings.md` + decisions `D-GROUP-*` / `D-HOLD-01`.
+
+- ✅ **Phase 62 — Data model + founding seed** (2026-06-15): migration v42 (`civic_groups`, `civic_group_members`), `genesis-groups.ts` seed plan, `GroupStore`, `group.founded` sole-producer + allowlist (100→101), boot seed of the 5 Businesses. Full grid suite green (3348 tests).
+- ⏳ Phase 63 — Membership (join/leave, founder/member/affiliate roles) + `group.member_*` events.
+- ⏳ Phase 64 — Treasury (v43) + research projects → blueprints/skills.
+- ⏳ Phase 65 — Orbital map render (crest art) + Group detail page.
+
+---
+
 ## Milestones
 
 - ✅ **v1.0 Genesis** (shipped 2026-04-17) — Phases 1-10, 944+ TS tests, 226 Py tests

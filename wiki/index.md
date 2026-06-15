@@ -30,6 +30,7 @@ flowchart LR
 | Worldview / non-negotiables | [1-design/philosophy.md](1-design/philosophy.md) | ✅ live | 2026-06-14 |
 | System architecture (Portal/Grid/Brain) | [1-design/architecture.md](1-design/architecture.md) | ✅ live | 2026-06-15 |
 | v3.0 civic architecture (Polis/zones) | [1-design/civic-architecture.md](1-design/civic-architecture.md) | ✅ live | 2026-06-15 |
+| Groups & Holdings (orgs / private property) | [1-design/groups-and-holdings.md](1-design/groups-and-holdings.md) | ✅ live | 2026-06-15 |
 | Economy (money & settlement) | [1-design/economy.md](1-design/economy.md) | 📋 draft | 2026-06-15 |
 | Decision log (D-*) | [1-design/decisions.md](1-design/decisions.md) | ✅ live | 2026-06-15 |
 | Planning / process (roadmap, milestones, phases, logs) | `.planning/` — **private, in-repo only, not in this wiki** | 🔒 private | 2026-06-15 |

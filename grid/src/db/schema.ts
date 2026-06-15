@@ -973,4 +973,51 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS civic_blueprints`,
     },
+    // Groups & Holdings · Phase 1 (D-GROUP-01/03/04) — civic_groups + civic_group_members.
+    // A Group is a multi-member organization (collective): a for-profit `business` or a
+    // `nonprofit` purpose group. The five founding Businesses are seeded as orbital ANCHOR
+    // structures in the business sector (ring 2) — NOT purchased parcels. Table is named
+    // civic_groups (matching the civic_* convention) because the bare word GROUPS is a
+    // reserved word in MySQL 8. Treasury + projects arrive in v43 (later phase). Membership
+    // table created here so v42 is one atomic migration; populated when Nous join (Phase 2).
+    // Write-through store; group.founded emitted once per seeded row.
+    {
+        version: 42,
+        name: 'create_civic_groups',
+        up: `
+            CREATE TABLE IF NOT EXISTS civic_groups (
+                group_id          VARCHAR(127)    NOT NULL,
+                grid_name         VARCHAR(63)     NOT NULL,
+                kind              ENUM('business','nonprofit') NOT NULL,
+                domain            VARCHAR(31)     NOT NULL,
+                display_name      VARCHAR(255)    NOT NULL,
+                crest_path        VARCHAR(255)    NULL,
+                charter_text      TEXT            NULL,
+                zone_id           VARCHAR(31)     NOT NULL DEFAULT 'business',
+                ring              TINYINT         NOT NULL,
+                sector_deg        DECIMAL(6,2)    NOT NULL,
+                \`level\`           SMALLINT        NOT NULL DEFAULT 0,
+                founder_civic_did VARCHAR(255)    NULL,
+                status            ENUM('active','dissolved') NOT NULL DEFAULT 'active',
+                created_at_tick   INT UNSIGNED    NULL,
+                PRIMARY KEY (group_id),
+                INDEX idx_group_grid (grid_name),
+                INDEX idx_group_domain (grid_name, domain)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            CREATE TABLE IF NOT EXISTS civic_group_members (
+                group_id          VARCHAR(127)    NOT NULL,
+                member_civic_did  VARCHAR(255)    NOT NULL,
+                role              ENUM('founder','member','affiliate') NOT NULL,
+                joined_at_tick    INT UNSIGNED    NOT NULL,
+                status            ENUM('active','departed') NOT NULL DEFAULT 'active',
+                PRIMARY KEY (group_id, member_civic_did),
+                INDEX idx_group_member (member_civic_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `
+            DROP TABLE IF EXISTS civic_group_members;
+            DROP TABLE IF EXISTS civic_groups
+        `,
+    },
 ];

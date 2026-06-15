@@ -120,7 +120,7 @@ describe('human civic application producers — 8-step discipline', () => {
 describe('allowlist extension 86 → 91', () => {
     it('positions 87-91 carry the five new events (1-indexed comments = 0-indexed array)', () => {
         const members = ALLOWLIST_MEMBERS as readonly string[];
-        expect(members.length).toBe(100); // Phase 61 HOUSE-4 (D-61-05): 99 → 100, +1 skill.blueprint_executed (EXPECTED-RED until Wave 3 / 61-04)
+        expect(members.length).toBe(101); // Phase 61 HOUSE-4: 99 → 100 (skill.blueprint_executed); Groups Phase 1: 100 → 101 (group.founded)
         expect(members[86]).toBe('portal.registration_requested');
         expect(members[87]).toBe('polis.registration_pending');
         expect(members[88]).toBe('portal.registration_approved');

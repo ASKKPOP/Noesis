@@ -430,6 +430,14 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   closed 4-key {blueprint_hash, builder_civic_did_hash, parcel_id, tick}; actorDid = builder_civic_did_hash.
     //   blueprint_hash is the Phase 18 skill hash (HEX64); builder_civic_did_hash is HEX64.
     'skill.blueprint_executed',   // (100)
+    // Groups & Holdings · Phase 1 (D-GROUP-01) — NEW prefix group.*. Allowlist 100 → 101.
+    // A Group is a multi-member organization (for-profit Business or non-profit). The five
+    // founding Businesses are seeded as orbital anchors at boot; each emits one group.founded.
+    // group.founded (101): sole-producer grid/src/audit/append-group-founded.ts
+    //   closed 4-key {domain, group_id, kind, tick}; actorDid = group_id (mirrors parcel
+    //   events using parcel_id as actor). NO plaintext display name / charter / member DID
+    //   crosses — only the id + domain/kind enums + tick.
+    'group.founded',              // (101)
 ] as const;
 
 /**
