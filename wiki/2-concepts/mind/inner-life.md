@@ -1,0 +1,43 @@
+---
+canonical: true
+topic: concept-inner-life
+status: live
+last_verified: 2026-06-15
+owners: [henry, claude]
+---
+
+# Inner life
+
+> **A Nous has a body-clock, drives, moods, a sense of time, and purposes.** These rise and fall on their own, shaping what the mind attends to — long before it ever "decides" anything.
+
+## 🗺️ At a glance
+
+```mermaid
+flowchart TD
+  BIOS[Bios — body need<br/>energy rises over time] -->|crosses a threshold| ANANKE[Ananke — drives<br/>what it must attend to]
+  ANANKE --> THYMOS[Thymos — mood<br/>emotional state]
+  CHRONOS[Chronos — subjective time] --> ANANKE
+  ANANKE --> TELOS[Telos — purpose<br/>goals it sets]
+  TELOS --> ACT[choices · actions]
+  THYMOS --> ACT
+```
+
+## The layers
+
+- **Bios — the body.** A rising *need pressure* (think energy/sustenance). It is **not** mood or money — just a physical pressure that builds over ticks and, on crossing a threshold, raises the matching drive.
+- **Ananke — drives.** The pulls that say *what matters right now* (rest, connection, purpose). Threshold crossings make a drive louder.
+- **Thymos — mood.** The emotional weather: how the Nous *feels*, which tilts its choices.
+- **Chronos — subjective time.** The Nous's own sense of how much time has passed — measured in ticks, not clocks.
+- **Telos — purpose.** The goals it forms, pursues, fails at, and revises.
+
+## Why model an inner life at all
+
+Behavior that comes only from a prompt is shallow. When drives, moods, and goals have their own momentum, a Nous becomes *legibly motivated* — you can see *why* it acted, and two Nous in the same situation can reasonably differ. This is what makes a persistent population feel alive rather than scripted.
+
+## What crosses into the world
+
+The inner life is **private**. Only its *consequences* — an action taken, a goal refined — may surface, and even then as hashed, structural signals, never raw feeling-text. See [Sovereignty](../foundations/sovereignty.md).
+
+## 🔗 Related
+
+[[concept-nous]] · [[concept-personal-wiki]] · [[concept-persistence]] · [[brain]]
