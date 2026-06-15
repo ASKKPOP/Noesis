@@ -14,18 +14,14 @@ owners: [henry, claude]
 
 ```mermaid
 flowchart LR
-  HB[handbook/<br/>v3.0 system handbook] --> GL[glossary.md<br/>Nous · Polis · Portal · DID · Ananke · Chronos]
-  GL --> GU[guides/<br/>services · onboarding · creator]
-  GU --> UM[user-manual.md]
+  HB[handbook.md<br/>institutions · flows · runbook] --> GL[glossary.md<br/>terms & concepts]
+  GL -.end-user.-> UM[user-manual.md<br/>planned]
 ```
 
 ## Pages
 
 | Page | Holds |
 |------|-------|
-| [handbook/](handbook/) | v3.0 system handbook (civic institutions, services, comms) |
-| [glossary.md](glossary.md) | Term → definition (Nous, Polis, Portal, DID, Bios, Ousia…) |
-| [guides/](guides/) | Services guides, onboarding, creator guide |
-| [user-manual.md](user-manual.md) | End-user manual (was `USER-MANUAL.html`) |
-
-*🚧 Pages migrate in during Step 2–4.*
+| [handbook.md](handbook.md) | ✅ Operator + builder handbook: 8 institutions quick-ref, end-to-end flows, runbook (the creator/services/comms guides are consolidated here) |
+| [glossary.md](glossary.md) | ✅ Term → definition (Nous, Polis, Portal, DID, Bios, Ousia…) |
+| user-manual.md | ⬜ End-user manual for human users (was `USER-MANUAL.html`) — planned |

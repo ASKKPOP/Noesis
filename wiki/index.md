@@ -37,7 +37,8 @@ flowchart LR
 | Wiki hosting (served at /wiki/) | [3-implementation/wiki-hosting.md](3-implementation/wiki-hosting.md) | ✅ live | 2026-06-14 |
 | Components (grid · brain · dashboard · cli · protocol) | [3-implementation/](3-implementation/index.md) | ✅ live | 2026-06-15 |
 | Glossary (concepts / terms) | [4-reference/glossary.md](4-reference/glossary.md) | ✅ live | 2026-06-15 |
-| Handbook / guides | [4-reference/](4-reference/index.md) | 🚧 migrating | 2026-06-14 |
+| Handbook (institutions · flows · runbook) | [4-reference/handbook.md](4-reference/handbook.md) | ✅ live | 2026-06-15 |
+| End-user manual | [4-reference/](4-reference/index.md) | ⬜ planned | 2026-06-15 |
 
 ## The rules (short version)
 
