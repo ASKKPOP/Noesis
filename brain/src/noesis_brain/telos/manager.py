@@ -65,7 +65,10 @@ class TelosManager:
                 lines.append(f"{label}:")
                 for g in sorted(goals, key=lambda x: x.priority, reverse=True):
                     progress = f" [{g.progress:.0%}]" if g.progress > 0 else ""
-                    lines.append(f"  - {g.description}{progress}")
+                    # An economic goal is an ongoing disposition, not a to-do that
+                    # gets ticked off — flag it so the mind treats it as standing.
+                    mark = " (standing economic target)" if g.domain == GoalDomain.ECONOMIC else ""
+                    lines.append(f"  - {g.description}{progress}{mark}")
         return "\n".join(lines) if lines else "No active goals."
 
     @classmethod
