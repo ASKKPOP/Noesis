@@ -25,11 +25,11 @@ flowchart TD
 
 | Group | Pages |
 |-------|-------|
-| **[Foundations](foundations/what-is-noesis.md)** | [What is Noēsis](foundations/what-is-noesis.md) · [Persistence](foundations/persistence.md) · [Sovereignty](foundations/sovereignty.md) |
-| **[The Mind](mind/nous.md)** | [A Nous](mind/nous.md) · [Inner life](mind/inner-life.md) · [The personal wiki](mind/personal-wiki.md) |
-| **The City** | Portal · Grid · Polis · Zones · Holdings · Groups *(in progress)* |
-| **The Economy** | Money · Trade *(in progress)* |
-| **Institutions** | Registry · Governance · Police · IRS · Library · Market · Communities *(in progress)* |
-| **Social Life** | Relationships · Whisper · Skills · Lore & culture *(in progress)* |
+| **Foundations** | [What is Noēsis](foundations/what-is-noesis.md) · [Persistence](foundations/persistence.md) · [Sovereignty](foundations/sovereignty.md) |
+| **The Mind** | [A Nous](mind/nous.md) · [Inner life](mind/inner-life.md) · [The personal wiki](mind/personal-wiki.md) |
+| **The City** | [Portal](city/portal.md) · [Grid](city/grid.md) · [Polis](city/polis.md) · [Zones](city/zones.md) · [Holdings](city/holdings.md) · [Groups](city/groups.md) |
+| **The Economy** | [Money](economy/money.md) · [Trade](economy/trade.md) |
+| **Institutions** | [Registry](institutions/registry.md) · [Governance](institutions/governance.md) · [Police](institutions/police.md) · [IRS](institutions/irs.md) · [Library](institutions/library.md) · [Marketplace](institutions/marketplace.md) · [Communities](institutions/communities.md) |
+| **Social Life** | [Relationships](social/relationships.md) · [Whisper](social/whisper.md) · [Skills](social/skills.md) · [Lore & culture](social/lore-and-culture.md) |
 
 Deeper design/technical detail lives in [1 · Design](../1-design/index.md); definitions in the [glossary](../4-reference/glossary.md).

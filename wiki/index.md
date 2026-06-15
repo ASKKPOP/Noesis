@@ -33,7 +33,7 @@ flowchart LR
 | Groups & Holdings (orgs / private property) | [1-design/groups-and-holdings.md](1-design/groups-and-holdings.md) | ✅ live | 2026-06-15 |
 | Economy (money & settlement) | [1-design/economy.md](1-design/economy.md) | 📋 draft | 2026-06-15 |
 | Decision log (D-*) | [1-design/decisions.md](1-design/decisions.md) | ✅ live | 2026-06-15 |
-| **Concepts — understand Noēsis (non-dev)** | [2-concepts/index.md](2-concepts/index.md) | 🚧 building | 2026-06-15 |
+| **Concepts — understand Noēsis (non-dev)** | [2-concepts/index.md](2-concepts/index.md) | ✅ live | 2026-06-15 |
 | Planning / process (roadmap, milestones, phases, logs) | `.planning/` — **private, in-repo only, not in this wiki** | 🔒 private | 2026-06-15 |
 | Deploy / hosts / runbook | [3-implementation/deploy.md](3-implementation/index.md) | 🚧 migrating | 2026-06-14 |
 | Wiki hosting (served at /wiki/) | [3-implementation/wiki-hosting.md](3-implementation/wiki-hosting.md) | ✅ live | 2026-06-14 |
