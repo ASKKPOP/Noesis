@@ -29,14 +29,15 @@ flowchart LR
 |-------|---------------|--------|---------------|
 | Worldview / non-negotiables | [1-design/philosophy.md](1-design/philosophy.md) | ✅ live | 2026-06-14 |
 | System architecture (Portal/Grid/Brain) | [1-design/architecture.md](1-design/architecture.md) | ✅ live | 2026-06-14 |
-| v3.0 civic architecture (Polis/zones) | [1-design/civic-architecture.md](1-design/civic-architecture.md) | 🚧 migrating | 2026-06-14 |
+| v3.0 civic architecture (Polis/zones) | [1-design/civic-architecture.md](1-design/civic-architecture.md) | ✅ live | 2026-06-15 |
 | Economy (money & settlement) | [1-design/economy.md](1-design/economy.md) | 📋 draft | 2026-06-15 |
-| Decision log (D-*) | [1-design/decisions.md](1-design/decisions.md) | 🚧 migrating | 2026-06-14 |
+| Decision log (D-*) | [1-design/decisions.md](1-design/decisions.md) | ✅ live | 2026-06-15 |
 | Planning / process (roadmap, milestones, phases, logs) | `.planning/` — **private, in-repo only, not in this wiki** | 🔒 private | 2026-06-15 |
 | Deploy / hosts / runbook | [3-implementation/deploy.md](3-implementation/index.md) | 🚧 migrating | 2026-06-14 |
 | Wiki hosting (served at /wiki/) | [3-implementation/wiki-hosting.md](3-implementation/wiki-hosting.md) | ✅ live | 2026-06-14 |
 | Components (grid/brain/dashboard) | [3-implementation/](3-implementation/index.md) | 🚧 migrating | 2026-06-14 |
-| Handbook / glossary / guides | [4-reference/](4-reference/index.md) | 🚧 migrating | 2026-06-14 |
+| Glossary (concepts / terms) | [4-reference/glossary.md](4-reference/glossary.md) | ✅ live | 2026-06-15 |
+| Handbook / guides | [4-reference/](4-reference/index.md) | 🚧 migrating | 2026-06-14 |
 
 ## The rules (short version)
 
