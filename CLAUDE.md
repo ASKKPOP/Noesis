@@ -124,18 +124,21 @@ These guidelines are working if you see:
 
 **When the project idea, scope, or design evolves — update the source-of-truth documents in the same turn. Never leave them stale.**
 
+> **Single source of truth = the in-repo wiki at `wiki/` (MkDocs Material).** Read `wiki/index.md` first, every session; follow `wiki/PROTOCOL.md`. **A task is not done until the wiki reflects it** (completion gate). Migration of the legacy paths below into `wiki/` is in progress — migrated docs leave a `superseded` stub pointing to their new wiki home.
+
 The "final idea" must always live in these files:
 
-| Scope | File |
+| Scope | File (canonical wiki home → legacy path) |
 |-------|------|
 | Public pitch + quickstart | `README.md` |
-| Core worldview + non-negotiables | `PHILOSOPHY.md` |
-| Active roadmap (current + upcoming phases) | `.planning/ROADMAP.md` |
-| Milestone log (what shipped) | `.planning/MILESTONES.md` |
+| Core worldview + non-negotiables | `wiki/1-design/philosophy.md` *(was `PHILOSOPHY.md`)* |
+| System architecture | `wiki/1-design/architecture.md` *(was `planning/ARCHITECTURE.md`)* |
+| Active roadmap (current + upcoming phases) | `.planning/ROADMAP.md` → migrating to `wiki/2-planning/roadmap.md` |
+| Milestone log (what shipped) | `.planning/MILESTONES.md` → `wiki/2-planning/milestones.md` |
 | Current milestone scope + validated REQs | `.planning/PROJECT.md` |
-| Active requirements | `.planning/REQUIREMENTS.md` |
-| Session state | `.planning/STATE.md` |
-| Research foundations | `.planning/research/*.md` |
+| Active requirements | `.planning/REQUIREMENTS.md` → `wiki/2-planning/requirements.md` |
+| Session state | `.planning/STATE.md` → `wiki/2-planning/state.md` |
+| Research foundations | `.planning/research/*.md` → `wiki/2-planning/research/*.md` |
 
 ### When this rule fires
 

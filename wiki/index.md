@@ -25,8 +25,8 @@ flowchart LR
 
 | Topic | Canonical doc | Status | Last verified |
 |-------|---------------|--------|---------------|
-| Worldview / non-negotiables | [1-design/philosophy.md](1-design/philosophy.md) | 🚧 migrating | 2026-06-14 |
-| System architecture (Portal/Grid/Brain) | [1-design/architecture.md](1-design/architecture.md) | 🚧 migrating | 2026-06-14 |
+| Worldview / non-negotiables | [1-design/philosophy.md](1-design/philosophy.md) | ✅ live | 2026-06-14 |
+| System architecture (Portal/Grid/Brain) | [1-design/architecture.md](1-design/architecture.md) | ✅ live | 2026-06-14 |
 | v3.0 civic architecture (Polis/zones) | [1-design/civic-architecture.md](1-design/civic-architecture.md) | 🚧 migrating | 2026-06-14 |
 | Decision log (D-*) | [1-design/decisions.md](1-design/decisions.md) | 🚧 migrating | 2026-06-14 |
 | Roadmap | [2-planning/roadmap.md](2-planning/index.md) | 🚧 migrating | 2026-06-14 |
