@@ -21,7 +21,7 @@ These are repo invariants that this work touches. Violating one breaks CI or a f
 5. **Doc-sync gate** (CLAUDE.md + `scripts/check-wiki.mjs`): not done until a `wiki/` page reflects the new capability, in the same commit. Mermaid diagram required on the page.
 6. **Surgical**: `generate()` stays untouched. Tool use is an *additive* method so non-tool paths are unaffected.
 
-**Phase numbering:** this is a **new capability not in the current v3.0/v3.2 roadmap** — it opens the "Nous-as-Builder" direction the spec (`docs/nous_spec.md`) describes. Phase number is **TBD/unassigned** — reconcile with `.planning/ROADMAP.md` before opening (last reserved: Phase 71 Groups, Money 62–66). Do **not** hard-code a number until `/gsd` assigns one. This doc plans the *content*; numbering is a separate decision.
+**Phase:** **Phase 72** of new milestone **v3.3 Agentic Brain (Nous-as-Builder)** (reconciled 2026-06-15 — next free after Groups Phase 71; Money reserves 62–66). Phase 73 (Code Sandbox) and Phase 74 (Task Pipeline + Reporting) are the reserved follow-ons. See `.planning/ROADMAP.md` → "v3.3 Agentic Brain". Plan 5's `.planning` edits should mark Phase 72 in progress on execution.
 
 ---
 

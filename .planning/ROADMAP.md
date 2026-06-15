@@ -28,6 +28,20 @@ Design: `docs/plans/2026-06-15-groups-and-holdings-design.md`. System truth → 
 
 ---
 
+## v3.3 Agentic Brain (Nous-as-Builder) — PLANNED (opened 2026-06-15)
+
+Realizes the side of `docs/nous_spec.md` the civic milestones never built: Nous as an autonomous **worker/builder** — it calls tools mid-reasoning, researches the live web, programs locally, and runs a plan→build→QA pipeline with visual reporting. The audit (gap analysis 2026-06-15) found identity/memory/social/economy ≈ strong, but the entire "agentic work" pillar MISSING/PARTIAL, almost all of it gated on one absent foundation: **tool-use + a code sandbox**.
+
+> **Phase numbering (reconciled 2026-06-15):** next free number after Groups Phase 71 (Money reserves 62–66, Groups 67–71). v3.3 takes **Phases 72–74**. Single critical-path foundation first, then the two dependents it unblocks.
+
+- 📋 **Phase 72 — Tool-Use Foundation** (planned): `generate_with_tools` adapter method (additive — `generate()` untouched), `ToolRegistry` + `ToolRunner` loop (digest-only trace), `web_search`/`web_fetch` tools reusing existing `aau/` SSRF + rate-limit guards, wired into the AAU learner. New `tool.invoked`/`tool.result` audit events (allowlist +2; keys dodge `FORBIDDEN_KEY_PATTERN` — `output_sha256`, never `output`/`content`). Plan: `docs/plans/2026-06-15-nous-agentic-work-foundation.md`. Delivers spec §4 (live web research). Branch: `feat/agentic-work-foundation`.
+- ⏳ **Phase 73 — Code Sandbox** (after 72): "Nous Can Program Locally" (§5) — process/container isolation, fs jail, resource limits, `tool.code_run` (audit carries `output_sha256` only). Needs its own safety-design pass before code.
+- ⏳ **Phase 74 — Task Pipeline + Reporting** (after 73): plan→build→QA lifecycle (§3) over the sandbox + live activity/progress visualization to Grid (§3/§5).
+
+**Invariants preserved:** money axiom (registry rejects economic-mutation tools), `NOESIS_FIXTURE_MODE` no-network (fixture-driven tool loop in CI), audit privacy walker (raw tool output stays Brain-local, mirrors Whisper), wiki completion gate.
+
+---
+
 ## Milestones
 
 - ✅ **v1.0 Genesis** (shipped 2026-04-17) — Phases 1-10, 944+ TS tests, 226 Py tests
