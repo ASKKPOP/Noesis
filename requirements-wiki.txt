@@ -1,0 +1,6 @@
+# Noēsis wiki (MkDocs Material) — install into a venv:
+#   python3 -m venv .venv-wiki && .venv-wiki/bin/pip install -r requirements-wiki.txt
+#   .venv-wiki/bin/mkdocs serve        # browse the HTML wiki at http://localhost:8000
+mkdocs-material>=9.5
+mkdocs-awesome-pages-plugin>=2.9
+mkdocs-git-revision-date-localized-plugin>=1.2

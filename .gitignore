@@ -46,3 +46,7 @@ htmlcov/
 .claude/
 .gstack/
 .claire/
+
+# Noēsis wiki (MkDocs) build artifacts
+site/
+.venv-wiki/
