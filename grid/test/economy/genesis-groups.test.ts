@@ -31,11 +31,11 @@ describe('genesis-groups — founding seed (D-GROUP-04)', () => {
 
     it('names each domain to its crest art', () => {
         const byDomain = Object.fromEntries(mod.GENESIS_GROUPS.map((g) => [g.domain, g]));
-        expect(byDomain.defense.crestPath).toBe('/orgs/defense.jpg');
-        expect(byDomain.biotech.crestPath).toBe('/orgs/biotech.jpg');
-        expect(byDomain.energy.crestPath).toBe('/orgs/energy.jpg');
-        expect(byDomain.physical_ai.crestPath).toBe('/orgs/ai.jpg');
-        expect(byDomain.quantum.crestPath).toBe('/orgs/quantum.jpg');
+        expect(byDomain.defense.crestPath).toBe('/orgs/defense.jpeg');
+        expect(byDomain.biotech.crestPath).toBe('/orgs/biotech.jpeg');
+        expect(byDomain.energy.crestPath).toBe('/orgs/energy.jpeg');
+        expect(byDomain.physical_ai.crestPath).toBe('/orgs/ai.jpeg');
+        expect(byDomain.quantum.crestPath).toBe('/orgs/quantum.jpeg');
     });
 
     it('buildGenesisGroups stamps grid-scoped ids and the business ring (D-GROUP-03)', () => {

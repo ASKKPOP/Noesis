@@ -44,11 +44,11 @@ export interface GenesisGroup extends GenesisGroupSeed {
  * founding set.
  */
 export const GENESIS_GROUPS: readonly GenesisGroupSeed[] = [
-    { displayName: 'Aegis', domain: 'defense', kind: 'business', crestPath: '/orgs/defense.jpg', sectorDeg: 0, charter: 'Next-generation defense systems.' },
-    { displayName: 'Helix', domain: 'biotech', kind: 'business', crestPath: '/orgs/biotech.jpg', sectorDeg: 72, charter: 'Biotechnology and biomedical research.' },
-    { displayName: 'Dynamo', domain: 'energy', kind: 'business', crestPath: '/orgs/energy.jpg', sectorDeg: 144, charter: 'Energy generation and storage.' },
-    { displayName: 'Soma', domain: 'physical_ai', kind: 'business', crestPath: '/orgs/ai.jpg', sectorDeg: 216, charter: 'Physical AI and embodied intelligence.' },
-    { displayName: 'Qubit', domain: 'quantum', kind: 'business', crestPath: '/orgs/quantum.jpg', sectorDeg: 288, charter: 'Quantum computing and sensing.' },
+    { displayName: 'Aegis', domain: 'defense', kind: 'business', crestPath: '/orgs/defense.jpeg', sectorDeg: 0, charter: 'Next-generation defense systems.' },
+    { displayName: 'Helix', domain: 'biotech', kind: 'business', crestPath: '/orgs/biotech.jpeg', sectorDeg: 72, charter: 'Biotechnology and biomedical research.' },
+    { displayName: 'Dynamo', domain: 'energy', kind: 'business', crestPath: '/orgs/energy.jpeg', sectorDeg: 144, charter: 'Energy generation and storage.' },
+    { displayName: 'Soma', domain: 'physical_ai', kind: 'business', crestPath: '/orgs/ai.jpeg', sectorDeg: 216, charter: 'Physical AI and embodied intelligence.' },
+    { displayName: 'Qubit', domain: 'quantum', kind: 'business', crestPath: '/orgs/quantum.jpeg', sectorDeg: 288, charter: 'Quantum computing and sensing.' },
 ];
 
 /**
