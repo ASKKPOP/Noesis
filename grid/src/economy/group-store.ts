@@ -14,6 +14,8 @@ import type { AuditEntry } from '../audit/types.js';
 import { appendGroupFounded } from '../audit/append-group-founded.js';
 import { appendGroupMemberJoined } from '../audit/append-group-member-joined.js';
 import { appendGroupMemberLeft } from '../audit/append-group-member-left.js';
+import { appendGroupProjectStarted } from '../audit/append-group-project-started.js';
+import { appendGroupProjectCompleted } from '../audit/append-group-project-completed.js';
 import { buildGenesisGroups, type GroupDomain, type GroupKind } from './genesis-groups.js';
 
 /** Hash a raw Civic-DID for the audit boundary — the raw DID is stored DB-side only. */
@@ -163,6 +165,87 @@ export class GroupStore {
             joinedAtTick: r.joined_at_tick,
         }));
     }
+
+    /**
+     * Start a research project (Phase 69). The title stays Grid-side; the audit event
+     * carries only the UUID project_id. Emits group.project_started.
+     */
+    async startProject(
+        audit: AuditChain,
+        p: { groupId: string; projectId: string; title: string; tick: number },
+    ): Promise<AuditEntry> {
+        await this.pool.query<ResultSetHeader>(
+            `INSERT INTO civic_group_projects
+                (project_id, group_id, grid_name, title, status, started_at_tick)
+             VALUES (?, ?, ?, ?, 'active', ?)`,
+            [p.projectId, p.groupId, this.gridName, p.title, p.tick],
+        );
+        return appendGroupProjectStarted(audit, {
+            group_id: p.groupId,
+            project_id: p.projectId,
+            tick: p.tick,
+        });
+    }
+
+    /**
+     * Complete a research project (Phase 69): it PRODUCES a blueprint/skill. Records the
+     * produced blueprint_hash (a Phase 18 skill hash) and emits group.project_completed.
+     */
+    async completeProject(
+        audit: AuditChain,
+        p: { groupId: string; projectId: string; blueprintHash: string; tick: number },
+    ): Promise<AuditEntry> {
+        await this.pool.query<ResultSetHeader>(
+            `UPDATE civic_group_projects
+                SET status = 'completed', produced_blueprint_hash = ?, completed_at_tick = ?
+              WHERE project_id = ? AND group_id = ?`,
+            [p.blueprintHash, p.tick, p.projectId, p.groupId],
+        );
+        return appendGroupProjectCompleted(audit, {
+            blueprint_hash: p.blueprintHash,
+            group_id: p.groupId,
+            project_id: p.projectId,
+            tick: p.tick,
+        });
+    }
+
+    /** List a Group's projects (DB source of truth). */
+    async listProjects(groupId: string): Promise<GroupProjectSummary[]> {
+        const [rows] = await this.pool.query<GroupProjectRow[]>(
+            `SELECT * FROM civic_group_projects WHERE group_id = ? ORDER BY started_at_tick`,
+            [groupId],
+        );
+        return rows.map((r) => ({
+            projectId: r.project_id,
+            groupId: r.group_id,
+            title: r.title,
+            status: r.status,
+            producedBlueprintHash: r.produced_blueprint_hash,
+            startedAtTick: r.started_at_tick,
+            completedAtTick: r.completed_at_tick,
+        }));
+    }
+}
+
+export interface GroupProjectRow extends RowDataPacket {
+    project_id: string;
+    group_id: string;
+    title: string;
+    status: 'active' | 'completed' | 'abandoned';
+    produced_blueprint_hash: string | null;
+    started_at_tick: number;
+    completed_at_tick: number | null;
+}
+
+/** A Group research project (title is Grid-side; never on the audit chain). */
+export interface GroupProjectSummary {
+    readonly projectId: string;
+    readonly groupId: string;
+    readonly title: string;
+    readonly status: 'active' | 'completed' | 'abandoned';
+    readonly producedBlueprintHash: string | null;
+    readonly startedAtTick: number;
+    readonly completedAtTick: number | null;
 }
 
 export interface GroupMemberRow extends RowDataPacket {

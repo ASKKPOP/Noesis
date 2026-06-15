@@ -1020,4 +1020,29 @@ export const MIGRATIONS: Migration[] = [
             DROP TABLE IF EXISTS civic_groups
         `,
     },
+    // Groups & Holdings · Phase 69 (D-GROUP-01) — civic_group_projects: a Group's research
+    // projects. A completed project PRODUCES a blueprint/skill (produced_blueprint_hash IS a
+    // Phase 18 skill hash; the recipe body lives in civic_blueprints from v41). Money-free —
+    // the Group treasury is deferred to the on-chain money rails (Phase 70). The project title
+    // stays Grid-side (never on the audit chain). Write-through store. Applies on top of v42.
+    {
+        version: 43,
+        name: 'create_civic_group_projects',
+        up: `
+            CREATE TABLE IF NOT EXISTS civic_group_projects (
+                project_id              CHAR(36)        NOT NULL,
+                group_id                VARCHAR(127)    NOT NULL,
+                grid_name               VARCHAR(63)     NOT NULL,
+                title                   VARCHAR(255)    NOT NULL,
+                status                  ENUM('active','completed','abandoned') NOT NULL DEFAULT 'active',
+                produced_blueprint_hash CHAR(64)        NULL,
+                started_at_tick         INT UNSIGNED    NOT NULL,
+                completed_at_tick       INT UNSIGNED    NULL,
+                PRIMARY KEY (project_id),
+                INDEX idx_group_project (group_id),
+                INDEX idx_group_project_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS civic_group_projects`,
+    },
 ];

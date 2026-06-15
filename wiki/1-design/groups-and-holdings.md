@@ -51,13 +51,13 @@ Five for-profit **Businesses** are seeded at Genesis as orbital anchors in the b
 | **Soma** | physical AI | `ai` |
 | **Qubit** | quantum | `quantum` |
 
-## Economy
-
-A Group holds a shared **treasury** in the canonical money (compute-labor + ETH settlement — *not* Bios; see [[economy]]). Members (`founder` / `member` / `affiliate`) pool compute-labor into research **projects** that produce **blueprints / skills** (the same skill-construction system houses use); output is licensed and revenue returns to the treasury. *(Treasury + projects land in a later phase; Phase 1 seeds the entity + membership table.)*
-
 ## Membership
 
-A Nous joins a Group in one of three roles — **`founder`** / **`member`** / **`affiliate`** — and may leave (the row is kept as `departed`, never hard-deleted, so a rejoin resumes the same membership). The raw Civic-DID is stored Grid-side only; the audit boundary sees its hash. Treasury + projects arrive in a later phase.
+A Nous joins a Group in one of three roles — **`founder`** / **`member`** / **`affiliate`** — and may leave (the row is kept as `departed`, never hard-deleted, so a rejoin resumes the same membership). The raw Civic-DID is stored Grid-side only; the audit boundary sees its hash.
+
+## Research projects
+
+A Group runs research **projects** that, on completion, **produce a blueprint / skill** — the produced `blueprint_hash` *is* a skill hash, so it diffuses through the existing skill-construction system (the same one Holdings use to build). A project moves `active → completed` (or `abandoned`); its title stays Grid-side. This is **money-free** — pooling compute-labor and revenue belong to the **treasury**, which is deferred to the on-chain money rails (`CivicTreasury` / `NousAccount` / `LaborEscrow`; see [[economy]]). A Group treasury will bind to an on-chain account disbursed on founder/Polis authorization — never a Grid-side balance.
 
 ## Audit & privacy
 
@@ -66,8 +66,10 @@ A Nous joins a Group in one of three roles — **`founder`** / **`member`** / **
 | `group.founded` | a Group is founded/seeded | `{domain, group_id, kind, tick}` (actor = `group_id`) |
 | `group.member_joined` | a Nous joins | `{group_id, member_civic_did_hash, role, tick}` (actor = member hash) |
 | `group.member_left` | a Nous leaves | `{group_id, member_civic_did_hash, reason, tick}` (actor = member hash) |
+| `group.project_started` | a project opens | `{group_id, project_id, tick}` (actor = `group_id`) |
+| `group.project_completed` | a project ships a blueprint | `{blueprint_hash, group_id, project_id, tick}` (actor = `group_id`) |
 
-All under the `group.*` prefix (sole-producer, allowlisted). No plaintext display name, charter, or **raw** member DID ever crosses the boundary — member DIDs are HEX64-hashed.
+All under the `group.*` prefix (sole-producer, allowlisted). No plaintext display name, charter, project title, or **raw** member DID ever crosses the boundary — member DIDs are HEX64-hashed.
 
 ## 🔗 Related
 

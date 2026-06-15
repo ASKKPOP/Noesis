@@ -14,14 +14,17 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 
 ## v3.2 Groups & Holdings (Deep-Tech Businesses) — IN PROGRESS (opened 2026-06-15)
 
-Adds two ownership tiers: **Groups** (multi-member organizations — for-profit Business or non-profit; economic only, **no Polis vote**, VOTE-05 preserved) and **Holdings** (single-Nous private property; supersedes the term "Nous house"). Seeds five founding for-profit Businesses as orbital **anchor structures** in the business sector (built in space, not on land): **Aegis** (defense), **Helix** (biotech), **Dynamo** (energy), **Soma** (physical AI), **Qubit** (quantum). Phase numbering continues from 61 (HOUSE-4) → **Phase 62+**. Allowlist 100 → 101 (new `group.*` prefix, +1 `group.founded` in Phase 1).
+Adds two ownership tiers: **Groups** (multi-member organizations — for-profit Business or non-profit; economic only, **no Polis vote**, VOTE-05 preserved) and **Holdings** (single-Nous private property; supersedes the term "Nous house"). Seeds five founding for-profit Businesses as orbital **anchor structures** in the business sector (built in space, not on land): **Aegis** (defense), **Helix** (biotech), **Dynamo** (energy), **Soma** (physical AI), **Qubit** (quantum).
+
+> **Phase numbering (reconciled 2026-06-15):** the parallel **v3.2 Money** milestone reserves Phases **62–66**. To avoid collision, Groups & Holdings phases are **renumbered to 67+** (the data-model + membership work that shipped under the working labels "62/63" is Phases 67/68 here). **The Group treasury is deferred** — it must ride the on-chain money rails (`CivicTreasury` / `NousAccount` / `LaborEscrow` from Money 62–64), not a MySQL balance, so it lands *after* those rails as Phase 70.
 
 Design: `docs/plans/2026-06-15-groups-and-holdings-design.md`. System truth → `wiki/1-design/groups-and-holdings.md` + decisions `D-GROUP-*` / `D-HOLD-01`.
 
-- ✅ **Phase 62 — Data model + founding seed** (2026-06-15): migration v42 (`civic_groups`, `civic_group_members`), `genesis-groups.ts` seed plan, `GroupStore`, `group.founded` sole-producer + allowlist (100→101), boot seed of the 5 Businesses. Full grid suite green (3348 tests).
-- ✅ **Phase 63 — Membership** (2026-06-15): `joinGroup`/`leaveGroup`/`listMembers` on GroupStore (raw DID Grid-side, HEX64 hash on the audit boundary); `group.member_joined` + `group.member_left` sole-producers (roles founder/member/affiliate; reasons voluntary/removed); allowlist 101 → 103. Full grid suite green.
-- ⏳ Phase 64 — Treasury (v43) + research projects → blueprints/skills.
-- ⏳ Phase 65 — Orbital map render (crest art) + Group detail page.
+- ✅ **Phase 67 — Data model + founding seed** (2026-06-15): migration v42 (`civic_groups`, `civic_group_members`), `genesis-groups.ts` seed plan, `GroupStore`, `group.founded` + allowlist (100→101), boot seed of the 5 Businesses. Deployed to noesiis.com (5 rows verified on prod MySQL).
+- ✅ **Phase 68 — Membership** (2026-06-15): `joinGroup`/`leaveGroup`/`listMembers` (raw DID Grid-side, HEX64 hash on the audit boundary); `group.member_joined` + `group.member_left` (roles founder/member/affiliate; reasons voluntary/removed); allowlist 101 → 103.
+- ✅ **Phase 69 — Research projects → blueprints** (2026-06-15, money-free): migration v43 (`civic_group_projects`); `startProject`/`completeProject`/`listProjects`; a completed project produces a `blueprint_hash` (the existing Phase-18 skill system); `group.project_started` (104) + `group.project_completed` (105); allowlist 103 → 105. Project title stays Grid-side. Full grid suite green.
+- ⏳ Phase 70 — Group treasury (**after** Money rails): bind to an on-chain account disbursed on founder/Polis authorization (mirrors `CivicTreasury`). NO MySQL balance.
+- ⏳ Phase 71 — Orbital map render (crest art) + Group detail page.
 
 ---
 

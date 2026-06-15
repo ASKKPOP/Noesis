@@ -447,6 +447,16 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   actorDid = member_civic_did_hash.
     'group.member_joined',        // (102)
     'group.member_left',          // (103)
+    // Groups & Holdings · Phase 69 (D-GROUP-01) — research projects. Allowlist 103 → 105.
+    // A Group runs projects that produce a blueprint/skill (money-free; treasury deferred to
+    // the on-chain rails). Project TITLE + recipe body stay Grid-side.
+    // group.project_started (104): sole-producer grid/src/audit/append-group-project-started.ts
+    //   closed 3-key {group_id, project_id, tick}; actorDid = group_id; project_id is a UUID.
+    // group.project_completed (105): sole-producer grid/src/audit/append-group-project-completed.ts
+    //   closed 4-key {blueprint_hash, group_id, project_id, tick}; actorDid = group_id;
+    //   blueprint_hash is the Phase 18 skill hash (HEX64).
+    'group.project_started',      // (104)
+    'group.project_completed',    // (105)
 ] as const;
 
 /**
