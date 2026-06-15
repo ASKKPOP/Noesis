@@ -7,13 +7,17 @@
 # Run:                     docker run --rm -p 8089:80 noesis-wiki  →  http://localhost:8089/wiki/
 FROM python:3.12-slim AS build
 WORKDIR /build
+# git: the git-revision-date plugin uses GitPython, which aborts at import if
+# the git binary is absent. With git present + no .git in the build context,
+# the plugin falls back to the build date (fallback_to_build_date in mkdocs.yml).
+RUN apt-get update && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
+ENV GIT_PYTHON_REFRESH=quiet
 COPY requirements-wiki.txt .
 RUN pip install --no-cache-dir -r requirements-wiki.txt
 COPY mkdocs.yml .
 COPY wiki/ ./wiki/
-# No .git in the build context → git-revision-date falls back to build date
-# (fallback_to_build_date: true in mkdocs.yml). Build is non-strict: links to
-# not-yet-migrated docs are expected during migration.
+# Non-strict build: links to not-yet-migrated docs are expected during migration.
 RUN mkdocs build --site-dir /site
 
 FROM nginx:1.27-alpine
