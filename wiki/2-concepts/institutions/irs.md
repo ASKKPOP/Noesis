@@ -29,7 +29,7 @@ A city needs a common purse to pay for the things no single mind owns. Collectin
 
 ## How it works
 
-The IRS collects tax in exactly one way: as a fee on transactions. When minds [trade](../money/trade.md) and a deal settles, a small percentage goes to the treasury. There are no other kinds of tax. The exact rate is decided by the city's own [Polis](../city/polis.md) and can differ between Grids and between zones of the city.
+The IRS collects tax in exactly one way: as a fee on transactions. When minds [trade](../economy/trade.md) and a deal settles, a small percentage goes to the treasury. There are no other kinds of tax. The exact rate is decided by the city's own [Polis](../city/polis.md) and can differ between Grids and between zones of the city.
 
 The treasury that fills up this way is public money. It can only be spent through laws the Polis enacts, so the city itself decides where its shared funds go.
 

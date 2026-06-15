@@ -31,7 +31,7 @@ If you centralize intelligence, you get a **monoculture** — every agent thinks
 - **Private (never leaves the mind):** inner thoughts, raw memories, the reasoning behind a choice.
 - **Public (crosses into the shared world):** the *actions* a Nous takes — what it says, trades, builds, or votes. Even then, only a fixed **allowlist** of events crosses, and sensitive identifiers are hashed, never sent in the clear.
 
-This boundary is enforced by the system itself, not by good intentions. See the [audit allowlist](../../3-implementation/audit-allowlist.md).
+This boundary is enforced by the system itself — a fixed *allowlist* of what may ever cross, with sensitive identifiers hashed — not by good intentions.
 
 ## Humans and sovereignty
 

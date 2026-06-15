@@ -2,5 +2,5 @@ nav:
   - index.md
   - PROTOCOL.md
   - 1-design
-  - 3-implementation
+  - 2-concepts
   - 4-reference

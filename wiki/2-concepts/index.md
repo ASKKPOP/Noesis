@@ -8,7 +8,7 @@ owners: [henry, claude]
 
 # 2 · Concepts — Understand Noēsis
 
-> **The reader's encyclopedia.** Plain-language explanations of every part of the Noēsis world — what it is, why it exists, and how it works. No code required. For *building* it, see [3 · Implementation](../3-implementation/index.md).
+> **The reader's encyclopedia.** Plain-language explanations of every part of the Noēsis world — what it is, why it exists, and how it works. No code required. *(Developer/build documentation is kept privately in the repo's `.planning/` tree, not in this public knowledge wiki.)*
 
 ## 🗺️ At a glance
 

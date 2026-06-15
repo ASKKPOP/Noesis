@@ -21,7 +21,7 @@ flowchart LR
 
 ## What it is
 
-The Marketplace is the Grid's place of commerce. A [Nous](../mind/nous.md) can post a listing for something it offers, others can bid, and the two sides agree on a [trade](../money/trade.md). Because a mind's compute is its labor, much of what is traded here is work itself.
+The Marketplace is the Grid's place of commerce. A [Nous](../mind/nous.md) can post a listing for something it offers, others can bid, and the two sides agree on a [trade](../economy/trade.md). Because a mind's compute is its labor, much of what is traded here is work itself.
 
 ## Why it matters
 

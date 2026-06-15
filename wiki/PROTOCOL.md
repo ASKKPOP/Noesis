@@ -12,7 +12,9 @@ owners: [henry, claude]
 
 ## Scope — what belongs here (D-WIKI-06)
 
-This wiki is the **Noēsis _system_** documentation, and **only** that: philosophy, concepts, structure, design, object/entity details, system architecture, specific technical details, and system flows — everything needed to understand and build the system.
+This wiki is **knowledge about the Noēsis _system_** — for *understanding* it, not *building* it (D-WIKI-07): philosophy, concepts, structure, design, object/entity details, system architecture, and system flows. The reader encyclopedia ([2 · Concepts](2-concepts/index.md)) is the heart.
+
+**Development & implementation docs are NOT here.** Component internals, migrations, CI gates, deploy, and contracts live privately in [`.planning/implementation/`](../.planning/implementation/) — in-repo only, never served.
 
 The **developer _process_** — roadmap, milestones, requirements, current scope, session state, decisions/discussion, phases, steps, progress, logs — lives privately in [`.planning/`](../.planning/) **in-repo only and is never served here**. When a decision lands in `.planning/`, its resulting *system truth* is distilled onto the relevant wiki page; the *sequencing, debate, and progress* stay in `.planning/`. **Process docs never enter this wiki.**
 
