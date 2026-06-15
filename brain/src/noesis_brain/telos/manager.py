@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from noesis_brain.telos.types import Goal, GoalStatus, GoalType
+from noesis_brain.telos.types import Goal, GoalDomain, GoalStatus, GoalType
+
+# D-MONEY-01: money is compute-labor (+ ETH), never Ousia. The standing economic
+# target is framed as work, not currency accumulation.
+ECONOMIC_GOAL_TEXT = "Earn a living through compute-labor — do useful work for other Nous."
+_ECONOMIC_GOAL_PRIORITY = 0.4
 
 
 class TelosManager:
@@ -13,10 +18,28 @@ class TelosManager:
     def __init__(self) -> None:
         self._goals: list[Goal] = []
 
-    def add_goal(self, description: str, goal_type: GoalType, priority: float = 0.5) -> Goal:
-        goal = Goal(description=description, goal_type=goal_type, priority=priority)
+    def add_goal(
+        self,
+        description: str,
+        goal_type: GoalType,
+        priority: float = 0.5,
+        domain: GoalDomain = GoalDomain.GENERAL,
+    ) -> Goal:
+        goal = Goal(description=description, goal_type=goal_type, priority=priority, domain=domain)
         self._goals.append(goal)
         return goal
+
+    def seed_economic_goal(self) -> Goal:
+        """Add the standing 'earn a living' target (long-term, never auto-completes)."""
+        return self.add_goal(
+            ECONOMIC_GOAL_TEXT,
+            GoalType.LONG_TERM,
+            priority=_ECONOMIC_GOAL_PRIORITY,
+            domain=GoalDomain.ECONOMIC,
+        )
+
+    def economic_goals(self) -> list[Goal]:
+        return [g for g in self._goals if g.domain == GoalDomain.ECONOMIC and g.is_active()]
 
     def active_goals(self) -> list[Goal]:
         return [g for g in self._goals if g.is_active()]
@@ -61,4 +84,7 @@ class TelosManager:
                 base_priority = {"short_term": 0.8, "medium_term": 0.5, "long_term": 0.3}
                 priority = base_priority.get(type_key, 0.5) - (i * 0.05)
                 manager.add_goal(desc, goal_type, priority=max(0.1, priority))
+        # Auto-seed the economic target for all Nous (opt out with earn_money: false).
+        if data.get("earn_money", True):
+            manager.seed_economic_goal()
         return manager

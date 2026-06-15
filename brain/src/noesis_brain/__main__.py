@@ -267,6 +267,9 @@ def create_brain_app(
         telos.add_goal(desc, GoalType.MEDIUM_TERM, priority=0.5)
     for desc in telos_config.get("long_term", []):
         telos.add_goal(desc, GoalType.LONG_TERM, priority=0.3)
+    # Auto-seed the economic target for all Nous (opt out with telos.earn_money: false).
+    if telos_config.get("earn_money", True):
+        telos.seed_economic_goal()
 
     # Build LLM adapter — Phase 40: 3-tier ModelRouter with OllamaAdapters
     yaml_llm = config_data.get("llm", {})

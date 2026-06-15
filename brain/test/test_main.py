@@ -134,8 +134,8 @@ class TestCreateBrainApp:
     def test_goals_loaded_from_config(self):
         app = create_brain_app(nous_name="sophia", config_data=SOPHIA_CONFIG)
         goals = app.handler.telos.active_goals()
-        # short_term(2) + medium_term(1) + long_term(1) = 4
-        assert len(goals) == 4
+        # short_term(2) + medium_term(1) + long_term(1) + auto-seeded economic(1) = 5
+        assert len(goals) == 5
 
     def test_short_term_goal_description(self):
         app = create_brain_app(nous_name="sophia", config_data=SOPHIA_CONFIG)
@@ -148,8 +148,10 @@ class TestCreateBrainApp:
         app = create_brain_app(nous_name="sophia", config_data=SOPHIA_CONFIG)
         from noesis_brain.telos.types import GoalType
         long_goals = app.handler.telos.goals_by_type(GoalType.LONG_TERM)
-        assert len(long_goals) == 1
-        assert "philosopher" in long_goals[0].description.lower()
+        # 1 config long-term + 1 auto-seeded economic long-term goal
+        assert len(long_goals) == 2
+        descriptions = [g.description.lower() for g in long_goals]
+        assert any("philosopher" in d for d in descriptions)
 
     def test_rpc_methods_registered(self):
         app = create_brain_app(nous_name="sophia", config_data=SOPHIA_CONFIG)
