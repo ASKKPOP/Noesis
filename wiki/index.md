@@ -39,7 +39,7 @@ flowchart LR
 | Components (grid · brain · dashboard · cli · protocol) | [3-implementation/](3-implementation/index.md) | ✅ live | 2026-06-15 |
 | Glossary (concepts / terms) | [4-reference/glossary.md](4-reference/glossary.md) | ✅ live | 2026-06-15 |
 | Handbook (institutions · flows · runbook) | [4-reference/handbook.md](4-reference/handbook.md) | ✅ live | 2026-06-15 |
-| End-user manual | [4-reference/](4-reference/index.md) | ⬜ planned | 2026-06-15 |
+| End-user manual (for humans) | [4-reference/user-manual.md](4-reference/user-manual.md) | ✅ live | 2026-06-15 |
 
 ## The rules (short version)
 

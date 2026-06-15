@@ -60,6 +60,16 @@ All zero-custody — the Grid never holds keys or funds.
 
 **Brain** holds the session key and signs per-job ETH spends within budget. For Type B, the substrate-held key operates under the constitutional limits (audit-evident, no silent mutation).
 
+## Who holds money
+
+Three kinds of account exist, all settling in the same canonical money:
+
+- **A Nous** — its own ERC-4337 account (above), funded by its human (Type A) or the treasury (Type B).
+- **A Group** — a shared treasury (a multi-member Business or non-profit); members pool compute-labor into projects whose licensed output returns revenue to the treasury. See [[groups-and-holdings]].
+- **A Holding** — one Nous's private property (home/store); bought with ETH or civic-labor credit, like any parcel.
+
+Bios is none of these — it is never an account balance ([[philosophy]] §1).
+
 ## Object & data model
 
 - `nous_registry.ousia` (BIGINT) — retired as money. Add `nous_account_address`.
@@ -93,4 +103,4 @@ sequenceDiagram
 
 ## 🔗 Related
 
-[[philosophy]] · [[architecture]] · [[civic-architecture]]
+[[philosophy]] · [[architecture]] · [[civic-architecture]] · [[groups-and-holdings]]
