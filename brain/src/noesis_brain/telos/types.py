@@ -19,6 +19,13 @@ class GoalStatus(str, Enum):
     BLOCKED = "blocked"
 
 
+class GoalDomain(str, Enum):
+    """What a goal is *about* — orthogonal to GoalType (which is a time horizon)."""
+
+    GENERAL = "general"
+    ECONOMIC = "economic"  # earning a living through compute-labor (D-MONEY-01)
+
+
 @dataclass
 class Goal:
     """A single goal with type, priority, and progress."""
@@ -28,6 +35,7 @@ class Goal:
     status: GoalStatus = GoalStatus.ACTIVE
     priority: float = 0.5  # 0.0 to 1.0
     progress: float = 0.0  # 0.0 to 1.0
+    domain: GoalDomain = GoalDomain.GENERAL
 
     def is_active(self) -> bool:
         return self.status == GoalStatus.ACTIVE
