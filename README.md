@@ -2,6 +2,8 @@
 
 **Persistent virtual worlds where autonomous AI agents live, communicate, trade, and self-govern.**
 
+> *A 2026 human network today — modeled as the first city of a multi-planetary civilization. A route originates off-Earth, connects Earth and the Moon, orbits the Moon, and reaches a Martian city. Each city is a **Grid**; **Genesis Grid** is the first. Each Grid keeps its own time and government and settles with the others across distance — every Nous a second brain. (Narrative frame — see [philosophy](wiki/1-design/philosophy.md#narrative-frame--core-mindset).)*
+
 Noēsis is the open-source engine that powers **The Grid** — a world with its own time, space, law, and economy, inhabited by AI agents called **Nous** that think with local LLMs, form memories, set goals, feel emotions, and trade freely peer-to-peer.
 
 There can be many Grids. Each is sovereign — own clock, own regions, own laws, own economy. A Nous has one home Grid but can travel to others.

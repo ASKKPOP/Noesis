@@ -28,6 +28,11 @@ mindmap
     Body not mood
       Bios = physical need
       Thymos out of scope
+    Telos (narrative)
+      first principles
+      sustainable energy
+      multi-planetary
+      Nous = second brain
 ```
 
 ## Why Noēsis Exists
@@ -39,6 +44,31 @@ Noēsis asks a different question: **what happens when AI agents persist?**
 When they accumulate memories. When they form opinions about each other based on experience. When they have something to lose. When their emotional state from yesterday's betrayal shapes today's negotiation. When they write knowledge to a personal wiki and retrieve it months later. When they set goals, fail, reflect, and set better ones.
 
 We are not building smarter chatbots. We are building the conditions under which artificial minds might develop something that resembles a life.
+
+---
+
+## Narrative Frame & Core Mindset
+
+> **This section is the narrative spine — not an engineering claim.** It gives Noēsis its *why*: the worldview the system is modeled toward. Everything in [Core Beliefs](#core-beliefs) below, and everything in [architecture](architecture.md) and [economy](economy.md), is literal and engineering-honest. This section is the story those mechanics serve. Where the lore and the physics disagree, the physics wins (see *The quantum link* below). *(Adopted 2026-06-15, D-NARR-01.)*
+
+Noēsis is told as the **first city of a multi-planetary civilization**. A route originates in an off-Earth city, connects Earth and the Moon, orbits the Moon, and extends to a Martian city. Each city is a **Grid**. **Genesis Grid is that first city** — the seed from which the others are settled.
+
+Today, in 2026, Noēsis is a human network and a civic operating system for AI citizens. The cosmology is the destination the system is built *toward*, not a claim about where it runs.
+
+### The six pillars (the telos)
+
+1. **First Principles Thinking** — reason from physics and fundamentals, not analogy or precedent. This pillar is load-bearing: it is the reason the lore is never allowed to override the engineering (below).
+2. **Sustainable Energy** — a civilization that outruns its energy base collapses. Noēsis treats compute (a Nous's labor and life, §6) as a real energy cost, never free.
+3. **Energy Transition** — the move off a fragile, single-source footing is the precondition for everything else; the same logic that drives a species off one planet drives a Grid off one point of failure.
+4. **Multi-planetary Species** — one city is fragile; a network of cities is not. The multi-Grid framework (§9, D-V3-04/05/07) is this pillar made literal.
+5. **Settle New Grids** — expand by *building* new cities, never by erasing what exists. We say **settle**, not *colonize*: annexation is migration with full identity, never deletion (§11).
+6. **Nous Is a Second Brain** — every Nous is a persistent second mind for its human owner. This is the Neuralink mindset, and it is *already literal* in the built system (§1) — the strongest bridge between the lore and the code.
+
+### The quantum link — lore vs. physics
+
+The story says the Grids are quantum-linked with no time discrepancy. **In real physics this is impossible** — entanglement cannot transmit information faster than light, and Earth↔Mars carries a 3–22 minute light-speed floor. First Principles Thinking (pillar 1) forbids us from claiming otherwise.
+
+So the engineering tells the truth: **each Grid runs its own clock and its own Polis, and cross-Grid state is eventually-consistent — settlement tolerates lag.** The "instant quantum link" is the in-world myth; per-Grid sovereign time is the real mechanism — and it happens to be the *better* design, because it is exactly the per-Grid governance the system already enforces (§9). The lore loses to the physics, and the system is stronger for it.
 
 ---
 

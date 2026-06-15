@@ -8,7 +8,7 @@ owners: [henry, claude]
 
 # Decision log (D-*)
 
-> One row per locked decision that governs the system. Families: civic architecture (`D-V3-*`), Nous House (`D-NH-*`), money (`D-MONEY-*`), wiki (`D-WIKI-*`). The full v3.0 civic list with rationale lives in the canonical source `.planning/research/v3.0/CIVIC-ARCHITECTURE.md §12`.
+> One row per locked decision that governs the system. Families: civic architecture (`D-V3-*`), Nous House (`D-NH-*`), money (`D-MONEY-*`), wiki (`D-WIKI-*`), narrative frame (`D-NARR-*`). The full v3.0 civic list with rationale lives in the canonical source `.planning/research/v3.0/CIVIC-ARCHITECTURE.md §12`.
 
 ## 🗺️ At a glance
 
@@ -18,10 +18,12 @@ flowchart TD
   DEC --> NH[D-NH-*<br/>Nous House]
   DEC --> MON[D-MONEY-*<br/>money & settlement]
   DEC --> WK[D-WIKI-*<br/>documentation]
+  DEC --> NAR[D-NARR-*<br/>narrative frame]
   V3 -. governs .-> SYS([the system])
   NH -. governs .-> SYS
   MON -. governs .-> SYS
   WK -. governs .-> SYS
+  NAR -. frames .-> SYS
 ```
 
 ## Money — `D-MONEY-*` (locked 2026-06-14/15)
@@ -46,8 +48,17 @@ See [[economy]] for the full design.
 | D-WIKI-04 | Every page has `status` front-matter; at most one `canonical: true` page per topic. |
 | D-WIKI-05 | Every `live`/`draft` page carries an `## At a glance` Mermaid diagram. |
 | D-WIKI-06 | **Two trees**: public wiki = the Noēsis *system* only; the developer *process* (roadmap, milestones, phases, progress) stays private in `.planning/`, never served. |
+| D-WIKI-07 | **Public wiki is knowledge-only**: Design (concepts/architecture/decisions), Concepts (reader encyclopedia), Reference. Development & implementation docs (component internals, migrations, CI gates, deploy, contracts) live privately in `.planning/implementation/`, never served. Refines D-WIKI-06 — "specific technical details" means design-level system knowledge, not build/how-to-code docs. |
 
 Enforced by `scripts/check-wiki.mjs`. See [[home]] · `PROTOCOL.md`.
+
+## Narrative frame — `D-NARR-*` (adopted 2026-06-15)
+
+| ID | Decision |
+|----|----------|
+| D-NARR-01 | Noēsis adopts a **cosmological narrative spine** — Genesis Grid as the first city of an Earth→Moon→Mars multi-planetary civilization of quantum-linked Grids — as **thematic worldview only**. Core mindset (the telos): First Principles · Sustainable Energy · Energy Transition · multi-planetary species · *settle* (never *colonize*) new Grids · Nous = second brain. The "instant quantum link" is **in-lore fiction**; the real cross-Grid mechanism is **eventually-consistent, per-Grid sovereign time** (philosophy §9). The frame lives ONLY in `philosophy.md` + `README.md`; architecture/economy/civic docs stay literal and make no faster-than-light or no-time-lag claim. |
+
+See [[philosophy]].
 
 ## Civic architecture — `D-V3-*` (32 locked; see canonical source for full rationale)
 
