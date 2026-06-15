@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {ECDSALite} from "./lib/ECDSALite.sol";
+
 interface ITreasurySink {
     function depositFee() external payable;
 }
@@ -61,33 +63,15 @@ contract LandSale {
     /// @notice The message the Grid oracle signs to attest a credit-funded claim.
     function claimDigest(uint256 parcelId, address buyer) public view returns (bytes32) {
         bytes32 inner = keccak256(abi.encode(block.chainid, address(this), parcelId, buyer));
-        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", inner));
+        return ECDSALite.toEthSignedMessageHash(inner);
     }
 
     /// @notice Claim an unowned parcel using civic-labor credit, attested by the oracle.
     function claimWithCredit(uint256 parcelId, bytes calldata oracleSig) external {
         if (ownerOf[parcelId] != address(0)) revert AlreadyOwned();
-        if (_recover(claimDigest(parcelId, msg.sender), oracleSig) != oracle) revert BadSignature();
+        if (ECDSALite.recover(claimDigest(parcelId, msg.sender), oracleSig) != oracle) revert BadSignature();
 
         ownerOf[parcelId] = msg.sender;
         emit ParcelClaimed(parcelId, msg.sender);
-    }
-
-    function _recover(bytes32 digest, bytes calldata sig) private pure returns (address) {
-        if (sig.length != 65) revert BadSignature();
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-        assembly {
-            r := calldataload(sig.offset)
-            s := calldataload(add(sig.offset, 32))
-            v := byte(0, calldataload(add(sig.offset, 64)))
-        }
-        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
-            revert BadSignature();
-        }
-        address signer = ecrecover(digest, v, r, s);
-        if (signer == address(0)) revert BadSignature();
-        return signer;
     }
 }

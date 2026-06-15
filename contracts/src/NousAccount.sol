@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {ECDSALite} from "./lib/ECDSALite.sol";
+import {IAccount, PackedUserOperation} from "./erc4337/IAccount.sol";
+
 /// @title NousAccount — smart account with capped session keys (D-MONEY-02)
 /// @notice Holds ETH for one holder: a Nous, a Group treasury, or a Holding. The
 ///         owner (the human wallet for Type A, the constitutional substrate key
@@ -11,8 +14,12 @@ pragma solidity ^0.8.24;
 ///         session keys move funds. Self-contained model — a session key is an EOA
 ///         that calls `execute` directly; full ERC-4337 EntryPoint/UserOp wiring is
 ///         a later refinement. Testnet-first. Verified with `forge test`.
-contract NousAccount {
+contract NousAccount is IAccount {
     address public owner;
+    /// @notice ERC-4337 EntryPoint (may be address(0) for non-4337 deployments).
+    address public immutable entryPoint;
+
+    uint256 private constant SIG_VALIDATION_FAILED = 1;
 
     struct SessionKey {
         uint128 cap;     // max total wei this key may spend
@@ -34,10 +41,12 @@ contract NousAccount {
     error CapExceeded();
     error KeyExpired();
     error CallFailed();
+    error NotEntryPoint();
 
-    constructor(address _owner) {
+    constructor(address _owner, address _entryPoint) {
         if (_owner == address(0)) revert BadParams();
         owner = _owner;
+        entryPoint = _entryPoint;
     }
 
     receive() external payable {}
@@ -78,7 +87,7 @@ contract NousAccount {
         external
         returns (bytes memory result)
     {
-        if (msg.sender != owner) {
+        if (msg.sender != owner && msg.sender != entryPoint) {
             SessionKey storage sk = sessionKeys[msg.sender];
             if (!sk.active) revert NotAuthorized();
             if (block.timestamp >= sk.expiry) revert KeyExpired();
@@ -90,5 +99,55 @@ contract NousAccount {
         (bool ok, bytes memory ret) = to.call{value: value}(data);
         if (!ok) revert CallFailed();
         return ret;
+    }
+
+    // ── ERC-4337 ────────────────────────────────────────────────────────────────
+
+    /// @notice EntryPoint validation. An owner-signed op validates unconditionally;
+    ///         a session-key-signed op must call `execute` and is bounded by the
+    ///         key's remaining cap (accounted here) and its expiry (returned as
+    ///         `validUntil` for the EntryPoint to enforce). Execution then runs via
+    ///         the EntryPoint calling `execute` (which trusts this accounting).
+    function validateUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash,
+        uint256 missingAccountFunds
+    ) external returns (uint256 validationData) {
+        if (msg.sender != entryPoint) revert NotEntryPoint();
+
+        address signer = ECDSALite.recover(ECDSALite.toEthSignedMessageHash(userOpHash), userOp.signature);
+
+        if (signer == owner) {
+            validationData = 0; // success, no time bound
+        } else {
+            SessionKey storage sk = sessionKeys[signer];
+            if (signer == address(0) || !sk.active || block.timestamp >= sk.expiry) {
+                validationData = SIG_VALIDATION_FAILED;
+            } else {
+                uint256 spend = _executeValue(userOp.callData);
+                uint256 newSpent = uint256(sk.spent) + spend;
+                if (spend == type(uint256).max || newSpent > sk.cap) {
+                    validationData = SIG_VALIDATION_FAILED;
+                } else {
+                    sk.spent = uint128(newSpent);
+                    validationData = uint256(sk.expiry) << 160; // success + validUntil
+                }
+            }
+        }
+
+        if (missingAccountFunds > 0) {
+            (bool ok, ) = msg.sender.call{value: missingAccountFunds}("");
+            ok; // a failed prefund is the EntryPoint's concern (ERC-4337)
+        }
+    }
+
+    /// @dev The wei value of an `execute(address,uint256,bytes)` callData, or
+    ///      type(uint256).max if `callData` is not an execute call (so it is rejected).
+    function _executeValue(bytes calldata callData) private pure returns (uint256) {
+        if (callData.length < 4 || bytes4(callData[:4]) != NousAccount.execute.selector) {
+            return type(uint256).max;
+        }
+        (, uint256 value, ) = abi.decode(callData[4:], (address, uint256, bytes));
+        return value;
     }
 }

@@ -14,7 +14,7 @@ contract NousAccountTest is Test {
         owner = makeAddr("owner");
         sessionKey = makeAddr("sessionKey");
         dest = payable(makeAddr("dest"));
-        account = new NousAccount(owner);
+        account = new NousAccount(owner, makeAddr("entryPoint"));
         vm.deal(address(account), 10 ether);
     }
 

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {ECDSALite} from "./lib/ECDSALite.sol";
+
 /// @title CivicTreasury — per-Grid civic fund (D-MONEY-03)
 /// @notice Accumulates transaction fees (in the canonical money, ETH/wei) and
 ///         disburses ONLY against a valid authorization signed by the Polis
@@ -50,8 +52,7 @@ contract CivicTreasury {
         bytes32 inner = keccak256(
             abi.encode(block.chainid, address(this), to, amount, nonce, legislationRefHash)
         );
-        // EIP-191 personal-sign prefix.
-        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", inner));
+        return ECDSALite.toEthSignedMessageHash(inner);
     }
 
     /// @notice Disburse `amount` to `to`, authorized by a Polis-signed legislation reference.
@@ -68,32 +69,12 @@ contract CivicTreasury {
         if (address(this).balance < amount) revert InsufficientBalance();
 
         bytes32 digest = disbursementDigest(to, amount, nonce, legislationRefHash);
-        if (_recover(digest, sig) != authorizer) revert BadSignature();
+        if (ECDSALite.recover(digest, sig) != authorizer) revert BadSignature();
 
         usedNonce[nonce] = true;
         emit Disbursed(to, amount, nonce, legislationRefHash);
 
         (bool ok, ) = to.call{value: amount}("");
         if (!ok) revert TransferFailed();
-    }
-
-    /// @dev Minimal ECDSA recover (65-byte r,s,v).
-    function _recover(bytes32 digest, bytes calldata sig) private pure returns (address) {
-        if (sig.length != 65) revert BadSignature();
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-        assembly {
-            r := calldataload(sig.offset)
-            s := calldataload(add(sig.offset, 32))
-            v := byte(0, calldataload(add(sig.offset, 64)))
-        }
-        // Reject malleable high-s per EIP-2.
-        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
-            revert BadSignature();
-        }
-        address signer = ecrecover(digest, v, r, s);
-        if (signer == address(0)) revert BadSignature();
-        return signer;
     }
 }

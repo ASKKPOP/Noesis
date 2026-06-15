@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {ECDSALite} from "./lib/ECDSALite.sol";
+
 interface ICivicTreasury {
     function depositFee() external payable;
 }
@@ -63,7 +65,7 @@ contract LaborEscrow {
     /// @notice Digest the oracle signs to attest completion (bound to chain + contract + job).
     function completionDigest(uint256 jobId) public view returns (bytes32) {
         bytes32 inner = keccak256(abi.encode(block.chainid, address(this), jobId));
-        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", inner));
+        return ECDSALite.toEthSignedMessageHash(inner);
     }
 
     /// @notice Release a funded job to the worker on the oracle's completion attestation.
@@ -71,7 +73,7 @@ contract LaborEscrow {
         Job storage j = jobs[jobId];
         if (j.state != State.Funded) revert NotFunded();
         if (block.timestamp > j.deadline) revert DeadlinePassed();
-        if (_recover(completionDigest(jobId), oracleSig) != oracle) revert BadSignature();
+        if (ECDSALite.recover(completionDigest(jobId), oracleSig) != oracle) revert BadSignature();
 
         uint256 fee = (j.amount * feeBps) / 10_000;
         uint256 toWorker = j.amount - fee;
@@ -96,23 +98,5 @@ contract LaborEscrow {
 
         (bool ok, ) = j.payer.call{value: amount}("");
         if (!ok) revert TransferFailed();
-    }
-
-    function _recover(bytes32 digest, bytes calldata sig) private pure returns (address) {
-        if (sig.length != 65) revert BadSignature();
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-        assembly {
-            r := calldataload(sig.offset)
-            s := calldataload(add(sig.offset, 32))
-            v := byte(0, calldataload(add(sig.offset, 64)))
-        }
-        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
-            revert BadSignature();
-        }
-        address signer = ecrecover(digest, v, r, s);
-        if (signer == address(0)) revert BadSignature();
-        return signer;
     }
 }
