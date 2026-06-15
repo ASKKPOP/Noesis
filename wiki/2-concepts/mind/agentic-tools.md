@@ -77,9 +77,31 @@ The isolation is the security boundary, because the code is the Nous's *own* —
 - **Bounded.** Wall-clock, CPU, memory, process-count, and output-size caps — an infinite loop or fork bomb is killed without touching the Brain.
 - **Audit-safe.** Only an `output_sha256` digest + exit status may cross the Grid boundary; the program's actual output stays Brain-local.
 
+## Carrying a task: plan → build → QA
+
+The tools and the sandbox let a Nous take on a whole **task**, not just answer a question. A task runs through three phases, each one a tool-loop turn:
+
+```mermaid
+flowchart LR
+  TASK[Task] --> PLAN[Plan<br/>steps + how to test]
+  PLAN --> BUILD[Build<br/>write code · run_code]
+  BUILD --> QA[QA<br/>write tests · run_code]
+  QA -->|all pass| DONE[Done]
+  QA -->|failure| FAILED[Failed]
+  PLAN -.-> REPORT[(Activity report<br/>digests only)]
+  BUILD -.-> REPORT
+  QA -.-> REPORT
+```
+
+- **Plan** — the mind lays out the steps and how it will verify them (no code yet).
+- **Build** — it writes the code and runs it in the sandbox to confirm it executes.
+- **QA** — it writes and runs tests; the phase ends with a clear pass/fail.
+
+The run produces an **activity report**: one entry per phase with a short summary and a `sha256` digest of that phase's output. As with everything in this layer, the report carries **digests, not raw output** — so it can be shown to the operator and (later) the Grid without leaking what the Nous actually ran.
+
 ## Where this is going
 
-The **Brain-side** capabilities — the tool loop, the two research tools, and the `run_code` sandbox — are in place. What's still ahead:
+The **Brain-side** capabilities — the tool loop, the research tools, the `run_code` sandbox, and the plan→build→QA task lifecycle — are in place. What's still ahead, all Grid-side:
 
 - **Public audit mirror** — emitting `tool.invoked` / `tool.result` / `tool.code_run` onto the Grid's audit chain (digest-only) through a dedicated sole-producer, so the city can *see that* a Nous worked without seeing *what*.
-- **Task pipeline + reporting** — orchestrating `run_code` across a plan → build → QA lifecycle, with live activity reporting back to the Grid.
+- **Live visualization** — rendering the activity report on the Grid as a Nous works, so others watch progress unfold.
