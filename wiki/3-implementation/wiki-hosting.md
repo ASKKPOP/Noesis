@@ -42,6 +42,12 @@ flowchart LR
 2. Rebuild + redeploy the `wiki` container (deploy is **operator-initiated**, never automatic — see deploy guardrail).
 3. The static site is regenerated from markdown at image build time; no hand-edited HTML.
 
+> ⚠️ **nginx must be force-recreated after any redeploy.** `docker compose up -d --build wiki` gives the `wiki` container a new IP, but `noesis-nginx` caches upstream IPs at startup and only re-renders its template at startup. Without restarting nginx you get `502` on `/wiki/`. Always follow a wiki (or any upstream) redeploy with:
+> ```bash
+> docker compose -f docker-compose.yml -f docker-compose.aws.yml --env-file .env up -d --force-recreate nginx
+> ```
+> Then verify `curl -H "Host: noesiis.com" http://localhost:8088/wiki/` → 200.
+
 ## Local preview (no Docker)
 
 ```bash
