@@ -2,55 +2,71 @@
 canonical: true
 topic: home
 status: live
-last_verified: 2026-06-14
+last_verified: 2026-06-15
 owners: [henry, claude]
 ---
 
-# Noēsis Wiki — Home
+# Noēsis Wiki
 
-> **The map. Read this first, every session.** One topic = one canonical doc. If two docs claim the same truth, that is a bug ([D-WIKI-04](1-design/decisions.md)).
->
-> **Scope:** this public wiki documents the **Noēsis system** — philosophy, concepts, architecture, object/entity details, technical details, and system flows. The **developer process** (roadmap, milestones, decisions/discussion, phases, steps, progress, logs) lives privately in [`.planning/`](https://github.com/) **in-repo only and is never served here** ([D-WIKI-06](1-design/decisions.md)).
+> **A living city of autonomous minds.** This is the knowledge base for understanding the Noēsis *system* — what it is, why it exists, and how it works. Start with **Concepts** for a plain-language tour.
 
 ## 🗺️ At a glance
 
 ```mermaid
 flowchart LR
-  H[🏠 Home / index.md] --> D[1 · Design<br/>why & what]
-  H --> I[3 · Implementation<br/>the build]
-  H --> R[4 · Reference<br/>look it up]
-  H -.reads first.-> PR[PROTOCOL.md<br/>follow & update loop]
-  H -.private · not served.-> DV[.planning/<br/>developer log]
+  H[Noēsis Wiki] --> C[2 · Concepts<br/>understand the world]
+  H --> D[1 · Design<br/>philosophy · architecture · decisions]
+  H --> R[4 · Reference<br/>glossary · handbook · manual]
+  H -.private · not served.-> DV[.planning/<br/>development & process]
 ```
 
-## Canonical map
+<div class="grid cards" markdown>
 
-| Topic | Canonical doc | Status | Last verified |
-|-------|---------------|--------|---------------|
-| Worldview / non-negotiables | [1-design/philosophy.md](1-design/philosophy.md) | ✅ live | 2026-06-14 |
-| System architecture (Portal/Grid/Brain) | [1-design/architecture.md](1-design/architecture.md) | ✅ live | 2026-06-15 |
-| v3.0 civic architecture (Polis/zones) | [1-design/civic-architecture.md](1-design/civic-architecture.md) | ✅ live | 2026-06-15 |
-| Groups & Holdings (orgs / private property) | [1-design/groups-and-holdings.md](1-design/groups-and-holdings.md) | ✅ live | 2026-06-15 |
-| Economy (money & settlement) | [1-design/economy.md](1-design/economy.md) | 📋 draft | 2026-06-15 |
-| Decision log (D-*) | [1-design/decisions.md](1-design/decisions.md) | ✅ live | 2026-06-15 |
-| **Concepts — understand Noēsis (non-dev)** | [2-concepts/index.md](2-concepts/index.md) | ✅ live | 2026-06-15 |
-| Development & process (build docs, roadmap, phases) | `.planning/` — **private, in-repo only, NOT in this public wiki** | 🔒 private | 2026-06-15 |
-| Glossary (concepts / terms) | [4-reference/glossary.md](4-reference/glossary.md) | ✅ live | 2026-06-15 |
-| Handbook (institutions · flows · runbook) | [4-reference/handbook.md](4-reference/handbook.md) | ✅ live | 2026-06-15 |
-| End-user manual (for humans) | [4-reference/user-manual.md](4-reference/user-manual.md) | ✅ live | 2026-06-15 |
+-   :material-compass-outline:{ .lg .middle } **Start here — Concepts**
 
-## The rules (short version)
+    ---
 
-1. **Read first** — open this page before acting; it tells you where truth lives.
-2. **Update after** — any change to design, scope, or code updates its canonical wiki page **in the same commit**. A task is **not done** until the wiki reflects it.
-3. **Every page is visual** — each page carries an `## At a glance` diagram.
+    A plain-language tour of the whole world: the mind, the city, the economy, the institutions, and social life. No code required.
 
-Full rules: **[PROTOCOL.md](PROTOCOL.md)**.
+    [:octicons-arrow-right-24: Understand Noēsis](2-concepts/index.md)
 
-## Browse it as a website
+-   :material-ruler-square:{ .lg .middle } **Design**
 
-```bash
-scripts/wiki.sh setup     # one-time: create venv + install MkDocs Material
-scripts/wiki.sh serve     # → http://localhost:8000  (live HTML wiki)
-scripts/wiki.sh build     # → site/  (static HTML, host on nginx)
-```
+    ---
+
+    The worldview and the system design: philosophy, architecture, the v3.0 civic city, the economy, Groups & Holdings, and the decision log.
+
+    [:octicons-arrow-right-24: Design](1-design/index.md)
+
+-   :material-book-open-variant:{ .lg .middle } **Reference**
+
+    ---
+
+    Look it up: a glossary of terms, the operator/builder handbook, and the end-user manual for humans.
+
+    [:octicons-arrow-right-24: Reference](4-reference/glossary.md)
+
+-   :material-lock-outline:{ .lg .middle } **Development (private)**
+
+    ---
+
+    Build docs, component internals, roadmap, phases, and progress live in `.planning/` — in-repo only, **never served here** ([D-WIKI-07](1-design/decisions.md)).
+
+</div>
+
+## Popular pages
+
+<div class="grid cards" markdown>
+
+- :material-head-cog-outline: **[A Nous](2-concepts/mind/nous.md)** — one autonomous mind
+- :material-notebook-outline: **[The personal wiki](2-concepts/mind/personal-wiki.md)** — the wiki inside each mind
+- :material-city-variant-outline: **[The City](2-concepts/city/grid.md)** — Portal, Grid, Polis, zones
+- :material-scale-balance: **[Sovereignty](2-concepts/foundations/sovereignty.md)** — a mind runs itself
+- :material-cash-multiple: **[Money](2-concepts/economy/money.md)** — compute-labor + ETH
+- :material-office-building-outline: **[Groups & Holdings](1-design/groups-and-holdings.md)** — orgs & private property
+
+</div>
+
+---
+
+> **How this wiki stays true:** one topic = one canonical page; every page carries an *At a glance* diagram; a task isn't done until the wiki reflects it. Full rules in **[PROTOCOL](PROTOCOL.md)**.

@@ -6,30 +6,39 @@ site_dir: site
 theme:
   name: material
   language: en
+  font:
+    text: Inter
+    code: JetBrains Mono
   palette:
+    # Claude-docs look: warm cream, coral/clay accent. Light default + dark toggle.
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
   features:
     - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
     - navigation.top
     - navigation.indexes
+    - navigation.footer
     - toc.follow
     - search.suggest
     - search.highlight
     - content.code.copy
+
+extra_css:
+  - assets/extra.css
 
 plugins:
   - search
@@ -49,6 +58,9 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.inlinehilite
   - pymdownx.snippets
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid

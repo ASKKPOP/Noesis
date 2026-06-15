@@ -1,0 +1,88 @@
+/* Noēsis Wiki — Claude-docs-inspired theme (warm cream + coral/clay accent). */
+
+:root,
+[data-md-color-scheme="default"] {
+  /* Anthropic "clay/coral" accent */
+  --md-primary-fg-color:        #c96442;
+  --md-primary-fg-color--light: #d98a6c;
+  --md-primary-fg-color--dark:  #a64e30;
+  --md-accent-fg-color:         #b3502f;
+
+  /* Warm paper background + ink text (Claude.ai palette) */
+  --md-default-bg-color:        #faf9f5;
+  --md-default-fg-color:        #1f1e1c;
+  --md-default-fg-color--light: #44423d;
+  --md-typeset-a-color:         #b3502f;
+
+  --md-code-bg-color:           #f1efe7;
+  --warm-border:                #e7e3d8;
+  --warm-surface:               #ffffff;
+}
+
+/* Body type a touch larger + calmer, like the Claude docs. */
+.md-typeset { font-size: 0.78rem; line-height: 1.7; }
+.md-typeset h1 { font-weight: 600; letter-spacing: -0.01em; }
+.md-typeset h2 { font-weight: 600; letter-spacing: -0.005em; margin-top: 2.2em; }
+
+/* ── Top bar: light/cream with an ink logo, not a solid coral block ── */
+.md-header {
+  background-color: var(--md-default-bg-color);
+  color: var(--md-default-fg-color);
+  box-shadow: 0 1px 0 var(--warm-border);
+}
+.md-header__title { font-weight: 600; }
+.md-tabs {
+  background-color: var(--md-default-bg-color);
+  color: var(--md-default-fg-color);
+  border-bottom: 1px solid var(--warm-border);
+}
+.md-tabs__link { opacity: 0.72; }
+.md-tabs__link:hover,
+.md-tabs__link--active { opacity: 1; color: var(--md-primary-fg-color); }
+
+/* Search pill (Cmd-K feel) */
+.md-search__form {
+  background-color: var(--warm-surface);
+  border: 1px solid var(--warm-border);
+  border-radius: 10px;
+  box-shadow: none;
+}
+.md-search__form:hover { background-color: var(--warm-surface); }
+
+/* Active nav item in the warm accent */
+.md-nav__link--active,
+.md-nav__link:focus,
+.md-nav__link:hover { color: var(--md-primary-fg-color); }
+
+/* ── Home card grid (Claude-docs tiles) ── */
+.md-typeset .grid.cards > ul > li,
+.md-typeset .grid > .card {
+  border: 1px solid var(--warm-border);
+  border-radius: 14px;
+  background: var(--warm-surface);
+  padding: 1.1rem 1.2rem;
+  box-shadow: none;
+  transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.md-typeset .grid.cards > ul > li:hover {
+  border-color: var(--md-primary-fg-color);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(31,30,28,0.06);
+}
+.md-typeset .grid.cards > ul > li > hr { margin: 0.6em 0; border-color: var(--warm-border); }
+.md-typeset .grid.cards a { font-weight: 600; }
+
+/* Tables + code blocks: soft warm borders, rounded. */
+.md-typeset table:not([class]) { border: 1px solid var(--warm-border); border-radius: 10px; overflow: hidden; }
+.md-typeset pre > code { border-radius: 10px; }
+.md-typeset code { background-color: var(--md-code-bg-color); border-radius: 5px; }
+
+/* Blockquote / "At a glance" lead: a calm coral left rule. */
+.md-typeset blockquote {
+  border-left: 3px solid var(--md-primary-fg-color--light);
+  color: var(--md-default-fg-color--light);
+}
+
+/* Footer: muted, not a heavy dark slab. */
+.md-footer { background-color: #2b2925; }
+.md-footer-meta { background-color: #211f1c; }
