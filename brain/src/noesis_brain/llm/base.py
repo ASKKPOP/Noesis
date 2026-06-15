@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from noesis_brain.llm.types import GenerateOptions, LLMResponse
+from noesis_brain.llm.types import GenerateOptions, LLMResponse, ToolSpec
 
 
 class LLMAdapter(ABC):
@@ -33,6 +33,31 @@ class LLMAdapter(ABC):
         Raises:
             LLMError: If the provider is unavailable or returns an error.
         """
+
+    async def generate_with_tools(
+        self,
+        messages: list[dict],
+        tools: list[ToolSpec],
+        options: GenerateOptions | None = None,
+    ) -> LLMResponse:
+        """Multi-turn generation that may emit ``tool_use`` blocks (Phase 72).
+
+        ``messages`` is an Anthropic-style message list. Additive: providers that
+        do not support tool use inherit this default and raise. ``generate()`` is
+        untouched.
+
+        Args:
+            messages: Conversation turns ([{"role", "content"}, ...]).
+            tools: Tool definitions the model may call.
+            options: Generation parameters.
+
+        Returns:
+            LLMResponse; ``tool_calls`` populated when ``stop_reason == "tool_use"``.
+
+        Raises:
+            LLMError: If the provider does not support tool use.
+        """
+        raise LLMError(self.provider_name, "tool use not supported by this adapter")
 
     @abstractmethod
     async def list_models(self) -> list[str]:

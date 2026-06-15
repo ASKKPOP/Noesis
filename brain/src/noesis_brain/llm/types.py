@@ -27,6 +27,31 @@ class GenerateOptions:
 
 
 @dataclass(frozen=True)
+class ToolSpec:
+    """A tool the model may call. Maps 1:1 to an Anthropic tool definition."""
+
+    name: str
+    description: str
+    input_schema: dict[str, Any]
+
+    def to_anthropic(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "description": self.description,
+            "input_schema": self.input_schema,
+        }
+
+
+@dataclass(frozen=True)
+class ToolCall:
+    """A model-requested tool invocation (Anthropic ``tool_use`` block)."""
+
+    id: str
+    name: str
+    input: dict[str, Any]
+
+
+@dataclass(frozen=True)
 class LLMResponse:
     """Response from an LLM generation call."""
 
@@ -36,6 +61,8 @@ class LLMResponse:
     usage: dict[str, int] = field(default_factory=dict)  # prompt_tokens, completion_tokens
     latency_ms: float = 0.0
     tier: ModelTier | None = None
+    tool_calls: list[ToolCall] = field(default_factory=list)  # Phase 72 — tool-use blocks
+    stop_reason: str | None = None  # Phase 72 — "tool_use" | "end_turn" | ...
 
 
 @dataclass
