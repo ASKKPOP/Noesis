@@ -35,7 +35,7 @@ flowchart LR
 | Planning / process (roadmap, milestones, phases, logs) | `.planning/` — **private, in-repo only, not in this wiki** | 🔒 private | 2026-06-15 |
 | Deploy / hosts / runbook | [3-implementation/deploy.md](3-implementation/index.md) | 🚧 migrating | 2026-06-14 |
 | Wiki hosting (served at /wiki/) | [3-implementation/wiki-hosting.md](3-implementation/wiki-hosting.md) | ✅ live | 2026-06-14 |
-| Components (grid/brain/dashboard) | [3-implementation/](3-implementation/index.md) | 🚧 migrating | 2026-06-14 |
+| Components (grid · brain · dashboard · cli · protocol) | [3-implementation/](3-implementation/index.md) | ✅ live | 2026-06-15 |
 | Glossary (concepts / terms) | [4-reference/glossary.md](4-reference/glossary.md) | ✅ live | 2026-06-15 |
 | Handbook / guides | [4-reference/](4-reference/index.md) | 🚧 migrating | 2026-06-14 |
 
