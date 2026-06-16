@@ -208,6 +208,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     // hoisted so they can ALSO be attached to GridServices below (registry-not-wired
     // bug class — R-H-01). DB is source of truth; the registry is a read cache.
     let parcels: { registry: ParcelRegistry; store: ParcelStore } | undefined;
+    let groupStore: GroupStore | undefined;  // hoisted for GridServices (spec §2 discovery)
     if (dbConn) {
         const presencePool = dbConn.getPool();
         const presenceStore = new PresenceStore(presencePool);
@@ -226,7 +227,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         // Groups & Holdings · Phase 1 (D-GROUP-04): seed the five founding Businesses as
         // orbital anchors in the business sector (idempotent). Each freshly-inserted row
         // emits one group.founded onto the audit chain (founding at genesis tick 0).
-        const groupStore = new GroupStore(presencePool, config.genesisConfig.gridName);
+        groupStore = new GroupStore(presencePool, config.genesisConfig.gridName);
         const groupsSeeded = await groupStore.seedGenesisGroups(chain!, 0);
         console.log(`[civic] groups seeded: ${groupsSeeded}`);
         // Phase 59 HOUSE-2 (D-59-06 / R-H-03): late-wire the upkeep scanner now that the
@@ -311,6 +312,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         gridName: launcher.gridName,
         registry: launcher.registry,
         shops: launcher.shops,
+        groupStore,
         relationships: launcher.relationships,
         humanRegistry,
         config: { relationship: config.genesisConfig.relationship },

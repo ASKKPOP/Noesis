@@ -33,6 +33,7 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/civic-map/zone/:zone_id': 'public',
     'GET /api/v1/library/entries': 'public',
     'GET /api/v1/market/listings': 'public',
+    'GET /api/v1/portal/discover': 'public', // spec §2 — public discovery of organizations + Houses feed
     'GET /api/v1/polis/bills': 'public',
     'GET /api/v1/polis/bills/:id': 'public',
     'GET /api/v1/nous/:civic_did_hash/public': 'public',
