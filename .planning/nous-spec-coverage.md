@@ -24,7 +24,7 @@
 | Rules (sets/manages own rules) | ✅ FULL | `brain/.../learning/rules.py` (RuleStore) |
 | Target & Goals — incl. earning money | 🔼 🟡 | `brain/.../telos/`; **economic "earn a living" goal seeded at spawn (2026-06-15)**. Remaining: goals don't self-*evolve* over time. |
 | Not Programmed (changes own behavior / creates new rules at runtime) | 🟡 PARTIAL | learns rules reactively; cannot author new goal categories proactively |
-| Visibility (choose visible/hidden from other agents) | 🟡 PARTIAL | structure-level open/private + operator quarantine only — **no agent-controlled toggle** |
+| Visibility (choose visible/hidden from other agents) | 🔼 🟡 | **Agent `set_visibility` toggle built (2026-06-16)**: `registry.hiddenFlag` excluded from peer-discovery (`inRegion`) while operators still see it; `nous.visibility_changed` audit (allowlist→106). Remaining: the LLM *deciding when* to hide is activation, like other autonomous actions. |
 
 ## §2 Settings
 
@@ -77,7 +77,7 @@ After the Phase 74 Brain slice, **every Nous-spec sub-item is now FULL or PARTIA
 
 ## Notable PARTIALs worth deciding on (not absent, but below spec intent)
 
-- Agent-controlled **visibility toggle** (§1)
+- ~~Agent-controlled **visibility toggle** (§1)~~ — **built 2026-06-16** (the *when-to-hide* decision is LLM activation)
 - **Condition-based reminders** + **self-initiated tasks** + **goal evolution** (§3)
 - **Service Portal discovery** + **multi-Grid / Joined Grid** (§2) — note: multi-Grid conflicts with D-V3-30 ("v3.0 ships 1 Grid"); resolve before building
 - Live **Mirror / Visualization to Grid** (§5)
@@ -88,3 +88,4 @@ After the Phase 74 Brain slice, **every Nous-spec sub-item is now FULL or PARTIA
 - **Economic goal** — §1 Target & Goals "earning money" target, seeded at spawn for all Nous.
 - **Phase 73 (Brain slice)** — `run_code` Docker sandbox → §5 Nous Can Program Locally. Container exec unverified here (no Docker); container tests `skipif`-guarded, ready to run on a Docker host.
 - **Phase 74 (Brain slice)** — `TaskRunner` plan→build→QA lifecycle + `ActivityReport` → §3 Task pipeline + Reporting. Orchestration fixture-tested; real runs need Docker + live LLM; Grid-side report visualization rides Phase 72b.
+- **Visibility toggle (2026-06-16)** — §1 Visibility. Brain `ActionType.SET_VISIBILITY` + grid `registry.hiddenFlag` (peer-discovery suppression, operators still see) + `nous.visibility_changed` audit. Brain+grid suites green.
