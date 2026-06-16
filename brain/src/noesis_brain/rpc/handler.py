@@ -15,6 +15,7 @@ from noesis_brain.llm.base import LLMAdapter, LLMError
 from noesis_brain.llm.types import GenerateOptions
 from noesis_brain.psyche.types import PersonalityDimension, Psyche
 from noesis_brain.prompts.system import build_system_prompt
+from noesis_brain.reminders import Reminder, ReminderStore
 from noesis_brain.state_hash import compute_pre_deletion_state_hash
 from noesis_brain.telos.hashing import compute_active_telos_hash
 from noesis_brain.telos.manager import TelosManager
@@ -66,6 +67,8 @@ class BrainHandler:
         self.location = location
         self.memory = memory
         self.did = did
+        # Reminder & Wake-Up (spec §3): self-set, tick-scheduled reminders.
+        self._reminders = ReminderStore()
         # Phase 10a DRIVE-02 wire-side: per-DID AnankeRuntime registry. One
         # handler may, over its lifetime, receive ticks for multiple DIDs
         # (though typical Brain process serves one Nous). The loader is a
@@ -370,6 +373,28 @@ class BrainHandler:
 
         return result_actions
 
+    def schedule_reminder(self, params: dict[str, Any]) -> dict[str, Any]:
+        """RPC: schedule a self-reminder for a future world tick (spec §3)."""
+        note = str(params.get("note", "")).strip()
+        due_tick = int(params.get("due_tick", 0) or 0)
+        if not note:
+            return {"ok": False, "error": "empty_note"}
+        reminder = self._reminders.schedule(note, due_tick)
+        return {"ok": True, "id": reminder.id, "due_tick": reminder.due_tick}
+
+    def _fire_due_reminders(self, tick: int) -> list[Reminder]:
+        """Fire reminders due at ``tick`` and record each into memory so the Nous
+        'wakes' to it (memory feeds future perception). Idempotent — fires once."""
+        fired = self._reminders.fire_due(tick)
+        if fired and self.memory is not None and hasattr(self.memory, "record_event"):
+            for r in fired:
+                self.memory.record_event(
+                    content=f"Reminder: {r.note}",
+                    source_did=self.did,
+                    tick=tick,
+                )
+        return fired
+
     async def on_tick(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle world clock tick — opportunity for autonomous action.
 
@@ -470,6 +495,8 @@ class BrainHandler:
             tick = int(tick_raw) if tick_raw is not None else 0
         except (TypeError, ValueError):
             tick = 0
+        # Reminder & Wake-Up (spec §3): fire any self-set reminders now due.
+        self._fire_due_reminders(tick)
         runtime = self._get_or_create_ananke(self.did)
         runtime.on_tick(tick)
         for xing in runtime.drain_crossings():

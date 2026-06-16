@@ -254,3 +254,38 @@ class TestForceTelos:
         assert handler.telos.active_goals() == []
         empty_hash = compute_active_telos_hash([])
         assert result["telos_hash_after"] == empty_hash
+
+
+# ── Reminder & Wake-Up (spec §3) ───────────────────────────────────────
+
+
+class TestReminders:
+    def test_schedule_then_fire_records_to_memory(self) -> None:
+        memory = _make_memory_with_entries([])
+        handler = _build_handler(memory=memory)
+
+        result = handler.schedule_reminder({"note": "check the market", "due_tick": 5})
+        assert result["ok"] is True and result["due_tick"] == 5
+
+        assert handler._fire_due_reminders(4) == []          # not due yet
+        fired = handler._fire_due_reminders(5)               # due now
+        assert [r.note for r in fired] == ["check the market"]
+
+        contents = [m.content for m in memory.recent(limit=10)]
+        assert any("Reminder: check the market" in c for c in contents)
+
+        assert handler._fire_due_reminders(6) == []          # idempotent — fires once
+
+    def test_empty_note_is_rejected(self) -> None:
+        handler = _build_handler()
+        assert handler.schedule_reminder({"note": "  ", "due_tick": 3})["ok"] is False
+
+    async def test_on_tick_fires_due_reminders(self) -> None:
+        memory = _make_memory_with_entries([])
+        handler = _build_handler(memory=memory)
+        handler.schedule_reminder({"note": "wake up", "due_tick": 2})
+
+        await handler.on_tick({"tick": 2})
+
+        contents = [m.content for m in memory.recent(limit=10)]
+        assert any("Reminder: wake up" in c for c in contents)
