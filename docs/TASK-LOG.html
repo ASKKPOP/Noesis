@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Noēsis — Task & Discussion Log</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b22; --panel2:#1c222b; --bd:#2a313c;
+    --tx:#e6edf3; --mut:#9aa7b4; --acc:#7ee787; --acc2:#79c0ff; --warn:#f0c674; --done:#56d364;
+    --pend:#d29922; --blocked:#ff7b72;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);line-height:1.55;font-size:15px}
+  .wrap{max-width:1100px;margin:0 auto;padding:32px 24px 80px}
+  h1{font-size:26px;margin:0 0 4px}
+  h2{font-size:19px;margin:38px 0 12px;border-bottom:1px solid var(--bd);padding-bottom:6px}
+  .sub{color:var(--mut);margin:0 0 24px}
+  a{color:var(--acc2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font-family:var(--mono);background:var(--panel2);padding:1px 6px;border-radius:5px;font-size:12.5px;color:var(--acc)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+  .stat{background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:14px 16px}
+  .stat .n{font-size:24px;font-weight:700}
+  .stat .l{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  table{width:100%;border-collapse:collapse;margin:8px 0 4px;font-size:14px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--bd);vertical-align:top}
+  th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.04em;background:var(--panel)}
+  tr:hover td{background:#12161d}
+  .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;border:1px solid var(--bd)}
+  .done{color:var(--done);border-color:#214d2c;background:#0f2417}
+  .partial{color:var(--warn);border-color:#5c4a16;background:#241f0f}
+  .design{color:var(--acc2);border-color:#1c3a59;background:#0f1b28}
+  .blocked{color:var(--blocked);border-color:#5c1f1c;background:#24120f}
+  .prog{color:var(--pend);border-color:#5c4a16;background:#241f0f}
+  .spec{font-family:var(--mono);font-size:12px;color:var(--acc)}
+  .hash{font-family:var(--mono);font-size:11.5px;color:var(--mut)}
+  .panel{background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:4px 18px;margin:10px 0}
+  ul.dec{margin:14px 0;padding-left:0;list-style:none}
+  ul.dec li{padding:9px 0;border-bottom:1px solid var(--bd)}
+  ul.dec li:last-child{border-bottom:0}
+  ul.dec b{color:var(--acc)}
+  .q{color:var(--mut)}
+  .legend{color:var(--mut);font-size:13px;margin:6px 0 0}
+  .note{color:var(--warn);font-size:13px}
+  footer{margin-top:48px;color:var(--mut);font-size:12.5px;border-top:1px solid var(--bd);padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Noēsis — Task &amp; Discussion Log</h1>
+  <p class="sub">Every task, decision, and link across working sessions. Maintained going forward — newest session on top.
+  Source of truth for spec coverage: <a href="../.planning/nous-spec-coverage.md">.planning/nous-spec-coverage.md</a>.</p>
+
+  <div class="grid">
+    <div class="stat"><div class="n">6</div><div class="l">Spec gaps closed</div></div>
+    <div class="stat"><div class="n">11</div><div class="l">Tasks worked</div></div>
+    <div class="stat"><div class="n">982</div><div class="l">Brain tests ✓</div></div>
+    <div class="stat"><div class="n">3383</div><div class="l">Grid tests ✓</div></div>
+    <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
+  </div>
+
+  <!-- ============================ SESSION 1 ============================ -->
+  <h2>Session 1 — 2026‑06‑15 → 06‑16 · “Nous‑spec build‑out (v3.3 Agentic Brain)”</h2>
+  <p class="sub">Goal: read <code>docs/nous_spec.md</code>, find what exists vs. what's missing, and implement spec items one by one.
+  Every change kept brain &amp; grid suites green and the wiki gate clean. All on <code>main</code>, not pushed.</p>
+
+  <p class="legend">Status legend:
+    <span class="tag done">done</span>
+    <span class="tag partial">partial / brain‑slice</span>
+    <span class="tag design">design only</span>
+    <span class="tag blocked">blocked (env)</span>
+    <span class="tag prog">in progress</span>
+  </p>
+
+  <table>
+    <thead><tr><th>#</th><th>Task</th><th>Spec</th><th>What was discussed / done</th><th>Status</th><th>Refs</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1</td><td><b>Spec audit</b></td><td class="spec">all §1–§5</td>
+        <td>Fanned out 4 parallel Explore agents over <code>brain/</code> + <code>grid/</code>; produced a full FULL/PARTIAL/MISSING gap map. Verdict: identity/memory/social/economy strong; the “Nous‑as‑builder” pillar (tool‑use, sandbox, task pipeline, reporting) was the main gap.</td>
+        <td><span class="tag done">done</span></td>
+        <td>→ coverage tracker</td>
+      </tr>
+      <tr>
+        <td>2</td><td><b>Foundation plan</b></td><td class="spec">§4</td>
+        <td>Wrote the Phase‑72 tool‑use plan (5 bite‑sized TDD tasks). Scoped “tool‑use + sandbox” down to just the tool loop + research tools (critical path).</td>
+        <td><span class="tag done">done</span></td>
+        <td><a href="plans/2026-06-15-nous-agentic-work-foundation.md">plan</a></td>
+      </tr>
+      <tr>
+        <td>3</td><td><b>Phase numbering</b></td><td class="spec">—</td>
+        <td>Opened milestone <b>v3.3 Agentic Brain (Nous‑as‑Builder)</b>; assigned Phases 72–74 (next free after Groups 71 / Money 62–66).</td>
+        <td><span class="tag done">done</span></td>
+        <td><a href="../.planning/ROADMAP.md">ROADMAP</a></td>
+      </tr>
+      <tr>
+        <td>4</td><td><b>Phase 72 — Tool‑Use Foundation</b></td><td class="spec">§4 Web Search / Connected Resources</td>
+        <td>5 plans: tool‑use types + additive <code>generate_with_tools</code>; <code>ClaudeAdapter</code> tool blocks; <code>ToolRegistry</code>+<code>ToolRunner</code> loop (digest‑only trace, money‑axiom guard); <code>web_search</code>/<code>web_fetch</code> reusing <code>aau</code> guards; wiki page. Live web research now a callable capability.</td>
+        <td><span class="tag partial">brain‑slice</span></td>
+        <td><a href="plans/2026-06-15-nous-agentic-work-foundation.md">plan</a> · <a href="../wiki/2-concepts/mind/agentic-tools.md">wiki</a> · <span class="hash">cb9a6c7 f07bcc3 4018d15 cca2bb4 0421752</span></td>
+      </tr>
+      <tr>
+        <td>5</td><td><b>Economic goal</b></td><td class="spec">§1 Target &amp; Goals</td>
+        <td>Added <code>GoalDomain</code> (orthogonal to time‑horizon); auto‑seeded an “earn a living through compute‑labor” goal at spawn for every Nous (per money axiom D‑MONEY‑01); surfaced in prompt. Mid‑build fix: seed only at spawn, not in the <code>from_yaml</code> rebuild path (caught by <code>force_telos</code> test).</td>
+        <td><span class="tag done">done</span></td>
+        <td><a href="plans/2026-06-15-nous-economic-goal.md">plan</a> · <span class="hash">050f2fc b89280b 1516c8a 826e975 09555ab</span></td>
+      </tr>
+      <tr>
+        <td>6</td><td><b>Coverage tracker</b></td><td class="spec">all</td>
+        <td>Created a living per‑item spec coverage doc so nothing is silently missed.</td>
+        <td><span class="tag done">done</span></td>
+        <td><a href="../.planning/nous-spec-coverage.md">tracker</a> · <span class="hash">b61ff08</span></td>
+      </tr>
+      <tr>
+        <td>7</td><td><b>Phase 73 — Code Sandbox</b></td><td class="spec">§5 Nous Can Program Locally</td>
+        <td><code>run_code</code> tool over a Docker container: <code>--network none</code>, read‑only FS + tmpfs, memory/cpu/pids/time caps, <code>--cap-drop ALL</code>, code mounted read‑only. <b>Decision: Docker‑only, no weak fallback</b> (off if Docker absent); compute‑only, no network. Isolation flags unit‑tested by construction.
+        <span class="note">⚠ Container execution unverified — this machine has no Docker; the 3 container tests are <code>skipif</code>‑guarded.</span></td>
+        <td><span class="tag partial">brain‑slice</span></td>
+        <td><a href="plans/2026-06-15-phase-73-code-sandbox.md">plan</a> · <span class="hash">41bd7de 315d22b 41a6381 b4bca1d</span></td>
+      </tr>
+      <tr>
+        <td>8</td><td><b>Phase 74 — Task Pipeline + Reporting</b></td><td class="spec">§3 Plan→Build→QA + Reporting</td>
+        <td><code>TaskRunner</code> drives a task through plan → build → QA (each phase a tool‑loop turn with <code>run_code</code>); produces an <code>ActivityReport</code> (one digest per phase + markdown render). Fixture‑verified; real runs need Docker + live LLM.</td>
+        <td><span class="tag partial">brain‑slice</span></td>
+        <td><span class="hash">9ee12ff 9db62b8 4e698d8</span></td>
+      </tr>
+      <tr>
+        <td>9</td><td><b>Phase 72b activation design</b></td><td class="spec">§3/§4/§5</td>
+        <td>Design (no code) for wiring the tool loop into the live cognitive tick (<code>on_tick</code> hook, tool‑capability gate, trace→<code>TOOL_USED</code> audit mirror, cadence). Surfaces 4 open decisions (D1–D4). Implementation needs a live LLM + Docker.</td>
+        <td><span class="tag design">design only</span></td>
+        <td><a href="plans/2026-06-16-phase-72b-activation-design.md">design</a> · <span class="hash">e752049</span></td>
+      </tr>
+      <tr>
+        <td>10</td><td><b>Visibility toggle</b></td><td class="spec">§1 Visibility</td>
+        <td>Agent‑controlled <code>set_visibility</code>: brain <code>ActionType.SET_VISIBILITY</code> + grid <code>registry.hiddenFlag</code> (excluded from peer‑discovery; operators still see) + <code>nous.visibility_changed</code> audit (allowlist 105→106). No migration (in‑memory, mirrors quarantine).</td>
+        <td><span class="tag done">done</span></td>
+        <td><a href="../wiki/2-concepts/mind/nous.md">wiki</a> · <span class="hash">3c1da79 ea7b8b3</span></td>
+      </tr>
+      <tr>
+        <td>11</td><td><b>Reminder &amp; Wake‑Up</b></td><td class="spec">§3 Reminder</td>
+        <td><code>ReminderStore</code> (schedule/due/fire‑once) + <code>brain.scheduleReminder</code> RPC; <code>on_tick</code> fires due reminders and records each to memory so the Nous “wakes” to it. Tick‑scheduled; condition‑based deferred.</td>
+        <td><span class="tag done">done</span></td>
+        <td><a href="../wiki/2-concepts/mind/inner-life.md">wiki</a> · <span class="hash">3dd304b 3a3acf3</span></td>
+      </tr>
+      <tr>
+        <td>12</td><td><b>This task log</b></td><td class="spec">—</td>
+        <td>Created this HTML log + a memory to maintain it every session (auto‑updated going forward).</td>
+        <td><span class="tag done">done</span></td>
+        <td>this file</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Decisions made this session</h2>
+  <div class="panel">
+    <ul class="dec">
+      <li><b>After the audit:</b> plan the foundation phase first. <span class="q">(vs. write audit doc / build a specific item)</span></li>
+      <li><b>Execution mode:</b> set up a parallel worktree session → then “do” it directly in <code>main</code> (no Docker for worktree venv; standing preference = commit to main, don't push).</li>
+      <li><b>Economic goal:</b> auto‑seed for <i>all</i> Nous · model as a long‑term <i>goal</i> in telos.</li>
+      <li><b>Code sandbox:</b> Docker isolation, no weak fallback · compute‑only + scoped temp FS (no network).</li>
+      <li><b>Docker verification:</b> skip for now (no Docker on this machine) · <b>Phase 72b:</b> design the activation first (no code).</li>
+    </ul>
+  </div>
+
+  <h2>What's left</h2>
+  <div class="panel">
+    <ul class="dec">
+      <li><span class="tag blocked">blocked</span> &nbsp;<b>Phase 72b — activation + Grid mirror + live viz.</b> Design ready; needs a live LLM + Docker env and your <b>4 decisions (D1–D4)</b>. <a href="plans/2026-06-16-phase-72b-activation-design.md">design</a></li>
+      <li><span class="tag blocked">blocked</span> &nbsp;<b>Verify Phase 73/74 on Docker</b> — container + end‑to‑end tests are <code>skipif</code>‑guarded.</li>
+      <li><span class="tag partial">buildable</span> &nbsp;<b>§3</b> self‑initiated tasks · goal evolution · condition‑based reminders</li>
+      <li><span class="tag partial">buildable</span> &nbsp;<b>§2</b> Service Portal discovery · multi‑Grid “Joined Grid” <span class="note">(conflicts with D‑V3‑30 “v3.0 ships 1 Grid” — decide first)</span></li>
+      <li><span class="tag partial">buildable</span> &nbsp;<b>§5</b> live Mirror / Visualization to Grid (overlaps 72b dashboard)</li>
+      <li><span class="tag partial">buildable</span> &nbsp;<b>§1</b> “Not Programmed” — proactive self‑rule / goal‑category creation (still reactive)</li>
+    </ul>
+  </div>
+
+  <footer>
+    Generated 2026‑06‑16 · Noēsis. Newest session appended at top under a new <code>&lt;h2&gt;</code>.
+    Plan docs live in <code>docs/plans/</code>; system truth in <code>wiki/</code>; process in <code>.planning/</code>.
+  </footer>
+
+</div>
+</body>
+</html>
