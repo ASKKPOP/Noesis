@@ -120,11 +120,12 @@ contract EdgeCasesTest is Test {
     // ── LaborEscrow / LandSale ───────────────────────────────────────────────────
     function test_escrow_constructor_bad_params() public {
         vm.expectRevert(LaborEscrow.BadParams.selector);
-        new LaborEscrow(address(0), payable(address(0xBEEF)), 200);
+        new LaborEscrow(address(0), makeAddr("arb"), payable(address(0xBEEF)), 200, 1 days);
     }
 
     function test_escrow_fund_bad_params() public {
-        LaborEscrow e = new LaborEscrow(makeAddr("oracle"), payable(address(0xBEEF)), 200);
+        LaborEscrow e =
+            new LaborEscrow(makeAddr("oracle"), makeAddr("arb"), payable(address(0xBEEF)), 200, 1 days);
         vm.expectRevert(LaborEscrow.BadParams.selector);
         e.fundJob{value: 0}(payable(makeAddr("w")), uint64(block.timestamp + 1 days));
     }

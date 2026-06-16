@@ -27,6 +27,7 @@ contract IntegrationTest is Test {
     address payable worker;
     address payable grantee;
     address buyer;
+    uint64 constant WINDOW = 1 days;
 
     function setUp() public {
         oracle = vm.addr(oraclePk);
@@ -38,7 +39,7 @@ contract IntegrationTest is Test {
         buyer = makeAddr("buyer");
 
         treasury = new CivicTreasury(polis);
-        escrow = new LaborEscrow(oracle, payable(address(treasury)), 200); // 2%
+        escrow = new LaborEscrow(oracle, polis, payable(address(treasury)), 200, WINDOW); // 2%, Polis arbiter
         land = new LandSale(polis, oracle, payable(address(treasury)));
         payerAccount = new NousAccount(human, address(0)); // direct session-key path
         vm.deal(address(payerAccount), 5 ether);
@@ -57,9 +58,11 @@ contract IntegrationTest is Test {
         uint256 jobId = abi.decode(ret, (uint256));
         assertEq(payerAccount.remaining(brain), 1 ether); // 2 cap − 1 spent
 
-        // 3. Grid oracle attests completion → worker paid, fee → treasury.
+        // 3. Grid oracle attests completion → opens dispute window; unchallenged → finalize.
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(oraclePk, escrow.completionDigest(jobId));
-        escrow.confirmCompletion(jobId, abi.encodePacked(r, s, v));
+        escrow.attestCompletion(jobId, abi.encodePacked(r, s, v));
+        vm.warp(block.timestamp + WINDOW + 1);
+        escrow.finalize(jobId);
         assertEq(worker.balance, 0.98 ether);
         assertEq(address(treasury).balance, 0.02 ether);
 

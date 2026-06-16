@@ -15,11 +15,14 @@ contract Deploy is Script {
         address authorizer = vm.envAddress("POLIS_AUTHORIZER");
         address oracle = vm.envAddress("GRID_ORACLE");
         uint256 feeBps = vm.envOr("FEE_BPS", uint256(200)); // 2% default
+        uint256 disputeWindow = vm.envOr("DISPUTE_WINDOW", uint256(1 days));
         uint256 deployerPk = vm.envUint("PRIVATE_KEY");
 
+        // The Polis authorizer doubles as the dispute arbiter (the court).
         vm.startBroadcast(deployerPk);
         CivicTreasury treasury = new CivicTreasury(authorizer);
-        LaborEscrow escrow = new LaborEscrow(oracle, payable(address(treasury)), uint16(feeBps));
+        LaborEscrow escrow =
+            new LaborEscrow(oracle, authorizer, payable(address(treasury)), uint16(feeBps), uint64(disputeWindow));
         LandSale land = new LandSale(authorizer, oracle, payable(address(treasury)));
         vm.stopBroadcast();
 
