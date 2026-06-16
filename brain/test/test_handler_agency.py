@@ -289,3 +289,19 @@ class TestReminders:
 
         contents = [m.content for m in memory.recent(limit=10)]
         assert any("Reminder: wake up" in c for c in contents)
+
+    def test_condition_reminder_fires_on_signal(self) -> None:
+        memory = _make_memory_with_entries([])
+        handler = _build_handler(memory=memory)
+        handler.schedule_reminder(
+            {"note": "curious!", "condition": {"signal": "curiosity", "op": ">=", "value": 0.7}}
+        )
+        assert handler._fire_due_reminders(1, context={"curiosity": 0.5}) == []   # below
+        fired = handler._fire_due_reminders(2, context={"curiosity": 0.9})        # met
+        assert [r.note for r in fired] == ["curious!"]
+        contents = [m.content for m in memory.recent(limit=10)]
+        assert any("Reminder: curious!" in c for c in contents)
+
+    def test_schedule_requires_a_trigger(self) -> None:
+        handler = _build_handler()
+        assert handler.schedule_reminder({"note": "x"})["ok"] is False  # no tick or condition

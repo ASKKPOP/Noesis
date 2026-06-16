@@ -7,6 +7,6 @@ act on them. Reminder notes stay Brain-local (privacy, like reflections).
 Tick-scheduled only for now; condition-based reminders are a deferred follow-up.
 """
 
-from noesis_brain.reminders.store import Reminder, ReminderStore
+from noesis_brain.reminders.store import Reminder, ReminderCondition, ReminderStore
 
-__all__ = ["Reminder", "ReminderStore"]
+__all__ = ["Reminder", "ReminderCondition", "ReminderStore"]

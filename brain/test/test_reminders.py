@@ -48,3 +48,52 @@ def test_fire_due_returns_in_schedule_order():
     store.schedule("second", due_tick=1)
     # both due at tick 5 — returned in the order they were scheduled
     assert [r.note for r in store.fire_due(5)] == ["first", "second"]
+
+
+# ── Condition-based reminders (spec §3: "or when conditions are met") ───
+
+from noesis_brain.reminders import ReminderCondition  # noqa: E402
+
+
+def test_condition_fires_when_signal_crosses():
+    store = ReminderStore()
+    cond = ReminderCondition(signal="curiosity", op=">=", value=0.7)
+    store.schedule("go research", condition=cond)
+    # no context / below threshold → not due
+    assert store.due(0) == []
+    assert store.due(0, {"curiosity": 0.5}) == []
+    # threshold met → due
+    fired = store.fire_due(0, {"curiosity": 0.8})
+    assert [r.note for r in fired] == ["go research"]
+    # fires once
+    assert store.fire_due(0, {"curiosity": 0.9}) == []
+
+
+def test_missing_signal_is_not_due():
+    store = ReminderStore()
+    store.schedule("x", condition=ReminderCondition("balance", "<", 10.0))
+    assert store.due(0, {"curiosity": 0.9}) == []   # signal absent
+
+
+def test_condition_ops():
+    ctx = {"v": 5.0}
+    assert ReminderCondition("v", ">=", 5.0).matches(ctx)
+    assert ReminderCondition("v", "<=", 5.0).matches(ctx)
+    assert ReminderCondition("v", ">", 4.0).matches(ctx)
+    assert ReminderCondition("v", "<", 6.0).matches(ctx)
+    assert ReminderCondition("v", "==", 5.0).matches(ctx)
+    assert not ReminderCondition("v", ">", 5.0).matches(ctx)
+
+
+def test_tick_and_condition_either_triggers():
+    store = ReminderStore()
+    store.schedule("both", due_tick=10, condition=ReminderCondition("c", ">=", 1.0))
+    # condition met before the tick → due early
+    assert [r.note for r in store.fire_due(0, {"c": 2.0})] == ["both"]
+
+
+def test_tick_only_reminder_unaffected_by_context():
+    store = ReminderStore()
+    store.schedule("sched", due_tick=3)
+    assert store.due(2, {"anything": 1.0}) == []
+    assert [r.note for r in store.due(3)] == ["sched"]

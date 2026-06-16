@@ -15,7 +15,7 @@ from noesis_brain.llm.base import LLMAdapter, LLMError
 from noesis_brain.llm.types import GenerateOptions
 from noesis_brain.psyche.types import PersonalityDimension, Psyche
 from noesis_brain.prompts.system import build_system_prompt
-from noesis_brain.reminders import Reminder, ReminderStore
+from noesis_brain.reminders import Reminder, ReminderCondition, ReminderStore
 from noesis_brain.state_hash import compute_pre_deletion_state_hash
 from noesis_brain.telos.hashing import compute_active_telos_hash
 from noesis_brain.telos.manager import TelosManager
@@ -374,18 +374,47 @@ class BrainHandler:
         return result_actions
 
     def schedule_reminder(self, params: dict[str, Any]) -> dict[str, Any]:
-        """RPC: schedule a self-reminder for a future world tick (spec §3)."""
+        """RPC: schedule a self-reminder (spec §3) — fires on a tick and/or a condition.
+
+        params: {note, due_tick?, condition?: {signal, op, value}}
+        """
         note = str(params.get("note", "")).strip()
-        due_tick = int(params.get("due_tick", 0) or 0)
         if not note:
             return {"ok": False, "error": "empty_note"}
-        reminder = self._reminders.schedule(note, due_tick)
+        due_tick_raw = params.get("due_tick")
+        due_tick = int(due_tick_raw) if due_tick_raw is not None else None
+        cond_raw = params.get("condition")
+        condition: ReminderCondition | None = None
+        if isinstance(cond_raw, dict) and cond_raw.get("signal") and cond_raw.get("op"):
+            condition = ReminderCondition(
+                signal=str(cond_raw["signal"]),
+                op=str(cond_raw["op"]),
+                value=float(cond_raw.get("value", 0)),
+            )
+        if due_tick is None and condition is None:
+            return {"ok": False, "error": "no_trigger"}
+        reminder = self._reminders.schedule(note, due_tick=due_tick, condition=condition)
         return {"ok": True, "id": reminder.id, "due_tick": reminder.due_tick}
 
-    def _fire_due_reminders(self, tick: int) -> list[Reminder]:
-        """Fire reminders due at ``tick`` and record each into memory so the Nous
-        'wakes' to it (memory feeds future perception). Idempotent — fires once."""
-        fired = self._reminders.fire_due(tick)
+    def _reminder_context(self, tick: int) -> dict[str, float]:
+        """Signals a condition reminder can fire on: the tick + current drive levels."""
+        ctx: dict[str, float] = {"tick": float(tick)}
+        try:
+            rt = self._get_or_create_ananke(self.did)
+            for drive, value in rt.state.values.items():
+                ctx[drive.value] = float(value)
+        except Exception:
+            pass
+        return ctx
+
+    def _fire_due_reminders(
+        self, tick: int, context: dict[str, float] | None = None
+    ) -> list[Reminder]:
+        """Fire reminders due at ``tick`` (or whose condition is met) and record each
+        into memory so the Nous 'wakes' to it. Idempotent — fires once."""
+        if context is None:
+            context = self._reminder_context(tick)
+        fired = self._reminders.fire_due(tick, context)
         if fired and self.memory is not None and hasattr(self.memory, "record_event"):
             for r in fired:
                 self.memory.record_event(
