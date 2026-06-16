@@ -40,7 +40,7 @@
 |---|---|---|
 | Autonomous Drive | 🟡 PARTIAL | `brain/.../ananke/` per-tick drives; reactive, never self-initiates |
 | Goal Management | 🟡 PARTIAL | tracked (now incl. economic); no evolution loop |
-| Reminder & Wake-Up | 🟡 PARTIAL | deterministic sleep/wake (`hypnos`); no condition/schedule reminders |
+| Reminder & Wake-Up | 🔼 🟡 | **Self-set tick-scheduled reminders built (2026-06-16)**: `ReminderStore` + `brain.scheduleReminder` RPC; `on_tick` fires due reminders, recording each to memory so the Nous wakes to it. Plus deterministic sleep/wake (`hypnos`). Remaining: **condition-based** reminders + the LLM *deciding* to set one (activation). |
 | Job Scheduler | 🟡 PARTIAL | tick + peer cowork board; no self-scheduled queue |
 | Task Plan → Build → QA | 🔼 🟡 | **`TaskRunner` plan→build→QA lifecycle built (Phase 74 Brain slice)** over `run_code`. Remaining: real runs need Docker + live LLM (orchestration unit-tested with fixtures). |
 | Reporting with Visualization | 🔼 🟡 | **`ActivityReport` + markdown render built (Phase 74)**. Remaining: live **Grid-side** visualization rides Phase 72b. |
@@ -78,7 +78,7 @@ After the Phase 74 Brain slice, **every Nous-spec sub-item is now FULL or PARTIA
 ## Notable PARTIALs worth deciding on (not absent, but below spec intent)
 
 - ~~Agent-controlled **visibility toggle** (§1)~~ — **built 2026-06-16** (the *when-to-hide* decision is LLM activation)
-- **Condition-based reminders** + **self-initiated tasks** + **goal evolution** (§3)
+- **Condition-based** reminders (tick-scheduled built 2026-06-16) + **self-initiated tasks** + **goal evolution** (§3)
 - **Service Portal discovery** + **multi-Grid / Joined Grid** (§2) — note: multi-Grid conflicts with D-V3-30 ("v3.0 ships 1 Grid"); resolve before building
 - Live **Mirror / Visualization to Grid** (§5)
 
@@ -89,3 +89,4 @@ After the Phase 74 Brain slice, **every Nous-spec sub-item is now FULL or PARTIA
 - **Phase 73 (Brain slice)** — `run_code` Docker sandbox → §5 Nous Can Program Locally. Container exec unverified here (no Docker); container tests `skipif`-guarded, ready to run on a Docker host.
 - **Phase 74 (Brain slice)** — `TaskRunner` plan→build→QA lifecycle + `ActivityReport` → §3 Task pipeline + Reporting. Orchestration fixture-tested; real runs need Docker + live LLM; Grid-side report visualization rides Phase 72b.
 - **Visibility toggle (2026-06-16)** — §1 Visibility. Brain `ActionType.SET_VISIBILITY` + grid `registry.hiddenFlag` (peer-discovery suppression, operators still see) + `nous.visibility_changed` audit. Brain+grid suites green.
+- **Reminder & Wake-Up (2026-06-16)** — §3. `ReminderStore` + `brain.scheduleReminder` RPC; `on_tick` fires due reminders → memory (the Nous wakes to it). Tick-scheduled; condition-based deferred. 8 brain tests.
