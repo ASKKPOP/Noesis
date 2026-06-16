@@ -56,8 +56,8 @@
   Source of truth for spec coverage: <a href="../.planning/nous-spec-coverage.md">.planning/nous-spec-coverage.md</a>.</p>
 
   <div class="grid">
-    <div class="stat"><div class="n">6</div><div class="l">Spec gaps closed</div></div>
-    <div class="stat"><div class="n">11</div><div class="l">Tasks worked</div></div>
+    <div class="stat"><div class="n">7</div><div class="l">Spec gaps closed</div></div>
+    <div class="stat"><div class="n">13</div><div class="l">Tasks worked</div></div>
     <div class="stat"><div class="n">982</div><div class="l">Brain tests ✓</div></div>
     <div class="stat"><div class="n">3383</div><div class="l">Grid tests ✓</div></div>
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
@@ -151,6 +151,12 @@
         <td>Created this HTML log + a memory to maintain it every session (auto‑updated going forward).</td>
         <td><span class="tag done">done</span></td>
         <td>this file</td>
+      </tr>
+      <tr>
+        <td>13</td><td><b>Service Portal discovery</b></td><td class="spec">§2 Service Portal Access</td>
+        <td>Public <code>GET /api/v1/portal/discover</code> — search organizations (Groups) by <code>?q=</code>/<code>?domain=</code> + pointer to the open‑Houses feed (<code>/api/v1/civic/parcels</code>). Wired <code>groupStore</code> onto <code>GridServices</code> (optional, 503 when absent) + hoisted in <code>main.ts</code>; added a <code>public</code> route‑policy entry. Single‑grid (multi‑Grid deferred per D‑V3‑30). Also fixed a latent <code>set_visibility</code> union type error (vitest doesn't typecheck; <code>tsc</code> caught it).</td>
+        <td><span class="tag done">done</span></td>
+        <td><a href="../wiki/2-concepts/city/portal.md">wiki</a> · <span class="hash">c7f8203 bad3f3a</span></td>
       </tr>
     </tbody>
   </table>

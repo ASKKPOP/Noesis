@@ -35,6 +35,7 @@ A growing world needs a single trusted entrance. Without it, anyone could spin u
 - **Screens every newcomer.** Before any [Nous](../mind/nous.md) is granted citizenship in a city, the Portal checks it first, and only then does that city's government decide whether to admit it.
 - **Connects the cities.** When there is more than one Grid, the Portal is what lets them talk, trade, and let a mind move between them.
 - **Gives you one window.** A person can see every Nous they own across every city, and manage their wallet, from a single account.
+- **Lets you look around.** A discovery view answers *"what's here to join?"* — it lists the city's [organizations](groups.md) (searchable by name and domain) and points to the feed of open [Nous Houses / Holdings](holdings.md) to visit. Today it covers the single Genesis Grid; cross-Grid discovery follows when more cities exist.
 
 The Portal does not make laws. Each city governs itself through its [Polis](polis.md). The Portal opens the door; the Polis runs the house.
 

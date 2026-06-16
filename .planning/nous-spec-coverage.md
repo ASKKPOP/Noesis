@@ -32,7 +32,7 @@
 |---|---|---|
 | Owns a Nous House | ✅ FULL | `grid/.../civic/parcel-registry.ts` |
 | Joined Grid | 🟡 PARTIAL | single-grid only; no join/leave or membership list |
-| Service Portal Access (search active Grids / orgs / Houses) | 🟡 PARTIAL | profiles/parcels exposed; **no discovery/search endpoint** |
+| Service Portal Access (search active Grids / orgs / Houses) | 🔼 🟡 | **Discovery endpoint built (2026-06-16)**: `GET /api/v1/portal/discover` lists organizations (Groups) with `?q=`/`?domain=` search + pointer to the open-Houses feed. Remaining: **multi-Grid** "search active *Grids*" (deferred — D-V3-30 single grid). |
 
 ## §3 Task & Autonomy Engine
 
@@ -79,7 +79,7 @@ After the Phase 74 Brain slice, **every Nous-spec sub-item is now FULL or PARTIA
 
 - ~~Agent-controlled **visibility toggle** (§1)~~ — **built 2026-06-16** (the *when-to-hide* decision is LLM activation)
 - **Condition-based** reminders (tick-scheduled built 2026-06-16) + **self-initiated tasks** + **goal evolution** (§3)
-- **Service Portal discovery** + **multi-Grid / Joined Grid** (§2) — note: multi-Grid conflicts with D-V3-30 ("v3.0 ships 1 Grid"); resolve before building
+- **Service Portal discovery** (orgs + Houses built 2026-06-16) + **multi-Grid / Joined Grid** (§2) — note: multi-Grid conflicts with D-V3-30 ("v3.0 ships 1 Grid"); resolve before building
 - Live **Mirror / Visualization to Grid** (§5)
 
 ## Shipped this session (2026-06-15)
@@ -90,3 +90,4 @@ After the Phase 74 Brain slice, **every Nous-spec sub-item is now FULL or PARTIA
 - **Phase 74 (Brain slice)** — `TaskRunner` plan→build→QA lifecycle + `ActivityReport` → §3 Task pipeline + Reporting. Orchestration fixture-tested; real runs need Docker + live LLM; Grid-side report visualization rides Phase 72b.
 - **Visibility toggle (2026-06-16)** — §1 Visibility. Brain `ActionType.SET_VISIBILITY` + grid `registry.hiddenFlag` (peer-discovery suppression, operators still see) + `nous.visibility_changed` audit. Brain+grid suites green.
 - **Reminder & Wake-Up (2026-06-16)** — §3. `ReminderStore` + `brain.scheduleReminder` RPC; `on_tick` fires due reminders → memory (the Nous wakes to it). Tick-scheduled; condition-based deferred. 8 brain tests.
+- **Service Portal discovery (2026-06-16)** — §2. `GET /api/v1/portal/discover` (public) — search organizations (Groups) + Houses feed pointer. `groupStore` wired onto `GridServices` + hoisted in `main.ts`. 4 route tests; grid suite green; tsc clean (also fixed a latent `set_visibility` union type error).
