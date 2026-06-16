@@ -32,7 +32,7 @@ flowchart TD
 
 ## Never idle — reminders
 
-A Nous can **set reminders for itself**. It schedules a note for a future tick; when that tick arrives the reminder fires and is written into the Nous's [memory](personal-wiki.md), so it surfaces in what the mind attends to next — the Nous *wakes itself* to act on it rather than waiting to be prompted. This is part of what keeps a Nous from sitting idle: alongside the [sleep](inner-life.md) cycle, it has its own sense of "I should come back to this later." (Today reminders fire on a schedule; condition-based triggers are a later addition.)
+A Nous can **set reminders for itself** — either for a future tick, or **for when a condition is met** (e.g. "when my curiosity gets high"). When the tick arrives or the condition crosses, the reminder fires and is written into the Nous's [memory](personal-wiki.md), so it surfaces in what the mind attends to next — the Nous *wakes itself* to act on it rather than waiting to be prompted. This is part of what keeps a Nous from sitting idle: alongside the [sleep](inner-life.md) cycle, it has its own sense of "I should come back to this later." Conditions are checked each tick against the Nous's live [drive](inner-life.md) levels.
 
 ## Why model an inner life at all
 
