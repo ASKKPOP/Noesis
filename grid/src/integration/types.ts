@@ -36,6 +36,14 @@ export interface NoopAction {
     metadata: Record<string, unknown>;
 }
 
+/** Spec §1: a Nous chooses to be visible/hidden from peers. metadata: { hidden: boolean } */
+export interface SetVisibilityAction {
+    action_type: 'set_visibility';
+    channel: string;
+    text: string;
+    metadata: Record<string, unknown>;
+}
+
 /**
  * Brain-initiated bilateral trade proposal.
  *
@@ -327,6 +335,7 @@ export type BrainAction =
     | DirectMessageAction
     | MoveAction
     | NoopAction
+    | SetVisibilityAction
     | TradeRequestAction
     | TelosRefinedAction
     | BrainActionDriveCrossed
