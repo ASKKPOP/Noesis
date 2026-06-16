@@ -214,7 +214,22 @@ export class NousRegistry {
      * is suppressed.
      */
     inRegion(region: string): NousRecord[] {
-        return this.active().filter(r => r.region === region && !r.quarantineFlag);
+        return this.active().filter(
+            r => r.region === region && !r.quarantineFlag && !r.hiddenFlag,
+        );
+    }
+
+    /**
+     * Agent-controlled visibility (spec §1). A Nous may hide itself from
+     * peer-discovery (inRegion); operator-side queries (all(), active()) still
+     * see it (substrate sovereignty). Distinct from quarantineFlag (operator).
+     * Returns false if the DID is unknown.
+     */
+    setVisibility(did: string, hidden: boolean): boolean {
+        const record = this.records.get(did);
+        if (!record) return false;
+        record.hiddenFlag = hidden;
+        return true;
     }
 
     /** Total registered Nous. */

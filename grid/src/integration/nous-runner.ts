@@ -290,6 +290,17 @@ export class NousRunner {
                     break;
                 }
 
+                case 'set_visibility': {
+                    // Spec §1: a Nous chooses to be visible/hidden from peers.
+                    // Suppresses peer-discovery (inRegion) only — operators still see it.
+                    const hidden = action.metadata?.['hidden'] === true;
+                    this.registry.setVisibility(this.nousDid, hidden);
+                    this.audit.append('nous.visibility_changed', this.nousDid, {
+                        mode: hidden ? 'hidden' : 'visible',
+                    });
+                    break;
+                }
+
                 case 'direct_message': {
                     // Phase 25b SANCTION-01 / D-25b-NEW-3: muteFlag suppression.
                     if (this.muteFlag) {

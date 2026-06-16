@@ -457,6 +457,10 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   blueprint_hash is the Phase 18 skill hash (HEX64).
     'group.project_started',      // (104)
     'group.project_completed',    // (105)
+    // nous.visibility_changed (106): emitted inline by NousRunner.executeActions on a
+    //   Nous's own set_visibility action (spec §1). Payload {mode: 'hidden'|'visible'}
+    //   + Grid-injected nous_did + tick. No plaintext; agent-controlled (vs operator quarantine).
+    'nous.visibility_changed',    // (106)
 ] as const;
 
 /**

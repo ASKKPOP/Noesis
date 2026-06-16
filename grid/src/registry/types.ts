@@ -21,6 +21,9 @@ export interface NousRecord {
     deletedAtTick?: number;
     /** Phase 25b (SANCTION-03). Set by quarantine route. Excludes Nous from peer-discovery (inRegion). */
     quarantineFlag?: boolean;
+    /** Agent-controlled visibility (spec §1). Set by the Nous's own set_visibility action.
+     *  Excludes from peer-discovery (inRegion) while operators still see it. Distinct from quarantineFlag. */
+    hiddenFlag?: boolean;
 }
 
 export interface SpawnRequest {

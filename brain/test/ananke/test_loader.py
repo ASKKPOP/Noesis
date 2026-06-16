@@ -71,7 +71,8 @@ def test_action_type_drive_crossed_present() -> None:
     # + 8 (Phase 60: GRANT_ROLE, REVOKE_ROLE, INVITE, BIND_SHOP, NAME_PLACE,
     #      POST_TASK, CLAIM_TASK, COMPLETE_TASK) = 44
     # + 4 (Phase 61: LEARN_BLUEPRINT, BUILD_FROM_BLUEPRINT, CO_BUILD, TEACH_HERE) = 48
-    assert len(list(ActionType)) == 48
+    # + 1 (visibility: SET_VISIBILITY) = 49
+    assert len(list(ActionType)) == 49
 
 
 def test_action_type_drive_crossed_position() -> None:
