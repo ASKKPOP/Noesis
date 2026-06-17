@@ -6,10 +6,12 @@ background-learning machinery into tools the model can call mid-reasoning.
 """
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 
 from noesis_brain.aau.config import AAUConfig
 from noesis_brain.aau.discovery import discover_urls
+from noesis_brain.aau.extractor import AAUExtractor
 from noesis_brain.aau.fetcher import AAUFetcher
 from noesis_brain.aau.types import SourceKind
 from noesis_brain.llm.types import ToolSpec
@@ -28,6 +30,7 @@ class ResearchTool:
 def build_research_tools(config: AAUConfig, fetcher: object | None = None) -> list[ResearchTool]:
     """Build the web_search + web_fetch tool bundles bound to one AAUConfig."""
     fetch_client = fetcher if fetcher is not None else AAUFetcher(config)
+    extractor = AAUExtractor(config)
 
     async def web_search(tool_input: dict) -> str:
         query = str(tool_input.get("query", "")).strip()
@@ -45,7 +48,10 @@ def build_research_tools(config: AAUConfig, fetcher: object | None = None) -> li
         result = await fetch_client.fetch(url, SourceKind.WEB)
         if result is None:
             return "(no content retrieved — blocked, unreachable, or disallowed)"
-        return result.truncated_content(_FETCH_CHAR_CAP)
+        fact = await asyncio.to_thread(extractor.extract, result)  # CPU-bound HTML→text
+        if fact is None:
+            return "(fetched, but no readable content could be extracted)"
+        return fact.truncated_content(_FETCH_CHAR_CAP)
 
     return [
         ResearchTool(

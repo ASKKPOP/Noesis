@@ -2,16 +2,15 @@
 from __future__ import annotations
 
 from noesis_brain.aau.config import AAUConfig
-from noesis_brain.aau.types import SourceKind
+from noesis_brain.aau.types import FetchResult, SourceKind
 from noesis_brain.tools.research import build_research_tools
 
 
-class _FakeFetchResult:
-    def __init__(self, content: str) -> None:
-        self._content = content
-
-    def truncated_content(self, max_chars: int = 3000) -> str:
-        return self._content[:max_chars]
+def _text_result(text: str) -> FetchResult:
+    # text/plain so the extractor decodes the body directly (no HTML parsing).
+    return FetchResult(
+        url="https://example.com/page", status=200, content_type="text/plain", body=text.encode()
+    )
 
 
 class _FakeFetcher:
@@ -42,7 +41,7 @@ async def test_web_search_tool_wraps_discovery(monkeypatch):
 
 
 async def test_web_fetch_tool_wraps_fetcher():
-    fetcher = _FakeFetcher(_FakeFetchResult("Hello from the live web. " * 10))
+    fetcher = _FakeFetcher(_text_result("Hello from the live web. " * 10))
     bundles = build_research_tools(AAUConfig(), fetcher=fetcher)
     web_fetch = _by_name(bundles, "web_fetch")
 
