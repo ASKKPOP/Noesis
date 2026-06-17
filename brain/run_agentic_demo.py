@@ -16,22 +16,28 @@ import asyncio
 import os
 import sys
 
-from noesis_brain.llm.claude import ClaudeAdapter
 from noesis_brain.sandbox.executor import docker_available
 from noesis_brain.tasks.runner import TaskRunner
 from noesis_brain.tools.agentic import build_agentic_registry
 from noesis_brain.tools.runner import ToolRunner
 
 
-async def main() -> int:
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        print("ERROR: set ANTHROPIC_API_KEY (tool use needs a tool-capable model).")
-        return 1
+def _make_adapter():
+    """Pick the LLM: NOESIS_LLM=ollama → local qwen3 (free); else Claude if a key
+    is set; default to Ollama so testing doesn't bill the Claude API."""
+    choice = os.environ.get("NOESIS_LLM", "").lower()
+    if choice == "claude" or (choice != "ollama" and os.environ.get("ANTHROPIC_API_KEY")):
+        from noesis_brain.llm.claude import ClaudeAdapter
+        return ClaudeAdapter(model="claude-sonnet-4-6"), "claude"
+    from noesis_brain.llm.ollama import OllamaAdapter
+    return OllamaAdapter(model=os.environ.get("OLLAMA_MODEL", "qwen3:4b")), "ollama"
 
-    adapter = ClaudeAdapter(model="claude-sonnet-4-6")
+
+async def main() -> int:
+    adapter, name = _make_adapter()
     registry = build_agentic_registry()
     tools = [s.name for s in registry.specs()]
-    print(f"🧠 Nous online · adapter=claude · docker={docker_available()} · tools={tools}\n")
+    print(f"🧠 Nous online · adapter={name} · docker={docker_available()} · tools={tools}\n")
 
     # 1) Interactive research + compute loop (model chooses the tools).
     print("── Agentic research+compute loop ───────────────────────────────")

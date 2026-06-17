@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import json
 import os
 import time
 
 import httpx
 
 from noesis_brain.llm.base import LLMAdapter, LLMError
-from noesis_brain.llm.types import GenerateOptions, LLMResponse
+from noesis_brain.llm.types import GenerateOptions, LLMResponse, ToolCall, ToolSpec
 
 _FIXTURE_MODE_VAR = "NOESIS_FIXTURE_MODE"
 
@@ -86,6 +87,96 @@ class OllamaAdapter(LLMAdapter):
             provider="ollama",
             usage=usage,
             latency_ms=elapsed,
+        )
+
+    @staticmethod
+    def _to_ollama_messages(messages: list[dict], system_prompt: str | None) -> list[dict]:
+        """Translate the loop's Anthropic-style messages to Ollama /api/chat format.
+
+        tool_use blocks → assistant message with tool_calls; tool_result blocks →
+        role='tool' messages (Ollama's tool-result convention).
+        """
+        out: list[dict] = []
+        if system_prompt:
+            out.append({"role": "system", "content": system_prompt})
+        for m in messages:
+            role = m.get("role", "user")
+            content = m.get("content", "")
+            if isinstance(content, str):
+                out.append({"role": role, "content": content})
+                continue
+            # block list (Anthropic content blocks)
+            if role == "assistant":
+                tcs = [
+                    {"function": {"name": b["name"], "arguments": b.get("input", {})}}
+                    for b in content
+                    if b.get("type") == "tool_use"
+                ]
+                text = "".join(b.get("text", "") for b in content if b.get("type") == "text")
+                out.append({"role": "assistant", "content": text, "tool_calls": tcs})
+            else:
+                for b in content:
+                    if b.get("type") == "tool_result":
+                        out.append({"role": "tool", "content": str(b.get("content", ""))})
+                    elif b.get("type") == "text":
+                        out.append({"role": "user", "content": b.get("text", "")})
+        return out
+
+    async def generate_with_tools(
+        self,
+        messages: list[dict],
+        tools: list[ToolSpec],
+        options: GenerateOptions | None = None,
+    ) -> LLMResponse:
+        opts = options or GenerateOptions()
+        start = time.monotonic()
+        payload: dict = {
+            "model": self._model,
+            "messages": self._to_ollama_messages(messages, opts.system_prompt),
+            "tools": [
+                {"type": "function", "function": {
+                    "name": t.name, "description": t.description, "parameters": t.input_schema,
+                }}
+                for t in tools
+            ],
+            "stream": False,
+            "options": {"temperature": opts.temperature, "num_predict": opts.max_tokens},
+        }
+        try:
+            resp = await self._client.post("/api/chat", json=payload)
+            resp.raise_for_status()
+        except httpx.HTTPError as e:
+            raise LLMError("ollama", f"HTTP error: {e}") from e
+
+        data = resp.json()
+        elapsed = (time.monotonic() - start) * 1000
+        msg = data.get("message", {})
+
+        tool_calls: list[ToolCall] = []
+        for i, c in enumerate(msg.get("tool_calls") or [], start=1):
+            fn = c.get("function", {})
+            args = fn.get("arguments", {})
+            if isinstance(args, str):
+                try:
+                    args = json.loads(args or "{}")
+                except json.JSONDecodeError:
+                    args = {}
+            tool_calls.append(ToolCall(id=f"call_{i}", name=fn.get("name", ""), input=args))
+
+        usage = {}
+        if "prompt_eval_count" in data:
+            usage["prompt_tokens"] = data["prompt_eval_count"]
+        if "eval_count" in data:
+            usage["completion_tokens"] = data["eval_count"]
+
+        return LLMResponse(
+            text=msg.get("content", ""),
+            model=self._model,
+            provider="ollama",
+            usage=usage,
+            latency_ms=elapsed,
+            tool_calls=tool_calls,
+            stop_reason="tool_use" if tool_calls else "end_turn",
         )
 
     async def list_models(self) -> list[str]:
