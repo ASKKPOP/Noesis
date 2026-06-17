@@ -51,7 +51,7 @@
 |---|---|---|
 | Skills | ✅ FULL | `brain/.../skills/store.py` |
 | Knowledge Base | ✅ FULL | `brain/.../episteme/wiki.py` |
-| Web Search | 🔼 🟡 | **`web_search` tool built (Phase 72, callable/live)**; default-loop activation = Phase 72b |
+| Web Search | 🔼 ✅ | `web_search` + `web_fetch` (clean extraction) — **verified LIVE 2026-06-17**: a real Nous on Claude searched + fetched + synthesized end-to-end. Default-tick activation still = Phase 72b. |
 | Connected Resources | 🟡 PARTIAL | `web_fetch` tool now exists; no pluggable API/DB connectors |
 | Local AI + Online | 🟡 PARTIAL | Ollama→Claude fallback; no knowledge-level seamlessness |
 
@@ -63,7 +63,7 @@
 | Mirror to Grid | 🟡 PARTIAL | one-way Brain→Grid actions |
 | Visualization to Grid | 🟡 PARTIAL | presence/map only; no live render of Brain output |
 | Local ↔ Grid sync | 🟡 PARTIAL | event-driven, not continuous |
-| Nous Can Program Locally | 🔼 🟡 | **`run_code` Docker sandbox built (Phase 73 Brain slice)**: no-network, read-only FS, time/mem caps, Docker-gated (off if absent). Remaining: container exec unverified on this machine (no Docker); Grid `tool.code_run` audit mirror = Phase 72b. |
+| Nous Can Program Locally | 🔼 ✅ | `run_code` Docker sandbox — **verified LIVE on real Docker (colima) 2026-06-17**: executes code, kills infinite loops, blocks network, caps memory; a real Nous ran code in it during the agentic loop. Remaining: Grid `tool.code_run` audit mirror = Phase 72b. |
 
 ---
 
@@ -72,7 +72,7 @@
 After the Phase 74 Brain slice, **every Nous-spec sub-item is now FULL or PARTIAL — none are absent.** The "Nous-as-builder" arc (Phases 72–74) is built Brain-side. What's left is **activation + the Grid-side mirror**, not missing capability:
 
 - **Phase 72b** — Grid audit mirror (`tool.*` sole-producer) + AAU-learner activation + **live Grid visualization** of activity reports.
-- **Verify on Docker** — Phases 73/74 container + end-to-end runs need a Docker host + live LLM (this build machine has neither).
+- ~~**Verify on Docker**~~ — **DONE 2026-06-17**: colima installed, all sandbox container tests pass, full agentic loop + plan→build→QA verified live with Claude. (Ollama `qwen3:4b` also installed as the local default; key in gitignored `brain/.env`.)
 - The notable PARTIALs below remain product decisions, not absences.
 
 ## Notable PARTIALs worth deciding on (not absent, but below spec intent)
@@ -93,3 +93,4 @@ After the Phase 74 Brain slice, **every Nous-spec sub-item is now FULL or PARTIA
 - **Service Portal discovery (2026-06-16)** — §2. `GET /api/v1/portal/discover` (public) — search organizations (Groups) + Houses feed pointer. `groupStore` wired onto `GridServices` + hoisted in `main.ts`. 4 route tests; grid suite green; tsc clean (also fixed a latent `set_visibility` union type error).
 - **Condition-based reminders (2026-06-16)** — §3. `ReminderCondition` (signal/op/value vs. live drive levels); completes the §3 Reminder sentence. 15 brain tests.
 - **Goal evolution (2026-06-16)** — §3 Goal Management. `TelosManager.evolve(tick)` demotes stale unprogressed goals (economic exempt); Brain-only + deterministic (telos hash only compared at telos events). 6 tests.
+- **Local env + LIVE agentic run (2026-06-17)** — installed Docker (colima) + Ollama (`qwen3:4b`); `build_agentic_registry` + `run_agentic_demo.py` ran a real Nous on Claude: web_search→run_code→web_fetch→synthesis + plan→build→QA "all tests passed." Fixed 4 real bugs live (sandbox host-mount→stdin, h2, trafilatura, web_fetch extraction). Brain suite 1001 passed.
