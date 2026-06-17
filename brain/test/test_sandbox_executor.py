@@ -17,28 +17,28 @@ requires_docker = pytest.mark.skipif(not docker_available(), reason="Docker not 
 # ── argv assembly: isolation flags present by construction (no Docker) ──
 
 def test_argv_enforces_isolation_flags() -> None:
-    argv = build_docker_argv("/tmp/code", SandboxConfig())
+    argv = build_docker_argv(SandboxConfig())
     joined = " ".join(argv)
-    assert argv[:3] == ["docker", "run", "--rm"]
+    assert argv[:4] == ["docker", "run", "--rm", "-i"]
     assert "--network" in argv and argv[argv.index("--network") + 1] == "none"
     assert "--memory" in argv and "256m" in argv
     assert "--pids-limit" in argv
     assert "--read-only" in argv
     assert "--cap-drop" in argv and "ALL" in argv
     assert "no-new-privileges" in joined
-    # code mounted read-only, not writable
-    assert "/tmp/code:/sandbox:ro" in argv
-    assert argv[-3:] == ["python", "/sandbox/main.py"] or "main.py" in joined
+    # no host bind mount (code arrives via stdin); program read from stdin
+    assert not any(":/sandbox" in a for a in argv)
+    assert argv[-3:] == ["python", "-"] or argv[-1] == "-"
 
 
 def test_argv_disables_swap_so_memory_cap_is_real() -> None:
-    argv = build_docker_argv("/tmp/code", SandboxConfig(memory_mb=128))
+    argv = build_docker_argv(SandboxConfig(memory_mb=128))
     assert "--memory" in argv and "128m" in argv
     assert "--memory-swap" in argv  # equal to --memory → no swap escape hatch
 
 
 def test_argv_uses_in_container_cpu_timeout() -> None:
-    argv = build_docker_argv("/tmp/code", SandboxConfig(cpu_timeout_s=5))
+    argv = build_docker_argv(SandboxConfig(cpu_timeout_s=5))
     assert "timeout" in argv
     assert "5" in argv
 

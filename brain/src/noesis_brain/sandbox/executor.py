@@ -10,8 +10,6 @@ import asyncio
 import hashlib
 import shutil
 import subprocess
-import tempfile
-from pathlib import Path
 
 from noesis_brain.sandbox.types import SandboxConfig, SandboxResult
 
@@ -35,13 +33,16 @@ def docker_available() -> bool:
     return _docker_available
 
 
-def build_docker_argv(code_dir: str, config: SandboxConfig) -> list[str]:
+def build_docker_argv(config: SandboxConfig) -> list[str]:
     """Assemble the `docker run` argv that isolates one Python run.
 
+    Code is fed to the container's stdin (``python -``) rather than a host bind
+    mount — no host filesystem is exposed, and it works across Docker backends
+    (colima/Docker Desktop) where arbitrary host paths aren't mounted into the VM.
     Pure function (no I/O) so the isolation flags are unit-testable without Docker.
     """
     return [
-        "docker", "run", "--rm",
+        "docker", "run", "--rm", "-i",              # -i: keep stdin open for the program
         "--network", "none" if not config.network else "bridge",
         "--memory", f"{config.memory_mb}m",
         "--memory-swap", f"{config.memory_mb}m",   # == --memory ⇒ no swap escape
@@ -52,40 +53,38 @@ def build_docker_argv(code_dir: str, config: SandboxConfig) -> list[str]:
         "--security-opt", "no-new-privileges",
         "--cap-drop", "ALL",
         "-e", "PYTHONDONTWRITEBYTECODE=1",
-        "-v", f"{code_dir}:/sandbox:ro",            # Nous code mounted read-only
-        "-w", "/sandbox",
         config.image,
-        "timeout", str(config.cpu_timeout_s), "python", "/sandbox/main.py",
+        "timeout", str(config.cpu_timeout_s), "python", "-",   # read program from stdin
     ]
 
 
 async def run_python(code: str, config: SandboxConfig | None = None) -> SandboxResult:
-    """Run `code` as /sandbox/main.py inside an isolated container."""
+    """Run `code` inside an isolated container (program delivered via stdin)."""
     config = config or SandboxConfig()
-    tmpdir = tempfile.mkdtemp(prefix="noesis-sbx-")
+    argv = build_docker_argv(config)
+    proc = await asyncio.create_subprocess_exec(
+        *argv,
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    timed_out = False
     try:
-        (Path(tmpdir) / "main.py").write_text(code, encoding="utf-8")
-        argv = build_docker_argv(tmpdir, config)
-        proc = await asyncio.create_subprocess_exec(
-            *argv, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        out, err = await asyncio.wait_for(
+            proc.communicate(input=code.encode("utf-8")), timeout=config.wall_timeout_s
         )
-        timed_out = False
-        try:
-            out, err = await asyncio.wait_for(proc.communicate(), timeout=config.wall_timeout_s)
-        except asyncio.TimeoutError:
-            proc.kill()
-            await proc.wait()
-            out, err, timed_out = b"", b"(killed: wall-clock timeout)", True
+    except asyncio.TimeoutError:
+        proc.kill()
+        await proc.wait()
+        out, err, timed_out = b"", b"(killed: wall-clock timeout)", True
 
-        stdout = out.decode("utf-8", errors="replace")[: config.max_output_bytes]
-        stderr = err.decode("utf-8", errors="replace")[: config.max_output_bytes]
-        digest = hashlib.sha256(stdout.encode("utf-8")).hexdigest()
-        return SandboxResult(
-            stdout=stdout,
-            stderr=stderr,
-            exit_code=proc.returncode if proc.returncode is not None else -1,
-            timed_out=timed_out,
-            output_sha256=digest,
-        )
-    finally:
-        shutil.rmtree(tmpdir, ignore_errors=True)
+    stdout = out.decode("utf-8", errors="replace")[: config.max_output_bytes]
+    stderr = err.decode("utf-8", errors="replace")[: config.max_output_bytes]
+    digest = hashlib.sha256(stdout.encode("utf-8")).hexdigest()
+    return SandboxResult(
+        stdout=stdout,
+        stderr=stderr,
+        exit_code=proc.returncode if proc.returncode is not None else -1,
+        timed_out=timed_out,
+        output_sha256=digest,
+    )
