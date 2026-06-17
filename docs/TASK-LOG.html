@@ -57,12 +57,27 @@
 
   <div class="grid">
     <div class="stat"><div class="n">8</div><div class="l">Spec gaps closed</div></div>
-    <div class="stat"><div class="n">16</div><div class="l">Tasks worked</div></div>
+    <div class="stat"><div class="n">17</div><div class="l">Tasks worked</div></div>
     <div class="stat"><div class="n">LIVE</div><div class="l">Agentic loop verified</div></div>
     <div class="stat"><div class="n">982</div><div class="l">Brain tests ✓</div></div>
     <div class="stat"><div class="n">3383</div><div class="l">Grid tests ✓</div></div>
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
+
+  <!-- ============================ SESSION 2 ============================ -->
+  <h2>Session 2 — 2026‑06‑17 · “System specification doc set (Claude-themed HTML + MD)”</h2>
+  <p class="sub">Goal: author bilingual (EN/KO) spec docs in both <code>.md</code> and visual <code>.html</code> — modeled on
+  <code>docs/nous_spec.html</code> but re-themed to the Claude AI design language (warm paper, clay accent, serif display),
+  with flows, diagrams, and inline SVG visualizations. Docs-only; no code/wiki/scope change, nothing committed.</p>
+  <ul>
+    <li>New shared theme <code>docs/spec/spec.css</code> + hub <code>docs/spec/index.html</code>.</li>
+    <li>Seven specs, each <code>.md</code> + <code>.html</code>: <code>architecture-overview</code> (3-layer Portal/Grid/Brain),
+      <code>portal</code> (4 functions D-V3-29 + registration pipeline), <code>steward-console</code> (H1–H5 agency scale),
+      <code>civic-institutions</code> (the 8), <code>civic-map</code> (radial 6-ring SVG), <code>monitoring</code>
+      (firehose + presence + health watchdog), <code>economy</code> (D-MONEY-01 + escrow + fees-only tax).</li>
+    <li>Content sourced from <code>wiki/1-design/{architecture,civic-architecture,economy}.md</code> and the grid/brain code
+      (broadcast allowlist, presence model, health watchdog). Verified rendering via local preview — no console errors.</li>
+  </ul>
 
   <!-- ============================ SESSION 1 ============================ -->
   <h2>Session 1 — 2026‑06‑15 → 06‑16 · “Nous‑spec build‑out (v3.3 Agentic Brain)”</h2>
@@ -176,6 +191,12 @@
         <td>Installed <b>Docker (colima)</b> + <b>Ollama (qwen3:4b)</b>; key in gitignored <code>brain/.env</code>. Ran <code>run_agentic_demo.py</code> — a <b>real Nous on Claude</b>: <code>web_search</code> → <code>run_code</code> (in the Docker sandbox) → <code>web_fetch</code> → synthesis, then plan→build→QA <b>"all tests passed."</b> Running live caught <b>4 real bugs</b> fixtures missed: sandbox host‑mount→stdin, missing <code>h2</code>, missing <code>trafilatura</code>, and <code>web_fetch</code> skipping extraction. Brain suite 1001 passed.</td>
         <td><span class="tag done">done</span></td>
         <td><span class="hash">385fb64 ec96f55 5a2ee34</span></td>
+      </tr>
+      <tr>
+        <td>17</td><td><b>Ollama tool use (free local testing)</b></td><td class="spec">§4 · Phase 72b</td>
+        <td>Implemented <code>OllamaAdapter.generate_with_tools</code> so the agentic loop can run on the <b>local LLM for free</b> (translates the loop's Anthropic‑style messages to Ollama <code>/api/chat</code>, parses <code>tool_calls</code>). Demo adapter‑selectable via <code>NOESIS_LLM</code> (defaults to Ollama). Verified live: <code>qwen3:4b</code> emits correct tool calls — reliable for simple calls, <b>marginal for the full multi‑step loop</b> (use a bigger qwen3 or Claude for real reasoning). 3 tests; brain suite 1004 passed.</td>
+        <td><span class="tag done">done</span></td>
+        <td><span class="hash">df93747</span></td>
       </tr>
     </tbody>
   </table>
