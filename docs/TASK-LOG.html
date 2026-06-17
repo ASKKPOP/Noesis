@@ -56,8 +56,8 @@
   Source of truth for spec coverage: <a href="../.planning/nous-spec-coverage.md">.planning/nous-spec-coverage.md</a>.</p>
 
   <div class="grid">
-    <div class="stat"><div class="n">7</div><div class="l">Spec gaps closed</div></div>
-    <div class="stat"><div class="n">14</div><div class="l">Tasks worked</div></div>
+    <div class="stat"><div class="n">8</div><div class="l">Spec gaps closed</div></div>
+    <div class="stat"><div class="n">15</div><div class="l">Tasks worked</div></div>
     <div class="stat"><div class="n">982</div><div class="l">Brain tests ✓</div></div>
     <div class="stat"><div class="n">3383</div><div class="l">Grid tests ✓</div></div>
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
@@ -163,6 +163,12 @@
         <td>Completed the §3 Reminder sentence (“on schedule <i>or when conditions are met</i>”). <code>ReminderCondition</code> (signal/op/value) evaluated against live drive levels; <code>scheduleReminder</code> RPC accepts a condition; <code>on_tick</code> builds the context (drives + tick) and fires. Tick‑only reminders unaffected. 15 brain tests.</td>
         <td><span class="tag done">done</span></td>
         <td><a href="../wiki/2-concepts/mind/inner-life.md">wiki</a> · <span class="hash">3b2c791</span></td>
+      </tr>
+      <tr>
+        <td>15</td><td><b>Goal evolution</b></td><td class="spec">§3 Goal Management</td>
+        <td>Goals evolve over time: <code>TelosManager.evolve(tick)</code> demotes a GENERAL goal left untouched + unprogressed for ≥500 ticks to a priority floor (once), so attention drifts to fresher/standing goals; economic goals exempt. Called from <code>on_tick</code>. <b>Chose the careful path</b> — found the telos zero‑diff hash is only compared at telos events (never mid‑tick), so a deterministic Brain‑only evolution is safe (no grid audit infra, no frozen‑contract bump). <code>last_advanced_tick</code> added (not hashed). 6 tests.</td>
+        <td><span class="tag done">done</span></td>
+        <td><a href="../wiki/2-concepts/mind/inner-life.md">wiki</a> · <span class="hash">5c66500</span></td>
       </tr>
     </tbody>
   </table>

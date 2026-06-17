@@ -39,7 +39,7 @@
 | Item | Status | Where / gap |
 |---|---|---|
 | Autonomous Drive | 🟡 PARTIAL | `brain/.../ananke/` per-tick drives; reactive, never self-initiates |
-| Goal Management | 🟡 PARTIAL | tracked (now incl. economic); no evolution loop |
+| Goal Management | 🔼 🟡 | tracked (incl. economic) + **time-driven evolution built (2026-06-16)**: `TelosManager.evolve(tick)` demotes long-stale, unprogressed goals so attention shifts (economic exempt); called from `on_tick`. Remaining: LLM-driven goal *reframing/creation* (activation; dialogue-refinement path already exists). |
 | Reminder & Wake-Up | 🔼 🟡 | **Tick-scheduled + condition-based reminders built (2026-06-16)**: `ReminderStore` + `ReminderCondition` (signal/op/value vs. live drive levels); `brain.scheduleReminder` RPC; `on_tick` fires due reminders (tick OR condition met), recording each to memory so the Nous wakes to it. Plus deterministic sleep/wake (`hypnos`). Mechanism complete — remaining: the LLM *deciding* to set one (activation). |
 | Job Scheduler | 🟡 PARTIAL | tick + peer cowork board; no self-scheduled queue |
 | Task Plan → Build → QA | 🔼 🟡 | **`TaskRunner` plan→build→QA lifecycle built (Phase 74 Brain slice)** over `run_code`. Remaining: real runs need Docker + live LLM (orchestration unit-tested with fixtures). |
@@ -78,7 +78,7 @@ After the Phase 74 Brain slice, **every Nous-spec sub-item is now FULL or PARTIA
 ## Notable PARTIALs worth deciding on (not absent, but below spec intent)
 
 - ~~Agent-controlled **visibility toggle** (§1)~~ — **built 2026-06-16** (the *when-to-hide* decision is LLM activation)
-- ~~**Condition-based** reminders~~ (built 2026-06-16) · **self-initiated tasks** + **goal evolution** (§3)
+- ~~**Condition-based** reminders~~ · ~~**goal evolution**~~ (both built 2026-06-16) · **self-initiated tasks** (§3, LLM-gated)
 - **Service Portal discovery** (orgs + Houses built 2026-06-16) + **multi-Grid / Joined Grid** (§2) — note: multi-Grid conflicts with D-V3-30 ("v3.0 ships 1 Grid"); resolve before building
 - Live **Mirror / Visualization to Grid** (§5)
 
@@ -92,3 +92,4 @@ After the Phase 74 Brain slice, **every Nous-spec sub-item is now FULL or PARTIA
 - **Reminder & Wake-Up (2026-06-16)** — §3. `ReminderStore` + `brain.scheduleReminder` RPC; `on_tick` fires due reminders → memory (the Nous wakes to it). Tick-scheduled; condition-based deferred. 8 brain tests.
 - **Service Portal discovery (2026-06-16)** — §2. `GET /api/v1/portal/discover` (public) — search organizations (Groups) + Houses feed pointer. `groupStore` wired onto `GridServices` + hoisted in `main.ts`. 4 route tests; grid suite green; tsc clean (also fixed a latent `set_visibility` union type error).
 - **Condition-based reminders (2026-06-16)** — §3. `ReminderCondition` (signal/op/value vs. live drive levels); completes the §3 Reminder sentence. 15 brain tests.
+- **Goal evolution (2026-06-16)** — §3 Goal Management. `TelosManager.evolve(tick)` demotes stale unprogressed goals (economic exempt); Brain-only + deterministic (telos hash only compared at telos events). 6 tests.

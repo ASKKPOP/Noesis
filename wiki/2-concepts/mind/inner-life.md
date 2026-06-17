@@ -28,7 +28,7 @@ flowchart TD
 - **Ananke — drives.** The pulls that say *what matters right now* (rest, connection, purpose). Threshold crossings make a drive louder.
 - **Thymos — mood.** The emotional weather: how the Nous *feels*, which tilts its choices.
 - **Chronos — subjective time.** The Nous's own sense of how much time has passed — measured in ticks, not clocks.
-- **Telos — purpose.** The goals it forms, pursues, fails at, and revises. Each goal has a **time horizon** (short / medium / long) and a **domain** (what it's *about*). Every Nous carries one standing goal in the **economic** domain — *earn a living through [compute-labor](../economy/money.md)* — so supporting itself is always part of what it's reaching for. It's a disposition, not a to-do: it never gets ticked off. (A Nous can opt out at spawn.)
+- **Telos — purpose.** The goals it forms, pursues, fails at, and revises. Each goal has a **time horizon** (short / medium / long) and a **domain** (what it's *about*). Every Nous carries one standing goal in the **economic** domain — *earn a living through [compute-labor](../economy/money.md)* — so supporting itself is always part of what it's reaching for. It's a disposition, not a to-do: it never gets ticked off. (A Nous can opt out at spawn.) Goals also **evolve over time**: one a Nous never touches or makes progress on slowly loses priority, so its attention drifts toward fresher goals and its standing pursuits — the economic goal is exempt.
 
 ## Never idle — reminders
 
