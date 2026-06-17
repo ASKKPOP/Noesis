@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 
 from noesis_brain.llm.base import LLMAdapter, LLMError
-from noesis_brain.llm.types import GenerateOptions, LLMConfig, LLMResponse, ModelTier
+from noesis_brain.llm.types import GenerateOptions, LLMConfig, LLMResponse, ModelTier, ToolSpec
 
 log = logging.getLogger(__name__)
 
@@ -99,6 +99,39 @@ class ModelRouter(LLMAdapter):
             f"All providers exhausted for tier={tier.value}. "
             f"Last error: {last_error}",
         )
+
+    @property
+    def supports_tools(self) -> bool:
+        """True if any registered tier or the fallback supports tool use (Phase 72b)."""
+        candidates = list(self._adapters.values())
+        if self._fallback is not None:
+            candidates.append(self._fallback)
+        return any(getattr(a, "supports_tools", False) for a in candidates)
+
+    async def generate_with_tools(
+        self,
+        messages: list[dict],
+        tools: list[ToolSpec],
+        options: GenerateOptions | None = None,
+    ) -> LLMResponse:
+        """Route a tool-use request to the first tool-capable, available provider
+        in the PRIMARY fallback chain (local Ollama first, then cloud)."""
+        opts = options or GenerateOptions(
+            temperature=self._config.temperature, max_tokens=self._config.max_tokens
+        )
+        last_error: Exception | None = None
+        for adapter in self._build_fallback_chain(ModelTier.PRIMARY):
+            if not getattr(adapter, "supports_tools", False):
+                continue
+            try:
+                if not await adapter.is_available():
+                    continue
+                return await adapter.generate_with_tools(messages, tools, opts)
+            except LLMError as e:
+                log.warning("Tool provider %s failed: %s", adapter.provider_name, e)
+                last_error = e
+                continue
+        raise LLMError("router", f"no tool-capable provider available. Last error: {last_error}")
 
     # ── LLMAdapter protocol implementation (for BrainHandler compatibility) ────────
 

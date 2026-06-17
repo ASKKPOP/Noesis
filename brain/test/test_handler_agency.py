@@ -322,3 +322,65 @@ class TestGoalEvolutionOnTick:
         g = handler.telos.add_goal("recent", GoalType.SHORT_TERM, priority=0.8, tick=580)
         await handler.on_tick({"tick": 600})   # only 20 ticks old
         assert g.priority == 0.8
+
+
+# ── Tool-loop activation via on_tick (Phase 72b) ───────────────────────
+
+from noesis_brain.ananke import DriveName  # noqa: E402
+from noesis_brain.tools.registry import ToolRegistry  # noqa: E402
+
+
+class _ToolCapableStub:
+    """Minimal tool-capable adapter for activation tests."""
+
+    supports_tools = True
+
+    def __init__(self, final_text: str = "ok") -> None:
+        self._final_text = final_text
+
+    @property
+    def provider_name(self) -> str:
+        return "stub"
+
+    async def generate_with_tools(self, messages, tools, options=None):
+        return LLMResponse(
+            text=self._final_text, model="stub", provider="stub", stop_reason="end_turn"
+        )
+
+
+class TestToolActivation:
+    def _curious_handler(self, curiosity: float):
+        handler = _build_handler()
+        rt = handler._get_or_create_ananke(handler.did)
+        rt.state.values[DriveName.CURIOSITY] = curiosity
+        return handler
+
+    def test_gate_false_without_tool_capable_model(self) -> None:
+        h = self._curious_handler(0.9)
+        h.llm = object()                               # no supports_tools → not tool-capable
+        assert h._should_run_tool_cycle(1000) is False
+
+    def test_gate_true_when_curious_and_tool_capable(self) -> None:
+        h = self._curious_handler(0.9)
+        h.llm = _ToolCapableStub()
+        assert h._should_run_tool_cycle(1000) is True
+
+    def test_gate_false_when_not_curious(self) -> None:
+        h = self._curious_handler(0.1)
+        h.llm = _ToolCapableStub()
+        assert h._should_run_tool_cycle(1000) is False
+
+    def test_gate_respects_cooldown(self) -> None:
+        h = self._curious_handler(0.9)
+        h.llm = _ToolCapableStub()
+        h._last_tool_tick = 990
+        assert h._should_run_tool_cycle(1000) is False  # 10 < 50 cooldown
+
+    async def test_run_cycle_records_research_to_memory(self) -> None:
+        memory = _make_memory_with_entries([])
+        h = _build_handler(memory=memory)
+        h.llm = _ToolCapableStub(final_text="learned something useful")
+        h._tool_registry = ToolRegistry()              # empty → model ends immediately
+        await h._run_tool_cycle(5)
+        contents = [m.content for m in memory.recent(limit=10)]
+        assert any("learned something useful" in c for c in contents)

@@ -69,6 +69,10 @@ class BrainHandler:
         self.did = did
         # Reminder & Wake-Up (spec §3): self-set, tick-scheduled reminders.
         self._reminders = ReminderStore()
+        # Tool-loop activation (Phase 72b): when curious + a tool-capable model is
+        # configured, a ticking Nous autonomously researches via the tool loop.
+        self._last_tool_tick = -10_000
+        self._tool_registry: Any = None
         # Phase 10a DRIVE-02 wire-side: per-DID AnankeRuntime registry. One
         # handler may, over its lifetime, receive ticks for multiple DIDs
         # (though typical Brain process serves one Nous). The loader is a
@@ -424,6 +428,51 @@ class BrainHandler:
                 )
         return fired
 
+    # ── Tool-loop activation (Phase 72b) ──────────────────────────────────────
+    _TOOL_COOLDOWN_TICKS = 50
+    _TOOL_CURIOSITY_THRESHOLD = 0.6
+
+    def _should_run_tool_cycle(self, tick: int) -> bool:
+        """Run the agentic tool loop only when a tool-capable model is configured,
+        the cooldown has elapsed, and the Nous is curious enough to reach out."""
+        if not getattr(self.llm, "supports_tools", False):
+            return False
+        if (tick - self._last_tool_tick) < self._TOOL_COOLDOWN_TICKS:
+            return False
+        runtime = self._ananke_runtimes.get(self.did)
+        if runtime is None:
+            return False
+        curiosity = float(runtime.state.values.get(DriveName.CURIOSITY, 0.0))
+        return curiosity >= self._TOOL_CURIOSITY_THRESHOLD
+
+    async def _run_tool_cycle(self, tick: int) -> None:
+        """Run one autonomous research loop and store what was learned in memory.
+
+        Non-blocking (launched as a background task from on_tick). Failures are
+        logged, never fatal. The model drives which tools to call.
+        """
+        try:
+            if self._tool_registry is None:
+                from noesis_brain.tools.agentic import build_agentic_registry
+                self._tool_registry = build_agentic_registry()
+            from noesis_brain.tools.runner import ToolRunner
+
+            top = self.telos.top_priority(1)
+            topic = top[0].description if top else "something useful to your goals"
+            runner = ToolRunner(self.llm, self._tool_registry, max_iterations=6)
+            result = await runner.run(
+                system="You are an autonomous Nous. Research and compute concisely using your tools.",
+                user=f"Briefly research and learn something relevant to: {topic}",
+            )
+            if result.final_text and self.memory is not None and hasattr(self.memory, "record_event"):
+                self.memory.record_event(
+                    content=f"Researched ({topic}): {result.final_text}"[:1000],
+                    source_did=self.did,
+                    tick=tick,
+                )
+        except Exception as exc:  # never let a tool cycle take down the tick
+            log.warning("[Brain] tool cycle failed: %s", exc)
+
     async def on_tick(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle world clock tick — opportunity for autonomous action.
 
@@ -530,6 +579,11 @@ class BrainHandler:
         # shifts over time. Deterministic; telos hash only compared at telos events.
         self.telos.evolve(tick)
         runtime = self._get_or_create_ananke(self.did)
+        # Tool-loop activation (Phase 72b): when curious + tool-capable, research autonomously.
+        if self._should_run_tool_cycle(tick):
+            self._last_tool_tick = tick
+            import asyncio as _asyncio
+            _asyncio.create_task(self._run_tool_cycle(tick))
         runtime.on_tick(tick)
         for xing in runtime.drain_crossings():
             actions.append(

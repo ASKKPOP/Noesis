@@ -41,6 +41,10 @@ class ClaudeAdapter(LLMAdapter):
     def provider_name(self) -> str:
         return "claude"
 
+    @property
+    def supports_tools(self) -> bool:
+        return True
+
     async def generate(
         self,
         prompt: str,

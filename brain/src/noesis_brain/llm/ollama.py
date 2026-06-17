@@ -40,6 +40,10 @@ class OllamaAdapter(LLMAdapter):
     def provider_name(self) -> str:
         return "ollama"
 
+    @property
+    def supports_tools(self) -> bool:
+        return True
+
     async def generate(
         self,
         prompt: str,

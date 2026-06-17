@@ -34,6 +34,11 @@ class LLMAdapter(ABC):
             LLMError: If the provider is unavailable or returns an error.
         """
 
+    @property
+    def supports_tools(self) -> bool:
+        """True if this adapter implements ``generate_with_tools`` (Phase 72b gate)."""
+        return False
+
     async def generate_with_tools(
         self,
         messages: list[dict],
