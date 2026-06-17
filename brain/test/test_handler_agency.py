@@ -305,3 +305,20 @@ class TestReminders:
     def test_schedule_requires_a_trigger(self) -> None:
         handler = _build_handler()
         assert handler.schedule_reminder({"note": "x"})["ok"] is False  # no tick or condition
+
+
+# ── Goal evolution via on_tick (spec §3) ───────────────────────────────
+
+
+class TestGoalEvolutionOnTick:
+    async def test_on_tick_demotes_stale_goal(self) -> None:
+        handler = _build_handler()
+        g = handler.telos.add_goal("untouched", GoalType.SHORT_TERM, priority=0.8, tick=0)
+        await handler.on_tick({"tick": 600})   # past the 500-tick staleness window
+        assert g.priority == 0.1               # demoted by evolution
+
+    async def test_on_tick_keeps_fresh_goal(self) -> None:
+        handler = _build_handler()
+        g = handler.telos.add_goal("recent", GoalType.SHORT_TERM, priority=0.8, tick=580)
+        await handler.on_tick({"tick": 600})   # only 20 ticks old
+        assert g.priority == 0.8

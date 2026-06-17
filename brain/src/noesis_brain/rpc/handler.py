@@ -526,6 +526,9 @@ class BrainHandler:
             tick = 0
         # Reminder & Wake-Up (spec §3): fire any self-set reminders now due.
         self._fire_due_reminders(tick)
+        # Goal evolution (spec §3): demote long-stale, unprogressed goals so attention
+        # shifts over time. Deterministic; telos hash only compared at telos events.
+        self.telos.evolve(tick)
         runtime = self._get_or_create_ananke(self.did)
         runtime.on_tick(tick)
         for xing in runtime.drain_crossings():

@@ -36,12 +36,15 @@ class Goal:
     priority: float = 0.5  # 0.0 to 1.0
     progress: float = 0.0  # 0.0 to 1.0
     domain: GoalDomain = GoalDomain.GENERAL
+    last_advanced_tick: int = 0  # for time-driven evolution (NOT hashed)
 
     def is_active(self) -> bool:
         return self.status == GoalStatus.ACTIVE
 
-    def advance(self, amount: float) -> None:
+    def advance(self, amount: float, tick: int | None = None) -> None:
         self.progress = min(1.0, self.progress + amount)
+        if tick is not None:
+            self.last_advanced_tick = tick
         if self.progress >= 1.0:
             self.status = GoalStatus.COMPLETED
 

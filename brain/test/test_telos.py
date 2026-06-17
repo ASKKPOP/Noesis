@@ -145,3 +145,44 @@ class TestTelosManager:
         top = mgr.top_priority(1)
         # Should be a short-term goal
         assert top[0].goal_type == GoalType.SHORT_TERM
+
+
+# ── Goal evolution over time (spec §3) ─────────────────────────────────
+
+
+class TestEvolve:
+    def test_demotes_stale_unprogressed_goal(self):
+        from noesis_brain.telos.manager import TelosManager
+        from noesis_brain.telos.types import GoalType
+        mgr = TelosManager()
+        g = mgr.add_goal("explore", GoalType.SHORT_TERM, priority=0.8, tick=0)
+        assert mgr.evolve(499) is False        # not stale yet
+        assert g.priority == 0.8
+        assert mgr.evolve(500) is True         # stale → demoted to floor
+        assert g.priority == 0.1
+        assert mgr.evolve(600) is False        # already at floor → no-op
+
+    def test_skips_progressed_goal(self):
+        from noesis_brain.telos.manager import TelosManager
+        from noesis_brain.telos.types import GoalType
+        mgr = TelosManager()
+        g = mgr.add_goal("build", GoalType.MEDIUM_TERM, priority=0.7, tick=0)
+        g.advance(0.3, tick=10)
+        assert mgr.evolve(600) is False        # has progress → not demoted
+        assert g.priority == 0.7
+
+    def test_exempts_economic_goal(self):
+        from noesis_brain.telos.manager import TelosManager
+        mgr = TelosManager()
+        e = mgr.seed_economic_goal()
+        assert mgr.evolve(10_000) is False     # standing economic goal never demoted
+        assert e.priority == 0.4
+
+    def test_staleness_measured_from_last_touch(self):
+        from noesis_brain.telos.manager import TelosManager
+        from noesis_brain.telos.types import GoalType
+        mgr = TelosManager()
+        g = mgr.add_goal("x", GoalType.SHORT_TERM, priority=0.8, tick=0)
+        g.advance(0.0, tick=300)               # touched at 300, still no progress
+        assert mgr.evolve(700) is False        # 700-300 = 400 < 500
+        assert mgr.evolve(800) is True         # 800-300 = 500 → demoted

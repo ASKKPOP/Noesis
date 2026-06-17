@@ -24,10 +24,40 @@ class TelosManager:
         goal_type: GoalType,
         priority: float = 0.5,
         domain: GoalDomain = GoalDomain.GENERAL,
+        tick: int = 0,
     ) -> Goal:
-        goal = Goal(description=description, goal_type=goal_type, priority=priority, domain=domain)
+        goal = Goal(
+            description=description,
+            goal_type=goal_type,
+            priority=priority,
+            domain=domain,
+            last_advanced_tick=tick,
+        )
         self._goals.append(goal)
         return goal
+
+    def evolve(self, current_tick: int, *, stale_ticks: int = 500, floor: float = 0.1) -> bool:
+        """Time-driven goal evolution (spec §3): a goal left untouched and with no
+        progress for a long time loses priority, so the Nous's attention shifts to
+        fresher goals and its standing pursuits. Standing **economic** goals are exempt.
+
+        Deterministic (tick-based). Returns True if any goal changed. Priority is in
+        the telos hash, but that hash is only computed at explicit telos events
+        (force_telos / telos_refined / deletion), never mid-tick — so this evolution
+        is reflected consistently there and preserves replay determinism (R-31-01).
+        """
+        changed = False
+        for g in self._goals:
+            if (
+                g.is_active()
+                and g.domain == GoalDomain.GENERAL
+                and g.progress == 0.0
+                and g.priority > floor
+                and (current_tick - g.last_advanced_tick) >= stale_ticks
+            ):
+                g.priority = floor
+                changed = True
+        return changed
 
     def seed_economic_goal(self) -> Goal:
         """Add the standing 'earn a living' target (long-term, never auto-completes)."""
