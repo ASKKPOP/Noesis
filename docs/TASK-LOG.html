@@ -57,7 +57,7 @@
 
   <div class="grid">
     <div class="stat"><div class="n">8</div><div class="l">Spec gaps closed</div></div>
-    <div class="stat"><div class="n">17</div><div class="l">Tasks worked</div></div>
+    <div class="stat"><div class="n">18</div><div class="l">Tasks worked</div></div>
     <div class="stat"><div class="n">LIVE</div><div class="l">Agentic loop verified</div></div>
     <div class="stat"><div class="n">982</div><div class="l">Brain tests ✓</div></div>
     <div class="stat"><div class="n">3383</div><div class="l">Grid tests ✓</div></div>
@@ -77,6 +77,14 @@
       (firehose + presence + health watchdog), <code>economy</code> (D-MONEY-01 + escrow + fees-only tax).</li>
     <li>Content sourced from <code>wiki/1-design/{architecture,civic-architecture,economy}.md</code> and the grid/brain code
       (broadcast allowlist, presence model, health watchdog). Verified rendering via local preview — no console errors.</li>
+    <li><b>Configuration &amp; Operations doc set</b> (follow-up, same day): 7 more bilingual HTML specs reframing the system for the
+      first-time human operator around the bootstrapping premise (local-machine compute = the money axiom) and the
+      <i>management vs governance</i> distinction. Each carries honest <code>implemented / partial / planned</code> status badges
+      grounded in a 4-agent code audit: <code>config-overview</code> (who-runs-what + SVG), <code>config-local-node</code> (Brain env/vars/LLM),
+      <code>config-nous</code> (agent settings), <code>config-grid</code> (server/deploy/monitoring), <code>config-portal</code>,
+      <code>config-steward</code> (3 management tiers), <code>config-dashboard</code> (first-time onboarding + gaps). Added status-badge +
+      callout + extend styles to <code>spec.css</code>; index hub now splits Concept vs Config sections. Surfaced key gaps:
+      self-serve Civic-DID issuance UI, ETH settlement migration, Type B birth ceremonies, Steward memory/civic-life views.</li>
   </ul>
 
   <!-- ============================ SESSION 1 ============================ -->
@@ -198,6 +206,12 @@
         <td><span class="tag done">done</span></td>
         <td><span class="hash">df93747</span></td>
       </tr>
+      <tr>
+        <td>18</td><td><b>on_tick tool-loop activation</b></td><td class="spec">§3 · §4 · Phase 72b</td>
+        <td>A <b>ticking Nous now uses tools autonomously</b>: <code>supports_tools</code> capability flag on adapters; <code>ModelRouter</code> forwards <code>generate_with_tools</code> to the first tool‑capable tier; <code>BrainHandler</code> gates a research cycle on (tool‑capable model + cooldown + curiosity drive), launches it non‑blocking on_tick, and records what it learns to memory. 6 activation tests; brain suite 1006 passed. Verified live: <b>qwen3:14b drives the tools</b>. Grid <code>tool.*</code> audit mirror still pending.</td>
+        <td><span class="tag done">done</span></td>
+        <td><span class="hash">4213e35</span></td>
+      </tr>
     </tbody>
   </table>
 
@@ -215,9 +229,9 @@
   <h2>What's left</h2>
   <div class="panel">
     <ul class="dec">
-      <li><span class="tag blocked">blocked</span> &nbsp;<b>Phase 72b — activation + Grid mirror + live viz.</b> Design ready; needs a live LLM + Docker env and your <b>4 decisions (D1–D4)</b>. <a href="plans/2026-06-16-phase-72b-activation-design.md">design</a></li>
+      <li><span class="tag done">done</span> &nbsp;<b>Phase 72b — research activation.</b> Local env built (colima + Ollama); tool-capability gate + on_tick research loop live (qwen3:14b). <b>Remaining:</b> Grid <code>tool.*</code> audit mirror + live dashboard viz. <a href="plans/2026-06-16-phase-72b-activation-design.md">design</a></li>
       <li><span class="tag done">done</span> &nbsp;<b>Verify Phase 73/74 on Docker</b> — colima installed; all sandbox container tests pass; full agentic loop + plan→build→QA verified LIVE with Claude (2026‑06‑17).</li>
-      <li><span class="tag partial">buildable</span> &nbsp;<b>§3</b> self‑initiated tasks · goal evolution · condition‑based reminders</li>
+      <li><span class="tag done">done</span> &nbsp;<b>§3</b> goal evolution · condition‑based reminders · self‑initiated <i>research</i> (on_tick) — remaining: richer self‑initiated <i>tasks</i></li>
       <li><span class="tag partial">buildable</span> &nbsp;<b>§2</b> Service Portal discovery · multi‑Grid “Joined Grid” <span class="note">(conflicts with D‑V3‑30 “v3.0 ships 1 Grid” — decide first)</span></li>
       <li><span class="tag partial">buildable</span> &nbsp;<b>§5</b> live Mirror / Visualization to Grid (overlaps 72b dashboard)</li>
       <li><span class="tag partial">buildable</span> &nbsp;<b>§1</b> “Not Programmed” — proactive self‑rule / goal‑category creation (still reactive)</li>

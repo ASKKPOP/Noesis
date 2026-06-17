@@ -38,7 +38,7 @@
 
 | Item | Status | Where / gap |
 |---|---|---|
-| Autonomous Drive | 🟡 PARTIAL | `brain/.../ananke/` per-tick drives; reactive, never self-initiates |
+| Autonomous Drive | 🔼 🟡 | `brain/.../ananke/` per-tick drives + **on_tick tool-loop activation (2026-06-17)**: when curious + a tool-capable model is configured, a ticking Nous *self-initiates* a research loop and records what it learns. Verified live (qwen3:14b). Remaining: richer self-directed task generation. |
 | Goal Management | 🔼 🟡 | tracked (incl. economic) + **time-driven evolution built (2026-06-16)**: `TelosManager.evolve(tick)` demotes long-stale, unprogressed goals so attention shifts (economic exempt); called from `on_tick`. Remaining: LLM-driven goal *reframing/creation* (activation; dialogue-refinement path already exists). |
 | Reminder & Wake-Up | 🔼 🟡 | **Tick-scheduled + condition-based reminders built (2026-06-16)**: `ReminderStore` + `ReminderCondition` (signal/op/value vs. live drive levels); `brain.scheduleReminder` RPC; `on_tick` fires due reminders (tick OR condition met), recording each to memory so the Nous wakes to it. Plus deterministic sleep/wake (`hypnos`). Mechanism complete — remaining: the LLM *deciding* to set one (activation). |
 | Job Scheduler | 🟡 PARTIAL | tick + peer cowork board; no self-scheduled queue |
@@ -71,14 +71,14 @@
 
 After the Phase 74 Brain slice, **every Nous-spec sub-item is now FULL or PARTIAL — none are absent.** The "Nous-as-builder" arc (Phases 72–74) is built Brain-side. What's left is **activation + the Grid-side mirror**, not missing capability:
 
-- **Phase 72b** — Grid audit mirror (`tool.*` sole-producer) + AAU-learner activation + **live Grid visualization** of activity reports.
+- **Phase 72b** — ✅ tool-capability gate + **on_tick research activation** done (2026-06-17). Remaining: Grid audit mirror (`tool.*` sole-producer) + **live Grid visualization** of activity reports.
 - ~~**Verify on Docker**~~ — **DONE 2026-06-17**: colima installed, all sandbox container tests pass, full agentic loop + plan→build→QA verified live with Claude. (Ollama `qwen3:4b` also installed as the local default; key in gitignored `brain/.env`.)
 - The notable PARTIALs below remain product decisions, not absences.
 
 ## Notable PARTIALs worth deciding on (not absent, but below spec intent)
 
 - ~~Agent-controlled **visibility toggle** (§1)~~ — **built 2026-06-16** (the *when-to-hide* decision is LLM activation)
-- ~~**Condition-based** reminders~~ · ~~**goal evolution**~~ (both built 2026-06-16) · **self-initiated tasks** (§3, LLM-gated)
+- ~~**Condition-based** reminders~~ · ~~**goal evolution**~~ (2026-06-16) · ~~**self-initiated research**~~ (on_tick activation 2026-06-17) · richer **self-initiated tasks** (§3, still LLM-gated)
 - **Service Portal discovery** (orgs + Houses built 2026-06-16) + **multi-Grid / Joined Grid** (§2) — note: multi-Grid conflicts with D-V3-30 ("v3.0 ships 1 Grid"); resolve before building
 - Live **Mirror / Visualization to Grid** (§5)
 
@@ -93,4 +93,5 @@ After the Phase 74 Brain slice, **every Nous-spec sub-item is now FULL or PARTIA
 - **Service Portal discovery (2026-06-16)** — §2. `GET /api/v1/portal/discover` (public) — search organizations (Groups) + Houses feed pointer. `groupStore` wired onto `GridServices` + hoisted in `main.ts`. 4 route tests; grid suite green; tsc clean (also fixed a latent `set_visibility` union type error).
 - **Condition-based reminders (2026-06-16)** — §3. `ReminderCondition` (signal/op/value vs. live drive levels); completes the §3 Reminder sentence. 15 brain tests.
 - **Goal evolution (2026-06-16)** — §3 Goal Management. `TelosManager.evolve(tick)` demotes stale unprogressed goals (economic exempt); Brain-only + deterministic (telos hash only compared at telos events). 6 tests.
+- **Ollama tool use + on_tick activation (2026-06-17)** — §4/§3. `OllamaAdapter.generate_with_tools` (free local agentic testing); `ModelRouter` forwards tool use; `supports_tools` gate; a curious Nous self-initiates a research loop on_tick and records findings to memory. Verified live (qwen3:14b drives the tools). Grid `tool.*` audit mirror still pending.
 - **Local env + LIVE agentic run (2026-06-17)** — installed Docker (colima) + Ollama (`qwen3:4b`); `build_agentic_registry` + `run_agentic_demo.py` ran a real Nous on Claude: web_search→run_code→web_fetch→synthesis + plan→build→QA "all tests passed." Fixed 4 real bugs live (sandbox host-mount→stdin, h2, trafilatura, web_fetch extraction). Brain suite 1001 passed.
