@@ -6,7 +6,8 @@
     {
       t: "Overview", ko: "개요",
       items: [
-        { href: "index.html", n: "—", label: "All Specifications" }
+        { href: "index.html", n: "—", label: "All Specifications" },
+        { href: "definitions.html", n: "§", label: "Definitions Directory" }
       ]
     },
     {
