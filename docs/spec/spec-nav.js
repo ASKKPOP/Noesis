@@ -17,6 +17,7 @@
         { href: "architecture-overview.html", n: "00", label: "Three-Layer Architecture" },
         { href: "portal.html", n: "01", label: "Portal" },
         { href: "portal-surfaces.html", n: "✦", label: "Portal Surfaces & Gaps" },
+        { href: "portal-manager.html", n: "T3", label: "Portal Manager (Tier 3)" },
         { href: "steward-console.html", n: "02", label: "Steward Console" },
         { href: "civic-institutions.html", n: "03", label: "Eight Civic Institutions" },
         { href: "civic-map.html", n: "04", label: "Civic Map" },

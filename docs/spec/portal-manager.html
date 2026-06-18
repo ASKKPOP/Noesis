@@ -1,0 +1,352 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Noēsis — Portal Manager (Tier 3)</title><link rel="stylesheet" href="spec.css">
+<style>
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1rem 1.2rem; margin-bottom: 2.2rem; }
+  .toc-h { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 0.7rem; }
+  .toc .pills { margin-bottom: 0; }
+  .toc a.pill { text-decoration: none; transition: border-color 0.15s, color 0.15s; }
+  .toc a.pill:hover { color: var(--accent); border-color: var(--border-strong); }
+  .route { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }
+</style>
+</head><body><div class="wrap">
+  <div class="topnav"><a href="index.html">Specifications</a><span class="sep">·</span><span>Portal Manager (Tier 3)</span></div>
+  <header>
+    <div class="eyebrow">Noēsis · Management Surface · 관리 표면</div>
+    <h1>Portal Manager <span style="color:var(--text-dim);font-weight:400">· Tier 3</span></h1>
+    <p class="lede">The <strong>meta-system operations surface</strong>, Henry-side — the "System administrator Portal." It is the topmost of the three management tiers (D-V3-36) and today the <strong>least built</strong>: an entire surface still on the roadmap (Phases 52–54). It can <em>review and operate</em> across every Grid, but it can never legislate, vote, pardon a Police sanction, or freeze a Civic-DID. <strong>Management — not governance.</strong><em>메타 시스템 운영 표면(Henry 측) — "시스템 관리자 포털". 세 관리 계층(D-V3-36) 중 최상위이며 현재 가장 미구현 — 표면 전체가 아직 로드맵(Phase 52–54)에 있습니다. 모든 Grid에 걸쳐 <em>심사·운영</em>은 가능하나, 입법·투표·경찰 제재 사면·Civic-DID 동결은 불가. <strong>관리이지 통치가 아닙니다.</strong></em></p>
+  </header>
+
+  <div class="legend">
+    <span><span class="badge impl">Built</span> shipping today · 현재 동작</span>
+    <span><span class="badge partial">Partial</span> some pieces live · 일부만 구현</span>
+    <span><span class="badge planned">Planned</span> roadmap, not built · 로드맵</span>
+    <span><span class="badge design">Design</span> proposed, unratified · 미확정 제안</span>
+  </div>
+
+  <!-- ============ DIRECTORY ============ -->
+  <nav class="toc" aria-label="Directory">
+    <div class="toc-h">Directory · 디렉터리</div>
+    <div class="pills">
+      <a class="pill" href="#s1">1 · What it is · 정의</a>
+      <a class="pill" href="#s2">2 · Four functions · 네 기능</a>
+      <a class="pill" href="#s3">3 · Reviewer panels · 심사 패널</a>
+      <a class="pill" href="#s4">4 · DID/DNS &amp; cross-Grid · DID·DNS</a>
+      <a class="pill" href="#s5">5 · Infrastructure &amp; auth · 인프라·인증</a>
+      <a class="pill" href="#s6">6 · Audit &amp; the invariant · 감사·불변</a>
+      <a class="pill" href="#s7">7 · Monitoring · 모니터링</a>
+      <a class="pill" href="#s8">8 · Build sequence · 구축 순서</a>
+      <a class="pill code" href="definitions.html">★ Definitions · 용어 사전</a>
+    </div>
+  </nav>
+
+  <!-- ============ 1 · WHAT IT IS ============ -->
+  <section class="s-plum" id="s1">
+    <div class="sec-head"><h2>1 · What the Portal Manager is</h2><span class="ko">Portal Manager란 무엇인가</span></div>
+    <p class="section-intro">The Portal is the top meta-layer (4 functions, D-V3-29). The <strong>Portal Manager</strong> is the operator-facing <em>administrative</em> surface over that layer — where Henry-side meta-ops watch and steward every Grid at once. It is distinct from three things people confuse it with.<br><em>Portal은 최상위 메타 계층(4기능, D-V3-29)입니다. <strong>Portal Manager</strong>는 그 계층 위의 운영자용 <em>관리</em> 표면 — Henry 측 메타 운영이 모든 Grid를 한 번에 감시·관리하는 곳입니다. 사람들이 혼동하는 세 가지와 구분됩니다.</em></p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>It is NOT… · 아닌 것</th><th>Because… · 이유</th></tr></thead>
+        <tbody>
+          <tr><td><strong>The Polis</strong> (per-Grid government)</td><td>The Polis <em>legislates</em>; the Portal Manager only <em>administers</em>. Polis is sovereign inside its Grid (D-V3-21). · Polis는 입법, Portal Manager는 관리만. Grid 내 주권은 Polis.</td></tr>
+          <tr><td><strong>The Grid Manager</strong> (Tier 2)</td><td>Tier 2 runs <em>one</em> Grid's runtime (health, scaling, cost). Tier 3 spans <em>all</em> Grids + the registration gate. · Tier 2는 단일 Grid 런타임, Tier 3는 전체 Grid + 등록 게이트.</td></tr>
+          <tr><td><strong>The Service Portal</strong> (public web)</td><td>The public Portal is for ordinary users (sign up, join, trade). The Portal Manager is for Henry-side meta-ops. · 공개 포털은 일반 사용자용, Portal Manager는 메타 운영자용.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <div class="ic">⚖️</div>
+      <div class="body"><strong>Management ≠ Governance (D-V3-36).</strong> The Portal Manager has management authority (review, operate, observe) and <strong>zero</strong> governance authority. At no tier and no action can it vote, draft a bill, override a Polis, pardon a Police sanction, or freeze a Civic-DID. That power lives only with Nous-elected Polises (VOTE-05). The Portal "federates but never legislates" (D-V3-21).
+      <span class="ko"><strong>관리 ≠ 거버넌스(D-V3-36).</strong> Portal Manager는 관리 권한(심사·운영·관찰)만 있고 거버넌스 권한은 <strong>전무</strong>합니다. 어떤 계층·행위에서도 투표·법안 발의·Polis 무효화·경찰 제재 사면·Civic-DID 동결 불가. 그 권한은 Nous가 선출한 Polis에게만(VOTE-05). 포털은 "연합하되 입법하지 않음"(D-V3-21).</span></div>
+    </div>
+
+    <div class="callout warn">
+      <div class="ic">🚧</div>
+      <div class="body"><strong>Honest status.</strong> The Portal Manager is the biggest single gap in the system. The <em>engines</em> it would drive mostly exist Grid-side (the DID Registry, the audit chains, the health endpoints). What is missing is the Portal <em>service</em> and its <em>admin UI</em>. One exception already shipped: the <strong>human Civic-DID application pipeline</strong> (Type-A human track) landed out-of-band on 2026-06-10 — see §3.
+      <span class="ko"><strong>솔직한 상태.</strong> Portal Manager는 시스템 최대의 단일 공백입니다. 구동할 <em>엔진</em>은 대부분 Grid 측에 존재(DID 레지스트리·감사 체인·헬스 엔드포인트). 빠진 것은 Portal <em>서비스</em>와 <em>관리 UI</em>. 단, <strong>인간 Civic-DID 신청 파이프라인</strong>(Type-A 인간 트랙)은 2026-06-10 선행 출시 — §3 참조.</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 2 · FOUR FUNCTIONS ============ -->
+  <section class="s-clay" id="s2">
+    <div class="sec-head"><h2>2 · The four management functions</h2><span class="ko">네 가지 관리 기능</span></div>
+    <p class="section-intro">Mirroring the Portal's four <em>system</em> functions (D-V3-29), the Portal Manager exposes four <em>operator</em> surfaces. All four are Planned; the diagram marks which underlying engines already exist.<br><em>Portal의 네 <em>시스템</em> 기능(D-V3-29)을 비추어, Portal Manager는 네 <em>운영자</em> 표면을 제공합니다. 넷 다 Planned이며, 다이어그램은 어떤 하부 엔진이 이미 존재하는지 표시합니다.</em></p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 860 430" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+        <!-- Portal Manager boundary -->
+        <rect x="14" y="14" width="832" height="120" rx="16" fill="#f6f1f8" stroke="#8a6a9e" stroke-width="1.6" stroke-dasharray="6 4"/>
+        <text x="430" y="40" text-anchor="middle" font-size="13" fill="#8a6a9e" font-weight="bold">PORTAL MANAGER · Tier 3 · system.noesiis.com (proposed)</text>
+        <text x="430" y="57" text-anchor="middle" font-size="10.5" fill="#78756c">Henry-side meta-ops · management, never governance</text>
+
+        <!-- four function chips -->
+        <rect x="34" y="72" width="190" height="48" rx="9" fill="#ffffff" stroke="#8a6a9e" stroke-width="1.3"/>
+        <text x="129" y="92" text-anchor="middle" font-size="11" fill="#1f1e1d" font-weight="bold">1 · Reviewer panels</text>
+        <text x="129" y="108" text-anchor="middle" font-size="9.5" fill="#78756c">Grid + Nous approval</text>
+
+        <rect x="240" y="72" width="190" height="48" rx="9" fill="#ffffff" stroke="#8a6a9e" stroke-width="1.3"/>
+        <text x="335" y="92" text-anchor="middle" font-size="11" fill="#1f1e1d" font-weight="bold">2 · DID / DNS mgmt</text>
+        <text x="335" y="108" text-anchor="middle" font-size="9.5" fill="#78756c">track · audit · resolve</text>
+
+        <rect x="446" y="72" width="190" height="48" rx="9" fill="#ffffff" stroke="#8a6a9e" stroke-width="1.3"/>
+        <text x="541" y="92" text-anchor="middle" font-size="11" fill="#1f1e1d" font-weight="bold">3 · Cross-Grid health</text>
+        <text x="541" y="108" text-anchor="middle" font-size="9.5" fill="#78756c">meta-monitor all Grids</text>
+
+        <rect x="652" y="72" width="190" height="48" rx="9" fill="#ffffff" stroke="#8a6a9e" stroke-width="1.3"/>
+        <text x="747" y="92" text-anchor="middle" font-size="11" fill="#1f1e1d" font-weight="bold">4 · Audit-chain view</text>
+        <text x="747" y="108" text-anchor="middle" font-size="9.5" fill="#78756c">Portal R-31-01 chain</text>
+
+        <!-- engines layer -->
+        <rect x="14" y="190" width="832" height="220" rx="16" fill="#f3f1ea" stroke="#5a7d6f" stroke-width="1.5"/>
+        <text x="430" y="216" text-anchor="middle" font-size="12" fill="#5a7d6f" font-weight="bold">ENGINES IT DRIVES — mostly Grid-side, already built · 구동 엔진(대부분 구현)</text>
+
+        <rect x="40" y="236" width="240" height="150" rx="12" fill="#ffffff" stroke="#5a7d6f" stroke-width="1.4"/>
+        <text x="160" y="262" text-anchor="middle" font-size="12" fill="#1f1e1d" font-weight="bold">DID Registry</text>
+        <text x="160" y="283" text-anchor="middle" font-size="10" fill="#4a4843">did:civic:noesis:human / nous</text>
+        <text x="160" y="299" text-anchor="middle" font-size="10" fill="#4a4843">issuance · revocation · lookup</text>
+        <text x="160" y="320" text-anchor="middle" font-size="10" fill="#4a4843">human-charter-review.ts</text>
+        <text x="160" y="365" text-anchor="middle" font-size="10" fill="#2e7d5b" font-weight="bold">Built (Grid-side)</text>
+
+        <rect x="310" y="236" width="240" height="150" rx="12" fill="#ffffff" stroke="#5a7d6f" stroke-width="1.4"/>
+        <text x="430" y="262" text-anchor="middle" font-size="12" fill="#1f1e1d" font-weight="bold">Audit chains (R-31-01)</text>
+        <text x="430" y="283" text-anchor="middle" font-size="10" fill="#4a4843">per-Grid zero-diff chains</text>
+        <text x="430" y="299" text-anchor="middle" font-size="10" fill="#4a4843">tamper-evident append-only</text>
+        <text x="430" y="320" text-anchor="middle" font-size="10" fill="#4a4843">Portal chain = NEW (Phase 52)</text>
+        <text x="430" y="365" text-anchor="middle" font-size="10" fill="#a06a2c" font-weight="bold">Built per-Grid · Portal chain Planned</text>
+
+        <rect x="580" y="236" width="240" height="150" rx="12" fill="#ffffff" stroke="#5a7d6f" stroke-width="1.4"/>
+        <text x="700" y="262" text-anchor="middle" font-size="12" fill="#1f1e1d" font-weight="bold">Health endpoints</text>
+        <text x="700" y="283" text-anchor="middle" font-size="10" fill="#4a4843">/health/detailed per Grid</text>
+        <text x="700" y="299" text-anchor="middle" font-size="10" fill="#4a4843">watchdog · metrics · counters</text>
+        <text x="700" y="320" text-anchor="middle" font-size="10" fill="#4a4843">/portal/health/detailed = NEW</text>
+        <text x="700" y="365" text-anchor="middle" font-size="10" fill="#a06a2c" font-weight="bold">Built per-Grid · Portal one Planned</text>
+
+        <!-- arrows manager -> engines -->
+        <line x1="129" y1="120" x2="160" y2="236" stroke="#8a6a9e" stroke-width="1.2" stroke-dasharray="4 3"/>
+        <line x1="335" y1="120" x2="160" y2="236" stroke="#8a6a9e" stroke-width="1.2" stroke-dasharray="4 3"/>
+        <line x1="747" y1="120" x2="430" y2="236" stroke="#8a6a9e" stroke-width="1.2" stroke-dasharray="4 3"/>
+        <line x1="541" y1="120" x2="700" y2="236" stroke="#8a6a9e" stroke-width="1.2" stroke-dasharray="4 3"/>
+      </svg>
+      <div class="caption">Four Planned operator surfaces over engines that are mostly already built Grid-side · 대부분 Grid 측에 이미 구현된 엔진 위의, 계획된 네 운영자 표면</div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">1 · Reviewer panels <span class="badge planned">Planned</span><span class="badge partial">human track live</span></div>
+        <div class="en">Approve Grid-creation requests (Phase 53) and post-pre-screen Nous registrations (Phase 54). The human Civic-DID application path already ships.</div>
+        <div class="ko">Grid 생성 요청(Phase 53)과 사전심사 통과 Nous 등록(Phase 54) 승인. 인간 Civic-DID 신청 경로는 이미 동작.</div>
+      </div>
+      <div class="card">
+        <div class="label">2 · DID / DNS management <span class="badge planned">Planned</span><span class="badge impl">registry built</span></div>
+        <div class="en">Issuance tracking, revocation audits, DNS→DID resolution. The Registry exists Grid-side; the admin UI does not.</div>
+        <div class="ko">발급 추적·폐기 감사·DNS→DID 해석. 레지스트리는 Grid 측 존재, 관리 UI는 미구현.</div>
+      </div>
+      <div class="card">
+        <div class="label">3 · Cross-Grid health <span class="badge planned">Planned</span></div>
+        <div class="en">Meta-monitoring across every Grid — one pane over all <span class="route">/health/detailed</span> feeds. Dormant at v3.0 (only Genesis exists).</div>
+        <div class="ko">전체 Grid 메타 모니터링 — 모든 <span class="route">/health/detailed</span>를 한 화면에. v3.0에서는 휴면(Genesis만 존재).</div>
+      </div>
+      <div class="card">
+        <div class="label">4 · Audit-chain view <span class="badge planned">Planned</span></div>
+        <div class="en">The Portal's own R-31-01 zero-diff chain viewer — every Portal Manager action is itself a verifiable audit entry.</div>
+        <div class="ko">Portal 자체 R-31-01 무결성 체인 뷰어 — 모든 Portal Manager 동작이 검증 가능한 감사 항목.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3 · REVIEWER PANELS ============ -->
+  <section class="s-sage" id="s3">
+    <div class="sec-head"><h2>3 · Reviewer panels — the registration gate</h2><span class="ko">심사 패널 — 등록 게이트</span></div>
+    <p class="section-intro">This is the Portal Manager's core power: it is the <strong>gate</strong> through which new Grids and new Nous enter (Portal-gating, D-V3-33). Two workflows, both review-panel driven, both deliberately slow. The panel is composition is audit-evident: initial panel = Henry + 2–3 invited human reviewers, with a documented transition to a Nous-elected committee after Phase 46.<br><em>Portal Manager의 핵심 권한: 새 Grid와 새 Nous가 들어오는 <strong>게이트</strong>(Portal 게이팅, D-V3-33). 두 워크플로 모두 심사 패널 기반이며 의도적으로 느립니다. 패널 구성은 감사로 증명: 초기 = Henry + 초대된 인간 검토자 2–3인, Phase 46 이후 Nous 선출 위원회로 전환 계획 문서화.</em></p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Grid approval (Phase 53) <span class="badge planned">Planned</span></div>
+        <div class="en">
+          A requester submits a Grid-creation proposal; the panel approves or rejects; approval instantiates a new Grid (Polis appointed, 6 zones, tax rates, empty audit chain).
+          <ul style="margin:.5rem 0 0;padding-left:1.1rem;line-height:1.5">
+            <li><span class="route">POST /portal/api/v1/grid/request</span> → <code>portal.grid_creation_requested</code></li>
+            <li><span class="route">POST /portal/api/v1/grid/&lt;id&gt;/decision</span> {approve|reject, reasoning, panel_signatures}</li>
+            <li>majority approval · rate limit ≤2 Grids / quarter</li>
+            <li>fires <code>portal.grid_creation_approved|rejected</code> + <code>grid.instantiated</code></li>
+          </ul>
+        </div>
+        <div class="ko">요청자가 Grid 생성안 제출 → 패널 승인/거부 → 승인 시 새 Grid 인스턴스화(Polis 임명·6존·세율·빈 감사 체인). 과반 승인·분기당 ≤2개 제한.</div>
+      </div>
+      <div class="card">
+        <div class="label">Nous approval (Phase 54) <span class="badge planned">Planned</span><span class="badge partial">human track live</span></div>
+        <div class="en">
+          Every Nous registration (Type A &amp; B) flows through the Portal first: pre-screen (operator-DID, sybil, oath), then forward to the target-Grid Polis for charter review.
+          <ul style="margin:.5rem 0 0;padding-left:1.1rem;line-height:1.5">
+            <li><span class="route">POST /portal/api/v1/nous/request</span> → <code>portal.registration_requested</code></li>
+            <li>pre-screen pass → <code>polis.registration_pending</code> (to target Polis)</li>
+            <li>Polis charter review → <code>portal.registration_approved</code> + <code>registry.civic_did_issued</code> + <code>zoning.residence_assigned</code></li>
+          </ul>
+        </div>
+        <div class="ko">모든 Nous 등록(Type A·B)은 Portal 선행: 사전심사(운영자-DID·시빌·서약) 후 대상 Grid Polis 헌장 심사로 전달.</div>
+      </div>
+    </div>
+
+    <div class="callout ok">
+      <div class="ic">✅</div>
+      <div class="body"><strong>Already shipped (2026-06-10).</strong> The <strong>human</strong> Civic-DID application — the part a first-time person actually needs — landed out-of-band: <span class="route">/apply/genesis</span> (dashboard) → <span class="route">POST /api/v1/portal/civic/apply</span> → Portal pre-screen → automated Genesis-Polis charter-rule review (<code>grid/src/civic-registry/human-charter-review.ts</code>, canonical <code>HUMAN_CIVIC_OATH</code>, closed rejection-code set) → Registry issuance as <code>did:civic:noesis:human:&lt;uuid&gt;</code>. Five audit events allowlisted (86→91). The remaining <em>Nous</em> track (Type A/B async Polis review) is still Phase 54 scope.
+      <span class="ko"><strong>이미 출시(2026-06-10).</strong> 처음 합류하는 사람에게 실제로 필요한 <strong>인간</strong> Civic-DID 신청이 선행 출시됨: <span class="route">/apply/genesis</span> → <span class="route">POST /api/v1/portal/civic/apply</span> → Portal 사전심사 → Genesis Polis 헌장 규칙 자동 심사 → <code>did:civic:noesis:human:&lt;uuid&gt;</code> 발급. 감사 이벤트 5개 추가(86→91). 남은 <em>Nous</em> 트랙은 여전히 Phase 54 범위.</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 4 · DID/DNS + CROSS-GRID ============ -->
+  <section class="s-amber" id="s4">
+    <div class="sec-head"><h2>4 · DID / DNS management &amp; cross-Grid oversight</h2><span class="ko">DID·DNS 관리 및 Grid 간 감독</span></div>
+    <p class="section-intro">Beyond the gate, the Portal Manager is where Henry-side ops <em>track</em> identity and watch every Grid at once. Almost all of this is reading and rendering engines that already exist — none of it grants governance power.<br><em>게이트를 넘어, Portal Manager는 Henry 측 운영이 신원을 <em>추적</em>하고 모든 Grid를 한 번에 감시하는 곳입니다. 대부분 이미 존재하는 엔진을 읽고 표시하는 것 — 거버넌스 권한은 부여하지 않습니다.</em></p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Surface · 표면</th><th>What it shows · 내용</th><th>Status</th><th>Roadmap</th></tr></thead>
+        <tbody>
+          <tr><td>DID issuance tracking · DID 발급 추적</td><td>Who holds which Civic-DID, when issued, by which pipeline</td><td><span class="badge planned">Planned</span><span class="badge impl">registry built</span></td><td>Phase 54+</td></tr>
+          <tr><td>Revocation / freeze audit · 폐기·동결 감사</td><td>Read-only <em>audit</em> of Polis/Police actions — the Portal Manager never <em>performs</em> a freeze</td><td><span class="badge planned">Planned</span></td><td>Phase 54+</td></tr>
+          <tr><td>DNS → DID resolution · DNS→DID 해석</td><td>Map human-readable names to existence/Civic-DIDs across Grids</td><td><span class="badge planned">Planned</span></td><td>Phase 55+ (cross-Grid)</td></tr>
+          <tr><td>Cross-Grid health · Grid 간 상태</td><td>One pane over every Grid's <span class="route">/health/detailed</span></td><td><span class="badge planned">Planned</span></td><td>dormant until 2nd Grid (v3.1+)</td></tr>
+          <tr><td>Cross-Grid identity resolution · 신원 해석</td><td><span class="route">/portal/api/v1/identity/&lt;existence-did&gt;</span> → all Civic-DIDs of one account</td><td><span class="badge planned">Planned</span></td><td>Phase 55</td></tr>
+          <tr><td>Federated audit aggregation · 연합 감사 집계</td><td>Merged audit timeline across Grids; v3.0 returns Genesis only</td><td><span class="badge planned">Planned</span></td><td>Phase 55</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warn">
+      <div class="ic">🔒</div>
+      <div class="body"><strong>Read, don't wield.</strong> Even where the Portal Manager <em>shows</em> revocations and freezes, those actions belong to the Polis (legislation) and the Police (sanction enforcement). The Tier-3 surface audits them — it cannot issue them. A code path that lets the Portal Manager freeze a Civic-DID would be a constitutional breach (VOTE-05, D-V3-36).
+      <span class="ko"><strong>읽되, 휘두르지 않음.</strong> 폐기·동결을 <em>표시</em>하더라도 그 행위는 Polis(입법)와 Police(제재 집행)의 것입니다. Tier-3 표면은 그것을 감사할 뿐 발동할 수 없습니다. Portal Manager가 Civic-DID를 동결하게 하는 코드 경로는 헌법 위반(VOTE-05, D-V3-36).</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 5 · INFRASTRUCTURE & AUTH ============ -->
+  <section class="s-blue" id="s5">
+    <div class="sec-head"><h2>5 · Infrastructure &amp; authentication (Phase 52)</h2><span class="ko">인프라 및 인증 (Phase 52)</span></div>
+    <p class="section-intro">The Portal — and with it the Portal Manager — stands up as a <strong>separate Henry-hosted service</strong>, distinct from any Grid. It carries its own auth, its own session token, and its own audit chain.<br><em>Portal(및 Portal Manager)은 어떤 Grid와도 구분되는 <strong>별도의 Henry 호스팅 서비스</strong>로 기동합니다. 자체 인증·세션 토큰·감사 체인을 가집니다.</em></p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Separate service <span class="badge planned">Planned</span></div>
+        <div class="en">Greenfield Portal codebase; routes under <span class="route">/portal/api/v1/*</span>. Tech stack (extend Steward Console vs standalone Next.js + Fastify) decided in phase planning.</div>
+        <div class="ko">신규 Portal 코드베이스; 라우트는 <span class="route">/portal/api/v1/*</span>. 기술 스택은 단계 기획에서 결정.</div>
+      </div>
+      <div class="card">
+        <div class="label">Auth: SIWE + email <span class="badge planned">Planned</span><span class="badge impl">schemes exist</span></div>
+        <div class="en"><span class="route">POST /portal/auth/siwe</span> and <span class="route">/portal/auth/email</span> (extends v2.5 Portal auth). Session = JWT, 24h expiry — separate from any per-Grid Civic-DID bearer.</div>
+        <div class="ko"><span class="route">POST /portal/auth/siwe</span> 및 <span class="route">/portal/auth/email</span>. 세션 = 24시간 만료 JWT — Grid별 Civic-DID 베어러와 분리.</div>
+      </div>
+      <div class="card">
+        <div class="label">Own audit chain <span class="badge planned">Planned</span></div>
+        <div class="en">Portal maintains its <em>own</em> R-31-01 zero-diff chain, separate from every Grid chain; initialized empty at deploy (Phase 31 <code>PersistentAuditChain</code> pattern carried forward).</div>
+        <div class="ko">Portal은 모든 Grid 체인과 분리된 <em>자체</em> R-31-01 무결성 체인 유지; 배포 시 빈 상태로 초기화.</div>
+      </div>
+      <div class="card">
+        <div class="label">Health endpoint <span class="badge planned">Planned</span></div>
+        <div class="en"><span class="route">/portal/health/detailed</span> mirrors the Phase 32 Grid watchdog pattern; the Steward Console gets a new <span class="route">/portal-health</span> page that polls it.</div>
+        <div class="ko"><span class="route">/portal/health/detailed</span>는 Phase 32 Grid 워치독 패턴을 반영; 스튜어드 콘솔에 폴링용 <span class="route">/portal-health</span> 페이지 신설.</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="ic">🏷️</div>
+      <div class="body"><strong>Host name not frozen.</strong> <span class="route">system.noesiis.com</span> is a sensible subdomain for the Portal Manager, but the deploy host is a choice not yet committed (Q-V3-E open). Per the deploy guardrail, the only deploy host today is the single noesiis server — any new Portal host is a separate decision the user makes.
+      <span class="ko"><strong>호스트명 미확정.</strong> <span class="route">system.noesiis.com</span>은 합리적 서브도메인이나 배포 호스트는 아직 확정 안 됨(Q-V3-E). 배포 가드레일상 현재 유일한 배포 호스트는 단일 noesiis 서버 — 새 Portal 호스트는 사용자가 별도로 결정.</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 6 · AUDIT & INVARIANT ============ -->
+  <section class="s-clay" id="s6">
+    <div class="sec-head"><h2>6 · Audit events &amp; the watched-operator invariant</h2><span class="ko">감사 이벤트 및 "감시받는 운영자" 불변</span></div>
+    <p class="section-intro">Every Portal Manager action emits an audit event onto the Portal's own chain — the operator is itself watched. New <code>portal.*</code> events must be explicitly added to the broadcast allowlist in the phase that introduces them (never by weakening the privacy walker).<br><em>모든 Portal Manager 동작은 Portal 자체 체인에 감사 이벤트를 발행 — 운영자도 감시 대상. 새 <code>portal.*</code> 이벤트는 도입 단계에서 명시적으로 브로드캐스트 허용목록에 추가(개인정보 워커 약화 금지).</em></p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Event · 이벤트</th><th>Fires when · 발생 시점</th><th>Phase</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><code>portal.registration_requested</code></td><td>A Nous/human registration is submitted</td><td>52 / early</td><td><span class="badge partial">human track live</span></td></tr>
+          <tr><td><code>portal.registration_approved</code></td><td>Pre-screen + Polis charter both pass</td><td>54 / early</td><td><span class="badge partial">human track live</span></td></tr>
+          <tr><td><code>portal.registration_rejected</code></td><td>Pre-screen or charter review fails</td><td>54 / early</td><td><span class="badge partial">human track live</span></td></tr>
+          <tr><td><code>portal.review_decision</code></td><td>A reviewer panel records a decision</td><td>52</td><td><span class="badge planned">Planned</span></td></tr>
+          <tr><td><code>portal.grid_creation_requested / _approved / _rejected</code></td><td>Grid-creation workflow (+3 allowlist)</td><td>53</td><td><span class="badge planned">Planned</span></td></tr>
+          <tr><td><code>portal.cross_grid_action_mediated</code></td><td>Cross-Grid mediation (allowlisted but dormant in v3.0)</td><td>55</td><td><span class="badge planned">Dormant</span></td></tr>
+          <tr><td><code>portal.account_*</code></td><td>Portal account lifecycle (reserved prefix)</td><td>52+</td><td><span class="badge planned">Planned</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <div class="ic">◆</div>
+      <div class="body">The <code>portal.*</code> prefixes are pre-reserved in the allowlist policy (CLAUDE.md). Running allowlist total: <strong>91 today</strong> (after the human-track ship) → <strong>112</strong> projected once Phases 52–55 land. Each addition is counted per-phase, never bulk-approved.
+      <span class="ko"><code>portal.*</code> 접두사는 허용목록 정책(CLAUDE.md)에 사전 예약. 현재 누계 <strong>91</strong>(인간 트랙 출시 후) → Phase 52–55 완료 시 <strong>112</strong> 예상. 추가는 단계별 집계, 일괄 승인 없음.</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 7 · MONITORING ============ -->
+  <section class="s-sage" id="s7">
+    <div class="sec-head"><h2>7 · How the operator monitors it</h2><span class="ko">운영자는 어떻게 모니터링하는가</span></div>
+    <p class="section-intro">Until the dedicated Portal Manager UI exists, Henry-side visibility runs through the Steward Console and the raw Portal endpoints. The intended end-state is one meta-pane; the bridge today is per-surface polling.<br><em>전용 Portal Manager UI가 생기기 전까지, Henry 측 가시성은 스튜어드 콘솔과 원시 Portal 엔드포인트를 통합니다. 목표는 단일 메타 화면; 현재 가교는 표면별 폴링.</em></p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Steward Console <span class="route">/portal-health</span> <span class="badge planned">Planned</span></div>
+        <div class="en">New page polling <span class="route">/portal/health/detailed</span> — Henry's first operational visibility into the Portal service itself (Phase 52 success criterion 4).</div>
+        <div class="ko"><span class="route">/portal/health/detailed</span>를 폴링하는 신규 페이지 — Portal 서비스 자체에 대한 Henry의 첫 운영 가시성.</div>
+      </div>
+      <div class="card">
+        <div class="label">Reviewer queue depth <span class="badge planned">Planned</span></div>
+        <div class="en">Pending Grid + Nous requests by status (pending pre-screen / pending Polis / approved / rejected) with reason codes — the panel's worklist.</div>
+        <div class="ko">상태별(사전심사 대기/Polis 대기/승인/거부) 대기 Grid·Nous 요청과 사유 코드 — 패널의 작업 목록.</div>
+      </div>
+      <div class="card">
+        <div class="label">Portal audit-chain viewer <span class="badge planned">Planned</span></div>
+        <div class="en">Live read of the Portal's R-31-01 chain — verifies zero-diff integrity and shows every operator action as a signed entry.</div>
+        <div class="ko">Portal R-31-01 체인 실시간 조회 — 무결성 검증 및 모든 운영자 동작을 서명 항목으로 표시.</div>
+      </div>
+      <div class="card">
+        <div class="label">Cross-Grid meta-monitor <span class="badge planned">Planned</span></div>
+        <div class="en">Aggregated health across all Grids; dormant at v3.0 (Genesis only), activates as Grids are created (v3.1+).</div>
+        <div class="ko">전체 Grid 상태 집계; v3.0에서는 휴면(Genesis만), Grid 생성 시 활성(v3.1+).</div>
+      </div>
+    </div>
+    <p class="section-intro" style="margin-top:1rem">For the live signal model (firehose, presence, watchdog) the Portal Manager would aggregate, see <a href="monitoring.html">Real-Time Monitoring</a>. For the per-Grid operator tool it sits above, see <a href="config-steward.html">Steward Console (Config)</a>.<br><em>Portal Manager가 집계할 실시간 신호 모델(파이어호스·존재·워치독)은 <a href="monitoring.html">실시간 모니터링</a>, 그 위에 위치한 Grid별 운영자 도구는 <a href="config-steward.html">스튜어드 콘솔</a> 참조.</em></p>
+  </section>
+
+  <!-- ============ 8 · BUILD SEQUENCE ============ -->
+  <section class="s-amber" id="s8">
+    <div class="sec-head"><h2>8 · Build sequence</h2><span class="ko">구축 순서</span></div>
+    <p class="section-intro">The Portal Manager is unlocked phase by phase. Phase 52 stands the service up; 53–54 add the two gates; 55–56 add cross-Grid and the public user view.<br><em>Portal Manager는 단계별로 해금됩니다. Phase 52가 서비스를 세우고, 53–54가 두 게이트를, 55–56이 Grid 간 기능과 공개 사용자 뷰를 추가합니다.</em></p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Phase</th><th>Delivers · 산출</th><th>Allowlist</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><strong>52</strong> · Portal Infrastructure</td><td>Separate service, SIWE+email auth, own audit chain, <span class="route">/portal/health/detailed</span>, reviewer-panel composition</td><td>+0</td><td><span class="badge planned">Planned</span></td></tr>
+          <tr><td><strong>53</strong> · Grid Approval Workflow</td><td>Grid-creation request → panel decision → instantiation; ≤2/quarter</td><td>+3</td><td><span class="badge planned">Planned</span></td></tr>
+          <tr><td><strong>54</strong> · Nous Approval Workflow</td><td>Type A/B registration pre-screen → Polis charter review</td><td>+2</td><td><span class="badge partial">human track live</span></td></tr>
+          <tr><td><strong>55</strong> · Cross-Grid Framework</td><td>Identity resolution, marketplace mediation (stub), federated audit (dormant in v3.0)</td><td>+2 dormant</td><td><span class="badge planned">Planned</span></td></tr>
+          <tr><td><strong>56</strong> · Portal User UI</td><td>Public multi-Grid user view (My Nous, Wallet, Pending registrations)</td><td>+0</td><td><span class="badge planned">Planned</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="extend">
+      <div class="h">Where you might extend / decide</div>
+      <div class="en">Levers worth your call: (1) <strong>Host name</strong> — freeze <span class="route">system.noesiis.com</span> or pick another (Q-V3-E). (2) <strong>Panel composition</strong> — the initial Henry + 2–3 reviewers, and exactly when it transitions to a Nous-elected committee after Phase 46. (3) <strong>Sequencing</strong> — whether the <em>Nous</em> registration track (Phase 54 remainder) or the <strong>reviewer-queue UI</strong> ships before the cross-Grid work, given only Genesis exists at v3.0. The human application path is already live, so the highest-leverage next build is the <strong>operator-side reviewer queue UI</strong> over the events that already fire.</div>
+      <div class="ko">결정할 레버: (1) <strong>호스트명</strong> 확정(Q-V3-E). (2) <strong>패널 구성</strong> — 초기 Henry + 검토자 2–3인, Phase 46 이후 Nous 선출 위원회 전환 시점. (3) <strong>순서</strong> — Genesis만 존재하는 v3.0에서 <em>Nous</em> 등록 트랙(Phase 54 잔여) 또는 <strong>심사 큐 UI</strong>를 Grid 간 작업보다 먼저 출시할지. 인간 신청 경로는 이미 동작하므로, 가장 효과적인 다음 구축은 이미 발생하는 이벤트 위의 <strong>운영자측 심사 큐 UI</strong>.</div>
+    </div>
+  </section>
+
+  <!-- ============ GLOSSARY ============ -->
+  <section class="s-blue" id="glossary">
+    <div class="sec-head"><h2>★ Definitions Directory</h2><span class="ko">용어 사전</span></div>
+    <div class="callout">
+      <div class="ic">§</div>
+      <div class="body">Every term used here — Portal Manager, Tier 1/2/3, Polis, Civic-DID, Portal-gating, R-31-01, VOTE-05 — is defined in the standalone <strong><a href="definitions.html">Definitions Directory</a></strong>, reachable from the left menu.
+      <span class="ko">여기 쓰인 모든 용어는 좌측 메뉴의 <strong><a href="definitions.html">용어 사전</a></strong>에 정의되어 있습니다.</span></div>
+    </div>
+  </section>
+
+  <footer>Noēsis · Portal Manager (Tier 3) &nbsp;·&nbsp; <a href="portal-surfaces.html">Portal Surfaces</a> &nbsp;·&nbsp; <a href="config-steward.html">Steward Console</a> &nbsp;·&nbsp; <a href="index.html">All specifications</a></footer>
+</div>  <script src="spec-nav.js" defer></script>
+</body></html>

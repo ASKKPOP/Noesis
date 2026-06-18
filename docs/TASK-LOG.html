@@ -57,7 +57,7 @@
 
   <div class="grid">
     <div class="stat"><div class="n">8</div><div class="l">Spec gaps closed</div></div>
-    <div class="stat"><div class="n">21</div><div class="l">Tasks worked</div></div>
+    <div class="stat"><div class="n">22</div><div class="l">Tasks worked</div></div>
     <div class="stat"><div class="n">LIVE</div><div class="l">Agentic loop verified</div></div>
     <div class="stat"><div class="n">1007</div><div class="l">Brain tests ✓</div></div>
     <div class="stat"><div class="n">3403</div><div class="l">Grid tests ✓</div></div>
@@ -89,6 +89,17 @@
       Mind &amp; Mandate · Economy &amp; Monitoring), added it to <code>spec-nav.js</code> under Overview (§), and replaced the
       in-page glossary on <code>portal-surfaces.html</code> with a pointer to it (single source of truth). Verified — nav entry
       active, no console errors.</li>
+    <li><b>Portal Manager (Tier 3) dedicated spec</b> (follow-up): promoted the summary-only Tier-3 coverage
+      (previously only inside <code>config-steward.html §2</code> and <code>portal-surfaces.html §6</code>) into a full
+      bilingual page <code>docs/spec/portal-manager.html</code> — the Henry-side meta-ops surface. 8 sections: what it is
+      (management ≠ governance, D-V3-36), the four functions (reviewer panels · DID/DNS mgmt · cross-Grid health · audit-chain view)
+      over a SVG "engines mostly already built Grid-side" diagram, reviewer-panel workflows with real routes
+      (<code>POST /portal/api/v1/grid|nous/request</code>, decision endpoints, the live human <code>/apply/genesis</code> track),
+      DID/DNS + cross-Grid oversight, Phase-52 infra/auth (SIWE+email, 24h JWT, own R-31-01 chain, <code>/portal/health/detailed</code>),
+      the <code>portal.*</code> audit-event table (91→112 allowlist projection), monitoring, and the Phase 52–56 build sequence.
+      Honest badges throughout (entire surface <span class="tag prog">Planned</span>, human registration track <span class="tag partial">partial-live</span>).
+      Wired into <code>spec-nav.js</code> (Concept Specs, T3) + featured hub card on the index. Verified via preview :8021 —
+      active nav highlight correct, SVG renders (845×423), 9 sections / 41 badges, no console errors.</li>
   </ul>
   <p class="note">⚠ Open: founding-mandate is not yet a frozen decision. Ratify as <code>D-*</code> + sync Nous guide when the operator confirms.</p>
 
