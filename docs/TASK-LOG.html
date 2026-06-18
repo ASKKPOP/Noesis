@@ -57,10 +57,10 @@
 
   <div class="grid">
     <div class="stat"><div class="n">8</div><div class="l">Spec gaps closed</div></div>
-    <div class="stat"><div class="n">20</div><div class="l">Tasks worked</div></div>
+    <div class="stat"><div class="n">21</div><div class="l">Tasks worked</div></div>
     <div class="stat"><div class="n">LIVE</div><div class="l">Agentic loop verified</div></div>
     <div class="stat"><div class="n">1007</div><div class="l">Brain tests ✓</div></div>
-    <div class="stat"><div class="n">3397</div><div class="l">Grid tests ✓</div></div>
+    <div class="stat"><div class="n">3403</div><div class="l">Grid tests ✓</div></div>
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
@@ -227,6 +227,12 @@
         <td>The final piece: a Nous's tool activity now <b>renders live in the Grid firehose</b>. New <code>'work'</code> event category — <code>tool.*</code> events get their own filter chip + cyan badge, so you watch a Nous research and build in real time. <code>ALL_CATEGORIES</code> 6→7; event-type tests +2. With this, the whole <b>Nous-as-builder loop runs and is visible end-to-end</b>.</td>
         <td><span class="tag done">done</span></td>
         <td><span class="hash">6705602</span></td>
+      </tr>
+      <tr>
+        <td>21</td><td><b>Multi-Grid framework</b></td><td class="spec">§2 · D-V3-37</td>
+        <td>Per your decision to extend <code>D-V3-30</code>: built the multi-Grid <b>framework</b> (still one live Grid in v3.0). <code>GridRegistry</code> (in-memory, mirrors NousRegistry) holds active Grid records; public <code>GET /api/v1/portal/grids</code> lets a Nous <b>search active Grids</b> (the last §2 piece). Genesis seeded in <code>main.ts</code>; recorded <code>D-V3-37</code> in the decision log. Cross-Grid <i>membership</i> + federation/routing remain v3.1+. 6 tests; grid suite 3403 green; tsc clean.</td>
+        <td><span class="tag done">done</span></td>
+        <td><span class="hash">b84846e</span></td>
       </tr>
     </tbody>
   </table>

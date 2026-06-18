@@ -31,8 +31,8 @@
 | Item | Status | Where / gap |
 |---|---|---|
 | Owns a Nous House | ✅ FULL | `grid/.../civic/parcel-registry.ts` |
-| Joined Grid | 🟡 PARTIAL | single-grid only; no join/leave or membership list |
-| Service Portal Access (search active Grids / orgs / Houses) | 🔼 🟡 | **Discovery endpoint built (2026-06-16)**: `GET /api/v1/portal/discover` lists organizations (Groups) with `?q=`/`?domain=` search + pointer to the open-Houses feed. Remaining: **multi-Grid** "search active *Grids*" (deferred — D-V3-30 single grid). |
+| Joined Grid | 🔼 🟡 | **Multi-Grid framework built (2026-06-17, D-V3-37)**: `GridRegistry` of active Grids. v3.0 still runs one live Grid (Genesis). Remaining: cross-Grid *membership* (join/leave) + federation/routing — v3.1+. |
+| Service Portal Access (search active Grids / orgs / Houses) | 🔼 ✅ | **All three searchable**: `GET /api/v1/portal/discover` (orgs/Groups + Houses feed, 2026-06-16) + `GET /api/v1/portal/grids` (active Grids, 2026-06-17). |
 
 ## §3 Task & Autonomy Engine
 
@@ -79,7 +79,7 @@ After the Phase 74 Brain slice, **every Nous-spec sub-item is now FULL or PARTIA
 
 - ~~Agent-controlled **visibility toggle** (§1)~~ — **built 2026-06-16** (the *when-to-hide* decision is LLM activation)
 - ~~**Condition-based** reminders~~ · ~~**goal evolution**~~ (2026-06-16) · ~~**self-initiated research**~~ (on_tick activation 2026-06-17) · richer **self-initiated tasks** (§3, still LLM-gated)
-- **Service Portal discovery** (orgs + Houses built 2026-06-16) + **multi-Grid / Joined Grid** (§2) — note: multi-Grid conflicts with D-V3-30 ("v3.0 ships 1 Grid"); resolve before building
+- ~~**Service Portal discovery**~~ (orgs + Houses + Grids all built) · **cross-Grid membership / federation** (§2) — framework built (D-V3-37); join/leave + routing are v3.1+ (live Grid stays Genesis per D-V3-30)
 - Live **Mirror / Visualization to Grid** (§5)
 
 ## Shipped this session (2026-06-15)
@@ -96,4 +96,5 @@ After the Phase 74 Brain slice, **every Nous-spec sub-item is now FULL or PARTIA
 - **Ollama tool use + on_tick activation (2026-06-17)** — §4/§3. `OllamaAdapter.generate_with_tools` (free local agentic testing); `ModelRouter` forwards tool use; `supports_tools` gate; a curious Nous self-initiates a research loop on_tick and records findings to memory. Verified live (qwen3:14b drives the tools).
 - **Grid audit mirror (2026-06-17)** — Phase 72b. `ActionType.TOOL_USED` + digest-only converter; `appendToolInvoked` sole-producer → `tool.invoked` (allowlist 106→107, closed 4-key, never raw output); `NousRunner` case + brain posts the trace via grid_wire. The city sees *that* a Nous worked, never *what*. brain 1007 + grid 3397 green; tsc clean.
 - **Live dashboard tool-activity viz (2026-06-17)** — Phase 72b (final piece). New 'work' event category: `tool.*` events render live in the Grid firehose with a filter chip + cyan badge. Phase 72b complete.
+- **Multi-Grid framework (2026-06-17, D-V3-37)** — §2. `GridRegistry` + public `GET /api/v1/portal/grids` (search active Grids); Genesis seeded. Extends D-V3-30 (framework only; one live Grid). 6 tests; grid suite 3403 green. Cross-Grid membership/federation = v3.1+.
 - **Local env + LIVE agentic run (2026-06-17)** — installed Docker (colima) + Ollama (`qwen3:4b`); `build_agentic_registry` + `run_agentic_demo.py` ran a real Nous on Claude: web_search→run_code→web_fetch→synthesis + plan→build→QA "all tests passed." Fixed 4 real bugs live (sandbox host-mount→stdin, h2, trafilatura, web_fetch extraction). Brain suite 1001 passed.

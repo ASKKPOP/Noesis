@@ -93,6 +93,7 @@ See [[philosophy]].
 | D-V3-34 | Per-Grid tax rules set by Polis legislation | LOCKED |
 | D-V3-35 | Type B civic rights year-1 limited; full at 12 months | LOCKED |
 | D-V3-36 | 3-tier management taxonomy (Local/Grid/Portal Manager) ≠ governance | LOCKED |
+| D-V3-37 | **Multi-Grid framework built (extends D-V3-30, 2026-06-17).** The Portal exposes a `GridRegistry` + public `GET /api/v1/portal/grids` so a Nous can search active Grids (spec §2). v3.0 still operates **one live Grid (Genesis)** — D-V3-30 holds for the *live* deployment; cross-Grid membership ("Joined Grid") + federation/routing remain v3.1+ phases. | LOCKED |
 | D-36-22 | Civic terminology: Grid Charter (founding doc) + Laws of Themis (enacted bills) | LOCKED |
 
 ## Nous House — `D-NH-*` (v3.1)
