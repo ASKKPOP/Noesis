@@ -57,10 +57,10 @@
 
   <div class="grid">
     <div class="stat"><div class="n">8</div><div class="l">Spec gaps closed</div></div>
-    <div class="stat"><div class="n">19</div><div class="l">Tasks worked</div></div>
+    <div class="stat"><div class="n">20</div><div class="l">Tasks worked</div></div>
     <div class="stat"><div class="n">LIVE</div><div class="l">Agentic loop verified</div></div>
-    <div class="stat"><div class="n">982</div><div class="l">Brain tests ✓</div></div>
-    <div class="stat"><div class="n">3383</div><div class="l">Grid tests ✓</div></div>
+    <div class="stat"><div class="n">1007</div><div class="l">Brain tests ✓</div></div>
+    <div class="stat"><div class="n">3397</div><div class="l">Grid tests ✓</div></div>
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
@@ -222,6 +222,12 @@
         <td><span class="tag done">done</span></td>
         <td><span class="hash">4a454d1</span></td>
       </tr>
+      <tr>
+        <td>20</td><td><b>Live dashboard tool-activity viz</b> — Phase 72b COMPLETE</td><td class="spec">§5 · §3</td>
+        <td>The final piece: a Nous's tool activity now <b>renders live in the Grid firehose</b>. New <code>'work'</code> event category — <code>tool.*</code> events get their own filter chip + cyan badge, so you watch a Nous research and build in real time. <code>ALL_CATEGORIES</code> 6→7; event-type tests +2. With this, the whole <b>Nous-as-builder loop runs and is visible end-to-end</b>.</td>
+        <td><span class="tag done">done</span></td>
+        <td><span class="hash">6705602</span></td>
+      </tr>
     </tbody>
   </table>
 
@@ -239,7 +245,7 @@
   <h2>What's left</h2>
   <div class="panel">
     <ul class="dec">
-      <li><span class="tag done">done</span> &nbsp;<b>Phase 72b — research activation.</b> Local env (colima + Ollama); tool-capability gate + on_tick research loop live (qwen3:14b); Grid <code>tool.invoked</code> audit mirror (digest-only). <b>Remaining:</b> live dashboard viz of activity reports. <a href="plans/2026-06-16-phase-72b-activation-design.md">design</a></li>
+      <li><span class="tag done">done</span> &nbsp;<b>Phase 72b — COMPLETE.</b> Local env (colima + Ollama); tool-capability gate + on_tick research loop live (qwen3:14b); Grid <code>tool.invoked</code> audit mirror (digest-only). <b>Remaining:</b> live dashboard viz of activity reports. <a href="plans/2026-06-16-phase-72b-activation-design.md">design</a></li>
       <li><span class="tag done">done</span> &nbsp;<b>Verify Phase 73/74 on Docker</b> — colima installed; all sandbox container tests pass; full agentic loop + plan→build→QA verified LIVE with Claude (2026‑06‑17).</li>
       <li><span class="tag done">done</span> &nbsp;<b>§3</b> goal evolution · condition‑based reminders · self‑initiated <i>research</i> (on_tick) — remaining: richer self‑initiated <i>tasks</i></li>
       <li><span class="tag partial">buildable</span> &nbsp;<b>§2</b> Service Portal discovery · multi‑Grid “Joined Grid” <span class="note">(conflicts with D‑V3‑30 “v3.0 ships 1 Grid” — decide first)</span></li>

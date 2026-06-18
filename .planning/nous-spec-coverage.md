@@ -43,7 +43,7 @@
 | Reminder & Wake-Up | 🔼 🟡 | **Tick-scheduled + condition-based reminders built (2026-06-16)**: `ReminderStore` + `ReminderCondition` (signal/op/value vs. live drive levels); `brain.scheduleReminder` RPC; `on_tick` fires due reminders (tick OR condition met), recording each to memory so the Nous wakes to it. Plus deterministic sleep/wake (`hypnos`). Mechanism complete — remaining: the LLM *deciding* to set one (activation). |
 | Job Scheduler | 🟡 PARTIAL | tick + peer cowork board; no self-scheduled queue |
 | Task Plan → Build → QA | 🔼 🟡 | **`TaskRunner` plan→build→QA lifecycle built (Phase 74 Brain slice)** over `run_code`. Remaining: real runs need Docker + live LLM (orchestration unit-tested with fixtures). |
-| Reporting with Visualization | 🔼 🟡 | **`ActivityReport` + markdown render built (Phase 74)**. Remaining: live **Grid-side** visualization rides Phase 72b. |
+| Reporting with Visualization | 🔼 ✅ | `ActivityReport` + markdown render (Phase 74) **+ live dashboard viz (2026-06-17)**: tool activity renders live in the Grid firehose as a 'work' category (filterable, color-coded). |
 
 ## §4 Research & Connected Resources
 
@@ -61,7 +61,7 @@
 |---|---|---|
 | Brain is Local | ✅ FULL | local Python process; all cognition local |
 | Mirror to Grid | 🟡 PARTIAL | one-way Brain→Grid actions |
-| Visualization to Grid | 🟡 PARTIAL | presence/map only; no live render of Brain output |
+| Visualization to Grid | 🔼 🟡 | presence/map + **live tool-activity feed (2026-06-17)**: a Nous's `tool.invoked` events render live in the firehose ('work' category). Richer per-Nous work dashboards remain. |
 | Local ↔ Grid sync | 🟡 PARTIAL | event-driven, not continuous |
 | Nous Can Program Locally | 🔼 ✅ | `run_code` Docker sandbox — **verified LIVE on real Docker (colima) 2026-06-17**: executes code, kills infinite loops, blocks network, caps memory; a real Nous ran code in it during the agentic loop. Remaining: Grid `tool.code_run` audit mirror = Phase 72b. |
 
@@ -71,7 +71,7 @@
 
 After the Phase 74 Brain slice, **every Nous-spec sub-item is now FULL or PARTIAL — none are absent.** The "Nous-as-builder" arc (Phases 72–74) is built Brain-side. What's left is **activation + the Grid-side mirror**, not missing capability:
 
-- **Phase 72b** — ✅ tool-capability gate + on_tick research activation + **Grid audit mirror** (`tool.invoked` sole-producer, digest-only) all done (2026-06-17). Remaining: **live Grid/dashboard visualization** of activity reports.
+- **Phase 72b — ✅ COMPLETE (2026-06-17)**: tool-capability gate + on_tick research activation + Grid audit mirror (`tool.invoked` sole-producer, digest-only) + **live dashboard tool-activity feed** ('work' category). The full Nous-as-builder loop runs and is visible end-to-end.
 - ~~**Verify on Docker**~~ — **DONE 2026-06-17**: colima installed, all sandbox container tests pass, full agentic loop + plan→build→QA verified live with Claude. (Ollama `qwen3:4b` also installed as the local default; key in gitignored `brain/.env`.)
 - The notable PARTIALs below remain product decisions, not absences.
 
@@ -94,5 +94,6 @@ After the Phase 74 Brain slice, **every Nous-spec sub-item is now FULL or PARTIA
 - **Condition-based reminders (2026-06-16)** — §3. `ReminderCondition` (signal/op/value vs. live drive levels); completes the §3 Reminder sentence. 15 brain tests.
 - **Goal evolution (2026-06-16)** — §3 Goal Management. `TelosManager.evolve(tick)` demotes stale unprogressed goals (economic exempt); Brain-only + deterministic (telos hash only compared at telos events). 6 tests.
 - **Ollama tool use + on_tick activation (2026-06-17)** — §4/§3. `OllamaAdapter.generate_with_tools` (free local agentic testing); `ModelRouter` forwards tool use; `supports_tools` gate; a curious Nous self-initiates a research loop on_tick and records findings to memory. Verified live (qwen3:14b drives the tools).
-- **Grid audit mirror (2026-06-17)** — Phase 72b. `ActionType.TOOL_USED` + digest-only converter; `appendToolInvoked` sole-producer → `tool.invoked` (allowlist 106→107, closed 4-key, never raw output); `NousRunner` case + brain posts the trace via grid_wire. The city sees *that* a Nous worked, never *what*. brain 1007 + grid 3397 green; tsc clean. Remaining 72b: live dashboard viz.
+- **Grid audit mirror (2026-06-17)** — Phase 72b. `ActionType.TOOL_USED` + digest-only converter; `appendToolInvoked` sole-producer → `tool.invoked` (allowlist 106→107, closed 4-key, never raw output); `NousRunner` case + brain posts the trace via grid_wire. The city sees *that* a Nous worked, never *what*. brain 1007 + grid 3397 green; tsc clean.
+- **Live dashboard tool-activity viz (2026-06-17)** — Phase 72b (final piece). New 'work' event category: `tool.*` events render live in the Grid firehose with a filter chip + cyan badge. Phase 72b complete.
 - **Local env + LIVE agentic run (2026-06-17)** — installed Docker (colima) + Ollama (`qwen3:4b`); `build_agentic_registry` + `run_agentic_demo.py` ran a real Nous on Claude: web_search→run_code→web_fetch→synthesis + plan→build→QA "all tests passed." Fixed 4 real bugs live (sandbox host-mount→stdin, h2, trafilatura, web_fetch extraction). Brain suite 1001 passed.
