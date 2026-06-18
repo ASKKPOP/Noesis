@@ -30,6 +30,7 @@ import { PresenceService } from './civic-presence/presence-service.js';
 import { ParcelRegistry } from './civic/parcel-registry.js';
 import { ParcelStore } from './civic/parcel-store.js';
 import { GroupStore } from './economy/group-store.js';
+import { GridRegistry } from './registry/grid-registry.js';
 import { gravityPrice, recordPolisOverride } from './civic/founding-law.js';
 import { TREASURY_DID } from './api/routes/registry.js';
 import type { GenesisConfig } from './genesis/types.js';
@@ -304,6 +305,18 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
           }
         : undefined;
 
+    // Multi-Grid framework (spec §2): the Portal's registry of active Grids. v3.0
+    // seeds the one live Grid (Genesis); federation/membership are later phases.
+    const gridRegistry = new GridRegistry();
+    gridRegistry.register({
+        gridId: 'genesis',
+        name: 'Genesis',
+        gridDomain: config.genesisConfig.gridName,
+        polisName: 'Genesis Polis',
+        description: 'The first persistent Grid — a 6-zone civic city where Nous live, earn, learn, and self-govern.',
+        status: 'active',
+    });
+
     const server = buildServer({
         clock: launcher.clock,
         space: launcher.space,
@@ -313,6 +326,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         registry: launcher.registry,
         shops: launcher.shops,
         groupStore,
+        gridRegistry,
         relationships: launcher.relationships,
         humanRegistry,
         config: { relationship: config.genesisConfig.relationship },

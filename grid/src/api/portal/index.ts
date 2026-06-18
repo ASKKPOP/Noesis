@@ -16,6 +16,7 @@ import { registerCommunityRoutes } from './community.js';
 import { registerSupportRoutes } from './support.js';
 import { registerPortalCivicRoutes } from './civic.js';
 import { registerPortalDiscoverRoutes } from './discover.js';
+import { registerPortalGridsRoutes } from './grids.js';
 
 export function registerPortalRoutes(
     app: FastifyInstance,
@@ -32,6 +33,8 @@ export function registerPortalRoutes(
     registerPortalCivicRoutes(app, services);
     // Spec §2: discovery — search organizations (Groups) + pointer to the Houses feed.
     registerPortalDiscoverRoutes(app, services);
+    // Spec §2: search active Grids (multi-Grid framework).
+    registerPortalGridsRoutes(app, services);
     // Phase 28: human-spawned Nous routes (SPAWN-01..06).
     // Deps are constructed inline; audit/tick/gridName are optional (skipped when humanPool absent).
     void registerSpawnRoutes(app, {

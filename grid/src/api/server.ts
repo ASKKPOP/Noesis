@@ -15,6 +15,7 @@ import type { AuditChain } from '../audit/chain.js';
 import type { NousRegistry } from '../registry/registry.js';
 import type { ShopRegistry } from '../economy/shop-registry.js';
 import type { GroupStore } from '../economy/group-store.js';
+import type { GridRegistry } from '../registry/grid-registry.js';
 import type {
     GridStatus,
     NousRosterEntry,
@@ -144,6 +145,9 @@ export interface GridServices {
     /** GroupStore — backs the portal discovery endpoint (organizations to join).
      *  Optional so legacy tests without Groups wiring still compile; route 503s when absent. */
     groupStore?: GroupStore;
+    /** GridRegistry — backs the portal "search active Grids" endpoint (multi-Grid framework).
+     *  Optional so legacy tests still compile; route 503s when absent. */
+    gridRegistry?: GridRegistry;
     /** Runner lookup for the inspector proxy. Returns undefined if no runner
      *  is registered for the DID (→ 404 unknown_nous). */
     getRunner?: (did: string) => InspectorRunner | undefined;
