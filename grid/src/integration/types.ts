@@ -44,6 +44,14 @@ export interface SetVisibilityAction {
     metadata: Record<string, unknown>;
 }
 
+/** Phase 72b: a tool call the Nous made. metadata: { tool_name, output_sha256, is_error } — digest only. */
+export interface ToolUsedAction {
+    action_type: 'tool_used';
+    channel: string;
+    text: string;
+    metadata: Record<string, unknown>;
+}
+
 /**
  * Brain-initiated bilateral trade proposal.
  *
@@ -336,6 +344,7 @@ export type BrainAction =
     | MoveAction
     | NoopAction
     | SetVisibilityAction
+    | ToolUsedAction
     | TradeRequestAction
     | TelosRefinedAction
     | BrainActionDriveCrossed

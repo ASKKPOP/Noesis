@@ -384,3 +384,18 @@ class TestToolActivation:
         await h._run_tool_cycle(5)
         contents = [m.content for m in memory.recent(limit=10)]
         assert any("learned something useful" in c for c in contents)
+
+    def test_tool_actions_from_trace_are_digest_only(self) -> None:
+        from noesis_brain.tools.runner import ToolTrace
+        trace = [
+            ToolTrace(tool_name="web_search", input={"query": "x"}, output_sha256="a" * 64, is_error=False),
+            ToolTrace(tool_name="run_code", input={"code": "secret"}, output_sha256="b" * 64, is_error=True),
+        ]
+        actions = _build_handler()._tool_actions_from_trace(trace)
+        assert len(actions) == 2
+        assert actions[0]["action_type"] == "tool_used"
+        md = actions[0]["metadata"]
+        assert set(md.keys()) == {"tool_name", "output_sha256", "is_error"}   # digest only
+        assert md["tool_name"] == "web_search"
+        assert "input" not in md and "output" not in md and "code" not in str(md)
+        assert actions[1]["metadata"]["is_error"] is True

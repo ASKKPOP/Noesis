@@ -20,6 +20,7 @@ import type { DialogueContext } from '../dialogue/index.js';
 import { Reviewer } from '../review/index.js';
 import { VALID_REVIEW_FAILURE_CODES } from '../review/types.js';
 import { appendTelosRefined } from '../audit/append-telos-refined.js';
+import { appendToolInvoked } from '../audit/append-tool-invoked.js';
 import { appendAnankeDriveCrossed } from '../ananke/index.js';
 import type { WhisperRouter } from '../whisper/router.js';
 import { appendProposalOpened } from '../governance/appendProposalOpened.js';
@@ -298,6 +299,25 @@ export class NousRunner {
                     this.audit.append('nous.visibility_changed', this.nousDid, {
                         mode: hidden ? 'hidden' : 'visible',
                     });
+                    break;
+                }
+
+                case 'tool_used': {
+                    // Phase 72b: mirror a Nous's tool call to the audit chain — DIGEST ONLY.
+                    const md = action.metadata ?? {};
+                    try {
+                        appendToolInvoked(this.audit, this.nousDid, {
+                            did: this.nousDid,
+                            tool_name: String(md['tool_name'] ?? ''),
+                            output_sha256: String(md['output_sha256'] ?? ''),
+                            is_error: md['is_error'] === true,
+                        });
+                    } catch (err) {
+                        // Malformed tool event — drop, never crash the tick.
+                        console.warn(JSON.stringify({
+                            event: 'tool.invoked.rejected', did: this.nousDid, reason: String(err),
+                        }));
+                    }
                     break;
                 }
 

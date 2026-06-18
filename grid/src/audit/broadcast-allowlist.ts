@@ -461,6 +461,10 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   Nous's own set_visibility action (spec §1). Payload {mode: 'hidden'|'visible'}
     //   + Grid-injected nous_did + tick. No plaintext; agent-controlled (vs operator quarantine).
     'nous.visibility_changed',    // (106)
+    // tool.invoked (107): sole-producer grid/src/audit/append-tool-invoked.ts. Emitted from a
+    //   Nous's own tool_used action (Phase 72b agentic tool loop). Closed 4-key payload
+    //   {did, tool_name, output_sha256, is_error} — DIGEST ONLY, never raw tool input/output.
+    'tool.invoked',               // (107)
 ] as const;
 
 /**

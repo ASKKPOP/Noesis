@@ -14,6 +14,7 @@ class ActionType(str, Enum):
     DIRECT_MESSAGE = "direct_message"  # Send DM to specific Nous
     MOVE = "move"  # Move to a different region
     SET_VISIBILITY = "set_visibility"  # Spec §1 — choose visible/hidden from peers. Metadata: {hidden} (Grid emits nous.visibility_changed)
+    TOOL_USED = "tool_used"  # Phase 72b — a tool call the Nous made. Metadata: {tool_name, output_sha256, is_error} (digest only; Grid emits tool.invoked, injects did+tick)
     TRADE_REQUEST = "trade_request"  # Send trade offer
     TELOS_REFINED = "telos_refined"  # Phase 7 DIALOG-02 — Nous-initiated refinement after peer dialogue
     DRIVE_CROSSED = "drive_crossed"  # Phase 10a DRIVE-03 — Ananke threshold crossing; Grid dispatcher converts to ananke.drive_crossed audit event. Metadata shape: {drive, level, direction} (3 keys; Grid injects did and tick).

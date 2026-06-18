@@ -470,8 +470,36 @@ class BrainHandler:
                     source_did=self.did,
                     tick=tick,
                 )
+            # Mirror tool activity to the Grid audit chain — digests only (Phase 72b).
+            actions = self._tool_actions_from_trace(result.trace)
+            if actions and self._grid_wire_client is not None:
+                try:
+                    await self._grid_wire_client.post_actions(actions, tick=tick)
+                except Exception as exc:
+                    log.warning("[Brain] tool audit post failed: %s", exc)
         except Exception as exc:  # never let a tool cycle take down the tick
             log.warning("[Brain] tool cycle failed: %s", exc)
+
+    @staticmethod
+    def _tool_actions_from_trace(trace: list[Any]) -> list[dict[str, Any]]:
+        """Convert a ToolRunner trace into TOOL_USED action dicts (digest only).
+
+        Carries ONLY {tool_name, output_sha256, is_error} — never raw tool output;
+        the Grid injects did + tick and emits tool.invoked.
+        """
+        return [
+            Action(
+                action_type=ActionType.TOOL_USED,
+                channel="",
+                text="",
+                metadata={
+                    "tool_name": t.tool_name,
+                    "output_sha256": t.output_sha256,
+                    "is_error": t.is_error,
+                },
+            ).to_dict()
+            for t in trace
+        ]
 
     async def on_tick(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle world clock tick — opportunity for autonomous action.
