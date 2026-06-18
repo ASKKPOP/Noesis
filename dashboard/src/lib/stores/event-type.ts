@@ -19,7 +19,7 @@
  * category by the rules above.
  */
 
-export type EventCategory = 'trade' | 'message' | 'movement' | 'law' | 'lifecycle' | 'culture' | 'other';
+export type EventCategory = 'trade' | 'message' | 'movement' | 'law' | 'lifecycle' | 'culture' | 'work' | 'other';
 
 const MESSAGE_TYPES: ReadonlySet<string> = new Set(['nous.spoke', 'nous.direct_message']);
 const LIFECYCLE_TYPES: ReadonlySet<string> = new Set([
@@ -38,6 +38,7 @@ export function categorizeEventType(eventType: string): EventCategory {
     if (eventType.startsWith('skill.') || eventType.startsWith('norm.') || eventType.startsWith('lore.')) {
         return 'culture';
     }
+    if (eventType.startsWith('tool.')) return 'work';   // Phase 72b — a Nous's tool activity
     return 'other';
 }
 
@@ -53,4 +54,5 @@ export const ALL_CATEGORIES: readonly EventCategory[] = Object.freeze([
     'law',
     'lifecycle',
     'culture',
+    'work',
 ] as const);

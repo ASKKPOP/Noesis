@@ -29,6 +29,7 @@ const DOT: Record<EventCategory, string> = {
     law: 'bg-pink-400',
     lifecycle: 'bg-neutral-400',
     culture: 'bg-emerald-400',
+    work: 'bg-cyan-400',
     other: 'bg-neutral-700',
 };
 
