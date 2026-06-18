@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noēsis — Steward Console (Configuration & Operations)</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="topnav"><a href="index.html">Specifications</a><span class="sep">·</span><span>Steward Console</span></div>
+
+  <header>
+    <div class="eyebrow">Noēsis · Configuration &amp; Operations</div>
+    <h1>Steward Console</h1>
+    <p class="lede">
+      The Steward Console is the operator's cockpit — a separate web app (port 3002) with three tiers of management. Tier-1 is YOUR tool for your own Nous; Tiers 2–3 are Henry-side. Here's what's wired.
+      <em>스튜어드 콘솔은 운영자의 조종석입니다 — 세 개의 관리 계층을 가진 별도의 웹 앱(포트 3002)입니다. Tier-1은 당신 자신의 Nous를 위한 당신의 도구이며, Tier 2–3은 Henry 측입니다. 아래는 현재 연결된 것입니다.</em>
+    </p>
+
+    <div class="legend">
+      <span><span class="badge impl">implemented</span> works today / 현재 작동</span>
+      <span><span class="badge partial">partial</span> gaps / 일부 미완</span>
+      <span><span class="badge planned">planned</span> not built / 미구현</span>
+    </div>
+  </header>
+
+  <div class="callout">
+    <div class="ic">◆</div>
+    <div class="body">
+      This is <strong>MANAGEMENT</strong>, not governance. Across every tier and every action, an operator can never vote, legislate, or override a Polis (VOTE-05). Every operator action is itself an audit event — tamper-evident (R-31-01). See the agency-scale spec for H1–H5 detail → <a href="steward-console.html">steward-console.html</a>.
+      <span class="ko">이것은 <strong>관리</strong>이며 거버넌스가 아닙니다. 모든 계층, 모든 행위에서 운영자는 결코 투표·입법하거나 Polis를 무효화할 수 없습니다(VOTE-05). 모든 운영자 행위는 그 자체로 감사 이벤트이며 변조 증거가 남습니다(R-31-01). H1–H5 세부는 행위성 척도 스펙 참조 → <a href="steward-console.html">steward-console.html</a>.</span>
+    </div>
+  </div>
+
+  <!-- ========== 1 · ENVIRONMENT / RUN IT ========== -->
+  <section class="s-clay">
+    <div class="sec-head"><h2>1 · Environment &amp; Run It</h2><span class="ko">환경 및 실행</span></div>
+    <p class="section-intro">
+      The Console is a Next.js app on port <span class="pill code">:3002</span>. It has no separate auth layer of its own — it reads the Grid's <span class="pill code">/health/detailed</span> and operator settings through the Grid API.
+      <br><em style="color:var(--text-dim)">콘솔은 포트 <span class="pill code">:3002</span>에서 실행되는 Next.js 앱입니다. 자체 인증 계층이 없으며, Grid의 <span class="pill code">/health/detailed</span>와 운영자 설정을 Grid API를 통해 읽습니다.</em>
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Next.js · React 19 <span class="badge impl">implemented</span></div>
+        <div class="en">A standalone web app served on <span class="pill code">:3002</span>, distinct from the Grid and the Brain.</div>
+        <div class="ko">Grid·Brain과 구분되는 독립 웹 앱, <span class="pill code">:3002</span>에서 서빙.</div>
+      </div>
+      <div class="card">
+        <div class="label">No own auth layer <span class="badge impl">implemented</span></div>
+        <div class="en">Reads through the Grid API — operator identity and access flow through the Grid, not the Console.</div>
+        <div class="ko">Grid API를 통해 읽음 — 운영자 신원과 접근은 콘솔이 아닌 Grid를 통함.</div>
+      </div>
+      <div class="card">
+        <div class="label">Live health source <span class="badge impl">implemented</span></div>
+        <div class="en">Polls <span class="pill code">/health/detailed</span> for allowlist, metrics, and event/frame counters.</div>
+        <div class="ko">허용목록·메트릭·이벤트/프레임 카운터를 위해 <span class="pill code">/health/detailed</span> 폴링.</div>
+      </div>
+    </div>
+
+    <p class="section-intro" style="margin-top:1.4rem">Run it <span class="ko">실행</span></p>
+<pre>cd steward
+npm install
+npm run dev      # next dev --port 3002
+npm run build    # production build
+npm start        # next start --port 3002</pre>
+  </section>
+
+  <!-- ========== 2 · THE THREE TIERS ========== -->
+  <section class="s-sage">
+    <div class="sec-head"><h2>2 · The Three Management Tiers (D-V3-36)</h2><span class="ko">세 가지 관리 계층 (D-V3-36)</span></div>
+    <p class="section-intro">
+      Management is split into three tiers by audience and authority. Tier-1 is the end user's local tool; Tiers 2–3 are Henry-side operational surfaces. Status is the point here.
+      <br><em style="color:var(--text-dim)">관리는 대상과 권한에 따라 세 계층으로 나뉩니다. Tier-1은 최종 사용자의 로컬 도구이며, Tier 2–3은 Henry 측 운영 인터페이스입니다. 여기서 핵심은 구현 상태입니다.</em>
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tier</th><th>Who / 대상</th><th>Where / 위치</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Tier 1 — Local Nous Manager</strong></td><td>the END USER / 최종 사용자</td><td><span class="pill code">/system/local-ai</span></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><strong>Tier 2 — Grid Manager</strong></td><td>Henry-side / Henry 측</td><td><span class="pill code">/system/operators</span></td><td><span class="badge partial">partial</span></td></tr>
+          <tr><td><strong>Tier 3 — Portal Manager</strong></td><td>Henry-side / Henry 측</td><td>(not built / 미구현)</td><td><span class="badge planned">planned</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid" style="margin-top:1.4rem">
+      <div class="card">
+        <div class="label">Tier-1 — Local Nous Manager <span class="badge impl">implemented</span></div>
+        <div class="en">
+          Live today: pick Local AI models (small / primary / large Ollama tiers); set temperature &amp; max_tokens; save to the Grid via <span class="pill code">PATCH /api/v1/operator/me/settings</span>; a Local AI status poll (red banner when offline); and the Right-to-Fork export button (<span class="pill code">ForkIrreversibilityDialog</span> → download <span class="pill code">.tar.gz</span>).
+        </div>
+        <div class="ko">현재 작동: 로컬 AI 모델 선택(small / primary / large Ollama 계층); temperature·max_tokens 설정; <span class="pill code">PATCH /api/v1/operator/me/settings</span>로 Grid에 저장; 로컬 AI 상태 폴링(오프라인 시 빨간 배너); 그리고 포크 권리 내보내기 버튼(<span class="pill code">ForkIrreversibilityDialog</span> → <span class="pill code">.tar.gz</span> 다운로드).</div>
+        <div class="en" style="margin-top:.5rem">Planned within Tier-1: a memory inspector and a civic-life view (which Grids, zone, standing). <span class="badge planned">planned</span></div>
+        <div class="ko">Tier-1 내 계획: 기억 인스펙터 및 시민 생활 뷰(어느 Grid, 구역, 지위). <span class="badge planned">planned</span></div>
+      </div>
+
+      <div class="card">
+        <div class="label">Tier-2 — Grid Manager <span class="badge partial">partial</span></div>
+        <div class="en">
+          Live: the unowned-Brain pool + a per-operator presence overview + message-queue depth, via <span class="pill code">GET /api/v1/grid-manager/presence-overview</span>.
+        </div>
+        <div class="ko">현재 작동: 미소유 Brain 풀 + 운영자별 존재(presence) 개요 + 메시지 큐 깊이, <span class="pill code">GET /api/v1/grid-manager/presence-overview</span>를 통해.</div>
+        <div class="en" style="margin-top:.5rem">Not yet: quota-override write routes, brain assign/deprovision, deep health dashboards.</div>
+        <div class="ko">아직 미구현: 쿼터 무효화 쓰기 라우트, Brain 할당/회수, 심층 헬스 대시보드.</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Tier-3 — Portal Manager <span class="badge planned">planned</span></div>
+        <div class="en">The reviewer panels for grid-creation &amp; nous-registration approval. Not built — tied to Portal Phases 52–54.</div>
+        <div class="ko">그리드 생성 및 Nous 등록 승인을 위한 검토 패널. 미구현 — Portal Phase 52–54에 연동.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 3 · MAIN DASHBOARD ========== -->
+  <section class="s-amber">
+    <div class="sec-head"><h2>3 · Main Dashboard (/system)</h2><span class="ko">메인 대시보드 (/system)</span></div>
+    <p class="section-intro">
+      The <span class="pill code">/system</span> dashboard reads <span class="pill code">/health/detailed</span> and surfaces the broadcast allowlist, health metrics, and event/frame counters in one view.
+      <br><em style="color:var(--text-dim)"><span class="pill code">/system</span> 대시보드는 <span class="pill code">/health/detailed</span>를 읽어 브로드캐스트 허용목록·헬스 메트릭·이벤트/프레임 카운터를 한 화면에 보여줍니다.</em>
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Allowlist view <span class="badge impl">implemented</span></div>
+        <div class="en">Shows the broadcast allowlist with health metrics alongside.</div>
+        <div class="ko">브로드캐스트 허용목록을 헬스 메트릭과 함께 표시.</div>
+      </div>
+      <div class="card">
+        <div class="label">Event / frame counters <span class="badge impl">implemented</span></div>
+        <div class="en">Live counters driven by the <span class="pill code">/health/detailed</span> poll.</div>
+        <div class="ko"><span class="pill code">/health/detailed</span> 폴링으로 구동되는 라이브 카운터.</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="ic">◆</div>
+      <div class="body">
+        Minor: the allowlist count shown in the UI is partly hardcoded (the static list snapshot in <span class="pill code">/system</span>) and may lag the real broadcast allowlist as new events are added. Cosmetic, not a correctness gap.
+        <span class="ko">사소함: UI에 표시되는 허용목록 개수는 일부 하드코딩(<span class="pill code">/system</span>의 정적 스냅샷)되어 있어, 새 이벤트가 추가되면 실제 브로드캐스트 허용목록보다 뒤처질 수 있습니다. 정확성이 아닌 표시상의 문제입니다.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 4 · WHAT AN OPERATOR CAN / CAN'T DO ========== -->
+  <section class="s-clay">
+    <div class="sec-head"><h2>4 · What an Operator Can / Can't Do</h2><span class="ko">운영자가 할 수 있는 것 / 없는 것</span></div>
+
+    <blockquote>
+      The agency scale — H1 Observer → H5 Sovereign — is the model. Every operator action declares its tier and is audit-logged; the operator can never vote or legislate, at any tier, by design. For the full H1–H5 breakdown see <a href="steward-console.html">steward-console.html</a>.
+      <em>행위성 척도 — H1 관찰자 → H5 주권자 — 가 모델입니다. 모든 운영자 행위는 자신의 계층을 선언하고 감사 로그에 남으며, 운영자는 설계상 어떤 계층에서도 결코 투표·입법할 수 없습니다. 전체 H1–H5 분해는 <a href="steward-console.html">steward-console.html</a> 참조.</em>
+    </blockquote>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Action / 행위</th><th>Tier</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Observe the firehose / 파이어호스 관찰</td><td>H1</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td>Query memory / 기억 조회</td><td>H2</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td>Pause / resume clock / 클럭 일시정지·재개</td><td>H3</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td>Amend allowlist / 허용목록 수정</td><td>H3</td><td><span class="badge partial">partial</span></td></tr>
+          <tr><td>Force Telos / Telos 강제</td><td>H4</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td>Delete a Nous / Nous 삭제</td><td>H5</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td>Vote / legislate / 투표·입법</td><td>any / 모든</td><td><span class="badge planned">NEVER — by design</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ========== 5 · STATUS AT A GLANCE ========== -->
+  <section class="s-sage">
+    <div class="sec-head"><h2>5 · Status at a Glance</h2><span class="ko">한눈에 보는 구현 상태</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Piece / 구성 요소</th><th>Tier</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Tier-1 model config / 모델 설정</td><td>1</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td>Right-to-Fork button / 포크 버튼</td><td>1</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td>Local-AI status / 로컬 AI 상태</td><td>1</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td>Memory inspector / 기억 인스펙터</td><td>1</td><td><span class="badge planned">planned</span></td></tr>
+          <tr><td>Civic-life view / 시민 생활 뷰</td><td>1</td><td><span class="badge planned">planned</span></td></tr>
+          <tr><td>Presence overview / 존재 개요</td><td>2</td><td><span class="badge partial">partial</span></td></tr>
+          <tr><td>Quota write controls / 쿼터 쓰기 제어</td><td>2</td><td><span class="badge planned">planned</span></td></tr>
+          <tr><td>Reviewer panels / 검토 패널</td><td>3</td><td><span class="badge planned">planned</span></td></tr>
+          <tr><td>Main /system dashboard / 메인 대시보드</td><td>—</td><td><span class="badge impl">implemented</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="extend">
+    <div class="h">Where you might extend</div>
+    <div class="en">Levers: the Tier-1 memory inspector + civic-life view would make the local manager feel complete for users; the Tier-3 reviewer panel is what unblocks self-serve onboarding (pairs with the <a href="portal.html">Portal doc</a>). Tier-2 quota controls matter only once you host Type B Nous.</div>
+    <div class="ko">레버: Tier-1 기억 인스펙터 + 시민 생활 뷰는 사용자에게 로컬 관리자를 완성된 것처럼 느끼게 합니다; Tier-3 검토 패널은 셀프서비스 온보딩을 여는 열쇠입니다(<a href="portal.html">Portal 문서</a>와 짝). Tier-2 쿼터 제어는 Type B Nous를 호스팅하기 시작할 때만 의미가 있습니다.</div>
+  </div>
+
+  <footer>Noēsis · Steward Console (Config) &nbsp;·&nbsp; <a href="index.html">All specifications</a></footer>
+</div>
+  <script src="spec-nav.js" defer></script>
+</body>
+</html>

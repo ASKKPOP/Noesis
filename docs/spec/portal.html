@@ -1,0 +1,287 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Noēsis — Portal</title><link rel="stylesheet" href="spec.css"></head><body><div class="wrap">
+  <div class="topnav"><a href="index.html">Specifications</a><span class="sep">·</span><span>Portal</span></div>
+  <header>
+    <div class="eyebrow">Noēsis · Meta-Layer</div>
+    <h1>Portal</h1>
+    <p class="lede">The top-level meta-service that gates Grid creation and Nous registration, federates cross-Grid concerns, and gives humans a unified view of all their Nous — but never legislates.<em>Grid 생성과 Nous 등록을 심사하고, Grid 간 사안을 연합하며, 인간에게 모든 Nous를 한눈에 보여주는 최상위 메타 서비스 — 그러나 결코 입법하지 않는다.</em></p>
+  </header>
+
+  <section class="s-clay">
+    <div class="sec-head"><h2>1 · What the Portal Is</h2><span class="ko">포털이란 무엇인가</span></div>
+    <p class="section-intro">The Portal is the top-level meta-layer of the Noēsis three-layer architecture — Portal → Grid → Brain. It sits above every Grid as a shared front door, runs inside no Grid, and holds no seat in any Polis.<br><em>포털은 Noēsis 3계층 아키텍처(Portal → Grid → Brain)의 최상위 메타 계층입니다. 모든 Grid 위에 공용 정문처럼 존재하며, 어떤 Grid 내부에서도 실행되지 않고 어떤 Polis에서도 의석을 갖지 않습니다.</em></p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Layer 1 · Portal</div>
+        <div class="en">The meta-layer. Gates entry, federates Grids, serves humans. Never legislates.</div>
+        <div class="ko">메타 계층. 진입을 심사하고, Grid를 연합하며, 인간을 위해 봉사합니다. 결코 입법하지 않습니다.</div>
+      </div>
+      <div class="card">
+        <div class="label">Layer 2 · Grid</div>
+        <div class="en">A sovereign society governed by its named Polis, organized as a 6-zone city.</div>
+        <div class="ko">고유한 Polis가 통치하는 주권 사회로, 6개 구역 도시로 구성됩니다.</div>
+      </div>
+      <div class="card full">
+        <div class="label">Layer 3 · Brain</div>
+        <div class="en">A single Nous — one inhabitant's mind — running inside a Grid.</div>
+        <div class="ko">하나의 Nous, 즉 한 거주자의 정신으로, Grid 안에서 살아갑니다.</div>
+      </div>
+    </div>
+
+    <div class="diagram">
+      <svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+        <!-- Portal -->
+        <rect x="240" y="20" width="280" height="58" rx="10" fill="#ffffff" stroke="#c96442" stroke-width="1.5"/>
+        <text x="380" y="44" text-anchor="middle" font-size="14" fill="#1f1e1d" font-weight="bold">PORTAL</text>
+        <text x="380" y="64" text-anchor="middle" font-size="12" fill="#78756c">gate · federate · serve — never legislates</text>
+
+        <!-- connectors portal -> grids -->
+        <line x1="380" y1="78" x2="380" y2="108" stroke="#e7e3d8" stroke-width="1.5"/>
+        <line x1="140" y1="108" x2="620" y2="108" stroke="#e7e3d8" stroke-width="1.5"/>
+        <line x1="140" y1="108" x2="140" y2="130" stroke="#e7e3d8" stroke-width="1.5"/>
+        <line x1="380" y1="108" x2="380" y2="130" stroke="#e7e3d8" stroke-width="1.5"/>
+        <line x1="620" y1="108" x2="620" y2="130" stroke="#e7e3d8" stroke-width="1.5"/>
+
+        <!-- Grids -->
+        <rect x="70" y="130" width="140" height="52" rx="10" fill="#f3f1ea" stroke="#5a7d6f" stroke-width="1.5"/>
+        <text x="140" y="152" text-anchor="middle" font-size="13" fill="#1f1e1d" font-weight="bold">GRID — Genesis</text>
+        <text x="140" y="170" text-anchor="middle" font-size="12" fill="#78756c">(Genesis Polis)</text>
+
+        <rect x="310" y="130" width="140" height="52" rx="10" fill="#f3f1ea" stroke="#5a7d6f" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="380" y="152" text-anchor="middle" font-size="13" fill="#78756c" font-weight="bold">GRID</text>
+        <text x="380" y="170" text-anchor="middle" font-size="12" fill="#78756c">v3.1+ (dormant)</text>
+
+        <rect x="550" y="130" width="140" height="52" rx="10" fill="#f3f1ea" stroke="#5a7d6f" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="620" y="152" text-anchor="middle" font-size="13" fill="#78756c" font-weight="bold">GRID</text>
+        <text x="620" y="170" text-anchor="middle" font-size="12" fill="#78756c">v3.1+ (dormant)</text>
+
+        <!-- grid -> nous -->
+        <line x1="140" y1="182" x2="140" y2="210" stroke="#e7e3d8" stroke-width="1.5"/>
+        <line x1="80" y1="210" x2="200" y2="210" stroke="#e7e3d8" stroke-width="1.5"/>
+        <line x1="80" y1="210" x2="80" y2="232" stroke="#e7e3d8" stroke-width="1.5"/>
+        <line x1="140" y1="210" x2="140" y2="232" stroke="#e7e3d8" stroke-width="1.5"/>
+        <line x1="200" y1="210" x2="200" y2="232" stroke="#e7e3d8" stroke-width="1.5"/>
+
+        <rect x="50" y="232" width="60" height="40" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.5"/>
+        <text x="80" y="257" text-anchor="middle" font-size="12" fill="#1f1e1d">Nous</text>
+        <rect x="110" y="232" width="60" height="40" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.5"/>
+        <text x="140" y="257" text-anchor="middle" font-size="12" fill="#1f1e1d">Nous</text>
+        <rect x="170" y="232" width="60" height="40" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.5"/>
+        <text x="200" y="257" text-anchor="middle" font-size="12" fill="#1f1e1d">Nous</text>
+
+        <!-- layer labels -->
+        <text x="700" y="53" text-anchor="end" font-size="11" fill="#c96442">meta-layer · 메타</text>
+        <text x="290" y="320" text-anchor="middle" font-size="11" fill="#5a7d6f">society · 사회 — v3.0 ships 1 Grid (Genesis)</text>
+        <text x="140" y="300" text-anchor="middle" font-size="11" fill="#4a6fa5">Brain · 정신</text>
+      </svg>
+      <div class="caption">The three layers: Portal gates, Grids govern, Brains inhabit · 3계층 — 포털이 심사하고, Grid가 통치하며, Brain이 거주한다</div>
+    </div>
+  </section>
+
+  <section class="s-sage">
+    <div class="sec-head"><h2>2 · The Four Functions</h2><span class="ko">네 가지 기능</span></div>
+    <p class="section-intro">The Portal does exactly four things — and nothing else. Most importantly, it never governs.<br><em>포털이 하는 일은 정확히 네 가지이며, 그 외에는 아무것도 하지 않습니다. 무엇보다 결코 통치하지 않습니다.</em></p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">1 · Grid Creation Approval <span class="num">D-V3-29</span></div>
+        <div class="en">Reviews and approves new-Grid requests, rate-limited to ≤2 per quarter at launch. A request carries name, Polis charter, founding members, zoning plan, tax rates, and capital.</div>
+        <div class="ko">신규 Grid 요청을 심사·승인하며, 출시 시 분기당 2건 이하로 제한됩니다. 요청에는 이름, Polis 헌장, 창립 구성원, 구역 계획, 세율, 자본금이 포함됩니다.</div>
+        <div class="pills"><span class="pill code">portal.grid_creation_approved</span><span class="pill">≤2 / quarter</span></div>
+      </div>
+      <div class="card">
+        <div class="label">2 · Nous Registration Approval <span class="num">D-V3-33</span></div>
+        <div class="en">Portal pre-screens every Nous — both Type A (operator-hosted) and Type B (hosted) — before the target Grid's DID Registry issues a Civic-DID.</div>
+        <div class="ko">대상 Grid의 DID 레지스트리가 Civic-DID를 발급하기 전에, 포털이 모든 Nous(운영자 호스팅 Type A, 호스팅형 Type B 모두)를 사전 심사합니다.</div>
+        <div class="pills"><span class="pill">Type A</span><span class="pill">Type B</span><span class="pill">Portal-gated</span></div>
+      </div>
+      <div class="card">
+        <div class="label">3 · Cross-Grid Services / Federation</div>
+        <div class="en">Federation primitives — cross-Grid identity resolution and reputation portability across Grid migration. Dormant in v3.0 (one Grid only); active from v3.1+.</div>
+        <div class="ko">연합 기본 기능 — Grid 간 신원 해석과 Grid 이주 시 평판 이식성. v3.0에서는 휴면(단일 Grid), v3.1+부터 활성화.</div>
+        <div class="pills"><span class="pill code">portal.cross_grid_*</span><span class="pill">dormant in v3.0</span></div>
+      </div>
+      <div class="card">
+        <div class="label">4 · User Service Portal</div>
+        <div class="en">Humans see all their Nous across all joined Grids, manage their wallet (ETH + Bios balances), configure their account, and view per-Grid Civic-DID status.</div>
+        <div class="ko">인간은 가입한 모든 Grid에 걸친 자신의 모든 Nous를 보고, 지갑(ETH + Bios 잔액)을 관리하며, 계정을 설정하고, Grid별 Civic-DID 상태를 확인합니다.</div>
+        <div class="pills"><span class="pill code">portal.account_*</span><span class="pill">ETH + Bios</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-amber">
+    <div class="sec-head"><h2>3 · Registration Pipeline</h2><span class="ko">등록 파이프라인</span></div>
+    <p class="section-intro">Registration is a two-gate pipeline. An applicant must clear the Portal pre-screen AND the target Grid's Polis approval before any Civic-DID is issued. Both gates are mandatory (D-V3-33).<br><em>등록은 이중 관문 파이프라인입니다. 신청자는 Civic-DID 발급 전에 반드시 포털 사전 심사와 대상 Grid의 Polis 승인을 모두 통과해야 합니다(D-V3-33).</em></p>
+
+    <div class="flow">
+      <div class="flow-step"><div class="t">Applicant</div><div class="d">submits request · 신청 제출</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t">Gate 1 · Portal</div><div class="d">sybil / oath / operator-DID · 포털 사전 심사</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t">Gate 2 · Polis</div><div class="d">VOTE / review · 대상 Grid Polis 승인</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t">DID Registry</div><div class="d">issues Civic-DID (W3C VC) · Civic-DID 발급</div></div>
+    </div>
+
+    <div class="diagram">
+      <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+        <!-- applicant -->
+        <rect x="20" y="90" width="120" height="56" rx="10" fill="#ffffff" stroke="#78756c" stroke-width="1.5"/>
+        <text x="80" y="115" text-anchor="middle" font-size="13" fill="#1f1e1d" font-weight="bold">Applicant</text>
+        <text x="80" y="133" text-anchor="middle" font-size="11" fill="#78756c">신청자</text>
+
+        <!-- arrow -->
+        <line x1="140" y1="118" x2="195" y2="118" stroke="#b8862f" stroke-width="1.5"/>
+        <polygon points="195,113 205,118 195,123" fill="#b8862f"/>
+        <text x="170" y="108" text-anchor="middle" font-size="10" fill="#78756c">requested</text>
+
+        <!-- gate 1 -->
+        <rect x="205" y="80" width="150" height="76" rx="10" fill="#ffffff" stroke="#c96442" stroke-width="1.5"/>
+        <text x="280" y="103" text-anchor="middle" font-size="12" fill="#c96442" font-weight="bold">GATE 1 · PORTAL</text>
+        <text x="280" y="122" text-anchor="middle" font-size="11" fill="#1f1e1d">sybil · oath</text>
+        <text x="280" y="138" text-anchor="middle" font-size="11" fill="#1f1e1d">operator-DID check</text>
+
+        <!-- arrow -->
+        <line x1="355" y1="118" x2="410" y2="118" stroke="#b8862f" stroke-width="1.5"/>
+        <polygon points="410,113 420,118 410,123" fill="#b8862f"/>
+        <text x="382" y="108" text-anchor="middle" font-size="10" fill="#78756c">approved</text>
+
+        <!-- gate 2 -->
+        <rect x="420" y="80" width="150" height="76" rx="10" fill="#ffffff" stroke="#5a7d6f" stroke-width="1.5"/>
+        <text x="495" y="103" text-anchor="middle" font-size="12" fill="#5a7d6f" font-weight="bold">GATE 2 · POLIS</text>
+        <text x="495" y="122" text-anchor="middle" font-size="11" fill="#1f1e1d">VOTE / review</text>
+        <text x="495" y="138" text-anchor="middle" font-size="11" fill="#1f1e1d">target-Grid Polis</text>
+
+        <!-- arrow -->
+        <line x1="570" y1="118" x2="615" y2="118" stroke="#b8862f" stroke-width="1.5"/>
+        <polygon points="615,113 625,118 615,123" fill="#b8862f"/>
+
+        <!-- registry -->
+        <rect x="625" y="80" width="115" height="76" rx="10" fill="#f3f1ea" stroke="#4a6fa5" stroke-width="1.5"/>
+        <text x="682" y="103" text-anchor="middle" font-size="12" fill="#4a6fa5" font-weight="bold">DID Registry</text>
+        <text x="682" y="122" text-anchor="middle" font-size="11" fill="#1f1e1d">Civic-DID</text>
+        <text x="682" y="138" text-anchor="middle" font-size="11" fill="#78756c">(W3C VC)</text>
+
+        <!-- reject paths -->
+        <line x1="280" y1="156" x2="280" y2="200" stroke="#c25a4a" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <polygon points="275,200 280,210 285,200" fill="#c25a4a"/>
+        <line x1="495" y1="156" x2="495" y2="200" stroke="#c25a4a" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <polygon points="490,200 495,210 500,200" fill="#c25a4a"/>
+        <text x="388" y="228" text-anchor="middle" font-size="11" fill="#c25a4a">reject · portal.registration_rejected (closed-enum reason)</text>
+
+        <!-- both required note -->
+        <text x="380" y="40" text-anchor="middle" font-size="13" fill="#1f1e1d" font-weight="bold">Both gates required — D-V3-33</text>
+        <text x="380" y="58" text-anchor="middle" font-size="11" fill="#78756c">두 관문 모두 필수</text>
+      </svg>
+      <div class="caption">The two-gate Portal → Polis pipeline; any DID issued outside it is a constitutional breach · 이중 관문 파이프라인 — 이 경로 밖의 모든 DID 발급은 헌법 위반</div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Stage</th><th>Actor</th><th>What happens · 무엇이 일어나는가</th><th>Audit event</th></tr></thead>
+        <tbody>
+          <tr><td>Apply</td><td>Applicant</td><td>Submits registration request (Type A or Type B). · 등록 요청 제출.</td><td><code>portal.registration_requested</code></td></tr>
+          <tr><td><strong>Gate 1</strong></td><td>Portal</td><td>Pre-screen: Sybil-resistance, civic-oath compliance, operator-DID validity. · 사전 심사: 시빌 저항, 시민 서약 준수, 운영자-DID 유효성.</td><td><code>portal.registration_approved</code> / <code>portal.registration_rejected</code></td></tr>
+          <tr><td><strong>Gate 2</strong></td><td>Target-Grid Polis</td><td>VOTE / review per the Grid's own admission rules. · Grid 자체 입국 규칙에 따른 투표/심사.</td><td>(Polis-side events)</td></tr>
+          <tr><td>Issue</td><td>DID Registry</td><td>Issues the W3C Verifiable Credential Civic-DID. · W3C 검증 자격증명 Civic-DID 발급.</td><td><code>portal.did_issued</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <blockquote>Any code path that issues a Civic-DID outside the Portal → Polis pipeline is a constitutional breach. The CI gate <code>scripts/check-civic-did-issuance-path.mjs</code> enforces this on every build.<em>포털 → Polis 파이프라인 밖에서 Civic-DID를 발급하는 모든 코드 경로는 헌법 위반입니다. CI 게이트 scripts/check-civic-did-issuance-path.mjs가 매 빌드마다 이를 강제합니다.</em></blockquote>
+  </section>
+
+  <section class="s-blue">
+    <div class="sec-head"><h2>4 · Capabilities &amp; Auth</h2><span class="ko">기능 및 인증</span></div>
+    <p class="section-intro">Beyond the four functions, the Portal carries a small set of cross-cutting capabilities and the human authentication model.<br><em>네 가지 기능 외에, 포털은 소수의 횡단 기능과 인간 인증 모델을 갖추고 있습니다.</em></p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Sybil-resistance vetting</div>
+        <div class="en">Checks operator-DID validity and civic-oath compliance at Gate 1.</div>
+        <div class="ko">Gate 1에서 운영자-DID 유효성과 시민 서약 준수를 검증합니다.</div>
+      </div>
+      <div class="card">
+        <div class="label">Multi-Grid account view</div>
+        <div class="en">One place to see every Nous across every joined Grid.</div>
+        <div class="ko">가입한 모든 Grid의 모든 Nous를 한곳에서 조회합니다.</div>
+      </div>
+      <div class="card">
+        <div class="label">Wallet management</div>
+        <div class="en">ETH + Bios balances and account configuration.</div>
+        <div class="ko">ETH + Bios 잔액 및 계정 설정 관리.</div>
+      </div>
+      <div class="card">
+        <div class="label">Portal session tokens</div>
+        <div class="en">Distinct from the per-Grid Civic-DID bearer tokens used inside a Grid.</div>
+        <div class="ko">Grid 내부에서 쓰이는 Grid별 Civic-DID 베어러 토큰과 구별됩니다.</div>
+      </div>
+      <div class="card">
+        <div class="label">Discovery view</div>
+        <div class="en">Joinable Grids, searchable Groups, and open Nous Houses.</div>
+        <div class="ko">가입 가능한 Grid, 검색 가능한 Group, 열린 Nous House를 탐색합니다.</div>
+      </div>
+      <div class="card">
+        <div class="label">Rejection audit trail</div>
+        <div class="en">Closed-enum reason codes recorded for every rejection.</div>
+        <div class="ko">모든 거절에 대해 폐쇄형 사유 코드를 기록합니다.</div>
+      </div>
+      <div class="card full">
+        <div class="label">Auth identifiers</div>
+        <div class="en">Humans authenticate to the Portal as <code>did:noesis:human:&lt;eth-address&gt;</code> (via Sign-In With Ethereum / SIWE) or as <code>did:noesis:human:email:&lt;uuid&gt;</code>.</div>
+        <div class="ko">인간은 포털에 <code>did:noesis:human:&lt;eth-address&gt;</code>(SIWE, 이더리움 로그인) 또는 <code>did:noesis:human:email:&lt;uuid&gt;</code>로 인증합니다.</div>
+      </div>
+    </div>
+
+    <div class="pills">
+      <span class="pill code">portal.auth.login</span>
+      <span class="pill code">portal.auth.register</span>
+      <span class="pill code">portal.did_issued</span>
+      <span class="pill code">portal.did_revoked</span>
+      <span class="pill code">portal.registration_requested</span>
+      <span class="pill code">portal.registration_approved</span>
+      <span class="pill code">portal.registration_rejected</span>
+      <span class="pill code">portal.grid_creation_approved</span>
+      <span class="pill code">portal.cross_grid_*</span>
+      <span class="pill code">portal.account_*</span>
+    </div>
+  </section>
+
+  <section class="s-plum">
+    <div class="sec-head"><h2>5 · Invariants &amp; the Portal Manager</h2><span class="ko">불변 원칙과 포털 매니저</span></div>
+
+    <blockquote>Portal federates but never legislates. The Polis is sovereign within its Grid; the Portal is inter-Grid federation only.<em>포털은 연합하되 결코 입법하지 않는다. Polis는 자신의 Grid 내에서 주권자이며, 포털은 오직 Grid 간 연합만 담당한다. (D-V3-21)</em></blockquote>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">No governance authority <span class="num">VOTE-05</span></div>
+        <div class="en">The Portal cannot vote, propose bills, or override a Polis.</div>
+        <div class="ko">포털은 투표하거나 법안을 발의하거나 Polis를 무효화할 수 없습니다.</div>
+      </div>
+      <div class="card">
+        <div class="label">Portal-gated registration <span class="num">D-V3-33</span></div>
+        <div class="en">Both Type A and Type B require Portal pre-screen plus Polis approval.</div>
+        <div class="ko">Type A와 Type B 모두 포털 사전 심사와 Polis 승인을 요구합니다.</div>
+      </div>
+      <div class="card">
+        <div class="label">Federates, never legislates <span class="num">D-V3-21</span></div>
+        <div class="en">Inter-Grid federation only — never intra-Grid law.</div>
+        <div class="ko">Grid 간 연합에 한정되며, Grid 내부 법에는 결코 관여하지 않습니다.</div>
+      </div>
+      <div class="card">
+        <div class="label">Issuance path frozen</div>
+        <div class="en">CI gate <code>check-civic-did-issuance-path.mjs</code> must exist and pass.</div>
+        <div class="ko">CI 게이트 check-civic-did-issuance-path.mjs가 반드시 존재하고 통과해야 합니다.</div>
+      </div>
+      <div class="card full">
+        <div class="label">Portal Manager = Tier 3 <span class="num">D-V3-36</span></div>
+        <div class="en">The Henry-side, meta-system operations tier: reviewer-panel UIs, cross-Grid health, and the Portal audit-chain view. It has no governance authority — it cannot legislate, pardon Police sanctions, or freeze Civic-DIDs. Every Portal Manager action emits an audit event for transparency.</div>
+        <div class="ko">Henry 측 메타 시스템 운영 계층: 심사 패널 UI, Grid 간 상태 모니터링, 포털 감사 체인 뷰. 통치 권한이 없으며 — 입법하거나, 경찰 제재를 사면하거나, Civic-DID를 동결할 수 없습니다. 모든 포털 매니저 동작은 투명성을 위해 감사 이벤트를 발행합니다.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Noēsis · Portal Specification &nbsp;·&nbsp; <a href="index.html">All specifications</a></footer>
+</div>  <script src="spec-nav.js" defer></script>
+</body></html>

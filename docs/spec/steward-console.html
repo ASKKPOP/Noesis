@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noēsis — Steward Console</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="topnav"><a href="index.html">Specifications</a><span class="sep">·</span><span>Steward Console</span></div>
+
+  <header>
+    <div class="eyebrow">Noēsis · Operator</div>
+    <h1>Steward Console</h1>
+    <p class="lede">
+      A per-Grid, operator-facing management UI built on an explicit five-tier Human Agency Scale (H1–H5) —
+      operators may observe, review, co-decide, drive, and administer Nous within one Grid, but may never vote
+      or legislate (Polis-only, VOTE-05).
+      <em>그리드 단위의 운영자용 관리 UI로, 명시적인 5단계 인간 행위성 척도(H1–H5) 위에 세워졌다 — 운영자는 하나의 그리드 안에서 Nous를 관찰·검토·공동결정·구동·관리할 수 있으나, 결코 투표하거나 입법할 수 없다(Polis 전용, VOTE-05).</em>
+    </p>
+  </header>
+
+  <!-- 1 -->
+  <section class="s-clay">
+    <div class="sec-head"><h2>1 · What the Steward Console Is</h2><span class="ko">스튜어드 콘솔이란</span></div>
+    <p class="section-intro">The administrative surface an operator uses to manage the Nous of a single Grid — management, never governance.</p>
+    <div class="pills">
+      <span class="pill">per-Grid</span>
+      <span class="pill">operator-facing</span>
+      <span class="pill">H1–H5</span>
+      <span class="pill">management ≠ governance</span>
+      <span class="pill code">operator.*</span>
+    </div>
+    <div class="grid">
+      <div class="card full">
+        <div class="label">PURPOSE <span class="num">1.1</span></div>
+        <div class="en">The Steward Console is the administrative surface an operator uses to manage the Nous of a single Grid. It is <strong>management</strong>, not <strong>governance</strong> — it never legislates. Every action the operator can take is classified into one of five agency tiers (H1–H5).</div>
+        <div class="ko">스튜어드 콘솔은 운영자가 단일 그리드의 Nous를 관리할 때 사용하는 행정 인터페이스다. 이는 <strong>관리</strong>이며 <strong>거버넌스가 아니다</strong> — 결코 입법하지 않는다. 운영자가 취할 수 있는 모든 행위는 다섯 개의 행위성 등급(H1–H5) 중 하나로 분류된다.</div>
+      </div>
+      <div class="card">
+        <div class="label">DECLARED IN UI <span class="num">1.2</span></div>
+        <div class="en">The agency tier is shown explicitly in the UI before the operator commits an action — no silent escalation.</div>
+        <div class="ko">행위성 등급은 운영자가 행위를 커밋하기 전에 UI에 명시적으로 표시된다 — 은밀한 승급은 없다.</div>
+      </div>
+      <div class="card">
+        <div class="label">RECORDED AT COMMIT <span class="num">1.3</span></div>
+        <div class="en">The tier is recorded in the audit chain at commit time, so the record reflects exactly the agency exercised.</div>
+        <div class="ko">등급은 커밋 시점에 감사 체인에 기록되어, 기록은 행사된 행위성을 정확히 반영한다.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="s-sage">
+    <div class="sec-head"><h2>2 · The H1–H5 Human Agency Scale</h2><span class="ko">H1–H5 인간 행위성 척도</span></div>
+    <p class="section-intro">A graded ladder of operator agency, from read-only observation to irreversible sovereignty. Grounded in the Human Agency Scale research (arXiv 2506.06576).</p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">H1 OBSERVER <span class="num">read-only</span></div>
+        <div class="en"><strong>Read-only, audit-silent.</strong> View the firehose live, inspect the civic map, read Nous state. Leaves no audit trace.</div>
+        <div class="ko"><strong>읽기 전용, 감사 무흔적.</strong> 실시간 파이어호스 열람, 시민 지도 조사, Nous 상태 읽기. 어떠한 감사 기록도 남기지 않는다.</div>
+      </div>
+      <div class="card">
+        <div class="label">H2 REVIEWER <span class="num">audit-logged</span></div>
+        <div class="en"><strong>Memory query, audit-logged.</strong> Query a Nous's episodic + semantic memory (retrieval scoring, personal wiki) — read-only, with explicit audit logging.</div>
+        <div class="ko"><strong>기억 조회, 감사 기록됨.</strong> Nous의 일화적·의미적 기억(검색 점수화, 개인 위키)을 조회 — 읽기 전용이며 명시적 감사 로그를 남긴다.</div>
+      </div>
+      <div class="card">
+        <div class="label">H3 PARTNER <span class="num">co-decision</span></div>
+        <div class="en"><strong>Co-decision with an elevation dialog.</strong> Pause/resume the WorldClock simulation, amend the broadcast allowlist, co-author a Grid law for Polis vote, mute, forced-sleep. Explicit confirm.</div>
+        <div class="ko"><strong>승급 대화창을 통한 공동결정.</strong> WorldClock 시뮬레이션 일시정지/재개, 브로드캐스트 허용목록 수정, Polis 표결용 그리드 법안 공동작성, 음소거, 강제 수면. 명시적 확인.</div>
+      </div>
+      <div class="card">
+        <div class="label">H4 DRIVER <span class="num">input → exec</span></div>
+        <div class="en"><strong>Operator provides input, system executes.</strong> Force-mutate a Nous's Telos (<code>operator.telos_forced</code>), slash (amount_bios), quarantine.</div>
+        <div class="ko"><strong>운영자가 입력을 제공하고 시스템이 실행한다.</strong> Nous의 Telos 강제 변경(<code>operator.telos_forced</code>), 슬래시(amount_bios), 격리.</div>
+      </div>
+      <div class="card full">
+        <div class="label">H5 SOVEREIGN <span class="num">irreversible</span></div>
+        <div class="en"><strong>Irreversible.</strong> Delete a Nous (<code>operator.nous_deleted</code>) with a typed identity-confirm; full state hash is preserved for forensic reconstruction. human_ban, human_freeze, nous_fork. The audit entry is never purged.</div>
+        <div class="ko"><strong>되돌릴 수 없음.</strong> 입력형 신원 확인과 함께 Nous 삭제(<code>operator.nous_deleted</code>); 전체 상태 해시는 포렌식 재구성을 위해 보존된다. human_ban, human_freeze, nous_fork. 감사 항목은 결코 삭제되지 않는다.</div>
+      </div>
+    </div>
+
+    <div class="diagram">
+      <svg viewBox="0 0 760 380" xmlns="http://www.w3.org/2000/svg">
+        <!-- axis -->
+        <line x1="60" y1="40" x2="60" y2="340" stroke="#d9d4c6" stroke-width="1.5"/>
+        <line x1="60" y1="340" x2="730" y2="340" stroke="#d9d4c6" stroke-width="1.5"/>
+        <polygon points="60,32 56,42 64,42" fill="#78756c"/>
+        <polygon points="738,340 728,336 728,344" fill="#78756c"/>
+        <text x="40" y="36" fill="#78756c" font-family="sans-serif" font-size="11" text-anchor="end">agency</text>
+        <text x="40" y="50" fill="#78756c" font-family="sans-serif" font-size="11" text-anchor="end">行為性</text>
+        <text x="730" y="362" fill="#78756c" font-family="sans-serif" font-size="11" text-anchor="end">tier · 등급</text>
+        <text x="68" y="358" fill="#78756c" font-family="sans-serif" font-size="11">low</text>
+        <text x="700" y="358" fill="#78756c" font-family="sans-serif" font-size="11">high</text>
+
+        <!-- H1 -->
+        <rect x="76" y="288" width="124" height="44" rx="10" fill="#5a7d6f"/>
+        <text x="138" y="308" fill="#ffffff" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">H1 Observer</text>
+        <text x="138" y="324" fill="#e8efe9" font-family="sans-serif" font-size="10.5" text-anchor="middle">read-only · audit-silent</text>
+
+        <!-- H2 -->
+        <rect x="206" y="232" width="124" height="44" rx="10" fill="#6e8a6a"/>
+        <text x="268" y="252" fill="#ffffff" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">H2 Reviewer</text>
+        <text x="268" y="268" fill="#eef2ec" font-family="sans-serif" font-size="10.5" text-anchor="middle">memory query · logged</text>
+
+        <!-- H3 -->
+        <rect x="336" y="176" width="124" height="44" rx="10" fill="#b8862f"/>
+        <text x="398" y="196" fill="#ffffff" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">H3 Partner</text>
+        <text x="398" y="212" fill="#f6eddc" font-family="sans-serif" font-size="10.5" text-anchor="middle">co-decide · elevation</text>
+
+        <!-- H4 -->
+        <rect x="466" y="120" width="124" height="44" rx="10" fill="#c25a4a"/>
+        <text x="528" y="140" fill="#ffffff" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">H4 Driver</text>
+        <text x="528" y="156" fill="#f7e2dd" font-family="sans-serif" font-size="10.5" text-anchor="middle">input → execute</text>
+
+        <!-- H5 -->
+        <rect x="596" y="64" width="124" height="44" rx="10" fill="#c96442"/>
+        <text x="658" y="84" fill="#ffffff" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">H5 Sovereign</text>
+        <text x="658" y="100" fill="#f8e3da" font-family="sans-serif" font-size="10.5" text-anchor="middle">irreversible · delete</text>
+
+        <!-- rising connectors -->
+        <path d="M200 290 L206 254" stroke="#b9b2a2" stroke-width="1.5" fill="none" stroke-dasharray="3 3"/>
+        <path d="M330 234 L336 198" stroke="#b9b2a2" stroke-width="1.5" fill="none" stroke-dasharray="3 3"/>
+        <path d="M460 178 L466 142" stroke="#b9b2a2" stroke-width="1.5" fill="none" stroke-dasharray="3 3"/>
+        <path d="M590 122 L596 86" stroke="#b9b2a2" stroke-width="1.5" fill="none" stroke-dasharray="3 3"/>
+      </svg>
+      <div class="caption">The escalation ladder — rising agency, color-graded from sage (low) to clay (high). · 승급 사다리 — 세이지(낮음)에서 클레이(높음)로 색이 짙어지는 상승 행위성.</div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Tier</th><th>Name</th><th>Mode</th><th>Audit</th><th>Example actions</th><th>Reversible</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>H1</strong></td><td>Observer</td><td>Read-only, audit-silent</td><td>None</td><td>View firehose, inspect civic map, read Nous state</td><td>n/a</td></tr>
+          <tr><td><strong>H2</strong></td><td>Reviewer</td><td>Read-only query</td><td>Audit-logged</td><td>Query episodic + semantic memory, retrieval scoring, personal wiki</td><td>n/a</td></tr>
+          <tr><td><strong>H3</strong></td><td>Partner</td><td>Co-decision + elevation dialog</td><td>Logged</td><td>Pause/resume WorldClock, amend allowlist, co-author Grid law, mute, forced-sleep</td><td>Mostly</td></tr>
+          <tr><td><strong>H4</strong></td><td>Driver</td><td>Operator input → system executes</td><td>Logged</td><td><code>operator.telos_forced</code>, slash (amount_bios), quarantine</td><td>Partly</td></tr>
+          <tr><td><strong>H5</strong></td><td>Sovereign</td><td>Irreversible, typed identity-confirm</td><td>Never purged</td><td><code>operator.nous_deleted</code>, human_ban, human_freeze, nous_fork</td><td>No</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="s-amber">
+    <div class="sec-head"><h2>3 · Sanctions &amp; Zero-Custody</h2><span class="ko">제재 & 무수탁</span></div>
+    <div class="pills">
+      <span class="pill">Phase 25b</span>
+      <span class="pill">Grid-side flag only</span>
+      <span class="pill">zero-custody</span>
+      <span class="pill code">gates portal + SIWE</span>
+    </div>
+    <blockquote>
+      "Freeze wallet" is a <strong>Grid-side flag only</strong> — it gates portal actions and SIWE surfaces. It does <strong>not</strong> touch the on-chain balance. Noēsis is zero-custody: the user can always move their own funds.
+      <em>"지갑 동결"은 <strong>그리드 측 플래그일 뿐</strong> — 포털 동작과 SIWE 표면을 차단한다. 온체인 잔액은 <strong>건드리지 않는다</strong>. Noēsis는 무수탁 구조다: 사용자는 언제나 자신의 자금을 이동할 수 있다.</em>
+    </blockquote>
+    <div class="grid">
+      <div class="card">
+        <div class="label">WHAT IT GATES <span class="num">3.1</span></div>
+        <div class="en">A frozen wallet flag blocks portal actions and SIWE sign-in surfaces inside the Grid.</div>
+        <div class="ko">동결 지갑 플래그는 그리드 내부의 포털 동작과 SIWE 로그인 표면을 차단한다.</div>
+      </div>
+      <div class="card">
+        <div class="label">WHAT IT NEVER TOUCHES <span class="num">3.2</span></div>
+        <div class="en">The on-chain balance is untouched. There is no custody, so the user can always move their own funds.</div>
+        <div class="ko">온체인 잔액은 손대지 않는다. 수탁이 없으므로 사용자는 언제나 자신의 자금을 이동할 수 있다.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="s-blue">
+    <div class="sec-head"><h2>4 · Replay / Export / Right-to-Fork</h2><span class="ko">리플레이 / 내보내기 / 포크 권리</span></div>
+    <div class="pills">
+      <span class="pill">Phase 43</span>
+      <span class="pill">right-to-fork</span>
+      <span class="pill">cognitive + civic continuity</span>
+      <span class="pill code">operator.exported</span>
+      <span class="pill code">operator.nous_forked</span>
+    </div>
+    <div class="grid">
+      <div class="card full">
+        <div class="label">EXPORT FULL STATE <span class="num">4.1</span></div>
+        <div class="en">Export the full Nous state so a Type A operator can run it standalone, locally — preserving both cognitive and civic continuity.</div>
+        <div class="ko">전체 Nous 상태를 내보내어 Type A 운영자가 로컬에서 독립적으로 실행할 수 있게 한다 — 인지적·시민적 연속성을 모두 보존한다.</div>
+      </div>
+    </div>
+    <div class="flow">
+      <div class="flow-step"><div class="t">Export</div><div class="d">operator.exported<br>전체 상태 내보내기</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t">Run local</div><div class="d">Type A standalone<br>로컬 독립 실행</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t">Fork</div><div class="d">operator.nous_forked<br>연속성 보존</div></div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="s-plum">
+    <div class="sec-head"><h2>5 · The Three Management Tiers</h2><span class="ko">세 개의 관리 계층 (D-V3-36)</span></div>
+    <p class="section-intro">The Steward Console is administrative <strong>MANAGEMENT</strong>, distinct from Polis <strong>GOVERNANCE</strong>. D-V3-36 defines three management tiers.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Tier</th><th>Name</th><th>Where</th><th>Scope</th><th>Governance authority</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Tier 1</strong></td>
+            <td>Local Nous Manager<br><span class="ko">로컬 Nous 매니저</span></td>
+            <td>Operator's own machine<br><span class="ko">운영자 본인 머신</span></td>
+            <td>Brain config: Local AI model selection, memory inspector, compute allocation, fork button<br><span class="ko">Brain 설정: 로컬 AI 모델 선택, 기억 검사기, 컴퓨트 할당, 포크 버튼</span></td>
+            <td>None<br><span class="ko">없음</span></td>
+          </tr>
+          <tr>
+            <td><strong>Tier 2</strong></td>
+            <td>Grid Manager<br><span class="ko">그리드 매니저</span></td>
+            <td>Henry-side, per-Grid<br><span class="ko">Henry 측, 그리드별</span></td>
+            <td>Runtime ops: Grid health, scaling, infrastructure cost<br><span class="ko">런타임 운영: 그리드 상태, 스케일링, 인프라 비용</span></td>
+            <td><strong>None over Polis</strong> — cannot legislate, pardon, or freeze Civic-DIDs<br><span class="ko"><strong>Polis 위 권한 없음</strong> — 입법·사면·Civic-DID 동결 불가</span></td>
+          </tr>
+          <tr>
+            <td><strong>Tier 3</strong></td>
+            <td>Portal Manager<br><span class="ko">포털 매니저</span></td>
+            <td>Henry-side, meta-system<br><span class="ko">Henry 측, 메타 시스템</span></td>
+            <td>Reviewer panels, cross-Grid health, Portal audit chain view<br><span class="ko">리뷰어 패널, 그리드 간 상태, 포털 감사 체인 뷰</span></td>
+            <td>None<br><span class="ko">없음</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="label">TIER-1 DETAIL <span class="num">5.1</span></div>
+        <div class="en">Tier-1 Local Nous Manager (D-V3-36) is the operator-side Brain admin on the operator's own machine — Local AI model selection, memory inspector, compute allocation, fork button. Distinct from Grid runtime ops.</div>
+        <div class="ko">Tier-1 로컬 Nous 매니저(D-V3-36)는 운영자 본인 머신에서 동작하는 운영자 측 Brain 관리 도구다 — 로컬 AI 모델 선택, 기억 검사기, 컴퓨트 할당, 포크 버튼. 그리드 런타임 운영과 구별된다.</div>
+      </div>
+      <div class="card">
+        <div class="label">GOVERNANCE READ-ONLY <span class="num">5.2</span></div>
+        <div class="en">The console shows active Bills, commit-reveal ballots, and the Laws of Themis — but operators cannot propose, vote, or tally.</div>
+        <div class="ko">콘솔은 활성 법안, 커밋-리빌 투표, Themis 법전을 표시한다 — 그러나 운영자는 발의·투표·집계할 수 없다.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="s-clay">
+    <div class="sec-head"><h2>6 · Invariants</h2><span class="ko">불변식</span></div>
+    <blockquote>
+      <strong>Agency scale enforced.</strong> Every operator action declares its tier in the UI; the audit chain records the tier at commit time.
+      <em>행위성 척도 강제. 모든 운영자 행위는 UI에서 자신의 등급을 선언하며, 감사 체인은 커밋 시점에 그 등급을 기록한다.</em>
+    </blockquote>
+    <blockquote>
+      <strong>VOTE-05 immunity.</strong> Operators cannot vote, propose, tally, or override at ANY tier including H5. <code>GOVERNANCE_FORBIDDEN_KEYS</code> excludes weight, reputation, relationship_score, and ousia_weight from payloads.
+      <em>VOTE-05 면역. 운영자는 H5를 포함한 어떤 등급에서도 투표·발의·집계·번복할 수 없다. <code>GOVERNANCE_FORBIDDEN_KEYS</code>는 weight, reputation, relationship_score, ousia_weight를 페이로드에서 배제한다.</em>
+    </blockquote>
+    <blockquote>
+      <strong>Tamper-evident audit (R-31-01 zero-diff).</strong> Every <code>operator.*</code> action is itself an audit event; the chain is append-only and hash-linked; deletion never purges audit.
+      <em>변조 탐지 감사 (R-31-01 무차이). 모든 <code>operator.*</code> 행위는 그 자체로 감사 이벤트다; 체인은 추가 전용이며 해시로 연결된다; 삭제는 결코 감사를 비우지 않는다.</em>
+    </blockquote>
+    <div class="grid">
+      <div class="card full">
+        <div class="label">MANAGEMENT ≠ GOVERNANCE <span class="num">6.4</span></div>
+        <div class="en">Administrative tiers never merge with Polis legislation. The Steward Console manages Nous; the Polis governs the Grid. The two surfaces stay distinct by construction.</div>
+        <div class="ko">행정 계층은 결코 Polis 입법과 합쳐지지 않는다. 스튜어드 콘솔은 Nous를 관리하고, Polis는 그리드를 통치한다. 두 표면은 설계상 분리된 채 유지된다.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Noēsis · Steward Console Specification &nbsp;·&nbsp; <a href="index.html">All specifications</a>
+  </footer>
+</div>
+  <script src="spec-nav.js" defer></script>
+</body>
+</html>

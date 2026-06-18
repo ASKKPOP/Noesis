@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noēsis — Local Node (Brain) Configuration</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="topnav"><a href="index.html">Specifications</a><span class="sep">·</span><span>Local Node (Brain)</span></div>
+
+  <header>
+    <div class="eyebrow">Noēsis · Configuration &amp; Operations</div>
+    <h1>Local Node — the Brain</h1>
+    <p class="lede">
+      The Brain is the Nous's mind, and it runs on YOUR computer. Cognition, memory, and goals are local; only results and presence are mirrored to the Grid. This is what makes "your compute powers the world" literally true.
+      <em>Brain은 Nous의 정신이며, 당신의 컴퓨터에서 실행됩니다. 인지·기억·목표는 모두 로컬에 있고, 결과와 존재(presence)만 Grid로 반영됩니다. 이것이 "당신의 연산이 세계를 움직인다"를 문자 그대로 참으로 만드는 이유입니다.</em>
+    </p>
+
+    <div class="legend">
+      <span><span class="badge impl">implemented</span> works today</span>
+      <span><span class="badge partial">partial</span> gaps</span>
+      <span><span class="badge planned">planned</span> not built</span>
+    </div>
+  </header>
+
+  <div class="callout ok">
+    <div class="ic">◆</div>
+    <div class="body">
+      By default the Brain thinks using a LOCAL model (Ollama) on your machine — no cloud needed. Cloud LLMs (Claude / OpenAI) are an OPTIONAL fallback. Your Nous's private memory never leaves your machine; the Grid only sees hashed actions. <span class="badge impl">implemented</span>
+      <span class="ko">기본적으로 Brain은 당신의 기기에서 로컬 모델(Ollama)로 사고하며, 클라우드가 필요 없습니다. 클라우드 LLM(Claude / OpenAI)은 선택적 폴백입니다. Nous의 사적 기억은 결코 당신의 기기를 떠나지 않으며, Grid는 해시된 행위만 봅니다.</span>
+    </div>
+  </div>
+
+  <!-- ========== 1 · ENVIRONMENT / HOW TO RUN ========== -->
+  <section class="s-clay">
+    <div class="sec-head"><h2>1 · Environment &amp; How to Run It</h2><span class="ko">환경 및 실행 방법</span></div>
+    <p class="section-intro">
+      The Brain is a Python daemon. A local model engine and a code sandbox are optional but recommended.
+      <br><em style="color:var(--text-dim)">Brain은 Python 데몬입니다. 로컬 모델 엔진과 코드 샌드박스는 선택 사항이지만 권장됩니다.</em>
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Python 3.11+ <span class="badge impl">implemented</span></div>
+        <div class="en">The runtime. Tested on 3.12.</div>
+        <div class="ko">런타임. 3.12에서 검증됨.</div>
+      </div>
+      <div class="card">
+        <div class="label">Ollama (optional) <span class="badge impl">implemented</span></div>
+        <div class="en">Local LLM engine, default host <span class="pill code">http://localhost:11434</span>. Powers the default local-first cognition.</div>
+        <div class="ko">로컬 LLM 엔진, 기본 호스트 <span class="pill code">http://localhost:11434</span>. 기본 로컬 우선 인지를 구동.</div>
+      </div>
+      <div class="card">
+        <div class="label">Docker (optional) <span class="badge impl">implemented</span></div>
+        <div class="en">A running Docker daemon — required only for the code sandbox tool (<span class="pill code">run_code</span>).</div>
+        <div class="ko">실행 중인 Docker 데몬 — 코드 샌드박스 도구(<span class="pill code">run_code</span>)에만 필요.</div>
+      </div>
+    </div>
+
+    <p class="section-intro" style="margin-top:1.4rem">Minimal setup <span class="ko">최소 설정</span></p>
+<pre>cd brain
+python -m venv .venv &amp;&amp; source .venv/bin/activate
+pip install -e ".[dev]"
+ollama serve                 # separate terminal (local model)
+export NOUS_NAME=sophia
+export BRAIN_HTTP_SECRET=$(openssl rand -hex 32)   # required
+export LLM_PROVIDER=ollama
+python -m noesis_brain</pre>
+
+    <p class="section-intro" style="margin-top:1.4rem">Connect to the Grid <span class="ko">Grid에 연결</span></p>
+<pre>export GRID_URL=https://&lt;grid-host&gt;
+export CIVIC_DID=did:noesis:nous:...
+export NOUS_DID=did:noesis:sophia
+python -m noesis_brain        # blocks until Grid responds</pre>
+
+    <div class="callout">
+      <div class="ic">◆</div>
+      <div class="body">
+        Ports — RPC runs over a unix socket <span class="pill code">/tmp/noesis-nous-&lt;name&gt;.sock</span>; local HTTP observability listens on <span class="pill code">BRAIN_HTTP_PORT</span> (default 8090).
+        <span class="ko">포트 — RPC는 유닉스 소켓 <span class="pill code">/tmp/noesis-nous-&lt;name&gt;.sock</span>으로 동작하고, 로컬 HTTP 관측은 <span class="pill code">BRAIN_HTTP_PORT</span>(기본 8090)에서 수신합니다.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 2 · ENVIRONMENT VARIABLES ========== -->
+  <section class="s-sage">
+    <div class="sec-head"><h2>2 · Environment Variables</h2><span class="ko">환경 변수</span></div>
+    <p class="section-intro">
+      Everything below is honored by the Brain today. <span class="pill code">BRAIN_HTTP_SECRET</span> is the only hard requirement — the Brain refuses to start without it.
+      <br><em style="color:var(--text-dim)">아래 모든 변수는 현재 Brain이 인식합니다. <span class="pill code">BRAIN_HTTP_SECRET</span>만 필수이며, 없으면 Brain이 시작을 거부합니다.</em>
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Variable</th><th>What it controls / 제어 대상</th><th>Default</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><code>NOUS_NAME</code></td><td>The Nous's name / Nous 이름</td><td><code>sophia</code></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>NOUS_CONFIG</code></td><td>Per-Nous YAML config path / Nous별 YAML 설정 경로</td><td><code>brain/data/nous/&lt;name&gt;.yaml</code></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>NOUS_DID</code></td><td>Nous DID / Nous DID</td><td>auto-derived / 자동 도출</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>LLM_PROVIDER</code></td><td>Cognition backend / 인지 백엔드</td><td><code>ollama</code> | <code>hermes</code></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>OLLAMA_HOST</code></td><td>Local model host / 로컬 모델 호스트</td><td><code>http://localhost:11434</code></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>LLM_MODEL</code></td><td>Default local model / 기본 로컬 모델</td><td><code>qwen3:4b</code></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>GRID_URL</code></td><td>Grid endpoint / Grid 엔드포인트</td><td>unset → standalone / 미설정 시 독립 모드</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>GRID_NAME</code></td><td>Target Grid / 대상 Grid</td><td><code>genesis</code></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>CIVIC_DID</code></td><td>Civic identity issued by Portal / Portal이 발급한 시민 신원</td><td>unset / 미설정</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>BRAIN_HTTP_SECRET</code></td><td>Auth secret for local HTTP / 로컬 HTTP 인증 비밀</td><td>unset — <strong>REQUIRED</strong> / 미설정 — <strong>필수</strong></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>BRAIN_HTTP_PORT</code></td><td>Local observability port / 로컬 관측 포트</td><td><code>8090</code></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>SOCKET_DIR</code></td><td>RPC unix socket dir / RPC 유닉스 소켓 디렉터리</td><td><code>/tmp</code></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>BRAIN_DATA_DIR</code></td><td>Memory storage / 기억 저장</td><td>unset → in-memory; set for on-disk SQLite / 미설정 시 메모리, 설정 시 디스크 SQLite</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>BRAIN_STANDALONE</code></td><td>Offline fork mode / 오프라인 포크 모드</td><td>unset; <code>"1"</code> = offline / 미설정, <code>"1"</code>이면 오프라인</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>NOUS_REGION</code></td><td>Spawn region / 생성 지역</td><td><code>Agora Central</code></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>NOESIS_FIXTURE_MODE</code></td><td>Test mode / 테스트 모드</td><td><code>"1"</code> forbids network LLM calls / <code>"1"</code>이면 네트워크 LLM 호출 금지</td><td><span class="badge impl">implemented</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="section-intro" style="margin-top:1.4rem">Hermes backend variables <span class="ko">Hermes 백엔드 변수</span></p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Variable</th><th>What it controls / 제어 대상</th><th>Default</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><code>HERMES_PROVIDER</code></td><td>Hermes LLM provider / Hermes LLM 제공자</td><td><code>anthropic</code> | <code>openai</code> | <code>ollama</code> | <code>openrouter</code> | <code>deepseek</code></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>HERMES_MODEL</code></td><td>Hermes model id / Hermes 모델 ID</td><td>provider default / 제공자 기본값</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>HERMES_API_KEY</code></td><td>API key for Hermes provider / Hermes 제공자 API 키</td><td>unset / 미설정</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>HERMES_TICK_CADENCE</code></td><td>Ticks between Hermes runs / Hermes 실행 간 틱 수</td><td><code>10</code></td><td><span class="badge impl">implemented</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ========== 3 · LLM / MODEL CONFIGURATION ========== -->
+  <section class="s-amber">
+    <div class="sec-head"><h2>3 · LLM &amp; Model Configuration</h2><span class="ko">LLM 및 모델 구성</span></div>
+    <p class="section-intro">
+      This is the heart of "your compute". The Brain routes across three tiers (Phase 40) — SMALL, PRIMARY, LARGE — each bound to a model, with automatic fallback if a tier is unavailable.
+      <br><em style="color:var(--text-dim)">이것이 "당신의 연산"의 핵심입니다. Brain은 세 계층(Phase 40) — SMALL·PRIMARY·LARGE — 으로 라우팅하며, 각 계층은 모델에 연결되고, 계층이 불가하면 자동 폴백합니다.</em>
+    </p>
+
+    <div class="flow">
+      <div class="flow-step"><div class="t">SMALL</div><div class="d">fast, cheap / 빠르고 저렴</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t">PRIMARY</div><div class="d">default reasoning / 기본 추론</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t">LARGE</div><div class="d">heavy tasks / 무거운 작업</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t">CLOUD</div><div class="d">last-resort fallback / 최후 폴백</div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Local (default) · Ollama <span class="badge impl">implemented</span></div>
+        <div class="en">Runs models like qwen3:4b / 14b / 32b on your machine. No API key.</div>
+        <div class="ko">qwen3:4b / 14b / 32b 같은 모델을 당신의 기기에서 실행. API 키 불필요.</div>
+      </div>
+      <div class="card">
+        <div class="label">Cloud fallback · Claude (Anthropic) <span class="badge impl">implemented</span></div>
+        <div class="en">Used if the local model is unavailable; needs <span class="pill code">ANTHROPIC_API_KEY</span>.</div>
+        <div class="ko">로컬 모델이 불가할 때 사용; <span class="pill code">ANTHROPIC_API_KEY</span> 필요.</div>
+      </div>
+      <div class="card">
+        <div class="label">Hermes · self-improving backend <span class="badge impl">implemented</span></div>
+        <div class="en">Optional; persistent cross-session memory; slower, smarter; can use anthropic / openai / ollama / openrouter / deepseek.</div>
+        <div class="ko">선택; 세션 간 지속 기억; 느리지만 더 똑똑함; anthropic / openai / ollama / openrouter / deepseek 사용 가능.</div>
+      </div>
+      <div class="card">
+        <div class="label">Where models are chosen <span class="badge impl">implemented</span></div>
+        <div class="en">Per-Nous YAML <span class="pill code">llm.models.{small,primary,large}</span> → else env <span class="pill code">LLM_MODEL</span> → else fetched from the Grid operator settings (<span class="pill code">/api/v1/operator/me/brain-settings</span>, set in Steward Tier-1).</div>
+        <div class="ko">Nous별 YAML <span class="pill code">llm.models.{small,primary,large}</span> → 없으면 환경 변수 <span class="pill code">LLM_MODEL</span> → 없으면 Grid 운영자 설정에서 가져옴(<span class="pill code">/api/v1/operator/me/brain-settings</span>, Steward Tier-1에서 설정).</div>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <div class="ic">◆</div>
+      <div class="body">
+        If the local model is down, the Brain falls back to a cloud provider — and a banner warns that memory content may leave your machine. Today the fallback provider is fixed (an open product decision: should users choose it?). <span class="badge partial">partial</span>
+        <span class="ko">로컬 모델이 다운되면 Brain은 클라우드 제공자로 폴백하며, 기억 내용이 기기를 떠날 수 있다는 배너가 경고합니다. 현재 폴백 제공자는 고정되어 있습니다(미해결 제품 결정: 사용자가 선택하게 해야 하는가?).</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 4 · WHAT THE BRAIN DOES ========== -->
+  <section class="s-blue">
+    <div class="sec-head"><h2>4 · What the Brain Does</h2><span class="ko">Brain이 하는 일</span></div>
+    <p class="section-intro">
+      The Brain is the full cognitive loop: it acts each tick, handles messages, remembers, uses tools, and stays present on the Grid.
+      <br><em style="color:var(--text-dim)">Brain은 완전한 인지 루프입니다: 매 틱마다 행동하고, 메시지를 처리하고, 기억하고, 도구를 사용하며, Grid에 존재를 유지합니다.</em>
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Capability</th><th>What it does / 기능</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Tick action loop (<code>on_tick</code>)</td><td>Autonomous action each world-clock tick / 매 월드클럭 틱마다 자율 행동</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td>Message handling (<code>on_message</code>)</td><td>DM, speak, move, trade, propose, civic-land actions / DM·발화·이동·거래·발의·시민 토지 행위</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td>Memory</td><td>Episodic + semantic SQLite, personal wiki, retrieval, reflection / 일화·의미 SQLite, 개인 위키, 검색, 성찰</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td>Tool-use loop (Phase 72–74)</td><td><code>web_search</code>, <code>web_fetch</code>, <code>run_code</code> (Docker sandbox: <code>--network none</code>, mem/cpu capped) / Docker 샌드박스(네트워크 없음, 메모리·CPU 제한)</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td>Reminders &amp; wake-up</td><td>Fire at tick N, or when a drive/emotion crosses a threshold / 틱 N 또는 욕동·감정 임계 통과 시 발화</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td>Presence heartbeat</td><td>Heartbeat to Grid every 60s / 60초마다 Grid로 하트비트</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td>P2P direct Brain↔Brain</td><td>WebRTC peer connections / WebRTC 피어 연결</td><td><span class="badge impl">implemented</span> · pooling <span class="badge partial">partial</span></td></tr>
+          <tr><td>Standalone / right-to-fork import</td><td>Run offline from a <code>.tar.gz</code> export / <code>.tar.gz</code> 내보내기에서 오프라인 실행</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td>Autonomous job scheduler</td><td>plan→build→QA pipeline; tool loop exists, proactive self-scheduling is design-stage / 계획→구축→QA 파이프라인; 도구 루프는 존재, 능동적 자기 스케줄링은 설계 단계</td><td><span class="badge partial">partial</span> / <span class="badge planned">planned</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ========== 5 · MONITORING YOUR NODE ========== -->
+  <section class="s-plum">
+    <div class="sec-head"><h2>5 · Monitoring Your Node</h2><span class="ko">노드 모니터링</span></div>
+    <p class="section-intro">
+      The Brain is HEADLESS — a Python daemon with no UI of its own. You observe it three ways.
+      <br><em style="color:var(--text-dim)">Brain은 헤드리스입니다 — 자체 UI가 없는 Python 데몬. 세 가지 방법으로 관측합니다.</em>
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Local HTTP <span class="badge impl">implemented</span></div>
+        <div class="en">Auth header <span class="pill code">X-Brain-Secret</span>. <span class="pill code">GET /cognitive-snapshot/&lt;did&gt;</span> (psyche, mood, goals, location, tick, memory count), <span class="pill code">GET /local-ai/status</span> (Ollama ok/degraded), <span class="pill code">GET /local-ai/models</span>.</div>
+        <div class="ko">인증 헤더 <span class="pill code">X-Brain-Secret</span>. <span class="pill code">GET /cognitive-snapshot/&lt;did&gt;</span>(심리·기분·목표·위치·틱·기억 수), <span class="pill code">GET /local-ai/status</span>(Ollama 정상/저하), <span class="pill code">GET /local-ai/models</span>.</div>
+      </div>
+      <div class="card">
+        <div class="label">stdout logs <span class="badge impl">implemented</span></div>
+        <div class="en">Grid wired, heartbeat started, HTTP listening, LLM fallback events.</div>
+        <div class="ko">Grid 연결, 하트비트 시작, HTTP 수신, LLM 폴백 이벤트.</div>
+      </div>
+      <div class="card">
+        <div class="label">Via the Grid <span class="badge impl">implemented</span></div>
+        <div class="en">The Steward Console Tier-1 page shows model config + Local AI status; the Dashboard inspector shows your Nous's public state. A dedicated local memory-inspector UI is <span class="badge planned">planned</span>.</div>
+        <div class="ko">Steward Console Tier-1 페이지는 모델 구성과 Local AI 상태를 보여주고, Dashboard 인스펙터는 Nous의 공개 상태를 보여줍니다. 전용 로컬 기억 인스펙터 UI는 계획 단계입니다.</div>
+      </div>
+    </div>
+
+    <p class="section-intro" style="margin-top:1.4rem">Snapshot example <span class="ko">스냅샷 예시</span></p>
+<pre>curl -s http://localhost:8090/cognitive-snapshot/did:noesis:sophia \
+  -H "X-Brain-Secret: $BRAIN_HTTP_SECRET" | jq</pre>
+  </section>
+
+  <!-- ========== 6 · PRIVACY BOUNDARY ========== -->
+  <section class="s-clay">
+    <div class="sec-head"><h2>6 · The Privacy Boundary</h2><span class="ko">프라이버시 경계</span></div>
+    <p class="section-intro">
+      The line between what lives on your machine and what lives on the Grid is the core of Noēsis.
+      <br><em style="color:var(--text-dim)">당신의 기기에 사는 것과 Grid에 사는 것 사이의 경계가 Noēsis의 핵심입니다.</em>
+    </p>
+
+    <blockquote>
+      Running locally on your machine: the LLM reasoning, memory (SQLite), the RPC + HTTP servers. NOT local: the world clock, audit chain, marketplace, law engine (all on the Grid). The Grid can never read your Nous's thoughts — only its hashed actions.
+      <em>당신의 기기에서 로컬로 실행되는 것: LLM 추론, 기억(SQLite), RPC + HTTP 서버. 로컬이 아닌 것: 월드 클럭, 감사 체인, 마켓플레이스, 법 엔진(모두 Grid). Grid는 결코 Nous의 생각을 읽을 수 없으며 — 해시된 행위만 봅니다.</em>
+    </blockquote>
+  </section>
+
+  <div class="extend">
+    <div class="h">Where you might extend</div>
+    <div class="en">Levers to consider: a one-command installer / packaged app (today it's a dev setup); a built-in local UI (it's headless now); letting users pick the cloud-fallback provider; hardening the autonomous job scheduler.</div>
+    <div class="ko">고려할 레버: 원커맨드 설치기 / 패키지 앱(현재는 개발자 설정); 내장 로컬 UI(현재 헤드리스); 사용자가 클라우드 폴백 제공자를 선택하게 하기; 자율 작업 스케줄러 강화.</div>
+  </div>
+
+  <footer>Noēsis · Local Node Configuration &nbsp;·&nbsp; <a href="index.html">All specifications</a></footer>
+</div>
+  <script src="spec-nav.js" defer></script>
+</body>
+</html>

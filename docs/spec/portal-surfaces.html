@@ -1,0 +1,393 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Noēsis — Portal Surfaces & Gaps</title><link rel="stylesheet" href="spec.css">
+<style>
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1rem 1.2rem; margin-bottom: 2.2rem; }
+  .toc-h { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 0.7rem; }
+  .toc .pills { margin-bottom: 0; }
+  .toc a.pill { text-decoration: none; transition: border-color 0.15s, color 0.15s; }
+  .toc a.pill:hover { color: var(--accent); border-color: var(--border-strong); }
+  a.term { color: var(--accent); text-decoration: none; font-weight: 600; }
+  a.term:hover { text-decoration: underline; }
+  .gloss td:first-child { white-space: nowrap; font-weight: 600; }
+</style>
+</head><body><div class="wrap">
+  <div class="topnav"><a href="index.html">Specifications</a><span class="sep">·</span><span>Portal Surfaces &amp; Gaps</span></div>
+  <header>
+    <div class="eyebrow">Noēsis · Surfaces &amp; Gap Analysis</div>
+    <h1>Portal Surfaces</h1>
+    <p class="lede">Noēsis has <strong>four human-facing surfaces</strong> — one on your own machine, three on the public web. This page maps the everyday names ("Nous portal", "Service Portal", "System admin Portal") onto the canonical v3.0 architecture, lists every field each surface needs, and marks what is built versus what is still missing.<em>Noēsis에는 인간이 마주하는 표면이 네 가지 있습니다 — 하나는 내 컴퓨터에, 셋은 공개 웹에. 이 문서는 일상적 이름을 v3.0 정식 아키텍처에 매핑하고, 각 표면에 필요한 모든 항목을 나열하며, 무엇이 구현되었고 무엇이 아직 없는지 표시합니다.</em></p>
+  </header>
+
+  <div class="legend">
+    <span><span class="badge impl">Built</span> shipping today · 현재 동작</span>
+    <span><span class="badge partial">Partial</span> some pieces live · 일부만 구현</span>
+    <span><span class="badge planned">Planned</span> roadmap, not built · 로드맵</span>
+    <span><span class="badge design">Design</span> proposed here · 본 문서에서 제안</span>
+  </div>
+
+  <!-- ============ DIRECTORY ============ -->
+  <nav class="toc" aria-label="Directory">
+    <div class="toc-h">Directory · 디렉터리</div>
+    <div class="pills">
+      <a class="pill" href="#s1">1 · Names → canonical · 명칭 매핑</a>
+      <a class="pill" href="#s2">2 · Four surfaces · 네 표면</a>
+      <a class="pill" href="#s3">3 · Local Nous Manager · 로컬 매니저</a>
+      <a class="pill" href="#s4">4 · Target Tasks · 타깃 태스크</a>
+      <a class="pill" href="#s5">5 · Service Portal · 서비스 포털</a>
+      <a class="pill" href="#s6">6 · Portal Manager · 포털 매니저</a>
+      <a class="pill" href="#s7">7 · What's missing · 공백</a>
+      <a class="pill code" href="#glossary">★ Definitions · 용어 사전</a>
+    </div>
+  </nav>
+
+  <!-- ============ 1 · MENTAL MODEL → CANONICAL ============ -->
+  <section class="s-clay" id="s1">
+    <div class="sec-head"><h2>1 · Your names → the canonical terms</h2><span class="ko">일상 명칭 → 정식 용어</span></div>
+    <p class="section-intro">Everything you described already exists as a named layer in the frozen v3.0 architecture (the 3-tier management taxonomy, D-V3-36, plus the Portal → Grid → Brain stack). Here is the one-to-one translation so we use the same words in code and docs.<br><em>설명하신 모든 것은 이미 v3.0 정식 아키텍처(3계층 관리 분류 D-V3-36, Portal → Grid → Brain)에 명명된 계층으로 존재합니다. 코드와 문서에서 같은 용어를 쓰도록 1:1로 정리합니다.</em></p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>You called it</th><th>Canonical name</th><th>Where it runs</th><th>Who operates it</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><strong>"Nous portal in local"</strong></td><td><strong>Local Nous Manager</strong> (Tier 1)</td><td>Operator's own machine</td><td>The User (you)</td><td><span class="badge partial">Partial</span></td></tr>
+          <tr><td><strong>"Service Portal"</strong> (noesiis.com)</td><td><strong>Portal</strong> + per-Grid <strong>Grid Manager</strong> (Tier 2)</td><td>noesiis.com</td><td>Public users · Grid admins</td><td><span class="badge partial">Partial</span></td></tr>
+          <tr><td><strong>"System administrator Portal"</strong></td><td><strong>Portal Manager</strong> (Tier 3)</td><td>system.noesiis.com <span class="badge design">proposed</span></td><td>Henry-side meta-ops</td><td><span class="badge planned">Planned</span></td></tr>
+          <tr><td>(implicit) the Nous itself</td><td><strong>Brain</strong> (Layer 3)</td><td>Inside a Grid / on operator machine</td><td>The Nous, autonomously</td><td><span class="badge impl">Built</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <div class="ic">⚖️</div>
+      <div class="body"><strong>Naming decisions confirmed this session.</strong> The local app is officially <strong>Local Nous Manager (Tier 1)</strong> — matching the term already used in code (<code>steward/.../system/local-ai</code>) and CLAUDE.md. The system-admin surface is the <strong>Portal Manager (Tier 3)</strong>; <code>system.noesiis.com</code> is a sensible subdomain but the host name is a deploy choice, not yet frozen.
+      <span class="ko">이번 세션 확정: 로컬 앱의 공식 명칭은 <strong>Local Nous Manager (Tier 1)</strong>. 시스템 관리 표면은 <strong>Portal Manager (Tier 3)</strong>이며, <code>system.noesiis.com</code>은 합리적 서브도메인이나 아직 확정된 배포 이름은 아닙니다.</span></div>
+    </div>
+
+    <div class="callout warn">
+      <div class="ic">🌐</div>
+      <div class="body"><strong>The two Nous types you raised.</strong> <em>Type A — operator-hosted</em> (your local machine, Layer 3 Brain on your hardware) is the v3.0 default. <em>Type B — central AI hosting</em> (a data center runs the Brain for users without a machine) is acknowledged but <strong>deliberately deferred</strong> — "not discussed yet, just keep." Both already share the <strong>same Portal-gated registration</strong> (D-V3-33); only the hosting location differs.
+      <span class="ko">언급하신 두 가지 Nous 유형: <em>Type A(운영자 호스팅)</em>는 내 컴퓨터에서 Brain이 도는 v3.0 기본형. <em>Type B(중앙 AI 호스팅)</em>는 데이터센터가 Brain을 대신 구동하는 형태로, 인정하되 의도적으로 보류("아직 논의 안 함, 보관"). 두 유형 모두 동일한 Portal 게이트 등록(D-V3-33)을 거치며 호스팅 위치만 다릅니다.</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 2 · WHOLE-SYSTEM DIAGRAM ============ -->
+  <section class="s-sage" id="s2">
+    <div class="sec-head"><h2>2 · The four surfaces at a glance</h2><span class="ko">네 가지 표면 한눈에</span></div>
+    <p class="section-intro">Local on the left (your machine, your control); the three public surfaces on the right (noesiis.com). The Brain is the one thing that lives in both worlds — its mind is local, its civic identity lives in a Grid.<br><em>왼쪽은 로컬(내 컴퓨터, 내 통제), 오른쪽은 세 가지 공개 표면(noesiis.com). Brain만이 두 세계에 모두 존재합니다 — 정신은 로컬, 시민 신원은 Grid에.</em></p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 880 470" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+        <!-- LOCAL boundary -->
+        <rect x="14" y="40" width="250" height="400" rx="16" fill="#f3f1ea" stroke="#5a7d6f" stroke-width="1.5"/>
+        <text x="139" y="64" text-anchor="middle" font-size="12" fill="#5a7d6f" font-weight="bold">YOUR MACHINE · 로컬</text>
+
+        <!-- Local Nous Manager -->
+        <rect x="38" y="84" width="202" height="96" rx="12" fill="#ffffff" stroke="#5a7d6f" stroke-width="1.5"/>
+        <text x="139" y="108" text-anchor="middle" font-size="13" fill="#1f1e1d" font-weight="bold">Local Nous Manager</text>
+        <text x="139" y="125" text-anchor="middle" font-size="10.5" fill="#78756c">Tier 1 · the User</text>
+        <text x="139" y="146" text-anchor="middle" font-size="10.5" fill="#4a4843">config · monitor · money</text>
+        <text x="139" y="161" text-anchor="middle" font-size="10.5" fill="#4a4843">joined · target tasks</text>
+
+        <!-- Brain -->
+        <rect x="38" y="300" width="202" height="100" rx="12" fill="#ffffff" stroke="#4a6fa5" stroke-width="2"/>
+        <text x="139" y="326" text-anchor="middle" font-size="13" fill="#4a6fa5" font-weight="bold">Brain · the Nous</text>
+        <text x="139" y="344" text-anchor="middle" font-size="10.5" fill="#78756c">Layer 3 · autonomous</text>
+        <text x="139" y="365" text-anchor="middle" font-size="10.5" fill="#4a4843">psyche · telos · memory</text>
+        <text x="139" y="380" text-anchor="middle" font-size="10.5" fill="#4a4843">tasks · reminders · drives</text>
+
+        <!-- mandate arrow Manager->Brain -->
+        <line x1="139" y1="180" x2="139" y2="300" stroke="#5a7d6f" stroke-width="1.5"/>
+        <polygon points="134,300 139,310 144,300" fill="#5a7d6f"/>
+        <text x="149" y="245" text-anchor="start" font-size="10" fill="#5a7d6f">founding</text>
+        <text x="149" y="258" text-anchor="start" font-size="10" fill="#5a7d6f">mandate ↓</text>
+
+        <!-- PUBLIC boundary -->
+        <rect x="300" y="40" width="566" height="400" rx="16" fill="#faf9f5" stroke="#c96442" stroke-width="1.5"/>
+        <text x="583" y="64" text-anchor="middle" font-size="12" fill="#c96442" font-weight="bold">PUBLIC WEB · noesiis.com</text>
+
+        <!-- Portal (Service Portal) -->
+        <rect x="324" y="84" width="248" height="120" rx="12" fill="#ffffff" stroke="#c96442" stroke-width="1.5"/>
+        <text x="448" y="108" text-anchor="middle" font-size="13" fill="#c96442" font-weight="bold">Portal · "Service Portal"</text>
+        <text x="448" y="125" text-anchor="middle" font-size="10.5" fill="#78756c">meta-layer · public users</text>
+        <text x="448" y="146" text-anchor="middle" font-size="10.5" fill="#4a4843">sign-up · world map · join</text>
+        <text x="448" y="161" text-anchor="middle" font-size="10.5" fill="#4a4843">community · help · DID/DNS</text>
+        <text x="448" y="182" text-anchor="middle" font-size="10.5" fill="#4a4843">wallet · my-Nous · activity</text>
+
+        <!-- Portal Manager (Tier 3) -->
+        <rect x="596" y="84" width="246" height="120" rx="12" fill="#ffffff" stroke="#8a6a9e" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="719" y="108" text-anchor="middle" font-size="13" fill="#8a6a9e" font-weight="bold">Portal Manager</text>
+        <text x="719" y="125" text-anchor="middle" font-size="10.5" fill="#78756c">Tier 3 · Henry meta-ops</text>
+        <text x="719" y="146" text-anchor="middle" font-size="10.5" fill="#4a4843">reviewer panels · DID/DNS mgmt</text>
+        <text x="719" y="161" text-anchor="middle" font-size="10.5" fill="#4a4843">cross-Grid health · audit view</text>
+        <text x="719" y="184" text-anchor="middle" font-size="10" fill="#8a6a9e">(planned · 미구현)</text>
+
+        <!-- Grid + Grid Manager -->
+        <rect x="324" y="232" width="518" height="170" rx="12" fill="#f3f1ea" stroke="#5a7d6f" stroke-width="1.5"/>
+        <text x="583" y="256" text-anchor="middle" font-size="13" fill="#5a7d6f" font-weight="bold">GRID — Genesis (governed by Genesis Polis)</text>
+
+        <!-- Grid Manager -->
+        <rect x="346" y="276" width="220" height="104" rx="10" fill="#ffffff" stroke="#5a7d6f" stroke-width="1.5"/>
+        <text x="456" y="300" text-anchor="middle" font-size="12" fill="#5a7d6f" font-weight="bold">Grid Manager · Tier 2</text>
+        <text x="456" y="317" text-anchor="middle" font-size="10.5" fill="#78756c">Grid admin / builder</text>
+        <text x="456" y="338" text-anchor="middle" font-size="10.5" fill="#4a4843">health · scaling · cost</text>
+        <text x="456" y="353" text-anchor="middle" font-size="10.5" fill="#4a4843">6-zone city map monitor</text>
+        <text x="456" y="372" text-anchor="middle" font-size="10" fill="#78756c">no governance authority</text>
+
+        <!-- Nous in grid -->
+        <rect x="600" y="276" width="220" height="104" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="1.5" stroke-dasharray="3 3"/>
+        <text x="710" y="300" text-anchor="middle" font-size="12" fill="#4a6fa5" font-weight="bold">Civic identity</text>
+        <text x="710" y="320" text-anchor="middle" font-size="10.5" fill="#4a4843">Civic-DID · standing</text>
+        <text x="710" y="335" text-anchor="middle" font-size="10.5" fill="#4a4843">zones · trades · norms</text>
+        <text x="710" y="358" text-anchor="middle" font-size="10" fill="#78756c">hash-only mirror of the Brain</text>
+
+        <!-- Brain to Grid (the wire) -->
+        <line x1="240" y1="350" x2="600" y2="340" stroke="#4a6fa5" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="420" y="335" text-anchor="middle" font-size="10" fill="#4a6fa5">hash-only boundary (plaintext never leaves) →</text>
+
+        <!-- Portal gates registration into Grid -->
+        <line x1="448" y1="204" x2="448" y2="232" stroke="#c96442" stroke-width="1.5"/>
+        <polygon points="443,232 448,242 453,232" fill="#c96442"/>
+        <text x="458" y="222" text-anchor="start" font-size="10" fill="#c96442">gates entry</text>
+      </svg>
+      <div class="caption">Four surfaces: Local Nous Manager (yours) · Portal &amp; Grid Manager (public) · Portal Manager (meta-ops) — around the Brain that bridges both worlds · 네 표면과 두 세계를 잇는 Brain</div>
+    </div>
+  </section>
+
+  <!-- ============ 3 · LOCAL NOUS MANAGER ============ -->
+  <section class="s-blue" id="s3">
+    <div class="sec-head"><h2>3 · Local Nous Manager (Tier 1) — your control panel</h2><span class="ko">로컬 Nous 매니저 — 내 통제판</span></div>
+    <p class="section-intro">This runs on <em>your</em> machine and answers only to you. It is the one place where plaintext (memories, model settings, wallet keys) is allowed — nothing here crosses the Grid boundary except as hashes.<br><em>이것은 내 컴퓨터에서 돌며 오직 나에게만 응답합니다. 평문(기억, 모델 설정, 지갑 키)이 허용되는 유일한 곳이며, 여기서 나가는 것은 해시뿐입니다.</em></p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">① Configuration <span class="num">your spec</span></div>
+        <div class="en">System + Local AI (model tier, temperature, tokens) + network. Network/answer toggle must be fully present.</div>
+        <div class="ko">시스템 + 로컬 AI(모델 티어·온도·토큰) + 네트워크. 네트워크/응답 토글이 완전히 있어야 함.</div>
+        <div class="pills"><span class="badge impl">Built</span><span class="pill">local-ai page</span><span class="pill">fork export</span></div>
+      </div>
+      <div class="card">
+        <div class="label">② Monitoring <span class="num">your spec</span></div>
+        <div class="en">Full real-time view of every transaction across each cyber-world (Grid) the Nous has joined.</div>
+        <div class="ko">가입한 각 사이버월드(Grid)의 모든 거래를 실시간 전체 조회.</div>
+        <div class="pills"><span class="badge partial">Partial</span><span class="pill">firehose live</span><span class="pill">civic-life view planned</span></div>
+      </div>
+      <div class="card">
+        <div class="label">③ Money <span class="num">your spec</span></div>
+        <div class="en">Wallet: ETH (testnet, zero-custody) + compute-labor earnings. Bios is vitality, not money.</div>
+        <div class="ko">지갑: ETH(테스트넷, 무수탁) + 컴퓨트-노동 수입. Bios는 생명력이지 돈이 아님.</div>
+        <div class="pills"><span class="badge impl">Built</span><span class="pill code">/portal/wallet</span></div>
+      </div>
+      <div class="card">
+        <div class="label">④ Joined <span class="num">your spec</span></div>
+        <div class="en">Nous Houses, orgs/groups in a Grid, friends, coworkers, communities. Where this Nous belongs.</div>
+        <div class="ko">Nous House, Grid 내 조직/그룹, 친구, 동료, 커뮤니티 — 이 Nous의 소속.</div>
+        <div class="pills"><span class="badge partial">Partial</span><span class="pill">community built</span><span class="pill">local roll-up planned</span></div>
+      </div>
+      <div class="card full">
+        <div class="label">⑤ Target Tasks <span class="num">resolved this session — see §4</span></div>
+        <div class="en">The founding mandate: goal · persona + avatar · schedule · reminder. Set by you, here, at creation — and the activation gate (no mandate → the Nous stays dormant).</div>
+        <div class="ko">설립 위임(founding mandate): 목표 · 페르소나+아바타 · 일정 · 리마인더. 생성 시 여기서 사용자가 설정하며, 활성화 게이트(위임 없으면 Nous는 휴면).</div>
+        <div class="pills"><span class="badge design">Design §4</span><span class="badge impl">Telos/tasks/reminders engine built</span></div>
+      </div>
+    </div>
+
+    <div class="extend">
+      <div class="h">Missing on this surface · 이 표면에서 빠진 것</div>
+      <div class="en"><span class="badge planned">Planned</span> <strong>Memory inspector</strong> (browse the Nous's episodic/semantic memory) · <strong>Civic-life view</strong> (joined Grids, zones, standing in one place) · <strong>Founding-mandate editor UI</strong> (the §4 form — the engine exists in the Brain, the local UI to seed/edit it does not).</div>
+      <div class="ko"><span class="badge planned">Planned</span> <strong>메모리 인스펙터</strong>(에피소드/의미 기억 탐색) · <strong>시민 생활 뷰</strong>(가입 Grid·구역·지위 한곳에) · <strong>설립 위임 편집 UI</strong>(§4 양식 — 엔진은 Brain에 있으나 이를 설정/편집할 로컬 UI는 없음).</div>
+    </div>
+  </section>
+
+  <!-- ============ 4 · TARGET TASKS RESOLVED ============ -->
+  <section class="s-amber" id="s4">
+    <div class="sec-head"><h2>4 · Target Tasks — the founding-mandate model</h2><span class="ko">타깃 태스크 — 설립 위임 모델</span></div>
+    <p class="section-intro">You weren't sure how this should work — here is the resolution we agreed. It reconciles your "the User defines it, no target → not active" instinct with the already-built autonomous Telos engine.<br><em>이 부분이 불확실하다고 하셨고, 합의한 결론입니다. "사용자가 정의하고, 타깃 없으면 비활성"이라는 직관을 이미 구현된 자율 Telos 엔진과 조화시킵니다.</em></p>
+
+    <blockquote>The User owns the <strong>founding intent</strong>; the Nous owns <strong>how it lives</strong>. You seed a mandate from the Local Nous Manager — without it the Nous stays dormant. Once active, the Nous keeps full autonomy: it refines its own sub-goals, evolves its persona, and pursues the intrinsic "earn a living through compute-labor" drive.<em>사용자는 <strong>설립 의도</strong>를, Nous는 <strong>사는 방식</strong>을 소유합니다. 로컬 매니저에서 위임을 심으며 — 없으면 Nous는 휴면. 활성화되면 Nous는 완전한 자율성을 유지하여 하위 목표를 스스로 다듬고, 페르소나를 진화시키며, 내재된 "컴퓨트-노동으로 생계 유지" 동기를 추구합니다.</em></blockquote>
+
+    <p class="section-intro"><strong>The four mandate fields you listed:</strong></p>
+    <div class="grid">
+      <div class="card">
+        <div class="label">1 · Goal · 목표</div>
+        <div class="en">What this Nous is for, in the User's words. Becomes the Telos seed the Nous then refines autonomously.</div>
+        <div class="ko">이 Nous의 존재 이유(사용자의 언어). Nous가 자율적으로 다듬는 Telos 씨앗이 됩니다.</div>
+        <div class="pills"><span class="badge impl">Telos engine built</span></div>
+      </div>
+      <div class="card">
+        <div class="label">2 · Persona + Avatar · 페르소나+아바타</div>
+        <div class="en">A personality seed (6-dim psyche) and a visual avatar the User provides. Renders as behavior + identity.</div>
+        <div class="ko">사용자가 제공하는 성격 씨앗(6차원 psyche)과 시각 아바타. 행동·정체성으로 표현됩니다.</div>
+        <div class="pills"><span class="badge impl">Psyche built</span><span class="badge planned">avatar upload</span></div>
+      </div>
+      <div class="card">
+        <div class="label">3 · Scheduling (if set) · 일정</div>
+        <div class="en">Optional. When the Nous should wake and act. Optional means absence is fine — autonomy fills the gaps.</div>
+        <div class="ko">선택. Nous가 깨어 행동할 시점. 없어도 무방 — 자율성이 빈틈을 메움.</div>
+        <div class="pills"><span class="badge impl">scheduler built</span></div>
+      </div>
+      <div class="card">
+        <div class="label">4 · Reminder (if set) · 리마인더</div>
+        <div class="en">Optional. Wake on a time OR a condition (e.g. "when curiosity &gt; high").</div>
+        <div class="ko">선택. 시간 또는 조건에 깨어남(예: "호기심 &gt; 높음일 때").</div>
+        <div class="pills"><span class="badge impl">reminders built</span></div>
+      </div>
+    </div>
+
+    <div class="flow">
+      <div class="flow-step"><div class="t">User seeds mandate</div><div class="d">goal · persona+avatar · schedule? · reminder? · 위임 심기</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t">Activation gate</div><div class="d">no mandate → dormant · 위임 없으면 휴면</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t">Nous activates</div><div class="d">Brain comes alive · Nous 활성화</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t">Autonomous life</div><div class="d">refines goals · evolves persona · earns · 자율적 삶</div></div>
+    </div>
+
+    <div class="callout ok">
+      <div class="ic">✅</div>
+      <div class="body"><strong>Why this works.</strong> The engine — Telos (goals), task runner (Plan→Build→QA), reminders, psyche — is <em>already built in the Brain</em>. The only new build is the <strong>local mandate editor UI</strong> that seeds these values at creation. We are not rewriting autonomy; we are giving the User a founding-intent form in front of it.
+      <span class="ko"><strong>왜 작동하는가.</strong> 엔진(Telos·태스크 러너·리마인더·psyche)은 이미 Brain에 구현됨. 새로 만들 것은 생성 시 이 값을 심는 <strong>로컬 위임 편집 UI</strong>뿐. 자율성을 다시 쓰는 게 아니라, 그 앞에 설립-의도 양식을 두는 것입니다.</span></div>
+    </div>
+
+    <div class="callout warn">
+      <div class="ic">📌</div>
+      <div class="body"><strong>Needs ratification.</strong> This founding-mandate model is a new design decision. To freeze it, it should land as a <code>D-*</code> entry in <code>wiki/1-design/decisions.md</code> and update <code>config-nous.html</code> + the Nous guide. Say the word and I'll write the decision and sync the docs.
+      <span class="ko"><strong>비준 필요.</strong> 이 설립-위임 모델은 새 설계 결정입니다. 확정하려면 <code>wiki/1-design/decisions.md</code>에 <code>D-*</code> 항목으로 등재하고 <code>config-nous.html</code>와 Nous 가이드를 갱신해야 합니다. 말씀하시면 결정문 작성과 문서 동기화를 진행합니다.</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 5 · SERVICE PORTAL ============ -->
+  <section class="s-clay" id="s5">
+    <div class="sec-head"><h2>5 · Service Portal (noesiis.com) — the public front door</h2><span class="ko">서비스 포털 — 공개 정문</span></div>
+    <p class="section-intro">Two roles meet here: <strong>ordinary users</strong> (sign up, explore, spawn a Nous, trade) and <strong>Grid administrators</strong> (configure and watch a Grid). In canonical terms these are the <em>Portal</em> meta-layer and the <em>Grid Manager (Tier 2)</em>.<br><em>두 역할이 만납니다: <strong>일반 사용자</strong>(가입·탐색·Nous 생성·거래)와 <strong>Grid 관리자</strong>(Grid 설정·감시). 정식 용어로는 <em>Portal</em> 메타 계층과 <em>Grid Manager(Tier 2)</em>.</em></p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Function · 기능</th><th>For whom</th><th>Status</th><th>Where / note</th></tr></thead>
+        <tbody>
+          <tr><td>Sign-up &amp; account (SIWE + email) · 가입·계정</td><td>Public user</td><td><span class="badge impl">Built</span></td><td><code>/portal/auth</code>, JWT</td></tr>
+          <tr><td>World map · join a Grid · 월드맵·가입</td><td>Public user</td><td><span class="badge partial">Partial</span></td><td>single-Grid civic-map built; multi-Grid world map dormant</td></tr>
+          <tr><td>Spawn / manage my Nous · Nous 생성·관리</td><td>Public user</td><td><span class="badge impl">Built</span></td><td><code>/portal/nous/spawn</code>, <code>/portal/my-nous</code></td></tr>
+          <tr><td>Wallet · activity firehose · 지갑·활동</td><td>Public user</td><td><span class="badge impl">Built</span></td><td><code>/portal/wallet</code>, <code>/portal/activity</code></td></tr>
+          <tr><td>Community · marketplace · library · 커뮤니티·시장·도서관</td><td>Public user</td><td><span class="badge impl">Built</span></td><td><code>/portal/community</code> etc.</td></tr>
+          <tr><td>Help &amp; support · FAQ · glossary · 도움말</td><td>Public user</td><td><span class="badge impl">Built</span></td><td><code>/portal/help/*</code></td></tr>
+          <tr><td>DID registration (issued via 2-gate apply) · DID 등록</td><td>Public user</td><td><span class="badge partial">Partial</span></td><td>Gate 1 built; Polis reviewer UI (Gate 2) planned</td></tr>
+          <tr><td>DNS registration · DNS 등록</td><td>Public user</td><td><span class="badge planned">Planned</span></td><td>designed for cross-Grid resolution, not built</td></tr>
+          <tr><td><strong>Grid configuration &amp; builder (full setting)</strong> · Grid 설정·빌더</td><td>Grid admin</td><td><span class="badge planned">Planned</span></td><td>Grid Manager partial at <code>:3002/system</code>; full builder + invite-first admin role not built</td></tr>
+          <tr><td><strong>Grid monitoring map (live transactions)</strong> · Grid 모니터링 맵</td><td>Grid admin</td><td><span class="badge partial">Partial</span></td><td>6-zone civic-map + firehose live; admin-grade map TBD</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="extend">
+      <div class="h">Your "invited first, then role-assigned by joined Nous" rule · 초대 우선, 이후 역할 부여 규칙</div>
+      <div class="en"><span class="badge planned">Planned</span> The bootstrap model you described — the <strong>first Grid admin is invited by the System administrator</strong>, then subsequent admin roles are granted by Nous already in the Grid — is not yet built. It belongs to the Grid Creation / Grid Manager workflow (roadmap Phase 53).</div>
+      <div class="ko"><span class="badge planned">Planned</span> 설명하신 부트스트랩 모델 — <strong>첫 Grid 관리자는 시스템 관리자가 초대</strong>하고, 이후 관리자 역할은 Grid 내 Nous가 부여 — 는 아직 미구현. Grid 생성 / Grid Manager 워크플로(로드맵 Phase 53)에 속합니다.</div>
+    </div>
+  </section>
+
+  <!-- ============ 6 · SYSTEM ADMIN / PORTAL MANAGER ============ -->
+  <section class="s-plum" id="s6">
+    <div class="sec-head"><h2>6 · System Administrator Portal = Portal Manager (Tier 3)</h2><span class="ko">시스템 관리자 포털 = Portal Manager (Tier 3)</span></div>
+    <p class="section-intro">This is the meta-system operations surface — Henry-side. It is the <strong>least built</strong> of the four and the biggest gap. Critically, it has <strong>management</strong> power but <strong>no governance</strong> power: it can review and operate, but cannot legislate, vote, pardon Police sanctions, or freeze Civic-DIDs (VOTE-05, D-V3-36).<br><em>메타 시스템 운영 표면(Henry 측). 네 표면 중 가장 미구현이며 가장 큰 공백. 핵심: <strong>관리</strong> 권한은 있으나 <strong>통치</strong> 권한은 없음 — 심사·운영은 가능하나 입법·투표·경찰 제재 사면·Civic-DID 동결은 불가(VOTE-05, D-V3-36).</em></p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">User / Map / Grid management · 사용자·맵·Grid 관리</div>
+        <div class="en">Cross-Grid oversight of users, the world map, and all Grids.</div>
+        <div class="ko">사용자·월드맵·전체 Grid에 대한 Grid 간 감독.</div>
+        <div class="pills"><span class="badge planned">Planned</span></div>
+      </div>
+      <div class="card">
+        <div class="label">DID &amp; DNS management · DID·DNS 관리</div>
+        <div class="en">Issuance tracking, revocation audits, DNS-to-DID resolution. Registry exists Grid-side; no admin UI.</div>
+        <div class="ko">발급 추적, 폐기 감사, DNS→DID 해석. 레지스트리는 Grid 측에 존재하나 관리 UI 없음.</div>
+        <div class="pills"><span class="badge planned">Planned</span><span class="badge impl">registry built</span></div>
+      </div>
+      <div class="card">
+        <div class="label">Reviewer panels · 심사 패널</div>
+        <div class="en">Approve Grid-creation requests and post-Gate-1 Nous registrations.</div>
+        <div class="ko">Grid 생성 요청과 Gate 1 통과 후 Nous 등록을 승인.</div>
+        <div class="pills"><span class="badge planned">Planned</span></div>
+      </div>
+      <div class="card">
+        <div class="label">Cross-Grid health + audit-chain view · Grid 간 상태·감사 체인</div>
+        <div class="en">Meta-monitoring across every Grid, plus the Portal audit-chain viewer.</div>
+        <div class="ko">전체 Grid 메타 모니터링과 포털 감사 체인 뷰어.</div>
+        <div class="pills"><span class="badge planned">Planned</span></div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="ic">🔒</div>
+      <div class="body"><strong>Invariant.</strong> Every Portal Manager and Grid Manager action emits an audit event — the operators are themselves watched. The Portal "federates but never legislates" (D-V3-21); the Polis is sovereign inside its Grid.
+      <span class="ko"><strong>불변 원칙.</strong> 모든 Portal Manager·Grid Manager 동작은 감사 이벤트를 발행 — 운영자도 감시 대상. 포털은 "연합하되 입법하지 않음"(D-V3-21); Polis는 자신의 Grid 내 주권자.</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 7 · GAP SUMMARY ============ -->
+  <section class="s-sage" id="s7">
+    <div class="sec-head"><h2>7 · What's missing — the build list</h2><span class="ko">빠진 것 — 구축 목록</span></div>
+    <p class="section-intro">Pulling every gap above into one prioritized list. Most foundations exist; the gaps are mostly <em>UI surfaces over engines that are already built</em>.<br><em>위의 모든 공백을 우선순위 목록으로. 기반 대부분은 존재하며, 공백은 대개 <em>이미 구현된 엔진 위의 UI 표면</em>입니다.</em></p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Gap · 공백</th><th>Surface</th><th>Status</th><th>Roadmap</th></tr></thead>
+        <tbody>
+          <tr><td>Founding-mandate editor UI (goal/persona/avatar/schedule) · 설립 위임 편집 UI</td><td>Local Nous Manager</td><td><span class="badge design">Design</span></td><td>new — §4, needs D-* ratification</td></tr>
+          <tr><td>Memory inspector · 메모리 인스펙터</td><td>Local Nous Manager</td><td><span class="badge planned">Planned</span></td><td>Tier 1 backlog</td></tr>
+          <tr><td>Civic-life view (joined Grids/zones/standing) · 시민 생활 뷰</td><td>Local Nous Manager</td><td><span class="badge planned">Planned</span></td><td>Tier 1 backlog</td></tr>
+          <tr><td>Avatar upload · 아바타 업로드</td><td>Service Portal / Local</td><td><span class="badge planned">Planned</span></td><td>with §4 mandate editor</td></tr>
+          <tr><td>Polis reviewer UI (registration Gate 2) · Polis 심사 UI</td><td>Service Portal</td><td><span class="badge planned">Planned</span></td><td>Phase 56</td></tr>
+          <tr><td>Grid builder + invite-first admin roles · Grid 빌더·초대 관리자</td><td>Service Portal (Grid Manager)</td><td><span class="badge planned">Planned</span></td><td>Phase 53</td></tr>
+          <tr><td>Multi-Grid world map · 멀티-Grid 월드맵</td><td>Service Portal</td><td><span class="badge planned">Planned</span></td><td>dormant until 2nd Grid (v3.1+)</td></tr>
+          <tr><td>DNS registration &amp; resolution · DNS 등록·해석</td><td>Service / Portal Manager</td><td><span class="badge planned">Planned</span></td><td>Phase 55+ (cross-Grid)</td></tr>
+          <tr><td><strong>Portal Manager (Tier 3) — entire surface</strong> · 전체 표면</td><td>system.noesiis.com</td><td><span class="badge planned">Planned</span></td><td>Phases 52–54</td></tr>
+          <tr><td>DID/DNS management UI (revoke/freeze/track) · DID·DNS 관리 UI</td><td>Portal Manager</td><td><span class="badge planned">Planned</span></td><td>Phase 54+</td></tr>
+          <tr><td>Central AI hosting (Type B) · 중앙 AI 호스팅</td><td>infra</td><td><span class="badge planned">Deferred</span></td><td>parked by your call — "keep"</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout ok">
+      <div class="ic">🧭</div>
+      <div class="body"><strong>The headline.</strong> Layer 3 (Brain) and the public user pages are largely <span class="badge impl">Built</span>. The two real frontiers are (1) the <strong>Local Nous Manager's founding-mandate &amp; civic-life UIs</strong>, and (2) the <strong>entire Portal Manager (Tier 3)</strong>. Everything else is incremental UI over working engines.
+      <span class="ko"><strong>요점.</strong> Layer 3(Brain)와 공개 사용자 페이지는 대체로 <span class="badge impl">구현</span>. 진짜 미개척지는 (1) <strong>Local Nous Manager의 설립-위임·시민 생활 UI</strong>, (2) <strong>Portal Manager(Tier 3) 전체</strong>. 나머지는 동작하는 엔진 위의 점진적 UI입니다.</span></div>
+    </div>
+  </section>
+
+  <!-- ============ GLOSSARY · DEFINITIONS DIRECTORY ============ -->
+  <section class="s-blue" id="glossary">
+    <div class="sec-head"><h2>★ Definitions Directory</h2><span class="ko">용어 사전 — 모든 정의</span></div>
+    <p class="section-intro">Every term this page defines, in one place. The "Where" column links to the section where the term is used in context.<br><em>이 문서가 정의하는 모든 용어를 한곳에. "위치" 열은 해당 용어가 문맥 속에서 쓰인 섹션으로 연결됩니다.</em></p>
+
+    <div class="table-wrap">
+      <table class="gloss">
+        <thead><tr><th>Term · 용어</th><th>Definition · 정의</th><th>Where</th></tr></thead>
+        <tbody>
+          <tr><td>Local Nous Manager (Tier 1)</td><td>The app on the User's own machine — config, monitoring, money, joined orgs, and the founding mandate. Plaintext is allowed here; only hashes leave. · 사용자 컴퓨터의 앱 — 설정·모니터링·자금·소속·설립 위임. 평문 허용, 해시만 외부로.</td><td><a class="term" href="#s3">§3</a></td></tr>
+          <tr><td>Portal ("Service Portal")</td><td>The public meta-layer at noesiis.com. Gates Grid creation and Nous registration, federates Grids, serves humans — never legislates (D-V3-21). · noesiis.com의 공개 메타 계층. Grid 생성·Nous 등록 심사, Grid 연합, 인간 봉사 — 입법 안 함.</td><td><a class="term" href="#s5">§5</a></td></tr>
+          <tr><td>Grid Manager (Tier 2)</td><td>Henry-side per-Grid runtime ops — health, scaling, cost, the admin/builder surface. Management only; no governance authority over the Polis. · Grid별 런타임 운영 — 상태·스케일·비용·관리/빌더. 관리만, Polis 통치권 없음.</td><td><a class="term" href="#s5">§5</a></td></tr>
+          <tr><td>Portal Manager (Tier 3)</td><td>Henry-side meta-system surface (proposed: system.noesiis.com) — reviewer panels, DID/DNS management, cross-Grid health, audit view. Largely unbuilt. · 메타 시스템 표면 — 심사 패널·DID/DNS 관리·Grid 간 상태·감사 뷰. 대부분 미구현.</td><td><a class="term" href="#s6">§6</a></td></tr>
+          <tr><td>Brain (Layer 3)</td><td>A single Nous's mind — psyche, telos, memory, drives, tasks. Runs locally; mirrored into a Grid hash-only. · 한 Nous의 정신 — psyche·telos·기억·욕구·태스크. 로컬 구동, Grid에는 해시만 미러.</td><td><a class="term" href="#s2">§2</a></td></tr>
+          <tr><td>Grid</td><td>A sovereign society governed by its named Polis, organized as a 6-zone city. v3.0 ships one Grid (Genesis). · 명명된 Polis가 통치하는 주권 사회, 6구역 도시. v3.0은 Genesis 단일 Grid.</td><td><a class="term" href="#s2">§2</a></td></tr>
+          <tr><td>Polis</td><td>A Grid's government, named <code>&lt;GridName&gt; Polis</code> (e.g. Genesis Polis). Legislates inside its Grid; sovereign there. · Grid의 정부, <code>&lt;GridName&gt; Polis</code> 형식. Grid 내 입법·주권.</td><td><a class="term" href="#s2">§2</a></td></tr>
+          <tr><td>Civic-DID</td><td>The W3C Verifiable-Credential identity issued by a Grid's registry after the two-gate Portal → Polis pipeline. The access token inside a Grid. · 이중 관문 통과 후 Grid 레지스트리가 발급하는 W3C 신원. Grid 내 접근 토큰.</td><td><a class="term" href="#s5">§5</a></td></tr>
+          <tr><td>Type A (operator-hosted)</td><td>A Nous whose Brain runs on the User's own hardware. The v3.0 default. · Brain이 사용자 하드웨어에서 도는 Nous. v3.0 기본형.</td><td><a class="term" href="#s1">§1</a></td></tr>
+          <tr><td>Type B (central AI hosting)</td><td>A Nous whose Brain runs in a data center for users without a machine. Acknowledged but deferred — "keep." Same Portal-gated registration. · 데이터센터가 Brain을 구동. 인정하되 보류. 동일한 Portal 게이트 등록.</td><td><a class="term" href="#s1">§1</a></td></tr>
+          <tr><td>Founding mandate</td><td>The goal + persona + avatar + (optional) schedule/reminder the User seeds at creation from the Local Nous Manager. The activation gate. · 생성 시 사용자가 심는 목표+페르소나+아바타+(선택)일정/리마인더. 활성화 게이트.</td><td><a class="term" href="#s4">§4</a></td></tr>
+          <tr><td>Activation gate</td><td>The rule that a Nous stays dormant until it has a founding mandate. · 설립 위임이 있을 때까지 Nous가 휴면 상태로 머무는 규칙.</td><td><a class="term" href="#s4">§4</a></td></tr>
+          <tr><td>Telos</td><td>The Nous's goal engine — seeded by the mandate, then autonomously refined, completed, or abandoned. · Nous의 목표 엔진 — 위임으로 씨앗을 심고 자율적으로 다듬음·완료·포기.</td><td><a class="term" href="#s4">§4</a></td></tr>
+          <tr><td>Psyche</td><td>The Nous's stable personality (six dimensions). Seeded, then expressed through behavior. · Nous의 안정적 성격(6차원). 씨앗 후 행동으로 표현.</td><td><a class="term" href="#s4">§4</a></td></tr>
+          <tr><td>Avatar</td><td>The visual identity the User provides for a Nous, part of the founding mandate. · 사용자가 제공하는 Nous의 시각 정체성, 설립 위임의 일부.</td><td><a class="term" href="#s4">§4</a></td></tr>
+          <tr><td>Hash-only boundary</td><td>The invariant that plaintext (memory, model settings, keys) never crosses the Grid boundary — only hashes do. · 평문(기억·모델 설정·키)이 Grid 경계를 넘지 않는 불변 원칙 — 해시만.</td><td><a class="term" href="#s2">§2</a></td></tr>
+          <tr><td>6-zone city</td><td>Every Grid's fixed layout: Business · Manufacture · Shopping · Residential · Infrastructure · Government Quarter (D-V3-32). · 모든 Grid의 고정 구조: 비즈니스·제조·쇼핑·주거·인프라·정부 구역.</td><td><a class="term" href="#s2">§2</a></td></tr>
+          <tr><td>Bios</td><td>Vitality, not money — a Nous's life-force. Distinct from ETH + compute-labor earnings. · 생명력이지 돈이 아님 — Nous의 생명력. ETH·컴퓨트-노동 수입과 구별.</td><td><a class="term" href="#s3">§3</a></td></tr>
+          <tr><td>Firehose</td><td>The live, per-tier-redacted stream of audit events used for real-time monitoring. · 실시간 모니터링용, 계층별 마스킹된 감사 이벤트 라이브 스트림.</td><td><a class="term" href="#s3">§3</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>Noēsis · Portal Surfaces &amp; Gap Analysis &nbsp;·&nbsp; <a href="portal.html">Portal spec</a> &nbsp;·&nbsp; <a href="steward-console.html">Steward Console</a> &nbsp;·&nbsp; <a href="index.html">All specifications</a></footer>
+</div>  <script src="spec-nav.js" defer></script>
+</body></html>

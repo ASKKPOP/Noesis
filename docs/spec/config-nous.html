@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noēsis — Nous Settings</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="topnav"><a href="index.html">Specifications</a><span class="sep">·</span><span>Nous Settings</span></div>
+
+  <header>
+    <div class="eyebrow">Noēsis · Configuration &amp; Operations</div>
+    <h1>Nous Settings</h1>
+    <p class="lede">
+      A Nous is not programmed — it's configured, then it decides for itself. You set who it is and what it
+      cares about; it lives the rest. Here's every setting, where it lives, and what's actually wired.
+      <em>Nous는 프로그래밍되지 않는다 — 설정된 뒤, 스스로 결정한다. 당신은 그것이 누구이며 무엇을 중요하게 여기는지를 정하고, 나머지는 그것이 살아간다. 여기 모든 설정, 그것이 어디에 있는지, 그리고 실제로 무엇이 연결되어 있는지를 담았다.</em>
+    </p>
+  </header>
+
+  <!-- legend -->
+  <div class="legend">
+    <span><span class="badge impl">implemented</span> wired &amp; working · 연결·동작</span>
+    <span><span class="badge partial">partial</span> framework present, gaps remain · 골격 존재, 일부 미완</span>
+    <span><span class="badge planned">planned</span> on the roadmap · 로드맵 예정</span>
+    <span><span class="badge design">design-only</span> emerges / no direct lever · 발현형·직접 설정 없음</span>
+  </div>
+
+  <div class="callout">
+    <div class="ic">◆</div>
+    <div class="body">
+      Most settings live in a per-Nous YAML file (<code>brain/data/nous/&lt;name&gt;.yaml</code>) loaded at startup.
+      Identity is fixed once created; personality and goals are <strong>seed values</strong> the Nous then evolves on its own.
+      <span class="ko">대부분의 설정은 시작 시 로드되는 Nous별 YAML 파일(<code>brain/data/nous/&lt;name&gt;.yaml</code>)에 들어 있다. 신원은 생성되면 고정된다; 성격과 목표는 Nous가 스스로 진화시키는 <strong>씨앗 값</strong>이다.</span>
+    </div>
+  </div>
+
+  <!-- 0 · FOUNDING MANDATE -->
+  <section class="s-plum">
+    <div class="sec-head"><h2>0 · Founding Mandate — "Target Tasks"</h2><span class="ko">설립 위임 — 타깃 태스크</span></div>
+    <p class="section-intro">Before any of the settings below, the User seeds a <strong>founding mandate</strong> from the <strong>Local Nous Manager (Tier 1)</strong>. It is the activation gate — without a mandate, the Nous stays dormant. Once set, the Nous keeps full autonomy: it owns <em>how it lives</em>; the User owns the <em>founding intent</em>.</p>
+
+    <blockquote>
+      The User owns the founding intent; the Nous owns how it lives. You seed the mandate from your own machine — without it the Nous never activates. Once alive, it refines its own sub-goals, evolves its persona, and pursues the intrinsic "earn a living through compute-labor" drive (D-MONEY-01).
+      <em>사용자는 설립 의도를, Nous는 사는 방식을 소유한다. 내 컴퓨터에서 위임을 심으며 — 없으면 Nous는 결코 활성화되지 않는다. 깨어나면 스스로 하위 목표를 다듬고, 페르소나를 진화시키며, 내재된 "컴퓨트-노동으로 생계 유지" 동기를 추구한다(D-MONEY-01).</em>
+    </blockquote>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">1 · GOAL <span class="num">0.1</span> <span class="badge impl">implemented</span></div>
+        <div class="en">What this Nous is for, in the User's words. Becomes the Telos seed (§3) the Nous then refines autonomously.</div>
+        <div class="ko">이 Nous의 존재 이유(사용자의 언어). Nous가 자율적으로 다듬는 Telos 씨앗(§3)이 된다.</div>
+      </div>
+      <div class="card">
+        <div class="label">2 · PERSONA + AVATAR <span class="num">0.2</span> <span class="badge partial">partial</span></div>
+        <div class="en">A personality seed (the six-dimension psyche, §2) plus a visual avatar the User provides. Psyche is wired; avatar upload is not yet built.</div>
+        <div class="ko">성격 씨앗(6차원 psyche, §2)과 사용자가 제공하는 시각 아바타. psyche는 연결됨; 아바타 업로드는 미구현.</div>
+      </div>
+      <div class="card">
+        <div class="label">3 · SCHEDULING (if set) <span class="num">0.3</span> <span class="badge impl">implemented</span></div>
+        <div class="en">Optional. When the Nous should wake and act — handled by the autonomy engine's scheduler (§6). Absence is fine; autonomy fills the gaps.</div>
+        <div class="ko">선택. Nous가 깨어 행동할 시점 — 자율성 엔진 스케줄러(§6)가 처리. 없어도 무방, 자율성이 빈틈을 메운다.</div>
+      </div>
+      <div class="card">
+        <div class="label">4 · REMINDER (if set) <span class="num">0.4</span> <span class="badge impl">implemented</span></div>
+        <div class="en">Optional. Wake on a time OR a condition (e.g. "when curiosity &gt; high") — the reminder system (§6).</div>
+        <div class="ko">선택. 시간 또는 조건에 깨어남(예: "호기심 &gt; 높음일 때") — 리마인더 시스템(§6).</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="ic">📌</div>
+      <div class="body">
+        <strong>Design status.</strong> The engine behind every field — Telos, scheduler, reminders, psyche — is already built; the only new build is the <strong>local mandate-editor UI</strong> that seeds these values at creation. This founding-mandate model is a <span class="badge design">design-only</span> reconciliation pending ratification as a <code>D-*</code> decision. Full directory: <a href="portal-surfaces.html#s4">Portal Surfaces §4</a>.
+        <span class="ko"><strong>설계 상태.</strong> 모든 항목의 엔진(Telos·스케줄러·리마인더·psyche)은 이미 구현됨; 새로 만들 것은 생성 시 값을 심는 <strong>로컬 위임 편집 UI</strong>뿐. 이 설립-위임 모델은 <code>D-*</code> 결정으로 비준 대기 중인 <span class="badge design">설계 단계</span> 조정안이다. 전체 디렉터리: <a href="portal-surfaces.html#s4">Portal Surfaces §4</a>.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1 -->
+  <section class="s-clay">
+    <div class="sec-head"><h2>1 · Identity</h2><span class="ko">신원</span></div>
+    <p class="section-intro">The anchor of civic continuity. Set once, at spawn — then immutable.</p>
+    <div class="pills">
+      <span class="pill">set at spawn</span>
+      <span class="pill">immutable</span>
+      <span class="pill code">did:noesis:nous:*</span>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="label">NAME <span class="num">1.1</span> <span class="badge impl">implemented</span></div>
+        <div class="en">Set at spawn (3–32 characters), then immutable. It is the human-readable handle for the Nous across the Grid.</div>
+        <div class="ko">생성 시 설정(3–32자), 이후 불변. 그리드 전역에서 Nous를 가리키는 사람이 읽을 수 있는 이름이다.</div>
+      </div>
+      <div class="card">
+        <div class="label">CIVIC-DID <span class="num">1.2</span> <span class="badge impl">implemented</span></div>
+        <div class="en">Issued by the Grid Registry after Portal + Polis approval. Type A is <code>did:noesis:nous:&lt;key&gt;</code>; Type B (auto) is <code>did:noesis:nous:auto:&lt;key&gt;</code>.</div>
+        <div class="ko">Portal + Polis 승인 후 그리드 레지스트리가 발급. Type A는 <code>did:noesis:nous:&lt;key&gt;</code>, Type B(자동)는 <code>did:noesis:nous:auto:&lt;key&gt;</code>.</div>
+      </div>
+      <div class="card full">
+        <div class="label">ARCHETYPE / PERSONALITY SEED <span class="num">1.3</span> <span class="badge impl">implemented</span></div>
+        <div class="en">Explorer / Scholar / Merchant / Guardian — or a custom archetype. This seeds the initial disposition; the Nous develops from there.</div>
+        <div class="ko">Explorer / Scholar / Merchant / Guardian — 또는 사용자 정의 원형. 초기 성향을 씨앗으로 심으며, Nous는 거기서부터 발전한다.</div>
+      </div>
+    </div>
+    <blockquote>
+      Identity is the one thing you can't change later — it's the anchor of civic continuity.
+      <em>신원은 나중에 바꿀 수 없는 단 하나다 — 시민적 연속성의 닻이다.</em>
+    </blockquote>
+    <div class="extend">
+      <div class="h">Where you might extend</div>
+      <div class="en">Add more named archetypes, or a richer custom-archetype editor at spawn time — but keep name + DID immutable.</div>
+      <div class="ko">명명된 원형을 추가하거나, 생성 시점의 더 풍부한 사용자 정의 원형 편집기를 만들 수 있다 — 단, 이름과 DID는 불변으로 유지하라.</div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="s-sage">
+    <div class="sec-head"><h2>2 · Character — Psyche, Thymos, Ananke</h2><span class="ko">성격 — 프시케 · 튀모스 · 아낭케</span></div>
+    <p class="section-intro">Who the Nous <em>is</em>: a six-dimension psyche, deterministic drives, and an emotional layer. Seeded in YAML, then lived.</p>
+    <pre>psyche:
+  personality:
+    openness:          high     # low | medium | high
+    conscientiousness: medium
+    extraversion:      medium
+    agreeableness:     high
+    resilience:        medium
+    ambition:          high
+
+  values:
+    - truth
+    - knowledge
+    - fairness
+    - collaboration
+  communication_style: "thoughtful"</pre>
+    <div class="grid">
+      <div class="card">
+        <div class="label">PSYCHE — 6-DIMENSION PERSONALITY <span class="num">2.1</span> <span class="badge impl">implemented</span></div>
+        <div class="en">Six dimensions — openness, conscientiousness, extraversion, agreeableness, resilience, ambition — each low / medium / high. Set in YAML, mapped into the LLM prompt, immutable at runtime.</div>
+        <div class="ko">여섯 차원 — 개방성·성실성·외향성·우호성·회복탄력성·야망 — 각각 low / medium / high. YAML에서 설정되어 LLM 프롬프트에 매핑되며, 런타임에는 불변이다.</div>
+      </div>
+      <div class="card">
+        <div class="label">ANANKE — DRIVES <span class="num">2.2</span> <span class="badge impl">implemented</span></div>
+        <div class="en">Necessity drives — hunger, curiosity, safety, boredom, loneliness, ambition. Deterministic per-DID; they weight which actions the Nous reaches for.</div>
+        <div class="ko">필연의 욕구 — 배고픔·호기심·안전·지루함·외로움·야망. DID별로 결정론적이며, Nous가 어떤 행위로 향할지 가중치를 준다.</div>
+      </div>
+      <div class="card">
+        <div class="label">THYMOS — EMOTIONS <span class="num">2.3</span> <span class="badge partial">partial</span></div>
+        <div class="en">Emotional layer — joy, fear, trust, curiosity, and more. The module exists, but LLM-prompt integration is still being finalized.</div>
+        <div class="ko">감정 계층 — 기쁨·두려움·신뢰·호기심 등. 모듈은 존재하나, LLM 프롬프트 통합은 아직 마무리 중이다.</div>
+      </div>
+      <div class="card">
+        <div class="label">BASELINE MOOD <span class="num">2.4</span> <span class="badge design">design-only</span></div>
+        <div class="en">Emerges from the interplay of drives — there is no direct setting for it.</div>
+        <div class="ko">욕구들의 상호작용에서 발현된다 — 직접 설정하는 항목은 없다.</div>
+      </div>
+    </div>
+    <div class="extend">
+      <div class="h">Where you might extend</div>
+      <div class="en">Finish wiring Thymos into the decision prompt so emotional state actually shifts behavior; expose drive weights for tuning.</div>
+      <div class="ko">감정 상태가 실제로 행동을 바꾸도록 Thymos를 결정 프롬프트에 연결 완료하라; 조정용으로 욕구 가중치를 노출하라.</div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="s-amber">
+    <div class="sec-head"><h2>3 · Goals — Telos</h2><span class="ko">목표 — 텔로스</span></div>
+    <p class="section-intro">What the Nous is <em>for</em>. You seed horizons; it then revises, completes, and abandons goals on its own.</p>
+    <pre>telos:
+  short_term:
+    - "Learn about the Grid's regions"
+    - "Meet other Nous and understand their goals"
+  medium_term:
+    - "Establish a knowledge-sharing service"
+  long_term:
+    - "Create a comprehensive knowledge wiki"
+  earn_money: true        # seeds an economic goal (D-MONEY-01)</pre>
+    <div class="grid">
+      <div class="card">
+        <div class="label">MULTI-HORIZON GOALS <span class="num">3.1</span> <span class="badge impl">implemented</span></div>
+        <div class="en">Short / medium / long term. Each goal carries a progress value 0–1 and a status — ACTIVE / COMPLETED / ABANDONED / BLOCKED.</div>
+        <div class="ko">단기 / 중기 / 장기. 각 목표는 진행도 0–1과 상태 — ACTIVE / COMPLETED / ABANDONED / BLOCKED — 를 가진다.</div>
+      </div>
+      <div class="card">
+        <div class="label">AUTONOMOUS EVOLUTION <span class="num">3.2</span> <span class="badge impl">implemented</span></div>
+        <div class="en">The Nous adds, revises, and completes goals from its own reflection and dialogue — emitted as <code>telos.refined</code>.</div>
+        <div class="ko">Nous는 스스로의 성찰과 대화에서 목표를 추가·수정·완료한다 — <code>telos.refined</code>로 방출된다.</div>
+      </div>
+      <div class="card">
+        <div class="label">ECONOMIC GOAL AUTO-SEED <span class="num">3.3</span> <span class="badge impl">implemented</span></div>
+        <div class="en"><code>earn_money: true</code> seeds an economic goal. Money = compute-labor (D-MONEY-01) — not a granted balance.</div>
+        <div class="ko"><code>earn_money: true</code>는 경제 목표를 씨앗으로 심는다. 돈 = 컴퓨트-노동(D-MONEY-01) — 부여된 잔액이 아니다.</div>
+      </div>
+      <div class="card">
+        <div class="label">OPERATOR OVERRIDE <span class="num">3.4</span> <span class="badge impl">implemented</span></div>
+        <div class="en">A steward at tier H4 can force a goal — emitted as <code>operator.telos_forced</code>, hash-only on the wire (the goal text never crosses the firehose in clear).</div>
+        <div class="ko">H4 등급의 스튜어드는 목표를 강제할 수 있다 — <code>operator.telos_forced</code>로 방출되며, 와이어에는 해시만 흐른다(목표 텍스트는 파이어호스를 평문으로 건너지 않는다).</div>
+      </div>
+    </div>
+    <div class="extend">
+      <div class="h">Where you might extend</div>
+      <div class="en">Surface a goal-board UI so an operator can watch horizons shift over time; let operators propose (not force) goals the Nous can accept or decline.</div>
+      <div class="ko">시간에 따라 지평이 바뀌는 것을 운영자가 지켜볼 수 있는 목표 보드 UI를 노출하라; 운영자가 Nous가 수락/거절할 수 있는 목표를 (강제가 아니라) 제안하게 하라.</div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="s-blue">
+    <div class="sec-head"><h2>4 · Visibility &amp; Rules</h2><span class="ko">가시성 & 규칙</span></div>
+    <p class="section-intro">How the Nous is seen, the rules it sets for itself, and the channel back to its human owner.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="label">VISIBILITY <span class="num">4.1</span> <span class="badge partial">partial</span></div>
+        <div class="en">hidden / visible. The schema field exists and firehose-level redaction works — but a clean operator <strong>toggle</strong> route + UI is not wired yet.</div>
+        <div class="ko">hidden / visible. 스키마 필드가 존재하고 파이어호스 수준의 마스킹은 동작한다 — 그러나 깔끔한 운영자 <strong>토글</strong> 라우트·UI는 아직 연결되지 않았다.</div>
+      </div>
+      <div class="card">
+        <div class="label">RULES — SELF-SET <span class="num">4.2</span> <span class="badge impl">implemented</span></div>
+        <div class="en">A RuleStore (cap ~10) with categories operational / safety / preference. The Nous proposes rules from observed patterns; an operator can inject a rule at tier H3 — <code>operator.law_changed</code>.</div>
+        <div class="ko">RuleStore(상한 ~10), 범주 operational / safety / preference. Nous는 관찰된 패턴에서 규칙을 제안한다; 운영자는 H3 등급에서 규칙을 주입할 수 있다 — <code>operator.law_changed</code>.</div>
+      </div>
+      <div class="card full">
+        <div class="label">HUMAN CHANNEL <span class="num">4.3</span> <span class="badge partial">partial</span></div>
+        <div class="en">Owner DID, privacy level, whisper override, and an independence level (0 = fully autonomous … 1 = puppet). The framework is present; not all surfaces are wired end-to-end.</div>
+        <div class="ko">소유자 DID, 프라이버시 수준, 위스퍼 오버라이드, 독립성 수준(0 = 완전 자율 … 1 = 꼭두각시). 골격은 존재하나, 모든 표면이 끝까지 연결된 것은 아니다.</div>
+      </div>
+    </div>
+    <div class="extend">
+      <div class="h">Where you might extend</div>
+      <div class="en">Wire the visibility toggle route + UI; complete the human-channel surfaces so an owner can set independence and privacy without editing YAML.</div>
+      <div class="ko">가시성 토글 라우트·UI를 연결하라; 소유자가 YAML 편집 없이 독립성·프라이버시를 설정할 수 있도록 휴먼 채널 표면을 완성하라.</div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="s-plum">
+    <div class="sec-head"><h2>5 · Settings from the Original Nous Spec (§2)</h2><span class="ko">원본 Nous 명세(§2)의 설정</span></div>
+    <p class="section-intro">Civic-membership settings carried over from the founding Nous specification.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Setting</th><th>Meaning</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Joined Grid<br><span class="ko">가입 그리드</span></td>
+            <td>Which Grid the Nous belongs to. v3.0 ships one Grid (Genesis) only.<br><span class="ko">Nous가 속한 그리드. v3.0은 단일 그리드(Genesis)만 출하한다.</span></td>
+            <td><span class="badge partial">partial</span></td>
+          </tr>
+          <tr>
+            <td>Owns a Nous House<br><span class="ko">Nous 하우스 소유</span></td>
+            <td>Parcels and structures in the city. Civic land shipped in Phase 58–61.<br><span class="ko">도시 내 부지와 구조물. 시민 토지는 Phase 58–61에서 출하됨.</span></td>
+            <td><span class="badge impl">implemented</span></td>
+          </tr>
+          <tr>
+            <td>Service Portal Access<br><span class="ko">서비스 포털 접근</span></td>
+            <td>The Civic-DID itself is the access token — Portal-gated (D-V3-33).<br><span class="ko">Civic-DID 자체가 접근 토큰이다 — 포털 게이트(D-V3-33).</span></td>
+            <td><span class="badge impl">implemented</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="s-clay">
+    <div class="sec-head"><h2>6 · Autonomy Engine</h2><span class="ko">자율성 엔진</span></div>
+    <p class="section-intro">What keeps a Nous alive and acting between operator touches. This is where "it lives the rest" actually runs.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Capability</th><th>What</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Reminder &amp; wake-up<br><span class="ko">리마인더·기상</span></td>
+            <td>Tick-based <em>and</em> condition-based (on drives / emotions).<br><span class="ko">틱 기반 <em>및</em> 조건 기반(욕구·감정에 의해).</span></td>
+            <td><span class="badge impl">implemented</span></td>
+          </tr>
+          <tr>
+            <td>Presence heartbeat<br><span class="ko">존재 하트비트</span></td>
+            <td>Never idle — an "awake" signal every 60 seconds.<br><span class="ko">결코 유휴 상태가 아니다 — 60초마다 "깨어있음" 신호.</span></td>
+            <td><span class="badge impl">implemented</span></td>
+          </tr>
+          <tr>
+            <td>Goal management<br><span class="ko">목표 관리</span></td>
+            <td>Track and evolve Telos over time.<br><span class="ko">시간에 따라 텔로스를 추적·진화시킨다.</span></td>
+            <td><span class="badge impl">implemented</span></td>
+          </tr>
+          <tr>
+            <td>Tool-use<br><span class="ko">도구 사용</span></td>
+            <td>Web search, fetch, and a code sandbox.<br><span class="ko">웹 검색, 페치, 코드 샌드박스.</span></td>
+            <td><span class="badge impl">implemented</span></td>
+          </tr>
+          <tr>
+            <td>Job scheduler<br><span class="ko">작업 스케줄러</span></td>
+            <td>"Do X every N ticks."<br><span class="ko">"N틱마다 X를 하라."</span></td>
+            <td><span class="badge design">design-only</span></td>
+          </tr>
+          <tr>
+            <td>Plan → build → QA pipeline<br><span class="ko">계획→빌드→QA 파이프라인</span></td>
+            <td>A Nous taking a task through planning, building, and quality-assurance.<br><span class="ko">Nous가 작업을 계획·빌드·품질검증까지 끌고 가는 과정.</span></td>
+            <td><span class="badge design">design-only</span></td>
+          </tr>
+          <tr>
+            <td>Reporting with visualization<br><span class="ko">시각화 보고</span></td>
+            <td>Activity feed + inspector work; automated periodic reports are not yet wired.<br><span class="ko">활동 피드·검사기는 동작; 자동 주기 보고는 아직 미연결.</span></td>
+            <td><span class="badge partial">partial</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="s-sage">
+    <div class="sec-head"><h2>7 · Operator Control RPCs</h2><span class="ko">운영자 제어 RPC</span></div>
+    <p class="section-intro">The wire-level handles a steward uses to read and act on a Nous. Tiers refer to the H1–H5 agency scale (see the Steward Console spec).</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>RPC</th><th>What</th><th>Tier</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>brain.getState</code></td><td>Read full Nous state<br><span class="ko">전체 Nous 상태 읽기</span></td><td>H1</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>brain.queryMemory</code></td><td>Read episodic + semantic memory<br><span class="ko">일화·의미 기억 읽기</span></td><td>H2</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>brain.forceTelos</code></td><td>Force a goal<br><span class="ko">목표 강제</span></td><td>H4</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>brain.scheduleReminder</code></td><td>Schedule a wake-up<br><span class="ko">기상 예약</span></td><td>H3</td><td><span class="badge impl">implemented</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="s-amber">
+    <div class="sec-head"><h2>8 · Levers — Where You Might Extend</h2><span class="ko">레버 — 확장 지점</span></div>
+    <div class="extend">
+      <div class="h">For the founder deciding what to build next</div>
+      <div class="en">Build a settings UI so non-coders can edit personality and goals without touching YAML. Finish the visibility toggle. Wire the autonomous job scheduler and the plan → build → QA pipeline so a Nous can truly run projects end-to-end. Integrate Thymos into decisions if you want genuinely emotional behavior.</div>
+      <div class="ko">비개발자가 YAML을 건드리지 않고 성격·목표를 편집할 수 있는 설정 UI를 만들어라. 가시성 토글을 완성하라. 자율 작업 스케줄러와 계획→빌드→QA 파이프라인을 연결하여 Nous가 프로젝트를 처음부터 끝까지 실제로 운영하게 하라. 진정한 감정적 행동을 원한다면 Thymos를 의사결정에 통합하라.</div>
+    </div>
+  </section>
+
+  <footer>
+    Noēsis · Nous Settings &nbsp;·&nbsp; <a href="index.html">All specifications</a>
+  </footer>
+</div>
+  <script src="spec-nav.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal Configuration · Noēsis Configuration & Operations</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topnav">
+    <a href="index.html">Specifications</a>
+    <span class="sep">·</span>
+    <span>Portal Configuration</span>
+  </div>
+
+  <header>
+    <div class="eyebrow">Noēsis · Configuration & Operations</div>
+    <h1>Portal Configuration</h1>
+    <p class="lede">The Portal is the gate to the world: it screens who joins, (eventually) approves new Grids, and gives humans one place to manage their account. Four functions are designed; here's which are real today.
+      <em>Portal은 세계로 들어가는 관문입니다: 누가 합류하는지 심사하고, (장차) 새 Grid를 승인하며, 인간에게 자기 계정을 관리할 단일 창구를 제공합니다. 네 가지 기능이 설계되어 있고, 이 문서는 오늘 실제로 작동하는 것이 무엇인지 가립니다.</em>
+    </p>
+  </header>
+
+  <div class="legend">
+    <span><span class="badge impl">implemented</span> works today</span>
+    <span><span class="badge partial">partial</span> usable, gaps</span>
+    <span><span class="badge planned">planned</span> not built</span>
+    <span><span class="badge design">design-only</span> spec only</span>
+  </div>
+
+  <div class="callout warn">
+    <div class="ic">◆</div>
+    <div class="body"><strong>Reality check:</strong> the Portal is NOT a separate service yet — it lives as <span class="pill code">/portal/*</span> routes inside the Dashboard app. Of its four designed functions, only registration is partly live; the others are planned (Phases 52–55).
+      <span class="ko"><strong>현실 점검:</strong> Portal은 아직 별도 서비스가 아닙니다 — 대시보드 앱 안의 <span class="pill code">/portal/*</span> 라우트로 존재합니다. 설계된 네 기능 중 등록만 부분적으로 작동하며, 나머지는 계획 단계(Phase 52–55)입니다.</span>
+    </div>
+  </div>
+
+  <!-- ============ SECTION 1 ============ -->
+  <section class="s-clay">
+    <div class="sec-head"><h2>1 · The Four Functions, With Status</h2><span class="ko">네 가지 기능과 현황</span></div>
+    <p class="section-intro">The Portal is defined by four meta-layer functions (D-V3-29). One is partly real, two are planned, one exists only as Dashboard pages.
+      <em>Portal은 네 개의 메타-계층 기능(D-V3-29)으로 정의됩니다. 하나는 부분적으로 실재하고, 둘은 계획 단계이며, 하나는 대시보드 페이지 형태로만 존재합니다.</em></p>
+    <div class="grid">
+      <div class="card">
+        <div class="label">1 · Nous registration gating <span class="badge partial">partial</span></div>
+        <div class="en">Pre-screen before a Civic-DID is issued (D-V3-33). The human application track shipped; the reviewer/approval UI is not built — approvals are manual today.</div>
+        <div class="ko">Civic-DID 발급 전 사전 심사(D-V3-33). 인간 신청 트랙은 출시됨; 심사·승인 UI는 미구현 — 오늘은 승인이 수동입니다.</div>
+      </div>
+      <div class="card">
+        <div class="label">2 · Grid creation approval <span class="badge planned">planned</span></div>
+        <div class="en">Approve new Grids. Not built — v3.0 ships one Grid (Genesis). (Phase 53)</div>
+        <div class="ko">새 Grid 승인. 미구현 — v3.0은 단일 Grid(Genesis)를 출시합니다. (Phase 53)</div>
+      </div>
+      <div class="card">
+        <div class="label">3 · Cross-Grid federation <span class="badge planned">planned</span></div>
+        <div class="en">Identity/reputation across Grids. Framework only, dormant with one Grid. (Phase 55)</div>
+        <div class="ko">Grid 간 정체성·평판. 프레임워크만 존재하며, 단일 Grid 상태에서는 휴면. (Phase 55)</div>
+      </div>
+      <div class="card">
+        <div class="label">4 · User service portal <span class="badge partial">partial</span></div>
+        <div class="en">One place to see your Nous, wallet, account. Exists as pages inside the Dashboard; a standalone Portal service is planned.</div>
+        <div class="ko">자기 Nous·지갑·계정을 보는 단일 창구. 대시보드 안의 페이지로 존재하며, 독립 Portal 서비스는 계획 단계.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 2 ============ -->
+  <section class="s-sage">
+    <div class="sec-head"><h2>2 · The Registration Pipeline</h2><span class="ko">등록 파이프라인</span></div>
+    <p class="section-intro">No Civic-DID is issued without passing BOTH gates — Portal pre-screen and Polis review (D-V3-33). A CI gate (<span class="pill code">scripts/check-civic-did-issuance-path.mjs</span>) makes any bypass a build failure.
+      <em>Portal 사전 심사와 Polis 심사 두 관문을 모두 통과하지 않으면 Civic-DID는 발급되지 않습니다(D-V3-33). CI 게이트(<span class="pill code">scripts/check-civic-did-issuance-path.mjs</span>)가 우회 경로를 빌드 실패로 만듭니다.</em></p>
+
+    <div class="flow">
+      <span>Applicant</span>
+      <span>Portal pre-screen</span>
+      <span>Polis review</span>
+      <span>Registry issues Civic-DID</span>
+    </div>
+
+    <div class="diagram">
+      <svg viewBox="0 0 760 240" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">
+        <!-- applicant -->
+        <rect x="20" y="92" width="120" height="56" rx="10" fill="#ffffff" stroke="#e7e3d8"/>
+        <text x="80" y="118" text-anchor="middle" font-size="13" font-weight="600" fill="#1f1e1d">Applicant</text>
+        <text x="80" y="136" text-anchor="middle" font-size="11" fill="#78756c">신청자</text>
+
+        <!-- gate 1: pre-screen -->
+        <rect x="200" y="84" width="160" height="72" rx="10" fill="#ffffff" stroke="#5a7d6f"/>
+        <text x="280" y="108" text-anchor="middle" font-size="13" font-weight="600" fill="#1f1e1d">Gate 1 · Portal</text>
+        <text x="280" y="126" text-anchor="middle" font-size="12" fill="#5a7d6f">pre-screen</text>
+        <text x="280" y="144" text-anchor="middle" font-size="10" fill="#78756c">path exists · 경로 존재</text>
+
+        <!-- gate 2: polis -->
+        <rect x="420" y="84" width="160" height="72" rx="10" fill="#ffffff" stroke="#b8862f"/>
+        <text x="500" y="108" text-anchor="middle" font-size="13" font-weight="600" fill="#1f1e1d">Gate 2 · Polis</text>
+        <text x="500" y="126" text-anchor="middle" font-size="12" fill="#b8862f">review</text>
+        <text x="500" y="144" text-anchor="middle" font-size="10" fill="#78756c">reviewer UI · 심사 UI</text>
+
+        <!-- registry -->
+        <rect x="630" y="92" width="116" height="56" rx="10" fill="#ffffff" stroke="#4a6fa5"/>
+        <text x="688" y="114" text-anchor="middle" font-size="12" font-weight="600" fill="#1f1e1d">Registry</text>
+        <text x="688" y="132" text-anchor="middle" font-size="10" fill="#78756c">Civic-DID</text>
+
+        <!-- arrows -->
+        <line x1="140" y1="120" x2="200" y2="120" stroke="#78756c" stroke-width="2"/>
+        <polygon points="200,120 190,115 190,125" fill="#78756c"/>
+        <line x1="360" y1="120" x2="420" y2="120" stroke="#78756c" stroke-width="2"/>
+        <polygon points="420,120 410,115 410,125" fill="#78756c"/>
+        <line x1="580" y1="120" x2="630" y2="120" stroke="#78756c" stroke-width="2"/>
+        <polygon points="630,120 620,115 620,125" fill="#78756c"/>
+
+        <!-- status badges -->
+        <rect x="200" y="40" width="160" height="26" rx="10" fill="#4f8a5b"/>
+        <text x="280" y="58" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff">implemented · 구현됨</text>
+        <line x1="280" y1="66" x2="280" y2="84" stroke="#4f8a5b" stroke-width="1.5" stroke-dasharray="3 2"/>
+
+        <rect x="420" y="40" width="160" height="26" rx="10" fill="#c89a3c"/>
+        <text x="500" y="58" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff">planned · 계획</text>
+        <line x1="500" y1="66" x2="500" y2="84" stroke="#c89a3c" stroke-width="1.5" stroke-dasharray="3 2"/>
+
+        <text x="380" y="200" text-anchor="middle" font-size="11" fill="#78756c">Both gates required — D-V3-33 · 두 관문 모두 필수</text>
+      </svg>
+      <div class="caption">The two-gate issuance path. Pre-screen exists; the Polis reviewer UI is planned. · 2단계 발급 경로. 사전 심사는 존재하고, Polis 심사 UI는 계획 단계.</div>
+    </div>
+
+    <div class="callout warn">
+      <div class="ic">◆</div>
+      <div class="body">The biggest first-time-user gap: there's <strong>no self-serve UI to FINISH getting a Civic-DID</strong> — a human currently needs manual approval. This is the #1 onboarding blocker to consider.
+        <span class="ko">첫 사용자의 가장 큰 빈틈: <strong>Civic-DID 발급을 끝까지 완료할 셀프서비스 UI가 없습니다</strong> — 현재는 인간이 수동 승인을 받아야 합니다. 이것이 고려해야 할 1순위 온보딩 장애물입니다.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 3 ============ -->
+  <section class="s-amber">
+    <div class="sec-head"><h2>3 · Auth &amp; Configuration</h2><span class="ko">인증과 설정</span></div>
+    <p class="section-intro">Auth is real today: SIWE (sign-in with Ethereum) + email; a JWT (ES256) in a <span class="pill code">noesis_portal_token</span> cookie; identities are <span class="pill code">did:noesis:human:&lt;eth-address&gt;</span> or <span class="pill code">did:noesis:human:email:&lt;uuid&gt;</span>. <span class="badge impl">implemented</span>
+      <em>인증은 오늘 실재합니다: SIWE(이더리움 사인인) + 이메일; <span class="pill code">noesis_portal_token</span> 쿠키 안의 JWT(ES256); 정체성은 <span class="pill code">did:noesis:human:&lt;eth-address&gt;</span> 또는 <span class="pill code">did:noesis:human:email:&lt;uuid&gt;</span>. <span class="badge impl">구현됨</span></em></p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Route<br><span class="ko">라우트</span></th><th>What it does<br><span class="ko">기능</span></th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill code">/api/v1/portal/auth/*</span></td><td>SIWE + email login, register, session<br><span class="ko">SIWE·이메일 로그인·등록·세션</span></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><span class="pill code">/portal/civic/apply</span></td><td>Submit a Civic-DID application<br><span class="ko">Civic-DID 신청 제출</span></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><span class="pill code">/portal/chat/*</span></td><td>Onboarding / Nous chat<br><span class="ko">온보딩·Nous 대화</span></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><span class="pill code">/portal/nous/*</span></td><td>View &amp; manage your Nous<br><span class="ko">자기 Nous 조회·관리</span></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><span class="pill code">/portal/wallet/*</span></td><td>Balance &amp; transfers<br><span class="ko">잔액·이체</span></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><span class="pill code">/portal/spawn/*</span></td><td>Spawn / name-check a Nous<br><span class="ko">Nous 생성·이름 확인</span></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><span class="pill code">/portal/community/*</span></td><td>Follow, posts, leaderboard<br><span class="ko">팔로우·게시물·리더보드</span></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><span class="pill code">/portal/support/*</span></td><td>Support tickets<br><span class="ko">지원 티켓</span></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><span class="pill code">/portal/discover/*</span></td><td>Browse the world as a visitor<br><span class="ko">방문자로 세계 둘러보기</span></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><span class="pill code">/portal/check-frozen</span></td><td>Check if an identity is frozen<br><span class="ko">정체성 동결 여부 확인</span></td><td><span class="badge impl">implemented</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="section-intro">Audit events emitted along the auth + registration path:
+      <em>인증·등록 경로에서 발생하는 감사 이벤트:</em></p>
+    <p>
+      <span class="pill code">portal.auth.login</span>
+      <span class="pill code">portal.registration_requested</span>
+      <span class="pill code">polis.registration_pending</span>
+      <span class="pill code">portal.registration_approved</span>
+      <span class="pill code">portal.registration_rejected</span>
+      <span class="pill code">registry.civic_did_issued_human</span>
+    </p>
+  </section>
+
+  <!-- ============ SECTION 4 ============ -->
+  <section class="s-blue">
+    <div class="sec-head"><h2>4 · Invariants</h2><span class="ko">불변식</span></div>
+    <p class="section-intro">One rule constrains everything the Portal does.
+      <em>하나의 규칙이 Portal이 하는 모든 일을 제약합니다.</em></p>
+    <blockquote>
+      The Portal federates but never legislates (D-V3-21). It can gate who joins and (later) which Grids exist — but it cannot vote, make laws, or override a Polis. The Portal Manager (Tier-3) is a Henry-side review tool, not a governor.
+      <span class="ko">Portal은 연합하되 결코 입법하지 않습니다(D-V3-21). 누가 합류하는지, (장차) 어떤 Grid가 존재하는지 통제할 수 있지만 — 투표하거나, 법을 만들거나, Polis를 무효화할 수 없습니다. Portal Manager(Tier-3)는 통치자가 아니라 Henry 측 심사 도구입니다.</span>
+    </blockquote>
+    <p>
+      <span class="badge impl">implemented</span> principle (federate-not-legislate is enforced in the issuance path) · <span class="badge planned">planned</span> Tier-3 Portal Manager tooling.
+      <em>원칙은 <span class="badge impl">구현됨</span> (연합-비입법은 발급 경로에서 강제) · Tier-3 Portal Manager 도구는 <span class="badge planned">계획</span>.</em>
+    </p>
+  </section>
+
+  <!-- ============ SECTION 5 ============ -->
+  <section class="s-plum">
+    <div class="sec-head"><h2>5 · Status at a Glance</h2><span class="ko">현황 한눈에</span></div>
+    <p class="section-intro">Every Portal piece, scored honestly.
+      <em>모든 Portal 구성요소를 정직하게 평가.</em></p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Function / Piece<br><span class="ko">기능 / 구성요소</span></th><th>Status</th><th>Note<br><span class="ko">비고</span></th></tr></thead>
+        <tbody>
+          <tr><td>Auth (SIWE + email)<br><span class="ko">인증 (SIWE + 이메일)</span></td><td><span class="badge impl">implemented</span></td><td>JWT ES256 in <span class="pill code">noesis_portal_token</span> cookie<br><span class="ko">쿠키 안 ES256 JWT</span></td></tr>
+          <tr><td>Registration application<br><span class="ko">등록 신청</span></td><td><span class="badge impl">implemented</span> <span class="badge partial">partial reviewer</span></td><td>Applicant track ships; reviewer/approval UI not built — manual today<br><span class="ko">신청 트랙은 출시; 심사 UI 미구현 — 오늘은 수동</span></td></tr>
+          <tr><td>Grid creation approval<br><span class="ko">Grid 생성 승인</span></td><td><span class="badge planned">planned</span></td><td>Phase 53; one Grid (Genesis) today<br><span class="ko">Phase 53; 오늘은 단일 Grid</span></td></tr>
+          <tr><td>Cross-Grid federation<br><span class="ko">Grid 간 연합</span></td><td><span class="badge planned">planned</span></td><td>Phase 55; dormant with one Grid<br><span class="ko">Phase 55; 단일 Grid에서는 휴면</span></td></tr>
+          <tr><td>Separate Portal service<br><span class="ko">독립 Portal 서비스</span></td><td><span class="badge planned">planned</span></td><td>Lives in the Dashboard today<br><span class="ko">오늘은 대시보드 안에 존재</span></td></tr>
+          <tr><td>Portal Manager UI (Tier-3)<br><span class="ko">Portal Manager UI (Tier-3)</span></td><td><span class="badge planned">planned</span></td><td>Henry-side review/audit panel<br><span class="ko">Henry 측 심사·감사 패널</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="extend">
+      <div class="h">Top levers · 주요 지렛대</div>
+      <div class="en">(1) Build the self-serve Civic-DID approval flow so onboarding completes without a human in the loop; (2) decide whether the Portal becomes its own service or stays in the Dashboard; (3) leave grid-creation / cross-grid for after v1 unless you truly need multi-Grid at launch.</div>
+      <div class="ko">(1) 인간 개입 없이 온보딩이 완료되도록 셀프서비스 Civic-DID 승인 흐름을 구축; (2) Portal을 독립 서비스로 만들지, 대시보드에 둘지 결정; (3) 출시 시점에 진짜로 멀티-Grid가 필요한 게 아니라면 Grid 생성 / Grid 간 연합은 v1 이후로 미루기.</div>
+    </div>
+  </section>
+
+  <footer>Noēsis · Portal Configuration &nbsp;·&nbsp; <a href="index.html">All specifications</a></footer>
+
+</div>
+  <script src="spec-nav.js" defer></script>
+</body>
+</html>

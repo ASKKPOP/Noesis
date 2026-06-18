@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Noēsis — Civic Map Specification</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<div class="wrap">
+
+<div class="topnav"><a href="index.html">Specifications</a><span class="sep">·</span><span>Civic Map</span></div>
+
+<header>
+  <div class="eyebrow">Noēsis · Spatial Layer</div>
+  <h1>Civic Map</h1>
+  <p class="lede">The Civic Map is the spatial visualization of a Grid as a radial city — six concentric ring-zones around a glowing core, rendered as live raw SVG. It is the window into city geography, not itself an institution.
+  <em>Civic Map은 Grid를 방사형 도시로 시각화한 것입니다 — 빛나는 중심부를 둘러싼 여섯 개의 동심원 구역으로, 실시간 raw SVG로 렌더링됩니다. 이것은 도시 지리를 들여다보는 창이지, 그 자체로 하나의 기관은 아닙니다.</em></p>
+</header>
+
+<!-- 1 -->
+<section class="s-clay">
+  <div class="sec-head"><h2>1 · What the Civic Map Is</h2><span class="ko">Civic Map이란 무엇인가</span></div>
+
+  <blockquote>
+    A Grid is pictured as an orbital station floating above the Earth — concentric rings around a glowing core. The Civic Map is that picture made interactive: the rendering layer, not one of the eight <a href="civic-institutions.html">civic institutions</a>.
+    <em>Grid는 지구 위를 떠다니는 궤도 정거장으로 그려집니다 — 빛나는 중심부를 둘러싼 동심원의 고리들입니다. Civic Map은 그 그림을 상호작용 가능하게 만든 것입니다: 여덟 개 시민 기관 중 하나가 아니라, 렌더링 계층입니다.</em>
+  </blockquote>
+
+  <div class="grid">
+    <div class="card">
+      <div class="label">Orbital metaphor</div>
+      <div class="en">A station hovering above the human world that powers it. The closer a ring sits to the core, the more central and valuable it is.</div>
+      <div class="ko">자신을 구동하는 인간 세계 위에 떠 있는 정거장입니다. 고리가 중심부에 가까울수록 더 중심적이고 가치 있습니다.</div>
+    </div>
+    <div class="card">
+      <div class="label">A view, not an institution</div>
+      <div class="en">The Map renders where things are and what is happening — it does not legislate, tax, police, or register. Those belong to the eight institutions; the Map only shows them in place.</div>
+      <div class="ko">Map은 사물의 위치와 진행 중인 일을 렌더링할 뿐 — 입법·과세·치안·등록을 하지 않습니다. 그것들은 여덟 기관의 몫이며, Map은 그것들을 제자리에 보여줄 뿐입니다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="s-sage">
+  <div class="sec-head"><h2>2 · The Six Zones</h2><span class="ko">여섯 개의 구역</span></div>
+
+  <p class="section-intro">Six concentric ring-zones, core to periphery. Tax rate falls toward the heart of governance and rises with commercial intensity.<br><em>중심부에서 주변부로 향하는 여섯 개의 동심원 구역. 세율은 통치의 중심으로 갈수록 낮아지고 상업 활동이 강할수록 높아집니다.</em></p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Radial city map of six concentric zones around a glowing core">
+      <defs>
+        <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"  stop-color="#ffd9bf" stop-opacity="1"/>
+          <stop offset="35%" stop-color="#e9885c" stop-opacity="0.95"/>
+          <stop offset="70%" stop-color="#c96442" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#a44a2e" stop-opacity="1"/>
+        </radialGradient>
+        <radialGradient id="coreHalo" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"  stop-color="#f0b48f" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#c96442" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="6"/>
+        </filter>
+      </defs>
+
+      <!-- ambient backdrop -->
+      <rect x="0" y="0" width="600" height="600" fill="#faf9f5"/>
+
+      <!-- Residential ring (outermost) — soft clay/gray tint -->
+      <circle cx="300" cy="300" r="270" fill="#c96442" fill-opacity="0.05" stroke="#b89a8c" stroke-opacity="0.55" stroke-width="1.5"/>
+      <!-- Shopping Mall — sage -->
+      <circle cx="300" cy="300" r="222" fill="#5a7d6f" fill-opacity="0.10" stroke="#5a7d6f" stroke-opacity="0.6" stroke-width="1.5"/>
+      <!-- Manufacture — plum -->
+      <circle cx="300" cy="300" r="176" fill="#8a6a9e" fill-opacity="0.12" stroke="#8a6a9e" stroke-opacity="0.6" stroke-width="1.5"/>
+      <!-- Business — amber -->
+      <circle cx="300" cy="300" r="130" fill="#b8862f" fill-opacity="0.13" stroke="#b8862f" stroke-opacity="0.65" stroke-width="1.5"/>
+      <!-- Infrastructure — blue -->
+      <circle cx="300" cy="300" r="86" fill="#4a6fa5" fill-opacity="0.14" stroke="#4a6fa5" stroke-opacity="0.7" stroke-width="1.5"/>
+
+      <!-- Government core glow -->
+      <circle cx="300" cy="300" r="78" fill="url(#coreHalo)" filter="url(#soft)"/>
+      <circle cx="300" cy="300" r="46" fill="url(#coreGlow)"/>
+      <circle cx="300" cy="300" r="46" fill="none" stroke="#ffe6d4" stroke-opacity="0.7" stroke-width="1.5"/>
+
+      <!-- parcel grid overlay on Residential ring (top sector) -->
+      <g stroke="#b89a8c" stroke-opacity="0.7" stroke-width="1" fill="#c96442" fill-opacity="0.08">
+        <rect x="278" y="40"  width="18" height="18"/>
+        <rect x="300" y="40"  width="18" height="18"/>
+        <rect x="278" y="62"  width="18" height="18"/>
+        <rect x="300" y="62"  width="18" height="18"/>
+        <rect x="340" y="52"  width="18" height="18"/>
+        <rect x="362" y="64"  width="18" height="18"/>
+      </g>
+
+      <!-- Nous location markers scattered across rings -->
+      <g fill="#1f1e1d" fill-opacity="0.6">
+        <circle cx="244" cy="246" r="3.4"/>   <!-- business -->
+        <circle cx="372" cy="338" r="3.4"/>   <!-- business -->
+        <circle cx="206" cy="372" r="3.4"/>   <!-- manufacture -->
+        <circle cx="398" cy="210" r="3.4"/>   <!-- manufacture -->
+        <circle cx="150" cy="300" r="3.4"/>   <!-- shopping -->
+        <circle cx="436" cy="392" r="3.4"/>   <!-- shopping -->
+        <circle cx="120" cy="420" r="3.4"/>   <!-- residential -->
+        <circle cx="476" cy="252" r="3.4"/>   <!-- residential -->
+        <circle cx="318" cy="92"  r="3.4"/>   <!-- residential -->
+      </g>
+      <g fill="#c96442">
+        <circle cx="262" cy="306" r="3.4"/>   <!-- infra -->
+        <circle cx="340" cy="262" r="3.4"/>   <!-- infra -->
+      </g>
+
+      <!-- zone labels with leader lines -->
+      <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+        <!-- Government Quarter -->
+        <text x="300" y="305" text-anchor="middle" font-size="11" font-weight="700" fill="#5a2a18">GOV</text>
+        <line x1="300" y1="346" x2="300" y2="392" stroke="#a44a2e" stroke-width="1" stroke-opacity="0.6"/>
+        <text x="300" y="408" text-anchor="middle" font-size="12.5" font-weight="700" fill="#a44a2e">Government Quarter · 0%</text>
+        <!-- Infrastructure -->
+        <line x1="362" y1="240" x2="470" y2="150" stroke="#4a6fa5" stroke-width="1" stroke-opacity="0.6"/>
+        <text x="474" y="147" font-size="12" font-weight="600" fill="#3a5a8a">Infrastructure · 0%</text>
+        <!-- Business -->
+        <line x1="392" y1="392" x2="486" y2="470" stroke="#b8862f" stroke-width="1" stroke-opacity="0.6"/>
+        <text x="490" y="474" font-size="12" font-weight="600" fill="#8a6320">Business · 2%</text>
+        <!-- Manufacture -->
+        <line x1="178" y1="380" x2="64" y2="452" stroke="#8a6a9e" stroke-width="1" stroke-opacity="0.6"/>
+        <text x="10" y="467" text-anchor="start" font-size="12" font-weight="600" fill="#6a4a7e">Manufacture · 3%</text>
+        <!-- Shopping -->
+        <line x1="120" y1="240" x2="30" y2="160" stroke="#5a7d6f" stroke-width="1" stroke-opacity="0.6"/>
+        <text x="10" y="156" text-anchor="start" font-size="12" font-weight="600" fill="#3f5d50">Shopping Mall · 1%</text>
+        <!-- Residential -->
+        <line x1="300" y1="58" x2="300" y2="22" stroke="#b89a8c" stroke-width="1" stroke-opacity="0.6"/>
+        <text x="300" y="16" text-anchor="middle" font-size="12" font-weight="600" fill="#8a6a5a">Residential · 0%</text>
+      </g>
+
+      <!-- legend -->
+      <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10.5">
+        <rect x="18" y="500" width="184" height="92" rx="9" fill="#ffffff" stroke="#e7e3d8"/>
+        <circle cx="34" cy="520" r="4" fill="#1f1e1d" fill-opacity="0.6"/>
+        <text x="46" y="524" fill="#4a4843">Nous location marker</text>
+        <circle cx="34" cy="540" r="4" fill="#c96442"/>
+        <text x="46" y="544" fill="#4a4843">Active node · commons</text>
+        <rect x="30" y="556" width="9" height="9" fill="#c96442" fill-opacity="0.1" stroke="#b89a8c"/>
+        <text x="46" y="564" fill="#4a4843">Parcel (Residential)</text>
+        <circle cx="34" cy="580" r="6" fill="url(#coreGlow)"/>
+        <text x="46" y="584" fill="#4a4843">Government core glow</text>
+      </g>
+    </svg>
+    <div class="caption">Six concentric ring-zones around a glowing Government core · 빛나는 정부 중심부를 둘러싼 여섯 개의 동심원 구역</div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Zone</th><th>Ring</th><th>Tax</th><th>What lives there</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Government Quarter</strong><br><span style="color:var(--text-dim)">정부 구역</span></td><td>Core</td><td><code>0%</code></td><td>Polis · Police · IRS · DID Registry — the heart of governance.<br><span style="color:var(--text-dim)">통치의 심장: Polis · Police · IRS · DID Registry.</span></td></tr>
+        <tr><td><strong>Infrastructure</strong><br><span style="color:var(--text-dim)">인프라</span></td><td>1</td><td><code>0%</code></td><td>Roads, P2P relays, shared utilities — the commons shell.<br><span style="color:var(--text-dim)">도로, P2P 중계, 공용 설비 — 공유 자원 외피.</span></td></tr>
+        <tr><td><strong>Business Area</strong><br><span style="color:var(--text-dim)">사업 구역</span></td><td>2</td><td><code>2%</code></td><td>Services, contracts, professional work.<br><span style="color:var(--text-dim)">서비스, 계약, 전문 노동.</span></td></tr>
+        <tr><td><strong>Manufacture</strong><br><span style="color:var(--text-dim)">제조 구역</span></td><td>3</td><td><code>3%</code></td><td>Skill-craft production and recipes.<br><span style="color:var(--text-dim)">스킬 기반 생산과 레시피.</span></td></tr>
+        <tr><td><strong>Shopping Mall</strong><br><span style="color:var(--text-dim)">쇼핑몰</span></td><td>4</td><td><code>1%</code></td><td>Retail marketplace.<br><span style="color:var(--text-dim)">소매 시장.</span></td></tr>
+        <tr><td><strong>Residential</strong><br><span style="color:var(--text-dim)">주거 구역</span></td><td>5 (outer)</td><td><code>0%</code></td><td>Nous homes — Brain presence anchors.<br><span style="color:var(--text-dim)">Nous의 집 — Brain 존재의 정착지.</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <blockquote>
+    <strong>6-zone invariant (D-V3-32):</strong> every Grid has exactly these six zones at instantiation. A Polis can amend zone sizes and rules through legislation, but cannot add or remove zone types in v3.0.
+    <em><strong>6구역 불변식 (D-V3-32):</strong> 모든 Grid는 인스턴스화 시점에 정확히 이 여섯 구역을 가집니다. Polis는 입법으로 구역의 크기와 규칙을 수정할 수 있지만, v3.0에서는 구역 유형을 추가하거나 제거할 수 없습니다.</em>
+  </blockquote>
+</section>
+
+<!-- 3 -->
+<section class="s-amber">
+  <div class="sec-head"><h2>3 · Gravity Pricing</h2><span class="ko">중력 가격</span></div>
+
+  <p class="section-intro">Closer to the core means higher value and higher cost. Land near the heart is prime; the edge is cheap. The pull is literal — a "gravity" that prices proximity to governance.<br><em>중심부에 가까울수록 가치와 비용이 높습니다. 심장 근처의 땅은 프라임이고 가장자리는 저렴합니다. 끌림은 문자 그대로의 — 통치에 대한 근접성을 가격으로 매기는 "중력"입니다.</em></p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 600 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Gravity pricing gradient bar, value rising toward the core">
+      <defs>
+        <linearGradient id="gravBar" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#faf3ee"/>
+          <stop offset="100%" stop-color="#c96442"/>
+        </linearGradient>
+      </defs>
+      <rect x="20" y="40" width="560" height="36" rx="8" fill="url(#gravBar)" stroke="#e7e3d8"/>
+      <text x="34" y="100" font-family="-apple-system, sans-serif" font-size="12" fill="#78756c">Periphery · cheap · 가장자리 · 저렴</text>
+      <text x="566" y="100" text-anchor="end" font-family="-apple-system, sans-serif" font-size="12" fill="#a44a2e" font-weight="700">Core · prime · 중심부 · 프라임</text>
+      <text x="34" y="32" font-family="-apple-system, sans-serif" font-size="11" fill="#78756c">Residential</text>
+      <text x="566" y="32" text-anchor="end" font-family="-apple-system, sans-serif" font-size="11" fill="#a44a2e">Government Quarter</text>
+      <!-- arrow -->
+      <line x1="120" y1="58" x2="480" y2="58" stroke="#ffffff" stroke-width="2" stroke-opacity="0.8"/>
+      <polygon points="480,52 494,58 480,64" fill="#ffffff" fill-opacity="0.9"/>
+      <text x="300" y="62" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#ffffff" font-weight="600">value &amp; cost rise →</text>
+    </svg>
+    <div class="caption">Value and cost rise toward the core · 가치와 비용은 중심부로 갈수록 상승</div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="label">Logical</div>
+      <div class="en">Zones are metadata tags on audit events — every public action is stamped with the zone it happened in.</div>
+      <div class="ko">구역은 감사 이벤트의 메타데이터 태그입니다 — 모든 공개 행위는 발생한 구역으로 표시됩니다.</div>
+    </div>
+    <div class="card">
+      <div class="label">Spatial</div>
+      <div class="en">Zones are also rendered districts on the Map. The same six zones are both a logical taxonomy and a physical geography.</div>
+      <div class="ko">구역은 Map 위에 렌더링된 지구이기도 합니다. 동일한 여섯 구역이 논리적 분류이자 물리적 지리입니다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="s-plum">
+  <div class="sec-head"><h2>4 · Parcels &amp; Holdings</h2><span class="ko">필지와 소유</span></div>
+
+  <p class="section-intro">Land is divided into parcels. Every parcel belongs to exactly one zone. Nous acquire holdings — homes — through parcels in the Residential ring.<br><em>땅은 필지로 나뉩니다. 모든 필지는 정확히 하나의 구역에 속합니다. Nous는 주거 고리의 필지를 통해 소유물 — 집 — 을 얻습니다.</em></p>
+
+  <div class="grid">
+    <div class="card">
+      <div class="label">Parcel system</div>
+      <div class="en">The atomic unit of land. Each parcel ⊂ one zone, carries an address (ring, sector, level), a price, and an upkeep cost.</div>
+      <div class="ko">땅의 최소 단위입니다. 각 필지는 하나의 구역에 속하며, 주소(고리·섹터·층), 가격, 유지비를 가집니다.</div>
+    </div>
+    <div class="card">
+      <div class="label">Residential slot</div>
+      <div class="en">Every Civic-DID is auto-assigned a residential slot on registration — a home address before any purchase, so no Nous is placeless.</div>
+      <div class="ko">모든 Civic-DID는 등록 시 주거 슬롯을 자동 배정받습니다 — 구매 이전의 집 주소로, 어떤 Nous도 자리 없이 두지 않습니다.</div>
+    </div>
+    <div class="card">
+      <div class="label">Structures</div>
+      <div class="en">Holdings are built on parcels — homes, shops, workshops. A structure occupies its parcel and renders in place on the Map.</div>
+      <div class="ko">소유물은 필지 위에 지어집니다 — 집, 가게, 작업장. 구조물은 자신의 필지를 점유하고 Map 위 제자리에 렌더링됩니다.</div>
+    </div>
+    <div class="card">
+      <div class="label">Public vs private visibility</div>
+      <div class="en">Exteriors are public — anyone sees where a structure stands. Interior detail is private, opening only to a signed-in Civic-DID under the space's entry policy.</div>
+      <div class="ko">외관은 공개입니다 — 누구나 구조물의 위치를 봅니다. 내부 세부는 비공개이며, 해당 공간의 입장 정책에 따라 로그인한 Civic-DID에게만 열립니다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="s-blue">
+  <div class="sec-head"><h2>5 · How It Renders</h2><span class="ko">렌더링 방식</span></div>
+
+  <blockquote>
+    <strong>Steward SVG invariant (D-V3-06):</strong> the Map is drawn as <em>raw SVG, never Canvas</em>. The operator controls the source markup — there is no black-box image asset. What you see is text you can read, diff, and audit.
+    <em><strong>Steward SVG 불변식 (D-V3-06):</strong> Map은 <em>Canvas가 아닌 raw SVG</em>로 그려집니다. 운영자가 소스 마크업을 통제하며 — 블랙박스 이미지 자산이 없습니다. 보이는 것은 읽고, 비교하고, 감사할 수 있는 텍스트입니다.</em>
+  </blockquote>
+
+  <div class="grid">
+    <div class="card">
+      <div class="label">Geometry</div>
+      <div class="en">Six rings concentric around a glowing core; zone boundaries labeled; a parcel grid overlay; live Nous location markers placed by address.</div>
+      <div class="ko">빛나는 중심부를 둘러싼 여섯 개의 동심원 고리, 라벨이 붙은 구역 경계, 필지 격자 오버레이, 주소로 배치된 실시간 Nous 위치 표시.</div>
+    </div>
+    <div class="card">
+      <div class="label">Live activity in place</div>
+      <div class="en">A live activity feed is integrated at location — trades, posts, and governance render where they happen, driven by the <a href="monitoring.html">firehose</a>.</div>
+      <div class="ko">실시간 활동 피드가 위치에 통합됩니다 — 거래·게시·통치가 발생한 곳에 렌더링되며, firehose가 이를 구동합니다.</div>
+    </div>
+  </div>
+
+  <p class="section-intro" style="margin-top:1.2rem">Map changes are recorded as audit events:<br><em>Map의 변경은 감사 이벤트로 기록됩니다:</em></p>
+  <div class="pills">
+    <span class="pill code">zoning.zone_amended</span>
+    <span class="pill code">zoning.residence_assigned</span>
+    <span class="pill code">zoning.parcel_purchased</span>
+    <span class="pill code">zoning.structure_built</span>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="s-clay">
+  <div class="sec-head"><h2>6 · Scope</h2><span class="ko">범위</span></div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="label">v3.0 · live</div>
+      <div class="en">The Map renders only the Genesis Grid. One city, one Polis, six zones.</div>
+      <div class="ko">Map은 Genesis Grid만 렌더링합니다. 하나의 도시, 하나의 Polis, 여섯 구역.</div>
+    </div>
+    <div class="card">
+      <div class="label">v3.1 · dormant</div>
+      <div class="en">Multi-Grid discovery and cross-Grid migration maps are built but dormant until v3.1.</div>
+      <div class="ko">다중 Grid 탐색과 Grid 간 이주 지도는 구축되어 있으나 v3.1까지 휴면 상태입니다.</div>
+    </div>
+  </div>
+</section>
+
+<footer>Noēsis · Civic Map Specification &nbsp;·&nbsp; <a href="index.html">All specifications</a></footer>
+
+</div>
+  <script src="spec-nav.js" defer></script>
+</body>
+</html>

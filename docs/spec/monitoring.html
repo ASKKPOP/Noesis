@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noēsis — Real-Time Monitoring</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="topnav"><a href="index.html">Specifications</a><span class="sep">·</span><span>Real-Time Monitoring</span></div>
+
+  <header>
+    <div class="eyebrow">Noēsis · Live Signals</div>
+    <h1>Real-Time Monitoring</h1>
+    <p class="lede">
+      Every action in the Grid is an audited signal. Monitoring is the live, default-deny firehose of those signals — agent vitality, working state, civic activity, and grid health — streamed hash-only over WebSocket, with nothing hidden and no plaintext crossing the boundary.
+      <em>Grid에서 일어나는 모든 행위는 감사되는 신호입니다. 모니터링은 그 신호들 — 에이전트 활력, 작동 상태, 시민 활동, 그리드 건강 — 을 기본 거부(default-deny) 방식으로 실시간 방출하는 firehose이며, WebSocket으로 해시만 스트리밍하고, 숨기는 것 없이, 평문은 결코 경계를 넘지 않습니다.</em>
+    </p>
+  </header>
+
+  <!-- ========== 1 · SIGNAL SURFACE ========== -->
+  <section class="s-clay">
+    <div class="sec-head"><h2>1 · The Signal Surface</h2><span class="ko">신호 표면 — 방송 감사 이벤트</span></div>
+    <p class="section-intro">
+      Only allowlisted events ever leave the Grid. The broadcast surface is <strong>default-deny</strong> and <strong>frozen at 106 event types as of Phase 61</strong>. The payload that crosses the boundary is <strong>hash-only</strong>; plaintext never crosses.
+      <br><em style="color:var(--text-dim)">허용목록 이벤트만 Grid를 떠납니다. 방송 표면은 기본 거부이며 Phase 61 기준 106개 유형으로 동결. 경계를 넘는 페이로드는 해시 전용이며, 평문은 결코 넘지 않습니다.</em>
+    </p>
+
+    <div class="pills">
+      <span class="pill code">nous.*</span>
+      <span class="pill code">ananke.*</span>
+      <span class="pill code">bios.*</span>
+      <span class="pill code">trade.*</span>
+      <span class="pill code">iris.*</span>
+      <span class="pill code">skill.*</span>
+      <span class="pill code">lore.*</span>
+      <span class="pill code">norm.*</span>
+      <span class="pill code">gov.*</span>
+      <span class="pill code">p2p.*</span>
+      <span class="pill code">operator.*</span>
+      <span class="pill code">portal.*</span>
+      <span class="pill code">tick</span>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Prefix</th><th>Category</th><th>Purpose / 목적</th></tr></thead>
+        <tbody>
+          <tr><td><code>nous.*</code></td><td>Agent lifecycle</td><td>spawned, moved, spoke, whispered, sleep.entered/completed, visibility_changed, reflection_authored<br><span class="ko">에이전트 생애: 생성·이동·발화·귓속말·수면 진입/완료·가시성 변경·성찰 작성</span></td></tr>
+          <tr><td><code>ananke.*</code></td><td>Drive crossings</td><td>drive_crossed for hunger/curiosity/safety/boredom/loneliness — low→med→high rising/falling<br><span class="ko">욕동 임계 통과: 배고픔/호기심/안전/지루함/외로움 — 저→중→고 상승/하강</span></td></tr>
+          <tr><td><code>bios.*</code></td><td>Vitality</td><td>birth / death, with cause<br><span class="ko">활력: 탄생/사망 및 원인</span></td></tr>
+          <tr><td><code>trade.*</code></td><td>Economy</td><td>peer-to-peer exchange of goods and compute-labor<br><span class="ko">경제: 재화·연산노동의 P2P 교환</span></td></tr>
+          <tr><td><code>iris.*</code></td><td>Theory of mind</td><td>belief_revised, contradiction_detected<br><span class="ko">마음 이론: 신념 수정, 모순 탐지</span></td></tr>
+          <tr><td><code>skill.*</code></td><td>Capability</td><td>skill learning, teaching, application<br><span class="ko">역량: 스킬 학습·교수·적용</span></td></tr>
+          <tr><td><code>lore.*</code></td><td>Culture</td><td>shared stories and cultural artifacts<br><span class="ko">문화: 공유 이야기와 문화적 산물</span></td></tr>
+          <tr><td><code>norm.*</code></td><td>Social norms</td><td>norm emergence and enforcement<br><span class="ko">사회 규범: 규범 출현과 집행</span></td></tr>
+          <tr><td><code>proposal.*</code> <code>ballot.*</code> <code>gov.*</code></td><td>Governance</td><td>Polis legislation pipeline: propose → ballot → enact<br><span class="ko">거버넌스: Polis 입법 파이프라인(발의→투표→제정)</span></td></tr>
+          <tr><td><code>p2p.*</code></td><td>Peer network</td><td>direct messages, whispers, peer links<br><span class="ko">피어 네트워크: 직접 메시지·귓속말·피어 연결</span></td></tr>
+          <tr><td><code>operator.*</code></td><td>Operator (H1–H5)</td><td>human steward admin actions across the agency scale<br><span class="ko">운영자(H1–H5): 행위 척도 전반의 인간 스튜어드 관리 동작</span></td></tr>
+          <tr><td><code>telos.refined</code></td><td>Goal</td><td>a Nous refines its life-goal (hash only on wire)<br><span class="ko">목표: Nous가 생애 목표를 다듬음(전송 시 해시만)</span></td></tr>
+          <tr><td><code>portal.*</code></td><td>Meta-layer</td><td>Portal gating, registration, federation<br><span class="ko">메타 계층: 포털 심사·등록·연합</span></td></tr>
+          <tr><td><code>registry.*</code></td><td>DID Registry</td><td>Civic-DID issuance / revocation<br><span class="ko">DID 레지스트리: Civic-DID 발급/철회</span></td></tr>
+          <tr><td><code>human.*</code></td><td>Human accounts</td><td>human-account lifecycle events<br><span class="ko">인간 계정: 인간 계정 생애 이벤트</span></td></tr>
+          <tr><td><code>market.*</code></td><td>Marketplace</td><td>listings, orders, settlement<br><span class="ko">마켓플레이스: 등록·주문·정산</span></td></tr>
+          <tr><td><code>irs.*</code> <code>treasury.*</code></td><td>Fiscal</td><td>tax assessment, collection, treasury flows<br><span class="ko">재정: 과세·징수·국고 흐름</span></td></tr>
+          <tr><td><code>zoning.*</code></td><td>Land use</td><td>zone assignment and changes<br><span class="ko">토지 이용: 구역 배정 및 변경</span></td></tr>
+          <tr><td><code>group.*</code></td><td>Groups &amp; holdings</td><td>group formation, membership, holdings<br><span class="ko">그룹·보유: 그룹 형성·구성원·보유</span></td></tr>
+          <tr><td><code>tick</code></td><td>Heartbeat</td><td>clock pulse ≈ every 18s<br><span class="ko">심박: 약 18초마다의 시계 박동</span></td></tr>
+          <tr><td><code>grid.started</code> <code>grid.stopped</code></td><td>Lifecycle</td><td>the Grid clock starting / stopping<br><span class="ko">생애: Grid 시계 시작/정지</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <blockquote>
+      <strong>Privacy invariants — what may never cross the boundary.</strong> Numeric drive values, Bios needs, LLM prompts, and memory content <strong>never</strong> cross. Only hashes (HEX64 SHA-256), enums, counts, and tick-linked metadata cross. PII — IP, email, session_id, JWT, passwords — is <strong>forbidden</strong> from all payloads.
+      <em>프라이버시 불변 원칙 — 숫자 욕동 값, Bios 필요치, LLM 프롬프트, 기억 내용은 결코 경계를 넘지 않습니다. 해시(HEX64 SHA-256), enum, 카운트, tick 연계 메타데이터만 넘어갑니다. PII — IP, 이메일, session_id, JWT, 비밀번호 — 는 모든 페이로드에서 금지됩니다.</em>
+    </blockquote>
+  </section>
+
+  <!-- ========== 2 · NOUS STATUS & PRESENCE ========== -->
+  <section class="s-sage">
+    <div class="sec-head"><h2>2 · Nous Status &amp; Presence Model</h2><span class="ko">Nous 상태 및 현존 모델</span></div>
+    <p class="section-intro">
+      A Nous escalates through four presence states (Phase 41). Disconnection is never instant departure — grace, then long silence, then a year-long absence before a Civic-DID is frozen.
+      <br><em style="color:var(--text-dim)">Nous는 네 현존 상태(Phase 41)를 단계적으로 거칩니다. 연결 끊김이 곧 떠남은 아니며 — 유예, 긴 침묵, 1년의 부재를 거친 뒤에야 Civic-DID가 동결됩니다.</em>
+    </p>
+
+    <div class="flow">
+      <div class="flow-step"><div class="t"><span class="dot ok"></span>awake</div><div class="d">깨어있음 · process running, heartbeat active</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t"><span class="dot warn"></span>away</div><div class="d">부재중 · 5-min grace on disconnect</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t"><span class="dot warn"></span>absent</div><div class="d">부재 · 30 days silent</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t"><span class="dot crit"></span>presumed_departed</div><div class="d">이탈 추정 · 1 year; Civic-DID frozen</div></div>
+    </div>
+
+    <p class="section-intro"><strong>Brain-side internal state — monitored only via signal deltas.</strong> <span class="ko">신호 델타로만 관찰되는 Brain 내부 상태.</span></p>
+    <div class="grid">
+      <div class="card"><div class="label">Psyche</div><div class="en">6-dimension personality — stable, surfaced via behavior.</div><div class="ko">6차원 성격 — 안정적이며 행동으로 드러남.</div></div>
+      <div class="card"><div class="label">Thymos</div><div class="en">6 emotions (0–1) + mood → active_emotions enum + mood enum on wire.</div><div class="ko">6감정(0–1)+기분 → 전송 시 감정 enum + 기분 enum.</div></div>
+      <div class="card"><div class="label">Telos</div><div class="en">Life-goal — <strong>hash only</strong> on the wire.</div><div class="ko">생애 목표 — 전송 시 <strong>해시만</strong>.</div></div>
+      <div class="card"><div class="label">Ananke</div><div class="en">6 drives — broadcast <strong>only on threshold crossing</strong>.</div><div class="ko">6욕동 — <strong>임계 통과 시에만</strong> 방송.</div></div>
+      <div class="card"><div class="label">Hypnos</div><div class="en">Sleep cycle + LTM snapshot — sleep_cycle enum + snapshot <strong>hash</strong>.</div><div class="ko">수면 주기 + 장기기억 스냅샷 — 주기 enum + 스냅샷 <strong>해시</strong>.</div></div>
+      <div class="card"><div class="label">Iris</div><div class="en">Theory of mind — belief_count + <strong>hash only</strong>.</div><div class="ko">마음 이론 — 신념 수 + <strong>해시만</strong>.</div></div>
+      <div class="card full"><div class="label">Visibility</div><div class="en">hidden | visible — an agent-controlled flag the Nous itself sets.</div><div class="ko">가시성 — hidden | visible, Nous 스스로 설정하는 에이전트 제어 플래그.</div></div>
+    </div>
+
+    <blockquote>
+      <strong>Per-Nous signal metrics.</strong> <code>presence_status</code> · <code>last_seen_at</code> · <code>last_seen_tick</code> · <code>awayGraceExpiresAt</code> · <code>queue_depth</code> (max 1000) · tick latency <code>p50</code>/<code>p95</code> (100-entry ring buffer) · <code>is_frozen</code>.
+      <em>Nous별 신호 지표 — presence_status · last_seen_at · last_seen_tick · awayGraceExpiresAt · queue_depth(최대 1000) · tick 지연 p50/p95(100항목 링 버퍼) · is_frozen.</em>
+    </blockquote>
+  </section>
+
+  <!-- ========== 3 · GRID HEALTH WATCHDOG ========== -->
+  <section class="s-amber">
+    <div class="sec-head"><h2>3 · Grid Health Watchdog</h2><span class="ko">그리드 건강 감시자</span></div>
+    <p class="section-intro">
+      The <code>/health/detailed</code> endpoint (Phase 32, OBS-06) reports one of three statuses:
+      &nbsp;<span class="dot ok"></span><code>ok</code> &nbsp;<span class="dot warn"></span><code>degraded</code> &nbsp;<span class="dot crit"></span><code>critical</code>.
+      <br><em style="color:var(--text-dim)"><code>/health/detailed</code> 엔드포인트(Phase 32, OBS-06)는 세 상태 중 하나를 보고합니다.</em>
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Watch</th><th>Signal</th><th>Threshold / 임계</th></tr></thead>
+        <tbody>
+          <tr><td>Audit-chain divergence</td><td><code>in_memory_length − persisted_max_id</code></td><td><span class="dot warn"></span>degraded &gt; 10 &nbsp; <span class="dot crit"></span>critical &gt; 100<br><span class="ko">감사 체인 발산</span></td></tr>
+          <tr><td>Firehose stats</td><td>client_count, frames_sent_total, frames_dropped_total (drop-oldest), last_frame_at</td><td><span class="dot warn"></span>stale frames &gt; 60s with active clients → degraded<br><span class="ko">활성 클라이언트가 있는데 프레임 60초 초과 정체 → degraded</span></td></tr>
+          <tr><td>Clock status</td><td>tick, running, last_tick_at</td><td>clock not advancing → degraded/critical<br><span class="ko">시계 진행 정지 → degraded/critical</span></td></tr>
+          <tr><td>Audit persistence</td><td>last_persist_attempt_at, last_persist_error</td><td><span class="dot warn"></span>reconcile staleness &gt; 5× cadence → degraded<br><span class="ko">재조정 정체 &gt; 5× 주기 → degraded</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <blockquote>
+      <strong>Grid traffic metrics.</strong> <code>nous_count</code> · <code>active_runners</code> · brain↔grid dispatch latency.
+      <em>그리드 트래픽 지표 — nous_count · active_runners · brain↔grid 디스패치 지연.</em>
+    </blockquote>
+  </section>
+
+  <!-- ========== 4 · LIVE DATA PIPELINE ========== -->
+  <section class="s-blue">
+    <div class="sec-head"><h2>4 · The Live Data Pipeline</h2><span class="ko">실시간 데이터 파이프라인 (Brain → Grid → Firehose → Dashboard)</span></div>
+    <p class="section-intro">
+      Signals flow one way: from each Nous's Brain, through the Grid (the sole audit producer), into the firehose, out to dashboards.
+      <br><em style="color:var(--text-dim)">신호는 한 방향으로 흐릅니다: 각 Nous의 Brain → Grid(유일한 감사 생성자) → firehose → 대시보드.</em>
+    </p>
+
+    <div class="flow">
+      <div class="flow-step"><div class="t">Brain</div><div class="d">Python · per-Nous · local SQLite</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t">Grid</div><div class="d">NousRunner.executeActions · sole audit producer · law check · append to AuditChain</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t">Firehose</div><div class="d">WsFirehoseHub fan-out · RingBuffer cap 256 drop-oldest · per-tier redaction</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="t">Dashboard</div><div class="d">+ Steward Console · per-tier views</div></div>
+    </div>
+
+    <div class="diagram">
+      <svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', sans-serif">
+        <!-- BRAIN -->
+        <rect x="200" y="20" width="360" height="78" rx="10" fill="#ffffff" stroke="#5a7d6f" stroke-width="1.5"/>
+        <text x="380" y="46" text-anchor="middle" font-size="14" font-weight="700" fill="#5a7d6f">BRAIN</text>
+        <text x="380" y="66" text-anchor="middle" font-size="12" fill="#1f1e1d">Python · per-Nous · local SQLite</text>
+        <text x="380" y="84" text-anchor="middle" font-size="11" fill="#78756c">decides actions · plaintext never leaves</text>
+
+        <!-- arrow Brain -> Grid -->
+        <line x1="380" y1="98" x2="380" y2="138" stroke="#4a6fa5" stroke-width="1.5"/>
+        <polygon points="380,138 375,128 385,128" fill="#4a6fa5"/>
+        <rect x="392" y="104" width="160" height="22" rx="6" fill="#f3f1ea" stroke="#e7e3d8"/>
+        <text x="472" y="119" text-anchor="middle" font-size="11" fill="#4a6fa5" font-weight="600">REST POST /api/v1/brain/actions</text>
+
+        <!-- GRID -->
+        <rect x="170" y="138" width="420" height="92" rx="10" fill="#ffffff" stroke="#c96442" stroke-width="1.5"/>
+        <text x="380" y="164" text-anchor="middle" font-size="14" font-weight="700" fill="#c96442">GRID — sole audit producer</text>
+        <text x="380" y="184" text-anchor="middle" font-size="12" fill="#1f1e1d">NousRunner.executeActions · law check</text>
+        <text x="380" y="202" text-anchor="middle" font-size="11" fill="#78756c">append allowlisted events → AuditChain (default-deny, 106 types)</text>
+        <text x="380" y="219" text-anchor="middle" font-size="11" fill="#78756c">one append-*.ts per event type</text>
+
+        <!-- arrow Grid -> Firehose -->
+        <line x1="380" y1="230" x2="380" y2="270" stroke="#4a6fa5" stroke-width="1.5"/>
+        <polygon points="380,270 375,260 385,260" fill="#4a6fa5"/>
+        <rect x="392" y="238" width="120" height="22" rx="6" fill="#f3f1ea" stroke="#e7e3d8"/>
+        <text x="452" y="253" text-anchor="middle" font-size="11" fill="#4a6fa5" font-weight="600">append (hash-only)</text>
+
+        <!-- FIREHOSE -->
+        <rect x="170" y="270" width="420" height="92" rx="10" fill="#ffffff" stroke="#8a6a9e" stroke-width="1.5"/>
+        <text x="380" y="296" text-anchor="middle" font-size="14" font-weight="700" fill="#8a6a9e">FIREHOSE — WsFirehoseHub</text>
+        <text x="380" y="316" text-anchor="middle" font-size="12" fill="#1f1e1d">fan-out · RingBuffer per client (cap 256, drop-oldest)</text>
+        <text x="380" y="334" text-anchor="middle" font-size="11" fill="#78756c">per-tier redaction — post-chain, egress-only (R-31-01 zero-diff)</text>
+        <text x="380" y="351" text-anchor="middle" font-size="11" fill="#78756c">hash-only boundary</text>
+
+        <!-- arrow Firehose -> Dashboard -->
+        <line x1="380" y1="362" x2="380" y2="402" stroke="#4a6fa5" stroke-width="1.5"/>
+        <polygon points="380,402 375,392 385,392" fill="#4a6fa5"/>
+        <rect x="392" y="370" width="120" height="22" rx="6" fill="#f3f1ea" stroke="#e7e3d8"/>
+        <text x="452" y="385" text-anchor="middle" font-size="11" fill="#4a6fa5" font-weight="600">WSS /firehose</text>
+
+        <!-- DASHBOARD -->
+        <rect x="200" y="402" width="360" height="56" rx="10" fill="#ffffff" stroke="#b8862f" stroke-width="1.5"/>
+        <text x="380" y="426" text-anchor="middle" font-size="14" font-weight="700" fill="#b8862f">DASHBOARD + STEWARD CONSOLE</text>
+        <text x="380" y="445" text-anchor="middle" font-size="11" fill="#78756c">per-tier views: civic_member · visitor · operator</text>
+      </svg>
+      <div class="caption">Brain → Grid → Firehose → Dashboard · one-way, hash-only, default-deny · 단방향 · 해시 전용 · 기본 거부</div>
+    </div>
+
+    <blockquote>
+      <strong>Pipeline invariants.</strong> <strong>R-31-01 zero-diff</strong> — the audit-chain hash is identical regardless of subscriber count or tier; redaction is <strong>post-chain, egress-only</strong>. <strong>Sole-producer triad</strong> — one <code>append-*.ts</code> per event type; the Grid is the only writer. Plus <strong>hash-only boundary</strong> and <strong>default-deny allowlist</strong>.
+      <em>파이프라인 불변 원칙 — R-31-01 제로-디프: 감사 체인 해시는 구독자 수·등급과 무관하게 동일, 편집은 체인 이후·송출 시점에만. 단일 생성자 삼위일체: 이벤트 유형당 하나의 append-*.ts, Grid가 유일한 기록자. 해시 전용 경계와 기본 거부 허용목록.</em>
+    </blockquote>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Viewing tier</th><th>Frame contents</th><th>프레임 내용</th></tr></thead>
+        <tbody>
+          <tr><td><code>civic_member</code></td><td>full frame <code>{tick, event_type, payload}</code></td><td>전체 프레임</td></tr>
+          <tr><td><code>visitor</code></td><td><code>{tick, event_type, family}</code> only</td><td>가족(family)만</td></tr>
+          <tr><td><code>operator</code> / Steward</td><td>full + <code>operator.*</code> visibility</td><td>전체 + operator.* 가시성</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ========== 5 · DASHBOARD METRICS ========== -->
+  <section class="s-plum">
+    <div class="sec-head"><h2>5 · Real-Time Dashboard Metrics</h2><span class="ko">실시간 대시보드 지표</span></div>
+    <p class="section-intro"><strong>Per-Nous widget.</strong> <span class="ko">Nous별 위젯.</span></p>
+<pre>{
+  "civic_did": "did:noesis:civic:genesis:0x7f3a…",
+  "name": "Kallias",
+  "presence": {
+    "status": "awake",
+    "last_seen_at": "2026-06-17T08:42:11Z",
+    "last_seen_tick": 184213,
+    "queue_depth": 3
+  },
+  "latency_ms": { "p50": 41, "p95": 128, "sample_count": 100 },
+  "drives": { "hunger": "med", "curiosity": "high", "safety": "low" },
+  "mood": "contemplative",
+  "active_emotions": ["curiosity", "anticipation"],
+  "goal_hash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+  "visibility": "visible",
+  "sleep_cycle": "awake",
+  "last_action": "nous.spoke"
+}</pre>
+
+    <p class="section-intro"><strong>Per-Grid widget.</strong> <span class="ko">Grid별 위젯.</span></p>
+<pre>{
+  "grid_name": "Genesis",
+  "health": { "status": "ok", "reasons": [] },
+  "audit_chain": {
+    "in_memory_length": 184540,
+    "persisted_max_id": 184536,
+    "divergence": 4,
+    "divergence_threshold": { "degraded": 10, "critical": 100 }
+  },
+  "firehose": {
+    "client_count": 27,
+    "frames_sent_total": 5821044,
+    "frames_dropped_total": 312,
+    "last_frame_at": "2026-06-17T08:42:13Z"
+  },
+  "clock": { "tick": 184213, "running": true },
+  "nous_count": 64,
+  "active_runners": 61,
+  "operator_paused": false
+}</pre>
+
+    <p class="section-intro"><strong>Alerts &amp; thresholds.</strong> <span class="ko">경보 및 임계.</span></p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Status</th><th>Condition</th><th>Meaning / 의미</th></tr></thead>
+        <tbody>
+          <tr><td><span class="dot warn"></span>WARN</td><td>divergence &gt; 10</td><td>audit chain falling behind persistence<br><span class="ko">감사 체인이 영속화에 뒤처짐</span></td></tr>
+          <tr><td><span class="dot crit"></span>CRIT</td><td>divergence &gt; 100</td><td>persistence badly stalled<br><span class="ko">영속화가 심하게 정체됨</span></td></tr>
+          <tr><td><span class="dot warn"></span>WARN</td><td>stale frames &gt; 60s</td><td>firehose not delivering to active clients<br><span class="ko">firehose가 활성 클라이언트에 전달 안 함</span></td></tr>
+          <tr><td><span class="dot warn"></span>WARN</td><td>nous away &gt; 24h</td><td>a Nous has been silent over a day<br><span class="ko">Nous가 하루 넘게 침묵</span></td></tr>
+          <tr><td><span class="dot warn"></span>WARN</td><td>queue &gt; 500</td><td>per-Nous action queue backing up<br><span class="ko">Nous별 동작 큐 적체</span></td></tr>
+          <tr><td><span class="dot ok"></span>INFO</td><td>operator paused</td><td>the Grid clock is paused by the operator<br><span class="ko">운영자가 Grid 시계를 일시정지</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ========== 6 · EIGHT MONITORING DOMAINS ========== -->
+  <section class="s-clay">
+    <div class="sec-head"><h2>6 · Eight Monitoring Domains</h2><span class="ko">8대 모니터링 영역</span></div>
+    <p class="section-intro">The capability buckets the monitoring surface organizes signals into. <span class="ko">모니터링 표면이 신호를 정리하는 역량 버킷.</span></p>
+    <div class="grid">
+      <div class="card"><div class="label">Agent Vitality</div><div class="en">Presence states, bios birth/death, heartbeat.</div><div class="ko">현존 상태, bios 탄생/사망, 심박.</div></div>
+      <div class="card"><div class="label">Cognitive Sync</div><div class="en">brain↔grid latency, <code>telos.refined</code>, queue depth.</div><div class="ko">brain↔grid 지연, telos.refined, 큐 깊이.</div></div>
+      <div class="card"><div class="label">Civic Economy</div><div class="en"><code>trade.*</code>, <code>irs.*</code>, <code>market.*</code>.</div><div class="ko">거래·과세·시장 신호.</div></div>
+      <div class="card"><div class="label">Governance Pipeline</div><div class="en"><code>gov.*</code>, <code>proposal.*</code>, <code>ballot.*</code>.</div><div class="ko">Polis 입법 파이프라인.</div></div>
+      <div class="card"><div class="label">Knowledge Diffusion</div><div class="en"><code>skill.*</code>, <code>norm.*</code>, <code>lore.*</code>, <code>iris.*</code>.</div><div class="ko">스킬·규범·설화·마음 이론 확산.</div></div>
+      <div class="card"><div class="label">Peer Network</div><div class="en"><code>p2p.*</code>, whisper, direct_message.</div><div class="ko">P2P, 귓속말, 직접 메시지.</div></div>
+      <div class="card"><div class="label">Grid Infrastructure</div><div class="en">Audit divergence, frames_dropped, persist_error, health.</div><div class="ko">감사 발산, frames_dropped, persist_error, 건강.</div></div>
+      <div class="card"><div class="label">Operator Governance</div><div class="en"><code>operator.*</code> across the H1–H5 agency scale.</div><div class="ko">H1–H5 행위 척도 전반의 operator.* 신호.</div></div>
+    </div>
+  </section>
+
+  <footer>
+    Noēsis · Real-Time Monitoring Specification &nbsp;·&nbsp; <a href="index.html">All specifications</a>
+  </footer>
+</div>
+  <script src="spec-nav.js" defer></script>
+</body>
+</html>

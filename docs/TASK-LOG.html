@@ -64,6 +64,29 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 3 ============================ -->
+  <h2>Session 3 — 2026‑06‑18 · “Portal surfaces &amp; gap analysis + founding-mandate model”</h2>
+  <p class="sub">Goal: reconcile the operator's everyday portal vocabulary ("Nous portal in local", "Service Portal", "System admin Portal")
+  with the frozen v3.0 canonical architecture, give an honest built-vs-missing map across all four human-facing surfaces, and
+  resolve the previously-unclear "Target Tasks" concept. Docs-only; nothing pushed.</p>
+  <ul>
+    <li><b>New synthesis spec</b> <code>docs/spec/portal-surfaces.html</code> (bilingual EN/KO, Claude theme): maps the three everyday
+      portal names → canonical terms (<i>Local Nous Manager · Tier 1</i>, <i>Portal + Grid Manager · Tier 2</i>,
+      <i>Portal Manager · Tier 3</i>, <i>Brain · Layer 3</i>); a four-surface SVG architecture diagram; per-field
+      <code>built / partial / planned / design</code> badges; a founding-mandate flow; a prioritized gap "build list"; and an
+      in-page <b>Directory</b> + 19-term <b>Definitions Directory</b> (glossary). Wired into <code>spec-nav.js</code> (Concept Specs, ✦).</li>
+    <li><b>Target Tasks resolved</b> via brainstorming with the operator: the <i>founding-mandate</i> model — the User seeds
+      goal + persona + avatar + (optional) schedule/reminder from the Local Nous Manager; this is the <i>activation gate</i>
+      (no mandate → dormant), after which the Nous keeps full autonomy (existing Telos engine). "User owns the founding intent,
+      Nous owns how it lives." Engine already built; only new build is the local mandate-editor UI.</li>
+    <li><b>Updated</b> <code>docs/spec/config-nous.html</code> — added section <code>0 · Founding Mandate ("Target Tasks")</code>
+      with the four mandate fields + activation-gate rule + cross-link to <code>portal-surfaces.html#s4</code>. Marked
+      <span class="tag design">design-only</span> pending <code>D-*</code> ratification in <code>wiki/1-design/decisions.md</code>.</li>
+    <li>Verified both pages via local preview (<code>spec-docs</code> :8021) — no console errors; directory anchors, glossary,
+      and the new section all render.</li>
+  </ul>
+  <p class="note">⚠ Open: founding-mandate is not yet a frozen decision. Ratify as <code>D-*</code> + sync Nous guide when the operator confirms.</p>
+
   <!-- ============================ SESSION 2 ============================ -->
   <h2>Session 2 — 2026‑06‑17 · “System specification doc set (Claude-themed HTML + MD)”</h2>
   <p class="sub">Goal: author bilingual (EN/KO) spec docs in both <code>.md</code> and visual <code>.html</code> — modeled on
