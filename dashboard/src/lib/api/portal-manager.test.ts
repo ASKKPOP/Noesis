@@ -51,6 +51,14 @@ describe('fetchRegistrations', () => {
         expect(headers['x-operator-id']).toBe(OP.operatorId);
     });
 
+    it('sends credentials: include so the Portal session cookie reaches the Grid cross-origin', async () => {
+        const fetchMock = vi.fn(async () => jsonResp(FIXTURE, 200));
+        vi.stubGlobal('fetch', fetchMock);
+        await fetchRegistrations(OP);
+        const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+        expect(init.credentials).toBe('include');
+    });
+
     it('appends ?status= when a status filter is given', async () => {
         const fetchMock = vi.fn(async () => jsonResp(FIXTURE, 200));
         vi.stubGlobal('fetch', fetchMock);
@@ -69,12 +77,20 @@ describe('fetchRegistrations', () => {
         }
     });
 
-    it('maps 503 to db_unavailable', async () => {
+    it('maps 503 { error: db_unavailable } to db_unavailable', async () => {
         const fetchMock = vi.fn(async () => jsonResp({ error: 'db_unavailable' }, 503));
         vi.stubGlobal('fetch', fetchMock);
         const res = await fetchRegistrations(OP);
         expect(res.ok).toBe(false);
         if (!res.ok) expect(res.error.kind).toBe('db_unavailable');
+    });
+
+    it('maps 503 { error: admin_disabled } to admin_disabled (distinct from db_unavailable)', async () => {
+        const fetchMock = vi.fn(async () => jsonResp({ error: 'admin_disabled' }, 503));
+        vi.stubGlobal('fetch', fetchMock);
+        const res = await fetchRegistrations(OP);
+        expect(res.ok).toBe(false);
+        if (!res.ok) expect(res.error.kind).toBe('admin_disabled');
     });
 
     it('maps a fetch rejection to network and exposes only `kind`', async () => {

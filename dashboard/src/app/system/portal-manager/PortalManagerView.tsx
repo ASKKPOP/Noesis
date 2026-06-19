@@ -87,6 +87,8 @@ export default function PortalManagerView({ data, error, loading }: PortalManage
                 }}>
                     {error === 'unauthorized'
                         ? 'Operator authorization required. This is a Tier-3 Henry-side surface — supply operator credentials to view the registration log.'
+                        : error === 'admin_disabled'
+                        ? 'This console is disabled in this environment (GRID_ADMIN_ENABLED is off). Enable the Grid admin surface to view the registration log.'
                         : error === 'db_unavailable'
                         ? 'Registration store is currently unavailable.'
                         : 'Could not load registration activity. Check the Grid connection and retry.'}

@@ -64,6 +64,43 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 5 ============================ -->
+  <h2>Session 5 — 2026‑06‑19 · “Portal Manager v1 — production-auth HARDENING (close the header-spoof hole)”</h2>
+  <p class="sub">Goal: close a confirmed auth hole in the shipped Tier-3 reviewer-queue route. The route was marked
+  <code>'public'</code> and gated ONLY on attacker-controllable <code>x-operator-tier</code>/<code>x-operator-id</code> headers,
+  so any anonymous caller could <code>curl https://api.noesiis.com/api/v1/portal-manager/registrations -H 'x-operator-tier: 5'
+  -H 'x-operator-id: op:…'</code> and read the full reviewer queue. Surgical, in-place hardening using only existing
+  trusted primitives — no new auth/CORS/proxy infra, route stays READ-ONLY, no new audit/broadcast events
+  (allowlist still 107). Implemented + tested; nothing pushed.</p>
+  <ul>
+    <li><b>Two server-trusted gates</b> <span class="tag done">hardened</span>
+      (1) <code>api/policy.ts</code> entry changed <code>'public'</code> → <code>'portal_session_required'</code>, so the central
+      <code>onRequest</code> hook runs <code>requirePortalSession</code> (401 <code>portal_session_required</code> for anonymous
+      callers) BEFORE the handler. (2) In <code>portal-manager.ts</code>: <code>operatorScope(req, reply)</code> as the first
+      handler line (403 <code>operator_scope_required</code> when no server-trusted <code>operatorDid</code>), plus a
+      <code>GRID_ADMIN_ENABLED</code> attack-surface gate copied verbatim from <code>admin/config.ts</code>
+      (503 <code>{ error: 'admin_disabled' }</code> when off; real handler never registered). Legacy tier≥5 / op-id checks
+      retained ONLY as a secondary intent signal behind <code>operatorScope</code> — never the sole boundary.</li>
+    <li><b>Spoof closed (regression proof)</b> <span class="tag done">test</span> the exact prior-working request
+      — <code>x-operator-tier:5</code> + <code>x-operator-id</code> with NO portal session — now returns
+      <code>401 portal_session_required</code> (admin enabled) or <code>503 admin_disabled</code> (admin off); asserted
+      it is NOT 200 and no queue body leaks. <code>grid/test/api/portal-manager-registrations.test.ts</code> (12, was 10;
+      portal-session injection via signed ES256 cookie mirroring <code>operator-me-quota.test.ts</code>).</li>
+    <li><b>Dashboard</b> <span class="tag done">built</span> <code>lib/api/portal-manager.ts</code> now sends
+      <code>credentials: 'include'</code> (cross-origin httpOnly Portal cookie reaches api.${DOMAIN}, same as
+      portal/auth + siwe-auth) and disambiguates 503 by <code>body.error</code> → new <code>'admin_disabled'</code> kind vs
+      <code>'db_unavailable'</code>. <code>PortalManagerView.tsx</code> gains a distinct console-disabled error branch.
+      Tests: <code>portal-manager.test.ts</code> (9) + <code>PortalManagerView.test.tsx</code> (9) — both green.</li>
+    <li><b>Invariants preserved:</b> READ-ONLY (SELECT-only, SHA-256 <code>human_did_hash</code>, statement never selected);
+      allowlist FROZEN at <strong>107</strong> (readonly-guard test unchanged; no <code>.audit</code> substring introduced);
+      privacy walker + <code>check-civic-did-issuance-path.mjs</code> untouched; D-V3-36 / VOTE-05 observe-only (no
+      approve/reject). Doc-synced <code>docs/spec/portal-manager.html</code> §5 (honest prod-auth card). Not deployed
+      (operator initiates deploys).</li>
+  </ul>
+  <p class="note">⚠ Residual: the route now shares the <code>GRID_ADMIN_ENABLED</code> kill-switch with the .env read/write
+  admin routes — to run the read-only console in prod, that flag also enables admin config writes. A dedicated
+  console-only flag would be a follow-up (out of scope here).</p>
+
   <!-- ============================ SESSION 4 ============================ -->
   <h2>Session 4 — 2026‑06‑18 · “Portal Manager v1 — read-only monitoring slice (built)”</h2>
   <p class="sub">Goal: ship the first <i>built</i> slice of the Tier-3 Portal Manager — an operator-gated, READ-ONLY

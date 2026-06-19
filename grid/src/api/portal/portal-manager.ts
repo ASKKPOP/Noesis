@@ -16,15 +16,26 @@
  *   - Privacy: human_did is SHA-256 hashed in the response (human_did_hash);
  *     the statement plaintext is never selected or returned.
  *
- * AUTH (header-trust, identical ladder to operator/ban-human.ts, D-25b-NEW-1):
- *   401 tier_missing     — x-operator-tier absent / non-numeric
- *   403 tier_too_low     — x-operator-tier < 5
- *   400 invalid_operator_id — x-operator-id fails OPERATOR_ID_REGEX
- *   400 invalid_status   — ?status= not one of pending|approved|rejected
- *   503 db_unavailable   — services.humanPool absent
- * The route is marked 'public' in ROUTE_DID_POLICY so the central DID hook passes
- * it through to this in-handler tier check — the documented operator-route
- * convention, NOT a weakening of auth.
+ * AUTH (production-hardened — TWO required server-trusted layers):
+ *   1. Attack-surface gate GRID_ADMIN_ENABLED: when not 'true' the route returns
+ *      503 admin_disabled and the real handler is never registered (mirrors
+ *      admin/config.ts — Tier-3 meta-ops is admin-grade).
+ *   2. Server-trusted identity: ROUTE_DID_POLICY marks this 'portal_session_required',
+ *      so the central onRequest hook runs requirePortalSession (401
+ *      portal_session_required for anonymous callers) BEFORE the handler. Inside the
+ *      handler operatorScope() then yields req.didContext.operatorDid or 403
+ *      operator_scope_required. A spoofed header alone can NEVER satisfy this — the
+ *      operatorDid comes from the validated Portal session, not from request headers.
+ *   The legacy x-operator-tier (>=5) / x-operator-id checks survive ONLY as a
+ *   secondary intent signal AFTER operatorScope passes — never the sole boundary.
+ *
+ *   Error ladder (after the admin gate + portal session pass):
+ *     403 operator_scope_required — no server-trusted operatorDid
+ *     401 tier_missing     — x-operator-tier absent / non-numeric (secondary)
+ *     403 tier_too_low     — x-operator-tier < 5 (secondary)
+ *     400 invalid_operator_id — x-operator-id fails OPERATOR_ID_REGEX (secondary)
+ *     400 invalid_status   — ?status= not one of pending|approved|rejected
+ *     503 db_unavailable   — services.humanPool absent
  */
 
 import type { FastifyInstance } from 'fastify';
@@ -32,6 +43,7 @@ import { createHash } from 'node:crypto';
 import type { GridServices } from '../server.js';
 import type { ApiError } from '../types.js';
 import { OPERATOR_ID_REGEX } from '../types.js';
+import { operatorScope } from '../preHandlers/operatorScope.js';
 
 const VALID_STATUS = ['pending', 'approved', 'rejected'] as const;
 type ApplicationStatus = (typeof VALID_STATUS)[number];
@@ -59,10 +71,27 @@ export function registerPortalManagerRoutes(
     app: FastifyInstance,
     services: GridServices,
 ): void {
+    // Layer 2 — attack-surface gate (mirrors admin/config.ts). Tier-3 meta-ops is
+    // admin-grade; when disabled the route 503s and the real handler is never wired.
+    const adminEnabled = process.env.GRID_ADMIN_ENABLED === 'true';
+    if (!adminEnabled) {
+        app.get('/api/v1/portal-manager/registrations', async (_req, reply) => {
+            reply.code(503);
+            return { error: 'admin_disabled' };
+        });
+        return;
+    }
+
     app.get<{ Querystring: { status?: string } }>(
         '/api/v1/portal-manager/registrations',
         async (req, reply) => {
-            // 1. Tier gate — server-trusted x-operator-tier header (D-25b-NEW-1).
+            // 0. Server-trusted identity — operatorDid comes from the validated Portal
+            //    session (requirePortalSession ran in the central hook), NOT from headers.
+            //    A spoofed x-operator-* header alone can never satisfy this (403 otherwise).
+            const operatorDid = await operatorScope(req, reply);
+            if (!operatorDid) return;
+
+            // 1. Tier signal — SECONDARY intent only (defense-in-depth, never the sole gate).
             const tierHeader = req.headers['x-operator-tier'];
             if (typeof tierHeader !== 'string') {
                 reply.code(401);
@@ -78,7 +107,7 @@ export function registerPortalManagerRoutes(
                 return { error: 'tier_too_low' } satisfies ApiError;
             }
 
-            // 1b. Operator-id gate — server-trusted x-operator-id header.
+            // 1b. Operator-id signal — SECONDARY (header is not the boundary now).
             const opIdHeader = req.headers['x-operator-id'];
             if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) {
                 reply.code(400);

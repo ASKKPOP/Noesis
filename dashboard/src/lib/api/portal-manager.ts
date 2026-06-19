@@ -4,10 +4,14 @@
  *
  * GET {NEXT_PUBLIC_GRID_ORIGIN}/api/v1/portal-manager/registrations[?status=]
  *
- * Operator-gated: the caller supplies x-operator-tier / x-operator-id headers
- * (the same header-trust mechanism every operator.* route uses). Non-2xx maps
- * to a discriminated-union error exposing only `kind` (mirrors operator.ts) —
- * raw error text never leaks to callers.
+ * AUTH: the real boundary is the server-trusted Portal session cookie — this
+ * client sends `credentials: 'include'` so the cross-origin httpOnly portal-session
+ * cookie reaches api.${DOMAIN} (same pattern as portal/auth + siwe-auth). The route
+ * is additionally gated behind GRID_ADMIN_ENABLED on the Grid (503 admin_disabled
+ * when off). The x-operator-tier / x-operator-id headers remain only as a secondary
+ * intent signal — they are NO LONGER the boundary. Non-2xx maps to a
+ * discriminated-union error exposing only `kind` (mirrors operator.ts) — raw error
+ * text never leaks to callers.
  */
 
 const GRID_ORIGIN = (): string => process.env.NEXT_PUBLIC_GRID_ORIGIN ?? '';
@@ -34,9 +38,10 @@ export interface RegistrationsResponse {
 }
 
 export type PortalManagerErrorKind =
-    | 'unauthorized'   // 401 tier_missing / 403 tier_too_low / 400 invalid_operator_id
-    | 'db_unavailable' // 503
-    | 'network';       // fetch rejection or any other non-2xx
+    | 'unauthorized'    // 401 portal_session_required/tier_missing / 403 operator_scope_required/tier_too_low / 400 invalid_operator_id
+    | 'admin_disabled'  // 503 { error: 'admin_disabled' } — console gated off in this environment
+    | 'db_unavailable'  // 503 { error: 'db_unavailable' } — registration store unavailable
+    | 'network';        // fetch rejection or any other non-2xx
 
 export interface PortalManagerFetchError {
     readonly kind: PortalManagerErrorKind;
@@ -50,6 +55,7 @@ const STATUS_TO_KIND: Record<number, PortalManagerErrorKind> = {
     400: 'unauthorized',
     401: 'unauthorized',
     403: 'unauthorized',
+    // 503 is disambiguated by body.error (admin_disabled vs db_unavailable) below.
     503: 'db_unavailable',
 };
 
@@ -73,6 +79,9 @@ export async function fetchRegistrations(
         resp = await fetch(`${GRID_ORIGIN()}/api/v1/portal-manager/registrations${qs}`, {
             method: 'GET',
             signal,
+            // The real auth is the server-trusted Portal session cookie — send it
+            // cross-origin (api.${DOMAIN}). The headers below are a secondary signal.
+            credentials: 'include',
             headers: {
                 accept: 'application/json',
                 'x-operator-tier': String(op.tier),
@@ -85,6 +94,12 @@ export async function fetchRegistrations(
     }
 
     if (!resp.ok) {
+        // Disambiguate 503: admin_disabled (console gated off) vs db_unavailable.
+        if (resp.status === 503) {
+            let code: string | undefined;
+            try { code = ((await resp.json()) as { error?: string }).error; } catch { /* keep undefined */ }
+            return { ok: false, error: { kind: code === 'admin_disabled' ? 'admin_disabled' : 'db_unavailable' } };
+        }
         return { ok: false, error: { kind: STATUS_TO_KIND[resp.status] ?? 'network' } };
     }
 

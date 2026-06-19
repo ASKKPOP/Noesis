@@ -184,10 +184,14 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/operator/spawn-system-nous': 'public',
 
     // Portal Manager v1 (Tier-3 Henry-side meta-ops) — READ-ONLY reviewer queue.
-    // header-trust pattern: uses x-operator-tier (>=5) / x-operator-id auth internally,
-    // identical to every operator.* route above (D-25b-NEW-1). 'public' lets the DID
-    // hook pass through to the in-handler tier check. Observe-only; emits no audit events.
-    'GET /api/v1/portal-manager/registrations': 'public',
+    // Requires a SERVER-TRUSTED Portal session: the global hook runs requirePortalSession
+    // (401 portal_session_required for anonymous callers) and the handler then calls
+    // operatorScope (403 operator_scope_required when req.didContext.operatorDid is absent).
+    // The route is ALSO admin-surface-gated behind GRID_ADMIN_ENABLED (503 admin_disabled
+    // when off). The earlier spoofable x-operator-tier/-id header pattern is RETIRED as the
+    // sole boundary — it survives only as a secondary intent signal behind operatorScope.
+    // Observe-only; emits no audit events.
+    'GET /api/v1/portal-manager/registrations': 'portal_session_required',
 
     // Admin routes — gated by GRID_ADMIN_ENABLED env, use their own mechanism
     'GET /api/v1/admin/config': 'public',
