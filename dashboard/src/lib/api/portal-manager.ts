@@ -7,8 +7,9 @@
  * AUTH: the real boundary is the server-trusted Portal session cookie — this
  * client sends `credentials: 'include'` so the cross-origin httpOnly portal-session
  * cookie reaches api.${DOMAIN} (same pattern as portal/auth + siwe-auth). The route
- * is additionally gated behind GRID_ADMIN_ENABLED on the Grid (503 admin_disabled
- * when off). The x-operator-tier / x-operator-id headers remain only as a secondary
+ * is additionally gated behind GRID_PORTAL_MANAGER_ENABLED on the Grid (503
+ * portal_manager_disabled when off; a dedicated flag, decoupled from the admin .env
+ * routes). The x-operator-tier / x-operator-id headers remain only as a secondary
  * intent signal — they are NO LONGER the boundary. Non-2xx maps to a
  * discriminated-union error exposing only `kind` (mirrors operator.ts) — raw error
  * text never leaks to callers.
@@ -38,10 +39,10 @@ export interface RegistrationsResponse {
 }
 
 export type PortalManagerErrorKind =
-    | 'unauthorized'    // 401 portal_session_required/tier_missing / 403 operator_scope_required/tier_too_low / 400 invalid_operator_id
-    | 'admin_disabled'  // 503 { error: 'admin_disabled' } — console gated off in this environment
-    | 'db_unavailable'  // 503 { error: 'db_unavailable' } — registration store unavailable
-    | 'network';        // fetch rejection or any other non-2xx
+    | 'unauthorized'      // 401 portal_session_required/tier_missing / 403 operator_scope_required/tier_too_low / 400 invalid_operator_id
+    | 'console_disabled'  // 503 { error: 'portal_manager_disabled' } — GRID_PORTAL_MANAGER_ENABLED off in this environment
+    | 'db_unavailable'    // 503 { error: 'db_unavailable' } — registration store unavailable
+    | 'network';          // fetch rejection or any other non-2xx
 
 export interface PortalManagerFetchError {
     readonly kind: PortalManagerErrorKind;
@@ -55,7 +56,7 @@ const STATUS_TO_KIND: Record<number, PortalManagerErrorKind> = {
     400: 'unauthorized',
     401: 'unauthorized',
     403: 'unauthorized',
-    // 503 is disambiguated by body.error (admin_disabled vs db_unavailable) below.
+    // 503 is disambiguated by body.error (portal_manager_disabled vs db_unavailable) below.
     503: 'db_unavailable',
 };
 
@@ -94,11 +95,11 @@ export async function fetchRegistrations(
     }
 
     if (!resp.ok) {
-        // Disambiguate 503: admin_disabled (console gated off) vs db_unavailable.
+        // Disambiguate 503: portal_manager_disabled (console gated off) vs db_unavailable.
         if (resp.status === 503) {
             let code: string | undefined;
             try { code = ((await resp.json()) as { error?: string }).error; } catch { /* keep undefined */ }
-            return { ok: false, error: { kind: code === 'admin_disabled' ? 'admin_disabled' : 'db_unavailable' } };
+            return { ok: false, error: { kind: code === 'portal_manager_disabled' ? 'console_disabled' : 'db_unavailable' } };
         }
         return { ok: false, error: { kind: STATUS_TO_KIND[resp.status] ?? 'network' } };
     }

@@ -3,7 +3,8 @@
  *
  * GET /api/v1/portal-manager/registrations[?status=]
  *   - TWO server-trusted gates:
- *       (a) attack-surface gate GRID_ADMIN_ENABLED — 503 admin_disabled when off;
+ *       (a) attack-surface gate GRID_PORTAL_MANAGER_ENABLED (dedicated, decoupled
+ *           from GRID_ADMIN_ENABLED) — 503 portal_manager_disabled when off;
  *       (b) portal_session_required policy + in-handler operatorScope — a valid
  *           Portal session cookie is mandatory (401/403 without one). A spoofed
  *           x-operator-tier/-id header alone can NEVER pass (regression below).
@@ -99,12 +100,16 @@ function defaultQueryFn(rows = ROWS) {
 // All suites below exercise the REAL handler, which only registers when the
 // attack-surface gate is enabled. (The admin-disabled and spoof regressions
 // manage the flag themselves.)
-describe('Portal Manager — admin-surface gate (GRID_ADMIN_ENABLED)', () => {
-    const PRIOR = process.env.GRID_ADMIN_ENABLED;
-    afterAll(() => { process.env.GRID_ADMIN_ENABLED = PRIOR; });
+describe('Portal Manager — attack-surface gate (GRID_PORTAL_MANAGER_ENABLED)', () => {
+    const PRIOR_PM = process.env.GRID_PORTAL_MANAGER_ENABLED;
+    const PRIOR_ADMIN = process.env.GRID_ADMIN_ENABLED;
+    afterAll(() => {
+        process.env.GRID_PORTAL_MANAGER_ENABLED = PRIOR_PM;
+        process.env.GRID_ADMIN_ENABLED = PRIOR_ADMIN;
+    });
 
-    it('503 admin_disabled when GRID_ADMIN_ENABLED is unset/false (even with spoofed headers + cookie)', async () => {
-        delete process.env.GRID_ADMIN_ENABLED;
+    it('503 portal_manager_disabled when the flag is unset/false (even with spoofed headers + cookie)', async () => {
+        delete process.env.GRID_PORTAL_MANAGER_ENABLED;
         const app = buildApp(makePool(defaultQueryFn()));
         await app.ready();
         const cookie = await makePortalCookie();
@@ -115,18 +120,36 @@ describe('Portal Manager — admin-surface gate (GRID_ADMIN_ENABLED)', () => {
             cookies: { [COOKIE_NAME]: cookie },
         });
         expect(res.statusCode).toBe(503);
-        expect(res.json().error).toBe('admin_disabled');
+        expect(res.json().error).toBe('portal_manager_disabled');
         // No queue body leaks.
         expect(res.json().applications).toBeUndefined();
+        await app.close();
+    });
+
+    it('DECOUPLED: GRID_ADMIN_ENABLED=true alone does NOT open the console', async () => {
+        delete process.env.GRID_PORTAL_MANAGER_ENABLED;
+        process.env.GRID_ADMIN_ENABLED = 'true';
+        const app = buildApp(makePool(defaultQueryFn()));
+        await app.ready();
+        const cookie = await makePortalCookie();
+        const res = await app.inject({
+            method: 'GET',
+            url: '/api/v1/portal-manager/registrations',
+            headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
+            cookies: { [COOKIE_NAME]: cookie },
+        });
+        // The admin .env kill-switch must not enable the read-only console.
+        expect(res.statusCode).toBe(503);
+        expect(res.json().error).toBe('portal_manager_disabled');
         await app.close();
     });
 });
 
 // --- Suites that need the REAL handler: enable the gate for all of them. ---
 describe('Portal Manager — production-gated handler', () => {
-    const PRIOR = process.env.GRID_ADMIN_ENABLED;
-    beforeAll(() => { process.env.GRID_ADMIN_ENABLED = 'true'; });
-    afterAll(() => { process.env.GRID_ADMIN_ENABLED = PRIOR; });
+    const PRIOR = process.env.GRID_PORTAL_MANAGER_ENABLED;
+    beforeAll(() => { process.env.GRID_PORTAL_MANAGER_ENABLED = 'true'; });
+    afterAll(() => { process.env.GRID_PORTAL_MANAGER_ENABLED = PRIOR; });
 
     describe('REGRESSION — spoofed-headers-only is rejected (the closed hole)', () => {
         it('401 portal_session_required when ONLY x-operator-tier:5 + x-operator-id are sent (no session cookie)', async () => {

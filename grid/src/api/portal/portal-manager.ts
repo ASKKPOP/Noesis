@@ -17,9 +17,11 @@
  *     the statement plaintext is never selected or returned.
  *
  * AUTH (production-hardened — TWO required server-trusted layers):
- *   1. Attack-surface gate GRID_ADMIN_ENABLED: when not 'true' the route returns
- *      503 admin_disabled and the real handler is never registered (mirrors
- *      admin/config.ts — Tier-3 meta-ops is admin-grade).
+ *   1. Attack-surface gate GRID_PORTAL_MANAGER_ENABLED (dedicated flag, decoupled
+ *      from GRID_ADMIN_ENABLED): when not 'true' the route returns 503
+ *      portal_manager_disabled and the real handler is never registered (pattern
+ *      mirrors admin/config.ts). This read-only console can run in prod without
+ *      also enabling the admin .env read/write routes.
  *   2. Server-trusted identity: ROUTE_DID_POLICY marks this 'portal_session_required',
  *      so the central onRequest hook runs requirePortalSession (401
  *      portal_session_required for anonymous callers) BEFORE the handler. Inside the
@@ -71,13 +73,16 @@ export function registerPortalManagerRoutes(
     app: FastifyInstance,
     services: GridServices,
 ): void {
-    // Layer 2 — attack-surface gate (mirrors admin/config.ts). Tier-3 meta-ops is
-    // admin-grade; when disabled the route 503s and the real handler is never wired.
-    const adminEnabled = process.env.GRID_ADMIN_ENABLED === 'true';
-    if (!adminEnabled) {
+    // Layer 2 — attack-surface gate (pattern mirrors admin/config.ts). Tier-3
+    // meta-ops has its OWN dedicated flag, decoupled from GRID_ADMIN_ENABLED: this
+    // read-only console can run in prod WITHOUT also enabling the admin .env
+    // read/write routes (which stay on GRID_ADMIN_ENABLED). When disabled the route
+    // 503s and the real handler is never wired.
+    const portalManagerEnabled = process.env.GRID_PORTAL_MANAGER_ENABLED === 'true';
+    if (!portalManagerEnabled) {
         app.get('/api/v1/portal-manager/registrations', async (_req, reply) => {
             reply.code(503);
-            return { error: 'admin_disabled' };
+            return { error: 'portal_manager_disabled' };
         });
         return;
     }

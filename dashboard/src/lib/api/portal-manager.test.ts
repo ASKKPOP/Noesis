@@ -85,12 +85,12 @@ describe('fetchRegistrations', () => {
         if (!res.ok) expect(res.error.kind).toBe('db_unavailable');
     });
 
-    it('maps 503 { error: admin_disabled } to admin_disabled (distinct from db_unavailable)', async () => {
-        const fetchMock = vi.fn(async () => jsonResp({ error: 'admin_disabled' }, 503));
+    it('maps 503 { error: portal_manager_disabled } to console_disabled (distinct from db_unavailable)', async () => {
+        const fetchMock = vi.fn(async () => jsonResp({ error: 'portal_manager_disabled' }, 503));
         vi.stubGlobal('fetch', fetchMock);
         const res = await fetchRegistrations(OP);
         expect(res.ok).toBe(false);
-        if (!res.ok) expect(res.error.kind).toBe('admin_disabled');
+        if (!res.ok) expect(res.error.kind).toBe('console_disabled');
     });
 
     it('maps a fetch rejection to network and exposes only `kind`', async () => {

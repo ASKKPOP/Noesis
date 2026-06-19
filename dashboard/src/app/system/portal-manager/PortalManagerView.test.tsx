@@ -91,8 +91,8 @@ describe('PortalManagerView — gate / error states', () => {
         expect(getByText(/store is currently unavailable/i)).toBeTruthy();
     });
 
-    it('renders a distinct console-disabled notice on admin_disabled (NOT the unauthorized copy)', () => {
-        const { getByText, queryByText } = render(<PortalManagerView data={null} error="admin_disabled" />);
+    it('renders a distinct console-disabled notice on console_disabled (NOT the unauthorized copy)', () => {
+        const { getByText, queryByText } = render(<PortalManagerView data={null} error="console_disabled" />);
         expect(getByText(/console is disabled in this environment/i)).toBeTruthy();
         // It must NOT show the operator-authorization (unauthorized) copy — distinct states.
         expect(queryByText(/Operator authorization required/i)).toBeNull();

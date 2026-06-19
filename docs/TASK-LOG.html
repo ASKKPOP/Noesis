@@ -64,6 +64,29 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 6 ============================ -->
+  <h2>Session 6 — 2026‑06‑19 · “Portal Manager v1 — dedicated console flag (separate the kill-switch)”</h2>
+  <p class="sub">Goal: resolve the Session-5 residual. The hardened console shared the <code>GRID_ADMIN_ENABLED</code>
+  kill-switch with the <code>.env</code> read/write admin routes, so enabling the read-only console in prod also exposed
+  admin config writes. Gave the console its <strong>own</strong> flag, fully decoupled. Surgical; read-only; nothing pushed.</p>
+  <ul>
+    <li><b>Dedicated gate</b> <span class="tag done">hardened</span> <code>grid/src/api/portal/portal-manager.ts</code> now
+      gates on <code>GRID_PORTAL_MANAGER_ENABLED === 'true'</code> (was <code>GRID_ADMIN_ENABLED</code>), returning
+      503 <code>portal_manager_disabled</code> (was <code>admin_disabled</code>) when off. The read-only console can run in
+      prod <em>without</em> enabling the admin <code>.env</code> read/write routes (which stay on <code>GRID_ADMIN_ENABLED</code>).
+      Session/operatorScope auth layer unchanged.</li>
+    <li><b>Decoupling proof</b> <span class="tag done">test</span> new case asserts <code>GRID_ADMIN_ENABLED=true</code> alone
+      (console flag unset) still returns 503 <code>portal_manager_disabled</code> — the admin kill-switch no longer opens the
+      console. <code>grid/test/api/portal-manager-registrations.test.ts</code> 13 (was 12); grid suites 17/17.</li>
+    <li><b>Dashboard</b> <span class="tag done">built</span> error kind renamed <code>admin_disabled</code> →
+      <code>console_disabled</code> (mapped from grid <code>portal_manager_disabled</code>); disabled-state copy now names
+      <code>GRID_PORTAL_MANAGER_ENABLED</code>. <code>lib/api/portal-manager.ts</code> + <code>PortalManagerView.tsx</code> + both
+      tests updated; dashboard suites 18/18.</li>
+    <li><b>Invariants:</b> still READ-ONLY (allowlist FROZEN at 107, SELECT-only, SHA-256 <code>human_did_hash</code>);
+      VOTE-05 / D-V3-36 untouched; auth layer (portal session + operatorScope) intact. Doc-synced
+      <code>docs/spec/portal-manager.html</code> §5 card. Verified via adversarial code review (separate agent). Not deployed.</li>
+  </ul>
+
   <!-- ============================ SESSION 5 ============================ -->
   <h2>Session 5 — 2026‑06‑19 · “Portal Manager v1 — production-auth HARDENING (close the header-spoof hole)”</h2>
   <p class="sub">Goal: close a confirmed auth hole in the shipped Tier-3 reviewer-queue route. The route was marked
