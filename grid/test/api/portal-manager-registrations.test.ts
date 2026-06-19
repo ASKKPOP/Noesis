@@ -1,0 +1,248 @@
+/**
+ * Portal Manager v1 — reviewer-queue READ endpoint tests.
+ *
+ * GET /api/v1/portal-manager/registrations[?status=]
+ *   - operator-gated (header-trust x-operator-tier >= 5 + x-operator-id), the
+ *     SAME ladder as grid/src/api/operator/ban-human.ts.
+ *   - READ-ONLY over human_civic_applications; emits zero audit events.
+ *   - privacy: returns human_did_hash (SHA-256) NOT the raw DID, and never the
+ *     statement plaintext (FORBIDDEN_KEY_PATTERN preserved).
+ *
+ * Mock-Pool pattern (no DB) per test/portal/nous-endpoints.test.ts.
+ */
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { createHash } from 'node:crypto';
+import { buildServer } from '../../src/api/server.js';
+import { WorldClock } from '../../src/clock/ticker.js';
+import { SpatialMap } from '../../src/space/map.js';
+import { LogosEngine } from '../../src/logos/engine.js';
+import { AuditChain } from '../../src/audit/chain.js';
+import type { FastifyInstance } from 'fastify';
+
+const OP_ID = 'op:12345678-1234-4234-8234-1234567890ab';
+
+type MockPool = { query: ReturnType<typeof vi.fn> };
+
+function makePool(queryFn: (sql: string, params: unknown[]) => [unknown[], unknown]): MockPool {
+    return {
+        query: vi.fn().mockImplementation((sql: string, params: unknown[]) =>
+            Promise.resolve(queryFn(sql, params)),
+        ),
+    };
+}
+
+function buildApp(humanPool?: MockPool): FastifyInstance {
+    return buildServer({
+        clock: new WorldClock({ tickRateMs: 100_000 }),
+        space: new SpatialMap(),
+        logos: new LogosEngine(),
+        audit: new AuditChain(),
+        gridName: 'genesis',
+        humanPool,
+    });
+}
+
+const ROWS = [
+    {
+        application_id: 'a1', grid_name: 'genesis', human_did: 'did:noesis:human:0xaaa',
+        status: 'approved', reason_code: null, civic_did: 'did:civic:noesis:human:c1',
+        requested_at_tick: 10, decided_at_tick: 11,
+    },
+    {
+        application_id: 'a2', grid_name: 'genesis', human_did: 'did:noesis:human:0xbbb',
+        status: 'pending', reason_code: null, civic_did: null,
+        requested_at_tick: 12, decided_at_tick: null,
+    },
+    {
+        application_id: 'a3', grid_name: 'genesis', human_did: 'did:noesis:human:0xccc',
+        status: 'rejected', reason_code: 'oath_mismatch', civic_did: null,
+        requested_at_tick: 13, decided_at_tick: 14,
+    },
+];
+
+const COUNT_ROWS = [
+    { status: 'pending', n: 1, issued: 0 },
+    { status: 'approved', n: 1, issued: 1 },
+    { status: 'rejected', n: 1, issued: 0 },
+];
+
+/** Route the two SELECTs (list + counts) by inspecting the SQL. */
+function defaultQueryFn(rows = ROWS) {
+    return (sql: string, _params: unknown[]): [unknown[], unknown] => {
+        if (/GROUP BY/i.test(sql)) return [COUNT_ROWS, undefined];
+        return [rows, undefined];
+    };
+}
+
+describe('GET /api/v1/portal-manager/registrations — auth ladder', () => {
+    let app: FastifyInstance;
+    beforeAll(async () => { app = buildApp(makePool(defaultQueryFn())); await app.ready(); });
+    afterAll(async () => { await app.close(); });
+
+    it('401 tier_missing when x-operator-tier absent', async () => {
+        const res = await app.inject({
+            method: 'GET',
+            url: '/api/v1/portal-manager/registrations',
+            headers: { 'x-operator-id': OP_ID },
+        });
+        expect(res.statusCode).toBe(401);
+        expect(res.json().error).toBe('tier_missing');
+    });
+
+    it('403 tier_too_low when tier < 5', async () => {
+        const res = await app.inject({
+            method: 'GET',
+            url: '/api/v1/portal-manager/registrations',
+            headers: { 'x-operator-tier': '4', 'x-operator-id': OP_ID },
+        });
+        expect(res.statusCode).toBe(403);
+        expect(res.json().error).toBe('tier_too_low');
+    });
+
+    it('400 invalid_operator_id when x-operator-id malformed', async () => {
+        const res = await app.inject({
+            method: 'GET',
+            url: '/api/v1/portal-manager/registrations',
+            headers: { 'x-operator-tier': '5', 'x-operator-id': 'not-an-op-id' },
+        });
+        expect(res.statusCode).toBe(400);
+        expect(res.json().error).toBe('invalid_operator_id');
+    });
+});
+
+describe('GET /api/v1/portal-manager/registrations — 503', () => {
+    it('503 db_unavailable when humanPool absent', async () => {
+        const app = buildApp(undefined);
+        await app.ready();
+        const res = await app.inject({
+            method: 'GET',
+            url: '/api/v1/portal-manager/registrations',
+            headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
+        });
+        expect(res.statusCode).toBe(503);
+        expect(res.json().error).toBe('db_unavailable');
+        await app.close();
+    });
+});
+
+describe('GET /api/v1/portal-manager/registrations — read shape', () => {
+    let app: FastifyInstance;
+    beforeAll(async () => { app = buildApp(makePool(defaultQueryFn())); await app.ready(); });
+    afterAll(async () => { await app.close(); });
+
+    it('200 returns rows + counts + activity summary', async () => {
+        const res = await app.inject({
+            method: 'GET',
+            url: '/api/v1/portal-manager/registrations',
+            headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
+        });
+        expect(res.statusCode).toBe(200);
+        const body = res.json();
+        expect(body.applications).toHaveLength(3);
+        expect(body.counts).toEqual({ pending: 1, approved: 1, rejected: 1, total: 3 });
+        expect(body.activity).toEqual({ registrations_total: 3, civic_dids_issued: 1 });
+        expect(body.grid_name).toBe('genesis');
+    });
+
+    it('each row carries application_id, status, civic_did, reason_code, ticks + grid_name', async () => {
+        const res = await app.inject({
+            method: 'GET',
+            url: '/api/v1/portal-manager/registrations',
+            headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
+        });
+        const row = res.json().applications[0];
+        expect(row.application_id).toBe('a1');
+        expect(row.status).toBe('approved');
+        expect(row.civic_did).toBe('did:civic:noesis:human:c1');
+        expect(row.reason_code).toBeNull();
+        expect(row.requested_at_tick).toBe(10);
+        expect(row.decided_at_tick).toBe(11);
+        expect(row.grid_name).toBe('genesis');
+    });
+
+    it('PRIVACY: returns human_did_hash (SHA-256) and NEVER the raw human_did or statement', async () => {
+        const res = await app.inject({
+            method: 'GET',
+            url: '/api/v1/portal-manager/registrations',
+            headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
+        });
+        const raw = res.payload;
+        expect(raw).not.toContain('did:noesis:human:0xaaa');
+        expect(raw).not.toContain('statement');
+        const row = res.json().applications[0];
+        expect(row.human_did).toBeUndefined();
+        expect(row.statement).toBeUndefined();
+        expect(row.human_did_hash).toBe(
+            createHash('sha256').update('did:noesis:human:0xaaa').digest('hex'),
+        );
+    });
+});
+
+describe('GET /api/v1/portal-manager/registrations — status filter', () => {
+    it('?status=pending parameterizes the SQL (no interpolation) and filters', async () => {
+        const seen: { sql: string; params: unknown[] }[] = [];
+        const pool: MockPool = {
+            query: vi.fn().mockImplementation((sql: string, params: unknown[]) => {
+                seen.push({ sql, params });
+                if (/GROUP BY/i.test(sql)) return Promise.resolve([COUNT_ROWS, undefined]);
+                return Promise.resolve([[ROWS[1]], undefined]);
+            }),
+        };
+        const app = buildApp(pool);
+        await app.ready();
+        const res = await app.inject({
+            method: 'GET',
+            url: '/api/v1/portal-manager/registrations?status=pending',
+            headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
+        });
+        expect(res.statusCode).toBe(200);
+        expect(res.json().applications).toHaveLength(1);
+        expect(res.json().applications[0].status).toBe('pending');
+
+        // The list SELECT must bind status as a parameter, not interpolate it.
+        const listCall = seen.find(c => !/GROUP BY/i.test(c.sql));
+        expect(listCall).toBeDefined();
+        expect(listCall!.params).toContain('pending');
+        expect(listCall!.sql).not.toContain("'pending'");
+        // reserved identifier `status` is backticked in the WHERE clause, and the
+        // WHERE leads with grid_name then status — the idx_civic_app_status order.
+        expect(listCall!.sql).toContain('`status`');
+        expect(listCall!.sql).toMatch(/WHERE grid_name = \?\s+AND `status` = \?/);
+    });
+
+    it('400 invalid_status on a bogus status value', async () => {
+        const app = buildApp(makePool(defaultQueryFn()));
+        await app.ready();
+        const res = await app.inject({
+            method: 'GET',
+            url: '/api/v1/portal-manager/registrations?status=bogus',
+            headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
+        });
+        expect(res.statusCode).toBe(400);
+        expect(res.json().error).toBe('invalid_status');
+        await app.close();
+    });
+});
+
+describe('Portal Manager — read-only (no audit emission)', () => {
+    it('a 200 read appends ZERO entries to the audit chain', async () => {
+        const audit = new AuditChain();
+        const before = audit.length;
+        const app = buildServer({
+            clock: new WorldClock({ tickRateMs: 100_000 }),
+            space: new SpatialMap(),
+            logos: new LogosEngine(),
+            audit,
+            gridName: 'genesis',
+            humanPool: makePool(defaultQueryFn()),
+        });
+        await app.ready();
+        await app.inject({
+            method: 'GET',
+            url: '/api/v1/portal-manager/registrations',
+            headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
+        });
+        expect(audit.length).toBe(before);
+        await app.close();
+    });
+});

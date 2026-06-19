@@ -64,6 +64,39 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 4 ============================ -->
+  <h2>Session 4 — 2026‑06‑18 · “Portal Manager v1 — read-only monitoring slice (built)”</h2>
+  <p class="sub">Goal: ship the first <i>built</i> slice of the Tier-3 Portal Manager — an operator-gated, READ-ONLY
+  reviewer-queue + registration/DID activity console on noesiis.com, over the existing
+  <code>human_civic_applications</code> table. No writes, no decisions, no new audit/broadcast events
+  (D-V3-36 management ≠ governance; VOTE-05 observe-only). Implemented + tested; nothing pushed.</p>
+  <ul>
+    <li><b>Grid READ endpoint</b> <span class="tag done">built</span> <code>GET /api/v1/portal-manager/registrations[?status=]</code>
+      — new <code>grid/src/api/portal/portal-manager.ts</code> (<code>registerPortalManagerRoutes</code>), wired in
+      <code>portal/index.ts</code> + policy entry (<code>'public'</code>, header-trust convention) in <code>api/policy.ts</code>.
+      Lists applications newest-first with per-status counts <code>{pending,approved,rejected,total}</code> and a derived
+      <code>activity {registrations_total, civic_dids_issued}</code>. Header-trust auth (x-operator-tier ≥ 5 + x-operator-id),
+      same ladder as <code>operator/ban-human.ts</code> (401/403/400/503). <b>Privacy:</b> returns <code>human_did_hash</code>
+      (SHA-256), never the raw DID or the statement plaintext. SELECT-only — emits zero audit entries.</li>
+    <li><b>Dashboard surface</b> <span class="tag done">built</span> <code>/system/portal-manager</code> on noesiis.com —
+      new <code>dashboard/src/app/system/portal-manager/page.tsx</code> (operator-gated client page) +
+      <code>PortalManagerView.tsx</code> (editorial read-only console, mirrors <code>portal/status</code>) +
+      api client <code>dashboard/src/lib/api/portal-manager.ts</code> (discriminated-union result, operator headers,
+      <code>NEXT_PUBLIC_GRID_ORIGIN</code>). Renders the reviewer queue (3 status sections + counts) and the activity
+      summary; unauthorized / db-unavailable / loading states. No approve/reject affordance.</li>
+    <li><b>Tests (TDD, green)</b> — grid: <code>test/api/portal-manager-registrations.test.ts</code> (10) +
+      <code>test/api/portal-manager-readonly-guard.test.ts</code> (4, asserts allowlist length unchanged + no audit producer
+      import + SELECT-only). dashboard: <code>portal-manager.test.ts</code> (7) +
+      <code>PortalManagerView.test.tsx</code> (8). Full suites: grid <code>3417 passed</code>; dashboard new tests
+      <code>15 passed</code> (6 pre-existing unrelated suites still red on a clean tree — untouched).</li>
+    <li><b>Invariants preserved:</b> broadcast allowlist FROZEN (no <code>portal.review_*</code>); privacy walker untouched;
+      <code>check-civic-did-issuance-path.mjs</code> scope untouched; shipped systems (civic.ts, auth.ts, schema.ts) read,
+      not modified. Updated <code>docs/spec/portal-manager.html</code> card 1 → <span class="tag done">v1 monitoring built</span>
+      (actions stay Planned).</li>
+  </ul>
+  <p class="note">⚠ Deferred: approve/reject actions (would emit a <code>portal.review_decision</code>-class event → needs explicit
+  allowlist addition + VOTE-05 boundary review), cross-Grid aggregation, Grid-creation reviewer UI. Not deployed (operator initiates deploys).</p>
+
   <!-- ============================ SESSION 3 ============================ -->
   <h2>Session 3 — 2026‑06‑18 · “Portal surfaces &amp; gap analysis + founding-mandate model”</h2>
   <p class="sub">Goal: reconcile the operator's everyday portal vocabulary ("Nous portal in local", "Service Portal", "System admin Portal")

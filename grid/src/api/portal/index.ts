@@ -17,6 +17,7 @@ import { registerSupportRoutes } from './support.js';
 import { registerPortalCivicRoutes } from './civic.js';
 import { registerPortalDiscoverRoutes } from './discover.js';
 import { registerPortalGridsRoutes } from './grids.js';
+import { registerPortalManagerRoutes } from './portal-manager.js';
 
 export function registerPortalRoutes(
     app: FastifyInstance,
@@ -35,6 +36,9 @@ export function registerPortalRoutes(
     registerPortalDiscoverRoutes(app, services);
     // Spec §2: search active Grids (multi-Grid framework).
     registerPortalGridsRoutes(app, services);
+    // Tier-3 Portal Manager v1 (Henry-side meta-ops): READ-ONLY reviewer queue
+    // over human_civic_applications. Observe-only — emits no audit events.
+    registerPortalManagerRoutes(app, services);
     // Phase 28: human-spawned Nous routes (SPAWN-01..06).
     // Deps are constructed inline; audit/tick/gridName are optional (skipped when humanPool absent).
     void registerSpawnRoutes(app, {
