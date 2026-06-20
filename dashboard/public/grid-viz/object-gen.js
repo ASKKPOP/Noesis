@@ -88,6 +88,6 @@ function _resetCache() { ATLAS = {}; saveAtlas(ATLAS); generated = 0; cacheHits 
 function setUseFal(v) { USE_FAL = !!v; }
 function stats() { return { generated, cacheHits, atlasSize: Object.keys(ATLAS).length }; }
 
-const api = { generate, signature, proceduralDesign, _resetCache, setUseFal, stats, GEO_BASES };
-if (typeof module !== 'undefined' && module.exports) module.exports = api;
-if (typeof window !== 'undefined') window.ObjectGen = api;
+const objectGenApi = { generate, signature, proceduralDesign, _resetCache, setUseFal, stats, GEO_BASES };
+if (typeof module !== 'undefined' && module.exports) module.exports = objectGenApi;
+if (typeof window !== 'undefined') window.ObjectGen = objectGenApi;

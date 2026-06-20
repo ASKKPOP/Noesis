@@ -201,19 +201,19 @@ function makeShape(design) {
 }
 
 const cacheCountEl = document.getElementById('cache-count');
-function buildObject(type, ringIdx, angle, rnd = Math.random) {
-  type = type || FUNCTIONS[Math.floor(rnd() * FUNCTIONS.length)];
-  ringIdx = ringIdx ?? Math.floor(rnd() * ringDefs.length);
-  angle = angle ?? rnd() * Math.PI * 2;
+const genCountEl = document.getElementById('gen-count');
+const bestFitEl = document.getElementById('best-fit');
+const orbiterMeshes = new Set();   // tracks which interactive entries are functional objects
+
+// Place an object FROM A GIVEN SPEC (gate → generate design → mesh). Returns the orbiter or null.
+function placeObject(spec, type, ringIdx, angle, rnd = Math.random, generation = 0) {
   // ── §S1 PHYSICS GATE ── no object is ever shown ungated.
-  const spec = makeSpec(type, rnd);
   const gate = window.PhysicsGate.checkPhysics(spec);
   if (!gate.ok) { rejectedCount++; rejCountEl.textContent = rejectedCount; return null; }
   // ── §S2 NOUS BUILDS THE DESIGN ── generate-once, atlas-cached.
   const design = window.ObjectGen.generate(spec);
   const rd = ringDefs[ringIdx];
   const { g, mesh } = makeShape(design);
-  // stalk pointing in-to-ring
   const stalk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 5, 6),
     new THREE.MeshBasicMaterial({ color: design.color, transparent: true, opacity: 0.5 }));
   stalk.position.y = -3.5; g.add(stalk);
@@ -221,25 +221,56 @@ function buildObject(type, ringIdx, angle, rnd = Math.random) {
   const holder = new THREE.Group();
   holder.rotation.x = Math.PI / 2 + rd.rx; holder.rotation.z = rd.rz; holder.position.y = 6;
   scene.add(holder);
-  const o = { holder, g, mesh, type, R: rd.R, angle, spin: 0.003 + rnd() * 0.01,
-    orbit: 0.0012 + rnd() * 0.0016, born: orbiters.length };
-  g.userData = { kind: 'obj', title: `${type.fn} module`, color: design.color,
+  const o = { holder, g, mesh, type, spec, generation, ringIdx, R: rd.R, angle,
+    spin: 0.003 + rnd() * 0.01, orbit: 0.0012 + rnd() * 0.0016, born: orbiters.length };
+  g.userData = { kind: 'obj', title: `${type.fn} module · gen ${generation}`, color: design.color,
     rows: [['function', type.fn], ['form', design.geoBase],
+           ['generation', `${generation}`],
+           ['fitness', window.Learn.fitness(spec).toFixed(1)],
            ['mass', `${Math.round(spec.mass_kg)} kg`],
            ['altitude', `${Math.round(spec.altitude_km)} km`],
            ['physics', `✓ passed (${window.PhysicsGate.REQUIRED.length} checks)`],
            ['design', `${design.source}${design.cached ? ' · cached' : ' · new'}`],
            ['built by', 'Nous']] };
   holder.add(g);
-  orbiters.push(o);
-  interactive.push(mesh);
+  orbiters.push(o); interactive.push(mesh); orbiterMeshes.add(mesh);
   objCountEl.textContent = orbiters.length;
   cacheCountEl.textContent = window.ObjectGen.stats().cacheHits;
   return o;
 }
+
+function buildObject(type, ringIdx, angle, rnd = Math.random) {
+  type = type || FUNCTIONS[Math.floor(rnd() * FUNCTIONS.length)];
+  ringIdx = ringIdx ?? Math.floor(rnd() * ringDefs.length);
+  angle = angle ?? rnd() * Math.PI * 2;
+  return placeObject(makeSpec(type, rnd), type, ringIdx, angle, rnd, 0);
+}
+
 // seed the scene with a DETERMINISTIC fleet — so a reload hits the atlas cache (generate-once).
 for (let i = 0; i < 22; i++) {
   buildObject(FUNCTIONS[i % FUNCTIONS.length], i % ringDefs.length, (i / 22) * Math.PI * 2, mulberry32(4100 + i));
+}
+
+// ── §S3 LEARNING LOOP ── evaluate fitness, keep the fittest, breed specialized (gated) variants.
+function refreshBestFit() {
+  if (orbiters.length) bestFitEl.textContent = Math.max(...orbiters.map(o => window.Learn.fitness(o.spec))).toFixed(1);
+}
+refreshBestFit();
+function evolveGeneration() {
+  if (!window.Learn || !orbiters.length) return;
+  const pop = orbiters.map(o => ({ spec: o.spec, generation: o.generation, fitness: window.Learn.fitness(o.spec) }));
+  const result = window.Learn.evolve(pop, { keep: Math.ceil(pop.length / 2), size: pop.length, rnd: Math.random });
+  // tear down the current fleet (scene + interactive)
+  orbiters.forEach(o => scene.remove(o.holder));
+  for (let i = interactive.length - 1; i >= 0; i--) if (orbiterMeshes.has(interactive[i])) interactive.splice(i, 1);
+  orbiterMeshes.clear(); orbiters.length = 0;
+  // rebuild from the evolved population
+  result.population.forEach((ind, i) => {
+    const t = FUNCTIONS.find(f => f.fn === ind.spec.fn) || FUNCTIONS[0];
+    placeObject(ind.spec, t, i % ringDefs.length, (i / result.population.length) * Math.PI * 2, Math.random, ind.generation);
+  });
+  genCountEl.textContent = result.generation;
+  bestFitEl.textContent = result.best.toFixed(1);
 }
 
 /* ---------------- legend ---------------- */
@@ -259,6 +290,13 @@ document.getElementById('build-btn').addEventListener('click', () => {
   let t = 0; const base = o.mesh.material.emissiveIntensity;
   const id = setInterval(() => { o.mesh.material.emissiveIntensity = base + Math.sin(t) * 0.6; t += 0.5; if (t > 6) { clearInterval(id); o.mesh.material.emissiveIntensity = base; } }, 30);
   showInfo(o.g.userData);
+});
+
+document.getElementById('evolve-btn').addEventListener('click', () => {
+  evolveGeneration();
+  showInfo({ title: `Evolved → generation ${genCountEl.textContent}`, kind: 'obj',
+    rows: [['best fitness', bestFitEl.textContent], ['population', String(orbiters.length)],
+           ['method', 'elitism + specialize'], ['gated', 'unphysical variants dropped']] });
 });
 
 /* ---------------- interaction (hover / click) ---------------- */

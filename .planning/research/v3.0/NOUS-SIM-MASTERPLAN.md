@@ -118,7 +118,8 @@ Click a zone-node → enter that zone's local view; run the **simulation** (obje
 - **Verify:** generated object renders, carries a valid spec, passes the gate; reload uses cache (zero re-gen).
 - **Done when:** "Nous: build object" yields a unique, physical, functional mesh.
 
-### Phase S3 — Learning loop + specialization (track ②)
+### Phase S3 — Learning loop + specialization (track ②) — ✅ SHIPPED 2026-06-20
+- **Delivered:** `learning.js` — `fitness` + `specialize` + `evolve` (elitism, gated children, monotonic best). 8 `node:test` cases (TDD). Wired into `orbital.html`: "Nous: evolve generation" button, `gen`/`best-fit` stats, per-object generation+fitness. Verified (best 17.8→32.8 over 6 gens, population specialized). Suite 24/24.
 - **Goal:** designs improve/specialize over generations (§2).
 - **Tasks:** fitness eval (function + efficiency); variant/fork generation; generation index; convergence visualization.
 - **Verify:** over N cycles, population fitness rises and variants specialize by function (measured, not asserted). Rejected designs never persist.

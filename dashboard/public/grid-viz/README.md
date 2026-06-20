@@ -15,6 +15,12 @@ Earth, the 6 zones as orbital station-nodes, and **functional objects the Nous l
 - `object-gen.js` — **Phase S2** the Nous generates a unique design per spec (generate-once → atlas cache,
   localStorage); `fal.ai` is a stubbed hook (`setUseFal(true)` + fill `falGenerate`), procedural is the
   offline fallback. Tests: `node --test object-gen.test.cjs` (6 cases, TDD).
+- `learning.js` — **Phase S3** the learning loop: `fitness` scores capability/efficiency, `evolve` keeps
+  the fittest (elitism) and breeds `specialize`d variants — only physical (S1-gated) children survive,
+  best fitness never regresses. "Nous: evolve generation" runs it live. Tests: `node --test learning.test.cjs`
+  (8 cases, TDD).
+
+Run all grid-viz tests: `node --test *.test.cjs` (24 cases).
 - "Nous: build object" button demonstrates the Nous constructing new functional modules (gated)
 - Must be **served over http** (three.js ES modules); `http://localhost:3000/grid-viz/orbital.html`
   via the dashboard, or any static server. Zone IDs stay canonical (D-V3-32); labels are demo-only.

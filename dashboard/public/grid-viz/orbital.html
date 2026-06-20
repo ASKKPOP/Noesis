@@ -47,7 +47,7 @@
   <span class="brand">No<span class="x">ē</span>sis · Grid-Viz</span>
   <span class="sub">Genesis Grid · orbital station · Noēsis-space</span>
   <span class="spacer"></span>
-  <span class="meta">objects built by Nous: <b id="obj-count">0</b> · physics-rejected: <b id="rej-count" style="color:#ff7373">0</b> · atlas-cached: <b id="cache-count" style="color:#34d399">0</b></span>
+  <span class="meta">built: <b id="obj-count">0</b> · rejected: <b id="rej-count" style="color:#ff7373">0</b> · cached: <b id="cache-count" style="color:#34d399">0</b> · gen: <b id="gen-count" style="color:#c084fc">0</b> · best-fit: <b id="best-fit" style="color:#c084fc">—</b></span>
 </header>
 
 <div class="tip">drag = orbit · wheel = zoom · click a node 노드 클릭</div>
@@ -63,6 +63,7 @@
 
 <div class="controls">
   <div class="legend" id="legend"></div>
+  <button class="btn" id="evolve-btn">⟳ Nous: evolve generation</button>
   <button class="btn" id="build-btn">✦ Nous: build object</button>
 </div>
 
@@ -70,6 +71,7 @@
 
 <script src="./physics-gate.js"></script>
 <script src="./object-gen.js"></script>
+<script src="./learning.js"></script>
 <script type="importmap">
 { "imports": { "three": "./vendor/three.module.js" } }
 </script>
