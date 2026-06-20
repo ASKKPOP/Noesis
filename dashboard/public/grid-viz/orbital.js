@@ -152,7 +152,7 @@ ZONES.forEach(z => {
   const hex = '#' + z.color.toString(16).padStart(6, '0');
   el.style.borderColor = hex; el.style.color = hex; el.style.boxShadow = `0 0 16px ${hex}55`;
   labelsEl.appendChild(el);
-  node.userData = { kind: 'zone', title: z.label, el, color: z.color,
+  node.userData = { kind: 'zone', title: z.label, el, color: z.color, zoneId: z.id,
     rows: [['canonical id', z.id], ['role', 'orbital station-node'], ['governance', 'Genesis Polis']] };
   interactive.push(node);
   z._node = node; z._el = el;
@@ -222,6 +222,7 @@ function placeObject(spec, type, ringIdx, angle, rnd = Math.random, generation =
   holder.rotation.x = Math.PI / 2 + rd.rx; holder.rotation.z = rd.rz; holder.position.y = 6;
   scene.add(holder);
   const o = { holder, g, mesh, type, spec, generation, ringIdx, R: rd.R, angle,
+    zoneId: ZONES[orbiters.length % ZONES.length].id,
     spin: 0.003 + rnd() * 0.01, orbit: 0.0012 + rnd() * 0.0016, born: orbiters.length };
   g.userData = { kind: 'obj', title: `${type.fn} module · gen ${generation}`, color: design.color,
     rows: [['function', type.fn], ['form', design.geoBase],
@@ -259,7 +260,7 @@ refreshBestFit();
 function evolveGeneration() {
   if (!window.Learn || !orbiters.length) return;
   const pop = orbiters.map(o => ({ spec: o.spec, generation: o.generation, fitness: window.Learn.fitness(o.spec) }));
-  const result = window.Learn.evolve(pop, { keep: Math.ceil(pop.length / 2), size: pop.length, rnd: Math.random });
+  const result = window.Learn.evolve(pop, { niche: true, keep: Math.ceil(pop.length / 2), size: pop.length, rnd: Math.random });
   // tear down the current fleet (scene + interactive)
   orbiters.forEach(o => scene.remove(o.holder));
   for (let i = interactive.length - 1; i >= 0; i--) if (orbiterMeshes.has(interactive[i])) interactive.splice(i, 1);
@@ -313,10 +314,33 @@ renderer.domElement.addEventListener('pointermove', e => {
 });
 renderer.domElement.addEventListener('click', e => {
   setPointer(e); const m = pick();
-  if (!m) { showInfo(coreGroup.userData); return; }
+  if (!m) { clearZoneFocus(); showInfo(coreGroup.userData); return; }
   const ud = m.userData.kind ? m.userData : m.parent.userData;
-  showInfo(ud);
+  if (ud.kind === 'zone') { enterZone(ud); return; }   // §S4 drill-in
+  clearZoneFocus(); showInfo(ud);
 });
+
+// ── §S4 ZONE DRILL-IN + SIMULATION ── focus a zone's modules and run its energy ledger.
+function clearZoneFocus() {
+  orbiters.forEach(o => { o.mesh.material.emissiveIntensity = 0.25; });
+}
+function enterZone(zoneUd) {
+  const mods = orbiters.filter(o => o.zoneId === zoneUd.zoneId);
+  // highlight this zone's modules, dim the rest
+  orbiters.forEach(o => { o.mesh.material.emissiveIntensity = (o.zoneId === zoneUd.zoneId) ? 0.85 : 0.05; });
+  const sim = window.Simulate.simulateZone(mods.map(o => o.spec));
+  const fns = {}; mods.forEach(o => { fns[o.type.fn] = (fns[o.type.fn] || 0) + 1; });
+  showInfo({ title: `${zoneUd.title} · zone sim`, kind: 'zone',
+    rows: [
+      ['modules', `${sim.modules}`],
+      ['mix', Object.entries(fns).map(([k, n]) => `${k}×${n}`).join(' ') || '—'],
+      ['inflow', `${Math.round(sim.inflow)} W`],
+      ['demand', `${Math.round(sim.demand)} W`],
+      ['surplus', `${Math.round(sim.surplus)} W`],
+      ['status', sim.status === 'powered' ? '✓ powered' : '⚠ brownout'],
+      ['energy', sim.conserved ? '✓ conserved' : '✗ violated'],
+    ] });
+}
 function showInfo(ud){
   document.getElementById('info-title').textContent = ud.title;
   const body = document.getElementById('info-body');
@@ -351,4 +375,4 @@ addEventListener('resize', () => {
 });
 
 // expose for quick debugging in the preview
-window.__noesis = { buildObject, orbiters, scene };
+window.__noesis = { buildObject, orbiters, scene, enterZone, evolveGeneration, ZONES };

@@ -65,6 +65,19 @@ test('elitism: best fitness never decreases across generations', () => {
   }
 });
 
+test('niche evolve preserves every function family (no extinction)', () => {
+  const specs = [
+    spec({ fn: 'Energy' }),
+    spec({ fn: 'Comms', mass_kg: 700, generation_W: 90, consumption_W: 70, yield_N: 450, load_N: 120, radiated_W: 90, dissipated_W: 50 }),
+    spec({ fn: 'Sense', mass_kg: 600, generation_W: 70, consumption_W: 55, yield_N: 400, load_N: 110, radiated_W: 70, dissipated_W: 35 }),
+  ];
+  let pop = Learn.seedPopulation(specs);
+  const rnd = mulberry32(99);
+  for (let g = 0; g < 10; g++) pop = Learn.evolve(pop, { niche: true, size: 9, rnd }).population;
+  const fns = new Set(pop.map(i => i.spec.fn));
+  assert.ok(fns.has('Energy') && fns.has('Comms') && fns.has('Sense'), `families survived: ${[...fns]}`);
+});
+
 test('over many generations the population specializes and improves', () => {
   let pop = Learn.seedPopulation([spec({ mass_kg: 1800, generation_W: 150, consumption_W: 130, yield_N: 320, load_N: 300, radiated_W: 130 })]);
   const rnd = mulberry32(21);

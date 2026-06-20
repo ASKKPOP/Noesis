@@ -54,7 +54,18 @@ function evolve(population, opts = {}) {
     fitness: ind.fitness != null ? ind.fitness : fitness(ind.spec),
   })).sort((a, b) => b.fitness - a.fitness);
 
-  const elites = scored.slice(0, keep);                       // carry the best forward unchanged
+  // Elitism. With { niche: true } we keep the best of EACH function family so selection
+  // pressure improves designs without collapsing the population to a monoculture
+  // (PHILOSOPHY: diversity over monoculture).
+  let elites;
+  if (opts.niche) {
+    const bestByFn = new Map();
+    for (const s of scored) if (!bestByFn.has(s.spec.fn)) bestByFn.set(s.spec.fn, s); // scored is fitness-desc
+    elites = Array.from(bestByFn.values());
+    for (const s of scored) { if (elites.length >= keep) break; if (!elites.includes(s)) elites.push(s); }
+  } else {
+    elites = scored.slice(0, keep);                           // carry the best forward unchanged
+  }
   const nextGen = Math.max(0, ...scored.map(s => s.generation)) + 1;
 
   const children = [];

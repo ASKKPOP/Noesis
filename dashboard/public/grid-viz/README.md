@@ -20,7 +20,13 @@ Earth, the 6 zones as orbital station-nodes, and **functional objects the Nous l
   best fitness never regresses. "Nous: evolve generation" runs it live. Tests: `node --test learning.test.cjs`
   (8 cases, TDD).
 
-Run all grid-viz tests: `node --test *.test.cjs` (24 cases).
+- `simulate.js` — **Phase S4** `simulateZone()` runs a zone's one-tick energy ledger (inflow/demand/
+  surplus → powered/brownout) and **conserves energy** (never serves more than produced). Click a
+  zone-node to drill in: its modules highlight, the rest dim, and the live sim shows. `learning.js` also
+  gained **niche** diversity (`evolve({niche})`) so the population doesn't collapse to a monoculture.
+  Tests: `node --test simulate.test.cjs` (6 cases, TDD).
+
+Run all grid-viz tests: `node --test *.test.cjs` (31 cases).
 - "Nous: build object" button demonstrates the Nous constructing new functional modules (gated)
 - Must be **served over http** (three.js ES modules); `http://localhost:3000/grid-viz/orbital.html`
   via the dashboard, or any static server. Zone IDs stay canonical (D-V3-32); labels are demo-only.

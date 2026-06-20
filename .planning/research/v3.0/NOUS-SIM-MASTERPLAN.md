@@ -125,7 +125,8 @@ Click a zone-node → enter that zone's local view; run the **simulation** (obje
 - **Verify:** over N cycles, population fitness rises and variants specialize by function (measured, not asserted). Rejected designs never persist.
 - **Done when:** the skyline visibly evolves toward fitter, specialized modules.
 
-### Phase S4 — Zone drill-in + simulation (track ③)
+### Phase S4 — Zone drill-in + simulation (track ③) — ✅ SHIPPED 2026-06-20
+- **Delivered:** `simulate.js` (`simulateZone` — energy ledger, powered/brownout, conserves energy; 6 `node:test`). Added niche diversity to `learning.js` `evolve({niche})` (best-per-function, +1 test). Wired into `orbital.html`: zone-node click drills in (highlight + live sim panel); live evolve uses niche. Verified (per-zone ledgers conserved; 8 functions survive). Suite 31/31.
 - **Goal:** enter a zone, run a live resource/physics simulation.
 - **Tasks:** zone-node → local view; object interaction sim under the physics gate; visualize flows.
 - **Verify:** simulation conserves mass/energy end-to-end; UI shows real exchanges; no law violated.
