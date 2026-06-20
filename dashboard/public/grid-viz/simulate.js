@@ -22,6 +22,29 @@ function simulateZone(modules, opts = {}) {
     conserved, modules: modules.length,
   };
 }
-const simApi = { simulateZone };
+// Route surplus energy from exporting zones to deficit zones (greedy, conserved:
+// total routed never exceeds total available surplus). Returns [{from, to, amount}].
+function computeFlows(zoneStates) {
+  const exporters = (zoneStates || []).filter(z => z.surplus > 0)
+    .map(z => ({ id: z.zoneId, avail: z.surplus })).sort((a, b) => b.avail - a.avail);
+  const importers = (zoneStates || []).filter(z => z.surplus < 0)
+    .map(z => ({ id: z.zoneId, need: -z.surplus })).sort((a, b) => b.need - a.need);
+  const flows = [];
+  let ei = 0;
+  for (const imp of importers) {
+    let need = imp.need;
+    while (need > 1e-9 && ei < exporters.length) {
+      const exp = exporters[ei];
+      if (exp.avail <= 1e-9) { ei++; continue; }
+      const amount = Math.min(need, exp.avail);
+      flows.push({ from: exp.id, to: imp.id, amount });
+      exp.avail -= amount; need -= amount;
+      if (exp.avail <= 1e-9) ei++;
+    }
+  }
+  return flows;
+}
+
+const simApi = { simulateZone, computeFlows };
 if (typeof module !== 'undefined' && module.exports) module.exports = simApi;
 if (typeof window !== 'undefined') window.Simulate = simApi;

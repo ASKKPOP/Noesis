@@ -197,13 +197,54 @@ function makeShape(design) {
     const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2, 6), new THREE.MeshBasicMaterial({ color: 0xcfcfd6 }));
     ant.position.y = 2.3; g.add(ant);
   }
+  addFunctionDetail(g, design.fn, design.color);
   return { g, mesh };
+}
+
+// Function-specific adornments — richer, recognisable module silhouettes.
+function addFunctionDetail(g, fn, c) {
+  const mat = (col, opts) => new THREE.MeshStandardMaterial(Object.assign({ color: col, emissive: col, emissiveIntensity: 0.2, roughness: 0.4, metalness: 0.4 }, opts || {}));
+  if (fn === 'Energy') {                          // solar panels on arms
+    [-1, 1].forEach(s => {
+      const panel = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.08, 1.6), mat(0x1b3a6b, { emissive: 0x2b5fb0, emissiveIntensity: 0.5 }));
+      panel.position.set(s * 3.0, 0, 0); g.add(panel);
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.5, 6), new THREE.MeshBasicMaterial({ color: 0x8899aa }));
+      arm.rotation.z = Math.PI / 2; arm.position.set(s * 1.6, 0, 0); g.add(arm);
+    });
+  } else if (fn === 'Comms') {                    // dish + stem
+    const dish = new THREE.Mesh(new THREE.ConeGeometry(1.6, 0.7, 20, 1, true), mat(0xcfd8e6, { side: THREE.DoubleSide, emissiveIntensity: 0.1 }));
+    dish.position.y = 2.5; dish.rotation.x = Math.PI; g.add(dish);
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.2, 6), new THREE.MeshBasicMaterial({ color: 0xaab4c4 }));
+    stem.position.y = 1.8; g.add(stem);
+  } else if (fn === 'Sense') {                    // sensor spikes
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2;
+      const spike = new THREE.Mesh(new THREE.ConeGeometry(0.16, 1.5, 6), mat(c));
+      spike.position.set(Math.cos(a) * 1.9, 0.4, Math.sin(a) * 1.9);
+      spike.rotation.z = -Math.cos(a) * 0.7; spike.rotation.x = Math.sin(a) * 0.7; g.add(spike);
+    }
+  } else if (fn === 'Fabricate') {                // assembly ring
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(2.5, 0.12, 8, 32), mat(c, { emissiveIntensity: 0.45 }));
+    ring.rotation.x = Math.PI / 2.4; g.add(ring);
+  } else if (fn === 'Store' || fn === 'Memory') { // banded tanks / banks
+    [-0.9, 0.9].forEach(y => {
+      const band = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.1, 8, 24), mat(c, { emissiveIntensity: 0.3 }));
+      band.rotation.x = Math.PI / 2; band.position.y = y; g.add(band);
+    });
+  }
 }
 
 const cacheCountEl = document.getElementById('cache-count');
 const genCountEl = document.getElementById('gen-count');
 const bestFitEl = document.getElementById('best-fit');
 const orbiterMeshes = new Set();   // tracks which interactive entries are functional objects
+// Functional zoning: producers (Energy) cluster in infrastructure, consumers (Compute/Fabricate)
+// in their districts — so zones specialize and genuinely TRADE energy (surplus → deficit flows).
+const FN_ZONE = {
+  Energy: 'infrastructure', Comms: 'infrastructure',
+  Compute: 'government_quarter', Govern: 'government_quarter',
+  Fabricate: 'manufacture', Store: 'shopping', Memory: 'business', Sense: 'residential',
+};
 
 // Place an object FROM A GIVEN SPEC (gate → generate design → mesh). Returns the orbiter or null.
 function placeObject(spec, type, ringIdx, angle, rnd = Math.random, generation = 0) {
@@ -212,6 +253,7 @@ function placeObject(spec, type, ringIdx, angle, rnd = Math.random, generation =
   if (!gate.ok) { rejectedCount++; rejCountEl.textContent = rejectedCount; return null; }
   // ── §S2 NOUS BUILDS THE DESIGN ── generate-once, atlas-cached.
   const design = window.ObjectGen.generate(spec);
+  design.fn = type.fn;                              // for function-specific adornments
   const rd = ringDefs[ringIdx];
   const { g, mesh } = makeShape(design);
   const stalk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 5, 6),
@@ -222,7 +264,7 @@ function placeObject(spec, type, ringIdx, angle, rnd = Math.random, generation =
   holder.rotation.x = Math.PI / 2 + rd.rx; holder.rotation.z = rd.rz; holder.position.y = 6;
   scene.add(holder);
   const o = { holder, g, mesh, type, spec, generation, ringIdx, R: rd.R, angle,
-    zoneId: ZONES[orbiters.length % ZONES.length].id,
+    zoneId: FN_ZONE[type.fn] || ZONES[orbiters.length % ZONES.length].id,
     spin: 0.003 + rnd() * 0.01, orbit: 0.0012 + rnd() * 0.0016, born: orbiters.length };
   g.userData = { kind: 'obj', title: `${type.fn} module · gen ${generation}`, color: design.color,
     rows: [['function', type.fn], ['form', design.geoBase],
@@ -257,6 +299,33 @@ function refreshBestFit() {
   if (orbiters.length) bestFitEl.textContent = Math.max(...orbiters.map(o => window.Learn.fitness(o.spec))).toFixed(1);
 }
 refreshBestFit();
+
+// ── §S4+ ANIMATED RESOURCE FLOWS ── pulses travel from surplus zones to deficit zones.
+const flowGroup = new THREE.Group(); scene.add(flowGroup);
+let flowPulses = [];
+function zoneWorldPos(zoneId) {
+  const z = ZONES.find(zz => zz.id === zoneId); if (!z) return null;
+  const v = new THREE.Vector3(); z._node.getWorldPosition(v); return v;
+}
+function rebuildFlows() {
+  while (flowGroup.children.length) flowGroup.remove(flowGroup.children[0]);
+  flowPulses = [];
+  const states = ZONES.map(z => ({
+    zoneId: z.id,
+    surplus: window.Simulate.simulateZone(orbiters.filter(o => o.zoneId === z.id).map(o => o.spec)).surplus,
+  }));
+  window.Simulate.computeFlows(states).forEach(e => {
+    const from = zoneWorldPos(e.from), to = zoneWorldPos(e.to); if (!from || !to) return;
+    const col = (ZONES.find(z => z.id === e.from) || {}).color || 0xffffff;
+    flowGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([from, to]),
+      new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.16 })));
+    const pulse = new THREE.Mesh(new THREE.SphereGeometry(0.6, 8, 8), new THREE.MeshBasicMaterial({ color: col }));
+    flowGroup.add(pulse);
+    flowPulses.push({ from, to, mesh: pulse, t: Math.random(), speed: 0.004 + Math.random() * 0.004 });
+  });
+}
+rebuildFlows();
+
 function evolveGeneration() {
   if (!window.Learn || !orbiters.length) return;
   const pop = orbiters.map(o => ({ spec: o.spec, generation: o.generation, fitness: window.Learn.fitness(o.spec) }));
@@ -272,6 +341,7 @@ function evolveGeneration() {
   });
   genCountEl.textContent = result.generation;
   bestFitEl.textContent = result.best.toFixed(1);
+  rebuildFlows();
 }
 
 // ── §S5 TEACHING / TRANSFER ── export the learned population, seed a NEW Grid from it.
@@ -293,7 +363,7 @@ function teachNewGrid() {
     const t = FUNCTIONS.find(f => f.fn === ind.spec.fn) || FUNCTIONS[0];
     placeObject(ind.spec, t, i % ringDefs.length, (i / imp.accepted.length) * Math.PI * 2, Math.random, ind.generation);
   });
-  genCountEl.textContent = imp.generation; refreshBestFit();
+  genCountEl.textContent = imp.generation; refreshBestFit(); rebuildFlows();
   const sub = document.querySelector('header .sub');
   if (sub) sub.textContent = `Grid-0${gridSeq} (taught) · seeded from Genesis · Noēsis-space`;
   const s = window.Teaching.summary(pack);
@@ -323,6 +393,7 @@ document.getElementById('build-btn').addEventListener('click', () => {
   // brief flash
   let t = 0; const base = o.mesh.material.emissiveIntensity;
   const id = setInterval(() => { o.mesh.material.emissiveIntensity = base + Math.sin(t) * 0.6; t += 0.5; if (t > 6) { clearInterval(id); o.mesh.material.emissiveIntensity = base; } }, 30);
+  rebuildFlows();
   showInfo(o.g.userData);
 });
 
@@ -400,6 +471,7 @@ function animate(){
   coreGroup.children[0].material.emissiveIntensity = 0.5 + Math.sin(Date.now() * 0.002) * 0.25;
   orbiters.forEach(o => { o.angle += o.orbit; const x = Math.cos(o.angle) * o.R, z = Math.sin(o.angle) * o.R;
     o.g.position.set(x, 0, z); o.g.rotation.y += o.spin; o.g.rotation.x += o.spin * 0.5; });
+  flowPulses.forEach(p => { p.t += p.speed; if (p.t > 1) p.t -= 1; p.mesh.position.lerpVectors(p.from, p.to, p.t); p.mesh.position.y += Math.sin(p.t * Math.PI) * 6; });
   controls.update(); projectLabels(); renderer.render(scene, camera);
 }
 animate();
