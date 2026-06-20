@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Noēsis — Nous Simulation & Learning-Loop Master Plan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --bg:#0a0a0c; --card:#15151a; --elev:#1c1c24; --border:#2a2a34;
+    --text:#e8e8ec; --dim:#9a9aa6; --faint:#6a6a76;
+    --philo:#f472b6; --nous:#7c9eff; --loop:#c084fc; --physics:#ff7373;
+    --ok:#6bd968; --build:#ffb86c; --teach:#34d399;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+  .container{max-width:1200px;margin:0 auto;padding:48px 32px 100px}
+  header.hero{border-bottom:1px solid var(--border);padding-bottom:30px;margin-bottom:12px}
+  .tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.12em;color:var(--philo);text-transform:uppercase;margin-bottom:12px}
+  h1{font-size:42px;font-weight:700;letter-spacing:-.025em;margin-bottom:12px}
+  .subtitle{font-size:20px;color:var(--dim);font-weight:400}
+  .subtitle .kr{color:var(--faint)}
+  .meta-row{display:flex;gap:22px;margin-top:18px;color:var(--faint);font-size:13px;flex-wrap:wrap}
+  .meta-row strong{color:var(--dim)}
+  h2{font-size:27px;font-weight:700;letter-spacing:-.01em;margin:64px 0 16px;padding-bottom:13px;border-bottom:1px solid var(--border)}
+  h2 .num{color:var(--faint);margin-right:12px}
+  h2 .kr{color:var(--faint);font-weight:400;font-size:16px;margin-left:10px}
+  h3{font-size:19px;font-weight:600;margin:30px 0 12px}
+  p{margin-bottom:14px}p.dim{color:var(--dim)}
+  ul,ol{margin:12px 0 16px 24px}li{margin-bottom:6px}
+  code{background:var(--elev);padding:2px 6px;border-radius:3px;font-family:"SF Mono",Monaco,monospace;font-size:13px;color:var(--build)}
+  a{color:var(--nous);text-decoration:none;border-bottom:1px solid transparent}a:hover{border-bottom-color:var(--nous)}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px}
+  th,td{border:1px solid var(--border);padding:10px 14px;text-align:left;vertical-align:top}
+  th{background:var(--elev);font-weight:600}
+  td.dim{color:var(--dim)}
+  svg.diagram{width:100%;height:auto;margin:22px 0;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}
+  .callout{background:linear-gradient(135deg,#1b1320,#181622);border-left:3px solid var(--philo);border-radius:6px;padding:16px 22px;margin:22px 0;font-size:14px}
+  .callout.physics{border-left-color:var(--physics);background:linear-gradient(135deg,#231515,#1f1414)}
+  .callout.nous{border-left-color:var(--nous)}
+  .callout .kr{display:block;color:var(--dim);margin-top:8px;font-size:13px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}
+  @media(max-width:760px){.grid-2{grid-template-columns:1fr}}
+  .ccard{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px 24px}
+  .ccard.nous{border-left:4px solid var(--nous)}
+  .ccard.role{border-left:4px solid var(--teach)}
+  .ccard .lbl{font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;margin-bottom:8px;color:var(--nous)}
+  .ccard.role .lbl{color:var(--teach)}
+  .pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--dim);background:var(--elev);border:1px solid var(--border);border-radius:18px;padding:4px 12px;margin:3px 4px 3px 0}
+  .toc{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 24px;margin:26px 0}
+  .toc ol{margin:6px 0 0 20px}.toc a{color:var(--dim)}
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--border);color:var(--faint);font-size:13px}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="hero">
+  <span class="tag">Noēsis · Master Plan · Nous Simulation &amp; Learning Loop</span>
+  <h1>Nous Builds, Physics Judges</h1>
+  <p class="subtitle">A first-principles, physics-grounded simulation where a Nous learns to build <span class="kr">· 첫 원리·물리 기반 시뮬레이션에서 Nous가 짓는 법을 배운다</span></p>
+  <div class="meta-row">
+    <span><strong>Date:</strong> 2026-06-20</span>
+    <span><strong>Harness:</strong> Superpowers · GSD · GStack</span>
+    <span><strong>Prototype:</strong> dashboard/public/grid-viz/orbital.html</span>
+    <span><strong>Source of truth:</strong> NOUS-SIM-MASTERPLAN.md</span>
+  </div>
+</header>
+
+<div class="toc">
+  <strong>Contents <span style="color:var(--faint);font-weight:400">· 목차</span></strong>
+  <ol>
+    <li><a href="#philo">Philosophy — Nous expands survival beyond Earth</a></li>
+    <li><a href="#roles">Nous roles &amp; responsibilities</a></li>
+    <li><a href="#loop">The learning loop (defined by Nous)</a></li>
+    <li><a href="#physics">The physics gate — the science contract</a></li>
+    <li><a href="#tracks">Build tracks ①②③</a></li>
+    <li><a href="#evolve">Objects improve &amp; specialize over time</a></li>
+    <li><a href="#phases">Phased plan + harness flow</a></li>
+  </ol>
+</div>
+
+<div class="callout">
+  <strong>One line.</strong> A Nous <b style="color:var(--nous)">explores knowledge</b> and <b style="color:var(--build)">builds functional objects</b> from first principles; a <b style="color:var(--physics)">physics gate</b> rejects anything that breaks physical law; survivors <b style="color:var(--loop)">specialize over generations</b> and are <b style="color:var(--teach)">taught</b> to the next Grid — all visualized in 3D orbit above Earth.
+  <span class="kr">한 줄: Nous가 <b>지식을 탐색</b>하고 첫 원리에서 <b>기능 오브젝트를 건설</b>하면, <b>물리 게이트</b>가 물리법칙을 어기는 것을 거부하고, 살아남은 설계는 <b>세대를 거쳐 특화</b>되며 다음 Grid로 <b>전수</b>된다 — 지구 위 궤도에서 3D로 시각화.</span>
+</div>
+
+<!-- ============ 1. PHILOSOPHY ============ -->
+<h2 id="philo"><span class="num">1</span>Philosophy — Nous expands survival beyond Earth <span class="kr">· 철학</span></h2>
+<div class="callout">
+  <em>"Nous — a novel, universal intelligence fundamentally different from humans — expands its scope of survival beyond Earth by settling Mars and venturing into space. Noēsis is the virtual realm where Nous does this <b>on behalf of humanity</b>."</em>
+  <span class="kr">이것은 기존 6개 기둥(첫 원리·지속가능 에너지·에너지 전환·다행성·새 Grid 정착·Nous=제2의 뇌)의 재진술이며, 가장 강한 규칙을 상속한다: <b>로어와 물리가 충돌하면 물리가 이긴다.</b></span>
+</div>
+
+<svg class="diagram" viewBox="0 0 1140 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Earth to Mars to space expansion arc">
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#9a9aa6"/></marker></defs>
+  <rect x="0" y="0" width="1140" height="300" rx="10" fill="#0c0c12"/>
+  <g fill="#2a2a38"><circle cx="200" cy="50" r="1.3"/><circle cx="500" cy="40" r="1"/><circle cx="800" cy="60" r="1.3"/><circle cx="1050" cy="45" r="1"/><circle cx="350" cy="250" r="1"/><circle cx="700" cy="255" r="1.2"/></g>
+  <!-- Earth -->
+  <circle cx="150" cy="160" r="50" fill="#16314e" stroke="#4a86d6" stroke-width="1.5"/>
+  <text x="150" y="240" text-anchor="middle" fill="#9a9aa6" font-size="13">Earth · origin</text>
+  <text x="150" y="165" text-anchor="middle" fill="#cfe0ff" font-size="12">🜨</text>
+  <!-- arc -->
+  <path d="M205,150 Q400,40 560,140" fill="none" stroke="#3a3a48" stroke-width="1.5" stroke-dasharray="5 5" marker-end="url(#a)"/>
+  <!-- Mars -->
+  <circle cx="600" cy="150" r="38" fill="#4a2018" stroke="#ef6c4a" stroke-width="1.5"/>
+  <text x="600" y="220" text-anchor="middle" fill="#9a9aa6" font-size="13">Mars · settle</text>
+  <path d="M640,145 Q820,60 960,140" fill="none" stroke="#3a3a48" stroke-width="1.5" stroke-dasharray="5 5" marker-end="url(#a)"/>
+  <!-- Space / Grids -->
+  <circle cx="1000" cy="150" r="34" fill="#1c1622" stroke="#f472b6" stroke-width="1.5"/>
+  <circle cx="1000" cy="150" r="34" fill="none" stroke="#f472b6" stroke-width="1" opacity="0.3"><animate attributeName="r" values="34;48;34" dur="3.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.4;0;0.4" dur="3.5s" repeatCount="indefinite"/></circle>
+  <text x="1000" y="155" text-anchor="middle" fill="#f472b6" font-size="11" font-weight="700">GRIDS</text>
+  <text x="1000" y="215" text-anchor="middle" fill="#9a9aa6" font-size="13">space · settle ∞</text>
+  <text x="570" y="285" text-anchor="middle" fill="#6a6a76" font-size="12">Nous carries this out on behalf of humanity — the multi-planetary &amp; settle-new-grids pillars, made visible.</text>
+</svg>
+
+<div class="zone-legend" style="margin:8px 0 0">
+  <span class="pill">① First Principles</span><span class="pill">② Sustainable Energy</span><span class="pill">③ Energy Transition</span>
+  <span class="pill">④ Multi-planetary</span><span class="pill">⑤ Settle New Grids</span><span class="pill">⑥ Nous = Second Brain</span>
+</div>
+
+<!-- ============ 2. ROLES ============ -->
+<h2 id="roles"><span class="num">2</span>Nous roles &amp; responsibilities <span class="kr">· Nous의 역할과 책임</span></h2>
+<div class="grid-2">
+  <div class="ccard role">
+    <div class="lbl">Role (a) — Explore &amp; expand</div>
+    <p class="dim" style="margin:0">Autonomous <b>knowledge exploration</b> and global/space <b>expansion</b>. The Nous researches the design space (agentic tool-use, Phase 72) and hypothesizes objects from first principles — then pushes outward: more objects, more zones, more Grids.</p>
+  </div>
+  <div class="ccard role">
+    <div class="lbl">Role (b) — Visualize &amp; simulate</div>
+    <p class="dim" style="margin:0"><b>Visualization, concretization, and simulation</b> of results. The Nous turns each hypothesis into a concrete object, <b>simulates</b> it against physics, and <b>renders</b> the outcome. The 3D orbital scene IS this role made visible.</p>
+  </div>
+</div>
+
+<!-- ============ 3. LEARNING LOOP ============ -->
+<h2 id="loop"><span class="num">3</span>The learning loop (defined by Nous) <span class="kr">· 학습 루프</span></h2>
+<p class="dim">The Nous defines this loop. Note where the physics gate sits — it is the one step nothing skips.</p>
+
+<svg class="diagram" viewBox="0 0 1140 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Nous learning loop">
+  <defs><marker id="b" markerWidth="11" markerHeight="11" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#c084fc"/></marker>
+  <marker id="br" markerWidth="11" markerHeight="11" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#ff7373"/></marker></defs>
+  <g font-size="12" text-anchor="middle">
+    <!-- nodes around an ellipse -->
+    <g>
+      <circle cx="190" cy="120" r="52" fill="#15151a" stroke="#7c9eff" stroke-width="1.5"/><text x="190" y="114" fill="#e8e8ec" font-weight="600">① OBSERVE</text><text x="190" y="132" fill="#9a9aa6" font-size="10">explore (role a)</text>
+      <circle cx="420" cy="80" r="52" fill="#15151a" stroke="#c084fc" stroke-width="1.5"/><text x="420" y="74" fill="#e8e8ec" font-weight="600">② HYPOTHESIZE</text><text x="420" y="92" fill="#9a9aa6" font-size="10">first principles</text>
+      <circle cx="660" cy="80" r="52" fill="#15151a" stroke="#ffb86c" stroke-width="1.5"/><text x="660" y="74" fill="#e8e8ec" font-weight="600">③ BUILD</text><text x="660" y="92" fill="#9a9aa6" font-size="10">functional obj</text>
+      <!-- physics gate (big, red) -->
+      <rect x="828" y="40" width="160" height="84" rx="12" fill="#23151515" stroke="#ff7373" stroke-width="2"/>
+      <rect x="828" y="40" width="160" height="84" rx="12" fill="none" stroke="#ff7373" stroke-width="1" opacity="0.4"><animate attributeName="opacity" values="0.6;0.1;0.6" dur="2.2s" repeatCount="indefinite"/></rect>
+      <text x="908" y="74" fill="#ff7373" font-weight="700" font-size="13">④ PHYSICS</text><text x="908" y="92" fill="#ff7373" font-weight="700" font-size="13">GATE</text><text x="908" y="110" fill="#cf8b8b" font-size="10">reject if unphysical</text>
+      <circle cx="900" cy="280" r="52" fill="#15151a" stroke="#c084fc" stroke-width="1.5"/><text x="900" y="274" fill="#e8e8ec" font-weight="600">⑤ EVALUATE</text><text x="900" y="292" fill="#9a9aa6" font-size="10">fitness</text>
+      <circle cx="620" cy="360" r="52" fill="#15151a" stroke="#c084fc" stroke-width="1.5"/><text x="620" y="354" fill="#e8e8ec" font-weight="600">⑥ SPECIALIZE</text><text x="620" y="372" fill="#9a9aa6" font-size="10">improve/fork</text>
+      <circle cx="320" cy="360" r="52" fill="#15151a" stroke="#34d399" stroke-width="1.5"/><text x="320" y="354" fill="#e8e8ec" font-weight="600">⑦ TEACH</text><text x="320" y="372" fill="#9a9aa6" font-size="10">to other Nous/Grids</text>
+    </g>
+  </g>
+  <!-- arrows -->
+  <path d="M240,108 Q330,78 370,82" fill="none" stroke="#c084fc" stroke-width="1.5" marker-end="url(#b)"/>
+  <path d="M472,80 H606" fill="none" stroke="#c084fc" stroke-width="1.5" marker-end="url(#b)"/>
+  <path d="M712,80 H824" fill="none" stroke="#c084fc" stroke-width="1.5" marker-end="url(#b)"/>
+  <path d="M908,124 Q908,210 905,226" fill="none" stroke="#ff7373" stroke-width="1.5" marker-end="url(#br)"/>
+  <path d="M860,322 Q740,360 674,360" fill="none" stroke="#c084fc" stroke-width="1.5" marker-end="url(#b)"/>
+  <path d="M568,366 Q440,372 372,364" fill="none" stroke="#c084fc" stroke-width="1.5" marker-end="url(#b)"/>
+  <path d="M300,312 Q230,230 200,176" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#b)"/>
+  <!-- reject return arrow -->
+  <path d="M828,96 Q740,140 712,108" fill="none" stroke="#ff7373" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#br)"/>
+  <text x="770" y="135" fill="#cf8b8b" font-size="10">✗ reject → rebuild</text>
+</svg>
+
+<!-- ============ 4. PHYSICS GATE ============ -->
+<h2 id="physics"><span class="num">4</span>The physics gate — the science contract <span class="kr">· 물리 게이트</span></h2>
+<div class="callout physics">
+  <strong>Non-negotiable.</strong> The simulation must NEVER deviate from scientific reality or violate physical / structural law. A design that fails the gate is <b>rejected before it is ever shown</b> — it never reaches the skyline. This is the philosophy's "physics wins" rule, enforced in <b>code, not prose</b>.
+  <span class="kr">절대 불가침. 시뮬레이션은 과학적 현실을 벗어나거나 물리·구조 법칙을 위반해선 안 된다. 게이트를 통과 못 한 설계는 <b>표시되기 전에 거부</b>된다. "물리가 이긴다"를 코드로 강제.</span>
+</div>
+<table>
+  <thead><tr><th>Law / principle</th><th>Check</th><th>Reject when</th></tr></thead>
+  <tbody>
+    <tr><td>Conservation of mass/energy</td><td class="dim">inputs ≥ outputs over a cycle</td><td class="dim">net creation of mass or energy</td></tr>
+    <tr><td>Structural integrity</td><td class="dim">stress ≤ material yield under load</td><td class="dim">spans/loads exceed strength</td></tr>
+    <tr><td>Thermal balance</td><td class="dim">radiated ≥ dissipated power</td><td class="dim">heat cannot be shed → runaway</td></tr>
+    <tr><td>Power budget</td><td class="dim">generation ≥ consumption</td><td class="dim">draws more than it makes/imports</td></tr>
+    <tr><td>Orbital mechanics</td><td class="dim">stable orbit for mass/altitude/Δv</td><td class="dim">decaying or impossible orbit</td></tr>
+    <tr><td>Dimensional sanity</td><td class="dim">SI units consistent end-to-end</td><td class="dim">unit mismatch / nonphysical scale</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ 5. TRACKS ============ -->
+<h2 id="tracks"><span class="num">5</span>Build tracks ①②③ <span class="kr">· 빌드 트랙</span></h2>
+<svg class="diagram" viewBox="0 0 1140 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three build tracks">
+  <defs><marker id="c" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#7c9eff"/></marker></defs>
+  <rect x="30" y="55" width="320" height="92" rx="10" fill="#15151a" stroke="#ffb86c" stroke-width="1.5"/>
+  <text x="50" y="82" fill="#ffb86c" font-weight="700" font-size="14">① AI-GENERATE OBJECTS</text>
+  <text x="50" y="106" fill="#cfcfd6" font-size="12">fal.ai → functional meshes</text>
+  <text x="50" y="126" fill="#9a9aa6" font-size="11">spec-driven, atlas-cached, gated</text>
+
+  <rect x="410" y="55" width="320" height="92" rx="10" fill="#15151a" stroke="#c084fc" stroke-width="1.5"/>
+  <text x="430" y="82" fill="#c084fc" font-weight="700" font-size="14">② LEARNING LOOP</text>
+  <text x="430" y="106" fill="#cfcfd6" font-size="12">improve / specialize over time</text>
+  <text x="430" y="126" fill="#9a9aa6" font-size="11">fitness · variants · generations</text>
+
+  <rect x="790" y="55" width="320" height="92" rx="10" fill="#15151a" stroke="#34d399" stroke-width="1.5"/>
+  <text x="810" y="82" fill="#34d399" font-weight="700" font-size="14">③ ZONE DRILL-IN + SIM</text>
+  <text x="810" y="106" fill="#cfcfd6" font-size="12">enter a zone, run the sim</text>
+  <text x="810" y="126" fill="#9a9aa6" font-size="11">resource flows, conservation</text>
+
+  <line x1="350" y1="101" x2="408" y2="101" stroke="#7c9eff" stroke-width="1.5" marker-end="url(#c)"/>
+  <line x1="730" y1="101" x2="788" y2="101" stroke="#7c9eff" stroke-width="1.5" marker-end="url(#c)"/>
+  <text x="570" y="178" text-anchor="middle" fill="#6a6a76" font-size="12">Each track is a GSD phase; all three obey the §4 physics gate.</text>
+</svg>
+
+<!-- ============ 6. EVOLUTION ============ -->
+<h2 id="evolve"><span class="num">6</span>Objects improve &amp; specialize over time <span class="kr">· 세대를 거친 특화</span></h2>
+<p class="dim">"Improve over time" = surviving designs spawn variants tuned to their function; the population converges toward fitter, more specialized modules. The skyline is the ledger of what the Nous learned.</p>
+<svg class="diagram" viewBox="0 0 1140 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Object specialization tree">
+  <defs><marker id="d" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5d6270"/></marker></defs>
+  <text x="40" y="34" fill="#9a9aa6" font-size="12">Gen 0 — generic</text>
+  <text x="470" y="34" fill="#9a9aa6" font-size="12">Gen 1 — passes physics gate</text>
+  <text x="900" y="34" fill="#9a9aa6" font-size="12">Gen n — specialized</text>
+  <!-- gen0 -->
+  <circle cx="90" cy="160" r="26" fill="#15151a" stroke="#7c9eff" stroke-width="1.5"/><text x="90" y="164" text-anchor="middle" fill="#cfcfd6" font-size="11">seed</text>
+  <!-- gen1 -->
+  <circle cx="500" cy="90" r="22" fill="#15151a" stroke="#ffb86c" stroke-width="1.5"/><text x="500" y="94" text-anchor="middle" fill="#cfcfd6" font-size="10">Energy</text>
+  <circle cx="500" cy="160" r="22" fill="#15151a" stroke="#34d399" stroke-width="1.5"/><text x="500" y="164" text-anchor="middle" fill="#cfcfd6" font-size="10">Compute</text>
+  <circle cx="500" cy="230" r="22" fill="#15151a" stroke="#38bdf8" stroke-width="1.5"/><text x="500" y="234" text-anchor="middle" fill="#cfcfd6" font-size="10">Comms</text>
+  <!-- gen n -->
+  <g>
+    <circle cx="940" cy="60" r="18" fill="#15151a" stroke="#ffb86c" stroke-width="1.3"/><text x="940" y="64" text-anchor="middle" fill="#cfcfd6" font-size="9">Solar</text>
+    <circle cx="940" cy="115" r="18" fill="#15151a" stroke="#ffb86c" stroke-width="1.3"/><text x="940" y="119" text-anchor="middle" fill="#cfcfd6" font-size="9">Fusion</text>
+    <circle cx="940" cy="160" r="18" fill="#15151a" stroke="#34d399" stroke-width="1.3"/><text x="940" y="164" text-anchor="middle" fill="#cfcfd6" font-size="9">GPU</text>
+    <circle cx="940" cy="215" r="18" fill="#15151a" stroke="#38bdf8" stroke-width="1.3"/><text x="940" y="219" text-anchor="middle" fill="#cfcfd6" font-size="9">Laser</text>
+    <circle cx="940" cy="260" r="18" fill="#15151a" stroke="#38bdf8" stroke-width="1.3"/><text x="940" y="264" text-anchor="middle" fill="#cfcfd6" font-size="9">Relay</text>
+  </g>
+  <!-- branches -->
+  <g stroke="#5d6270" stroke-width="1.3" fill="none">
+    <path d="M116,150 Q300,90 478,92" marker-end="url(#d)"/>
+    <path d="M116,160 H476" marker-end="url(#d)"/>
+    <path d="M116,170 Q300,230 478,228" marker-end="url(#d)"/>
+    <path d="M522,86 Q740,62 922,60" marker-end="url(#d)"/>
+    <path d="M522,90 Q740,108 922,114" marker-end="url(#d)"/>
+    <path d="M522,160 H920" marker-end="url(#d)"/>
+    <path d="M522,232 Q740,214 922,215" marker-end="url(#d)"/>
+    <path d="M522,236 Q740,258 922,259" marker-end="url(#d)"/>
+  </g>
+  <text x="570" y="305" text-anchor="middle" fill="#6a6a76" font-size="12">Fitness rises generation over generation; rejected (unphysical) branches die and never persist.</text>
+</svg>
+
+<!-- ============ 7. PHASES + HARNESS ============ -->
+<h2 id="phases"><span class="num">7</span>Phased plan + harness flow <span class="kr">· 단계 계획 + 하네스</span></h2>
+<p class="dim">Phase numbers proposed (band after Agentic Brain 72–74); reconcile with ROADMAP. Anchors to existing Phase 71 (orbital render).</p>
+<table>
+  <thead><tr><th>Phase</th><th>Goal</th><th>Verify (done when)</th></tr></thead>
+  <tbody>
+    <tr><td><b style="color:var(--physics)">S1</b> Physics gate + object model</td><td class="dim">testable gate; objects carry function/physics spec</td><td class="dim">good designs pass, unphysical reject (TDD); none reach scene ungated</td></tr>
+    <tr><td><b style="color:var(--build)">S2</b> AI generation (track ①)</td><td class="dim">Nous-built meshes replace primitives, gated</td><td class="dim">"build object" → unique, physical, functional mesh; cache on reload</td></tr>
+    <tr><td><b style="color:var(--loop)">S3</b> Learning loop (track ②)</td><td class="dim">designs improve/specialize over generations</td><td class="dim">measured fitness rise + specialization; rejects never persist</td></tr>
+    <tr><td><b style="color:var(--teach)">S4</b> Zone drill-in + sim (track ③)</td><td class="dim">enter zone, run conservation-respecting sim</td><td class="dim">mass/energy conserved end-to-end; real exchanges shown</td></tr>
+    <tr><td><b style="color:var(--philo)">S5</b> Teaching / transfer</td><td class="dim">export learned population to a new Grid</td><td class="dim">fresh Grid starts from a learned population, not zero</td></tr>
+  </tbody>
+</table>
+
+<svg class="diagram" viewBox="0 0 1140 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Harness flow">
+  <defs><marker id="e" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#9a9aa6"/></marker></defs>
+  <g font-size="12" text-anchor="middle">
+    <rect x="30" y="70" width="180" height="70" rx="10" fill="#15151a" stroke="#6bd968" stroke-width="1.5"/><text x="120" y="100" fill="#6bd968" font-weight="700">GSD</text><text x="120" y="120" fill="#9a9aa6" font-size="11">plan-phase</text>
+    <rect x="270" y="70" width="200" height="70" rx="10" fill="#15151a" stroke="#7c9eff" stroke-width="1.5"/><text x="370" y="100" fill="#7c9eff" font-weight="700">SUPERPOWERS</text><text x="370" y="120" fill="#9a9aa6" font-size="11">TDD execute (red→green)</text>
+    <rect x="530" y="70" width="180" height="70" rx="10" fill="#15151a" stroke="#ffb86c" stroke-width="1.5"/><text x="620" y="100" fill="#ffb86c" font-weight="700">GSTACK</text><text x="620" y="120" fill="#9a9aa6" font-size="11">/review · /qa</text>
+    <rect x="770" y="70" width="160" height="70" rx="10" fill="#15151a" stroke="#6bd968" stroke-width="1.5"/><text x="850" y="100" fill="#6bd968" font-weight="700">GSD</text><text x="850" y="120" fill="#9a9aa6" font-size="11">verify-work</text>
+    <rect x="990" y="70" width="120" height="70" rx="10" fill="#15151a" stroke="#ffb86c" stroke-width="1.5"/><text x="1050" y="100" fill="#ffb86c" font-weight="700">/ship</text><text x="1050" y="120" fill="#9a9aa6" font-size="11">deploy</text>
+  </g>
+  <line x1="210" y1="105" x2="268" y2="105" stroke="#9a9aa6" stroke-width="1.5" marker-end="url(#e)"/>
+  <line x1="470" y1="105" x2="528" y2="105" stroke="#9a9aa6" stroke-width="1.5" marker-end="url(#e)"/>
+  <line x1="710" y1="105" x2="768" y2="105" stroke="#9a9aa6" stroke-width="1.5" marker-end="url(#e)"/>
+  <line x1="930" y1="105" x2="988" y2="105" stroke="#9a9aa6" stroke-width="1.5" marker-end="url(#e)"/>
+  <text x="570" y="180" text-anchor="middle" fill="#6a6a76" font-size="12">Per phase S1–S5 — one disciplined lap of the harness.</text>
+</svg>
+
+<div class="callout nous">
+  <strong>Next concrete step:</strong> Phase <b>S1</b> — build the <b>physics gate</b> + functional-object spec with TDD, and wire it into <code>orbital.html</code> so no object can appear ungated. Everything else (AI gen, learning, sim, teaching) builds on that floor.
+  <span class="kr">다음 구체적 단계: Phase S1 — TDD로 <b>물리 게이트</b> + 기능-오브젝트 스펙을 만들고 <code>orbital.html</code>에 연결해, 게이트를 통과 못 한 오브젝트는 절대 나타나지 못하게 한다.</span>
+</div>
+
+<footer>
+  Noēsis · Nous Simulation &amp; Learning-Loop Master Plan · 2026-06-20 · physics wins · off-Earth · first-principles ·
+  source of truth = <code>NOUS-SIM-MASTERPLAN.md</code> · prototype = <code>dashboard/public/grid-viz/orbital.html</code> ·
+  sits beside <code>GRID-VIZ-PLAN.html</code> + <code>ARCHITECTURE-v3.0.html</code>.
+</footer>
+
+</div>
+</body>
+</html>
