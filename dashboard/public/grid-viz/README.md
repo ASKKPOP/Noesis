@@ -26,7 +26,13 @@ Earth, the 6 zones as orbital station-nodes, and **functional objects the Nous l
   gained **niche** diversity (`evolve({niche})`) so the population doesn't collapse to a monoculture.
   Tests: `node --test simulate.test.cjs` (6 cases, TDD).
 
-Run all grid-viz tests: `node --test *.test.cjs` (31 cases).
+- `teaching.js` — **Phase S5** export the learned population as a portable, versioned **knowledge pack**
+  (`exportPopulation`) and seed a new Grid from it (`importPopulation` — **re-gated** through S1 so teaching
+  can never inject a law-breaker). "Nous: teach → new Grid" reseeds the scene as Grid-02 from the learned
+  generation, not zero. Tests: `node --test teaching.test.cjs` (6 cases, TDD).
+
+Run all grid-viz tests: `node --test *.test.cjs` (37 cases). The S-track is complete:
+**S1** physics gate · **S2** AI generation · **S3** learning loop · **S4** zone sim + diversity · **S5** teaching.
 - "Nous: build object" button demonstrates the Nous constructing new functional modules (gated)
 - Must be **served over http** (three.js ES modules); `http://localhost:3000/grid-viz/orbital.html`
   via the dashboard, or any static server. Zone IDs stay canonical (D-V3-32); labels are demo-only.

@@ -132,7 +132,8 @@ Click a zone-node → enter that zone's local view; run the **simulation** (obje
 - **Verify:** simulation conserves mass/energy end-to-end; UI shows real exchanges; no law violated.
 - **Done when:** clicking a zone runs a believable, conservation-respecting sim.
 
-### Phase S5 — Teaching / transfer (philosophy: Settle New Grids)
+### Phase S5 — Teaching / transfer (philosophy: Settle New Grids) — ✅ SHIPPED 2026-06-20
+- **Delivered:** `teaching.js` — `exportPopulation` (versioned knowledge pack), `importPopulation` (**re-gated** through S1), `summary`. 6 `node:test` cases (TDD). Wired into `orbital.html`: "Nous: teach → new Grid" seeds Grid-02 from the learned generation (not zero). Verified (Grid-02 from Genesis gen 5: 22 modules, 8 functions, best-fit 26.8, 0 rejected). Suite 37/37. **S-track complete.**
 - **Goal:** export a learned design population to another Nous/Grid.
 - **Tasks:** serialize the learned atlas + fitness; import path bootstraps a new scene.
 - **Verify:** a fresh Grid starts from a learned population, not zero.

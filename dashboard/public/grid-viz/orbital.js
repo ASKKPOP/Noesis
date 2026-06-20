@@ -274,6 +274,39 @@ function evolveGeneration() {
   bestFitEl.textContent = result.best.toFixed(1);
 }
 
+// ── §S5 TEACHING / TRANSFER ── export the learned population, seed a NEW Grid from it.
+let gridSeq = 1;
+function teachNewGrid() {
+  if (!window.Teaching || !orbiters.length) return;
+  const pack = window.Teaching.exportPopulation(
+    orbiters.map(o => ({ spec: o.spec, generation: o.generation, fitness: window.Learn.fitness(o.spec) })),
+    { grid: 'genesis' });
+  try { localStorage.setItem('noesis:grid-viz:knowledge-pack', JSON.stringify(pack)); } catch (e) {}
+  const imp = window.Teaching.importPopulation(pack);     // re-gated on import
+  // tear down the current fleet
+  orbiters.forEach(o => scene.remove(o.holder));
+  for (let i = interactive.length - 1; i >= 0; i--) if (orbiterMeshes.has(interactive[i])) interactive.splice(i, 1);
+  orbiterMeshes.clear(); orbiters.length = 0;
+  // seed the NEW Grid from the learned population (not from zero)
+  gridSeq++;
+  imp.accepted.forEach((ind, i) => {
+    const t = FUNCTIONS.find(f => f.fn === ind.spec.fn) || FUNCTIONS[0];
+    placeObject(ind.spec, t, i % ringDefs.length, (i / imp.accepted.length) * Math.PI * 2, Math.random, ind.generation);
+  });
+  genCountEl.textContent = imp.generation; refreshBestFit();
+  const sub = document.querySelector('header .sub');
+  if (sub) sub.textContent = `Grid-0${gridSeq} (taught) · seeded from Genesis · Noēsis-space`;
+  const s = window.Teaching.summary(pack);
+  showInfo({ title: `Taught → Grid-0${gridSeq}`, kind: 'obj', rows: [
+    ['seeded from', `Genesis · gen ${imp.generation}`],
+    ['modules', `${imp.accepted.length}`],
+    ['functions', `${s.functions}`],
+    ['best fitness', `${(s.best || 0).toFixed(1)}`],
+    ['rejected', `${imp.rejected.length} unphysical`],
+    ['result', 'starts from learned knowledge, not zero'],
+  ] });
+}
+
 /* ---------------- legend ---------------- */
 const legendEl = document.getElementById('legend');
 FUNCTIONS.forEach(f => {
@@ -299,6 +332,8 @@ document.getElementById('evolve-btn').addEventListener('click', () => {
     rows: [['best fitness', bestFitEl.textContent], ['population', String(orbiters.length)],
            ['method', 'elitism + specialize'], ['gated', 'unphysical variants dropped']] });
 });
+
+document.getElementById('teach-btn').addEventListener('click', teachNewGrid);
 
 /* ---------------- interaction (hover / click) ---------------- */
 const ray = new THREE.Raycaster(), pointer = new THREE.Vector2();
@@ -375,4 +410,4 @@ addEventListener('resize', () => {
 });
 
 // expose for quick debugging in the preview
-window.__noesis = { buildObject, orbiters, scene, enterZone, evolveGeneration, ZONES };
+window.__noesis = { buildObject, orbiters, scene, enterZone, evolveGeneration, teachNewGrid, ZONES };
