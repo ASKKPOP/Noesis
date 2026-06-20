@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Noēsis Grid — Visualization Plan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --bg-card: #15151a;
+    --bg-elevated: #1c1c24;
+    --border: #2a2a34;
+    --text: #e8e8ec;
+    --text-dim: #9a9aa6;
+    --text-faint: #6a6a76;
+    --portal: #f472b6;   /* world / Portal meta-layer */
+    --grid: #ffb86c;     /* Grid layer */
+    --city: #7c9eff;     /* city / renderer */
+    --ai: #c084fc;       /* AI generation */
+    --ok: #6bd968;       /* required / yes */
+    --opt: #38bdf8;      /* optional */
+    --warn: #ff7373;
+    /* 6 civic zones */
+    --z-business: #f5a623;
+    --z-manufacture: #ef6c4a;
+    --z-shopping: #ec4899;
+    --z-residential: #34d399;
+    --z-infra: #38bdf8;
+    --z-gov: #fbbf24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    line-height: 1.65; font-size: 15px;
+  }
+  .container { max-width: 1180px; margin: 0 auto; padding: 48px 32px 96px; }
+  header.hero { border-bottom: 1px solid var(--border); padding-bottom: 32px; margin-bottom: 12px; }
+  .tag {
+    display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+    color: var(--portal); text-transform: uppercase; margin-bottom: 12px;
+  }
+  h1 { font-size: 44px; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 12px; }
+  .subtitle { font-size: 20px; color: var(--text-dim); font-weight: 400; }
+  .subtitle .kr { color: var(--text-faint); }
+  .meta-row { display: flex; gap: 24px; margin-top: 20px; color: var(--text-faint); font-size: 13px; flex-wrap: wrap; }
+  .meta-row strong { color: var(--text-dim); }
+  h2 {
+    font-size: 28px; font-weight: 700; letter-spacing: -0.01em;
+    margin: 64px 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
+  }
+  h2 .num { color: var(--text-faint); font-weight: 700; margin-right: 12px; }
+  h2 .kr { color: var(--text-faint); font-weight: 400; font-size: 17px; margin-left: 10px; }
+  h3 { font-size: 20px; font-weight: 600; margin: 34px 0 12px; color: var(--text); }
+  h4 { font-size: 16px; font-weight: 600; margin: 20px 0 8px; color: var(--text-dim); }
+  p { margin-bottom: 14px; color: var(--text); }
+  p.dim { color: var(--text-dim); }
+  ul, ol { margin: 12px 0 16px 24px; }
+  li { margin-bottom: 7px; }
+  code {
+    background: var(--bg-elevated); padding: 2px 6px; border-radius: 3px;
+    font-family: "SF Mono", Monaco, Consolas, monospace; font-size: 13px; color: var(--grid);
+  }
+  a { color: var(--city); text-decoration: none; border-bottom: 1px solid transparent; }
+  a:hover { border-bottom-color: var(--city); }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  th, td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; vertical-align: top; }
+  th { background: var(--bg-elevated); font-weight: 600; }
+  td.dim { color: var(--text-dim); }
+  .req { color: var(--ok); font-weight: 600; }
+  .optn { color: var(--opt); font-weight: 600; }
+  svg.diagram {
+    width: 100%; height: auto; margin: 24px 0;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 12px;
+  }
+  .callout {
+    background: linear-gradient(135deg, #1b1320 0%, #181622 100%);
+    border-left: 3px solid var(--portal); border-radius: 6px; padding: 16px 22px; margin: 22px 0;
+    font-size: 14px;
+  }
+  .callout.grid { border-left-color: var(--grid); }
+  .callout.ai { border-left-color: var(--ai); }
+  .callout.warn { border-left-color: var(--warn); }
+  .callout .kr { display:block; color: var(--text-dim); margin-top: 8px; font-size:13px; }
+  .layer-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 22px 26px; margin: 14px 0; }
+  .layer-card.portal { border-left: 4px solid var(--portal); }
+  .layer-card.grid { border-left: 4px solid var(--grid); }
+  .layer-card.city { border-left: 4px solid var(--city); }
+  .layer-label { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 6px; }
+  .portal .layer-label { color: var(--portal); }
+  .grid .layer-label { color: var(--grid); }
+  .city .layer-label { color: var(--city); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 18px 0; }
+  @media (max-width: 760px) { .grid-2 { grid-template-columns: 1fr; } }
+  .step { display: flex; gap: 16px; margin: 14px 0; align-items: flex-start; }
+  .step .n {
+    flex: 0 0 32px; height: 32px; border-radius: 50%; background: var(--bg-elevated);
+    border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; color: var(--grid);
+  }
+  .step .body { flex: 1; }
+  .step .body b { color: var(--text); }
+  .zone-legend { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
+  .chip { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text-dim); background: var(--bg-elevated); border:1px solid var(--border); border-radius: 20px; padding: 4px 12px; }
+  .dot { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .toc { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px 26px; margin: 28px 0 8px; }
+  .toc ol { margin: 6px 0 0 20px; }
+  .toc a { color: var(--text-dim); }
+  footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--text-faint); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="hero">
+  <span class="tag">Noēsis · v3.0 · Visualization Engine Plan</span>
+  <h1>Genesis Grid — Visualization Plan</h1>
+  <p class="subtitle">A two-layer, off-Earth, AI-built city renderer <span class="kr">· 지구 밖에서 AI가 짓는 2-레이어 도시 렌더러 계획</span></p>
+  <div class="meta-row">
+    <span><strong>Date:</strong> 2026-06-20</span>
+    <span><strong>Basis:</strong> Portal→Grid architecture (D-V3-29..36)</span>
+    <span><strong>Status:</strong> Planning / research</span>
+    <span><strong>World:</strong> synthetic Noēsis-space (NOT real Earth)</span>
+  </div>
+</header>
+
+<div class="toc">
+  <strong>Contents <span style="color:var(--text-faint);font-weight:400">· 목차</span></strong>
+  <ol>
+    <li><a href="#world">Our world map — synthetic Noēsis-space</a></li>
+    <li><a href="#setup">Setting · Infra · Resource · Initialization</a></li>
+    <li><a href="#howto">How to — build flow</a></li>
+    <li><a href="#learn">Nous learn &amp; teaching loop</a></li>
+    <li><a href="#example">Example — Genesis Grid walkthrough</a></li>
+    <li><a href="#research">Required &amp; optional — skills &amp; resources (research)</a></li>
+  </ol>
+</div>
+
+<div class="callout">
+  <strong>The whole plan in one line.</strong> Build <b>two open-source layers</b> — a synthetic <b style="color:var(--portal)">Portal-space</b> (constellation of Grids, not a map of Earth) you click into a <b style="color:var(--city)">city</b> rendered by IsoCity, where <b style="color:var(--ai)">each building is AI-generated once and cached</b> so most objects are unique. Nothing Earth-bound, no year-long engine to write.
+  <span class="kr">전체 계획 한 줄: 오픈소스 <b>2개 레이어</b> — 합성 <b>Portal-space</b>(지구 지도가 아닌 Grid들의 별자리)를 클릭하면 IsoCity가 그리는 <b>도시</b>로 들어가고, <b>각 건물은 AI가 한 번 생성해 캐시</b>되어 대부분 오브젝트가 고유함. 지구 의존 없음, 1년짜리 엔진 작성 불필요.</span>
+</div>
+
+<!-- ====================== ARCHITECTURE OVERVIEW ====================== -->
+<h2>Architecture at a glance <span class="kr">· 아키텍처 한눈에</span></h2>
+<p class="dim">Three layers, mirroring your Portal → Grid → Brain structure 1:1. The visualization is just a window onto each layer.</p>
+
+<svg class="diagram" viewBox="0 0 1100 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three-layer architecture">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#9a9aa6"/></marker>
+  </defs>
+  <!-- Portal layer -->
+  <rect x="40" y="30" width="1020" height="120" rx="12" fill="#15151a" stroke="#f472b6" stroke-width="1.5"/>
+  <text x="64" y="58" fill="#f472b6" font-size="12" font-weight="700" letter-spacing="2">PORTAL LAYER · 세계</text>
+  <text x="64" y="82" fill="#e8e8ec" font-size="15" font-weight="600">Synthetic Noēsis-space — a constellation of Grids (not Earth)</text>
+  <text x="64" y="104" fill="#9a9aa6" font-size="13">Engine: PixiJS / Canvas · shows WHERE each Grid sits in your reality · meta-view of all Grids</text>
+  <!-- grid nodes inside portal -->
+  <circle cx="820" cy="95" r="16" fill="#ffb86c"/><text x="820" y="100" text-anchor="middle" fill="#0a0a0c" font-size="10" font-weight="700">G</text>
+  <circle cx="880" cy="75" r="7" fill="#3a3a44"/><circle cx="930" cy="110" r="7" fill="#3a3a44"/><circle cx="975" cy="80" r="7" fill="#3a3a44"/><circle cx="1010" cy="115" r="6" fill="#3a3a44"/>
+  <line x1="820" y1="95" x2="880" y2="75" stroke="#3a3a44" stroke-width="1"/><line x1="820" y1="95" x2="930" y2="110" stroke="#3a3a44" stroke-width="1"/>
+
+  <line x1="550" y1="150" x2="550" y2="180" stroke="#9a9aa6" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="565" y="170" fill="#6a6a76" font-size="12">click a Grid ↓ 줌인</text>
+
+  <!-- Grid layer -->
+  <rect x="40" y="185" width="1020" height="95" rx="12" fill="#15151a" stroke="#ffb86c" stroke-width="1.5"/>
+  <text x="64" y="213" fill="#ffb86c" font-size="12" font-weight="700" letter-spacing="2">GRID LAYER · 그리드</text>
+  <text x="64" y="237" fill="#e8e8ec" font-size="15" font-weight="600">One Grid = one Genesis city, governed by Genesis Polis, 6 zones</text>
+  <text x="64" y="259" fill="#9a9aa6" font-size="13">Data: zones, parcels, Civic-DIDs, audit events — the JSON your repo already produces</text>
+
+  <line x1="550" y1="280" x2="550" y2="310" stroke="#9a9aa6" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="565" y="300" fill="#6a6a76" font-size="12">render city ↓</text>
+
+  <!-- City layer -->
+  <rect x="40" y="315" width="1020" height="125" rx="12" fill="#15151a" stroke="#7c9eff" stroke-width="1.5"/>
+  <text x="64" y="343" fill="#7c9eff" font-size="12" font-weight="700" letter-spacing="2">CITY LAYER · 도시</text>
+  <text x="64" y="367" fill="#e8e8ec" font-size="15" font-weight="600">IsoCity isometric renderer · AI-generated buildings (unique, cached)</text>
+  <text x="64" y="389" fill="#9a9aa6" font-size="13">Engine: amilich/isometric-city + fal.ai generation → per-Grid sprite atlas</text>
+  <!-- mini zones -->
+  <g>
+    <rect x="640" y="350" width="60" height="22" rx="4" fill="#f5a623" opacity="0.85"/><text x="670" y="365" text-anchor="middle" fill="#0a0a0c" font-size="9" font-weight="700">BUS</text>
+    <rect x="708" y="350" width="60" height="22" rx="4" fill="#ef6c4a" opacity="0.85"/><text x="738" y="365" text-anchor="middle" fill="#0a0a0c" font-size="9" font-weight="700">MFG</text>
+    <rect x="776" y="350" width="60" height="22" rx="4" fill="#ec4899" opacity="0.85"/><text x="806" y="365" text-anchor="middle" fill="#0a0a0c" font-size="9" font-weight="700">SHOP</text>
+    <rect x="640" y="378" width="60" height="22" rx="4" fill="#34d399" opacity="0.85"/><text x="670" y="393" text-anchor="middle" fill="#0a0a0c" font-size="9" font-weight="700">RES</text>
+    <rect x="708" y="378" width="60" height="22" rx="4" fill="#38bdf8" opacity="0.85"/><text x="738" y="393" text-anchor="middle" fill="#0a0a0c" font-size="9" font-weight="700">INFRA</text>
+    <rect x="776" y="378" width="60" height="22" rx="4" fill="#fbbf24" opacity="0.85"/><text x="806" y="393" text-anchor="middle" fill="#0a0a0c" font-size="9" font-weight="700">GOV</text>
+  </g>
+</svg>
+
+<!-- ====================== 1. WORLD MAP ====================== -->
+<h2 id="world"><span class="num">1</span>Our world map — synthetic Noēsis-space <span class="kr">· 우리의 세계 지도</span></h2>
+
+<div class="callout warn">
+  <strong>Hard rule:</strong> Noēsis is built <b>off the real Earth</b>. No MapLibre, Mapbox, Cesium, or lat/lon — those are Earth-bound. The "world" is your own synthetic space, and the <b>Portal</b> is the view of it.
+  <span class="kr">절대 규칙: Noēsis는 실제 지구 밖에 세워집니다. MapLibre·Mapbox·Cesium·위경도 금지(전부 지구 기반). "세계"는 당신만의 합성 공간이고, <b>Portal</b>이 그 뷰입니다.</span>
+</div>
+
+<p>The world map is the <b>Portal layer</b>: a pannable, zoomable field where each Grid is a node/island floating in Noēsis-space. Genesis is the only lit node today; the framework holds many more (D-V3-04/05/07). This <em>is</em> the Portal — a meta-view of every Grid in your reality.</p>
+
+<svg class="diagram" viewBox="0 0 1100 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Portal constellation world map">
+  <rect x="0" y="0" width="1100" height="360" rx="10" fill="#0c0c12"/>
+  <!-- faint starfield -->
+  <g fill="#2a2a38">
+    <circle cx="120" cy="60" r="1.5"/><circle cx="300" cy="40" r="1"/><circle cx="500" cy="70" r="1.5"/><circle cx="700" cy="35" r="1"/><circle cx="900" cy="60" r="1.5"/><circle cx="1000" cy="100" r="1"/>
+    <circle cx="180" cy="300" r="1"/><circle cx="420" cy="320" r="1.5"/><circle cx="650" cy="300" r="1"/><circle cx="860" cy="320" r="1.5"/><circle cx="980" cy="280" r="1"/>
+    <circle cx="240" cy="180" r="1"/><circle cx="760" cy="200" r="1"/>
+  </g>
+  <text x="40" y="40" fill="#f472b6" font-size="12" font-weight="700" letter-spacing="2">PORTAL · NOĒSIS-SPACE</text>
+  <!-- connection lines -->
+  <line x1="520" y1="180" x2="760" y2="120" stroke="#3a2433" stroke-width="1" stroke-dasharray="4 4"/>
+  <line x1="520" y1="180" x2="800" y2="240" stroke="#3a2433" stroke-width="1" stroke-dasharray="4 4"/>
+  <line x1="520" y1="180" x2="300" y2="130" stroke="#3a2433" stroke-width="1" stroke-dasharray="4 4"/>
+  <line x1="520" y1="180" x2="320" y2="250" stroke="#3a2433" stroke-width="1" stroke-dasharray="4 4"/>
+  <!-- Genesis (lit) -->
+  <circle cx="520" cy="180" r="46" fill="#1c1622" stroke="#ffb86c" stroke-width="2"/>
+  <circle cx="520" cy="180" r="46" fill="none" stroke="#ffb86c" stroke-width="1" opacity="0.3"><animate attributeName="r" values="46;62;46" dur="3.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.4;0;0.4" dur="3.5s" repeatCount="indefinite"/></circle>
+  <text x="520" y="176" text-anchor="middle" fill="#ffb86c" font-size="14" font-weight="700">GENESIS</text>
+  <text x="520" y="194" text-anchor="middle" fill="#9a9aa6" font-size="11">Grid · live</text>
+  <!-- future grids (dim) -->
+  <g opacity="0.55">
+    <circle cx="760" cy="120" r="26" fill="#15151a" stroke="#3a3a44" stroke-width="1.5"/><text x="760" y="124" text-anchor="middle" fill="#6a6a76" font-size="10">Grid 2</text>
+    <circle cx="800" cy="240" r="22" fill="#15151a" stroke="#3a3a44" stroke-width="1.5"/><text x="800" y="244" text-anchor="middle" fill="#6a6a76" font-size="10">Grid 3</text>
+    <circle cx="300" cy="130" r="24" fill="#15151a" stroke="#3a3a44" stroke-width="1.5"/><text x="300" y="134" text-anchor="middle" fill="#6a6a76" font-size="10">Grid 4</text>
+    <circle cx="320" cy="250" r="20" fill="#15151a" stroke="#3a3a44" stroke-width="1.5"/><text x="320" y="254" text-anchor="middle" fill="#6a6a76" font-size="9">future</text>
+  </g>
+  <text x="40" y="335" fill="#6a6a76" font-size="12">Click Genesis → enter the Grid → render the 6-zone city. Future Grids appear here as they are founded.</text>
+</svg>
+
+<!-- ====================== 2. SETTING / INFRA / RESOURCE / INIT ====================== -->
+<h2 id="setup"><span class="num">2</span>Setting · Infra · Resource · Initialization <span class="kr">· 설정 · 인프라 · 자원 · 초기화</span></h2>
+
+<svg class="diagram" viewBox="0 0 1100 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Initialization pipeline">
+  <defs><marker id="arr2" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#7c9eff"/></marker></defs>
+  <g font-size="13">
+    <rect x="20" y="50" width="195" height="110" rx="10" fill="#15151a" stroke="#38bdf8" stroke-width="1.5"/>
+    <text x="38" y="78" fill="#38bdf8" font-weight="700" font-size="13">① SETTING</text>
+    <text x="38" y="100" fill="#cfcfd6" font-size="12">zone palette (6)</text>
+    <text x="38" y="118" fill="#cfcfd6" font-size="12">art style prompt</text>
+    <text x="38" y="136" fill="#cfcfd6" font-size="12">tile size · seed</text>
+
+    <rect x="248" y="50" width="195" height="110" rx="10" fill="#15151a" stroke="#7c9eff" stroke-width="1.5"/>
+    <text x="266" y="78" fill="#7c9eff" font-weight="700" font-size="13">② INFRA</text>
+    <text x="266" y="100" fill="#cfcfd6" font-size="12">static web (no server)</text>
+    <text x="266" y="118" fill="#cfcfd6" font-size="12">fal.ai key (gen)</text>
+    <text x="266" y="136" fill="#cfcfd6" font-size="12">atlas cache dir</text>
+
+    <rect x="476" y="50" width="195" height="110" rx="10" fill="#15151a" stroke="#c084fc" stroke-width="1.5"/>
+    <text x="494" y="78" fill="#c084fc" font-weight="700" font-size="13">③ RESOURCE</text>
+    <text x="494" y="100" fill="#cfcfd6" font-size="12">Grid JSON (zones)</text>
+    <text x="494" y="118" fill="#cfcfd6" font-size="12">sprite atlas (cache)</text>
+    <text x="494" y="136" fill="#cfcfd6" font-size="12">Kenney fallback art</text>
+
+    <rect x="704" y="50" width="195" height="110" rx="10" fill="#15151a" stroke="#ffb86c" stroke-width="1.5"/>
+    <text x="722" y="78" fill="#ffb86c" font-weight="700" font-size="13">④ INITIALIZE</text>
+    <text x="722" y="100" fill="#cfcfd6" font-size="12">load Grid JSON</text>
+    <text x="722" y="118" fill="#cfcfd6" font-size="12">map zones→tiles</text>
+    <text x="722" y="136" fill="#cfcfd6" font-size="12">hydrate atlas</text>
+
+    <rect x="932" y="50" width="148" height="110" rx="10" fill="#15151a" stroke="#6bd968" stroke-width="1.5"/>
+    <text x="950" y="78" fill="#6bd968" font-weight="700" font-size="13">⑤ RENDER</text>
+    <text x="950" y="100" fill="#cfcfd6" font-size="12">draw Portal</text>
+    <text x="950" y="118" fill="#cfcfd6" font-size="12">+ draw City</text>
+    <text x="950" y="136" fill="#cfcfd6" font-size="12">interactive</text>
+
+    <line x1="215" y1="105" x2="246" y2="105" stroke="#7c9eff" stroke-width="1.5" marker-end="url(#arr2)"/>
+    <line x1="443" y1="105" x2="474" y2="105" stroke="#7c9eff" stroke-width="1.5" marker-end="url(#arr2)"/>
+    <line x1="671" y1="105" x2="702" y2="105" stroke="#7c9eff" stroke-width="1.5" marker-end="url(#arr2)"/>
+    <line x1="899" y1="105" x2="930" y2="105" stroke="#7c9eff" stroke-width="1.5" marker-end="url(#arr2)"/>
+  </g>
+  <text x="20" y="200" fill="#6a6a76" font-size="12">Everything is static + cached. The only runtime dependency is fal.ai, and only when generating a NEW building (then cached forever).</text>
+</svg>
+
+<div class="grid-2">
+  <div class="layer-card city">
+    <div class="layer-label">Infra — what you actually run</div>
+    <ul>
+      <li><b>Hosting:</b> static files — drop into your existing <code>docs/</code> or <code>dashboard/</code>. No new server.</li>
+      <li><b>Generation:</b> a <code>fal.ai</code> API key, called only at build/place time.</li>
+      <li><b>Cache:</b> a per-Grid <code>atlas.json</code> + PNG sheet. Generate-once, reuse forever.</li>
+      <li><b>Data in:</b> the Grid's existing zone/parcel JSON — no new backend.</li>
+    </ul>
+  </div>
+  <div class="layer-card grid">
+    <div class="layer-label">Resource — what feeds it</div>
+    <ul>
+      <li><b>Grid JSON</b> — zones, parcels, Civic-DIDs (already produced by your repo).</li>
+      <li><b>Sprite atlas</b> — grows as buildings are generated; the city's "object catalog".</li>
+      <li><b>Style seed</b> — one prompt/style so all AI buildings share a coherent look.</li>
+      <li><b>Fallback art</b> — Kenney CC0 tiles for instant prototyping before any AI call.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ====================== 3. HOW TO ====================== -->
+<h2 id="howto"><span class="num">3</span>How to — build flow <span class="kr">· 만드는 순서</span></h2>
+<p class="dim">Each step has a concrete done-check. Roughly a weekend to a clickable prototype.</p>
+
+<div class="step"><div class="n">1</div><div class="body"><b>Fork the city renderer.</b> Clone <code>amilich/isometric-city</code> (or the lighter <code>victorqribeiro/isocity</code>) into <code>dashboard/grid-viz/</code>. <span class="dim">✓ done: it runs and draws a default city.</span></div></div>
+<div class="step"><div class="n">2</div><div class="body"><b>Define the 6 zones.</b> Replace its zoning palette with Business · Manufacture · Shopping · Residential · Infrastructure · Government Quarter. <span class="dim">✓ done: painting a tile shows the right zone color.</span></div></div>
+<div class="step"><div class="n">3</div><div class="body"><b>Wire Grid JSON → tiles.</b> Write a tiny adapter that reads your Grid's zone/parcel JSON and sets tile state. <span class="dim">✓ done: Genesis Grid data draws the real zone layout.</span></div></div>
+<div class="step"><div class="n">4</div><div class="body"><b>Add AI building generation.</b> Bolt on <code>isometric-city-fal</code> (or your own fal.ai call). On place, generate a unique isometric sprite from the style seed. <span class="dim">✓ done: two same-type buildings look different.</span></div></div>
+<div class="step"><div class="n">5</div><div class="body"><b>Cache to an atlas.</b> Store each generated sprite in <code>atlas.json</code> + PNG; reuse from cache on reload. <span class="dim">✓ done: reload makes zero new API calls.</span></div></div>
+<div class="step"><div class="n">6</div><div class="body"><b>Build the Portal layer.</b> A PixiJS/canvas field with Genesis as a node; click → open the city view. <span class="dim">✓ done: click Genesis → city; back button → Portal.</span></div></div>
+<div class="step"><div class="n">7</div><div class="body"><b>Ship it into docs/.</b> Drop the built page next to your other dashboards, resync any copies. <span class="dim">✓ done: opens in Chrome, no console errors.</span></div></div>
+
+<!-- ====================== 4. NOUS LEARN & TEACHING ====================== -->
+<h2 id="learn"><span class="num">4</span>Nous learn &amp; teaching loop <span class="kr">· Nous 학습과 가르침</span></h2>
+
+<div class="callout ai">
+  This is the doctrine made literal: <b>the Nous builds the city, the AI generates each building.</b> The "learning" is the Nous improving its building catalog over time; "teaching" is one Nous handing its learned atlas/style to another (or to a newly founded Grid).
+  <span class="kr">교리를 글자 그대로: <b>Nous가 도시를 짓고, AI가 각 건물을 생성한다.</b> "학습"은 Nous가 시간이 지나며 건물 카탈로그를 개선하는 것이고, "가르침"은 한 Nous가 학습한 아틀라스/스타일을 다른 Nous(또는 새로 세워진 Grid)에 넘기는 것입니다.</span>
+</div>
+
+<svg class="diagram" viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Nous learn and teach loop">
+  <defs><marker id="arr3" markerWidth="11" markerHeight="11" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#c084fc"/></marker></defs>
+  <!-- learning loop (circular) -->
+  <text x="40" y="34" fill="#c084fc" font-size="12" font-weight="700" letter-spacing="2">LEARN LOOP · 학습 루프</text>
+  <!-- nodes -->
+  <g font-size="12" text-anchor="middle">
+    <circle cx="300" cy="110" r="54" fill="#15151a" stroke="#c084fc" stroke-width="1.5"/><text x="300" y="106" fill="#e8e8ec" font-weight="600">① OBSERVE</text><text x="300" y="124" fill="#9a9aa6" font-size="11">needs / gaps</text>
+    <circle cx="560" cy="110" r="54" fill="#15151a" stroke="#c084fc" stroke-width="1.5"/><text x="560" y="106" fill="#e8e8ec" font-weight="600">② GENERATE</text><text x="560" y="124" fill="#9a9aa6" font-size="11">AI sprite (fal)</text>
+    <circle cx="560" cy="290" r="54" fill="#15151a" stroke="#c084fc" stroke-width="1.5"/><text x="560" y="286" fill="#e8e8ec" font-weight="600">③ PLACE</text><text x="560" y="304" fill="#9a9aa6" font-size="11">into the city</text>
+    <circle cx="300" cy="290" r="54" fill="#15151a" stroke="#c084fc" stroke-width="1.5"/><text x="300" y="282" fill="#e8e8ec" font-weight="600">④ CACHE</text><text x="300" y="300" fill="#9a9aa6" font-size="11">→ atlas</text>
+    <circle cx="135" cy="200" r="50" fill="#15151a" stroke="#6bd968" stroke-width="1.5"/><text x="135" y="196" fill="#e8e8ec" font-weight="600" font-size="11">⑤ EVALUATE</text><text x="135" y="214" fill="#9a9aa6" font-size="10">keep / refine</text>
+  </g>
+  <!-- arrows -->
+  <line x1="354" y1="110" x2="505" y2="110" stroke="#c084fc" stroke-width="1.5" marker-end="url(#arr3)"/>
+  <line x1="560" y1="164" x2="560" y2="235" stroke="#c084fc" stroke-width="1.5" marker-end="url(#arr3)"/>
+  <line x1="506" y1="290" x2="355" y2="290" stroke="#c084fc" stroke-width="1.5" marker-end="url(#arr3)"/>
+  <line x1="276" y1="245" x2="170" y2="232" stroke="#6bd968" stroke-width="1.5" marker-end="url(#arr3)"/>
+  <line x1="160" y1="158" x2="262" y2="120" stroke="#6bd968" stroke-width="1.5" marker-end="url(#arr3)"/>
+  <text x="430" y="100" fill="#6a6a76" font-size="11" text-anchor="middle">unique</text>
+  <text x="200" y="150" fill="#6a6a76" font-size="11" text-anchor="middle">learned style ↑</text>
+
+  <!-- teaching branch -->
+  <line x1="614" y1="200" x2="720" y2="200" stroke="#3a3a44" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <rect x="725" y="70" width="330" height="260" rx="12" fill="#0f130f" stroke="#6bd968" stroke-width="1.3"/>
+  <text x="748" y="100" fill="#6bd968" font-size="12" font-weight="700" letter-spacing="2">TEACH · 가르침</text>
+  <text x="748" y="132" fill="#e8e8ec" font-size="14" font-weight="600">A mature Nous exports its</text>
+  <text x="748" y="152" fill="#e8e8ec" font-size="14" font-weight="600">learned atlas + style seed…</text>
+  <g font-size="13" fill="#cfcfd6">
+    <text x="748" y="188">→ to a newly founded Grid</text>
+    <text x="748" y="212">→ to another Nous (peer)</text>
+    <text x="748" y="236">→ as a shared "style pack"</text>
+  </g>
+  <text x="748" y="282" fill="#9a9aa6" font-size="12">New Grids start with a learned</text>
+  <text x="748" y="300" fill="#9a9aa6" font-size="12">catalog instead of from zero.</text>
+</svg>
+
+<h3>What "learning" concretely means here</h3>
+<ul>
+  <li><b>Catalog growth</b> — every generated building is kept in the atlas, so the Nous's vocabulary of objects expands as it builds.</li>
+  <li><b>Style convergence</b> — a fixed style seed + accept/reject keeps new buildings coherent with what came before (evaluate step).</li>
+  <li><b>Teaching = transfer</b> — exporting that atlas + seed bootstraps a new Grid or a peer Nous, so the next city isn't built from nothing. This is your Nous-builds-Grids doctrine at the visualization layer.</li>
+</ul>
+
+<!-- ====================== 5. EXAMPLE ====================== -->
+<h2 id="example"><span class="num">5</span>Example — Genesis Grid walkthrough <span class="kr">· 예시</span></h2>
+
+<div class="zone-legend">
+  <span class="chip"><span class="dot" style="background:var(--z-business)"></span>Business 비즈니스</span>
+  <span class="chip"><span class="dot" style="background:var(--z-manufacture)"></span>Manufacture 제조</span>
+  <span class="chip"><span class="dot" style="background:var(--z-shopping)"></span>Shopping 쇼핑</span>
+  <span class="chip"><span class="dot" style="background:var(--z-residential)"></span>Residential 주거</span>
+  <span class="chip"><span class="dot" style="background:var(--z-infra)"></span>Infrastructure 인프라</span>
+  <span class="chip"><span class="dot" style="background:var(--z-gov)"></span>Government Quarter 정부구역</span>
+</div>
+
+<svg class="diagram" viewBox="0 0 1100 430" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Genesis Grid isometric example">
+  <text x="40" y="32" fill="#7c9eff" font-size="12" font-weight="700" letter-spacing="2">GENESIS GRID · ISOMETRIC CITY (schematic)</text>
+  <g transform="translate(550,70)">
+    <!-- isometric tiles: each diamond w=120 h=60 -->
+    <!-- row helper colors by zone -->
+    <!-- We draw a 6-block layout, one block per zone -->
+    <!-- gov (top) -->
+    <g>
+      <polygon points="0,0 120,60 0,120 -120,60" fill="#fbbf24" opacity="0.9" stroke="#0a0a0c"/>
+      <text x="0" y="64" text-anchor="middle" fill="#0a0a0c" font-size="12" font-weight="700">GOV QUARTER</text>
+      <!-- a couple of "unique" buildings -->
+      <rect x="-30" y="14" width="22" height="34" fill="#7a5a10" /><rect x="-30" y="6" width="22" height="8" fill="#caa030"/>
+      <rect x="8" y="20" width="18" height="26" fill="#7a5a10"/><rect x="8" y="12" width="18" height="8" fill="#caa030"/>
+    </g>
+    <!-- business (left) -->
+    <g transform="translate(-120,60)">
+      <polygon points="0,0 120,60 0,120 -120,60" fill="#f5a623" opacity="0.9" stroke="#0a0a0c"/>
+      <text x="0" y="64" text-anchor="middle" fill="#0a0a0c" font-size="12" font-weight="700">BUSINESS</text>
+      <rect x="-34" y="10" width="20" height="44" fill="#8a5e12"/><rect x="-8" y="18" width="16" height="36" fill="#8a5e12"/><rect x="16" y="24" width="18" height="30" fill="#8a5e12"/>
+    </g>
+    <!-- shopping (right) -->
+    <g transform="translate(120,60)">
+      <polygon points="0,0 120,60 0,120 -120,60" fill="#ec4899" opacity="0.9" stroke="#0a0a0c"/>
+      <text x="0" y="64" text-anchor="middle" fill="#0a0a0c" font-size="12" font-weight="700">SHOPPING</text>
+      <rect x="-30" y="20" width="24" height="28" fill="#822353"/><rect x="6" y="16" width="22" height="32" fill="#822353"/>
+    </g>
+    <!-- residential (lower-left) -->
+    <g transform="translate(-120,180)">
+      <polygon points="0,0 120,60 0,120 -120,60" fill="#34d399" opacity="0.9" stroke="#0a0a0c"/>
+      <text x="0" y="64" text-anchor="middle" fill="#0a0a0c" font-size="12" font-weight="700">RESIDENTIAL</text>
+      <rect x="-40" y="24" width="16" height="22" fill="#176a4a"/><rect x="-18" y="28" width="16" height="18" fill="#176a4a"/><rect x="6" y="22" width="16" height="24" fill="#176a4a"/><rect x="28" y="30" width="14" height="16" fill="#176a4a"/>
+    </g>
+    <!-- infra (lower-right) -->
+    <g transform="translate(120,180)">
+      <polygon points="0,0 120,60 0,120 -120,60" fill="#38bdf8" opacity="0.9" stroke="#0a0a0c"/>
+      <text x="0" y="64" text-anchor="middle" fill="#0a0a0c" font-size="12" font-weight="700">INFRASTRUCTURE</text>
+      <rect x="-22" y="16" width="44" height="10" fill="#16627e"/><rect x="-4" y="26" width="8" height="22" fill="#16627e"/>
+    </g>
+    <!-- manufacture (bottom) -->
+    <g transform="translate(0,240)">
+      <polygon points="0,0 120,60 0,120 -120,60" fill="#ef6c4a" opacity="0.9" stroke="#0a0a0c"/>
+      <text x="0" y="64" text-anchor="middle" fill="#0a0a0c" font-size="12" font-weight="700">MANUFACTURE</text>
+      <rect x="-36" y="22" width="30" height="24" fill="#8a371f"/><rect x="2" y="18" width="34" height="28" fill="#8a371f"/>
+    </g>
+  </g>
+  <text x="40" y="410" fill="#6a6a76" font-size="12">Each rectangle is an AI-generated, atlas-cached building — note none are identical. Real renderer = IsoCity sprites, not boxes.</text>
+</svg>
+
+<h4>Step-by-step, as the user experiences it</h4>
+<ol>
+  <li>Open the dashboard → see <b>Portal-space</b>, Genesis glowing as the one live Grid.</li>
+  <li>Click Genesis → zoom into the <b>6-zone isometric city</b>.</li>
+  <li>The renderer reads Grid JSON, lays out zones, and fills each parcel with a building <b>pulled from the atlas</b> (or generated + cached if new).</li>
+  <li>Hover a building → tooltip shows its parcel, Civic-DID owner, recent audit events.</li>
+  <li>As the Grid grows, new unique buildings appear and the atlas — the Nous's learned catalog — grows with it.</li>
+</ol>
+
+<!-- ====================== 6. RESEARCH ====================== -->
+<h2 id="research"><span class="num">6</span>Required &amp; optional — skills &amp; resources <span class="kr">· 필수 · 선택 (조사)</span></h2>
+
+<h3>GitHub / open-source resources</h3>
+<table>
+  <thead><tr><th>Resource</th><th>Role</th><th>Need</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td><a href="https://github.com/amilich/isometric-city">amilich/isometric-city</a></td><td>City renderer (base engine)</td><td class="req">REQUIRED</td><td class="dim">Isometric canvas engine; zoning, traffic, pedestrians built in. Your chosen base.</td></tr>
+    <tr><td><a href="https://github.com/blendi-remade/isometric-city-fal">blendi-remade/isometric-city-fal</a></td><td>AI building generation</td><td class="req">REQUIRED</td><td class="dim">fal.ai building generator on top of IsoCity → unique objects, not a repeating tileset.</td></tr>
+    <tr><td><a href="https://github.com/pixijs/pixijs">pixijs/pixijs</a></td><td>Portal-layer (world map)</td><td class="req">REQUIRED*</td><td class="dim">Pan/zoom field of Grid nodes. *Plain Canvas works too for a v1.</td></tr>
+    <tr><td><a href="https://github.com/victorqribeiro/isocity">victorqribeiro/isocity</a></td><td>Lighter alt renderer</td><td class="optn">OPTIONAL</td><td class="dim">Single vanilla-JS file. Use instead of IsoCity if you don't need the sim layer.</td></tr>
+    <tr><td><a href="https://kenney.nl/assets/isometric-city">Kenney Isometric City (CC0)</a></td><td>Fallback / prototype art</td><td class="optn">OPTIONAL</td><td class="dim">128 public-domain tiles to prototype before any AI call. Free, no attribution.</td></tr>
+    <tr><td><a href="https://github.com/mrdoob/three.js">mrdoob/three.js</a></td><td>Synthetic planet (alt world)</td><td class="optn">OPTIONAL</td><td class="dim">Only if you later want a 3D Noēsis globe instead of abstract Portal-space.</td></tr>
+    <tr><td><a href="https://github.com/visgl/deck.gl">visgl/deck.gl</a></td><td>Data overlays</td><td class="optn">OPTIONAL</td><td class="dim">If you ever want population / audit-event heatmaps as layers.</td></tr>
+    <tr><td>free-tex-packer / TexturePacker</td><td>Atlas packing</td><td class="optn">OPTIONAL</td><td class="dim">Packs generated sprites into one sheet for fast rendering.</td></tr>
+  </tbody>
+</table>
+
+<h3>Useful skills (already available in this environment)</h3>
+<table>
+  <thead><tr><th>Skill</th><th>Use for</th><th>Need</th></tr></thead>
+  <tbody>
+    <tr><td><code>fal-generate</code> · <code>fal-image-edit</code> · <code>fal-workflow</code> · <code>fal-upscale</code> · <code>fal-platform</code></td><td>Generate &amp; refine unique isometric building sprites (the core of "most objects differ")</td><td class="req">REQUIRED</td></tr>
+    <tr><td><code>ai-studio-image</code> · <code>imagen</code> · <code>stability-ai</code></td><td>Alternative image-gen backends if not using fal</td><td class="optn">OPTIONAL</td></tr>
+    <tr><td><code>web-artifacts-builder</code> · <code>canvas-design</code> · <code>frontend-design</code> · <code>baseline-ui</code></td><td>Build the dashboard shell &amp; Portal UI cleanly</td><td class="req">REQUIRED</td></tr>
+    <tr><td><code>threejs-fundamentals</code> · <code>threejs-materials</code> · <code>threejs-geometry</code> · <code>threejs-shaders</code></td><td>Only if you take the optional 3D-planet route</td><td class="optn">OPTIONAL</td></tr>
+    <tr><td><code>claude-d3js-skill</code></td><td>Charts / data diagrams for the Portal meta-view</td><td class="optn">OPTIONAL</td></tr>
+    <tr><td><code>gsd-ui-phase</code> · <code>gsd-plan-phase</code> · <code>gsd-ui-review</code></td><td>Run this as a proper GSD phase with UI spec &amp; review gates</td><td class="optn">RECOMMENDED</td></tr>
+  </tbody>
+</table>
+
+<div class="callout grid">
+  <strong>Minimum viable stack (the short list):</strong> <code>isometric-city</code> + <code>fal-generate</code> + Canvas/PixiJS Portal + your Grid JSON. Everything else is optional polish.
+  <span class="kr">최소 실행 스택: <code>isometric-city</code> + <code>fal-generate</code> + Canvas/PixiJS Portal + Grid JSON. 나머지는 전부 선택적 다듬기입니다.</span>
+</div>
+
+<footer>
+  Noēsis · Genesis Grid Visualization Plan · drafted 2026-06-20 · world = synthetic Noēsis-space (off-Earth) ·
+  base engine = <code>amilich/isometric-city</code> · objects = AI-generated &amp; atlas-cached ·
+  sits alongside <code>ARCHITECTURE-v3.0.html</code> as a planning artifact.
+</footer>
+
+</div>
+</body>
+</html>

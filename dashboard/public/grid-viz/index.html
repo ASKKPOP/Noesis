@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Noēsis Grid-Viz — Genesis</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --bg:#0a0a0c; --bg-card:#15151a; --bg-elev:#1c1c24; --border:#2a2a34;
+    --text:#e8e8ec; --dim:#9a9aa6; --faint:#6a6a76;
+    --portal:#f472b6; --grid:#ffb86c; --city:#7c9eff;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { height:100%; }
+  body { font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif; background:var(--bg); color:var(--text); overflow:hidden; }
+  header { display:flex; align-items:center; gap:16px; padding:14px 22px; border-bottom:1px solid var(--border); background:var(--bg-card); }
+  header .brand { font-weight:700; font-size:15px; letter-spacing:.02em; }
+  header .brand .x { color:var(--portal); }
+  header #view-title { color:var(--dim); font-size:13px; }
+  header .spacer { flex:1; }
+  header .meta { color:var(--faint); font-size:12px; }
+  header .meta b { color:var(--grid); }
+  .btn { display:inline-flex; align-items:center; gap:6px; background:var(--bg-elev); border:1px solid var(--border);
+    color:var(--text); border-radius:8px; padding:7px 14px; font-size:13px; cursor:pointer; }
+  .btn:hover { border-color:var(--city); }
+  .stage { position:relative; width:100%; height:calc(100vh - 53px); }
+  #portal-view, #city-view { position:absolute; inset:0; }
+  canvas { display:block; width:100%; height:100%; }
+  .legend { position:absolute; left:18px; bottom:18px; display:flex; flex-wrap:wrap; gap:8px; max-width:60%; }
+  .chip { display:inline-flex; align-items:center; gap:7px; font-size:12px; color:var(--dim);
+    background:rgba(21,21,26,.85); border:1px solid var(--border); border-radius:18px; padding:4px 11px; backdrop-filter:blur(4px); }
+  .dot { width:11px; height:11px; border-radius:3px; }
+  .hint { position:absolute; right:18px; bottom:18px; color:var(--faint); font-size:12px;
+    background:rgba(21,21,26,.85); border:1px solid var(--border); border-radius:8px; padding:8px 12px; }
+  #tooltip { position:fixed; display:none; z-index:50; background:var(--bg-elev); border:1px solid var(--border);
+    border-radius:8px; padding:12px 14px; font-size:12px; width:260px; pointer-events:none; box-shadow:0 8px 28px rgba(0,0,0,.5); }
+  #tooltip .t-zone { font-weight:700; font-size:13px; display:block; margin-bottom:8px; }
+  #tooltip .t-zone .kr { color:var(--faint); font-weight:400; font-size:11px; }
+  #tooltip .t-row { display:flex; justify-content:space-between; gap:8px; color:var(--dim); margin-top:4px; }
+  #tooltip code { color:var(--text); font-family:"SF Mono",Monaco,monospace; font-size:11px; }
+  .kr { font-size:.92em; }
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">No<span class="x">ē</span>sis · Grid-Viz</span>
+  <span id="view-title">Portal — Noēsis-space</span>
+  <span class="spacer"></span>
+  <span class="meta">objects cached: <b id="catalog-count">0</b></span>
+  <button class="btn" id="back-btn" style="display:none">← Portal</button>
+</header>
+
+<div class="stage">
+  <div id="portal-view">
+    <canvas id="portal-canvas"></canvas>
+    <div class="hint">Click <b style="color:var(--grid)">GENESIS</b> to enter the city · 제네시스 클릭</div>
+  </div>
+
+  <div id="city-view" style="display:none">
+    <canvas id="city-canvas"></canvas>
+    <div class="legend">
+      <span class="chip"><span class="dot" style="background:#f5a623"></span>Business 비즈니스</span>
+      <span class="chip"><span class="dot" style="background:#ef6c4a"></span>Manufacture 제조</span>
+      <span class="chip"><span class="dot" style="background:#ec4899"></span>Shopping 쇼핑</span>
+      <span class="chip"><span class="dot" style="background:#34d399"></span>Residential 주거</span>
+      <span class="chip"><span class="dot" style="background:#38bdf8"></span>Infrastructure 인프라</span>
+      <span class="chip"><span class="dot" style="background:#fbbf24"></span>Gov Quarter 정부구역</span>
+    </div>
+    <div class="hint">drag = pan · wheel = zoom · hover a building 마우스 올리기</div>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<script src="data.js"></script>
+<script src="buildings.js"></script>
+<script src="city.js"></script>
+<script src="portal.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
