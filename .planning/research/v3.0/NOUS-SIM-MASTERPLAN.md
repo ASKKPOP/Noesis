@@ -102,7 +102,7 @@ Click a zone-node → enter that zone's local view; run the **simulation** (obje
 
 ## 6. Phased plan (GSD-style)
 
-> Phase numbers are **proposed** (next free band after Agentic Brain 72–74). Reconcile with `.planning/ROADMAP.md` before execution. Anchors to existing **Phase 71 (orbital map render)**.
+> Phase numbers are **locked as Phases 75–79** in `.planning/ROADMAP.md` (S1→75, S2→76, S3→77, S4→78, S5→79; next free band after Agentic Brain 74; allowlist +0). The `S#` labels are kept as aliases. Anchors to existing **Phase 71 (orbital map render)**.
 
 ### Phase S1 — Physics gate + functional-object model — ✅ SHIPPED 2026-06-20
 - **Delivered:** `dashboard/public/grid-viz/physics-gate.js` (6-law contract → `{ok, violations}`), 10 `node:test` cases via TDD (RED→GREEN, all green), wired into `orbital.html` so no object is shown ungated; header shows built/rejected, info panel shows per-object mass/altitude/physics. Verified in-browser, zero console errors.
