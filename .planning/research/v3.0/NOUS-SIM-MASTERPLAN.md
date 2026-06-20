@@ -111,7 +111,8 @@ Click a zone-node → enter that zone's local view; run the **simulation** (obje
 - **Verify:** unit tests — known-good designs pass, deliberately-unphysical designs reject (TDD). Zero unphysical object can reach the scene.
 - **Done when:** every object in `orbital.html` carries a spec and passed the gate.
 
-### Phase S2 — AI generation of objects (track ①)
+### Phase S2 — AI generation of objects (track ①) — ✅ SHIPPED 2026-06-20
+- **Delivered:** `object-gen.js` — deterministic procedural design from each spec + fal.ai stub hook + atlas cache (generate-once). 6 `node:test` cases (TDD). Wired into `orbital.html`: design-driven unique meshes, still S1-gated; `atlas-cached` + `design` surfaced. Verified (22 fleet cache-hit on reload). Suite 16/16.
 - **Goal:** Nous-built meshes/sprites replace primitives, gated by S1.
 - **Tasks:** fal.ai (or backend) generation from first-principles spec; atlas cache; fallback to procedural if offline.
 - **Verify:** generated object renders, carries a valid spec, passes the gate; reload uses cache (zero re-gen).

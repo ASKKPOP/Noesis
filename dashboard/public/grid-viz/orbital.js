@@ -46,9 +46,11 @@ const FN_BASE = {
   Govern:    { gen: 110, con: 90,  dis: 60,  rad: 110, load: 180, yld: 520, mass: 1000 },
   Store:     { gen: 80,  con: 50,  dis: 40,  rad: 80,  load: 200, yld: 560, mass: 1100 },
 };
-function makeSpec(type) {
+function mulberry32(a) { return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+function makeSpec(type, rnd = Math.random) {
   const b = FN_BASE[type.fn] || FN_BASE.Compute;
-  const j = (x, f) => x * (1 + (Math.random() - 0.5) * f);
+  const j = (x, f) => x * (1 + (rnd() - 0.5) * f);
   return {
     fn: type.fn, mass_kg: j(b.mass, 0.3),
     massIn_kg: 10, massOut_kg: 10,
@@ -56,7 +58,7 @@ function makeSpec(type) {
     load_N: j(b.load, 0.18), yield_N: b.yld,
     dissipated_W: b.dis, radiated_W: j(b.rad, 0.06),
     generation_W: b.gen, consumption_W: j(b.con, 0.06),
-    altitude_km: 380 + Math.random() * 140,
+    altitude_km: 380 + rnd() * 140,
   };
 }
 
@@ -165,62 +167,80 @@ const objCountEl = document.getElementById('obj-count');
 const rejCountEl = document.getElementById('rej-count');
 let rejectedCount = 0;
 
-function makeShape(type) {
-  const c = type.color;
+// Build the mesh from a Nous-generated DESIGN (Phase S2) — geometry, colour, elongation,
+// secondary modules and antenna all come from the generated descriptor, so each is unique.
+function makeShape(design) {
+  const c = design.color, d = design.detail;
   let geo;
-  switch (type.geo) {
+  switch (design.geoBase) {
     case 'box': geo = new THREE.BoxGeometry(2.4, 2.4, 2.4); break;
-    case 'octa': geo = new THREE.OctahedronGeometry(1.7); break;
-    case 'sphere': geo = new THREE.SphereGeometry(1.6, 12, 12); break;
+    case 'octa': geo = new THREE.OctahedronGeometry(1.7, Math.max(0, d - 1)); break;
+    case 'sphere': geo = new THREE.SphereGeometry(1.6, 10 + d * 4, 10 + d * 4); break;
     case 'torusknot': geo = new THREE.TorusKnotGeometry(1.1, 0.4, 64, 8); break;
     case 'tetra': geo = new THREE.TetrahedronGeometry(1.9); break;
-    case 'dodeca': geo = new THREE.DodecahedronGeometry(1.7); break;
+    case 'dodeca': geo = new THREE.DodecahedronGeometry(1.7, Math.max(0, d - 1)); break;
     case 'cyl': geo = new THREE.CylinderGeometry(1.2, 1.2, 2.6, 10); break;
-    default: geo = new THREE.IcosahedronGeometry(1.7, 0);
+    default: geo = new THREE.IcosahedronGeometry(1.7, d);
   }
   const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
-    color: c, emissive: c, emissiveIntensity: 0.25, roughness: 0.35, metalness: 0.3, wireframe: false }));
-  // wireframe halo to echo the reference image's pods
-  const halo = new THREE.Mesh(new THREE.SphereGeometry(2.4, 10, 10),
-    new THREE.MeshBasicMaterial({ color: c, wireframe: true, transparent: true, opacity: 0.35 }));
+    color: c, emissive: c, emissiveIntensity: 0.25, roughness: design.roughness, metalness: design.metalness }));
+  mesh.scale.y = design.elongation;
+  const halo = new THREE.Mesh(new THREE.SphereGeometry(2.5, 10, 10),
+    new THREE.MeshBasicMaterial({ color: c, wireframe: true, transparent: true, opacity: 0.32 }));
   const g = new THREE.Group(); g.add(mesh); g.add(halo);
+  for (let i = 0; i < design.secondary; i++) {
+    const s = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8),
+      new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.2, roughness: design.roughness, metalness: design.metalness }));
+    s.position.set((i ? 1 : -1) * 1.9, 1.3, 0); g.add(s);
+  }
+  if (design.antenna) {
+    const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2, 6), new THREE.MeshBasicMaterial({ color: 0xcfcfd6 }));
+    ant.position.y = 2.3; g.add(ant);
+  }
   return { g, mesh };
 }
 
-function buildObject(type, ringIdx, angle) {
-  type = type || FUNCTIONS[Math.floor(Math.random() * FUNCTIONS.length)];
-  ringIdx = ringIdx ?? Math.floor(Math.random() * ringDefs.length);
-  angle = angle ?? Math.random() * Math.PI * 2;
+const cacheCountEl = document.getElementById('cache-count');
+function buildObject(type, ringIdx, angle, rnd = Math.random) {
+  type = type || FUNCTIONS[Math.floor(rnd() * FUNCTIONS.length)];
+  ringIdx = ringIdx ?? Math.floor(rnd() * ringDefs.length);
+  angle = angle ?? rnd() * Math.PI * 2;
   // ── §S1 PHYSICS GATE ── no object is ever shown ungated.
-  const spec = makeSpec(type);
+  const spec = makeSpec(type, rnd);
   const gate = window.PhysicsGate.checkPhysics(spec);
   if (!gate.ok) { rejectedCount++; rejCountEl.textContent = rejectedCount; return null; }
+  // ── §S2 NOUS BUILDS THE DESIGN ── generate-once, atlas-cached.
+  const design = window.ObjectGen.generate(spec);
   const rd = ringDefs[ringIdx];
-  const { g, mesh } = makeShape(type);
+  const { g, mesh } = makeShape(design);
   // stalk pointing in-to-ring
   const stalk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 5, 6),
-    new THREE.MeshBasicMaterial({ color: type.color, transparent: true, opacity: 0.5 }));
+    new THREE.MeshBasicMaterial({ color: design.color, transparent: true, opacity: 0.5 }));
   stalk.position.y = -3.5; g.add(stalk);
 
   const holder = new THREE.Group();
   holder.rotation.x = Math.PI / 2 + rd.rx; holder.rotation.z = rd.rz; holder.position.y = 6;
   scene.add(holder);
-  const o = { holder, g, mesh, type, R: rd.R, angle, spin: 0.003 + Math.random() * 0.01,
-    orbit: 0.0012 + Math.random() * 0.0016, born: orbiters.length };
-  g.userData = { kind: 'obj', title: `${type.fn} module`, color: type.color,
-    rows: [['function', type.fn], ['form', type.geo],
+  const o = { holder, g, mesh, type, R: rd.R, angle, spin: 0.003 + rnd() * 0.01,
+    orbit: 0.0012 + rnd() * 0.0016, born: orbiters.length };
+  g.userData = { kind: 'obj', title: `${type.fn} module`, color: design.color,
+    rows: [['function', type.fn], ['form', design.geoBase],
            ['mass', `${Math.round(spec.mass_kg)} kg`],
            ['altitude', `${Math.round(spec.altitude_km)} km`],
            ['physics', `✓ passed (${window.PhysicsGate.REQUIRED.length} checks)`],
+           ['design', `${design.source}${design.cached ? ' · cached' : ' · new'}`],
            ['built by', 'Nous']] };
   holder.add(g);
   orbiters.push(o);
   interactive.push(mesh);
   objCountEl.textContent = orbiters.length;
+  cacheCountEl.textContent = window.ObjectGen.stats().cacheHits;
   return o;
 }
-// seed the scene with an initial fleet
-for (let i = 0; i < 22; i++) buildObject();
+// seed the scene with a DETERMINISTIC fleet — so a reload hits the atlas cache (generate-once).
+for (let i = 0; i < 22; i++) {
+  buildObject(FUNCTIONS[i % FUNCTIONS.length], i % ringDefs.length, (i / 22) * Math.PI * 2, mulberry32(4100 + i));
+}
 
 /* ---------------- legend ---------------- */
 const legendEl = document.getElementById('legend');

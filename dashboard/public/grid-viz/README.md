@@ -12,6 +12,9 @@ Earth, the 6 zones as orbital station-nodes, and **functional objects the Nous l
 - `orbital.html` + `orbital.js` — the scene · `vendor/` — local three.js (no CDN at runtime)
 - `physics-gate.js` — **Phase S1** physics contract (6 laws); every object is gated before it can appear.
   Tests: `node --test physics-gate.test.cjs` (10 cases, TDD). Dual browser-global / CommonJS.
+- `object-gen.js` — **Phase S2** the Nous generates a unique design per spec (generate-once → atlas cache,
+  localStorage); `fal.ai` is a stubbed hook (`setUseFal(true)` + fill `falGenerate`), procedural is the
+  offline fallback. Tests: `node --test object-gen.test.cjs` (6 cases, TDD).
 - "Nous: build object" button demonstrates the Nous constructing new functional modules (gated)
 - Must be **served over http** (three.js ES modules); `http://localhost:3000/grid-viz/orbital.html`
   via the dashboard, or any static server. Zone IDs stay canonical (D-V3-32); labels are demo-only.
