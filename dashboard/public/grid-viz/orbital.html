@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Noēsis Grid-Viz — Orbital</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{ --bg:#06070c; --card:#12131a; --elev:#1a1c26; --border:#2a2c38; --text:#e8e8ec; --dim:#9aa0ad; --faint:#5d6270; --accent:#7c9eff; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+  #scene{position:fixed;inset:0;display:block}
+  #labels{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+  .zone-label{position:absolute;transform:translate(-50%,-50%);padding:6px 13px;border:1.5px solid;border-radius:9px;
+    font:700 12px/1 ui-monospace,"SF Mono",Monaco,monospace;letter-spacing:.13em;color:#fff;white-space:nowrap;
+    background:rgba(8,9,14,.5);backdrop-filter:blur(3px);text-shadow:0 0 8px currentColor;transition:opacity .2s}
+  header{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:14px;padding:13px 20px;z-index:10;
+    background:linear-gradient(180deg,rgba(6,7,12,.92),rgba(6,7,12,0))}
+  header .brand{font-weight:700;font-size:15px}
+  header .brand .x{color:#f472b6}
+  header .sub{color:var(--dim);font-size:12px}
+  header .spacer{flex:1}
+  header .meta{color:var(--faint);font-size:12px}
+  header .meta b{color:#ffb86c}
+  .panel{position:fixed;left:20px;bottom:20px;z-index:10;width:300px;background:rgba(18,19,26,.86);border:1px solid var(--border);
+    border-radius:12px;padding:16px 18px;backdrop-filter:blur(6px)}
+  .panel h3{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+  .panel .row{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--dim);margin:4px 0}
+  .panel code{color:var(--text);font-family:ui-monospace,monospace;font-size:11px}
+  .panel .hint{color:var(--faint);font-size:11px;margin-top:6px}
+  .btn{display:inline-flex;align-items:center;gap:7px;background:var(--elev);border:1px solid var(--border);color:var(--text);
+    border-radius:9px;padding:9px 15px;font-size:13px;cursor:pointer;font-weight:600}
+  .btn:hover{border-color:var(--accent);box-shadow:0 0 16px rgba(124,158,255,.25)}
+  .controls{position:fixed;right:20px;bottom:20px;z-index:10;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+  .legend{display:flex;flex-direction:column;gap:5px;background:rgba(18,19,26,.86);border:1px solid var(--border);border-radius:10px;padding:11px 14px;backdrop-filter:blur(6px)}
+  .legend .li{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--dim)}
+  .legend .dot{width:9px;height:9px;border-radius:50%}
+  .tip{position:fixed;right:20px;top:60px;z-index:10;color:var(--faint);font-size:12px;background:rgba(18,19,26,.7);border:1px solid var(--border);border-radius:8px;padding:7px 11px}
+  #loaderr{position:fixed;inset:0;display:none;align-items:center;justify-content:center;color:#ff7373;font-size:14px;z-index:20}
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div id="labels"></div>
+
+<header>
+  <span class="brand">No<span class="x">ē</span>sis · Grid-Viz</span>
+  <span class="sub">Genesis Grid · orbital station · Noēsis-space</span>
+  <span class="spacer"></span>
+  <span class="meta">objects built by Nous: <b id="obj-count">0</b></span>
+</header>
+
+<div class="tip">drag = orbit · wheel = zoom · click a node 노드 클릭</div>
+
+<div class="panel" id="info-panel">
+  <h3 id="info-title">Genesis Grid Core</h3>
+  <div id="info-body">
+    <div class="row"><span>type</span><code>civic seed</code></div>
+    <div class="row"><span>polis</span><code>Genesis Polis</code></div>
+    <div class="hint">Each orbiting object is a <b>functional module</b> the Nous learned to build — shape encodes its function.</div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="legend" id="legend"></div>
+  <button class="btn" id="build-btn">✦ Nous: build object</button>
+</div>
+
+<div id="loaderr">WebGL unavailable in this view — open over http (served), not file://.</div>
+
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js" } }
+</script>
+<script type="module" src="./orbital.js"></script>
+</body>
+</html>

@@ -1,7 +1,22 @@
 # Noēsis Grid-Viz (prototype)
 
-A self-contained, vanilla-JS prototype of the **Genesis Grid visualization** from
+Self-contained prototypes of the **Genesis Grid visualization** from
 [`.planning/research/v3.0/GRID-VIZ-PLAN.html`](../../../.planning/research/v3.0/GRID-VIZ-PLAN.html).
+
+## ▶ `orbital.html` — current direction (3D, canonical)
+
+The **off-Earth orbital scene** (three.js): a central Grid core (civic seed) in orbit above
+Earth, the 6 zones as orbital station-nodes, and **functional objects the Nous learns to build**
+— each object's shape encodes its function (Compute, Memory, Energy, …), not decoration.
+
+- `orbital.html` + `orbital.js` — the scene · `vendor/` — local three.js (no CDN at runtime)
+- "Nous: build object" button demonstrates the Nous constructing new functional modules
+- Must be **served over http** (three.js ES modules); `http://localhost:3000/grid-viz/orbital.html`
+  via the dashboard, or any static server. Zone IDs stay canonical (D-V3-32); labels are demo-only.
+
+## `index.html` — earlier isometric prototype (alternative)
+
+The original ground-city metaphor, kept as a reference/alternative. Superseded by `orbital.html`.
 
 Two layers, mirroring **Portal → Grid → City**:
 
