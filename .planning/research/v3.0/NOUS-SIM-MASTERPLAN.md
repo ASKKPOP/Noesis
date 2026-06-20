@@ -104,7 +104,8 @@ Click a zone-node → enter that zone's local view; run the **simulation** (obje
 
 > Phase numbers are **proposed** (next free band after Agentic Brain 72–74). Reconcile with `.planning/ROADMAP.md` before execution. Anchors to existing **Phase 71 (orbital map render)**.
 
-### Phase S1 — Physics gate + functional-object model
+### Phase S1 — Physics gate + functional-object model — ✅ SHIPPED 2026-06-20
+- **Delivered:** `dashboard/public/grid-viz/physics-gate.js` (6-law contract → `{ok, violations}`), 10 `node:test` cases via TDD (RED→GREEN, all green), wired into `orbital.html` so no object is shown ungated; header shows built/rejected, info panel shows per-object mass/altitude/physics. Verified in-browser, zero console errors.
 - **Goal:** a testable physics gate exists; objects carry a function/physics spec.
 - **Tasks:** define `FunctionalObject` spec (mass, power, material, I/O); implement `physics-gate` rule engine (§3); wire gate into the build path.
 - **Verify:** unit tests — known-good designs pass, deliberately-unphysical designs reject (TDD). Zero unphysical object can reach the scene.

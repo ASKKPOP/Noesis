@@ -34,6 +34,32 @@ const FUNCTIONS = [
   { fn: 'Store',     geo: 'cyl',       color: 0xffb86c },
 ];
 
+/* Physical base spec per function (SI, one cycle). All pass the §S1 physics gate;
+ * jittered per build so objects differ while staying physical. */
+const FN_BASE = {
+  Compute:   { gen: 140, con: 120, dis: 90,  rad: 130, load: 200, yld: 600, mass: 1200 },
+  Memory:    { gen: 60,  con: 40,  dis: 30,  rad: 60,  load: 150, yld: 500, mass: 900 },
+  Energy:    { gen: 400, con: 80,  dis: 120, rad: 200, load: 260, yld: 700, mass: 1500 },
+  Comms:     { gen: 90,  con: 70,  dis: 50,  rad: 90,  load: 120, yld: 450, mass: 700 },
+  Fabricate: { gen: 220, con: 200, dis: 160, rad: 240, load: 320, yld: 800, mass: 1800 },
+  Sense:     { gen: 70,  con: 55,  dis: 35,  rad: 70,  load: 110, yld: 400, mass: 600 },
+  Govern:    { gen: 110, con: 90,  dis: 60,  rad: 110, load: 180, yld: 520, mass: 1000 },
+  Store:     { gen: 80,  con: 50,  dis: 40,  rad: 80,  load: 200, yld: 560, mass: 1100 },
+};
+function makeSpec(type) {
+  const b = FN_BASE[type.fn] || FN_BASE.Compute;
+  const j = (x, f) => x * (1 + (Math.random() - 0.5) * f);
+  return {
+    fn: type.fn, mass_kg: j(b.mass, 0.3),
+    massIn_kg: 10, massOut_kg: 10,
+    energyIn_J: 1000, energyOut_J: j(900, 0.08),
+    load_N: j(b.load, 0.18), yield_N: b.yld,
+    dissipated_W: b.dis, radiated_W: j(b.rad, 0.06),
+    generation_W: b.gen, consumption_W: j(b.con, 0.06),
+    altitude_km: 380 + Math.random() * 140,
+  };
+}
+
 /* ---------------- scene / camera / controls ---------------- */
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 2000);
@@ -136,6 +162,8 @@ const ringDefs = [
 ];
 const orbiters = [];
 const objCountEl = document.getElementById('obj-count');
+const rejCountEl = document.getElementById('rej-count');
+let rejectedCount = 0;
 
 function makeShape(type) {
   const c = type.color;
@@ -163,6 +191,10 @@ function buildObject(type, ringIdx, angle) {
   type = type || FUNCTIONS[Math.floor(Math.random() * FUNCTIONS.length)];
   ringIdx = ringIdx ?? Math.floor(Math.random() * ringDefs.length);
   angle = angle ?? Math.random() * Math.PI * 2;
+  // ── §S1 PHYSICS GATE ── no object is ever shown ungated.
+  const spec = makeSpec(type);
+  const gate = window.PhysicsGate.checkPhysics(spec);
+  if (!gate.ok) { rejectedCount++; rejCountEl.textContent = rejectedCount; return null; }
   const rd = ringDefs[ringIdx];
   const { g, mesh } = makeShape(type);
   // stalk pointing in-to-ring
@@ -176,7 +208,11 @@ function buildObject(type, ringIdx, angle) {
   const o = { holder, g, mesh, type, R: rd.R, angle, spin: 0.003 + Math.random() * 0.01,
     orbit: 0.0012 + Math.random() * 0.0016, born: orbiters.length };
   g.userData = { kind: 'obj', title: `${type.fn} module`, color: type.color,
-    rows: [['function', type.fn], ['form', type.geo], ['built by', 'Nous']] };
+    rows: [['function', type.fn], ['form', type.geo],
+           ['mass', `${Math.round(spec.mass_kg)} kg`],
+           ['altitude', `${Math.round(spec.altitude_km)} km`],
+           ['physics', `✓ passed (${window.PhysicsGate.REQUIRED.length} checks)`],
+           ['built by', 'Nous']] };
   holder.add(g);
   orbiters.push(o);
   interactive.push(mesh);
@@ -197,6 +233,8 @@ FUNCTIONS.forEach(f => {
 /* ---------------- "Nous builds object" button ---------------- */
 document.getElementById('build-btn').addEventListener('click', () => {
   const o = buildObject();
+  if (!o) { showInfo({ title: 'Rejected by physics gate', kind: 'obj',
+    rows: [['result', '✗ violated physical law'], ['action', 'not built']] }); return; }
   // brief flash
   let t = 0; const base = o.mesh.material.emissiveIntensity;
   const id = setInterval(() => { o.mesh.material.emissiveIntensity = base + Math.sin(t) * 0.6; t += 0.5; if (t > 6) { clearInterval(id); o.mesh.material.emissiveIntensity = base; } }, 30);

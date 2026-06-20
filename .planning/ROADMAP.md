@@ -44,6 +44,20 @@ Realizes the side of `docs/nous_spec.md` the civic milestones never built: Nous 
 
 ---
 
+## Nous Simulation & Learning Loop (Grid-Viz orbital) — IN PROGRESS (opened 2026-06-20)
+
+Off-Earth 3D orbital visualization (three.js) where a Nous **learns to build functional objects** (shape encodes function), every object gated by a **physics contract** ("physics wins" — PHILOSOPHY). Realizes/extends **Phase 71 (orbital render)** + the v3.2 **orbital anchor structures**. Tracked as a parallel **S-track (S1–S5)** to avoid civic phase-number collision — this is visualization research, not a civic-institution phase.
+
+Plan: `.planning/research/v3.0/NOUS-SIM-MASTERPLAN.md` + `.html`. Prototype: `dashboard/public/grid-viz/orbital.html`. Built per HARNESS.md (Superpowers TDD · GSD phases · GStack QA).
+
+- ✅ **S1 — Physics gate + functional-object model** (2026-06-20): `dashboard/public/grid-viz/physics-gate.js` — a 6-law contract (conservation of mass/energy, structural integrity, thermal balance, power budget, orbital mechanics, dimensional sanity) returning `{ok, violations}`. **TDD**: 10 `node:test` cases (valid passes; each law + multi-violation + missing-field rejects) — RED→GREEN, all green. Wired into `orbital.html` (dual browser-global/CommonJS): **no object is ever shown ungated**; header shows built vs physics-rejected; info panel shows per-object mass/altitude/physics ✓. Verified in-browser, zero console errors.
+- ⏳ **S2 — AI generation of functional objects** (track ①, fal.ai → meshes, gated by S1).
+- ⏳ **S3 — Learning loop + specialization over generations** (track ②).
+- ⏳ **S4 — Zone drill-in + conservation-respecting simulation** (track ③).
+- ⏳ **S5 — Teaching / transfer of a learned population to a new Grid.**
+
+---
+
 ## Milestones
 
 - ✅ **v1.0 Genesis** (shipped 2026-04-17) — Phases 1-10, 944+ TS tests, 226 Py tests
