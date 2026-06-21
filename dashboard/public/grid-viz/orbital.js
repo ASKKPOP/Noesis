@@ -246,6 +246,23 @@ const FN_ZONE = {
   Fabricate: 'manufacture', Store: 'shopping', Memory: 'business', Sense: 'residential',
 };
 
+// ── §S2+ fal.ai sprite enhancement (dormant unless ObjectGen.falEnabled()) ──
+// Procedural mesh shows instantly; if fal is on + keyed, an AI sprite swaps in when ready.
+const texLoader = new THREE.TextureLoader();
+function applySprite(o, url) {
+  if (!o || !url) return;
+  texLoader.load(url, (tex) => {
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+    spr.scale.set(6, 6, 1);
+    o.mesh.visible = false;          // hide the procedural body, keep halo for glow
+    o.g.add(spr); o.sprite = spr;
+  });
+}
+function maybeEnhance(o) {
+  if (!o || !window.ObjectGen.falEnabled()) return;   // off by default → no network, no key
+  window.ObjectGen.falGenerate(o.spec).then(d => { if (d && d.spriteUrl) applySprite(o, d.spriteUrl); }).catch(() => {});
+}
+
 // Place an object FROM A GIVEN SPEC (gate → generate design → mesh). Returns the orbiter or null.
 function placeObject(spec, type, ringIdx, angle, rnd = Math.random, generation = 0) {
   // ── §S1 PHYSICS GATE ── no object is ever shown ungated.
@@ -279,6 +296,7 @@ function placeObject(spec, type, ringIdx, angle, rnd = Math.random, generation =
   orbiters.push(o); interactive.push(mesh); orbiterMeshes.add(mesh);
   objCountEl.textContent = orbiters.length;
   cacheCountEl.textContent = window.ObjectGen.stats().cacheHits;
+  maybeEnhance(o);                 // fal.ai sprite swap-in (no-op unless enabled + keyed)
   return o;
 }
 
@@ -482,4 +500,4 @@ addEventListener('resize', () => {
 });
 
 // expose for quick debugging in the preview
-window.__noesis = { buildObject, orbiters, scene, enterZone, evolveGeneration, teachNewGrid, ZONES };
+window.__noesis = { buildObject, orbiters, scene, enterZone, evolveGeneration, teachNewGrid, applySprite, ZONES };

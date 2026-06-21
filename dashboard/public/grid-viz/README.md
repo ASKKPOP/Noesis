@@ -13,8 +13,17 @@ Earth, the 6 zones as orbital station-nodes, and **functional objects the Nous l
 - `physics-gate.js` — **Phase S1** physics contract (6 laws); every object is gated before it can appear.
   Tests: `node --test physics-gate.test.cjs` (10 cases, TDD). Dual browser-global / CommonJS.
 - `object-gen.js` — **Phase S2** the Nous generates a unique design per spec (generate-once → atlas cache,
-  localStorage); `fal.ai` is a stubbed hook (`setUseFal(true)` + fill `falGenerate`), procedural is the
-  offline fallback. Tests: `node --test object-gen.test.cjs` (6 cases, TDD).
+  localStorage); procedural runs offline by default. **fal.ai is fully wired** (`buildPrompt` + async
+  `falGenerate` → AI sprite; `applySprite` swaps it into the 3D scene, hiding the procedural mesh).
+  Tests: `node --test object-gen.test.cjs` (10 cases, TDD; the live API call is mock-tested).
+
+### Enable real AI sprites (fal.ai)
+
+1. Get a fal.ai key. **Set it yourself — never commit it:**
+   `localStorage.setItem('noesis:fal-key', 'YOUR_KEY')` (or `window.__FAL_KEY = '...'`).
+2. In the page console: `ObjectGen.setUseFal(true)` (or set `USE_FAL = true` in `object-gen.js`).
+3. New objects then call fal.ai (model via `window.__FAL_MODEL`, default `fal-ai/flux/schnell`); the
+   returned sprite swaps in. No key / fal off → procedural fallback, scene unchanged.
 - `learning.js` — **Phase S3** the learning loop: `fitness` scores capability/efficiency, `evolve` keeps
   the fittest (elitism) and breeds `specialize`d variants — only physical (S1-gated) children survive,
   best fitness never regresses. "Nous: evolve generation" runs it live. Tests: `node --test learning.test.cjs`
@@ -36,7 +45,7 @@ makes zones **trade energy**; `simulate.js` `computeFlows()` routes surplus→de
 **animated pulses** travel between zone nodes; modules have **richer per-function forms** (Energy solar
 panels, Comms dishes, Sense spikes, Fabricate ring, Store/Memory bands).
 
-Run all grid-viz tests: `node --test *.test.cjs` (40 cases). The S-track is complete:
+Run all grid-viz tests: `node --test *.test.cjs` (44 cases). The S-track is complete:
 **S1** physics gate · **S2** AI generation · **S3** learning loop · **S4** zone sim + diversity + flows · **S5** teaching.
 - "Nous: build object" button demonstrates the Nous constructing new functional modules (gated)
 - Must be **served over http** (three.js ES modules); `http://localhost:3000/grid-viz/orbital.html`

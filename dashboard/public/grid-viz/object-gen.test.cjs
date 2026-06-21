@@ -60,6 +60,32 @@ test('generate-once: second call for the same spec is a cache hit', () => {
   assert.strictEqual(after.generated, before.generated); // no new generation
 });
 
+test('buildPrompt includes the function and mass for the AI request', () => {
+  const p = Gen.buildPrompt({ fn: 'Energy', mass_kg: 1500 });
+  assert.match(p, /energy/i);
+  assert.match(p, /1500/);
+});
+
+test('falGenerate returns null when disabled (offline-safe)', async () => {
+  Gen.setUseFal(false);
+  assert.strictEqual(await Gen.falGenerate({ fn: 'Energy', mass_kg: 1500 }), null);
+});
+
+test('falGenerate returns null when enabled but no key is set', async () => {
+  Gen.setUseFal(true); Gen.setFalKey(null);
+  assert.strictEqual(await Gen.falGenerate({ fn: 'Energy', mass_kg: 1500 }), null);
+  Gen.setUseFal(false);
+});
+
+test('falGenerate returns a fal design when enabled with a key (mock fetch)', async () => {
+  Gen.setUseFal(true); Gen.setFalKey('test-key');
+  const mockFetch = async () => ({ json: async () => ({ images: [{ url: 'https://cdn/x.png' }] }) });
+  const d = await Gen.falGenerate({ fn: 'Comms', mass_kg: 700 }, mockFetch);
+  assert.strictEqual(d.source, 'fal');
+  assert.strictEqual(d.spriteUrl, 'https://cdn/x.png');
+  Gen.setUseFal(false); Gen.setFalKey(null);
+});
+
 test('design color belongs to the function family', () => {
   Gen._resetCache();
   const d = Gen.generate(spec({ fn: 'Energy' }));

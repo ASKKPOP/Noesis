@@ -61,11 +61,42 @@ function proceduralDesign(spec) {
  * sprite, return { source:'fal', signature, spriteUrl, ...visual params }. Until a key
  * is wired, returns null and we fall back to procedural — the scene stays fully working. */
 let USE_FAL = false;
-function falGenerate(spec) {
-  if (!USE_FAL) return null;
-  // const prompt = `low-poly functional ${spec.fn} module, ${Math.round(spec.mass_kg)}kg, isometric, transparent bg`;
-  // → fetch fal.ai, return { source:'fal', signature: signature(spec), spriteUrl };
+let FAL_KEY_OVERRIDE = null;
+
+// Prompt sent to fal.ai, derived from the (physics-passed) spec.
+function buildPrompt(spec) {
+  return `isometric low-poly ${String(spec.fn).toLowerCase()} space module, functional orbital satellite, `
+    + `${Math.round(spec.mass_kg)}kg, clean sci-fi, single centered object, transparent background`;
+}
+// The API key is NEVER hard-coded. It comes from the operator: setFalKey(), or localStorage
+// ('noesis:fal-key'), or window.__FAL_KEY. No key → fal stays off and procedural runs.
+function setFalKey(k) { FAL_KEY_OVERRIDE = k || null; }
+function getFalKey() {
+  if (FAL_KEY_OVERRIDE) return FAL_KEY_OVERRIDE;
+  try { if (typeof localStorage !== 'undefined' && localStorage.getItem('noesis:fal-key')) return localStorage.getItem('noesis:fal-key'); } catch (e) {}
+  if (typeof window !== 'undefined' && window.__FAL_KEY) return window.__FAL_KEY;
   return null;
+}
+function falEnabled() { return USE_FAL && !!getFalKey(); }
+
+// Async — asks fal.ai for a sprite for this spec. Returns { source, signature, spriteUrl } or null.
+// Returns null (→ procedural fallback) whenever fal is off or no key is set, so the scene never breaks.
+async function falGenerate(spec, fetchImpl) {
+  if (!USE_FAL) return null;
+  const key = getFalKey(); if (!key) return null;
+  const f = fetchImpl || (typeof fetch !== 'undefined' ? fetch : null); if (!f) return null;
+  const model = (typeof window !== 'undefined' && window.__FAL_MODEL) || 'fal-ai/flux/schnell';
+  try {
+    const res = await f(`https://fal.run/${model}`, {
+      method: 'POST',
+      headers: { 'Authorization': `Key ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: buildPrompt(spec), image_size: 'square' }),
+    });
+    const data = await res.json();
+    const url = data && data.images && data.images[0] && data.images[0].url;
+    if (!url) return null;
+    return { source: 'fal', signature: signature(spec), spriteUrl: url };
+  } catch (e) { return null; }
 }
 
 /* ---- atlas cache (generate-once → reuse) ---- */
@@ -78,7 +109,7 @@ let generated = 0, cacheHits = 0;
 function generate(spec) {
   const sig = signature(spec);
   if (ATLAS[sig]) { cacheHits++; return Object.assign({}, ATLAS[sig], { cached: true }); }
-  const design = falGenerate(spec) || proceduralDesign(spec);
+  const design = proceduralDesign(spec);   // sync path; fal is an async enhancement (see falGenerate)
   design.cached = false;
   ATLAS[sig] = design; saveAtlas(ATLAS); generated++;
   return design;
@@ -88,6 +119,6 @@ function _resetCache() { ATLAS = {}; saveAtlas(ATLAS); generated = 0; cacheHits 
 function setUseFal(v) { USE_FAL = !!v; }
 function stats() { return { generated, cacheHits, atlasSize: Object.keys(ATLAS).length }; }
 
-const objectGenApi = { generate, signature, proceduralDesign, _resetCache, setUseFal, stats, GEO_BASES };
+const objectGenApi = { generate, signature, proceduralDesign, _resetCache, setUseFal, stats, GEO_BASES, buildPrompt, falGenerate, setFalKey, getFalKey, falEnabled };
 if (typeof module !== 'undefined' && module.exports) module.exports = objectGenApi;
 if (typeof window !== 'undefined') window.ObjectGen = objectGenApi;
