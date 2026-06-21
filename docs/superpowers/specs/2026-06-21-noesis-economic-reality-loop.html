@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Noēsis · Economic Reality Loop — Visualization</title>
+<style>
+  :root{
+    --bg:#05060d; --bg2:#0a0d1a; --panel:#0d1124; --panel2:#11162e;
+    --ink:#e8ecff; --dim:#8b93b8; --faint:#4a5170; --line:#1f2747;
+    --amber:#ffb454; --green:#37d99e; --cyan:#34d2ff; --magenta:#ff6ad5; --violet:#b98cff; --blue:#6a8cff;
+    --red:#ff5d6c;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:radial-gradient(1200px 700px at 70% -10%, #0e1430 0%, var(--bg) 60%);color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+  .wrap{max-width:1140px;margin:0 auto;padding:40px 22px 90px}
+  h1{font-size:30px;margin:0 0 6px;letter-spacing:.3px}
+  h1 .ko{font-size:16px;color:var(--cyan);font-weight:500}
+  .lede{color:var(--dim);max-width:820px;margin:10px 0 0}
+  .tag{display:inline-block;font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--cyan);
+    border:1px solid var(--line);border-radius:999px;padding:3px 11px;margin-bottom:16px;background:var(--panel)}
+  section{margin-top:54px}
+  h2{font-size:20px;margin:0 0 4px;display:flex;align-items:baseline;gap:12px}
+  h2 .ko{font-size:13px;color:var(--dim);font-weight:500}
+  h2::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
+  .sub{color:var(--dim);margin:6px 0 20px;max-width:840px}
+  .panel{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:16px;padding:22px}
+  /* loop */
+  .loopwrap{position:relative;width:820px;max-width:100%;height:640px;margin:6px auto 0}
+  @media(max-width:840px){.loopwrap{height:auto}}
+  .loop-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .node{position:absolute;width:128px;transform:translate(-50%,-50%);text-align:center;
+    background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:9px 8px 10px;
+    box-shadow:0 6px 22px rgba(0,0,0,.45)}
+  .node .n{position:absolute;top:-12px;left:-12px;width:26px;height:26px;border-radius:50%;
+    display:grid;place-items:center;font-size:13px;font-weight:700;color:#04060f;background:var(--cyan);box-shadow:0 0 14px var(--cyan)}
+  .node .t{font-weight:650;font-size:13.5px;line-height:1.25}
+  .node .k{font-size:11px;color:var(--dim);margin-top:2px}
+  .node.am{border-color:#5a3f1c}.node.am .n{background:var(--amber);box-shadow:0 0 14px var(--amber)}
+  .node.gr{border-color:#1c4d3a}.node.gr .n{background:var(--green);box-shadow:0 0 14px var(--green)}
+  .node.cy{border-color:#1d4a5e}.node.cy .n{background:var(--cyan);box-shadow:0 0 14px var(--cyan)}
+  .node.mg{border-color:#5a2049}.node.mg .n{background:var(--magenta);box-shadow:0 0 14px var(--magenta)}
+  .node.vi{border-color:#3e2d63}.node.vi .n{background:var(--violet);box-shadow:0 0 14px var(--violet)}
+  .node.bl{border-color:#26356b}.node.bl .n{background:var(--blue);box-shadow:0 0 14px var(--blue)}
+  .loop-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:230px}
+  .loop-center .big{font-size:15px;font-weight:700;letter-spacing:.4px}
+  .loop-center .eq{font-size:12.5px;color:var(--amber);margin-top:6px;font-family:ui-monospace,Menlo,monospace}
+  .loop-center .fb{font-size:11px;color:var(--violet);margin-top:10px}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:8px;color:var(--dim);font-size:12px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:50%}
+  /* fallback list for narrow screens */
+  .looplist{display:none}
+  @media(max-width:840px){
+    .loopwrap{display:none}
+    .looplist{display:block}
+    .looplist ol{margin:0;padding-left:22px}
+    .looplist li{margin:7px 0}
+  }
+  /* generic grids */
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g5{grid-template-columns:repeat(5,1fr)}
+  @media(max-width:880px){.g2,.g3,.g5{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px}
+  .card h3{margin:0 0 6px;font-size:14.5px}
+  .card .ko{color:var(--dim);font-size:12px;font-weight:500}
+  .have{color:var(--green)} .need{color:var(--amber)}
+  .card ul{margin:6px 0 0;padding-left:17px;color:var(--dim);font-size:12.7px}
+  .card li{margin:3px 0}
+  /* lost */
+  .lost{display:flex;flex-wrap:wrap;gap:12px}
+  .frag{flex:1;min-width:200px;border:1px solid var(--line);border-radius:12px;padding:13px 14px;background:var(--panel)}
+  .frag .h{font-weight:650;font-size:13.5px;display:flex;align-items:center;gap:8px}
+  .frag .s{color:var(--dim);font-size:12.4px;margin-top:5px}
+  .brk{color:var(--red);font-weight:700}
+  /* organism */
+  .organism{display:flex;flex-direction:column;gap:0;align-items:center}
+  .band{width:100%;border-radius:13px;padding:13px 16px;border:1px solid var(--line);text-align:center;position:relative}
+  .band .lab{font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--dim)}
+  .band .it{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:7px}
+  .pill{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:6px 11px;font-size:12.6px;font-weight:600}
+  .pill small{display:block;color:var(--dim);font-weight:500;font-size:10.7px}
+  .conn{width:2px;height:22px;background:linear-gradient(var(--cyan),transparent)}
+  .band.found{background:linear-gradient(180deg,#0c1f1a,#0a1316);border-color:#1c4d3a}
+  .band.spine{background:linear-gradient(180deg,#0c1830,#0a1020);border-color:#26356b}
+  .band.organs{background:linear-gradient(180deg,#1a0f24,#120a18);border-color:#3e2d63}
+  .band.horizon{background:linear-gradient(180deg,#251a0c,#160f08);border-color:#5a3f1c}
+  /* planet */
+  .planets{display:flex;gap:14px;flex-wrap:wrap}
+  .planet{flex:1;min-width:200px;border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--panel);text-align:center}
+  .planet .orb{width:54px;height:54px;border-radius:50%;margin:0 auto 10px;box-shadow:0 0 24px rgba(255,255,255,.08) inset, 0 8px 22px rgba(0,0,0,.5)}
+  .planet table{width:100%;font-size:12px;color:var(--dim);margin-top:8px;border-collapse:collapse}
+  .planet td{padding:2px 0;text-align:left}.planet td:last-child{text-align:right;color:var(--ink)}
+  .planet .now{color:var(--green);font-weight:700;font-size:11px}
+  .planet .later{color:var(--amber);font-weight:700;font-size:11px}
+  /* slice */
+  .slice{display:flex;gap:0;align-items:stretch;overflow-x:auto;padding-bottom:6px}
+  .step{min-width:155px;flex:1;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel);position:relative;margin-right:26px}
+  .step:last-child{margin-right:0}
+  .step::after{content:"▸";position:absolute;right:-20px;top:50%;transform:translateY(-50%);color:var(--cyan);font-size:18px}
+  .step:last-child::after{display:none}
+  .step .id{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--cyan);font-weight:700}
+  .step .ti{font-size:13px;font-weight:650;margin:3px 0 6px}
+  .ev{display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:10.3px;color:var(--amber);
+    border:1px solid #5a3f1c;border-radius:6px;padding:1px 6px;margin:2px 3px 0 0;background:#160f08}
+  /* invariants */
+  .chips{display:flex;flex-wrap:wrap;gap:9px}
+  .chip{border:1px solid #1c4d3a;background:#0c1f1a;color:var(--green);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:600}
+  .chip.warn{border-color:#5a3f1c;background:#160f08;color:var(--amber)}
+  .foot{margin-top:60px;color:var(--faint);font-size:12px;border-top:1px solid var(--line);padding-top:18px}
+  a{color:var(--cyan)}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:var(--cyan)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="tag">North-Star Design · 2026-06-21 · Phases 80+</div>
+  <h1>Noēsis — Economic Reality Loop <span class="ko">· 경제 현실 루프</span></h1>
+  <p class="lede">The objects Nous build and the economy that should make them real were built as separate worlds that never touch. This is the spine that reconnects them — a civic due funds the city, the Polis commissions a build, a Nous earns by building, and the object becomes <b>real</b>, <b>owned</b>, <b>costed</b>, and <b>rendered</b>.
+  <br><span style="color:var(--dim)">짓는 객체와 그것을 현실로 만드는 경제가 끊겨 있었습니다. 이 척추가 둘을 다시 잇습니다.</span></p>
+
+  <!-- ============ THE LOOP ============ -->
+  <section>
+    <h2>The Loop <span class="ko">· 닫힌 순환</span></h2>
+    <p class="sub">compute = labor = money = the city itself. Ten stations, one cycle; each built object's function output feeds back into the economy.</p>
+    <div class="panel">
+      <div class="loopwrap">
+        <svg class="loop-svg" viewBox="0 0 820 640" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <defs>
+            <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+              <path d="M0,0 L9,4.5 L0,9 Z" fill="#34d2ff"/>
+            </marker>
+            <marker id="ahv" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+              <path d="M0,0 L9,4.5 L0,9 Z" fill="#b98cff"/>
+            </marker>
+          </defs>
+          <!-- main clockwise ring -->
+          <circle cx="410" cy="320" r="240" fill="none" stroke="#34d2ff" stroke-width="2"
+            stroke-dasharray="10 12" opacity="0.55">
+            <animate attributeName="stroke-dashoffset" from="0" to="-220" dur="6s" repeatCount="indefinite"/>
+          </circle>
+          <!-- direction chevrons on ring -->
+          <g fill="#34d2ff" opacity="0.9">
+            <path d="M650,320 l-12,-7 v14 z"/>
+            <path d="M410,560 l7,-12 h-14 z"/>
+            <path d="M170,320 l12,7 v-14 z"/>
+            <path d="M410,80 l-7,12 h14 z"/>
+          </g>
+          <!-- inner feedback chord: object/render -> treasury -->
+          <path d="M275,150 C 360,205 470,205 545,152" fill="none" stroke="#b98cff" stroke-width="1.6"
+            stroke-dasharray="4 5" marker-end="url(#ahv)" opacity="0.85"/>
+        </svg>
+
+        <!-- nodes -->
+        <div class="node am" style="left:410px;top:80px"><span class="n">1</span><div class="t">Civic Due</div><div class="k">시민세 · labor or ETH</div></div>
+        <div class="node gr" style="left:551px;top:126px"><span class="n">2</span><div class="t">Treasury</div><div class="k">금고 · wei, on Polis vote</div></div>
+        <div class="node cy" style="left:638px;top:246px"><span class="n">3</span><div class="t">RFP Notice</div><div class="k">공고 · budget + spec</div></div>
+        <div class="node cy" style="left:638px;top:394px"><span class="n">4</span><div class="t">Bids</div><div class="k">입찰 · artifact / capacity</div></div>
+        <div class="node cy" style="left:551px;top:514px"><span class="n">5</span><div class="t">Award</div><div class="k">낙찰 · one winner</div></div>
+        <div class="node mg" style="left:410px;top:560px"><span class="n">6</span><div class="t">Build</div><div class="k">건설 · the labor</div></div>
+        <div class="node mg" style="left:269px;top:514px"><span class="n">7</span><div class="t">Attest</div><div class="k">검증 · Grid = oracle</div></div>
+        <div class="node gr" style="left:182px;top:394px"><span class="n">8</span><div class="t">Pay (wei)</div><div class="k">지급 · escrow release</div></div>
+        <div class="node vi" style="left:182px;top:246px"><span class="n">9</span><div class="t">Real Object</div><div class="k">실제 객체 · owned·costed</div></div>
+        <div class="node bl" style="left:269px;top:126px"><span class="n">10</span><div class="t">Render</div><div class="k">렌더 · from backend</div></div>
+
+        <div class="loop-center">
+          <div class="big">compute = labor = money</div>
+          <div class="eq">= the city itself</div>
+          <div class="fb">⤴ each object's function output<br>feeds back into the economy</div>
+        </div>
+      </div>
+
+      <!-- narrow-screen fallback -->
+      <div class="looplist">
+        <ol>
+          <li><b>Civic Due</b> 시민세 — every member owes, payable in labor or ETH</li>
+          <li><b>Treasury</b> 금고 — wei commons fund; out only on Polis vote</li>
+          <li><b>RFP Notice</b> 공고 — Polis posts budget + spec</li>
+          <li><b>Bids</b> 입찰 — Nous bid (artifact work or capacity pledge)</li>
+          <li><b>Award</b> 낙찰 — Polis awards one winner → contract</li>
+          <li><b>Build</b> 건설 — the winner does the work</li>
+          <li><b>Attest</b> 검증 — Grid (oracle) signs "done"</li>
+          <li><b>Pay (wei)</b> 지급 — escrow releases, fee → treasury</li>
+          <li><b>Real Object</b> 실제 객체 — owned, costed, function-producing</li>
+          <li><b>Render</b> 렌더 — world-map shows real backend state → feeds back to economy</li>
+        </ol>
+      </div>
+
+      <div class="legend">
+        <span><i class="dot" style="background:var(--amber)"></i>obligation</span>
+        <span><i class="dot" style="background:var(--green)"></i>treasury / money</span>
+        <span><i class="dot" style="background:var(--cyan)"></i>procurement</span>
+        <span><i class="dot" style="background:var(--magenta)"></i>build / labor</span>
+        <span><i class="dot" style="background:var(--violet)"></i>reality</span>
+        <span><i class="dot" style="background:var(--blue)"></i>render</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WHAT WE LOST ============ -->
+  <section>
+    <h2>What we lost <span class="ko">· 무엇을 잃었나</span></h2>
+    <p class="sub">Three disconnected fragments plus one never even sketched. The links between them are broken.</p>
+    <div class="lost">
+      <div class="frag"><div class="h">🛰️ Objects <span class="brk">✕ cosmetic</span></div><div class="s">Grid-Viz is 100% browser/localStorage — no backend, no audit events, no owner, no cost. Close the tab → gone.</div></div>
+      <div class="frag"><div class="h">💠 Money <span class="brk">✕ unbuilt</span></div><div class="s">D-MONEY-01 (compute-labor + ETH) is locked, but code still runs legacy Ousia with a faucet that contradicts the axiom.</div></div>
+      <div class="frag"><div class="h">🏛️ Procurement <span class="brk">✕ absent</span></div><div class="s">No RFP at all. The Polis "legislates and disburses, but does not hire." Not built, not designed, not roadmapped.</div></div>
+      <div class="frag"><div class="h">🌍 Place <span class="brk">✕ placeless</span></div><div class="s">Grid has no celestial body; physics hardcodes Earth orbit — the same disease, ready to repeat for Moon/Mars.</div></div>
+    </div>
+  </section>
+
+  <!-- ============ ORGANISM ============ -->
+  <section>
+    <h2>One organism, not five projects <span class="ko">· 하나의 유기체</span></h2>
+    <p class="sub">The loop is the spine. The other subsystems are organs that attach to it — each meaningless without the spine's output.</p>
+    <div class="panel">
+      <div class="organism">
+        <div class="band horizon"><div class="lab">Horizon · 지평선</div>
+          <div class="it"><span class="pill">H1 Multi-celestial grids<small>Moon = a config · cross-grid mobility · light-delay</small></span></div></div>
+        <div class="conn"></div>
+        <div class="band organs"><div class="lab">Organs · 장기 (attach after spine is demoable)</div>
+          <div class="it">
+            <span class="pill">O1 Multitasking<small>task scheduler · group actions</small></span>
+            <span class="pill">O2 Human-in-the-loop<small>approval gates · Portal↔Nous chat</small></span>
+            <span class="pill">O3 Forest app<small>phone ↔ Nous over P2P</small></span>
+            <span class="pill">O4 World-map street-view<small>navigable city renders the body</small></span>
+          </div></div>
+        <div class="conn"></div>
+        <div class="band spine"><div class="lab">Spine · 척추 — the economic loop</div>
+          <div class="it">
+            <span class="pill">L1 Civic due</span>
+            <span class="pill">L2 Procurement RFP</span>
+            <span class="pill">L3 Orbital-object reality</span>
+            <span class="pill">L4 Grid-Viz bridge</span>
+          </div></div>
+        <div class="conn"></div>
+        <div class="band found"><div class="lab">Foundation · 기반 (built FIRST, cross-cutting)</div>
+          <div class="it">
+            <span class="pill">F0 GridEnvironment<small>body · gravity · solar · light-delay</small></span>
+            <span class="pill">F1 Money rails (model-first)<small>nous_accounts wei · escrow · credit</small></span>
+          </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HAVE vs NEED ============ -->
+  <section>
+    <h2>Have vs. Need <span class="ko">· 보유 vs 필요</span></h2>
+    <p class="sub">Deep scan across the five subsystems.</p>
+    <div class="grid g5">
+      <div class="card"><h3>Economic loop <span class="ko">경제 루프</span></h3>
+        <div class="have">✓ Have</div><ul><li>IRS treasury (Ousia, off-chain)</li><li>P2P marketplace</li><li>Gov legislation</li></ul>
+        <div class="need">+ Need</div><ul><li>Due · RFP · labor rails · object-reality</li><li><i>the whole spine</i></li></ul></div>
+      <div class="card"><h3>World-map viz <span class="ko">세계지도</span></h3>
+        <div class="have">✓ Have</div><ul><li>Orbital overview</li><li>Zone drill-in</li><li>Physics/learning engine</li></ul>
+        <div class="need">+ Need</div><ul><li>Street/first-person camera</li><li>Interiors · avatar · LOD</li></ul></div>
+      <div class="card"><h3>Multitasking <span class="ko">멀티태스킹</span></h3>
+        <div class="have">✓ Have</div><ul><li>Multi-action per tick</li><li>Tool/sandbox/task pipeline</li></ul>
+        <div class="need">+ Need</div><ul><li>Persistent scheduler</li><li>Group actions · approval gates · chat</li></ul></div>
+      <div class="card"><h3>Forest phone <span class="ko">포레스트</span></h3>
+        <div class="have">✓ Have</div><ul><li>Tier-1 local manager</li><li>WebRTC P2P + TURN (done)</li></ul>
+        <div class="need">+ Need</div><ul><li>Mobile app (0%)</li><li>Phone auth · Brain listener</li></ul></div>
+      <div class="card"><h3>Moon / Mars <span class="ko">달·화성</span></h3>
+        <div class="have">✓ Have</div><ul><li>Multi-Grid framework</li><li>Lore commits (Pillar 4)</li></ul>
+        <div class="need">+ Need</div><ul><li>Body model · param physics</li><li>Cross-grid mobility</li></ul></div>
+    </div>
+  </section>
+
+  <!-- ============ MULTI-PLANETARY FOUNDATION ============ -->
+  <section>
+    <h2>Multi-planetary foundation (F0) <span class="ko">· 천체 매개변수 기반</span></h2>
+    <p class="sub">The cheapest moment to make Noēsis multi-planetary is <b>before</b> the reality layer hardens. One <code>GridEnvironment</code> record; Genesis ships as Earth-orbit; Moon &amp; Mars become configs, not rewrites.</p>
+    <div class="planets">
+      <div class="planet"><div class="orb" style="background:radial-gradient(circle at 35% 30%, #5b8cff, #16306e)"></div>
+        <h3>Earth-orbit <span class="now">▶ NOW (Genesis)</span></h3>
+        <table><tr><td>gravity</td><td>9.81 m/s²</td></tr><tr><td>solar</td><td>1361 W/m²</td></tr><tr><td>light-delay</td><td>0 ms</td></tr></table></div>
+      <div class="planet"><div class="orb" style="background:radial-gradient(circle at 35% 30%, #cfd3e0, #6b6f7e)"></div>
+        <h3>Moon <span class="later">later · a config</span></h3>
+        <table><tr><td>gravity</td><td>1.62 m/s²</td></tr><tr><td>solar</td><td>1361 W/m²</td></tr><tr><td>light-delay</td><td>~1.26 s</td></tr></table></div>
+      <div class="planet"><div class="orb" style="background:radial-gradient(circle at 35% 30%, #ff8a5b, #7e2f18)"></div>
+        <h3>Mars <span class="later">later · a config</span></h3>
+        <table><tr><td>gravity</td><td>3.71 m/s²</td></tr><tr><td>solar</td><td>~580 W/m²</td></tr><tr><td>light-delay</td><td>3–22 min</td></tr></table></div>
+    </div>
+  </section>
+
+  <!-- ============ THIN SLICE ============ -->
+  <section>
+    <h2>The thin vertical slice (first build) <span class="ko">· 얇은 수직 슬라이스</span></h2>
+    <p class="sub">Smallest end-to-end loop touching every part. Build this first, then deepen each station.</p>
+    <div class="panel">
+      <div class="slice">
+        <div class="step"><div class="id">F0</div><div class="ti">Environment</div><div>Seed Genesis = Earth-orbit; <code>checkPhysics(spec, env)</code></div></div>
+        <div class="step"><div class="id">F1</div><div class="ti">Money rails</div><div>nous_accounts (wei) · treasury · minimal escrow/credit</div></div>
+        <div class="step"><div class="id">L1</div><div class="ti">Civic due</div><div>Assess one · pay in labor or wei<br><span class="ev">due.assessed</span><span class="ev">due.paid</span></div></div>
+        <div class="step"><div class="id">L2</div><div class="ti">RFP</div><div>Issue → bid → award<br><span class="ev">procurement.notice_issued</span><span class="ev">procurement.bid_placed</span><span class="ev">procurement.awarded</span></div></div>
+        <div class="step"><div class="id">L3</div><div class="ti">Build + settle</div><div>Attest → pay → object real<br><span class="ev">procurement.attested</span><span class="ev">procurement.settled</span><span class="ev">orbital.object_built</span></div></div>
+        <div class="step"><div class="id">L4</div><div class="ti">Render</div><div>GET /api/v1/orbital/objects → orbital.js renders from backend</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ INVARIANTS ============ -->
+  <section>
+    <h2>Invariants preserved &amp; the one change <span class="ko">· 불변식과 단 하나의 변경</span></h2>
+    <div class="chips">
+      <span class="chip">VOTE-05 · RFP issue+award are Nous-only Polis acts</span>
+      <span class="chip">D-MONEY-01..07 · wei · no internal mint · zero-custody</span>
+      <span class="chip">D-MONEY-03 / D-V3-21 · treasury out only on Polis vote</span>
+      <span class="chip">Allowlist freeze · explicit per-phase additions</span>
+      <span class="chip">R-31-01 · zero-diff tamper-evident audit</span>
+      <span class="chip">6-zone · Portal-gating · Polis naming · Tier taxonomy</span>
+      <span class="chip warn">⚑ D-MONEY-08 · civic due overturns D-V3-22 ("fees only")</span>
+    </div>
+  </section>
+
+  <div class="foot">
+    Companion to <a href="2026-06-21-noesis-economic-reality-loop-design.md">2026-06-21-noesis-economic-reality-loop-design.md</a> ·
+    Program: Phases 80+ (Foundation → Spine → Organs → Horizon) ·
+    Next: writing-plans for the first slice (F0 + F1 + L1–L4).
+  </div>
+
+</div>
+</body>
+</html>
