@@ -78,7 +78,7 @@ The operator expanded scope to four more subsystems. The deep scan shows they ar
 
 ## 5. Architecture — component boundaries
 
-Six well-bounded units for the spine + foundation, each with one job:
+Seven well-bounded units for the spine + foundation, each with one job:
 
 | # | Unit | One job | Depends on |
 |---|---|---|---|
