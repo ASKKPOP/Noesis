@@ -64,6 +64,32 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 11 ============================ -->
+  <h2>Session 11 — 2026‑06‑22 · “O4 correction — orbital station, not a flat plane (Moon/Mars previews)”</h2>
+  <p class="sub">Operator feedback: "structures are not on a 2D plane; in space they're 3D; the Moon and Mars
+  serve as true previews." My Session-10 flat city was wrong — and it turns out it violated a <em>user-locked</em>
+  canon I should have followed.</p>
+  <ul>
+    <li><b>Found the locked canon</b> <span class="tag warn">caught</span> the <code>nous-space-visualizer</code> skill
+      records: <em>"orbital space-station, NEVER a flat disc… No flat ground plane, ever"</em> (user-locked 2026-06-11) —
+      and a canonical artifact, <code>docs/noesis-genesis-core-map.html</code>, with the directive <em>"extend it, don't
+      fork it."</em> My flat <code>street.{html,js}</code> was exactly the fork the skill warns against.</li>
+    <li><b>Removed the flat fork</b> <span class="tag done">reverted</span> deleted
+      <code>street.html</code>/<code>street.js</code>/<code>address-to-world.{js,test.cjs}</code>.</li>
+    <li><b>Extended the canonical orbital station</b> <span class="tag done">built</span> added a <strong>body picker
+      (Earth / Moon / Mars)</strong> to <code>docs/noesis-genesis-core-map.html</code>, parameterizing the body below
+      (mirrors the grid-side <code>GridEnvironment</code>: gravity + light-delay shown). Earth stays the Genesis default
+      (D-NH-12); Moon &amp; Mars are <em>true previews</em> of a lunar/martian Grid's body — the H1 tie. Structures hang
+      in 3D orbital shells above the body, never a flat plane.</li>
+    <li><b>Browser-verified</b> <span class="tag done">preview</span> dashboard → <code>grid-viz/genesis-core-map.html</code>
+      (a marked synced copy): full orbital station renders above Earth, <strong>0 console errors</strong>; clicking the
+      body buttons switches Earth→Moon→Mars and updates the label (<code>MOON · g 1.62 m/s² · light 1.3 s</code>). Earth
+      screenshot captured at full size (Moon/Mars frames raced a preview-window resize glitch, but the switch is
+      eval-confirmed).</li>
+    <li><b>Lesson:</b> invoke the domain skill <em>before</em> building in its domain — the canon was already decided.
+      Doc-synced O4 design doc (attempt retracted + correction), ROADMAP, STATE. Committed to main, not pushed.</li>
+  </ul>
+
   <!-- ============================ SESSION 10 ============================ -->
   <h2>Session 10 — 2026‑06‑22 · “O4 street-view — first version (3D navigable city)”</h2>
   <p class="sub">"Go next" after H1 → built the O4 street-view first version: a walkable 3D Three.js view of

@@ -38,16 +38,25 @@ top-down SVG civic map; the SVG map stays the operator's authoritative diagram (
 
 ## Scope — phased (YAGNI)
 
-**Phase O4a (MVP) — ✅ SHIPPED 2026-06-22 (first version):** `address-to-world.js` (the
-(ring,sector,level)→(x,y,z) mapping, node:test 6/6) + `street.html`/`street.js` — a Three.js city
-that places parcels at their address in concentric zone-colored rings, massed by structure type,
-with OrbitControls overview + a minimal pointer-lock first-person walk + raycast click-to-inspect,
-and an additive `GET /api/v1/civic/parcels` swap over a local demo. **Browser-verified** (preview):
-84 demo parcels render, 0 console errors, click opens the parcel panel (id/zone/ring·sector·level/
-status/structure/owner). Decisions taken: standalone `grid-viz/street.html` (public visitor view);
-radial convention locked (ring 0 = core, sector 0° = North, 90° = East). **Deferred to v2:** live
-backend by default (the dashboard dev server doesn't proxy `/api` → demo is the standalone path),
-Nous avatars, walk-into interiors, firehose live updates, modelled buildings.
+**Phase O4a — first attempt RETRACTED, then corrected (2026-06-22).**
+
+- ❌ **First attempt (a flat city plane) was WRONG** — it violated the user-locked canon
+  (`nous-space-visualizer` skill, 2026-06-11): *"orbital space-station, NEVER a flat disc... No
+  flat ground plane, ever."* Structures in Noēsis are built in 3D orbital space above a body, not
+  on the ground. The flat `street.{html,js}` + `address-to-world.*` were removed.
+- ✅ **Correction (the canon):** there is already a **canonical 3D orbital-station map** —
+  `docs/noesis-genesis-core-map.html` (D-NH-09 seeding: ring 0 gov · ring 1×4 commons · ring 2
+  business/shopping/manufacture ×8 · ring 3 residential ×24; orbital shells; inclined residential;
+  capsule modules, ghost=unsold; neon district signs; **Earth below, D-NH-12**). Per the skill,
+  *extend it, don't fork it.* The operator's feedback — "Moon and Mars serve as true previews" —
+  is delivered by **parameterizing the body below** (an Earth/Moon/Mars picker mirroring the
+  grid-side `GridEnvironment`: gravity + light-delay shown). Earth stays the Genesis default
+  (D-NH-12); Moon/Mars preview a lunar/martian Grid's body (the H1 tie-in). The dashboard O4
+  surface is `dashboard/public/grid-viz/genesis-core-map.html` (a marked synced copy of the
+  canonical file). **Browser-verified:** full orbital station renders above Earth (0 console
+  errors); the body picker switches Earth→Moon→Mars (label updates `g`/light-delay).
+- **Deferred to v2:** live `/api/v1/civic/parcels` instead of the embedded seed; Moon/Mars surface
+  textures (currently colored bodies); first-person walk *inside* the station; interiors.
 
 **Deferred (explicit):**
 - **Nous avatars in the street** — the Nous↔parcel binding is a Phase-36/37 stub (`civic-map`
