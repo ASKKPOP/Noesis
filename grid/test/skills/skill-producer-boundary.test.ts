@@ -26,11 +26,38 @@ const SOLE_EMITTERS: Record<string, string> = {
     'skill.rejected': 'skills/appendSkillRejected.ts',
 };
 
+// Under `npm run test` worker parallelism, sibling suites may create and delete
+// transient .ts files directly in grid/src (e.g. check-civic-did-issuance-path
+// writes/unlinks __test_violator_*.ts CI-gate fixtures). A file that exists at
+// enumeration but vanishes before we stat/read it is, by definition, not a stable
+// production source file. Skipping such ENOENT files keeps this scan deterministic
+// regardless of parallelism WITHOUT weakening the sole-producer invariant: real
+// producer files never vanish mid-scan, so they are always scanned. This is a
+// pre-existing race (Phase 18), widened by Phase 59's extra append-*.ts files.
+function isVanished(err: unknown): boolean {
+    return (err as NodeJS.ErrnoException)?.code === 'ENOENT';
+}
+
+function readIfPresent(file: string): string | null {
+    try {
+        return readFileSync(file, 'utf8');
+    } catch (err) {
+        if (isVanished(err)) return null;
+        throw err;
+    }
+}
+
 function walk(dir: string): string[] {
     const out: string[] = [];
     for (const entry of readdirSync(dir)) {
         const full = join(dir, entry);
-        const st = statSync(full);
+        let st;
+        try {
+            st = statSync(full);
+        } catch (err) {
+            if (isVanished(err)) continue;
+            throw err;
+        }
         // Exclude test fixtures (.test.ts / __tests__): tests legitimately call
         // audit.append(...) directly for setup, which is not a production sole-producer
         // violation. Mirrors the .test.ts exclusion in check-sole-producer-discipline.mjs.
@@ -54,7 +81,8 @@ describe('skill.* events — sole producer boundaries', () => {
             const hits: string[] = [];
             for (const file of allFiles) {
                 const rel = relative(GRID_SRC, file).replace(/\\/g, '/');
-                const src = readFileSync(file, 'utf8');
+                const src = readIfPresent(file);
+                if (src === null) continue;
                 if (new RegExp(escapedEvent).test(src)) hits.push(rel);
             }
             // The allowlist registration and the sole emitter MUST both reference the event.
@@ -70,7 +98,8 @@ describe('skill.* events — sole producer boundaries', () => {
             for (const file of allFiles) {
                 const rel = relative(GRID_SRC, file).replace(/\\/g, '/');
                 if (rel === emitterFile) continue;
-                const src = readFileSync(file, 'utf8');
+                const src = readIfPresent(file);
+                if (src === null) continue;
                 // Match audit.append / chain.append / this.audit.append with skill event
                 const pattern = new RegExp(
                     `\\b(?:audit|chain|this\\.audit|this\\.chain)\\.append[^;]{0,200}['"\`]${escapedEvent}['"\`]`,
