@@ -23,11 +23,14 @@ const REQUIRED = [
 const _ENV = (typeof require === 'function')
   ? require('./grid-environments.js')
   : (typeof window !== 'undefined' && window.GridEnvironments ? window.GridEnvironments : null);
-const EARTH_ORBIT = (_ENV && _ENV.EARTH_ORBIT) || { name: 'Earth-orbit', min_stable_altitude_km: 0 };
+/* Named DEFAULT_ENV, not EARTH_ORBIT: as a classic <script> this shares the
+ * global lexical scope with grid-environments.js (which declares EARTH_ORBIT),
+ * and a duplicate top-level `const` there is a SyntaxError that aborts this file. */
+const DEFAULT_ENV = (_ENV && _ENV.EARTH_ORBIT) || { name: 'Earth-orbit', min_stable_altitude_km: 0 };
 
 function finiteNonNeg(v) { return typeof v === 'number' && Number.isFinite(v) && v >= 0; }
 
-function checkPhysics(spec, env = EARTH_ORBIT) {
+function checkPhysics(spec, env = DEFAULT_ENV) {
   const v = [];
 
   // 6. Dimensional sanity — every required field present, finite, non-negative.
