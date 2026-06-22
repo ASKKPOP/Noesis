@@ -256,6 +256,15 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/civic/dues':                    'civic_did_required',
     'POST /api/v1/civic/dues/:dueId/pay':        'civic_did_required',
 
+    // W — Approval routes: consult-your-human gate (de-orphan ApprovalStore).
+    // All four routes require a Civic-DID bearer. Ownership enforced per-handler:
+    //   request: any Civic-DID may call (caller = nous_did)
+    //   list/approve/reject: caller must equal the approval's human_did (403 not_your_approval)
+    'POST /api/v1/civic/approvals':                   'civic_did_required',
+    'GET /api/v1/civic/approvals':                    'civic_did_required',
+    'POST /api/v1/civic/approvals/:id/approve':       'civic_did_required',
+    'POST /api/v1/civic/approvals/:id/reject':        'civic_did_required',
+
     // W — Procurement member routes: members see open RFPs + place bids (VOTE-05 preserved).
     // GET lists/detail are public-readable (anyone may browse open RFPs to decide whether to bid).
     // POST bid requires civic_member tier (bidder = caller; no issue/award exposed here).

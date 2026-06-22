@@ -74,6 +74,7 @@ import { registerCivicInboxRoutes } from './routes/civic-inbox.js';
 import { registerCivicMessageRoute } from './routes/civic-message.js';
 import { registerCivicDueRoutes } from './routes/civic-dues.js';
 import { registerProcurementRoutes } from './routes/procurement.js';
+import { registerApprovalRoutes } from './routes/approvals.js';
 import { registerGridManagerPresenceRoute } from './routes/grid-manager-presence.js';
 import { registerP2pRoutes } from './routes/p2p.js';
 import { registerForkNousRoute } from './operator/fork-nous.js';
@@ -731,6 +732,7 @@ export function buildServerWithHub(
     void registerCivicMessageRoute(app, services);
     registerCivicDueRoutes(app, services);
     registerProcurementRoutes(app, services);
+    registerApprovalRoutes(app, services);
 
     // --- Phase 41 SLEEP-02: Grid Manager presence overview (Steward Console Section 4) ---
     // GET /api/v1/grid-manager/presence-overview — portal_session_required (D-V3-36 Tier-2).
