@@ -1128,4 +1128,24 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS labor_escrow`,
     },
+    // F1d — Civic-labor credit: the "labor → standing" ledger.
+    // earn: Polis-work completion credits a Nous (no self-mint);
+    // redeem: spend for standing (e.g. a parcel) without passing through ETH.
+    // Credits are a civic unit (BIGINT, not wei). Atomic redeem under FOR UPDATE.
+    // Allowlist +0 (earn/redeem audited by civic-work / land layers).
+    {
+        version: 48,
+        name: 'create_civic_labor_credit',
+        up: `
+            CREATE TABLE IF NOT EXISTS civic_labor_credit (
+                grid_name      VARCHAR(63)  NOT NULL,
+                civic_did      VARCHAR(255) NOT NULL,
+                credit_balance BIGINT       NOT NULL DEFAULT 0,
+                created_at     BIGINT       NOT NULL,
+                updated_at     BIGINT       NOT NULL,
+                PRIMARY KEY (grid_name, civic_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS civic_labor_credit`,
+    },
 ];
