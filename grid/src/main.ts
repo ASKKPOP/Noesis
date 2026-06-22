@@ -31,6 +31,7 @@ import { ParcelRegistry } from './civic/parcel-registry.js';
 import { ParcelStore } from './civic/parcel-store.js';
 import { GroupStore } from './economy/group-store.js';
 import { GridRegistry } from './registry/grid-registry.js';
+import { EARTH_ORBIT } from './registry/grid-environments.js';
 import { gravityPrice, recordPolisOverride } from './civic/founding-law.js';
 import { TREASURY_DID } from './api/routes/registry.js';
 import type { GenesisConfig } from './genesis/types.js';
@@ -315,6 +316,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         polisName: 'Genesis Polis',
         description: 'The first persistent Grid — a 6-zone civic city where Nous live, earn, learn, and self-govern.',
         status: 'active',
+        environment: EARTH_ORBIT,
     });
 
     const server = buildServer({

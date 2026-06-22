@@ -35,6 +35,8 @@ export function registerPortalGridsRoutes(app: FastifyInstance, services: GridSe
                 polis: g.polisName,
                 description: g.description,
                 status: g.status,
+                celestial_body: g.environment.name,
+                environment: g.environment,
             })),
             count: grids.length,
         });

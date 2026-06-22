@@ -8,6 +8,8 @@
  * NousRegistry); extends D-V3-30 (the multi-Grid framework, still 1 live Grid).
  */
 
+import type { GridEnvironment } from './grid-environments.js';
+
 export interface GridRecord {
     /** Stable id, e.g. 'genesis'. */
     readonly gridId: string;
@@ -20,6 +22,8 @@ export interface GridRecord {
     /** One-line description for the discovery feed. */
     readonly description: string;
     readonly status: 'active' | 'forming' | 'closed';
+    /** Where this Grid physically is — body/gravity/solar/light-delay/orbital floor. */
+    readonly environment: GridEnvironment;
 }
 
 export class GridRegistry {

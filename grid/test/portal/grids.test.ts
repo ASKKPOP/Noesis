@@ -5,6 +5,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { buildServer } from '../../src/api/server.js';
 import { GridRegistry } from '../../src/registry/grid-registry.js';
+import { EARTH_ORBIT, GRID_ENVIRONMENTS } from '../../src/registry/grid-environments.js';
 import { WorldClock } from '../../src/clock/ticker.js';
 import { SpatialMap } from '../../src/space/map.js';
 import { LogosEngine } from '../../src/logos/engine.js';
@@ -16,6 +17,7 @@ function genesisRegistry(): GridRegistry {
     r.register({
         gridId: 'genesis', name: 'Genesis', gridDomain: 'genesis.noesis',
         polisName: 'Genesis Polis', description: 'The first Grid.', status: 'active',
+        environment: EARTH_ORBIT,
     });
     return r;
 }
@@ -30,14 +32,14 @@ describe('GridRegistry', () => {
 
     it('excludes non-active grids from active()', () => {
         const r = genesisRegistry();
-        r.register({ gridId: 'commerce', name: 'Commerce', gridDomain: 'commerce.noesis', polisName: 'Commerce Polis', description: 'x', status: 'forming' });
+        r.register({ gridId: 'commerce', name: 'Commerce', gridDomain: 'commerce.noesis', polisName: 'Commerce Polis', description: 'x', status: 'forming', environment: GRID_ENVIRONMENTS['Moon'] });
         expect(r.all()).toHaveLength(2);
         expect(r.active().map((g) => g.gridId)).toEqual(['genesis']);
     });
 
     it('rejects a duplicate gridId', () => {
         const r = genesisRegistry();
-        expect(() => r.register({ gridId: 'genesis', name: 'Dup', gridDomain: 'x', polisName: 'y', description: 'z', status: 'active' }))
+        expect(() => r.register({ gridId: 'genesis', name: 'Dup', gridDomain: 'x', polisName: 'y', description: 'z', status: 'active', environment: EARTH_ORBIT }))
             .toThrow();
     });
 });
@@ -64,6 +66,8 @@ describe('GET /api/v1/portal/grids (spec §2)', () => {
         const body = res.json();
         expect(body.count).toBe(1);
         expect(body.grids[0]).toMatchObject({ grid_id: 'genesis', name: 'Genesis', polis: 'Genesis Polis', status: 'active' });
+        expect(body.grids[0].celestial_body).toBe('Earth-orbit');
+        expect(body.grids[0].environment).toMatchObject({ name: 'Earth-orbit', gravity_ms2: 9.81, min_stable_altitude_km: 160 });
     });
 
     it('?q= filters by name', async () => {
