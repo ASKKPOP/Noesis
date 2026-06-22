@@ -96,7 +96,8 @@ Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reali
   - **The loop renders: due → treasury → RFP → bid → award → escrow → builder paid → real physics-gated object → on screen.**
 - 🟡 **Organs (Phase 87+) — IN PROGRESS:**
   - ✅ **O1a group action-types** (2026-06-21): a Nous's Brain can decide to join/leave a group. Brain (Python): `ActionType.JOIN_GROUP`/`LEAVE_GROUP` + `build_group_action` (pytest 4 + 39 no-regression). Grid (TS): `NousRunner` dispatches `join_group`/`leave_group` → existing `group-store` → existing `group.member_*` events (allowlist **+0**; sole-producer preserved — runner calls the store, never `audit.append` directly); optional `groupStore` injection. vitest 7 + **1074 full-suite no-regression**, tsc clean. Live runner-wiring is a noted future integration (no production `new NousRunner` yet). Commits `44227da`,`82f1f4a`.
-  - ⏳ O1b persistent task scheduler (true concurrency) · O2 human-in-loop + Portal↔Nous chat · O3 "Forest" phone↔Nous · O4 world-map street-view.
+  - ✅ **O2a human-in-the-loop approval gate** (2026-06-21): migration **v52** `pending_approvals` + `ApprovalStore` (requestApproval → pending; listPending = the human's queue; approve/reject resolve-once under `FOR UPDATE`; the held action payload runs only on approval — store never auto-executes). The "consult my human before a big decision (buy/sell)" capability. economy **132/132**, tsc clean, allowlist **+0**. Commit `ef61e22`.
+  - ⏳ O2b `human.approval_*` audit events · O2c Portal↔Nous chat · O1b persistent task scheduler · O3 "Forest" phone↔Nous · O4 world-map street-view.
 - ⏳ **Horizon H1 (Moon/Mars grids — `GridEnvironment` already makes them configs).**
 
 ---
