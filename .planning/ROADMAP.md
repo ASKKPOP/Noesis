@@ -85,7 +85,10 @@ Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reali
   - ✅ **L1a due ledger core**: extracted connection-scoped `credit-ops.ts` (`CivicLaborCreditStore` delegates); migration **v49** `civic_dues` (`amount_wei` + `amount_credit`, status assessed/paid/delinquent, unique per member+period); `CivicDueStore` assess / payWithWei (debit member → credit treasury) / payWithCredit (redeem civic-labor credit) / markDelinquent — atomic, pay-once under `FOR UPDATE`. Review: pay-once + atomicity + conservation confirmed. Commits `bb5264c`,`ec23e26`.
   - ✅ **L1b due.* audit events**: sole-producer `due.assessed`/`due.paid`/`due.delinquent` (9-step guard, HEX64-hashed DID, closed tuple, privacy gate) + 3 producer-boundary grep tests + allowlist **107 → 110** + `CivicDueStore` wired to emit (hashed DID, after commit). Review: sole-producer + privacy + allowlist-+3 confirmed. test/audit + test/economy **857/857**, tsc clean. Commit `12b779a`.
   - **First visible money flow of the loop + first program audit events. Allowlist 110.**
-- ⏳ **L2 RFP → L3 orbital-object → L4 viz bridge → Organs O1–O4 → Horizon H1.** Next: **L2** (Polis issues a Procurement Notice/RFP → Nous bid → award → fund a labor escrow; `procurement.*` events).
+- 🟡 **Phase 84 (L2) — RFP procurement (Polis commissions builds) — IN PROGRESS:**
+  - ✅ **L2a procurement ledger core** (2026-06-21): migration **v50** (`procurement_notices`/`procurement_bids`/`procurement_contracts`); `ProcurementStore` issueNotice (Polis-authorized — `polis_authorization_ref` recorded, never self-authorized) / placeBid / award (debit **treasury** → fund a `labor_escrow` row with `payer=did:civic:noesis:treasury` → write contract → mark notice/bid awarded, atomic) / settleContract (credit builder → release escrow → mark settled) / cancelNotice. Reuses the F1c escrow rail + wei-ops. Review: award-atomicity + conservation + award/settle-once + Polis-authority confirmed. Full economy suite **100/100**, tsc clean. Commits `01e8482`,`dab905e`.
+  - ⏳ **L2b procurement.* audit events** — 6 sole-producer events (notice_issued/bid_placed/awarded/attested/settled/cancelled) + allowlist **110 → 116** + wire emit. (Plan: `docs/superpowers/plans/2026-06-21-l2-rfp-procurement.md` Task 3.)
+- ⏳ **L3 orbital-object reality → L4 viz bridge → Organs O1–O4 → Horizon H1.**
 
 ---
 
