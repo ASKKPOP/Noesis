@@ -256,6 +256,13 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/civic/dues':                    'civic_did_required',
     'POST /api/v1/civic/dues/:dueId/pay':        'civic_did_required',
 
+    // W — Economy read routes: de-orphan wei rails over HTTP (read-only observability).
+    // account/credit: civic_did_required (scoped to caller's own DID; bigint→string).
+    // treasury: public (the commons fund is transparently readable by anyone).
+    'GET /api/v1/civic/account':   'civic_did_required',
+    'GET /api/v1/civic/credit':    'civic_did_required',
+    'GET /api/v1/civic/treasury':  'public',
+
     // W — Conversation routes: human↔Nous chat thread (de-orphan ConversationStore).
     // Content is private (never on the audit chain); sender inferred from DID form.
     'POST /api/v1/civic/conversation/:partnerDid/messages': 'civic_did_required',
