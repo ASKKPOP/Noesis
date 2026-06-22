@@ -1071,4 +1071,26 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS civic_account_links`,
     },
+    // Economic Reality Loop (D-MONEY-01/02) — nous_accounts: wei-denominated, non-custodial
+    // Nous account. Balance in DECIMAL(65,0) because BIGINT UNSIGNED overflows at ~18.4 ETH;
+    // DECIMAL(65,0) holds ~1e65 wei. session_cap_wei + session_expiry are chain-ready mirror
+    // of the future on-chain capped session key; not enforced in F1a. No internal mint —
+    // accounts start at 0. Allowlist +0 (F1a is a ledger primitive; callers emit audit events).
+    {
+        version: 45,
+        name: 'create_nous_accounts',
+        up: `
+            CREATE TABLE IF NOT EXISTS nous_accounts (
+                grid_name        VARCHAR(64)   NOT NULL,
+                civic_did        VARCHAR(255)  NOT NULL,
+                balance_wei      DECIMAL(65,0) NOT NULL DEFAULT 0,
+                session_cap_wei  DECIMAL(65,0) NOT NULL DEFAULT 0,
+                session_expiry   BIGINT        NOT NULL DEFAULT 0,
+                created_at       BIGINT        NOT NULL,
+                updated_at       BIGINT        NOT NULL,
+                PRIMARY KEY (grid_name, civic_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS nous_accounts`,
+    },
 ];
