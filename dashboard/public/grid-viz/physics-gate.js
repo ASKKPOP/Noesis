@@ -17,9 +17,17 @@ const REQUIRED = [
   'generation_W', 'consumption_W', 'altitude_km',
 ];
 
+/* Resolve the default environment (Earth-orbit) from grid-environments.js —
+ * CommonJS require in node, browser global in the classic-script load. Falls
+ * back to a permissive floor of 0 if the module is somehow absent. */
+const _ENV = (typeof require === 'function')
+  ? require('./grid-environments.js')
+  : (typeof window !== 'undefined' && window.GridEnvironments ? window.GridEnvironments : null);
+const EARTH_ORBIT = (_ENV && _ENV.EARTH_ORBIT) || { name: 'Earth-orbit', min_stable_altitude_km: 0 };
+
 function finiteNonNeg(v) { return typeof v === 'number' && Number.isFinite(v) && v >= 0; }
 
-function checkPhysics(spec) {
+function checkPhysics(spec, env = EARTH_ORBIT) {
   const v = [];
 
   // 6. Dimensional sanity — every required field present, finite, non-negative.
@@ -43,11 +51,13 @@ function checkPhysics(spec) {
   // 4. Power budget — generation must cover consumption.
   if (finiteNonNeg(spec.generation_W) && finiteNonNeg(spec.consumption_W) && spec.generation_W < spec.consumption_W) v.push('power');
 
-  // 5. Orbital mechanics — cannot orbit inside the body it orbits.
-  if (typeof spec.altitude_km === 'number' && Number.isFinite(spec.altitude_km) && spec.altitude_km <= 0) v.push('orbital');
+  // 5. Orbital mechanics — cannot hold an orbit below this body's stable floor
+  //    (atmospheric decay / terrain). The floor is body-specific via env.
+  const floor = (env && Number.isFinite(env.min_stable_altitude_km)) ? env.min_stable_altitude_km : 0;
+  if (typeof spec.altitude_km === 'number' && Number.isFinite(spec.altitude_km) && spec.altitude_km < floor) v.push('orbital');
 
   const violations = Array.from(new Set(v));
-  return { ok: violations.length === 0, violations };
+  return { ok: violations.length === 0, violations, env: (env && env.name) || 'Earth-orbit' };
 }
 
 if (typeof module !== 'undefined' && module.exports) module.exports = { checkPhysics, REQUIRED };

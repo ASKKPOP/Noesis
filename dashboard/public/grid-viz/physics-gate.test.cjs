@@ -79,3 +79,28 @@ test('a missing required field is a dimensional violation, never a silent pass',
   assert.strictEqual(r.ok, false);
   assert.ok(r.violations.includes('dimensional'));
 });
+
+const { GRID_ENVIRONMENTS, EARTH_ORBIT } = require('./grid-environments.js');
+
+test('default environment is Earth-orbit and is reported on the result', () => {
+  const r = checkPhysics(valid());
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.env, 'Earth-orbit');
+});
+
+test('a low orbit that decays on Earth can hold on the airless Moon', () => {
+  const lowSpec = valid({ altitude_km: 50 });        // 50 km
+  const earth = checkPhysics(lowSpec, EARTH_ORBIT);  // floor 160 -> too low
+  assert.strictEqual(earth.ok, false);
+  assert.ok(earth.violations.includes('orbital'));
+
+  const moon = checkPhysics(lowSpec, GRID_ENVIRONMENTS['Moon']); // floor 15 -> ok
+  assert.strictEqual(moon.ok, true);
+  assert.strictEqual(moon.env, 'Moon');
+});
+
+test('an orbit below even the Moon floor is still rejected', () => {
+  const r = checkPhysics(valid({ altitude_km: 5 }), GRID_ENVIRONMENTS['Moon']); // floor 15
+  assert.strictEqual(r.ok, false);
+  assert.ok(r.violations.includes('orbital'));
+});
