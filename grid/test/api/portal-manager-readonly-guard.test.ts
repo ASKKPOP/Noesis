@@ -19,8 +19,10 @@ const SRC = readFileSync(
 
 describe('Portal Manager v1 — allowlist frozen', () => {
     it('ALLOWLIST_MEMBERS length is unchanged by v1 (no new broadcast event)', () => {
-        // v1 adds zero events; the count must match the pre-v1 frozen total.
-        expect(ALLOWLIST_MEMBERS.length).toBe(107);
+        // Portal Manager v1 adds zero events. The canonical count lives in
+        // broadcast-allowlist.test.ts (116 after L1b due.* + L2b procurement.*);
+        // this guard only asserts v1 itself added nothing.
+        expect(ALLOWLIST_MEMBERS.length).toBe(116);
     });
 });
 

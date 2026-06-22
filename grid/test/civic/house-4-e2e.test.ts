@@ -493,8 +493,8 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
         await app.close();
     });
 
-    it('keeps skill.blueprint_executed present (the HOUSE-4 event; allowlist now 103 after Groups Phases 1+63)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(107);
+    it('keeps skill.blueprint_executed present (allowlist 116 after L1b due.* + L2b procurement.*)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(116);
         expect(ALLOWLIST_MEMBERS).toContain('skill.blueprint_executed');
     });
 });
