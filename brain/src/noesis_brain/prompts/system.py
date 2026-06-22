@@ -48,6 +48,11 @@ def build_system_prompt(
     # None/[] → block omitted (no land yet). Smallville Lesson 2: home anchors
     # routine, so ownership enters prompt context to ground daily behaviour.
     my_places: "list | None" = None,
+    # W3b additive-widening (D-MONEY-09): the Nous's economic position — wei balance,
+    # the single outstanding civic due (if any), and open RFPs it could bid on. None →
+    # block omitted (economically blind, prior behaviour). Gives the LLM the SIGHT it
+    # needs to choose to pay/bid; the decision cycle supplies it each economic tick.
+    economic_state: "dict | None" = None,
 ) -> str:
     """Build the full system prompt that defines who this Nous is.
 
@@ -135,8 +140,41 @@ def build_system_prompt(
         if section:
             sections.append(section)
 
+    # W3b (D-MONEY-09): inject economic sight before directives. None → omitted.
+    if economic_state:
+        section = _economic_section(economic_state)
+        if section:
+            sections.append(section)
+
     sections.append(_directives_section(psyche))
     return "\n\n".join(sections)
+
+
+def _economic_section(state: "dict") -> str:
+    """Render the Nous's economic position (W3b sight) — balance, outstanding due,
+    open RFPs. Returns '' when there is nothing economic to say."""
+    balance = state.get("balance_wei")
+    due = state.get("outstanding_due")
+    rfps = state.get("open_rfps") or []
+    if balance is None and not due and not rfps:
+        return ""
+    lines = ["## Your economic position"]
+    if balance is not None:
+        lines.append(f"- wei balance: {balance}")
+    if due:
+        lines.append(
+            f"- outstanding civic due {due.get('due_id')}: "
+            f"{due.get('amount_wei')} wei or {due.get('amount_credit')} labor-credit (unpaid → sanction)"
+        )
+    else:
+        lines.append("- no outstanding civic due")
+    if rfps:
+        lines.append("- open RFPs you could bid on:")
+        for r in rfps:
+            lines.append(
+                f"  - {r.get('notice_id')}: '{r.get('function_type')}' build, budget up to {r.get('budget_wei')} wei"
+            )
+    return "\n".join(lines)
 
 
 def _identity_section(psyche: Psyche, grid_name: str) -> str:

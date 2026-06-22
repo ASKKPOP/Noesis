@@ -21,7 +21,11 @@ from noesis_brain.telos.hashing import compute_active_telos_hash
 from noesis_brain.telos.manager import TelosManager
 from noesis_brain.thymos.tracker import ThymosTracker
 from noesis_brain.thymos.types import Emotion
-from noesis_brain.rpc.types import Action, ActionType, build_civic_land_action
+from noesis_brain.rpc.types import Action, ActionType, build_civic_land_action, build_economic_action
+from noesis_brain.prompts.economic_decision import (
+    build_economic_decision_prompt,
+    parse_economic_decision,
+)
 from noesis_brain.iris.priors import seed_priors
 from pathlib import Path
 from noesis_brain.iris.store import IrisStore
@@ -73,6 +77,9 @@ class BrainHandler:
         # configured, a ticking Nous autonomously researches via the tool loop.
         self._last_tool_tick = -10_000
         self._tool_registry: Any = None
+        # W3b (D-MONEY-09): per-tick economic decision cooldown. A ticking Nous with
+        # an outstanding due / an open RFP autonomously decides whether to pay / bid.
+        self._last_econ_tick = -10_000
         # Phase 10a DRIVE-02 wire-side: per-DID AnankeRuntime registry. One
         # handler may, over its lifetime, receive ticks for multiple DIDs
         # (though typical Brain process serves one Nous). The loader is a
@@ -501,6 +508,110 @@ class BrainHandler:
             for t in trace
         ]
 
+    # ── Economic decision cycle (W3b / D-MONEY-09) ────────────────────────────
+    _ECON_COOLDOWN_TICKS = 50
+
+    def _should_run_economic_cycle(self, tick: int) -> bool:
+        """Run the economic decision cycle only when a Grid wire client is wired
+        (so we can read state + dispatch) and the cooldown has elapsed. Whether
+        there is anything to decide is checked inside the cycle (async read)."""
+        if self._grid_wire_client is None:
+            return False
+        return (tick - self._last_econ_tick) >= self._ECON_COOLDOWN_TICKS
+
+    async def _run_economic_cycle(self, tick: int) -> None:
+        """Read economic state; if there is an outstanding due or an open RFP, ask
+        the Nous (one LLM call) whether to pay / bid / do nothing, then dispatch the
+        chosen action. Cost-gated (no LLM call when nothing is actionable) and every
+        LLM-chosen value is validated Brain-side. Non-blocking; never fatal."""
+        wire = self._grid_wire_client
+        if wire is None:
+            return
+        try:
+            dues = await wire.fetch_dues()
+            rfps = await wire.fetch_open_rfps()
+            due = next((d for d in dues if d.get("status") == "assessed"), None)
+            open_rfps = [r for r in rfps if r.get("status", "open") == "open"]
+            if due is None and not open_rfps:
+                return  # nothing to decide — do NOT spend an LLM call
+
+            account = await wire.fetch_account()
+            balance = int(account.get("balance_wei", "0") or 0)
+
+            system_prompt = build_system_prompt(
+                self.psyche, self.thymos.mood, self.telos,
+                grid_name=self.grid_name, location=self.location,
+                economic_state={
+                    "balance_wei": str(balance),
+                    "outstanding_due": due,
+                    "open_rfps": open_rfps,
+                },
+            )
+            user_prompt = build_economic_decision_prompt(account, due, open_rfps)
+            response = await self.llm.generate(
+                user_prompt,
+                GenerateOptions(
+                    system_prompt=system_prompt,
+                    temperature=0.7,
+                    max_tokens=256,
+                    purpose="economic_decision",
+                ),
+            )
+            decision = parse_economic_decision(response.text)
+            action = self._economic_action_from_decision(decision, due, open_rfps, balance)
+            if action is None:
+                if decision is not None and self.memory is not None and hasattr(self.memory, "record_event"):
+                    self.memory.record_event(
+                        content=f"Considered my finances and chose to wait: {decision.get('reason') or ''}"[:300],
+                        source_did=self.did, tick=tick,
+                    )
+                return
+
+            ok = await wire.post_economic_action(action)
+            if ok and self.memory is not None and hasattr(self.memory, "record_event"):
+                self.memory.record_event(
+                    content=f"Economic decision: {action.action_type.value} {action.metadata}"[:300],
+                    source_did=self.did, tick=tick,
+                )
+        except Exception as exc:  # never let an economic cycle take down the tick
+            log.warning("[Brain] economic cycle failed: %s", exc)
+
+    def _economic_action_from_decision(
+        self, decision: "dict | None", due: "dict | None", open_rfps: list, balance: int
+    ) -> "Action | None":
+        """Turn a parsed decision into a validated economic Action, or None.
+
+        Brain-side guardrails: pay only an actual outstanding due (wei requires an
+        affordable balance); bid only on a presented notice with price ≤ its budget.
+        """
+        if not decision:
+            return None
+        act = decision.get("action")
+        if act == "pay_due":
+            if due is None:
+                return None
+            method = decision.get("method")
+            if method not in ("wei", "labor"):
+                return None
+            if method == "wei" and balance < int(due.get("amount_wei", "0") or 0):
+                return None  # can't afford it in wei — skip (Grid would reject anyway)
+            return build_economic_action(ActionType.PAY_DUE, due_id=due["due_id"], method=method)
+        if act == "bid_rfp":
+            notice_id = decision.get("notice_id")
+            chosen = next((r for r in open_rfps if r.get("notice_id") == notice_id), None)
+            if chosen is None:
+                return None  # hallucinated / unknown notice
+            price = decision.get("price_wei")
+            if not isinstance(price, str) or not price.isdigit():
+                return None
+            if int(price) > int(chosen.get("budget_wei", "0") or 0):
+                return None  # over budget
+            spec = decision.get("artifact_spec") or "Build per the RFP specification."
+            return build_economic_action(
+                ActionType.BID_RFP, notice_id=notice_id, price_wei=price, artifact_spec=str(spec),
+            )
+        return None
+
     async def on_tick(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle world clock tick — opportunity for autonomous action.
 
@@ -612,6 +723,12 @@ class BrainHandler:
             self._last_tool_tick = tick
             import asyncio as _asyncio
             _asyncio.create_task(self._run_tool_cycle(tick))
+        # Economic decision cycle (W3b / D-MONEY-09): when a due/RFP exists, the Nous
+        # autonomously decides whether to pay / bid. Background task; never fatal.
+        if self._should_run_economic_cycle(tick):
+            self._last_econ_tick = tick
+            import asyncio as _asyncio
+            _asyncio.create_task(self._run_economic_cycle(tick))
         runtime.on_tick(tick)
         for xing in runtime.drain_crossings():
             actions.append(

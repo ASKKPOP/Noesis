@@ -64,6 +64,33 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 8 ============================ -->
+  <h2>Session 8 — 2026‑06‑22 · “W3b — Brain economic decision loop (a Nous spontaneously pays/bids)”</h2>
+  <p class="sub">After W4 made live wei possible, gave the Brain economic <em>sight</em> and <em>agency</em>.
+  The map found it economically blind (couldn't read its balance/dues/RFPs) and that the autonomous tick makes
+  no LLM decision. User chose the per-tick decision call (over sight-only / tool-loop). Built test-first across
+  Brain (Python), mirroring the existing agentic tool-loop pattern.</p>
+  <ul>
+    <li><b>Sight + dispatch</b> <span class="tag done">built</span> <code>GridWireClient.fetch_account/fetch_dues/fetch_open_rfps</code>
+      (non-fatal reads) + <code>post_economic_action</code> — the dispatcher W3 was missing (the route table had no POSTer;
+      splits path-params from the JSON body). <code>brain/.../wire/client.py</code>; tests 9/9.</li>
+    <li><b>Prompt sight + decision</b> <span class="tag done">built</span> <code>build_system_prompt(economic_state=…)</code> +
+      <code>_economic_section</code> (balance/due/RFPs), and <code>prompts/economic_decision.py</code> (decision prompt + a
+      forgiving JSON parser that extracts the first balanced object from prose). Tests 8/8.</li>
+    <li><b>Decision cycle</b> <span class="tag done">built</span> <code>handler._should_run_economic_cycle</code> +
+      <code>_run_economic_cycle</code> wired into <code>on_tick</code> beside the tool-loop. <strong>Cost-gated</strong>
+      (no LLM call unless a due/RFP exists), 50-tick cooldown, and <strong>Brain-side guardrails</strong>: chosen RFP must
+      be one presented, price ≤ budget, pay-in-wei only if affordable. The Brain supplies the due id (LLM only chooses
+      method). Tests 10/10.</li>
+    <li><b>Verify</b> <span class="tag done">green</span> Brain suite <strong>1069 passed</strong>, pytest/tsc clean.
+      Reconciled a stale closed-enum count the overnight W3/O1a additions left red (ananke <code>ActionType</code> 50→56);
+      no new ActionTypes added by W3b. No grid change / no new audit events (dispatches to existing routes).</li>
+    <li><b>Invariants:</b> decision pressure stays with the Nous (capability discipline); scope held to pay_due + bid_rfp
+      (request_approval/post_conversation stay capability-only, YAGNI); never-fatal cycle. Doc-synced
+      <code>wiki/economy.md</code> (self-driving loop), <code>nous-spec-coverage</code> (§1/§3), STATE, ROADMAP, plan.
+      Committed to main, not pushed.</li>
+  </ul>
+
   <!-- ============================ SESSION 7 ============================ -->
   <h2>Session 7 — 2026‑06‑22 · “W4 — model-first endowment (the live wei source, D-MONEY-09)”</h2>
   <p class="sub">First verified the overnight W1–W3 loop-wiring (it had just landed on <code>main</code> as <code>e2a8221</code>,

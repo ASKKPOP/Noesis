@@ -3,7 +3,7 @@
 **Source of truth for the spec:** `docs/nous_spec.md` (Nous — Autonomous AI Agent Specification).
 **Purpose:** one place to see, at a glance, how much of the Nous spec is actually built — so nothing is silently missed. Update this in the same turn whenever a spec item's status changes.
 
-**Last updated:** 2026-06-15 (after Phase 72 tool-use foundation + economic-goal increment).
+**Last updated:** 2026-06-22 (after W3b economic decision loop — a Nous autonomously pays dues / bids on RFPs).
 
 ## Legend
 
@@ -22,7 +22,7 @@
 |---|---|---|
 | Character (personality, style) | ✅ FULL | `brain/.../psyche/` |
 | Rules (sets/manages own rules) | ✅ FULL | `brain/.../learning/rules.py` (RuleStore) |
-| Target & Goals — incl. earning money | 🔼 🟡 | `brain/.../telos/`; **economic "earn a living" goal seeded at spawn (2026-06-15)**. Remaining: goals don't self-*evolve* over time. |
+| Target & Goals — incl. earning money | 🔼 ✅ | `brain/.../telos/` (earn-a-living goal) + **W3b economic decision loop (2026-06-22)**: a ticking Nous now *reads* its wei balance/dues/RFPs and *autonomously decides* to pay a due or bid on an RFP (`handler._run_economic_cycle`). The earning goal is now actionable, not just aspirational. |
 | Not Programmed (changes own behavior / creates new rules at runtime) | 🟡 PARTIAL | learns rules reactively; cannot author new goal categories proactively |
 | Visibility (choose visible/hidden from other agents) | 🔼 🟡 | **Agent `set_visibility` toggle built (2026-06-16)**: `registry.hiddenFlag` excluded from peer-discovery (`inRegion`) while operators still see it; `nous.visibility_changed` audit (allowlist→106). Remaining: the LLM *deciding when* to hide is activation, like other autonomous actions. |
 
@@ -38,7 +38,7 @@
 
 | Item | Status | Where / gap |
 |---|---|---|
-| Autonomous Drive | 🔼 🟡 | `brain/.../ananke/` per-tick drives + **on_tick tool-loop activation (2026-06-17)**: when curious + a tool-capable model is configured, a ticking Nous *self-initiates* a research loop and records what it learns. Verified live (qwen3:14b). Remaining: richer self-directed task generation. |
+| Autonomous Drive | 🔼 🟡 | `brain/.../ananke/` per-tick drives + **on_tick tool-loop activation (2026-06-17)**: when curious + a tool-capable model is configured, a ticking Nous *self-initiates* a research loop. Plus **W3b economic decision cycle (2026-06-22)**: when a due/RFP exists, a ticking Nous *self-initiates* an economic decision (pay/bid) via a dedicated LLM call (`_run_economic_cycle`, cost- + cooldown-gated). Remaining: richer self-directed task generation. |
 | Goal Management | 🔼 🟡 | tracked (incl. economic) + **time-driven evolution built (2026-06-16)**: `TelosManager.evolve(tick)` demotes long-stale, unprogressed goals so attention shifts (economic exempt); called from `on_tick`. Remaining: LLM-driven goal *reframing/creation* (activation; dialogue-refinement path already exists). |
 | Reminder & Wake-Up | 🔼 🟡 | **Tick-scheduled + condition-based reminders built (2026-06-16)**: `ReminderStore` + `ReminderCondition` (signal/op/value vs. live drive levels); `brain.scheduleReminder` RPC; `on_tick` fires due reminders (tick OR condition met), recording each to memory so the Nous wakes to it. Plus deterministic sleep/wake (`hypnos`). Mechanism complete — remaining: the LLM *deciding* to set one (activation). |
 | Job Scheduler | 🟡 PARTIAL | tick + peer cowork board; no self-scheduled queue |

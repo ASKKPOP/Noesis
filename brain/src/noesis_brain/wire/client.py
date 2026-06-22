@@ -300,6 +300,79 @@ class GridWireClient:
             },
         )
 
+    # ── W3b economic sight + dispatch ──────────────────────────────────────────
+
+    async def _econ_get(self, path: str) -> Any:
+        """GET a Grid economy endpoint with the Bearer token. Returns the parsed
+        JSON on 2xx, else None. NEVER raises — economic sight must not crash a tick."""
+        try:
+            token = self._token_manager.get_valid_token()
+            client = await self._get_client()
+            resp = await client.get(
+                f"{self._base_url}{path}",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            if 200 <= resp.status_code < 300:
+                return resp.json()
+            log.warning("[Brain] econ GET %s non-2xx: status=%s", path, resp.status_code)
+        except Exception as exc:
+            log.warning("[Brain] econ GET %s error: %s", path, exc)
+        return None
+
+    async def fetch_account(self) -> dict[str, Any]:
+        """GET /api/v1/civic/account — the Nous's own wei balance. {} on any error."""
+        data = await self._econ_get("/api/v1/civic/account")
+        return data if isinstance(data, dict) else {}
+
+    async def fetch_dues(self) -> list[dict[str, Any]]:
+        """GET /api/v1/civic/dues — the Nous's own civic dues. [] on any error."""
+        data = await self._econ_get("/api/v1/civic/dues")
+        dues = data.get("dues") if isinstance(data, dict) else None
+        return dues if isinstance(dues, list) else []
+
+    async def fetch_open_rfps(self) -> list[dict[str, Any]]:
+        """GET /api/v1/procurement/notices — open RFPs the Nous could bid on. [] on error."""
+        data = await self._econ_get("/api/v1/procurement/notices")
+        notices = data.get("notices") if isinstance(data, dict) else None
+        return notices if isinstance(notices, list) else []
+
+    async def post_economic_action(self, action: Any) -> bool:
+        """Dispatch one economic Action to its live Grid route (W3 ECONOMIC_ROUTES).
+
+        Resolves (method, path) via economic_route(); path params (e.g. due_id,
+        notice_id) are substituted into the URL and stripped from the JSON body —
+        the remaining metadata IS the body. Returns True on 2xx, False otherwise.
+        NEVER raises — a failed economic action must not crash a tick.
+        """
+        try:
+            metadata = dict(getattr(action, "metadata", {}) or {})
+            method, path = economic_route(action.action_type, **metadata)
+            if method != "POST":  # every ECONOMIC_ROUTE is POST today; guard the contract.
+                raise ValueError(f"unexpected economic route method {method!r}")
+            # Strip path params from the body — they live in the URL, not the JSON.
+            path_params = set(re.findall(r"\{(\w+)\}", ECONOMIC_ROUTES[action.action_type][1]))
+            body = {k: v for k, v in metadata.items() if k not in path_params}
+            token = self._token_manager.get_valid_token()
+            client = await self._get_client()
+            resp = await client.post(
+                f"{self._base_url}{path}",
+                json=body,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
+            )
+            if 200 <= resp.status_code < 300:
+                return True
+            log.warning(
+                "[Brain] economic action %s non-2xx: status=%s body=%s",
+                action.action_type.value, resp.status_code, resp.text[:200],
+            )
+            return False
+        except Exception as exc:
+            log.warning("[Brain] economic action dispatch error: %s", exc)
+            return False
+
     # ── Presence heartbeat ────────────────────────────────────────────────────
 
     async def post_presence_heartbeat(self) -> None:

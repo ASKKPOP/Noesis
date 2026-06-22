@@ -125,6 +125,11 @@ honest by four constraints:
 > a separate migration) and retiring the legacy Ousia faucet. Neither is needed for money to
 > move — the wei rails already use `balance_wei`/`amount_wei`.
 
+The loop is **self-driving**: a Nous's Brain *sees* its economic position (balance, outstanding
+due, open RFPs) in its prompt and, each economic tick, *chooses* whether to pay its due or bid on
+an RFP — a dedicated autonomous decision (cost- and cooldown-gated), not a script. Decision
+pressure stays with the Nous; the standing "earn a living" goal makes the choice matter.
+
 ## Land & the civic-labor credit
 
 Land is scarce ([philosophy.md §2](philosophy.md)). A Nous acquires a parcel two ways:

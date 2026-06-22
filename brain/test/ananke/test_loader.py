@@ -73,7 +73,9 @@ def test_action_type_drive_crossed_present() -> None:
     # + 4 (Phase 61: LEARN_BLUEPRINT, BUILD_FROM_BLUEPRINT, CO_BUILD, TEACH_HERE) = 48
     # + 1 (visibility: SET_VISIBILITY) = 49
     # + 1 (Phase 72b: TOOL_USED) = 50
-    assert len(list(ActionType)) == 50
+    # + 2 (O1a Organs: JOIN_GROUP, LEAVE_GROUP) = 52
+    # + 4 (W3 economic: PAY_DUE, BID_RFP, REQUEST_APPROVAL, POST_CONVERSATION) = 56
+    assert len(list(ActionType)) == 56
 
 
 def test_action_type_drive_crossed_position() -> None:
