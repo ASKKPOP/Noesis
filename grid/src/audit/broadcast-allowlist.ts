@@ -465,6 +465,15 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   Nous's own tool_used action (Phase 72b agentic tool loop). Closed 4-key payload
     //   {did, tool_name, output_sha256, is_error} — DIGEST ONLY, never raw tool input/output.
     'tool.invoked',               // (107)
+    // Economic Reality Loop · L1 (D-MONEY-08) — NEW prefix due.*. Allowlist 107 → 110.
+    // The civic due: assessed by the Polis, paid in wei or labor, or flagged delinquent.
+    // DIDs hashed (HEX64) like market.*/gov.*; due_id is a UUID; amounts are decimal strings.
+    // due.assessed (108): sole-producer grid/src/audit/append-due-assessed.ts
+    // due.paid (109): sole-producer grid/src/audit/append-due-paid.ts
+    // due.delinquent (110): sole-producer grid/src/audit/append-due-delinquent.ts
+    'due.assessed',     // (108)
+    'due.paid',         // (109)
+    'due.delinquent',   // (110)
 ] as const;
 
 /**
