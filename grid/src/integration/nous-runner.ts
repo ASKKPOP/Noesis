@@ -43,6 +43,7 @@ import {
 import { appendLoreContributed } from '../lore/appendLoreContributed.js';
 import { appendLoreCited } from '../lore/appendLoreCited.js';
 import { LoreQuotaTracker } from '../lore/LoreQuotaTracker.js';
+import type { GroupStore, GroupRole } from '../economy/group-store.js';
 
 export interface NousRunnerConfig {
     nousDid: string;
@@ -104,6 +105,17 @@ export interface NousRunnerConfig {
         quotaTracker: LoreQuotaTracker;
     };
     /**
+     * O1a: GroupStore for join_group / leave_group dispatch.
+     *
+     * Optional — if absent the join_group / leave_group actions are silently
+     * dropped with a console.warn (mirrors loreDeps / governanceDeps pattern).
+     * Production wiring passes the GroupStore instance from main.ts.
+     * GroupStore is the SOLE producer of group.member_* audit events —
+     * NousRunner calls groupStore.joinGroup/leaveGroup; it NEVER calls
+     * audit.append('group.*') directly.
+     */
+    groupStore?: GroupStore;
+    /**
      * Phase 25b SANCTION-04 / D-25b-NEW-3: force-sleep trigger.
      *
      * Invoked by POST /api/v1/operator/nous/:did/force-sleep AFTER emitting operator.forced_sleep.
@@ -133,6 +145,7 @@ export class NousRunner {
     private readonly whisperRouter: WhisperRouter | undefined;
     private readonly governanceDeps: { audit: AuditChain; store: GovernanceStore } | undefined;
     private readonly loreDeps: { quotaTracker: LoreQuotaTracker } | undefined;
+    private readonly groupStore: GroupStore | undefined;
     private readonly sleepTrigger: (() => void | Promise<void>) | undefined;
 
     private speakHandler: SpeakHandler | null = null;
@@ -181,6 +194,7 @@ export class NousRunner {
         this.whisperRouter = config.whisperRouter;
         this.governanceDeps = config.governanceDeps;
         this.loreDeps = config.loreDeps;
+        this.groupStore = config.groupStore;
         this.sleepTrigger = config.sleepTrigger;
     }
 
@@ -998,6 +1012,100 @@ export class NousRunner {
                         recipient_did: recipientDid,
                         tick,
                     }));
+                    break;
+                }
+
+                case 'join_group': {
+                    // O1a: Brain decided to join a group. NousRunner delegates to GroupStore
+                    // (the sole producer of group.member_joined). Never calls audit.append directly.
+                    if (!this.groupStore) {
+                        console.warn(JSON.stringify({
+                            event: 'group.dispatch.not_wired',
+                            action_type: 'join_group',
+                            did: this.nousDid,
+                        }));
+                        break;
+                    }
+                    {
+                        const md = (action.metadata ?? {}) as Record<string, unknown>;
+                        const groupId = typeof md['group_id'] === 'string' ? md['group_id'] : null;
+                        const role = typeof md['role'] === 'string' ? md['role'] : null;
+                        const validRoles: ReadonlySet<string> = new Set(['founder', 'member', 'affiliate']);
+
+                        if (groupId === null || role === null || !validRoles.has(role)) {
+                            console.warn(JSON.stringify({
+                                event: 'group.join.malformed_metadata',
+                                did: this.nousDid,
+                                reason: 'missing or invalid group_id or role',
+                                tick,
+                            }));
+                            break;
+                        }
+
+                        try {
+                            await this.groupStore.joinGroup(this.audit, {
+                                groupId,
+                                memberCivicDid: this.nousDid,
+                                role: role as GroupRole,
+                                tick,
+                            });
+                        } catch (err) {
+                            console.warn(JSON.stringify({
+                                event: 'group.join.rejected',
+                                did: this.nousDid,
+                                group_id: groupId,
+                                reason: (err as Error).message,
+                                tick,
+                            }));
+                        }
+                    }
+                    break;
+                }
+
+                case 'leave_group': {
+                    // O1a: Brain decided to leave a group. NousRunner delegates to GroupStore
+                    // (the sole producer of group.member_left). Never calls audit.append directly.
+                    if (!this.groupStore) {
+                        console.warn(JSON.stringify({
+                            event: 'group.dispatch.not_wired',
+                            action_type: 'leave_group',
+                            did: this.nousDid,
+                        }));
+                        break;
+                    }
+                    {
+                        const md = (action.metadata ?? {}) as Record<string, unknown>;
+                        const groupId = typeof md['group_id'] === 'string' ? md['group_id'] : null;
+                        const reason = typeof md['reason'] === 'string' ? md['reason'] : null;
+                        const validReasons: ReadonlySet<string> = new Set(['voluntary', 'removed']);
+
+                        if (groupId === null || reason === null || !validReasons.has(reason)) {
+                            console.warn(JSON.stringify({
+                                event: 'group.leave.malformed_metadata',
+                                did: this.nousDid,
+                                reason: 'missing or invalid group_id or reason',
+                                tick,
+                            }));
+                            break;
+                        }
+
+                        try {
+                            await this.groupStore.leaveGroup(this.audit, {
+                                groupId,
+                                memberCivicDid: this.nousDid,
+                                reason: reason as 'voluntary' | 'removed',
+                                tick,
+                            });
+                        } catch (err) {
+                            console.warn(JSON.stringify({
+                                event: 'group.leave.rejected',
+                                did: this.nousDid,
+                                group_id: groupId,
+                                reason: (err as Error).message,
+                                tick,
+                            }));
+                        }
+                    }
                     break;
                 }
 

@@ -376,6 +376,9 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         // constructed by a future sub-plan that wires GridCoordinator here;
         // until then the lookup always returns undefined → 404 unknown_nous.
         // That is the correct behaviour for a Grid with no brain bridges.
+        // O1a NOTE: when NousRunner construction lands here, pass groupStore
+        // into NousRunnerConfig so join_group/leave_group dispatch to the
+        // sole-producer GroupStore. The groupStore instance is in scope above.
         getRunner: () => undefined,
         // Phase 7 DIALOG-01 (D-04): wire the launcher's dialogue aggregator
         // drain into the clock-pause HTTP handler so pause drops all

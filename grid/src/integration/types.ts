@@ -338,6 +338,30 @@ export interface BrainActionLoreResponse {
     };
 }
 
+/** O1a: Brain decided to join a group. NousRunner dispatches to GroupStore.joinGroup. */
+export interface BrainActionJoinGroup {
+    readonly action_type: 'join_group';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly group_id: string;
+        readonly role: string;
+        readonly [key: string]: unknown;
+    };
+}
+
+/** O1a: Brain decided to leave a group. NousRunner dispatches to GroupStore.leaveGroup. */
+export interface BrainActionLeaveGroup {
+    readonly action_type: 'leave_group';
+    readonly channel: '';
+    readonly text: '';
+    readonly metadata: {
+        readonly group_id: string;
+        readonly reason: string;
+        readonly [key: string]: unknown;
+    };
+}
+
 export type BrainAction =
     | SpeakAction
     | DirectMessageAction
@@ -362,7 +386,9 @@ export type BrainAction =
     | BrainActionLoreContribute
     | BrainActionLoreCited
     | BrainActionLoreRequest
-    | BrainActionLoreResponse;
+    | BrainActionLoreResponse
+    | BrainActionJoinGroup
+    | BrainActionLeaveGroup;
 
 export interface MessageParams {
     sender_name: string;
