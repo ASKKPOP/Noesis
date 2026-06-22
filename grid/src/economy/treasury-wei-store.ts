@@ -9,6 +9,7 @@
  * wei as bigint (DECIMAL(65,0) string ↔ BigInt).
  */
 import type { Pool, RowDataPacket } from 'mysql2/promise';
+import { creditTreasuryWeiOnConn, debitTreasuryWeiOnConn } from './wei-ops.js';
 
 export class TreasuryWeiStore {
     constructor(private readonly pool: Pool) {}
@@ -28,12 +29,7 @@ export class TreasuryWeiStore {
         const conn = await this.pool.getConnection();
         try {
             await conn.beginTransaction();
-            await conn.query(
-                `INSERT INTO civic_treasury (grid_name, balance_bios, balance_wei, last_updated_tick)
-                 VALUES (?, 0, ?, ?)
-                 ON DUPLICATE KEY UPDATE balance_wei = balance_wei + VALUES(balance_wei), last_updated_tick = VALUES(last_updated_tick)`,
-                [params.gridName, params.amountWei.toString(), params.currentTick],
-            );
+            await creditTreasuryWeiOnConn(conn, params);
             const [rows] = await conn.query<RowDataPacket[]>(
                 `SELECT balance_wei FROM civic_treasury WHERE grid_name = ?`,
                 [params.gridName],
@@ -54,22 +50,9 @@ export class TreasuryWeiStore {
         const conn = await this.pool.getConnection();
         try {
             await conn.beginTransaction();
-            const [rows] = await conn.query<RowDataPacket[]>(
-                `SELECT balance_wei FROM civic_treasury WHERE grid_name = ? FOR UPDATE`,
-                [params.gridName],
-            );
-            const current = BigInt(rows[0]?.balance_wei ?? 0);
-            if (current < params.amountWei) {
-                await conn.rollback();
-                throw new Error('insufficient_treasury_wei');
-            }
-            await conn.query(
-                `UPDATE civic_treasury SET balance_wei = balance_wei - ?, last_updated_tick = ?
-                 WHERE grid_name = ?`,
-                [params.amountWei.toString(), params.currentTick, params.gridName],
-            );
+            const newBalance = await debitTreasuryWeiOnConn(conn, params);
             await conn.commit();
-            return { newBalance: current - params.amountWei };
+            return { newBalance };
         } catch (err) {
             try { await conn.rollback(); } catch { /* ignore rollback error */ }
             throw err;

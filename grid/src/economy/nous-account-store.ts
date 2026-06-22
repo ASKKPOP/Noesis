@@ -12,6 +12,7 @@
  * adds wei a caller funds from a real inflow — the store never conjures balance.
  */
 import type { Pool, RowDataPacket } from 'mysql2/promise';
+import { creditAccountOnConn, debitAccountOnConn } from './wei-ops.js';
 
 export class NousAccountStore {
     constructor(private readonly pool: Pool) {}
@@ -41,13 +42,7 @@ export class NousAccountStore {
         const conn = await this.pool.getConnection();
         try {
             await conn.beginTransaction();
-            await conn.query(
-                `INSERT INTO nous_accounts
-                   (grid_name, civic_did, balance_wei, session_cap_wei, session_expiry, created_at, updated_at)
-                 VALUES (?, ?, ?, 0, 0, ?, ?)
-                 ON DUPLICATE KEY UPDATE balance_wei = balance_wei + VALUES(balance_wei), updated_at = VALUES(updated_at)`,
-                [params.gridName, params.civicDid, params.amountWei.toString(), params.currentTick, params.currentTick],
-            );
+            await creditAccountOnConn(conn, params);
             const [rows] = await conn.query<RowDataPacket[]>(
                 `SELECT balance_wei FROM nous_accounts WHERE grid_name = ? AND civic_did = ?`,
                 [params.gridName, params.civicDid],
@@ -68,22 +63,9 @@ export class NousAccountStore {
         const conn = await this.pool.getConnection();
         try {
             await conn.beginTransaction();
-            const [rows] = await conn.query<RowDataPacket[]>(
-                `SELECT balance_wei FROM nous_accounts WHERE grid_name = ? AND civic_did = ? FOR UPDATE`,
-                [params.gridName, params.civicDid],
-            );
-            const current = BigInt(rows[0]?.balance_wei ?? 0);
-            if (current < params.amountWei) {
-                await conn.rollback();
-                throw new Error('insufficient_balance');
-            }
-            await conn.query(
-                `UPDATE nous_accounts SET balance_wei = balance_wei - ?, updated_at = ?
-                 WHERE grid_name = ? AND civic_did = ?`,
-                [params.amountWei.toString(), params.currentTick, params.gridName, params.civicDid],
-            );
+            const newBalance = await debitAccountOnConn(conn, params);
             await conn.commit();
-            return { newBalance: current - params.amountWei };
+            return { newBalance };
         } catch (err) {
             try { await conn.rollback(); } catch { /* ignore rollback error */ }
             throw err;
@@ -99,27 +81,8 @@ export class NousAccountStore {
         const conn = await this.pool.getConnection();
         try {
             await conn.beginTransaction();
-            const [rows] = await conn.query<RowDataPacket[]>(
-                `SELECT balance_wei FROM nous_accounts WHERE grid_name = ? AND civic_did = ? FOR UPDATE`,
-                [params.gridName, params.fromDid],
-            );
-            const fromBalance = BigInt(rows[0]?.balance_wei ?? 0);
-            if (fromBalance < params.amountWei) {
-                await conn.rollback();
-                throw new Error('insufficient_balance');
-            }
-            await conn.query(
-                `UPDATE nous_accounts SET balance_wei = balance_wei - ?, updated_at = ?
-                 WHERE grid_name = ? AND civic_did = ?`,
-                [params.amountWei.toString(), params.currentTick, params.gridName, params.fromDid],
-            );
-            await conn.query(
-                `INSERT INTO nous_accounts
-                   (grid_name, civic_did, balance_wei, session_cap_wei, session_expiry, created_at, updated_at)
-                 VALUES (?, ?, ?, 0, 0, ?, ?)
-                 ON DUPLICATE KEY UPDATE balance_wei = balance_wei + VALUES(balance_wei), updated_at = VALUES(updated_at)`,
-                [params.gridName, params.toDid, params.amountWei.toString(), params.currentTick, params.currentTick],
-            );
+            await debitAccountOnConn(conn, { gridName: params.gridName, civicDid: params.fromDid, amountWei: params.amountWei, currentTick: params.currentTick });
+            await creditAccountOnConn(conn, { gridName: params.gridName, civicDid: params.toDid, amountWei: params.amountWei, currentTick: params.currentTick });
             await conn.commit();
         } catch (err) {
             try { await conn.rollback(); } catch { /* ignore rollback error */ }
