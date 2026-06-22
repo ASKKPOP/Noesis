@@ -51,13 +51,15 @@ function checkPhysics(spec, env = EARTH_ORBIT) {
   // 4. Power budget — generation must cover consumption.
   if (finiteNonNeg(spec.generation_W) && finiteNonNeg(spec.consumption_W) && spec.generation_W < spec.consumption_W) v.push('power');
 
-  // 5. Orbital mechanics — cannot hold an orbit below this body's stable floor
-  //    (atmospheric decay / terrain). The floor is body-specific via env.
+  // 5. Orbital mechanics — an orbit cannot sit inside the body (altitude <= 0,
+  //    universal) and cannot hold below this body's stable floor (atmospheric
+  //    decay / terrain, body-specific via env).
   const floor = (env && Number.isFinite(env.min_stable_altitude_km)) ? env.min_stable_altitude_km : 0;
-  if (typeof spec.altitude_km === 'number' && Number.isFinite(spec.altitude_km) && spec.altitude_km < floor) v.push('orbital');
+  if (typeof spec.altitude_km === 'number' && Number.isFinite(spec.altitude_km)
+      && (spec.altitude_km <= 0 || spec.altitude_km < floor)) v.push('orbital');
 
   const violations = Array.from(new Set(v));
-  return { ok: violations.length === 0, violations, env: (env && env.name) || 'Earth-orbit' };
+  return { ok: violations.length === 0, violations, env: (env && env.name) || 'unknown' };
 }
 
 if (typeof module !== 'undefined' && module.exports) module.exports = { checkPhysics, REQUIRED };

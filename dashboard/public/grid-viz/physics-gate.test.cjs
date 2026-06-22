@@ -104,3 +104,14 @@ test('an orbit below even the Moon floor is still rejected', () => {
   assert.strictEqual(r.ok, false);
   assert.ok(r.violations.includes('orbital'));
 });
+
+test('an orbit exactly at the Earth-orbit floor is accepted (inclusive floor)', () => {
+  const r = checkPhysics(valid({ altitude_km: 160 }), EARTH_ORBIT); // floor 160, inclusive
+  assert.strictEqual(r.ok, true);
+});
+
+test('an orbit at zero altitude is rejected on any body (inside the surface)', () => {
+  const r = checkPhysics(valid({ altitude_km: 0 }), EARTH_ORBIT);
+  assert.strictEqual(r.ok, false);
+  assert.ok(r.violations.includes('orbital'));
+});
