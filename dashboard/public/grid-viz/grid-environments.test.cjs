@@ -27,6 +27,7 @@ test('Moon and Mars exist as configs with distinct gravity and orbital floors', 
 
 test('getEnvironment returns the named env, or Earth-orbit for an unknown name', () => {
   assert.strictEqual(getEnvironment('Moon').name, 'Moon');
+  assert.strictEqual(getEnvironment('Mars').name, 'Mars');
   assert.strictEqual(getEnvironment('Nowhere'), EARTH_ORBIT);
   assert.strictEqual(getEnvironment(undefined), EARTH_ORBIT);
 });

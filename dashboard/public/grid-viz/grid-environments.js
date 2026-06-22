@@ -30,7 +30,7 @@ const GRID_ENVIRONMENTS = {
     gravity_ms2: 1.62,
     solar_constant_wm2: 1361,
     orbital_ref_radius_km: 1737,
-    light_delay_ms: 1260,
+    light_delay_ms: 1282,
     min_stable_altitude_km: 15,
   },
   'Mars': {
@@ -39,9 +39,13 @@ const GRID_ENVIRONMENTS = {
     solar_constant_wm2: 586,
     orbital_ref_radius_km: 3390,
     light_delay_ms: 180000,
-    min_stable_altitude_km: 90,
+    min_stable_altitude_km: 100,
   },
 };
+
+/* Environments are read repeatedly by physics laws; freeze so a consumer cannot
+ * mutate the shared source of truth. */
+for (const env of Object.values(GRID_ENVIRONMENTS)) Object.freeze(env);
 
 /* Genesis Grid ships in Earth-orbit. */
 const EARTH_ORBIT = GRID_ENVIRONMENTS['Earth-orbit'];
