@@ -12,12 +12,14 @@ import { describe, it, expect, vi } from 'vitest';
 import { GenesisLauncher } from '../../src/genesis/launcher.js';
 import { GENESIS_SHOPS } from '../../src/genesis/presets.js';
 import { ShopRegistry } from '../../src/economy/shop-registry.js';
+import { EARTH_ORBIT } from '../../src/registry/grid-environments.js';
 import type { GenesisConfig } from '../../src/genesis/types.js';
 
 function cfgWithSeed(seedDid: string, seedName: string): GenesisConfig {
     return {
         gridName: 'ShopsTest',
         gridDomain: 'shops.test',
+        environment: EARTH_ORBIT,
         tickRateMs: 1000,
         ticksPerEpoch: 10,
         regions: [

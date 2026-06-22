@@ -31,7 +31,8 @@ import { ParcelRegistry } from './civic/parcel-registry.js';
 import { ParcelStore } from './civic/parcel-store.js';
 import { GroupStore } from './economy/group-store.js';
 import { GridRegistry } from './registry/grid-registry.js';
-import { EARTH_ORBIT } from './registry/grid-environments.js';
+import { getEnvironment } from './registry/grid-environments.js';
+import { gridRecordFromConfig } from './registry/grid-record-from-config.js';
 import { gravityPrice, recordPolisOverride } from './civic/founding-law.js';
 import { TREASURY_DID } from './api/routes/registry.js';
 import type { GenesisConfig } from './genesis/types.js';
@@ -311,18 +312,12 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
           }
         : undefined;
 
-    // Multi-Grid framework (spec §2): the Portal's registry of active Grids. v3.0
-    // seeds the one live Grid (Genesis); federation/membership are later phases.
+    // Multi-Grid framework (spec §2): the Portal's registry of active Grids. Each
+    // Grid self-registers from its own config (H1) — Genesis on Earth-orbit, or a
+    // Moon Grid (GRID_NAME=moon GRID_ENV=Moon) with Moon Polis + Moon physics.
+    // Cross-grid federation/membership remain v3.1+.
     const gridRegistry = new GridRegistry();
-    gridRegistry.register({
-        gridId: 'genesis',
-        name: 'Genesis',
-        gridDomain: config.genesisConfig.gridName,
-        polisName: 'Genesis Polis',
-        description: 'The first persistent Grid — a 6-zone civic city where Nous live, earn, learn, and self-govern.',
-        status: 'active',
-        environment: EARTH_ORBIT,
-    });
+    gridRegistry.register(gridRecordFromConfig(config.genesisConfig));
 
     const server = buildServer({
         clock: launcher.clock,
@@ -431,6 +426,9 @@ export function configFromEnv(): GridAppConfig {
         ...GENESIS_CONFIG,
         gridName: process.env.GRID_NAME ?? GENESIS_CONFIG.gridName,
         gridDomain: process.env.GRID_DOMAIN ?? GENESIS_CONFIG.gridDomain,
+        // H1: GRID_ENV selects the celestial body (Earth-orbit | Moon | Mars); an
+        // unknown/absent value falls back to Earth-orbit via getEnvironment().
+        environment: getEnvironment(process.env.GRID_ENV),
         tickRateMs: process.env.GRID_TICK_RATE_MS
             ? parseInt(process.env.GRID_TICK_RATE_MS, 10)
             : GENESIS_CONFIG.tickRateMs,

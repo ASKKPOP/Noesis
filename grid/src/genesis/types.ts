@@ -7,10 +7,16 @@ import type { Law } from '../logos/types.js';
 import type { EconomyConfig } from '../economy/types.js';
 import type { RelationshipConfig } from '../relationships/index.js';
 import type { NormConfig } from '../norms/types.js';
+import type { GridEnvironment } from '../registry/grid-environments.js';
 
 export interface GenesisConfig {
     gridName: string;
     gridDomain: string;         // e.g. "genesis.noesis"
+    // H1 (D-V3-30 / F0b): the celestial body this Grid runs on. Parameterizes the
+    // physics gate (object-physics) + the registry record. Moon = config, not rewrite.
+    environment: GridEnvironment;
+    // One-line discovery blurb surfaced by GET /api/v1/portal/grids.
+    description?: string;
     tickRateMs: number;         // Clock speed (default: 30000)
     ticksPerEpoch: number;      // Ticks per epoch (default: 100)
     regions: Region[];          // Initial regions

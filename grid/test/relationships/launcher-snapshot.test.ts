@@ -13,11 +13,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GenesisLauncher } from '../../src/genesis/launcher.js';
 import type { Pool } from 'mysql2/promise';
 import type { GenesisConfig } from '../../src/genesis/types.js';
+import { EARTH_ORBIT } from '../../src/registry/grid-environments.js';
 
 function makeConfig(): GenesisConfig {
     return {
         gridName: 'test-grid',
         gridDomain: 'test.noesis',
+        environment: EARTH_ORBIT,
         tickRateMs: 1_000_000,     // deterministic, no real wall-clock ticks
         ticksPerEpoch: 25,
         regions: [

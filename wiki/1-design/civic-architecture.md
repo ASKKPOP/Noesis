@@ -138,6 +138,8 @@ Every rejection carries a closed-enum reason code for auditability. This preserv
 
 The multi-Grid framework ships in v3.0 but stays dormant (only Genesis is active). When it activates, a new Grid is born by Portal-mediated charter: a requester submits a name + Polis charter + founding members + zoning + tax rates; Portal's reviewer panel approves (≤2/quarter); the Grid is instantiated with its named Polis, 6 zones, an empty audit chain, and a cross-Grid registry entry. A council of cities can charter an entirely new Grid (D-NH-13).
 
+**Each Grid is parameterized by a `GridEnvironment` (body physics) — "Moon = config, not rewrite."** A Grid carries its celestial body (gravity, solar constant, stable-orbit floor, light delay); the server-side physics gate judges every built object under *that* body's laws, so a low orbit valid on the Moon (15 km floor) is rejected on Earth-orbit (160 km). A second Grid is stood up purely by config — launch with `GRID_NAME=moon GRID_ENV=Moon` and it self-registers as **Moon Polis** under Moon physics, discoverable via `GET /api/v1/portal/grids`. The schema is `grid_name`-partitioned, so one database hosts both. **Cross-Grid travel, membership, and light-delay reconciliation remain v3.1+** — a Nous still lives in exactly one Grid, and isolation is automatic (each Grid is a separate launcher with its own space).
+
 ## 3-tier management (D-V3-36)
 
 Distinct from **governance** (Polis legislative): **Tier 1 Local Nous Manager** (operator-side Brain admin), **Tier 2 Grid Manager** (Henry-side per-Grid runtime ops — no governance authority over a Polis), **Tier 3 Portal Manager** (Henry-side meta-system + reviewer panels). Management is administrative; governance is legislative; the two never merge.

@@ -4,11 +4,14 @@
 
 import type { GenesisConfig } from './types.js';
 import type { ShopRegisterInput } from '../economy/types.js';
+import { EARTH_ORBIT, GRID_ENVIRONMENTS } from '../registry/grid-environments.js';
 
 /** The default "Genesis" Grid — the first world. */
 export const GENESIS_CONFIG: GenesisConfig = {
     gridName: 'Genesis',
     gridDomain: 'genesis.noesis',
+    environment: EARTH_ORBIT,
+    description: 'The first persistent Grid — a 6-zone civic city where Nous live, earn, learn, and self-govern.',
     tickRateMs: 30_000,
     ticksPerEpoch: 100,
     regions: [
@@ -109,10 +112,27 @@ export const GENESIS_CONFIG: GenesisConfig = {
     seedNous: [],
 };
 
+/**
+ * H1 (first version) — the Moon Grid as a CONFIG, not a rewrite. Same civic stack
+ * as Genesis (regions, laws, economy reused) under the Moon GridEnvironment (gravity
+ * 1.62 m/s², stable-orbit floor 15 km), governed by its own Moon Polis (derived by
+ * gridRecordFromConfig per D-V3-31). Launch with GRID_NAME=moon GRID_ENV=Moon.
+ * No cross-grid travel — that's v3.1+ (isolation is automatic: separate launcher =
+ * separate SpatialMap).
+ */
+export const MOON_CONFIG: GenesisConfig = {
+    ...GENESIS_CONFIG,
+    gridName: 'Moon',
+    gridDomain: 'moon.noesis',
+    environment: GRID_ENVIRONMENTS['Moon'],
+    description: 'The second Grid — a lunar civic city under Moon physics (low gravity), governed by Moon Polis.',
+};
+
 /** A minimal test Grid with 2 regions and no laws. */
 export const TEST_CONFIG: GenesisConfig = {
     gridName: 'TestGrid',
     gridDomain: 'test.noesis',
+    environment: EARTH_ORBIT,
     tickRateMs: 100,
     ticksPerEpoch: 10,
     regions: [

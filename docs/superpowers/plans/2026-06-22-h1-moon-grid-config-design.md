@@ -48,9 +48,15 @@ governed by its own **Moon Polis**, discoverable via `GET /api/v1/portal/grids`.
 
 ## Scope — phased (YAGNI)
 
-**Phase H1a (MVP):** env-driven launcher config + `GridEnvironment` threaded through to the physics
-gate + `MOON_CONFIG` preset + a second running Grid (`moon`) seeded with its 6 zones/Polis/groups,
-discoverable in `/portal/grids`, with object-physics demonstrably stricter/looser than Genesis.
+**Phase H1a (MVP) — ✅ SHIPPED 2026-06-22 (first version):** `GenesisConfig.environment` field +
+`MOON_CONFIG` preset + `configFromEnv` reads `GRID_ENV` (→ `getEnvironment`, Earth-orbit fallback)
++ `gridRecordFromConfig` derives the registry record (Polis name per D-V3-31, body environment) so a
+Grid self-registers from its config. Object-physics proven body-specific (a 100 km orbit rejected on
+Earth-orbit, accepted on Moon). 11 new tests; full grid suite green, tsc clean. **What this first
+version does NOT yet do (the "deeper v2"):** thread the env into a *live* `createFromContract` call
+(there is no runtime caller yet — proven by unit test instead); a cross-process **shared `grids`
+table** so the Portal lists Grids from *other* processes (today each process serves its own registry);
+a second docker service. These are the v2 deepening.
 
 **Deferred (explicit — all v3.1+):**
 - **Cross-grid anything** — membership, Nous migration, travel, marketplace mediation, audit merge.

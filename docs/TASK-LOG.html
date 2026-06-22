@@ -64,6 +64,31 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 9 ============================ -->
+  <h2>Session 9 — 2026‑06‑22 · “Plan O3/O4/H1 + build H1 Moon (first version)”</h2>
+  <p class="sub">Planned the three deferred organs (gating decisions made + grounded design docs), then —
+  on "just implement the first version" — built H1 Moon: a second Grid as a config, not a rewrite.</p>
+  <ul>
+    <li><b>Designs</b> <span class="tag done">planned</span> three design docs in <code>docs/superpowers/plans/</code>
+      (grounded via parallel research): <b>O3 Forest</b> = installable PWA (gap = O2c-b human-authed conversation
+      routes; WebRTC/push deferred); <b>O4 street-view</b> = 3D first-person Three.js (reuse grid-viz;
+      (ring,sector,level)→(x,y,z) + real parcels; avatars deferred); <b>H1 Moon</b> = 2nd standalone Grid as config.</li>
+    <li><b>H1 first version</b> <span class="tag done">built</span> <code>GenesisConfig.environment</code> +
+      <code>MOON_CONFIG</code> preset + <code>configFromEnv</code> reads <code>GRID_ENV</code> (getEnvironment,
+      Earth-orbit fallback) + new <code>gridRecordFromConfig</code> (Polis name per D-V3-31 + body env) so a Grid
+      <em>self-registers from its own config</em>. Launch <code>GRID_NAME=moon GRID_ENV=Moon</code> → a Moon Polis
+      Grid under Moon physics, discoverable via <code>/api/v1/portal/grids</code>; one DB hosts both (grid_name-partitioned).</li>
+    <li><b>Physics proven body-specific</b> <span class="tag done">test</span> a 100 km orbit is <em>rejected</em> on
+      Earth-orbit (160 km floor) and <em>accepted</em> on the Moon (15 km floor) — the body parameterizes the economy.
+      TDD: 11 new tests (<code>moon-config</code> 9 + <code>object-physics-moon</code> 2); fixed 2 fixtures my new
+      required field orphaned. Full grid suite <strong>3818 green</strong>, tsc clean.</li>
+    <li><b>Invariants:</b> NO cross-grid (v3.1+); isolation automatic (separate launcher = separate space); no new
+      audit events / allowlist change; VOTE-05 / 6-zone / Polis-naming preserved. Doc-synced
+      <code>wiki/civic-architecture.md</code> (GridEnvironment / "Moon = config"), STATE, ROADMAP, the H1 design doc.
+      <strong>Deeper v2 left for later:</strong> cross-process shared <code>grids</code> table, live createFromContract
+      env threading, 2nd docker service. O3/O4 first versions not yet built. Committed to main, not pushed.</li>
+  </ul>
+
   <!-- ============================ SESSION 8 ============================ -->
   <h2>Session 8 — 2026‑06‑22 · “W3b — Brain economic decision loop (a Nous spontaneously pays/bids)”</h2>
   <p class="sub">After W4 made live wei possible, gave the Brain economic <em>sight</em> and <em>agency</em>.
