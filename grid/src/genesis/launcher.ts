@@ -33,6 +33,7 @@ import { SdpInboxStore } from '../p2p/sdp-inbox-store.js';
 import type { P2PService } from '../p2p/types.js';
 import { checkSettlementTimeouts } from '../marketplace/settlement-timeout.js';
 import { onUpkeepTick, type UpkeepScannerDeps } from '../civic/upkeep-scanner.js';
+import { runDueAssessment, runDueDelinquencySweep, DUE_PERIOD_TICKS } from '../economy/civic-due-driver.js';
 
 /**
  * Phase 31 OBS-01 (D-31-A1): optional dependencies that can be supplied at
@@ -532,6 +533,20 @@ export class GenesisLauncher {
             // Silence in the audit_reconcile_ok log stream is the alarm signal.
             if (this.auditReconcile && event.tick > 0 && event.tick % 60 === 0) {
                 void this.auditReconcile.run();
+            }
+
+            // W2 — civic-due driver. At each period boundary the grid assesses a due
+            // per active member (emits due.assessed); every 60 ticks it sweeps overdue
+            // pending dues delinquent. Fire-and-forget, gated on the pool, never blocks
+            // the clock (mirrors governance.onTickClosed / auditReconcile above).
+            if (this._pool && event.tick > 0) {
+                if (event.tick % DUE_PERIOD_TICKS === 0) {
+                    const members = this.registry.active().map((r) => r.did);
+                    void runDueAssessment(this._pool, this.audit, members, event.tick, { gridName: this.gridName });
+                }
+                if (event.tick % 60 === 0) {
+                    void runDueDelinquencySweep(this._pool, this.audit, event.tick, this.gridName);
+                }
             }
         });
 
