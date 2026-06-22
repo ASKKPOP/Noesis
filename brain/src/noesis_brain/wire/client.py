@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from typing import Any, Optional
 from urllib.parse import urlparse
 
@@ -40,6 +41,8 @@ __all__ = [
     "validate_grid_url",
     "CIVIC_LAND_ROUTES",
     "civic_land_route",
+    "ECONOMIC_ROUTES",
+    "economic_route",
 ]
 
 log = logging.getLogger(__name__)
@@ -120,6 +123,52 @@ def civic_land_route(
                 f"{action_type.value} route requires a parcel_id"
             )
         return method, template.replace("{id}", parcel_id)
+    return method, template
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# W3 — Economic verb → Grid route map.
+#
+# Economic Actions are dispatched DIRECTLY to the live Grid HTTP routes (NOT
+# batched through /api/v1/brain/actions). This table is the Brain-side source
+# of truth for the routing contract — it is asserted by test_economic_actions.py
+# and mirrors the Grid routes built in this session.
+#
+# Path templates use named placeholders (e.g. "{due_id}") filled from the
+# action's metadata at dispatch time via economic_route(). The remaining
+# metadata keys become the JSON request body.
+# ──────────────────────────────────────────────────────────────────────────
+ECONOMIC_ROUTES: dict[ActionType, tuple[str, str]] = {
+    ActionType.PAY_DUE: ("POST", "/api/v1/civic/dues/{due_id}/pay"),
+    ActionType.BID_RFP: ("POST", "/api/v1/procurement/notices/{notice_id}/bids"),
+    ActionType.REQUEST_APPROVAL: ("POST", "/api/v1/civic/approvals"),
+    ActionType.POST_CONVERSATION: ("POST", "/api/v1/civic/conversation/{partner_did}/messages"),
+}
+
+
+def economic_route(
+    action_type: ActionType, **metadata: Any
+) -> tuple[str, str]:
+    """Resolve an economic verb to its ``(method, resolved_path)`` Grid route.
+
+    Substitutes named ``{param}`` placeholders in the path template from
+    ``metadata``. Raises ``ValueError`` when ``action_type`` is not an economic
+    verb or when a required path parameter is absent from metadata.
+
+    The caller is responsible for building the JSON body from the remaining
+    (non-path) metadata keys.
+    """
+    if action_type not in ECONOMIC_ROUTES:
+        raise ValueError(f"{action_type!r} is not an economic verb")
+    method, template = ECONOMIC_ROUTES[action_type]
+    # Substitute every {param} in the template from metadata.
+    path_params = re.findall(r"\{(\w+)\}", template)
+    for param in path_params:
+        if param not in metadata or metadata[param] is None:
+            raise ValueError(
+                f"{action_type.value} route requires '{param}' in metadata"
+            )
+        template = template.replace(f"{{{param}}}", str(metadata[param]))
     return method, template
 
 

@@ -131,6 +131,20 @@ class ActionType(str, Enum):
     BUILD_FROM_BLUEPRINT = "build_from_blueprint"  # -> :id/build-from-blueprint. Metadata: {parcel, blueprint_hash}
     CO_BUILD             = "co_build"              # -> :id/board/claim|complete. Metadata: {parcel, node_id}
     TEACH_HERE           = "teach_here"            # rides the existing skill/teach dispatch. Metadata: {parcel, skill_hash}
+    # W3 — Brain economic action-types.
+    # CAPABILITIES (not autoplay): a Nous chooses to emit these; GridWireClient
+    # dispatches them directly to the live Grid economic/civic HTTP routes (NOT
+    # through the generic /api/v1/brain/actions handler). Decision pressure stays
+    # with the Nous. LLM-prompt awareness (W3b) is a later slice.
+    # Metadata shapes (build_economic_action is the schema gate):
+    #   pay_due           {due_id, method}                (method ∈ wei|labor)
+    #   bid_rfp           {notice_id, price_wei, artifact_spec}
+    #   request_approval  {human_did, kind, summary, payload, deadline_tick}
+    #   post_conversation {partner_did, text}
+    PAY_DUE           = "pay_due"           # POST /api/v1/civic/dues/{due_id}/pay
+    BID_RFP           = "bid_rfp"           # POST /api/v1/procurement/notices/{notice_id}/bids
+    REQUEST_APPROVAL  = "request_approval"  # POST /api/v1/civic/approvals
+    POST_CONVERSATION = "post_conversation" # POST /api/v1/civic/conversation/{partner_did}/messages
 
 
 # JSON-RPC error codes
@@ -336,5 +350,53 @@ def build_group_action(action_type: ActionType, **metadata: Any) -> Action:
     if missing:
         raise ValueError(
             f"{action_type.value} action missing required metadata key(s): {', '.join(missing)}"
+        )
+    return Action(action_type=action_type, metadata=dict(metadata))
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# W3 — Economic capability builder.
+#
+# build_economic_action() is the SCHEMA GATE for the four economic verbs.
+# It validates the documented metadata shape and raises ValueError when a
+# required key is missing or when action_type is not an economic verb.
+#
+# These verbs are dispatched DIRECTLY to the live Grid economic/civic HTTP
+# routes (not the generic /api/v1/brain/actions batch). The wire client's
+# ECONOMIC_ROUTES table maps each verb to its (METHOD, path-template).
+#
+# This is a CAPABILITY constructor, not a script: nothing here auto-pays or
+# auto-bids — decision pressure stays with the Nous (W3b adds LLM prompting).
+# ──────────────────────────────────────────────────────────────────────────
+
+_ECONOMIC_REQUIRED_KEYS: dict[ActionType, tuple[str, ...]] = {
+    ActionType.PAY_DUE: ("due_id", "method"),
+    ActionType.BID_RFP: ("notice_id", "price_wei", "artifact_spec"),
+    ActionType.REQUEST_APPROVAL: ("human_did", "kind", "summary", "payload", "deadline_tick"),
+    ActionType.POST_CONVERSATION: ("partner_did", "text"),
+}
+
+_ECONOMIC_VERBS: frozenset[ActionType] = frozenset(_ECONOMIC_REQUIRED_KEYS.keys())
+
+
+def build_economic_action(action_type: ActionType, **metadata: Any) -> Action:
+    """Build a validated economic Action (W3 capability, not autoplay).
+
+    Validates the documented metadata shape for the given verb and raises
+    ``ValueError`` when a required key is missing or when ``action_type`` is
+    not an economic verb.
+
+    Returns an :class:`Action` ready for ``GridWireClient`` dispatch. The wire
+    client resolves the (METHOD, path) via ``ECONOMIC_ROUTES`` and substitutes
+    path params from metadata at send time.
+    """
+    if action_type not in _ECONOMIC_VERBS:
+        raise ValueError(f"{action_type!r} is not an economic verb")
+    required = _ECONOMIC_REQUIRED_KEYS[action_type]
+    missing = [k for k in required if k not in metadata or metadata[k] is None]
+    if missing:
+        raise ValueError(
+            f"{action_type.value} action missing required metadata key(s): "
+            f"{', '.join(missing)}"
         )
     return Action(action_type=action_type, metadata=dict(metadata))
