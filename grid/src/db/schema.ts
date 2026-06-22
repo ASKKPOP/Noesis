@@ -1171,4 +1171,64 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS civic_dues`,
     },
+    // L2a — RFP procurement: the Polis commissions builds with the treasury.
+    // issueNotice / placeBid / award / settleContract / cancelNotice.
+    // award funds a labor_escrow from the treasury (payer = TREASURY_CIVIC_DID),
+    // deducting treasury wei and writing a procurement_contracts row — all atomic.
+    // Allowlist +0 (procurement.* events wired in L2b).
+    {
+        version: 50,
+        name: 'create_procurement',
+        up: `
+            CREATE TABLE IF NOT EXISTS procurement_notices (
+                notice_id              CHAR(36)      NOT NULL,
+                grid_name              VARCHAR(63)   NOT NULL,
+                polis_authorization_ref VARCHAR(255) NOT NULL,
+                title                  VARCHAR(255)  NOT NULL,
+                spec                   TEXT          NOT NULL,
+                budget_wei             DECIMAL(65,0) NOT NULL,
+                zone                   VARCHAR(63)   NOT NULL,
+                function_type          VARCHAR(63)   NOT NULL,
+                status                 ENUM('open','awarded','cancelled') NOT NULL DEFAULT 'open',
+                deadline_tick          BIGINT        NOT NULL,
+                created_at             BIGINT        NOT NULL,
+                updated_at             BIGINT        NOT NULL,
+                PRIMARY KEY (notice_id),
+                INDEX idx_grid_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            CREATE TABLE IF NOT EXISTS procurement_bids (
+                bid_id        CHAR(36)      NOT NULL,
+                notice_id     CHAR(36)      NOT NULL,
+                grid_name     VARCHAR(63)   NOT NULL,
+                bidder_did    VARCHAR(255)  NOT NULL,
+                price_wei     DECIMAL(65,0) NOT NULL,
+                artifact_spec TEXT          NOT NULL,
+                status        ENUM('submitted','awarded','rejected') NOT NULL DEFAULT 'submitted',
+                created_at    BIGINT        NOT NULL,
+                PRIMARY KEY (bid_id),
+                INDEX idx_notice (notice_id, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            CREATE TABLE IF NOT EXISTS procurement_contracts (
+                contract_id   CHAR(36)      NOT NULL,
+                notice_id     CHAR(36)      NOT NULL,
+                grid_name     VARCHAR(63)   NOT NULL,
+                winner_did    VARCHAR(255)  NOT NULL,
+                award_wei     DECIMAL(65,0) NOT NULL,
+                escrow_id     CHAR(36)      NOT NULL,
+                status        ENUM('active','settled','cancelled') NOT NULL DEFAULT 'active',
+                attested_tick BIGINT        NULL,
+                created_at    BIGINT        NOT NULL,
+                updated_at    BIGINT        NOT NULL,
+                PRIMARY KEY (contract_id),
+                INDEX idx_grid_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `
+            DROP TABLE IF EXISTS procurement_contracts;
+            DROP TABLE IF EXISTS procurement_bids;
+            DROP TABLE IF EXISTS procurement_notices
+        `,
+    },
 ];
