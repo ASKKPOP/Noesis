@@ -77,7 +77,8 @@ Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reali
 - ✅ **Phase 81 (F0b) — grid-side GridEnvironment + Portal discovery feed** (2026-06-21): `grid/src/registry/grid-environments.ts` (TS mirror of the browser env data — frozen Earth-orbit/Moon/Mars + `getEnvironment`); `GridRecord` gains a **required** `environment`; Genesis seeded `Earth-orbit` in `main.ts`; `GET /api/v1/portal/grids` now returns `celestial_body` + `environment`. In-memory (no DB/migration — `GridRegistry` is in-memory). Vitest **10/10**, `tsc --noEmit` clean, **allowlist +0**. Plan: `docs/superpowers/plans/2026-06-21-f0b-grid-side-environment.md`. Commits `db104e6`, `b8a4cc8`.
 - 🟡 **Phase 82 (F1) — money rails (model-first / chain-ready) — IN PROGRESS:**
   - ✅ **F1a NousAccount** (2026-06-21): migration **v45** `nous_accounts` (wei `DECIMAL(65,0)`); `NousAccountStore` with atomic credit / debit / transfer over `SELECT ... FOR UPDATE` txns (no mint — accounts start at 0; chain-ready `session_cap_wei`/`session_expiry` carried). Vitest **11/11**, tsc clean, **allowlist +0**. Plan: `docs/superpowers/plans/2026-06-21-f1a-nous-accounts.md`. Commits `911aa18`, `fe24a8a`.
-  - ⏳ F1b treasury wei extension · F1c labor escrow · F1d civic-labor credit.
+  - ✅ **F1b treasury wei extension** (2026-06-21): migration **v46** adds `civic_treasury.balance_wei DECIMAL(65,0)`; `TreasuryWeiStore` (`getWeiBalance`/`creditWei`/`debitWei`, atomic, Polis-authorized debit by caller). Ousia `balance_bios` untouched (verified). Vitest 7/7, tsc clean, allowlist +0. Commits `4c10825`,`9eecf0c`.
+  - ⏳ F1c labor escrow · F1d civic-labor credit.
 - ⏳ **Spine L1–L4 → Organs O1–O4 → Horizon H1** — L1 (civic due ledger + the D-MONEY-08 implementation) after F1.
 
 ---
