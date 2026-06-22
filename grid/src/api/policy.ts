@@ -251,6 +251,11 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // T-40-02-01: Brain JWT verified against registered public key in brain_tokens table.
     'GET /api/v1/operator/me/brain-settings': 'public',
 
+    // W1 — Civic dues (D-MONEY-08): member sees + pays its own dues.
+    // civic_did_required: Brain JWT resolves to civic_member tier; handler enforces own-due-only.
+    'GET /api/v1/civic/dues':                    'civic_did_required',
+    'POST /api/v1/civic/dues/:dueId/pay':        'civic_did_required',
+
     // Phase 41 Sleep Cycle (SLEEP-01..05) — presence + inbox + queue-aware send.
     // All 6 routes registered explicitly per OBS-36-01.
     'POST /api/v1/civic/presence':        'civic_did_required', // Brain JWT heartbeat (T-41-01)
