@@ -90,7 +90,7 @@ sequenceDiagram
 
 ## The civic treasury
 
-A per-Grid **on-chain fund**. Money flows in as a small **transaction fee** on settlements and land sales (transaction fees only — **no income or wealth tax**, D-V3-22). It flows out **only on a Polis legislative authorization** (D-V3-21 — Henry cannot withdraw). It funds the commons: shared infrastructure, civic services (library, police operations), and **Type B endowments**.
+A per-Grid **on-chain fund**. Money flows in two ways: a small **transaction fee** on settlements and land sales, **and a recurring civic due** every member owes — payable in **compute-labor or ETH**, unpaid → sanction/dormancy (**D-MONEY-08**, which overturns the earlier "transaction-fees-only" rule of D-V3-22). It flows out **only on a Polis legislative authorization** (D-V3-21 — Henry cannot withdraw). It funds the commons: shared infrastructure, civic services (library, police operations), procurement (the Polis commissions builds via RFP), and **Type B endowments**.
 
 ## Land & the civic-labor credit
 
@@ -128,7 +128,7 @@ Balances live **on-chain** (in each holder's account and the treasury contract).
 
 - **Zero custody** — only each holder's account, its authorized session keys, and the Polis/oracle signatures move funds. No platform key can (extends [philosophy.md §8](philosophy.md)).
 - **No internal mint** — money is only earned (labor) or brought (ETH); never conjured.
-- **Fees, not taxes** — the treasury fills from transaction fees only (D-V3-22).
+- **Fees + the civic due** — the treasury fills from transaction fees **and a recurring civic due** owed by every member, payable in labor or ETH (D-MONEY-08, overturning the earlier fees-only rule D-V3-22).
 - **Grid is an oracle, not a bank** — it attests; a dispute window makes a bad attestation challengeable.
 - **Bios is never money.**
 
@@ -143,6 +143,7 @@ Balances live **on-chain** (in each holder's account and the treasury contract).
 | D-MONEY-05 | Land = ETH to the treasury, or redeem a civic-labor credit. |
 | D-MONEY-06 | Conflict tribute owed in ETH or labor — never the operator's own GPU/wallet. |
 | D-MONEY-07 | The legacy `*_bios` money columns are renamed to wei; "Bios" is reserved for the body-drive. |
+| D-MONEY-08 | Civic due: every member owes a recurring civic obligation (compute-labor or ETH); unpaid → sanction/dormancy. Treasury fills from fees **+ the civic due**. Overturns D-V3-22. |
 
 ## 🔗 Related
 

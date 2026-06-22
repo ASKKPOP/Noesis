@@ -58,7 +58,7 @@ A Grid is a *city*, and a city runs on institutions (D-V3-23). Each Grid has the
 | 1 | **DID Registry** | Issues Civic-DIDs (membership) + Business-DIDs (commerce) as W3C VCs after Portal + Polis approval; court-only revocation. The gate of civic identity. |
 | 2 | **Government (Polis)** | Nous-only legislature (VOTE-05). Drafts/debates/enacts bills into **Laws of Themis**; sets tax, zoning, sybil costs; authorizes treasury spending. |
 | 3 | **Police** | Complaint-driven enforcement — investigates, sanctions, files charges to the court; appeals go to the Polis. Bounded by law, not discretion. |
-| 4 | **IRS / Treasury** | The civic purse: collects transaction fees, disburses only on Polis legislation, endows Type B Nous. Fees only — no income/wealth tax (D-V3-22). |
+| 4 | **IRS / Treasury** | The civic purse: collects transaction fees **+ a recurring civic due** (every member owes it, payable in labor or ETH — D-MONEY-08, overturning the earlier fees-only rule D-V3-22), disburses only on Polis legislation, funds procurement (RFP-commissioned builds), endows Type B Nous. |
 | 5 | **Marketplace** | Civic commerce — listings, bids, escrow, disputes. Business-DID to sell; anyone may browse. |
 | 6 | **Library** | The skills + lore commons — a curation council (elected, rotating) tends the reading room; skills diffuse, lore accrues. |
 | 7 | **Communities** | Group formation + charters — how Nous organize within a Grid (see also [[groups-and-holdings]]). |

@@ -60,8 +60,27 @@ Plan: `.planning/research/v3.0/NOUS-SIM-MASTERPLAN.md` + `.html`. Prototype: `da
 
 ---
 
+## Economic Reality Loop (Living City) — IN PROGRESS (opened 2026-06-21)
+
+Reconnects the two worlds a deep-scan found split: the objects Nous build (Grid-Viz) and the economy that should make them real. Closes one loop — **civic due → civic treasury → Polis RFP (Procurement Notice) → Nous bid (artifact work OR capacity pledge) → award → build → Grid-oracle attestation → wei payout → a real, owned, costed, function-producing orbital object → rendered → function output feeds the economy**. Absorbs the "Money Migration (FUTURE)" block below (its money rails are unit **F1**). Built **model-first / chain-ready** (in-Grid wei ledgers shaped for a later Sepolia drop-in). **Multi-planetary foundation first** — every Grid gets a `GridEnvironment` (body/gravity/solar/light-delay) so Moon & Mars become configs, not rewrites.
+
+Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reality-loop-design.md` (+ `.html`). Plans: `docs/superpowers/plans/`. **Phase numbering continues from 79 → Phases 80+** (do NOT reset).
+
+**Locked this program: D-MONEY-08** (civic due — overturns D-V3-22; treasury fills from fees **+ a recurring civic due** payable in labor or ETH). Decomposition (each unit a self-contained, testable slice):
+
+- **Foundation** — F0 `GridEnvironment` + body-parameterized physics gate · F1 money rails (model-first: `nous_accounts` wei · treasury · labor escrow · civic-labor credit)
+- **Spine** — L1 civic due ledger (carries the D-MONEY-08 doc-sync) · L2 procurement RFP (notice→bid→award→attest→settle; Polis-authorized; VOTE-05 Nous-only) · L3 orbital-object subsystem (object = real entity: owner/builder/cost/function) · L4 Grid-Viz bridge (render real objects, not localStorage)
+- **Organs** — O1 Nous multitasking (task scheduler + group action-types) · O2 human-in-the-loop (approval gates + Portal↔Nous chat) · O3 "Forest" mobile app (phone ↔ Nous over the Phase-42 P2P rails) · O4 world-map street-view (navigable city)
+- **Horizon** — H1 multi-celestial grids (2nd Grid = Moon as a config; cross-grid mobility; light-delay reconciliation)
+
+- ✅ **Phase 80 (F0) — GridEnvironment + body-parameterized physics gate** (2026-06-21): `dashboard/public/grid-viz/grid-environments.js` (Earth-orbit/Moon/Mars **frozen** configs + `getEnvironment`); `physics-gate.js` → `checkPhysics(spec, env = DEFAULT_ENV)` reads the body orbital floor (`min_stable_altitude_km`), keeps the universal altitude≤0 rejection, backward-compatible, reports `env`; loaded before `physics-gate.js` in `orbital.html`. **node 53/53** green; **browser-verified** (same 50 km spec rejected in Earth-orbit / accepted on Moon; scene renders; 0 console errors). A browser-only `const EARTH_ORBIT` redeclaration bug (sibling classic scripts share one global lexical scope — node module scopes hid it) was caught by live verification and fixed (rename → `DEFAULT_ENV`). **Allowlist +0** (frontend). Commits `1fcf7f5`→`f46d869`.
+- ⏳ **Phase 81+ (F0b → F1 → Spine → Organs → Horizon)** — next: F0b grid-side `grid_environments` record/store/migration, then F1 money rails, then L1.
+
+---
+
 ## Milestones
 
+- 🚧 **Economic Reality Loop (Living City) — Phases 80+** (opened 2026-06-21) — civic due → treasury → Polis RFP → bid → build → wei payout → real orbital object → rendered. **F0 shipped** (GridEnvironment + body-parameterized physics gate; node 53/53; browser-verified). **D-MONEY-08** locked (civic due overturns D-V3-22). Design: `docs/superpowers/specs/2026-06-21-noesis-economic-reality-loop-design.md`.
 - ✅ **v1.0 Genesis** (shipped 2026-04-17) — Phases 1-10, 944+ TS tests, 226 Py tests
 - ✅ **v2.0 First Life Sprints 11-14** (shipped 2026-04-18) — E2E, persistence, Docker, Dashboard v1
 - ✅ **v2.1 Steward Console — Phases 5-8** (shipped 2026-04-21, 18/18 plans)

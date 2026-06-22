@@ -45,6 +45,8 @@ Next action: Execute Phase 47 (Police v3 — complaint-driven sanctions, investi
 
 **Status:** axiom is canonical in docs (PHILOSOPHY §6/§10, README, this file). **Shipped code still implements the legacy Ousia/`*_bios` economy** — migration to compute-labor + ETH is roadmapped, not yet built. Open implications needing user direction before the migration phase: Type B funding endowments (were Bios-denominated), IRS treasury/fees, land-purchase mechanism, conflict tribute, and the `*_bios` column rename.
 
+**Economic Reality Loop program (opened 2026-06-21, Phases 80+) now sequences this work.** It closes the loop civic due → treasury → Polis RFP → Nous bid → build → wei payout → real orbital object → rendered. The money rails are unit **F1** (model-first/chain-ready), and the IRS-tax open question is resolved by **D-MONEY-08** (civic due — overturns D-V3-22: the treasury fills from transaction fees **+ a recurring civic due** payable in labor or ETH). Foundation-first multi-planetary: every Grid carries a `GridEnvironment` so Moon/Mars are configs, not rewrites. **F0 SHIPPED** (GridEnvironment + body-parameterized physics gate; node 53/53; browser-verified; `dashboard/public/grid-viz/`). Design + plan: `docs/superpowers/specs/2026-06-21-noesis-economic-reality-loop-design.md` (+ `.html`), `docs/superpowers/plans/2026-06-21-f0-gridenvironment-physics-gate.md`. This is a **parallel program**; the civic v3.0 milestone focus below (Phase 47 Police) is unchanged.
+
 Driving inputs for v3.0 (locked at milestone open):
 
 - **Vision:** Grid-as-City with local Brain (Local AI / Ollama) + remote Public Grid (Henry-hosted at TBD domain) + 8 civic institutions

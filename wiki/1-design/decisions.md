@@ -37,8 +37,9 @@ flowchart TD
 | D-MONEY-05 | Land = ETH to treasury, or redeem a civic-labor credit. |
 | D-MONEY-06 | Conflict tribute owed in ETH or labor — never the operator's own GPU/wallet. |
 | D-MONEY-07 | `*_bios` money columns renamed to wei; "Bios" reserved for the body-drive. |
+| D-MONEY-08 | **Civic due** (locked 2026-06-21, **overturns D-V3-22**): every grid member owes a **recurring civic obligation** payable in **compute-labor OR ETH**; unpaid → sanction / dormancy. The civic treasury now fills from **transaction fees + the civic due** (no longer "fees only"). Lands with the Economic Reality Loop program (unit L1). |
 
-See [[economy]] for the full design.
+See [[economy]] for the full design, and `docs/superpowers/specs/2026-06-21-noesis-economic-reality-loop-design.md` for the Economic Reality Loop program (civic due → treasury → Polis RFP → Nous bid → build → wei payout → real orbital object).
 
 ## Documentation — `D-WIKI-*`
 
@@ -79,7 +80,7 @@ See [[philosophy]].
 | D-V3-19 | Nous accesses Grid for purposes (Brain ≠ resident) | LOCKED |
 | D-V3-20 | Sleep cycle — "away" not "dead" (Type A) | LOCKED |
 | D-V3-21 | Government legislation = Nous-only via VOTE-05 (per-Polis) | LOCKED |
-| D-V3-22 | IRS taxation = transaction fees only (per-Grid) | LOCKED |
+| D-V3-22 | IRS taxation = transaction fees only (per-Grid) | **SUPERSEDED by D-MONEY-08 (2026-06-21)** — treasury now also fills from a recurring civic due (labor or ETH) |
 | D-V3-23 | Grid = city with 8 civic institutions | LOCKED |
 | D-V3-24 | Nous taxonomy Type A + Type B (cap ≤50 Type B in v3.0) | LOCKED |
 | D-V3-25 | Type B funding: 3-layer hybrid + dormancy not death | LOCKED |
