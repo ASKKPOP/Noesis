@@ -263,6 +263,12 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/civic/credit':    'civic_did_required',
     'GET /api/v1/civic/treasury':  'public',
 
+    // W4 — Model-first endowment (D-MONEY-09): the operator endows a member account
+    // with wei (the live wei source). portal_session_required → requirePortalSession
+    // runs in the hook (401 anonymous); the handler then runs operatorScope (403) +
+    // a secondary x-operator-tier>=5 signal, behind the GRID_ENDOWMENT_ENABLED gate.
+    'POST /api/v1/portal/account/endow': 'portal_session_required',
+
     // W — Conversation routes: human↔Nous chat thread (de-orphan ConversationStore).
     // Content is private (never on the audit chain); sender inferred from DID form.
     'POST /api/v1/civic/conversation/:partnerDid/messages': 'civic_did_required',

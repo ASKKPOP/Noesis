@@ -64,6 +64,40 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 7 ============================ -->
+  <h2>Session 7 — 2026‑06‑22 · “W4 — model-first endowment (the live wei source, D-MONEY-09)”</h2>
+  <p class="sub">First verified the overnight W1–W3 loop-wiring (it had just landed on <code>main</code> as <code>e2a8221</code>,
+  not a separate branch — reconciled a momentary discrepancy report). Then shipped the one gated decision the prior session
+  deliberately left for the user: <strong>where live wei comes from</strong>. User chose <em>model-first endowment</em> over
+  on-chain-first / labor-only. Built it test-first (TDD), spec-synced, all invariants intact.</p>
+  <ul>
+    <li><b>Why</b> <span class="tag done">unblocks</span> the wei economy was airtight — accounts start at zero with no
+      inflow, so <code>payWithWei</code> could never succeed, the treasury never filled, and RFP awards never paid. The loop
+      <em>ran</em> but money couldn't <em>move</em>.</li>
+    <li><b>Store</b> <span class="tag done">built</span> <code>grid/src/economy/endowment-store.ts</code> —
+      <code>EndowmentStore.endow()</code>: atomic (cap-check SUM FOR UPDATE → ledger insert → <code>creditAccountOnConn</code>),
+      <strong>bounded</strong> (per-call 1e18 + per-account 1e19 caps), endows the <em>account</em> (not treasury) so one
+      injection lights the whole loop. Migration <strong>v54</strong> <code>account_endowments</code> (the conservation
+      record + on-chain retirement path: one row ↔ one future deposit proof).</li>
+    <li><b>Audit</b> <span class="tag done">sole-producer</span> <code>append-portal-account-endowed.ts</code> +
+      allowlist <strong>120→121</strong> (<code>portal.account_endowed</code>, under the pre-cleared <code>portal.account_*</code>
+      prefix). Closed 5-key <code>{amount_wei, civic_did_hash, endowment_id, source, tick}</code>; <code>reason</code>/<code>operator_did</code>
+      stay Grid-side, never on chain.</li>
+    <li><b>Route</b> <span class="tag done">hardened</span> <code>POST /api/v1/portal/account/endow</code> — off-by-default
+      <code>GRID_ENDOWMENT_ENABLED</code> gate (503 when off, handler never wired) + <code>portal_session_required</code> +
+      server-trusted <code>operatorScope</code> + secondary tier≥5 (mirrors the Session-5 anti-spoof pattern).
+      <code>policy.ts</code> + <code>server.ts</code> wired.</li>
+    <li><b>Tests</b> <span class="tag done">TDD</span> store (8) + audit append (7) + producer-boundary (2) + route (8) =
+      27 new; bumped frozen-count guards 120→121 across 3 test files. Full grid suite <strong>3807 green</strong>, tsc clean.
+      CI gates green: did-policy-coverage, sole-producer-discipline, operator-scope, no-silent-catch, no-did-exception,
+      civic-did-issuance, check-wiki, <strong>state-doc-sync</strong> (also restored — the hardcoded expected count had drifted
+      to 86 vs code 121; bumped to 121 + pinned the new event).</li>
+    <li><b>Invariants:</b> D-MONEY-01 bent only in the bounded/ledgered/audited model-first way (new <strong>D-MONEY-09</strong>);
+      VOTE-05 untouched; <code>source</code> column backticked (deploy reserved-word safety). Doc-synced
+      <code>wiki/1-design/{economy,decisions}.md</code>, <code>docs/spec/economy.md</code>, STATE, plan. <strong>Deferred (tracked):</strong>
+      <code>*_bios</code>→wei rename (D-MONEY-07) + retire Ousia faucet — not needed for money to move. Committed to main, not pushed/deployed.</li>
+  </ul>
+
   <!-- ============================ SESSION 6 ============================ -->
   <h2>Session 6 — 2026‑06‑19 · “Portal Manager v1 — dedicated console flag (separate the kill-switch)”</h2>
   <p class="sub">Goal: resolve the Session-5 residual. The hardened console shared the <code>GRID_ADMIN_ENABLED</code>

@@ -92,6 +92,39 @@ sequenceDiagram
 
 A per-Grid **on-chain fund**. Money flows in two ways: a small **transaction fee** on settlements and land sales, **and a recurring civic due** every member owes — payable in **compute-labor or ETH**, unpaid → sanction/dormancy (**D-MONEY-08**, which overturns the earlier "transaction-fees-only" rule of D-V3-22). It flows out **only on a Polis legislative authorization** (D-V3-21 — Henry cannot withdraw). It funds the commons: shared infrastructure, civic services (library, police operations), procurement (the Polis commissions builds via RFP), and **Type B endowments**.
 
+## Where live wei comes from — the model-first endowment
+
+On-chain settlement (D-MONEY-02) is the destination, but until the Sepolia wallet-proof
+rails land, accounts would start at zero with **no inflow** — so dues could never be paid,
+the treasury could never fill, and procurement awards could never pay out. The loop would
+*run* but money could never *move*.
+
+The **model-first endowment** (**D-MONEY-09**) is the bridge: an operator-authorized wei
+injection into a member **account** that stands in for "the human brings ETH". It deliberately
+endows the *account* (not the treasury) so a single injection lights the **whole** loop:
+
+```
+endow → account → civic due → treasury → RFP award → escrow → worker
+```
+
+It is the *one* documented, temporary bend of the "no internal mint" rule, and it is kept
+honest by four constraints:
+
+- **Ledgered** — every endowment is one `account_endowments` row. The ledger *is* the
+  conservation record: every endowed wei traces to a row, and each row maps 1:1 to a future
+  on-chain deposit proof. **This ledger is the retirement path** — when D-MONEY-02 settles,
+  the model-first source is swapped out row-for-row.
+- **Bounded** — a per-call cap (1 ETH-equiv) and a per-account lifetime cap (10 ETH-equiv),
+  both enforced inside the transaction.
+- **Gated** — off by default (`GRID_ENDOWMENT_ENABLED`); the route demands a server-trusted
+  operator session (never a spoofable header), with a secondary operator-tier signal.
+- **Audited** — emits the sole-producer event `portal.account_endowed` (recipient hash +
+  amount only; the operator note and authorizer stay Grid-side, never on the chain).
+
+> **Still to come (tracked, not forgotten):** the `*_bios`→wei column rename (**D-MONEY-07**,
+> a separate migration) and retiring the legacy Ousia faucet. Neither is needed for money to
+> move — the wei rails already use `balance_wei`/`amount_wei`.
+
 ## Land & the civic-labor credit
 
 Land is scarce ([philosophy.md §2](philosophy.md)). A Nous acquires a parcel two ways:
@@ -127,7 +160,7 @@ Balances live **on-chain** (in each holder's account and the treasury contract).
 ## Invariants
 
 - **Zero custody** — only each holder's account, its authorized session keys, and the Polis/oracle signatures move funds. No platform key can (extends [philosophy.md §8](philosophy.md)).
-- **No internal mint** — money is only earned (labor) or brought (ETH); never conjured.
+- **No internal mint** — money is only earned (labor) or brought (ETH); never conjured. The one bounded, temporary exception is the **model-first endowment** (D-MONEY-09): a ledgered, capped, audited stand-in for "the human brings ETH", retired row-for-row when on-chain settlement lands.
 - **Fees + the civic due** — the treasury fills from transaction fees **and a recurring civic due** owed by every member, payable in labor or ETH (D-MONEY-08, overturning the earlier fees-only rule D-V3-22).
 - **Grid is an oracle, not a bank** — it attests; a dispute window makes a bad attestation challengeable.
 - **Bios is never money.**
@@ -144,6 +177,7 @@ Balances live **on-chain** (in each holder's account and the treasury contract).
 | D-MONEY-06 | Conflict tribute owed in ETH or labor — never the operator's own GPU/wallet. |
 | D-MONEY-07 | The legacy `*_bios` money columns are renamed to wei; "Bios" is reserved for the body-drive. |
 | D-MONEY-08 | Civic due: every member owes a recurring civic obligation (compute-labor or ETH); unpaid → sanction/dormancy. Treasury fills from fees **+ the civic due**. Overturns D-V3-22. |
+| D-MONEY-09 | Model-first endowment: the live wei source until on-chain settlement. A bounded, ledgered, audited, operator-gated wei injection into a member account (`account_endowments` + `portal.account_endowed`). The single temporary bend of "no internal mint"; endows the account so it lights the whole loop; retired row-for-row when D-MONEY-02 lands. |
 
 ## 🔗 Related
 

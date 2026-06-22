@@ -4,6 +4,8 @@
 
 **Status:** design locked 2026-06-15 · **not started** · proposed milestone **v3.2 Money**.
 
+> **Precursor landed 2026-06-22 — model-first endowment (D-MONEY-09).** Ahead of these on-chain phases, the **live wei source** shipped as a bounded, ledgered, audited, operator-gated in-DB endowment (`EndowmentStore` + migration v54 `account_endowments` + `portal.account_endowed`). It is the *temporary* stand-in for "the human brings ETH" and the **retirement target** of Phase 62–63 below: when on-chain settlement lands, each `account_endowments` row maps 1:1 to a real Sepolia deposit proof and the model-first source is retired row-for-row. The `*_bios`→wei rename (D-MONEY-07) and retiring the legacy Ousia faucet remain part of this migration (not yet done).
+
 ## Phases (proposed — v3.2, Phases 62–66)
 
 Phase numbering continues from v3.1 Nous House (last shipped Phase 61). Each phase ships its wiki + audit-allowlist updates in the same commit.

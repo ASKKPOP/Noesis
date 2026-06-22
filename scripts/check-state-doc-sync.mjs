@@ -235,7 +235,10 @@ function checkAllowlistCount() {
   const text = readFileSync(allowlistPath, 'utf8');
 
   // Count quoted entries in ALLOWLIST_MEMBERS (each on its own line, starting with leading whitespace + quote).
-  // Phase 46 target: 81 members (Phase 44 +4 market.* = 72 → Phase 45 +3 irs.* = 75 → Phase 46 +6 gov.* = 81).
+  // Current target: 121 members. Growth since Phase 48b (86): the Economic Reality Loop +
+  // Organs + Loop-Wiring programs (parallel, Phases 80+) added L1b due.* (107→110), L2b
+  // procurement.* (110→116), L3b orbital.object_built (117), O2b human.approval.* (118→120),
+  // and W4 portal.account_endowed (121, D-MONEY-09 model-first endowment).
   const arrayMatch = text.match(/export const ALLOWLIST_MEMBERS:[^=]*=\s*\[([\s\S]*?)\] as const;/);
   if (!arrayMatch) {
     failures.push('checkAllowlistCount: could not locate ALLOWLIST_MEMBERS array literal in broadcast-allowlist.ts');
@@ -243,12 +246,12 @@ function checkAllowlistCount() {
   }
   const arrayBody = arrayMatch[1];
   const members = arrayBody.match(/^\s+'[a-z][a-z0-9_.]+'/gm) ?? [];
-  if (members.length !== 86) {
+  if (members.length !== 121) {
     failures.push(
-      `ALLOWLIST_MEMBERS count mismatch: expected 86 entries, found ${members.length}.\n` +
-      `  Phase 45 IRS-04 adds 3 irs.* (72 → 75); Phase 46 CIVGOV-06 adds 6 gov.* (75 → 81);\n` +
-      `  Phase 48b LAND-01..05 adds 5 zoning.*/treasury.* (81 → 86).\n` +
-      `  Reference: docs/plans/2026-06-05-civic-land-and-property-design.md.`,
+      `ALLOWLIST_MEMBERS count mismatch: expected 121 entries, found ${members.length}.\n` +
+      `  Phase 48b reached 86; the Economic Reality Loop / Organs / Loop-Wiring programs grew it\n` +
+      `  to 120 (due.* / procurement.* / orbital.* / human.approval.*); W4 adds\n` +
+      `  portal.account_endowed (121, D-MONEY-09). Bump this literal + append below when extending.`,
     );
   }
 
@@ -281,6 +284,10 @@ function checkAllowlistCount() {
     }
   }
 
+  // W4 (D-MONEY-09): portal.account_endowed at position 121 (model-first endowment).
+  if (!text.includes("'portal.account_endowed'")) {
+    failures.push('ALLOWLIST_MEMBERS missing portal.account_endowed (W4 D-MONEY-09, position 121).');
+  }
   // Position-by-name checks for Phase 33's 3 entries (preserved).
   if (!text.includes("'portal.auth.login'")) {
     failures.push('ALLOWLIST_MEMBERS missing portal.auth.login (Phase 33 D-33-A1, position 54).');

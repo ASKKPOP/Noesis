@@ -1299,4 +1299,29 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS conversation_messages`,
     },
+    {
+        // W4 (D-MONEY-09) — model-first endowment ledger. Each row is one bounded,
+        // operator-authorized wei injection standing in for "the human brings ETH"
+        // until on-chain settlement (D-MONEY-02). The ledger is the conservation
+        // record + the retirement path (one row ↔ one future Sepolia deposit proof).
+        // reason/operator_did are Grid-side provenance only — never on the audit chain.
+        version: 54,
+        name: 'create_account_endowments',
+        up: `
+            CREATE TABLE IF NOT EXISTS account_endowments (
+                endowment_id  CHAR(36)      NOT NULL,
+                grid_name     VARCHAR(63)   NOT NULL,
+                civic_did     VARCHAR(255)  NOT NULL,
+                amount_wei    DECIMAL(65,0) NOT NULL,
+                source        VARCHAR(31)   NOT NULL DEFAULT 'model_first',
+                reason        VARCHAR(255)  NULL,
+                operator_did  VARCHAR(255)  NULL,
+                endowed_tick  BIGINT        NOT NULL,
+                created_at    BIGINT        NOT NULL,
+                PRIMARY KEY (endowment_id),
+                INDEX idx_account_endow (grid_name, civic_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS account_endowments`,
+    },
 ];

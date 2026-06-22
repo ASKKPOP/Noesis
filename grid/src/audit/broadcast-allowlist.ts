@@ -524,6 +524,16 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'human.approval_requested',  // (118)
     'human.approval_granted',    // (119)
     'human.approval_denied',     // (120)
+    // W4 (D-MONEY-09) — model-first endowment. Allowlist 120 → 121.
+    // A bounded, operator-authorized wei injection into a member account (the
+    // documented temporary bend of D-MONEY-01 "no internal mint"), under the
+    // CLAUDE.md pre-cleared portal.account_* prefix. The Grid-side ledger
+    // (account_endowments) carries reason + operator_did; the chain carries only
+    // the recipient hash + amount, so reason/operator_did NEVER cross the boundary.
+    // portal.account_endowed (121): actorDid = civic_did_hash (recipient).
+    //   sole-producer grid/src/audit/append-portal-account-endowed.ts
+    //   closed 5-key {amount_wei, civic_did_hash, endowment_id, source, tick}
+    'portal.account_endowed',    // (121)
 ] as const;
 
 /**

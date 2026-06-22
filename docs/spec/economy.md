@@ -98,6 +98,10 @@ Audit event: `irs.tax_collected`
 
 Audit events: `treasury.balance_updated` · `treasury.endowment_granted` · `treasury.stipend_paid` · `treasury.dormancy_entered` · `treasury.revived` · `irs.disbursement_authorized` · `irs.disbursement_executed`
 
+**EN — Model-first endowment (D-MONEY-09):** until on-chain settlement (D-MONEY-02) lands, the **live wei source** is a bounded, operator-authorized injection into a member **account** that stands in for "the human brings ETH". It is the *single, documented, temporary* bend of "no internal mint", kept honest by a per-row ledger (`account_endowments` — the conservation record + retirement path, one row ↔ one future deposit proof), per-call + per-account caps, an off-by-default gate (`GRID_ENDOWMENT_ENABLED`) + server-trusted operator auth, and a sole-producer audit event. Endowing the *account* (not the treasury) lights the whole loop: account → due → treasury → RFP award → escrow → worker. Route: `POST /api/v1/portal/account/endow`. Audit event: `portal.account_endowed`.
+
+**KO — 모델 우선 기부(D-MONEY-09):** 온체인 정산(D-MONEY-02)이 도입되기 전까지 **라이브 wei 출처**는 "인간이 ETH를 가져온다"를 대신하는, 운영자 승인 기반의 **한도가 정해진** 회원 **계정** 주입입니다. "무발행" 규칙의 *유일하고 문서화된 한시적* 우회이며, 행별 원장(`account_endowments` — 보존 기록 + 은퇴 경로, 한 행 ↔ 미래의 입금 증명 1건), 호출별·계정별 한도, 기본 비활성 게이트(`GRID_ENDOWMENT_ENABLED`) + 서버 신뢰 운영자 인증, 단일 생산자 감사 이벤트로 정직성을 보장합니다. (재무국이 아닌) *계정*에 기부하므로 전체 루프가 가동됩니다: 계정 → 회비 → 재무국 → RFP 발주 → 에스크로 → 작업자. 라우트: `POST /api/v1/portal/account/endow`. 감사 이벤트: `portal.account_endowed`.
+
 See also: [Civic Institutions](civic-institutions.html)
 
 ---

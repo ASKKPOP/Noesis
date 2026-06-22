@@ -56,8 +56,12 @@ const TARGETS = [
 //          re-pinning this SC#5 baseline — reconciled here.
 //          Phase 48b post-ship = 701 (LAND-01..05: +5 zoning.*/treasury.* members + comment block;
 //          approved in docs/plans/2026-06-05-civic-land-and-property-design.md).
+//          2026-06-22 = 880: the Economic Reality Loop / Organs / Loop-Wiring programs (Phases 80+,
+//          allowlist 86→120 via due.*/procurement.*/orbital.*/human.approval.*) + W4 model-first
+//          endowment (portal.account_endowed, 121, D-MONEY-09) grew the file via the sanctioned
+//          per-event allowlist-addition mechanism (CLAUDE.md) — re-pinned here.
 const ALLOWLIST_FILE = resolve(repoRoot, 'grid/src/audit/broadcast-allowlist.ts');
-const ALLOWLIST_BASELINE_LINES = 701;
+const ALLOWLIST_BASELINE_LINES = 880;
 
 let hadError = false;
 

@@ -493,8 +493,8 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
         await app.close();
     });
 
-    it('keeps skill.blueprint_executed present (allowlist 117 after L1b due.* + L2b procurement.* + L3b orbital.*)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(120);
+    it('keeps skill.blueprint_executed present (allowlist 121 after L1b due.* + L2b procurement.* + L3b orbital.* + O2b human.approval.* + W4 portal.account_endowed)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(121);
         expect(ALLOWLIST_MEMBERS).toContain('skill.blueprint_executed');
     });
 });
