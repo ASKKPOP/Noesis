@@ -501,6 +501,13 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'procurement.attested',      // (114)
     'procurement.settled',       // (115)
     'procurement.cancelled',     // (116)
+    // Economic Reality Loop · L3b (D-MONEY-08 / L3b) — NEW prefix orbital.*. Allowlist 116 → 117.
+    // The loop's final station: when a settled contract realizes a physical object, emit orbital.object_built.
+    // DIDs hashed (HEX64) like procurement.*; contract_id/object_id are UUIDs; amounts are decimal strings.
+    // orbital.object_built (117): sole-producer grid/src/audit/append-orbital-object-built.ts
+    //   closed 7-key {build_cost_wei, builder_did_hash, contract_id, function_type, object_id, output_rate, tick}
+    //   actorDid = builder_did_hash.
+    'orbital.object_built',      // (117)
 ] as const;
 
 /**

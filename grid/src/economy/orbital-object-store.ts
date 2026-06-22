@@ -9,9 +9,14 @@
  * not cosmetic sprites. Audit event (orbital.object_built) is wired in L3b; the
  * Grid-Viz render (L4) reads listObjects.
  */
+import { createHash } from 'node:crypto';
 import type { Pool, RowDataPacket } from 'mysql2/promise';
+import type { AuditChain } from '../audit/chain.js';
+import { appendOrbitalObjectBuilt } from '../audit/append-orbital-object-built.js';
 import { checkObjectPhysics, type ObjectPhysicsSpec } from './object-physics.js';
 import { type GridEnvironment, EARTH_ORBIT } from '../registry/grid-environments.js';
+
+const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
 
 /** Procurement-built objects belong to the commons (matches grid/src/api/routes/irs.ts). */
 const TREASURY_CIVIC_DID = 'did:civic:noesis:treasury';
@@ -23,11 +28,16 @@ export interface OrbitalObjectRow {
 }
 
 export class OrbitalObjectStore {
-    constructor(private readonly pool: Pool) {}
+    constructor(
+        private readonly pool: Pool,
+        private readonly audit?: AuditChain,
+    ) {}
 
     /** Realize a built object from a settled contract. Physics-gated; one per contract. */
     async createFromContract(p: { gridName: string; objectId: string; contractId: string; functionType: string; outputRate: bigint; physicsSpec: ObjectPhysicsSpec; zone: string; currentTick: number; env?: GridEnvironment }): Promise<void> {
         const conn = await this.pool.getConnection();
+        let winnerDid: string | undefined;
+        let awardWei: string | undefined;
         try {
             await conn.beginTransaction();
             const [contractRows] = await conn.query<RowDataPacket[]>(
@@ -59,12 +69,26 @@ export class OrbitalObjectStore {
                 [p.objectId, p.gridName, TREASURY_CIVIC_DID, String(contract.winner_did), String(contract.award_wei),
                  p.functionType, p.outputRate.toString(), JSON.stringify(p.physicsSpec), p.contractId, p.zone, p.currentTick, p.currentTick],
             );
+            winnerDid = String(contract.winner_did);
+            awardWei = String(contract.award_wei);
             await conn.commit();
         } catch (err) {
             try { await conn.rollback(); } catch { /* ignore rollback error */ }
             throw err;
         } finally {
             conn.release();
+        }
+        // Emit after commit + connection release — audit failure does NOT trigger rollback.
+        if (this.audit && winnerDid !== undefined && awardWei !== undefined) {
+            appendOrbitalObjectBuilt(this.audit, {
+                build_cost_wei: awardWei,
+                builder_did_hash: sha256Hex(winnerDid),
+                contract_id: p.contractId,
+                function_type: p.functionType,
+                object_id: p.objectId,
+                output_rate: p.outputRate.toString(),
+                tick: p.currentTick,
+            });
         }
     }
 

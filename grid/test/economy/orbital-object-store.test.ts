@@ -1,7 +1,9 @@
+import { createHash } from 'node:crypto';
 import { describe, it, expect, vi } from 'vitest';
 import type { Pool, PoolConnection, RowDataPacket } from 'mysql2/promise';
 import { MIGRATIONS } from '../../src/db/schema.js';
 import { OrbitalObjectStore } from '../../src/economy/orbital-object-store.js';
+import { AuditChain } from '../../src/audit/chain.js';
 
 describe('migration v51 — orbital_objects', () => {
     it('creates the orbital_objects table', () => {
@@ -64,5 +66,54 @@ describe('OrbitalObjectStore reads', () => {
         const list = await new OrbitalObjectStore(m.pool).listObjects('genesis');
         expect(list).toHaveLength(1);
         expect(m.calls()[0]).toContain('FROM orbital_objects');
+    });
+});
+
+// Valid UUIDs required by the emitter's closed-tuple guards.
+const CONTRACT_UUID = '33345678-1234-1234-1234-123456789abc';
+const OBJECT_UUID   = '44445678-1234-1234-1234-123456789abc';
+
+function auditArgs(over = {}) {
+    return { gridName: 'genesis', objectId: OBJECT_UUID, contractId: CONTRACT_UUID, functionType: 'Energy', outputRate: 120n, physicsSpec: validSpec, zone: 'infrastructure', currentTick: 10, ...over };
+}
+
+describe('OrbitalObjectStore.createFromContract — L3b audit emit', () => {
+    it('emits orbital.object_built with hashed builder DID when AuditChain is provided', async () => {
+        const winnerDid = 'did:civic:noesis:builder-x';
+        const m = makeMockPool([
+            rows([{ status: 'settled', winner_did: winnerDid, award_wei: '4000' }]),
+            rows([]),
+            [{}, {}],
+        ]);
+        const chain = new AuditChain();
+        const appendSpy = vi.spyOn(chain, 'append');
+        await new OrbitalObjectStore(m.pool, chain).createFromContract(auditArgs());
+        expect(appendSpy).toHaveBeenCalledOnce();
+        const call = appendSpy.mock.calls[0];
+        expect(call[0]).toBe('orbital.object_built');
+        // actorDid must be sha256(winnerDid)
+        const expectedHash = createHash('sha256').update(winnerDid).digest('hex');
+        expect(call[1]).toBe(expectedHash);
+        // payload fields
+        const payload = call[2] as Record<string, unknown>;
+        expect(payload.builder_did_hash).toBe(expectedHash);
+        expect(payload.build_cost_wei).toBe('4000');
+        expect(payload.contract_id).toBe(CONTRACT_UUID);
+        expect(payload.object_id).toBe(OBJECT_UUID);
+        expect(payload.function_type).toBe('Energy');
+        expect(payload.output_rate).toBe('120');
+        expect(payload.tick).toBe(10);
+    });
+
+    it('does NOT emit when no AuditChain is provided (default off — L3a tests unaffected)', async () => {
+        const m = makeMockPool([
+            rows([{ status: 'settled', winner_did: 'did:civic:noesis:builder-y', award_wei: '4000' }]),
+            rows([]),
+            [{}, {}],
+        ]);
+        // No audit passed — uses original test-style args (non-UUID ids) to show compatibility
+        await new OrbitalObjectStore(m.pool).createFromContract(args());
+        // No throw, no emit needed — just verify the commit happened
+        expect(m.conn.commit).toHaveBeenCalled();
     });
 });
