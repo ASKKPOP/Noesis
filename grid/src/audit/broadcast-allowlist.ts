@@ -474,6 +474,33 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'due.assessed',     // (108)
     'due.paid',         // (109)
     'due.delinquent',   // (110)
+    // Economic Reality Loop · L2b (D-MONEY-08 / L2b) — NEW prefix procurement.*. Allowlist 110 → 116.
+    // RFP pipeline: the Polis commissions builds with the treasury. DIDs/refs hashed (HEX64);
+    // notice_id/bid_id/contract_id are UUIDs; amounts are decimal digit strings.
+    // procurement.notice_issued (111): sole-producer grid/src/audit/append-procurement-notice-issued.ts
+    //   closed 5-key {budget_wei, function_type, notice_id, polis_authorization_ref_hash, tick, zone}
+    //   actorDid = polis_authorization_ref_hash (HEX64 hash of the Polis legislative act).
+    // procurement.bid_placed (112): sole-producer grid/src/audit/append-procurement-bid-placed.ts
+    //   closed 5-key {bid_id, bidder_did_hash, notice_id, price_wei, tick}
+    //   actorDid = bidder_did_hash.
+    // procurement.awarded (113): sole-producer grid/src/audit/append-procurement-awarded.ts
+    //   closed 5-key {award_wei, contract_id, notice_id, tick, winner_did_hash}
+    //   actorDid = winner_did_hash.
+    // procurement.attested (114): sole-producer grid/src/audit/append-procurement-attested.ts
+    //   closed 3-key {attestation_ref_hash, contract_id, tick}
+    //   actorDid = attestation_ref_hash.
+    // procurement.settled (115): sole-producer grid/src/audit/append-procurement-settled.ts
+    //   closed 4-key {award_wei, contract_id, tick, winner_did_hash}
+    //   actorDid = winner_did_hash.
+    // procurement.cancelled (116): sole-producer grid/src/audit/append-procurement-cancelled.ts
+    //   closed 3-key {notice_id, reason, tick}
+    //   actorDid = notice_id.
+    'procurement.notice_issued', // (111)
+    'procurement.bid_placed',    // (112)
+    'procurement.awarded',       // (113)
+    'procurement.attested',      // (114)
+    'procurement.settled',       // (115)
+    'procurement.cancelled',     // (116)
 ] as const;
 
 /**

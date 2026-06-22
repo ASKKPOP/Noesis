@@ -8,12 +8,12 @@ import {
 } from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast-allowlist: default-deny membership', () => {
-    it('has exactly 91 locked v1..Phase 48b + human civic application (2026-06-10) event types', () => {
-        expect(ALLOWLIST.size).toBe(110);
+    it('has exactly 116 locked v1..Phase 48b + human civic application + L2b procurement.* event types', () => {
+        expect(ALLOWLIST.size).toBe(116);
     });
 
-    it('has frozen 81-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(110);
+    it('has frozen 116-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(116);
     });
 
     it.each([
@@ -92,7 +92,7 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(() => (ALLOWLIST as Set<string>).add('law.bypassed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).delete('trade.reviewed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).clear()).toThrow(TypeError);
-        expect(ALLOWLIST.size).toBe(110);
+        expect(ALLOWLIST.size).toBe(116);
     });
 
     it('Phase 6 operator.* tuple order: inspected < paused < resumed < law_changed < telos_forced', () => {
@@ -222,7 +222,7 @@ describe('broadcast-allowlist: Phase 6 operator.* payload privacy (representativ
 
 describe('ALLOWLIST_MEMBERS Phase 42 (Plan 03)', () => {
     it('has count 81 after Phase 46 adds gov.* events (Phase 42 added p2p.*, Phase 43 added operator.nous_forked)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(110);
+        expect(ALLOWLIST_MEMBERS.length).toBe(116);
     });
     it('includes p2p.peer_announced at position 65 (index 64)', () => {
         expect(ALLOWLIST_MEMBERS[64]).toBe('p2p.peer_announced');
@@ -240,7 +240,7 @@ describe('ALLOWLIST_MEMBERS Phase 42 (Plan 03)', () => {
 
 describe('ALLOWLIST_MEMBERS Phase 43 (Plan 01 — FORK-04)', () => {
     it('has count 81 after Phase 46 adds gov.* events (Phase 43 base was 68)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(110);
+        expect(ALLOWLIST_MEMBERS.length).toBe(116);
     });
     it('includes operator.nous_forked at position 68 (index 67)', () => {
         expect(ALLOWLIST_MEMBERS[67]).toBe('operator.nous_forked');
@@ -255,7 +255,7 @@ describe('ALLOWLIST_MEMBERS Phase 44 (Plan 01 — MKT-06 / D-44-01 / D-44-03)', 
     // This combined assertion is ACTIVE and will FAIL until Plan 03 adds the 4 market.* entries
     // to ALLOWLIST_MEMBERS, growing the array from 68 to 72. Plan 03 turns it GREEN.
     it('Phase 44 allowlist grows to 72 with 4 market.* additions — market.listing_created, market.bid_placed, market.settled, market.disputed (FAILS until Plan 03 — D-44-01)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(110);
+        expect(ALLOWLIST_MEMBERS.length).toBe(116);
         expect(ALLOWLIST_MEMBERS).toContain('market.listing_created');
         expect(ALLOWLIST_MEMBERS).toContain('market.bid_placed');
         expect(ALLOWLIST_MEMBERS).toContain('market.settled');
@@ -352,7 +352,7 @@ describe('broadcast-allowlist: payloadPrivacyCheck', () => {
 
 describe('ALLOWLIST_MEMBERS Phase 45 (IRS-04)', () => {
     it('Phase 45 allowlist grows to 75 with 3 IRS additions (72 → 75)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(110);
+        expect(ALLOWLIST_MEMBERS.length).toBe(116);
         expect(ALLOWLIST_MEMBERS).toContain('irs.tax_collected');
         expect(ALLOWLIST_MEMBERS).toContain('irs.disbursement_authorized');
         expect(ALLOWLIST_MEMBERS).toContain('irs.disbursement_executed');
@@ -383,7 +383,7 @@ describe('ALLOWLIST_MEMBERS Phase 46 (CIVGOV-06)', () => {
     // Phase 46 D-46 / numbering reconciliation: ROADMAP literal "74 → 80" is stale
     // (Phase 45 actually shipped at 75). Correct delta is +6 → 75 → 81.
     it('Phase 46 allowlist grows to 81 with 6 gov.* additions (75 → 81)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(110);
+        expect(ALLOWLIST_MEMBERS.length).toBe(116);
         expect(ALLOWLIST_MEMBERS).toContain('gov.bill_drafted');
         expect(ALLOWLIST_MEMBERS).toContain('gov.bill_cosponsored');
         expect(ALLOWLIST_MEMBERS).toContain('gov.session_opened');
@@ -425,7 +425,7 @@ describe('ALLOWLIST_MEMBERS Phase 46 (CIVGOV-06)', () => {
 
 describe('ALLOWLIST_MEMBERS Phase 48b (LAND-01..05) — Civic Land & Property', () => {
     it('Phase 48b allowlist grows to 86 with 5 zoning.*/treasury.* additions (81 → 86)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(110);
+        expect(ALLOWLIST_MEMBERS.length).toBe(116);
     });
     it('the 5 new members are present', () => {
         for (const e of [
@@ -523,5 +523,49 @@ describe('ALLOWLIST_MEMBERS L1b (D-MONEY-08) — due.* civic due events', () => 
         expect(idx('tool.invoked')).toBeLessThan(idx('due.assessed'));
         expect(idx('due.assessed')).toBeLessThan(idx('due.paid'));
         expect(idx('due.paid')).toBeLessThan(idx('due.delinquent'));
+    });
+});
+
+describe('ALLOWLIST_MEMBERS L2b (D-MONEY-08 / L2b) — procurement.* RFP events', () => {
+    // L2b: Allowlist 110 → 116 (+6 procurement.* events).
+    it.each([
+        'procurement.notice_issued',
+        'procurement.bid_placed',
+        'procurement.awarded',
+        'procurement.attested',
+        'procurement.settled',
+        'procurement.cancelled',
+    ])('allowlists %s', (e) => {
+        expect(isAllowlisted(e)).toBe(true);
+    });
+
+    it('procurement.notice_issued is at position 111 (index 110)', () => {
+        expect(ALLOWLIST_MEMBERS[110]).toBe('procurement.notice_issued');
+    });
+    it('procurement.bid_placed is at position 112 (index 111)', () => {
+        expect(ALLOWLIST_MEMBERS[111]).toBe('procurement.bid_placed');
+    });
+    it('procurement.awarded is at position 113 (index 112)', () => {
+        expect(ALLOWLIST_MEMBERS[112]).toBe('procurement.awarded');
+    });
+    it('procurement.attested is at position 114 (index 113)', () => {
+        expect(ALLOWLIST_MEMBERS[113]).toBe('procurement.attested');
+    });
+    it('procurement.settled is at position 115 (index 114)', () => {
+        expect(ALLOWLIST_MEMBERS[114]).toBe('procurement.settled');
+    });
+    it('procurement.cancelled is at position 116 (index 115)', () => {
+        expect(ALLOWLIST_MEMBERS[115]).toBe('procurement.cancelled');
+    });
+
+    it('procurement.* entries appear in order after due.delinquent', () => {
+        const members = Array.from(ALLOWLIST);
+        const idx = (k: string): number => members.indexOf(k);
+        expect(idx('due.delinquent')).toBeLessThan(idx('procurement.notice_issued'));
+        expect(idx('procurement.notice_issued')).toBeLessThan(idx('procurement.bid_placed'));
+        expect(idx('procurement.bid_placed')).toBeLessThan(idx('procurement.awarded'));
+        expect(idx('procurement.awarded')).toBeLessThan(idx('procurement.attested'));
+        expect(idx('procurement.attested')).toBeLessThan(idx('procurement.settled'));
+        expect(idx('procurement.settled')).toBeLessThan(idx('procurement.cancelled'));
     });
 });

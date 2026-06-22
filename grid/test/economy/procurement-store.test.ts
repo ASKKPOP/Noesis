@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import type { Pool, PoolConnection, RowDataPacket } from 'mysql2/promise';
 import { MIGRATIONS } from '../../src/db/schema.js';
 import { ProcurementStore } from '../../src/economy/procurement-store.js';
+import { AuditChain } from '../../src/audit/chain.js';
 
 describe('migration v50 — procurement tables', () => {
     it('creates notices, bids, contracts', () => {
@@ -93,5 +94,82 @@ describe('ProcurementStore', () => {
         await new ProcurementStore(m.pool).cancelNotice({ gridName: 'g', noticeId: 'n1', currentTick: 10 });
         expect(m.calls().join('\n')).toContain("status = 'cancelled'");
         expect(m.conn.commit).toHaveBeenCalled();
+    });
+});
+
+describe('ProcurementStore — audit emit wiring (L2b)', () => {
+    const NOTICE_ID = '12345678-1234-1234-1234-123456789abc';
+    const BID_ID = '22345678-1234-1234-1234-123456789abc';
+    const CONTRACT_ID = '33345678-1234-1234-1234-123456789abc';
+    const ESCROW_ID = '44345678-1234-1234-1234-123456789abc';
+
+    it('issueNotice emits procurement.notice_issued when audit is wired', async () => {
+        const m = makeMockPool([[{}, {}]]);
+        const chain = new AuditChain();
+        const spy = vi.spyOn(chain, 'append');
+        await new ProcurementStore(m.pool, chain).issueNotice({
+            gridName: 'g', noticeId: NOTICE_ID, polisAuthorizationRef: 'law:1',
+            title: 'Energy module', spec: 's', budgetWei: 5000n,
+            zone: 'infrastructure', functionType: 'power', deadlineTick: 100, currentTick: 1,
+        });
+        expect(spy).toHaveBeenCalledWith('procurement.notice_issued', expect.any(String), expect.objectContaining({ notice_id: NOTICE_ID, budget_wei: '5000' }));
+    });
+
+    it('issueNotice does NOT emit when audit is absent', async () => {
+        const m = makeMockPool([[{}, {}]]);
+        // no audit → no throw, no spyable chain
+        await expect(new ProcurementStore(m.pool).issueNotice({
+            gridName: 'g', noticeId: NOTICE_ID, polisAuthorizationRef: 'law:1',
+            title: 'T', spec: 's', budgetWei: 1n, zone: 'z', functionType: 'f', deadlineTick: 10, currentTick: 1,
+        })).resolves.toBeUndefined();
+    });
+
+    it('placeBid emits procurement.bid_placed when audit is wired', async () => {
+        const m = makeMockPool([rows([{ status: 'open', deadline_tick: 100 }]), [{}, {}]]);
+        const chain = new AuditChain();
+        const spy = vi.spyOn(chain, 'append');
+        await new ProcurementStore(m.pool, chain).placeBid({
+            gridName: 'g', bidId: BID_ID, noticeId: NOTICE_ID,
+            bidderDid: 'did:noesis:nous:alice', priceWei: 4000n, artifactSpec: '{}', currentTick: 5,
+        });
+        expect(spy).toHaveBeenCalledWith('procurement.bid_placed', expect.any(String), expect.objectContaining({ bid_id: BID_ID, notice_id: NOTICE_ID }));
+    });
+
+    it('award emits procurement.awarded when audit is wired', async () => {
+        const m = makeMockPool([
+            rows([{ status: 'open', budget_wei: '5000' }]),
+            rows([{ status: 'submitted', price_wei: '4000', notice_id: NOTICE_ID, bidder_did: 'did:noesis:nous:builder' }]),
+            rows([{ balance_wei: '8000' }]), [{}, {}], [{}, {}], [{}, {}], [{}, {}], [{}, {}],
+        ]);
+        const chain = new AuditChain();
+        const spy = vi.spyOn(chain, 'append');
+        await new ProcurementStore(m.pool, chain).award({
+            gridName: 'g', noticeId: NOTICE_ID, bidId: BID_ID,
+            contractId: CONTRACT_ID, escrowId: ESCROW_ID, currentTick: 7,
+        });
+        expect(spy).toHaveBeenCalledWith('procurement.awarded', expect.any(String), expect.objectContaining({ contract_id: CONTRACT_ID, notice_id: NOTICE_ID, award_wei: '4000' }));
+    });
+
+    it('settleContract emits procurement.attested then procurement.settled when audit is wired', async () => {
+        const m = makeMockPool([rows([{ status: 'active', winner_did: 'did:noesis:nous:builder', award_wei: '4000', escrow_id: ESCROW_ID }]), [{}, {}], [{}, {}], [{}, {}]]);
+        const chain = new AuditChain();
+        const spy = vi.spyOn(chain, 'append');
+        await new ProcurementStore(m.pool, chain).settleContract({
+            gridName: 'g', contractId: CONTRACT_ID, attestationRef: 'att:1', currentTick: 9,
+        });
+        const calls = spy.mock.calls.map((c) => c[0]);
+        expect(calls).toContain('procurement.attested');
+        expect(calls).toContain('procurement.settled');
+        expect(calls.indexOf('procurement.attested')).toBeLessThan(calls.indexOf('procurement.settled'));
+    });
+
+    it('cancelNotice emits procurement.cancelled when audit is wired', async () => {
+        const m = makeMockPool([rows([{ status: 'open' }]), [{}, {}]]);
+        const chain = new AuditChain();
+        const spy = vi.spyOn(chain, 'append');
+        await new ProcurementStore(m.pool, chain).cancelNotice({
+            gridName: 'g', noticeId: NOTICE_ID, currentTick: 10,
+        });
+        expect(spy).toHaveBeenCalledWith('procurement.cancelled', NOTICE_ID, expect.objectContaining({ notice_id: NOTICE_ID, reason: 'withdrawn' }));
     });
 });
