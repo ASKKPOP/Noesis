@@ -1256,4 +1256,28 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS orbital_objects`,
     },
+    {
+        version: 52,
+        name: 'create_pending_approvals',
+        up: `
+            CREATE TABLE IF NOT EXISTS pending_approvals (
+                approval_id   CHAR(36)      NOT NULL,
+                grid_name     VARCHAR(63)   NOT NULL,
+                nous_did      VARCHAR(255)  NOT NULL,
+                human_did     VARCHAR(255)  NOT NULL,
+                kind          VARCHAR(63)   NOT NULL,
+                summary       TEXT          NOT NULL,
+                payload       TEXT          NOT NULL,
+                status        ENUM('pending','approved','rejected','expired') NOT NULL DEFAULT 'pending',
+                created_tick  BIGINT        NOT NULL,
+                deadline_tick BIGINT        NOT NULL,
+                resolved_tick BIGINT        NULL,
+                created_at    BIGINT        NOT NULL,
+                updated_at    BIGINT        NOT NULL,
+                PRIMARY KEY (approval_id),
+                INDEX idx_human_pending (grid_name, human_did, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS pending_approvals`,
+    },
 ];
