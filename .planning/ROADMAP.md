@@ -102,6 +102,10 @@ Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reali
   - ⏳ O2c-b human-facing chat routes (Portal auth + ownership) · O2-trigger (gate a real trade — policy decision) · O1b persistent task scheduler · O3 "Forest" phone↔Nous · O4 world-map street-view.
 - ⏳ **Horizon H1 (Moon/Mars grids — `GridEnvironment` already makes them configs).**
 
+- 🟡 **Wiring / "make it RUN" (Phase 88+) — IN PROGRESS** (from the 2nd deep-scan "what we lost": the loop was built but inert — stores orphaned, no driver, no routes, legacy Ousia still live):
+  - ✅ **W1+W2 first running vertical — live civic-due flow** (2026-06-21): `civic-due-driver.ts` (`runDueAssessment`/`runDueDelinquencySweep`, fire-and-forget, never-throws, model-first amounts) wired into the launcher's existing `clock.onTick` (period-boundary assess + every-60-tick delinquency, guarded on `_pool`, single-subscription preserved); routes `GET /api/v1/civic/dues` + `POST /api/v1/civic/dues/:id/pay` (member pays only its own due; wei|labor; 402/409/403/404/400/503). **De-orphans `CivicDueStore` + (via pay) the wei rails.** A live grid now emits `due.assessed` autonomously + members can pay. Review ✅ (single onTick, never-throws, ownership). 677 tests green, tsc clean, allowlist +0. Commits `0f2b11e`,`eb9d5ed`,`6956821`.
+  - ⏳ **W3** Brain economic awareness (ActionTypes + prompt so a Nous *chooses* to pay/bid) · **W4** money cutover (seed wei live — model-first endowment vs on-chain wallet-proof; `*_bios`→wei rename; retire Ousia faucet) · wire the rest (RFP/approval/conversation routes + drivers). **NOTE: treasury only fills once payers hold wei — W4 is the gating decision.**
+
 ---
 
 ## Milestones
