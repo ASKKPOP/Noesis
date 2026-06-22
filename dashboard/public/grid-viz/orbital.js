@@ -499,5 +499,145 @@ addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
 });
 
+/* ──────────────────────────────────────────────────────────────────────────
+ * L4 — render REAL, economy-built, physics-gated objects from the Grid backend.
+ * Fully additive + guarded: any failure (static host 404, network error,
+ * empty result) leaves the existing local simulation exactly as-is.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Update the small source-label in the header.
+ * Reachable from the browser console for verification.
+ */
+function setSourceLabel(text) {
+  const el = document.getElementById('source');
+  if (el) el.textContent = text;
+}
+
+/**
+ * Replace the procedural fleet with REAL backend objects.
+ * Reuses the existing per-function type descriptor (form + colour) and zone
+ * placement — same mesh pipeline as placeObject(), but skips the local
+ * physics gate (objects already passed the on-chain gate server-side).
+ * Reachable from the browser console for verification.
+ */
+function renderBackendObjects(objects) {
+  // --- tear down the existing procedural fleet (mirrors evolveGeneration) ---
+  orbiters.forEach(o => scene.remove(o.holder));
+  for (let i = interactive.length - 1; i >= 0; i--) {
+    if (orbiterMeshes.has(interactive[i])) interactive.splice(i, 1);
+  }
+  orbiterMeshes.clear();
+  orbiters.length = 0;
+  rejectedCount = 0;
+  objCountEl.textContent = 0;
+  rejCountEl.textContent = 0;
+
+  // --- build a mesh per real object ---
+  objects.forEach((obj, i) => {
+    const fnName = obj.function_type || 'Compute';
+    const type = FUNCTIONS.find(f => f.fn === fnName) || FUNCTIONS[0];
+
+    // Resolve zone: prefer the real object's zone field, fall back to FN_ZONE.
+    const zoneId = obj.zone || FN_ZONE[fnName] || ZONES[i % ZONES.length].id;
+
+    const ringIdx = i % ringDefs.length;
+    const angle = (i / Math.max(objects.length, 1)) * Math.PI * 2;
+    const rd = ringDefs[ringIdx];
+
+    // Build a deterministic spec representative of the real object so
+    // makeShape / addFunctionDetail can produce the right form and colour.
+    const rnd = mulberry32(9000 + i);
+    const spec = makeSpec(type, rnd);
+
+    // Generate the design (Nous-visual pipeline) — same as placeObject.
+    const design = window.ObjectGen.generate(spec);
+    design.fn = type.fn;
+
+    const { g, mesh } = makeShape(design);
+    const stalk = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.12, 0.12, 5, 6),
+      new THREE.MeshBasicMaterial({ color: design.color, transparent: true, opacity: 0.5 })
+    );
+    stalk.position.y = -3.5;
+    g.add(stalk);
+
+    const holder = new THREE.Group();
+    holder.rotation.x = Math.PI / 2 + rd.rx;
+    holder.rotation.z = rd.rz;
+    holder.position.y = 6;
+    scene.add(holder);
+
+    // Format info-panel content to reveal the object is REAL.
+    const physLabel = obj.physics_spec
+      ? `✓ (mass ${obj.physics_spec.mass_kg ?? '?'} kg · alt ${obj.physics_spec.altitude_km ?? '?'} km)`
+      : '✓ gated';
+    const ownerShort = (obj.owner_did || '').replace('did:civic:noesis:', '') || obj.owner_did || '—';
+    const builderShort = (obj.builder_did || '').replace('did:civic:noesis:', '') || obj.builder_did || '—';
+
+    g.userData = {
+      kind: 'obj',
+      title: `${fnName} · real object`,
+      color: design.color,
+      rows: [
+        ['object_id',      obj.object_id   || '—'],
+        ['function_type',  fnName],
+        ['output_rate',    obj.output_rate != null ? `${obj.output_rate}` : '—'],
+        ['build_cost',     obj.build_cost_wei != null ? `${obj.build_cost_wei} wei` : '—'],
+        ['owner',          ownerShort],
+        ['builder',        builderShort],
+        ['zone',           zoneId],
+        ['physics',        physLabel],
+        ['source',         '✦ economy-built · real'],
+      ],
+    };
+
+    const o = {
+      holder, g, mesh, type, spec,
+      generation: 0,
+      ringIdx, R: rd.R, angle, zoneId,
+      spin:  0.003 + rnd() * 0.01,
+      orbit: 0.0012 + rnd() * 0.0016,
+      born:  orbiters.length,
+    };
+
+    holder.add(g);
+    orbiters.push(o);
+    interactive.push(mesh);
+    orbiterMeshes.add(mesh);
+  });
+
+  objCountEl.textContent = orbiters.length;
+  cacheCountEl.textContent = window.ObjectGen.stats().cacheHits;
+  rebuildFlows();
+  refreshBestFit();
+}
+
+/**
+ * Fire-and-forget startup loader.
+ * Attempts to fetch real objects from the Grid backend.
+ * Returns true if real objects were rendered, false on any failure.
+ * Fully guarded — the local sim is already on screen; a slow/failed fetch
+ * simply leaves it unchanged (no error is ever thrown to the caller).
+ */
+async function tryLoadBackendObjects() {
+  try {
+    const res = await fetch('/api/v1/orbital/objects?grid=genesis', { cache: 'no-store' });
+    if (!res.ok) return false;
+    const body = await res.json();
+    if (!body || !Array.isArray(body.objects) || body.objects.length === 0) return false;
+    renderBackendObjects(body.objects);
+    setSourceLabel(`backend: ${body.objects.length} real`);
+    return true;
+  } catch (_e) {
+    // static host / offline / parse error → keep local sim, zero console noise
+    return false;
+  }
+}
+
+// Fire-and-forget on startup — local sim is already rendered; this is additive only.
+tryLoadBackendObjects();
+
 // expose for quick debugging in the preview
-window.__noesis = { buildObject, orbiters, scene, enterZone, evolveGeneration, teachNewGrid, applySprite, ZONES };
+window.__noesis = { buildObject, orbiters, scene, enterZone, evolveGeneration, teachNewGrid, applySprite, ZONES,
+  renderBackendObjects, setSourceLabel, tryLoadBackendObjects };
