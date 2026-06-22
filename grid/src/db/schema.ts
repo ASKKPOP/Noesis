@@ -1148,4 +1148,27 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS civic_labor_credit`,
     },
+    {
+        version: 49,
+        name: 'create_civic_dues',
+        up: `
+            CREATE TABLE IF NOT EXISTS civic_dues (
+                due_id         CHAR(36)      NOT NULL,
+                grid_name      VARCHAR(63)   NOT NULL,
+                civic_did      VARCHAR(255)  NOT NULL,
+                period         VARCHAR(32)   NOT NULL,
+                amount_wei     DECIMAL(65,0) NOT NULL,
+                amount_credit  BIGINT        NOT NULL,
+                status         ENUM('assessed','paid','delinquent') NOT NULL DEFAULT 'assessed',
+                paid_in        ENUM('wei','labor') NULL,
+                due_tick       BIGINT        NOT NULL,
+                created_at     BIGINT        NOT NULL,
+                updated_at     BIGINT        NOT NULL,
+                PRIMARY KEY (due_id),
+                UNIQUE KEY uniq_member_period (grid_name, civic_did, period),
+                INDEX idx_grid_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS civic_dues`,
+    },
 ];

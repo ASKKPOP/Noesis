@@ -11,6 +11,7 @@
  * grants credit on its own. Allowlist +0 (earn/redeem audited by their callers).
  */
 import type { Pool, RowDataPacket } from 'mysql2/promise';
+import { earnCreditOnConn, redeemCreditOnConn } from './credit-ops.js';
 
 export class CivicLaborCreditStore {
     constructor(private readonly pool: Pool) {}
@@ -30,12 +31,7 @@ export class CivicLaborCreditStore {
         const conn = await this.pool.getConnection();
         try {
             await conn.beginTransaction();
-            await conn.query(
-                `INSERT INTO civic_labor_credit (grid_name, civic_did, credit_balance, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?)
-                 ON DUPLICATE KEY UPDATE credit_balance = credit_balance + VALUES(credit_balance), updated_at = VALUES(updated_at)`,
-                [params.gridName, params.civicDid, params.amount.toString(), params.currentTick, params.currentTick],
-            );
+            await earnCreditOnConn(conn, params);
             const [rows] = await conn.query<RowDataPacket[]>(
                 `SELECT credit_balance FROM civic_labor_credit WHERE grid_name = ? AND civic_did = ?`,
                 [params.gridName, params.civicDid],
@@ -56,22 +52,9 @@ export class CivicLaborCreditStore {
         const conn = await this.pool.getConnection();
         try {
             await conn.beginTransaction();
-            const [rows] = await conn.query<RowDataPacket[]>(
-                `SELECT credit_balance FROM civic_labor_credit WHERE grid_name = ? AND civic_did = ? FOR UPDATE`,
-                [params.gridName, params.civicDid],
-            );
-            const current = BigInt(rows[0]?.credit_balance ?? 0);
-            if (current < params.amount) {
-                await conn.rollback();
-                throw new Error('insufficient_credit');
-            }
-            await conn.query(
-                `UPDATE civic_labor_credit SET credit_balance = credit_balance - ?, updated_at = ?
-                 WHERE grid_name = ? AND civic_did = ?`,
-                [params.amount.toString(), params.currentTick, params.gridName, params.civicDid],
-            );
+            const newBalance = await redeemCreditOnConn(conn, params);
             await conn.commit();
-            return { newBalance: current - params.amount };
+            return { newBalance };
         } catch (err) {
             try { await conn.rollback(); } catch { /* ignore rollback error */ }
             throw err;
