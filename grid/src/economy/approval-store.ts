@@ -5,9 +5,21 @@
  * is stored Grid-side and executed by the caller ONLY after status='approved' —
  * this store never auto-executes. Resolve-once under SELECT ... FOR UPDATE.
  *
- * Audit events (human.approval_*) are O2b; the Portal chat channel is O2c.
+ * O2b: optional `audit?: AuditChain` dep — emits human.approval_* events via
+ * the sole-producer emitter FUNCTIONS (never audit.append directly). DIDs are
+ * hashed (SHA-256 HEX64) before crossing the audit boundary. Default off so
+ * O2a tests remain unaffected.
  */
+import { createHash } from 'node:crypto';
 import type { Pool, RowDataPacket } from 'mysql2/promise';
+import type { AuditChain } from '../audit/chain.js';
+import { appendHumanApprovalRequested } from '../audit/append-human-approval-requested.js';
+import { appendHumanApprovalGranted } from '../audit/append-human-approval-granted.js';
+import { appendHumanApprovalDenied } from '../audit/append-human-approval-denied.js';
+
+function sha256Hex(input: string): string {
+    return createHash('sha256').update(input).digest('hex');
+}
 
 export interface PendingApprovalRow {
     approval_id: string; grid_name: string; nous_did: string; human_did: string;
@@ -16,7 +28,10 @@ export interface PendingApprovalRow {
 }
 
 export class ApprovalStore {
-    constructor(private readonly pool: Pool) {}
+    constructor(
+        private readonly pool: Pool,
+        private readonly audit?: AuditChain,
+    ) {}
 
     /** A Nous requests human approval for a big-decision action (held as the payload). */
     async requestApproval(p: { gridName: string; approvalId: string; nousDid: string; humanDid: string; kind: string; summary: string; payload: unknown; deadlineTick: number; currentTick: number }): Promise<void> {
@@ -27,6 +42,15 @@ export class ApprovalStore {
              VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, NULL, ?, ?)`,
             [p.approvalId, p.gridName, p.nousDid, p.humanDid, p.kind, p.summary, JSON.stringify(p.payload), p.currentTick, p.deadlineTick, p.currentTick, p.currentTick],
         );
+        if (this.audit) {
+            appendHumanApprovalRequested(this.audit, {
+                approval_id: p.approvalId,
+                human_did_hash: sha256Hex(p.humanDid),
+                kind: p.kind,
+                nous_did_hash: sha256Hex(p.nousDid),
+                tick: p.currentTick,
+            });
+        }
     }
 
     /** The human's pending queue (for the Portal/Steward UI). */
@@ -61,10 +85,11 @@ export class ApprovalStore {
 
     private async resolve(gridName: string, approvalId: string, to: 'approved' | 'rejected' | 'expired', currentTick: number): Promise<void> {
         const conn = await this.pool.getConnection();
+        let humanDid: string | undefined;
         try {
             await conn.beginTransaction();
             const [rows] = await conn.query<RowDataPacket[]>(
-                `SELECT status FROM pending_approvals WHERE approval_id = ? AND grid_name = ? FOR UPDATE`,
+                `SELECT status, human_did FROM pending_approvals WHERE approval_id = ? AND grid_name = ? FOR UPDATE`,
                 [approvalId, gridName],
             );
             const row = rows[0];
@@ -72,6 +97,7 @@ export class ApprovalStore {
                 await conn.rollback();
                 throw new Error('approval_not_pending');
             }
+            humanDid = row.human_did as string;
             await conn.query(
                 `UPDATE pending_approvals SET status = '${to}', resolved_tick = ?, updated_at = ? WHERE approval_id = ?`,
                 [currentTick, currentTick, approvalId],
@@ -82,6 +108,23 @@ export class ApprovalStore {
             throw err;
         } finally {
             conn.release();
+        }
+        // Emit audit event after commit + connection released (O2b). Expiry emits nothing.
+        if (this.audit && humanDid !== undefined && (to === 'approved' || to === 'rejected')) {
+            const humanDidHash = sha256Hex(humanDid);
+            if (to === 'approved') {
+                appendHumanApprovalGranted(this.audit, {
+                    approval_id: approvalId,
+                    human_did_hash: humanDidHash,
+                    tick: currentTick,
+                });
+            } else {
+                appendHumanApprovalDenied(this.audit, {
+                    approval_id: approvalId,
+                    human_did_hash: humanDidHash,
+                    tick: currentTick,
+                });
+            }
         }
     }
 }

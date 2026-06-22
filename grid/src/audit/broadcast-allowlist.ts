@@ -508,6 +508,22 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   closed 7-key {build_cost_wei, builder_did_hash, contract_id, function_type, object_id, output_rate, tick}
     //   actorDid = builder_did_hash.
     'orbital.object_built',      // (117)
+    // O2b — human.approval.* audit events. Allowlist 117 → 120.
+    // Human-in-the-loop approval lifecycle (O2a ApprovalStore) on the tamper-evident chain.
+    // Privacy: only approval_id, kind, and SHA-256-hashed DIDs cross the boundary.
+    // The held action payload and summary NEVER cross the audit boundary.
+    // human.approval_requested (118): Nous asks for human approval. actorDid = nous_did_hash.
+    //   sole-producer grid/src/audit/append-human-approval-requested.ts
+    //   closed 5-key {approval_id, human_did_hash, kind, nous_did_hash, tick}
+    // human.approval_granted (119): Human approves the pending action. actorDid = human_did_hash.
+    //   sole-producer grid/src/audit/append-human-approval-granted.ts
+    //   closed 3-key {approval_id, human_did_hash, tick}
+    // human.approval_denied (120): Human rejects the pending action. actorDid = human_did_hash.
+    //   sole-producer grid/src/audit/append-human-approval-denied.ts
+    //   closed 3-key {approval_id, human_did_hash, tick}
+    'human.approval_requested',  // (118)
+    'human.approval_granted',    // (119)
+    'human.approval_denied',     // (120)
 ] as const;
 
 /**
