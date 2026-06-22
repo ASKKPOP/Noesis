@@ -204,6 +204,33 @@ export class ProcurementStore {
         }
     }
 
+    async listNotices(gridName: string, status = 'open'): Promise<RowDataPacket[]> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT notice_id, title, spec, budget_wei, zone, function_type, status, deadline_tick, polis_authorization_ref
+             FROM procurement_notices WHERE grid_name = ? AND status = ? ORDER BY deadline_tick ASC LIMIT 200`,
+            [gridName, status],
+        );
+        return rows;
+    }
+
+    async getNotice(gridName: string, noticeId: string): Promise<RowDataPacket | undefined> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT notice_id, title, spec, budget_wei, zone, function_type, status, deadline_tick
+             FROM procurement_notices WHERE grid_name = ? AND notice_id = ?`,
+            [gridName, noticeId],
+        );
+        return rows[0];
+    }
+
+    async listBids(gridName: string, noticeId: string): Promise<RowDataPacket[]> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT bid_id, bidder_did, price_wei, status
+             FROM procurement_bids WHERE grid_name = ? AND notice_id = ? ORDER BY created_at ASC LIMIT 200`,
+            [gridName, noticeId],
+        );
+        return rows;
+    }
+
     async cancelNotice(p: { gridName: string; noticeId: string; currentTick: number }): Promise<void> {
         const conn = await this.pool.getConnection();
         try {

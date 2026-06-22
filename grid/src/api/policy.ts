@@ -256,6 +256,13 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/civic/dues':                    'civic_did_required',
     'POST /api/v1/civic/dues/:dueId/pay':        'civic_did_required',
 
+    // W — Procurement member routes: members see open RFPs + place bids (VOTE-05 preserved).
+    // GET lists/detail are public-readable (anyone may browse open RFPs to decide whether to bid).
+    // POST bid requires civic_member tier (bidder = caller; no issue/award exposed here).
+    'GET /api/v1/procurement/notices':                          'public',
+    'GET /api/v1/procurement/notices/:noticeId':                'public',
+    'POST /api/v1/procurement/notices/:noticeId/bids':          'civic_did_required',
+
     // Phase 41 Sleep Cycle (SLEEP-01..05) — presence + inbox + queue-aware send.
     // All 6 routes registered explicitly per OBS-36-01.
     'POST /api/v1/civic/presence':        'civic_did_required', // Brain JWT heartbeat (T-41-01)
