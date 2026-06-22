@@ -1093,4 +1093,13 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS nous_accounts`,
     },
+    // F1b — Treasury wei: the civic commons fund in wei (DECIMAL(65,0) mirrors nous_accounts).
+    // ALTER TABLE because the civic_treasury table + genesis row already exist from v35.
+    // Allowlist +0 (callers emit audit events; this is a ledger primitive).
+    {
+        version: 46,
+        name: 'civic_treasury_add_balance_wei',
+        up: `ALTER TABLE civic_treasury ADD COLUMN balance_wei DECIMAL(65,0) NOT NULL DEFAULT 0`,
+        down: `ALTER TABLE civic_treasury DROP COLUMN balance_wei`,
+    },
 ];
