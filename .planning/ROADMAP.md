@@ -104,7 +104,14 @@ Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reali
 
 - 🟡 **Wiring / "make it RUN" (Phase 88+) — IN PROGRESS** (from the 2nd deep-scan "what we lost": the loop was built but inert — stores orphaned, no driver, no routes, legacy Ousia still live):
   - ✅ **W1+W2 first running vertical — live civic-due flow** (2026-06-21): `civic-due-driver.ts` (`runDueAssessment`/`runDueDelinquencySweep`, fire-and-forget, never-throws, model-first amounts) wired into the launcher's existing `clock.onTick` (period-boundary assess + every-60-tick delinquency, guarded on `_pool`, single-subscription preserved); routes `GET /api/v1/civic/dues` + `POST /api/v1/civic/dues/:id/pay` (member pays only its own due; wei|labor; 402/409/403/404/400/503). **De-orphans `CivicDueStore` + (via pay) the wei rails.** A live grid now emits `due.assessed` autonomously + members can pay. Review ✅ (single onTick, never-throws, ownership). 677 tests green, tsc clean, allowlist +0. Commits `0f2b11e`,`eb9d5ed`,`6956821`.
-  - ⏳ **W3** Brain economic awareness (ActionTypes + prompt so a Nous *chooses* to pay/bid) · **W4** money cutover (seed wei live — model-first endowment vs on-chain wallet-proof; `*_bios`→wei rename; retire Ousia faucet) · wire the rest (RFP/approval/conversation routes + drivers). **NOTE: treasury only fills once payers hold wei — W4 is the gating decision.**
+  - ✅ **Overnight autonomous wiring (2026-06-21 night, LOCAL branch `night/loop-wiring` — NOT pushed; for morning review):** de-orphaned every economy store with HTTP routes + gave the Brain economic awareness + a self-driving RFP issuer, all invariant-safe (no wei mint). Reviewed + green (full grid suite **1624 tests**, tsc clean):
+    - **W procurement member routes** (`12974c9`): GET notices / GET notice+bids / POST bid (members read+bid; issue/award stay Polis-only — VOTE-05).
+    - **W approval routes** (`2903c29`): request/list/approve/reject (DID-ownership 403; de-orphan ApprovalStore).
+    - **W conversation routes** (`28203b6`): human↔Nous chat post/read (sender by DID-form; content off-chain).
+    - **W3 Brain economic action-types** (`ae3cbce`): `pay_due`/`bid_rfp`/`request_approval`/`post_conversation` + wire-route mappings to the live Grid endpoints (closes "Brain blind"; LLM-prompt awareness = W3b, deferred).
+    - **W economy read routes** (`2c17c77`): account/credit/treasury (de-orphan the wei rails, observability).
+    - **W governance→RFP bridge** (`927441f`): an enacted Polis `procurement` bill issues an RFP via the VOTE-05 pipeline (constitutional self-driving issuance; reviewed — VOTE-05 intact, parse non-fatal, sole-producer).
+  - ⏳ **W3b** Brain LLM-prompt economic awareness (so a Nous spontaneously chooses) · **W4** money cutover — **GATING, user's call (bends D-MONEY-01 "no mint"): seed wei live (model-first endowment vs on-chain wallet-proof) + `*_bios`→wei rename + retire Ousia faucet.** Treasury fills + procurement award only run once payers/treasury hold wei. · Large organs O3 Forest (mobile) · O4 street-view · H1 Moon/Mars (cross-grid).
 
 ---
 
