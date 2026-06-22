@@ -1102,4 +1102,30 @@ export const MIGRATIONS: Migration[] = [
         up: `ALTER TABLE civic_treasury ADD COLUMN balance_wei DECIMAL(65,0) NOT NULL DEFAULT 0`,
         down: `ALTER TABLE civic_treasury DROP COLUMN balance_wei`,
     },
+    // F1c — Labor escrow: escrowed inter-Nous job settlement ledger.
+    // fund: debit payer → escrow 'funded'; release: pay worker + fee → treasury, mark 'released';
+    // reclaim: refund payer, mark 'reclaimed'. Atomic via LaborEscrowStore (wei-ops composition).
+    // Allowlist +0 (RFP/settlement layer emits audit events).
+    {
+        version: 47,
+        name: 'create_labor_escrow',
+        up: `
+            CREATE TABLE IF NOT EXISTS labor_escrow (
+                escrow_id        CHAR(36)      NOT NULL,
+                grid_name        VARCHAR(63)   NOT NULL,
+                payer_did        VARCHAR(255)  NOT NULL,
+                worker_did       VARCHAR(255)  NOT NULL,
+                amount_wei       DECIMAL(65,0) NOT NULL,
+                fee_wei          DECIMAL(65,0) NOT NULL DEFAULT 0,
+                ref              VARCHAR(255)  NOT NULL,
+                status           ENUM('funded','released','reclaimed') NOT NULL DEFAULT 'funded',
+                attestation_ref  VARCHAR(255)  NULL,
+                created_at       BIGINT        NOT NULL,
+                updated_at       BIGINT        NOT NULL,
+                PRIMARY KEY (escrow_id),
+                INDEX idx_grid_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS labor_escrow`,
+    },
 ];
