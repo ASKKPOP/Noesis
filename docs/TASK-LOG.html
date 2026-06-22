@@ -96,6 +96,12 @@
       VOTE-05 untouched; <code>source</code> column backticked (deploy reserved-word safety). Doc-synced
       <code>wiki/1-design/{economy,decisions}.md</code>, <code>docs/spec/economy.md</code>, STATE, plan. <strong>Deferred (tracked):</strong>
       <code>*_bios</code>→wei rename (D-MONEY-07) + retire Ousia faucet — not needed for money to move. Committed to main, not pushed/deployed.</li>
+    <li><b>Capstone — loop proven end-to-end</b> <span class="tag done">verified</span> drove the REAL stores
+      (Endowment→CivicDue→Procurement) against a stateful in-memory ledger that interprets the exact SQL each wei rail emits,
+      asserting <strong>wei conserves at every hop</strong>: endow→account→due→treasury→award→escrow→settle→worker
+      (alice 500 + builder 300 + treasury 200 = 1000 endowed; escrow drained; full 8-event sequence on the audit chain in order).
+      Negative test proves the endowment is load-bearing (no endow → pay due fails <code>insufficient_balance</code>).
+      <code>grid/test/economy/loop-end-to-end.test.ts</code>. Commit <code>5556580</code>. "Money moves" is now demonstrated, not asserted.</li>
   </ul>
 
   <!-- ============================ SESSION 6 ============================ -->
