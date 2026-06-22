@@ -81,7 +81,10 @@ Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reali
   - ✅ **F1c labor escrow + composable wei-ops** (2026-06-21): extracted `grid/src/economy/wei-ops.ts` (connection-scoped credit/debit for accounts + treasury — single source of truth); `NousAccountStore`/`TreasuryWeiStore` delegate to it. Migration **v47** `labor_escrow`; `LaborEscrowStore` fund/release/reclaim, each composing wei-ops in ONE atomic transaction (fund debits payer; release pays worker `amount-fee` + routes `fee` to treasury; reclaim refunds payer). `FOR UPDATE` double-spend guard. Review confirmed atomicity + conservation. Migration-version tests made stable (uniqueness, not global-max — fixed a latent F1a/F1b regression). Commits `d42d755`,`edc60a0`,`2e7a71c`.
   - ✅ **F1d civic-labor credit** (2026-06-21): migration **v48** `civic_labor_credit` (BIGINT credit unit) + `CivicLaborCreditStore` earn/redeem (atomic, no self-mint) — the labor→standing rail (D-MONEY-05). Commit `347100a`.
   - Full economy suite **73/73**, tsc clean, allowlist +0 across all of F1.
-- ⏳ **Spine L1–L4 → Organs O1–O4 → Horizon H1** — next: **L1** (civic due ledger + the D-MONEY-08 implementation), now that the money rails (accounts, treasury-wei, escrow, credit) exist to build on.
+- 🟡 **Phase 83 (L1) — civic due (D-MONEY-08 made real) — IN PROGRESS:**
+  - ✅ **L1a due ledger core** (2026-06-21): extracted connection-scoped `credit-ops.ts` (`CivicLaborCreditStore` delegates); migration **v49** `civic_dues` (`amount_wei` + `amount_credit`, status assessed/paid/delinquent, unique per member+period); `CivicDueStore` assess / payWithWei (debit member → credit treasury) / payWithCredit (redeem civic-labor credit) / markDelinquent — each one atomic transaction composing the rails, pay-once under `FOR UPDATE`. Review confirmed pay-once + atomicity + conservation. Full economy suite **83/83**, tsc clean. Commits `bb5264c`,`ec23e26`.
+  - ⏳ **L1b due.* audit events** — sole-producer `due.assessed`/`due.paid`/`due.delinquent` (9-step guard + producer-boundary tests) + allowlist **107 → 110** + wire `CivicDueStore` to emit. (Plan: `docs/superpowers/plans/2026-06-21-l1-civic-due.md` Task 3.)
+- ⏳ **L2 RFP → L3 orbital-object → L4 viz bridge → Organs O1–O4 → Horizon H1.**
 
 ---
 
