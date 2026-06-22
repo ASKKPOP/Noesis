@@ -1280,4 +1280,23 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS pending_approvals`,
     },
+    {
+        version: 53,
+        name: 'create_conversation_messages',
+        up: `
+            CREATE TABLE IF NOT EXISTS conversation_messages (
+                message_id  CHAR(36)     NOT NULL,
+                grid_name   VARCHAR(63)  NOT NULL,
+                human_did   VARCHAR(255) NOT NULL,
+                nous_did    VARCHAR(255) NOT NULL,
+                sender      ENUM('human','nous') NOT NULL,
+                text        TEXT         NOT NULL,
+                tick        BIGINT       NOT NULL,
+                created_at  BIGINT       NOT NULL,
+                PRIMARY KEY (message_id),
+                INDEX idx_thread (grid_name, human_did, nous_did, tick)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS conversation_messages`,
+    },
 ];
