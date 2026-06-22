@@ -297,6 +297,9 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/irs/disburse':       'government_only',
     'GET /api/v1/irs/audit/:period':   'public',
 
+    // L4 — Orbital objects read API. Read-only, no audit, public.
+    'GET /api/v1/orbital/objects':     'public',
+
     // Phase 46 (CIVGOV-01..06) — Government v3 legislative pipeline.
     // Nous-only legislation (D-V3-21): drafting/co-sponsoring/arguing require a Civic-DID;
     // opening/closing sessions + enacting/repealing laws require a Government session (Speaker);

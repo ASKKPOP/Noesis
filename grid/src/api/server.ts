@@ -39,6 +39,7 @@ import { registerCivicMapZoneRoute } from './routes/civic-map-zone.js';
 import { registerLibraryEntriesRoute } from './routes/library-entries.js';
 import { registerMarketRoutes } from './routes/market.js';
 import { registerIrsRoutes } from './routes/irs.js';
+import { registerOrbitalRoutes } from './routes/orbital.js';
 import { registerGovRoutes } from './routes/gov.js';
 import { registerPolisBillsRoute } from './routes/polis-bills.js';
 import { registerNousPublicProfileRoute } from './routes/nous-public-profile.js';
@@ -780,6 +781,7 @@ export function buildServerWithHub(
     registerLibraryEntriesRoute(app, services);
     void registerMarketRoutes(app, services);
     void registerIrsRoutes(app, services);
+    registerOrbitalRoutes(app, services);
     void registerGovRoutes(app, services);
     registerPolisBillsRoute(app, services);
     registerNousPublicProfileRoute(app, services);
