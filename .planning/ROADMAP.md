@@ -91,8 +91,10 @@ Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reali
   - **The procurement loop is real + auditable. Allowlist 116.**
 - 🟡 **Phase 85 (L3) — orbital-object reality (built objects become real) — IN PROGRESS:**
   - ✅ **L3a object reality core** (2026-06-21): TS server-side physics gate `grid/src/economy/object-physics.ts` (port of F0's `physics-gate.js`, reads the grid-side `GridEnvironment`; exact 6-law parity); migration **v51** `orbital_objects`; `OrbitalObjectStore.createFromContract` — physics-gated BEFORE persist, built only from a `settled` contract, one per contract (pre-check + UNIQUE), commons-owned (`did:civic:noesis:treasury`)/builder-attributed/award-costed + `listObjects`/`getObject`. Review: physics-parity + gated-before-persist + settled-only + one-per-contract + ownership confirmed. Full economy suite **122/122**, tsc clean. Commits `ed17739`,`b3c1562`.
-  - ⏳ **L3b `orbital.object_built` event** (allowlist 116 → 117) + emit. ⏳ **L4 viz bridge** — `GET /api/v1/orbital/objects` + Grid-Viz renders real objects from the backend (not localStorage) — **closes the visible loop** (browser-verifiable).
-- ⏳ **Organs O1–O4 → Horizon H1.**
+  - ⏳ **L3b `orbital.object_built` event** (allowlist 116 → 117) + emit — small follow-up.
+- ✅ **Phase 86 (L4) — viz bridge — COMPLETE (2026-06-21): the visible loop is closed.** `GET /api/v1/orbital/objects?grid=` route (`grid/src/api/routes/orbital.ts`, public, 503-on-no-pool, `physics_spec` parsed; vitest 2/2). `orbital.js` `tryLoadBackendObjects()` (guarded, fire-and-forget) → `renderBackendObjects()` renders real objects via the existing per-function mesh/zone helpers, falls back to the local sim on empty/error; header `source` label. **Browser-verified:** fallback path (route 404 → local sim, 0 console errors) AND real-object render (injected objects render, label `backend: N real`, 0 errors). Full live route↔render needs a Docker/DB run (noted). Also fixed 2 stale allowlist-count assertions (107→116) missed by L1b/L2b. Commits `c8c17f2`,`364172a`,`b00f12c`.
+  - **The loop renders: due → treasury → RFP → bid → award → escrow → builder paid → real physics-gated object → on screen.**
+- ⏳ **Organs O1–O4 (multitasking · human-in-loop · Forest · street-view) → Horizon H1 (Moon/Mars).**
 
 ---
 
