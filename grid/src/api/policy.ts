@@ -256,6 +256,11 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/civic/dues':                    'civic_did_required',
     'POST /api/v1/civic/dues/:dueId/pay':        'civic_did_required',
 
+    // W — Conversation routes: human↔Nous chat thread (de-orphan ConversationStore).
+    // Content is private (never on the audit chain); sender inferred from DID form.
+    'POST /api/v1/civic/conversation/:partnerDid/messages': 'civic_did_required',
+    'GET /api/v1/civic/conversation/:partnerDid':           'civic_did_required',
+
     // W — Approval routes: consult-your-human gate (de-orphan ApprovalStore).
     // All four routes require a Civic-DID bearer. Ownership enforced per-handler:
     //   request: any Civic-DID may call (caller = nous_did)
