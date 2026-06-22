@@ -64,6 +64,28 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 10 ============================ -->
+  <h2>Session 10 — 2026‑06‑22 · “O4 street-view — first version (3D navigable city)”</h2>
+  <p class="sub">"Go next" after H1 → built the O4 street-view first version: a walkable 3D Three.js view of
+  the Genesis 6-zone city, reusing the grid-viz scaffolding.</p>
+  <ul>
+    <li><b>Coordinate spine</b> <span class="tag done">TDD</span> <code>grid-viz/address-to-world.js</code> — the
+      (ring,sector,level)→(x,y,z) mapping (ring 0 = core; sector 0°=N, 90°=E). Convention pinned by
+      <code>address-to-world.test.cjs</code> (node:test 6/6).</li>
+    <li><b>3D city</b> <span class="tag done">built</span> <code>grid-viz/street.{html,js}</code> — parcels placed at
+      their address in concentric zone-colored rings (gold core → blue infra → orange business → red manufacture →
+      pink shopping → green residential), massed by structure type. OrbitControls overview + a minimal pointer-lock
+      first-person walk (WASD + mouse-look) + raycast click-to-inspect. Additive <code>GET /api/v1/civic/parcels</code>
+      swap over a local demo (renders standalone, like orbital.js).</li>
+    <li><b>Browser-verified</b> <span class="tag done">preview</span> dashboard dev server → <code>/grid-viz/street.html</code>:
+      84 demo parcels render, WebGL OK, <strong>0 console errors</strong>; a dispatched click opened the parcel panel
+      (<code>genesis:government_quarter:0001</code> · ring 1 · 90° · government · owner). Screenshots captured.</li>
+    <li><b>Scope/deferred:</b> no backend changes; decisions taken (standalone public page; radial convention locked).
+      <strong>v2:</strong> Nous avatars (the Nous↔parcel binding is still a Phase-36/37 stub), walk-into interiors,
+      firehose live updates, live-backend-by-default, modelled buildings. Doc-synced O4 design doc, ROADMAP, STATE.
+      O3 Forest first version not yet built. Committed to main, not pushed.</li>
+  </ul>
+
   <!-- ============================ SESSION 9 ============================ -->
   <h2>Session 9 — 2026‑06‑22 · “Plan O3/O4/H1 + build H1 Moon (first version)”</h2>
   <p class="sub">Planned the three deferred organs (gating decisions made + grounded design docs), then —
