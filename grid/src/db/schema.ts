@@ -1231,4 +1231,29 @@ export const MIGRATIONS: Migration[] = [
             DROP TABLE IF EXISTS procurement_notices
         `,
     },
+    {
+        version: 51,
+        name: 'create_orbital_objects',
+        up: `
+            CREATE TABLE IF NOT EXISTS orbital_objects (
+                object_id              CHAR(36)      NOT NULL,
+                grid_name              VARCHAR(63)   NOT NULL,
+                owner_did              VARCHAR(255)  NOT NULL,
+                builder_did            VARCHAR(255)  NOT NULL,
+                build_cost_wei         DECIMAL(65,0) NOT NULL,
+                function_type          VARCHAR(63)   NOT NULL,
+                output_rate            BIGINT        NOT NULL DEFAULT 0,
+                physics_spec           TEXT          NOT NULL,
+                provenance_contract_id CHAR(36)      NOT NULL,
+                zone                   VARCHAR(63)   NOT NULL,
+                status                 ENUM('active','decommissioned') NOT NULL DEFAULT 'active',
+                created_at             BIGINT        NOT NULL,
+                updated_at             BIGINT        NOT NULL,
+                PRIMARY KEY (object_id),
+                UNIQUE KEY uniq_provenance (provenance_contract_id),
+                INDEX idx_grid (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS orbital_objects`,
+    },
 ];
