@@ -20,6 +20,8 @@ class ActionType(str, Enum):
     DRIVE_CROSSED = "drive_crossed"  # Phase 10a DRIVE-03 — Ananke threshold crossing; Grid dispatcher converts to ananke.drive_crossed audit event. Metadata shape: {drive, level, direction} (3 keys; Grid injects did and tick).
     BIOS_DEATH = "bios_death"  # Phase 10b BIOS-04 — starvation death signal; Grid plan 10b-05 emits bios.death audit event. Metadata shape: {cause, final_state_hash} (Grid injects did and tick).
     NOOP = "noop"  # Do nothing this cycle
+    JOIN_GROUP = "join_group"    # O1a. Metadata: {group_id, role}
+    LEAVE_GROUP = "leave_group"  # O1a. Metadata: {group_id, reason}
     # Phase 12 Wave 3 — D-12-07 / VOTE-05: collective-law governance actions.
     # String values MUST match the Grid NousRunner switch cases exactly.
     PROPOSE = "propose"         # Open a proposal. Metadata: {body_text, deadline_tick, quorum_pct?, supermajority_pct?}
@@ -306,5 +308,33 @@ def build_civic_land_action(action_type: ActionType, **metadata: Any) -> Action:
         raise ValueError(
             f"{action_type.value} action missing required metadata key(s): "
             f"{', '.join(missing)}"
+        )
+    return Action(action_type=action_type, metadata=dict(metadata))
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# O1a — Group capability builder.
+#
+# build_group_action() is the SCHEMA GATE for join_group / leave_group.
+# Group verbs flow through the generic actions batch (/api/v1/brain/actions),
+# NOT the civic-land HTTP routes — so no CIVIC_LAND_ROUTES entry is needed.
+# ──────────────────────────────────────────────────────────────────────────
+
+_GROUP_ACTION_REQUIRED_KEYS: dict[ActionType, tuple[str, ...]] = {
+    ActionType.JOIN_GROUP: ("group_id", "role"),
+    ActionType.LEAVE_GROUP: ("group_id", "reason"),
+}
+
+
+def build_group_action(action_type: ActionType, **metadata: Any) -> Action:
+    """Build a validated group Action (O1a). Group verbs flow through the generic
+    actions batch, not the civic-land HTTP routes."""
+    required = _GROUP_ACTION_REQUIRED_KEYS.get(action_type)
+    if required is None:
+        raise ValueError(f"{action_type!r} is not a group verb")
+    missing = [k for k in required if metadata.get(k) is None]
+    if missing:
+        raise ValueError(
+            f"{action_type.value} action missing required metadata key(s): {', '.join(missing)}"
         )
     return Action(action_type=action_type, metadata=dict(metadata))
