@@ -132,6 +132,11 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     // the next tick that matches snapshotCadenceTicks).
     if (dbConn) {
         launcher.attachRelationshipStorage(dbConn.getPool());
+        // Governance → RFP bridge: late-wire the MySQL pool + audit chain so enacted
+        // `procurement` bills can call ProcurementStore.issueNotice fire-and-forget.
+        // Mirrors attachRingExpansion (same late-wire-after-pool pattern). Absent in
+        // DB-less contexts; the bridge is a no-op until pool is available (VOTE-05 safe).
+        launcher.governance.attachProcurementBridge({ pool: dbConn.getPool(), audit: chain ?? undefined });
     }
 
     // Phase 5 (REV-03, D-06, D-07): Construct the ReviewerNous singleton once per Grid.

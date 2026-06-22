@@ -15,6 +15,24 @@ import type { LogosEngine } from '../logos/engine.js';
 import type { NousRegistry } from '../registry/registry.js';
 import { appendProposalTallied } from './appendProposalTallied.js';
 import type { GovernanceStore } from './store.js';
+import type { Pool } from 'mysql2/promise';
+
+/**
+ * Dependencies for the governance → RFP procurement bridge.
+ *
+ * Late-wired by main.ts (mirrors attachRingExpansion) once the MySQL pool is available.
+ * When present, an enacted `procurement` bill's body is handed to the bridge which
+ * calls ProcurementStore.issueNotice fire-and-forget. Absent in pure-governance
+ * contexts (tests / replay without pool): the bridge is a no-op.
+ *
+ * VOTE-05 / D-V3-21: issuance ONLY via an enacted bill — no self-issue path.
+ */
+export interface ProcurementBridgeDeps {
+    /** MySQL pool passed to ProcurementStore. */
+    pool: Pool;
+    /** Optional audit chain — forwarded to ProcurementStore for procurement.notice_issued. */
+    audit?: AuditChain;
+}
 
 export class GovernanceEngine {
     /**
@@ -25,6 +43,13 @@ export class GovernanceEngine {
      * governance path / clock.onTick.
      */
     private ringDeps?: RingExpansionDeps;
+
+    /**
+     * Governance → RFP procurement bridge deps, LATE-WIRED by main.ts once the MySQL pool
+     * is available. Undefined until wired; when absent the dispatch is a no-op for procurement
+     * bills (mirror of ringDeps late-wire pattern). NOT a new governance path / clock.onTick.
+     */
+    private procurementDeps?: ProcurementBridgeDeps;
 
     constructor(
         private readonly audit: AuditChain,
@@ -45,6 +70,18 @@ export class GovernanceEngine {
     }
 
     /**
+     * Late-wire the governance → RFP procurement bridge. Called by main.ts once the MySQL pool
+     * is available (mirrors attachRingExpansion). When wired, an enacted `procurement` bill
+     * causes ProcurementStore.issueNotice to be called fire-and-forget. Keeps the constructor
+     * signature unchanged; absent = no-op for procurement bills.
+     *
+     * VOTE-05 / D-V3-21: Polis-only issuance via the enacted bill (never self-issued).
+     */
+    attachProcurementBridge(deps: ProcurementBridgeDeps): void {
+        this.procurementDeps = deps;
+    }
+
+    /**
      * Called by GenesisLauncher's clock.onTick (Wave 3 wires this).
      *
      * Scans for proposals where currentTick >= deadline_tick AND status === 'open',
@@ -62,6 +99,7 @@ export class GovernanceEngine {
                     registry: this.registry,
                     logos: this.logos,
                     ringDeps: this.ringDeps,
+                    procurementDeps: this.procurementDeps,
                 });
             }
         }

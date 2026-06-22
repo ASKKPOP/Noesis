@@ -15,6 +15,7 @@
  * Phase 12 Wave 2 — VOTE-04 / D-12-01 / D-12-03 / D-12-10 / T-09-15 / CONTEXT-12.
  */
 
+import { randomUUID } from 'node:crypto';
 import type { AuditChain } from '../audit/chain.js';
 import { payloadPrivacyCheck } from '../audit/broadcast-allowlist.js';
 import type { LogosEngine } from '../logos/engine.js';
@@ -30,6 +31,8 @@ import type { GovernanceStore } from './store.js';
 import { GovernanceError } from './errors.js';
 import type { NousRegistry } from '../registry/registry.js';
 import { onLawEnacted as ringExpansionOnLawEnacted, type RingExpansionDeps } from '../civic/ring-expansion.js';
+import type { ProcurementBridgeDeps } from './engine.js';
+import { ProcurementStore } from '../economy/procurement-store.js';
 
 export interface AppendProposalTalliedInput {
     proposal_id: string;
@@ -47,6 +50,14 @@ export interface AppendProposalTalliedInput {
      * VOTE-05, single-onTick preserved); side-effect-only, no append.
      */
     ringDeps?: RingExpansionDeps;
+    /**
+     * Governance → RFP procurement bridge deps. OPTIONAL — absent in pure-governance contexts
+     * (tests / replay without pool). When present and the enacted bill carries
+     * `category:'procurement'`, calls ProcurementStore.issueNotice fire-and-forget.
+     * Parse-fail or missing fields → log + skip (never throws out of the enactment path).
+     * VOTE-05 / D-V3-21: issuance ONLY via enacted bill — no self-issue path.
+     */
+    procurementDeps?: ProcurementBridgeDeps;
 }
 
 export async function appendProposalTallied(
@@ -144,5 +155,83 @@ export async function appendProposalTallied(
         if (input.ringDeps) {
             ringExpansionOnLawEnacted(proposal.body_text, input.ringDeps);
         }
+        // Governance → RFP procurement bridge. Fire-and-forget, mirrors ring-expansion pattern.
+        // Fires ONLY when: procurementDeps are wired AND the enacted bill carries
+        // `category:'procurement'` with a valid JSON body. Parse-fail → log + skip (non-fatal).
+        // VOTE-05 / D-V3-21: Polis-only issuance — no self-issue path. Allowlist +0.
+        if (input.procurementDeps) {
+            void onProcurementBillEnacted(proposal.body_text, proposal.proposal_id, input.currentTick, proposal.grid_name, input.procurementDeps);
+        }
+    }
+}
+
+/**
+ * Governance → RFP bridge: parse an enacted bill body and, if it is a valid `procurement`
+ * bill, call ProcurementStore.issueNotice fire-and-forget. Any failure is logged and swallowed
+ * so it can never throw out of the enactment path (mirrors ring-expansion fire-and-forget).
+ *
+ * @param bodyText    Raw body_text from the governance_proposals row.
+ * @param proposalId  Used as the polisAuthorizationRef (the legislative act that authorised it).
+ * @param currentTick Current tick at enactment — deadlineTick = currentTick + deadline_offset_ticks.
+ * @param gridName    Grid the proposal belongs to.
+ * @param deps        Pool + optional audit (late-wired by main.ts).
+ */
+async function onProcurementBillEnacted(
+    bodyText: string,
+    proposalId: string,
+    currentTick: number,
+    gridName: string,
+    deps: ProcurementBridgeDeps,
+): Promise<void> {
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(bodyText);
+    } catch {
+        // Not valid JSON — not a procurement bill, silently ignore.
+        return;
+    }
+    if (!parsed || typeof parsed !== 'object') return;
+    const body = parsed as Record<string, unknown>;
+
+    // Gate: must carry category:'procurement'
+    if (body['category'] !== 'procurement') return;
+
+    // Validate required fields.
+    const { title, spec, budget_wei, zone, function_type, deadline_offset_ticks } = body;
+    if (
+        typeof title !== 'string' || title.trim() === '' ||
+        typeof spec !== 'string' ||
+        typeof budget_wei !== 'string' || !/^\d+$/.test(budget_wei) ||
+        typeof zone !== 'string' || zone.trim() === '' ||
+        typeof function_type !== 'string' || function_type.trim() === '' ||
+        typeof deadline_offset_ticks !== 'number' || !Number.isInteger(deadline_offset_ticks) || deadline_offset_ticks < 0
+    ) {
+        console.warn(
+            `[procurement-bridge] enacted bill ${proposalId} has category:procurement but invalid fields — skipping issuance`,
+            { title, spec, budget_wei, zone, function_type, deadline_offset_ticks },
+        );
+        return;
+    }
+
+    try {
+        const store = new ProcurementStore(deps.pool, deps.audit);
+        await store.issueNotice({
+            gridName,
+            noticeId: randomUUID(),
+            polisAuthorizationRef: proposalId,
+            title: title.trim(),
+            spec,
+            budgetWei: BigInt(budget_wei),
+            zone: zone.trim(),
+            functionType: function_type.trim(),
+            deadlineTick: currentTick + deadline_offset_ticks,
+            currentTick,
+        });
+    } catch (err) {
+        // Fire-and-forget: failure is non-fatal (log + skip). Never throws out of enactment.
+        console.error(
+            `[procurement-bridge] issueNotice failed for bill ${proposalId} — skipping`,
+            err,
+        );
     }
 }
