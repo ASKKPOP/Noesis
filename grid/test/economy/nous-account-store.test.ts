@@ -14,9 +14,8 @@ describe('migration v45 — nous_accounts', () => {
         expect(m!.down).toContain('DROP TABLE IF EXISTS nous_accounts');
     });
 
-    it('is the highest version (appended, not inserted)', () => {
-        const max = Math.max(...MIGRATIONS.map((x) => x.version));
-        expect(max).toBe(45);
+    it('has a unique version number (no duplicate v45)', () => {
+        expect(MIGRATIONS.filter((x) => x.version === 45)).toHaveLength(1);
     });
 });
 

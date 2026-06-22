@@ -13,8 +13,8 @@ describe('migration v46 — civic_treasury.balance_wei', () => {
         expect(m!.up).toContain('DECIMAL(65,0)');
         expect(m!.down).toContain('DROP COLUMN balance_wei');
     });
-    it('is the highest version (appended)', () => {
-        expect(Math.max(...MIGRATIONS.map((x) => x.version))).toBe(46);
+    it('has a unique version number (no duplicate v46)', () => {
+        expect(MIGRATIONS.filter((x) => x.version === 46)).toHaveLength(1);
     });
 });
 
