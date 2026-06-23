@@ -87,7 +87,15 @@
       screenshot captured at full size (Moon/Mars frames raced a preview-window resize glitch, but the switch is
       eval-confirmed).</li>
     <li><b>Lesson:</b> invoke the domain skill <em>before</em> building in its domain — the canon was already decided.
-      Doc-synced O4 design doc (attempt retracted + correction), ROADMAP, STATE. Committed to main, not pushed.</li>
+      Doc-synced O4 design doc (attempt retracted + correction), ROADMAP, STATE.</li>
+    <li><b>DEPLOYED to noesiis.com</b> <span class="tag done">live</span> on operator approval: pushed all 9 session
+      commits to <code>origin/main</code> (<code>9f8d3b7</code>), then <code>./deploy.sh dashboard</code>. Found + fixed a
+      real serving bug first — <code>/map</code> rewrites to <code>dashboard/public/genesis-core-map.html</code> (public
+      <em>root</em>), not the <code>grid-viz/</code> subdir my synced copy landed in; put the body-switcher map at the
+      correct path. Compose recreated <code>noesis-dashboard</code> + <code>noesis-grid</code> (grid came up healthy — the
+      v54 <code>account_endowments</code> migration applied cleanly on real MySQL; brain agents untouched). Force-recreated
+      <code>noesis-nginx</code> (stale-upstream guard). Verified on host through nginx: <code>/</code> 200, <code>/map</code>
+      200 with Earth/Moon/Mars buttons present, 0 502s. The orbital map with the body switcher is live.</li>
   </ul>
 
   <!-- ============================ SESSION 10 ============================ -->
