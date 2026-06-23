@@ -232,32 +232,24 @@ function modMesh(p,size,parent,pos){
  const dir=pos.clone().normalize();
  if(dir.lengthSq()>0) grp.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
  grp.position.copy(pos);grp.userData=p;parent.add(grp);return body;}
-// ring1 commons — connected to core
-for(const p of PARCELS.filter(p=>p.ring===1)){
- const th=p.sector_deg*Math.PI/180;
+// ── static scaffold — trusses, district signs, spokes, ring-3 tethers ────────
+// Positions are CANONICAL (identical for seed & live), so this is built ONCE.
+for(const p of PARCELS.filter(p=>p.ring===1)){const th=p.sector_deg*Math.PI/180;
  const pos=new THREE.Vector3(Math.cos(th)*R[1],((p.sector_deg/90)%2?5:-5),Math.sin(th)*R[1]);
- modMesh(p,4.2,station,pos);
  truss(new THREE.Vector3(0,0,0),pos,0x7d8da1,.5);}
 {const s=neonSign('COMMONS',0x9fb0c4);s.position.set(R[1]*.7,14,R[1]*.7);station.add(s);}
-// ring2 sectors — modules on the equatorial ring, alternating above/below (levels)
-for(const p of PARCELS.filter(p=>p.ring===2)){
- const th=p.sector_deg*Math.PI/180;const idx=Math.round(p.sector_deg);
- const lift=(idx%2?6:-6); // multi-dimensional: stacked above & below the ring plane
+for(const p of PARCELS.filter(p=>p.ring===2)){const th=p.sector_deg*Math.PI/180;
+ const lift=(Math.round(p.sector_deg)%2?6:-6);
  const pos=new THREE.Vector3(Math.cos(th)*R[2],lift,Math.sin(th)*R[2]);
- modMesh(p,3.6,station,pos);
  truss(new THREE.Vector3(Math.cos(th)*R[2],0,Math.sin(th)*R[2]),pos,ZCOL[p.zone],.5);}
 for(const [txt,hex,deg] of [['BUSINESS',0xc2a878,60],['SHOPPING',0x3fa6bd,180],['MANUFACTURE',0x9a5a44,300]]){
  const th=deg*Math.PI/180;const s=neonSign(txt,hex);
  s.position.set(Math.cos(th)*(R[2]+2),17,Math.sin(th)*(R[2]+2));station.add(s);}
-// spokes core → ring2 (4 anchors)
 for(const deg of [30,120,210,300]){const th=deg*Math.PI/180;
  truss(new THREE.Vector3(0,0,0),new THREE.Vector3(Math.cos(th)*R[2],0,Math.sin(th)*R[2]),0x46e0d0,.30);}
-// ring3 residential — inclined spinning orbit
-for(const p of PARCELS.filter(p=>p.ring===3)){
- const th=p.sector_deg*Math.PI/180;const idx=Math.round(p.sector_deg*24/360);
- const lift=(idx%2?4:-4);
+for(const p of PARCELS.filter(p=>p.ring===3)){const th=p.sector_deg*Math.PI/180;
+ const lift=((Math.round(p.sector_deg*24/360))%2?4:-4);
  const pos=new THREE.Vector3(Math.cos(th)*R[3],lift,Math.sin(th)*R[3]);
- modMesh(p,3.0,r3spin,pos);
  const anchor=new THREE.Vector3(Math.cos(th)*R[3],0,Math.sin(th)*R[3]);
  const d=new THREE.Vector3().subVectors(pos,anchor),len=Math.max(d.length(),.001);
  const t=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,len,6),
@@ -266,6 +258,44 @@ for(const p of PARCELS.filter(p=>p.ring===3)){
  t.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3().subVectors(pos,anchor).normalize());
  r3spin.add(t);}
 {const s=neonSign('RESIDENTIAL',0x5a84c4);s.position.set(0,20,R[3]);r3tilt.add(s);}
+// ── modules (capsules) — RE-RENDERABLE from the seed OR live grid data ───────
+// SAME VIEW for user & Nous: the seed renders instantly; if the grid answers,
+// the SAME modules re-render from /api/v1/civic/parcels (real ownership). The
+// seed is the offline fallback; canonical positions keep the scaffold valid.
+let parcelBodies=[];
+function clearModules(){for(const b of parcelBodies){const grp=b.parent;if(grp&&grp.parent)grp.parent.remove(grp);
+ const i=meshes.indexOf(b);if(i>=0)meshes.splice(i,1);}parcelBodies=[];}
+function renderParcelModules(parcels){clearModules();
+ for(const p of parcels.filter(p=>p.ring===1)){const th=p.sector_deg*Math.PI/180;
+  const pos=new THREE.Vector3(Math.cos(th)*R[1],((p.sector_deg/90)%2?5:-5),Math.sin(th)*R[1]);
+  parcelBodies.push(modMesh(p,4.2,station,pos));}
+ for(const p of parcels.filter(p=>p.ring===2)){const th=p.sector_deg*Math.PI/180;
+  const lift=(Math.round(p.sector_deg)%2?6:-6);
+  const pos=new THREE.Vector3(Math.cos(th)*R[2],lift,Math.sin(th)*R[2]);
+  parcelBodies.push(modMesh(p,3.6,station,pos));}
+ for(const p of parcels.filter(p=>p.ring===3)){const th=p.sector_deg*Math.PI/180;
+  const lift=((Math.round(p.sector_deg*24/360))%2?4:-4);
+  const pos=new THREE.Vector3(Math.cos(th)*R[3],lift,Math.sin(th)*R[3]);
+  parcelBodies.push(modMesh(p,3.0,r3spin,pos));}
+}
+renderParcelModules(PARCELS);
+// live data: the SAME source of truth the Nous act on (grid on api.<host>, CORS).
+function normalizeLive(a){
+ const status=a.zone==='government_quarter'?'civic':a.zone==='infrastructure'?'commons':((a.status==='owned'||a.owner_civic_did_hash)?'owned':'unsold');
+ return {id:a.id,zone:a.zone,ring:a.ring,sector_deg:a.sector,level:a.level||0,
+  price:a.price_bios||0,upkeep:Math.ceil((a.price_bios||0)*0.02),
+  purchasable:!(a.zone==='government_quarter'||a.zone==='infrastructure'),
+  status,owner:a.owner_civic_did_hash||null,structure:a.structure||null};}
+function gridApiOrigin(){const h=location.hostname;
+ if(!h||h==='localhost'||h.startsWith('127.')||h.startsWith('192.168.'))return null;
+ return location.protocol+'//api.'+h.replace(/^www\./,'');}
+(async function(){const o=gridApiOrigin();if(!o)return;          // local/dev → keep seed
+ try{const res=await fetch(o+'/api/v1/civic/parcels',{cache:'no-store'});if(!res.ok)return;
+  const body=await res.json();const live=Array.isArray(body&&body.parcels)?body.parcels:null;
+  if(!live||!live.length)return;
+  renderParcelModules(live.map(normalizeLive));
+  const el=document.getElementById('mapsrc');if(el)el.textContent='live · '+live.length+' parcels';
+ }catch(_e){/* offline / CORS / static host → keep the founding seed */}})();
 // ── data flows: glowing packets travelling core ⇄ districts ────────────────
 const flows=[];
 function flow(target,hex){const curve=new THREE.CatmullRomCurve3([
@@ -322,7 +352,7 @@ buildPreviewGrid({name:'Mars',gridPos:new THREE.Vector3(980,70,-880),bodyOffset:
 const EPOCH=Date.UTC(2026,5,1,7);
 function noesisNow(){const days=Math.floor((Date.now()-EPOCH)/86400000);
 return 'NY '+(Math.floor(days/365)+1)+' \u00b7 DAY '+((days%365)+1);}
-document.getElementById('stats').innerHTML='<b id="nyclock">'+noesisNow()+'</b> \u00b7 Genesis Epoch 2026-06-01 PT<br><b>'+PARCELS.filter(p=>p.purchasable).length+'</b> purchasable slots \u00b7 <b>5</b> civic \u00b7 3 orbital shells<br>ring 4+ awaits a council expansion law \u00b7 L\u00b1 levels reserved';
+document.getElementById('stats').innerHTML='<b id="nyclock">'+noesisNow()+'</b> \u00b7 Genesis Epoch 2026-06-01 PT<br><b>'+PARCELS.filter(p=>p.purchasable).length+'</b> purchasable slots \u00b7 <b>5</b> civic \u00b7 3 orbital shells \u00b7 <span id="mapsrc" style="color:#3fa6bd">founding seed</span><br>ring 4+ awaits a council expansion law \u00b7 L\u00b1 levels reserved';
 setInterval(()=>{const el=document.getElementById('nyclock');if(el)el.textContent=noesisNow();},60000);
 // ── camera orbit (hand-rolled) ──────────────────────────────────────────────
 let rx=0.42,ry=0.7,dist=185;
