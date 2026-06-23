@@ -9,13 +9,15 @@ const nextConfig = {
     reactStrictMode: true,
     output: 'standalone',
     ...(basePath ? { basePath } : {}),
-    // Clean URLs: pages never expose .html. /map serves the static orbital map
-    // from /public; the old .html path permanently redirects to it.
+    // ONE map: /map and the old static .html both point to the rich 3D React
+    // orbital station at /worldmap/orbital ("our world map" — live parcel feed,
+    // seed fallback). The static genesis-core-map.html stays as the canonical
+    // docs artifact but is no longer served as the app's map.
     async redirects() {
-        return [{ source: '/genesis-core-map.html', destination: '/map', permanent: true }];
-    },
-    async rewrites() {
-        return [{ source: '/map', destination: '/genesis-core-map.html' }];
+        return [
+            { source: '/map', destination: '/worldmap/orbital', permanent: false },
+            { source: '/genesis-core-map.html', destination: '/worldmap/orbital', permanent: false },
+        ];
     },
     // Grid API origin is controlled by NEXT_PUBLIC_GRID_ORIGIN (.env.example).
     // Baked at BUILD time by the Docker build-arg flow — see docker/Dockerfile.dashboard.

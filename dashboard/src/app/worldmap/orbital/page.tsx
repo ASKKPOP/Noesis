@@ -16,15 +16,17 @@
 
 import dynamic from 'next/dynamic';
 
-const OrbitalGenesisMap = dynamic(
-    () => import('@/components/worldmap/OrbitalGenesisMap'),
+// "Our world map": the rich 3D Three.js orbital station as a native React
+// component, rendering the SAME live parcel feed the Nous act on (seed fallback).
+const OrbitalStation3D = dynamic(
+    () => import('@/components/worldmap/OrbitalStation3D'),
     { ssr: false },
 );
 
 export default function OrbitalWorldmapPage(): React.ReactElement {
     return (
         <div style={{ height: '100vh', width: '100vw' }}>
-            <OrbitalGenesisMap />
+            <OrbitalStation3D />
         </div>
     );
 }

@@ -19,7 +19,9 @@ const CyberGridBg = dynamic(() => import('@/components/portal/CyberGrid'), { ssr
 
 // Orbital Genesis Core map — static Three.js page served from /public via the
 // clean /map rewrite (pages never expose .html). basePath-prefixed for /dash.
-const MAP_SRC = `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/map`;
+// "Our world map": the rich 3D React orbital station (live parcel feed). The
+// landing embeds it and "Open full map" links to it — one map everywhere.
+const MAP_SRC = `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/worldmap/orbital`;
 
 // ── Shared styles ────────────────────────────────────────────────────────────
 

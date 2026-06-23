@@ -23,6 +23,7 @@
     "react-dom": "19.2.5",
     "siwe": "^2.3.2",
     "swr": "^2.4.1",
+    "three": "^0.160.0",
     "viem": "^2.0.0",
     "wagmi": "^2.0.0",
     "zustand": "^4.5.0"
@@ -37,6 +38,7 @@
     "@types/node": "^20.0.0",
     "@types/react": "19.0.10",
     "@types/react-dom": "19.0.4",
+    "@types/three": "^0.160.0",
     "@types/ws": "^8.5.10",
     "@vitejs/plugin-react": "^4.7.0",
     "@vitejs/plugin-react-swc": "^4.3.1",
