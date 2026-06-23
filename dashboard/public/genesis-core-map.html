@@ -61,17 +61,17 @@ font-size:11.5px;line-height:1.7;color:var(--muted);opacity:0;transition:opacity
 <div><span class="sw" style="background:#3fa6bd"></span><b>Shopping</b> · equatorial ring</div>
 <div><span class="sw" style="background:#9a5a44"></span><b>Manufacture</b> · equatorial ring</div>
 <div><span class="sw" style="background:#5a84c4"></span><b>Residential</b> · inclined orbit</div>
-<div><span class="sw" style="background:#3fa6bd;opacity:.55"></span><b>Aurora Grid (II)</b> · forming — not open</div>
+<div><span class="sw" style="background:#9aa6c0;opacity:.6"></span><b>Moon · Mars Grids</b> · forming — separate worlds (H1)</div>
 </div>
 <div class="hud" id="viewer">
  <span class="who"><span class="lock">●</span> <b id="vid">Human visitor</b> <span id="vmode">· public view</span></span>
  <button id="vbtn">Sign in with DID</button>
 </div>
 <div class="hud" id="bodies">
- <span class="blabel" id="bodylabel">EARTH ORBIT</span>
- <button data-body="Earth-orbit" class="on">Earth</button>
- <button data-body="Moon">Moon</button>
- <button data-body="Mars">Mars</button>
+ <span class="blabel" id="bodylabel">FOCUS · Genesis (near Earth)</span>
+ <button data-grid="Genesis" class="on">Genesis</button>
+ <button data-grid="Moon">Moon Grid</button>
+ <button data-grid="Mars">Mars Grid</button>
 </div>
 <div class="hud" id="panel"></div>
 <div class="hud" id="hint">drag = orbit · scroll = zoom · click a module<br>exteriors are public · per-space detail needs a signed-in DID + access</div>
@@ -93,39 +93,25 @@ pos[i*3]=r*Math.sin(ph)*Math.cos(th);pos[i*3+1]=r*Math.cos(ph);pos[i*3+2]=r*Math
 const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));
 scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:0x9fb8d8,size:1.1,sizeAttenuation:true})));}
 // D-NH-12: the world below IS Earth — the Genesis Core orbits the human world
-// that powers it (zero-money loop: humans invest local AI power from down there).
-// H1 PREVIEW: the body is parameterized (Earth / Moon / Mars, mirroring the
-// grid-side GridEnvironment). Switch it to see the SAME station above a lunar /
-// martian world — the structures are NEVER on a flat plane; they hang in 3D
-// orbital space above whichever body powers the Grid. Earth stays the Genesis
-// default; Moon & Mars are true previews of those future Grids' bodies.
+// that powers it. Genesis is the FIRST Grid and stays NEAR EARTH; Earth NEVER
+// changes. The Moon & Mars are SEPARATE Grids on their OWN bodies (the
+// Earth→Moon→Mars journey, D-NARR-01), built farther out as forming previews —
+// distinct worlds, NOT Genesis relocated. A focus picker visits each without
+// ever moving Genesis off Earth.
 const planet=new THREE.Mesh(new THREE.SphereGeometry(340,96,96),
   new THREE.MeshStandardMaterial({color:0x123a5c,emissive:0x0a1c30,emissiveIntensity:.6,roughness:1,metalness:0}));
 planet.position.set(80,-450,-150);planet.rotation.z=0.41;scene.add(planet);
+new THREE.TextureLoader().setCrossOrigin('anonymous').load(
+ 'https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg',
+ tex=>{tex.colorSpace=THREE.SRGBColorSpace;
+  planet.material=new THREE.MeshStandardMaterial({map:tex,roughness:1,metalness:0,
+   emissive:0x223a55,emissiveIntensity:.22,emissiveMap:tex});
+  planet.material.needsUpdate=true;});
 const atmo=new THREE.Mesh(new THREE.SphereGeometry(354,48,48),
   new THREE.MeshBasicMaterial({color:0x3a8bd5,transparent:true,opacity:.18,side:THREE.BackSide,blending:THREE.AdditiveBlending}));
 atmo.position.copy(planet.position);scene.add(atmo);
-// Bodies mirror grid/src/registry/grid-environments.ts (gravity + light-delay).
-const BODIES={
- 'Earth-orbit':{color:0x123a5c,emissive:0x223a55,tex:'https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg',atmoColor:0x3a8bd5,atmoOpacity:.18,g:9.81,delay:'0 ms',tag:'Genesis · D-NH-12'},
- 'Moon':{color:0x8f8f93,emissive:0x33352f,tex:null,atmoColor:0x9aa0a6,atmoOpacity:0,g:1.62,delay:'1.3 s',tag:'preview · H1'},
- 'Mars':{color:0x9c4a2f,emissive:0x3a1c12,tex:null,atmoColor:0xc78a5a,atmoOpacity:.10,g:3.71,delay:'3–22 min',tag:'preview · H1'},
-};
-let curBody='Earth-orbit';
-function setBody(name){
- const b=BODIES[name]||BODIES['Earth-orbit'];curBody=name;
- planet.material=new THREE.MeshStandardMaterial({color:b.color,emissive:b.emissive,emissiveIntensity:.55,roughness:1,metalness:0});
- if(b.tex){const want=name;new THREE.TextureLoader().setCrossOrigin('anonymous').load(b.tex,tex=>{
-   if(curBody!==want)return;tex.colorSpace=THREE.SRGBColorSpace;
-   planet.material=new THREE.MeshStandardMaterial({map:tex,emissiveMap:tex,emissive:0x223a55,emissiveIntensity:.22,roughness:1,metalness:0});
-   planet.material.needsUpdate=true;});}
- atmo.material.color.setHex(b.atmoColor);atmo.material.opacity=b.atmoOpacity;atmo.visible=b.atmoOpacity>0;
- const lbl=document.getElementById('bodylabel');
- if(lbl)lbl.innerHTML=name.toUpperCase().replace('-',' ')+' · g '+b.g+' m/s² · light '+b.delay+' · <span>'+b.tag+'</span>';
- document.querySelectorAll('#bodies button').forEach(btn=>btn.classList.toggle('on',btn.dataset.body===name));
-}
-document.querySelectorAll('#bodies button').forEach(btn=>btn.addEventListener('click',()=>setBody(btn.dataset.body)));
-setBody('Earth-orbit');
+// Camera-focus registry — Genesis stays near Earth at the origin; Moon/Mars added below.
+const GRID_FOCUS={Genesis:{pos:new THREE.Vector3(0,2,0),dist:185,label:'Genesis · near Earth'}};
 // ── lights ──────────────────────────────────────────────────────────────────
 scene.add(new THREE.AmbientLight(0x2a3a52,.85));
 const coreLight=new THREE.PointLight(0xda7a4e,1.8,320);scene.add(coreLight);
@@ -294,59 +280,45 @@ for(const deg of [20,100,140,220,260,340]){const th=deg*Math.PI/180;
  const zone=deg<120?'business':deg<240?'shopping':'manufacture';
  flow(new THREE.Vector3(Math.cos(th)*R[2],(Math.round(deg)%2?6:-6),Math.sin(th)*R[2]),ZCOL[zone]);}
 flow(new THREE.Vector3(Math.cos(.8)*R[1],5,Math.sin(.8)*R[1]),0x9fb0c4);
-// ── FUTURE GRID — "Aurora" (forming · not yet open, D-NH-13 teaser) ─────────
-// A second Grid condensing out in the distance: a deformed wireframe shell of
-// nodes — land with no city yet. Linked to Genesis by a survey corridor.
-// The Grids ORBIT EARTH (D-NH-12): Genesis sits at φ=0 of a shared orbital
-// shell around the planet; Aurora condenses farther along the same orbit.
-const ORBIT_C=planet.position.clone();
-const ORBIT_R=ORBIT_C.length();                   // Genesis is at the origin
-const _u1=ORBIT_C.clone().negate().normalize();   // planet → Genesis
-const _u2=new THREE.Vector3(1,0,0).addScaledVector(_u1,-_u1.x).normalize();
-function orbitPoint(phi){return ORBIT_C.clone()
- .addScaledVector(_u1,Math.cos(phi)*ORBIT_R)
- .addScaledVector(_u2,Math.sin(phi)*ORBIT_R);}
-// the shared orbit ring + a fainter inclined shell hinting at future Grids
-{const pts=[];for(let i=0;i<=256;i++)pts.push(orbitPoint(i/256*Math.PI*2));
- const ring=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
-  new THREE.LineDashedMaterial({color:0x3fa6bd,transparent:true,opacity:.16,dashSize:5,gapSize:7}));
- ring.computeLineDistances();scene.add(ring);
- const pts2=[];for(let i=0;i<=256;i++){const p=orbitPoint(i/256*Math.PI*2);
-  pts2.push(p.clone().sub(ORBIT_C).applyAxisAngle(_u2,0.5).multiplyScalar(1.12).add(ORBIT_C));}
- const ring2=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts2),
-  new THREE.LineDashedMaterial({color:0x6a7686,transparent:true,opacity:.10,dashSize:4,gapSize:9}));
- ring2.computeLineDistances();scene.add(ring2);}
-const futureGrid=new THREE.Group();scene.add(futureGrid);
-futureGrid.position.copy(orbitPoint(0.62));
-const FG={id:'aurora:grid:forming',zone:'frontier_grid',ring:'—',sector_deg:'—',level:'—',
- price:0,upkeep:0,purchasable:false,status:'forming',future:true};
-{const g=new THREE.SphereGeometry(26,26,18);
- const pos=g.attributes.position;const v=new THREE.Vector3();
+// ── THE JOURNEY — Earth → Moon → Mars (D-NARR-01) ───────────────────────────
+// Genesis stays NEAR EARTH. The Moon & Mars are SEPARATE Grids on their OWN
+// bodies, forming farther out (land condensing, no city yet — D-NH-13). Each is
+// a distinct world above its own moon/planet, NOT Genesis relocated. A focus
+// picker visits each; Earth never changes.
+const previewGrids=[];
+function buildPreviewGrid(o){
+ const grp=new THREE.Group();grp.position.copy(o.gridPos);scene.add(grp);
+ // the body this Grid sits above (Moon / Mars), offset below its forming station
+ const body=new THREE.Mesh(new THREE.SphereGeometry(o.bodyR,64,64),
+  new THREE.MeshStandardMaterial({color:o.bodyColor,emissive:o.bodyEmissive,emissiveIntensity:.5,roughness:1,metalness:0}));
+ body.position.copy(o.gridPos).add(o.bodyOffset);scene.add(body);
+ if(o.atmoColor){const a=new THREE.Mesh(new THREE.SphereGeometry(o.bodyR*1.04,40,40),
+   new THREE.MeshBasicMaterial({color:o.atmoColor,transparent:true,opacity:o.atmoOpacity,side:THREE.BackSide,blending:THREE.AdditiveBlending}));
+  a.position.copy(body.position);scene.add(a);}
+ // forming station — deformed wireframe shell (land, no city yet)
+ const g=new THREE.SphereGeometry(26,26,18);const pos=g.attributes.position;const v=new THREE.Vector3();
  for(let i=0;i<pos.count;i++){v.fromBufferAttribute(pos,i);
-  const n=Math.sin(v.x*.21)+Math.cos(v.y*.17)*1.3+Math.sin(v.z*.23)*1.1;
-  v.multiplyScalar(1+n*0.06);pos.setXYZ(i,v.x,v.y,v.z);}
- const wire=new THREE.LineSegments(new THREE.WireframeGeometry(g),
-  new THREE.LineBasicMaterial({color:0x3fa6bd,transparent:true,opacity:.45}));
- futureGrid.add(wire);
- const dots=new THREE.Points(g,new THREE.PointsMaterial({color:0x7fd4e8,size:1.5,sizeAttenuation:true,transparent:true,opacity:.85}));
- futureGrid.add(dots);
- const haze=new THREE.Mesh(new THREE.SphereGeometry(9,16,12),
-  new THREE.MeshBasicMaterial({color:0x3fa6bd,transparent:true,opacity:.06,blending:THREE.AdditiveBlending}));
- futureGrid.add(haze);
- const hit=new THREE.Mesh(new THREE.SphereGeometry(27,12,10),
-  new THREE.MeshBasicMaterial({visible:false}));
- hit.userData=FG;futureGrid.add(hit);meshes.push(hit);}
-{const s1=neonSign('GRID II · AURORA',0x3fa6bd);s1.position.set(0,42,0);futureGrid.add(s1);
- const s2=neonSign('FORMING · NOT OPEN',0x6a7686);s2.position.set(0,32,0);s2.scale.set(21,5.2,1);futureGrid.add(s2);}
-// inter-grid survey corridor: Genesis → Aurora along the shared Earth orbit
-{const corridor=new THREE.CatmullRomCurve3(
-  [0.20,0.30,0.40,0.50,0.56].map(phi=>orbitPoint(phi)));
- const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(corridor.getPoints(64)),
-  new THREE.LineDashedMaterial({color:0x3fa6bd,transparent:true,opacity:.35,dashSize:2.4,gapSize:2.4}));
+  const n=Math.sin(v.x*.21)+Math.cos(v.y*.17)*1.3+Math.sin(v.z*.23)*1.1;v.multiplyScalar(1+n*0.06);pos.setXYZ(i,v.x,v.y,v.z);}
+ grp.add(new THREE.LineSegments(new THREE.WireframeGeometry(g),new THREE.LineBasicMaterial({color:o.sign,transparent:true,opacity:.45})));
+ grp.add(new THREE.Points(g,new THREE.PointsMaterial({color:o.sign,size:1.5,sizeAttenuation:true,transparent:true,opacity:.85})));
+ grp.add(new THREE.Mesh(new THREE.SphereGeometry(9,16,12),new THREE.MeshBasicMaterial({color:o.sign,transparent:true,opacity:.06,blending:THREE.AdditiveBlending})));
+ const meta={id:o.name.toLowerCase()+':grid:forming',name:o.name+' Grid',body:o.name,zone:'frontier_grid',ring:'—',sector_deg:'—',level:'—',price:0,upkeep:0,purchasable:false,status:'forming',future:true,g:o.g,delay:o.delay};
+ const hit=new THREE.Mesh(new THREE.SphereGeometry(27,12,10),new THREE.MeshBasicMaterial({visible:false}));hit.userData=meta;grp.add(hit);meshes.push(hit);
+ const s1=neonSign(o.name.toUpperCase()+' GRID',o.sign);s1.position.set(0,42,0);grp.add(s1);
+ const s2=neonSign('FORMING · H1',0x6a7686);s2.position.set(0,32,0);s2.scale.set(16,4,1);grp.add(s2);
+ previewGrids.push(grp);
+ GRID_FOCUS[o.name]={pos:o.gridPos.clone(),dist:o.dist,label:o.name+' Grid · forming ('+o.name+')'};
+}
+buildPreviewGrid({name:'Moon',gridPos:new THREE.Vector3(520,40,-430),bodyOffset:new THREE.Vector3(50,-190,-60),bodyR:120,bodyColor:0x8f8f93,bodyEmissive:0x33352f,sign:0x9aa6c0,dist:150,g:'1.62',delay:'1.3 s'});
+buildPreviewGrid({name:'Mars',gridPos:new THREE.Vector3(980,70,-880),bodyOffset:new THREE.Vector3(60,-200,-70),bodyR:110,bodyColor:0x9c4a2f,bodyEmissive:0x3a1c12,atmoColor:0xc78a5a,atmoOpacity:.12,sign:0xc88a5a,dist:150,g:'3.71',delay:'3–22 min'});
+// survey corridor: Genesis (near Earth) → Moon Grid → Mars Grid (the journey)
+{const corridor=new THREE.CatmullRomCurve3([new THREE.Vector3(0,2,0),new THREE.Vector3(260,40,-210),GRID_FOCUS.Moon.pos.clone(),new THREE.Vector3(740,60,-650),GRID_FOCUS.Mars.pos.clone()]);
+ const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(corridor.getPoints(96)),
+  new THREE.LineDashedMaterial({color:0x3fa6bd,transparent:true,opacity:.30,dashSize:3,gapSize:4}));
  line.computeLineDistances();scene.add(line);
- for(let k=0;k<2;k++){const m=new THREE.Mesh(new THREE.SphereGeometry(.8,8,8),
+ for(let k=0;k<3;k++){const m=new THREE.Mesh(new THREE.SphereGeometry(.9,8,8),
   new THREE.MeshBasicMaterial({color:0x7fd4e8,transparent:true,opacity:.9,blending:THREE.AdditiveBlending}));
- scene.add(m);flows.push({m,curve:corridor,off:k*.5,spd:.0008});}}
+ scene.add(m);flows.push({m,curve:corridor,off:k/3,spd:.0006});}}
 // D-NH-11 Genesis Epoch: NY 1 · DAY 1 = Earth 2026-06-01 00:00 US Pacific Time (PDT, UTC-7)
 const EPOCH=Date.UTC(2026,5,1,7);
 function noesisNow(){const days=Math.floor((Date.now()-EPOCH)/86400000);
@@ -355,9 +327,15 @@ document.getElementById('stats').innerHTML='<b id="nyclock">'+noesisNow()+'</b> 
 setInterval(()=>{const el=document.getElementById('nyclock');if(el)el.textContent=noesisNow();},60000);
 // ── camera orbit (hand-rolled) ──────────────────────────────────────────────
 let rx=0.42,ry=0.7,dist=185;
+const focus=new THREE.Vector3(0,2,0),focusGoal=focus.clone();let distGoal=185;
 // ?focus=core — Government Core portrait view
-if(new URLSearchParams(location.search).get('focus')==='core'){rx=0.16;ry=0.95;dist=58;}let drag=false,px=0,py=0;
-function place(){cam.position.set(Math.sin(ry)*Math.cos(rx)*dist,Math.sin(rx)*dist+6,Math.cos(ry)*Math.cos(rx)*dist);cam.lookAt(0,2,0);}
+if(new URLSearchParams(location.search).get('focus')==='core'){rx=0.16;ry=0.95;dist=58;distGoal=58;}let drag=false,px=0,py=0;
+function place(){cam.position.set(focus.x+Math.sin(ry)*Math.cos(rx)*dist,focus.y+Math.sin(rx)*dist+6,focus.z+Math.cos(ry)*Math.cos(rx)*dist);cam.lookAt(focus);}
+// Grid focus picker — Genesis stays near Earth; Moon/Mars are SEPARATE Grids visited by camera.
+function focusGrid(name){const f=GRID_FOCUS[name]||GRID_FOCUS.Genesis;focusGoal.copy(f.pos);distGoal=f.dist;
+ const lbl=document.getElementById('bodylabel');if(lbl)lbl.textContent='FOCUS · '+(f.label||name);
+ document.querySelectorAll('#bodies button').forEach(b=>b.classList.toggle('on',b.dataset.grid===name));}
+document.querySelectorAll('#bodies button').forEach(b=>b.addEventListener('click',()=>focusGrid(b.dataset.grid)));
 cvs.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;});
 addEventListener('pointerup',()=>drag=false);
 addEventListener('pointermove',e=>{if(!drag)return;ry-=(e.clientX-px)*0.006;
@@ -397,12 +375,13 @@ const ray=new THREE.Raycaster();const pv=new THREE.Vector2();const panel=documen
 function renderPanel(p){
  lastPicked=p;
  if(p.future){
-  panel.innerHTML='<div class="pid">'+p.id+'</div>'+
-   '<div class="row"><span>grid</span><b>Aurora (II)</b></div>'+
+  panel.innerHTML='<div class="pid">'+(p.name||'Frontier Grid')+'</div>'+
+   '<div class="row"><span>body</span><b>'+(p.body||'—')+'</b></div>'+
+   '<div class="row"><span>gravity</span><b>'+(p.g||'—')+' m/s²</b></div>'+
+   '<div class="row"><span>light delay</span><b>'+(p.delay||'—')+'</b></div>'+
    '<div class="row"><span>status</span><b>forming</b></div>'+
-   '<div class="row"><span>parcels</span><b>not yet surveyed</b></div>'+
    '<div class="row"><span>opens</span><b>by Nous council law</b></div>'+
-   '<div class="lockmsg">A second Grid condensing in the distance (D-NH-13).<br>Grids are not a fixed product — Nous design and build them with their pooled AI power. Not yet open; chartered by Nous council law, not by schedule.</div>';
+   '<div class="lockmsg">A SEPARATE Grid forming on its own world (H1 / D-NH-13). Genesis stays near Earth — this is a distinct city on the Earth→Moon→Mars journey, not Genesis relocated. Built by Nous with pooled AI power; chartered by council law, not schedule.</div>';
   panel.classList.add('on');return;
  }
  if(!signedIn){
@@ -432,7 +411,8 @@ place();
 // ── animate: station drift, counter-rotating residential orbit, packets ────
 let t=0;(function loop(){t+=1;
 station.rotation.y+=0.00055;
-futureGrid.rotation.y+=0.0012;futureGrid.rotation.x+=0.0004;
+for(const pg of previewGrids){pg.rotation.y+=0.0012;pg.rotation.x+=0.0004;}
+focus.lerp(focusGoal,0.07);dist+=(distGoal-dist)*0.07;place();
 planet.rotation.y+=0.00035;
 r3spin.rotation.z+=0.0009;
 councilRing.rotation.y-=0.0028;
