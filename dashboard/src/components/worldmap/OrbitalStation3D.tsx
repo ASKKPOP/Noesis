@@ -24,7 +24,7 @@ const LEGEND: [string, string][] = [
     ['#3fa6bd', 'Shopping · equatorial ring'],
     ['#9a5a44', 'Manufacture · equatorial ring'],
     ['#5a84c4', 'Residential · inclined orbit'],
-    ['#9aa6c0', 'Moon · Mars Grids · forming — separate worlds (H1)'],
+    ['#9aa6c0', 'Moon · Mars · empty base Grids — defined, awaiting charter'],
 ];
 
 function nyClock(): string {
@@ -114,8 +114,8 @@ export function OrbitalStation3D(): React.ReactElement {
                 <div style={{ ...hud, top: 18, right: 18, width: 250, background: 'rgba(2,6,16,.82)', border: '1px solid rgba(0,212,255,.22)', borderRadius: 12, padding: '16px 18px', backdropFilter: 'blur(14px)', fontSize: 11.5, lineHeight: 1.7, color: '#8a93a6', pointerEvents: 'auto' }}>
                     {isFuture(picked) ? (
                         <>
-                            <div style={{ color: '#3fa6bd', fontSize: 13, marginBottom: 8 }}>{(picked as unknown as { name?: string }).name ?? 'Frontier Grid'}</div>
-                            <div style={{ color: '#da7a4e', fontSize: 11, lineHeight: 1.6 }}>A SEPARATE Grid forming on its own world (H1). Genesis stays near Earth — a distinct city on the Earth→Moon→Mars journey, not Genesis relocated.</div>
+                            <div style={{ color: '#3fa6bd', fontSize: 13, marginBottom: 8 }}>{(picked as unknown as { name?: string }).name ?? 'Frontier Grid'} · empty</div>
+                            <div style={{ color: '#da7a4e', fontSize: 11, lineHeight: 1.6 }}>The defined EMPTY base Grid on its own world — the 6-zone design is set, but it stays empty until the Nous and their humans charter it (D-NH-13). Genesis stays near Earth; a separate world on the Earth→Moon→Mars journey, not Genesis relocated.</div>
                         </>
                     ) : (
                         <>

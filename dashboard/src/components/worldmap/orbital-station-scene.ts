@@ -250,20 +250,38 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         const body = new THREE.Mesh(new THREE.SphereGeometry(o.bodyR, 64, 64), new THREE.MeshStandardMaterial({ color: o.bodyColor, emissive: o.bodyEmissive, emissiveIntensity: 0.5, roughness: 1, metalness: 0 }));
         body.position.copy(o.gridPos).add(o.bodyOffset); scene.add(body);
         if (o.atmoColor) { const a = new THREE.Mesh(new THREE.SphereGeometry(o.bodyR * 1.04, 40, 40), new THREE.MeshBasicMaterial({ color: o.atmoColor, transparent: true, opacity: o.atmoOpacity, side: THREE.BackSide, blending: THREE.AdditiveBlending })); a.position.copy(body.position); scene.add(a); }
-        const g = new THREE.SphereGeometry(26, 26, 18); const pos = g.attributes.position; const v = new THREE.Vector3();
-        for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i); const nn = Math.sin(v.x * 0.21) + Math.cos(v.y * 0.17) * 1.3 + Math.sin(v.z * 0.23) * 1.1; v.multiplyScalar(1 + nn * 0.06); pos.setXYZ(i, v.x, v.y, v.z); }
-        grp.add(new THREE.LineSegments(new THREE.WireframeGeometry(g), new THREE.LineBasicMaterial({ color: o.sign, transparent: true, opacity: 0.45 })));
-        grp.add(new THREE.Points(g, new THREE.PointsMaterial({ color: o.sign, size: 1.5, sizeAttenuation: true, transparent: true, opacity: 0.85 })));
-        grp.add(new THREE.Mesh(new THREE.SphereGeometry(9, 16, 12), new THREE.MeshBasicMaterial({ color: o.sign, transparent: true, opacity: 0.06, blending: THREE.AdditiveBlending })));
-        const meta = { id: o.name.toLowerCase() + ':grid:forming', name: o.name + ' Grid', body: o.name, zone: 'frontier_grid', ring: -1, sector: 0, level: 0, status: 'forming', price_bios: 0, owner_civic_did_hash: null, structure: null, occupant_count: 0, future: true } as unknown as ParcelFeedEntry;
-        const hit = new THREE.Mesh(new THREE.SphereGeometry(27, 12, 10), new THREE.MeshBasicMaterial({ visible: false })); hit.userData = meta; grp.add(hit); meshes.push(hit);
-        const s1 = neonSign(o.name.toUpperCase() + ' GRID', o.sign); s1.position.set(0, 42, 0); grp.add(s1);
-        const s2 = neonSign('FORMING · H1', 0x6a7686); s2.position.set(0, 32, 0); s2.scale.set(16, 4, 1); grp.add(s2);
+        // ── the BASE EMPTY grid — the same 6-zone design we defined for Genesis,
+        //    rendered EMPTY (core + 3 zone shells + empty slot ticks, no parcels).
+        //    It APPEARS so the world is present on the map; it is NOT focused or
+        //    developed. It fills only when the Nous + their humans charter it (D-NH-13).
+        const PR: Record<number, number> = { 1: 12, 2: 22, 3: 32 };
+        // government core (gravity center) — a faint empty marker, not a built core
+        grp.add(new THREE.Mesh(new THREE.SphereGeometry(4.2, 24, 18),
+            new THREE.MeshStandardMaterial({ color: 0x2b333b, emissive: o.sign, emissiveIntensity: 0.16, metalness: 0.4, roughness: 0.4, transparent: true, opacity: 0.55 })));
+        grp.add(new THREE.Mesh(new THREE.IcosahedronGeometry(4.4, 2), new THREE.MeshBasicMaterial({ color: o.sign, wireframe: true, transparent: true, opacity: 0.28 })));
+        // commons + equatorial zone shells (empty)
+        for (const rr of [PR[1], PR[2]]) {
+            const t = new THREE.Mesh(new THREE.TorusGeometry(rr, 0.28, 8, 110), new THREE.MeshBasicMaterial({ color: o.sign, transparent: true, opacity: 0.34 }));
+            t.rotation.x = Math.PI / 2; grp.add(t);
+        }
+        // inclined residential shell (empty) — matches Genesis INCL
+        { const tilt = new THREE.Group(); tilt.rotation.x = INCL;
+          const t = new THREE.Mesh(new THREE.TorusGeometry(PR[3], 0.28, 8, 110), new THREE.MeshBasicMaterial({ color: 0x5a84c4, transparent: true, opacity: 0.32 })); t.rotation.x = Math.PI / 2; tilt.add(t); grp.add(tilt); }
+        // empty zone slots around the equatorial shell — defined positions, none built
+        for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; const dot = new THREE.Mesh(new THREE.SphereGeometry(0.62, 8, 8), new THREE.MeshBasicMaterial({ color: o.sign, transparent: true, opacity: 0.45 })); dot.position.set(Math.cos(a) * PR[2], 0, Math.sin(a) * PR[2]); grp.add(dot); }
+        // faint halo so the empty world still reads from a distance
+        grp.add(new THREE.Mesh(new THREE.SphereGeometry(PR[3] + 4, 16, 12), new THREE.MeshBasicMaterial({ color: o.sign, transparent: true, opacity: 0.05, blending: THREE.AdditiveBlending })));
+        const meta = { id: o.name.toLowerCase() + ':grid:empty', name: o.name + ' Grid', body: o.name, zone: 'frontier_grid', ring: -1, sector: 0, level: 0, status: 'empty', price_bios: 0, owner_civic_did_hash: null, structure: null, occupant_count: 0, future: true } as unknown as ParcelFeedEntry;
+        const hit = new THREE.Mesh(new THREE.SphereGeometry(40, 12, 10), new THREE.MeshBasicMaterial({ visible: false })); hit.userData = meta; grp.add(hit); meshes.push(hit);
+        const s1 = neonSign(o.name.toUpperCase() + ' GRID', o.sign); s1.position.set(0, 54, 0); grp.add(s1);
+        const s2 = neonSign('EMPTY · AWAITING CHARTER', 0x6a7686); s2.position.set(0, 45, 0); s2.scale.set(20, 5, 1); grp.add(s2);
         previewGrids.push(grp);
-        GRID_FOCUS[o.name] = { pos: o.gridPos.clone(), dist: o.dist, label: o.name + ' Grid · forming (' + o.name + ')' };
+        GRID_FOCUS[o.name] = { pos: o.gridPos.clone(), dist: o.dist, label: o.name + ' Grid · empty · awaiting charter' };
     }
-    buildPreviewGrid({ name: 'Moon', gridPos: new THREE.Vector3(520, 40, -430), bodyOffset: new THREE.Vector3(50, -190, -60), bodyR: 120, bodyColor: 0x8f8f93, bodyEmissive: 0x33352f, sign: 0x9aa6c0, dist: 150 });
-    buildPreviewGrid({ name: 'Mars', gridPos: new THREE.Vector3(980, 70, -880), bodyOffset: new THREE.Vector3(60, -200, -70), bodyR: 110, bodyColor: 0x9c4a2f, bodyEmissive: 0x3a1c12, atmoColor: 0xc78a5a, atmoOpacity: 0.12, sign: 0xc88a5a, dist: 150 });
+    // Positioned in the camera's default forward field (−x/−z, beyond Genesis) so
+    // they APPEAR in the world map without focusing — the journey receding into space.
+    buildPreviewGrid({ name: 'Moon', gridPos: new THREE.Vector3(-300, 58, -210), bodyOffset: new THREE.Vector3(-16, -40, -26), bodyR: 34, bodyColor: 0x8f8f93, bodyEmissive: 0x33352f, sign: 0x9aa6c0, dist: 120 });
+    buildPreviewGrid({ name: 'Mars', gridPos: new THREE.Vector3(-540, 92, -415), bodyOffset: new THREE.Vector3(-20, -44, -30), bodyR: 30, bodyColor: 0x9c4a2f, bodyEmissive: 0x3a1c12, atmoColor: 0xc78a5a, atmoOpacity: 0.12, sign: 0xc88a5a, dist: 115 });
 
     // ── data flows ──
     const flows: { m: THREE.Mesh; curve: THREE.Curve<THREE.Vector3>; off: number; spd: number }[] = [];
@@ -273,15 +291,18 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
     }
     for (const deg of [20, 100, 140, 220, 260, 340]) { const th = deg * Math.PI / 180; const zone = deg < 120 ? 'business' : deg < 240 ? 'shopping' : 'manufacture'; flow(new THREE.Vector3(Math.cos(th) * R[2], (Math.round(deg) % 2 ? 6 : -6), Math.sin(th) * R[2]), ZCOL[zone]); }
     // survey corridor Genesis → Moon → Mars
-    { const corridor = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 2, 0), new THREE.Vector3(260, 40, -210), GRID_FOCUS.Moon.pos.clone(), new THREE.Vector3(740, 60, -650), GRID_FOCUS.Mars.pos.clone()]);
+    { const corridor = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 2, 0), new THREE.Vector3(-150, 34, -105), GRID_FOCUS.Moon.pos.clone(), new THREE.Vector3(-410, 74, -300), GRID_FOCUS.Mars.pos.clone()]);
         const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(corridor.getPoints(96)), new THREE.LineDashedMaterial({ color: 0x3fa6bd, transparent: true, opacity: 0.30, dashSize: 3, gapSize: 4 }));
         line.computeLineDistances(); scene.add(line);
         for (let k = 0; k < 3; k++) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.9, 8, 8), new THREE.MeshBasicMaterial({ color: 0x7fd4e8, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending })); scene.add(m); flows.push({ m, curve: corridor, off: k / 3, spd: 0.0006 }); }
     }
 
     // ── camera (hand-rolled, focus-based) ──
-    let rx = 0.42, ry = 0.7, dist = 185;
-    const focus = new THREE.Vector3(0, 2, 0), focusGoal = focus.clone(); let distGoal = 185;
+    // Default = a wide "world map" overview angled at the −x/−z journey so Genesis
+    // (near Earth) AND the empty Moon/Mars grids are all in frame at load. The Genesis
+    // focus button zooms back in to 185.
+    let rx = 0.42, ry = 0.92, dist = 235;
+    const focus = new THREE.Vector3(0, 2, 0), focusGoal = focus.clone(); let distGoal = 235;
     let drag = false, px = 0, py = 0;
     function place(): void {
         cam.position.set(focus.x + Math.sin(ry) * Math.cos(rx) * dist, focus.y + Math.sin(rx) * dist + 6, focus.z + Math.cos(ry) * Math.cos(rx) * dist);

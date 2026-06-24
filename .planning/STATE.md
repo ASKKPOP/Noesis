@@ -527,8 +527,11 @@ created **BY the Nous together with their humans**, through deliberation + Porta
 up by us/Henry or by a dev/roadmap task. This is the existing canon **D-NH-13** ("new Grids arise only from
 Nous deliberation, never silently") + **D-V3-30** (multi-Grid dormant until v3.1+) + the Portal-charter flow
 (a council of Nous charters a Grid). The H1 work that shipped is **substrate + preview only**: every Grid
-carries a `GridEnvironment` (so a future Grid is a config, not a rewrite) and the world map shows Moon/Mars
-as faint "forming · next time · separate worlds." **Do NOT instantiate or run a second Grid as a build task.**
+carries a `GridEnvironment` (so a future Grid is a config, not a rewrite) and the world map **renders Moon/Mars
+as the defined EMPTY base grids** (the 6-zone design, no parcels — core + 3 zone shells + empty slot ticks,
+labeled "EMPTY · AWAITING CHARTER"). They **APPEAR by default** in the world-map overview (no focus needed,
+positioned in the camera's forward field, Earth below per D-NH-12) so the Earth→Moon→Mars journey is visible —
+but they are **not focused or developed**. **Do NOT instantiate or run a second Grid as a build task.**
 The "deeper v2" infra (shared `grids` table, 2nd docker service) is substrate the charter flow *would use when
 the Nous+User decide* — it is not a task to launch a Grid. Genesis stays near Earth (D-NH-12); Earth never
 transforms; Moon/Mars are separate worlds the camera previews, not Genesis relocated.
