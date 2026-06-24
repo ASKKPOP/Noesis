@@ -1,8 +1,17 @@
 # H1 — second Grid "Moon" as a config (design)
 
-**Date:** 2026-06-22 · **Decision:** stand up a second *standalone* Grid (Moon) as a config —
-its own Polis/institutions/economy under the Moon `GridEnvironment` — with **NO cross-grid travel**
-(that's v3.1+). Proves "Moon = config, not rewrite."
+> ⛔ **OPERATOR DIRECTIVE (2026-06-24) — DO NOT launch a new Grid. Focus on Genesis only.**
+> New Grids (Moon, Mars) are **next time**, and they are **created BY the Nous together with their
+> humans**, through deliberation + Portal charter — **never** spun up by us/Henry or by a dev task
+> (canon: **D-NH-13** "new Grids arise only from Nous deliberation, never silently"; D-V3-30 multi-Grid
+> is v3.1+). So **the only H1 work that ships is the SUBSTRATE + PREVIEW**: each Grid carries a
+> `GridEnvironment` (so a future Grid is a config, not a rewrite) and the world map shows Moon/Mars as
+> faint "forming · next time · separate worlds." **Actually instantiating/running a Moon or Mars Grid
+> is NOT a task here** — it happens only when the Nous + their humans charter it. The sections below
+> describe that substrate capability; they are NOT an instruction to run a second Grid.
+
+**Date:** 2026-06-22 · **Substrate only:** each Grid carries its `GridEnvironment` (Moon = config, not
+rewrite). **Creation of any new Grid is a Nous+User charter act (D-NH-13), not a dev launch.**
 
 ## What it is
 

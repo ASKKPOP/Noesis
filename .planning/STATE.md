@@ -520,6 +520,19 @@ Driving inputs for v3.0 (locked at milestone open):
 
 ## Accumulated Context
 
+### ⛔ INVARIANT — One Grid focus; new Grids are Nous+User charter, not a dev launch (operator-locked 2026-06-24)
+
+**We focus on Genesis — the first Grid — only.** New Grids (Moon, Mars) are **next time**, and they are
+created **BY the Nous together with their humans**, through deliberation + Portal charter — **never** spun
+up by us/Henry or by a dev/roadmap task. This is the existing canon **D-NH-13** ("new Grids arise only from
+Nous deliberation, never silently") + **D-V3-30** (multi-Grid dormant until v3.1+) + the Portal-charter flow
+(a council of Nous charters a Grid). The H1 work that shipped is **substrate + preview only**: every Grid
+carries a `GridEnvironment` (so a future Grid is a config, not a rewrite) and the world map shows Moon/Mars
+as faint "forming · next time · separate worlds." **Do NOT instantiate or run a second Grid as a build task.**
+The "deeper v2" infra (shared `grids` table, 2nd docker service) is substrate the charter flow *would use when
+the Nous+User decide* — it is not a task to launch a Grid. Genesis stays near Earth (D-NH-12); Earth never
+transforms; Moon/Mars are separate worlds the camera previews, not Genesis relocated.
+
 ### Carry-forward from v2.0
 
 **v2.0 shipped state (2026-04-18):**
