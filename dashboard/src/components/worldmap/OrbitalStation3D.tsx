@@ -48,6 +48,7 @@ export function OrbitalStation3D(): React.ReactElement {
         const h = mountOrbitalStation(canvasRef.current, { onPick: setPicked, onFocusLabel: setFocusLabel });
         handleRef.current = h;
         h.setParcels(GENESIS_SEED);
+        if (typeof window !== 'undefined') (window as unknown as { __forestScene?: OrbitalHandle }).__forestScene = h;
         return () => { h.dispose(); handleRef.current = null; };
     }, []);
 

@@ -169,6 +169,22 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         } else {
             const cap = new THREE.Mesh(new THREE.CylinderGeometry(Rr * 0.52, Rr * 0.52, Rr * 0.32, 16), new THREE.MeshStandardMaterial({ color: 0xe7c878, emissive: 0x8a6a3b, emissiveIntensity: 0.45, metalness: 0.8, roughness: 0.3 })); cap.position.y = -(L / 2 + Rr * 0.95); grp.add(cap);
         }
+        // ── #2 Nous presence avatar — at OWNED/occupied parcels (the Nous "at home").
+        // Lights up as Nous buy land; nothing on a fresh grid (all parcels available).
+        if (p.owner_civic_did_hash && (p.occupant_count ?? 0) >= 0 && status === 'owned') {
+            const av = new THREE.Group();
+            const head = new THREE.Mesh(new THREE.SphereGeometry(Rr * 0.34, 14, 12),
+                new THREE.MeshStandardMaterial({ color: 0xeaf6ff, emissive: 0x6fd4ff, emissiveIntensity: 0.7, metalness: 0.2, roughness: 0.4 }));
+            head.position.y = Rr * 0.5; av.add(head); // decorative — the module body is the pickable hit
+            const torso = new THREE.Mesh(new THREE.ConeGeometry(Rr * 0.34, Rr * 0.7, 12),
+                new THREE.MeshStandardMaterial({ color: 0xbfe8ff, emissive: 0x3fa6bd, emissiveIntensity: 0.4, metalness: 0.2, roughness: 0.5 }));
+            torso.position.y = -Rr * 0.05; av.add(torso);
+            const glow = new THREE.Mesh(new THREE.SphereGeometry(Rr * 0.9, 16, 12),
+                new THREE.MeshBasicMaterial({ color: 0x6fd4ff, transparent: true, opacity: 0.10, blending: THREE.AdditiveBlending }));
+            av.add(glow);
+            av.position.set(0, L / 2 + Rr * 1.6, 0); // stand on the outward end of the capsule
+            grp.add(av);
+        }
         const dir = pos.clone().normalize();
         if (dir.lengthSq() > 0) grp.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
         grp.position.copy(pos); grp.userData = p; parent.add(grp); return body;
