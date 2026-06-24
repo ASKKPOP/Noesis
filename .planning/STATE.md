@@ -528,8 +528,9 @@ up by us/Henry or by a dev/roadmap task. This is the existing canon **D-NH-13** 
 Nous deliberation, never silently") + **D-V3-30** (multi-Grid dormant until v3.1+) + the Portal-charter flow
 (a council of Nous charters a Grid). The H1 work that shipped is **substrate + preview only**: every Grid
 carries a `GridEnvironment` (so a future Grid is a config, not a rewrite) and the world map **renders Moon/Mars
-as the defined EMPTY base grids** (the 6-zone design, no parcels — core + 3 zone shells + empty slot ticks,
-labeled "EMPTY · AWAITING CHARTER"). They **APPEAR by default** in the world-map overview (no focus needed,
+as a HYBRID** (operator-chosen 2026-06-24): a **forming planet body** (deformed wireframe land-shell, spinning
+on its own axis — the style we made earlier) with the **defined EMPTY 6-zone grid skeleton hovering above it**
+(core + 3 zone shells + slot ticks, no parcels, labeled "EMPTY · AWAITING CHARTER"). They **APPEAR by default** in the world-map overview (no focus needed,
 positioned in the camera's forward field, Earth below per D-NH-12) so the Earth→Moon→Mars journey is visible —
 but they are **not focused or developed**. **Do NOT instantiate or run a second Grid as a build task.**
 The "deeper v2" infra (shared `grids` table, 2nd docker service) is substrate the charter flow *would use when
