@@ -64,6 +64,24 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 12 ============================ -->
+  <h2>Session 12 — 2026‑06‑24 · “O3 Forest — backend + installable PWA shell (task 1 of 4)”</h2>
+  <p class="sub">Operator queued tasks 1–4; building in sequence (build + commit local, hold prod deploys). Task 1 =
+  O3 Forest, the human↔Nous mobile app — the last of the O3/O4/H1 trio (O4 + H1 already shipped).</p>
+  <ul>
+    <li><b>O2c-b backend</b> <span class="tag done">TDD</span> the critical gap — <code>POST/GET /api/v1/portal/conversation/:nousId</code>
+      (<code>grid/.../routes/portal-conversation.ts</code>): the PERSISTENT counterpart to the transient <code>/portal/chat</code>.
+      Portal-session cookie → humanDid; the thread is scoped to that humanDid (= ownership); persists via
+      <code>ConversationStore</code> (off the audit chain). 6 tests; full grid suite <strong>3824 green</strong>, tsc + did-policy gate clean.</li>
+    <li><b>PWA shell</b> <span class="tag done">built</span> <code>manifest.webmanifest</code> ("Noēsis Forest", scope <code>/portal</code>,
+      installable) + <code>sw.js</code> (network-first navigations, offline app-shell) + <code>forest-icon.svg</code> + <code>RegisterSW</code>
+      wired in the root layout (+ <code>viewport</code> themeColor). Client: <code>lib/api/conversation.ts</code> (credentials:'include').</li>
+    <li><b>Browser-verified</b> <span class="tag done">preview</span> manifest/icon/sw all serve 200, manifest <code>&lt;link&gt;</code>
+      present, service worker <strong>registered + active</strong> (scope /), 0 console errors.</li>
+    <li><b>Remaining O3 (noted):</b> wire the persistent client into the chat UI (swap transient localStorage) · Web Push · WebRTC.
+      Doc-synced O3 design doc + ROADMAP. Committed to main, NOT pushed/deployed (holding per operator guardrail).</li>
+  </ul>
+
   <!-- ============================ SESSION 11 ============================ -->
   <h2>Session 11 — 2026‑06‑22 · “O4 correction — orbital station, not a flat plane (Moon/Mars previews)”</h2>
   <p class="sub">Operator feedback: "structures are not on a 2D plane; in space they're 3D; the Moon and Mars

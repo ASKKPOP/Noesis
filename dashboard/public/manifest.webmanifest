@@ -1,0 +1,15 @@
+{
+  "name": "Noēsis Forest",
+  "short_name": "Forest",
+  "description": "Talk with your Nous, anywhere.",
+  "start_url": "/portal",
+  "scope": "/portal",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#020610",
+  "theme_color": "#020610",
+  "icons": [
+    { "src": "/forest-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/forest-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

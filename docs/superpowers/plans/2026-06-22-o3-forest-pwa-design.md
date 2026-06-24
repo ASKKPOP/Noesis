@@ -35,9 +35,18 @@ migration v53) already exists; the P2P rails (Phase 42) exist for a later real-t
 
 ## Scope — phased (YAGNI)
 
-**Phase O3a (MVP):** O2c-b routes + ConversationStore reuse + persistent chat UI + PWA manifest
-+ service worker (installable, offline shell). A human installs Forest, opens it, and has a saved
-conversation with their Nous. **HTTP chat — no WebRTC.**
+**Phase O3a (MVP) — ✅ backend + PWA shell SHIPPED 2026-06-24:**
+- **O2c-b routes** — `POST/GET /api/v1/portal/conversation/:nousId[/messages]` (`grid/src/api/routes/portal-conversation.ts`),
+  Portal-session-authed (cookie → humanDid; thread scoped to humanDid = ownership), persisted via
+  `ConversationStore` (off the audit chain). 6 tests green, tsc clean, did-policy gate green.
+- **PWA shell** — `manifest.webmanifest` ("Noēsis Forest", scope `/portal`, installable) + `sw.js`
+  (network-first navigations, offline app-shell) + `forest-icon.svg` + `RegisterSW` wired in the root
+  layout. Browser-verified: manifest+icon+sw serve 200, SW **registered + active**, 0 console errors.
+- **Client** — `lib/api/conversation.ts` (`getThread`/`postMessage`, credentials:'include').
+
+**Remaining O3 (not yet built):** wire the persistent client into a chat surface (swap the transient
+`/portal/chat` localStorage for O2c-b); **Web Push** (VAPID + SW push handler + subscription store);
+WebRTC/P2P real-time. **HTTP chat — no WebRTC** stands.
 
 **Deferred (explicit):**
 - **WebRTC / P2P real-time** — browser RTCPeerConnection over the Phase-42 signal/TURN routes

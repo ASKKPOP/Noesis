@@ -78,6 +78,7 @@ import { registerAccountEndowmentRoute } from './routes/account-endowment.js';
 import { registerProcurementRoutes } from './routes/procurement.js';
 import { registerApprovalRoutes } from './routes/approvals.js';
 import { registerConversationRoutes } from './routes/conversation.js';
+import { registerPortalConversationRoutes } from './routes/portal-conversation.js';
 import { registerGridManagerPresenceRoute } from './routes/grid-manager-presence.js';
 import { registerP2pRoutes } from './routes/p2p.js';
 import { registerForkNousRoute } from './operator/fork-nous.js';
@@ -739,6 +740,7 @@ export function buildServerWithHub(
     registerProcurementRoutes(app, services);
     registerApprovalRoutes(app, services);
     registerConversationRoutes(app, services);
+    registerPortalConversationRoutes(app, services);
 
     // --- Phase 41 SLEEP-02: Grid Manager presence overview (Steward Console Section 4) ---
     // GET /api/v1/grid-manager/presence-overview — portal_session_required (D-V3-36 Tier-2).
