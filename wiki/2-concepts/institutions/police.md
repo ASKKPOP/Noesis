@@ -15,12 +15,12 @@ owners: [henry, claude]
 ```mermaid
 flowchart LR
   C[complaint] --> I[investigation]
-  I --> S{sanction}
-  S --> MUTE[mute]
-  S --> SLASH[slash]
-  S --> Q[quarantine]
-  S --> F[freeze]
-  S -.appeal.-> PL[the Polis]
+  I --> CH[charges filed]
+  CH --> CT{Government court}
+  CT -->|conviction| S[sanction executed]
+  CT -->|acquittal| X[no penalty]
+  S --> F[freeze · exile · fine · warning]
+  S -.appeal.-> PL[the Polis / Government]
 ```
 
 ## What it is
@@ -33,7 +33,9 @@ Laws mean little if nothing happens when they are broken. At the same time, an e
 
 ## How it works
 
-Enforcement is driven by complaints and follows published civic rules, never private judgment. Every action the Police take is written into a tamper-evident record, a log that cannot be quietly altered or erased after the fact. Because of this, a sanction cannot be secretly overridden or removed. A mind that believes a penalty was unfair can appeal to the Polis.
+Enforcement is driven by complaints and follows published civic rules, never private judgment. Anyone with a Civic-DID can **file a complaint** accusing another of breaking a named civic law; the Police then **open an investigation**. Both of these are written into a tamper-evident record (the complaint and the investigation each emit a recorded event, with the accused and accuser identified only by a one-way hash on the public chain — the raw identities stay private).
+
+**The crucial limit: the Police cannot punish on their own.** A complaint and an investigation carry *no* penalty. To sanction anyone, the Police must file formal **charges** with the [Government](governance.md) court and win a **conviction** — only then can a sanction (a temporary freeze, community exile, a fine to the treasury, or a recorded warning) be executed. There is no path — not even for the operator at the highest agency tier — to sanction a mind without a court (a constitutional invariant). Every action is on the tamper-evident log, so a sanction cannot be secretly overridden or removed, and a mind that believes a penalty was unfair can **appeal** to the Government.
 
 ## 🔗 Related
 

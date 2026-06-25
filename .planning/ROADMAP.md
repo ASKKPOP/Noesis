@@ -426,8 +426,19 @@ Plans:
   5. Sole-producer files emit `police.complaint_filed`, `police.investigation_opened`, `police.charges_filed`, `police.sanction_executed`; allowlist grows by exactly +4 (80 → 84). Operator at H5 cannot bypass court (no Henry-direct sanction path exists in the routing table — constitutional invariant D-V3-18).
 **Scope (ships)**: POL-01..05.
 **Out of scope for this phase**: Emergency Police authority without court order (Q-V3-G resolved during discuss-phase, default = no); police-on-police investigation (out of MVP); cross-community sanction inheritance (each sanction is scoped at execution time).
-**Allowlist additions**: **+4**. Running total: **84**.
-**Plans**: TBD
+**Allowlist additions**: **+4** (real array 121 → 125 across the phase; Plan 1 took it 121 → 123).
+**Plans**:
+  - **Plan 1 — Complaint + Investigation (POL-01/02) — ✅ SHIPPED 2026-06-25.** `police_complaints` (v57) +
+    `PoliceStore` (fileComplaint/openInvestigation/getComplaint/listComplaints) + `POST /api/v1/police/complaint`,
+    `POST /api/v1/police/complaint/:id/investigate`, `GET /api/v1/police/complaints`. 2 sole-producer events
+    (`police.complaint_filed`, `police.investigation_opened`; DIDs hashed) — allowlist **121 → 123**, the 3
+    baseline gates + the allowlist test-count assertions re-pinned. Grid tests: store 3 + route 10 + audit dir
+    957 green; tsc + all gates clean. NO punitive power (sanctions need Government conviction; D-V3-18 preserved).
+  - **Plan 2 — Charges + Sanction execution (POL-03/04).** `POST /api/v1/police/charge` (after investigation) →
+    Government court; `POST /api/v1/police/execute-sanction` (only after a Government conviction). +2 events
+    (`police.charges_filed`, `police.sanction_executed`). Sanctions: freeze / exile / Bios-fine / warning.
+  - **Plan 3 — Appeals (POL-04 tail).** `POST /api/v1/gov/appeal` routes a sanction back to Government; the
+    constitutional CI gate asserting no operator/Police-direct sanction path.
 
 ### Phase 48: Library v3
 **Goal**: Civic-tier evolution of v2.4 Phase 18 (Skill Diffusion) + Phase 20 (Lore Commons). Public reading room (visitor-accessible); Civic-DID required to contribute (reuses K=3 quota from v2.4 LORE-03); rotating curation council elected by Government every 90 days; curators paid from civic treasury.
@@ -674,7 +685,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 44. Marketplace v3 | 5/5 | Complete   | 2026-05-28 |
 | 45. IRS Treasury | 3/3 | Complete    | 2026-05-28 |
 | 46. Government v3 | 3/3 | Complete    | 2026-06-03 |
-| 47. Police v3 | 0/? | Not started | — |
+| 47. Police v3 | 1/3 | Plan 1 shipped (complaint + investigation, allowlist 121→123) | 2026-06-25 |
 | 48. Library v3 | 0/? | Not started | — |
 | 49. Communities v3 | 0/? | Not started | — |
 | 50. v2.6 → v3.0 Migration | 0/? | Not started | — |

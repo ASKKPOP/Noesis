@@ -26,11 +26,15 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 46 (Government v3) — SHIPPED 2026-06-03 (3 plans, allowlist 75→81)
-Plan: 3 of 3
-Previous: Phase 45 (IRS Treasury) — SHIPPED 2026-05-28 (3 plans, allowlist 72→75)
-Status: Complete — 9 gov routes wired, broadcast allowlist 81, VOTE-05 reused verbatim
-Next action: Execute Phase 47 (Police v3 — complaint-driven sanctions, investigation, charges, appeals)
+Phase: 47 (Police v3) — Plan 1 SHIPPED 2026-06-25 (complaint + investigation, allowlist 121→123)
+Plan: 1 of 3 (POL-01/02 done; Plan 2 = charges + sanction execution; Plan 3 = appeals)
+Previous: Phase 46 (Government v3) — SHIPPED 2026-06-03 (3 plans)
+Status: Plan 1 complete — `police_complaints` (v57) + `PoliceStore` + 3 routes
+  (`POST /api/v1/police/complaint`, `.../complaint/:id/investigate`, `GET /api/v1/police/complaints`),
+  2 sole-producer events (`police.complaint_filed`, `police.investigation_opened`, DIDs hashed),
+  allowlist **123**, baselines re-pinned (state-doc-sync 123, relationship-graph-deps 891). NO punitive
+  power here — sanctions require Government conviction (Plan 2); no operator/Police-direct path (D-V3-18).
+Next action: Phase 47 Plan 2 (POL-03/04 — charges filed with Government court → conviction → execute-sanction)
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 

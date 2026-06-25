@@ -21,7 +21,8 @@
  * See: PITFALLS.md §C2 (critical pitfall — privacy leak).
  */
 
-/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42 + Phase 43 + Phase 44 + Phase 45 + Phase 46) — exactly these 81 event types.
+/** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42 + Phase 43 + Phase 44 + Phase 45 + Phase 46 + Phase 47) — 81 is the civic count through Phase 46; with the
+ *  parallel Economic Reality Loop programs the array is 121, and Phase 47 (+2 police.*) → 123.
  *  Phase 42 (P2P-05 / D-42-07): +3 P2P audit events (allowlist 64 → 67).
  *   - p2p.peer_announced (65): closed 3-key {civic_did_hash, endpoint_hash, tick}.
  *     endpoint_hash = sha256('online') — static sentinel (no IP/port leakage per D-42-02).
@@ -534,6 +535,16 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   sole-producer grid/src/audit/append-portal-account-endowed.ts
     //   closed 5-key {amount_wei, civic_did_hash, endowment_id, source, tick}
     'portal.account_endowed',    // (121)
+    // Phase 47 (POL-01/02) — Police v3 complaint-driven investigation. Allowlist 121 → 123.
+    // DIDs hashed (HEX64); raw DIDs live only in police_complaints/police_investigations.
+    // police.complaint_filed (122): actorDid = complainant_did_hash.
+    //   sole-producer grid/src/audit/append-police-complaint-filed.ts
+    //   closed 6-key {accused_did_hash, cited_law_id, complainant_did_hash, complaint_id, evidence_chain_hash, tick}
+    // police.investigation_opened (123): actorDid = investigation_id.
+    //   sole-producer grid/src/audit/append-police-investigation-opened.ts
+    //   closed 4-key {complaint_id, dispute_id, investigation_id, tick} (exactly one source non-null)
+    'police.complaint_filed',       // (122)
+    'police.investigation_opened',  // (123)
 ] as const;
 
 /**

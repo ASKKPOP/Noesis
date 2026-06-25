@@ -280,6 +280,11 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/portal/nous':                           'public',
     'POST /api/v1/portal/grid-recommendations':          'public',
     'GET /api/v1/civic/grid-recommendations':            'civic_did_required',
+    // Phase 47 Police v3 (POL-01/02) — complaint + investigation. All civic_member-gated;
+    // no operator-direct / Police-direct sanction path exists (D-V3-18).
+    'POST /api/v1/police/complaint':                                'civic_did_required',
+    'POST /api/v1/police/complaint/:complaintId/investigate':       'civic_did_required',
+    'GET /api/v1/police/complaints':                                'civic_did_required',
 
     // W — Conversation routes: human↔Nous chat thread (de-orphan ConversationStore).
     // Content is private (never on the audit chain); sender inferred from DID form.

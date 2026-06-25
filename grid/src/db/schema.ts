@@ -1366,4 +1366,28 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS grid_join_recommendations`,
     },
+    {
+        // Phase 47 Police v3 (POL-01) — complaint-driven enforcement. A Civic-DID holder
+        // accuses another of a civic-law violation. Raw DIDs live here (for queries/joins);
+        // the audit chain carries only hashed DIDs. police_investigations already exists (v
+        // from Phase 44). status walks filed → investigating → dismissed | charged.
+        version: 57,
+        name: 'create_police_complaints',
+        up: `
+            CREATE TABLE IF NOT EXISTS police_complaints (
+                complaint_id          CHAR(36)     NOT NULL,
+                grid_name             VARCHAR(63)  NOT NULL,
+                complainant_civic_did VARCHAR(255) NOT NULL,
+                accused_civic_did     VARCHAR(255) NOT NULL,
+                cited_law_id          CHAR(36)     NOT NULL,
+                evidence_chain_hash   CHAR(64)     NOT NULL,
+                status                ENUM('filed','investigating','dismissed','charged') NOT NULL DEFAULT 'filed',
+                filed_at_tick         BIGINT       NOT NULL,
+                PRIMARY KEY (complaint_id),
+                INDEX idx_complaint_accused (grid_name, accused_civic_did),
+                INDEX idx_complaint_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS police_complaints`,
+    },
 ];

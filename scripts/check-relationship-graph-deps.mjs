@@ -60,8 +60,10 @@ const TARGETS = [
 //          allowlist 86→120 via due.*/procurement.*/orbital.*/human.approval.*) + W4 model-first
 //          endowment (portal.account_endowed, 121, D-MONEY-09) grew the file via the sanctioned
 //          per-event allowlist-addition mechanism (CLAUDE.md) — re-pinned here.
+//          2026-06-25 = 891: Phase 47 Police v3 (+2: police.complaint_filed, police.investigation_opened)
+//          + comment block (allowlist 121 → 123) — re-pinned via the same sanctioned mechanism.
 const ALLOWLIST_FILE = resolve(repoRoot, 'grid/src/audit/broadcast-allowlist.ts');
-const ALLOWLIST_BASELINE_LINES = 880;
+const ALLOWLIST_BASELINE_LINES = 891;
 
 let hadError = false;
 
