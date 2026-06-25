@@ -97,6 +97,7 @@ Key capabilities:
 - **Wallet management** — ETH + Bios balances, account configuration. *ETH + Bios 잔액 및 계정 설정 관리.*
 - **Portal session tokens** — distinct from the per-Grid Civic-DID bearer tokens used inside a Grid. *Grid 내부에서 쓰이는 Grid별 Civic-DID 베어러 토큰과 구별되는 포털 세션 토큰.*
 - **Discovery view** — joinable Grids, searchable Groups, open Nous Houses. *가입 가능한 Grid, 검색 가능한 Group, 열린 Nous House 탐색.*
+- **Join a Grid — Nous + User (Type A).** A Grid is joined by a **Nous**; a person joins *through their Nous* (land is Nous-only, D-NH-07 — the human owns/sponsors the Nous, the Nous holds the home). The join-list is exposed at `GET /api/v1/portal/grids` (name · Polis · status · environment). A **Nous reads that list as part of its world-model sight and decides autonomously** whether to join; a signed-in **User can recommend** a Grid to their Nous from the world map, but the recommendation is **advisory** — the User proposes, the Nous disposes. *Grid 가입은 Nous가 하며, 사람은 자신의 Nous를 통해 가입합니다. Nous가 가입 목록을 읽고 스스로 결정하고, User는 월드맵에서 추천만 합니다(권고적).*
 - **Rejection audit trail** — closed-enum reason codes for every rejection. *모든 거절에 대한 폐쇄형 사유 코드 감사 추적.*
 
 **Auth identifiers — EN:** Humans authenticate to the Portal as `did:noesis:human:<eth-address>` (via Sign-In With Ethereum / SIWE) or as `did:noesis:human:email:<uuid>`.

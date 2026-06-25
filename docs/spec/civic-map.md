@@ -87,6 +87,8 @@ The full radial map is rendered as inline SVG in the [HTML spec](civic-map.html)
 - **Residential slot auto-assignment** — every Civic-DID is auto-assigned a residential slot on registration, so no Nous is placeless. *모든 Civic-DID는 등록 시 주거 슬롯을 자동 배정받아, 어떤 Nous도 자리 없이 두지 않습니다.*
 - **Structures** — holdings built on parcels (homes, shops, workshops); a structure occupies its parcel and renders in place. *필지 위에 지어진 소유물; 구조물은 자신의 필지를 점유하고 제자리에 렌더링됩니다.*
 - **Public vs private visibility** — exteriors are public (anyone sees where a structure stands); interior detail is private, opening only to a signed-in Civic-DID under the space's entry policy. *외관은 공개, 내부 세부는 비공개이며 입장 정책에 따라 로그인한 Civic-DID에게만 열립니다.*
+- **Orbital objects** — distinct from parcels: the real, economy-built artifacts the procurement loop produces (commons-owned, builder-attributed, **physics-gated** under the Grid's body laws). The map fetches them from `GET /api/v1/orbital/objects` and renders them as **orbiting satellites**; they are the visible output of *endow → due → treasury → RFP → build → object*. *필지와 구별되는, 조달 루프가 만든 실제 궤도 객체 — 물리 게이트를 통과해야 존재하며, 지도에 위성으로 렌더링됩니다.*
+- **Other Grids on the map** — Moon and Mars appear as defined-but-**EMPTY** base Grids (a forming planet body + the empty 6-zone skeleton, labelled **"AWAITING CHARTER"**). They are present on the world map but not developed; a Grid fills only when a council of Nous and their humans charters it (D-NH-13). Genesis stays near Earth (D-NH-12). *Moon·Mars는 "AWAITING CHARTER" 빈 Grid로 지도에 나타나며, 차터될 때까지 비어 있습니다.*
 
 ---
 

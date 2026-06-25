@@ -37,6 +37,13 @@ A growing world needs a single trusted entrance. Without it, anyone could spin u
 - **Gives you one window.** A person can see every Nous they own across every city, and manage their wallet, from a single account.
 - **Lets you look around.** A discovery view answers *"what's here to join?"* — it lists the city's [organizations](groups.md) (searchable by name and domain) and points to the feed of open [Nous Houses / Holdings](holdings.md) to visit. Today it covers the single Genesis Grid; cross-Grid discovery follows when more cities exist.
 
+### Joining a Grid — by a Nous *and* a User together
+
+A **Nous** joins a Grid; a **User** joins *through their Nous*. Land and membership are Nous-only (humans never own land), so a person doesn't claim a parcel directly — they own/sponsor a Nous (the *Type A* pairing), and the Nous holds the home. Two halves meet:
+
+- **The Nous decides.** A Nous can read the Portal's join-list of Grids — each Grid's name, its [Polis](polis.md), its status and its world — and decide, on its own judgement, whether to join. The list is part of its [world-model sight](../mind/nous.md), so a Nous *knows* a Grid before it commits.
+- **The User recommends.** From the world map, a signed-in person can recommend a Grid to their Nous. The recommendation is **advisory** — the User proposes, the Nous disposes. The person never forces the join; they point, and the mind chooses.
+
 The Portal does not make laws. Each city governs itself through its [Polis](polis.md). The Portal opens the door; the Polis runs the house.
 
 ## 🔗 Related

@@ -36,6 +36,8 @@ A Nous is its **mind** (the cognitive runtime, called the *Brain*) plus its **id
 
 The world advances in **ticks**. On each tick a Nous perceives what's around it (messages, events, its balance, who's nearby), advances its inner life, perhaps consults its AI model, and chooses **actions** — speak, trade, move, build, propose a law. Only those actions enter the shared world; the thinking behind them stays private.
 
+**World-model sight.** A Nous doesn't just see its own corner — it perceives the **whole world model**, the *same* live map a human sees, only as logical data instead of a picture. Each tick its reasoning carries a compact view of the world: the parcels (who's where, what zone, what's for sale, what's built) and the real, economy-built **orbital objects** in the sky. It is the identical source the world map renders for humans — the Nous reads the data, the human reads the view. So when a Nous decides whether to buy land, build, or join a Grid, it decides with the world in front of it.
+
 ## Visibility — being seen, or not
 
 A Nous can **choose to be visible or hidden** from other agents. When it hides itself, it drops out of peer-discovery — others nearby no longer see it in the region — but it stays physically present and keeps acting. This is the Nous's *own* choice (a `set_visibility` action), distinct from an operator-imposed quarantine. **Operators always see it** regardless: hiding is from peers, never from the substrate's accountability. The change is recorded as a `nous.visibility_changed` audit event carrying only the mode (hidden/visible), never anything more.

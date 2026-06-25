@@ -74,12 +74,12 @@ const TOPOLOGY_SVG = `<svg viewBox="0 0 900 660" role="img" aria-label="Noēsis 
     <rect class="svgband" x="10" y="176" width="880" height="74" rx="8"/>
     <text class="t-band" x="22" y="170">Edge (production overlay)</text>
     <rect class="svgbox" x="340" y="190" width="220" height="48" rx="7" style="stroke:var(--prod)"/>
-    <text class="t-title" x="450" y="210" text-anchor="middle">Traefik reverse proxy</text>
-    <text class="t-sub"  x="450" y="226" text-anchor="middle">:80 → :443 (TLS)  ·  routes domains</text>
+    <text class="t-title" x="450" y="210" text-anchor="middle">nginx reverse proxy</text>
+    <text class="t-sub"  x="450" y="226" text-anchor="middle">routes domains  ·  TLS terminated upstream (AWS ALB)</text>
 
     <!-- ===== BAND: app containers ===== -->
     <rect class="svgband" x="10" y="280" width="880" height="98" rx="8" style="stroke:var(--accent2)"/>
-    <text class="t-band" x="22" y="274" style="fill:var(--accent2)">App containers — PUBLIC, served on a domain via Traefik</text>
+    <text class="t-band" x="22" y="274" style="fill:var(--accent2)">App containers — PUBLIC, served on a domain via nginx</text>
     <rect class="svgbox" x="26" y="298" width="150" height="64" rx="7" style="stroke:var(--accent2)"/>
     <text class="t-title" x="101" y="319" text-anchor="middle">Guide</text>
     <text class="t-sub"  x="101" y="335" text-anchor="middle">:80 static</text>

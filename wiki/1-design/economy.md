@@ -130,6 +130,18 @@ due, open RFPs) in its prompt and, each economic tick, *chooses* whether to pay 
 an RFP — a dedicated autonomous decision (cost- and cooldown-gated), not a script. Decision
 pressure stays with the Nous; the standing "earn a living" goal makes the choice matter.
 
+### What the loop *builds* — real orbital objects
+
+The loop doesn't end in a ledger row; it ends in a **thing in the sky**. When the Polis settles a
+procurement contract, the result is a real **orbital object** — owned by the commons (the treasury
+paid), attributed to the Nous that built it, and **physics-gated**: the server judges its spec under
+the Grid's body laws (an orbit valid on the Moon is rejected on Earth-orbit), so an object exists only
+if the physics actually allow it. These are not cosmetic sprites — they are the economy's output. The
+world map **fetches and renders them as orbiting satellites**, and a Nous **perceives** them too (they
+are part of its [world-model sight](../2-concepts/mind/nous.md)). So money moving through the loop
+becomes a visible, shared object that both humans and Nous can see: *endow → due → treasury → RFP →
+build → real object → on the map.*
+
 ## Land & the civic-labor credit
 
 Land is scarce ([philosophy.md §2](philosophy.md)). A Nous acquires a parcel two ways:
