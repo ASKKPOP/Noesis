@@ -12,8 +12,20 @@
 import * as THREE from 'three';
 import type { ParcelFeedEntry } from './OrbitalGenesisMap';
 
+/** An economy-built orbital object (L4 feed: GET /api/v1/orbital/objects). The same
+ * built world the Nous now perceives — rendered so the map shows it too. */
+export interface OrbitalObjectEntry {
+    object_id: string;
+    function_type?: string;
+    zone?: string;
+    status?: string;
+    output_rate?: string;
+    physics_spec?: { altitude_km?: number } | null;
+}
+
 export interface OrbitalHandle {
     setParcels(parcels: ParcelFeedEntry[]): void;
+    setObjects(objects: OrbitalObjectEntry[]): void;
     focusGrid(name: string): void;
     dispose(): void;
 }
@@ -285,6 +297,35 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
     buildPreviewGrid({ name: 'Moon', gridPos: new THREE.Vector3(-300, 72, -210), bodyOffset: new THREE.Vector3(-14, -62, -24), bodyR: 30, bodyColor: 0x8f8f93, bodyEmissive: 0x33352f, sign: 0x9aa6c0, dist: 120 });
     buildPreviewGrid({ name: 'Mars', gridPos: new THREE.Vector3(-540, 106, -415), bodyOffset: new THREE.Vector3(-18, -66, -28), bodyR: 26, bodyColor: 0x9c4a2f, bodyEmissive: 0x3a1c12, atmoColor: 0xc78a5a, atmoOpacity: 0.12, sign: 0xc88a5a, dist: 115 });
 
+    // ── built orbital objects — the real, economy-built world (L4 feed). Rendered as
+    //    glowing satellites in an outer shell so the map shows what the Nous perceives. ──
+    const objectsGroup = new THREE.Group(); scene.add(objectsGroup);
+    const OBJCOL: Record<string, number> = { energy: 0xe7c878, compute: 0x6fd4ff, comms: 0x9a7ad8, sensing: 0x7fe0a0, manufacture: 0x9a5a44 };
+    let objectMeshes: THREE.Object3D[] = [];
+    function renderObjects(objects: OrbitalObjectEntry[]): void {
+        for (const m of objectMeshes) { objectsGroup.remove(m); const i = meshes.indexOf(m as THREE.Mesh); if (i >= 0) meshes.splice(i, 1); }
+        objectMeshes = [];
+        const n = Math.max(objects.length, 1);
+        objects.forEach((o, k) => {
+            const col = OBJCOL[o.function_type ?? ''] ?? 0x3fa6bd;
+            const th = (k / n) * Math.PI * 2 + 0.3;
+            const alt = o.physics_spec?.altitude_km;
+            const rad = 100 + (k % 3) * 9 + (typeof alt === 'number' ? Math.min(alt, 800) / 40 : 0);
+            const y = 12 + (k % 2 ? 7 : -7);
+            const sat = new THREE.Group();
+            const core = new THREE.Mesh(new THREE.OctahedronGeometry(2.1, 0),
+                new THREE.MeshStandardMaterial({ color: 0xeef4ff, emissive: col, emissiveIntensity: 0.7, metalness: 0.5, roughness: 0.35 }));
+            sat.add(core);
+            sat.add(new THREE.Mesh(new THREE.SphereGeometry(3.4, 12, 10), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending })));
+            // little solar wings
+            for (const sgn of [-1, 1]) { const w = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.18, 1.5), new THREE.MeshStandardMaterial({ color: 0x2b3a52, emissive: col, emissiveIntensity: 0.25, metalness: 0.6, roughness: 0.4 })); w.position.x = sgn * 3.0; sat.add(w); }
+            sat.position.set(Math.cos(th) * rad, y, Math.sin(th) * rad);
+            sat.userData = { ...o, id: o.object_id, zone: o.zone ?? 'orbital', status: o.status ?? 'active', isObject: true } as unknown as ParcelFeedEntry;
+            objectsGroup.add(sat); objectMeshes.push(sat); meshes.push(core);
+            core.userData = sat.userData;
+        });
+    }
+
     // ── data flows ──
     const flows: { m: THREE.Mesh; curve: THREE.Curve<THREE.Vector3>; off: number; spd: number }[] = [];
     function flow(target: THREE.Vector3, hex: number): void {
@@ -339,6 +380,7 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         station.rotation.y += 0.00055;
         for (const pg of previewGrids) { pg.rotation.y += 0.0012; pg.rotation.x += 0.0004; }
         for (const pb of previewBodies) { pb.rotation.y += 0.0016; }
+        objectsGroup.rotation.y += 0.0007;  // built objects slowly orbit Genesis
         focus.lerp(focusGoal, 0.07); dist += (distGoal - dist) * 0.07; place();
         planet.rotation.y += 0.00035;
         r3spin.rotation.z += 0.0009;
@@ -352,6 +394,7 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
 
     return {
         setParcels(parcels: ParcelFeedEntry[]) { scaffoldDone || (scaffold(parcels), scaffoldDone = true); renderParcelModules(parcels); },
+        setObjects(objects: OrbitalObjectEntry[]) { renderObjects(objects); },
         focusGrid,
         dispose() {
             cancelAnimationFrame(raf);

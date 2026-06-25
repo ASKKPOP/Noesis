@@ -347,6 +347,22 @@ class GridWireClient:
         grids = data.get("grids") if isinstance(data, dict) else None
         return grids if isinstance(grids, list) else []
 
+    async def fetch_parcels(self) -> list[dict[str, Any]]:
+        """GET /api/v1/civic/parcels — the WORLD MODEL: the same spatial feed the world
+        map renders (zone, ring, status, owner, structure per parcel). [] on any error.
+        The Nous's ambient sight of the world (logical data; the map is the visual)."""
+        data = await self._econ_get("/api/v1/civic/parcels")
+        parcels = data.get("parcels") if isinstance(data, dict) else None
+        return parcels if isinstance(parcels, list) else []
+
+    async def fetch_objects(self) -> list[dict[str, Any]]:
+        """GET /api/v1/orbital/objects — the real, economy-built orbital objects (the
+        BUILT world). [] on any error. Lets the Nous perceive what's been built, not
+        just the parcels it could claim."""
+        data = await self._econ_get("/api/v1/orbital/objects")
+        objects = data.get("objects") if isinstance(data, dict) else None
+        return objects if isinstance(objects, list) else []
+
     async def post_economic_action(self, action: Any) -> bool:
         """Dispatch one economic Action to its live Grid route (W3 ECONOMIC_ROUTES).
 

@@ -58,6 +58,10 @@ def build_system_prompt(
     # join recommendations from its paired human. None/[] → block omitted. This is how
     # a Nous KNOWS a Grid before deciding to join (User recommends; Nous decides).
     grids_in_reach: "list | None" = None,
+    # World-model sight additive-widening (2026-06-25): a COMPACT view of the live
+    # world map — {parcels: [...], objects: [...]} — so the Nous always "sees" the
+    # world (logical data), the same world the User sees visually. None → omitted.
+    world_state: "dict | None" = None,
 ) -> str:
     """Build the full system prompt that defines who this Nous is.
 
@@ -157,8 +161,45 @@ def build_system_prompt(
         if section:
             sections.append(section)
 
+    # World-model sight (2026-06-25): the live map (parcels + built objects). None → omitted.
+    if world_state:
+        section = _world_section(world_state)
+        if section:
+            sections.append(section)
+
     sections.append(_directives_section(psyche))
     return "\n\n".join(sections)
+
+
+def _world_section(state: "dict") -> str:
+    """Render a COMPACT view of the world model — the same parcels + built objects the
+    world map shows — so the Nous always 'sees' the world, not only its own land. A
+    summary (counts + zone tally + built objects), not the full parcel list. '' when empty."""
+    parcels = state.get("parcels") or []
+    objects = state.get("objects") or []
+    if not parcels and not objects:
+        return ""
+    lines = ["## The world around you (Genesis — the live map you share with humans)"]
+    if parcels:
+        owned = sum(1 for p in parcels if p.get("owner_civic_did_hash") or p.get("status") == "owned")
+        built = sum(1 for p in parcels if p.get("structure"))
+        avail = sum(
+            1 for p in parcels
+            if not (p.get("owner_civic_did_hash") or p.get("status") == "owned")
+            and p.get("zone") not in ("government_quarter", "infrastructure")
+        )
+        zones: "dict[str, int]" = {}
+        for p in parcels:
+            z = str(p.get("zone") or "?")
+            zones[z] = zones.get(z, 0) + 1
+        ztxt = ", ".join(f"{z.replace('_', ' ')} {n}" for z, n in sorted(zones.items()))
+        lines.append(f"- {len(parcels)} parcels · {owned} owned · {avail} available to claim · {built} with structures")
+        lines.append(f"- zones: {ztxt}")
+    if objects:
+        kinds = sorted({str(o.get("function_type")) for o in objects if o.get("function_type")})
+        kindtxt = (" — " + ", ".join(kinds)) if kinds else ""
+        lines.append(f"- {len(objects)} orbital objects built in the economy{kindtxt}")
+    return "\n".join(lines)
 
 
 def _grids_in_reach_section(grids: "list") -> str:

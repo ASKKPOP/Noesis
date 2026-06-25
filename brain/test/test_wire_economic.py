@@ -74,12 +74,34 @@ async def test_fetch_grids_returns_join_list():
 
 
 @pytest.mark.asyncio
+async def test_fetch_parcels_returns_world_model():
+    wire, http = _make_client(get_json={"parcels": [
+        {"zone": "business", "ring": 2, "status": "unsold", "owner_civic_did_hash": None, "structure": None},
+    ], "count": 1})
+    out = await wire.fetch_parcels()
+    assert out[0]["zone"] == "business"
+    assert http.get.call_args[0][0].endswith("/api/v1/civic/parcels")
+
+
+@pytest.mark.asyncio
+async def test_fetch_objects_returns_built_world():
+    wire, http = _make_client(get_json={"objects": [
+        {"object_id": "o1", "function_type": "energy", "zone": "infrastructure", "status": "active"},
+    ], "count": 1})
+    out = await wire.fetch_objects()
+    assert out[0]["object_id"] == "o1" and out[0]["function_type"] == "energy"
+    assert http.get.call_args[0][0].endswith("/api/v1/orbital/objects")
+
+
+@pytest.mark.asyncio
 async def test_reads_are_non_fatal_on_transport_error():
     wire, _ = _make_client(raise_exc=httpx.ConnectError("boom"))
     assert await wire.fetch_account() == {}
     assert await wire.fetch_dues() == []
     assert await wire.fetch_open_rfps() == []
     assert await wire.fetch_grids() == []
+    assert await wire.fetch_parcels() == []
+    assert await wire.fetch_objects() == []
 
 
 @pytest.mark.asyncio

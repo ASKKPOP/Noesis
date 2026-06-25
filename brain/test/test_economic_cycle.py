@@ -39,6 +39,8 @@ def _wire(*, dues=None, rfps=None, balance="1000", grids=None):
     w.fetch_open_rfps = AsyncMock(return_value=rfps or [])
     w.fetch_account = AsyncMock(return_value={"balance_wei": balance})
     w.fetch_grids = AsyncMock(return_value=grids or [])  # Join-a-Grid sight
+    w.fetch_parcels = AsyncMock(return_value=[])         # world-model sight
+    w.fetch_objects = AsyncMock(return_value=[])         # built-world sight
     w.post_economic_action = AsyncMock(return_value=True)
     return w
 

@@ -74,6 +74,34 @@ class TestGridsInReachSight:
         assert "grids within reach" not in build_system_prompt(psyche, thymos.mood, telos, grids_in_reach=[]).lower()
 
 
+# ── World-model sight: the live map the Nous shares with users ────────────────
+class TestWorldSight:
+    def _world(self):
+        return {
+            "parcels": [
+                {"zone": "business", "status": "unsold", "owner_civic_did_hash": None, "structure": None},
+                {"zone": "residential", "status": "owned", "owner_civic_did_hash": "h1", "structure": "house"},
+                {"zone": "government_quarter", "status": "civic", "owner_civic_did_hash": None, "structure": None},
+            ],
+            "objects": [{"object_id": "o1", "function_type": "energy"}],
+        }
+
+    def test_world_section_appears_with_summary(self):
+        psyche, thymos, telos = _load_full(SOPHIA_YAML)
+        prompt = build_system_prompt(psyche, thymos.mood, telos, world_state=self._world())
+        assert "the world around you" in prompt.lower()
+        assert "3 parcels" in prompt            # total
+        assert "1 owned" in prompt              # one owned
+        assert "with structures" in prompt      # structure tally
+        assert "orbital objects built" in prompt and "energy" in prompt
+
+    def test_no_world_section_when_omitted_or_empty(self):
+        psyche, thymos, telos = _load_full(SOPHIA_YAML)
+        assert "the world around you" not in build_system_prompt(psyche, thymos.mood, telos).lower()
+        empty = {"parcels": [], "objects": []}
+        assert "the world around you" not in build_system_prompt(psyche, thymos.mood, telos, world_state=empty).lower()
+
+
 # ── Decision prompt ──────────────────────────────────────────────────────────
 class TestDecisionPrompt:
     def test_prompt_presents_due_and_rfps_and_asks_for_json(self):

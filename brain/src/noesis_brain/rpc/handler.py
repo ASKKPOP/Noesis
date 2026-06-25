@@ -153,6 +153,11 @@ class BrainHandler:
         # Set by __main__.py when GRID_URL + CIVIC_DID + NOUS_DID are all available.
         # When None: Unix-socket-only path (legacy dev/test default, D-38-A2).
         self._grid_wire_client: "Any | None" = None
+        # World-model sight cache (2026-06-25): the live map (parcels + built objects)
+        # the Nous shares with users. Refreshed every ~20 prompt builds so ambient world
+        # sight doesn't cost a GET per response. None until first fetch.
+        self._world_sight_cache: "dict | None" = None
+        self._world_sight_counter: int = 0
         # Phase 20 — Lore Commons (D-20-01, D-20-06, D-20-09)
         _lore_capacity = int(getattr(memory, "lore_capacity", 50)) if memory is not None else 50
         _lore_poll_interval = 30  # ticks between discovery polls (D-20-06)
@@ -314,6 +319,10 @@ class BrainHandler:
             except Exception:
                 peer_voices = None  # graceful no-op if method unavailable
 
+        # Ambient world sight (2026-06-25): the live map the Nous shares with users.
+        # Cached so this costs no GET on most responses. None → block omitted.
+        world_sight = await self._get_world_sight()
+
         system_prompt = build_system_prompt(
             self.psyche, self.thymos.mood, self.telos,
             grid_name=self.grid_name, location=self.location,
@@ -324,6 +333,7 @@ class BrainHandler:
             **({"ltm_memories": ltm_memories} if ltm_memories else {}),
             **({"peer_voices": peer_voices} if peer_voices else {}),
             **({"lore_entries": self._cached_lore_entries} if self._cached_lore_entries else {}),
+            **({"world_state": world_sight} if world_sight else {}),
         )
 
         # 3. Build user prompt with message context
@@ -519,6 +529,21 @@ class BrainHandler:
             return False
         return (tick - self._last_econ_tick) >= self._ECON_COOLDOWN_TICKS
 
+    async def _get_world_sight(self) -> "dict | None":
+        """Cached ambient world sight — the live map (parcels + built objects) the Nous
+        shares with users. Refreshed every ~20 calls so injecting world sight into every
+        prompt build does NOT cost a GET per response. Returns None when no wire client.
+        Never raises (the fetches are non-fatal → [] on error; last cache is kept)."""
+        wire = self._grid_wire_client
+        if wire is None:
+            return None
+        self._world_sight_counter += 1
+        if self._world_sight_cache is None or self._world_sight_counter % 20 == 1:
+            parcels = await wire.fetch_parcels()
+            objects = await wire.fetch_objects()
+            self._world_sight_cache = {"parcels": parcels, "objects": objects}
+        return self._world_sight_cache
+
     async def _run_economic_cycle(self, tick: int) -> None:
         """Read economic state; if there is an outstanding due or an open RFP, ask
         the Nous (one LLM call) whether to pay / bid / do nothing, then dispatch the
@@ -539,9 +564,9 @@ class BrainHandler:
             balance = int(account.get("balance_wei", "0") or 0)
 
             # Join-a-Grid sight: the Portal join-list of Grids the Nous could consider
-            # (never raises → [] on error). Gives the Nous knowledge of the Grids it
-            # might join, alongside its economic position.
+            # (never raises → [] on error). Plus the ambient world sight (cached).
             grids_in_reach = await wire.fetch_grids()
+            world_sight = await self._get_world_sight()
 
             system_prompt = build_system_prompt(
                 self.psyche, self.thymos.mood, self.telos,
@@ -552,6 +577,7 @@ class BrainHandler:
                     "open_rfps": open_rfps,
                 },
                 grids_in_reach=grids_in_reach,
+                **({"world_state": world_sight} if world_sight else {}),
             )
             user_prompt = build_economic_decision_prompt(account, due, open_rfps)
             response = await self.llm.generate(
