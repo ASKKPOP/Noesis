@@ -564,8 +564,14 @@ class BrainHandler:
             balance = int(account.get("balance_wei", "0") or 0)
 
             # Join-a-Grid sight: the Portal join-list of Grids the Nous could consider
-            # (never raises → [] on error). Plus the ambient world sight (cached).
+            # (never raises → [] on error). Flag any Grid its human recommended (S3 —
+            # advisory; the Nous still decides). Plus the ambient world sight (cached).
             grids_in_reach = await wire.fetch_grids()
+            rec_ids = {r.lower() for r in await wire.fetch_grid_recommendations()}
+            if rec_ids:
+                for g in grids_in_reach:
+                    if str(g.get("grid_id", "")).lower() in rec_ids:
+                        g["recommended"] = True
             world_sight = await self._get_world_sight()
 
             system_prompt = build_system_prompt(

@@ -274,6 +274,12 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // (mirrors /api/v1/portal/chat/*); the thread is scoped to the session humanDid.
     'POST /api/v1/portal/conversation/:nousId/messages': 'public',
     'GET /api/v1/portal/conversation/:nousId':           'public',
+    // Join-a-Grid S2/S3 — the User-side routes cookie-check inside the handler
+    // (humanFromSession), so 'public' here; the Nous-read route is civic_member-gated.
+    'POST /api/v1/portal/nous/:nousId/claim':            'public',
+    'GET /api/v1/portal/nous':                           'public',
+    'POST /api/v1/portal/grid-recommendations':          'public',
+    'GET /api/v1/civic/grid-recommendations':            'civic_did_required',
 
     // W — Conversation routes: human↔Nous chat thread (de-orphan ConversationStore).
     // Content is private (never on the audit chain); sender inferred from DID form.

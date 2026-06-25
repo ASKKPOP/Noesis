@@ -94,6 +94,14 @@ async def test_fetch_objects_returns_built_world():
 
 
 @pytest.mark.asyncio
+async def test_fetch_grid_recommendations_returns_grid_ids():
+    wire, http = _make_client(get_json={"grid_ids": ["moon", "genesis"], "count": 2})
+    out = await wire.fetch_grid_recommendations()
+    assert out == ["moon", "genesis"]
+    assert http.get.call_args[0][0].endswith("/api/v1/civic/grid-recommendations")
+
+
+@pytest.mark.asyncio
 async def test_reads_are_non_fatal_on_transport_error():
     wire, _ = _make_client(raise_exc=httpx.ConnectError("boom"))
     assert await wire.fetch_account() == {}
@@ -102,6 +110,7 @@ async def test_reads_are_non_fatal_on_transport_error():
     assert await wire.fetch_grids() == []
     assert await wire.fetch_parcels() == []
     assert await wire.fetch_objects() == []
+    assert await wire.fetch_grid_recommendations() == []
 
 
 @pytest.mark.asyncio

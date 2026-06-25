@@ -43,6 +43,7 @@ export function OrbitalStation3D(): React.ReactElement {
     const [focusLabel, setFocusLabel] = useState('Genesis · near Earth');
     const [activeGrid, setActiveGrid] = useState('Genesis');
     const [clock, setClock] = useState(nyClock);
+    const [recMsg, setRecMsg] = useState<string | null>(null);
 
     // Mount the Three.js scene once (WebGL — client only).
     useEffect(() => {
@@ -91,6 +92,24 @@ export function OrbitalStation3D(): React.ReactElement {
 
     const focus = (name: string): void => { handleRef.current?.focusGrid(name); setActiveGrid(name); };
 
+    // Join-a-Grid S3 — a signed-in User recommends the focused Grid to their owned Nous.
+    // Advisory: the Nous reads it and decides. Server resolves which Nous from the session.
+    const recommend = async (): Promise<void> => {
+        setRecMsg('recommending…');
+        try {
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/portal/grid-recommendations`, {
+                method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ grid_id: activeGrid.toLowerCase() }),
+            });
+            const j = (await res.json().catch(() => ({}))) as { recommended_to?: number; error?: string };
+            if (res.status === 401) setRecMsg('sign in to recommend');
+            else if (res.ok) setRecMsg(`✓ recommended ${activeGrid} to ${j.recommended_to ?? 0} of your Nous`);
+            else if (j.error === 'no_owned_nous') setRecMsg('you own no Nous yet');
+            else setRecMsg('could not recommend');
+        } catch { setRecMsg('could not recommend'); }
+        setTimeout(() => setRecMsg(null), 4500);
+    };
+
     const isFuture = (p: ParcelFeedEntry | null): boolean => !!p && (p as unknown as { future?: boolean }).future === true;
     const purchasable = parcels.filter((p) => !['government_quarter', 'infrastructure'].includes(p.zone)).length;
 
@@ -124,7 +143,18 @@ export function OrbitalStation3D(): React.ReactElement {
                 {['Genesis', 'Moon', 'Mars'].map((g) => (
                     <button key={g} style={btn(activeGrid === g)} onClick={() => focus(g)}>{g === 'Genesis' ? 'Genesis' : `${g} Grid`}</button>
                 ))}
+                <span style={{ width: 1, height: 18, background: 'rgba(255,255,255,.14)', margin: '0 2px' }} />
+                <button
+                    title="Recommend this Grid to your Nous — it decides whether to join"
+                    style={{ ...btn(false), border: '1px solid rgba(127,224,160,.4)', color: '#7fe0a0', whiteSpace: 'nowrap' }}
+                    onClick={recommend}
+                >★ Recommend to my Nous</button>
             </div>
+
+            {/* Join-a-Grid S3 — recommendation feedback toast */}
+            {recMsg && (
+                <div style={{ ...hud, bottom: 104, left: '50%', transform: 'translateX(-50%)', background: 'rgba(2,6,16,.9)', border: '1px solid rgba(127,224,160,.35)', borderRadius: 999, padding: '6px 14px', fontSize: 11, color: '#7fe0a0', backdropFilter: 'blur(14px)', whiteSpace: 'nowrap' }}>{recMsg}</div>
+            )}
 
             {/* DID-gated info panel */}
             {picked && (

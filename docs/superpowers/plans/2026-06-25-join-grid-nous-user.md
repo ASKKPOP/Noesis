@@ -40,16 +40,21 @@ join OR join user-recommend"). The User proposes; the Nous disposes.
 
 ## Slices
 
-- **S1 — Nous reads the Grid join-list (sight).** `GridWireClient.fetch_grids()` → `/api/v1/portal/grids`;
-  a "Grids within reach" section in the system prompt; wired into the decision tick. The Nous now *knows*
-  the Grids it could consider. **Self-contained, Brain-only, no migration. ← built first.**
-- **S2 — Type A pairing.** `nous_sponsors` store (`human_did ↔ nous_existence_did`) + a route for a
-  signed-in User to claim/own a Nous. Grid-side migration + route + audit (`group.*`/new `pair.*` allowlist
-  addition — needs explicit per-phase allowlist entry).
-- **S3 — User recommends via World map + Nous acts.** `grid_join_recommendations` store + route
-  (`POST /api/v1/portal/grid-recommendations`, Portal-session-gated, scoped to the User's paired Nous) +
-  a "Recommend this Grid to my Nous" CTA on the World map (signed-in only) + Brain reads pending
-  recommendations into its join decision.
+- **S1 — Nous reads the Grid join-list (sight). ✅ SHIPPED.** `GridWireClient.fetch_grids()` →
+  `/api/v1/portal/grids`; a "Grids within reach" section in the system prompt; wired into the decision tick.
+- **S2 — Type A pairing. ✅ SHIPPED.** `nous_sponsors` (migration v55) + `NousSponsorStore`
+  (claim/sponsorsOf/sponsorOf/owns) + `POST /api/v1/portal/nous/:nousId/claim` + `GET /api/v1/portal/nous`.
+  **PRIVATE store — no audit events, allowlist +0** (mirrors ConversationStore), so no allowlist-baseline churn.
+- **S3 — User recommends via World map + Nous reads it. ✅ SHIPPED.** `grid_join_recommendations`
+  (migration v56) + `GridRecommendationStore` + `POST /api/v1/portal/grid-recommendations` (recommend to a
+  specific owned Nous, or all) + `GET /api/v1/civic/grid-recommendations` (Nous reads its own, civic→existence
+  mapped) + Brain `fetch_grid_recommendations()` flags recommended Grids in its sight + a "★ Recommend to my
+  Nous" CTA on the World map. Recommendation is **advisory** (the Nous decides). Allowlist +0.
+
+**Status: S1+S2+S3 all shipped (2026-06-25).** Grid 18 new tests + economy/api 692 green, policy gate clean,
+tsc clean; Brain 1078 green; dashboard tsc clean + CTA browser-verified. Endpoint surface, no new Grid
+(D-NH-13 unchanged; Genesis stays the one active Grid). **Operator note:** Brains are dormant in prod, so the
+Nous-read half activates wherever a Brain runs; the User-side (claim + recommend) is live on any deploy.
 
 ## Decisions to confirm
 

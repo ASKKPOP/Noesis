@@ -1324,4 +1324,46 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS account_endowments`,
     },
+    {
+        // Join-a-Grid S2 — Type A pairing: a human owns/sponsors a Nous (the human
+        // joins a Grid THROUGH this Nous; land is Nous-only, D-NH-07). PRIVATE portal
+        // record — an ownership relationship, not a civic broadcast. No audit events,
+        // allowlist +0 (same posture as conversation_messages).
+        version: 55,
+        name: 'create_nous_sponsors',
+        up: `
+            CREATE TABLE IF NOT EXISTS nous_sponsors (
+                grid_name   VARCHAR(63)  NOT NULL,
+                human_did   VARCHAR(255) NOT NULL,
+                nous_did    VARCHAR(255) NOT NULL,
+                created_at  BIGINT       NOT NULL,
+                PRIMARY KEY (grid_name, human_did, nous_did),
+                INDEX idx_sponsor_human (grid_name, human_did),
+                INDEX idx_sponsor_nous (grid_name, nous_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS nous_sponsors`,
+    },
+    {
+        // Join-a-Grid S3 — a User recommends a Grid to their owned Nous (from the world
+        // map). ADVISORY: the Nous reads pending recommendations as sight and decides on
+        // its own. PRIVATE portal record, no audit events, allowlist +0.
+        version: 56,
+        name: 'create_grid_join_recommendations',
+        up: `
+            CREATE TABLE IF NOT EXISTS grid_join_recommendations (
+                recommendation_id CHAR(36)     NOT NULL,
+                grid_name         VARCHAR(63)  NOT NULL,
+                human_did         VARCHAR(255) NOT NULL,
+                nous_did          VARCHAR(255) NOT NULL,
+                target_grid_id    VARCHAR(63)  NOT NULL,
+                status            ENUM('pending','seen') NOT NULL DEFAULT 'pending',
+                created_at        BIGINT       NOT NULL,
+                PRIMARY KEY (recommendation_id),
+                UNIQUE KEY uq_rec (grid_name, human_did, nous_did, target_grid_id),
+                INDEX idx_rec_nous (grid_name, nous_did, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS grid_join_recommendations`,
+    },
 ];

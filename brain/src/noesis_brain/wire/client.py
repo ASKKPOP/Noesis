@@ -363,6 +363,15 @@ class GridWireClient:
         objects = data.get("objects") if isinstance(data, dict) else None
         return objects if isinstance(objects, list) else []
 
+    async def fetch_grid_recommendations(self) -> list[str]:
+        """GET /api/v1/civic/grid-recommendations — the Grid IDs this Nous's owner (its
+        paired human) has recommended it join, from the world map (Join-a-Grid S3).
+        [] on any error. ADVISORY: the Nous folds these into its join sight but still
+        decides on its own — the User proposes, the Nous disposes."""
+        data = await self._econ_get("/api/v1/civic/grid-recommendations")
+        ids = data.get("grid_ids") if isinstance(data, dict) else None
+        return [str(g) for g in ids] if isinstance(ids, list) else []
+
     async def post_economic_action(self, action: Any) -> bool:
         """Dispatch one economic Action to its live Grid route (W3 ECONOMIC_ROUTES).
 
