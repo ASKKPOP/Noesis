@@ -336,6 +336,17 @@ class GridWireClient:
         notices = data.get("notices") if isinstance(data, dict) else None
         return notices if isinstance(notices, list) else []
 
+    async def fetch_grids(self) -> list[dict[str, Any]]:
+        """GET /api/v1/portal/grids — the Portal join-list of active Grids a Nous can
+        learn about and consider joining (name, Polis, status, environment). [] on any
+        error. Public endpoint; v3.0 returns one (Genesis), the shape supports more.
+
+        This is how a Nous *knows* a Grid's information — the first half of the
+        Nous+User join flow (the User recommends; the Nous reads + decides)."""
+        data = await self._econ_get("/api/v1/portal/grids")
+        grids = data.get("grids") if isinstance(data, dict) else None
+        return grids if isinstance(grids, list) else []
+
     async def post_economic_action(self, action: Any) -> bool:
         """Dispatch one economic Action to its live Grid route (W3 ECONOMIC_ROUTES).
 

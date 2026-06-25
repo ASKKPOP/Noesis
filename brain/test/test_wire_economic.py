@@ -64,11 +64,22 @@ async def test_fetch_open_rfps_returns_list():
 
 
 @pytest.mark.asyncio
+async def test_fetch_grids_returns_join_list():
+    wire, http = _make_client(get_json={"grids": [
+        {"grid_id": "genesis", "name": "Genesis", "polis": "Genesis Polis", "status": "active", "celestial_body": "Earth-orbit"},
+    ], "count": 1})
+    out = await wire.fetch_grids()
+    assert out[0]["name"] == "Genesis" and out[0]["polis"] == "Genesis Polis"
+    assert http.get.call_args[0][0].endswith("/api/v1/portal/grids")
+
+
+@pytest.mark.asyncio
 async def test_reads_are_non_fatal_on_transport_error():
     wire, _ = _make_client(raise_exc=httpx.ConnectError("boom"))
     assert await wire.fetch_account() == {}
     assert await wire.fetch_dues() == []
     assert await wire.fetch_open_rfps() == []
+    assert await wire.fetch_grids() == []
 
 
 @pytest.mark.asyncio

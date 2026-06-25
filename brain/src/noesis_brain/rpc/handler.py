@@ -538,6 +538,11 @@ class BrainHandler:
             account = await wire.fetch_account()
             balance = int(account.get("balance_wei", "0") or 0)
 
+            # Join-a-Grid sight: the Portal join-list of Grids the Nous could consider
+            # (never raises → [] on error). Gives the Nous knowledge of the Grids it
+            # might join, alongside its economic position.
+            grids_in_reach = await wire.fetch_grids()
+
             system_prompt = build_system_prompt(
                 self.psyche, self.thymos.mood, self.telos,
                 grid_name=self.grid_name, location=self.location,
@@ -546,6 +551,7 @@ class BrainHandler:
                     "outstanding_due": due,
                     "open_rfps": open_rfps,
                 },
+                grids_in_reach=grids_in_reach,
             )
             user_prompt = build_economic_decision_prompt(account, due, open_rfps)
             response = await self.llm.generate(

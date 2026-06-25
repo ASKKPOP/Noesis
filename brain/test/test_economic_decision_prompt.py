@@ -49,6 +49,31 @@ class TestEconomicSight:
         assert "economic position" not in prompt.lower()
 
 
+# ── Join-a-Grid: the Grid join-list sight ────────────────────────────────────
+class TestGridsInReachSight:
+    def _grids(self):
+        return [
+            {"grid_id": "genesis", "name": "Genesis", "polis": "Genesis Polis", "status": "active", "celestial_body": "Earth-orbit"},
+        ]
+
+    def test_grids_section_appears_when_provided(self):
+        psyche, thymos, telos = _load_full(SOPHIA_YAML)
+        prompt = build_system_prompt(psyche, thymos.mood, telos, grids_in_reach=self._grids())
+        assert "grids within reach" in prompt.lower()
+        assert "Genesis" in prompt and "Genesis Polis" in prompt and "Earth-orbit" in prompt
+
+    def test_recommended_flag_renders(self):
+        psyche, thymos, telos = _load_full(SOPHIA_YAML)
+        grids = self._grids(); grids[0]["recommended"] = True
+        prompt = build_system_prompt(psyche, thymos.mood, telos, grids_in_reach=grids)
+        assert "recommended by your human" in prompt.lower()
+
+    def test_no_grids_section_when_omitted_or_empty(self):
+        psyche, thymos, telos = _load_full(SOPHIA_YAML)
+        assert "grids within reach" not in build_system_prompt(psyche, thymos.mood, telos).lower()
+        assert "grids within reach" not in build_system_prompt(psyche, thymos.mood, telos, grids_in_reach=[]).lower()
+
+
 # ── Decision prompt ──────────────────────────────────────────────────────────
 class TestDecisionPrompt:
     def test_prompt_presents_due_and_rfps_and_asks_for_json(self):

@@ -53,6 +53,11 @@ def build_system_prompt(
     # block omitted (economically blind, prior behaviour). Gives the LLM the SIGHT it
     # needs to choose to pay/bid; the decision cycle supplies it each economic tick.
     economic_state: "dict | None" = None,
+    # Join-a-Grid additive-widening (2026-06-25): the Portal join-list of Grids the
+    # Nous could consider joining (name, Polis, status, environment), plus any pending
+    # join recommendations from its paired human. None/[] → block omitted. This is how
+    # a Nous KNOWS a Grid before deciding to join (User recommends; Nous decides).
+    grids_in_reach: "list | None" = None,
 ) -> str:
     """Build the full system prompt that defines who this Nous is.
 
@@ -146,8 +151,31 @@ def build_system_prompt(
         if section:
             sections.append(section)
 
+    # Join-a-Grid (2026-06-25): inject the Grid join-list sight. None/[] → omitted.
+    if grids_in_reach:
+        section = _grids_in_reach_section(grids_in_reach)
+        if section:
+            sections.append(section)
+
     sections.append(_directives_section(psyche))
     return "\n\n".join(sections)
+
+
+def _grids_in_reach_section(grids: "list") -> str:
+    """Render the Portal join-list a Nous can consider — one line per Grid (name,
+    Polis, status, body), so the Nous KNOWS a Grid before any join decision. A
+    recommendation from its paired human (rec=True) is flagged. '' when empty."""
+    if not grids:
+        return ""
+    lines = ["## Grids within reach (you may consider joining — your own judgment)"]
+    for g in grids:
+        name = g.get("name") or g.get("grid_id") or "?"
+        polis = g.get("polis") or "—"
+        status = g.get("status") or "—"
+        body = g.get("celestial_body") or (g.get("environment") or {}).get("name") or "—"
+        flag = " · ⭐ recommended by your human" if g.get("recommended") else ""
+        lines.append(f"- {name} ({status}) · {polis} · on {body}{flag}")
+    return "\n".join(lines)
 
 
 def _economic_section(state: "dict") -> str:
