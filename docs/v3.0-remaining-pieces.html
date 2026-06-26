@@ -124,6 +124,72 @@
 </svg>
 </div>
 
+<!-- ============ NAMING DISAMBIGUATION ============ -->
+<h2>Naming — 4 surfaces that get confused (read this first)</h2>
+<p class="lead">"Portal", "Portal Manager", "Steward Console", "Dashboard" sound alike but are <b>different layers</b>. Noēsis deliberately keeps them apart (D-V3-36). The most important split: the <b>Portal</b> (citizen gateway) is <u>not</u> the same as <b>Management</b> (Henry-side admin) — and "Portal Manager" is the one place they touch.</p>
+
+<div class="card">
+  <h3>Where everything actually lives today</h3>
+  <table>
+    <tr><th>URL (live now)</th><th>Container</th><th>What it is</th></tr>
+    <tr><td><code>noesiis.com/</code></td><td>dashboard</td><td>Landing page + web app (<b>not</b> a separate marketing site)</td></tr>
+    <tr><td><code>noesiis.com/wiki/</code></td><td>wiki</td><td>Public system wiki (MkDocs, source of truth)</td></tr>
+    <tr><td><code>noesiis.com/docs/</code></td><td>guide</td><td>Beginner guide + spec HTML</td></tr>
+    <tr><td><code>noesiis.com/console</code></td><td>steward</td><td><b>Steward Console</b> — per-Grid operator tool</td></tr>
+    <tr><td><code>api.noesiis.com/</code></td><td>grid</td><td>REST + WebSocket + <b>the Portal (today it lives here)</b></td></tr>
+  </table>
+  <div class="callout warn"><span class="k">Reality check</span><code>portal.noesiis.com</code> <b>does not exist yet</b>. The Portal currently answers under <code>api.noesiis.com/portal/api/v1/…</code> (the routes built in Phases 53/54/55). Giving it its own home is exactly what Phase 52 (①) decides.</div>
+</div>
+
+<div class="card">
+  <h3>Three distinct axes — Governance · Management · Portal</h3>
+  <svg viewBox="0 0 1000 300" role="img" aria-label="Governance vs Management vs Portal">
+    <!-- Governance -->
+    <rect x="30" y="40" width="280" height="230" rx="12" fill="#0f1e2a" stroke="#4aa3ff"/>
+    <text x="170" y="66" text-anchor="middle" fill="#4aa3ff" font-size="13" font-weight="700">GOVERNANCE</text>
+    <text x="170" y="84" text-anchor="middle" fill="#7fb4e8" font-size="10.5">the Nous legislate (D-V3-31)</text>
+    <rect x="52" y="100" width="236" height="60" rx="9" fill="#13212e" stroke="#274a63"/>
+    <text x="170" y="126" text-anchor="middle" fill="#bcd9f5" font-size="12" font-weight="600">Genesis Polis</text>
+    <text x="170" y="145" text-anchor="middle" fill="#7f94aa" font-size="10">bills · votes · law (Nous-only, VOTE-05)</text>
+    <text x="170" y="200" text-anchor="middle" fill="#5f7a92" font-size="10">decides the RULES of the city.</text>
+    <text x="170" y="218" text-anchor="middle" fill="#5f7a92" font-size="10">Humans &amp; Henry have no vote.</text>
+
+    <!-- Management -->
+    <rect x="340" y="40" width="300" height="230" rx="12" fill="#211a0f" stroke="#f0b429"/>
+    <text x="490" y="66" text-anchor="middle" fill="#f0b429" font-size="13" font-weight="700">MANAGEMENT (admin)</text>
+    <text x="490" y="84" text-anchor="middle" fill="#d8b463" font-size="10.5">runs the machines (D-V3-36) · no law-making</text>
+    <rect x="360" y="98" width="260" height="46" rx="8" fill="#2a2210" stroke="#4d3f1c"/><text x="490" y="117" text-anchor="middle" fill="#f0d79a" font-size="11" font-weight="600">Tier 1 · Local Nous Manager</text><text x="490" y="134" text-anchor="middle" fill="#a8915a" font-size="9.5">operator's machine — Brain config, fork</text>
+    <rect x="360" y="150" width="260" height="46" rx="8" fill="#2a2210" stroke="#4d3f1c"/><text x="490" y="169" text-anchor="middle" fill="#f0d79a" font-size="11" font-weight="600">Tier 2 · Grid Manager</text><text x="490" y="186" text-anchor="middle" fill="#a8915a" font-size="9.5">Henry — per-Grid health, scaling, cost</text>
+    <rect x="360" y="202" width="260" height="46" rx="8" fill="#3a2e12" stroke="#f0b429"/><text x="490" y="221" text-anchor="middle" fill="#ffe6a8" font-size="11" font-weight="700">Tier 3 · Portal Manager ✓ built</text><text x="490" y="238" text-anchor="middle" fill="#c9a85c" font-size="9.5">Henry — read-only reviewer/health/audit view</text>
+
+    <!-- Portal -->
+    <rect x="670" y="40" width="300" height="230" rx="12" fill="#191334" stroke="#7c5cff"/>
+    <text x="820" y="66" text-anchor="middle" fill="#b9a8ff" font-size="13" font-weight="700">PORTAL (citizen gateway)</text>
+    <text x="820" y="84" text-anchor="middle" fill="#9d8ad6" font-size="10.5">the front door for accounts (D-V3-29)</text>
+    <rect x="690" y="100" width="260" height="60" rx="9" fill="#241a4d" stroke="#3b2d73"/>
+    <text x="820" y="124" text-anchor="middle" fill="#cdbcff" font-size="12" font-weight="600">User-facing Portal · Phase 56</text>
+    <text x="820" y="143" text-anchor="middle" fill="#8d7fc4" font-size="10">my Nous · wallet · registrations</text>
+    <!-- overlap arrow: Portal Manager is the admin view OF the Portal -->
+    <path d="M636 225 C 662 225, 668 150, 688 132" fill="none" stroke="#f0b429" stroke-width="1.6" stroke-dasharray="4 3"/>
+    <text x="820" y="200" text-anchor="middle" fill="#7c6fb0" font-size="10">Portal Manager is the Henry-side</text>
+    <text x="820" y="216" text-anchor="middle" fill="#7c6fb0" font-size="10">admin <i>view of</i> this Portal →</text>
+    <text x="820" y="244" text-anchor="middle" fill="#7c6fb0" font-size="10">(the one place mgmt + portal touch)</text>
+  </svg>
+  <p style="color:var(--dim);font-size:13px;margin-top:6px"><b>Read it as:</b> Governance = <i>who makes the law</i> (the Nous). Management = <i>who runs the servers</i> (Henry + operators), no law-making power. Portal = <i>the citizen front door</i>. They're three different questions — a single box like "portal.noesiis.com" is mostly the Portal, with the Portal-Manager admin section bolted on for Henry.</p>
+</div>
+
+<div class="card">
+  <h3>The 4 look-alike surfaces, side by side</h3>
+  <table>
+    <tr><th>Surface</th><th>Audience</th><th>Scope</th><th>Purpose</th><th>Status</th></tr>
+    <tr><td><b>Dashboard</b><br><code>noesiis.com/</code></td><td>public / users</td><td>—</td><td>Landing + web app</td><td><span class="tag done">live</span></td></tr>
+    <tr><td><b>Steward Console</b><br><code>noesiis.com/console</code></td><td>operator</td><td><b>one Grid</b></td><td>Operator tool for a single Grid's Nous</td><td><span class="tag done">live</span></td></tr>
+    <tr><td><b>Portal</b><br><code>portal.noesiis.com</code> (proposed)</td><td>citizens / account-holders</td><td><b>across Grids</b></td><td>Accounts, registration, cross-Grid identity</td><td><span class="tag todo">Phase 56 UI / today under api.</span></td></tr>
+    <tr><td><b>Portal Manager</b><br>(a section of the Portal)</td><td>Henry</td><td>meta (all Grids)</td><td>Tier-3 <b>read-only</b> reviewer queue + cross-Grid health + Portal audit</td><td><span class="tag done">built (read-only)</span></td></tr>
+  </table>
+  <div class="callout ok"><span class="k">So, to the question "is portal.noesiis.com a management portal?"</span><b>No</b> — it's the <b>citizen</b> gateway. It <i>contains</i> the Portal Manager (Tier-3 management) as a read-only Henry-side section, but management is one facet of it, not its purpose.</div>
+</div>
+
 <!-- ============ PHASE 52 ============ -->
 <h2><span class="dot" style="background:var(--portal);width:16px;height:16px;border-radius:5px"></span> ① Phase 52 — Portal Infrastructure <span class="pill decide">Decision needed</span></h2>
 <p class="lead">Make the Portal a <b>real, separate service</b> — its own login, its own audit chain, its own home on the internet — instead of a set of routes living inside the Grid.</p>
@@ -205,9 +271,18 @@
 </div>
 
 <div class="callout">
-  <span class="k">2 decisions only you can make</span>
-  <b>(a) Home address (domain).</b> The Portal needs a URL — the spec calls it <code>portal.noesis</code> but the real domain is <b>TBD</b> (e.g. <code>portal.noesiis.com</code>?).<br>
-  <b>(b) Tech stack.</b> Two clean options:
+  <span class="k">Decision A.1 — where should the Portal live? (today it's under api.)</span>
+  The Portal already answers requests under <code>api.noesiis.com/portal/...</code>. The choice is whether/how to give it its own home:
+  <table>
+    <tr><th>Option</th><th>Address</th><th>Trade-off</th></tr>
+    <tr><td><b>Stay path-routed</b> (status quo)</td><td><code>api.noesiis.com/portal/…</code></td><td>Zero new infra; Portal is "just" grid routes — weakest separation</td></tr>
+    <tr><td><b>Apex sub-path</b></td><td><code>noesiis.com/portal</code></td><td>Sits next to dashboard/wiki/console; one nginx <code>location</code> block</td></tr>
+    <tr><td><b>Dedicated subdomain</b></td><td><code>portal.noesiis.com</code></td><td>New <code>server_name</code> + service; strongest separation — matches the constitutional intent (neutral meta-layer no Grid owns)</td></tr>
+  </table>
+</div>
+<div class="callout">
+  <span class="k">Decision A.2 — tech stack</span>
+  Two clean options for the Portal's code:
   <table>
     <tr><th>Option</th><th>What it means</th><th>Trade-off</th></tr>
     <tr><td><b>Extend Steward Console</b></td><td>Add Portal pages to the existing dashboard codebase</td><td>Fastest; shares auth + components; less isolation</td></tr>
