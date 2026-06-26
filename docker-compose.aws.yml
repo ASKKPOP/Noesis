@@ -12,6 +12,7 @@
 # Hostname routing (nginx server_name):
 #   ${DOMAIN}        → dashboard (/, the landing page) · guide (/docs) · steward (/console)
 #   api.${DOMAIN}    → grid (Portal + Grid)                       ← REQUIRED
+#   portal.${DOMAIN} → dashboard (Tier-3 Portal Manager console; / → /system/portal-manager)
 #   coturn.${DOMAIN} → coturn — NOT through the ALB/nginx (TURN is not HTTP).
 #                      Use an NLB or the EC2 elastic IP; open UDP/TCP 3478 + TLS 5349.
 #

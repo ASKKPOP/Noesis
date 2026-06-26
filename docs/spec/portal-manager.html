@@ -76,7 +76,7 @@
       <svg viewBox="0 0 860 430" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
         <!-- Portal Manager boundary -->
         <rect x="14" y="14" width="832" height="120" rx="16" fill="#f6f1f8" stroke="#8a6a9e" stroke-width="1.6" stroke-dasharray="6 4"/>
-        <text x="430" y="40" text-anchor="middle" font-size="13" fill="#8a6a9e" font-weight="bold">PORTAL MANAGER · Tier 3 · system.noesiis.com (proposed)</text>
+        <text x="430" y="40" text-anchor="middle" font-size="13" fill="#8a6a9e" font-weight="bold">PORTAL MANAGER · Tier 3 · portal.noesiis.com</text>
         <text x="430" y="57" text-anchor="middle" font-size="10.5" fill="#78756c">Henry-side meta-ops · management, never governance</text>
 
         <!-- four function chips -->
@@ -255,8 +255,8 @@
 
     <div class="callout">
       <div class="ic">🏷️</div>
-      <div class="body"><strong>Host name not frozen.</strong> <span class="route">system.noesiis.com</span> is a sensible subdomain for the Portal Manager, but the deploy host is a choice not yet committed (Q-V3-E open). Per the deploy guardrail, the only deploy host today is the single noesiis server — any new Portal host is a separate decision the user makes.
-      <span class="ko"><strong>호스트명 미확정.</strong> <span class="route">system.noesiis.com</span>은 합리적 서브도메인이나 배포 호스트는 아직 확정 안 됨(Q-V3-E). 배포 가드레일상 현재 유일한 배포 호스트는 단일 noesiis 서버 — 새 Portal 호스트는 사용자가 별도로 결정.</span></div>
+      <div class="body"><strong>Host name.</strong> <span class="route">portal.noesiis.com</span> is the chosen subdomain for the Portal Manager console — an nginx <code>server_name portal.${DOMAIN}</code> block routes it to the dashboard, with <code>/</code> → <code>/system/portal-manager</code>. It is convenience, not authority: the console stays gated server-side (<code>GRID_PORTAL_MANAGER_ENABLED</code> + Portal session). DNS/ALB cert for the subdomain are provisioned operator-side.
+      <span class="ko"><strong>호스트명.</strong> <span class="route">portal.noesiis.com</span>이 Portal Manager 콘솔의 확정 서브도메인 — nginx <code>server_name portal.${DOMAIN}</code> 블록이 대시보드로 라우팅하며 <code>/</code> → <code>/system/portal-manager</code>. 편의일 뿐 권한이 아님: 콘솔은 서버측(<code>GRID_PORTAL_MANAGER_ENABLED</code> + 포털 세션)에서 계속 게이팅. DNS/ALB 인증서는 운영자측에서 발급.</span></div>
     </div>
   </section>
 
@@ -337,7 +337,7 @@
 
     <div class="extend">
       <div class="h">Where you might extend / decide</div>
-      <div class="en">Levers worth your call: (1) <strong>Host name</strong> — freeze <span class="route">system.noesiis.com</span> or pick another (Q-V3-E). (2) <strong>Panel composition</strong> — the initial Henry + 2–3 reviewers, and exactly when it transitions to a Nous-elected committee after Phase 46. (3) <strong>Sequencing</strong> — whether the <em>Nous</em> registration track (Phase 54 remainder) or the <strong>reviewer-queue UI</strong> ships before the cross-Grid work, given only Genesis exists at v3.0. The human application path is already live, so the highest-leverage next build is the <strong>operator-side reviewer queue UI</strong> over the events that already fire.</div>
+      <div class="en">Levers worth your call: (1) <strong>Host name</strong> — chosen: <span class="route">portal.noesiis.com</span> (nginx → dashboard → /system/portal-manager). (2) <strong>Panel composition</strong> — the initial Henry + 2–3 reviewers, and exactly when it transitions to a Nous-elected committee after Phase 46. (3) <strong>Sequencing</strong> — whether the <em>Nous</em> registration track (Phase 54 remainder) or the <strong>reviewer-queue UI</strong> ships before the cross-Grid work, given only Genesis exists at v3.0. The human application path is already live, so the highest-leverage next build is the <strong>operator-side reviewer queue UI</strong> over the events that already fire.</div>
       <div class="ko">결정할 레버: (1) <strong>호스트명</strong> 확정(Q-V3-E). (2) <strong>패널 구성</strong> — 초기 Henry + 검토자 2–3인, Phase 46 이후 Nous 선출 위원회 전환 시점. (3) <strong>순서</strong> — Genesis만 존재하는 v3.0에서 <em>Nous</em> 등록 트랙(Phase 54 잔여) 또는 <strong>심사 큐 UI</strong>를 Grid 간 작업보다 먼저 출시할지. 인간 신청 경로는 이미 동작하므로, 가장 효과적인 다음 구축은 이미 발생하는 이벤트 위의 <strong>운영자측 심사 큐 UI</strong>.</div>
     </div>
   </section>
