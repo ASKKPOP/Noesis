@@ -235,7 +235,7 @@ function checkAllowlistCount() {
   const text = readFileSync(allowlistPath, 'utf8');
 
   // Count quoted entries in ALLOWLIST_MEMBERS (each on its own line, starting with leading whitespace + quote).
-  // Current target: 151 members. Growth since Phase 48b (86): the Economic Reality Loop +
+  // Current target: 152 members. Growth since Phase 48b (86): the Economic Reality Loop +
   // Organs + Loop-Wiring programs (parallel, Phases 80+) added L1b due.* (107→110), L2b
   // procurement.* (110→116), L3b orbital.object_built (117), O2b human.approval.* (118→120),
   // and W4 portal.account_endowed (121, D-MONEY-09 model-first endowment); Phase 47 Police
@@ -247,9 +247,9 @@ function checkAllowlistCount() {
   }
   const arrayBody = arrayMatch[1];
   const members = arrayBody.match(/^\s+'[a-z][a-z0-9_.]+'/gm) ?? [];
-  if (members.length !== 151) {
+  if (members.length !== 152) {
     failures.push(
-      `ALLOWLIST_MEMBERS count mismatch: expected 151 entries, found ${members.length}.\n` +
+      `ALLOWLIST_MEMBERS count mismatch: expected 152 entries, found ${members.length}.\n` +
       `  Phase 48b reached 86; the Economic Reality Loop / Organs / Loop-Wiring programs grew it\n` +
       `  to 120 (due.* / procurement.* / orbital.* / human.approval.*); W4 adds\n` +
       `  portal.account_endowed (121, D-MONEY-09). Bump this literal + append below when extending.`,

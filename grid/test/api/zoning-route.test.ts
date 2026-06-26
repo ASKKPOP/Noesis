@@ -57,3 +57,19 @@ describe('POST /api/v1/zoning/:zoneId/amend', () => {
         await a.close();
     });
 });
+
+describe('POST /api/v1/zoning/residence/assign', () => {
+    it('201 assigns a residence (system/Polis)', async () => {
+        const a = makeApp([], GOV);
+        const res = await a.inject({ method: 'POST', url: '/api/v1/zoning/residence/assign', payload: { civic_did: 'did:civic:noesis:human:alice' } });
+        expect(res.statusCode).toBe(201);
+        expect(res.json().residence_id).toMatch(/^res-/);
+        await a.close();
+    });
+    it('403 for a non-Government caller', async () => {
+        const a = makeApp([], CIVIC);
+        const res = await a.inject({ method: 'POST', url: '/api/v1/zoning/residence/assign', payload: { civic_did: 'did:civic:noesis:human:alice' } });
+        expect(res.statusCode).toBe(403);
+        await a.close();
+    });
+});

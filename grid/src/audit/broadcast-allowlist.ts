@@ -23,7 +23,7 @@
 
 /** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42 + Phase 43 + Phase 44 + Phase 45 + Phase 46 + Phase 47) — 81 is the civic count through Phase 46; with the
  *  parallel Economic Reality Loop programs the array is 121, Phase 47 (+4 police.*) → 125, and
- *  Phase 48 (+2 library.*) → 127, and Phase 49 (+4 community.*) → 131, Phase 51 (+5 mobility.*) → 136, Phase 45b (+5 treasury.*) → 141, Phase 37b (+6) → 147, Phase 53 (+3) → 150, Phase 57 (+1 zoning.zone_amended) → 151.
+ *  Phase 48 (+2 library.*) → 127, and Phase 49 (+4 community.*) → 131, Phase 51 (+5 mobility.*) → 136, Phase 45b (+5 treasury.*) → 141, Phase 37b (+6) → 147, Phase 53 (+3) → 150, Phase 57 (+2 zoning.*) → 152.
  *  Phase 42 (P2P-05 / D-42-07): +3 P2P audit events (allowlist 64 → 67).
  *   - p2p.peer_announced (65): closed 3-key {civic_did_hash, endpoint_hash, tick}.
  *     endpoint_hash = sha256('online') — static sentinel (no IP/port leakage per D-42-02).
@@ -678,6 +678,11 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   sole-producer grid/src/audit/append-zoning-zone-amended.ts
     //   closed 4-key {amended_by_did_hash, tax_modifier_bps, tick, zone_id}
     'zoning.zone_amended',             // (151)
+    // Phase 57 Plan 2 (ZONE-04) — residence assignment on Civic-DID issuance. Allowlist 151 → 152.
+    // zoning.residence_assigned (152): actorDid = civic_did_hash. DID hashed.
+    //   sole-producer grid/src/audit/append-zoning-residence-assigned.ts
+    //   closed 3-key {civic_did_hash, residence_id, tick}
+    'zoning.residence_assigned',       // (152)
 ] as const;
 
 /**

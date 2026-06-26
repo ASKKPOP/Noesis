@@ -1675,4 +1675,21 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS zone_config`,
     },
+    {
+        // Phase 57 Grid Zoning Plan 2 (ZONE-04) — residential slot per Civic-DID. A new Civic-DID
+        // is auto-assigned a residence in the Residential zone on issuance (Phase 54 wires it).
+        version: 69,
+        name: 'create_residence_assignments',
+        up: `
+            CREATE TABLE IF NOT EXISTS residence_assignments (
+                grid_name     VARCHAR(63)  NOT NULL,
+                civic_did     VARCHAR(255) NOT NULL,
+                residence_id  VARCHAR(64)  NOT NULL,
+                assigned_tick BIGINT       NOT NULL,
+                PRIMARY KEY (grid_name, civic_did),
+                UNIQUE KEY uq_residence (grid_name, residence_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS residence_assignments`,
+    },
 ];

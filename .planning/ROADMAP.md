@@ -774,8 +774,14 @@ Plans:
     for_sale). `ZoneRegistry`: `taxModifierBps` (override→canonical), `listZones`, `validateActivity`,
     `amendZone` → `zoning.zone_amended`. `zone_config` (v68) holds Polis overrides. `GET /api/v1/zoning/zones`
     (public), `POST /api/v1/zoning/:zoneId/amend` (government). +1 → 151. registry 6 + route 4 tests.
-  - **Plan 2 — Residence assignment (ZONE-04).** New Civic-DID issuance assigns a Residential-zone slot →
-    `zoning.residence_assigned {civic_did, residence_id, tick}` (wired by Phase 54). +1 → 152.
+  - **Plan 2 — Residence assignment (ZONE-04) — ✅ SHIPPED 2026-06-26.** `residence_assignments` (v69) +
+    `ResidenceStore.assignResidence` (deterministic `res-<hash>` in the Residential zone →
+    `zoning.residence_assigned`) + `POST /api/v1/zoning/residence/assign` (government). Phase 54 wires it on
+    Civic-DID issuance. +1 → 152. registry 6 + residence 2 + route 6 tests.
+
+  **Phase 57 COMPLETE (2/2, 2026-06-26)** — 6-zone city (D-V3-32): immutable zone types, per-zone activity
+  rules + tax modifiers (Polis-amendable), residential slots on issuance. 2 `zoning.*` events. (Civic-Map 6-zone
+  SVG rendering is a follow-up UI surface; backend zone system complete.)
 
 ### Progress (v3.0)
 

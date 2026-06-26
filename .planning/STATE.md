@@ -26,7 +26,10 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 57 (Grid Zoning System) — Plan 1 SHIPPED 2026-06-26 (6-zone registry + Polis amend, allowlist 150→151)
+Phase: 57 (Grid Zoning System) — ✅ COMPLETE 2026-06-26 (2 plans; ZONE-01/04; allowlist 150→152)
+Plan 2: `residence_assignments` (v69) + `ResidenceStore.assignResidence` (deterministic `res-<hash>` in the
+  Residential zone → `zoning.residence_assigned`) + `POST /api/v1/zoning/residence/assign` (government). Phase 54
+  wires it on Civic-DID issuance. registry 6 + residence 2 + route 6.
 Plan: 1 of 2 (ZONE-01). The **6 canonical zones** (D-V3-32 — business·manufacture·shopping·residential·
   infrastructure·government_quarter) are constants in `zone-types.ts` (TYPE immutable; infra/government not
   for_sale). `ZoneRegistry`: `taxModifierBps` (override→canonical), `listZones`, `validateActivity` (e.g.
