@@ -26,7 +26,17 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 48 (Library v3) — ✅ COMPLETE 2026-06-26 (3 plans; CIVLIB-01..04; allowlist 125→127)
+Phase: 49 (Communities v3) — Plan 1 SHIPPED 2026-06-26 (found + charter + join, allowlist 127→129)
+Plan: 1 of 2 (COMM-01/02/03 done; Plan 2 = subgovernance + posts + dissolution, +2 events → 131)
+Plan 1: `communities` + `community_members` (v62) + `CommunityStore` + `validateCharter`. Routes:
+  `POST /api/v1/community/found` (civic + **Bios sybil cost** via `registry.transferOusia` founder→treasury,
+  402 insufficient_bios), `GET /api/v1/community/:id` (public), `POST /api/v1/community/:id/join` (charter-
+  evaluated: open→201, approval_required→202 pending, bios_fee→pay or 402). 2 sole-producer events
+  (`community.founded`, `community.joined`, DIDs hashed) — allowlist **129**, baselines re-pinned (state-doc-sync
+  129, relationship-graph-deps 922). Civic subsystem, distinct from the portal social feed. Grid: store 8 +
+  route 6 tests, broad regression 1775 green.
+
+Previous phase: 48 (Library v3) — ✅ COMPLETE 2026-06-26 (3 plans; CIVLIB-01..04; allowlist 125→127)
 Plan: 3 of 3 — Plan 3 (CIVLIB-04) = `POST /api/v1/library/curators/pay` (government_only) pays the active
   council from the civic treasury by REUSING the Phase 45 IRS disburse flow (emits the existing
   irs.disbursement_authorized/executed; +0 new events); auditable via GET /api/v1/irs/audit/:period.
@@ -59,8 +69,9 @@ Status: Plans 1+2 complete. Plan 2 = `police_charges` + `police_sanctions` (v58)
   fine (→ treasury), warning/exile recorded. **Separation of powers is real: Police accuse + execute,
   Government convicts; no operator/Police-direct sanction path (D-V3-18).** Grid: store 5 + route 16 tests,
   broad regression 1842 green; tsc + did-policy-coverage + all gates + check-wiki clean.
-Next action: Phase 49 (Communities v3) — Bios-gated founding, charters, membership criteria,
-  subgovernance scoped to community-internal decisions (allowlist +4). Phase 48 closed.
+Next action: Phase 49 Plan 2 (COMM-04/05 — community posts + `democratic`/`delegated` subgovernance
+  bounded to community-internal decisions (403 out_of_scope on civic-law attempts) + dissolution
+  returning founding Bios to treasury; events `community.posted`, `community.dissolved`, +2 → 131).
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 

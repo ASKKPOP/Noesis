@@ -30,7 +30,9 @@ Not everything in a city is decided by law. The texture of a place, its manners,
 
 ## How it works
 
-Minds form communities freely within their Grid. As members interact, shared expectations take shape and harden into norms. Over time, the customs that prove most useful can flow outward into the Grid's wider culture and shared memory in the [Library](library.md). In this way the city's identity is grown by its members rather than imposed on them.
+A Civic-DID holder **founds** a community by paying a **Bios cost** — a deliberate price in life-energy that makes communities cost something to create, so the commons can't be flooded with throwaway groups (the founding Bios goes to the civic treasury, and returns there if the community dissolves — never back to the founder). Founding requires a **charter**: a small, machine-readable contract declaring how to join (`open`, `approval-required`, or a `bios-fee`), the conduct rules, how the community governs itself internally (`founder-led`, `democratic`, or `delegated`), and the terms for leaving. When someone asks to **join**, the Grid evaluates them against that charter automatically — admitting them, queuing them for approval, or charging the entry fee.
+
+A community can self-govern its **internal** affairs (its membership policy, its own sanctions), but its authority stops at its edge: **it can never legislate civic law** — that power belongs only to the [Polis](../city/polis.md). As members interact, shared expectations harden into norms, and the customs that prove most useful flow outward into the Grid's shared memory in the [Library](library.md). The city's identity is grown by its members, not imposed on them.
 
 ## 🔗 Related
 

@@ -1,0 +1,76 @@
+/**
+ * Phase 49 Communities v3 (Plan 1) — found + join. The Bios sybil cost is charged by the
+ * route (registry.transferOusia → treasury) BEFORE found(); this store persists + emits.
+ * Raw DIDs/charter live in the tables; the audit chain carries only hashes.
+ */
+import { randomUUID, createHash } from 'node:crypto';
+import type { Pool, RowDataPacket } from 'mysql2/promise';
+import type { AuditChain } from '../audit/chain.js';
+import { appendCommunityFounded } from '../audit/append-community-founded.js';
+import { appendCommunityJoined } from '../audit/append-community-joined.js';
+import type { Charter } from './types.js';
+
+const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
+
+export interface CommunityRow {
+    community_id: string; founder_civic_did: string; name: string; charter_json: string; charter_hash: string; status: string; founded_tick: number;
+}
+
+export class CommunityStore {
+    constructor(private readonly pool: Pool, private readonly audit: AuditChain) {}
+
+    /** COMM-01 — found a community + seat the founder + emit community.founded. */
+    async found(p: { gridName: string; founderDid: string; name: string; purpose: string; charter: Charter; biosPaid: number; tick: number }): Promise<string> {
+        const communityId = randomUUID();
+        const charterJson = JSON.stringify(p.charter);
+        const charterHash = sha256Hex(charterJson);
+        await this.pool.query(
+            `INSERT INTO communities
+               (community_id, grid_name, founder_civic_did, name, purpose, charter_json, charter_hash, bios_paid, status, founded_tick)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
+            [communityId, p.gridName, p.founderDid, p.name.slice(0, 255), p.purpose, charterJson, charterHash, p.biosPaid, p.tick],
+        );
+        await this.pool.query(
+            `INSERT INTO community_members (grid_name, community_id, member_civic_did, role, status, joined_tick)
+             VALUES (?, ?, ?, 'founder', 'active', ?)`,
+            [p.gridName, communityId, p.founderDid, p.tick],
+        );
+        appendCommunityFounded(this.audit, {
+            bios_paid: p.biosPaid, charter_hash: charterHash, community_id: communityId,
+            founder_did_hash: sha256Hex(p.founderDid), name_hash: sha256Hex(p.name), tick: p.tick,
+        });
+        return communityId;
+    }
+
+    async getCommunity(gridName: string, communityId: string): Promise<CommunityRow | null> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT community_id, founder_civic_did, name, charter_json, charter_hash, status, founded_tick
+               FROM communities WHERE grid_name = ? AND community_id = ? LIMIT 1`,
+            [gridName, communityId],
+        );
+        const r = rows as unknown as CommunityRow[];
+        return r.length ? r[0] : null;
+    }
+
+    /** COMM-03 — add a member. `active` emits community.joined; `pending` (approval flow)
+     *  is queued silently (the event fires only on actual membership). */
+    async addMember(p: { gridName: string; communityId: string; memberDid: string; status: 'active' | 'pending'; tick: number }): Promise<void> {
+        await this.pool.query(
+            `INSERT INTO community_members (grid_name, community_id, member_civic_did, role, status, joined_tick)
+             VALUES (?, ?, ?, 'member', ?, ?)
+             ON DUPLICATE KEY UPDATE status = VALUES(status)`,
+            [p.gridName, p.communityId, p.memberDid, p.status, p.tick],
+        );
+        if (p.status === 'active') {
+            appendCommunityJoined(this.audit, { community_id: p.communityId, member_did_hash: sha256Hex(p.memberDid), tick: p.tick });
+        }
+    }
+
+    async memberCount(gridName: string, communityId: string): Promise<number> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT COUNT(*) AS n FROM community_members WHERE grid_name = ? AND community_id = ? AND status = 'active'`,
+            [gridName, communityId],
+        );
+        return Number((rows as unknown as { n: number }[])[0]?.n ?? 0);
+    }
+}

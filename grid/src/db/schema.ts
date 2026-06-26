@@ -1512,4 +1512,38 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS library_entry_links; DROP TABLE IF EXISTS library_curators; ALTER TABLE library_entries DROP COLUMN pinned`,
     },
+    {
+        // Phase 49 Communities v3 Plan 1 (COMM-01/02/03) — Civic-DID holders found
+        // communities (Bios sybil cost → treasury) with a machine-readable charter, and
+        // join per the charter. Raw DIDs/charter live here; the chain carries hashes.
+        version: 62,
+        name: 'create_communities',
+        up: `
+            CREATE TABLE IF NOT EXISTS communities (
+                community_id      CHAR(36)     NOT NULL,
+                grid_name         VARCHAR(63)  NOT NULL,
+                founder_civic_did VARCHAR(255) NOT NULL,
+                name              VARCHAR(255) NOT NULL,
+                purpose           TEXT         NOT NULL,
+                charter_json      MEDIUMTEXT   NOT NULL,
+                charter_hash      CHAR(64)     NOT NULL,
+                bios_paid         BIGINT       NOT NULL,
+                status            ENUM('active','dissolved') NOT NULL DEFAULT 'active',
+                founded_tick      BIGINT       NOT NULL,
+                PRIMARY KEY (community_id),
+                INDEX idx_comm_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+            CREATE TABLE IF NOT EXISTS community_members (
+                grid_name        VARCHAR(63)  NOT NULL,
+                community_id     CHAR(36)     NOT NULL,
+                member_civic_did VARCHAR(255) NOT NULL,
+                role             ENUM('founder','officer','member') NOT NULL DEFAULT 'member',
+                status           ENUM('active','pending') NOT NULL DEFAULT 'active',
+                joined_tick      BIGINT       NOT NULL,
+                PRIMARY KEY (grid_name, community_id, member_civic_did),
+                INDEX idx_member (grid_name, member_civic_did)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS community_members; DROP TABLE IF EXISTS communities`,
+    },
 ];
