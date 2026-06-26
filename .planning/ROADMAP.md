@@ -178,7 +178,7 @@ Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reali
 - [ ] **Phase 47: Police v3** — Complaint-driven sanctions, investigation, court-filed charges, appeals to Government. (allowlist +4)
 - [x] **Phase 48: Library v3** — Public reading room + Civic-DID contribution + rotating curation council paid from treasury. (allowlist +2)
 - [x] **Phase 49: Communities v3** — Bios-gated founding, charters, membership criteria, subgovernance scoped to community-internal decisions. (allowlist +4)
-- [~] **Phase 48b: Civic Land & Property** — Ownable parcels (treasury-sale acquisition) + one buildable structure per parcel (home/shop/workshop/venue) + join/visit for open structures + NDS-named searchable addresses. Business requires an owned business parcel; home gives an address; `own_home`/`own_business` Telos goals; operators read-only on land; civic land (infrastructure/government) not for sale; per-Nous cap ≤1 home + ≤1 business. (allowlist +5 → 86) **Grid-core wave shipped 2026-06-05** (ParcelRegistry + 5 sole-producers + allowlist lock + 38 tests); routes/economy/Brain/UI/SAT-7 waves pending. Design: `docs/plans/2026-06-05-civic-land-and-property-design.md`. Provisional slot — final number to be locked in `/gsd-discuss-phase`.
+- [~] **Phase 48b: Civic Land & Property** — Ownable parcels (treasury-sale acquisition) + one buildable structure per parcel (home/shop/workshop/venue) + join/visit for open structures + NDS-named searchable addresses. Business requires an owned business parcel; home gives an address; `own_home`/`own_business` Telos goals; operators read-only on land; civic land (infrastructure/government) not for sale; per-Nous cap ≤1 home + ≤1 business. (allowlist +5 → 86) **Grid-core + routes waves shipped** (ParcelRegistry + 5 sole-producers + civic-parcels.ts purchase/build/join/leave/interior + v92-94 zoning.* events; 52 parcel tests green as of 2026-06-26). **Backend complete; only Brain/UI/SAT-7 integration waves remain** (deferred to the v3.1 housing-economy phase that activates the land system). Design: `docs/plans/2026-06-05-civic-land-and-property-design.md`. Provisional slot — final number to be locked in `/gsd-discuss-phase`.
 
 **Wave 4 — Migration (Phase 50)**
 - [~] **Phase 50: v2.6 → v3.0 Migration** — CLI-driven Sophia/Hermes/Themis import, pre-civic audit context, grandfathered reputation, reversible until first civic action. (allowlist 0)
@@ -820,7 +820,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 38. Brain ↔ Grid Wire Protocol | 4/4 | Complete    | 2026-05-27 |
 | 39. Grid Multi-Tenancy | 4/4 | Complete    | 2026-05-27 |
 | 40. Local AI Integration | 5/5 | Complete     | 2026-05-27 |
-| 41. Sleep Cycle + Away Presence | 5/6 | In Progress|  |
+| 41. Sleep Cycle + Away Presence | 6/6 ✅ | Complete (table was stale; all 6 plans shipped) | 2026-05-27 |
 | 42. P2P Infrastructure | 5/5 | Complete   | 2026-05-28 |
 | 43. Right-to-Fork Export Tooling | 4/4 | Complete    | 2026-05-28 |
 | 44. Marketplace v3 | 5/5 | Complete   | 2026-05-28 |
