@@ -36,7 +36,7 @@ import { HealthWatchdog } from '../diagnostics/health-watchdog.js';
 import { registerHealthDetailedRoute } from './routes/health-detailed.js';
 import { registerCivicMapRoute } from './routes/civic-map.js';
 import { registerCivicMapZoneRoute } from './routes/civic-map-zone.js';
-import { registerLibraryEntriesRoute } from './routes/library-entries.js';
+import { registerLibraryRoutes } from './routes/library.js';
 import { registerMarketRoutes } from './routes/market.js';
 import { registerIrsRoutes } from './routes/irs.js';
 import { registerOrbitalRoutes } from './routes/orbital.js';
@@ -796,7 +796,7 @@ export function buildServerWithHub(
     //        polis-bills, nous-public-profile, visitor-audit-trail.
     registerCivicMapRoute(app, services);
     registerCivicMapZoneRoute(app, services);
-    registerLibraryEntriesRoute(app, services);
+    registerLibraryRoutes(app, services);  // Phase 48 Library v3 — reading room + contribute/cite
     void registerMarketRoutes(app, services);
     void registerIrsRoutes(app, services);
     registerOrbitalRoutes(app, services);

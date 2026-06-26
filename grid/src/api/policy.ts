@@ -32,6 +32,10 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/civic-map/state': 'public',
     'GET /api/v1/civic-map/zone/:zone_id': 'public',
     'GET /api/v1/library/entries': 'public',
+    // Phase 48 Library v3 — reading room is public; contribute/cite need a Civic-DID.
+    'GET /api/v1/library/entries/:entryId': 'public',
+    'POST /api/v1/library/contribute':      'civic_did_required',
+    'POST /api/v1/library/cite':            'civic_did_required',
     'GET /api/v1/market/listings': 'public',
     'GET /api/v1/portal/discover': 'public', // spec §2 — public discovery of organizations + Houses feed
     'GET /api/v1/portal/grids': 'public', // spec §2 — public discovery of active Grids (multi-Grid framework)

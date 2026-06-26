@@ -26,7 +26,19 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 47 (Police v3) — ✅ COMPLETE 2026-06-25 (3 plans; POL-01..05; allowlist 121→125)
+Phase: 48 (Library v3) — Plan 1 SHIPPED 2026-06-26 (reading room + contribute/cite, allowlist +0)
+Plan: 1 of 3 (CIVLIB-01/02 done; Plan 2 = curation council +2 events; Plan 3 = treasury curator-pay)
+Status: Plan 1 — `library_entries` (v60, READABLE content) + `LibraryStore`
+  (contribute/cite/listEntries/getEntry). Routes: `GET /api/v1/library/entries` (public reading room,
+  search/category/page — replaces the Phase-36 stub), `GET /api/v1/library/entries/:id` (full content,
+  public), `POST /api/v1/library/contribute` (civic + K=3/epoch quota via LoreQuotaTracker), `POST
+  /api/v1/library/cite`. **Reuses the v2.4 lore commons as the backend** (upserts lore_commons + emits the
+  existing `lore.contributed`/`lore.cited`, allowlist **unchanged at 125**). One frozen-contract edit
+  (operator-approved): the lore `DID_RE` widened to accept Civic-DIDs (`did:civic:noesis:…`) so a Civic-DID
+  contribution can emit lore.contributed — backward-compatible, lore tests 46 green. Grid: store 5 + route 8
+  tests, broad regression 1799 green; tsc + did-policy-coverage + sole-producer clean.
+
+Previous phase: 47 (Police v3) — ✅ COMPLETE 2026-06-25 (3 plans; POL-01..05; allowlist 121→125)
 Plan: 3 of 3 — Plan 3 = appeals (`police_appeals` v59 + `POST /api/v1/gov/appeal` + `.../resolve`
   government_only, freeze reversed via `markUnfrozen`) + the executable CI gate
   `scripts/check-no-operator-sanction-path.mjs` (wired into rig-invariants.yml, D-V3-18). +0 events.
@@ -40,8 +52,8 @@ Status: Plans 1+2 complete. Plan 2 = `police_charges` + `police_sanctions` (v58)
   fine (→ treasury), warning/exile recorded. **Separation of powers is real: Police accuse + execute,
   Government convicts; no operator/Police-direct sanction path (D-V3-18).** Grid: store 5 + route 16 tests,
   broad regression 1842 green; tsc + did-policy-coverage + all gates + check-wiki clean.
-Next action: Phase 48 (Library v3) — public reading room + Civic-DID contribution + rotating
-  curation council paid from treasury (allowlist +2). Phase 47 closed.
+Next action: Phase 48 Plan 2 (CIVLIB-03 — curation council: `library.curator_elected` +
+  `library.entry_curated`, allowlist 125 → 127; Government-enacted curator election + curate routes).
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 

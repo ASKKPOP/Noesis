@@ -1455,4 +1455,32 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS police_appeals`,
     },
+    {
+        // Phase 48 Library v3 (CIVLIB-01/02) — the public reading room's READABLE content
+        // layer. v2.4 lore_commons stores only hashes (content was Brain-private); the
+        // Library is a visitor-accessible commons, so it stores the actual title/body
+        // grid-side. Contribute also upserts lore_commons + emits the v2.4 lore.contributed
+        // event (the lore commons IS the Library backend). One entry per content_hash.
+        version: 60,
+        name: 'create_library_entries',
+        up: `
+            CREATE TABLE IF NOT EXISTS library_entries (
+                entry_id              CHAR(36)     NOT NULL,
+                grid_name             VARCHAR(63)  NOT NULL,
+                contributor_civic_did VARCHAR(255) NOT NULL,
+                content_hash          CHAR(64)     NOT NULL,
+                title                 VARCHAR(255) NOT NULL,
+                body                  MEDIUMTEXT   NOT NULL,
+                category              VARCHAR(32)  NOT NULL,
+                citation_count        INT UNSIGNED NOT NULL DEFAULT 0,
+                status                ENUM('published','flagged') NOT NULL DEFAULT 'published',
+                contributed_tick      BIGINT       NOT NULL,
+                PRIMARY KEY (entry_id),
+                UNIQUE KEY uq_lib_content (grid_name, content_hash),
+                INDEX idx_lib_category (grid_name, category),
+                INDEX idx_lib_tick (grid_name, contributed_tick)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS library_entries`,
+    },
 ];
