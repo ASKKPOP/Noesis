@@ -70,6 +70,9 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/registry/type-b/:requestId/bond-refund': 'civic_did_required',
     'POST /api/v1/registry/type-b/:requestId/bond-slash':  'government_only',
     'POST /api/v1/registry/type-b/spawn':                  'civic_did_required',
+    // Phase 53 Portal Grid Approval — requester (civic/operator) + reviewer panel (government).
+    'POST /portal/api/v1/grid/request':              'civic_did_required',
+    'POST /portal/api/v1/grid/:requestId/decision':  'government_only',
     'GET /api/v1/market/listings': 'public',
     'GET /api/v1/portal/discover': 'public', // spec §2 — public discovery of organizations + Houses feed
     'GET /api/v1/portal/grids': 'public', // spec §2 — public discovery of active Grids (multi-Grid framework)

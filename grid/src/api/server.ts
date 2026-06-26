@@ -40,6 +40,7 @@ import { registerLibraryRoutes } from './routes/library.js';
 import { registerCommunityRoutes } from './routes/community.js';
 import { registerTreasuryTypeBRoutes } from './routes/treasury-type-b.js';
 import { registerRegistryTypeBRoutes } from './routes/registry-type-b.js';
+import { registerPortalGridApprovalRoutes } from './routes/portal-grid-approval.js';
 import { registerMobilityRoutes } from './routes/mobility.js';
 import { registerMarketRoutes } from './routes/market.js';
 import { registerIrsRoutes } from './routes/irs.js';
@@ -805,6 +806,7 @@ export function buildServerWithHub(
     registerMobilityRoutes(app, services);  // Phase 51 Type Mobility — abandon + adopt
     registerTreasuryTypeBRoutes(app, services);  // Phase 45b Type B treasury — endow + donate/revive
     registerRegistryTypeBRoutes(app, services);  // Phase 37b Type B Registry — α charter + β sponsor
+    registerPortalGridApprovalRoutes(app, services);  // Phase 53 Portal Grid Approval Workflow
     void registerMarketRoutes(app, services);
     void registerIrsRoutes(app, services);
     registerOrbitalRoutes(app, services);

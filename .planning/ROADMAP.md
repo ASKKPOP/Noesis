@@ -688,7 +688,13 @@ Plans:
 **Scope (ships)**: PORTAL-02, PORTAL-03. Grid creation workflow with rate limit.
 **Out of scope for this phase**: v3.0 only Genesis exists — workflow code ships but no Grid creation actually happens at v3.0 launch; v3.1+ activates request flow externally.
 **Allowlist additions**: **+3**. Running total: **108**.
-**Plans**: TBD
+**Plans**:
+  - **Single plan — Grid creation request + reviewer decision (PORTAL-02/03) — ✅ SHIPPED 2026-06-26.**
+    `grid_creation_requests` (v67) + `GridApprovalStore`. `POST /portal/api/v1/grid/request` (civic/operator →
+    `portal.grid_creation_requested`), `.../:id/decision` (government reviewer panel → `portal.grid_creation_
+    approved` [≤2 approvals/quarter, 429] / `portal.grid_creation_rejected` [closed-enum reason]). Grid-side
+    portal pipeline (same pattern as the Phase 54 human track; the standalone Portal service is Phase 52,
+    deferred). +3 → 150. store 5 + route 6 tests. v3.0 ships workflow only — no Grid is instantiated (Genesis only).
 
 ### Phase 54: Portal Nous Approval Workflow
 > **PARTIAL EARLY SHIP (2026-06-10)** — the **HUMAN track** of this pipeline shipped out-of-band

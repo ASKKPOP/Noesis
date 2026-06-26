@@ -26,6 +26,13 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
+Phase: 53 (Portal Grid Approval Workflow) — ✅ COMPLETE 2026-06-26 (PORTAL-02/03; allowlist 147→150)
+  `grid_creation_requests` (v67) + `GridApprovalStore` (request / decide). Routes: `POST /portal/api/v1/grid/
+  request` (civic/operator → `portal.grid_creation_requested`), `.../:id/decision` (government reviewer panel →
+  approved [≤2/quarter, 429] / rejected [closed-enum reason]). Grid-side portal pipeline (same pattern as the
+  Phase 54 human track); **Phase 52 standalone-Portal-service extraction is deferred (big-issue: domain +
+  tech-stack).** 3 events → allowlist 150. store 5 + route 6. v3.0 ships workflow; no Grid instantiated (Genesis only).
+
 Phase: 37b (Type B Registry — birth ceremonies) — ✅ COMPLETE 2026-06-26 (2 plans; TYPE-B-01/02; allowlist 141→147)
 Plan 2: `refundBond` (12mo + civic minimums → `registry.sponsorship_bond_refunded`, treasury→sponsor),
   `slashBond` (sybil/spam sanction → `registry.sponsorship_bond_slashed` → civic treasury), `spawnByParent`

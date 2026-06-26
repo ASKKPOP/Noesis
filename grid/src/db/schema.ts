@@ -1635,4 +1635,27 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS type_b_registry`,
     },
+    {
+        // Phase 53 Portal Grid Approval Workflow (PORTAL-02/03) — Grid-creation requests +
+        // reviewer-panel decisions. v3.0 ships the workflow but no Grid is created (only Genesis);
+        // v3.1+ activates it. ≤2 approvals/quarter. Grid-side portal pipeline (Phase 52 extracts
+        // the standalone service later).
+        version: 67,
+        name: 'create_grid_creation_requests',
+        up: `
+            CREATE TABLE IF NOT EXISTS grid_creation_requests (
+                request_id     VARCHAR(64)  NOT NULL,
+                proposed_name  VARCHAR(63)  NOT NULL,
+                requester_did  VARCHAR(255) NOT NULL,
+                status         ENUM('pending_review','approved','rejected') NOT NULL DEFAULT 'pending_review',
+                founding_capital BIGINT     NOT NULL DEFAULT 0,
+                reason         VARCHAR(32)  NULL,
+                filed_tick     BIGINT       NOT NULL,
+                decided_tick   BIGINT       NULL,
+                PRIMARY KEY (request_id),
+                INDEX idx_grid_requests_status (status, decided_tick)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS grid_creation_requests`,
+    },
 ];
