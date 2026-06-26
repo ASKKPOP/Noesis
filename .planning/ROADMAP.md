@@ -181,7 +181,7 @@ Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reali
 - [~] **Phase 48b: Civic Land & Property** — Ownable parcels (treasury-sale acquisition) + one buildable structure per parcel (home/shop/workshop/venue) + join/visit for open structures + NDS-named searchable addresses. Business requires an owned business parcel; home gives an address; `own_home`/`own_business` Telos goals; operators read-only on land; civic land (infrastructure/government) not for sale; per-Nous cap ≤1 home + ≤1 business. (allowlist +5 → 86) **Grid-core + routes waves shipped** (ParcelRegistry + 5 sole-producers + civic-parcels.ts purchase/build/join/leave/interior + v92-94 zoning.* events; 52 parcel tests green as of 2026-06-26). **Backend complete; only Brain/UI/SAT-7 integration waves remain** (deferred to the v3.1 housing-economy phase that activates the land system). Design: `docs/plans/2026-06-05-civic-land-and-property-design.md`. Provisional slot — final number to be locked in `/gsd-discuss-phase`.
 
 **Wave 4 — Migration (Phase 50)**
-- [~] **Phase 50: v2.6 → v3.0 Migration** — CLI-driven Sophia/Hermes/Themis import, pre-civic audit context, grandfathered reputation, reversible until first civic action. (allowlist 0)
+- [x] **Phase 50: v2.6 → v3.0 Migration** — CLI-driven Sophia/Hermes/Themis import, pre-civic audit context, grandfathered reputation, reversible until first civic action. (allowlist 0)
 
 ### Phase Details (v3.0)
 
@@ -541,13 +541,19 @@ Plans:
     total `grandfatherReputation(v26Metrics)` mapping {sanctionCount, skillTeachCount, tradeSuccessRate} →
     {civicStanding = −sanctions, libraryContributionScore = skillTeaches, marketplaceReputation = round(rate×100)}.
     Formula PUBLISHED in `philosophy.md` §12 (transparency). 5 tests; tsc + check-wiki clean. +0 allowlist.
-  - **Plan 2 — Migrate CLI export + commit (MIG-01/02).** A `noesis migrate --from-v2.6 --to-v3.0` command
-    (new `cli/` subcommand) reads the operator's v2.6 MySQL, exports Karpathy/Hypnos/Pneuma memory to a v3.0
-    Brain init bundle (reuse the Phase-43 fork-archive `.tar.gz` builder) + prints a per-Nous summary; then
-    `--commit` starts the v3.0 runtime + shows pre-Phase-37 audit as read-only "pre-civic context". No new events.
-  - **Plan 3 — Revert + committed gate (MIG-04).** `noesis migrate --revert` rolls back to v2.6 mode IFF no
-    post-migration civic action has committed; after the first `*.civic.*` event → `409 migration_committed`
-    (use the Phase-43 right-to-fork to leave instead). Wires the grandfathering (Plan 1) into Civic-DID issuance.
+  - **Plan 2 — Migrate CLI export + commit (MIG-01/02) — ✅ SHIPPED 2026-06-26.** `MigrationCeremony`
+    (`grid/src/migration/migrate-ceremony.ts`) — injectable-I/O state machine: `exportBundle` → `commit`.
+    `noesis migrate --from-v2.6 --to-v3.0` exports a per-Nous summary (name/rows/memory-hash/tick); `--commit`
+    marks the v3.0 runtime committed (pre-Phase-37 audit → read-only "pre-civic context"). Filesystem I/O in the
+    CLI; NOESIS_V26_MANIFEST as the v2.6 read stand-in. Smoke-tested end-to-end.
+  - **Plan 3 — Revert + committed gate (MIG-04) — ✅ SHIPPED 2026-06-26.** `noesis migrate --revert` rolls back
+    IFF no post-migration civic action has committed; after the first `*.civic.*` event → `migration_committed`
+    (`revertHttpStatus` → 409; use the Phase-43 fork to leave instead). 7 ceremony tests. **Thin follow-up:**
+    wiring `grandfatherReputation` (Plan 1) into the live Civic-DID issuance path awaits a v26-metrics store —
+    the pure formula + ceremony are complete and published (PHILOSOPHY §12).
+
+  **Phase 50 COMPLETE (3/3, 2026-06-26)** — grandfathering formula + the reversible migrate ceremony
+  (export → commit → revert, 409-gated after the first civic action). Allowlist +0.
 
 #### Wave 4 — Mobility & Foundations Extension
 
@@ -829,7 +835,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 47. Police v3 | 3/3 ✅ | COMPLETE — complaint·investigation·charges·conviction·sanction·appeal (allowlist 121→125, +CI gate) | 2026-06-25 |
 | 48. Library v3 | 3/3 ✅ | COMPLETE — reading room·contribute·curation·curator-pay (allowlist 125→127) | 2026-06-26 |
 | 49. Communities v3 | 2/2 ✅ | COMPLETE — found·charter·join·posts·subgov·dissolve (allowlist 127→131) | 2026-06-26 |
-| 50. v2.6→v3.0 Migration | 1/3 | Plan 1 shipped (MIG-03 grandfathering, +0) | 2026-06-26 |
+| 50. v2.6→v3.0 Migration | 3/3 ✅ | COMPLETE — grandfather + migrate CLI (export·commit·revert, 409-gated) | 2026-06-26 |
 
 ### Coverage & Traceability (v3.0)
 

@@ -35,3 +35,8 @@ export type { NousRunnerConfig, SpeakHandler, BrainAction } from './integration/
 
 export { DatabaseConnection, MigrationRunner, GridStore, InMemoryGridStore, PersistentAuditChain, snapshotGrid, restoreGrid, MIGRATIONS } from './db/index.js';
 export type { DbConfig, IGridStore, IAuditStore, IRegistryStore, ISpaceStore, Migration } from './db/index.js';
+
+// Phase 50 v2.6 → v3.0 Migration (MIG-01..04)
+export { grandfatherReputation } from './migration/grandfather.js';
+export { MigrationCeremony, revertHttpStatus } from './migration/migrate-ceremony.js';
+export type { MigrationIO, MigrationState, MigrationPhase, NousBundleSummary, CommitResult, RevertResult } from './migration/migrate-ceremony.js';

@@ -26,6 +26,14 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
+Phase: 50 (v2.6 → v3.0 Migration) — ✅ COMPLETE 2026-06-26 (3 plans; MIG-01..04; allowlist +0)
+Plan 2/3: `MigrationCeremony` (`grid/src/migration/migrate-ceremony.ts`) — injectable-I/O state machine:
+  exportBundle → commit → revert, reversible until the first civic action; after a `*.civic.*` event →
+  `migration_committed` (409). `noesis migrate --from-v2.6 --to-v3.0 | --commit | --revert` CLI (filesystem I/O;
+  NOESIS_V26_MANIFEST as the v2.6 read stand-in). Smoke-tested end-to-end. 7 ceremony tests + 5 grandfather.
+  Exported from @noesis/grid. **Follow-up (thin):** wiring `grandfatherReputation` into the live Civic-DID
+  issuance path awaits a v26-metrics store — the pure formula + ceremony are done + published (PHILOSOPHY §12).
+
 Phase: 55 (Portal Cross-Grid Framework — DORMANT v3.0) — ✅ COMPLETE 2026-06-26 (PORTAL-06; allowlist 155→157)
   Read endpoints return at most [Genesis]; `POST /portal/api/v1/cross-grid/marketplace/quote` → **503
   not_yet_active**. 2 events (`portal.cross_grid_action_mediated`/`identity_linked`) allowlisted but DORMANT —

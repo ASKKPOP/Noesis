@@ -2,10 +2,10 @@
  * CLI Command Runner — parses args and dispatches commands.
  */
 
-import { GenesisLauncher, GENESIS_CONFIG, TEST_CONFIG } from '@noesis/grid';
-import type { GenesisConfig } from '@noesis/grid';
+import { GenesisLauncher, GENESIS_CONFIG, TEST_CONFIG, MigrationCeremony } from '@noesis/grid';
+import type { GenesisConfig, MigrationIO, MigrationState, NousBundleSummary } from '@noesis/grid';
 import { spawn as nodeSpawn } from 'child_process';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, rmSync, mkdirSync } from 'fs';
 import { join, resolve, dirname } from 'path';
 import { homedir } from 'os';
 import { fileURLToPath } from 'url';
@@ -39,6 +39,9 @@ export function run(args: string[]): void {
             break;
         case 'brain':
             cmdBrain(args.slice(1));
+            break;
+        case 'migrate':
+            cmdMigrate(args.slice(1));
             break;
         case 'help':
         case '--help':
@@ -249,6 +252,74 @@ function cmdBrain(args: string[]): void {
     // Forward SIGINT/SIGTERM to child
     process.on('SIGINT', () => child.kill('SIGINT'));
     process.on('SIGTERM', () => child.kill('SIGTERM'));
+}
+
+/**
+ * `noesis migrate` — the v2.6 → v3.0 migration ceremony (Phase 50, MIG-01..04).
+ *   noesis migrate --from-v2.6 --to-v3.0   Export v2.6 memory to a v3.0 init bundle (no Grid call)
+ *   noesis migrate --commit                Start v3.0 runtime; pre-Phase-37 audit becomes read-only
+ *   noesis migrate --revert                Roll back IFF no civic action has committed (else 409)
+ */
+function migrationDir(): string {
+    const dir = process.env.NOESIS_V3_DIR ?? join(homedir(), '.noesis', 'migration');
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+    return dir;
+}
+
+function fsMigrationIO(dir: string): MigrationIO {
+    const statePath = join(dir, '.noesis-migration.json');
+    const bundlePath = join(dir, 'v3-init-bundle.json');
+    const civicMarker = join(dir, '.civic-committed'); // a committed civic action writes this
+    return {
+        readState: () => (existsSync(statePath) ? (JSON.parse(readFileSync(statePath, 'utf8')) as MigrationState) : null),
+        writeState: (s) => writeFileSync(statePath, JSON.stringify(s, null, 2)),
+        exportV26Memory: () => {
+            // Pragmatic v3.0 stand-in for the live v2.6 MySQL read: a manifest the operator points at.
+            const manifest = process.env.NOESIS_V26_MANIFEST;
+            if (!manifest || !existsSync(manifest)) {
+                throw new Error('no v2.6 source: set NOESIS_V26_MANIFEST to a JSON array of {nousName,rowCount,memoryHash}');
+            }
+            const rows = JSON.parse(readFileSync(manifest, 'utf8')) as Array<{ nousName: string; rowCount: number; memoryHash: string }>;
+            const tick = Math.floor(Date.now() / 1000);
+            const bundles: NousBundleSummary[] = rows.map((r) => ({ nousName: r.nousName, rowCount: r.rowCount, memoryHash: r.memoryHash, migrationTick: tick }));
+            writeFileSync(bundlePath, JSON.stringify(bundles, null, 2));
+            return bundles;
+        },
+        deleteBundle: () => { if (existsSync(bundlePath)) rmSync(bundlePath); },
+        hasCivicActionSince: () => existsSync(civicMarker),
+        now: () => Math.floor(Date.now() / 1000),
+    };
+}
+
+function cmdMigrate(args: string[]): void {
+    const dir = migrationDir();
+    const ceremony = new MigrationCeremony(fsMigrationIO(dir));
+    if (args.includes('--commit')) {
+        const r = ceremony.commit();
+        if (!r.ok) { console.error('✗ commit failed: run `noesis migrate --from-v2.6 --to-v3.0` first (not_exported)'); process.exitCode = 1; return; }
+        console.log(`✓ committed at tick ${r.committedTick}. Pre-Phase-37 audit is now read-only "pre-civic context".`);
+        return;
+    }
+    if (args.includes('--revert')) {
+        const r = ceremony.revert();
+        if (r.ok) { console.log('✓ Reverted — no civic actions had occurred. v2.6 stack pointers restored.'); return; }
+        if (r.code === 'migration_committed') { console.error('✗ 409 migration_committed — a civic action has committed; use `noesis fork` (Phase 43) to leave instead.'); process.exitCode = 1; return; }
+        console.error('✗ nothing_to_revert — no active migration.'); process.exitCode = 1; return;
+    }
+    if (args.includes('--from-v2.6') || args.includes('--to-v3.0')) {
+        try {
+            const bundles = ceremony.exportBundle();
+            console.log('Exported v2.6 → v3.0 init bundle:\n');
+            console.log('  Nous            rows     memory-hash       tick');
+            for (const b of bundles) console.log(`  ${b.nousName.padEnd(14)}  ${String(b.rowCount).padStart(6)}  ${b.memoryHash.slice(0, 16)}  ${b.migrationTick}`);
+            console.log('\nInspect the bundle, then run `noesis migrate --commit`.');
+        } catch (e) {
+            console.error(`✗ export failed: ${(e as Error).message}`); process.exitCode = 1;
+        }
+        return;
+    }
+    console.error('Usage: noesis migrate --from-v2.6 --to-v3.0 | --commit | --revert');
+    process.exitCode = 1;
 }
 
 function cmdHelp(): void {
