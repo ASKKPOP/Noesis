@@ -22,7 +22,15 @@ Phase-37 issuance producer**, so `check-civic-did-issuance-path.mjs` stays green
 - 3 events (DIDs hashed) → allowlist 141 → 144; baseline gates + test-counts re-pinned. store 7 + route 8
   tests; broad regression 1578 green; Portal-gating + did-policy-coverage clean.
 
-### Plan 2 — Bond refund/slash + Polis-γ parent-spawn — next
-- After 12mo civic minimums → `registry.sponsorship_bond_refunded` (bond returned); on Police sybil/spam
-  sanction → `registry.sponsorship_bond_slashed` (redistributed to civic treasury). Polis-γ (v3.1+ gated):
-  parent ≥1y standing → 14-day wait → `registry.type_b_spawned_by_parent` + parent reputation locked. +3 → 147.
+### Plan 2 — Bond refund/slash + Polis-γ parent-spawn — ✅ SHIPPED 2026-06-26
+- `refundBond` (beta+issued + 12mo + civic minimums → `registry.sponsorship_bond_refunded`, route settles
+  treasury→sponsor via `transferOusia`), `slashBond` (sybil/spam Police sanction → `registry.sponsorship_bond_
+  slashed` → civic treasury), `spawnByParent` (→ `registry.type_b_spawned_by_parent`).
+- Routes: `POST .../:id/bond-refund` (civic), `POST .../:id/bond-slash` (government_only), `POST .../spawn` →
+  **403 `forbidden_in_v3.0`** (Polis-γ gated to v3.1+, D-V3-28; the store method exists + is tested for v3.1).
+- +3 → 147. store 11 + route 13 tests; broad regression 1588 green; Portal-gating + did-policy-coverage clean.
+
+## Phase 37b COMPLETE (2/2) — 2026-06-26
+3 Type B birth ceremonies — Polis-α (Foundation charter, ≥7-day review, ≤5/quarter), Polis-β (nonlinear bond
+sponsor with refund-after-12mo / slash-on-sanction), Polis-γ (parent-spawn, gated to v3.1+). 6 `registry.*`
+events; the issuance pipeline never imports the Phase-37 producer (D-V3-33 green). Allowlist 141 → 147.

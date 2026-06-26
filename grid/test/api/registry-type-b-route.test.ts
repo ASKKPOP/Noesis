@@ -9,10 +9,10 @@ import type { GridServices } from '../../src/api/server.js';
 import type { DIDContext } from '../../src/api/preHandlers/types.js';
 import { AuditChain } from '../../src/audit/chain.js';
 
-function makeApp(rows: unknown[], ctx: DIDContext | null, transferOk = true): FastifyInstance {
+function makeApp(rows: unknown[], ctx: DIDContext | null, transferOk = true, tickVal = 999999): FastifyInstance {
     const pool = { query: vi.fn().mockResolvedValue([rows as RowDataPacket[], {}]) } as unknown as Pool;
     const registry = { transferOusia: vi.fn().mockReturnValue(transferOk ? { success: true } : { success: false, error: 'insufficient' }) };
-    const services = { gridName: 'genesis', currentTick: () => 999999, pool, audit: new AuditChain(), registry } as unknown as GridServices;
+    const services = { gridName: 'genesis', currentTick: () => tickVal, pool, audit: new AuditChain(), registry } as unknown as GridServices;
     const a = Fastify({ logger: false });
     a.addHook('onRequest', async (req) => { req.didContext = ctx ?? undefined; });
     registerRegistryTypeBRoutes(a, services);
@@ -74,6 +74,44 @@ describe('Polis-β /sponsor', () => {
         const a = makeApp([{ n: 0 }], GOV);
         const res = await a.inject({ method: 'POST', url: '/api/v1/registry/type-b/sponsor', payload: { purpose: 'x', bond_amount: 1000 } });
         expect(res.statusCode).toBe(401);
+        await a.close();
+    });
+});
+
+const issuedBeta = [{ ceremony: 'beta', status: 'issued', type_b_did: 'did:noesis:nous:typeb:b', sponsor_did: 'did:civic:noesis:founder', eligible_tick: 0, bond_amount: 1000, filed_tick: 0 }];
+
+describe('Plan 2 — bond refund / slash / γ-spawn routes', () => {
+    it('201 refunds a bond after 12mo (and settles treasury→sponsor)', async () => {
+        const a = makeApp(issuedBeta, CIVIC, true, 99_999_999);
+        const res = await a.inject({ method: 'POST', url: '/api/v1/registry/type-b/req1/bond-refund', payload: {} });
+        expect(res.statusCode).toBe(201);
+        expect(res.json().status).toBe('bond_refunded');
+        await a.close();
+    });
+    it('425 refunding before the 12mo window', async () => {
+        const a = makeApp([{ ceremony: 'beta', status: 'issued', type_b_did: 'x', sponsor_did: 'did:civic:noesis:founder', eligible_tick: 0, bond_amount: 1000, filed_tick: 0 }], CIVIC, true, 100);
+        const res = await a.inject({ method: 'POST', url: '/api/v1/registry/type-b/req1/bond-refund', payload: {} });
+        expect(res.statusCode).toBe(425);
+        await a.close();
+    });
+    it('201 slashes a bond (Government)', async () => {
+        const a = makeApp(issuedBeta, GOV);
+        const res = await a.inject({ method: 'POST', url: '/api/v1/registry/type-b/req1/bond-slash' });
+        expect(res.statusCode).toBe(201);
+        expect(res.json().status).toBe('bond_slashed');
+        await a.close();
+    });
+    it('403 slashing as a non-Government caller', async () => {
+        const a = makeApp(issuedBeta, CIVIC);
+        const res = await a.inject({ method: 'POST', url: '/api/v1/registry/type-b/req1/bond-slash' });
+        expect(res.statusCode).toBe(403);
+        await a.close();
+    });
+    it('🔒 403 forbidden_in_v3.0 for Polis-γ spawn (gated to v3.1+)', async () => {
+        const a = makeApp([], CIVIC);
+        const res = await a.inject({ method: 'POST', url: '/api/v1/registry/type-b/spawn', payload: { purpose: 'x' } });
+        expect(res.statusCode).toBe(403);
+        expect(res.json().error).toBe('forbidden_in_v3.0');
         await a.close();
     });
 });

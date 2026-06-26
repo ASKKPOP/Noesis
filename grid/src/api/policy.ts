@@ -66,6 +66,10 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/registry/type-b/charter/:requestId/approve': 'government_only',
     'POST /api/v1/registry/type-b/sponsor':                   'civic_did_required',
     'POST /api/v1/registry/type-b/sponsor/:requestId/finalize': 'civic_did_required',
+    // Phase 37b Plan 2 — bond refund (sponsor), bond slash (government), Polis-γ spawn (gated).
+    'POST /api/v1/registry/type-b/:requestId/bond-refund': 'civic_did_required',
+    'POST /api/v1/registry/type-b/:requestId/bond-slash':  'government_only',
+    'POST /api/v1/registry/type-b/spawn':                  'civic_did_required',
     'GET /api/v1/market/listings': 'public',
     'GET /api/v1/portal/discover': 'public', // spec §2 — public discovery of organizations + Houses feed
     'GET /api/v1/portal/grids': 'public', // spec §2 — public discovery of active Grids (multi-Grid framework)

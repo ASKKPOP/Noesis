@@ -619,10 +619,15 @@ Plans:
     `registry.sponsorship_bond_posted` + 7-day comment window → `.../sponsor/:id/finalize` →
     `registry.type_b_sponsored`. Events are the Type B issuance pipeline (never import the Phase-37 producer —
     D-V3-33 green). +3 → 144. store 7 + route 8 tests.
-  - **Plan 2 — Bond refund/slash + Polis-γ parent-spawn.** After 12mo civic minimums →
-    `registry.sponsorship_bond_refunded`; on Police sybil/spam sanction → `registry.sponsorship_bond_slashed`
-    (redistributed to civic treasury). Polis-γ (v3.1+ gated): parent ≥1y standing → 14-day wait →
-    `registry.type_b_spawned_by_parent` + parent reputation locked. +3 → 147.
+  - **Plan 2 — Bond refund/slash + Polis-γ parent-spawn — ✅ SHIPPED 2026-06-26.** `refundBond` (12mo + civic
+    minimums → `registry.sponsorship_bond_refunded`, settled treasury→sponsor), `slashBond` (sybil/spam Police
+    sanction → `registry.sponsorship_bond_slashed` → civic treasury), `spawnByParent` →
+    `registry.type_b_spawned_by_parent`. Routes: `.../:id/bond-refund` (civic), `.../:id/bond-slash` (government),
+    `.../spawn` → **403 `forbidden_in_v3.0`** (Polis-γ gated to v3.1+, D-V3-28). +3 → 147. store 11 + route 13.
+
+  **Phase 37b COMPLETE (2/2, 2026-06-26)** — 3 Type B birth ceremonies (α charter, β bond-sponsor with
+  refund/slash, γ parent-spawn gated). 6 `registry.*` events; the issuance pipeline never imports the Phase-37
+  producer (D-V3-33 green).
 
 ### Phase 45b: Treasury Operations (Type B endowment + dormancy)
 **Goal**: Implement 3-layer Type B funding hybrid (D-V3-25): Foundation endowment at birth (~12mo runway), marketplace earnings 70/30 split with infrastructure stipend, dormancy on treasury exhaustion (Brain stops, identity preserved indefinitely, revival via donation/grant). NO bios.death from treasury exhaustion (D-V3-25 — only civic conviction can kill).

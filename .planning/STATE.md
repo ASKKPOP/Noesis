@@ -26,8 +26,12 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 37b (Type B Registry — birth ceremonies) — Plan 1 SHIPPED 2026-06-26 (Polis-α charter + Polis-β sponsor, allowlist 141→144)
-Plan: 1 of 2 (TYPE-B-01/02). `type_b_registry` (v66) + `TypeBRegistryStore`. **Deliberate latency throughout**
+Phase: 37b (Type B Registry — birth ceremonies) — ✅ COMPLETE 2026-06-26 (2 plans; TYPE-B-01/02; allowlist 141→147)
+Plan 2: `refundBond` (12mo + civic minimums → `registry.sponsorship_bond_refunded`, treasury→sponsor),
+  `slashBond` (sybil/spam sanction → `registry.sponsorship_bond_slashed` → civic treasury), `spawnByParent`
+  (Polis-γ → `registry.type_b_spawned_by_parent`). Routes: `.../:id/bond-refund` (civic), `.../:id/bond-slash`
+  (government), `.../spawn` → **403 `forbidden_in_v3.0`** (Polis-γ gated to v3.1+, D-V3-28). store 11 + route 13.
+Plan 1: `type_b_registry` (v66) + `TypeBRegistryStore`. **Deliberate latency throughout**
   (file → window → issue). Polis-α: `POST .../charter` (government, ≤5/quarter rate limit) → `.../charter/:id/
   approve` after ≥7 days → `registry.type_b_chartered`. Polis-β: `POST .../sponsor` (civic; nonlinear bond
   `requiredBond` = 1000×(active+1)², charged sponsor→treasury) → `registry.sponsorship_bond_posted` + 7-day

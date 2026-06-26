@@ -12,23 +12,26 @@ import type { AuditChain } from '../audit/chain.js';
 import { appendRegistryTypeBChartered } from '../audit/append-registry-type-b-chartered.js';
 import { appendRegistrySponsorshipBondPosted } from '../audit/append-registry-sponsorship-bond-posted.js';
 import { appendRegistryTypeBSponsored } from '../audit/append-registry-type-b-sponsored.js';
+import { appendRegistrySponsorshipBondRefunded } from '../audit/append-registry-sponsorship-bond-refunded.js';
+import { appendRegistrySponsorshipBondSlashed } from '../audit/append-registry-sponsorship-bond-slashed.js';
+import { appendRegistryTypeBSpawnedByParent } from '../audit/append-registry-type-b-spawned-by-parent.js';
 import {
     CHARTER_REVIEW_TICKS, CHARTER_QUARTER_TICKS, CHARTER_QUARTER_LIMIT,
-    SPONSOR_COMMENT_TICKS, requiredBond, prospectiveTypeBDid,
+    SPONSOR_COMMENT_TICKS, REFUND_ELIGIBLE_TICKS, requiredBond, prospectiveTypeBDid,
 } from './registry-types.js';
 
 const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
 const requestId = (sponsorDid: string, purpose: string, tick: number): string =>
     sha256Hex(`${sponsorDid}|${purpose}|${tick}`).slice(0, 32);
 
-export interface RegistryRequestRow { request_id: string; ceremony: string; status: string; type_b_did: string; sponsor_did: string; eligible_tick: number; }
+export interface RegistryRequestRow { request_id: string; ceremony: string; status: string; type_b_did: string; sponsor_did: string; eligible_tick: number; bond_amount: number; filed_tick: number; }
 
 export class TypeBRegistryStore {
     constructor(private readonly pool: Pool, private readonly audit: AuditChain) {}
 
     private async get(gridName: string, reqId: string): Promise<RegistryRequestRow | null> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT request_id, ceremony, status, type_b_did, sponsor_did, eligible_tick FROM type_b_registry WHERE grid_name = ? AND request_id = ? LIMIT 1`,
+            `SELECT request_id, ceremony, status, type_b_did, sponsor_did, eligible_tick, bond_amount, filed_tick FROM type_b_registry WHERE grid_name = ? AND request_id = ? LIMIT 1`,
             [gridName, reqId],
         );
         const r = rows as unknown as RegistryRequestRow[];
@@ -103,5 +106,42 @@ export class TypeBRegistryStore {
         await this.pool.query(`UPDATE type_b_registry SET status = 'issued' WHERE grid_name = ? AND request_id = ?`, [p.gridName, p.requestId]);
         appendRegistryTypeBSponsored(this.audit, { sponsor_did_hash: sha256Hex(r.sponsor_did), tick: p.tick, type_b_did_hash: sha256Hex(r.type_b_did) });
         return { ok: true, typeBDid: r.type_b_did };
+    }
+
+    /** Refund a Polis-β bond after 12mo, if civic minimums are met. Returns the amount + sponsor
+     *  so the route can settle treasury→sponsor; marks the bond consumed (no double refund). */
+    async refundBond(p: { gridName: string; requestId: string; meetsMinimums: boolean; tick: number }): Promise<{ ok: true; amount: number; sponsorDid: string } | { ok: false; reason: 'not_found' | 'too_early' | 'minimums_unmet' | 'bad_state' }> {
+        const r = await this.get(p.gridName, p.requestId);
+        if (!r || r.ceremony !== 'beta') return { ok: false, reason: 'not_found' };
+        if (r.status !== 'issued' || r.bond_amount <= 0) return { ok: false, reason: 'bad_state' };
+        if (p.tick < r.filed_tick + REFUND_ELIGIBLE_TICKS) return { ok: false, reason: 'too_early' };
+        if (!p.meetsMinimums) return { ok: false, reason: 'minimums_unmet' };
+        await this.pool.query(`UPDATE type_b_registry SET bond_amount = 0 WHERE grid_name = ? AND request_id = ?`, [p.gridName, p.requestId]);
+        appendRegistrySponsorshipBondRefunded(this.audit, { bond_amount: r.bond_amount, sponsor_did_hash: sha256Hex(r.sponsor_did), tick: p.tick, type_b_did_hash: sha256Hex(r.type_b_did) });
+        return { ok: true, amount: r.bond_amount, sponsorDid: r.sponsor_did };
+    }
+
+    /** Slash a Polis-β bond on a sybil/spam Police sanction → forfeited to civic treasury. */
+    async slashBond(p: { gridName: string; requestId: string; tick: number }): Promise<{ ok: true; amount: number } | { ok: false; reason: 'not_found' | 'bad_state' }> {
+        const r = await this.get(p.gridName, p.requestId);
+        if (!r || r.ceremony !== 'beta') return { ok: false, reason: 'not_found' };
+        if (r.status !== 'issued' || r.bond_amount <= 0) return { ok: false, reason: 'bad_state' };
+        await this.pool.query(`UPDATE type_b_registry SET bond_amount = 0 WHERE grid_name = ? AND request_id = ?`, [p.gridName, p.requestId]);
+        appendRegistrySponsorshipBondSlashed(this.audit, { bond_amount: r.bond_amount, sponsor_did_hash: sha256Hex(r.sponsor_did), tick: p.tick, type_b_did_hash: sha256Hex(r.type_b_did) });
+        return { ok: true, amount: r.bond_amount };
+    }
+
+    /** Polis-γ (gated to v3.1+): a parent Nous spawns a child after the 14-day wait. Emits
+     *  registry.type_b_spawned_by_parent + persists the issued child. */
+    async spawnByParent(p: { gridName: string; parentDid: string; purpose: string; tick: number }): Promise<{ typeBDid: string }> {
+        const reqId = requestId(p.parentDid, p.purpose, p.tick);
+        const typeBDid = prospectiveTypeBDid(p.parentDid, p.purpose, p.tick);
+        await this.pool.query(
+            `INSERT INTO type_b_registry (grid_name, request_id, ceremony, status, type_b_did, sponsor_did, purpose, filed_tick, eligible_tick)
+             VALUES (?, ?, 'gamma', 'issued', ?, ?, ?, ?, ?)`,
+            [p.gridName, reqId, typeBDid, p.parentDid, p.purpose, p.tick, p.tick],
+        );
+        appendRegistryTypeBSpawnedByParent(this.audit, { parent_did_hash: sha256Hex(p.parentDid), tick: p.tick, type_b_did_hash: sha256Hex(typeBDid) });
+        return { typeBDid };
     }
 }
