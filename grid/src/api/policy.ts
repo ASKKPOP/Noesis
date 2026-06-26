@@ -55,6 +55,8 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // (humanFromSession), so 'public' here.
     'POST /api/v1/mobility/abandon':         'public',
     'POST /api/v1/mobility/adopt/:nousId':   'public',
+    // Phase 51 Plan 2 — window-expiry conversion to Type B is a Foundation/system act.
+    'POST /api/v1/mobility/:nousId/convert': 'government_only',
     'GET /api/v1/market/listings': 'public',
     'GET /api/v1/portal/discover': 'public', // spec §2 — public discovery of organizations + Houses feed
     'GET /api/v1/portal/grids': 'public', // spec §2 — public discovery of active Grids (multi-Grid framework)

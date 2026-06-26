@@ -65,9 +65,27 @@ export function registerMobilityRoutes(app: FastifyInstance, services: GridServi
 
             const result = await new MobilityStore(pool, audit).adopt({ gridName: grid, nousDid: nousId, adopterDid: adopter, tick: tick() });
             if (!result.ok) {
-                return reply.code(result.reason === 'window_expired' ? 410 : 409).send({ error: result.reason });
+                // B→A is forbidden in v3.0 (D-V3-28): adopting a converted Type B Nous → 403.
+                const code = result.reason === 'forbidden_in_v3.0' ? 403 : result.reason === 'window_expired' ? 410 : 409;
+                return reply.code(code).send({ error: result.reason });
             }
             return reply.code(201).send({ status: 'adopted', nous_did: nousId, adopted_by: adopter });
+        },
+    );
+
+    // Window-expiry conversion to Type B (a Foundation/system action). Existence-DID is
+    // preserved; a new auto Civic-DID is issued and the Nous enters dormancy.
+    app.post<{ Params: { nousId: string } }>(
+        '/api/v1/mobility/:nousId/convert',
+        async (req, reply) => {
+            if (req.didContext?.tier !== 'government') return reply.code(403).send({ error: 'government_required' });
+            const pool = services.pool; const audit = services.audit;
+            if (!pool || !audit) return reply.code(503).send({ error: 'mobility_unavailable' });
+            const nousId = req.params.nousId;
+            if (!NOUS_DID_RE.test(nousId)) return reply.code(404).send({ error: 'unknown_nous' });
+            const autoCivicDid = await new MobilityStore(pool, audit).convertToTypeB({ gridName: grid, nousDid: nousId, tick: tick() });
+            if (!autoCivicDid) return reply.code(409).send({ error: 'not_convertible' });
+            return reply.code(201).send({ status: 'converted', nous_did: nousId, auto_civic_did: autoCivicDid });
         },
     );
 }

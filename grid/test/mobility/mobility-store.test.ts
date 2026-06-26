@@ -48,4 +48,23 @@ describe('MobilityStore.adopt', () => {
         const r = await new MobilityStore(pool(pending(1)), new AuditChain()).adopt({ gridName: 'genesis', nousDid: NOUS, adopterDid: NEW, tick: 5 });
         expect(r).toEqual({ ok: false, reason: 'window_expired' });
     });
+    it('🔒 a converted Type B Nous can NOT be adopted back (B→A forbidden, D-V3-28)', async () => {
+        const r = await new MobilityStore(pool([{ nous_did: NOUS, status: 'converted', abandoned_by_human_did: OLD, window_end_tick: 1 }]), new AuditChain())
+            .adopt({ gridName: 'genesis', nousDid: NOUS, adopterDid: NEW, tick: 5 });
+        expect(r).toEqual({ ok: false, reason: 'forbidden_in_v3.0' });
+    });
+});
+
+describe('MobilityStore.convertToTypeB (Plan 2)', () => {
+    it('expired window with no adopter → auto Civic-DID + converted + dormancy events', async () => {
+        const p = pool(pending(1)); const audit = new AuditChain();
+        const did = await new MobilityStore(p, audit).convertToTypeB({ gridName: 'genesis', nousDid: NOUS, tick: 5 });
+        expect(did).toMatch(/^did:noesis:nous:auto:[0-9a-f]{16}$/i);
+        expect((p.query as ReturnType<typeof vi.fn>).mock.calls.some((c) => /UPDATE mobility_records SET status = 'converted'/i.test(c[0]))).toBe(true);
+        expect(audit.query({ eventType: 'mobility.converted_to_type_b' })).toHaveLength(1);
+        expect(audit.query({ eventType: 'mobility.dormancy_entered' })).toHaveLength(1);
+    });
+    it('returns null when the window has not expired', async () => {
+        expect(await new MobilityStore(pool(pending(999999)), new AuditChain()).convertToTypeB({ gridName: 'genesis', nousDid: NOUS, tick: 5 })).toBeNull();
+    });
 });

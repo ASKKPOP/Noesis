@@ -571,10 +571,15 @@ Plans:
     adopter, Nous stays Type A; 409 not_adoptable / 410 window_expired). 3 sole-producer events
     (`mobility.operator_abandoned`, `mobility.adoption_attempted`, `mobility.adoption_succeeded`; DIDs hashed) —
     allowlist **131 → 134**, baseline gates + test-counts re-pinned. store 5 + route 6 tests; regression green.
-  - **Plan 2 — Auto-convert to Type B + B→A block (TYPE-B-06 tail).** On window expiry with no adoption →
-    `mobility.converted_to_type_b` + `mobility.dormancy_entered` (+2 → 136); Existence-DID preserved, new Civic-DID
-    `did:noesis:nous:auto:<key>`. `POST /api/v1/mobility/adopt/:typeBDid` → **403 `forbidden_in_v3.0`** (B→A is a
-    sybil escape hatch, D-V3-28), the rejected attempt logged for transparency.
+  - **Plan 2 — Auto-convert to Type B + B→A block (TYPE-B-06 tail) — ✅ SHIPPED 2026-06-26.**
+    `MobilityStore.convertToTypeB` + `POST /api/v1/mobility/:id/convert` (**government_only**): on window expiry
+    the Existence-DID is preserved, a new Civic-DID `did:noesis:nous:auto:<key>` is issued, and
+    `mobility.converted_to_type_b` + `mobility.dormancy_entered` fire (+2 → 136). **B→A blocked (D-V3-28):**
+    `POST /api/v1/mobility/adopt/:typeBDid` on a converted Nous → **403 `forbidden_in_v3.0`** (attempt still
+    logged for transparency). store 9 + route 9 tests; gates + test-counts re-pinned; regression green.
+
+  **Phase 51 COMPLETE (2/2, 2026-06-26)** — operator abandon → 30-day adoption window → adopt (stays Type A) or
+  auto-convert to Foundation Type B; Existence-DID preserved throughout; B→A forbidden.
 
 #### Wave 1 Foundations — Hosted Brain (parallel with Local AI)
 

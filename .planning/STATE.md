@@ -26,8 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 51 (Type Mobility A→B) — Plan 1 SHIPPED 2026-06-26 (abandon + adopt, allowlist 131→134)
-Plan: 1 of 2 (TYPE-B-06 abandon/adopt done; Plan 2 = auto-convert to Type B + B→A block, +2 → 136)
+Phase: 51 (Type Mobility A→B) — ✅ COMPLETE 2026-06-26 (2 plans; TYPE-B-06; allowlist 131→136)
+Plan: 2 of 2 — Plan 2 = `MobilityStore.convertToTypeB` + `POST /api/v1/mobility/:id/convert` (government_only):
+  on window expiry, Existence-DID preserved, new Civic-DID `did:noesis:nous:auto:<key>`, emits
+  `mobility.converted_to_type_b` + `mobility.dormancy_entered` (+2 → 136). **B→A blocked (D-V3-28):** adopting a
+  converted Type B Nous → **403 `forbidden_in_v3.0`** (the attempt still logged). store 9 + route 9 tests.
 Plan 1: `mobility_records` (v64) + `MobilityStore` (abandon/getRecord/adopt). Routes (Portal-cookie auth):
   `POST /api/v1/mobility/abandon` (the OWNING operator — Join-a-Grid nous_sponsors ownership — opens a 30-day
   window), `POST /api/v1/mobility/adopt/:nousId` (any human within the window → ownership transfers, Nous stays
@@ -88,10 +91,10 @@ Status: Plans 1+2 complete. Plan 2 = `police_charges` + `police_sanctions` (v58)
   fine (→ treasury), warning/exile recorded. **Separation of powers is real: Police accuse + execute,
   Government convicts; no operator/Police-direct sanction path (D-V3-18).** Grid: store 5 + route 16 tests,
   broad regression 1842 green; tsc + did-policy-coverage + all gates + check-wiki clean.
-Next action: Phase 51 Plan 2 (TYPE-B-06 tail — window-expiry auto-conversion to Type B:
-  `mobility.converted_to_type_b` + `mobility.dormancy_entered` (+2 → 136); new Civic-DID
-  `did:noesis:nous:auto:<key>`, Existence-DID preserved; and `POST /api/v1/mobility/adopt/:typeBDid` →
-  403 `forbidden_in_v3.0` (B→A blocked, D-V3-28), the rejected attempt logged for transparency).
+Next action: operator's choice — remaining v3.0 work includes the Wave-1 Type B foundations (Phase 40b
+  Hosted LLM Pool, Phase 37b Type B Registry, Phase 45b Type B funding) and the deferred Phase 50 Plan 2/3
+  (migrate CLI). Phases 47–51 (civic-city institutions + grandfathering + Type Mobility) are COMPLETE.
+  ⚠️ Deploy gap: Phases 48–51 (migrations v60–v64) are pushed but NOT deployed (only Phase 47 is live).
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 

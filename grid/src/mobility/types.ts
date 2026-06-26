@@ -35,3 +35,26 @@ export interface MobilityAdoptionSucceededPayload {
     readonly tick: number;
 }
 export const MOBILITY_ADOPTION_SUCCEEDED_KEYS = ['adopter_did_hash', 'nous_did_hash', 'tick'] as const;
+
+/** The auto-issued Type B Civic-DID: did:noesis:nous:auto:<key>. Existence-DID is preserved;
+ *  only the substrate authority (Civic-DID) changes. Deterministic from the existence DID. */
+export function autoTypeBCivicDid(existenceDid: string, key: string): string {
+    void existenceDid;
+    return `did:noesis:nous:auto:${key}`;
+}
+
+/** mobility.converted_to_type_b — window expired with no adoption → Foundation custody. */
+export interface MobilityConvertedToTypeBPayload {
+    readonly auto_civic_did_hash: string; // HEX64 — the reissued Type B Civic-DID
+    readonly nous_did_hash: string;       // HEX64 — the (preserved) existence DID
+    readonly tick: number;
+}
+export const MOBILITY_CONVERTED_TO_TYPE_B_KEYS = ['auto_civic_did_hash', 'nous_did_hash', 'tick'] as const;
+
+/** mobility.dormancy_entered — the freshly-converted Type B Nous waits, dormant, for its
+ *  Type B endowment (Phase 45b) to fund it. */
+export interface MobilityDormancyEnteredPayload {
+    readonly nous_did_hash: string; // HEX64
+    readonly tick: number;
+}
+export const MOBILITY_DORMANCY_ENTERED_KEYS = ['nous_did_hash', 'tick'] as const;

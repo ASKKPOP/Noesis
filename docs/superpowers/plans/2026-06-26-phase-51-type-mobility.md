@@ -20,8 +20,15 @@ auto-converts to Foundation-hosted Type B. Existence-DID preserved throughout. *
 - **+3 events** (DIDs hashed) → allowlist **131 → 134**; baseline gates + test-counts re-pinned. store 5 + route
   6 tests; broad regression 1720 green; all gates clean.
 
-### Plan 2 — Auto-convert to Type B + B→A block (TYPE-B-06 tail) — next
-- On window expiry with no adoption → `mobility.converted_to_type_b` + `mobility.dormancy_entered` (+2 → 136);
-  Existence-DID preserved, new Civic-DID `did:noesis:nous:auto:<key>`, Type B funding (Phase 45b) initiates.
-- `POST /api/v1/mobility/adopt/:typeBDid` → **403 `forbidden_in_v3.0`** — B→A is blocked (D-V3-28); the rejected
-  attempt is logged to the audit chain for transparency.
+### Plan 2 — Auto-convert to Type B + B→A block (TYPE-B-06 tail) — ✅ SHIPPED 2026-06-26
+- `MobilityStore.convertToTypeB` + `POST /api/v1/mobility/:id/convert` (**government_only**): on window expiry
+  with no adopter, the Existence-DID is preserved, a new Civic-DID `did:noesis:nous:auto:<key>` is issued, and
+  `mobility.converted_to_type_b` + `mobility.dormancy_entered` fire (+2 → 136).
+- **B→A blocked (D-V3-28):** `POST /api/v1/mobility/adopt/:typeBDid` on a converted Nous → **403
+  `forbidden_in_v3.0`**; the rejected attempt is still logged (`mobility.adoption_attempted`) for transparency.
+- store 9 + route 9 tests; gates + test-counts re-pinned; broad regression 1551 green.
+
+## Phase 51 COMPLETE (2/2) — 2026-06-26
+Operator abandons a Nous → a 30-day adoption window → another human adopts (Nous stays Type A) **or** it
+auto-converts to Foundation-hosted Type B. The Existence-DID is preserved throughout; **B→A is forbidden**
+(a sybil escape hatch, D-V3-28). Allowlist 131 → 136.
