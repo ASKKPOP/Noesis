@@ -23,7 +23,7 @@
 
 /** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42 + Phase 43 + Phase 44 + Phase 45 + Phase 46 + Phase 47) — 81 is the civic count through Phase 46; with the
  *  parallel Economic Reality Loop programs the array is 121, Phase 47 (+4 police.*) → 125, and
- *  Phase 48 (+2 library.*) → 127, and Phase 49 (+4 community.*) → 131.
+ *  Phase 48 (+2 library.*) → 127, and Phase 49 (+4 community.*) → 131, Phase 51 (+3 mobility.*) → 134.
  *  Phase 42 (P2P-05 / D-42-07): +3 P2P audit events (allowlist 64 → 67).
  *   - p2p.peer_announced (65): closed 3-key {civic_did_hash, endpoint_hash, tick}.
  *     endpoint_hash = sha256('online') — static sentinel (no IP/port leakage per D-42-02).
@@ -585,6 +585,20 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   closed 3-key {community_id, dissolved_by_did_hash, tick}
     'community.posted',             // (130)
     'community.dissolved',          // (131)
+    // Phase 51 Plan 1 (TYPE-B-06) — Type Mobility abandon + adopt. Allowlist 131 → 134.
+    // DIDs hashed; the abandoning operator is the human who owns the Nous (Type A pairing).
+    // mobility.operator_abandoned (132): actorDid = operator_did_hash.
+    //   sole-producer grid/src/audit/append-mobility-operator-abandoned.ts
+    //   closed 4-key {nous_did_hash, operator_did_hash, tick, window_end_tick}
+    // mobility.adoption_attempted (133): actorDid = adopter_did_hash. (logged even on rejection)
+    //   sole-producer grid/src/audit/append-mobility-adoption-attempted.ts
+    //   closed 3-key {adopter_did_hash, nous_did_hash, tick}
+    // mobility.adoption_succeeded (134): actorDid = adopter_did_hash. (Nous stays Type A)
+    //   sole-producer grid/src/audit/append-mobility-adoption-succeeded.ts
+    //   closed 3-key {adopter_did_hash, nous_did_hash, tick}
+    'mobility.operator_abandoned',  // (132)
+    'mobility.adoption_attempted',  // (133)
+    'mobility.adoption_succeeded',  // (134)
 ] as const;
 
 /**

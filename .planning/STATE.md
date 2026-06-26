@@ -26,8 +26,17 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 50 (v2.6 → v3.0 Migration) — Plan 1 SHIPPED 2026-06-26 (MIG-03 grandfathering, allowlist +0)
-Plan: 1 of 3 (MIG-03 done; Plan 2 = migrate CLI export/--commit; Plan 3 = --revert + the committed gate)
+Phase: 51 (Type Mobility A→B) — Plan 1 SHIPPED 2026-06-26 (abandon + adopt, allowlist 131→134)
+Plan: 1 of 2 (TYPE-B-06 abandon/adopt done; Plan 2 = auto-convert to Type B + B→A block, +2 → 136)
+Plan 1: `mobility_records` (v64) + `MobilityStore` (abandon/getRecord/adopt). Routes (Portal-cookie auth):
+  `POST /api/v1/mobility/abandon` (the OWNING operator — Join-a-Grid nous_sponsors ownership — opens a 30-day
+  window), `POST /api/v1/mobility/adopt/:nousId` (any human within the window → ownership transfers, Nous stays
+  Type A; 409 not_adoptable / 410 window_expired). 3 sole-producer events (`mobility.operator_abandoned`,
+  `mobility.adoption_attempted` [logged even on rejection], `mobility.adoption_succeeded`; DIDs hashed) —
+  allowlist **134**, baselines re-pinned (state-doc-sync 134, relationship-graph-deps 945). store 5 + route 6.
+
+Previous: Phase 50 Plan 1 (MIG-03 grandfathering) shipped; Plans 2/3 (migrate CLI export/commit/revert)
+  remain — a fresh-session CLI/MySQL ceremony.
 Plan 1: `grid/src/migration/grandfather.ts` — pure, total `grandfatherReputation(v26Metrics)` →
   {civicStanding (−sanctions), libraryContributionScore (skillTeaches), marketplaceReputation (rate×100)}.
   Formula PUBLISHED in PHILOSOPHY §12 (transparency). 5 tests; tsc + check-wiki clean. +0 allowlist, no migration.
@@ -79,9 +88,10 @@ Status: Plans 1+2 complete. Plan 2 = `police_charges` + `police_sanctions` (v58)
   fine (→ treasury), warning/exile recorded. **Separation of powers is real: Police accuse + execute,
   Government convicts; no operator/Police-direct sanction path (D-V3-18).** Grid: store 5 + route 16 tests,
   broad regression 1842 green; tsc + did-policy-coverage + all gates + check-wiki clean.
-Next action: Phase 50 Plan 2 (MIG-01/02 — the `noesis migrate` CLI: `--from-v2.6 --to-v3.0` exports the
-  v2.6 Brain memory to a v3.0 init bundle (reuse the Phase-43 fork-archive pattern) + `--commit`; then
-  Plan 3 (MIG-04 — `--revert` with the 409 `migration_committed` gate after the first civic action).
+Next action: Phase 51 Plan 2 (TYPE-B-06 tail — window-expiry auto-conversion to Type B:
+  `mobility.converted_to_type_b` + `mobility.dormancy_entered` (+2 → 136); new Civic-DID
+  `did:noesis:nous:auto:<key>`, Existence-DID preserved; and `POST /api/v1/mobility/adopt/:typeBDid` →
+  403 `forbidden_in_v3.0` (B→A blocked, D-V3-28), the rejected attempt logged for transparency).
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 

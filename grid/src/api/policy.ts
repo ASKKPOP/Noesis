@@ -51,6 +51,10 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/community/:communityId/post':     'civic_did_required',
     'POST /api/v1/community/:communityId/decision': 'civic_did_required',
     'POST /api/v1/community/:communityId/dissolve': 'civic_did_required',
+    // Phase 51 Type Mobility — abandon/adopt are cookie-checked inside the handler
+    // (humanFromSession), so 'public' here.
+    'POST /api/v1/mobility/abandon':         'public',
+    'POST /api/v1/mobility/adopt/:nousId':   'public',
     'GET /api/v1/market/listings': 'public',
     'GET /api/v1/portal/discover': 'public', // spec §2 — public discovery of organizations + Houses feed
     'GET /api/v1/portal/grids': 'public', // spec §2 — public discovery of active Grids (multi-Grid framework)

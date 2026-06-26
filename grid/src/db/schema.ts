@@ -1566,4 +1566,27 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS community_posts`,
     },
+    {
+        // Phase 51 Type Mobility Plan 1 (TYPE-B-06) — abandon + adopt. When an owning
+        // operator (the human in the Type A pairing) abandons a Nous, a 30-day adoption
+        // window opens; another human may adopt within it (Nous stays Type A under the new
+        // operator). Raw DIDs here; the chain carries hashes. Plan 2 adds Type-B conversion.
+        version: 64,
+        name: 'create_mobility_records',
+        up: `
+            CREATE TABLE IF NOT EXISTS mobility_records (
+                grid_name              VARCHAR(63)  NOT NULL,
+                nous_did               VARCHAR(255) NOT NULL,
+                status                 ENUM('adoption_pending','adopted','converted') NOT NULL DEFAULT 'adoption_pending',
+                abandoned_by_human_did VARCHAR(255) NOT NULL,
+                adopted_by_human_did   VARCHAR(255) NULL,
+                abandoned_tick         BIGINT       NOT NULL,
+                window_end_tick        BIGINT       NOT NULL,
+                resolved_tick          BIGINT       NULL,
+                PRIMARY KEY (grid_name, nous_did),
+                INDEX idx_mobility_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS mobility_records`,
+    },
 ];

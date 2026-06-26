@@ -563,8 +563,18 @@ Plans:
   5. Sole-producer files emit 5 new audit events: `mobility.operator_abandoned`, `mobility.adoption_attempted`, `mobility.adoption_succeeded`, `mobility.converted_to_type_b`, `mobility.dormancy_entered`; allowlist grows by exactly +5.
 **Scope (ships)**: TYPE-B-06.
 **Out of scope for this phase**: B→A migration (v3.x); cross-Grid mobility (v3.1+); multi-operator co-adoption (out of MVP).
-**Allowlist additions**: **+5**. Running total: **95**.
-**Plans**: TBD
+**Allowlist additions**: **+5** (Plan 1: operator_abandoned/adoption_attempted/adoption_succeeded; Plan 2: converted_to_type_b/dormancy_entered).
+**Plans**:
+  - **Plan 1 — Abandon + adopt (TYPE-B-06) — ✅ SHIPPED 2026-06-26.** `mobility_records` (v64) + `MobilityStore`.
+    `POST /api/v1/mobility/abandon` (the owning operator — Join-a-Grid `nous_sponsors` ownership — opens a 30-day
+    window), `POST /api/v1/mobility/adopt/:nousId` (any human within the window → ownership transfers to the
+    adopter, Nous stays Type A; 409 not_adoptable / 410 window_expired). 3 sole-producer events
+    (`mobility.operator_abandoned`, `mobility.adoption_attempted`, `mobility.adoption_succeeded`; DIDs hashed) —
+    allowlist **131 → 134**, baseline gates + test-counts re-pinned. store 5 + route 6 tests; regression green.
+  - **Plan 2 — Auto-convert to Type B + B→A block (TYPE-B-06 tail).** On window expiry with no adoption →
+    `mobility.converted_to_type_b` + `mobility.dormancy_entered` (+2 → 136); Existence-DID preserved, new Civic-DID
+    `did:noesis:nous:auto:<key>`. `POST /api/v1/mobility/adopt/:typeBDid` → **403 `forbidden_in_v3.0`** (B→A is a
+    sybil escape hatch, D-V3-28), the rejected attempt logged for transparency.
 
 #### Wave 1 Foundations — Hosted Brain (parallel with Local AI)
 
