@@ -18,8 +18,16 @@ const ALICE = 'did:civic:noesis:alice';
 const aliceCtx = (): DIDContext => ({ did: ALICE, tier: 'civic_member' });
 const HASH = 'a'.repeat(64);
 
-function app(opts: { ctx?: DIDContext | null; rows?: unknown[] }): FastifyInstance {
-    const pool = { query: vi.fn().mockResolvedValue([(opts.rows ?? []) as RowDataPacket[], {}]) } as unknown as Pool;
+function app(opts: { ctx?: DIDContext | null; rows?: unknown[]; treasuryBios?: string }): FastifyInstance {
+    const conn = {
+        beginTransaction: vi.fn(async () => {}),
+        query: vi.fn(async () => [[{ balance_bios: opts.treasuryBios ?? '1000000' }]]),
+        commit: vi.fn(async () => {}), rollback: vi.fn(async () => {}), release: vi.fn(() => {}),
+    };
+    const pool = {
+        query: vi.fn().mockResolvedValue([(opts.rows ?? []) as RowDataPacket[], {}]),
+        getConnection: vi.fn(async () => conn),
+    } as unknown as Pool;
     const services = { gridName: 'genesis', currentTick: () => 5, pool, audit: new AuditChain() } as unknown as GridServices;
     const a = Fastify({ logger: false });
     if (opts.ctx !== undefined) a.addHook('onRequest', async (req) => { req.didContext = opts.ctx ?? undefined; });
@@ -140,6 +148,35 @@ describe('Library curation (CIVLIB-03)', () => {
         const a = app({ ctx: aliceCtx(), rows: [{ '1': 1 }] });
         const res = await a.inject({ method: 'POST', url: `/api/v1/library/curate/${ENTRY}`, payload: { action: 'delete' } });
         expect(res.statusCode).toBe(400);
+        await a.close();
+    });
+});
+
+describe('POST /api/v1/library/curators/pay (CIVLIB-04 — reuses IRS disburse)', () => {
+    it('200 — Government pays the active council from the treasury', async () => {
+        const a = app({ ctx: govCtx(), rows: [{ curator_civic_did: ALICE, term_start_tick: 1, term_end_tick: 100, status: 'active' }], treasuryBios: '1000000' });
+        const res = await a.inject({ method: 'POST', url: '/api/v1/library/curators/pay', payload: { rate_bios: '500' } });
+        expect(res.statusCode).toBe(200);
+        expect(res.json().paid).toBe(1);
+        expect(res.json().total_bios).toBe('500');
+        await a.close();
+    });
+    it('403 — a civic member cannot pay curators', async () => {
+        const a = app({ ctx: aliceCtx(), rows: [{ curator_civic_did: ALICE, status: 'active' }] });
+        const res = await a.inject({ method: 'POST', url: '/api/v1/library/curators/pay', payload: { rate_bios: '500' } });
+        expect(res.statusCode).toBe(403);
+        await a.close();
+    });
+    it('400 — no active curators to pay', async () => {
+        const a = app({ ctx: govCtx(), rows: [] });
+        const res = await a.inject({ method: 'POST', url: '/api/v1/library/curators/pay', payload: { rate_bios: '500' } });
+        expect(res.statusCode).toBe(400);
+        await a.close();
+    });
+    it('402 — insufficient treasury balance', async () => {
+        const a = app({ ctx: govCtx(), rows: [{ curator_civic_did: ALICE, status: 'active' }], treasuryBios: '100' });
+        const res = await a.inject({ method: 'POST', url: '/api/v1/library/curators/pay', payload: { rate_bios: '500' } });
+        expect(res.statusCode).toBe(402);
         await a.close();
     });
 });

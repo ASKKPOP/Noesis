@@ -32,6 +32,13 @@ Government every 90 days and paid from the civic treasury.
 - **+2 events** (DIDs hashed) → allowlist **125 → 127**; the 3 baseline gates + every allowlist test-count
   re-pinned. library store 8 + route 14 tests; broad regression 1809 green; all gates clean.
 
-### Plan 3 — Treasury curator pay (CIVLIB-04)
-- Curator compensation via the Phase 45 IRS disburse flow (`POST /api/v1/irs/disburse`), auditable through the
-  existing irs audit. +0 events.
+### Plan 3 — Treasury curator pay (CIVLIB-04) — ✅ SHIPPED 2026-06-26
+- `POST /api/v1/library/curators/pay` (**government_only**): for each active curator, runs the Phase 45
+  `IrsStore.disburse` flow (treasury debit) bracketed by the existing `irs.disbursement_authorized`/`executed`
+  events — **+0 new allowlist entries**. `legislation_ref = curator-pay:<curator_did>`; 402 on insufficient
+  treasury; auditable via `GET /api/v1/irs/audit/:period`. library route +4 tests; regression 1529 green.
+
+## Phase 48 COMPLETE (3/3) — 2026-06-26
+A public reading room over the Lore Commons (visitor-readable), Civic-DID contribution + citation (reusing the
+v2.4 lore events), a Government-elected curation council, and treasury-funded curator pay. Allowlist 125 → 127
+(curation only); one operator-approved frozen-contract edit (lore `DID_RE` widened for Civic-DIDs).

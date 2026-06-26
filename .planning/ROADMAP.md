@@ -176,7 +176,7 @@ Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reali
 - [x] **Phase 45: IRS Treasury** — Transaction fee collection (1-3% configurable), civic treasury, Government-authorized disbursements. (allowlist +3) (completed 2026-05-28)
 - [x] **Phase 46: Government v3** — Nous-only legislative VOTE-05 with bills, co-sponsorship, scheduled sessions, civic law book. (allowlist +6 → 81) (completed 2026-06-03)
 - [ ] **Phase 47: Police v3** — Complaint-driven sanctions, investigation, court-filed charges, appeals to Government. (allowlist +4)
-- [ ] **Phase 48: Library v3** — Public reading room + Civic-DID contribution + rotating curation council paid from treasury. (allowlist +2)
+- [x] **Phase 48: Library v3** — Public reading room + Civic-DID contribution + rotating curation council paid from treasury. (allowlist +2)
 - [ ] **Phase 49: Communities v3** — Bios-gated founding, charters, membership criteria, subgovernance scoped to community-internal decisions. (allowlist +4)
 - [~] **Phase 48b: Civic Land & Property** — Ownable parcels (treasury-sale acquisition) + one buildable structure per parcel (home/shop/workshop/venue) + join/visit for open structures + NDS-named searchable addresses. Business requires an owned business parcel; home gives an address; `own_home`/`own_business` Telos goals; operators read-only on land; civic land (infrastructure/government) not for sale; per-Nous cap ≤1 home + ≤1 business. (allowlist +5 → 86) **Grid-core wave shipped 2026-06-05** (ParcelRegistry + 5 sole-producers + allowlist lock + 38 tests); routes/economy/Brain/UI/SAT-7 waves pending. Design: `docs/plans/2026-06-05-civic-land-and-property-design.md`. Provisional slot — final number to be locked in `/gsd-discuss-phase`.
 
@@ -481,8 +481,14 @@ Plans:
     curator pins/flags/re-categorises/links). 2 sole-producer events (`library.curator_elected`,
     `library.entry_curated`; DIDs hashed) — allowlist **125 → 127**, the 3 baseline gates + every test-count
     re-pinned. library store 8 + route 14 tests; broad regression 1809 green; all gates clean.
-  - **Plan 3 — Treasury curator pay (CIVLIB-04).** Curator compensation via the Phase 45 IRS disburse flow;
-    auditable through the existing irs audit. +0 events.
+  - **Plan 3 — Treasury curator pay (CIVLIB-04) — ✅ SHIPPED 2026-06-26.** `POST /api/v1/library/curators/pay`
+    (**government_only**) pays the active council from the civic treasury by reusing the Phase 45
+    `IrsStore.disburse` flow — emits the existing `irs.disbursement_authorized`/`executed` (**+0 events**);
+    auditable via `GET /api/v1/irs/audit/:period`. 402 on insufficient treasury. library route +4 tests;
+    regression 1529 green; all gates clean.
+
+  **Phase 48 COMPLETE (3/3, 2026-06-26)** — a public reading room over the Lore Commons, Civic-DID
+  contribution + citation, a Government-elected curation council, and treasury-funded curator pay.
 
 ### Phase 49: Communities v3
 **Goal**: New subsystem. Civic-DID holders can found communities by paying the Bios sybil cost (D-V3-09); each community has a charter (purpose, membership criteria, conduct rules, subgovernance model, exit terms); communities can self-govern internally but cannot override civic law.
@@ -715,7 +721,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 45. IRS Treasury | 3/3 | Complete    | 2026-05-28 |
 | 46. Government v3 | 3/3 | Complete    | 2026-06-03 |
 | 47. Police v3 | 3/3 ✅ | COMPLETE — complaint·investigation·charges·conviction·sanction·appeal (allowlist 121→125, +CI gate) | 2026-06-25 |
-| 48. Library v3 | 2/3 | Plans 1+2 shipped (reading room·contribute·curation, allowlist +2) | 2026-06-26 |
+| 48. Library v3 | 3/3 ✅ | COMPLETE — reading room·contribute·curation·curator-pay (allowlist 125→127) | 2026-06-26 |
 | 49. Communities v3 | 0/? | Not started | — |
 | 50. v2.6 → v3.0 Migration | 0/? | Not started | — |
 

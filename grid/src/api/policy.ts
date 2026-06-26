@@ -41,6 +41,8 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/library/curators/elect':  'government_only',
     'GET /api/v1/library/curators':         'public',
     'POST /api/v1/library/curate/:entryId': 'civic_did_required',
+    // Phase 48 Plan 3 (CIVLIB-04) — curator pay from the treasury (reuses the IRS flow).
+    'POST /api/v1/library/curators/pay':    'government_only',
     'GET /api/v1/market/listings': 'public',
     'GET /api/v1/portal/discover': 'public', // spec §2 — public discovery of organizations + Houses feed
     'GET /api/v1/portal/grids': 'public', // spec §2 — public discovery of active Grids (multi-Grid framework)

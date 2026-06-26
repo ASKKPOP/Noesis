@@ -15,7 +15,14 @@ import { LibraryStore } from '../../library/library-store.js';
 import { LoreQuotaTracker } from '../../lore/LoreQuotaTracker.js';
 import { VALID_LORE_CATEGORIES } from '../../lore/types.js';
 import { CURATE_ACTIONS, type CurateAction } from '../../library/types.js';
+import { IrsStore } from '../../irs/irs-store.js';
+import { appendIrsDisbursementAuthorized } from '../../audit/append-irs-disbursement-authorized.js';
+import { appendIrsDisbursementExecuted } from '../../audit/append-irs-disbursement-executed.js';
+import { GOV_SESSION_ISSUER_DID } from '../../civic-registry/government-session.js';
+import { createHash } from 'node:crypto';
 
+const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
+const TREASURY_CIVIC_DID = 'did:civic:noesis:treasury';
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const HEX64_RE = /^[0-9a-f]{64}$/i;
@@ -151,6 +158,48 @@ export function registerLibraryRoutes(app: FastifyInstance, services: GridServic
 
             await store.curate({ gridName: grid, curatorDid: caller, entryId, action: action as CurateAction, category, relatedEntryId, tick: tick() });
             return reply.send({ ok: true, action });
+        },
+    );
+
+    // CIVLIB-04 — curator compensation from the civic treasury, via the Phase 45 IRS
+    // disburse flow (government_only). Auditable through GET /api/v1/irs/audit/:period
+    // (reuses irs.disbursement_authorized/executed — no new allowlist entries).
+    app.post<{ Body: { rate_bios?: unknown } }>(
+        '/api/v1/library/curators/pay',
+        async (req, reply) => {
+            if (req.didContext?.tier !== 'government') return reply.code(403).send({ error: 'government_required' });
+            const pool = services.pool; const audit = services.audit;
+            if (!pool || !audit) return reply.code(503).send({ error: 'library_unavailable' });
+            let rate: bigint;
+            try { rate = BigInt(String(req.body?.rate_bios ?? '0')); } catch { return reply.code(400).send({ error: 'invalid_rate_bios' }); }
+            if (rate <= 0n) return reply.code(400).send({ error: 'invalid_rate_bios' });
+
+            const store = new LibraryStore(pool, audit);
+            const curators = await store.listCurators(grid);
+            if (curators.length === 0) return reply.code(400).send({ error: 'no_curators' });
+
+            const irs = new IrsStore(pool); const t = tick(); let paid = 0;
+            for (const c of curators) {
+                const legislationRef = `curator-pay:${c.curator_civic_did}`;
+                appendIrsDisbursementAuthorized(audit, {
+                    amount_bios: Number(rate), authorized_by_civic_did_hash: sha256Hex(GOV_SESSION_ISSUER_DID),
+                    grid_name: grid, legislation_ref_hash: sha256Hex(legislationRef), tick: t,
+                });
+                try {
+                    await irs.disburse({ gridName: grid, amountBios: rate, legislationRef, currentTick: t });
+                } catch (err) {
+                    const msg = err instanceof Error ? err.message : 'unknown';
+                    if (msg === 'insufficient_treasury_balance') {
+                        return reply.code(402).send({ error: 'insufficient_treasury_balance', paid });
+                    }
+                    return reply.code(500).send({ error: 'internal', paid });
+                }
+                appendIrsDisbursementExecuted(audit, {
+                    amount_bios: Number(rate), cause: 'government_disbursement', civic_did: TREASURY_CIVIC_DID, grid_name: grid, tick: t,
+                });
+                paid += 1;
+            }
+            return reply.send({ paid, rate_bios: rate.toString(), total_bios: (rate * BigInt(paid)).toString() });
         },
     );
 }

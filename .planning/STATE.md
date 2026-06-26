@@ -26,8 +26,10 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 48 (Library v3) — Plan 2 SHIPPED 2026-06-26 (curation council, allowlist 125→127)
-Plan: 2 of 3 (CIVLIB-01/02/03 done; Plan 3 = treasury curator-pay, +0 events)
+Phase: 48 (Library v3) — ✅ COMPLETE 2026-06-26 (3 plans; CIVLIB-01..04; allowlist 125→127)
+Plan: 3 of 3 — Plan 3 (CIVLIB-04) = `POST /api/v1/library/curators/pay` (government_only) pays the active
+  council from the civic treasury by REUSING the Phase 45 IRS disburse flow (emits the existing
+  irs.disbursement_authorized/executed; +0 new events); auditable via GET /api/v1/irs/audit/:period.
 Plan 2: `library_curators` + `library_entry_links` + `pinned` col (v61). `POST /api/v1/library/curators/elect`
   (**government_only**), `GET /api/v1/library/curators` (public), `POST /api/v1/library/curate/:id` (active
   curator: pin/flag/categorize/link). 2 sole-producer events (`library.curator_elected`,
@@ -57,8 +59,8 @@ Status: Plans 1+2 complete. Plan 2 = `police_charges` + `police_sanctions` (v58)
   fine (→ treasury), warning/exile recorded. **Separation of powers is real: Police accuse + execute,
   Government convicts; no operator/Police-direct sanction path (D-V3-18).** Grid: store 5 + route 16 tests,
   broad regression 1842 green; tsc + did-policy-coverage + all gates + check-wiki clean.
-Next action: Phase 48 Plan 3 (CIVLIB-04 — curator compensation from the civic treasury via the
-  Phase 45 IRS disburse flow; auditable through the existing irs audit; +0 events).
+Next action: Phase 49 (Communities v3) — Bios-gated founding, charters, membership criteria,
+  subgovernance scoped to community-internal decisions (allowlist +4). Phase 48 closed.
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 
