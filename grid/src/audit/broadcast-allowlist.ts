@@ -23,7 +23,7 @@
 
 /** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42 + Phase 43 + Phase 44 + Phase 45 + Phase 46 + Phase 47) — 81 is the civic count through Phase 46; with the
  *  parallel Economic Reality Loop programs the array is 121, Phase 47 (+4 police.*) → 125, and
- *  Phase 48 (+2 library.*) → 127, and Phase 49 (+4 community.*) → 131, Phase 51 (+5 mobility.*) → 136, Phase 45b (+5 treasury.*) → 141.
+ *  Phase 48 (+2 library.*) → 127, and Phase 49 (+4 community.*) → 131, Phase 51 (+5 mobility.*) → 136, Phase 45b (+5 treasury.*) → 141, Phase 37b (+3 registry.type_b α/β) → 144.
  *  Phase 42 (P2P-05 / D-42-07): +3 P2P audit events (allowlist 64 → 67).
  *   - p2p.peer_announced (65): closed 3-key {civic_did_hash, endpoint_hash, tick}.
  *     endpoint_hash = sha256('online') — static sentinel (no IP/port leakage per D-42-02).
@@ -631,6 +631,21 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   closed 2-key {tick, type_b_did_hash}
     'treasury.stipend_paid',        // (140)
     'treasury.low_power_entered',   // (141)
+    // Phase 37b Plan 1 (TYPE-B-01/02) — Type B birth ceremonies α/β. Allowlist 141 → 144.
+    // DIDs hashed. These events ARE the Type B issuance pipeline (Foundation/Polis ceremony),
+    // so the producers never import the Phase-37 issuance producer (D-V3-33 stays green).
+    // registry.type_b_chartered (142): actorDid = type_b_did_hash. (Polis-α, ≥7-day review)
+    //   sole-producer grid/src/audit/append-registry-type-b-chartered.ts
+    //   closed 3-key {sponsor_did_hash, tick, type_b_did_hash}
+    // registry.sponsorship_bond_posted (143): actorDid = sponsor_did_hash. (Polis-β bond)
+    //   sole-producer grid/src/audit/append-registry-sponsorship-bond-posted.ts
+    //   closed 4-key {bond_amount, sponsor_did_hash, tick, type_b_did_hash}
+    // registry.type_b_sponsored (144): actorDid = type_b_did_hash. (Polis-β, no-objection)
+    //   sole-producer grid/src/audit/append-registry-type-b-sponsored.ts
+    //   closed 3-key {sponsor_did_hash, tick, type_b_did_hash}
+    'registry.type_b_chartered',         // (142)
+    'registry.sponsorship_bond_posted',  // (143)
+    'registry.type_b_sponsored',         // (144)
 ] as const;
 
 /**

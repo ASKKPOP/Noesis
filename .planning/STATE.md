@@ -26,6 +26,16 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
+Phase: 37b (Type B Registry — birth ceremonies) — Plan 1 SHIPPED 2026-06-26 (Polis-α charter + Polis-β sponsor, allowlist 141→144)
+Plan: 1 of 2 (TYPE-B-01/02). `type_b_registry` (v66) + `TypeBRegistryStore`. **Deliberate latency throughout**
+  (file → window → issue). Polis-α: `POST .../charter` (government, ≤5/quarter rate limit) → `.../charter/:id/
+  approve` after ≥7 days → `registry.type_b_chartered`. Polis-β: `POST .../sponsor` (civic; nonlinear bond
+  `requiredBond` = 1000×(active+1)², charged sponsor→treasury) → `registry.sponsorship_bond_posted` + 7-day
+  comment window → `.../sponsor/:id/finalize` → `registry.type_b_sponsored`. **These events ARE the Type B
+  issuance pipeline** (Foundation/Polis ceremony) so the store never imports the Phase-37 producer — D-V3-33 /
+  check-civic-did-issuance-path stays green. 3 events → allowlist **144**. store 7 + route 8. Plan 2 = bond
+  refund/slash + Polis-γ parent-spawn (+3 → 147).
+
 Phase: 45b (Type B Treasury Operations) — ✅ COMPLETE 2026-06-26 (2 plans; TYPE-B-03/04; allowlist 136→141)
 Plan 2: `payStipend` (daily compute deduction → `treasury.stipend_paid`; exhaustion → dormancy; runway < 3mo →
   low-power + `treasury.low_power_entered`) + `applyTypeBEarning` (70/30 split, `splitTypeBEarning`) +

@@ -22,7 +22,7 @@ describe('Portal Manager v1 — allowlist frozen', () => {
         // Portal Manager v1 adds zero events. The canonical count lives in
         // broadcast-allowlist.test.ts (117 after L1b due.* + L2b procurement.* + L3b orbital.*);
         // this guard only asserts v1 itself added nothing.
-        expect(ALLOWLIST_MEMBERS.length).toBe(141);
+        expect(ALLOWLIST_MEMBERS.length).toBe(144);
     });
 });
 

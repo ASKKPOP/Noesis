@@ -1610,4 +1610,29 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS type_b_treasury`,
     },
+    {
+        // Phase 37b Type B Registry Plan 1 (TYPE-B-01/02) — birth-ceremony requests. Each
+        // ceremony has deliberate latency: a request is FILED, then ISSUED only after its
+        // review/comment window elapses (eligible_tick). This IS the Type B issuance pipeline
+        // (Foundation/Polis ceremony), parallel to the human civic.ts pipeline (D-V3-33).
+        version: 66,
+        name: 'create_type_b_registry',
+        up: `
+            CREATE TABLE IF NOT EXISTS type_b_registry (
+                grid_name     VARCHAR(63)  NOT NULL,
+                request_id    VARCHAR(64)  NOT NULL,
+                ceremony      ENUM('alpha','beta','gamma') NOT NULL,
+                status        ENUM('pending_review','comment_window','issued','rejected') NOT NULL,
+                type_b_did    VARCHAR(255) NOT NULL,
+                sponsor_did   VARCHAR(255) NOT NULL,
+                purpose       VARCHAR(500) NOT NULL,
+                bond_amount   BIGINT       NOT NULL DEFAULT 0,
+                filed_tick    BIGINT       NOT NULL,
+                eligible_tick BIGINT       NOT NULL,
+                PRIMARY KEY (grid_name, request_id),
+                INDEX idx_type_b_registry_ceremony (grid_name, ceremony, status, filed_tick)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS type_b_registry`,
+    },
 ];

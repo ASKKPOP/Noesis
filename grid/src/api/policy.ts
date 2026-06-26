@@ -61,6 +61,11 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/treasury/endow-type-b/:typeBDid': 'government_only',
     'POST /api/v1/treasury/stipend/:typeBDid':      'government_only',
     'POST /api/v1/treasury/donate/:typeBDid':       'civic_did_required',
+    // Phase 37b Type B Registry — α charter (Foundation), β sponsor (civic sponsor + bond).
+    'POST /api/v1/registry/type-b/charter':                   'government_only',
+    'POST /api/v1/registry/type-b/charter/:requestId/approve': 'government_only',
+    'POST /api/v1/registry/type-b/sponsor':                   'civic_did_required',
+    'POST /api/v1/registry/type-b/sponsor/:requestId/finalize': 'civic_did_required',
     'GET /api/v1/market/listings': 'public',
     'GET /api/v1/portal/discover': 'public', // spec §2 — public discovery of organizations + Houses feed
     'GET /api/v1/portal/grids': 'public', // spec §2 — public discovery of active Grids (multi-Grid framework)
