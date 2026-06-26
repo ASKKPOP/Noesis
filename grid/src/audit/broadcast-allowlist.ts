@@ -22,7 +22,8 @@
  */
 
 /** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42 + Phase 43 + Phase 44 + Phase 45 + Phase 46 + Phase 47) — 81 is the civic count through Phase 46; with the
- *  parallel Economic Reality Loop programs the array is 121, and Phase 47 (+4 police.*) → 125.
+ *  parallel Economic Reality Loop programs the array is 121, Phase 47 (+4 police.*) → 125, and
+ *  Phase 48 (+2 library.* curation) → 127.
  *  Phase 42 (P2P-05 / D-42-07): +3 P2P audit events (allowlist 64 → 67).
  *   - p2p.peer_announced (65): closed 3-key {civic_did_hash, endpoint_hash, tick}.
  *     endpoint_hash = sha256('online') — static sentinel (no IP/port leakage per D-42-02).
@@ -555,6 +556,16 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   closed 5-key {accused_did_hash, charge_id, sanction_id, sanction_type, tick}
     'police.charges_filed',         // (124)
     'police.sanction_executed',     // (125)
+    // Phase 48 (CIVLIB-03) — Library curation council. Allowlist 125 → 127. Curator
+    // DIDs hashed; curation params stay in the DB.
+    // library.curator_elected (126): actorDid = curator_did_hash.
+    //   sole-producer grid/src/audit/append-library-curator-elected.ts
+    //   closed 3-key {curator_did_hash, term_end_tick, term_start_tick}
+    // library.entry_curated (127): actorDid = curator_did_hash.
+    //   sole-producer grid/src/audit/append-library-entry-curated.ts
+    //   closed 4-key {action, curator_did_hash, entry_id, tick} (action ∈ pin|flag|categorize|link)
+    'library.curator_elected',      // (126)
+    'library.entry_curated',        // (127)
 ] as const;
 
 /**

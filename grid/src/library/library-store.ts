@@ -12,8 +12,13 @@ import type { AuditChain } from '../audit/chain.js';
 import { LoreStorage } from '../lore/LoreStorage.js';
 import { appendLoreContributed } from '../lore/appendLoreContributed.js';
 import { appendLoreCited } from '../lore/appendLoreCited.js';
+import { appendLibraryCuratorElected } from '../audit/append-library-curator-elected.js';
+import { appendLibraryEntryCurated } from '../audit/append-library-entry-curated.js';
+import type { CurateAction } from './types.js';
 
 const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
+
+export interface CuratorRow { curator_civic_did: string; term_start_tick: number; term_end_tick: number; status: string; }
 
 /** Visitor list view — no body (deep-link fetches full content). */
 export interface LibraryEntrySummary {
@@ -70,6 +75,61 @@ export class LibraryStore {
             params,
         );
         return rows as unknown as LibraryEntrySummary[];
+    }
+
+    // ── CIVLIB-03 — curation council ────────────────────────────────────────────
+
+    /** Government-enacted election: seat a curator (term-bounded), emit library.curator_elected. */
+    async electCurator(p: { gridName: string; curatorDid: string; termStartTick: number; termEndTick: number; tick: number }): Promise<void> {
+        await this.pool.query(
+            `INSERT INTO library_curators (grid_name, curator_civic_did, term_start_tick, term_end_tick, status, elected_at_tick)
+             VALUES (?, ?, ?, ?, 'active', ?)
+             ON DUPLICATE KEY UPDATE term_start_tick = VALUES(term_start_tick), term_end_tick = VALUES(term_end_tick), status = 'active', elected_at_tick = VALUES(elected_at_tick)`,
+            [p.gridName, p.curatorDid, p.termStartTick, p.termEndTick, p.tick],
+        );
+        appendLibraryCuratorElected(this.audit, {
+            curator_did_hash: sha256Hex(p.curatorDid), term_end_tick: p.termEndTick, term_start_tick: p.termStartTick,
+        });
+    }
+
+    /** The active curation council (visitor-readable). */
+    async listCurators(gridName: string): Promise<CuratorRow[]> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT curator_civic_did, term_start_tick, term_end_tick, status FROM library_curators
+               WHERE grid_name = ? AND status = 'active' ORDER BY elected_at_tick DESC LIMIT 100`,
+            [gridName],
+        );
+        return rows as unknown as CuratorRow[];
+    }
+
+    /** Is this Civic-DID an active curator whose term covers `tick`? */
+    async isActiveCurator(gridName: string, civicDid: string, tick: number): Promise<boolean> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT 1 FROM library_curators WHERE grid_name = ? AND curator_civic_did = ? AND status = 'active' AND term_end_tick > ? LIMIT 1`,
+            [gridName, civicDid, tick],
+        );
+        return (rows as unknown as unknown[]).length > 0;
+    }
+
+    /** Apply a curation action (pin/flag/categorize/link) + emit library.entry_curated.
+     *  The caller MUST have verified the curator is active. */
+    async curate(p: { gridName: string; curatorDid: string; entryId: string; action: CurateAction; category?: string; relatedEntryId?: string; tick: number }): Promise<void> {
+        if (p.action === 'pin') {
+            await this.pool.query(`UPDATE library_entries SET pinned = 1 WHERE grid_name = ? AND entry_id = ?`, [p.gridName, p.entryId]);
+        } else if (p.action === 'flag') {
+            await this.pool.query(`UPDATE library_entries SET status = 'flagged' WHERE grid_name = ? AND entry_id = ?`, [p.gridName, p.entryId]);
+        } else if (p.action === 'categorize') {
+            await this.pool.query(`UPDATE library_entries SET category = ? WHERE grid_name = ? AND entry_id = ?`, [p.category ?? 'observation', p.gridName, p.entryId]);
+        } else { // link
+            await this.pool.query(
+                `INSERT INTO library_entry_links (grid_name, entry_id, related_entry_id, linked_by_did, linked_at_tick)
+                 VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE linked_at_tick = VALUES(linked_at_tick)`,
+                [p.gridName, p.entryId, p.relatedEntryId ?? '', p.curatorDid, p.tick],
+            );
+        }
+        appendLibraryEntryCurated(this.audit, {
+            action: p.action, curator_did_hash: sha256Hex(p.curatorDid), entry_id: p.entryId, tick: p.tick,
+        });
     }
 
     /** CIVLIB-01 — per-entry deep link: full content (visitor-readable when published). */

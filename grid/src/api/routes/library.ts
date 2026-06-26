@@ -14,8 +14,10 @@ import type { GridServices } from '../server.js';
 import { LibraryStore } from '../../library/library-store.js';
 import { LoreQuotaTracker } from '../../lore/LoreQuotaTracker.js';
 import { VALID_LORE_CATEGORIES } from '../../lore/types.js';
+import { CURATE_ACTIONS, type CurateAction } from '../../library/types.js';
 
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const HEX64_RE = /^[0-9a-f]{64}$/i;
 
 export function registerLibraryRoutes(app: FastifyInstance, services: GridServices): void {
@@ -92,6 +94,63 @@ export function registerLibraryRoutes(app: FastifyInstance, services: GridServic
             if (!HEX64_RE.test(contentHash)) return reply.code(400).send({ error: 'invalid_content_hash' });
             await new LibraryStore(pool, audit).cite({ gridName: grid, citingDid: citer, contentHash, tick: tick() });
             return reply.send({ ok: true });
+        },
+    );
+
+    // CIVLIB-03 — the Government enacts a curator election (government_only).
+    app.post<{ Body: { curators?: unknown; term_ticks?: unknown } }>(
+        '/api/v1/library/curators/elect',
+        async (req, reply) => {
+            if (req.didContext?.tier !== 'government') return reply.code(403).send({ error: 'government_required' });
+            const pool = services.pool; const audit = services.audit;
+            if (!pool || !audit) return reply.code(503).send({ error: 'library_unavailable' });
+            const curators = Array.isArray(req.body?.curators) ? (req.body.curators as unknown[]).map(String) : [];
+            if (curators.length === 0 || !curators.every((c) => CIVIC_DID_RE.test(c))) {
+                return reply.code(400).send({ error: 'invalid_curators' });
+            }
+            const termTicks = Number.isInteger(req.body?.term_ticks) && (req.body.term_ticks as number) > 0 ? (req.body.term_ticks as number) : 259200; // ~90 days at 30s/tick
+            const start = tick(); const end = start + termTicks;
+            const store = new LibraryStore(pool, audit);
+            for (const curatorDid of curators) {
+                await store.electCurator({ gridName: grid, curatorDid, termStartTick: start, termEndTick: end, tick: start });
+            }
+            return reply.code(201).send({ elected: curators.length, term_start_tick: start, term_end_tick: end });
+        },
+    );
+
+    // CIVLIB-03 — the active council (public).
+    app.get('/api/v1/library/curators', async (_req, reply) => {
+        const pool = services.pool;
+        if (!pool) return reply.send({ curators: [], count: 0 });
+        const curators = await new LibraryStore(pool, services.audit!).listCurators(grid);
+        return reply.send({ curators, count: curators.length });
+    });
+
+    // CIVLIB-03 — a curator pins / flags / re-categorises / links an entry.
+    app.post<{ Params: { entryId: string }; Body: { action?: unknown; category?: unknown; related_entry_id?: unknown } }>(
+        '/api/v1/library/curate/:entryId',
+        async (req, reply) => {
+            const caller = req.didContext?.did;
+            if (!caller || req.didContext?.tier !== 'civic_member' || !CIVIC_DID_RE.test(caller)) {
+                return reply.code(401).send({ error: 'civic_did_required' });
+            }
+            const pool = services.pool; const audit = services.audit;
+            if (!pool || !audit) return reply.code(503).send({ error: 'library_unavailable' });
+            const entryId = req.params.entryId;
+            if (!UUID_RE.test(entryId)) return reply.code(400).send({ error: 'invalid_entry_id' });
+            const action = typeof req.body?.action === 'string' ? req.body.action : '';
+            if (!CURATE_ACTIONS.includes(action as CurateAction)) return reply.code(400).send({ error: 'invalid_action' });
+
+            const store = new LibraryStore(pool, audit);
+            if (!(await store.isActiveCurator(grid, caller, tick()))) return reply.code(403).send({ error: 'not_a_curator' });
+
+            const category = typeof req.body?.category === 'string' && VALID_LORE_CATEGORIES.has(req.body.category) ? req.body.category : undefined;
+            const relatedEntryId = typeof req.body?.related_entry_id === 'string' && UUID_RE.test(req.body.related_entry_id) ? req.body.related_entry_id : undefined;
+            if (action === 'categorize' && !category) return reply.code(400).send({ error: 'invalid_category' });
+            if (action === 'link' && !relatedEntryId) return reply.code(400).send({ error: 'invalid_related_entry_id' });
+
+            await store.curate({ gridName: grid, curatorDid: caller, entryId, action: action as CurateAction, category, relatedEntryId, tick: tick() });
+            return reply.send({ ok: true, action });
         },
     );
 }

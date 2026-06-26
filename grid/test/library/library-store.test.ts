@@ -54,3 +54,26 @@ describe('LibraryStore reading room (CIVLIB-01)', () => {
         expect(out?.body).toBe('full text');
     });
 });
+
+describe('LibraryStore curation (CIVLIB-03)', () => {
+    const ENTRY = '99999999-9999-4999-8999-999999999999';
+    it('electCurator inserts + emits library.curator_elected (hashed DID)', async () => {
+        const p = pool(); const audit = new AuditChain();
+        await new LibraryStore(p, audit).electCurator({ gridName: 'genesis', curatorDid: ALICE, termStartTick: 10, termEndTick: 1010, tick: 10 });
+        expect((p.query as ReturnType<typeof vi.fn>).mock.calls[0][0]).toMatch(/INSERT INTO library_curators/i);
+        const ev = audit.query({ eventType: 'library.curator_elected' });
+        expect(ev).toHaveLength(1);
+        expect((ev[0].payload as Record<string, unknown>).curator_did_hash).toMatch(/^[0-9a-f]{64}$/i);
+        expect(JSON.stringify(ev[0].payload)).not.toContain(ALICE);
+    });
+    it('isActiveCurator reflects a matching row', async () => {
+        expect(await new LibraryStore(pool([{ '1': 1 }]), new AuditChain()).isActiveCurator('genesis', ALICE, 5)).toBe(true);
+        expect(await new LibraryStore(pool([]), new AuditChain()).isActiveCurator('genesis', ALICE, 5)).toBe(false);
+    });
+    it('curate(pin) updates the entry + emits library.entry_curated', async () => {
+        const p = pool(); const audit = new AuditChain();
+        await new LibraryStore(p, audit).curate({ gridName: 'genesis', curatorDid: ALICE, entryId: ENTRY, action: 'pin', tick: 12 });
+        expect((p.query as ReturnType<typeof vi.fn>).mock.calls[0][0]).toMatch(/UPDATE library_entries SET pinned = 1/i);
+        expect((audit.query({ eventType: 'library.entry_curated' })[0].payload as Record<string, unknown>).action).toBe('pin');
+    });
+});

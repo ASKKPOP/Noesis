@@ -1483,4 +1483,33 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS library_entries`,
     },
+    {
+        // Phase 48 Library v3 Plan 2 (CIVLIB-03) — the curation council. Curators are
+        // elected by the Government (term-bounded); they pin/flag/categorise/link entries.
+        // `pinned` + the links table support those curation actions on library_entries.
+        version: 61,
+        name: 'create_library_curation',
+        up: `
+            ALTER TABLE library_entries ADD COLUMN pinned TINYINT(1) NOT NULL DEFAULT 0;
+            CREATE TABLE IF NOT EXISTS library_curators (
+                grid_name         VARCHAR(63)  NOT NULL,
+                curator_civic_did VARCHAR(255) NOT NULL,
+                term_start_tick   BIGINT       NOT NULL,
+                term_end_tick     BIGINT       NOT NULL,
+                status            ENUM('active','expired') NOT NULL DEFAULT 'active',
+                elected_at_tick   BIGINT       NOT NULL,
+                PRIMARY KEY (grid_name, curator_civic_did),
+                INDEX idx_curator_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+            CREATE TABLE IF NOT EXISTS library_entry_links (
+                grid_name        VARCHAR(63)  NOT NULL,
+                entry_id         CHAR(36)     NOT NULL,
+                related_entry_id CHAR(36)     NOT NULL,
+                linked_by_did    VARCHAR(255) NOT NULL,
+                linked_at_tick   BIGINT       NOT NULL,
+                PRIMARY KEY (grid_name, entry_id, related_entry_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS library_entry_links; DROP TABLE IF EXISTS library_curators; ALTER TABLE library_entries DROP COLUMN pinned`,
+    },
 ];

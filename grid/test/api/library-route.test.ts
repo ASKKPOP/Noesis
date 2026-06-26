@@ -98,3 +98,48 @@ describe('POST /api/v1/library/cite (CIVLIB-02)', () => {
         await a.close();
     });
 });
+
+const govCtx = (): DIDContext => ({ did: 'did:gov:noesis:session', tier: 'government' });
+const ENTRY = '99999999-9999-4999-8999-999999999999';
+
+describe('Library curation (CIVLIB-03)', () => {
+    it('201 — Government elects curators', async () => {
+        const a = app({ ctx: govCtx() });
+        const res = await a.inject({ method: 'POST', url: '/api/v1/library/curators/elect', payload: { curators: [ALICE], term_ticks: 1000 } });
+        expect(res.statusCode).toBe(201);
+        expect(res.json().elected).toBe(1);
+        await a.close();
+    });
+    it('403 — a civic member cannot elect curators', async () => {
+        const a = app({ ctx: aliceCtx() });
+        const res = await a.inject({ method: 'POST', url: '/api/v1/library/curators/elect', payload: { curators: [ALICE] } });
+        expect(res.statusCode).toBe(403);
+        await a.close();
+    });
+    it('GET /curators is public', async () => {
+        const a = app({ ctx: null, rows: [{ curator_civic_did: ALICE, term_start_tick: 1, term_end_tick: 100, status: 'active' }] });
+        const res = await a.inject({ method: 'GET', url: '/api/v1/library/curators' });
+        expect(res.statusCode).toBe(200);
+        expect(res.json().count).toBe(1);
+        await a.close();
+    });
+    it('200 — an active curator pins an entry', async () => {
+        const a = app({ ctx: aliceCtx(), rows: [{ '1': 1 }] }); // isActiveCurator → truthy
+        const res = await a.inject({ method: 'POST', url: `/api/v1/library/curate/${ENTRY}`, payload: { action: 'pin' } });
+        expect(res.statusCode).toBe(200);
+        await a.close();
+    });
+    it('403 — a non-curator civic member cannot curate', async () => {
+        const a = app({ ctx: aliceCtx(), rows: [] }); // isActiveCurator → false
+        const res = await a.inject({ method: 'POST', url: `/api/v1/library/curate/${ENTRY}`, payload: { action: 'pin' } });
+        expect(res.statusCode).toBe(403);
+        expect(res.json().error).toBe('not_a_curator');
+        await a.close();
+    });
+    it('400 — invalid curate action', async () => {
+        const a = app({ ctx: aliceCtx(), rows: [{ '1': 1 }] });
+        const res = await a.inject({ method: 'POST', url: `/api/v1/library/curate/${ENTRY}`, payload: { action: 'delete' } });
+        expect(res.statusCode).toBe(400);
+        await a.close();
+    });
+});

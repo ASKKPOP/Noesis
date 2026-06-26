@@ -36,6 +36,11 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/library/entries/:entryId': 'public',
     'POST /api/v1/library/contribute':      'civic_did_required',
     'POST /api/v1/library/cite':            'civic_did_required',
+    // Phase 48 Plan 2 — curation council: election is Government-only; the council is
+    // public; curate actions require an active curator (civic + in-handler check).
+    'POST /api/v1/library/curators/elect':  'government_only',
+    'GET /api/v1/library/curators':         'public',
+    'POST /api/v1/library/curate/:entryId': 'civic_did_required',
     'GET /api/v1/market/listings': 'public',
     'GET /api/v1/portal/discover': 'public', // spec §2 — public discovery of organizations + Houses feed
     'GET /api/v1/portal/grids': 'public', // spec §2 — public discovery of active Grids (multi-Grid framework)

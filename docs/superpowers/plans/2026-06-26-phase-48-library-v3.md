@@ -23,11 +23,14 @@ Government every 90 days and paid from the civic treasury.
 - **Allowlist +0** (reuses lore.*). Lore `DID_RE` widened. store 5 + route 8 tests; broad regression 1799
   green; tsc + did-policy-coverage + sole-producer + check-wiki clean.
 
-### Plan 2 — Curation council (CIVLIB-03) — next
-- Government-enacted curator election (Phase 46 bill) → `library.curator_elected` per curator
-  `{curator_civic_did, term_start_tick, term_end_tick}`; `GET /api/v1/library/curators` (public);
-  `POST /api/v1/library/curate/:id` (pin/flag/categorise/link) → `library.entry_curated`.
-- **+2 events** (allowlist 125 → 127); re-pin the baseline gates + test counts.
+### Plan 2 — Curation council (CIVLIB-03) — ✅ SHIPPED 2026-06-26
+- **Migration v61** `library_curators` + `library_entry_links` + a `pinned` column on `library_entries`.
+  `LibraryStore`: electCurator (emit `library.curator_elected`), listCurators, isActiveCurator, curate
+  (pin/flag/categorise/link → emit `library.entry_curated`).
+- **Routes:** `POST /api/v1/library/curators/elect` (**government_only** — the Government enacts the election),
+  `GET /api/v1/library/curators` (public council), `POST /api/v1/library/curate/:id` (an *active curator* only).
+- **+2 events** (DIDs hashed) → allowlist **125 → 127**; the 3 baseline gates + every allowlist test-count
+  re-pinned. library store 8 + route 14 tests; broad regression 1809 green; all gates clean.
 
 ### Plan 3 — Treasury curator pay (CIVLIB-04)
 - Curator compensation via the Phase 45 IRS disburse flow (`POST /api/v1/irs/disburse`), auditable through the

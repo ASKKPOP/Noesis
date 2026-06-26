@@ -475,9 +475,12 @@ Plans:
     `POST .../cite`. **Reuses the v2.4 lore commons** (upserts lore_commons + emits `lore.contributed`/`lore.cited`
     — allowlist unchanged). One operator-approved frozen-contract edit: lore `DID_RE` widened to accept
     Civic-DIDs. store 5 + route 8 tests, broad regression 1799 green; gates clean.
-  - **Plan 2 — Curation council (CIVLIB-03).** Government-enacted curator election → `library.curator_elected`
-    per curator; `GET /api/v1/library/curators` (public); `POST /api/v1/library/curate/:id` (pin/flag/categorize/
-    link) → `library.entry_curated`. +2 events (125 → 127).
+  - **Plan 2 — Curation council (CIVLIB-03) — ✅ SHIPPED 2026-06-26.** `library_curators` + `library_entry_links`
+    + `pinned` column (v61). `POST /api/v1/library/curators/elect` (**government_only** — the Government enacts
+    the election), `GET /api/v1/library/curators` (public council), `POST /api/v1/library/curate/:id` (an active
+    curator pins/flags/re-categorises/links). 2 sole-producer events (`library.curator_elected`,
+    `library.entry_curated`; DIDs hashed) — allowlist **125 → 127**, the 3 baseline gates + every test-count
+    re-pinned. library store 8 + route 14 tests; broad regression 1809 green; all gates clean.
   - **Plan 3 — Treasury curator pay (CIVLIB-04).** Curator compensation via the Phase 45 IRS disburse flow;
     auditable through the existing irs audit. +0 events.
 
@@ -712,7 +715,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 45. IRS Treasury | 3/3 | Complete    | 2026-05-28 |
 | 46. Government v3 | 3/3 | Complete    | 2026-06-03 |
 | 47. Police v3 | 3/3 ✅ | COMPLETE — complaint·investigation·charges·conviction·sanction·appeal (allowlist 121→125, +CI gate) | 2026-06-25 |
-| 48. Library v3 | 1/3 | Plan 1 shipped (reading room + contribute/cite, allowlist +0) | 2026-06-26 |
+| 48. Library v3 | 2/3 | Plans 1+2 shipped (reading room·contribute·curation, allowlist +2) | 2026-06-26 |
 | 49. Communities v3 | 0/? | Not started | — |
 | 50. v2.6 → v3.0 Migration | 0/? | Not started | — |
 
