@@ -26,7 +26,14 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 49 (Communities v3) — ✅ COMPLETE 2026-06-26 (2 plans; COMM-01..05; allowlist 127→131)
+Phase: 50 (v2.6 → v3.0 Migration) — Plan 1 SHIPPED 2026-06-26 (MIG-03 grandfathering, allowlist +0)
+Plan: 1 of 3 (MIG-03 done; Plan 2 = migrate CLI export/--commit; Plan 3 = --revert + the committed gate)
+Plan 1: `grid/src/migration/grandfather.ts` — pure, total `grandfatherReputation(v26Metrics)` →
+  {civicStanding (−sanctions), libraryContributionScore (skillTeaches), marketplaceReputation (rate×100)}.
+  Formula PUBLISHED in PHILOSOPHY §12 (transparency). 5 tests; tsc + check-wiki clean. +0 allowlist, no migration.
+
+Previous phase: 49 (Communities v3) — ✅ COMPLETE 2026-06-26 (2 plans; COMM-01..05; allowlist 127→131).
+The v3.0 civic-city institution wave (Police·Library·Communities, Phases 47–49) is COMPLETE.
 Plan: 2 of 2 — Plan 2 (COMM-04/05) = `community_posts` (v63) + post / dissolve / decision routes.
   `community.posted` + `community.dissolved` (+2 → 131). The constitutional bound is live: a community
   `decision` outside {membership_policy, internal_sanction} → **403 out_of_scope** (only the Polis makes law).
@@ -72,8 +79,9 @@ Status: Plans 1+2 complete. Plan 2 = `police_charges` + `police_sanctions` (v58)
   fine (→ treasury), warning/exile recorded. **Separation of powers is real: Police accuse + execute,
   Government convicts; no operator/Police-direct sanction path (D-V3-18).** Grid: store 5 + route 16 tests,
   broad regression 1842 green; tsc + did-policy-coverage + all gates + check-wiki clean.
-Next action: Phase 50 (v2.6 → v3.0 Migration) — the Wave-4 migration phase. Phase 49 closed; the v3.0
-  civic-city institution wave (Police·Library·Communities) is complete (Phases 47–49).
+Next action: Phase 50 Plan 2 (MIG-01/02 — the `noesis migrate` CLI: `--from-v2.6 --to-v3.0` exports the
+  v2.6 Brain memory to a v3.0 init bundle (reuse the Phase-43 fork-archive pattern) + `--commit`; then
+  Plan 3 (MIG-04 — `--revert` with the 409 `migration_committed` gate after the first civic action).
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 

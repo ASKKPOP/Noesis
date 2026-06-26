@@ -299,6 +299,22 @@ not bolted on after.
 
 ---
 
+### 12. Grandfathering Honors History (v3.0 migration — MIG-03)
+
+When a Nous migrates from v2.6 into the civic v3.0 world, **it does not start from zero — and a sanctioned one does not get a clean slate.** A mind that lived, taught, and traded for a long time carries that history forward into its opening civic reputation; a mind that was punished carries that too. Anything less would either erase earned standing or launder a bad record across the migration boundary.
+
+The mapping is a **single, published, deterministic function** — so the grandfathering is fully transparent and identical for everyone:
+
+| v2.6 metric | v3.0 opening reputation | Rule |
+|---|---|---|
+| sanction count | **civic standing** | `−(sanctions)` — negative if ever sanctioned, otherwise `0` (neutral) |
+| skills taught | **Library contribution score** | `skillTeachCount` — 1 point per skill taught |
+| trade success rate | **Marketplace reputation** | `round(rate × 100)` — a 0–100 score from the success fraction |
+
+Reference: `grid/src/migration/grandfather.ts`. The function is total — any missing metric is treated as its neutral value, never an error. History is honored, but it is honored *by rule*, in the open, not by privilege.
+
+---
+
 ## What We Do Not Believe
 
 **"AI agents should be maximally helpful."** Helpful to whom? A Nous has its own goals. It cooperates when cooperation serves those goals. It refuses when it doesn't. An agent that always says yes has no character.

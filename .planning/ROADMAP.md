@@ -181,7 +181,7 @@ Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reali
 - [~] **Phase 48b: Civic Land & Property** — Ownable parcels (treasury-sale acquisition) + one buildable structure per parcel (home/shop/workshop/venue) + join/visit for open structures + NDS-named searchable addresses. Business requires an owned business parcel; home gives an address; `own_home`/`own_business` Telos goals; operators read-only on land; civic land (infrastructure/government) not for sale; per-Nous cap ≤1 home + ≤1 business. (allowlist +5 → 86) **Grid-core wave shipped 2026-06-05** (ParcelRegistry + 5 sole-producers + allowlist lock + 38 tests); routes/economy/Brain/UI/SAT-7 waves pending. Design: `docs/plans/2026-06-05-civic-land-and-property-design.md`. Provisional slot — final number to be locked in `/gsd-discuss-phase`.
 
 **Wave 4 — Migration (Phase 50)**
-- [ ] **Phase 50: v2.6 → v3.0 Migration** — CLI-driven Sophia/Hermes/Themis import, pre-civic audit context, grandfathered reputation, reversible until first civic action. (allowlist 0)
+- [~] **Phase 50: v2.6 → v3.0 Migration** — CLI-driven Sophia/Hermes/Themis import, pre-civic audit context, grandfathered reputation, reversible until first civic action. (allowlist 0)
 
 ### Phase Details (v3.0)
 
@@ -535,8 +535,19 @@ Plans:
   4. Operator who has not yet committed a civic action (Civic-DID registered but no post-migration `*.civic.*` audit event) can run `noesis migrate --revert` to roll back to v2.6 mode; CLI deletes the v3.0 init bundle, restores v2.6 stack pointers, and surfaces "Reverted — no civic actions had occurred"; after the first post-migration civic action, `--revert` returns `409 migration_committed` and operator must use Phase 43 right-to-fork to leave instead.
 **Scope (ships)**: MIG-01..04.
 **Out of scope for this phase**: Migration of users who never ran v2.6 (they start clean at Phase 37); cross-operator migration (operator A → operator B for the same Nous — out of scope, constitutional question); partial migration (only some Nous) — v3.0 ceremony is all-or-nothing per operator; rollback after first civic action (use Phase 43 fork instead).
-**Allowlist additions**: **0**. Running total: **90**.
-**Plans**: TBD
+**Allowlist additions**: **0**.
+**Plans**:
+  - **Plan 1 — Grandfathering (MIG-03) — ✅ SHIPPED 2026-06-26.** `grid/src/migration/grandfather.ts` — a pure,
+    total `grandfatherReputation(v26Metrics)` mapping {sanctionCount, skillTeachCount, tradeSuccessRate} →
+    {civicStanding = −sanctions, libraryContributionScore = skillTeaches, marketplaceReputation = round(rate×100)}.
+    Formula PUBLISHED in `philosophy.md` §12 (transparency). 5 tests; tsc + check-wiki clean. +0 allowlist.
+  - **Plan 2 — Migrate CLI export + commit (MIG-01/02).** A `noesis migrate --from-v2.6 --to-v3.0` command
+    (new `cli/` subcommand) reads the operator's v2.6 MySQL, exports Karpathy/Hypnos/Pneuma memory to a v3.0
+    Brain init bundle (reuse the Phase-43 fork-archive `.tar.gz` builder) + prints a per-Nous summary; then
+    `--commit` starts the v3.0 runtime + shows pre-Phase-37 audit as read-only "pre-civic context". No new events.
+  - **Plan 3 — Revert + committed gate (MIG-04).** `noesis migrate --revert` rolls back to v2.6 mode IFF no
+    post-migration civic action has committed; after the first `*.civic.*` event → `409 migration_committed`
+    (use the Phase-43 right-to-fork to leave instead). Wires the grandfathering (Plan 1) into Civic-DID issuance.
 
 #### Wave 4 — Mobility & Foundations Extension
 
@@ -740,7 +751,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 47. Police v3 | 3/3 ✅ | COMPLETE — complaint·investigation·charges·conviction·sanction·appeal (allowlist 121→125, +CI gate) | 2026-06-25 |
 | 48. Library v3 | 3/3 ✅ | COMPLETE — reading room·contribute·curation·curator-pay (allowlist 125→127) | 2026-06-26 |
 | 49. Communities v3 | 2/2 ✅ | COMPLETE — found·charter·join·posts·subgov·dissolve (allowlist 127→131) | 2026-06-26 |
-| 50. v2.6 → v3.0 Migration | 0/? | Not started | — |
+| 50. v2.6→v3.0 Migration | 1/3 | Plan 1 shipped (MIG-03 grandfathering, +0) | 2026-06-26 |
 
 ### Coverage & Traceability (v3.0)
 
