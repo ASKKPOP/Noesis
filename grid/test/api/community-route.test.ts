@@ -92,3 +92,43 @@ describe('GET /api/v1/community/:id (public)', () => {
         await a.close();
     });
 });
+
+describe('Community Plan 2 (COMM-04/05)', () => {
+    it('POST /post — 201 for a member', async () => {
+        const a = app({ ctx: aliceCtx(), rows: [{ '1': 1 }] }); // isMember true
+        const res = await a.inject({ method: 'POST', url: `/api/v1/community/${CID}/post`, payload: { body: 'hello' } });
+        expect(res.statusCode).toBe(201);
+        await a.close();
+    });
+    it('POST /post — 403 for a non-member', async () => {
+        const a = app({ ctx: aliceCtx(), rows: [] });
+        const res = await a.inject({ method: 'POST', url: `/api/v1/community/${CID}/post`, payload: { body: 'hello' } });
+        expect(res.statusCode).toBe(403);
+        await a.close();
+    });
+    it('POST /decision — 200 for an internal scope', async () => {
+        const a = app({ ctx: aliceCtx(), rows: [{ '1': 1 }] });
+        const res = await a.inject({ method: 'POST', url: `/api/v1/community/${CID}/decision`, payload: { scope: 'membership_policy' } });
+        expect(res.statusCode).toBe(200);
+        await a.close();
+    });
+    it('🔒 POST /decision — 403 out_of_scope when trying to legislate civic law', async () => {
+        const a = app({ ctx: aliceCtx(), rows: [{ '1': 1 }] });
+        const res = await a.inject({ method: 'POST', url: `/api/v1/community/${CID}/decision`, payload: { scope: 'civic_law' } });
+        expect(res.statusCode).toBe(403);
+        expect(res.json().error).toBe('out_of_scope');
+        await a.close();
+    });
+    it('POST /dissolve — 200 for the founder', async () => {
+        const a = app({ ctx: aliceCtx(), rows: activeCommunity() }); // founder = ALICE
+        const res = await a.inject({ method: 'POST', url: `/api/v1/community/${CID}/dissolve` });
+        expect(res.statusCode).toBe(200);
+        await a.close();
+    });
+    it('POST /dissolve — 403 for a non-founder', async () => {
+        const a = app({ ctx: aliceCtx(), rows: [{ community_id: CID, founder_civic_did: 'did:civic:noesis:bob', name: 'x', charter_json: JSON.stringify(CHARTER), charter_hash: 'h', status: 'active', founded_tick: 1 }] });
+        const res = await a.inject({ method: 'POST', url: `/api/v1/community/${CID}/dissolve` });
+        expect(res.statusCode).toBe(403);
+        await a.close();
+    });
+});

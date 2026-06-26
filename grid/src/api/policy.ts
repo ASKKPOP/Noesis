@@ -47,6 +47,10 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/community/found':                 'civic_did_required',
     'GET /api/v1/community/:communityId':           'public',
     'POST /api/v1/community/:communityId/join':     'civic_did_required',
+    // Phase 49 Plan 2 — posts, bounded subgovernance decision, founder dissolution.
+    'POST /api/v1/community/:communityId/post':     'civic_did_required',
+    'POST /api/v1/community/:communityId/decision': 'civic_did_required',
+    'POST /api/v1/community/:communityId/dissolve': 'civic_did_required',
     'GET /api/v1/market/listings': 'public',
     'GET /api/v1/portal/discover': 'public', // spec §2 — public discovery of organizations + Houses feed
     'GET /api/v1/portal/grids': 'public', // spec §2 — public discovery of active Grids (multi-Grid framework)

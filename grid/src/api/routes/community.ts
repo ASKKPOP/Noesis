@@ -12,7 +12,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { CommunityStore } from '../../community/community-store.js';
-import { validateCharter, FOUND_BIOS_COST, type MembershipCriteria } from '../../community/types.js';
+import { validateCharter, FOUND_BIOS_COST, INTERNAL_DECISION_SCOPES, type MembershipCriteria } from '../../community/types.js';
 import { TREASURY_DID } from './registry.js';
 
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
@@ -98,6 +98,66 @@ export function registerCommunityRoutes(app: FastifyInstance, services: GridServ
             // 'open' or a paid 'bios_fee' → immediate active membership.
             await store.addMember({ gridName: grid, communityId, memberDid: joiner, status: 'active', tick: tick() });
             return reply.code(201).send({ status: 'joined', community_id: communityId });
+        },
+    );
+
+    // COMM-04 — a member posts in the community.
+    app.post<{ Params: { communityId: string }; Body: { body?: unknown } }>(
+        '/api/v1/community/:communityId/post',
+        async (req, reply) => {
+            const poster = req.didContext?.did;
+            if (!poster || req.didContext?.tier !== 'civic_member' || !CIVIC_DID_RE.test(poster)) return reply.code(401).send({ error: 'civic_did_required' });
+            const pool = services.pool; const audit = services.audit;
+            if (!pool || !audit) return reply.code(503).send({ error: 'community_unavailable' });
+            const communityId = req.params.communityId;
+            if (!UUID_RE.test(communityId)) return reply.code(400).send({ error: 'invalid_community_id' });
+            const body = typeof req.body?.body === 'string' ? req.body.body.trim() : '';
+            if (!body) return reply.code(400).send({ error: 'empty_body' });
+            const store = new CommunityStore(pool, audit);
+            if (!(await store.isMember(grid, communityId, poster))) return reply.code(403).send({ error: 'not_a_member' });
+            const postId = await store.post({ gridName: grid, communityId, posterDid: poster, body, tick: tick() });
+            return reply.code(201).send({ post_id: postId });
+        },
+    );
+
+    // COMM-04 — a bounded internal subgovernance decision. Anything outside the
+    // community-internal scope is an attempt to legislate civic law → 403 out_of_scope.
+    app.post<{ Params: { communityId: string }; Body: { scope?: unknown } }>(
+        '/api/v1/community/:communityId/decision',
+        async (req, reply) => {
+            const caller = req.didContext?.did;
+            if (!caller || req.didContext?.tier !== 'civic_member' || !CIVIC_DID_RE.test(caller)) return reply.code(401).send({ error: 'civic_did_required' });
+            const pool = services.pool; const audit = services.audit;
+            if (!pool || !audit) return reply.code(503).send({ error: 'community_unavailable' });
+            const communityId = req.params.communityId;
+            if (!UUID_RE.test(communityId)) return reply.code(400).send({ error: 'invalid_community_id' });
+            const scope = typeof req.body?.scope === 'string' ? req.body.scope : '';
+            const store = new CommunityStore(pool, audit);
+            if (!(await store.isMember(grid, communityId, caller))) return reply.code(403).send({ error: 'not_a_member' });
+            // The constitutional bound: communities cannot legislate civic law.
+            if (!INTERNAL_DECISION_SCOPES.includes(scope)) {
+                return reply.code(403).send({ error: 'out_of_scope', detail: 'community subgovernance is bounded to community-internal decisions; civic law belongs to the Polis' });
+            }
+            return reply.send({ ok: true, scope, decision: 'accepted' });
+        },
+    );
+
+    // COMM-05 — dissolve a community (founder only). Founding Bios stays in the treasury.
+    app.post<{ Params: { communityId: string } }>(
+        '/api/v1/community/:communityId/dissolve',
+        async (req, reply) => {
+            const caller = req.didContext?.did;
+            if (!caller || req.didContext?.tier !== 'civic_member' || !CIVIC_DID_RE.test(caller)) return reply.code(401).send({ error: 'civic_did_required' });
+            const pool = services.pool; const audit = services.audit;
+            if (!pool || !audit) return reply.code(503).send({ error: 'community_unavailable' });
+            const communityId = req.params.communityId;
+            if (!UUID_RE.test(communityId)) return reply.code(400).send({ error: 'invalid_community_id' });
+            const store = new CommunityStore(pool, audit);
+            const c = await store.getCommunity(grid, communityId);
+            if (!c || c.status !== 'active') return reply.code(404).send({ error: 'unknown_community' });
+            if (c.founder_civic_did !== caller) return reply.code(403).send({ error: 'not_the_founder' });
+            await store.dissolve({ gridName: grid, communityId, byDid: caller, tick: tick() });
+            return reply.send({ ok: true, status: 'dissolved' });
         },
     );
 }

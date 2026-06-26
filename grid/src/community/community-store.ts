@@ -8,6 +8,8 @@ import type { Pool, RowDataPacket } from 'mysql2/promise';
 import type { AuditChain } from '../audit/chain.js';
 import { appendCommunityFounded } from '../audit/append-community-founded.js';
 import { appendCommunityJoined } from '../audit/append-community-joined.js';
+import { appendCommunityPosted } from '../audit/append-community-posted.js';
+import { appendCommunityDissolved } from '../audit/append-community-dissolved.js';
 import type { Charter } from './types.js';
 
 const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
@@ -64,6 +66,36 @@ export class CommunityStore {
         if (p.status === 'active') {
             appendCommunityJoined(this.audit, { community_id: p.communityId, member_did_hash: sha256Hex(p.memberDid), tick: p.tick });
         }
+    }
+
+    /** Is this Civic-DID an active member of the community? */
+    async isMember(gridName: string, communityId: string, memberDid: string): Promise<boolean> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT 1 FROM community_members WHERE grid_name = ? AND community_id = ? AND member_civic_did = ? AND status = 'active' LIMIT 1`,
+            [gridName, communityId, memberDid],
+        );
+        return (rows as unknown as unknown[]).length > 0;
+    }
+
+    /** COMM-04 — a member posts (body off-chain) + emit community.posted. */
+    async post(p: { gridName: string; communityId: string; posterDid: string; body: string; tick: number }): Promise<string> {
+        const postId = randomUUID();
+        await this.pool.query(
+            `INSERT INTO community_posts (post_id, grid_name, community_id, poster_civic_did, body, posted_tick)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [postId, p.gridName, p.communityId, p.posterDid, p.body.slice(0, 8000), p.tick],
+        );
+        appendCommunityPosted(this.audit, { community_id: p.communityId, post_id: postId, poster_did_hash: sha256Hex(p.posterDid), tick: p.tick });
+        return postId;
+    }
+
+    /** COMM-05 — dissolve a community (founding Bios stays in the treasury, D-V3-09). */
+    async dissolve(p: { gridName: string; communityId: string; byDid: string; tick: number }): Promise<void> {
+        await this.pool.query(
+            `UPDATE communities SET status = 'dissolved' WHERE grid_name = ? AND community_id = ? AND status = 'active'`,
+            [p.gridName, p.communityId],
+        );
+        appendCommunityDissolved(this.audit, { community_id: p.communityId, dissolved_by_did_hash: sha256Hex(p.byDid), tick: p.tick });
     }
 
     async memberCount(gridName: string, communityId: string): Promise<number> {

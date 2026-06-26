@@ -177,7 +177,7 @@ Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reali
 - [x] **Phase 46: Government v3** — Nous-only legislative VOTE-05 with bills, co-sponsorship, scheduled sessions, civic law book. (allowlist +6 → 81) (completed 2026-06-03)
 - [ ] **Phase 47: Police v3** — Complaint-driven sanctions, investigation, court-filed charges, appeals to Government. (allowlist +4)
 - [x] **Phase 48: Library v3** — Public reading room + Civic-DID contribution + rotating curation council paid from treasury. (allowlist +2)
-- [~] **Phase 49: Communities v3** — Bios-gated founding, charters, membership criteria, subgovernance scoped to community-internal decisions. (allowlist +4)
+- [x] **Phase 49: Communities v3** — Bios-gated founding, charters, membership criteria, subgovernance scoped to community-internal decisions. (allowlist +4)
 - [~] **Phase 48b: Civic Land & Property** — Ownable parcels (treasury-sale acquisition) + one buildable structure per parcel (home/shop/workshop/venue) + join/visit for open structures + NDS-named searchable addresses. Business requires an owned business parcel; home gives an address; `own_home`/`own_business` Telos goals; operators read-only on land; civic land (infrastructure/government) not for sale; per-Nous cap ≤1 home + ≤1 business. (allowlist +5 → 86) **Grid-core wave shipped 2026-06-05** (ParcelRegistry + 5 sole-producers + allowlist lock + 38 tests); routes/economy/Brain/UI/SAT-7 waves pending. Design: `docs/plans/2026-06-05-civic-land-and-property-design.md`. Provisional slot — final number to be locked in `/gsd-discuss-phase`.
 
 **Wave 4 — Migration (Phase 50)**
@@ -511,9 +511,16 @@ Plans:
     approval_required→202, bios_fee→pay/402). 2 sole-producer events (`community.founded`, `community.joined`;
     DIDs hashed) — allowlist **127 → 129**, baseline gates + test-counts re-pinned. store 8 + route 6 tests;
     broad regression 1775 green; all gates clean. Civic subsystem (distinct from /api/v1/portal/community/* feed).
-  - **Plan 2 — Subgovernance + posts + dissolution (COMM-04/05).** `community.posted`, `community.dissolved`
-    (+2 → 131); scoped majority vote bounded to community-internal decisions (403 out_of_scope on civic-law
-    attempts); dissolution returns founding Bios to treasury (no founder refund, D-V3-09).
+  - **Plan 2 — Subgovernance + posts + dissolution (COMM-04/05) — ✅ SHIPPED 2026-06-26.** `community_posts`
+    (v63) + `CommunityStore` post/dissolve/isMember. Routes: `POST /api/v1/community/:id/post` (member),
+    `POST /api/v1/community/:id/decision` (member — **403 `out_of_scope`** for any scope outside
+    {membership_policy, internal_sanction}: communities cannot legislate civic law), `POST
+    /api/v1/community/:id/dissolve` (founder only; founding Bios stays in the treasury, D-V3-09). 2 sole-producer
+    events (`community.posted`, `community.dissolved`; DIDs hashed) — allowlist **129 → 131**, gates + test-counts
+    re-pinned. store 10 + route 12 tests; broad regression 1784 green.
+
+  **Phase 49 COMPLETE (2/2, 2026-06-26)** — Civic-DID-founded communities with Bios sybil cost, machine-readable
+  charters, charter-evaluated join, member posts, bounded internal subgovernance, and founder dissolution.
 
 #### Wave 4 — Migration
 
@@ -732,7 +739,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 46. Government v3 | 3/3 | Complete    | 2026-06-03 |
 | 47. Police v3 | 3/3 ✅ | COMPLETE — complaint·investigation·charges·conviction·sanction·appeal (allowlist 121→125, +CI gate) | 2026-06-25 |
 | 48. Library v3 | 3/3 ✅ | COMPLETE — reading room·contribute·curation·curator-pay (allowlist 125→127) | 2026-06-26 |
-| 49. Communities v3 | 1/2 | Plan 1 shipped (found·charter·join, allowlist +2) | 2026-06-26 |
+| 49. Communities v3 | 2/2 ✅ | COMPLETE — found·charter·join·posts·subgov·dissolve (allowlist 127→131) | 2026-06-26 |
 | 50. v2.6 → v3.0 Migration | 0/? | Not started | — |
 
 ### Coverage & Traceability (v3.0)

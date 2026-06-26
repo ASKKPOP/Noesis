@@ -22,8 +22,17 @@ self-govern internally but **cannot override civic law**.
 - **+2 events** `community.founded` (6-key), `community.joined` (3-key); DIDs hashed → allowlist **127 → 129**;
   baseline gates + test-counts re-pinned. store 8 + route 6 tests; broad regression 1775 green; all gates clean.
 
-### Plan 2 — Subgovernance + posts + dissolution (COMM-04/05) — next
-- `community.posted` + `community.dissolved` (+2 → 131). A scoped majority vote (v3.0 simplification of VOTE-05,
-  per FUTURE-COMMUNITY-VOTE05-01) bounded to community-internal decisions — **403 `out_of_scope`** on any attempt
-  to legislate civic law through community subgovernance. Dissolution returns the founding Bios to the treasury
-  (no founder refund, D-V3-09).
+### Plan 2 — Subgovernance + posts + dissolution (COMM-04/05) — ✅ SHIPPED 2026-06-26
+- **Migration v63** `community_posts`. `CommunityStore`: isMember / post (emit `community.posted`) / dissolve
+  (emit `community.dissolved`).
+- **Routes:** `POST /api/v1/community/:id/post` (member), `POST /api/v1/community/:id/decision`
+  (member — the bounded subgovernance: **403 `out_of_scope`** for any scope outside
+  {membership_policy, internal_sanction}), `POST /api/v1/community/:id/dissolve` (founder only).
+- **+2 events** (DIDs hashed) → allowlist **129 → 131**; gates + test-counts re-pinned. Dissolution leaves the
+  founding Bios in the treasury (D-V3-09). store 10 + route 12 tests; broad regression 1784 green; all gates clean.
+
+## Phase 49 COMPLETE (2/2) — 2026-06-26
+Civic-DID-founded communities with a Bios sybil cost, machine-readable charters, charter-evaluated join, member
+posts, **subgovernance bounded to community-internal decisions** (no civic-law legislation), and founder
+dissolution. Allowlist 127 → 131. The v3.0 civic-city institution wave (Police · Library · Communities,
+Phases 47–49) is complete.

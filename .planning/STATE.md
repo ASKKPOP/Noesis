@@ -26,8 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 49 (Communities v3) — Plan 1 SHIPPED 2026-06-26 (found + charter + join, allowlist 127→129)
-Plan: 1 of 2 (COMM-01/02/03 done; Plan 2 = subgovernance + posts + dissolution, +2 events → 131)
+Phase: 49 (Communities v3) — ✅ COMPLETE 2026-06-26 (2 plans; COMM-01..05; allowlist 127→131)
+Plan: 2 of 2 — Plan 2 (COMM-04/05) = `community_posts` (v63) + post / dissolve / decision routes.
+  `community.posted` + `community.dissolved` (+2 → 131). The constitutional bound is live: a community
+  `decision` outside {membership_policy, internal_sanction} → **403 out_of_scope** (only the Polis makes law).
+  Dissolution flips status (founding Bios stays in the treasury, D-V3-09). community store 10 + route 12 tests.
 Plan 1: `communities` + `community_members` (v62) + `CommunityStore` + `validateCharter`. Routes:
   `POST /api/v1/community/found` (civic + **Bios sybil cost** via `registry.transferOusia` founder→treasury,
   402 insufficient_bios), `GET /api/v1/community/:id` (public), `POST /api/v1/community/:id/join` (charter-
@@ -69,9 +72,8 @@ Status: Plans 1+2 complete. Plan 2 = `police_charges` + `police_sanctions` (v58)
   fine (→ treasury), warning/exile recorded. **Separation of powers is real: Police accuse + execute,
   Government convicts; no operator/Police-direct sanction path (D-V3-18).** Grid: store 5 + route 16 tests,
   broad regression 1842 green; tsc + did-policy-coverage + all gates + check-wiki clean.
-Next action: Phase 49 Plan 2 (COMM-04/05 — community posts + `democratic`/`delegated` subgovernance
-  bounded to community-internal decisions (403 out_of_scope on civic-law attempts) + dissolution
-  returning founding Bios to treasury; events `community.posted`, `community.dissolved`, +2 → 131).
+Next action: Phase 50 (v2.6 → v3.0 Migration) — the Wave-4 migration phase. Phase 49 closed; the v3.0
+  civic-city institution wave (Police·Library·Communities) is complete (Phases 47–49).
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 

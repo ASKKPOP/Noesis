@@ -1546,4 +1546,24 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS community_members; DROP TABLE IF EXISTS communities`,
     },
+    {
+        // Phase 49 Communities v3 Plan 2 (COMM-04) — community posts. Member-authored
+        // messages inside a community; the body stays off-chain (only a hash on the chain
+        // via community.posted). Dissolution (COMM-05) is a status flip on `communities`.
+        version: 63,
+        name: 'create_community_posts',
+        up: `
+            CREATE TABLE IF NOT EXISTS community_posts (
+                post_id          CHAR(36)     NOT NULL,
+                grid_name        VARCHAR(63)  NOT NULL,
+                community_id     CHAR(36)     NOT NULL,
+                poster_civic_did VARCHAR(255) NOT NULL,
+                body             MEDIUMTEXT   NOT NULL,
+                posted_tick      BIGINT       NOT NULL,
+                PRIMARY KEY (post_id),
+                INDEX idx_post_community (grid_name, community_id, posted_tick)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS community_posts`,
+    },
 ];

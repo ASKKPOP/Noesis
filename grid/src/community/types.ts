@@ -51,3 +51,24 @@ export interface CommunityJoinedPayload {
     readonly tick: number;
 }
 export const COMMUNITY_JOINED_KEYS = ['community_id', 'member_did_hash', 'tick'] as const;
+
+/** COMM-04 — subgovernance is bounded to community-internal scope. Anything outside this
+ *  set is an attempt to legislate civic law → 403 out_of_scope (only the Polis makes law). */
+export const INTERNAL_DECISION_SCOPES: readonly string[] = ['membership_policy', 'internal_sanction'];
+
+/** community.posted — a member posts in the community (body stays in the DB, off-chain). */
+export interface CommunityPostedPayload {
+    readonly community_id: string;     // UUID
+    readonly post_id: string;          // UUID
+    readonly poster_did_hash: string;  // HEX64
+    readonly tick: number;
+}
+export const COMMUNITY_POSTED_KEYS = ['community_id', 'post_id', 'poster_did_hash', 'tick'] as const;
+
+/** community.dissolved — the community is wound down; its founding Bios stays in the treasury. */
+export interface CommunityDissolvedPayload {
+    readonly community_id: string;          // UUID
+    readonly dissolved_by_did_hash: string; // HEX64
+    readonly tick: number;
+}
+export const COMMUNITY_DISSOLVED_KEYS = ['community_id', 'dissolved_by_did_hash', 'tick'] as const;
