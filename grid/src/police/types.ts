@@ -29,3 +29,37 @@ export interface PoliceInvestigationOpenedPayload {
 export const POLICE_INVESTIGATION_OPENED_KEYS = [
     'complaint_id', 'dispute_id', 'investigation_id', 'tick',
 ] as const;
+
+/** The four sanction kinds (POL-04). */
+export type SanctionType = 'freeze' | 'exile' | 'fine' | 'warning';
+export const SANCTION_TYPES: readonly SanctionType[] = ['freeze', 'exile', 'fine', 'warning'];
+
+/** police.charges_filed — Police file formal charges with the Government court after an
+ *  investigation concludes. recommended_sanction is the *range* (a sanction kind), not an
+ *  executed penalty. accused DID hashed. */
+export interface PoliceChargesFiledPayload {
+    readonly accused_did_hash: string;       // HEX64
+    readonly alleged_law_id: string;         // UUID — the law alleged violated
+    readonly charge_id: string;              // UUID
+    readonly evidence_summary_hash: string;  // HEX64
+    readonly investigation_id: string;       // UUID
+    readonly recommended_sanction: SanctionType;
+    readonly tick: number;
+}
+export const POLICE_CHARGES_FILED_KEYS = [
+    'accused_did_hash', 'alleged_law_id', 'charge_id', 'evidence_summary_hash', 'investigation_id', 'recommended_sanction', 'tick',
+] as const;
+
+/** police.sanction_executed — a sanction carried out AFTER a Government conviction. The
+ *  material parameters (duration / community / amount) stay in the DB; the chain carries
+ *  only the kind. accused DID hashed. */
+export interface PoliceSanctionExecutedPayload {
+    readonly accused_did_hash: string;   // HEX64
+    readonly charge_id: string;          // UUID
+    readonly sanction_id: string;        // UUID
+    readonly sanction_type: SanctionType;
+    readonly tick: number;
+}
+export const POLICE_SANCTION_EXECUTED_KEYS = [
+    'accused_did_hash', 'charge_id', 'sanction_id', 'sanction_type', 'tick',
+] as const;

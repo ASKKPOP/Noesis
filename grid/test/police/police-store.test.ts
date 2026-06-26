@@ -54,3 +54,36 @@ describe('PoliceStore.openInvestigation (POL-02)', () => {
         await expect(store.openInvestigation({ gridName: 'genesis', complaintId: 'x', disputeId: 'y', tick: 1 })).rejects.toThrow(/exactly one/);
     });
 });
+
+const INV = '44444444-4444-4444-8444-444444444444';
+const CHG = '55555555-5555-4555-8555-555555555555';
+
+describe('PoliceStore.fileCharges (POL-03)', () => {
+    it('inserts the charge and emits police.charges_filed with a hashed accused DID', async () => {
+        const p = pool(); const audit = new AuditChain();
+        const id = await new PoliceStore(p, audit).fileCharges({
+            gridName: 'genesis', investigationId: INV, accusedDid: ACCUSED, allegedLawId: LAW,
+            evidenceSummaryHash: 'b'.repeat(64), recommendedSanction: 'freeze', tick: 8,
+        });
+        expect(id).toMatch(/^[0-9a-f-]{36}$/i);
+        expect((p.query as ReturnType<typeof vi.fn>).mock.calls.some((c) => /INSERT INTO police_charges/i.test(c[0]))).toBe(true);
+        const ev = audit.query({ eventType: 'police.charges_filed' });
+        expect(ev).toHaveLength(1);
+        expect((ev[0].payload as Record<string, unknown>).recommended_sanction).toBe('freeze');
+        expect(JSON.stringify(ev[0].payload)).not.toContain(ACCUSED);
+    });
+});
+
+describe('PoliceStore.recordSanction (POL-04)', () => {
+    it('inserts the sanction, marks the charge executed, emits police.sanction_executed', async () => {
+        const p = pool(); const audit = new AuditChain();
+        const id = await new PoliceStore(p, audit).recordSanction({
+            gridName: 'genesis', chargeId: CHG, accusedDid: ACCUSED, sanctionType: 'warning', tick: 9,
+        });
+        expect(id).toMatch(/^[0-9a-f-]{36}$/i);
+        const calls = (p.query as ReturnType<typeof vi.fn>).mock.calls;
+        expect(calls.some((c) => /INSERT INTO police_sanctions/i.test(c[0]))).toBe(true);
+        expect(calls.some((c) => /UPDATE police_charges SET status = 'executed'/i.test(c[0]))).toBe(true);
+        expect((audit.query({ eventType: 'police.sanction_executed' })[0].payload as Record<string, unknown>).sanction_type).toBe('warning');
+    });
+});

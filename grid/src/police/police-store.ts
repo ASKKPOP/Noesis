@@ -12,11 +12,18 @@ import type { Pool, RowDataPacket } from 'mysql2/promise';
 import type { AuditChain } from '../audit/chain.js';
 import { appendPoliceComplaintFiled } from '../audit/append-police-complaint-filed.js';
 import { appendPoliceInvestigationOpened } from '../audit/append-police-investigation-opened.js';
+import { appendPoliceChargesFiled } from '../audit/append-police-charges-filed.js';
+import { appendPoliceSanctionExecuted } from '../audit/append-police-sanction-executed.js';
+import type { SanctionType } from './types.js';
 
 const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
 
 export interface ComplaintRow {
     complaint_id: string; accused_civic_did: string; cited_law_id: string; status: string; filed_at_tick: number;
+}
+export interface ChargeRow {
+    charge_id: string; investigation_id: string; accused_civic_did: string; alleged_law_id: string;
+    recommended_sanction: SanctionType; status: string; gov_session_id: string | null;
 }
 
 export class PoliceStore {
@@ -87,6 +94,81 @@ export class PoliceStore {
         );
         const r = rows as unknown as ComplaintRow[];
         return r.length ? r[0] : null;
+    }
+
+    /** POL-03 — file formal charges with the Government court (after an investigation).
+     *  Inserts police_charges (status 'filed'), emits police.charges_filed. Returns charge_id. */
+    async fileCharges(p: {
+        gridName: string; investigationId: string; accusedDid: string; allegedLawId: string;
+        evidenceSummaryHash: string; recommendedSanction: SanctionType; tick: number;
+    }): Promise<string> {
+        const chargeId = randomUUID();
+        await this.pool.query(
+            `INSERT INTO police_charges
+               (charge_id, grid_name, investigation_id, accused_civic_did, alleged_law_id, evidence_summary_hash, recommended_sanction, status, filed_at_tick)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'filed', ?)`,
+            [chargeId, p.gridName, p.investigationId, p.accusedDid, p.allegedLawId, p.evidenceSummaryHash, p.recommendedSanction, p.tick],
+        );
+        appendPoliceChargesFiled(this.audit, {
+            accused_did_hash: sha256Hex(p.accusedDid),
+            alleged_law_id: p.allegedLawId,
+            charge_id: chargeId,
+            evidence_summary_hash: p.evidenceSummaryHash,
+            investigation_id: p.investigationId,
+            recommended_sanction: p.recommendedSanction,
+            tick: p.tick,
+        });
+        return chargeId;
+    }
+
+    async getCharge(gridName: string, chargeId: string): Promise<ChargeRow | null> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT charge_id, investigation_id, accused_civic_did, alleged_law_id, recommended_sanction, status, gov_session_id
+               FROM police_charges WHERE grid_name = ? AND charge_id = ? LIMIT 1`,
+            [gridName, chargeId],
+        );
+        const r = rows as unknown as ChargeRow[];
+        return r.length ? r[0] : null;
+    }
+
+    /** Government conviction (or acquittal). Called only from the government_only route.
+     *  Marks the charge; NO broadcast event (a Government decision, not a Police act). */
+    async resolveCharge(gridName: string, chargeId: string, convicted: boolean, govSessionId: string, tick: number): Promise<void> {
+        await this.pool.query(
+            `UPDATE police_charges SET status = ?, gov_session_id = ?, resolved_at_tick = ?
+               WHERE grid_name = ? AND charge_id = ? AND status = 'filed'`,
+            [convicted ? 'convicted' : 'acquitted', govSessionId, tick, gridName, chargeId],
+        );
+    }
+
+    /** POL-04 — record an executed sanction (the material effect — freeze/fine — is applied
+     *  by the route BEFORE this call). Inserts police_sanctions, marks the charge 'executed',
+     *  emits police.sanction_executed. Returns sanction_id. The caller MUST have verified the
+     *  charge is 'convicted'. */
+    async recordSanction(p: {
+        gridName: string; chargeId: string; accusedDid: string; sanctionType: SanctionType;
+        durationTicks?: number | null; communityId?: string | null; amountWei?: bigint | null; tick: number;
+    }): Promise<string> {
+        const sanctionId = randomUUID();
+        await this.pool.query(
+            `INSERT INTO police_sanctions
+               (sanction_id, grid_name, charge_id, accused_civic_did, sanction_type, duration_ticks, community_id, amount_wei, executed_at_tick)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [sanctionId, p.gridName, p.chargeId, p.accusedDid, p.sanctionType,
+             p.durationTicks ?? null, p.communityId ?? null, p.amountWei != null ? p.amountWei.toString() : null, p.tick],
+        );
+        await this.pool.query(
+            `UPDATE police_charges SET status = 'executed', resolved_at_tick = ? WHERE grid_name = ? AND charge_id = ?`,
+            [p.tick, p.gridName, p.chargeId],
+        );
+        appendPoliceSanctionExecuted(this.audit, {
+            accused_did_hash: sha256Hex(p.accusedDid),
+            charge_id: p.chargeId,
+            sanction_id: sanctionId,
+            sanction_type: p.sanctionType,
+            tick: p.tick,
+        });
+        return sanctionId;
     }
 
     /** List complaints, newest first — optionally filtered by accused DID or status. */

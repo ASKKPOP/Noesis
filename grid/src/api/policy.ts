@@ -285,6 +285,11 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/police/complaint':                                'civic_did_required',
     'POST /api/v1/police/complaint/:complaintId/investigate':       'civic_did_required',
     'GET /api/v1/police/complaints':                                'civic_did_required',
+    // Phase 47 Plan 2 — charges (police), conviction (GOVERNMENT only — the constitutional
+    // gate), sanction execution (police, only against a convicted charge). No operator path.
+    'POST /api/v1/police/charge':                                   'police_only',
+    'POST /api/v1/police/charge/:chargeId/convict':                 'government_only',
+    'POST /api/v1/police/charge/:chargeId/execute-sanction':        'police_only',
 
     // W — Conversation routes: human↔Nous chat thread (de-orphan ConversationStore).
     // Content is private (never on the audit chain); sender inferred from DID form.

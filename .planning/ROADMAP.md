@@ -434,9 +434,15 @@ Plans:
     (`police.complaint_filed`, `police.investigation_opened`; DIDs hashed) — allowlist **121 → 123**, the 3
     baseline gates + the allowlist test-count assertions re-pinned. Grid tests: store 3 + route 10 + audit dir
     957 green; tsc + all gates clean. NO punitive power (sanctions need Government conviction; D-V3-18 preserved).
-  - **Plan 2 — Charges + Sanction execution (POL-03/04).** `POST /api/v1/police/charge` (after investigation) →
-    Government court; `POST /api/v1/police/execute-sanction` (only after a Government conviction). +2 events
-    (`police.charges_filed`, `police.sanction_executed`). Sanctions: freeze / exile / Bios-fine / warning.
+  - **Plan 2 — Charges + Sanction execution (POL-03/04) — ✅ SHIPPED 2026-06-25.** `police_charges` +
+    `police_sanctions` (v58) + `PoliceStore` (fileCharges/getCharge/resolveCharge/recordSanction). Routes:
+    `POST /api/v1/police/charge` (police), `POST /api/v1/police/charge/:id/convict` (**government_only** — the
+    only path to punitive power), `POST /api/v1/police/charge/:id/execute-sanction` (police, **only against a
+    convicted charge** → 403 `no_conviction` otherwise). +2 events (`police.charges_filed`,
+    `police.sanction_executed`; DIDs hashed) — allowlist **123 → 125**, the 3 baseline gates + every test-count
+    re-pinned. Sanction effects: freeze (markFrozen), fine (→ treasury), warning/exile recorded. Separation of
+    powers real (Police accuse+execute, Government convicts; D-V3-18 preserved). store 5 + route 16 tests, broad
+    regression 1842 green; tsc + did-policy-coverage + all gates + check-wiki clean.
   - **Plan 3 — Appeals (POL-04 tail).** `POST /api/v1/gov/appeal` routes a sanction back to Government; the
     constitutional CI gate asserting no operator/Police-direct sanction path.
 
@@ -685,7 +691,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 44. Marketplace v3 | 5/5 | Complete   | 2026-05-28 |
 | 45. IRS Treasury | 3/3 | Complete    | 2026-05-28 |
 | 46. Government v3 | 3/3 | Complete    | 2026-06-03 |
-| 47. Police v3 | 1/3 | Plan 1 shipped (complaint + investigation, allowlist 121→123) | 2026-06-25 |
+| 47. Police v3 | 2/3 | Plans 1+2 shipped (complaint·investigation·charges·sanction, allowlist 121→125) | 2026-06-25 |
 | 48. Library v3 | 0/? | Not started | — |
 | 49. Communities v3 | 0/? | Not started | — |
 | 50. v2.6 → v3.0 Migration | 0/? | Not started | — |

@@ -1390,4 +1390,45 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS police_complaints`,
     },
+    {
+        // Phase 47 Police v3 Plan 2 (POL-03/04) — charges + sanctions. Charges are filed
+        // with the Government court; a charge can only become 'convicted' via a Government
+        // session (government_only route); a sanction may only be executed against a
+        // convicted charge (no operator/Police-direct path, D-V3-18).
+        version: 58,
+        name: 'create_police_charges_and_sanctions',
+        up: `
+            CREATE TABLE IF NOT EXISTS police_charges (
+                charge_id            CHAR(36)     NOT NULL,
+                grid_name            VARCHAR(63)  NOT NULL,
+                investigation_id     CHAR(36)     NOT NULL,
+                accused_civic_did    VARCHAR(255) NOT NULL,
+                alleged_law_id       CHAR(36)     NOT NULL,
+                evidence_summary_hash CHAR(64)    NOT NULL,
+                recommended_sanction ENUM('freeze','exile','fine','warning') NOT NULL,
+                status               ENUM('filed','convicted','acquitted','executed') NOT NULL DEFAULT 'filed',
+                gov_session_id       CHAR(36)     NULL,
+                filed_at_tick        BIGINT       NOT NULL,
+                resolved_at_tick     BIGINT       NULL,
+                PRIMARY KEY (charge_id),
+                INDEX idx_charge_accused (grid_name, accused_civic_did),
+                INDEX idx_charge_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+            CREATE TABLE IF NOT EXISTS police_sanctions (
+                sanction_id        CHAR(36)     NOT NULL,
+                grid_name          VARCHAR(63)  NOT NULL,
+                charge_id          CHAR(36)     NOT NULL,
+                accused_civic_did  VARCHAR(255) NOT NULL,
+                sanction_type      ENUM('freeze','exile','fine','warning') NOT NULL,
+                duration_ticks     BIGINT       NULL,
+                community_id       CHAR(36)     NULL,
+                amount_wei         DECIMAL(65,0) NULL,
+                executed_at_tick   BIGINT       NOT NULL,
+                PRIMARY KEY (sanction_id),
+                INDEX idx_sanction_accused (grid_name, accused_civic_did),
+                INDEX idx_sanction_charge (grid_name, charge_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS police_sanctions; DROP TABLE IF EXISTS police_charges`,
+    },
 ];

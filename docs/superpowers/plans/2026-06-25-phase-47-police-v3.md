@@ -27,12 +27,19 @@ Police-direct sanction path exists anywhere in the routing table (D-V3-18).
   `GET /api/v1/police/complaints`.
 - **Tests:** store 3 + route 10 + allowlist updates; audit dir 957 green; tsc + all gates clean.
 
-### Plan 2 — Charges + Sanction execution (POL-03/04) — next
-- `police_charges` + `police_sanctions` tables. `POST /api/v1/police/charge` (only after an investigation
-  concludes) files with the Government court. `POST /api/v1/police/execute-sanction` — gated on a
-  **Government conviction** (an active gov session referencing the charges_id); sanctions: temporary
-  Civic-DID freeze (duration in ticks), community exile, Bios fine (→ treasury), formal warning.
-- +2 events: `police.charges_filed`, `police.sanction_executed` (allowlist 123 → 125).
+### Plan 2 — Charges + Sanction execution (POL-03/04) — ✅ SHIPPED 2026-06-25
+- **Migration v58** `police_charges` + `police_sanctions`. `PoliceStore`:
+  `fileCharges` (emit `police.charges_filed`), `resolveCharge` (Government conviction/acquittal — no event),
+  `recordSanction` (emit `police.sanction_executed`).
+- **Routes:** `POST /api/v1/police/charge` (police), `POST /api/v1/police/charge/:id/convict`
+  (**government_only** — the constitutional gate, the only path to punitive power),
+  `POST /api/v1/police/charge/:id/execute-sanction` (police, **only against a convicted charge** → 403
+  `no_conviction`). Sanction effects wired: freeze (`markFrozen`), fine (credit treasury), warning/exile
+  recorded (exile membership-removal is a follow-up).
+- **+2 events** `police.charges_filed` (7-key), `police.sanction_executed` (5-key); DIDs hashed. Allowlist
+  **123 → 125**; the 3 baseline gates + every allowlist test-count re-pinned (relationship-graph-deps → 901).
+- **Tests:** store 5 + route 16 (incl. the 🔒 "no sanction without conviction" gate test); broad regression
+  1842 green; tsc + did-policy-coverage + all gates + check-wiki clean.
 
 ### Plan 3 — Appeals
 - `POST /api/v1/gov/appeal` routes a sanction back to the Government. CI gate asserting there is **no**

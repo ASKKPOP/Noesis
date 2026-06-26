@@ -26,15 +26,20 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 47 (Police v3) — Plan 1 SHIPPED 2026-06-25 (complaint + investigation, allowlist 121→123)
-Plan: 1 of 3 (POL-01/02 done; Plan 2 = charges + sanction execution; Plan 3 = appeals)
+Phase: 47 (Police v3) — Plan 2 SHIPPED 2026-06-25 (charges + sanction execution, allowlist 123→125)
+Plan: 2 of 3 (POL-01/02/03/04 done; Plan 3 = appeals + the no-operator-sanction CI gate)
 Previous: Phase 46 (Government v3) — SHIPPED 2026-06-03 (3 plans)
-Status: Plan 1 complete — `police_complaints` (v57) + `PoliceStore` + 3 routes
-  (`POST /api/v1/police/complaint`, `.../complaint/:id/investigate`, `GET /api/v1/police/complaints`),
-  2 sole-producer events (`police.complaint_filed`, `police.investigation_opened`, DIDs hashed),
-  allowlist **123**, baselines re-pinned (state-doc-sync 123, relationship-graph-deps 891). NO punitive
-  power here — sanctions require Government conviction (Plan 2); no operator/Police-direct path (D-V3-18).
-Next action: Phase 47 Plan 2 (POL-03/04 — charges filed with Government court → conviction → execute-sanction)
+Status: Plans 1+2 complete. Plan 2 = `police_charges` + `police_sanctions` (v58) + `PoliceStore`
+  (fileCharges/getCharge/resolveCharge/recordSanction) + 3 routes: `POST /police/charge` (police),
+  `POST /police/charge/:id/convict` (**government_only** — the constitutional gate), `POST
+  /police/charge/:id/execute-sanction` (police, **only against a convicted charge**). 2 sole-producer
+  events (`police.charges_filed`, `police.sanction_executed`, DIDs hashed) — allowlist **125**, baselines
+  re-pinned (state-doc-sync 125, relationship-graph-deps 901). Sanction EFFECTS: freeze (markFrozen),
+  fine (→ treasury), warning/exile recorded. **Separation of powers is real: Police accuse + execute,
+  Government convicts; no operator/Police-direct sanction path (D-V3-18).** Grid: store 5 + route 16 tests,
+  broad regression 1842 green; tsc + did-policy-coverage + all gates + check-wiki clean.
+Next action: Phase 47 Plan 3 (POL-04 tail — `POST /api/v1/gov/appeal` + a CI gate making the
+  no-operator/Police-direct-sanction invariant executable)
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 

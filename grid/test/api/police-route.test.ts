@@ -20,14 +20,19 @@ const BOB = 'did:civic:noesis:bob';
 const LAW = '11111111-1111-4111-8111-111111111111';
 const aliceCtx = (): DIDContext => ({ did: ALICE, tier: 'civic_member' });
 
-function app(opts: { ctx?: DIDContext | null; rows?: unknown[] }): FastifyInstance {
+function app(opts: { ctx?: DIDContext | null; rows?: unknown[]; markFrozen?: ReturnType<typeof vi.fn> }): FastifyInstance {
     const pool = { query: vi.fn().mockResolvedValue([(opts.rows ?? []) as RowDataPacket[], {}]) } as unknown as Pool;
-    const services = { gridName: 'genesis', currentTick: () => 5, pool, audit: new AuditChain() } as unknown as GridServices;
+    const civicDidStore = { markFrozen: opts.markFrozen ?? vi.fn(async () => true) };
+    const services = { gridName: 'genesis', currentTick: () => 5, pool, audit: new AuditChain(), civicDidStore } as unknown as GridServices;
     const a = Fastify({ logger: false });
     if (opts.ctx !== undefined) a.addHook('onRequest', async (req) => { req.didContext = opts.ctx ?? undefined; });
     registerPoliceRoutes(a, services);
     return a;
 }
+const INV = '44444444-4444-4444-8444-444444444444';
+const CHG = '55555555-5555-4555-8555-555555555555';
+const govCtx = (): DIDContext => ({ did: 'did:gov:noesis:session', tier: 'government' });
+const convictedCharge = { charge_id: CHG, investigation_id: INV, accused_civic_did: BOB, alleged_law_id: LAW, recommended_sanction: 'freeze', status: 'convicted', gov_session_id: null };
 
 describe('POST /api/v1/police/complaint (POL-01)', () => {
     it('201 with a complaint_id for a valid complaint', async () => {
@@ -99,6 +104,64 @@ describe('GET /api/v1/police/complaints', () => {
         const a = app({ ctx: null });
         const res = await a.inject({ method: 'GET', url: '/api/v1/police/complaints' });
         expect(res.statusCode).toBe(401);
+        await a.close();
+    });
+});
+
+describe('POST /api/v1/police/charge (POL-03)', () => {
+    it('201 filing charges', async () => {
+        const a = app({ ctx: aliceCtx() });
+        const res = await a.inject({ method: 'POST', url: '/api/v1/police/charge', payload: { investigation_id: INV, accused_civic_did: BOB, alleged_law_id: LAW, recommended_sanction: 'freeze', evidence_event_ids: ['e1'] } });
+        expect(res.statusCode).toBe(201);
+        expect(res.json().charge_id).toMatch(/^[0-9a-f-]{36}$/i);
+        await a.close();
+    });
+    it('400 on an invalid recommended_sanction', async () => {
+        const a = app({ ctx: aliceCtx() });
+        const res = await a.inject({ method: 'POST', url: '/api/v1/police/charge', payload: { investigation_id: INV, accused_civic_did: BOB, alleged_law_id: LAW, recommended_sanction: 'execute' } });
+        expect(res.statusCode).toBe(400);
+        await a.close();
+    });
+});
+
+describe('POST /api/v1/police/charge/:id/convict (Government only)', () => {
+    const GS = '66666666-6666-4666-8666-666666666666';
+    it('Government convicts a filed charge', async () => {
+        const a = app({ ctx: govCtx(), rows: [{ charge_id: CHG, status: 'filed', accused_civic_did: BOB, recommended_sanction: 'freeze' }] });
+        const res = await a.inject({ method: 'POST', url: `/api/v1/police/charge/${CHG}/convict`, payload: { convicted: true, gov_session_id: GS } });
+        expect(res.statusCode).toBe(200);
+        expect(res.json().status).toBe('convicted');
+        await a.close();
+    });
+    it('403 when the caller is not Government (civic member cannot convict)', async () => {
+        const a = app({ ctx: aliceCtx(), rows: [{ charge_id: CHG, status: 'filed' }] });
+        const res = await a.inject({ method: 'POST', url: `/api/v1/police/charge/${CHG}/convict`, payload: { convicted: true, gov_session_id: GS } });
+        expect(res.statusCode).toBe(403);
+        await a.close();
+    });
+});
+
+describe('POST /api/v1/police/charge/:id/execute-sanction (POL-04)', () => {
+    it('🔒 403 no_conviction — a sanction CANNOT be executed without a Government conviction', async () => {
+        const a = app({ ctx: aliceCtx(), rows: [{ ...convictedCharge, status: 'filed' }] }); // not convicted
+        const res = await a.inject({ method: 'POST', url: `/api/v1/police/charge/${CHG}/execute-sanction`, payload: { sanction_type: 'freeze' } });
+        expect(res.statusCode).toBe(403);
+        expect(res.json().error).toBe('no_conviction');
+        await a.close();
+    });
+    it('201 executing a freeze on a convicted charge — and the accused DID is frozen', async () => {
+        const markFrozen = vi.fn(async () => true);
+        const a = app({ ctx: aliceCtx(), rows: [convictedCharge], markFrozen });
+        const res = await a.inject({ method: 'POST', url: `/api/v1/police/charge/${CHG}/execute-sanction`, payload: { sanction_type: 'freeze', duration_ticks: 1000 } });
+        expect(res.statusCode).toBe(201);
+        expect(res.json().sanction_type).toBe('freeze');
+        expect(markFrozen).toHaveBeenCalledWith('genesis', BOB, 5);
+        await a.close();
+    });
+    it('404 for an unknown charge', async () => {
+        const a = app({ ctx: aliceCtx(), rows: [] });
+        const res = await a.inject({ method: 'POST', url: `/api/v1/police/charge/${CHG}/execute-sanction`, payload: { sanction_type: 'warning' } });
+        expect(res.statusCode).toBe(404);
         await a.close();
     });
 });

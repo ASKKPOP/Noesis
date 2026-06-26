@@ -22,7 +22,7 @@
  */
 
 /** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42 + Phase 43 + Phase 44 + Phase 45 + Phase 46 + Phase 47) — 81 is the civic count through Phase 46; with the
- *  parallel Economic Reality Loop programs the array is 121, and Phase 47 (+2 police.*) → 123.
+ *  parallel Economic Reality Loop programs the array is 121, and Phase 47 (+4 police.*) → 125.
  *  Phase 42 (P2P-05 / D-42-07): +3 P2P audit events (allowlist 64 → 67).
  *   - p2p.peer_announced (65): closed 3-key {civic_did_hash, endpoint_hash, tick}.
  *     endpoint_hash = sha256('online') — static sentinel (no IP/port leakage per D-42-02).
@@ -545,6 +545,16 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   closed 4-key {complaint_id, dispute_id, investigation_id, tick} (exactly one source non-null)
     'police.complaint_filed',       // (122)
     'police.investigation_opened',  // (123)
+    // Phase 47 Plan 2 (POL-03/04) — charges + sanction execution. Allowlist 123 → 125.
+    // accused DID hashed; sanction params (duration/community/amount) stay in the DB.
+    // police.charges_filed (124): actorDid = charge_id.
+    //   sole-producer grid/src/audit/append-police-charges-filed.ts
+    //   closed 7-key {accused_did_hash, alleged_law_id, charge_id, evidence_summary_hash, investigation_id, recommended_sanction, tick}
+    // police.sanction_executed (125): actorDid = sanction_id. ONLY after a Government conviction.
+    //   sole-producer grid/src/audit/append-police-sanction-executed.ts
+    //   closed 5-key {accused_did_hash, charge_id, sanction_id, sanction_type, tick}
+    'police.charges_filed',         // (124)
+    'police.sanction_executed',     // (125)
 ] as const;
 
 /**
