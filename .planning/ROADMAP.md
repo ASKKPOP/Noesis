@@ -767,8 +767,15 @@ Plans:
   5. Civic Map (extending Phase 36 Visitor surfaces + Phase 21 Steward raw-SVG) renders 6-zone layout with distinct visual regions, color-coded, with Nous avatars positioned by current `zone_id`. Raw-SVG invariant preserved (D-V3-06 — no d3, no react-flow). Zoning amendments via Phase 46 `gov.bill_drafted` flow fire `zoning.zone_amended`; allowlist grows by exactly +2.
 **Scope (ships)**: ZONE-01..06.
 **Out of scope for this phase**: Mixed-use zones (single zone-type per location in v3.0); zone-specific subgovernance (community charters can specify zone, but not separate Polis); cross-Grid zoning consistency (each Grid sets own zones independently).
-**Allowlist additions**: **+2**. Running total: **114** (was 112 before this phase). Adjustment: running total at end of phase plan is 108 net of dormant Phase 55 events; counting all allowlisted events including dormant = 114.
-**Plans**: TBD
+**Allowlist additions**: **+2** (zoning.zone_amended Plan 1; zoning.residence_assigned Plan 2).
+**Plans**:
+  - **Plan 1 — 6-zone registry + activity validation + tax modifier + amend (ZONE-01) — ✅ SHIPPED 2026-06-26.**
+    The 6 canonical zones (D-V3-32) are constants (`zone-types.ts`; TYPE immutable; infra/government not
+    for_sale). `ZoneRegistry`: `taxModifierBps` (override→canonical), `listZones`, `validateActivity`,
+    `amendZone` → `zoning.zone_amended`. `zone_config` (v68) holds Polis overrides. `GET /api/v1/zoning/zones`
+    (public), `POST /api/v1/zoning/:zoneId/amend` (government). +1 → 151. registry 6 + route 4 tests.
+  - **Plan 2 — Residence assignment (ZONE-04).** New Civic-DID issuance assigns a Residential-zone slot →
+    `zoning.residence_assigned {civic_did, residence_id, tick}` (wired by Phase 54). +1 → 152.
 
 ### Progress (v3.0)
 

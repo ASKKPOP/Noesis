@@ -73,6 +73,9 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // Phase 53 Portal Grid Approval — requester (civic/operator) + reviewer panel (government).
     'POST /portal/api/v1/grid/request':              'civic_did_required',
     'POST /portal/api/v1/grid/:requestId/decision':  'government_only',
+    // Phase 57 Grid Zoning — public zone read; Polis-only amendment.
+    'GET /api/v1/zoning/zones':         'public',
+    'POST /api/v1/zoning/:zoneId/amend': 'government_only',
     'GET /api/v1/market/listings': 'public',
     'GET /api/v1/portal/discover': 'public', // spec §2 — public discovery of organizations + Houses feed
     'GET /api/v1/portal/grids': 'public', // spec §2 — public discovery of active Grids (multi-Grid framework)

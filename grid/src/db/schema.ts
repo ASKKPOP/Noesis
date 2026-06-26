@@ -1658,4 +1658,21 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS grid_creation_requests`,
     },
+    {
+        // Phase 57 Grid Zoning Plan 1 (ZONE-01) — per-zone tax-modifier amendments. The 6 zone
+        // TYPES are canonical constants (D-V3-32, immutable); this table holds only Polis-amended
+        // overrides. Plan 2 adds residence assignment.
+        version: 68,
+        name: 'create_zone_config',
+        up: `
+            CREATE TABLE IF NOT EXISTS zone_config (
+                grid_name        VARCHAR(63) NOT NULL,
+                zone_id          VARCHAR(32) NOT NULL,
+                tax_modifier_bps INT         NOT NULL,
+                amended_tick     BIGINT      NOT NULL,
+                PRIMARY KEY (grid_name, zone_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS zone_config`,
+    },
 ];

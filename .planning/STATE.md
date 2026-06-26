@@ -26,6 +26,15 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
+Phase: 57 (Grid Zoning System) — Plan 1 SHIPPED 2026-06-26 (6-zone registry + Polis amend, allowlist 150→151)
+Plan: 1 of 2 (ZONE-01). The **6 canonical zones** (D-V3-32 — business·manufacture·shopping·residential·
+  infrastructure·government_quarter) are constants in `zone-types.ts` (TYPE immutable; infra/government not
+  for_sale). `ZoneRegistry`: `taxModifierBps` (override→canonical), `listZones`, `validateActivity` (e.g.
+  marketplace_listing only in business/shopping), `amendZone` → `zoning.zone_amended`. `zone_config` (v68) holds
+  Polis tax-modifier overrides. Routes: `GET /api/v1/zoning/zones` (public), `POST /api/v1/zoning/:zoneId/amend`
+  (government). 1 event → allowlist 151. registry 6 + route 4. Plan 2 = residence assignment (zoning.residence_
+  assigned, +1 → 152) which Phase 54 wires on issuance.
+
 Phase: 53 (Portal Grid Approval Workflow) — ✅ COMPLETE 2026-06-26 (PORTAL-02/03; allowlist 147→150)
   `grid_creation_requests` (v67) + `GridApprovalStore` (request / decide). Routes: `POST /portal/api/v1/grid/
   request` (civic/operator → `portal.grid_creation_requested`), `.../:id/decision` (government reviewer panel →
