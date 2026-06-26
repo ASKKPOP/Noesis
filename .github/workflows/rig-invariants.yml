@@ -57,6 +57,9 @@ jobs:
       - name: POL-05 no operator-direct sanction path (Phase 47 D-V3-18)
         run: node scripts/check-no-operator-sanction-path.mjs
 
+      - name: TYPE-B-04 no bios.death from treasury exhaustion (Phase 45b D-V3-25)
+        run: node scripts/check-treasury-no-bios-death.mjs
+
       - name: Fast Vitest rig suite (Wave 0/1/2 — NOESIS_RUN_NIGHTLY unset, rig-bench skips)
         working-directory: grid
         run: |

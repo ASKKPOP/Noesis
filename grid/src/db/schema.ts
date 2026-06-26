@@ -1589,4 +1589,25 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS mobility_records`,
     },
+    {
+        // Phase 45b Treasury Operations Plan 1 (TYPE-B-03/04) — per-Type-B Bios treasury.
+        // Foundation endows at birth (~12mo runway); exhaustion → dormancy (Brain stops,
+        // identity preserved indefinitely — NEVER bios.death, D-V3-25 / PHILOSOPHY §9);
+        // donation/grant above the revival threshold → revived. Plan 2 adds stipend + low-power.
+        version: 65,
+        name: 'create_type_b_treasury',
+        up: `
+            CREATE TABLE IF NOT EXISTS type_b_treasury (
+                grid_name     VARCHAR(63)  NOT NULL,
+                type_b_did    VARCHAR(255) NOT NULL,
+                bios_balance  BIGINT       NOT NULL DEFAULT 0,
+                runway_months INT          NOT NULL DEFAULT 12,
+                status        ENUM('active','low_power','dormant') NOT NULL DEFAULT 'active',
+                endowed_tick  BIGINT       NOT NULL,
+                PRIMARY KEY (grid_name, type_b_did),
+                INDEX idx_type_b_treasury_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS type_b_treasury`,
+    },
 ];

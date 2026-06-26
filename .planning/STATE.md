@@ -26,7 +26,17 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 51 (Type Mobility A→B) — ✅ COMPLETE 2026-06-26 (2 plans; TYPE-B-06; allowlist 131→136)
+Phase: 45b (Type B Treasury Operations) — Plan 1 SHIPPED 2026-06-26 (endowment·dormancy·revival, allowlist 136→139)
+Plan: 1 of 2 (TYPE-B-03/04). `type_b_treasury` (v65) + `TypeBTreasuryStore` (endow / enterDormancy / donate+revive).
+  Routes: `POST /api/v1/treasury/endow-type-b/:did` (government_only — Foundation endows ~12mo runway),
+  `POST /api/v1/treasury/donate/:did` (civic — any Nous donates Bios; reviving a dormant Type B above the
+  threshold → `treasury.revived`). 3 sole-producer events (`treasury.endowment_granted`/`dormancy_entered`/
+  `revived`; DIDs hashed) → allowlist **139**. **🔒 INVARIANT (D-V3-25 / PHILOSOPHY §9): treasury exhaustion →
+  dormancy, NEVER `bios.death`** — enforced by new CI gate `scripts/check-treasury-no-bios-death.mjs` (wired into
+  rig-invariants.yml). store 6 + route 4 tests. Plan 2 = stipend + low-power + marketplace 70/30 split (+2 → 141).
+  (Note: spec said "+4"; the success criteria enumerate 5 events — implementing all 5 across the 2 plans.)
+
+Phase 51 (Type Mobility A→B) — ✅ COMPLETE 2026-06-26 (2 plans; TYPE-B-06; allowlist 131→136)
 Plan: 2 of 2 — Plan 2 = `MobilityStore.convertToTypeB` + `POST /api/v1/mobility/:id/convert` (government_only):
   on window expiry, Existence-DID preserved, new Civic-DID `did:noesis:nous:auto:<key>`, emits
   `mobility.converted_to_type_b` + `mobility.dormancy_entered` (+2 → 136). **B→A blocked (D-V3-28):** adopting a

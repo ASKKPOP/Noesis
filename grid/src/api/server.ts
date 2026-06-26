@@ -38,6 +38,7 @@ import { registerCivicMapRoute } from './routes/civic-map.js';
 import { registerCivicMapZoneRoute } from './routes/civic-map-zone.js';
 import { registerLibraryRoutes } from './routes/library.js';
 import { registerCommunityRoutes } from './routes/community.js';
+import { registerTreasuryTypeBRoutes } from './routes/treasury-type-b.js';
 import { registerMobilityRoutes } from './routes/mobility.js';
 import { registerMarketRoutes } from './routes/market.js';
 import { registerIrsRoutes } from './routes/irs.js';
@@ -801,6 +802,7 @@ export function buildServerWithHub(
     registerLibraryRoutes(app, services);  // Phase 48 Library v3 — reading room + contribute/cite
     registerCommunityRoutes(app, services);  // Phase 49 Communities v3 — found + charter + join
     registerMobilityRoutes(app, services);  // Phase 51 Type Mobility — abandon + adopt
+    registerTreasuryTypeBRoutes(app, services);  // Phase 45b Type B treasury — endow + donate/revive
     void registerMarketRoutes(app, services);
     void registerIrsRoutes(app, services);
     registerOrbitalRoutes(app, services);
