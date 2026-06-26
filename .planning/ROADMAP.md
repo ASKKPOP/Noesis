@@ -743,8 +743,14 @@ producers; per the 2026-06-26 fork decision the NOUS track ships dedicated nous.
   5. CI gate verifies cross-Grid endpoints return `503 not_yet_active` in v3.0; activation requires explicit flag flip at v3.1 milestone open. Sole-producer file for `portal.cross_grid_action_mediated` exists but unreachable in v3.0.
 **Scope (ships)**: PORTAL-06. Cross-Grid framework (dormant). Two new audit events allowlisted but dormant.
 **Out of scope for this phase**: Active cross-Grid trades (v3.1+); cross-Grid civic migration (v3.1+); cross-Grid disputes (v3.1+).
-**Allowlist additions**: **+2** (allowlisted but dormant in v3.0). Running total: **112**.
-**Plans**: TBD
+**Allowlist additions**: **+2** (allowlisted but DORMANT in v3.0).
+**Plans**:
+  - **Single plan — Cross-Grid framework, dormant (PORTAL-06) — ✅ SHIPPED 2026-06-26.** Read endpoints
+    (`/portal/api/v1/nous/:account/grids`, `/identity/:existence`, `/audit/cross-grid`) return at most [Genesis];
+    `POST /portal/api/v1/cross-grid/marketplace/quote` → **503 not_yet_active**. 2 events
+    (`portal.cross_grid_action_mediated`/`identity_linked`) allowlisted but dormant — sole-producers exist (v3.1
+    contract surface) but UNREACHABLE. CI gate `scripts/check-cross-grid-dormant.mjs` (in rig-invariants.yml)
+    enforces producers-unimported + the 503 stub. +2 → 157. route 4 + dormant-producer 3 tests.
 
 ### Phase 56: Portal User Service UI (multi-Grid view)
 **Goal**: Build user-facing Portal UI accessible at `https://portal.noesis/<account>`. Renders account profile, list of joined Grids with per-Grid Civic-DID, Wallet balance (cross-Grid), pending registrations, Portal settings. Complementary to Steward Console (per-Grid operator tool).

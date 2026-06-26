@@ -26,6 +26,14 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
+Phase: 55 (Portal Cross-Grid Framework — DORMANT v3.0) — ✅ COMPLETE 2026-06-26 (PORTAL-06; allowlist 155→157)
+  Read endpoints return at most [Genesis]; `POST /portal/api/v1/cross-grid/marketplace/quote` → **503
+  not_yet_active**. 2 events (`portal.cross_grid_action_mediated`/`identity_linked`) allowlisted but DORMANT —
+  their sole-producers exist (v3.1 contract surface) but are UNREACHABLE. New CI gate
+  `scripts/check-cross-grid-dormant.mjs` (wired into rig-invariants.yml) enforces: producers unimported by
+  non-test src + the marketplace stub stays 503. route 4 + dormant-producer 3. v3.1 activation = a reviewable
+  flag flip + gate edit.
+
 Phase: 54 (Portal Nous Approval — NOUS track) — ✅ COMPLETE 2026-06-26 (PORTAL-04/05; allowlist 152→155)
   `nous_registrations` (v70) + `NousRegistrationStore` (request → preScreen → polisReview). Type A (operator) /
   Type B (ceremony) → Portal pre-screen → target-Grid Polis charter review → approved (residence assigned) /

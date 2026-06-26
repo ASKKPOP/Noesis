@@ -23,7 +23,7 @@
 
 /** Locked allowlist (v1 + Phase 5 + Phase 6 + Phase 7 + Phase 8 + Phase 10a + Phase 10b + Phase 11 + Phase 12 + Phase 13 + Phase 15 + Phase 16 + Phase 17 + Phase 18 + Phase 19 + Phase 25b + Phase 27 + Phase 28 + Phase 33 + Phase 36 + Phase 37 + Phase 42 + Phase 43 + Phase 44 + Phase 45 + Phase 46 + Phase 47) — 81 is the civic count through Phase 46; with the
  *  parallel Economic Reality Loop programs the array is 121, Phase 47 (+4 police.*) → 125, and
- *  Phase 48 (+2 library.*) → 127, and Phase 49 (+4 community.*) → 131, Phase 51 (+5 mobility.*) → 136, Phase 45b (+5 treasury.*) → 141, Phase 37b (+6) → 147, Phase 53 (+3) → 150, Phase 57 (+2) → 152, Phase 54 (+3 nous.registration_*) → 155.
+ *  Phase 48 (+2 library.*) → 127, and Phase 49 (+4 community.*) → 131, Phase 51 (+5 mobility.*) → 136, Phase 45b (+5 treasury.*) → 141, Phase 37b (+6) → 147, Phase 53 (+3) → 150, Phase 57 (+2) → 152, Phase 54 (+3) → 155, Phase 55 (+2 portal.cross_grid_* DORMANT) → 157.
  *  Phase 42 (P2P-05 / D-42-07): +3 P2P audit events (allowlist 64 → 67).
  *   - p2p.peer_announced (65): closed 3-key {civic_did_hash, endpoint_hash, tick}.
  *     endpoint_hash = sha256('online') — static sentinel (no IP/port leakage per D-42-02).
@@ -699,6 +699,17 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     'nous.registration_requested',     // (153)
     'nous.registration_approved',      // (154)
     'nous.registration_rejected',      // (155)
+    // Phase 55 (PORTAL-06) — Cross-Grid Framework. Allowlist 155 → 157. DORMANT in v3.0: both
+    // events are allowlisted but their sole-producers are UNREACHABLE while only Genesis is
+    // active (check-cross-grid-dormant.mjs enforces). DIDs hashed.
+    // portal.cross_grid_action_mediated (156): actorDid = account_did_hash.
+    //   sole-producer grid/src/audit/append-portal-cross-grid-action-mediated.ts
+    //   closed 5-key {account_did_hash, action_id, source_grid, target_grid, tick}
+    // portal.cross_grid_identity_linked (157): actorDid = account_did_hash.
+    //   sole-producer grid/src/audit/append-portal-cross-grid-identity-linked.ts
+    //   closed 4-key {account_did_hash, civic_did_hash, grid_name, tick}
+    'portal.cross_grid_action_mediated',   // (156)
+    'portal.cross_grid_identity_linked',   // (157)
 ] as const;
 
 /**

@@ -81,6 +81,11 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /portal/api/v1/nous/request':              'civic_did_required',
     'POST /portal/api/v1/nous/:requestId/prescreen': 'government_only',
     'POST /api/v1/gov/charter/review/:requestId':    'government_only',
+    // Phase 55 Portal Cross-Grid (dormant v3.0) — identity reads public; account views civic.
+    'GET /portal/api/v1/nous/:accountDid/grids':       'civic_did_required',
+    'GET /portal/api/v1/identity/:existenceDid':       'public',
+    'POST /portal/api/v1/cross-grid/marketplace/quote':'public',
+    'GET /portal/api/v1/audit/cross-grid':             'civic_did_required',
     'GET /api/v1/market/listings': 'public',
     'GET /api/v1/portal/discover': 'public', // spec §2 — public discovery of organizations + Houses feed
     'GET /api/v1/portal/grids': 'public', // spec §2 — public discovery of active Grids (multi-Grid framework)

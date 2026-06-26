@@ -60,6 +60,9 @@ jobs:
       - name: TYPE-B-04 no bios.death from treasury exhaustion (Phase 45b D-V3-25)
         run: node scripts/check-treasury-no-bios-death.mjs
 
+      - name: PORTAL-06 cross-Grid framework stays dormant in v3.0 (Phase 55)
+        run: node scripts/check-cross-grid-dormant.mjs
+
       - name: Fast Vitest rig suite (Wave 0/1/2 — NOESIS_RUN_NIGHTLY unset, rig-bench skips)
         working-directory: grid
         run: |

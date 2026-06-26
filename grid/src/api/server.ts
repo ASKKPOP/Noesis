@@ -43,6 +43,7 @@ import { registerRegistryTypeBRoutes } from './routes/registry-type-b.js';
 import { registerPortalGridApprovalRoutes } from './routes/portal-grid-approval.js';
 import { registerZoningRoutes } from './routes/zoning.js';
 import { registerPortalNousApprovalRoutes } from './routes/portal-nous-approval.js';
+import { registerPortalCrossGridRoutes } from './routes/portal-cross-grid.js';
 import { registerMobilityRoutes } from './routes/mobility.js';
 import { registerMarketRoutes } from './routes/market.js';
 import { registerIrsRoutes } from './routes/irs.js';
@@ -811,6 +812,7 @@ export function buildServerWithHub(
     registerPortalGridApprovalRoutes(app, services);  // Phase 53 Portal Grid Approval Workflow
     registerZoningRoutes(app, services);  // Phase 57 Grid Zoning — 6 zones + Polis amend
     registerPortalNousApprovalRoutes(app, services);  // Phase 54 Portal Nous Approval (nous track)
+    registerPortalCrossGridRoutes(app, services);  // Phase 55 Portal Cross-Grid (dormant in v3.0)
     void registerMarketRoutes(app, services);
     void registerIrsRoutes(app, services);
     registerOrbitalRoutes(app, services);

@@ -63,7 +63,7 @@ const TARGETS = [
 //          2026-06-25 = 891: Phase 47 Police v3 (+2: police.complaint_filed, police.investigation_opened)
 //          + comment block (allowlist 121 → 123) — re-pinned via the same sanctioned mechanism.
 const ALLOWLIST_FILE = resolve(repoRoot, 'grid/src/audit/broadcast-allowlist.ts');
-const ALLOWLIST_BASELINE_LINES = 1045;
+const ALLOWLIST_BASELINE_LINES = 1056;
 
 let hadError = false;
 
