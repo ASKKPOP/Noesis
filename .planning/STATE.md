@@ -26,6 +26,15 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
+Phase: 54 (Portal Nous Approval — NOUS track) — ✅ COMPLETE 2026-06-26 (PORTAL-04/05; allowlist 152→155)
+  `nous_registrations` (v70) + `NousRegistrationStore` (request → preScreen → polisReview). Type A (operator) /
+  Type B (ceremony) → Portal pre-screen → target-Grid Polis charter review → approved (residence assigned) /
+  rejected (closed-enum). Routes: `POST /portal/api/v1/nous/request` (civic), `.../:id/prescreen` (government),
+  `POST /api/v1/gov/charter/review/:id` (Polis). **Fork decision (user 2026-06-26): dedicated nous.registration_*
+  events** (the human-track portal.registration_* producers are hard-bound to `did:noesis:human:`). Reuses
+  `polis.registration_pending` (generic) + `zoning.residence_assigned` (Phase 57) on approval. 3 events →
+  allowlist 155. store 6 + route 8.
+
 Phase: 57 (Grid Zoning System) — ✅ COMPLETE 2026-06-26 (2 plans; ZONE-01/04; allowlist 150→152)
 Plan 2: `residence_assignments` (v69) + `ResidenceStore.assignResidence` (deterministic `res-<hash>` in the
   Residential zone → `zoning.residence_assigned`) + `POST /api/v1/zoning/residence/assign` (government). Phase 54

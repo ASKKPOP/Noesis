@@ -1692,4 +1692,26 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS residence_assignments`,
     },
+    {
+        // Phase 54 Portal Nous Approval Workflow (NOUS track, PORTAL-04/05) — registration
+        // requests. Type A (operator) / Type B (ceremony) → Portal pre-screen → target-Grid Polis
+        // charter review → approved (Civic-DID + residence) / rejected (closed-enum reason).
+        version: 70,
+        name: 'create_nous_registrations',
+        up: `
+            CREATE TABLE IF NOT EXISTS nous_registrations (
+                request_id    VARCHAR(64)  NOT NULL,
+                nous_type     ENUM('A','B') NOT NULL,
+                registrant_did VARCHAR(255) NOT NULL,
+                nous_did      VARCHAR(255) NOT NULL,
+                target_grid   VARCHAR(63)  NOT NULL,
+                status        ENUM('requested','polis_pending','approved','rejected') NOT NULL DEFAULT 'requested',
+                reason_code   VARCHAR(32)  NULL,
+                filed_tick    BIGINT       NOT NULL,
+                PRIMARY KEY (request_id),
+                INDEX idx_nous_reg_status (target_grid, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS nous_registrations`,
+    },
 ];

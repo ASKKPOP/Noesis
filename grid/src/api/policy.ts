@@ -77,6 +77,10 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/zoning/zones':         'public',
     'POST /api/v1/zoning/:zoneId/amend': 'government_only',
     'POST /api/v1/zoning/residence/assign': 'government_only',
+    // Phase 54 Portal Nous Approval (nous track) — request (civic/operator), pre-screen + Polis review (government).
+    'POST /portal/api/v1/nous/request':              'civic_did_required',
+    'POST /portal/api/v1/nous/:requestId/prescreen': 'government_only',
+    'POST /api/v1/gov/charter/review/:requestId':    'government_only',
     'GET /api/v1/market/listings': 'public',
     'GET /api/v1/portal/discover': 'public', // spec §2 — public discovery of organizations + Houses feed
     'GET /api/v1/portal/grids': 'public', // spec §2 — public discovery of active Grids (multi-Grid framework)

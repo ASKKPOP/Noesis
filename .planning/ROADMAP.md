@@ -718,8 +718,16 @@ Plans:
   5. Sole-producer files emit 2 new audit events on Portal side: `portal.registration_approved`, `portal.registration_rejected` (request and pending are existing); allowlist grows by exactly +2 (+1 from `portal.registration_requested` is part of Phase 52).
 **Scope (ships)**: PORTAL-04, PORTAL-05. Portal-gated registration for both Type A and Type B.
 **Out of scope for this phase**: Cross-Grid registration (v3.1+); bulk Migration registration (Phase 50 has its own flow).
-**Allowlist additions**: **+2**. Running total: **110**.
-**Plans**: TBD
+**Allowlist additions**: **+3** (the +2 in the spec assumed reuse of the human-bound portal.registration_*
+producers; per the 2026-06-26 fork decision the NOUS track ships dedicated nous.registration_* events instead).
+**Plans**:
+  - **Single plan — Nous registration pipeline (PORTAL-04/05) — ✅ SHIPPED 2026-06-26.** `nous_registrations`
+    (v70) + `NousRegistrationStore` (request → preScreen → polisReview). Type A (operator) / Type B (ceremony) →
+    Portal pre-screen → target-Grid Polis charter review → approved (residence assigned) / rejected (closed-enum).
+    `POST /portal/api/v1/nous/request` (civic), `.../:id/prescreen` (government), `POST /api/v1/gov/charter/
+    review/:id` (Polis). Dedicated `nous.registration_requested/approved/rejected` (the human-track
+    portal.registration_* producers are hard-bound to did:noesis:human:); reuses `polis.registration_pending` +
+    `zoning.residence_assigned` on approval. +3 → 155. store 6 + route 8 tests.
 
 #### Wave 2 — Portal Cross-Grid + User UI
 
