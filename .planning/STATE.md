@@ -26,7 +26,10 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 45b (Type B Treasury Operations) — Plan 1 SHIPPED 2026-06-26 (endowment·dormancy·revival, allowlist 136→139)
+Phase: 45b (Type B Treasury Operations) — ✅ COMPLETE 2026-06-26 (2 plans; TYPE-B-03/04; allowlist 136→141)
+Plan 2: `payStipend` (daily compute deduction → `treasury.stipend_paid`; exhaustion → dormancy; runway < 3mo →
+  low-power + `treasury.low_power_entered`) + `applyTypeBEarning` (70/30 split, `splitTypeBEarning`) +
+  `POST /api/v1/treasury/stipend/:did` (government_only). 5 treasury.* events total. store 10 + route 6 tests.
 Plan: 1 of 2 (TYPE-B-03/04). `type_b_treasury` (v65) + `TypeBTreasuryStore` (endow / enterDormancy / donate+revive).
   Routes: `POST /api/v1/treasury/endow-type-b/:did` (government_only — Foundation endows ~12mo runway),
   `POST /api/v1/treasury/donate/:did` (civic — any Nous donates Bios; reviving a dormant Type B above the

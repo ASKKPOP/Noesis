@@ -10,7 +10,9 @@ import type { AuditChain } from '../audit/chain.js';
 import { appendTreasuryEndowmentGranted } from '../audit/append-treasury-endowment-granted.js';
 import { appendTreasuryDormancyEntered } from '../audit/append-treasury-dormancy-entered.js';
 import { appendTreasuryRevived } from '../audit/append-treasury-revived.js';
-import { ENDOWMENT_RUNWAY_MONTHS, REVIVAL_THRESHOLD_BIOS } from './types.js';
+import { appendTreasuryStipendPaid } from '../audit/append-treasury-stipend-paid.js';
+import { appendTreasuryLowPowerEntered } from '../audit/append-treasury-low-power-entered.js';
+import { ENDOWMENT_RUNWAY_MONTHS, REVIVAL_THRESHOLD_BIOS, LOW_POWER_THRESHOLD_MONTHS, splitTypeBEarning } from './types.js';
 
 const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
 
@@ -60,5 +62,39 @@ export class TypeBTreasuryStore {
         );
         if (revived) appendTreasuryRevived(this.audit, { tick: p.tick, type_b_did_hash: sha256Hex(p.typeBDid) });
         return { balance, revived };
+    }
+
+    /** Deduct the daily infrastructure (compute) stipend. Always emits treasury.stipend_paid.
+     *  Exhaustion (≤0) → dormancy; runway below the low-power threshold → low-power mode. NEVER
+     *  bios.death (D-V3-25). Returns the new balance + resulting status. */
+    async payStipend(p: { gridName: string; typeBDid: string; stipendAmount: number; tick: number }): Promise<{ balance: number; status: 'active' | 'low_power' | 'dormant' } | null> {
+        const before = await this.get(p.gridName, p.typeBDid);
+        if (!before) return null;
+        const balance = Math.max(0, before.bios_balance - p.stipendAmount);
+        const hash = sha256Hex(p.typeBDid);
+        appendTreasuryStipendPaid(this.audit, { stipend_amount: p.stipendAmount, tick: p.tick, type_b_did_hash: hash });
+
+        if (balance <= 0) {
+            await this.pool.query(`UPDATE type_b_treasury SET bios_balance = 0, status = 'dormant' WHERE grid_name = ? AND type_b_did = ?`, [p.gridName, p.typeBDid]);
+            appendTreasuryDormancyEntered(this.audit, { tick: p.tick, type_b_did_hash: hash });
+            return { balance: 0, status: 'dormant' };
+        }
+        // monthly burn ≈ daily stipend × 30; low-power when runway dips under the threshold.
+        const lowPower = balance < LOW_POWER_THRESHOLD_MONTHS * p.stipendAmount * 30;
+        const status: 'active' | 'low_power' = lowPower ? 'low_power' : 'active';
+        await this.pool.query(`UPDATE type_b_treasury SET bios_balance = ?, status = ? WHERE grid_name = ? AND type_b_did = ?`, [balance, status, p.gridName, p.typeBDid]);
+        // Emit the transition only when first crossing from active → low-power.
+        if (lowPower && before.status === 'active') appendTreasuryLowPowerEntered(this.audit, { tick: p.tick, type_b_did_hash: hash });
+        return { balance, status };
+    }
+
+    /** Apply a gross Type B marketplace earning: 70% credited to the Type B treasury, 30% is the
+     *  Genesis IRS cut (D-V3-25). Returns the split; the caller settles the IRS cut to treasury. */
+    async applyTypeBEarning(p: { gridName: string; typeBDid: string; gross: number; tick: number }): Promise<{ typeBShare: number; irsShare: number } | null> {
+        const before = await this.get(p.gridName, p.typeBDid);
+        if (!before) return null;
+        const { typeBShare, irsShare } = splitTypeBEarning(p.gross);
+        await this.pool.query(`UPDATE type_b_treasury SET bios_balance = bios_balance + ? WHERE grid_name = ? AND type_b_did = ?`, [typeBShare, p.gridName, p.typeBDid]);
+        return { typeBShare, irsShare };
     }
 }

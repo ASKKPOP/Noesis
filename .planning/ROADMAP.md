@@ -633,9 +633,14 @@ Plans:
     threshold). 3 sole-producer events (`treasury.endowment_granted`/`dormancy_entered`/`revived`; DIDs hashed) →
     allowlist 136→139. **CI gate `scripts/check-treasury-no-bios-death.mjs`** (wired into rig-invariants.yml)
     enforces D-V3-25 / PHILOSOPHY §9: exhaustion → dormancy, never `bios.death`. store 6 + route 4 tests.
-  - **Plan 2 — Stipend + low-power + marketplace 70/30 split (TYPE-B-03).** Daily compute stipend deduction,
-    `treasury.stipend_paid`; below 3-month runway → `treasury.low_power_entered` + low-power mode; Type B
-    marketplace earnings split 70% Type B / 30% Genesis IRS. +2 → 141.
+  - **Plan 2 — Stipend + low-power + marketplace 70/30 split (TYPE-B-03) — ✅ SHIPPED 2026-06-26.**
+    `payStipend` (daily compute deduction → `treasury.stipend_paid`; exhaustion → dormancy; runway < 3mo →
+    `treasury.low_power_entered` + low-power) + `applyTypeBEarning` (70/30 split via `splitTypeBEarning`) +
+    `POST /api/v1/treasury/stipend/:did` (government_only). +2 → 141. store 10 + route 6 tests.
+
+  **Phase 45b COMPLETE (2/2, 2026-06-26)** — Type B funding lifecycle: endow → stipend → low-power → dormancy
+  (never death) → revive, + 70/30 marketplace split. 5 treasury.* events; the no-bios-death CI gate enforces
+  D-V3-25.
 
 #### Wave 1 Foundations — Portal Infrastructure (parallel with Grid work)
 

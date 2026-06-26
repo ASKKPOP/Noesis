@@ -31,6 +31,23 @@ export function registerTreasuryTypeBRoutes(app: FastifyInstance, services: Grid
         },
     );
 
+    // Daily compute stipend (a system/Foundation deduction). Exhaustion → dormancy; runway below
+    // the low-power threshold → low-power mode. Never kills (D-V3-25).
+    app.post<{ Params: { typeBDid: string }; Body: { stipend_amount?: unknown } }>(
+        '/api/v1/treasury/stipend/:typeBDid',
+        async (req, reply) => {
+            if (req.didContext?.tier !== 'government') return reply.code(403).send({ error: 'government_required' });
+            const pool = services.pool; const audit = services.audit;
+            if (!pool || !audit) return reply.code(503).send({ error: 'treasury_unavailable' });
+            if (!TYPE_B_DID_RE.test(req.params.typeBDid)) return reply.code(404).send({ error: 'unknown_nous' });
+            const amount = typeof req.body?.stipend_amount === 'number' ? Math.floor(req.body.stipend_amount) : NaN;
+            if (!Number.isInteger(amount) || amount <= 0) return reply.code(400).send({ error: 'invalid_amount' });
+            const result = await new TypeBTreasuryStore(pool, audit).payStipend({ gridName: grid, typeBDid: req.params.typeBDid, stipendAmount: amount, tick: tick() });
+            if (!result) return reply.code(404).send({ error: 'no_treasury' });
+            return reply.code(200).send({ type_b_did: req.params.typeBDid, balance: result.balance, status: result.status });
+        },
+    );
+
     app.post<{ Params: { typeBDid: string }; Body: { amount?: unknown } }>(
         '/api/v1/treasury/donate/:typeBDid',
         async (req, reply) => {

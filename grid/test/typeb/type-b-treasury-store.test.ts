@@ -50,3 +50,35 @@ describe('TypeBTreasuryStore.donate', () => {
         expect(await new TypeBTreasuryStore(pool([]), new AuditChain()).donate({ gridName: 'genesis', typeBDid: DID, amount: 100, tick: 1 })).toBeNull();
     });
 });
+
+describe('TypeBTreasuryStore.payStipend (Plan 2)', () => {
+    it('comfortable balance → stays active, only treasury.stipend_paid', async () => {
+        const p = pool([{ bios_balance: 1_000_000, status: 'active', runway_months: 12 }]); const audit = new AuditChain();
+        const r = await new TypeBTreasuryStore(p, audit).payStipend({ gridName: 'genesis', typeBDid: DID, stipendAmount: 100, tick: 7 });
+        expect(r).toEqual({ balance: 999_900, status: 'active' });
+        expect(audit.query({ eventType: 'treasury.stipend_paid' })).toHaveLength(1);
+        expect(audit.query({ eventType: 'treasury.low_power_entered' })).toHaveLength(0);
+    });
+    it('runway below threshold → low_power + treasury.low_power_entered (once, on crossing)', async () => {
+        // 3 months × 100/day × 30 = 9000 threshold; balance 5000 is under it.
+        const p = pool([{ bios_balance: 5000, status: 'active', runway_months: 12 }]); const audit = new AuditChain();
+        const r = await new TypeBTreasuryStore(p, audit).payStipend({ gridName: 'genesis', typeBDid: DID, stipendAmount: 100, tick: 7 });
+        expect(r?.status).toBe('low_power');
+        expect(audit.query({ eventType: 'treasury.low_power_entered' })).toHaveLength(1);
+    });
+    it('exhaustion → dormancy (treasury.dormancy_entered) and NEVER bios.death', async () => {
+        const p = pool([{ bios_balance: 50, status: 'low_power', runway_months: 12 }]); const audit = new AuditChain();
+        const r = await new TypeBTreasuryStore(p, audit).payStipend({ gridName: 'genesis', typeBDid: DID, stipendAmount: 100, tick: 7 });
+        expect(r).toEqual({ balance: 0, status: 'dormant' });
+        expect(audit.query({ eventType: 'treasury.dormancy_entered' })).toHaveLength(1);
+        expect(audit.query({ eventType: 'bios.death' })).toHaveLength(0);
+    });
+});
+
+describe('TypeBTreasuryStore.applyTypeBEarning (Plan 2)', () => {
+    it('splits a gross earning 70/30 and credits the Type B share', async () => {
+        const r = await new TypeBTreasuryStore(pool([{ bios_balance: 100, status: 'active', runway_months: 12 }]), new AuditChain())
+            .applyTypeBEarning({ gridName: 'genesis', typeBDid: DID, gross: 1000, tick: 7 });
+        expect(r).toEqual({ typeBShare: 700, irsShare: 300 });
+    });
+});

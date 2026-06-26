@@ -44,6 +44,22 @@ describe('POST /api/v1/treasury/endow-type-b/:typeBDid (government_only)', () =>
     });
 });
 
+describe('POST /api/v1/treasury/stipend/:typeBDid (government_only)', () => {
+    it('200 deducting the daily stipend', async () => {
+        const a = app([{ bios_balance: 1_000_000, status: 'active', runway_months: 12 }], GOV);
+        const res = await a.inject({ method: 'POST', url: `/api/v1/treasury/stipend/${DID}`, payload: { stipend_amount: 100 } });
+        expect(res.statusCode).toBe(200);
+        expect(res.json().status).toBe('active');
+        await a.close();
+    });
+    it('403 for a non-Government caller', async () => {
+        const a = app([], CIVIC);
+        const res = await a.inject({ method: 'POST', url: `/api/v1/treasury/stipend/${DID}`, payload: { stipend_amount: 100 } });
+        expect(res.statusCode).toBe(403);
+        await a.close();
+    });
+});
+
 describe('POST /api/v1/treasury/donate/:typeBDid', () => {
     it('201 donating to (and reviving) a dormant Type B', async () => {
         const a = app([{ bios_balance: 0, status: 'dormant', runway_months: 12 }], CIVIC);

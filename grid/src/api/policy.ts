@@ -59,6 +59,7 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/mobility/:nousId/convert': 'government_only',
     // Phase 45b Type B treasury — Foundation endows; any civic member may donate Bios.
     'POST /api/v1/treasury/endow-type-b/:typeBDid': 'government_only',
+    'POST /api/v1/treasury/stipend/:typeBDid':      'government_only',
     'POST /api/v1/treasury/donate/:typeBDid':       'civic_did_required',
     'GET /api/v1/market/listings': 'public',
     'GET /api/v1/portal/discover': 'public', // spec §2 — public discovery of organizations + Houses feed

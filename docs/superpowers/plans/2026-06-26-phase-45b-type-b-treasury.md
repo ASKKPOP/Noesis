@@ -23,7 +23,13 @@ split across the 2 plans (documented deviation, recorded in STATE + commit).
 - 3 events (DIDs hashed) → allowlist 136 → 139; baseline gates + test-counts re-pinned. store 6 + route 4 tests;
   broad regression 1555 green.
 
-### Plan 2 — Stipend + low-power + marketplace 70/30 split (TYPE-B-03) — next
-- Daily compute-cost stipend deduction (`treasury.stipend_paid`); below 3-month runway →
-  `treasury.low_power_entered` + low-power mode (Phase 40b reduces tick rate); Type B marketplace earnings split
-  70% Type B treasury / 30% Genesis IRS. +2 → 141.
+### Plan 2 — Stipend + low-power + marketplace 70/30 split (TYPE-B-03) — ✅ SHIPPED 2026-06-26
+- `payStipend` (daily compute deduction → `treasury.stipend_paid`; exhaustion → dormancy; runway < 3 months →
+  `treasury.low_power_entered` + low-power, emitted once on crossing) + `applyTypeBEarning` (70/30 split via
+  `splitTypeBEarning`) + `POST /api/v1/treasury/stipend/:did` (government_only).
+- +2 → 141. store 10 + route 6 tests; broad regression 1562 green.
+
+## Phase 45b COMPLETE (2/2) — 2026-06-26
+Type B funding lifecycle: endow → stipend → low-power → dormancy (**never death**) → revive, plus the 70/30
+marketplace earnings split. 5 `treasury.*` events; `check-treasury-no-bios-death.mjs` enforces D-V3-25 /
+PHILOSOPHY §9. Allowlist 136 → 141.
