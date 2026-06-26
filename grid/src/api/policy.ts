@@ -290,6 +290,10 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/police/charge':                                   'police_only',
     'POST /api/v1/police/charge/:chargeId/convict':                 'government_only',
     'POST /api/v1/police/charge/:chargeId/execute-sanction':        'police_only',
+    // Phase 47 Plan 3 — appeals. The sanctioned party appeals (civic); the Government
+    // upholds/overturns (government_only). All sanctions are appealable.
+    'POST /api/v1/gov/appeal':                                      'civic_did_required',
+    'POST /api/v1/gov/appeal/:appealId/resolve':                    'government_only',
 
     // W — Conversation routes: human↔Nous chat thread (de-orphan ConversationStore).
     // Content is private (never on the audit chain); sender inferred from DID form.

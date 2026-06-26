@@ -1431,4 +1431,28 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS police_sanctions; DROP TABLE IF EXISTS police_charges`,
     },
+    {
+        // Phase 47 Police v3 Plan 3 (POL-04 tail) — appeals. A sanctioned party appeals an
+        // executed sanction; the Government (government_only) upholds or overturns it. On
+        // overturn the material effect is reversed (e.g. the Civic-DID is un-frozen). One
+        // appeal per sanction. No new broadcast event (the phase allowlist stays at 125).
+        version: 59,
+        name: 'create_police_appeals',
+        up: `
+            CREATE TABLE IF NOT EXISTS police_appeals (
+                appeal_id           CHAR(36)     NOT NULL,
+                grid_name           VARCHAR(63)  NOT NULL,
+                sanction_id         CHAR(36)     NOT NULL,
+                appellant_civic_did VARCHAR(255) NOT NULL,
+                grounds             TEXT         NOT NULL,
+                status              ENUM('pending','upheld','overturned') NOT NULL DEFAULT 'pending',
+                filed_at_tick       BIGINT       NOT NULL,
+                resolved_at_tick    BIGINT       NULL,
+                PRIMARY KEY (appeal_id),
+                UNIQUE KEY uq_appeal_sanction (grid_name, sanction_id),
+                INDEX idx_appeal_status (grid_name, status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS police_appeals`,
+    },
 ];

@@ -26,8 +26,10 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 47 (Police v3) — Plan 2 SHIPPED 2026-06-25 (charges + sanction execution, allowlist 123→125)
-Plan: 2 of 3 (POL-01/02/03/04 done; Plan 3 = appeals + the no-operator-sanction CI gate)
+Phase: 47 (Police v3) — ✅ COMPLETE 2026-06-25 (3 plans; POL-01..05; allowlist 121→125)
+Plan: 3 of 3 — Plan 3 = appeals (`police_appeals` v59 + `POST /api/v1/gov/appeal` + `.../resolve`
+  government_only, freeze reversed via `markUnfrozen`) + the executable CI gate
+  `scripts/check-no-operator-sanction-path.mjs` (wired into rig-invariants.yml, D-V3-18). +0 events.
 Previous: Phase 46 (Government v3) — SHIPPED 2026-06-03 (3 plans)
 Status: Plans 1+2 complete. Plan 2 = `police_charges` + `police_sanctions` (v58) + `PoliceStore`
   (fileCharges/getCharge/resolveCharge/recordSanction) + 3 routes: `POST /police/charge` (police),
@@ -38,8 +40,8 @@ Status: Plans 1+2 complete. Plan 2 = `police_charges` + `police_sanctions` (v58)
   fine (→ treasury), warning/exile recorded. **Separation of powers is real: Police accuse + execute,
   Government convicts; no operator/Police-direct sanction path (D-V3-18).** Grid: store 5 + route 16 tests,
   broad regression 1842 green; tsc + did-policy-coverage + all gates + check-wiki clean.
-Next action: Phase 47 Plan 3 (POL-04 tail — `POST /api/v1/gov/appeal` + a CI gate making the
-  no-operator/Police-direct-sanction invariant executable)
+Next action: Phase 48 (Library v3) — public reading room + Civic-DID contribution + rotating
+  curation council paid from treasury (allowlist +2). Phase 47 closed.
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 

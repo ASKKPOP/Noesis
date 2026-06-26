@@ -41,6 +41,17 @@ Police-direct sanction path exists anywhere in the routing table (D-V3-18).
 - **Tests:** store 5 + route 16 (incl. the 🔒 "no sanction without conviction" gate test); broad regression
   1842 green; tsc + did-policy-coverage + all gates + check-wiki clean.
 
-### Plan 3 — Appeals
-- `POST /api/v1/gov/appeal` routes a sanction back to the Government. CI gate asserting there is **no**
-  operator/Police-direct sanction path in the routing table (the D-V3-18 invariant, made executable).
+### Plan 3 — Appeals — ✅ SHIPPED 2026-06-25
+- **Migration v59** `police_appeals` (one appeal per sanction). `PoliceStore`: `fileAppeal`,
+  `getAppeal`, `resolveAppeal`, `getSanction`. `markUnfrozen` added to the civic registry (un-freeze on overturn).
+- **Routes:** `POST /api/v1/gov/appeal` (civic — only the sanctioned party may appeal their own sanction) +
+  `POST /api/v1/gov/appeal/:id/resolve` (**government_only** — uphold/overturn; an overturn lifts the freeze).
+  No new broadcast event (appeals are private; allowlist stays 125).
+- **Executable invariant:** `scripts/check-no-operator-sanction-path.mjs` (wired into
+  `.github/workflows/rig-invariants.yml`) asserts execute-sanction=police_only, convict=government_only, and no
+  operator-tier sanction route — **D-V3-18 made enforceable in CI.**
+- **Tests:** store 8 + route 21; broad regression 1849 green; all gates + check-wiki clean.
+
+## Phase 47 COMPLETE (3/3) — 2026-06-25
+complaint → investigation → charges → **Government conviction** → sanction → appeal, with the operator
+structurally locked out of punitive power (D-V3-18, now a CI gate). Allowlist 121 → 125 across the phase.

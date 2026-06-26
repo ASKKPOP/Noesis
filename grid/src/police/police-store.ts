@@ -25,6 +25,12 @@ export interface ChargeRow {
     charge_id: string; investigation_id: string; accused_civic_did: string; alleged_law_id: string;
     recommended_sanction: SanctionType; status: string; gov_session_id: string | null;
 }
+export interface SanctionRow {
+    sanction_id: string; charge_id: string; accused_civic_did: string; sanction_type: SanctionType;
+}
+export interface AppealRow {
+    appeal_id: string; sanction_id: string; appellant_civic_did: string; status: string;
+}
 
 export class PoliceStore {
     constructor(private readonly pool: Pool, private readonly audit: AuditChain) {}
@@ -169,6 +175,48 @@ export class PoliceStore {
             tick: p.tick,
         });
         return sanctionId;
+    }
+
+    async getSanction(gridName: string, sanctionId: string): Promise<SanctionRow | null> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT sanction_id, charge_id, accused_civic_did, sanction_type
+               FROM police_sanctions WHERE grid_name = ? AND sanction_id = ? LIMIT 1`,
+            [gridName, sanctionId],
+        );
+        const r = rows as unknown as SanctionRow[];
+        return r.length ? r[0] : null;
+    }
+
+    /** POL-04 appeals — a sanctioned party appeals an executed sanction. One per sanction
+     *  (UNIQUE); pending until the Government resolves it. No broadcast event (+0). */
+    async fileAppeal(p: { gridName: string; sanctionId: string; appellantDid: string; grounds: string; tick: number }): Promise<string> {
+        const appealId = randomUUID();
+        await this.pool.query(
+            `INSERT INTO police_appeals (appeal_id, grid_name, sanction_id, appellant_civic_did, grounds, status, filed_at_tick)
+             VALUES (?, ?, ?, ?, ?, 'pending', ?)`,
+            [appealId, p.gridName, p.sanctionId, p.appellantDid, p.grounds.slice(0, 4000), p.tick],
+        );
+        return appealId;
+    }
+
+    async getAppeal(gridName: string, appealId: string): Promise<AppealRow | null> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT appeal_id, sanction_id, appellant_civic_did, status
+               FROM police_appeals WHERE grid_name = ? AND appeal_id = ? LIMIT 1`,
+            [gridName, appealId],
+        );
+        const r = rows as unknown as AppealRow[];
+        return r.length ? r[0] : null;
+    }
+
+    /** Government resolves an appeal: overturn (the sanction is reversed by the route) or
+     *  uphold. Government-only; marks the appeal. No broadcast event. */
+    async resolveAppeal(gridName: string, appealId: string, overturn: boolean, tick: number): Promise<void> {
+        await this.pool.query(
+            `UPDATE police_appeals SET status = ?, resolved_at_tick = ?
+               WHERE grid_name = ? AND appeal_id = ? AND status = 'pending'`,
+            [overturn ? 'overturned' : 'upheld', tick, gridName, appealId],
+        );
     }
 
     /** List complaints, newest first — optionally filtered by accused DID or status. */

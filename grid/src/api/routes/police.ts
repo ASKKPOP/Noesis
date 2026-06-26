@@ -175,4 +175,60 @@ export function registerPoliceRoutes(app: FastifyInstance, services: GridService
             return reply.code(201).send({ sanction_id: sanctionId, sanction_type: sanctionType, charge_id: chargeId });
         },
     );
+
+    // POL-04 appeals — the sanctioned party appeals their executed sanction (civic).
+    // It routes to the Government; only the accused may appeal their own sanction.
+    app.post<{ Body: { sanction_id?: unknown; grounds?: unknown } }>(
+        '/api/v1/gov/appeal',
+        async (req, reply) => {
+            const caller = req.didContext?.did;
+            if (!caller || req.didContext?.tier !== 'civic_member' || !CIVIC_DID_RE.test(caller)) {
+                return reply.code(401).send({ error: 'civic_did_required' });
+            }
+            const pool = services.pool; const audit = services.audit;
+            if (!pool || !audit) return reply.code(503).send({ error: 'police_unavailable' });
+            const sanctionId = typeof req.body?.sanction_id === 'string' ? req.body.sanction_id.trim() : '';
+            const grounds = typeof req.body?.grounds === 'string' ? req.body.grounds.trim() : '';
+            if (!UUID_RE.test(sanctionId)) return reply.code(400).send({ error: 'invalid_sanction_id' });
+            if (!grounds) return reply.code(400).send({ error: 'empty_grounds' });
+
+            const store = new PoliceStore(pool, audit);
+            const sanction = await store.getSanction(grid, sanctionId);
+            if (!sanction) return reply.code(404).send({ error: 'unknown_sanction' });
+            if (sanction.accused_civic_did !== caller) return reply.code(403).send({ error: 'not_your_sanction' });
+
+            const appealId = await store.fileAppeal({ gridName: grid, sanctionId, appellantDid: caller, grounds, tick: tick() });
+            return reply.code(201).send({ appeal_id: appealId, status: 'pending' });
+        },
+    );
+
+    // Government resolves an appeal — uphold or overturn (government_only). On overturn the
+    // material effect is reversed (a freeze is lifted). This is the appeal half of the
+    // separation of powers: the same body that convicts also hears the appeal.
+    app.post<{ Params: { appealId: string }; Body: { overturn?: unknown } }>(
+        '/api/v1/gov/appeal/:appealId/resolve',
+        async (req, reply) => {
+            if (req.didContext?.tier !== 'government') return reply.code(403).send({ error: 'government_required' });
+            const pool = services.pool; const audit = services.audit;
+            if (!pool || !audit) return reply.code(503).send({ error: 'police_unavailable' });
+            const appealId = req.params.appealId;
+            if (!UUID_RE.test(appealId)) return reply.code(400).send({ error: 'invalid_appeal_id' });
+            if (typeof req.body?.overturn !== 'boolean') return reply.code(400).send({ error: 'overturn_must_be_boolean' });
+
+            const store = new PoliceStore(pool, audit);
+            const appeal = await store.getAppeal(grid, appealId);
+            if (!appeal) return reply.code(404).send({ error: 'unknown_appeal' });
+            if (appeal.status !== 'pending') return reply.code(409).send({ error: 'appeal_not_pending', status: appeal.status });
+
+            await store.resolveAppeal(grid, appealId, req.body.overturn, tick());
+            // Reverse the material effect on a successful appeal (freeze is lifted).
+            if (req.body.overturn) {
+                const sanction = await store.getSanction(grid, appeal.sanction_id);
+                if (sanction?.sanction_type === 'freeze' && services.civicDidStore) {
+                    await services.civicDidStore.markUnfrozen(grid, sanction.accused_civic_did);
+                }
+            }
+            return reply.send({ appeal_id: appealId, status: req.body.overturn ? 'overturned' : 'upheld' });
+        },
+    );
 }

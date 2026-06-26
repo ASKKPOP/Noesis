@@ -20,9 +20,9 @@ const BOB = 'did:civic:noesis:bob';
 const LAW = '11111111-1111-4111-8111-111111111111';
 const aliceCtx = (): DIDContext => ({ did: ALICE, tier: 'civic_member' });
 
-function app(opts: { ctx?: DIDContext | null; rows?: unknown[]; markFrozen?: ReturnType<typeof vi.fn> }): FastifyInstance {
+function app(opts: { ctx?: DIDContext | null; rows?: unknown[]; markFrozen?: ReturnType<typeof vi.fn>; markUnfrozen?: ReturnType<typeof vi.fn> }): FastifyInstance {
     const pool = { query: vi.fn().mockResolvedValue([(opts.rows ?? []) as RowDataPacket[], {}]) } as unknown as Pool;
-    const civicDidStore = { markFrozen: opts.markFrozen ?? vi.fn(async () => true) };
+    const civicDidStore = { markFrozen: opts.markFrozen ?? vi.fn(async () => true), markUnfrozen: opts.markUnfrozen ?? vi.fn(async () => true) };
     const services = { gridName: 'genesis', currentTick: () => 5, pool, audit: new AuditChain(), civicDidStore } as unknown as GridServices;
     const a = Fastify({ logger: false });
     if (opts.ctx !== undefined) a.addHook('onRequest', async (req) => { req.didContext = opts.ctx ?? undefined; });
@@ -162,6 +162,52 @@ describe('POST /api/v1/police/charge/:id/execute-sanction (POL-04)', () => {
         const a = app({ ctx: aliceCtx(), rows: [] });
         const res = await a.inject({ method: 'POST', url: `/api/v1/police/charge/${CHG}/execute-sanction`, payload: { sanction_type: 'warning' } });
         expect(res.statusCode).toBe(404);
+        await a.close();
+    });
+});
+
+const SAN = '77777777-7777-4777-8777-777777777777';
+const APP = '88888888-8888-4888-8888-888888888888';
+
+describe('POST /api/v1/gov/appeal (POL-04 appeals)', () => {
+    it('201 — the sanctioned party appeals their own sanction', async () => {
+        const a = app({ ctx: aliceCtx(), rows: [{ sanction_id: SAN, charge_id: CHG, accused_civic_did: ALICE, sanction_type: 'freeze' }] });
+        const res = await a.inject({ method: 'POST', url: '/api/v1/gov/appeal', payload: { sanction_id: SAN, grounds: 'the evidence was fabricated' } });
+        expect(res.statusCode).toBe(201);
+        expect(res.json().appeal_id).toMatch(/^[0-9a-f-]{36}$/i);
+        await a.close();
+    });
+    it('403 — you cannot appeal someone else\'s sanction', async () => {
+        const a = app({ ctx: aliceCtx(), rows: [{ sanction_id: SAN, accused_civic_did: BOB, sanction_type: 'freeze' }] });
+        const res = await a.inject({ method: 'POST', url: '/api/v1/gov/appeal', payload: { sanction_id: SAN, grounds: 'x' } });
+        expect(res.statusCode).toBe(403);
+        await a.close();
+    });
+    it('404 for an unknown sanction', async () => {
+        const a = app({ ctx: aliceCtx(), rows: [] });
+        const res = await a.inject({ method: 'POST', url: '/api/v1/gov/appeal', payload: { sanction_id: SAN, grounds: 'x' } });
+        expect(res.statusCode).toBe(404);
+        await a.close();
+    });
+});
+
+describe('POST /api/v1/gov/appeal/:id/resolve (Government only)', () => {
+    it('Government overturns an appeal — and the freeze is reversed', async () => {
+        const markUnfrozen = vi.fn(async () => true);
+        const a = app({
+            ctx: govCtx(), markUnfrozen,
+            rows: [{ appeal_id: APP, sanction_id: SAN, appellant_civic_did: BOB, status: 'pending', charge_id: CHG, accused_civic_did: BOB, sanction_type: 'freeze' }],
+        });
+        const res = await a.inject({ method: 'POST', url: `/api/v1/gov/appeal/${APP}/resolve`, payload: { overturn: true } });
+        expect(res.statusCode).toBe(200);
+        expect(res.json().status).toBe('overturned');
+        expect(markUnfrozen).toHaveBeenCalledWith('genesis', BOB);
+        await a.close();
+    });
+    it('403 when a civic member tries to resolve an appeal', async () => {
+        const a = app({ ctx: aliceCtx(), rows: [{ appeal_id: APP, status: 'pending' }] });
+        const res = await a.inject({ method: 'POST', url: `/api/v1/gov/appeal/${APP}/resolve`, payload: { overturn: true } });
+        expect(res.statusCode).toBe(403);
         await a.close();
     });
 });

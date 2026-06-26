@@ -137,4 +137,15 @@ export class CivicDidStore {
         );
         return result.affectedRows === 1;
     }
+
+    /** Phase 47 (POL-04 / appeals) — reverse a freeze when a Government appeal is upheld
+     *  (overturns the sanction). Restores the Civic-DID to active. */
+    async markUnfrozen(gridName: string, civicDid: string): Promise<boolean> {
+        const [result] = await this.pool.query<ResultSetHeader>(
+            `UPDATE civic_did_registry SET frozen = 0, presence_status = 'awake'
+             WHERE grid_name = ? AND civic_did = ?`,
+            [gridName, civicDid],
+        );
+        return result.affectedRows === 1;
+    }
 }

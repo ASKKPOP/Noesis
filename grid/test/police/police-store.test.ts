@@ -87,3 +87,19 @@ describe('PoliceStore.recordSanction (POL-04)', () => {
         expect((audit.query({ eventType: 'police.sanction_executed' })[0].payload as Record<string, unknown>).sanction_type).toBe('warning');
     });
 });
+
+describe('PoliceStore appeals (POL-04 tail) — no broadcast event (+0)', () => {
+    const SAN = '77777777-7777-4777-8777-777777777777';
+    it('fileAppeal inserts a pending appeal and emits NO audit event', async () => {
+        const p = pool(); const audit = new AuditChain();
+        const id = await new PoliceStore(p, audit).fileAppeal({ gridName: 'genesis', sanctionId: SAN, appellantDid: ACCUSED, grounds: 'wrongful', tick: 11 });
+        expect(id).toMatch(/^[0-9a-f-]{36}$/i);
+        expect((p.query as ReturnType<typeof vi.fn>).mock.calls[0][0]).toMatch(/INSERT INTO police_appeals/i);
+        expect(audit.query({}).length).toBe(0); // appeals are private — no broadcast
+    });
+    it('resolveAppeal flips status (overturned/upheld)', async () => {
+        const p = pool();
+        await new PoliceStore(p, new AuditChain()).resolveAppeal('genesis', 'a1', true, 12);
+        expect((p.query as ReturnType<typeof vi.fn>).mock.calls[0][0]).toMatch(/UPDATE police_appeals SET status = \?/i);
+    });
+});

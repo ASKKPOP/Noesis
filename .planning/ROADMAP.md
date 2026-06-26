@@ -443,8 +443,17 @@ Plans:
     re-pinned. Sanction effects: freeze (markFrozen), fine (→ treasury), warning/exile recorded. Separation of
     powers real (Police accuse+execute, Government convicts; D-V3-18 preserved). store 5 + route 16 tests, broad
     regression 1842 green; tsc + did-policy-coverage + all gates + check-wiki clean.
-  - **Plan 3 — Appeals (POL-04 tail).** `POST /api/v1/gov/appeal` routes a sanction back to Government; the
-    constitutional CI gate asserting no operator/Police-direct sanction path.
+  - **Plan 3 — Appeals (POL-04 tail) — ✅ SHIPPED 2026-06-25.** `police_appeals` (v59) + `PoliceStore`
+    (fileAppeal/getAppeal/resolveAppeal/getSanction) + `markUnfrozen` on the civic registry. Routes:
+    `POST /api/v1/gov/appeal` (civic — only the sanctioned party may appeal their own sanction) +
+    `POST /api/v1/gov/appeal/:id/resolve` (**government_only** — uphold/overturn; an overturn reverses the
+    freeze). +0 events (appeals are private). **Executable invariant:** new CI gate
+    `scripts/check-no-operator-sanction-path.mjs` (wired into `.github/workflows/rig-invariants.yml`) asserts
+    execute-sanction=police_only, convict=government_only, no operator-tier sanction route — D-V3-18 enforceable.
+    store 8 + route 21 tests; broad regression 1849 green; all gates + check-wiki clean.
+
+  **Phase 47 COMPLETE (3/3, 2026-06-25)** — complaint → investigation → charges → Government conviction →
+  sanction → appeal, with the operator structurally locked out of punitive power.
 
 ### Phase 48: Library v3
 **Goal**: Civic-tier evolution of v2.4 Phase 18 (Skill Diffusion) + Phase 20 (Lore Commons). Public reading room (visitor-accessible); Civic-DID required to contribute (reuses K=3 quota from v2.4 LORE-03); rotating curation council elected by Government every 90 days; curators paid from civic treasury.
@@ -691,7 +700,7 @@ Wave 4: Phase 50 (Migration) — depends on ALL.
 | 44. Marketplace v3 | 5/5 | Complete   | 2026-05-28 |
 | 45. IRS Treasury | 3/3 | Complete    | 2026-05-28 |
 | 46. Government v3 | 3/3 | Complete    | 2026-06-03 |
-| 47. Police v3 | 2/3 | Plans 1+2 shipped (complaint·investigation·charges·sanction, allowlist 121→125) | 2026-06-25 |
+| 47. Police v3 | 3/3 ✅ | COMPLETE — complaint·investigation·charges·conviction·sanction·appeal (allowlist 121→125, +CI gate) | 2026-06-25 |
 | 48. Library v3 | 0/? | Not started | — |
 | 49. Communities v3 | 0/? | Not started | — |
 | 50. v2.6 → v3.0 Migration | 0/? | Not started | — |
