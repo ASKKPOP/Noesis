@@ -83,6 +83,10 @@ server {
     proxy_set_header X-Forwarded-Proto https;
     proxy_http_version 1.1;
 
+    # Issue a RELATIVE Location so the browser keeps the original https scheme
+    # (nginx speaks http behind the ALB; an absolute redirect would downgrade to
+    # http and break the console's secure cookie + credentialed CORS).
+    absolute_redirect off;
     location = / { return 302 /system/portal-manager; }
     location /   { proxy_pass http://noesis_dashboard; }
 }
