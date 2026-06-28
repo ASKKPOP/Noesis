@@ -48,6 +48,11 @@ services:
       # W4 (D-MONEY-09) — model-first endowment, the live wei source. Default OFF;
       # set GRID_ENDOWMENT_ENABLED=true in .env to enable the operator-gated endow route.
       GRID_ENDOWMENT_ENABLED: ${GRID_ENDOWMENT_ENABLED:-false}
+      # Tier-3 Portal Manager console (read-only reviewer queue at portal.${DOMAIN}
+      # / dashboard /system/portal-manager). Dedicated flag, DECOUPLED from
+      # GRID_ADMIN_ENABLED — enabling this does NOT enable admin .env routes.
+      # Default OFF → route 503s (portal_manager_disabled).
+      GRID_PORTAL_MANAGER_ENABLED: ${GRID_PORTAL_MANAGER_ENABLED:-false}
       # Local Management Site admin routes (post-v2.6, default OFF)
       GRID_ADMIN_ENABLED: ${GRID_ADMIN_ENABLED:-false}
       GRID_ADMIN_DOCKER_ENABLED: ${GRID_ADMIN_DOCKER_ENABLED:-false}

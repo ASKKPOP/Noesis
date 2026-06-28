@@ -62,10 +62,10 @@ services:
     container_name: noesis-wiki
     restart: unless-stopped
 
-  # ── Portal + Grid (api.${DOMAIN}). Allow the apex origin (cross-origin) ─────
+  # ── Portal + Grid (api.${DOMAIN}). Allow the apex + portal-subdomain origins ─
   grid:
     environment:
-      GRID_CORS_ORIGINS: "https://${DOMAIN:-localhost}"
+      GRID_CORS_ORIGINS: "https://${DOMAIN:-localhost},https://portal.${DOMAIN:-localhost}"
 
   # ── Dashboard → ${DOMAIN}/ (apex — the landing page is the first page) ──────
   dashboard:
