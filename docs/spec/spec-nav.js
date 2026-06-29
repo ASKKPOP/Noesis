@@ -7,6 +7,7 @@
       t: "Overview", ko: "개요",
       items: [
         { href: "index.html", n: "—", label: "All Specifications" },
+        { href: "system-map.html", n: "◈", label: "System Map" },
         { href: "definitions.html", n: "§", label: "Definitions Directory" }
       ]
     },
