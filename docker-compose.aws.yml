@@ -42,6 +42,9 @@ services:
       NGINX_ENVSUBST_FILTER: "^DOMAIN$$"
     volumes:
       - ./docker/nginx.noesiis.conf.template:/etc/nginx/templates/default.conf.template:ro
+      # The full spec doc set, served read-only at ${DOMAIN}/spec/ (single source:
+      # the repo's docs/spec — refreshed on every git pull, no duplication).
+      - ./docs/spec:/usr/share/nginx/spec:ro
     ports:
       - "${NGINX_HTTP_PORT:-80}:80"
     restart: unless-stopped

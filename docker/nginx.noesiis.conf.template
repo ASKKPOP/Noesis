@@ -45,6 +45,9 @@ server {
     # Wiki (single source of truth — MkDocs static site) under /wiki/.
     location /wiki/   { proxy_pass http://noesis_wiki; }
     location = /wiki  { return 302 /wiki/; }
+    # Full spec doc set — static files mounted read-only from the repo's docs/spec.
+    location = /spec  { return 302 /spec/; }
+    location /spec/   { alias /usr/share/nginx/spec/; index index.html; autoindex off; }
     location /console { proxy_pass http://noesis_steward; }
     location /        { proxy_pass http://noesis_dashboard; }
 }
