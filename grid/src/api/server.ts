@@ -47,6 +47,7 @@ import { registerPortalCrossGridRoutes } from './routes/portal-cross-grid.js';
 import { registerMobilityRoutes } from './routes/mobility.js';
 import { registerMarketRoutes } from './routes/market.js';
 import { registerIrsRoutes } from './routes/irs.js';
+import { registerSystemMapRoute } from './routes/system-map.js';
 import { registerOrbitalRoutes } from './routes/orbital.js';
 import { registerGovRoutes } from './routes/gov.js';
 import { registerPolisBillsRoute } from './routes/polis-bills.js';
@@ -815,6 +816,7 @@ export function buildServerWithHub(
     registerPortalCrossGridRoutes(app, services);  // Phase 55 Portal Cross-Grid (dormant in v3.0)
     void registerMarketRoutes(app, services);
     void registerIrsRoutes(app, services);
+    registerSystemMapRoute(app, services);  // System Map — live aggregate of 4 surfaces + 8 institutions
     registerOrbitalRoutes(app, services);
     void registerGovRoutes(app, services);
     registerPolisBillsRoute(app, services);

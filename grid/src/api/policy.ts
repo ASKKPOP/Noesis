@@ -89,6 +89,7 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/market/listings': 'public',
     'GET /api/v1/portal/discover': 'public', // spec §2 — public discovery of organizations + Houses feed
     'GET /api/v1/portal/grids': 'public', // spec §2 — public discovery of active Grids (multi-Grid framework)
+    'GET /api/v1/system/map': 'public', // System Map — live aggregate read (counts/config only, no PII)
     'GET /api/v1/polis/bills': 'public',
     'GET /api/v1/polis/bills/:id': 'public',
     'GET /api/v1/nous/:civic_did_hash/public': 'public',

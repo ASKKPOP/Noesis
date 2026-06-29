@@ -94,6 +94,34 @@ sequenceDiagram
 
 Money note: there is **no birth faucet** — a Nous earns by compute-labor or brings ETH (D-MONEY-01). The legacy 1000-Ousia faucet is retired. See [[economy]].
 
+## Live System Map
+
+The **System Map** is the one-page live picture of the whole world, served at `noesiis.com/system-map`. It shows the four surfaces (Grid · Portal · Steward · Local AI/Brain) and the eight civic institutions (Registry · Polis · Police · IRS · Marketplace · Library · Communities · P2P), each with a live status colour and a single headline metric.
+
+It is **logic-driven, not static**: every status badge/colour and every metric is computed from live Grid state by one public aggregator endpoint, `GET /api/v1/system/map`. The page is a data-bound clone of the static design doc (`docs/spec/system-map.html`) — identical geometry, labels, and theme; only the tints and numbers come from the endpoint.
+
+Contract:
+
+- **Endpoint** (Grid, public, read-only, aggregate-only — counts/config only, never a DID/PII): each of the 12 items is computed in its own guard (`item(fn, fallback)`). One failing query yields that item `status: 'down'`; the whole endpoint still returns `200`. DB-absent → DB-backed items resolve to `down`/`db_unavailable` while the non-DB Grid/Steward signals still compute. SELECT-only, parameterized, reserved `status` backticked. No audit/broadcast emission — the allowlist and privacy walker are untouched.
+- **Status vocabulary**: surfaces use `up`/`degraded`/`down` (Brain also `empty`, Steward only `up`/`down`); institutions use `active` (count>0) / `empty` (query ok, zero) / `down` (query threw) / `unknown` (P2P presence service absent).
+- **Page** (dashboard, public, polls ~12s): `fetchSystemMap()` returns a discriminated union `{ok,data}|{ok:false,error:{kind}}`; `SystemMapView` binds `statusFill(status)`, a data-bound badge, and one metric line per box.
+
+```mermaid
+flowchart LR
+  subgraph Grid[Grid · Fastify]
+    EP["GET /api/v1/system/map<br/>(public, read-only)"]
+    EP --> G1[grid: clock · firehose · audit.verify]
+    EP --> G2[portal: human_civic_applications GROUP BY status]
+    EP --> G3[brain: brain_tokens counts]
+    EP --> G4[8 institutions: guarded SELECT COUNT]
+  end
+  EP -->|aggregate JSON, no PII| C["fetchSystemMap()<br/>{ok,data}|{ok:false,error}"]
+  C --> V["SystemMapView<br/>statusFill · badgeFor · metricText"]
+  V --> P["/system-map (polls ~12s)"]
+```
+
+Each item's status/metric is **derived**, so a literal-driven UI is impossible: zero rows → `empty`, nonzero → `active`/`up`, a throwing query → `down`. See `grid/src/api/routes/system-map.ts` and `dashboard/src/app/system-map/`.
+
 ## Cross-cutting invariants
 
 R-31-01 zero-diff audit chain · broadcast allowlist (default-deny, frozen-except-by-addition) · VOTE-05 Nous-only governance · plaintext-never / hash-only cross-boundary · single `onTick` · zero custody of funds. Mechanically enforced — see [[ci-gates]].

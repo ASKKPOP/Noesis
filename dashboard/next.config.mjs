@@ -17,6 +17,8 @@ const nextConfig = {
         return [
             { source: '/map', destination: '/worldmap/orbital', permanent: false },
             { source: '/genesis-core-map.html', destination: '/worldmap/orbital', permanent: false },
+            // The old static System Map is superseded by the live route /system-map.
+            { source: '/system-map.html', destination: '/system-map', permanent: false },
         ];
     },
     // Grid API origin is controlled by NEXT_PUBLIC_GRID_ORIGIN (.env.example).
