@@ -64,6 +64,23 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 13 ============================ -->
+  <h2>Session 13 — 2026‑06‑29 · “Obsidian vaults + Karpathy LLM-wiki over research corpus”</h2>
+  <p class="sub">Operator wanted to connect Obsidian and adopt Karpathy's
+  <a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">LLM-wiki pattern</a>. Mapped its three layers
+  (schema · raw sources · interlinked wiki) onto existing Noēsis docs; placed the freeform loop on the <em>private</em> tree
+  to respect the two-tree rule (D-WIKI-06).</p>
+  <ul>
+    <li><b>Obsidian configs</b> <span class="tag done">built</span> <code>wiki/.obsidian/</code> (MkDocs-safe: markdown links,
+      no <code>[[wikilinks]]</code>) and <code>.planning/research/.obsidian/</code> (wikilinks ON — private tree). Both gitignored.</li>
+    <li><b>Research LLM-wiki vault</b> <span class="tag done">built</span> over <code>.planning/research/</code>:
+      <code>SCHEMA.md</code> (conventions), <code>index.md</code> (all 26 docs catalogued, grouped by milestone),
+      <code>log.md</code> (append-only). System-truths still distil up into public <code>wiki/</code>.</li>
+    <li><b>Lint pass</b> <span class="tag done">passing</span> <code>scripts/lint-research-wiki.mjs</code> — orphans + broken
+      wikilinks + uncatalogued files; strips code spans. <strong>29 pages · 0 orphans · 0 broken</strong>.</li>
+    <li><b>Scope:</b> tooling/docs only — no Nous spec change, no app code, no deploy. Spec-coverage doc unaffected.</li>
+  </ul>
+
   <!-- ============================ SESSION 12 ============================ -->
   <h2>Session 12 — 2026‑06‑24 · “O3 Forest — backend + installable PWA shell (task 1 of 4)”</h2>
   <p class="sub">Operator queued tasks 1–4; building in sequence (build + commit local, hold prod deploys). Task 1 =
