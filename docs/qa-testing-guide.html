@@ -128,6 +128,30 @@ curl -s -o /dev/null -w "%{http_code}\n" https://api.noesiis.com/api/v1/police/c
 </table>
 <div class="callout warn"><div class="ic">⚠️</div><div><b>C-07 → C-09 are write-path.</b> They create real records on Genesis. <b>Run by you (the operator) together with Luu</b> — last, and announce in the channel before starting (you own prod, so you green-light the mutation). C-09 is the best end-to-end test in the whole round: a real sign-up should make the System Map's numbers move.</div></div>
 
+<h2>5b · Local AI / Brain setup per tester <span class="ko">테스터별 로컬 AI(Brain) 설정 — 심화(선택)</span></h2>
+<p class="intro"><b>Optional — only for the deep "run your own Nous" test.</b> The read-only QA round (Tracks A/B/C) needs no local Brain; everyone tests noesiis.com from a browser. To run a real local Nous that joins the Grid, each machine runs the Brain daemon with a different LLM provider:</p>
+<table>
+<tr><th>Tester</th><th>Machine</th><th><code>LLM_PROVIDER</code></th><th>Needs</th><th>Cost</th></tr>
+<tr><td><b>You</b></td><td>MacBook Pro</td><td><code>ollama</code></td><td>Ollama + <code>ollama pull qwen3:4b</code></td><td>free (local compute)</td></tr>
+<tr><td><b>Luu</b></td><td>a Mac</td><td><code>ollama</code></td><td>same as above</td><td>free (local compute)</td></tr>
+<tr><td><b>Tuan Anh</b></td><td>no Local AI</td><td><code>claude</code></td><td><code>ANTHROPIC_API_KEY</code> (his own Anthropic key)</td><td>pay-per-use (mostly cheap Haiku)</td></tr>
+</table>
+<h3>You + Luu — local Ollama (free)</h3>
+<pre><span class="k"># 1. install Ollama (ollama.com), then pull the small model</span>
+ollama pull qwen3:4b
+<span class="k"># 2. run the Brain (defaults: LLM_PROVIDER=ollama, LLM_MODEL=qwen3:4b)</span>
+cd brain &amp;&amp; python -m noesis_brain</pre>
+<h3>Tuan Anh — Claude API (no Ollama needed)</h3>
+<pre><span class="k"># LLM_PROVIDER=claude routes the 3 tiers to Haiku / Sonnet / Opus on the Anthropic API.</span>
+<span class="k"># Most cognition hits cheap Haiku; only hard tasks escalate to Opus.</span>
+export LLM_PROVIDER=claude
+export ANTHROPIC_API_KEY=sk-ant-...        <span class="k"># Tuan Anh's own key</span>
+cd brain &amp;&amp; python -m noesis_brain</pre>
+<div class="callout"><div class="ic">⚙️</div><div>Full Brain env (NOUS_NAME, Grid connection, BRAIN_HTTP_SECRET, data dir, model overrides) is documented in the <b>Local Node spec</b> — see <code>docs/spec/config-local-node.html</code> (also at <code>noesiis.com/spec/config-local-node.html</code>). <code>LLM_MODEL</code> overrides a tier model; on Claude it must be a real Claude model ID (a leftover <code>qwen3:4b</code> is ignored on the claude provider).
+<span class="ko">전체 Brain 환경변수는 <code>config-local-node.html</code> 참조. <code>LLM_PROVIDER=claude</code>는 Ollama 없이 Claude API로 로컬 Nous 실행. 대부분 저렴한 Haiku 사용, 어려운 작업만 Opus.</span></div></div>
+<div class="callout warn"><div class="ic">⚖️</div><div><b>Design note.</b> A Claude-API Brain shifts cognition to Anthropic's paid cloud rather than the operator's own compute — perfectly fine for <b>this test round</b>, but it sits against the money axiom (compute-labor, D-MONEY-01) and is flagged for later economic reconciliation. Not a blocker for testing.
+<span class="ko"><b>설계 노트.</b> Claude-API Brain은 운영자 자체 연산이 아닌 유료 클라우드로 인지를 옮깁니다 — <b>이번 테스트</b>엔 적합하나 화폐 공리(D-MONEY-01)와 충돌, 추후 조정 대상. 테스트엔 무방.</span></div></div>
+
 <h2>6 · Reporting templates <span class="ko">보고 템플릿</span></h2>
 <h3>Per-item result (post in your track thread)</h3>
 <pre><span class="g">A-04</span> ✅ pass — System Map renders, registry shows "1 Civic-DID · 3 Nous" (real)
