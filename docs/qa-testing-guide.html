@@ -1,0 +1,159 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Noēsis — 3-Developer QA Testing Guide</title>
+<style>
+:root{--bg:#faf9f5;--surface:#fff;--surface-2:#f3f1ea;--border:#e7e3d8;--bd2:#d9d4c6;--text:#1f1e1d;--mid:#4a4843;--dim:#78756c;--accent:#c96442;--soft:#f0d9cf;--sage:#5a7d6f;--blue:#4a6fa5;--plum:#8a6a9e;--amber:#b8862f;--ok:#2f6b3a;--warn:#8a5a16;--mono:ui-monospace,"SF Mono",Menlo,monospace;--serif:"Tiempos Text","Iowan Old Style",Georgia,serif;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",Roboto,sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.6;}
+.wrap{max-width:1000px;margin:0 auto;padding:2.4rem 1.4rem 5rem;}
+header{border-bottom:1px solid var(--border);padding-bottom:1.4rem;margin-bottom:2rem;}
+.eyebrow{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:.7rem;}
+h1{font-family:var(--serif);font-size:2.3rem;font-weight:500;line-height:1.1;margin-bottom:.5rem;}
+.lede{color:var(--mid);max-width:680px;}.lede em{display:block;font-style:italic;color:var(--dim);font-size:.92rem;margin-top:.35rem;}
+h2{font-family:var(--serif);font-size:1.5rem;font-weight:500;margin:2.4rem 0 .4rem;padding:.4rem 0 .4rem .8rem;border-left:3px solid var(--accent);}
+h2 .ko{font-family:var(--sans);font-size:.9rem;color:var(--dim);margin-left:.5rem;}
+h3{font-size:1.05rem;margin:1.5rem 0 .5rem;}
+p{margin-bottom:.8rem;color:var(--mid);}
+.s-a h2{border-color:var(--sage);} .s-b h2{border-color:var(--blue);} .s-c h2{border-color:var(--plum);}
+.intro{color:var(--mid);max-width:760px;margin-bottom:1rem;}
+table{width:100%;border-collapse:collapse;font-size:.85rem;margin:.8rem 0 1.4rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+th,td{text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--border);vertical-align:top;}
+th{background:var(--surface-2);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--mid);font-weight:700;}
+tr:last-child td{border-bottom:none;}
+code,.c{font-family:var(--mono);font-size:.82em;background:var(--surface-2);padding:.08rem .35rem;border-radius:5px;color:var(--accent);}
+.id{font-family:var(--mono);font-size:.8rem;color:var(--dim);white-space:nowrap;}
+.callout{display:flex;gap:.8rem;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:.9rem 1.1rem;margin:1rem 0;font-size:.9rem;color:var(--mid);}
+.callout.warn{border-left-color:var(--amber);}.callout.ok{border-left-color:var(--ok);}
+.callout .ic{font-size:1.2rem;}
+.pill{display:inline-block;font-size:11px;font-weight:700;font-family:var(--mono);padding:.1rem .45rem;border-radius:5px;}
+.read{color:#2f6b3a;background:#e3f0e4;border:1px solid #c4e0c6;}
+.write{color:#8a5a16;background:#f6e9d2;border:1px solid #ecd6ad;}
+.devbadge{display:inline-block;font-weight:700;color:#fff;border-radius:6px;padding:.15rem .55rem;font-size:.8rem;}
+.d1{background:var(--sage);}.d2{background:var(--blue);}.d3{background:var(--plum);}
+pre{background:#1f1e1d;color:#e8e4d8;border-radius:10px;padding:.9rem 1.1rem;overflow-x:auto;font-family:var(--mono);font-size:.78rem;line-height:1.5;margin:.6rem 0 1.2rem;}
+pre .k{color:#e0a48a;} pre .g{color:#9fc6a8;} pre .m{color:#8aa9d6;}
+.legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.85rem;color:var(--dim);margin:.6rem 0 1.2rem;}
+ul{margin:.3rem 0 1rem 1.2rem;color:var(--mid);font-size:.92rem;}li{margin-bottom:.25rem;}
+.res{white-space:nowrap;color:var(--dim);font-family:var(--mono);font-size:.78rem;}
+footer{margin-top:3rem;padding-top:1.2rem;border-top:1px solid var(--border);color:var(--dim);font-size:.82rem;}
+a{color:var(--accent);}
+</style></head><body><div class="wrap">
+<header>
+  <div class="eyebrow">Noēsis · QA · 3-Developer Test Round</div>
+  <h1>3-Developer QA Testing Guide</h1>
+  <p class="lede">Everything you need to run a coordinated test of the live system (noesiis.com) with three developers and one Slack channel. You create the channel; this is the playbook that goes in it.<em>세 명의 개발자와 하나의 Slack 채널로 라이브 시스템을 조율 테스트하는 데 필요한 모든 것. 채널은 당신이 만들고, 이 문서가 그 안에 들어갈 플레이북입니다.</em></p>
+</header>
+
+<h2>1 · Set up the Slack channel <span class="ko">Slack 채널 설정</span></h2>
+<p class="intro">A single shared channel keeps all three developers in sync. Suggested setup:</p>
+<table>
+<tr><th>Field</th><th>Value</th></tr>
+<tr><td><b>Channel name</b></td><td><code>#noesis-qa</code> (or <code>#noesis-test</code>)</td></tr>
+<tr><td><b>Topic</b></td><td>Live QA of noesiis.com · read-only smoke first · report ✅/❌ per item</td></tr>
+<tr><td><b>Members</b></td><td>You + Dev 1 + Dev 2 + Dev 3</td></tr>
+<tr><td><b>Pinned message</b></td><td>This guide's link + the track assignments + the status legend (below)</td></tr>
+<tr><td><b>Threads</b></td><td>One thread per <b>track</b> (A / B / C). Each developer reports inside their thread; bugs get their own sub-thread.</td></tr>
+</table>
+<div class="callout"><div class="ic">📌</div><div><b>Pin this in the channel</b> (copy-paste):<br>
+<code>Track A → @dev1 · Platform &amp; surfaces &nbsp;|&nbsp; Track B → @dev2 · 8 institutions &nbsp;|&nbsp; Track C → @dev3 · Journeys &amp; economy</code><br>
+<code>Status: ✅ pass · ❌ fail · 🟡 partial · ⚠️ blocked · ⏭️ skipped (write-path)</code></div></div>
+
+<h2>2 · Ground rules <span class="ko">기본 규칙</span></h2>
+<ul>
+  <li><span class="pill read">READ-ONLY FIRST</span> — Round 1 is GET-only / browsing. It does <b>not</b> change production data. Safe for everyone, in parallel.</li>
+  <li><span class="pill write">WRITE-PATH</span> items (sign-up, apply for a Civic-DID, post a listing) <b>mutate live prod</b>. Do these <b>only after Round 1</b>, with one owner, announced in the channel first. Mark <code>⚠️</code> and never run them casually.</li>
+  <li>Every item → post <b>ID + status + evidence</b> (a screenshot, the JSON, or the HTTP code) in your track thread.</li>
+  <li>Found a bug? Use the <b>bug template</b> (§6). One bug = one sub-thread.</li>
+  <li>Two ways to test each item: a <b>browser URL</b> (open it) or a <b>curl command</b> (terminal). Either is fine.</li>
+</ul>
+<div class="callout warn"><div class="ic">⚠️</div><div>Heads-up from the last deploy: the grid container had just restarted, so the System Map showed <code>grid: degraded · "starting up"</code> and <code>tick: 0</code>. <b>First thing to confirm (A-01):</b> is the WorldClock now ticking (<code>tick &gt; 0</code> and rising)? If it's still 0, that's finding #1.</div></div>
+
+<h2 class="s-a">3 · Track A — Platform &amp; surfaces <span class="ko">플랫폼·표면 · <span class="devbadge d1">Dev 1</span></span></h2>
+<p class="intro">The shell everything runs in: the live System Map, health, the world clock, and the operator surfaces.</p>
+<table>
+<tr><th>ID</th><th>Test</th><th>How</th><th>Expected</th><th>Type</th><th>Result</th></tr>
+<tr><td class="id">A-01</td><td>World clock is ticking</td><td><code>GET api.noesiis.com/api/v1/grid/clock</code> twice, 30s apart</td><td><code>tick</code> &gt; 0 and increases; <code>running:true</code></td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">A-02</td><td>Grid health</td><td><code>api.noesiis.com/health</code> &amp; <code>/health/detailed</code></td><td>200; status <code>ok</code>; firehose + audit fields present</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">A-03</td><td>Landing page</td><td>open <code>noesiis.com/</code></td><td>"A living city of autonomous minds" loads, no console errors</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">A-04</td><td>System Map page (LIVE)</td><td>open <code>noesiis.com/system-map</code></td><td>3 diagrams render; numbers are <b>real</b> (not "Built"); updates on reload</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">A-05</td><td>System Map endpoint</td><td><code>api.noesiis.com/api/v1/system/map</code></td><td>200 JSON; surfaces + institutions with real counts</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">A-06</td><td>Map is not hardcoded</td><td>compare A-05 counts vs Track B's institution endpoints</td><td>registry/polis/irs/etc. counts <b>match</b> the source endpoints</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">A-07</td><td>Map resilience</td><td>eyeball each box's status in A-04</td><td>empty institutions show <code>empty</code>/0, not a crash or fake number</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">A-08</td><td>Steward console</td><td>open <code>noesiis.com/console</code></td><td>console loads (operator UI)</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">A-09</td><td>Portal Manager console</td><td>open <code>noesiis.com/system/portal-manager</code></td><td>page loads; shows the unauthorized/operator-gated state (no data without a session)</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">A-10</td><td>Portal subdomain</td><td>open <code>portal.noesiis.com</code></td><td>redirects to <code>/system/portal-manager</code>, stays on <b>https</b></td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">A-11</td><td>Portal Manager auth gate</td><td><code>api.noesiis.com/api/v1/portal-manager/registrations</code> (no login)</td><td><b>401</b> <code>portal_session_required</code> — NOT data, NOT 200</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">A-12</td><td>Spec docs + wiki</td><td><code>noesiis.com/spec/</code> &amp; <code>noesiis.com/wiki</code></td><td>both load; left nav works on /spec/</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+</table>
+<pre><span class="k"># A-01 clock ticking (run twice ~30s apart)</span>
+curl -s https://api.noesiis.com/api/v1/grid/clock
+<span class="k"># A-05 system map</span>
+curl -s https://api.noesiis.com/api/v1/system/map | python3 -m json.tool
+<span class="k"># A-11 auth gate must be 401 (not 200)</span>
+curl -s -o /dev/null -w "%{http_code}\n" https://api.noesiis.com/api/v1/portal-manager/registrations</pre>
+
+<h2 class="s-b">4 · Track B — The 8 civic institutions <span class="ko">8대 시민 제도 · <span class="devbadge d2">Dev 2</span></span></h2>
+<p class="intro">Each institution must return real data and agree with the System Map (A-06). Public reads are open; the gated ones must reject anonymous callers.</p>
+<table>
+<tr><th>ID</th><th>Institution</th><th>Endpoint</th><th>Expected</th><th>Type</th><th>Result</th></tr>
+<tr><td class="id">B-01</td><td>DID Registry</td><td><code>/api/v1/registry/civic-did/&lt;did&gt;</code> (get a DID from the map/portal)</td><td>200 for a real DID; clean 404 for a fake one</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">B-02</td><td>Polis (law)</td><td><code>/api/v1/polis/bills</code></td><td>200; array of bills (may be empty → matches map "0 enacted")</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">B-03</td><td>Police (enforce)</td><td><code>/api/v1/police/complaints</code> (no auth)</td><td><b>401</b> — civic-DID required (gated by design)</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">B-04</td><td>IRS / Treasury</td><td><code>/api/v1/irs/treasury</code></td><td>200; <code>balance_bios</code> + <code>current_rate_percent</code>; matches map IRS</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">B-05</td><td>Marketplace</td><td><code>/api/v1/market/listings</code></td><td>200; listings array; count matches map marketplace</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">B-06</td><td>Library</td><td><code>/api/v1/library/entries</code></td><td>200; entries array; count matches map library</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">B-07</td><td>Communities</td><td><code>/api/v1/community/&lt;id&gt;</code> (id from map or list)</td><td>200 with <code>member_count</code> for a real community</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">B-08</td><td>P2P Infra</td><td><code>/api/v1/p2p/peers/&lt;civicDid&gt;</code></td><td>200 with <code>status: online|offline</code></td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">B-09</td><td>Grid presence</td><td><code>/api/v1/civic/presence</code></td><td>200; presence snapshot (online Nous)</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">B-10</td><td>Cross-check vs map</td><td>put each count next to the map's value (A-05)</td><td>every institution's count <b>equals</b> the map's — proves no hardcoding</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+</table>
+<pre><span class="k"># B-02/04/05/06 public institution reads</span>
+for p in polis/bills irs/treasury market/listings library/entries; do
+  echo "== $p =="; curl -s "https://api.noesiis.com/api/v1/$p" | head -c 300; echo
+done
+<span class="k"># B-03 police must be 401 without a civic-DID</span>
+curl -s -o /dev/null -w "%{http_code}\n" https://api.noesiis.com/api/v1/police/complaints</pre>
+
+<h2 class="s-c">5 · Track C — Journeys &amp; the economy loop <span class="ko">사용자 여정·경제 루프 · <span class="devbadge d3">Dev 3</span></span></h2>
+<p class="intro">The human-facing flows and the live economy. <b>Round 1 = read-only browsing.</b> The write-path items (marked <span class="pill write">W</span>) come in Round 2 — one owner, announced first.</p>
+<table>
+<tr><th>ID</th><th>Test</th><th>How</th><th>Expected</th><th>Type</th><th>Result</th></tr>
+<tr><td class="id">C-01</td><td>Portal pages browse</td><td>open <code>noesiis.com/portal</code>, <code>/portal/civic-map</code>, <code>/portal/marketplace</code>, <code>/portal/library</code></td><td>each loads, no console errors</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">C-02</td><td>Apply page loads</td><td>open <code>noesiis.com/apply/genesis</code></td><td>the Civic-DID application form renders</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">C-03</td><td>Auth screen</td><td>open <code>noesiis.com/portal/auth</code></td><td>SIWE + email sign-in options appear</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">C-04</td><td>Economy — treasury &amp; dues</td><td>map IRS box + <code>/api/v1/irs/treasury</code></td><td>real balance; if dues ran, balance reflects it</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">C-05</td><td>Wiki content</td><td>browse <code>noesiis.com/wiki</code></td><td>pages render, internal links work</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">C-06</td><td>Mobile / responsive</td><td>open key pages on a phone width</td><td>System Map + portal usable on mobile</td><td><span class="pill read">R</span></td><td class="res">__</td></tr>
+<tr><td class="id">C-07</td><td>Sign up (real)</td><td>create a test account via <code>/portal/auth</code> (email)</td><td>account created, lands in portal</td><td><span class="pill write">W</span></td><td class="res">__</td></tr>
+<tr><td class="id">C-08</td><td>Apply for Civic-DID (real)</td><td>submit <code>/apply/genesis</code> with the test account</td><td>application accepted → DID issued (or clear rejection reason); appears in Portal Manager queue</td><td><span class="pill write">W</span></td><td class="res">__</td></tr>
+<tr><td class="id">C-09</td><td>Map reflects the new account</td><td>after C-08, reload <code>noesiis.com/system-map</code></td><td>registry/portal counts went <b>up by 1</b> — end-to-end proof the map is live</td><td><span class="pill write">W</span></td><td class="res">__</td></tr>
+</table>
+<div class="callout warn"><div class="ic">⚠️</div><div><b>C-07 → C-09 are write-path.</b> They create real records on Genesis. Do them last, one developer only, and announce in the channel before starting. C-09 is the best end-to-end test in the whole round: a real sign-up should make the System Map's numbers move.</div></div>
+
+<h2>6 · Reporting templates <span class="ko">보고 템플릿</span></h2>
+<h3>Per-item result (post in your track thread)</h3>
+<pre><span class="g">A-04</span> ✅ pass — System Map renders, registry shows "1 Civic-DID · 3 Nous" (real)
+<span class="g">A-11</span> ✅ pass — 401 portal_session_required (auth gate holds)
+<span class="g">B-03</span> 🟡 partial — 401 as expected, but error body is empty (no reason code)</pre>
+<h3>Bug report (one sub-thread per bug)</h3>
+<pre><span class="k">🐞 BUG</span>  [<span class="m">track/ID</span>]  e.g. B-05
+<span class="k">What:</span>     marketplace/listings returns 500
+<span class="k">URL:</span>      https://api.noesiis.com/api/v1/market/listings
+<span class="k">Expected:</span> 200 + listings array
+<span class="k">Got:</span>      500 {"error":"..."}   (paste body / screenshot)
+<span class="k">Severity:</span> blocker | major | minor
+<span class="k">Who:</span>      @dev2   <span class="k">When:</span> &lt;time&gt;</pre>
+<h3>End-of-round summary (one per developer)</h3>
+<pre><span class="g">Track B — Dev 2 — Round 1 done</span>
+✅ 8/10  ❌ 1 (B-05 500)  🟡 1 (B-03 empty body)  ⏭️ 0
+Blockers: none. Bug threads: ↑ B-05.</pre>
+
+<h2>7 · Cadence <span class="ko">진행 순서</span></h2>
+<ul>
+  <li><b>Round 1 (read-only):</b> all three run their tracks in parallel, post per-item results in their thread, then an end-of-round summary. ~30–45 min.</li>
+  <li><b>Triage:</b> regroup on the ❌/🟡 items — confirm, file bugs, assign. (This is where I can step back in: paste the bug threads here and I'll diagnose + fix.)</li>
+  <li><b>Round 2 (write-path):</b> Dev 3 runs C-07→C-09 solo, announced. Watch the System Map move (C-09).</li>
+  <li><b>Sign-off:</b> a final summary message — total ✅/❌, open bugs, go/no-go.</li>
+</ul>
+<div class="callout ok"><div class="ic">✅</div><div><b>How I plug in:</b> your devs run the tracks and post in Slack; you paste the failures (or the whole summary) back to me here, and I diagnose, fix, and redeploy. I can also pre-run the read-only Track A/B endpoints right now as a baseline so your team starts from a known-good (or known-bad) state — just say the word.</div></div>
+
+<footer>Noēsis · 3-Developer QA Testing Guide &nbsp;·&nbsp; live system: <a href="https://noesiis.com/system-map">noesiis.com/system-map</a> &nbsp;·&nbsp; generated for the test round</footer>
+</div></body></html>
