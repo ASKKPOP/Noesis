@@ -48,12 +48,12 @@ a{color:var(--accent);}
 <tr><th>Field</th><th>Value</th></tr>
 <tr><td><b>Channel name</b></td><td><code>#noesis-qa</code> (or <code>#noesis-test</code>)</td></tr>
 <tr><td><b>Topic</b></td><td>Live QA of noesiis.com · read-only smoke first · report ✅/❌ per item</td></tr>
-<tr><td><b>Members</b></td><td><b>3 testers</b> = You (operator, Track A) + Teammate 2 (Track B) + Teammate 3 (Track C)</td></tr>
+<tr><td><b>Members</b></td><td><b>3 testers</b> = You (operator, Track A) + Tuan Anh (Track B) + Luu (Track C)</td></tr>
 <tr><td><b>Pinned message</b></td><td>This guide's link + the track assignments + the status legend (below)</td></tr>
 <tr><td><b>Threads</b></td><td>One thread per <b>track</b> (A / B / C). Each developer reports inside their thread; bugs get their own sub-thread.</td></tr>
 </table>
 <div class="callout"><div class="ic">📌</div><div><b>Pin this in the channel</b> (copy-paste):<br>
-<code>Track A → You (operator) · Platform &amp; surfaces &nbsp;|&nbsp; Track B → @teammate2 · 8 institutions &nbsp;|&nbsp; Track C → @teammate3 · Journeys &amp; economy</code><br>
+<code>Track A → You (operator) · Platform &amp; surfaces &nbsp;|&nbsp; Track B → Tuan Anh · 8 institutions &nbsp;|&nbsp; Track C → Luu · Journeys &amp; economy</code><br>
 <code>Status: ✅ pass · ❌ fail · 🟡 partial · ⚠️ blocked · ⏭️ skipped (write-path)</code></div></div>
 
 <h2>2 · Ground rules <span class="ko">기본 규칙</span></h2>
@@ -90,7 +90,7 @@ curl -s https://api.noesiis.com/api/v1/system/map | python3 -m json.tool
 <span class="k"># A-11 auth gate must be 401 (not 200)</span>
 curl -s -o /dev/null -w "%{http_code}\n" https://api.noesiis.com/api/v1/portal-manager/registrations</pre>
 
-<h2 class="s-b">4 · Track B — The 8 civic institutions <span class="ko">8대 시민 제도 · <span class="devbadge d2">Teammate 2</span></span></h2>
+<h2 class="s-b">4 · Track B — The 8 civic institutions <span class="ko">8대 시민 제도 · <span class="devbadge d2">Tuan Anh</span></span></h2>
 <p class="intro">Each institution must return real data and agree with the System Map (A-06). Public reads are open; the gated ones must reject anonymous callers.</p>
 <table>
 <tr><th>ID</th><th>Institution</th><th>Endpoint</th><th>Expected</th><th>Type</th><th>Result</th></tr>
@@ -112,7 +112,7 @@ done
 <span class="k"># B-03 police must be 401 without a civic-DID</span>
 curl -s -o /dev/null -w "%{http_code}\n" https://api.noesiis.com/api/v1/police/complaints</pre>
 
-<h2 class="s-c">5 · Track C — Journeys &amp; the economy loop <span class="ko">사용자 여정·경제 루프 · <span class="devbadge d3">Teammate 3</span></span></h2>
+<h2 class="s-c">5 · Track C — Journeys &amp; the economy loop <span class="ko">사용자 여정·경제 루프 · <span class="devbadge d3">Luu</span></span></h2>
 <p class="intro">The human-facing flows and the live economy. <b>Round 1 = read-only browsing.</b> The write-path items (marked <span class="pill write">W</span>) come in Round 2 — one owner, announced first.</p>
 <table>
 <tr><th>ID</th><th>Test</th><th>How</th><th>Expected</th><th>Type</th><th>Result</th></tr>
@@ -126,7 +126,7 @@ curl -s -o /dev/null -w "%{http_code}\n" https://api.noesiis.com/api/v1/police/c
 <tr><td class="id">C-08</td><td>Apply for Civic-DID (real)</td><td>submit <code>/apply/genesis</code> with the test account</td><td>application accepted → DID issued (or clear rejection reason); appears in Portal Manager queue</td><td><span class="pill write">W</span></td><td class="res">__</td></tr>
 <tr><td class="id">C-09</td><td>Map reflects the new account</td><td>after C-08, reload <code>noesiis.com/system-map</code></td><td>registry/portal counts went <b>up by 1</b> — end-to-end proof the map is live</td><td><span class="pill write">W</span></td><td class="res">__</td></tr>
 </table>
-<div class="callout warn"><div class="ic">⚠️</div><div><b>C-07 → C-09 are write-path.</b> They create real records on Genesis. <b>Run by you (the operator) together with Teammate 3</b> — last, and announce in the channel before starting (you own prod, so you green-light the mutation). C-09 is the best end-to-end test in the whole round: a real sign-up should make the System Map's numbers move.</div></div>
+<div class="callout warn"><div class="ic">⚠️</div><div><b>C-07 → C-09 are write-path.</b> They create real records on Genesis. <b>Run by you (the operator) together with Luu</b> — last, and announce in the channel before starting (you own prod, so you green-light the mutation). C-09 is the best end-to-end test in the whole round: a real sign-up should make the System Map's numbers move.</div></div>
 
 <h2>6 · Reporting templates <span class="ko">보고 템플릿</span></h2>
 <h3>Per-item result (post in your track thread)</h3>
@@ -140,9 +140,9 @@ curl -s -o /dev/null -w "%{http_code}\n" https://api.noesiis.com/api/v1/police/c
 <span class="k">Expected:</span> 200 + listings array
 <span class="k">Got:</span>      500 {"error":"..."}   (paste body / screenshot)
 <span class="k">Severity:</span> blocker | major | minor
-<span class="k">Who:</span>      @teammate2   <span class="k">When:</span> &lt;time&gt;</pre>
+<span class="k">Who:</span>      Tuan Anh   <span class="k">When:</span> &lt;time&gt;</pre>
 <h3>End-of-round summary (one per developer)</h3>
-<pre><span class="g">Track B — Teammate 2 — Round 1 done</span>
+<pre><span class="g">Track B — Tuan Anh — Round 1 done</span>
 ✅ 8/10  ❌ 1 (B-05 500)  🟡 1 (B-03 empty body)  ⏭️ 0
 Blockers: none. Bug threads: ↑ B-05.</pre>
 
@@ -150,7 +150,7 @@ Blockers: none. Bug threads: ↑ B-05.</pre>
 <ul>
   <li><b>Round 1 (read-only):</b> all three run their tracks in parallel, post per-item results in their thread, then an end-of-round summary. ~30–45 min.</li>
   <li><b>Triage:</b> regroup on the ❌/🟡 items — confirm, file bugs, assign. (This is where I can step back in: paste the bug threads here and I'll diagnose + fix.)</li>
-  <li><b>Round 2 (write-path):</b> you (operator) + Teammate 3 run C-07→C-09, announced. Watch the System Map move (C-09).</li>
+  <li><b>Round 2 (write-path):</b> you (operator) + Luu run C-07→C-09, announced. Watch the System Map move (C-09).</li>
   <li><b>Sign-off:</b> a final summary message — total ✅/❌, open bugs, go/no-go.</li>
 </ul>
 <div class="callout ok"><div class="ic">✅</div><div><b>How I plug in:</b> your devs run the tracks and post in Slack; you paste the failures (or the whole summary) back to me here, and I diagnose, fix, and redeploy. I can also pre-run the read-only Track A/B endpoints right now as a baseline so your team starts from a known-good (or known-bad) state — just say the word.</div></div>
