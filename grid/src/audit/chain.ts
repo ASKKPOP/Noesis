@@ -170,6 +170,34 @@ export class AuditChain {
         }
     }
 
+    /**
+     * Order-independent JSON serialization for hashing.
+     *
+     * Object keys are sorted recursively so the output is byte-identical
+     * regardless of key insertion order. This is REQUIRED for R-31-01: the
+     * audit `payload` is persisted to a MySQL `JSON` column (see
+     * grid/src/db/schema.ts), which normalizes (reorders) object keys on
+     * storage. A plain JSON.stringify() over the reordered object read back on
+     * restore (grid/src/db/stores/audit-store.ts:loadAll) would recompute a
+     * different hash than the one stored at append time, so verify() would
+     * report the chain broken after every container restart. Sorting keys makes
+     * the hash survive the JSON round-trip.
+     *
+     * Arrays keep their order (order is semantically meaningful). A value change
+     * anywhere still changes the output, so tamper-detection is preserved.
+     */
+    static stableStringify(value: unknown): string {
+        if (value === null || typeof value !== 'object') {
+            return JSON.stringify(value) ?? 'null';
+        }
+        if (Array.isArray(value)) {
+            return '[' + value.map(v => AuditChain.stableStringify(v)).join(',') + ']';
+        }
+        const obj = value as Record<string, unknown>;
+        const keys = Object.keys(obj).sort();
+        return '{' + keys.map(k => JSON.stringify(k) + ':' + AuditChain.stableStringify(obj[k])).join(',') + '}';
+    }
+
     /** Compute SHA-256 hash for an entry. */
     static computeHash(
         prevHash: string,
@@ -178,7 +206,7 @@ export class AuditChain {
         payload: Record<string, unknown>,
         timestamp: number,
     ): string {
-        const data = `${prevHash}|${eventType}|${actorDid}|${JSON.stringify(payload)}|${timestamp}`;
+        const data = `${prevHash}|${eventType}|${actorDid}|${AuditChain.stableStringify(payload)}|${timestamp}`;
         return createHash('sha256').update(data).digest('hex');
     }
 }
