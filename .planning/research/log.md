@@ -29,6 +29,14 @@ closed on the existing SkillStore with sleep-time distillation of completed goal
 and _sleep_time_compute after Hypnos (A7 — Letta pattern). Brain suite 1140 green,
 D-MIND-05/06. W-A remaining: A8 DSPy/GEPA (offline), A9 Phase 40b hosted pool.
 
+## [2026-07-02] apply | "do until finish" wave — W-B society + substrate + doors
+Operator directed autonomous completion. Shipped: W-B social cycle (autonomous DM/teach/
+lore/commit-reveal voting — VOTE-05 end-to-end, D-SOC-01..03, brain 1152 green) · W-D
+(watchdog webhook alerts, real-MySQL migration CI, backup script+runbook) · W-C6 map-sync
+CI gate · W-E1 bilingual getting-started · A8 decision-evalset exporter · A9 always-on
+Brain compose. Daily visual log: docs/noesis-daily-log-2026-07-02.html. Remaining tail
+recorded there + in [[system-audit-2026-07]] program (W-C1–C5, W-E2–E5, Phase 40b).
+
 ## [2026-07-02] ingest | OSS landscapes (agent learning · visualization)
 Created [[oss-agent-learning-landscape]] (Voyager, Generative Agents, Reflexion, PIANO,
 Letta sleep-time, Mem0/Graphiti, DSPy+GEPA, SLM cascades) and

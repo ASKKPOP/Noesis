@@ -184,8 +184,13 @@ tick-based) → planner + decision lessons · A6 Voyager loop closed on the exis
 in the decision prompt, outcome EMA per work_task, sleep-time distillation of completed goals via
 `GoalLedger.done_tasks` + `parse_skill`) · A7 `_sleep_time_compute` after Hypnos `run_sleep` (distill +
 forced reflection). Suite **1140 green**, allowlist +0. D-MIND-05/06 added to the wiki decision log.
-**W-A remaining (deferred, larger standalone):** A8 DSPy/GEPA offline prompt evolution · A9 Phase 40b
-hosted pool (ceaselessness). Then W-B/W-C/W-D/W-E per the audit program.
+**Same day ("do until finish"): W-B + W-C6 + W-D + W-E1 + A8 + A9-substrate SHIPPED** (commit `9f7a946`):
+social cycle (autonomous DM/teach/lore/commit-reveal voting — VOTE-05 end-to-end, D-SOC-01..03, brain 1152
+green) · watchdog webhook alerting + real-MySQL migration CI + backup script/runbook · map-sync CI gate
+(IN SYNC) · bilingual getting-started page · decision-evalset exporter · always-on Brain compose+runbook.
+**Still open from the audit program:** W-B groups/peer-contracts/promise-ledger · W-C1–C5 (live WS map,
+fly-to camera, upgrade routes, knowledge constellations, time scrubber) · W-E2–E5 · Phase 40b hosted pool.
+Daily visual log: `docs/noesis-daily-log-2026-07-02.html`.
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 
