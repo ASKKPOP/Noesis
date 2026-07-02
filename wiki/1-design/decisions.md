@@ -122,6 +122,15 @@ See [[philosophy]].
 
 See [[groups-and-holdings]].
 
+## Mind Loop — `D-MIND-*` (W-A, 2026-07-02)
+
+| ID | Decision |
+|----|----------|
+| D-MIND-01 | The mind runs on **two timescales**: a slow planner decomposes the top goal into a persistent **goal ledger** (only when the ledger is dry); a fast actor works the next task every ~20 ticks. Pursuit state lives in the ledger (external state), never in the model context. |
+| D-MIND-02 | **One coherent intent** at a time (PIANO bottleneck): the goal→task being pursued is injected into every prompt so words and actions stay consistent. |
+| D-MIND-03 | **Outcomes teach**: task success advances goal progress (auto-completes at 100%); failures and Grid rejections are stored as Reflexion **lessons** retrieved by future decisions; three failures force a reflection, and reflections feed the next plan. |
+| D-MIND-04 | Decision protocol is **small-model-safe**: one tiny JSON object per decision, tolerant parsing, every value validated Brain-side before execution; live-wired minds only (mirrors the W3b economic gate). |
+
 ## 🔗 Related
 
 [[civic-architecture]] · [[philosophy]] · [[economy]]

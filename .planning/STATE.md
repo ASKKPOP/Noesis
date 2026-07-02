@@ -167,6 +167,21 @@ Next action: operator's choice — remaining v3.0 work includes the Wave-1 Type 
   (migrate CLI). Phases 47–51 (civic-city institutions + grandfathering + Type Mobility) are COMPLETE.
   ⚠️ Deploy gap: Phases 48–51 (migrations v60–v64) are pushed but NOT deployed (only Phase 47 is live).
 
+## W-A Mind Loop — SHIPPED 2026-07-02 (from the full-system audit)
+
+Operator asked for full analytics (autonomy/visualization/availability) then approved implementation
+("Sure, doing"). Audit + program: `docs/noesis-system-analysis-2026-07.html` + `.planning/research/system-audit-2026-07.md`
+(workstreams W-A Mind → W-B Society → W-C Living Map → W-D Substrate → W-E Doors).
+**W-A A1–A4 SHIPPED:** per-tick decision cycle (work_task/speak/rest; NOOP idle replaced; live-wired gate,
+20-tick cooldown) · `GoalLedger` (persists via `ledger_db_dir` next to nous.db) + 200-tick planner
+(top-goal → 2-4 tasks when dry) · ReflectionEngine WIRED (interval or 3-failure trigger; reflect→re-plan) ·
+outcome feedback (`record_task_outcome` → `Goal.advance` 1/total + auto-complete; failures/rejections →
+`Lesson:` Reflexion memories). ONE intent per tick injected into prompts (`build_system_prompt(intent=…)`,
+D-MIND-02). 43 new Brain tests, suite **1127 green**, allowlist **+0**, on_tick contract untouched.
+Decisions **D-MIND-01..04** (wiki decisions.md). Plan: `docs/superpowers/plans/2026-07-02-w-a-mind-autonomous-learning.md`.
+**W-A remaining:** scored memory retrieval · SKILL.md skill library · sleep-time compute · DSPy/GEPA offline
+prompt evolution · Phase 40b hosted pool (ceaselessness). Then W-B/W-C/W-D/W-E per the audit program.
+
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 
 **Money in Noēsis is exactly two things, and nothing else:**

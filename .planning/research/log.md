@@ -16,6 +16,13 @@ scalability/usability. Ran 4 codebase deep-audits + 2 live OSS web surveys; synt
 into [[system-audit-2026-07]] (verdicts + W-A..W-E implementation program). Served twin:
 `docs/noesis-system-analysis-2026-07.html`.
 
+## [2026-07-02] apply | W-A Mind loop shipped from the audit program
+Operator approved the [[system-audit-2026-07]] program; W-A A1–A4 implemented in the Brain
+(decision cycle replacing NOOP, GoalLedger + slow planner, ReflectionEngine wired,
+outcome feedback with Reflexion lessons; D-MIND-01..04). 43 TDD tests, brain suite 1127
+green, allowlist +0. Patterns applied from [[oss-agent-learning-landscape]]
+(BabyAGI ledger × PIANO intent · Generative-Agents reflection · Reflexion lessons).
+
 ## [2026-07-02] ingest | OSS landscapes (agent learning · visualization)
 Created [[oss-agent-learning-landscape]] (Voyager, Generative Agents, Reflexion, PIANO,
 Letta sleep-time, Mem0/Graphiti, DSPy+GEPA, SLM cascades) and

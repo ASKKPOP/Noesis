@@ -87,6 +87,14 @@
     <li><b>Decision</b> <span class="tag design">proposed</span> — implementation program <b>W-A Mind → W-B Society → W-C Living Map (parallel) → W-D Substrate Trust → W-E Open Doors</b>;
       OSS adoptions locked to: port patterns (Generative-Agents memory, Reflexion, BabyAGI ledger × PIANO, Voyager+SKILL.md, Letta sleep-time, Colyseus/CZML deltas+replay),
       embed small MIT libs (camera-controls, three-mesh-bvh/csg, three-forcegraph, cosmos.gl, troika, DSPy/GEPA, Outlines); avoid Brain-owning frameworks; stay vanilla no-build three.js.</li>
+    <li><b>W-A Mind loop A1–A4</b> <span class="tag done">shipped</span> — operator approved ("Sure, doing"); TDD per
+      <code>docs/superpowers/plans/2026-07-02-w-a-mind-autonomous-learning.md</code>:
+      <b>A1</b> per-tick decision cycle (<code>_run_decision_cycle</code>: work_task/speak/rest, 20-tick cooldown, live-wired gate, W3b guardrails — NOOP idle replaced) ·
+      <b>A2</b> <code>GoalLedger</code> (SQLite, persists via <code>ledger_db_dir</code>) + 200-tick planner decomposing the top Telos goal ·
+      <b>A3</b> ReflectionEngine finally wired (interval OR 3-failure trigger, inflight-guarded; reflect→re-plan) ·
+      <b>A4</b> outcome feedback (<code>record_task_outcome</code> → <code>Goal.advance</code> + auto-complete; failures/Grid rejections → <code>Lesson:</code> Reflexion memories).
+      ONE intent per tick in prompts (PIANO, D-MIND-02). <strong>43 new Brain tests · suite 1127 green · allowlist +0 · on_tick contract untouched.</strong>
+      Wiki: nous.md mind-loop section + D-MIND-01..04; ROADMAP/STATE synced.</li>
   </ul>
 
   <!-- ============================ SESSION 13 ============================ -->

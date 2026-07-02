@@ -358,6 +358,9 @@ def create_brain_app(
         location=location,
         memory=memory_store,
         did=did,
+        # W-A2 (Mind): the goal→task ledger persists next to nous.db so goal
+        # pursuit survives restarts (ceaselessness lives in external state).
+        ledger_db_dir=data_dir,
     )
 
     # Build RPC server
