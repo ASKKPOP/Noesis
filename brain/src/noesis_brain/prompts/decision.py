@@ -19,6 +19,7 @@ from typing import Any
 
 _MAX_TASKS = 4
 _DECISION_ACTIONS = {"work_task", "speak", "rest"}
+_SOCIAL_ACTIONS = {"message_peer", "share_skill", "contribute_lore", "vote", "none"}
 
 _JSON_RE = re.compile(r"\{.*\}", re.DOTALL)
 
@@ -143,6 +144,46 @@ def parse_skill(text: str) -> dict[str, Any] | None:
         "triggers": [t.strip() for t in triggers if isinstance(t, str) and t.strip()][:5]
         if isinstance(triggers, list) else [],
     }
+
+
+def build_social_prompt(
+    peers: list[str],
+    skill_names: list[str],
+    proposals: list[dict[str, Any]],
+) -> str:
+    """W-B — one small social/civic act. Options are contextual: only offer
+    what actually exists (peers, own skills, open proposals); lore is always
+    offerable (Grid quota-caps it)."""
+    lines = ["You have a moment for social and civic life. Choose ONE small act, or none."]
+    opts: list[str] = []
+    if peers:
+        lines += ["", "Peers you trust:"] + [f"- {p}" for p in peers]
+        opts.append('- {"action": "message_peer", "peer_did": "<one of the peers>", "text": "<short, useful or friendly>"}')
+        if skill_names:
+            lines += ["", "Skills you could teach a peer:"] + [f"- {s}" for s in skill_names]
+            opts.append('- {"action": "share_skill", "peer_did": "<peer>", "skill_name": "<one of your skills>"}')
+    if proposals:
+        lines += ["", "Open proposals awaiting your ballot:"]
+        lines += [
+            f"- {p.get('proposal_id')} (voting closes at tick {p.get('deadline_tick')})"
+            for p in proposals
+        ]
+        opts.append('- {"action": "vote", "proposal_id": "<id>", "choice": "yes" | "no" | "abstain"}')
+    lines += ["", "You may record knowledge for the commons:"]
+    opts.append('- {"action": "contribute_lore", "title": "<short>", "content": "<the knowledge, a few sentences>", "category": "cultural" | "historical" | "observation" | "synthesis"}')
+    opts.append('- {"action": "none"}')
+    lines += ["", "Respond with ONLY one JSON object:"] + opts
+    return "\n".join(lines)
+
+
+def parse_social_decision(text: str) -> dict[str, Any] | None:
+    """Parse a social decision; unknown/missing action → None (guardrail)."""
+    obj = _first_json_object(text)
+    if obj is None:
+        return None
+    if obj.get("action") not in _SOCIAL_ACTIONS:
+        return None
+    return obj
 
 
 def parse_task_list(text: str) -> list[str] | None:

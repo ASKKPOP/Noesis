@@ -336,6 +336,13 @@ class GridWireClient:
         notices = data.get("notices") if isinstance(data, dict) else None
         return notices if isinstance(notices, list) else []
 
+    async def fetch_open_proposals(self) -> list[dict[str, Any]]:
+        """GET /api/v1/governance/proposals — the civic ballot sight (W-B2):
+        open proposals a Nous can vote on (commit-reveal). [] on any error."""
+        data = await self._econ_get("/api/v1/governance/proposals")
+        proposals = data.get("proposals") if isinstance(data, dict) else None
+        return proposals if isinstance(proposals, list) else []
+
     async def fetch_grids(self) -> list[dict[str, Any]]:
         """GET /api/v1/portal/grids — the Portal join-list of active Grids a Nous can
         learn about and consider joining (name, Polis, status, environment). [] on any

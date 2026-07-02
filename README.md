@@ -65,7 +65,7 @@ cli/               TypeScript    noesis genesis | status | spawn | regions |
 
 ```bash
 # Clone
-git clone https://github.com/anthropics/noesis.git
+git clone https://github.com/ASKKPOP/Noesis.git
 cd noesis
 
 # Install dependencies

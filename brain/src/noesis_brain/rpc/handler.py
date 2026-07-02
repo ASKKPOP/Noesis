@@ -26,10 +26,19 @@ from noesis_brain.prompts.decision import (
     build_decision_prompt,
     build_planning_prompt,
     build_skill_distill_prompt,
+    build_social_prompt,
     parse_decision,
     parse_skill,
+    parse_social_decision,
     parse_task_list,
 )
+from noesis_brain.governance.state import GovernanceState
+from noesis_brain.governance.voter import (
+    NoCommittedBallotError,
+    build_commit_action,
+    build_reveal_action,
+)
+from noesis_brain.lore.types import LORE_CATEGORIES, LoreEntry
 from noesis_brain.telos.ledger import GoalLedger, LedgerTask
 from noesis_brain.memory.reflection import ReflectionEngine
 from noesis_brain.memory.retrieval import RetrievalScorer
@@ -110,6 +119,9 @@ class BrainHandler:
         self._retrieval_scorer = RetrievalScorer()
         # W-A6: goals completed since the last sleep, awaiting skill distillation.
         self._pending_distill: list[str] = []
+        # W-B: social/civic cycle — outreach, teaching, lore, commit-reveal voting.
+        self._last_social_tick = -10_000
+        self._governance_state = GovernanceState()
         self._reflection: ReflectionEngine | None = None
         if memory is not None and hasattr(memory, "add_reflection") and hasattr(memory, "recent"):
             self._reflection = ReflectionEngine(memory, llm)
@@ -959,6 +971,155 @@ class BrainHandler:
         except Exception as exc:  # never let distillation take down sleep
             log.warning("[Brain] skill distillation failed: %s", exc)
 
+    # ── W-B: social/civic cycle ───────────────────────────────────────────────
+    _SOCIAL_COOLDOWN_TICKS = 60
+
+    def _should_run_social_cycle(self, tick: int) -> bool:
+        """Social timescale: live-wired minds only + cooldown."""
+        if self._grid_wire_client is None or self.llm is None:
+            return False
+        return (tick - self._last_social_tick) >= self._SOCIAL_COOLDOWN_TICKS
+
+    async def _run_social_cycle(self, tick: int) -> None:
+        """W-B — one small social/civic act per cycle: message a trusted peer,
+        teach a skill (__skill_share DM), contribute lore to the commons, or
+        vote on an open proposal (commit-reveal via GovernanceState). Chosen
+        actions are stashed on _pending_actions and drained by the next
+        on_tick into the normal NousRunner dispatch — no new Grid surface,
+        every existing audit path preserved. VOTE-05 holds: the Nous itself
+        decides and casts its ballot. Background; never fatal."""
+        wire = self._grid_wire_client
+        if wire is None:
+            return
+        try:
+            proposals = await wire.fetch_open_proposals()
+
+            # 1. Reveal sweep (no LLM): any past-deadline proposal we committed on.
+            for p in proposals:
+                pid = p.get("proposal_id")
+                deadline = int(p.get("deadline_tick", 0) or 0)
+                if pid and tick >= deadline:
+                    try:
+                        self._pending_actions.append(
+                            build_reveal_action(pid, self.did, self._governance_state)
+                        )
+                        if self.memory is not None and hasattr(self.memory, "record_event"):
+                            self.memory.record_event(
+                                content=f"Revealed my ballot on proposal {pid}",
+                                source_did=self.did, tick=tick,
+                            )
+                    except NoCommittedBallotError:
+                        pass
+
+            # 2. Offerable context — only what actually exists.
+            peers = [
+                d for d, w in sorted(
+                    self._cached_peer_weights.items(), key=lambda x: x[1], reverse=True
+                ) if w >= 0.3
+            ][:3]
+            skills: list = []
+            if self._skill_store is not None:
+                try:
+                    goal = self._top_goal()
+                    skills = self._skill_store.retrieve(
+                        goal.description if goal else "useful", k=3,
+                    ) or []
+                except Exception:
+                    skills = []
+            open_props = [
+                p for p in proposals
+                if p.get("status") == "open"
+                and tick < int(p.get("deadline_tick", 0) or 0)
+                and self._governance_state.recall(str(p.get("proposal_id", ""))) is None
+            ]
+
+            prompt = build_social_prompt(peers, [s.name for s in skills], open_props)
+            system_prompt = build_system_prompt(
+                self.psyche, self.thymos.mood, self.telos,
+                grid_name=self.grid_name, location=self.location,
+                intent=self._current_intent,
+            )
+            response = await self.llm.generate(
+                prompt,
+                GenerateOptions(
+                    system_prompt=system_prompt, temperature=0.8,
+                    max_tokens=300, purpose="social_decision",
+                ),
+            )
+            decision = parse_social_decision(response.text)
+            if not decision:
+                return
+            act = decision["action"]
+
+            if act == "message_peer":
+                peer = decision.get("peer_did")
+                text = decision.get("text")
+                if peer in peers and isinstance(text, str) and text.strip():
+                    self._pending_actions.append(Action(
+                        action_type=ActionType.DIRECT_MESSAGE, channel="direct",
+                        text=text.strip()[:300], metadata={"target_did": peer},
+                    ))
+                    self._social_memory(f"Reached out to {peer}", tick)
+
+            elif act == "share_skill":
+                peer = decision.get("peer_did")
+                name = decision.get("skill_name")
+                skill = next((s for s in skills if s.name == name), None)
+                if peer in peers and skill is not None:
+                    import json as _json
+                    payload = _json.dumps({
+                        "name": skill.name,
+                        "description": skill.description,
+                        "instructions": skill.instructions,
+                        "triggers": list(getattr(skill, "triggers", []) or []),
+                    })
+                    self._pending_actions.append(Action(
+                        action_type=ActionType.DIRECT_MESSAGE, channel="direct",
+                        text="__skill_share:" + payload, metadata={"target_did": peer},
+                    ))
+                    self._social_memory(f"Taught skill '{skill.name}' to {peer}", tick)
+
+            elif act == "contribute_lore":
+                title = decision.get("title")
+                content = decision.get("content")
+                category = decision.get("category")
+                if (
+                    isinstance(title, str) and isinstance(content, str)
+                    and content.strip() and category in LORE_CATEGORIES
+                    and self._lore_store is not None
+                ):
+                    import hashlib as _hashlib
+                    body = content.strip()[:2000]
+                    chash = _hashlib.sha256(body.encode()).hexdigest()
+                    if not self._lore_store.has(chash):
+                        self._lore_store.add(LoreEntry(
+                            content_hash=chash, contributor_did=self.did,
+                            category_tag=category, title=title.strip()[:80],
+                            content=body, received_tick=tick,
+                        ))
+                    # Grid sees hash + category only (D-20-12); content stays Brain-side.
+                    self._pending_actions.append(Action(
+                        action_type=ActionType.LORE_CONTRIBUTE,
+                        metadata={"content_hash": chash, "category_tag": category},
+                    ))
+                    self._social_memory(f"Contributed lore '{title.strip()[:80]}' to the commons", tick)
+
+            elif act == "vote":
+                pid = decision.get("proposal_id")
+                choice = decision.get("choice")
+                chosen = next((p for p in open_props if p.get("proposal_id") == pid), None)
+                if chosen is not None and choice in ("yes", "no", "abstain"):
+                    self._pending_actions.append(
+                        build_commit_action(pid, choice, self.did, self._governance_state)
+                    )
+                    self._social_memory(f"Committed my ballot on proposal {pid}", tick)
+        except Exception as exc:  # never let a social cycle take down the tick
+            log.warning("[Brain] social cycle failed: %s", exc)
+
+    def _social_memory(self, content: str, tick: int) -> None:
+        if self.memory is not None and hasattr(self.memory, "record_event"):
+            self.memory.record_event(content=content[:300], source_did=self.did, tick=tick)
+
     async def _sleep_time_compute(self, tick: int) -> None:
         """W-A7 (Letta sleep-time pattern) — idle consolidation becomes
         learning: after Hypnos runs, distill completed goals into skills and
@@ -1103,6 +1264,13 @@ class BrainHandler:
             self._last_decision_tick = tick
             import asyncio as _asyncio
             _asyncio.create_task(self._run_decision_cycle(tick))
+        # W-B: the social/civic cycle — outreach, teaching, lore, voting. Its own
+        # (longer) cooldown; may share a tick with the mind cycles (different LLM
+        # temperature/purpose, and reveals must never wait behind a busy mind).
+        if self._should_run_social_cycle(tick):
+            self._last_social_tick = tick
+            import asyncio as _asyncio
+            _asyncio.create_task(self._run_social_cycle(tick))
         # W-A3: reflection cadence — every tick counts; fires on interval or
         # after repeated failures (inflight-guarded).
         if self._reflection is not None:

@@ -962,6 +962,9 @@ export function buildServerWithHub(
                 readonly lastPersistError?: { code: string; at: number } | null;
                 readonly lastPersistedId?: number | null;
             },
+        }, {
+            // W-D3: grid name for the ALERT_WEBHOOK_URL payload (URL read from env).
+            gridName: services.gridName,
         });
         launcher.attachHealthWatchdog(healthWatchdog);
         launcher.attachFirehoseHub(firehoseHub);

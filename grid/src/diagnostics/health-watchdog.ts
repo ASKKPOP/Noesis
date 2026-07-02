@@ -192,6 +192,16 @@ interface HealthWatchdogDeps {
 interface HealthWatchdogOpts {
     now?: () => number;
     snapshotCadenceMs?: number;
+    /**
+     * W-D3 alert hook: Grid name included in the webhook payload.
+     * Defaults to env GRID_NAME, then 'genesis'.
+     */
+    gridName?: string;
+    /**
+     * W-D3 alert hook: webhook URL POSTed on transitions to degraded/critical.
+     * Defaults to env ALERT_WEBHOOK_URL. Unset → alerting is a no-op.
+     */
+    alertWebhookUrl?: string;
 }
 
 /**
@@ -204,6 +214,8 @@ export class HealthWatchdog {
     private _firehoseStatsFn: (() => FirehoseStats) | null = null;
     private readonly nowFn: () => number;
     private readonly snapshotCadenceMs: number;
+    private readonly gridName: string;
+    private readonly alertWebhookUrl: string | undefined;
 
     constructor(
         private readonly deps: HealthWatchdogDeps,
@@ -211,6 +223,38 @@ export class HealthWatchdog {
     ) {
         this.nowFn = opts.now ?? Date.now;
         this.snapshotCadenceMs = opts.snapshotCadenceMs ?? 30_000;
+        this.gridName = opts.gridName ?? process.env['GRID_NAME'] ?? 'genesis';
+        this.alertWebhookUrl = opts.alertWebhookUrl ?? process.env['ALERT_WEBHOOK_URL'];
+    }
+
+    /**
+     * W-D3 alert hook: POST {grid, status, reason, tick} to ALERT_WEBHOOK_URL on
+     * a state TRANSITION to degraded/critical. Fire-and-forget — a failed or slow
+     * webhook (5s abort) only Pino-warns; it never throws and never blocks the
+     * health loop. No-op when the URL is unset (default).
+     */
+    private postAlert(status: HealthStatus, reasons: readonly string[], tick: number): void {
+        if (this.alertWebhookUrl === undefined || this.alertWebhookUrl === '') return;
+        fetch(this.alertWebhookUrl, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+                grid: this.gridName,
+                status,
+                reason: reasons.join(','),
+                tick,
+            }),
+            signal: AbortSignal.timeout(5_000),
+        }).catch((err: unknown) => {
+            log.warn(
+                {
+                    event: 'health_alert_webhook_failed',
+                    status,
+                    error: err instanceof Error ? err.message : String(err),
+                },
+                'alert webhook POST failed',
+            );
+        });
     }
 
     /**
@@ -316,6 +360,8 @@ export class HealthWatchdog {
                 log.info(payload, 'health recovered');
             } else {
                 log.warn(payload, 'health degraded');
+                // W-D3: webhook alert on the transition only (never on repeat checks).
+                this.postAlert(status, reasons, clock.tick);
             }
         }
         this.lastStatus = status;
