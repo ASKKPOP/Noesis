@@ -117,8 +117,8 @@ async def test_planner_prompt_carries_reflections_from_memory():
 
     h = _handler()
     h.memory = _memory(recent=[
-        SimpleNamespace(content="power is scarce in ring 3", memory_type=MemoryType.REFLECTION),
-        SimpleNamespace(content="saw a brownout", memory_type=MemoryType.EVENT),
+        SimpleNamespace(content="power is scarce in ring 3", memory_type=MemoryType.REFLECTION, tick=490, importance=8.0),
+        SimpleNamespace(content="saw a brownout", memory_type=MemoryType.EVENT, tick=495, importance=6.0),
     ])
     h.llm = _llm_saying('{"tasks": ["fix it"]}')
 

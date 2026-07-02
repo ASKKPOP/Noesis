@@ -95,6 +95,56 @@ def build_decision_prompt(
     return "\n".join(lines)
 
 
+def build_skill_distill_prompt(goal_desc: str, done_tasks: list[str]) -> str:
+    """W-A6 (Voyager verify-then-add): distill a COMPLETED goal's task
+    trajectory into one reusable text skill. Runs at sleep-time only."""
+    lines = [
+        "You just completed a goal. Distill HOW you did it into one reusable skill",
+        "another future situation could reuse.",
+        "",
+        f"COMPLETED GOAL: {goal_desc}",
+        "Tasks you completed, in order:",
+    ]
+    lines += [f"{i + 1}. {t}" for i, t in enumerate(done_tasks)]
+    lines += [
+        "",
+        "Respond with ONLY a JSON object:",
+        '{"name": "<short_snake_case_slug>", "description": "<≤200 chars, what this skill achieves>",'
+        ' "instructions": "<≤1000 chars, how to do it step by step>", "triggers": ["<keyword>", "<keyword>"]}',
+    ]
+    return "\n".join(lines)
+
+
+_SLUG_RE = re.compile(r"[^a-z0-9_]+")
+
+
+def parse_skill(text: str) -> dict[str, Any] | None:
+    """Parse a distilled skill; requires name + instructions; sanitizes the
+    name into a slug that passes Skill.validate() (alnum + underscore)."""
+    obj = _first_json_object(text)
+    if obj is None:
+        return None
+    name = obj.get("name")
+    instructions = obj.get("instructions")
+    if not isinstance(name, str) or not name.strip():
+        return None
+    if not isinstance(instructions, str) or not instructions.strip():
+        return None
+    slug = _SLUG_RE.sub("_", name.strip().lower()).strip("_")
+    slug = re.sub(r"_+", "_", slug)
+    if not slug:
+        return None
+    description = obj.get("description")
+    triggers = obj.get("triggers")
+    return {
+        "name": slug,
+        "description": description.strip() if isinstance(description, str) else slug,
+        "instructions": instructions.strip(),
+        "triggers": [t.strip() for t in triggers if isinstance(t, str) and t.strip()][:5]
+        if isinstance(triggers, list) else [],
+    }
+
+
 def parse_task_list(text: str) -> list[str] | None:
     """Parse {"tasks": [...]} → list of 1-4 non-empty task strings, or None."""
     obj = _first_json_object(text)

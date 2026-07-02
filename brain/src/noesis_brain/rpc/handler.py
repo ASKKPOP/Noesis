@@ -25,11 +25,14 @@ from noesis_brain.rpc.types import Action, ActionType, build_civic_land_action, 
 from noesis_brain.prompts.decision import (
     build_decision_prompt,
     build_planning_prompt,
+    build_skill_distill_prompt,
     parse_decision,
+    parse_skill,
     parse_task_list,
 )
 from noesis_brain.telos.ledger import GoalLedger, LedgerTask
 from noesis_brain.memory.reflection import ReflectionEngine
+from noesis_brain.memory.retrieval import RetrievalScorer
 from noesis_brain.memory.types import MemoryType
 from noesis_brain.prompts.economic_decision import (
     build_economic_decision_prompt,
@@ -102,6 +105,11 @@ class BrainHandler:
         self._current_intent: str | None = None
         self._failed_since_reflection = 0
         self._reflection_inflight = False
+        # W-A5: deterministic Stanford retrieval (recency×importance×relevance,
+        # tick-based) feeds the planner and the decision lessons.
+        self._retrieval_scorer = RetrievalScorer()
+        # W-A6: goals completed since the last sleep, awaiting skill distillation.
+        self._pending_distill: list[str] = []
         self._reflection: ReflectionEngine | None = None
         if memory is not None and hasattr(memory, "add_reflection") and hasattr(memory, "recent"):
             self._reflection = ReflectionEngine(memory, llm)
@@ -139,6 +147,9 @@ class BrainHandler:
             from noesis_brain.learning.observational import ObservationalLearner
             from noesis_brain.skills.store import SkillStore as _SkillStore
             _skill_store = _SkillStore(self.memory._conn) if self.memory is not None and hasattr(self.memory, "_conn") else None
+            # W-A6: the decision cycle retrieves from + reports outcomes to the
+            # same per-Nous skill library (Voyager loop finally closes).
+            self._skill_store = _skill_store
             if _skill_store is not None:
                 self._obs_learner: ObservationalLearner | None = ObservationalLearner(
                     store=self.memory,
@@ -168,6 +179,7 @@ class BrainHandler:
         else:
             self._hypnos_runtime = None
             self._obs_learner = None
+            self._skill_store = None
             self._cached_peer_weights = {}
             self._peer_filter = None
             self._quarantine_store = None
@@ -693,6 +705,27 @@ class BrainHandler:
         top = self.telos.top_priority(1)
         return top[0] if top else None
 
+    def _ranked_memories(
+        self, query: str, tick: int, k: int = 8, prefix: str | None = None
+    ) -> list[str]:
+        """W-A5 — deterministic Stanford top-k: recency×importance×relevance,
+        tick-based (score_with_chronos, multiplier 1.0 — no wall clock). The
+        optional prefix filter selects a memory family (e.g. 'Lesson:')."""
+        if self.memory is None or not hasattr(self.memory, "recent"):
+            return []
+        pool = [
+            m for m in list(self.memory.recent(limit=50) or [])
+            if isinstance(getattr(m, "content", None), str)
+        ]
+        if prefix is not None:
+            pool = [m for m in pool if m.content.startswith(prefix)]
+        scored = [
+            (self._retrieval_scorer.score_with_chronos(m, query, tick), m)
+            for m in pool
+        ]
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [m.content for _, m in scored[:k]]
+
     def _should_run_planner_cycle(self, tick: int) -> bool:
         """Slow timescale: decompose the top goal ONLY when its ledger is dry.
         Live-wired minds only (mirrors the W3b economic gate) + cooldown."""
@@ -713,16 +746,15 @@ class BrainHandler:
             goal = self._top_goal()
             if goal is None:
                 return
-            memories_text = ""
+            # W-A5: Stanford-scored top-k (deterministic, tick-based) instead
+            # of a raw recency slice — the goal itself is the query.
+            memories_text = "\n".join(
+                f"- {c}" for c in self._ranked_memories(goal.description, tick, k=8)
+            )
             reflections: list[str] = []
             if self.memory is not None and hasattr(self.memory, "recent"):
-                recent = list(self.memory.recent(limit=10) or [])
-                memories_text = "\n".join(
-                    f"- {m.content}" for m in recent
-                    if isinstance(getattr(m, "content", None), str)
-                )
                 reflections = [
-                    m.content for m in recent
+                    m.content for m in list(self.memory.recent(limit=10) or [])
                     if getattr(m, "memory_type", None) == MemoryType.REFLECTION
                 ][:3]
             prompt = build_planning_prompt(goal.description, memories_text, reflections)
@@ -760,13 +792,19 @@ class BrainHandler:
             if goal is None:
                 return
             task = self._goal_ledger.next_task(goal.description)
-            lessons: list[str] = []
-            if self.memory is not None and hasattr(self.memory, "recent"):
-                lessons = [
-                    m.content for m in list(self.memory.recent(limit=20) or [])
-                    if isinstance(getattr(m, "content", None), str)
-                    and m.content.startswith("Lesson:")
-                ][:3]
+            # W-A5: lessons ranked by Stanford score against the work at hand.
+            lessons = self._ranked_memories(
+                task.description if task else goal.description, tick, k=3, prefix="Lesson:",
+            )
+            # W-A6: retrieve top-k relevant skills for the prompt (Voyager loop).
+            skills = None
+            if self._skill_store is not None:
+                try:
+                    skills = self._skill_store.retrieve(
+                        task.description if task else goal.description, k=3,
+                    ) or None
+                except Exception:
+                    skills = None
             self._current_intent = goal.description + (
                 f" → {task.description}" if task else ""
             )
@@ -774,6 +812,7 @@ class BrainHandler:
                 self.psyche, self.thymos.mood, self.telos,
                 grid_name=self.grid_name, location=self.location,
                 intent=self._current_intent,
+                skills=skills,
             )
             user_prompt = build_decision_prompt(
                 goal.description, task.description if task else None, lessons,
@@ -800,6 +839,15 @@ class BrainHandler:
                     self.record_task_outcome(task, success=True, note=note, tick=tick)
                 else:
                     self._goal_ledger.mark_attempt(task.task_id, tick)
+                # W-A6: skill practice feedback — gentle EMA (α=0.1) on the
+                # skills that were in front of the mind while it worked.
+                if skills and self._skill_store is not None:
+                    outcome_ok = decision.get("completed") is True
+                    for s in skills:
+                        try:
+                            self._skill_store.update_outcome(s.name, outcome_ok)
+                        except Exception:
+                            pass
             elif act == "speak":
                 text = decision.get("text")
                 if isinstance(text, str) and text.strip() and self._grid_wire_client is not None:
@@ -830,6 +878,10 @@ class BrainHandler:
             for g in self.telos.active_goals():
                 if g.description == task.goal_key:
                     g.advance(1.0 / total, tick)
+                    # W-A6 (Voyager verify-then-add): a COMPLETED goal is the
+                    # verification — queue it for sleep-time skill distillation.
+                    if not g.is_active():
+                        self._pending_distill.append(g.description)
                     break
             if self.memory is not None and hasattr(self.memory, "record_event"):
                 self.memory.record_event(
@@ -866,6 +918,62 @@ class BrainHandler:
             self._reflection._cycles_since_reflection = 0
             self._failed_since_reflection = 0
             self._reflection_inflight = False
+
+    async def _distill_skill_from_goal(self, goal_key: str, tick: int) -> None:
+        """W-A6 — distill a completed goal's task trajectory into one reusable
+        text skill (Voyager verify-then-add; text-only, never code). Sleep-time
+        only; name collisions and invalid skills are skipped quietly."""
+        try:
+            if self._skill_store is None:
+                return
+            done = self._goal_ledger.done_tasks(goal_key)
+            if not done:
+                return
+            prompt = build_skill_distill_prompt(goal_key, [t.description for t in done])
+            response = await self.llm.generate(
+                prompt,
+                GenerateOptions(temperature=0.7, max_tokens=400, purpose="skill_distill"),
+            )
+            parsed = parse_skill(response.text)
+            if parsed is None:
+                return
+            from noesis_brain.skills.types import Skill as _Skill
+            skill = _Skill(
+                name=parsed["name"][:60],
+                description=parsed["description"][:200],
+                instructions=parsed["instructions"][:1000],
+                triggers=parsed["triggers"],
+                tags=["distilled"],
+                success_rate=1.0,   # born from a verified success
+                source_did="",      # self-authored — full trust
+            )
+            try:
+                self._skill_store.add(skill)
+            except ValueError:
+                return  # name collision / validation — skip quietly
+            if self.memory is not None and hasattr(self.memory, "record_event"):
+                self.memory.record_event(
+                    content=f"Distilled skill '{skill.name}' from completed goal '{goal_key}'"[:300],
+                    source_did=self.did, tick=tick,
+                )
+        except Exception as exc:  # never let distillation take down sleep
+            log.warning("[Brain] skill distillation failed: %s", exc)
+
+    async def _sleep_time_compute(self, tick: int) -> None:
+        """W-A7 (Letta sleep-time pattern) — idle consolidation becomes
+        learning: after Hypnos runs, distill completed goals into skills and
+        force a reflection (even mid-interval). Never fatal."""
+        try:
+            pending, self._pending_distill = self._pending_distill[:3], self._pending_distill[3:]
+            for goal_key in pending:
+                try:
+                    await self._distill_skill_from_goal(goal_key, tick)
+                except Exception as exc:
+                    log.warning("[Brain] sleep-time distillation failed: %s", exc)
+            if self._reflection is not None and not self._reflection_inflight:
+                await self._run_reflection_cycle(tick)
+        except Exception as exc:  # never let sleep-time compute take down sleep
+            log.warning("[Brain] sleep-time compute failed: %s", exc)
 
     async def on_tick(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle world clock tick — opportunity for autonomous action.
@@ -1061,6 +1169,9 @@ class BrainHandler:
                     async def _run() -> None:
                         result_hash = await rt.run_sleep(self.did, t)
                         self._pending_sleep_completed = result_hash
+                        # W-A7 (Letta): consolidation is followed by learning —
+                        # distill completed goals into skills + force reflection.
+                        await self._sleep_time_compute(t)
                     _asyncio.create_task(_run())
 
                 _make_sleep_task()

@@ -109,6 +109,17 @@ class GoalLedger:
         ).fetchone()
         return LedgerTask(*row) if row else None
 
+    def done_tasks(self, goal_key: str) -> list[LedgerTask]:
+        """Completed tasks for a goal, oldest first — the trajectory that
+        sleep-time skill distillation (W-A6) reads."""
+        rows = self._conn.execute(
+            "SELECT task_id, goal_key, description, status, attempts, created_tick, updated_tick"
+            " FROM goal_tasks WHERE goal_key = ? AND status = 'done'"
+            " ORDER BY task_id ASC",
+            (goal_key,),
+        ).fetchall()
+        return [LedgerTask(*row) for row in rows]
+
     def pending_count(self, goal_key: str) -> int:
         (n,) = self._conn.execute(
             "SELECT COUNT(*) FROM goal_tasks WHERE goal_key = ? AND status = 'pending'",

@@ -62,6 +62,18 @@ def test_goals_are_isolated():
     assert led.next_task("other goal") is not None
 
 
+def test_done_tasks_returns_completed_in_order():
+    led = GoalLedger()
+    led.add_tasks(GOAL, ["a", "b", "c"], tick=1)
+    t1 = led.next_task(GOAL)
+    led.mark_done(t1.task_id, tick=2)
+    t2 = led.next_task(GOAL)
+    led.mark_done(t2.task_id, tick=3)
+    done = led.done_tasks(GOAL)
+    assert [t.description for t in done] == ["a", "b"]
+    assert all(t.status == "done" for t in done)
+
+
 def test_persistence_roundtrip(tmp_path):
     did = "did:civic:noesis:sophia"
     led = GoalLedger(db_dir=tmp_path, did=did)

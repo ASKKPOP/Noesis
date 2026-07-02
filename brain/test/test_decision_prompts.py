@@ -70,3 +70,29 @@ def test_parse_decision_rejects_unknown_action_and_garbage():
     assert parse_decision('{"action": "hack_the_grid"}') is None
     assert parse_decision("") is None
     assert parse_decision("not json") is None
+
+
+# ── skill distillation (W-A6, Voyager verify-then-add at sleep-time) ─────────
+def test_skill_distill_prompt_names_goal_and_tasks():
+    from noesis_brain.prompts.decision import build_skill_distill_prompt
+
+    p = build_skill_distill_prompt(GOAL, ["survey parcels", "estimate demand"])
+    assert GOAL in p and "survey parcels" in p and "estimate demand" in p
+    assert '"name"' in p and '"instructions"' in p
+
+
+def test_parse_skill_happy_path_sanitizes_name():
+    from noesis_brain.prompts.decision import parse_skill
+
+    s = parse_skill('{"name": "Map Energy Needs!", "description": "how to map", "instructions": "do x then y", "triggers": ["energy", "map"]}')
+    assert s["name"] == "map_energy_needs"      # slug-safe for Skill.validate()
+    assert s["description"] == "how to map"
+    assert s["triggers"] == ["energy", "map"]
+
+
+def test_parse_skill_rejects_missing_fields_and_garbage():
+    from noesis_brain.prompts.decision import parse_skill
+
+    assert parse_skill('{"name": "x"}') is None          # no instructions
+    assert parse_skill("prose only") is None
+    assert parse_skill('{"description": "d", "instructions": "i"}') is None  # no name
