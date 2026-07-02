@@ -179,8 +179,13 @@ outcome feedback (`record_task_outcome` → `Goal.advance` 1/total + auto-comple
 `Lesson:` Reflexion memories). ONE intent per tick injected into prompts (`build_system_prompt(intent=…)`,
 D-MIND-02). 43 new Brain tests, suite **1127 green**, allowlist **+0**, on_tick contract untouched.
 Decisions **D-MIND-01..04** (wiki decisions.md). Plan: `docs/superpowers/plans/2026-07-02-w-a-mind-autonomous-learning.md`.
-**W-A remaining:** scored memory retrieval · SKILL.md skill library · sleep-time compute · DSPy/GEPA offline
-prompt evolution · Phase 40b hosted pool (ceaselessness). Then W-B/W-C/W-D/W-E per the audit program.
+**A5/A6/A7 SHIPPED (same day, "go next"):** A5 deterministic Stanford retrieval (`_ranked_memories`,
+tick-based) → planner + decision lessons · A6 Voyager loop closed on the existing SkillStore (top-3 skills
+in the decision prompt, outcome EMA per work_task, sleep-time distillation of completed goals via
+`GoalLedger.done_tasks` + `parse_skill`) · A7 `_sleep_time_compute` after Hypnos `run_sleep` (distill +
+forced reflection). Suite **1140 green**, allowlist +0. D-MIND-05/06 added to the wiki decision log.
+**W-A remaining (deferred, larger standalone):** A8 DSPy/GEPA offline prompt evolution · A9 Phase 40b
+hosted pool (ceaselessness). Then W-B/W-C/W-D/W-E per the audit program.
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 

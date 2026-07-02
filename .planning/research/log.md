@@ -23,6 +23,12 @@ outcome feedback with Reflexion lessons; D-MIND-01..04). 43 TDD tests, brain sui
 green, allowlist +0. Patterns applied from [[oss-agent-learning-landscape]]
 (BabyAGI ledger × PIANO intent · Generative-Agents reflection · Reflexion lessons).
 
+## [2026-07-02] apply | W-A5/6/7 learning half shipped
+"go next": Stanford-scored retrieval into planner+decisions (A5), Voyager skill loop
+closed on the existing SkillStore with sleep-time distillation of completed goals (A6),
+and _sleep_time_compute after Hypnos (A7 — Letta pattern). Brain suite 1140 green,
+D-MIND-05/06. W-A remaining: A8 DSPy/GEPA (offline), A9 Phase 40b hosted pool.
+
 ## [2026-07-02] ingest | OSS landscapes (agent learning · visualization)
 Created [[oss-agent-learning-landscape]] (Voyager, Generative Agents, Reflexion, PIANO,
 Letta sleep-time, Mem0/Graphiti, DSPy+GEPA, SLM cascades) and

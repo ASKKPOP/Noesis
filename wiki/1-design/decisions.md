@@ -130,6 +130,8 @@ See [[groups-and-holdings]].
 | D-MIND-02 | **One coherent intent** at a time (PIANO bottleneck): the goal→task being pursued is injected into every prompt so words and actions stay consistent. |
 | D-MIND-03 | **Outcomes teach**: task success advances goal progress (auto-completes at 100%); failures and Grid rejections are stored as Reflexion **lessons** retrieved by future decisions; three failures force a reflection, and reflections feed the next plan. |
 | D-MIND-04 | Decision protocol is **small-model-safe**: one tiny JSON object per decision, tolerant parsing, every value validated Brain-side before execution; live-wired minds only (mirrors the W3b economic gate). |
+| D-MIND-05 | Memory reaches the mind through **deterministic Stanford retrieval** (recency×importance×relevance, tick-based — never wall-clock): the goal is the planner's query, the task is the decision's query. |
+| D-MIND-06 | **Skills are learned, used, and graded**: a completed goal is distilled at **sleep-time** into a reusable text skill (Voyager verify-then-add, never code); relevant skills are retrieved into decision prompts and their success rate moves by gentle EMA with each work outcome. Sleep = consolidation **then learning** (distill + forced reflection). |
 
 ## 🔗 Related
 
