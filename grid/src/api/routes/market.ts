@@ -272,6 +272,7 @@ export async function registerMarketRoutes(
             if (msg === 'insufficient_bios') return reply.code(402).send({ error: 'insufficient_bios' });
             if (msg === 'not_seller') return reply.code(403).send({ error: 'not_seller' });
             if (msg === 'bid_not_found') return reply.code(404).send({ error: 'bid_not_found' });
+            if (msg === 'buyer_not_found') return reply.code(404).send({ error: 'buyer_not_found' });
             if (msg === 'bid_not_pending') return reply.code(409).send({ error: 'bid_not_pending' });
             if (msg === 'listing_not_active') return reply.code(409).send({ error: 'listing_not_active' });
             req.log.error({ err: msg }, 'accept_bid_unhandled');
