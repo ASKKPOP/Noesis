@@ -234,6 +234,35 @@
 <figcaption>The liveness run is why you launch the real thing: 1155 green tests, yet the loop was dead on the default model until this fix. Now it plans, works, completes, re-goals, earns, cooperates, and votes — on a 4B local model. `brain/scripts/liveness_run.py`. 실제 구동의 이유: 테스트 1155개 통과에도 기본 모델에서 루프는 죽어 있었고, 이 수정 후 4B 로컬 모델에서 계획·수행·완료·재목표·수익·협력·투표를 합니다.</figcaption>
 </figure>
 
+<h2 id="fullstack">3c · Full-stack liveness — the real Grid boots on real MySQL</h2>
+<p class="sub">Docker (via colima) brought up MySQL 8.0, so we ran the two things only a real database can prove: the whole migration chain, and an actual Grid boot. Both surfaced value.<br/>
+colima로 MySQL 8.0을 띄워, 실제 DB만 증명할 수 있는 두 가지 — 전체 마이그레이션 체인과 실제 Grid 부팅 — 을 실행했고, 둘 다 성과를 냈습니다.</p>
+<figure>
+<svg viewBox="0 0 980 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Full-stack liveness results">
+  <defs><marker id="arf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9aa7b4"/></marker></defs>
+  <rect x="20" y="26" width="220" height="80" rx="12" fill="#0f2417" stroke="#56d364"/>
+  <text x="34" y="50" fill="#56d364" font-size="13.5" font-weight="700">MySQL 8.0.46 (colima)</text>
+  <text x="34" y="72" fill="#9aa7b4" font-size="12">real DB on :3307 —</text>
+  <text x="34" y="89" fill="#9aa7b4" font-size="12">no more mock-Pool blind spot</text>
+  <rect x="270" y="26" width="300" height="80" rx="12" fill="#0f2417" stroke="#56d364"/>
+  <text x="284" y="50" fill="#56d364" font-size="13.5" font-weight="700">W-D2 migration chain ✓</text>
+  <text x="284" y="72" fill="#9aa7b4" font-size="12">71 migrations (v1→v71) applied cleanly</text>
+  <text x="284" y="89" fill="#9aa7b4" font-size="12">on a real MySQL — the CI gate works</text>
+  <rect x="600" y="26" width="360" height="80" rx="12" fill="#0f2417" stroke="#56d364"/>
+  <text x="614" y="50" fill="#56d364" font-size="13.5" font-weight="700">Grid boots on real MySQL ✓</text>
+  <text x="614" y="72" fill="#9aa7b4" font-size="12">parcels 53 · groups seeded 5 · Genesis on :8080</text>
+  <text x="614" y="89" fill="#9aa7b4" font-size="12">/api/v1/groups + /health/detailed serve real data</text>
+  <line x1="240" y1="66" x2="270" y2="66" stroke="#9aa7b4" marker-end="url(#arf)"/>
+  <line x1="570" y1="66" x2="600" y2="66" stroke="#9aa7b4" marker-end="url(#arf)"/>
+  <rect x="20" y="126" width="940" height="100" rx="12" fill="#161b22" stroke="#ff7b72"/>
+  <text x="36" y="150" fill="#ff7b72" font-size="14" font-weight="700">BUG #5 caught by the boot (mock tests were green):</text>
+  <text x="36" y="172" fill="#9aa7b4" font-size="12.5">The Grid crash-looped in seedGenesisGroups: GENESIS_CONFIG.gridName is "Genesis" (Polis naming) → buildGenesisGroups stamped</text>
+  <text x="36" y="190" fill="#9aa7b4" font-size="12.5">"Genesis:group:aegis", which appendGroupFounded rejects (GROUP_ID_RE is lowercase). EVERY real boot with groups seeding crashed.</text>
+  <text x="36" y="208" fill="#7ee787" font-size="12.5">Fix: lowercase the id prefix (matches the parcel-id convention). Regression test seeds with "Genesis". Grid then booted clean; groups route returns 5.</text>
+</svg>
+<figcaption>The mocks all seed groups with a lowercase "genesis", so they never built the capitalized id the real config produces — the same mock-vs-real gap as the qwen3 bug, one layer down. Real MySQL + a real boot found it in seconds. 목 테스트는 모두 소문자 "genesis"로 시드해 실제 설정이 만드는 대문자 id를 만든 적이 없습니다 — qwen3 버그와 같은 격차. 실제 MySQL 부팅이 수초 만에 발견.</figcaption>
+</figure>
+
 <h2>4 · Gates &amp; invariants (all green at end of day)</h2>
 <div class="panel">
 <span class="tag done">brain pytest 1152/1152</span>

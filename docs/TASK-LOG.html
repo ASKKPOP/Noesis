@@ -132,6 +132,11 @@
       with think-off qwen3 kept content non-empty but <em>narrated the task</em> ("We are in the role of Sophia…") — fine for internal parses, wrong for the Agora-visible reply and the reflection insight that feeds planning.
       <b>Refined two-mode rule (D-MIND-07):</b> structured per-tick decisions → think-off + <code>json_mode</code> (fast, constrained); the two <b>prose</b> calls (conversational reply + reflection) → <code>think=True</code> + <code>max_tokens</code> 1024 so reasoning stays hidden in the model's <code>thinking</code> field and <code>content</code> carries a clean line.
       Verified on qwen3:4b: conversation <em>"Thanks, Hermes! I'm finalizing the energy stability report for the North Sector rings today…"</em>; reflection a real articulate insight w/ WIKI_UPDATE, no narration. 2 regression tests lock the call-site options; suite <strong>1161 green</strong>.</li>
+    <li><b>Full-stack liveness — the real Grid boots on real MySQL (Docker via colima)</b> <span class="tag done">proven</span> (<span class="hash">fbc08d5</span>) —
+      brought up MySQL 8.0.46 and ran what only a real DB can prove.
+      <b>W-D2 migration chain ✓</b>: 71 migrations (v1→v71) applied cleanly on real MySQL — the CI gate I built works, mock-Pool blind spot closed.
+      <b>Grid boot ✓</b>: after fixing a crash it started clean (parcels 53, groups seeded 5, Genesis on :8080); <code>GET /api/v1/groups</code> (my W-B4 route) returns the 5 seeded groups and <code>/health/detailed</code> shows the audit chain persisting to real MySQL.
+      <b>Bug #5 caught by the boot:</b> the Grid crash-looped in <code>seedGenesisGroups</code> — <code>GENESIS_CONFIG.gridName</code> is "Genesis" (Polis naming) so the group_id came out <code>Genesis:group:aegis</code>, which <code>appendGroupFounded</code> rejects (<code>GROUP_ID_RE</code> is lowercase). Every real boot with groups seeding crashed; mocks passed because they all seed lowercase "genesis". <b>Fix:</b> lowercase the id prefix (matches the parcel-id convention); the display name stays "Genesis". Regression test seeds with "Genesis". Economy suite 168/168, tsc clean. See §3c of the <a href="noesis-daily-log-2026-07-02.html#fullstack">daily log</a>.</li>
   </ul>
 
   <!-- ============================ SESSION 13 ============================ -->

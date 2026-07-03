@@ -52,6 +52,13 @@ no-op'd on the default model. Fixed with constrained decoding (json_mode → Oll
 format=json + think=false), validating [[oss-agent-learning-landscape]] rec #5 in practice.
 Re-run: 6/6 loop stages fire (plan→work→100%→re-goal→pay→bid→join Dynamo→speak→vote). D-MIND-07.
 
+## [2026-07-03] verify | full-stack liveness — real Grid boots on real MySQL
+Brought up MySQL 8.0 (colima). W-D2 migration chain proven (71 migrations v1→v71 clean on
+real DB). Real Grid boot caught a crash-loop: group_id used the capitalized canonical grid
+name "Genesis" → failed GROUP_ID_RE (lowercase); mocks seed lowercase so never caught it.
+Fixed (lowercase id prefix, parcel-id convention). Grid then booted clean, W-B4 /api/v1/groups
+serves 5 seeded groups, audit persists to MySQL. Liveness thread total: 5 real bugs found+fixed.
+
 ## [2026-07-02] ingest | OSS landscapes (agent learning · visualization)
 Created [[oss-agent-learning-landscape]] (Voyager, Generative Agents, Reflexion, PIANO,
 Letta sleep-time, Mem0/Graphiti, DSPy+GEPA, SLM cascades) and

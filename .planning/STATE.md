@@ -228,6 +228,18 @@ structured per-tick decisions → think-off + json_mode (fast); prose calls (Ago
 conversation "Thanks, Hermes! I'm finalizing the energy stability report…"; reflection a real articulate
 insight w/ WIKI_UPDATE, no narration. 2 regression tests lock the call-site options. Suite **1161 green**.
 
+**FULL-STACK LIVENESS — real Grid boots on real MySQL (Docker via colima, commit `fbc08d5`):** brought up
+MySQL 8.0.46 and ran what only a real DB proves. **W-D2 migration chain:** 71 migrations (v1→v71) applied
+cleanly on real MySQL — the CI gate works, mock-Pool blind spot closed. **Grid boot:** crash-looped in
+`seedGenesisGroups` — `GENESIS_CONFIG.gridName` is "Genesis" (Polis naming) → group_id `Genesis:group:aegis`
+fails `GROUP_ID_RE` (lowercase); every real boot with groups seeding crashed, mocks passed (they seed
+lowercase "genesis"). Same mock-vs-real gap as the qwen3 bug, one layer down. **Fix:** lowercase the id
+prefix (parcel-id convention); display name stays "Genesis"; regression test seeds "Genesis". After the fix
+the Grid boots clean (parcels 53, groups seeded 5, Genesis :8080), `GET /api/v1/groups` (W-B4) returns 5,
+`/health/detailed` shows audit persisting to real MySQL. Economy 168/168, tsc clean. **Liveness thread total:
+5 real, test-invisible bugs found + fixed** (qwen3 structured / reflection / conversation empty-output; bid+join
+over-eagerness; group_id boot-crash). colima + `noesis-mysql-test` container left running for future runs.
+
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 
 **Money in Noēsis is exactly two things, and nothing else:**
