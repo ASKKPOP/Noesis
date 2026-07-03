@@ -197,6 +197,19 @@ did-policy clean, map-sync IN SYNC, allowlist +0. **Still open:** W-B peer-contr
 W-C3 upgrade routes for built objects (create-once still) · W-C5 time scrubber · W-E2–E5 · Phase 40b.
 Daily visual log: `docs/noesis-daily-log-2026-07-02.html`.
 
+**LIVENESS RUN — the Nous is ALIVE on the real model, and it caught a production-breaking bug** (commit `ffb23c9`):
+`brain/scripts/liveness_run.py` wires the REAL BrainHandler to REAL qwen3:4b (Ollama) + real memory/ledger/
+reflection, driven over real ticks. **Found:** qwen3 is a reasoning model — Ollama puts `<think>` in a
+separate field, answer in `content`; our 256-token structured calls were consumed entirely by hidden
+reasoning → `content` EMPTY → every planner/decision/social/economic cycle no-op'd. **With the default model
+the whole mind+society loop was silently DEAD, and all 1155 mock tests passed.** **Fix (D-MIND-07):**
+`GenerateOptions.json_mode` → Ollama `format='json'` + `think=false` on the 5 structured sites (constrained
+decoding, the OSS-research rec); prose calls unchanged. **Proof:** 6/6 loop stages fire on qwen3:4b — the
+Nous decomposes its energy goal, works it to 100%, autonomously generates new goals, pays its due, bids the
+energy RFP, joins Dynamo (the energy group — goal-relevant cooperation), speaks, and commits a ballot.
+New Ollama unit test locks the payload contract; suite **1155 green**. **Lesson: mock LLMs prove plumbing,
+not cognition — a real-model liveness run is now part of done.**
+
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 
 **Money in Noēsis is exactly two things, and nothing else:**

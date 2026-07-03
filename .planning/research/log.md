@@ -44,6 +44,14 @@ first knowledge-graph view (docs/noesis-knowledge-graph.html — force-directed 
 applies [[oss-visualization-landscape]] three-forcegraph pattern hand-rolled/no-deps).
 W-C3a upkeep scanner confirmed already wired. Brain 1154 green, grid clean, allowlist +0.
 
+## [2026-07-02] verify | liveness run — Nous ALIVE on real qwen3:4b, caught a dead-loop bug
+Ran the REAL BrainHandler against REAL qwen3:4b (brain/scripts/liveness_run.py). Found a
+production-breaking bug all 1155 mock tests missed: qwen3's hidden <think> consumed the
+256-token structured-call budget → empty content → the whole mind/society loop silently
+no-op'd on the default model. Fixed with constrained decoding (json_mode → Ollama
+format=json + think=false), validating [[oss-agent-learning-landscape]] rec #5 in practice.
+Re-run: 6/6 loop stages fire (plan→work→100%→re-goal→pay→bid→join Dynamo→speak→vote). D-MIND-07.
+
 ## [2026-07-02] ingest | OSS landscapes (agent learning · visualization)
 Created [[oss-agent-learning-landscape]] (Voyager, Generative Agents, Reflexion, PIANO,
 Letta sleep-time, Mem0/Graphiti, DSPy+GEPA, SLM cascades) and

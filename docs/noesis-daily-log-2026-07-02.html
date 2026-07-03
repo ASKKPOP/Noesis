@@ -193,6 +193,47 @@
 
 <div class="panel"><b>Afternoon addendum ("do do do"):</b> the audit's two biggest Q2 gaps are now addressed — the map is <b>live</b> (glows as the city builds) and has the <b>fly-to</b> investment gesture, a Nous can <b>autonomously join a group</b> (W-B society extends to organizations), and Noēsis has its <b>first knowledge-graph view</b> (the lore commons as a navigable constellation). Note: the W-C3a upkeep scanner the audit flagged as "dormant" is in fact already wired (<code>main.ts:245</code> → <code>launcher.ts:515</code>) — verified, no change needed. / 오후 추가분: 지도가 라이브(도시가 건설되면 빛남) + 플라이투 제스처, Nous의 자율 그룹 가입, 그리고 최초의 지식 그래프 뷰. 감사에서 "휴면"으로 표시된 유지보수 스캐너는 이미 연결되어 있음을 확인.</div>
 
+<h2 id="alive">3b · Liveness run — is the Nous actually ALIVE?</h2>
+<p class="sub">Everything above is mock-verified. So we wired the <b>real</b> BrainHandler to the <b>real</b> qwen3:4b (Ollama) with real memory, ledger, and reflection, and drove it over real ticks. It immediately found a production-breaking bug that all 1155 mock tests missed — then, fixed, the Nous came alive.<br/>
+위 전부는 모의 검증입니다. 그래서 <b>실제</b> BrainHandler를 <b>실제</b> qwen3:4b에 연결해 실제 틱으로 구동했고, 모의 테스트 1155개가 놓친 치명적 버그를 즉시 발견 — 수정 후 Nous가 살아났습니다.</p>
+<figure>
+<svg viewBox="0 0 980 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The qwen3 empty-output bug and its fix">
+  <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9aa7b4"/></marker></defs>
+  <rect x="20" y="26" width="300" height="120" rx="12" fill="#161b22" stroke="#ff7b72"/>
+  <text x="36" y="50" fill="#ff7b72" font-size="14" font-weight="700">THE BUG (mocks hid it)</text>
+  <text x="36" y="72" fill="#9aa7b4" font-size="12">qwen3 is a reasoning model. Ollama puts</text>
+  <text x="36" y="89" fill="#9aa7b4" font-size="12">&lt;think&gt; in a `thinking` field, answer in</text>
+  <text x="36" y="106" fill="#9aa7b4" font-size="12">`content`. Our 256-token cap is eaten by</text>
+  <text x="36" y="123" fill="#9aa7b4" font-size="12">hidden reasoning → content EMPTY →</text>
+  <text x="36" y="140" fill="#ff7b72" font-size="12" font-weight="700">every cycle no-ops. Loop silently DEAD.</text>
+  <rect x="350" y="26" width="270" height="120" rx="12" fill="#161b22" stroke="#f0c674"/>
+  <text x="366" y="50" fill="#f0c674" font-size="14" font-weight="700">THE FIX (constrained decode)</text>
+  <text x="366" y="72" fill="#9aa7b4" font-size="12">GenerateOptions.json_mode → Ollama</text>
+  <text x="366" y="89" fill="#9aa7b4" font-size="12">format='json' + think=false on the 5</text>
+  <text x="366" y="106" fill="#9aa7b4" font-size="12">structured sites. Clean JSON in 256 tok.</text>
+  <text x="366" y="130" fill="#7ee787" font-size="12">Exactly the OSS-research rec #5</text>
+  <text x="366" y="140" fill="#9aa7b4" font-size="11">(constrained decoding for small models).</text>
+  <rect x="650" y="26" width="310" height="120" rx="12" fill="#0f2417" stroke="#56d364"/>
+  <text x="666" y="50" fill="#56d364" font-size="14" font-weight="700">THE PROOF — 6/6 ALIVE ✓</text>
+  <text x="666" y="72" fill="#9aa7b4" font-size="12">Real qwen3:4b, 24 ticks: decomposed its</text>
+  <text x="666" y="89" fill="#9aa7b4" font-size="12">energy goal → worked it to 100% → then</text>
+  <text x="666" y="106" fill="#9aa7b4" font-size="12">GENERATED NEW GOALS → paid due, bid the</text>
+  <text x="666" y="123" fill="#9aa7b4" font-size="12">energy RFP, joined Dynamo (energy group!),</text>
+  <text x="666" y="140" fill="#9aa7b4" font-size="12">spoke, committed a ballot.</text>
+  <line x1="320" y1="86" x2="350" y2="86" stroke="#9aa7b4" marker-end="url(#arr)"/>
+  <line x1="620" y1="86" x2="650" y2="86" stroke="#9aa7b4" marker-end="url(#arr)"/>
+  <rect x="20" y="166" width="940" height="112" rx="12" fill="#0a0d12" stroke="#1c3350"/>
+  <text x="36" y="190" fill="#7ee787" font-size="13" font-weight="700">Real transcript (distilled, qwen3:4b):</text>
+  <g font-family="ui-monospace,Menlo,monospace" font-size="11.5" fill="#9aa7b4">
+    <text x="36" y="212">· Planned 'Map the energy needs of the residential ring': 2 tasks</text>
+    <text x="36" y="230">· Worked on 'Identify the number of households…' → Completed · Worked 'Calculate total energy demand…' → Completed</text>
+    <text x="36" y="248">· Economic decision: pay_due · bid_rfp (energy) · Joined group Dynamo · Committed my ballot on proposal prop-ring-4</text>
+    <text x="36" y="266" fill="#56d364">· Planned 'Meet other Nous and understand their goals': 2 tasks   ← autonomously set a NEW goal after finishing the first</text>
+  </g>
+</svg>
+<figcaption>The liveness run is why you launch the real thing: 1155 green tests, yet the loop was dead on the default model until this fix. Now it plans, works, completes, re-goals, earns, cooperates, and votes — on a 4B local model. `brain/scripts/liveness_run.py`. 실제 구동의 이유: 테스트 1155개 통과에도 기본 모델에서 루프는 죽어 있었고, 이 수정 후 4B 로컬 모델에서 계획·수행·완료·재목표·수익·협력·투표를 합니다.</figcaption>
+</figure>
+
 <h2>4 · Gates &amp; invariants (all green at end of day)</h2>
 <div class="panel">
 <span class="tag done">brain pytest 1152/1152</span>
