@@ -58,3 +58,4 @@ contracts/out/
 contracts/cache/
 contracts/lib/
 contracts/broadcast/
+.worktrees/
