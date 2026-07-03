@@ -263,6 +263,36 @@ colima로 MySQL 8.0을 띄워, 실제 DB만 증명할 수 있는 두 가지 — 
 <figcaption>The mocks all seed groups with a lowercase "genesis", so they never built the capitalized id the real config produces — the same mock-vs-real gap as the qwen3 bug, one layer down. Real MySQL + a real boot found it in seconds. 목 테스트는 모두 소문자 "genesis"로 시드해 실제 설정이 만드는 대문자 id를 만든 적이 없습니다 — qwen3 버그와 같은 격차. 실제 MySQL 부팅이 수초 만에 발견.</figcaption>
 </figure>
 
+<h2 id="joined">3d · Full-stack cognition — real Brain ← HTTP ← real Grid ← real qwen3</h2>
+<p class="sub">The last join: the earlier runs proved cognition (stubbed Grid) and the Grid boot (no Brain) separately. This wires them — the real Brain pulls real civic data over HTTP from the real Grid (real MySQL) and the real model decides on it.<br/>
+마지막 결합: 앞선 실행들은 인지(스텁 Grid)와 Grid 부팅(Brain 없음)을 따로 증명했습니다. 이번엔 둘을 연결 — 실제 Brain이 실제 Grid(실제 MySQL)에서 HTTP로 실제 시민 데이터를 가져와 실제 모델이 결정합니다.</p>
+<figure>
+<svg viewBox="0 0 980 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Full-stack cognition chain">
+  <defs><marker id="arj" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#56d364"/></marker></defs>
+  <g font-size="12">
+    <rect x="14"  y="30" width="120" height="52" rx="9" fill="#0f2417" stroke="#214d2c"/><text x="26" y="52" fill="#56d364" font-weight="700">MySQL 8.0</text><text x="26" y="70" fill="#9aa7b4">real DB :3307</text>
+    <rect x="164" y="30" width="130" height="52" rx="9" fill="#0f2417" stroke="#214d2c"/><text x="176" y="52" fill="#56d364" font-weight="700">Grid :8080</text><text x="176" y="70" fill="#9aa7b4">/api/v1/groups</text>
+    <rect x="324" y="30" width="130" height="52" rx="9" fill="#0f2417" stroke="#214d2c"/><text x="336" y="52" fill="#56d364" font-weight="700">HTTP wire</text><text x="336" y="70" fill="#9aa7b4">GridWireClient</text>
+    <rect x="484" y="30" width="130" height="52" rx="9" fill="#0f2417" stroke="#00d4ff"/><text x="496" y="52" fill="#00d4ff" font-weight="700">Brain</text><text x="496" y="70" fill="#9aa7b4">social cycle</text>
+    <rect x="644" y="30" width="130" height="52" rx="9" fill="#0f2417" stroke="#00d4ff"/><text x="656" y="52" fill="#00d4ff" font-weight="700">qwen3:4b</text><text x="656" y="70" fill="#9aa7b4">real model</text>
+    <rect x="804" y="30" width="160" height="52" rx="9" fill="#0f2417" stroke="#bf00ff"/><text x="816" y="52" fill="#bf00ff" font-weight="700">DECISION</text><text x="816" y="70" fill="#9aa7b4">join Dynamo</text>
+    <line x1="134" y1="56" x2="164" y2="56" stroke="#56d364" marker-end="url(#arj)"/>
+    <line x1="294" y1="56" x2="324" y2="56" stroke="#56d364" marker-end="url(#arj)"/>
+    <line x1="454" y1="56" x2="484" y2="56" stroke="#56d364" marker-end="url(#arj)"/>
+    <line x1="614" y1="56" x2="644" y2="56" stroke="#56d364" marker-end="url(#arj)"/>
+    <line x1="774" y1="56" x2="804" y2="56" stroke="#56d364" marker-end="url(#arj)"/>
+  </g>
+  <rect x="14" y="104" width="950" height="106" rx="12" fill="#0a0d12" stroke="#1c3350"/>
+  <text x="30" y="128" fill="#7ee787" font-size="13" font-weight="700">Live run output:</text>
+  <g font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#9aa7b4">
+    <text x="30" y="150">[sight] 5 real seeded groups pulled from the Grid over HTTP: Aegis · Helix · Dynamo · Soma · Qubit</text>
+    <text x="30" y="170">[goal]  "Secure reliable energy for the residential ring"</text>
+    <text x="30" y="190" fill="#56d364">[decide] → the Nous chose to JOIN genesis:group:dynamo — the ENERGY company — a real group, goal-relevant, not a hallucination.</text>
+  </g>
+</svg>
+<figcaption>The citizen looked at the real city's real organizations and joined the energy company because it wanted energy for the ring — exactly the autonomous, goal-directed cooperation question #1 asked, now proven against the real stack, not a stub. Write-back of the join still needs a Civic-DID (Portal→Polis ceremony). 시민이 실제 도시의 실제 조직을 보고, 링에 에너지가 필요해서 에너지 회사에 가입 — 질문 #1의 자율·목표지향 협력이 스텁이 아닌 실제 스택에서 증명됨. (가입의 write-back은 Civic-DID 필요.)</figcaption>
+</figure>
+
 <h2>4 · Gates &amp; invariants (all green at end of day)</h2>
 <div class="panel">
 <span class="tag done">brain pytest 1152/1152</span>

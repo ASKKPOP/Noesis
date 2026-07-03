@@ -240,6 +240,16 @@ the Grid boots clean (parcels 53, groups seeded 5, Genesis :8080), `GET /api/v1/
 5 real, test-invisible bugs found + fixed** (qwen3 structured / reflection / conversation empty-output; bid+join
 over-eagerness; group_id boot-crash). colima + `noesis-mysql-test` container left running for future runs.
 
+**FULL-STACK COGNITION — real Brain ← HTTP ← real Grid ← real qwen3 (commit `3677ac8`):** the last join.
+`brain/scripts/fullstack_liveness.py` points the REAL `GridWireClient` at the running Grid (:8080, real
+MySQL) and drives a REAL qwen3:4b social cycle. Live result: the Brain pulled the **5 real seeded groups
+over HTTP** (Aegis·Helix·Dynamo·Soma·Qubit); given the goal "secure reliable energy for the residential
+ring," the Nous **chose to join `genesis:group:dynamo` — the energy company** (real group, goal-relevant,
+not a hallucination). Chain proven: **MySQL → Grid HTTP → wire client → Brain → qwen3 → decision.** The
+sight+decide half is live; write-back of civic actions needs a Civic-DID (Portal→Polis ceremony) — the
+next full-stack milestone. `validate_grid_url` is https-only, so the harness relaxes `_base_url` for local
+http (dev-only).
+
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 
 **Money in Noēsis is exactly two things, and nothing else:**

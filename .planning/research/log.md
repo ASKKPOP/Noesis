@@ -59,6 +59,13 @@ name "Genesis" → failed GROUP_ID_RE (lowercase); mocks seed lowercase so never
 Fixed (lowercase id prefix, parcel-id convention). Grid then booted clean, W-B4 /api/v1/groups
 serves 5 seeded groups, audit persists to MySQL. Liveness thread total: 5 real bugs found+fixed.
 
+## [2026-07-03] verify | full-stack cognition — real Brain ← HTTP ← real Grid ← real qwen3
+Joined the halves: real GridWireClient pulled 5 real seeded groups over HTTP from the live
+Grid (real MySQL); real qwen3:4b, given an energy goal, chose to JOIN Dynamo (the energy
+company) — goal-relevant, not a hallucination. Chain proven MySQL→Grid→HTTP→Brain→qwen3→
+decision. Write-back needs a Civic-DID (Portal→Polis) — next milestone. brain/scripts/
+fullstack_liveness.py.
+
 ## [2026-07-02] ingest | OSS landscapes (agent learning · visualization)
 Created [[oss-agent-learning-landscape]] (Voyager, Generative Agents, Reflexion, PIANO,
 Letta sleep-time, Mem0/Graphiti, DSPy+GEPA, SLM cascades) and
