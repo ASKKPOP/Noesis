@@ -71,6 +71,16 @@ export interface WireRunner {
 /** Minimal coordinator surface consumed by the route. */
 export interface WireCoordinator {
     getRunnerByCivicDid(civicDid: string): WireRunner | undefined;
+    /**
+     * Phase 38 WIRE-02 binding: bind a freshly-issued Civic-DID to the live
+     * NousRunner keyed by the Nous's Existence-DID. The registry issuance path
+     * calls this on success so `/api/v1/brain/actions` can then route the Nous's
+     * actions to its runner. No-op if no runner exists yet for that nousDid
+     * (race-safe: the Brain starts after registration). Optional so DB-less /
+     * test contexts stay valid. This BINDS an already-issued DID — it does not
+     * issue one, so it is orthogonal to the D-V3-33 issuance-gating question.
+     */
+    registerCivicDid?(civicDid: string, nousDid: string): void;
 }
 
 /** Shape of one event in the POST /brain/events/batch body. */

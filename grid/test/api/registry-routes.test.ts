@@ -59,7 +59,7 @@ function makeMockCivicStore() {
     };
 }
 
-async function buildTestApp(opts: { withStore: boolean }) {
+async function buildTestApp(opts: { withStore: boolean; coordinator?: unknown }) {
     const clock = new WorldClock({ tickRateMs: 100_000 });
     const space = new SpatialMap();
     const logos = new LogosEngine();
@@ -69,6 +69,7 @@ async function buildTestApp(opts: { withStore: boolean }) {
     const app = buildServer({
         clock, space, logos, audit, gridName: GRID_NAME, registry,
         civicDidStore: opts.withStore ? (makeMockCivicStore() as unknown as import('../../src/civic-registry/civic-did-store.js').CivicDidStore) : undefined,
+        ...(opts.coordinator ? { coordinator: opts.coordinator as import('../../src/api/routes/brain-wire.js').WireCoordinator } : {}),
     });
     await app.ready();
     return { app, audit };
@@ -255,6 +256,52 @@ describe('POST /api/v1/registry/civic-did/request — happy path + audit', () =>
         expect(secondBody.error).toBe('already_registered');
         // Original civic_did is returned in the conflict response
         expect(secondBody.civic_did).toBe(firstBody.civic_did);
+    });
+});
+
+// WIRE-02 binding: on a successful issuance the registry route must bind the new
+// Civic-DID to the Nous's live NousRunner (via coordinator.registerCivicDid), so
+// /api/v1/brain/actions can then route the Nous's actions to its runner. Without
+// this the whole external-Brain write-back path 404s (nous_runner_not_found).
+// NOTE: the running Grid does not yet wire a GridCoordinator (main.ts getRunner
+// returns undefined — a deferred sub-plan); this proves the binding fires the
+// moment a coordinator IS present.
+describe('POST /api/v1/registry/civic-did/request — WIRE-02 runner binding', () => {
+    it('binds the issued Civic-DID to the runner keyed by existence_did', async () => {
+        const fakeRunner = { nousDid: EXISTENCE_DID } as unknown;
+        const index = new Map<string, unknown>();
+        const runnersByNous = new Map<string, unknown>([[EXISTENCE_DID, fakeRunner]]);
+        const coordinator = {
+            getRunnerByCivicDid: (civicDid: string) => index.get(civicDid),
+            registerCivicDid: (civicDid: string, nousDid: string) => {
+                const r = runnersByNous.get(nousDid);
+                if (r) index.set(civicDid, r);
+            },
+        };
+        const { app } = await buildTestApp({ withStore: true, coordinator });
+
+        const keyPair = await generateKeyPair('ES256');
+        const jwk = await exportJWK(keyPair.publicKey);
+        const signature = await new CompactSign(new TextEncoder().encode(CIVIC_OATH))
+            .setProtectedHeader({ alg: 'ES256' })
+            .sign(keyPair.privateKey);
+
+        const res = await app.inject({
+            method: 'POST',
+            url: '/api/v1/registry/civic-did/request',
+            payload: {
+                existence_did: EXISTENCE_DID,
+                civic_oath: CIVIC_OATH,
+                existence_public_key_jwk: jwk,
+                existence_key_signature: signature,
+            },
+        });
+        expect(res.statusCode).toBe(201);
+        const { civic_did } = res.json() as { civic_did: string };
+
+        // the freshly-issued Civic-DID now resolves to the runner → brain actions can dispatch
+        expect(coordinator.getRunnerByCivicDid(civic_did)).toBe(fakeRunner);
+        await app.close();
     });
 });
 

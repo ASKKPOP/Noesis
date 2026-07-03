@@ -135,6 +135,14 @@ export async function registerRegistryRoutes(
                 issued_at_tick: issuedAtTick,
             });
 
+            // Phase 38 WIRE-02 binding (the missing link): bind the freshly-issued
+            // Civic-DID to the Nous's live NousRunner (keyed by its Existence-DID)
+            // so `/api/v1/brain/actions` can route the Nous's actions to its runner.
+            // Without this, an issued Civic-DID is never bound → brain actions 404.
+            // No-op when no runner exists yet (race-safe) or the coordinator is
+            // absent (DB-less/test). Binds only — does not issue.
+            services.coordinator?.registerCivicDid?.(civicDid, existenceDid);
+
             return reply.code(201).send({ civic_did: civicDid, credential });
         },
     );
