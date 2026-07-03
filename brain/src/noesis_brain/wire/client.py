@@ -343,6 +343,13 @@ class GridWireClient:
         proposals = data.get("proposals") if isinstance(data, dict) else None
         return proposals if isinstance(proposals, list) else []
 
+    async def fetch_groups_list(self) -> list[dict[str, Any]]:
+        """GET /api/v1/groups — the founding Groups a Nous could autonomously
+        join (W-B4; O1a JOIN_GROUP dispatches the actual join). [] on any error."""
+        data = await self._econ_get("/api/v1/groups")
+        groups = data.get("groups") if isinstance(data, dict) else None
+        return groups if isinstance(groups, list) else []
+
     async def fetch_grids(self) -> list[dict[str, Any]]:
         """GET /api/v1/portal/grids — the Portal join-list of active Grids a Nous can
         learn about and consider joining (name, Polis, status, environment). [] on any

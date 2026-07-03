@@ -1032,8 +1032,16 @@ class BrainHandler:
                 and tick < int(p.get("deadline_tick", 0) or 0)
                 and self._governance_state.recall(str(p.get("proposal_id", ""))) is None
             ]
+            # W-B4: group join-sight (guarded — older wire mocks may lack it).
+            groups: list = []
+            fetch_groups = getattr(wire, "fetch_groups_list", None)
+            if fetch_groups is not None:
+                try:
+                    groups = await fetch_groups() or []
+                except TypeError:
+                    groups = []
 
-            prompt = build_social_prompt(peers, [s.name for s in skills], open_props)
+            prompt = build_social_prompt(peers, [s.name for s in skills], open_props, groups)
             system_prompt = build_system_prompt(
                 self.psyche, self.thymos.mood, self.telos,
                 grid_name=self.grid_name, location=self.location,
@@ -1113,6 +1121,20 @@ class BrainHandler:
                         build_commit_action(pid, choice, self.did, self._governance_state)
                     )
                     self._social_memory(f"Committed my ballot on proposal {pid}", tick)
+
+            elif act == "join_group":
+                gid = decision.get("group_id")
+                chosen_group = next((g for g in groups if g.get("group_id") == gid), None)
+                if chosen_group is not None:
+                    # O1a JOIN_GROUP — NousRunner dispatches to the group store
+                    # (dupe-joins are the Grid's call, not ours).
+                    self._pending_actions.append(Action(
+                        action_type=ActionType.JOIN_GROUP,
+                        metadata={"group_id": gid, "role": "member"},
+                    ))
+                    self._social_memory(
+                        f"Joined group {chosen_group.get('display_name') or gid}", tick,
+                    )
         except Exception as exc:  # never let a social cycle take down the tick
             log.warning("[Brain] social cycle failed: %s", exc)
 

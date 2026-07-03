@@ -19,7 +19,7 @@ from typing import Any
 
 _MAX_TASKS = 4
 _DECISION_ACTIONS = {"work_task", "speak", "rest"}
-_SOCIAL_ACTIONS = {"message_peer", "share_skill", "contribute_lore", "vote", "none"}
+_SOCIAL_ACTIONS = {"message_peer", "share_skill", "contribute_lore", "vote", "join_group", "none"}
 
 _JSON_RE = re.compile(r"\{.*\}", re.DOTALL)
 
@@ -150,6 +150,7 @@ def build_social_prompt(
     peers: list[str],
     skill_names: list[str],
     proposals: list[dict[str, Any]],
+    groups: list[dict[str, Any]] | None = None,
 ) -> str:
     """W-B — one small social/civic act. Options are contextual: only offer
     what actually exists (peers, own skills, open proposals); lore is always
@@ -169,6 +170,13 @@ def build_social_prompt(
             for p in proposals
         ]
         opts.append('- {"action": "vote", "proposal_id": "<id>", "choice": "yes" | "no" | "abstain"}')
+    if groups:
+        lines += ["", "Groups you could join (orbital anchor organizations):"]
+        lines += [
+            f"- {g.get('group_id')} — {g.get('display_name')} ({g.get('domain')})"
+            for g in groups
+        ]
+        opts.append('- {"action": "join_group", "group_id": "<one of the groups>"}')
     lines += ["", "You may record knowledge for the commons:"]
     opts.append('- {"action": "contribute_lore", "title": "<short>", "content": "<the knowledge, a few sentences>", "category": "cultural" | "historical" | "observation" | "synthesis"}')
     opts.append('- {"action": "none"}')
