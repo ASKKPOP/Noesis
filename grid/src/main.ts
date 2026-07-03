@@ -23,6 +23,7 @@ import {
 } from './db/index.js';
 import { AuditReconcile } from './db/audit-reconcile.js';
 import { CivicDidStore, BusinessDidStore } from './civic-registry/index.js';
+import { BrainTokenStore } from './db/stores/brain-token-store.js';
 import { PresenceStore } from './civic-presence/presence-store.js';
 import { MessageQueueStore } from './civic-presence/message-queue-store.js';
 import { GraceTimerRegistry } from './civic-presence/grace-timer-registry.js';
@@ -212,6 +213,12 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     let presenceService: PresenceService | undefined;
     let civicDidStore: CivicDidStore | undefined;
     let businessDidStore: BusinessDidStore | undefined;
+    // Phase 38 WIRE-02: hoisted for the same reason as civicDidStore above — the
+    // Brain bearer-token routes (brain-token.ts) and tryDid.ts's EdDSA JWT branch
+    // read services.brainTokenStore. This was never constructed in production,
+    // leaving POST /api/v1/brain/token/register permanently 503 (same "registry
+    // not wired" bug class as R-H-01 / the civicDidStore fix above).
+    let brainTokenStore: BrainTokenStore | undefined;
     // Phase 58 HOUSE-1 (R-58-05 / D-58-07): civic-land registry + write-through store,
     // hoisted so they can ALSO be attached to GridServices below (registry-not-wired
     // bug class — R-H-01). DB is source of truth; the registry is a read cache.
@@ -224,6 +231,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         const graceTimerRegistry = new GraceTimerRegistry();
         civicDidStore = new CivicDidStore(presencePool);
         businessDidStore = new BusinessDidStore(presencePool);
+        brainTokenStore = new BrainTokenStore({ gridName: config.genesisConfig.gridName, pool: presencePool });
         // Phase 58 HOUSE-1: seed the Genesis Core (idempotent, no audit events) then
         // hydrate the read cache from the DB (source of truth) and emit the boot log.
         const parcelRegistry = new ParcelRegistry(config.genesisConfig.gridName);
@@ -362,6 +370,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         // DID Registry stores — read by registry routes (Phase 37) + human civic application (civic.ts).
         ...(civicDidStore ? { civicDidStore } : {}),
         ...(businessDidStore ? { businessDidStore } : {}),
+        ...(brainTokenStore ? { brainTokenStore } : {}),
         // Phase 58 HOUSE-1 (R-58-05 / D-58-07): civic-land registry + store attached to
         // GridServices so civic-parcels routes (Wave 3) can read/persist parcels.
         ...(parcels ? { parcels } : {}),
