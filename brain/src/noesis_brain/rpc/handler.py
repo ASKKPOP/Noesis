@@ -122,6 +122,12 @@ class BrainHandler:
         # W-B: social/civic cycle — outreach, teaching, lore, commit-reveal voting.
         self._last_social_tick = -10_000
         self._governance_state = GovernanceState()
+        # Duplicate-action guards (surfaced by the 2026-07-02 liveness run: the
+        # real model bid the SAME open RFP every cycle and re-joined the same
+        # group repeatedly → audit-chain spam). Track what's already been acted
+        # on this session; a notice leaving the open list prunes its entry.
+        self._bid_notice_ids: set[str] = set()
+        self._joined_group_ids: set[str] = set()
         self._reflection: ReflectionEngine | None = None
         if memory is not None and hasattr(memory, "add_reflection") and hasattr(memory, "recent"):
             self._reflection = ReflectionEngine(memory, llm)
@@ -606,6 +612,11 @@ class BrainHandler:
             rfps = await wire.fetch_open_rfps()
             due = next((d for d in dues if d.get("status") == "assessed"), None)
             open_rfps = [r for r in rfps if r.get("status", "open") == "open"]
+            # Prune bid-guard to only still-open notices (bounds memory), then
+            # hide notices we've already bid on — no double-bidding one RFP.
+            open_ids = {str(r.get("notice_id")) for r in open_rfps}
+            self._bid_notice_ids &= open_ids
+            open_rfps = [r for r in open_rfps if str(r.get("notice_id")) not in self._bid_notice_ids]
             if due is None and not open_rfps:
                 return  # nothing to decide — do NOT spend an LLM call
 
@@ -655,6 +666,8 @@ class BrainHandler:
                 return
 
             ok = await wire.post_economic_action(action)
+            if ok and action.action_type == ActionType.BID_RFP:
+                self._bid_notice_ids.add(str(action.metadata.get("notice_id")))
             if ok and self.memory is not None and hasattr(self.memory, "record_event"):
                 self.memory.record_event(
                     content=f"Economic decision: {action.action_type.value} {action.metadata}"[:300],
@@ -1040,6 +1053,8 @@ class BrainHandler:
                     groups = await fetch_groups() or []
                 except TypeError:
                     groups = []
+            # Don't offer groups the Nous already joined this session (no re-join spam).
+            groups = [g for g in groups if str(g.get("group_id")) not in self._joined_group_ids]
 
             prompt = build_social_prompt(peers, [s.name for s in skills], open_props, groups)
             system_prompt = build_system_prompt(
@@ -1126,8 +1141,9 @@ class BrainHandler:
                 gid = decision.get("group_id")
                 chosen_group = next((g for g in groups if g.get("group_id") == gid), None)
                 if chosen_group is not None:
-                    # O1a JOIN_GROUP — NousRunner dispatches to the group store
-                    # (dupe-joins are the Grid's call, not ours).
+                    # O1a JOIN_GROUP — NousRunner dispatches to the group store.
+                    # Record it so we never re-join (and re-emit) the same group.
+                    self._joined_group_ids.add(str(gid))
                     self._pending_actions.append(Action(
                         action_type=ActionType.JOIN_GROUP,
                         metadata={"group_id": gid, "role": "member"},
