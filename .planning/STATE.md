@@ -209,6 +209,12 @@ Nous decomposes its energy goal, works it to 100%, autonomously generates new go
 energy RFP, joins Dynamo (the energy group — goal-relevant cooperation), speaks, and commits a ballot.
 New Ollama unit test locks the payload contract; suite **1155 green**. **Lesson: mock LLMs prove plumbing,
 not cognition — a real-model liveness run is now part of done.**
+**Hardening (commit `76151df`, rebased over parallel grid-QA work):** the live transcript exposed real
+over-eagerness — the Nous bid the SAME open RFP ~20× and re-joined Dynamo every cycle. Dedup guards
+(`_bid_notice_ids` pruned to still-open notices; `_joined_group_ids` filters the group offer) make each act
+once-per-target. Plus `test/test_loop_integration.py` — the FIRST end-to-end loop test (deterministic
+per-purpose scripted LLM drives real on_tick over real ticks; asserts goal→completion + a ballot cast;
+CI-safe). Suite **1159 green**.
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 
