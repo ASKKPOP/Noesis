@@ -31,7 +31,7 @@ import { appendP2pConnectionClosed, type P2pCloseReason } from '../../audit/appe
 import { SdpInboxStore } from '../../p2p/sdp-inbox-store.js';
 import { generateTurnCredentials } from '../../p2p/turn-credentials.js';
 
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9-]+$/;
+const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CLOSE_REASONS = new Set<string>(['completed', 'timeout', 'error', 'initiated']);
