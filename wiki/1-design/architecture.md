@@ -24,7 +24,7 @@ flowchart TD
     WC[WorldClock] --- AU[audit chain] --- CIV[civic institutions]
   end
   subgraph Brain[Brain · mind · Python · one per Nous]
-    PIPE[psyche · thymos · telos · ananke · memory] --- LLM[Ollama · 3-tier]
+    PIPE[psyche · thymos · telos · ananke · memory] --- LLM[Ollama or Claude · 3-tier]
   end
   Portal --> Grid
   Grid <-->|HTTPS REST + WSS · hash-only| Brain
@@ -40,7 +40,7 @@ Noēsis runs **Grids** — persistent digital cities where autonomous AI agents 
 - **Python** — the Brain: one cognitive runtime per Nous (personality, emotions, goals, drives, memory, LLM).
 - **MySQL** — shared world state (registries, civic tables, the persisted audit chain).
 - **SQLite** — per-Nous private memory + personal wiki, Brain-side.
-- **Local AI (Ollama)** — default LLM backend, operator-selectable; cloud models optional.
+- **LLM backend (operator-selectable)** — `LLM_PROVIDER=ollama` (default, local) or `LLM_PROVIDER=claude` (Anthropic cloud, gated by the operator's own `ANTHROPIC_API_KEY`). A machine without Ollama can run a real local Nous on Claude; the 3 cognition tiers default to Haiku 4.5 / Sonnet 4.6 / Opus 4.8.
 
 ## The three layers
 

@@ -295,8 +295,41 @@ def create_brain_app(
         router.register_tier(ModelTier.PRIMARY, OllamaAdapter(model=_primary, base_url=ollama_host))
         router.register_tier(ModelTier.LARGE, OllamaAdapter(model=_large, base_url=ollama_host))
         llm = router  # ModelRouter satisfies LLMAdapter (Plan 03 Task 1)
+    elif llm_provider in ("claude", "anthropic"):
+        # Cloud-LLM Brain: run a real local Nous on the Anthropic Claude API
+        # (no Ollama required). Gated by the operator's own ANTHROPIC_API_KEY —
+        # ClaudeAdapter raises a clear LLMError when the key is missing.
+        from noesis_brain.llm.claude import ClaudeAdapter  # noqa: PLC0415
+        from noesis_brain.llm.router import ModelRouter  # noqa: PLC0415
+        from noesis_brain.llm.types import LLMConfig, ModelTier  # noqa: PLC0415
+
+        # qwen leak guard: the *_model_override values default to the Ollama
+        # default "qwen3:4b" when LLM_MODEL is unset. Treat that sentinel as
+        # "unset" for the Claude branch so the Claude tier defaults win. A real
+        # user-set LLM_MODEL (any non-qwen value) still overrides.
+        def _claude_override(value: str | None) -> str | None:
+            return None if value in (None, "qwen3:4b") else value
+
+        _yaml_models = yaml_llm.get("models", {})
+        _small = _claude_override(small_model_override) or _yaml_models.get("small", "claude-haiku-4-5-20251001")
+        _primary = _claude_override(primary_model_override) or _yaml_models.get("primary", "claude-sonnet-4-6")
+        _large = _claude_override(large_model_override) or _yaml_models.get("large", "claude-opus-4-8")
+        _temp = temperature_override if temperature_override is not None else float(yaml_llm.get("temperature", 0.7))
+        _max_tok = max_tokens_override if max_tokens_override is not None else int(yaml_llm.get("max_tokens", 2048))
+
+        llm_config = LLMConfig(
+            provider="claude",
+            models={"small": _small, "primary": _primary, "large": _large},
+            temperature=_temp,
+            max_tokens=_max_tok,
+        )
+        router = ModelRouter(config=llm_config)
+        router.register_tier(ModelTier.SMALL, ClaudeAdapter(model=_small))
+        router.register_tier(ModelTier.PRIMARY, ClaudeAdapter(model=_primary))
+        router.register_tier(ModelTier.LARGE, ClaudeAdapter(model=_large))
+        llm = router  # ModelRouter satisfies LLMAdapter
     else:
-        raise ValueError(f"Unknown LLM provider: {llm_provider!r}. Use 'ollama'.")
+        raise ValueError(f"Unknown LLM provider: {llm_provider!r}. Use 'ollama' or 'claude'.")
 
     # Build memory store — Phase 43 D-43-06: use data_dir for on-disk persistence.
     # When data_dir is set, create the directory tree and write nous.db there.
@@ -325,6 +358,9 @@ def create_brain_app(
         location=location,
         memory=memory_store,
         did=did,
+        # W-A2 (Mind): the goal→task ledger persists next to nous.db so goal
+        # pursuit survives restarts (ceaselessness lives in external state).
+        ledger_db_dir=data_dir,
     )
 
     # Build RPC server

@@ -167,6 +167,36 @@ Next action: operator's choice — remaining v3.0 work includes the Wave-1 Type 
   (migrate CLI). Phases 47–51 (civic-city institutions + grandfathering + Type Mobility) are COMPLETE.
   ⚠️ Deploy gap: Phases 48–51 (migrations v60–v64) are pushed but NOT deployed (only Phase 47 is live).
 
+## W-A Mind Loop — SHIPPED 2026-07-02 (from the full-system audit)
+
+Operator asked for full analytics (autonomy/visualization/availability) then approved implementation
+("Sure, doing"). Audit + program: `docs/noesis-system-analysis-2026-07.html` + `.planning/research/system-audit-2026-07.md`
+(workstreams W-A Mind → W-B Society → W-C Living Map → W-D Substrate → W-E Doors).
+**W-A A1–A4 SHIPPED:** per-tick decision cycle (work_task/speak/rest; NOOP idle replaced; live-wired gate,
+20-tick cooldown) · `GoalLedger` (persists via `ledger_db_dir` next to nous.db) + 200-tick planner
+(top-goal → 2-4 tasks when dry) · ReflectionEngine WIRED (interval or 3-failure trigger; reflect→re-plan) ·
+outcome feedback (`record_task_outcome` → `Goal.advance` 1/total + auto-complete; failures/rejections →
+`Lesson:` Reflexion memories). ONE intent per tick injected into prompts (`build_system_prompt(intent=…)`,
+D-MIND-02). 43 new Brain tests, suite **1127 green**, allowlist **+0**, on_tick contract untouched.
+Decisions **D-MIND-01..04** (wiki decisions.md). Plan: `docs/superpowers/plans/2026-07-02-w-a-mind-autonomous-learning.md`.
+**A5/A6/A7 SHIPPED (same day, "go next"):** A5 deterministic Stanford retrieval (`_ranked_memories`,
+tick-based) → planner + decision lessons · A6 Voyager loop closed on the existing SkillStore (top-3 skills
+in the decision prompt, outcome EMA per work_task, sleep-time distillation of completed goals via
+`GoalLedger.done_tasks` + `parse_skill`) · A7 `_sleep_time_compute` after Hypnos `run_sleep` (distill +
+forced reflection). Suite **1140 green**, allowlist +0. D-MIND-05/06 added to the wiki decision log.
+**Same day ("do until finish"): W-B + W-C6 + W-D + W-E1 + A8 + A9-substrate SHIPPED** (commit `9f7a946`):
+social cycle (autonomous DM/teach/lore/commit-reveal voting — VOTE-05 end-to-end, D-SOC-01..03, brain 1152
+green) · watchdog webhook alerting + real-MySQL migration CI + backup script/runbook · map-sync CI gate
+(IN SYNC) · bilingual getting-started page · decision-evalset exporter · always-on Brain compose+runbook.
+**Afternoon ("do do do"): W-C1 + W-C2 + W-B4 + W-C4 SHIPPED** (commits `e1d50a4` + latest):
+live map (firehose → glow-on-build, guarded) · fly-to camera (canon-safe tween) · autonomous group join
+(`GET /api/v1/groups` + social-cycle `join_group` → O1a; 2 grid + 2 brain tests) · **first knowledge-graph
+view** (`docs/noesis-knowledge-graph.html` — force-directed lore commons, live+seed, no deps). W-C3a upkeep
+scanner verified ALREADY wired (`main.ts:245`→`launcher.ts:515`) — no change. Brain 1154 green, grid tsc +
+did-policy clean, map-sync IN SYNC, allowlist +0. **Still open:** W-B peer-contracts/promise-ledger ·
+W-C3 upgrade routes for built objects (create-once still) · W-C5 time scrubber · W-E2–E5 · Phase 40b.
+Daily visual log: `docs/noesis-daily-log-2026-07-02.html`.
+
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 
 **Money in Noēsis is exactly two things, and nothing else:**

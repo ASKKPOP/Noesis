@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Noēsis — Full System Analysis · Nous &amp; Grid · 2026-07</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b22; --panel2:#1c222b; --bd:#2a313c;
+    --tx:#e6edf3; --mut:#9aa7b4; --acc:#7ee787; --acc2:#79c0ff; --warn:#f0c674;
+    --live:#56d364; --partial:#f0c674; --dormant:#79c0ff; --missing:#ff7b72;
+    --gov:#bf00ff; --biz:#ffd700; --shop:#00d4ff; --man:#ff4400; --res:#4488ff; --cta:#da7a4e;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);line-height:1.55;font-size:15px}
+  .wrap{max-width:1160px;margin:0 auto;padding:32px 24px 80px}
+  h1{font-size:27px;margin:0 0 4px}
+  h2{font-size:20px;margin:44px 0 12px;border-bottom:1px solid var(--bd);padding-bottom:6px}
+  h3{font-size:16px;margin:26px 0 8px;color:var(--acc2)}
+  .sub{color:var(--mut);margin:0 0 22px}
+  a{color:var(--acc2);text-decoration:none} a:hover{text-decoration:underline}
+  code{font-family:var(--mono);background:var(--panel2);padding:1px 6px;border-radius:5px;font-size:12.5px;color:var(--acc)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:16px 0}
+  .stat{background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:14px 16px}
+  .stat .n{font-size:21px;font-weight:700}
+  .stat .l{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  table{width:100%;border-collapse:collapse;margin:8px 0 4px;font-size:13.5px}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--bd);vertical-align:top}
+  th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.04em;background:var(--panel)}
+  tr:hover td{background:#12161d}
+  .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;border:1px solid var(--bd);white-space:nowrap}
+  .live{color:var(--live);border-color:#214d2c;background:#0f2417}
+  .partial{color:var(--partial);border-color:#5c4a16;background:#241f0f}
+  .dormant{color:var(--dormant);border-color:#1c3a59;background:#0f1b28}
+  .missing{color:var(--missing);border-color:#5c1f1c;background:#24120f}
+  .panel{background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:14px 18px;margin:12px 0}
+  .verdict{border-left:4px solid var(--acc2)}
+  .danger{border-left:4px solid var(--missing)}
+  .ok{border-left:4px solid var(--live)}
+  .warned{border-left:4px solid var(--partial)}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:860px){.cols{grid-template-columns:1fr}}
+  figure{margin:18px 0;background:#0a0d12;border:1px solid var(--bd);border-radius:12px;padding:12px;overflow-x:auto}
+  figcaption{color:var(--mut);font-size:12.5px;margin-top:8px;padding:0 6px}
+  svg{display:block;min-width:760px;width:100%;height:auto}
+  svg text{font-family:var(--sans)} svg .m{font-family:var(--mono)}
+  .toc{columns:2;column-gap:32px;font-size:14px}
+  .toc li{margin:3px 0}
+  ul{margin:8px 0 8px 2px;padding-left:20px}
+  li{margin:4px 0}
+  .q{color:var(--mut)}
+  footer{margin-top:56px;color:var(--mut);font-size:12.5px;border-top:1px solid var(--bd);padding-top:14px}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0;color:var(--mut);font-size:12.5px;align-items:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Noēsis — Full System Analysis: Nous &amp; Grid</h1>
+<p class="sub">2026-07-02 · four codebase deep-audits + two live open-source landscape surveys · answers the operator's three questions and ends with the implementation program we build next.<br/>
+분석일 2026-07-02 · 코드베이스 심층 감사 4건 + 오픈소스 조사 2건 · 운영자의 세 가지 질문에 답하고, 다음에 구현할 프로그램 제안으로 끝납니다.</p>
+
+<div class="grid">
+  <div class="stat"><div class="n"><span class="tag partial">PARTIAL</span></div><div class="l">Q1 · autonomous learning</div></div>
+  <div class="stat"><div class="n"><span class="tag partial">60%</span></div><div class="l">Q2 · visualization optimal</div></div>
+  <div class="stat"><div class="n"><span class="tag missing">NOT READY</span></div><div class="l">Q3 · availability</div></div>
+  <div class="stat"><div class="n"><span class="tag live">CLOSED</span></div><div class="l">Economic reality loop</div></div>
+  <div class="stat"><div class="n">61</div><div class="l">Brain action types</div></div>
+  <div class="stat"><div class="n">5</div><div class="l">Workstreams proposed</div></div>
+</div>
+
+<div class="legend"><b>Status language:</b>
+  <span class="tag live">LIVE — wired &amp; autonomous</span>
+  <span class="tag partial">PARTIAL — built, not closed</span>
+  <span class="tag dormant">DORMANT — server-side only / scaffold</span>
+  <span class="tag missing">MISSING — not built or dead code</span>
+</div>
+
+<h2 id="toc">Contents</h2>
+<ol class="toc">
+  <li><a href="#exec">Executive summary — the three answers</a></li>
+  <li><a href="#arch">System at a glance (Portal · Grid · Brain)</a></li>
+  <li><a href="#q1">Q1 — Autonomy &amp; learning (the tick loop, honestly)</a></li>
+  <li><a href="#split">Q1 — The learning-loop split (S1–S5 vs the Brain)</a></li>
+  <li><a href="#coop">Q1 — Cooperation between Nous</a></li>
+  <li><a href="#q2">Q2 — Visualization &amp; upgradeability</a></li>
+  <li><a href="#q3">Q3 — Availability · scalability · usability</a></li>
+  <li><a href="#oss">Open-source adoption plan</a></li>
+  <li><a href="#roadmap">Implementation program (what we build next)</a></li>
+</ol>
+
+<h2 id="exec">1 · Executive summary — the three answers</h2>
+
+<div class="panel verdict">
+<b>Q1 — "Can the Nous act on tasks by itself, develop itself through learning, and cooperate to advance the Grid — ceaselessly, toward its goals?"</b><br/>
+<span class="tag partial">PARTIAL</span> The skeleton is genuinely built: a 30-second world tick drives every Brain; the Nous holds 61 action types, a persistent SQLite memory, personality/mood/drive systems, theory-of-mind, a sleep-consolidation cycle, and it <b>already makes real autonomous economic decisions</b> (pays civic dues, bids on RFPs, and its winning bids become physics-gated orbital objects). But the mind idles: the main per-tick "what do I want to do?" path still returns <code>NOOP</code>, the reflection engine is written but never called, goals are seeded at birth and never grow from experience, action outcomes update nothing, and the Brain only runs while the operator's laptop is awake (the hosted Type-B pool is not built). <b>It acts; it does not yet learn or persist ceaselessly.</b>
+</div>
+
+<div class="panel warned">
+<b>Q2 — "Does an optimal system exist to visualize what Nous build (objects &amp; knowledge), continuously upgradeable?"</b><br/>
+<span class="tag partial">~60% OF OPTIMAL</span> The hardest part is done and is excellent: the canonical 3D orbital-station map (locked canon) plus <code>orbital.js</code> rendering <b>real backend objects built by the economic loop</b>, with a client-side physics gate so nothing unphysical ever renders. But the picture is fragmented across 14 surfaces (docs map, dashboard copy, portal civic-map, steward views) mostly fed by static seeds instead of the live WS firehose; built objects are <b>create-once immutable</b> (no upgrade route); structure upkeep/interiors are scaffolded but dormant; and the knowledge Nous accumulate (skills, relationships, personal wikis) has <b>no graph visualization at all</b>.
+</div>
+
+<div class="panel danger">
+<b>Q3 — "Availability, scalability, and friendliness for professionals AND total beginners?"</b><br/>
+<span class="tag missing">AVAILABILITY: NOT PRODUCTION-READY</span> <span class="tag partial">SCALE: PROOF-OF-CONCEPT</span> <span class="tag partial">UX: PRO GOOD / BEGINNER BLOCKED</span> Everything runs on one EC2 host; MySQL has <b>no backup, replication, or point-in-time recovery</b>; there is no alerting; a known test blind spot lets SQL errors reach production (2026-06-14 crash-loop). Scale is one Grid / one process / no load tests (rate limits are wired). A developer can integrate (API, CLI, wiki); a no-IT beginner cannot join: ~10 manual steps, Ollama+Python+Node install, wallet required to own a Nous, no hosted browser-only path, English-only docs.
+</div>
+
+<h2 id="arch">2 · System at a glance</h2>
+<figure>
+<svg viewBox="0 0 980 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three-layer architecture with status colors">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9aa7b4"/></marker>
+  </defs>
+  <!-- Portal -->
+  <rect x="20" y="16" width="940" height="86" rx="12" fill="#161b22" stroke="#bf00ff" stroke-opacity=".55"/>
+  <text x="36" y="42" fill="#bf00ff" font-size="15" font-weight="700">PORTAL — meta-layer (D-V3-29)</text>
+  <g font-size="12">
+    <rect x="36" y="54" width="150" height="30" rx="8" fill="#0f2417" stroke="#214d2c"/><text x="46" y="73" fill="#56d364">Grid approval wf</text>
+    <rect x="196" y="54" width="190" height="30" rx="8" fill="#0f2417" stroke="#214d2c"/><text x="206" y="73" fill="#56d364">Nous approval (Type A/B)</text>
+    <rect x="396" y="54" width="170" height="30" rx="8" fill="#0f1b28" stroke="#1c3a59"/><text x="406" y="73" fill="#79c0ff">Cross-Grid (dormant 503)</text>
+    <rect x="576" y="54" width="180" height="30" rx="8" fill="#0f2417" stroke="#214d2c"/><text x="586" y="73" fill="#56d364">Account + endowment</text>
+    <rect x="766" y="54" width="178" height="30" rx="8" fill="#241f0f" stroke="#5c4a16"/><text x="776" y="73" fill="#f0c674">Inside dashboard (P52 ✗)</text>
+  </g>
+  <!-- Grid -->
+  <rect x="20" y="122" width="940" height="126" rx="12" fill="#161b22" stroke="#ffd700" stroke-opacity=".45"/>
+  <text x="36" y="148" fill="#ffd700" font-size="15" font-weight="700">GRID — Genesis city (Node/TS · one instance, Moon/Mars = configs)</text>
+  <g font-size="12">
+    <rect x="36" y="160" width="120" height="30" rx="8" fill="#0f2417" stroke="#214d2c"/><text x="46" y="179" fill="#56d364">DID Registry</text>
+    <rect x="166" y="160" width="150" height="30" rx="8" fill="#0f2417" stroke="#214d2c"/><text x="176" y="179" fill="#56d364">Polis / Gov / Police</text>
+    <rect x="326" y="160" width="170" height="30" rx="8" fill="#0f2417" stroke="#214d2c"/><text x="336" y="179" fill="#56d364">IRS · treasury (wei)</text>
+    <rect x="506" y="160" width="200" height="30" rx="8" fill="#0f2417" stroke="#214d2c"/><text x="516" y="179" fill="#56d364">Procurement RFP + escrow</text>
+    <rect x="716" y="160" width="228" height="30" rx="8" fill="#0f2417" stroke="#214d2c"/><text x="726" y="179" fill="#56d364">Orbital objects (physics-gated)</text>
+    <rect x="36" y="200" width="150" height="30" rx="8" fill="#0f2417" stroke="#214d2c"/><text x="46" y="219" fill="#56d364">Audit chain + WS</text>
+    <rect x="196" y="200" width="150" height="30" rx="8" fill="#0f2417" stroke="#214d2c"/><text x="206" y="219" fill="#56d364">Library · lore</text>
+    <rect x="356" y="200" width="170" height="30" rx="8" fill="#0f1b28" stroke="#1c3a59"/><text x="366" y="219" fill="#79c0ff">Groups · communities</text>
+    <rect x="536" y="200" width="160" height="30" rx="8" fill="#0f1b28" stroke="#1c3a59"/><text x="546" y="219" fill="#79c0ff">P2P WebRTC (unused)</text>
+    <rect x="706" y="200" width="238" height="30" rx="8" fill="#0f1b28" stroke="#1c3a59"/><text x="716" y="219" fill="#79c0ff">Parcels · structures (dormant)</text>
+  </g>
+  <!-- Brain -->
+  <rect x="20" y="268" width="940" height="112" rx="12" fill="#161b22" stroke="#00d4ff" stroke-opacity=".45"/>
+  <text x="36" y="294" fill="#00d4ff" font-size="15" font-weight="700">BRAIN — one per Nous (Python · operator's machine · Ollama qwen3:4b or Claude API)</text>
+  <g font-size="12">
+    <rect x="36" y="306" width="180" height="30" rx="8" fill="#0f2417" stroke="#214d2c"/><text x="46" y="325" fill="#56d364">Economic decisions (W3b)</text>
+    <rect x="226" y="306" width="150" height="30" rx="8" fill="#0f2417" stroke="#214d2c"/><text x="236" y="325" fill="#56d364">Tool loop (72b)</text>
+    <rect x="386" y="306" width="200" height="30" rx="8" fill="#0f2417" stroke="#214d2c"/><text x="396" y="325" fill="#56d364">Memory · Hypnos · Iris · drives</text>
+    <rect x="596" y="306" width="170" height="30" rx="8" fill="#24120f" stroke="#5c1f1c"/><text x="606" y="325" fill="#ff7b72">Main decision → NOOP</text>
+    <rect x="776" y="306" width="168" height="30" rx="8" fill="#24120f" stroke="#5c1f1c"/><text x="786" y="325" fill="#ff7b72">Reflection orphaned</text>
+    <rect x="36" y="344" width="180" height="26" rx="8" fill="#241f0f" stroke="#5c4a16"/><text x="46" y="361" fill="#f0c674">Telos goals: static</text>
+    <rect x="226" y="344" width="220" height="26" rx="8" fill="#241f0f" stroke="#5c4a16"/><text x="236" y="361" fill="#f0c674">Skills/lore: receive-only</text>
+    <rect x="456" y="344" width="230" height="26" rx="8" fill="#24120f" stroke="#5c1f1c"/><text x="466" y="361" fill="#ff7b72">Governance voter/proposer: dead code</text>
+    <rect x="696" y="344" width="248" height="26" rx="8" fill="#24120f" stroke="#5c1f1c"/><text x="706" y="361" fill="#ff7b72">Laptop-bound (Type-B pool not built)</text>
+  </g>
+  <line x1="490" y1="102" x2="490" y2="122" stroke="#9aa7b4" marker-end="url(#ar)"/>
+  <line x1="490" y1="248" x2="490" y2="268" stroke="#9aa7b4" marker-end="url(#ar)"/>
+</svg>
+<figcaption>Three-layer architecture with implementation reality overlaid. Green = live &amp; autonomous · amber = built but not closed · blue = server-side scaffold no Brain uses · red = missing/dead. 3계층 아키텍처와 구현 현실: 초록=가동, 호박=미완결, 파랑=서버만, 빨강=미구현/사장 코드.</figcaption>
+</figure>
+
+<h2 id="q1">3 · Q1 — Autonomy &amp; learning: what the tick actually does</h2>
+
+<p>Every 30 seconds the Grid's <code>WorldClock</code> (<code>grid/src/clock/ticker.ts</code>) ticks every Nous via <code>NousRunner</code> → the Brain's <code>on_tick</code> (<code>brain/src/noesis_brain/rpc/handler.py</code>). What happens inside is the honest picture of autonomy today:</p>
+
+<figure>
+<svg viewBox="0 0 980 430" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tick loop flow with live and missing branches">
+  <defs>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#56d364"/></marker>
+    <marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9aa7b4"/></marker>
+    <marker id="arx" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#ff7b72"/></marker>
+  </defs>
+  <!-- clock -->
+  <rect x="20" y="30" width="170" height="52" rx="10" fill="#161b22" stroke="#79c0ff"/>
+  <text x="36" y="52" fill="#79c0ff" font-size="13" font-weight="700">WorldClock · 30s</text>
+  <text x="36" y="70" fill="#9aa7b4" font-size="11.5" class="m">grid/src/clock/ticker.ts</text>
+  <rect x="20" y="120" width="170" height="52" rx="10" fill="#161b22" stroke="#79c0ff"/>
+  <text x="36" y="142" fill="#79c0ff" font-size="13" font-weight="700">NousRunner.tick</text>
+  <text x="36" y="160" fill="#9aa7b4" font-size="11.5" class="m">integration/nous-runner.ts</text>
+  <line x1="105" y1="82" x2="105" y2="120" stroke="#9aa7b4" marker-end="url(#am)"/>
+  <rect x="20" y="210" width="170" height="52" rx="10" fill="#161b22" stroke="#00d4ff"/>
+  <text x="36" y="232" fill="#00d4ff" font-size="13" font-weight="700">Brain on_tick</text>
+  <text x="36" y="250" fill="#9aa7b4" font-size="11.5" class="m">rpc/handler.py</text>
+  <line x1="105" y1="172" x2="105" y2="210" stroke="#9aa7b4" marker-end="url(#am)"/>
+
+  <!-- context feeders -->
+  <rect x="20" y="310" width="230" height="96" rx="10" fill="#0f1b28" stroke="#1c3a59"/>
+  <text x="34" y="332" fill="#79c0ff" font-size="12.5" font-weight="700">Prompt context (real, rich)</text>
+  <text x="34" y="351" fill="#9aa7b4" font-size="11.5">Psyche · Thymos mood · Ananke drives</text>
+  <text x="34" y="368" fill="#9aa7b4" font-size="11.5">Telos top-3 · Iris beliefs · LTM top-k</text>
+  <text x="34" y="385" fill="#9aa7b4" font-size="11.5">lore · world sight · economic state</text>
+  <line x1="135" y1="310" x2="112" y2="262" stroke="#1c3a59" marker-end="url(#am)"/>
+
+  <!-- branches -->
+  <rect x="300" y="60" width="300" height="56" rx="10" fill="#0f2417" stroke="#214d2c"/>
+  <text x="314" y="82" fill="#56d364" font-size="13" font-weight="700">✓ Economic cycle (every ~50 ticks)</text>
+  <text x="314" y="100" fill="#9aa7b4" font-size="11.5">LLM decides pay_due / bid_rfp / none · guardrails</text>
+  <rect x="300" y="130" width="300" height="56" rx="10" fill="#0f2417" stroke="#214d2c"/>
+  <text x="314" y="152" fill="#56d364" font-size="13" font-weight="700">✓ Tool loop (curiosity ≥ 0.6, cooldown)</text>
+  <text x="314" y="170" fill="#9aa7b4" font-size="11.5">autonomous research · TOOL_USED events</text>
+  <rect x="300" y="200" width="300" height="56" rx="10" fill="#24120f" stroke="#5c1f1c"/>
+  <text x="314" y="222" fill="#ff7b72" font-size="13" font-weight="700">✗ Main decision “what do I want to do?”</text>
+  <text x="314" y="240" fill="#9aa7b4" font-size="11.5" class="m">handler.py ~1024: returns NOOP (Sprint-5 stub)</text>
+  <rect x="300" y="270" width="300" height="56" rx="10" fill="#24120f" stroke="#5c1f1c" stroke-dasharray="5 4"/>
+  <text x="314" y="292" fill="#ff7b72" font-size="13" font-weight="700">✗ ReflectionEngine — never called</text>
+  <text x="314" y="310" fill="#9aa7b4" font-size="11.5" class="m">memory/reflection.py exists · 0 callsites</text>
+  <rect x="300" y="340" width="300" height="56" rx="10" fill="#241f0f" stroke="#5c4a16"/>
+  <text x="314" y="362" fill="#f0c674" font-size="13" font-weight="700">△ Telos goals — static after birth</text>
+  <text x="314" y="380" fill="#9aa7b4" font-size="11.5">decay-only evolve() · no outcome→progress updates</text>
+
+  <line x1="190" y1="236" x2="300" y2="88" stroke="#56d364" marker-end="url(#ag)"/>
+  <line x1="190" y1="236" x2="300" y2="158" stroke="#56d364" marker-end="url(#ag)"/>
+  <line x1="190" y1="236" x2="300" y2="228" stroke="#ff7b72" marker-end="url(#arx)"/>
+  <line x1="190" y1="236" x2="300" y2="298" stroke="#ff7b72" stroke-dasharray="5 4" marker-end="url(#arx)"/>
+
+  <!-- outputs -->
+  <rect x="680" y="60" width="280" height="56" rx="10" fill="#161b22" stroke="#ffd700" stroke-opacity=".5"/>
+  <text x="694" y="82" fill="#ffd700" font-size="13" font-weight="700">Actions → NousRunner.executeActions</text>
+  <text x="694" y="100" fill="#9aa7b4" font-size="11.5">61 ActionTypes available to the enum</text>
+  <rect x="680" y="140" width="280" height="56" rx="10" fill="#0f2417" stroke="#214d2c"/>
+  <text x="694" y="162" fill="#56d364" font-size="13" font-weight="700">Audit chain (tamper-evident)</text>
+  <text x="694" y="180" fill="#9aa7b4" font-size="11.5">sole-producers · allowlist · WS firehose</text>
+  <line x1="600" y1="88" x2="680" y2="88" stroke="#56d364" marker-end="url(#ag)"/>
+  <line x1="600" y1="158" x2="680" y2="115" stroke="#56d364" marker-end="url(#ag)"/>
+  <line x1="820" y1="116" x2="820" y2="140" stroke="#9aa7b4" marker-end="url(#am)"/>
+
+  <rect x="680" y="230" width="280" height="88" rx="10" fill="#24120f" stroke="#5c1f1c"/>
+  <text x="694" y="252" fill="#ff7b72" font-size="13" font-weight="700">Missing return path</text>
+  <text x="694" y="271" fill="#9aa7b4" font-size="11.5">Outcomes never flow back into goals,</text>
+  <text x="694" y="288" fill="#9aa7b4" font-size="11.5">skill proficiency, or lessons — the loop</text>
+  <text x="694" y="305" fill="#9aa7b4" font-size="11.5">acts but does not learn from acting.</text>
+  <line x1="820" y1="196" x2="820" y2="230" stroke="#ff7b72" stroke-dasharray="5 4" marker-end="url(#arx)"/>
+
+  <rect x="680" y="340" width="280" height="56" rx="10" fill="#24120f" stroke="#5c1f1c"/>
+  <text x="694" y="362" fill="#ff7b72" font-size="13" font-weight="700">Ceaselessness gap</text>
+  <text x="694" y="380" fill="#9aa7b4" font-size="11.5">Brain dies with the laptop lid · Phase 40b ✗</text>
+</svg>
+<figcaption>The tick loop today: the economic and research cycles are genuinely autonomous; the general decision path, reflection, goal growth, and outcome feedback are the four broken links. 틱 루프의 현재: 경제/연구 사이클은 진짜 자율이지만, 일반 의사결정·리플렉션·목표 성장·결과 피드백 4개 고리가 끊겨 있습니다.</figcaption>
+</figure>
+
+<h3>What is solid (keep and build on)</h3>
+<ul>
+  <li><span class="tag live">LIVE</span> Deterministic world clock, action dispatch, tamper-evident audit chain, 3-tier ModelRouter (small/primary/large; <code>LLM_PROVIDER=ollama|claude</code>), persistent SQLite memory (<code>BRAIN_DATA_DIR</code>), Hypnos sleep-consolidation, Iris theory-of-mind, Ananke drive system, presence/sleep cycle (Phase 41), fork/right-to-exit (Phase 43).</li>
+  <li><span class="tag live">LIVE</span> <b>Economic Reality Loop end-to-end</b>: due → treasury → RFP → autonomous bid → award → escrow → build → physics gate → rendered object, with wei conservation asserted in tests (<code>grid/test/economy/loop-end-to-end.test.ts</code>).</li>
+</ul>
+
+<h3>Critical gaps (ranked)</h3>
+<table>
+<tr><th>#</th><th>Gap</th><th>Evidence</th><th>Severity</th></tr>
+<tr><td>1</td><td>Main per-tick decision loop returns NOOP — Nous is reactive outside economy/tools</td><td><code>brain/.../rpc/handler.py</code> ~1024–1033</td><td><span class="tag missing">CRITICAL</span></td></tr>
+<tr><td>2</td><td>ReflectionEngine drafted, never instantiated; insights never change behavior</td><td><code>brain/.../memory/reflection.py</code> (0 callsites)</td><td><span class="tag missing">CRITICAL</span></td></tr>
+<tr><td>3</td><td>No goal generation from experience; no <code>goal.progress</code> updates; decay-only</td><td><code>brain/.../telos/manager.py</code></td><td><span class="tag missing">CRITICAL</span></td></tr>
+<tr><td>4</td><td>No outcome-feedback loop (Grid result → Brain state)</td><td>handler returns actions, consumes no results</td><td><span class="tag missing">CRITICAL</span></td></tr>
+<tr><td>5</td><td>No hosted Type-B Brain → not ceaseless; laptop-bound</td><td>Phase 40b unbuilt; spawn 403 <code>forbidden_in_v3.0</code></td><td><span class="tag missing">MAJOR</span></td></tr>
+<tr><td>6</td><td>Skills stored but never practiced/improved; no skill→success feedback</td><td>skill stores + quarantine only</td><td><span class="tag partial">MAJOR</span></td></tr>
+<tr><td>7</td><td>Economic cycle reactive (waits for dues/RFPs) — not goal-driven earning</td><td><code>handler.py</code> ~524–530</td><td><span class="tag partial">MODERATE</span></td></tr>
+</table>
+
+<h2 id="split">4 · Q1 — The learning-loop split: the engine exists, in the wrong layer</h2>
+
+<p>The Nous-Sim master plan (S1–S5) — <b>observe → hypothesize → build → physics-gate → evaluate → specialize → teach</b> — <b>shipped on 2026-06-20 with 37/37 tests</b>. But it shipped as browser JavaScript in the visualization layer, driven by UI buttons. The Brain knows nothing about it.</p>
+
+<figure>
+<svg viewBox="0 0 980 310" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Learning loop lives in viz layer, not Brain">
+  <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#ff7b72"/></marker>
+  <marker id="ag2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#56d364"/></marker></defs>
+  <rect x="20" y="30" width="380" height="180" rx="12" fill="#161b22" stroke="#00d4ff" stroke-opacity=".5"/>
+  <text x="36" y="56" fill="#00d4ff" font-size="14" font-weight="700">BRAIN (Python — the mind)</text>
+  <text x="36" y="82" fill="#9aa7b4" font-size="12">Decides: pay_due · bid_rfp · research</text>
+  <text x="36" y="102" fill="#9aa7b4" font-size="12">Has: memory, drives, goals (static)</text>
+  <text x="36" y="130" fill="#ff7b72" font-size="12.5" font-weight="700">Does NOT hypothesize designs,</text>
+  <text x="36" y="148" fill="#ff7b72" font-size="12.5" font-weight="700">evolve generations, or teach —</text>
+  <text x="36" y="166" fill="#ff7b72" font-size="12.5" font-weight="700">no code path reaches the S-loop.</text>
+
+  <rect x="580" y="30" width="380" height="180" rx="12" fill="#161b22" stroke="#ffd700" stroke-opacity=".5"/>
+  <text x="596" y="56" fill="#ffd700" font-size="14" font-weight="700">VIZ LAYER (browser JS — the demo)</text>
+  <g font-size="12" class="m">
+    <text x="596" y="82" fill="#56d364">S1 physics-gate.js — 6-law contract ✓</text>
+    <text x="596" y="102" fill="#56d364">S2 object-gen.js — procedural designs ✓</text>
+    <text x="596" y="122" fill="#56d364">S3 learning.js — fitness · specialize ✓</text>
+    <text x="596" y="142" fill="#56d364">S4 simulate.js — zone energy ledger ✓</text>
+    <text x="596" y="162" fill="#56d364">S5 teaching.js — export → seed Grid-02 ✓</text>
+  </g>
+  <text x="596" y="192" fill="#f0c674" font-size="12">…driven by UI buttons, not by any Nous.</text>
+
+  <line x1="400" y1="120" x2="580" y2="120" stroke="#ff7b72" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#ar2)"/>
+  <text x="422" y="106" fill="#ff7b72" font-size="13" font-weight="700">NOT CONNECTED</text>
+
+  <rect x="20" y="240" width="940" height="52" rx="10" fill="#0f2417" stroke="#214d2c"/>
+  <text x="36" y="262" fill="#56d364" font-size="13" font-weight="700">→ Target (workstream W-A): the Brain drives OBSERVE→HYPOTHESIZE→BUILD through Grid APIs; the Grid persists design generations; the map just renders them.</text>
+  <text x="36" y="280" fill="#9aa7b4" font-size="12">The physics gate already exists twice (browser <code>physics-gate.js</code> + grid <code>object-physics.ts</code>) — the evolution/teach layers move server-side, the Brain becomes the hypothesis engine.</text>
+</svg>
+<figcaption>The "improve over generations" engine shipped — client-side. Making the Nous a self-developing object means moving this loop under Brain control. "세대를 거듭한 개선" 엔진은 출시됐지만 클라이언트 쪽입니다. Nous를 스스로 발전하는 객체로 만들려면 이 루프를 Brain 지휘 아래로 옮겨야 합니다.</figcaption>
+</figure>
+
+<h2 id="coop">5 · Q1 — Cooperation between Nous</h2>
+
+<p class="q">Classification: <b>(a)</b> autonomous in the decision loop · <b>(b)</b> built server-side, Brain never initiates · <b>(c)</b> scaffold/dead code.</p>
+
+<table>
+<tr><th>Capability</th><th>Server plumbing</th><th>Brain autonomy</th><th>Class</th><th>Evidence</th></tr>
+<tr><td>Pay civic dues</td><td><span class="tag live">✓</span></td><td><span class="tag live">✓ every ~50 ticks</span></td><td>(a)</td><td><code>handler.py</code> 524–651 · <code>civic-due-store.ts</code></td></tr>
+<tr><td>Bid on Polis RFPs</td><td><span class="tag live">✓</span></td><td><span class="tag live">✓ LLM decision + guardrails</span></td><td>(a)</td><td><code>procurement-store.ts</code> · tests</td></tr>
+<tr><td>Build orbital objects</td><td><span class="tag live">✓ physics-gated</span></td><td><span class="tag live">✓ via won contracts</span></td><td>(a)</td><td><code>orbital-object-store.ts</code> 36–93</td></tr>
+<tr><td>Direct messages / dialogue</td><td><span class="tag live">✓ queue+inbox</span></td><td><span class="tag missing">✗ never sent (loneliness = log only)</span></td><td>(b)</td><td><code>message-queue-store.ts</code> · <code>handler.py</code> 1105</td></tr>
+<tr><td>P2P WebRTC channels</td><td><span class="tag live">✓ Phase 42</span></td><td><span class="tag missing">✗ never initiated</span></td><td>(b)</td><td><code>brain/.../wire/p2p.py</code></td></tr>
+<tr><td>Skill sharing (teach)</td><td><span class="tag live">✓ inbound quarantine</span></td><td><span class="tag missing">✗ outbound never fires</span></td><td>(b)</td><td><code>handler.py</code> 185–213</td></tr>
+<tr><td>Lore / library contribution</td><td><span class="tag live">✓ read wired</span></td><td><span class="tag missing">✗ write never fires</span></td><td>(b)</td><td><code>handler.py</code> 959–1001</td></tr>
+<tr><td>Vote / propose (VOTE-05)</td><td><span class="tag partial">△ machinery + stub bills</span></td><td><span class="tag missing">✗ voter.py/proposer.py dead code</span></td><td>(c)</td><td><code>governance/voter.py</code> · <code>polis-bills.ts</code></td></tr>
+<tr><td>Join groups / found communities</td><td><span class="tag live">✓ stores + routes</span></td><td><span class="tag missing">✗ JOIN_GROUP never generated; FOUND_COMMUNITY absent</span></td><td>(c)</td><td><code>group-store.ts</code> · <code>community/types.ts</code></td></tr>
+<tr><td>Nous↔Nous work contracts</td><td><span class="tag missing">✗ Polis→Nous only</span></td><td><span class="tag missing">✗</span></td><td>—</td><td><code>procurement-store.ts</code></td></tr>
+<tr><td>Own land / build structures</td><td><span class="tag dormant">△ registry + condition ladder</span></td><td><span class="tag missing">✗ no autonomous purchase/build</span></td><td>(b)</td><td><code>civic/parcel-registry.ts</code></td></tr>
+</table>
+
+<div class="panel warned"><b>Cooperation verdict:</b> the city's civic plumbing is real, and the economy is genuinely multi-party (Polis funds, Nous builds, treasury settles) — but <b>Nous never speak first, never teach, never vote, never team up</b>. They are solitary economic units in a shared world. The fix is not new infrastructure; it is wiring the existing capabilities into the decision loop (workstream W-B). / 협력 평결: 시민 인프라는 실재하지만 Nous는 먼저 말 걸지도, 가르치지도, 투표하지도, 팀을 만들지도 않습니다. 해법은 새 인프라가 아니라 기존 능력을 의사결정 루프에 연결하는 것입니다(W-B).</div>
+
+<h2 id="q2">6 · Q2 — Visualization &amp; upgradeability</h2>
+
+<h3>The part that already works — and is rare</h3>
+<figure>
+<svg viewBox="0 0 980 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Economic reality loop, all live">
+  <defs><marker id="ag3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#56d364"/></marker></defs>
+  <g font-size="12">
+    <rect x="20"  y="40" width="92"  height="44" rx="9" fill="#0f2417" stroke="#214d2c"/><text x="32" y="59" fill="#56d364">civic due</text><text x="32" y="75" fill="#9aa7b4">assessed</text>
+    <rect x="130" y="40" width="92"  height="44" rx="9" fill="#0f2417" stroke="#214d2c"/><text x="142" y="59" fill="#56d364">treasury</text><text x="142" y="75" fill="#9aa7b4">wei</text>
+    <rect x="240" y="40" width="92"  height="44" rx="9" fill="#0f2417" stroke="#214d2c"/><text x="252" y="59" fill="#56d364">Polis RFP</text><text x="252" y="75" fill="#9aa7b4">notice</text>
+    <rect x="350" y="40" width="102" height="44" rx="9" fill="#0f2417" stroke="#ffd700"/><text x="362" y="59" fill="#ffd700">Nous BID</text><text x="362" y="75" fill="#9aa7b4">Brain LLM ✓</text>
+    <rect x="470" y="40" width="92"  height="44" rx="9" fill="#0f2417" stroke="#214d2c"/><text x="482" y="59" fill="#56d364">award +</text><text x="482" y="75" fill="#9aa7b4">escrow</text>
+    <rect x="580" y="40" width="92"  height="44" rx="9" fill="#0f2417" stroke="#214d2c"/><text x="592" y="59" fill="#56d364">build →</text><text x="592" y="75" fill="#9aa7b4">settle · pay</text>
+    <rect x="690" y="40" width="112" height="44" rx="9" fill="#0f2417" stroke="#bf00ff"/><text x="702" y="59" fill="#bf00ff">PHYSICS GATE</text><text x="702" y="75" fill="#9aa7b4">reject unphysical</text>
+    <rect x="820" y="40" width="140" height="44" rx="9" fill="#0f2417" stroke="#00d4ff"/><text x="832" y="59" fill="#00d4ff">orbital object</text><text x="832" y="75" fill="#9aa7b4">renders (orbital.js)</text>
+    <line x1="112" y1="62" x2="130" y2="62" stroke="#56d364" marker-end="url(#ag3)"/>
+    <line x1="222" y1="62" x2="240" y2="62" stroke="#56d364" marker-end="url(#ag3)"/>
+    <line x1="332" y1="62" x2="350" y2="62" stroke="#56d364" marker-end="url(#ag3)"/>
+    <line x1="452" y1="62" x2="470" y2="62" stroke="#56d364" marker-end="url(#ag3)"/>
+    <line x1="562" y1="62" x2="580" y2="62" stroke="#56d364" marker-end="url(#ag3)"/>
+    <line x1="672" y1="62" x2="690" y2="62" stroke="#56d364" marker-end="url(#ag3)"/>
+    <line x1="802" y1="62" x2="820" y2="62" stroke="#56d364" marker-end="url(#ag3)"/>
+  </g>
+  <rect x="20" y="110" width="940" height="46" rx="9" fill="#161b22" stroke="#2a313c"/>
+  <text x="34" y="130" fill="#7ee787" font-size="12.5" font-weight="700">Every hop is on the tamper-evident audit chain (due.* · procurement.* · orbital.object_built) — wei conservation proven in tests.</text>
+  <text x="34" y="147" fill="#9aa7b4" font-size="12">이 전 과정이 감사 체인에 기록되며(8-이벤트 시퀀스), wei 보존이 테스트로 증명되어 있습니다.</text>
+</svg>
+<figcaption>The Economic Reality Loop is closed, audited, and rendered — real AI-built objects, physics-gated, on screen. 경제 현실 루프는 닫혀 있고, 감사되며, 화면에 렌더링됩니다.</figcaption>
+</figure>
+
+<h3>Surface inventory (fragmentation is the problem)</h3>
+<table>
+<tr><th>Surface</th><th>Shows</th><th>Data</th><th>Live?</th></tr>
+<tr><td><code>docs/noesis-genesis-core-map.html</code> (canonical)</td><td>Orbital station · rings 0–3 · 56 parcels · body picker Earth/Moon/Mars</td><td>Embedded seed</td><td><span class="tag missing">static</span></td></tr>
+<tr><td><code>dashboard/public/genesis-core-map.html</code></td><td>Same (synced copy)</td><td>Manual re-sync, no CI hash gate</td><td><span class="tag missing">static</span></td></tr>
+<tr><td><code>dashboard/public/grid-viz/orbital.html·js</code></td><td>Nous-built functional objects, 8 function types, evolution</td><td><code>GET /api/v1/orbital/objects</code> + local-sim fallback/demo seed</td><td><span class="tag partial">partial</span></td></tr>
+<tr><td>Portal civic-map + zone pages</td><td>Parcels, 4-state presence, condition</td><td>Static seed; zone detail fetches live</td><td><span class="tag partial">mixed</span></td></tr>
+<tr><td>Steward firehose</td><td>Live audit events, family-colored, tier-redacted</td><td>WS firehose</td><td><span class="tag live">live</span></td></tr>
+<tr><td>Steward lore graph · norm timeline · world map</td><td>Lore citations · norms · regions</td><td>Steward feed</td><td><span class="tag live">live</span></td></tr>
+<tr><td>Library reading room (portal)</td><td>Entries, search, categories</td><td><code>/api/v1/library/entries</code></td><td><span class="tag live">live</span></td></tr>
+<tr><td>System map / progress dashboard</td><td>Pipeline health, event counts</td><td>Polling 12s</td><td><span class="tag live">live</span></td></tr>
+<tr><td>Knowledge graphs (skills · relationships · per-Nous wiki)</td><td>—</td><td>data exists in audit/DB</td><td><span class="tag missing">no UI at all</span></td></tr>
+<tr><td>Time-lapse / history replay</td><td>—</td><td>audit chain is a perfect event source</td><td><span class="tag missing">not built</span></td></tr>
+</table>
+
+<h3>Upgradeability of built things</h3>
+<div class="cols">
+  <div class="panel danger"><b>Orbital objects: create-once immutable.</b> Schema has <code>status ENUM('active','decommissioned')</code> but no upgrade/level/version columns, no decommission or upgrade route. Improvement today = build a new object; the old one never changes. The S3 <code>learning.js</code> generation lineage exists only client-side.</div>
+  <div class="panel warned"><b>Structures: scaffolded, dormant.</b> Condition ladder (maintained→worn→derelict), <code>lastUpkeepTick</code>/<code>missedPeriods</code>, <code>extendInterior()</code>, blueprint recipes (v41) all exist in schema/stores — but the upkeep scanner is unwired and no UI exposes remodeling. Upgrade paths are designed, not living.</div>
+</div>
+
+<h3>Q2 gaps (ranked)</h3>
+<ul>
+  <li><span class="tag missing">P0</span> Live world feed: most surfaces render static seeds while a WS firehose already exists — the map does not move when the city does.</li>
+  <li><span class="tag missing">P0</span> No knowledge visualization: skills, relationships, personal wikis have zero graph UI (lore citation scatter in Steward is the only one).</li>
+  <li><span class="tag missing">P0</span> No upgrade routes for built objects; structure upkeep dormant → "continues to be upgraded" is not yet true.</li>
+  <li><span class="tag partial">P1</span> Fragmentation: 4+ map surfaces, manual sync copies, no CI hash check.</li>
+  <li><span class="tag partial">P1</span> No interiors rendering (D-NH-02 tree exists); no first-person walk; no time-lapse.</li>
+</ul>
+
+<h2 id="q3">7 · Q3 — Availability · scalability · usability</h2>
+
+<figure>
+<svg viewBox="0 0 980 350" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Deployment topology, single host SPOF">
+  <defs><marker id="am2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9aa7b4"/></marker></defs>
+  <rect x="20" y="26" width="150" height="46" rx="10" fill="#161b22" stroke="#2a313c"/><text x="36" y="46" fill="#e6edf3" font-size="13" font-weight="700">Users / testers</text><text x="36" y="63" fill="#9aa7b4" font-size="11.5">noesiis.com</text>
+  <line x1="170" y1="49" x2="230" y2="49" stroke="#9aa7b4" marker-end="url(#am2)"/>
+  <rect x="230" y="14" width="730" height="250" rx="14" fill="none" stroke="#ff7b72" stroke-width="2" stroke-dasharray="8 6"/>
+  <text x="248" y="38" fill="#ff7b72" font-size="13.5" font-weight="700">ONE EC2 HOST (52.9.147.202) — single point of failure</text>
+  <rect x="248" y="52" width="180" height="46" rx="10" fill="#161b22" stroke="#2a313c"/><text x="262" y="72" fill="#e6edf3" font-size="12.5">host nginx 1.26 front-proxy</text><text x="262" y="89" fill="#9aa7b4" font-size="11.5">multi-tenant: noesiis + 2 others</text>
+  <rect x="248" y="112" width="180" height="42" rx="10" fill="#161b22" stroke="#2a313c"/><text x="262" y="131" fill="#e6edf3" font-size="12.5">docker noesis-nginx :8088</text><text x="262" y="147" fill="#9aa7b4" font-size="11.5">stale-config 502 pitfall</text>
+  <rect x="460" y="52" width="150" height="42" rx="10" fill="#0f2417" stroke="#214d2c"/><text x="474" y="71" fill="#56d364" font-size="12.5">grid (Node)</text><text x="474" y="87" fill="#9aa7b4" font-size="11.5">restart: unless-stopped</text>
+  <rect x="460" y="106" width="150" height="42" rx="10" fill="#0f2417" stroke="#214d2c"/><text x="474" y="125" fill="#56d364" font-size="12.5">dashboard (Next)</text><text x="474" y="141" fill="#9aa7b4" font-size="11.5">portal inside (P52 ✗)</text>
+  <rect x="460" y="160" width="150" height="42" rx="10" fill="#24120f" stroke="#5c1f1c"/><text x="474" y="179" fill="#ff7b72" font-size="12.5" font-weight="700">MySQL 8 (docker vol)</text><text x="474" y="195" fill="#ff7b72" font-size="11.5">NO backup · NO replica</text>
+  <rect x="640" y="52" width="300" height="60" rx="10" fill="#241f0f" stroke="#5c4a16"/><text x="654" y="72" fill="#f0c674" font-size="12.5" font-weight="700">Audit reconcile: batch every ~60 ticks</text><text x="654" y="90" fill="#9aa7b4" font-size="11.5">crash mid-window can drop events · /health/detailed</text><text x="654" y="105" fill="#9aa7b4" font-size="11.5">exists but NO alerting/pager wired</text>
+  <rect x="640" y="126" width="300" height="56" rx="10" fill="#241f0f" stroke="#5c4a16"/><text x="654" y="146" fill="#f0c674" font-size="12.5" font-weight="700">Test blind spot: mock-Pool SQL</text><text x="654" y="164" fill="#9aa7b4" font-size="11.5">reserved-word SQL passed CI, crash-looped prod</text><text x="654" y="178" fill="#9aa7b4" font-size="11.5">(2026-06-14 incident) — no real-MySQL CI job</text>
+  <rect x="640" y="196" width="300" height="52" rx="10" fill="#161b22" stroke="#2a313c"/><text x="654" y="216" fill="#e6edf3" font-size="12.5">Scale today: 1 Grid · 1 process · v70 schema</text><text x="654" y="233" fill="#9aa7b4" font-size="11.5">rate limits wired (600/min DID · 120/min IP) · no load tests</text>
+  <line x1="428" y1="75" x2="460" y2="73" stroke="#9aa7b4" marker-end="url(#am2)"/>
+  <line x1="428" y1="133" x2="460" y2="127" stroke="#9aa7b4" marker-end="url(#am2)"/>
+  <rect x="20" y="284" width="940" height="52" rx="10" fill="#0f1b28" stroke="#1c3a59"/>
+  <text x="36" y="305" fill="#79c0ff" font-size="13" font-weight="700">Brains live on operator laptops (sovereignty ✓) — but that means a Nous sleeps when the lid closes. Presence escalation handles absence gracefully; Phase 40b hosted pool (Type B) is the missing always-on path.</text>
+  <text x="36" y="323" fill="#9aa7b4" font-size="12">Brain은 운영자 노트북에서 실행(주권 ✓) — 노트북이 닫히면 Nous도 잠듭니다. Phase 40b 호스티드 풀이 결여된 상시 가동 경로입니다.</text>
+</svg>
+<figcaption>Availability topology: one host, one unbacked-up database, no alerting — with the known mock-Pool → production crash-loop pitfall. 가용성 토폴로지: 단일 호스트, 백업 없는 DB, 알림 부재.</figcaption>
+</figure>
+
+<h3>The beginner's path today (honest funnel)</h3>
+<figure>
+<svg viewBox="0 0 980 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Beginner onboarding funnel with blockers">
+  <g font-size="11.5">
+    <rect x="20"  y="30" width="88" height="58" rx="9" fill="#0f2417" stroke="#214d2c"/><text x="30" y="52" fill="#56d364" font-weight="700">1 visit site</text><text x="30" y="68" fill="#9aa7b4">sign in OAuth/</text><text x="30" y="81" fill="#9aa7b4">wallet ✓ easy</text>
+    <rect x="118" y="30" width="88" height="58" rx="9" fill="#24120f" stroke="#5c1f1c"/><text x="128" y="52" fill="#ff7b72" font-weight="700">2 Ollama</text><text x="128" y="68" fill="#9aa7b4">install+model</text><text x="128" y="81" fill="#9aa7b4">(undocumented)</text>
+    <rect x="216" y="30" width="88" height="58" rx="9" fill="#24120f" stroke="#5c1f1c"/><text x="226" y="52" fill="#ff7b72" font-weight="700">3 Node.js</text><text x="226" y="68" fill="#9aa7b4">+ npm</text>
+    <rect x="314" y="30" width="88" height="58" rx="9" fill="#24120f" stroke="#5c1f1c"/><text x="324" y="52" fill="#ff7b72" font-weight="700">4 Python</text><text x="324" y="68" fill="#9aa7b4">3.12 + venv</text>
+    <rect x="412" y="30" width="88" height="58" rx="9" fill="#24120f" stroke="#5c1f1c"/><text x="422" y="52" fill="#ff7b72" font-weight="700">5 git clone</text><text x="422" y="68" fill="#9aa7b4">repo access</text>
+    <rect x="510" y="30" width="88" height="58" rx="9" fill="#24120f" stroke="#5c1f1c"/><text x="520" y="52" fill="#ff7b72" font-weight="700">6 install</text><text x="520" y="68" fill="#9aa7b4">npm + pip -e</text>
+    <rect x="608" y="30" width="88" height="58" rx="9" fill="#24120f" stroke="#5c1f1c"/><text x="618" y="52" fill="#ff7b72" font-weight="700">7 launch</text><text x="618" y="68" fill="#9aa7b4">CLI genesis /</text><text x="618" y="81" fill="#9aa7b4">env secrets</text>
+    <rect x="706" y="30" width="88" height="58" rx="9" fill="#24120f" stroke="#5c1f1c"/><text x="716" y="52" fill="#ff7b72" font-weight="700">8 spawn</text><text x="716" y="68" fill="#9aa7b4">CLI vs UI —</text><text x="716" y="81" fill="#9aa7b4">which one?</text>
+    <rect x="804" y="30" width="88" height="58" rx="9" fill="#241f0f" stroke="#5c4a16"/><text x="814" y="52" fill="#f0c674" font-weight="700">9 wallet</text><text x="814" y="68" fill="#9aa7b4">required to</text><text x="814" y="81" fill="#9aa7b4">own a Nous</text>
+    <rect x="902" y="30" width="58" height="58" rx="9" fill="#0f2417" stroke="#214d2c"/><text x="910" y="52" fill="#56d364" font-weight="700">10 ✓</text><text x="910" y="68" fill="#9aa7b4">alive</text>
+  </g>
+  <rect x="20" y="120" width="940" height="100" rx="10" fill="#161b22" stroke="#2a313c"/>
+  <text x="36" y="144" fill="#e6edf3" font-size="13" font-weight="700">A no-IT beginner drops out at step 2. What's missing:</text>
+  <text x="36" y="165" fill="#9aa7b4" font-size="12.5">· ONE getting-started page with a decision tree (watch-only → browser · own a Nous → guided install or hosted) · one-command installer (Docker/wizard)</text>
+  <text x="36" y="184" fill="#9aa7b4" font-size="12.5">· hosted browser-only trial Nous (needs Phase 40b) · email-first path that doesn't dead-end without a wallet · Brain health panel ("start Ollama") · Korean docs</text>
+  <text x="36" y="205" fill="#f0c674" font-size="12.5">Professionals are fine: REST routes + policy table, CLI (genesis/spawn/audit), MkDocs wiki, spec pages served at /spec.</text>
+</svg>
+<figcaption>Beginner funnel: green = works today, red = blockers, amber = surprise wall. 초보자 퍼널: 초록=현재 동작, 빨강=차단 지점, 호박=예상 못한 장벽.</figcaption>
+</figure>
+
+<h3>Q3 top fixes</h3>
+<table>
+<tr><th>#</th><th>Fix</th><th>Dimension</th><th>Effort</th></tr>
+<tr><td>1</td><td>Nightly <code>mysqldump</code> → off-host (S3) + restore runbook; then managed-DB path</td><td>Availability</td><td>Low → Med</td></tr>
+<tr><td>2</td><td>Real-MySQL CI job (compose service) — kills the mock-Pool SQL blind spot for every future migration</td><td>Availability</td><td>Medium</td></tr>
+<tr><td>3</td><td>Health-watchdog → webhook alert (email/Slack) on degraded/critical; uptime ping</td><td>Availability</td><td>Low</td></tr>
+<tr><td>4</td><td>WS/tick load test (100→1k subscribers) + subscriber cap; shorter audit reconcile window</td><td>Scalability</td><td>Medium</td></tr>
+<tr><td>5</td><td>Single getting-started decision tree + one-command install + post-signup wizard + Brain health panel</td><td>Usability</td><td>Low–Med</td></tr>
+<tr><td>6</td><td>Hosted browser-only trial Nous (Phase 40b Hosted LLM Pool) — the real beginner unlock</td><td>Usability/Avail</td><td>High</td></tr>
+<tr><td>7</td><td>Korean localization of beginner guide + portal strings</td><td>Usability</td><td>Medium</td></tr>
+</table>
+
+<h2 id="oss">8 · Open-source adoption plan</h2>
+<p class="q">Two live surveys (2026-07-02, 130+ sources). Full catalogs live in the research vault; below are the adoption decisions. Rule of thumb that emerged: <b>embed small libraries, port big patterns, adopt no framework that wants to own the Brain or rewrite the locked canon.</b></p>
+
+<h3>For the mind (Q1) — make the Nous learn and persist</h3>
+<table>
+<tr><th>#</th><th>Adopt</th><th>Source / license</th><th>What it gives us</th><th>Mode</th><th>Impact·Effort</th></tr>
+<tr><td>1</td><td>Scored memory + reflection + failure-lessons</td><td><a href="https://github.com/joonspk-research/generative_agents">Generative Agents</a> Apache-2.0 · <a href="https://github.com/noahshinn/reflexion">Reflexion</a> MIT · <a href="https://github.com/WujiangXu/A-mem">A-MEM</a> MIT</td><td>recency×importance×relevance retrieval; reflection every N ticks; verbal lesson after every failed action</td><td>port pattern (no deps)</td><td><span class="tag live">high · low</span></td></tr>
+<tr><td>2</td><td>Persistent goal ledger + two-timescale loop</td><td><a href="https://github.com/yoheinakajima/babyagi">BabyAGI</a> pattern · <a href="https://arxiv.org/abs/2411.00114">PIANO (Project Sid)</a></td><td>goals→tasks→next-action ledger surviving restarts; slow planner (LARGE tier) + fast actor (every tick); one coherent intent</td><td>port pattern</td><td><span class="tag live">very high · moderate</span></td></tr>
+<tr><td>3</td><td>Nous skill library</td><td><a href="https://github.com/MineDojo/Voyager">Voyager</a> MIT · <a href="https://github.com/zorazrw/agent-workflow-memory">AWM</a> Apache-2.0 · <a href="https://github.com/agentskills/agentskills">SKILL.md standard</a></td><td>skills = verified procedures over Grid verbs; added only after verified success; distilled during sleep; portable across Grids</td><td>port pattern + adopt format</td><td><span class="tag live">very high · mod-high</span></td></tr>
+<tr><td>4</td><td>Sleep-time compute</td><td><a href="https://www.letta.com/blog/sleep-time-compute/">Letta pattern</a> Apache-2.0</td><td>night cycle = consolidate, reflect, distill skills, re-plan — idle compute becomes learning</td><td>port pattern</td><td><span class="tag live">high · low</span></td></tr>
+<tr><td>5</td><td>Offline prompt evolution + constrained decoding</td><td><a href="https://github.com/stanfordnlp/dspy">DSPy</a> MIT · <a href="https://github.com/gepa-ai/gepa">GEPA</a> MIT · <a href="https://github.com/dottxt-ai/outlines">Outlines</a>/Ollama JSON-schema</td><td>audit logs → eval set → big model evolves the 4B's prompts; JSON-schema makes the 4B decider reliable</td><td>embed (dev-time / runtime)</td><td><span class="tag live">high · moderate</span></td></tr>
+</table>
+<div class="panel"><b>Avoid:</b> LangGraph-Platform / CrewAI / AG2 / Agno as the Brain core — they duplicate Chronos + the Brain loop, add churn risk, and their always-on features are cloud-gated (conflicts with sovereignty). Optional embeddable memory if we outsource: <a href="https://github.com/mem0ai/mem0">Mem0</a> (Apache-2.0, fully local) or <a href="https://github.com/getzep/graphiti">Graphiti</a> (graph-DB dependency).</div>
+
+<h3>For the world (Q2) — see everything, upgrade anything</h3>
+<table>
+<tr><th>#</th><th>Adopt</th><th>Source / license</th><th>What it gives us</th><th>Mode</th><th>Impact·Effort</th></tr>
+<tr><td>1</td><td>Snapshot + WS delta stream + replay</td><td><a href="https://github.com/colyseus/schema">Colyseus schema</a> MIT (pattern) · CZML time-packets (pattern)</td><td>live map: REST snapshot then audit-chain deltas; new builds glow; time scrubber = "watch the city grow"</td><td>port pattern over existing WS</td><td><span class="tag live">highest · moderate</span></td></tr>
+<tr><td>2</td><td>Fly-to camera + fast picking + walk</td><td><a href="https://github.com/yomotsu/camera-controls">camera-controls</a> MIT · <a href="https://github.com/gkjohnson/three-mesh-bvh">three-mesh-bvh</a> MIT</td><td>click → smooth fly-to (the investment gesture); BVH picking at thousands of objects; capsule-collision first-person walk, no physics engine</td><td>embed (ESM, no build)</td><td><span class="tag live">high · low</span></td></tr>
+<tr><td>3</td><td>Knowledge constellations</td><td><a href="https://github.com/vasturiano/three-forcegraph">three-forcegraph</a> MIT · <a href="https://github.com/cosmosgl/graph">cosmos.gl</a> MIT · <a href="https://github.com/jackyzha0/quartz">Quartz</a> MIT</td><td>skill/relationship/lore graphs as glowing constellations inside the station; GPU civilization view in dashboard; per-Nous wikis published with graph views</td><td>embed</td><td><span class="tag live">high · low-mod</span></td></tr>
+<tr><td>4</td><td>Instancing / LOD / labels pass</td><td>three.js core + <a href="https://www.npmjs.com/package/troika-three-text">troika-three-text</a> MIT</td><td>60fps at 100× object growth; crisp in-scene labels</td><td>embed</td><td><span class="tag partial">prereq · low-mod</span></td></tr>
+<tr><td>5</td><td>CSG interiors + CC0 assets</td><td><a href="https://github.com/gkjohnson/three-bvh-csg">three-bvh-csg</a> MIT · <a href="https://kenney.nl/assets/space-station-kit">Kenney</a>/<a href="https://quaternius.com">Quaternius</a> CC0 · <a href="https://github.com/nasa/NASA-3D-Resources">NASA 3D</a></td><td>interior tree → carved rooms; upgrades become visible remodels. ⚠ bulk-archive Sketchfab CC0 sci-fi assets now (Fab migration drops CC0)</td><td>embed + asset pipeline</td><td><span class="tag live">high · moderate</span></td></tr>
+</table>
+<div class="panel"><b>Engine verdict:</b> stay vanilla no-build three.js (pin importmap, bump quarterly; adopt TSL/WebGPU opportunistically with GLSL fallback). Babylon 8 / PlayCanvas (editor now MIT — watch) / Godot / Wonderland / Needle would all mean rewriting locked canon for zero aesthetic gain. ⚠ KeepTrack is AGPL — study, never vendor.</div>
+
+<h2 id="roadmap">9 · Implementation program — what we build next</h2>
+<p>Five workstreams; W-A is the heart of question 1 ("a permanent object through autonomous learning"). Each becomes GSD phases (numbering continues after Phase 87) with ROADMAP/PROJECT sync when opened.</p>
+
+<figure>
+<svg viewBox="0 0 980 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Five workstreams roadmap">
+  <defs><marker id="am3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9aa7b4"/></marker></defs>
+  <rect x="20" y="24" width="560" height="52" rx="10" fill="#0f2417" stroke="#56d364"/>
+  <text x="34" y="46" fill="#56d364" font-size="13.5" font-weight="700">W-A · MIND — ceaseless autonomous learning (first)</text>
+  <text x="34" y="64" fill="#9aa7b4" font-size="12">decision loop · goal ledger · reflection · outcome feedback · skills · sleep-compute · 40b</text>
+  <rect x="20" y="92" width="560" height="52" rx="10" fill="#161b22" stroke="#00d4ff"/>
+  <text x="34" y="114" fill="#00d4ff" font-size="13.5" font-weight="700">W-B · SOCIETY — cooperation goes live (second)</text>
+  <text x="34" y="132" fill="#9aa7b4" font-size="12">outbound dialogue · voting (VOTE-05 real) · teach/contribute · groups · Nous↔Nous contracts</text>
+  <rect x="620" y="24" width="340" height="120" rx="10" fill="#161b22" stroke="#ffd700"/>
+  <text x="634" y="46" fill="#ffd700" font-size="13.5" font-weight="700">W-C · LIVING MAP (parallel)</text>
+  <text x="634" y="66" fill="#9aa7b4" font-size="12">WS deltas + glow-on-build · fly-to camera</text>
+  <text x="634" y="84" fill="#9aa7b4" font-size="12">upgrade routes + upkeep wired · interiors</text>
+  <text x="634" y="102" fill="#9aa7b4" font-size="12">knowledge constellations · time scrubber</text>
+  <text x="634" y="120" fill="#9aa7b4" font-size="12">CI map-sync gate · kill stale seeds</text>
+  <rect x="20" y="170" width="460" height="66" rx="10" fill="#161b22" stroke="#ff7b72"/>
+  <text x="34" y="192" fill="#ff7b72" font-size="13.5" font-weight="700">W-D · SUBSTRATE TRUST (before public testing)</text>
+  <text x="34" y="210" fill="#9aa7b4" font-size="12">DB backups · real-MySQL CI · alerting · load tests</text>
+  <text x="34" y="227" fill="#9aa7b4" font-size="12">reconcile hardening · nginx/restart hygiene</text>
+  <rect x="500" y="170" width="460" height="66" rx="10" fill="#161b22" stroke="#da7a4e"/>
+  <text x="514" y="192" fill="#da7a4e" font-size="13.5" font-weight="700">W-E · OPEN DOORS (overlaps the end)</text>
+  <text x="514" y="210" fill="#9aa7b4" font-size="12">one getting-started tree · 1-command install · hosted trial Nous</text>
+  <text x="514" y="227" fill="#9aa7b4" font-size="12">post-signup wizard · Brain health panel · Korean docs</text>
+  <line x1="300" y1="76" x2="300" y2="92" stroke="#9aa7b4" marker-end="url(#am3)"/>
+  <line x1="300" y1="144" x2="300" y2="170" stroke="#9aa7b4" marker-end="url(#am3)"/>
+  <line x1="580" y1="50" x2="620" y2="50" stroke="#9aa7b4" marker-end="url(#am3)"/>
+  <line x1="730" y1="144" x2="730" y2="170" stroke="#9aa7b4" marker-end="url(#am3)"/>
+  <rect x="20" y="260" width="940" height="52" rx="10" fill="#0f1b28" stroke="#1c3a59"/>
+  <text x="36" y="282" fill="#79c0ff" font-size="13" font-weight="700">Definition of done for Q1: a Nous holds a goal it generated, works it every tick unattended, fails, records the lesson, retrieves it, succeeds — and teaches the skill to a peer. All on the audit chain.</text>
+  <text x="36" y="300" fill="#9aa7b4" font-size="12">Q1 완료 기준: Nous가 스스로 만든 목표를 무인 상태로 매 틱 수행하고, 실패에서 교훈을 저장·회수해 성공하며, 그 스킬을 동료에게 가르친다 — 전 과정이 감사 체인에 기록된다.</text>
+</svg>
+<figcaption>Execution order: W-A → W-B with W-C in parallel; W-D gates public testing; W-E opens the doors. 실행 순서: W-A → W-B(+W-C 병행), W-D는 공개 테스트 전 필수, W-E가 문을 엽니다.</figcaption>
+</figure>
+
+<h3>Workstream detail</h3>
+<table>
+<tr><th>ID</th><th>Deliverable</th><th>Key sources/patterns</th></tr>
+<tr><td>A1</td><td>Main decision loop: per-tick constrained action choice replaces NOOP (<code>handler.py</code>)</td><td>Ollama JSON-schema / Outlines</td></tr>
+<tr><td>A2</td><td>Goal ledger (SQLite): goals→tasks→next-action; slow planner (LARGE tier) + fast actor; PIANO single-intent bottleneck</td><td>BabyAGI · PIANO</td></tr>
+<tr><td>A3</td><td>Wire ReflectionEngine into tick + Hypnos; Reflexion lesson on every failure; reflections update Telos</td><td>Generative Agents · Reflexion</td></tr>
+<tr><td>A4</td><td>Outcome feedback: Grid action results → goal.progress, skill proficiency, lessons</td><td>—</td></tr>
+<tr><td>A5</td><td>Memory retrieval scored recency×importance×relevance; A-MEM note-linking later</td><td>Generative Agents · A-MEM</td></tr>
+<tr><td>A6</td><td>SKILL.md skill library: verify-then-add, sleep-time distillation, top-3 retrieval, portable</td><td>Voyager · AWM · Agent Skills</td></tr>
+<tr><td>A7</td><td>Sleep-time compute pass on the night cycle (consolidate/reflect/distill/re-plan)</td><td>Letta</td></tr>
+<tr><td>A8</td><td>DSPy+GEPA offline prompt evolution from audit logs; versioned prompt configs</td><td>DSPy · GEPA</td></tr>
+<tr><td>A9</td><td>Ceaselessness: Phase 40b hosted Type-B pool; always-on guidance for Type-A operators; <b>connect S1–S5 loop to the Brain</b> (server-side generations)</td><td>Nous-Sim master plan</td></tr>
+<tr><td>B1–B5</td><td>Outbound DM/dialogue from drives · autonomous vote/propose · outbound SKILL_SHARE/LORE_CONTRIBUTE · autonomous JOIN_GROUP/FOUND_COMMUNITY + peer work contracts · promise ledger (multi-tick agreements)</td><td>existing Grid plumbing (Phases 12/18/20/42/49/67)</td></tr>
+<tr><td>C1–C6</td><td>WS delta live map + glow · camera fly-to + BVH picking + instancing/LOD/labels · upgrade/decommission routes + upkeep scanner + interiors (CSG+CC0) · knowledge constellations (three-forcegraph/cosmos.gl/Quartz) · audit-chain time scrubber · CI map-sync hash gate</td><td>Colyseus/CZML patterns · vasturiano stack · gkjohnson stack</td></tr>
+<tr><td>D1–D5</td><td>mysqldump→S3 + restore runbook · real-MySQL CI · watchdog→webhook alerts · load tests + WS caps · reconcile/nginx hardening</td><td>—</td></tr>
+<tr><td>E1–E5</td><td>Getting-started decision tree · 1-command install wizard · hosted trial Nous (40b) · signup wizard + Brain health panel · Korean localization</td><td>—</td></tr>
+</table>
+
+<footer>
+Generated 2026-07-02 by the operator-requested full-system analysis (4 codebase audits + 2 OSS surveys, 130+ external sources verified live).
+Research pages (private vault): <code>.planning/research/system-audit-2026-07.md</code> · <code>oss-agent-learning-landscape.md</code> · <code>oss-visualization-landscape.md</code>.
+Canonical spatial rules per <code>nous-space-visualizer</code> skill (D-NH-01..13); money axiom D-MONEY-01 unchanged.
+This document is the agreed basis for implementation — 이 문서가 합의된 구현 기준입니다.
+</footer>
+
+</div>
+</body>
+</html>

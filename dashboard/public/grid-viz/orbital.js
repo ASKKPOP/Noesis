@@ -599,6 +599,7 @@ function renderBackendObjects(objects) {
       spin:  0.003 + rnd() * 0.01,
       orbit: 0.0012 + rnd() * 0.0016,
       born:  orbiters.length,
+      objectId: obj.object_id || null,   // W-C1: identity for live-arrival pulses
     };
 
     holder.add(g);
@@ -627,6 +628,7 @@ async function tryLoadBackendObjects() {
     const body = await res.json();
     if (!body || !Array.isArray(body.objects) || body.objects.length === 0) return false;
     renderBackendObjects(body.objects);
+    rememberIds(body.objects);
     setSourceLabel(`backend: ${body.objects.length} real`);
     return true;
   } catch (_e) {
@@ -635,9 +637,78 @@ async function tryLoadBackendObjects() {
   }
 }
 
-// Fire-and-forget on startup — local sim is already rendered; this is additive only.
-tryLoadBackendObjects();
+// Fire-and-forget on startup — local sim is already rendered; this is additive
+// only. W-C1: when (and only when) a real backend answered, also subscribe to
+// the live firehose — static hosts stay perfectly quiet (no WS attempts).
+tryLoadBackendObjects().then((ok) => { if (ok) subscribeLiveBuilds(); });
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * W-C1 — the LIVE map: subscribe to the public audit firehose; when the city
+ * builds (orbital.object_built), refetch the real objects and pulse the new
+ * arrivals in. Fully additive + guarded: no WebSocket support, a blocked
+ * endpoint, or malformed frames leave the map exactly as it was. Visitor
+ * frames are redacted to {tick, event_type, family} (R-31-01) — the TYPE is
+ * all we need; the data itself still comes from the same REST endpoint.
+ * ────────────────────────────────────────────────────────────────────────── */
+const knownObjectIds = new Set();
+
+function rememberIds(objects) {
+  knownObjectIds.clear();
+  objects.forEach(o => { if (o.object_id) knownObjectIds.add(o.object_id); });
+}
+
+/** Self-contained pop-in tween — independent of the main animate loop. */
+function popIn(o) {
+  const start = performance.now();
+  const dur = 1400;
+  (function step(now) {
+    const u = Math.min(1, (now - start) / dur);
+    const s = 0.2 + 0.8 * u + Math.sin(u * Math.PI) * 0.35;   // overshoot pulse
+    o.g.scale.setScalar(s);
+    if (u < 1) requestAnimationFrame(step); else o.g.scale.setScalar(1);
+  })(start);
+}
+
+async function refreshLiveObjects() {
+  const res = await fetch('/api/v1/orbital/objects?grid=genesis', { cache: 'no-store' });
+  if (!res.ok) return;
+  const body = await res.json();
+  if (!body || !Array.isArray(body.objects) || body.objects.length === 0) return;
+  const freshIds = body.objects
+    .map(o => o.object_id)
+    .filter(id => id && !knownObjectIds.has(id));
+  renderBackendObjects(body.objects);
+  rememberIds(body.objects);
+  orbiters.forEach(o => { if (o.objectId && freshIds.includes(o.objectId)) popIn(o); });
+  setSourceLabel(`backend: ${body.objects.length} real · live ✦`);
+}
+
+let wsAttempts = 0;
+function subscribeLiveBuilds() {
+  if (typeof WebSocket === 'undefined' || wsAttempts >= 20) return;
+  wsAttempts += 1;
+  try {
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${proto}//${location.host}/api/v1/audit/firehose`);
+    let refreshQueued = false;
+    ws.onopen = () => { wsAttempts = 0; };
+    ws.onmessage = (ev) => {
+      let frame;
+      try { frame = JSON.parse(ev.data); } catch (_e) { return; }
+      const type = frame && (frame.event_type || frame.type);
+      if (type !== 'orbital.object_built' || refreshQueued) return;
+      refreshQueued = true;
+      // small settle delay: the REST read follows the audit event
+      setTimeout(() => {
+        refreshQueued = false;
+        refreshLiveObjects().catch(() => { /* keep the last good frame */ });
+      }, 800);
+    };
+    ws.onerror = () => { try { ws.close(); } catch (_e) { /* already closed */ } };
+    ws.onclose = () => setTimeout(subscribeLiveBuilds, 15000);   // gentle retry
+  } catch (_e) { /* no WS — the map simply stays snapshot-based */ }
+}
 
 // expose for quick debugging in the preview
 window.__noesis = { buildObject, orbiters, scene, enterZone, evolveGeneration, teachNewGrid, applySprite, ZONES,
-  renderBackendObjects, setSourceLabel, tryLoadBackendObjects };
+  renderBackendObjects, setSourceLabel, tryLoadBackendObjects, refreshLiveObjects, subscribeLiveBuilds };

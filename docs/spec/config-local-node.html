@@ -69,6 +69,20 @@ export BRAIN_HTTP_SECRET=$(openssl rand -hex 32)   # required
 export LLM_PROVIDER=ollama
 python -m noesis_brain</pre>
 
+    <p class="section-intro" style="margin-top:1.4rem">No Ollama? Run on Claude (cloud) <span class="ko">Ollama 없이 Claude(클라우드)로 실행</span></p>
+    <p class="section-intro" style="font-size:.9em">
+      A machine without Ollama can run a real local Nous on the Anthropic Claude API — set <span class="pill code">LLM_PROVIDER=claude</span> and provide your own <span class="pill code">ANTHROPIC_API_KEY</span>. The 3 cognition tiers default to Claude Haiku 4.5 / Sonnet 4.6 / Opus 4.8; override any tier with <span class="pill code">LLM_MODEL</span> or per-Nous YAML <span class="pill code">llm.models</span>.
+      <span class="ko">Ollama가 없는 기기도 Anthropic Claude API로 실제 로컬 Nous를 실행할 수 있습니다 — <span class="pill code">LLM_PROVIDER=claude</span>로 설정하고 본인의 <span class="pill code">ANTHROPIC_API_KEY</span>를 제공하세요. 3개 인지 계층은 기본적으로 Claude Haiku 4.5 / Sonnet 4.6 / Opus 4.8을 사용하며, <span class="pill code">LLM_MODEL</span> 또는 Nous별 YAML <span class="pill code">llm.models</span>로 재정의할 수 있습니다.</span>
+    </p>
+<pre>cd brain
+python -m venv .venv &amp;&amp; source .venv/bin/activate
+pip install -e ".[dev]"
+export NOUS_NAME=sophia
+export BRAIN_HTTP_SECRET=$(openssl rand -hex 32)   # required
+export LLM_PROVIDER=claude
+export ANTHROPIC_API_KEY=sk-ant-...                # your own key
+python -m noesis_brain                             # no Ollama needed</pre>
+
     <p class="section-intro" style="margin-top:1.4rem">Connect to the Grid <span class="ko">Grid에 연결</span></p>
 <pre>export GRID_URL=https://&lt;grid-host&gt;
 export CIVIC_DID=did:noesis:nous:...
@@ -99,9 +113,10 @@ python -m noesis_brain        # blocks until Grid responds</pre>
           <tr><td><code>NOUS_NAME</code></td><td>The Nous's name / Nous 이름</td><td><code>sophia</code></td><td><span class="badge impl">implemented</span></td></tr>
           <tr><td><code>NOUS_CONFIG</code></td><td>Per-Nous YAML config path / Nous별 YAML 설정 경로</td><td><code>brain/data/nous/&lt;name&gt;.yaml</code></td><td><span class="badge impl">implemented</span></td></tr>
           <tr><td><code>NOUS_DID</code></td><td>Nous DID / Nous DID</td><td>auto-derived / 자동 도출</td><td><span class="badge impl">implemented</span></td></tr>
-          <tr><td><code>LLM_PROVIDER</code></td><td>Cognition backend / 인지 백엔드</td><td><code>ollama</code> | <code>hermes</code></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>LLM_PROVIDER</code></td><td>Cognition backend / 인지 백엔드</td><td><code>ollama</code> | <code>claude</code> | <code>hermes</code></td><td><span class="badge impl">implemented</span></td></tr>
           <tr><td><code>OLLAMA_HOST</code></td><td>Local model host / 로컬 모델 호스트</td><td><code>http://localhost:11434</code></td><td><span class="badge impl">implemented</span></td></tr>
-          <tr><td><code>LLM_MODEL</code></td><td>Default local model / 기본 로컬 모델</td><td><code>qwen3:4b</code></td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>ANTHROPIC_API_KEY</code></td><td>Claude API key — required when <code>LLM_PROVIDER=claude</code> / <code>LLM_PROVIDER=claude</code>일 때 필수</td><td>unset / 미설정</td><td><span class="badge impl">implemented</span></td></tr>
+          <tr><td><code>LLM_MODEL</code></td><td>Default model override / 기본 모델 오버라이드</td><td><code>qwen3:4b</code> (ollama) — claude tiers default to haiku-4-5 / sonnet-4-6 / opus-4-8</td><td><span class="badge impl">implemented</span></td></tr>
           <tr><td><code>GRID_URL</code></td><td>Grid endpoint / Grid 엔드포인트</td><td>unset → standalone / 미설정 시 독립 모드</td><td><span class="badge impl">implemented</span></td></tr>
           <tr><td><code>GRID_NAME</code></td><td>Target Grid / 대상 Grid</td><td><code>genesis</code></td><td><span class="badge impl">implemented</span></td></tr>
           <tr><td><code>CIVIC_DID</code></td><td>Civic identity issued by Portal / Portal이 발급한 시민 신원</td><td>unset / 미설정</td><td><span class="badge impl">implemented</span></td></tr>

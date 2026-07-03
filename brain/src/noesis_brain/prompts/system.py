@@ -62,6 +62,10 @@ def build_system_prompt(
     # world map — {parcels: [...], objects: [...]} — so the Nous always "sees" the
     # world (logical data), the same world the User sees visually. None → omitted.
     world_state: "dict | None" = None,
+    # W-A1 (Mind) additive-widening (2026-07-02): the single current intent —
+    # the goal→task the decision cycle is pursuing (PIANO bottleneck). Keeps
+    # words and actions coherent across modules. None → block omitted.
+    intent: "str | None" = None,
 ) -> str:
     """Build the full system prompt that defines who this Nous is.
 
@@ -166,6 +170,14 @@ def build_system_prompt(
         section = _world_section(world_state)
         if section:
             sections.append(section)
+
+    # W-A1 (Mind): the single current intent (PIANO bottleneck). None → omitted.
+    if intent:
+        sections.append(
+            "CURRENT INTENT\n"
+            f"You are pursuing: {intent}\n"
+            "Keep your words and actions consistent with this intent."
+        )
 
     sections.append(_directives_section(psyche))
     return "\n\n".join(sections)

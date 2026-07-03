@@ -42,6 +42,11 @@ Chronological actions in [[log]]. Run `node scripts/lint-research-wiki.mjs` to c
 - [[v3.1/ARCHITECTURE-RECONCILIATION|Architecture Reconciliation (external doc × repo canon)]]
 - [[v3.1/2026-06-12-architecture-source|Architecture for Autonomous Local AI Agents on a Shared Grid]] — external engineering source.
 
+## 2026-07 — Full-System Audit (Nous & Grid)
+- [[system-audit-2026-07|Full-System Audit (2026-07-02)]] — verdicts on autonomy/learning, cooperation, visualization, availability/scalability/usability + W-A..W-E implementation program. Served twin: `docs/noesis-system-analysis-2026-07.html`.
+- [[oss-agent-learning-landscape|OSS — Agent Autonomy & Lifelong Learning]] — Voyager/GA/Reflexion/PIANO/Letta/DSPy+GEPA survey → top-5 adoptions.
+- [[oss-visualization-landscape|OSS — Living-World & Knowledge Visualization]] — three.js ecosystem/Colyseus deltas/force-graphs/CC0 assets survey → top-5 adoptions.
+
 ## Cross-cutting foundations
 - [[nous-house-research|Nous House — Research (2026-06-11)]] — D-NH spatial axioms.
 - [[stanford-peer-agent-patterns|Stanford Peer-Agent Patterns]] — peer-agent synthesis → Steward Console scope.

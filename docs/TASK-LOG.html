@@ -64,6 +64,61 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 14 ============================ -->
+  <h2>Session 14 — 2026‑07‑02 · “Full system analysis: Nous autonomy · visualization · availability (operator's 3 questions)”</h2>
+  <p class="sub">Operator asked for full analytics before the next build wave: (1) is the Nous a permanent object that
+  autonomously learns and cooperates — ceaselessly toward goals? (2) optimal visualization of Nous-built objects/knowledge
+  with continuous upgrades? (3) availability/scalability + beginner-and-pro usability. Ran 4 parallel codebase deep-audits
+  + 2 live OSS landscape surveys (130+ sources), then synthesized. <b>Deliverable first, implementation after review.</b></p>
+  <ul>
+    <li><b>Analysis report (served)</b> <span class="tag done">built</span> <a href="noesis-system-analysis-2026-07.html">docs/noesis-system-analysis-2026-07.html</a>
+      — 7 SVG diagrams/flows (3-layer status map, tick loop, S1–S5 split, economic reality loop, deploy topology, beginner funnel, W-A..E roadmap), bilingual captions.</li>
+    <li><b>Research vault pages</b> <span class="tag done">built</span> <code>.planning/research/system-audit-2026-07.md</code>
+      + <code>oss-agent-learning-landscape.md</code> + <code>oss-visualization-landscape.md</code>; index + log updated; lint green.</li>
+    <li><b>Q1 verdict</b> <span class="tag partial">partial</span> — tick loop/61 actions/economic decisions (W3b) + tool loop are real;
+      but main decision path returns <code>NOOP</code> (<code>handler.py</code> ~1024), ReflectionEngine orphaned, Telos static, no outcome feedback,
+      Phase 40b hosted pool unbuilt (laptop-bound). S1–S5 learning loop shipped 2026-06-20 <em>in the viz layer only</em> — not Brain-connected.</li>
+    <li><b>Cooperation verdict</b> <span class="tag partial">dormant</span> — pay dues/bid RFPs/build = autonomous (a);
+      messaging/P2P/skill-share/lore = server-built, Brain never initiates (b); voting/groups/communities = dead code or no action type (c).</li>
+    <li><b>Q2 verdict</b> <span class="tag partial">~60%</span> — economic loop renders REAL physics-gated objects (rare, excellent);
+      but 14 fragmented surfaces, static seeds vs live WS, orbital objects create-once (no upgrade route), upkeep scanner unwired, zero knowledge-graph UI.</li>
+    <li><b>Q3 verdict</b> <span class="tag blocked">not ready</span> — single EC2, MySQL <em>no backup/replica</em>, no alerting,
+      mock-Pool SQL blind spot (2026-06-14 crash-loop class); scale = PoC (no load tests); beginner path blocked at ~10 manual steps, wallet wall, English-only.</li>
+    <li><b>Decision</b> <span class="tag design">proposed</span> — implementation program <b>W-A Mind → W-B Society → W-C Living Map (parallel) → W-D Substrate Trust → W-E Open Doors</b>;
+      OSS adoptions locked to: port patterns (Generative-Agents memory, Reflexion, BabyAGI ledger × PIANO, Voyager+SKILL.md, Letta sleep-time, Colyseus/CZML deltas+replay),
+      embed small MIT libs (camera-controls, three-mesh-bvh/csg, three-forcegraph, cosmos.gl, troika, DSPy/GEPA, Outlines); avoid Brain-owning frameworks; stay vanilla no-build three.js.</li>
+    <li><b>W-A Mind loop A1–A4</b> <span class="tag done">shipped</span> — operator approved ("Sure, doing"); TDD per
+      <code>docs/superpowers/plans/2026-07-02-w-a-mind-autonomous-learning.md</code>:
+      <b>A1</b> per-tick decision cycle (<code>_run_decision_cycle</code>: work_task/speak/rest, 20-tick cooldown, live-wired gate, W3b guardrails — NOOP idle replaced) ·
+      <b>A2</b> <code>GoalLedger</code> (SQLite, persists via <code>ledger_db_dir</code>) + 200-tick planner decomposing the top Telos goal ·
+      <b>A3</b> ReflectionEngine finally wired (interval OR 3-failure trigger, inflight-guarded; reflect→re-plan) ·
+      <b>A4</b> outcome feedback (<code>record_task_outcome</code> → <code>Goal.advance</code> + auto-complete; failures/Grid rejections → <code>Lesson:</code> Reflexion memories).
+      ONE intent per tick in prompts (PIANO, D-MIND-02). <strong>43 new Brain tests · suite 1127 green · allowlist +0 · on_tick contract untouched.</strong>
+      Wiki: nous.md mind-loop section + D-MIND-01..04; ROADMAP/STATE synced.</li>
+    <li><b>W-A5/6/7 learning half</b> <span class="tag done">shipped</span> — "go next":
+      <b>A5</b> deterministic Stanford retrieval (<code>_ranked_memories</code>, tick-based <code>score_with_chronos</code>) feeds planner (goal=query) + decision lessons (task=query) ·
+      <b>A6</b> Voyager loop closed on the existing <code>SkillStore</code>: top-3 skills into the decision prompt, per-work outcome EMA (α=0.1), completed goals distilled into skills at sleep-time (verify-then-add; <code>GoalLedger.done_tasks</code> + <code>parse_skill</code> slug guard) ·
+      <b>A7</b> <code>_sleep_time_compute</code> after Hypnos <code>run_sleep</code>: distill ≤3 pending goals + forced reflection (Letta idle-compute-becomes-learning).
+      <strong>Suite 1140 green · allowlist +0.</strong> D-MIND-05/06. Deferred to next sessions: A8 DSPy/GEPA offline evolution · A9 Phase 40b hosted pool.</li>
+    <li><b>“do until finish” wave — W-B + W-C6 + W-D + W-E1 + A8 + A9-substrate</b> <span class="tag done">shipped</span> (<span class="hash">9f7a946</span>) —
+      <b>W-B Society</b> (10 TDD tests): <code>_run_social_cycle</code> — the Nous <em>initiates</em>: DMs trusted peers, teaches skills (<code>__skill_share</code> → quarantine path),
+      contributes lore (hash-only per D-20-12), and <b>votes autonomously</b> (new <code>fetch_open_proposals</code> sight; LLM chooses; commit-reveal via GovernanceState; no-LLM reveal sweep after deadline — VOTE-05 end-to-end).
+      Actions drain via <code>_pending_actions</code> → existing NousRunner dispatch: zero new Grid surface. D-SOC-01..03.
+      <b>W-D</b>: watchdog → <code>ALERT_WEBHOOK_URL</code> (5 tests) · real-MySQL migration CI (script + workflow) · <code>backup-mysql.sh</code> + runbook.
+      <b>W-C6</b>: <code>check-map-sync.mjs</code> (verified IN SYNC) wired into rig-invariants.
+      <b>W-E1</b>: <a href="getting-started.html">bilingual getting-started</a>. <b>A8</b>: decision-evalset exporter (2 tests). <b>A9</b>: <code>docker-compose.brain.yml</code> + always-on runbook.
+      <strong>Brain suite 1152 green · grid tsc clean · allowlist +0.</strong> Clone URL fixed → <code>ASKKPOP/Noesis</code>.</li>
+    <li><b>Daily visual log</b> <span class="tag done">built</span> — <a href="noesis-daily-log-2026-07-02.html">docs/noesis-daily-log-2026-07-02.html</a>:
+      the whole day as flow + loop diagrams (timeline, closed mind+society loop, task table, gates, honest remaining-work tail), bilingual.</li>
+    <li><b>Afternoon "do do do" — W-C1 + W-C2 + W-B4 + W-C4</b> <span class="tag done">shipped</span> (<span class="hash">e1d50a4</span> + latest) —
+      <b>W-C1 live map</b>: <code>orbital.js</code> subscribes to the audit firehose; on <code>orbital.object_built</code> refetches real objects and pulses new arrivals in (guarded — static host/no-WS stays snapshot-based, 0 noise; only subscribes after a real backend answers).
+      <b>W-C2 fly-to</b>: clicking a module glides the camera to frame it (reuses the existing focus/dist tween — canon-safe, three.js only); dashboard map re-synced, gate green.
+      <b>W-B4</b>: new public <code>GET /api/v1/groups</code> (2 route tests, 503-on-no-pool) + <code>fetch_groups_list</code> + social-cycle <code>join_group</code> → O1a JOIN_GROUP (role='member' matches NousRunner <code>validRoles</code> — zero runner changes; 2 brain tests).
+      <b>W-C4 knowledge constellation</b>: <a href="noesis-knowledge-graph.html">docs/noesis-knowledge-graph.html</a> — the FIRST knowledge-graph view (force-directed lore commons, nodes=entries sized by citations, category clustering, live-data + seed fallback, no external deps). Answers the Q2 gap "no knowledge-graph view at all".
+      <b>W-C3a</b>: upkeep scanner verified already-wired (<code>main.ts:245</code>→<code>launcher.ts:515</code>) — audit was pessimistic; no change.
+      <strong>Brain suite 1154 green · grid tsc + did-policy clean · map-sync IN SYNC · allowlist +0.</strong> Browser-verified both maps + the graph (0 console errors).</li>
+  </ul>
+
   <!-- ============================ SESSION 13 ============================ -->
   <h2>Session 13 — 2026‑06‑29 · “Obsidian vaults + Karpathy LLM-wiki over research corpus”</h2>
   <p class="sub">Operator wanted to connect Obsidian and adopt Karpathy's

@@ -1,0 +1,55 @@
+name: real-mysql-migrations
+
+# W-D2 (Substrate Trust): run the full Grid migration chain against a REAL
+# MySQL 8.0 from an empty database. The vitest suite uses a mock mysql2 Pool
+# (no SQL parsing), so reserved-word/syntax errors in migration SQL pass unit
+# CI yet crash-loop prod on boot (2026-06-14 `condition` ER_PARSE_ERROR
+# incident). This job is the real-SQL gate.
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: noesis_grid
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install workspace deps
+        run: npm ci
+
+      - name: W-D2 full migration chain on real MySQL 8.0
+        working-directory: grid
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: '3306'
+          MYSQL_USER: root
+          MYSQL_PASSWORD: root
+          MYSQL_DATABASE: noesis_grid
+        run: npx tsx scripts/check-migrations-real-mysql.ts

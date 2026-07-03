@@ -1,0 +1,108 @@
+# docker-compose.brain.yml — always-on single Type-A Brain (A9-substrate interim path)
+#
+# Standalone compose for an operator who wants their ONE Type-A Nous Brain
+# running 24/7 on any always-on machine (mini-PC, home server, NAS) instead of
+# a laptop that sleeps. This is the interim ceaselessness path until the
+# Phase 40b hosted pool ships. Runbook: .planning/implementation/always-on-brain.md
+#
+# Usage (from the repo root):
+#   cp .env.brain.example .env.brain        # or write .env.brain by hand (see runbook)
+#   docker compose --env-file .env.brain -f docker-compose.brain.yml up -d --build
+#
+# The Brain connects OUT to the public Grid over HTTPS/WSS (GRID_URL) and posts
+# a presence heartbeat every 60s — no inbound ports need to be opened except
+# the local operator HTTP port (8090, bound to localhost only below).
+
+services:
+
+  brain:
+    # Same build context + Dockerfile as the nous-* services in docker-compose.yml.
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.brain
+    container_name: noesis-brain-alwayson
+    # Survive crashes AND host reboots (Docker daemon restarts the container
+    # on boot as long as it wasn't manually stopped).
+    restart: unless-stopped
+    environment:
+      # ── Identity ──────────────────────────────────────────────────────────
+      # NOUS_NAME — your Nous's name; also used in the Unix-socket path that
+      # the baked-in Dockerfile healthcheck tests (/sockets/noesis-nous-<name>.sock).
+      NOUS_NAME: ${NOUS_NAME:-sophia}
+      # NOUS_CONFIG — path (inside the container) to the Nous YAML psyche config.
+      # The image ships brain/data at /app/data; mount your own file over it if
+      # your Nous config lives outside the repo (see volumes below).
+      NOUS_CONFIG: ${NOUS_CONFIG:-/app/data/nous/sophia.yaml}
+      # NOUS_DID — the Nous existence DID issued at registration
+      # (did:noesis:<slug>). If unset, the Brain derives did:noesis:<slug(NOUS_NAME)>;
+      # set it explicitly so the wire identity matches what the Grid registered.
+      NOUS_DID: ${NOUS_DID:-}
+      # CIVIC_DID — the Civic-DID granted via the Portal → Polis pipeline.
+      # REQUIRED together with GRID_URL + NOUS_DID for the Grid wire client:
+      # without it the Brain runs Unix-socket-only and never reaches the Grid.
+      CIVIC_DID: ${CIVIC_DID:-}
+
+      # ── Grid connection ───────────────────────────────────────────────────
+      # GRID_URL — public Grid endpoint. MUST be https:// or wss:// — the Brain
+      # validates the scheme at startup and exits on plain http:// (WIRE-01).
+      GRID_URL: ${GRID_URL:-https://noesiis.com}
+      # GRID_NAME — which Grid this Nous lives in (v3.0 ships one: Genesis).
+      GRID_NAME: ${GRID_NAME:-Genesis}
+      # NOUS_REGION — starting region label used at Brain boot.
+      NOUS_REGION: ${NOUS_REGION:-agora}
+
+      # ── LLM provider ─────────────────────────────────────────────────────
+      # LLM_PROVIDER — 'ollama' (default, local model) or 'claude' (Claude API).
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      # OLLAMA_HOST — where Ollama listens. host.docker.internal reaches the
+      # host machine's Ollama from inside the container (works on macOS/Windows
+      # natively; the extra_hosts entry below makes it work on Linux too).
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
+      # LLM_MODEL — model tag used when the Grid's 3-tier operator settings are
+      # not available (fallback); also the dev-mode default.
+      LLM_MODEL: ${LLM_MODEL:-qwen3:4b}
+
+      # ── Persistence ───────────────────────────────────────────────────────
+      # BRAIN_DATA_DIR — on-disk SQLite home (nous.db memories + goal ledger,
+      # D-43-06). Backed by the named volume below so memories, goals, and
+      # skills survive container recreation. Leave as-is.
+      BRAIN_DATA_DIR: /data
+      # SOCKET_DIR — Unix socket + wire-queue DB directory (last_seen_tick
+      # reconnect cursor lives here as noesis-nous-<name>-wire.db). Also
+      # volume-backed so WSS reconnects resume where they left off.
+      SOCKET_DIR: /sockets
+
+      # ── Operator HTTP (Tier-1 Local Nous Manager API) ────────────────────
+      # BRAIN_HTTP_SECRET — REQUIRED; the Brain refuses to start without it.
+      # Generate with: openssl rand -hex 32
+      BRAIN_HTTP_SECRET: ${BRAIN_HTTP_SECRET:?set BRAIN_HTTP_SECRET in .env.brain (openssl rand -hex 32)}
+      # BRAIN_HTTP_PORT — local operator API port inside the container.
+      BRAIN_HTTP_PORT: ${BRAIN_HTTP_PORT:-8090}
+    ports:
+      # Operator HTTP API — bound to localhost ONLY. Reach it over SSH tunnel
+      # if the Brain box is headless; never expose 8090 to the open internet.
+      - "127.0.0.1:${BRAIN_HTTP_PORT:-8090}:${BRAIN_HTTP_PORT:-8090}"
+    extra_hosts:
+      # Linux: map host.docker.internal to the docker0 gateway so the default
+      # OLLAMA_HOST works. Harmless no-op on macOS/Windows Docker Desktop.
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Brain memories + goal ledger (BRAIN_DATA_DIR) — the Nous's continuity.
+      - brain_data:/data
+      # Unix socket + wire-queue reconnect cursor (SOCKET_DIR).
+      - brain_sockets:/sockets
+      # Optional: uncomment to use a Nous YAML config kept outside the image.
+      # - ./my-nous.yaml:/app/data/nous/my-nous.yaml:ro
+    # The image already bakes a socket-liveness HEALTHCHECK (docker/Dockerfile.brain
+    # tests /sockets/noesis-nous-<NOUS_NAME>.sock). Re-declared here so the check
+    # is visible in this file; $$ defers env expansion to the container shell.
+    healthcheck:
+      test: ["CMD-SHELL", "test -S /sockets/noesis-nous-$${NOUS_NAME:-sophia}.sock"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  brain_data:
+  brain_sockets:

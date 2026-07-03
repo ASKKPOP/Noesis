@@ -438,10 +438,15 @@ function renderPanel(p){
  }
  panel.classList.add('on');
 }
+// W-C2 — fly-to: clicking a module glides the camera to frame it (the core
+// investment gesture, D-NH-01). Reuses the existing focus/dist tween — no new
+// deps (canon: three.js only). Clicking empty space closes the panel but does
+// NOT yank the view back.
+function flyTo(obj){const wp=new THREE.Vector3();obj.getWorldPosition(wp);focusGoal.copy(wp);distGoal=Math.max(70,Math.min(dist,160)*0.6);}
 cvs.addEventListener('click',e=>{pv.x=(e.clientX/innerWidth)*2-1;pv.y=-(e.clientY/innerHeight)*2+1;
 ray.setFromCamera(pv,cam);const hit=ray.intersectObjects(meshes,false)[0];
 if(!hit){panel.classList.remove('on');lastPicked=null;return;}
-renderPanel(hit.object.userData);});
+renderPanel(hit.object.userData);flyTo(hit.object);});
 addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();rnd.setSize(innerWidth,innerHeight);});
 place();
 // ── animate: station drift, counter-rotating residential orbit, packets ────

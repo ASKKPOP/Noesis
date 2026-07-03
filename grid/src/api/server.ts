@@ -49,6 +49,7 @@ import { registerMarketRoutes } from './routes/market.js';
 import { registerIrsRoutes } from './routes/irs.js';
 import { registerSystemMapRoute } from './routes/system-map.js';
 import { registerOrbitalRoutes } from './routes/orbital.js';
+import { registerGroupRoutes } from './routes/groups.js';
 import { registerGovRoutes } from './routes/gov.js';
 import { registerPolisBillsRoute } from './routes/polis-bills.js';
 import { registerNousPublicProfileRoute } from './routes/nous-public-profile.js';
@@ -818,6 +819,7 @@ export function buildServerWithHub(
     void registerIrsRoutes(app, services);
     registerSystemMapRoute(app, services);  // System Map — live aggregate of 4 surfaces + 8 institutions
     registerOrbitalRoutes(app, services);
+    registerGroupRoutes(app, services);   // W-B4 — Nous group join-sight
     void registerGovRoutes(app, services);
     registerPolisBillsRoute(app, services);
     registerNousPublicProfileRoute(app, services);
@@ -962,6 +964,9 @@ export function buildServerWithHub(
                 readonly lastPersistError?: { code: string; at: number } | null;
                 readonly lastPersistedId?: number | null;
             },
+        }, {
+            // W-D3: grid name for the ALERT_WEBHOOK_URL payload (URL read from env).
+            gridName: services.gridName,
         });
         launcher.attachHealthWatchdog(healthWatchdog);
         launcher.attachFirehoseHub(firehoseHub);

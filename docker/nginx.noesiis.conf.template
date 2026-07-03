@@ -48,6 +48,8 @@ server {
     # Full spec doc set — static files mounted read-only from the repo's docs/spec.
     location = /spec  { return 302 /spec/; }
     location /spec/   { alias /usr/share/nginx/spec/; index index.html; autoindex off; }
+    # Short shareable link → the 3-developer QA testing guide (served in place, no redirect).
+    location = /qa    { alias /usr/share/nginx/spec/qa-testing-guide.html; default_type text/html; }
     location /console { proxy_pass http://noesis_steward; }
     location /        { proxy_pass http://noesis_dashboard; }
 }

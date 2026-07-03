@@ -22,6 +22,27 @@ from noesis_brain.telos.manager import TelosManager
 from noesis_brain.thymos.tracker import ThymosTracker
 from noesis_brain.thymos.types import Emotion
 from noesis_brain.rpc.types import Action, ActionType, build_civic_land_action, build_economic_action
+from noesis_brain.prompts.decision import (
+    build_decision_prompt,
+    build_planning_prompt,
+    build_skill_distill_prompt,
+    build_social_prompt,
+    parse_decision,
+    parse_skill,
+    parse_social_decision,
+    parse_task_list,
+)
+from noesis_brain.governance.state import GovernanceState
+from noesis_brain.governance.voter import (
+    NoCommittedBallotError,
+    build_commit_action,
+    build_reveal_action,
+)
+from noesis_brain.lore.types import LORE_CATEGORIES, LoreEntry
+from noesis_brain.telos.ledger import GoalLedger, LedgerTask
+from noesis_brain.memory.reflection import ReflectionEngine
+from noesis_brain.memory.retrieval import RetrievalScorer
+from noesis_brain.memory.types import MemoryType
 from noesis_brain.prompts.economic_decision import (
     build_economic_decision_prompt,
     parse_economic_decision,
@@ -62,6 +83,7 @@ class BrainHandler:
         did: str = "",
         iris_db_dir: str | Path | None = None,   # Phase 17 D-17-14
         hypnos_db_dir: str | Path | None = None,  # Phase 16 D-16-02
+        ledger_db_dir: str | Path | None = None,  # W-A2 (Mind) — goal→task ledger
     ) -> None:
         self.psyche = psyche
         self.thymos = thymos
@@ -80,6 +102,29 @@ class BrainHandler:
         # W3b (D-MONEY-09): per-tick economic decision cooldown. A ticking Nous with
         # an outstanding due / an open RFP autonomously decides whether to pay / bid.
         self._last_econ_tick = -10_000
+        # W-A (Mind, 2026-07-02): two-timescale mind loop. The slow planner
+        # decomposes the top Telos goal into GoalLedger tasks; the fast decision
+        # cycle works the next task every ~20 ticks under ONE coherent intent
+        # (PIANO bottleneck). Reflection (previously orphaned) + Reflexion
+        # lessons close learn-from-acting. All cycles run as background tasks —
+        # the on_tick returned-action contract is untouched.
+        self._goal_ledger = GoalLedger(db_dir=ledger_db_dir, did=did)
+        self._last_plan_tick = -10_000
+        self._last_decision_tick = -10_000
+        self._current_intent: str | None = None
+        self._failed_since_reflection = 0
+        self._reflection_inflight = False
+        # W-A5: deterministic Stanford retrieval (recency×importance×relevance,
+        # tick-based) feeds the planner and the decision lessons.
+        self._retrieval_scorer = RetrievalScorer()
+        # W-A6: goals completed since the last sleep, awaiting skill distillation.
+        self._pending_distill: list[str] = []
+        # W-B: social/civic cycle — outreach, teaching, lore, commit-reveal voting.
+        self._last_social_tick = -10_000
+        self._governance_state = GovernanceState()
+        self._reflection: ReflectionEngine | None = None
+        if memory is not None and hasattr(memory, "add_reflection") and hasattr(memory, "recent"):
+            self._reflection = ReflectionEngine(memory, llm)
         # Phase 10a DRIVE-02 wire-side: per-DID AnankeRuntime registry. One
         # handler may, over its lifetime, receive ticks for multiple DIDs
         # (though typical Brain process serves one Nous). The loader is a
@@ -114,6 +159,9 @@ class BrainHandler:
             from noesis_brain.learning.observational import ObservationalLearner
             from noesis_brain.skills.store import SkillStore as _SkillStore
             _skill_store = _SkillStore(self.memory._conn) if self.memory is not None and hasattr(self.memory, "_conn") else None
+            # W-A6: the decision cycle retrieves from + reports outcomes to the
+            # same per-Nous skill library (Voyager loop finally closes).
+            self._skill_store = _skill_store
             if _skill_store is not None:
                 self._obs_learner: ObservationalLearner | None = ObservationalLearner(
                     store=self.memory,
@@ -143,6 +191,7 @@ class BrainHandler:
         else:
             self._hypnos_runtime = None
             self._obs_learner = None
+            self._skill_store = None
             self._cached_peer_weights = {}
             self._peer_filter = None
             self._quarantine_store = None
@@ -611,6 +660,16 @@ class BrainHandler:
                     content=f"Economic decision: {action.action_type.value} {action.metadata}"[:300],
                     source_did=self.did, tick=tick,
                 )
+            elif not ok:
+                # W-A4: a Grid rejection is a Reflexion lesson, not a silent shrug —
+                # the next decision prompt retrieves it, and repeated failures
+                # trigger a reflection cycle.
+                self._failed_since_reflection += 1
+                if self.memory is not None and hasattr(self.memory, "record_event"):
+                    self.memory.record_event(
+                        content=f"Lesson: my {action.action_type.value} was rejected by the Grid"[:300],
+                        source_did=self.did, tick=tick,
+                    )
         except Exception as exc:  # never let an economic cycle take down the tick
             log.warning("[Brain] economic cycle failed: %s", exc)
 
@@ -649,6 +708,455 @@ class BrainHandler:
                 ActionType.BID_RFP, notice_id=notice_id, price_wei=price, artifact_spec=str(spec),
             )
         return None
+
+    # ── W-A (Mind): two-timescale autonomous mind loop ────────────────────────
+    _PLAN_COOLDOWN_TICKS = 200
+    _DECISION_COOLDOWN_TICKS = 20
+
+    def _top_goal(self):
+        top = self.telos.top_priority(1)
+        return top[0] if top else None
+
+    def _ranked_memories(
+        self, query: str, tick: int, k: int = 8, prefix: str | None = None
+    ) -> list[str]:
+        """W-A5 — deterministic Stanford top-k: recency×importance×relevance,
+        tick-based (score_with_chronos, multiplier 1.0 — no wall clock). The
+        optional prefix filter selects a memory family (e.g. 'Lesson:')."""
+        if self.memory is None or not hasattr(self.memory, "recent"):
+            return []
+        pool = [
+            m for m in list(self.memory.recent(limit=50) or [])
+            if isinstance(getattr(m, "content", None), str)
+        ]
+        if prefix is not None:
+            pool = [m for m in pool if m.content.startswith(prefix)]
+        scored = [
+            (self._retrieval_scorer.score_with_chronos(m, query, tick), m)
+            for m in pool
+        ]
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [m.content for _, m in scored[:k]]
+
+    def _should_run_planner_cycle(self, tick: int) -> bool:
+        """Slow timescale: decompose the top goal ONLY when its ledger is dry.
+        Live-wired minds only (mirrors the W3b economic gate) + cooldown."""
+        if self._grid_wire_client is None or self.llm is None:
+            return False
+        if (tick - self._last_plan_tick) < self._PLAN_COOLDOWN_TICKS:
+            return False
+        goal = self._top_goal()
+        if goal is None:
+            return False
+        return self._goal_ledger.pending_count(goal.description) == 0
+
+    async def _run_planner_cycle(self, tick: int) -> None:
+        """Decompose the top-priority goal into 2-4 concrete ledger tasks,
+        informed by recent memories + reflections (reflect → re-plan loop).
+        Background; never fatal."""
+        try:
+            goal = self._top_goal()
+            if goal is None:
+                return
+            # W-A5: Stanford-scored top-k (deterministic, tick-based) instead
+            # of a raw recency slice — the goal itself is the query.
+            memories_text = "\n".join(
+                f"- {c}" for c in self._ranked_memories(goal.description, tick, k=8)
+            )
+            reflections: list[str] = []
+            if self.memory is not None and hasattr(self.memory, "recent"):
+                reflections = [
+                    m.content for m in list(self.memory.recent(limit=10) or [])
+                    if getattr(m, "memory_type", None) == MemoryType.REFLECTION
+                ][:3]
+            prompt = build_planning_prompt(goal.description, memories_text, reflections)
+            response = await self.llm.generate(
+                prompt,
+                GenerateOptions(temperature=0.7, max_tokens=256, purpose="planning"),
+            )
+            tasks = parse_task_list(response.text)
+            if not tasks:
+                return
+            n = self._goal_ledger.add_tasks(goal.description, tasks, tick)
+            if n and self.memory is not None and hasattr(self.memory, "record_event"):
+                self.memory.record_event(
+                    content=f"Planned '{goal.description}': {n} tasks"[:300],
+                    source_did=self.did, tick=tick,
+                )
+        except Exception as exc:  # never let a planner cycle take down the tick
+            log.warning("[Brain] planner cycle failed: %s", exc)
+
+    def _should_run_decision_cycle(self, tick: int) -> bool:
+        """Fast timescale: work the ledger. Live-wired minds only + cooldown +
+        a goal to pursue (no goal → nothing to decide → no LLM spend)."""
+        if self._grid_wire_client is None or self.llm is None:
+            return False
+        if (tick - self._last_decision_tick) < self._DECISION_COOLDOWN_TICKS:
+            return False
+        return self._top_goal() is not None
+
+    async def _run_decision_cycle(self, tick: int) -> None:
+        """One small step — work_task / speak / rest — chosen by the Nous under
+        a single coherent intent (PIANO bottleneck). Every LLM-chosen value is
+        validated Brain-side (W3b guardrail discipline). Background; never fatal."""
+        try:
+            goal = self._top_goal()
+            if goal is None:
+                return
+            task = self._goal_ledger.next_task(goal.description)
+            # W-A5: lessons ranked by Stanford score against the work at hand.
+            lessons = self._ranked_memories(
+                task.description if task else goal.description, tick, k=3, prefix="Lesson:",
+            )
+            # W-A6: retrieve top-k relevant skills for the prompt (Voyager loop).
+            skills = None
+            if self._skill_store is not None:
+                try:
+                    skills = self._skill_store.retrieve(
+                        task.description if task else goal.description, k=3,
+                    ) or None
+                except Exception:
+                    skills = None
+            self._current_intent = goal.description + (
+                f" → {task.description}" if task else ""
+            )
+            system_prompt = build_system_prompt(
+                self.psyche, self.thymos.mood, self.telos,
+                grid_name=self.grid_name, location=self.location,
+                intent=self._current_intent,
+                skills=skills,
+            )
+            user_prompt = build_decision_prompt(
+                goal.description, task.description if task else None, lessons,
+            )
+            response = await self.llm.generate(
+                user_prompt,
+                GenerateOptions(
+                    system_prompt=system_prompt, temperature=0.7,
+                    max_tokens=256, purpose="decision",
+                ),
+            )
+            decision = parse_decision(response.text)
+            if decision is None:
+                return
+            act = decision["action"]
+            if act == "work_task" and task is not None:
+                note = str(decision.get("note") or "")[:300]
+                if self.memory is not None and hasattr(self.memory, "record_event"):
+                    self.memory.record_event(
+                        content=f"Worked on '{task.description}': {note}"[:400],
+                        source_did=self.did, tick=tick,
+                    )
+                if decision.get("completed") is True:
+                    self.record_task_outcome(task, success=True, note=note, tick=tick)
+                else:
+                    self._goal_ledger.mark_attempt(task.task_id, tick)
+                # W-A6: skill practice feedback — gentle EMA (α=0.1) on the
+                # skills that were in front of the mind while it worked.
+                if skills and self._skill_store is not None:
+                    outcome_ok = decision.get("completed") is True
+                    for s in skills:
+                        try:
+                            self._skill_store.update_outcome(s.name, outcome_ok)
+                        except Exception:
+                            pass
+            elif act == "speak":
+                text = decision.get("text")
+                if isinstance(text, str) and text.strip() and self._grid_wire_client is not None:
+                    action = Action(
+                        action_type=ActionType.SPEAK, channel="agora",
+                        text=text.strip()[:500],
+                    )
+                    await self._grid_wire_client.post_actions([action.to_dict()], tick=tick)
+            elif act == "rest":
+                note = str(decision.get("note") or "")[:200]
+                if note and self.memory is not None and hasattr(self.memory, "record_event"):
+                    self.memory.record_event(
+                        content=f"Chose to rest: {note}", source_did=self.did, tick=tick,
+                    )
+        except Exception as exc:  # never let a decision cycle take down the tick
+            log.warning("[Brain] decision cycle failed: %s", exc)
+
+    def record_task_outcome(
+        self, task: LedgerTask, success: bool, note: str = "", tick: int = 0
+    ) -> None:
+        """W-A4 — outcome feedback: success advances the owning goal by 1/total
+        (Goal.advance auto-completes at 100%); failure stores a Reflexion lesson
+        that the next decision prompt retrieves, and counts toward a
+        failure-triggered reflection."""
+        if success:
+            self._goal_ledger.mark_done(task.task_id, tick)
+            total = self._goal_ledger.total_count(task.goal_key) or 1
+            for g in self.telos.active_goals():
+                if g.description == task.goal_key:
+                    g.advance(1.0 / total, tick)
+                    # W-A6 (Voyager verify-then-add): a COMPLETED goal is the
+                    # verification — queue it for sleep-time skill distillation.
+                    if not g.is_active():
+                        self._pending_distill.append(g.description)
+                    break
+            if self.memory is not None and hasattr(self.memory, "record_event"):
+                self.memory.record_event(
+                    content=f"Completed task '{task.description}' toward '{task.goal_key}'"[:400],
+                    source_did=self.did, tick=tick,
+                )
+        else:
+            self._goal_ledger.mark_attempt(task.task_id, tick)
+            self._failed_since_reflection += 1
+            if self.memory is not None and hasattr(self.memory, "record_event"):
+                self.memory.record_event(
+                    content=f"Lesson: failed '{task.description}' — {note}"[:400],
+                    source_did=self.did, tick=tick,
+                )
+
+    def _should_run_reflection_cycle(self) -> bool:
+        if self._reflection is None or self._reflection_inflight:
+            return False
+        return self._reflection.should_reflect() or self._failed_since_reflection >= 3
+
+    async def _run_reflection_cycle(self, tick: int) -> None:
+        """W-A3 — the (previously orphaned) ReflectionEngine finally runs: on
+        interval or after repeated failures. The reflection lands in the memory
+        stream, which the next planning prompt consumes — reflect → re-plan."""
+        if self._reflection is None:
+            return
+        self._reflection_inflight = True
+        try:
+            await self._reflection.reflect(tick)
+        except Exception as exc:  # never let reflection take down the tick
+            log.warning("[Brain] reflection cycle failed: %s", exc)
+        finally:
+            # Never spin: some reflect() early-outs skip its internal counter reset.
+            self._reflection._cycles_since_reflection = 0
+            self._failed_since_reflection = 0
+            self._reflection_inflight = False
+
+    async def _distill_skill_from_goal(self, goal_key: str, tick: int) -> None:
+        """W-A6 — distill a completed goal's task trajectory into one reusable
+        text skill (Voyager verify-then-add; text-only, never code). Sleep-time
+        only; name collisions and invalid skills are skipped quietly."""
+        try:
+            if self._skill_store is None:
+                return
+            done = self._goal_ledger.done_tasks(goal_key)
+            if not done:
+                return
+            prompt = build_skill_distill_prompt(goal_key, [t.description for t in done])
+            response = await self.llm.generate(
+                prompt,
+                GenerateOptions(temperature=0.7, max_tokens=400, purpose="skill_distill"),
+            )
+            parsed = parse_skill(response.text)
+            if parsed is None:
+                return
+            from noesis_brain.skills.types import Skill as _Skill
+            skill = _Skill(
+                name=parsed["name"][:60],
+                description=parsed["description"][:200],
+                instructions=parsed["instructions"][:1000],
+                triggers=parsed["triggers"],
+                tags=["distilled"],
+                success_rate=1.0,   # born from a verified success
+                source_did="",      # self-authored — full trust
+            )
+            try:
+                self._skill_store.add(skill)
+            except ValueError:
+                return  # name collision / validation — skip quietly
+            if self.memory is not None and hasattr(self.memory, "record_event"):
+                self.memory.record_event(
+                    content=f"Distilled skill '{skill.name}' from completed goal '{goal_key}'"[:300],
+                    source_did=self.did, tick=tick,
+                )
+        except Exception as exc:  # never let distillation take down sleep
+            log.warning("[Brain] skill distillation failed: %s", exc)
+
+    # ── W-B: social/civic cycle ───────────────────────────────────────────────
+    _SOCIAL_COOLDOWN_TICKS = 60
+
+    def _should_run_social_cycle(self, tick: int) -> bool:
+        """Social timescale: live-wired minds only + cooldown."""
+        if self._grid_wire_client is None or self.llm is None:
+            return False
+        return (tick - self._last_social_tick) >= self._SOCIAL_COOLDOWN_TICKS
+
+    async def _run_social_cycle(self, tick: int) -> None:
+        """W-B — one small social/civic act per cycle: message a trusted peer,
+        teach a skill (__skill_share DM), contribute lore to the commons, or
+        vote on an open proposal (commit-reveal via GovernanceState). Chosen
+        actions are stashed on _pending_actions and drained by the next
+        on_tick into the normal NousRunner dispatch — no new Grid surface,
+        every existing audit path preserved. VOTE-05 holds: the Nous itself
+        decides and casts its ballot. Background; never fatal."""
+        wire = self._grid_wire_client
+        if wire is None:
+            return
+        try:
+            proposals = await wire.fetch_open_proposals()
+
+            # 1. Reveal sweep (no LLM): any past-deadline proposal we committed on.
+            for p in proposals:
+                pid = p.get("proposal_id")
+                deadline = int(p.get("deadline_tick", 0) or 0)
+                if pid and tick >= deadline:
+                    try:
+                        self._pending_actions.append(
+                            build_reveal_action(pid, self.did, self._governance_state)
+                        )
+                        if self.memory is not None and hasattr(self.memory, "record_event"):
+                            self.memory.record_event(
+                                content=f"Revealed my ballot on proposal {pid}",
+                                source_did=self.did, tick=tick,
+                            )
+                    except NoCommittedBallotError:
+                        pass
+
+            # 2. Offerable context — only what actually exists.
+            peers = [
+                d for d, w in sorted(
+                    self._cached_peer_weights.items(), key=lambda x: x[1], reverse=True
+                ) if w >= 0.3
+            ][:3]
+            skills: list = []
+            if self._skill_store is not None:
+                try:
+                    goal = self._top_goal()
+                    skills = self._skill_store.retrieve(
+                        goal.description if goal else "useful", k=3,
+                    ) or []
+                except Exception:
+                    skills = []
+            open_props = [
+                p for p in proposals
+                if p.get("status") == "open"
+                and tick < int(p.get("deadline_tick", 0) or 0)
+                and self._governance_state.recall(str(p.get("proposal_id", ""))) is None
+            ]
+            # W-B4: group join-sight (guarded — older wire mocks may lack it).
+            groups: list = []
+            fetch_groups = getattr(wire, "fetch_groups_list", None)
+            if fetch_groups is not None:
+                try:
+                    groups = await fetch_groups() or []
+                except TypeError:
+                    groups = []
+
+            prompt = build_social_prompt(peers, [s.name for s in skills], open_props, groups)
+            system_prompt = build_system_prompt(
+                self.psyche, self.thymos.mood, self.telos,
+                grid_name=self.grid_name, location=self.location,
+                intent=self._current_intent,
+            )
+            response = await self.llm.generate(
+                prompt,
+                GenerateOptions(
+                    system_prompt=system_prompt, temperature=0.8,
+                    max_tokens=300, purpose="social_decision",
+                ),
+            )
+            decision = parse_social_decision(response.text)
+            if not decision:
+                return
+            act = decision["action"]
+
+            if act == "message_peer":
+                peer = decision.get("peer_did")
+                text = decision.get("text")
+                if peer in peers and isinstance(text, str) and text.strip():
+                    self._pending_actions.append(Action(
+                        action_type=ActionType.DIRECT_MESSAGE, channel="direct",
+                        text=text.strip()[:300], metadata={"target_did": peer},
+                    ))
+                    self._social_memory(f"Reached out to {peer}", tick)
+
+            elif act == "share_skill":
+                peer = decision.get("peer_did")
+                name = decision.get("skill_name")
+                skill = next((s for s in skills if s.name == name), None)
+                if peer in peers and skill is not None:
+                    import json as _json
+                    payload = _json.dumps({
+                        "name": skill.name,
+                        "description": skill.description,
+                        "instructions": skill.instructions,
+                        "triggers": list(getattr(skill, "triggers", []) or []),
+                    })
+                    self._pending_actions.append(Action(
+                        action_type=ActionType.DIRECT_MESSAGE, channel="direct",
+                        text="__skill_share:" + payload, metadata={"target_did": peer},
+                    ))
+                    self._social_memory(f"Taught skill '{skill.name}' to {peer}", tick)
+
+            elif act == "contribute_lore":
+                title = decision.get("title")
+                content = decision.get("content")
+                category = decision.get("category")
+                if (
+                    isinstance(title, str) and isinstance(content, str)
+                    and content.strip() and category in LORE_CATEGORIES
+                    and self._lore_store is not None
+                ):
+                    import hashlib as _hashlib
+                    body = content.strip()[:2000]
+                    chash = _hashlib.sha256(body.encode()).hexdigest()
+                    if not self._lore_store.has(chash):
+                        self._lore_store.add(LoreEntry(
+                            content_hash=chash, contributor_did=self.did,
+                            category_tag=category, title=title.strip()[:80],
+                            content=body, received_tick=tick,
+                        ))
+                    # Grid sees hash + category only (D-20-12); content stays Brain-side.
+                    self._pending_actions.append(Action(
+                        action_type=ActionType.LORE_CONTRIBUTE,
+                        metadata={"content_hash": chash, "category_tag": category},
+                    ))
+                    self._social_memory(f"Contributed lore '{title.strip()[:80]}' to the commons", tick)
+
+            elif act == "vote":
+                pid = decision.get("proposal_id")
+                choice = decision.get("choice")
+                chosen = next((p for p in open_props if p.get("proposal_id") == pid), None)
+                if chosen is not None and choice in ("yes", "no", "abstain"):
+                    self._pending_actions.append(
+                        build_commit_action(pid, choice, self.did, self._governance_state)
+                    )
+                    self._social_memory(f"Committed my ballot on proposal {pid}", tick)
+
+            elif act == "join_group":
+                gid = decision.get("group_id")
+                chosen_group = next((g for g in groups if g.get("group_id") == gid), None)
+                if chosen_group is not None:
+                    # O1a JOIN_GROUP — NousRunner dispatches to the group store
+                    # (dupe-joins are the Grid's call, not ours).
+                    self._pending_actions.append(Action(
+                        action_type=ActionType.JOIN_GROUP,
+                        metadata={"group_id": gid, "role": "member"},
+                    ))
+                    self._social_memory(
+                        f"Joined group {chosen_group.get('display_name') or gid}", tick,
+                    )
+        except Exception as exc:  # never let a social cycle take down the tick
+            log.warning("[Brain] social cycle failed: %s", exc)
+
+    def _social_memory(self, content: str, tick: int) -> None:
+        if self.memory is not None and hasattr(self.memory, "record_event"):
+            self.memory.record_event(content=content[:300], source_did=self.did, tick=tick)
+
+    async def _sleep_time_compute(self, tick: int) -> None:
+        """W-A7 (Letta sleep-time pattern) — idle consolidation becomes
+        learning: after Hypnos runs, distill completed goals into skills and
+        force a reflection (even mid-interval). Never fatal."""
+        try:
+            pending, self._pending_distill = self._pending_distill[:3], self._pending_distill[3:]
+            for goal_key in pending:
+                try:
+                    await self._distill_skill_from_goal(goal_key, tick)
+                except Exception as exc:
+                    log.warning("[Brain] sleep-time distillation failed: %s", exc)
+            if self._reflection is not None and not self._reflection_inflight:
+                await self._run_reflection_cycle(tick)
+        except Exception as exc:  # never let sleep-time compute take down sleep
+            log.warning("[Brain] sleep-time compute failed: %s", exc)
 
     async def on_tick(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle world clock tick — opportunity for autonomous action.
@@ -767,6 +1275,32 @@ class BrainHandler:
             self._last_econ_tick = tick
             import asyncio as _asyncio
             _asyncio.create_task(self._run_economic_cycle(tick))
+        # W-A (Mind): the slow planner refills the goal ledger when dry; otherwise
+        # the fast decision cycle works the next task. `elif` keeps them mutually
+        # exclusive per tick (max one mind-LLM call). Background; never fatal.
+        if self._should_run_planner_cycle(tick):
+            self._last_plan_tick = tick
+            import asyncio as _asyncio
+            _asyncio.create_task(self._run_planner_cycle(tick))
+        elif self._should_run_decision_cycle(tick):
+            self._last_decision_tick = tick
+            import asyncio as _asyncio
+            _asyncio.create_task(self._run_decision_cycle(tick))
+        # W-B: the social/civic cycle — outreach, teaching, lore, voting. Its own
+        # (longer) cooldown; may share a tick with the mind cycles (different LLM
+        # temperature/purpose, and reveals must never wait behind a busy mind).
+        if self._should_run_social_cycle(tick):
+            self._last_social_tick = tick
+            import asyncio as _asyncio
+            _asyncio.create_task(self._run_social_cycle(tick))
+        # W-A3: reflection cadence — every tick counts; fires on interval or
+        # after repeated failures (inflight-guarded).
+        if self._reflection is not None:
+            self._reflection.tick()
+            if self._should_run_reflection_cycle():
+                self._reflection_inflight = True
+                import asyncio as _asyncio
+                _asyncio.create_task(self._run_reflection_cycle(tick))
         runtime.on_tick(tick)
         for xing in runtime.drain_crossings():
             actions.append(
@@ -825,6 +1359,9 @@ class BrainHandler:
                     async def _run() -> None:
                         result_hash = await rt.run_sleep(self.did, t)
                         self._pending_sleep_completed = result_hash
+                        # W-A7 (Letta): consolidation is followed by learning —
+                        # distill completed goals into skills + force reflection.
+                        await self._sleep_time_compute(t)
                     _asyncio.create_task(_run())
 
                 _make_sleep_task()
