@@ -110,6 +110,13 @@
       <strong>Brain suite 1152 green · grid tsc clean · allowlist +0.</strong> Clone URL fixed → <code>ASKKPOP/Noesis</code>.</li>
     <li><b>Daily visual log</b> <span class="tag done">built</span> — <a href="noesis-daily-log-2026-07-02.html">docs/noesis-daily-log-2026-07-02.html</a>:
       the whole day as flow + loop diagrams (timeline, closed mind+society loop, task table, gates, honest remaining-work tail), bilingual.</li>
+    <li><b>Afternoon "do do do" — W-C1 + W-C2 + W-B4 + W-C4</b> <span class="tag done">shipped</span> (<span class="hash">e1d50a4</span> + latest) —
+      <b>W-C1 live map</b>: <code>orbital.js</code> subscribes to the audit firehose; on <code>orbital.object_built</code> refetches real objects and pulses new arrivals in (guarded — static host/no-WS stays snapshot-based, 0 noise; only subscribes after a real backend answers).
+      <b>W-C2 fly-to</b>: clicking a module glides the camera to frame it (reuses the existing focus/dist tween — canon-safe, three.js only); dashboard map re-synced, gate green.
+      <b>W-B4</b>: new public <code>GET /api/v1/groups</code> (2 route tests, 503-on-no-pool) + <code>fetch_groups_list</code> + social-cycle <code>join_group</code> → O1a JOIN_GROUP (role='member' matches NousRunner <code>validRoles</code> — zero runner changes; 2 brain tests).
+      <b>W-C4 knowledge constellation</b>: <a href="noesis-knowledge-graph.html">docs/noesis-knowledge-graph.html</a> — the FIRST knowledge-graph view (force-directed lore commons, nodes=entries sized by citations, category clustering, live-data + seed fallback, no external deps). Answers the Q2 gap "no knowledge-graph view at all".
+      <b>W-C3a</b>: upkeep scanner verified already-wired (<code>main.ts:245</code>→<code>launcher.ts:515</code>) — audit was pessimistic; no change.
+      <strong>Brain suite 1154 green · grid tsc + did-policy clean · map-sync IN SYNC · allowlist +0.</strong> Browser-verified both maps + the graph (0 console errors).</li>
   </ul>
 
   <!-- ============================ SESSION 13 ============================ -->

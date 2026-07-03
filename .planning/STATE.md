@@ -188,8 +188,13 @@ forced reflection). Suite **1140 green**, allowlist +0. D-MIND-05/06 added to th
 social cycle (autonomous DM/teach/lore/commit-reveal voting — VOTE-05 end-to-end, D-SOC-01..03, brain 1152
 green) · watchdog webhook alerting + real-MySQL migration CI + backup script/runbook · map-sync CI gate
 (IN SYNC) · bilingual getting-started page · decision-evalset exporter · always-on Brain compose+runbook.
-**Still open from the audit program:** W-B groups/peer-contracts/promise-ledger · W-C1–C5 (live WS map,
-fly-to camera, upgrade routes, knowledge constellations, time scrubber) · W-E2–E5 · Phase 40b hosted pool.
+**Afternoon ("do do do"): W-C1 + W-C2 + W-B4 + W-C4 SHIPPED** (commits `e1d50a4` + latest):
+live map (firehose → glow-on-build, guarded) · fly-to camera (canon-safe tween) · autonomous group join
+(`GET /api/v1/groups` + social-cycle `join_group` → O1a; 2 grid + 2 brain tests) · **first knowledge-graph
+view** (`docs/noesis-knowledge-graph.html` — force-directed lore commons, live+seed, no deps). W-C3a upkeep
+scanner verified ALREADY wired (`main.ts:245`→`launcher.ts:515`) — no change. Brain 1154 green, grid tsc +
+did-policy clean, map-sync IN SYNC, allowlist +0. **Still open:** W-B peer-contracts/promise-ledger ·
+W-C3 upgrade routes for built objects (create-once still) · W-C5 time scrubber · W-E2–E5 · Phase 40b.
 Daily visual log: `docs/noesis-daily-log-2026-07-02.html`.
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)

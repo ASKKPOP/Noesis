@@ -185,7 +185,13 @@
 <tr><td><b>W-E1</b> getting started</td><td><a href="getting-started.html">docs/getting-started.html</a> — bilingual EN/KR decision tree (observer · citizen · operator · developer)</td><td>links verified</td><td class="hash">9f7a946</td></tr>
 <tr><td><b>A8</b> evalset exporter</td><td><code>brain/scripts/export_decision_evalset.py</code> — mines the mind's own memories into a GEPA/DSPy eval set</td><td>2 tests</td><td class="hash">9f7a946</td></tr>
 <tr><td><b>A9</b> always-on substrate</td><td><code>docker-compose.brain.yml</code> + runbook — 24/7 Type-A Brain (interim until Phase 40b)</td><td>YAML parse-verified</td><td class="hash">9f7a946</td></tr>
+<tr><td><b>W-C1</b> live map</td><td><code>orbital.js</code> subscribes to the audit firehose; on <code>orbital.object_built</code> refetches + pulses new arrivals in (guarded — static host stays quiet)</td><td>browser: 22 obj · 0 errors</td><td class="hash">e1d50a4</td></tr>
+<tr><td><b>W-C2</b> fly-to camera</td><td>Click a module → camera glides to frame it (reuses the focus/dist tween; canon-safe, three.js only)</td><td>browser: click→panel+flyTo</td><td class="hash">e1d50a4</td></tr>
+<tr><td><b>W-B4</b> autonomous group join</td><td><code>GET /api/v1/groups</code> (2 route tests) + Brain join-sight + social-cycle <code>join_group</code> → O1a JOIN_GROUP (role matches NousRunner exactly)</td><td>2 grid + 2 brain tests</td><td class="hash">e1d50a4</td></tr>
+<tr><td><b>W-C4</b> knowledge constellation</td><td><a href="noesis-knowledge-graph.html">docs/noesis-knowledge-graph.html</a> — first knowledge-graph view: force-directed lore commons (nodes=entries, size=citations, edges=citations, category clustering), live-data + seed fallback, no deps</td><td>browser: clusters · fly-to · 0 errors</td><td class="hash">(latest)</td></tr>
 </table>
+
+<div class="panel"><b>Afternoon addendum ("do do do"):</b> the audit's two biggest Q2 gaps are now addressed — the map is <b>live</b> (glows as the city builds) and has the <b>fly-to</b> investment gesture, a Nous can <b>autonomously join a group</b> (W-B society extends to organizations), and Noēsis has its <b>first knowledge-graph view</b> (the lore commons as a navigable constellation). Note: the W-C3a upkeep scanner the audit flagged as "dormant" is in fact already wired (<code>main.ts:245</code> → <code>launcher.ts:515</code>) — verified, no change needed. / 오후 추가분: 지도가 라이브(도시가 건설되면 빛남) + 플라이투 제스처, Nous의 자율 그룹 가입, 그리고 최초의 지식 그래프 뷰. 감사에서 "휴면"으로 표시된 유지보수 스캐너는 이미 연결되어 있음을 확인.</div>
 
 <h2>4 · Gates &amp; invariants (all green at end of day)</h2>
 <div class="panel">

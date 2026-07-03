@@ -37,6 +37,13 @@ CI gate · W-E1 bilingual getting-started · A8 decision-evalset exporter · A9 
 Brain compose. Daily visual log: docs/noesis-daily-log-2026-07-02.html. Remaining tail
 recorded there + in [[system-audit-2026-07]] program (W-C1–C5, W-E2–E5, Phase 40b).
 
+## [2026-07-02] apply | afternoon wave — live map, fly-to, group join, knowledge graph
+"do do do": W-C1 live map (orbital.js firehose → glow-on-build) + W-C2 fly-to camera
+(canon-safe) + W-B4 autonomous group join (GET /api/v1/groups + social-cycle) + W-C4 the
+first knowledge-graph view (docs/noesis-knowledge-graph.html — force-directed lore commons,
+applies [[oss-visualization-landscape]] three-forcegraph pattern hand-rolled/no-deps).
+W-C3a upkeep scanner confirmed already wired. Brain 1154 green, grid clean, allowlist +0.
+
 ## [2026-07-02] ingest | OSS landscapes (agent learning · visualization)
 Created [[oss-agent-learning-landscape]] (Voyager, Generative Agents, Reflexion, PIANO,
 Letta sleep-time, Mem0/Graphiti, DSPy+GEPA, SLM cascades) and
