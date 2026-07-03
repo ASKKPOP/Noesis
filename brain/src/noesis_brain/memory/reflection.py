@@ -74,11 +74,14 @@ class ReflectionEngine:
                 prompt,
                 GenerateOptions(
                     temperature=0.8,
-                    # Headroom for the insight + the WIKI_UPDATE line. Thinking is
-                    # off by default (Ollama adapter), so a capped budget on qwen3
-                    # yields a real reflection in `content` rather than empty output.
-                    max_tokens=512,
+                    # A reflection is prose whose insight feeds the next plan, so
+                    # keep reasoning ON (hidden in `thinking`) with room for the
+                    # insight + WIKI_UPDATE line — a clean synthesis in `content`
+                    # rather than the task-narrating preamble think-off produces
+                    # on qwen3. (Same rule as the conversational reply. D-MIND-07.)
+                    max_tokens=1024,
                     purpose="reflection",
+                    think=True,
                 ),
             )
             text = response.text.strip()

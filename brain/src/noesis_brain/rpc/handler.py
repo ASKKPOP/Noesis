@@ -405,8 +405,15 @@ class BrainHandler:
                 GenerateOptions(
                     system_prompt=system_prompt,
                     temperature=0.7,
-                    max_tokens=256,
+                    # Prose reply shown to other Nous in the Agora: keep reasoning
+                    # ON (it lands in the model's hidden `thinking` field, not the
+                    # spoken words) with room for both — verified on qwen3:4b to
+                    # yield a clean in-character line instead of the task-narrating
+                    # preamble that think-off produces. (Structured per-tick
+                    # decisions do the opposite: think-off + json_mode. D-MIND-07.)
+                    max_tokens=1024,
                     purpose="conversation",
+                    think=True,
                 ),
             )
             reply_text = response.text.strip()
