@@ -215,6 +215,14 @@ over-eagerness — the Nous bid the SAME open RFP ~20× and re-joined Dynamo eve
 once-per-target. Plus `test/test_loop_integration.py` — the FIRST end-to-end loop test (deterministic
 per-purpose scripted LLM drives real on_tick over real ticks; asserts goal→completion + a ballot cast;
 CI-safe). Suite **1159 green**.
+**Systemic thinking-off fix (commit `5075cfb`):** the empty-output bug was NOT limited to structured calls —
+verified on real qwen3 that reflection (prose, 300 tok) and the conversational reply (256 tok) ALSO returned
+empty content (hidden `<think>` ate the budget) → the learning loop produced no insight and a Nous went
+SILENT when spoken to. Root-cause fix: `OllamaAdapter.generate` defaults `think=false` for EVERY call
+(json_mode adds format=json on top; `GenerateOptions.think=True` opts back in); reflection budget 300→512.
+Re-verified on qwen3: reflection 2683 chars w/ WIKI_UPDATE, conversation non-empty. D-MIND-07 widened.
+Known nit: prose replies carry a brief "Okay, the user wants…" preamble (pre-existing conversation-path
+prompt quality, strictly better than silent) — a future polish, not a blocker.
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 
