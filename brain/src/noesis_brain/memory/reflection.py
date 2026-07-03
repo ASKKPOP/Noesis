@@ -74,7 +74,10 @@ class ReflectionEngine:
                 prompt,
                 GenerateOptions(
                     temperature=0.8,
-                    max_tokens=300,
+                    # Headroom for the insight + the WIKI_UPDATE line. Thinking is
+                    # off by default (Ollama adapter), so a capped budget on qwen3
+                    # yields a real reflection in `content` rather than empty output.
+                    max_tokens=512,
                     purpose="reflection",
                 ),
             )

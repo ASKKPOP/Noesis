@@ -104,16 +104,22 @@ class TestOllamaAdapter:
         adapter = OllamaAdapter()
         adapter._client = httpx.AsyncClient(base_url="http://localhost:11434", transport=_mock_transport(handler))
 
-        # json_mode ON → constrained + no reasoning
+        # json_mode ON → constrained JSON + reasoning off
         await adapter.generate("Decide", GenerateOptions(json_mode=True, purpose="decision"))
         assert seen["format"] == "json"
         assert seen["think"] is False
 
-        # json_mode OFF (default) → neither key sent (prose calls keep model default)
+        # prose call (default) → reasoning still OFF (answer must land in content,
+        # not be eaten by hidden <think>), but NOT constrained to JSON
         seen.clear()
         await adapter.generate("Reflect", GenerateOptions(purpose="reflection"))
         assert seen["format"] is None
-        assert seen["think"] is None
+        assert seen["think"] is False
+
+        # explicit opt-in → visible reasoning preserved
+        seen.clear()
+        await adapter.generate("Ponder", GenerateOptions(think=True))
+        assert seen["think"] is True
         await adapter.close()
 
     @pytest.mark.asyncio

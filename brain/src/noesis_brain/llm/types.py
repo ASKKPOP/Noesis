@@ -30,6 +30,11 @@ class GenerateOptions:
     # constrained decoding (Ollama format=json + think=false) emit clean JSON
     # directly. Prose calls (reflection, conversation) leave this False.
     json_mode: bool = False
+    # Reasoning toggle for models that support it (qwen3). None → provider
+    # default (Ollama adapter defaults to False so the answer lands in content
+    # instead of being consumed as hidden reasoning). Set True only when visible
+    # chain-of-thought in the output is genuinely wanted.
+    think: bool | None = None
 
 
 @dataclass(frozen=True)

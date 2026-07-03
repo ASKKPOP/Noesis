@@ -68,15 +68,17 @@ class OllamaAdapter(LLMAdapter):
         }
         if opts.stop_sequences:
             payload["options"]["stop"] = opts.stop_sequences
-        # Structured-decision calls: constrain output to a JSON object and turn
-        # OFF reasoning. qwen3 (the default model) otherwise spends the whole
-        # num_predict budget inside a hidden <think> block, leaving message
-        # content EMPTY — which silently no-ops the mind/society loop. Verified
-        # against qwen3:4b: think=false + format=json yields clean parseable JSON
-        # within 256 tokens. (Prose calls leave json_mode False → model default.)
+        # Reasoning models (qwen3, the default): thinking is OFF by default so the
+        # final answer lands in `content`. Otherwise the hidden <think> block eats
+        # the whole num_predict budget and `content` comes back EMPTY — which
+        # silently no-ops EVERY capped call: decisions (empty→unparseable),
+        # reflection (empty→no insight), and conversation (empty→the Nous goes
+        # SILENT when spoken to). Verified against qwen3:4b. Callers that genuinely
+        # want visible reasoning set options.think=True. json_mode additionally
+        # constrains output to a JSON object (structured decisions).
+        payload["think"] = opts.think if opts.think is not None else False
         if opts.json_mode:
             payload["format"] = "json"
-            payload["think"] = False
 
         try:
             resp = await self._client.post("/api/chat", json=payload)
