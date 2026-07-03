@@ -96,11 +96,34 @@ async def main() -> int:
         real = any(g.get("group_id") == gid for g in groups)
         print(f"  [{'PASS' if real else 'FAIL'}] the group it chose ({gid}) is a REAL seeded group, not a hallucination")
 
+    # 3. The write boundary: a civic action WITHOUT a Civic-DID must be rejected.
+    #    (The constitutional gate — check-civic-did-issuance-path — makes the
+    #    Civic-DID obtainable only via the Portal→Polis ceremony, so a real
+    #    write-back is a separate onboarding milestone. Here we prove the gate
+    #    HOLDS: an unauthenticated civic write is refused, not silently accepted.)
+    import httpx as _httpx
+    gate_ok = False
+    try:
+        r = await (await wire._get_client()).post(
+            f"{GRID}/api/v1/brain/actions",
+            headers={"Authorization": "Bearer invalid.token.here"},
+            json={"actions": [{"action_type": "join_group", "channel": "", "text": "",
+                               "metadata": {"group_id": "genesis:group:dynamo", "role": "member"}}],
+                  "tick": 1},
+        )
+        gate_ok = r.status_code in (401, 403)
+        print(f"\n[write] civic action without a Civic-DID → HTTP {r.status_code} {r.text[:60]}")
+    except _httpx.HTTPError as exc:
+        print(f"\n[write] gate probe transport error: {exc}")
+
+    print(f"  [{'PASS' if gate_ok else 'FAIL'}] the constitutional write-gate refuses an un-credentialed civic action")
+
     await wire.aclose()
-    ok = bool(groups) and chose_something
+    ok = bool(groups) and chose_something and gate_ok
     print(f"\n=== VERDICT: {'FULL-STACK ALIVE ✓' if ok else 'INCONCLUSIVE'} — MySQL → Grid → HTTP → Brain → qwen3 ===")
-    print("Note: write-back of civic actions (the JOIN_GROUP hitting the Grid) needs a")
-    print("Civic-DID via the Portal→Polis ceremony — the sight+decide half is proven here.")
+    print("Proven: real Grid data → real model decision, and the write-gate holds.")
+    print("Next milestone: the JOIN_GROUP actually landing on the audit chain needs a")
+    print("Civic-DID via the Portal→Polis ceremony (by design — not shortcuttable).")
     return 0 if ok else 1
 
 
