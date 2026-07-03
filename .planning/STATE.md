@@ -274,6 +274,25 @@ on the real audit chain. **Deferred as a proper milestone** (grid-side + archite
 session on `grid/src/` = collision risk; deserves design, not a session-tail edit). Seeded Nous DIDs:
 `did:noesis:{sophia,hermes,themis}` (runners keyed by nousDid; presets.ts).
 
+**WRITE-BACK — DEEPER ROOT CAUSE + part-1 fix (commit `d3fb326`, isolated worktree `feat/civic-writeback`):**
+The gap is bigger than the missing `registerCivicDid` call — **the running Grid never wires a GridCoordinator
+at all.** `main.ts:384` hardcodes `getRunner: () => undefined` with a comment deferring runner+coordinator
+construction to "a future sub-plan"; seeded Nous are `launcher.spawnNous` representations, NOT `NousRunner`
+instances registered to a coordinator. So the whole external-Brain→Grid action path (routes + `GridCoordinator`
++ WIRE-02 index) is scaffolded but disconnected — `services.coordinator` is `undefined` at runtime.
+**Part-1 fix SHIPPED (surgical, forward-compatible, merged to main):** the registry issuance route now calls
+`coordinator?.registerCivicDid?.(civicDid, existenceDid)` on success (extended `WireCoordinator`; +1 binding
+test; api suite 627, tsc clean). Binds an already-issued DID — does NOT issue, so orthogonal to D-V3-33.
+**Remaining milestone (the deferred sub-plan):** construct a `GridCoordinator` in `main.ts`, build/register
+`NousRunner` instances for the seeded Nous (pass `groupStore` into `NousRunnerConfig` for join/leave dispatch),
+wire it into `services.coordinator`, replace `getRunner:()=>undefined`. Then E2E: issue DID → post join_group
+→ `group.member_joined` on the audit chain. **A core-boot change (main.ts/launcher.ts) — proper milestone,
+needs design + coordination with the active grid-QA session, not a session-tail edit.**
+**CONSTITUTIONAL TENSION SURFACED:** the Phase 37 `POST /registry/civic-did/request` issues a Civic-DID
+**directly (public, self-service)**, which is in tension with **D-V3-33** (all Civic-DID issuance must be
+Portal→Polis-gated). The `check-civic-did-issuance-path` gate only guards the audit *producers*, not this
+direct route. Needs a decision: is Phase 37 direct issuance still legitimate, or should it be gated/removed?
+
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 
 **Money in Noēsis is exactly two things, and nothing else:**
