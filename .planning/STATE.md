@@ -221,8 +221,12 @@ empty content (hidden `<think>` ate the budget) → the learning loop produced n
 SILENT when spoken to. Root-cause fix: `OllamaAdapter.generate` defaults `think=false` for EVERY call
 (json_mode adds format=json on top; `GenerateOptions.think=True` opts back in); reflection budget 300→512.
 Re-verified on qwen3: reflection 2683 chars w/ WIKI_UPDATE, conversation non-empty. D-MIND-07 widened.
-Known nit: prose replies carry a brief "Okay, the user wants…" preamble (pre-existing conversation-path
-prompt quality, strictly better than silent) — a future polish, not a blocker.
+**Prose-quality follow-up (commit `015bfd5`):** the preamble nit is fixed. With think-off qwen3 keeps
+content non-empty but NARRATES ("We are in the role of Sophia…"). Refined two-mode rule (D-MIND-07):
+structured per-tick decisions → think-off + json_mode (fast); prose calls (Agora reply + reflection) →
+`think=True` + max_tokens 1024 (reasoning hidden in `thinking`, clean line in `content`). Verified on qwen3:
+conversation "Thanks, Hermes! I'm finalizing the energy stability report…"; reflection a real articulate
+insight w/ WIKI_UPDATE, no narration. 2 regression tests lock the call-site options. Suite **1161 green**.
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 
