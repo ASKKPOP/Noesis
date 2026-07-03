@@ -32,7 +32,7 @@ import { appendTreasuryStructureRevenue } from '../../audit/append-treasury-stru
 import { MarketplaceStore, MIN_LISTING_PRICE_BIOS } from '../../marketplace/marketplace-store.js';
 import { structureRevenueDue, ZONE_TAX_BPS } from '../../civic/founding-law.js';
 
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9-]+$/;
+const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 
 /**
  * The Polis treasury DID structure-revenue is skimmed to (D-60-04). Defined locally so the

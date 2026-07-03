@@ -35,7 +35,7 @@ import { GOV_SESSION_ISSUER_DID } from '../../civic-registry/government-session.
 import { MySqlGovBillStore, type GovBillStore } from '../../gov/gov-bill-store.js';
 import type { SessionOutcome } from '../../gov/types.js';
 
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9-]+$/;
+const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CATEGORY_RE = /^[a-z0-9_-]{1,63}$/i;
 const MAX_BODY_BYTES = 32 * 1024; // 32 KiB (mirrors Phase 12 MAX_BODY_TEXT_BYTES)
