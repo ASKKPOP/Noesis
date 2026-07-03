@@ -1714,4 +1714,16 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS nous_registrations`,
     },
+    {
+        // QA fix (ISSUE-002): gov_bills only ever stored title_hash — the plaintext
+        // title submitted at POST /api/v1/gov/bill/draft was hashed and discarded,
+        // so no visitor-facing surface (GET /api/v1/polis/bills) could ever display
+        // a bill's title. body_text is stored in full alongside body_hash; title
+        // gets the same treatment for consistency — no privacy rationale for
+        // withholding it (the full body is already public).
+        version: 71,
+        name: 'gov_bills_add_title',
+        up: `ALTER TABLE gov_bills ADD COLUMN title VARCHAR(255) NOT NULL DEFAULT '' AFTER author_civic_did`,
+        down: `ALTER TABLE gov_bills DROP COLUMN title`,
+    },
 ];

@@ -23,6 +23,7 @@ export interface BillRow {
     bill_id: string;
     grid_name: string;
     author_civic_did: string;
+    title: string;
     title_hash: string;
     body_text: string;
     body_hash: string;
@@ -59,6 +60,7 @@ export interface LawRow {
 export interface InsertBillInput {
     bill_id: string;
     author_civic_did: string;
+    title: string;
     title_hash: string;
     body_text: string;
     body_hash: string;
@@ -69,6 +71,8 @@ export interface InsertBillInput {
 export interface GovBillStore {
     insertBill(input: InsertBillInput): Promise<void>;
     getBill(bill_id: string): Promise<BillRow | null>;
+    /** All bills for the store's grid, most recent first — backs the visitor-facing bill list. */
+    listBills(): Promise<BillRow[]>;
     /** Adds a distinct co-sponsor; throws Error('duplicate_cosponsor') on repeat. Returns the new count. */
     addCosponsor(input: { bill_id: string; cosponsor_civic_did: string; cosponsored_at_tick: number }): Promise<number>;
     setBillStatus(bill_id: string, status: BillStatus): Promise<void>;
@@ -99,6 +103,7 @@ export class InMemoryGovBillStore implements GovBillStore {
             bill_id: input.bill_id,
             grid_name: this.gridName,
             author_civic_did: input.author_civic_did,
+            title: input.title,
             title_hash: input.title_hash,
             body_text: input.body_text,
             body_hash: input.body_hash,
@@ -113,6 +118,12 @@ export class InMemoryGovBillStore implements GovBillStore {
     async getBill(bill_id: string): Promise<BillRow | null> {
         const row = this.bills.get(bill_id);
         return row ? { ...row } : null;
+    }
+
+    async listBills(): Promise<BillRow[]> {
+        return [...this.bills.values()]
+            .sort((a, b) => b.created_at_tick - a.created_at_tick)
+            .map(b => ({ ...b }));
     }
 
     async addCosponsor(input: { bill_id: string; cosponsor_civic_did: string; cosponsored_at_tick: number }): Promise<number> {
@@ -209,20 +220,30 @@ export class MySqlGovBillStore implements GovBillStore {
     async insertBill(input: InsertBillInput): Promise<void> {
         await this.pool.query(
             `INSERT INTO gov_bills
-               (bill_id, grid_name, author_civic_did, title_hash, body_text, body_hash, category, status, cosponsor_count, created_at_tick)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'drafted', 0, ?)`,
-            [input.bill_id, this.gridName, input.author_civic_did, input.title_hash, input.body_text, input.body_hash, input.category, input.created_at_tick],
+               (bill_id, grid_name, author_civic_did, title, title_hash, body_text, body_hash, category, status, cosponsor_count, created_at_tick)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'drafted', 0, ?)`,
+            [input.bill_id, this.gridName, input.author_civic_did, input.title, input.title_hash, input.body_text, input.body_hash, input.category, input.created_at_tick],
         );
     }
 
     async getBill(bill_id: string): Promise<BillRow | null> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT bill_id, grid_name, author_civic_did, title_hash, body_text, body_hash, category,
+            `SELECT bill_id, grid_name, author_civic_did, title, title_hash, body_text, body_hash, category,
                     status, cosponsor_count, proposal_id, created_at_tick
              FROM gov_bills WHERE grid_name = ? AND bill_id = ?`,
             [this.gridName, bill_id],
         );
         return (rows[0] as BillRow | undefined) ?? null;
+    }
+
+    async listBills(): Promise<BillRow[]> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT bill_id, grid_name, author_civic_did, title, title_hash, body_text, body_hash, category,
+                    status, cosponsor_count, proposal_id, created_at_tick
+             FROM gov_bills WHERE grid_name = ? ORDER BY created_at_tick DESC`,
+            [this.gridName],
+        );
+        return rows as unknown as BillRow[];
     }
 
     async addCosponsor(input: { bill_id: string; cosponsor_civic_did: string; cosponsored_at_tick: number }): Promise<number> {

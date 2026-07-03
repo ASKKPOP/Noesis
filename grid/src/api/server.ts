@@ -353,15 +353,6 @@ export interface GridServices {
      */
     brainTokenStore?: BrainTokenStore;
     /**
-     * Phase 36 VIS-01 VOTE-05: optional Polis bill store.
-     * When present, polis-bills route queries getBill/listBills.
-     * When absent, the route returns empty stubs (Phase 46 wires real Polis data).
-     */
-    polisStore?: {
-        getBill(id: string): Record<string, unknown> | null;
-        listBills(): Array<Record<string, unknown>>;
-    };
-    /**
      * Phase 38 WIRE-01: GridCoordinator accessor for the Brain-wire action dispatch route.
      * When present, POST /api/v1/brain/actions looks up the NousRunner via
      * coordinator.getRunnerByCivicDid(civicDid) and calls executeActions.

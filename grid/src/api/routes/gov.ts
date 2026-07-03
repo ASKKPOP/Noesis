@@ -110,6 +110,7 @@ export async function registerGovRoutes(
         await store.insertBill({
             bill_id: billId,
             author_civic_did: civicDid,
+            title: body.title,
             title_hash: titleHash,
             body_text: body.body,
             body_hash: contentHash,

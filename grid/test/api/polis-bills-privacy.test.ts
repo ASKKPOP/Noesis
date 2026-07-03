@@ -2,12 +2,19 @@
  * Phase 36 Wave 0 — Polis bills ballot privacy test.
  *
  * D-36-15 / VOTE-05 invariant: GET /api/v1/polis/bills/:id for an unauthenticated
- * (visitor) request MUST expose tally totals but MUST NOT expose the ballots array
- * or any voter_did fields.
+ * (visitor) request MUST NOT expose a ballots array or any voter_did fields,
+ * no matter what the underlying store returns.
  *
- * // VOTE-05 invariant: ballot privacy preserved even at tally exposure (D-36-15)
+ * // VOTE-05 invariant: ballot privacy preserved via the PUBLIC_KEYS allowlist (D-36-15)
  *
- * Tests fail RED until Plan 05 implements polis-bills.ts with the privacy stripping.
+ * QA fix (ISSUE-002): polis-bills.ts now reads from the real GovBillStore
+ * (services.govStore) instead of the Phase 36 stub (services.polisStore, removed).
+ * gov_bills has no tally/ballots columns — those live in governance_ballots,
+ * joined via bill.proposal_id, and are not yet wired into this route (future
+ * work, tracked separately from ISSUE-002). This test injects a mock GovBillStore
+ * whose BillRow carries extra unexpected properties (simulating a future store
+ * that DID include ballots) to prove toPublicBill's allowlist reconstruction
+ * strips anything outside PUBLIC_KEYS regardless of what the store returns.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { buildServer } from '../../src/api/server.js';
@@ -16,23 +23,47 @@ import { SpatialMap } from '../../src/space/map.js';
 import { LogosEngine } from '../../src/logos/engine.js';
 import { AuditChain } from '../../src/audit/chain.js';
 import type { FastifyInstance } from 'fastify';
+import type { GovBillStore, BillRow } from '../../src/gov/gov-bill-store.js';
 
 const GRID_NAME = 'genesis';
 
-// Mock bill with ballots (ballots should be stripped from visitor response)
+// A BillRow with extra, non-PUBLIC_KEYS properties tacked on (ballots, voter_did) —
+// simulating a future store shape. toPublicBill must strip anything not in
+// PUBLIC_KEYS regardless of what the store hands back.
 const mockBill = {
-    id: 'bill-1',
-    body: 'Proposal to establish a public library fund.',
-    tally: { pass: 5, fail: 2, abstain: 1 },
+    bill_id: 'bill-1',
+    grid_name: GRID_NAME,
+    author_civic_did: 'did:civic:noesis:human:gen-001',
+    title: 'Public Library Fund',
+    title_hash: 'x'.repeat(64),
+    body_text: 'Proposal to establish a public library fund.',
+    body_hash: 'y'.repeat(64),
+    category: 'infrastructure',
+    status: 'in_session',
+    cosponsor_count: 2,
+    proposal_id: null,
+    created_at_tick: 10,
     ballots: [
         { voter_did: 'did:civic:noesis:gen-001', choice: 'pass' },
         { voter_did: 'did:civic:noesis:gen-002', choice: 'fail' },
     ],
-};
+} as unknown as BillRow;
 
-const mockPolisStore = {
-    getBill: (id: string) => (id === 'bill-1' ? mockBill : null),
-    listBills: () => [mockBill],
+const mockGovStore: GovBillStore = {
+    insertBill: async () => {},
+    getBill: async (id: string) => (id === 'bill-1' ? mockBill : null),
+    listBills: async () => [mockBill],
+    addCosponsor: async () => 0,
+    setBillStatus: async () => {},
+    setBillProposalId: async () => {},
+    openSession: async () => {},
+    getSession: async () => null,
+    addArgument: async () => {},
+    closeSession: async () => {},
+    enactLaw: async () => {},
+    getActiveLaws: async () => [],
+    getLaw: async () => null,
+    repealLaw: async () => {},
 };
 
 function buildTestServer(): FastifyInstance {
@@ -40,10 +71,9 @@ function buildTestServer(): FastifyInstance {
     const space = new SpatialMap();
     const logos = new LogosEngine();
     const audit = new AuditChain();
-    // polisStore injected via GridServices in Plan 05
     return buildServer({
         clock, space, logos, audit, gridName: GRID_NAME,
-        polisStore: mockPolisStore as unknown as never,
+        govStore: mockGovStore,
     });
 }
 
@@ -59,7 +89,7 @@ describe('polis bills privacy — VOTE-05 invariant', () => {
         await app.close();
     });
 
-    it('GET /api/v1/polis/bills/bill-1 (visitor, no bearer) has tally but NO ballots array', async () => {
+    it('GET /api/v1/polis/bills/bill-1 (visitor, no bearer) has real title, NO ballots array', async () => {
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/polis/bills/bill-1',
@@ -68,21 +98,13 @@ describe('polis bills privacy — VOTE-05 invariant', () => {
         expect(res.statusCode).toBe(200);
         const body = JSON.parse(res.payload);
 
-        // VOTE-05 invariant: ballot privacy preserved even at tally exposure (D-36-15)
+        // ISSUE-002: title is now real (previously unrecoverable — only a hash was stored)
+        expect(body.title).toBe('Public Library Fund');
+        expect(body.cosponsors_count).toBe(2);
 
-        // Tally MUST be present
-        expect(body).toHaveProperty('tally');
-        expect(body.tally).toHaveProperty('pass');
-        expect(body.tally).toHaveProperty('fail');
-        expect(body.tally).toHaveProperty('abstain');
-        expect(body.tally.pass).toBe(5);
-        expect(body.tally.fail).toBe(2);
-        expect(body.tally.abstain).toBe(1);
-
-        // Ballots MUST be absent
+        // VOTE-05 invariant: ballots/voter_did MUST be absent regardless of what
+        // the store returned (allowlist reconstruction, not a field-by-field strip)
         expect(body.ballots).toBeUndefined();
-
-        // No voter_did anywhere in the response
         expect(JSON.stringify(body)).not.toMatch(/voter_did|ballots/);
     });
 });

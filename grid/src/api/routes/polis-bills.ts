@@ -9,15 +9,53 @@
  * GET /api/v1/polis/bills          → {bills: PolisBill[]}
  * GET /api/v1/polis/bills/:id      → PolisBill (single)
  *
- * Phase 36 STUB — Phase 46 (Polis) wires real bill data.
+ * QA fix (ISSUE-002): the Phase 36 stub (services.polisStore) was never wired
+ * anywhere — this route always returned {bills: []}, even with real bills in
+ * gov_bills. Now reads from the real Phase 46 GovBillStore (services.govStore,
+ * mirroring gov.ts's resolveStore), same as every other Polis/gov route.
  *
  * VOTE-05 / D-36-15: visitor sees tally totals after 'tallied' status,
  * but NEVER individual ballots or voter_did fields. Response is reconstructed
  * from an explicit PUBLIC_KEYS allowlist — source object is never spread.
  */
 
+import { createHash } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
+import { MySqlGovBillStore, type GovBillStore, type BillRow, type BillStatus } from '../../gov/gov-bill-store.js';
+
+function sha256Hex(input: string): string {
+    return createHash('sha256').update(input).digest('hex');
+}
+
+/** Prefer an injected store (tests); otherwise build a MySQL-backed one — mirrors gov.ts. */
+function resolveStore(services: GridServices): GovBillStore | null {
+    if (services.govStore) return services.govStore;
+    if (services.pool) return new MySqlGovBillStore(services.pool, services.gridName);
+    return null;
+}
+
+/** BillStatus (drafted/cosponsored/in_session/enacted/rejected/withdrawn) has no 1:1
+ *  mapping to the visitor-facing session_status enum — approximate the pipeline stage. */
+function toSessionStatus(status: BillStatus): PolisBill['session_status'] {
+    switch (status) {
+        case 'drafted':
+        case 'cosponsored': return 'drafting';
+        case 'in_session': return 'debate';
+        default: return 'tallied'; // enacted, rejected, withdrawn — session has closed
+    }
+}
+
+function billRowToRaw(bill: BillRow): Record<string, unknown> {
+    return {
+        id: bill.bill_id,
+        title: bill.title,
+        body_summary: bill.body_text.slice(0, 280),
+        sponsor_civic_did_hash: sha256Hex(bill.author_civic_did),
+        cosponsors_count: bill.cosponsor_count,
+        session_status: toSessionStatus(bill.status),
+    };
+}
 
 /**
  * Visitor-visible bill shape.
@@ -75,29 +113,23 @@ export function registerPolisBillsRoute(
     services: GridServices,
 ): void {
     // GET /api/v1/polis/bills — list all bills (visitor view, VOTE-05 filtered)
-    app.get('/api/v1/polis/bills', async (_req, _reply) => {
-        const polisStore = services.polisStore;
-        if (!polisStore) {
-            // PHASE-36 STUB — Phase 46 wires real Polis bill store.
-            return { bills: [] };
-        }
-        const rawBills = polisStore.listBills() as Array<Record<string, unknown>>;
-        const bills = rawBills.map(toPublicBill);
+    app.get('/api/v1/polis/bills', async (_req, reply) => {
+        const store = resolveStore(services);
+        if (!store) return reply.code(503).send({ error: 'polis_unavailable' });
+        const rawBills = await store.listBills();
+        const bills = rawBills.map(b => toPublicBill(billRowToRaw(b)));
         return { bills };
     });
 
     // GET /api/v1/polis/bills/:id — single bill (visitor view, VOTE-05 filtered)
     app.get<{ Params: { id: string } }>('/api/v1/polis/bills/:id', async (req, reply) => {
-        const polisStore = services.polisStore;
-        if (!polisStore) {
-            // PHASE-36 STUB — Phase 46 wires real Polis bill store.
-            return {};
-        }
-        const raw = polisStore.getBill(req.params.id) as Record<string, unknown> | null;
-        if (!raw) {
+        const store = resolveStore(services);
+        if (!store) return reply.code(503).send({ error: 'polis_unavailable' });
+        const bill = await store.getBill(req.params.id);
+        if (!bill) {
             reply.code(404);
             return { error: 'bill_not_found' };
         }
-        return toPublicBill(raw);
+        return toPublicBill(billRowToRaw(bill));
     });
 }
