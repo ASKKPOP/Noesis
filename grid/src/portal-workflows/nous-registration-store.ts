@@ -48,6 +48,20 @@ export class NousRegistrationStore {
         return r.length ? r[0] : null;
     }
 
+    /**
+     * D-V3-33 issuance gate: has this Nous a Portal→Polis-**approved** registration
+     * on the target Grid? The Civic-DID issuance route requires this so no
+     * Civic-DID is issued outside the Portal → Polis pipeline. Matches the
+     * request's existence_did against nous_registrations.nous_did.
+     */
+    async isNousApproved(gridName: string, nousDid: string): Promise<boolean> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT 1 FROM nous_registrations WHERE target_grid = ? AND nous_did = ? AND status = 'approved' LIMIT 1`,
+            [gridName, nousDid],
+        );
+        return rows.length > 0;
+    }
+
     /** Portal pre-screen. Pass → forward to Polis (polis.registration_pending). Fail → rejected. */
     async preScreen(p: { requestId: string; pass: boolean; reason?: NousRejectReason; tick: number }): Promise<{ ok: true; forwarded: boolean } | { ok: false; reason: 'not_found' | 'bad_state' }> {
         const r = await this.get(p.requestId);

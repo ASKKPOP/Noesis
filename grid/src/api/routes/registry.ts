@@ -83,6 +83,23 @@ export async function registerRegistryRoutes(
                 return reply.code(409).send({ error: 'already_registered', civic_did: existing.civicDid });
             }
 
+            // D-V3-33 issuance gate: a Civic-DID may be issued ONLY after the Nous
+            // has a Portal→Polis-APPROVED registration on this Grid. The valid
+            // signature above proves existence-key ownership; this proves the
+            // Portal → Polis pipeline approved this Nous. Without an approved
+            // registration → 403. (Enforced whenever a DB pool is wired, i.e.
+            // production; DB-less/crypto-only test contexts exercise the signing
+            // path without the pipeline. The direct route is now the *issuance
+            // step that follows approval*, not standalone self-service.)
+            if (services.pool) {
+                const { NousRegistrationStore } = await import('../../portal-workflows/nous-registration-store.js');
+                const approved = await new NousRegistrationStore(services.pool, services.audit)
+                    .isNousApproved(services.gridName, existenceDid);
+                if (!approved) {
+                    return reply.code(403).send({ error: 'portal_approval_required' });
+                }
+            }
+
             // Phase 42 D-42-05 — extract optional P2P public key JWK (T-42-02-04 mitigation).
             // When present and shaped as OKP/Ed25519, store for P2P SDP encryption.
             // When missing, null, or non-OKP format: store null (backward compat — Phase 37

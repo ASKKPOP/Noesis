@@ -59,17 +59,26 @@ function makeMockCivicStore() {
     };
 }
 
-async function buildTestApp(opts: { withStore: boolean; coordinator?: unknown }) {
+async function buildTestApp(opts: { withStore: boolean; coordinator?: unknown; approved?: boolean }) {
     const clock = new WorldClock({ tickRateMs: 100_000 });
     const space = new SpatialMap();
     const logos = new LogosEngine();
     const audit = new AuditChain();
     const registry = new NousRegistry();
 
+    // D-V3-33 gate: when a pool is wired, the issuance route checks
+    // NousRegistrationStore.isNousApproved (a `SELECT 1 … status='approved'`).
+    // This mock pool answers only that query — approved → one row, else none.
+    const pool = opts.approved === undefined ? undefined : ({
+        query: async (sql: string) =>
+            /status\s*=\s*'approved'/.test(sql) && opts.approved ? [[{ '1': 1 }], {}] : [[], {}],
+    } as unknown as import('mysql2/promise').Pool);
+
     const app = buildServer({
         clock, space, logos, audit, gridName: GRID_NAME, registry,
         civicDidStore: opts.withStore ? (makeMockCivicStore() as unknown as import('../../src/civic-registry/civic-did-store.js').CivicDidStore) : undefined,
         ...(opts.coordinator ? { coordinator: opts.coordinator as import('../../src/api/routes/brain-wire.js').WireCoordinator } : {}),
+        ...(pool ? { pool } : {}),
     });
     await app.ready();
     return { app, audit };
@@ -256,6 +265,41 @@ describe('POST /api/v1/registry/civic-did/request — happy path + audit', () =>
         expect(secondBody.error).toBe('already_registered');
         // Original civic_did is returned in the conflict response
         expect(secondBody.civic_did).toBe(firstBody.civic_did);
+    });
+});
+
+// D-V3-33: with a DB pool wired (production), a Civic-DID is issued ONLY after the
+// Nous has a Portal→Polis-approved registration. The direct route is the issuance
+// step that follows approval — not standalone self-service.
+describe('POST /api/v1/registry/civic-did/request — D-V3-33 Portal-approval gate', () => {
+    async function signedRequest() {
+        const keyPair = await generateKeyPair('ES256');
+        const jwk = await exportJWK(keyPair.publicKey);
+        const signature = await new CompactSign(new TextEncoder().encode(CIVIC_OATH))
+            .setProtectedHeader({ alg: 'ES256' })
+            .sign(keyPair.privateKey);
+        return {
+            existence_did: EXISTENCE_DID,
+            civic_oath: CIVIC_OATH,
+            existence_public_key_jwk: jwk,
+            existence_key_signature: signature,
+        };
+    }
+
+    it('403 portal_approval_required when the Nous has no approved registration', async () => {
+        const { app } = await buildTestApp({ withStore: true, approved: false });
+        const res = await app.inject({ method: 'POST', url: '/api/v1/registry/civic-did/request', payload: await signedRequest() });
+        expect(res.statusCode).toBe(403);
+        expect(res.json()).toMatchObject({ error: 'portal_approval_required' });
+        await app.close();
+    });
+
+    it('201 issues once a Portal→Polis-approved registration exists', async () => {
+        const { app } = await buildTestApp({ withStore: true, approved: true });
+        const res = await app.inject({ method: 'POST', url: '/api/v1/registry/civic-did/request', payload: await signedRequest() });
+        expect(res.statusCode).toBe(201);
+        expect((res.json() as { civic_did: string }).civic_did).toMatch(/^did:civic:noesis:/);
+        await app.close();
     });
 });
 
