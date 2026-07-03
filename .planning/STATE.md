@@ -249,6 +249,14 @@ not a hallucination). Chain proven: **MySQL → Grid HTTP → wire client → Br
 sight+decide half is live; write-back of civic actions needs a Civic-DID (Portal→Polis ceremony) — the
 next full-stack milestone. `validate_grid_url` is https-only, so the harness relaxes `_base_url` for local
 http (dev-only).
+**Write-gate characterized (commit `0de1f93`):** the DB confirms `civic_did_registry` + `brain_tokens` are
+EMPTY (seeded Nous have runners but no Civic-DIDs), and posting `join_group` to `/api/v1/brain/actions`
+without a Civic-DID → **401 `did_required`** — the constitutional gate holds live. The full write-back
+(action → audit chain) requires a Civic-DID, obtainable ONLY via the Portal→Polis ceremony (Portal request →
+pre-screen → Polis charter review → approval; government/Polis-tier auth + deliberate windows).
+`check-civic-did-issuance-path` makes this the sole path — **direct SQL insertion is a constitutional breach.**
+So the write-back is a proper multi-step onboarding MILESTONE, not a quick step. Full-stack harness now 4/4
+(sight · decide · real-not-hallucinated · write-gate-holds).
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 
