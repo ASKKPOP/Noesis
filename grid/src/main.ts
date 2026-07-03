@@ -10,6 +10,9 @@ import { GENESIS_CONFIG } from './genesis/presets.js';
 import { buildServer } from './api/server.js';
 import { HumanRegistry } from './human/index.js';
 import { Reviewer } from './review/index.js';
+import { GridCoordinator } from './integration/grid-coordinator.js';
+import { NousRunner } from './integration/nous-runner.js';
+import type { IBrainBridge } from './integration/types.js';
 import { LoreStorage } from './lore/LoreStorage.js';
 import {
     AuditStore,
@@ -327,6 +330,49 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     const gridRegistry = new GridRegistry();
     gridRegistry.register(gridRecordFromConfig(config.genesisConfig));
 
+    // Phase 38 WIRE-01/02 (Brain→Grid write-back): wire a GridCoordinator so an
+    // external Brain (over HTTPS) can dispatch a Civic-DID holder's actions to
+    // its NousRunner: /api/v1/brain/actions → coordinator.getRunnerByCivicDid →
+    // runner.executeActions → sole-producer audit events. On Civic-DID issuance
+    // the registry route calls coordinator.registerCivicDid (binding, this plan).
+    //
+    // Seeded Nous get HEADLESS runners: a disconnected stub bridge makes on_tick
+    // early-return (bridge.connected === false), so they NEVER double-tick the
+    // launcher's in-process simulation — they exist only to (a) be bound to a
+    // Civic-DID on issuance and (b) dispatch external actions to the audit chain.
+    // The coordinator is not clock-subscribed (no startListening) — passive.
+    const coordinator = new GridCoordinator(launcher);
+    {
+        // Disconnected stub: connected=false short-circuits every pull-model call
+        // (on_tick/on_message early-return), so these methods are never invoked.
+        // They exist only to satisfy IBrainBridge; the runner serves external
+        // action dispatch (executeActions) which does not touch the bridge.
+        const stubBridge: IBrainBridge = {
+            connected: false,
+            sendTick: async () => [],
+            sendMessage: async () => [],
+            sendEvent: () => {},
+            getState: async () => ({}),
+            queryMemory: async () => ({ entries: [] }),
+            forceTelos: async () => ({ telos_hash_before: '', telos_hash_after: '' }),
+        };
+        const availableRegions = new Set(config.genesisConfig.regions.map((r) => r.id));
+        for (const seed of SEED_NOUS) {
+            if (!availableRegions.has(seed.region)) continue;
+            coordinator.addRunner(new NousRunner({
+                nousDid: seed.did,
+                nousName: seed.name,
+                bridge: stubBridge,
+                space: launcher.space,
+                audit: chain ?? launcher.audit,   // persist to MySQL when wired
+                registry: launcher.registry,
+                economy: launcher.economy,
+                reviewer,
+                groupStore,
+            }));
+        }
+    }
+
     const server = buildServer({
         clock: launcher.clock,
         space: launcher.space,
@@ -336,6 +382,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         registry: launcher.registry,
         shops: launcher.shops,
         groupStore,
+        coordinator,   // Phase 38: external Brain action dispatch + WIRE-02 Civic-DID binding
         gridRegistry,
         relationships: launcher.relationships,
         humanRegistry,
