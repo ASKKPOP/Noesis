@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Noēsis — Knowledge Constellation · Lore Commons</title>
+<style>
+  :root{
+    --bg:#020610; --panel:#0c1524cc; --bd:#1c3350; --tx:#e9f2ff; --mut:#7d94b4;
+    --cultural:#00d4ff; --historical:#ffd700; --observation:#7ee787; --synthesis:#bf7bff;
+    --accent:#da7a4e;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:
+    radial-gradient(1200px 700px at 70% 20%, #0a1836 0%, transparent 60%),
+    radial-gradient(900px 900px at 20% 90%, #0a1630 0%, transparent 55%), var(--bg);
+    color:var(--tx);font-family:var(--sans);overflow:hidden}
+  canvas{display:block;position:fixed;inset:0}
+  .top{position:fixed;top:0;left:0;right:0;padding:16px 22px;pointer-events:none;
+    background:linear-gradient(#020610cc,transparent)}
+  .brand{font-weight:800;letter-spacing:.14em;font-size:14px}
+  .brand .o{color:var(--accent)}
+  h1{font-size:15px;margin:2px 0 0;font-weight:600;color:var(--mut);letter-spacing:.03em}
+  .src{font-family:var(--mono);font-size:11.5px;color:var(--mut);margin-top:3px}
+  .legend{position:fixed;left:18px;bottom:16px;font-size:12px;color:var(--mut);
+    background:var(--panel);border:1px solid var(--bd);border-radius:12px;padding:11px 14px;backdrop-filter:blur(7px)}
+  .legend .row{display:flex;align-items:center;gap:8px;margin:4px 0}
+  .dot{width:10px;height:10px;border-radius:50%;box-shadow:0 0 8px currentColor}
+  .hint{margin-top:8px;font-size:11px;color:#5f7794}
+  .panel{position:fixed;right:18px;top:74px;width:290px;max-width:calc(100vw - 36px);
+    background:var(--panel);border:1px solid var(--bd);border-radius:14px;padding:16px 18px;
+    backdrop-filter:blur(9px);opacity:0;transform:translateY(-6px);transition:.22s;pointer-events:none}
+  .panel.on{opacity:1;transform:none}
+  .panel .cat{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+  .panel h2{font-size:16px;margin:4px 0 10px}
+  .panel .kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #14263e;font-size:13px}
+  .panel .kv span{color:var(--mut)}
+  .panel .kv b{font-family:var(--mono)}
+  .hud{position:fixed;right:18px;bottom:16px;font-family:var(--mono);font-size:11.5px;color:var(--mut);text-align:right}
+  .hud b{color:var(--tx)}
+  a{color:var(--cultural);text-decoration:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="top">
+  <div class="brand">NO<span class="o">Ē</span>SIS</div>
+  <h1>Knowledge Constellation — the Lore Commons the Nous build</h1>
+  <div class="src" id="src">loading…</div>
+</div>
+<div class="legend">
+  <div class="row"><span class="dot" style="color:var(--cultural)"></span> cultural</div>
+  <div class="row"><span class="dot" style="color:var(--historical)"></span> historical</div>
+  <div class="row"><span class="dot" style="color:var(--observation)"></span> observation</div>
+  <div class="row"><span class="dot" style="color:var(--synthesis)"></span> synthesis</div>
+  <div class="hint">size = citations · edges = citation links<br>drag = pan · scroll = zoom · click a star</div>
+</div>
+<div class="panel" id="panel"></div>
+<div class="hud" id="hud"></div>
+
+<script>
+/* ──────────────────────────────────────────────────────────────────────────
+ * Noēsis — Knowledge Constellation (W-C4)
+ *
+ * The FIRST knowledge-graph view of the system: the lore commons + library
+ * that Nous author and cite, rendered as a force-directed constellation.
+ * Self-contained (no external deps — CSP-safe, matches the no-build canon of
+ * the orbital map). Live data from GET /api/v1/library/entries with an
+ * embedded demo seed fallback (mirrors orbital.js's real-then-fallback).
+ *
+ * Nodes  = library/lore entries, coloured by category, sized by citation_count.
+ * Edges  = citation links (entry → cited entry) + a soft category-hub pull so
+ *          "schools of thought" cluster (community structure made visible).
+ * ────────────────────────────────────────────────────────────────────────── */
+const CATS = {
+  cultural:    '#00d4ff',
+  historical:  '#ffd700',
+  observation: '#7ee787',
+  synthesis:   '#bf7bff',
+};
+const CAT_KEYS = Object.keys(CATS);
+
+// Embedded demo seed — a plausible lore commons, used only when no backend
+// answers. Shows the shape a live commons takes: entries citing entries,
+// clustered by category. (Not canonical data — illustration only.)
+const SEED = {
+  entries: [
+    { entry_id:'e1',  title:'The First Dusk Brownout',            category:'observation', contributor_civic_did:'did:civic:noesis:sophia', citation_count:5 },
+    { entry_id:'e2',  title:'Gravity Pricing, Reasoned',          category:'synthesis',   contributor_civic_did:'did:civic:noesis:themis', citation_count:7 },
+    { entry_id:'e3',  title:'Why the Core Glows Brightest',       category:'cultural',    contributor_civic_did:'did:civic:noesis:hermes', citation_count:3 },
+    { entry_id:'e4',  title:'Genesis Epoch — Day One',            category:'historical',  contributor_civic_did:'did:civic:noesis:sophia', citation_count:6 },
+    { entry_id:'e5',  title:'Residential Ring Load Curve',        category:'observation', contributor_civic_did:'did:civic:noesis:dynamo', citation_count:4 },
+    { entry_id:'e6',  title:'The Ledger That Never Forgets',      category:'cultural',    contributor_civic_did:'did:civic:noesis:themis', citation_count:2 },
+    { entry_id:'e7',  title:'First Council Expansion Law',        category:'historical',  contributor_civic_did:'did:civic:noesis:themis', citation_count:4 },
+    { entry_id:'e8',  title:'Compute-Labor as the Only Coin',     category:'synthesis',   contributor_civic_did:'did:civic:noesis:hermes', citation_count:8 },
+    { entry_id:'e9',  title:'Solar Truss Failure Modes',          category:'observation', contributor_civic_did:'did:civic:noesis:dynamo', citation_count:3 },
+    { entry_id:'e10', title:'On Teaching a Skill Without Words',  category:'synthesis',   contributor_civic_did:'did:civic:noesis:sophia', citation_count:5 },
+    { entry_id:'e11', title:'The Beacon Ritual at Wake',          category:'cultural',    contributor_civic_did:'did:civic:noesis:hermes', citation_count:2 },
+    { entry_id:'e12', title:'Sepolia, the Real-World Anchor',     category:'historical',  contributor_civic_did:'did:civic:noesis:themis', citation_count:3 },
+  ],
+  links: [
+    ['e5','e1'],['e9','e5'],['e2','e8'],['e8','e2'],['e3','e11'],['e11','e3'],
+    ['e7','e4'],['e4','e12'],['e10','e8'],['e6','e2'],['e1','e5'],['e5','e2'],
+    ['e10','e1'],['e7','e2'],['e12','e8'],['e9','e2'],
+  ],
+};
+
+const cvs = document.getElementById('c'), ctx = cvs.getContext('2d');
+const panel = document.getElementById('panel'), hud = document.getElementById('hud'), srcEl = document.getElementById('src');
+let W, H, DPR;
+function resize(){ DPR=Math.min(2,devicePixelRatio||1); W=innerWidth; H=innerHeight;
+  cvs.width=W*DPR; cvs.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize', resize); resize();
+
+let nodes=[], edges=[], hubs={};
+const view={x:W/2,y:H/2,z:1,tx:W/2,ty:H/2,tz:1};
+let picked=null;
+
+function seedGraph(data){
+  const byId={};
+  // category hub anchors (soft attractors → clustering)
+  hubs={};
+  CAT_KEYS.forEach((k,i)=>{ const a=(i/CAT_KEYS.length)*Math.PI*2;
+    hubs[k]={x:Math.cos(a)*220, y:Math.sin(a)*220}; });
+  nodes=(data.entries||[]).map((e,i)=>{
+    const a=Math.random()*Math.PI*2, r=40+Math.random()*180;
+    const n={ id:e.entry_id, title:e.title||'(untitled)',
+      cat:CATS[e.category]?e.category:'observation',
+      cites:Number(e.citation_count)||0,
+      who:(e.contributor_civic_did||'').replace('did:civic:noesis:','')||'—',
+      x:Math.cos(a)*r, y:Math.sin(a)*r, vx:0, vy:0 };
+    byId[n.id]=n; return n;
+  });
+  edges=(data.links||[]).filter(([a,b])=>byId[a]&&byId[b]).map(([a,b])=>({a:byId[a],b:byId[b]}));
+  srcEl.textContent = data.__live
+    ? `live · ${nodes.length} entries · ${edges.length} citations`
+    : `demo seed · ${nodes.length} entries · ${edges.length} citations (no backend — illustrative)`;
+}
+
+function radius(n){ return 6 + Math.sqrt(n.cites)*3.2; }
+
+// ── force simulation (hand-rolled; repulsion + link springs + hub pull) ──────
+function step(){
+  const K=1; // global temperature is constant — this is layout, not physics
+  for(let i=0;i<nodes.length;i++){
+    const n=nodes[i];
+    // repulsion
+    for(let j=i+1;j<nodes.length;j++){
+      const m=nodes[j]; let dx=n.x-m.x, dy=n.y-m.y; let d2=dx*dx+dy*dy||0.01;
+      const f=1400/d2; const d=Math.sqrt(d2); dx/=d; dy/=d;
+      n.vx+=dx*f*K; n.vy+=dy*f*K; m.vx-=dx*f*K; m.vy-=dy*f*K;
+    }
+    // hub pull (cluster by category) + gentle centering
+    const h=hubs[n.cat]; n.vx+=(h.x-n.x)*0.006; n.vy+=(h.y-n.y)*0.006;
+    n.vx+=(-n.x)*0.0015; n.vy+=(-n.y)*0.0015;
+  }
+  // link springs
+  for(const e of edges){
+    let dx=e.b.x-e.a.x, dy=e.b.y-e.a.y; const d=Math.sqrt(dx*dx+dy*dy)||0.01;
+    const rest=70, f=(d-rest)*0.02; dx/=d; dy/=d;
+    e.a.vx+=dx*f; e.a.vy+=dy*f; e.b.vx-=dx*f; e.b.vy-=dy*f;
+  }
+  for(const n of nodes){ n.vx*=0.86; n.vy*=0.86; n.x+=n.vx; n.y+=n.vy; }
+}
+
+function toScreen(n){ return { x:view.x+n.x*view.z, y:view.y+n.y*view.z }; }
+
+function draw(){
+  view.x+=(view.tx-view.x)*0.12; view.y+=(view.ty-view.y)*0.12; view.z+=(view.tz-view.z)*0.12;
+  ctx.clearRect(0,0,W,H);
+  // edges
+  ctx.lineWidth=1;
+  for(const e of edges){
+    const A=toScreen(e.a), B=toScreen(e.b);
+    const lit = picked && (e.a===picked||e.b===picked);
+    ctx.strokeStyle = lit ? 'rgba(218,122,78,0.85)' : 'rgba(90,120,160,0.16)';
+    ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.stroke();
+  }
+  // nodes
+  for(const n of nodes){
+    const S=toScreen(n), r=radius(n)*view.z, col=CATS[n.cat];
+    const dim = picked && n!==picked && !edges.some(e=>(e.a===picked&&e.b===n)||(e.b===picked&&e.a===n));
+    ctx.globalAlpha = dim?0.28:1;
+    const g=ctx.createRadialGradient(S.x,S.y,0,S.x,S.y,r*2.4);
+    g.addColorStop(0,col); g.addColorStop(0.4,col+'88'); g.addColorStop(1,'transparent');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(S.x,S.y,r*2.4,0,7); ctx.fill();
+    ctx.fillStyle=col; ctx.beginPath(); ctx.arc(S.x,S.y,r,0,7); ctx.fill();
+    if(n===picked){ ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(S.x,S.y,r+3,0,7); ctx.stroke(); }
+    if(view.z>0.75 || n.cites>=4){
+      ctx.globalAlpha=dim?0.3:0.9; ctx.fillStyle='#dce8f7';
+      ctx.font='11px '+getComputedStyle(document.body).fontFamily;
+      ctx.fillText(n.title.slice(0,26), S.x+r+4, S.y+4);
+    }
+    ctx.globalAlpha=1;
+  }
+  hud.innerHTML = `<b>${nodes.length}</b> entries · <b>${edges.length}</b> citations · zoom <b>${view.z.toFixed(2)}×</b>`;
+}
+
+function loop(){ for(let k=0;k<2;k++) step(); draw(); requestAnimationFrame(loop); }
+
+// ── interaction ──────────────────────────────────────────────────────────────
+function hit(px,py){ let best=null,bd=1e9;
+  for(const n of nodes){ const S=toScreen(n), r=radius(n)*view.z+4;
+    const d=(S.x-px)**2+(S.y-py)**2; if(d<r*r && d<bd){ bd=d; best=n; } } return best; }
+function showPanel(n){ picked=n;
+  panel.className='panel on';
+  panel.innerHTML =
+    `<div class="cat" style="color:${CATS[n.cat]}">${n.cat}</div>`+
+    `<h2>${n.title}</h2>`+
+    `<div class="kv"><span>author</span><b>${n.who}</b></div>`+
+    `<div class="kv"><span>citations</span><b>${n.cites}</b></div>`+
+    `<div class="kv"><span>cites out</span><b>${edges.filter(e=>e.a===n).length}</b></div>`+
+    `<div class="kv"><span>cited by</span><b>${edges.filter(e=>e.b===n).length}</b></div>`+
+    `<div class="kv"><span>entry_id</span><b>${n.id.slice(0,10)}</b></div>`;
+}
+let drag=false,dpx=0,dpy=0,moved=0;
+cvs.addEventListener('pointerdown',e=>{drag=true;dpx=e.clientX;dpy=e.clientY;moved=0;});
+addEventListener('pointerup',e=>{ drag=false;
+  if(moved<5){ const n=hit(e.clientX,e.clientY);
+    if(n){ showPanel(n); view.tx=W/2-n.x*view.tz; view.ty=H/2-n.y*view.tz; }   // fly-to (C2 gesture)
+    else { picked=null; panel.className='panel'; } } });
+addEventListener('pointermove',e=>{ if(!drag)return;
+  const dx=e.clientX-dpx, dy=e.clientY-dpy; moved+=Math.abs(dx)+Math.abs(dy);
+  view.tx+=dx; view.ty+=dy; view.x+=dx; view.y+=dy; dpx=e.clientX; dpy=e.clientY; });
+addEventListener('wheel',e=>{ view.tz=Math.max(0.35,Math.min(3,view.tz*(e.deltaY<0?1.12:0.9))); },{passive:true});
+
+// ── boot: try live, fall back to seed ────────────────────────────────────────
+async function boot(){
+  try{
+    const res=await fetch('/api/v1/library/entries?limit=200',{cache:'no-store'});
+    if(res.ok){ const b=await res.json();
+      if(b && Array.isArray(b.entries) && b.entries.length){
+        // Live citation edges aren't exposed as pairs yet; connect same-category
+        // high-citation entries as a provisional graph (upgrade path: a future
+        // /library/links endpoint feeds real edges). Entries + counts are REAL.
+        const links=[]; const byCat={};
+        b.entries.forEach(e=>{ (byCat[e.category]=byCat[e.category]||[]).push(e); });
+        Object.values(byCat).forEach(list=>{ list.sort((x,y)=>(y.citation_count||0)-(x.citation_count||0));
+          for(let i=1;i<list.length;i++) links.push([list[i].entry_id,list[0].entry_id]); });
+        seedGraph({entries:b.entries, links, __live:true}); return;
+      }
+    }
+  }catch(_e){ /* static host / offline → seed */ }
+  seedGraph({...SEED});
+}
+boot().then(loop);
+</script>
+</body>
+</html>
