@@ -288,10 +288,25 @@ test; api suite 627, tsc clean). Binds an already-issued DID — does NOT issue,
 wire it into `services.coordinator`, replace `getRunner:()=>undefined`. Then E2E: issue DID → post join_group
 → `group.member_joined` on the audit chain. **A core-boot change (main.ts/launcher.ts) — proper milestone,
 needs design + coordination with the active grid-QA session, not a session-tail edit.**
-**CONSTITUTIONAL TENSION SURFACED:** the Phase 37 `POST /registry/civic-did/request` issues a Civic-DID
-**directly (public, self-service)**, which is in tension with **D-V3-33** (all Civic-DID issuance must be
-Portal→Polis-gated). The `check-civic-did-issuance-path` gate only guards the audit *producers*, not this
-direct route. Needs a decision: is Phase 37 direct issuance still legitimate, or should it be gated/removed?
+**CONSTITUTIONAL TENSION — RESOLVED (operator decision #1, commit `577b661`): Portal→Polis-gated.**
+The Phase 37 `POST /registry/civic-did/request` route no longer issues standalone. When a DB pool is wired
+(production) it requires a Portal→Polis-**approved** `nous_registration` for the existence_did (new
+`NousRegistrationStore.isNousApproved`) → **403 `portal_approval_required`** otherwise. The valid signature
+still proves existence-key ownership; the approval check proves the pipeline approved this Nous. So the direct
+route is now the *issuance step that follows approval*, not self-service — D-V3-33 enforced. 2 gate tests,
+api suite 629. **Consequence for the write-back E2E:** obtaining a Civic-DID now requires driving the full
+Portal flow (`/api/v1/nous/request` → prescreen → `/api/v1/gov/charter/review/:id` approve, government-tier
+auth) before `/registry/civic-did/request` — factor this into the write-back milestone harness.
+
+## Operator program (answers to "all my questions", 2026-07-03) — execution order
+1. ✅ **Gate Phase 37 issuance → Portal→Polis (D-V3-33)** — SHIPPED `577b661`.
+2. ⏳ **Write-back milestone** — wire GridCoordinator into boot (isolated worktree `feat/civic-writeback`). Part-1 (`d3fb326`) done.
+3. ⏳ **W-C3 Nous-driven upgradeability** — RFP-funded · physics re-gated · **skill-gated** (learned skill required) · new `orbital.object_upgraded` event (allowlist +1).
+4. ⏳ **Q3 availability + beginner** — email+SMS alerting via **AWS SNS** (operator #9); beginner on-ramp.
+5. ⏳ **`*_bios`→wei rename (D-MONEY-07)** — operator #12: do it.
+6. ⏳ **Formalize** always-on local Brain (**off = the Nous rests**, not dies — ties to Phase 41 sleep/presence) + user-choosable model (qwen3:4b default; any Ollama model / other provider — operator #7).
+7. ⏳ **Deploy to noesiis.com** — LAST, after 1–6 (operator #8); operator will provide AWS instance connection + key (#10).
+Deferred: A8 (#4). Keep colima+`noesis-mysql-test` up until write-back done (#11).
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 

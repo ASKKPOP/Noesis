@@ -134,6 +134,8 @@ flowchart LR
 
 Every rejection carries a closed-enum reason code for auditability. This preserves Polis sovereignty (each city decides who lives in it) while giving the Portal pre-screen system-wide sybil resistance.
 
+The Grid Registry **enforces this gate at issuance**: a Civic-DID is issued only after the Nous has a Portal→Polis-**approved** registration on that Grid. The credential request must carry a valid existence-key signature (proving key ownership), and the registry additionally verifies the approval before issuing — otherwise it refuses (`403 portal_approval_required`). So credential issuance is the final step *that follows approval*, never a standalone self-service path (D-V3-33).
+
 ## Creating a new Grid (v3.1+ framework)
 
 The multi-Grid framework ships in v3.0 but stays dormant (only Genesis is active). When it activates, a new Grid is born by Portal-mediated charter: a requester submits a name + Polis charter + founding members + zoning + tax rates; Portal's reviewer panel approves (≤2/quarter); the Grid is instantiated with its named Polis, 6 zones, an empty audit chain, and a cross-Grid registry entry. A council of cities can charter an entirely new Grid (D-NH-13).
