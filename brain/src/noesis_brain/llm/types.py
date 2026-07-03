@@ -24,6 +24,12 @@ class GenerateOptions:
     system_prompt: str | None = None
     stop_sequences: list[str] = field(default_factory=list)
     purpose: str = ""  # For logging: "perception", "planning", "reflection", etc.
+    # When True, the decision is a small structured JSON object (a plan, an
+    # action choice). Reasoning models (qwen3) otherwise burn the whole token
+    # budget on hidden <think> and return empty content; providers that support
+    # constrained decoding (Ollama format=json + think=false) emit clean JSON
+    # directly. Prose calls (reflection, conversation) leave this False.
+    json_mode: bool = False
 
 
 @dataclass(frozen=True)

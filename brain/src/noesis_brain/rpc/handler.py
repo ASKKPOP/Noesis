@@ -641,7 +641,7 @@ class BrainHandler:
                     system_prompt=system_prompt,
                     temperature=0.7,
                     max_tokens=256,
-                    purpose="economic_decision",
+                    purpose="economic_decision", json_mode=True,
                 ),
             )
             decision = parse_economic_decision(response.text)
@@ -772,7 +772,7 @@ class BrainHandler:
             prompt = build_planning_prompt(goal.description, memories_text, reflections)
             response = await self.llm.generate(
                 prompt,
-                GenerateOptions(temperature=0.7, max_tokens=256, purpose="planning"),
+                GenerateOptions(temperature=0.7, max_tokens=256, purpose="planning", json_mode=True),
             )
             tasks = parse_task_list(response.text)
             if not tasks:
@@ -833,7 +833,7 @@ class BrainHandler:
                 user_prompt,
                 GenerateOptions(
                     system_prompt=system_prompt, temperature=0.7,
-                    max_tokens=256, purpose="decision",
+                    max_tokens=256, purpose="decision", json_mode=True,
                 ),
             )
             decision = parse_decision(response.text)
@@ -944,7 +944,7 @@ class BrainHandler:
             prompt = build_skill_distill_prompt(goal_key, [t.description for t in done])
             response = await self.llm.generate(
                 prompt,
-                GenerateOptions(temperature=0.7, max_tokens=400, purpose="skill_distill"),
+                GenerateOptions(temperature=0.7, max_tokens=400, purpose="skill_distill", json_mode=True),
             )
             parsed = parse_skill(response.text)
             if parsed is None:
@@ -1051,7 +1051,7 @@ class BrainHandler:
                 prompt,
                 GenerateOptions(
                     system_prompt=system_prompt, temperature=0.8,
-                    max_tokens=300, purpose="social_decision",
+                    max_tokens=300, purpose="social_decision", json_mode=True,
                 ),
             )
             decision = parse_social_decision(response.text)
