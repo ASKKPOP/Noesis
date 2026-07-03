@@ -258,6 +258,22 @@ pre-screen → Polis charter review → approval; government/Polis-tier auth + d
 So the write-back is a proper multi-step onboarding MILESTONE, not a quick step. Full-stack harness now 4/4
 (sight · decide · real-not-hallucinated · write-gate-holds).
 
+**WRITE-BACK ROOT CAUSE FOUND (2026-07-03, by tracing the real path):** the write-back is blocked by a
+concrete **missing link**, not just the DID ceremony. Two subsystems were each built but never wired:
+(1) Phase 37 `POST /api/v1/registry/civic-did/request` (public, self-service) DOES issue a Civic-DID directly
+(sign the `civic_oath` with an ES256 key via JWS compact; emits `registry.civic_did_issued`). (2) Phase 38
+WIRE-02 `GridCoordinator.registerCivicDid(civicDid, nousDid)` binds an issued Civic-DID to a live NousRunner
+(the `civicDidIndex` that `/api/v1/brain/actions` looks up via `getRunnerByCivicDid`). **BUT `registerCivicDid`
+has ZERO runtime callers** (grep of `grid/src/` excluding its own def + tests). So an issued Civic-DID is
+never bound to its runner → `/api/v1/brain/actions` → 404 `nous_runner_not_found`. **To complete the
+write-back:** (a) call `coordinator.registerCivicDid(civicDid, existenceDid)` from the issuance path (or a
+post-issue hook) — a deliberate grid change, needs the coordinator threaded to the registry route; (b) a
+binding test (issue → getRunnerByCivicDid finds the runner); (c) register a `brain_tokens` row (EdDSA pubkey)
+for auth; (d) then the Brain's `post_actions` dispatches → `NousRunner.executeActions` → `group.member_joined`
+on the real audit chain. **Deferred as a proper milestone** (grid-side + architectural + active grid-QA
+session on `grid/src/` = collision risk; deserves design, not a session-tail edit). Seeded Nous DIDs:
+`did:noesis:{sophia,hermes,themis}` (runners keyed by nousDid; presets.ts).
+
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
 
 **Money in Noēsis is exactly two things, and nothing else:**
