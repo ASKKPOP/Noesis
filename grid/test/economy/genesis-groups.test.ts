@@ -56,4 +56,16 @@ describe('genesis-groups — founding seed (D-GROUP-04)', () => {
         expect(aegis?.groupId).toBe('genesis:group:aegis');
         expect(aegis?.displayName).toBe('Aegis');
     });
+
+    it('lowercases the canonical capitalized grid name so ids pass GROUP_ID_RE (real-boot regression)', () => {
+        // GENESIS_CONFIG.gridName is 'Genesis' (Polis naming). Without lowercasing,
+        // the real boot builds 'Genesis:group:aegis' and appendGroupFounded's
+        // GROUP_ID_RE rejects it → Grid crash-loops seeding groups. Mock tests
+        // only ever used lowercase 'genesis', so they never caught it.
+        const groups = mod.buildGenesisGroups('Genesis');
+        for (const g of groups) {
+            expect(g.groupId).toMatch(/^genesis:group:[a-z]+$/);   // lowercase id
+        }
+        expect(groups[0].gridName).toBe('Genesis');                // display name preserved
+    });
 });

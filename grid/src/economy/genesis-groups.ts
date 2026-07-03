@@ -58,7 +58,13 @@ export const GENESIS_GROUPS: readonly GenesisGroupSeed[] = [
 export function buildGenesisGroups(gridName: string): GenesisGroup[] {
     return GENESIS_GROUPS.map((s) => ({
         ...s,
-        groupId: `${gridName}:group:${s.displayName.toLowerCase()}`,
+        // Lowercase the grid-name prefix to match the id convention (GROUP_ID_RE
+        // + the parcel-id form `genesis:zone:nnnn`). The canonical config name is
+        // capitalized ("Genesis", the Polis naming convention), so without this
+        // the real boot builds "Genesis:group:…" and appendGroupFounded rejects
+        // it → the Grid crash-loops seeding groups. (Mock tests passed only
+        // because they seed with a lowercase name.)
+        groupId: `${gridName.toLowerCase()}:group:${s.displayName.toLowerCase()}`,
         gridName,
         ring: BUSINESS_RING,
         zoneId: 'business' as const,
