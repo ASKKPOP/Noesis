@@ -88,6 +88,35 @@ class TestOllamaAdapter:
         await adapter.close()
 
     @pytest.mark.asyncio
+    async def test_json_mode_constrains_output_and_disables_thinking(self):
+        """The liveness fix: structured-decision calls must set Ollama
+        format=json + think=false, or qwen3 (default model) burns the token
+        budget on hidden <think> and returns empty content — silently no-oping
+        the whole mind/society loop."""
+        seen = {}
+
+        async def handler(request: httpx.Request) -> httpx.Response:
+            body = json.loads(request.content)
+            seen["format"] = body.get("format")
+            seen["think"] = body.get("think")
+            return httpx.Response(200, json=_ollama_chat_response('{"action":"rest"}'))
+
+        adapter = OllamaAdapter()
+        adapter._client = httpx.AsyncClient(base_url="http://localhost:11434", transport=_mock_transport(handler))
+
+        # json_mode ON → constrained + no reasoning
+        await adapter.generate("Decide", GenerateOptions(json_mode=True, purpose="decision"))
+        assert seen["format"] == "json"
+        assert seen["think"] is False
+
+        # json_mode OFF (default) → neither key sent (prose calls keep model default)
+        seen.clear()
+        await adapter.generate("Reflect", GenerateOptions(purpose="reflection"))
+        assert seen["format"] is None
+        assert seen["think"] is None
+        await adapter.close()
+
+    @pytest.mark.asyncio
     async def test_generate_http_error(self):
         async def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(500, text="Internal Server Error")

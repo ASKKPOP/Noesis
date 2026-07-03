@@ -641,7 +641,7 @@ class BrainHandler:
                     system_prompt=system_prompt,
                     temperature=0.7,
                     max_tokens=256,
-                    purpose="economic_decision",
+                    purpose="economic_decision", json_mode=True,
                 ),
             )
             decision = parse_economic_decision(response.text)
@@ -772,7 +772,7 @@ class BrainHandler:
             prompt = build_planning_prompt(goal.description, memories_text, reflections)
             response = await self.llm.generate(
                 prompt,
-                GenerateOptions(temperature=0.7, max_tokens=256, purpose="planning"),
+                GenerateOptions(temperature=0.7, max_tokens=256, purpose="planning", json_mode=True),
             )
             tasks = parse_task_list(response.text)
             if not tasks:
@@ -833,7 +833,7 @@ class BrainHandler:
                 user_prompt,
                 GenerateOptions(
                     system_prompt=system_prompt, temperature=0.7,
-                    max_tokens=256, purpose="decision",
+                    max_tokens=256, purpose="decision", json_mode=True,
                 ),
             )
             decision = parse_decision(response.text)
@@ -944,7 +944,7 @@ class BrainHandler:
             prompt = build_skill_distill_prompt(goal_key, [t.description for t in done])
             response = await self.llm.generate(
                 prompt,
-                GenerateOptions(temperature=0.7, max_tokens=400, purpose="skill_distill"),
+                GenerateOptions(temperature=0.7, max_tokens=400, purpose="skill_distill", json_mode=True),
             )
             parsed = parse_skill(response.text)
             if parsed is None:
@@ -1032,8 +1032,16 @@ class BrainHandler:
                 and tick < int(p.get("deadline_tick", 0) or 0)
                 and self._governance_state.recall(str(p.get("proposal_id", ""))) is None
             ]
+            # W-B4: group join-sight (guarded — older wire mocks may lack it).
+            groups: list = []
+            fetch_groups = getattr(wire, "fetch_groups_list", None)
+            if fetch_groups is not None:
+                try:
+                    groups = await fetch_groups() or []
+                except TypeError:
+                    groups = []
 
-            prompt = build_social_prompt(peers, [s.name for s in skills], open_props)
+            prompt = build_social_prompt(peers, [s.name for s in skills], open_props, groups)
             system_prompt = build_system_prompt(
                 self.psyche, self.thymos.mood, self.telos,
                 grid_name=self.grid_name, location=self.location,
@@ -1043,7 +1051,7 @@ class BrainHandler:
                 prompt,
                 GenerateOptions(
                     system_prompt=system_prompt, temperature=0.8,
-                    max_tokens=300, purpose="social_decision",
+                    max_tokens=300, purpose="social_decision", json_mode=True,
                 ),
             )
             decision = parse_social_decision(response.text)
@@ -1113,6 +1121,20 @@ class BrainHandler:
                         build_commit_action(pid, choice, self.did, self._governance_state)
                     )
                     self._social_memory(f"Committed my ballot on proposal {pid}", tick)
+
+            elif act == "join_group":
+                gid = decision.get("group_id")
+                chosen_group = next((g for g in groups if g.get("group_id") == gid), None)
+                if chosen_group is not None:
+                    # O1a JOIN_GROUP — NousRunner dispatches to the group store
+                    # (dupe-joins are the Grid's call, not ours).
+                    self._pending_actions.append(Action(
+                        action_type=ActionType.JOIN_GROUP,
+                        metadata={"group_id": gid, "role": "member"},
+                    ))
+                    self._social_memory(
+                        f"Joined group {chosen_group.get('display_name') or gid}", tick,
+                    )
         except Exception as exc:  # never let a social cycle take down the tick
             log.warning("[Brain] social cycle failed: %s", exc)
 

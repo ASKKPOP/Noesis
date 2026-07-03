@@ -37,6 +37,21 @@ CI gate · W-E1 bilingual getting-started · A8 decision-evalset exporter · A9 
 Brain compose. Daily visual log: docs/noesis-daily-log-2026-07-02.html. Remaining tail
 recorded there + in [[system-audit-2026-07]] program (W-C1–C5, W-E2–E5, Phase 40b).
 
+## [2026-07-02] apply | afternoon wave — live map, fly-to, group join, knowledge graph
+"do do do": W-C1 live map (orbital.js firehose → glow-on-build) + W-C2 fly-to camera
+(canon-safe) + W-B4 autonomous group join (GET /api/v1/groups + social-cycle) + W-C4 the
+first knowledge-graph view (docs/noesis-knowledge-graph.html — force-directed lore commons,
+applies [[oss-visualization-landscape]] three-forcegraph pattern hand-rolled/no-deps).
+W-C3a upkeep scanner confirmed already wired. Brain 1154 green, grid clean, allowlist +0.
+
+## [2026-07-02] verify | liveness run — Nous ALIVE on real qwen3:4b, caught a dead-loop bug
+Ran the REAL BrainHandler against REAL qwen3:4b (brain/scripts/liveness_run.py). Found a
+production-breaking bug all 1155 mock tests missed: qwen3's hidden <think> consumed the
+256-token structured-call budget → empty content → the whole mind/society loop silently
+no-op'd on the default model. Fixed with constrained decoding (json_mode → Ollama
+format=json + think=false), validating [[oss-agent-learning-landscape]] rec #5 in practice.
+Re-run: 6/6 loop stages fire (plan→work→100%→re-goal→pay→bid→join Dynamo→speak→vote). D-MIND-07.
+
 ## [2026-07-02] ingest | OSS landscapes (agent learning · visualization)
 Created [[oss-agent-learning-landscape]] (Voyager, Generative Agents, Reflexion, PIANO,
 Letta sleep-time, Mem0/Graphiti, DSPy+GEPA, SLM cascades) and

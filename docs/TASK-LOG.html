@@ -58,8 +58,8 @@
   <div class="grid">
     <div class="stat"><div class="n">8</div><div class="l">Spec gaps closed</div></div>
     <div class="stat"><div class="n">22</div><div class="l">Tasks worked</div></div>
-    <div class="stat"><div class="n">LIVE</div><div class="l">Agentic loop verified</div></div>
-    <div class="stat"><div class="n">1007</div><div class="l">Brain tests ✓</div></div>
+    <div class="stat"><div class="n">ALIVE ✓</div><div class="l">Mind loop on real qwen3:4b</div></div>
+    <div class="stat"><div class="n">1155</div><div class="l">Brain tests ✓</div></div>
     <div class="stat"><div class="n">3403</div><div class="l">Grid tests ✓</div></div>
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
@@ -110,6 +110,18 @@
       <strong>Brain suite 1152 green · grid tsc clean · allowlist +0.</strong> Clone URL fixed → <code>ASKKPOP/Noesis</code>.</li>
     <li><b>Daily visual log</b> <span class="tag done">built</span> — <a href="noesis-daily-log-2026-07-02.html">docs/noesis-daily-log-2026-07-02.html</a>:
       the whole day as flow + loop diagrams (timeline, closed mind+society loop, task table, gates, honest remaining-work tail), bilingual.</li>
+    <li><b>Afternoon "do do do" — W-C1 + W-C2 + W-B4 + W-C4</b> <span class="tag done">shipped</span> (<span class="hash">e1d50a4</span> + latest) —
+      <b>W-C1 live map</b>: <code>orbital.js</code> subscribes to the audit firehose; on <code>orbital.object_built</code> refetches real objects and pulses new arrivals in (guarded — static host/no-WS stays snapshot-based, 0 noise; only subscribes after a real backend answers).
+      <b>W-C2 fly-to</b>: clicking a module glides the camera to frame it (reuses the existing focus/dist tween — canon-safe, three.js only); dashboard map re-synced, gate green.
+      <b>W-B4</b>: new public <code>GET /api/v1/groups</code> (2 route tests, 503-on-no-pool) + <code>fetch_groups_list</code> + social-cycle <code>join_group</code> → O1a JOIN_GROUP (role='member' matches NousRunner <code>validRoles</code> — zero runner changes; 2 brain tests).
+      <b>W-C4 knowledge constellation</b>: <a href="noesis-knowledge-graph.html">docs/noesis-knowledge-graph.html</a> — the FIRST knowledge-graph view (force-directed lore commons, nodes=entries sized by citations, category clustering, live-data + seed fallback, no external deps). Answers the Q2 gap "no knowledge-graph view at all".
+      <b>W-C3a</b>: upkeep scanner verified already-wired (<code>main.ts:245</code>→<code>launcher.ts:515</code>) — audit was pessimistic; no change.
+      <strong>Brain suite 1154 green · grid tsc + did-policy clean · map-sync IN SYNC · allowlist +0.</strong> Browser-verified both maps + the graph (0 console errors).</li>
+    <li><b>Liveness run — the Nous is ALIVE, and it caught a production-breaking bug</b> <span class="tag done">proven</span> (<span class="hash">ffb23c9</span>) —
+      wired the <b>real</b> BrainHandler to the <b>real</b> qwen3:4b (Ollama) with real memory/ledger/reflection (<code>brain/scripts/liveness_run.py</code>) and drove real ticks.
+      <b>Found:</b> qwen3 is a reasoning model — Ollama returns <code>&lt;think&gt;</code> in a separate field and the answer in <code>content</code>; our 256-token structured calls were entirely consumed by hidden reasoning → <code>content</code> EMPTY → every planner/decision/social/economic cycle no-op'd. <strong>With the DEFAULT model the whole mind+society loop was silently DEAD — yet all 1155 mock tests passed.</strong>
+      <b>Fix:</b> <code>GenerateOptions.json_mode</code> → Ollama <code>format='json'</code> + <code>think=false</code> on the 5 structured sites (constrained decoding — the exact OSS-research rec #5); prose calls unchanged.
+      <b>Proof:</b> re-run → <strong>6/6 loop stages fire</strong> — the Nous decomposed its energy goal, worked it to 100%, autonomously generated new goals, paid its due, bid the energy RFP, <b>joined Dynamo (the energy group — goal-relevant cooperation)</b>, spoke, and committed a ballot. New unit test locks the payload contract; suite <strong>1155 green</strong>. See §3b of the <a href="noesis-daily-log-2026-07-02.html#alive">daily log</a>.</li>
   </ul>
 
   <!-- ============================ SESSION 13 ============================ -->

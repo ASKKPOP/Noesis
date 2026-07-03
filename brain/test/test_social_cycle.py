@@ -43,9 +43,10 @@ def _handler() -> BrainHandler:
     return h
 
 
-def _wire(proposals=None):
+def _wire(proposals=None, groups=None):
     w = MagicMock()
     w.fetch_open_proposals = AsyncMock(return_value=proposals or [])
+    w.fetch_groups_list = AsyncMock(return_value=groups or [])
     return w
 
 
@@ -191,6 +192,35 @@ async def test_vote_on_unknown_proposal_is_dropped():
     h = _handler()
     h._grid_wire_client = _wire(proposals=[PROPOSAL])
     h.llm = _llm_saying('{"action": "vote", "proposal_id": "prop-999", "choice": "yes"}')
+
+    await h._run_social_cycle(100)
+
+    assert h._pending_actions == []
+
+
+# ── join_group (W-B4 / O1a) ──────────────────────────────────────────────────
+GROUP = {"group_id": "grp-helix", "display_name": "Helix", "domain": "biotech", "status": "active"}
+
+
+@pytest.mark.asyncio
+async def test_joins_offered_group():
+    h = _handler()
+    h._grid_wire_client = _wire(groups=[GROUP])
+    h.llm = _llm_saying('{"action": "join_group", "group_id": "grp-helix"}')
+
+    await h._run_social_cycle(100)
+
+    assert len(h._pending_actions) == 1
+    a = h._pending_actions[0]
+    assert a.action_type == ActionType.JOIN_GROUP
+    assert a.metadata == {"group_id": "grp-helix", "role": "member"}
+
+
+@pytest.mark.asyncio
+async def test_join_unknown_group_is_dropped():
+    h = _handler()
+    h._grid_wire_client = _wire(groups=[GROUP])
+    h.llm = _llm_saying('{"action": "join_group", "group_id": "grp-fake"}')
 
     await h._run_social_cycle(100)
 
