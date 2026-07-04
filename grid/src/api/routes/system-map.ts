@@ -332,22 +332,23 @@ export function registerSystemMapRoute(app: FastifyInstance, services: GridServi
         );
 
         // ── INSTITUTION: P2P ───────────────────────────────────────────────────
-        // In-memory presence service — 'unknown' when absent (guarded).
+        // QA fix: this used to read services.presenceService (civic/presence
+        // "awake" count — a different institution, B-09 Grid presence) instead of
+        // the P2P peer store that GET /api/v1/p2p/peers/:did itself reads. A civic-DID
+        // could show here as "online" while the real peer-lookup route reported it
+        // peer_offline. In-memory p2p peer store — 'unknown' when absent (guarded).
         const p2p = await item<P2pItem>(
             async () => {
-                const presence = services.presenceService;
-                if (!presence) {
+                const p2pService = services.p2pService;
+                if (!p2pService) {
                     return {
                         status: 'unknown' as InstitutionStatus,
                         metric: null,
-                        headline: 'in-memory presence unavailable',
+                        headline: 'p2p peer store unavailable',
                         peers_online: 0,
                     };
                 }
-                const records = await presence.listAllPresence();
-                const peersOnline = records.filter(
-                    (r: { presenceStatus: string }) => r.presenceStatus === 'awake',
-                ).length;
+                const peersOnline = p2pService.peerStore.countOnline();
                 const status: InstitutionStatus = peersOnline > 0 ? 'active' : 'empty';
                 return {
                     status, metric: peersOnline,

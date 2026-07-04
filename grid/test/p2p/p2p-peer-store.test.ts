@@ -63,4 +63,24 @@ describe('P2PPeerStore (Phase 42 Plan 02)', () => {
         const status = store.getStatus('did:civic:noesis:abc');
         expect(status.status).toBe('online');
     });
+
+    // Regression: system-map's P2P institution metric used to read
+    // services.presenceService (civic/presence "awake" count — a different
+    // institution) instead of this store, so it could report a peer "online"
+    // while GET /api/v1/p2p/peers/:did reported the same DID peer_offline.
+    // Found by /qa on 2026-07-04.
+    // Report: .gstack/qa-reports/qa-report-all-tracks-round1-2026-07-04.md
+    it('countOnline() reflects only non-expired peers, filtered at call time', () => {
+        const store = new P2PPeerStore();
+        store.announce('did:civic:noesis:abc', 1);
+        store.announce('did:civic:noesis:def', 1);
+        expect(store.countOnline()).toBe(2);
+
+        vi.advanceTimersByTime(P2P_PEER_TTL_MS + 1);
+        // No cleanup() call — countOnline() must filter by TTL itself, not
+        // depend on the periodic cleanup() interval having already run.
+        expect(store.countOnline()).toBe(0);
+        // getStatus/size are unaffected — countOnline doesn't mutate the map.
+        expect(store.size()).toBe(2);
+    });
 });

@@ -51,4 +51,18 @@ export class P2PPeerStore {
     size(): number {
         return this.peers.size;
     }
+
+    /**
+     * Count of currently-online peers, TTL-filtered at call time (does not
+     * depend on the periodic cleanup() interval having already purged stale
+     * entries). Used by GET /api/v1/system/map's P2P institution metric.
+     */
+    countOnline(): number {
+        const now = Date.now();
+        let count = 0;
+        for (const entry of this.peers.values()) {
+            if (now - entry.lastSeenAt <= P2P_PEER_TTL_MS) count++;
+        }
+        return count;
+    }
 }

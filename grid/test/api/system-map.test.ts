@@ -100,11 +100,17 @@ function buildApp(extra: Partial<GridServices> = {}): FastifyInstance {
     } as GridServices);
 }
 
-/** Minimal in-memory presence-service stub matching the listAllPresence surface. */
-function presenceStub(records: { presenceStatus: string }[]): GridServices['presenceService'] {
+/**
+ * Minimal in-memory p2p-service stub matching the peerStore.countOnline() surface
+ * that GET /api/v1/system/map's P2P institution actually reads (same store GET
+ * /api/v1/p2p/peers/:did reads — QA fix: this used to be mocked via presenceService,
+ * a different institution's data, before system-map.ts was corrected to read the
+ * real p2p peer store).
+ */
+function p2pServiceStub(onlineCount: number): GridServices['p2pService'] {
     return {
-        listAllPresence: async () => records,
-    } as unknown as GridServices['presenceService'];
+        peerStore: { countOnline: () => onlineCount },
+    } as unknown as GridServices['p2pService'];
 }
 
 describe('GET /api/v1/system/map — shape + always 200', () => {
@@ -132,7 +138,7 @@ describe('GET /api/v1/system/map — computed status (not constant)', () => {
     it('populated mock → institutions active, brain up, portal counts from GROUP BY', async () => {
         const app = buildApp({
             pool: makePool(makeQueryFn({ populated: true })) as never,
-            presenceService: presenceStub([{ presenceStatus: 'awake' }, { presenceStatus: 'away' }]),
+            p2pService: p2pServiceStub(1),
         });
         await app.ready();
         const body = (await app.inject({ method: 'GET', url: '/api/v1/system/map' })).json();
@@ -163,7 +169,7 @@ describe('GET /api/v1/system/map — computed status (not constant)', () => {
     it('zero-row mock → institutions empty, brain empty (proves status is computed)', async () => {
         const app = buildApp({
             pool: makePool(makeQueryFn({ populated: false })) as never,
-            presenceService: presenceStub([]),
+            p2pService: p2pServiceStub(0),
         });
         await app.ready();
         const body = (await app.inject({ method: 'GET', url: '/api/v1/system/map' })).json();
@@ -180,7 +186,7 @@ describe('GET /api/v1/system/map — computed status (not constant)', () => {
         await app.close();
     });
 
-    it('p2p is unknown when presenceService is absent (guarded)', async () => {
+    it('p2p is unknown when p2pService is absent (guarded)', async () => {
         const app = buildApp({ pool: makePool(makeQueryFn({ populated: true })) as never });
         await app.ready();
         const body = (await app.inject({ method: 'GET', url: '/api/v1/system/map' })).json();
@@ -208,7 +214,7 @@ describe('GET /api/v1/system/map — per-item guard isolation', () => {
     it('one throwing table → that item down, the other 11 still compute, response 200', async () => {
         const app = buildApp({
             pool: makePool(makeQueryFn({ populated: true, throwOn: /library_entries/i })) as never,
-            presenceService: presenceStub([{ presenceStatus: 'awake' }]),
+            p2pService: p2pServiceStub(1),
         });
         await app.ready();
         const res = await app.inject({ method: 'GET', url: '/api/v1/system/map' });
@@ -254,7 +260,7 @@ describe('GET /api/v1/system/map — SQL discipline', () => {
                 return Promise.resolve(makeQueryFn({ populated: true })(sql, params));
             }),
         };
-        const app = buildApp({ pool: pool as never, presenceService: presenceStub([]) });
+        const app = buildApp({ pool: pool as never, p2pService: p2pServiceStub(0) });
         await app.ready();
         await app.inject({ method: 'GET', url: '/api/v1/system/map' });
 
@@ -280,7 +286,7 @@ describe('GET /api/v1/system/map — no PII / DIDs', () => {
     it('payload contains no DID, hash, or address — counts + config only', async () => {
         const app = buildApp({
             pool: makePool(makeQueryFn({ populated: true })) as never,
-            presenceService: presenceStub([{ presenceStatus: 'awake' }]),
+            p2pService: p2pServiceStub(1),
         });
         await app.ready();
         const raw = (await app.inject({ method: 'GET', url: '/api/v1/system/map' })).payload;
