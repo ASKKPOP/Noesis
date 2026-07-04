@@ -45,6 +45,24 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
 }
 
 export const COOKIE_NAME = 'noesis_portal_token';
+
+/**
+ * QA fix: the portal session cookie's `secure` flag used to be
+ * `process.env.NODE_ENV === 'production'`. docker/Dockerfile.grid hardcodes
+ * `ENV NODE_ENV=production` unconditionally (for the Node runtime build, not
+ * as a signal about TLS) — so the LOCAL docker-compose stack, served over
+ * plain HTTP, was also issuing Secure cookies. Browsers and HTTP clients
+ * never send a Secure cookie back over a non-HTTPS connection, so every
+ * portal_session_required route (portal/account/endow, and anything else
+ * gated on a logged-in operator) was silently unusable in local dev — a
+ * fresh email signup looked successful but the resulting session could
+ * never actually authenticate a follow-up request.
+ * Default true (matches prior always-secure behavior everywhere this env
+ * var is unset, including AWS production); local docker-compose.yml sets
+ * GRID_COOKIE_SECURE=false so local HTTP dev can actually use the cookie.
+ */
+const COOKIE_SECURE = process.env['GRID_COOKIE_SECURE'] !== 'false';
+
 const NONCE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 /** In-memory nonce store. Key = nonce string, Value = created timestamp (ms). */
@@ -179,7 +197,7 @@ export function registerPortalAuthRoutes(
         reply.setCookie(COOKIE_NAME, token, {
             httpOnly: true,
             sameSite: 'strict',
-            secure: process.env['NODE_ENV'] === 'production',
+            secure: COOKIE_SECURE,
             path: '/',
             maxAge: 24 * 60 * 60, // seconds
         });
@@ -266,7 +284,7 @@ export function registerPortalAuthRoutes(
         reply.setCookie(COOKIE_NAME, token, {
             httpOnly: true,
             sameSite: 'strict',
-            secure: process.env['NODE_ENV'] === 'production',
+            secure: COOKIE_SECURE,
             path: '/',
             maxAge: 24 * 60 * 60,
         });
@@ -335,7 +353,7 @@ export function registerPortalAuthRoutes(
         reply.setCookie(COOKIE_NAME, token, {
             httpOnly: true,
             sameSite: 'strict',
-            secure: process.env['NODE_ENV'] === 'production',
+            secure: COOKIE_SECURE,
             path: '/',
             maxAge: 24 * 60 * 60,
         });
