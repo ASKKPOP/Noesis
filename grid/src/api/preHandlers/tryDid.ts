@@ -15,7 +15,9 @@ const ANY_DID_RE = /^did:[a-z0-9]+:noesis:[a-z0-9_:\-]+$/i;
 
 // Phase 38 WIRE-02: existence-DID regex for Brain-signed JWTs (iss field).
 // Brain tokens have iss = did:noesis:nous:* (existence-DID) + sub = did:civic:noesis:* (civic-DID).
-const NOUS_DID_RE = /^did:noesis:nous:[a-z0-9_\-]+$/i;
+// Standard nous: form + the three founding legacy DIDs (BLOCKER-01) so a founding
+// Nous's Brain-signed EdDSA JWT (iss = existence DID) enters the civic_member branch.
+const NOUS_DID_RE = /^did:noesis:(nous:[a-z0-9_\-]+|sophia|hermes|themis)$/i;
 
 /**
  * Optional DID store interface for revocation checks.

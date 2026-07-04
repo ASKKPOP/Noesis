@@ -120,6 +120,45 @@ describe('POST /api/v1/registry/civic-did/request — validation', () => {
         expect(res.json()).toMatchObject({ error: 'invalid_existence_did' });
     });
 
+    it('BLOCKER-01: accepts a founding legacy DID (did:noesis:sophia) past the existence-DID gate', async () => {
+        // Founding Nous predate the nous: convention. They must pass EXISTENCE_DID_RE
+        // so they can obtain a Civic-DID and bind their pre-registered NousRunner.
+        const { privateKey } = await generateKeyPair('ES256');
+        const { publicKey: otherPublicKey } = await generateKeyPair('ES256');
+        const signature = await new CompactSign(new TextEncoder().encode(CIVIC_OATH))
+            .setProtectedHeader({ alg: 'ES256' })
+            .sign(privateKey);
+        const otherJwk = await exportJWK(otherPublicKey);
+        const res = await app.inject({
+            method: 'POST',
+            url: '/api/v1/registry/civic-did/request',
+            payload: {
+                existence_did: 'did:noesis:sophia',
+                civic_oath: CIVIC_OATH,
+                existence_public_key_jwk: otherJwk,
+                existence_key_signature: signature,
+            },
+        });
+        // Reaches the signature check (NOT 400 invalid_existence_did).
+        expect(res.statusCode).toBe(401);
+        expect(res.json()).toMatchObject({ error: 'invalid_signature' });
+    });
+
+    it('BLOCKER-01: still rejects a non-founding did:noesis:<name> DID (narrow relax)', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/api/v1/registry/civic-did/request',
+            payload: {
+                existence_did: 'did:noesis:mallory',
+                civic_oath: CIVIC_OATH,
+                existence_public_key_jwk: {},
+                existence_key_signature: 'x',
+            },
+        });
+        expect(res.statusCode).toBe(400);
+        expect(res.json()).toMatchObject({ error: 'invalid_existence_did' });
+    });
+
     it('returns 400 when civic_oath is missing', async () => {
         const res = await app.inject({
             method: 'POST',
