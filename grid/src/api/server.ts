@@ -964,8 +964,14 @@ export function buildServerWithHub(
             // unset, so RECONCILE_STALE_MULTIPLIER(5) x 30_000 = a 2.5-minute
             // staleness window against a 30-minute cycle: /health/detailed reported
             // degraded/reconcile_stale for the vast majority of every cycle, not
-            // just on real stalls. Pass the actual reconcile cadence.
-            snapshotCadenceMs: 60 * launcher.clock.state.tickRateMs,
+            // just on real stalls. Pass the actual reconcile cadence. Read from env
+            // (mirrors main.ts's own GRID_TICK_RATE_MS parsing) rather than
+            // launcher.clock.state — launcher.clock is assigned later in the
+            // GenesisLauncher constructor than this wiring runs, so reading it here
+            // (eagerly, unlike the lazy clockState closure above) throws.
+            snapshotCadenceMs: 60 * (process.env.GRID_TICK_RATE_MS
+                ? parseInt(process.env.GRID_TICK_RATE_MS, 10)
+                : 30_000),
         });
         launcher.attachHealthWatchdog(healthWatchdog);
         launcher.attachFirehoseHub(firehoseHub);
