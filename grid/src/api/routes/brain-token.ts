@@ -22,7 +22,9 @@ import type { GridServices } from '../server.js';
 import type { BrainTokenStore } from '../../db/stores/brain-token-store.js';
 
 // DID regexes — kept inline so callers can read the intent directly.
-const BRAIN_DID_RE = /^did:noesis:nous:[a-z0-9_\-]+$/i;
+// Standard nous: form + the three founding legacy DIDs (BLOCKER-01) so a founding
+// Nous can register a Brain token and dispatch actions.
+const BRAIN_DID_RE = /^did:noesis:(nous:[a-z0-9_\-]+|sophia|hermes|themis)$/i;
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 
 function currentTick(services: GridServices): number {

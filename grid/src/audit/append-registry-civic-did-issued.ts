@@ -24,7 +24,8 @@ import { payloadPrivacyCheck } from './broadcast-allowlist.js';
 // Phase 37 introduces did:civic:* and did:noesis:nous:* — DID_RE only covers did:noesis:*.
 // Local regex constants required (do NOT import DID_RE).
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
-const EXISTENCE_DID_RE = /^did:noesis:nous:[a-z0-9_:\-]+$/i;
+// Mirror registry.ts: standard nous: form + the three founding legacy DIDs (BLOCKER-01).
+const EXISTENCE_DID_RE = /^did:noesis:(nous:[a-z0-9_:\-]+|sophia|hermes|themis)$/i;
 
 /** Closed 4-key payload for registry.civic_did_issued. */
 export interface RegistryCivicDidIssuedPayload {
