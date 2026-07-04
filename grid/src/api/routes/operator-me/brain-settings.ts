@@ -31,7 +31,8 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../server.js';
 import { getSettings } from '../../../operator/data/operator-settings-store.js';
 
-const NOUS_DID_RE = /^did:noesis:nous:[a-z0-9_\-]+$/i;
+// Standard nous: form + the three founding legacy DIDs (BLOCKER-01).
+const NOUS_DID_RE = /^did:noesis:(nous:[a-z0-9_\-]+|sophia|hermes|themis)$/i;
 
 export async function registerOperatorMeBrainSettingsRoutes(
     app: FastifyInstance,
