@@ -15,6 +15,13 @@ import { useEffect, useState, useRef } from 'react';
 import StewardShell from '@/components/StewardShell';
 import { ForkIrreversibilityDialog } from '@/components/fork-irreversibility-dialog';
 
+// QA fix: these two routes live on the Grid, not on Steward's own Next.js
+// server — every other page (e.g. economy/page.tsx) prefixes with
+// GRID_ORIGIN. This file used bare relative paths, so the requests hit
+// Steward's own origin and 404'd (no such Next.js API route here),
+// surfacing as a permanent "Settings load failed: 404" banner.
+const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
+
 // WR-02: guard against javascript: URIs or off-origin URLs in server-returned download_url
 function isSafeDownloadUrl(url: string): boolean {
     try {
@@ -79,11 +86,11 @@ export default function LocalAiPage() {
         async function load() {
             try {
                 const [settingsRes, modelsRes, nousRes] = await Promise.all([
-                    fetch('/api/v1/operator/me/settings', { credentials: 'include' }),
+                    fetch(`${GRID_ORIGIN}/api/v1/operator/me/settings`, { credentials: 'include' }),
                     fetch('/api/brain/local-ai/models'),
                     // Phase 43: attempt to load Civic-DID from operator's Nous fleet.
                     // civic_did is stubbed null until Phase 46 wires the registry join.
-                    fetch('/api/v1/operator/me/nous', { credentials: 'include' }),
+                    fetch(`${GRID_ORIGIN}/api/v1/operator/me/nous`, { credentials: 'include' }),
                 ]);
                 if (settingsRes.ok) {
                     const s = await settingsRes.json() as { local_ai: LocalAiSettings };
@@ -135,7 +142,7 @@ export default function LocalAiPage() {
     async function handleSave() {
         if (!draft) return;
         try {
-            const res = await fetch('/api/v1/operator/me/settings', {
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/operator/me/settings`, {
                 method: 'PATCH',
                 credentials: 'include',
                 headers: { 'content-type': 'application/json' },
