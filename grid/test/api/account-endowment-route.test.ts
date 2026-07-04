@@ -24,7 +24,12 @@ import { AuditChain } from '../../src/audit/chain.js';
 import { COOKIE_NAME, keyPairPromise } from '../../src/api/portal/auth.js';
 import type { FastifyInstance } from 'fastify';
 
-const OPERATOR_DID = 'did:portal:noesis:operator-a';
+// QA fix: was 'did:portal:noesis:operator-a' — a shape that happens to satisfy
+// tryDid.ts's (formerly buggy) ANY_DID_RE but that no real code path ever
+// issues. A real portal session cookie's `did` claim is always a human
+// existence-DID (did:noesis:human:*, from SIWE or email signup) — use that
+// real shape so this test actually exercises the contract tryDid.ts enforces.
+const OPERATOR_DID = 'did:noesis:human:operator-a';
 const RECIPIENT = 'did:civic:noesis:alice';
 const ENDOW_URL = '/api/v1/portal/account/endow';
 

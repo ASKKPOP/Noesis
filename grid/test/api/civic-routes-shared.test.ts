@@ -17,11 +17,13 @@ import { SignJWT } from 'jose';
 import { COOKIE_NAME, keyPairPromise } from '../../src/api/portal/auth.js';
 import type { FastifyInstance } from 'fastify';
 
-// ANY_DID_RE = /^did:[a-z0-9]+:noesis:[a-z0-9_:\-]+$/i — tryDid cookie path uses this.
-// Human DIDs (did:noesis:human:0x...) do NOT match ANY_DID_RE due to a Phase 37/38 regression.
-// Use did:portal:noesis:* format which matches ANY_DID_RE for test portal cookies.
-const OP_A_DID = 'did:portal:noesis:operator-a';
-const OP_B_DID = 'did:portal:noesis:operator-b';
+// QA fix: tryDid.ts's portal-cookie path now correctly uses DID_RE
+// (did:noesis:*), matching the real shape SIWE/email signup issue
+// (did:noesis:human:*) — the former did:portal:noesis:* workaround for the
+// "Phase 37/38 regression" (ANY_DID_RE rejecting real human DIDs) is gone,
+// fixed at the source in tryDid.ts.
+const OP_A_DID = 'did:noesis:human:operator-a';
+const OP_B_DID = 'did:noesis:human:operator-b';
 const CIVIC_DID = 'did:civic:noesis:civic001';
 
 async function makePortalCookie(did: string): Promise<string> {

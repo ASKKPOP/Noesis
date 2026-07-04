@@ -25,8 +25,9 @@ import { getSettings, updateSettings } from '../src/operator/data/operator-setti
 import type { LocalAiSettings, OperatorSettings } from '../src/operator/data/operator-settings-store.js';
 import type { BrainTokenRecord } from '../src/db/stores/brain-token-store.js';
 
-// Use did:portal:noesis:* format — matches ANY_DID_RE used by tryDid cookie path.
-const OP_A_DID = 'did:portal:noesis:operator-a';
+// QA fix: tryDid.ts's portal-cookie path now correctly uses DID_RE
+// (did:noesis:*), matching the real shape SIWE/email signup issue.
+const OP_A_DID = 'did:noesis:human:operator-a';
 
 async function makePortalCookie(did: string): Promise<string> {
     const { privateKey } = await keyPairPromise;
@@ -229,7 +230,7 @@ function makeBrainTokenStore(opts: {
 
 const BRAIN_DID = 'did:noesis:nous:brain-001';
 const CIVIC_DID = 'did:civic:noesis:member-001';
-const OPERATOR_DID = 'did:portal:noesis:operator-a';
+const OPERATOR_DID = 'did:noesis:human:operator-a';
 
 describe('GET /api/v1/operator/me/brain-settings (Brain JWT auth gap — D-40-01)', () => {
     // Build a single app with brainTokenStore wired.

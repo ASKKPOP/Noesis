@@ -30,9 +30,9 @@ import type { FastifyInstance } from 'fastify';
 
 const OP_ID = 'op:12345678-1234-4234-8234-1234567890ab';
 
-// ANY_DID_RE = /^did:[a-z0-9]+:noesis:[a-z0-9_:\-]+$/i — the tryDid cookie path uses this.
-// did:portal:noesis:* matches it (did:noesis:human:0x… does not, per the Phase 37/38 regression).
-const OPERATOR_DID = 'did:portal:noesis:operator-a';
+// QA fix: tryDid.ts's portal-cookie path now correctly uses DID_RE
+// (did:noesis:*), matching the real shape SIWE/email signup issue.
+const OPERATOR_DID = 'did:noesis:human:operator-a';
 
 type MockPool = { query: ReturnType<typeof vi.fn> };
 

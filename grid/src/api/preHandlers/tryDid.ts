@@ -123,13 +123,21 @@ export async function tryDid(
     }
 
     // Step 2: Portal session cookie (Human Visitor)
+    // QA fix: this used ANY_DID_RE (did:<X>:noesis:*, the civic/biz/gov shape),
+    // but a portal session cookie's `did` claim is always a human existence-DID
+    // (did:noesis:human:* — DID_RE's shape, noesis as the SECOND segment, not
+    // the third). ANY_DID_RE.test() on a human DID is always false, so this
+    // branch could never resolve a Human Visitor from a real session cookie —
+    // portal_session_required (and operatorScope, which depends on it) was
+    // unusable end-to-end regardless of the cookie's Secure flag. DID_RE was
+    // already imported for this exact purpose and never used.
     const cookies = req.cookies as Record<string, string | undefined> | undefined;
     const cookieToken = cookies?.[COOKIE_NAME];
     if (cookieToken) {
         try {
             const { payload } = await jwtVerify(cookieToken, publicKey);
             const did = payload['did'];
-            if (typeof did === 'string' && did.length > 0 && ANY_DID_RE.test(did)) {
+            if (typeof did === 'string' && did.length > 0 && DID_RE.test(did)) {
                 return { did, tier: 'human_visitor', operatorDid: did };
             }
         } catch {

@@ -28,10 +28,9 @@ import type { FastifyInstance } from 'fastify';
 import { countActiveByOperator } from '../../src/operator/data/operator-brain-store.js';
 import { getFullQuota } from '../../src/operator/data/operator-quota-store.js';
 
-// ANY_DID_RE = /^did:[a-z0-9]+:noesis:[a-z0-9_:\-]+$/i — tryDid cookie path uses this.
-// Human DIDs (did:noesis:human:0x...) do NOT match ANY_DID_RE due to a Phase 37/38 regression.
-// Use did:portal:noesis:* format which matches ANY_DID_RE for test portal cookies.
-const OP_A_DID = 'did:portal:noesis:operator-a';
+// QA fix: tryDid.ts's portal-cookie path now correctly uses DID_RE
+// (did:noesis:*), matching the real shape SIWE/email signup issue.
+const OP_A_DID = 'did:noesis:human:operator-a';
 
 async function makePortalCookie(did: string): Promise<string> {
     const { privateKey } = await keyPairPromise;
