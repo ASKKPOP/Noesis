@@ -958,6 +958,14 @@ export function buildServerWithHub(
         }, {
             // W-D3: grid name for the ALERT_WEBHOOK_URL payload (URL read from env).
             gridName: services.gridName,
+            // QA fix (A-02): AuditReconcile.run() fires every 60 ticks (see
+            // audit-reconcile.ts), not every 30s — at production tickRateMs=30000
+            // that's a 30-minute cadence. snapshotCadenceMs defaults to 30_000 when
+            // unset, so RECONCILE_STALE_MULTIPLIER(5) x 30_000 = a 2.5-minute
+            // staleness window against a 30-minute cycle: /health/detailed reported
+            // degraded/reconcile_stale for the vast majority of every cycle, not
+            // just on real stalls. Pass the actual reconcile cadence.
+            snapshotCadenceMs: 60 * launcher.clock.state.tickRateMs,
         });
         launcher.attachHealthWatchdog(healthWatchdog);
         launcher.attachFirehoseHub(firehoseHub);
