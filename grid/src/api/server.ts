@@ -450,6 +450,36 @@ export function buildServerWithHub(
     // Phase 22: @fastify/cookie required for portal JWT cookie support (WEB3-03).
     void app.register(fastifyCookie);
 
+    // QA fix (A-08/A-11): CORS must be registered before ANY onRequest hook that
+    // can short-circuit a request (the rate limiters below and the policy hook
+    // further down both send 429/401/403 directly from onRequest). Fastify runs
+    // onRequest hooks in registration order and stops once a reply is sent — so
+    // when CORS was registered AFTER those hooks, every rejected cross-origin
+    // request (steward:3002 / dashboard:3001 calling grid:8080) came back with
+    // no Access-Control-Allow-Origin header at all, and the browser reported a
+    // CORS failure instead of surfacing the real 401/403/429 body to the caller.
+    // Dashboard CORS (dev): Next.js dev server runs on :3001 per 03-VALIDATION.md.
+    // :3000 is included because `next dev` falls back to :3000 when :3001 is taken.
+    // :3002 is the Steward Console.
+    // Production (subdomain hosting): the dashboard/steward live on different
+    // origins (dash./console.${DOMAIN}) so requests to api.${DOMAIN} are
+    // cross-origin. Add those HTTPS origins via GRID_CORS_ORIGINS (comma-
+    // separated); the localhost defaults are always kept for dev.
+    const corsOrigins = [
+        'http://localhost:3001',
+        'http://localhost:3000',
+        'http://localhost:3002',
+        ...(process.env.GRID_CORS_ORIGINS ?? '')
+            .split(',')
+            .map((o) => o.trim())
+            .filter((o) => o.length > 0),
+    ];
+    void app.register(cors, {
+        origin: corsOrigins,
+        credentials: true,
+        methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+    });
+
     // Phase 36 D-36-05/07: visitor rate limiter — registered FIRST (before policy hook).
     // 120 req/min per IP. In-process Map; Phase 39 refactors to per-DID buckets.
     registerVisitorRateLimit(app);
@@ -510,28 +540,6 @@ export function buildServerWithHub(
     // Registered AFTER the policy onRequest hook above so req.didContext is already populated.
     // DID-authenticated requests get 600 req/min (5× the anonymous visitor 120/min IP limit).
     registerDidRateLimit(app);
-
-    // Dashboard CORS (dev): Next.js dev server runs on :3001 per 03-VALIDATION.md.
-    // :3000 is included because `next dev` falls back to :3000 when :3001 is taken.
-    // :3002 is the Steward Console.
-    // Production (subdomain hosting): the dashboard/steward live on different
-    // origins (dash./console.${DOMAIN}) so requests to api.${DOMAIN} are
-    // cross-origin. Add those HTTPS origins via GRID_CORS_ORIGINS (comma-
-    // separated); the localhost defaults are always kept for dev.
-    const corsOrigins = [
-        'http://localhost:3001',
-        'http://localhost:3000',
-        'http://localhost:3002',
-        ...(process.env.GRID_CORS_ORIGINS ?? '')
-            .split(',')
-            .map((o) => o.trim())
-            .filter((o) => o.length > 0),
-    ];
-    void app.register(cors, {
-        origin: corsOrigins,
-        credentials: true,
-        methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
-    });
 
     // --- Health ---
 
