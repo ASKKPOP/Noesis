@@ -84,20 +84,50 @@ export function registerSystemMapRoute(app: FastifyInstance, services: GridServi
         // Non-DB signals only — clock running, audit chain integrity, firehose subs.
         const gridSurface = await item<GridSurfaceItem>(
             async () => {
+                const clientCount = services.firehoseHub?.stats().client_count ?? 0;
+
+                // Canonical health signal — the SAME source /health/detailed uses
+                // (the watchdog snapshot: divergence-based, pure-pull). NOT the O(n)
+                // audit.verify() re-hash, which on a polled endpoint is both slow AND
+                // returns valid:false benignly on a large-but-healthy chain — that made
+                // this tile read 'degraded'/'starting up' while the grid was actually ok
+                // (QA finding: 77k-entry chain, divergence 0, watchdog ok).
+                const snap = services.launcher?.healthWatchdog?.snapshot();
+                if (snap) {
+                    const running = snap.clock.running;
+                    const div = snap.audit.divergence;
+                    const chainValid = div === null || div <= snap.audit.divergence_threshold;
+                    const status: SurfaceStatus = !running
+                        ? 'down'
+                        : snap.status === 'critical'
+                            ? 'down'
+                            : snap.status === 'degraded'
+                                ? 'degraded'
+                                : 'up';
+                    return {
+                        status,
+                        metric: clientCount,
+                        headline: status === 'up' ? 'world running' : status === 'down' ? 'clock stopped' : 'degraded',
+                        tick: snap.clock.tick,
+                        client_count: clientCount,
+                        chain_valid: chainValid,
+                    };
+                }
+
+                // Fallback (watchdog not wired — e.g. unit tests): liveness only.
+                // Cheap chain_valid (length), never the full re-hash.
                 const running = services.clock?.running ?? false;
                 const tick = services.clock?.state?.tick ?? currentTick;
-                const clientCount = services.firehoseHub?.stats().client_count ?? 0;
-                const chainValid = services.audit ? services.audit.verify().valid : true;
-
-                let status: SurfaceStatus;
-                if (!running) status = 'down';
-                else if (!chainValid || tick < COLD_START_TICKS) status = 'degraded';
-                else status = 'up';
-
+                const chainValid = services.audit ? services.audit.length > 0 : true;
+                const status: SurfaceStatus = !running
+                    ? 'down'
+                    : tick < COLD_START_TICKS
+                        ? 'degraded'
+                        : 'up';
                 return {
                     status,
                     metric: clientCount,
-                    headline: status === 'up' ? 'world running' : status === 'degraded' ? 'starting up' : 'clock stopped',
+                    headline: status === 'up' ? 'world running' : status === 'down' ? 'clock stopped' : 'starting up',
                     tick,
                     client_count: clientCount,
                     chain_valid: chainValid,

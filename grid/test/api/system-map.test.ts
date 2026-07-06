@@ -195,17 +195,56 @@ describe('GET /api/v1/system/map — computed status (not constant)', () => {
         await app.close();
     });
 
-    it('grid degraded when audit chain integrity is broken', async () => {
-        const audit = new AuditChain();
-        // Force verify() to report invalid.
-        vi.spyOn(audit, 'verify').mockReturnValue({ valid: false, brokenAt: 0 });
-        const app = buildApp({ audit, pool: makePool(makeQueryFn({ populated: true })) as never });
+    // Health comes from the canonical watchdog snapshot (the SAME source /health/detailed
+    // uses) — NOT an independent audit.verify() re-hash.
+    function snapLauncher(snap: unknown): Partial<GridServices> {
+        return { launcher: { healthWatchdog: { snapshot: () => snap } } } as unknown as Partial<GridServices>;
+    }
+
+    it('grid up from the watchdog snapshot when divergence is within threshold', async () => {
+        const app = buildApp({
+            ...snapLauncher({
+                status: 'ok', clock: { running: true, tick: 1123, last_tick_at: 1 },
+                audit: { divergence: 0, divergence_threshold: 10 },
+            }),
+            pool: makePool(makeQueryFn({ populated: true })) as never,
+        });
+        await app.ready();
+        const body = (await app.inject({ method: 'GET', url: '/api/v1/system/map' })).json();
+        expect(body.surfaces.grid.status).toBe('up');
+        expect(body.surfaces.grid.chain_valid).toBe(true);
+        expect(body.surfaces.grid.tick).toBe(1123);
+        await app.close();
+    });
+
+    it('grid degraded when the watchdog reports divergence over threshold', async () => {
+        const app = buildApp({
+            ...snapLauncher({
+                status: 'degraded', clock: { running: true, tick: 1123, last_tick_at: 1 },
+                audit: { divergence: 50, divergence_threshold: 10 },
+            }),
+            pool: makePool(makeQueryFn({ populated: true })) as never,
+        });
         await app.ready();
         const body = (await app.inject({ method: 'GET', url: '/api/v1/system/map' })).json();
         expect(body.surfaces.grid.status).toBe('degraded');
         expect(body.surfaces.grid.chain_valid).toBe(false);
         // steward derives from grid: not 'down' (grid is degraded, still reachable).
         expect(body.surfaces.steward.status).toBe('up');
+        await app.close();
+    });
+
+    it('regression: a healthy-but-large chain is NOT falsely degraded — verify() is never called', async () => {
+        // The old code called audit.verify() (O(n)) and read valid:false benignly on a
+        // large chain, showing 'degraded' while the Grid was actually ok. No watchdog here
+        // → the liveness fallback runs and must NOT invoke verify().
+        const audit = new AuditChain();
+        const spy = vi.spyOn(audit, 'verify').mockReturnValue({ valid: false, brokenAt: 0 });
+        const app = buildApp({ audit, pool: makePool(makeQueryFn({ populated: true })) as never });
+        await app.ready();
+        const body = (await app.inject({ method: 'GET', url: '/api/v1/system/map' })).json();
+        expect(body.surfaces.grid.status).toBe('up');   // running + tick >= 60, verify() ignored
+        expect(spy).not.toHaveBeenCalled();             // never re-hash on a polled endpoint
         await app.close();
     });
 });
