@@ -247,6 +247,11 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // sole boundary — it survives only as a secondary intent signal behind operatorScope.
     // Observe-only; emits no audit events.
     'GET /api/v1/portal-manager/registrations': 'portal_session_required',
+    // Two more READ-ONLY Tier-3 monitoring surfaces (same operator gate as above).
+    // MUST be 'portal_session_required' (NOT 'public') so requirePortalSession runs
+    // in the hook and populates req.didContext.operatorDid that operatorScope reads.
+    'GET /api/v1/portal-manager/did-issuance': 'portal_session_required',
+    'GET /api/v1/portal-manager/audit-chain': 'portal_session_required',
 
     // Admin routes — gated by GRID_ADMIN_ENABLED env, use their own mechanism
     'GET /api/v1/admin/config': 'public',

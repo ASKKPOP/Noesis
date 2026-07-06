@@ -18,7 +18,11 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { agencyStore, getOperatorId } from '@/lib/stores/agency-store';
 import {
     fetchRegistrations,
+    fetchDidIssuance,
+    fetchAuditChain,
     type RegistrationsResponse,
+    type DidIssuanceResponse,
+    type AuditChainResponse,
     type PortalManagerErrorKind,
 } from '@/lib/api/portal-manager';
 import type { HumanAgencyTier } from '@/lib/protocol/agency-types';
@@ -38,6 +42,10 @@ export default function PortalManagerPage() {
 
     const [data, setData] = useState<RegistrationsResponse | null>(null);
     const [error, setError] = useState<PortalManagerErrorKind | undefined>(undefined);
+    const [didData, setDidData] = useState<DidIssuanceResponse | null>(null);
+    const [didError, setDidError] = useState<PortalManagerErrorKind | undefined>(undefined);
+    const [auditData, setAuditData] = useState<AuditChainResponse | null>(null);
+    const [auditError, setAuditError] = useState<PortalManagerErrorKind | undefined>(undefined);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -46,30 +54,48 @@ export default function PortalManagerPage() {
 
     useEffect(() => {
         const controller = new AbortController();
+        const op = { tier: TIER_TO_NUM[tier], operatorId: getOperatorId() };
         setLoading(true);
         setError(undefined);
-        fetchRegistrations(
-            { tier: TIER_TO_NUM[tier], operatorId: getOperatorId() },
-            undefined,
-            controller.signal,
-        )
-            .then((res) => {
-                if (res.ok) {
-                    setData(res.data);
-                    setError(undefined);
-                } else {
-                    setData(null);
-                    setError(res.error.kind);
-                }
-                setLoading(false);
-            })
+        setDidError(undefined);
+        setAuditError(undefined);
+
+        // Fire all three read-only slices in parallel with the SAME signal; the
+        // single top-level loading flag clears once ALL settle.
+        Promise.all([
+            fetchRegistrations(op, undefined, controller.signal).then((res) => {
+                if (res.ok) { setData(res.data); setError(undefined); }
+                else { setData(null); setError(res.error.kind); }
+            }),
+            fetchDidIssuance(op, controller.signal).then((res) => {
+                if (res.ok) { setDidData(res.data); setDidError(undefined); }
+                else { setDidData(null); setDidError(res.error.kind); }
+            }),
+            fetchAuditChain(op, controller.signal).then((res) => {
+                if (res.ok) { setAuditData(res.data); setAuditError(undefined); }
+                else { setAuditData(null); setAuditError(res.error.kind); }
+            }),
+        ])
+            .then(() => setLoading(false))
             .catch((err) => {
                 if ((err as { name?: string })?.name === 'AbortError') return;
                 setError('network');
+                setDidError('network');
+                setAuditError('network');
                 setLoading(false);
             });
         return () => controller.abort();
     }, [tier]);
 
-    return <PortalManagerView data={data} error={error} loading={loading} />;
+    return (
+        <PortalManagerView
+            data={data}
+            error={error}
+            loading={loading}
+            didIssuance={didData}
+            didError={didError}
+            audit={auditData}
+            auditError={auditError}
+        />
+    );
 }

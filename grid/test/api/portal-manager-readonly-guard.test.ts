@@ -4,8 +4,10 @@
  * v1 is strictly observe-only (D-V3-36, VOTE-05). These guards prove it adds NO
  * broadcast event and emits no audit entries:
  *   1. The broadcast allowlist length is unchanged (no new portal.* prefix).
- *   2. The route module imports NO audit producer (no `append*` import, no
- *      reference to services.audit) — it can only SELECT.
+ *   2. The route module imports NO audit producer (no `append*` import) and never
+ *      APPENDS to the chain — the audit-chain viewer reads services.audit.query()
+ *      (a pure read) but can never emit. It also never calls verify() (the
+ *      integrity signal is the divergence-based watchdog snapshot).
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -31,9 +33,11 @@ describe('Portal Manager v1 — module is observe-only', () => {
         expect(SRC).not.toMatch(/import[^\n]*append/i);
     });
 
-    it('never references services.audit (cannot emit audit entries)', () => {
-        expect(SRC).not.toContain('services.audit');
-        expect(SRC).not.toContain('.audit');
+    it('never appends to the audit chain (cannot emit audit entries)', () => {
+        // Reading services.audit.query() is allowed (audit-chain viewer); appending
+        // and verify() are not. No `.append(` producer call may appear.
+        expect(SRC).not.toMatch(/\.append\s*\(/);
+        expect(SRC).not.toMatch(/\.verify\s*\(/);
     });
 
     it('issues no INSERT / UPDATE / DELETE SQL — SELECT-only', () => {

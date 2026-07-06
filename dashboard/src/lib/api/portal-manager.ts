@@ -38,6 +38,37 @@ export interface RegistrationsResponse {
     activity: { registrations_total: number; civic_dids_issued: number };
 }
 
+/** A recently issued PUBLIC Civic-DID (did:civic:noesis:…) — safe to display raw. */
+export interface DidIssuanceRow {
+    civic_did: string;
+    status: 'active' | 'revoked';
+    issued_at_tick: number;
+    kind: 'civic';
+}
+
+export interface DidIssuanceResponse {
+    grid_name: string;
+    issued: DidIssuanceRow[];
+    counts: { active: number; revoked: number; total: number; nous_active: number };
+}
+
+/** A recent audit event — PII-free projection ({ event_type, tick } only). */
+export interface AuditChainEvent {
+    event_type: string;
+    tick: number;
+}
+
+export interface AuditChainResponse {
+    integrity: {
+        in_memory_length: number | null;
+        persisted_max_id: number | null;
+        divergence: number | null;
+        divergence_threshold: number;
+        healthy: boolean;
+    };
+    recent: AuditChainEvent[];
+}
+
 export type PortalManagerErrorKind =
     | 'unauthorized'      // 401 portal_session_required/tier_missing / 403 operator_scope_required/tier_too_low / 400 invalid_operator_id
     | 'console_disabled'  // 503 { error: 'portal_manager_disabled' } — GRID_PORTAL_MANAGER_ENABLED off in this environment
@@ -105,4 +136,59 @@ export async function fetchRegistrations(
     }
 
     return { ok: true, data: (await resp.json()) as RegistrationsResponse };
+}
+
+/**
+ * Shared GET helper for the two additional Tier-3 monitoring surfaces — the SAME
+ * discriminated-union + credentials:'include' + 503 disambiguation as
+ * fetchRegistrations, reusing STATUS_TO_KIND + PortalManagerErrorKind.
+ */
+async function fetchPortalManager<T>(
+    path: string,
+    op: OperatorHeaders,
+    signal?: AbortSignal,
+): Promise<PortalManagerResult<T>> {
+    let resp: Response;
+    try {
+        resp = await fetch(`${GRID_ORIGIN()}${path}`, {
+            method: 'GET',
+            signal,
+            credentials: 'include',
+            headers: {
+                accept: 'application/json',
+                'x-operator-tier': String(op.tier),
+                'x-operator-id': op.operatorId,
+            },
+        });
+    } catch (err) {
+        if ((err as { name?: string })?.name === 'AbortError') throw err;
+        return { ok: false, error: { kind: 'network' } };
+    }
+
+    if (!resp.ok) {
+        if (resp.status === 503) {
+            let code: string | undefined;
+            try { code = ((await resp.json()) as { error?: string }).error; } catch { /* keep undefined */ }
+            return { ok: false, error: { kind: code === 'portal_manager_disabled' ? 'console_disabled' : 'db_unavailable' } };
+        }
+        return { ok: false, error: { kind: STATUS_TO_KIND[resp.status] ?? 'network' } };
+    }
+
+    return { ok: true, data: (await resp.json()) as T };
+}
+
+/** fetchDidIssuance — GET the recently-issued Civic-DID tracker + counts. */
+export function fetchDidIssuance(
+    op: OperatorHeaders,
+    signal?: AbortSignal,
+): Promise<PortalManagerResult<DidIssuanceResponse>> {
+    return fetchPortalManager<DidIssuanceResponse>('/api/v1/portal-manager/did-issuance', op, signal);
+}
+
+/** fetchAuditChain — GET the recent audit events + chain integrity. */
+export function fetchAuditChain(
+    op: OperatorHeaders,
+    signal?: AbortSignal,
+): Promise<PortalManagerResult<AuditChainResponse>> {
+    return fetchPortalManager<AuditChainResponse>('/api/v1/portal-manager/audit-chain', op, signal);
 }
