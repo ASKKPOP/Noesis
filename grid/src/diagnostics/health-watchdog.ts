@@ -202,6 +202,15 @@ interface HealthWatchdogOpts {
      * Defaults to env ALERT_WEBHOOK_URL. Unset → alerting is a no-op.
      */
     alertWebhookUrl?: string;
+    /**
+     * Q3 alert hook: an AWS SNS topic ARN published to on transitions to
+     * degraded/critical. Subscribe the topic to email + SMS in AWS and both get
+     * the alert. Defaults to env ALERT_SNS_TOPIC_ARN; region from ALERT_SNS_REGION
+     * (else AWS_REGION). Unset → SNS alerting is a no-op. The SDK is dynamically
+     * imported only when a topic is configured (zero cost when unused).
+     */
+    alertSnsTopicArn?: string;
+    alertSnsRegion?: string;
 }
 
 /**
@@ -216,6 +225,8 @@ export class HealthWatchdog {
     private readonly snapshotCadenceMs: number;
     private readonly gridName: string;
     private readonly alertWebhookUrl: string | undefined;
+    private readonly alertSnsTopicArn: string | undefined;
+    private readonly alertSnsRegion: string | undefined;
 
     constructor(
         private readonly deps: HealthWatchdogDeps,
@@ -225,6 +236,40 @@ export class HealthWatchdog {
         this.snapshotCadenceMs = opts.snapshotCadenceMs ?? 30_000;
         this.gridName = opts.gridName ?? process.env['GRID_NAME'] ?? 'genesis';
         this.alertWebhookUrl = opts.alertWebhookUrl ?? process.env['ALERT_WEBHOOK_URL'];
+        this.alertSnsTopicArn = opts.alertSnsTopicArn ?? process.env['ALERT_SNS_TOPIC_ARN'];
+        this.alertSnsRegion = opts.alertSnsRegion ?? process.env['ALERT_SNS_REGION'] ?? process.env['AWS_REGION'];
+    }
+
+    /**
+     * Q3 alert hook: publish {grid, status, reason, tick} to an AWS SNS topic on
+     * a state TRANSITION to degraded/critical. The topic fans out to email + SMS
+     * subscribers. Fire-and-forget — the SDK is dynamically imported only when a
+     * topic ARN is configured, and any error only Pino-warns; it never throws and
+     * never blocks the health loop. No-op when ALERT_SNS_TOPIC_ARN is unset.
+     */
+    private publishSns(status: HealthStatus, reasons: readonly string[], tick: number): void {
+        if (this.alertSnsTopicArn === undefined || this.alertSnsTopicArn === '') return;
+        const topicArn = this.alertSnsTopicArn;
+        const region = this.alertSnsRegion;
+        const subject = `[Noēsis ${this.gridName}] health ${status}`.slice(0, 100);
+        const message = JSON.stringify({ grid: this.gridName, status, reason: reasons.join(','), tick });
+        void (async () => {
+            try {
+                const { SNSClient, PublishCommand } = await import('@aws-sdk/client-sns');
+                const client = new SNSClient(region ? { region } : {});
+                // SMS has no subject; email uses it. SNS ignores Subject for SMS.
+                await client.send(new PublishCommand({ TopicArn: topicArn, Subject: subject, Message: message }));
+            } catch (err: unknown) {
+                log.warn(
+                    {
+                        event: 'health_alert_sns_failed',
+                        status,
+                        error: err instanceof Error ? err.message : String(err),
+                    },
+                    'alert SNS publish failed',
+                );
+            }
+        })();
     }
 
     /**
@@ -360,8 +405,10 @@ export class HealthWatchdog {
                 log.info(payload, 'health recovered');
             } else {
                 log.warn(payload, 'health degraded');
-                // W-D3: webhook alert on the transition only (never on repeat checks).
+                // W-D3 + Q3: webhook AND SNS(email+SMS) alert on the transition
+                // only (never on repeat checks). Both are independently env-gated.
                 this.postAlert(status, reasons, clock.tick);
+                this.publishSns(status, reasons, clock.tick);
             }
         }
         this.lastStatus = status;
