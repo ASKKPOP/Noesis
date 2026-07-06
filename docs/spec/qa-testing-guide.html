@@ -64,7 +64,23 @@ a{color:var(--accent);}
   <li>Found a bug? Use the <b>bug template</b> (§6). One bug = one sub-thread.</li>
   <li>Two ways to test each item: a <b>browser URL</b> (open it) or a <b>curl command</b> (terminal). Either is fine.</li>
 </ul>
-<div class="callout warn"><div class="ic">⚠️</div><div>Heads-up from the last deploy: the grid container had just restarted, so the System Map showed <code>grid: degraded · "starting up"</code> and <code>tick: 0</code>. <b>First thing to confirm (A-01):</b> is the WorldClock now ticking (<code>tick &gt; 0</code> and rising)? If it's still 0, that's finding #1.</div></div>
+<h2>2b · Round-0 baseline — operator pre-run</h2>
+<p class="intro">Before you start, the operator pre-ran the read-only tracks against production. This is your <b>known-good starting state</b> — begin here. A ✅ confirms the baseline; anything different is a genuine new finding worth reporting.</p>
+<div class="callout ok"><div class="ic">✅</div><div><b>All read-only tracks green (2026-07-06 pre-run).</b> Every core surface returns 200 and every institution endpoint returns real data. Two real bugs were caught during the pre-run and are <b>already fixed &amp; deployed</b> — this guide's fix-loop, demonstrated.</div></div>
+<table>
+  <tr><th>Area</th><th>Baseline result</th></tr>
+  <tr><td>Track A — platform &amp; surfaces</td><td>✅ clock ticking · System Map page + endpoint live &amp; accurate · steward · portal-manager (401 gate holds) · spec/wiki/qa — all 200</td></tr>
+  <tr><td>Track B — 8 institutions</td><td>✅ all endpoints 200 &amp; real; police 401 (gated, correct); IRS matches the map; other institutions genuinely empty (fresh Genesis grid)</td></tr>
+  <tr><td>Track C — journeys (read-only)</td><td>✅ portal / apply / auth pages 200; economy endpoints 200 (valid JSON)</td></tr>
+  <tr><td>Write-path C-07 → C-09</td><td><span class="pill write">W</span> open — Round 2 (operator + Luu): real sign-up → apply → System Map counts +1</td></tr>
+</table>
+<h3>Two bugs caught &amp; fixed during the pre-run</h3>
+<table>
+  <tr><th>#</th><th>Bug</th><th>Fix (deployed)</th></tr>
+  <tr><td>1</td><td>System Map grid tile showed <code>degraded · "starting up"</code> while the grid was actually <code>ok</code> — it re-hashed the 77k-entry audit chain, which returned false benignly (and was slow on a polled endpoint).</td><td>grid tile now reads the canonical health-watchdog signal, same source as <code>/health/detailed</code>. Live: grid reads <code>up</code>. <span class="id">643c007</span></td></tr>
+  <tr><td>2</td><td>The dashboard hung the entire apex (<code>000</code>) when the grid restarted — server-side page fetches had no timeout and crashed on 401 / non-JSON bodies.</td><td><code>safeGridFetch</code> (3s timeout + graceful fallback) across all 9 SSR pages; a grid blip now degrades one page for ~3s, never the whole app. <span class="id">4fa3d96</span></td></tr>
+</table>
+<div class="callout"><div class="ic">🧭</div><div>So when you run your track: <b>green</b> = baseline confirmed; <b>❌</b> = a genuine new finding or regression — post it with the §6 template and the operator diagnoses, fixes, and redeploys.</div></div>
 
 <h2 class="s-a">3 · Track A — Platform &amp; surfaces <span class="ko">플랫폼·표면 · <span class="devbadge d1">You · operator</span></span></h2>
 <p class="intro">The shell everything runs in: the live System Map, health, the world clock, and the operator surfaces.</p>
