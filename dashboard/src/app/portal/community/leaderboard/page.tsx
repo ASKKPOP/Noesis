@@ -7,6 +7,8 @@
 import { useState, useEffect } from 'react';
 import { LeaderboardRow } from '../../../../components/portal/LeaderboardRow';
 
+const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
+
 interface LeaderboardEntry {
     did: string;
     eth_address: string | null;
@@ -23,7 +25,7 @@ export default function LeaderboardPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch('/api/v1/portal/community/leaderboard', { credentials: 'include' })
+        fetch(`${GRID_ORIGIN}/api/v1/portal/community/leaderboard`, { credentials: 'include' })
             .then(r => r.json())
             .then(d => { setEntries(d.entries ?? []); setLoading(false); })
             .catch(() => { setError('Failed to load leaderboard'); setLoading(false); });

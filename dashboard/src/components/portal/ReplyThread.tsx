@@ -6,6 +6,8 @@
 
 import { useState, useEffect } from 'react';
 
+const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
+
 interface Reply {
     id: number;
     author_did: string;
@@ -42,7 +44,7 @@ export function ReplyThread({ postId }: ReplyThreadProps) {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch(`/api/v1/portal/community/posts/${postId}/replies`, { credentials: 'include' })
+        fetch(`${GRID_ORIGIN}/api/v1/portal/community/posts/${postId}/replies`, { credentials: 'include' })
             .then(r => r.json())
             .then((d: { replies?: Reply[] }) => { setReplies(d.replies ?? []); setLoading(false); })
             .catch(() => setLoading(false));
@@ -56,7 +58,7 @@ export function ReplyThread({ postId }: ReplyThreadProps) {
         setSubmitting(true);
         setError(null);
         try {
-            const res = await fetch(`/api/v1/portal/community/posts/${postId}/replies`, {
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/portal/community/posts/${postId}/replies`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
@@ -68,7 +70,7 @@ export function ReplyThread({ postId }: ReplyThreadProps) {
                 return;
             }
             // Refresh replies after successful post
-            const fresh = await fetch(`/api/v1/portal/community/posts/${postId}/replies`, { credentials: 'include' });
+            const fresh = await fetch(`${GRID_ORIGIN}/api/v1/portal/community/posts/${postId}/replies`, { credentials: 'include' });
             const freshData = await fresh.json() as { replies?: Reply[] };
             setReplies(freshData.replies ?? []);
             setReplyContent('');

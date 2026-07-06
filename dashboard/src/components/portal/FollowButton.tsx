@@ -6,6 +6,8 @@
 
 import { useState } from 'react';
 
+const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
+
 interface FollowButtonProps {
     targetDid: string;
     initialFollowing: boolean;
@@ -21,7 +23,7 @@ export function FollowButton({ targetDid, initialFollowing, onFollowChange }: Fo
         setLoading(true);
         try {
             const method = following ? 'DELETE' : 'POST';
-            const res = await fetch(`/api/v1/portal/community/follow/${encodeURIComponent(targetDid)}`, {
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/portal/community/follow/${encodeURIComponent(targetDid)}`, {
                 method,
                 credentials: 'include',
             });

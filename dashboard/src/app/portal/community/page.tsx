@@ -12,6 +12,8 @@ import { PostCard } from '../../../components/portal/PostCard';
 import { PostComposer } from '../../../components/portal/PostComposer';
 import { FollowButton } from '../../../components/portal/FollowButton';
 
+const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
+
 type Tab = 'board' | 'users' | 'leaderboard';
 
 interface UserEntry {
@@ -53,7 +55,7 @@ export default function CommunityPage() {
 
     function loadPosts() {
         setPostsLoading(true);
-        fetch('/api/v1/portal/community/posts', { credentials: 'include' })
+        fetch(`${GRID_ORIGIN}/api/v1/portal/community/posts`, { credentials: 'include' })
             .then(r => r.json())
             .then((d: { posts?: Post[] }) => { setPosts(d.posts ?? []); setPostsLoading(false); })
             .catch(() => setPostsLoading(false));
@@ -65,19 +67,19 @@ export default function CommunityPage() {
         }
         if (activeTab === 'users' && users.length === 0) {
             setLoading(true);
-            fetch('/api/v1/portal/community/users', { credentials: 'include' })
+            fetch(`${GRID_ORIGIN}/api/v1/portal/community/users`, { credentials: 'include' })
                 .then(r => r.json())
                 .then(d => { setUsers(d.users ?? []); setLoading(false); })
                 .catch(() => { setError('Failed to load users'); setLoading(false); });
         }
         if (activeTab === 'users' && !myDid) {
-            fetch('/api/v1/portal/auth/me', { credentials: 'include' })
+            fetch(`${GRID_ORIGIN}/api/v1/portal/auth/me`, { credentials: 'include' })
                 .then(r => r.json())
                 .then((d: { did?: string }) => { if (d.did) setMyDid(d.did); })
                 .catch(() => {});
         }
         if (activeTab === 'users' && followingSet.size === 0) {
-            fetch('/api/v1/portal/community/following', { credentials: 'include' })
+            fetch(`${GRID_ORIGIN}/api/v1/portal/community/following`, { credentials: 'include' })
                 .then(r => r.json())
                 .then((d: { following?: string[] }) => {
                     setFollowingSet(new Set(d.following ?? []));
@@ -86,7 +88,7 @@ export default function CommunityPage() {
         }
         if (activeTab === 'leaderboard' && leaderboard.length === 0) {
             setLoading(true);
-            fetch('/api/v1/portal/community/leaderboard', { credentials: 'include' })
+            fetch(`${GRID_ORIGIN}/api/v1/portal/community/leaderboard`, { credentials: 'include' })
                 .then(r => r.json())
                 .then(d => { setLeaderboard(d.entries ?? []); setLoading(false); })
                 .catch(() => { setError('Failed to load leaderboard'); setLoading(false); });

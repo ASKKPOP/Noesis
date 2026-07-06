@@ -6,6 +6,8 @@
 
 import { useState } from 'react';
 
+const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
+
 interface PostComposerProps {
     onPosted: () => void;  // called after successful post creation
 }
@@ -25,7 +27,7 @@ export function PostComposer({ onPosted }: PostComposerProps) {
         setSubmitting(true);
         setError(null);
         try {
-            const res = await fetch('/api/v1/portal/community/posts', {
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/portal/community/posts`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
