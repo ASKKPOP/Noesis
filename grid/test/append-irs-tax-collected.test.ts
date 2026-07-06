@@ -2,7 +2,7 @@
  * Phase 44 D-44-03 — append-irs-tax-collected sole-producer test stub.
  *
  * Event: irs.tax_collected (audit-chain-only — NOT on broadcast allowlist in Phase 44)
- * Keys (alphabetical): amount_bios, listing_id, payer_civic_did_hash, tick, total_treasury_after
+ * Keys (alphabetical): amount_wei, listing_id, payer_civic_did_hash, tick, total_treasury_after
  * Sole producer: grid/src/audit/append-irs-tax-collected.ts (Plan 03 creates)
  *
  * IMPORTANT: irs.tax_collected is intentionally NOT in ALLOWLIST_MEMBERS in Phase 44.
@@ -38,7 +38,7 @@ describe('appendIrsTaxCollected — 9-step guard discipline (irs.tax_collected, 
     const VALID_UUID = '550e8400-e29b-41d4-a716-446655440000';
 
     const validPayload = {
-        amount_bios: 2,
+        amount_wei: 2,
         listing_id: VALID_UUID,
         payer_civic_did_hash: VALID_HEX64,
         tick: 10,
@@ -72,10 +72,10 @@ describe('appendIrsTaxCollected — 9-step guard discipline (irs.tax_collected, 
         expect(() => appendIrsTaxCollected(audit, { ...validPayload, payer_civic_did_hash: 'short' })).toThrow(/payer_civic_did_hash/i);
     });
 
-    it('rejects non-positive amount_bios', () => {
+    it('rejects non-positive amount_wei', () => {
         const audit = mockAudit();
-        expect(() => appendIrsTaxCollected(audit, { ...validPayload, amount_bios: 0 })).toThrow(/amount_bios/i);
-        expect(() => appendIrsTaxCollected(audit, { ...validPayload, amount_bios: -1 })).toThrow(/amount_bios/i);
+        expect(() => appendIrsTaxCollected(audit, { ...validPayload, amount_wei: 0 })).toThrow(/amount_wei/i);
+        expect(() => appendIrsTaxCollected(audit, { ...validPayload, amount_wei: -1 })).toThrow(/amount_wei/i);
     });
 
     it('accepts total_treasury_after=0 (valid: treasury may start empty)', () => {
@@ -110,7 +110,7 @@ describe('appendIrsTaxCollected — 9-step guard discipline (irs.tax_collected, 
     it('payload reaches chain.append with exactly the closed tuple (alphabetical keys)', () => {
         const audit = mockAudit();
         appendIrsTaxCollected(audit, validPayload);
-        const EXPECTED_KEYS = ['amount_bios', 'listing_id', 'payer_civic_did_hash', 'tick', 'total_treasury_after'];
+        const EXPECTED_KEYS = ['amount_wei', 'listing_id', 'payer_civic_did_hash', 'tick', 'total_treasury_after'];
         const passedPayload = audit.append.mock.calls[0][2] as Record<string, unknown>;
         expect(Object.keys(passedPayload).sort()).toEqual(EXPECTED_KEYS);
     });

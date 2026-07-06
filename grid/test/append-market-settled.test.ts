@@ -2,7 +2,7 @@
  * Phase 44 MKT-06 — append-market-settled sole-producer test stub.
  *
  * Event: market.settled
- * Keys (alphabetical): buyer_civic_did_hash, irs_fee_bios, listing_id, price_bios,
+ * Keys (alphabetical): buyer_civic_did_hash, irs_fee_wei, listing_id, price_wei,
  *                      seller_business_did_hash, tick
  * Sole producer: grid/src/audit/append-market-settled.ts (Plan 03 creates)
  * Note: After emit, appendIrsTaxCollected fires audit-chain-only (NOT on allowlist until Phase 45).
@@ -37,9 +37,9 @@ describe('appendMarketSettled — 9-step guard discipline (market.settled)', () 
 
     const validPayload = {
         buyer_civic_did_hash: VALID_HEX64_A,
-        irs_fee_bios: 2,
+        irs_fee_wei: 2,
         listing_id: VALID_UUID,
-        price_bios: 100,
+        price_wei: 100,
         seller_business_did_hash: VALID_HEX64_B,
         tick: 10,
     };
@@ -76,21 +76,21 @@ describe('appendMarketSettled — 9-step guard discipline (market.settled)', () 
         expect(() => appendMarketSettled(audit, { ...validPayload, seller_business_did_hash: 'short' })).toThrow(/seller_business_did_hash/i);
     });
 
-    it('rejects non-positive price_bios', () => {
+    it('rejects non-positive price_wei', () => {
         const audit = mockAudit();
-        expect(() => appendMarketSettled(audit, { ...validPayload, price_bios: 0 })).toThrow(/price_bios/i);
-        expect(() => appendMarketSettled(audit, { ...validPayload, price_bios: -1 })).toThrow(/price_bios/i);
+        expect(() => appendMarketSettled(audit, { ...validPayload, price_wei: 0 })).toThrow(/price_wei/i);
+        expect(() => appendMarketSettled(audit, { ...validPayload, price_wei: -1 })).toThrow(/price_wei/i);
     });
 
-    it('accepts irs_fee_bios=0 (valid: FLOOR(price * rate) may be 0 for tiny amounts)', () => {
-        // irs_fee_bios is non-negative integer (0 is valid per D-44-02 FLOOR semantics)
+    it('accepts irs_fee_wei=0 (valid: FLOOR(price * rate) may be 0 for tiny amounts)', () => {
+        // irs_fee_wei is non-negative integer (0 is valid per D-44-02 FLOOR semantics)
         const audit = mockAudit();
-        expect(appendMarketSettled(audit, { ...validPayload, irs_fee_bios: 0 })).toBeDefined();
+        expect(appendMarketSettled(audit, { ...validPayload, irs_fee_wei: 0 })).toBeDefined();
     });
 
-    it('rejects negative irs_fee_bios', () => {
+    it('rejects negative irs_fee_wei', () => {
         const audit = mockAudit();
-        expect(() => appendMarketSettled(audit, { ...validPayload, irs_fee_bios: -1 })).toThrow(/irs_fee_bios/i);
+        expect(() => appendMarketSettled(audit, { ...validPayload, irs_fee_wei: -1 })).toThrow(/irs_fee_wei/i);
     });
 
     it('rejects negative tick', () => {
@@ -112,7 +112,7 @@ describe('appendMarketSettled — 9-step guard discipline (market.settled)', () 
     it('payload reaches chain.append with exactly the closed tuple (alphabetical keys)', () => {
         const audit = mockAudit();
         appendMarketSettled(audit, validPayload);
-        const EXPECTED_KEYS = ['buyer_civic_did_hash', 'irs_fee_bios', 'listing_id', 'price_bios', 'seller_business_did_hash', 'tick'];
+        const EXPECTED_KEYS = ['buyer_civic_did_hash', 'irs_fee_wei', 'listing_id', 'price_wei', 'seller_business_did_hash', 'tick'];
         const passedPayload = audit.append.mock.calls[0][2] as Record<string, unknown>;
         expect(Object.keys(passedPayload).sort()).toEqual(EXPECTED_KEYS);
     });

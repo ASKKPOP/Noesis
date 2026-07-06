@@ -5,7 +5,7 @@
 
 /** D-V3-09 sybil cost: founding a community burns this much Bios (→ civic treasury;
  *  returned to treasury on dissolution, never refunded to the founder). */
-export const FOUND_BIOS_COST = 100;
+export const FOUND_WEI_COST = 100;
 
 export type MembershipCriteria = 'open' | 'approval_required' | { bios_fee: number };
 export type SubgovernanceModel = 'founder_led' | 'democratic' | 'delegated';
@@ -33,16 +33,17 @@ export function validateCharter(c: unknown): { ok: true; charter: Charter } | { 
     return { ok: true, charter: { membership: m as MembershipCriteria, subgovernance: ch.subgovernance as SubgovernanceModel, conduct_rules: ch.conduct_rules, exit_terms: ch.exit_terms } };
 }
 
-/** community.founded — a Civic-DID holder founds a community (paid the Bios sybil cost). */
+/** community.founded — a Civic-DID holder founds a community (paid the wei sybil cost). */
 export interface CommunityFoundedPayload {
-    readonly bios_paid: number;
     readonly charter_hash: string;     // HEX64
     readonly community_id: string;     // UUID
     readonly founder_did_hash: string; // HEX64
     readonly name_hash: string;        // HEX64
     readonly tick: number;
+    readonly wei_paid: number;
 }
-export const COMMUNITY_FOUNDED_KEYS = ['bios_paid', 'charter_hash', 'community_id', 'founder_did_hash', 'name_hash', 'tick'] as const;
+// Alphabetically sorted — the closed-tuple check compares Object.keys(payload).sort() element-wise.
+export const COMMUNITY_FOUNDED_KEYS = ['charter_hash', 'community_id', 'founder_did_hash', 'name_hash', 'tick', 'wei_paid'] as const;
 
 /** community.joined — a Civic-DID holder joins a community (charter satisfied). */
 export interface CommunityJoinedPayload {

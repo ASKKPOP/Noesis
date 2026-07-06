@@ -1738,4 +1738,44 @@ export const MIGRATIONS: Migration[] = [
                  ADD COLUMN upgraded_at_tick BIGINT NULL AFTER level`,
         down: `ALTER TABLE orbital_objects DROP COLUMN level, DROP COLUMN upgraded_at_tick`,
     },
+    {
+        // D-MONEY-07 — retire BOTH legacy money misnomers (*_bios and ousia) and
+        // unify all money columns on the real unit, wei. Per D-MONEY-01 money =
+        // compute-labor + real ETH (wei); "Bios" is the body's energy drive (NEVER
+        // money) and "Ousia" was the retired internal currency. This renames every
+        // money-carrying column to a *_wei name, migrating stored values in place.
+        // RENAME preserves the amounts (BIGINT) — a later phase may widen to
+        // DECIMAL(65,0) to match native wei rails. Does NOT touch the legitimate
+        // Bios energy system (BiosRuntime / bios.death) nor the reputation weight
+        // (ousia_weight) — only money columns.
+        version: 73,
+        name: 'money_columns_bios_ousia_to_wei',
+        up: `
+            ALTER TABLE marketplace_listings    RENAME COLUMN price_bios TO price_wei;
+            ALTER TABLE marketplace_bids        RENAME COLUMN offer_price_bios TO offer_price_wei;
+            ALTER TABLE marketplace_escrow      RENAME COLUMN amount_bios TO amount_wei;
+            ALTER TABLE civic_parcels           RENAME COLUMN price_bios TO price_wei;
+            ALTER TABLE civic_credit_ledger     RENAME COLUMN amount_bios TO amount_wei;
+            ALTER TABLE civic_cowork_agreements RENAME COLUMN settlement_amount_bios TO settlement_amount_wei;
+            ALTER TABLE civic_blueprints        RENAME COLUMN material_cost_bios TO material_cost_wei;
+            ALTER TABLE communities             RENAME COLUMN bios_paid TO wei_paid;
+            ALTER TABLE nous_registry           RENAME COLUMN ousia TO balance_wei;
+            ALTER TABLE human_users             RENAME COLUMN ousia TO balance_wei;
+            UPDATE civic_treasury SET balance_wei = balance_wei + balance_bios;
+            ALTER TABLE civic_treasury DROP COLUMN balance_bios;
+        `,
+        down: `
+            ALTER TABLE civic_treasury ADD COLUMN balance_bios BIGINT NOT NULL DEFAULT 0;
+            ALTER TABLE human_users             RENAME COLUMN balance_wei TO ousia;
+            ALTER TABLE nous_registry           RENAME COLUMN balance_wei TO ousia;
+            ALTER TABLE communities             RENAME COLUMN wei_paid TO bios_paid;
+            ALTER TABLE civic_blueprints        RENAME COLUMN material_cost_wei TO material_cost_bios;
+            ALTER TABLE civic_cowork_agreements RENAME COLUMN settlement_amount_wei TO settlement_amount_bios;
+            ALTER TABLE civic_credit_ledger     RENAME COLUMN amount_wei TO amount_bios;
+            ALTER TABLE civic_parcels           RENAME COLUMN price_wei TO price_bios;
+            ALTER TABLE marketplace_escrow      RENAME COLUMN amount_wei TO amount_bios;
+            ALTER TABLE marketplace_bids        RENAME COLUMN offer_price_wei TO offer_price_bios;
+            ALTER TABLE marketplace_listings    RENAME COLUMN price_wei TO price_bios;
+        `,
+    },
 ];

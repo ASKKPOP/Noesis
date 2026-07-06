@@ -45,20 +45,20 @@ export function registerCommunityRoutes(
     // ── COM-01: User Directory ──────────────────────────────────────────────
 
     // GET /api/v1/portal/community/users
-    // Returns up to 100 human users sorted by ousia DESC.
-    // Each row: did, eth_address, ousia, created_at, nous_name (nullable).
+    // Returns up to 100 human users sorted by balance_wei DESC.
+    // Each row: did, eth_address, balance_wei, created_at, nous_name (nullable).
     app.get('/api/v1/portal/community/users', async (req, reply) => {
         const humanDid = await getHumanDid(req);
         if (!humanDid) { reply.code(401).send({ error: 'unauthorized' }); return; }
         const pool = services.humanPool;
         if (!pool) { reply.code(503).send({ error: 'portal_unavailable' }); return; }
         const [rows] = await pool.query(
-            `SELECT hu.did, hu.eth_address, hu.ousia, hu.created_at,
+            `SELECT hu.did, hu.eth_address, hu.balance_wei, hu.created_at,
                     nr.name AS nous_name
              FROM human_users hu
              LEFT JOIN nous_registry nr ON nr.human_owner = hu.did AND nr.grid_name = hu.grid_name
              WHERE hu.grid_name = ?
-             ORDER BY hu.ousia DESC
+             ORDER BY hu.balance_wei DESC
              LIMIT 100`,
             [gridName],
         );
@@ -171,7 +171,7 @@ export function registerCommunityRoutes(
     // ── COM-03: Leaderboard ─────────────────────────────────────────────────
 
     // GET /api/v1/portal/community/leaderboard
-    // Returns top 50 humans by ousia, with secondary Nous contribution score.
+    // Returns top 50 humans by balance_wei, with secondary Nous contribution score.
     app.get('/api/v1/portal/community/leaderboard', async (req, reply) => {
         const humanDid = await getHumanDid(req);
         if (!humanDid) { reply.code(401).send({ error: 'unauthorized' }); return; }
@@ -179,7 +179,7 @@ export function registerCommunityRoutes(
         if (!pool) { reply.code(503).send({ error: 'portal_unavailable' }); return; }
         // nous_score = count of nous.spoke + lore.contributed events for owned Nous.
         const [rows] = await pool.query(
-            `SELECT hu.did, hu.eth_address, hu.ousia, hu.created_at,
+            `SELECT hu.did, hu.eth_address, hu.balance_wei, hu.created_at,
                     nr.name AS nous_name, nr.did AS nous_did,
                     COALESCE(contrib.score, 0) AS nous_score
              FROM human_users hu
@@ -193,7 +193,7 @@ export function registerCommunityRoutes(
                  GROUP BY actor_did
              ) contrib ON contrib.actor_did = nr.did
              WHERE hu.grid_name = ?
-             ORDER BY hu.ousia DESC, nous_score DESC
+             ORDER BY hu.balance_wei DESC, nous_score DESC
              LIMIT 50`,
             [gridName, gridName],
         );

@@ -15,7 +15,7 @@ export class RegistryStore implements IRegistryStore {
         await this.db.execute(
             `INSERT INTO nous_registry
                 (grid_name, did, name, nds_address, public_key, human_owner, region,
-                 lifecycle_phase, reputation, ousia, spawned_at_tick, last_active_tick, status)
+                 lifecycle_phase, reputation, balance_wei, spawned_at_tick, last_active_tick, status)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE
                 name             = VALUES(name),
@@ -23,7 +23,7 @@ export class RegistryStore implements IRegistryStore {
                 region           = VALUES(region),
                 lifecycle_phase  = VALUES(lifecycle_phase),
                 reputation       = VALUES(reputation),
-                ousia            = VALUES(ousia),
+                balance_wei            = VALUES(balance_wei),
                 last_active_tick = VALUES(last_active_tick),
                 status           = VALUES(status)`,
             [
@@ -36,7 +36,7 @@ export class RegistryStore implements IRegistryStore {
                 record.region,
                 record.lifecyclePhase,
                 record.reputation,
-                record.ousia,
+                record.balance_wei,
                 record.spawnedAtTick,
                 record.lastActiveTick,
                 record.status,
@@ -54,13 +54,13 @@ export class RegistryStore implements IRegistryStore {
             region: string;
             lifecycle_phase: string;
             reputation: number;
-            ousia: number;
+            balance_wei: number;
             spawned_at_tick: number;
             last_active_tick: number;
             status: string;
         }>(
             `SELECT did, name, nds_address, public_key, human_owner, region,
-                    lifecycle_phase, reputation, ousia,
+                    lifecycle_phase, reputation, balance_wei,
                     spawned_at_tick, last_active_tick, status
              FROM nous_registry
              WHERE grid_name = ?
@@ -77,7 +77,7 @@ export class RegistryStore implements IRegistryStore {
             region: r.region,
             lifecyclePhase: r.lifecycle_phase as NousRecord['lifecyclePhase'],
             reputation: Number(r.reputation),
-            ousia: Number(r.ousia),
+            balance_wei: Number(r.balance_wei),
             spawnedAtTick: r.spawned_at_tick,
             lastActiveTick: r.last_active_tick,
             status: r.status as NousRecord['status'],

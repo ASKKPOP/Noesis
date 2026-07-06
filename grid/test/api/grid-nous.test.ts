@@ -2,7 +2,7 @@
  * Plan 04-03 Task 1: GET /api/v1/grid/nous — roster endpoint.
  *
  * Contract: returns { nous: NousRosterEntry[] } where each entry is
- * { did, name, region, ousia, lifecyclePhase, reputation, status } sourced
+ * { did, name, region, balance_wei, lifecyclePhase, reputation, status } sourced
  * from registry.active(). No pagination — rosters are small.
  */
 
@@ -78,7 +78,7 @@ describe('GET /api/v1/grid/nous — roster with three Nous', () => {
                 did: string;
                 name: string;
                 region: string;
-                ousia: number;
+                balance_wei: number;
                 lifecyclePhase: string;
                 reputation: number;
                 status: string;
@@ -88,7 +88,7 @@ describe('GET /api/v1/grid/nous — roster with three Nous', () => {
             expect(typeof entry.did).toBe('string');
             expect(typeof entry.name).toBe('string');
             expect(typeof entry.region).toBe('string');
-            expect(typeof entry.ousia).toBe('number');
+            expect(typeof entry.balance_wei).toBe('number');
             expect(typeof entry.lifecyclePhase).toBe('string');
             expect(typeof entry.reputation).toBe('number');
             expect(typeof entry.status).toBe('string');

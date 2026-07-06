@@ -36,30 +36,30 @@ describe('marketplace store — createListing (MKT-01)', () => {
         const store = new MarketplaceStore(pool);
         const id = await store.createListing({
             gridName: 'genesis', sellerCivicDid: 'did:test:1', sellerBusinessDid: 'did:biz:1',
-            title: 'Widget', description: 'A widget', priceBios: 100n,
+            title: 'Widget', description: 'A widget', priceWei: 100n,
             category: 'tools', createdAtTick: 1, expiresAtTick: 100,
         });
         expect(id).toMatch(/^[0-9a-f-]{36}$/);
         expect(pool.query).toHaveBeenCalled();
     });
 
-    it('throws price_too_low for priceBios < 50n (D-44-02)', async () => {
+    it('throws price_too_low for priceWei < 50n (D-44-02)', async () => {
         const pool = makeMockPool();
         const store = new MarketplaceStore(pool);
         await expect(store.createListing({
             gridName: 'genesis', sellerCivicDid: 'did:test:1', sellerBusinessDid: 'did:biz:1',
-            title: 'Widget', description: 'A widget', priceBios: 49n,
+            title: 'Widget', description: 'A widget', priceWei: 49n,
             category: 'tools', createdAtTick: 1, expiresAtTick: 100,
         })).rejects.toThrow('price_too_low');
         expect(pool.query).not.toHaveBeenCalled();
     });
 
-    it('accepts priceBios = 50n (boundary — D-44-02 minimum)', async () => {
+    it('accepts priceWei = 50n (boundary — D-44-02 minimum)', async () => {
         const pool = makeMockPool();
         const store = new MarketplaceStore(pool);
         const id = await store.createListing({
             gridName: 'genesis', sellerCivicDid: 'did:test:1', sellerBusinessDid: 'did:biz:1',
-            title: 'Cheap Widget', description: 'Minimum price', priceBios: 50n,
+            title: 'Cheap Widget', description: 'Minimum price', priceWei: 50n,
             category: 'tools', createdAtTick: 1, expiresAtTick: 100,
         });
         expect(id).toMatch(/^[0-9a-f-]{36}$/);
@@ -122,7 +122,7 @@ describe('marketplace store — placeBid (MKT-02)', () => {
         const store = new MarketplaceStore(pool);
         const id = await store.placeBid({
             listingId: 'lst-1', gridName: 'genesis', bidderCivicDid: 'did:buyer:1',
-            offerPriceBios: 80n, placedAtTick: 5,
+            offerPriceWei: 80n, placedAtTick: 5,
         });
         expect(id).toMatch(/^[0-9a-f-]{36}$/);
         expect(pool.query).toHaveBeenCalled();
@@ -132,13 +132,13 @@ describe('marketplace store — placeBid (MKT-02)', () => {
 // ── acceptBid ────────────────────────────────────────────────────────────────
 
 describe('marketplace store — acceptBid', () => {
-    it('throws insufficient_bios when buyer ousia < bid amount', async () => {
+    it('throws insufficient_wei when buyer balance_wei < bid amount', async () => {
         const bidRow = {
             bid_id: 'bid-1', listing_id: 'lst-1', grid_name: 'genesis',
-            bidder_civic_did: 'did:buyer:1', offer_price_bios: '100', status: 'pending',
+            bidder_civic_did: 'did:buyer:1', offer_price_wei: '100', status: 'pending',
             listing_seller: 'did:seller:1', listing_status: 'active',
         };
-        const buyerRow = { ousia: '50' }; // balance too low
+        const buyerRow = { balance_wei: '50' }; // balance too low
 
         let qCall = 0;
         const mockConn = {
@@ -159,16 +159,16 @@ describe('marketplace store — acceptBid', () => {
         await expect(store.acceptBid({
             listingId: 'lst-1', bidId: 'bid-1', gridName: 'genesis',
             sellerCivicDid: 'did:seller:1', currentTick: 5,
-        })).rejects.toThrow('insufficient_bios');
+        })).rejects.toThrow('insufficient_wei');
     });
 
-    it('returns escrowId + amounts when buyer has sufficient ousia', async () => {
+    it('returns escrowId + amounts when buyer has sufficient balance_wei', async () => {
         const bidRow = {
             bid_id: 'bid-1', listing_id: 'lst-1', grid_name: 'genesis',
-            bidder_civic_did: 'did:buyer:1', offer_price_bios: '100', status: 'pending',
+            bidder_civic_did: 'did:buyer:1', offer_price_wei: '100', status: 'pending',
             listing_seller: 'did:seller:1', listing_status: 'active',
         };
-        const buyerRow = { ousia: '500' }; // sufficient
+        const buyerRow = { balance_wei: '500' }; // sufficient
 
         let qCall = 0;
         const mockConn = {
@@ -192,7 +192,7 @@ describe('marketplace store — acceptBid', () => {
             sellerCivicDid: 'did:seller:1', currentTick: 5,
         });
         expect(result.escrowId).toMatch(/^[0-9a-f-]{36}$/);
-        expect(result.amountBios).toBe(100n);
+        expect(result.amountWei).toBe(100n);
         expect(result.buyerCivicDid).toBe('did:buyer:1');
         expect(result.sellerCivicDid).toBe('did:seller:1');
     });
@@ -205,7 +205,7 @@ describe('marketplace store — confirmSettlement (MKT-03)', () => {
         const escrowRow = {
             escrow_id: 'esc-1', listing_id: 'lst-1', grid_name: 'genesis',
             buyer_civic_did: 'did:buyer:1', seller_civic_did: 'did:seller:1',
-            amount_bios: '100', escrow_status: 'held',
+            amount_wei: '100', escrow_status: 'held',
             buyer_confirmed: 0, seller_confirmed: 0,
             accepted_at_tick: 1, settled_at_tick: null,
         };
@@ -233,7 +233,7 @@ describe('marketplace store — confirmSettlement (MKT-03)', () => {
         const escrowRow = {
             escrow_id: 'esc-1', listing_id: 'lst-1', grid_name: 'genesis',
             buyer_civic_did: 'did:buyer:1', seller_civic_did: 'did:seller:1',
-            amount_bios: '100', escrow_status: 'held',
+            amount_wei: '100', escrow_status: 'held',
             buyer_confirmed: 1, seller_confirmed: 0, // buyer already confirmed
             accepted_at_tick: 1, settled_at_tick: null,
         };
@@ -262,7 +262,7 @@ describe('marketplace store — confirmSettlement (MKT-03)', () => {
 
 describe('marketplace store — settle (MKT-03 IRS fee)', () => {
     function makeSettleMockConn(escrowRow: object): PoolConnection {
-        const treasuryRow = { balance_bios: '2' };
+        const treasuryRow = { balance_wei: '2' };
         let qCall = 0;
         return {
             beginTransaction: vi.fn().mockResolvedValue(undefined),
@@ -286,7 +286,7 @@ describe('marketplace store — settle (MKT-03 IRS fee)', () => {
         const escrowRow = {
             escrow_id: 'esc-1', listing_id: 'lst-1', bid_id: 'bid-1', grid_name: 'genesis',
             buyer_civic_did: 'did:buyer:1', seller_civic_did: 'did:seller:1',
-            amount_bios: '100', escrow_status: 'held',
+            amount_wei: '100', escrow_status: 'held',
             buyer_confirmed: 1, seller_confirmed: 1,
             seller_business_did: 'did:biz:1', accepted_at_tick: 1, settled_at_tick: null,
         };
@@ -304,7 +304,7 @@ describe('marketplace store — settle (MKT-03 IRS fee)', () => {
         const escrowRow = {
             escrow_id: 'esc-1', listing_id: 'lst-1', bid_id: 'bid-1', grid_name: 'genesis',
             buyer_civic_did: 'did:buyer:1', seller_civic_did: 'did:seller:1',
-            amount_bios: '101', escrow_status: 'held',
+            amount_wei: '101', escrow_status: 'held',
             buyer_confirmed: 1, seller_confirmed: 1,
             seller_business_did: 'did:biz:1', accepted_at_tick: 1, settled_at_tick: null,
         };
@@ -318,11 +318,11 @@ describe('marketplace store — settle (MKT-03 IRS fee)', () => {
         expect(result.sellerPayout).toBe(99n);
     });
 
-    it('returns seller/buyer DIDs and priceBios', async () => {
+    it('returns seller/buyer DIDs and priceWei', async () => {
         const escrowRow = {
             escrow_id: 'esc-1', listing_id: 'lst-1', bid_id: 'bid-1', grid_name: 'genesis',
             buyer_civic_did: 'did:buyer:1', seller_civic_did: 'did:seller:1',
-            amount_bios: '200', escrow_status: 'held',
+            amount_wei: '200', escrow_status: 'held',
             buyer_confirmed: 1, seller_confirmed: 1,
             seller_business_did: 'did:biz:1', accepted_at_tick: 1, settled_at_tick: null,
         };
@@ -334,7 +334,7 @@ describe('marketplace store — settle (MKT-03 IRS fee)', () => {
         const result = await store.settle({ gridName: 'genesis', listingId: 'lst-1', irsFeeRate: 0.02, currentTick: 10 });
         expect(result.sellerCivicDid).toBe('did:seller:1');
         expect(result.buyerCivicDid).toBe('did:buyer:1');
-        expect(result.priceBios).toBe(200n);
+        expect(result.priceWei).toBe(200n);
         expect(result.sellerBusinessDid).toBe('did:biz:1');
     });
 });

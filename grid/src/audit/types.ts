@@ -4,7 +4,7 @@
 
 export interface AuditEntry {
     id?: number;
-    eventType: string;       // domain.register, ousia.transfer, law.enacted, etc.
+    eventType: string;       // domain.register, balance_wei.transfer, law.enacted, etc.
     actorDid: string;        // Who performed the action
     targetDid?: string;      // Who was affected (optional)
     payload: Record<string, unknown>;

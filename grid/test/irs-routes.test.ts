@@ -74,10 +74,10 @@ describe('IRS routes — Phase 45 integration', () => {
     }
 
     describe('GET /api/v1/irs/treasury (public)', () => {
-        it('returns 200 with balance_bios/last_updated_tick/current_rate_percent fields', async () => {
+        it('returns 200 with balance_wei/last_updated_tick/current_rate_percent fields', async () => {
             const { app } = await buildApp({
                 poolQueryImpl: async (sql: string) => {
-                    if (sql.includes('civic_treasury')) return [[{ balance_bios: '500', last_updated_tick: 99 }]] as unknown;
+                    if (sql.includes('civic_treasury')) return [[{ balance_wei: '500', last_updated_tick: 99 }]] as unknown;
                     if (sql.includes('grid_config')) return [[{ config_value: '0.02' }]] as unknown;
                     return [[]] as unknown;
                 },
@@ -85,20 +85,20 @@ describe('IRS routes — Phase 45 integration', () => {
             const res = await app.inject({ method: 'GET', url: '/api/v1/irs/treasury' });
             expect(res.statusCode).toBe(200);
             const body = res.json();
-            expect(body).toHaveProperty('balance_bios');
+            expect(body).toHaveProperty('balance_wei');
             expect(body).toHaveProperty('last_updated_tick');
             expect(body).toHaveProperty('current_rate_percent');
             expect(body.current_rate_percent).toBeCloseTo(2.0, 5);
             expect(res.headers['cache-control']).toMatch(/max-age=10/);
         });
 
-        it('returns 200 with balance_bios=0 when civic_treasury row absent (NULL handling)', async () => {
+        it('returns 200 with balance_wei=0 when civic_treasury row absent (NULL handling)', async () => {
             const { app } = await buildApp({
                 poolQueryImpl: async () => [[]] as unknown,
             });
             const res = await app.inject({ method: 'GET', url: '/api/v1/irs/treasury' });
             expect(res.statusCode).toBe(200);
-            expect(res.json().balance_bios).toBe('0');
+            expect(res.json().balance_wei).toBe('0');
         });
     });
 
@@ -108,20 +108,20 @@ describe('IRS routes — Phase 45 integration', () => {
             const res = await app.inject({
                 method: 'POST',
                 url: '/api/v1/irs/disburse',
-                payload: { amount_bios: 100 },
+                payload: { amount_wei: 100 },
             });
             expect(res.statusCode).toBe(403);
             expect(res.json().error).toMatch(/legislation_auth_required|legislation_ref_required/);
         });
 
-        it('returns 400 invalid_amount for non-numeric amount_bios', async () => {
+        it('returns 400 invalid_amount for non-numeric amount_wei', async () => {
             // RED scaffold; Plan 03 wires a valid mock JWT via test fixture.
             // For now, assert that with a stub auth header, malformed body returns 400.
             const { app } = await buildApp({ authHeader: 'Bearer test-fixture-token' });
             const res = await app.inject({
                 method: 'POST',
                 url: '/api/v1/irs/disburse',
-                payload: { amount_bios: 'not-a-number' },
+                payload: { amount_wei: 'not-a-number' },
             });
             // Either 400 (invalid amount) or 403 (test fixture not a real JWT) is acceptable here;
             // Plan 03 will refine. For now we just assert the route is registered (not 404).
@@ -136,7 +136,7 @@ describe('IRS routes — Phase 45 integration', () => {
                 getConnectionImpl: () => ({
                     beginTransaction: vi.fn(async () => {}),
                     query: vi.fn(async (sql: string) => {
-                        if (sql.includes('FOR UPDATE')) return [[{ balance_bios: '1000' }]] as unknown;
+                        if (sql.includes('FOR UPDATE')) return [[{ balance_wei: '1000' }]] as unknown;
                         return [[]] as unknown;
                     }),
                     commit: vi.fn(async () => {}),
@@ -152,7 +152,7 @@ describe('IRS routes — Phase 45 integration', () => {
                 method: 'POST',
                 url: '/api/v1/irs/disburse',
                 headers: { authorization: `Bearer ${jwt}` },
-                payload: { amount_bios: 100 },
+                payload: { amount_wei: 100 },
             });
             expect(res.statusCode).toBe(200);
 

@@ -124,7 +124,7 @@ async function runSim(withReviewer: boolean): Promise<AuditEntry[]> {
     const reviewer = withReviewer ? new Reviewer(env.audit, env.registry) : undefined;
 
     // Deterministic trade schedule: 5 pass-path trades at small amounts
-    // (buyer has 100 ousia, 5*1=5 spent total → well within bounds).
+    // (buyer has 100 balance_wei, 5*1=5 spent total → well within bounds).
     // Trades only fire on early ticks; remaining ticks are no-op brain actions.
     const trades: BrainAction[] = [
         makeTradeAction('nonce-A-1', 1),

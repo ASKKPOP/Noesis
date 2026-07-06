@@ -11,7 +11,7 @@ import { AuditChain } from '../../src/audit/chain.js';
 
 function makeApp(rows: unknown[], ctx: DIDContext | null, transferOk = true, tickVal = 999999): FastifyInstance {
     const pool = { query: vi.fn().mockResolvedValue([rows as RowDataPacket[], {}]) } as unknown as Pool;
-    const registry = { transferOusia: vi.fn().mockReturnValue(transferOk ? { success: true } : { success: false, error: 'insufficient' }) };
+    const registry = { transferWei: vi.fn().mockReturnValue(transferOk ? { success: true } : { success: false, error: 'insufficient' }) };
     const services = { gridName: 'genesis', currentTick: () => tickVal, pool, audit: new AuditChain(), registry } as unknown as GridServices;
     const a = Fastify({ logger: false });
     a.addHook('onRequest', async (req) => { req.didContext = ctx ?? undefined; });

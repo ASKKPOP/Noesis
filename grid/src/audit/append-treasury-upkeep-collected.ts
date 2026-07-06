@@ -2,14 +2,14 @@
  * Phase 59 HOUSE-2 (D-59-01.4 / D-59-06 / D-59-09 / R-59-06/09) — sole-producer for
  * treasury.upkeep_collected. Allowlist position 95.
  *
- * Closed 4-key payload: {amount_bios, owner_civic_did_hash, parcel_id, tick}.
+ * Closed 4-key payload: {amount_wei, owner_civic_did_hash, parcel_id, tick}.
  * actorDid = parcel_id (the upkeep is attributed to the land, not a person —
  *   mirrors treasury.parcel_revenue #83 land-attribution discipline).
  *
  * Emitted when the upkeep scanner auto-debits owner Ousia → TREASURY_DID on a
  * period boundary. The owner DID is hashed (HEX64) — the raw Civic-DID NEVER
  * crosses the audit boundary. Mirrors the irs.* / treasury.* revenue discipline
- * (amount_bios positive integer).
+ * (amount_wei positive integer).
  */
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
@@ -20,13 +20,13 @@ const PARCEL_ID_RE = /^[a-z0-9_-]+:[a-z_]+:\d{4}$/;
 
 /** Closed 4-key payload. Keys ALPHABETICAL. */
 export interface TreasuryUpkeepCollectedPayload {
-    readonly amount_bios: number;          // positive integer (>0)
+    readonly amount_wei: number;          // positive integer (>0)
     readonly owner_civic_did_hash: string; // HEX64_RE
     readonly parcel_id: string;            // PARCEL_ID_RE
     readonly tick: number;                 // non-negative integer
 }
 
-const EXPECTED_KEYS = ['amount_bios', 'owner_civic_did_hash', 'parcel_id', 'tick'] as const;
+const EXPECTED_KEYS = ['amount_wei', 'owner_civic_did_hash', 'parcel_id', 'tick'] as const;
 
 export function appendTreasuryUpkeepCollected(
     audit: AuditChain,
@@ -36,9 +36,9 @@ export function appendTreasuryUpkeepCollected(
     if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
         throw new TypeError(`appendTreasuryUpkeepCollected: payload must be a plain object`);
     }
-    // 2. Positive integer: amount_bios.
-    if (!Number.isInteger(payload.amount_bios) || payload.amount_bios <= 0) {
-        throw new TypeError(`appendTreasuryUpkeepCollected: amount_bios must be positive integer, got ${JSON.stringify(payload.amount_bios)}`);
+    // 2. Positive integer: amount_wei.
+    if (!Number.isInteger(payload.amount_wei) || payload.amount_wei <= 0) {
+        throw new TypeError(`appendTreasuryUpkeepCollected: amount_wei must be positive integer, got ${JSON.stringify(payload.amount_wei)}`);
     }
     // 3. Regex: owner_civic_did_hash (HEX64).
     if (typeof payload.owner_civic_did_hash !== 'string' || !HEX64_RE.test(payload.owner_civic_did_hash)) {
@@ -60,7 +60,7 @@ export function appendTreasuryUpkeepCollected(
     }
     // 7. Explicit reconstruction — no spread.
     const cleanPayload = {
-        amount_bios: payload.amount_bios,
+        amount_wei: payload.amount_wei,
         owner_civic_did_hash: payload.owner_civic_did_hash,
         parcel_id: payload.parcel_id,
         tick: payload.tick,

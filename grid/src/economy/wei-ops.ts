@@ -37,7 +37,7 @@ export async function debitAccountOnConn(conn: PoolConnection, p: { gridName: st
 export async function creditTreasuryWeiOnConn(conn: PoolConnection, p: { gridName: string; amountWei: bigint; currentTick: number }): Promise<void> {
     if (p.amountWei <= 0n) throw new Error('invalid_amount');
     await conn.query(
-        `INSERT INTO civic_treasury (grid_name, balance_bios, balance_wei, last_updated_tick)
+        `INSERT INTO civic_treasury (grid_name, balance_wei, balance_wei, last_updated_tick)
          VALUES (?, 0, ?, ?)
          ON DUPLICATE KEY UPDATE balance_wei = balance_wei + VALUES(balance_wei), last_updated_tick = VALUES(last_updated_tick)`,
         [p.gridName, p.amountWei.toString(), p.currentTick],

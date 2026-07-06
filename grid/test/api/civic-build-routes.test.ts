@@ -12,7 +12,7 @@
  *   - a did:civic:noesis:human:* builder → 403 (humans never build).
  *   - a non-authorized Nous (not owner, not co-build staff) → 403 not_authorized.
  *   - a builder who does not hold the skill → 422 skill_not_held.
- *   - insufficient Ousia for material_cost_bios → 402 insufficient_funds.
+ *   - insufficient Ousia for material_cost_wei → 402 insufficient_funds.
  *   - a held + funded build → 201 and emits skill.blueprint_executed exactly once (hashed
  *     builder, no recipe body — only the hash/parcel/tick cross).
  *   - ROUTE_DID_POLICY coverage for the new route.
@@ -54,7 +54,7 @@ const recipe = (): BlueprintRecipe => ({
     arrangement: [
         { node_id: 'n1', objects: [{ kind: 'bed', area: 'hall' }], depends_on: [], weight: 1 },
     ],
-    material_cost_bios: 50,
+    material_cost_wei: 50,
 });
 
 interface AppHandle {
@@ -66,17 +66,17 @@ interface AppHandle {
 
 /**
  * Build a Fastify app with a real registry seeded so OWNER owns + built a home on ADDR.
- * `ownerOusia` controls whether the owner can cover material_cost_bios. ctx is mutable per
+ * `ownerWei` controls whether the owner can cover material_cost_wei. ctx is mutable per
  * request so a single app can act as different callers (owner / stranger / human).
  */
-function buildApp(opts: { ownerOusia?: number } = {}): AppHandle {
+function buildApp(opts: { ownerWei?: number } = {}): AppHandle {
     const audit = new AuditChain();
     const parcelRegistry = new ParcelRegistry('genesis');
-    parcelRegistry.seedZone({ zoneId: 'residential', count: 2, priceBios: 400, ring: 3 });
+    parcelRegistry.seedZone({ zoneId: 'residential', count: 2, priceWei: 400, ring: 3 });
 
     const nousRegistry = new NousRegistry();
     nousRegistry.spawn({ name: 'treasury', did: TREASURY_DID, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 0);
-    nousRegistry.spawn({ name: 'alice', did: OWNER, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, opts.ownerOusia ?? 100_000);
+    nousRegistry.spawn({ name: 'alice', did: OWNER, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, opts.ownerWei ?? 100_000);
     nousRegistry.spawn({ name: 'carol', did: STRANGER, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 100_000);
 
     parcelRegistry.purchase(ADDR, OWNER, 100_000);
@@ -153,9 +153,9 @@ describe('Phase 61 HOUSE-4 — skill-held + funds gates on the build route', () 
         expect(res.json()).toMatchObject({ error: 'skill_not_held' });
     });
 
-    it('returns 402 insufficient_funds when the builder cannot cover material_cost_bios', async () => {
-        // Owner holds 10 Ousia but the recipe costs 50 → transferOusia fails.
-        handle = buildApp({ ownerOusia: 10 });
+    it('returns 402 insufficient_funds when the builder cannot cover material_cost_wei', async () => {
+        // Owner holds 10 Ousia but the recipe costs 50 → transferWei fails.
+        handle = buildApp({ ownerWei: 10 });
         await handle.app.ready();
         storeBlueprint(recipe());
         teach(handle.audit, OWNER);
@@ -186,7 +186,7 @@ describe('Phase 61 HOUSE-4 — skill-held + funds gates on the build route', () 
         // No recipe body / sub-task content crosses.
         expect(payload).not.toHaveProperty('objects');
         expect(payload).not.toHaveProperty('arrangement');
-        expect(payload).not.toHaveProperty('material_cost_bios');
+        expect(payload).not.toHaveProperty('material_cost_wei');
     });
 });
 

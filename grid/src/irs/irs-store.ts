@@ -23,7 +23,7 @@ const IRS_EVENT_TYPES = [
 ] as const;
 
 export interface TreasuryBalanceSnapshot {
-    readonly balance_bios: string;
+    readonly balance_wei: string;
     readonly last_updated_tick: number;
     readonly current_rate_percent: number;
 }
@@ -35,7 +35,7 @@ export class IrsStore {
     async getTreasuryBalance(gridName: string): Promise<TreasuryBalanceSnapshot> {
         // Read config OUTSIDE any transaction (Pitfall 1).
         const [balanceRows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT balance_bios, last_updated_tick FROM civic_treasury WHERE grid_name = ?`,
+            `SELECT balance_wei, last_updated_tick FROM civic_treasury WHERE grid_name = ?`,
             [gridName],
         );
         const [rateRows] = await this.pool.query<RowDataPacket[]>(
@@ -45,7 +45,7 @@ export class IrsStore {
         const rateRaw = rateRows[0]?.config_value ?? '0.02';
         const current_rate_percent = Number.parseFloat(String(rateRaw)) * 100;
         return {
-            balance_bios: String(balanceRows[0]?.balance_bios ?? 0),
+            balance_wei: String(balanceRows[0]?.balance_wei ?? 0),
             last_updated_tick: Number(balanceRows[0]?.last_updated_tick ?? 0),
             current_rate_percent,
         };
@@ -53,12 +53,12 @@ export class IrsStore {
 
     /**
      * Atomic Government-authorized disbursement.
-     * Throws Error('insufficient_treasury_balance') if balance < amountBios.
+     * Throws Error('insufficient_treasury_balance') if balance < amountWei.
      * Does NOT emit audit events — caller (route handler) emits authorized BEFORE this call and executed AFTER.
      */
     async disburse(params: {
         gridName: string;
-        amountBios: bigint;
+        amountWei: bigint;
         legislationRef: string;
         currentTick: number;
     }): Promise<{ newBalance: bigint }> {
@@ -66,21 +66,21 @@ export class IrsStore {
         try {
             await conn.beginTransaction();
             const [treasuryRows] = await conn.query<RowDataPacket[]>(
-                `SELECT balance_bios FROM civic_treasury WHERE grid_name = ? FOR UPDATE`,
+                `SELECT balance_wei FROM civic_treasury WHERE grid_name = ? FOR UPDATE`,
                 [params.gridName],
             );
-            const currentBalance = BigInt(treasuryRows[0]?.balance_bios ?? 0);
-            if (currentBalance < params.amountBios) {
+            const currentBalance = BigInt(treasuryRows[0]?.balance_wei ?? 0);
+            if (currentBalance < params.amountWei) {
                 await conn.rollback();
                 throw new Error('insufficient_treasury_balance');
             }
             await conn.query(
-                `UPDATE civic_treasury SET balance_bios = balance_bios - ?, last_updated_tick = ?
+                `UPDATE civic_treasury SET balance_wei = balance_wei - ?, last_updated_tick = ?
                  WHERE grid_name = ?`,
-                [params.amountBios.toString(), params.currentTick, params.gridName],
+                [params.amountWei.toString(), params.currentTick, params.gridName],
             );
             await conn.commit();
-            return { newBalance: currentBalance - params.amountBios };
+            return { newBalance: currentBalance - params.amountWei };
         } catch (err) {
             try { await conn.rollback(); } catch { /* ignore rollback error */ }
             throw err;

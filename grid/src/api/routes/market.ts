@@ -5,7 +5,7 @@
  * All audit emissions happen AFTER DB transactions commit (Pitfall 4 — RESEARCH.md).
  *
  * D-44-02 invariants enforced at this layer:
- *  - create route rejects price_bios < 50 with 400 price_too_low (mirrors store guard for explicit error).
+ *  - create route rejects price_wei < 50 with 400 price_too_low (mirrors store guard for explicit error).
  *  - confirm-settlement validates grid_config.irs_fee_rate ∈ [0.01, 0.03] (D-44-02 spec range).
  *
  * Routes registered:
@@ -29,7 +29,7 @@ import { appendMarketSettled } from '../../audit/append-market-settled.js';
 import { appendMarketDisputed } from '../../audit/append-market-disputed.js';
 import { appendIrsTaxCollected } from '../../audit/append-irs-tax-collected.js';
 import { appendTreasuryStructureRevenue } from '../../audit/append-treasury-structure-revenue.js';
-import { MarketplaceStore, MIN_LISTING_PRICE_BIOS } from '../../marketplace/marketplace-store.js';
+import { MarketplaceStore, MIN_LISTING_PRICE_WEI } from '../../marketplace/marketplace-store.js';
 import { structureRevenueDue, ZONE_TAX_BPS } from '../../civic/founding-law.js';
 
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
@@ -79,14 +79,14 @@ export async function registerMarketRoutes(
         const { category, max_price, limit: limitStr, offset: offsetStr } = req.query;
         const limit = Math.min(50, Math.max(1, parseInt(limitStr ?? '20', 10) || 20));
         const offset = Math.max(0, parseInt(offsetStr ?? '0', 10) || 0);
-        let maxPriceBios: bigint | undefined;
+        let maxPriceWei: bigint | undefined;
         if (max_price) {
-            try { maxPriceBios = BigInt(max_price); } catch { /* ignore invalid */ }
+            try { maxPriceWei = BigInt(max_price); } catch { /* ignore invalid */ }
         }
         const listings = await store.browseListings({
             gridName: services.gridName,
             category,
-            maxPriceBios,
+            maxPriceWei,
             currentTick,
             limit,
             offset,
@@ -95,8 +95,8 @@ export async function registerMarketRoutes(
     });
 
     // ── POST /api/v1/market/listing/create (business_did_required) ─────────────
-    // D-44-02: rejects price_bios < 50 with 400 price_too_low.
-    app.post<{ Body: { title?: unknown; description?: unknown; price_bios?: unknown; category?: unknown; expires_in_ticks?: unknown } }>(
+    // D-44-02: rejects price_wei < 50 with 400 price_too_low.
+    app.post<{ Body: { title?: unknown; description?: unknown; price_wei?: unknown; category?: unknown; expires_in_ticks?: unknown } }>(
         '/api/v1/market/listing/create', async (req, reply) => {
         const pool = services.pool;
         const tickFn = services.currentTick;
@@ -114,7 +114,7 @@ export async function registerMarketRoutes(
         if (!activeBusiness) return reply.code(403).send({ error: 'business_did_required' });
 
         const body = req.body ?? {};
-        const { title, description, price_bios, category, expires_in_ticks } = body;
+        const { title, description, price_wei, category, expires_in_ticks } = body;
 
         if (typeof title !== 'string' || title.length === 0 || title.length > 255) {
             return reply.code(400).send({ error: 'invalid_title' });
@@ -125,18 +125,18 @@ export async function registerMarketRoutes(
         if (typeof category !== 'string' || !CATEGORY_RE.test(category)) {
             return reply.code(400).send({ error: 'invalid_category' });
         }
-        let priceBios: bigint;
-        try { priceBios = BigInt(price_bios as string | number); } catch {
+        let priceWei: bigint;
+        try { priceWei = BigInt(price_wei as string | number); } catch {
             return reply.code(400).send({ error: 'invalid_price' });
         }
-        if (priceBios <= 0n) {
+        if (priceWei <= 0n) {
             return reply.code(400).send({ error: 'invalid_price' });
         }
         // D-44-02 minimum-price guard at HTTP layer (store enforces too — defense in depth).
-        if (priceBios < MIN_LISTING_PRICE_BIOS) {
+        if (priceWei < MIN_LISTING_PRICE_WEI) {
             return reply.code(400).send({
                 error: 'price_too_low',
-                minimum_price_bios: Number(MIN_LISTING_PRICE_BIOS),
+                minimum_price_wei: Number(MIN_LISTING_PRICE_WEI),
             });
         }
         if (!Number.isInteger(expires_in_ticks) || (expires_in_ticks as number) <= 0 || (expires_in_ticks as number) > MAX_EXPIRY_TICKS) {
@@ -153,7 +153,7 @@ export async function registerMarketRoutes(
                 sellerBusinessDid: activeBusiness.businessDid,
                 title,
                 description,
-                priceBios,
+                priceWei,
                 category,
                 createdAtTick: currentTick,
                 expiresAtTick: currentTick + (expires_in_ticks as number),
@@ -163,7 +163,7 @@ export async function registerMarketRoutes(
             if (msg === 'price_too_low') {
                 return reply.code(400).send({
                     error: 'price_too_low',
-                    minimum_price_bios: Number(MIN_LISTING_PRICE_BIOS),
+                    minimum_price_wei: Number(MIN_LISTING_PRICE_WEI),
                 });
             }
             req.log.error({ err: msg }, 'create_listing_unhandled');
@@ -173,7 +173,7 @@ export async function registerMarketRoutes(
         appendMarketListingCreated(audit, {
             category,
             listing_id: listingId,
-            price_bios: Number(priceBios),
+            price_wei: Number(priceWei),
             seller_business_did_hash: sha256Hex(activeBusiness.businessDid),
             tick: currentTick,
         });
@@ -193,7 +193,7 @@ export async function registerMarketRoutes(
     });
 
     // ── POST /api/v1/market/listing/:id/bid (civic_did_required) ──────────────
-    app.post<{ Params: { id: string }; Body: { offer_price_bios?: unknown; bid_message?: unknown } }>(
+    app.post<{ Params: { id: string }; Body: { offer_price_wei?: unknown; bid_message?: unknown } }>(
         '/api/v1/market/listing/:id/bid', async (req, reply) => {
         const pool = services.pool;
         const tickFn = services.currentTick;
@@ -205,11 +205,11 @@ export async function registerMarketRoutes(
         if (!UUID_RE.test(req.params.id)) return reply.code(400).send({ error: 'invalid_listing_id' });
 
         const body = req.body ?? {};
-        let offerPriceBios: bigint;
-        try { offerPriceBios = BigInt(body.offer_price_bios as string | number); } catch {
+        let offerPriceWei: bigint;
+        try { offerPriceWei = BigInt(body.offer_price_wei as string | number); } catch {
             return reply.code(400).send({ error: 'invalid_offer_price' });
         }
-        if (offerPriceBios <= 0n) return reply.code(400).send({ error: 'invalid_offer_price' });
+        if (offerPriceWei <= 0n) return reply.code(400).send({ error: 'invalid_offer_price' });
         const bidMessage = typeof body.bid_message === 'string' ? body.bid_message.slice(0, 512) : undefined;
 
         const currentTick = tickFn();
@@ -220,7 +220,7 @@ export async function registerMarketRoutes(
                 listingId: req.params.id,
                 gridName: services.gridName,
                 bidderCivicDid: civicDid,
-                offerPriceBios,
+                offerPriceWei,
                 bidMessage,
                 placedAtTick: currentTick,
             });
@@ -234,7 +234,7 @@ export async function registerMarketRoutes(
         appendMarketBidPlaced(audit, {
             bidder_civic_did_hash: sha256Hex(civicDid),
             listing_id: req.params.id,
-            offer_price_bios: Number(offerPriceBios),
+            offer_price_wei: Number(offerPriceWei),
             tick: currentTick,
         });
         return reply.code(201).send({ bid_id: bidId });
@@ -269,7 +269,7 @@ export async function registerMarketRoutes(
             return reply.code(200).send({ escrow_id: result.escrowId });
         } catch (err) {
             const msg = err instanceof Error ? err.message : 'unknown';
-            if (msg === 'insufficient_bios') return reply.code(402).send({ error: 'insufficient_bios' });
+            if (msg === 'insufficient_wei') return reply.code(402).send({ error: 'insufficient_wei' });
             if (msg === 'not_seller') return reply.code(403).send({ error: 'not_seller' });
             if (msg === 'bid_not_found') return reply.code(404).send({ error: 'bid_not_found' });
             if (msg === 'buyer_not_found') return reply.code(404).send({ error: 'buyer_not_found' });
@@ -377,7 +377,7 @@ export async function registerMarketRoutes(
             sellerCivicDid: string;
             buyerCivicDid: string;
             sellerBusinessDid: string;
-            priceBios: bigint;
+            priceWei: bigint;
             totalTreasuryAfter: bigint;
         };
         try {
@@ -397,16 +397,16 @@ export async function registerMarketRoutes(
         // Emit market.settled THEN irs.tax_collected (D-44-03 order preserved).
         appendMarketSettled(audit, {
             buyer_civic_did_hash: sha256Hex(settleResult.buyerCivicDid),
-            irs_fee_bios: Number(settleResult.irsFee),
+            irs_fee_wei: Number(settleResult.irsFee),
             listing_id: req.params.id,
-            price_bios: Number(settleResult.priceBios),
+            price_wei: Number(settleResult.priceWei),
             seller_business_did_hash: sha256Hex(settleResult.sellerBusinessDid),
             tick: currentTick,
         });
         // D-44-02 invariant: min-price guard ensures irsFee >= 1n always.
-        // Emit appendIrsTaxCollected unconditionally — amount_bios guard requires positive integer.
+        // Emit appendIrsTaxCollected unconditionally — amount_wei guard requires positive integer.
         appendIrsTaxCollected(audit, {
-            amount_bios: Number(settleResult.irsFee),
+            amount_wei: Number(settleResult.irsFee),
             listing_id: req.params.id,
             payer_civic_did_hash: sha256Hex(settleResult.buyerCivicDid),
             tick: currentTick,
@@ -423,19 +423,19 @@ export async function registerMarketRoutes(
         if (parcelId && services.parcels && services.registry) {
             const parcel = services.parcels.registry.get(parcelId);
             if (parcel) {
-                const saleAmount = Number(settleResult.priceBios);
+                const saleAmount = Number(settleResult.priceWei);
                 const skim = structureRevenueDue(parcel, saleAmount);
                 if (skim > 0) {
-                    // Route the skim to TREASURY_DID (streaming). transferOusia is atomic and
-                    // a no-op on failure (e.g. seller absent from the ousia registry), so the
+                    // Route the skim to TREASURY_DID (streaming). transferWei is atomic and
+                    // a no-op on failure (e.g. seller absent from the balance_wei registry), so the
                     // trade settlement above is never disturbed.
-                    services.registry.transferOusia(settleResult.sellerCivicDid, TREASURY_DID, skim);
+                    services.registry.transferWei(settleResult.sellerCivicDid, TREASURY_DID, skim);
                     // ── Phase 60 Wave 4 EMIT POINT (treasury.structure_revenue #98) ─────
                     // Sole-producer append (allowlist 95→99). actorDid = parcel_id (mirrors
                     // #83 — NO buyer/seller DID on chain; identity already audited via the
                     // market.settled trade above). Only the skimmed tax + the per-zone bps.
                     appendTreasuryStructureRevenue(audit, {
-                        amount_bios: skim,
+                        amount_wei: skim,
                         parcel_id: parcelId,
                         tick: currentTick,
                         zone_tax_bps: ZONE_TAX_BPS[parcel.zoneId as keyof typeof ZONE_TAX_BPS],
@@ -447,7 +447,7 @@ export async function registerMarketRoutes(
         return reply.code(200).send({
             settled: true,
             seller_payout_bios: settleResult.sellerPayout.toString(),
-            irs_fee_bios: settleResult.irsFee.toString(),
+            irs_fee_wei: settleResult.irsFee.toString(),
         });
     });
 

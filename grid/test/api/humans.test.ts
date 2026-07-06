@@ -137,18 +137,18 @@ describe('GET /api/v1/humans/:did — 200 profile', () => {
         // 2 human.transferred where payload.human_did === HUMAN_DID
         audit.append('human.transferred', 'did:noesis:operator', {
             human_did: HUMAN_DID,
-            asset: 'ousia',
+            asset: 'wei',
             grid_name: GRID_NAME,
         });
         audit.append('human.transferred', 'did:noesis:operator', {
             human_did: HUMAN_DID,
-            asset: 'ousia',
+            asset: 'wei',
             grid_name: GRID_NAME,
         });
         // 1 for OTHER_DID — must NOT count
         audit.append('human.transferred', 'did:noesis:operator', {
             human_did: OTHER_DID,
-            asset: 'ousia',
+            asset: 'wei',
             grid_name: GRID_NAME,
         });
 
@@ -272,12 +272,12 @@ describe('GET /api/v1/humans/:did/history — 200 history arrays', () => {
         // Transfers: 1 matching, 1 non-matching
         audit.append('human.transferred', 'did:noesis:op', {
             human_did: HUMAN_DID,
-            asset: 'ousia',
+            asset: 'wei',
             grid_name: GRID_NAME,
         });
         audit.append('human.transferred', 'did:noesis:op', {
             human_did: OTHER_DID, // filtered out
-            asset: 'ousia',
+            asset: 'wei',
             grid_name: GRID_NAME,
         });
 
@@ -321,7 +321,7 @@ describe('GET /api/v1/humans/:did/history — 200 history arrays', () => {
         expect(res.statusCode).toBe(200);
         const body = res.json<{ transfers: Array<{ asset: string; grid_name: string }> }>();
         expect(body.transfers).toHaveLength(1);
-        expect(body.transfers[0]!.asset).toBe('ousia');
+        expect(body.transfers[0]!.asset).toBe('wei');
         expect(body.transfers[0]!.grid_name).toBe(GRID_NAME);
     });
 

@@ -60,7 +60,7 @@ export async function runEscalationCheck(deps: EscalationDeps): Promise<{
         }
 
         appendIrsDisbursementExecuted(deps.audit, {
-            amount_bios: 0,
+            amount_wei: 0,
             cause: 'presumed_departed',
             civic_did: row.civicDid,
             grid_name: deps.gridName,

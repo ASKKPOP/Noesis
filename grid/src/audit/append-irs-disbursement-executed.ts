@@ -21,14 +21,14 @@ const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 
 /** Closed-tuple payload — 5 keys, alphabetical. */
 export interface IrsDisbursementExecutedPayload {
-    readonly amount_bios: number;       // non-negative integer
+    readonly amount_wei: number;       // non-negative integer
     readonly cause: string;             // e.g. 'presumed_departed' — non-empty
     readonly civic_did: string;         // CIVIC_DID_RE — the source (departed Nous)
     readonly grid_name: string;         // non-empty
     readonly tick: number;              // non-negative integer
 }
 
-const EXPECTED_KEYS = ['amount_bios', 'cause', 'civic_did', 'grid_name', 'tick'] as const;
+const EXPECTED_KEYS = ['amount_wei', 'cause', 'civic_did', 'grid_name', 'tick'] as const;
 
 export function appendIrsDisbursementExecuted(
     audit: AuditChain,
@@ -50,8 +50,8 @@ export function appendIrsDisbursementExecuted(
         throw new TypeError(`appendIrsDisbursementExecuted: grid_name must be a non-empty string, got ${JSON.stringify(payload.grid_name)}`);
     }
     // 4. Non-negative integer guards.
-    if (!Number.isInteger(payload.amount_bios) || payload.amount_bios < 0) {
-        throw new TypeError(`appendIrsDisbursementExecuted: amount_bios must be a non-negative integer, got ${JSON.stringify(payload.amount_bios)}`);
+    if (!Number.isInteger(payload.amount_wei) || payload.amount_wei < 0) {
+        throw new TypeError(`appendIrsDisbursementExecuted: amount_wei must be a non-negative integer, got ${JSON.stringify(payload.amount_wei)}`);
     }
     if (!Number.isInteger(payload.tick) || payload.tick < 0) {
         throw new TypeError(`appendIrsDisbursementExecuted: tick must be a non-negative integer, got ${JSON.stringify(payload.tick)}`);
@@ -64,7 +64,7 @@ export function appendIrsDisbursementExecuted(
     }
     // 6. Explicit reconstruction — no spread.
     const cleanPayload = {
-        amount_bios: payload.amount_bios,
+        amount_wei: payload.amount_wei,
         cause: payload.cause,
         civic_did: payload.civic_did,
         grid_name: payload.grid_name,

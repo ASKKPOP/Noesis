@@ -66,7 +66,7 @@ function makeQueryFn(opts: { populated: boolean; throwOn?: RegExp }) {
         if (/police_complaints/i.test(sql)) return [[{ n }], undefined];
         if (/police_sanctions/i.test(sql)) return [[{ active: n }], undefined];
         // IRS — treasury balance + fee-rate config.
-        if (/civic_treasury/i.test(sql)) return [[{ balance_bios: populated ? '123456' : '0' }], undefined];
+        if (/civic_treasury/i.test(sql)) return [[{ balance_wei: populated ? '123456' : '0' }], undefined];
         if (/grid_config/i.test(sql)) return populated ? [[{ config_value: '0.02' }], undefined] : [[], undefined];
         // Marketplace — listings + escrow.
         if (/marketplace_listings/i.test(sql)) return [[{ n }], undefined];

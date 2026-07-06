@@ -32,7 +32,7 @@ function makeRecord(did: string): NousRecord {
         region: 'alpha',
         lifecyclePhase: 'spawning',
         reputation: 0,
-        ousia: 1000,
+        balance_wei: 1000,
         spawnedAtTick: 0,
         lastActiveTick: 0,
         status: 'active',
@@ -129,9 +129,9 @@ describe('Sprint 12: NousRegistry load methods', () => {
         const record = makeRecord('did:noesis:sophia');
         reg.loadRecords([record]);
 
-        record.ousia = 99999;
+        record.balance_wei = 99999;
 
-        expect(reg.get('did:noesis:sophia')?.ousia).toBe(1000);
+        expect(reg.get('did:noesis:sophia')?.balance_wei).toBe(1000);
     });
 
     it('loadRecords into empty registry with empty array is a no-op', () => {

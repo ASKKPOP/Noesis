@@ -14,10 +14,10 @@ const aliceCtx = (): DIDContext => ({ did: ALICE, tier: 'civic_member' });
 const CID = '22222222-2222-4222-8222-222222222222';
 const CHARTER = { membership: 'open', subgovernance: 'founder_led', conduct_rules: 'be kind', exit_terms: 'leave anytime' };
 
-/** transferOusia mock: ok=true → success, ok=false → insufficient. */
+/** transferWei mock: ok=true → success, ok=false → insufficient. */
 function app(opts: { ctx?: DIDContext | null; rows?: unknown[]; biosOk?: boolean }): FastifyInstance {
     const pool = { query: vi.fn().mockResolvedValue([(opts.rows ?? []) as RowDataPacket[], {}]) } as unknown as Pool;
-    const registry = { transferOusia: vi.fn(() => (opts.biosOk === false ? { success: false, error: 'insufficient' } : { success: true, fromBalance: 0, toBalance: 0 })) };
+    const registry = { transferWei: vi.fn(() => (opts.biosOk === false ? { success: false, error: 'insufficient' } : { success: true, fromBalance: 0, toBalance: 0 })) };
     const services = { gridName: 'genesis', currentTick: () => 5, pool, audit: new AuditChain(), registry } as unknown as GridServices;
     const a = Fastify({ logger: false });
     if (opts.ctx !== undefined) a.addHook('onRequest', async (req) => { req.didContext = opts.ctx ?? undefined; });
@@ -49,7 +49,7 @@ describe('POST /api/v1/community/found (COMM-01/02)', () => {
         const a = app({ ctx: aliceCtx(), biosOk: false });
         const res = await a.inject({ method: 'POST', url: '/api/v1/community/found', payload: { name: 'x', purpose: 'y', charter: CHARTER } });
         expect(res.statusCode).toBe(402);
-        expect(res.json().error).toBe('insufficient_bios');
+        expect(res.json().error).toBe('insufficient_wei');
         await a.close();
     });
 });

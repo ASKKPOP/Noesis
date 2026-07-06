@@ -55,7 +55,7 @@ export async function registerIrsRoutes(
         if (!pool) return reply.code(503).send({ error: 'db_unavailable' });
 
         const [balanceRows] = await pool.query<RowDataPacket[]>(
-            `SELECT balance_bios, last_updated_tick FROM civic_treasury WHERE grid_name = ?`,
+            `SELECT balance_wei, last_updated_tick FROM civic_treasury WHERE grid_name = ?`,
             [services.gridName],
         );
         const [rateRows] = await pool.query<RowDataPacket[]>(
@@ -67,14 +67,14 @@ export async function registerIrsRoutes(
 
         void reply.header('Cache-Control', 'public, max-age=10');
         return reply.code(200).send({
-            balance_bios: String(balanceRows[0]?.balance_bios ?? 0),
+            balance_wei: String(balanceRows[0]?.balance_wei ?? 0),
             last_updated_tick: Number(balanceRows[0]?.last_updated_tick ?? 0),
             current_rate_percent: currentRatePercent,
         });
     });
 
     // ── POST /api/v1/irs/disburse (government_only) ────────────────────────────
-    app.post<{ Body: { amount_bios?: unknown } }>(
+    app.post<{ Body: { amount_wei?: unknown } }>(
         '/api/v1/irs/disburse',
         async (req, reply) => {
             const pool = services.pool;
@@ -93,19 +93,19 @@ export async function registerIrsRoutes(
 
             // 2. Parse + validate amount.
             const body = req.body ?? {};
-            let amountBios: bigint;
+            let amountWei: bigint;
             try {
-                amountBios = BigInt(body.amount_bios as string | number);
+                amountWei = BigInt(body.amount_wei as string | number);
             } catch {
                 return reply.code(400).send({ error: 'invalid_amount' });
             }
-            if (amountBios <= 0n) return reply.code(400).send({ error: 'invalid_amount' });
+            if (amountWei <= 0n) return reply.code(400).send({ error: 'invalid_amount' });
 
             const currentTick = tickFn();
 
             // 3. Emit AUTHORIZED before DB write (authorization is the signing event).
             appendIrsDisbursementAuthorized(audit, {
-                amount_bios: Number(amountBios),
+                amount_wei: Number(amountWei),
                 authorized_by_civic_did_hash: sha256Hex(GOV_SESSION_ISSUER_DID),
                 grid_name: services.gridName,
                 legislation_ref_hash: sha256Hex(legislationRef),
@@ -118,7 +118,7 @@ export async function registerIrsRoutes(
             try {
                 ({ newBalance } = await store.disburse({
                     gridName: services.gridName,
-                    amountBios,
+                    amountWei,
                     legislationRef,
                     currentTick,
                 }));
@@ -134,7 +134,7 @@ export async function registerIrsRoutes(
             // 5. Emit EXECUTED after commit (cause='government_disbursement').
             //    civic_did = TREASURY_CIVIC_DID (the civic source) — see DEVIATION note above.
             appendIrsDisbursementExecuted(audit, {
-                amount_bios: Number(amountBios),
+                amount_wei: Number(amountWei),
                 cause: 'government_disbursement',
                 civic_did: TREASURY_CIVIC_DID,
                 grid_name: services.gridName,
@@ -143,7 +143,7 @@ export async function registerIrsRoutes(
 
             return reply.code(200).send({
                 disbursed: true,
-                new_balance_bios: newBalance.toString(),
+                new_balance_wei: newBalance.toString(),
             });
         },
     );

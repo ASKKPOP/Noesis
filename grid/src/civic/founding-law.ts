@@ -77,7 +77,7 @@ export const GENESIS_CORE_SEED_PLAN: readonly SeedPlanEntry[] = [
 /** One upkeep period = 10080 ticks (1 week @ 1 tick/min; matches the gov debate window). */
 export const UPKEEP_PERIOD_TICKS = 10080;
 
-/** Upkeep charge per period = 2% (200 bps) of the parcel's price_bios. */
+/** Upkeep charge per period = 2% (200 bps) of the parcel's price_wei. */
 export const UPKEEP_RATE_BPS = 200;
 
 /* ──────────────── Polis amendment read-through (D-60-08 / D-NH-03 / R-60-10) ────────────────
@@ -117,11 +117,11 @@ export function getUpkeepRateBps(): number {
 export const RECLAIM_GRACE_PERIODS = { worn: 1, derelict: 2, reclaim: 3 } as const;
 
 /**
- * Upkeep owed per period for a parcel = floor(price_bios × UPKEEP_RATE_BPS / 10000).
+ * Upkeep owed per period for a parcel = floor(price_wei × UPKEEP_RATE_BPS / 10000).
  * Commons (price 0 / treasury-owned) yield 0 and are exempt at the scanner.
  */
 export function upkeepDue(parcel: Parcel): number {
-    return Math.floor((parcel.priceBios * getUpkeepRateBps()) / 10000);
+    return Math.floor((parcel.priceWei * getUpkeepRateBps()) / 10000);
 }
 
 /* ──────────────── Mutual-credit IOU caps (D-60-05 / D-NH-06 / R-60-07) ────────────────

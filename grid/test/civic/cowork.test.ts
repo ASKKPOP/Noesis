@@ -6,9 +6,9 @@
  *
  * Contract under test:
  *   - CoworkAgreement {agreement_id, parcel_id, parties:[host, worker], scope_ref,
- *     settlement_amount_bios, term_ticks, status} is the signed dual-DID source of truth.
+ *     settlement_amount_wei, term_ticks, status} is the signed dual-DID source of truth.
  *   - board post (owner/staff) → claim (role with board access) → complete (host) transitions status.
- *   - completion ALWAYS settles: Ousia via transferOusia when funded, OR records an IOU when not —
+ *   - completion ALWAYS settles: Ousia via transferWei when funded, OR records an IOU when not —
  *     a completion that pays NOTHING throws (never free, D-NH-06).
  *   - a completed session emits zoning.cowork_session carrying ONLY {end_tick, parcel_id,
  *     participant_count, participants_hash, start_tick} — no board/task text, no raw DIDs.
@@ -30,11 +30,11 @@ describe('Phase 60 HOUSE-3 — CoworkAgreement dual-DID schema [Wave 2 un-skips]
     it('CoworkAgreement is the signed dual-DID source of truth with the closed field set', async () => {
         const { createAgreement } = await loadCowork();
         const agreement = createAgreement({
-            parcel_id: PARCEL, parties: [HOST, WORKER], scope_ref: 'task:clean-shelves', settlement_amount_bios: 50, term_ticks: 100,
+            parcel_id: PARCEL, parties: [HOST, WORKER], scope_ref: 'task:clean-shelves', settlement_amount_wei: 50, term_ticks: 100,
         });
         expect(agreement.parties).toEqual([HOST, WORKER]);
         expect(agreement.parcel_id).toBe(PARCEL);
-        expect(agreement.settlement_amount_bios).toBe(50);
+        expect(agreement.settlement_amount_wei).toBe(50);
         expect(agreement.status).toBe('posted');
     });
 });
@@ -42,7 +42,7 @@ describe('Phase 60 HOUSE-3 — CoworkAgreement dual-DID schema [Wave 2 un-skips]
 describe('Phase 60 HOUSE-3 — task board post / claim / complete [Wave 2 un-skips]', () => {
     it('post (owner/staff) → claim (board access) → complete (host) transitions status', async () => {
         const { createAgreement, claimTask, completeTask } = await loadCowork();
-        const posted = createAgreement({ parcel_id: PARCEL, parties: [HOST, WORKER], scope_ref: 'task:x', settlement_amount_bios: 50, term_ticks: 100 });
+        const posted = createAgreement({ parcel_id: PARCEL, parties: [HOST, WORKER], scope_ref: 'task:x', settlement_amount_wei: 50, term_ticks: 100 });
         expect(posted.status).toBe('posted');
         const claimed = claimTask(posted.agreement_id, WORKER);
         expect(claimed.status).toBe('claimed');
@@ -50,14 +50,14 @@ describe('Phase 60 HOUSE-3 — task board post / claim / complete [Wave 2 un-ski
         expect(completed.status).toBe('settled');
     });
 
-    it('completion of a FUNDED agreement settles in Ousia via transferOusia (never free)', async () => {
+    it('completion of a FUNDED agreement settles in Ousia via transferWei (never free)', async () => {
         const { createAgreement, claimTask, completeTask } = await loadCowork();
         const transfers: Array<[string, string, number]> = [];
-        const posted = createAgreement({ parcel_id: PARCEL, parties: [HOST, WORKER], scope_ref: 'task:y', settlement_amount_bios: 50, term_ticks: 100 });
+        const posted = createAgreement({ parcel_id: PARCEL, parties: [HOST, WORKER], scope_ref: 'task:y', settlement_amount_wei: 50, term_ticks: 100 });
         claimTask(posted.agreement_id, WORKER);
         completeTask(posted.agreement_id, HOST, {
             funded: true, start_tick: 1, end_tick: 2,
-            transferOusia: (from, to, amt) => { transfers.push([from, to, amt]); },
+            transferWei: (from, to, amt) => { transfers.push([from, to, amt]); },
         });
         expect(transfers).toEqual([[HOST, WORKER, 50]]);
     });
@@ -65,7 +65,7 @@ describe('Phase 60 HOUSE-3 — task board post / claim / complete [Wave 2 un-ski
     it('completion of an UNFUNDED agreement records an IOU instead (never free)', async () => {
         const { createAgreement, claimTask, completeTask } = await loadCowork();
         const ious: Array<[string, string, number]> = [];
-        const posted = createAgreement({ parcel_id: PARCEL, parties: [HOST, WORKER], scope_ref: 'task:z', settlement_amount_bios: 50, term_ticks: 100 });
+        const posted = createAgreement({ parcel_id: PARCEL, parties: [HOST, WORKER], scope_ref: 'task:z', settlement_amount_wei: 50, term_ticks: 100 });
         claimTask(posted.agreement_id, WORKER);
         completeTask(posted.agreement_id, HOST, {
             funded: false, start_tick: 1, end_tick: 2,
@@ -77,7 +77,7 @@ describe('Phase 60 HOUSE-3 — task board post / claim / complete [Wave 2 un-ski
 
     it('a completion that pays NOTHING throws — co-work is NEVER free (D-NH-06)', async () => {
         const { createAgreement, claimTask, completeTask } = await loadCowork();
-        const posted = createAgreement({ parcel_id: PARCEL, parties: [HOST, WORKER], scope_ref: 'task:free', settlement_amount_bios: 0, term_ticks: 100 });
+        const posted = createAgreement({ parcel_id: PARCEL, parties: [HOST, WORKER], scope_ref: 'task:free', settlement_amount_wei: 0, term_ticks: 100 });
         claimTask(posted.agreement_id, WORKER);
         expect(() => completeTask(posted.agreement_id, HOST, { funded: true, start_tick: 1, end_tick: 2 }))
             .toThrow(/never free|settle|zero/i);
@@ -89,7 +89,7 @@ describe.skip('Phase 60 HOUSE-3 — completion emits zoning.cowork_session (hash
         const { createAgreement, claimTask, completeTask } = await loadCowork();
         const { AuditChain } = await import('../../src/audit/chain.js');
         const audit = new AuditChain();
-        const posted = createAgreement({ parcel_id: PARCEL, parties: [HOST, WORKER], scope_ref: 'task:s', settlement_amount_bios: 50, term_ticks: 100 });
+        const posted = createAgreement({ parcel_id: PARCEL, parties: [HOST, WORKER], scope_ref: 'task:s', settlement_amount_wei: 50, term_ticks: 100 });
         claimTask(posted.agreement_id, WORKER);
         completeTask(posted.agreement_id, HOST, { funded: true, start_tick: 1, end_tick: 9, audit });
         const session = audit.query({ eventType: 'zoning.cowork_session' });

@@ -287,11 +287,11 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   Emitted ONLY via appendOperatorNousForked (grid/src/audit/append-operator-nous-forked.ts).
     'operator.nous_forked',    // (68) {civic_did_hash, fork_reason, operator_did_hash, package_hash, tick}
     // Phase 44 (MKT-06 / D-44-01) — Civic marketplace audit events. Allowlist 68 → 72.
-    // market.listing_created (69): closed 5-key {category, listing_id, price_bios, seller_business_did_hash, tick}.
+    // market.listing_created (69): closed 5-key {category, listing_id, price_wei, seller_business_did_hash, tick}.
     //   Sole-producer: grid/src/audit/append-market-listing-created.ts. actorDid=seller_business_did_hash.
-    // market.bid_placed (70): closed 4-key {bidder_civic_did_hash, listing_id, offer_price_bios, tick}.
+    // market.bid_placed (70): closed 4-key {bidder_civic_did_hash, listing_id, offer_price_wei, tick}.
     //   Sole-producer: grid/src/audit/append-market-bid-placed.ts. actorDid=bidder_civic_did_hash.
-    // market.settled (71): closed 6-key {buyer_civic_did_hash, irs_fee_bios, listing_id, price_bios, seller_business_did_hash, tick}.
+    // market.settled (71): closed 6-key {buyer_civic_did_hash, irs_fee_wei, listing_id, price_wei, seller_business_did_hash, tick}.
     //   Sole-producer: grid/src/audit/append-market-settled.ts. actorDid=buyer_civic_did_hash.
     //   After emit, appendIrsTaxCollected fires audit-chain-only (NOT on allowlist until Phase 45 — D-44-03).
     // market.disputed (72): closed 4-key {complainant_civic_did_hash, dispute_id, listing_id, tick}.
@@ -303,13 +303,13 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     // Phase 45 (IRS-04) — IRS treasury lifecycle events. Allowlist 72 → 75.
     // irs.tax_collected (73): pre-empted in Phase 44 (D-44-03); Phase 45 promotes to broadcast.
     //   Sole-producer: grid/src/audit/append-irs-tax-collected.ts
-    //   Closed 5-key payload: {amount_bios, listing_id, payer_civic_did_hash, tick, total_treasury_after}
+    //   Closed 5-key payload: {amount_wei, listing_id, payer_civic_did_hash, tick, total_treasury_after}
     // irs.disbursement_authorized (74): NEW in Phase 45 — Government-signed legislation authorization.
     //   Sole-producer: grid/src/audit/append-irs-disbursement-authorized.ts
-    //   Closed 5-key payload: {amount_bios, authorized_by_civic_did_hash, grid_name, legislation_ref_hash, tick}
+    //   Closed 5-key payload: {amount_wei, authorized_by_civic_did_hash, grid_name, legislation_ref_hash, tick}
     // irs.disbursement_executed (75): pre-empted in Phase 41 (SLEEP-05); Phase 45 promotes to broadcast.
     //   Sole-producer: grid/src/audit/append-irs-disbursement-executed.ts
-    //   Closed 5-key payload: {amount_bios, cause, civic_did, grid_name, tick} (cause ∈ {'presumed_departed','government_disbursement'})
+    //   Closed 5-key payload: {amount_wei, cause, civic_did, grid_name, tick} (cause ∈ {'presumed_departed','government_disbursement'})
     'irs.tax_collected',           // (73)
     'irs.disbursement_authorized', // (74) NEW
     'irs.disbursement_executed',   // (75)
@@ -343,9 +343,9 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     // Hash-only discipline: structure plaintext name lives Grid-side (ParcelRegistry/NDS);
     //   only name_hash crosses the audit boundary. DIDs are hashed (HEX64) like market.*/gov.*.
     // zoning.parcel_purchased (82): sole-producer grid/src/audit/append-zoning-parcel-purchased.ts
-    //   closed 5-key {buyer_civic_did_hash, parcel_id, price_bios, tick, zone_id}
+    //   closed 5-key {buyer_civic_did_hash, parcel_id, price_wei, tick, zone_id}
     // treasury.parcel_revenue (83): sole-producer grid/src/audit/append-treasury-parcel-revenue.ts
-    //   closed 3-key {amount_bios, parcel_id, tick}
+    //   closed 3-key {amount_wei, parcel_id, tick}
     // zoning.structure_built (84): sole-producer grid/src/audit/append-zoning-structure-built.ts
     //   closed 6-key {name_hash, owner_civic_did_hash, parcel_id, structure_type, tick, visibility}
     // zoning.structure_joined (85): sole-producer grid/src/audit/append-zoning-structure-joined.ts
@@ -397,7 +397,7 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   closed 4-key {former_owner_civic_did_hash, parcel_id, reason, tick}; actorDid = parcel_id.
     //   reason ∈ {upkeep_default} (the land returns to treasury).
     // treasury.upkeep_collected (95): sole-producer grid/src/audit/append-treasury-upkeep-collected.ts
-    //   closed 4-key {amount_bios, owner_civic_did_hash, parcel_id, tick}; actorDid = parcel_id.
+    //   closed 4-key {amount_wei, owner_civic_did_hash, parcel_id, tick}; actorDid = parcel_id.
     'zoning.interior_extended',  // (92)
     'zoning.condition_changed',  // (93)
     'zoning.parcel_reclaimed',   // (94)
@@ -415,7 +415,7 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   closed 4-key {holder_civic_did_hash, parcel_id, reason, tick};
     //   reason ∈ {owner_revoked, for_cause, severance_complete}; actorDid = parcel_id.
     // treasury.structure_revenue (98): sole-producer grid/src/audit/append-treasury-structure-revenue.ts
-    //   closed 4-key {amount_bios, parcel_id, tick, zone_tax_bps}; actorDid = parcel_id
+    //   closed 4-key {amount_wei, parcel_id, tick, zone_tax_bps}; actorDid = parcel_id
     //   (mirrors treasury.parcel_revenue #83 — NO buyer/seller DID on chain).
     // zoning.cowork_session (99): sole-producer grid/src/audit/append-zoning-cowork-session.ts
     //   closed 5-key {end_tick, parcel_id, participant_count, participants_hash, start_tick};
@@ -570,7 +570,7 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     // name stored as hashes on the chain (raw in communities table).
     // community.founded (128): actorDid = founder_did_hash.
     //   sole-producer grid/src/audit/append-community-founded.ts
-    //   closed 6-key {bios_paid, charter_hash, community_id, founder_did_hash, name_hash, tick}
+    //   closed 6-key {wei_paid, charter_hash, community_id, founder_did_hash, name_hash, tick}
     // community.joined (129): actorDid = member_did_hash.
     //   sole-producer grid/src/audit/append-community-joined.ts
     //   closed 3-key {community_id, member_did_hash, tick}
@@ -890,11 +890,11 @@ export const LORE_FORBIDDEN_KEYS = Object.freeze([
 /**
  * Phase 11 (WHISPER-04 / D-11-09): whisper-leaf keys that MUST NOT appear in any
  * whisper payload. Plaintext whisper content (message bodies, utterances, offer
- * text, ousia amounts within whispers, raw decrypted data) NEVER crosses the wire.
+ * text, balance_wei amounts within whispers, raw decrypted data) NEVER crosses the wire.
  * Only the closed-enum {ciphertext_hash, from_did, tick, to_did} 4-tuple crosses.
  * Per D-11-09 — exactly 13 keys. Do NOT add extras.
  *
- * NOTE: offer, amount, ousia, price, value are NOT added to FORBIDDEN_KEY_PATTERN
+ * NOTE: offer, amount, balance_wei, price, value are NOT added to FORBIDDEN_KEY_PATTERN
  * because these keys are legitimately used in trade payloads (trade.proposed,
  * trade.settled). The whisper-specific plaintext gate uses WHISPER_FORBIDDEN_KEYS
  * directly in the whisper emitter boundary checks. The global FORBIDDEN_KEY_PATTERN
@@ -914,7 +914,7 @@ export const WHISPER_FORBIDDEN_KEYS = Object.freeze([
     'utterance',
     'offer',
     'amount',
-    'ousia',
+    'wei',
     'price',
     'value',
     'plaintext',
@@ -969,7 +969,7 @@ export const PORTAL_AUTH_FORBIDDEN_KEYS = Object.freeze([
  *
  * Phase 11 (D-11-09): extended with 8 whisper-only WHISPER_FORBIDDEN_KEYS
  * (text|body|content|message|utterance|plaintext|decrypted|payload_plain).
- * The 5 trade-compatible keys (offer|amount|ousia|price|value) from
+ * The 5 trade-compatible keys (offer|amount|balance_wei|price|value) from
  * WHISPER_FORBIDDEN_KEYS are NOT added here because they appear in legitimate
  * trade payloads — they are enforced only at the whisper emitter boundary.
  *

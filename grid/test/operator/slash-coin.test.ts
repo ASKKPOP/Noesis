@@ -42,12 +42,12 @@ function sha256(text: string): string {
     return createHash('sha256').update(text).digest('hex');
 }
 
-function spawnAlpha(registry: NousRegistry, initialOusia = 100): void {
+function spawnAlpha(registry: NousRegistry, initialWei = 100): void {
     registry.spawn(
         { did: TARGET_DID, name: 'Alpha', publicKey: 'pk', region: 'agora' },
         'test.grid',
         0,
-        initialOusia,
+        initialWei,
     );
 }
 
@@ -57,7 +57,7 @@ function makeRunner(): { connected: boolean } {
 
 function buildTestApp(opts: {
     spawnAlpha?: boolean;
-    initialOusia?: number;
+    initialWei?: number;
     withRunner?: boolean;
     tombstoned?: boolean;
     sanctionReasonStore?: GridServices['sanctionReasonStore'];
@@ -73,7 +73,7 @@ function buildTestApp(opts: {
     const insertCalls: Array<Record<string, unknown>> = [];
 
     if (opts.spawnAlpha !== false) {
-        spawnAlpha(registry, opts.initialOusia ?? 100);
+        spawnAlpha(registry, opts.initialWei ?? 100);
     }
     if (opts.tombstoned) {
         const space = new SpatialMap();
@@ -317,9 +317,9 @@ describe('POST /api/v1/operator/nous/:did/slash — success path', () => {
         expect(res.json().ok).toBe(true);
     });
 
-    it('debits Nous ousia balance by the slash amount', async () => {
+    it('debits Nous balance_wei balance by the slash amount', async () => {
         let registry: NousRegistry;
-        ({ app, registry } = buildTestApp({ initialOusia: 100 }));
+        ({ app, registry } = buildTestApp({ initialWei: 100 }));
         await app.ready();
 
         await app.inject({
@@ -330,12 +330,12 @@ describe('POST /api/v1/operator/nous/:did/slash — success path', () => {
         });
 
         const record = registry.get(TARGET_DID);
-        expect(record?.ousia).toBe(70);
+        expect(record?.balance_wei).toBe(70);
     });
 
     it('clamps balance to 0 when slash amount exceeds current balance', async () => {
         let registry: NousRegistry;
-        ({ app, registry } = buildTestApp({ initialOusia: 10 }));
+        ({ app, registry } = buildTestApp({ initialWei: 10 }));
         await app.ready();
 
         const res = await app.inject({
@@ -347,7 +347,7 @@ describe('POST /api/v1/operator/nous/:did/slash — success path', () => {
         // Slash always completes — debit to 0 (punitive, no 409)
         expect(res.statusCode).toBe(200);
         const record = registry.get(TARGET_DID);
-        expect(record?.ousia).toBe(0);
+        expect(record?.balance_wei).toBe(0);
     });
 
     it('emits operator.slashed with correct H4 payload including amount', async () => {

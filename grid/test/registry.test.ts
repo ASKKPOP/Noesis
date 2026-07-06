@@ -16,7 +16,7 @@ describe('NousRegistry', () => {
         expect(record.name).toBe('Sophia');
         expect(record.ndsAddress).toBe('nous://sophia.genesis.noesis');
         expect(record.lifecyclePhase).toBe('spawning');
-        expect(record.ousia).toBe(1000);
+        expect(record.balance_wei).toBe(1000);
         expect(record.status).toBe('active');
         expect(registry.count).toBe(1);
     });

@@ -62,7 +62,7 @@ describe('GET /api/v1/civic/parcels — registry-not-wired smoke check (R-H-01 /
 
     it('the returned parcels array reflects the seeded registry (non-empty after seedZone)', async () => {
         const registry = new ParcelRegistry('genesis');
-        registry.seedZone({ zoneId: 'residential', count: 24, priceBios: 400, ring: 3 });
+        registry.seedZone({ zoneId: 'residential', count: 24, priceWei: 400, ring: 3 });
         const store = new ParcelStore(makeMockPool(), 'genesis');
         const app = Fastify({ logger: false });
         registerCivicParcelRoutes(app, {

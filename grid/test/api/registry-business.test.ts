@@ -3,7 +3,7 @@
  *
  * Tests for the business-DID registration endpoint:
  *   - 201 + Business-DID VC on valid civic_did bearer with sufficient Bios
- *   - 402 insufficient_bios when caller has < 100 Bios
+ *   - 402 insufficient_wei when caller has < 100 Bios
  *   - 400 on missing business_name
  *   - 400 on missing category
  *   - 403 civic_did_required_caller when no civic-DID bearer present
@@ -87,7 +87,7 @@ describe('POST /api/v1/registry/business-did/register', () => {
         audit = new AuditChain();
         registry = new NousRegistry();
 
-        // Seed registry with TREASURY_DID so transferOusia can find the target
+        // Seed registry with TREASURY_DID so transferWei can find the target
         registry.spawn({ did: TREASURY_DID, name: 'treasury', publicKey: 'pk-treasury', region: 'admin' }, GRID_NAME, 0, 0);
         // Seed rich member with 200 Bios
         registry.spawn({ did: CIVIC_DID_RICH, name: 'rich-member', publicKey: 'pk-rich', region: 'business' }, GRID_NAME, 0, 200);
@@ -192,7 +192,7 @@ describe('POST /api/v1/registry/business-did/register', () => {
         expect(res.json()).toMatchObject({ error: 'civic_did_not_found' });
     });
 
-    it('returns 402 insufficient_bios when caller has only 50 Bios (need 100)', async () => {
+    it('returns 402 insufficient_wei when caller has only 50 Bios (need 100)', async () => {
         const bearer = await mintCivicBearer(CIVIC_DID_POOR);
         const res = await app.inject({
             method: 'POST',
@@ -202,14 +202,14 @@ describe('POST /api/v1/registry/business-did/register', () => {
         });
         expect(res.statusCode).toBe(402);
         const body = res.json() as { error: string; required: number; available: number };
-        expect(body.error).toBe('insufficient_bios');
+        expect(body.error).toBe('insufficient_wei');
         expect(body.required).toBe(100);
         expect(body.available).toBe(50);
     });
 
     it('returns 201 with business_did and credential on valid civic_did bearer with sufficient Bios', async () => {
         const bearer = await mintCivicBearer(CIVIC_DID_RICH);
-        const ousiaBefore = registry.get(CIVIC_DID_RICH)!.ousia;
+        const ousiaBefore = registry.get(CIVIC_DID_RICH)!.balance_wei;
 
         const res = await app.inject({
             method: 'POST',
@@ -224,7 +224,7 @@ describe('POST /api/v1/registry/business-did/register', () => {
         expect((body.credential as { type: string[] }).type).toContain('BusinessDIDCredential');
 
         // Ousia was deducted by exactly 100
-        const ousiaAfter = registry.get(CIVIC_DID_RICH)!.ousia;
+        const ousiaAfter = registry.get(CIVIC_DID_RICH)!.balance_wei;
         expect(ousiaAfter).toBe(ousiaBefore - 100);
     });
 

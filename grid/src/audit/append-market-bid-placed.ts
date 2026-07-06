@@ -1,7 +1,7 @@
 /**
  * Phase 44 MKT-06 / D-44-01 — Sole-producer for market.bid_placed.
  *
- * Closed 4-key payload: {bidder_civic_did_hash, listing_id, offer_price_bios, tick}.
+ * Closed 4-key payload: {bidder_civic_did_hash, listing_id, offer_price_wei, tick}.
  * actorDid = bidder_civic_did_hash.
  *
  * Allowlist position 70.
@@ -17,11 +17,11 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export interface MarketBidPlacedPayload {
     readonly bidder_civic_did_hash: string;  // HEX64_RE
     readonly listing_id: string;             // UUID_RE
-    readonly offer_price_bios: number;       // positive integer (>0)
+    readonly offer_price_wei: number;       // positive integer (>0)
     readonly tick: number;                   // non-negative integer
 }
 
-const EXPECTED_KEYS = ['bidder_civic_did_hash', 'listing_id', 'offer_price_bios', 'tick'] as const;
+const EXPECTED_KEYS = ['bidder_civic_did_hash', 'listing_id', 'offer_price_wei', 'tick'] as const;
 
 export function appendMarketBidPlaced(
     audit: AuditChain,
@@ -39,9 +39,9 @@ export function appendMarketBidPlaced(
     if (typeof payload.bidder_civic_did_hash !== 'string' || !HEX64_RE.test(payload.bidder_civic_did_hash)) {
         throw new TypeError(`appendMarketBidPlaced: bidder_civic_did_hash must match HEX64_RE, got ${JSON.stringify(payload.bidder_civic_did_hash)}`);
     }
-    // 3. Positive integer: offer_price_bios.
-    if (!Number.isInteger(payload.offer_price_bios) || payload.offer_price_bios <= 0) {
-        throw new TypeError(`appendMarketBidPlaced: offer_price_bios must be positive integer, got ${JSON.stringify(payload.offer_price_bios)}`);
+    // 3. Positive integer: offer_price_wei.
+    if (!Number.isInteger(payload.offer_price_wei) || payload.offer_price_wei <= 0) {
+        throw new TypeError(`appendMarketBidPlaced: offer_price_wei must be positive integer, got ${JSON.stringify(payload.offer_price_wei)}`);
     }
     // 4. Non-negative integer: tick.
     if (!Number.isInteger(payload.tick) || payload.tick < 0) {
@@ -57,7 +57,7 @@ export function appendMarketBidPlaced(
     const cleanPayload = {
         bidder_civic_did_hash: payload.bidder_civic_did_hash,
         listing_id: payload.listing_id,
-        offer_price_bios: payload.offer_price_bios,
+        offer_price_wei: payload.offer_price_wei,
         tick: payload.tick,
     };
     // 7. Privacy gate.

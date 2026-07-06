@@ -45,7 +45,7 @@ export interface NousRosterEntry {
     did: string;
     name: string;
     region: string;
-    ousia: number;
+    balance_wei: number;
     lifecyclePhase: string;
     reputation: number;
     status: string;
@@ -86,7 +86,7 @@ export interface ShopsResponse {
     shops: Array<{
         ownerDid: string;
         name: string;
-        listings: Array<{ sku: string; label: string; priceOusia: number }>;
+        listings: Array<{ sku: string; label: string; priceWei: number }>;
     }>;
 }
 

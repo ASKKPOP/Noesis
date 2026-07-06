@@ -31,7 +31,7 @@ describe('Phase 60 HOUSE-3 — IOU record / settle / outstanding [Wave 2 un-skip
         const entry = recordIou(CREDITOR, DEBTOR, 100, 'cowork:agreement:1', 10);
         expect(entry.creditor_civic_did).toBe(CREDITOR);
         expect(entry.debtor_civic_did).toBe(DEBTOR);
-        expect(entry.amount_bios).toBe(100);
+        expect(entry.amount_wei).toBe(100);
         expect(entry.settled_tick).toBeNull();
         expect(outstandingFor(DEBTOR)).toBe(100);
     });

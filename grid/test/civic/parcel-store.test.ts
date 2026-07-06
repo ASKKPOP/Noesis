@@ -81,7 +81,7 @@ describe('ParcelStore — seed idempotency + write-through (R-58-01 / R-58-02)',
         const rows = buildGenesisCoreParcels('genesis').slice(0, 3).map(p => ({
             parcel_id: p.id, grid_name: p.gridId, zone_id: p.zoneId,
             ring: p.ring, sector_deg: String(p.sector), level: p.level,
-            owner_civic_did: null, price_bios: String(p.priceBios), acquired_at_tick: null,
+            owner_civic_did: null, price_wei: String(p.priceWei), acquired_at_tick: null,
             structure_name: null, structure_type: null, visibility: null,
             built_at_tick: null, named_address: null,
             entry_policy: 'open', entry_allowlist: null,
@@ -134,7 +134,7 @@ describe('ParcelStore — seed idempotency + write-through (R-58-01 / R-58-02)',
         const rows = buildGenesisCoreParcels('genesis').slice(0, 1).map(p => ({
             parcel_id: p.id, grid_name: p.gridId, zone_id: p.zoneId,
             ring: p.ring, sector_deg: String(p.sector), level: p.level,
-            owner_civic_did: 'did:civic:noesis:nous:owner', price_bios: String(p.priceBios),
+            owner_civic_did: 'did:civic:noesis:nous:owner', price_wei: String(p.priceWei),
             acquired_at_tick: 1,
             structure_name: 'Hall', structure_type: 'venue', visibility: 'open',
             built_at_tick: 2, named_address: null,
@@ -164,8 +164,8 @@ describe('ParcelStore — gravity prices + caps + civic-land guard (R-58-03)', (
         expect(residential).toHaveLength(24);
         for (const p of residential) {
             expect(p.ring).toBe(3);
-            expect(p.priceBios).toBe(400);
-            expect(p.priceBios).toBe(gravityPrice(3));
+            expect(p.priceWei).toBe(400);
+            expect(p.priceWei).toBe(gravityPrice(3));
         }
     });
 
@@ -175,8 +175,8 @@ describe('ParcelStore — gravity prices + caps + civic-land guard (R-58-03)', (
         expect(ring2).toHaveLength(24); // 8 + 8 + 8
         for (const p of ring2) {
             expect(['business', 'shopping', 'manufacture']).toContain(p.zoneId);
-            expect(p.priceBios).toBe(900);
-            expect(p.priceBios).toBe(gravityPrice(2));
+            expect(p.priceWei).toBe(900);
+            expect(p.priceWei).toBe(gravityPrice(2));
         }
     });
 

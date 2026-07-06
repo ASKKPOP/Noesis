@@ -20,7 +20,7 @@ export type ReviewFailureCode =
 export type ReviewCheckName = ReviewFailureCode;
 
 /**
- * Per-trade review input. Proposer balance is pre-resolved at emit site (NousRegistry.get(proposerDid).ousia ?? 0).
+ * Per-trade review input. Proposer balance is pre-resolved at emit site (NousRegistry.get(proposerDid).balance_wei ?? 0).
  * memoryRefs + telosHash are brain self-attestation (D-05) — reviewer verifies structural shape only in Phase 5.
  */
 export interface ReviewContext {

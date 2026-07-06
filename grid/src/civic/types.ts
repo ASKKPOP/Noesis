@@ -83,7 +83,7 @@ export interface Parcel {
     sector: number;              // D-NH-10 vector address: angular position in DEGREES [0, 360)
     level: number;               // D-NH-10 vector address: vertical level (defaults to 0)
     ownerDid: string | null;      // null = unclaimed (owned by the Polis treasury)
-    priceBios: number;            // positive integer
+    priceWei: number;            // positive integer
     structure: Structure | null;
     entryPolicy: EntryPolicy;
     acquiredAtTick: number | null;

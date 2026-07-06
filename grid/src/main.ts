@@ -257,7 +257,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
             registry: {
                 list: (filter) => parcelRegistry.list(filter),
                 get: (did) => launcher.registry.get(did),
-                transferOusia: (from, to, amount) => launcher.registry.transferOusia(from, to, amount),
+                transferWei: (from, to, amount) => launcher.registry.transferWei(from, to, amount),
                 advanceCondition: (address) => parcelRegistry.advanceCondition(address),
                 resetCondition: (address) => parcelRegistry.resetCondition(address),
                 persistUpkeep: (parcel) => parcelStore.persistUpkeep(parcel),
@@ -278,7 +278,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
                 parcelRegistry.seedZone({
                     zoneId: 'residential',
                     count: 24,
-                    priceBios: gravityPrice(ring),
+                    priceWei: gravityPrice(ring),
                     ring,
                 });
             },

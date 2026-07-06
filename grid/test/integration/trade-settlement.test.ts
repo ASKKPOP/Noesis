@@ -10,9 +10,9 @@
  *     (privacy contract from D8 / Pitfall 4) — the settled payload shape DID NOT change; the
  *     reviewer adds trade.proposed + trade.reviewed{pass} BEFORE settled.
  *   - Insufficient-funds case now asserts trade.reviewed{fail, insufficient_balance} and NO
- *     trade.settled — the reviewer intercepts insufficient balance BEFORE transferOusia, so the
- *     old `trade.rejected{reason:insufficient}` path from transferOusia is now unreachable in
- *     Phase 5 (the defensive transferOusia branch is kept for library-level callers that bypass
+ *     trade.settled — the reviewer intercepts insufficient balance BEFORE transferWei, so the
+ *     old `trade.rejected{reason:insufficient}` path from transferWei is now unreachable in
+ *     Phase 5 (the defensive transferWei branch is kept for library-level callers that bypass
  *     the reviewer).
  *   - Malformed metadata case UNCHANGED in shape — transport-layer error that pre-empts the
  *     reviewer entirely.
@@ -144,8 +144,8 @@ describe('Plan 04-01 + 05-03 — trade_request settlement with reviewer gate', (
         expect((entry.payload as Record<string, unknown>)['tick']).toBeUndefined();
 
         // Balances moved atomically.
-        expect(env.registry.get(BUYER_DID)?.ousia).toBe(100 - 42);
-        expect(env.registry.get(SELLER_DID)?.ousia).toBe(50 + 42);
+        expect(env.registry.get(BUYER_DID)?.balance_wei).toBe(100 - 42);
+        expect(env.registry.get(SELLER_DID)?.balance_wei).toBe(50 + 42);
     });
 
     it('insufficient funds: reviewer intercepts — trade.proposed + trade.reviewed{fail, insufficient_balance}, NO trade.settled, balances unchanged', async () => {
@@ -192,8 +192,8 @@ describe('Plan 04-01 + 05-03 — trade_request settlement with reviewer gate', (
         expect(rp['trade_id']).toBe('nonce-2');
         expect(reviewed[0].actorDid).toBe(Reviewer.DID);
 
-        expect(env.registry.get(BUYER_DID)?.ousia).toBe(100);
-        expect(env.registry.get(SELLER_DID)?.ousia).toBe(50);
+        expect(env.registry.get(BUYER_DID)?.balance_wei).toBe(100);
+        expect(env.registry.get(SELLER_DID)?.balance_wei).toBe(50);
     });
 
     it('malformed metadata: one trade.rejected(reason=malformed_metadata), NO trade.proposed, NO trade.reviewed, balances unchanged', async () => {
@@ -233,7 +233,7 @@ describe('Plan 04-01 + 05-03 — trade_request settlement with reviewer gate', (
         expect(rejected).toHaveLength(1);
         expect(rejected[0].payload).toEqual({ reason: 'malformed_metadata', nonce: 'nonce-3' });
 
-        expect(env.registry.get(BUYER_DID)?.ousia).toBe(100);
-        expect(env.registry.get(SELLER_DID)?.ousia).toBe(50);
+        expect(env.registry.get(BUYER_DID)?.balance_wei).toBe(100);
+        expect(env.registry.get(SELLER_DID)?.balance_wei).toBe(50);
     });
 });

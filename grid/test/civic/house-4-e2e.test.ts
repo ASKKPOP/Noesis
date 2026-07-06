@@ -22,14 +22,14 @@
  *
  *   1. LEARN — a Nous learns a blueprint_hash via the EXISTING skill.taught machinery (no new
  *      event); a civic_blueprints recipe row holds catalog-kind objects + the arrangement DAG +
- *      material_cost_bios.
+ *      material_cost_wei.
  *   2. BUILD — buildFromBlueprint on an OWNED parcel → skill-held confirmed from the existing
- *      skill-event history → material_cost_bios debited (Ousia → TREASURY_DID) → recipe applied
+ *      skill-event history → material_cost_wei debited (Ousia → TREASURY_DID) → recipe applied
  *      via extendInterior per object → skill.blueprint_executed {blueprint_hash,
  *      builder_civic_did_hash, parcel_id, tick} on the trail (no raw DID, no recipe body).
  *   2b. NEGATIVE — a builder who does NOT hold the skill → skill_not_held; insufficient Ousia → 402.
  *   3. CO-BUILD — decompose a recipe into the arrangement DAG; two workers claim+complete sub-tasks.
- *      FUNDED → transferOusia; UNFUNDED → a Phase 60 IOU (never free). Attribution DAG-weighted.
+ *      FUNDED → transferWei; UNFUNDED → a Phase 60 IOU (never free). Attribution DAG-weighted.
  *      zoning.cowork_session per session (participants_hash only) + ONE skill.blueprint_executed
  *      on full completion.
  *   4. TEACH — a skill taught inside a workshop diffuses to the PRESENT Nous (not the absent one,
@@ -101,7 +101,7 @@ function homeRecipe(): BlueprintRecipe {
             { node_id: 'n1', objects: [{ kind: 'bed', area: 'bedroom' }], depends_on: [], weight: 2 },
             { node_id: 'n2', objects: [{ kind: 'shelf', area: 'study' }], depends_on: ['n1'], weight: 1 },
         ],
-        material_cost_bios: 100,
+        material_cost_wei: 100,
     };
 }
 
@@ -169,7 +169,7 @@ const POST = (app: FastifyInstance, url: string, payload?: unknown) =>
 function runBuild(env: E2EApp, addr: string, builderDid: string): ReturnType<typeof buildFromBlueprint> {
     return buildFromBlueprint(addr, builderDid, BLUEPRINT_HASH, TICK, {
         registry: env.parcelRegistry,
-        transferOusia: (from, to, amount) => env.nousRegistry.transferOusia(from, to, amount),
+        transferWei: (from, to, amount) => env.nousRegistry.transferWei(from, to, amount),
         audit: env.audit,
         coBuildStaffOf,
         emitBlueprintExecuted: (payload) => { appendSkillBlueprintExecuted(env.audit, payload); },
@@ -196,7 +196,7 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
         storeBlueprint(homeRecipe());
         const recipe = getBlueprint(BLUEPRINT_HASH);
         expect(recipe).not.toBeNull();
-        expect(recipe!.material_cost_bios).toBe(100);
+        expect(recipe!.material_cost_wei).toBe(100);
         // The recipe row holds catalog-kind objects + the arrangement DAG.
         expect(recipe!.objects.map((o) => o.kind).sort()).toEqual(['bed', 'shelf']);
         expect(recipe!.arrangement.map((n) => n.node_id)).toEqual(['n1', 'n2']);
@@ -218,15 +218,15 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
         //        the recipe, and emits the SINGLE skill.blueprint_executed (driven through the SAME
         //        production composition the HTTP route runs — R6). ──
         expect(builderHoldsSkill(BLUEPRINT_HASH, OWNER, { audit })).toBe(true);
-        const ownerBefore = nousRegistry.get(OWNER)!.ousia;
-        const treasuryBefore = nousRegistry.get(TREASURY_DID)!.ousia;
+        const ownerBefore = nousRegistry.get(OWNER)!.balance_wei;
+        const treasuryBefore = nousRegistry.get(TREASURY_DID)!.balance_wei;
 
         const structure = runBuild(env, PARCEL, OWNER);
         expect(structure).toBeDefined();
 
         // The material cost moved builder → treasury (Ousia debit).
-        expect(nousRegistry.get(OWNER)!.ousia).toBe(ownerBefore - 100);
-        expect(nousRegistry.get(TREASURY_DID)!.ousia).toBe(treasuryBefore + 100);
+        expect(nousRegistry.get(OWNER)!.balance_wei).toBe(ownerBefore - 100);
+        expect(nousRegistry.get(TREASURY_DID)!.balance_wei).toBe(treasuryBefore + 100);
         // The recipe applied via extendInterior — both areas now exist in the interior tree.
         const interiorAreas = parcelRegistry.get(PARCEL)!.structure!.interior!.areas.map((a) => a.name).sort();
         expect(interiorAreas).toEqual(['bedroom', 'study']);
@@ -253,7 +253,7 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
         expect(audit.all().filter((e) => e.eventType === 'skill.blueprint_executed')).toHaveLength(1);
 
         // ── 2c. NEGATIVE — insufficient Ousia → 402 (insufficient_funds). ──
-        // Teach POOR the blueprint, give it ownership but drain its Ousia below material_cost_bios.
+        // Teach POOR the blueprint, give it ownership but drain its Ousia below material_cost_wei.
         const POOR = 'did:noesis:grace';
         nousRegistry.spawn({ name: 'grace', did: POOR, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 10);
         appendSkillTaught(audit, POOR, {
@@ -280,10 +280,10 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
         claimSubTask(session, 'n1', WORKER_A);
         const s1 = completeSubTask(session, 'n1', WORKER_A, {
             funded: true, tick: TICK,
-            transferOusia: (_from, _to, amount) => { ousiaMoved += amount; },
+            transferWei: (_from, _to, amount) => { ousiaMoved += amount; },
         });
-        expect(s1.settlement).toBe('ousia');
-        expect(s1.amount_bios).toBe(2);    // node weight 2
+        expect(s1.settlement).toBe('wei');
+        expect(s1.amount_wei).toBe(2);    // node weight 2
         expect(ousiaMoved).toBe(2);
         expect(outstandingFor(OWNER)).toBe(0); // funded → no IOU
 
@@ -294,7 +294,7 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
             recordIou: (creditor, debtor, amt, ref, tick) => recordIou(creditor, debtor, amt, ref, tick),
         });
         expect(s2.settlement).toBe('iou');
-        expect(s2.amount_bios).toBe(1);    // node weight 1
+        expect(s2.amount_wei).toBe(1);    // node weight 1
         // The IOU is outstanding — host (OWNER=debtor) owes WORKER_B (creditor) 1 Bios. Never free.
         expect(outstandingFor(OWNER)).toBe(1);
 
@@ -371,7 +371,7 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
         //        directly (the executor's human guard) AND through the real HTTP route (403). ──
         expect(() => buildFromBlueprint(PARCEL, HUMAN, BLUEPRINT_HASH, TICK, {
             registry: parcelRegistry,
-            transferOusia: (from, to, amount) => nousRegistry.transferOusia(from, to, amount),
+            transferWei: (from, to, amount) => nousRegistry.transferWei(from, to, amount),
             audit,
             coBuildStaffOf,
             emitBlueprintExecuted: () => {},
@@ -420,7 +420,7 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
             expect(e.payload).not.toHaveProperty('parcel_id');
             expect(e.payload).not.toHaveProperty('objects');
             expect(e.payload).not.toHaveProperty('arrangement');
-            expect(e.payload).not.toHaveProperty('material_cost_bios');
+            expect(e.payload).not.toHaveProperty('material_cost_wei');
         }
 
         // All THREE HOUSE-4-relevant topics present on the trail (the new + the reused ones).

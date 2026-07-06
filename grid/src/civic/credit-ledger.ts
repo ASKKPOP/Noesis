@@ -11,7 +11,7 @@
  *       (IOU_GLOBAL_CAP_BIOS) — both live ONLY in founding-law.ts. Over-cap → throw.
  *
  * Recording an IOU emits NOTHING on chain — it is private bilateral bookkeeping. Only a
- * settlement that MOVES Ousia rides the existing registry.transferOusia path; a pure
+ * settlement that MOVES Ousia rides the existing registry.transferWei path; a pure
  * bookkeeping net (counter-IOU offset) moves no Ousia and emits nothing.
  *
  * Auto-netting: recording a counter-IOU between the same pair offsets the smaller against
@@ -24,12 +24,12 @@
 
 import { IOU_PAIR_CAP_BIOS, IOU_GLOBAL_CAP_BIOS } from './founding-law.js';
 
-/** A bilateral payable: the debtor owes the creditor `amount_bios` until settled. */
+/** A bilateral payable: the debtor owes the creditor `amount_wei` until settled. */
 export interface IouEntry {
     iou_id: string;
     creditor_civic_did: string;
     debtor_civic_did: string;
-    amount_bios: number;
+    amount_wei: number;
     reason_ref: string;
     created_tick: number;
     /** null while outstanding; stamped with the settling tick once cleared. */
@@ -74,7 +74,7 @@ export function upsertIou(entry: IouEntry): void {
 export function outstandingFor(did: string): number {
     return ledger
         .filter(e => e.debtor_civic_did === did && e.settled_tick === null)
-        .reduce((sum, e) => sum + e.amount_bios, 0);
+        .reduce((sum, e) => sum + e.amount_wei, 0);
 }
 
 /** Outstanding from `debtor` to `creditor` specifically (per-pair, directional). */
@@ -84,7 +84,7 @@ function outstandingPair(creditor: string, debtor: string): number {
             e.creditor_civic_did === creditor &&
             e.debtor_civic_did === debtor &&
             e.settled_tick === null)
-        .reduce((sum, e) => sum + e.amount_bios, 0);
+        .reduce((sum, e) => sum + e.amount_wei, 0);
 }
 
 /**
@@ -116,7 +116,7 @@ export function recordIou(
         iou_id: `iou:${seq++}`,
         creditor_civic_did: creditor,
         debtor_civic_did: debtor,
-        amount_bios: amount,
+        amount_wei: amount,
         reason_ref: reasonRef,
         created_tick: tick,
         settled_tick: null,
@@ -142,15 +142,15 @@ function netCounter(entry: IouEntry, tick: number, deps: LedgerDeps): void {
         e.debtor_civic_did === entry.creditor_civic_did);
     for (const counter of counters) {
         if (entry.settled_tick !== null) break;
-        const offset = Math.min(entry.amount_bios, counter.amount_bios);
+        const offset = Math.min(entry.amount_wei, counter.amount_wei);
         if (offset <= 0) continue;
-        entry.amount_bios -= offset;
-        counter.amount_bios -= offset;
-        if (counter.amount_bios === 0) {
+        entry.amount_wei -= offset;
+        counter.amount_wei -= offset;
+        if (counter.amount_wei === 0) {
             counter.settled_tick = tick;
             deps.persistIouSettle?.(counter.iou_id, tick);
         }
-        if (entry.amount_bios === 0) {
+        if (entry.amount_wei === 0) {
             entry.settled_tick = tick;
             deps.persistIouSettle?.(entry.iou_id, tick);
         }
@@ -162,7 +162,7 @@ function netCounter(entry: IouEntry, tick: number, deps: LedgerDeps): void {
 
 /**
  * Settle a single IOU (the debtor pays). Marks settled_tick so it drops out of
- * outstandingFor. The Ousia move itself rides registry.transferOusia at the CALLER
+ * outstandingFor. The Ousia move itself rides registry.transferWei at the CALLER
  * (cowork.completeTask / severance SETTLEMENT) — the ledger only flips bookkeeping.
  * Idempotent: settling an already-settled or unknown IOU is a no-op.
  */

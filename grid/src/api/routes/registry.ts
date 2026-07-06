@@ -259,13 +259,13 @@ export async function registerRegistryRoutes(
             const nous = reg.get(civicDid);
             if (!nous) return reply.code(404).send({ error: 'civic_did_not_found' });
 
-            const result = reg.transferOusia(civicDid, TREASURY_DID, BUSINESS_DID_BIOS_COST);
+            const result = reg.transferWei(civicDid, TREASURY_DID, BUSINESS_DID_BIOS_COST);
             if (!result.success) {
                 if (result.error === 'insufficient') {
                     return reply.code(402).send({
-                        error: 'insufficient_bios',
+                        error: 'insufficient_wei',
                         required: BUSINESS_DID_BIOS_COST,
-                        available: nous.ousia,
+                        available: nous.balance_wei,
                     });
                 }
                 return reply.code(400).send({ error: result.error });

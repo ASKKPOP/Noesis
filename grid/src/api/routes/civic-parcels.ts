@@ -13,12 +13,12 @@
  * TWO DISTINCT REGISTRIES (do not conflate — this is the bug this file guards against):
  *   - parcelRegistry = services.parcels.registry — owns land state transitions:
  *       purchase() validates affordability + caps ONLY (does NOT move funds);
- *       stampAcquired/build/join/leave/setEntryPolicy. HAS NO transferOusia.
+ *       stampAcquired/build/join/leave/setEntryPolicy. HAS NO transferWei.
  *   - nousRegistry   = services.registry — the funds registry:
- *       get(did)?.ousia reads balance; transferOusia(from, to, amount) MOVES Ousia.
+ *       get(did)?.balance_wei reads balance; transferWei(from, to, amount) MOVES Ousia.
  *
  * Funds path (D-58-06): read buyer Ousia from nousRegistry → parcelRegistry.purchase
- *   validates → nousRegistry.transferOusia(buyer → TREASURY_DID, price) → store write →
+ *   validates → nousRegistry.transferWei(buyer → TREASURY_DID, price) → store write →
  *   stampAcquired → appendZoningParcelPurchased(82) + appendTreasuryParcelRevenue(83).
  *
  * D-NH-07 (D-58-05): land is Nous-only. human_visitor / anon → 401 (tier gate);
@@ -72,7 +72,7 @@ function publicView(p: Parcel, occupantCount: number): Record<string, unknown> {
         sector: p.sector,
         level: p.level,
         status: p.ownerDid === null ? 'available' : 'owned',
-        price_bios: p.priceBios,
+        price_wei: p.priceWei,
         // Owner DID NEVER crosses raw — hashed HEX64 only (D-58-08).
         owner_civic_did_hash: p.ownerDid === null ? null : sha256Hex(p.ownerDid),
         structure: p.structure === null
@@ -143,7 +143,7 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
         if (!buyer) return reply.code(404).send({ error: 'buyer_not_found' });
 
         // 2. parcelRegistry.purchase validates affordability + caps ONLY (no funds move).
-        const result = parcelRegistry.purchase(addr, buyerDid, buyer.ousia);
+        const result = parcelRegistry.purchase(addr, buyerDid, buyer.balance_wei);
         if (!result.ok) {
             if (result.reason === 'insufficient_funds') {
                 return reply.code(402).send({ error: 'insufficient_funds' });
@@ -154,10 +154,10 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             return reply.code(409).send({ error: result.reason });
         }
         const parcel = result.parcel;
-        const price = parcel.priceBios;
+        const price = parcel.priceWei;
 
         // 3. Move funds on the NOUS registry (buyer → treasury). Belt-and-suspenders 402.
-        const moved = nousRegistry.transferOusia(buyerDid, TREASURY_DID, price);
+        const moved = nousRegistry.transferWei(buyerDid, TREASURY_DID, price);
         if (!moved.success) {
             if (moved.error === 'insufficient') {
                 return reply.code(402).send({ error: 'insufficient_funds' });
@@ -176,17 +176,17 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
         appendZoningParcelPurchased(services.audit, {
             buyer_civic_did_hash: sha256Hex(buyerDid),
             parcel_id: parcel.id,
-            price_bios: price,
+            price_wei: price,
             tick,
             zone_id: parcel.zoneId,
         });
         appendTreasuryParcelRevenue(services.audit, {
-            amount_bios: price,
+            amount_wei: price,
             parcel_id: parcel.id,
             tick,
         });
 
-        return reply.code(201).send({ purchased: true, parcel_id: parcel.id, price_bios: price });
+        return reply.code(201).send({ purchased: true, parcel_id: parcel.id, price_wei: price });
     });
 
     // --- POST /api/v1/civic/parcels/:id/build (civic_did_required) ---
@@ -278,7 +278,7 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
                     registry: parcelRegistry,
                     // Material cost rides the existing Ousia transfer path (builder → treasury);
                     // a failed transfer (cannot cover) → insufficient_funds (mapped to 402 below).
-                    transferOusia: (from, to, amount) => nousRegistry.transferOusia(from, to, amount),
+                    transferWei: (from, to, amount) => nousRegistry.transferWei(from, to, amount),
                     audit: services.audit,
                     // Existence-DID for the skill-held check ONLY (defaults to buyerDid in the executor).
                     skillHolderDid,
@@ -743,7 +743,7 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
                 parcel_id: addr,
                 parties: [buyerDid, ''],
                 scope_ref: taskRef,
-                settlement_amount_bios: payBios as number,
+                settlement_amount_wei: payBios as number,
                 term_ticks: 0,
             });
             return reply.code(200).send({ posted: true, parcel_id: addr, task_id: agreement.agreement_id });
@@ -801,8 +801,8 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
                     funded: !!nous,
                     start_tick: startTick,
                     end_tick: endTick,
-                    transferOusia: nous
-                        ? (from, to, amount) => { nous.transferOusia(from, to, amount); }
+                    transferWei: nous
+                        ? (from, to, amount) => { nous.transferWei(from, to, amount); }
                         : undefined,
                     bumpTrust: (parcelId, workerDid, delta) => parcelRegistry.bumpTrust(parcelId, workerDid, delta),
                 });

@@ -69,9 +69,9 @@ export function registerRegistryTypeBRoutes(app: FastifyInstance, services: Grid
             if (bond < required) return reply.code(400).send({ error: 'insufficient_bond', required });
 
             // Charge the refundable bond: sponsor → treasury escrow. 402 on insufficient Bios.
-            const moved = registry.transferOusia(sponsor, TREASURY_DID, bond);
+            const moved = registry.transferWei(sponsor, TREASURY_DID, bond);
             if (!moved.success) {
-                if (moved.error === 'insufficient') return reply.code(402).send({ error: 'insufficient_bios', required });
+                if (moved.error === 'insufficient') return reply.code(402).send({ error: 'insufficient_wei', required });
                 return reply.code(400).send({ error: moved.error });
             }
             const r = await store.postSponsorBond({ gridName: grid, sponsorDid: sponsor, purpose, bondAmount: bond, activeTypeBCount: activeCount, tick: tick() });
@@ -103,7 +103,7 @@ export function registerRegistryTypeBRoutes(app: FastifyInstance, services: Grid
             const meets = req.body?.meets_minimums !== false; // default: minimums met unless explicitly false
             const r = await new TypeBRegistryStore(pool, audit).refundBond({ gridName: grid, requestId: req.params.requestId, meetsMinimums: meets, tick: tick() });
             if (!r.ok) return reply.code(r.reason === 'too_early' ? 425 : r.reason === 'not_found' ? 404 : 409).send({ error: r.reason });
-            registry.transferOusia(TREASURY_DID, r.sponsorDid, r.amount); // settle the refund
+            registry.transferWei(TREASURY_DID, r.sponsorDid, r.amount); // settle the refund
             return reply.code(201).send({ status: 'bond_refunded', amount: r.amount });
         },
     );

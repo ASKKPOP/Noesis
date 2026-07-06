@@ -31,7 +31,7 @@ describe('validateCharter (COMM-02)', () => {
 describe('CommunityStore.found (COMM-01)', () => {
     it('inserts the community + seats the founder + emits community.founded (hashed DIDs)', async () => {
         const p = pool(); const audit = new AuditChain();
-        const id = await new CommunityStore(p, audit).found({ gridName: 'genesis', founderDid: FOUNDER, name: 'Stoics', purpose: 'study', charter: CHARTER, biosPaid: 100, tick: 5 });
+        const id = await new CommunityStore(p, audit).found({ gridName: 'genesis', founderDid: FOUNDER, name: 'Stoics', purpose: 'study', charter: CHARTER, weiPaid: 100, tick: 5 });
         expect(id).toMatch(/^[0-9a-f-]{36}$/i);
         const calls = (p.query as ReturnType<typeof vi.fn>).mock.calls;
         expect(calls.some((c) => /INSERT INTO communities/i.test(c[0]))).toBe(true);

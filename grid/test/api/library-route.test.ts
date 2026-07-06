@@ -21,7 +21,7 @@ const HASH = 'a'.repeat(64);
 function app(opts: { ctx?: DIDContext | null; rows?: unknown[]; treasuryBios?: string }): FastifyInstance {
     const conn = {
         beginTransaction: vi.fn(async () => {}),
-        query: vi.fn(async () => [[{ balance_bios: opts.treasuryBios ?? '1000000' }]]),
+        query: vi.fn(async () => [[{ balance_wei: opts.treasuryBios ?? '1000000' }]]),
         commit: vi.fn(async () => {}), rollback: vi.fn(async () => {}), release: vi.fn(() => {}),
     };
     const pool = {

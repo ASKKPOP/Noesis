@@ -1,7 +1,7 @@
 /**
  * Phase 44 MKT-01 / MKT-06 / D-44-01 — Sole-producer for market.listing_created.
  *
- * Closed 5-key payload: {category, listing_id, price_bios, seller_business_did_hash, tick}.
+ * Closed 5-key payload: {category, listing_id, price_wei, seller_business_did_hash, tick}.
  * actorDid = seller_business_did_hash.
  *
  * Allowlist position 69. Listing title/description live in marketplace_listings DB table —
@@ -18,12 +18,12 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export interface MarketListingCreatedPayload {
     readonly category: string;                  // non-empty, ≤63 chars
     readonly listing_id: string;                // UUID_RE
-    readonly price_bios: number;                // positive integer (>0)
+    readonly price_wei: number;                // positive integer (>0)
     readonly seller_business_did_hash: string;  // HEX64_RE
     readonly tick: number;                      // non-negative integer
 }
 
-const EXPECTED_KEYS = ['category', 'listing_id', 'price_bios', 'seller_business_did_hash', 'tick'] as const;
+const EXPECTED_KEYS = ['category', 'listing_id', 'price_wei', 'seller_business_did_hash', 'tick'] as const;
 
 export function appendMarketListingCreated(
     audit: AuditChain,
@@ -45,9 +45,9 @@ export function appendMarketListingCreated(
     if (typeof payload.category !== 'string' || payload.category.length === 0 || payload.category.length > 63) {
         throw new TypeError(`appendMarketListingCreated: category must be non-empty string ≤63 chars, got ${JSON.stringify(payload.category)}`);
     }
-    // 4. Positive integer: price_bios.
-    if (!Number.isInteger(payload.price_bios) || payload.price_bios <= 0) {
-        throw new TypeError(`appendMarketListingCreated: price_bios must be positive integer, got ${JSON.stringify(payload.price_bios)}`);
+    // 4. Positive integer: price_wei.
+    if (!Number.isInteger(payload.price_wei) || payload.price_wei <= 0) {
+        throw new TypeError(`appendMarketListingCreated: price_wei must be positive integer, got ${JSON.stringify(payload.price_wei)}`);
     }
     // 5. Non-negative integer: tick.
     if (!Number.isInteger(payload.tick) || payload.tick < 0) {
@@ -63,7 +63,7 @@ export function appendMarketListingCreated(
     const cleanPayload = {
         category: payload.category,
         listing_id: payload.listing_id,
-        price_bios: payload.price_bios,
+        price_wei: payload.price_wei,
         seller_business_did_hash: payload.seller_business_did_hash,
         tick: payload.tick,
     };

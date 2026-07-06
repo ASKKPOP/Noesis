@@ -21,7 +21,7 @@ export interface BlueprintRow extends RowDataPacket {
     blueprint_hash: string;
     grid_name: string;
     recipe_json: BlueprintRecipe | string;   // mysql2 may return JSON as text
-    material_cost_bios: string | number;      // BIGINT UNSIGNED arrives as string
+    material_cost_wei: string | number;      // BIGINT UNSIGNED arrives as string
     created_tick: number;
 }
 
@@ -44,15 +44,15 @@ export class BlueprintStore {
     async persistBlueprint(recipe: BlueprintRecipe, tick: number): Promise<void> {
         await this.pool.query<ResultSetHeader>(
             `INSERT INTO civic_blueprints
-                (blueprint_hash, grid_name, recipe_json, material_cost_bios, created_tick)
+                (blueprint_hash, grid_name, recipe_json, material_cost_wei, created_tick)
              VALUES (?, ?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE
                 recipe_json = VALUES(recipe_json),
-                material_cost_bios = VALUES(material_cost_bios),
+                material_cost_wei = VALUES(material_cost_wei),
                 created_tick = VALUES(created_tick)`,
             [
                 recipe.blueprint_hash, this.gridName, JSON.stringify(recipe),
-                recipe.material_cost_bios, tick,
+                recipe.material_cost_wei, tick,
             ],
         );
     }

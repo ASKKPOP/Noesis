@@ -5,7 +5,7 @@
  * A build decomposes into atomic sub-tasks: the recipe `arrangement` is a DAG, each node =
  * one or more catalog objects + dependency edges + a weight. A co-build session reuses the
  * Phase 60 co-work board (cowork.ts postTask/claimTask) — each claimed sub-task is a board
- * task carrying pay. Completion ALWAYS settles (D-NH-06): Ousia via transferOusia when funded,
+ * task carrying pay. Completion ALWAYS settles (D-NH-06): Ousia via transferWei when funded,
  * else a Phase 60 mutual-credit IOU (credit-ledger.recordIou) — NEVER free; a sub-task that
  * would pay NOTHING throws `cobuild_must_pay`.
  *
@@ -38,10 +38,10 @@ export interface CoBuildSession {
 
 /** The settlement record a completed sub-task returns (Ousia move OR a recorded IOU). */
 export interface SubTaskSettlement {
-    settlement: 'ousia' | 'iou';
+    settlement: 'wei' | 'iou';
     node_id: string;
     worker_did: string;
-    amount_bios: number;
+    amount_wei: number;
 }
 
 /** Deps for a sub-task settlement — defaults wire the real ledger + a no-op Ousia seam. */
@@ -51,8 +51,8 @@ export interface CoBuildDeps {
     /** Explicit pay override; defaults to the node weight. A pay of 0 throws cobuild_must_pay. */
     pay?: number;
     tick?: number;
-    /** Move Ousia host → worker (registry.transferOusia). Defaults to a no-op spy seam. */
-    transferOusia?: (from: string, to: string, amount: number) => void;
+    /** Move Ousia host → worker (registry.transferWei). Defaults to a no-op spy seam. */
+    transferWei?: (from: string, to: string, amount: number) => void;
     /** Record the IOU when unfunded (credit-ledger.recordIou). Defaults to the real ledger. */
     recordIou?: (creditor: string, debtor: string, amount: number, reasonRef: string, tick: number) => void;
 }
@@ -135,7 +135,7 @@ export function claimSubTask(
         parcel_id: session.parcel_id,
         parties: [session.host_did, workerDid],
         scope_ref: `cobuild:${session.session_id}:${node_id}`,
-        settlement_amount_bios: pay,
+        settlement_amount_wei: pay,
         term_ticks: 0,
     });
     claimTask(posted.agreement_id, workerDid);
@@ -143,7 +143,7 @@ export function claimSubTask(
 }
 
 /**
- * Complete a sub-task. **ALWAYS settles (D-NH-06):** transferOusia(host → worker) when funded,
+ * Complete a sub-task. **ALWAYS settles (D-NH-06):** transferWei(host → worker) when funded,
  * else recordIou(worker=creditor, host=debtor, amount, session_id, tick). A completion that
  * would pay NOTHING throws `cobuild_must_pay` (never free). Rejects completing a node whose
  * `depends_on` are unmet (dependency edges respected). Marks the node completed + credits the
@@ -165,11 +165,11 @@ export function completeSubTask(
         throw new Error('cobuild_must_pay: a completed co-build sub-task is never free (D-NH-06)');
     }
     const tick = deps.tick ?? 0;
-    let settlement: 'ousia' | 'iou';
+    let settlement: 'wei' | 'iou';
     if (deps.funded) {
         // Ousia-moving settlement rides the existing transfer path (host → worker).
-        (deps.transferOusia ?? (() => {}))(session.host_did, workerDid, amount);
-        settlement = 'ousia';
+        (deps.transferWei ?? (() => {}))(session.host_did, workerDid, amount);
+        settlement = 'wei';
     } else {
         // Unfunded → record a Phase 60 IOU: worker is the creditor (owed), host the debtor.
         (deps.recordIou ?? recordIou)(workerDid, session.host_did, amount, session.session_id, tick);
@@ -177,7 +177,7 @@ export function completeSubTask(
     }
     session.claims.set(node_id, workerDid);
     session.completed.add(node_id);
-    return { settlement, node_id, worker_did: workerDid, amount_bios: amount };
+    return { settlement, node_id, worker_did: workerDid, amount_wei: amount };
 }
 
 /**

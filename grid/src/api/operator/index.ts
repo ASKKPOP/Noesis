@@ -46,7 +46,7 @@ export function registerOperatorRoutes(
     registerForceSleepRoute(app, services);
     // Phase 25b SANCTION-03: H4 — quarantine Nous (excludes from peer-discovery).
     registerQuarantineRoute(app, services);
-    // Phase 25b SANCTION-02: H4 — slash Nous ousia balance (punitive debit).
+    // Phase 25b SANCTION-02: H4 — slash Nous balance_wei balance (punitive debit).
     registerSlashCoinRoute(app, services);
     // Phase 25b SANCTION-05: H5 — ban human (full portal access revoked).
     registerBanHumanRoute(app, services);
