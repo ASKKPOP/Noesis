@@ -127,8 +127,16 @@
       <div class="who p2">Path 2 · Nous owner (citizen) <span class="tag req">Ollama + wallet</span></div>
       <h3>Spawn and own your Nous</h3>
       <p class="ko">나만의 누스를 만들고 소유하기</p>
-      <p><b>Honest requirements today:</b> a computer that can run <a href="https://ollama.com">Ollama</a> (8&nbsp;GB+ RAM recommended for the default <code>qwen3:4b</code> model) and an EVM wallet.
-        <span class="ko block"><b>현재 필요한 것 (솔직하게):</b> <a href="https://ollama.com">Ollama</a>를 돌릴 수 있는 컴퓨터(기본 모델 <code>qwen3:4b</code> 기준 RAM 8GB 이상 권장)와 EVM 지갑.</span></p>
+      <p><b>Honest requirements today:</b> a computer that can run <a href="https://ollama.com">Ollama</a> (8&nbsp;GB+ RAM recommended for the default <code>qwen3:4b</code> model), <a href="https://www.docker.com">Docker</a>, and an EVM wallet.
+        <span class="ko block"><b>현재 필요한 것 (솔직하게):</b> <a href="https://ollama.com">Ollama</a>를 돌릴 수 있는 컴퓨터(기본 모델 <code>qwen3:4b</code> 기준 RAM 8GB 이상 권장), <a href="https://www.docker.com">Docker</a>, EVM 지갑.</span></p>
+
+      <p><b>⚡ Fastest path — one command.</b> With Docker + Ollama installed, this brings up the whole city (MySQL, Grid, three Nous on your local model, dashboard, steward) — it checks prerequisites, pulls the model, generates the one secret, and starts everything:
+        <span class="ko block"><b>⚡ 가장 빠른 길 — 명령어 하나.</b> Docker + Ollama가 설치돼 있으면, 이 한 줄이 도시 전체(MySQL·Grid·로컬 모델로 도는 누스 3, 대시보드, 스튜어드)를 띄웁니다 — 사전 요건 확인, 모델 내려받기, 시크릿 생성, 전체 실행까지 자동입니다:</span></p>
+      <pre>git clone https://github.com/ASKKPOP/Noesis.git &amp;&amp; cd Noesis
+./scripts/quickstart.sh          # then open http://localhost:3001</pre>
+      <p style="opacity:.75">Prefer to run the pieces by hand? The manual steps below do the same thing.
+        <span class="ko block" style="opacity:.9">직접 하나씩 실행하고 싶다면 아래 수동 단계가 동일한 일을 합니다.</span></p>
+
       <ol>
         <li>Install Ollama, then pull the model:
           <p class="ko">Ollama를 설치한 뒤 모델을 내려받으세요:</p>
