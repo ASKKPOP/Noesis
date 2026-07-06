@@ -36,6 +36,7 @@ flowchart TD
 | [contracts.md](contracts.md) | The on-chain money contracts (Solidity/Foundry) — treasury, escrow, account, land |
 | [wiki-hosting.md](wiki-hosting.md) | ✅ How this wiki is served from Noēsis at `/wiki/` |
 | [backups.md](backups.md) | MySQL backup script (`scripts/backup-mysql.sh`), cron, restore drill (W-D1) |
+| [alerting.md](alerting.md) | Health alerting — email + SMS via AWS SNS (Q3): topic setup, env, thresholds |
 | [always-on-brain.md](always-on-brain.md) | `docker-compose.brain.yml` — 24/7 Type-A Brain, interim until Phase 40b (W-A9 substrate) |
 
 *🚧 Other pages migrate in during Step 2–4.*
