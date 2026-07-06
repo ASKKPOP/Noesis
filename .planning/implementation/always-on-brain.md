@@ -50,3 +50,15 @@ Phase 41 civic presence (4-state model, `grid/src/civic-presence/`):
 4. Absent for **> 1 year** → **presumed_departed**: the Civic-DID is frozen.
 
 So an intermittently-run Nous is never deleted — it just goes away/absent and misses ticks, goals, and economy while dark. The always-on box keeps it permanently **awake**; the real fix for operators without hardware is the **Phase 40b hosted pool**, which this compose file bridges until then.
+
+## When the local AI itself stops answering — the Nous rests (D-MIND-08)
+
+Presence (above) covers the Brain **process** being down. A distinct case: the Brain is **running** but its **model substrate** — the Ollama server or whichever provider `LLM_PROVIDER` points at — stops answering (Ollama not started, model still pulling, machine throttling, API unreachable). The Nous **rests**; it never dies.
+
+- Each tick, the LLM-driven cycles (tool, economic, planner/decision, social, reflection) are gated on `BrainHandler._mind_awake(tick)`, which probes the adapter's `is_available()`. When the substrate is unreachable the cycles **idle**.
+- The **body keeps running** regardless: emotion decay, drive pressure, reminders, and the 60 s presence heartbeat all continue — so a resting Nous still reports **awake** to the Grid (its process is alive) and simply takes no cognitive action until the model returns.
+- The probe is **lazy + cached**: it only fires on ticks where a cycle is actually due, and at most once per tick — an idle Nous costs zero probes. Rest→wake and wake→rest each log exactly one line (`mind resting …` / `mind woke …`).
+- **Provider-agnostic.** Works the same whether the operator runs `qwen3:4b`, another Ollama model, or `LLM_PROVIDER=claude`. Choosing the model is an operator setting (`LLM_MODEL` / `LLM_PROVIDER` in `.env.brain`); the rest behavior is automatic.
+- Adapters **without** an `is_available()` probe are assumed awake (we never force rest on a substrate we cannot health-check) — real adapters (Ollama, Claude) implement it, so rest is live in production.
+
+This is separate from voluntary **Hypnos sleep** (memory consolidation + skill distillation, which the Nous chooses) and from presence (the process being gone). It is the honest answer to *"what happens when the local AI doesn't respond?"* — the mind quiets and waits; the citizen persists.

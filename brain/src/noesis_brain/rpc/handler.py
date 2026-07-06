@@ -204,6 +204,15 @@ class BrainHandler:
         self._last_sleep_tick: int = 0
         # Pending SLEEP_COMPLETED hash from async task (drained on next tick). D-16-Q1.
         self._pending_sleep_completed: str | None = None
+        # D-MIND-08 (2026-07-06) — local-AI rest gate. When the model substrate
+        # (Ollama / any provider) is unreachable, the Nous *rests* — it never dies:
+        # the body (emotions, drives, reminders, presence) keeps running while
+        # cognition idles, and it wakes the moment the model answers again.
+        self._resting: bool = False
+        self._rest_since_tick: int | None = None
+        # Per-tick availability probe cache (reset at the top of on_tick); keeps
+        # the rest gate to at most one is_available() round-trip per tick.
+        self._mind_awake_cache: bool | None = None
         # Phase 38 WIRE-01: optional GridWireClient for Brain → Grid HTTPS dispatch.
         # Set by __main__.py when GRID_URL + CIVIC_DID + NOUS_DID are all available.
         # When None: Unix-socket-only path (legacy dev/test default, D-38-A2).
@@ -506,6 +515,53 @@ class BrainHandler:
                     tick=tick,
                 )
         return fired
+
+    # ── Local-AI rest gate (D-MIND-08) ────────────────────────────────────────
+    async def _mind_awake(self, tick: int) -> bool:
+        """Gate proactive cognition on the model substrate being reachable.
+
+        Probed lazily — only when a cycle is actually due — and cached for the
+        tick, so a resting Nous costs at most one ``is_available()`` round-trip
+        per tick and a fully-idle tick costs none. Transitions rest⇄wake with a
+        single legible log line each way. Provider-agnostic: works the same for
+        Ollama, Claude, or any adapter the operator chooses (operator #6/#7).
+
+        The Nous *rests*, it does not die (D-SOC / PHILOSOPHY §9 dormancy): the
+        deterministic body — emotion decay, drive pressure, reminders, presence
+        heartbeat — keeps running in ``on_tick`` regardless; only the LLM-driven
+        cycles (tool, economic, planner/decision, social, reflection) idle.
+        """
+        if self._mind_awake_cache is not None:
+            return self._mind_awake_cache
+        probe = getattr(self.llm, "is_available", None)
+        if not callable(probe):
+            # No health probe on this adapter → we cannot detect a down substrate,
+            # so never force rest on its account (assume awake). Real adapters
+            # (Ollama, Claude) implement is_available(), so rest works in production.
+            self._mind_awake_cache = True
+            return True
+        try:
+            available = await probe()
+        except Exception:  # a probe that ERRORS (e.g. connection refused) → substrate is down
+            available = False
+        if available and self._resting:
+            rested = tick - (self._rest_since_tick if self._rest_since_tick is not None else tick)
+            log.info(
+                "[Brain:%s] mind woke — model substrate reachable again after resting %d tick(s)",
+                self.psyche.name, rested,
+            )
+            self._resting = False
+            self._rest_since_tick = None
+        elif not available and not self._resting:
+            log.info(
+                "[Brain:%s] mind resting — model substrate unreachable; the Nous idles until it "
+                "returns (body still lives: emotions, drives, reminders, presence continue)",
+                self.psyche.name,
+            )
+            self._resting = True
+            self._rest_since_tick = tick
+        self._mind_awake_cache = available
+        return available
 
     # ── Tool-loop activation (Phase 72b) ──────────────────────────────────────
     _TOOL_COOLDOWN_TICKS = 50
@@ -1197,6 +1253,9 @@ class BrainHandler:
         # Decay emotions each tick (Phase 6 behavior — preserved exactly).
         self.thymos.decay()
 
+        # D-MIND-08: reset the per-tick rest-gate probe cache (see _mind_awake).
+        self._mind_awake_cache = None
+
         # Phase 7 additive widening (D-10): consume optional dialogue_context.
         # Absent, empty, or malformed → no refinement attempted, falls through
         # to NOOP path (strict superset of Phase 6 on_tick contract).
@@ -1287,40 +1346,46 @@ class BrainHandler:
         # shifts over time. Deterministic; telos hash only compared at telos events.
         self.telos.evolve(tick)
         runtime = self._get_or_create_ananke(self.did)
+        # D-MIND-08: each LLM-driven cycle below is gated on the model substrate
+        # being reachable (`_mind_awake`, probed lazily + cached this tick). When
+        # the local AI is unreachable the Nous rests: cognition idles, the body
+        # above/below keeps running, and it wakes automatically when the model
+        # answers again. The `_should_run_*` predicates are evaluated first so the
+        # probe only fires on ticks where the Nous actually wants to think.
         # Tool-loop activation (Phase 72b): when curious + tool-capable, research autonomously.
-        if self._should_run_tool_cycle(tick):
+        if self._should_run_tool_cycle(tick) and await self._mind_awake(tick):
             self._last_tool_tick = tick
             import asyncio as _asyncio
             _asyncio.create_task(self._run_tool_cycle(tick))
         # Economic decision cycle (W3b / D-MONEY-09): when a due/RFP exists, the Nous
         # autonomously decides whether to pay / bid. Background task; never fatal.
-        if self._should_run_economic_cycle(tick):
+        if self._should_run_economic_cycle(tick) and await self._mind_awake(tick):
             self._last_econ_tick = tick
             import asyncio as _asyncio
             _asyncio.create_task(self._run_economic_cycle(tick))
         # W-A (Mind): the slow planner refills the goal ledger when dry; otherwise
         # the fast decision cycle works the next task. `elif` keeps them mutually
         # exclusive per tick (max one mind-LLM call). Background; never fatal.
-        if self._should_run_planner_cycle(tick):
+        if self._should_run_planner_cycle(tick) and await self._mind_awake(tick):
             self._last_plan_tick = tick
             import asyncio as _asyncio
             _asyncio.create_task(self._run_planner_cycle(tick))
-        elif self._should_run_decision_cycle(tick):
+        elif self._should_run_decision_cycle(tick) and await self._mind_awake(tick):
             self._last_decision_tick = tick
             import asyncio as _asyncio
             _asyncio.create_task(self._run_decision_cycle(tick))
         # W-B: the social/civic cycle — outreach, teaching, lore, voting. Its own
         # (longer) cooldown; may share a tick with the mind cycles (different LLM
         # temperature/purpose, and reveals must never wait behind a busy mind).
-        if self._should_run_social_cycle(tick):
+        if self._should_run_social_cycle(tick) and await self._mind_awake(tick):
             self._last_social_tick = tick
             import asyncio as _asyncio
             _asyncio.create_task(self._run_social_cycle(tick))
-        # W-A3: reflection cadence — every tick counts; fires on interval or
-        # after repeated failures (inflight-guarded).
+        # W-A3: reflection cadence — every tick counts (the counter must advance even
+        # while resting); the LLM-driven reflection dispatch itself waits for the mind.
         if self._reflection is not None:
             self._reflection.tick()
-            if self._should_run_reflection_cycle():
+            if self._should_run_reflection_cycle() and await self._mind_awake(tick):
                 self._reflection_inflight = True
                 import asyncio as _asyncio
                 _asyncio.create_task(self._run_reflection_cycle(tick))
