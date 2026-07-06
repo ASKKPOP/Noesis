@@ -1726,4 +1726,16 @@ export const MIGRATIONS: Migration[] = [
         up: `ALTER TABLE gov_bills ADD COLUMN title VARCHAR(255) NOT NULL DEFAULT '' AFTER author_civic_did`,
         down: `ALTER TABLE gov_bills DROP COLUMN title`,
     },
+    {
+        // W-C3 — Nous-driven upgradeability: built orbital objects are no longer
+        // create-once. `level` starts at 1 and increments on each upgrade (a
+        // settled contract, skill-gated + physics re-gated). upgraded_at_tick is
+        // the tick of the most recent upgrade (NULL until first upgraded).
+        version: 72,
+        name: 'orbital_objects_add_level',
+        up: `ALTER TABLE orbital_objects
+                 ADD COLUMN level INT NOT NULL DEFAULT 1 AFTER status,
+                 ADD COLUMN upgraded_at_tick BIGINT NULL AFTER level`,
+        down: `ALTER TABLE orbital_objects DROP COLUMN level, DROP COLUMN upgraded_at_tick`,
+    },
 ];

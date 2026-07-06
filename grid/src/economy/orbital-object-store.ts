@@ -13,6 +13,8 @@ import { createHash } from 'node:crypto';
 import type { Pool, RowDataPacket } from 'mysql2/promise';
 import type { AuditChain } from '../audit/chain.js';
 import { appendOrbitalObjectBuilt } from '../audit/append-orbital-object-built.js';
+import { appendOrbitalObjectUpgraded } from '../audit/append-orbital-object-upgraded.js';
+import { builderHoldsSkill } from '../civic/blueprint.js';
 import { checkObjectPhysics, type ObjectPhysicsSpec } from './object-physics.js';
 import { type GridEnvironment, EARTH_ORBIT } from '../registry/grid-environments.js';
 
@@ -25,6 +27,7 @@ export interface OrbitalObjectRow {
     object_id: string; grid_name: string; owner_did: string; builder_did: string;
     build_cost_wei: string; function_type: string; output_rate: string;
     physics_spec: string; provenance_contract_id: string; zone: string; status: string;
+    level: number;  // W-C3: 1 at build, +1 per upgrade
 }
 
 export class OrbitalObjectStore {
@@ -92,10 +95,83 @@ export class OrbitalObjectStore {
         }
     }
 
+    /**
+     * W-C3 — Nous-driven upgrade: built objects are not create-once. A settled
+     * procurement contract (RFP-funded) UPGRADES an existing active object, IFF
+     * the contract winner has LEARNED the required skill (skill-gate) and the new
+     * spec re-passes the physics gate. Bumps level, updates output_rate + spec,
+     * emits orbital.object_upgraded. One-upgrade-per-settle is the driver's job
+     * (mirrors createFromContract, which the settle-driver invokes once).
+     */
+    async upgradeFromContract(p: { gridName: string; objectId: string; contractId: string; newOutputRate: bigint; newPhysicsSpec: ObjectPhysicsSpec; skillHash: string; currentTick: number; env?: GridEnvironment }): Promise<void> {
+        const conn = await this.pool.getConnection();
+        let winnerDid: string | undefined;
+        let newLevel: number | undefined;
+        try {
+            await conn.beginTransaction();
+            const [contractRows] = await conn.query<RowDataPacket[]>(
+                `SELECT status, winner_did FROM procurement_contracts WHERE contract_id = ? AND grid_name = ? FOR UPDATE`,
+                [p.contractId, p.gridName],
+            );
+            const contract = contractRows[0];
+            if (!contract || contract.status !== 'settled') {
+                await conn.rollback();
+                throw new Error('contract_not_settled');
+            }
+            const [objRows] = await conn.query<RowDataPacket[]>(
+                `SELECT level FROM orbital_objects WHERE object_id = ? AND grid_name = ? AND status = 'active' FOR UPDATE`,
+                [p.objectId, p.gridName],
+            );
+            const obj = objRows[0];
+            if (!obj) {
+                await conn.rollback();
+                throw new Error('object_not_found');
+            }
+            // Skill-gate: the contract winner must HOLD the required skill (a
+            // skill.taught/skill.inferred with learner_did === winner). This is
+            // what ties upgradeability to the learning loop.
+            winnerDid = String(contract.winner_did);
+            if (this.audit && !builderHoldsSkill(p.skillHash, winnerDid, { audit: this.audit })) {
+                await conn.rollback();
+                throw new Error('skill_not_held');
+            }
+            // Physics re-gate: the upgraded spec must itself obey physics.
+            const physics = checkObjectPhysics(p.newPhysicsSpec, p.env ?? EARTH_ORBIT);
+            if (!physics.ok) {
+                await conn.rollback();
+                throw new Error(`physics_violation:${physics.violations.join(',')}`);
+            }
+            newLevel = Number(obj.level) + 1;
+            await conn.query(
+                `UPDATE orbital_objects SET level = ?, output_rate = ?, physics_spec = ?, upgraded_at_tick = ?, updated_at = ?
+                 WHERE object_id = ? AND grid_name = ?`,
+                [newLevel, p.newOutputRate.toString(), JSON.stringify(p.newPhysicsSpec), p.currentTick, p.currentTick, p.objectId, p.gridName],
+            );
+            await conn.commit();
+        } catch (err) {
+            try { await conn.rollback(); } catch { /* ignore rollback error */ }
+            throw err;
+        } finally {
+            conn.release();
+        }
+        // Emit after commit + release — audit failure does NOT trigger rollback.
+        if (this.audit && winnerDid !== undefined && newLevel !== undefined) {
+            appendOrbitalObjectUpgraded(this.audit, {
+                builder_did_hash: sha256Hex(winnerDid),
+                contract_id: p.contractId,
+                new_level: newLevel,
+                new_output_rate: p.newOutputRate.toString(),
+                object_id: p.objectId,
+                skill_hash: p.skillHash,
+                tick: p.currentTick,
+            });
+        }
+    }
+
     /** Active objects for a grid (the L4 render reads this). */
     async listObjects(gridName: string): Promise<OrbitalObjectRow[]> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT object_id, grid_name, owner_did, builder_did, build_cost_wei, function_type, output_rate, physics_spec, provenance_contract_id, zone, status
+            `SELECT object_id, grid_name, owner_did, builder_did, build_cost_wei, function_type, output_rate, physics_spec, provenance_contract_id, zone, status, level
              FROM orbital_objects WHERE grid_name = ? AND status = 'active' ORDER BY created_at ASC LIMIT 500`,
             [gridName],
         );
@@ -104,7 +180,7 @@ export class OrbitalObjectStore {
 
     async getObject(gridName: string, objectId: string): Promise<OrbitalObjectRow | undefined> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT object_id, grid_name, owner_did, builder_did, build_cost_wei, function_type, output_rate, physics_spec, provenance_contract_id, zone, status
+            `SELECT object_id, grid_name, owner_did, builder_did, build_cost_wei, function_type, output_rate, physics_spec, provenance_contract_id, zone, status, level
              FROM orbital_objects WHERE grid_name = ? AND object_id = ?`,
             [gridName, objectId],
         );

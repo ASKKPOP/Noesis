@@ -247,12 +247,13 @@ function checkAllowlistCount() {
   }
   const arrayBody = arrayMatch[1];
   const members = arrayBody.match(/^\s+'[a-z][a-z0-9_.]+'/gm) ?? [];
-  if (members.length !== 157) {
+  if (members.length !== 158) {
     failures.push(
-      `ALLOWLIST_MEMBERS count mismatch: expected 157 entries, found ${members.length}.\n` +
+      `ALLOWLIST_MEMBERS count mismatch: expected 158 entries, found ${members.length}.\n` +
       `  Phase 48b reached 86; the Economic Reality Loop / Organs / Loop-Wiring programs grew it\n` +
       `  to 120 (due.* / procurement.* / orbital.* / human.approval.*); W4 adds\n` +
-      `  portal.account_endowed (121, D-MONEY-09). Bump this literal + append below when extending.`,
+      `  portal.account_endowed (121, D-MONEY-09); W-C3 adds orbital.object_upgraded (158).\n` +
+      `  Bump this literal + append below when extending.`,
     );
   }
 

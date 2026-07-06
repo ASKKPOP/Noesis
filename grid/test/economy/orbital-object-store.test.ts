@@ -117,3 +117,68 @@ describe('OrbitalObjectStore.createFromContract — L3b audit emit', () => {
         expect(m.conn.commit).toHaveBeenCalled();
     });
 });
+
+// ── W-C3: Nous-driven upgradeability ─────────────────────────────────────────
+describe('migration v72 — orbital_objects level', () => {
+    it('adds level + upgraded_at_tick columns', () => {
+        const m = MIGRATIONS.find((x) => x.version === 72);
+        expect(m, 'v72 must exist').toBeDefined();
+        expect(m!.name).toBe('orbital_objects_add_level');
+        expect(m!.up).toContain('ADD COLUMN level');
+        expect(m!.up).toContain('upgraded_at_tick');
+        expect(m!.down).toContain('DROP COLUMN level');
+    });
+    it('v72 version is unique', () => {
+        expect(MIGRATIONS.filter((x) => x.version === 72)).toHaveLength(1);
+    });
+});
+
+const UUID_O = '11111111-1111-4111-8111-111111111111';
+const UUID_C = '22222222-2222-4222-8222-222222222222';
+function upArgs(over = {}) {
+    return { gridName: 'genesis', objectId: UUID_O, contractId: UUID_C, newOutputRate: 240n, newPhysicsSpec: validSpec, skillHash: 'skill-abc', currentTick: 50, ...over };
+}
+function auditWithSkill(learner = 'w', skill = 'skill-abc'): AuditChain {
+    const a = new AuditChain();
+    a.append('skill.taught', 'teacher', { learner_did: learner, skill_hash: skill });
+    return a;
+}
+
+describe('OrbitalObjectStore.upgradeFromContract (W-C3)', () => {
+    it('upgrades a built object: skill-gated, physics re-gated, level++, emits orbital.object_upgraded', async () => {
+        const m = makeMockPool([rows([{ status: 'settled', winner_did: 'w' }]), rows([{ level: 1 }]), [{}, {}]]);
+        const audit = auditWithSkill();
+        await new OrbitalObjectStore(m.pool, audit).upgradeFromContract(upArgs());
+        expect(m.calls().join('\n')).toContain('UPDATE orbital_objects SET level');
+        expect(m.conn.commit).toHaveBeenCalled();
+        const ev = audit.all().filter((e) => e.eventType === 'orbital.object_upgraded');
+        expect(ev).toHaveLength(1);
+        expect(ev[0].payload).toMatchObject({ new_level: 2, object_id: UUID_O, contract_id: UUID_C, skill_hash: 'skill-abc' });
+    });
+
+    it('refuses when the contract winner has NOT learned the skill (skill_not_held)', async () => {
+        const m = makeMockPool([rows([{ status: 'settled', winner_did: 'w' }]), rows([{ level: 1 }])]);
+        const audit = auditWithSkill('someone-else', 'skill-abc');  // learner is not the winner 'w'
+        await expect(new OrbitalObjectStore(m.pool, audit).upgradeFromContract(upArgs())).rejects.toThrow('skill_not_held');
+        expect(m.conn.rollback).toHaveBeenCalled();
+        expect(audit.all().filter((e) => e.eventType === 'orbital.object_upgraded')).toHaveLength(0);
+    });
+
+    it('refuses a physically invalid upgrade spec (never persisted)', async () => {
+        const m = makeMockPool([rows([{ status: 'settled', winner_did: 'w' }]), rows([{ level: 1 }])]);
+        await expect(new OrbitalObjectStore(m.pool, auditWithSkill()).upgradeFromContract(upArgs({ newPhysicsSpec: { ...validSpec, massOut_kg: 9 } }))).rejects.toThrow('physics_violation');
+        expect(m.conn.rollback).toHaveBeenCalled();
+    });
+
+    it('refuses a non-settled contract', async () => {
+        const m = makeMockPool([rows([{ status: 'active', winner_did: 'w' }])]);
+        await expect(new OrbitalObjectStore(m.pool, auditWithSkill()).upgradeFromContract(upArgs())).rejects.toThrow('contract_not_settled');
+        expect(m.conn.rollback).toHaveBeenCalled();
+    });
+
+    it('refuses when the object does not exist or is not active', async () => {
+        const m = makeMockPool([rows([{ status: 'settled', winner_did: 'w' }]), rows([])]);
+        await expect(new OrbitalObjectStore(m.pool, auditWithSkill()).upgradeFromContract(upArgs())).rejects.toThrow('object_not_found');
+        expect(m.conn.rollback).toHaveBeenCalled();
+    });
+});

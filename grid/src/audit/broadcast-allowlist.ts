@@ -710,6 +710,15 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   closed 4-key {account_did_hash, civic_did_hash, grid_name, tick}
     'portal.cross_grid_action_mediated',   // (156)
     'portal.cross_grid_identity_linked',   // (157)
+    // W-C3 (2026-07-04) — Nous-driven upgradeability. Built objects are not
+    // create-once: a Nous that has LEARNED a matching skill can upgrade what it
+    // built (RFP-funded, skill-gated, physics re-gated). Same privacy shape as
+    // orbital.object_built (DIDs hashed HEX64; contract_id/object_id UUIDs; rates
+    // decimal strings). APPENDED at the end so no existing position shifts.
+    // orbital.object_upgraded (158): sole-producer grid/src/audit/append-orbital-object-upgraded.ts
+    //   closed 7-key {builder_did_hash, contract_id, new_level, new_output_rate, object_id, skill_hash, tick}
+    //   actorDid = builder_did_hash.
+    'orbital.object_upgraded',             // (158)
 ] as const;
 
 /**
