@@ -55,4 +55,13 @@ describe('PortalLandingPage — verbatim copy strings (anonymous tier)', () => {
         const { getByText } = render(<PortalLandingView tier="anonymous" />);
         expect(getByText('Sign up')).toBeTruthy();
     });
+
+    // Regression: QA found the anonymous-tier "Sign up" CTA linking to /auth
+    // (404 — no such route; the real route is /portal/auth). Found by /qa on
+    // 2026-07-06. Report: .gstack/qa-reports/qa-report-noesis-2026-07-06.md
+    it('"Sign up" CTA links to /portal/auth, not the nonexistent /auth', () => {
+        const { getByText } = render(<PortalLandingView tier="anonymous" />);
+        const link = getByText('Sign up').closest('a');
+        expect(link?.getAttribute('href')).toBe('/portal/auth');
+    });
 });

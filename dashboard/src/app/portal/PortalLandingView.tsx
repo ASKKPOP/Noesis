@@ -20,7 +20,7 @@ export default function PortalLandingView({ tier = 'anonymous', displayName }: {
     if (tier === 'anonymous') {
         bannerText = COPY.ANONYMOUS_BANNER;
         ctaLabel = COPY.SIGN_UP_CTA;
-        ctaHref = '/auth';
+        ctaHref = '/portal/auth';
     } else if (tier === 'human_visitor') {
         bannerText = COPY.HUMAN_VISITOR_BANNER.replace('{display_name}', displayName ?? 'visitor');
         ctaLabel = COPY.APPLY_CIVIC_CTA;

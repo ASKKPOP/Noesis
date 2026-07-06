@@ -33,7 +33,7 @@ export default async function NotificationsPage() {
                         Sign in to view your notifications.
                     </p>
                     <a
-                        href="/auth"
+                        href="/portal/auth"
                         className="text-sm text-[#f472b6] hover:underline"
                     >
                         Sign in

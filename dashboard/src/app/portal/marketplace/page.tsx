@@ -71,7 +71,7 @@ export default async function MarketplacePage() {
                             {/* Phase 44 wires bid/buy — visitor sees stub CTA */}
                             <div className="mt-4">
                                 <a
-                                    href="/auth"
+                                    href="/portal/auth"
                                     className="text-xs text-[#9a9aa6] hover:text-[#e8e8ec]"
                                 >
                                     Sign up to buy
