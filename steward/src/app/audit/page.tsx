@@ -6,11 +6,10 @@ import StewardShell from '@/components/StewardShell';
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 
 interface AuditEntry {
-    id: string;
-    eventType: string;
-    actorDid: string;
+    tick: number;
+    event_type: string;
+    actor_did: string;
     payload: unknown;
-    createdAt: string;
 }
 
 const LIMIT = 50;
@@ -18,29 +17,6 @@ const LIMIT = 50;
 function truncateDid(did: string): string {
     if (!did || did.length <= 20) return did ?? '';
     return did.slice(0, 10) + '…' + did.slice(-8);
-}
-
-function relativeTime(ts: string): string {
-    try {
-        const diff = Date.now() - new Date(ts).getTime();
-        const s = Math.floor(diff / 1000);
-        if (s < 60) return `${s}s ago`;
-        const m = Math.floor(s / 60);
-        if (m < 60) return `${m}m ago`;
-        const h = Math.floor(m / 60);
-        if (h < 24) return `${h}h ago`;
-        return `${Math.floor(h / 24)}d ago`;
-    } catch {
-        return ts;
-    }
-}
-
-function absoluteTime(ts: string): string {
-    try {
-        return new Date(ts).toLocaleString();
-    } catch {
-        return ts;
-    }
 }
 
 function PayloadCell({ payload }: { payload: unknown }) {
@@ -110,7 +86,6 @@ function PayloadCell({ payload }: { payload: unknown }) {
 
 export default function AuditPage() {
     const [entries, setEntries] = useState<AuditEntry[]>([]);
-    const [total, setTotal] = useState(0);
     const [offset, setOffset] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -136,7 +111,6 @@ export default function AuditPage() {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             setEntries(Array.isArray(data) ? data : data.entries ?? []);
-            setTotal(data.total ?? 0);
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Failed to fetch audit trail');
         } finally {
@@ -269,20 +243,17 @@ export default function AuditPage() {
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Timestamp</th>
+                                    <th>Tick</th>
                                     <th>Event Type</th>
                                     <th>Actor DID</th>
                                     <th>Payload</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {entries.map((entry) => (
-                                    <tr key={entry.id}>
-                                        <td
-                                            style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap' }}
-                                            title={absoluteTime(entry.createdAt)}
-                                        >
-                                            {relativeTime(entry.createdAt)}
+                                {entries.map((entry, i) => (
+                                    <tr key={`${entry.tick}-${i}`}>
+                                        <td style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap' }}>
+                                            {entry.tick}
                                         </td>
                                         <td>
                                             <span
@@ -297,14 +268,14 @@ export default function AuditPage() {
                                                     whiteSpace: 'nowrap',
                                                 }}
                                             >
-                                                {entry.eventType}
+                                                {entry.event_type}
                                             </span>
                                         </td>
                                         <td
                                             style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)' }}
-                                            title={entry.actorDid}
+                                            title={entry.actor_did}
                                         >
-                                            {truncateDid(entry.actorDid)}
+                                            {truncateDid(entry.actor_did)}
                                         </td>
                                         <PayloadCell payload={entry.payload} />
                                     </tr>
@@ -339,11 +310,11 @@ export default function AuditPage() {
                                 ← Prev
                             </button>
                             <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)' }}>
-                                {offset + 1}–{Math.min(offset + LIMIT, total)} of {total}
+                                {offset + 1}–{offset + entries.length}
                             </span>
                             <button
                                 onClick={() => goToPage(offset + LIMIT)}
-                                disabled={offset + LIMIT >= total}
+                                disabled={entries.length < LIMIT}
                                 style={{
                                     background: 'none',
                                     border: '1px solid var(--rule)',
@@ -351,8 +322,8 @@ export default function AuditPage() {
                                     padding: '4px 12px',
                                     fontFamily: 'var(--sans)',
                                     fontSize: 12,
-                                    color: offset + LIMIT >= total ? 'var(--rule)' : 'var(--muted)',
-                                    cursor: offset + LIMIT >= total ? 'not-allowed' : 'pointer',
+                                    color: entries.length < LIMIT ? 'var(--rule)' : 'var(--muted)',
+                                    cursor: entries.length < LIMIT ? 'not-allowed' : 'pointer',
                                 }}
                             >
                                 Next →
