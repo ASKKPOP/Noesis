@@ -65,7 +65,7 @@ interface AppHandle {
 function buildApp(): AppHandle {
     const audit = new AuditChain();
     const parcelRegistry = new ParcelRegistry('genesis');
-    parcelRegistry.seedZone({ zoneId: 'shopping', count: 4, priceBios: 400, ring: 2 });
+    parcelRegistry.seedZone({ zoneId: 'shopping', count: 4, priceWei: 400, ring: 2 });
 
     const nousRegistry = new NousRegistry();
     nousRegistry.spawn({ name: 'treasury', did: TREASURY_DID, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 0);
@@ -127,7 +127,7 @@ describe('Phase 60 HOUSE-3 — bind/unbind-shop routes', () => {
 
     it('binding a non-shop structure → 422 structure_not_shop', async () => {
         // Provision a residential home (not a shop) for OWNER and try to bind.
-        handle.parcelRegistry.seedZone({ zoneId: 'residential', count: 1, priceBios: 100, ring: 3 });
+        handle.parcelRegistry.seedZone({ zoneId: 'residential', count: 1, priceWei: 100, ring: 3 });
         handle.parcelRegistry.purchase('genesis:residential:0001', OWNER, 100_000);
         handle.parcelRegistry.build('genesis:residential:0001', OWNER, { name: 'home', type: 'home', visibility: 'open' }, 2);
         handle.setCtx(nousCtx(OWNER));

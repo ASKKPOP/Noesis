@@ -2,7 +2,7 @@
  * Phase 44 MKT-06 — append-market-bid-placed sole-producer test stub.
  *
  * Event: market.bid_placed
- * Keys (alphabetical): bidder_civic_did_hash, listing_id, offer_price_bios, tick
+ * Keys (alphabetical): bidder_civic_did_hash, listing_id, offer_price_wei, tick
  * Sole producer: grid/src/audit/append-market-bid-placed.ts (Plan 03 creates)
  *
  * Wave 0 stub: skipped until Plan 03 implementation lands.
@@ -35,7 +35,7 @@ describe('appendMarketBidPlaced — 9-step guard discipline (market.bid_placed)'
     const validPayload = {
         bidder_civic_did_hash: VALID_HEX64,
         listing_id: VALID_UUID,
-        offer_price_bios: 50,
+        offer_price_wei: 50,
         tick: 2,
     };
 
@@ -66,10 +66,10 @@ describe('appendMarketBidPlaced — 9-step guard discipline (market.bid_placed)'
         expect(() => appendMarketBidPlaced(audit, { ...validPayload, bidder_civic_did_hash: 'short' })).toThrow(/bidder_civic_did_hash/i);
     });
 
-    it('rejects non-positive offer_price_bios', () => {
+    it('rejects non-positive offer_price_wei', () => {
         const audit = mockAudit();
-        expect(() => appendMarketBidPlaced(audit, { ...validPayload, offer_price_bios: 0 })).toThrow(/offer_price_bios/i);
-        expect(() => appendMarketBidPlaced(audit, { ...validPayload, offer_price_bios: -1 })).toThrow(/offer_price_bios/i);
+        expect(() => appendMarketBidPlaced(audit, { ...validPayload, offer_price_wei: 0 })).toThrow(/offer_price_wei/i);
+        expect(() => appendMarketBidPlaced(audit, { ...validPayload, offer_price_wei: -1 })).toThrow(/offer_price_wei/i);
     });
 
     it('rejects negative tick', () => {
@@ -91,7 +91,7 @@ describe('appendMarketBidPlaced — 9-step guard discipline (market.bid_placed)'
     it('payload reaches chain.append with exactly the closed tuple (alphabetical keys)', () => {
         const audit = mockAudit();
         appendMarketBidPlaced(audit, validPayload);
-        const EXPECTED_KEYS = ['bidder_civic_did_hash', 'listing_id', 'offer_price_bios', 'tick'];
+        const EXPECTED_KEYS = ['bidder_civic_did_hash', 'listing_id', 'offer_price_wei', 'tick'];
         const passedPayload = audit.append.mock.calls[0][2] as Record<string, unknown>;
         expect(Object.keys(passedPayload).sort()).toEqual(EXPECTED_KEYS);
     });

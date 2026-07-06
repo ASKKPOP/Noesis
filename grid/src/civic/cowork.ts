@@ -11,7 +11,7 @@
  *   completeTask (host)      → `settled`
  *
  * D-NH-06 — co-work is ALWAYS PAID. completeTask settles EVERY time:
- *   funded   → registry.transferOusia(host → worker, settlement_amount_bios)
+ *   funded   → registry.transferWei(host → worker, settlement_amount_wei)
  *   not now  → recordIou(worker=creditor, host=debtor, amount, agreement_id, tick)
  * A completion that would pay NOTHING (amount 0 AND no IOU) THROWS `cowork_must_pay` —
  * never free. Honored work bumps the worker's trust_score (reputation, not vibes).
@@ -37,7 +37,7 @@ export interface CoworkAgreement {
     /** [host, worker]; worker is empty until claimTask sets parties[1]. */
     parties: [string, string];
     scope_ref: string;
-    settlement_amount_bios: number;
+    settlement_amount_wei: number;
     term_ticks: number;
     status: CoworkStatus;
     /** Pointer to the Phase 47 Police dispute pipeline (set only on a breach). */
@@ -49,21 +49,21 @@ export interface CoworkAgreementInput {
     parcel_id: string;
     parties: [string, string];
     scope_ref: string;
-    settlement_amount_bios: number;
+    settlement_amount_wei: number;
     term_ticks: number;
 }
 
 /**
  * Dependencies for completeTask. Tests inject pure spies; production wires
- * registry.transferOusia + credit-ledger.recordIou + the (Wave-4) audit append.
+ * registry.transferWei + credit-ledger.recordIou + the (Wave-4) audit append.
  */
 export interface CompleteDeps {
     /** True when the host can settle in Ousia NOW; false → record an IOU instead. */
     funded: boolean;
     start_tick: number;
     end_tick: number;
-    /** Move Ousia host → worker (registry.transferOusia). Defaults to a no-op spy seam. */
-    transferOusia?: (from: string, to: string, amount: number) => void;
+    /** Move Ousia host → worker (registry.transferWei). Defaults to a no-op spy seam. */
+    transferWei?: (from: string, to: string, amount: number) => void;
     /** Record the IOU when unfunded (credit-ledger.recordIou). Defaults to the real ledger. */
     recordIou?: (creditor: string, debtor: string, amount: number, reasonRef: string, tick: number) => void;
     /** Bump the worker's trust_score on honored settlement (registry.bumpTrust seam). */
@@ -111,7 +111,7 @@ export function createAgreement(input: CoworkAgreementInput): CoworkAgreement {
         parcel_id: input.parcel_id,
         parties: [input.parties[0], input.parties[1] ?? ''] as [string, string],
         scope_ref: input.scope_ref,
-        settlement_amount_bios: input.settlement_amount_bios,
+        settlement_amount_wei: input.settlement_amount_wei,
         term_ticks: input.term_ticks,
         status: 'posted',
     };
@@ -136,7 +136,7 @@ export function claimTask(agreementId: string, workerDid: string): CoworkAgreeme
 }
 
 /**
- * Host confirms completion. **ALWAYS settles (D-NH-06):** Ousia via transferOusia when
+ * Host confirms completion. **ALWAYS settles (D-NH-06):** Ousia via transferWei when
  * funded, otherwise an IOU (worker = creditor, host = debtor). A completion that would
  * pay NOTHING (amount ≤ 0 AND not falling back to an IOU) THROWS `cowork_must_pay` —
  * co-work is never free. On settlement the worker's trust_score is bumped (honored work).
@@ -151,7 +151,7 @@ export function completeTask(agreementId: string, hostDid: string, deps: Complet
     const worker = a.parties[1];
     if (!worker) throw new Error(`cowork_unclaimed: ${agreementId} has no worker`);
 
-    const amount = a.settlement_amount_bios;
+    const amount = a.settlement_amount_wei;
     a.status = 'completed';
 
     // D-NH-06: ALWAYS settle — a pay-nothing completion is forbidden (never free).
@@ -160,7 +160,7 @@ export function completeTask(agreementId: string, hostDid: string, deps: Complet
     }
     if (deps.funded) {
         // Ousia-moving settlement rides the existing transfer path.
-        (deps.transferOusia ?? (() => {}))(hostDid, worker, amount);
+        (deps.transferWei ?? (() => {}))(hostDid, worker, amount);
     } else {
         // Unfunded → record an IOU: worker is the creditor (owed), host the debtor.
         (deps.recordIou ?? recordIou)(worker, hostDid, amount, a.agreement_id, deps.end_tick);

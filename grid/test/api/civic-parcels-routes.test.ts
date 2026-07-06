@@ -37,7 +37,7 @@ function humanVisitorCtx(): DIDContext {
 interface AppOpts {
     ctx?: DIDContext | null;
     /** Ousia balance to seed the buyer Nous with (default plenty). */
-    buyerOusia?: number;
+    buyerWei?: number;
     /** Skip spawning the buyer Nous in the funds registry (→ 404 buyer_not_found). */
     noBuyer?: boolean;
 }
@@ -54,9 +54,9 @@ function buildApp(opts: AppOpts = {}): {
 
     // Real ParcelRegistry, seeded with one residential band (ring 3 = 400 Bios).
     const parcelRegistry = new ParcelRegistry('genesis');
-    parcelRegistry.seedZone({ zoneId: 'residential', count: 4, priceBios: 400, ring: 3 });
+    parcelRegistry.seedZone({ zoneId: 'residential', count: 4, priceWei: 400, ring: 3 });
 
-    // Real NousRegistry — funds registry. Treasury must exist for transferOusia.
+    // Real NousRegistry — funds registry. Treasury must exist for transferWei.
     const nousRegistry = new NousRegistry();
     nousRegistry.spawn(
         { name: 'treasury', did: TREASURY_DID, publicKey: 'pk', region: 'r0' },
@@ -65,7 +65,7 @@ function buildApp(opts: AppOpts = {}): {
     if (!opts.noBuyer) {
         nousRegistry.spawn(
             { name: 'alice', did: NOUS_DID, publicKey: 'pk', region: 'r0' },
-            'genesis.local', 0, opts.buyerOusia ?? 10_000,
+            'genesis.local', 0, opts.buyerWei ?? 10_000,
         );
     }
 
@@ -129,7 +129,7 @@ describe('civic-parcels routes — D-NH-07 Nous-only auth matrix (R-58-07)', () 
         await appReady;
         const res = await app.inject({ method: 'POST', url: `/api/v1/civic/parcels/${ADDR}/purchase` });
         expect(res.statusCode).toBe(201);
-        expect(res.json()).toMatchObject({ purchased: true, parcel_id: ADDR, price_bios: 400 });
+        expect(res.json()).toMatchObject({ purchased: true, parcel_id: ADDR, price_wei: 400 });
         await app.close();
     });
 
@@ -146,7 +146,7 @@ describe('civic-parcels routes — D-NH-07 Nous-only auth matrix (R-58-07)', () 
 
 describe('civic-parcels routes — funds + failure codes (R-58-08)', () => {
     it('insufficient balance → 402 insufficient_funds', async () => {
-        const { app, appReady } = buildApp({ ctx: nousCtx(), buyerOusia: 10 });
+        const { app, appReady } = buildApp({ ctx: nousCtx(), buyerWei: 10 });
         await appReady;
         const res = await app.inject({ method: 'POST', url: `/api/v1/civic/parcels/${ADDR}/purchase` });
         expect(res.statusCode).toBe(402);
@@ -162,8 +162,8 @@ describe('civic-parcels routes — funds + failure codes (R-58-08)', () => {
         expect(res.statusCode).toBe(201);
 
         // Funds moved on the NOUS registry (not the parcel registry).
-        expect(nousRegistry.get(NOUS_DID)?.ousia).toBe(10_000 - 400);
-        expect(nousRegistry.get(TREASURY_DID)?.ousia).toBe(400);
+        expect(nousRegistry.get(NOUS_DID)?.balance_wei).toBe(10_000 - 400);
+        expect(nousRegistry.get(TREASURY_DID)?.balance_wei).toBe(400);
         expect(store.persistPurchase).toHaveBeenCalledOnce();
 
         const purchased = appendSpy.mock.calls.find((c) => c[0] === 'zoning.parcel_purchased');

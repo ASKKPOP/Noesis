@@ -13,9 +13,9 @@ const BOB = 'did:noesis:nous:bob';
 
 function seeded(): ParcelRegistry {
     const r = new ParcelRegistry('genesis');
-    r.seedZone({ zoneId: 'residential', count: 3, priceBios: 100 });
-    r.seedZone({ zoneId: 'business', count: 2, priceBios: 250 });
-    r.seedZone({ zoneId: 'government_quarter', count: 1, priceBios: 1 });
+    r.seedZone({ zoneId: 'residential', count: 3, priceWei: 100 });
+    r.seedZone({ zoneId: 'business', count: 2, priceWei: 250 });
+    r.seedZone({ zoneId: 'government_quarter', count: 1, priceWei: 1 });
     return r;
 }
 
@@ -34,13 +34,13 @@ describe('ParcelRegistry — seeding', () => {
         expect(p.ownerDid).toBeNull();
         expect(p.structure).toBeNull();
         expect(p.entryPolicy.policy).toBe('open');
-        expect(p.priceBios).toBe(100);
+        expect(p.priceWei).toBe(100);
     });
 
     it('rejects non-positive seed counts/prices', () => {
         const r = new ParcelRegistry();
-        expect(() => r.seedZone({ zoneId: 'residential', count: 0, priceBios: 100 })).toThrow();
-        expect(() => r.seedZone({ zoneId: 'residential', count: 2, priceBios: 0 })).toThrow();
+        expect(() => r.seedZone({ zoneId: 'residential', count: 0, priceWei: 100 })).toThrow();
+        expect(() => r.seedZone({ zoneId: 'residential', count: 2, priceWei: 0 })).toThrow();
     });
 });
 

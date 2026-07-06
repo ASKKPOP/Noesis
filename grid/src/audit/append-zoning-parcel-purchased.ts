@@ -1,7 +1,7 @@
 /**
  * Phase 48b LAND-01 / D-48b-01 — Sole-producer for zoning.parcel_purchased.
  *
- * Closed 5-key payload: {buyer_civic_did_hash, parcel_id, price_bios, tick, zone_id}.
+ * Closed 5-key payload: {buyer_civic_did_hash, parcel_id, price_wei, tick, zone_id}.
  * actorDid = buyer_civic_did_hash.
  *
  * Allowlist position 82. A Nous buys an unclaimed parcel from the Polis treasury.
@@ -19,12 +19,12 @@ const PARCEL_ID_RE = /^[a-z0-9_-]+:[a-z_]+:\d{4}$/;
 export interface ZoningParcelPurchasedPayload {
     readonly buyer_civic_did_hash: string; // HEX64_RE
     readonly parcel_id: string;            // PARCEL_ID_RE
-    readonly price_bios: number;           // positive integer (>0)
+    readonly price_wei: number;           // positive integer (>0)
     readonly tick: number;                 // non-negative integer
     readonly zone_id: string;              // non-empty, ≤63 chars
 }
 
-const EXPECTED_KEYS = ['buyer_civic_did_hash', 'parcel_id', 'price_bios', 'tick', 'zone_id'] as const;
+const EXPECTED_KEYS = ['buyer_civic_did_hash', 'parcel_id', 'price_wei', 'tick', 'zone_id'] as const;
 
 export function appendZoningParcelPurchased(
     audit: AuditChain,
@@ -42,9 +42,9 @@ export function appendZoningParcelPurchased(
     if (typeof payload.parcel_id !== 'string' || !PARCEL_ID_RE.test(payload.parcel_id)) {
         throw new TypeError(`appendZoningParcelPurchased: parcel_id must match PARCEL_ID_RE, got ${JSON.stringify(payload.parcel_id)}`);
     }
-    // 3. Positive integer: price_bios.
-    if (!Number.isInteger(payload.price_bios) || payload.price_bios <= 0) {
-        throw new TypeError(`appendZoningParcelPurchased: price_bios must be positive integer, got ${JSON.stringify(payload.price_bios)}`);
+    // 3. Positive integer: price_wei.
+    if (!Number.isInteger(payload.price_wei) || payload.price_wei <= 0) {
+        throw new TypeError(`appendZoningParcelPurchased: price_wei must be positive integer, got ${JSON.stringify(payload.price_wei)}`);
     }
     // 4. Non-negative integer: tick.
     if (!Number.isInteger(payload.tick) || payload.tick < 0) {
@@ -64,7 +64,7 @@ export function appendZoningParcelPurchased(
     const cleanPayload = {
         buyer_civic_did_hash: payload.buyer_civic_did_hash,
         parcel_id: payload.parcel_id,
-        price_bios: payload.price_bios,
+        price_wei: payload.price_wei,
         tick: payload.tick,
         zone_id: payload.zone_id,
     };

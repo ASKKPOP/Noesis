@@ -10,7 +10,7 @@
  * Lazy period-boundary assessment: for each OWNED, NON-commons parcel whose
  * `last_upkeep_tick` is a full UPKEEP_PERIOD_TICKS (or more) behind `tick` (or
  * undefined), a period is DUE:
- *   - FUNDED  → transferOusia(owner → TREASURY_DID, upkeepDue) + emit
+ *   - FUNDED  → transferWei(owner → TREASURY_DID, upkeepDue) + emit
  *               treasury.upkeep_collected + resetCondition + persistUpkeep.
  *   - INSUFFICIENT → advanceCondition (ladder maintained→worn→derelict) + emit
  *               zoning.condition_changed; at the reclaim threshold the registry
@@ -35,15 +35,15 @@ function sha256Hex(input: string): string {
 /**
  * The registry facade the scanner needs. In production this is composed in the
  * launcher from the parcel registry (list/ladder), the parcel store (persist), and
- * the Nous registry (balance + transferOusia). The tests pass a single mock object.
+ * the Nous registry (balance + transferWei). The tests pass a single mock object.
  */
 export interface UpkeepRegistry {
     /** All parcels (deep copies) for this grid. */
     list(filter?: { ownerDid?: string | null }): Parcel[];
     /** Read a Nous record's Ousia balance (owner affordability check). */
-    get(did: string): { ousia: number } | undefined;
+    get(did: string): { balance_wei: number } | undefined;
     /** Move Ousia owner → treasury (return shape is not inspected — only the call). */
-    transferOusia(fromDid: string, toDid: string, amount: number): unknown;
+    transferWei(fromDid: string, toDid: string, amount: number): unknown;
     /** Ladder transitions (delegate to ParcelRegistry). */
     advanceCondition(address: string): 'worn' | 'derelict' | 'reclaimed';
     resetCondition?(address: string): void;
@@ -91,13 +91,13 @@ export async function onUpkeepTick(tick: number, deps: UpkeepScannerDeps): Promi
         const ownerDid = parcel.ownerDid as string;
         const due = upkeepDue(parcel);
         const ownerHash = sha256Hex(ownerDid);
-        const balance = registry.get(ownerDid)?.ousia ?? 0;
+        const balance = registry.get(ownerDid)?.balance_wei ?? 0;
 
         if (due > 0 && balance >= due) {
             // FUNDED — auto-debit owner → treasury, emit, reset ladder, persist.
-            registry.transferOusia(ownerDid, treasuryDid, due);
+            registry.transferWei(ownerDid, treasuryDid, due);
             appendTreasuryUpkeepCollected(audit as never, {
-                amount_bios: due,
+                amount_wei: due,
                 owner_civic_did_hash: ownerHash,
                 parcel_id: parcel.id,
                 tick,

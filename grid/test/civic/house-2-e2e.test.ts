@@ -12,7 +12,7 @@
  *      the trail carrying ONLY {object_class, object_kind, parcel_id, tick} (no interior
  *      name/state). Nous B GETs the interior while the structure is OPEN → 200.
  *   2. PAY (funded) — a separate funded owner is ticked across a UPKEEP_PERIOD_TICKS
- *      boundary → treasury.upkeep_collected {amount_bios, owner_civic_did_hash,
+ *      boundary → treasury.upkeep_collected {amount_wei, owner_civic_did_hash,
  *      parcel_id, tick}; condition stays maintained; missed_periods reset.
  *   3. DECAY — Nous A's balance set insufficient; successive period boundaries walk the
  *      ladder: 1st miss → worn + zoning.condition_changed; 2nd miss → derelict +
@@ -114,7 +114,7 @@ function buildGenesisApp(): E2EApp {
         registry: {
             list: (filter) => parcelRegistry.list(filter),
             get: (did) => nousRegistry.get(did),
-            transferOusia: (from, to, amount) => nousRegistry.transferOusia(from, to, amount),
+            transferWei: (from, to, amount) => nousRegistry.transferWei(from, to, amount),
             advanceCondition: (address) => parcelRegistry.advanceCondition(address),
             resetCondition: (address) => parcelRegistry.resetCondition(address),
             persistUpkeep: (parcel) => store.persistUpkeep(parcel),
@@ -159,7 +159,7 @@ describe('HOUSE-2 Definition of Done — furnish → view-gated → upkeep → r
 
         // Sanity — gravity law priced ring 3 at 400; upkeepDue = 2% = 8 Bios/period.
         expect(gravityPrice(3)).toBe(400);
-        expect(parcelRegistry.get(HOME_A)?.priceBios).toBe(400);
+        expect(parcelRegistry.get(HOME_A)?.priceWei).toBe(400);
         expect(upkeepDue(parcelRegistry.get(HOME_A)!)).toBe(8);
 
         // ── 1. FURNISH — Nous A buys + builds a home, then extends its interior ──────
@@ -198,8 +198,8 @@ describe('HOUSE-2 Definition of Done — furnish → view-gated → upkeep → r
 
         // ── 2. PAY (funded) — Nous C buys + builds, then a funded period is collected ──
         await buyAndBuild(env, NOUS_C, HOME_C);
-        const carolBefore = nousRegistry.get(NOUS_C)!.ousia;
-        const treasuryBeforeUpkeep = nousRegistry.get(TREASURY_DID)!.ousia;
+        const carolBefore = nousRegistry.get(NOUS_C)!.balance_wei;
+        const treasuryBeforeUpkeep = nousRegistry.get(TREASURY_DID)!.balance_wei;
 
         // Tick across a full UPKEEP_PERIOD_TICKS boundary (lastUpkeepTick is null → due).
         await onUpkeepTick(UPKEEP_PERIOD_TICKS, upkeepDeps);
@@ -208,23 +208,23 @@ describe('HOUSE-2 Definition of Done — furnish → view-gated → upkeep → r
         // Both owned homes are due this first sweep; assert Nous C's funded collection.
         const carolCollect = collected.find((e) => e.payload.parcel_id === HOME_C);
         expect(carolCollect).toBeTruthy();
-        expect(Object.keys(carolCollect!.payload).sort()).toEqual(['amount_bios', 'owner_civic_did_hash', 'parcel_id', 'tick']);
-        expect(carolCollect!.payload.amount_bios).toBe(8);
+        expect(Object.keys(carolCollect!.payload).sort()).toEqual(['amount_wei', 'owner_civic_did_hash', 'parcel_id', 'tick']);
+        expect(carolCollect!.payload.amount_wei).toBe(8);
         expect(String(carolCollect!.payload.owner_civic_did_hash)).toBe(sha256Hex(NOUS_C));
         // Funds moved Nous C → treasury (exactly 8); condition stays maintained.
-        expect(nousRegistry.get(NOUS_C)!.ousia).toBe(carolBefore - 8);
+        expect(nousRegistry.get(NOUS_C)!.balance_wei).toBe(carolBefore - 8);
         expect(parcelRegistry.get(HOME_C)!.condition).toBe('maintained');
         expect(parcelRegistry.get(HOME_C)!.missedPeriods).toBe(0);
 
         // Nous A was ALSO funded on this first sweep (balance 10000-400=9600 ≥ 8) → maintained.
         expect(parcelRegistry.get(HOME_A)!.condition).toBe('maintained');
-        const aliceFundedBalance = nousRegistry.get(NOUS_A)!.ousia;
+        const aliceFundedBalance = nousRegistry.get(NOUS_A)!.balance_wei;
         expect(aliceFundedBalance).toBe(10_000 - 400 - 8);
 
         // ── 3. DECAY — drain Nous A's balance, then walk the ladder across boundaries ──
         // Move Alice's funds away so she cannot pay (transfer to treasury → balance 0).
-        nousRegistry.transferOusia(NOUS_A, TREASURY_DID, aliceFundedBalance);
-        expect(nousRegistry.get(NOUS_A)!.ousia).toBe(0);
+        nousRegistry.transferWei(NOUS_A, TREASURY_DID, aliceFundedBalance);
+        expect(nousRegistry.get(NOUS_A)!.balance_wei).toBe(0);
 
         // 1st missed period → worn + zoning.condition_changed.
         await onUpkeepTick(UPKEEP_PERIOD_TICKS * 2, upkeepDeps);

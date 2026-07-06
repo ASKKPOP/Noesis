@@ -28,7 +28,7 @@ export interface ParcelRow extends RowDataPacket {
     sector_deg: string | number;   // mysql2 returns DECIMAL as string
     level: number;
     owner_civic_did: string | null;
-    price_bios: string | number;   // mysql2 returns BIGINT UNSIGNED as string
+    price_wei: string | number;   // mysql2 returns BIGINT UNSIGNED as string
     acquired_at_tick: number | null;
     structure_name: string | null;
     structure_type: StructureType | null;
@@ -62,7 +62,7 @@ export interface CreditLedgerRow extends RowDataPacket {
     iou_id: string;
     creditor_civic_did: string;
     debtor_civic_did: string;
-    amount_bios: string | number;   // mysql2 returns BIGINT UNSIGNED as string
+    amount_wei: string | number;   // mysql2 returns BIGINT UNSIGNED as string
     reason_ref: string;
     created_tick: number;
     settled_tick: number | null;
@@ -75,7 +75,7 @@ export interface CoworkAgreementRow extends RowDataPacket {
     host_civic_did: string;
     worker_civic_did: string | null;
     scope_ref: string;
-    settlement_amount_bios: string | number;
+    settlement_amount_wei: string | number;
     term_ticks: number;
     status: 'posted' | 'claimed' | 'completed' | 'cancelled';
     created_tick: number;
@@ -98,7 +98,7 @@ function rowToParcel(row: ParcelRow): Parcel {
         sector: Number(row.sector_deg),
         level: row.level,
         ownerDid: row.owner_civic_did,
-        priceBios: Number(row.price_bios),
+        priceWei: Number(row.price_wei),
         structure: row.structure_name !== null && row.structure_type !== null
             ? {
                 name: row.structure_name,
@@ -151,13 +151,13 @@ export class ParcelStore {
             const [res] = await this.pool.query<ResultSetHeader>(
                 `INSERT IGNORE INTO civic_parcels
                     (parcel_id, grid_name, zone_id, ring, sector_deg, level,
-                     owner_civic_did, price_bios, acquired_at_tick,
+                     owner_civic_did, price_wei, acquired_at_tick,
                      structure_name, structure_type, visibility, built_at_tick,
                      named_address, entry_policy, entry_allowlist)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     p.id, p.gridId, p.zoneId, p.ring, p.sector, p.level,
-                    p.ownerDid, p.priceBios, p.acquiredAtTick,
+                    p.ownerDid, p.priceWei, p.acquiredAtTick,
                     structure?.name ?? null, structure?.type ?? null,
                     structure?.visibility ?? null, structure?.builtAtTick ?? null,
                     structure?.namedAddress ?? null,
@@ -379,14 +379,14 @@ export class ParcelStore {
         await this.pool.query<ResultSetHeader>(
             `INSERT INTO civic_credit_ledger
                 (iou_id, grid_name, creditor_civic_did, debtor_civic_did,
-                 amount_bios, reason_ref, created_tick, settled_tick)
+                 amount_wei, reason_ref, created_tick, settled_tick)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE
-                amount_bios = VALUES(amount_bios),
+                amount_wei = VALUES(amount_wei),
                 settled_tick = VALUES(settled_tick)`,
             [
                 entry.iou_id, this.gridName, entry.creditor_civic_did, entry.debtor_civic_did,
-                entry.amount_bios, entry.reason_ref, entry.created_tick, entry.settled_tick,
+                entry.amount_wei, entry.reason_ref, entry.created_tick, entry.settled_tick,
             ],
         );
     }
@@ -415,7 +415,7 @@ export class ParcelStore {
         await this.pool.query<ResultSetHeader>(
             `INSERT INTO civic_cowork_agreements
                 (agreement_id, grid_name, parcel_id, host_civic_did, worker_civic_did,
-                 scope_ref, settlement_amount_bios, term_ticks, status, created_tick, completed_tick)
+                 scope_ref, settlement_amount_wei, term_ticks, status, created_tick, completed_tick)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE
                 worker_civic_did = VALUES(worker_civic_did),
@@ -423,7 +423,7 @@ export class ParcelStore {
                 completed_tick = VALUES(completed_tick)`,
             [
                 agreement.agreement_id, this.gridName, agreement.parcel_id, agreement.parties[0], worker,
-                agreement.scope_ref, agreement.settlement_amount_bios, agreement.term_ticks,
+                agreement.scope_ref, agreement.settlement_amount_wei, agreement.term_ticks,
                 dbStatus, ticks.created, completedTick,
             ],
         );
@@ -436,7 +436,7 @@ function rowToIou(row: CreditLedgerRow): IouEntry {
         iou_id: row.iou_id,
         creditor_civic_did: row.creditor_civic_did,
         debtor_civic_did: row.debtor_civic_did,
-        amount_bios: Number(row.amount_bios),
+        amount_wei: Number(row.amount_wei),
         reason_ref: row.reason_ref,
         created_tick: row.created_tick,
         settled_tick: row.settled_tick,
@@ -458,7 +458,7 @@ function rowToCowork(row: CoworkAgreementRow): CoworkAgreement {
         parcel_id: row.parcel_id,
         parties: [row.host_civic_did, row.worker_civic_did ?? ''],
         scope_ref: row.scope_ref,
-        settlement_amount_bios: Number(row.settlement_amount_bios),
+        settlement_amount_wei: Number(row.settlement_amount_wei),
         term_ticks: row.term_ticks,
         status,
     };
@@ -488,7 +488,7 @@ export function buildGenesisCoreParcels(gridName: string): Parcel[] {
     const out: Parcel[] = [];
     for (const entry of GENESIS_CORE_SEED_PLAN) {
         const purchasable = PURCHASABLE_RINGS.includes(entry.ring);
-        const priceBios = purchasable ? gravityPrice(entry.ring) : 0;
+        const priceWei = purchasable ? gravityPrice(entry.ring) : 0;
         for (let i = 0; i < entry.count; i++) {
             const seq = String(i + 1).padStart(4, '0');
             const id = `${gridName}:${entry.zoneId}:${seq}`;
@@ -501,7 +501,7 @@ export function buildGenesisCoreParcels(gridName: string): Parcel[] {
                 sector,
                 level: 0,
                 ownerDid: null,
-                priceBios,
+                priceWei,
                 structure: entry.prebuiltStructure
                     ? {
                         name: `${entry.zoneId}-venue-${seq}`,

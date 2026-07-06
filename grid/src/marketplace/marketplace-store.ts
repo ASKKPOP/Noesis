@@ -3,10 +3,10 @@
  *
  * CRUD + transactional operations for civic marketplace listings, bids, escrow, disputes.
  * Atomic settle transaction: buyer debit + seller credit + IRS fee + escrow status in one BEGIN/COMMIT.
- * Note: Bios balance lives in nous_registry.ousia (v1.0/v2.x naming; v3.0 rename deferred to migration phase).
+ * Note: Bios balance lives in nous_registry.balance_wei (v1.0/v2.x naming; v3.0 rename deferred to migration phase).
  *
- * D-44-02 minimum-price guard: createListing rejects priceBios < 50n. This guarantees the IRS
- * fee FLOOR(priceBios * 0.02) >= 1 for any settled listing — preventing the "zero-fee" branch
+ * D-44-02 minimum-price guard: createListing rejects priceWei < 50n. This guarantees the IRS
+ * fee FLOOR(priceWei * 0.02) >= 1 for any settled listing — preventing the "zero-fee" branch
  * at settle time (which would otherwise force the route to skip appendIrsTaxCollected).
  */
 import type { Pool, PoolConnection, RowDataPacket } from 'mysql2/promise';
@@ -16,8 +16,8 @@ function sha256Hex(input: string): string {
     return createHash('sha256').update(input).digest('hex');
 }
 
-/** D-44-02 minimum price — ensures FLOOR(priceBios * 0.02) >= 1 for any settled listing. */
-export const MIN_LISTING_PRICE_BIOS = 50n;
+/** D-44-02 minimum price — ensures FLOOR(priceWei * 0.02) >= 1 for any settled listing. */
+export const MIN_LISTING_PRICE_WEI = 50n;
 
 // ── Row type interfaces ────────────────────────────────────────────────────────────
 
@@ -28,7 +28,7 @@ export interface ListingRow extends RowDataPacket {
     seller_business_did: string;
     title: string;
     description: string;
-    price_bios: string | number;  // mysql2 may return BIGINT UNSIGNED as string
+    price_wei: string | number;  // mysql2 may return BIGINT UNSIGNED as string
     category: string;
     status: 'active' | 'accepted' | 'settled' | 'expired' | 'cancelled';
     created_at_tick: number;
@@ -46,7 +46,7 @@ export interface EscrowRow extends RowDataPacket {
     grid_name: string;
     buyer_civic_did: string;
     seller_civic_did: string;
-    amount_bios: string | number;
+    amount_wei: string | number;
     escrow_status: 'held' | 'frozen' | 'settled' | 'refunded';
     buyer_confirmed: 0 | 1;
     seller_confirmed: 0 | 1;
@@ -77,7 +77,7 @@ export class MarketplaceStore {
 
     /**
      * Create a new active marketplace listing.
-     * D-44-02: Rejects priceBios < 50n — ensures FLOOR(price * 0.02) >= 1 always.
+     * D-44-02: Rejects priceWei < 50n — ensures FLOOR(price * 0.02) >= 1 always.
      * Returns the new listing_id UUID.
      */
     async createListing(params: {
@@ -86,24 +86,24 @@ export class MarketplaceStore {
         sellerBusinessDid: string;
         title: string;
         description: string;
-        priceBios: bigint;
+        priceWei: bigint;
         category: string;
         createdAtTick: number;
         expiresAtTick: number;
     }): Promise<string> {
-        // D-44-02 minimum-price guard: FLOOR(priceBios * 0.02) must be >= 1.
-        // At irs_fee_rate=0.02, priceBios=50 → fee=1. Any lower → fee=0 → skipped IRS emission.
+        // D-44-02 minimum-price guard: FLOOR(priceWei * 0.02) must be >= 1.
+        // At irs_fee_rate=0.02, priceWei=50 → fee=1. Any lower → fee=0 → skipped IRS emission.
         // Reject up-front so no listing is created whose settle would drop the IRS event.
-        if (params.priceBios < MIN_LISTING_PRICE_BIOS) {
+        if (params.priceWei < MIN_LISTING_PRICE_WEI) {
             throw new Error('price_too_low');
         }
         const listingId = randomUUID();
         await this.pool.query(
             `INSERT INTO marketplace_listings
-                (listing_id, grid_name, seller_civic_did, seller_business_did, title, description, price_bios, category, status, created_at_tick, expires_at_tick)
+                (listing_id, grid_name, seller_civic_did, seller_business_did, title, description, price_wei, category, status, created_at_tick, expires_at_tick)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)`,
             [listingId, params.gridName, params.sellerCivicDid, params.sellerBusinessDid,
-             params.title, params.description, params.priceBios.toString(), params.category,
+             params.title, params.description, params.priceWei.toString(), params.category,
              params.createdAtTick, params.expiresAtTick],
         );
         return listingId;
@@ -128,7 +128,7 @@ export class MarketplaceStore {
     async browseListings(params: {
         gridName: string;
         category?: string;
-        maxPriceBios?: bigint;
+        maxPriceWei?: bigint;
         currentTick: number;
         limit: number;
         offset: number;
@@ -148,15 +148,15 @@ export class MarketplaceStore {
              ) rs ON rs.seller_civic_did = l.seller_civic_did
              WHERE l.grid_name = ? AND l.status = 'active'
                AND (? IS NULL OR l.category = ?)
-               AND (? IS NULL OR l.price_bios <= ?)
+               AND (? IS NULL OR l.price_wei <= ?)
                AND l.expires_at_tick > ?
              ORDER BY l.created_at_tick DESC, l.listing_id ASC
              LIMIT ? OFFSET ?`,
             [params.gridName,
              params.gridName,
              params.category ?? null, params.category ?? null,
-             params.maxPriceBios != null ? params.maxPriceBios.toString() : null,
-             params.maxPriceBios != null ? params.maxPriceBios.toString() : null,
+             params.maxPriceWei != null ? params.maxPriceWei.toString() : null,
+             params.maxPriceWei != null ? params.maxPriceWei.toString() : null,
              params.currentTick,
              params.limit, params.offset],
         );
@@ -174,28 +174,28 @@ export class MarketplaceStore {
         listingId: string;
         gridName: string;
         bidderCivicDid: string;
-        offerPriceBios: bigint;
+        offerPriceWei: bigint;
         bidMessage?: string;
         placedAtTick: number;
     }): Promise<string> {
         const bidId = randomUUID();
         await this.pool.query(
             `INSERT INTO marketplace_bids
-                (bid_id, listing_id, grid_name, bidder_civic_did, offer_price_bios, bid_message, status, placed_at_tick)
+                (bid_id, listing_id, grid_name, bidder_civic_did, offer_price_wei, bid_message, status, placed_at_tick)
              VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)`,
             [bidId, params.listingId, params.gridName, params.bidderCivicDid,
-             params.offerPriceBios.toString(), params.bidMessage ?? null, params.placedAtTick],
+             params.offerPriceWei.toString(), params.bidMessage ?? null, params.placedAtTick],
         );
         return bidId;
     }
 
     /**
      * Accept a bid.
-     * Inside a transaction: locks bid + listing, checks buyer ousia >= price,
+     * Inside a transaction: locks bid + listing, checks buyer balance_wei >= price,
      * deducts from buyer, creates escrow row, marks listing+bid accepted.
      * D-44-10: Buyer Bios checked at accept time, not bid time (Pitfall 6).
-     * Throws 'insufficient_bios' if buyer balance is too low.
-     * Returns {escrowId, amountBios, buyerCivicDid, sellerCivicDid}.
+     * Throws 'insufficient_wei' if buyer balance is too low.
+     * Returns {escrowId, amountWei, buyerCivicDid, sellerCivicDid}.
      */
     async acceptBid(params: {
         listingId: string;
@@ -203,7 +203,7 @@ export class MarketplaceStore {
         gridName: string;
         sellerCivicDid: string;
         currentTick: number;
-    }): Promise<{ escrowId: string; amountBios: bigint; buyerCivicDid: string; sellerCivicDid: string }> {
+    }): Promise<{ escrowId: string; amountWei: bigint; buyerCivicDid: string; sellerCivicDid: string }> {
         const conn = await this.pool.getConnection();
         try {
             await conn.beginTransaction();
@@ -221,35 +221,35 @@ export class MarketplaceStore {
             if (bid.status !== 'pending') { await conn.rollback(); throw new Error('bid_not_pending'); }
             if (bid.listing_status !== 'active') { await conn.rollback(); throw new Error('listing_not_active'); }
             if (bid.listing_seller !== params.sellerCivicDid) { await conn.rollback(); throw new Error('not_seller'); }
-            const amountBios = BigInt(bid.offer_price_bios);
+            const amountWei = BigInt(bid.offer_price_wei);
             // Lock buyer balance row — must happen inside tx (T-44-02-02 mitigation)
             const [buyerRows] = await conn.query<RowDataPacket[]>(
-                `SELECT ousia FROM nous_registry WHERE grid_name = ? AND did = ? FOR UPDATE`,
+                `SELECT balance_wei FROM nous_registry WHERE grid_name = ? AND did = ? FOR UPDATE`,
                 [params.gridName, bid.bidder_civic_did],
             );
             if (!buyerRows[0]) { await conn.rollback(); throw new Error('buyer_not_found'); }
-            const buyerOusia = BigInt(buyerRows[0].ousia);
-            if (buyerOusia < amountBios) { await conn.rollback(); throw new Error('insufficient_bios'); }
+            const buyerWei = BigInt(buyerRows[0].balance_wei);
+            if (buyerWei < amountWei) { await conn.rollback(); throw new Error('insufficient_wei'); }
             // Deduct from buyer
             await conn.query(
-                `UPDATE nous_registry SET ousia = ousia - ? WHERE grid_name = ? AND did = ?`,
-                [amountBios.toString(), params.gridName, bid.bidder_civic_did],
+                `UPDATE nous_registry SET balance_wei = balance_wei - ? WHERE grid_name = ? AND did = ?`,
+                [amountWei.toString(), params.gridName, bid.bidder_civic_did],
             );
             // Create escrow row
             const escrowId = randomUUID();
             await conn.query(
                 `INSERT INTO marketplace_escrow
                     (escrow_id, listing_id, bid_id, grid_name, buyer_civic_did, seller_civic_did,
-                     amount_bios, escrow_status, buyer_confirmed, seller_confirmed, accepted_at_tick)
+                     amount_wei, escrow_status, buyer_confirmed, seller_confirmed, accepted_at_tick)
                  VALUES (?, ?, ?, ?, ?, ?, ?, 'held', 0, 0, ?)`,
                 [escrowId, params.listingId, params.bidId, params.gridName,
-                 bid.bidder_civic_did, bid.listing_seller, amountBios.toString(), params.currentTick],
+                 bid.bidder_civic_did, bid.listing_seller, amountWei.toString(), params.currentTick],
             );
             // Mark listing + bid accepted
             await conn.query(`UPDATE marketplace_listings SET status='accepted' WHERE listing_id=?`, [params.listingId]);
             await conn.query(`UPDATE marketplace_bids SET status='accepted' WHERE bid_id=?`, [params.bidId]);
             await conn.commit();
-            return { escrowId, amountBios, buyerCivicDid: bid.bidder_civic_did, sellerCivicDid: bid.listing_seller };
+            return { escrowId, amountWei, buyerCivicDid: bid.bidder_civic_did, sellerCivicDid: bid.listing_seller };
         } catch (err) {
             try { await conn.rollback(); } catch { /* ignore rollback error */ }
             throw err;
@@ -310,7 +310,7 @@ export class MarketplaceStore {
      *   update escrow+listing status, read treasury balance, commit.
      *
      * irsFeeRate is passed in by the caller (read via getConfigValue OUTSIDE this tx — Pitfall 1).
-     * IRS fee: FLOOR(amountBios * irsFeeRate) — favors seller per Bios integer math.
+     * IRS fee: FLOOR(amountWei * irsFeeRate) — favors seller per Bios integer math.
      */
     async settle(params: {
         gridName: string;
@@ -323,7 +323,7 @@ export class MarketplaceStore {
         sellerCivicDid: string;
         buyerCivicDid: string;
         sellerBusinessDid: string;
-        priceBios: bigint;
+        priceWei: bigint;
         totalTreasuryAfter: bigint;
     }> {
         const conn = await this.pool.getConnection();
@@ -345,20 +345,20 @@ export class MarketplaceStore {
                 await conn.rollback(); throw new Error('not_both_confirmed');
             }
             // Step 3: Compute fee (outside tx per Pitfall 1 — fee rate passed in as param)
-            const amountBios = BigInt(escrow.amount_bios);
-            const irsFee = BigInt(Math.floor(Number(amountBios) * params.irsFeeRate));
-            const sellerPayout = amountBios - irsFee;
+            const amountWei = BigInt(escrow.amount_wei);
+            const irsFee = BigInt(Math.floor(Number(amountWei) * params.irsFeeRate));
+            const sellerPayout = amountWei - irsFee;
             // Step 4: Credit seller
             await conn.query(
-                `UPDATE nous_registry SET ousia = ousia + ? WHERE grid_name = ? AND did = ?`,
+                `UPDATE nous_registry SET balance_wei = balance_wei + ? WHERE grid_name = ? AND did = ?`,
                 [sellerPayout.toString(), params.gridName, escrow.seller_civic_did],
             );
             // Step 5: Credit treasury (upsert — D-44-03)
             await conn.query(
-                `INSERT INTO civic_treasury (grid_name, balance_bios, last_updated_tick)
+                `INSERT INTO civic_treasury (grid_name, balance_wei, last_updated_tick)
                  VALUES (?, ?, ?)
                  ON DUPLICATE KEY UPDATE
-                     balance_bios = balance_bios + VALUES(balance_bios),
+                     balance_wei = balance_wei + VALUES(balance_wei),
                      last_updated_tick = VALUES(last_updated_tick)`,
                 [params.gridName, irsFee.toString(), params.currentTick],
             );
@@ -373,16 +373,16 @@ export class MarketplaceStore {
             );
             // Read treasury after credit (inside tx for consistency)
             const [treasuryRows] = await conn.query<RowDataPacket[]>(
-                `SELECT balance_bios FROM civic_treasury WHERE grid_name = ?`, [params.gridName],
+                `SELECT balance_wei FROM civic_treasury WHERE grid_name = ?`, [params.gridName],
             );
-            const totalTreasuryAfter = BigInt(treasuryRows[0]?.balance_bios ?? 0);
+            const totalTreasuryAfter = BigInt(treasuryRows[0]?.balance_wei ?? 0);
             await conn.commit();
             return {
                 sellerPayout, irsFee,
                 sellerCivicDid: escrow.seller_civic_did,
                 buyerCivicDid: escrow.buyer_civic_did,
                 sellerBusinessDid: escrow.seller_business_did,
-                priceBios: amountBios,
+                priceWei: amountWei,
                 totalTreasuryAfter,
             };
         } catch (err) {

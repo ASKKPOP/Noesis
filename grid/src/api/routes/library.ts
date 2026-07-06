@@ -182,11 +182,11 @@ export function registerLibraryRoutes(app: FastifyInstance, services: GridServic
             for (const c of curators) {
                 const legislationRef = `curator-pay:${c.curator_civic_did}`;
                 appendIrsDisbursementAuthorized(audit, {
-                    amount_bios: Number(rate), authorized_by_civic_did_hash: sha256Hex(GOV_SESSION_ISSUER_DID),
+                    amount_wei: Number(rate), authorized_by_civic_did_hash: sha256Hex(GOV_SESSION_ISSUER_DID),
                     grid_name: grid, legislation_ref_hash: sha256Hex(legislationRef), tick: t,
                 });
                 try {
-                    await irs.disburse({ gridName: grid, amountBios: rate, legislationRef, currentTick: t });
+                    await irs.disburse({ gridName: grid, amountWei: rate, legislationRef, currentTick: t });
                 } catch (err) {
                     const msg = err instanceof Error ? err.message : 'unknown';
                     if (msg === 'insufficient_treasury_balance') {
@@ -195,7 +195,7 @@ export function registerLibraryRoutes(app: FastifyInstance, services: GridServic
                     return reply.code(500).send({ error: 'internal', paid });
                 }
                 appendIrsDisbursementExecuted(audit, {
-                    amount_bios: Number(rate), cause: 'government_disbursement', civic_did: TREASURY_CIVIC_DID, grid_name: grid, tick: t,
+                    amount_wei: Number(rate), cause: 'government_disbursement', civic_did: TREASURY_CIVIC_DID, grid_name: grid, tick: t,
                 });
                 paid += 1;
             }

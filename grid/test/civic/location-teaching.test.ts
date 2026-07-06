@@ -33,7 +33,7 @@ const SKILL_TAUGHT_KEYS = ['learner_did', 'parent_hash', 'skill_hash', 'teacher_
 /** A registry with PARCEL owned by TEACHER, an OPEN workshop built, and present occupants joined. */
 function workshopWith(present: string[]): ParcelRegistry {
     const reg = new ParcelRegistry('genesis');
-    reg.seedZone({ zoneId: 'business', count: 1, priceBios: 900, ring: 2 });
+    reg.seedZone({ zoneId: 'business', count: 1, priceWei: 900, ring: 2 });
     reg.purchase(PARCEL, TEACHER, 900);
     reg.build(PARCEL, TEACHER, { name: 'Workshop', type: 'workshop', visibility: 'open' }, 1);
     for (const did of present) reg.join(PARCEL, did);

@@ -3,7 +3,7 @@
  *
  * Event: irs.disbursement_authorized (broadcast allowlist position 74; added in Plan 02)
  * Closed 5-key payload (alphabetical):
- *   amount_bios, authorized_by_civic_did_hash, grid_name, legislation_ref_hash, tick
+ *   amount_wei, authorized_by_civic_did_hash, grid_name, legislation_ref_hash, tick
  * Sole producer: grid/src/audit/append-irs-disbursement-authorized.ts
  *
  * RED state during Wave 0: import fails because the producer module does not exist.
@@ -36,7 +36,7 @@ describe('appendIrsDisbursementAuthorized — 9-step guard discipline', () => {
     const VALID_LEG_HASH = 'a'.repeat(64);
 
     const validPayload = () => ({
-        amount_bios: 500,
+        amount_wei: 500,
         authorized_by_civic_did_hash: VALID_HEX64,
         grid_name: 'Genesis',
         legislation_ref_hash: VALID_LEG_HASH,
@@ -79,12 +79,12 @@ describe('appendIrsDisbursementAuthorized — 9-step guard discipline', () => {
         expect(() => appendIrsDisbursementAuthorized(audit, p)).toThrow(/grid_name/);
     });
 
-    it('rejects non-positive amount_bios (0 and -1)', () => {
+    it('rejects non-positive amount_wei (0 and -1)', () => {
         const audit = mockAudit();
-        const p0 = { ...validPayload(), amount_bios: 0 };
-        const pNeg = { ...validPayload(), amount_bios: -1 };
-        expect(() => appendIrsDisbursementAuthorized(audit, p0)).toThrow(/amount_bios/);
-        expect(() => appendIrsDisbursementAuthorized(audit, pNeg)).toThrow(/amount_bios/);
+        const p0 = { ...validPayload(), amount_wei: 0 };
+        const pNeg = { ...validPayload(), amount_wei: -1 };
+        expect(() => appendIrsDisbursementAuthorized(audit, p0)).toThrow(/amount_wei/);
+        expect(() => appendIrsDisbursementAuthorized(audit, pNeg)).toThrow(/amount_wei/);
     });
 
     it('rejects negative tick; accepts tick=0 (boundary)', () => {
@@ -116,7 +116,7 @@ describe('appendIrsDisbursementAuthorized — 9-step guard discipline', () => {
         appendIrsDisbursementAuthorized(audit, validPayload());
         const sentPayload = audit.append.mock.calls[0][2] as Record<string, unknown>;
         expect(Object.keys(sentPayload).sort()).toEqual([
-            'amount_bios',
+            'amount_wei',
             'authorized_by_civic_did_hash',
             'grid_name',
             'legislation_ref_hash',

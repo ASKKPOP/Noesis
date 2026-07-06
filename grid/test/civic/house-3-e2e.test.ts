@@ -14,11 +14,11 @@
  *   1. ROLE — an owner grants a staff role to a second Nous → zoning.role_granted (5-tuple,
  *      hashed DIDs only); roleOf === 'staff'.
  *   2. COWORK — owner posts a task; staff claims + completes. FUNDED path (the HTTP route,
- *      which always settles in Ousia) → registry.transferOusia(host → worker). UNFUNDED
+ *      which always settles in Ousia) → registry.transferWei(host → worker). UNFUNDED
  *      path (completeTask funded:false) → recordIou(worker, host, amount, agreement, tick) —
  *      never free. Both emit zoning.cowork_session (participants_hash only — no board text).
  *   3. SHOP — owner binds a shop + names it place://aurora-cafe.genesis; a sale at the
- *      addressed shop emits treasury.structure_revenue {amount_bios, parcel_id, tick,
+ *      addressed shop emits treasury.structure_revenue {amount_wei, parcel_id, tick,
  *      zone_tax_bps} at the zone-tax rate.
  *   4. UNIQUENESS — a duplicate place name → 409 place_name_taken.
  *   5. RING — a ring-expansion bill enacted via gov.law_enacted ({action:'seed_ring', ring:N})
@@ -146,7 +146,7 @@ describe('HOUSE-3 Definition of Done — roles → co-work → shop/place → re
 
         // Sanity — gravity law priced the ring-2 shop at 900; the shopping zone tax = 1000 bps.
         expect(gravityPrice(2)).toBe(900);
-        expect(parcelRegistry.get(SHOP)?.priceBios).toBe(900);
+        expect(parcelRegistry.get(SHOP)?.priceWei).toBe(900);
         expect(getZoneTaxBps('shopping')).toBe(1000);
 
         // ── 0. BUILD — OWNER buys + builds a shop at the Genesis Core shopping parcel ──
@@ -177,9 +177,9 @@ describe('HOUSE-3 Definition of Done — roles → co-work → shop/place → re
 
         // ── 2a. COWORK (FUNDED) — owner posts, staff claims, host completes through the real
         //        HTTP route. The route ALWAYS settles in Ousia (funded = !!registry), so this
-        //        exercises the transferOusia branch: 50 Bios move OWNER → STAFF. ──
-        const ownerBeforeFunded = nousRegistry.get(OWNER)!.ousia;
-        const staffBeforeFunded = nousRegistry.get(STAFF)!.ousia;
+        //        exercises the transferWei branch: 50 Bios move OWNER → STAFF. ──
+        const ownerBeforeFunded = nousRegistry.get(OWNER)!.balance_wei;
+        const staffBeforeFunded = nousRegistry.get(STAFF)!.balance_wei;
 
         env.setCtx({ did: OWNER, tier: 'civic_member' });
         const post1 = await POST(app, `/api/v1/civic/parcels/${SHOP}/board/post`, {
@@ -197,8 +197,8 @@ describe('HOUSE-3 Definition of Done — roles → co-work → shop/place → re
         expect(complete1.statusCode).toBe(200);
 
         // Funded settlement moved Ousia host → worker (exactly the pay amount); no IOU recorded.
-        expect(nousRegistry.get(OWNER)!.ousia).toBe(ownerBeforeFunded - 50);
-        expect(nousRegistry.get(STAFF)!.ousia).toBe(staffBeforeFunded + 50);
+        expect(nousRegistry.get(OWNER)!.balance_wei).toBe(ownerBeforeFunded - 50);
+        expect(nousRegistry.get(STAFF)!.balance_wei).toBe(staffBeforeFunded + 50);
         expect(outstandingFor(OWNER)).toBe(0);
 
         const sessionsAfterFunded = audit.query({ eventType: 'zoning.cowork_session' });
@@ -229,7 +229,7 @@ describe('HOUSE-3 Definition of Done — roles → co-work → shop/place → re
 
         // ── 3. SHOP — owner binds a shop record + names the place place://aurora-cafe.genesis ──
         // Register the economy shop record (owned by OWNER) so the sale skim can find the parcel.
-        shops.register({ ownerDid: OWNER, name: 'Aurora Cafe', listings: [{ sku: 'coffee', label: 'Coffee', priceOusia: 5 }] });
+        shops.register({ ownerDid: OWNER, name: 'Aurora Cafe', listings: [{ sku: 'coffee', label: 'Coffee', priceWei: 5 }] });
 
         env.setCtx({ did: OWNER, tier: 'civic_member' });
         const bind = await POST(app, `/api/v1/civic/parcels/${SHOP}/bind-shop`, { shop_id: OWNER });
@@ -246,7 +246,7 @@ describe('HOUSE-3 Definition of Done — roles → co-work → shop/place → re
         // ── 3b. SALE — a sale at the addressed shop emits treasury.structure_revenue at the
         //        zone tax. Driven through the SAME production composition the Phase 44 market
         //        confirm-settlement route runs (services.shops.getByOwner → structureRevenueDue
-        //        → registry.transferOusia(seller → treasury) → appendTreasuryStructureRevenue). ──
+        //        → registry.transferWei(seller → treasury) → appendTreasuryStructureRevenue). ──
         const saleAmount = 1000;                       // a 1000-Bios sale clears at the shop counter
         const skimmed = recordStructureRevenue(env, OWNER, saleAmount);
         expect(skimmed).toBe(Math.floor((saleAmount * 1000) / 10000)); // 1000 bps of 1000 = 100
@@ -254,8 +254,8 @@ describe('HOUSE-3 Definition of Done — roles → co-work → shop/place → re
         const revenue = audit.query({ eventType: 'treasury.structure_revenue' });
         expect(revenue).toHaveLength(1);
         expect(Object.keys(revenue[0].payload).sort())
-            .toEqual(['amount_bios', 'parcel_id', 'tick', 'zone_tax_bps']);
-        expect(revenue[0].payload.amount_bios).toBe(100);
+            .toEqual(['amount_wei', 'parcel_id', 'tick', 'zone_tax_bps']);
+        expect(revenue[0].payload.amount_wei).toBe(100);
         expect(revenue[0].payload.parcel_id).toBe(SHOP);
         expect(revenue[0].payload.zone_tax_bps).toBe(1000);
 
@@ -276,7 +276,7 @@ describe('HOUSE-3 Definition of Done — roles → co-work → shop/place → re
         //        ringDeps composed exactly as main.ts (seedZone @ gravityPrice, alreadySeeded). ──
         const ringDeps: RingExpansionDeps = {
             seedZone: (ring) => parcelRegistry.seedZone({
-                zoneId: 'residential', count: 24, priceBios: gravityPrice(ring), ring,
+                zoneId: 'residential', count: 24, priceWei: gravityPrice(ring), ring,
             }),
             alreadySeeded: (ring) => parcelRegistry.list().some((p) => p.ring === ring),
         };
@@ -287,7 +287,7 @@ describe('HOUSE-3 Definition of Done — roles → co-work → shop/place → re
         onLawEnacted({ action: 'seed_ring', ring: 4 }, ringDeps);
         const ring4 = parcelRegistry.list().filter((p) => p.ring === 4);
         expect(ring4).toHaveLength(24);
-        expect(ring4.every((p) => p.priceBios === gravityPrice(4))).toBe(true); // frontier price = 100
+        expect(ring4.every((p) => p.priceWei === gravityPrice(4))).toBe(true); // frontier price = 100
 
         // Idempotent: re-enacting the SAME ring adds NO duplicate parcels.
         onLawEnacted({ action: 'seed_ring', ring: 4 }, ringDeps);
@@ -374,7 +374,7 @@ function postUnfundedCowork(
     // Post (host) → claim (worker) → completeTask(funded:false) on the real cowork module.
     const agreement = postTask({
         parcel_id: parcelId, parties: [host, ''], scope_ref: 'wipe-counters',
-        settlement_amount_bios: amount, term_ticks: 0,
+        settlement_amount_wei: amount, term_ticks: 0,
     });
     claimTask(agreement.agreement_id, worker);
     const settled = completeTask(agreement.agreement_id, host, {
@@ -399,7 +399,7 @@ function postUnfundedCowork(
 /**
  * Drive the structure-revenue zone-tax skim through the SAME production composition the
  * Phase 44 market confirm-settlement route runs (market.ts): find the seller's bound shop,
- * compute structureRevenueDue, route the skim to the treasury via registry.transferOusia,
+ * compute structureRevenueDue, route the skim to the treasury via registry.transferWei,
  * and append treasury.structure_revenue via the sole producer. Returns the skimmed amount.
  */
 function recordStructureRevenue(env: E2EApp, sellerDid: string, saleAmount: number): number {
@@ -410,9 +410,9 @@ function recordStructureRevenue(env: E2EApp, sellerDid: string, saleAmount: numb
     const parcel = parcelRegistry.get(parcelId)!;
     const skim = structureRevenueDue(parcel, saleAmount);
     if (skim <= 0) return 0;
-    nousRegistry.transferOusia(sellerDid, TREASURY_DID, skim);
+    nousRegistry.transferWei(sellerDid, TREASURY_DID, skim);
     appendTreasuryStructureRevenue(audit, {
-        amount_bios: skim,
+        amount_wei: skim,
         parcel_id: parcelId,
         tick: 100,
         zone_tax_bps: getZoneTaxBps(parcel.zoneId),

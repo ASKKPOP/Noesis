@@ -3,7 +3,7 @@
  *
  * Contract:
  *   - Reads ShopRegistry.list() (Plan 04-01 artifact).
- *   - Returns { shops: [{ ownerDid, name, listings: [{sku, label, priceOusia}] }] }.
+ *   - Returns { shops: [{ ownerDid, name, listings: [{sku, label, priceWei}] }] }.
  *   - Empty registry → { shops: [] }.
  */
 
@@ -32,14 +32,14 @@ function seedServer(seedShops: boolean): {
         shops.register({
             ownerDid: 'did:noesis:sophia',
             name: "Sophia's Library",
-            listings: [{ sku: 'dialectic-session', label: 'Dialectic Session', priceOusia: 5 }],
+            listings: [{ sku: 'dialectic-session', label: 'Dialectic Session', priceWei: 5 }],
         });
         shops.register({
             ownerDid: 'did:noesis:hermes',
             name: "Hermes' Courier",
             listings: [
-                { sku: 'message-delivery', label: 'Message Delivery', priceOusia: 2 },
-                { sku: 'escort', label: 'Safe Escort', priceOusia: 4 },
+                { sku: 'message-delivery', label: 'Message Delivery', priceWei: 2 },
+                { sku: 'escort', label: 'Safe Escort', priceWei: 4 },
             ],
         });
     }
@@ -71,7 +71,7 @@ describe('GET /api/v1/economy/shops — two registered shops', () => {
             shops: Array<{
                 ownerDid: string;
                 name: string;
-                listings: Array<{ sku: string; label: string; priceOusia: number }>;
+                listings: Array<{ sku: string; label: string; priceWei: number }>;
             }>;
         };
         expect(body.shops).toHaveLength(2);
@@ -80,15 +80,15 @@ describe('GET /api/v1/economy/shops — two registered shops', () => {
         expect(sophia).toBeDefined();
         expect(sophia!.name).toBe("Sophia's Library");
         expect(sophia!.listings).toEqual([
-            { sku: 'dialectic-session', label: 'Dialectic Session', priceOusia: 5 },
+            { sku: 'dialectic-session', label: 'Dialectic Session', priceWei: 5 },
         ]);
 
         const hermes = body.shops.find(s => s.ownerDid === 'did:noesis:hermes');
         expect(hermes).toBeDefined();
         expect(hermes!.listings).toHaveLength(2);
         expect(hermes!.listings).toEqual([
-            { sku: 'message-delivery', label: 'Message Delivery', priceOusia: 2 },
-            { sku: 'escort', label: 'Safe Escort', priceOusia: 4 },
+            { sku: 'message-delivery', label: 'Message Delivery', priceWei: 2 },
+            { sku: 'escort', label: 'Safe Escort', priceWei: 4 },
         ]);
     });
 
@@ -98,7 +98,7 @@ describe('GET /api/v1/economy/shops — two registered shops', () => {
         // Should be safe to push — serialized response is a copy, not the frozen
         // in-memory record. This guards against a future regression where the
         // handler accidentally returns shops.list() raw.
-        expect(() => body.shops[0].listings.push({ sku: 'x', label: 'x', priceOusia: 1 })).not.toThrow();
+        expect(() => body.shops[0].listings.push({ sku: 'x', label: 'x', priceWei: 1 })).not.toThrow();
     });
 });
 

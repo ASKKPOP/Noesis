@@ -6,7 +6,7 @@
  * Contract under test:
  *   - buildFromBlueprint(addr, builderDid, blueprint_hash, tick, deps):
  *       (1) confirms skill-held (else skill_not_held);
- *       (2) debits material_cost_bios from the builder's Ousia → TREASURY_DID via transferOusia
+ *       (2) debits material_cost_wei from the builder's Ousia → TREASURY_DID via transferWei
  *           (insufficient → 402 insufficient_funds);
  *       (3) applies the recipe by replaying ParcelRegistry.extendInterior(addr, ownerDid,
  *           {area, kind}) for each recipe object (the executor is the SINGLE caller).
@@ -47,13 +47,13 @@ const recipe = (): BlueprintRecipe => ({
         { node_id: 'n1', objects: [{ kind: 'bed', area: 'hall' }], depends_on: [], weight: 1 },
         { node_id: 'n2', objects: [{ kind: 'shelf', area: 'hall' }], depends_on: ['n1'], weight: 1 },
     ],
-    material_cost_bios: 50,
+    material_cost_wei: 50,
 });
 
 /** A registry with ADDR owned by OWNER + a built home structure, so roleOf(ADDR, OWNER) === 'owner'. */
 function ownedRegistry(): ParcelRegistry {
     const reg = new ParcelRegistry('genesis');
-    reg.seedZone({ zoneId: 'residential', count: 1, priceBios: 400, ring: 3 });
+    reg.seedZone({ zoneId: 'residential', count: 1, priceWei: 400, ring: 3 });
     reg.purchase(ADDR, OWNER, 400);
     reg.build(ADDR, OWNER, { name: 'Home', type: 'home', visibility: 'open' }, 1);
     return reg;
@@ -73,7 +73,7 @@ function chainHolding(holder: string): AuditChain {
     return audit;
 }
 
-/** Build the executor deps: funded transferOusia, the skill-held chain, optional co-build staff. */
+/** Build the executor deps: funded transferWei, the skill-held chain, optional co-build staff. */
 function makeDeps(opts: {
     registry: ParcelRegistry;
     audit: AuditChain;
@@ -85,7 +85,7 @@ function makeDeps(opts: {
     return {
         registry: opts.registry,
         audit: opts.audit,
-        transferOusia: (from, to, amount) => {
+        transferWei: (from, to, amount) => {
             opts.transfers?.push([from, to, amount]);
             return { success: opts.funded !== false };
         },
@@ -113,8 +113,8 @@ describe('Phase 61 HOUSE-4 — buildFromBlueprint skill-held gate', () => {
     });
 });
 
-describe('Phase 61 HOUSE-4 — material debit → TREASURY_DID via transferOusia', () => {
-    it('debits material_cost_bios from the builder Ousia to TREASURY_DID on a successful build', () => {
+describe('Phase 61 HOUSE-4 — material debit → TREASURY_DID via transferWei', () => {
+    it('debits material_cost_wei from the builder Ousia to TREASURY_DID on a successful build', () => {
         storeBlueprint(recipe());
         const reg = ownedRegistry();
         const transfers: Array<[string, string, number]> = [];
@@ -125,7 +125,7 @@ describe('Phase 61 HOUSE-4 — material debit → TREASURY_DID via transferOusia
         expect(transfers[0]).toEqual([OWNER, 'did:noesis:system:treasury', 50]);
     });
 
-    it('rejects with insufficient_funds (402) when the builder cannot cover material_cost_bios', () => {
+    it('rejects with insufficient_funds (402) when the builder cannot cover material_cost_wei', () => {
         storeBlueprint(recipe());
         const reg = ownedRegistry();
         expect(() => buildFromBlueprint(ADDR, OWNER, BLUEPRINT_HASH, 1,

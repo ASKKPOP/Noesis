@@ -83,14 +83,14 @@ describe('Genesis Core seed — gravity pricing + 5 commons venues (R-58-02)', (
         expect(gravityPrice(2)).toBe(900);
         expect(gravityPrice(3)).toBe(400);
         const parcels = buildGenesisCoreParcels('genesis');
-        expect(parcels.filter(p => p.ring === 2).every(p => p.priceBios === 900)).toBe(true);
-        expect(parcels.filter(p => p.ring === 3).every(p => p.priceBios === 400)).toBe(true);
+        expect(parcels.filter(p => p.ring === 2).every(p => p.priceWei === 900)).toBe(true);
+        expect(parcels.filter(p => p.ring === 3).every(p => p.priceWei === 400)).toBe(true);
     });
 
     it('civic rings 0-1 are not for sale (price 0)', () => {
         const parcels = buildGenesisCoreParcels('genesis');
         const civic = parcels.filter(p => p.ring === 0 || p.ring === 1);
-        expect(civic.every(p => p.priceBios === 0)).toBe(true);
+        expect(civic.every(p => p.priceWei === 0)).toBe(true);
     });
 
     it('the 5 civic parcels (ring 1 ×4) carry pre-built venue/open commons structures', () => {

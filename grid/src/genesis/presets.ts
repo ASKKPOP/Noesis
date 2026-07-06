@@ -170,15 +170,15 @@ export const GENESIS_SHOPS: ShopRegisterInput[] = [
         ownerDid: 'did:noesis:hermes',
         name: "Hermes' Market",
         listings: [
-            { sku: 'scroll', label: 'Scroll of news', priceOusia: 5 },
-            { sku: 'bread',  label: 'Fresh bread',    priceOusia: 2 },
+            { sku: 'scroll', label: 'Scroll of news', priceWei: 5 },
+            { sku: 'bread',  label: 'Fresh bread',    priceWei: 2 },
         ],
     },
     {
         ownerDid: 'did:noesis:sophia',
         name: "Sophia's Library",
         listings: [
-            { sku: 'lesson', label: 'Philosophy lesson', priceOusia: 10 },
+            { sku: 'lesson', label: 'Philosophy lesson', priceWei: 10 },
         ],
     },
 ];

@@ -16,8 +16,8 @@ export function appendCommunityFounded(audit: AuditChain, payload: CommunityFoun
     if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
         throw new TypeError(`appendCommunityFounded: payload must be a plain object`);
     }
-    if (!Number.isInteger(payload.bios_paid) || payload.bios_paid < 0) {
-        throw new TypeError(`appendCommunityFounded: bios_paid must be non-negative integer, got ${JSON.stringify(payload.bios_paid)}`);
+    if (!Number.isInteger(payload.wei_paid) || payload.wei_paid < 0) {
+        throw new TypeError(`appendCommunityFounded: wei_paid must be non-negative integer, got ${JSON.stringify(payload.wei_paid)}`);
     }
     if (typeof payload.charter_hash !== 'string' || !HEX64_RE.test(payload.charter_hash)) {
         throw new TypeError(`appendCommunityFounded: charter_hash must match HEX64, got ${JSON.stringify(payload.charter_hash)}`);
@@ -39,7 +39,7 @@ export function appendCommunityFounded(audit: AuditChain, payload: CommunityFoun
         throw new TypeError(`appendCommunityFounded: closed-tuple violation — expected ${JSON.stringify(COMMUNITY_FOUNDED_KEYS)}, got ${JSON.stringify(actualKeys)}`);
     }
     const cleanPayload = {
-        bios_paid: payload.bios_paid,
+        wei_paid: payload.wei_paid,
         charter_hash: payload.charter_hash,
         community_id: payload.community_id,
         founder_did_hash: payload.founder_did_hash,

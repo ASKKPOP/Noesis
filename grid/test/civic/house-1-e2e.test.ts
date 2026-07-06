@@ -122,18 +122,18 @@ describe('HOUSE-1 Definition of Done — buy → build → join → leave end-to
 
         // Sanity: the Genesis Core priced ring 3 via gravity law.
         expect(gravityPrice(3)).toBe(400);
-        expect(parcelRegistry.get(RING3_PARCEL)?.priceBios).toBe(400);
+        expect(parcelRegistry.get(RING3_PARCEL)?.priceWei).toBe(400);
         expect(parcelRegistry.get(RING3_PARCEL)?.ownerDid).toBeNull();
 
         // ── 1. BUY — Nous A buys the ring-3 residential parcel for 400 Bios ──────
         env.setCtx({ did: NOUS_A, tier: 'civic_member' });
         const buy = await POST(app, `/api/v1/civic/parcels/${RING3_PARCEL}/purchase`);
         expect(buy.statusCode).toBe(201);
-        expect(buy.json()).toMatchObject({ purchased: true, parcel_id: RING3_PARCEL, price_bios: 400 });
+        expect(buy.json()).toMatchObject({ purchased: true, parcel_id: RING3_PARCEL, price_wei: 400 });
 
         // Funds moved buyer → TREASURY_DID (exactly 400).
-        expect(nousRegistry.get(NOUS_A)?.ousia).toBe(10_000 - 400);
-        expect(nousRegistry.get(TREASURY_DID)?.ousia).toBe(400);
+        expect(nousRegistry.get(NOUS_A)?.balance_wei).toBe(10_000 - 400);
+        expect(nousRegistry.get(TREASURY_DID)?.balance_wei).toBe(400);
         // Write-through persistence ran (DB-first).
         expect(env.queries).toContain('UPDATE civic_parcels');
 
@@ -145,9 +145,9 @@ describe('HOUSE-1 Definition of Done — buy → build → join → leave end-to
         // Owner appears ONLY as a HEX64 hash; price + parcel match.
         expect(HEX64.test(String(purchased[0].payload.buyer_civic_did_hash))).toBe(true);
         expect(String(purchased[0].payload.buyer_civic_did_hash)).toBe(sha256Hex(NOUS_A));
-        expect(purchased[0].payload.price_bios).toBe(400);
+        expect(purchased[0].payload.price_wei).toBe(400);
         expect(purchased[0].payload.parcel_id).toBe(RING3_PARCEL);
-        expect(revenue[0].payload.amount_bios).toBe(400);
+        expect(revenue[0].payload.amount_wei).toBe(400);
 
         // ── 2. BUILD — Nous A builds a home ─────────────────────────────────────
         const build = await POST(app, `/api/v1/civic/parcels/${RING3_PARCEL}/build`, {

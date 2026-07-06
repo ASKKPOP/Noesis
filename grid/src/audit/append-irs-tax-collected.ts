@@ -5,7 +5,7 @@
  * Phase 45 will add this to ALLOWLIST_MEMBERS (+3 delta with disbursement_authorized + disbursement_executed).
  * Pattern mirrors append-irs-disbursement-executed.ts (Phase 41).
  *
- * Closed 5-key payload: {amount_bios, listing_id, payer_civic_did_hash, tick, total_treasury_after}.
+ * Closed 5-key payload: {amount_wei, listing_id, payer_civic_did_hash, tick, total_treasury_after}.
  * actorDid = payer_civic_did_hash (the buyer who paid the IRS fee at settle time).
  */
 import type { AuditChain } from './chain.js';
@@ -17,14 +17,14 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 /** Closed 5-key payload. Keys ALPHABETICAL. */
 export interface IrsTaxCollectedPayload {
-    readonly amount_bios: number;            // positive integer (>0)
+    readonly amount_wei: number;            // positive integer (>0)
     readonly listing_id: string;             // UUID_RE
     readonly payer_civic_did_hash: string;   // HEX64_RE — buyer civicDid sha256
     readonly tick: number;                   // non-negative integer
     readonly total_treasury_after: number;   // non-negative integer (≥0)
 }
 
-const EXPECTED_KEYS = ['amount_bios', 'listing_id', 'payer_civic_did_hash', 'tick', 'total_treasury_after'] as const;
+const EXPECTED_KEYS = ['amount_wei', 'listing_id', 'payer_civic_did_hash', 'tick', 'total_treasury_after'] as const;
 
 export function appendIrsTaxCollected(
     audit: AuditChain,
@@ -42,9 +42,9 @@ export function appendIrsTaxCollected(
     if (typeof payload.payer_civic_did_hash !== 'string' || !HEX64_RE.test(payload.payer_civic_did_hash)) {
         throw new TypeError(`appendIrsTaxCollected: payer_civic_did_hash must match HEX64_RE, got ${JSON.stringify(payload.payer_civic_did_hash)}`);
     }
-    // 3. Positive integer: amount_bios.
-    if (!Number.isInteger(payload.amount_bios) || payload.amount_bios <= 0) {
-        throw new TypeError(`appendIrsTaxCollected: amount_bios must be positive integer, got ${JSON.stringify(payload.amount_bios)}`);
+    // 3. Positive integer: amount_wei.
+    if (!Number.isInteger(payload.amount_wei) || payload.amount_wei <= 0) {
+        throw new TypeError(`appendIrsTaxCollected: amount_wei must be positive integer, got ${JSON.stringify(payload.amount_wei)}`);
     }
     // 4. Non-negative integer: tick.
     if (!Number.isInteger(payload.tick) || payload.tick < 0) {
@@ -62,7 +62,7 @@ export function appendIrsTaxCollected(
     }
     // 7. Explicit reconstruction — no spread.
     const cleanPayload = {
-        amount_bios: payload.amount_bios,
+        amount_wei: payload.amount_wei,
         listing_id: payload.listing_id,
         payer_civic_did_hash: payload.payer_civic_did_hash,
         tick: payload.tick,

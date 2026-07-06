@@ -6,10 +6,10 @@
  *
  * Covers:
  *  - 403 business_did_required for non-business-DID callers on create
- *  - 400 price_too_low when price_bios < 50 (D-44-02 minimum-price guard)
+ *  - 400 price_too_low when price_wei < 50 (D-44-02 minimum-price guard)
  *  - 201 on successful create + audit event emission
  *  - 201 on bid placement + audit event emission
- *  - 402 insufficient_bios on accept
+ *  - 402 insufficient_wei on accept
  *  - 409 listing_not_active on bid when listing not active
  *  - 200 settled=true on both-confirmed confirm-settlement
  *  - market.settled + irs.tax_collected both emitted on settle (D-44-03 unconditional)
@@ -121,7 +121,7 @@ describe('POST /api/v1/market/listing/create (business_did_required)', () => {
     const validBody = {
         title: 'Test Listing',
         description: 'A test listing description',
-        price_bios: 100,
+        price_wei: 100,
         category: 'goods',
         expires_in_ticks: 1000,
     };
@@ -147,22 +147,22 @@ describe('POST /api/v1/market/listing/create (business_did_required)', () => {
         await app.close();
     });
 
-    it('returns 400 price_too_low when price_bios < 50 (D-44-02 minimum-price guard)', async () => {
+    it('returns 400 price_too_low when price_wei < 50 (D-44-02 minimum-price guard)', async () => {
         const { app } = await buildApp({ authedCtx: makeAliceCtx() });
         const res = await app.inject({
             method: 'POST', url: '/api/v1/market/listing/create',
-            payload: { ...validBody, price_bios: 49 },
+            payload: { ...validBody, price_wei: 49 },
         });
         expect(res.statusCode).toBe(400);
-        expect(res.json()).toMatchObject({ error: 'price_too_low', minimum_price_bios: 50 });
+        expect(res.json()).toMatchObject({ error: 'price_too_low', minimum_price_wei: 50 });
         await app.close();
     });
 
-    it('returns 400 price_too_low for exactly price_bios=1', async () => {
+    it('returns 400 price_too_low for exactly price_wei=1', async () => {
         const { app } = await buildApp({ authedCtx: makeAliceCtx() });
         const res = await app.inject({
             method: 'POST', url: '/api/v1/market/listing/create',
-            payload: { ...validBody, price_bios: 1 },
+            payload: { ...validBody, price_wei: 1 },
         });
         expect(res.statusCode).toBe(400);
         expect(res.json()).toMatchObject({ error: 'price_too_low' });
@@ -201,7 +201,7 @@ describe('POST /api/v1/market/listing/create (business_did_required)', () => {
 
         const res = await app.inject({
             method: 'POST', url: '/api/v1/market/listing/create',
-            payload: { ...validBody, price_bios: 100 },
+            payload: { ...validBody, price_wei: 100 },
         });
         expect(res.statusCode).toBe(201);
         expect(res.json()).toMatchObject({ listing_id: expect.any(String) });
@@ -228,7 +228,7 @@ describe('POST /api/v1/market/listing/:id/bid', () => {
         const { app } = await buildApp({ authedCtx: null });
         const res = await app.inject({
             method: 'POST', url: `/api/v1/market/listing/${LISTING_ID}/bid`,
-            payload: { offer_price_bios: 100 },
+            payload: { offer_price_wei: 100 },
         });
         expect(res.statusCode).toBe(401);
         await app.close();
@@ -259,7 +259,7 @@ describe('POST /api/v1/market/listing/:id/bid', () => {
 
         const res = await app.inject({
             method: 'POST', url: `/api/v1/market/listing/${LISTING_ID}/bid`,
-            payload: { offer_price_bios: 100 },
+            payload: { offer_price_wei: 100 },
         });
         expect(res.statusCode).toBe(201);
         expect(res.json()).toMatchObject({ bid_id: expect.any(String) });
@@ -284,7 +284,7 @@ describe('POST /api/v1/market/listing/:id/bid', () => {
         await app.ready();
         const res = await app.inject({
             method: 'POST', url: `/api/v1/market/listing/${LISTING_ID}/bid`,
-            payload: { offer_price_bios: 100 },
+            payload: { offer_price_wei: 100 },
         });
         expect(res.statusCode).toBe(409);
         await app.close();
@@ -294,7 +294,7 @@ describe('POST /api/v1/market/listing/:id/bid', () => {
 // ── POST /api/v1/market/listing/:id/accept ─────────────────────────────────
 
 describe('POST /api/v1/market/listing/:id/accept', () => {
-    it('returns 402 insufficient_bios when buyer balance is too low', async () => {
+    it('returns 402 insufficient_wei when buyer balance is too low', async () => {
         const mockConn = {
             beginTransaction: vi.fn(async () => {}),
             query: vi.fn(async (sql: unknown) => {
@@ -302,12 +302,12 @@ describe('POST /api/v1/market/listing/:id/accept', () => {
                     return [[{
                         bid_id: BID_ID, listing_id: LISTING_ID,
                         listing_seller: ALICE_DID, listing_status: 'active',
-                        offer_price_bios: '10000', bidder_civic_did: 'did:civic:noesis:buyer',
+                        offer_price_wei: '10000', bidder_civic_did: 'did:civic:noesis:buyer',
                         status: 'pending',
                     }]];
                 }
                 if (typeof sql === 'string' && sql.includes('nous_registry')) {
-                    return [[{ ousia: '5' }]]; // too low
+                    return [[{ balance_wei: '5' }]]; // too low
                 }
                 return [[]];
             }),
@@ -334,7 +334,7 @@ describe('POST /api/v1/market/listing/:id/accept', () => {
             payload: { bid_id: BID_ID },
         });
         expect(res.statusCode).toBe(402);
-        expect(res.json()).toMatchObject({ error: 'insufficient_bios' });
+        expect(res.json()).toMatchObject({ error: 'insufficient_wei' });
         await app.close();
     });
 });
@@ -477,14 +477,14 @@ describe('POST /api/v1/market/listing/:id/confirm-settlement', () => {
                         buyer_civic_did: ALICE_DID,          // caller is buyer (ALICE_DID)
                         seller_civic_did: 'did:civic:noesis:seller',
                         seller_business_did: 'did:business:seller',
-                        amount_bios: '100',
+                        amount_wei: '100',
                         escrow_status: 'held',
                         buyer_confirmed: 1,
                         seller_confirmed: 1,
                     }]];
                 }
                 if (typeof sql === 'string' && sql.includes('civic_treasury')) {
-                    return [[{ balance_bios: '2' }]];
+                    return [[{ balance_wei: '2' }]];
                 }
                 return [[]];
             }),

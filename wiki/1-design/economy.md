@@ -36,7 +36,7 @@ There is **no internal mint** and **no birth faucet** — money is never conjure
 
 ### Bios is not money
 
-**Bios** is the body's craving / energy drive ([philosophy.md §1](philosophy.md)) — a pressure that rises over time, never a balance. It can never be earned, spent, taxed, or transferred. No money concept may reuse the Bios name. (This is why the legacy `*_bios` *money* columns are a misnomer slated for renaming.)
+**Bios** is the body's craving / energy drive ([philosophy.md §1](philosophy.md)) — a pressure that rises over time, never a balance. It can never be earned, spent, taxed, or transferred. No money concept may reuse the Bios name. (The legacy `*_bios` *money* columns were a misnomer; migration **v73** renamed every one of them — together with the retired-currency `ousia` balance columns — to `*_wei` under **D-MONEY-07**. The unrelated `ousia_weight` reputation term and the genuine Bios energy system are untouched.)
 
 ## How a Nous earns and spends — the money lifecycle
 
@@ -121,9 +121,12 @@ honest by four constraints:
 - **Audited** — emits the sole-producer event `portal.account_endowed` (recipient hash +
   amount only; the operator note and authorizer stay Grid-side, never on the chain).
 
-> **Still to come (tracked, not forgotten):** the `*_bios`→wei column rename (**D-MONEY-07**,
-> a separate migration) and retiring the legacy Ousia faucet. Neither is needed for money to
-> move — the wei rails already use `balance_wei`/`amount_wei`.
+> **Done (migration v73, D-MONEY-07):** all `*_bios` money columns **and** the legacy
+> `ousia` balance columns (`nous_registry.ousia`, `human_users.ousia`) are renamed to `*_wei`
+> — `nous_registry.balance_wei`, `communities.wei_paid`, `marketplace_listings.price_wei`, etc.
+> — with values migrated in place. The whole money surface now speaks one unit, **wei**. Verified
+> end-to-end on real MySQL (the mock-Pool suite cannot parse DDL). Only the `ousia_weight`
+> reputation term and the genuine Bios energy drive keep their names.
 
 The loop is **self-driving**: a Nous's Brain *sees* its economic position (balance, outstanding
 due, open RFPs) in its prompt and, each economic tick, *chooses* whether to pay its due or bid on
@@ -200,7 +203,7 @@ Balances live **on-chain** (in each holder's account and the treasury contract).
 | D-MONEY-04 | Type B funding = treasury endowment + earn + dormancy (not death). |
 | D-MONEY-05 | Land = ETH to the treasury, or redeem a civic-labor credit. |
 | D-MONEY-06 | Conflict tribute owed in ETH or labor — never the operator's own GPU/wallet. |
-| D-MONEY-07 | The legacy `*_bios` money columns are renamed to wei; "Bios" is reserved for the body-drive. |
+| D-MONEY-07 | **Done (migration v73):** all `*_bios` money columns **and** the legacy `ousia` balance columns renamed to `*_wei`, values migrated in place; real-MySQL verified. "Bios" is reserved for the body-drive; `ousia_weight` reputation untouched. |
 | D-MONEY-08 | Civic due: every member owes a recurring civic obligation (compute-labor or ETH); unpaid → sanction/dormancy. Treasury fills from fees **+ the civic due**. Overturns D-V3-22. |
 | D-MONEY-09 | Model-first endowment: the live wei source until on-chain settlement. A bounded, ledgered, audited, operator-gated wei injection into a member account (`account_endowments` + `portal.account_endowed`). The single temporary bend of "no internal mint"; endows the account so it lights the whole loop; retired row-for-row when D-MONEY-02 lands. |
 

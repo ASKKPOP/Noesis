@@ -141,8 +141,8 @@ describe('REV-02 integration: reviewer fail path — no trade.settled emitted', 
             expect(VALID_REVIEW_FAILURE_CODES.has(rp['failed_check'] as ReviewFailureCode)).toBe(true);
 
             // Balances unchanged on reviewer fail.
-            expect(registry.get(BUYER_DID)?.ousia).toBe(5);
-            expect(registry.get(SELLER_DID)?.ousia).toBe(50);
+            expect(registry.get(BUYER_DID)?.balance_wei).toBe(5);
+            expect(registry.get(SELLER_DID)?.balance_wei).toBe(50);
         },
     );
 

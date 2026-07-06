@@ -49,7 +49,7 @@ describe('GenesisLauncher', () => {
         it('grants initial Ousia', () => {
             launcher = new GenesisLauncher(TEST_CONFIG);
             launcher.bootstrap();
-            expect(launcher.registry.get('did:noesis:sophia')!.ousia).toBe(500);
+            expect(launcher.registry.get('did:noesis:sophia')!.balance_wei).toBe(500);
         });
 
         it('records audit events', () => {
@@ -107,7 +107,7 @@ describe('GenesisLauncher', () => {
             launcher.spawnNous('Atlas', 'did:noesis:atlas', 'pk-atlas', 'alpha');
             expect(launcher.registry.count).toBe(3);
             expect(launcher.space.getPosition('did:noesis:atlas')?.regionId).toBe('alpha');
-            expect(launcher.registry.get('did:noesis:atlas')!.ousia).toBe(500);
+            expect(launcher.registry.get('did:noesis:atlas')!.balance_wei).toBe(500);
         });
     });
 

@@ -3,7 +3,7 @@
  *
  * A `blueprint_hash` IS a Phase 18 skill hash; it diffuses via the EXISTING
  * `skill.taught` / `skill.inferred` machinery (ZERO new diffusion code). The Grid-side
- * recipe BODY — {objects:[{kind, area}], arrangement (the sub-task DAG), material_cost_bios}
+ * recipe BODY — {objects:[{kind, area}], arrangement (the sub-task DAG), material_cost_wei}
  * — lives in the civic_blueprints table (migration v41) keyed by blueprint_hash and is
  * mirrored into the in-memory cache below. Recipe kinds are restricted to the Phase 59
  * closed furniture catalog (furniture.ts); a non-catalog kind is rejected by the existing
@@ -25,7 +25,7 @@ import type { Structure } from './types.js';
 const HEX64 = /^[0-9a-f]{64}$/;
 
 /**
- * The Polis treasury DID that material_cost_bios is debited to (D-NH-03/05). Defined
+ * The Polis treasury DID that material_cost_wei is debited to (D-NH-03/05). Defined
  * locally so the civic blueprint executor never depends on the API routes layer — the
  * same string the registry / civic-parcels route use (`api/routes/registry.ts`).
  */
@@ -50,7 +50,7 @@ export interface BlueprintRecipe {
     blueprint_hash: string;
     objects: BlueprintObject[];
     arrangement: BlueprintNode[];
-    material_cost_bios: number;
+    material_cost_wei: number;
 }
 
 /** In-memory recipe cache (hydrated on boot from civic_blueprints). */
@@ -177,7 +177,7 @@ export interface BlueprintExecutedPayload {
 /**
  * Deps for buildFromBlueprint:
  *  - `registry` is the SINGLE recipe-apply surface (extendInterior + roleOf authorization).
- *  - `transferOusia` moves the material cost builder → TREASURY_DID; `{success:false}` (the
+ *  - `transferWei` moves the material cost builder → TREASURY_DID; `{success:false}` (the
  *     builder cannot cover it) maps to insufficient_funds (402).
  *  - `audit` is the existing skill-event history surface for the skill-held check.
  *  - `coBuildStaffOf?` is the co-build authorization read (a staff Nous in an active session
@@ -187,7 +187,7 @@ export interface BlueprintExecutedPayload {
  */
 export interface BuildDeps {
     registry: ParcelRegistry;
-    transferOusia(from: string, to: string, amount: number): { success: boolean };
+    transferWei(from: string, to: string, amount: number): { success: boolean };
     audit: { all(): AuditEntry[] };
     /** True iff `did` is a staff Nous in an active co-build session for `addr` (co-build authz). */
     coBuildStaffOf?(addr: string, did: string): boolean;
@@ -211,7 +211,7 @@ export interface BuildDeps {
  *      session for this parcel; else not_authorized (403).
  *   3. getBlueprint → blueprint_not_found when absent.
  *   4. builderHoldsSkill (existing skill-event history) → skill_not_held when false.
- *   5. debit recipe.material_cost_bios builder → TREASURY_DID via transferOusia; a failed
+ *   5. debit recipe.material_cost_wei builder → TREASURY_DID via transferWei; a failed
  *      transfer (cannot cover) → insufficient_funds (402).
  *   6. apply the recipe: extendInterior(addr, builderDid, {area, kind}) once per recipe
  *      object (the SINGLE caller; the interior mutation emits NO per-object chain event).
@@ -257,10 +257,10 @@ export function buildFromBlueprint(
         throw new Error(`skill_not_held: ${skillIdentities.join('/')} does not hold ${blueprint_hash}`);
     }
     // 5. Debit the material cost builder → TREASURY_DID (insufficient → 402).
-    if (recipe.material_cost_bios > 0) {
-        const moved = deps.transferOusia(builderDid, TREASURY_DID, recipe.material_cost_bios);
+    if (recipe.material_cost_wei > 0) {
+        const moved = deps.transferWei(builderDid, TREASURY_DID, recipe.material_cost_wei);
         if (!moved.success) {
-            throw new Error('insufficient_funds: builder cannot cover material_cost_bios (402)');
+            throw new Error('insufficient_funds: builder cannot cover material_cost_wei (402)');
         }
     }
     // 6. Apply the recipe — the SINGLE recipe-apply caller; no per-object chain event.

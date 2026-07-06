@@ -12,7 +12,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { CommunityStore } from '../../community/community-store.js';
-import { validateCharter, FOUND_BIOS_COST, INTERNAL_DECISION_SCOPES, type MembershipCriteria } from '../../community/types.js';
+import { validateCharter, FOUND_WEI_COST, INTERNAL_DECISION_SCOPES, type MembershipCriteria } from '../../community/types.js';
 import { TREASURY_DID } from './registry.js';
 
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
@@ -40,16 +40,16 @@ export function registerCommunityRoutes(app: FastifyInstance, services: GridServ
             if (!v.ok) return reply.code(400).send({ error: 'invalid_charter', clause: v.clause });
 
             // Bios sybil cost: founder → treasury (D-V3-09). 402 on insufficient.
-            const moved = registry.transferOusia(founder, TREASURY_DID, FOUND_BIOS_COST);
+            const moved = registry.transferWei(founder, TREASURY_DID, FOUND_WEI_COST);
             if (!moved.success) {
-                if (moved.error === 'insufficient') return reply.code(402).send({ error: 'insufficient_bios', required: FOUND_BIOS_COST });
+                if (moved.error === 'insufficient') return reply.code(402).send({ error: 'insufficient_wei', required: FOUND_WEI_COST });
                 return reply.code(400).send({ error: moved.error });
             }
 
             const communityId = await new CommunityStore(pool, audit).found({
-                gridName: grid, founderDid: founder, name, purpose, charter: v.charter, biosPaid: FOUND_BIOS_COST, tick: tick(),
+                gridName: grid, founderDid: founder, name, purpose, charter: v.charter, weiPaid: FOUND_WEI_COST, tick: tick(),
             });
-            return reply.code(201).send({ community_id: communityId, bios_paid: FOUND_BIOS_COST, status: 'active' });
+            return reply.code(201).send({ community_id: communityId, wei_paid: FOUND_WEI_COST, status: 'active' });
         },
     );
 
@@ -89,9 +89,9 @@ export function registerCommunityRoutes(app: FastifyInstance, services: GridServ
                 return reply.code(202).send({ status: 'pending', clause: 'approval_required' });
             }
             if (typeof membership === 'object' && typeof membership.bios_fee === 'number') {
-                const moved = registry.transferOusia(joiner, TREASURY_DID, membership.bios_fee);
+                const moved = registry.transferWei(joiner, TREASURY_DID, membership.bios_fee);
                 if (!moved.success) {
-                    if (moved.error === 'insufficient') return reply.code(402).send({ error: 'insufficient_bios', clause: 'bios_fee', required: membership.bios_fee });
+                    if (moved.error === 'insufficient') return reply.code(402).send({ error: 'insufficient_wei', clause: 'bios_fee', required: membership.bios_fee });
                     return reply.code(400).send({ error: moved.error });
                 }
             }

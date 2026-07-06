@@ -32,7 +32,7 @@ describe('allowlist membership', () => {
 });
 
 describe('appendZoningParcelPurchased', () => {
-    const valid = { buyer_civic_did_hash: HEX64, parcel_id: PARCEL, price_bios: 100, tick: 3, zone_id: 'residential' };
+    const valid = { buyer_civic_did_hash: HEX64, parcel_id: PARCEL, price_wei: 100, tick: 3, zone_id: 'residential' };
 
     it('lands a valid event with the buyer hash as actor', () => {
         const audit = new AuditChain();
@@ -54,7 +54,7 @@ describe('appendZoningParcelPurchased', () => {
 
     it('rejects a non-positive price', () => {
         const audit = new AuditChain();
-        expect(() => appendZoningParcelPurchased(audit, { ...valid, price_bios: 0 })).toThrow(/price_bios/);
+        expect(() => appendZoningParcelPurchased(audit, { ...valid, price_wei: 0 })).toThrow(/price_wei/);
     });
 
     it('rejects an extra key (closed-tuple)', () => {
@@ -65,7 +65,7 @@ describe('appendZoningParcelPurchased', () => {
 });
 
 describe('appendTreasuryParcelRevenue', () => {
-    const valid = { amount_bios: 100, parcel_id: PARCEL, tick: 3 };
+    const valid = { amount_wei: 100, parcel_id: PARCEL, tick: 3 };
     it('lands a valid event attributed to the parcel', () => {
         const audit = new AuditChain();
         const entry = appendTreasuryParcelRevenue(audit, valid);

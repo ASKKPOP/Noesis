@@ -18,7 +18,7 @@ describe('ShopRegistry', () => {
         const input: ShopRegisterInput = {
             ownerDid: 'did:noesis:sophia',
             name: "Sophia's Library",
-            listings: [{ sku: 'lesson', label: 'Philosophy lesson', priceOusia: 10 }],
+            listings: [{ sku: 'lesson', label: 'Philosophy lesson', priceWei: 10 }],
         };
         const shop = shops.register(input);
         expect(shop.ownerDid).toBe('did:noesis:sophia');
@@ -60,7 +60,7 @@ describe('ShopRegistry', () => {
         const shop = shops.register({
             ownerDid: 'did:noesis:sophia',
             name: "Sophia's Library",
-            listings: [{ sku: 'lesson', label: 'Philosophy lesson', priceOusia: 10 }],
+            listings: [{ sku: 'lesson', label: 'Philosophy lesson', priceWei: 10 }],
         });
         // Listings array itself is frozen.
         expect(Object.isFrozen(shop.listings)).toBe(true);
@@ -70,14 +70,14 @@ describe('ShopRegistry', () => {
     });
 
     it('defensively copies listings so external mutations do not affect the stored shop', () => {
-        const listings = [{ sku: 'x', label: 'X', priceOusia: 1 }];
+        const listings = [{ sku: 'x', label: 'X', priceWei: 1 }];
         const shop = shops.register({
             ownerDid: 'did:noesis:x',
             name: 'X',
             listings,
         });
         // Mutate the original array the caller passed in.
-        listings.push({ sku: 'y', label: 'Y', priceOusia: 2 });
+        listings.push({ sku: 'y', label: 'Y', priceWei: 2 });
         // Shop's listings should be unchanged.
         expect(shop.listings).toHaveLength(1);
         expect(shops.getByOwner('did:noesis:x')?.listings).toHaveLength(1);

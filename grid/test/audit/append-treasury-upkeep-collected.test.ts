@@ -6,8 +6,8 @@
  * (clones the append-treasury-parcel-revenue triad; mirrors #83 land-attribution).
  * Deferred dynamic import (Phase 58 Wave-0 pattern).
  *
- * Closed 4-tuple {amount_bios, owner_civic_did_hash, parcel_id, tick}:
- *   - amount_bios positive int; owner_civic_did_hash HEX64; parcel_id PARCEL_ID_RE;
+ * Closed 4-tuple {amount_wei, owner_civic_did_hash, parcel_id, tick}:
+ *   - amount_wei positive int; owner_civic_did_hash HEX64; parcel_id PARCEL_ID_RE;
  *   - tick non-negative int; actorDid = parcel_id (mirrors treasury.parcel_revenue #83).
  *   - closed-tuple + privacy assertions.
  */
@@ -18,7 +18,7 @@ const loadChain = () => import('../../src/audit/chain.js');
 
 const HEX64 = 'a'.repeat(64);
 const PARCEL = 'genesis:residential:0001';
-const valid = { amount_bios: 8, owner_civic_did_hash: HEX64, parcel_id: PARCEL, tick: 10080 };
+const valid = { amount_wei: 8, owner_civic_did_hash: HEX64, parcel_id: PARCEL, tick: 10080 };
 
 describe('Phase 59 — appendTreasuryUpkeepCollected sole producer [Wave 4 un-skips]', () => {
     it('lands a valid event with the parcel_id as actor (mirrors #83 land-attribution)', async () => {
@@ -30,19 +30,19 @@ describe('Phase 59 — appendTreasuryUpkeepCollected sole producer [Wave 4 un-sk
         expect(entry.payload).toEqual(valid);
     });
 
-    it('keys are exactly the closed 4-tuple {amount_bios, owner_civic_did_hash, parcel_id, tick}', async () => {
+    it('keys are exactly the closed 4-tuple {amount_wei, owner_civic_did_hash, parcel_id, tick}', async () => {
         const { appendTreasuryUpkeepCollected } = await loadProducer();
         const { AuditChain } = await loadChain();
         const entry = appendTreasuryUpkeepCollected(new AuditChain(), valid);
         expect(Object.keys(entry.payload as object).sort())
-            .toEqual(['amount_bios', 'owner_civic_did_hash', 'parcel_id', 'tick']);
+            .toEqual(['amount_wei', 'owner_civic_did_hash', 'parcel_id', 'tick']);
     });
 
-    it('rejects a non-positive amount_bios', async () => {
+    it('rejects a non-positive amount_wei', async () => {
         const { appendTreasuryUpkeepCollected } = await loadProducer();
         const { AuditChain } = await loadChain();
-        expect(() => appendTreasuryUpkeepCollected(new AuditChain(), { ...valid, amount_bios: 0 }))
-            .toThrow(/amount_bios/);
+        expect(() => appendTreasuryUpkeepCollected(new AuditChain(), { ...valid, amount_wei: 0 }))
+            .toThrow(/amount_wei/);
     });
 
     it('rejects a non-HEX64 owner hash', async () => {

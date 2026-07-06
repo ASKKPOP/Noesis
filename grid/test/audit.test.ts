@@ -25,7 +25,7 @@ describe('AuditChain', () => {
 
     it('chains hashes — each entry links to previous', () => {
         const e1 = chain.append('domain.register', 'did:noesis:sophia', { name: 'sophia' });
-        const e2 = chain.append('ousia.transfer', 'did:noesis:hermes', { amount: 50 });
+        const e2 = chain.append('balance_wei.transfer', 'did:noesis:hermes', { amount: 50 });
         expect(e2.prevHash).toBe(e1.eventHash);
         expect(chain.head).toBe(e2.eventHash);
     });
@@ -84,10 +84,10 @@ describe('AuditChain', () => {
     describe('query', () => {
         beforeEach(() => {
             chain.append('domain.register', 'did:noesis:sophia', { name: 'sophia' });
-            chain.append('ousia.transfer', 'did:noesis:hermes', { amount: 50 }, 'did:noesis:sophia');
+            chain.append('balance_wei.transfer', 'did:noesis:hermes', { amount: 50 }, 'did:noesis:sophia');
             chain.append('domain.register', 'did:noesis:atlas', { name: 'atlas' });
             chain.append('law.enacted', 'did:noesis:admin', { lawId: 'l1' });
-            chain.append('ousia.transfer', 'did:noesis:sophia', { amount: 30 }, 'did:noesis:hermes');
+            chain.append('balance_wei.transfer', 'did:noesis:sophia', { amount: 30 }, 'did:noesis:hermes');
         });
 
         it('returns all entries when no filter', () => {
@@ -119,7 +119,7 @@ describe('AuditChain', () => {
         });
 
         it('combines filters', () => {
-            const results = chain.query({ eventType: 'ousia.transfer', actorDid: 'did:noesis:hermes' });
+            const results = chain.query({ eventType: 'balance_wei.transfer', actorDid: 'did:noesis:hermes' });
             expect(results).toHaveLength(1);
         });
     });

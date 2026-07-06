@@ -16,7 +16,7 @@ export const CHARTER_QUARTER_TICKS = 259200;
 export const CHARTER_QUARTER_LIMIT = 5;
 /** Polis-β: 7-day public comment window before a sponsorship finalizes. */
 export const SPONSOR_COMMENT_TICKS = 20160;
-/** Polis-β: base bond = 10× the community-founding Bios cost (Phase 49 FOUND_BIOS_COST=100). */
+/** Polis-β: base bond = 10× the community-founding Bios cost (Phase 49 FOUND_WEI_COST=100). */
 export const SPONSOR_BOND_BASE = 1000;
 /** Polis-β: bond becomes refundable after 12 months of civic minimums. */
 export const REFUND_ELIGIBLE_TICKS = 1051200; // 365 days × 24h × 3600s / 30s

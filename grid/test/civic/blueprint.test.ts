@@ -7,7 +7,7 @@
  *
  * Contract under test:
  *   - a `blueprint_hash` IS a Phase 18 skill hash (HEX64); the Grid-side recipe body
- *     {objects:[{kind, area}], arrangement (the sub-task DAG), material_cost_bios} lives in a
+ *     {objects:[{kind, area}], arrangement (the sub-task DAG), material_cost_wei} lives in a
  *     NEW civic_blueprints table (migration v41) keyed by blueprint_hash.
  *   - storeBlueprint(recipe) write-through stores the recipe; getBlueprint(hash) reads it back.
  *   - recipe `kind`s are restricted to the Phase 59 closed furniture catalog (furniture.ts);
@@ -36,7 +36,7 @@ const recipe = () => ({
         { node_id: 'n1', objects: [{ kind: 'work_desk', area: 'office' }], depends_on: [], weight: 1 },
         { node_id: 'n2', objects: [{ kind: 'shelf', area: 'office' }], depends_on: ['n1'], weight: 1 },
     ],
-    material_cost_bios: 200,
+    material_cost_wei: 200,
 });
 
 beforeEach(async () => {
@@ -56,7 +56,7 @@ describe('Phase 61 HOUSE-4 — civic_blueprints recipe storage [Wave 1 un-skips]
         storeBlueprint(recipe());
         const stored = getBlueprint(BLUEPRINT_HASH);
         expect(stored).not.toBeNull();
-        expect(stored?.material_cost_bios).toBe(200);
+        expect(stored?.material_cost_wei).toBe(200);
         expect(stored?.objects.map((o) => o.kind)).toEqual(['work_desk', 'shelf']);
         expect(stored?.arrangement).toHaveLength(2);
     });

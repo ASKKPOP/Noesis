@@ -2,14 +2,14 @@
  * Operator slash-coin: POST /api/v1/operator/nous/:did/slash.
  *
  * Phase 25b SANCTION-02 — H4 Moderator action (D-25b-NEW-1, D-25b-09).
- * Slashes a Nous by debiting ousia (Cyber Coin) from its registry balance.
+ * Slashes a Nous by debiting balance_wei (Cyber Coin) from its registry balance.
  *
  * BALANCE DEBIT STRATEGY:
  *   The slash always completes, even if the amount exceeds the current balance.
  *   Insufficient balance → balance clamped to 0 (floor). No 409 is returned.
  *   Rationale: slash is punitive; blocking on insufficient funds would allow
  *   a Nous to evade sanctions by pre-spending its wallet. Debit is applied
- *   directly to NousRecord.ousia (the canonical in-memory balance).
+ *   directly to NousRecord.balance_wei (the canonical in-memory balance).
  *
  * AUTH MODEL (born header-auth per D-25b-NEW-1):
  *   tier and operator_id are derived from server-trusted request headers
@@ -137,7 +137,7 @@ export function registerSlashCoinRoute(app: FastifyInstance, services: GridServi
                 });
             }
 
-            // 8. Apply sanction — debit ousia from NousRecord. Clamped to 0 (never negative).
+            // 8. Apply sanction — debit balance_wei from NousRecord. Clamped to 0 (never negative).
             //    See file-level comment for rationale on clamp-to-zero vs 409.
             //    WR-01 fix: re-check record presence before emitting to avoid a false
             //    audit event if the Nous was tombstoned between step 3 and here.
@@ -147,7 +147,7 @@ export function registerSlashCoinRoute(app: FastifyInstance, services: GridServi
                     reply.code(410);
                     return { error: 'gone' } satisfies ApiError;
                 }
-                record.ousia = Math.max(0, record.ousia - amount);
+                record.balance_wei = Math.max(0, record.balance_wei - amount);
             }
 
             // 9. Emit operator.slashed — ONLY on success path (sole-producer invariant, Pitfall 4).

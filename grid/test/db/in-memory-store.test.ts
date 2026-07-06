@@ -37,7 +37,7 @@ function makeRecord(did: string, overrides: Partial<NousRecord> = {}): NousRecor
         region: 'alpha',
         lifecyclePhase: 'spawning',
         reputation: 0,
-        ousia: 1000,
+        balance_wei: 1000,
         spawnedAtTick: 0,
         lastActiveTick: 0,
         status: 'active',
@@ -123,13 +123,13 @@ describe('Sprint 12: InMemoryGridStore', () => {
             const r = makeRecord('did:noesis:sophia');
             await store.registry.upsert(GRID, r);
 
-            const updated = { ...r, lastActiveTick: 99, ousia: 500 };
+            const updated = { ...r, lastActiveTick: 99, balance_wei: 500 };
             await store.registry.upsert(GRID, updated);
 
             const loaded = await store.registry.loadAll(GRID);
             expect(loaded).toHaveLength(1);
             expect(loaded[0].lastActiveTick).toBe(99);
-            expect(loaded[0].ousia).toBe(500);
+            expect(loaded[0].balance_wei).toBe(500);
         });
 
         it('returns empty array for unknown grid', async () => {

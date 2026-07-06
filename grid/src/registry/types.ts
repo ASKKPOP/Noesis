@@ -13,7 +13,7 @@ export interface NousRecord {
     region: string;             // Current region ID
     lifecyclePhase: LifecyclePhase;
     reputation: number;         // 0.0 - 1.0
-    ousia: number;              // Current balance
+    balance_wei: number;              // Current balance
     spawnedAtTick: number;
     lastActiveTick: number;
     status: 'active' | 'suspended' | 'exiled' | 'deleted';

@@ -10,7 +10,7 @@
  *     catalog object(s) + depends_on edges + a weight); dependency edges are respected (a node
  *     cannot complete before its depends_on).
  *   - each sub-task is posted to the Phase 60 co-work board (a Cowork Agreement task carrying
- *     pay); completion ALWAYS settles — Ousia via transferOusia when funded, else a Phase 60
+ *     pay); completion ALWAYS settles — Ousia via transferWei when funded, else a Phase 60
  *     recordIou — a sub-task completion that pays NOTHING throws (never free, D-NH-06).
  *   - attributionShare(session, did) is DAG-weighted: Σ(completed-node weights for did) ÷
  *     Σ(all-node weights) (half the weight → a 0.5 share).
@@ -38,7 +38,7 @@ const recipe = () => ({
         { node_id: 'n1', objects: [{ kind: 'work_desk', area: 'office' }], depends_on: [], weight: 1 },
         { node_id: 'n2', objects: [{ kind: 'shelf', area: 'office' }], depends_on: ['n1'], weight: 3 },
     ],
-    material_cost_bios: 200,
+    material_cost_wei: 200,
 });
 
 beforeEach(async () => {
@@ -64,13 +64,13 @@ describe('Phase 61 HOUSE-4 — decomposeRecipe → atomic sub-task DAG [Wave 2 u
 });
 
 describe('Phase 61 HOUSE-4 — every sub-task ALWAYS settles (never free, D-NH-06) [Wave 2 un-skips]', () => {
-    it('settles in Ousia via transferOusia when the host is funded', async () => {
+    it('settles in Ousia via transferWei when the host is funded', async () => {
         const { decomposeRecipe, createCoBuildSession, completeNode } = await loadCoBuild();
         const session = createCoBuildSession({
             parcel_id: PARCEL, blueprint_hash: BLUEPRINT_HASH, nodes: decomposeRecipe(recipe()),
         });
         const settled = completeNode(session, 'n1', WORKER, { funded: true });
-        expect(settled.settlement).toBe('ousia');
+        expect(settled.settlement).toBe('wei');
     });
 
     it('records a Phase 60 IOU (recordIou) when the host is NOT funded', async () => {

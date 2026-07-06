@@ -14,7 +14,7 @@ export class NousRegistry {
     private readonly nameIndex = new Map<string, string>(); // name → did
 
     /** Spawn a new Nous into the Grid. */
-    spawn(req: SpawnRequest, gridDomain: string, tick: number, initialOusia: number): NousRecord {
+    spawn(req: SpawnRequest, gridDomain: string, tick: number, initialWei: number): NousRecord {
         const existing = this.records.get(req.did);
         if (existing?.status === 'deleted') {
             throw new TypeError(
@@ -37,7 +37,7 @@ export class NousRegistry {
             region: req.region,
             lifecyclePhase: 'spawning',
             reputation: 0,
-            ousia: initialOusia,
+            balance_wei: initialWei,
             spawnedAtTick: tick,
             lastActiveTick: tick,
             status: 'active',
@@ -123,7 +123,7 @@ export class NousRegistry {
      *   - not_found:      either DID is absent from the registry
      *   - insufficient:   sender balance is below the requested amount
      */
-    transferOusia(
+    transferWei(
         fromDid: string,
         toDid: string,
         amount: number,
@@ -141,12 +141,12 @@ export class NousRegistry {
         if (!from || !to) {
             return { success: false, error: 'not_found' };
         }
-        if (from.ousia < amount) {
+        if (from.balance_wei < amount) {
             return { success: false, error: 'insufficient' };
         }
-        from.ousia -= amount;
-        to.ousia += amount;
-        return { success: true, fromBalance: from.ousia, toBalance: to.ousia };
+        from.balance_wei -= amount;
+        to.balance_wei += amount;
+        return { success: true, fromBalance: from.balance_wei, toBalance: to.balance_wei };
     }
 
     /**

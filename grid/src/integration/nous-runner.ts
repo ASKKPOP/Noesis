@@ -412,7 +412,7 @@ export class NousRunner {
                     // `reviewer?` field JSDoc for the contract.
                     if (this.reviewer) {
                         const proposer = this.registry.get(this.nousDid);
-                        const proposerBalance = proposer?.ousia ?? 0;
+                        const proposerBalance = proposer?.balance_wei ?? 0;
                         const verdict = this.reviewer.review({
                             proposerDid: this.nousDid,
                             proposerBalance,
@@ -437,12 +437,12 @@ export class NousRunner {
                                 failed_check: verdict.failed_check,
                                 failure_reason: verdict.failure_reason,
                             });
-                            // NO transferOusia, NO trade.settled, NO trade.rejected on reviewer fail.
+                            // NO transferWei, NO trade.settled, NO trade.rejected on reviewer fail.
                             break;
                         }
 
                         // Pass path — emit trade.reviewed{pass}, then proceed with existing bounds +
-                        // transferOusia + trade.settled.
+                        // transferWei + trade.settled.
                         this.audit.append('trade.reviewed', Reviewer.DID, {
                             trade_id: nonce,
                             reviewer_did: Reviewer.DID,
@@ -466,7 +466,7 @@ export class NousRunner {
                     // reachable when the counterparty DID parses but isn't registered — reviewer
                     // checks DID format, not registry membership (intentional — registry lookup
                     // would break Phase 5's no-RPC/no-state-read-beyond-ctx invariant at check time).
-                    const result = this.registry.transferOusia(this.nousDid, counterparty, amount);
+                    const result = this.registry.transferWei(this.nousDid, counterparty, amount);
                     if (!result.success) {
                         this.audit.append('trade.rejected', this.nousDid, {
                             reason: result.error,

@@ -37,14 +37,14 @@ const VALID_NONCE = '00000000000000000000000000000000';
 
 function makeRegistry(did = ALICE): NousRegistry {
     return {
-        get: (d: string) => d === did ? { did: d, status: 'active', ousia: 100 } : undefined,
+        get: (d: string) => d === did ? { did: d, status: 'active', balance_wei: 100 } : undefined,
         has: (d: string) => d === did,
         isTombstoned: (_d: string) => false,
         count: 1,
         active: () => [],
         touch: () => {},
         spawn: () => { throw new Error('not used'); },
-        transferOusia: () => ({ success: false, error: 'not_implemented' }),
+        transferWei: () => ({ success: false, error: 'not_implemented' }),
     } as unknown as NousRegistry;
 }
 

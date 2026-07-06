@@ -26,7 +26,7 @@ const LIVE_CONFIG = {
     gridDomain: 'live.noesis.test',
     tickRateMs: 1_000_000,
     ticksPerEpoch: 25,
-    economy: { initialOusia: 100 },
+    economy: { initialWei: 100 },
 };
 
 /** Minimal AuditEntry fixtures */

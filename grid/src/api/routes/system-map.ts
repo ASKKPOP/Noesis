@@ -44,7 +44,7 @@ interface BrainSurfaceItem { status: SurfaceStatus; metric: number | null; headl
 interface RegistryItem { status: InstitutionStatus; metric: number | null; headline: string; civic_active: number; nous_active: number; }
 interface PolisItem { status: InstitutionStatus; metric: number | null; headline: string; bills_active: number; bills_enacted: number; }
 interface PoliceItem { status: InstitutionStatus; metric: number | null; headline: string; complaints: number; sanctions_active: number; }
-interface IrsItem { status: InstitutionStatus; metric: string | null; headline: string; balance_bios: string; fee_rate_percent: number; }
+interface IrsItem { status: InstitutionStatus; metric: string | null; headline: string; balance_wei: string; fee_rate_percent: number; }
 interface MarketplaceItem { status: InstitutionStatus; metric: number | null; headline: string; listings_active: number; escrow_settled: number; }
 interface LibraryItem { status: InstitutionStatus; metric: number | null; headline: string; entries_published: number; citations_total: number; }
 interface CommunitiesItem { status: InstitutionStatus; metric: number | null; headline: string; communities_active: number; members_active: number; }
@@ -271,25 +271,25 @@ export function registerSystemMapRoute(app: FastifyInstance, services: GridServi
             async () => {
                 const p = requirePool();
                 const [bal] = await p.query<RowDataPacket[]>(
-                    'SELECT balance_bios FROM civic_treasury WHERE grid_name = ?',
+                    'SELECT balance_wei FROM civic_treasury WHERE grid_name = ?',
                     [grid],
                 );
                 const [rate] = await p.query<RowDataPacket[]>(
                     "SELECT config_value FROM grid_config WHERE grid_name = ? AND config_key = 'irs_fee_rate'",
                     [grid],
                 );
-                const balanceBios = String(bal[0]?.balance_bios ?? 0); // BIGINT safety
+                const balanceWei = String(bal[0]?.balance_wei ?? 0); // BIGINT safety
                 const feePresent = rate[0]?.config_value !== undefined;
                 const feeRatePercent = feePresent ? Number.parseFloat(String(rate[0].config_value)) * 100 : 0;
-                const hasBalance = balanceBios !== '0' && balanceBios !== '';
+                const hasBalance = balanceWei !== '0' && balanceWei !== '';
                 const status: InstitutionStatus = hasBalance || feePresent ? 'active' : 'empty';
                 return {
-                    status, metric: balanceBios,
-                    headline: `treasury ${balanceBios} bios · ${feeRatePercent}% fee`,
-                    balance_bios: balanceBios, fee_rate_percent: feeRatePercent,
+                    status, metric: balanceWei,
+                    headline: `treasury ${balanceWei} bios · ${feeRatePercent}% fee`,
+                    balance_wei: balanceWei, fee_rate_percent: feeRatePercent,
                 };
             },
-            { status: 'down' as InstitutionStatus, metric: null, headline: 'db_unavailable', balance_bios: '0', fee_rate_percent: 0 },
+            { status: 'down' as InstitutionStatus, metric: null, headline: 'db_unavailable', balance_wei: '0', fee_rate_percent: 0 },
         );
 
         // ── INSTITUTION: Marketplace ───────────────────────────────────────────

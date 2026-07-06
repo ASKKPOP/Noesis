@@ -597,7 +597,7 @@ export function buildServerWithHub(
             did: r.did,
             name: r.name,
             region: r.region,
-            ousia: r.ousia,
+            balance_wei: r.balance_wei,
             lifecyclePhase: r.lifecyclePhase,
             reputation: r.reputation,
             status: r.status,
@@ -703,7 +703,7 @@ export function buildServerWithHub(
             listings: s.listings.map((l) => ({
                 sku: l.sku,
                 label: l.label,
-                priceOusia: l.priceOusia,
+                priceWei: l.priceWei,
             })),
         }));
         return { shops: out };

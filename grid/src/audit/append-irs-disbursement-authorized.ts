@@ -3,7 +3,7 @@
  *
  * Emitted at JWT-verification time (BEFORE the DB transaction in disburse route).
  * actorDid = authorized_by_civic_did_hash (Government Speaker civic-did sha256).
- * Closed 5-key payload (alphabetical): amount_bios, authorized_by_civic_did_hash, grid_name, legislation_ref_hash, tick.
+ * Closed 5-key payload (alphabetical): amount_wei, authorized_by_civic_did_hash, grid_name, legislation_ref_hash, tick.
  *
  * Pair: irs.disbursement_executed (pos 75) fires AFTER the DB commit with cause='government_disbursement'.
  */
@@ -15,7 +15,7 @@ const HEX64_RE = /^[0-9a-f]{64}$/i;
 
 /** Closed 5-key payload. Keys ALPHABETICAL. */
 export interface IrsDisbursementAuthorizedPayload {
-    readonly amount_bios: number;                        // positive integer (>0)
+    readonly amount_wei: number;                        // positive integer (>0)
     readonly authorized_by_civic_did_hash: string;       // HEX64_RE — Government Speaker civic-did sha256
     readonly grid_name: string;                          // non-empty
     readonly legislation_ref_hash: string;               // HEX64_RE — sha256(legislation_ref plaintext)
@@ -23,7 +23,7 @@ export interface IrsDisbursementAuthorizedPayload {
 }
 
 const EXPECTED_KEYS = [
-    'amount_bios',
+    'amount_wei',
     'authorized_by_civic_did_hash',
     'grid_name',
     'legislation_ref_hash',
@@ -50,9 +50,9 @@ export function appendIrsDisbursementAuthorized(
     if (typeof payload.grid_name !== 'string' || payload.grid_name.length === 0) {
         throw new TypeError(`appendIrsDisbursementAuthorized: grid_name must be non-empty string, got ${JSON.stringify(payload.grid_name)}`);
     }
-    // 5. Positive integer: amount_bios.
-    if (!Number.isInteger(payload.amount_bios) || payload.amount_bios <= 0) {
-        throw new TypeError(`appendIrsDisbursementAuthorized: amount_bios must be positive integer, got ${JSON.stringify(payload.amount_bios)}`);
+    // 5. Positive integer: amount_wei.
+    if (!Number.isInteger(payload.amount_wei) || payload.amount_wei <= 0) {
+        throw new TypeError(`appendIrsDisbursementAuthorized: amount_wei must be positive integer, got ${JSON.stringify(payload.amount_wei)}`);
     }
     // 6. Non-negative integer: tick.
     if (!Number.isInteger(payload.tick) || payload.tick < 0) {
@@ -66,7 +66,7 @@ export function appendIrsDisbursementAuthorized(
     }
     // 8. Explicit reconstruction — no spread.
     const cleanPayload = {
-        amount_bios: payload.amount_bios,
+        amount_wei: payload.amount_wei,
         authorized_by_civic_did_hash: payload.authorized_by_civic_did_hash,
         grid_name: payload.grid_name,
         legislation_ref_hash: payload.legislation_ref_hash,

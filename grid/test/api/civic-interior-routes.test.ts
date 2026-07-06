@@ -68,7 +68,7 @@ function buildApp(opts: AppOpts = {}): {
     const audit = new AuditChain();
 
     const parcelRegistry = new ParcelRegistry('genesis');
-    parcelRegistry.seedZone({ zoneId: 'residential', count: 4, priceBios: 400, ring: 3 });
+    parcelRegistry.seedZone({ zoneId: 'residential', count: 4, priceWei: 400, ring: 3 });
 
     const nousRegistry = new NousRegistry();
     nousRegistry.spawn(

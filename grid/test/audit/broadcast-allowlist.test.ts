@@ -353,7 +353,7 @@ describe('ALLOWLIST_MEMBERS Phase 44 (Plan 01 — MKT-06 / D-44-01 / D-44-03)', 
 
 describe('broadcast-allowlist: payloadPrivacyCheck', () => {
     it('passes benign numeric/currency payload', () => {
-        expect(payloadPrivacyCheck({ amount: 10, currency: 'ousia' })).toEqual({ ok: true });
+        expect(payloadPrivacyCheck({ amount: 10, currency: 'wei' })).toEqual({ ok: true });
     });
 
     it('passes empty object', () => {
