@@ -12,7 +12,8 @@
 # Hostname routing (nginx server_name):
 #   ${DOMAIN}        → dashboard (/, the landing page) · guide (/docs) · steward (/console)
 #   api.${DOMAIN}    → grid (Portal + Grid)                       ← REQUIRED
-#   portal.${DOMAIN} → dashboard (Tier-3 Portal Manager console; / → /system/portal-manager)
+#   portal.${DOMAIN} → dashboard, the PUBLIC Portal (/ → /portal)
+#   system.${DOMAIN} → dashboard, the Tier-3 Portal Manager OPERATOR console (/ → /system/portal-manager)
 #   coturn.${DOMAIN} → coturn — NOT through the ALB/nginx (TURN is not HTTP).
 #                      Use an NLB or the EC2 elastic IP; open UDP/TCP 3478 + TLS 5349.
 #
@@ -65,10 +66,10 @@ services:
     container_name: noesis-wiki
     restart: unless-stopped
 
-  # ── Portal + Grid (api.${DOMAIN}). Allow the apex + portal-subdomain origins ─
+  # ── Portal + Grid (api.${DOMAIN}). Allow apex + portal + system origins ──────
   grid:
     environment:
-      GRID_CORS_ORIGINS: "https://${DOMAIN:-localhost},https://portal.${DOMAIN:-localhost}"
+      GRID_CORS_ORIGINS: "https://${DOMAIN:-localhost},https://portal.${DOMAIN:-localhost},https://system.${DOMAIN:-localhost}"
 
   # ── Dashboard → ${DOMAIN}/ (apex — the landing page is the first page) ──────
   dashboard:

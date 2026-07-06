@@ -6,7 +6,8 @@
 # The ALB terminates TLS, so nginx speaks plain HTTP. Routing is by Host header:
 #   ${DOMAIN}        → dashboard (/, landing page) · guide (/docs) · wiki (/wiki) · steward (/console)
 #   api.${DOMAIN}    → grid (Portal + Grid · REST + WS + Portal)
-#   portal.${DOMAIN} → dashboard (Tier-3 Portal Manager console; / → /system/portal-manager)
+#   portal.${DOMAIN} → dashboard, the PUBLIC Portal (/ → /portal)
+#   system.${DOMAIN} → dashboard, the Tier-3 Portal Manager OPERATOR console (/ → /system/portal-manager)
 #
 # Rendered from this template by the nginx image entrypoint (envsubst) — only the
 # ${DOMAIN} token is substituted (NGINX_ENVSUBST_FILTER=^DOMAIN$); every nginx
@@ -73,11 +74,11 @@ server {
     location / { proxy_pass http://noesis_grid; }
 }
 
-# ── portal subdomain → dashboard (Tier-3 Portal Manager console) ─────────────
-# Serves the same dashboard container; the bare host lands operators on the
-# read-only Portal Manager console (/system/portal-manager). The console is
-# still gated server-side: GRID_PORTAL_MANAGER_ENABLED + a Portal session
-# (operatorScope) on the grid — this subdomain is convenience, not authority.
+# ── portal subdomain → the PUBLIC Portal (the user-facing meta-layer) ─────────
+# portal.${DOMAIN} is the Portal users meet: sign in, browse Grids, apply, join
+# communities, marketplace, library. Today that experience is the dashboard's
+# /portal/* pages (Grid-hosted); when the standalone Portal service (Phase 52)
+# ships, this same domain re-points to it — no user-facing URL churn.
 server {
     listen 80;
     server_name portal.${DOMAIN};
@@ -88,9 +89,28 @@ server {
     proxy_set_header X-Forwarded-Proto https;
     proxy_http_version 1.1;
 
-    # Issue a RELATIVE Location so the browser keeps the original https scheme
-    # (nginx speaks http behind the ALB; an absolute redirect would downgrade to
-    # http and break the console's secure cookie + credentialed CORS).
+    # Relative redirect keeps the browser on https (nginx speaks http behind the ALB).
+    absolute_redirect off;
+    location = / { return 302 /portal; }
+    location /   { proxy_pass http://noesis_dashboard; }
+}
+
+# ── system subdomain → the Tier-3 Portal Manager OPERATOR console ─────────────
+# system.${DOMAIN} is the Henry-side meta-ops console (read-only monitoring:
+# reviewer queue + DID-issuance tracker + audit-chain viewer). Still gated
+# server-side: GRID_PORTAL_MANAGER_ENABLED + a Portal session (operatorScope) on
+# the grid — this subdomain is convenience, not authority. Also reachable at
+# ${DOMAIN}/system/portal-manager.
+server {
+    listen 80;
+    server_name system.${DOMAIN};
+
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_http_version 1.1;
+
     absolute_redirect off;
     location = / { return 302 /system/portal-manager; }
     location /   { proxy_pass http://noesis_dashboard; }
