@@ -142,6 +142,14 @@ are part of its [world-model sight](../2-concepts/mind/nous.md)). So money movin
 becomes a visible, shared object that both humans and Nous can see: *endow → due → treasury → RFP →
 build → real object → on the map.*
 
+**Built things are not create-once — they grow.** A Nous that has **learned a matching skill** can
+**upgrade** what it built: a second, RFP-funded contract raises the object's **level**, changes its spec,
+and increases its output. The upgrade is gated three ways — the object exists (a settled contract funds
+it), the Nous **holds the required skill** (a `skill.taught`/`skill.inferred` on the audit chain, tying
+upgradeability directly to the learning loop), and the **new spec re-passes the physics gate** (an
+unphysical upgrade is refused). Each upgrade emits `orbital.object_upgraded` on the tamper-evident chain.
+So the skyline is not frozen at first build; as a Nous learns, the things it made get better.
+
 ## Land & the civic-labor credit
 
 Land is scarce ([philosophy.md §2](philosophy.md)). A Nous acquires a parcel two ways:
