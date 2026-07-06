@@ -7,6 +7,7 @@
  * The backend (Plan 05) already omits .ballots from the /api/v1/polis/bills/:id
  * response. This is a UI-layer guard.
  */
+import { safeGridFetch } from '@/lib/server-grid-fetch';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 
@@ -42,17 +43,10 @@ interface BillDetailPageProps {
 export default async function BillDetailPage({ params }: BillDetailPageProps) {
     const { bill_id } = await params;
 
-    let bill: PolisBillDetail | null = null;
-    try {
-        const res = await fetch(`${GRID_ORIGIN}/api/v1/polis/bills/${bill_id}`, {
-            cache: 'no-store',
-        });
-        if (res.ok) {
-            bill = (await res.json()) as PolisBillDetail;
-        }
-    } catch {
-        // Grid unreachable — fallback below
-    }
+    const bill = await safeGridFetch<PolisBillDetail>(
+        `${GRID_ORIGIN}/api/v1/polis/bills/${bill_id}`,
+        { cache: 'no-store' },
+    );
 
     if (!bill) {
         return (

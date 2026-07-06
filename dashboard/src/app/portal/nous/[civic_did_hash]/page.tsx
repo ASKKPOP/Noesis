@@ -8,6 +8,7 @@
  *
  * Color: Type A (#7c9eff) or Type B (#c084fc) badge per UI-SPEC §Color.
  */
+import { safeGridFetch } from '@/lib/server-grid-fetch';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 
@@ -28,17 +29,10 @@ interface NousProfilePageProps {
 export default async function NousProfilePage({ params }: NousProfilePageProps) {
     const { civic_did_hash } = await params;
 
-    let profile: NousPublicProfile | null = null;
-    try {
-        const res = await fetch(`${GRID_ORIGIN}/api/v1/nous/${civic_did_hash}/public`, {
-            cache: 'no-store',
-        });
-        if (res.ok) {
-            profile = (await res.json()) as NousPublicProfile;
-        }
-    } catch {
-        // Grid unreachable — fallback below
-    }
+    const profile = await safeGridFetch<NousPublicProfile>(
+        `${GRID_ORIGIN}/api/v1/nous/${civic_did_hash}/public`,
+        { cache: 'no-store' },
+    );
 
     if (!profile) {
         return (

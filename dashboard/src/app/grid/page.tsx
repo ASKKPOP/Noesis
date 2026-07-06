@@ -18,6 +18,7 @@
 
 import React, { Suspense } from 'react';
 import { GridClient } from './grid-client';
+import { safeGridFetch } from '@/lib/server-grid-fetch';
 import type { Region, RegionConnection } from '@/lib/protocol/region-types';
 
 interface RegionsResponse {
@@ -26,11 +27,10 @@ interface RegionsResponse {
 }
 
 async function fetchRegions(origin: string): Promise<RegionsResponse> {
-    const res = await fetch(`${origin}/api/v1/grid/regions`, { cache: 'no-store' });
-    if (!res.ok) {
-        throw new Error(`Grid regions fetch failed: HTTP ${res.status}`);
-    }
-    const body = (await res.json()) as RegionsResponse;
+    const body = await safeGridFetch<RegionsResponse>(
+        `${origin}/api/v1/grid/regions`,
+        { cache: 'no-store' },
+    );
     if (!body || !Array.isArray(body.regions) || !Array.isArray(body.connections)) {
         throw new Error('Grid regions response malformed');
     }

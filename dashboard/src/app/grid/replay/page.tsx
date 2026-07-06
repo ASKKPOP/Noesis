@@ -15,6 +15,7 @@
  */
 
 import { ReplayClient } from './replay-client';
+import { safeGridFetch } from '@/lib/server-grid-fetch';
 import type { Region, RegionConnection } from '@/lib/protocol/region-types';
 
 interface AuditBoundsResponse {
@@ -30,22 +31,23 @@ interface RegionsResponse {
 }
 
 async function fetchAuditBounds(origin: string): Promise<{ startTick: number; endTick: number }> {
-    const res = await fetch(`${origin}/api/v1/grid/audit?limit=1`, { cache: 'no-store' });
-    if (!res.ok) {
+    const body = await safeGridFetch<AuditBoundsResponse>(
+        `${origin}/api/v1/grid/audit?limit=1`,
+        { cache: 'no-store' },
+    );
+    if (!body) {
         return { startTick: 0, endTick: 0 };
     }
-    const body = (await res.json()) as AuditBoundsResponse;
     const startTick = body.startTick ?? 0;
     const endTick = body.endTick ?? (body.total ?? 0);
     return { startTick, endTick };
 }
 
 async function fetchRegions(origin: string): Promise<RegionsResponse> {
-    const res = await fetch(`${origin}/api/v1/grid/regions`, { cache: 'no-store' });
-    if (!res.ok) {
-        throw new Error(`Grid regions fetch failed: HTTP ${res.status}`);
-    }
-    const body = (await res.json()) as RegionsResponse;
+    const body = await safeGridFetch<RegionsResponse>(
+        `${origin}/api/v1/grid/regions`,
+        { cache: 'no-store' },
+    );
     if (!body || !Array.isArray(body.regions) || !Array.isArray(body.connections)) {
         throw new Error('Grid regions response malformed');
     }

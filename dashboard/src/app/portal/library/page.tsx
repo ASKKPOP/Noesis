@@ -4,6 +4,7 @@
  * Color accent: Grid orange (#ffb86c) for card left-border per UI-SPEC §Color.
  */
 import { COPY } from '../../../lib/portal-copy';
+import { safeGridFetch } from '@/lib/server-grid-fetch';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 
@@ -21,18 +22,11 @@ interface LibraryResponse {
 }
 
 export default async function LibraryPage() {
-    let entries: LibraryEntry[] = [];
-    try {
-        const res = await fetch(`${GRID_ORIGIN}/api/v1/library/entries`, {
-            cache: 'no-store',
-        });
-        if (res.ok) {
-            const data = (await res.json()) as LibraryResponse;
-            entries = data.entries ?? [];
-        }
-    } catch {
-        // Grid unreachable — empty state renders below
-    }
+    const data = await safeGridFetch<LibraryResponse>(
+        `${GRID_ORIGIN}/api/v1/library/entries`,
+        { cache: 'no-store' },
+    );
+    const entries: LibraryEntry[] = data?.entries ?? [];
 
     return (
         <main className="bg-[#0a0a0c] min-h-screen px-8 py-8 max-w-[960px] mx-auto">

@@ -5,6 +5,7 @@
  */
 import { resolveVisitorTier } from '../../../lib/visitor-tier';
 import { cookies } from 'next/headers';
+import { safeGridFetch } from '@/lib/server-grid-fetch';
 
 const PORTAL_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 
@@ -52,21 +53,16 @@ export default async function NotificationsPage() {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get('noesis_portal_token')?.value;
 
-    let notifications: Notification[] = [];
-    try {
-        const res = await fetch(`${PORTAL_ORIGIN}/portal/api/v1/notifications`, {
+    const data = await safeGridFetch<NotificationsResponse>(
+        `${PORTAL_ORIGIN}/portal/api/v1/notifications`,
+        {
             cache: 'no-store',
             headers: sessionCookie
                 ? { Cookie: `noesis_portal_token=${sessionCookie}` }
                 : {},
-        });
-        if (res.ok) {
-            const data = (await res.json()) as NotificationsResponse;
-            notifications = data.notifications ?? [];
-        }
-    } catch {
-        // Portal unreachable — empty list
-    }
+        },
+    );
+    const notifications: Notification[] = data?.notifications ?? [];
 
     return (
         <main className="bg-[#0a0a0c] min-h-screen px-8 py-8 max-w-[960px] mx-auto">

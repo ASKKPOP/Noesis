@@ -5,6 +5,7 @@
  * Color accent: Polis green (#6bd968) per UI-SPEC §Color.
  */
 import { COPY } from '../../../lib/portal-copy';
+import { safeGridFetch } from '@/lib/server-grid-fetch';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 
@@ -34,18 +35,11 @@ interface PolisResponse {
 }
 
 export default async function PolisPage() {
-    let bills: PolisBillSummary[] = [];
-    try {
-        const res = await fetch(`${GRID_ORIGIN}/api/v1/polis/bills`, {
-            cache: 'no-store',
-        });
-        if (res.ok) {
-            const data = (await res.json()) as PolisResponse;
-            bills = data.bills ?? [];
-        }
-    } catch {
-        // Grid unreachable — empty state renders below
-    }
+    const data = await safeGridFetch<PolisResponse>(
+        `${GRID_ORIGIN}/api/v1/polis/bills`,
+        { cache: 'no-store' },
+    );
+    const bills: PolisBillSummary[] = data?.bills ?? [];
 
     return (
         <main className="bg-[#0a0a0c] min-h-screen px-8 py-8 max-w-[960px] mx-auto">

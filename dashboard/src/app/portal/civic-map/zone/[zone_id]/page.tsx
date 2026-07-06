@@ -5,6 +5,7 @@
  *
  * Color: zone-color accent (#38bdf8) per UI-SPEC §Color layer-semantic table.
  */
+import { safeGridFetch } from '@/lib/server-grid-fetch';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 
@@ -36,17 +37,10 @@ interface ZonePageProps {
 export default async function ZoneDeepDivePage({ params }: ZonePageProps) {
     const { zone_id } = await params;
 
-    let zone: ZoneDetail | null = null;
-    try {
-        const res = await fetch(`${GRID_ORIGIN}/api/v1/civic-map/zone/${zone_id}`, {
-            cache: 'no-store',
-        });
-        if (res.ok) {
-            zone = (await res.json()) as ZoneDetail;
-        }
-    } catch {
-        // Grid unreachable — show fallback below
-    }
+    const zone = await safeGridFetch<ZoneDetail>(
+        `${GRID_ORIGIN}/api/v1/civic-map/zone/${zone_id}`,
+        { cache: 'no-store' },
+    );
 
     return (
         <main className="bg-[#0a0a0c] min-h-screen px-8 py-8 max-w-[960px] mx-auto">

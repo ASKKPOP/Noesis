@@ -7,6 +7,7 @@
  * price obfuscation. Bid/buy actions require Civic-DID (Phase 44 wiring).
  */
 import { COPY } from '../../../lib/portal-copy';
+import { safeGridFetch } from '@/lib/server-grid-fetch';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 
@@ -25,18 +26,11 @@ interface MarketResponse {
 }
 
 export default async function MarketplacePage() {
-    let listings: MarketListing[] = [];
-    try {
-        const res = await fetch(`${GRID_ORIGIN}/api/v1/market/listings`, {
-            cache: 'no-store',
-        });
-        if (res.ok) {
-            const data = (await res.json()) as MarketResponse;
-            listings = data.listings ?? [];
-        }
-    } catch {
-        // Grid unreachable — empty state renders below
-    }
+    const data = await safeGridFetch<MarketResponse>(
+        `${GRID_ORIGIN}/api/v1/market/listings`,
+        { cache: 'no-store' },
+    );
+    const listings: MarketListing[] = data?.listings ?? [];
 
     return (
         <main className="bg-[#0a0a0c] min-h-screen px-8 py-8 max-w-[960px] mx-auto">
