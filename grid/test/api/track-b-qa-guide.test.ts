@@ -204,14 +204,20 @@ describe('Track B — the 8 civic institutions (QA-guide contract)', () => {
         });
     });
 
-    // ── B-10 · System Map cross-check ────────────────────────────────────────
+    // ── B-10 · System Map structure ──────────────────────────────────────────
+    // NOTE: this is a STRUCTURAL check only. The real B-10 count↔endpoint
+    // cross-check ("every institution count equals its own endpoint") is a
+    // live-data assertion — it lives in the Track B runbook and runs against a
+    // running Grid, not here where the pool is mocked empty.
     describe('B-10 · System Map — GET /api/v1/system/map', () => {
-        it('200 and exposes all 8 institutions (the counts a tester cross-checks against each endpoint)', async () => {
+        it('200 and exposes all 8 institutions, each with a status string + a metric (structural; live count cross-check is the runbook’s job)', async () => {
             const res = await get('/api/v1/system/map');
             expect(res.statusCode).toBe(200);
             const inst = res.json().institutions;
             for (const k of ['registry', 'polis', 'police', 'irs', 'marketplace', 'library', 'communities', 'p2p']) {
-                expect(inst).toHaveProperty(k);
+                expect(inst[k]).toBeDefined();
+                expect(typeof inst[k].status).toBe('string');
+                expect(inst[k]).toHaveProperty('metric');
             }
         });
     });
