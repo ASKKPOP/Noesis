@@ -85,6 +85,43 @@ Grid decision log where the guide is stale (see B-08 / D-42-02 below).
 
 ---
 
+## Round 2 — authenticated write-path (live)
+
+Round 1 above is read-only + negative-auth. Round 2 crosses the auth gate with a real
+`civic_member` token and drives write endpoints. The token is mintable locally because
+`tryDid.ts` verifies EdDSA Brain-JWTs against a public key **we control** (stored in
+`brain_tokens`).
+
+**Mint an EdDSA civic token (Ed25519, via `jose` in grid/node_modules):**
+1. Generate an Ed25519 keypair; export the public JWK (`{kty:'OKP',crv:'Ed25519',x,alg:'EdDSA'}`).
+2. `INSERT INTO brain_tokens (grid_name, brain_did, public_key_jwk, issued_at, expires_at, revoked)
+   VALUES ('genesis','did:noesis:nous:<existence>','<pubJwk>',1,99999999999999,0);`
+3. Sign a JWT `{iss:'did:noesis:nous:<existence>', sub:'did:civic:noesis:<civic>'}` with
+   header `{alg:'EdDSA'}` using the private key. Send it as `Authorization: Bearer <jwt>`.
+
+**What it proves (verified 2026-07-07 on localhost:8080):**
+- `POST /api/v1/community/found` — no token → `401 did_required`; **with token → `400 not_found`**
+  (auth crossed; stops at the economic layer because the synthetic civic-DID has no
+  `NousRegistry` wei account). Auth gate transition confirmed.
+- `POST /api/v1/p2p/announce` (Brain heartbeat) with token → `200 announced`, then
+  `GET /api/v1/p2p/peers/<civic>` → **`200 {status:"online",last_seen_at}`**. This exercises the
+  B-08 **online** path the Round-1 offline run couldn't reach, and `system/map` `p2p.peers_online`
+  goes 0→1 (map is live).
+
+**B-08 contract, now complete:** `online → 200 {status:"online"}` · `offline/absent → 404 peer_offline`
+(D-42-02) · `malformed → 400 invalid_civic_did`. The noesiis.com/qa guide's "200 status online|offline"
+is half-right — fix it to name the 404-on-offline.
+
+**Cleanup (mandatory):** `DELETE FROM brain_tokens WHERE brain_did='did:noesis:nous:<existence>';`
+delete any minted temp files, then diff `git status` against the pre-test baseline. The announced
+p2p peer is in-memory and self-expires (~5 min); no DB residue.
+
+**Full economic loop (201 + wei conservation) is covered deterministically** — a live founder
+needs a wei endowment (operator-gated), so the money-conservation invariant lives in
+`grid/test/api/track-b-writepath-economy.test.ts` (real `NousRegistry`, seeded balances:
+founder debited `FOUND_WEI_COST`, treasury credited, total unchanged; 402 leaves balances
+untouched; `community.*` audit event emitted). Run with `npm test`.
+
 ## Notes for the human
 
 - **Read-only by default.** The only writes are the bracketed B-07 community create, which the runbook
