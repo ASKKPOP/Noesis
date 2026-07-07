@@ -31,7 +31,7 @@ beforeEach(() => {
     global.fetch = vi.fn(async (url: string | URL) => {
         const u = String(url);
         const body = u.includes('/grid/nous')
-            ? [NOUS_FROM_API]
+            ? { nous: [NOUS_FROM_API] } // real endpoint shape: { nous: [...] }
             : u.includes('/grid/status')
                 ? { tick: 374 }
                 : { proposals: [] };
