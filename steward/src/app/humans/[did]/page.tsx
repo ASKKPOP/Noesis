@@ -38,7 +38,7 @@ interface NousEntry {
     did: string;
     name: string;
     region: string;
-    ousia: number;
+    balance_wei: number;
     lifecyclePhase: string;
     status: string;
     humanOwner?: string;
@@ -502,7 +502,7 @@ export default function HumanDetailPage() {
                                                 <th>DID</th>
                                                 <th>Region</th>
                                                 <th>Status</th>
-                                                <th>Ousia</th>
+                                                <th>Bios</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -522,7 +522,7 @@ export default function HumanDetailPage() {
                                                     <td>
                                                         <span className="badge">{n.status}</span>
                                                     </td>
-                                                    <td style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>{n.ousia}</td>
+                                                    <td style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>{n.balance_wei != null ? n.balance_wei.toLocaleString() : '—'}</td>
                                                 </tr>
                                             ))}
                                         </tbody>

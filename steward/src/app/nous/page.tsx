@@ -163,7 +163,7 @@ export default function NousRosterPage() {
                                 <th>Region</th>
                                 <th>Phase</th>
                                 <th>Status</th>
-                                <th>Ousia</th>
+                                <th>Bios</th>
                                 <th>Reputation</th>
                             </tr>
                         </thead>
@@ -212,7 +212,7 @@ export default function NousRosterPage() {
                                             color: 'var(--muted)',
                                         }}
                                     >
-                                        {(n.balance_wei ?? 0).toLocaleString()}
+                                        {n.balance_wei != null ? n.balance_wei.toLocaleString() : '—'}
                                     </td>
                                     <td
                                         style={{

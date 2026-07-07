@@ -221,7 +221,7 @@ export default function DashboardPage() {
                                 <th>DID</th>
                                 <th>Region</th>
                                 <th>Status</th>
-                                <th>Ousia</th>
+                                <th>Bios</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -258,7 +258,7 @@ export default function DashboardPage() {
                                             color: 'var(--muted)',
                                         }}
                                     >
-                                        {(n.balance_wei ?? 0).toLocaleString()}
+                                        {fmt(n.balance_wei ?? null)}
                                     </td>
                                 </tr>
                             ))}
