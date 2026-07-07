@@ -21,22 +21,36 @@ export interface CommunityRow {
 export class CommunityStore {
     constructor(private readonly pool: Pool, private readonly audit: AuditChain) {}
 
-    /** COMM-01 — found a community + seat the founder + emit community.founded. */
+    /** COMM-01 — found a community + seat the founder + emit community.founded.
+     *  The community row and the founder-member row commit together or not at all
+     *  (one MySQL transaction, matching the IRS disburse idiom) so a mid-way failure
+     *  never leaves an orphan community without its founder. community.founded is
+     *  emitted only after commit — a rolled-back found() emits nothing. */
     async found(p: { gridName: string; founderDid: string; name: string; purpose: string; charter: Charter; weiPaid: number; tick: number }): Promise<string> {
         const communityId = randomUUID();
         const charterJson = JSON.stringify(p.charter);
         const charterHash = sha256Hex(charterJson);
-        await this.pool.query(
-            `INSERT INTO communities
-               (community_id, grid_name, founder_civic_did, name, purpose, charter_json, charter_hash, wei_paid, status, founded_tick)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
-            [communityId, p.gridName, p.founderDid, p.name.slice(0, 255), p.purpose, charterJson, charterHash, p.weiPaid, p.tick],
-        );
-        await this.pool.query(
-            `INSERT INTO community_members (grid_name, community_id, member_civic_did, role, status, joined_tick)
-             VALUES (?, ?, ?, 'founder', 'active', ?)`,
-            [p.gridName, communityId, p.founderDid, p.tick],
-        );
+        const conn = await this.pool.getConnection();
+        try {
+            await conn.beginTransaction();
+            await conn.query(
+                `INSERT INTO communities
+                   (community_id, grid_name, founder_civic_did, name, purpose, charter_json, charter_hash, wei_paid, status, founded_tick)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
+                [communityId, p.gridName, p.founderDid, p.name.slice(0, 255), p.purpose, charterJson, charterHash, p.weiPaid, p.tick],
+            );
+            await conn.query(
+                `INSERT INTO community_members (grid_name, community_id, member_civic_did, role, status, joined_tick)
+                 VALUES (?, ?, ?, 'founder', 'active', ?)`,
+                [p.gridName, communityId, p.founderDid, p.tick],
+            );
+            await conn.commit();
+        } catch (err) {
+            await conn.rollback();
+            throw err;
+        } finally {
+            conn.release();
+        }
         appendCommunityFounded(this.audit, {
             wei_paid: p.weiPaid, charter_hash: charterHash, community_id: communityId,
             founder_did_hash: sha256Hex(p.founderDid), name_hash: sha256Hex(p.name), tick: p.tick,

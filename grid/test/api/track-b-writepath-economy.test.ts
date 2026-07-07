@@ -27,8 +27,26 @@ function seed(registry: NousRegistry, did: string, name: string, wei: number): v
     registry.spawn({ did, name, publicKey: `pk-${name}`, region: 'agora' } as never, 'genesis.noesis', 1, wei);
 }
 
-function buildApp(registry: NousRegistry, ctx: DIDContext | null): { app: FastifyInstance; audit: AuditChain } {
-    const pool = { query: vi.fn().mockResolvedValue([[] as RowDataPacket[], {}]) } as unknown as Pool;
+function buildApp(
+    registry: NousRegistry,
+    ctx: DIDContext | null,
+    opts: { failInsert?: boolean } = {},
+): { app: FastifyInstance; audit: AuditChain } {
+    // found() persists via a getConnection transaction (Option A). failInsert makes the
+    // transactional INSERT throw, exercising the DB-failure path.
+    const conn = {
+        beginTransaction: vi.fn(),
+        query: opts.failInsert
+            ? vi.fn().mockRejectedValue(new Error('ER_LOCK_DEADLOCK: simulated DB failure'))
+            : vi.fn().mockResolvedValue([[], {}]),
+        commit: vi.fn(),
+        rollback: vi.fn(),
+        release: vi.fn(),
+    };
+    const pool = {
+        query: vi.fn().mockResolvedValue([[] as RowDataPacket[], {}]),
+        getConnection: vi.fn(async () => conn),
+    } as unknown as Pool;
     const audit = new AuditChain();
     const services = { gridName: 'genesis', currentTick: () => 5, pool, audit, registry } as unknown as GridServices;
     const app = Fastify({ logger: false });
@@ -88,6 +106,25 @@ describe('Track B (Round 2) — community/found wei conservation', () => {
         });
         const events = (audit as unknown as { all: () => Array<{ eventType: string }> }).all();
         expect(events.some((e) => e.eventType.startsWith('community.'))).toBe(true);
+        await app.close();
+    });
+
+    it('DB persistence failure leaves the founder’s balance untouched (Option A: charge only after commit)', async () => {
+        const registry = new NousRegistry();
+        seed(registry, FOUNDER, 'r2founder-dbfail', FOUND_WEI_COST * 3);
+        seed(registry, TREASURY_DID, 'r2treasury-df', 0);
+        const founderBefore = registry.get(FOUNDER)!.balance_wei;
+
+        const { app } = buildApp(registry, { did: FOUNDER, tier: 'civic_member' }, { failInsert: true });
+        const res = await app.inject({
+            method: 'POST', url: '/api/v1/community/found',
+            payload: { name: 'DB Fail', purpose: 'persist should roll back', charter: CHARTER },
+        });
+        // found() rolls back + rethrows → route returns 503; the wei transfer runs only
+        // AFTER a successful commit, so a failed persist never debits the founder.
+        expect(res.statusCode).toBe(503);
+        expect(registry.get(FOUNDER)!.balance_wei).toBe(founderBefore);
+        expect(registry.get(TREASURY_DID)!.balance_wei).toBe(0);
         await app.close();
     });
 });

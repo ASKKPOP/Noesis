@@ -8,6 +8,7 @@ import { AuditChain } from '../../src/audit/chain.js';
 import { registerCommunityRoutes } from '../../src/api/routes/community.js';
 import type { GridServices } from '../../src/api/server.js';
 import type { DIDContext } from '../../src/api/preHandlers/types.js';
+import { FOUND_WEI_COST } from '../../src/community/types.js';
 
 const ALICE = 'did:civic:noesis:alice';
 const aliceCtx = (): DIDContext => ({ did: ALICE, tier: 'civic_member' });
@@ -16,8 +17,12 @@ const CHARTER = { membership: 'open', subgovernance: 'founder_led', conduct_rule
 
 /** transferWei mock: ok=true → success, ok=false → insufficient. */
 function app(opts: { ctx?: DIDContext | null; rows?: unknown[]; biosOk?: boolean }): FastifyInstance {
-    const pool = { query: vi.fn().mockResolvedValue([(opts.rows ?? []) as RowDataPacket[], {}]) } as unknown as Pool;
-    const registry = { transferWei: vi.fn(() => (opts.biosOk === false ? { success: false, error: 'insufficient' } : { success: true, fromBalance: 0, toBalance: 0 })) };
+    const conn = { beginTransaction: vi.fn(), query: vi.fn().mockResolvedValue([[], {}]), commit: vi.fn(), rollback: vi.fn(), release: vi.fn() };
+    const pool = { query: vi.fn().mockResolvedValue([(opts.rows ?? []) as RowDataPacket[], {}]), getConnection: vi.fn(async () => conn) } as unknown as Pool;
+    const registry = {
+        get: vi.fn(() => ({ balance_wei: FOUND_WEI_COST })),
+        transferWei: vi.fn(() => (opts.biosOk === false ? { success: false, error: 'insufficient' } : { success: true, fromBalance: 0, toBalance: 0 })),
+    };
     const services = { gridName: 'genesis', currentTick: () => 5, pool, audit: new AuditChain(), registry } as unknown as GridServices;
     const a = Fastify({ logger: false });
     if (opts.ctx !== undefined) a.addHook('onRequest', async (req) => { req.didContext = opts.ctx ?? undefined; });

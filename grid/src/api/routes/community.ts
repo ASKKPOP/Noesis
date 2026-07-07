@@ -39,16 +39,37 @@ export function registerCommunityRoutes(app: FastifyInstance, services: GridServ
             const v = validateCharter(req.body?.charter);
             if (!v.ok) return reply.code(400).send({ error: 'invalid_charter', clause: v.clause });
 
-            // Bios sybil cost: founder → treasury (D-V3-09). 402 on insufficient.
+            // D-V3-09 Bios sybil cost, made atomic across the in-memory ledger (NousRegistry)
+            // and MySQL (communities): (1) pre-check funds WITHOUT moving them, (2) persist the
+            // community in a transaction, (3) charge LAST — so a DB failure can never leave the
+            // founder debited with no community (the money move is the last thing that happens).
+            const founderRec = registry.get(founder);
+            if (!founderRec) return reply.code(400).send({ error: 'not_found' });
+            if (founderRec.balance_wei < FOUND_WEI_COST) {
+                return reply.code(402).send({ error: 'insufficient_wei', required: FOUND_WEI_COST });
+            }
+
+            const store = new CommunityStore(pool, audit);
+            let communityId: string;
+            try {
+                communityId = await store.found({
+                    gridName: grid, founderDid: founder, name, purpose, charter: v.charter, weiPaid: FOUND_WEI_COST, tick: tick(),
+                });
+            } catch (err) {
+                req.log.error({ err: err instanceof Error ? err.message : 'unknown' }, 'community_found_failed');
+                return reply.code(503).send({ error: 'community_unavailable' });
+            }
+
+            // Charge last. transferWei re-checks the balance atomically; a failure here (a
+            // concurrent drain since the pre-check) dissolves the just-created community so no
+            // active-but-unpaid community is ever left behind — conservation holds either way.
             const moved = registry.transferWei(founder, TREASURY_DID, FOUND_WEI_COST);
             if (!moved.success) {
+                await store.dissolve({ gridName: grid, communityId, byDid: founder, tick: tick() });
                 if (moved.error === 'insufficient') return reply.code(402).send({ error: 'insufficient_wei', required: FOUND_WEI_COST });
                 return reply.code(400).send({ error: moved.error });
             }
 
-            const communityId = await new CommunityStore(pool, audit).found({
-                gridName: grid, founderDid: founder, name, purpose, charter: v.charter, weiPaid: FOUND_WEI_COST, tick: tick(),
-            });
             return reply.code(201).send({ community_id: communityId, wei_paid: FOUND_WEI_COST, status: 'active' });
         },
     );

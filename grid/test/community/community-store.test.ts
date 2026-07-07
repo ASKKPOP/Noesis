@@ -8,7 +8,12 @@ import { validateCharter, type Charter } from '../../src/community/types.js';
 import { AuditChain } from '../../src/audit/chain.js';
 
 function pool(rows: unknown[] = []): Pool {
-    return { query: vi.fn().mockResolvedValue([rows as RowDataPacket[], {}]) } as unknown as Pool;
+    // One shared query mock backs both pool.query and the transactional conn.query
+    // (found() now persists inside a getConnection transaction), so call-site
+    // assertions on pool.query still see the INSERTs issued through the connection.
+    const q = vi.fn().mockResolvedValue([rows as RowDataPacket[], {}]);
+    const conn = { beginTransaction: vi.fn(), query: q, commit: vi.fn(), rollback: vi.fn(), release: vi.fn() };
+    return { query: q, getConnection: vi.fn(async () => conn) } as unknown as Pool;
 }
 const FOUNDER = 'did:civic:noesis:alice';
 const CHARTER: Charter = { membership: 'open', subgovernance: 'founder_led', conduct_rules: 'be kind', exit_terms: 'leave anytime' };
