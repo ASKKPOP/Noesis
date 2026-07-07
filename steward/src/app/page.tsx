@@ -14,7 +14,7 @@ interface NousEntry {
     did: string;
     name: string;
     region: string;
-    ousia: number;
+    balance_wei: number;
     lifecyclePhase: string;
     reputation: number;
     status: string;
@@ -258,7 +258,7 @@ export default function DashboardPage() {
                                             color: 'var(--muted)',
                                         }}
                                     >
-                                        {n.ousia.toLocaleString()}
+                                        {(n.balance_wei ?? 0).toLocaleString()}
                                     </td>
                                 </tr>
                             ))}
