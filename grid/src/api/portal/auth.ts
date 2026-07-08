@@ -20,6 +20,7 @@ import { SiweMessage } from 'siwe';
 import { SignJWT, jwtVerify, generateKeyPair } from 'jose';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
+import type { HumanRecord } from '../../human/types.js';
 import { appendHumanJoined } from '../../audit/append-human-joined.js';
 import { appendHumanIdentified } from '../../audit/append-human-identified.js';
 import { appendPortalAuthLogin } from '../../audit/append-portal-auth-login.js';
@@ -42,6 +43,32 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
     const storedHash = Buffer.from(hashHex, 'hex');
     const candidate = (await scryptAsync(password, salt, 64)) as Buffer;
     return storedHash.length === candidate.length && timingSafeEqual(storedHash, candidate);
+}
+
+/**
+ * Persist a newly-created human to the human_users table so the in-memory
+ * registry survives a grid restart and onboarding (which reads/writes this
+ * table on /me) can actually complete. Best-effort: a failure is logged but
+ * never blocks sign-up (the in-memory registry still serves this session).
+ * No-op when the pool is absent (in-memory test mode). Runs at most once per
+ * human — HumanRegistry.createHuman guards against in-memory duplicates and the
+ * registry is rehydrated from this table at boot.
+ */
+async function persistHuman(
+    pool: GridServices['humanPool'],
+    human: HumanRecord,
+    passwordHash: string | null,
+): Promise<void> {
+    if (!pool) return;
+    try {
+        await pool.query(
+            `INSERT INTO human_users (grid_name, did, eth_address, email, password_hash, region, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [human.grid_name, human.did, human.eth_address, human.email, passwordHash, human.region, human.created_at],
+        );
+    } catch (err) {
+        console.error('[auth] failed to persist human to human_users (continuing in-memory)', err);
+    }
 }
 
 export const COOKIE_NAME = 'noesis_portal_token';
@@ -138,6 +165,7 @@ export function registerPortalAuthRoutes(
         const isNew = human === undefined;
         if (!human) {
             human = humanRegistry.createHuman({ eth_address: ethAddress, grid_name: gridName });
+            await persistHuman(services.humanPool, human, null);
 
             // WEB3-04: SHA-256 hash of lowercased ETH address — raw address never in audit chain.
             const eth_address_hash = createHash('sha256')
@@ -241,6 +269,7 @@ export function registerPortalAuthRoutes(
             password_hash,
             grid_name: gridName,
         });
+        await persistHuman(services.humanPool, human, password_hash);
 
         // Phase 33 OBS-08b / D-33-A5 — universal identity event for email humans.
         // identity_hash = sha256(email.toLowerCase().trim()) — a new privacy-preserved
