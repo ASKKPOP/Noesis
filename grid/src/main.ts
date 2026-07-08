@@ -207,6 +207,26 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     // queries on GET /me and PATCH /me. Follows the humanSanctionStore closure pattern.
     const humanPool = dbConn ? dbConn.getPool() : undefined;
 
+    // Rehydrate the in-memory HumanRegistry from human_users so Portal humans —
+    // their password hashes and onboarding state — survive a grid restart. Without
+    // this the registry boots empty: sign-in fails after a restart and onboarding
+    // (whose `onboarded` flag is derived from this table on GET /me) can never
+    // complete for anyone. Best-effort; a failure leaves the registry in-memory.
+    if (humanPool) {
+        try {
+            const [humanRows] = await humanPool.query(
+                'SELECT grid_name, did, eth_address, email, password_hash, region, created_at FROM human_users',
+            ) as [Array<{
+                grid_name: string; did: string; eth_address: string | null;
+                email: string | null; password_hash: string | null;
+                region: string | null; created_at: Date | string;
+            }>, unknown];
+            humanRegistry.hydrateFromRows(humanRows);
+        } catch (err) {
+            console.warn('[main] human_users rehydration failed (continuing in-memory)', err);
+        }
+    }
+
     // Phase 41 — PresenceService wiring (SLEEP-01..05).
     // Only constructed when a DB connection is available (mirrors loreStorage / humanPool pattern).
     // civicDidStore / businessDidStore are hoisted to the outer scope so they can ALSO be

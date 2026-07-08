@@ -94,6 +94,47 @@ export class HumanRegistry {
         return this.byDid.get(`${gridName}:${did}`);
     }
 
+    /**
+     * Rehydrate the in-memory registry from persisted human_users rows.
+     * Called once at grid boot so Portal humans (and their onboarding state /
+     * password hashes) survive a restart — the registry is the in-process source
+     * of truth, but without this it starts empty and every prior human vanishes
+     * (sign-in fails, onboarding can never complete). Idempotent.
+     */
+    hydrateFromRows(rows: ReadonlyArray<{
+        did: string;
+        grid_name: string;
+        eth_address: string | null;
+        email: string | null;
+        region: string | null;
+        created_at: Date | string;
+        password_hash: string | null;
+    }>): void {
+        for (const row of rows) {
+            const address = row.eth_address ? row.eth_address.toLowerCase() : null;
+            const email = row.email ? row.email.toLowerCase() : null;
+            const record: HumanRecord = {
+                did: row.did,
+                eth_address: address,
+                email,
+                grid_name: row.grid_name,
+                region: row.region ?? 'agora',
+                created_at: row.created_at instanceof Date ? row.created_at : new Date(row.created_at),
+            };
+            this.byDid.set(`${row.grid_name}:${record.did}`, record);
+            if (address) {
+                this.byAddress.set(`${row.grid_name}:${address}`, record);
+            }
+            if (email) {
+                const emailKey = `${row.grid_name}:${email}`;
+                this.byEmail.set(emailKey, record);
+                if (row.password_hash) {
+                    this.passwordHashes.set(emailKey, row.password_hash);
+                }
+            }
+        }
+    }
+
     /** Return all human records for a grid (used by tests). */
     listByGrid(gridName: string): HumanRecord[] {
         return [
