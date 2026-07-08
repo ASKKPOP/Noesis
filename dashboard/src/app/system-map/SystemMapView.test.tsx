@@ -28,7 +28,7 @@ function fixture(overrides?: Partial<SystemMap['institutions']>): SystemMap {
             registry: { status: 'active', metric: 5, headline: '', civic_active: 5, nous_active: 1 },
             polis: { status: 'empty', metric: 0, headline: '', bills_active: 0, bills_enacted: 0 },
             police: { status: 'active', metric: 2, headline: '', complaints: 2, sanctions_active: 0 },
-            irs: { status: 'active', metric: '99', headline: '', balance_bios: '99', fee_rate_percent: 2 },
+            irs: { status: 'active', metric: '99', headline: '', balance_wei: '99', fee_rate_percent: 2 },
             marketplace: { status: 'down', metric: null, headline: 'db_unavailable', listings_active: 0, escrow_settled: 0 },
             library: { status: 'active', metric: 42, headline: '', entries_published: 42, citations_total: 9 },
             communities: { status: 'active', metric: 3, headline: '', communities_active: 3, members_active: 7 },

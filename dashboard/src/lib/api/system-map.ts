@@ -62,7 +62,7 @@ export interface PoliceItem {
 }
 export interface IrsItem {
     status: InstitutionStatus; metric: string | null; headline: string;
-    balance_bios: string; fee_rate_percent: number;
+    balance_wei: string; fee_rate_percent: number;
 }
 export interface MarketplaceItem {
     status: InstitutionStatus; metric: number | null; headline: string;

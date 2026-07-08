@@ -28,6 +28,7 @@
  * the reserved-ish `status` identifier is backticked (the mock Pool cannot catch
  * reserved-word SQL errors — backticking avoids a real-MySQL crash-loop on deploy).
  */
+import { formatEther } from 'ethers';
 import type { FastifyInstance } from 'fastify';
 import type { RowDataPacket, Pool } from 'mysql2/promise';
 import type { GridServices } from '../server.js';
@@ -283,9 +284,12 @@ export function registerSystemMapRoute(app: FastifyInstance, services: GridServi
                 const feeRatePercent = feePresent ? Number.parseFloat(String(rate[0].config_value)) * 100 : 0;
                 const hasBalance = balanceWei !== '0' && balanceWei !== '';
                 const status: InstitutionStatus = hasBalance || feePresent ? 'active' : 'empty';
+                // Money speaks wei (D-MONEY-07); "Bios" is the body-drive, never money.
+                // Show the human amount in ETH (formatEther); keep raw wei in balance_wei.
+                const balanceEth = formatEther(BigInt(balanceWei));
                 return {
-                    status, metric: balanceWei,
-                    headline: `treasury ${balanceWei} bios · ${feeRatePercent}% fee`,
+                    status, metric: balanceEth,
+                    headline: `treasury ${balanceEth} ETH · ${feeRatePercent}% fee`,
                     balance_wei: balanceWei, fee_rate_percent: feeRatePercent,
                 };
             },
