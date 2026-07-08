@@ -16,6 +16,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { useHumanAuthStore } from '@/lib/stores/human-auth-store';
 
 const PUBLIC_PREFIXES = ['/portal/auth', '/portal/terms', '/portal/privacy'];
 
@@ -26,6 +27,7 @@ function isPublicPath(pathname: string): boolean {
 export default function PortalAuthGate({ children }: { children: ReactNode }) {
     const pathname = usePathname() ?? '/portal';
     const router = useRouter();
+    const setUser = useHumanAuthStore((s) => s.setUser);
     const publicPage = isPublicPath(pathname);
     const [allowed, setAllowed] = useState(publicPage);
 
@@ -39,10 +41,20 @@ export default function PortalAuthGate({ children }: { children: ReactNode }) {
         const toAuth = () =>
             router.replace(`/portal/auth?next=${encodeURIComponent(pathname)}`);
         fetch(`${gridApiBase}/api/v1/portal/auth/me`, { credentials: 'include' })
-            .then(res => {
+            .then(async res => {
                 if (cancelled) return;
-                if (res.ok) setAllowed(true);
-                else toAuth();
+                if (!res.ok) {
+                    toAuth();
+                    return;
+                }
+                // Hydrate the client auth store from the authoritative /me body so
+                // currentUser survives a reload / direct-nav — not only right after
+                // login. Without this the store is null on every fresh load and
+                // Profile/PortalHeader render blank for a logged-in user.
+                const user = await res.json().catch(() => null);
+                if (cancelled) return;
+                if (user) setUser(user);
+                setAllowed(true);
             })
             .catch(() => {
                 if (!cancelled) toAuth();
@@ -50,7 +62,7 @@ export default function PortalAuthGate({ children }: { children: ReactNode }) {
         return () => {
             cancelled = true;
         };
-    }, [pathname, publicPage, router]);
+    }, [pathname, publicPage, router, setUser]);
 
     if (!allowed) {
         return (
