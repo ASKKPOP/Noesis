@@ -156,6 +156,12 @@ describe('GET /api/v1/system/map — computed status (not constant)', () => {
         expect(body.institutions.polis.status).toBe('active');
         expect(body.institutions.police.status).toBe('active');
         expect(body.institutions.irs.status).toBe('active');
+        // Regression: ISSUE-002 (QA 2026-07-08) — treasury is money=wei (D-MONEY-07),
+        // shown in ETH via formatEther, never the raw wei labeled "bios".
+        expect(body.institutions.irs.balance_wei).toBe('123456'); // raw wei preserved
+        expect(body.institutions.irs.metric).not.toBe('123456');  // display is formatted, not raw wei
+        expect(body.institutions.irs.headline).toContain('ETH');
+        expect(body.institutions.irs.headline).not.toContain('bios');
         expect(body.institutions.marketplace.status).toBe('active');
         expect(body.institutions.library.status).toBe('active');
         expect(body.institutions.library.entries_published).toBe(3);
