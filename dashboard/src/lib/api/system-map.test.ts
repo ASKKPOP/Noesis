@@ -30,7 +30,7 @@ const FIXTURE = {
         registry: { status: 'active', metric: 5, headline: '', civic_active: 5, nous_active: 1 },
         polis: { status: 'active', metric: 2, headline: '', bills_active: 2, bills_enacted: 1 },
         police: { status: 'empty', metric: 0, headline: '', complaints: 0, sanctions_active: 0 },
-        irs: { status: 'active', metric: '123', headline: '', balance_bios: '123', fee_rate_percent: 2 },
+        irs: { status: 'active', metric: '123', headline: '', balance_wei: '123', fee_rate_percent: 2 },
         marketplace: { status: 'active', metric: 4, headline: '', listings_active: 4, escrow_settled: 1 },
         library: { status: 'active', metric: 42, headline: '', entries_published: 42, citations_total: 9 },
         communities: { status: 'active', metric: 3, headline: '', communities_active: 3, members_active: 7 },

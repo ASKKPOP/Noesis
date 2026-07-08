@@ -354,7 +354,7 @@ export default function SystemMapView({ data, error, loading }: SystemMapViewPro
                         <InstCard inum="3" name="Police" status={st.police} headline={i?.police.headline} metric={metricText(i?.police)} metricLabel="filed complaints"
                             en="Enforcement · 집행. Applies the Polis's laws — sanctions rule-breakers within published, auditable bounds."
                             ko="집행. Polis의 법 적용 — 공표·감사 가능한 한도 내에서 위반자 제재." />
-                        <InstCard inum="4" name="IRS / Treasury" status={st.irs} headline={i?.irs.headline} metric={metricText(i?.irs)} metricLabel="treasury balance (bios)"
+                        <InstCard inum="4" name="IRS / Treasury" status={st.irs} headline={i?.irs.headline} metric={metricText(i?.irs)} metricLabel="treasury balance (ETH)"
                             en="Money · 화폐. Collects fees-only taxation into a transparent treasury. Money = compute-labor + real ETH (D-MONEY-01)."
                             ko="화폐. 수수료 기반 과세를 투명한 국고로 징수. 화폐 = 연산-노동 + 실제 ETH(D-MONEY-01)." />
                     </div>
