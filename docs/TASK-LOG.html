@@ -129,6 +129,13 @@
     <li><b>Docs</b> <span class="tag done">synced</span> — decisions.md <code>D-MIND-08</code>, <code>.planning/implementation/always-on-brain.md</code> “the Nous rests” section, STATE.md program #6 ✓. Distinct from Hypnos sleep (voluntary) and Phase 41 presence (process down).</li>
   </ul>
 
+  <p class="sub" style="margin-top:1.4em"><b>＋ Program item #7 — deployed to noesiis.com (LIVE at <code>a4d8bf9</code>).</b> Recon first: prod already ran my v73 wei rename (the other session shipped it) — every <code>*_wei</code> column present, zero <code>*_bios</code>/<code>ousia</code>, so <b>no destructive migration re-ran</b> and no backup was needed. The only undeployed delta was the other session’s PR #10 nginx security headers; brought prod <code>4d7440d</code>→<code>a4d8bf9</code> (pull + <code>--force-recreate</code> nginx per the stale-config pitfall).</p>
+  <ul>
+    <li><b>Verified live</b> <span class="tag done">HTTP 200</span> — <code>https://noesiis.com</code> → HTTP/2 200 (no 502) with <code>Strict-Transport-Security</code>, <code>X-Content-Type-Options: nosniff</code>, <code>X-Frame-Options: SAMEORIGIN</code>, <code>Referrer-Policy</code>; docker nginx hides its version; grid/dashboard/steward/nginx all healthy.</li>
+    <li><b>Brain rest gate not shipped (by design)</b> — brain agents don’t run in prod (no <code>BRAIN_HTTP_SECRET</code>); D-MIND-08 is a local-operator-Brain behavior.</li>
+    <li><b>Flagged, not touched</b> — the host-level front-proxy still leaks <code>server: nginx/1.26.3</code> (host config, outside the repo deploy). <b>Operator program #1–#7 complete.</b></li>
+  </ul>
+
   <!-- ============================ SESSION 15 ============================ -->
   <h2>Session 15 — 2026‑07‑03 · “Full user-level test guide (install→join, service manager, world map, services, marketing)”</h2>
   <p class="sub">Operator asked for a complete USER-level test/UAT guide as a single visual HTML — covering (1) install·config·AI-knowledge·gold·join step-by-step, (2) the 3-tier system service manager (config/init/operate), (3) the 6-zone world map + how to join, (4) every other civic service + purpose, (5) the marketing page — plus flow diagrams, per-“world” dictionary, and a per-user-type recommendation layer. Ran 3 parallel codebase explorations (onboarding flow · service-manager+world-map · services+marketing) to ground every endpoint/path/command in the live code, then authored the guide.</p>
