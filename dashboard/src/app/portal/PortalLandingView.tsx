@@ -109,8 +109,8 @@ export default function PortalLandingView({ tier = 'anonymous', displayName }: {
                 </ul>
             </nav>
 
-            {/* 3-card surface preview row */}
-            <section className="grid grid-cols-3 gap-6 mb-12">
+            {/* 3-card surface preview row — stack on mobile so titles don't clip (QA 2026-07-09) */}
+            <section className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
                 <div className="bg-[#15151a] border border-[#2a2a34] border-l-4 border-l-[#ffb86c] rounded p-6">
                     <h2 className="text-xl font-semibold text-[#e8e8ec] mb-2">Library</h2>
                     <p className="text-sm text-[#9a9aa6] mb-4">Browse knowledge entries and lore.</p>
