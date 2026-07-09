@@ -54,6 +54,11 @@ services:
       # can never be sent back (browsers refuse Secure cookies on non-HTTPS), making
       # every portal_session_required route silently unusable.
       GRID_COOKIE_SECURE: ${GRID_COOKIE_SECURE:-true}
+      # SECURITY 2026-07-09: server-trusted operator allowlist. Format: comma-separated
+      # DID|op:<uuid-v4>|tier entries (the Portal-session DID of each operator). Empty ⇒
+      # every operator/* route returns 403 not_operator (fail-closed). Retires the
+      # spoofable x-operator-tier/-id header pattern.
+      GRID_OPERATOR_DIDS: ${GRID_OPERATOR_DIDS:-}
       # Tier-3 Portal Manager console (read-only reviewer queue at portal.${DOMAIN}
       # / dashboard /system/portal-manager). Dedicated flag, DECOUPLED from
       # GRID_ADMIN_ENABLED — enabling this does NOT enable admin .env routes.
@@ -208,6 +213,11 @@ services:
       - "${STEWARD_PORT:-3002}:3002"
     environment:
       NEXT_PUBLIC_GRID_ORIGIN: ${NEXT_PUBLIC_GRID_ORIGIN:-http://localhost:8080}
+      # SECURITY 2026-07-09: server-held operator Portal credentials. The operator
+      # proxy signs in to the Grid with these to obtain a session cookie (retires the
+      # spoofable x-operator-* header). The account's DID must be in GRID_OPERATOR_DIDS.
+      STEWARD_OPERATOR_EMAIL: ${STEWARD_OPERATOR_EMAIL:-}
+      STEWARD_OPERATOR_PASSWORD: ${STEWARD_OPERATOR_PASSWORD:-}
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
       PORT: 3002
