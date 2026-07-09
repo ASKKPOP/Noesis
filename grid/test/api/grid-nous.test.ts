@@ -123,3 +123,34 @@ describe('GET /api/v1/grid/nous — empty roster', () => {
         expect(body.nous).toEqual([]);
     });
 });
+
+describe('GET /api/v1/grid/nous — excludes infrastructure accounts', () => {
+    let app: FastifyInstance;
+    let clock: WorldClock;
+
+    beforeAll(async () => {
+        const s = seedServer(true);
+        app = s.app;
+        clock = s.clock;
+        // A did:noesis:system:* account (e.g. the treasury) is infrastructure, not a citizen.
+        s.registry.spawn(
+            { name: 'System Treasury', did: 'did:noesis:system:treasury', publicKey: 'system', region: 'agora' },
+            'genesis.grid', 0, 0,
+        );
+        await app.ready();
+    });
+
+    afterAll(async () => {
+        await app.close();
+        clock.stop();
+    });
+
+    it('omits did:noesis:system:* from the public roster but keeps real citizens', async () => {
+        const res = await app.inject({ method: 'GET', url: '/api/v1/grid/nous' });
+        expect(res.statusCode).toBe(200);
+        const dids = (res.json() as { nous: { did: string }[] }).nous.map((n) => n.did);
+        expect(dids).not.toContain('did:noesis:system:treasury');
+        expect(dids).toContain('did:noesis:sophia');
+        expect(dids).toContain('did:noesis:hermes');
+    });
+});

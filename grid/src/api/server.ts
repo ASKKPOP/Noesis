@@ -621,15 +621,20 @@ export function buildServerWithHub(
             // Legacy test harness path — no registry wired. Treat as empty roster.
             return { nous: [] };
         }
-        const nous: NousRosterEntry[] = registry.active().map((r) => ({
-            did: r.did,
-            name: r.name,
-            region: r.region,
-            balance_wei: r.balance_wei,
-            lifecyclePhase: r.lifecyclePhase,
-            reputation: r.reputation,
-            status: r.status,
-        }));
+        // Infrastructure accounts (did:noesis:system:*, e.g. the treasury) are not
+        // citizens — exclude them from the public roster.
+        const nous: NousRosterEntry[] = registry
+            .active()
+            .filter((r) => !r.did.startsWith('did:noesis:system:'))
+            .map((r) => ({
+                did: r.did,
+                name: r.name,
+                region: r.region,
+                balance_wei: r.balance_wei,
+                lifecyclePhase: r.lifecyclePhase,
+                reputation: r.reputation,
+                status: r.status,
+            }));
         return { nous };
     });
 
