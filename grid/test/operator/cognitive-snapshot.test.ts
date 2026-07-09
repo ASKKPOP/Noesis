@@ -1,15 +1,21 @@
 /**
  * Integration tests for registerCognitiveSnapshotRoute.
  *
- * Tests the full H3+ proxy route: header-derived tier validation (GAP-25a-1),
- * header-derived operator_id, DID validation, tombstone check, runner lookup,
+ * Tests the full H3+ proxy route: server-context tier validation (GAP-25a-1),
+ * server-context operator_id, DID validation, tombstone check, runner lookup,
  * Brain HTTP proxy, creed_violation_count merge, and operator.inspected emission.
+ *
+ * SECURITY 2026-07-09: operator identity/tier now come from the server-trusted
+ * operator_only gate (req.didContext.operatorTier/operatorId), simulated here by
+ * withOperatorContext. Header-gate cases (tier_missing / invalid_operator_id) moved
+ * to grid/test/api/operator-gate.test.ts.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Fastify from 'fastify';
 import { AuditChain } from '../../src/audit/chain.js';
 import { registerCognitiveSnapshotRoute } from '../../src/api/operator/cognitive-snapshot.js';
+import { withOperatorContext, TEST_OPERATOR_ID } from '../helpers/operator-session.js';
 import type { GridServices } from '../../src/api/server.js';
 import type { NousRegistry } from '../../src/registry/registry.js';
 import {
@@ -17,12 +23,8 @@ import {
 } from '../../src/api/operator/brain-http-errors.js';
 
 const DID = 'did:noesis:agent001';
-// Valid operator_id: must match OPERATOR_ID_REGEX = /^op:[uuid-v4]$/i
-const VALID_OPERATOR_ID = 'op:12345678-1234-4abc-89ab-123456789012';
-const VALID_HEADERS = {
-    'x-operator-tier': '3',
-    'x-operator-id': VALID_OPERATOR_ID,
-};
+// Server-trusted operator_id (matches withOperatorContext default TEST_OPERATOR_ID).
+const VALID_OPERATOR_ID = TEST_OPERATOR_ID;
 
 const VALID_BRAIN_BODY = {
     drive_levels: {
@@ -64,8 +66,10 @@ function makeRegistry(opts: { exists?: boolean; tombstoned?: boolean } = {}): No
 
 function buildTestApp(
     services: Partial<GridServices> & { audit: AuditChain },
+    operatorTier?: number,
 ) {
     const app = Fastify({ logger: false });
+    withOperatorContext(app, operatorTier !== undefined ? { tier: operatorTier } : undefined);
     registerCognitiveSnapshotRoute(app, services as GridServices);
     return app;
 }
@@ -85,60 +89,14 @@ describe('POST /api/v1/operator/nous/:did/cognitive-snapshot', () => {
         } as unknown as Partial<GridServices> & { audit: AuditChain };
     });
 
-    it('GAP-25a-1: rejects body-supplied tier when headers are missing (returns 401 tier_missing)', async () => {
-        const app = buildTestApp(baseServices);
+    it('returns 403 tier_too_low when operator context tier is below 3', async () => {
+        const app = buildTestApp(baseServices, 2);
         const resp = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${DID}/cognitive-snapshot`,
-            // No headers — body claims H3 but must be ignored
-            payload: { tier: 'H3', operator_id: VALID_OPERATOR_ID },
-        });
-        expect(resp.statusCode).toBe(401);
-        expect(JSON.parse(resp.body).error).toBe('tier_missing');
-    });
-
-    it('returns 403 tier_too_low when x-operator-tier header is below 3', async () => {
-        const app = buildTestApp(baseServices);
-        const resp = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${DID}/cognitive-snapshot`,
-            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OPERATOR_ID },
         });
         expect(resp.statusCode).toBe(403);
         expect(JSON.parse(resp.body).error).toBe('tier_too_low');
-    });
-
-    it('returns 401 tier_missing when x-operator-tier header is non-numeric', async () => {
-        const app = buildTestApp(baseServices);
-        const resp = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${DID}/cognitive-snapshot`,
-            headers: { 'x-operator-tier': 'H3', 'x-operator-id': VALID_OPERATOR_ID },
-        });
-        expect(resp.statusCode).toBe(401);
-        expect(JSON.parse(resp.body).error).toBe('tier_missing');
-    });
-
-    it('returns 400 invalid_operator_id when x-operator-id is the legacy "op:steward:default" form', async () => {
-        const app = buildTestApp(baseServices);
-        const resp = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${DID}/cognitive-snapshot`,
-            headers: { 'x-operator-tier': '3', 'x-operator-id': 'op:steward:default' },
-        });
-        expect(resp.statusCode).toBe(400);
-        expect(JSON.parse(resp.body).error).toBe('invalid_operator_id');
-    });
-
-    it('returns 400 invalid_operator_id when x-operator-id header is missing', async () => {
-        const app = buildTestApp(baseServices);
-        const resp = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${DID}/cognitive-snapshot`,
-            headers: { 'x-operator-tier': '3' },
-        });
-        expect(resp.statusCode).toBe(400);
-        expect(JSON.parse(resp.body).error).toBe('invalid_operator_id');
     });
 
     it('returns 400 on invalid DID', async () => {
@@ -146,7 +104,6 @@ describe('POST /api/v1/operator/nous/:did/cognitive-snapshot', () => {
         const resp = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/nous/not-a-valid-did/cognitive-snapshot',
-            headers: VALID_HEADERS,
         });
         expect(resp.statusCode).toBe(400);
         expect(JSON.parse(resp.body).error).toBe('invalid_did');
@@ -161,7 +118,6 @@ describe('POST /api/v1/operator/nous/:did/cognitive-snapshot', () => {
         const resp = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${DID}/cognitive-snapshot`,
-            headers: VALID_HEADERS,
         });
         expect(resp.statusCode).toBe(410);
         expect(JSON.parse(resp.body).error).toBe('tombstoned');
@@ -176,7 +132,6 @@ describe('POST /api/v1/operator/nous/:did/cognitive-snapshot', () => {
         const resp = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${DID}/cognitive-snapshot`,
-            headers: VALID_HEADERS,
         });
         expect(resp.statusCode).toBe(404);
         expect(JSON.parse(resp.body).error).toBe('unknown_nous');
@@ -191,7 +146,6 @@ describe('POST /api/v1/operator/nous/:did/cognitive-snapshot', () => {
         const resp = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${DID}/cognitive-snapshot`,
-            headers: VALID_HEADERS,
         });
         expect(resp.statusCode).toBe(503);
         expect(JSON.parse(resp.body).error).toBe('brain_unavailable');
@@ -207,7 +161,6 @@ describe('POST /api/v1/operator/nous/:did/cognitive-snapshot', () => {
         const resp = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${DID}/cognitive-snapshot`,
-            headers: VALID_HEADERS,
         });
         expect(resp.statusCode).toBe(503);
         expect(JSON.parse(resp.body).error).toBe('brain_unavailable');
@@ -218,7 +171,6 @@ describe('POST /api/v1/operator/nous/:did/cognitive-snapshot', () => {
         const resp = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${DID}/cognitive-snapshot`,
-            headers: VALID_HEADERS,
         });
         expect(resp.statusCode).toBe(200);
         const body = JSON.parse(resp.body);
@@ -239,7 +191,6 @@ describe('POST /api/v1/operator/nous/:did/cognitive-snapshot', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/cognitive-snapshot`,
-                headers: VALID_HEADERS,
             });
             expect(resp.statusCode).toBe(200);
 
@@ -254,15 +205,13 @@ describe('POST /api/v1/operator/nous/:did/cognitive-snapshot', () => {
             expect(entry.payload['target_did']).toBe(DID);
         });
 
-        it('GAP-25a-1: audit payload.operator_id uses header value, not body value', async () => {
-            const headerOpId = 'op:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
+        it('GAP-25a-1: audit payload.operator_id uses server context value, not body value', async () => {
             const bodyOpId = 'op:11111111-2222-4333-8444-555555555555';
             const priorLength = audit.length;
             const app = buildTestApp(baseServices);
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/cognitive-snapshot`,
-                headers: { 'x-operator-tier': '3', 'x-operator-id': headerOpId },
                 payload: { tier: 'H3', operator_id: bodyOpId }, // attacker body — must be ignored
             });
             expect(resp.statusCode).toBe(200);
@@ -270,9 +219,9 @@ describe('POST /api/v1/operator/nous/:did/cognitive-snapshot', () => {
                 (e) => e.id > priorLength,
             );
             expect(newEntries).toHaveLength(1);
-            expect((newEntries[0].payload as { operator_id: string }).operator_id).toBe(headerOpId);
+            expect((newEntries[0].payload as { operator_id: string }).operator_id).toBe(TEST_OPERATOR_ID);
             expect((newEntries[0].payload as { operator_id: string }).operator_id).not.toBe(bodyOpId);
-            expect(newEntries[0].actorDid).toBe(headerOpId);
+            expect(newEntries[0].actorDid).toBe(TEST_OPERATOR_ID);
         });
 
         it('does NOT emit operator.inspected when brainFetch throws', async () => {
@@ -285,7 +234,6 @@ describe('POST /api/v1/operator/nous/:did/cognitive-snapshot', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/cognitive-snapshot`,
-                headers: VALID_HEADERS,
             });
             expect(resp.statusCode).toBe(503);
 
@@ -305,7 +253,6 @@ describe('POST /api/v1/operator/nous/:did/cognitive-snapshot', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/cognitive-snapshot`,
-                headers: VALID_HEADERS,
             });
             expect(resp.statusCode).toBe(404);
             const newEntries = audit.query({ eventType: 'operator.inspected' }).filter(
@@ -328,7 +275,6 @@ describe('POST /api/v1/operator/nous/:did/cognitive-snapshot', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/cognitive-snapshot`,
-                headers: VALID_HEADERS,
             });
             expect(resp.statusCode).toBe(200);
             expect(JSON.parse(resp.body).creed_violation_count).toBe(3);
@@ -339,7 +285,6 @@ describe('POST /api/v1/operator/nous/:did/cognitive-snapshot', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/cognitive-snapshot`,
-                headers: VALID_HEADERS,
             });
             expect(resp.statusCode).toBe(200);
             expect(JSON.parse(resp.body).creed_violation_count).toBe(0);

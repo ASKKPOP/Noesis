@@ -1,12 +1,15 @@
 /**
  * Phase 25b D-25b-12 — tests for POST /api/v1/operator/spawn-system-nous.
  *
+ * SECURITY 2026-07-09: operator tier now comes from the server-trusted operator_only
+ * gate (req.didContext.operatorTier), simulated here by withOperatorContext. The
+ * header-gate cases (tier_missing / invalid_operator_id) moved to
+ * grid/test/api/operator-gate.test.ts. This handler no longer resolves an operator_id
+ * at all — it only checks tier — so there is no operator_id audit assertion.
+ *
  * Test matrix:
- *   Header-auth contract (H5 gate):
- *   - No x-operator-tier header → 401 tier_missing
- *   - Non-numeric tier header → 401 tier_missing
- *   - tier '4' (< 5) → 403 tier_too_low
- *   - tier '5' + invalid x-operator-id → 400 invalid_operator_id
+ *   Tier gate (H5):
+ *   - context tier 4 (< 5) → 403 tier_too_low
  *
  *   Body validation:
  *   - Missing name → 400 invalid_body
@@ -24,16 +27,16 @@
  * See: 25b-PLAN-14, D-25b-12, D-25b-NEW-1.
  */
 
-import { describe, it, expect, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import Fastify from 'fastify';
 import { WorldClock } from '../../src/clock/ticker.js';
 import { AuditChain } from '../../src/audit/chain.js';
 import { registerSpawnSystemNousRoute } from '../../src/api/operator/spawn-system-nous.js';
+import { withOperatorContext } from '../helpers/operator-session.js';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../src/api/server.js';
 import type { SpawnNousDeps } from '../../src/api/operator/spawn-system-nous.js';
 
-const OPERATOR = 'op:11111111-1111-4111-8111-111111111111';
 const SYSTEM_DID_REGEX = /^did:noesis:system:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 /** Create a minimal SpawnNousDeps stub that records calls and simulates audit emission. */
@@ -51,7 +54,7 @@ function makeSpawnDeps(audit: AuditChain): { deps: SpawnNousDeps; spawnCalls: Ar
     return { deps, spawnCalls };
 }
 
-function buildTestApp(): {
+function buildTestApp(operatorTier?: number): {
     app: FastifyInstance;
     audit: AuditChain;
     spawnCalls: Array<{ name: string; did: string; region: string }>;
@@ -66,71 +69,30 @@ function buildTestApp(): {
     };
 
     const app = Fastify({ logger: false });
+    withOperatorContext(app, operatorTier !== undefined ? { tier: operatorTier } : undefined);
     registerSpawnSystemNousRoute(app, services as GridServices, deps);
 
     return { app, audit, spawnCalls };
 }
 
-describe('25b-14: spawn-system-nous header-auth contract (H5, D-25b-NEW-1)', () => {
+describe('25b-14: spawn-system-nous tier gate (H5, D-25b-NEW-1)', () => {
     let app: FastifyInstance;
 
     afterEach(async () => {
         if (app) await app.close();
     });
 
-    it('returns 401 tier_missing when x-operator-tier header is absent', async () => {
-        ({ app } = buildTestApp());
+    it('returns 403 tier_too_low when operator context tier is 4 (< 5)', async () => {
+        ({ app } = buildTestApp(4));
         await app.ready();
 
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/spawn-system-nous',
-            payload: { name: 'Sophia', personality_seeds: ['curious'] },
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json().error).toBe('tier_missing');
-    });
-
-    it('returns 401 tier_missing when x-operator-tier is non-numeric', async () => {
-        ({ app } = buildTestApp());
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: '/api/v1/operator/spawn-system-nous',
-            headers: { 'x-operator-tier': 'H5', 'x-operator-id': OPERATOR },
-            payload: { name: 'Sophia', personality_seeds: ['curious'] },
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json().error).toBe('tier_missing');
-    });
-
-    it('returns 403 tier_too_low when x-operator-tier is 4 (< 5)', async () => {
-        ({ app } = buildTestApp());
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: '/api/v1/operator/spawn-system-nous',
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
             payload: { name: 'Sophia', personality_seeds: ['curious'] },
         });
         expect(res.statusCode).toBe(403);
         expect(res.json().error).toBe('tier_too_low');
-    });
-
-    it('returns 400 invalid_operator_id when x-operator-id header is malformed', async () => {
-        ({ app } = buildTestApp());
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: '/api/v1/operator/spawn-system-nous',
-            headers: { 'x-operator-tier': '5', 'x-operator-id': 'not-a-valid-operator-id' },
-            payload: { name: 'Sophia', personality_seeds: ['curious'] },
-        });
-        expect(res.statusCode).toBe(400);
-        expect(res.json().error).toBe('invalid_operator_id');
     });
 });
 
@@ -141,8 +103,6 @@ describe('25b-14: spawn-system-nous body validation', () => {
         if (app) await app.close();
     });
 
-    const H5_HEADERS = { 'x-operator-tier': '5', 'x-operator-id': OPERATOR };
-
     it('returns 400 invalid_body when name is missing', async () => {
         ({ app } = buildTestApp());
         await app.ready();
@@ -150,7 +110,6 @@ describe('25b-14: spawn-system-nous body validation', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/spawn-system-nous',
-            headers: H5_HEADERS,
             payload: { personality_seeds: ['curious'] },
         });
         expect(res.statusCode).toBe(400);
@@ -164,7 +123,6 @@ describe('25b-14: spawn-system-nous body validation', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/spawn-system-nous',
-            headers: H5_HEADERS,
             payload: { name: '', personality_seeds: ['curious'] },
         });
         expect(res.statusCode).toBe(400);
@@ -178,7 +136,6 @@ describe('25b-14: spawn-system-nous body validation', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/spawn-system-nous',
-            headers: H5_HEADERS,
             payload: { name: 'x'.repeat(65), personality_seeds: ['curious'] },
         });
         expect(res.statusCode).toBe(400);
@@ -192,7 +149,6 @@ describe('25b-14: spawn-system-nous body validation', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/spawn-system-nous',
-            headers: H5_HEADERS,
             payload: { name: 'Sophia', personality_seeds: [] },
         });
         expect(res.statusCode).toBe(400);
@@ -206,7 +162,6 @@ describe('25b-14: spawn-system-nous body validation', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/spawn-system-nous',
-            headers: H5_HEADERS,
             payload: { name: 'Sophia', personality_seeds: ['curious', 42] },
         });
         expect(res.statusCode).toBe(400);
@@ -220,7 +175,6 @@ describe('25b-14: spawn-system-nous body validation', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/spawn-system-nous',
-            headers: H5_HEADERS,
             payload: { name: 'Sophia', personality_seeds: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'] },
         });
         expect(res.statusCode).toBe(400);
@@ -235,17 +189,14 @@ describe('25b-14: spawn-system-nous success path', () => {
         if (app) await app.close();
     });
 
-    const H5_HEADERS = { 'x-operator-tier': '5', 'x-operator-id': OPERATOR };
-
     it('returns 200 with nous_did matching did:noesis:system:<uuid> scheme', async () => {
-        const { app: testApp, spawnCalls } = buildTestApp();
+        const { app: testApp } = buildTestApp();
         app = testApp;
         await app.ready();
 
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/spawn-system-nous',
-            headers: H5_HEADERS,
             payload: { name: 'Sophia', personality_seeds: ['curious researcher'] },
         });
 
@@ -265,7 +216,6 @@ describe('25b-14: spawn-system-nous success path', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/spawn-system-nous',
-            headers: H5_HEADERS,
             payload: { name: 'Hermes', personality_seeds: ['swift messenger'] },
         });
 
@@ -296,7 +246,6 @@ describe('25b-14: spawn-system-nous success path', () => {
         await app.inject({
             method: 'POST',
             url: '/api/v1/operator/spawn-system-nous',
-            headers: H5_HEADERS,
             payload: { name: 'Themis', personality_seeds: ['just arbiter'] },
         });
 
@@ -313,7 +262,6 @@ describe('25b-14: spawn-system-nous success path', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/spawn-system-nous',
-            headers: H5_HEADERS,
             payload: { name: 'x'.repeat(64), personality_seeds: ['seed'] },
         });
         expect(res.statusCode).toBe(200);
@@ -327,7 +275,6 @@ describe('25b-14: spawn-system-nous success path', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/spawn-system-nous',
-            headers: H5_HEADERS,
             payload: {
                 name: 'Sophia',
                 personality_seeds: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'],

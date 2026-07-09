@@ -3,12 +3,16 @@
  *
  * Tests for grid/src/api/operator/fork-nous.ts.
  *
- * Auth model: header-trust (x-operator-tier + x-operator-id), H4+ gate.
+ * Auth model: server-trusted operator_only gate (req.didContext.operatorTier/
+ *   operatorId), simulated here by withOperatorContext; H4+ threshold. The pure
+ *   header-gate cases (401 tier_missing / 400 invalid_operator_id) moved to
+ *   grid/test/api/operator-gate.test.ts.
  * Route: POST /api/v1/operator/fork/:nousDid
  * Download: GET /api/v1/operator/fork/:nousDid/download?token=<one-time-token>
  *
  * Strategy:
  *   - Inject services.checkOperatorOwnsNous stub to avoid DB dependency.
+ *     The stub now receives the server-trusted operatorId (from context) as arg 1.
  *   - Mock buildForkArchive to return deterministic fake bytes (avoids needing real .db files).
  *   - Use Fastify app.inject() for HTTP simulation.
  */
@@ -18,6 +22,7 @@ import { createHash } from 'node:crypto';
 import { AuditChain } from '../../../src/audit/chain.js';
 import { registerForkNousRoute } from '../../../src/api/operator/fork-nous.js';
 import { forkTokenStore } from '../../../src/api/operator/fork-token-store.js';
+import { withOperatorContext } from '../../helpers/operator-session.js';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../../src/api/server.js';
 
@@ -45,14 +50,11 @@ const OPERATOR_ID = 'op:11111111-1111-4111-8111-111111111111';
 const OPERATOR_B_ID = 'op:22222222-2222-4222-8222-222222222222';
 const NOUS_DID = 'did:civic:noesis:test-nous-abc';
 
-const VALID_HEADERS_H4 = {
-    'x-operator-tier': '4',
-    'x-operator-id': OPERATOR_ID,
-};
-
 function buildTestApp(opts: {
     ownsNous?: (operatorId: string, nousDid: string) => Promise<boolean>;
     auditChain?: AuditChain;
+    operatorTier?: number;
+    operatorId?: string;
 } = {}): { app: FastifyInstance; audit: AuditChain } {
     const audit = opts.auditChain ?? new AuditChain();
 
@@ -64,6 +66,11 @@ function buildTestApp(opts: {
     };
 
     const app = Fastify({ logger: false });
+    // Simulate the operator_only gate (server-trusted identity/tier, threshold H4).
+    withOperatorContext(app, {
+        ...(opts.operatorTier !== undefined ? { tier: opts.operatorTier } : {}),
+        ...(opts.operatorId !== undefined ? { operatorId: opts.operatorId } : {}),
+    });
     registerForkNousRoute(app, services as GridServices);
     return { app, audit };
 }
@@ -87,7 +94,6 @@ describe('POST /api/v1/operator/fork/:nousDid — header-trust auth (Plan 02)', 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}`,
-            headers: VALID_HEADERS_H4,
         });
 
         expect(res.statusCode).toBe(200);
@@ -99,60 +105,25 @@ describe('POST /api/v1/operator/fork/:nousDid — header-trust auth (Plan 02)', 
         expect(body.bytes).toBe(FAKE_BYTES.length);
     });
 
-    it('43-02-02: returns 401 tier_missing when x-operator-tier header absent', async () => {
-        const { app: a } = buildTestApp();
+    it('43-02-03: returns 403 tier_too_low when operator tier < 4', async () => {
+        const { app: a } = buildTestApp({ operatorTier: 3 });
         app = a;
         await app.ready();
 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}`,
-            headers: { 'x-operator-id': OPERATOR_ID },
-        });
-
-        expect(res.statusCode).toBe(401);
-        expect(res.json()).toMatchObject({ error: 'tier_missing' });
-    });
-
-    it('43-02-03: returns 403 tier_too_low when tier < 4', async () => {
-        const { app: a } = buildTestApp();
-        app = a;
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}`,
-            headers: {
-                'x-operator-tier': '3',
-                'x-operator-id': OPERATOR_ID,
-            },
         });
 
         expect(res.statusCode).toBe(403);
         expect(res.json()).toMatchObject({ error: 'tier_too_low' });
     });
 
-    it('43-02-04: returns 400 invalid_operator_id when x-operator-id malformed', async () => {
-        const { app: a } = buildTestApp();
-        app = a;
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}`,
-            headers: {
-                'x-operator-tier': '4',
-                'x-operator-id': 'not-a-valid-operator-id',
-            },
-        });
-
-        expect(res.statusCode).toBe(400);
-        expect(res.json()).toMatchObject({ error: 'invalid_operator_id' });
-    });
-
     it('43-02-05: returns 403 on cross-operator fork attempt (T-43-auth)', async () => {
         // Operator B tries to fork a Nous owned by Operator A — must be rejected.
+        // The ownership checker receives the server-trusted operatorId (Operator B).
         const { app: a } = buildTestApp({
+            operatorId: OPERATOR_B_ID,
             ownsNous: async (operatorId, _nousDid) => {
                 // Only OPERATOR_ID owns NOUS_DID; OPERATOR_B_ID does not.
                 return operatorId === OPERATOR_ID;
@@ -164,10 +135,6 @@ describe('POST /api/v1/operator/fork/:nousDid — header-trust auth (Plan 02)', 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}`,
-            headers: {
-                'x-operator-tier': '4',
-                'x-operator-id': OPERATOR_B_ID,
-            },
         });
 
         expect(res.statusCode).toBe(403);
@@ -195,7 +162,6 @@ describe('POST /api/v1/operator/fork/:nousDid — audit order discipline (Plan 0
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}`,
-            headers: VALID_HEADERS_H4,
         });
 
         expect(res.statusCode).toBe(200);
@@ -214,7 +180,6 @@ describe('POST /api/v1/operator/fork/:nousDid — audit order discipline (Plan 0
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}`,
-            headers: VALID_HEADERS_H4,
         });
 
         expect(res.statusCode).toBe(200);
@@ -248,7 +213,6 @@ describe('POST /api/v1/operator/fork/:nousDid — audit order discipline (Plan 0
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}`,
-            headers: VALID_HEADERS_H4,
         });
 
         expect(res.statusCode).toBe(500);
@@ -273,7 +237,6 @@ describe('GET /api/v1/operator/fork/:nousDid/download — one-time token (Plan 0
         const res = await testApp.inject({
             method: 'POST',
             url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}`,
-            headers: VALID_HEADERS_H4,
         });
         expect(res.statusCode).toBe(200);
         const body = res.json<{ download_url: string }>();

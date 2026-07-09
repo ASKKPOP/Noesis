@@ -35,7 +35,6 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { DID_REGEX } from '../server.js';
 import type { ApiError } from '../types.js';
-import { OPERATOR_ID_REGEX } from '../types.js';
 import { appendOperatorEvent } from '../../audit/operator-events.js';
 import { tombstoneCheck, TombstonedDidError } from '../../registry/tombstone-check.js';
 
@@ -53,31 +52,19 @@ export function registerMemoryQueryRoute(
         async (req, reply) => {
             const body = req.body ?? {};
 
-            // 1. Tier gate — read from server-trusted x-operator-tier header (D-25b-NEW-1).
+            // 1. Tier gate — server-trusted operator context (set by the operator_only gate).
             //    GAP-25a-1 fix: body fields tier/operator_id are NOT trusted.
-            const tierHeader = req.headers['x-operator-tier'];
-            if (typeof tierHeader !== 'string') {
-                reply.code(401);
-                return { error: 'tier_missing' } satisfies ApiError;
-            }
-            const tierNum = parseInt(tierHeader, 10);
-            if (!Number.isFinite(tierNum)) {
-                reply.code(401);
-                return { error: 'tier_missing' } satisfies ApiError;
-            }
-            if (tierNum < 2) {
+            const tier = req.didContext?.operatorTier ?? 0;
+            if (tier < 2) {
                 reply.code(403);
                 return { error: 'tier_too_low' } satisfies ApiError;
             }
-
-            // 1b. Operator-id gate — read from server-trusted x-operator-id header.
-            const opIdHeader = req.headers['x-operator-id'];
-            if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) {
-                reply.code(400);
-                return { error: 'invalid_operator_id' } satisfies ApiError;
-            }
             const resolvedTier: 'H2' = 'H2';
-            const resolvedOperatorId = opIdHeader;
+            const resolvedOperatorId = req.didContext?.operatorId;
+            if (!resolvedOperatorId) {
+                reply.code(403);
+                return { error: 'not_operator' } satisfies ApiError;
+            }
 
             // 2. DID shape gate (consistent with /api/v1/nous/:did/state from Plan 04).
             const targetDid = req.params.did;

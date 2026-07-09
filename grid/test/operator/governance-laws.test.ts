@@ -1,17 +1,18 @@
 /**
- * Regression tests for registerGovernanceOperatorRoutes — header-auth contract.
+ * Regression tests for registerGovernanceOperatorRoutes.
  *
- * Phase 25b Wave 0 (D-25b-NEW-1): tier and operator_id are now derived from
- * server-trusted request headers (x-operator-tier, x-operator-id), NOT from
- * the request body. This file pins that contract for all three governance
- * operator endpoints:
+ * SECURITY 2026-07-09: tier and operator_id are derived from the server-trusted
+ * operator_only gate (req.didContext.operatorTier/operatorId), simulated here by
+ * withOperatorContext. The pure header-gate cases (tier_missing / invalid_operator_id)
+ * moved to grid/test/api/operator-gate.test.ts. This file pins the per-route min-tier
+ * gate + the audit payload sourcing for all three governance operator endpoints:
  *   POST   /api/v1/operator/governance/laws       (add law)
  *   PUT    /api/v1/operator/governance/laws/:id   (amend law)
  *   DELETE /api/v1/operator/governance/laws/:id   (repeal law)
  *
  * Structure mirrors grid/test/operator/cognitive-snapshot.test.ts:
  * - Uses Fastify inject (no real server, no WebSocket)
- * - One describe('header-auth contract') section per endpoint (4 cases each)
+ * - One describe section per endpoint (min-tier + success cases)
  * - Audit payload sourcing verified on success path
  */
 
@@ -19,16 +20,10 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import Fastify from 'fastify';
 import { AuditChain } from '../../src/audit/chain.js';
 import { registerGovernanceOperatorRoutes } from '../../src/api/operator/governance-laws.js';
+import { withOperatorContext, TEST_OPERATOR_ID } from '../helpers/operator-session.js';
 import type { GridServices } from '../../src/api/server.js';
 import type { Law } from '../../src/logos/types.js';
 import { LogosEngine } from '../../src/logos/engine.js';
-
-// Valid operator_id matching OPERATOR_ID_REGEX
-const VALID_OPERATOR_ID = 'op:12345678-1234-4abc-89ab-123456789012';
-const VALID_HEADERS = {
-    'x-operator-tier': '3',
-    'x-operator-id': VALID_OPERATOR_ID,
-};
 
 const FIXTURE_LAW: Law = {
     id: 'law.test.header.001',
@@ -45,8 +40,11 @@ const FIXTURE_LAW: Law = {
 
 function buildTestApp(
     services: Partial<GridServices> & { audit: AuditChain },
+    opts?: { tier?: number },
 ) {
     const app = Fastify({ logger: false });
+    // Simulate the operator_only gate (server-trusted identity/tier).
+    withOperatorContext(app, opts?.tier !== undefined ? { tier: opts.tier } : undefined);
     registerGovernanceOperatorRoutes(app, services as GridServices);
     return app;
 }
@@ -67,49 +65,23 @@ describe('POST /api/v1/operator/governance/laws — header-auth contract', () =>
         services = makeServices();
     });
 
-    it('no headers + body {tier:"H5"} → 401 tier_missing (body tier ignored)', async () => {
-        const app = buildTestApp(services);
+    it('operator tier 2 (< 3) → 403 tier_too_low', async () => {
+        const app = buildTestApp(services, { tier: 2 });
         const resp = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/governance/laws',
-            // No x-operator-tier header — body claims tier but must be ignored
-            payload: { tier: 'H5', operator_id: VALID_OPERATOR_ID, law: FIXTURE_LAW },
-        });
-        expect(resp.statusCode).toBe(401);
-        expect(JSON.parse(resp.body).error).toBe('tier_missing');
-    });
-
-    it('header x-operator-tier:"2" → 403 tier_too_low', async () => {
-        const app = buildTestApp(services);
-        const resp = await app.inject({
-            method: 'POST',
-            url: '/api/v1/operator/governance/laws',
-            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OPERATOR_ID },
             payload: { law: FIXTURE_LAW },
         });
         expect(resp.statusCode).toBe(403);
         expect(JSON.parse(resp.body).error).toBe('tier_too_low');
     });
 
-    it('header x-operator-tier:"3", missing/bad x-operator-id → 400 invalid_operator_id', async () => {
-        const app = buildTestApp(services);
-        const resp = await app.inject({
-            method: 'POST',
-            url: '/api/v1/operator/governance/laws',
-            headers: { 'x-operator-tier': '3', 'x-operator-id': 'op:steward:default' },
-            payload: { law: FIXTURE_LAW },
-        });
-        expect(resp.statusCode).toBe(400);
-        expect(JSON.parse(resp.body).error).toBe('invalid_operator_id');
-    });
-
-    it('header x-operator-tier:"3" + valid x-operator-id + body claiming tier:"H1" → 200; body tier IGNORED, audit sources operator_id from header', async () => {
+    it('valid operator context + body claiming tier:"H1" → 200; body tier IGNORED, audit sources operator_id from context', async () => {
         const app = buildTestApp(services);
         const bodyOpId = 'op:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';  // attacker value
         const resp = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/governance/laws',
-            headers: VALID_HEADERS,
             payload: { tier: 'H1', operator_id: bodyOpId, law: FIXTURE_LAW },
         });
         expect(resp.statusCode).toBe(200);
@@ -117,10 +89,10 @@ describe('POST /api/v1/operator/governance/laws — header-auth contract', () =>
         const entries = audit!.query({ eventType: 'operator.law_changed' });
         expect(entries).toHaveLength(1);
         const entry = entries[0];
-        // operator_id must come from header, not body
-        expect((entry.payload as { operator_id: string }).operator_id).toBe(VALID_OPERATOR_ID);
+        // operator_id must come from operator context, not body
+        expect((entry.payload as { operator_id: string }).operator_id).toBe(TEST_OPERATOR_ID);
         expect((entry.payload as { operator_id: string }).operator_id).not.toBe(bodyOpId);
-        // tier must be H3 (header-derived), not H1 (body claim)
+        // tier must be H3 (context-derived), not H1 (body claim)
         expect(entry.payload['tier']).toBe('H3');
         expect(entry.payload['action']).toBe('add');
     });
@@ -137,48 +109,23 @@ describe('PUT /api/v1/operator/governance/laws/:id — header-auth contract', ()
         (services.logos as LogosEngine).addLaw(FIXTURE_LAW);
     });
 
-    it('no headers + body {tier:"H5"} → 401 tier_missing (body tier ignored)', async () => {
-        const app = buildTestApp(services);
+    it('operator tier 2 (< 3) → 403 tier_too_low', async () => {
+        const app = buildTestApp(services, { tier: 2 });
         const resp = await app.inject({
             method: 'PUT',
             url: `/api/v1/operator/governance/laws/${FIXTURE_LAW.id}`,
-            payload: { tier: 'H5', operator_id: VALID_OPERATOR_ID, updates: { title: 'Changed' } },
-        });
-        expect(resp.statusCode).toBe(401);
-        expect(JSON.parse(resp.body).error).toBe('tier_missing');
-    });
-
-    it('header x-operator-tier:"2" → 403 tier_too_low', async () => {
-        const app = buildTestApp(services);
-        const resp = await app.inject({
-            method: 'PUT',
-            url: `/api/v1/operator/governance/laws/${FIXTURE_LAW.id}`,
-            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OPERATOR_ID },
             payload: { updates: { title: 'Changed' } },
         });
         expect(resp.statusCode).toBe(403);
         expect(JSON.parse(resp.body).error).toBe('tier_too_low');
     });
 
-    it('header x-operator-tier:"3", missing/bad x-operator-id → 400 invalid_operator_id', async () => {
-        const app = buildTestApp(services);
-        const resp = await app.inject({
-            method: 'PUT',
-            url: `/api/v1/operator/governance/laws/${FIXTURE_LAW.id}`,
-            headers: { 'x-operator-tier': '3' },  // missing x-operator-id
-            payload: { updates: { title: 'Changed' } },
-        });
-        expect(resp.statusCode).toBe(400);
-        expect(JSON.parse(resp.body).error).toBe('invalid_operator_id');
-    });
-
-    it('header x-operator-tier:"3" + valid x-operator-id + body claiming tier:"H1" → 200; body tier IGNORED, audit sources operator_id from header', async () => {
+    it('valid operator context + body claiming tier:"H1" → 200; body tier IGNORED, audit sources operator_id from context', async () => {
         const app = buildTestApp(services);
         const bodyOpId = 'op:11111111-2222-4333-8444-555555555555';  // attacker value
         const resp = await app.inject({
             method: 'PUT',
             url: `/api/v1/operator/governance/laws/${FIXTURE_LAW.id}`,
-            headers: VALID_HEADERS,
             payload: { tier: 'H1', operator_id: bodyOpId, updates: { title: 'Amended' } },
         });
         expect(resp.statusCode).toBe(200);
@@ -186,7 +133,7 @@ describe('PUT /api/v1/operator/governance/laws/:id — header-auth contract', ()
         const entries = audit!.query({ eventType: 'operator.law_changed' });
         expect(entries).toHaveLength(1);
         const entry = entries[0];
-        expect((entry.payload as { operator_id: string }).operator_id).toBe(VALID_OPERATOR_ID);
+        expect((entry.payload as { operator_id: string }).operator_id).toBe(TEST_OPERATOR_ID);
         expect((entry.payload as { operator_id: string }).operator_id).not.toBe(bodyOpId);
         expect(entry.payload['tier']).toBe('H3');
         expect(entry.payload['action']).toBe('amend');
@@ -204,46 +151,22 @@ describe('DELETE /api/v1/operator/governance/laws/:id — header-auth contract',
         (services.logos as LogosEngine).addLaw(FIXTURE_LAW);
     });
 
-    it('no headers + body {tier:"H5"} → 401 tier_missing (body tier ignored)', async () => {
-        const app = buildTestApp(services);
+    it('operator tier 2 (< 3) → 403 tier_too_low', async () => {
+        const app = buildTestApp(services, { tier: 2 });
         const resp = await app.inject({
             method: 'DELETE',
             url: `/api/v1/operator/governance/laws/${FIXTURE_LAW.id}`,
-            payload: { tier: 'H5', operator_id: VALID_OPERATOR_ID },
-        });
-        expect(resp.statusCode).toBe(401);
-        expect(JSON.parse(resp.body).error).toBe('tier_missing');
-    });
-
-    it('header x-operator-tier:"2" → 403 tier_too_low', async () => {
-        const app = buildTestApp(services);
-        const resp = await app.inject({
-            method: 'DELETE',
-            url: `/api/v1/operator/governance/laws/${FIXTURE_LAW.id}`,
-            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OPERATOR_ID },
         });
         expect(resp.statusCode).toBe(403);
         expect(JSON.parse(resp.body).error).toBe('tier_too_low');
     });
 
-    it('header x-operator-tier:"3", missing/bad x-operator-id → 400 invalid_operator_id', async () => {
-        const app = buildTestApp(services);
-        const resp = await app.inject({
-            method: 'DELETE',
-            url: `/api/v1/operator/governance/laws/${FIXTURE_LAW.id}`,
-            headers: { 'x-operator-tier': '3', 'x-operator-id': 'invalid-format' },
-        });
-        expect(resp.statusCode).toBe(400);
-        expect(JSON.parse(resp.body).error).toBe('invalid_operator_id');
-    });
-
-    it('header x-operator-tier:"3" + valid x-operator-id + body claiming tier:"H1" → 200; body tier IGNORED, audit sources operator_id from header', async () => {
+    it('valid operator context + body claiming tier:"H1" → 200; body tier IGNORED, audit sources operator_id from context', async () => {
         const app = buildTestApp(services);
         const bodyOpId = 'op:bbbbbbbb-cccc-4ddd-8eee-ffffffffffff';  // attacker value
         const resp = await app.inject({
             method: 'DELETE',
             url: `/api/v1/operator/governance/laws/${FIXTURE_LAW.id}`,
-            headers: VALID_HEADERS,
             payload: { tier: 'H1', operator_id: bodyOpId },
         });
         expect(resp.statusCode).toBe(200);
@@ -251,7 +174,7 @@ describe('DELETE /api/v1/operator/governance/laws/:id — header-auth contract',
         const entries = audit!.query({ eventType: 'operator.law_changed' });
         expect(entries).toHaveLength(1);
         const entry = entries[0];
-        expect((entry.payload as { operator_id: string }).operator_id).toBe(VALID_OPERATOR_ID);
+        expect((entry.payload as { operator_id: string }).operator_id).toBe(TEST_OPERATOR_ID);
         expect((entry.payload as { operator_id: string }).operator_id).not.toBe(bodyOpId);
         expect(entry.payload['tier']).toBe('H3');
         expect(entry.payload['action']).toBe('repeal');

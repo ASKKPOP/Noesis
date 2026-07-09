@@ -15,20 +15,35 @@
  */
 
 import { describe, it, expect, afterEach } from 'vitest';
+import { SignJWT } from 'jose';
 import { buildServer } from '../../src/api/server.js';
 import { WorldClock } from '../../src/clock/ticker.js';
 import { SpatialMap } from '../../src/space/map.js';
 import { LogosEngine } from '../../src/logos/engine.js';
 import { AuditChain } from '../../src/audit/chain.js';
 import { NousRegistry } from '../../src/registry/registry.js';
+import { COOKIE_NAME, keyPairPromise } from '../../src/api/portal/auth.js';
+import type { OperatorGrant } from '../../src/api/preHandlers/operatorAuth.js';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../src/api/server.js';
 
-const OPERATOR_H2 = 'op:22222222-2222-4222-8222-222222222222';
-const OPERATOR_H4 = 'op:44444444-4444-4444-8444-444444444444';
-const OPERATOR_H5 = 'op:55555555-5555-4555-8555-555555555555';
+const OPERATOR_DID = 'did:noesis:human:0xoperator';
+const OP_ID       = 'op:11111111-1111-4111-8111-111111111111';
 const ALPHA_DID   = 'did:noesis:alpha';
 const TOMBSTONE_TICK = 7;
+
+// Server-trusted operator allowlist injected into buildServer. Tier 5 clears every
+// per-route min-tier gate, so the tombstone (410) check is what each test observes.
+const OPERATOR_ALLOWLIST = new Map<string, OperatorGrant>([
+    [OPERATOR_DID, { operatorId: OP_ID, tier: 5 }],
+]);
+
+/** Mint a Portal-session cookie the operator_only gate accepts (mirrors operator-gate.test.ts). */
+async function cookie(did: string): Promise<string> {
+    const { privateKey } = await keyPairPromise;
+    return new SignJWT({ did, grid_name: 'test-grid' })
+        .setProtectedHeader({ alg: 'ES256' }).setIssuedAt().setExpirationTime('1h').sign(privateKey);
+}
 
 function buildTombstonedServices(): { services: GridServices; registry: NousRegistry } {
     const space    = new SpatialMap();
@@ -49,6 +64,7 @@ function buildTombstonedServices(): { services: GridServices; registry: NousRegi
         gridName: 'test-grid',
         registry,
         getRunner: () => undefined, // no runners needed — tombstone check fires first
+        operatorAllowlist: OPERATOR_ALLOWLIST,
     };
 
     return { services, registry };
@@ -83,7 +99,7 @@ describe('AGENCY-05 tombstoned DID → HTTP 410 Gone on all DID-scoped routes (D
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/memory/query`,
-            headers: { 'x-operator-tier': '2', 'x-operator-id': OPERATOR_H2 },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { query: 'test' },
         });
         expect(res.statusCode).toBe(410);
@@ -99,7 +115,7 @@ describe('AGENCY-05 tombstoned DID → HTTP 410 Gone on all DID-scoped routes (D
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/telos/force`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR_H4 },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { new_telos: { goals: [] } },
         });
         expect(res.statusCode).toBe(410);
@@ -116,7 +132,7 @@ describe('AGENCY-05 tombstoned DID → HTTP 410 Gone on all DID-scoped routes (D
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR_H5 },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: {},
         });
         expect(res.statusCode).toBe(410);

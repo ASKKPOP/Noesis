@@ -25,6 +25,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { SignJWT } from 'jose';
 import { buildServer } from '../../src/api/server.js';
 import { WorldClock } from '../../src/clock/ticker.js';
 import { SpatialMap } from '../../src/space/map.js';
@@ -34,16 +35,29 @@ import { NousRegistry } from '../../src/registry/registry.js';
 import { RelationshipListener } from '../../src/relationships/listener.js';
 import { DEFAULT_RELATIONSHIP_CONFIG } from '../../src/relationships/config.js';
 import { edgeHash } from '../../src/relationships/canonical.js';
+import { COOKIE_NAME, keyPairPromise } from '../../src/api/portal/auth.js';
+import type { OperatorGrant } from '../../src/api/preHandlers/operatorAuth.js';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../src/api/server.js';
 
 // ─── stable test constants ───────────────────────────────────────────────────
 
-const VALID_OP_ID = 'op:99999999-9999-4999-8999-999999999999';
+// SECURITY 2026-07-09: operator tier + operator_id come from the server-trusted
+// operator_only gate (resolved from the Portal-session cookie against the
+// operatorAllowlist), NOT from x-operator-* headers.
+const OPERATOR_DID = 'did:noesis:human:0xoperator';
+const OP_ID = 'op:11111111-1111-4111-8111-111111111111';
 const DID_A = 'did:noesis:alpha';
 const DID_B = 'did:noesis:beta';
 const DID_C = 'did:noesis:gamma';
 const TOMBSTONE_DID = 'did:noesis:dead';
+
+/** Mint a Portal-session cookie the operator_only gate accepts (mirrors operator-gate.test.ts). */
+async function cookie(did: string): Promise<string> {
+    const { privateKey } = await keyPairPromise;
+    return new SignJWT({ did, grid_name: 'test-grid' })
+        .setProtectedHeader({ alg: 'ES256' }).setIssuedAt().setExpirationTime('1h').sign(privateKey);
+}
 
 // ─── fixture helpers ─────────────────────────────────────────────────────────
 
@@ -77,7 +91,7 @@ interface TestFixture {
     app: FastifyInstance;
 }
 
-async function buildFixture(): Promise<TestFixture> {
+async function buildFixture(operatorTier = 5): Promise<TestFixture> {
     const clock = new WorldClock({ tickRateMs: 1_000_000 });
     const space = new SpatialMap();
     const logos = new LogosEngine();
@@ -114,6 +128,10 @@ async function buildFixture(): Promise<TestFixture> {
         registry,
         relationships: listener,
         config: { relationship: DEFAULT_RELATIONSHIP_CONFIG },
+        // Server-trusted operator allowlist injected into buildServer (fail-closed fixture).
+        operatorAllowlist: new Map<string, OperatorGrant>([
+            [OPERATOR_DID, { operatorId: OP_ID, tier: operatorTier }],
+        ]),
     };
 
     const app = buildServer(services);
@@ -224,7 +242,7 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         const res = await fixture.app.inject({
             method: 'POST',
             url: `/api/v1/nous/${DID_A}/relationships/inspect`,
-            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { top: 5 },
         });
         expect(res.statusCode).toBe(200);
@@ -253,7 +271,7 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         await fixture.app.inject({
             method: 'POST',
             url: `/api/v1/nous/${DID_A}/relationships/inspect`,
-            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { top: 5 },
         });
         const entries = fixture.audit.query({ eventType: 'operator.inspected' });
@@ -267,10 +285,14 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
     // ── Test 7: H2 POST tier spoof → 400 ─────────────────────────────────────
 
     it('Test 7: H2 POST tier too low → 403 tier_too_low (T-09-14)', async () => {
+        // Rebuild with an operator grant below the inspect threshold (tier 1 < 2).
+        await fixture.app.close();
+        fixture.services.clock.stop();
+        fixture = await buildFixture(1);
         const res = await fixture.app.inject({
             method: 'POST',
             url: `/api/v1/nous/${DID_A}/relationships/inspect`,
-            headers: { 'x-operator-tier': '1', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
         });
         expect(res.statusCode).toBe(403);
         expect(res.json().error).toBe('tier_too_low');
@@ -282,7 +304,7 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         const res = await fixture.app.inject({
             method: 'GET',
             url: `/api/v1/operator/relationships/${fixture.edgeKey}/events`,
-            headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
         });
         expect(res.statusCode).toBe(200);
         const body = res.json();
@@ -309,7 +331,7 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         const res = await fixture.app.inject({
             method: 'GET',
             url: `/api/v1/operator/relationships/${unknownKey}/events`,
-            headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
         });
         expect(res.statusCode).toBe(404);
         expect(res.json()).toEqual({ error: 'edge_not_found' });
@@ -322,7 +344,7 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         await fixture.app.inject({
             method: 'GET',
             url: `/api/v1/operator/relationships/${fixture.edgeKey}/events`,
-            headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
         });
         const entries = fixture.audit.query({ eventType: 'operator.inspected' });
         expect(entries.length).toBe(beforeCount + 1);
@@ -334,10 +356,14 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
     // ── Test 11: H5 GET tier query-param mismatch → 400 ─────────────────────
 
     it('Test 11: H5 GET tier too low → 403 tier_too_low', async () => {
+        // Rebuild with an operator grant below the events threshold (tier 4 < 5).
+        await fixture.app.close();
+        fixture.services.clock.stop();
+        fixture = await buildFixture(4);
         const res = await fixture.app.inject({
             method: 'GET',
             url: `/api/v1/operator/relationships/${fixture.edgeKey}/events`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
         });
         expect(res.statusCode).toBe(403);
         expect(res.json()).toEqual({ error: 'tier_too_low' });
@@ -359,7 +385,7 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         const res = await app.inject({
             method: 'GET',
             url: `/api/v1/operator/relationships/${shortKey}/events`,
-            headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
         });
 
         expect(res.statusCode).toBe(400);
@@ -380,7 +406,7 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         const res = await app.inject({
             method: 'GET',
             url: `/api/v1/operator/relationships/${nearKey}/events`,
-            headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
         });
 
         expect(res.statusCode).toBe(400);
@@ -401,7 +427,7 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         const res = await app.inject({
             method: 'GET',
             url: `/api/v1/operator/relationships/${edgeKey}/events`,
-            headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
         });
 
         expect(res.statusCode).toBe(200);
@@ -498,7 +524,7 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         const h2res = await fixture.app.inject({
             method: 'POST',
             url: `/api/v1/nous/${DID_A}/relationships/inspect`,
-            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
         });
         for (const e of h2res.json().edges) {
             expect(e).toHaveProperty('valence');
@@ -509,7 +535,7 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
         const h5res = await fixture.app.inject({
             method: 'GET',
             url: `/api/v1/operator/relationships/${fixture.edgeKey}/events`,
-            headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
         });
         for (const ev of h5res.json().events) {
             expect(ev).toHaveProperty('payload');
@@ -527,12 +553,13 @@ describe('Relationship endpoint privacy matrix — T-09-07 gate', () => {
     });
 });
 
-// ── D-01 header-auth migration tests (D-25c-01) ───────────────────────────────
-// These tests assert the header-auth contract after migration.
-// RED: these fail before migration (routes still use body/query auth).
-// GREEN: pass after relationships.ts is migrated to x-operator-tier / x-operator-id headers.
+// ── Per-route min-tier gate via server-trusted context (D-25c-01) ─────────────
+// The pure header-gate cases (401 tier_missing) are covered centrally by
+// grid/test/api/operator-gate.test.ts. These retain the per-route min-tier
+// contract (inspect ≥ H2, events ≥ H5), driven by the operatorAllowlist grant
+// the operator_only gate resolves from the Portal-session cookie.
 
-describe('Relationship routes — header-auth contract (D-25c-01)', () => {
+describe('Relationship routes — per-route min-tier gate (D-25c-01)', () => {
     let fixture: TestFixture;
 
     beforeEach(async () => {
@@ -544,87 +571,53 @@ describe('Relationship routes — header-auth contract (D-25c-01)', () => {
         fixture.services.clock.stop();
     });
 
-    // ── H2 POST header-auth gate ──────────────────────────────────────────────
+    // ── H2 POST min-tier gate ─────────────────────────────────────────────────
 
-    it('H2 POST: no x-operator-tier header → 401 tier_missing', async () => {
+    it('H2 POST: operator tier 1 (< 2) → 403 tier_too_low', async () => {
+        await fixture.app.close();
+        fixture.services.clock.stop();
+        fixture = await buildFixture(1);
         const res = await fixture.app.inject({
             method: 'POST',
             url: `/api/v1/nous/${DID_A}/relationships/inspect`,
-            payload: { top: 5 },
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json().error).toBe('tier_missing');
-    });
-
-    it('H2 POST: non-numeric x-operator-tier → 401 tier_missing', async () => {
-        const res = await fixture.app.inject({
-            method: 'POST',
-            url: `/api/v1/nous/${DID_A}/relationships/inspect`,
-            headers: { 'x-operator-tier': 'H2', 'x-operator-id': VALID_OP_ID },
-            payload: { top: 5 },
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json().error).toBe('tier_missing');
-    });
-
-    it('H2 POST: tier 1 (< 2) → 403 tier_too_low', async () => {
-        const res = await fixture.app.inject({
-            method: 'POST',
-            url: `/api/v1/nous/${DID_A}/relationships/inspect`,
-            headers: { 'x-operator-tier': '1', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { top: 5 },
         });
         expect(res.statusCode).toBe(403);
         expect(res.json().error).toBe('tier_too_low');
     });
 
-    it('H2 POST: valid tier 2 header → 200 with edges', async () => {
+    it('H2 POST: valid operator (tier ≥ 2) → 200 with edges', async () => {
         const res = await fixture.app.inject({
             method: 'POST',
             url: `/api/v1/nous/${DID_A}/relationships/inspect`,
-            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { top: 5 },
         });
         expect(res.statusCode).toBe(200);
         expect(res.json()).toHaveProperty('edges');
     });
 
-    // ── H5 GET header-auth gate ───────────────────────────────────────────────
+    // ── H5 GET min-tier gate ──────────────────────────────────────────────────
 
-    it('H5 GET: no x-operator-tier header → 401 tier_missing', async () => {
+    it('H5 GET: operator tier 4 (< 5) → 403 tier_too_low', async () => {
+        await fixture.app.close();
+        fixture.services.clock.stop();
+        fixture = await buildFixture(4);
         const res = await fixture.app.inject({
             method: 'GET',
             url: `/api/v1/operator/relationships/${fixture.edgeKey}/events`,
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json().error).toBe('tier_missing');
-    });
-
-    it('H5 GET: non-numeric x-operator-tier → 401 tier_missing', async () => {
-        const res = await fixture.app.inject({
-            method: 'GET',
-            url: `/api/v1/operator/relationships/${fixture.edgeKey}/events`,
-            headers: { 'x-operator-tier': 'H5', 'x-operator-id': VALID_OP_ID },
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json().error).toBe('tier_missing');
-    });
-
-    it('H5 GET: tier 4 (< 5) → 403 tier_too_low', async () => {
-        const res = await fixture.app.inject({
-            method: 'GET',
-            url: `/api/v1/operator/relationships/${fixture.edgeKey}/events`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
         });
         expect(res.statusCode).toBe(403);
         expect(res.json().error).toBe('tier_too_low');
     });
 
-    it('H5 GET: valid tier 5 header → 200 with events', async () => {
+    it('H5 GET: valid operator (tier 5) → 200 with events', async () => {
         const res = await fixture.app.inject({
             method: 'GET',
             url: `/api/v1/operator/relationships/${fixture.edgeKey}/events`,
-            headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
         });
         expect(res.statusCode).toBe(200);
         expect(res.json()).toHaveProperty('events');

@@ -13,15 +13,26 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { SignJWT } from 'jose';
 import { buildServer, type InspectorRunner } from '../../../src/api/server.js';
 import { WorldClock } from '../../../src/clock/ticker.js';
 import { SpatialMap } from '../../../src/space/map.js';
 import { LogosEngine } from '../../../src/logos/engine.js';
 import { AuditChain } from '../../../src/audit/chain.js';
+import { COOKIE_NAME, keyPairPromise } from '../../../src/api/portal/auth.js';
+import type { OperatorGrant } from '../../../src/api/preHandlers/operatorAuth.js';
 import type { FastifyInstance } from 'fastify';
 
 const VALID_OP_ID = 'op:11111111-1111-4111-8111-111111111111';
 const VALID_DID = 'did:noesis:sophia';
+const OPERATOR_DID = 'did:noesis:human:0xoperator';
+
+/** Mint a Portal-session cookie the operator_only gate accepts (mirrors operator-gate.test.ts). */
+async function cookie(did: string): Promise<string> {
+    const { privateKey } = await keyPairPromise;
+    return new SignJWT({ did, grid_name: 'test-grid' })
+        .setProtectedHeader({ alg: 'ES256' }).setIssuedAt().setExpirationTime('1h').sign(privateKey);
+}
 
 const HASH_BEFORE = 'a'.repeat(64); // 64-hex SHA-256 shape
 const HASH_AFTER = 'b'.repeat(64);
@@ -64,9 +75,10 @@ interface SeededServices {
     gridName: string;
     getRunner: (did: string) => InspectorRunner | undefined;
     runners: Map<string, MockRunner>;
+    operatorAllowlist: Map<string, OperatorGrant>;
 }
 
-function seedServices(runners: Map<string, MockRunner>): SeededServices {
+function seedServices(runners: Map<string, MockRunner>, operatorTier = 5): SeededServices {
     return {
         clock: new WorldClock({ tickRateMs: 100_000 }),
         space: new SpatialMap(),
@@ -75,6 +87,8 @@ function seedServices(runners: Map<string, MockRunner>): SeededServices {
         gridName: 'test-grid',
         runners,
         getRunner: (did) => runners.get(did),
+        // Server-trusted operator allowlist injected into buildServer (fail-closed fixture).
+        operatorAllowlist: new Map([[OPERATOR_DID, { operatorId: VALID_OP_ID, tier: operatorTier }]]),
     };
 }
 
@@ -99,7 +113,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: {
                 tier: 'H4',
                 operator_id: VALID_OP_ID,
@@ -129,7 +143,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: {
                 tier: 'H4',
                 operator_id: VALID_OP_ID,
@@ -153,7 +167,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: {
                 tier: 'H4',
                 operator_id: VALID_OP_ID,
@@ -171,11 +185,20 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         expect(serialised).not.toContain('long_term');
     });
 
-    it('Test 4: tier < 4 → 403 tier_too_low, no audit event', async () => {
+    it('Test 4: operator tier < 4 → 403 tier_too_low, no audit event', async () => {
+        // Rebuild the server with a below-threshold operator grant (tier 3).
+        await app.close();
+        services.clock.stop();
+        const runners = new Map<string, MockRunner>();
+        runners.set(VALID_DID, makeRunner());
+        services = seedServices(runners, 3);
+        app = buildServer(services);
+        await app.ready();
+
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
-            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { new_telos: {} },
         });
         expect(res.statusCode).toBe(403);
@@ -183,23 +206,11 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         expect(services.audit.query({ eventType: 'operator.telos_forced' }).length).toBe(0);
     });
 
-    it('Test 5: invalid operator_id → 400 invalid_operator_id, no audit event', async () => {
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': 'not-a-uuid' },
-            payload: { new_telos: {} },
-        });
-        expect(res.statusCode).toBe(400);
-        expect(res.json()).toEqual({ error: 'invalid_operator_id' });
-        expect(services.audit.query({ eventType: 'operator.telos_forced' }).length).toBe(0);
-    });
-
     it('Test 6: invalid DID → 400 invalid_did, no audit event', async () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/nous/garbage-did/telos/force',
-            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { tier: 'H4', operator_id: VALID_OP_ID, new_telos: {} },
         });
         expect(res.statusCode).toBe(400);
@@ -211,7 +222,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { tier: 'H4', operator_id: VALID_OP_ID },
         });
         expect(res.statusCode).toBe(400);
@@ -223,7 +234,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: {
                 tier: 'H4',
                 operator_id: VALID_OP_ID,
@@ -238,7 +249,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/nous/did:noesis:nobody/telos/force',
-            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { tier: 'H4', operator_id: VALID_OP_ID, new_telos: {} },
         });
         expect(res.statusCode).toBe(404);
@@ -258,7 +269,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { tier: 'H4', operator_id: VALID_OP_ID, new_telos: {} },
         });
         expect(res.statusCode).toBe(503);
@@ -281,7 +292,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { tier: 'H4', operator_id: VALID_OP_ID, new_telos: {} },
         });
         expect(res.statusCode).toBe(503);
@@ -309,7 +320,7 @@ describe('Operator telos force — AGENCY-02 H4 + D-19 hash-only', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/telos/force`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { tier: 'H4', operator_id: VALID_OP_ID, new_telos: {} },
         });
         expect(res.statusCode).toBe(503);

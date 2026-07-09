@@ -51,7 +51,6 @@
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import type { ApiError } from '../types.js';
-import { OPERATOR_ID_REGEX } from '../types.js';
 import { generateKeyPairSync, randomUUID } from 'node:crypto';
 
 /** Body accepted by the spawn endpoint. */
@@ -92,31 +91,14 @@ export function registerSpawnSystemNousRoute(
     app.post<{ Body: SpawnBody }>(
         '/api/v1/operator/spawn-system-nous',
         async (req, reply) => {
-            // 1. Tier gate — read from server-trusted x-operator-tier header (D-25b-NEW-1).
-            const tierHeader = req.headers['x-operator-tier'];
-            if (typeof tierHeader !== 'string') {
-                reply.code(401);
-                return { error: 'tier_missing' } satisfies ApiError;
-            }
-            const tierNum = parseInt(tierHeader, 10);
-            if (!Number.isFinite(tierNum)) {
-                reply.code(401);
-                return { error: 'tier_missing' } satisfies ApiError;
-            }
-            if (tierNum < 5) {
+            // 1. Tier gate — server-trusted operator context (set by the operator_only gate).
+            const tier = req.didContext?.operatorTier ?? 0;
+            if (tier < 5) {
                 reply.code(403);
                 return { error: 'tier_too_low' } satisfies ApiError;
             }
-
-            // 1b. Operator-id gate — read from server-trusted x-operator-id header.
-            const opIdHeader = req.headers['x-operator-id'];
-            if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) {
-                reply.code(400);
-                return { error: 'invalid_operator_id' } satisfies ApiError;
-            }
-            // resolvedTier preserved for future operator.* event if Phase N introduces one.
-            // const resolvedTier: 'H5' = 'H5';
-            // const resolvedOperatorId = opIdHeader;
+            // operatorTier/operatorId are available on req.didContext if a future
+            // operator.* event for spawn needs them.
 
             // 2. Body validation.
             const { name: rawName, personality_seeds: rawSeeds } = req.body ?? {};

@@ -1,28 +1,29 @@
 /**
- * Regression tests for registerTelosForceRoute — header-auth contract (D-25b-NEW-1).
+ * Regression tests for registerTelosForceRoute — operator context auth (D-25b-NEW-1).
  *
- * Tests pin the H4 header-trust auth model:
- *   - Body-supplied tier is IGNORED; only x-operator-tier header is trusted.
- *   - operator_id sourced from x-operator-id header, never from body.
+ * SECURITY 2026-07-09: operator identity/tier now come from the server-trusted
+ * operator_only gate (req.didContext.operatorTier/operatorId), simulated here by
+ * withOperatorContext. The header-gate cases (tier_missing / invalid_operator_id)
+ * moved to grid/test/api/operator-gate.test.ts.
+ *
+ * These tests pin the H4 gate + business logic:
+ *   - Body-supplied tier / operator_id are IGNORED; identity comes from context.
  *   - Tier gate: < 4 → 403 tier_too_low.
  *   - Telos body field (new_telos) still parsed correctly.
- *   - Audit emit operator_id sources from header.
+ *   - Audit emit operator_id sources from the trusted context, never the body.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Fastify from 'fastify';
 import { AuditChain } from '../../src/audit/chain.js';
 import { registerTelosForceRoute } from '../../src/api/operator/telos-force.js';
+import { withOperatorContext, TEST_OPERATOR_ID } from '../helpers/operator-session.js';
 import type { GridServices } from '../../src/api/server.js';
 import type { NousRegistry } from '../../src/registry/registry.js';
 
 const DID = 'did:noesis:agent001';
-// Valid operator_id: must match OPERATOR_ID_REGEX = /^op:[uuid-v4]$/i
-const VALID_OPERATOR_ID = 'op:12345678-1234-4abc-89ab-123456789012';
-const VALID_HEADERS = {
-    'x-operator-tier': '4',
-    'x-operator-id': VALID_OPERATOR_ID,
-};
+// Trusted operator_id set by the context (matches withOperatorContext default).
+const VALID_OPERATOR_ID = TEST_OPERATOR_ID;
 
 const VALID_NEW_TELOS = {
     goals: ['Achieve understanding'],
@@ -70,8 +71,11 @@ function makeRunner(opts: {
 
 function buildTestApp(
     services: Partial<GridServices> & { audit: AuditChain },
+    operatorOpts?: { tier?: number; operatorId?: string },
 ) {
     const app = Fastify({ logger: false });
+    // Simulate the operator_only gate (server-trusted identity/tier).
+    withOperatorContext(app, operatorOpts);
     registerTelosForceRoute(app, services as GridServices);
     return app;
 }
@@ -89,25 +93,12 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
         } as unknown as Partial<GridServices> & { audit: AuditChain };
     });
 
-    describe('Header-auth gate (D-25b-NEW-1)', () => {
-        it('rejects body-supplied tier when headers are missing (returns 401 tier_missing)', async () => {
-            const app = buildTestApp(baseServices);
+    describe('Tier gate (D-25b-NEW-1)', () => {
+        it('returns 403 tier_too_low when operator tier is 3 (below H4 threshold)', async () => {
+            const app = buildTestApp(baseServices, { tier: 3 });
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                // No headers — body claims H5 but must be ignored
-                payload: { tier: 'H5', operator_id: VALID_OPERATOR_ID, new_telos: VALID_NEW_TELOS },
-            });
-            expect(resp.statusCode).toBe(401);
-            expect(JSON.parse(resp.body).error).toBe('tier_missing');
-        });
-
-        it('returns 403 tier_too_low when x-operator-tier header is 3 (below H4 threshold)', async () => {
-            const app = buildTestApp(baseServices);
-            const resp = await app.inject({
-                method: 'POST',
-                url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: { 'x-operator-tier': '3', 'x-operator-id': VALID_OPERATOR_ID },
                 payload: { new_telos: VALID_NEW_TELOS },
             });
             expect(resp.statusCode).toBe(403);
@@ -115,61 +106,23 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
         });
 
         it('returns 403 tier_too_low for tier 1', async () => {
-            const app = buildTestApp(baseServices);
+            const app = buildTestApp(baseServices, { tier: 1 });
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: { 'x-operator-tier': '1', 'x-operator-id': VALID_OPERATOR_ID },
                 payload: { new_telos: VALID_NEW_TELOS },
             });
             expect(resp.statusCode).toBe(403);
             expect(JSON.parse(resp.body).error).toBe('tier_too_low');
         });
-
-        it('returns 401 tier_missing when x-operator-tier header is non-numeric', async () => {
-            const app = buildTestApp(baseServices);
-            const resp = await app.inject({
-                method: 'POST',
-                url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: { 'x-operator-tier': 'H4', 'x-operator-id': VALID_OPERATOR_ID },
-                payload: { new_telos: VALID_NEW_TELOS },
-            });
-            expect(resp.statusCode).toBe(401);
-            expect(JSON.parse(resp.body).error).toBe('tier_missing');
-        });
-
-        it('returns 400 invalid_operator_id when x-operator-id is the legacy "op:steward:default" form', async () => {
-            const app = buildTestApp(baseServices);
-            const resp = await app.inject({
-                method: 'POST',
-                url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: { 'x-operator-tier': '4', 'x-operator-id': 'op:steward:default' },
-                payload: { new_telos: VALID_NEW_TELOS },
-            });
-            expect(resp.statusCode).toBe(400);
-            expect(JSON.parse(resp.body).error).toBe('invalid_operator_id');
-        });
-
-        it('returns 400 invalid_operator_id when x-operator-id header is missing', async () => {
-            const app = buildTestApp(baseServices);
-            const resp = await app.inject({
-                method: 'POST',
-                url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: { 'x-operator-tier': '4' },
-                payload: { new_telos: VALID_NEW_TELOS },
-            });
-            expect(resp.statusCode).toBe(400);
-            expect(JSON.parse(resp.body).error).toBe('invalid_operator_id');
-        });
     });
 
     describe('H4+ passes through to telos body validation', () => {
-        it('succeeds with tier 4 header — body tier field ignored, telos body accepted', async () => {
-            const app = buildTestApp(baseServices);
+        it('succeeds with tier 4 — body tier field ignored, telos body accepted', async () => {
+            const app = buildTestApp(baseServices, { tier: 4 });
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: VALID_HEADERS,
                 // body contains a body-tier claim (H1) which must be ignored; new_telos accepted
                 payload: { tier: 'H1', operator_id: 'op:fake-fake-fake-fake-fake', new_telos: VALID_NEW_TELOS },
             });
@@ -180,12 +133,11 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
             expect(body.telos_hash_after).toBe(TELOS_HASH_AFTER);
         });
 
-        it('succeeds with tier 5 header (H5 operator forcing telos)', async () => {
-            const app = buildTestApp(baseServices);
+        it('succeeds with tier 5 (H5 operator forcing telos)', async () => {
+            const app = buildTestApp(baseServices, { tier: 5 });
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OPERATOR_ID },
                 payload: { new_telos: VALID_NEW_TELOS },
             });
             expect(resp.statusCode).toBe(200);
@@ -198,7 +150,6 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: '/api/v1/operator/nous/not-a-valid-did/telos/force',
-                headers: VALID_HEADERS,
                 payload: { new_telos: VALID_NEW_TELOS },
             });
             expect(resp.statusCode).toBe(400);
@@ -214,7 +165,6 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: VALID_HEADERS,
                 payload: { new_telos: VALID_NEW_TELOS },
             });
             expect(resp.statusCode).toBe(410);
@@ -228,7 +178,6 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: VALID_HEADERS,
                 payload: {},
             });
             expect(resp.statusCode).toBe(400);
@@ -240,7 +189,6 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: VALID_HEADERS,
                 payload: { new_telos: 'invalid' },
             });
             expect(resp.statusCode).toBe(400);
@@ -252,7 +200,6 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: VALID_HEADERS,
                 payload: { new_telos: ['goal1', 'goal2'] },
             });
             expect(resp.statusCode).toBe(400);
@@ -270,7 +217,6 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: VALID_HEADERS,
                 payload: { new_telos: VALID_NEW_TELOS },
             });
             expect(resp.statusCode).toBe(404);
@@ -286,7 +232,6 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: VALID_HEADERS,
                 payload: { new_telos: VALID_NEW_TELOS },
             });
             expect(resp.statusCode).toBe(503);
@@ -302,7 +247,6 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: VALID_HEADERS,
                 payload: { new_telos: VALID_NEW_TELOS },
             });
             expect(resp.statusCode).toBe(503);
@@ -318,7 +262,6 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: VALID_HEADERS,
                 payload: { new_telos: VALID_NEW_TELOS },
             });
             expect(resp.statusCode).toBe(503);
@@ -338,7 +281,6 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: VALID_HEADERS,
                 payload: { new_telos: VALID_NEW_TELOS },
             });
             expect(resp.statusCode).toBe(503);
@@ -356,7 +298,6 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: VALID_HEADERS,
                 payload: { new_telos: VALID_NEW_TELOS },
             });
             expect(resp.statusCode).toBe(503);
@@ -364,14 +305,13 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
         });
     });
 
-    describe('Audit emission (operator_id from header, D-25b-NEW-1)', () => {
+    describe('Audit emission (operator_id from trusted context, D-25b-NEW-1)', () => {
         it('emits operator.telos_forced ONLY on success', async () => {
             const priorLength = audit.length;
             const app = buildTestApp(baseServices);
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: VALID_HEADERS,
                 payload: { new_telos: VALID_NEW_TELOS },
             });
             expect(resp.statusCode).toBe(200);
@@ -389,15 +329,14 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
             expect(entry.payload['telos_hash_after']).toBe(TELOS_HASH_AFTER);
         });
 
-        it('audit payload.operator_id uses header value, not body value', async () => {
-            const headerOpId = 'op:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
+        it('audit payload.operator_id uses the trusted context value, not the body value', async () => {
+            const contextOpId = 'op:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
             const bodyOpId = 'op:11111111-2222-4333-8444-555555555555';
             const priorLength = audit.length;
-            const app = buildTestApp(baseServices);
+            const app = buildTestApp(baseServices, { operatorId: contextOpId });
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: { 'x-operator-tier': '4', 'x-operator-id': headerOpId },
                 payload: { tier: 'H4', operator_id: bodyOpId, new_telos: VALID_NEW_TELOS },
             });
             expect(resp.statusCode).toBe(200);
@@ -405,9 +344,9 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
                 (e) => e.id > priorLength,
             );
             expect(newEntries).toHaveLength(1);
-            expect((newEntries[0].payload as { operator_id: string }).operator_id).toBe(headerOpId);
+            expect((newEntries[0].payload as { operator_id: string }).operator_id).toBe(contextOpId);
             expect((newEntries[0].payload as { operator_id: string }).operator_id).not.toBe(bodyOpId);
-            expect(newEntries[0].actorDid).toBe(headerOpId);
+            expect(newEntries[0].actorDid).toBe(contextOpId);
         });
 
         it('does NOT emit operator.telos_forced on 404 unknown_nous', async () => {
@@ -420,7 +359,6 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: VALID_HEADERS,
                 payload: { new_telos: VALID_NEW_TELOS },
             });
             expect(resp.statusCode).toBe(404);
@@ -440,7 +378,6 @@ describe('POST /api/v1/operator/nous/:did/telos/force', () => {
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/telos/force`,
-                headers: VALID_HEADERS,
                 payload: { new_telos: VALID_NEW_TELOS },
             });
             expect(resp.statusCode).toBe(503);

@@ -1,32 +1,30 @@
 /**
- * Regression tests for registerReplayExportRoute — header-auth contract (D-25b-NEW-1).
+ * Regression tests for registerReplayExportRoute — operator-context auth (D-25b-NEW-1).
  *
- * Phase 25b Wave-0 migration: export-replay.ts migrated from body-trust to header-trust auth.
+ * SECURITY 2026-07-09: operator identity/tier now come from the server-trusted
+ * operator_only gate (req.didContext.operatorTier/operatorId), simulated here by
+ * withOperatorContext. Header-gate cases (tier_missing / invalid_operator_id) moved
+ * to grid/test/api/operator-gate.test.ts.
  *
  * Tests verify:
- *   - No headers → 401 tier_missing
- *   - Header x-operator-tier:'4' → 403 tier_too_low
- *   - Header x-operator-tier:'5', bad x-operator-id → 400 invalid_operator_id
- *   - Header x-operator-tier:'5' + valid x-operator-id + body {tier:'H1', ...} → 200 (body tier ignored)
- *   - operator.exported audit entry has operator_id === header value (NOT body value)
+ *   - context tier 4/1 → 403 tier_too_low
+ *   - body {tier, operator_id} ignored — server context wins
+ *   - operator.exported audit entry has operator_id === server context value (NOT body value)
+ *   - operator.exported emitted on success path only
  *
- * Analog: grid/test/operator/cognitive-snapshot.test.ts (header-auth assertion pattern).
+ * Analog: grid/test/operator/cognitive-snapshot.test.ts (operator-context assertion pattern).
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Fastify from 'fastify';
 import { AuditChain } from '../../src/audit/chain.js';
 import { registerReplayExportRoute } from '../../src/api/operator/export-replay.js';
+import { withOperatorContext, TEST_OPERATOR_ID } from '../helpers/operator-session.js';
 import type { GridServices } from '../../src/api/server.js';
 
-// Valid operator IDs (op:<uuid-v4> format)
-const VALID_OPERATOR_ID = 'op:12345678-1234-4abc-89ab-123456789012';
+// Server-trusted operator id (op:<uuid-v4> format), matches withOperatorContext default.
+const VALID_OPERATOR_ID = TEST_OPERATOR_ID;
 const ATTACKER_OPERATOR_ID = 'op:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
-
-const VALID_HEADERS = {
-    'x-operator-tier': '5',
-    'x-operator-id': VALID_OPERATOR_ID,
-};
 
 // A fake 64-hex tarball hash for mock output (inline — used in vi.mock factories below)
 const FAKE_TARBALL_HASH = 'a'.repeat(64);
@@ -63,8 +61,12 @@ vi.mock('../../src/replay/state-builder.js', () => ({
     buildStateAtTick: vi.fn().mockReturnValue({}),
 }));
 
-function buildTestApp(services: Partial<GridServices> & { audit: AuditChain }) {
+function buildTestApp(
+    services: Partial<GridServices> & { audit: AuditChain },
+    operatorTier?: number,
+) {
     const app = Fastify({ logger: false });
+    withOperatorContext(app, operatorTier !== undefined ? { tier: operatorTier } : undefined);
     registerReplayExportRoute(app, services as GridServices);
     return app;
 }
@@ -76,7 +78,7 @@ function makeAuditWithEntries(audit: AuditChain) {
     return audit;
 }
 
-describe('POST /api/v1/operator/replay/export — header-auth (D-25b-NEW-1)', () => {
+describe('POST /api/v1/operator/replay/export — operator-context auth (D-25b-NEW-1)', () => {
     let audit: AuditChain;
     let baseServices: Partial<GridServices> & { audit: AuditChain };
 
@@ -89,49 +91,23 @@ describe('POST /api/v1/operator/replay/export — header-auth (D-25b-NEW-1)', ()
         } as unknown as Partial<GridServices> & { audit: AuditChain };
     });
 
-    describe('Tier header gate (H5)', () => {
-        it('returns 401 tier_missing when no headers are provided', async () => {
-            const app = buildTestApp(baseServices);
+    describe('Tier gate (H5)', () => {
+        it('returns 403 tier_too_low when operator context tier is 4', async () => {
+            const app = buildTestApp(baseServices, 4);
             const resp = await app.inject({
                 method: 'POST',
                 url: '/api/v1/operator/replay/export',
-                // No headers — body claims H5 but must be ignored
-                payload: { tier: 'H5', operator_id: VALID_OPERATOR_ID, start_tick: 1, end_tick: 2 },
-            });
-            expect(resp.statusCode).toBe(401);
-            expect(JSON.parse(resp.body).error).toBe('tier_missing');
-        });
-
-        it('returns 401 tier_missing when x-operator-tier header is non-numeric', async () => {
-            const app = buildTestApp(baseServices);
-            const resp = await app.inject({
-                method: 'POST',
-                url: '/api/v1/operator/replay/export',
-                headers: { 'x-operator-tier': 'H5', 'x-operator-id': VALID_OPERATOR_ID },
-                payload: { start_tick: 1, end_tick: 2 },
-            });
-            expect(resp.statusCode).toBe(401);
-            expect(JSON.parse(resp.body).error).toBe('tier_missing');
-        });
-
-        it('returns 403 tier_too_low when x-operator-tier header is 4', async () => {
-            const app = buildTestApp(baseServices);
-            const resp = await app.inject({
-                method: 'POST',
-                url: '/api/v1/operator/replay/export',
-                headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OPERATOR_ID },
                 payload: { start_tick: 1, end_tick: 2 },
             });
             expect(resp.statusCode).toBe(403);
             expect(JSON.parse(resp.body).error).toBe('tier_too_low');
         });
 
-        it('returns 403 tier_too_low when x-operator-tier header is 1', async () => {
-            const app = buildTestApp(baseServices);
+        it('returns 403 tier_too_low when operator context tier is 1', async () => {
+            const app = buildTestApp(baseServices, 1);
             const resp = await app.inject({
                 method: 'POST',
                 url: '/api/v1/operator/replay/export',
-                headers: { 'x-operator-tier': '1', 'x-operator-id': VALID_OPERATOR_ID },
                 payload: { start_tick: 1, end_tick: 2 },
             });
             expect(resp.statusCode).toBe(403);
@@ -139,72 +115,32 @@ describe('POST /api/v1/operator/replay/export — header-auth (D-25b-NEW-1)', ()
         });
     });
 
-    describe('Operator-id header gate', () => {
-        it('returns 400 invalid_operator_id when x-operator-id header is missing', async () => {
+    describe('Body auth fields ignored (D-25b-NEW-1 body-trust rejection)', () => {
+        it('returns 200 with server context even if body contains wrong tier', async () => {
             const app = buildTestApp(baseServices);
             const resp = await app.inject({
                 method: 'POST',
                 url: '/api/v1/operator/replay/export',
-                headers: { 'x-operator-tier': '5' },
-                payload: { start_tick: 1, end_tick: 2 },
-            });
-            expect(resp.statusCode).toBe(400);
-            expect(JSON.parse(resp.body).error).toBe('invalid_operator_id');
-        });
-
-        it('returns 400 invalid_operator_id when x-operator-id is invalid format (op:steward:default)', async () => {
-            const app = buildTestApp(baseServices);
-            const resp = await app.inject({
-                method: 'POST',
-                url: '/api/v1/operator/replay/export',
-                headers: { 'x-operator-tier': '5', 'x-operator-id': 'op:steward:default' },
-                payload: { start_tick: 1, end_tick: 2 },
-            });
-            expect(resp.statusCode).toBe(400);
-            expect(JSON.parse(resp.body).error).toBe('invalid_operator_id');
-        });
-
-        it('returns 400 invalid_operator_id when x-operator-id is a plain string', async () => {
-            const app = buildTestApp(baseServices);
-            const resp = await app.inject({
-                method: 'POST',
-                url: '/api/v1/operator/replay/export',
-                headers: { 'x-operator-tier': '5', 'x-operator-id': 'not-an-op-id' },
-                payload: { start_tick: 1, end_tick: 2 },
-            });
-            expect(resp.statusCode).toBe(400);
-            expect(JSON.parse(resp.body).error).toBe('invalid_operator_id');
-        });
-    });
-
-    describe('Body tier ignored (D-25b-NEW-1 body-trust rejection)', () => {
-        it('returns 200 when valid headers provided even if body contains wrong tier', async () => {
-            const app = buildTestApp(baseServices);
-            const resp = await app.inject({
-                method: 'POST',
-                url: '/api/v1/operator/replay/export',
-                headers: VALID_HEADERS,
                 // Body claims H1 tier — must be silently ignored
                 payload: { tier: 'H1', start_tick: 1, end_tick: 2 },
             });
             expect(resp.statusCode).toBe(200);
         });
 
-        it('returns 200 when valid headers provided even if body omits tier entirely', async () => {
+        it('returns 200 with server context even if body omits tier entirely', async () => {
             const app = buildTestApp(baseServices);
             const resp = await app.inject({
                 method: 'POST',
                 url: '/api/v1/operator/replay/export',
-                headers: VALID_HEADERS,
                 payload: { start_tick: 1, end_tick: 2 },
             });
             expect(resp.statusCode).toBe(200);
         });
     });
 
-    describe('operator.exported audit emit — operator_id sources from header', () => {
-        it('emits operator.exported with operator_id from header, not body (T-25b-06-02)', async () => {
-            const headerOpId = VALID_OPERATOR_ID;
+    describe('operator.exported audit emit — operator_id from server context', () => {
+        it('emits operator.exported with operator_id from server context, not body (T-25b-06-02)', async () => {
+            const contextOpId = VALID_OPERATOR_ID; // server-trusted (withOperatorContext default)
             const bodyOpId = ATTACKER_OPERATOR_ID;
             const priorLength = audit.length;
 
@@ -212,10 +148,6 @@ describe('POST /api/v1/operator/replay/export — header-auth (D-25b-NEW-1)', ()
             const resp = await app.inject({
                 method: 'POST',
                 url: '/api/v1/operator/replay/export',
-                headers: {
-                    'x-operator-tier': '5',
-                    'x-operator-id': headerOpId,
-                },
                 // Attacker tries to claim a different operator_id via body
                 payload: { operator_id: bodyOpId, start_tick: 1, end_tick: 2 },
             });
@@ -227,20 +159,19 @@ describe('POST /api/v1/operator/replay/export — header-auth (D-25b-NEW-1)', ()
             expect(newEntries).toHaveLength(1);
 
             const entry = newEntries[0];
-            // Must use header operator_id, NOT body operator_id
-            expect((entry.payload as { operator_id: string }).operator_id).toBe(headerOpId);
+            // Must use server-context operator_id, NOT body operator_id
+            expect((entry.payload as { operator_id: string }).operator_id).toBe(contextOpId);
             expect((entry.payload as { operator_id: string }).operator_id).not.toBe(bodyOpId);
-            // actorDid on the audit entry must also be the header value
-            expect(entry.actorDid).toBe(headerOpId);
+            // actorDid on the audit entry must also be the server-context value
+            expect(entry.actorDid).toBe(contextOpId);
         });
 
         it('emits operator.exported only on success path (not on 403 tier_too_low)', async () => {
             const priorLength = audit.length;
-            const app = buildTestApp(baseServices);
+            const app = buildTestApp(baseServices, 4);
             await app.inject({
                 method: 'POST',
                 url: '/api/v1/operator/replay/export',
-                headers: { 'x-operator-tier': '4', 'x-operator-id': VALID_OPERATOR_ID },
                 payload: { start_tick: 1, end_tick: 2 },
             });
             const newEntries = audit.query({ eventType: 'operator.exported' }).filter(
@@ -249,14 +180,14 @@ describe('POST /api/v1/operator/replay/export — header-auth (D-25b-NEW-1)', ()
             expect(newEntries).toHaveLength(0);
         });
 
-        it('emits operator.exported only on success path (not on 401 tier_missing)', async () => {
+        it('emits operator.exported only on success path (not on 400 invalid_start_tick)', async () => {
             const priorLength = audit.length;
             const app = buildTestApp(baseServices);
             await app.inject({
                 method: 'POST',
                 url: '/api/v1/operator/replay/export',
-                // No tier header
-                payload: { start_tick: 1, end_tick: 2 },
+                // Malformed tick range → 400 before the audit append.
+                payload: { start_tick: -1, end_tick: 2 },
             });
             const newEntries = audit.query({ eventType: 'operator.exported' }).filter(
                 (e) => e.id > priorLength,
@@ -270,7 +201,6 @@ describe('POST /api/v1/operator/replay/export — header-auth (D-25b-NEW-1)', ()
             const resp = await app.inject({
                 method: 'POST',
                 url: '/api/v1/operator/replay/export',
-                headers: VALID_HEADERS,
                 payload: { start_tick: 1, end_tick: 2 },
             });
             expect(resp.statusCode).toBe(200);
@@ -289,7 +219,6 @@ describe('POST /api/v1/operator/replay/export — header-auth (D-25b-NEW-1)', ()
             const resp = await app.inject({
                 method: 'POST',
                 url: '/api/v1/operator/replay/export',
-                headers: VALID_HEADERS,
                 payload: { start_tick: 1, end_tick: 2 },
             });
             expect(resp.statusCode).toBe(200);
@@ -301,7 +230,6 @@ describe('POST /api/v1/operator/replay/export — header-auth (D-25b-NEW-1)', ()
             const resp = await app.inject({
                 method: 'POST',
                 url: '/api/v1/operator/replay/export',
-                headers: VALID_HEADERS,
                 payload: { start_tick: 1, end_tick: 2 },
             });
             expect(resp.statusCode).toBe(200);

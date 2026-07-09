@@ -1,12 +1,14 @@
 /**
  * Phase 25b SANCTION-03 (D-25b-09) — tests for POST /api/v1/operator/nous/:did/quarantine.
  *
+ * SECURITY 2026-07-09: operator identity/tier now come from the server-trusted
+ * operator_only gate (req.didContext.operatorTier/operatorId), simulated here by
+ * withOperatorContext. The header-gate cases (tier_missing / invalid_operator_id)
+ * moved to grid/test/api/operator-gate.test.ts. This file keeps the per-route
+ * min-tier gate + the business logic.
+ *
  * Test matrix:
- *   Header-auth contract:
- *   - No x-operator-tier header → 401 tier_missing
- *   - Non-numeric tier header → 401 tier_missing
- *   - tier '3' (< 4) → 403 tier_too_low
- *   - tier '4' + invalid x-operator-id → 400 invalid_operator_id
+ *   - operator tier 3 (< 4) → 403 tier_too_low
  *   - Invalid DID shape → 400 invalid_did
  *   - Tombstoned DID → 410 gone
  *   - No runner for DID → 404 unknown_nous
@@ -24,11 +26,12 @@ import { WorldClock } from '../../src/clock/ticker.js';
 import { SpatialMap } from '../../src/space/map.js';
 import { LogosEngine } from '../../src/logos/engine.js';
 import { registerQuarantineRoute } from '../../src/api/operator/quarantine.js';
+import { withOperatorContext, TEST_OPERATOR_ID } from '../helpers/operator-session.js';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../src/api/server.js';
 import { createHash } from 'node:crypto';
 
-const OPERATOR = 'op:11111111-1111-4111-8111-111111111111';
+const OPERATOR = TEST_OPERATOR_ID;
 const TARGET_DID = 'did:noesis:alpha';
 const BETA_DID = 'did:noesis:beta';
 const GAMMA_DID = 'did:noesis:gamma';
@@ -55,6 +58,7 @@ function buildTestApp(opts: {
     withRunner?: boolean;
     tombstoned?: boolean;
     sanctionReasonStore?: GridServices['sanctionReasonStore'];
+    operatorTier?: number;
 }): {
     app: FastifyInstance;
     audit: AuditChain;
@@ -94,68 +98,30 @@ function buildTestApp(opts: {
     };
 
     const app = Fastify({ logger: false });
+    // Simulate the operator_only gate (server-trusted identity/tier).
+    withOperatorContext(app, opts.operatorTier !== undefined ? { tier: opts.operatorTier } : undefined);
     registerQuarantineRoute(app, services as GridServices);
 
     return { app, audit, registry, runner, insertCalls };
 }
 
-describe('POST /api/v1/operator/nous/:did/quarantine — header-auth contract', () => {
+describe('POST /api/v1/operator/nous/:did/quarantine — auth + shape gates', () => {
     let app: FastifyInstance;
 
     afterEach(async () => {
         if (app) await app.close();
     });
 
-    it('returns 401 tier_missing when x-operator-tier header is absent', async () => {
-        ({ app } = buildTestApp({}));
+    it('returns 403 tier_too_low when operator tier is 3 (< 4)', async () => {
+        ({ app } = buildTestApp({ operatorTier: 3 }));
         await app.ready();
 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/quarantine`,
-            payload: { tier: 'H4', operator_id: OPERATOR },
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json().error).toBe('tier_missing');
-    });
-
-    it('returns 401 tier_missing when x-operator-tier is non-numeric (e.g. "H4")', async () => {
-        ({ app } = buildTestApp({}));
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${TARGET_DID}/quarantine`,
-            headers: { 'x-operator-tier': 'H4', 'x-operator-id': OPERATOR },
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json().error).toBe('tier_missing');
-    });
-
-    it('returns 403 tier_too_low when x-operator-tier is 3 (< 4)', async () => {
-        ({ app } = buildTestApp({}));
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${TARGET_DID}/quarantine`,
-            headers: { 'x-operator-tier': '3', 'x-operator-id': OPERATOR },
         });
         expect(res.statusCode).toBe(403);
         expect(res.json().error).toBe('tier_too_low');
-    });
-
-    it('returns 400 invalid_operator_id when x-operator-id header is badly formatted', async () => {
-        ({ app } = buildTestApp({}));
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${TARGET_DID}/quarantine`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': 'not-an-op-id' },
-        });
-        expect(res.statusCode).toBe(400);
-        expect(res.json().error).toBe('invalid_operator_id');
     });
 
     it('returns 400 invalid_did when DID URL param is malformed', async () => {
@@ -165,7 +131,6 @@ describe('POST /api/v1/operator/nous/:did/quarantine — header-auth contract', 
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/nous/not-a-did/quarantine',
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
         });
         expect(res.statusCode).toBe(400);
         expect(res.json().error).toBe('invalid_did');
@@ -178,7 +143,6 @@ describe('POST /api/v1/operator/nous/:did/quarantine — header-auth contract', 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/quarantine`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
         });
         expect(res.statusCode).toBe(410);
         expect(res.json().error).toBe('gone');
@@ -191,7 +155,6 @@ describe('POST /api/v1/operator/nous/:did/quarantine — header-auth contract', 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/quarantine`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
         });
         expect(res.statusCode).toBe(404);
         expect(res.json().error).toBe('unknown_nous');
@@ -212,8 +175,7 @@ describe('POST /api/v1/operator/nous/:did/quarantine — success path', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/quarantine`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
-            payload: { reason: 'test reason' },
+            payload: { reason: 'policy violation logged' },
         });
         expect(res.statusCode).toBe(200);
         expect(res.json().ok).toBe(true);
@@ -230,8 +192,7 @@ describe('POST /api/v1/operator/nous/:did/quarantine — success path', () => {
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/quarantine`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
-            payload: { reason: 'policy violation' },
+            payload: { reason: 'policy violation logged' },
         });
 
         const recordAfter = registry.get(TARGET_DID);
@@ -246,8 +207,7 @@ describe('POST /api/v1/operator/nous/:did/quarantine — success path', () => {
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/quarantine`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
-            payload: { reason: 'policy violation' },
+            payload: { reason: 'policy violation logged' },
         });
 
         const entries = audit.query({ eventType: 'operator.quarantined' });
@@ -257,9 +217,9 @@ describe('POST /api/v1/operator/nous/:did/quarantine — success path', () => {
         expect(payload.action).toBe('quarantine');
         expect(payload.operator_id).toBe(OPERATOR);
         expect(payload.target_did).toBe(TARGET_DID);
-        expect(payload.reason_hash).toBe(sha256('policy violation'));
+        expect(payload.reason_hash).toBe(sha256('policy violation logged'));
         // Reason plaintext must NOT appear in audit payload
-        expect(JSON.stringify(payload)).not.toContain('policy violation');
+        expect(JSON.stringify(payload)).not.toContain('policy violation logged');
     });
 
     it('does NOT emit audit events on error paths (sole-producer invariant)', async () => {
@@ -267,10 +227,11 @@ describe('POST /api/v1/operator/nous/:did/quarantine — success path', () => {
         ({ app, audit } = buildTestApp({}));
         await app.ready();
 
-        // Trigger 401
+        // Malformed DID → 400 invalid_did, no audit emission.
         await app.inject({
             method: 'POST',
-            url: `/api/v1/operator/nous/${TARGET_DID}/quarantine`,
+            url: '/api/v1/operator/nous/not-a-did/quarantine',
+            payload: { reason: 'x'.repeat(12) },
         });
 
         expect(audit.query({ eventType: 'operator.quarantined' })).toHaveLength(0);
@@ -295,7 +256,6 @@ describe('POST /api/v1/operator/nous/:did/quarantine — reason discipline', () 
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/quarantine`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
             payload: { reason },
         });
 
@@ -324,7 +284,6 @@ describe('POST /api/v1/operator/nous/:did/quarantine — reason discipline', () 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/quarantine`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
         });
 
         // WR-02: reason (>= 10 chars) is mandatory; an absent reason is rejected
@@ -418,6 +377,7 @@ describe('POST /api/v1/operator/nous/:did/quarantine — peer-discovery filter (
         };
 
         const app = Fastify({ logger: false });
+        withOperatorContext(app);
         registerQuarantineRoute(app, services as GridServices);
         await app.ready();
 
@@ -428,8 +388,7 @@ describe('POST /api/v1/operator/nous/:did/quarantine — peer-discovery filter (
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/quarantine`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
-            payload: { reason: 'policy violation' },
+            payload: { reason: 'policy violation logged' },
         });
         expect(res.statusCode).toBe(200);
 

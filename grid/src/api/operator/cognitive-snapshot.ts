@@ -38,7 +38,6 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { DID_REGEX } from '../server.js';
 import type { ApiError } from '../types.js';
-import { OPERATOR_ID_REGEX } from '../types.js';
 import { appendOperatorEvent } from '../../audit/operator-events.js';
 import { tombstoneCheck, TombstonedDidError } from '../../registry/tombstone-check.js';
 import {
@@ -62,32 +61,19 @@ export function registerCognitiveSnapshotRoute(
     app.post<{ Params: { did: string }; Body: never }>(
         '/api/v1/operator/nous/:did/cognitive-snapshot',
         async (req, reply) => {
-            // 1. Tier gate — read from server-trusted x-operator-tier header (D-25a-04).
-            //    Mirrors grid/src/api/governance/_validation.ts validateTierAtLeast.
+            // 1. Tier gate — server-trusted operator context (set by the operator_only gate).
             //    GAP-25a-1 fix: body fields tier/operator_id are NOT trusted.
-            const tierHeader = req.headers['x-operator-tier'];
-            if (typeof tierHeader !== 'string') {
-                reply.code(401);
-                return { error: 'tier_missing' } satisfies ApiError;
-            }
-            const tierNum = parseInt(tierHeader, 10);
-            if (!Number.isFinite(tierNum)) {
-                reply.code(401);
-                return { error: 'tier_missing' } satisfies ApiError;
-            }
-            if (tierNum < 3) {
+            const tier = req.didContext?.operatorTier ?? 0;
+            if (tier < 3) {
                 reply.code(403);
                 return { error: 'tier_too_low' } satisfies ApiError;
             }
-
-            // 1b. Operator-id gate — read from server-trusted x-operator-id header.
-            const opIdHeader = req.headers['x-operator-id'];
-            if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) {
-                reply.code(400);
-                return { error: 'invalid_operator_id' } satisfies ApiError;
-            }
             const resolvedTier: 'H3' = 'H3';
-            const resolvedOperatorId = opIdHeader;
+            const resolvedOperatorId = req.didContext?.operatorId;
+            if (!resolvedOperatorId) {
+                reply.code(403);
+                return { error: 'not_operator' } satisfies ApiError;
+            }
 
             // 2. DID shape gate.
             const targetDid = req.params.did;

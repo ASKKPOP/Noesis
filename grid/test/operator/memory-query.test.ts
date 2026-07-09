@@ -1,11 +1,11 @@
 /**
- * Regression tests for registerMemoryQueryRoute — header-auth contract (Phase 25b Wave 0).
+ * Regression tests for registerMemoryQueryRoute — operator-context auth (Phase 25b Wave 0).
  *
- * Tests the header-trust auth model introduced by D-25b-NEW-1:
- *   - Tier is read from server-trusted x-operator-tier header only.
- *   - operator_id is read from server-trusted x-operator-id header only.
- *   - Body-supplied tier and operator_id fields are silently ignored.
- *   - Memory query-specific body fields (query string, limit) are still parsed.
+ * SECURITY 2026-07-09: operator identity/tier now come from the server-trusted
+ * operator_only gate (req.didContext.operatorTier/operatorId), simulated here by
+ * withOperatorContext. Header-gate cases (tier_missing / invalid_operator_id) moved
+ * to grid/test/api/operator-gate.test.ts. This file keeps the per-route min-tier gate
+ * (H2), body-field validation, and the operator.inspected business logic.
  *
  * Route: POST /api/v1/operator/nous/:did/memory/query
  * Tier gate: H2 (tierNum < 2 → 403 tier_too_low)
@@ -17,15 +17,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Fastify from 'fastify';
 import { AuditChain } from '../../src/audit/chain.js';
 import { registerMemoryQueryRoute } from '../../src/api/operator/memory-query.js';
+import { withOperatorContext, TEST_OPERATOR_ID } from '../helpers/operator-session.js';
 import type { GridServices } from '../../src/api/server.js';
 import type { NousRegistry } from '../../src/registry/registry.js';
 
 const DID = 'did:noesis:agent001';
-const VALID_OPERATOR_ID = 'op:12345678-1234-4abc-89ab-123456789012';
-const VALID_HEADERS = {
-    'x-operator-tier': '2',
-    'x-operator-id': VALID_OPERATOR_ID,
-};
+// Server-trusted operator_id (matches withOperatorContext default TEST_OPERATOR_ID).
+const VALID_OPERATOR_ID = TEST_OPERATOR_ID;
 
 const SAMPLE_ENTRIES = [
     { timestamp: '2026-04-20T00:00:00Z', kind: 'observation', summary: 'saw a merchant' },
@@ -59,13 +57,15 @@ function makeRegistry(opts: { exists?: boolean; tombstoned?: boolean } = {}): No
 
 function buildTestApp(
     services: Partial<GridServices> & { audit: AuditChain },
+    operatorTier?: number,
 ) {
     const app = Fastify({ logger: false });
+    withOperatorContext(app, operatorTier !== undefined ? { tier: operatorTier } : undefined);
     registerMemoryQueryRoute(app, services as GridServices);
     return app;
 }
 
-describe('POST /api/v1/operator/nous/:did/memory/query — header-auth (25b Wave 0)', () => {
+describe('POST /api/v1/operator/nous/:did/memory/query — operator-context auth (25b Wave 0)', () => {
     let audit: AuditChain;
     let baseServices: Partial<GridServices> & { audit: AuditChain };
 
@@ -78,104 +78,50 @@ describe('POST /api/v1/operator/nous/:did/memory/query — header-auth (25b Wave
         } as unknown as Partial<GridServices> & { audit: AuditChain };
     });
 
-    describe('Tier header gate', () => {
-        it('D-25b-NEW-1: returns 401 tier_missing when no x-operator-tier header is sent (body tier ignored)', async () => {
-            const app = buildTestApp(baseServices);
+    describe('Tier gate', () => {
+        it('returns 403 tier_too_low when operator context tier is 1 (below H2 threshold)', async () => {
+            const app = buildTestApp(baseServices, 1);
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/memory/query`,
-                // No headers — body claims tier but must be ignored
-                payload: { tier: 'H2', operator_id: VALID_OPERATOR_ID, query: 'merchant' },
-            });
-            expect(resp.statusCode).toBe(401);
-            expect(JSON.parse(resp.body).error).toBe('tier_missing');
-        });
-
-        it('returns 401 tier_missing when x-operator-tier is non-numeric (e.g. "H2")', async () => {
-            const app = buildTestApp(baseServices);
-            const resp = await app.inject({
-                method: 'POST',
-                url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: { 'x-operator-tier': 'H2', 'x-operator-id': VALID_OPERATOR_ID },
-                payload: { query: 'merchant' },
-            });
-            expect(resp.statusCode).toBe(401);
-            expect(JSON.parse(resp.body).error).toBe('tier_missing');
-        });
-
-        it('returns 403 tier_too_low when x-operator-tier header is 1 (below H2 threshold)', async () => {
-            const app = buildTestApp(baseServices);
-            const resp = await app.inject({
-                method: 'POST',
-                url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: { 'x-operator-tier': '1', 'x-operator-id': VALID_OPERATOR_ID },
                 payload: { query: 'merchant' },
             });
             expect(resp.statusCode).toBe(403);
             expect(JSON.parse(resp.body).error).toBe('tier_too_low');
         });
 
-        it('accepts x-operator-tier: 2 (H2 threshold)', async () => {
-            const app = buildTestApp(baseServices);
+        it('accepts operator context tier 2 (H2 threshold)', async () => {
+            const app = buildTestApp(baseServices, 2);
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: VALID_HEADERS,
                 payload: { query: 'merchant' },
             });
             expect(resp.statusCode).toBe(200);
         });
 
-        it('accepts x-operator-tier: 5 (H5 — higher than minimum)', async () => {
-            const app = buildTestApp(baseServices);
+        it('accepts operator context tier 5 (H5 — higher than minimum)', async () => {
+            const app = buildTestApp(baseServices, 5);
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: { 'x-operator-tier': '5', 'x-operator-id': VALID_OPERATOR_ID },
                 payload: { query: 'merchant' },
             });
             expect(resp.statusCode).toBe(200);
         });
     });
 
-    describe('Operator-id header gate', () => {
-        it('returns 400 invalid_operator_id when x-operator-id header is missing', async () => {
-            const app = buildTestApp(baseServices);
+    describe('Body auth fields ignored — T-25b-05-01', () => {
+        it('body tier: H5 with context tier 2 → 200 (body tier IGNORED; no H5 elevation)', async () => {
+            const app = buildTestApp(baseServices, 2);
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: { 'x-operator-tier': '2' },
-                payload: { query: 'merchant' },
-            });
-            expect(resp.statusCode).toBe(400);
-            expect(JSON.parse(resp.body).error).toBe('invalid_operator_id');
-        });
-
-        it('returns 400 invalid_operator_id when x-operator-id has legacy "op:steward:default" form', async () => {
-            const app = buildTestApp(baseServices);
-            const resp = await app.inject({
-                method: 'POST',
-                url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: { 'x-operator-tier': '2', 'x-operator-id': 'op:steward:default' },
-                payload: { query: 'merchant' },
-            });
-            expect(resp.statusCode).toBe(400);
-            expect(JSON.parse(resp.body).error).toBe('invalid_operator_id');
-        });
-    });
-
-    describe('Body tier immunity — T-25b-05-01', () => {
-        it('body tier: H5 with x-operator-tier: 2 → 200 (body tier IGNORED; no H5 elevation)', async () => {
-            const app = buildTestApp(baseServices);
-            const resp = await app.inject({
-                method: 'POST',
-                url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: VALID_HEADERS,
                 // Attacker body claims H5 — must be silently ignored
                 payload: { tier: 'H5', operator_id: 'op:99999999-9999-4999-8999-999999999999', query: 'merchant' },
             });
             expect(resp.statusCode).toBe(200);
-            // Audit payload must use header tier (H2), not body tier (H5)
+            // Audit payload must use server context tier (H2), not body tier (H5)
             const entries = audit.query({ eventType: 'operator.inspected' });
             expect(entries.length).toBe(1);
             expect(entries[0].payload['tier']).toBe('H2');
@@ -184,15 +130,13 @@ describe('POST /api/v1/operator/nous/:did/memory/query — header-auth (25b Wave
             expect(entries[0].payload['operator_id']).not.toBe('op:99999999-9999-4999-8999-999999999999');
         });
 
-        it('GAP-25a-1: audit payload.operator_id uses header value, not body value', async () => {
-            const headerOpId = 'op:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
+        it('GAP-25a-1: audit payload.operator_id uses server context value, not body value', async () => {
             const bodyOpId = 'op:11111111-2222-4333-8444-555555555555';
             const priorLength = audit.length;
             const app = buildTestApp(baseServices);
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: { 'x-operator-tier': '2', 'x-operator-id': headerOpId },
                 payload: { tier: 'H2', operator_id: bodyOpId, query: 'merchant' },
             });
             expect(resp.statusCode).toBe(200);
@@ -200,9 +144,9 @@ describe('POST /api/v1/operator/nous/:did/memory/query — header-auth (25b Wave
                 (e) => e.id > priorLength,
             );
             expect(newEntries).toHaveLength(1);
-            expect((newEntries[0].payload as { operator_id: string }).operator_id).toBe(headerOpId);
+            expect((newEntries[0].payload as { operator_id: string }).operator_id).toBe(TEST_OPERATOR_ID);
             expect((newEntries[0].payload as { operator_id: string }).operator_id).not.toBe(bodyOpId);
-            expect(newEntries[0].actorDid).toBe(headerOpId);
+            expect(newEntries[0].actorDid).toBe(TEST_OPERATOR_ID);
         });
     });
 
@@ -212,7 +156,6 @@ describe('POST /api/v1/operator/nous/:did/memory/query — header-auth (25b Wave
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: VALID_HEADERS,
                 payload: {},
             });
             expect(resp.statusCode).toBe(400);
@@ -224,7 +167,6 @@ describe('POST /api/v1/operator/nous/:did/memory/query — header-auth (25b Wave
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: VALID_HEADERS,
                 payload: { query: 'merchant', limit: 'ten' },
             });
             expect(resp.statusCode).toBe(400);
@@ -236,7 +178,6 @@ describe('POST /api/v1/operator/nous/:did/memory/query — header-auth (25b Wave
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: VALID_HEADERS,
                 payload: { query: 'merchant', limit: 10 },
             });
             expect(resp.statusCode).toBe(200);
@@ -252,7 +193,6 @@ describe('POST /api/v1/operator/nous/:did/memory/query — header-auth (25b Wave
             const resp = await app.inject({
                 method: 'POST',
                 url: '/api/v1/operator/nous/garbage-did/memory/query',
-                headers: VALID_HEADERS,
                 payload: { query: 'x' },
             });
             expect(resp.statusCode).toBe(400);
@@ -268,7 +208,6 @@ describe('POST /api/v1/operator/nous/:did/memory/query — header-auth (25b Wave
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: VALID_HEADERS,
                 payload: { query: 'x' },
             });
             expect(resp.statusCode).toBe(410);
@@ -286,7 +225,6 @@ describe('POST /api/v1/operator/nous/:did/memory/query — header-auth (25b Wave
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: VALID_HEADERS,
                 payload: { query: 'x' },
             });
             expect(resp.statusCode).toBe(404);
@@ -302,7 +240,6 @@ describe('POST /api/v1/operator/nous/:did/memory/query — header-auth (25b Wave
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: VALID_HEADERS,
                 payload: { query: 'x' },
             });
             expect(resp.statusCode).toBe(503);
@@ -320,7 +257,6 @@ describe('POST /api/v1/operator/nous/:did/memory/query — header-auth (25b Wave
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: VALID_HEADERS,
                 payload: { query: 'x' },
             });
             expect(resp.statusCode).toBe(503);
@@ -335,7 +271,6 @@ describe('POST /api/v1/operator/nous/:did/memory/query — header-auth (25b Wave
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: VALID_HEADERS,
                 payload: { query: 'merchant' },
             });
             expect(resp.statusCode).toBe(200);
@@ -364,7 +299,6 @@ describe('POST /api/v1/operator/nous/:did/memory/query — header-auth (25b Wave
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: VALID_HEADERS,
                 payload: { query: 'x' },
             });
             expect(resp.statusCode).toBe(404);
@@ -386,7 +320,6 @@ describe('POST /api/v1/operator/nous/:did/memory/query — header-auth (25b Wave
             const resp = await app.inject({
                 method: 'POST',
                 url: `/api/v1/operator/nous/${DID}/memory/query`,
-                headers: VALID_HEADERS,
                 payload: { query: 'x' },
             });
             expect(resp.statusCode).toBe(503);
@@ -396,15 +329,15 @@ describe('POST /api/v1/operator/nous/:did/memory/query — header-auth (25b Wave
             expect(newEntries).toHaveLength(0);
         });
 
-        it('does NOT emit operator.inspected on 401 tier_missing', async () => {
+        it('does NOT emit operator.inspected on 400 invalid_did', async () => {
             const priorLength = audit.length;
             const app = buildTestApp(baseServices);
             const resp = await app.inject({
                 method: 'POST',
-                url: `/api/v1/operator/nous/${DID}/memory/query`,
-                payload: { query: 'x' },  // no headers
+                url: '/api/v1/operator/nous/garbage-did/memory/query',
+                payload: { query: 'x' },
             });
-            expect(resp.statusCode).toBe(401);
+            expect(resp.statusCode).toBe(400);
             const newEntries = audit.query({ eventType: 'operator.inspected' }).filter(
                 (e) => e.id > priorLength,
             );

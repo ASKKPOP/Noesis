@@ -1,8 +1,9 @@
 /**
  * Phase 10b Wave 0 RED stub — BIOS-03 H5 delete handler emits bios.death.
  *
- * Updated in Phase 25b Wave 0 (D-25b-NEW-1): header-auth migration.
- * Auth is now sourced from x-operator-tier + x-operator-id headers, not body.
+ * SECURITY 2026-07-09: operator identity/tier now come from the server-trusted
+ * operator_only gate (req.didContext.operatorTier/operatorId), simulated here by
+ * withOperatorContext — not from client headers or the request body.
  *
  * Extends Phase 8 D-30 ordering: the operator H5 delete handler must
  * emit BOTH events in this strict order:
@@ -16,7 +17,7 @@
  *
  * bios.death.operator_id (via actorDid on audit chain) and
  * operator.nous_deleted.payload.operator_id must both equal the
- * header-supplied x-operator-id value.
+ * server-trusted operatorId from req.didContext.
  *
  * Uses lightweight Fastify + route registration (mirrors cognitive-snapshot test pattern).
  */
@@ -28,17 +29,12 @@ import { LogosEngine } from '../../../src/logos/engine.js';
 import { AuditChain } from '../../../src/audit/chain.js';
 import { NousRegistry } from '../../../src/registry/registry.js';
 import { registerDeleteNousRoute } from '../../../src/api/operator/delete-nous.js';
+import { withOperatorContext } from '../../helpers/operator-session.js';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../../src/api/server.js';
 
 const OPERATOR  = 'op:11111111-1111-4111-8111-111111111111';
 const ALPHA_DID = 'did:noesis:alpha';
-
-// Valid headers for H5 requests.
-const VALID_HEADERS = {
-    'x-operator-tier': '5',
-    'x-operator-id': OPERATOR,
-};
 
 const BRAIN_HASHES = {
     psyche_hash:        'a'.repeat(64),
@@ -88,6 +84,8 @@ function buildTestApp(opts: { brainFetch?: typeof fetch }): {
     };
 
     const app = Fastify({ logger: false });
+    // Simulate the operator_only gate (server-trusted identity/tier, H5).
+    withOperatorContext(app);
     registerDeleteNousRoute(app, services as GridServices, deleteNousDeps);
 
     return { app, audit, despawnCalls };
@@ -105,7 +103,6 @@ describe('AGENCY-05 + BIOS-03 — H5 delete emits bios.death THEN operator.nous_
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(200);
 
@@ -128,7 +125,6 @@ describe('AGENCY-05 + BIOS-03 — H5 delete emits bios.death THEN operator.nous_
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: VALID_HEADERS,
         });
 
         const entries = audit.all();
@@ -158,7 +154,6 @@ describe('AGENCY-05 + BIOS-03 — H5 delete emits bios.death THEN operator.nous_
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: VALID_HEADERS,
         });
 
         const entries = audit.all();
@@ -169,7 +164,7 @@ describe('AGENCY-05 + BIOS-03 — H5 delete emits bios.death THEN operator.nous_
         expect(biosIdx).toBeLessThan(operatorIdx);
     });
 
-    it('bios.death and operator.nous_deleted both source operator_id from x-operator-id header', async () => {
+    it('bios.death and operator.nous_deleted both source operator_id from server-trusted context', async () => {
         const { app: a, audit } = buildTestApp({});
         app = a;
         await app.ready();
@@ -177,7 +172,6 @@ describe('AGENCY-05 + BIOS-03 — H5 delete emits bios.death THEN operator.nous_
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: VALID_HEADERS,
         });
 
         const entries = audit.all();
@@ -185,7 +179,7 @@ describe('AGENCY-05 + BIOS-03 — H5 delete emits bios.death THEN operator.nous_
         expect(operatorDeleted).toBeDefined();
 
         const operatorPayload = operatorDeleted!.payload as Record<string, unknown>;
-        // operator.nous_deleted payload.operator_id === header-supplied x-operator-id
+        // operator.nous_deleted payload.operator_id === server-trusted operatorId
         expect(operatorPayload.operator_id).toBe(OPERATOR);
     });
 });

@@ -11,25 +11,39 @@
  * Error ladder: 400 (malformed) → 404 (unknown Nous) → 503 (Brain down),
  * with no 500s. 503 and 400/404 do NOT emit audit events.
  *
- * Updated Phase 25b Wave 0: auth migrated to header-trust (D-25b-NEW-1).
- * Tier and operator_id are now sent as x-operator-tier / x-operator-id
- * headers; body-supplied values are ignored.
+ * SECURITY 2026-07-09: operator tier + operator_id come from the server-trusted
+ * operator_only gate (resolved from the Portal-session cookie against the
+ * operatorAllowlist), NOT from client headers or the request body. The pure
+ * header-gate cases (401 tier_missing / 400 invalid_operator_id) moved to
+ * grid/test/api/operator-gate.test.ts.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { SignJWT } from 'jose';
 import { buildServer, type InspectorRunner, type InspectorMemoryEntry } from '../../../src/api/server.js';
 import { WorldClock } from '../../../src/clock/ticker.js';
 import { SpatialMap } from '../../../src/space/map.js';
 import { LogosEngine } from '../../../src/logos/engine.js';
 import { AuditChain } from '../../../src/audit/chain.js';
+import { COOKIE_NAME, keyPairPromise } from '../../../src/api/portal/auth.js';
+import type { OperatorGrant } from '../../../src/api/preHandlers/operatorAuth.js';
 import type { FastifyInstance } from 'fastify';
 
 const VALID_OP_ID = 'op:11111111-1111-4111-8111-111111111111';
 const VALID_DID = 'did:noesis:sophia';
-const VALID_HEADERS = {
-    'x-operator-tier': '2',
-    'x-operator-id': VALID_OP_ID,
-};
+const OPERATOR_DID = 'did:noesis:human:0xoperator';
+
+// Server-trusted operator allowlist injected into buildServer (fail-closed fixture).
+const OPERATOR_ALLOWLIST = new Map<string, OperatorGrant>([
+    [OPERATOR_DID, { operatorId: VALID_OP_ID, tier: 5 }],
+]);
+
+/** Mint a Portal-session cookie the operator_only gate accepts (mirrors operator-gate.test.ts). */
+async function cookie(did: string): Promise<string> {
+    const { privateKey } = await keyPairPromise;
+    return new SignJWT({ did, grid_name: 'test-grid' })
+        .setProtectedHeader({ alg: 'ES256' }).setIssuedAt().setExpirationTime('1h').sign(privateKey);
+}
 
 interface MockRunner extends InspectorRunner {
     lastCall?: { query: string; limit?: number };
@@ -62,6 +76,7 @@ interface SeededServices {
     gridName: string;
     getRunner: (did: string) => InspectorRunner | undefined;
     runners: Map<string, MockRunner>;
+    operatorAllowlist: Map<string, OperatorGrant>;
 }
 
 function seedServices(runners: Map<string, MockRunner>): SeededServices {
@@ -73,6 +88,7 @@ function seedServices(runners: Map<string, MockRunner>): SeededServices {
         gridName: 'test-grid',
         runners,
         getRunner: (did) => runners.get(did),
+        operatorAllowlist: OPERATOR_ALLOWLIST,
     };
 }
 
@@ -103,7 +119,7 @@ describe('Operator memory query — AGENCY-02 H2 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/memory/query`,
-            headers: VALID_HEADERS,
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { query: 'merchant' },
         });
         expect(res.statusCode).toBe(200);
@@ -130,35 +146,11 @@ describe('Operator memory query — AGENCY-02 H2 + D-11 privacy', () => {
         );
     });
 
-    it('Test 2: missing tier header → 401 tier_missing, no audit event (D-25b-NEW-1)', async () => {
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${VALID_DID}/memory/query`,
-            // No headers — body tier is now ignored
-            payload: { query: 'x' },
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json()).toEqual({ error: 'tier_missing' });
-        expect(services.audit.query({ eventType: 'operator.inspected' }).length).toBe(0);
-    });
-
-    it('Test 3: invalid operator_id header → 400 invalid_operator_id, no audit event', async () => {
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${VALID_DID}/memory/query`,
-            headers: { 'x-operator-tier': '2', 'x-operator-id': 'not-a-uuid' },
-            payload: { query: 'x' },
-        });
-        expect(res.statusCode).toBe(400);
-        expect(res.json()).toEqual({ error: 'invalid_operator_id' });
-        expect(services.audit.query({ eventType: 'operator.inspected' }).length).toBe(0);
-    });
-
     it('Test 4: invalid DID → 400 invalid_did, no audit event', async () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/nous/garbage-did/memory/query',
-            headers: VALID_HEADERS,
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { query: 'x' },
         });
         expect(res.statusCode).toBe(400);
@@ -170,7 +162,7 @@ describe('Operator memory query — AGENCY-02 H2 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/nous/did:noesis:nobody/memory/query',
-            headers: VALID_HEADERS,
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { query: 'x' },
         });
         expect(res.statusCode).toBe(404);
@@ -190,7 +182,7 @@ describe('Operator memory query — AGENCY-02 H2 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/memory/query`,
-            headers: VALID_HEADERS,
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { query: 'x' },
         });
         expect(res.statusCode).toBe(503);
@@ -213,7 +205,7 @@ describe('Operator memory query — AGENCY-02 H2 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${VALID_DID}/memory/query`,
-            headers: VALID_HEADERS,
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { query: 'x' },
         });
         expect(res.statusCode).toBe(503);

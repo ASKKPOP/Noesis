@@ -7,24 +7,37 @@
  * Law body remains accessible through GET /api/v1/governance/laws/:id
  * (existing Phase 4 endpoint, not broadcast-scoped).
  *
- * Updated Phase 25b (D-25b-NEW-1): tier and operator_id now sourced from
- * server-trusted x-operator-tier / x-operator-id headers, not request body.
+ * Updated SECURITY 2026-07-09: tier and operator_id are sourced from the
+ * server-trusted operator_only gate (resolved from the Portal-session DID against
+ * the allowlist), not request body or headers. Pure header-gate cases
+ * (tier_missing / invalid_operator_id) are covered centrally by
+ * grid/test/api/operator-gate.test.ts.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { SignJWT } from 'jose';
 import { buildServer } from '../../../src/api/server.js';
 import { WorldClock } from '../../../src/clock/ticker.js';
 import { SpatialMap } from '../../../src/space/map.js';
 import { LogosEngine } from '../../../src/logos/engine.js';
 import { AuditChain } from '../../../src/audit/chain.js';
+import { COOKIE_NAME, keyPairPromise } from '../../../src/api/portal/auth.js';
+import type { OperatorGrant } from '../../../src/api/preHandlers/operatorAuth.js';
 import type { FastifyInstance } from 'fastify';
 import type { Law } from '../../../src/logos/types.js';
 
 const VALID_OP_ID = 'op:11111111-1111-4111-8111-111111111111';
-const VALID_HEADERS = {
-    'x-operator-tier': '3',
-    'x-operator-id': VALID_OP_ID,
-};
+const OPERATOR_DID = 'did:noesis:human:0xoperator';
+// Server-trusted operator identity is resolved from the Portal-session cookie's DID
+// against this allowlist (mirrors grid/test/api/operator-gate.test.ts).
+const ALLOW = new Map<string, OperatorGrant>([[OPERATOR_DID, { operatorId: VALID_OP_ID, tier: 5 }]]);
+const ALLOW_TIER2 = new Map<string, OperatorGrant>([[OPERATOR_DID, { operatorId: VALID_OP_ID, tier: 2 }]]);
+
+async function cookie(did: string): Promise<string> {
+    const { privateKey } = await keyPairPromise;
+    return new SignJWT({ did, grid_name: 'test-grid' })
+        .setProtectedHeader({ alg: 'ES256' }).setIssuedAt().setExpirationTime('1h').sign(privateKey);
+}
 
 const FIXTURE_LAW: Law = {
     id: 'law.test.001',
@@ -61,7 +74,7 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
 
     beforeEach(async () => {
         services = seedServices();
-        app = buildServer(services);
+        app = buildServer({ ...services, operatorAllowlist: ALLOW });
         await app.ready();
     });
 
@@ -74,7 +87,7 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/governance/laws',
-            headers: VALID_HEADERS,
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { law: FIXTURE_LAW },
         });
         expect(res.statusCode).toBe(200);
@@ -97,7 +110,7 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'PUT',
             url: `/api/v1/operator/governance/laws/${FIXTURE_LAW.id}`,
-            headers: VALID_HEADERS,
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: {
                 updates: { title: 'Amended' },
             },
@@ -116,7 +129,7 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'DELETE',
             url: `/api/v1/operator/governance/laws/${FIXTURE_LAW.id}`,
-            headers: VALID_HEADERS,
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
         });
         expect(res.statusCode).toBe(200);
         expect(services.logos.getLaw(FIXTURE_LAW.id)).toBeUndefined();
@@ -130,7 +143,7 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'PUT',
             url: '/api/v1/operator/governance/laws/law.nonexistent',
-            headers: VALID_HEADERS,
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: {
                 updates: { title: 'x' },
             },
@@ -144,7 +157,7 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
         const res = await app.inject({
             method: 'DELETE',
             url: '/api/v1/operator/governance/laws/law.nonexistent',
-            headers: VALID_HEADERS,
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
         });
         expect(res.statusCode).toBe(404);
         expect(res.json()).toEqual({ error: 'law_not_found' });
@@ -152,10 +165,13 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
     });
 
     it('Test 6: 403 tier_too_low on POST — no audit event, law NOT added', async () => {
+        await app.close();
+        app = buildServer({ ...services, operatorAllowlist: ALLOW_TIER2 });
+        await app.ready();
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/governance/laws',
-            headers: { 'x-operator-tier': '2', 'x-operator-id': VALID_OP_ID },
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { law: FIXTURE_LAW },
         });
         expect(res.statusCode).toBe(403);
@@ -164,48 +180,11 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
         expect(services.audit.query({ eventType: 'operator.law_changed' }).length).toBe(0);
     });
 
-    it('Test 6b: 401 tier_missing on PUT — no audit event, law not amended', async () => {
-        services.logos.addLaw(FIXTURE_LAW);
-        const res = await app.inject({
-            method: 'PUT',
-            url: `/api/v1/operator/governance/laws/${FIXTURE_LAW.id}`,
-            payload: { updates: { title: 'X' } },
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json()).toEqual({ error: 'tier_missing' });
-        expect(services.logos.getLaw(FIXTURE_LAW.id)?.title).toBe('Test Law');
-        expect(services.audit.query({ eventType: 'operator.law_changed' }).length).toBe(0);
-    });
-
-    it('Test 6c: 401 tier_missing on DELETE — no audit event, law not removed', async () => {
-        services.logos.addLaw(FIXTURE_LAW);
-        const res = await app.inject({
-            method: 'DELETE',
-            url: `/api/v1/operator/governance/laws/${FIXTURE_LAW.id}`,
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json()).toEqual({ error: 'tier_missing' });
-        expect(services.logos.getLaw(FIXTURE_LAW.id)).toBeDefined();
-        expect(services.audit.query({ eventType: 'operator.law_changed' }).length).toBe(0);
-    });
-
-    it('Test 7: 400 invalid_operator_id on any endpoint — no audit event', async () => {
-        const res = await app.inject({
-            method: 'POST',
-            url: '/api/v1/operator/governance/laws',
-            headers: { 'x-operator-tier': '3', 'x-operator-id': 'bogus' },
-            payload: { law: FIXTURE_LAW },
-        });
-        expect(res.statusCode).toBe(400);
-        expect(res.json()).toEqual({ error: 'invalid_operator_id' });
-        expect(services.audit.query({ eventType: 'operator.law_changed' }).length).toBe(0);
-    });
-
     it('Test 8 (THE PRIVACY TEST — D-11 / T-6-06 closure): operator.law_changed payload keys are exactly {tier, action, operator_id, law_id, change_type} — no law body fields leak', async () => {
         await app.inject({
             method: 'POST',
             url: '/api/v1/operator/governance/laws',
-            headers: VALID_HEADERS,
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { law: FIXTURE_LAW },
         });
         const entry = services.audit.query({ eventType: 'operator.law_changed' })[0];
@@ -227,7 +206,7 @@ describe('Operator governance CRUD — AGENCY-02 H3 + D-11 privacy', () => {
         await app.inject({
             method: 'POST',
             url: '/api/v1/operator/governance/laws',
-            headers: VALID_HEADERS,
+            cookies: { [COOKIE_NAME]: await cookie(OPERATOR_DID) },
             payload: { law: FIXTURE_LAW },
         });
         const entry = services.audit.query({ eventType: 'operator.law_changed' })[0];

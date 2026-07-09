@@ -39,7 +39,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
-import { OPERATOR_ID_REGEX, type ApiError } from '../types.js';
+import type { ApiError } from '../types.js';
 import { appendOperatorNousForked } from '../../audit/append-operator-nous-forked.js';
 import { buildForkArchive } from '../../export/fork-archive-builder.js';
 import { forkTokenStore } from './fork-token-store.js';
@@ -49,28 +49,17 @@ export function registerForkNousRoute(app: FastifyInstance, services: GridServic
     // POST /api/v1/operator/fork/:nousDid
     app.post<{ Params: { nousDid: string } }>('/api/v1/operator/fork/:nousDid', async (req, reply) => {
 
-        // ── Header-trust auth (verbatim from export-replay.ts, threshold = 4) ─────────────
-        const tierHeader = req.headers['x-operator-tier'];
-        if (typeof tierHeader !== 'string') {
-            reply.code(401);
-            return { error: 'tier_missing' } satisfies ApiError;
-        }
-        const tierNum = parseInt(tierHeader, 10);
-        if (!Number.isFinite(tierNum)) {
-            reply.code(401);
-            return { error: 'tier_missing' } satisfies ApiError;
-        }
-        if (tierNum < 4) {
+        // ── Server-trusted operator context (set by the operator_only gate), threshold = 4 ─────
+        const tier = req.didContext?.operatorTier ?? 0;
+        if (tier < 4) {
             reply.code(403);
             return { error: 'tier_too_low' } satisfies ApiError;
         }
-
-        const opIdHeader = req.headers['x-operator-id'];
-        if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) {
-            reply.code(400);
-            return { error: 'invalid_operator_id' } satisfies ApiError;
+        const operatorId = req.didContext?.operatorId;
+        if (!operatorId) {
+            reply.code(403);
+            return { error: 'not_operator' } satisfies ApiError;
         }
-        const operatorId = opIdHeader;
         const nousDid = req.params.nousDid;
 
         // ── Ownership check (T-43-auth mitigation) ──────────────────────────────────────

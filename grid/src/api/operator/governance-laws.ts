@@ -36,7 +36,6 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import type { Law } from '../../logos/types.js';
 import type { ApiError } from '../types.js';
-import { OPERATOR_ID_REGEX } from '../types.js';
 import { appendOperatorEvent } from '../../audit/operator-events.js';
 
 interface AddBody {
@@ -66,31 +65,19 @@ export function registerGovernanceOperatorRoutes(
     app.post<{ Body: AddBody }>(
         '/api/v1/operator/governance/laws',
         async (req, reply) => {
-            // 1. Tier gate — read from server-trusted x-operator-tier header (D-25b-NEW-1).
+            // 1. Tier gate — server-trusted operator context (set by the operator_only gate).
             //    Body fields tier/operator_id are NOT trusted.
-            const tierHeader = req.headers['x-operator-tier'];
-            if (typeof tierHeader !== 'string') {
-                reply.code(401);
-                return { error: 'tier_missing' } satisfies ApiError;
-            }
-            const tierNum = parseInt(tierHeader, 10);
-            if (!Number.isFinite(tierNum)) {
-                reply.code(401);
-                return { error: 'tier_missing' } satisfies ApiError;
-            }
-            if (tierNum < 3) {
+            const tier = req.didContext?.operatorTier ?? 0;
+            if (tier < 3) {
                 reply.code(403);
                 return { error: 'tier_too_low' } satisfies ApiError;
             }
-
-            // 1b. Operator-id gate — read from server-trusted x-operator-id header.
-            const opIdHeader = req.headers['x-operator-id'];
-            if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) {
-                reply.code(400);
-                return { error: 'invalid_operator_id' } satisfies ApiError;
-            }
             const resolvedTier: 'H3' = 'H3';
-            const resolvedOperatorId = opIdHeader;
+            const resolvedOperatorId = req.didContext?.operatorId;
+            if (!resolvedOperatorId) {
+                reply.code(403);
+                return { error: 'not_operator' } satisfies ApiError;
+            }
 
             const body = req.body ?? {};
             if (!isLawShape(body.law)) {
@@ -113,30 +100,18 @@ export function registerGovernanceOperatorRoutes(
     app.put<{ Params: { id: string }; Body: AmendBody }>(
         '/api/v1/operator/governance/laws/:id',
         async (req, reply) => {
-            // 1. Tier gate — read from server-trusted x-operator-tier header (D-25b-NEW-1).
-            const tierHeader = req.headers['x-operator-tier'];
-            if (typeof tierHeader !== 'string') {
-                reply.code(401);
-                return { error: 'tier_missing' } satisfies ApiError;
-            }
-            const tierNum = parseInt(tierHeader, 10);
-            if (!Number.isFinite(tierNum)) {
-                reply.code(401);
-                return { error: 'tier_missing' } satisfies ApiError;
-            }
-            if (tierNum < 3) {
+            // 1. Tier gate — server-trusted operator context (set by the operator_only gate).
+            const tier = req.didContext?.operatorTier ?? 0;
+            if (tier < 3) {
                 reply.code(403);
                 return { error: 'tier_too_low' } satisfies ApiError;
             }
-
-            // 1b. Operator-id gate — read from server-trusted x-operator-id header.
-            const opIdHeader = req.headers['x-operator-id'];
-            if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) {
-                reply.code(400);
-                return { error: 'invalid_operator_id' } satisfies ApiError;
-            }
             const resolvedTier: 'H3' = 'H3';
-            const resolvedOperatorId = opIdHeader;
+            const resolvedOperatorId = req.didContext?.operatorId;
+            if (!resolvedOperatorId) {
+                reply.code(403);
+                return { error: 'not_operator' } satisfies ApiError;
+            }
 
             const body = req.body ?? {};
             const updates = body.updates;
@@ -167,30 +142,18 @@ export function registerGovernanceOperatorRoutes(
     app.delete<{ Params: { id: string }; Body: never }>(
         '/api/v1/operator/governance/laws/:id',
         async (req, reply) => {
-            // 1. Tier gate — read from server-trusted x-operator-tier header (D-25b-NEW-1).
-            const tierHeader = req.headers['x-operator-tier'];
-            if (typeof tierHeader !== 'string') {
-                reply.code(401);
-                return { error: 'tier_missing' } satisfies ApiError;
-            }
-            const tierNum = parseInt(tierHeader, 10);
-            if (!Number.isFinite(tierNum)) {
-                reply.code(401);
-                return { error: 'tier_missing' } satisfies ApiError;
-            }
-            if (tierNum < 3) {
+            // 1. Tier gate — server-trusted operator context (set by the operator_only gate).
+            const tier = req.didContext?.operatorTier ?? 0;
+            if (tier < 3) {
                 reply.code(403);
                 return { error: 'tier_too_low' } satisfies ApiError;
             }
-
-            // 1b. Operator-id gate — read from server-trusted x-operator-id header.
-            const opIdHeader = req.headers['x-operator-id'];
-            if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) {
-                reply.code(400);
-                return { error: 'invalid_operator_id' } satisfies ApiError;
-            }
             const resolvedTier: 'H3' = 'H3';
-            const resolvedOperatorId = opIdHeader;
+            const resolvedOperatorId = req.didContext?.operatorId;
+            if (!resolvedOperatorId) {
+                reply.code(403);
+                return { error: 'not_operator' } satisfies ApiError;
+            }
 
             const removed = services.logos.removeLaw(req.params.id);
             if (!removed) {

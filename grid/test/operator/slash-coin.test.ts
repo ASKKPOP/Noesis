@@ -1,12 +1,14 @@
 /**
  * Phase 25b SANCTION-02 (D-25b-09) — tests for POST /api/v1/operator/nous/:did/slash.
  *
+ * SECURITY 2026-07-09: operator identity/tier now come from the server-trusted
+ * operator_only gate (req.didContext.operatorTier/operatorId), simulated here by
+ * withOperatorContext. The header-gate cases (tier_missing / invalid_operator_id)
+ * moved to grid/test/api/operator-gate.test.ts. This file keeps the per-route
+ * min-tier gate + the business logic.
+ *
  * Test matrix:
- *   Header-auth contract:
- *   - No x-operator-tier header → 401 tier_missing
- *   - Non-numeric tier header → 401 tier_missing
- *   - tier '3' (< 4) → 403 tier_too_low
- *   - tier '4' + invalid x-operator-id → 400 invalid_operator_id
+ *   - operator tier 3 (< 4) → 403 tier_too_low
  *   - Invalid DID shape → 400 invalid_did
  *   - Tombstoned DID → 410 gone
  *   - No runner for DID → 404 unknown_nous
@@ -31,11 +33,12 @@ import { WorldClock } from '../../src/clock/ticker.js';
 import { SpatialMap } from '../../src/space/map.js';
 import { LogosEngine } from '../../src/logos/engine.js';
 import { registerSlashCoinRoute } from '../../src/api/operator/slash-coin.js';
+import { withOperatorContext, TEST_OPERATOR_ID } from '../helpers/operator-session.js';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../src/api/server.js';
 import { createHash } from 'node:crypto';
 
-const OPERATOR = 'op:11111111-1111-4111-8111-111111111111';
+const OPERATOR = TEST_OPERATOR_ID;
 const TARGET_DID = 'did:noesis:alpha';
 
 function sha256(text: string): string {
@@ -61,6 +64,7 @@ function buildTestApp(opts: {
     withRunner?: boolean;
     tombstoned?: boolean;
     sanctionReasonStore?: GridServices['sanctionReasonStore'];
+    operatorTier?: number;
 }): {
     app: FastifyInstance;
     audit: AuditChain;
@@ -100,71 +104,31 @@ function buildTestApp(opts: {
     };
 
     const app = Fastify({ logger: false });
+    // Simulate the operator_only gate (server-trusted identity/tier).
+    withOperatorContext(app, opts.operatorTier !== undefined ? { tier: opts.operatorTier } : undefined);
     registerSlashCoinRoute(app, services as GridServices);
 
     return { app, audit, registry, runner, insertCalls };
 }
 
-describe('POST /api/v1/operator/nous/:did/slash — header-auth contract', () => {
+describe('POST /api/v1/operator/nous/:did/slash — tier gate', () => {
     let app: FastifyInstance;
 
     afterEach(async () => {
         if (app) await app.close();
     });
 
-    it('returns 401 tier_missing when x-operator-tier header is absent', async () => {
-        ({ app } = buildTestApp({}));
+    it('returns 403 tier_too_low when operator tier is 3 (< 4)', async () => {
+        ({ app } = buildTestApp({ operatorTier: 3 }));
         await app.ready();
 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
-            payload: { amount: 10 },
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json().error).toBe('tier_missing');
-    });
-
-    it('returns 401 tier_missing when x-operator-tier is non-numeric (e.g. "H4")', async () => {
-        ({ app } = buildTestApp({}));
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
-            headers: { 'x-operator-tier': 'H4', 'x-operator-id': OPERATOR },
-            payload: { amount: 10 },
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json().error).toBe('tier_missing');
-    });
-
-    it('returns 403 tier_too_low when x-operator-tier is 3 (< 4)', async () => {
-        ({ app } = buildTestApp({}));
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
-            headers: { 'x-operator-tier': '3', 'x-operator-id': OPERATOR },
             payload: { amount: 10 },
         });
         expect(res.statusCode).toBe(403);
         expect(res.json().error).toBe('tier_too_low');
-    });
-
-    it('returns 400 invalid_operator_id when x-operator-id header is badly formatted', async () => {
-        ({ app } = buildTestApp({}));
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': 'not-an-op-id' },
-            payload: { amount: 10 },
-        });
-        expect(res.statusCode).toBe(400);
-        expect(res.json().error).toBe('invalid_operator_id');
     });
 });
 
@@ -182,7 +146,6 @@ describe('POST /api/v1/operator/nous/:did/slash — DID + runner gates', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/nous/not-a-did/slash',
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
             payload: { amount: 10 },
         });
         expect(res.statusCode).toBe(400);
@@ -196,7 +159,6 @@ describe('POST /api/v1/operator/nous/:did/slash — DID + runner gates', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
             payload: { amount: 10 },
         });
         expect(res.statusCode).toBe(410);
@@ -210,7 +172,6 @@ describe('POST /api/v1/operator/nous/:did/slash — DID + runner gates', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
             payload: { amount: 10 },
         });
         expect(res.statusCode).toBe(404);
@@ -232,7 +193,6 @@ describe('POST /api/v1/operator/nous/:did/slash — amount validation', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
             payload: { amount: 0 },
         });
         expect(res.statusCode).toBe(400);
@@ -246,7 +206,6 @@ describe('POST /api/v1/operator/nous/:did/slash — amount validation', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
             payload: { amount: -5 },
         });
         expect(res.statusCode).toBe(400);
@@ -260,7 +219,6 @@ describe('POST /api/v1/operator/nous/:did/slash — amount validation', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
             payload: { amount: 'abc' },
         });
         expect(res.statusCode).toBe(400);
@@ -274,7 +232,6 @@ describe('POST /api/v1/operator/nous/:did/slash — amount validation', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
             payload: { amount: 1.5 },
         });
         expect(res.statusCode).toBe(400);
@@ -288,7 +245,6 @@ describe('POST /api/v1/operator/nous/:did/slash — amount validation', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
             payload: { reason: 'no amount' },
         });
         expect(res.statusCode).toBe(400);
@@ -310,7 +266,6 @@ describe('POST /api/v1/operator/nous/:did/slash — success path', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
             payload: { amount: 10, reason: 'fraud detected' },
         });
         expect(res.statusCode).toBe(200);
@@ -325,7 +280,6 @@ describe('POST /api/v1/operator/nous/:did/slash — success path', () => {
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
             payload: { amount: 30, reason: 'fraud detected' },
         });
 
@@ -341,7 +295,6 @@ describe('POST /api/v1/operator/nous/:did/slash — success path', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
             payload: { amount: 50, reason: 'fraud detected' },
         });
         // Slash always completes — debit to 0 (punitive, no 409)
@@ -358,7 +311,6 @@ describe('POST /api/v1/operator/nous/:did/slash — success path', () => {
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
             payload: { amount: 25, reason: 'market manipulation' },
         });
 
@@ -380,10 +332,11 @@ describe('POST /api/v1/operator/nous/:did/slash — success path', () => {
         ({ app, audit } = buildTestApp({}));
         await app.ready();
 
-        // Trigger 401
+        // Malformed DID → 400 invalid_did, no audit emission.
         await app.inject({
             method: 'POST',
-            url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
+            url: '/api/v1/operator/nous/not-a-did/slash',
+            payload: { amount: 10, reason: 'x'.repeat(12) },
         });
 
         expect(audit.query({ eventType: 'operator.slashed' })).toHaveLength(0);
@@ -408,7 +361,6 @@ describe('POST /api/v1/operator/nous/:did/slash — reason discipline', () => {
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
             payload: { amount: 10, reason },
         });
 

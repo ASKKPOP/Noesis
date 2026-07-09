@@ -1,12 +1,14 @@
 /**
  * Phase 25b SANCTION-04 (D-25b-09) — tests for POST /api/v1/operator/nous/:did/force-sleep.
  *
+ * SECURITY 2026-07-09: operator identity/tier now come from the server-trusted
+ * operator_only gate (req.didContext.operatorTier/operatorId), simulated here by
+ * withOperatorContext. The header-gate cases (tier_missing / invalid_operator_id)
+ * moved to grid/test/api/operator-gate.test.ts. This file keeps the per-route
+ * min-tier gate + the business logic.
+ *
  * Test matrix:
- *   Header-auth contract (mirrors mute-broadcast.test.ts):
- *   - No x-operator-tier header → 401 tier_missing
- *   - Non-numeric tier header → 401 tier_missing
- *   - tier '2' (< 3) → 403 tier_too_low
- *   - tier '3' + invalid x-operator-id → 400 invalid_operator_id
+ *   - operator tier 2 (< 3) → 403 tier_too_low
  *   - Invalid DID shape → 400 invalid_did
  *   - Tombstoned DID → 410 gone
  *   - No runner for DID → 404 unknown_nous
@@ -23,11 +25,12 @@ import { WorldClock } from '../../src/clock/ticker.js';
 import { SpatialMap } from '../../src/space/map.js';
 import { LogosEngine } from '../../src/logos/engine.js';
 import { registerForceSleepRoute } from '../../src/api/operator/force-sleep.js';
+import { withOperatorContext, TEST_OPERATOR_ID } from '../helpers/operator-session.js';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../src/api/server.js';
 import { createHash } from 'node:crypto';
 
-const OPERATOR = 'op:11111111-1111-4111-8111-111111111111';
+const OPERATOR = TEST_OPERATOR_ID;
 const TARGET_DID = 'did:noesis:alpha';
 
 function sha256(text: string): string {
@@ -49,6 +52,7 @@ function buildTestApp(opts: {
     tombstoned?: boolean;
     sleepTrigger?: () => void | Promise<void>;
     sanctionReasonStore?: GridServices['sanctionReasonStore'];
+    operatorTier?: number;
 }): { app: FastifyInstance; audit: AuditChain; registry: NousRegistry; insertCalls: Array<Record<string, unknown>> } {
     const audit = new AuditChain();
     const registry = new NousRegistry();
@@ -90,68 +94,30 @@ function buildTestApp(opts: {
     };
 
     const app = Fastify({ logger: false });
+    // Simulate the operator_only gate (server-trusted identity/tier).
+    withOperatorContext(app, opts.operatorTier !== undefined ? { tier: opts.operatorTier } : undefined);
     registerForceSleepRoute(app, services as GridServices);
 
     return { app, audit, registry, insertCalls };
 }
 
-describe('POST /api/v1/operator/nous/:did/force-sleep — header-auth contract', () => {
+describe('POST /api/v1/operator/nous/:did/force-sleep — auth + shape gates', () => {
     let app: FastifyInstance;
 
     afterEach(async () => {
         if (app) await app.close();
     });
 
-    it('returns 401 tier_missing when x-operator-tier header is absent', async () => {
-        ({ app } = buildTestApp({}));
+    it('returns 403 tier_too_low when operator tier is 2 (< 3)', async () => {
+        ({ app } = buildTestApp({ operatorTier: 2 }));
         await app.ready();
 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/force-sleep`,
-            payload: { tier: 'H3', operator_id: OPERATOR },
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json().error).toBe('tier_missing');
-    });
-
-    it('returns 401 tier_missing when x-operator-tier is non-numeric (e.g. "H3")', async () => {
-        ({ app } = buildTestApp({}));
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${TARGET_DID}/force-sleep`,
-            headers: { 'x-operator-tier': 'H3', 'x-operator-id': OPERATOR },
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json().error).toBe('tier_missing');
-    });
-
-    it('returns 403 tier_too_low when x-operator-tier is 2 (< 3)', async () => {
-        ({ app } = buildTestApp({}));
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${TARGET_DID}/force-sleep`,
-            headers: { 'x-operator-tier': '2', 'x-operator-id': OPERATOR },
         });
         expect(res.statusCode).toBe(403);
         expect(res.json().error).toBe('tier_too_low');
-    });
-
-    it('returns 400 invalid_operator_id when x-operator-id header is badly formatted', async () => {
-        ({ app } = buildTestApp({}));
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${TARGET_DID}/force-sleep`,
-            headers: { 'x-operator-tier': '3', 'x-operator-id': 'not-an-op-id' },
-        });
-        expect(res.statusCode).toBe(400);
-        expect(res.json().error).toBe('invalid_operator_id');
     });
 
     it('returns 400 invalid_did when DID URL param is malformed', async () => {
@@ -161,7 +127,6 @@ describe('POST /api/v1/operator/nous/:did/force-sleep — header-auth contract',
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/nous/not-a-did/force-sleep',
-            headers: { 'x-operator-tier': '3', 'x-operator-id': OPERATOR },
         });
         expect(res.statusCode).toBe(400);
         expect(res.json().error).toBe('invalid_did');
@@ -174,7 +139,6 @@ describe('POST /api/v1/operator/nous/:did/force-sleep — header-auth contract',
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/force-sleep`,
-            headers: { 'x-operator-tier': '3', 'x-operator-id': OPERATOR },
         });
         expect(res.statusCode).toBe(410);
         expect(res.json().error).toBe('gone');
@@ -187,7 +151,6 @@ describe('POST /api/v1/operator/nous/:did/force-sleep — header-auth contract',
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/force-sleep`,
-            headers: { 'x-operator-tier': '3', 'x-operator-id': OPERATOR },
         });
         expect(res.statusCode).toBe(404);
         expect(res.json().error).toBe('unknown_nous');
@@ -208,7 +171,6 @@ describe('POST /api/v1/operator/nous/:did/force-sleep — success path', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/force-sleep`,
-            headers: { 'x-operator-tier': '3', 'x-operator-id': OPERATOR },
             payload: { reason: 'scheduled maintenance' },
         });
         expect(res.statusCode).toBe(200);
@@ -223,8 +185,7 @@ describe('POST /api/v1/operator/nous/:did/force-sleep — success path', () => {
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/force-sleep`,
-            headers: { 'x-operator-tier': '3', 'x-operator-id': OPERATOR },
-            payload: { reason: 'test reason' },
+            payload: { reason: 'scheduled downtime' },
         });
 
         const entries = audit.query({ eventType: 'operator.forced_sleep' });
@@ -234,9 +195,9 @@ describe('POST /api/v1/operator/nous/:did/force-sleep — success path', () => {
         expect(payload.action).toBe('force_sleep');
         expect(payload.operator_id).toBe(OPERATOR);
         expect(payload.target_did).toBe(TARGET_DID);
-        expect(payload.reason_hash).toBe(sha256('test reason'));
+        expect(payload.reason_hash).toBe(sha256('scheduled downtime'));
         // Reason plaintext must NOT appear in audit payload
-        expect(JSON.stringify(payload)).not.toContain('test reason');
+        expect(JSON.stringify(payload)).not.toContain('scheduled downtime');
     });
 
     it('does NOT emit audit events on error paths', async () => {
@@ -244,10 +205,11 @@ describe('POST /api/v1/operator/nous/:did/force-sleep — success path', () => {
         ({ app, audit } = buildTestApp({}));
         await app.ready();
 
-        // Trigger 401
+        // Malformed DID → 400 invalid_did, no audit emission.
         await app.inject({
             method: 'POST',
-            url: `/api/v1/operator/nous/${TARGET_DID}/force-sleep`,
+            url: '/api/v1/operator/nous/not-a-did/force-sleep',
+            payload: { reason: 'x'.repeat(12) },
         });
 
         expect(audit.query({ eventType: 'operator.forced_sleep' })).toHaveLength(0);
@@ -283,7 +245,6 @@ describe('POST /api/v1/operator/nous/:did/force-sleep — audit ordering', () =>
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/force-sleep`,
-            headers: { 'x-operator-tier': '3', 'x-operator-id': OPERATOR },
             payload: { reason: 'ordering test' },
         });
 
@@ -320,7 +281,6 @@ describe('POST /api/v1/operator/nous/:did/force-sleep — reason discipline', ()
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/force-sleep`,
-            headers: { 'x-operator-tier': '3', 'x-operator-id': OPERATOR },
             payload: { reason },
         });
 

@@ -1,17 +1,19 @@
 /**
- * Phase 25b Wave 0 (D-25b-NEW-1) — header-auth regression tests for
+ * Phase 25b Wave 0 (D-25b-NEW-1) — regression tests for
  * POST /api/v1/operator/nous/:did/delete.
  *
- * Pins the header-auth contract and ORDER-LOCKED audit emit sequence:
+ * SECURITY 2026-07-09: operator tier/identity now come from the server-trusted
+ * operator_only gate (req.didContext.operatorTier/operatorId), simulated here by
+ * withOperatorContext. The pure header-gate cases (tier_missing / invalid_operator_id)
+ * moved to grid/test/api/operator-gate.test.ts. This file keeps the per-route min-tier
+ * gate + the ORDER-LOCKED audit emit sequence:
  *   tombstone check → despawn → appendBiosDeath → appendNousDeleted
  *
- * Test matrix (per plan 25b-04 behavior spec):
- *   - No headers + body {tier:'H5'} → 401 tier_missing
- *   - Header x-operator-tier:'4' (< 5) → 403 tier_too_low
- *   - Header x-operator-tier:'5', bad x-operator-id → 400 invalid_operator_id
- *   - Header x-operator-tier:'5' + valid x-operator-id + body {tier:'H1'} → 200; body tier ignored
+ * Test matrix:
+ *   - operator tier 4 (< 5) → 403 tier_too_low
+ *   - operator context (H5) + body {tier:'H1'} → 200; body tier ignored
  *   - Audit chain: bios.death(cause='operator_h5') IMMEDIATELY before operator.nous_deleted
- *   - bios.death and operator.nous_deleted both source operator_id from header
+ *   - bios.death and operator.nous_deleted both source operator_id from operator context
  *
  * Uses lightweight Fastify + route registration (mirrors cognitive-snapshot test pattern).
  */
@@ -24,10 +26,11 @@ import { LogosEngine } from '../../src/logos/engine.js';
 import { AuditChain } from '../../src/audit/chain.js';
 import { NousRegistry } from '../../src/registry/registry.js';
 import { registerDeleteNousRoute } from '../../src/api/operator/delete-nous.js';
+import { withOperatorContext, TEST_OPERATOR_ID } from '../helpers/operator-session.js';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../src/api/server.js';
 
-const OPERATOR   = 'op:11111111-1111-4111-8111-111111111111';
+const OPERATOR   = TEST_OPERATOR_ID;
 const ALPHA_DID  = 'did:noesis:alpha';
 
 const BRAIN_HASHES = {
@@ -55,6 +58,7 @@ function spawnAlpha(registry: NousRegistry): void {
 function buildTestApp(opts: {
     brainFetch?: typeof fetch;
     spawnAlpha?: boolean;
+    operatorTier?: number;
 }): { app: FastifyInstance; registry: NousRegistry; audit: AuditChain; despawnCalls: string[] } {
     const space    = new SpatialMap();
     const registry = new NousRegistry();
@@ -81,6 +85,8 @@ function buildTestApp(opts: {
     };
 
     const app = Fastify({ logger: false });
+    // Simulate the operator_only gate (server-trusted identity/tier).
+    withOperatorContext(app, opts.operatorTier !== undefined ? { tier: opts.operatorTier } : undefined);
     registerDeleteNousRoute(app, services as GridServices, deleteNousDeps);
 
     return { app, registry, audit, despawnCalls };
@@ -93,75 +99,33 @@ describe('25b-04: delete-nous header-auth contract (D-25b-NEW-1)', () => {
         if (app) await app.close();
     });
 
-    it('GAP-25b: rejects body-supplied tier when headers are missing (401 tier_missing)', async () => {
-        ({ app } = buildTestApp({}));
+    it('returns 403 tier_too_low when operator tier is 4 (< 5)', async () => {
+        ({ app } = buildTestApp({ operatorTier: 4 }));
         await app.ready();
 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            // No x-operator-tier header — body claims H5 but must be ignored
-            payload: { tier: 'H5', operator_id: OPERATOR },
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json().error).toBe('tier_missing');
-    });
-
-    it('returns 403 tier_too_low when x-operator-tier header is 4 (< 5)', async () => {
-        ({ app } = buildTestApp({}));
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
         });
         expect(res.statusCode).toBe(403);
         expect(res.json().error).toBe('tier_too_low');
     });
 
-    it('returns 400 invalid_operator_id when x-operator-id header is badly formatted', async () => {
-        ({ app } = buildTestApp({}));
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: { 'x-operator-tier': '5', 'x-operator-id': 'bad-id-format' },
-        });
-        expect(res.statusCode).toBe(400);
-        expect(res.json().error).toBe('invalid_operator_id');
-    });
-
-    it('returns 401 tier_missing when x-operator-tier header is non-numeric (e.g. "H5")', async () => {
-        ({ app } = buildTestApp({}));
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: { 'x-operator-tier': 'H5', 'x-operator-id': OPERATOR },
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json().error).toBe('tier_missing');
-    });
-
-    it('returns 200 when valid headers present; body tier field ignored', async () => {
+    it('returns 200 with server-trusted operator context; body tier field ignored', async () => {
         const { app: a, audit } = buildTestApp({});
         app = a;
         await app.ready();
 
-        // Valid H5 headers + body claims H1 (should be ignored)
+        // Operator context supplies H5; body claims H1 (must be ignored).
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
             payload: { tier: 'H1' },
         });
         expect(res.statusCode).toBe(200);
         expect(res.json().ok).toBe(true);
 
-        // Audit payload must reflect header-sourced tier (H5), not body tier (H1)
+        // Audit payload must reflect context-sourced tier (H5), not body tier (H1)
         const entries = audit.query({ eventType: 'operator.nous_deleted' });
         expect(entries).toHaveLength(1);
         expect((entries[0].payload as { tier: string }).tier).toBe('H5');
@@ -183,7 +147,6 @@ describe('25b-04: ORDER-LOCKED audit emit sequence preserved (D-30)', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
         });
         expect(res.statusCode).toBe(200);
 
@@ -200,7 +163,7 @@ describe('25b-04: ORDER-LOCKED audit emit sequence preserved (D-30)', () => {
         expect(next.eventType).toBe('operator.nous_deleted');
     });
 
-    it('bios.death.operator_id === operator.nous_deleted.operator_id === header x-operator-id', async () => {
+    it('bios.death.operator_id === operator.nous_deleted.operator_id === operator context id', async () => {
         const { app: a, audit } = buildTestApp({});
         app = a;
         await app.ready();
@@ -208,7 +171,6 @@ describe('25b-04: ORDER-LOCKED audit emit sequence preserved (D-30)', () => {
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
         });
 
         const entries = audit.all();
@@ -228,7 +190,6 @@ describe('25b-04: ORDER-LOCKED audit emit sequence preserved (D-30)', () => {
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
         });
 
         const entries = audit.all();
@@ -247,7 +208,6 @@ describe('25b-04: ORDER-LOCKED audit emit sequence preserved (D-30)', () => {
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
         });
 
         const entries     = audit.all();
@@ -272,7 +232,6 @@ describe('25b-04: ORDER-LOCKED audit emit sequence preserved (D-30)', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: { 'x-operator-tier': '5', 'x-operator-id': OPERATOR },
         });
         expect(res.statusCode).toBe(503);
 

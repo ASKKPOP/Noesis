@@ -1,13 +1,15 @@
 /**
  * Phase 8 AGENCY-05 — POST /api/v1/operator/nous/:did/delete route tests.
  *
- * Updated in Phase 25b Wave 0 (D-25b-NEW-1): header-auth migration.
- * Auth is now sourced from x-operator-tier + x-operator-id headers, not body.
+ * SECURITY 2026-07-09: operator identity/tier now come from the server-trusted
+ * operator_only gate (req.didContext.operatorTier/operatorId), simulated here by
+ * withOperatorContext — not from client headers or the request body. The pure
+ * header-gate cases (401 tier_missing / 400 invalid_operator_id) moved to
+ * grid/test/api/operator-gate.test.ts; this file keeps the per-route min-tier
+ * gate + the delete business logic.
  *
- * Covers the full error ladder:
- *   401  — tier_missing (no / non-numeric x-operator-tier header)
- *   403  — tier_too_low (header tier < 5)
- *   400  — invalid_operator_id (bad x-operator-id header)
+ * Covers the error ladder:
+ *   403  — tier_too_low (operator tier < 5)
  *   400  — malformed DID
  *   410  — tombstoned DID (tombstoneCheck gate)
  *   404  — unknown DID (registry has no record)
@@ -27,17 +29,12 @@ import { LogosEngine } from '../../src/logos/engine.js';
 import { AuditChain } from '../../src/audit/chain.js';
 import { NousRegistry } from '../../src/registry/registry.js';
 import { registerDeleteNousRoute } from '../../src/api/operator/delete-nous.js';
+import { withOperatorContext } from '../helpers/operator-session.js';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../src/api/server.js';
 
 const OPERATOR   = 'op:11111111-1111-4111-8111-111111111111';
 const ALPHA_DID  = 'did:noesis:alpha';
-
-// Valid headers for H5 requests.
-const VALID_HEADERS = {
-    'x-operator-tier': '5',
-    'x-operator-id': OPERATOR,
-};
 
 const BRAIN_HASHES = {
     psyche_hash:        'a'.repeat(64),
@@ -59,6 +56,7 @@ function spawnAlpha(registry: NousRegistry): void {
 function buildTestApp(opts: {
     brainFetch?: typeof fetch;
     spawnAlpha?: boolean;
+    operatorTier?: number;
 }): { app: FastifyInstance; registry: NousRegistry; audit: AuditChain; space: SpatialMap; despawnCalls: string[] } {
     const space    = new SpatialMap();
     const registry = new NousRegistry();
@@ -85,6 +83,8 @@ function buildTestApp(opts: {
     };
 
     const app = Fastify({ logger: false });
+    // Simulate the operator_only gate (server-trusted identity/tier).
+    withOperatorContext(app, opts.operatorTier !== undefined ? { tier: opts.operatorTier } : undefined);
     registerDeleteNousRoute(app, services as GridServices, deleteNousDeps);
 
     return { app, registry, audit, space, despawnCalls };
@@ -97,44 +97,16 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         if (app) await app.close();
     });
 
-    it('401 — no headers (body-only tier claim rejected)', async () => {
-        ({ app } = buildTestApp({}));
+    it('403 — operator tier 4 (< 5) → tier_too_low', async () => {
+        ({ app } = buildTestApp({ operatorTier: 4 }));
         await app.ready();
 
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            // No headers — body claims H5 but must be ignored
-            payload: { tier: 'H5', operator_id: OPERATOR },
-        });
-        expect(res.statusCode).toBe(401);
-        expect(res.json().error).toBe('tier_missing');
-    });
-
-    it('403 — header tier 4 (< 5) → tier_too_low', async () => {
-        ({ app } = buildTestApp({}));
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: { 'x-operator-tier': '4', 'x-operator-id': OPERATOR },
         });
         expect(res.statusCode).toBe(403);
         expect(res.json().error).toBe('tier_too_low');
-    });
-
-    it('400 — invalid_operator_id when x-operator-id header is missing', async () => {
-        ({ app } = buildTestApp({}));
-        await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: { 'x-operator-tier': '5' },
-        });
-        expect(res.statusCode).toBe(400);
-        expect(res.json().error).toBe('invalid_operator_id');
     });
 
     it('400 — malformed DID (not-a-did)', async () => {
@@ -144,7 +116,6 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         const res = await app.inject({
             method: 'POST',
             url: '/api/v1/operator/nous/not-a-did/delete',
-            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(400);
         expect(res.json().error).toBe('invalid_did');
@@ -159,7 +130,6 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(410);
         expect(res.json().error).toBe('gone');
@@ -173,7 +143,6 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(404);
         expect(res.json().error).toBe('unknown_did');
@@ -190,7 +159,6 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(503);
         // Nous must remain active — tombstone must NOT have fired
@@ -211,7 +179,6 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(503);
         expect(registry.get(ALPHA_DID)?.status).toBe('active');
@@ -229,7 +196,6 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(503);
         expect(registry.get(ALPHA_DID)?.status).toBe('active');
@@ -246,7 +212,6 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: VALID_HEADERS,
         });
         expect(res.statusCode).toBe(200);
         const body = res.json();
@@ -276,7 +241,7 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
             .toMatch(/^[0-9a-f]{64}$/);
     });
 
-    it('200 happy path — body tier field ignored when valid headers present', async () => {
+    it('200 happy path — body tier field ignored (server-trusted context wins)', async () => {
         const brainFetch = vi.fn().mockResolvedValue(
             new Response(JSON.stringify(BRAIN_HASHES), { status: 200, headers: { 'content-type': 'application/json' } }),
         );
@@ -284,16 +249,15 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         app = a;
         await app.ready();
 
-        // Send H1 in body but H5 in header — header wins
+        // Send H1 in body — the server-trusted context (H5) must win
         const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: VALID_HEADERS,
             payload: { tier: 'H1' },
         });
         expect(res.statusCode).toBe(200);
 
-        // Audit payload must reflect header-sourced tier (H5), not body tier (H1)
+        // Audit payload must reflect context-sourced tier (H5), not body tier (H1)
         const entries = audit.query({ eventType: 'operator.nous_deleted' });
         expect((entries[0].payload as { tier: string }).tier).toBe('H5');
     });
@@ -309,7 +273,6 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: VALID_HEADERS,
         });
 
         // Both must have happened (tombstone AND audit)
@@ -329,7 +292,6 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         const r1 = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: VALID_HEADERS,
         });
         expect(r1.statusCode).toBe(200);
 
@@ -337,7 +299,6 @@ describe('AGENCY-05 POST /api/v1/operator/nous/:did/delete — error ladder (D-3
         const r2 = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${ALPHA_DID}/delete`,
-            headers: VALID_HEADERS,
         });
         expect(r2.statusCode).toBe(410);
     });
