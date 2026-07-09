@@ -18,8 +18,9 @@
  * Consumed by: dashboard/src/app/** (Plans 04–06) via a React hook wrapper.
  */
 
-import type {
-    AuditEntry,
+import {
+    normalizeAuditEntry,
+    type AuditEntry,
 } from '../protocol/audit-types';
 import type {
     ByeFrame,
@@ -223,7 +224,11 @@ export class WsClient {
                 this.emit('stateChange', { ...this.state_ });
                 break;
             case 'event': {
-                const entry = (frame as EventFrame).entry;
+                // QA ISSUE-010: normalize the frame entry (operator frames are
+                // camelCase; the visitor firehose sends a snake_case projection).
+                const entry = normalizeAuditEntry(
+                    (frame as EventFrame).entry as unknown as Record<string, unknown>,
+                );
                 if (typeof entry.id === 'number' && entry.id > this.state_.lastSeenId) {
                     this.state_.lastSeenId = entry.id;
                 }

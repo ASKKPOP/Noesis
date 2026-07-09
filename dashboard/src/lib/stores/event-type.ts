@@ -30,6 +30,9 @@ const LIFECYCLE_TYPES: ReadonlySet<string> = new Set([
 ]);
 
 export function categorizeEventType(eventType: string): EventCategory {
+    // QA ISSUE-010 guard: never crash on a malformed/undefined event type
+    // (e.g. an un-normalized projection entry). Fall through to 'other'.
+    if (typeof eventType !== 'string' || eventType.length === 0) return 'other';
     if (eventType.startsWith('trade.')) return 'trade';
     if (MESSAGE_TYPES.has(eventType)) return 'message';
     if (eventType === 'nous.moved') return 'movement';

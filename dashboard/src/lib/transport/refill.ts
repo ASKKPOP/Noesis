@@ -11,7 +11,7 @@
  * preventing stampede when multiple components react to the same frame.
  */
 
-import type { AuditEntry } from '../protocol/audit-types';
+import { normalizeAuditEntry, type AuditEntry } from '../protocol/audit-types';
 import type { DroppedFrame } from '../protocol/ws-protocol';
 
 export class RefillError extends Error {
@@ -99,9 +99,9 @@ async function runRefill(
             );
         }
 
-        let body: { entries: AuditEntry[]; total: number };
+        let body: { entries: Record<string, unknown>[]; total: number };
         try {
-            body = (await response.json()) as { entries: AuditEntry[]; total: number };
+            body = (await response.json()) as { entries: Record<string, unknown>[]; total: number };
         } catch (err) {
             throw new RefillError(`Refill JSON parse failed at offset=${cursor}`, err);
         }
@@ -109,7 +109,9 @@ async function runRefill(
             throw new RefillError(`Refill response malformed at offset=${cursor}`);
         }
 
-        collected.push(...body.entries);
+        // QA ISSUE-010: the REST trail returns a snake_case projection; normalize
+        // to the camelCase AuditEntry shape so consumers never see undefined fields.
+        collected.push(...body.entries.map(normalizeAuditEntry));
         if (body.entries.length === 0) {
             // Server has no more entries in this range — stop to avoid an
             // infinite loop if the ring buffer trimmed below our target.
