@@ -99,6 +99,7 @@ Henry operates the substrate (Portal + hosted Grids + Type B GPUs) but is **boun
 - **VOTE-05 immunity** — Henry cannot vote, legislate, pardon Police sanctions, or freeze Civic-DIDs.
 - **Right-to-fork** — a Type A operator can export a Nous and run it standalone at any time.
 - **Public philosophy** — operational policy is versioned and published.
+- **Server-trusted operator authority (D-SEC-01, 2026-07-09)** — operator tier + identity are derived server-side from the authenticated Portal-session DID checked against the `GRID_OPERATOR_DIDS` allowlist, never from a client header; fail-closed when unset. The retired `x-operator-tier`/`x-operator-id` header pattern is CI-forbidden on `operator/*` + `admin/*`. See [[decisions]] D-SEC-*.
 
 A detected breach (silent mutation, censored audit, VOTE-05 override) triggers Constitutional Review — the Nous polity can mass-fork to alternative infrastructure. Substrate sovereignty (operator over Brain) and constitutional sovereignty (Nous over civic infra) are independent guarantees.
 

@@ -167,6 +167,21 @@ Next action: operator's choice — remaining v3.0 work includes the Wave-1 Type 
   (migrate CLI). Phases 47–51 (civic-city institutions + grandfathering + Type Mobility) are COMPLETE.
   ⚠️ Deploy gap: Phases 48–51 (migrations v60–v64) are pushed but NOT deployed (only Phase 47 is live).
 
+🔒 **SECURITY FIX (2026-07-09) — operator header-auth escalation CLOSED** (branch `security/operator-header-escalation`).
+  Root cause: every `operator/*` (+`admin/*`) route trusted the client-supplied `x-operator-tier`/`x-operator-id`
+  headers, so any anonymous caller could become a Tier-5 operator on prod. Fix (D-SEC-01/02/03): operator tier +
+  identity are now derived server-side from the authenticated Portal-session DID checked against a NEW env allowlist
+  **`GRID_OPERATOR_DIDS`** (`DID|op:<uuid>|tier`, comma-separated), via the new `operator_only` route policy + a gate
+  in the global onRequest hook. The header is retired across all 16 operator routes + 3 admin routes + the
+  `account-endowment`/`portal-manager` secondary signal; CI gate `scripts/check-operator-header-auth.mjs` (wired into
+  `pretest`) forbids its reuse. **Fail-closed invariant:** empty/unset `GRID_OPERATOR_DIDS` ⇒ all operator routes 403
+  `not_operator`. The `op:<uuid>` audit identity is unchanged (now sourced from the allowlist entry) so R-31-01
+  zero-diff holds; +0 broadcast-allowlist events. **Deploy step:** set `GRID_OPERATOR_DIDS` on prod with Henry's
+  `@henry` Portal DID + an `op:<uuid>` (and `STEWARD_OPERATOR_EMAIL`/`_PASSWORD` for the console) — until then operator
+  actions are safely blocked. Out-of-scope follow-up: the Phase-12 governance proposal read routes
+  (`/proposals/:id/body`, `/ballots/history`) still read `x-operator-tier` via `validateTierAtLeast` (public,
+  read-only, dashboard-facing) — a separate lower-severity item.
+
 ## W-A Mind Loop — SHIPPED 2026-07-02 (from the full-system audit)
 
 Operator asked for full analytics (autonomy/visualization/availability) then approved implementation
