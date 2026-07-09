@@ -205,7 +205,9 @@ export function registerSystemMapRoute(app: FastifyInstance, services: GridServi
                     [grid],
                 );
                 const [nous] = await p.query<RowDataPacket[]>(
-                    "SELECT COUNT(*) AS n FROM nous_registry WHERE grid_name = ? AND `status` = 'active'",
+                    // Exclude infrastructure accounts (did:noesis:system:*, e.g. the
+                    // treasury) — they are not citizens and must not inflate the count.
+                    "SELECT COUNT(*) AS n FROM nous_registry WHERE grid_name = ? AND `status` = 'active' AND did NOT LIKE 'did:noesis:system:%'",
                     [grid],
                 );
                 const civicActive = num(civic[0]?.n);
