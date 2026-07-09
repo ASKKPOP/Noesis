@@ -26,6 +26,29 @@ upstream noesis_dashboard { server dashboard:3001; }
 upstream noesis_steward   { server steward:3002; }
 upstream noesis_grid      { server grid:8080; }
 
+# ── Security hardening ───────────────────────────────────────────────────────
+# Declared once at http-context so every server/location below inherits it. No
+# location defines its own add_header, so nginx's "child add_header replaces
+# parent" rule never drops these (revisit if a location ever adds one).
+#
+#   server_tokens off      — stop leaking the nginx version (Server header).
+#   proxy_hide_header      — strip Next.js's X-Powered-By from proxied apps.
+#   absolute_redirect off  — keep 302 Location relative (e.g. /wiki → /wiki/)
+#                            so the browser stays on https. The ALB terminates
+#                            TLS and nginx speaks :80, so an absolute redirect
+#                            would otherwise emit http:// and strip TLS.
+#   HSTS/nosniff/frame/ref — the `always` flag applies them to error responses
+#                            (401/404/…) too, not just 2xx/3xx.
+# CSP is intentionally NOT set here — a correct policy for the Next.js apps needs
+# app-side testing (inline scripts/styles); see the follow-up note in the PR.
+server_tokens off;
+absolute_redirect off;
+proxy_hide_header X-Powered-By;
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+add_header X-Content-Type-Options    "nosniff"                            always;
+add_header X-Frame-Options           "SAMEORIGIN"                         always;
+add_header Referrer-Policy           "strict-origin-when-cross-origin"    always;
+
 # ── Apex: dashboard (/) + guide docs (/docs) + steward (/console) ────────────
 server {
     listen 80;
