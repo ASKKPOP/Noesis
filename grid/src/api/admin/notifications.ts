@@ -9,8 +9,7 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { OPERATOR_ID_REGEX } from '../types.js';
-import type { ApiError } from '../types.js';
+import { operatorTierGate, type OperatorGrant } from '../preHandlers/operatorAuth.js';
 
 interface NotificationEntry {
     ts: number;
@@ -40,18 +39,7 @@ export function recordNotification(entry: NotificationEntry): void {
     if (ring.length > RING_CAPACITY) ring.shift();
 }
 
-function tierGate(req: { headers: Record<string, string | string[] | undefined> }, minTier: number): ApiError | null {
-    const tierHeader = req.headers['x-operator-tier'];
-    if (typeof tierHeader !== 'string') return { error: 'tier_missing' };
-    const tierNum = parseInt(tierHeader, 10);
-    if (!Number.isFinite(tierNum)) return { error: 'tier_missing' };
-    if (tierNum < minTier) return { error: 'tier_too_low' };
-    const opIdHeader = req.headers['x-operator-id'];
-    if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) return { error: 'invalid_operator_id' };
-    return null;
-}
-
-export function registerAdminNotificationsRoute(app: FastifyInstance): void {
+export function registerAdminNotificationsRoute(app: FastifyInstance, allowlist: Map<string, OperatorGrant>): void {
     const adminEnabled = process.env.GRID_ADMIN_ENABLED === 'true';
 
     app.get<{ Querystring: { event_prefix?: string; min_level?: string; limit?: string } }>(
@@ -61,10 +49,10 @@ export function registerAdminNotificationsRoute(app: FastifyInstance): void {
                 reply.code(503);
                 return { error: 'admin_disabled' };
             }
-            const gateErr = tierGate(req, 3);  // H3+ can read notifications
-            if (gateErr) {
-                reply.code(gateErr.error === 'tier_missing' || gateErr.error === 'invalid_operator_id' ? 401 : 403);
-                return gateErr;
+            const gate = operatorTierGate(req.didContext?.operatorDid, allowlist, 3);  // H3+ can read notifications
+            if (!gate.ok) {
+                reply.code(403);
+                return { error: gate.error };
             }
 
             const eventPrefix = req.query.event_prefix;

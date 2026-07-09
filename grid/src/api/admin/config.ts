@@ -15,8 +15,7 @@ import type { FastifyInstance } from 'fastify';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { logger as baseLogger } from '../../util/logger.js';
-import { OPERATOR_ID_REGEX } from '../types.js';
-import type { ApiError } from '../types.js';
+import { operatorTierGate, type OperatorGrant } from '../preHandlers/operatorAuth.js';
 
 const log = baseLogger.child({ module: 'admin-config' });
 
@@ -99,18 +98,7 @@ function serializeEnvFile(values: Record<string, string>, existingContent: strin
     return lines.join('\n');
 }
 
-function tierGate(req: { headers: Record<string, string | string[] | undefined> }, minTier: number): ApiError | null {
-    const tierHeader = req.headers['x-operator-tier'];
-    if (typeof tierHeader !== 'string') return { error: 'tier_missing' };
-    const tierNum = parseInt(tierHeader, 10);
-    if (!Number.isFinite(tierNum)) return { error: 'tier_missing' };
-    if (tierNum < minTier) return { error: 'tier_too_low' };
-    const opIdHeader = req.headers['x-operator-id'];
-    if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) return { error: 'invalid_operator_id' };
-    return null;
-}
-
-export function registerAdminConfigRoutes(app: FastifyInstance): void {
+export function registerAdminConfigRoutes(app: FastifyInstance, allowlist: Map<string, OperatorGrant>): void {
     const adminEnabled = process.env.GRID_ADMIN_ENABLED === 'true';
     const envPath = process.env.GRID_ADMIN_ENV_PATH || '/app/.env';
 
@@ -128,10 +116,10 @@ export function registerAdminConfigRoutes(app: FastifyInstance): void {
 
     // GET /api/v1/admin/config — read .env, mask secrets
     app.get('/api/v1/admin/config', async (req, reply) => {
-        const gateErr = tierGate(req, 4);
-        if (gateErr) {
-            reply.code(gateErr.error === 'tier_missing' || gateErr.error === 'invalid_operator_id' ? 401 : 403);
-            return gateErr;
+        const gate = operatorTierGate(req.didContext?.operatorDid, allowlist, 4);
+        if (!gate.ok) {
+            reply.code(403);
+            return { error: gate.error };
         }
 
         try {
@@ -160,10 +148,10 @@ export function registerAdminConfigRoutes(app: FastifyInstance): void {
     app.put<{ Body: { updates: Record<string, string> } }>(
         '/api/v1/admin/config',
         async (req, reply) => {
-            const gateErr = tierGate(req, 5);  // H5 for writes — config change is sovereign-tier
-            if (gateErr) {
-                reply.code(gateErr.error === 'tier_missing' || gateErr.error === 'invalid_operator_id' ? 401 : 403);
-                return gateErr;
+            const gate = operatorTierGate(req.didContext?.operatorDid, allowlist, 5);  // H5 for writes — config change is sovereign-tier
+            if (!gate.ok) {
+                reply.code(403);
+                return { error: gate.error };
             }
 
             const updates = req.body?.updates;
@@ -201,7 +189,7 @@ export function registerAdminConfigRoutes(app: FastifyInstance): void {
                 log.warn(
                     {
                         event: 'admin_config_written',
-                        operator_id: req.headers['x-operator-id'],
+                        operator_id: gate.grant.operatorId,
                         keys_changed: Object.keys(updates),
                         backup: backupPath,
                     },

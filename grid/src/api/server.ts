@@ -1026,9 +1026,9 @@ export function buildServerWithHub(
     // Local Management Site admin routes (post-v2.6, gated by GRID_ADMIN_ENABLED env).
     // When the env is absent or false, every /api/v1/admin/* returns 503 — admin
     // attack surface is fully gated and zero-overhead by default.
-    registerAdminConfigRoutes(app);
-    registerAdminRestartRoute(app);
-    registerAdminNotificationsRoute(app);
+    registerAdminConfigRoutes(app, operatorAllowlist);
+    registerAdminRestartRoute(app, operatorAllowlist);
+    registerAdminNotificationsRoute(app, operatorAllowlist);
 
     app.register(async (instance) => {
         // Phase 25a: firehose WS route registered inside the same plugin scope as /ws/events.

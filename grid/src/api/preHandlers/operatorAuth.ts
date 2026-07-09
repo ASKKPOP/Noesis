@@ -51,3 +51,19 @@ export function resolveOperator(
     if (!operatorDid) return null;
     return allowlist.get(operatorDid) ?? null;
 }
+
+/**
+ * Server-trusted tier gate for routes that keep policy 'public' but still require
+ * an operator (admin/*). Resolves the operator from the authenticated DID, then
+ * enforces a minimum tier. Both failure modes map to HTTP 403 at the call site.
+ */
+export function operatorTierGate(
+    operatorDid: string | undefined,
+    allowlist: Map<string, OperatorGrant>,
+    minTier: number,
+): { ok: true; grant: OperatorGrant } | { ok: false; error: 'not_operator' | 'tier_too_low' } {
+    const grant = resolveOperator(operatorDid, allowlist);
+    if (!grant) return { ok: false, error: 'not_operator' };
+    if (grant.tier < minTier) return { ok: false, error: 'tier_too_low' };
+    return { ok: true, grant };
+}

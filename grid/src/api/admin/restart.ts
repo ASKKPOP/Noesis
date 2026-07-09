@@ -12,8 +12,7 @@ import type { FastifyInstance } from 'fastify';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import { logger as baseLogger } from '../../util/logger.js';
-import { OPERATOR_ID_REGEX } from '../types.js';
-import type { ApiError } from '../types.js';
+import { operatorTierGate, type OperatorGrant } from '../preHandlers/operatorAuth.js';
 
 const log = baseLogger.child({ module: 'admin-restart' });
 const execAsync = promisify(exec);
@@ -29,18 +28,7 @@ const RESTARTABLE_SERVICES = new Set([
     // Deliberately NOT 'mysql' — restarting MySQL during operations causes audit chain divergence.
 ]);
 
-function tierGate(req: { headers: Record<string, string | string[] | undefined> }, minTier: number): ApiError | null {
-    const tierHeader = req.headers['x-operator-tier'];
-    if (typeof tierHeader !== 'string') return { error: 'tier_missing' };
-    const tierNum = parseInt(tierHeader, 10);
-    if (!Number.isFinite(tierNum)) return { error: 'tier_missing' };
-    if (tierNum < minTier) return { error: 'tier_too_low' };
-    const opIdHeader = req.headers['x-operator-id'];
-    if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) return { error: 'invalid_operator_id' };
-    return null;
-}
-
-export function registerAdminRestartRoute(app: FastifyInstance): void {
+export function registerAdminRestartRoute(app: FastifyInstance, allowlist: Map<string, OperatorGrant>): void {
     const adminEnabled = process.env.GRID_ADMIN_ENABLED === 'true';
     const dockerEnabled = process.env.GRID_ADMIN_DOCKER_ENABLED === 'true';
 
@@ -59,10 +47,10 @@ export function registerAdminRestartRoute(app: FastifyInstance): void {
                 };
             }
 
-            const gateErr = tierGate(req, 5);
-            if (gateErr) {
-                reply.code(gateErr.error === 'tier_missing' || gateErr.error === 'invalid_operator_id' ? 401 : 403);
-                return gateErr;
+            const gate = operatorTierGate(req.didContext?.operatorDid, allowlist, 5);
+            if (!gate.ok) {
+                reply.code(403);
+                return { error: gate.error };
             }
 
             const service = req.params.service;
@@ -79,7 +67,7 @@ export function registerAdminRestartRoute(app: FastifyInstance): void {
                 log.warn(
                     {
                         event: 'admin_service_restarted',
-                        operator_id: req.headers['x-operator-id'],
+                        operator_id: gate.grant.operatorId,
                         service,
                         stdout: stdout.slice(0, 500),
                         stderr: stderr.slice(0, 500),
