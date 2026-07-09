@@ -445,6 +445,14 @@ export function registerPortalAuthRoutes(
                 console.warn('[/me] civic_did lookup failed, defaulting to null', err);
             }
 
+            // QA ISSUE-007 (2026-07-09): a human holding an active Civic-DID has
+            // completed the Portal→Polis citizenship pipeline (D-V3-33) — that IS
+            // onboarding. Treat citizenship as satisfying `onboarded` so the
+            // /apply/genesis path doesn't trap the citizen on /portal/onboard
+            // (onboarding_goal is never set on that path). onboarding_goal remains
+            // the signal for goal-only (visitor) users who never registered a DID.
+            if (civicDid !== null) onboarded = true;
+
             return reply.send({
                 did: payload['did'],
                 eth_address: payload['eth_address'],

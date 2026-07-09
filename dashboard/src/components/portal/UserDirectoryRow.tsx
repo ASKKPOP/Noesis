@@ -31,6 +31,11 @@ function truncateAddress(address: string): string {
 
 /** Format ousia as a readable number. */
 function formatOusia(n: number): string {
+    // ISSUE-009 (2026-07-09): the community API returns `balance_wei`, not `ousia`,
+    // so this prop can arrive undefined until the Phase 66 money-rename wires the
+    // field through. Guard so we render 0 (the real balance) instead of the literal
+    // string "undefined".
+    if (!Number.isFinite(n)) return '0';
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
     if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
     return String(n);
