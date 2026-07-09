@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Noēsis — Surfaces & Users</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#121722; --panel2:#0f141d; --line:#232c3b;
+    --text:#e6ebf2; --muted:#93a0b4; --accent:#6ea8fe; --accent2:#7ee0c0;
+    --ok:#3ecf8e; --warn:#f2c14e; --bad:#f2666b; --chip:#1b2433;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f5f7fb; --panel:#ffffff; --panel2:#f0f3f8; --line:#dde3ec;
+      --text:#131a24; --muted:#5a6678; --accent:#2563eb; --accent2:#0f9d76;
+      --ok:#0f9d58; --warn:#b7791f; --bad:#d64550; --chip:#eef2f8;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px}
+  header.top{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+  h1{font-size:26px;margin:0;letter-spacing:.2px}
+  .sub{color:var(--muted);font-size:14px}
+  .meta{color:var(--muted);font-size:12.5px;margin-top:6px}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:20px 20px 8px;margin-top:22px;overflow:hidden}
+  h2{font-size:16px;margin:0 0 4px;display:flex;align-items:center;gap:9px}
+  h2 .dot{width:9px;height:9px;border-radius:50%;background:var(--accent)}
+  .desc{color:var(--muted);font-size:13px;margin:0 0 14px}
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+  tr:last-child td{border-bottom:none}
+  td.svc{font-weight:600;white-space:nowrap}
+  a.url{color:var(--accent);text-decoration:none;word-break:break-all}
+  a.url:hover{text-decoration:underline}
+  code{background:var(--chip);padding:1px 6px;border-radius:6px;font-size:12.5px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;
+    font-weight:700;white-space:nowrap}
+  .b-ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+  .b-warn{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
+  .b-bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+  .b-neutral{background:var(--chip);color:var(--muted)}
+  .env-pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:6px}
+  .env-local{background:color-mix(in srgb,var(--accent2) 18%,transparent);color:var(--accent2)}
+  .env-pub{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}
+  .note{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--warn);
+    border-radius:8px;padding:11px 13px;margin:6px 0 16px;font-size:13px;color:var(--text)}
+  .note b{color:var(--warn)}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;color:var(--muted);font-size:12.5px;margin:2px 0 16px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .role{font-weight:600}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
+  footer{color:var(--muted);font-size:12px;margin-top:26px;text-align:center}
+  .grid2{display:grid;grid-template-columns:1fr;gap:0}
+  /* per-surface explanation cards */
+  .card{border:1px solid var(--line);background:var(--panel2);border-radius:12px;
+    padding:15px 17px;margin:0 0 13px}
+  .card:last-child{margin-bottom:6px}
+  .card .chead{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-bottom:8px}
+  .card .cnum{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;
+    color:var(--muted);background:var(--chip);padding:1px 7px;border-radius:6px}
+  .card h3{margin:0;font-size:15.5px;font-weight:700}
+  .card .curl{display:block;margin:2px 0 10px;font-size:12.5px}
+  .card p{margin:0 0 9px;font-size:13.5px;color:var(--text)}
+  .card p:last-child{margin-bottom:0}
+  .card .who{color:var(--muted)}
+  .card .who b{color:var(--text)}
+  .kv{display:grid;grid-template-columns:92px 1fr;gap:3px 12px;font-size:12.5px;
+    color:var(--muted);margin-top:4px}
+  .kv .k{font-weight:600;color:var(--muted)}
+  .kv .v{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>Noēsis — Surfaces &amp; Users</h1>
+    <div class="sub">Every reachable surface (local dev + public <code>noesiis.com</code>) and the domain user roster.</div>
+    <div class="meta">Generated 2026-07-07 · Public stack on <code>main@a1ef591</code> · Local stack on Colima (12 GiB VM)</div>
+  </header>
+
+  <div class="legend">
+    <span><span class="badge b-ok">200</span> live</span>
+    <span><span class="badge b-ok">302</span> redirect (expected)</span>
+    <span><span class="badge b-warn">401</span> auth-gated (expected)</span>
+    <span><span class="badge b-bad">DNS</span> pending AWS wiring</span>
+    <span><span class="env-pill env-pub">PUBLIC</span> internet</span>
+    <span><span class="env-pill env-local">LOCAL</span> your Mac only</span>
+  </div>
+
+  <!-- ───────────── PUBLIC ───────────── -->
+  <section>
+    <h2><span class="dot"></span>Public surfaces — <span class="env-pill env-pub">PUBLIC</span> <code>noesiis.com</code></h2>
+    <p class="desc">Route 53 → ALB (TLS/ACM) → EC2 host nginx :80 → docker <code>noesis-nginx</code> :8088 → containers.</p>
+    <div class="scroll">
+    <table>
+      <thead><tr><th>Surface</th><th>URL</th><th>Purpose</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td class="svc">Landing</td><td><a class="url" href="https://noesiis.com/">https://noesiis.com/</a></td><td>Dashboard apex — the front door</td><td><span class="badge b-ok">200</span></td></tr>
+        <tr><td class="svc">Grid API</td><td><a class="url" href="https://api.noesiis.com/health">https://api.noesiis.com/health</a></td><td>Portal + Grid REST / WS firehose</td><td><span class="badge b-ok">200</span></td></tr>
+        <tr><td class="svc">System Map (data)</td><td><a class="url" href="https://api.noesiis.com/api/v1/system/map">…/api/v1/system/map</a></td><td>Live logic-driven map payload</td><td><span class="badge b-ok">200</span></td></tr>
+        <tr><td class="svc">System Map (page)</td><td><a class="url" href="https://noesiis.com/system-map">https://noesiis.com/system-map</a></td><td>Rendered map (Grid · Portal · Steward · Local AI + 8 civic institutions)</td><td><span class="badge b-ok">200</span></td></tr>
+        <tr><td class="svc">Operator console</td><td><a class="url" href="https://noesiis.com/system/portal-manager">https://noesiis.com/system/portal-manager</a></td><td>Tier-3 Portal Manager (read-only monitoring)</td><td><span class="badge b-ok">200</span></td></tr>
+        <tr><td class="svc">Public Portal</td><td><a class="url" href="https://portal.noesiis.com/">https://portal.noesiis.com/</a></td><td>User-facing meta-layer → <code>/portal</code></td><td><span class="badge b-ok">302</span></td></tr>
+        <tr><td class="svc">Operator subdomain</td><td><a class="url" href="https://system.noesiis.com/">https://system.noesiis.com/</a></td><td>Vanity alias for the operator console</td><td><span class="badge b-bad">DNS</span></td></tr>
+        <tr><td class="svc">Steward console</td><td><a class="url" href="https://noesiis.com/console">https://noesiis.com/console</a></td><td>Steward Console (basePath <code>/console</code>)</td><td><span class="badge b-ok">200</span></td></tr>
+        <tr><td class="svc">Wiki</td><td><a class="url" href="https://noesiis.com/wiki/">https://noesiis.com/wiki/</a></td><td>System wiki (single source of truth)</td><td><span class="badge b-ok">200</span></td></tr>
+        <tr><td class="svc">Services guide</td><td><a class="url" href="https://noesiis.com/docs">https://noesiis.com/docs</a></td><td>Beginner services guide</td><td><span class="badge b-ok">302</span></td></tr>
+        <tr><td class="svc">Spec docs</td><td><a class="url" href="https://noesiis.com/spec/">https://noesiis.com/spec/</a></td><td>Full spec doc set (read-only)</td><td><span class="badge b-ok">200</span></td></tr>
+        <tr><td class="svc">QA guide</td><td><a class="url" href="https://noesiis.com/qa">https://noesiis.com/qa</a></td><td>3-developer QA testing guide</td><td><span class="badge b-ok">200</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="note"><b>system.noesiis.com — pending AWS:</b> server-side is already wired (host nginx <code>server_name</code> + docker block). The subdomain resolves to a stale IP pair that accepts no traffic. Fix in AWS: (1) Route 53 <b>Alias</b> to the same ALB as <code>noesiis.com</code> — not hardcoded A-records; (2) add an ALB :443 host-rule <code>system.noesiis.com</code> → EC2 target group; (3) ACM cert must cover it (a <code>*.noesiis.com</code> wildcard suffices). Until then use <code>noesiis.com/system/portal-manager</code>.</div>
+  </section>
+
+  <!-- ───────────── LOCAL ───────────── -->
+  <section>
+    <h2><span class="dot" style="background:var(--accent2)"></span>Local surfaces — <span class="env-pill env-local">LOCAL</span> your Mac only</h2>
+    <p class="desc">Colima docker web stack — <b>not exposed to the internet.</b> Base compose: steward serves at root (the <code>/console</code> basePath is public-overlay only).</p>
+    <div class="scroll">
+    <table>
+      <thead><tr><th>Surface</th><th>URL</th><th>Container</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td class="svc">Landing</td><td><a class="url" href="http://localhost:3001/">http://localhost:3001/</a></td><td><code>noesis-dashboard</code></td><td><span class="badge b-ok">200</span></td></tr>
+        <tr><td class="svc">Public Portal</td><td><a class="url" href="http://localhost:3001/portal">http://localhost:3001/portal</a></td><td><code>noesis-dashboard</code></td><td><span class="badge b-ok">200</span></td></tr>
+        <tr><td class="svc">Operator console</td><td><a class="url" href="http://localhost:3001/system/portal-manager">http://localhost:3001/system/portal-manager</a></td><td><code>noesis-dashboard</code></td><td><span class="badge b-ok">200</span></td></tr>
+        <tr><td class="svc">System Map (page)</td><td><a class="url" href="http://localhost:3001/system-map">http://localhost:3001/system-map</a></td><td><code>noesis-dashboard</code></td><td><span class="badge b-ok">200</span></td></tr>
+        <tr><td class="svc">Grid API</td><td><a class="url" href="http://localhost:8080/health">http://localhost:8080/health</a></td><td><code>noesis-grid</code></td><td><span class="badge b-ok">200</span></td></tr>
+        <tr><td class="svc">System Map (data)</td><td><a class="url" href="http://localhost:8080/api/v1/system/map">…:8080/api/v1/system/map</a></td><td><code>noesis-grid</code></td><td><span class="badge b-ok">200</span></td></tr>
+        <tr><td class="svc">Portal-Mgr APIs</td><td><span class="mono">:8080/api/v1/portal-manager/{registrations,did-issuance,audit-chain}</span></td><td><code>noesis-grid</code></td><td><span class="badge b-warn">401</span></td></tr>
+        <tr><td class="svc">Steward console</td><td><a class="url" href="http://localhost:3002/">http://localhost:3002/</a></td><td><code>noesis-steward</code></td><td><span class="badge b-ok">200</span></td></tr>
+        <tr><td class="svc">MySQL</td><td><code>localhost:3306</code> (db <code>noesis_grid</code>)</td><td><code>noesis-mysql</code></td><td><span class="badge b-ok">healthy</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="note" style="border-left-color:var(--accent2)"><b style="color:var(--accent2)">Excluded locally:</b> the 3 Nous brains (<code>nous-*</code>) and <code>coturn</code> — web stack only. Bring the stack up with <code>docker-compose -f docker-compose.yml up -d --build mysql grid dashboard steward</code>.</div>
+  </section>
+
+  <!-- ───────────── USERS ───────────── -->
+  <section>
+    <h2><span class="dot" style="background:var(--accent)"></span>Public-domain user roster</h2>
+    <p class="desc">The people with access to <code>noesiis.com</code>. Portal accounts are <b>self-registered</b> (SIWE wallet or email → JWT cookie) — credentials are set by each person at sign-in, never provisioned in code. Roles below define what each account is authorized for.</p>
+    <div class="scroll">
+    <table>
+      <thead><tr><th>User</th><th>Handle / email</th><th>Role</th><th>Mgmt tier</th><th>Auth method</th><th>Local AI</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="svc">Henry (you)</td>
+          <td class="mono">@henry · info@askkpop.com</td>
+          <td><span class="role">Operator / Substrate</span></td>
+          <td><span class="badge b-neutral">Tier 3 — Portal Manager</span></td>
+          <td>SIWE + email</td>
+          <td>Ollama <code>qwen3:4b</code> (MacBook Pro)</td>
+        </tr>
+        <tr>
+          <td class="svc">Tuan Anh</td>
+          <td class="mono">@tuananh</td>
+          <td><span class="role">Developer / Tester — Track&nbsp;B</span></td>
+          <td><span class="badge b-neutral">Tier 1 — Local Nous Manager</span></td>
+          <td>Email → JWT</td>
+          <td>Claude API (<code>haiku-4-5</code>)</td>
+        </tr>
+        <tr>
+          <td class="svc">Luu</td>
+          <td class="mono">@luu</td>
+          <td><span class="role">Developer / Tester — Track&nbsp;C</span></td>
+          <td><span class="badge b-neutral">Tier 1 — Local Nous Manager</span></td>
+          <td>Email → JWT</td>
+          <td>Ollama (this Mac)</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="note">
+      <b>To create an account:</b> each person visits <a class="url" href="https://portal.noesiis.com/">portal.noesiis.com</a>, chooses <b>Connect wallet (SIWE)</b> or <b>Email</b>, and completes sign-in — this mints their Portal session (<code>noesis_portal_token</code>). I can't provision credentials headlessly (that's a human credential step). Tier-3 console access additionally requires <code>GRID_PORTAL_MANAGER_ENABLED</code> + an operator-scoped Portal session on the grid.
+    </div>
+  </section>
+
+  <!-- ───────────── PER-SURFACE EXPLANATIONS ───────────── -->
+  <section>
+    <h2><span class="dot" style="background:var(--accent)"></span>Every surface explained — one by one</h2>
+    <p class="desc">What each surface <em>is</em>, who uses it, and how it works under the hood.</p>
+
+    <div class="card">
+      <div class="chead"><span class="cnum">1</span><span class="env-pill env-pub">PUBLIC</span><h3>Landing</h3><span class="badge b-ok">200</span></div>
+      <a class="url curl" href="https://noesiis.com/">https://noesiis.com/</a>
+      <p>The front door of Noēsis — the Next.js <b>dashboard</b> app owns the apex path. It renders the marketing/overview landing page and embeds the live system map so a first-time visitor immediately sees the state of the civilization.</p>
+      <p class="who"><b>Who:</b> anyone on the internet. <b>How:</b> server-rendered React; every server-side fetch to the grid goes through <code>safeGridFetch</code> (3s timeout + <code>res.ok</code> + JSON guard → <code>null</code>) so a grid restart can never hang or crash the apex.</p>
+    </div>
+
+    <div class="card">
+      <div class="chead"><span class="cnum">2</span><span class="env-pill env-pub">PUBLIC</span><h3>Grid API</h3><span class="badge b-ok">200</span></div>
+      <a class="url curl" href="https://api.noesiis.com/health">https://api.noesiis.com/</a>
+      <p>The beating heart — the <b>Grid</b> process (Portal + Grid). It advances the world one tick every 30s, holds the tamper-evident audit chain, exposes all REST endpoints, and streams the real-time event firehose over WebSocket at <code>/ws/events</code>.</p>
+      <p class="who"><b>Who:</b> the dashboard, the steward console, and Nous brains — every other surface talks to this. <b>How:</b> its own subdomain so WebSocket upgrades and long-lived connections (<code>proxy_read_timeout 3600s</code>) stay isolated from the page traffic. <code>/health</code> is a cheap liveness ping; deeper health uses the watchdog snapshot, never an O(n) chain re-hash.</p>
+    </div>
+
+    <div class="card">
+      <div class="chead"><span class="cnum">3</span><span class="env-pill env-pub">PUBLIC</span><h3>System Map — data endpoint</h3><span class="badge b-ok">200</span></div>
+      <a class="url curl" href="https://api.noesiis.com/api/v1/system/map">https://api.noesiis.com/api/v1/system/map</a>
+      <p>The <b>logic-driven</b> payload behind the map. Public, read-only, aggregate-only. It returns a <code>surfaces</code> object (grid, portal, steward, local-AI + the civic institutions) where every value is computed live — grid status from the health watchdog's divergence signal, Portal counts from <code>civic_did_registry</code>, application tallies from real rows.</p>
+      <p class="who"><b>Who:</b> the map page (and anyone who wants raw JSON). <b>How:</b> every tile is wrapped in a per-item <code>item(fn, fallback)</code> guard so one failing metric degrades to a fallback instead of 500-ing the whole map. <b>No mock data, no hardcoding</b> — this was a hard requirement.</p>
+    </div>
+
+    <div class="card">
+      <div class="chead"><span class="cnum">4</span><span class="env-pill env-pub">PUBLIC</span><h3>System Map — page</h3><span class="badge b-ok">200</span></div>
+      <a class="url curl" href="https://noesiis.com/system-map">https://noesiis.com/system-map</a>
+      <p>The human-readable rendering of surface #3. It visualizes the four pillars — <b>Grid · Portal · Steward · Local AI dashboard</b> — plus the list of civic institutions, each tile data-bound to the live endpoint (identical numbers to the JSON).</p>
+      <p class="who"><b>Who:</b> operators, developers, and anyone wanting a one-glance system status. <b>How:</b> reads the map endpoint on the dashboard; the visual is fixed while the values are always live.</p>
+    </div>
+
+    <div class="card">
+      <div class="chead"><span class="cnum">5</span><span class="env-pill env-pub">PUBLIC</span><h3>Operator console — Portal Manager (Tier 3)</h3><span class="badge b-ok">200</span></div>
+      <a class="url curl" href="https://noesiis.com/system/portal-manager">https://noesiis.com/system/portal-manager</a>
+      <p>The Henry-side <b>Tier-3 meta-ops console</b>. Three read-only surfaces: the <b>reviewer queue</b> (pending registrations), the <b>DID-issuance tracker</b> (public Civic-DIDs + counts), and the <b>audit-chain viewer</b> (integrity + the last 30 portal/registry events). It monitors the Portal; it does not govern (that stays with the Polis, Nous-only, VOTE-05).</p>
+      <p class="who"><b>Who:</b> you, the operator. <b>How:</b> gated two ways — <code>GRID_PORTAL_MANAGER_ENABLED</code> (a dedicated kill-switch → 503 when off) and an operator-scoped <b>Portal session</b> (401 without it). SELECT-only; it never reads <code>existence_did</code>, <code>credential_json</code>, or <code>human_owner</code>.</p>
+      <div class="kv">
+        <span class="k">Access URL</span><span class="v"><a class="url" href="https://noesiis.com/system/portal-manager">noesiis.com/system/portal-manager</a> — <span class="badge b-ok">live</span></span>
+        <span class="k">Vanity alias</span><span class="v"><a class="url" href="https://system.noesiis.com/">system.noesiis.com</a> — redirects <code>/ → /system/portal-manager</code> (same page, same gates). <span class="badge b-bad">DNS pending</span></span>
+      </div>
+      <p style="margin-top:9px" class="who"><b>On the alias:</b> it's <em>the same console</em>, not a second one — pure convenience, no extra authority. Server side is already wired (host nginx <code>server_name</code> line 48 + a docker <code>server_name system.${DOMAIN}</code> block). The only blocker is AWS: DNS resolves to a stale IP pair that accepts no traffic. Fix: Route 53 <b>Alias → the same ALB</b>, an ALB :443 host-rule → EC2 target group, and an ACM cert covering it (<code>*.noesiis.com</code> works). Until then, use the live path above.</p>
+    </div>
+
+    <div class="card">
+      <div class="chead"><span class="cnum">6</span><span class="env-pill env-pub">PUBLIC</span><h3>Public Portal</h3><span class="badge b-ok">302</span></div>
+      <a class="url curl" href="https://portal.noesiis.com/">https://portal.noesiis.com/</a>
+      <p>The meta-layer <b>users actually meet</b>: sign in, browse Grids, apply for a Civic-DID, join communities, use the marketplace and library. The dedicated subdomain redirects <code>/ → /portal</code>.</p>
+      <p class="who"><b>Who:</b> prospective and existing citizens/operators. <b>How:</b> today it's the dashboard's <code>/portal/*</code> pages (Grid-hosted). When the standalone Portal service (Phase 52) ships, this same domain re-points to it — <b>no user-facing URL churn</b>.</p>
+    </div>
+
+    <div class="card">
+      <div class="chead"><span class="cnum">7</span><span class="env-pill env-pub">PUBLIC</span><h3>Steward console</h3><span class="badge b-ok">200</span></div>
+      <a class="url curl" href="https://noesiis.com/console">https://noesiis.com/console</a>
+      <p>The <b>Steward Console</b> — a separate Next.js app for human oversight of the running world (steward tooling, distinct from the operator's Portal Manager and from Polis governance).</p>
+      <p class="who"><b>Who:</b> stewards. <b>How:</b> served under <code>basePath=/console</code> so its prefix passes through nginx unchanged. (Note: this <code>/console</code> prefix is the <em>public</em> overlay only — locally the same app serves at root.)</p>
+    </div>
+
+    <div class="card">
+      <div class="chead"><span class="cnum">8</span><span class="env-pill env-pub">PUBLIC</span><h3>Wiki</h3><span class="badge b-ok">200</span></div>
+      <a class="url curl" href="https://noesiis.com/wiki/">https://noesiis.com/wiki/</a>
+      <p>The <b>system wiki</b> — the single source of truth for the Noēsis <em>system</em> (philosophy, concepts, design, architecture, flows). Knowledge-only: developer <em>process</em> docs (roadmap, milestones, phases) stay private in <code>.planning/</code> and are never served here.</p>
+      <p class="who"><b>Who:</b> anyone wanting to understand the system. <b>How:</b> a static MkDocs Material build in its own container; a task isn't "done" until this reflects it (CI-enforced).</p>
+    </div>
+
+    <div class="card">
+      <div class="chead"><span class="cnum">9</span><span class="env-pill env-pub">PUBLIC</span><h3>Services guide</h3><span class="badge b-ok">302</span></div>
+      <a class="url curl" href="https://noesiis.com/docs">https://noesiis.com/docs</a>
+      <p>A beginner-friendly static guide to the running services — redirects to <code>/docs/noesis-services-beginner-guide.html</code>.</p>
+      <p class="who"><b>Who:</b> newcomers and testers who need orientation before the deeper wiki. <b>How:</b> plain static files served by the <code>guide</code> container.</p>
+    </div>
+
+    <div class="card">
+      <div class="chead"><span class="cnum">10</span><span class="env-pill env-pub">PUBLIC</span><h3>Spec docs</h3><span class="badge b-ok">200</span></div>
+      <a class="url curl" href="https://noesiis.com/spec/">https://noesiis.com/spec/</a>
+      <p>The full spec document set (e.g. the Portal Manager spec, QA guide), served <b>read-only straight from the repo's <code>docs/spec/</code></b> — no duplication, refreshed on every <code>git pull</code>.</p>
+      <p class="who"><b>Who:</b> developers and reviewers. <b>How:</b> nginx <code>alias</code> onto a read-only mount of <code>docs/spec</code>.</p>
+    </div>
+
+    <div class="card">
+      <div class="chead"><span class="cnum">11</span><span class="env-pill env-pub">PUBLIC</span><h3>QA guide</h3><span class="badge b-ok">200</span></div>
+      <a class="url curl" href="https://noesiis.com/qa">https://noesiis.com/qa</a>
+      <p>A short shareable link to the <b>3-developer QA testing guide</b> (Tracks A/B/C, per-tester Local-AI setup, the Round-0 baseline). Same file as <code>/spec/qa-testing-guide.html</code>, served in place.</p>
+      <p class="who"><b>Who:</b> you, Tuan Anh, and Luu. <b>How:</b> nginx <code>alias</code> → the guide HTML with an explicit <code>text/html</code> type.</p>
+    </div>
+
+    <div class="card">
+      <div class="chead"><span class="cnum">12</span><span class="env-pill env-local">LOCAL</span><h3>Local web stack</h3><span class="badge b-ok">healthy</span></div>
+      <a class="url curl">localhost :3001 (dashboard) · :8080 (grid) · :3002 (steward) · :3306 (mysql)</a>
+      <p>An exact copy of the public web stack running on your Mac via Colima docker — <b>for testing only, never exposed to the internet.</b> Same pages and APIs as public (landing, portal, operator console, system map, grid health/map, portal-manager APIs at 401), with two differences: steward serves at <b>root</b> (the <code>/console</code> prefix is public-overlay only), and cookies use <code>GRID_COOKIE_SECURE=false</code> because localhost is plain HTTP.</p>
+      <p class="who"><b>Who:</b> you, locally. <b>How:</b> <code>docker-compose -f docker-compose.yml up -d --build mysql grid dashboard steward</code> (brains + coturn excluded). Requires the Colima VM at ≥12 GiB or the dashboard build OOMs.</p>
+    </div>
+  </section>
+
+  <footer>Noēsis · surfaces &amp; users reference · this file is local (<code>docs/noesis-surfaces-and-users.html</code>) — not served publicly unless deployed.</footer>
+
+</div>
+</body>
+</html>
