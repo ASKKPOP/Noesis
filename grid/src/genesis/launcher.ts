@@ -424,6 +424,28 @@ export class GenesisLauncher {
             this.logos.addLaw(law);
         }
 
+        // Seed the system treasury account. Every treasury-collecting transfer —
+        // parcel purchase, community/business/type-B fees, blueprint material cost —
+        // does registry.transferWei(x, TREASURY_DID, …), and transferWei requires the
+        // recipient to exist. The treasury is infrastructure (balance 0, receives
+        // revenue), never placed spatially; it is snapshot-persisted like any record
+        // and idempotent so re-init/restart never dups. Excluded from public rosters
+        // by the did:noesis:system:* prefix.
+        const SYSTEM_TREASURY_DID = 'did:noesis:system:treasury';
+        if (!this.registry.get(SYSTEM_TREASURY_DID)) {
+            this.registry.spawn(
+                {
+                    name: 'System Treasury',
+                    did: SYSTEM_TREASURY_DID,
+                    publicKey: 'system',
+                    region: this.config.regions[0]?.id ?? 'agora',
+                },
+                this.gridDomain,
+                this.clock.currentTick,
+                0,
+            );
+        }
+
         if (!opts.skipSeedNous) {
             // 4. Spawn seed Nous
             const tick = this.clock.currentTick;
