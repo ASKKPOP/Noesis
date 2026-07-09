@@ -13,14 +13,15 @@
  *      the route 503s endowment_disabled and the real handler is never registered.
  *   2. Server-trusted identity: ROUTE_DID_POLICY marks this 'portal_session_required',
  *      so the central hook runs requirePortalSession (401 for anonymous) BEFORE the
- *      handler; operatorScope() then yields the session operatorDid or 403. A spoofed
- *      header alone can never satisfy this. The x-operator-tier >= 5 check survives
- *      ONLY as a secondary intent signal AFTER operatorScope.
+ *      handler; operatorScope() then yields the session operatorDid or 403. The session
+ *      DID must be an allowlisted operator at tier >= 5 (GRID_OPERATOR_DIDS). SECURITY
+ *      2026-07-09: the spoofable x-operator-tier/-id header check is RETIRED.
  */
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { EndowmentStore } from '../../economy/endowment-store.js';
 import { operatorScope } from '../preHandlers/operatorScope.js';
+import { resolveOperator } from '../preHandlers/operatorAuth.js';
 
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 const DECIMAL_RE = /^[0-9]+$/;
@@ -47,11 +48,13 @@ export function registerAccountEndowmentRoute(app: FastifyInstance, services: Gr
         const operatorDid = await operatorScope(req, reply);
         if (!operatorDid) return;
 
-        // Secondary tier signal — defense-in-depth, never the sole gate.
-        const tierHeader = req.headers['x-operator-tier'];
-        const tierNum = typeof tierHeader === 'string' ? parseInt(tierHeader, 10) : NaN;
-        if (!Number.isFinite(tierNum)) return reply.code(401).send({ error: 'tier_missing' });
-        if (tierNum < 5) return reply.code(403).send({ error: 'tier_too_low' });
+        // Server-trusted operator authorization: the session DID must be an allowlisted
+        // operator at tier >= 5 (SECURITY 2026-07-09 — replaces the spoofable x-operator-tier
+        // secondary signal; closes the "any logged-in human = operator" gap).
+        const grant = resolveOperator(operatorDid, services.operatorAllowlist ?? new Map());
+        if (!grant || grant.tier < 5) {
+            return reply.code(403).send({ error: 'not_operator' });
+        }
 
         const pool = services.pool;
         if (!pool) return reply.code(503).send({ error: 'db_unavailable' });

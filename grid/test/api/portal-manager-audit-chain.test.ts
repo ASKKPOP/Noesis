@@ -2,7 +2,10 @@
  * Portal Manager v1 — audit-chain viewer READ endpoint tests.
  *
  * GET /api/v1/portal-manager/audit-chain
- *   - SAME two server-trusted gates as the registrations slice.
+ *   - SAME two server-trusted gates as the registrations slice: a valid Portal
+ *     session cookie is mandatory, and the session DID must be an allowlisted
+ *     operator at tier >= 5 (services.operatorAllowlist), else 403 not_operator.
+ *     (SECURITY 2026-07-09 — the spoofable x-operator-tier/-id headers are RETIRED.)
  *   - READ-ONLY: reads services.audit.query() + the watchdog snapshot; emits zero
  *     audit events and NEVER calls services.audit.verify().
  *   - PII: each recent entry is projected to EXACTLY { event_type, tick } — no
@@ -18,11 +21,16 @@ import { SpatialMap } from '../../src/space/map.js';
 import { LogosEngine } from '../../src/logos/engine.js';
 import { AuditChain } from '../../src/audit/chain.js';
 import { COOKIE_NAME, keyPairPromise } from '../../src/api/portal/auth.js';
+import type { OperatorGrant } from '../../src/api/preHandlers/operatorAuth.js';
 import type { GridServices } from '../../src/api/server.js';
 import type { FastifyInstance } from 'fastify';
 
 const OP_ID = 'op:12345678-1234-4234-8234-1234567890ab';
 const OPERATOR_DID = 'did:noesis:human:operator-a';
+const STRANGER_DID = 'did:noesis:human:0xstranger';
+
+/** The session DID is authorized only via this allowlist (tier >= 5). */
+const ALLOW = new Map<string, OperatorGrant>([[OPERATOR_DID, { operatorId: OP_ID, tier: 5 }]]);
 
 async function makePortalCookie(did = OPERATOR_DID): Promise<string> {
     const { privateKey } = await keyPairPromise;
@@ -59,6 +67,7 @@ function buildApp(over: Partial<GridServices>): FastifyInstance {
         logos: new LogosEngine(),
         audit: new AuditChain(),
         gridName: 'genesis',
+        operatorAllowlist: ALLOW,
         ...over,
     } as GridServices);
 }
@@ -82,7 +91,6 @@ describe('Portal Manager audit-chain — attack-surface gate', () => {
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal-manager/audit-chain',
-            headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
             cookies: { [COOKIE_NAME]: cookie },
         });
         expect(res.statusCode).toBe(503);
@@ -103,9 +111,25 @@ describe('Portal Manager audit-chain — production-gated handler', () => {
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal-manager/audit-chain',
+            // Spoofed headers alone (no cookie) must NOT pass — they are no longer read.
             headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
         });
         expect([401, 403]).toContain(res.statusCode);
+        expect(res.json().recent).toBeUndefined();
+        await app.close();
+    });
+
+    it('403 not_operator when the logged-in session DID is not on the allowlist', async () => {
+        const app = buildApp({ audit: seedAudit(), ...launcherStub(HEALTHY_BLOCK) });
+        await app.ready();
+        const cookie = await makePortalCookie(STRANGER_DID);
+        const res = await app.inject({
+            method: 'GET',
+            url: '/api/v1/portal-manager/audit-chain',
+            cookies: { [COOKIE_NAME]: cookie },
+        });
+        expect(res.statusCode).toBe(403);
+        expect(res.json().error).toBe('not_operator');
         expect(res.json().recent).toBeUndefined();
         await app.close();
     });
@@ -124,7 +148,6 @@ describe('Portal Manager audit-chain — production-gated handler', () => {
             const res = await app.inject({
                 method: 'GET',
                 url: '/api/v1/portal-manager/audit-chain',
-                headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
                 cookies: { [COOKIE_NAME]: cookie },
             });
             expect(res.statusCode).toBe(200);
@@ -143,7 +166,6 @@ describe('Portal Manager audit-chain — production-gated handler', () => {
             const res = await app.inject({
                 method: 'GET',
                 url: '/api/v1/portal-manager/audit-chain',
-                headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
                 cookies: { [COOKIE_NAME]: cookie },
             });
             const recent = res.json().recent as { event_type: string; tick: number }[];
@@ -158,7 +180,6 @@ describe('Portal Manager audit-chain — production-gated handler', () => {
             const res = await app.inject({
                 method: 'GET',
                 url: '/api/v1/portal-manager/audit-chain',
-                headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
                 cookies: { [COOKIE_NAME]: cookie },
             });
             for (const item of res.json().recent) {
@@ -185,7 +206,6 @@ describe('Portal Manager audit-chain — production-gated handler', () => {
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal-manager/audit-chain',
-            headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
             cookies: { [COOKIE_NAME]: cookie },
         });
         expect(res.json().integrity.healthy).toBe(true);
@@ -202,7 +222,6 @@ describe('Portal Manager audit-chain — production-gated handler', () => {
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal-manager/audit-chain',
-            headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
             cookies: { [COOKIE_NAME]: cookie },
         });
         expect(res.json().integrity.healthy).toBe(false);
@@ -216,7 +235,6 @@ describe('Portal Manager audit-chain — production-gated handler', () => {
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal-manager/audit-chain',
-            headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
             cookies: { [COOKIE_NAME]: cookie },
         });
         expect(res.statusCode).toBe(200);
@@ -239,7 +257,6 @@ describe('Portal Manager audit-chain — production-gated handler', () => {
         await app.inject({
             method: 'GET',
             url: '/api/v1/portal-manager/audit-chain',
-            headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
             cookies: { [COOKIE_NAME]: cookie },
         });
         expect(verifySpy).not.toHaveBeenCalled();
@@ -255,7 +272,6 @@ describe('Portal Manager audit-chain — production-gated handler', () => {
         await app.inject({
             method: 'GET',
             url: '/api/v1/portal-manager/audit-chain',
-            headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
             cookies: { [COOKIE_NAME]: cookie },
         });
         expect(audit.length).toBe(before);

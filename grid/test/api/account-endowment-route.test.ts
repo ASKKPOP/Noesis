@@ -7,7 +7,9 @@
  *     never wired);
  *   - portal_session_required policy → requirePortalSession in the central hook
  *     (401 for anonymous) + in-handler operatorScope (server-trusted operatorDid);
- *   - secondary x-operator-tier >= 5 defense-in-depth.
+ *   - authorization: the session DID must be an allowlisted operator at tier >= 5
+ *     (services.operatorAllowlist), else 403 not_operator. (SECURITY 2026-07-09 —
+ *     the spoofable x-operator-tier/-id headers are RETIRED; they are no longer read.)
  * On success it credits the account, ledgers the endowment, and emits
  * portal.account_endowed.
  *
@@ -22,6 +24,7 @@ import { SpatialMap } from '../../src/space/map.js';
 import { LogosEngine } from '../../src/logos/engine.js';
 import { AuditChain } from '../../src/audit/chain.js';
 import { COOKIE_NAME, keyPairPromise } from '../../src/api/portal/auth.js';
+import type { OperatorGrant } from '../../src/api/preHandlers/operatorAuth.js';
 import type { FastifyInstance } from 'fastify';
 
 // QA fix: was 'did:portal:noesis:operator-a' — a shape that happens to satisfy
@@ -30,8 +33,13 @@ import type { FastifyInstance } from 'fastify';
 // existence-DID (did:noesis:human:*, from SIWE or email signup) — use that
 // real shape so this test actually exercises the contract tryDid.ts enforces.
 const OPERATOR_DID = 'did:noesis:human:operator-a';
+const OP_ID = 'op:12345678-1234-4234-8234-1234567890ab';
+const STRANGER_DID = 'did:noesis:human:0xstranger';
 const RECIPIENT = 'did:civic:noesis:alice';
 const ENDOW_URL = '/api/v1/portal/account/endow';
+
+/** The session DID is authorized only via this allowlist (tier >= 5). */
+const ALLOW = new Map<string, OperatorGrant>([[OPERATOR_DID, { operatorId: OP_ID, tier: 5 }]]);
 
 async function makePortalCookie(did = OPERATOR_DID): Promise<string> {
     const { privateKey } = await keyPairPromise;
@@ -58,7 +66,7 @@ function makePool(newBalance = 1000n): Pool {
     return { getConnection: vi.fn().mockResolvedValue(conn), query: vi.fn().mockResolvedValue([[], {}]) } as unknown as Pool;
 }
 
-function makeApp(pool?: Pool, audit = new AuditChain()): FastifyInstance {
+function makeApp(pool?: Pool, audit = new AuditChain(), allow: Map<string, OperatorGrant> = ALLOW): FastifyInstance {
     return buildServer({
         clock: new WorldClock({ tickRateMs: 100_000 }),
         space: new SpatialMap(),
@@ -67,6 +75,7 @@ function makeApp(pool?: Pool, audit = new AuditChain()): FastifyInstance {
         gridName: 'genesis',
         pool: pool as never,
         currentTick: () => 7,
+        operatorAllowlist: allow,
     });
 }
 
@@ -84,7 +93,6 @@ describe('POST /api/v1/portal/account/endow — attack-surface gate', () => {
         const cookie = await makePortalCookie();
         const res = await app.inject({
             method: 'POST', url: ENDOW_URL,
-            headers: { 'x-operator-tier': '5' },
             cookies: { [COOKIE_NAME]: cookie },
             payload: { civic_did: RECIPIENT, amount_wei: '1000' },
         });
@@ -103,6 +111,7 @@ describe('POST /api/v1/portal/account/endow — enabled', () => {
         await app.ready();
         const res = await app.inject({
             method: 'POST', url: ENDOW_URL,
+            // Spoofed header alone (no cookie) must NOT pass — it is no longer read.
             headers: { 'x-operator-tier': '5' },
             payload: { civic_did: RECIPIENT, amount_wei: '1000' },
         });
@@ -110,18 +119,34 @@ describe('POST /api/v1/portal/account/endow — enabled', () => {
         await app.close();
     });
 
-    it('403 tier_too_low when the secondary tier signal is below 5', async () => {
+    it('403 not_operator when the logged-in session DID is not on the allowlist', async () => {
         enable();
         const app = makeApp(makePool());
         await app.ready();
-        const cookie = await makePortalCookie();
+        const cookie = await makePortalCookie(STRANGER_DID);
         const res = await app.inject({
             method: 'POST', url: ENDOW_URL,
-            headers: { 'x-operator-tier': '4' },
             cookies: { [COOKIE_NAME]: cookie },
             payload: { civic_did: RECIPIENT, amount_wei: '1000' },
         });
         expect(res.statusCode).toBe(403);
+        expect(res.json().error).toBe('not_operator');
+        await app.close();
+    });
+
+    it('403 not_operator when the allowlisted operator is below tier 5', async () => {
+        enable();
+        const underTier = new Map<string, OperatorGrant>([[OPERATOR_DID, { operatorId: OP_ID, tier: 4 }]]);
+        const app = makeApp(makePool(), new AuditChain(), underTier);
+        await app.ready();
+        const cookie = await makePortalCookie();
+        const res = await app.inject({
+            method: 'POST', url: ENDOW_URL,
+            cookies: { [COOKIE_NAME]: cookie },
+            payload: { civic_did: RECIPIENT, amount_wei: '1000' },
+        });
+        expect(res.statusCode).toBe(403);
+        expect(res.json().error).toBe('not_operator');
         await app.close();
     });
 
@@ -133,7 +158,6 @@ describe('POST /api/v1/portal/account/endow — enabled', () => {
         const cookie = await makePortalCookie();
         const res = await app.inject({
             method: 'POST', url: ENDOW_URL,
-            headers: { 'x-operator-tier': '5' },
             cookies: { [COOKIE_NAME]: cookie },
             payload: { civic_did: RECIPIENT, amount_wei: '1000', reason: 'seed' },
         });
@@ -154,7 +178,6 @@ describe('POST /api/v1/portal/account/endow — enabled', () => {
         const cookie = await makePortalCookie();
         const res = await app.inject({
             method: 'POST', url: ENDOW_URL,
-            headers: { 'x-operator-tier': '5' },
             cookies: { [COOKIE_NAME]: cookie },
             payload: { civic_did: 'not-a-did', amount_wei: '1000' },
         });
@@ -171,7 +194,6 @@ describe('POST /api/v1/portal/account/endow — enabled', () => {
         for (const amount_wei of ['0', '-5', 'abc', '']) {
             const res = await app.inject({
                 method: 'POST', url: ENDOW_URL,
-                headers: { 'x-operator-tier': '5' },
                 cookies: { [COOKIE_NAME]: cookie },
                 payload: { civic_did: RECIPIENT, amount_wei },
             });
@@ -188,7 +210,6 @@ describe('POST /api/v1/portal/account/endow — enabled', () => {
         const cookie = await makePortalCookie();
         const res = await app.inject({
             method: 'POST', url: ENDOW_URL,
-            headers: { 'x-operator-tier': '5' },
             cookies: { [COOKIE_NAME]: cookie },
             payload: { civic_did: RECIPIENT, amount_wei: '2000000000000000000' }, // 2e18 > 1e18 cap
         });
@@ -204,7 +225,6 @@ describe('POST /api/v1/portal/account/endow — enabled', () => {
         const cookie = await makePortalCookie();
         const res = await app.inject({
             method: 'POST', url: ENDOW_URL,
-            headers: { 'x-operator-tier': '5' },
             cookies: { [COOKIE_NAME]: cookie },
             payload: { civic_did: RECIPIENT, amount_wei: '1000' },
         });

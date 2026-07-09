@@ -6,10 +6,11 @@
  *       (a) attack-surface gate GRID_PORTAL_MANAGER_ENABLED (dedicated, decoupled
  *           from GRID_ADMIN_ENABLED) — 503 portal_manager_disabled when off;
  *       (b) portal_session_required policy + in-handler operatorScope — a valid
- *           Portal session cookie is mandatory (401/403 without one). A spoofed
+ *           Portal session cookie is mandatory (401 without one). A spoofed
  *           x-operator-tier/-id header alone can NEVER pass (regression below).
- *   - the legacy x-operator-tier (>=5) + x-operator-id checks remain as a SECONDARY
- *     intent signal AFTER operatorScope (defense-in-depth, never the sole gate).
+ *   - authorization: the session DID must be an allowlisted operator at tier >= 5
+ *     (services.operatorAllowlist), else 403 not_operator. (SECURITY 2026-07-09 —
+ *     the spoofable x-operator-tier/-id headers are RETIRED; they are no longer read.)
  *   - READ-ONLY over human_civic_applications; emits zero audit events.
  *   - privacy: returns human_did_hash (SHA-256) NOT the raw DID, and never the
  *     statement plaintext (FORBIDDEN_KEY_PATTERN preserved).
@@ -26,6 +27,7 @@ import { SpatialMap } from '../../src/space/map.js';
 import { LogosEngine } from '../../src/logos/engine.js';
 import { AuditChain } from '../../src/audit/chain.js';
 import { COOKIE_NAME, keyPairPromise } from '../../src/api/portal/auth.js';
+import type { OperatorGrant } from '../../src/api/preHandlers/operatorAuth.js';
 import type { FastifyInstance } from 'fastify';
 
 const OP_ID = 'op:12345678-1234-4234-8234-1234567890ab';
@@ -33,6 +35,10 @@ const OP_ID = 'op:12345678-1234-4234-8234-1234567890ab';
 // QA fix: tryDid.ts's portal-cookie path now correctly uses DID_RE
 // (did:noesis:*), matching the real shape SIWE/email signup issue.
 const OPERATOR_DID = 'did:noesis:human:operator-a';
+const STRANGER_DID = 'did:noesis:human:0xstranger';
+
+/** The session DID is authorized only via this allowlist (tier >= 5). */
+const ALLOW = new Map<string, OperatorGrant>([[OPERATOR_DID, { operatorId: OP_ID, tier: 5 }]]);
 
 type MockPool = { query: ReturnType<typeof vi.fn> };
 
@@ -44,7 +50,7 @@ function makePool(queryFn: (sql: string, params: unknown[]) => [unknown[], unkno
     };
 }
 
-function buildApp(humanPool?: MockPool): FastifyInstance {
+function buildApp(humanPool?: MockPool, allow: Map<string, OperatorGrant> = ALLOW): FastifyInstance {
     return buildServer({
         clock: new WorldClock({ tickRateMs: 100_000 }),
         space: new SpatialMap(),
@@ -52,6 +58,7 @@ function buildApp(humanPool?: MockPool): FastifyInstance {
         audit: new AuditChain(),
         gridName: 'genesis',
         humanPool,
+        operatorAllowlist: allow,
     });
 }
 
@@ -108,7 +115,7 @@ describe('Portal Manager — attack-surface gate (GRID_PORTAL_MANAGER_ENABLED)',
         process.env.GRID_ADMIN_ENABLED = PRIOR_ADMIN;
     });
 
-    it('503 portal_manager_disabled when the flag is unset/false (even with spoofed headers + cookie)', async () => {
+    it('503 portal_manager_disabled when the flag is unset/false (even with a valid cookie)', async () => {
         delete process.env.GRID_PORTAL_MANAGER_ENABLED;
         const app = buildApp(makePool(defaultQueryFn()));
         await app.ready();
@@ -116,7 +123,6 @@ describe('Portal Manager — attack-surface gate (GRID_PORTAL_MANAGER_ENABLED)',
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal-manager/registrations',
-            headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
             cookies: { [COOKIE_NAME]: cookie },
         });
         expect(res.statusCode).toBe(503);
@@ -135,7 +141,6 @@ describe('Portal Manager — attack-surface gate (GRID_PORTAL_MANAGER_ENABLED)',
         const res = await app.inject({
             method: 'GET',
             url: '/api/v1/portal-manager/registrations',
-            headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
             cookies: { [COOKIE_NAME]: cookie },
         });
         // The admin .env kill-switch must not enable the read-only console.
@@ -171,59 +176,47 @@ describe('Portal Manager — production-gated handler', () => {
         });
     });
 
-    describe('auth ladder (secondary header checks behind a valid session)', () => {
-        let app: FastifyInstance;
-        let cookie: string;
-        beforeAll(async () => {
-            app = buildApp(makePool(defaultQueryFn()));
+    describe('operator authorization (allowlist gate behind a valid session)', () => {
+        it('403 not_operator when the logged-in session DID is not on the allowlist', async () => {
+            const app = buildApp(makePool(defaultQueryFn()));
             await app.ready();
-            cookie = await makePortalCookie();
-        });
-        afterAll(async () => { await app.close(); });
-
-        it('401 tier_missing when x-operator-tier absent (session present)', async () => {
+            const cookie = await makePortalCookie(STRANGER_DID);
             const res = await app.inject({
                 method: 'GET',
                 url: '/api/v1/portal-manager/registrations',
-                headers: { 'x-operator-id': OP_ID },
-                cookies: { [COOKIE_NAME]: cookie },
-            });
-            expect(res.statusCode).toBe(401);
-            expect(res.json().error).toBe('tier_missing');
-        });
-
-        it('403 tier_too_low when tier < 5 (session present)', async () => {
-            const res = await app.inject({
-                method: 'GET',
-                url: '/api/v1/portal-manager/registrations',
-                headers: { 'x-operator-tier': '4', 'x-operator-id': OP_ID },
                 cookies: { [COOKIE_NAME]: cookie },
             });
             expect(res.statusCode).toBe(403);
-            expect(res.json().error).toBe('tier_too_low');
+            expect(res.json().error).toBe('not_operator');
+            // No reviewer-queue body leaked past the gate.
+            expect(res.json().applications).toBeUndefined();
+            await app.close();
         });
 
-        it('400 invalid_operator_id when x-operator-id malformed (session present)', async () => {
+        it('403 not_operator when the allowlisted operator is below tier 5', async () => {
+            const underTier = new Map<string, OperatorGrant>([[OPERATOR_DID, { operatorId: OP_ID, tier: 4 }]]);
+            const app = buildApp(makePool(defaultQueryFn()), underTier);
+            await app.ready();
+            const cookie = await makePortalCookie();
             const res = await app.inject({
                 method: 'GET',
                 url: '/api/v1/portal-manager/registrations',
-                headers: { 'x-operator-tier': '5', 'x-operator-id': 'not-an-op-id' },
                 cookies: { [COOKIE_NAME]: cookie },
             });
-            expect(res.statusCode).toBe(400);
-            expect(res.json().error).toBe('invalid_operator_id');
+            expect(res.statusCode).toBe(403);
+            expect(res.json().error).toBe('not_operator');
+            await app.close();
         });
     });
 
     describe('503 db_unavailable', () => {
-        it('503 db_unavailable when humanPool absent (session + headers present)', async () => {
+        it('503 db_unavailable when humanPool absent (allowlisted session present)', async () => {
             const app = buildApp(undefined);
             await app.ready();
             const cookie = await makePortalCookie();
             const res = await app.inject({
                 method: 'GET',
                 url: '/api/v1/portal-manager/registrations',
-                headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
                 cookies: { [COOKIE_NAME]: cookie },
             });
             expect(res.statusCode).toBe(503);
@@ -246,7 +239,6 @@ describe('Portal Manager — production-gated handler', () => {
             const res = await app.inject({
                 method: 'GET',
                 url: '/api/v1/portal-manager/registrations',
-                headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
                 cookies: { [COOKIE_NAME]: cookie },
             });
             expect(res.statusCode).toBe(200);
@@ -261,7 +253,6 @@ describe('Portal Manager — production-gated handler', () => {
             const res = await app.inject({
                 method: 'GET',
                 url: '/api/v1/portal-manager/registrations',
-                headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
                 cookies: { [COOKIE_NAME]: cookie },
             });
             const row = res.json().applications[0];
@@ -278,7 +269,6 @@ describe('Portal Manager — production-gated handler', () => {
             const res = await app.inject({
                 method: 'GET',
                 url: '/api/v1/portal-manager/registrations',
-                headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
                 cookies: { [COOKIE_NAME]: cookie },
             });
             const raw = res.payload;
@@ -309,7 +299,6 @@ describe('Portal Manager — production-gated handler', () => {
             const res = await app.inject({
                 method: 'GET',
                 url: '/api/v1/portal-manager/registrations?status=pending',
-                headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
                 cookies: { [COOKIE_NAME]: cookie },
             });
             expect(res.statusCode).toBe(200);
@@ -335,7 +324,6 @@ describe('Portal Manager — production-gated handler', () => {
             const res = await app.inject({
                 method: 'GET',
                 url: '/api/v1/portal-manager/registrations?status=bogus',
-                headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
                 cookies: { [COOKIE_NAME]: cookie },
             });
             expect(res.statusCode).toBe(400);
@@ -355,13 +343,13 @@ describe('Portal Manager — production-gated handler', () => {
                 audit,
                 gridName: 'genesis',
                 humanPool: makePool(defaultQueryFn()),
+                operatorAllowlist: ALLOW,
             });
             await app.ready();
             const cookie = await makePortalCookie();
             await app.inject({
                 method: 'GET',
                 url: '/api/v1/portal-manager/registrations',
-                headers: { 'x-operator-tier': '5', 'x-operator-id': OP_ID },
                 cookies: { [COOKIE_NAME]: cookie },
             });
             expect(audit.length).toBe(before);

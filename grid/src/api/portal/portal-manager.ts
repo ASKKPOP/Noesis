@@ -38,14 +38,12 @@
  *      handler operatorScope() then yields req.didContext.operatorDid or 403
  *      operator_scope_required. A spoofed header alone can NEVER satisfy this — the
  *      operatorDid comes from the validated Portal session, not from request headers.
- *   The legacy x-operator-tier (>=5) / x-operator-id checks survive ONLY as a
- *   secondary intent signal AFTER operatorScope passes — never the sole boundary.
+ *   SECURITY 2026-07-09: the spoofable x-operator-tier/-id headers are RETIRED. Operator
+ *   membership + tier come from the GRID_OPERATOR_DIDS allowlist, keyed on the session DID.
  *
  *   Error ladder (after the admin gate + portal session pass):
  *     403 operator_scope_required — no server-trusted operatorDid
- *     401 tier_missing     — x-operator-tier absent / non-numeric (secondary)
- *     403 tier_too_low     — x-operator-tier < 5 (secondary)
- *     400 invalid_operator_id — x-operator-id fails OPERATOR_ID_REGEX (secondary)
+ *     403 not_operator     — session DID is not an allowlisted operator (or tier < 5)
  *     400 invalid_status   — ?status= not one of pending|approved|rejected
  *     503 db_unavailable   — services.humanPool absent
  */
@@ -54,8 +52,8 @@ import type { FastifyInstance } from 'fastify';
 import { createHash } from 'node:crypto';
 import type { GridServices } from '../server.js';
 import type { ApiError } from '../types.js';
-import { OPERATOR_ID_REGEX } from '../types.js';
 import { operatorScope } from '../preHandlers/operatorScope.js';
+import { resolveOperator, type OperatorGrant } from '../preHandlers/operatorAuth.js';
 
 const VALID_STATUS = ['pending', 'approved', 'rejected'] as const;
 type ApplicationStatus = (typeof VALID_STATUS)[number];
@@ -93,42 +91,24 @@ interface CivicCountRow {
 }
 
 /**
- * Runs the IDENTICAL auth ladder as the registrations handler:
- *   0. operatorScope — server-trusted operatorDid (403 operator_scope_required)
- *   1. x-operator-tier >= 5 secondary signal (401 tier_missing / 403 tier_too_low)
- *   1b. x-operator-id OPERATOR_ID_REGEX secondary signal (400 invalid_operator_id)
- * Returns true when every gate passed (the caller may proceed), false when a
- * response has already been sent.
+ * Server-trusted operator gate shared by all three read handlers:
+ *   0. operatorScope — server-trusted operatorDid from the Portal session (403 otherwise)
+ *   1. the operatorDid must be an allowlisted operator at tier >= 5 (403 not_operator)
+ * SECURITY 2026-07-09: the spoofable x-operator-tier/-id headers are RETIRED — operator
+ * membership + tier come from GRID_OPERATOR_DIDS, keyed on the authenticated session DID.
+ * Returns true when every gate passed, false when a response has already been sent.
  */
 async function passOperatorLadder(
     req: import('fastify').FastifyRequest,
     reply: import('fastify').FastifyReply,
+    allowlist: Map<string, OperatorGrant>,
 ): Promise<boolean> {
     const operatorDid = await operatorScope(req, reply);
     if (!operatorDid) return false;
-
-    const tierHeader = req.headers['x-operator-tier'];
-    if (typeof tierHeader !== 'string') {
-        reply.code(401);
-        void reply.send({ error: 'tier_missing' } satisfies ApiError);
-        return false;
-    }
-    const tierNum = parseInt(tierHeader, 10);
-    if (!Number.isFinite(tierNum)) {
-        reply.code(401);
-        void reply.send({ error: 'tier_missing' } satisfies ApiError);
-        return false;
-    }
-    if (tierNum < 5) {
+    const grant = resolveOperator(operatorDid, allowlist);
+    if (!grant || grant.tier < 5) {
         reply.code(403);
-        void reply.send({ error: 'tier_too_low' } satisfies ApiError);
-        return false;
-    }
-
-    const opIdHeader = req.headers['x-operator-id'];
-    if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) {
-        reply.code(400);
-        void reply.send({ error: 'invalid_operator_id' } satisfies ApiError);
+        void reply.send({ error: 'not_operator' } satisfies ApiError);
         return false;
     }
     return true;
@@ -163,33 +143,16 @@ export function registerPortalManagerRoutes(
     app.get<{ Querystring: { status?: string } }>(
         '/api/v1/portal-manager/registrations',
         async (req, reply) => {
-            // 0. Server-trusted identity — operatorDid comes from the validated Portal
-            //    session (requirePortalSession ran in the central hook), NOT from headers.
-            //    A spoofed x-operator-* header alone can never satisfy this (403 otherwise).
+            // 0. Server-trusted identity + authorization — operatorDid comes from the
+            //    validated Portal session (requirePortalSession ran in the central hook),
+            //    NOT from headers, and must be an allowlisted operator at tier >= 5.
+            //    SECURITY 2026-07-09: the x-operator-tier/-id headers are retired.
             const operatorDid = await operatorScope(req, reply);
             if (!operatorDid) return;
-
-            // 1. Tier signal — SECONDARY intent only (defense-in-depth, never the sole gate).
-            const tierHeader = req.headers['x-operator-tier'];
-            if (typeof tierHeader !== 'string') {
-                reply.code(401);
-                return { error: 'tier_missing' } satisfies ApiError;
-            }
-            const tierNum = parseInt(tierHeader, 10);
-            if (!Number.isFinite(tierNum)) {
-                reply.code(401);
-                return { error: 'tier_missing' } satisfies ApiError;
-            }
-            if (tierNum < 5) {
+            const grant = resolveOperator(operatorDid, services.operatorAllowlist ?? new Map());
+            if (!grant || grant.tier < 5) {
                 reply.code(403);
-                return { error: 'tier_too_low' } satisfies ApiError;
-            }
-
-            // 1b. Operator-id signal — SECONDARY (header is not the boundary now).
-            const opIdHeader = req.headers['x-operator-id'];
-            if (typeof opIdHeader !== 'string' || !OPERATOR_ID_REGEX.test(opIdHeader)) {
-                reply.code(400);
-                return { error: 'invalid_operator_id' } satisfies ApiError;
+                return { error: 'not_operator' } satisfies ApiError;
             }
 
             // 2. Status filter — reject anything outside the ENUM (no interpolation).
@@ -275,8 +238,8 @@ export function registerPortalManagerRoutes(
     // existence_did / credential_json / nous did+human_owner are NEVER selected —
     // the only identity-bearing value returned is the intentionally-public civic_did.
     app.get('/api/v1/portal-manager/did-issuance', async (req, reply) => {
-        // 0/1/1b — identical operator auth ladder as the registrations handler.
-        if (!(await passOperatorLadder(req, reply))) return;
+        // Identical server-trusted operator gate as the registrations handler.
+        if (!(await passOperatorLadder(req, reply, services.operatorAllowlist ?? new Map()))) return;
 
         // DB gate — this slice reads the MAIN grid pool (NOT humanPool).
         const pool = services.pool;
@@ -335,8 +298,8 @@ export function registerPortalManagerRoutes(
     // verbatim from the canonical watchdog snapshot (divergence-based; the SAME
     // signal /health/detailed + system-map.ts use). verify() is NEVER called.
     app.get('/api/v1/portal-manager/audit-chain', async (req, reply) => {
-        // 0/1/1b — identical operator auth ladder as the registrations handler.
-        if (!(await passOperatorLadder(req, reply))) return;
+        // Identical server-trusted operator gate as the registrations handler.
+        if (!(await passOperatorLadder(req, reply, services.operatorAllowlist ?? new Map()))) return;
 
         // Integrity — copy the four counters verbatim from the watchdog snapshot.
         // Absent launcher/watchdog → nulls + healthy:false (optional-chaining

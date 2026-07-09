@@ -457,8 +457,10 @@ export function buildServerWithHub(
 
     // Server-trusted operator allowlist — parsed once at boot (or injected by tests).
     // Fail-closed: an empty map means every operator_only route returns 403.
+    // Persist onto services so any route (account-endowment, portal-manager) can read it.
     const operatorAllowlist =
         services.operatorAllowlist ?? parseOperatorAllowlist(process.env.GRID_OPERATOR_DIDS);
+    services.operatorAllowlist = operatorAllowlist;
 
     // Phase 22: @fastify/cookie required for portal JWT cookie support (WEB3-03).
     void app.register(fastifyCookie);
