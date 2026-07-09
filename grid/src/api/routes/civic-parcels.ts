@@ -159,6 +159,9 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
         // 3. Move funds on the NOUS registry (buyer → treasury). Belt-and-suspenders 402.
         const moved = nousRegistry.transferWei(buyerDid, TREASURY_DID, price);
         if (!moved.success) {
+            // Roll back the ownership stamp from step 2 — a failed charge must never
+            // leave a phantom owner (unpaid, unpersisted, unaudited).
+            parcelRegistry.releaseOwnership(addr);
             if (moved.error === 'insufficient') {
                 return reply.code(402).send({ error: 'insufficient_funds' });
             }
