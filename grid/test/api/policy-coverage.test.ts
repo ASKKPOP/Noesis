@@ -30,7 +30,7 @@ function buildTestServer(): FastifyInstance {
 }
 
 describe('ROUTE_DID_POLICY — enum shape', () => {
-    it('ROUTE_DID_POLICY_VALUES contains exactly the 6 D-36-17 policy strings', () => {
+    it('ROUTE_DID_POLICY_VALUES contains exactly the 7 policy strings (D-36-17 + operator_only)', () => {
         const expected = [
             'public',
             'portal_session_required',
@@ -38,9 +38,10 @@ describe('ROUTE_DID_POLICY — enum shape', () => {
             'business_did_required',
             'government_only',
             'police_only',
+            'operator_only', // SECURITY 2026-07-09 — server-trusted operator gate
         ];
         expect([...ROUTE_DID_POLICY_VALUES].sort()).toEqual(expected.sort());
-        expect(ROUTE_DID_POLICY_VALUES.length).toBe(6);
+        expect(ROUTE_DID_POLICY_VALUES.length).toBe(7);
     });
 });
 

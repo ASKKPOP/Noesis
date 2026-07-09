@@ -29,6 +29,10 @@ export interface DIDContext {
     readonly did: string;
     readonly tier: VisitorTier;
     readonly operatorDid?: string;
+    /** Server-trusted operator tier (1..5). Set ONLY by the operator_only gate. */
+    readonly operatorTier?: number;
+    /** Server-trusted operator audit id (op:<uuid>). Set ONLY by the operator_only gate. */
+    readonly operatorId?: string;
 }
 
 // Module augmentation: extend FastifyRequest so handlers see req.didContext without casting.

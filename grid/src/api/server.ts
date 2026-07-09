@@ -69,6 +69,7 @@ import { lookupPolicy } from './policy.js';
 import { tryDid } from './preHandlers/tryDid.js';
 import { requireDid, requirePortalSession } from './preHandlers/requireDid.js';
 import type { RequireDidServices } from './preHandlers/requireDid.js';
+import { parseOperatorAllowlist, resolveOperator } from './preHandlers/operatorAuth.js';
 import './preHandlers/types.js'; // module augmentation side-effect
 import { verifyGovernmentSession, GOV_SESSION_ISSUER_DID } from '../civic-registry/index.js';
 import { registerRegistryRoutes } from './routes/registry.js';
@@ -422,6 +423,13 @@ export interface GridServices {
      * Tests inject an InMemoryGovBillStore.
      */
     govStore?: import('../gov/gov-bill-store.js').GovBillStore;
+    /**
+     * Server-trusted operator allowlist (SECURITY 2026-07-09). Maps operator
+     * Portal-DID → { operatorId, tier }. When absent, buildServerWithHub parses
+     * it from process.env.GRID_OPERATOR_DIDS. Empty ⇒ all operator routes 403
+     * (fail-closed). Tests inject a fixture map here to avoid touching env.
+     */
+    operatorAllowlist?: Map<string, import('./preHandlers/operatorAuth.js').OperatorGrant>;
 }
 
 /**
@@ -446,6 +454,11 @@ export function buildServerWithHub(
 ): { app: FastifyInstance; wsHub: WsHub; firehoseHub: WsFirehoseHub; driftDetector: DriftDetector } {
     const app = Fastify({ logger: false });
     const startedAt = Date.now();
+
+    // Server-trusted operator allowlist — parsed once at boot (or injected by tests).
+    // Fail-closed: an empty map means every operator_only route returns 403.
+    const operatorAllowlist =
+        services.operatorAllowlist ?? parseOperatorAllowlist(process.env.GRID_OPERATOR_DIDS);
 
     // Phase 22: @fastify/cookie required for portal JWT cookie support (WEB3-03).
     void app.register(fastifyCookie);
@@ -507,6 +520,19 @@ export function buildServerWithHub(
             const ctx = await requirePortalSession(req, reply, { didStore: services.didStore });
             if (!ctx) return; // 401 already sent
             req.didContext = ctx;
+            return;
+        }
+        // SECURITY 2026-07-09: operator routes derive tier + identity SERVER-SIDE
+        // from the authenticated Portal-session DID checked against the allowlist —
+        // never from x-operator-tier/-id headers. Fail-closed (empty allowlist ⇒ 403).
+        if (policy === 'operator_only') {
+            const ctx = await requirePortalSession(req, reply, { didStore: services.didStore });
+            if (!ctx) return; // 401 portal_session_required already sent
+            const grant = resolveOperator(ctx.operatorDid, operatorAllowlist);
+            if (!grant) {
+                return reply.code(403).send({ error: 'not_operator' });
+            }
+            req.didContext = { ...ctx, operatorTier: grant.tier, operatorId: grant.operatorId };
             return;
         }
         // Phase 37 (REG-04 / Pitfall 1 / Pitfall 6): government_only branch — enforces

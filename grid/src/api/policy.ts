@@ -19,6 +19,7 @@ export const ROUTE_DID_POLICY_VALUES = [
     'business_did_required',
     'government_only',
     'police_only',
+    'operator_only',
 ] as const;
 
 export type RouteDIDPolicy = (typeof ROUTE_DID_POLICY_VALUES)[number];
@@ -210,33 +211,36 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // Relationship graph
     'GET /api/v1/nous/:did/relationships': 'public',
     'GET /api/v1/nous/:did/relationships/inspect': 'public',
-    // H2 operator inspect is a POST (operator/relationships.ts); the DID hook must pass
-    // it through to the x-operator-tier handler, not default-deny it (Phase 36 gap).
-    'POST /api/v1/nous/:did/relationships/inspect': 'public',
+    // H5 operator inspect is a POST (operator/relationships.ts); routed through the
+    // server-trusted operator_only gate (SECURITY 2026-07-09).
+    'POST /api/v1/nous/:did/relationships/inspect': 'operator_only',
     'GET /api/v1/grid/relationships/graph': 'public',
 
-    // Operator routes — use their own x-operator-tier/x-operator-id auth mechanism
-    'POST /api/v1/operator/clock/pause': 'public',
-    'POST /api/v1/operator/clock/resume': 'public',
-    'GET /api/v1/operator/governance/laws': 'public',
-    'POST /api/v1/operator/governance/laws': 'public',
-    'PUT /api/v1/operator/governance/laws/:id': 'public',
-    'DELETE /api/v1/operator/governance/laws/:id': 'public',
-    'POST /api/v1/operator/humans/:did/ban': 'public',
-    'POST /api/v1/operator/humans/:did/freeze': 'public',
-    'POST /api/v1/operator/nous/:did/delete': 'public',
-    'POST /api/v1/operator/nous/:did/mute': 'public',
-    'POST /api/v1/operator/nous/:did/quarantine': 'public',
-    'POST /api/v1/operator/nous/:did/slash': 'public',
-    'POST /api/v1/operator/nous/:did/force-sleep': 'public',
-    'POST /api/v1/operator/nous/:did/telos/force': 'public',
+    // Operator routes — SECURITY 2026-07-09: server-trusted operator_only gate.
+    // The global onRequest hook runs requirePortalSession + resolveOperator (env
+    // allowlist keyed on the Portal-session DID) and attaches operatorTier/operatorId
+    // to req.didContext. The spoofable x-operator-tier/-id header pattern is RETIRED.
+    'POST /api/v1/operator/clock/pause': 'operator_only',
+    'POST /api/v1/operator/clock/resume': 'operator_only',
+    'GET /api/v1/operator/governance/laws': 'operator_only',
+    'POST /api/v1/operator/governance/laws': 'operator_only',
+    'PUT /api/v1/operator/governance/laws/:id': 'operator_only',
+    'DELETE /api/v1/operator/governance/laws/:id': 'operator_only',
+    'POST /api/v1/operator/humans/:did/ban': 'operator_only',
+    'POST /api/v1/operator/humans/:did/freeze': 'operator_only',
+    'POST /api/v1/operator/nous/:did/delete': 'operator_only',
+    'POST /api/v1/operator/nous/:did/mute': 'operator_only',
+    'POST /api/v1/operator/nous/:did/quarantine': 'operator_only',
+    'POST /api/v1/operator/nous/:did/slash': 'operator_only',
+    'POST /api/v1/operator/nous/:did/force-sleep': 'operator_only',
+    'POST /api/v1/operator/nous/:did/telos/force': 'operator_only',
     // cognitive-snapshot is registered as POST (cognitive-snapshot.ts), not GET.
-    'POST /api/v1/operator/nous/:did/cognitive-snapshot': 'public',
-    'POST /api/v1/operator/nous/:did/memory/query': 'public',
+    'POST /api/v1/operator/nous/:did/cognitive-snapshot': 'operator_only',
+    'POST /api/v1/operator/nous/:did/memory/query': 'operator_only',
     // operator relationship-events is registered as GET (operator/relationships.ts), not POST.
-    'GET /api/v1/operator/relationships/:edge_key/events': 'public',
-    'POST /api/v1/operator/replay/export': 'public',
-    'POST /api/v1/operator/spawn-system-nous': 'public',
+    'GET /api/v1/operator/relationships/:edge_key/events': 'operator_only',
+    'POST /api/v1/operator/replay/export': 'operator_only',
+    'POST /api/v1/operator/spawn-system-nous': 'operator_only',
 
     // Portal Manager v1 (Tier-3 Henry-side meta-ops) — READ-ONLY reviewer queue.
     // Requires a SERVER-TRUSTED Portal session: the global hook runs requirePortalSession
@@ -398,10 +402,12 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/p2p/turn-credentials':    'civic_did_required',  // Brain JWT TURN auth
 
     // Phase 43 FORK-01 — Fork endpoint (2 entries)
-    // header-trust pattern: both routes use x-operator-tier / x-operator-id auth internally.
-    // 'public' is the established policy for all operator.* routes (D-25b-NEW-1).
-    'POST /api/v1/operator/fork/:nousDid':          'public',  // H4+ header-trust, builds .tar.gz
-    'GET /api/v1/operator/fork/:nousDid/download':  'public',  // one-time-token download
+    // SECURITY 2026-07-09: the POST that builds the brain .tar.gz is now operator_only
+    // (server-trusted gate). The GET download stays 'public' — it authenticates via a
+    // one-time token in the query string (issued by the POST), not an operator session,
+    // so a browser click without the operator cookie can still fetch the archive.
+    'POST /api/v1/operator/fork/:nousDid':          'operator_only',  // H4+ gate, builds .tar.gz
+    'GET /api/v1/operator/fork/:nousDid/download':  'public',         // one-time-token download
 
     // Phase 44 MKT-01..06 — Civic marketplace routes (8 new entries per RESEARCH.md Pattern 4).
     // GET /api/v1/market/listings is already 'public' (Phase 36 VIS-01, line 35 of policy.ts) — NOT duplicated here.
