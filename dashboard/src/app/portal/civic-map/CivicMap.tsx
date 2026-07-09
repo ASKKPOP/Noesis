@@ -75,10 +75,12 @@ export default function CivicMap({ zones: propZones, nous: propNous }: CivicMapP
                         role="button"
                         aria-label={`Navigate to ${zone.label} zone`}
                     />
+                    {/* Dark ink labels — zone fills are light pastels (#dbeafe…#ede9fe),
+                        so near-white text was near-invisible (QA 2026-07-09). */}
                     <text
                         x={zone.labelX}
                         y={zone.labelY}
-                        fill="#e8e8ec"
+                        fill="#1a1a2e"
                         fontSize="14"
                         fontFamily="Inter Tight, sans-serif"
                         fontWeight="600"
@@ -90,7 +92,7 @@ export default function CivicMap({ zones: propZones, nous: propNous }: CivicMapP
                     <text
                         x={zone.labelX}
                         y={zone.labelY + 18}
-                        fill="#6a6a76"
+                        fill="#4b5563"
                         fontSize="11"
                         fontFamily="JetBrains Mono, monospace"
                         textAnchor="middle"
