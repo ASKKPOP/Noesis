@@ -64,6 +64,51 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 17 ============================ -->
+  <h2>Session 17 — 2026‑07‑07/08 · “Portal Manager Tier‑3 build · logic‑driven System Map · portal/system domain split · local+remote deploy · surfaces &amp; users doc”</h2>
+  <p class="sub">A long multi-task session. Operator drove: build the Tier‑3 Portal Manager on <code>noesiis.com</code> via the HARNESS (Planner→Generator→Evaluator), harden its auth, add the remaining read-only surfaces; build a <b>logic-driven</b> System Map (no hardcoding); set up 3-developer QA testing; re-home the domains so <code>portal.noesiis.com</code> is the <i>public</i> Portal and the operator console moves to <code>system.noesiis.com</code>; deploy both local (Colima) and remote; then produce a full surfaces &amp; users reference and log the history. English-only from this session on (bilingual revoked).</p>
+
+  <p class="sub" style="margin-top:1.2em"><b>① Portal Manager (Tier‑3 operator console)</b></p>
+  <ul>
+    <li><b>Spec + status verify</b> <span class="tag done">done</span> <a href="spec/portal-manager.html">docs/spec/portal-manager.html</a> — dedicated spec page; honestly verified which surfaces were Planned vs Built before writing code.</li>
+    <li><b>Read-only Tier‑3 surfaces</b> <span class="tag done">built <span class="hash">865148c</span></span> — <code>grid/src/api/portal/portal-manager.ts</code>: reviewer queue (<code>/registrations</code>), <b>DID-issuance tracker</b> (<code>/did-issuance</code> — public Civic-DIDs + counts from <code>civic_did_registry</code>), <b>audit-chain viewer</b> (<code>/audit-chain</code> — watchdog integrity + last 30 <code>portal.*/registry.*/polis.registration_*</code> events). SELECT-only; never reads <code>existence_did/credential_json/human_owner</code>; <code>status</code> backticked; <code>human_did_hash = sha256</code>. Dashboard: <code>system/portal-manager/{page,PortalManagerView}.tsx</code>. Spec marked Built <span class="hash">4bfdafa</span>.</li>
+    <li><b>Auth hardening</b> <span class="tag done">fixed</span> — v1 route trusted spoofable <code>x-operator-tier</code> headers (<code>'public'</code>) → changed to <code>portal_session_required</code> policy + global session hook (<code>req.didContext.operatorDid</code>) + in-handler <code>operatorScope()</code>. Added a <b>dedicated</b> <code>GRID_PORTAL_MANAGER_ENABLED</code> kill-switch (503 when off) so the console no longer shares <code>GRID_ADMIN_ENABLED</code> with the .env admin routes. Verified live: APIs return <b>401</b> gated (not 500/503).</li>
+  </ul>
+
+  <p class="sub" style="margin-top:1.2em"><b>② Logic-driven System Map</b></p>
+  <ul>
+    <li><b>Live endpoint</b> <span class="tag done">built</span> <code>grid/src/api/routes/system-map.ts</code> — <code>GET /api/v1/system/map</code>, public read-only, aggregate-only, per-item <code>item(fn, fallback)</code> guard. Every value computed live (grid status from watchdog divergence, Portal counts from real rows). <b>No mock data, no hardcoding</b> (operator mandate — saved to memory).</li>
+    <li><b>Bug fix</b> <span class="tag done">fixed</span> — grid tile showed <code>degraded</code> while grid was <code>ok</code> because it called <code>audit.verify()</code> (O(n) re-hash of ~77k entries, returns false benignly). Switched to <code>launcher.healthWatchdog.snapshot()</code>, the canonical liveness signal.</li>
+    <li><b>Map page + visual parity</b> <span class="tag done">done</span> <code>dashboard/src/app/system-map/*</code> — 4 pillars (Grid · Portal · Steward · Local AI) + 8 civic institutions, data-bound to the endpoint; visual kept identical, values live.</li>
+  </ul>
+
+  <p class="sub" style="margin-top:1.2em"><b>③ SSR resilience + Claude Brain provider</b></p>
+  <ul>
+    <li><b><code>safeGridFetch</code></b> <span class="tag done">built</span> <code>dashboard/src/lib/server-grid-fetch.ts</code> — after an apex outage (SSR <code>await fetch()</code> hung during a grid restart → 000), added a timeout (3s) + <code>res.ok</code> + JSON content-type guard → <code>null</code>, never throws. Restarted the container to recover the live outage first.</li>
+    <li><b>Claude Brain adapter branch</b> <span class="tag done">built</span> <code>brain/src/noesis_brain/__main__.py</code> — <code>LLM_PROVIDER in (claude,anthropic)</code> registers the ClaudeAdapter (haiku/sonnet/opus tiers); <code>_claude_override()</code> maps the ollama default <code>qwen3:4b</code>→null so it can't leak. For tester Tuan Anh (no Local AI). Flagged the open D-MONEY-01 tension: a cloud Brain shifts cognition to paid compute.</li>
+  </ul>
+
+  <p class="sub" style="margin-top:1.2em"><b>④ 3-developer QA testing</b></p>
+  <ul>
+    <li><b>QA guide + Round-0 baseline</b> <span class="tag done">done</span> <a href="spec/qa-testing-guide.html">docs/spec/qa-testing-guide.html</a> (served at <code>/qa</code>) — Tracks A/B/C, per-tester Local-AI setup (You/Luu=ollama, Tuan Anh=claude), the verified-green baseline. Testers: <b>Henry</b> (operator, MacBook Pro), <b>Tuan Anh</b> (Claude API), <b>Luu</b> (this Mac / ollama).</li>
+    <li><b>Baseline caught 2 real bugs</b> <span class="tag done">fixed</span> — the System Map grid-tile signal bug (above) and the live apex outage (above), both found + fixed during Round-0.</li>
+  </ul>
+
+  <p class="sub" style="margin-top:1.2em"><b>⑤ Domain re-home + deploy (local &amp; remote)</b></p>
+  <ul>
+    <li><b>portal/system split</b> <span class="tag done">shipped <span class="hash">a1ef591</span></span> — <code>docker/nginx.noesiis.conf.template</code>: <code>portal.noesiis.com</code> = the <b>public Portal</b> (<code>/ → /portal</code>); NEW <code>system.noesiis.com</code> = the operator console (<code>/ → /system/portal-manager</code>). CORS origins added in <code>docker-compose.aws.yml</code>. Host front-proxy <code>domains.conf</code> already lists both subdomains → <code>:8088</code>.</li>
+    <li><b>Remote deploy</b> <span class="tag done">healthy</span> — full web stack rebuilt on the EC2, nginx force-recreated, mysql untouched, brains excluded. All public surfaces verified 200/302: landing, api/health, system/map, <code>/system/portal-manager</code>, <code>/system-map</code>, portal, wiki, /docs, /spec, /qa, /console.</li>
+    <li><b>Local docker stack</b> <span class="tag done">up</span> — diagnosed two blockers on this Mac (Colima): (a) no <code>docker compose</code> plugin → use hyphenated <code>docker-compose</code> (brew); (b) 2 GiB VM OOM-killed the dashboard <code>next build</code> → bumped Colima to 12 GiB / 6 CPU. Brought up mysql/grid/dashboard/steward, all healthy; verified localhost:8080/3001/3002. Saved to memory. <b>Local is test-only — never public.</b></li>
+    <li><b><code>system.noesiis.com</code> — AWS-side blocker</b> <span class="tag blocked">pending operator</span> — server side fully wired (host nginx + docker block), but the subdomain resolves to a stale IP pair that accepts no traffic (times out :443 &amp; :80). Fix in AWS: Route 53 <b>Alias → same ALB</b>, ALB :443 host-rule → EC2 target group, ACM cert covering it (<code>*.noesiis.com</code> works). Console remains live at <code>noesiis.com/system/portal-manager</code> meanwhile.</li>
+  </ul>
+
+  <p class="sub" style="margin-top:1.2em"><b>⑥ Surfaces &amp; users reference + git</b></p>
+  <ul>
+    <li><b>Surfaces &amp; users doc</b> <span class="tag done">built <span class="hash">de68b83</span></span> <a href="noesis-surfaces-and-users.html">docs/noesis-surfaces-and-users.html</a> — URL matrix for <b>local + public</b> surfaces with live status; per-surface explanations (12, deduped so the operator console + its <code>system.noesiis.com</code> alias are one card, not two); public-domain user roster (Henry/Tuan Anh/Luu with roles, tiers, auth, Local AI). Not served yet (local file).</li>
+    <li><b>Pushed + rebased</b> <span class="tag done">de68b83</span> — committed both docs; push rejected (collaborator merged <b>PR #6 + PR #7</b>: ISSUE-001/002 WalletConnect+treasury-ETH, ISSUE-005/006 authenticated Portal persistence, steward <code>ousia→balance_wei</code> crash fix); rebased cleanly (docs-only) onto <span class="hash">ef612e3</span> and pushed. Working tree clean, all 51 tracked HTML docs on origin.</li>
+    <li><b>Open follow-ups</b> <span class="tag prog">next</span> — (a) remote is on <span class="hash">a1ef591</span>, does <i>not</i> yet include PR #6/#7 or these docs → a redeploy to <span class="hash">de68b83</span> is available on request; (b) to make the surfaces doc shareable at <code>/spec/</code>, move it under <code>docs/spec/</code> and deploy.</li>
+  </ul>
+
   <!-- ============================ SESSION 16 ============================ -->
   <h2>Session 16 — 2026‑07‑06 · “Retire the money misnomer: full *_bios / ousia → wei rename (D-MONEY-07)”</h2>
   <p class="sub">Operator program item #5. Money in Noēsis is compute-labor + real ETH, measured in <b>wei</b> (D-MONEY-01); the schema still carried two retired-currency names — the <code>*_bios</code> money columns (the desire-word misused for money) and the older <code>ousia</code> balance. A scope check found the misnomer spanned three layers of very different risk (DB columns · the tamper-evident audit-chain payload keys · a deeper <code>ousia</code> balance layer), so I surfaced the fork rather than guess. <b>Operator chose the full retire.</b> Executed as compiler-and-test-verified passes in an isolated worktree, not a blind sed.</p>
