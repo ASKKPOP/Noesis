@@ -248,6 +248,10 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     // bug class — R-H-01). DB is source of truth; the registry is a read cache.
     let parcels: { registry: ParcelRegistry; store: ParcelStore } | undefined;
     let groupStore: GroupStore | undefined;  // hoisted for GridServices (spec §2 discovery)
+    // Phase 62.6-04 (D-7 / D-13): hoisted so the seeded NousRunner construction (outside
+    // the if(dbConn) block, below) can inject the Ledger-A account store for agent-trade
+    // settlement. Assigned inside if(dbConn) from presencePool; undefined in DB-less mode.
+    let nousAccountStore: NousAccountStore | undefined;
     if (dbConn) {
         const presencePool = dbConn.getPool();
         const presenceStore = new PresenceStore(presencePool);
@@ -268,6 +272,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         // orbital anchors in the business sector (idempotent). Each freshly-inserted row
         // emits one group.founded onto the audit chain (founding at genesis tick 0).
         groupStore = new GroupStore(presencePool, config.genesisConfig.gridName);
+        nousAccountStore = new NousAccountStore(presencePool);
         const groupsSeeded = await groupStore.seedGenesisGroups(chain!, 0);
         console.log(`[civic] groups seeded: ${groupsSeeded}`);
         // Phase 59 HOUSE-2 (D-59-06 / R-H-03): late-wire the upkeep scanner now that the
@@ -288,7 +293,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
             audit: chain!,
             treasuryDid: TREASURY_DID,
             gridName: config.genesisConfig.gridName,
-            accountStore: new NousAccountStore(presencePool),
+            accountStore: nousAccountStore,
         });
         // Phase 60 HOUSE-3 (D-60-08 / R-60-10): late-wire the ring-expansion TEMPLATE onto the
         // governance engine now that the parcel registry + founding-law read-through exist. The
@@ -393,6 +398,13 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
                 economy: launcher.economy,
                 reviewer,
                 groupStore,
+                // Phase 62.6-04 (D-7 / D-13): inject Ledger-A settlement deps so agent-trade
+                // settle moves on nous_accounts between resolved civic-DIDs. Wired only when the
+                // DB (and thus civicDidStore/nousAccountStore) is present — otherwise the settle
+                // path treats trades as unresolved (trade.rejected{not_found}), never Ledger-B.
+                ...(nousAccountStore && civicDidStore
+                    ? { accountStore: nousAccountStore, civicDidStore, gridName: config.genesisConfig.gridName }
+                    : {}),
             }));
         }
     }
