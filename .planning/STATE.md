@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
-stopped_at: Phase 62.6-01 SHIPPED — marketplace buyer-debit/seller-credit migrated to nous_accounts (via *OnConn on the store escrow/settle conn) and the structure-revenue skim to civic_treasury (via chargeToTreasury post-settle, try/catch never-500s); no nous_registry.balance_wei / transferWei money use remains in marketplace-store.ts or the market.ts skim. 51+27 tests green, tsc clean. Confirmed NO marketplace refund writer exists (escrow_status=refunded schema-only) for the 62.5-05 precondition.
-last_updated: "2026-07-10T09:30:00.000Z"
+stopped_at: Phase 62.6-02 SHIPPED (critical path) — tick-driven upkeep migrated off registry.transferWei (which credited the did:noesis:system:treasury Ledger-B record) onto an atomic NousAccountStore.chargeToTreasury (owner nous_accounts → civic_treasury); insufficient_balance routes to the existing decay ladder, a transient non-affordability throw skips the parcel WITHOUT decaying (no false eviction). UpkeepScannerDeps gains gridName + accountStore; main.ts threads NousAccountStore(presencePool). Also fixes a latent split-ledger bug (upkeep read Ledger B by civic-DID → 0 → silently never charged). No Ledger-B money read/write remains in upkeep-scanner.ts. treasury.upkeep_collected emit unchanged (D-8 no allowlist change, D-9 zero custody, D-11 deterministic tick, D-12 atomic). 14 upkeep/house-2 tests green; full civic 207 + genesis 23 green; tsc clean. **With 62.6-01's skim, BOTH writers to did:noesis:system:treasury are now retired → 62.5-05 (record retirement) is UNBLOCKED once the phase completes.**
+last_updated: "2026-07-10T09:31:00.000Z"
 progress:
   total_phases: 25
   completed_phases: 11
@@ -26,7 +26,22 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 62.6 (ledger-b-subsystem-migration) — EXECUTING (plan 1 of 5 shipped; 4 subsystems remain)
+Phase: 62.6 (ledger-b-subsystem-migration) — EXECUTING (plans 1+2 of 5 shipped; 3 subsystems remain)
+Plan 62.6-02 (upkeep — CRITICAL PATH) — ✅ COMPLETE 2026-07-10 (commits `39f50f60`/`257f0e20`/`2f092482`):
+  `onUpkeepTick` replaces the `registry.get(ownerDid).balance_wei` read + `registry.transferWei(ownerDid,
+  treasuryDid, due)` (the last upkeep writer to `did:noesis:system:treasury`) with an atomic
+  `accountStore.chargeToTreasury({ gridName, civicDid: ownerDid, amountWei: BigInt(due), currentTick })`
+  (owner `nous_accounts` → `civic_treasury`, one transaction). `insufficient_balance` → the existing decay
+  ladder (worn/derelict/reclaimed); a transient non-affordability throw skips the parcel WITHOUT decaying.
+  `UpkeepScannerDeps` gains `gridName` + `accountStore` (dropped `get`/`transferWei` from the facade; kept
+  `treasuryDid` for the reclaim path); `main.ts` threads `NousAccountStore(presencePool)` +
+  `config.genesisConfig.gridName`. Fixes a latent split-ledger bug (upkeep read Ledger B by civic-DID → 0 →
+  silently never charged). `treasury.upkeep_collected` emit unchanged — no allowlist/event/payload change
+  (D-8/D-10), zero custody (D-9), deterministic tick (D-11), atomic (D-12). Tests retargeted to the
+  `accounts-pool` fake (owner debit + civic_treasury credit) + underfunded-decay + reclaim + 2 per-parcel
+  isolation cases; **14 upkeep/house-2 green, full civic 207 + genesis 23 green, tsc clean.** Audit
+  zero-diff (R-31-01) holds. SUMMARY: `.planning/phases/62.6-ledger-b-subsystem-migration/62.6-02-SUMMARY.md`.
+  **🔓 62.5-05 UNBLOCK: with 62.6-01's skim, there is now NO remaining writer to `did:noesis:system:treasury`.**
 Plan 62.6-01 (marketplace + skim) — ✅ COMPLETE 2026-07-10 (commits `ec2d6985`/`a77f2cf6`/`45d3d87c`):
   `acceptBid` debits the buyer via `debitAccountOnConn(conn, …)` and `settle` credits the seller via
   `creditAccountOnConn(conn, …)` — both on the store's OWN escrow/settle connection so each leg stays inside
@@ -40,9 +55,13 @@ Plan 62.6-01 (marketplace + skim) — ✅ COMPLETE 2026-07-10 (commits `ec2d6985
   audit zero-diff (R-31-01) holds. **Refund-site verified: NO marketplace buyer-refund writer exists**
   (`escrow_status='refunded'` schema-only; timeout→dispute/frozen, no money move) — recorded for 62.5-05.
   SUMMARY: `.planning/phases/62.6-ledger-b-subsystem-migration/62.6-01-SUMMARY.md`.
-**NEXT:** 62.6-02 (upkeep — the other `did:noesis:system:treasury` writer; critical-path for 62.5-05), then
-  62.6-03 (co-work/co-build) and 62.6-04 (agent-trades, gated on D-13 citizens-only). A+B+C touch disjoint
-  files; both 62.6-01 (skim) and 62.6-02 (upkeep) must land before 62.5-05 can retire the treasury record.
+**NEXT:** 62.6-03 (co-work/co-build — host→worker `NousAccountStore.transfer`, sync→async `completeTask`/
+  `completeSubTask` seam, recompute `funded` from real balance / IOU fallback) and 62.6-04 (agent-trades,
+  gated on D-13 citizens-only — inject `NousAccountStore` + `CivicDidStore` into `NousRunner`, existence→civic
+  resolve, migrate the reviewer balance-source too). Both are Nous→Nous (do NOT block the treasury record) but
+  block the 62.5-04 `transferWei` removal. **62.6-01 (skim) + 62.6-02 (upkeep) are both landed → the treasury
+  record has no writer left; 62.5-05 can retire it once the whole 62.6 phase completes (transferWei still lives
+  in co-work/co-build + agent-trades until 62.6-03/04, then removed in 62.5-04).**
 
 Phase: 55 (Portal Cross-Grid Framework — DORMANT v3.0) — ✅ COMPLETE 2026-06-26 (PORTAL-06; allowlist 155→157)
   Read endpoints return at most [Genesis]; `POST /portal/api/v1/cross-grid/marketplace/quote` → **503

@@ -28,6 +28,20 @@ Design: `docs/plans/2026-06-15-groups-and-holdings-design.md`. System truth → 
 
 ---
 
+## v3.2 Money — In-DB wei ledger unification (Phases 62.5–62.6) — IN PROGRESS (2026-07-10)
+
+Unify all money onto **Ledger A** (`nous_accounts` per civic-DID + `civic_treasury`), retire the birth faucet, and remove the legacy in-memory `NousRegistry.transferWei` / `nous_registry.balance_wei` money paths. Precursor to on-chain settlement (Phase 63). Registry: `.planning/money-migration-plan.md` row A″.
+
+- ✅ **Phase 62.5** (waves 01–03) — civic spend paths (land · community · business-DID · blueprint material · type-B bond) migrated to `nous_accounts`/`civic_treasury`; birth faucet retired (`initialSupply:0`); IRS treasury reconciliation proven.
+- 🔄 **Phase 62.6** — Ledger-B subsystem migration (marketplace · upkeep · co-work/co-build · agent-trades):
+  - ✅ **62.6-01** marketplace + skim → `nous_accounts`/`civic_treasury` (buyer-debit/seller-credit on the escrow conn; structure-revenue skim via `chargeToTreasury`). Retires the market writers to `did:noesis:system:treasury` + `nous_registry.balance_wei`.
+  - ✅ **62.6-02** upkeep (⚑ **critical path**) → atomic `chargeToTreasury` (owner `nous_accounts` → `civic_treasury`); insufficient → decay ladder; deterministic tick preserved. **Retires the LAST writer to `did:noesis:system:treasury` — with 62.6-01, that record now has no writer left ⇒ 62.5-05 unblocked.**
+  - ⏳ **62.6-03** co-work/co-build (host→worker `NousAccountStore.transfer`, sync→async seam).
+  - ⏳ **62.6-04** agent-trades (existence→civic resolve; citizens-only per D-13; inject `NousAccountStore`+`CivicDidStore` into `NousRunner`).
+- ⏳ **Phase 62.5-04** — one-time data fold + remove `NousRegistry.transferWei` (operator decision = ZERO faucet money). ⏳ **62.5-05** — retire the `did:noesis:system:treasury` record + delete PR #8/#11 + CI gate forbidding `transferWei`/`nous_registry.balance_wei` as money. Both run **after** 62.6 lands.
+
+---
+
 ## v3.3 Agentic Brain (Nous-as-Builder) — PLANNED (opened 2026-06-15)
 
 Realizes the side of `docs/nous_spec.md` the civic milestones never built: Nous as an autonomous **worker/builder** — it calls tools mid-reasoning, researches the live web, programs locally, and runs a plan→build→QA pipeline with visual reporting. The audit (gap analysis 2026-06-15) found identity/memory/social/economy ≈ strong, but the entire "agentic work" pillar MISSING/PARTIAL, almost all of it gated on one absent foundation: **tool-use + a code sandbox**.
