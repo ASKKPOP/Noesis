@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
-stopped_at: Phase 62.6-04 SHIPPED — agent-trade settlement migrated off NousRegistry.transferWei onto NousAccountStore.transfer between the RESOLVED civic-DIDs of proposer + counterparty (existence→civic via CivicDidStore.getByExistenceDid), enforcing the operator-locked D-13 citizens-only reject: either party unresolved (pre-citizen) ⇒ trade.rejected{reason:'not_found'} (existing allowlisted reason, no allowlist change). The reviewer proposerBalance is now read from the resolved civic-DID's nous_accounts (same ledger as the settle transfer); store throws map to the existing reason enum (insufficient_balance→'insufficient', invalid_transfer_self→'self_transfer', invalid_amount→'invalid_amount', else→'not_found'); the review-fail branch + trade.settled{counterparty,amount,nonce} payload are byte-identical (D-10). NousRunnerConfig gains optional accountStore/civicDidStore/gridName; main.ts hoists nousAccountStore and injects all three into the seeded NousRunner (only real construction site — launcher.ts:186 is a JSDoc). No allowlist/event/payload change (D-8/D-10), zero custody (D-9), deterministic tick (D-11), atomic w/ rollback (D-12), audit zero-diff (R-31-01). tsc clean; trade-settlement (7) + governance-nous-runner (8) = 15 green. **This is the LAST transferWei money site — 62.5-04 can now fold nous_registry.balance_wei + remove transferWei.** Deferred to 62.6-05 (its declared scope): retarget trade-review-flow/trade-review-abort/house-3/4-e2e/e2e-tick-cycle + confirm zero-diff passes with the new deps wired.
-last_updated: "2026-07-10T10:20:00.000Z"
+stopped_at: Phase 62.6 COMPLETE (all 5 plans) — 62.6-05 regression + invariant gate SHIPPED. The four deferred trade tests (trade-review-flow, trade-review-abort, zero-diff, e2e-tick-cycle) were retargeted to the unified nous_accounts ledger; e2e-tick-cycle already passed (no Ledger-B balance assert) so only the first three needed the accountStore/civicDidStore/gridName + stub-CivicDidStore wiring + account seeding. The R-31-01 zero-diff test was kept STRICT (deps wired identically into both reviewer-on/off runs → reviewer stays the sole difference; async transfer does not perturb Date.now determinism). Two dedicated D-12 atomic-rollback proofs added: marketplace (underfunded acceptBid → insufficient_wei, no phantom debit, no escrow row; forced throw on settle escrow-status UPDATE → seller credit + treasury fee rolled back) and upkeep (underfunded owner → nous_accounts + civic_treasury unchanged, parcel decays, no phantom collection). Grep sweep = 0 transferWei/nous_registry.balance_wei money across all six subsystem files (the two nous-runner comment mentions reworded off the literal token). Invariant gates all green: allowlist byte-unchanged vs phase base 45e34f32 (D-8), transferFrom grep empty (D-9 zero custody), sole-producer discipline (140 files, full triad), wallclock-forbidden (D-11), check-wiki clean (economy.md already documents unified money), R-31-01 zero-diff strict, tsc clean. Full grid suite: 471 files / 4101 tests passed, modulo 4 documented PRE-EXISTING env flakes (operator-scope-typing hardcoded foreign path /Users/desirey/… EACCES, SNS-watchdog parallelism [passes isolated], 2× rig-subprocess ER_ACCESS_DENIED MySQL) — none touch the migrated subsystems. Commits: 263e59bb (test retargets), c776d964 (atomic-rollback proofs). **62.5-04 (data fold + transferWei removal, ZERO faucet) and 62.5-05 (retire did:noesis:system:treasury record + delete PR#8/#11 + CI gate) are now UNBLOCKED — both remain Phase 62.5 waves.** RESUME AT: /gsd-plan-phase for 62.5-04/05 (or a new phase).
+last_updated: "2026-07-10T17:15:00.000Z"
 progress:
   total_phases: 25
   completed_phases: 11
@@ -26,7 +26,20 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 62.6 (ledger-b-subsystem-migration) — EXECUTING (plans 1+2+3+4 of 5 shipped; verify (62.6-05) remains)
+Phase: 62.6 (ledger-b-subsystem-migration) — ✅ COMPLETE 2026-07-10 (all 5 plans shipped)
+Plan 62.6-05 (regression + invariant gate) — ✅ COMPLETE 2026-07-10 (commits `263e59bb`/`c776d964`):
+  Retargeted the four deferred trade tests (`trade-review-flow`/`trade-review-abort`/`zero-diff` wired
+  the new `accountStore`/`civicDidStore`/`gridName` deps + stub `CivicDidStore` + seeded `nous_accounts`;
+  `e2e-tick-cycle` already green). R-31-01 zero-diff kept STRICT (deps identical in both runs → reviewer
+  the sole diff). Two dedicated D-12 atomic-rollback proofs: `marketplace-atomic-rollback.test.ts`
+  (underfunded acceptBid → no phantom debit/escrow; forced settle-UPDATE throw → seller+treasury rolled
+  back) + `civic/upkeep-atomic-rollback.test.ts` (underfunded owner → balances unchanged, parcel decays).
+  Grep sweep = 0 transferWei/`nous_registry.balance_wei` money across all six subsystem files. Gates green:
+  allowlist byte-unchanged (D-8), transferFrom empty (D-9), sole-producer (140 files), wallclock (D-11),
+  check-wiki clean, zero-diff strict (R-31-01), tsc clean. Full suite 471/4101 passed modulo 4 documented
+  PRE-EXISTING env flakes (operator-scope-typing foreign-path EACCES, SNS-watchdog parallelism, 2× rig
+  MySQL access-denied). **62.5-04 + 62.5-05 unblocked (both remain Phase 62.5 waves).**
+  SUMMARY: `.planning/phases/62.6-ledger-b-subsystem-migration/62.6-05-SUMMARY.md`.
 Plan 62.6-04 (agent-trades — LAST transferWei money site) — ✅ COMPLETE 2026-07-10 (commits `ddc7e2f6`/`832f4f6b`/`68f9d699`):
   Trade settle (`nous-runner.ts` `trade_request`) resolves BOTH proposer + counterparty existence-DIDs to
   civic-DIDs via `CivicDidStore.getByExistenceDid`; either `null` (pre-citizen) ⇒ `trade.rejected{reason:'not_found'}`
