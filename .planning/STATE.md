@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
-stopped_at: Phase 62.6-02 SHIPPED (critical path) — tick-driven upkeep migrated off registry.transferWei (which credited the did:noesis:system:treasury Ledger-B record) onto an atomic NousAccountStore.chargeToTreasury (owner nous_accounts → civic_treasury); insufficient_balance routes to the existing decay ladder, a transient non-affordability throw skips the parcel WITHOUT decaying (no false eviction). UpkeepScannerDeps gains gridName + accountStore; main.ts threads NousAccountStore(presencePool). Also fixes a latent split-ledger bug (upkeep read Ledger B by civic-DID → 0 → silently never charged). No Ledger-B money read/write remains in upkeep-scanner.ts. treasury.upkeep_collected emit unchanged (D-8 no allowlist change, D-9 zero custody, D-11 deterministic tick, D-12 atomic). 14 upkeep/house-2 tests green; full civic 207 + genesis 23 green; tsc clean. **With 62.6-01's skim, BOTH writers to did:noesis:system:treasury are now retired → 62.5-05 (record retirement) is UNBLOCKED once the phase completes.**
-last_updated: "2026-07-10T09:31:00.000Z"
+stopped_at: Phase 62.6-03 SHIPPED — co-work + co-build host→worker settlement migrated off the sync registry.transferWei dep seam onto an async settleWei seam wired to NousAccountStore.transfer (Nous→Nous, one atomic transaction on nous_accounts). completeTask (cowork.ts) + completeSubTask/completeNode (co-build.ts) are now async; the board/complete route constructs NousAccountStore(services.pool) and awaits completeTask with funded:true. D-NH-06 always-settles preserved via an insufficient_balance→recordIou fallback INSIDE completeTask (never a silent no-pay). co-build has NO production route (research-confirmed) — source seam + tests migrated only. Tests retargeted to the async settleWei seam + accounts-pool conservation + IOU-fallback cases; 3 collateral e2e/route tests (house-3-e2e/house-4-e2e/civic-commerce-routes) also retargeted (await + accounts-pool + pool wiring) — forced by the sync→async change. No transferWei remains in cowork.ts/co-build.ts/board-complete route. No allowlist/event/payload change (D-8/D-10), zero custody (D-9), deterministic tick (D-11), atomic (D-12), audit zero-diff (R-31-01). tsc clean; civic+api regression 890 green / 16 skipped / 0 fail. **Remaining transferWei money user: 62.6-04 agent-trades; then 62.5-04 can fold + remove NousRegistry.transferWei.**
+last_updated: "2026-07-10T09:56:00.000Z"
 progress:
   total_phases: 25
   completed_phases: 11
@@ -26,7 +26,24 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 62.6 (ledger-b-subsystem-migration) — EXECUTING (plans 1+2 of 5 shipped; 3 subsystems remain)
+Phase: 62.6 (ledger-b-subsystem-migration) — EXECUTING (plans 1+2+3 of 5 shipped; agent-trades + verify remain)
+Plan 62.6-03 (co-work / co-build) — ✅ COMPLETE 2026-07-10 (commits `b37ac23c`/`0fcb3f02`/`d623c9c9`):
+  `CompleteDeps.transferWei?`/`CoBuildDeps.transferWei?` (sync, no-op default) replaced by an async
+  `settleWei?: (from,to,amountWei)=>Promise<void>`; `completeTask` + `completeSubTask`/`completeNode` are now
+  `async`. The `POST /board/complete` route builds `new NousAccountStore(services.pool)` and wires
+  `settleWei → accountStore.transfer(host→worker)`, awaiting the async `completeTask` with `funded:true`.
+  **D-NH-06 always-settles** is preserved by catching `insufficient_balance` INSIDE completeTask and falling
+  back to `recordIou(worker, host, amount, ref, tick)` — never a silent no-pay (proven by a dedicated
+  IOU-fallback test in both suites). **co-build has NO production route** (research-confirmed — only cowork's
+  completeTask is wired via board/complete): the source seam + tests were migrated, no build route to wire.
+  Tests retargeted to the async `settleWei` spy + `makeAccountsPool`/`NousAccountStore.transfer` conservation
+  + IOU-fallback; 3 collateral tests (`house-3-e2e`/`house-4-e2e`/`civic-commerce-routes`) retargeted (await +
+  accounts-pool + `pool`/`gridName` wiring) — forced by the sync→async signature change (deviation Rule 3).
+  No `transferWei` remains in `cowork.ts`/`co-build.ts`/board-complete route. No allowlist/event/payload change
+  (D-8/D-10), zero custody (D-9), deterministic tick (D-11), atomic (D-12), audit zero-diff (R-31-01).
+  **tsc clean; civic+api regression 890 passed / 16 skipped / 0 fail.** These are Nous→Nous (do NOT block the
+  treasury record) but advance the 62.5-04 `transferWei` removal.
+  SUMMARY: `.planning/phases/62.6-ledger-b-subsystem-migration/62.6-03-SUMMARY.md`.
 Plan 62.6-02 (upkeep — CRITICAL PATH) — ✅ COMPLETE 2026-07-10 (commits `39f50f60`/`257f0e20`/`2f092482`):
   `onUpkeepTick` replaces the `registry.get(ownerDid).balance_wei` read + `registry.transferWei(ownerDid,
   treasuryDid, due)` (the last upkeep writer to `did:noesis:system:treasury`) with an atomic
@@ -55,13 +72,12 @@ Plan 62.6-01 (marketplace + skim) — ✅ COMPLETE 2026-07-10 (commits `ec2d6985
   audit zero-diff (R-31-01) holds. **Refund-site verified: NO marketplace buyer-refund writer exists**
   (`escrow_status='refunded'` schema-only; timeout→dispute/frozen, no money move) — recorded for 62.5-05.
   SUMMARY: `.planning/phases/62.6-ledger-b-subsystem-migration/62.6-01-SUMMARY.md`.
-**NEXT:** 62.6-03 (co-work/co-build — host→worker `NousAccountStore.transfer`, sync→async `completeTask`/
-  `completeSubTask` seam, recompute `funded` from real balance / IOU fallback) and 62.6-04 (agent-trades,
-  gated on D-13 citizens-only — inject `NousAccountStore` + `CivicDidStore` into `NousRunner`, existence→civic
-  resolve, migrate the reviewer balance-source too). Both are Nous→Nous (do NOT block the treasury record) but
-  block the 62.5-04 `transferWei` removal. **62.6-01 (skim) + 62.6-02 (upkeep) are both landed → the treasury
-  record has no writer left; 62.5-05 can retire it once the whole 62.6 phase completes (transferWei still lives
-  in co-work/co-build + agent-trades until 62.6-03/04, then removed in 62.5-04).**
+**NEXT:** 62.6-04 (agent-trades, gated on D-13 citizens-only — inject `NousAccountStore` + `CivicDidStore` into
+  `NousRunner`, existence→civic resolve, migrate the reviewer balance-source too, `NousAccountStore.transfer`
+  for the trade settle). It is the LAST remaining `transferWei` money user. Then 62.5-04 can fold
+  `nous_registry.balance_wei` → `nous_accounts` + remove `NousRegistry.transferWei`, and 62.5-05 can retire the
+  `did:noesis:system:treasury` record (already writer-free since 62.6-01/02). **62.6-01 (skim) + 62.6-02
+  (upkeep) + 62.6-03 (co-work/co-build) all landed; only agent-trades still calls `transferWei`.**
 
 Phase: 55 (Portal Cross-Grid Framework — DORMANT v3.0) — ✅ COMPLETE 2026-06-26 (PORTAL-06; allowlist 155→157)
   Read endpoints return at most [Genesis]; `POST /portal/api/v1/cross-grid/marketplace/quote` → **503
