@@ -41,6 +41,7 @@ import yaml
 
 from noesis_brain.psyche.loader import load_psyche
 from noesis_brain.aisthesis import AisthesisTracker
+from noesis_brain.praxis import PraxisTracker
 from noesis_brain.thymos.tracker import ThymosTracker
 from noesis_brain.telos.manager import TelosManager
 from noesis_brain.telos.types import GoalType
@@ -261,6 +262,8 @@ def create_brain_app(
 
     # v3.3 Mind — Aisthesis (in-world perception) from the optional aisthesis section.
     aisthesis = AisthesisTracker(config=config_data.get("aisthesis", {}))
+    # v3.3 Mind — Praxis (in-world action + deed journal) from the optional praxis section.
+    praxis = PraxisTracker(config=config_data.get("praxis", {}))
 
     # Build Telos from YAML telos section
     telos_config = config_data.get("telos", {})
@@ -363,6 +366,7 @@ def create_brain_app(
         memory=memory_store,
         did=did,
         aisthesis=aisthesis,
+        praxis=praxis,
         # W-A2 (Mind): the goal→task ledger persists next to nous.db so goal
         # pursuit survives restarts (ceaselessness lives in external state).
         ledger_db_dir=data_dir,

@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Any
 
 from noesis_brain.aisthesis import AisthesisTracker, MEMORY_THRESHOLD as AISTHESIS_MEMORY_THRESHOLD
+from noesis_brain.praxis import PraxisTracker
 from noesis_brain.ananke import AnankeRuntime, DriveLevel, DriveName
 from noesis_brain.ananke.loader import AnankeLoader
 from noesis_brain.bios import BiosLoader, BiosRuntime
@@ -83,6 +84,7 @@ class BrainHandler:
         memory: Any = None,
         did: str = "",
         aisthesis: AisthesisTracker | None = None,  # v3.3 Mind — in-world perception
+        praxis: PraxisTracker | None = None,        # v3.3 Mind — in-world action
         iris_db_dir: str | Path | None = None,   # Phase 17 D-17-14
         hypnos_db_dir: str | Path | None = None,  # Phase 16 D-16-02
         ledger_db_dir: str | Path | None = None,  # W-A2 (Mind) — goal→task ledger
@@ -98,6 +100,9 @@ class BrainHandler:
         # v3.3 Mind — aisthesis: in-world perception (input edge). Self-constructs
         # when not injected so every call site keeps working (additive, D-10).
         self.aisthesis = aisthesis if aisthesis is not None else AisthesisTracker()
+        # v3.3 Mind — praxis: in-world action repertoire + deed journal (output
+        # edge). Self-constructs when not injected (additive, D-10).
+        self.praxis = praxis if praxis is not None else PraxisTracker()
         # Reminder & Wake-Up (spec §3): self-set, tick-scheduled reminders.
         self._reminders = ReminderStore()
         # Tool-loop activation (Phase 72b): when curious + a tool-capable model is
@@ -1685,6 +1690,14 @@ class BrainHandler:
         # with a NOOP primary is the canonical divergence case.
         self._advisory_log_divergence(self.did, runtime.state, actions)
 
+        # v3.3 Mind — praxis (output edge): journal the in-world deeds the Nous
+        # took this tick. Pure observation like the divergence logger above —
+        # MUST NOT mutate `actions`; never fatal.
+        try:
+            self.praxis.observe(actions, tick)
+        except Exception:
+            log.debug("praxis observation skipped", exc_info=True)
+
         # Phase 40 D-40-07: poll Ollama recovery once per tick when in fallback mode.
         # hasattr guard makes this safe for older tests that pass a plain OllamaAdapter.
         if hasattr(self.llm, "check_recovery"):
@@ -1877,8 +1890,9 @@ class BrainHandler:
             "thymos": thymos_dict,
             "telos": {"active_goals": goals_out},
             "memory_highlights": memory_highlights,
-            # v3.3 Mind — latest in-world perception snapshot.
+            # v3.3 Mind — latest in-world perception + action snapshots.
             "aisthesis": self.aisthesis.snapshot(),
+            "praxis": self.praxis.snapshot(),
         }
 
     def _psyche_snapshot(self) -> dict[str, Any]:

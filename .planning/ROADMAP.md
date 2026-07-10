@@ -35,7 +35,7 @@ Adds three cognitive faculties that were missing/partial in the Brain, each buil
 Phase numbering: Money reserves 62–66, Groups 67–71 → Mind takes **72–74** (bridge 75–76 held). No Grid audit events this milestone ⇒ **no broadcast-allowlist change** (in-world faculties are Brain-local).
 
 - ✅ **Phase 72 — `aisthesis` (in-world perception)** (2026-07-10): new `brain/src/noesis_brain/aisthesis/` faculty — diffs the world-sight feed (parcels + built objects) into salient-change percepts (appeared/vanished/changed), wired to the `on_tick` **input edge** (records salient change to episodic memory, stirs curiosity) + `get_state` snapshot. Deterministic (no-walltime gate). 18 faculty tests + full brain suite (1186) green. State hash untouched (stays closed at 4).
-- ⏳ **Phase 73 — `praxis` (in-world action)**: action-verb registry + validate→execute contract over `tools/`+`sandbox/`, wired to the output edge (money-axiom name guard preserved).
+- ✅ **Phase 73 — `praxis` (in-world action)** (2026-07-10): new `brain/src/noesis_brain/praxis/` faculty — the outward-verb repertoire (`OUTWARD_VERBS`, a curated subset of `ActionType`), a validate contract (verb + required-metadata shape), and a bounded **deed journal** wired to the `on_tick` **output edge** (pure observation beside `_advisory_log_divergence` — never mutates the action batch) + `get_state` snapshot. Deterministic (no-walltime gate). 16 faculty tests + full brain suite (1205) green.
 - ⏳ **Phase 74 — `synopsis` (in-world research)**: SQLite-backed research store; curiosity/goal-triggered `aau` synthesis into `episteme` (personal wiki); background-cycle hook.
 - ⏳ **Phases 75–76 — operator bridge + Tier 1 Local Nous Manager + Type-A providers (sim-use / supervision / notebook). HELD.**
 
