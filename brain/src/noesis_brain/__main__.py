@@ -40,6 +40,7 @@ from typing import Any
 import yaml
 
 from noesis_brain.psyche.loader import load_psyche
+from noesis_brain.aisthesis import AisthesisTracker
 from noesis_brain.thymos.tracker import ThymosTracker
 from noesis_brain.telos.manager import TelosManager
 from noesis_brain.telos.types import GoalType
@@ -258,6 +259,9 @@ def create_brain_app(
     thymos_config = config_data.get("thymos", {})
     thymos = ThymosTracker(config=thymos_config)
 
+    # v3.3 Mind — Aisthesis (in-world perception) from the optional aisthesis section.
+    aisthesis = AisthesisTracker(config=config_data.get("aisthesis", {}))
+
     # Build Telos from YAML telos section
     telos_config = config_data.get("telos", {})
     telos = TelosManager()
@@ -358,6 +362,7 @@ def create_brain_app(
         location=location,
         memory=memory_store,
         did=did,
+        aisthesis=aisthesis,
         # W-A2 (Mind): the goal→task ledger persists next to nous.db so goal
         # pursuit survives restarts (ceaselessness lives in external state).
         ledger_db_dir=data_dir,

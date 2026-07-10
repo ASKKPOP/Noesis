@@ -7,6 +7,7 @@ import logging
 from datetime import datetime
 from typing import Any
 
+from noesis_brain.aisthesis import AisthesisTracker, MEMORY_THRESHOLD as AISTHESIS_MEMORY_THRESHOLD
 from noesis_brain.ananke import AnankeRuntime, DriveLevel, DriveName
 from noesis_brain.ananke.loader import AnankeLoader
 from noesis_brain.bios import BiosLoader, BiosRuntime
@@ -81,6 +82,7 @@ class BrainHandler:
         *,
         memory: Any = None,
         did: str = "",
+        aisthesis: AisthesisTracker | None = None,  # v3.3 Mind — in-world perception
         iris_db_dir: str | Path | None = None,   # Phase 17 D-17-14
         hypnos_db_dir: str | Path | None = None,  # Phase 16 D-16-02
         ledger_db_dir: str | Path | None = None,  # W-A2 (Mind) — goal→task ledger
@@ -93,6 +95,9 @@ class BrainHandler:
         self.location = location
         self.memory = memory
         self.did = did
+        # v3.3 Mind — aisthesis: in-world perception (input edge). Self-constructs
+        # when not injected so every call site keeps working (additive, D-10).
+        self.aisthesis = aisthesis if aisthesis is not None else AisthesisTracker()
         # Reminder & Wake-Up (spec §3): self-set, tick-scheduled reminders.
         self._reminders = ReminderStore()
         # Tool-loop activation (Phase 72b): when curious + a tool-capable model is
@@ -1346,6 +1351,22 @@ class BrainHandler:
         # shifts over time. Deterministic; telos hash only compared at telos events.
         self.telos.evolve(tick)
         runtime = self._get_or_create_ananke(self.did)
+        # v3.3 Mind — aisthesis (input edge): perceive the in-world surroundings and
+        # remember salient change. Body-level (runs before the rest-gate, like emotion
+        # decay); reuses the throttled world-sight cache so it costs a GET only every
+        # ~20 ticks. Brain-local — records to episodic memory, emits no Grid events.
+        if self._grid_wire_client is not None:
+            try:
+                _percepts = self.aisthesis.perceive(await self._get_world_sight())
+                _salient = [p for p in _percepts if p.salience >= AISTHESIS_MEMORY_THRESHOLD]
+                if _salient and self.memory is not None and hasattr(self.memory, "record_event"):
+                    self.memory.record_event(
+                        content=self.aisthesis.describe()[:300], source_did=self.did, tick=tick,
+                    )
+                    # Noticing change stirs curiosity (bounded, decays via thymos).
+                    self.thymos.feel(Emotion.CURIOSITY, min(0.3, 0.1 * len(_salient)), trigger="perceived change")
+            except Exception:  # perception must never take down the tick
+                log.debug("aisthesis perception skipped", exc_info=True)
         # D-MIND-08: each LLM-driven cycle below is gated on the model substrate
         # being reachable (`_mind_awake`, probed lazily + cached this tick). When
         # the local AI is unreachable the Nous rests: cognition idles, the body
@@ -1856,6 +1877,8 @@ class BrainHandler:
             "thymos": thymos_dict,
             "telos": {"active_goals": goals_out},
             "memory_highlights": memory_highlights,
+            # v3.3 Mind — latest in-world perception snapshot.
+            "aisthesis": self.aisthesis.snapshot(),
         }
 
     def _psyche_snapshot(self) -> dict[str, Any]:
