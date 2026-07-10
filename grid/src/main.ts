@@ -34,6 +34,7 @@ import { PresenceService } from './civic-presence/presence-service.js';
 import { ParcelRegistry } from './civic/parcel-registry.js';
 import { ParcelStore } from './civic/parcel-store.js';
 import { GroupStore } from './economy/group-store.js';
+import { NousAccountStore } from './economy/nous-account-store.js';
 import { GridRegistry } from './registry/grid-registry.js';
 import { getEnvironment } from './registry/grid-environments.js';
 import { gridRecordFromConfig } from './registry/grid-record-from-config.js';
@@ -272,12 +273,13 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         // Phase 59 HOUSE-2 (D-59-06 / R-H-03): late-wire the upkeep scanner now that the
         // parcel registry/store exist. It rides the EXISTING clock.onTick block in the
         // launcher (no new subscription). The facade composes parcel-registry ladder +
-        // store persist + Nous-registry balance/transfer; treasury = TREASURY_DID.
+        // store persist; the owner→treasury money move is now an atomic Ledger-A charge
+        // via NousAccountStore.chargeToTreasury (Phase 62.6-02 — nous_accounts →
+        // civic_treasury), retiring the last upkeep writer to the did:noesis:system:treasury
+        // record. treasuryDid is retained for the reclaim path (ownerDid = treasury).
         launcher.attachUpkeepScanner({
             registry: {
                 list: (filter) => parcelRegistry.list(filter),
-                get: (did) => launcher.registry.get(did),
-                transferWei: (from, to, amount) => launcher.registry.transferWei(from, to, amount),
                 advanceCondition: (address) => parcelRegistry.advanceCondition(address),
                 resetCondition: (address) => parcelRegistry.resetCondition(address),
                 persistUpkeep: (parcel) => parcelStore.persistUpkeep(parcel),
@@ -285,6 +287,8 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
             },
             audit: chain!,
             treasuryDid: TREASURY_DID,
+            gridName: config.genesisConfig.gridName,
+            accountStore: new NousAccountStore(presencePool),
         });
         // Phase 60 HOUSE-3 (D-60-08 / R-60-10): late-wire the ring-expansion TEMPLATE onto the
         // governance engine now that the parcel registry + founding-law read-through exist. The
