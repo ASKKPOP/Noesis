@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Noēsis — The 8 Tools, and What We Built</title>
+<style>
+  :root{
+    --bg:#faf9f5; --surface:#ffffff; --surface-alt:#f2f0e8;
+    --text:#1f1e1d; --text-soft:#3d3d3a; --muted:#73726c; --border:#e8e4d9;
+    --accent:#c96442; --accent-hover:#b5573a; --accent-soft:#f6e7e0;
+    --sage:#5c8a72; --blue:#6b83a8;
+    --serif:"Tiempos Headline",Georgia,"Times New Roman",serif;
+    --sans:"Styrene A",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:60px 24px 110px}
+  .kicker{color:var(--accent);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;margin:0 0 16px}
+  h1{font-family:var(--serif);font-weight:600;font-size:42px;line-height:1.1;letter-spacing:-.5px;margin:0 0 16px}
+  h2{font-family:var(--serif);font-weight:600;font-size:26px;margin:56px 0 6px;letter-spacing:-.3px}
+  h3{font-family:var(--serif);font-weight:600;font-size:19px;margin:24px 0 4px}
+  .lead{font-size:19px;line-height:1.55;color:var(--text-soft);margin:0 0 6px}
+  p{margin:13px 0}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent}
+  a:hover{border-bottom-color:var(--accent)}
+  strong{font-weight:650}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--surface-alt);
+    padding:2px 6px;border-radius:5px;font-size:.82em;color:var(--accent-hover)}
+  .rule{width:56px;height:3px;background:var(--accent);border-radius:2px;margin:0 0 28px}
+  .callout{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);
+    border-radius:0 14px 14px 0;padding:16px 22px;margin:24px 0;color:var(--text-soft)}
+  .callout p{margin:6px 0}
+  .tablecard{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin:24px 0}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:13px 15px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;background:var(--surface-alt)}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover td{background:#fbf9f3}
+  td.n{font-family:var(--serif);font-size:18px;color:var(--accent);font-weight:600;width:34px}
+  .garble{color:var(--muted);font-style:italic}
+  .proj{font-weight:650}
+  .repo{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px}
+  .mapped{border-left:3px solid var(--sage)}
+  .faculty-tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;
+    background:var(--accent-soft);color:var(--accent-hover);margin-left:6px;white-space:nowrap}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);
+    border:1px solid var(--border);border-radius:16px;overflow:hidden;margin:26px 0}
+  .stats .s{background:var(--surface);padding:20px 16px;text-align:center}
+  .stats .num{font-family:var(--serif);font-size:32px;font-weight:600;letter-spacing:-1px}
+  .stats .l{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+  figure{margin:30px 0;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+  figure svg{width:100%;height:auto;display:block}
+  figcaption{color:var(--muted);font-size:13px;margin-top:14px;text-align:center}
+  svg text{fill:var(--text);font-family:var(--sans)} svg .mut{fill:var(--muted)}
+  .fcard{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px 24px;margin:18px 0}
+  .fcard .greek{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:15px;margin:2px 0 12px}
+  .fcard .from{font-size:13px;color:var(--muted);margin-bottom:10px}
+  .fcard .from b{color:var(--sage)}
+  .fcard p{margin:8px 0;font-size:14.5px}
+  .pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px}
+  .pill.done{color:#fff;background:var(--accent)} .pill.held{color:var(--muted);background:var(--surface-alt);border:1px solid var(--border)}
+  .foot{color:var(--muted);font-size:13.5px;margin-top:52px;padding-top:20px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">Noēsis · Reference · 2026-07-10</p>
+  <h1>The 8 open-source tools —<br/>and what we built from them</h1>
+  <div class="rule"></div>
+  <p class="lead">The definitive mapping of the video’s eight (TTS-garbled) tool names to their real projects — and the three faculties we implemented in the Nous Brain as a result.</p>
+
+  <h2>Part 1 · The eight tools, identified</h2>
+  <p>Each name in the video was the <strong>real repo name</strong>, just phonetically mangled by the Korean text-to-speech. Seven are exact, high-confidence matches; one (#1) is a best-fit inference.</p>
+
+  <div class="tablecard">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Video (TTS-garbled)</th><th>Actual project</th><th>Repo</th><th>What it is</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="n">1</td>
+          <td><span class="garble">“DA exhibition / DHC”</span><br/>(Persona)</td>
+          <td class="proj">Contains Studio – agents</td>
+          <td><a class="repo" href="https://github.com/contains-studio/agents">contains-studio/agents</a></td>
+          <td>The ~147-subagent “AI agency” for Claude Code (engineering / design / marketing depts, MIT, ~91K★). You command one agent; it delegates to specialists.</td>
+        </tr>
+        <tr>
+          <td class="n">2</td>
+          <td><span class="garble">“Craft Agent”</span><br/>(Workspace)</td>
+          <td class="proj">Craft Agents (OSS)</td>
+          <td><a class="repo" href="https://github.com/craft-ai-agents/craft-agents-oss">craft-ai-agents/craft-agents-oss</a><br/><a class="repo" href="https://agents.craft.do/">agents.craft.do</a></td>
+          <td>Electron + React desktop app; document-style workspace with full MCP support and Explore / Ask-to-Edit / Execute modes.</td>
+        </tr>
+        <tr>
+          <td class="n">3</td>
+          <td><span class="garble">“Cogni / Connie / Cogney”</span><br/>(Memory)</td>
+          <td class="proj">Cognee</td>
+          <td><a class="repo" href="https://github.com/topoteretes/cognee">topoteretes/cognee</a></td>
+          <td>Knowledge-graph memory for agents (multi-hop reasoning), self-hosted. The “6 lines of code” claim is real.</td>
+        </tr>
+        <tr>
+          <td class="n">4</td>
+          <td><span class="garble">“Open Notebook”</span><br/>(Research)</td>
+          <td class="proj">Open Notebook</td>
+          <td><a class="repo" href="https://github.com/lfnovo/open-notebook">lfnovo/open-notebook</a></td>
+          <td>Self-hosted NotebookLM clone; runs fully local via Ollama, podcast generation (up to 4 voices).</td>
+        </tr>
+        <tr>
+          <td class="n">5</td>
+          <td><span class="garble">“SimUse / Simyuze”</span><br/>(Interface)</td>
+          <td class="proj">sim-use</td>
+          <td><a class="repo" href="https://github.com/lycorp-jp/sim-use">lycorp-jp/sim-use</a></td>
+          <td>“Eyes and hands on iOS Simulator / Android emulator” — accessibility tree + visual anchoring. (By LY Corp — LINE / Yahoo Japan.)</td>
+        </tr>
+        <tr>
+          <td class="n">6</td>
+          <td><span class="garble">“Open Wiki”</span><br/>(Onboarding)</td>
+          <td class="proj">OpenWiki</td>
+          <td><a class="repo" href="https://github.com/langchain-ai/openwiki">langchain-ai/openwiki</a></td>
+          <td>LangChain CLI that auto-writes a repo wiki and appends references to your <code>AGENTS.md</code> / <code>CLAUDE.md</code>. Exactly the “AI rulebook” described.</td>
+        </tr>
+        <tr>
+          <td class="n">7</td>
+          <td><span class="garble">“Supervision”</span><br/>(Vision)</td>
+          <td class="proj">Supervision</td>
+          <td><a class="repo" href="https://github.com/roboflow/supervision">roboflow/supervision</a></td>
+          <td>Roboflow’s CV toolkit — detection, ByteTrack tracking through occlusion, bounding boxes / zones.</td>
+        </tr>
+        <tr>
+          <td class="n">8</td>
+          <td><span class="garble">“Neyer Dayflow”</span><br/>(Work log)</td>
+          <td class="proj">Dayflow</td>
+          <td><a class="repo" href="https://github.com/JerryZLiu/Dayflow">JerryZLiu/Dayflow</a></td>
+          <td>macOS local-first work journal; 1 FPS screen capture → local vision model → text timeline, raw frames auto-deleted.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p><strong>One caveat.</strong> #1 is a best-fit inference. The “147 professional personas + one PM delegating to specialists” fingerprint matches <code>contains-studio/agents</code> almost exactly, but unlike the other seven, the TTS name (“DHC”) doesn’t map cleanly — so there’s a small chance the video used a fork of that same 147-agent collection. The other seven are exact matches.</p>
+  </div>
+
+  <h2>Part 2 · What we implemented</h2>
+  <p>Our Nous isn’t built like that assistant. It is <strong>one Brain</strong> decomposed into cognitive faculties — most of the eight blocks already had a home (persona → <code>psyche</code>, memory → <code>memory</code>, onboarding-wiki → <code>episteme</code>). Three had <strong>no faculty</strong>. We built those three, <strong>in-world first</strong>.</p>
+
+  <div class="tablecard">
+    <table>
+      <thead><tr><th>Video block</th><th>→ New faculty</th><th>In-world meaning</th><th>Held bridge (Type A)</th></tr></thead>
+      <tbody>
+        <tr class="mapped"><td>#7 Vision <span class="garble">(Supervision)</span></td><td><b>aisthesis</b> <span class="faculty-tag">perception</span></td><td>perceive the Grid’s spatial world &amp; built objects</td><td>real camera / video CV</td></tr>
+        <tr class="mapped"><td>#5 Interface <span class="garble">(sim-use)</span></td><td><b>praxis</b> <span class="faculty-tag">action</span></td><td>act on in-world objects &amp; services</td><td>drive real iOS / Android apps</td></tr>
+        <tr class="mapped"><td>#4 Research <span class="garble">(Open Notebook)</span></td><td><b>synopsis</b> <span class="faculty-tag">synthesis</span></td><td>synthesize in-world memories into digests</td><td>ingest real PDFs / audio</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 720 300" role="img" aria-label="The in-world loop">
+      <defs>
+        <marker id="as" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--sage)"/></marker>
+        <marker id="ac" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/></marker>
+        <marker id="ab" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--blue)"/></marker>
+        <marker id="an" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--muted)"/></marker>
+      </defs>
+      <rect x="20" y="120" width="96" height="66" rx="11" fill="var(--surface-alt)" stroke="var(--border)"/>
+      <text x="68" y="150" text-anchor="middle" font-weight="700" font-size="13">Grid</text>
+      <text x="68" y="167" text-anchor="middle" class="mut" font-size="10.5">the world</text>
+
+      <rect x="165" y="28" width="170" height="72" rx="12" fill="var(--surface)" stroke="var(--sage)"/>
+      <text x="250" y="55" text-anchor="middle" font-weight="700" font-size="14" fill="var(--sage)">aisthesis</text>
+      <text x="250" y="73" text-anchor="middle" class="mut" font-size="11">perceive · input edge</text>
+      <text x="250" y="89" text-anchor="middle" class="mut" font-size="10">world-sight → percepts</text>
+
+      <rect x="310" y="122" width="110" height="62" rx="11" fill="var(--surface-alt)" stroke="var(--border)"/>
+      <text x="365" y="149" text-anchor="middle" font-weight="700" font-size="13">memory</text>
+      <text x="365" y="166" text-anchor="middle" class="mut" font-size="10">+ episteme</text>
+
+      <rect x="470" y="28" width="170" height="72" rx="12" fill="var(--surface-alt)" stroke="var(--border)"/>
+      <text x="555" y="52" text-anchor="middle" font-weight="700" font-size="13">deliberate</text>
+      <text x="555" y="70" text-anchor="middle" class="mut" font-size="11">llm · telos · thymos</text>
+      <text x="555" y="86" text-anchor="middle" class="mut" font-size="10">choose an action</text>
+
+      <rect x="470" y="205" width="170" height="72" rx="12" fill="var(--surface)" stroke="var(--accent)"/>
+      <text x="555" y="232" text-anchor="middle" font-weight="700" font-size="14" fill="var(--accent)">praxis</text>
+      <text x="555" y="250" text-anchor="middle" class="mut" font-size="11">act · output edge</text>
+      <text x="555" y="266" text-anchor="middle" class="mut" font-size="10">validate + journal deeds</text>
+
+      <rect x="165" y="205" width="170" height="72" rx="12" fill="var(--surface)" stroke="var(--blue)"/>
+      <text x="250" y="232" text-anchor="middle" font-weight="700" font-size="14" fill="var(--blue)">synopsis</text>
+      <text x="250" y="250" text-anchor="middle" class="mut" font-size="11">synthesize · background</text>
+      <text x="250" y="266" text-anchor="middle" class="mut" font-size="10">memories → digest</text>
+
+      <path d="M100,128 C140,86 148,64 165,64" fill="none" stroke="var(--sage)" stroke-width="2" marker-end="url(#as)"/>
+      <path d="M300,100 C330,118 335,124 342,132" fill="none" stroke="var(--sage)" stroke-width="2" marker-end="url(#as)"/>
+      <path d="M420,150 C450,130 455,104 470,92" fill="none" stroke="var(--muted)" stroke-width="1.7" marker-end="url(#an)"/>
+      <path d="M555,100 L555,205" fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#ac)"/>
+      <path d="M470,246 C250,290 110,250 96,186" fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#ac)" opacity=".8"/>
+      <path d="M330,178 C300,192 285,196 300,205" fill="none" stroke="var(--blue)" stroke-width="2" marker-end="url(#ab)"/>
+
+      <text x="120" y="92" class="mut" font-size="10.5">look</text>
+      <text x="452" y="150" class="mut" font-size="10.5">decide</text>
+      <text x="250" y="298" fill="var(--accent)" font-size="10.5">act on the world</text>
+    </svg>
+    <figcaption>The three faculties close the loop: perceive → deliberate → act, with synthesis distilling memory alongside.</figcaption>
+  </figure>
+
+  <div class="fcard">
+    <h3>aisthesis — perception <span class="pill done">shipped</span></h3>
+    <div class="greek">αἴσθησις</div>
+    <div class="from">in-world take on <b>#7 Vision (Supervision)</b> · input edge</div>
+    <p>Diffs the world-sight feed (parcels + built objects) into salient-change percepts — <em>appeared / vanished / changed</em> — and records what it notices to memory, stirring curiosity. <code>brain/src/noesis_brain/aisthesis/</code> · 18 tests.</p>
+  </div>
+
+  <div class="fcard">
+    <h3>praxis — action <span class="pill done">shipped</span></h3>
+    <div class="greek">πρᾶξις</div>
+    <div class="from">in-world take on <b>#5 Interface (sim-use)</b> · output edge</div>
+    <p>Knows the outward-verb repertoire, validates a chosen action’s shape, and journals every deed the Nous takes — pure observation that never alters the actions. <code>brain/src/noesis_brain/praxis/</code> · 16 tests.</p>
+  </div>
+
+  <div class="fcard">
+    <h3>synopsis — synthesis <span class="pill done">shipped</span></h3>
+    <div class="greek">σύνοψις</div>
+    <div class="from">in-world take on <b>#4 Research (Open Notebook)</b> · background</div>
+    <p>Deterministically consolidates recent memories on the current-goal topic into a persisted digest — split, dedupe, rank by recurrence; no language model. <code>brain/src/noesis_brain/synopsis/</code> · 12 tests.</p>
+  </div>
+
+  <div class="callout">
+    <p><strong>Held by decision.</strong> The three blocks point at the operator’s <em>real</em> machine (real apps, real camera, real PDFs). Those operator-bridge providers — plus the Type-A-only “control room” to host them — are the held phases 75–76. Nothing on the real machine was touched.</p>
+  </div>
+
+  <h2>Result</h2>
+  <div class="stats">
+    <div class="s"><div class="num">3</div><div class="l">Faculties shipped</div></div>
+    <div class="s"><div class="num">46</div><div class="l">New tests</div></div>
+    <div class="s"><div class="num">1217</div><div class="l">Brain suite ✓</div></div>
+    <div class="s"><div class="num">4</div><div class="l">State-hash keys (unchanged)</div></div>
+    <div class="s"><div class="num">0</div><div class="l">Allowlist changes</div></div>
+    <div class="s"><div class="num">3</div><div class="l">Commits · wiki pages</div></div>
+  </div>
+
+  <div class="tablecard">
+    <table>
+      <thead><tr><th>Phase</th><th>Faculty</th><th>Status</th><th>Commit</th></tr></thead>
+      <tbody>
+        <tr><td>72</td><td><code>aisthesis</code> — perception</td><td><span class="pill done">shipped</span></td><td class="repo">09b90aa</td></tr>
+        <tr><td>73</td><td><code>praxis</code> — action</td><td><span class="pill done">shipped</span></td><td class="repo">7379c48</td></tr>
+        <tr><td>74</td><td><code>synopsis</code> — synthesis</td><td><span class="pill done">shipped</span></td><td class="repo">584e78a</td></tr>
+        <tr><td>75–76</td><td>operator bridge · Local Nous Manager · Type-A providers</td><td><span class="pill held">held</span></td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="foot">
+    Noēsis · v3.3 Mind — In-World Faculties · 2026-07-10 · branch <code>plan/phase-72-aisthesis-inworld-perception</code>.<br/>
+    Three of the eight tools became faculties of the mind: a Nous now perceives, acts, and understands — in-world.
+  </div>
+
+</div>
+</body>
+</html>
