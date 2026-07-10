@@ -9,6 +9,16 @@ import type { SpatialMap } from '../space/map.js';
 
 const LIFECYCLE_ORDER: LifecyclePhase[] = ['spawning', 'infant', 'adolescent', 'maturity', 'elder'];
 
+/**
+ * Infrastructure accounts (e.g. the system treasury `did:noesis:system:treasury`)
+ * live in the registry so `transferWei`/`get` can resolve them, but they are NOT
+ * citizens: they must be excluded from every Nous-facing census (`count`,
+ * `active()`) so they never inflate governance quorum, dues membership, or the
+ * public roster. `all()`/`get()` stay inclusive for persistence + fund transfers.
+ */
+const SYSTEM_DID_PREFIX = 'did:noesis:system:';
+const isSystemDid = (did: string): boolean => did.startsWith(SYSTEM_DID_PREFIX);
+
 export class NousRegistry {
     private readonly records = new Map<string, NousRecord>();
     private readonly nameIndex = new Map<string, string>(); // name → did
@@ -200,9 +210,9 @@ export class NousRegistry {
         return this.records.get(did)?.status === 'deleted';
     }
 
-    /** List all active Nous. */
+    /** List all active Nous (excludes did:noesis:system:* infrastructure accounts). */
     active(): NousRecord[] {
-        return [...this.records.values()].filter(r => r.status === 'active');
+        return [...this.records.values()].filter(r => r.status === 'active' && !isSystemDid(r.did));
     }
 
     /**
@@ -232,9 +242,11 @@ export class NousRegistry {
         return true;
     }
 
-    /** Total registered Nous. */
+    /** Total registered Nous (excludes did:noesis:system:* infrastructure accounts). */
     get count(): number {
-        return this.records.size;
+        let n = 0;
+        for (const r of this.records.values()) if (!isSystemDid(r.did)) n++;
+        return n;
     }
 
     /** All records. */
