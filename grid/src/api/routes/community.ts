@@ -6,14 +6,15 @@
  *   POST /api/v1/community/:communityId/join — join, evaluated against the charter (civic)
  *
  * The civic Communities subsystem — distinct from the portal social feed
- * (/api/v1/portal/community/*). Bios sybil cost is charged via the funds registry
- * (founder → treasury); dissolution returns it to the treasury (Plan 2), never the founder.
+ * (/api/v1/portal/community/*). Bios sybil cost is charged on the unified in-DB ledger
+ * (founder → civic_treasury via nous_accounts, Phase 62.5-02); dissolution keeps it in the
+ * treasury (Plan 2), never refunds the founder.
  */
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { CommunityStore } from '../../community/community-store.js';
 import { validateCharter, FOUND_WEI_COST, INTERNAL_DECISION_SCOPES, type MembershipCriteria } from '../../community/types.js';
-import { TREASURY_DID } from './registry.js';
+import { NousAccountStore } from '../../economy/nous-account-store.js';
 
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -30,8 +31,8 @@ export function registerCommunityRoutes(app: FastifyInstance, services: GridServ
             if (!founder || req.didContext?.tier !== 'civic_member' || !CIVIC_DID_RE.test(founder)) {
                 return reply.code(401).send({ error: 'civic_did_required' });
             }
-            const pool = services.pool; const audit = services.audit; const registry = services.registry;
-            if (!pool || !audit || !registry) return reply.code(503).send({ error: 'community_unavailable' });
+            const pool = services.pool; const audit = services.audit;
+            if (!pool || !audit) return reply.code(503).send({ error: 'community_unavailable' });
             const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
             const purpose = typeof req.body?.purpose === 'string' ? req.body.purpose.trim() : '';
             if (!name) return reply.code(400).send({ error: 'empty_name' });
@@ -39,13 +40,14 @@ export function registerCommunityRoutes(app: FastifyInstance, services: GridServ
             const v = validateCharter(req.body?.charter);
             if (!v.ok) return reply.code(400).send({ error: 'invalid_charter', clause: v.clause });
 
-            // D-V3-09 Bios sybil cost, made atomic across the in-memory ledger (NousRegistry)
-            // and MySQL (communities): (1) pre-check funds WITHOUT moving them, (2) persist the
-            // community in a transaction, (3) charge LAST — so a DB failure can never leave the
-            // founder debited with no community (the money move is the last thing that happens).
-            const founderRec = registry.get(founder);
-            if (!founderRec) return reply.code(400).send({ error: 'not_found' });
-            if (founderRec.balance_wei < FOUND_WEI_COST) {
+            // D-V3-09 Bios sybil cost, charged on the unified in-DB ledger (nous_accounts →
+            // civic_treasury, Phase 62.5-02 / Issue #9) and kept atomic across it and MySQL
+            // (communities): (1) pre-check funds WITHOUT moving them, (2) persist the community
+            // in a transaction, (3) charge LAST — so a DB failure can never leave the founder
+            // debited with no community (the money move is the last thing that happens).
+            const accountStore = new NousAccountStore(pool);
+            const balance = await accountStore.getBalance(grid, founder);
+            if (balance < BigInt(FOUND_WEI_COST)) {
                 return reply.code(402).send({ error: 'insufficient_wei', required: FOUND_WEI_COST });
             }
 
@@ -60,14 +62,17 @@ export function registerCommunityRoutes(app: FastifyInstance, services: GridServ
                 return reply.code(503).send({ error: 'community_unavailable' });
             }
 
-            // Charge last. transferWei re-checks the balance atomically; a failure here (a
-            // concurrent drain since the pre-check) dissolves the just-created community so no
-            // active-but-unpaid community is ever left behind — conservation holds either way.
-            const moved = registry.transferWei(founder, TREASURY_DID, FOUND_WEI_COST);
-            if (!moved.success) {
+            // Charge last. chargeToTreasury re-checks the balance atomically (debit under
+            // SELECT … FOR UPDATE); a failure here (a concurrent drain since the pre-check)
+            // dissolves the just-created community so no active-but-unpaid community is ever
+            // left behind — conservation holds either way.
+            try {
+                await accountStore.chargeToTreasury({ gridName: grid, civicDid: founder, amountWei: BigInt(FOUND_WEI_COST), currentTick: tick() });
+            } catch (err) {
                 await store.dissolve({ gridName: grid, communityId, byDid: founder, tick: tick() });
-                if (moved.error === 'insufficient') return reply.code(402).send({ error: 'insufficient_wei', required: FOUND_WEI_COST });
-                return reply.code(400).send({ error: moved.error });
+                const msg = err instanceof Error ? err.message : 'charge_failed';
+                if (msg === 'insufficient_balance') return reply.code(402).send({ error: 'insufficient_wei', required: FOUND_WEI_COST });
+                return reply.code(400).send({ error: msg });
             }
 
             return reply.code(201).send({ community_id: communityId, wei_paid: FOUND_WEI_COST, status: 'active' });
@@ -95,8 +100,8 @@ export function registerCommunityRoutes(app: FastifyInstance, services: GridServ
             if (!joiner || req.didContext?.tier !== 'civic_member' || !CIVIC_DID_RE.test(joiner)) {
                 return reply.code(401).send({ error: 'civic_did_required' });
             }
-            const pool = services.pool; const audit = services.audit; const registry = services.registry;
-            if (!pool || !audit || !registry) return reply.code(503).send({ error: 'community_unavailable' });
+            const pool = services.pool; const audit = services.audit;
+            if (!pool || !audit) return reply.code(503).send({ error: 'community_unavailable' });
             const communityId = req.params.communityId;
             if (!UUID_RE.test(communityId)) return reply.code(400).send({ error: 'invalid_community_id' });
 
@@ -110,10 +115,13 @@ export function registerCommunityRoutes(app: FastifyInstance, services: GridServ
                 return reply.code(202).send({ status: 'pending', clause: 'approval_required' });
             }
             if (typeof membership === 'object' && typeof membership.bios_fee === 'number') {
-                const moved = registry.transferWei(joiner, TREASURY_DID, membership.bios_fee);
-                if (!moved.success) {
-                    if (moved.error === 'insufficient') return reply.code(402).send({ error: 'insufficient_wei', clause: 'bios_fee', required: membership.bios_fee });
-                    return reply.code(400).send({ error: moved.error });
+                // Bios join fee on the unified ledger: joiner → civic_treasury (Phase 62.5-02).
+                try {
+                    await new NousAccountStore(pool).chargeToTreasury({ gridName: grid, civicDid: joiner, amountWei: BigInt(membership.bios_fee), currentTick: tick() });
+                } catch (err) {
+                    const msg = err instanceof Error ? err.message : 'charge_failed';
+                    if (msg === 'insufficient_balance') return reply.code(402).send({ error: 'insufficient_wei', clause: 'bios_fee', required: membership.bios_fee });
+                    return reply.code(400).send({ error: msg });
                 }
             }
             // 'open' or a paid 'bios_fee' → immediate active membership.

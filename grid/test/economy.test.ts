@@ -9,7 +9,8 @@ describe('EconomyManager', () => {
     });
 
     it('has default settings', () => {
-        expect(econ.initialSupply).toBe(1000);
+        // Phase 62.5-02: no birth faucet — default initialSupply is 0 (ECON-01 / D-MONEY-01).
+        expect(econ.initialSupply).toBe(0);
         expect(econ.settings.minTransfer).toBe(1);
         expect(econ.settings.maxTransfer).toBe(1_000_000);
         expect(econ.settings.transactionFee).toBe(0);

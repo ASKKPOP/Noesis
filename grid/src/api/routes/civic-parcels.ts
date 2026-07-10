@@ -10,15 +10,17 @@
  *   - POST /api/v1/civic/parcels/:id/leave         (civic_did_required)
  *   - POST /api/v1/civic/parcels/:id/entry-policy  (civic_did_required)
  *
- * TWO DISTINCT REGISTRIES (do not conflate — this is the bug this file guards against):
+ * LAND STATE vs MONEY (do not conflate — this is the bug this file guards against):
  *   - parcelRegistry = services.parcels.registry — owns land state transitions:
  *       purchase() validates affordability + caps ONLY (does NOT move funds);
- *       stampAcquired/build/join/leave/setEntryPolicy. HAS NO transferWei.
- *   - nousRegistry   = services.registry — the funds registry:
- *       get(did)?.balance_wei reads balance; transferWei(from, to, amount) MOVES Ousia.
+ *       stampAcquired/build/join/leave/setEntryPolicy. Moves NO money.
+ *   - nous_accounts (NousAccountStore, civic-DID keyed) — the unified in-DB money ledger
+ *       (Phase 62.5-02, Issue #9): getBalance reads; chargeToTreasury debits the buyer and
+ *       credits civic_treasury atomically. Replaces the legacy existence-keyed nous_registry
+ *       balance, which a fresh citizen could not reach (live buyer_not_found).
  *
- * Funds path (D-58-06): read buyer Ousia from nousRegistry → parcelRegistry.purchase
- *   validates → nousRegistry.transferWei(buyer → TREASURY_DID, price) → store write →
+ * Funds path (D-58-06): read buyer balance from nous_accounts → parcelRegistry.purchase
+ *   validates → accountStore.chargeToTreasury(buyer → civic_treasury, price) → store write →
  *   stampAcquired → appendZoningParcelPurchased(82) + appendTreasuryParcelRevenue(83).
  *
  * D-NH-07 (D-58-05): land is Nous-only. human_visitor / anon → 401 (tier gate);
@@ -34,7 +36,6 @@ import { createHash } from 'node:crypto';
 import type { GridServices } from '../server.js';
 import type { Parcel, StructureType, Visibility } from '../../civic/types.js';
 import { isValidFurniture, FURNITURE_CATALOG } from '../../civic/furniture.js';
-import { TREASURY_DID } from './registry.js';
 import { appendZoningParcelPurchased } from '../../audit/append-zoning-parcel-purchased.js';
 import { appendTreasuryParcelRevenue } from '../../audit/append-treasury-parcel-revenue.js';
 import { appendZoningStructureBuilt } from '../../audit/append-zoning-structure-built.js';
@@ -49,6 +50,14 @@ import { isHumanDid } from '../../civic/roles.js';
 import { postTask, claimTask, completeTask } from '../../civic/cowork.js';
 import { buildFromBlueprint } from '../../civic/blueprint.js';
 import { coBuildStaffOf } from '../../civic/co-build.js';
+import { NousAccountStore } from '../../economy/nous-account-store.js';
+
+/** Clamp a wei balance (bigint) to a Number for the ParcelRegistry affordability check.
+ *  Land prices are small integers; only the real chargeToTreasury debit is authoritative,
+ *  so clamping an astronomically large balance to MAX_SAFE_INTEGER never mis-gates a buy. */
+function affordableWei(balance: bigint): number {
+    return balance > BigInt(Number.MAX_SAFE_INTEGER) ? Number.MAX_SAFE_INTEGER : Number(balance);
+}
 
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 const HUMAN_CIVIC_DID_RE = /^did:civic:noesis:human:/i;
@@ -135,15 +144,24 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
     app.post<{ Params: { id: string } }>('/api/v1/civic/parcels/:id/purchase', async (req, reply) => {
         const guarded = requireCivicWriter(req, reply, services);
         if (!guarded) return reply; // 401/403/503 already sent
-        const { parcelRegistry, store, nousRegistry, buyerDid } = guarded;
+        const { parcelRegistry, store, buyerDid } = guarded;
         const addr = req.params.id;
 
-        // 1. Read the buyer's Ousia from the Nous registry (1:1 Bios per D-58-06).
-        const buyer = nousRegistry.get(buyerDid);
-        if (!buyer) return reply.code(404).send({ error: 'buyer_not_found' });
+        // Phase 62.5-02: land is bought from the unified in-DB ledger (nous_accounts,
+        // civic-DID keyed) — the same balance endowment/labour fund and the IRS reads via
+        // civic_treasury. The legacy existence-keyed nous_registry balance is no longer
+        // money (Issue #9). Every civic-DID has a nous_accounts row (0 if unfunded), so
+        // there is no buyer_not_found — an unfunded buyer simply fails affordability (402).
+        const pool = services.pool;
+        if (!pool) return reply.code(503).send({ error: 'civic_registry_unavailable' });
+        const accountStore = new NousAccountStore(pool);
+        const tick = currentTick(services);
+
+        // 1. Read the buyer's ledger balance (0 when the account is unfunded).
+        const balance = await accountStore.getBalance(services.gridName, buyerDid);
 
         // 2. parcelRegistry.purchase validates affordability + caps ONLY (no funds move).
-        const result = parcelRegistry.purchase(addr, buyerDid, buyer.balance_wei);
+        const result = parcelRegistry.purchase(addr, buyerDid, affordableWei(balance));
         if (!result.ok) {
             if (result.reason === 'insufficient_funds') {
                 return reply.code(402).send({ error: 'insufficient_funds' });
@@ -156,23 +174,22 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
         const parcel = result.parcel;
         const price = parcel.priceWei;
 
-        // 3. Move funds on the NOUS registry (buyer → treasury). Belt-and-suspenders 402.
-        const moved = nousRegistry.transferWei(buyerDid, TREASURY_DID, price);
-        if (!moved.success) {
-            // Roll back the ownership stamp from step 2 — a failed charge must never
-            // leave a phantom owner (unpaid, unpersisted, unaudited).
+        // 3. Charge atomically on the ledger: debit buyer → credit civic_treasury (one
+        //    transaction). A failed charge rolls back fully and must never leave a phantom
+        //    owner (unpaid, unpersisted, unaudited), so release the step-2 ownership stamp.
+        try {
+            await accountStore.chargeToTreasury({ gridName: services.gridName, civicDid: buyerDid, amountWei: BigInt(price), currentTick: tick });
+        } catch (err) {
             parcelRegistry.releaseOwnership(addr);
-            if (moved.error === 'insufficient') {
-                return reply.code(402).send({ error: 'insufficient_funds' });
-            }
-            return reply.code(400).send({ error: moved.error });
+            const msg = err instanceof Error ? err.message : 'charge_failed';
+            if (msg === 'insufficient_balance') return reply.code(402).send({ error: 'insufficient_funds' });
+            return reply.code(400).send({ error: msg });
         }
 
         // 4. Persist DB-first.
         await store.persistPurchase(parcel);
 
         // 5. Stamp acquisition tick (Grid owns the clock).
-        const tick = currentTick(services);
         parcelRegistry.stampAcquired(addr, tick);
 
         // 6. Emit events 82 + 83 (owner DID hashed HEX64).
@@ -261,7 +278,7 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
         async (req, reply) => {
             const guarded = requireCivicWriter(req, reply, services);
             if (!guarded) return reply;
-            const { parcelRegistry, store, nousRegistry, buyerDid } = guarded;
+            const { parcelRegistry, store, buyerDid } = guarded;
             const addr = req.params.id;
 
             const body = (req.body ?? {}) as Record<string, unknown>;
@@ -270,6 +287,12 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
                 return reply.code(400).send({ error: 'invalid_blueprint_hash' });
             }
 
+            // Phase 62.5-02: material cost is charged from the unified in-DB ledger
+            // (nous_accounts → civic_treasury), not the legacy nous_registry balance.
+            const pool = services.pool;
+            if (!pool) return reply.code(503).send({ error: 'civic_registry_unavailable' });
+            const accountStore = new NousAccountStore(pool);
+
             const tick = currentTick(services);
             // Skills are attested under the EXISTENCE-DID (skill.taught.learner_did, nous-runner),
             // not the civic-DID land identity. A Brain-signed request carries the existence-DID as
@@ -277,11 +300,19 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             // ownership / Ousia / the human check / the emitted civic hash stay on buyerDid.
             const skillHolderDid = req.didContext?.operatorDid;
             try {
-                const structure = buildFromBlueprint(addr, buyerDid, blueprintHash, tick, {
+                const structure = await buildFromBlueprint(addr, buyerDid, blueprintHash, tick, {
                     registry: parcelRegistry,
-                    // Material cost rides the existing Ousia transfer path (builder → treasury);
-                    // a failed transfer (cannot cover) → insufficient_funds (mapped to 402 below).
-                    transferWei: (from, to, amount) => nousRegistry.transferWei(from, to, amount),
+                    // Material cost debits the builder's ledger account → civic treasury atomically;
+                    // a failed charge (cannot cover) → insufficient_funds (mapped to 402 below).
+                    chargeMaterial: async (from, amountWei) => {
+                        try {
+                            await accountStore.chargeToTreasury({ gridName: services.gridName, civicDid: from, amountWei: BigInt(amountWei), currentTick: tick });
+                            return { success: true };
+                        } catch (e) {
+                            if (e instanceof Error && e.message === 'insufficient_balance') return { success: false };
+                            throw e;
+                        }
+                    },
                     audit: services.audit,
                     // Existence-DID for the skill-held check ONLY (defaults to buyerDid in the executor).
                     skillHolderDid,

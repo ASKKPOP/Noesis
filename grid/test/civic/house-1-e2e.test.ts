@@ -23,12 +23,13 @@
  */
 import { describe, it, expect } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
-import type { Pool, ResultSetHeader } from 'mysql2/promise';
+import type { ResultSetHeader } from 'mysql2/promise';
 import { createHash } from 'node:crypto';
 import { AuditChain } from '../../src/audit/chain.js';
 import { ParcelRegistry } from '../../src/civic/parcel-registry.js';
 import { ParcelStore, buildGenesisCoreParcels } from '../../src/civic/parcel-store.js';
 import { NousRegistry } from '../../src/registry/registry.js';
+import { makeAccountsPool } from '../helpers/accounts-pool.js';
 import { registerCivicParcelRoutes } from '../../src/api/routes/civic-parcels.js';
 import { gravityPrice } from '../../src/civic/founding-law.js';
 import { TREASURY_DID } from '../../src/api/routes/registry.js';
@@ -46,27 +47,12 @@ const RING3_PARCEL = 'genesis:residential:0001';
 
 const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
 
-/**
- * A mock mysql2 Pool that satisfies the real ParcelStore: UPDATE/INSERT report
- * affectedRows so the write-through path runs; SELECT (hydrate) returns nothing.
- * This lets the DoD exercise the real persistence code with no live DB.
- */
-function mockPool(): { pool: Pool; queries: string[] } {
-    const queries: string[] = [];
-    const pool = {
-        query: async (sql: string) => {
-            queries.push(sql.trim().split(/\s+/).slice(0, 2).join(' '));
-            return [{ affectedRows: 1 } as ResultSetHeader, []];
-        },
-    } as unknown as Pool;
-    return { pool, queries };
-}
-
 interface E2EApp {
     app: FastifyInstance;
     audit: AuditChain;
     parcelRegistry: ParcelRegistry;
     nousRegistry: NousRegistry;
+    accts: ReturnType<typeof makeAccountsPool>;
     queries: string[];
     setCtx: (ctx: DIDContext | null) => void;
     ready: Promise<void>;
@@ -80,21 +66,31 @@ function buildGenesisApp(): E2EApp {
     const parcelRegistry = new ParcelRegistry('genesis');
     for (const p of buildGenesisCoreParcels('genesis')) parcelRegistry.upsert(p);
 
-    // Real funds registry: treasury + Nous A (funded) + Nous B (funded).
+    // Phase 62.5-02: land is bought from the unified in-DB ledger (nous_accounts →
+    // civic_treasury). The stateful fake pool tracks the buyer's ledger balance AND, via
+    // otherQuery, satisfies the real ParcelStore (affectedRows) while recording its SQL.
+    const queries: string[] = [];
+    const accts = makeAccountsPool({
+        otherQuery: (sql) => {
+            queries.push(String(sql).trim().split(/\s+/).slice(0, 2).join(' '));
+            return [{ affectedRows: 1 } as ResultSetHeader, []];
+        },
+    });
+    accts.seedAccount(NOUS_A, 10_000);
+    accts.seedAccount(NOUS_B, 10_000);
+    const store = new ParcelStore(accts.pool, 'genesis');
+
+    // A NousRegistry is still required by requireCivicWriter (503 guard); it no longer holds
+    // land money.
     const nousRegistry = new NousRegistry();
     nousRegistry.spawn({ name: 'treasury', did: TREASURY_DID, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 0);
-    nousRegistry.spawn({ name: 'alice', did: NOUS_A, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 10_000);
-    nousRegistry.spawn({ name: 'bob', did: NOUS_B, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 10_000);
-
-    // Real write-through store over a mock Pool — persistPurchase/persistBuild run for real.
-    const { pool, queries } = mockPool();
-    const store = new ParcelStore(pool, 'genesis');
 
     const services: Partial<GridServices> = {
         audit,
         gridName: 'genesis',
         currentTick: () => 100,
         registry: nousRegistry,
+        pool: accts.pool,
         parcels: { registry: parcelRegistry, store },
     };
 
@@ -104,7 +100,7 @@ function buildGenesisApp(): E2EApp {
     registerCivicParcelRoutes(app, services as GridServices);
 
     return {
-        app, audit, parcelRegistry, nousRegistry, queries,
+        app, audit, parcelRegistry, nousRegistry, accts, queries,
         setCtx: (ctx) => { currentCtx = ctx; },
         ready: app.ready().then(() => {}),
     };
@@ -118,7 +114,7 @@ describe('HOUSE-1 Definition of Done — buy → build → join → leave end-to
     it('a Nous buys ring-3 for 400, builds a home, a 2nd Nous visits; all 5 events on the public trail', async () => {
         const env = buildGenesisApp();
         await env.ready;
-        const { app, audit, parcelRegistry, nousRegistry } = env;
+        const { app, audit, parcelRegistry, accts } = env;
 
         // Sanity: the Genesis Core priced ring 3 via gravity law.
         expect(gravityPrice(3)).toBe(400);
@@ -131,9 +127,9 @@ describe('HOUSE-1 Definition of Done — buy → build → join → leave end-to
         expect(buy.statusCode).toBe(201);
         expect(buy.json()).toMatchObject({ purchased: true, parcel_id: RING3_PARCEL, price_wei: 400 });
 
-        // Funds moved buyer → TREASURY_DID (exactly 400).
-        expect(nousRegistry.get(NOUS_A)?.balance_wei).toBe(10_000 - 400);
-        expect(nousRegistry.get(TREASURY_DID)?.balance_wei).toBe(400);
+        // Funds moved buyer → civic_treasury on the unified ledger (exactly 400).
+        expect(accts.balanceOf(NOUS_A)).toBe(BigInt(10_000 - 400));
+        expect(accts.treasuryOf()).toBe(400n);
         // Write-through persistence ran (DB-first).
         expect(env.queries).toContain('UPDATE civic_parcels');
 

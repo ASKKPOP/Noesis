@@ -5,7 +5,10 @@
 import type { EconomyConfig } from './types.js';
 
 const DEFAULT_CONFIG: EconomyConfig = {
-    initialSupply: 1000,
+    // ECON-01 / D-MONEY-01 (Phase 62.5-02): no birth faucet. New Nous are born with 0 and
+    // fund via endowment / compute-labour / procurement. The launcher spawns with a literal
+    // 0 regardless of this value; the field is inert and slated for removal in Phase 62.5-04.
+    initialSupply: 0,
     transactionFee: 0,
     minTransfer: 1,
     maxTransfer: 1_000_000,

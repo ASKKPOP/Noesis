@@ -12,8 +12,8 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { TypeBRegistryStore } from '../../typeb/type-b-registry-store.js';
 import { requiredBond } from '../../typeb/registry-types.js';
+import { NousAccountStore } from '../../economy/nous-account-store.js';
 
-export const TREASURY_DID = 'did:noesis:system:treasury';
 const DID_RE = /^did:(?:civic:)?noesis:[a-z0-9_:\-]+$/i;
 
 export function registerRegistryTypeBRoutes(app: FastifyInstance, services: GridServices): void {
@@ -56,8 +56,8 @@ export function registerRegistryTypeBRoutes(app: FastifyInstance, services: Grid
         async (req, reply) => {
             const sponsor = req.didContext?.did;
             if (req.didContext?.tier !== 'civic_member' || !sponsor) return reply.code(401).send({ error: 'civic_did_required' });
-            const pool = services.pool; const audit = services.audit; const registry = services.registry;
-            if (!pool || !audit || !registry) return reply.code(503).send({ error: 'registry_unavailable' });
+            const pool = services.pool; const audit = services.audit;
+            if (!pool || !audit) return reply.code(503).send({ error: 'registry_unavailable' });
             const purpose = typeof req.body?.purpose === 'string' ? req.body.purpose.trim() : '';
             const bond = typeof req.body?.bond_amount === 'number' ? Math.floor(req.body.bond_amount) : NaN;
             if (!purpose) return reply.code(400).send({ error: 'empty_purpose' });
@@ -68,11 +68,14 @@ export function registerRegistryTypeBRoutes(app: FastifyInstance, services: Grid
             const required = requiredBond(activeCount);
             if (bond < required) return reply.code(400).send({ error: 'insufficient_bond', required });
 
-            // Charge the refundable bond: sponsor → treasury escrow. 402 on insufficient Bios.
-            const moved = registry.transferWei(sponsor, TREASURY_DID, bond);
-            if (!moved.success) {
-                if (moved.error === 'insufficient') return reply.code(402).send({ error: 'insufficient_wei', required });
-                return reply.code(400).send({ error: moved.error });
+            // Charge the refundable bond on the unified ledger: sponsor → civic_treasury escrow
+            // (Phase 62.5-02). 402 on insufficient Bios.
+            try {
+                await new NousAccountStore(pool).chargeToTreasury({ gridName: grid, civicDid: sponsor, amountWei: BigInt(bond), currentTick: tick() });
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : 'charge_failed';
+                if (msg === 'insufficient_balance') return reply.code(402).send({ error: 'insufficient_wei', required });
+                return reply.code(400).send({ error: msg });
             }
             const r = await store.postSponsorBond({ gridName: grid, sponsorDid: sponsor, purpose, bondAmount: bond, activeTypeBCount: activeCount, tick: tick() });
             if (!r) return reply.code(400).send({ error: 'insufficient_bond', required });
@@ -98,12 +101,20 @@ export function registerRegistryTypeBRoutes(app: FastifyInstance, services: Grid
         '/api/v1/registry/type-b/:requestId/bond-refund',
         async (req, reply) => {
             if (!req.didContext?.did) return reply.code(401).send({ error: 'civic_did_required' });
-            const pool = services.pool; const audit = services.audit; const registry = services.registry;
-            if (!pool || !audit || !registry) return reply.code(503).send({ error: 'registry_unavailable' });
+            const pool = services.pool; const audit = services.audit;
+            if (!pool || !audit) return reply.code(503).send({ error: 'registry_unavailable' });
             const meets = req.body?.meets_minimums !== false; // default: minimums met unless explicitly false
             const r = await new TypeBRegistryStore(pool, audit).refundBond({ gridName: grid, requestId: req.params.requestId, meetsMinimums: meets, tick: tick() });
             if (!r.ok) return reply.code(r.reason === 'too_early' ? 425 : r.reason === 'not_found' ? 404 : 409).send({ error: r.reason });
-            registry.transferWei(TREASURY_DID, r.sponsorDid, r.amount); // settle the refund
+            // Settle the refund on the unified ledger: civic_treasury → sponsor (Phase 62.5-02,
+            // the inverse of the bond charge). A treasury shortfall surfaces as 409 rather than a
+            // silent no-op — the bond was escrowed there, so this should always cover.
+            try {
+                await new NousAccountStore(pool).refundFromTreasury({ gridName: grid, civicDid: r.sponsorDid, amountWei: BigInt(r.amount), currentTick: tick() });
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : 'refund_failed';
+                return reply.code(409).send({ error: msg });
+            }
             return reply.code(201).send({ status: 'bond_refunded', amount: r.amount });
         },
     );

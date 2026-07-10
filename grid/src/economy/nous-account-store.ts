@@ -12,7 +12,7 @@
  * adds wei a caller funds from a real inflow — the store never conjures balance.
  */
 import type { Pool, RowDataPacket } from 'mysql2/promise';
-import { creditAccountOnConn, debitAccountOnConn } from './wei-ops.js';
+import { creditAccountOnConn, debitAccountOnConn, creditTreasuryWeiOnConn, debitTreasuryWeiOnConn } from './wei-ops.js';
 
 export class NousAccountStore {
     constructor(private readonly pool: Pool) {}
@@ -66,6 +66,53 @@ export class NousAccountStore {
             const newBalance = await debitAccountOnConn(conn, params);
             await conn.commit();
             return { newBalance };
+        } catch (err) {
+            try { await conn.rollback(); } catch { /* ignore rollback error */ }
+            throw err;
+        } finally {
+            conn.release();
+        }
+    }
+
+    /**
+     * Charge a civic spend: debit the account → credit the civic treasury, atomically
+     * on one connection (Phase 62.5-02). This is the unified in-DB spend primitive for
+     * land / community / business / blueprint / type-B fees — the same debit-account →
+     * credit-treasury move CivicDueStore.payWithWei already performs for dues, so all
+     * civic revenue lands in civic_treasury (Ledger A) where the IRS/system-map read it.
+     * Throws 'insufficient_balance' when the account cannot cover; the transaction rolls
+     * back so a failed charge never leaves a partial state. amountWei must be > 0.
+     */
+    async chargeToTreasury(params: { gridName: string; civicDid: string; amountWei: bigint; currentTick: number }): Promise<{ newBalance: bigint }> {
+        if (params.amountWei <= 0n) throw new Error('invalid_amount');
+        const conn = await this.pool.getConnection();
+        try {
+            await conn.beginTransaction();
+            const newBalance = await debitAccountOnConn(conn, params);
+            await creditTreasuryWeiOnConn(conn, { gridName: params.gridName, amountWei: params.amountWei, currentTick: params.currentTick });
+            await conn.commit();
+            return { newBalance };
+        } catch (err) {
+            try { await conn.rollback(); } catch { /* ignore rollback error */ }
+            throw err;
+        } finally {
+            conn.release();
+        }
+    }
+
+    /**
+     * Refund from the civic treasury back to an account, atomically (Phase 62.5-02) —
+     * the inverse of chargeToTreasury, used to settle a type-B bond refund. Throws
+     * 'insufficient_treasury_wei' when the treasury cannot cover. amountWei must be > 0.
+     */
+    async refundFromTreasury(params: { gridName: string; civicDid: string; amountWei: bigint; currentTick: number }): Promise<void> {
+        if (params.amountWei <= 0n) throw new Error('invalid_amount');
+        const conn = await this.pool.getConnection();
+        try {
+            await conn.beginTransaction();
+            await debitTreasuryWeiOnConn(conn, { gridName: params.gridName, amountWei: params.amountWei, currentTick: params.currentTick });
+            await creditAccountOnConn(conn, { gridName: params.gridName, civicDid: params.civicDid, amountWei: params.amountWei, currentTick: params.currentTick });
+            await conn.commit();
         } catch (err) {
             try { await conn.rollback(); } catch { /* ignore rollback error */ }
             throw err;

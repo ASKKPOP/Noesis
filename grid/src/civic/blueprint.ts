@@ -24,13 +24,6 @@ import type { Structure } from './types.js';
 
 const HEX64 = /^[0-9a-f]{64}$/;
 
-/**
- * The Polis treasury DID that material_cost_wei is debited to (D-NH-03/05). Defined
- * locally so the civic blueprint executor never depends on the API routes layer — the
- * same string the registry / civic-parcels route use (`api/routes/registry.ts`).
- */
-const TREASURY_DID = 'did:noesis:system:treasury';
-
 /** A single recipe object — `kind` MUST be a Phase 59 furniture-catalog kind. */
 export interface BlueprintObject {
     kind: string;
@@ -177,8 +170,9 @@ export interface BlueprintExecutedPayload {
 /**
  * Deps for buildFromBlueprint:
  *  - `registry` is the SINGLE recipe-apply surface (extendInterior + roleOf authorization).
- *  - `transferWei` moves the material cost builder → TREASURY_DID; `{success:false}` (the
- *     builder cannot cover it) maps to insufficient_funds (402).
+ *  - `chargeMaterial` debits the material cost from the builder's ledger account and credits
+ *     the civic treasury atomically (Phase 62.5-02, unified in-DB ledger); `{success:false}`
+ *     (the builder cannot cover it) maps to insufficient_funds (402).
  *  - `audit` is the existing skill-event history surface for the skill-held check.
  *  - `coBuildStaffOf?` is the co-build authorization read (a staff Nous in an active session
  *     for this parcel); absent ⇒ owner-only authorization.
@@ -187,7 +181,8 @@ export interface BlueprintExecutedPayload {
  */
 export interface BuildDeps {
     registry: ParcelRegistry;
-    transferWei(from: string, to: string, amount: number): { success: boolean };
+    /** Debit `material_cost_wei` from the builder's ledger account → civic treasury, atomically. */
+    chargeMaterial(builderDid: string, amountWei: number): Promise<{ success: boolean }>;
     audit: { all(): AuditEntry[] };
     /** True iff `did` is a staff Nous in an active co-build session for `addr` (co-build authz). */
     coBuildStaffOf?(addr: string, did: string): boolean;
@@ -211,21 +206,21 @@ export interface BuildDeps {
  *      session for this parcel; else not_authorized (403).
  *   3. getBlueprint → blueprint_not_found when absent.
  *   4. builderHoldsSkill (existing skill-event history) → skill_not_held when false.
- *   5. debit recipe.material_cost_wei builder → TREASURY_DID via transferWei; a failed
- *      transfer (cannot cover) → insufficient_funds (402).
+ *   5. debit recipe.material_cost_wei builder → civic treasury via chargeMaterial; a failed
+ *      charge (cannot cover) → insufficient_funds (402).
  *   6. apply the recipe: extendInterior(addr, builderDid, {area, kind}) once per recipe
  *      object (the SINGLE caller; the interior mutation emits NO per-object chain event).
  *   7. construct the skill.blueprint_executed payload (hashed builder, no recipe body) and
  *      call the Wave-3 emit seam.
  *   8. return the updated Structure.
  */
-export function buildFromBlueprint(
+export async function buildFromBlueprint(
     addr: string,
     builderDid: string,
     blueprint_hash: string,
     tick: number,
     deps: BuildDeps,
-): Structure {
+): Promise<Structure> {
     // 1. Humans NEVER build (VOTE-05 / D-NH-07).
     if (isHumanDid(builderDid)) {
         throw new Error(`builder_forbidden_human: ${builderDid} may not build`);
@@ -256,9 +251,9 @@ export function buildFromBlueprint(
     if (!holdsSkill) {
         throw new Error(`skill_not_held: ${skillIdentities.join('/')} does not hold ${blueprint_hash}`);
     }
-    // 5. Debit the material cost builder → TREASURY_DID (insufficient → 402).
+    // 5. Debit the material cost builder → civic treasury (insufficient → 402).
     if (recipe.material_cost_wei > 0) {
-        const moved = deps.transferWei(builderDid, TREASURY_DID, recipe.material_cost_wei);
+        const moved = await deps.chargeMaterial(builderDid, recipe.material_cost_wei);
         if (!moved.success) {
             throw new Error('insufficient_funds: builder cannot cover material_cost_wei (402)');
         }

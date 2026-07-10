@@ -267,26 +267,31 @@ export async function registerRegistryRoutes(
                 return reply.code(400).send({ error: 'invalid_category' });
             }
 
-            const reg = services.registry;
-            if (!reg) return reply.code(503).send({ error: 'registry_unavailable' });
+            const pool = services.pool;
+            if (!pool) return reply.code(503).send({ error: 'registry_unavailable' });
 
-            const nous = reg.get(civicDid);
-            if (!nous) return reply.code(404).send({ error: 'civic_did_not_found' });
-
-            const result = reg.transferWei(civicDid, TREASURY_DID, BUSINESS_DID_BIOS_COST);
-            if (!result.success) {
-                if (result.error === 'insufficient') {
+            const registeredAtTick = currentTick(services);
+            // Phase 62.5-02: the business-DID Bios cost is charged on the unified in-DB ledger
+            // (nous_accounts → civic_treasury, Issue #9), keyed by the caller's civic-DID (which
+            // has a nous_accounts row from issuance). No separate existence check — an unfunded
+            // account simply fails the atomic debit (insufficient → 402).
+            const accountStore = new NousAccountStore(pool);
+            try {
+                await accountStore.chargeToTreasury({ gridName: services.gridName, civicDid, amountWei: BigInt(BUSINESS_DID_BIOS_COST), currentTick: registeredAtTick });
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : 'charge_failed';
+                if (msg === 'insufficient_balance') {
+                    const available = await accountStore.getBalance(services.gridName, civicDid);
                     return reply.code(402).send({
                         error: 'insufficient_wei',
                         required: BUSINESS_DID_BIOS_COST,
-                        available: nous.balance_wei,
+                        available: Number(available),
                     });
                 }
-                return reply.code(400).send({ error: result.error });
+                return reply.code(400).send({ error: msg });
             }
 
             const businessDid = `did:biz:noesis:${randomUUID()}`;
-            const registeredAtTick = currentTick(services);
             const credential = await buildBusinessDidVc({
                 businessDid,
                 civicDid,

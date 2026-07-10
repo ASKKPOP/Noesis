@@ -73,20 +73,22 @@ function chainHolding(holder: string): AuditChain {
     return audit;
 }
 
-/** Build the executor deps: funded transferWei, the skill-held chain, optional co-build staff. */
+/** Build the executor deps: funded chargeMaterial, the skill-held chain, optional co-build staff. */
 function makeDeps(opts: {
     registry: ParcelRegistry;
     audit: AuditChain;
     funded?: boolean;
     coBuildStaff?: string;
     emitted?: BlueprintExecutedPayload[];
-    transfers?: Array<[string, string, number]>;
+    charges?: Array<[string, number]>;
 }): BuildDeps {
     return {
         registry: opts.registry,
         audit: opts.audit,
-        transferWei: (from, to, amount) => {
-            opts.transfers?.push([from, to, amount]);
+        // Phase 62.5-02: material cost debits the builder's ledger account → civic_treasury.
+        // funded:false models an insufficient balance (chargeToTreasury throws → {success:false}).
+        chargeMaterial: async (builderDid, amount) => {
+            opts.charges?.push([builderDid, amount]);
             return { success: opts.funded !== false };
         },
         coBuildStaffOf: (addr, did) => addr === ADDR && did === opts.coBuildStaff,
@@ -97,59 +99,59 @@ function makeDeps(opts: {
 beforeEach(() => { _resetBlueprints(); });
 
 describe('Phase 61 HOUSE-4 — buildFromBlueprint skill-held gate', () => {
-    it('rejects with skill_not_held when the builder does not hold the blueprint skill', () => {
+    it('rejects with skill_not_held when the builder does not hold the blueprint skill', async () => {
         storeBlueprint(recipe());
         const reg = ownedRegistry();
         const audit = new AuditChain(); // empty — no skill.taught for OWNER
-        expect(() => buildFromBlueprint(ADDR, OWNER, BLUEPRINT_HASH, 1, makeDeps({ registry: reg, audit })))
-            .toThrow(/skill_not_held/);
+        await expect(buildFromBlueprint(ADDR, OWNER, BLUEPRINT_HASH, 1, makeDeps({ registry: reg, audit })))
+            .rejects.toThrow(/skill_not_held/);
     });
 
-    it('rejects with blueprint_not_found when the recipe is absent', () => {
+    it('rejects with blueprint_not_found when the recipe is absent', async () => {
         const reg = ownedRegistry();
         const audit = chainHolding(OWNER);
-        expect(() => buildFromBlueprint(ADDR, OWNER, BLUEPRINT_HASH, 1, makeDeps({ registry: reg, audit })))
-            .toThrow(/blueprint_not_found/);
+        await expect(buildFromBlueprint(ADDR, OWNER, BLUEPRINT_HASH, 1, makeDeps({ registry: reg, audit })))
+            .rejects.toThrow(/blueprint_not_found/);
     });
 });
 
-describe('Phase 61 HOUSE-4 — material debit → TREASURY_DID via transferWei', () => {
-    it('debits material_cost_wei from the builder Ousia to TREASURY_DID on a successful build', () => {
+describe('Phase 61 HOUSE-4 — material debit → civic_treasury via chargeMaterial', () => {
+    it('debits material_cost_wei from the builder ledger to civic_treasury on a successful build', async () => {
         storeBlueprint(recipe());
         const reg = ownedRegistry();
-        const transfers: Array<[string, string, number]> = [];
-        const structure = buildFromBlueprint(ADDR, OWNER, BLUEPRINT_HASH, 1,
-            makeDeps({ registry: reg, audit: chainHolding(OWNER), funded: true, transfers }));
+        const charges: Array<[string, number]> = [];
+        const structure = await buildFromBlueprint(ADDR, OWNER, BLUEPRINT_HASH, 1,
+            makeDeps({ registry: reg, audit: chainHolding(OWNER), funded: true, charges }));
         expect(structure).toBeDefined();
-        expect(transfers).toHaveLength(1);
-        expect(transfers[0]).toEqual([OWNER, 'did:noesis:system:treasury', 50]);
+        expect(charges).toHaveLength(1);
+        expect(charges[0]).toEqual([OWNER, 50]);
     });
 
-    it('rejects with insufficient_funds (402) when the builder cannot cover material_cost_wei', () => {
+    it('rejects with insufficient_funds (402) when the builder cannot cover material_cost_wei', async () => {
         storeBlueprint(recipe());
         const reg = ownedRegistry();
-        expect(() => buildFromBlueprint(ADDR, OWNER, BLUEPRINT_HASH, 1,
+        await expect(buildFromBlueprint(ADDR, OWNER, BLUEPRINT_HASH, 1,
             makeDeps({ registry: reg, audit: chainHolding(OWNER), funded: false })))
-            .toThrow(/insufficient_funds/);
+            .rejects.toThrow(/insufficient_funds/);
     });
 });
 
 describe('Phase 61 HOUSE-4 — recipe applied via extendInterior (the SINGLE caller)', () => {
-    it('replays ParcelRegistry.extendInterior(addr, ownerDid, {area, kind}) for each recipe object', () => {
+    it('replays ParcelRegistry.extendInterior(addr, ownerDid, {area, kind}) for each recipe object', async () => {
         storeBlueprint(recipe());
         const reg = ownedRegistry();
-        const structure = buildFromBlueprint(ADDR, OWNER, BLUEPRINT_HASH, 1,
+        const structure = await buildFromBlueprint(ADDR, OWNER, BLUEPRINT_HASH, 1,
             makeDeps({ registry: reg, audit: chainHolding(OWNER), funded: true }));
         // each recipe object became one extendInterior call — both objects landed in the 'hall' area.
         const hall = structure.interior?.areas.find((a) => a.name === 'hall');
         expect(hall?.objects.map((o) => o.kind).sort()).toEqual(['bed', 'shelf']);
     });
 
-    it('emits skill.blueprint_executed exactly ONCE per executed build (hashed builder, no recipe body)', () => {
+    it('emits skill.blueprint_executed exactly ONCE per executed build (hashed builder, no recipe body)', async () => {
         storeBlueprint(recipe());
         const reg = ownedRegistry();
         const emitted: BlueprintExecutedPayload[] = [];
-        buildFromBlueprint(ADDR, OWNER, BLUEPRINT_HASH, 7,
+        await buildFromBlueprint(ADDR, OWNER, BLUEPRINT_HASH, 7,
             makeDeps({ registry: reg, audit: chainHolding(OWNER), funded: true, emitted }));
         expect(emitted).toHaveLength(1);
         expect(Object.keys(emitted[0]).sort()).toEqual(['blueprint_hash', 'builder_civic_did_hash', 'parcel_id', 'tick']);
@@ -162,36 +164,36 @@ describe('Phase 61 HOUSE-4 — recipe applied via extendInterior (the SINGLE cal
 });
 
 describe('Phase 61 HOUSE-4 — authorization: owner OR co-build staff only', () => {
-    it('allows the parcel owner to build', () => {
+    it('allows the parcel owner to build', async () => {
         storeBlueprint(recipe());
         const reg = ownedRegistry();
-        expect(buildFromBlueprint(ADDR, OWNER, BLUEPRINT_HASH, 1,
+        expect(await buildFromBlueprint(ADDR, OWNER, BLUEPRINT_HASH, 1,
             makeDeps({ registry: reg, audit: chainHolding(OWNER), funded: true }))).toBeDefined();
     });
 
-    it('allows a staff Nous in an active co-build session to build', () => {
+    it('allows a staff Nous in an active co-build session to build', async () => {
         storeBlueprint(recipe());
         const reg = ownedRegistry();
         // STAFF is not the owner, but is a staff Nous in an active co-build session for ADDR.
-        expect(buildFromBlueprint(ADDR, STAFF, BLUEPRINT_HASH, 1,
+        expect(await buildFromBlueprint(ADDR, STAFF, BLUEPRINT_HASH, 1,
             makeDeps({ registry: reg, audit: chainHolding(STAFF), funded: true, coBuildStaff: STAFF }))).toBeDefined();
     });
 
-    it('rejects an unauthorized Nous (not owner, not co-build staff) with 403', () => {
+    it('rejects an unauthorized Nous (not owner, not co-build staff) with 403', async () => {
         storeBlueprint(recipe());
         const reg = ownedRegistry();
-        expect(() => buildFromBlueprint(ADDR, STRANGER, BLUEPRINT_HASH, 1,
+        await expect(buildFromBlueprint(ADDR, STRANGER, BLUEPRINT_HASH, 1,
             makeDeps({ registry: reg, audit: chainHolding(STRANGER), funded: true })))
-            .toThrow(/not_authorized|403/);
+            .rejects.toThrow(/not_authorized|403/);
     });
 });
 
 describe('Phase 61 HOUSE-4 — humans NEVER build (VOTE-05 / D-NH-07)', () => {
-    it('rejects a did:civic:noesis:human:* builder', () => {
+    it('rejects a did:civic:noesis:human:* builder', async () => {
         storeBlueprint(recipe());
         const reg = ownedRegistry();
-        expect(() => buildFromBlueprint(ADDR, HUMAN, BLUEPRINT_HASH, 1,
+        await expect(buildFromBlueprint(ADDR, HUMAN, BLUEPRINT_HASH, 1,
             makeDeps({ registry: reg, audit: chainHolding(HUMAN), funded: true })))
-            .toThrow(/human|forbidden|not_authorized/i);
+            .rejects.toThrow(/human|forbidden|not_authorized/i);
     });
 });

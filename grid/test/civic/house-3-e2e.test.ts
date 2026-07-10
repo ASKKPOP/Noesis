@@ -30,12 +30,13 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
-import type { Pool, ResultSetHeader } from 'mysql2/promise';
+import type { ResultSetHeader } from 'mysql2/promise';
 import { createHash } from 'node:crypto';
 import { AuditChain } from '../../src/audit/chain.js';
 import { ParcelRegistry } from '../../src/civic/parcel-registry.js';
 import { ParcelStore, buildGenesisCoreParcels } from '../../src/civic/parcel-store.js';
 import { NousRegistry } from '../../src/registry/registry.js';
+import { makeAccountsPool } from '../helpers/accounts-pool.js';
 import { ShopRegistry } from '../../src/economy/shop-registry.js';
 import { registerCivicParcelRoutes } from '../../src/api/routes/civic-parcels.js';
 import { postTask, claimTask, completeTask, _resetCowork } from '../../src/civic/cowork.js';
@@ -61,18 +62,6 @@ const SHOP2 = 'genesis:shopping:0002';    // a second parcel for the duplicate-n
 
 const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
 
-/** A mock mysql2 Pool — UPDATE/INSERT report affectedRows; SELECT returns nothing. */
-function mockPool(): { pool: Pool; queries: string[] } {
-    const queries: string[] = [];
-    const pool = {
-        query: async (sql: string) => {
-            queries.push(sql.trim().split(/\s+/).slice(0, 2).join(' '));
-            return [{ affectedRows: 1 } as ResultSetHeader, []];
-        },
-    } as unknown as Pool;
-    return { pool, queries };
-}
-
 interface E2EApp {
     app: FastifyInstance;
     audit: AuditChain;
@@ -92,8 +81,15 @@ function buildGenesisApp(): E2EApp {
     const parcelRegistry = new ParcelRegistry('genesis');
     for (const p of buildGenesisCoreParcels('genesis')) parcelRegistry.upsert(p);
 
-    // Real funds registry: treasury + two Nous. OWNER has enough to buy ring-2 (900);
-    // STAFF stays low so the IOU branch is meaningful (the host's funding is what varies).
+    // Phase 62.5-02: the land purchase runs on the unified in-DB ledger (nous_accounts →
+    // civic_treasury); the co-work settlement + structure-revenue skim are not migrated in this
+    // wave and still move on the in-memory NousRegistry. Both ledgers are funded: accts backs
+    // the buy, NousRegistry backs the settlement/skim. otherQuery satisfies the ParcelStore.
+    const accts = makeAccountsPool({ otherQuery: () => [{ affectedRows: 1 } as ResultSetHeader, []] });
+    accts.seedAccount(OWNER, 10_000);
+    accts.seedAccount(STAFF, 10_000);
+
+    // Funds registry: treasury + two Nous (funds the not-yet-migrated co-work/skim path).
     const nousRegistry = new NousRegistry();
     nousRegistry.spawn({ name: 'treasury', did: TREASURY_DID, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 0);
     nousRegistry.spawn({ name: 'alice', did: OWNER, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 10_000);
@@ -103,15 +99,15 @@ function buildGenesisApp(): E2EApp {
     const shops = new ShopRegistry();
     parcelRegistry.attachShopRegistry(shops);
 
-    // Real write-through store over a mock Pool — persistPurchase/persistBuild/etc. run.
-    const { pool } = mockPool();
-    const store = new ParcelStore(pool, 'genesis');
+    // Real write-through store over the fake Pool — persistPurchase/persistBuild/etc. run.
+    const store = new ParcelStore(accts.pool, 'genesis');
 
     const services: Partial<GridServices> = {
         audit,
         gridName: 'genesis',
         currentTick: () => 100,
         registry: nousRegistry,
+        pool: accts.pool,
         shops,
         parcels: { registry: parcelRegistry, store },
     };
