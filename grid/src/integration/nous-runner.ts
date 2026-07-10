@@ -473,12 +473,12 @@ export class NousRunner {
                                 failed_check: verdict.failed_check,
                                 failure_reason: verdict.failure_reason,
                             });
-                            // NO transferWei, NO trade.settled, NO trade.rejected on reviewer fail.
+                            // NO money move, NO trade.settled, NO trade.rejected on reviewer fail.
                             break;
                         }
 
                         // Pass path — emit trade.reviewed{pass}, then proceed with existing bounds +
-                        // transferWei + trade.settled.
+                        // the Ledger-A settle transfer + trade.settled.
                         this.audit.append('trade.reviewed', Reviewer.DID, {
                             trade_id: nonce,
                             reviewer_did: Reviewer.DID,

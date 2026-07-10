@@ -18,8 +18,12 @@ import { NousRegistry } from '../../src/registry/registry.js';
 import { EconomyManager } from '../../src/economy/config.js';
 import { SpatialMap } from '../../src/space/map.js';
 import { NousRunner } from '../../src/integration/nous-runner.js';
+import { NousAccountStore } from '../../src/economy/nous-account-store.js';
 import { Reviewer } from '../../src/review/index.js';
 import { VALID_REVIEW_FAILURE_CODES, type ReviewFailureCode } from '../../src/review/types.js';
+import { makeAccountsPool, type AccountsPool } from '../helpers/accounts-pool.js';
+import type { CivicDidStore } from '../../src/civic-registry/civic-did-store.js';
+import type { CivicDidRecord } from '../../src/civic-registry/types.js';
 import type {
     BrainAction,
     IBrainBridge,
@@ -30,7 +34,21 @@ import type {
 
 const BUYER_DID = 'did:noesis:alpha';
 const SELLER_DID = 'did:noesis:beta';
+// Naturalized civic-DIDs (nous_accounts keying, Phase 62.6-04 D-13).
+const BUYER_CIVIC = 'did:noesis:civic-alpha';
+const SELLER_CIVIC = 'did:noesis:civic-beta';
+const GRID = 'genesis';
 const VALID_TELOS = 'a'.repeat(64);
+
+/** Stub CivicDidStore: existence-DID → civic-DID map; unmapped resolves null (pre-citizen). */
+function makeCivicStore(map: Record<string, string>): CivicDidStore {
+    return {
+        getByExistenceDid: async (_grid: string, existenceDid: string): Promise<CivicDidRecord | null> => {
+            const civicDid = map[existenceDid];
+            return civicDid ? ({ civicDid, existenceDid, gridName: GRID } as CivicDidRecord) : null;
+        },
+    } as unknown as CivicDidStore;
+}
 
 function mkBridge(actions: BrainAction[]): IBrainBridge {
     let delivered = false;
@@ -50,6 +68,9 @@ describe('REV-02 integration: reviewer fail path — no trade.settled emitted', 
     let space: SpatialMap;
     let economy: EconomyManager;
     let reviewer: Reviewer;
+    let accounts: AccountsPool;
+    let accountStore: NousAccountStore;
+    let civicStore: CivicDidStore;
 
     beforeEach(() => {
         Reviewer.resetForTesting();
@@ -61,7 +82,6 @@ describe('REV-02 integration: reviewer fail path — no trade.settled emitted', 
             id: 'agora', name: 'Agora', description: 'x',
             regionType: 'public', capacity: 10, properties: {},
         });
-        // BUYER starts with 5 Ousia — exercises insufficient_balance branch naturally.
         registry.spawn(
             { name: 'Alpha', did: BUYER_DID, publicKey: 'pk-a', region: 'agora' },
             'test.noesis', 0, 5,
@@ -71,6 +91,15 @@ describe('REV-02 integration: reviewer fail path — no trade.settled emitted', 
             'test.noesis', 0, 50,
         );
         reviewer = new Reviewer(audit, registry);
+        // Phase 62.6-04: the reviewer balance gate now reads nous_accounts (resolved civic-DID).
+        // BUYER_CIVIC starts with 5 wei — exercises insufficient_balance naturally; the
+        // non-balance fail cases use amount 1 (5 >= 1 passes the balance check, the intended
+        // check fails first).
+        accounts = makeAccountsPool();
+        accountStore = new NousAccountStore(accounts.pool);
+        accounts.seedAccount(BUYER_CIVIC, 5n);
+        accounts.seedAccount(SELLER_CIVIC, 50n);
+        civicStore = makeCivicStore({ [BUYER_DID]: BUYER_CIVIC, [SELLER_DID]: SELLER_CIVIC });
     });
 
     // One case per ReviewFailureCode member — must stay in 1:1 sync with VALID_REVIEW_FAILURE_CODES.
@@ -112,6 +141,7 @@ describe('REV-02 integration: reviewer fail path — no trade.settled emitted', 
                 nousDid: BUYER_DID, nousName: 'Alpha',
                 bridge: mkBridge([action]),
                 space, audit, registry, economy, reviewer,
+                accountStore, civicDidStore: civicStore, gridName: GRID,
             });
 
             await runner.tick(1, 0);
@@ -140,9 +170,10 @@ describe('REV-02 integration: reviewer fail path — no trade.settled emitted', 
             expect(VALID_REVIEW_FAILURE_CODES.has(rp['failure_reason'] as ReviewFailureCode)).toBe(true);
             expect(VALID_REVIEW_FAILURE_CODES.has(rp['failed_check'] as ReviewFailureCode)).toBe(true);
 
-            // Balances unchanged on reviewer fail.
-            expect(registry.get(BUYER_DID)?.balance_wei).toBe(5);
-            expect(registry.get(SELLER_DID)?.balance_wei).toBe(50);
+            // Balances unchanged on reviewer fail — asserted on nous_accounts (the ledger
+            // the settle transfer moves, Phase 62.6-04). No reviewer-fail case moves money.
+            expect(accounts.balanceOf(BUYER_CIVIC)).toBe(5n);
+            expect(accounts.balanceOf(SELLER_CIVIC)).toBe(50n);
         },
     );
 
