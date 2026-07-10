@@ -29,7 +29,7 @@
  *      builder_civic_did_hash, parcel_id, tick} on the trail (no raw DID, no recipe body).
  *   2b. NEGATIVE — a builder who does NOT hold the skill → skill_not_held; insufficient Ousia → 402.
  *   3. CO-BUILD — decompose a recipe into the arrangement DAG; two workers claim+complete sub-tasks.
- *      FUNDED → transferWei; UNFUNDED → a Phase 60 IOU (never free). Attribution DAG-weighted.
+ *      FUNDED → settleWei (NousAccountStore.transfer); UNFUNDED → a Phase 60 IOU (never free). Attribution DAG-weighted.
  *      zoning.cowork_session per session (participants_hash only) + ONE skill.blueprint_executed
  *      on full completion.
  *   4. TEACH — a skill taught inside a workshop diffuses to the PRESENT Nous (not the absent one,
@@ -39,12 +39,13 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
-import type { Pool, ResultSetHeader } from 'mysql2/promise';
+import type { ResultSetHeader } from 'mysql2/promise';
 import { createHash } from 'node:crypto';
 import { AuditChain } from '../../src/audit/chain.js';
 import { ParcelRegistry } from '../../src/civic/parcel-registry.js';
 import { ParcelStore, buildGenesisCoreParcels } from '../../src/civic/parcel-store.js';
 import { NousRegistry } from '../../src/registry/registry.js';
+import { makeAccountsPool } from '../helpers/accounts-pool.js';
 import { registerCivicParcelRoutes } from '../../src/api/routes/civic-parcels.js';
 import { appendSkillTaught } from '../../src/skills/appendSkillTaught.js';
 import {
@@ -105,19 +106,12 @@ function homeRecipe(): BlueprintRecipe {
     };
 }
 
-/** A mock mysql2 Pool — UPDATE/INSERT report affectedRows; SELECT returns nothing. */
-function mockPool(): { pool: Pool } {
-    const pool = {
-        query: async () => [{ affectedRows: 1 } as ResultSetHeader, []],
-    } as unknown as Pool;
-    return { pool };
-}
-
 interface E2EApp {
     app: FastifyInstance;
     audit: AuditChain;
     parcelRegistry: ParcelRegistry;
     nousRegistry: NousRegistry;
+    accts: ReturnType<typeof makeAccountsPool>;
     setCtx: (ctx: DIDContext | null) => void;
     ready: Promise<void>;
 }
@@ -139,14 +133,19 @@ function buildGenesisApp(): E2EApp {
     nousRegistry.spawn({ name: 'carol', did: WORKER_B, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 10_000);
     nousRegistry.spawn({ name: 'erin', did: NOSKILL, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 10_000);
 
-    const { pool } = mockPool();
-    const store = new ParcelStore(pool, 'genesis');
+    // Phase 62.5-02: the build-from-blueprint HTTP route charges material_cost on the unified
+    // in-DB ledger (nous_accounts → civic_treasury). The direct-executor runBuild() calls below
+    // route their material charge to the (unmigrated) NousRegistry via the chargeMaterial seam,
+    // keeping their Ledger-B balance assertions valid; the accts pool backs the HTTP route.
+    const accts = makeAccountsPool({ otherQuery: () => [{ affectedRows: 1 } as ResultSetHeader, []] });
+    const store = new ParcelStore(accts.pool, 'genesis');
 
     const services: Partial<GridServices> = {
         audit,
         gridName: 'genesis',
         currentTick: () => TICK,
         registry: nousRegistry,
+        pool: accts.pool,
         parcels: { registry: parcelRegistry, store },
     };
 
@@ -156,7 +155,7 @@ function buildGenesisApp(): E2EApp {
     registerCivicParcelRoutes(app, services as GridServices);
 
     return {
-        app, audit, parcelRegistry, nousRegistry,
+        app, audit, parcelRegistry, nousRegistry, accts,
         setCtx: (ctx) => { currentCtx = ctx; },
         ready: app.ready().then(() => {}),
     };
@@ -169,7 +168,9 @@ const POST = (app: FastifyInstance, url: string, payload?: unknown) =>
 function runBuild(env: E2EApp, addr: string, builderDid: string): ReturnType<typeof buildFromBlueprint> {
     return buildFromBlueprint(addr, builderDid, BLUEPRINT_HASH, TICK, {
         registry: env.parcelRegistry,
-        transferWei: (from, to, amount) => env.nousRegistry.transferWei(from, to, amount),
+        // The direct-executor path keeps the material charge on the (unmigrated) NousRegistry so
+        // this suite's Ledger-B balance assertions stay valid; the HTTP route uses nous_accounts.
+        chargeMaterial: async (from, amount) => ({ success: env.nousRegistry.transferWei(from, TREASURY_DID, amount).success }),
         audit: env.audit,
         coBuildStaffOf,
         emitBlueprintExecuted: (payload) => { appendSkillBlueprintExecuted(env.audit, payload); },
@@ -221,7 +222,7 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
         const ownerBefore = nousRegistry.get(OWNER)!.balance_wei;
         const treasuryBefore = nousRegistry.get(TREASURY_DID)!.balance_wei;
 
-        const structure = runBuild(env, PARCEL, OWNER);
+        const structure = await runBuild(env, PARCEL, OWNER);
         expect(structure).toBeDefined();
 
         // The material cost moved builder → treasury (Ousia debit).
@@ -248,7 +249,7 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
         const PARCEL2 = 'genesis:residential:0002';
         parcelRegistry.upsert({ ...parcelRegistry.get(PARCEL2)!, ownerDid: NOSKILL });
         expect(builderHoldsSkill(BLUEPRINT_HASH, NOSKILL, { audit })).toBe(false);
-        expect(() => runBuild(env, PARCEL2, NOSKILL)).toThrow(/skill_not_held/);
+        await expect(runBuild(env, PARCEL2, NOSKILL)).rejects.toThrow(/skill_not_held/);
         // The failed build emitted no skill.blueprint_executed (still exactly one).
         expect(audit.all().filter((e) => e.eventType === 'skill.blueprint_executed')).toHaveLength(1);
 
@@ -264,7 +265,7 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
         parcelRegistry.upsert({ ...parcelRegistry.get(PARCEL3)!, ownerDid: POOR });
         expect(builderHoldsSkill(BLUEPRINT_HASH, POOR, { audit })).toBe(true);
         // The route maps this thrown reason to 402 (civic-parcels.ts build-from-blueprint catch).
-        expect(() => runBuild(env, PARCEL3, POOR)).toThrow(/insufficient_funds/);
+        await expect(runBuild(env, PARCEL3, POOR)).rejects.toThrow(/insufficient_funds/);
 
         // ── 3. CO-BUILD — decompose the recipe DAG; two workers claim+complete sub-tasks. n1 is
         //        FUNDED (Ousia move); n2 (depends_on n1) is UNFUNDED (a Phase 60 IOU, never free).
@@ -275,12 +276,13 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
             parcel_id: WORKSHOP, blueprint_hash: BLUEPRINT_HASH, nodes, host_did: OWNER,
         });
 
-        // n1 FUNDED — WORKER_A claims + completes; Ousia moves host → worker (weight 2).
+        // n1 FUNDED — WORKER_A claims + completes; Ousia moves host → worker (weight 2) via the
+        // async settleWei seam (NousAccountStore.transfer in production, 62.6-03).
         let ousiaMoved = 0;
         claimSubTask(session, 'n1', WORKER_A);
-        const s1 = completeSubTask(session, 'n1', WORKER_A, {
+        const s1 = await completeSubTask(session, 'n1', WORKER_A, {
             funded: true, tick: TICK,
-            transferWei: (_from, _to, amount) => { ousiaMoved += amount; },
+            settleWei: async (_from, _to, amount) => { ousiaMoved += amount; },
         });
         expect(s1.settlement).toBe('wei');
         expect(s1.amount_wei).toBe(2);    // node weight 2
@@ -289,7 +291,7 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
 
         // n2 UNFUNDED — WORKER_B claims + completes; records a Phase 60 IOU (host owes worker).
         claimSubTask(session, 'n2', WORKER_B);
-        const s2 = completeSubTask(session, 'n2', WORKER_B, {
+        const s2 = await completeSubTask(session, 'n2', WORKER_B, {
             funded: false, tick: TICK,
             recordIou: (creditor, debtor, amt, ref, tick) => recordIou(creditor, debtor, amt, ref, tick),
         });
@@ -335,7 +337,7 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
             learner_did: WORKER_A, parent_hash: PARENT_HASH, skill_hash: BLUEPRINT_HASH,
             teacher_did: OWNER, tick: 2,
         });
-        runBuild(env, COBUILD_HOME, WORKER_A);
+        await runBuild(env, COBUILD_HOME, WORKER_A);
         const execsAfterCoBuild = audit.all().filter((e) => e.eventType === 'skill.blueprint_executed');
         expect(execsAfterCoBuild).toHaveLength(2); // the owner build + the co-build assembly
 
@@ -369,13 +371,13 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
 
         // ── 5. HUMAN — a did:civic:noesis:human:* attempting any build → rejected. Proven BOTH
         //        directly (the executor's human guard) AND through the real HTTP route (403). ──
-        expect(() => buildFromBlueprint(PARCEL, HUMAN, BLUEPRINT_HASH, TICK, {
+        await expect(buildFromBlueprint(PARCEL, HUMAN, BLUEPRINT_HASH, TICK, {
             registry: parcelRegistry,
-            transferWei: (from, to, amount) => nousRegistry.transferWei(from, to, amount),
+            chargeMaterial: async (from, amount) => ({ success: nousRegistry.transferWei(from, TREASURY_DID, amount).success }),
             audit,
             coBuildStaffOf,
             emitBlueprintExecuted: () => {},
-        })).toThrow(/builder_forbidden_human|human|not_authorized/i);
+        })).rejects.toThrow(/builder_forbidden_human|human|not_authorized/i);
 
         // A human Civic-DID presenting as a civic_member hits the route's defensive D-NH-07 guard
         // (humans_cannot_own_land, 403) — a human_visitor tier would 401 at the tier gate first.
@@ -445,8 +447,10 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
         const BUILDER_EXIST = 'did:noesis:zara';
         const HTTP_PARCEL = 'genesis:residential:0003';
 
-        // Fund the civic-DID and give it ownership of the parcel (the land/Ousia identity).
+        // Fund the civic-DID and give it ownership of the parcel (the land/Ousia identity). The
+        // HTTP build route charges material_cost on the unified ledger, so seed its nous_accounts.
         nousRegistry.spawn({ name: 'zara', did: BUILDER_CIVIC, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 10_000);
+        env.accts.seedAccount(BUILDER_CIVIC, 10_000);
         parcelRegistry.purchase(HTTP_PARCEL, BUILDER_CIVIC, 10_000);
 
         // The recipe lives Grid-side; the skill is attested under the EXISTENCE-DID (the form the

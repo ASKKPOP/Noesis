@@ -26,7 +26,11 @@ import { NousRegistry } from '../../src/registry/registry.js';
 import { EconomyManager } from '../../src/economy/config.js';
 import { SpatialMap } from '../../src/space/map.js';
 import { NousRunner } from '../../src/integration/nous-runner.js';
+import { NousAccountStore } from '../../src/economy/nous-account-store.js';
 import { Reviewer } from '../../src/review/index.js';
+import { makeAccountsPool } from '../helpers/accounts-pool.js';
+import type { CivicDidStore } from '../../src/civic-registry/civic-did-store.js';
+import type { CivicDidRecord } from '../../src/civic-registry/types.js';
 import type { AuditEntry } from '../../src/audit/types.js';
 import type {
     BrainAction,
@@ -38,7 +42,23 @@ import type {
 
 const BUYER_DID = 'did:noesis:alpha';
 const SELLER_DID = 'did:noesis:beta';
+// Naturalized civic-DIDs (nous_accounts keying, Phase 62.6-04 D-13). The account-store
+// deps are wired IDENTICALLY into both the reviewer-on and reviewer-off runs, so the ONLY
+// difference between the two runs remains the reviewer — preserving the zero-diff contract.
+const BUYER_CIVIC = 'did:noesis:civic-alpha';
+const SELLER_CIVIC = 'did:noesis:civic-beta';
+const GRID = 'genesis';
 const TELOS_HASH = 'a'.repeat(64);
+
+/** Stub CivicDidStore: existence-DID → civic-DID map; unmapped resolves null (pre-citizen). */
+function makeCivicStore(map: Record<string, string>): CivicDidStore {
+    return {
+        getByExistenceDid: async (_grid: string, existenceDid: string): Promise<CivicDidRecord | null> => {
+            const civicDid = map[existenceDid];
+            return civicDid ? ({ civicDid, existenceDid, gridName: GRID } as CivicDidRecord) : null;
+        },
+    } as unknown as CivicDidStore;
+}
 const FIXED_TIME = new Date('2026-01-01T00:00:00.000Z');
 const TICK_COUNT = 100;
 
@@ -123,6 +143,15 @@ async function runSim(withReviewer: boolean): Promise<AuditEntry[]> {
     const env = makeEnv();
     const reviewer = withReviewer ? new Reviewer(env.audit, env.registry) : undefined;
 
+    // Phase 62.6-04: the trade settle + reviewer balance read the unified nous_accounts
+    // ledger (resolved civic-DID). Seed the SAME accounts and wire the SAME store deps in
+    // BOTH runs so the reviewer remains the sole difference (zero-diff invariant).
+    const accounts = makeAccountsPool();
+    const accountStore = new NousAccountStore(accounts.pool);
+    accounts.seedAccount(BUYER_CIVIC, 100n);
+    accounts.seedAccount(SELLER_CIVIC, 50n);
+    const civicDidStore = makeCivicStore({ [BUYER_DID]: BUYER_CIVIC, [SELLER_DID]: SELLER_CIVIC });
+
     // Deterministic trade schedule: 5 pass-path trades at small amounts
     // (buyer has 100 balance_wei, 5*1=5 spent total → well within bounds).
     // Trades only fire on early ticks; remaining ticks are no-op brain actions.
@@ -142,6 +171,9 @@ async function runSim(withReviewer: boolean): Promise<AuditEntry[]> {
         audit: env.audit,
         registry: env.registry,
         economy: env.economy,
+        accountStore,
+        civicDidStore,
+        gridName: GRID,
         ...(reviewer ? { reviewer } : {}),
     });
 

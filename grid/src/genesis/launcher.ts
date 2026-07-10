@@ -461,7 +461,10 @@ export class GenesisLauncher {
                     },
                     this.gridDomain,
                     tick,
-                    this.economy.initialSupply,
+                    // ECON-01 / D-MONEY-01 (Phase 62.5-02): no birth faucet. Founding Nous are
+                    // born with 0 and fund via endowment / compute-labour / procurement like
+                    // every other citizen — money lives only in nous_accounts + civic_treasury.
+                    0,
                 );
 
                 // Place in spatial map
@@ -735,7 +738,8 @@ export class GenesisLauncher {
             { name, did, publicKey, region, humanOwner, personalitySeed },
             this.gridDomain,
             tick,
-            this.economy.initialSupply,
+            // ECON-01 / D-MONEY-01 (Phase 62.5-02): no birth faucet — spawn with 0.
+            0,
         );
 
         this.space.placeNous(record.did, record.region);

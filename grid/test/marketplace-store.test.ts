@@ -1,12 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import type { Pool, PoolConnection } from 'mysql2/promise';
 import { MarketplaceStore } from '../src/marketplace/marketplace-store.js';
+import { makeAccountsPool } from './helpers/accounts-pool.js';
 
 /**
  * Phase 44 Plan 02 — MarketplaceStore unit tests (MKT-01..05)
  *
- * Uses mock Pool (vi.fn()) — no live DB harness in this project.
- * All 10 methods tested. D-44-02 price guard, IRS FLOOR, acceptBid balance check verified.
+ * Phase 62.6-01: the money legs (acceptBid buyer-debit, settle seller-credit) now move on
+ * Ledger A (`nous_accounts` + `civic_treasury`). Those two describes assert *conservation* on
+ * the unified ledger via the `makeAccountsPool()` fake (buyer debited, seller credited, IRS fee
+ * in civic_treasury, totals conserved) — replacing the old hand-counted legacy-registry qCall
+ * mocks. The non-money methods keep the lightweight `makeMockPool` fixture.
  */
 
 function makeMockPool(responses: Array<[unknown[], unknown]> = []): Pool {
@@ -129,64 +133,31 @@ describe('marketplace store — placeBid (MKT-02)', () => {
     });
 });
 
-// ── acceptBid ────────────────────────────────────────────────────────────────
+// ── acceptBid — Ledger A buyer-debit (Phase 62.6-01) ──────────────────────────
 
-describe('marketplace store — acceptBid', () => {
-    it('throws insufficient_wei when buyer balance_wei < bid amount', async () => {
-        const bidRow = {
-            bid_id: 'bid-1', listing_id: 'lst-1', grid_name: 'genesis',
-            bidder_civic_did: 'did:buyer:1', offer_price_wei: '100', status: 'pending',
-            listing_seller: 'did:seller:1', listing_status: 'active',
-        };
-        const buyerRow = { balance_wei: '50' }; // balance too low
+describe('marketplace store — acceptBid (nous_accounts buyer-debit)', () => {
+    const bidRow = {
+        bid_id: 'bid-1', listing_id: 'lst-1', grid_name: 'genesis',
+        bidder_civic_did: 'did:buyer:1', offer_price_wei: '100', status: 'pending',
+        listing_seller: 'did:seller:1', listing_status: 'active',
+    };
 
-        let qCall = 0;
-        const mockConn = {
-            beginTransaction: vi.fn().mockResolvedValue(undefined),
-            rollback: vi.fn().mockResolvedValue(undefined),
-            release: vi.fn(),
-            query: vi.fn().mockImplementation(() => {
-                qCall++;
-                if (qCall === 1) return Promise.resolve([[bidRow], null]);
-                if (qCall === 2) return Promise.resolve([[buyerRow], null]);
-                return Promise.resolve([[{}], null]);
-            }),
-        } as unknown as PoolConnection;
+    /** Accounts-pool where the bid+listing lock SELECT resolves to bidRow; all other
+     *  non-money SQL (escrow INSERT, listing/bid status UPDATEs) is empty success. */
+    function acceptPool(seedBuyerWei: bigint | null) {
+        const ap = makeAccountsPool({
+            otherQuery: (sql) => {
+                if (/marketplace_bids/i.test(sql)) return [[bidRow], {}];
+                return [[], {}];
+            },
+        });
+        if (seedBuyerWei !== null) ap.seedAccount('did:buyer:1', seedBuyerWei);
+        return ap;
+    }
 
-        const pool = { getConnection: vi.fn().mockResolvedValue(mockConn) } as unknown as Pool;
-        const store = new MarketplaceStore(pool);
-
-        await expect(store.acceptBid({
-            listingId: 'lst-1', bidId: 'bid-1', gridName: 'genesis',
-            sellerCivicDid: 'did:seller:1', currentTick: 5,
-        })).rejects.toThrow('insufficient_wei');
-    });
-
-    it('returns escrowId + amounts when buyer has sufficient balance_wei', async () => {
-        const bidRow = {
-            bid_id: 'bid-1', listing_id: 'lst-1', grid_name: 'genesis',
-            bidder_civic_did: 'did:buyer:1', offer_price_wei: '100', status: 'pending',
-            listing_seller: 'did:seller:1', listing_status: 'active',
-        };
-        const buyerRow = { balance_wei: '500' }; // sufficient
-
-        let qCall = 0;
-        const mockConn = {
-            beginTransaction: vi.fn().mockResolvedValue(undefined),
-            commit: vi.fn().mockResolvedValue(undefined),
-            rollback: vi.fn().mockResolvedValue(undefined),
-            release: vi.fn(),
-            query: vi.fn().mockImplementation(() => {
-                qCall++;
-                if (qCall === 1) return Promise.resolve([[bidRow], null]);
-                if (qCall === 2) return Promise.resolve([[buyerRow], null]);
-                return Promise.resolve([[{}], null]);
-            }),
-        } as unknown as PoolConnection;
-
-        const pool = { getConnection: vi.fn().mockResolvedValue(mockConn) } as unknown as Pool;
-        const store = new MarketplaceStore(pool);
-
+    it('debits the buyer on nous_accounts (500 → 400) and returns the escrow', async () => {
+        const ap = acceptPool(500n);
+        const store = new MarketplaceStore(ap.pool);
         const result = await store.acceptBid({
             listingId: 'lst-1', bidId: 'bid-1', gridName: 'genesis',
             sellerCivicDid: 'did:seller:1', currentTick: 5,
@@ -195,6 +166,28 @@ describe('marketplace store — acceptBid', () => {
         expect(result.amountWei).toBe(100n);
         expect(result.buyerCivicDid).toBe('did:buyer:1');
         expect(result.sellerCivicDid).toBe('did:seller:1');
+        // Buyer debited 100 on the unified ledger.
+        expect(ap.balanceOf('did:buyer:1')).toBe(400n);
+    });
+
+    it('throws insufficient_wei and rolls back when the buyer is underfunded (50 < 100)', async () => {
+        const ap = acceptPool(50n);
+        const store = new MarketplaceStore(ap.pool);
+        await expect(store.acceptBid({
+            listingId: 'lst-1', bidId: 'bid-1', gridName: 'genesis',
+            sellerCivicDid: 'did:seller:1', currentTick: 5,
+        })).rejects.toThrow('insufficient_wei');
+        // Rolled back — no funds moved (escrow tx aborted).
+        expect(ap.balanceOf('did:buyer:1')).toBe(50n);
+    });
+
+    it('throws insufficient_wei when the buyer has no account row (absent → 0, was buyer_not_found)', async () => {
+        const ap = acceptPool(null);
+        const store = new MarketplaceStore(ap.pool);
+        await expect(store.acceptBid({
+            listingId: 'lst-1', bidId: 'bid-1', gridName: 'genesis',
+            sellerCivicDid: 'did:seller:1', currentTick: 5,
+        })).rejects.toThrow('insufficient_wei');
     });
 });
 
@@ -258,84 +251,73 @@ describe('marketplace store — confirmSettlement (MKT-03)', () => {
     });
 });
 
-// ── settle (MKT-03) ──────────────────────────────────────────────────────────
+// ── settle — Ledger A seller-credit + civic_treasury IRS fee (Phase 62.6-01) ──
 
-describe('marketplace store — settle (MKT-03 IRS fee)', () => {
-    function makeSettleMockConn(escrowRow: object): PoolConnection {
-        const treasuryRow = { balance_wei: '2' };
-        let qCall = 0;
+describe('marketplace store — settle (nous_accounts credit + civic_treasury conservation)', () => {
+    function escrowRow(amountWei: string) {
         return {
-            beginTransaction: vi.fn().mockResolvedValue(undefined),
-            commit: vi.fn().mockResolvedValue(undefined),
-            rollback: vi.fn().mockResolvedValue(undefined),
-            release: vi.fn(),
-            query: vi.fn().mockImplementation(() => {
-                qCall++;
-                if (qCall === 1) return Promise.resolve([[escrowRow], null]); // SELECT escrow FOR UPDATE
-                if (qCall === 2) return Promise.resolve([[{}], null]);         // UPDATE nous_registry (seller credit)
-                if (qCall === 3) return Promise.resolve([[{}], null]);         // INSERT civic_treasury upsert
-                if (qCall === 4) return Promise.resolve([[{}], null]);         // UPDATE escrow status
-                if (qCall === 5) return Promise.resolve([[{}], null]);         // UPDATE listing status
-                if (qCall === 6) return Promise.resolve([[treasuryRow], null]); // SELECT treasury balance
-                return Promise.resolve([[{}], null]);
-            }),
-        } as unknown as PoolConnection;
-    }
-
-    it('computes irsFee = FLOOR(amount * rate) for 100 * 0.02 = 2', async () => {
-        const escrowRow = {
             escrow_id: 'esc-1', listing_id: 'lst-1', bid_id: 'bid-1', grid_name: 'genesis',
             buyer_civic_did: 'did:buyer:1', seller_civic_did: 'did:seller:1',
-            amount_wei: '100', escrow_status: 'held',
+            amount_wei: amountWei, escrow_status: 'held',
             buyer_confirmed: 1, seller_confirmed: 1,
             seller_business_did: 'did:biz:1', accepted_at_tick: 1, settled_at_tick: null,
         };
+    }
 
-        const mockConn = makeSettleMockConn(escrowRow);
-        const pool = { getConnection: vi.fn().mockResolvedValue(mockConn) } as unknown as Pool;
-        const store = new MarketplaceStore(pool);
+    /** Accounts-pool where the escrow lock SELECT resolves to the held escrow. */
+    function settlePool(amountWei: string) {
+        return makeAccountsPool({
+            otherQuery: (sql) => {
+                if (/marketplace_escrow/i.test(sql) && /FOR UPDATE/i.test(sql)) return [[escrowRow(amountWei)], {}];
+                return [[], {}];
+            },
+        });
+    }
+
+    it('credits the seller sellerPayout on nous_accounts and the IRS fee to civic_treasury (100 * 0.02 = 2)', async () => {
+        const ap = settlePool('100');
+        ap.seedAccount('did:seller:1', 0n);
+        ap.seedTreasury(0n);
+        const store = new MarketplaceStore(ap.pool);
 
         const result = await store.settle({ gridName: 'genesis', listingId: 'lst-1', irsFeeRate: 0.02, currentTick: 10 });
         expect(result.irsFee).toBe(2n);
         expect(result.sellerPayout).toBe(98n);
+        // Ledger A conservation: seller gets 98, treasury gets 2, total == price 100.
+        expect(ap.balanceOf('did:seller:1')).toBe(98n);
+        expect(ap.treasuryOf()).toBe(2n);
+        expect(ap.balanceOf('did:seller:1') + ap.treasuryOf()).toBe(100n);
+        expect(result.totalTreasuryAfter).toBe(2n);
     });
 
-    it('computes irsFee = FLOOR(101 * 0.02) = 2 (not 2.02 — floor)', async () => {
-        const escrowRow = {
-            escrow_id: 'esc-1', listing_id: 'lst-1', bid_id: 'bid-1', grid_name: 'genesis',
-            buyer_civic_did: 'did:buyer:1', seller_civic_did: 'did:seller:1',
-            amount_wei: '101', escrow_status: 'held',
-            buyer_confirmed: 1, seller_confirmed: 1,
-            seller_business_did: 'did:biz:1', accepted_at_tick: 1, settled_at_tick: null,
-        };
-
-        const mockConn = makeSettleMockConn(escrowRow);
-        const pool = { getConnection: vi.fn().mockResolvedValue(mockConn) } as unknown as Pool;
-        const store = new MarketplaceStore(pool);
+    it('floors the IRS fee: FLOOR(101 * 0.02) = 2, seller credited 99', async () => {
+        const ap = settlePool('101');
+        ap.seedAccount('did:seller:1', 0n);
+        ap.seedTreasury(0n);
+        const store = new MarketplaceStore(ap.pool);
 
         const result = await store.settle({ gridName: 'genesis', listingId: 'lst-1', irsFeeRate: 0.02, currentTick: 10 });
         expect(result.irsFee).toBe(2n); // FLOOR(2.02) = 2
         expect(result.sellerPayout).toBe(99n);
+        expect(ap.balanceOf('did:seller:1')).toBe(99n);
+        expect(ap.treasuryOf()).toBe(2n);
     });
 
-    it('returns seller/buyer DIDs and priceWei', async () => {
-        const escrowRow = {
-            escrow_id: 'esc-1', listing_id: 'lst-1', bid_id: 'bid-1', grid_name: 'genesis',
-            buyer_civic_did: 'did:buyer:1', seller_civic_did: 'did:seller:1',
-            amount_wei: '200', escrow_status: 'held',
-            buyer_confirmed: 1, seller_confirmed: 1,
-            seller_business_did: 'did:biz:1', accepted_at_tick: 1, settled_at_tick: null,
-        };
-
-        const mockConn = makeSettleMockConn(escrowRow);
-        const pool = { getConnection: vi.fn().mockResolvedValue(mockConn) } as unknown as Pool;
-        const store = new MarketplaceStore(pool);
+    it('adds the fee to a pre-existing treasury balance and reports totalTreasuryAfter', async () => {
+        const ap = settlePool('200');
+        ap.seedAccount('did:seller:1', 0n);
+        ap.seedTreasury(5n);
+        const store = new MarketplaceStore(ap.pool);
 
         const result = await store.settle({ gridName: 'genesis', listingId: 'lst-1', irsFeeRate: 0.02, currentTick: 10 });
+        expect(result.irsFee).toBe(4n); // FLOOR(200 * 0.02)
+        expect(result.sellerPayout).toBe(196n);
+        expect(ap.treasuryOf()).toBe(9n); // 5 + 4
+        expect(result.totalTreasuryAfter).toBe(9n);
         expect(result.sellerCivicDid).toBe('did:seller:1');
         expect(result.buyerCivicDid).toBe('did:buyer:1');
-        expect(result.priceWei).toBe(200n);
         expect(result.sellerBusinessDid).toBe('did:biz:1');
+        expect(result.priceWei).toBe(200n);
     });
 });
 

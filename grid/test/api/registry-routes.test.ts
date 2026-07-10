@@ -414,3 +414,47 @@ describe('POST /api/v1/registry/civic-did/request — 503 when store absent', ()
         expect(res.json()).toMatchObject({ error: 'civic_registry_unavailable' });
     });
 });
+
+describe('POST /api/v1/registry/civic-did/request — Phase 62.5-01: seeds the citizen Ledger-A account', () => {
+    it('fires ensureAccount (INSERT INTO nous_accounts) for the new civic-DID on issuance', async () => {
+        const queries: string[] = [];
+        const pool = {
+            query: async (sql: string) => {
+                queries.push(sql);
+                if (/status\s*=\s*'approved'/.test(sql)) return [[{ '1': 1 }], {}];
+                return [[], {}];
+            },
+        } as unknown as import('mysql2/promise').Pool;
+
+        const app = buildServer({
+            clock: new WorldClock({ tickRateMs: 100_000 }),
+            space: new SpatialMap(),
+            logos: new LogosEngine(),
+            audit: new AuditChain(),
+            gridName: GRID_NAME,
+            registry: new NousRegistry(),
+            civicDidStore: makeMockCivicStore() as unknown as import('../../src/civic-registry/civic-did-store.js').CivicDidStore,
+            pool,
+        });
+        await app.ready();
+
+        const keyPair = await generateKeyPair('ES256');
+        const signature = await new CompactSign(new TextEncoder().encode(CIVIC_OATH))
+            .setProtectedHeader({ alg: 'ES256' })
+            .sign(keyPair.privateKey);
+        const res = await app.inject({
+            method: 'POST',
+            url: '/api/v1/registry/civic-did/request',
+            payload: {
+                existence_did: EXISTENCE_DID,
+                civic_oath: CIVIC_OATH,
+                existence_public_key_jwk: await exportJWK(keyPair.publicKey),
+                existence_key_signature: signature,
+            },
+        });
+        expect(res.statusCode).toBe(201);
+        // The split-ledger fix: the new citizen gets a nous_accounts (Ledger A) row.
+        expect(queries.some(q => /insert\s+ignore\s+into\s+nous_accounts/i.test(q))).toBe(true);
+        await app.close();
+    });
+});

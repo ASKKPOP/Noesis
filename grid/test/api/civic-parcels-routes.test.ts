@@ -18,6 +18,7 @@ import { ParcelRegistry } from '../../src/civic/parcel-registry.js';
 import { NousRegistry } from '../../src/registry/registry.js';
 import { registerCivicParcelRoutes } from '../../src/api/routes/civic-parcels.js';
 import { TREASURY_DID } from '../../src/api/routes/registry.js';
+import { makeAccountsPool, type AccountsPool } from '../helpers/accounts-pool.js';
 import type { GridServices } from '../../src/api/server.js';
 import type { DIDContext } from '../../src/api/preHandlers/types.js';
 import type { ParcelStore } from '../../src/civic/parcel-store.js';
@@ -47,6 +48,7 @@ function buildApp(opts: AppOpts = {}): {
     audit: AuditChain;
     parcelRegistry: ParcelRegistry;
     nousRegistry: NousRegistry;
+    accts: AccountsPool;
     store: { persistPurchase: ReturnType<typeof vi.fn>; persistBuild: ReturnType<typeof vi.fn>; persistEntryPolicy: ReturnType<typeof vi.fn> };
     appReady: Promise<void>;
 } {
@@ -56,18 +58,19 @@ function buildApp(opts: AppOpts = {}): {
     const parcelRegistry = new ParcelRegistry('genesis');
     parcelRegistry.seedZone({ zoneId: 'residential', count: 4, priceWei: 400, ring: 3 });
 
-    // Real NousRegistry — funds registry. Treasury must exist for transferWei.
+    // Phase 62.5-02: land is bought from the unified in-DB ledger (nous_accounts →
+    // civic_treasury), not the in-memory NousRegistry. Seed the buyer's ledger account;
+    // an unfunded buyer (noBuyer) simply fails affordability (402), not buyer_not_found.
+    const accts = makeAccountsPool();
+    if (!opts.noBuyer) accts.seedAccount(NOUS_DID, opts.buyerWei ?? 10_000);
+
+    // A NousRegistry is still required by requireCivicWriter (503 guard); it no longer
+    // holds money for land. Treasury kept for parity with the live registry shape.
     const nousRegistry = new NousRegistry();
     nousRegistry.spawn(
         { name: 'treasury', did: TREASURY_DID, publicKey: 'pk', region: 'r0' },
         'genesis.local', 0, 0,
     );
-    if (!opts.noBuyer) {
-        nousRegistry.spawn(
-            { name: 'alice', did: NOUS_DID, publicKey: 'pk', region: 'r0' },
-            'genesis.local', 0, opts.buyerWei ?? 10_000,
-        );
-    }
 
     const store = {
         persistPurchase: vi.fn(async () => {}),
@@ -80,6 +83,7 @@ function buildApp(opts: AppOpts = {}): {
         gridName: 'genesis',
         currentTick: () => 100,
         registry: nousRegistry,
+        pool: accts.pool,
         parcels: {
             registry: parcelRegistry,
             store: store as unknown as ParcelStore,
@@ -91,7 +95,7 @@ function buildApp(opts: AppOpts = {}): {
         app.addHook('onRequest', async (req) => { req.didContext = opts.ctx; });
     }
     registerCivicParcelRoutes(app, services as GridServices);
-    return { app, audit, parcelRegistry, nousRegistry, store, appReady: app.ready().then(() => {}) };
+    return { app, audit, parcelRegistry, nousRegistry, accts, store, appReady: app.ready().then(() => {}) };
 }
 
 const ADDR = 'genesis:residential:0001';
@@ -154,16 +158,17 @@ describe('civic-parcels routes — funds + failure codes (R-58-08)', () => {
         await app.close();
     });
 
-    it('a successful purchase moves funds buyer → TREASURY_DID then emits events 82 + 83', async () => {
-        const { app, appReady, audit, nousRegistry, store } = buildApp({ ctx: nousCtx() });
+    it('a successful purchase moves funds buyer → civic_treasury then emits events 82 + 83', async () => {
+        const { app, appReady, audit, accts, store } = buildApp({ ctx: nousCtx() });
         await appReady;
         const appendSpy = vi.spyOn(audit, 'append');
         const res = await app.inject({ method: 'POST', url: `/api/v1/civic/parcels/${ADDR}/purchase` });
         expect(res.statusCode).toBe(201);
 
-        // Funds moved on the NOUS registry (not the parcel registry).
-        expect(nousRegistry.get(NOUS_DID)?.balance_wei).toBe(10_000 - 400);
-        expect(nousRegistry.get(TREASURY_DID)?.balance_wei).toBe(400);
+        // Funds moved on the unified in-DB ledger (nous_accounts → civic_treasury), not the
+        // parcel registry — and conserved (buyer debited exactly the price, treasury credited).
+        expect(accts.balanceOf(NOUS_DID)).toBe(BigInt(10_000 - 400));
+        expect(accts.treasuryOf()).toBe(400n);
         expect(store.persistPurchase).toHaveBeenCalledOnce();
 
         const purchased = appendSpy.mock.calls.find((c) => c[0] === 'zoning.parcel_purchased');

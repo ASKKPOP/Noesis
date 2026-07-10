@@ -1,25 +1,36 @@
 /**
  * Phase 37b Type B Registry (Plan 1) — α charter + β sponsor routes.
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
-import type { Pool, RowDataPacket } from 'mysql2/promise';
+import type { RowDataPacket } from 'mysql2/promise';
 import { registerRegistryTypeBRoutes } from '../../src/api/routes/registry-type-b.js';
+import { makeAccountsPool } from '../helpers/accounts-pool.js';
 import type { GridServices } from '../../src/api/server.js';
 import type { DIDContext } from '../../src/api/preHandlers/types.js';
 import { AuditChain } from '../../src/audit/chain.js';
 
+const SPONSOR = 'did:civic:noesis:founder';
+
+// Phase 62.5-02: the refundable bond is charged/refunded on the unified in-DB ledger
+// (sponsor ⇄ civic_treasury). `transferOk` now means "the sponsor/treasury are funded":
+// true → seed the sponsor account + treasury generously (bond charge & refund succeed);
+// false → leave the sponsor unfunded so the bond charge fails (402). The type-b store's
+// own queries still resolve via otherQuery returning the caller-supplied `rows`.
 function makeApp(rows: unknown[], ctx: DIDContext | null, transferOk = true, tickVal = 999999): FastifyInstance {
-    const pool = { query: vi.fn().mockResolvedValue([rows as RowDataPacket[], {}]) } as unknown as Pool;
-    const registry = { transferWei: vi.fn().mockReturnValue(transferOk ? { success: true } : { success: false, error: 'insufficient' }) };
-    const services = { gridName: 'genesis', currentTick: () => tickVal, pool, audit: new AuditChain(), registry } as unknown as GridServices;
+    const accts = makeAccountsPool({ otherQuery: () => [rows as RowDataPacket[], {}] });
+    if (transferOk) {
+        accts.seedAccount(SPONSOR, 1_000_000);
+        accts.seedTreasury(1_000_000);
+    }
+    const services = { gridName: 'genesis', currentTick: () => tickVal, pool: accts.pool, audit: new AuditChain() } as unknown as GridServices;
     const a = Fastify({ logger: false });
     a.addHook('onRequest', async (req) => { req.didContext = ctx ?? undefined; });
     registerRegistryTypeBRoutes(a, services);
     return a;
 }
 const GOV: DIDContext = { did: 'did:gov:noesis:session', tier: 'government' };
-const CIVIC: DIDContext = { did: 'did:civic:noesis:founder', tier: 'civic_member' };
+const CIVIC: DIDContext = { did: SPONSOR, tier: 'civic_member' };
 
 describe('Polis-α /charter', () => {
     it('201 files a charter (Foundation)', async () => {

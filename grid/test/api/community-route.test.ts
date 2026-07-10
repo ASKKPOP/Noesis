@@ -1,11 +1,12 @@
 /**
  * Phase 49 Communities v3 (Plan 1) — found + charter + join routes.
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
-import type { Pool, RowDataPacket } from 'mysql2/promise';
+import type { RowDataPacket } from 'mysql2/promise';
 import { AuditChain } from '../../src/audit/chain.js';
 import { registerCommunityRoutes } from '../../src/api/routes/community.js';
+import { makeAccountsPool } from '../helpers/accounts-pool.js';
 import type { GridServices } from '../../src/api/server.js';
 import type { DIDContext } from '../../src/api/preHandlers/types.js';
 import { FOUND_WEI_COST } from '../../src/community/types.js';
@@ -15,15 +16,15 @@ const aliceCtx = (): DIDContext => ({ did: ALICE, tier: 'civic_member' });
 const CID = '22222222-2222-4222-8222-222222222222';
 const CHARTER = { membership: 'open', subgovernance: 'founder_led', conduct_rules: 'be kind', exit_terms: 'leave anytime' };
 
-/** transferWei mock: ok=true → success, ok=false → insufficient. */
+/**
+ * Phase 62.5-02: the Bios sybil cost is charged on the unified in-DB ledger (nous_accounts →
+ * civic_treasury). The stateful fake accounts pool tracks the balance; `otherQuery` returns
+ * `opts.rows` for the community-store SELECT/INSERTs. biosOk:false leaves ALICE unfunded (→ 402).
+ */
 function app(opts: { ctx?: DIDContext | null; rows?: unknown[]; biosOk?: boolean }): FastifyInstance {
-    const conn = { beginTransaction: vi.fn(), query: vi.fn().mockResolvedValue([[], {}]), commit: vi.fn(), rollback: vi.fn(), release: vi.fn() };
-    const pool = { query: vi.fn().mockResolvedValue([(opts.rows ?? []) as RowDataPacket[], {}]), getConnection: vi.fn(async () => conn) } as unknown as Pool;
-    const registry = {
-        get: vi.fn(() => ({ balance_wei: FOUND_WEI_COST })),
-        transferWei: vi.fn(() => (opts.biosOk === false ? { success: false, error: 'insufficient' } : { success: true, fromBalance: 0, toBalance: 0 })),
-    };
-    const services = { gridName: 'genesis', currentTick: () => 5, pool, audit: new AuditChain(), registry } as unknown as GridServices;
+    const accts = makeAccountsPool({ otherQuery: () => [(opts.rows ?? []) as RowDataPacket[], {}] });
+    if (opts.biosOk !== false) accts.seedAccount(ALICE, FOUND_WEI_COST * 10); // covers found + any join fee
+    const services = { gridName: 'genesis', currentTick: () => 5, pool: accts.pool, audit: new AuditChain() } as unknown as GridServices;
     const a = Fastify({ logger: false });
     if (opts.ctx !== undefined) a.addHook('onRequest', async (req) => { req.didContext = opts.ctx ?? undefined; });
     registerCommunityRoutes(a, services);

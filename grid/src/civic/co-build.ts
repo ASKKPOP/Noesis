@@ -5,8 +5,9 @@
  * A build decomposes into atomic sub-tasks: the recipe `arrangement` is a DAG, each node =
  * one or more catalog objects + dependency edges + a weight. A co-build session reuses the
  * Phase 60 co-work board (cowork.ts postTask/claimTask) — each claimed sub-task is a board
- * task carrying pay. Completion ALWAYS settles (D-NH-06): Ousia via transferWei when funded,
- * else a Phase 60 mutual-credit IOU (credit-ledger.recordIou) — NEVER free; a sub-task that
+ * task carrying pay. Completion ALWAYS settles (D-NH-06): Ousia via settleWei (NousAccountStore
+ * .transfer) when funded, else a Phase 60 mutual-credit IOU (credit-ledger.recordIou; an
+ * underfunded funded-host also falls back to an IOU) — NEVER free; a sub-task that
  * would pay NOTHING throws `cobuild_must_pay`.
  *
  * Attribution is DAG-WEIGHTED (A5 contribution split): a participant's share =
@@ -51,8 +52,12 @@ export interface CoBuildDeps {
     /** Explicit pay override; defaults to the node weight. A pay of 0 throws cobuild_must_pay. */
     pay?: number;
     tick?: number;
-    /** Move Ousia host → worker (registry.transferWei). Defaults to a no-op spy seam. */
-    transferWei?: (from: string, to: string, amount: number) => void;
+    /**
+     * Move Ousia host → worker via NousAccountStore.transfer (Nous→Nous, one atomic
+     * transaction on nous_accounts). Defaults to a no-op async seam. An underfunded host
+     * throws `insufficient_balance`, caught → IOU fallback (D-NH-06). (Phase 62.6-03.)
+     */
+    settleWei?: (fromCivic: string, toCivic: string, amountWei: number) => Promise<void>;
     /** Record the IOU when unfunded (credit-ledger.recordIou). Defaults to the real ledger. */
     recordIou?: (creditor: string, debtor: string, amount: number, reasonRef: string, tick: number) => void;
 }
@@ -143,21 +148,27 @@ export function claimSubTask(
 }
 
 /**
- * Complete a sub-task. **ALWAYS settles (D-NH-06):** transferWei(host → worker) when funded,
- * else recordIou(worker=creditor, host=debtor, amount, session_id, tick). A completion that
+ * Complete a sub-task. **ALWAYS settles (D-NH-06):** settleWei(host → worker) when funded
+ * (an underfunded host falls back to an IOU), else recordIou(worker=creditor, host=debtor,
+ * amount, session_id, tick). A completion that
  * would pay NOTHING throws `cobuild_must_pay` (never free). Rejects completing a node whose
  * `depends_on` are unmet (dependency edges respected). Marks the node completed + credits the
  * worker for the node weight (attributionShare).
  */
-export function completeSubTask(
+export async function completeSubTask(
     session: CoBuildSession,
     node_id: string,
     workerDid: string,
     deps: CoBuildDeps = {},
-): SubTaskSettlement {
+): Promise<SubTaskSettlement> {
     const node = nodeOf(session, node_id);
     if (!depsMet(session, node)) {
         throw new Error(`cobuild_deps_unmet: ${node_id} depends_on ${JSON.stringify(node.depends_on)} not yet completed`);
+    }
+    // WR-02 (double-pay guard): a node that already completed cannot settle again — a repeat
+    // or concurrent completion throws instead of re-running the host→worker money move.
+    if (session.completed.has(node_id)) {
+        throw new Error(`cobuild_already_completed: ${node_id}`);
     }
     const amount = deps.pay ?? node.weight;
     // D-NH-06: ALWAYS settle — a pay-nothing completion is forbidden (never free).
@@ -166,10 +177,24 @@ export function completeSubTask(
     }
     const tick = deps.tick ?? 0;
     let settlement: 'wei' | 'iou';
-    if (deps.funded) {
-        // Ousia-moving settlement rides the existing transfer path (host → worker).
-        (deps.transferWei ?? (() => {}))(session.host_did, workerDid, amount);
+    if (session.host_did === workerDid) {
+        // WR-01: host is also the worker — paying yourself moves no money and cannot create
+        // an IOU (you can't owe yourself). Settle as a no-op (settled, nothing owed).
         settlement = 'wei';
+    } else if (deps.funded) {
+        // Ousia-moving settlement rides the Nous→Nous account transfer (host → worker).
+        try {
+            await (deps.settleWei ?? (async () => {}))(session.host_did, workerDid, amount);
+            settlement = 'wei';
+        } catch (e) {
+            if (e instanceof Error && e.message === 'insufficient_balance') {
+                // D-NH-06 — never a silent no-pay: an underfunded host falls back to an IOU.
+                (deps.recordIou ?? recordIou)(workerDid, session.host_did, amount, session.session_id, tick);
+                settlement = 'iou';
+            } else {
+                throw e;
+            }
+        }
     } else {
         // Unfunded → record a Phase 60 IOU: worker is the creditor (owed), host the debtor.
         (deps.recordIou ?? recordIou)(workerDid, session.host_did, amount, session.session_id, tick);

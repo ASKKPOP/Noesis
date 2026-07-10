@@ -11,8 +11,8 @@
  *   completeTask (host)      → `settled`
  *
  * D-NH-06 — co-work is ALWAYS PAID. completeTask settles EVERY time:
- *   funded   → registry.transferWei(host → worker, settlement_amount_wei)
- *   not now  → recordIou(worker=creditor, host=debtor, amount, agreement_id, tick)
+ *   funded   → settleWei(host → worker, settlement_amount_wei) (NousAccountStore.transfer)
+ *   underfunded/not now → recordIou(worker=creditor, host=debtor, amount, agreement_id, tick)
  * A completion that would pay NOTHING (amount 0 AND no IOU) THROWS `cowork_must_pay` —
  * never free. Honored work bumps the worker's trust_score (reputation, not vibes).
  *
@@ -55,15 +55,20 @@ export interface CoworkAgreementInput {
 
 /**
  * Dependencies for completeTask. Tests inject pure spies; production wires
- * registry.transferWei + credit-ledger.recordIou + the (Wave-4) audit append.
+ * settleWei (NousAccountStore.transfer) + credit-ledger.recordIou + the audit append.
  */
 export interface CompleteDeps {
     /** True when the host can settle in Ousia NOW; false → record an IOU instead. */
     funded: boolean;
     start_tick: number;
     end_tick: number;
-    /** Move Ousia host → worker (registry.transferWei). Defaults to a no-op spy seam. */
-    transferWei?: (from: string, to: string, amount: number) => void;
+    /**
+     * Move Ousia host → worker via NousAccountStore.transfer (Nous→Nous, one atomic
+     * transaction on nous_accounts). Defaults to a no-op async seam. An underfunded
+     * host throws `insufficient_balance`, which completeTask catches and falls back to
+     * an IOU (D-NH-06 always-settles). (Phase 62.6-03 — replaced the sync Ledger-B seam.)
+     */
+    settleWei?: (fromCivic: string, toCivic: string, amountWei: number) => Promise<void>;
     /** Record the IOU when unfunded (credit-ledger.recordIou). Defaults to the real ledger. */
     recordIou?: (creditor: string, debtor: string, amount: number, reasonRef: string, tick: number) => void;
     /** Bump the worker's trust_score on honored settlement (registry.bumpTrust seam). */
@@ -136,31 +141,50 @@ export function claimTask(agreementId: string, workerDid: string): CoworkAgreeme
 }
 
 /**
- * Host confirms completion. **ALWAYS settles (D-NH-06):** Ousia via transferWei when
- * funded, otherwise an IOU (worker = creditor, host = debtor). A completion that would
+ * Host confirms completion. **ALWAYS settles (D-NH-06):** Ousia via settleWei when
+ * funded (an underfunded host falls back to an IOU), otherwise an IOU (worker = creditor,
+ * host = debtor). A completion that would
  * pay NOTHING (amount ≤ 0 AND not falling back to an IOU) THROWS `cowork_must_pay` —
  * co-work is never free. On settlement the worker's trust_score is bumped (honored work).
  *
  * The participants set + participants_hash for the Wave-4 `zoning.cowork_session` producer
  * is CONSTRUCTED here, but NOTHING is appended on chain this wave (Wave 4 wires the append).
  */
-export function completeTask(agreementId: string, hostDid: string, deps: CompleteDeps): CoworkAgreement {
+export async function completeTask(agreementId: string, hostDid: string, deps: CompleteDeps): Promise<CoworkAgreement> {
     const a = agreements.get(agreementId);
     if (!a) throw new Error(`cowork_not_found: ${agreementId}`);
     if (a.parties[0] !== hostDid) throw new Error(`cowork_not_host: ${hostDid} is not the host`);
     const worker = a.parties[1];
     if (!worker) throw new Error(`cowork_unclaimed: ${agreementId} has no worker`);
 
+    // WR-02 (double-pay guard): only a 'claimed' agreement is completable. A repeat or
+    // concurrent completion of an already-settled agreement throws instead of re-running the
+    // money move. Status is advanced to 'settled' ONLY after settlement resolves (WR-01), so
+    // a failed settle leaves the agreement 'claimed' — retryable, never stuck at 'completed'.
+    if (a.status !== 'claimed') throw new Error(`cowork_not_completable: ${a.status}`);
+
     const amount = a.settlement_amount_wei;
-    a.status = 'completed';
 
     // D-NH-06: ALWAYS settle — a pay-nothing completion is forbidden (never free).
     if (amount <= 0) {
         throw new Error('cowork_must_pay: a completed co-work session is never free (D-NH-06)');
     }
-    if (deps.funded) {
-        // Ousia-moving settlement rides the existing transfer path.
-        (deps.transferWei ?? (() => {}))(hostDid, worker, amount);
+    if (hostDid === worker) {
+        // WR-01: the host is also the worker — paying yourself moves no money and cannot
+        // create an IOU (you can't owe yourself). Settle as a no-op; still a valid completion.
+    } else if (deps.funded) {
+        // Ousia-moving settlement rides the Nous→Nous account transfer (host → worker).
+        try {
+            await (deps.settleWei ?? (async () => {}))(hostDid, worker, amount);
+        } catch (e) {
+            if (e instanceof Error && e.message === 'insufficient_balance') {
+                // D-NH-06 — a completion NEVER silently succeeds with no money moved: an
+                // underfunded host falls back to an IOU (worker creditor, host debtor).
+                (deps.recordIou ?? recordIou)(worker, hostDid, amount, a.agreement_id, deps.end_tick);
+            } else {
+                throw e;
+            }
+        }
     } else {
         // Unfunded → record an IOU: worker is the creditor (owed), host the debtor.
         (deps.recordIou ?? recordIou)(worker, hostDid, amount, a.agreement_id, deps.end_tick);

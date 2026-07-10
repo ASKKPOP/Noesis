@@ -44,6 +44,8 @@ import { appendLoreContributed } from '../lore/appendLoreContributed.js';
 import { appendLoreCited } from '../lore/appendLoreCited.js';
 import { LoreQuotaTracker } from '../lore/LoreQuotaTracker.js';
 import type { GroupStore, GroupRole } from '../economy/group-store.js';
+import type { NousAccountStore } from '../economy/nous-account-store.js';
+import type { CivicDidStore } from '../civic-registry/civic-did-store.js';
 
 export interface NousRunnerConfig {
     nousDid: string;
@@ -128,6 +130,24 @@ export interface NousRunnerConfig {
      * this trigger.
      */
     sleepTrigger?: () => void | Promise<void>;
+    /**
+     * Phase 62.6-04 (D-7 / D-13): agent-trade settlement on Ledger A (nous_accounts).
+     *
+     * accountStore + civicDidStore + gridName are REQUIRED for trade settlement.
+     * Production wiring (main.ts) always passes all three. They are typed optional
+     * ONLY so the many non-trading NousRunner test constructions stay valid (mirrors
+     * the reviewer?/whisperRouter?/groupStore? optional-dep pattern).
+     *
+     * When ANY of the three is absent at a trade_request, the settle path treats the
+     * trade as an unresolved-counterparty case (trade.rejected{reason:'not_found'}) —
+     * it NEVER falls back to the Ledger-B registry. Money moves only
+     * between the resolved civic-DIDs (getByExistenceDid) of the citizen proposer +
+     * counterparty; a pre-citizen party (null resolution) cannot settle money, per
+     * the citizens-only civic economy (D-13, operator-locked).
+     */
+    accountStore?: NousAccountStore;
+    civicDidStore?: CivicDidStore;
+    gridName?: string;
 }
 
 export type SpeakHandler = (runner: NousRunner, channel: string, text: string, tick: number) => void;
@@ -147,6 +167,9 @@ export class NousRunner {
     private readonly loreDeps: { quotaTracker: LoreQuotaTracker } | undefined;
     private readonly groupStore: GroupStore | undefined;
     private readonly sleepTrigger: (() => void | Promise<void>) | undefined;
+    private readonly accountStore: NousAccountStore | undefined;
+    private readonly civicDidStore: CivicDidStore | undefined;
+    private readonly gridName: string | undefined;
 
     private speakHandler: SpeakHandler | null = null;
 
@@ -196,6 +219,9 @@ export class NousRunner {
         this.loreDeps = config.loreDeps;
         this.groupStore = config.groupStore;
         this.sleepTrigger = config.sleepTrigger;
+        this.accountStore = config.accountStore;
+        this.civicDidStore = config.civicDidStore;
+        this.gridName = config.gridName;
     }
 
     /** Register handler called when this Nous speaks (for message routing). */
@@ -411,8 +437,18 @@ export class NousRunner {
                     // branch exists solely for the zero-diff regression test. See the NousRunnerConfig
                     // `reviewer?` field JSDoc for the contract.
                     if (this.reviewer) {
-                        const proposer = this.registry.get(this.nousDid);
-                        const proposerBalance = proposer?.balance_wei ?? 0;
+                        // Phase 62.6-04 (D-13): read the proposer's balance from the SAME
+                        // ledger the settle transfer moves (nous_accounts, resolved civic-DID),
+                        // so the review gate and the money move agree. executeActions is async,
+                        // so awaiting the balance read here is fine — review() itself stays sync
+                        // (determinism, D-02). A pre-citizen proposer (null resolution) reads 0.
+                        let proposerBalance = 0;
+                        if (this.civicDidStore && this.accountStore && this.gridName) {
+                            const proposerCivic = await this.civicDidStore.getByExistenceDid(this.gridName, this.nousDid);
+                            proposerBalance = proposerCivic
+                                ? Number(await this.accountStore.getBalance(this.gridName, proposerCivic.civicDid))
+                                : 0;
+                        }
                         const verdict = this.reviewer.review({
                             proposerDid: this.nousDid,
                             proposerBalance,
@@ -437,12 +473,12 @@ export class NousRunner {
                                 failed_check: verdict.failed_check,
                                 failure_reason: verdict.failure_reason,
                             });
-                            // NO transferWei, NO trade.settled, NO trade.rejected on reviewer fail.
+                            // NO money move, NO trade.settled, NO trade.rejected on reviewer fail.
                             break;
                         }
 
                         // Pass path — emit trade.reviewed{pass}, then proceed with existing bounds +
-                        // transferWei + trade.settled.
+                        // the Ledger-A settle transfer + trade.settled.
                         this.audit.append('trade.reviewed', Reviewer.DID, {
                             trade_id: nonce,
                             reviewer_did: Reviewer.DID,
@@ -461,20 +497,56 @@ export class NousRunner {
                         break;
                     }
 
-                    // Defensive library-level guard — reviewer invariants make 'insufficient',
-                    // 'invalid_amount', 'self_transfer' unreachable in Phase 5. 'not_found' remains
-                    // reachable when the counterparty DID parses but isn't registered — reviewer
-                    // checks DID format, not registry membership (intentional — registry lookup
-                    // would break Phase 5's no-RPC/no-state-read-beyond-ctx invariant at check time).
-                    const result = this.registry.transferWei(this.nousDid, counterparty, amount);
-                    if (!result.success) {
+                    // Phase 62.6-04 (D-7 / D-13): settle on Ledger A (nous_accounts) between
+                    // the resolved civic-DIDs of the proposer + counterparty. Money is a
+                    // citizens-only civic concept — resolve BOTH existence-DIDs to a civic-DID
+                    // via CivicDidStore.getByExistenceDid; if EITHER is unresolved (pre-citizen),
+                    // the trade does NOT settle: emit trade.rejected{reason:'not_found'} (an
+                    // EXISTING allowlisted reason — no new reason string, D-8 / R-31-01). Absent
+                    // wiring is likewise treated as unresolved (never a Ledger-B fallback).
+                    if (!this.civicDidStore || !this.accountStore || !this.gridName) {
                         this.audit.append('trade.rejected', this.nousDid, {
-                            reason: result.error,
+                            reason: 'not_found',
+                            nonce,
+                        });
+                        break;
+                    }
+                    const proposerCivic = await this.civicDidStore.getByExistenceDid(this.gridName, this.nousDid);
+                    const counterpartyCivic = await this.civicDidStore.getByExistenceDid(this.gridName, counterparty);
+                    if (!proposerCivic || !counterpartyCivic) {
+                        this.audit.append('trade.rejected', this.nousDid, {
+                            reason: 'not_found',
+                            nonce,
+                        });
+                        break;
+                    }
+                    try {
+                        await this.accountStore.transfer({
+                            gridName: this.gridName,
+                            fromDid: proposerCivic.civicDid,
+                            toDid: counterpartyCivic.civicDid,
+                            amountWei: BigInt(amount),
+                            currentTick: tick,
+                        });
+                    } catch (e) {
+                        // Map NousAccountStore throws to the EXISTING trade.rejected reason enum —
+                        // no new reason strings (R-31-01 zero-diff). insufficient_balance→'insufficient',
+                        // invalid_transfer_self→'self_transfer', invalid_amount→'invalid_amount',
+                        // anything else→'not_found'.
+                        const msg = e instanceof Error ? e.message : '';
+                        const reason = msg === 'insufficient_balance' ? 'insufficient'
+                            : msg === 'invalid_transfer_self' ? 'self_transfer'
+                            : msg === 'invalid_amount' ? 'invalid_amount'
+                            : 'not_found';
+                        this.audit.append('trade.rejected', this.nousDid, {
+                            reason,
                             nonce,
                         });
                         break;
                     }
 
+                    // D-10 hash-only boundary: keep counterparty/nonce as the existence-DID/id
+                    // EXACTLY as today — only the store the money moves in changed.
                     this.audit.append('trade.settled', this.nousDid, {
                         counterparty,
                         amount,

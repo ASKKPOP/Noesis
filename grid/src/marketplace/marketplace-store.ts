@@ -3,7 +3,9 @@
  *
  * CRUD + transactional operations for civic marketplace listings, bids, escrow, disputes.
  * Atomic settle transaction: buyer debit + seller credit + IRS fee + escrow status in one BEGIN/COMMIT.
- * Note: Bios balance lives in nous_registry.balance_wei (v1.0/v2.x naming; v3.0 rename deferred to migration phase).
+ * Money moves on Ledger A (Phase 62.6-01): buyer/seller balances live in `nous_accounts` (per civic-DID),
+ * civic revenue in `civic_treasury`. Debit/credit run via the connection-scoped `*OnConn` wei rails on the
+ * store's OWN escrow/settle connection so each money leg stays inside the escrow BEGIN/COMMIT (O4/D-12).
  *
  * D-44-02 minimum-price guard: createListing rejects priceWei < 50n. This guarantees the IRS
  * fee FLOOR(priceWei * 0.02) >= 1 for any settled listing — preventing the "zero-fee" branch
@@ -11,6 +13,7 @@
  */
 import type { Pool, PoolConnection, RowDataPacket } from 'mysql2/promise';
 import { randomUUID, createHash } from 'node:crypto';
+import { debitAccountOnConn, creditAccountOnConn } from '../economy/wei-ops.js';
 
 function sha256Hex(input: string): string {
     return createHash('sha256').update(input).digest('hex');
@@ -222,19 +225,23 @@ export class MarketplaceStore {
             if (bid.listing_status !== 'active') { await conn.rollback(); throw new Error('listing_not_active'); }
             if (bid.listing_seller !== params.sellerCivicDid) { await conn.rollback(); throw new Error('not_seller'); }
             const amountWei = BigInt(bid.offer_price_wei);
-            // Lock buyer balance row — must happen inside tx (T-44-02-02 mitigation)
-            const [buyerRows] = await conn.query<RowDataPacket[]>(
-                `SELECT balance_wei FROM nous_registry WHERE grid_name = ? AND did = ? FOR UPDATE`,
-                [params.gridName, bid.bidder_civic_did],
-            );
-            if (!buyerRows[0]) { await conn.rollback(); throw new Error('buyer_not_found'); }
-            const buyerWei = BigInt(buyerRows[0].balance_wei);
-            if (buyerWei < amountWei) { await conn.rollback(); throw new Error('insufficient_wei'); }
-            // Deduct from buyer
-            await conn.query(
-                `UPDATE nous_registry SET balance_wei = balance_wei - ? WHERE grid_name = ? AND did = ?`,
-                [amountWei.toString(), params.gridName, bid.bidder_civic_did],
-            );
+            // Buyer debit on nous_accounts (Ledger A) — on the store's OWN escrow connection so it
+            // stays inside this beginTransaction (O4/D-12). debitAccountOnConn does the SELECT ... FOR
+            // UPDATE + throws 'insufficient_balance' when the account cannot cover; an unfunded civic-DID
+            // has a 0-balance/absent row → insufficient_balance → insufficient_wei. buyer_not_found is now
+            // unreachable, mirroring the 62.5-02 buyer_not_found→402 retirement.
+            try {
+                await debitAccountOnConn(conn, {
+                    gridName: params.gridName,
+                    civicDid: bid.bidder_civic_did,
+                    amountWei,
+                    currentTick: params.currentTick,
+                });
+            } catch (e) {
+                await conn.rollback();
+                if (e instanceof Error && e.message === 'insufficient_balance') throw new Error('insufficient_wei');
+                throw e;
+            }
             // Create escrow row
             const escrowId = randomUUID();
             await conn.query(
@@ -348,11 +355,14 @@ export class MarketplaceStore {
             const amountWei = BigInt(escrow.amount_wei);
             const irsFee = BigInt(Math.floor(Number(amountWei) * params.irsFeeRate));
             const sellerPayout = amountWei - irsFee;
-            // Step 4: Credit seller
-            await conn.query(
-                `UPDATE nous_registry SET balance_wei = balance_wei + ? WHERE grid_name = ? AND did = ?`,
-                [sellerPayout.toString(), params.gridName, escrow.seller_civic_did],
-            );
+            // Step 4: Credit seller on nous_accounts (Ledger A), on the store's OWN settle connection so
+            // it stays inside this beginTransaction (O4/D-12). creditAccountOnConn upserts the account row.
+            await creditAccountOnConn(conn, {
+                gridName: params.gridName,
+                civicDid: escrow.seller_civic_did,
+                amountWei: sellerPayout,
+                currentTick: params.currentTick,
+            });
             // Step 5: Credit treasury (upsert — D-44-03)
             await conn.query(
                 `INSERT INTO civic_treasury (grid_name, balance_wei, last_updated_tick)

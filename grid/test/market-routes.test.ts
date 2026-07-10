@@ -21,6 +21,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { AuditChain } from '../src/audit/chain.js';
 import { registerMarketRoutes } from '../src/api/routes/market.js';
+import { NousAccountStore } from '../src/economy/nous-account-store.js';
+import { makeAccountsPool } from './helpers/accounts-pool.js';
 import type { GridServices } from '../src/api/server.js';
 import type { DIDContext } from '../src/api/preHandlers/types.js';
 import '../src/api/preHandlers/types.js';
@@ -294,38 +296,29 @@ describe('POST /api/v1/market/listing/:id/bid', () => {
 // ── POST /api/v1/market/listing/:id/accept ─────────────────────────────────
 
 describe('POST /api/v1/market/listing/:id/accept', () => {
-    it('returns 402 insufficient_wei when buyer balance is too low', async () => {
-        const mockConn = {
-            beginTransaction: vi.fn(async () => {}),
-            query: vi.fn(async (sql: unknown) => {
-                if (typeof sql === 'string' && sql.includes('marketplace_bids')) {
+    it('returns 402 insufficient_wei when the buyer nous_accounts balance is too low', async () => {
+        // Ledger A (Phase 62.6-01): acceptBid debits nous_accounts. Buyer seeded 5 < bid 10000.
+        const ap = makeAccountsPool({
+            otherQuery: (sql) => {
+                if (/marketplace_bids/i.test(sql)) {
                     return [[{
                         bid_id: BID_ID, listing_id: LISTING_ID,
                         listing_seller: ALICE_DID, listing_status: 'active',
                         offer_price_wei: '10000', bidder_civic_did: 'did:civic:noesis:buyer',
                         status: 'pending',
-                    }]];
+                    }], {}];
                 }
-                if (typeof sql === 'string' && sql.includes('nous_registry')) {
-                    return [[{ balance_wei: '5' }]]; // too low
-                }
-                return [[]];
-            }),
-            commit: vi.fn(async () => {}),
-            rollback: vi.fn(async () => {}),
-            release: vi.fn(() => {}),
-        };
-        const mockPool = {
-            query: vi.fn(async () => [[]]),
-            getConnection: vi.fn(async () => mockConn),
-        };
+                return [[], {}];
+            },
+        });
+        ap.seedAccount('did:civic:noesis:buyer', 5n);
         const app = Fastify({ logger: false });
         app.addHook('onRequest', async (req) => { req.didContext = makeAliceCtx(); });
         await registerMarketRoutes(app, {
             audit: new AuditChain(),
-            gridName: 'Genesis',
+            gridName: 'genesis',
             currentTick: () => 100,
-            pool: mockPool as unknown as import('mysql2/promise').Pool,
+            pool: ap.pool,
             businessDidStore: { listByCivicDid: vi.fn(async () => []) } as unknown as import('../src/civic-registry/business-did-store.js').BusinessDidStore,
         } as GridServices);
         await app.ready();
@@ -335,6 +328,8 @@ describe('POST /api/v1/market/listing/:id/accept', () => {
         });
         expect(res.statusCode).toBe(402);
         expect(res.json()).toMatchObject({ error: 'insufficient_wei' });
+        // Rolled back — buyer's 5 wei untouched.
+        expect(ap.balanceOf('did:civic:noesis:buyer')).toBe(5n);
         await app.close();
     });
 });
@@ -462,15 +457,16 @@ describe('POST /api/v1/market/listing/:id/confirm-settlement', () => {
         await app.close();
     });
 
-    it('returns 200 settled=true + emits market.settled AND irs.tax_collected on both-confirmed (D-44-03)', async () => {
+    it('returns 200 settled=true + emits market.settled AND irs.tax_collected + credits nous_accounts/civic_treasury (D-44-03, Ledger A)', async () => {
         const audit = new AuditChain();
         const appendSpy = vi.spyOn(audit, 'append');
 
-        // confirmSettlement returns bothConfirmed=true; getConfigValue returns 0.02; settle() succeeds
-        const mockConn = {
-            beginTransaction: vi.fn(async () => {}),
-            query: vi.fn(async (sql: unknown) => {
-                if (typeof sql === 'string' && (sql.includes('FOR UPDATE') || sql.includes('marketplace_escrow'))) {
+        // Ledger A (Phase 62.6-01): settle credits the seller on nous_accounts and the IRS fee
+        // to civic_treasury via the accounts-pool fake. grid_config → 0.02; escrow both-confirmed.
+        const ap = makeAccountsPool({
+            otherQuery: (sql) => {
+                if (/grid_config/i.test(sql)) return [[{ config_value: '0.02' }], {}];
+                if (/marketplace_escrow/i.test(sql) && /FOR UPDATE/i.test(sql)) {
                     return [[{
                         escrow_id: ESCROW_ID,
                         listing_id: LISTING_ID,
@@ -481,34 +477,21 @@ describe('POST /api/v1/market/listing/:id/confirm-settlement', () => {
                         escrow_status: 'held',
                         buyer_confirmed: 1,
                         seller_confirmed: 1,
-                    }]];
+                    }], {}];
                 }
-                if (typeof sql === 'string' && sql.includes('civic_treasury')) {
-                    return [[{ balance_wei: '2' }]];
-                }
-                return [[]];
-            }),
-            commit: vi.fn(async () => {}),
-            rollback: vi.fn(async () => {}),
-            release: vi.fn(() => {}),
-        };
-        const mockPool = {
-            query: vi.fn(async (sql: unknown) => {
-                if (typeof sql === 'string' && sql.includes('grid_config')) {
-                    return [[{ config_value: '0.02' }]];
-                }
-                return [[]];
-            }),
-            getConnection: vi.fn(async () => mockConn),
-        };
+                return [[], {}];
+            },
+        });
+        ap.seedAccount('did:civic:noesis:seller', 0n);
+        ap.seedTreasury(0n);
 
         const app = Fastify({ logger: false });
         app.addHook('onRequest', async (req) => { req.didContext = makeAliceCtx(); });
         await registerMarketRoutes(app, {
             audit,
-            gridName: 'Genesis',
+            gridName: 'genesis',
             currentTick: () => 100,
-            pool: mockPool as unknown as import('mysql2/promise').Pool,
+            pool: ap.pool,
             businessDidStore: { listByCivicDid: vi.fn(async () => []) } as unknown as import('../src/civic-registry/business-did-store.js').BusinessDidStore,
         } as GridServices);
         await app.ready();
@@ -529,6 +512,111 @@ describe('POST /api/v1/market/listing/:id/confirm-settlement', () => {
         const settledIdx = appendSpy.mock.calls.findIndex(c => c[0] === 'market.settled');
         const irsIdx = appendSpy.mock.calls.findIndex(c => c[0] === 'irs.tax_collected');
         expect(settledIdx).toBeLessThan(irsIdx);
+
+        // Ledger A conservation: seller credited 98, IRS fee 2 in civic_treasury (no shop → no skim).
+        expect(ap.balanceOf('did:civic:noesis:seller')).toBe(98n);
+        expect(ap.treasuryOf()).toBe(2n);
+        await app.close();
+    });
+});
+
+// ── Structure-revenue skim (Phase 60 HOUSE-3 → Ledger A, Phase 62.6-01) ─────
+
+describe('POST /api/v1/market/listing/:id/confirm-settlement — structure-revenue skim', () => {
+    /** Wire a parcel-bound shop so the settle skims the per-zone structure tax. */
+    function skimServices(ap: ReturnType<typeof makeAccountsPool>, audit: AuditChain): Partial<GridServices> {
+        return {
+            audit,
+            gridName: 'genesis',
+            currentTick: () => 100,
+            pool: ap.pool,
+            businessDidStore: { listByCivicDid: vi.fn(async () => []) } as unknown as GridServices['businessDidStore'],
+            // seller's shop is bound to a business-zone parcel → 1200 bps structure tax.
+            shops: { getByOwner: vi.fn(() => ({ parcel_id: 'genesis:business:0001' })) } as unknown as GridServices['shops'],
+            parcels: { registry: { get: vi.fn(() => ({ zoneId: 'business' })) } } as unknown as GridServices['parcels'],
+            registry: {} as unknown as GridServices['registry'], // truthy — skim guard only checks presence
+        };
+    }
+
+    function settleEscrowPool() {
+        return makeAccountsPool({
+            otherQuery: (sql) => {
+                if (/grid_config/i.test(sql)) return [[{ config_value: '0.02' }], {}];
+                if (/marketplace_escrow/i.test(sql) && /FOR UPDATE/i.test(sql)) {
+                    return [[{
+                        escrow_id: ESCROW_ID,
+                        listing_id: LISTING_ID,
+                        buyer_civic_did: ALICE_DID,
+                        seller_civic_did: 'did:civic:noesis:seller',
+                        seller_business_did: 'did:business:seller',
+                        amount_wei: '100',
+                        escrow_status: 'held',
+                        buyer_confirmed: 1,
+                        seller_confirmed: 1,
+                    }], {}];
+                }
+                return [[], {}];
+            },
+        });
+    }
+
+    it('debits the seller and credits civic_treasury with the skim, emitting treasury.structure_revenue', async () => {
+        const audit = new AuditChain();
+        const appendSpy = vi.spyOn(audit, 'append');
+        const ap = settleEscrowPool();
+        ap.seedAccount('did:civic:noesis:seller', 0n);
+        ap.seedTreasury(0n);
+
+        const app = Fastify({ logger: false });
+        app.addHook('onRequest', async (req) => { req.didContext = makeAliceCtx(); });
+        await registerMarketRoutes(app, skimServices(ap, audit) as GridServices);
+        await app.ready();
+
+        const res = await app.inject({
+            method: 'POST', url: `/api/v1/market/listing/${LISTING_ID}/confirm-settlement`,
+            payload: { party: 'buyer' },
+        });
+        expect(res.statusCode).toBe(200);
+        expect(res.json()).toMatchObject({ settled: true });
+
+        // price 100 → IRS fee 2 (seller +98), skim = floor(100 * 1200/10000) = 12 (seller -12 → 86).
+        // treasury = IRS fee 2 + skim 12 = 14.
+        expect(ap.balanceOf('did:civic:noesis:seller')).toBe(86n);
+        expect(ap.treasuryOf()).toBe(14n);
+        const skimCalls = appendSpy.mock.calls.filter(c => c[0] === 'treasury.structure_revenue');
+        expect(skimCalls.length).toBe(1);
+        await app.close();
+    });
+
+    it('never 500s the committed settle when the skim charge fails — returns 200, no structure_revenue emit', async () => {
+        const audit = new AuditChain();
+        const appendSpy = vi.spyOn(audit, 'append');
+        // Force the skim's chargeToTreasury to reject (underfunded), leaving the settle untouched.
+        const chargeSpy = vi.spyOn(NousAccountStore.prototype, 'chargeToTreasury')
+            .mockRejectedValueOnce(new Error('insufficient_balance'));
+        const ap = settleEscrowPool();
+        ap.seedAccount('did:civic:noesis:seller', 0n);
+        ap.seedTreasury(0n);
+
+        const app = Fastify({ logger: false });
+        app.addHook('onRequest', async (req) => { req.didContext = makeAliceCtx(); });
+        await registerMarketRoutes(app, skimServices(ap, audit) as GridServices);
+        await app.ready();
+
+        const res = await app.inject({
+            method: 'POST', url: `/api/v1/market/listing/${LISTING_ID}/confirm-settlement`,
+            payload: { party: 'buyer' },
+        });
+        // Settle already committed (seller credited 98, IRS fee 2) — a skim failure must not 500 it.
+        expect(res.statusCode).toBe(200);
+        expect(res.json()).toMatchObject({ settled: true });
+        expect(chargeSpy).toHaveBeenCalledOnce();
+        // No money moved by the failed skim; no phantom structure-revenue event.
+        const skimCalls = appendSpy.mock.calls.filter(c => c[0] === 'treasury.structure_revenue');
+        expect(skimCalls.length).toBe(0);
+        expect(ap.balanceOf('did:civic:noesis:seller')).toBe(98n);
+        expect(ap.treasuryOf()).toBe(2n);
+        chargeSpy.mockRestore();
         await app.close();
     });
 });

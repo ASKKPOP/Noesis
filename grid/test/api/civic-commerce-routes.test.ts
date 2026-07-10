@@ -26,6 +26,7 @@ import { AuditChain } from '../../src/audit/chain.js';
 import { ParcelRegistry } from '../../src/civic/parcel-registry.js';
 import { NousRegistry } from '../../src/registry/registry.js';
 import { registerCivicParcelRoutes } from '../../src/api/routes/civic-parcels.js';
+import { makeAccountsPool } from '../helpers/accounts-pool.js';
 import { TREASURY_DID } from '../../src/api/routes/registry.js';
 import { ROUTE_DID_POLICY } from '../../src/api/policy.js';
 import { _resetCowork } from '../../src/civic/cowork.js';
@@ -80,6 +81,12 @@ function buildApp(): AppHandle {
     parcelRegistry.stampAcquired(SHOP2, 1);
     parcelRegistry.build(SHOP2, STAFF, { name: 'Shop Two', type: 'shop', visibility: 'open' }, 2);
 
+    // Phase 62.6-03: the funded board/complete settlement now moves host→worker on the unified
+    // in-DB ledger (NousAccountStore.transfer), so the route needs a pool + a funded host.
+    const accts = makeAccountsPool();
+    accts.seedAccount(OWNER, 100_000);
+    accts.seedAccount(STAFF, 100_000);
+
     const store = {
         persistBuild: vi.fn(async () => {}),
         persistEntryPolicy: vi.fn(async () => {}),
@@ -94,6 +101,8 @@ function buildApp(): AppHandle {
         parcels: { registry: parcelRegistry, store },
         registry: nousRegistry,
         audit,
+        pool: accts.pool,
+        gridName: 'genesis',
         currentTick: () => 7,
     } as unknown as GridServices;
     registerCivicParcelRoutes(app, services);

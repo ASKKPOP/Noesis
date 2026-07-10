@@ -23,6 +23,7 @@ import { LogosEngine } from '../../src/logos/engine.js';
 import { AuditChain } from '../../src/audit/chain.js';
 import { NousRegistry } from '../../src/registry/registry.js';
 import { TREASURY_DID } from '../../src/api/routes/registry.js';
+import { makeAccountsPool, type AccountsPool } from '../helpers/accounts-pool.js';
 import type { FastifyInstance } from 'fastify';
 import type { CivicDidRecord, BusinessDidRecord } from '../../src/civic-registry/index.js';
 
@@ -78,25 +79,24 @@ function makeMockBizStore() {
 describe('POST /api/v1/registry/business-did/register', () => {
     let app: FastifyInstance;
     let audit: AuditChain;
-    let registry: NousRegistry;
+    let accts: AccountsPool;
 
     beforeAll(async () => {
         const clock = new WorldClock({ tickRateMs: 100_000 });
         const space = new SpatialMap();
         const logos = new LogosEngine();
         audit = new AuditChain();
-        registry = new NousRegistry();
+        const registry = new NousRegistry();
 
-        // Seed registry with TREASURY_DID so transferWei can find the target
-        registry.spawn({ did: TREASURY_DID, name: 'treasury', publicKey: 'pk-treasury', region: 'admin' }, GRID_NAME, 0, 0);
-        // Seed rich member with 200 Bios
-        registry.spawn({ did: CIVIC_DID_RICH, name: 'rich-member', publicKey: 'pk-rich', region: 'business' }, GRID_NAME, 0, 200);
-        // Seed poor member with 50 Bios
-        registry.spawn({ did: CIVIC_DID_POOR, name: 'poor-member', publicKey: 'pk-poor', region: 'business' }, GRID_NAME, 0, 50);
-        // CIVIC_DID_UNKNOWN intentionally NOT in registry
+        // Phase 62.5-02: the business-DID Bios cost is charged on the unified in-DB ledger
+        // (nous_accounts → civic_treasury). Seed the callers' ledger accounts; CIVIC_DID_UNKNOWN
+        // is intentionally unseeded (balance 0 → insufficient, no separate existence check).
+        accts = makeAccountsPool();
+        accts.seedAccount(CIVIC_DID_RICH, 200); // has 200 Bios
+        accts.seedAccount(CIVIC_DID_POOR, 50);  // has 50 Bios (need 100)
 
         app = buildServer({
-            clock, space, logos, audit, gridName: GRID_NAME, registry,
+            clock, space, logos, audit, gridName: GRID_NAME, registry, pool: accts.pool,
             civicDidStore: makeMockCivicStore() as unknown as import('../../src/civic-registry/civic-did-store.js').CivicDidStore,
             businessDidStore: makeMockBizStore() as unknown as import('../../src/civic-registry/business-did-store.js').BusinessDidStore,
         });
@@ -180,7 +180,7 @@ describe('POST /api/v1/registry/business-did/register', () => {
         expect(res.json()).toMatchObject({ error: 'invalid_category' });
     });
 
-    it('returns 404 civic_did_not_found when caller civic_did is not in NousRegistry', async () => {
+    it('returns 402 insufficient_wei when the caller has no ledger balance (Phase 62.5-02: an unfunded civic-DID has a 0-balance account — no separate civic_did_not_found)', async () => {
         const bearer = await mintCivicBearer(CIVIC_DID_UNKNOWN);
         const res = await app.inject({
             method: 'POST',
@@ -188,8 +188,10 @@ describe('POST /api/v1/registry/business-did/register', () => {
             headers: { authorization: bearer },
             payload: { business_name: 'Ghost Corp', category: 'commerce' },
         });
-        expect(res.statusCode).toBe(404);
-        expect(res.json()).toMatchObject({ error: 'civic_did_not_found' });
+        expect(res.statusCode).toBe(402);
+        const body = res.json() as { error: string; required: number; available: number };
+        expect(body.error).toBe('insufficient_wei');
+        expect(body.available).toBe(0);
     });
 
     it('returns 402 insufficient_wei when caller has only 50 Bios (need 100)', async () => {
@@ -209,7 +211,7 @@ describe('POST /api/v1/registry/business-did/register', () => {
 
     it('returns 201 with business_did and credential on valid civic_did bearer with sufficient Bios', async () => {
         const bearer = await mintCivicBearer(CIVIC_DID_RICH);
-        const ousiaBefore = registry.get(CIVIC_DID_RICH)!.balance_wei;
+        const ousiaBefore = accts.balanceOf(CIVIC_DID_RICH);
 
         const res = await app.inject({
             method: 'POST',
@@ -223,9 +225,9 @@ describe('POST /api/v1/registry/business-did/register', () => {
         expect(body.credential).toBeTruthy();
         expect((body.credential as { type: string[] }).type).toContain('BusinessDIDCredential');
 
-        // Ousia was deducted by exactly 100
-        const ousiaAfter = registry.get(CIVIC_DID_RICH)!.balance_wei;
-        expect(ousiaAfter).toBe(ousiaBefore - 100);
+        // Ousia was deducted by exactly 100 on the ledger, and civic_treasury received it.
+        expect(accts.balanceOf(CIVIC_DID_RICH)).toBe(ousiaBefore - 100n);
+        expect(accts.treasuryOf()).toBe(100n);
     });
 
     it('appends registry.business_did_registered audit event with exactly 4 keys in payload', async () => {

@@ -24,6 +24,7 @@ import { ParcelRegistry } from '../../src/civic/parcel-registry.js';
 import { NousRegistry } from '../../src/registry/registry.js';
 import { registerCivicParcelRoutes } from '../../src/api/routes/civic-parcels.js';
 import { TREASURY_DID } from '../../src/api/routes/registry.js';
+import { makeAccountsPool } from '../helpers/accounts-pool.js';
 import { ROUTE_DID_POLICY } from '../../src/api/policy.js';
 import { storeBlueprint, _resetBlueprints, type BlueprintRecipe } from '../../src/civic/blueprint.js';
 import { _resetCoBuild } from '../../src/civic/co-build.js';
@@ -74,10 +75,17 @@ function buildApp(opts: { ownerWei?: number } = {}): AppHandle {
     const parcelRegistry = new ParcelRegistry('genesis');
     parcelRegistry.seedZone({ zoneId: 'residential', count: 2, priceWei: 400, ring: 3 });
 
+    // Phase 62.5-02: the blueprint material cost is charged on the unified in-DB ledger
+    // (builder → civic_treasury). Seed OWNER's ledger account; ownerWei controls coverage.
+    const accts = makeAccountsPool();
+    accts.seedAccount(OWNER, opts.ownerWei ?? 100_000);
+
+    // A NousRegistry is still required by requireCivicWriter (503 guard); it no longer holds
+    // build money.
     const nousRegistry = new NousRegistry();
     nousRegistry.spawn({ name: 'treasury', did: TREASURY_DID, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 0);
-    nousRegistry.spawn({ name: 'alice', did: OWNER, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, opts.ownerWei ?? 100_000);
-    nousRegistry.spawn({ name: 'carol', did: STRANGER, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 100_000);
+    nousRegistry.spawn({ name: 'alice', did: OWNER, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 0);
+    nousRegistry.spawn({ name: 'carol', did: STRANGER, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 0);
 
     parcelRegistry.purchase(ADDR, OWNER, 100_000);
     parcelRegistry.stampAcquired(ADDR, 1);
@@ -97,6 +105,8 @@ function buildApp(opts: { ownerWei?: number } = {}): AppHandle {
     const services = {
         parcels: { registry: parcelRegistry, store },
         registry: nousRegistry,
+        pool: accts.pool,
+        gridName: 'genesis',
         audit,
         currentTick: () => 7,
     } as unknown as GridServices;

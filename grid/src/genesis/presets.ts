@@ -104,7 +104,7 @@ export const GENESIS_CONFIG: GenesisConfig = {
         },
     ],
     economy: {
-        initialSupply: 1000,
+        initialSupply: 0, // ECON-01 / D-MONEY-01 (Phase 62.5-02): no birth faucet.
         transactionFee: 0,
         minTransfer: 1,
         maxTransfer: 100_000,
@@ -143,7 +143,7 @@ export const TEST_CONFIG: GenesisConfig = {
         { fromRegion: 'alpha', toRegion: 'beta', travelCost: 1, bidirectional: true },
     ],
     laws: [],
-    economy: { initialSupply: 500 },
+    economy: { initialSupply: 0 }, // ECON-01 / D-MONEY-01 (Phase 62.5-02): no birth faucet.
     seedNous: [
         { name: 'Sophia', did: 'did:noesis:sophia', publicKey: 'pk-sophia', region: 'alpha' },
         { name: 'Hermes', did: 'did:noesis:hermes', publicKey: 'pk-hermes', region: 'beta' },

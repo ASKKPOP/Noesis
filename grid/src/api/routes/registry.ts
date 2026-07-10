@@ -10,6 +10,7 @@ import { compactVerify, importJWK, type JWK } from 'jose';
 import type { GridServices } from '../server.js';
 
 import { buildCivicDidVc, buildBusinessDidVc } from '../../civic-registry/vc-builder.js';
+import { NousAccountStore } from '../../economy/nous-account-store.js';
 
 import { appendRegistryCivicDidIssued } from '../../audit/append-registry-civic-did-issued.js';
 import { appendRegistryCivicDidRevoked } from '../../audit/append-registry-civic-did-revoked.js';
@@ -155,6 +156,19 @@ export async function registerRegistryRoutes(
                 issued_at_tick: issuedAtTick,
             });
 
+            // Phase 62.5-01: give every new citizen a civic-DID-keyed economy account
+            // (Ledger A / nous_accounts, balance 0) at issuance, so land/community/
+            // business spend can read it (Phase 62.5-02) instead of the legacy
+            // existence-keyed nous_registry balance — closing the split-ledger gap
+            // (Issue #9). Idempotent (INSERT IGNORE); no-op in DB-less tests (no pool).
+            if (services.pool) {
+                await new NousAccountStore(services.pool).ensureAccount({
+                    gridName: services.gridName,
+                    civicDid,
+                    currentTick: issuedAtTick,
+                });
+            }
+
             // Phase 38 WIRE-02 binding (the missing link): bind the freshly-issued
             // Civic-DID to the Nous's live NousRunner (keyed by its Existence-DID)
             // so `/api/v1/brain/actions` can route the Nous's actions to its runner.
@@ -253,26 +267,31 @@ export async function registerRegistryRoutes(
                 return reply.code(400).send({ error: 'invalid_category' });
             }
 
-            const reg = services.registry;
-            if (!reg) return reply.code(503).send({ error: 'registry_unavailable' });
+            const pool = services.pool;
+            if (!pool) return reply.code(503).send({ error: 'registry_unavailable' });
 
-            const nous = reg.get(civicDid);
-            if (!nous) return reply.code(404).send({ error: 'civic_did_not_found' });
-
-            const result = reg.transferWei(civicDid, TREASURY_DID, BUSINESS_DID_BIOS_COST);
-            if (!result.success) {
-                if (result.error === 'insufficient') {
+            const registeredAtTick = currentTick(services);
+            // Phase 62.5-02: the business-DID Bios cost is charged on the unified in-DB ledger
+            // (nous_accounts → civic_treasury, Issue #9), keyed by the caller's civic-DID (which
+            // has a nous_accounts row from issuance). No separate existence check — an unfunded
+            // account simply fails the atomic debit (insufficient → 402).
+            const accountStore = new NousAccountStore(pool);
+            try {
+                await accountStore.chargeToTreasury({ gridName: services.gridName, civicDid, amountWei: BigInt(BUSINESS_DID_BIOS_COST), currentTick: registeredAtTick });
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : 'charge_failed';
+                if (msg === 'insufficient_balance') {
+                    const available = await accountStore.getBalance(services.gridName, civicDid);
                     return reply.code(402).send({
                         error: 'insufficient_wei',
                         required: BUSINESS_DID_BIOS_COST,
-                        available: nous.balance_wei,
+                        available: Number(available),
                     });
                 }
-                return reply.code(400).send({ error: result.error });
+                return reply.code(400).send({ error: msg });
             }
 
             const businessDid = `did:biz:noesis:${randomUUID()}`;
-            const registeredAtTick = currentTick(services);
             const credential = await buildBusinessDidVc({
                 businessDid,
                 civicDid,

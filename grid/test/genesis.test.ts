@@ -46,10 +46,11 @@ describe('GenesisLauncher', () => {
             expect(sophia.ndsAddress).toBe('nous://sophia.test.noesis');
         });
 
-        it('grants initial Ousia', () => {
+        it('spawns founding Nous with 0 — no birth faucet (ECON-01 / D-MONEY-01)', () => {
             launcher = new GenesisLauncher(TEST_CONFIG);
             launcher.bootstrap();
-            expect(launcher.registry.get('did:noesis:sophia')!.balance_wei).toBe(500);
+            // Phase 62.5-02 retired the birth faucet: founding Nous fund via endowment/labour.
+            expect(launcher.registry.get('did:noesis:sophia')!.balance_wei).toBe(0);
         });
 
         it('records audit events', () => {
@@ -107,7 +108,8 @@ describe('GenesisLauncher', () => {
             launcher.spawnNous('Atlas', 'did:noesis:atlas', 'pk-atlas', 'alpha');
             expect(launcher.registry.count).toBe(3);
             expect(launcher.space.getPosition('did:noesis:atlas')?.regionId).toBe('alpha');
-            expect(launcher.registry.get('did:noesis:atlas')!.balance_wei).toBe(500);
+            // Phase 62.5-02: no birth faucet — a runtime-spawned Nous starts at 0.
+            expect(launcher.registry.get('did:noesis:atlas')!.balance_wei).toBe(0);
         });
     });
 
