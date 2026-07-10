@@ -169,3 +169,25 @@ describe('Phase 61 HOUSE-4 — reuses zoning.cowork_session; one skill.blueprint
         expect(isComplete(session)).toBe(true);
     });
 });
+
+describe('Phase 62.6-03 — settlement safety (WR-01 self / WR-02 double-pay)', () => {
+    it('WR-02: re-completing a node throws cobuild_already_completed and does NOT pay twice', async () => {
+        const { decomposeRecipe, createCoBuildSession, completeNode } = await loadCoBuild();
+        const session = createCoBuildSession({ parcel_id: PARCEL, blueprint_hash: BLUEPRINT_HASH, host_did: HOST, nodes: decomposeRecipe(recipe()) });
+        const settleWei = vi.fn(async () => {});
+        await completeNode(session, 'n1', WORKER, { funded: true, settleWei });
+        expect(settleWei).toHaveBeenCalledTimes(1);
+        await expect(completeNode(session, 'n1', WORKER, { funded: true, settleWei }))
+            .rejects.toThrow(/cobuild_already_completed/);
+        expect(settleWei).toHaveBeenCalledTimes(1);
+    });
+
+    it('WR-01: host completing their own node (host === worker) settles with no transfer and no throw', async () => {
+        const { decomposeRecipe, createCoBuildSession, completeNode } = await loadCoBuild();
+        const session = createCoBuildSession({ parcel_id: PARCEL, blueprint_hash: BLUEPRINT_HASH, host_did: HOST, nodes: decomposeRecipe(recipe()) });
+        const settleWei = vi.fn(async () => {});
+        const settled = await completeNode(session, 'n1', HOST, { funded: true, settleWei });
+        expect(settled.settlement).toBe('wei');
+        expect(settleWei).not.toHaveBeenCalled();
+    });
+});

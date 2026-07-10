@@ -146,3 +146,29 @@ describe.skip('Phase 60 HOUSE-3 — completion emits zoning.cowork_session (hash
         expect(blob).not.toMatch(/task|scope|shelves/i);
     });
 });
+
+describe('Phase 62.6-03 — settlement safety (WR-01 self-transfer / WR-02 double-pay)', () => {
+    it('WR-02: re-completing a settled agreement throws cowork_not_completable and does NOT pay twice', async () => {
+        const { createAgreement, claimTask, completeTask } = await loadCowork();
+        const posted = createAgreement({ parcel_id: PARCEL, parties: [HOST, WORKER], scope_ref: 'task:x', settlement_amount_wei: 50, term_ticks: 100 });
+        claimTask(posted.agreement_id, WORKER);
+        const settleWei = vi.fn(async () => {});
+        const settled = await completeTask(posted.agreement_id, HOST, { funded: true, start_tick: 1, end_tick: 2, settleWei });
+        expect(settled.status).toBe('settled');
+        expect(settleWei).toHaveBeenCalledTimes(1);
+        // Second completion must be rejected — the money move must NOT run again.
+        await expect(completeTask(posted.agreement_id, HOST, { funded: true, start_tick: 3, end_tick: 4, settleWei }))
+            .rejects.toThrow(/cowork_not_completable/);
+        expect(settleWei).toHaveBeenCalledTimes(1);
+    });
+
+    it('WR-01: host completing their OWN task (host === worker) settles with no transfer and no throw', async () => {
+        const { createAgreement, claimTask, completeTask } = await loadCowork();
+        const posted = createAgreement({ parcel_id: PARCEL, parties: [HOST, ''], scope_ref: 'task:self', settlement_amount_wei: 50, term_ticks: 100 });
+        claimTask(posted.agreement_id, HOST); // host claims own task → worker === host
+        const settleWei = vi.fn(async () => {});
+        const settled = await completeTask(posted.agreement_id, HOST, { funded: true, start_tick: 1, end_tick: 2, settleWei });
+        expect(settled.status).toBe('settled');
+        expect(settleWei).not.toHaveBeenCalled(); // can't pay yourself — no money move, no throw, not stuck
+    });
+});

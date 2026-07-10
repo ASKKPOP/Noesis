@@ -157,14 +157,22 @@ export async function completeTask(agreementId: string, hostDid: string, deps: C
     const worker = a.parties[1];
     if (!worker) throw new Error(`cowork_unclaimed: ${agreementId} has no worker`);
 
+    // WR-02 (double-pay guard): only a 'claimed' agreement is completable. A repeat or
+    // concurrent completion of an already-settled agreement throws instead of re-running the
+    // money move. Status is advanced to 'settled' ONLY after settlement resolves (WR-01), so
+    // a failed settle leaves the agreement 'claimed' — retryable, never stuck at 'completed'.
+    if (a.status !== 'claimed') throw new Error(`cowork_not_completable: ${a.status}`);
+
     const amount = a.settlement_amount_wei;
-    a.status = 'completed';
 
     // D-NH-06: ALWAYS settle — a pay-nothing completion is forbidden (never free).
     if (amount <= 0) {
         throw new Error('cowork_must_pay: a completed co-work session is never free (D-NH-06)');
     }
-    if (deps.funded) {
+    if (hostDid === worker) {
+        // WR-01: the host is also the worker — paying yourself moves no money and cannot
+        // create an IOU (you can't owe yourself). Settle as a no-op; still a valid completion.
+    } else if (deps.funded) {
         // Ousia-moving settlement rides the Nous→Nous account transfer (host → worker).
         try {
             await (deps.settleWei ?? (async () => {}))(hostDid, worker, amount);

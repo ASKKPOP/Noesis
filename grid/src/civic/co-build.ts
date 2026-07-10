@@ -165,6 +165,11 @@ export async function completeSubTask(
     if (!depsMet(session, node)) {
         throw new Error(`cobuild_deps_unmet: ${node_id} depends_on ${JSON.stringify(node.depends_on)} not yet completed`);
     }
+    // WR-02 (double-pay guard): a node that already completed cannot settle again — a repeat
+    // or concurrent completion throws instead of re-running the host→worker money move.
+    if (session.completed.has(node_id)) {
+        throw new Error(`cobuild_already_completed: ${node_id}`);
+    }
     const amount = deps.pay ?? node.weight;
     // D-NH-06: ALWAYS settle — a pay-nothing completion is forbidden (never free).
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -172,7 +177,11 @@ export async function completeSubTask(
     }
     const tick = deps.tick ?? 0;
     let settlement: 'wei' | 'iou';
-    if (deps.funded) {
+    if (session.host_did === workerDid) {
+        // WR-01: host is also the worker — paying yourself moves no money and cannot create
+        // an IOU (you can't owe yourself). Settle as a no-op (settled, nothing owed).
+        settlement = 'wei';
+    } else if (deps.funded) {
         // Ousia-moving settlement rides the Nous→Nous account transfer (host → worker).
         try {
             await (deps.settleWei ?? (async () => {}))(session.host_did, workerDid, amount);
