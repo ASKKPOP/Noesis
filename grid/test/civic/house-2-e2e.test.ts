@@ -34,6 +34,7 @@ import { ParcelRegistry } from '../../src/civic/parcel-registry.js';
 import { ParcelStore, buildGenesisCoreParcels } from '../../src/civic/parcel-store.js';
 import { NousRegistry } from '../../src/registry/registry.js';
 import { makeAccountsPool } from '../helpers/accounts-pool.js';
+import { NousAccountStore } from '../../src/economy/nous-account-store.js';
 import { registerCivicParcelRoutes } from '../../src/api/routes/civic-parcels.js';
 import { onUpkeepTick, type UpkeepScannerDeps } from '../../src/civic/upkeep-scanner.js';
 import { gravityPrice, upkeepDue, UPKEEP_PERIOD_TICKS } from '../../src/civic/founding-law.js';
@@ -60,6 +61,7 @@ interface E2EApp {
     audit: AuditChain;
     parcelRegistry: ParcelRegistry;
     nousRegistry: NousRegistry;
+    accts: ReturnType<typeof makeAccountsPool>;
     store: ParcelStore;
     upkeepDeps: UpkeepScannerDeps;
     queries: string[];
@@ -70,7 +72,8 @@ interface E2EApp {
 /**
  * Build the seeded Genesis Core app with a swappable per-request didContext AND the
  * upkeep-scanner deps composed EXACTLY as production does in main.ts (parcel-registry
- * ladder + Nous-registry balance/transfer + store persist; treasury = TREASURY_DID).
+ * ladder + store persist + an atomic Ledger-A charge via NousAccountStore; treasury =
+ * TREASURY_DID for the reclaim path).
  */
 function buildGenesisApp(): E2EApp {
     const audit = new AuditChain();
@@ -79,10 +82,9 @@ function buildGenesisApp(): E2EApp {
     const parcelRegistry = new ParcelRegistry('genesis');
     for (const p of buildGenesisCoreParcels('genesis')) parcelRegistry.upsert(p);
 
-    // Phase 62.5-02: land purchase runs on the unified in-DB ledger (nous_accounts →
-    // civic_treasury); UPKEEP is not migrated in this wave and still moves on the in-memory
-    // NousRegistry (Ledger B). So both ledgers are funded here: the accts pool backs the buy,
-    // the NousRegistry backs upkeep. otherQuery satisfies the real ParcelStore + records SQL.
+    // Phase 62.6-02: BOTH land purchase AND upkeep now run on the unified in-DB ledger
+    // (nous_accounts → civic_treasury). The accts pool backs the buy, the build-material
+    // charge, AND the upkeep charge. otherQuery satisfies the real ParcelStore + records SQL.
     const queries: string[] = [];
     const accts = makeAccountsPool({
         otherQuery: (sql) => {
@@ -94,12 +96,13 @@ function buildGenesisApp(): E2EApp {
     accts.seedAccount(NOUS_B, 10_000);
     accts.seedAccount(NOUS_C, 10_000);
 
-    // Funds registry: treasury + three Nous (funds the not-yet-migrated upkeep path).
+    // NousRegistry retained only as the GridServices.registry surface some routes read;
+    // it no longer carries any upkeep money (upkeep is Ledger A as of 62.6-02).
     const nousRegistry = new NousRegistry();
     nousRegistry.spawn({ name: 'treasury', did: TREASURY_DID, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 0);
-    nousRegistry.spawn({ name: 'alice', did: NOUS_A, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 10_000);
-    nousRegistry.spawn({ name: 'bob', did: NOUS_B, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 10_000);
-    nousRegistry.spawn({ name: 'carol', did: NOUS_C, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 10_000);
+    nousRegistry.spawn({ name: 'alice', did: NOUS_A, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 0);
+    nousRegistry.spawn({ name: 'bob', did: NOUS_B, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 0);
+    nousRegistry.spawn({ name: 'carol', did: NOUS_C, publicKey: 'pk', region: 'r0' }, 'genesis.local', 0, 0);
 
     // Real write-through store over the fake Pool — persistPurchase/persistBuild/etc. run.
     const store = new ParcelStore(accts.pool, 'genesis');
@@ -113,12 +116,11 @@ function buildGenesisApp(): E2EApp {
         parcels: { registry: parcelRegistry, store },
     };
 
-    // Upkeep deps composed EXACTLY as production (main.ts lines 228–240).
+    // Upkeep deps composed EXACTLY as production (main.ts): parcel-registry ladder +
+    // store persist + an atomic Ledger-A charge via NousAccountStore.chargeToTreasury.
     const upkeepDeps: UpkeepScannerDeps = {
         registry: {
             list: (filter) => parcelRegistry.list(filter),
-            get: (did) => nousRegistry.get(did),
-            transferWei: (from, to, amount) => nousRegistry.transferWei(from, to, amount),
             advanceCondition: (address) => parcelRegistry.advanceCondition(address),
             resetCondition: (address) => parcelRegistry.resetCondition(address),
             persistUpkeep: (parcel) => store.persistUpkeep(parcel),
@@ -126,6 +128,8 @@ function buildGenesisApp(): E2EApp {
         },
         audit,
         treasuryDid: TREASURY_DID,
+        gridName: 'genesis',
+        accountStore: new NousAccountStore(accts.pool),
     };
 
     let currentCtx: DIDContext | null = null;
@@ -134,7 +138,7 @@ function buildGenesisApp(): E2EApp {
     registerCivicParcelRoutes(app, services as GridServices);
 
     return {
-        app, audit, parcelRegistry, nousRegistry, store, upkeepDeps, queries,
+        app, audit, parcelRegistry, nousRegistry, accts, store, upkeepDeps, queries,
         setCtx: (ctx) => { currentCtx = ctx; },
         ready: app.ready().then(() => {}),
     };
@@ -159,7 +163,7 @@ describe('HOUSE-2 Definition of Done — furnish → view-gated → upkeep → r
     it('extends an interior, collects funded upkeep, decays an unfunded home to reclaim, exempts commons', async () => {
         const env = buildGenesisApp();
         await env.ready;
-        const { app, audit, parcelRegistry, nousRegistry, upkeepDeps } = env;
+        const { app, audit, parcelRegistry, accts, upkeepDeps } = env;
 
         // Sanity — gravity law priced ring 3 at 400; upkeepDue = 2% = 8 Bios/period.
         expect(gravityPrice(3)).toBe(400);
@@ -202,8 +206,8 @@ describe('HOUSE-2 Definition of Done — furnish → view-gated → upkeep → r
 
         // ── 2. PAY (funded) — Nous C buys + builds, then a funded period is collected ──
         await buyAndBuild(env, NOUS_C, HOME_C);
-        const carolBefore = nousRegistry.get(NOUS_C)!.balance_wei;
-        const treasuryBeforeUpkeep = nousRegistry.get(TREASURY_DID)!.balance_wei;
+        const carolBefore = accts.balanceOf(NOUS_C);
+        const treasuryBeforeUpkeep = accts.treasuryOf();
 
         // Tick across a full UPKEEP_PERIOD_TICKS boundary (lastUpkeepTick is null → due).
         await onUpkeepTick(UPKEEP_PERIOD_TICKS, upkeepDeps);
@@ -215,22 +219,22 @@ describe('HOUSE-2 Definition of Done — furnish → view-gated → upkeep → r
         expect(Object.keys(carolCollect!.payload).sort()).toEqual(['amount_wei', 'owner_civic_did_hash', 'parcel_id', 'tick']);
         expect(carolCollect!.payload.amount_wei).toBe(8);
         expect(String(carolCollect!.payload.owner_civic_did_hash)).toBe(sha256Hex(NOUS_C));
-        // Funds moved Nous C → treasury (exactly 8); condition stays maintained.
-        expect(nousRegistry.get(NOUS_C)!.balance_wei).toBe(carolBefore - 8);
+        // Funds moved Nous C nous_accounts → civic_treasury (exactly 8); condition stays maintained.
+        expect(accts.balanceOf(NOUS_C)).toBe(carolBefore - 8n);
+        // Both owned homes charged this sweep → civic_treasury up by 16 (8 each).
+        expect(accts.treasuryOf()).toBe(treasuryBeforeUpkeep + 16n);
         expect(parcelRegistry.get(HOME_C)!.condition).toBe('maintained');
         expect(parcelRegistry.get(HOME_C)!.missedPeriods).toBe(0);
 
-        // Nous A was ALSO funded on this first sweep → maintained. Upkeep debits the (unmigrated)
-        // NousRegistry balance; the land purchase debited the separate nous_accounts ledger, so
-        // Alice's NousRegistry balance reflects the upkeep only: 10000 - 8.
+        // Nous A was ALSO funded on this first sweep → maintained. Upkeep now debits the SAME
+        // unified nous_accounts ledger the land purchase used (Phase 62.6-02), so Alice's
+        // account reflects buy + build-material + this upkeep charge.
         expect(parcelRegistry.get(HOME_A)!.condition).toBe('maintained');
-        const aliceFundedBalance = nousRegistry.get(NOUS_A)!.balance_wei;
-        expect(aliceFundedBalance).toBe(10_000 - 8);
 
         // ── 3. DECAY — drain Nous A's balance, then walk the ladder across boundaries ──
-        // Move Alice's funds away so she cannot pay (transfer to treasury → balance 0).
-        nousRegistry.transferWei(NOUS_A, TREASURY_DID, aliceFundedBalance);
-        expect(nousRegistry.get(NOUS_A)!.balance_wei).toBe(0);
+        // Zero Alice's Ledger-A account so the next upkeep charge fails (insufficient_balance).
+        accts.seedAccount(NOUS_A, 0);
+        expect(accts.balanceOf(NOUS_A)).toBe(0n);
 
         // 1st missed period → worn + zoning.condition_changed.
         await onUpkeepTick(UPKEEP_PERIOD_TICKS * 2, upkeepDeps);
