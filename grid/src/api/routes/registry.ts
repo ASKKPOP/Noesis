@@ -10,6 +10,7 @@ import { compactVerify, importJWK, type JWK } from 'jose';
 import type { GridServices } from '../server.js';
 
 import { buildCivicDidVc, buildBusinessDidVc } from '../../civic-registry/vc-builder.js';
+import { NousAccountStore } from '../../economy/nous-account-store.js';
 
 import { appendRegistryCivicDidIssued } from '../../audit/append-registry-civic-did-issued.js';
 import { appendRegistryCivicDidRevoked } from '../../audit/append-registry-civic-did-revoked.js';
@@ -154,6 +155,19 @@ export async function registerRegistryRoutes(
                 grid_name: services.gridName,
                 issued_at_tick: issuedAtTick,
             });
+
+            // Phase 62.5-01: give every new citizen a civic-DID-keyed economy account
+            // (Ledger A / nous_accounts, balance 0) at issuance, so land/community/
+            // business spend can read it (Phase 62.5-02) instead of the legacy
+            // existence-keyed nous_registry balance — closing the split-ledger gap
+            // (Issue #9). Idempotent (INSERT IGNORE); no-op in DB-less tests (no pool).
+            if (services.pool) {
+                await new NousAccountStore(services.pool).ensureAccount({
+                    gridName: services.gridName,
+                    civicDid,
+                    currentTick: issuedAtTick,
+                });
+            }
 
             // Phase 38 WIRE-02 binding (the missing link): bind the freshly-issued
             // Civic-DID to the Nous's live NousRunner (keyed by its Existence-DID)
