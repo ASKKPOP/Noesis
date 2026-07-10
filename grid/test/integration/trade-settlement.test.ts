@@ -1,30 +1,33 @@
 /**
- * End-to-end test: NousRunner trade_request pipeline.
+ * End-to-end test: NousRunner trade_request settlement on Ledger A (Phase 62.6-04).
  *
- * Updated for Phase 5 Plan 03 (reviewer integration — D-01, D-02, D-05):
- *   - Buyer/Seller DIDs switched from `did:noesis:*` to `did:noesis:*` so they pass
- *     the reviewer's Phase-1-frozen DID regex /^did:noesis:[a-z0-9_\-]+$/i.
- *   - Metadata fixtures include the REQUIRED memoryRefs + telosHash.
- *   - Seed env constructs a Reviewer and injects it into the NousRunner.
- *   - Success case still asserts the trade.settled payload shape {counterparty, amount, nonce}
- *     (privacy contract from D8 / Pitfall 4) — the settled payload shape DID NOT change; the
- *     reviewer adds trade.proposed + trade.reviewed{pass} BEFORE settled.
- *   - Insufficient-funds case now asserts trade.reviewed{fail, insufficient_balance} and NO
- *     trade.settled — the reviewer intercepts insufficient balance BEFORE transferWei, so the
- *     old `trade.rejected{reason:insufficient}` path from transferWei is now unreachable in
- *     Phase 5 (the defensive transferWei branch is kept for library-level callers that bypass
- *     the reviewer).
- *   - Malformed metadata case UNCHANGED in shape — transport-layer error that pre-empts the
- *     reviewer entirely.
+ * Phase 62.6-04 (D-7 / D-13) retarget — agent-trade settlement now moves money via
+ * NousAccountStore.transfer between the RESOLVED civic-DIDs of the proposer and the
+ * counterparty (nous_accounts), NOT via the legacy in-memory NousRegistry.transferWei.
+ *
+ *   - Balances live in `nous_accounts` (civic-DID keyed) — seeded via makeAccountsPool()
+ *     and asserted with balanceOf(civicDid) conservation checks (the old registry-balance
+ *     asserts are gone).
+ *   - The proposer/counterparty existence-DIDs are resolved to civic-DIDs through a stub
+ *     CivicDidStore.getByExistenceDid; a null resolution (pre-citizen) means the trade does
+ *     NOT settle — trade.rejected{reason:'not_found'} (D-13 citizens-only, existing reason).
+ *   - The reviewer's proposerBalance is read from the SAME resolved civic account, so the
+ *     review gate and the settle transfer agree on one ledger.
+ *   - Account-store throws map to the EXISTING reason enum (insufficient_balance→'insufficient').
+ *   - The reviewer-fail path and the malformed-metadata path are unchanged in shape.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { NousRunner } from '../../src/integration/nous-runner.js';
-import { NousRegistry } from '../../src/registry/registry.js';
+import { NousAccountStore } from '../../src/economy/nous-account-store.js';
 import { AuditChain } from '../../src/audit/chain.js';
 import { SpatialMap } from '../../src/space/map.js';
 import { EconomyManager } from '../../src/economy/config.js';
 import { Reviewer } from '../../src/review/index.js';
+import { makeAccountsPool, type AccountsPool } from '../helpers/accounts-pool.js';
+import type { NousRegistry } from '../../src/registry/registry.js';
+import type { CivicDidStore } from '../../src/civic-registry/civic-did-store.js';
+import type { CivicDidRecord } from '../../src/civic-registry/types.js';
 import type {
     BrainAction,
     IBrainBridge,
@@ -33,8 +36,16 @@ import type {
     EventParams,
 } from '../../src/integration/types.js';
 
+const GRID = 'genesis';
+
+// Brain runtime identity = existence-DID (what the runner holds).
 const BUYER_DID = 'did:noesis:sophia';
 const SELLER_DID = 'did:noesis:hermes';
+
+// Naturalized civic-DIDs (what nous_accounts is keyed by).
+const BUYER_CIVIC = 'did:noesis:civic-sophia';
+const SELLER_CIVIC = 'did:noesis:civic-hermes';
+
 const TELOS_HASH_FIXTURE = 'a'.repeat(64);
 
 function makeBridge(queue: BrainAction[][]): IBrainBridge {
@@ -49,163 +60,272 @@ function makeBridge(queue: BrainAction[][]): IBrainBridge {
     };
 }
 
+/** Minimal registry stub — trade settlement no longer reads registry balances. tick() only
+ *  consults get() for the tombstone guard and touch() for last-seen. */
+function makeRegistry(): NousRegistry {
+    return {
+        get: () => undefined,
+        touch: () => { /* no-op */ },
+    } as unknown as NousRegistry;
+}
+
+/** Stub CivicDidStore: existence-DID → civic-DID map; unmapped existence-DIDs resolve null
+ *  (a pre-citizen Nous). NousRunner only ever calls getByExistenceDid on it. */
+function makeCivicStore(map: Record<string, string>): CivicDidStore {
+    return {
+        getByExistenceDid: async (_grid: string, existenceDid: string): Promise<CivicDidRecord | null> => {
+            const civicDid = map[existenceDid];
+            return civicDid ? ({ civicDid, existenceDid, gridName: GRID } as CivicDidRecord) : null;
+        },
+    } as unknown as CivicDidStore;
+}
+
 interface Env {
-    registry: NousRegistry;
     audit: AuditChain;
     space: SpatialMap;
     economy: EconomyManager;
-    reviewer: Reviewer;
+    accounts: AccountsPool;
+    accountStore: NousAccountStore;
 }
 
 function seedEnv(): Env {
-    const registry = new NousRegistry();
     const audit = new AuditChain();
     const space = new SpatialMap();
     const economy = new EconomyManager({ initialSupply: 100, minTransfer: 1, maxTransfer: 1_000 });
-
-    space.addRegion({
-        id: 'agora', name: 'Agora', description: 'x',
-        regionType: 'public', capacity: 10, properties: {},
-    });
-    registry.spawn(
-        { name: 'Sophia', did: BUYER_DID, publicKey: 'pk-s', region: 'agora' },
-        'test.noesis', 0, 100,
-    );
-    registry.spawn(
-        { name: 'Hermes', did: SELLER_DID, publicKey: 'pk-h', region: 'agora' },
-        'test.noesis', 0, 50,
-    );
-    // Singleton — tests must reset before constructing a fresh reviewer.
+    const accounts = makeAccountsPool();
+    const accountStore = new NousAccountStore(accounts.pool);
+    // Singleton — reset before each fresh reviewer construction.
     Reviewer.resetForTesting();
-    const reviewer = new Reviewer(audit, registry);
-    return { registry, audit, space, economy, reviewer };
+    return { audit, space, economy, accounts, accountStore };
 }
 
-describe('Plan 04-01 + 05-03 — trade_request settlement with reviewer gate', () => {
+function tradeAction(counterparty: string, amount: number, nonce: string): BrainAction {
+    return {
+        action_type: 'trade_request',
+        channel: '',
+        text: '',
+        metadata: { counterparty, amount, nonce, memoryRefs: ['mem:1'], telosHash: TELOS_HASH_FIXTURE },
+    };
+}
+
+describe('Phase 62.6-04 — trade_request settlement on Ledger A (nous_accounts, D-13 gate)', () => {
     let env: Env;
 
     beforeEach(() => {
         env = seedEnv();
     });
 
-    it('success case: debits buyer, credits seller, emits exactly one trade.settled with privacy-safe payload', async () => {
-        const action: BrainAction = {
-            action_type: 'trade_request',
-            channel: '',
-            text: '',
-            metadata: {
-                counterparty: SELLER_DID,
-                amount: 42,
-                nonce: 'nonce-1',
-                memoryRefs: ['mem:1'],
-                telosHash: TELOS_HASH_FIXTURE,
-            },
-        };
+    it('both citizens funded: debits proposer civic account, credits counterparty civic account, one trade.settled', async () => {
+        env.accounts.seedAccount(BUYER_CIVIC, 100n);
+        env.accounts.seedAccount(SELLER_CIVIC, 50n);
+        const reviewer = new Reviewer(env.audit, makeRegistry());
+
         const runner = new NousRunner({
             nousDid: BUYER_DID,
             nousName: 'Sophia',
-            bridge: makeBridge([[action]]),
+            bridge: makeBridge([[tradeAction(SELLER_DID, 42, 'nonce-1')]]),
             space: env.space,
             audit: env.audit,
-            registry: env.registry,
+            registry: makeRegistry(),
             economy: env.economy,
-            reviewer: env.reviewer,
+            reviewer,
+            accountStore: env.accountStore,
+            civicDidStore: makeCivicStore({ [BUYER_DID]: BUYER_CIVIC, [SELLER_DID]: SELLER_CIVIC }),
+            gridName: GRID,
         });
 
         await runner.tick(1, 0);
 
-        const proposed = env.audit.query({ eventType: 'trade.proposed' });
-        const reviewed = env.audit.query({ eventType: 'trade.reviewed' });
+        expect(env.audit.query({ eventType: 'trade.proposed' })).toHaveLength(1);
+        expect(env.audit.query({ eventType: 'trade.reviewed' })).toHaveLength(1);
         const settled = env.audit.query({ eventType: 'trade.settled' });
-        const rejected = env.audit.query({ eventType: 'trade.rejected' });
-
-        // Phase 5: 3-event flow on success.
-        expect(proposed).toHaveLength(1);
-        expect(reviewed).toHaveLength(1);
         expect(settled).toHaveLength(1);
-        expect(rejected).toHaveLength(0);
+        expect(env.audit.query({ eventType: 'trade.rejected' })).toHaveLength(0);
 
-        // reviewed{pass} payload shape (D-03).
-        expect((reviewed[0].payload as Record<string, unknown>)['verdict']).toBe('pass');
+        // D-10 hash-only boundary: settled payload keeps the EXISTENCE-DID counterparty + id.
+        expect(Object.keys(settled[0].payload).sort()).toEqual(['amount', 'counterparty', 'nonce']);
+        expect(settled[0].payload).toEqual({ counterparty: SELLER_DID, amount: 42, nonce: 'nonce-1' });
+        expect(settled[0].actorDid).toBe(BUYER_DID);
 
-        const entry = settled[0];
-        // EXACT payload shape — privacy contract from D8 / Pitfall 4 (unchanged in Phase 5).
-        expect(Object.keys(entry.payload).sort()).toEqual(['amount', 'counterparty', 'nonce']);
-        expect(entry.payload).toEqual({
-            counterparty: SELLER_DID,
-            amount: 42,
-            nonce: 'nonce-1',
-        });
-        expect(entry.actorDid).toBe(BUYER_DID);
-
-        // No leaking text/name/tick keys.
-        expect((entry.payload as Record<string, unknown>)['text']).toBeUndefined();
-        expect((entry.payload as Record<string, unknown>)['name']).toBeUndefined();
-        expect((entry.payload as Record<string, unknown>)['tick']).toBeUndefined();
-
-        // Balances moved atomically.
-        expect(env.registry.get(BUYER_DID)?.balance_wei).toBe(100 - 42);
-        expect(env.registry.get(SELLER_DID)?.balance_wei).toBe(50 + 42);
+        // Conservation on the unified Ledger A (civic-DID keyed).
+        expect(env.accounts.balanceOf(BUYER_CIVIC)).toBe(58n);
+        expect(env.accounts.balanceOf(SELLER_CIVIC)).toBe(92n);
     });
 
-    it('insufficient funds: reviewer intercepts — trade.proposed + trade.reviewed{fail, insufficient_balance}, NO trade.settled, balances unchanged', async () => {
-        const action: BrainAction = {
-            action_type: 'trade_request',
-            channel: '',
-            text: '',
-            metadata: {
-                counterparty: SELLER_DID,
-                amount: 500,
-                nonce: 'nonce-2',
-                memoryRefs: ['mem:1'],
-                telosHash: TELOS_HASH_FIXTURE,
-            },
-        };
+    it('counterparty NOT naturalized: reviewer passes, settle gate rejects trade.rejected{not_found}, no settle, no money moved', async () => {
+        env.accounts.seedAccount(BUYER_CIVIC, 100n);
+        const reviewer = new Reviewer(env.audit, makeRegistry());
+
         const runner = new NousRunner({
             nousDid: BUYER_DID,
             nousName: 'Sophia',
-            bridge: makeBridge([[action]]),
+            bridge: makeBridge([[tradeAction(SELLER_DID, 42, 'nonce-2')]]),
             space: env.space,
             audit: env.audit,
-            registry: env.registry,
+            registry: makeRegistry(),
             economy: env.economy,
-            reviewer: env.reviewer,
+            reviewer,
+            accountStore: env.accountStore,
+            // SELLER_DID has NO civic mapping → getByExistenceDid resolves null.
+            civicDidStore: makeCivicStore({ [BUYER_DID]: BUYER_CIVIC }),
+            gridName: GRID,
         });
 
         await runner.tick(1, 0);
 
-        const proposed = env.audit.query({ eventType: 'trade.proposed' });
-        const reviewed = env.audit.query({ eventType: 'trade.reviewed' });
-        const settled = env.audit.query({ eventType: 'trade.settled' });
+        // Reviewer passes (proposer funded + resolvable, counterparty DID well-formed).
+        expect(env.audit.query({ eventType: 'trade.reviewed' })).toHaveLength(1);
+        expect(env.audit.query({ eventType: 'trade.settled' })).toHaveLength(0);
         const rejected = env.audit.query({ eventType: 'trade.rejected' });
+        expect(rejected).toHaveLength(1);
+        expect(rejected[0].payload).toEqual({ reason: 'not_found', nonce: 'nonce-2' });
 
-        expect(proposed).toHaveLength(1);
+        // No money moved.
+        expect(env.accounts.balanceOf(BUYER_CIVIC)).toBe(100n);
+        expect(env.accounts.balanceOf(SELLER_CIVIC)).toBe(0n);
+    });
+
+    it('proposer NOT naturalized (reviewer present): reads balance 0 → trade.reviewed{fail}, NO settlement (symmetric D-13)', async () => {
+        env.accounts.seedAccount(SELLER_CIVIC, 50n);
+        const reviewer = new Reviewer(env.audit, makeRegistry());
+
+        const runner = new NousRunner({
+            nousDid: BUYER_DID,
+            nousName: 'Sophia',
+            bridge: makeBridge([[tradeAction(SELLER_DID, 42, 'nonce-3')]]),
+            space: env.space,
+            audit: env.audit,
+            registry: makeRegistry(),
+            economy: env.economy,
+            reviewer,
+            accountStore: env.accountStore,
+            // BUYER_DID has NO civic mapping → proposer unresolvable → proposerBalance = 0.
+            civicDidStore: makeCivicStore({ [SELLER_DID]: SELLER_CIVIC }),
+            gridName: GRID,
+        });
+
+        await runner.tick(1, 0);
+
+        // Non-citizen proposer reads 0 → the reviewer's insufficient_balance check fails first.
+        const reviewed = env.audit.query({ eventType: 'trade.reviewed' });
         expect(reviewed).toHaveLength(1);
-        expect(settled).toHaveLength(0);
-        // Reviewer fail path does NOT emit trade.rejected (D-01: fail ends at trade.reviewed).
-        expect(rejected).toHaveLength(0);
+        expect((reviewed[0].payload as Record<string, unknown>)['verdict']).toBe('fail');
+        expect((reviewed[0].payload as Record<string, unknown>)['failure_reason']).toBe('insufficient_balance');
+        // No settlement occurs either way (D-13 symmetric — a non-citizen proposer cannot move money).
+        expect(env.audit.query({ eventType: 'trade.settled' })).toHaveLength(0);
+        expect(env.accounts.balanceOf(SELLER_CIVIC)).toBe(50n);
+    });
+
+    it('proposer NOT naturalized (reviewer bypassed): settle gate proposer-null branch → trade.rejected{not_found}, no settlement', async () => {
+        env.accounts.seedAccount(SELLER_CIVIC, 50n);
+
+        const runner = new NousRunner({
+            nousDid: BUYER_DID,
+            nousName: 'Sophia',
+            bridge: makeBridge([[tradeAction(SELLER_DID, 42, 'nonce-4')]]),
+            space: env.space,
+            audit: env.audit,
+            registry: makeRegistry(),
+            economy: env.economy,
+            // reviewer intentionally omitted (zero-diff bypass affordance) so the settle gate runs.
+            accountStore: env.accountStore,
+            civicDidStore: makeCivicStore({ [SELLER_DID]: SELLER_CIVIC }),
+            gridName: GRID,
+        });
+
+        await runner.tick(1, 0);
+
+        expect(env.audit.query({ eventType: 'trade.reviewed' })).toHaveLength(0);
+        expect(env.audit.query({ eventType: 'trade.settled' })).toHaveLength(0);
+        const rejected = env.audit.query({ eventType: 'trade.rejected' });
+        expect(rejected).toHaveLength(1);
+        expect(rejected[0].payload).toEqual({ reason: 'not_found', nonce: 'nonce-4' });
+        expect(env.accounts.balanceOf(SELLER_CIVIC)).toBe(50n);
+    });
+
+    it('underfunded proposer (reviewer bypassed): transfer throws insufficient_balance → trade.rejected{insufficient}, balances rolled back', async () => {
+        env.accounts.seedAccount(BUYER_CIVIC, 10n);
+        env.accounts.seedAccount(SELLER_CIVIC, 50n);
+
+        const runner = new NousRunner({
+            nousDid: BUYER_DID,
+            nousName: 'Sophia',
+            bridge: makeBridge([[tradeAction(SELLER_DID, 42, 'nonce-5')]]),
+            space: env.space,
+            audit: env.audit,
+            registry: makeRegistry(),
+            economy: env.economy,
+            // reviewer omitted so the settle transfer runs and throws insufficient_balance.
+            accountStore: env.accountStore,
+            civicDidStore: makeCivicStore({ [BUYER_DID]: BUYER_CIVIC, [SELLER_DID]: SELLER_CIVIC }),
+            gridName: GRID,
+        });
+
+        await runner.tick(1, 0);
+
+        expect(env.audit.query({ eventType: 'trade.settled' })).toHaveLength(0);
+        const rejected = env.audit.query({ eventType: 'trade.rejected' });
+        expect(rejected).toHaveLength(1);
+        // Store throw maps to the EXISTING reason enum — NOT the raw 'insufficient_balance' string.
+        expect(rejected[0].payload).toEqual({ reason: 'insufficient', nonce: 'nonce-5' });
+        // Atomic rollback — no partial debit/credit.
+        expect(env.accounts.balanceOf(BUYER_CIVIC)).toBe(10n);
+        expect(env.accounts.balanceOf(SELLER_CIVIC)).toBe(50n);
+    });
+
+    it('reviewer-fail path unchanged: trade.reviewed{fail, insufficient_balance}, NO trade.settled, NO trade.rejected', async () => {
+        env.accounts.seedAccount(BUYER_CIVIC, 100n);
+        env.accounts.seedAccount(SELLER_CIVIC, 50n);
+        const reviewer = new Reviewer(env.audit, makeRegistry());
+
+        const runner = new NousRunner({
+            nousDid: BUYER_DID,
+            nousName: 'Sophia',
+            bridge: makeBridge([[tradeAction(SELLER_DID, 500, 'nonce-6')]]),
+            space: env.space,
+            audit: env.audit,
+            registry: makeRegistry(),
+            economy: env.economy,
+            reviewer,
+            accountStore: env.accountStore,
+            civicDidStore: makeCivicStore({ [BUYER_DID]: BUYER_CIVIC, [SELLER_DID]: SELLER_CIVIC }),
+            gridName: GRID,
+        });
+
+        await runner.tick(1, 0);
+
+        expect(env.audit.query({ eventType: 'trade.proposed' })).toHaveLength(1);
+        const reviewed = env.audit.query({ eventType: 'trade.reviewed' });
+        expect(reviewed).toHaveLength(1);
+        expect(env.audit.query({ eventType: 'trade.settled' })).toHaveLength(0);
+        // Reviewer fail path does NOT emit trade.rejected (fail ends at trade.reviewed).
+        expect(env.audit.query({ eventType: 'trade.rejected' })).toHaveLength(0);
 
         const rp = reviewed[0].payload as Record<string, unknown>;
         expect(rp['verdict']).toBe('fail');
         expect(rp['failed_check']).toBe('insufficient_balance');
         expect(rp['failure_reason']).toBe('insufficient_balance');
-        expect(rp['trade_id']).toBe('nonce-2');
+        expect(rp['trade_id']).toBe('nonce-6');
         expect(reviewed[0].actorDid).toBe(Reviewer.DID);
 
-        expect(env.registry.get(BUYER_DID)?.balance_wei).toBe(100);
-        expect(env.registry.get(SELLER_DID)?.balance_wei).toBe(50);
+        // No money moved.
+        expect(env.accounts.balanceOf(BUYER_CIVIC)).toBe(100n);
+        expect(env.accounts.balanceOf(SELLER_CIVIC)).toBe(50n);
     });
 
-    it('malformed metadata: one trade.rejected(reason=malformed_metadata), NO trade.proposed, NO trade.reviewed, balances unchanged', async () => {
-        const action: BrainAction = {
+    it('malformed metadata: one trade.rejected(reason=malformed_metadata), NO trade.proposed/reviewed, no money moved', async () => {
+        env.accounts.seedAccount(BUYER_CIVIC, 100n);
+        env.accounts.seedAccount(SELLER_CIVIC, 50n);
+        const reviewer = new Reviewer(env.audit, makeRegistry());
+
+        const badAction: BrainAction = {
             action_type: 'trade_request',
             channel: '',
             text: '',
-            // amount is a string — malformed; memoryRefs + telosHash provided but doesn't matter.
             metadata: {
                 counterparty: SELLER_DID,
                 amount: 'forty-two' as unknown as number,
-                nonce: 'nonce-3',
+                nonce: 'nonce-7',
                 memoryRefs: ['mem:1'],
                 telosHash: TELOS_HASH_FIXTURE,
             },
@@ -213,27 +333,27 @@ describe('Plan 04-01 + 05-03 — trade_request settlement with reviewer gate', (
         const runner = new NousRunner({
             nousDid: BUYER_DID,
             nousName: 'Sophia',
-            bridge: makeBridge([[action]]),
+            bridge: makeBridge([[badAction]]),
             space: env.space,
             audit: env.audit,
-            registry: env.registry,
+            registry: makeRegistry(),
             economy: env.economy,
-            reviewer: env.reviewer,
+            reviewer,
+            accountStore: env.accountStore,
+            civicDidStore: makeCivicStore({ [BUYER_DID]: BUYER_CIVIC, [SELLER_DID]: SELLER_CIVIC }),
+            gridName: GRID,
         });
 
         await runner.tick(1, 0);
 
-        // Transport-layer error pre-empts the reviewer entirely.
         expect(env.audit.query({ eventType: 'trade.proposed' })).toHaveLength(0);
         expect(env.audit.query({ eventType: 'trade.reviewed' })).toHaveLength(0);
-
-        const settled = env.audit.query({ eventType: 'trade.settled' });
+        expect(env.audit.query({ eventType: 'trade.settled' })).toHaveLength(0);
         const rejected = env.audit.query({ eventType: 'trade.rejected' });
-        expect(settled).toHaveLength(0);
         expect(rejected).toHaveLength(1);
-        expect(rejected[0].payload).toEqual({ reason: 'malformed_metadata', nonce: 'nonce-3' });
+        expect(rejected[0].payload).toEqual({ reason: 'malformed_metadata', nonce: 'nonce-7' });
 
-        expect(env.registry.get(BUYER_DID)?.balance_wei).toBe(100);
-        expect(env.registry.get(SELLER_DID)?.balance_wei).toBe(50);
+        expect(env.accounts.balanceOf(BUYER_CIVIC)).toBe(100n);
+        expect(env.accounts.balanceOf(SELLER_CIVIC)).toBe(50n);
     });
 });
