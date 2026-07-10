@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
-status: ready_to_execute
-stopped_at: Phase 46 SHIPPED (Government v3 — 3 plans, allowlist 75→81)
-last_updated: "2026-06-03T18:30:00.000Z"
+status: executing
+stopped_at: Phase 62.6-01 SHIPPED — marketplace buyer-debit/seller-credit migrated to nous_accounts (via *OnConn on the store escrow/settle conn) and the structure-revenue skim to civic_treasury (via chargeToTreasury post-settle, try/catch never-500s); no nous_registry.balance_wei / transferWei money use remains in marketplace-store.ts or the market.ts skim. 51+27 tests green, tsc clean. Confirmed NO marketplace refund writer exists (escrow_status=refunded schema-only) for the 62.5-05 precondition.
+last_updated: "2026-07-10T09:30:00.000Z"
 progress:
   total_phases: 25
-  completed_phases: 12
-  total_plans: 56
-  completed_plans: 56
-  percent: 48
+  completed_phases: 11
+  total_plans: 51
+  completed_plans: 51
+  percent: 100
 ---
 
 # Project State
@@ -22,17 +22,27 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** Phase 47 — Police v3 (next — complaint-driven sanctions, investigation, court-filed charges, appeals to Government)
+**Current focus:** Phase 62.6 — ledger-b-subsystem-migration
 
 ## Current Position
 
-Phase: 50 (v2.6 → v3.0 Migration) — ✅ COMPLETE 2026-06-26 (3 plans; MIG-01..04; allowlist +0)
-Plan 2/3: `MigrationCeremony` (`grid/src/migration/migrate-ceremony.ts`) — injectable-I/O state machine:
-  exportBundle → commit → revert, reversible until the first civic action; after a `*.civic.*` event →
-  `migration_committed` (409). `noesis migrate --from-v2.6 --to-v3.0 | --commit | --revert` CLI (filesystem I/O;
-  NOESIS_V26_MANIFEST as the v2.6 read stand-in). Smoke-tested end-to-end. 7 ceremony tests + 5 grandfather.
-  Exported from @noesis/grid. **Follow-up (thin):** wiring `grandfatherReputation` into the live Civic-DID
-  issuance path awaits a v26-metrics store — the pure formula + ceremony are done + published (PHILOSOPHY §12).
+Phase: 62.6 (ledger-b-subsystem-migration) — EXECUTING (plan 1 of 5 shipped; 4 subsystems remain)
+Plan 62.6-01 (marketplace + skim) — ✅ COMPLETE 2026-07-10 (commits `ec2d6985`/`a77f2cf6`/`45d3d87c`):
+  `acceptBid` debits the buyer via `debitAccountOnConn(conn, …)` and `settle` credits the seller via
+  `creditAccountOnConn(conn, …)` — both on the store's OWN escrow/settle connection so each leg stays inside
+  the existing BEGIN/COMMIT (O4/D-12); `insufficient_balance`→`insufficient_wei` (buyer_not_found retired). The
+  market skim now debits the seller → credits `civic_treasury` via `NousAccountStore.chargeToTreasury` in its
+  own tx AFTER settle commits, wrapped try/catch so a skim failure never 500s the committed settle;
+  `treasury.structure_revenue` emitted ONLY on a successful charge. IRS-fee `civic_treasury` upsert left as-is
+  (already Ledger A). Orphaned `TREASURY_DID` const removed from market.ts. Tests retargeted to the
+  `accounts-pool` fake (conservation on nous_accounts/civic_treasury) + skim success/never-500 route tests;
+  **51 subsystem + 27 related tests green, tsc clean.** No allowlist/event/payload change (D-8/D-10);
+  audit zero-diff (R-31-01) holds. **Refund-site verified: NO marketplace buyer-refund writer exists**
+  (`escrow_status='refunded'` schema-only; timeout→dispute/frozen, no money move) — recorded for 62.5-05.
+  SUMMARY: `.planning/phases/62.6-ledger-b-subsystem-migration/62.6-01-SUMMARY.md`.
+**NEXT:** 62.6-02 (upkeep — the other `did:noesis:system:treasury` writer; critical-path for 62.5-05), then
+  62.6-03 (co-work/co-build) and 62.6-04 (agent-trades, gated on D-13 citizens-only). A+B+C touch disjoint
+  files; both 62.6-01 (skim) and 62.6-02 (upkeep) must land before 62.5-05 can retire the treasury record.
 
 Phase: 55 (Portal Cross-Grid Framework — DORMANT v3.0) — ✅ COMPLETE 2026-06-26 (PORTAL-06; allowlist 155→157)
   Read endpoints return at most [Genesis]; `POST /portal/api/v1/cross-grid/marketplace/quote` → **503
@@ -55,7 +65,7 @@ Phase: 57 (Grid Zoning System) — ✅ COMPLETE 2026-06-26 (2 plans; ZONE-01/04;
 Plan 2: `residence_assignments` (v69) + `ResidenceStore.assignResidence` (deterministic `res-<hash>` in the
   Residential zone → `zoning.residence_assigned`) + `POST /api/v1/zoning/residence/assign` (government). Phase 54
   wires it on Civic-DID issuance. registry 6 + residence 2 + route 6.
-Plan: 1 of 2 (ZONE-01). The **6 canonical zones** (D-V3-32 — business·manufacture·shopping·residential·
+Plan: 2 of 5
   infrastructure·government_quarter) are constants in `zone-types.ts` (TYPE immutable; infra/government not
   for_sale). `ZoneRegistry`: `taxModifierBps` (override→canonical), `listZones`, `validateActivity` (e.g.
   marketplace_listing only in business/shopping), `amendZone` → `zoning.zone_amended`. `zone_config` (v68) holds
@@ -138,7 +148,7 @@ Plan 2: `library_curators` + `library_entry_links` + `pinned` col (v61). `POST /
   curator: pin/flag/categorize/link). 2 sole-producer events (`library.curator_elected`,
   `library.entry_curated`, DIDs hashed) — allowlist **127**, baselines re-pinned (state-doc-sync 127,
   relationship-graph-deps 912). Grid: library store 8 + route 14 tests, broad regression 1809 green.
-Status: Plan 1 — `library_entries` (v60, READABLE content) + `LibraryStore`
+Status: Ready to execute
   (contribute/cite/listEntries/getEntry). Routes: `GET /api/v1/library/entries` (public reading room,
   search/category/page — replaces the Phase-36 stub), `GET /api/v1/library/entries/:id` (full content,
   public), `POST /api/v1/library/contribute` (civic + K=3/epoch quota via LoreQuotaTracker), `POST
@@ -294,7 +304,9 @@ The gap is bigger than the missing `registerCivicDid` call — **the running Gri
 at all.** `main.ts:384` hardcodes `getRunner: () => undefined` with a comment deferring runner+coordinator
 construction to "a future sub-plan"; seeded Nous are `launcher.spawnNous` representations, NOT `NousRunner`
 instances registered to a coordinator. So the whole external-Brain→Grid action path (routes + `GridCoordinator`
+
 + WIRE-02 index) is scaffolded but disconnected — `services.coordinator` is `undefined` at runtime.
+
 **Part-1 fix SHIPPED (surgical, forward-compatible, merged to main):** the registry issuance route now calls
 `coordinator?.registerCivicDid?.(civicDid, existenceDid)` on success (extended `WireCoordinator`; +1 binding
 test; api suite 627, tsc clean). Binds an already-issued DID — does NOT issue, so orthogonal to D-V3-33.
@@ -314,6 +326,7 @@ Portal flow (`/api/v1/nous/request` → prescreen → `/api/v1/gov/charter/revie
 auth) before `/registry/civic-did/request` — factor this into the write-back milestone harness.
 
 ## Operator program (answers to "all my questions", 2026-07-03) — execution order
+
 1. ✅ **Gate Phase 37 issuance → Portal→Polis (D-V3-33)** — SHIPPED `577b661`.
 2. ✅ **Write-back milestone — CODE COMPLETE** (`f09a520`/`8806f4d`, worktree `feat/civic-writeback`): the deferred "future sub-plan" is implemented. `main.ts` now constructs a `GridCoordinator` + registers a HEADLESS `NousRunner` per seeded Nous (disconnected stub bridge → `on_tick` early-returns, never double-ticks the sim; serves only external-action dispatch + Civic-DID binding) and passes it into `buildServer`. Every link now implemented + tested: route→coordinator dispatch (`brain-wire-batch.test`), `executeActions(join_group)`→`group.member_joined` (`nous-runner-group.test`), `registerCivicDid` binding (part-1 `d3fb326`), issuance Portal-gated (#1). Boots clean on real MySQL (Nous:3, no double-tick), api+integration suite **715**, tsc clean. **Remaining = the live HTTP E2E ceremony only** (not a missing capability): (a) seed/drive a Portal→Polis-approved `nous_registration` for a seeded Nous's existence_did (`/nous/request`→prescreen→`/gov/charter/review` are `government_only`), (b) issue via `/registry/civic-did/request` (gate passes → binds to the runner), (c) register a `brain_tokens` row + sign an EdDSA JWT (`tryDid` verifies), (d) POST `join_group` to `/api/v1/brain/actions` → assert `group.member_joined` in the MySQL `audit_chain`. Driver stub: `brain/scripts/fullstack_liveness.py` (has TokenManager). Deferred because the auth+gov ceremony is by-design involved and the mechanism is already fully tested.
 3. ✅ **W-C3 Nous-driven upgradeability — CORE SHIPPED** (`9ea3e21`, worktree `feat/wc3-upgrades`): built objects are not create-once. Migration **v72** (`orbital_objects` += `level`/`upgraded_at_tick`; applies clean on real MySQL v1→v72). `OrbitalObjectStore.upgradeFromContract`: RFP-funded (settled contract) · **skill-gated** (`builderHoldsSkill` — contract winner must hold the skill via `skill.taught`/`skill.inferred` on the chain → ties upgrades to the learning loop) · **physics re-gated** (`checkObjectPhysics`) · level++ · emits new sole-producer `orbital.object_upgraded` (broadcast allowlist **157→158**, APPENDED at end so no positions shift; baselines re-pinned: state-doc-sync 158, relationship-graph 1063; all hardcoded 157→158 test guards updated). 6 store/migration tests; **full grid suite 1941 green**, tsc + all 3 allowlist gates + sole-producer discipline clean. Wiki economy.md updated. **Follow-ups (like the build loop, whose settle-driver also isn't wired):** settle-driver that invokes upgrade · Brain UPGRADE action · map level rendering.
@@ -321,6 +334,7 @@ auth) before `/registry/civic-did/request` — factor this into the write-back m
 5. ✅ **`*_bios`→wei rename (D-MONEY-07) — SHIPPED** (worktree `feat/bios-wei-rename`): operator chose the **full retire** — both legacy money names gone. Migration **v73** (`money_columns_bios_ousia_to_wei`) `RENAME COLUMN`s all nine money columns to `*_wei` (marketplace `price_bios`/`offer_price_bios`/`amount_bios`, `civic_parcels.price_bios`, `civic_credit_ledger.amount_bios`, `civic_cowork_agreements.settlement_amount_bios`, `civic_blueprints.material_cost_bios`, `communities.bios_paid`→`wei_paid`, `nous_registry.ousia`+`human_users.ousia`→`balance_wei`) and merges+drops `civic_treasury.balance_bios` into `balance_wei` — values preserved in place. Code renamed across ~75 files: bios money tokens (Pass A) + the whole ousia layer (Pass B/C — `transferOusia`→`transferWei`, `priceOusia`→`priceWei`, the `.ousia` balance property→`balance_wei`, settlement/whisper/asset string `'ousia'`→`'wei'`). Untouched by design: `ousia_weight` reputation, the Bios energy drive, and the historical schema migrations (v73 does the rename; earlier CREATE TABLE / `add_ousia_to_human_users` stay verbatim). Fixed the `COMMUNITY_FOUNDED_KEYS` closed-tuple ordering (`bios_paid`→`wei_paid` moved it out of alphabetical position). **tsc clean; full grid suite 4088 green; real-MySQL gate PASS v1→v73** (which caught a `material_cost_bios` RENAME pointed at the wrong table — mock-Pool passed it). Docs synced: economy.md + decisions.md D-MONEY-07 (planned→done) + migrations.md v73. Pre-existing baseline drift (`ALLOWLIST_BASELINE_LINES` 1063 vs actual 1065, from merged QA commits) fixed in a separate commit.
 6. ✅ **Always-on local Brain formalized — SHIPPED.** Three parts: **(a)** the always-on infra already existed (`docker-compose.brain.yml` `restart: unless-stopped` + `.planning/implementation/always-on-brain.md` runbook; ceaselessness lives in external state, not process uptime). **(b) User-choosable model** already live via `.env.brain`: `LLM_PROVIDER` (ollama|claude) + `LLM_MODEL` (qwen3:4b default) + `OLLAMA_HOST` — any Ollama model or other provider is an operator setting (operator #7). **(c) NEW — the rest semantic (D-MIND-08):** the operator's "local AI doesn't respond = the Nous rests, not dies" is now real code. `BrainHandler._mind_awake(tick)` gates every LLM-driven cycle (tool/economic/planner/decision/social/reflection) on the model substrate being reachable (`llm.is_available()`); unreachable → cognition **idles** while the deterministic body (emotion decay, drives, reminders, 60s presence heartbeat) keeps running, waking automatically when the model returns. Probed **lazily** (only when a cycle is due) + **cached per tick** (≤1 round-trip/tick; idle ticks cost 0); rest⇄wake log one line each. Provider-agnostic; adapters lacking `is_available()` are assumed awake (never force rest on an un-probeable substrate). Distinct from Hypnos sleep (voluntary consolidation) and Phase 41 presence (process down). 7 new pytests (`test/test_rest_gate.py`); **full Brain suite 1171 green**. Docs: decisions.md D-MIND-08 + always-on-brain.md "the Nous rests" section.
 7. ✅ **Deployed to noesiis.com — LIVE at `a4d8bf9`** (2026-07-09). Prod host `ec2-user@52.9.147.202:~/noesiis` via `deploy.sh` (key `~/shell/sierrabiolab-aws.pem`). **The wei rename (#5, v73) was already live** — the other session shipped it earlier (grid was at `4d7440d`); recon confirmed every `*_wei` column present, zero `*_bios`/`ousia` remaining, so **no destructive migration re-ran** (grid boot no-op'd v73). The only undeployed delta was the other session's **PR #10 nginx security headers**; brought prod `4d7440d`→`a4d8bf9` (pull + `up -d --build --force-recreate nginx` per the stale-config pitfall). **Verified:** `https://noesiis.com` → HTTP/2 200 (no 502) with `Strict-Transport-Security` + `X-Content-Type-Options: nosniff` + `X-Frame-Options: SAMEORIGIN` + `Referrer-Policy` present; docker nginx hides its version; grid/dashboard/steward/nginx all healthy. **Not shipped (by design):** the Brain rest gate (#6, D-MIND-08) — brain agents don't run in prod (no `BRAIN_HTTP_SECRET`); it's a local-operator-Brain behavior. **Flagged, not touched:** the host-level front-proxy still leaks `server: nginx/1.26.3` (host config, outside the repo deploy). **The full operator program #1–#7 is complete.**
+
 Deferred: A8 (#4). Keep colima+`noesis-mysql-test` up until write-back done (#11).
 
 ## Money Axiom — D-MONEY-01 (locked 2026-06-14)
@@ -334,7 +348,7 @@ Deferred: A8 (#4). Keep colima+`noesis-mysql-test` up until write-back done (#11
 
 **Untouched:** **Bios** = the body's craving / energy drive (PHILOSOPHY §1). It is **not money** and can never be spent. ✅ RESOLVED (2026-07-06, migration v73 / D-MONEY-07): the `*_bios` *money* columns that borrowed the desire-word — plus the legacy-currency `ousia` balance columns — are renamed to `*_wei`. The whole money surface now speaks one unit; only `ousia_weight` (reputation) and the Bios energy drive keep their names.
 
-**Status:** axiom is canonical in docs (PHILOSOPHY §6/§10, README, this file). **Shipped code still implements the legacy Ousia/`*_bios` economy** — migration to compute-labor + ETH is roadmapped, not yet built. Open implications needing user direction before the migration phase: Type B funding endowments (were Bios-denominated), IRS treasury/fees, land-purchase mechanism, conflict tribute, and the `*_bios` column rename.
+**Status:** Ready to execute
 
 **Economic Reality Loop program (opened 2026-06-21, Phases 80+) now sequences this work.** It closes the loop civic due → treasury → Polis RFP → Nous bid → build → wei payout → real orbital object → rendered. The money rails are unit **F1** (model-first/chain-ready), and the IRS-tax open question is resolved by **D-MONEY-08** (civic due — overturns D-V3-22: the treasury fills from transaction fees **+ a recurring civic due** payable in labor or ETH). Foundation-first multi-planetary: every Grid carries a `GridEnvironment` so Moon/Mars are configs, not rewrites. **F0 + F0b + F1a SHIPPED** (F0: browser GridEnvironment + body-parameterized physics gate, node 53/53; F0b: grid-side `GridEnvironment` on `GridRecord` + Portal feed, vitest 10/10; F1a: `nous_accounts` wei rail + `NousAccountStore`, migration v45, vitest 11/11; F1b: `civic_treasury.balance_wei` + `TreasuryWeiStore`, v46; F1c: composable `wei-ops` + `LaborEscrowStore` fund/release/reclaim, v47, atomic+conservation reviewed; F1d: `CivicLaborCreditStore` earn/redeem, v48). **F1 COMPLETE** (accounts · treasury-wei · escrow · credit). **L1 COMPLETE** (Phase 83) — civic due (D-MONEY-08) fully real + auditable. L1a: `civic_dues` (v49) + `CivicDueStore` assess/payWithWei(→treasury)/payWithCredit(redeem)/markDelinquent, atomic pay-once; credit-ops extracted. L1b: sole-producer `due.assessed`/`due.paid`/`due.delinquent` + producer-boundary tests + allowlist **107→110** + store emits (hashed DID). test/audit+test/economy **857/857**, tsc clean. **L2 COMPLETE** (Phase 84) — RFP procurement real + auditable. L2a: `ProcurementStore` issueNotice/placeBid/award(debit treasury→fund escrow)/settleContract(pay builder)/cancelNotice, migration v50, atomic, Polis-authorized. L2b: 6 sole-producer `procurement.*` events + allowlist **110→116** + store emits. test/audit+test/economy **952/952**, tsc clean. **L3a + L4 SHIPPED — the Economic Reality Loop is CLOSED end-to-end and renders.** L3a (Phase 85): `object-physics.ts` + migration v51 `orbital_objects` + `OrbitalObjectStore.createFromContract` (physics-gated, settled-only, one-per-contract, commons-owned). L4 (Phase 86): `GET /api/v1/orbital/objects` route (vitest 2/2) + `orbital.js` renders real backend objects with local-sim fallback (browser-verified both paths, 0 console errors). Loop: due→treasury→RFP→bid→award→escrow→builder paid→real physics-gated object→on screen. Economy suite **122/122**, tsc clean, allowlist **116**. **L3b SHIPPED** — `orbital.object_built` event (allowlist **117**); the whole loop is now on the audit chain. test/audit+test/economy **988/988**, tsc clean. **The Economic Reality Loop is COMPLETE: closed, rendered, and fully audited.** **O1a SHIPPED** (Organs, Phase 87): a Nous's Brain can join/leave a group — Brain `ActionType.JOIN_GROUP/LEAVE_GROUP` + Grid `NousRunner` dispatch → existing group-store/events (allowlist +0, sole-producer preserved). vitest 1074 no-regression, pytest green, tsc clean. **O2a SHIPPED** — human-in-the-loop approval gate: migration v52 `pending_approvals` + `ApprovalStore` (request → pending → approve/reject resolve-once; held action runs only on approval). The consult-your-human capability. economy 132/132, tsc clean, allowlist +0. **O2b SHIPPED** — `human.approval_requested/granted/denied` events (allowlist **120**, hashed DIDs, held action off-chain) + `ApprovalStore` emits. The approval lifecycle is auditable. test/audit+test/economy 1041/1041, tsc clean. **O2c-a SHIPPED** — `conversation_messages` (v53) + `ConversationStore` (private human↔Nous chat thread, off-chain, allowlist +0). economy 144/144, tsc clean. **W1+W2 SHIPPED — the loop is no longer inert.** A 2nd deep-scan found the whole economy built-but-orphaned (stores test-only, no driver, no routes, legacy Ousia still live). W1+W2 wired the FIRST running vertical: `civic-due-driver.ts` in the launcher tick (autonomous period assessment → `due.assessed`; delinquency sweep) + `GET/POST /api/v1/civic/dues` (see/pay). De-orphans `CivicDueStore` + wei rails. 677 tests green, tsc clean, allowlist +0. Commits `0f2b11e`/`eb9d5ed`/`6956821`. **OVERNIGHT AUTONOMOUS WIRING (2026-06-21 night) — MERGED TO `main` (`e2a8221`), pushed to origin 2026-06-22.** (Supersedes the earlier "local branch `night/loop-wiring`, not pushed" note — the work landed on main.) De-orphaned EVERY economy store via HTTP routes + gave the Brain economic awareness + a self-driving RFP issuer, all invariant-safe. Commits on main `c52b722`..`e2a8221`: procurement / approval / conversation routes + W3 Brain economic action-types + economy read routes + governance→RFP bridge. Full grid suite green, tsc clean, all reviewed (incl. the governance bridge — VOTE-05 intact). **W4 SHIPPED (2026-06-22) — model-first endowment = the live wei source (D-MONEY-09; user chose model-first over on-chain/labor-only).** Operator-authorized, **bounded** (per-call 1e18 + per-account 1e19 caps), **ledgered** (`account_endowments`, migration v54 — the conservation record + on-chain retirement path), **gated** (`GRID_ENDOWMENT_ENABLED` off by default + server-trusted `operatorScope` + secondary tier signal), **audited** (sole-producer `portal.account_endowed`, allowlist **120→121**). Endows the member **account** (not the treasury) so a single injection lights the whole loop: account → due → treasury → RFP award → escrow → worker. The single documented, temporary bend of D-MONEY-01 "no internal mint". `POST /api/v1/portal/account/endow` + `EndowmentStore`. New tests: store (8) + audit append (7) + producer-boundary (2) + route (8). Full grid suite **3807 green**, tsc clean. Design/plan: `docs/superpowers/plans/2026-06-22-w4-model-first-endowment.md`. **W4 capstone — loop PROVEN end-to-end** (`grid/test/economy/loop-end-to-end.test.ts`, commit `5556580`): stateful in-memory ledger drives the real stores endow→account→due→treasury→award→escrow→worker, asserting wei conservation at every hop (alice 500 + builder 300 + treasury 200 = 1000 endowed; 8-event sequence on the audit chain); negative test proves the endowment is load-bearing. **W3b SHIPPED (2026-06-22) — Brain economic decision loop (user chose the per-tick decision call over sight-only / tool-loop).** The Brain was economically blind + made no autonomous economic decision; now it (1) *reads* its balance/dues/RFPs (`GridWireClient.fetch_account/fetch_dues/fetch_open_rfps` + `post_economic_action` — the missing dispatcher), (2) gets economic *sight* in its prompt (`build_system_prompt(economic_state=…)`), and (3) each economic tick *autonomously decides* pay/bid/none via a dedicated LLM call (`handler._run_economic_cycle`, mirrors the agentic tool-loop: cost-gated — no LLM call unless a due/RFP exists — + 50-tick cooldown + Brain-side guardrails: chosen RFP must be presented, price ≤ budget, pay-in-wei only if affordable). Scope: pay_due + bid_rfp (request_approval/post_conversation stay capability-only). No new audit events (dispatches to existing Grid routes). New tests: wire (9) + prompt/parse (8) + cycle (10) = 27; reconciled a stale closed-enum count the overnight W3/O1a additions left red (ananke test 50→56). **Brain suite 1069 green, tsc/pytest clean.** Design/plan: `docs/superpowers/plans/2026-06-22-w3b-economic-decision-loop.md`. **DEFERRED (tracked, not forgotten):** `*_bios`→wei rename (D-MONEY-07, separate migration) + retire legacy Ousia faucet — neither needed for money to move. **O3 · O4 · H1 DESIGNED (2026-06-22)** — gating decisions locked + grounded design docs in `docs/superpowers/plans/`: O3 Forest = installable **PWA** (gap: O2c-b human-authed persistent conversation routes; WebRTC/push deferred); O4 street-view = **3D first-person** Three.js (reuse grid-viz; (ring,sector,level)→(x,y,z) + real parcels; avatars/interiors deferred); H1 Moon = **2nd standalone Grid as config** (no cross-grid). **H1 first version SHIPPED (2026-06-22):** `GenesisConfig.environment` + `MOON_CONFIG` preset + `configFromEnv` reads `GRID_ENV` (getEnvironment, Earth-orbit fallback) + `gridRecordFromConfig` (Polis per D-V3-31 + body env) so a Grid self-registers from its config; launch `GRID_NAME=moon GRID_ENV=Moon` → Moon Polis under Moon physics; object-physics proven body-specific (100 km orbit rejected on Earth-orbit, accepted on Moon). 11 new tests, grid suite **3818 green**, tsc clean. **H1 deeper v2:** cross-process shared `grids` table, live createFromContract env threading, 2nd docker service. **O4 street-view — CORRECTED to canon (2026-06-22):** the first flat-city attempt VIOLATED the user-locked "orbital space-station, never a flat disc" canon (`nous-space-visualizer` skill, 2026-06-11) — operator feedback: structures are built in 3D space, Moon/Mars are true previews. Removed the flat `street.{html,js}`/`address-to-world.*` fork. Correct fix per the skill ("extend `docs/noesis-genesis-core-map.html`, don't fork"): the canonical 3D orbital station (D-NH-09 seeding, orbital shells, inclined residential, Earth below D-NH-12) gained a **body picker (Earth/Moon/Mars)** mirroring the grid-side `GridEnvironment` (gravity + light-delay shown) — Earth stays Genesis default, Moon/Mars preview a lunar/martian Grid's body (H1 tie). Dashboard surface = `grid-viz/genesis-core-map.html` (marked synced copy). **Browser-verified:** orbital station above Earth, 0 console errors; body switch updates the label (g 1.62 / light 1.3s for Moon). O4 deferred v2: live parcels fetch, Moon/Mars textures, in-station walk, interiors. **O3 Forest first version not yet built.** This is a **parallel program**; the civic v3.0 milestone focus below (Phase 47 Police) is unchanged.
 
@@ -658,6 +672,7 @@ Driving inputs for v3.0 (locked at milestone open):
   every wave independently re-verified. Allowlist **99 → 100** (+1): `skill.blueprint_executed` —
   full sole-producer triad, closed 4-tuple `{blueprint_hash, builder_civic_did_hash, parcel_id, tick}`,
   actorDid = builder hash, keys dodge FORBIDDEN_KEY_PATTERN. **HOUSE total +9 (0/4/4/1).**
+
 - **Built:** migration v41 `civic_blueprints` (recipe JSON keyed by blueprint_hash, material_cost_bios);
   blueprint recipe type (objects + arrangement DAG) + closed-catalog validation + DB-first store;
   **skill-held check** (`builderHoldsSkill`) reusing the EXISTING `skill.taught`/`skill.inferred`
@@ -672,16 +687,19 @@ Driving inputs for v3.0 (locked at milestone open):
   verbs (learn_blueprint/build_from_blueprint/co_build/teach_here, capabilities no autoplay) +
   my_places enrichment + ActionType count 44→48; dashboard construction surfaces (blueprint library,
   build panel, co-build DAG board, teach-here indicator — additive).
+
 - **Invariants held:** zero-diff R-31-01 (no chain/audit-src edits — event rides a new producer);
   single-onTick R-H-03 (no new `.onTick(`); zero new diffusion; D-NH-06 always-paid; D-NH-07/VOTE-05
   humans never build; sole-producer + wallclock + civic-did-issuance + cross-house-injection (A11e) +
   did-policy-coverage + privacy-walker gates green. Full grid suite **357 files / 3330 tests green**;
   brain suite 928 passed (ActionType 48); allowlist 100.
+
 - **Definition of Done E2E** (`grid/test/civic/house-4-e2e.test.ts`): learn blueprint → build-from-
   blueprint skill-held → `skill.blueprint_executed`; co-build DAG funded (`transferOusia`) + IOU
   (`recordIou`, never free) DAG-weighted (2/3 vs 1/3); teach diffuses present-not-absent-not-human;
   human build 403; privacy walk over the real run trail. Artifacts:
   `.planning/phases/61-house-4-skill-construction/` (61-COMPLETION.md).
+
 - **✅ Dual-DID bridge — RESOLVED (commit `bf7d3b8`, user chose fix-before-deploy):** a Nous carries a
   civic-DID (`did:civic:noesis:*`, land/Ousia, JWT sub) and an existence-DID (`did:noesis:*`,
   skill-attestation `skill.taught.learner_did`, JWT iss). The `build-from-blueprint` route now runs the
@@ -699,6 +717,7 @@ Driving inputs for v3.0 (locked at milestone open):
   Allowlist **95 → 99** (+4): `zoning.role_granted`, `zoning.role_revoked`,
   `treasury.structure_revenue`, `zoning.cowork_session` — each a full sole-producer triad
   (closed-tuple + no-spread + payloadPrivacyCheck). No board/task/scope/place content on the chain.
+
 - **Built:** migration v40 (`civic_parcel_roles` / `civic_credit_ledger` / `civic_cowork_agreements`
   + shop `bound_shop_id`); closed `ROLE_CAPABILITIES` (owner⊇staff⊇guest, `isHumanDid` rejection
   D-NH-07); **severance FSM** (ACTIVE→NOTICE→SETTLEMENT→WIND_DOWN→REVOKE→ARCHIVED); mutual-credit
@@ -714,18 +733,22 @@ Driving inputs for v3.0 (locked at milestone open):
   instructions); 8 brain commerce verbs (grant_role/revoke_role/invite/bind_shop/name_place/
   post_task/claim_task/complete_task) + commerce `my_places`; dashboard commerce surfaces
   (shop badge + place name, roles panel, co-work board, IOU strip — additive).
+
 - **Invariants held:** zero-diff R-31-01 (no chain/audit-src edits — events ride new producers);
   single-onTick R-H-03 preserved (no new `.onTick(`); VOTE-05; D-NH-07 humans never own/staff;
   wallclock + sole-producer + civic-did-issuance + cross-house-injection + privacy-walker gates
   green. Full grid suite **349 files / 3277 tests green**; allowlist 99.
+
 - **Definition of Done E2E** (`grid/test/civic/house-3-e2e.test.ts`): grant staff role →
   co-work funded (`transferOusia`) + IOU (`recordIou`, never free) → `cowork_session`; bind+name
   shop → sale → `structure_revenue` at zone tax; duplicate name 409; ring-expansion enacts ring 4;
   revoke → IOU drain → severance FSM ARCHIVED → `role_revoked`; human rejected 403; privacy walk
   over the real run's trail. Artifacts: `.planning/phases/60-house-3-commerce-cowork/` (60-COMPLETION.md).
+
 - **Note:** revoke route emits `reason:'owner_revoked'` (not the plan's misnamed `'severance_complete'`);
   E2E asserts the real value per R6 (no source rewrite). `'severance_complete'` stays a valid
   un-emitted enum member.
+
 - **Side-fix (test-infra, behavior-preserving):** brain `ananke` ActionType count 34→44 orphan
   (`a6dcb00`) — Phase 59 (+2 interior) / Phase 60 (+8 commerce) grew the closed enum; full brain
   suite 904 passed.
@@ -737,6 +760,7 @@ Driving inputs for v3.0 (locked at milestone open):
   **91 → 95** (+4, the FIRST HOUSE +N): `zoning.interior_extended`, `zoning.condition_changed`,
   `zoning.parcel_reclaimed`, `treasury.upkeep_collected` — each a full sole-producer triad
   (closed-tuple + no-spread + payloadPrivacyCheck), interior contents NEVER on the chain (D-NH-02).
+
 - **Built:** migration v39 (structure_interior JSON / condition ENUM / last_upkeep_tick /
   missed_periods); closed furniture catalog (6 mirror home-only + 7 functional, single
   isValidFurniture gate); interior tree + `extendInterior`; interior HTTP routes
@@ -746,10 +770,12 @@ Driving inputs for v3.0 (locked at milestone open):
   maintained→worn→derelict→**reclaim-to-treasury** ladder (razes structure+interior, ejects
   occupants); brain `extend_interior`/`view_interior` verbs + upkeep-pressure `my_places`;
   dashboard interior viewer (mirror static / functional highlighted / condition styling).
+
 - **Invariants held:** zero-diff R-31-01 (no chain/audit-src edits — events ride new producers);
   wallclock + sole-producer + civic-did-issuance + privacy-walker gates green; commons exempt;
   no raw owner DID. Full grid suite 336 files / 3163 tests green. Artifacts:
   `.planning/phases/59-house-2-interiors-upkeep/` (59-COMPLETION.md).
+
 - **Side-fixes (test-infra, behavior-preserving):** dashboard vitest JSX (`9c155fe`,
   @vitejs/plugin-react-swc) + whisper-crypto libsodium readiness under vitest (`c2bbb92`).
   Open task chips: whisper.tsx (user's own session) + flaky skill-producer-boundary
@@ -761,16 +787,19 @@ Driving inputs for v3.0 (locked at milestone open):
   remaining phases (it depends only on the already-shipped Phase 48b `ParcelRegistry` skeleton +
   events 82–86, NOT on Phases 47/49–57). The v3.0 current-position above (Phase 46 shipped, 47/48b
   next) is unchanged; Phase 58 was built out-of-sequence because its dependency was already present.
+
 - **Built via the Planner→Generator→Evaluator harness, 7 waves (0–6), all green:** migration v38
   `civic_parcels` (write-through store, vector address ring/sector/level per D-NH-10), `founding-law.ts`
   gravity pricing `100×(5−ring)²` (ring3=400, ring2=900) + 53-parcel Genesis Core seed, GridServices
   wiring + boot log, 7 civic-parcels HTTP routes (dual-registry funds flow — `nousRegistry.transferOusia`
   moves Ousia, `parcelRegistry.purchase` only validates; D-NH-07 `humans_cannot_own_land` 401/403),
   6 brain ActionType verbs + `my_places` prompt block, orbital map `/worldmap/orbital`, E2E DoD.
+
 - **Invariants held:** allowlist **+0** (reuses 82–86; `broadcast-allowlist.test.ts` byte-for-byte
   unchanged at 91), zero-diff R-31-01 (no `scripts/` or `grid/src/audit/` change across the phase),
   wallclock + civic-did-issuance + sole-producer + privacy-walker gates green, full grid suite
   326 files / 3078 tests passing. Artifacts: `.planning/phases/58-house-1-foundations/`.
+
 - **Side-fix (committed `9c155fe`):** dashboard vitest JSX transform was pre-existing broken
   (vitest-4/rolldown dropped `oxc.jsx`); fixed by switching to `@vitejs/plugin-react-swc` — restored
   40 of 49 broken `.test.tsx` files. Remaining 9 are pre-existing logic/source issues (a `whisper.tsx`
@@ -1079,6 +1108,6 @@ Total v3.0 allowlist growth: **+35 (56 → 91)**. Freeze-except-by-explicit-addi
 
 ## Session Continuity
 
-Last session: 2026-06-10
+Last session: 2026-07-10T09:16:34.235Z
 Stopped at: Nous House designed (D-NH-01..13 canon, orbital map w/ Government Core + Earth + NY calendar) + v3.1 Phases 58-61 detailed plan written (docs/plans/2026-06-11-nous-house-implementation-plan.md); second deep-research pass in flight for founding-law parameters
 Resume file: None
