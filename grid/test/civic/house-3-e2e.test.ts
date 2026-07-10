@@ -14,8 +14,8 @@
  *   1. ROLE — an owner grants a staff role to a second Nous → zoning.role_granted (5-tuple,
  *      hashed DIDs only); roleOf === 'staff'.
  *   2. COWORK — owner posts a task; staff claims + completes. FUNDED path (the HTTP route,
- *      which always settles in Ousia) → registry.transferWei(host → worker). UNFUNDED
- *      path (completeTask funded:false) → recordIou(worker, host, amount, agreement, tick) —
+ *      which always settles in Ousia) → settleWei/NousAccountStore.transfer(host → worker).
+ *      UNFUNDED path (completeTask funded:false) → recordIou(worker, host, amount, agreement, tick) —
  *      never free. Both emit zoning.cowork_session (participants_hash only — no board text).
  *   3. SHOP — owner binds a shop + names it place://aurora-cafe.genesis; a sale at the
  *      addressed shop emits treasury.structure_revenue {amount_wei, parcel_id, tick,
@@ -67,6 +67,7 @@ interface E2EApp {
     audit: AuditChain;
     parcelRegistry: ParcelRegistry;
     nousRegistry: NousRegistry;
+    accts: ReturnType<typeof makeAccountsPool>;
     shops: ShopRegistry;
     store: ParcelStore;
     setCtx: (ctx: DIDContext | null) => void;
@@ -81,10 +82,12 @@ function buildGenesisApp(): E2EApp {
     const parcelRegistry = new ParcelRegistry('genesis');
     for (const p of buildGenesisCoreParcels('genesis')) parcelRegistry.upsert(p);
 
-    // Phase 62.5-02: the land purchase runs on the unified in-DB ledger (nous_accounts →
-    // civic_treasury); the co-work settlement + structure-revenue skim are not migrated in this
-    // wave and still move on the in-memory NousRegistry. Both ledgers are funded: accts backs
-    // the buy, NousRegistry backs the settlement/skim. otherQuery satisfies the ParcelStore.
+    // Phase 62.6-03: the land purchase AND the funded co-work settlement (board/complete →
+    // NousAccountStore.transfer host→worker) now run on the unified in-DB ledger (nous_accounts).
+    // Only the test-local structure-revenue skim helper still moves on the in-memory NousRegistry
+    // (that skim's production route was migrated in 62.6-01; this e2e drives it via a local
+    // helper). accts backs the buy + co-work; NousRegistry backs the skim helper. otherQuery
+    // satisfies the ParcelStore.
     const accts = makeAccountsPool({ otherQuery: () => [{ affectedRows: 1 } as ResultSetHeader, []] });
     accts.seedAccount(OWNER, 10_000);
     accts.seedAccount(STAFF, 10_000);
@@ -118,7 +121,7 @@ function buildGenesisApp(): E2EApp {
     registerCivicParcelRoutes(app, services as GridServices);
 
     return {
-        app, audit, parcelRegistry, nousRegistry, shops, store,
+        app, audit, parcelRegistry, nousRegistry, accts, shops, store,
         setCtx: (ctx) => { currentCtx = ctx; },
         ready: app.ready().then(() => {}),
     };
@@ -138,7 +141,7 @@ describe('HOUSE-3 Definition of Done — roles → co-work → shop/place → re
     it('grants a staff role, runs a funded AND an IOU co-work session, binds+names a shop, collects structure revenue, expands a ring, then severs the role draining the IOU', async () => {
         const env = buildGenesisApp();
         await env.ready;
-        const { app, audit, parcelRegistry, nousRegistry, shops } = env;
+        const { app, audit, parcelRegistry, nousRegistry, accts, shops } = env;
 
         // Sanity — gravity law priced the ring-2 shop at 900; the shopping zone tax = 1000 bps.
         expect(gravityPrice(2)).toBe(900);
@@ -172,10 +175,10 @@ describe('HOUSE-3 Definition of Done — roles → co-work → shop/place → re
         expect(String(granted[0].payload.holder_civic_did_hash)).toBe(sha256Hex(STAFF));
 
         // ── 2a. COWORK (FUNDED) — owner posts, staff claims, host completes through the real
-        //        HTTP route. The route ALWAYS settles in Ousia (funded = !!registry), so this
-        //        exercises the transferWei branch: 50 Bios move OWNER → STAFF. ──
-        const ownerBeforeFunded = nousRegistry.get(OWNER)!.balance_wei;
-        const staffBeforeFunded = nousRegistry.get(STAFF)!.balance_wei;
+        //        HTTP route. The route ALWAYS settles in Ousia (funded:true), so this exercises
+        //        the settleWei branch: 50 Bios move OWNER → STAFF on nous_accounts (62.6-03). ──
+        const ownerBeforeFunded = accts.balanceOf(OWNER);
+        const staffBeforeFunded = accts.balanceOf(STAFF);
 
         env.setCtx({ did: OWNER, tier: 'civic_member' });
         const post1 = await POST(app, `/api/v1/civic/parcels/${SHOP}/board/post`, {
@@ -193,8 +196,8 @@ describe('HOUSE-3 Definition of Done — roles → co-work → shop/place → re
         expect(complete1.statusCode).toBe(200);
 
         // Funded settlement moved Ousia host → worker (exactly the pay amount); no IOU recorded.
-        expect(nousRegistry.get(OWNER)!.balance_wei).toBe(ownerBeforeFunded - 50);
-        expect(nousRegistry.get(STAFF)!.balance_wei).toBe(staffBeforeFunded + 50);
+        expect(accts.balanceOf(OWNER)).toBe(ownerBeforeFunded - 50n);
+        expect(accts.balanceOf(STAFF)).toBe(staffBeforeFunded + 50n);
         expect(outstandingFor(OWNER)).toBe(0);
 
         const sessionsAfterFunded = audit.query({ eventType: 'zoning.cowork_session' });
@@ -362,9 +365,9 @@ describe('HOUSE-3 Definition of Done — roles → co-work → shop/place → re
  * directly. The cowork_session is then appended via the SAME sole producer the route uses.
  * Returns the participants_hash so the caller can correlate it with the emitted event.
  */
-function postUnfundedCowork(
+async function postUnfundedCowork(
     env: E2EApp, parcelId: string, host: string, worker: string, amount: number,
-): { participants_hash: string } {
+): Promise<{ participants_hash: string }> {
     const { audit } = env;
     const start = 100, end = 100;
     // Post (host) → claim (worker) → completeTask(funded:false) on the real cowork module.
@@ -373,7 +376,7 @@ function postUnfundedCowork(
         settlement_amount_wei: amount, term_ticks: 0,
     });
     claimTask(agreement.agreement_id, worker);
-    const settled = completeTask(agreement.agreement_id, host, {
+    const settled = await completeTask(agreement.agreement_id, host, {
         funded: false,           // the IOU branch — never free, records a payable instead.
         start_tick: start,
         end_tick: end,

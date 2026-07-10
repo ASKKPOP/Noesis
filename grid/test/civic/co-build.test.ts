@@ -10,15 +10,21 @@
  *     catalog object(s) + depends_on edges + a weight); dependency edges are respected (a node
  *     cannot complete before its depends_on).
  *   - each sub-task is posted to the Phase 60 co-work board (a Cowork Agreement task carrying
- *     pay); completion ALWAYS settles — Ousia via transferWei when funded, else a Phase 60
- *     recordIou — a sub-task completion that pays NOTHING throws (never free, D-NH-06).
+ *     pay); completion ALWAYS settles — Ousia via settleWei (NousAccountStore.transfer) when
+ *     funded (an underfunded host falls back to an IOU), else a Phase 60 recordIou — a sub-task
+ *     completion that pays NOTHING throws (never free, D-NH-06).
  *   - attributionShare(session, did) is DAG-weighted: Σ(completed-node weights for did) ÷
  *     Σ(all-node weights) (half the weight → a 0.5 share).
  *   - sub-task settlement reuses the Phase 60 zoning.cowork_session event + the IOU/Ousia path —
  *     NO new allowlist event for sub-tasks; on FULL completion the executor applies the assembled
  *     recipe + emits the single skill.blueprint_executed.
+ *
+ * Phase 62.6-03 — the settlement seam is the async settleWei (NousAccountStore.transfer,
+ * Nous→Nous), no longer the sync Ledger-B seam; completeSubTask/completeNode are async.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { makeAccountsPool } from '../helpers/accounts-pool.js';
+import { NousAccountStore } from '../../src/economy/nous-account-store.js';
 
 const loadCoBuild = () => import('../../src/civic/co-build.js');
 
@@ -59,18 +65,58 @@ describe('Phase 61 HOUSE-4 — decomposeRecipe → atomic sub-task DAG [Wave 2 u
         const { decomposeRecipe, createCoBuildSession, completeNode } = await loadCoBuild();
         const nodes = decomposeRecipe(recipe());
         const session = createCoBuildSession({ parcel_id: PARCEL, blueprint_hash: BLUEPRINT_HASH, nodes });
-        expect(() => completeNode(session, 'n2', WORKER, { funded: true })).toThrow(/depend|n1|order/i);
+        await expect(completeNode(session, 'n2', WORKER, { funded: true })).rejects.toThrow(/depend|n1|order/i);
     });
 });
 
 describe('Phase 61 HOUSE-4 — every sub-task ALWAYS settles (never free, D-NH-06) [Wave 2 un-skips]', () => {
-    it('settles in Ousia via transferWei when the host is funded', async () => {
+    it('settles in Ousia via the async settleWei seam when the host is funded', async () => {
         const { decomposeRecipe, createCoBuildSession, completeNode } = await loadCoBuild();
         const session = createCoBuildSession({
-            parcel_id: PARCEL, blueprint_hash: BLUEPRINT_HASH, nodes: decomposeRecipe(recipe()),
+            parcel_id: PARCEL, blueprint_hash: BLUEPRINT_HASH, host_did: HOST, nodes: decomposeRecipe(recipe()),
         });
-        const settled = completeNode(session, 'n1', WORKER, { funded: true });
+        const settleWei = vi.fn(async () => {});
+        const settled = await completeNode(session, 'n1', WORKER, { funded: true, settleWei });
         expect(settled.settlement).toBe('wei');
+        expect(settleWei).toHaveBeenCalledWith(HOST, WORKER, 1);
+    });
+
+    it('FUNDED settlement moves money on nous_accounts — host debited, worker credited (real transfer)', async () => {
+        const { decomposeRecipe, createCoBuildSession, completeNode } = await loadCoBuild();
+        const acc = makeAccountsPool();
+        acc.seedAccount(HOST, 10);
+        acc.seedAccount(WORKER, 0);
+        const store = new NousAccountStore(acc.pool);
+        const session = createCoBuildSession({
+            parcel_id: PARCEL, blueprint_hash: BLUEPRINT_HASH, host_did: HOST, nodes: decomposeRecipe(recipe()),
+        });
+        const settled = await completeNode(session, 'n1', WORKER, {
+            funded: true,
+            settleWei: (from, to, amt) => store.transfer({ gridName: 'genesis', fromDid: from, toDid: to, amountWei: BigInt(amt), currentTick: 0 }),
+        });
+        expect(settled.settlement).toBe('wei');
+        expect(acc.balanceOf(HOST)).toBe(9n);   // 10 - 1
+        expect(acc.balanceOf(WORKER)).toBe(1n);  // 0 + 1 (conservation)
+    });
+
+    it('an UNDERFUNDED funded host falls back to an IOU when settleWei throws insufficient_balance (D-NH-06)', async () => {
+        const { decomposeRecipe, createCoBuildSession, completeNode } = await loadCoBuild();
+        const acc = makeAccountsPool();
+        acc.seedAccount(HOST, 0); // < weight → transfer throws insufficient_balance
+        acc.seedAccount(WORKER, 0);
+        const store = new NousAccountStore(acc.pool);
+        const ious: Array<[string, string, number]> = [];
+        const session = createCoBuildSession({
+            parcel_id: PARCEL, blueprint_hash: BLUEPRINT_HASH, host_did: HOST, nodes: decomposeRecipe(recipe()),
+        });
+        const settled = await completeNode(session, 'n1', WORKER, {
+            funded: true, tick: 5,
+            settleWei: (from, to, amt) => store.transfer({ gridName: 'genesis', fromDid: from, toDid: to, amountWei: BigInt(amt), currentTick: 5 }),
+            recordIou: (creditor, debtor, amt) => { ious.push([creditor, debtor, amt]); },
+        });
+        expect(settled.settlement).toBe('iou');
+        expect(acc.balanceOf(HOST)).toBe(0n);   // transfer rolled back — no partial pay
+        expect(ious).toEqual([[WORKER, HOST, 1]]); // worker creditor, host debtor
     });
 
     it('records a Phase 60 IOU (recordIou) when the host is NOT funded', async () => {
@@ -78,7 +124,7 @@ describe('Phase 61 HOUSE-4 — every sub-task ALWAYS settles (never free, D-NH-0
         const session = createCoBuildSession({
             parcel_id: PARCEL, blueprint_hash: BLUEPRINT_HASH, nodes: decomposeRecipe(recipe()),
         });
-        const settled = completeNode(session, 'n1', WORKER, { funded: false });
+        const settled = await completeNode(session, 'n1', WORKER, { funded: false });
         expect(settled.settlement).toBe('iou');
     });
 
@@ -87,7 +133,7 @@ describe('Phase 61 HOUSE-4 — every sub-task ALWAYS settles (never free, D-NH-0
         const session = createCoBuildSession({
             parcel_id: PARCEL, blueprint_hash: BLUEPRINT_HASH, nodes: decomposeRecipe(recipe()),
         });
-        expect(() => completeNode(session, 'n1', WORKER, { pay: 0 } as never)).toThrow(/free|pay|settle/i);
+        await expect(completeNode(session, 'n1', WORKER, { pay: 0 } as never)).rejects.toThrow(/free|pay|settle/i);
     });
 });
 
@@ -97,9 +143,9 @@ describe('Phase 61 HOUSE-4 — DAG-weighted attribution [Wave 2 un-skips]', () =
         const session = createCoBuildSession({
             parcel_id: PARCEL, blueprint_hash: BLUEPRINT_HASH, nodes: decomposeRecipe(recipe()),
         });
-        completeNode(session, 'n1', WORKER, { funded: true }); // weight 1 of total 4
+        await completeNode(session, 'n1', WORKER, { funded: true }); // weight 1 of total 4
         expect(attributionShare(session, WORKER)).toBeCloseTo(0.25);
-        completeNode(session, 'n2', WORKER, { funded: true }); // + weight 3 → 4 of 4
+        await completeNode(session, 'n2', WORKER, { funded: true }); // + weight 3 → 4 of 4
         expect(attributionShare(session, WORKER)).toBeCloseTo(1.0);
     });
 });
@@ -118,8 +164,8 @@ describe('Phase 61 HOUSE-4 — reuses zoning.cowork_session; one skill.blueprint
         const session = createCoBuildSession({
             parcel_id: PARCEL, blueprint_hash: BLUEPRINT_HASH, nodes: decomposeRecipe(recipe()),
         });
-        completeNode(session, 'n1', WORKER, { funded: true });
-        completeNode(session, 'n2', WORKER, { funded: true });
+        await completeNode(session, 'n1', WORKER, { funded: true });
+        await completeNode(session, 'n2', WORKER, { funded: true });
         expect(isComplete(session)).toBe(true);
     });
 });

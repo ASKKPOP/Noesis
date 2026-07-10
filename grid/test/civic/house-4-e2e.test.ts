@@ -29,7 +29,7 @@
  *      builder_civic_did_hash, parcel_id, tick} on the trail (no raw DID, no recipe body).
  *   2b. NEGATIVE — a builder who does NOT hold the skill → skill_not_held; insufficient Ousia → 402.
  *   3. CO-BUILD — decompose a recipe into the arrangement DAG; two workers claim+complete sub-tasks.
- *      FUNDED → transferWei; UNFUNDED → a Phase 60 IOU (never free). Attribution DAG-weighted.
+ *      FUNDED → settleWei (NousAccountStore.transfer); UNFUNDED → a Phase 60 IOU (never free). Attribution DAG-weighted.
  *      zoning.cowork_session per session (participants_hash only) + ONE skill.blueprint_executed
  *      on full completion.
  *   4. TEACH — a skill taught inside a workshop diffuses to the PRESENT Nous (not the absent one,
@@ -276,12 +276,13 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
             parcel_id: WORKSHOP, blueprint_hash: BLUEPRINT_HASH, nodes, host_did: OWNER,
         });
 
-        // n1 FUNDED — WORKER_A claims + completes; Ousia moves host → worker (weight 2).
+        // n1 FUNDED — WORKER_A claims + completes; Ousia moves host → worker (weight 2) via the
+        // async settleWei seam (NousAccountStore.transfer in production, 62.6-03).
         let ousiaMoved = 0;
         claimSubTask(session, 'n1', WORKER_A);
-        const s1 = completeSubTask(session, 'n1', WORKER_A, {
+        const s1 = await completeSubTask(session, 'n1', WORKER_A, {
             funded: true, tick: TICK,
-            transferWei: (_from, _to, amount) => { ousiaMoved += amount; },
+            settleWei: async (_from, _to, amount) => { ousiaMoved += amount; },
         });
         expect(s1.settlement).toBe('wei');
         expect(s1.amount_wei).toBe(2);    // node weight 2
@@ -290,7 +291,7 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
 
         // n2 UNFUNDED — WORKER_B claims + completes; records a Phase 60 IOU (host owes worker).
         claimSubTask(session, 'n2', WORKER_B);
-        const s2 = completeSubTask(session, 'n2', WORKER_B, {
+        const s2 = await completeSubTask(session, 'n2', WORKER_B, {
             funded: false, tick: TICK,
             recordIou: (creditor, debtor, amt, ref, tick) => recordIou(creditor, debtor, amt, ref, tick),
         });
