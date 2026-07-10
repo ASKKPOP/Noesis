@@ -829,15 +829,21 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             const endTick = startTick;
             try {
                 // D-NH-06 — completion ALWAYS settles: Ousia when funded, else an IOU. The
-                // Ousia move rides the existing transfer path; the IOU rides credit-ledger.
-                const nous = services.registry;
-                const agreement = completeTask(taskId, buyerDid, {
-                    funded: !!nous,
+                // Ousia move is a Nous→Nous NousAccountStore.transfer (host → worker) on the
+                // unified in-DB ledger (Phase 62.6-03); an underfunded host is caught inside
+                // completeTask and falls back to an IOU (credit-ledger). funded:true is safe —
+                // both parties are civic-DID citizens with nous_accounts rows, and the
+                // insufficient_balance→IOU fallback guarantees always-settles.
+                const pool = services.pool;
+                if (!pool) return reply.code(503).send({ error: 'civic_registry_unavailable' });
+                const accountStore = new NousAccountStore(pool);
+                const agreement = await completeTask(taskId, buyerDid, {
+                    funded: true,
                     start_tick: startTick,
                     end_tick: endTick,
-                    transferWei: nous
-                        ? (from, to, amount) => { nous.transferWei(from, to, amount); }
-                        : undefined,
+                    settleWei: (from, to, amt) => accountStore.transfer({
+                        gridName: services.gridName, fromDid: from, toDid: to, amountWei: BigInt(amt), currentTick: endTick,
+                    }),
                     bumpTrust: (parcelId, workerDid, delta) => parcelRegistry.bumpTrust(parcelId, workerDid, delta),
                 });
                 // Emit zoning.cowork_session (99) — participants HASHED (single hash over the
