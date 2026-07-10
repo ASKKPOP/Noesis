@@ -44,6 +44,8 @@ import { appendLoreContributed } from '../lore/appendLoreContributed.js';
 import { appendLoreCited } from '../lore/appendLoreCited.js';
 import { LoreQuotaTracker } from '../lore/LoreQuotaTracker.js';
 import type { GroupStore, GroupRole } from '../economy/group-store.js';
+import type { NousAccountStore } from '../economy/nous-account-store.js';
+import type { CivicDidStore } from '../civic-registry/civic-did-store.js';
 
 export interface NousRunnerConfig {
     nousDid: string;
@@ -128,6 +130,24 @@ export interface NousRunnerConfig {
      * this trigger.
      */
     sleepTrigger?: () => void | Promise<void>;
+    /**
+     * Phase 62.6-04 (D-7 / D-13): agent-trade settlement on Ledger A (nous_accounts).
+     *
+     * accountStore + civicDidStore + gridName are REQUIRED for trade settlement.
+     * Production wiring (main.ts) always passes all three. They are typed optional
+     * ONLY so the many non-trading NousRunner test constructions stay valid (mirrors
+     * the reviewer?/whisperRouter?/groupStore? optional-dep pattern).
+     *
+     * When ANY of the three is absent at a trade_request, the settle path treats the
+     * trade as an unresolved-counterparty case (trade.rejected{reason:'not_found'}) —
+     * it NEVER falls back to the Ledger-B registry.transferWei. Money moves only
+     * between the resolved civic-DIDs (getByExistenceDid) of the citizen proposer +
+     * counterparty; a pre-citizen party (null resolution) cannot settle money, per
+     * the citizens-only civic economy (D-13, operator-locked).
+     */
+    accountStore?: NousAccountStore;
+    civicDidStore?: CivicDidStore;
+    gridName?: string;
 }
 
 export type SpeakHandler = (runner: NousRunner, channel: string, text: string, tick: number) => void;
@@ -147,6 +167,9 @@ export class NousRunner {
     private readonly loreDeps: { quotaTracker: LoreQuotaTracker } | undefined;
     private readonly groupStore: GroupStore | undefined;
     private readonly sleepTrigger: (() => void | Promise<void>) | undefined;
+    private readonly accountStore: NousAccountStore | undefined;
+    private readonly civicDidStore: CivicDidStore | undefined;
+    private readonly gridName: string | undefined;
 
     private speakHandler: SpeakHandler | null = null;
 
@@ -196,6 +219,9 @@ export class NousRunner {
         this.loreDeps = config.loreDeps;
         this.groupStore = config.groupStore;
         this.sleepTrigger = config.sleepTrigger;
+        this.accountStore = config.accountStore;
+        this.civicDidStore = config.civicDidStore;
+        this.gridName = config.gridName;
     }
 
     /** Register handler called when this Nous speaks (for message routing). */
