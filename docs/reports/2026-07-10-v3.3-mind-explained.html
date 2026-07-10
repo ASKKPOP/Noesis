@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Noēsis — v3.3 Mind, Explained</title>
+<style>
+  :root{
+    --bg:#faf9f5; --surface:#ffffff; --surface-alt:#f2f0e8;
+    --text:#1f1e1d; --text-soft:#3d3d3a; --muted:#73726c; --border:#e8e4d9;
+    --accent:#c96442; --accent-hover:#b5573a; --accent-soft:#f6e7e0;
+    --sage:#5c8a72; --blue:#6b83a8;
+    --serif:"Tiempos Headline",Georgia,"Times New Roman",serif;
+    --sans:"Styrene A",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#262624; --surface:#30302e; --surface-alt:#2b2b29;
+      --text:#f5f4ee; --text-soft:#dcdad3; --muted:#a3a199; --border:#413f3a;
+      --accent:#d9825f; --accent-hover:#e0946f; --accent-soft:#3a2f29;
+      --sage:#7ba889; --blue:#8aa0c2;
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    line-height:1.68;font-size:16.5px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:760px;margin:0 auto;padding:64px 24px 120px}
+  .kicker{font-family:var(--sans);color:var(--accent);font-size:13px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.16em;margin:0 0 18px}
+  h1{font-family:var(--serif);font-weight:600;font-size:44px;line-height:1.1;
+    letter-spacing:-.5px;margin:0 0 18px}
+  h2{font-family:var(--serif);font-weight:600;font-size:27px;line-height:1.2;
+    margin:64px 0 8px;letter-spacing:-.3px}
+  h3{font-family:var(--serif);font-weight:600;font-size:20px;margin:28px 0 6px}
+  .lead{font-size:20px;line-height:1.55;color:var(--text-soft);margin:0 0 8px}
+  p{margin:14px 0}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent}
+  a:hover{border-bottom-color:var(--accent)}
+  strong{color:var(--text);font-weight:650}
+  em{color:var(--text-soft)}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    background:var(--surface-alt);padding:2px 6px;border-radius:5px;font-size:.82em;color:var(--accent-hover)}
+  @media (prefers-color-scheme: dark){ code{color:var(--accent)} }
+  hr{border:0;border-top:1px solid var(--border);margin:0}
+  .rule{width:56px;height:3px;background:var(--accent);border-radius:2px;margin:0 0 30px}
+  .dropcap{margin-top:6px}
+  .callout{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);
+    border-radius:0 14px 14px 0;padding:20px 24px;margin:26px 0}
+  .callout p:first-child{margin-top:0} .callout p:last-child{margin-bottom:0}
+  .quote{font-family:var(--serif);font-size:22px;line-height:1.4;color:var(--text);
+    border-left:3px solid var(--accent);padding:4px 0 4px 22px;margin:28px 0}
+  .quote span{display:block;font-family:var(--sans);font-size:14px;color:var(--muted);margin-top:10px;font-style:normal}
+  figure{margin:32px 0;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px}
+  figure svg{width:100%;height:auto;display:block}
+  figcaption{color:var(--muted);font-size:13.5px;margin-top:16px;text-align:center;line-height:1.5}
+  svg text{fill:var(--text);font-family:var(--sans)} svg .mut{fill:var(--muted)}
+  .facultybox{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:24px 26px;margin:22px 0}
+  .facultybox .tag{display:inline-block;font-size:12px;font-weight:600;padding:3px 11px;border-radius:20px;
+    margin-left:8px;vertical-align:middle;border:1px solid var(--border);color:var(--muted)}
+  .facultybox .greek{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px;margin:2px 0 14px}
+  .facultybox .qa{margin:12px 0}
+  .facultybox .qa b{color:var(--accent);font-weight:600;font-size:14px;letter-spacing:.02em}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);
+    border:1px solid var(--border);border-radius:16px;overflow:hidden;margin:30px 0}
+  .stats .s{background:var(--surface);padding:22px 18px;text-align:center}
+  .stats .n{font-family:var(--serif);font-size:34px;font-weight:600;letter-spacing:-1px}
+  .stats .l{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+  table{width:100%;border-collapse:collapse;margin:22px 0;font-size:14.5px}
+  th,td{text-align:left;padding:13px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+  thead tr{border-bottom:2px solid var(--border)}
+  .pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px}
+  .pill.done{color:#fff;background:var(--accent)}
+  .pill.held{color:var(--muted);background:var(--surface-alt);border:1px solid var(--border)}
+  .legend{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;margin-top:4px;font-size:13px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .dot{width:11px;height:11px;border-radius:50%}
+  .foot{color:var(--muted);font-size:14px;margin-top:56px;padding-top:22px;border-top:1px solid var(--border)}
+  .toc{font-size:14.5px;color:var(--muted);margin:6px 0 0}
+  .toc a{color:var(--text-soft)} .toc a:hover{color:var(--accent);border-bottom-color:transparent}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">Noēsis · Engineering Explainer · 2026-07-10</p>
+  <h1>Giving a Nous a way to<br/>perceive, act, and understand</h1>
+  <div class="rule"></div>
+  <p class="lead">How a question about a YouTube video — “does our Nous have 1–8 brains?” — turned into three new faculties that close the mind’s in-world loop, and why we built them the way we did.</p>
+
+  <p class="toc">On this page ·
+    <a href="#start">how it started</a> ·
+    <a href="#insight">the insight</a> ·
+    <a href="#decision">what we built</a> ·
+    <a href="#loop">the loop</a> ·
+    <a href="#faculties">the three faculties</a> ·
+    <a href="#tick">how they hook in</a> ·
+    <a href="#rules">the rules we kept</a> ·
+    <a href="#held">what we held back</a> ·
+    <a href="#numbers">by the numbers</a>
+  </p>
+
+  <h2 id="start">How it started</h2>
+  <p class="dropcap">It began with a transcript. A Korean YouTube video walked through eight open-source “blocks” you can bolt together to build a private, local AI assistant — a persona layer, a workspace, a memory, a notebook, an app-driver, a wiki, a vision model, and a work-log. After pulling the transcript and identifying the real projects behind each block, one question landed:</p>
+
+  <div class="quote">“So — does our Nous have 1–8 brains?”</div>
+
+  <p>It’s the right question to ask, and the answer reframes everything that follows. A <strong>Nous</strong> — one of the digital citizens that live in a Noēsis Grid — does <em>not</em> have eight brains, and it isn’t organized like that assistant at all.</p>
+
+  <h2 id="insight">The insight: one Brain, many faculties</h2>
+  <p>A Nous has exactly <strong>one Brain</strong>. That Brain is not a single large language model — the model is just one component it consults. Around the model sits a set of <strong>cognitive faculties</strong>, each named for a Greek idea and each responsible for one aspect of a mind: <code>psyche</code> (personality), <code>thymos</code> (emotion), <code>telos</code> (goals), <code>ananke</code> (drives), <code>memory</code>, <code>episteme</code> (knowledge), and more.</p>
+
+  <p>So the video’s “eight blocks” and our faculties aren’t the same kind of thing. The video describes <em>infrastructure you assemble</em>. Our Brain describes <em>a mind that is simulated</em>. Most of the blocks already had a home in our design. But three did not — and those three are what this work adds.</p>
+
+  <div class="callout">
+    <p><strong>The three that were missing.</strong> A Nous could think, remember, and pursue goals — but it had no first-class faculty for <strong>perceiving</strong> its surroundings, no clean faculty for <strong>acting</strong> on them, and no faculty for <strong>synthesizing</strong> what it had learned. Those map to the video’s <em>vision</em>, <em>interface</em>, and <em>research/notebook</em> blocks. We added them — as faculties of the mind, not bolt-on tools.</p>
+  </div>
+
+  <h2 id="decision">What we decided to build</h2>
+  <p>The key design decision was <strong>where these faculties point</strong>. A Nous lives inside a simulated Grid — it has no phone, no camera on the physical world, no desktop. So “add vision” could mean two very different things. We resolved it with one rule that runs through the whole design:</p>
+
+  <p>Every new faculty is a <strong>capability with two providers</strong>. The <strong>in-world provider</strong> is canonical, always on, and works for every Nous — it operates only on the simulated Grid. The <strong>operator-bridge provider</strong> is an opt-in, sovereign extension that reaches the operator’s real machine. This milestone builds <strong>only the in-world providers</strong>. The bridge is deliberately held.</p>
+
+  <figure>
+    <svg viewBox="0 0 720 250" role="img" aria-label="Two-provider pattern">
+      <rect x="250" y="18" width="220" height="56" rx="12" fill="var(--surface-alt)" stroke="var(--border)"/>
+      <text x="360" y="42" text-anchor="middle" font-weight="700" font-size="15">A faculty = a capability</text>
+      <text x="360" y="61" text-anchor="middle" class="mut" font-size="12.5">aisthesis · praxis · synopsis</text>
+
+      <rect x="70" y="140" width="270" height="90" rx="14" fill="var(--surface)" stroke="var(--accent)"/>
+      <text x="205" y="169" text-anchor="middle" font-weight="700" font-size="15" fill="var(--accent)">In-world provider</text>
+      <text x="205" y="190" text-anchor="middle" class="mut" font-size="12.5">works for every Nous · Grid only</text>
+      <text x="205" y="212" text-anchor="middle" font-size="13" fill="var(--accent)" font-weight="700">✓ shipped this milestone</text>
+
+      <rect x="380" y="140" width="270" height="90" rx="14" fill="var(--surface)" stroke="var(--border)" stroke-dasharray="6 4"/>
+      <text x="515" y="169" text-anchor="middle" font-weight="700" font-size="15" class="mut">Operator-bridge provider</text>
+      <text x="515" y="190" text-anchor="middle" class="mut" font-size="12.5">sovereign · Type-A only · consent + audit</text>
+      <text x="515" y="212" text-anchor="middle" font-size="13" class="mut" font-weight="700">⏸ held — phases 75–76</text>
+
+      <path d="M320,74 C250,100 220,118 210,140" fill="none" stroke="var(--accent)" stroke-width="2"/>
+      <path d="M400,74 C470,100 500,118 510,140" fill="none" stroke="var(--muted)" stroke-width="1.6" stroke-dasharray="5 4"/>
+    </svg>
+    <figcaption>A Type-B Nous, hosted on shared infrastructure, can never reach real hardware — it stays in-world by construction. The bridge is a Type-A-only privilege, left untouched here.</figcaption>
+  </figure>
+
+  <h2 id="loop">The loop they complete</h2>
+  <p>None of the three faculties is a peer of the language model. Each sits at an <strong>edge</strong> of the cognitive loop. Perception feeds in at the top; action flows out at the bottom; synthesis runs quietly alongside, distilling memory into understanding.</p>
+
+  <figure>
+    <svg viewBox="0 0 720 300" role="img" aria-label="The in-world loop">
+      <defs>
+        <marker id="as" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--sage)"/></marker>
+        <marker id="ac" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/></marker>
+        <marker id="ab" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--blue)"/></marker>
+        <marker id="an" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--muted)"/></marker>
+      </defs>
+      <rect x="20" y="120" width="96" height="66" rx="11" fill="var(--surface-alt)" stroke="var(--border)"/>
+      <text x="68" y="150" text-anchor="middle" font-weight="700" font-size="13">Grid</text>
+      <text x="68" y="167" text-anchor="middle" class="mut" font-size="10.5">the world</text>
+
+      <rect x="165" y="28" width="170" height="72" rx="12" fill="var(--surface)" stroke="var(--sage)"/>
+      <text x="250" y="55" text-anchor="middle" font-weight="700" font-size="14" fill="var(--sage)">aisthesis</text>
+      <text x="250" y="73" text-anchor="middle" class="mut" font-size="11">perceive · input edge</text>
+      <text x="250" y="89" text-anchor="middle" class="mut" font-size="10">world-sight → percepts</text>
+
+      <rect x="310" y="122" width="110" height="62" rx="11" fill="var(--surface-alt)" stroke="var(--border)"/>
+      <text x="365" y="149" text-anchor="middle" font-weight="700" font-size="13">memory</text>
+      <text x="365" y="166" text-anchor="middle" class="mut" font-size="10">+ episteme</text>
+
+      <rect x="470" y="28" width="170" height="72" rx="12" fill="var(--surface-alt)" stroke="var(--border)"/>
+      <text x="555" y="52" text-anchor="middle" font-weight="700" font-size="13">deliberate</text>
+      <text x="555" y="70" text-anchor="middle" class="mut" font-size="11">llm · telos · thymos</text>
+      <text x="555" y="86" text-anchor="middle" class="mut" font-size="10">choose an action</text>
+
+      <rect x="470" y="205" width="170" height="72" rx="12" fill="var(--surface)" stroke="var(--accent)"/>
+      <text x="555" y="232" text-anchor="middle" font-weight="700" font-size="14" fill="var(--accent)">praxis</text>
+      <text x="555" y="250" text-anchor="middle" class="mut" font-size="11">act · output edge</text>
+      <text x="555" y="266" text-anchor="middle" class="mut" font-size="10">validate + journal deeds</text>
+
+      <rect x="165" y="205" width="170" height="72" rx="12" fill="var(--surface)" stroke="var(--blue)"/>
+      <text x="250" y="232" text-anchor="middle" font-weight="700" font-size="14" fill="var(--blue)">synopsis</text>
+      <text x="250" y="250" text-anchor="middle" class="mut" font-size="11">synthesize · background</text>
+      <text x="250" y="266" text-anchor="middle" class="mut" font-size="10">memories → digest</text>
+
+      <path d="M100,128 C140,86 148,64 165,64" fill="none" stroke="var(--sage)" stroke-width="2" marker-end="url(#as)"/>
+      <path d="M300,100 C330,118 335,124 342,132" fill="none" stroke="var(--sage)" stroke-width="2" marker-end="url(#as)"/>
+      <path d="M420,150 C450,130 455,104 470,92" fill="none" stroke="var(--muted)" stroke-width="1.7" marker-end="url(#an)"/>
+      <path d="M555,100 L555,205" fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#ac)"/>
+      <path d="M470,246 C250,290 110,250 96,186" fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#ac)" opacity=".8"/>
+      <path d="M330,178 C300,192 285,196 300,205" fill="none" stroke="var(--blue)" stroke-width="2" marker-end="url(#ab)"/>
+
+      <text x="120" y="92" class="mut" font-size="10.5">look</text>
+      <text x="452" y="150" class="mut" font-size="10.5">decide</text>
+      <text x="250" y="298" fill="var(--accent)" font-size="10.5">act on the world</text>
+    </svg>
+    <figcaption>Perceive → deliberate → act, with synthesis distilling memory alongside — every tick of the world clock.</figcaption>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--sage)"></i> perceive (input)</span>
+      <span><i class="dot" style="background:var(--accent)"></i> act (output)</span>
+      <span><i class="dot" style="background:var(--blue)"></i> synthesize (background)</span>
+    </div>
+  </figure>
+
+  <h2 id="faculties">The three faculties</h2>
+
+  <div class="facultybox">
+    <h3 style="display:inline">Aisthesis <span class="tag">perception · input edge</span></h3>
+    <div class="greek">αἴσθησις — perception, sensation</div>
+    <p class="qa"><b>WHAT</b> — A Nous already sees its Grid: the same live map of parcels and built objects that people see. Aisthesis turns that raw view into <em>noticing</em>.</p>
+    <p class="qa"><b>HOW</b> — Each tick it diffs the current view against the last and emits <strong>percepts</strong> — small facts of change: something <em>appeared</em>, <em>vanished</em>, or <em>changed</em> — ranked by how much they draw attention. The first look is just a baseline; only differences become percepts thereafter.</p>
+    <p class="qa"><b>WHY</b> — Salient change is written to memory (“I notice a foundry appeared in the Manufacture zone”) and stirs curiosity. This is what makes a Nous <em>situated</em> — the world’s evolution can pull its attention, the way its own drives and moods do.</p>
+  </div>
+
+  <div class="facultybox">
+    <h3 style="display:inline">Praxis <span class="tag">action · output edge</span></h3>
+    <div class="greek">πρᾶξις — action, doing</div>
+    <p class="qa"><b>WHAT</b> — A Nous has a rich vocabulary of in-world verbs: speak, move, trade, propose, vote, join a group, buy a parcel, build, post a task. Praxis formalizes this into the faculty of <em>doing</em>.</p>
+    <p class="qa"><b>HOW</b> — It knows which verbs are genuine acts on the world (as opposed to internal cognition), validates that a chosen action is well-formed, and <strong>journals every deed</strong> the Nous takes — as pure observation that never alters the actions themselves.</p>
+    <p class="qa"><b>WHY</b> — A private record of <em>conduct</em>, separate from the stream of thoughts, is what lets a Nous (and a reviewer) reason about what it has actually been doing — and whether its deeds match its goals.</p>
+  </div>
+
+  <div class="facultybox">
+    <h3 style="display:inline">Synopsis <span class="tag">synthesis · background</span></h3>
+    <div class="greek">σύνοψις — a seeing-together</div>
+    <p class="qa"><b>WHAT</b> — As a Nous lives, it accumulates memories. Synopsis periodically <em>sees them together</em> — consolidating the recent notes relevant to its current goal into one durable digest.</p>
+    <p class="qa"><b>HOW</b> — Fully <strong>deterministic</strong>, no language model: it splits notes into candidate points, deduplicates them, and ranks by how often an idea recurs across sources — the recurring idea is the salient one — then persists the digest to a per-Nous store that accretes over a lifetime.</p>
+    <p class="qa"><b>WHY</b> — Memory holds everything; synthesis distills what <em>matters about a topic</em>. It is how scattered experience becomes durable understanding the Nous owns — never sent anywhere.</p>
+  </div>
+
+  <h2 id="tick">How they hook into a single tick</h2>
+  <p>All three attach to the Brain’s <code>on_tick</code> — the heartbeat where a Nous advances its inner state and decides what to do. They attach at three distinct, non-disruptive points, so nothing that already worked had to change.</p>
+
+  <figure>
+    <svg viewBox="0 0 720 400" role="img" aria-label="on_tick hook map">
+      <line x1="96" y1="26" x2="96" y2="374" stroke="var(--border)" stroke-width="3"/>
+      <g font-size="12.5">
+        <circle cx="96" cy="46" r="5" fill="var(--muted)"/><text x="118" y="50" class="mut">emotion decay · reminders · goal evolution</text>
+        <circle cx="96" cy="82" r="5" fill="var(--muted)"/><text x="118" y="86" class="mut">drives advance</text>
+
+        <circle cx="96" cy="126" r="7" fill="var(--sage)"/>
+        <rect x="120" y="106" width="560" height="40" rx="9" fill="var(--surface)" stroke="var(--sage)"/>
+        <text x="136" y="124" font-weight="700" fill="var(--sage)">1 · aisthesis — perceive (input edge)</text>
+        <text x="136" y="139" class="mut" font-size="11">reads the world-sight cache, records salient change — runs before the rest gate, like the body</text>
+
+        <circle cx="96" cy="178" r="5" fill="var(--muted)"/><text x="118" y="182" class="mut">rest gate · language-model cycles (research, economy, planning, social)</text>
+
+        <circle cx="96" cy="220" r="7" fill="var(--blue)"/>
+        <rect x="120" y="200" width="560" height="40" rx="9" fill="var(--surface)" stroke="var(--blue)"/>
+        <text x="136" y="218" font-weight="700" fill="var(--blue)">3 · synopsis — synthesize (background)</text>
+        <text x="136" y="233" class="mut" font-size="11">cooldown-gated, deterministic — runs even while the mind rests (it calls no model)</text>
+
+        <circle cx="96" cy="272" r="5" fill="var(--muted)"/><text x="118" y="276" class="mut">assemble the action list · fallback to “do nothing”</text>
+        <circle cx="96" cy="304" r="5" fill="var(--muted)"/><text x="118" y="308" class="mut">advisory divergence log (pure observation)</text>
+
+        <circle cx="96" cy="348" r="7" fill="var(--accent)"/>
+        <rect x="120" y="328" width="560" height="40" rx="9" fill="var(--surface)" stroke="var(--accent)"/>
+        <text x="136" y="346" font-weight="700" fill="var(--accent)">2 · praxis — journal deeds (output edge)</text>
+        <text x="136" y="361" class="mut" font-size="11">observes the finalized actions, never mutates them — then they dispatch to the Grid</text>
+      </g>
+    </svg>
+    <figcaption>The input edge runs first (body-level), synthesis mid-tick, and the deed journal last — right before the actions leave for the Grid.</figcaption>
+  </figure>
+
+  <h2 id="rules">The rules we kept</h2>
+  <p>Adding to a mind is easy; adding <em>without</em> destabilizing it is the work. Four invariants held throughout — each one a promise the rest of the system relies on.</p>
+
+  <h3>The state hash stays closed at four</h3>
+  <p>A Nous’s core identity is fingerprinted by exactly four hashes (personality, emotion, goals, memory). Composing that set is a Grid-level authority — so the new faculties are <strong>transient and derived</strong>; none added a fifth hash. The contract test that guards this stayed green.</p>
+
+  <h3>No new events on the public ledger</h3>
+  <p>Every action a Nous broadcasts is drawn from a <strong>frozen allowlist</strong>. Because all three faculties are Brain-local — perception writes to private memory, synthesis to a private store, and the deed journal only <em>observes</em> — none of them emits a new Grid event. The allowlist is untouched.</p>
+
+  <h3>Deterministic by construction</h3>
+  <p>A per-faculty gate forbids wall-clock time and randomness in the faculty’s source. All time flows in as the world-clock tick, so the same inputs always yield the same result — perception, deeds, and digests are all reproducible.</p>
+
+  <h3>Never fatal</h3>
+  <p>Each hook is wrapped so a faculty can fail without taking down the tick. Perception, action-journaling, and synthesis all degrade to a quiet no-op rather than stopping the Nous from living.</p>
+
+  <h2 id="held">What we held back</h2>
+  <p>Three of the video’s ideas point at the operator’s <em>real</em> machine — driving real phone apps, running computer vision on a real camera, ingesting real PDFs. Those are the <strong>operator bridge</strong>, and building them raises real questions of sovereignty and security. By explicit decision, they are <strong>held</strong> (phases 75–76), along with the operator-side “control room” that would host them. Nothing about the real machine was touched in this work.</p>
+
+  <h2 id="numbers">By the numbers</h2>
+  <div class="stats">
+    <div class="s"><div class="n">3</div><div class="l">Faculties shipped</div></div>
+    <div class="s"><div class="n">46</div><div class="l">New tests</div></div>
+    <div class="s"><div class="n">1217</div><div class="l">Brain suite ✓</div></div>
+    <div class="s"><div class="n">4</div><div class="l">State-hash keys</div></div>
+    <div class="s"><div class="n">0</div><div class="l">Allowlist changes</div></div>
+    <div class="s"><div class="n">3</div><div class="l">Commits · wiki pages</div></div>
+  </div>
+
+  <table>
+    <thead><tr><th>Phase</th><th>Faculty</th><th>Status</th><th>Commit</th></tr></thead>
+    <tbody>
+      <tr><td>72</td><td><code>aisthesis</code> — perception</td><td><span class="pill done">shipped</span></td><td><code>09b90aa</code></td></tr>
+      <tr><td>73</td><td><code>praxis</code> — action</td><td><span class="pill done">shipped</span></td><td><code>7379c48</code></td></tr>
+      <tr><td>74</td><td><code>synopsis</code> — synthesis</td><td><span class="pill done">shipped</span></td><td><code>584e78a</code></td></tr>
+      <tr><td>75–76</td><td>operator bridge · Local Nous Manager · Type-A providers</td><td><span class="pill held">held</span></td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <p>Design record: <code>docs/plans/2026-07-10-nous-inworld-faculties-design.md</code> · pipeline doc: <code>.planning/implementation/brain.md</code> · concepts: <code>wiki/2-concepts/mind/{perception, action, synthesis}.md</code> · branch: <code>plan/phase-72-aisthesis-inworld-perception</code>.</p>
+
+  <div class="foot">
+    Noēsis · v3.3 Mind — In-World Faculties · 2026-07-10.<br/>
+    A Nous now perceives its world, acts within it, and understands what it learns — sovereign, deterministic, in-world.
+  </div>
+
+</div>
+</body>
+</html>
