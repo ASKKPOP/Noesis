@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Noēsis — v3.3 Mind · In-World Faculties Report</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b22; --panel2:#1c222b; --bd:#2a313c;
+    --tx:#e6edf3; --mut:#9aa7b4; --acc:#7ee787; --acc2:#79c0ff; --acc3:#d2a8ff;
+    --warn:#f0c674; --done:#56d364; --held:#8b949e; --pend:#d29922;
+    --in:#7ee787; --out:#79c0ff; --bg2:#d2a8ff;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f6f8fa; --panel:#fff; --panel2:#f0f3f6; --bd:#d6dde5;
+      --tx:#1c2128; --mut:#57606a; --acc:#1a7f37; --acc2:#0969da; --acc3:#8250df;
+      --done:#1a7f37; --held:#6e7781; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);line-height:1.6;font-size:15px}
+  .wrap{max-width:1080px;margin:0 auto;padding:34px 22px 90px}
+  h1{font-size:28px;margin:0 0 6px;letter-spacing:-.5px}
+  h2{font-size:20px;margin:46px 0 14px;border-bottom:1px solid var(--bd);padding-bottom:8px}
+  h3{font-size:16px;margin:0 0 6px}
+  .sub{color:var(--mut);margin:0 0 6px;font-size:15px}
+  .kicker{color:var(--acc);font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:.14em;margin:0 0 10px}
+  a{color:var(--acc2);text-decoration:none} a:hover{text-decoration:underline}
+  code{font-family:var(--mono);background:var(--panel2);padding:1.5px 6px;border-radius:5px;font-size:12.5px;color:var(--acc)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0}
+  .stat{background:var(--panel);border:1px solid var(--bd);border-radius:12px;padding:16px 18px}
+  .stat .n{font-size:26px;font-weight:800;letter-spacing:-.5px}
+  .stat .l{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:16px 0}
+  .card{background:var(--panel);border:1px solid var(--bd);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .card.inp::before{background:var(--in)} .card.outp::before{background:var(--out)} .card.bgd::before{background:var(--bg2)}
+  .card .greek{font-family:var(--mono);color:var(--mut);font-size:12px}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;border:1px solid var(--bd);vertical-align:middle}
+  .b-in{color:var(--in);border-color:#214d2c;background:#0f2417}
+  .b-out{color:var(--out);border-color:#1c3a59;background:#0f1b28}
+  .b-bg{color:var(--bg2);border-color:#3a2a59;background:#170f28}
+  .b-done{color:var(--done);border-color:#214d2c;background:#0f2417}
+  .b-held{color:var(--held);border-color:#3a424c;background:#171b22}
+  @media (prefers-color-scheme: light){
+    .b-in{background:#dafbe1;border-color:#aceebb}.b-out{background:#ddf4ff;border-color:#b6e3ff}
+    .b-bg{background:#fbefff;border-color:#ecd6ff}.b-done{background:#dafbe1;border-color:#aceebb}
+    .b-held{background:#eef1f4;border-color:#d6dde5}
+  }
+  .card ul{margin:10px 0 0;padding-left:18px;font-size:13.5px;color:var(--tx)}
+  .card li{margin:3px 0}
+  .card .meta{color:var(--mut);font-size:12px;margin-top:12px;border-top:1px dashed var(--bd);padding-top:10px}
+  figure{margin:20px 0;background:var(--panel);border:1px solid var(--bd);border-radius:14px;padding:18px}
+  figure svg{width:100%;height:auto;display:block}
+  figcaption{color:var(--mut);font-size:12.5px;margin-top:12px;text-align:center}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--bd);vertical-align:top}
+  th{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}
+  tr:hover td{background:var(--panel2)}
+  .hash{font-family:var(--mono);font-size:12px;color:var(--acc3)}
+  .lede{background:var(--panel);border:1px solid var(--bd);border-left:4px solid var(--acc);border-radius:0 12px 12px 0;padding:14px 18px;margin:14px 0;color:var(--mut)}
+  .lede b{color:var(--tx)}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-top:6px;font-size:12px;color:var(--mut)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .foot{color:var(--mut);font-size:12.5px;margin-top:40px;border-top:1px solid var(--bd);padding-top:16px}
+  /* SVG text inherits theme */
+  svg text{fill:var(--tx)} svg .mut{fill:var(--mut)} svg .inv{fill:#0e1116}
+  @media (prefers-color-scheme: light){ svg .inv{fill:#fff} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">Noēsis · Task Report · 2026-07-10</p>
+  <h1>v3.3 Mind — In-World Faculties</h1>
+  <p class="sub">Perception · Action · Synthesis — three new Greek-named cognitive faculties that close the Nous's in-world loop: <b>perceive → deliberate → act → synthesize</b>.</p>
+
+  <div class="lede">
+    <b>Origin.</b> A YouTube walkthrough listed 8 open-source "blocks" for a local AI assistant. Our Nous isn't built on that axis — it is <b>one Brain</b> decomposed into ~10–12 cognitive faculties. Three capabilities had no first-class faculty. This milestone adds them <b>in-world first</b>: they operate on the simulated Grid, work for every Nous, and add no security surface. The outward <b>operator bridge</b> (real apps, camera CV, real PDFs) is deliberately <b>held</b>.
+  </div>
+
+  <div class="grid">
+    <div class="stat"><div class="n" style="color:var(--acc)">3</div><div class="l">Faculties shipped</div></div>
+    <div class="stat"><div class="n">72–74</div><div class="l">Phases (v3.3 Mind)</div></div>
+    <div class="stat"><div class="n" style="color:var(--done)">46</div><div class="l">New tests</div></div>
+    <div class="stat"><div class="n" style="color:var(--done)">1217</div><div class="l">Brain suite ✓</div></div>
+    <div class="stat"><div class="n">4</div><div class="l">State hash keys (unchanged)</div></div>
+    <div class="stat"><div class="n">0</div><div class="l">Allowlist changes</div></div>
+  </div>
+
+  <!-- ============ THE MIND LOOP ============ -->
+  <h2>The in-world loop</h2>
+  <p class="sub">Each faculty sits at an <em>edge</em> of the cognitive loop — none are peers of the LLM. Perception feeds in; action flows out; synthesis runs alongside, distilling memory.</p>
+
+  <figure>
+    <svg viewBox="0 0 960 320" role="img" aria-label="The in-world cognitive loop">
+      <defs>
+        <marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#7ee787"/></marker>
+        <marker id="ab" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#79c0ff"/></marker>
+        <marker id="ap" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#8b949e"/></marker>
+        <marker id="av" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#d2a8ff"/></marker>
+      </defs>
+
+      <!-- GRID world -->
+      <rect x="20" y="120" width="120" height="80" rx="12" fill="#161b22" stroke="#2a313c"/>
+      <text x="80" y="155" text-anchor="middle" font-weight="700" font-size="15">Grid</text>
+      <text x="80" y="174" text-anchor="middle" class="mut" font-size="11">the world</text>
+
+      <!-- AISTHESIS -->
+      <rect x="215" y="30" width="200" height="86" rx="12" fill="#0f2417" stroke="#214d2c"/>
+      <text x="315" y="60" text-anchor="middle" font-weight="700" font-size="15" fill="#7ee787">aisthesis</text>
+      <text x="315" y="80" text-anchor="middle" class="mut" font-size="11">perceive · input edge</text>
+      <text x="315" y="98" text-anchor="middle" class="mut" font-size="10.5">world-sight → percepts</text>
+
+      <!-- MEMORY hub -->
+      <rect x="410" y="128" width="140" height="64" rx="12" fill="#161b22" stroke="#2a313c"/>
+      <text x="480" y="156" text-anchor="middle" font-weight="700" font-size="14">memory</text>
+      <text x="480" y="174" text-anchor="middle" class="mut" font-size="10.5">+ episteme</text>
+
+      <!-- DELIBERATE -->
+      <rect x="620" y="30" width="200" height="86" rx="12" fill="#161b22" stroke="#2a313c"/>
+      <text x="720" y="58" text-anchor="middle" font-weight="700" font-size="14">deliberate</text>
+      <text x="720" y="77" text-anchor="middle" class="mut" font-size="11">llm · telos · thymos</text>
+      <text x="720" y="95" text-anchor="middle" class="mut" font-size="10.5">choose an action</text>
+
+      <!-- PRAXIS -->
+      <rect x="620" y="205" width="200" height="86" rx="12" fill="#0f1b28" stroke="#1c3a59"/>
+      <text x="720" y="235" text-anchor="middle" font-weight="700" font-size="15" fill="#79c0ff">praxis</text>
+      <text x="720" y="255" text-anchor="middle" class="mut" font-size="11">act · output edge</text>
+      <text x="720" y="273" text-anchor="middle" class="mut" font-size="10.5">validate + journal deeds</text>
+
+      <!-- SYNOPSIS -->
+      <rect x="215" y="205" width="200" height="86" rx="12" fill="#170f28" stroke="#3a2a59"/>
+      <text x="315" y="235" text-anchor="middle" font-weight="700" font-size="15" fill="#d2a8ff">synopsis</text>
+      <text x="315" y="255" text-anchor="middle" class="mut" font-size="11">synthesize · background</text>
+      <text x="315" y="273" text-anchor="middle" class="mut" font-size="10.5">memories → digest</text>
+
+      <!-- arrows -->
+      <!-- grid -> aisthesis -->
+      <path d="M120,130 C170,90 180,73 215,73" fill="none" stroke="#7ee787" stroke-width="2.2" marker-end="url(#ah)"/>
+      <!-- aisthesis -> memory -->
+      <path d="M360,116 C400,132 405,140 410,146" fill="none" stroke="#7ee787" stroke-width="2.2" marker-end="url(#ah)"/>
+      <!-- memory -> deliberate -->
+      <path d="M550,150 C595,130 600,100 620,88" fill="none" stroke="#2a313c" stroke-width="2" marker-end="url(#ap)"/>
+      <!-- deliberate -> praxis -->
+      <path d="M720,116 L720,205" fill="none" stroke="#79c0ff" stroke-width="2.2" marker-end="url(#ab)"/>
+      <!-- praxis -> grid (act on world) -->
+      <path d="M620,248 C300,300 120,250 105,200" fill="none" stroke="#79c0ff" stroke-width="2.2" marker-end="url(#ab)" opacity=".8"/>
+      <!-- memory -> synopsis -->
+      <path d="M410,168 C380,185 350,195 355,205" fill="none" stroke="#d2a8ff" stroke-width="2.2" marker-end="url(#av)"/>
+      <!-- synopsis -> store (loop back to memory/episteme) -->
+      <path d="M360,205 C400,195 405,190 430,192" fill="none" stroke="#d2a8ff" stroke-width="1.6" stroke-dasharray="4 3" marker-end="url(#av)"/>
+
+      <text x="150" y="98" class="mut" font-size="10.5">look</text>
+      <text x="735" y="150" class="mut" font-size="10.5">decide</text>
+      <text x="300" y="315" fill="#79c0ff" font-size="10.5">act on the world</text>
+    </svg>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--in)"></i> input edge — perceive</span>
+      <span><i class="dot" style="background:var(--out)"></i> output edge — act</span>
+      <span><i class="dot" style="background:var(--bg2)"></i> background — synthesize</span>
+    </div>
+    <figcaption>The Nous perceives its Grid, deliberates over memory, acts back on the world, and synthesizes what it learns — every tick.</figcaption>
+  </figure>
+
+  <!-- ============ FACULTY CARDS ============ -->
+  <h2>The three faculties</h2>
+  <div class="cards">
+    <div class="card inp">
+      <h3>aisthesis <span class="badge b-in">input edge</span></h3>
+      <div class="greek">αἴσθησις — perception</div>
+      <ul>
+        <li>Diffs the world-sight feed (parcels + built objects) against the last snapshot.</li>
+        <li>Emits <b>percepts</b>: <code>appeared</code> / <code>vanished</code> / <code>changed</code>, salience-ranked.</li>
+        <li>Salient change → episodic <b>memory</b> + stirs <b>curiosity</b>.</li>
+      </ul>
+      <div class="meta"><code>aisthesis/{types,tracker}.py</code> · hook: <code>on_tick</code> input edge · <b>18 tests</b> · <span class="badge b-done">shipped</span></div>
+    </div>
+    <div class="card outp">
+      <h3>praxis <span class="badge b-out">output edge</span></h3>
+      <div class="greek">πρᾶξις — action</div>
+      <ul>
+        <li>Knows the outward-verb <b>repertoire</b> (curated subset of <code>ActionType</code>).</li>
+        <li><b>Validates</b> a proposed action's verb + required-metadata shape.</li>
+        <li>Journals the <b>deeds</b> the Nous took — pure observation, never mutates the batch.</li>
+      </ul>
+      <div class="meta"><code>praxis/{types,tracker}.py</code> · hook: <code>on_tick</code> output edge · <b>16 tests</b> · <span class="badge b-done">shipped</span></div>
+    </div>
+    <div class="card bgd">
+      <h3>synopsis <span class="badge b-bg">background</span></h3>
+      <div class="greek">σύνοψις — seeing-together</div>
+      <ul>
+        <li><b>Deterministic</b> synthesizer: split → dedupe → rank by cross-source recurrence.</li>
+        <li>Consolidates recent memories on the current-goal topic into a <b>digest + outline</b> (no LLM).</li>
+        <li>Persists to a per-Nous <code>SynopsisStore</code> (SQLite, append-only).</li>
+      </ul>
+      <div class="meta"><code>synopsis/{types,synthesizer,store}.py</code> · hook: background cycle · <b>12 tests</b> · <span class="badge b-done">shipped</span></div>
+    </div>
+  </div>
+
+  <!-- ============ ON_TICK HOOK MAP ============ -->
+  <h2>Where they hook into <code>on_tick</code></h2>
+  <p class="sub">A single tick, top to bottom. The three faculties attach at three distinct, non-disruptive points.</p>
+
+  <figure>
+    <svg viewBox="0 0 960 430" role="img" aria-label="on_tick hook map">
+      <defs>
+        <marker id="t1" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#9aa7b4"/></marker>
+      </defs>
+      <!-- spine -->
+      <line x1="120" y1="30" x2="120" y2="400" stroke="#2a313c" stroke-width="3"/>
+      <!-- steps -->
+      <g font-size="13">
+        <circle cx="120" cy="52" r="6" fill="#9aa7b4"/><text x="145" y="57" class="mut">thymos.decay() · reminders · telos.evolve()</text>
+        <circle cx="120" cy="92" r="6" fill="#9aa7b4"/><text x="145" y="97" class="mut">ananke runtime advances</text>
+
+        <!-- aisthesis -->
+        <circle cx="120" cy="140" r="8" fill="#7ee787"/>
+        <rect x="150" y="118" width="700" height="44" rx="9" fill="#0f2417" stroke="#214d2c"/>
+        <text x="168" y="138" font-weight="700" fill="#7ee787">① aisthesis — perceive (input edge)</text>
+        <text x="168" y="154" class="mut" font-size="11.5">reads throttled world-sight · records salient change to memory · body-level, before the rest gate</text>
+
+        <circle cx="120" cy="196" r="6" fill="#9aa7b4"/><text x="145" y="201" class="mut">rest gate · LLM cycles: tool · economic · planner/decision · social</text>
+
+        <!-- synopsis -->
+        <circle cx="120" cy="240" r="8" fill="#d2a8ff"/>
+        <rect x="150" y="218" width="700" height="44" rx="9" fill="#170f28" stroke="#3a2a59"/>
+        <text x="168" y="238" font-weight="700" fill="#d2a8ff">③ synopsis — synthesize (background cycle)</text>
+        <text x="168" y="254" class="mut" font-size="11.5">cooldown-gated · deterministic (no LLM, runs even while resting) · optional-dep on synopsis_db_dir</text>
+
+        <circle cx="120" cy="300" r="6" fill="#9aa7b4"/><text x="145" y="305" class="mut">assemble actions · drain _pending_actions · NOOP fallback</text>
+        <circle cx="120" cy="332" r="6" fill="#9aa7b4"/><text x="145" y="337" class="mut">_advisory_log_divergence (pure observation)</text>
+
+        <!-- praxis -->
+        <circle cx="120" cy="372" r="8" fill="#79c0ff"/>
+        <rect x="150" y="350" width="700" height="44" rx="9" fill="#0f1b28" stroke="#1c3a59"/>
+        <text x="168" y="370" font-weight="700" fill="#79c0ff">② praxis — journal deeds (output edge)</text>
+        <text x="168" y="386" class="mut" font-size="11.5">observes the finalized action batch beside the divergence logger · never mutates · then dispatch → Grid</text>
+      </g>
+    </svg>
+    <figcaption>Input edge runs first (body-level), the background synthesis mid-tick, and the deed journal last — right before the actions leave for the Grid.</figcaption>
+  </figure>
+
+  <!-- ============ DUAL PROVIDER ============ -->
+  <h2>The pattern: in-world now, bridge held</h2>
+  <p class="sub">Every faculty is a capability with two providers. Only the in-world provider ships — it is sovereign and safe for every Nous. The operator bridge is held by decision.</p>
+
+  <figure>
+    <svg viewBox="0 0 960 300" role="img" aria-label="Dual-provider pattern">
+      <defs>
+        <marker id="d1" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#9aa7b4"/></marker>
+      </defs>
+      <!-- capability -->
+      <rect x="360" y="24" width="240" height="60" rx="12" fill="#161b22" stroke="#2a313c"/>
+      <text x="480" y="49" text-anchor="middle" font-weight="700" font-size="14">Faculty = capability</text>
+      <text x="480" y="68" text-anchor="middle" class="mut" font-size="11">aisthesis · praxis · synopsis</text>
+
+      <!-- in-world provider -->
+      <rect x="120" y="150" width="330" height="120" rx="14" fill="#0f2417" stroke="#214d2c"/>
+      <text x="285" y="180" text-anchor="middle" font-weight="700" font-size="15" fill="#7ee787">In-world provider</text>
+      <text x="285" y="203" text-anchor="middle" class="mut" font-size="12">canonical · always on · Type A + Type B</text>
+      <text x="285" y="223" text-anchor="middle" class="mut" font-size="12">operates only on the simulated Grid</text>
+      <text x="285" y="248" text-anchor="middle" font-size="12.5" fill="#56d364" font-weight="700">✓ SHIPPED — no security surface</text>
+
+      <!-- bridge provider -->
+      <rect x="510" y="150" width="330" height="120" rx="14" fill="#171b22" stroke="#3a424c" stroke-dasharray="6 4"/>
+      <text x="675" y="180" text-anchor="middle" font-weight="700" font-size="15" fill="#8b949e">Operator-bridge provider</text>
+      <text x="675" y="203" text-anchor="middle" class="mut" font-size="12">opt-in · Type A only · consent + audit</text>
+      <text x="675" y="223" text-anchor="middle" class="mut" font-size="12">reaches the operator's real machine</text>
+      <text x="675" y="248" text-anchor="middle" font-size="12.5" fill="#8b949e" font-weight="700">⏸ HELD — Phases 75–76</text>
+
+      <path d="M430,84 C360,110 320,128 300,150" fill="none" stroke="#7ee787" stroke-width="2.2" marker-end="url(#d1)"/>
+      <path d="M530,84 C600,110 650,128 670,150" fill="none" stroke="#8b949e" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#d1)"/>
+    </svg>
+    <figcaption>A Type-B Nous (hosted on Henry's GPU) can never touch real hardware — in-world only. The bridge is a sovereign, Type-A-only extension, left untouched this milestone.</figcaption>
+  </figure>
+
+  <!-- ============ PHASES ============ -->
+  <h2>Phases</h2>
+  <table>
+    <thead><tr><th>Phase</th><th>Faculty</th><th>Edge</th><th>Status</th><th>Tests</th></tr></thead>
+    <tbody>
+      <tr><td>72</td><td><code>aisthesis</code> — perception</td><td><span class="badge b-in">input</span></td><td><span class="badge b-done">shipped</span></td><td>18</td></tr>
+      <tr><td>73</td><td><code>praxis</code> — action</td><td><span class="badge b-out">output</span></td><td><span class="badge b-done">shipped</span></td><td>16</td></tr>
+      <tr><td>74</td><td><code>synopsis</code> — synthesis</td><td><span class="badge b-bg">background</span></td><td><span class="badge b-done">shipped</span></td><td>12</td></tr>
+      <tr><td>75–76</td><td>operator bridge · Local Nous Manager · Type-A providers</td><td>—</td><td><span class="badge b-held">held</span></td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ============ ORIGIN MAPPING ============ -->
+  <h2>Back to the 8 blocks</h2>
+  <p class="sub">The three video "blocks" that had no faculty — mapped to their Noēsis-native, in-world form.</p>
+  <table>
+    <thead><tr><th>Video block</th><th>Our faculty</th><th>In-world meaning</th><th>Held bridge (Type A)</th></tr></thead>
+    <tbody>
+      <tr><td>Vision (real-time CV)</td><td><code>aisthesis</code></td><td>perceive the Grid's spatial world &amp; built objects</td><td>real camera / video CV</td></tr>
+      <tr><td>Interface (tap apps)</td><td><code>praxis</code></td><td>act on in-world objects &amp; services</td><td>drive real iOS/Android apps</td></tr>
+      <tr><td>Research / notebook</td><td><code>synopsis</code></td><td>synthesize in-world memories into digests</td><td>ingest real PDFs / audio</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ============ INVARIANTS ============ -->
+  <h2>Invariants held</h2>
+  <div class="cards">
+    <div class="card"><h3>State hash closed at 4</h3><p class="sub" style="font-size:13px;margin:0">New faculties are transient/derived — none added a 5th hash. Contract test still green.</p></div>
+    <div class="card"><h3>No allowlist change</h3><p class="sub" style="font-size:13px;margin:0">All faculties are Brain-local and emit no Grid events, so the frozen broadcast allowlist is untouched.</p></div>
+    <div class="card"><h3>Deterministic</h3><p class="sub" style="font-size:13px;margin:0">A no-walltime grep gate per faculty: no <code>time</code>/<code>datetime</code>/<code>random</code>/<code>uuid</code>. Time flows in as the tick.</p></div>
+    <div class="card"><h3>Never fatal</h3><p class="sub" style="font-size:13px;margin:0">Every hook is wrapped so a faculty can never take down the tick — mirroring the existing divergence logger.</p></div>
+  </div>
+
+  <!-- ============ COMMITS ============ -->
+  <h2>Commits &amp; artifacts</h2>
+  <table>
+    <thead><tr><th>Commit</th><th>Phase</th><th>Wiki page</th></tr></thead>
+    <tbody>
+      <tr><td class="hash">09b90aa</td><td>72 · aisthesis</td><td><code>wiki/2-concepts/mind/perception.md</code></td></tr>
+      <tr><td class="hash">7379c48</td><td>73 · praxis</td><td><code>wiki/2-concepts/mind/action.md</code></td></tr>
+      <tr><td class="hash">584e78a</td><td>74 · synopsis</td><td><code>wiki/2-concepts/mind/synthesis.md</code></td></tr>
+    </tbody>
+  </table>
+  <p class="sub" style="font-size:13.5px">Branch <code>plan/phase-72-aisthesis-inworld-perception</code> (pushed, not merged). Design: <code>docs/plans/2026-07-10-nous-inworld-faculties-design.md</code>. Pipeline doc: <code>.planning/implementation/brain.md</code>.</p>
+
+  <div class="foot">
+    Noēsis · v3.3 Mind — In-World Faculties · generated 2026-07-10 · brain suite 1217 ✓ · state hash 4 · allowlist unchanged.<br/>
+    A Nous now <b>perceives</b>, <b>acts</b>, and <b>synthesizes</b> — sovereign, deterministic, in-world.
+  </div>
+
+</div>
+</body>
+</html>
