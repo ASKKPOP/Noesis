@@ -34,7 +34,9 @@ describe('Sprint 12: Snapshot & Restore', () => {
         await snapshotGrid(GRID, launcher, store);
 
         const records = await store.registry.loadAll(GRID);
-        expect(records.length).toBe(launcher.registry.count);
+        // snapshot persists EVERY registry record, including the did:noesis:system:*
+        // treasury (which registry.count excludes as non-citizen) — compare to all().
+        expect(records.length).toBe(launcher.registry.all().length);
         const dids = records.map(r => r.did).sort();
         expect(dids).toContain('did:noesis:sophia');
         expect(dids).toContain('did:noesis:hermes');

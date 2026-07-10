@@ -69,7 +69,9 @@ describe('Sprint 13: Graceful Shutdown', () => {
         await snapshotGrid(TEST_CONFIG.gridName, app.launcher, store);
 
         const records = await store.registry.loadAll(TEST_CONFIG.gridName);
-        expect(records.length).toBe(2);
+        // The genesis system treasury (did:noesis:system:*) is also persisted; count
+        // only the two Nous we spawned. Positions exclude the treasury (never placed).
+        expect(records.filter(r => !r.did.startsWith('did:noesis:system:')).length).toBe(2);
 
         const positions = await store.space.loadPositions(TEST_CONFIG.gridName);
         expect(positions.length).toBe(2);
@@ -112,7 +114,8 @@ describe('Sprint 13: Graceful Shutdown', () => {
             store.audit.loadAll(TEST_CONFIG.gridName),
         ]);
 
-        expect(records.length).toBe(1);
+        // Only the one Nous we spawned; the did:noesis:system:* treasury is also persisted.
+        expect(records.filter(r => !r.did.startsWith('did:noesis:system:')).length).toBe(1);
         expect(entries.length).toBe(app.launcher.audit.length);
     });
 });
