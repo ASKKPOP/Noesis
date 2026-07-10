@@ -10,8 +10,9 @@
  * Lazy period-boundary assessment: for each OWNED, NON-commons parcel whose
  * `last_upkeep_tick` is a full UPKEEP_PERIOD_TICKS (or more) behind `tick` (or
  * undefined), a period is DUE:
- *   - FUNDED  → transferWei(owner → TREASURY_DID, upkeepDue) + emit
- *               treasury.upkeep_collected + resetCondition + persistUpkeep.
+ *   - FUNDED  → chargeToTreasury(owner nous_accounts → civic_treasury, upkeepDue)
+ *               atomically (Phase 62.6-02, Ledger A) + emit treasury.upkeep_collected
+ *               + resetCondition + persistUpkeep.
  *   - INSUFFICIENT → advanceCondition (ladder maintained→worn→derelict) + emit
  *               zoning.condition_changed; at the reclaim threshold the registry
  *               reclaims to treasury and the scanner emits zoning.parcel_reclaimed +
@@ -34,16 +35,13 @@ function sha256Hex(input: string): string {
 
 /**
  * The registry facade the scanner needs. In production this is composed in the
- * launcher from the parcel registry (list/ladder), the parcel store (persist), and
- * the Nous registry (balance + transferWei). The tests pass a single mock object.
+ * launcher from the parcel registry (list/ladder) and the parcel store (persist).
+ * The owner→treasury money move is now an atomic Ledger-A charge via `accountStore`
+ * (below), not this facade. The tests pass a single mock object.
  */
 export interface UpkeepRegistry {
     /** All parcels (deep copies) for this grid. */
     list(filter?: { ownerDid?: string | null }): Parcel[];
-    /** Read a Nous record's Ousia balance (owner affordability check). */
-    get(did: string): { balance_wei: number } | undefined;
-    /** Move Ousia owner → treasury (return shape is not inspected — only the call). */
-    transferWei(fromDid: string, toDid: string, amount: number): unknown;
     /** Ladder transitions (delegate to ParcelRegistry). */
     advanceCondition(address: string): 'worn' | 'derelict' | 'reclaimed';
     resetCondition?(address: string): void;
@@ -59,10 +57,29 @@ export interface UpkeepAudit {
     append(eventType: string, actorDid: string, payload: Record<string, unknown>): unknown;
 }
 
+/**
+ * The atomic owner→civic_treasury charge seam (Phase 62.6-02). Backed in production by
+ * `NousAccountStore.chargeToTreasury` (debit owner nous_accounts → credit civic_treasury
+ * on one connection/transaction; throws 'insufficient_balance' when the owner cannot cover).
+ */
+export interface UpkeepAccountStore {
+    chargeToTreasury(p: {
+        gridName: string;
+        civicDid: string;
+        amountWei: bigint;
+        currentTick: number;
+    }): Promise<{ newBalance: bigint }>;
+}
+
 export interface UpkeepScannerDeps {
     registry: UpkeepRegistry;
     audit: UpkeepAudit;
+    /** Retained for the reclaim path (ownerDid = treasuryDid on a reclaimed parcel). */
     treasuryDid: string;
+    /** Grid name for the Ledger-A charge keying. */
+    gridName: string;
+    /** Atomic owner nous_accounts → civic_treasury upkeep charge (Ledger A). */
+    accountStore: UpkeepAccountStore;
 }
 
 /** True if a parcel is Polis Commons (treasury-owned: owner_civic_did NULL) — upkeep-exempt. */
@@ -82,7 +99,7 @@ function periodDue(parcel: Parcel, tick: number): boolean {
  * is assessed in isolation; a failure on one does not stop the sweep).
  */
 export async function onUpkeepTick(tick: number, deps: UpkeepScannerDeps): Promise<void> {
-    const { registry, audit, treasuryDid } = deps;
+    const { registry, audit, treasuryDid, gridName, accountStore } = deps;
     for (const parcel of registry.list()) {
         // Polis Commons are EXEMPT — never debited, never decayed.
         if (isCommons(parcel)) continue;
@@ -91,26 +108,45 @@ export async function onUpkeepTick(tick: number, deps: UpkeepScannerDeps): Promi
         const ownerDid = parcel.ownerDid as string;
         const due = upkeepDue(parcel);
         const ownerHash = sha256Hex(ownerDid);
-        const balance = registry.get(ownerDid)?.balance_wei ?? 0;
 
-        if (due > 0 && balance >= due) {
-            // FUNDED — auto-debit owner → treasury, emit, reset ladder, persist.
-            registry.transferWei(ownerDid, treasuryDid, due);
-            appendTreasuryUpkeepCollected(audit as never, {
-                amount_wei: due,
-                owner_civic_did_hash: ownerHash,
-                parcel_id: parcel.id,
-                tick,
-            });
-            registry.resetCondition?.(parcel.id);
-            const settled: Parcel = {
-                ...parcel,
-                lastUpkeepTick: tick,
-                missedPeriods: 0,
-                condition: 'maintained',
-            };
-            await registry.persistUpkeep?.(settled);
-        } else {
+        if (due > 0) {
+            try {
+                // FUNDED — atomic owner nous_accounts → civic_treasury (Ledger A). The
+                // affordability read collapses into the charge: chargeToTreasury does
+                // SELECT … FOR UPDATE → debit → treasury credit in one transaction and
+                // throws 'insufficient_balance' when the owner cannot cover.
+                await accountStore.chargeToTreasury({
+                    gridName,
+                    civicDid: ownerDid,
+                    amountWei: BigInt(due),
+                    currentTick: tick,
+                });
+                appendTreasuryUpkeepCollected(audit as never, {
+                    amount_wei: due,
+                    owner_civic_did_hash: ownerHash,
+                    parcel_id: parcel.id,
+                    tick,
+                });
+                registry.resetCondition?.(parcel.id);
+                const settled: Parcel = {
+                    ...parcel,
+                    lastUpkeepTick: tick,
+                    missedPeriods: 0,
+                    condition: 'maintained',
+                };
+                await registry.persistUpkeep?.(settled);
+                continue;
+            } catch (e) {
+                if (!(e instanceof Error && e.message === 'insufficient_balance')) {
+                    // Non-affordability error — preserve per-parcel isolation: skip this
+                    // parcel, do NOT abort the sweep, do NOT decay on a transient DB fault.
+                    continue;
+                }
+                // insufficient_balance → fall through to the decay ladder below.
+            }
+        }
+
+        {
             // INSUFFICIENT (or nothing owed but a real period missed) — advance the ladder.
             const state = registry.advanceCondition(parcel.id);
             if (state === 'reclaimed') {
