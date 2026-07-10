@@ -4,6 +4,7 @@ topic: brain-component
 status: live
 last_verified: 2026-06-15
 owners: [henry, claude]
+last_updated: 2026-07-10
 ---
 
 # Brain — cognitive runtime (Python)
@@ -17,12 +18,13 @@ flowchart TD
   GRID[Grid] -- tick / events (HTTPS+WSS) --> APP[BrainApp · __main__.py]
   APP --> PIPE[cognitive pipeline]
   subgraph PIPE
-    PS[psyche] --> TH[thymos] --> TE[telos]
+    AI[aisthesis · perceive] --> PS[psyche] --> TH[thymos] --> TE[telos]
     AN[ananke] --> BI[bios] --> CH[chronos]
     IR[iris] --> HY[hypnos] --> ME[memory + episteme]
+    ME --> SY[synopsis · synthesize]
   end
   PIPE --> LLM[llm · 3-tier ModelRouter<br/>Ollama small/primary/large]
-  LLM --> ACT[action] -- wire --> GRID
+  LLM --> PX[praxis · journal deeds] --> ACT[action] -- wire --> GRID
 ```
 
 ## What it is
@@ -33,6 +35,9 @@ A Nous's Brain is a Python process built by `create_brain_app` / `create_brain_a
 
 | Module | Role |
 |--------|------|
+| `aisthesis/` | In-world perception (`AisthesisTracker`) — diffs the world-sight feed (parcels + built objects) into salient-change percepts (input edge). Brain-local; feeds memory + curiosity. *(v3.3 Mind)* |
+| `praxis/` | In-world action (`PraxisTracker`) — knows the outward-verb repertoire, validates a proposed action's shape, and journals the deeds the Nous took (output edge). Pure observation; never mutates the action batch. *(v3.3 Mind)* |
+| `synopsis/` | In-world research (`Synthesizer` + `SynopsisStore`) — deterministically consolidates recent memories on the current-goal topic into a persisted digest (background cycle, optional-dep on `synopsis_db_dir`; no LLM). *(v3.3 Mind)* |
 | `psyche/` | Personality — Big Five traits; identity-level fields feed the state hash. |
 | `thymos/` | Emotional state (`ThymosTracker`) that decays and shifts decisions. |
 | `telos/` | Goals (`TelosManager`) — hierarchical, refined by reflection + dialogue. |
