@@ -203,8 +203,13 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
 
     // Governance proposals (conditional — only registered when governance service present)
     'GET /api/v1/governance/proposals': 'public',
-    'GET /api/v1/governance/proposals/:id/body': 'public',
-    'GET /api/v1/governance/proposals/:id/ballots/history': 'public',
+    // SECURITY 2026-07-10: proposal body (H2+) and ballot history (H5) are operator reads.
+    // They previously trusted the spoofable x-operator-tier header via validateTierAtLeast —
+    // any anonymous caller could set the header and read gated content. Now server-trusted:
+    // the operator_only gate resolves tier from the Portal-session DID against the allowlist,
+    // and the handler enforces the per-route minimum tier (>=2 / >=5) from req.didContext.
+    'GET /api/v1/governance/proposals/:id/body': 'operator_only',
+    'GET /api/v1/governance/proposals/:id/ballots/history': 'operator_only',
     'POST /api/v1/governance/proposals/:id/ballots/commit': 'public',
     'POST /api/v1/governance/proposals/:id/ballots/reveal': 'public',
 

@@ -42,7 +42,6 @@ import {
     NONCE_RE,
     validateProposerDid,
     validateVoterDid,
-    validateTierAtLeast,
     validatePctRange,
     type GovernanceRegistry,
 } from './_validation.js';
@@ -379,10 +378,13 @@ export async function registerGovernanceRoutes(
     fastify.get<{ Params: { id: string } }>(
         '/api/v1/governance/proposals/:id/body',
         async (req, reply) => {
-            const tierResult = validateTierAtLeast(req, 2);
-            if (!tierResult.ok) {
-                reply.code(tierResult.status);
-                return { error: tierResult.error };
+            // SECURITY 2026-07-10: tier is server-trusted — set by the operator_only gate
+            // from the Portal-session DID against the allowlist, NEVER from the (spoofable)
+            // x-operator-tier header. The gate already rejected anonymous callers (401) and
+            // non-operators (403 not_operator); here we enforce the H2+ read minimum.
+            if ((req.didContext?.operatorTier ?? 0) < 2) {
+                reply.code(403);
+                return { error: 'tier_too_low' };
             }
 
             const proposal = await store.getProposal(req.params.id);
@@ -410,10 +412,11 @@ export async function registerGovernanceRoutes(
     fastify.get<{ Params: { id: string } }>(
         '/api/v1/governance/proposals/:id/ballots/history',
         async (req, reply) => {
-            const tierResult = validateTierAtLeast(req, 5);
-            if (!tierResult.ok) {
-                reply.code(tierResult.status);
-                return { error: tierResult.error };
+            // SECURITY 2026-07-10: server-trusted tier from the operator_only gate, not a
+            // client header. Ballot history is H5-only; the gate handles anonymous/non-operator.
+            if ((req.didContext?.operatorTier ?? 0) < 5) {
+                reply.code(403);
+                return { error: 'tier_too_low' };
             }
 
             const proposal = await store.getProposal(req.params.id);

@@ -178,9 +178,21 @@ Next action: operator's choice — remaining v3.0 work includes the Wave-1 Type 
   `not_operator`. The `op:<uuid>` audit identity is unchanged (now sourced from the allowlist entry) so R-31-01
   zero-diff holds; +0 broadcast-allowlist events. **Deploy step:** set `GRID_OPERATOR_DIDS` on prod with Henry's
   `@henry` Portal DID + an `op:<uuid>` (and `STEWARD_OPERATOR_EMAIL`/`_PASSWORD` for the console) — until then operator
-  actions are safely blocked. Out-of-scope follow-up: the Phase-12 governance proposal read routes
-  (`/proposals/:id/body`, `/ballots/history`) still read `x-operator-tier` via `validateTierAtLeast` (public,
-  read-only, dashboard-facing) — a separate lower-severity item.
+  actions are safely blocked.
+
+🔒 **SECURITY FIX (2026-07-10) — governance read-route header-trust CLOSED** (follow-up to the 2026-07-09 escalation).
+  The last two header-trusting surfaces are shut. `GET /governance/proposals/:id/body` (H2+) and
+  `/ballots/history` (H5) gated on the spoofable `x-operator-tier` header via `validateTierAtLeast` — any
+  anonymous caller could read gated proposal bodies + full ballot reveal history (VOTE-05 secrecy leak) by
+  asserting a tier header. Fix (D-SEC-04): both routes are now `operator_only` (policy.ts) — server-trusted tier
+  from the Portal-session DID + `GRID_OPERATOR_DIDS`; each handler enforces its min tier from
+  `req.didContext.operatorTier`. `validateTierAtLeast` (the sole remaining header reader) deleted; the CI gate
+  `scripts/check-operator-header-auth.mjs` scan roots now include `grid/src/api/governance/`. Both governance
+  tier test files rewritten to the full-server harness (12 tests incl. a forged-header regression proving 401,
+  not 200). Verified: gate green, tsc clean (pre-existing `@aws-sdk/client-sns` only), api+governance regression
+  789 pass. +0 broadcast-allowlist events. **No prod deploy needed beyond the existing `GRID_OPERATOR_DIDS`
+  config** (already set 2026-07-09) — the fix reuses the same allowlist. **The `x-operator-tier`/`-id` header is
+  now fully retired as an auth source across the entire Grid API.**
 
 ## W-A Mind Loop — SHIPPED 2026-07-02 (from the full-system audit)
 

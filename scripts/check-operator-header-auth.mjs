@@ -1,14 +1,19 @@
-// CI gate (SECURITY 2026-07-09): no route under grid/src/api/operator/ or
-// grid/src/api/admin/ may read x-operator-tier / x-operator-id from request
-// headers as an auth source. Operator tier + identity are server-trusted —
-// resolved from the Portal-session DID against the GRID_OPERATOR_DIDS allowlist
-// (req.didContext.operatorTier / operatorId), never from a client header.
+// CI gate (SECURITY 2026-07-09): no route under grid/src/api/operator/,
+// grid/src/api/admin/, or grid/src/api/governance/ may read x-operator-tier /
+// x-operator-id from request headers as an auth source. Operator tier + identity
+// are server-trusted — resolved from the Portal-session DID against the
+// GRID_OPERATOR_DIDS allowlist (req.didContext.operatorTier / operatorId), never
+// from a client header.
+//
+// governance/ added 2026-07-10: the proposal body (H2+) and ballot history (H5)
+// reads previously trusted x-operator-tier via validateTierAtLeast — now retired
+// in favor of the operator_only gate. This root keeps that hole from reopening.
 //
 // Run: node scripts/check-operator-header-auth.mjs
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-const ROOTS = ['grid/src/api/operator', 'grid/src/api/admin'];
+const ROOTS = ['grid/src/api/operator', 'grid/src/api/admin', 'grid/src/api/governance'];
 // Matches an actual header read of x-operator-tier / x-operator-id, e.g.
 //   req.headers['x-operator-tier']   headers["x-operator-id"]
 const FORBIDDEN = /headers\s*\[\s*['"]x-operator-(tier|id)['"]\s*\]/;
