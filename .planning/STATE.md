@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Polis (Civic City) — Phases 36-50
 status: executing
-stopped_at: Phase 62.6-03 SHIPPED — co-work + co-build host→worker settlement migrated off the sync registry.transferWei dep seam onto an async settleWei seam wired to NousAccountStore.transfer (Nous→Nous, one atomic transaction on nous_accounts). completeTask (cowork.ts) + completeSubTask/completeNode (co-build.ts) are now async; the board/complete route constructs NousAccountStore(services.pool) and awaits completeTask with funded:true. D-NH-06 always-settles preserved via an insufficient_balance→recordIou fallback INSIDE completeTask (never a silent no-pay). co-build has NO production route (research-confirmed) — source seam + tests migrated only. Tests retargeted to the async settleWei seam + accounts-pool conservation + IOU-fallback cases; 3 collateral e2e/route tests (house-3-e2e/house-4-e2e/civic-commerce-routes) also retargeted (await + accounts-pool + pool wiring) — forced by the sync→async change. No transferWei remains in cowork.ts/co-build.ts/board-complete route. No allowlist/event/payload change (D-8/D-10), zero custody (D-9), deterministic tick (D-11), atomic (D-12), audit zero-diff (R-31-01). tsc clean; civic+api regression 890 green / 16 skipped / 0 fail. **Remaining transferWei money user: 62.6-04 agent-trades; then 62.5-04 can fold + remove NousRegistry.transferWei.**
-last_updated: "2026-07-10T09:56:00.000Z"
+stopped_at: Phase 62.6-04 SHIPPED — agent-trade settlement migrated off NousRegistry.transferWei onto NousAccountStore.transfer between the RESOLVED civic-DIDs of proposer + counterparty (existence→civic via CivicDidStore.getByExistenceDid), enforcing the operator-locked D-13 citizens-only reject: either party unresolved (pre-citizen) ⇒ trade.rejected{reason:'not_found'} (existing allowlisted reason, no allowlist change). The reviewer proposerBalance is now read from the resolved civic-DID's nous_accounts (same ledger as the settle transfer); store throws map to the existing reason enum (insufficient_balance→'insufficient', invalid_transfer_self→'self_transfer', invalid_amount→'invalid_amount', else→'not_found'); the review-fail branch + trade.settled{counterparty,amount,nonce} payload are byte-identical (D-10). NousRunnerConfig gains optional accountStore/civicDidStore/gridName; main.ts hoists nousAccountStore and injects all three into the seeded NousRunner (only real construction site — launcher.ts:186 is a JSDoc). No allowlist/event/payload change (D-8/D-10), zero custody (D-9), deterministic tick (D-11), atomic w/ rollback (D-12), audit zero-diff (R-31-01). tsc clean; trade-settlement (7) + governance-nous-runner (8) = 15 green. **This is the LAST transferWei money site — 62.5-04 can now fold nous_registry.balance_wei + remove transferWei.** Deferred to 62.6-05 (its declared scope): retarget trade-review-flow/trade-review-abort/house-3/4-e2e/e2e-tick-cycle + confirm zero-diff passes with the new deps wired.
+last_updated: "2026-07-10T10:20:00.000Z"
 progress:
   total_phases: 25
   completed_phases: 11
@@ -26,7 +26,25 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 
 ## Current Position
 
-Phase: 62.6 (ledger-b-subsystem-migration) — EXECUTING (plans 1+2+3 of 5 shipped; agent-trades + verify remain)
+Phase: 62.6 (ledger-b-subsystem-migration) — EXECUTING (plans 1+2+3+4 of 5 shipped; verify (62.6-05) remains)
+Plan 62.6-04 (agent-trades — LAST transferWei money site) — ✅ COMPLETE 2026-07-10 (commits `ddc7e2f6`/`832f4f6b`/`68f9d699`):
+  Trade settle (`nous-runner.ts` `trade_request`) resolves BOTH proposer + counterparty existence-DIDs to
+  civic-DIDs via `CivicDidStore.getByExistenceDid`; either `null` (pre-citizen) ⇒ `trade.rejected{reason:'not_found'}`
+  (D-13 citizens-only, existing allowlisted reason — no allowlist change). `await accountStore.transfer(proposerCivic
+  → counterpartyCivic, BigInt(amount))` replaces `registry.transferWei`; throws map to the EXISTING reason enum
+  (`insufficient`/`self_transfer`/`invalid_amount`/`not_found`). The reviewer `proposerBalance` is read from the
+  resolved civic-DID's `nous_accounts` (same ledger as settle). Review-fail branch + `trade.settled{counterparty,
+  amount,nonce}` payload byte-identical (D-10 — counterparty stays the existence-DID). `NousRunnerConfig` gains
+  optional `accountStore`/`civicDidStore`/`gridName` (mirrors `reviewer?`); `main.ts` hoists `nousAccountStore` and
+  injects all three into the seeded `NousRunner` (the only real construction — `launcher.ts:186` is a JSDoc comment).
+  No allowlist/event/payload change (D-8/D-10), zero custody (D-9), deterministic tick (D-11), atomic w/ rollback
+  (D-12), audit zero-diff (R-31-01). tsc clean; `trade-settlement` (7, incl. both-citizens settle / counterparty-null
+  not_found / symmetric proposer-null / underfunded insufficient / reviewer-fail unchanged) + `governance-nous-runner`
+  (8) = **15 green**. **LAST transferWei money site retired** → 62.5-04 can fold `nous_registry.balance_wei` + remove
+  `NousRegistry.transferWei` (only its def + doc comments remain). **Deferred to 62.6-05 (its declared scope):**
+  retarget `trade-review-flow`/`trade-review-abort`/`house-3-e2e`/`house-4-e2e`/`e2e-tick-cycle` + confirm
+  `zero-diff` passes with the new deps wired (these assert Ledger-B and fail at runtime by design until Plan 05 wires
+  the deps — NOT a regression). SUMMARY: `.planning/phases/62.6-ledger-b-subsystem-migration/62.6-04-SUMMARY.md`.
 Plan 62.6-03 (co-work / co-build) — ✅ COMPLETE 2026-07-10 (commits `b37ac23c`/`0fcb3f02`/`d623c9c9`):
   `CompleteDeps.transferWei?`/`CoBuildDeps.transferWei?` (sync, no-op default) replaced by an async
   `settleWei?: (from,to,amountWei)=>Promise<void>`; `completeTask` + `completeSubTask`/`completeNode` are now
