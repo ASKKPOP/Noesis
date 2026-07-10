@@ -36,8 +36,10 @@ Phase numbering: Money reserves 62–66, Groups 67–71 → Mind takes **72–74
 
 - ✅ **Phase 72 — `aisthesis` (in-world perception)** (2026-07-10): new `brain/src/noesis_brain/aisthesis/` faculty — diffs the world-sight feed (parcels + built objects) into salient-change percepts (appeared/vanished/changed), wired to the `on_tick` **input edge** (records salient change to episodic memory, stirs curiosity) + `get_state` snapshot. Deterministic (no-walltime gate). 18 faculty tests + full brain suite (1186) green. State hash untouched (stays closed at 4).
 - ✅ **Phase 73 — `praxis` (in-world action)** (2026-07-10): new `brain/src/noesis_brain/praxis/` faculty — the outward-verb repertoire (`OUTWARD_VERBS`, a curated subset of `ActionType`), a validate contract (verb + required-metadata shape), and a bounded **deed journal** wired to the `on_tick` **output edge** (pure observation beside `_advisory_log_divergence` — never mutates the action batch) + `get_state` snapshot. Deterministic (no-walltime gate). 16 faculty tests + full brain suite (1205) green.
-- ⏳ **Phase 74 — `synopsis` (in-world research)**: SQLite-backed research store; curiosity/goal-triggered `aau` synthesis into `episteme` (personal wiki); background-cycle hook.
-- ⏳ **Phases 75–76 — operator bridge + Tier 1 Local Nous Manager + Type-A providers (sim-use / supervision / notebook). HELD.**
+- ✅ **Phase 74 — `synopsis` (in-world research)** (2026-07-10): new `brain/src/noesis_brain/synopsis/` faculty — a deterministic `Synthesizer` (splits recent memories on the current-goal topic into candidate points, dedupes + ranks by cross-source recurrence, emits a digest + outline; no LLM) and a per-Nous `SynopsisStore` (iris SQLite pattern, append-only). Wired as an optional-dep (`synopsis_db_dir`) background `on_tick` cycle + `get_state` snapshot. Deterministic (no-walltime gate). 12 faculty tests + full brain suite (1217) green.
+- ⏳ **Phases 75–76 — operator bridge + Tier 1 Local Nous Manager + Type-A providers (sim-use / supervision / notebook). HELD by operator.**
+
+**In-world faculties (72–74) complete.** All three in-world Mind faculties ship value to *all* Nous with no security surface; the outward operator bridge (75–76) remains held.
 
 ---
 

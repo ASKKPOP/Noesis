@@ -9,6 +9,7 @@ from typing import Any
 
 from noesis_brain.aisthesis import AisthesisTracker, MEMORY_THRESHOLD as AISTHESIS_MEMORY_THRESHOLD
 from noesis_brain.praxis import PraxisTracker
+from noesis_brain.synopsis import SourceNote, Synthesizer, SynopsisStore
 from noesis_brain.ananke import AnankeRuntime, DriveLevel, DriveName
 from noesis_brain.ananke.loader import AnankeLoader
 from noesis_brain.bios import BiosLoader, BiosRuntime
@@ -85,6 +86,7 @@ class BrainHandler:
         did: str = "",
         aisthesis: AisthesisTracker | None = None,  # v3.3 Mind — in-world perception
         praxis: PraxisTracker | None = None,        # v3.3 Mind — in-world action
+        synopsis_db_dir: str | Path | None = None,  # v3.3 Mind — in-world research (optional-dep)
         iris_db_dir: str | Path | None = None,   # Phase 17 D-17-14
         hypnos_db_dir: str | Path | None = None,  # Phase 16 D-16-02
         ledger_db_dir: str | Path | None = None,  # W-A2 (Mind) — goal→task ledger
@@ -103,6 +105,19 @@ class BrainHandler:
         # v3.3 Mind — praxis: in-world action repertoire + deed journal (output
         # edge). Self-constructs when not injected (additive, D-10).
         self.praxis = praxis if praxis is not None else PraxisTracker()
+        # v3.3 Mind — synopsis: background research synthesis (optional-dep, iris
+        # pattern). synopsis_db_dir=None → disabled (no research persists). When set,
+        # a per-Nous SynopsisStore + deterministic Synthesizer are constructed.
+        if synopsis_db_dir is not None:
+            self._synopsis_store: SynopsisStore | None = SynopsisStore(
+                db_path=Path(synopsis_db_dir), nous_did=self.did,
+            )
+            self._synthesizer: Synthesizer | None = Synthesizer()
+        else:
+            self._synopsis_store = None
+            self._synthesizer = None
+        self._last_synopsis_tick = -10_000
+        self._SYNOPSIS_COOLDOWN_TICKS = 120
         # Reminder & Wake-Up (spec §3): self-set, tick-scheduled reminders.
         self._reminders = ReminderStore()
         # Tool-loop activation (Phase 72b): when curious + a tool-capable model is
@@ -624,6 +639,56 @@ class BrainHandler:
                     log.warning("[Brain] tool audit post failed: %s", exc)
         except Exception as exc:  # never let a tool cycle take down the tick
             log.warning("[Brain] tool cycle failed: %s", exc)
+
+    # ── Synopsis: background research synthesis (v3.3 Mind) ────────────────────
+    def _should_run_synopsis_cycle(self, tick: int) -> bool:
+        """Run the synthesis pass only when the store is enabled, memory exists,
+        and the cooldown has elapsed. Deterministic (no LLM) — needs no rest gate."""
+        if self._synopsis_store is None or self._synthesizer is None or self.memory is None:
+            return False
+        return (tick - self._last_synopsis_tick) >= self._SYNOPSIS_COOLDOWN_TICKS
+
+    async def _run_synopsis_cycle(self, tick: int) -> None:
+        """Consolidate recent memories into a topic synopsis and persist it.
+
+        Deterministic + Brain-local: no LLM, no Grid events. Background task;
+        never fatal. The topic is the Nous's current top goal.
+        """
+        try:
+            if self._synopsis_store is None or self._synthesizer is None or self.memory is None:
+                return
+            recents = self.memory.recent(limit=12)
+            if len(recents) < 2:
+                return  # not enough to see together yet
+            sources = [
+                SourceNote(title=f"mem-{i}", content=getattr(m, "content", "") or "")
+                for i, m in enumerate(recents)
+            ]
+            top = self.telos.top_priority(1) if self.telos is not None else []
+            topic = (getattr(top[0], "description", "") if top else "recent experience")[:120]
+            synopsis = self._synthesizer.synthesize(topic, sources, tick)
+            if synopsis.key_points:
+                self._synopsis_store.save(synopsis)
+        except Exception:  # never let a synopsis cycle take down the tick
+            log.debug("synopsis cycle skipped", exc_info=True)
+
+    def _synopsis_snapshot(self) -> dict[str, Any]:
+        """get_state snapshot of the research notebook (latest digest + count)."""
+        if self._synopsis_store is None:
+            return {"count": 0, "latest": None}
+        latest = self._synopsis_store.latest(limit=1)
+        top = latest[0] if latest else None
+        return {
+            "count": self._synopsis_store.count(),
+            "latest": None
+            if top is None
+            else {
+                "topic": top.topic,
+                "key_points": list(top.key_points),
+                "source_count": len(top.source_titles),
+                "created_tick": top.created_tick,
+            },
+        }
 
     @staticmethod
     def _tool_actions_from_trace(trace: list[Any]) -> list[dict[str, Any]]:
@@ -1389,6 +1454,12 @@ class BrainHandler:
             self._last_econ_tick = tick
             import asyncio as _asyncio
             _asyncio.create_task(self._run_economic_cycle(tick))
+        # v3.3 Mind — synopsis: background research synthesis. Deterministic (no LLM),
+        # so it runs regardless of the rest gate. Background task; never fatal.
+        if self._should_run_synopsis_cycle(tick):
+            self._last_synopsis_tick = tick
+            import asyncio as _asyncio
+            _asyncio.create_task(self._run_synopsis_cycle(tick))
         # W-A (Mind): the slow planner refills the goal ledger when dry; otherwise
         # the fast decision cycle works the next task. `elif` keeps them mutually
         # exclusive per tick (max one mind-LLM call). Background; never fatal.
@@ -1890,9 +1961,10 @@ class BrainHandler:
             "thymos": thymos_dict,
             "telos": {"active_goals": goals_out},
             "memory_highlights": memory_highlights,
-            # v3.3 Mind — latest in-world perception + action snapshots.
+            # v3.3 Mind — latest in-world perception + action + research snapshots.
             "aisthesis": self.aisthesis.snapshot(),
             "praxis": self.praxis.snapshot(),
+            "synopsis": self._synopsis_snapshot(),
         }
 
     def _psyche_snapshot(self) -> dict[str, Any]:

@@ -367,6 +367,8 @@ def create_brain_app(
         did=did,
         aisthesis=aisthesis,
         praxis=praxis,
+        # v3.3 Mind — synopsis persists next to nous.db (disabled when data_dir is None).
+        synopsis_db_dir=data_dir,
         # W-A2 (Mind): the goal→task ledger persists next to nous.db so goal
         # pursuit survives restarts (ceaselessness lives in external state).
         ledger_db_dir=data_dir,
