@@ -138,10 +138,19 @@ export async function registerBrainTokenRoutes(
                 return reply.code(401).send({ error: 'invalid_signature' });
             }
 
-            // Upsert — rotation path; clears any prior revocation on new key registration
+            // SECURITY 2026-07-10 (D-SEC-05): this route is PUBLIC and only proves the
+            // caller holds the key it just submitted — NOT that it controls brain_did.
+            // It must therefore be FIRST-REGISTRATION-ONLY (INSERT IGNORE): it may never
+            // overwrite an existing brain_did's key (key-hijack) nor clear a prior
+            // revocation (upsert reset revoked=0, defeating the government_only court-order
+            // revoke, D-V3-18). insert() no-ops when the row exists, so a re-registration
+            // attempt against a known brain_did changes nothing (idempotent same-key boot
+            // re-register still returns 200; a different-key hijack silently no-ops).
+            // Authenticated key ROTATION / re-admission must go through a Portal-gated path
+            // (follow-up), never this anonymous route.
             // operatorDid is NOT set here per D-39-01: ownership is claimed separately via
             // POST /api/v1/operator/me/brains (two-step Portal-gated claim model).
-            await store.upsert({
+            await store.insert({
                 brainDid: brain_did,
                 publicKeyJwk: jwk,
                 issuedAt: issued_at,

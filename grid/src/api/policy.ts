@@ -354,11 +354,18 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/police/complaint':                                'civic_did_required',
     'POST /api/v1/police/complaint/:complaintId/investigate':       'civic_did_required',
     'GET /api/v1/police/complaints':                                'civic_did_required',
-    // Phase 47 Plan 2 — charges (police), conviction (GOVERNMENT only — the constitutional
-    // gate), sanction execution (police, only against a convicted charge). No operator path.
-    'POST /api/v1/police/charge':                                   'police_only',
+    // Phase 47 Plan 2 — charges, conviction (GOVERNMENT only — the constitutional gate),
+    // sanction execution (only against a convicted charge).
+    // SECURITY 2026-07-10 (D-SEC-07): these two were labeled 'police_only', but v3.0 has NO
+    // Police role/tier — the onRequest hook has no police_only branch, so they always fell
+    // through to civic_member enforcement. The label asserted a restriction that did not
+    // exist. They are now honestly 'civic_did_required' (community-policing: any civic member
+    // may file a charge or execute a CONVICTED sanction). The teeth are elsewhere: conviction
+    // is government_only, and execute-sanction is BOUND to the convicted charge's sanction
+    // kind (D-SEC-07 in police.ts) so an executor cannot choose the sanction or its amount.
+    'POST /api/v1/police/charge':                                   'civic_did_required',
     'POST /api/v1/police/charge/:chargeId/convict':                 'government_only',
-    'POST /api/v1/police/charge/:chargeId/execute-sanction':        'police_only',
+    'POST /api/v1/police/charge/:chargeId/execute-sanction':        'civic_did_required',
     // Phase 47 Plan 3 — appeals. The sanctioned party appeals (civic); the Government
     // upholds/overturns (government_only). All sanctions are appealable.
     'POST /api/v1/gov/appeal':                                      'civic_did_required',

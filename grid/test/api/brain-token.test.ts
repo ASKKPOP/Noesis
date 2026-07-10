@@ -2,13 +2,13 @@
  * Phase 38 WIRE-02 — POST /api/v1/brain/token/{register,revoke}
  *
  * 8 test cases:
- *   1. register: valid existence-signed payload upserts the JWK
+ *   1. register: valid existence-signed payload registers the JWK (first-registration)
  *   2. register: invalid signature → 401
  *   3. register: civic_did not in registry → 403
  *   4. register: malformed body (missing public_key_jwk) → 400
  *   5. revoke: government_only — without government tier returns 401/403
  *   6. revoke: with stub government session marks row revoked → 200
- *   7. register then revoke then re-register clears revocation
+ *   7. SECURITY (D-SEC-05): public re-register cannot overwrite the key or un-revoke
  *   8. ROUTE_DID_POLICY has explicit entries for both new routes
  */
 
@@ -301,7 +301,7 @@ describe('POST /api/v1/brain/token/revoke', () => {
     });
 });
 
-describe('POST /api/v1/brain/token — register then revoke then re-register clears revocation', () => {
+describe('POST /api/v1/brain/token — SECURITY (D-SEC-05): public register cannot overwrite or un-revoke', () => {
     let app: FastifyInstance;
     let store: ReturnType<typeof makeMockBrainTokenStore>;
 
@@ -314,36 +314,42 @@ describe('POST /api/v1/brain/token — register then revoke then re-register cle
 
     afterAll(async () => { await app.close(); });
 
-    it('three-call sequence: register → isRevoked=false, revoke → isRevoked=true, re-register → isRevoked=false', async () => {
+    it('re-register of a REVOKED brain_did with a DIFFERENT key: revocation is NOT cleared and the key is NOT overwritten', async () => {
         const now = Math.floor(Date.now() / 1000);
-        const { publicKeyJwk, signCanonical } = generateBrainKeyPair();
         const brainDid = 'did:noesis:nous:rotation-test-001';
         const civicDid = CIVIC_DID;
 
-        // Step 1: register
-        const sig1 = signCanonical(brainDid, civicDid, publicKeyJwk, now, now + 86400);
+        // Step 1: legitimate first registration with key A.
+        const keyA = generateBrainKeyPair();
+        const sigA = keyA.signCanonical(brainDid, civicDid, keyA.publicKeyJwk, now, now + 86400);
         const reg1 = await app.inject({
             method: 'POST',
             url: '/api/v1/brain/token/register',
-            payload: { brain_did: brainDid, civic_did: civicDid, public_key_jwk: publicKeyJwk, issued_at: now, expires_at: now + 86400, signature: sig1 },
+            payload: { brain_did: brainDid, civic_did: civicDid, public_key_jwk: keyA.publicKeyJwk, issued_at: now, expires_at: now + 86400, signature: sigA },
         });
         expect(reg1.statusCode).toBe(200);
         expect(await store.isRevoked(brainDid)).toBe(false);
+        expect((await store.getByDid(brainDid))?.publicKeyJwk).toMatchObject(keyA.publicKeyJwk);
 
-        // Step 2: revoke (manually via store since we need a gov session otherwise)
-        const revokeResult = await store.revoke(brainDid, 42);
-        expect(revokeResult).toBe(true);
+        // Step 2: government revokes the token (court-order path, D-V3-18).
+        expect(await store.revoke(brainDid, 42)).toBe(true);
         expect(await store.isRevoked(brainDid)).toBe(true);
 
-        // Step 3: re-register (upsert clears revocation)
-        const sig2 = signCanonical(brainDid, civicDid, publicKeyJwk, now + 1, now + 86401);
+        // Step 3: attacker re-registers the SAME brain_did with a DIFFERENT key B.
+        // Pre-fix this cleared revoked=0 (un-revoke) AND overwrote the key (hijack).
+        // Post-fix (insert / INSERT IGNORE): the row is untouched.
+        const keyB = generateBrainKeyPair();
+        const sigB = keyB.signCanonical(brainDid, civicDid, keyB.publicKeyJwk, now + 1, now + 86401);
         const reg2 = await app.inject({
             method: 'POST',
             url: '/api/v1/brain/token/register',
-            payload: { brain_did: brainDid, civic_did: civicDid, public_key_jwk: publicKeyJwk, issued_at: now + 1, expires_at: now + 86401, signature: sig2 },
+            payload: { brain_did: brainDid, civic_did: civicDid, public_key_jwk: keyB.publicKeyJwk, issued_at: now + 1, expires_at: now + 86401, signature: sigB },
         });
-        expect(reg2.statusCode).toBe(200);
-        expect(await store.isRevoked(brainDid)).toBe(false);
+        expect(reg2.statusCode).toBe(200); // idempotent no-op — no error oracle
+
+        // The revocation MUST still hold and the key MUST still be A (not the attacker's B).
+        expect(await store.isRevoked(brainDid)).toBe(true);
+        expect((await store.getByDid(brainDid))?.publicKeyJwk).toMatchObject(keyA.publicKeyJwk);
     });
 });
 

@@ -45,6 +45,39 @@ function makeBrainStore(rec: BrainTokenRecord | null, revokedDids: string[] = []
     } as unknown as import('../../src/db/stores/brain-token-store.js').BrainTokenStore;
 }
 
+const GRID = 'genesis';
+
+/**
+ * SECURITY (D-SEC-06): civic registry stub. `getByExistenceDid(iss)` returns the
+ * ACTIVE civic-DID bound to that existence-DID — the authoritative binding tryDid
+ * enforces `sub` against. `bindings` maps existence-DID → { civicDid, status }.
+ */
+function makeCivicStore(bindings: Record<string, { civicDid: string; status?: string }>) {
+    return {
+        async getByExistenceDid(_gridName: string, existenceDid: string) {
+            const b = bindings[existenceDid];
+            if (!b) return null;
+            return {
+                gridName: GRID,
+                civicDid: b.civicDid,
+                existenceDid,
+                credentialJson: {},
+                status: b.status ?? 'active',
+                issuedAtTick: 1,
+            };
+        },
+    } as unknown as import('../../src/civic-registry/civic-did-store.js').CivicDidStore;
+}
+
+/** The common wired-registry services: brain token + matching civic binding. */
+function boundServices(rec: BrainTokenRecord, revokedDids: string[] = []): TryDidServices {
+    return {
+        brainTokenStore: makeBrainStore(rec, revokedDids),
+        civicDidStore: makeCivicStore({ [NOUS_DID]: { civicDid: CIVIC_DID } }),
+        gridName: GRID,
+    };
+}
+
 /** Generate an Ed25519 JWK keypair and sign a Brain bearer JWT. */
 async function makeBrainJwt(opts: {
     iss: string;
@@ -84,9 +117,8 @@ describe('tryDid — EdDSA Brain JWT branch', () => {
             revoked: false,
         };
 
-        const services: TryDidServices = {
-            brainTokenStore: makeBrainStore(rec),
-        };
+        // D-SEC-06: registry binds NOUS_DID → CIVIC_DID, and the JWT's sub IS CIVIC_DID.
+        const services = boundServices(rec);
 
         const result = await tryDid(makeReq({ authorization: `Bearer ${jwt}` }), services);
 
@@ -94,6 +126,76 @@ describe('tryDid — EdDSA Brain JWT branch', () => {
         expect(result?.tier).toBe('civic_member');
         expect(result?.did).toBe(CIVIC_DID);
         expect(result?.operatorDid).toBe(NOUS_DID);
+    });
+
+    // ── SECURITY (D-SEC-06) — subject/issuer binding ──────────────────────────
+    it('SECURITY: valid Brain signature but sub ≠ the civic-DID bound to iss → null (impersonation blocked)', async () => {
+        // Attacker holds a real Brain token for NOUS_DID (their own key), but signs a JWT
+        // asserting a DIFFERENT victim civic-DID as sub. Pre-fix this returned the victim.
+        const victimCivicDid = 'did:civic:noesis:victim-999';
+        const { jwt, publicKeyJwk } = await makeBrainJwt({ iss: NOUS_DID, sub: victimCivicDid });
+
+        const rec: BrainTokenRecord = {
+            brainDid: NOUS_DID,
+            publicKeyJwk,
+            issuedAt: Math.floor(Date.now() / 1000),
+            expiresAt: Math.floor(Date.now() / 1000) + 86400,
+            revoked: false,
+        };
+        // Registry binds NOUS_DID → CIVIC_DID (NOT the victim).
+        const services = boundServices(rec);
+
+        const result = await tryDid(makeReq({ authorization: `Bearer ${jwt}` }), services);
+        expect(result).toBeNull();
+    });
+
+    it('SECURITY: valid Brain signature but iss has NO active civic-DID in the registry → null', async () => {
+        const { jwt, publicKeyJwk } = await makeBrainJwt({ iss: NOUS_DID, sub: CIVIC_DID });
+        const rec: BrainTokenRecord = {
+            brainDid: NOUS_DID, publicKeyJwk,
+            issuedAt: Math.floor(Date.now() / 1000),
+            expiresAt: Math.floor(Date.now() / 1000) + 86400, revoked: false,
+        };
+        // Registry has NO binding for NOUS_DID.
+        const services: TryDidServices = {
+            brainTokenStore: makeBrainStore(rec),
+            civicDidStore: makeCivicStore({}),
+            gridName: GRID,
+        };
+        const result = await tryDid(makeReq({ authorization: `Bearer ${jwt}` }), services);
+        expect(result).toBeNull();
+    });
+
+    it('binding is enforced-when-present: with NO civic registry wired (legacy harness) the Brain JWT still resolves', async () => {
+        // D-SEC-06 is conditional: the registry is ALWAYS wired with brainTokenStore in
+        // production (main.ts), so the binding is always enforced on a real Grid. Legacy
+        // unit harnesses that wire a Brain store WITHOUT a registry keep the prior behavior.
+        const { jwt, publicKeyJwk } = await makeBrainJwt({ iss: NOUS_DID, sub: CIVIC_DID });
+        const rec: BrainTokenRecord = {
+            brainDid: NOUS_DID, publicKeyJwk,
+            issuedAt: Math.floor(Date.now() / 1000),
+            expiresAt: Math.floor(Date.now() / 1000) + 86400, revoked: false,
+        };
+        const services: TryDidServices = { brainTokenStore: makeBrainStore(rec) };
+        const result = await tryDid(makeReq({ authorization: `Bearer ${jwt}` }), services);
+        expect(result?.tier).toBe('civic_member');
+        expect(result?.did).toBe(CIVIC_DID);
+    });
+
+    it('SECURITY: bound civic-DID is revoked (status ≠ active) → null', async () => {
+        const { jwt, publicKeyJwk } = await makeBrainJwt({ iss: NOUS_DID, sub: CIVIC_DID });
+        const rec: BrainTokenRecord = {
+            brainDid: NOUS_DID, publicKeyJwk,
+            issuedAt: Math.floor(Date.now() / 1000),
+            expiresAt: Math.floor(Date.now() / 1000) + 86400, revoked: false,
+        };
+        const services: TryDidServices = {
+            brainTokenStore: makeBrainStore(rec),
+            civicDidStore: makeCivicStore({ [NOUS_DID]: { civicDid: CIVIC_DID, status: 'revoked' } }),
+            gridName: GRID,
+        };
+        const result = await tryDid(makeReq({ authorization: `Bearer ${jwt}` }), services);
+        expect(result).toBeNull();
     });
 
     it('EdDSA JWT but brain_tokens row is revoked → null', async () => {

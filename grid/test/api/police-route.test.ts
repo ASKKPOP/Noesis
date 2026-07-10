@@ -164,6 +164,22 @@ describe('POST /api/v1/police/charge/:id/execute-sanction (POL-04)', () => {
         expect(res.statusCode).toBe(404);
         await a.close();
     });
+    it('🔒 SECURITY (D-SEC-07): the executed sanction is BOUND to the convicted charge — a body sanction_type/amount is IGNORED', async () => {
+        // The charge was convicted as a mild 'warning'; the caller tries to escalate to a
+        // 'freeze' (and inject a huge fine) via the body. Post-fix the body is ignored.
+        const markFrozen = vi.fn(async () => true);
+        const warningCharge = { ...convictedCharge, recommended_sanction: 'warning' };
+        const a = app({ ctx: aliceCtx(), rows: [warningCharge], markFrozen });
+        const res = await a.inject({
+            method: 'POST',
+            url: `/api/v1/police/charge/${CHG}/execute-sanction`,
+            payload: { sanction_type: 'freeze', amount_wei: '999999999999999999', duration_ticks: 999999 },
+        });
+        expect(res.statusCode).toBe(201);
+        expect(res.json().sanction_type).toBe('warning'); // bound to the charge, NOT the body
+        expect(markFrozen).not.toHaveBeenCalled();          // the freeze escalation is blocked
+        await a.close();
+    });
 });
 
 const SAN = '77777777-7777-4777-8777-777777777777';

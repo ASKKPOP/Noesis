@@ -14,7 +14,6 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { PoliceStore } from '../../police/police-store.js';
 import { SANCTION_TYPES, type SanctionType } from '../../police/types.js';
-import { TreasuryWeiStore } from '../../economy/treasury-wei-store.js';
 
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -145,32 +144,34 @@ export function registerPoliceRoutes(app: FastifyInstance, services: GridService
             if (!pool || !audit) return reply.code(503).send({ error: 'police_unavailable' });
             const chargeId = req.params.chargeId;
             if (!UUID_RE.test(chargeId)) return reply.code(400).send({ error: 'invalid_charge_id' });
-            if (!isSanction(req.body?.sanction_type)) return reply.code(400).send({ error: 'invalid_sanction_type' });
-            const sanctionType = req.body.sanction_type;
 
             const store = new PoliceStore(pool, audit);
             const charge = await store.getCharge(grid, chargeId);
             if (!charge) return reply.code(404).send({ error: 'unknown_charge' });
             if (charge.status !== 'convicted') return reply.code(403).send({ error: 'no_conviction', status: charge.status });
 
+            // SECURITY 2026-07-10 (D-SEC-07): the executed sanction is BOUND to the charge
+            // that the Government convicted — the executor does NOT choose it. Any
+            // body-supplied sanction_type / amount_wei / duration_ticks is IGNORED, so a
+            // convicted 'warning' can never be executed as a 'freeze'/'exile', nor a 'fine'
+            // credited an attacker-chosen amount. (police_only is community-policing in v3.0:
+            // any civic member may execute, but only the convicted sanction KIND.)
+            const sanctionType = charge.recommended_sanction;
             const accused = charge.accused_civic_did;
-            let amountWei: bigint | null = null;
-            const communityId = typeof req.body?.community_id === 'string' && UUID_RE.test(req.body.community_id) ? req.body.community_id : null;
-            const durationTicks = Number.isInteger(req.body?.duration_ticks) ? (req.body.duration_ticks as number) : null;
 
-            // Apply the material effect (freeze / fine) before recording the sanction.
+            // Apply the material effect. recommended_sanction is the sanction KIND only;
+            // the exact fine amount / freeze duration are NOT carried on the charge in v3.0
+            // and MUST NOT be taken from the untrusted request body. A monetary 'fine' is
+            // therefore recorded with amount=null (no arbitrary treasury credit); binding an
+            // exact amount is a follow-up that carries it on the charge at conviction time.
             if (sanctionType === 'freeze') {
                 if (services.civicDidStore) await services.civicDidStore.markFrozen(grid, accused, tick());
-            } else if (sanctionType === 'fine') {
-                try { amountWei = BigInt(String(req.body?.amount_wei ?? '0')); } catch { return reply.code(400).send({ error: 'invalid_amount_wei' }); }
-                if (amountWei <= 0n) return reply.code(400).send({ error: 'invalid_amount_wei' });
-                await new TreasuryWeiStore(pool).creditWei({ gridName: grid, amountWei, currentTick: tick() });
             }
-            // 'warning' and 'exile' are recorded only (exile membership removal: follow-up).
+            // 'fine' (amount deferred), 'warning', and 'exile' are recorded only.
 
             const sanctionId = await store.recordSanction({
                 gridName: grid, chargeId, accusedDid: accused, sanctionType,
-                durationTicks, communityId, amountWei, tick: tick(),
+                durationTicks: null, communityId: null, amountWei: null, tick: tick(),
             });
             return reply.code(201).send({ sanction_id: sanctionId, sanction_type: sanctionType, charge_id: chargeId });
         },

@@ -514,7 +514,13 @@ export function buildServerWithHub(
         const policy = lookupPolicy(req.method, routePath);
         if (policy === 'public') {
             // Public routes: still resolve context for downstream handlers that conditionally redact.
-            const ctx = await tryDid(req, { didStore: services.didStore, brainTokenStore: services.brainTokenStore });
+            const ctx = await tryDid(req, {
+                didStore: services.didStore,
+                brainTokenStore: services.brainTokenStore,
+                // SECURITY (D-SEC-06): pass the civic registry so a Brain JWT's sub is bound to its iss.
+                civicDidStore: services.civicDidStore,
+                gridName: services.gridName,
+            });
             req.didContext = ctx;
             return;
         }
@@ -558,6 +564,9 @@ export function buildServerWithHub(
             didStore: services.didStore,
             brainTokenStore: services.brainTokenStore,
             presenceService: services.presenceService,
+            // SECURITY (D-SEC-06): civic registry binds a Brain JWT's sub to its iss.
+            civicDidStore: services.civicDidStore,
+            gridName: services.gridName,
         };
         const ctx = await requireDid(req, reply, requireDidServices);
         if (!ctx) return;

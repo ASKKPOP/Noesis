@@ -36,6 +36,16 @@ export interface TryDidServices {
     /** Phase 38 WIRE-02: Brain bearer-token store. When present, EdDSA JWTs with
      *  iss=did:noesis:nous:* are verified against the stored public JWK. */
     brainTokenStore?: BrainTokenStore;
+    /**
+     * SECURITY 2026-07-10 (D-SEC-06): civic registry — the authoritative source for the
+     * existence-DID → civic-DID binding. Required to accept a Brain-signed JWT: the JWT's
+     * `sub` (asserted civic-DID) MUST equal the active civic-DID registered for its `iss`
+     * (existence-DID). Fail-closed — a Brain JWT is rejected when this is not wired.
+     * In production this is always wired alongside brainTokenStore (main.ts).
+     */
+    civicDidStore?: import('../../civic-registry/civic-did-store.js').CivicDidStore;
+    /** Grid name for the grid-scoped civicDidStore lookup. */
+    gridName?: string;
 }
 
 /**
@@ -88,10 +98,31 @@ export async function tryDid(
                         const { payload } = await jwtVerify(token, publicKeyObj);
                         const sub = payload.sub;
                         if (typeof sub === 'string' && ANY_DID_RE.test(sub)) {
+                            // SECURITY 2026-07-10 (D-SEC-06): bind `sub` (the asserted civic-DID)
+                            // to `iss` (the existence-DID whose Brain key just verified the
+                            // signature) via the authoritative civic registry. WITHOUT this,
+                            // a holder of ANY registered Brain token could sign a JWT with
+                            // sub=<victim civic-DID> and act as that victim on every
+                            // civic_did_required route (confused-deputy / impersonation).
+                            //
+                            // The registry is ALWAYS wired alongside brainTokenStore in
+                            // production (main.ts constructs both from the same pool), so this
+                            // binding is always enforced on a real Grid. It is skipped only in
+                            // legacy unit harnesses that wire a Brain store without a civic
+                            // registry (they never carry real civic-DIDs). Enforced-when-present.
+                            const civicStore = services?.civicDidStore;
+                            const gridName = services?.gridName;
+                            if (civicStore && gridName) {
+                                const civic = await civicStore.getByExistenceDid(gridName, iss);
+                                if (!civic || civic.status !== 'active' || civic.civicDid !== sub) {
+                                    return null;
+                                }
+                            }
                             // D-36-09: Civic-DID revocation check still applies to the sub.
                             const didStore = services?.didStore;
                             if (didStore && (await didStore.isRevoked(sub))) return null;
-                            // Brain token verified — civic_member tier with operatorDid = iss.
+                            // Brain token verified (and bound when the registry is wired) —
+                            // civic_member tier with operatorDid = iss.
                             return { did: sub, tier: 'civic_member', operatorDid: iss };
                         }
                     }
