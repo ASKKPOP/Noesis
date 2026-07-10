@@ -30,15 +30,11 @@ import { appendMarketDisputed } from '../../audit/append-market-disputed.js';
 import { appendIrsTaxCollected } from '../../audit/append-irs-tax-collected.js';
 import { appendTreasuryStructureRevenue } from '../../audit/append-treasury-structure-revenue.js';
 import { MarketplaceStore, MIN_LISTING_PRICE_WEI } from '../../marketplace/marketplace-store.js';
+import { NousAccountStore } from '../../economy/nous-account-store.js';
 import { structureRevenueDue, ZONE_TAX_BPS } from '../../civic/founding-law.js';
 
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 
-/**
- * The Polis treasury DID structure-revenue is skimmed to (D-60-04). Defined locally so the
- * market route never depends on the civic registry module (mirrors parcel-registry's copy).
- */
-const TREASURY_DID = 'did:noesis:system:treasury';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CATEGORY_RE = /^[a-z0-9_-]{1,63}$/i;
 
@@ -418,6 +414,7 @@ export async function registerMarketRoutes(
         // (streaming, collected at settlement, never filed). Fully guarded: when the civic
         // services aren't wired or the shop is unbound, this is a no-op and the legacy
         // settlement behavior is unchanged.
+        const accountStore = new NousAccountStore(pool);
         const shop = services.shops?.getByOwner(settleResult.sellerCivicDid);
         const parcelId = shop?.parcel_id;
         if (parcelId && services.parcels && services.registry) {
@@ -426,20 +423,34 @@ export async function registerMarketRoutes(
                 const saleAmount = Number(settleResult.priceWei);
                 const skim = structureRevenueDue(parcel, saleAmount);
                 if (skim > 0) {
-                    // Route the skim to TREASURY_DID (streaming). transferWei is atomic and
-                    // a no-op on failure (e.g. seller absent from the balance_wei registry), so the
-                    // trade settlement above is never disturbed.
-                    services.registry.transferWei(settleResult.sellerCivicDid, TREASURY_DID, skim);
-                    // ── Phase 60 Wave 4 EMIT POINT (treasury.structure_revenue #98) ─────
-                    // Sole-producer append (allowlist 95→99). actorDid = parcel_id (mirrors
-                    // #83 — NO buyer/seller DID on chain; identity already audited via the
-                    // market.settled trade above). Only the skimmed tax + the per-zone bps.
-                    appendTreasuryStructureRevenue(audit, {
-                        amount_wei: skim,
-                        parcel_id: parcelId,
-                        tick: currentTick,
-                        zone_tax_bps: ZONE_TAX_BPS[parcel.zoneId as keyof typeof ZONE_TAX_BPS],
-                    });
+                    // Skim the per-zone structure tax to civic_treasury (Ledger A, Phase 62.6-01).
+                    // chargeToTreasury debits the seller → credits civic_treasury in its OWN transaction,
+                    // AFTER the settle above already committed. It throws insufficient_balance, so wrap it:
+                    // a skim failure must NEVER 500 the committed settle. The seller was just credited
+                    // sellerPayout on the same account so funds normally exist; a skim > payout edge is
+                    // logged and swallowed.
+                    try {
+                        await accountStore.chargeToTreasury({
+                            gridName: services.gridName,
+                            civicDid: settleResult.sellerCivicDid,
+                            amountWei: BigInt(skim),
+                            currentTick,
+                        });
+                        // ── Phase 60 Wave 4 EMIT POINT (treasury.structure_revenue #98) ─────
+                        // Sole-producer append (allowlist 95→99). actorDid = parcel_id (mirrors
+                        // #83 — NO buyer/seller DID on chain; identity already audited via the
+                        // market.settled trade above). Only the skimmed tax + the per-zone bps.
+                        // Emitted ONLY after a successful charge so an emit always implies money moved (#98).
+                        appendTreasuryStructureRevenue(audit, {
+                            amount_wei: skim,
+                            parcel_id: parcelId,
+                            tick: currentTick,
+                            zone_tax_bps: ZONE_TAX_BPS[parcel.zoneId as keyof typeof ZONE_TAX_BPS],
+                        });
+                    } catch (e) {
+                        // Skim failure must never 500 the committed settle. Log and swallow.
+                        req.log?.warn?.({ err: e instanceof Error ? e.message : String(e), parcel_id: parcelId }, 'skim_charge_failed');
+                    }
                 }
             }
         }
