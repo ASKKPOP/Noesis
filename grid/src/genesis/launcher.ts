@@ -424,28 +424,13 @@ export class GenesisLauncher {
             this.logos.addLaw(law);
         }
 
-        // Seed the system treasury account. Historically every treasury-collecting
-        // transfer (parcel purchase, community/business/type-B fees, blueprint material
-        // cost) rode registry.transferWei(x, TREASURY_DID, …); those paths now settle on
-        // the civic-keyed civic_treasury (Ledger A) and transferWei was retired in
-        // Phase 62.5-04. This registry record persists only as inert infrastructure
-        // (balance 0), never placed spatially; it is snapshot-persisted like any record
-        // and idempotent so re-init/restart never dups. Excluded from public rosters by
-        // the did:noesis:system:* prefix. (Record retirement itself is Phase 62.5-05.)
-        const SYSTEM_TREASURY_DID = 'did:noesis:system:treasury';
-        if (!this.registry.get(SYSTEM_TREASURY_DID)) {
-            this.registry.spawn(
-                {
-                    name: 'System Treasury',
-                    did: SYSTEM_TREASURY_DID,
-                    publicKey: 'system',
-                    region: this.config.regions[0]?.id ?? 'agora',
-                },
-                this.gridDomain,
-                this.clock.currentTick,
-                0,
-            );
-        }
+        // NO system-treasury registry record is seeded. Historically a
+        // `did:noesis:system:treasury` NousRecord was spawned as the recipient of every
+        // treasury-collecting `registry.transferWei(…)`. That verb was retired in
+        // Phase 62.5-04 (money now settles on the civic-keyed `civic_treasury`, Ledger A),
+        // so the record became inert and is RETIRED in Phase 62.5-05 (migration v75 deletes
+        // any existing row). The `TREASURY_DID` string still labels reclaimed-parcel
+        // ownership (upkeep-scanner), which needs no registry record.
 
         if (!opts.skipSeedNous) {
             // 4. Spawn seed Nous

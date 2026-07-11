@@ -20,9 +20,8 @@ describe('Phase 62.5-04: Migration v74 — retire Ledger B faucet money', () => 
         expect(m!.down).not.toMatch(/UPDATE|ALTER|INSERT|DELETE/i);
     });
 
-    it('v74 is the latest migration and versions remain sequential', () => {
+    it('migration versions remain sequential (no gaps / dupes)', () => {
         const sorted = [...MIGRATIONS].sort((a, b) => a.version - b.version);
-        expect(sorted[sorted.length - 1].version).toBe(74);
         sorted.forEach((m, i) => expect(m.version).toBe(i + 1));
     });
 });

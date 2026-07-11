@@ -10,11 +10,13 @@ import type { SpatialMap } from '../space/map.js';
 const LIFECYCLE_ORDER: LifecyclePhase[] = ['spawning', 'infant', 'adolescent', 'maturity', 'elder'];
 
 /**
- * Infrastructure accounts (e.g. the system treasury `did:noesis:system:treasury`)
- * live in the registry so `get` can resolve them, but they are NOT citizens: they
- * must be excluded from every Nous-facing census (`count`, `active()`) so they never
- * inflate governance quorum, dues membership, or the public roster. `all()`/`get()`
- * stay inclusive for persistence.
+ * Infrastructure accounts — any `did:noesis:system:*` — are NOT citizens: they must be
+ * excluded from every Nous-facing census (`count`, `active()`) so they never inflate
+ * governance quorum, dues membership, or the public roster. `all()`/`get()` stay
+ * inclusive for persistence. This is a general infra-DID hygiene filter: it is kept as a
+ * defensive net for ANY current or future `system:*` account (and any such row left in an
+ * existing snapshot), independent of the system-treasury record — which was retired in
+ * Phase 62.5-05 (no longer seeded; migration v75 deletes any leftover row).
  *
  * Note: money no longer moves through the registry. Ledger B (`nous_registry.balance_wei`
  * + `transferWei`) was retired in Phase 62.5-04 — all money lives on the civic-keyed
