@@ -69,6 +69,12 @@ export async function checkSettlementTimeouts(
     for (const e of expired) {
         try {
             // Auto-dispute on buyer's behalf (buyer is the at-risk party — they paid into escrow).
+            // WR-03 STRANDED-WEI INVARIANT: this only freezes the escrow (escrow_status via dispute)
+            // and opens a Police investigation — it does NOT refund the buyer. The buyer's wei stays
+            // debited-into-escrow (conserved, never minted/burned) until the Phase 47 Police pipeline
+            // adjudicates a settle-or-refund. `escrow_status='refunded'` + buyer credit-back is
+            // intentionally UNIMPLEMENTED here (see marketplace-store.acceptBid debit site) — a blind
+            // timeout refund could wrongly reverse a delivered trade. DO NOT auto-refund before Phase 47.
             const { disputeId } = await store.dispute({
                 gridName,
                 listingId: e.listingId,

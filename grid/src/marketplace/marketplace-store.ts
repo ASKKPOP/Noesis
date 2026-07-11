@@ -230,6 +230,17 @@ export class MarketplaceStore {
             // UPDATE + throws 'insufficient_balance' when the account cannot cover; an unfunded civic-DID
             // has a 0-balance/absent row → insufficient_balance → insufficient_wei. buyer_not_found is now
             // unreachable, mirroring the 62.5-02 buyer_not_found→402 retirement.
+            //
+            // WR-03 STRANDED-WEI INVARIANT (deferred to Phase 47 Police dispute pipeline):
+            // this debit moves the buyer's wei INTO escrow at accept. The only terminal writers today
+            // are `settle` (credits seller + treasury = amount, conserved) and `dispute`/settlement-timeout
+            // (set escrow_status='frozen'). `escrow_status='refunded'` + the buyer credit-back is DEFINED
+            // in the type/enum but INTENTIONALLY UNIMPLEMENTED — auto-refunding a buyer on dispute/timeout
+            // is a Phase 47 (Police) POLICY decision, and a blind auto-refund could wrongly reverse a
+            // trade the seller already delivered. So a disputed/frozen escrow leaves this debited wei
+            // stranded (never minted/burned — conservation holds) UNTIL Phase 47 lands the adjudicated
+            // refund/settle writer. No code path debits without an eventual settle/refund once Phase 47
+            // exists. DO NOT add an unconditional refund here.
             try {
                 await debitAccountOnConn(conn, {
                     gridName: params.gridName,
