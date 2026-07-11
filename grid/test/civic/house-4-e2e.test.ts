@@ -164,13 +164,28 @@ function buildGenesisApp(): E2EApp {
 const POST = (app: FastifyInstance, url: string, payload?: unknown) =>
     app.inject({ method: 'POST', url, payload: payload as Record<string, unknown> });
 
+/**
+ * In-memory wei move for this suite's Ledger-B balance assertions. transferWei was
+ * retired from NousRegistry in Phase 62.5-04; this local helper reproduces its exact
+ * debit-from → credit-to semantics on the in-memory records so the direct-executor
+ * material charge keeps moving the same balances the assertions check.
+ */
+function moveWei(registry: NousRegistry, from: string, to: string, amount: number): { success: boolean } {
+    const f = registry.get(from);
+    const t = registry.get(to);
+    if (!f || !t || f.balance_wei < amount) return { success: false };
+    f.balance_wei -= amount;
+    t.balance_wei += amount;
+    return { success: true };
+}
+
 /** The exact production composition the build-from-blueprint route runs (R6 — no source rewrite). */
 function runBuild(env: E2EApp, addr: string, builderDid: string): ReturnType<typeof buildFromBlueprint> {
     return buildFromBlueprint(addr, builderDid, BLUEPRINT_HASH, TICK, {
         registry: env.parcelRegistry,
         // The direct-executor path keeps the material charge on the (unmigrated) NousRegistry so
         // this suite's Ledger-B balance assertions stay valid; the HTTP route uses nous_accounts.
-        chargeMaterial: async (from, amount) => ({ success: env.nousRegistry.transferWei(from, TREASURY_DID, amount).success }),
+        chargeMaterial: async (from, amount) => ({ success: moveWei(env.nousRegistry, from, TREASURY_DID, amount).success }),
         audit: env.audit,
         coBuildStaffOf,
         emitBlueprintExecuted: (payload) => { appendSkillBlueprintExecuted(env.audit, payload); },
@@ -373,7 +388,7 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
         //        directly (the executor's human guard) AND through the real HTTP route (403). ──
         await expect(buildFromBlueprint(PARCEL, HUMAN, BLUEPRINT_HASH, TICK, {
             registry: parcelRegistry,
-            chargeMaterial: async (from, amount) => ({ success: nousRegistry.transferWei(from, TREASURY_DID, amount).success }),
+            chargeMaterial: async (from, amount) => ({ success: moveWei(nousRegistry, from, TREASURY_DID, amount).success }),
             audit,
             coBuildStaffOf,
             emitBlueprintExecuted: () => {},
