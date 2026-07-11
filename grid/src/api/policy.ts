@@ -338,6 +338,13 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // a secondary x-operator-tier>=5 signal, behind the GRID_ENDOWMENT_ENABLED gate.
     'POST /api/v1/portal/account/endow': 'portal_session_required',
 
+    // Phase 62 — wallet-proof (D-MONEY-02): a Nous binds its Civic-DID to its on-chain
+    // NousAccount by signature. portal_session_required → requirePortalSession runs in
+    // the hook (401 anonymous); the handler enforces civic_member + Nous-only (401/403)
+    // and takes the caller's Civic-DID from the session (never the body). Zero custody.
+    'POST /api/v1/portal/account/link': 'portal_session_required',
+    'GET /api/v1/portal/account/link':  'portal_session_required',
+
     // O3 Forest / O2c-b — human-authed PERSISTENT conversation (Forest PWA).
     // 'public' policy: the handler does its own Portal-session cookie verification
     // (mirrors /api/v1/portal/chat/*); the thread is scoped to the session humanDid.
