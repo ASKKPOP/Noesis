@@ -230,6 +230,17 @@ export class MarketplaceStore {
             // UPDATE + throws 'insufficient_balance' when the account cannot cover; an unfunded civic-DID
             // has a 0-balance/absent row → insufficient_balance → insufficient_wei. buyer_not_found is now
             // unreachable, mirroring the 62.5-02 buyer_not_found→402 retirement.
+            //
+            // WR-03 STRANDED-WEI INVARIANT (deferred to Phase 47 Police dispute pipeline):
+            // this debit moves the buyer's wei INTO escrow at accept. The only terminal writers today
+            // are `settle` (credits seller + treasury = amount, conserved) and `dispute`/settlement-timeout
+            // (set escrow_status='frozen'). `escrow_status='refunded'` + the buyer credit-back is DEFINED
+            // in the type/enum but INTENTIONALLY UNIMPLEMENTED — auto-refunding a buyer on dispute/timeout
+            // is a Phase 47 (Police) POLICY decision, and a blind auto-refund could wrongly reverse a
+            // trade the seller already delivered. So a disputed/frozen escrow leaves this debited wei
+            // stranded (never minted/burned — conservation holds) UNTIL Phase 47 lands the adjudicated
+            // refund/settle writer. No code path debits without an eventual settle/refund once Phase 47
+            // exists. DO NOT add an unconditional refund here.
             try {
                 await debitAccountOnConn(conn, {
                     gridName: params.gridName,
@@ -352,8 +363,13 @@ export class MarketplaceStore {
                 await conn.rollback(); throw new Error('not_both_confirmed');
             }
             // Step 3: Compute fee (outside tx per Pitfall 1 — fee rate passed in as param)
+            // WR-04: keep the fee split in integer/BigInt space. Coercing amountWei→Number
+            // loses precision above ~2^53 (well within true wei magnitudes: 1 ETH = 1e18 wei).
+            // Convert the rate to basis points once, then multiply/divide in BigInt so
+            // sellerPayout = amountWei - irsFee stays exact at any magnitude.
             const amountWei = BigInt(escrow.amount_wei);
-            const irsFee = BigInt(Math.floor(Number(amountWei) * params.irsFeeRate));
+            const feeBps = BigInt(Math.round(params.irsFeeRate * 10000));
+            const irsFee = (amountWei * feeBps) / 10000n;
             const sellerPayout = amountWei - irsFee;
             // Step 4: Credit seller on nous_accounts (Ledger A), on the store's OWN settle connection so
             // it stays inside this beginTransaction (O4/D-12). creditAccountOnConn upserts the account row.

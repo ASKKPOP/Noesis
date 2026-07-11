@@ -319,6 +319,25 @@ describe('marketplace store — settle (nous_accounts credit + civic_treasury co
         expect(result.sellerBusinessDid).toBe('did:biz:1');
         expect(result.priceWei).toBe(200n);
     });
+
+    it('WR-04: keeps full precision at true-wei magnitude (>1e18) — BigInt bps, no Number coercion', async () => {
+        // 3 ETH in wei — far above 2^53, where Number(amountWei) would round and skew the split.
+        const amountWei = 3_000_000_000_000_000_000n; // 3e18
+        const ap = settlePool(amountWei.toString());
+        ap.seedAccount('did:seller:1', 0n);
+        ap.seedTreasury(0n);
+        const store = new MarketplaceStore(ap.pool);
+
+        const result = await store.settle({ gridName: 'genesis', listingId: 'lst-1', irsFeeRate: 0.02, currentTick: 10 });
+
+        // Fee must equal the exact basis-point cut: FLOOR(amount * 200bps / 10000).
+        const expectedFee = (amountWei * 200n) / 10000n; // 60_000_000_000_000_000n (0.06 ETH)
+        expect(result.irsFee).toBe(expectedFee);
+        expect(result.sellerPayout).toBe(amountWei - expectedFee);
+        // Conservation is EXACT at this magnitude: seller + treasury == the full price, to the wei.
+        expect(result.sellerPayout + result.irsFee).toBe(amountWei);
+        expect(ap.balanceOf('did:seller:1') + ap.treasuryOf()).toBe(amountWei);
+    });
 });
 
 // ── dispute (MKT-04) ─────────────────────────────────────────────────────────

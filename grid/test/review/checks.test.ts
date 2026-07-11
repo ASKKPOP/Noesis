@@ -57,15 +57,28 @@ describe('registry: 5-check registration via side-effect imports', () => {
 
     it('balance handler: fails on proposerBalance < amount', () => {
         const handler = CHECKS.get('insufficient_balance')!;
-        expect(handler({ proposerDid: 'did:noesis:a', proposerBalance: 5, counterparty: 'did:noesis:b', amount: 10, memoryRefs: ['mem:1'], telosHash: 'a'.repeat(64) }))
+        expect(handler({ proposerDid: 'did:noesis:a', proposerBalance: 5n, counterparty: 'did:noesis:b', amount: 10, memoryRefs: ['mem:1'], telosHash: 'a'.repeat(64) }))
             .toEqual({ ok: false, code: 'insufficient_balance' });
-        expect(handler({ proposerDid: 'did:noesis:a', proposerBalance: 10, counterparty: 'did:noesis:b', amount: 10, memoryRefs: ['mem:1'], telosHash: 'a'.repeat(64) }))
+        expect(handler({ proposerDid: 'did:noesis:a', proposerBalance: 10n, counterparty: 'did:noesis:b', amount: 10, memoryRefs: ['mem:1'], telosHash: 'a'.repeat(64) }))
             .toEqual({ ok: true });
+    });
+
+    it('WR-05: balance handler compares in exact BigInt space (no Number coercion)', () => {
+        const handler = CHECKS.get('insufficient_balance')!;
+        const base = { proposerDid: 'did:noesis:a', counterparty: 'did:noesis:b', memoryRefs: ['mem:1'], telosHash: 'a'.repeat(64) };
+        // amount at the 2^53 boundary (the largest integer still exactly representable as a Number).
+        const amount = 9007199254740992; // 2^53
+        // Balance exactly covers → ok; one wei short → fail. This exactness at the boundary is
+        // only reachable because proposerBalance is a bigint — a coerced Number would round.
+        expect(handler({ ...base, proposerBalance: 9007199254740992n, amount })).toEqual({ ok: true });
+        expect(handler({ ...base, proposerBalance: 9007199254740991n, amount })).toEqual({ ok: false, code: 'insufficient_balance' });
+        // True-wei magnitude (1 ETH = 1e18 wei) is held exactly, far beyond Number's safe range.
+        expect(handler({ ...base, proposerBalance: 10n ** 18n, amount: 5 })).toEqual({ ok: true });
     });
 
     it('amount handler: fails on 0, negative, non-integer', () => {
         const h = CHECKS.get('non_positive_amount')!;
-        const base = { proposerDid: 'did:noesis:a', proposerBalance: 1000, counterparty: 'did:noesis:b', memoryRefs: ['mem:1'], telosHash: 'a'.repeat(64) };
+        const base = { proposerDid: 'did:noesis:a', proposerBalance: 1000n, counterparty: 'did:noesis:b', memoryRefs: ['mem:1'], telosHash: 'a'.repeat(64) };
         expect(h({ ...base, amount: 0 })).toEqual({ ok: false, code: 'non_positive_amount' });
         expect(h({ ...base, amount: -1 })).toEqual({ ok: false, code: 'non_positive_amount' });
         expect(h({ ...base, amount: 1.5 })).toEqual({ ok: false, code: 'non_positive_amount' });
@@ -74,7 +87,7 @@ describe('registry: 5-check registration via side-effect imports', () => {
 
     it('counterparty-did handler: fails on malformed DID, dot in grid segment, and self-transfer', () => {
         const h = CHECKS.get('invalid_counterparty_did')!;
-        const base = { proposerDid: 'did:noesis:alpha', proposerBalance: 10, amount: 1, memoryRefs: ['mem:1'], telosHash: 'a'.repeat(64) };
+        const base = { proposerDid: 'did:noesis:alpha', proposerBalance: 10n, amount: 1, memoryRefs: ['mem:1'], telosHash: 'a'.repeat(64) };
         expect(h({ ...base, counterparty: 'alpha' })).toEqual({ ok: false, code: 'invalid_counterparty_did' });
         expect(h({ ...base, counterparty: 'did:noesis:reviewer.gridX' })).toEqual({ ok: false, code: 'invalid_counterparty_did' });
         expect(h({ ...base, counterparty: 'did:noesis:alpha' })).toEqual({ ok: false, code: 'invalid_counterparty_did' }); // self
@@ -83,7 +96,7 @@ describe('registry: 5-check registration via side-effect imports', () => {
 
     it('memory-refs handler: fails on empty, non-string, or bad format', () => {
         const h = CHECKS.get('malformed_memory_refs')!;
-        const base = { proposerDid: 'did:noesis:a', proposerBalance: 10, counterparty: 'did:noesis:b', amount: 1, telosHash: 'a'.repeat(64) };
+        const base = { proposerDid: 'did:noesis:a', proposerBalance: 10n, counterparty: 'did:noesis:b', amount: 1, telosHash: 'a'.repeat(64) };
         expect(h({ ...base, memoryRefs: [] })).toEqual({ ok: false, code: 'malformed_memory_refs' });
         expect(h({ ...base, memoryRefs: ['mem:abc'] })).toEqual({ ok: false, code: 'malformed_memory_refs' });
         expect(h({ ...base, memoryRefs: ['1'] })).toEqual({ ok: false, code: 'malformed_memory_refs' });
@@ -92,7 +105,7 @@ describe('registry: 5-check registration via side-effect imports', () => {
 
     it('telos-hash handler: fails on non-64-hex, passes on 64 lowercase hex', () => {
         const h = CHECKS.get('malformed_telos_hash')!;
-        const base = { proposerDid: 'did:noesis:a', proposerBalance: 10, counterparty: 'did:noesis:b', amount: 1, memoryRefs: ['mem:1'] };
+        const base = { proposerDid: 'did:noesis:a', proposerBalance: 10n, counterparty: 'did:noesis:b', amount: 1, memoryRefs: ['mem:1'] };
         expect(h({ ...base, telosHash: 'abc' })).toEqual({ ok: false, code: 'malformed_telos_hash' });
         expect(h({ ...base, telosHash: 'A'.repeat(64) })).toEqual({ ok: false, code: 'malformed_telos_hash' }); // upper case disallowed
         expect(h({ ...base, telosHash: 'a'.repeat(64) })).toEqual({ ok: true });

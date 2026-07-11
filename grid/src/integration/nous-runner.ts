@@ -442,12 +442,15 @@ export class NousRunner {
                         // so the review gate and the money move agree. executeActions is async,
                         // so awaiting the balance read here is fine — review() itself stays sync
                         // (determinism, D-02). A pre-citizen proposer (null resolution) reads 0.
-                        let proposerBalance = 0;
+                        // WR-05: keep the balance a bigint end-to-end. Coercing the wei balance to
+                        // Number here rounded any value above ~2^53, so the advisory gate could
+                        // disagree with the authoritative BigInt settle near that magnitude.
+                        let proposerBalance = 0n;
                         if (this.civicDidStore && this.accountStore && this.gridName) {
                             const proposerCivic = await this.civicDidStore.getByExistenceDid(this.gridName, this.nousDid);
                             proposerBalance = proposerCivic
-                                ? Number(await this.accountStore.getBalance(this.gridName, proposerCivic.civicDid))
-                                : 0;
+                                ? await this.accountStore.getBalance(this.gridName, proposerCivic.civicDid)
+                                : 0n;
                         }
                         const verdict = this.reviewer.review({
                             proposerDid: this.nousDid,

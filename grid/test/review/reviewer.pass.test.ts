@@ -14,7 +14,7 @@ describe('REV-01: Reviewer.review() happy path — all 5 checks pass', () => {
 
     const ctx: ReviewContext = {
         proposerDid: 'did:noesis:alpha',
-        proposerBalance: 100,
+        proposerBalance: 100n,
         counterparty: 'did:noesis:beta',
         amount: 42,
         memoryRefs: ['mem:1', 'mem:7'],
@@ -28,6 +28,6 @@ describe('REV-01: Reviewer.review() happy path — all 5 checks pass', () => {
     });
 
     it('large balance + minimum valid amount also passes', () => {
-        expect(reviewer.review({ ...ctx, proposerBalance: 1_000_000, amount: 1 })).toEqual({ verdict: 'pass' });
+        expect(reviewer.review({ ...ctx, proposerBalance: 1_000_000n, amount: 1 })).toEqual({ verdict: 'pass' });
     });
 });

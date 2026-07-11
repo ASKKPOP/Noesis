@@ -290,6 +290,50 @@ describe('Phase 62.6-02 — per-parcel isolation (a charge throw does not abort 
             'treasury.upkeep_collected', RICH_PARCEL, expect.objectContaining({ amount_wei: 8 }),
         );
     });
+
+    it('WR-06: an unexpected charge error is LOGGED (warn with parcel_id + message) before the sweep continues', async () => {
+        const { onUpkeepTick } = await loadScanner();
+        const FAIL = 'did:civic:noesis:fail';
+        const RICH = 'did:civic:noesis:rich';
+        const FAIL_PARCEL = 'genesis:residential:0013';
+        const RICH_PARCEL = 'genesis:residential:0014';
+        const accts = makeAccountsPool();
+        accts.seedAccount(RICH, 10_000);
+        const realStore = new NousAccountStore(accts.pool);
+        // A hard SQL fault (exactly the class of defect that hid CR-01) — must NOT be swallowed silently.
+        const accountStore = {
+            chargeToTreasury: vi.fn((p: { civicDid: string }) =>
+                p.civicDid === FAIL
+                    ? Promise.reject(new Error("Column 'balance_wei' specified twice"))
+                    : realStore.chargeToTreasury(p as never),
+            ),
+        };
+        const deps = {
+            registry: {
+                list: () => [parcelOwed8(FAIL_PARCEL, FAIL), parcelOwed8(RICH_PARCEL, RICH)],
+                advanceCondition: vi.fn().mockReturnValue('worn'),
+                resetCondition: vi.fn(),
+                persistUpkeep: vi.fn(),
+            },
+            audit: { append: vi.fn() },
+            treasuryDid: TREASURY_DID,
+            gridName: GRID,
+            accountStore,
+        };
+        // Capture console.warn directly (vitest's own console interception makes vi.spyOn unreliable here).
+        const logged: string[] = [];
+        const realWarn = console.warn;
+        console.warn = (...args: unknown[]) => { logged.push(String(args[0])); };
+        try {
+            await onUpkeepTick(10080, deps as never);
+        } finally {
+            console.warn = realWarn;
+        }
+        // The hard fault surfaced: one warn carrying BOTH the parcel id and the underlying message.
+        expect(logged.some((line) => line.includes(FAIL_PARCEL) && /balance_wei.*specified twice/.test(line))).toBe(true);
+        // And the sweep still continued past the failure — RICH collected.
+        expect(accts.balanceOf(RICH)).toBe(10_000n - 8n);
+    });
 });
 
 describe('Phase 59 HOUSE-2 — single-onTick invariant (R-H-03)', () => {
