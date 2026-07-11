@@ -1778,4 +1778,22 @@ export const MIGRATIONS: Migration[] = [
             ALTER TABLE marketplace_listings    RENAME COLUMN price_wei TO price_bios;
         `,
     },
+    {
+        // Phase 62.5-04 — retire Ledger B as money. The legacy existence-keyed
+        // `nous_registry.balance_wei` was the birth-faucet ledger (`initialSupply`,
+        // retired in 62.5-02). By this point Phase 62.6 has moved EVERY legitimate
+        // balance onto the civic-keyed Ledger A (`nous_accounts` + `civic_treasury`),
+        // so whatever remains in `nous_registry.balance_wei` is retired faucet money
+        // with no legitimate claimant. Operator decision (2026-07-10): ZERO it — do
+        // NOT fold it into `nous_accounts` (D-MONEY-01: the faucet was illegitimate
+        // mint). The column is KEPT (history/persistence of the inert NousRecord
+        // field), it is simply no longer money.
+        version: 74,
+        name: 'retire_ledger_b_faucet_money',
+        up: `UPDATE nous_registry SET balance_wei = 0`,
+        // Irreversible: the pre-zeroing faucet balances are NOT recoverable (they were
+        // never fungible with Ledger A and are retired as illegitimate). `down` is a
+        // documented no-op so the migration remains reversible in shape only.
+        down: `SELECT 1 /* no-op: Ledger-B faucet balances are not recoverable */`,
+    },
 ];
