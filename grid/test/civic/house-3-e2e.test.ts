@@ -398,7 +398,7 @@ async function postUnfundedCowork(
 /**
  * Drive the structure-revenue zone-tax skim through the SAME production composition the
  * Phase 44 market confirm-settlement route runs (market.ts): find the seller's bound shop,
- * compute structureRevenueDue, route the skim to the treasury via registry.transferWei,
+ * compute structureRevenueDue, move the skim to the treasury on the in-memory NousRegistry,
  * and append treasury.structure_revenue via the sole producer. Returns the skimmed amount.
  */
 function recordStructureRevenue(env: E2EApp, sellerDid: string, saleAmount: number): number {
@@ -409,7 +409,14 @@ function recordStructureRevenue(env: E2EApp, sellerDid: string, saleAmount: numb
     const parcel = parcelRegistry.get(parcelId)!;
     const skim = structureRevenueDue(parcel, saleAmount);
     if (skim <= 0) return 0;
-    nousRegistry.transferWei(sellerDid, TREASURY_DID, skim);
+    // transferWei was retired from NousRegistry in Phase 62.5-04; move the skim in-memory
+    // (debit seller → credit treasury) to keep this suite's Ledger-B balance assertions valid.
+    const seller = nousRegistry.get(sellerDid);
+    const treasury = nousRegistry.get(TREASURY_DID);
+    if (seller && treasury && seller.balance_wei >= skim) {
+        seller.balance_wei -= skim;
+        treasury.balance_wei += skim;
+    }
     appendTreasuryStructureRevenue(audit, {
         amount_wei: skim,
         parcel_id: parcelId,

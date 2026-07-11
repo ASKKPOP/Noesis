@@ -11,8 +11,8 @@
  *       (IOU_GLOBAL_CAP_BIOS) — both live ONLY in founding-law.ts. Over-cap → throw.
  *
  * Recording an IOU emits NOTHING on chain — it is private bilateral bookkeeping. Only a
- * settlement that MOVES Ousia rides the existing registry.transferWei path; a pure
- * bookkeeping net (counter-IOU offset) moves no Ousia and emits nothing.
+ * settlement that MOVES wei rides the civic-keyed nous_accounts rails; a pure
+ * bookkeeping net (counter-IOU offset) moves no wei and emits nothing.
  *
  * Auto-netting: recording a counter-IOU between the same pair offsets the smaller against
  * the larger immediately (a payable and a counter-payable cancel up to the overlap). The
@@ -162,8 +162,8 @@ function netCounter(entry: IouEntry, tick: number, deps: LedgerDeps): void {
 
 /**
  * Settle a single IOU (the debtor pays). Marks settled_tick so it drops out of
- * outstandingFor. The Ousia move itself rides registry.transferWei at the CALLER
- * (cowork.completeTask / severance SETTLEMENT) — the ledger only flips bookkeeping.
+ * outstandingFor. The wei move itself rides the civic-keyed nous_accounts rails at the
+ * CALLER (cowork.completeTask / severance SETTLEMENT) — the ledger only flips bookkeeping.
  * Idempotent: settling an already-settled or unknown IOU is a no-op.
  */
 export function settleIou(iouId: string, tick: number, deps: LedgerDeps = {}): void {

@@ -11,10 +11,15 @@ const LIFECYCLE_ORDER: LifecyclePhase[] = ['spawning', 'infant', 'adolescent', '
 
 /**
  * Infrastructure accounts (e.g. the system treasury `did:noesis:system:treasury`)
- * live in the registry so `transferWei`/`get` can resolve them, but they are NOT
- * citizens: they must be excluded from every Nous-facing census (`count`,
- * `active()`) so they never inflate governance quorum, dues membership, or the
- * public roster. `all()`/`get()` stay inclusive for persistence + fund transfers.
+ * live in the registry so `get` can resolve them, but they are NOT citizens: they
+ * must be excluded from every Nous-facing census (`count`, `active()`) so they never
+ * inflate governance quorum, dues membership, or the public roster. `all()`/`get()`
+ * stay inclusive for persistence.
+ *
+ * Note: money no longer moves through the registry. Ledger B (`nous_registry.balance_wei`
+ * + `transferWei`) was retired in Phase 62.5-04 — all money lives on the civic-keyed
+ * Ledger A (`nous_accounts` + `civic_treasury`). `NousRecord.balance_wei` persists as an
+ * inert, zeroed history field only.
  */
 const SYSTEM_DID_PREFIX = 'did:noesis:system:';
 const isSystemDid = (did: string): boolean => did.startsWith(SYSTEM_DID_PREFIX);
@@ -118,45 +123,6 @@ export class NousRegistry {
     touch(did: string, tick: number): void {
         const record = this.records.get(did);
         if (record) record.lastActiveTick = tick;
-    }
-
-    /**
-     * Atomically transfer Ousia between two Nous.
-     *
-     * Returns a tagged result. Performs no mutation unless success is true.
-     * The result is atomic: all validation occurs before any balance change,
-     * so a failed transfer leaves both records untouched.
-     *
-     * Failure modes:
-     *   - invalid_amount: amount is not a positive integer
-     *   - self_transfer:  fromDid === toDid
-     *   - not_found:      either DID is absent from the registry
-     *   - insufficient:   sender balance is below the requested amount
-     */
-    transferWei(
-        fromDid: string,
-        toDid: string,
-        amount: number,
-    ):
-        | { success: true; fromBalance: number; toBalance: number }
-        | { success: false; error: 'not_found' | 'insufficient' | 'self_transfer' | 'invalid_amount' } {
-        if (!Number.isInteger(amount) || amount <= 0) {
-            return { success: false, error: 'invalid_amount' };
-        }
-        if (fromDid === toDid) {
-            return { success: false, error: 'self_transfer' };
-        }
-        const from = this.records.get(fromDid);
-        const to = this.records.get(toDid);
-        if (!from || !to) {
-            return { success: false, error: 'not_found' };
-        }
-        if (from.balance_wei < amount) {
-            return { success: false, error: 'insufficient' };
-        }
-        from.balance_wei -= amount;
-        to.balance_wei += amount;
-        return { success: true, fromBalance: from.balance_wei, toBalance: to.balance_wei };
     }
 
     /**

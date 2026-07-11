@@ -44,7 +44,6 @@ function makeRegistry(did = ALICE): NousRegistry {
         active: () => [],
         touch: () => {},
         spawn: () => { throw new Error('not used'); },
-        transferWei: () => ({ success: false, error: 'not_implemented' }),
     } as unknown as NousRegistry;
 }
 

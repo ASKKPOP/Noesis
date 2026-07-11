@@ -1,6 +1,6 @@
 /**
- * Phase 49 Communities v3 (Plan 1) — found + join. The Bios sybil cost is charged by the
- * route (registry.transferWei → treasury) BEFORE found(); this store persists + emits.
+ * Phase 49 Communities v3 (Plan 1) — found + join. The sybil cost is charged by the
+ * route (nous_accounts debit → civic_treasury credit) BEFORE found(); this store persists + emits.
  * Raw DIDs/charter live in the tables; the audit chain carries only hashes.
  */
 import { randomUUID, createHash } from 'node:crypto';

@@ -28,18 +28,9 @@ describe('GenesisLauncher — system treasury seed (BUG-A regression)', () => {
         expect(t?.balance_wei).toBe(0);
     });
 
-    it('a buyer→treasury transfer resolves after genesis (no not_found)', () => {
-        launcher = new GenesisLauncher({ ...TEST_CONFIG, tickRateMs: 10 });
-        launcher.bootstrap();
-        launcher.registry.spawn(
-            { name: 'atomic-buyer', did: 'did:civic:noesis:buyer', publicKey: 'pk', region: TEST_CONFIG.regions[0].id },
-            'genesis.local',
-            0,
-            1000,
-        );
-        const moved = launcher.registry.transferWei('did:civic:noesis:buyer', TREASURY_DID, 400);
-        expect(moved.success).toBe(true);
-    });
+    // NOTE: the buyer→treasury transferWei assertion was removed in Phase 62.5-04 —
+    // transferWei is retired and money now settles on nous_accounts/civic_treasury.
+    // The treasury registry record itself is retired in Phase 62.5-05.
 
     it('the treasury seed is guarded — it is not placed spatially and does not collide on a pre-seeded registry', () => {
         launcher = new GenesisLauncher({ ...TEST_CONFIG, tickRateMs: 10 });

@@ -424,13 +424,14 @@ export class GenesisLauncher {
             this.logos.addLaw(law);
         }
 
-        // Seed the system treasury account. Every treasury-collecting transfer —
-        // parcel purchase, community/business/type-B fees, blueprint material cost —
-        // does registry.transferWei(x, TREASURY_DID, …), and transferWei requires the
-        // recipient to exist. The treasury is infrastructure (balance 0, receives
-        // revenue), never placed spatially; it is snapshot-persisted like any record
-        // and idempotent so re-init/restart never dups. Excluded from public rosters
-        // by the did:noesis:system:* prefix.
+        // Seed the system treasury account. Historically every treasury-collecting
+        // transfer (parcel purchase, community/business/type-B fees, blueprint material
+        // cost) rode registry.transferWei(x, TREASURY_DID, …); those paths now settle on
+        // the civic-keyed civic_treasury (Ledger A) and transferWei was retired in
+        // Phase 62.5-04. This registry record persists only as inert infrastructure
+        // (balance 0), never placed spatially; it is snapshot-persisted like any record
+        // and idempotent so re-init/restart never dups. Excluded from public rosters by
+        // the did:noesis:system:* prefix. (Record retirement itself is Phase 62.5-05.)
         const SYSTEM_TREASURY_DID = 'did:noesis:system:treasury';
         if (!this.registry.get(SYSTEM_TREASURY_DID)) {
             this.registry.spawn(
