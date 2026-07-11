@@ -86,6 +86,7 @@ import { registerCivicMessageRoute } from './routes/civic-message.js';
 import { registerCivicDueRoutes } from './routes/civic-dues.js';
 import { registerCivicEconomyRoutes } from './routes/civic-economy.js';
 import { registerAccountEndowmentRoute } from './routes/account-endowment.js';
+import { registerAccountLinkRoute } from './routes/account-link.js';
 import { registerProcurementRoutes } from './routes/procurement.js';
 import { registerApprovalRoutes } from './routes/approvals.js';
 import { registerConversationRoutes } from './routes/conversation.js';
@@ -790,6 +791,7 @@ export function buildServerWithHub(
     registerCivicDueRoutes(app, services);
     registerCivicEconomyRoutes(app, services);
     registerAccountEndowmentRoute(app, services);
+    registerAccountLinkRoute(app, services);
     registerProcurementRoutes(app, services);
     registerApprovalRoutes(app, services);
     registerConversationRoutes(app, services);

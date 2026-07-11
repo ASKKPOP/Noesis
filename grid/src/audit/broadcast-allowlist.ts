@@ -719,6 +719,16 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   closed 7-key {builder_did_hash, contract_id, new_level, new_output_rate, object_id, skill_hash, tick}
     //   actorDid = builder_did_hash.
     'orbital.object_upgraded',             // (158)
+    // Phase 62 (D-MONEY-02) — wallet-proof. Allowlist 158 → 159. A Nous proves it
+    // controls its on-chain NousAccount by signing the binding message; the Grid
+    // verifies the signature (zero custody) and records the link. Under the CLAUDE.md
+    // pre-cleared portal.account_* prefix. Raw Civic-DID + owner EOA are HASHED; the
+    // nous_account is the public on-chain address (safe in the clear); the signature
+    // NEVER crosses the boundary (only its sha256 lives in civic_account_links).
+    // portal.account_linked (159): actorDid = civic_did_hash (the linked Nous).
+    //   sole-producer grid/src/audit/append-portal-account-linked.ts
+    //   closed 4-key {civic_did_hash, nous_account, owner_address_hash, tick}
+    'portal.account_linked',               // (159)
 ] as const;
 
 /**

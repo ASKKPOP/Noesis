@@ -513,7 +513,7 @@ describe('HOUSE-4 Definition of Done — learn → build → co-build → locati
     });
 
     it('keeps skill.blueprint_executed present (allowlist 123 after …W4 portal.account_endowed + Phase 47 police.*)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(158);
+        expect(ALLOWLIST_MEMBERS.length).toBe(159);
         expect(ALLOWLIST_MEMBERS).toContain('skill.blueprint_executed');
     });
 });
