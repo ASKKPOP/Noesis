@@ -82,9 +82,9 @@ export function registerPortalRoutes(
         getOwnedNous: async (humanDid) => {
             if (!services.humanPool) return null;
             const [rows] = await services.humanPool.query(
-                'SELECT did, name, region, personality_seed, spawned_at_tick, balance_wei FROM nous_registry WHERE human_owner = ? LIMIT 1',
+                'SELECT did, name, region, personality_seed, spawned_at_tick FROM nous_registry WHERE human_owner = ? LIMIT 1',
                 [humanDid],
-            ) as [Array<{ did: string; name: string; region: string; personality_seed: string | null; spawned_at_tick: number; balance_wei: number }>, unknown];
+            ) as [Array<{ did: string; name: string; region: string; personality_seed: string | null; spawned_at_tick: number }>, unknown];
             if (!rows.length) return null;
             const row = rows[0]!;
             return {
