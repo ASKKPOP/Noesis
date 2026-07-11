@@ -1796,4 +1796,16 @@ export const MIGRATIONS: Migration[] = [
         // documented no-op so the migration remains reversible in shape only.
         down: `SELECT 1 /* no-op: Ledger-B faucet balances are not recoverable */`,
     },
+    {
+        // Phase 62.5-05 — retire the inert `did:noesis:system:treasury` NousRecord.
+        // It was seeded (Phase 45 / PR #8) only as the recipient of the now-retired
+        // `registry.transferWei(…)`; money settles on `civic_treasury` (Ledger A) since
+        // 62.6, so the record carries no balance and no function. Genesis no longer seeds
+        // it (launcher.ts); this deletes any row left in existing snapshots. The
+        // `TREASURY_DID` string still labels reclaimed-parcel ownership — that needs no row.
+        version: 75,
+        name: 'retire_system_treasury_record',
+        up: `DELETE FROM nous_registry WHERE did = 'did:noesis:system:treasury'`,
+        down: `SELECT 1 /* no-op: the inert system-treasury record is not restored */`,
+    },
 ];
