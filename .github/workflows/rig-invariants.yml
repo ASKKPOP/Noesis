@@ -66,6 +66,9 @@ jobs:
       - name: MAP-SYNC canonical map ↔ dashboard copy identical (W-C6, space-viz canon)
         run: node scripts/check-map-sync.mjs
 
+      - name: MONEY-62.5-05 Ledger-B retired — no transferWei / nous_registry balance_wei money
+        run: node scripts/check-ledger-b-money.mjs
+
       - name: Fast Vitest rig suite (Wave 0/1/2 — NOESIS_RUN_NIGHTLY unset, rig-bench skips)
         working-directory: grid
         run: |
