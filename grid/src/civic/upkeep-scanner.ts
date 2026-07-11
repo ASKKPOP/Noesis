@@ -140,6 +140,12 @@ export async function onUpkeepTick(tick: number, deps: UpkeepScannerDeps): Promi
                 if (!(e instanceof Error && e.message === 'insufficient_balance')) {
                     // Non-affordability error — preserve per-parcel isolation: skip this
                     // parcel, do NOT abort the sweep, do NOT decay on a transient DB fault.
+                    // WR-06: a hard failure (e.g. a broken charge rail — the exact defect that
+                    // hid CR-01) must be OBSERVABLE, not silently swallowed. Mirror the market
+                    // skim's `skim_charge_failed` log so a real SQL fault surfaces per parcel.
+                    console.warn(
+                        `[upkeep] upkeep_charge_failed parcel_id=${parcel.id}: ${e instanceof Error ? e.message : String(e)}`,
+                    );
                     continue;
                 }
                 // insufficient_balance → fall through to the decay ladder below.
