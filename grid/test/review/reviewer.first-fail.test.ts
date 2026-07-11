@@ -7,7 +7,7 @@ import type { ReviewContext, ReviewFailureCode } from '../../src/review/types.js
 function validCtx(): ReviewContext {
     return {
         proposerDid: 'did:noesis:alpha',
-        proposerBalance: 100,
+        proposerBalance: 100n,
         counterparty: 'did:noesis:beta',
         amount: 10,
         memoryRefs: ['mem:1', 'mem:2'],
@@ -27,7 +27,7 @@ describe('REV-01: Reviewer.review() first-fail-wins', () => {
         // amount=0 (non_positive) AND proposerBalance < amount would require amount > 0; construct so balance fails first.
         // Balance check precedes amount in CHECK_ORDER; with proposerBalance=5, amount=10 => balance fails.
         // ALSO set counterparty invalid so multiple checks would fail if iterated past balance.
-        const result = reviewer.review({ ...validCtx(), proposerBalance: 5, amount: 10, counterparty: 'not-a-did' });
+        const result = reviewer.review({ ...validCtx(), proposerBalance: 5n, amount: 10, counterparty: 'not-a-did' });
         expect(result).toEqual({
             verdict: 'fail',
             failed_check: 'insufficient_balance',
@@ -36,7 +36,7 @@ describe('REV-01: Reviewer.review() first-fail-wins', () => {
     });
 
     const cases: Array<[ReviewFailureCode, Partial<ReviewContext>]> = [
-        ['insufficient_balance',      { proposerBalance: 1, amount: 100 }],
+        ['insufficient_balance',      { proposerBalance: 1n, amount: 100 }],
         ['invalid_counterparty_did',  { counterparty: 'not-a-did' }],
         ['non_positive_amount',       { amount: 0 }],
         ['malformed_memory_refs',     { memoryRefs: [] }],

@@ -20,12 +20,15 @@ export type ReviewFailureCode =
 export type ReviewCheckName = ReviewFailureCode;
 
 /**
- * Per-trade review input. Proposer balance is pre-resolved at emit site (NousRegistry.get(proposerDid).balance_wei ?? 0).
- * memoryRefs + telosHash are brain self-attestation (D-05) — reviewer verifies structural shape only in Phase 5.
+ * Per-trade review input. Proposer balance is pre-resolved at the emit site from the SAME
+ * ledger the settle transfer moves (nous_accounts, resolved civic-DID). It is a wei `bigint`
+ * end-to-end (WR-05) so the advisory gate never loses precision above ~2^53 and cannot disagree
+ * with the authoritative BigInt settle. memoryRefs + telosHash are brain self-attestation (D-05)
+ * — reviewer verifies structural shape only in Phase 5.
  */
 export interface ReviewContext {
     readonly proposerDid: string;
-    readonly proposerBalance: number;
+    readonly proposerBalance: bigint;
     readonly counterparty: string;
     readonly amount: number;
     readonly memoryRefs: readonly string[];
