@@ -2,14 +2,18 @@
  * Operator slash-coin: POST /api/v1/operator/nous/:did/slash.
  *
  * Phase 25b SANCTION-02 — H4 Moderator action (D-25b-NEW-1, D-25b-09).
- * Slashes a Nous by debiting balance_wei (Cyber Coin) from its registry balance.
+ * Slashes a Nous by fining its wei balance to the commons.
  *
- * BALANCE DEBIT STRATEGY:
+ * FINE→TREASURY STRATEGY (Phase 62.5-04):
  *   The slash always completes, even if the amount exceeds the current balance.
- *   Insufficient balance → balance clamped to 0 (floor). No 409 is returned.
  *   Rationale: slash is punitive; blocking on insufficient funds would allow
- *   a Nous to evade sanctions by pre-spending its wallet. Debit is applied
- *   directly to NousRecord.balance_wei (the canonical in-memory balance).
+ *   a Nous to evade sanctions by pre-spending its wallet. Ledger B (the legacy
+ *   nous_registry.balance_wei) was retired, so the punitive debit now targets the
+ *   target's real civic-keyed account (nous_accounts, Ledger A) and CREDITS
+ *   civic_treasury — a fine to the commons. Money moves, never vanishes: this
+ *   preserves the no-mint/no-burn conservation invariant. The clamp is intact —
+ *   fine = min(amount, balance), so a slash beyond the balance takes only what is
+ *   there (no 409). A target with no civic-DID / no account has no money to fine.
  *
  * AUTH MODEL (born header-auth per D-25b-NEW-1):
  *   tier and operator_id are derived from server-trusted request headers
@@ -43,6 +47,8 @@ import { DID_REGEX } from '../server.js';
 import type { ApiError } from '../types.js';
 import { tombstoneCheck, TombstonedDidError } from '../../registry/tombstone-check.js';
 import { appendOperatorSlashed } from '../../audit/append-operator-slashed.js';
+import { CivicDidStore } from '../../civic-registry/civic-did-store.js';
+import { NousAccountStore } from '../../economy/nous-account-store.js';
 import { createHash } from 'node:crypto';
 
 interface SlashBody {
@@ -124,17 +130,40 @@ export function registerSlashCoinRoute(app: FastifyInstance, services: GridServi
                 });
             }
 
-            // 8. Apply sanction — debit balance_wei from NousRecord. Clamped to 0 (never negative).
-            //    See file-level comment for rationale on clamp-to-zero vs 409.
-            //    WR-01 fix: re-check record presence before emitting to avoid a false
-            //    audit event if the Nous was tombstoned between step 3 and here.
+            // 8a. WR-01 fix: re-check record presence before emitting to avoid a false
+            //     audit event if the Nous was tombstoned between step 3 and here.
             if (services.registry) {
                 const record = services.registry.get(targetDid);
                 if (!record || (record as unknown as { status?: string }).status === 'deleted') {
                     reply.code(410);
                     return { error: 'gone' } satisfies ApiError;
                 }
-                record.balance_wei = Math.max(0, record.balance_wei - amount);
+            }
+
+            // 8b. Apply the sanction as a FINE to the commons (Phase 62.5-04). Ledger B
+            //     (nous_registry.balance_wei) was retired, so the punitive debit now targets
+            //     the target's real civic-keyed account (nous_accounts, Ledger A) and CREDITS
+            //     civic_treasury — money moves, never vanishes (preserves the no-mint/no-burn
+            //     conservation invariant). Punitive clamp is intact: fine = min(amount, balance),
+            //     so a slash beyond the balance takes only what is there (never negative, no 409).
+            //     Resolve the target existence-DID → civic-DID; if it has no civic-DID / no
+            //     account (or no DB pool in tests), no money moves — the sanction still emits.
+            if (services.pool) {
+                const civic = await new CivicDidStore(services.pool).getByExistenceDid(services.gridName, targetDid);
+                if (civic) {
+                    const accounts = new NousAccountStore(services.pool);
+                    const balance = await accounts.getBalance(services.gridName, civic.civicDid);
+                    const requested = BigInt(amount);
+                    const fine = requested < balance ? requested : balance;
+                    if (fine > 0n) {
+                        await accounts.chargeToTreasury({
+                            gridName: services.gridName,
+                            civicDid: civic.civicDid,
+                            amountWei: fine,
+                            currentTick: services.clock.state.tick,
+                        });
+                    }
+                }
             }
 
             // 9. Emit operator.slashed — ONLY on success path (sole-producer invariant, Pitfall 4).

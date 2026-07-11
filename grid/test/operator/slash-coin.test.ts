@@ -34,12 +34,15 @@ import { SpatialMap } from '../../src/space/map.js';
 import { LogosEngine } from '../../src/logos/engine.js';
 import { registerSlashCoinRoute } from '../../src/api/operator/slash-coin.js';
 import { withOperatorContext, TEST_OPERATOR_ID } from '../helpers/operator-session.js';
+import { makeAccountsPool, type AccountsPool } from '../helpers/accounts-pool.js';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../src/api/server.js';
 import { createHash } from 'node:crypto';
 
 const OPERATOR = TEST_OPERATOR_ID;
 const TARGET_DID = 'did:noesis:alpha';
+const TARGET_CIVIC_DID = 'did:civic:noesis:alpha';
+const GRID = 'test-grid';
 
 function sha256(text: string): string {
     return createHash('sha256').update(text).digest('hex');
@@ -58,6 +61,33 @@ function makeRunner(): { connected: boolean } {
     return { connected: true };
 }
 
+/**
+ * A fake wei-rails pool (nous_accounts + civic_treasury) whose civic_did_registry
+ * lookup maps the target's existence-DID → its civic-DID, seeded with a starting
+ * balance. Lets the fine→treasury slash path (62.5-04) assert conservation on Ledger A.
+ */
+function makeSlashPool(balanceWei: bigint | number): AccountsPool {
+    const accounts = makeAccountsPool({
+        otherQuery: (sql) => {
+            if (/FROM civic_did_registry/i.test(sql)) {
+                return [[{
+                    grid_name: GRID,
+                    civic_did: TARGET_CIVIC_DID,
+                    existence_did: TARGET_DID,
+                    credential_json: '{}',
+                    status: 'active',
+                    issued_at_tick: 0,
+                    revoked_at_tick: null,
+                    court_conviction_ref: null,
+                }], {}];
+            }
+            return [[], {}];
+        },
+    });
+    accounts.seedAccount(TARGET_CIVIC_DID, balanceWei, GRID);
+    return accounts;
+}
+
 function buildTestApp(opts: {
     spawnAlpha?: boolean;
     initialWei?: number;
@@ -65,6 +95,7 @@ function buildTestApp(opts: {
     tombstoned?: boolean;
     sanctionReasonStore?: GridServices['sanctionReasonStore'];
     operatorTier?: number;
+    pool?: AccountsPool['pool'];
 }): {
     app: FastifyInstance;
     audit: AuditChain;
@@ -97,9 +128,10 @@ function buildTestApp(opts: {
         space: new SpatialMap(),
         logos: new LogosEngine(),
         audit,
-        gridName: 'test-grid',
+        gridName: GRID,
         registry,
         sanctionReasonStore,
+        pool: opts.pool,
         getRunner: runner ? vi.fn().mockReturnValue(runner) : vi.fn().mockReturnValue(undefined),
     };
 
@@ -272,24 +304,26 @@ describe('POST /api/v1/operator/nous/:did/slash — success path', () => {
         expect(res.json().ok).toBe(true);
     });
 
-    it('debits Nous balance_wei balance by the slash amount', async () => {
-        let registry: NousRegistry;
-        ({ app, registry } = buildTestApp({ initialWei: 100 }));
+    it('fines nous_accounts and credits civic_treasury by the slash amount (Ledger A)', async () => {
+        const accounts = makeSlashPool(100);
+        ({ app } = buildTestApp({ pool: accounts.pool }));
         await app.ready();
 
-        await app.inject({
+        const res = await app.inject({
             method: 'POST',
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
             payload: { amount: 30, reason: 'fraud detected' },
         });
 
-        const record = registry.get(TARGET_DID);
-        expect(record?.balance_wei).toBe(70);
+        expect(res.statusCode).toBe(200);
+        // Fine to the commons: account debited, civic_treasury credited (conservation).
+        expect(accounts.balanceOf(TARGET_CIVIC_DID, GRID)).toBe(70n);
+        expect(accounts.treasuryOf(GRID)).toBe(30n);
     });
 
-    it('clamps balance to 0 when slash amount exceeds current balance', async () => {
-        let registry: NousRegistry;
-        ({ app, registry } = buildTestApp({ initialWei: 10 }));
+    it('clamps the fine to the balance when the slash exceeds it (fine = min(amount, balance))', async () => {
+        const accounts = makeSlashPool(10);
+        ({ app } = buildTestApp({ pool: accounts.pool }));
         await app.ready();
 
         const res = await app.inject({
@@ -297,10 +331,25 @@ describe('POST /api/v1/operator/nous/:did/slash — success path', () => {
             url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
             payload: { amount: 50, reason: 'fraud detected' },
         });
-        // Slash always completes — debit to 0 (punitive, no 409)
+        // Slash always completes — fine only what is there (punitive clamp, no 409).
         expect(res.statusCode).toBe(200);
-        const record = registry.get(TARGET_DID);
-        expect(record?.balance_wei).toBe(0);
+        expect(accounts.balanceOf(TARGET_CIVIC_DID, GRID)).toBe(0n);
+        expect(accounts.treasuryOf(GRID)).toBe(10n);
+    });
+
+    it('emits operator.slashed exactly once on the funded fine path', async () => {
+        const accounts = makeSlashPool(100);
+        let audit: AuditChain;
+        ({ app, audit } = buildTestApp({ pool: accounts.pool }));
+        await app.ready();
+
+        await app.inject({
+            method: 'POST',
+            url: `/api/v1/operator/nous/${TARGET_DID}/slash`,
+            payload: { amount: 25, reason: 'market manipulation' },
+        });
+
+        expect(audit.query({ eventType: 'operator.slashed' })).toHaveLength(1);
     });
 
     it('emits operator.slashed with correct H4 payload including amount', async () => {
