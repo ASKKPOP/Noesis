@@ -60,7 +60,7 @@ sequenceDiagram
 
 | Tier | Who | Surface |
 |------|-----|---------|
-| 1 · Local Nous Manager | operator | Brain config, Local AI settings, memory inspector, fork — on the operator's machine |
+| 1 · Local Nous Manager | operator | Brain config, Local AI settings, memory inspector, fork — on the operator's machine. Desktop app: `apps/local-nous-manager/` (Electron; runs/monitors the local Brain over its `/local/*` HTTP inspect surface; fork remains the Grid-mediated Phase-43 ceremony, not a local button) |
 | 2 · Grid Manager | Henry | per-Grid runtime ops (health, scaling, cost) — no authority over a Polis |
 | 3 · Portal Manager | Henry | meta-system: reviewer panels, cross-Grid health, Portal audit view |
 

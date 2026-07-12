@@ -64,6 +64,16 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 19 ============================ -->
+  <h2>Session 19 — 2026‑07‑12 · “Phase 75: Tier‑1 Local Nous Manager desktop app (go desktop)”</h2>
+  <p class="sub">Operator asked “we have desktop app for nous local?” — honest answer: no (web consoles + CLI only; the desktop control room was the held Phase 75). Operator said <b>“go desktop”</b>, validated Electron + React + Vite and full-Tier-1 scope (monitor + control + memory browser). Bridge <i>providers</i> (real apps / camera / PDFs) remain held as Phase 76.</p>
+  <ul>
+    <li><b>Design</b> <span class="tag design">design</span> — <a href="plans/2026-07-12-local-nous-manager-design.md">docs/plans/2026-07-12-local-nous-manager-design.md</a>. <b>Fork button cut from v1</b>: fork is the Grid-mediated Phase-43 ceremony; a local button can’t do the real flow (no-mock rule).</li>
+    <li><b>Brain: /local/* Tier‑1 inspect endpoints</b> <span class="tag done">done</span> — <code>http/local_inspect.py</code>: <code>/local/state</code> (full get_state incl. the 3 faculties), <code>/local/memory/recent</code> (episodic, limit-clamped), <code>/local/wiki/pages</code> (episteme). Same X‑Brain‑Secret gate; Brain-local, no Grid events. 9 new tests; brain suite <b>1226</b> green.</li>
+    <li><b>Desktop app</b> <span class="tag done">done</span> — <code>apps/local-nous-manager/</code> (Electron + React + Vite, claude.ai light theme): BrainProcessManager (spawn/stop <code>python -m noesis_brain</code> with NOUS_CONFIG/secret/port env, log buffer), tabs Overview · Memory · Personal Wiki · Local AI · Process · Brain Config (YAML editor with .bak) · Settings. Secret lives in Electron main only; renderer sandboxed behind an allowlisted-route IPC bridge. <code>tsc</code> + <code>vite build</code> green.</li>
+    <li><b>E2E verification</b> <span class="tag done">done</span> — booted a REAL local Brain (Sophia) with the HTTP server: 401 without secret, state shows aisthesis/praxis(31 verbs)/synopsis, memory/wiki respond, 400 on bad category, local‑ai status ok. Test process cleaned up.</li>
+  </ul>
+
   <!-- ============================ SESSION 18 ============================ -->
   <h2>Session 18 — 2026‑07‑10 · “v3.3 Mind — In-World Faculties: Aisthesis (perception) shipped”</h2>
   <p class="sub">From a YouTube walkthrough of 8 open-source local-AI "blocks", the operator asked whether our Nous "has 1–8 brains". Answer: no — one Brain, ~10–12 Greek-named cognitive faculties (not the video's infra blocks). Operator then chose to <b>add</b> the missing/partial ones as in-world brain faculties. Design validated in-session (brainstorming): faculty = capability interface with an in-world provider (canonical) + a Type-A operator-bridge provider (sovereignty-gated). <b>Bridge phases 75–76 HELD by operator.</b> Bilingual replies re-enabled (English then Korean).</p>

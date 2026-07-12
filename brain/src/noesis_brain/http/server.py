@@ -80,6 +80,11 @@ class BrainHttpServer:
         from .cognitive_snapshot import handle_cognitive_snapshot  # noqa: PLC0415
         from .skills_lookup import handle_skills_lookup  # noqa: PLC0415
         from .local_ai import handle_local_ai_models, handle_local_ai_status  # noqa: PLC0415
+        from .local_inspect import (  # noqa: PLC0415
+            handle_local_memory_recent,
+            handle_local_state,
+            handle_local_wiki_pages,
+        )
 
         # Use async wrappers so aiohttp does not emit the bare-function deprecation.
         _h = self._handler
@@ -97,10 +102,23 @@ class BrainHttpServer:
         async def _local_ai_status_route(req: web.Request) -> web.Response:
             return await handle_local_ai_status(req, _h, _s)
 
+        # v3.3 Phase 75 — Tier-1 Local Nous Manager inspect surface (D-V3-36).
+        async def _local_state_route(req: web.Request) -> web.Response:
+            return await handle_local_state(req, _h, _s)
+
+        async def _local_memory_route(req: web.Request) -> web.Response:
+            return await handle_local_memory_recent(req, _h, _s)
+
+        async def _local_wiki_route(req: web.Request) -> web.Response:
+            return await handle_local_wiki_pages(req, _h, _s)
+
         self._app.router.add_get("/cognitive-snapshot/{did}", _cognitive_snapshot_route)
         self._app.router.add_get("/skills/{hash}", _skills_lookup_route)
         self._app.router.add_get("/local-ai/models", _local_ai_models_route)
         self._app.router.add_get("/local-ai/status", _local_ai_status_route)
+        self._app.router.add_get("/local/state", _local_state_route)
+        self._app.router.add_get("/local/memory/recent", _local_memory_route)
+        self._app.router.add_get("/local/wiki/pages", _local_wiki_route)
 
         self._runner: web.AppRunner | None = None
         self._site: web.TCPSite | None = None
