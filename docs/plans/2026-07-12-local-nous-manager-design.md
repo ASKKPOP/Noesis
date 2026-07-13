@@ -64,7 +64,25 @@ secret-gated. These endpoints emit no Grid events and add no audit surface.
 - App: `tsc --noEmit` + `vite build` must pass; manual run (`npm run dev`) is the runtime
   verification (Electron cannot run headless here).
 
+## Packaging — pure macOS app (added 2026-07-13, operator: "make pure mac app")
+
+- `npm run pack:mac` → electron-builder DMG (arm64) in `release/` (gitignored); the packed
+  `.app` lands in `release/mac-arm64/`. appId `com.noesis.local-nous-manager`, productName
+  "Local Nous Manager" (the D-V3-36 Tier-1 name).
+- **Icon**: `scripts/make-icns.sh` — Swift/AppKit rasterizes the canonical Noēsis mark
+  (`dashboard/public/forest-icon.svg`) onto the Apple 1024/824 icon grid, then
+  `sips`/`iconutil` → `assets/icon.icns` (committed; `assets/` not `build/` because the repo
+  root `.gitignore` excludes `build/` globally).
+- **Signing**: no Developer ID in this environment → electron-builder skips signing, but Apple
+  Silicon requires a valid seal. afterPack hook `scripts/afterpack-sign.cjs` ad-hoc signs the
+  bundle (`codesign -s -`) with the correct identifier; a real identity, if ever configured,
+  re-signs after the hook. Locally built = no quarantine → runs normally; a DMG shared to
+  another Mac needs right-click→Open (not notarized).
+- Verified 2026-07-13: `codesign --verify --deep --strict` valid; launch-tested from
+  `release/` and from `/Applications/Local Nous Manager.app` (installed via `ditto`).
+
 ## Docs sync
 
 ROADMAP (Phase 75 split: desktop ✅ / bridge providers still held), STATE, TASK-LOG,
 `wiki/4-reference/handbook.md` Tier-1 row gains the app pointer, this design doc.
+Packaging follow-up (2026-07-13): same files + this section.

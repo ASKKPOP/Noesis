@@ -3,12 +3,41 @@
   "version": "0.1.0",
   "description": "Tier 1 Local Nous Manager — the operator's desktop control room for a local Type-A Nous Brain (D-V3-36)",
   "private": true,
+  "author": "Noēsis Project",
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "start": "npm run build && electron .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "icon": "bash scripts/make-icns.sh",
+    "pack:mac": "npm run build && electron-builder --mac"
+  },
+  "build": {
+    "appId": "com.noesis.local-nous-manager",
+    "productName": "Local Nous Manager",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**",
+      "electron/**",
+      "package.json"
+    ],
+    "npmRebuild": false,
+    "afterPack": "scripts/afterpack-sign.cjs",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "assets/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ]
+    }
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -19,6 +48,7 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "electron": "^31.0.0",
+    "electron-builder": "^26.15.3",
     "typescript": "^5.5.3",
     "vite": "^5.3.3"
   }

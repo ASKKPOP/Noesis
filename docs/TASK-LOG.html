@@ -64,6 +64,16 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 20 ============================ -->
+  <h2>Session 20 — 2026‑07‑13 · “Phase 75 follow-up: pure macOS app (packaged desktop)”</h2>
+  <p class="sub">Operator: <b>“desktop version make pure mac app”</b> — the Electron app now ships as a real double-clickable macOS bundle (<code>Local Nous Manager.app</code> + DMG) and is installed to <code>/Applications</code>. No terminal / <code>npm start</code> needed to run the Tier‑1 control room.</p>
+  <ul>
+    <li><b>App icon</b> <span class="tag done">done</span> — <code>apps/local-nous-manager/scripts/make-icns.sh</code>: Swift/AppKit rasterizes the canonical Noēsis mark (<code>dashboard/public/forest-icon.svg</code>, the orbital-core roundrect) onto the Apple 1024/824 icon grid → <code>sips</code>/<code>iconutil</code> → <code>assets/icon.icns</code> (committed; <code>build/</code> is repo-gitignored, hence <code>assets/</code>).</li>
+    <li><b>electron-builder packaging</b> <span class="tag done">done</span> — <code>npm run pack:mac</code>: vite build → arm64 DMG at <code>release/Local Nous Manager-0.1.0-arm64.dmg</code> (~97&nbsp;MB; <code>release/</code> gitignored). appId <code>com.noesis.local-nous-manager</code>, productName “Local Nous Manager” (D‑V3‑36 Tier‑1 name), category developer-tools.</li>
+    <li><b>Ad-hoc signing (Apple Silicon)</b> <span class="tag done">done</span> — no Developer ID in env → electron-builder skips signing, but arm64 requires a valid seal; afterPack hook <code>scripts/afterpack-sign.cjs</code> ad-hoc signs the bundle with the correct identifier (a real identity, if ever configured, re-signs after the hook). <code>codesign --verify --deep --strict</code> VALID.</li>
+    <li><b>Verify + install</b> <span class="tag done">done</span> — packaged app launch-tested (process alive, quit clean), <code>ditto</code>-installed to <code>/Applications/Local Nous Manager.app</code>, re-launched + verified from there. Caveat: locally built = no quarantine so it runs normally; a DMG shared to another Mac needs right‑click→Open (no notarization).</li>
+  </ul>
+
   <!-- ============================ SESSION 19 ============================ -->
   <h2>Session 19 — 2026‑07‑12 · “Phase 75: Tier‑1 Local Nous Manager desktop app (go desktop)”</h2>
   <p class="sub">Operator asked “we have desktop app for nous local?” — honest answer: no (web consoles + CLI only; the desktop control room was the held Phase 75). Operator said <b>“go desktop”</b>, validated Electron + React + Vite and full-Tier-1 scope (monitor + control + memory browser). Bridge <i>providers</i> (real apps / camera / PDFs) remain held as Phase 76.</p>

@@ -71,3 +71,11 @@ Created [[oss-agent-learning-landscape]] (Voyager, Generative Agents, Reflexion,
 Letta sleep-time, Mem0/Graphiti, DSPy+GEPA, SLM cascades) and
 [[oss-visualization-landscape]] (camera-controls, three-mesh-bvh/csg, Colyseus delta sync,
 CZML replay pattern, three-forcegraph/cosmos.gl, CC0 asset pipeline). Both catalogued in [[index]].
+
+## [2026-07-13] build | Phase 75 packaged as a pure macOS app
+`apps/local-nous-manager/` now ships as a double-clickable macOS bundle: electron-builder
+DMG target (arm64), icon generated from `dashboard/public/forest-icon.svg`
+(`scripts/make-icns.sh`, Swift/AppKit → iconutil → `assets/icon.icns`), afterPack ad-hoc
+codesign (`scripts/afterpack-sign.cjs`) because Apple Silicon requires a sealed bundle and
+no Developer ID exists locally. Verified: bundle seal valid, launch-tested from
+`/Applications`. No research pages changed — build/packaging only.

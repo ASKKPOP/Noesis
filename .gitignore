@@ -55,6 +55,9 @@ htmlcov/
 site/
 .venv-wiki/
 
+# Local Nous Manager (electron-builder packaged output)
+apps/local-nous-manager/release/
+
 # Foundry (contracts/) build artifacts + vendored libs
 contracts/out/
 contracts/cache/
