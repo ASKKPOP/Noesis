@@ -79,3 +79,11 @@ DMG target (arm64), icon generated from `dashboard/public/forest-icon.svg`
 codesign (`scripts/afterpack-sign.cjs`) because Apple Silicon requires a sealed bundle and
 no Developer ID exists locally. Verified: bundle seal valid, launch-tested from
 `/Applications`. No research pages changed — build/packaging only.
+
+## [2026-07-13] doc | Local Nous Manager — full per-menu operator guide
+Wrote `docs/local-nous-manager-guide.html` (self-contained, claude.ai design theme,
+light+dark): documents all 7 menus (Overview·Memory·Personal Wiki·Local AI·Process·Brain
+Config·Settings) with per-menu field tables, every Settings field, a data-flow SVG, first-run
+steps, troubleshooting, by-design exclusions (fork/standalone), and the secret-isolation
+security model. Derived from the app source (App.tsx/main.cjs/preload.cjs) + sophia.yaml — no
+research pages changed.

@@ -86,3 +86,6 @@ secret-gated. These endpoints emit no Grid events and add no audit surface.
 ROADMAP (Phase 75 split: desktop ✅ / bridge providers still held), STATE, TASK-LOG,
 `wiki/4-reference/handbook.md` Tier-1 row gains the app pointer, this design doc.
 Packaging follow-up (2026-07-13): same files + this section.
+Guide follow-up (2026-07-13): `docs/local-nous-manager-guide.html` — full per-menu operator
+guide (all 7 menus + every Settings field, first-run steps, troubleshooting, security model),
+claude.ai design theme, light+dark; TASK-LOG Session 20 bullet + research log entry.
