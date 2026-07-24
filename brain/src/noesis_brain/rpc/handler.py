@@ -10,6 +10,7 @@ from typing import Any
 from noesis_brain.aisthesis import AisthesisTracker, MEMORY_THRESHOLD as AISTHESIS_MEMORY_THRESHOLD
 from noesis_brain.praxis import PraxisTracker
 from noesis_brain.synopsis import SourceNote, Synthesizer, SynopsisStore
+from noesis_brain.bridge import BridgeCapability, BridgeDeed, BridgeRegistry  # Phase 76 operator bridge
 from noesis_brain.ananke import AnankeRuntime, DriveLevel, DriveName
 from noesis_brain.ananke.loader import AnankeLoader
 from noesis_brain.bios import BiosLoader, BiosRuntime
@@ -87,6 +88,7 @@ class BrainHandler:
         aisthesis: AisthesisTracker | None = None,  # v3.3 Mind — in-world perception
         praxis: PraxisTracker | None = None,        # v3.3 Mind — in-world action
         synopsis_db_dir: str | Path | None = None,  # v3.3 Mind — in-world research (optional-dep)
+        bridge: BridgeRegistry | None = None,   # Phase 76 — operator bridge (Type-A, off-by-default)
         iris_db_dir: str | Path | None = None,   # Phase 17 D-17-14
         hypnos_db_dir: str | Path | None = None,  # Phase 16 D-16-02
         ledger_db_dir: str | Path | None = None,  # W-A2 (Mind) — goal→task ledger
@@ -118,6 +120,10 @@ class BrainHandler:
             self._synthesizer = None
         self._last_synopsis_tick = -10_000
         self._SYNOPSIS_COOLDOWN_TICKS = 120
+        # Phase 76 — operator bridge: the Type-A-only edge to the operator's real
+        # machine. None ⇒ in-world only (default). Off-by-default even when set:
+        # the registry holds only capabilities the operator's local YAML granted.
+        self._bridge = bridge
         # Reminder & Wake-Up (spec §3): self-set, tick-scheduled reminders.
         self._reminders = ReminderStore()
         # Tool-loop activation (Phase 72b): when curious + a tool-capable model is
@@ -664,6 +670,20 @@ class BrainHandler:
                 SourceNote(title=f"mem-{i}", content=getattr(m, "content", "") or "")
                 for i, m in enumerate(recents)
             ]
+            # Phase 76 — notebook bridge: when the operator granted `notebook`,
+            # fold real documents from their configured directory into synthesis.
+            notebook = self._bridge.get(BridgeCapability.NOTEBOOK) if self._bridge else None
+            if notebook is not None:
+                try:
+                    docs = notebook.ingest()
+                    if docs:
+                        sources.extend(docs)
+                        self._bridge.record(BridgeDeed(
+                            capability=BridgeCapability.NOTEBOOK.value, verb="ingest",
+                            tick=tick, ok=True, digest=notebook.digest(docs),
+                        ))
+                except Exception:
+                    log.debug("notebook bridge ingest skipped", exc_info=True)
             top = self.telos.top_priority(1) if self.telos is not None else []
             topic = (getattr(top[0], "description", "") if top else "recent experience")[:120]
             synopsis = self._synthesizer.synthesize(topic, sources, tick)
@@ -671,6 +691,29 @@ class BrainHandler:
                 self._synopsis_store.save(synopsis)
         except Exception:  # never let a synopsis cycle take down the tick
             log.debug("synopsis cycle skipped", exc_info=True)
+
+    # ── Sim-use bridge (Phase 76): drive a real app on operator hardware ───────
+    def bridge_sim_use(self, verb: str, params: dict[str, Any] | None, tick: int) -> dict[str, Any]:
+        """Invoke the sim-use provider, if granted. Praxis stays observation-only,
+        so this is an explicit call (never auto-fired from the action batch). Every
+        call routes through the provider's allowlist + money-guard + dry-run and is
+        journaled. Returns the BridgeResult as a dict; a no-grant is a clean deny.
+        """
+        provider = self._bridge.get(BridgeCapability.SIM_USE) if self._bridge else None
+        if provider is None:
+            return {"ok": False, "reason": "not_granted", "dry_run": False}
+        result = provider.execute(verb, params, tick)
+        self._bridge.record(BridgeDeed(
+            capability=BridgeCapability.SIM_USE.value, verb=verb, tick=tick,
+            ok=result.ok, digest=result.digest, reason=result.reason,
+        ))
+        return {"ok": result.ok, "dry_run": result.dry_run, "reason": result.reason}
+
+    def _bridge_snapshot(self) -> dict[str, Any]:
+        """get_state snapshot of the operator bridge (grants + journal digests)."""
+        if self._bridge is None:
+            return {"enabled": False}
+        return self._bridge.snapshot()
 
     def _synopsis_snapshot(self) -> dict[str, Any]:
         """get_state snapshot of the research notebook (latest digest + count)."""
@@ -1437,6 +1480,25 @@ class BrainHandler:
                     self.thymos.feel(Emotion.CURIOSITY, min(0.3, 0.1 * len(_salient)), trigger="perceived change")
             except Exception:  # perception must never take down the tick
                 log.debug("aisthesis perception skipped", exc_info=True)
+        # Phase 76 — supervision bridge: when the operator granted `supervision`,
+        # a real camera frame becomes a coarse percept alongside in-world sight.
+        # Same memory/curiosity path as aisthesis; Brain-local, digest-only audit.
+        supervision = self._bridge.get(BridgeCapability.SUPERVISION) if self._bridge else None
+        if supervision is not None:
+            try:
+                percept = supervision.observe(tick)
+                if percept is not None:
+                    if self.memory is not None and hasattr(self.memory, "record_event"):
+                        self.memory.record_event(
+                            content=percept.describe()[:300], source_did=self.did, tick=tick,
+                        )
+                    self.thymos.feel(Emotion.CURIOSITY, min(0.3, percept.salience), trigger="supervision")
+                self._bridge.record(BridgeDeed(
+                    capability=BridgeCapability.SUPERVISION.value, verb="observe",
+                    tick=tick, ok=True, digest=supervision.digest(percept),
+                ))
+            except Exception:  # a camera glitch must never take down the tick
+                log.debug("supervision bridge skipped", exc_info=True)
         # D-MIND-08: each LLM-driven cycle below is gated on the model substrate
         # being reachable (`_mind_awake`, probed lazily + cached this tick). When
         # the local AI is unreachable the Nous rests: cognition idles, the body
@@ -1965,6 +2027,8 @@ class BrainHandler:
             "aisthesis": self.aisthesis.snapshot(),
             "praxis": self.praxis.snapshot(),
             "synopsis": self._synopsis_snapshot(),
+            # Phase 76 — operator bridge (grants + local audit digests).
+            "bridge": self._bridge_snapshot(),
         }
 
     def _psyche_snapshot(self) -> dict[str, Any]:
