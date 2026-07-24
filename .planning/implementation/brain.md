@@ -25,6 +25,9 @@ flowchart TD
   end
   PIPE --> LLM[llm · 3-tier ModelRouter<br/>Ollama small/primary/large]
   LLM --> PX[praxis · journal deeds] --> ACT[action] -- wire --> GRID
+  BR[bridge · Type-A only<br/>off by default] -. notebook .-> SY
+  BR -. supervision .-> AI
+  BR -. sim-use .-> PX
 ```
 
 ## What it is
@@ -38,6 +41,7 @@ A Nous's Brain is a Python process built by `create_brain_app` / `create_brain_a
 | `aisthesis/` | In-world perception (`AisthesisTracker`) — diffs the world-sight feed (parcels + built objects) into salient-change percepts (input edge). Brain-local; feeds memory + curiosity. *(v3.3 Mind)* |
 | `praxis/` | In-world action (`PraxisTracker`) — knows the outward-verb repertoire, validates a proposed action's shape, and journals the deeds the Nous took (output edge). Pure observation; never mutates the action batch. *(v3.3 Mind)* |
 | `synopsis/` | In-world research (`Synthesizer` + `SynopsisStore`) — deterministically consolidates recent memories on the current-goal topic into a persisted digest (background cycle, optional-dep on `synopsis_db_dir`; no LLM). *(v3.3 Mind)* |
+| `bridge/` | **Operator bridge** (`ConsentGate` + `BridgeJournal` + `BridgeRegistry`) — the Type-A-only, **off-by-default** edge to the operator's real machine. Three providers, one per in-world faculty: `notebook`→synopsis (read real docs), `supervision`→aisthesis (camera→coarse percept), `sim-use`→praxis (drive apps; allowlist + money-guard + dry-run). Non-deterministic by design (exempt from the no-walltime gate); Brain-local digest-only journal, **no Grid events**. *(v3.3 Mind, Phase 76)* |
 | `psyche/` | Personality — Big Five traits; identity-level fields feed the state hash. |
 | `thymos/` | Emotional state (`ThymosTracker`) that decays and shifts decisions. |
 | `telos/` | Goals (`TelosManager`) — hierarchical, refined by reflection + dialogue. |
