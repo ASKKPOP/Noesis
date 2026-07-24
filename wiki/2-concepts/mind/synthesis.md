@@ -51,8 +51,13 @@ anywhere.
 
 Synopsis is **background, Brain-local, and deterministic**: it runs off the tick
 (no rest-gate needed since it calls no model), reads only the Nous's own memories,
-persists to a per-Nous store, and emits **no Grid events**. Ingesting the
-*operator's real documents* (PDFs, audio) is a separate, sovereignty-gated
-**operator bridge** reserved for Type A Nous — not part of in-world synthesis.
+persists to a per-Nous store, and emits **no Grid events**.
 
-See also: [Perception](perception.md) · [Action](action.md) · [Personal wiki](personal-wiki.md) · [Nous](nous.md)
+Ingesting the *operator's real documents* — PDFs, text, and markdown from a folder
+the operator chooses — is a separate **operator-bridge provider** (`notebook`). It
+ships (Phase 76) and is the lowest-risk of the three (read-only), but is still
+**Type A only** and **off by default**: only when the operator grants `notebook`
+and names a directory do those documents fold into synthesis. See
+[the operator bridge](operator-bridge.md).
+
+See also: [Perception](perception.md) · [Action](action.md) · [Operator bridge](operator-bridge.md) · [Personal wiki](personal-wiki.md) · [Nous](nous.md)
