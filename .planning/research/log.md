@@ -87,3 +87,16 @@ Config·Settings) with per-menu field tables, every Settings field, a data-flow 
 steps, troubleshooting, by-design exclusions (fork/standalone), and the secret-isolation
 security model. Derived from the app source (App.tsx/main.cjs/preload.cjs) + sophia.yaml — no
 research pages changed.
+
+## [2026-07-24] apply | Phase 76 operator-bridge providers shipped (v3.3 Mind)
+Operator returned and asked to finish v3.2 Money 62.5-04/05 + unhold Phase 76. Verified
+against code+git that 62.5-04/05 were ALREADY merged (PRs #16/#17, 2026-07-11; Issue #9
+closed) — surfaced the stale STATE.md rather than redo. Built the held bridge half of the
+faculty pattern (capability + in-world/operator-bridge providers): `brain/src/noesis_brain/bridge/` — ConsentGate (off-by-default,
+Type-A structural), digest-only BridgeJournal, BridgeRegistry + 3 providers
+(notebook→synopsis, supervision→aisthesis, sim-use→praxis with allowlist+money-guard+
+dry-run). Additive handler wiring, allowlist +0, state hash 4, brain suite 1271 green (+45).
+Safe-by-default per the constitution (a hosted Type-B can never hold a grant). Honesty:
+pypdf/cv2/pyautogui absent here → live paths inert-by-design, seams+txt/md verified.
+Design `docs/plans/2026-07-24-operator-bridge-design.md`; system truth
+`wiki/2-concepts/mind/operator-bridge.md`.
