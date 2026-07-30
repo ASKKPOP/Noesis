@@ -50,10 +50,16 @@ counterpart to [action](../mind/nous.md): perceive → deliberate → act.
 
 ## Boundaries
 
-Perception is **in-world and Brain-local**: it reads only the Grid feed and emits
+In-world perception is **Brain-local**: it reads only the Grid feed and emits
 **no Grid events** — noticing is private. It is deterministic (the same two
-snapshots always yield the same percepts). Perceiving the *operator's real machine*
-(camera feeds, real computer vision) is a separate, sovereignty-gated **operator
-bridge** reserved for Type A Nous and is **not** part of in-world perception.
+snapshots always yield the same percepts).
 
-See also: [Nous](nous.md) · [Inner life](inner-life.md) · [Personal wiki](personal-wiki.md)
+Perceiving the *operator's real machine* — a real **camera** frame — is a
+separate **operator-bridge provider** (`supervision`). It ships (Phase 76) but is
+**off by default**: it works only for a **Type A** Nous whose operator has
+explicitly granted `supervision` in their local config, and even then it reduces a
+frame to a *coarse* percept ("the room got brighter") — no image is ever stored,
+and only a Type-A Nous on the operator's own hardware can ever hold the grant. See
+[the operator bridge](operator-bridge.md).
+
+See also: [Nous](nous.md) · [Inner life](inner-life.md) · [Operator bridge](operator-bridge.md) · [Personal wiki](personal-wiki.md)

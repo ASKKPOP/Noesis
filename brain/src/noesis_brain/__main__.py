@@ -355,6 +355,12 @@ def create_brain_app(
     if not did:
         did = f"did:noesis:{_slugify_nous_name(nous_name)}"
 
+    # Phase 76 — operator bridge from the optional `bridge` section. Off-by-default:
+    # with no section, nothing is granted and the registry is an inert shell. The
+    # journal persists next to nous.db when data_dir is set.
+    from noesis_brain.bridge import build_registry
+    bridge = build_registry(config_data.get("bridge", {}), data_dir=data_dir, nous_did=did)
+
     # Build handler
     handler = BrainHandler(
         psyche=psyche,
@@ -369,6 +375,8 @@ def create_brain_app(
         praxis=praxis,
         # v3.3 Mind — synopsis persists next to nous.db (disabled when data_dir is None).
         synopsis_db_dir=data_dir,
+        # Phase 76 — operator bridge (Type-A, off-by-default via the `bridge` section).
+        bridge=bridge,
         # W-A2 (Mind): the goal→task ledger persists next to nous.db so goal
         # pursuit survives restarts (ceaselessness lives in external state).
         ledger_db_dir=data_dir,

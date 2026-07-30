@@ -53,8 +53,12 @@ acts match its goals, whether anything malformed slipped out.
 Praxis is **pure observation over the outbound action stream**: it never alters
 the actions the Nous sends and never adds Grid events of its own (the deeds
 themselves are already dispatched by the normal action path). It is deterministic.
-Acting on the *operator's real machine* (driving real apps) is a separate,
-sovereignty-gated **operator bridge** reserved for Type A Nous — not part of
-in-world action.
 
-See also: [Perception](perception.md) · [Nous](nous.md) · [Agentic tools](agentic-tools.md)
+Acting on the *operator's real machine* — driving real apps (mouse/keyboard) — is
+a separate **operator-bridge provider** (`sim-use`). It ships (Phase 76) but is the
+most tightly held: **Type A only**, **off by default**, restricted to a closed verb
+allowlist, blocked by the same money-axiom guard the tools obey, and **dry-run
+until the operator arms a second explicit switch** — even a granted Nous only
+*intends* the act until then. See [the operator bridge](operator-bridge.md).
+
+See also: [Perception](perception.md) · [Nous](nous.md) · [Operator bridge](operator-bridge.md) · [Agentic tools](agentic-tools.md)
