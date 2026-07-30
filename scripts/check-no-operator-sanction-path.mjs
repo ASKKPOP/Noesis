@@ -8,7 +8,10 @@
  * which the operator (Henry), even at H5, imposes a sanction directly.
  *
  * Fails CI if:
- *   1. the sanction-execution route is missing or gated by anything but a police tier;
+ *   1. the sanction-execution route is missing or gated by anything but the civic
+ *      community-policing tier (`civic_did_required`, per D-SEC-07 2026-07-10: v3.0 has
+ *      no Police role, `police_only` silently fell through to civic_member, so the route
+ *      was relabeled honestly and the sanction bound to charge.recommended_sanction);
  *   2. the conviction gate is missing or not `government_only`;
  *   3. any route that imposes/executes a sanction is gated by an operator-ish tier.
  *
@@ -29,14 +32,19 @@ const entries = [...text.matchAll(/'((?:GET|POST|PUT|PATCH|DELETE)\s+[^']+)':\s*
 const failures = [];
 const find = (substr) => entries.filter((e) => e.route.includes(substr));
 
-// 1. The sanction-execution route exists and is a police tier (civic), never operator.
+// 1. The sanction-execution route exists and is a CIVIC tier, never operator.
+//    D-SEC-07 (2026-07-10): the honest tier is 'civic_did_required' (community
+//    policing) — 'police_only' had no hook branch and fell through to civic_member.
+//    The executed sanction is bound to charge.recommended_sanction (body ignored),
+//    and conviction (rule 2) remains the government_only gate to punitive power.
+const EXEC_TIER = 'civic_did_required';
 const exec = find('execute-sanction');
 if (exec.length === 0) {
     failures.push('POL-04: no execute-sanction route found in policy.ts.');
 }
 for (const e of exec) {
-    if (e.tier !== 'police_only') {
-        failures.push(`execute-sanction must be 'police_only', found '${e.tier}' for ${e.route}.`);
+    if (e.tier !== EXEC_TIER) {
+        failures.push(`execute-sanction must be '${EXEC_TIER}' (D-SEC-07), found '${e.tier}' for ${e.route}.`);
     }
 }
 
@@ -66,6 +74,7 @@ if (failures.length > 0) {
 }
 console.log(
     '[check-no-operator-sanction-path] OK — punitive power runs only through the court ' +
-    '(execute-sanction=police_only, convict=government_only); no operator-direct sanction path.',
+    '(execute-sanction=civic_did_required per D-SEC-07, convict=government_only); ' +
+    'no operator-direct sanction path.',
 );
 process.exit(0);

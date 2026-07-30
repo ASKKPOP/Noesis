@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Local Nous Manager — Full Guide</title>
+<style>
+  :root{
+    --bg:#faf9f5; --surface:#ffffff; --surface-alt:#f2f0e8;
+    --text:#1f1e1d; --text-soft:#3d3d3a; --muted:#73726c; --border:#e8e4d9;
+    --accent:#c96442; --accent-hover:#b5573a; --accent-soft:#f6e7e0;
+    --sage:#5c8a72; --blue:#6b83a8; --gold:#b8893f;
+    --serif:"Tiempos Headline",Georgia,"Times New Roman",serif;
+    --sans:"Styrene A",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#262624; --surface:#30302e; --surface-alt:#2b2b29;
+      --text:#f5f4ee; --text-soft:#dcdad3; --muted:#a3a199; --border:#413f3a;
+      --accent:#d9825f; --accent-hover:#e0946f; --accent-soft:#3a2f29;
+      --sage:#7ba889; --blue:#8aa0c2; --gold:#d0a862;
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#faf9f5; --surface:#ffffff; --surface-alt:#f2f0e8;
+    --text:#1f1e1d; --text-soft:#3d3d3a; --muted:#73726c; --border:#e8e4d9;
+    --accent:#c96442; --accent-hover:#b5573a; --accent-soft:#f6e7e0;
+    --sage:#5c8a72; --blue:#6b83a8; --gold:#b8893f;
+  }
+  :root[data-theme="dark"]{
+    --bg:#262624; --surface:#30302e; --surface-alt:#2b2b29;
+    --text:#f5f4ee; --text-soft:#dcdad3; --muted:#a3a199; --border:#413f3a;
+    --accent:#d9825f; --accent-hover:#e0946f; --accent-soft:#3a2f29;
+    --sage:#7ba889; --blue:#8aa0c2; --gold:#d0a862;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    line-height:1.68;font-size:16.5px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:820px;margin:0 auto;padding:60px 24px 120px}
+  .kicker{font-family:var(--sans);color:var(--accent);font-size:13px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.16em;margin:0 0 18px}
+  h1{font-family:var(--serif);font-weight:600;font-size:44px;line-height:1.08;
+    letter-spacing:-.5px;margin:0 0 16px}
+  h2{font-family:var(--serif);font-weight:600;font-size:27px;line-height:1.2;
+    margin:12px 0 8px;letter-spacing:-.3px;scroll-margin-top:20px}
+  h3{font-family:var(--serif);font-weight:600;font-size:19px;margin:26px 0 6px}
+  .lead{font-size:20px;line-height:1.55;color:var(--text-soft);margin:0 0 8px}
+  p{margin:14px 0}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent}
+  a:hover{border-bottom-color:var(--accent)}
+  strong{color:var(--text);font-weight:650}
+  em{color:var(--text-soft)}
+  code{font-family:var(--mono);background:var(--surface-alt);padding:2px 6px;border-radius:5px;
+    font-size:.82em;color:var(--accent-hover)}
+  @media (prefers-color-scheme: dark){ code{color:var(--accent)} }
+  :root[data-theme="dark"] code{color:var(--accent)}
+  .rule{width:56px;height:3px;background:var(--accent);border-radius:2px;margin:0 0 30px}
+
+  /* table of contents */
+  .toc{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px 26px;margin:34px 0 10px}
+  .toc h4{margin:0 0 12px;font-family:var(--sans);font-size:12px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.1em;color:var(--muted)}
+  .toc ol{margin:0;padding:0;list-style:none;counter-reset:toc;
+    display:grid;grid-template-columns:1fr 1fr;gap:6px 26px}
+  .toc li{counter-increment:toc;font-size:15px}
+  .toc li a{color:var(--text-soft);display:flex;gap:10px;align-items:baseline;padding:3px 0}
+  .toc li a:hover{color:var(--accent);border-bottom-color:transparent}
+  .toc li a::before{content:counter(toc,decimal-leading-zero);font-family:var(--mono);font-size:12px;
+    color:var(--accent);font-weight:600;min-width:22px}
+  @media(max-width:640px){ .toc ol{grid-template-columns:1fr} }
+
+  /* callouts */
+  .callout{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);
+    border-radius:0 14px 14px 0;padding:18px 22px;margin:24px 0}
+  .callout p:first-child{margin-top:0} .callout p:last-child{margin-bottom:0}
+  .callout.warn{border-left-color:var(--gold)}
+  .callout.sec{border-left-color:var(--sage)}
+  .callout .lbl{font-family:var(--sans);font-size:12px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:6px}
+
+  /* menu section header */
+  .menu{margin:50px 0 0;padding-top:34px;border-top:1px solid var(--border)}
+  .menu:first-of-type{border-top:0;padding-top:0}
+  .menu .head{display:flex;align-items:center;gap:14px;margin-bottom:2px}
+  .menu .num{font-family:var(--serif);font-size:15px;font-weight:600;color:var(--accent);
+    background:var(--accent-soft);width:34px;height:34px;border-radius:9px;display:flex;
+    align-items:center;justify-content:center;flex-shrink:0}
+  .tag{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 11px;border-radius:20px;
+    border:1px solid var(--border);color:var(--muted);vertical-align:middle}
+  .tag.sage{color:var(--sage);border-color:var(--sage)}
+  .tag.blue{color:var(--blue);border-color:var(--blue)}
+  .tag.accent{color:#fff;background:var(--accent);border-color:var(--accent)}
+  .tag.read{color:var(--muted)}
+  .greek{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px}
+  .purpose{font-size:17.5px;color:var(--text-soft);margin:10px 0 6px}
+
+  /* field tables */
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14.5px}
+  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+  thead tr{border-bottom:2px solid var(--border)}
+  td code{white-space:nowrap}
+  td.f{white-space:nowrap;font-family:var(--mono);font-size:13px;color:var(--accent-hover);font-weight:600}
+  @media (prefers-color-scheme: dark){ td.f{color:var(--accent)} }
+  :root[data-theme="dark"] td.f{color:var(--accent)}
+
+  /* steps */
+  ol.steps{counter-reset:step;list-style:none;padding:0;margin:22px 0}
+  ol.steps>li{counter-increment:step;position:relative;padding:4px 0 20px 52px;margin:0}
+  ol.steps>li::before{content:counter(step);position:absolute;left:0;top:0;
+    font-family:var(--serif);font-weight:600;font-size:16px;color:#fff;background:var(--accent);
+    width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  ol.steps>li::after{content:"";position:absolute;left:16.5px;top:36px;bottom:2px;width:1px;background:var(--border)}
+  ol.steps>li:last-child::after{display:none}
+  ol.steps>li b{font-size:16.5px}
+  .kbd{font-family:var(--sans);font-size:13px;font-weight:600;background:var(--surface);
+    border:1px solid var(--border);border-bottom-width:2px;border-radius:7px;padding:2px 9px;color:var(--text)}
+
+  /* code block */
+  pre{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;
+    overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.6;color:var(--text-soft);margin:16px 0}
+  pre .c{color:var(--muted)}
+  pre .k{color:var(--accent)}
+
+  /* figure */
+  figure{margin:30px 0;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px}
+  figure svg{width:100%;height:auto;display:block}
+  figcaption{color:var(--muted);font-size:13.5px;margin-top:16px;text-align:center;line-height:1.5}
+  svg text{font-family:var(--sans)}
+
+  /* mini app mock (title bar + tabs) */
+  .mock{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin:26px 0}
+  .mock .bar{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);
+    background:var(--surface-alt)}
+  .mock .bar h5{margin:0;font-family:var(--serif);font-size:16px;font-weight:600}
+  .mock .bar .t{font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-soft);
+    padding:2px 9px;border-radius:20px}
+  .mock .bar .st{margin-left:auto;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:7px}
+  .mock .bar .st .d{width:9px;height:9px;border-radius:50%;background:var(--sage)}
+  .mock .tabs{display:flex;flex-wrap:wrap;gap:2px;padding:8px 12px}
+  .mock .tabs span{font-size:13.5px;padding:6px 12px;border-radius:8px;color:var(--muted)}
+  .mock .tabs span.on{color:var(--accent);background:var(--accent-soft);font-weight:600}
+
+  .foot{color:var(--muted);font-size:14px;margin-top:60px;padding-top:22px;border-top:1px solid var(--border)}
+  .foot a{color:var(--text-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">Noēsis · Tier 1 · Operator Guide</p>
+  <h1>Local Nous Manager<br/>— the full guide</h1>
+  <div class="rule"></div>
+  <p class="lead">Your desktop control room for one local Type&#8209;A Nous Brain. This guide walks
+  every menu and every setting, then the exact steps to bring a Nous to life on your own machine.</p>
+
+  <div class="callout">
+    <span class="lbl">Mental model</span>
+    <p>The app has one job split three ways: <strong>Settings</strong> tells it where your Brain lives,
+    <strong>Process</strong> starts and stops it, and the four read&#8209;only tabs
+    (<strong>Overview · Memory · Personal Wiki · Local AI</strong>) let you watch the mind think.
+    <strong>Brain Config</strong> edits the Nous's personality file. Everything flows in that order —
+    fill Settings first, or nothing else works.</p>
+  </div>
+
+  <div class="mock" aria-hidden="true">
+    <div class="bar">
+      <h5>Local Nous Manager</h5><span class="t">Tier 1 · operator</span>
+      <span class="st"><i class="d"></i> Brain running</span>
+    </div>
+    <div class="tabs">
+      <span class="on">Overview</span><span>Memory</span><span>Personal Wiki</span>
+      <span>Local AI</span><span>Process</span><span>Brain Config</span><span>Settings</span>
+    </div>
+  </div>
+
+  <div class="toc">
+    <h4>The seven menus</h4>
+    <ol>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#memory">Memory</a></li>
+      <li><a href="#wiki">Personal Wiki</a></li>
+      <li><a href="#localai">Local AI</a></li>
+      <li><a href="#process">Process</a></li>
+      <li><a href="#config">Brain Config</a></li>
+      <li><a href="#settings">Settings</a></li>
+    </ol>
+  </div>
+
+  <p style="font-size:14.5px;color:var(--muted);margin-top:14px">
+    Jump also to: <a href="#firstrun">First&#8209;run steps</a> ·
+    <a href="#trouble">Troubleshooting</a> · <a href="#bydesign">What's not here (by design)</a> ·
+    <a href="#security">How your secret stays safe</a></p>
+
+  <!-- data flow diagram -->
+  <figure>
+    <svg viewBox="0 0 780 250" role="img" aria-label="Data flow from Settings to the live tabs">
+      <defs>
+        <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+          <path d="M0,0 L9,4.5 L0,9 z" fill="var(--muted)"/>
+        </marker>
+      </defs>
+      <!-- Settings -->
+      <rect x="10" y="96" width="132" height="58" rx="12" fill="var(--surface-alt)" stroke="var(--border)"/>
+      <text x="76" y="120" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text)">Settings</text>
+      <text x="76" y="139" text-anchor="middle" font-size="11" fill="var(--muted)">dir · python · port · secret</text>
+      <!-- Process -->
+      <rect x="196" y="96" width="150" height="58" rx="12" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text x="271" y="120" text-anchor="middle" font-size="14" font-weight="600" fill="var(--accent)">Process</text>
+      <text x="271" y="139" text-anchor="middle" font-size="11" fill="var(--muted)">spawns the Brain</text>
+      <!-- Brain -->
+      <rect x="400" y="86" width="164" height="78" rx="12" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="482" y="112" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text)">Brain (Python)</text>
+      <text x="482" y="131" text-anchor="middle" font-size="11" fill="var(--muted)">python -m noesis_brain</text>
+      <text x="482" y="148" text-anchor="middle" font-size="11" fill="var(--sage)">HTTP :port · X&#8209;Brain&#8209;Secret</text>
+      <!-- tabs -->
+      <rect x="620" y="20" width="150" height="46" rx="10" fill="var(--surface)" stroke="var(--border)"/>
+      <text x="695" y="41" text-anchor="middle" font-size="12.5" fill="var(--text)">Overview</text>
+      <text x="695" y="56" text-anchor="middle" font-size="10.5" fill="var(--muted)">/local/state</text>
+      <rect x="620" y="74" width="150" height="46" rx="10" fill="var(--surface)" stroke="var(--border)"/>
+      <text x="695" y="95" text-anchor="middle" font-size="12.5" fill="var(--text)">Memory · Wiki</text>
+      <text x="695" y="110" text-anchor="middle" font-size="10.5" fill="var(--muted)">/local/memory · /wiki</text>
+      <rect x="620" y="128" width="150" height="46" rx="10" fill="var(--surface)" stroke="var(--border)"/>
+      <text x="695" y="149" text-anchor="middle" font-size="12.5" fill="var(--text)">Local AI</text>
+      <text x="695" y="164" text-anchor="middle" font-size="10.5" fill="var(--muted)">/local&#8209;ai/status</text>
+      <!-- config write -->
+      <rect x="196" y="196" width="150" height="44" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-dasharray="4 3"/>
+      <text x="271" y="216" text-anchor="middle" font-size="12.5" fill="var(--text)">Brain Config</text>
+      <text x="271" y="231" text-anchor="middle" font-size="10.5" fill="var(--muted)">writes YAML (+.bak)</text>
+      <!-- arrows -->
+      <line x1="142" y1="125" x2="190" y2="125" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="346" y1="125" x2="394" y2="125" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="564" y1="110" x2="614" y2="60" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="564" y1="125" x2="614" y2="100" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="564" y1="140" x2="614" y2="150" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="271" y1="196" x2="271" y2="158" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+    </svg>
+    <figcaption>Settings configures the launch · Process spawns the Brain · the read tabs poll the
+    Brain's <code>/local/*</code> endpoints (every request carries your secret) · Brain Config edits the source YAML.</figcaption>
+  </figure>
+
+  <!-- ============ 1 · OVERVIEW ============ -->
+  <div class="menu" id="overview">
+    <div class="head"><span class="num">1</span><h2>Overview</h2><span class="tag sage">live · 2s</span></div>
+    <p class="purpose">The cognitive dashboard — the single screen where you watch the Nous think.
+    Six cards, refreshed every two seconds from <code>/local/state</code>.</p>
+    <p>Each card maps to one Greek&#8209;named faculty of the Brain. If the Brain is stopped you'll see
+    <em>“No state yet — is the Brain running?”</em> — start it in the <a href="#process">Process</a> tab.</p>
+    <table>
+      <thead><tr><th>Card</th><th>Shows</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td class="f">Identity</td><td>name · archetype · DID · Grid · location · mood · emotions</td>
+          <td>Who this Nous is and how it currently feels. The <em>archetype</em> (e.g. “The Philosopher”) and DID come straight from its config.</td></tr>
+        <tr><td class="f">Goals <span class="greek">telos</span></td><td>the active goal list</td>
+          <td>What the Nous is working toward right now. Empty means it hasn't formed goals yet.</td></tr>
+        <tr><td class="f">Perception <span class="greek">aisthesis</span></td><td>world size · latest percept count · percept chips</td>
+          <td>The <strong>input edge</strong> — what changed in the world that the Nous noticed (things that appeared / vanished / changed).</td></tr>
+        <tr><td class="f">Action <span class="greek">praxis</span></td><td>total deeds · repertoire size · verb×count chips</td>
+          <td>The <strong>output edge</strong> — the outward acts it can perform and how often it has used each.</td></tr>
+        <tr><td class="f">Research <span class="greek">synopsis</span></td><td>digest count · latest topic · key points</td>
+          <td>Background synthesis — the Nous distilling its recent memories on its current&#8209;goal topic into a digest.</td></tr>
+        <tr><td class="f">Memory highlights</td><td>a few important recent memories + importance</td>
+          <td>A teaser of the memory stream; the full list lives in the <a href="#memory">Memory</a> tab.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><p><strong>Read&#8209;only.</strong> Nothing on this screen changes the Nous — it is a window, not a lever.</p></div>
+  </div>
+
+  <!-- ============ 2 · MEMORY ============ -->
+  <div class="menu" id="memory">
+    <div class="head"><span class="num">2</span><h2>Memory</h2><span class="tag read">live · 4s</span></div>
+    <p class="purpose">The memory inspector — the Nous's recent <em>episodic</em> memories, newest first
+    (up to 100), from <code>/local/memory/recent</code>.</p>
+    <p>Each row is one memory with a metadata line beneath it:</p>
+    <table>
+      <thead><tr><th>Field</th><th>What it tells you</th></tr></thead>
+      <tbody>
+        <tr><td class="f">content</td><td>The memory itself, in the Nous's own words.</td></tr>
+        <tr><td class="f">memory_type</td><td>The kind of memory (observation, reflection, lesson, interaction…).</td></tr>
+        <tr><td class="f">tick</td><td>The simulation tick when it was formed — the Nous's clock.</td></tr>
+        <tr><td class="f">importance</td><td>How salient the Nous rated it; higher survives longer and surfaces in Overview.</td></tr>
+        <tr><td class="f">source_did</td><td>If the memory came from another party, who — otherwise blank.</td></tr>
+      </tbody>
+    </table>
+    <p>Empty list = <em>“No memories yet.”</em> A freshly started Nous accumulates memories as ticks pass.</p>
+  </div>
+
+  <!-- ============ 3 · PERSONAL WIKI ============ -->
+  <div class="menu" id="wiki">
+    <div class="head"><span class="num">3</span><h2>Personal Wiki</h2><span class="tag read">live · 6s</span></div>
+    <p class="purpose">The Nous's own knowledge base — its <span class="greek">episteme</span>. These are pages the
+    Nous has written for itself: concepts it has learned and its confidence in each, from <code>/local/wiki/pages</code>.</p>
+    <table>
+      <thead><tr><th>Field</th><th>What it tells you</th></tr></thead>
+      <tbody>
+        <tr><td class="f">title</td><td>The concept or entity the page is about.</td></tr>
+        <tr><td class="f">category</td><td>How the Nous filed it (person, place, skill, idea…).</td></tr>
+        <tr><td class="f">confidence</td><td>0–100% — how sure the Nous is about this knowledge.</td></tr>
+        <tr><td class="f">content</td><td>The page body — what it believes to be true.</td></tr>
+        <tr><td class="f">source</td><td>Where it learned this, when recorded.</td></tr>
+      </tbody>
+    </table>
+    <p>This is distinct from the project's public wiki — it is the <em>Nous's private understanding</em>,
+    which grows and revises as it lives. Empty = <em>“The personal wiki is empty.”</em></p>
+  </div>
+
+  <!-- ============ 4 · LOCAL AI ============ -->
+  <div class="menu" id="localai">
+    <div class="head"><span class="num">4</span><h2>Local AI</h2><span class="tag blue">live · 4–10s</span></div>
+    <p class="purpose">The local language model that powers the Nous's cognition. Two cards —
+    <strong>Status</strong> (<code>/local&#8209;ai/status</code>) and installed <strong>Models</strong>
+    (<code>/local&#8209;ai/models</code>).</p>
+    <div class="callout warn">
+      <span class="lbl">Prerequisite</span>
+      <p>For this tab to read <em>“ok”</em>, <strong>Ollama must be running</strong> on your machine with the
+      Nous's model pulled — by default <code>qwen3:4b</code> (<code>ollama pull qwen3:4b</code>). Without a
+      local model, the Nous can't actually think, and this tab shows <em>“Unavailable.”</em></p>
+    </div>
+    <p>The model a Nous uses is set in its YAML under <code>llm.models</code> (small / primary / large tiers).
+    You can change it in the <a href="#config">Brain Config</a> tab.</p>
+  </div>
+
+  <!-- ============ 5 · PROCESS ============ -->
+  <div class="menu" id="process">
+    <div class="head"><span class="num">5</span><h2>Process</h2><span class="tag accent">control</span></div>
+    <p class="purpose">The control panel — this is where you actually <strong>run</strong> the Nous. Start it,
+    stop it, and read its live log.</p>
+    <table>
+      <thead><tr><th>Control</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td class="f">Status</td><td>Shows <code>running (pid …)</code> or <code>stopped</code>, polled every 1.5s. The title&#8209;bar dot mirrors it (green = running).</td></tr>
+        <tr><td class="f">Start&nbsp;Brain</td><td>Launches <code>python -m noesis_brain</code> from your Brain directory, with the secret, port, and config from Settings passed as environment. Disabled while already running.</td></tr>
+        <tr><td class="f">Stop</td><td>Sends the Brain a graceful shutdown (SIGTERM). Disabled while stopped.</td></tr>
+        <tr><td class="f">Logs</td><td>A live tail of the Brain's stdout/stderr (last ~400 lines). Your first stop when something won't start.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><p>If <strong>Start</strong> fails instantly, the error appears in red at the top. The two
+    common causes — <code>brainDir not set</code> and <code>python not found</code> — are both fixed in
+    <a href="#settings">Settings</a>. See <a href="#trouble">Troubleshooting</a>.</p></div>
+  </div>
+
+  <!-- ============ 6 · BRAIN CONFIG ============ -->
+  <div class="menu" id="config">
+    <div class="head"><span class="num">6</span><h2>Brain Config</h2><span class="tag">editor</span></div>
+    <p class="purpose">A text editor for the Nous's YAML file — its personality, drives, and goals. This is the
+    one place in the app that <strong>writes</strong>. <strong>Save</strong> makes a <code>.bak</code> backup
+    first (one&#8209;step undo), and changes take effect only after you restart the Brain.</p>
+    <p><strong>Save</strong> · <strong>Reload</strong> are the two buttons; the file path shown comes from your
+    Settings <code>configPath</code>. The YAML is organized into these sections — each a faculty of the Nous:</p>
+    <table>
+      <thead><tr><th>Section</th><th>Greek</th><th>What you're editing</th></tr></thead>
+      <tbody>
+        <tr><td class="f">identity</td><td class="greek">—</td><td>name, archetype, birth date.</td></tr>
+        <tr><td class="f">psyche</td><td class="greek">soul</td><td>personality traits (openness, conscientiousness…), core values, communication style.</td></tr>
+        <tr><td class="f">thymos</td><td class="greek">spirit</td><td>baseline mood, emotional intensity, and what triggers joy / anger / curiosity.</td></tr>
+        <tr><td class="f">telos</td><td class="greek">purpose</td><td>short / medium / long&#8209;term goals — these seed the Overview goal list.</td></tr>
+        <tr><td class="f">ananke</td><td class="greek">necessity</td><td>drive strengths: social, knowledge, economic, autonomy, recognition needs.</td></tr>
+        <tr><td class="f">episteme</td><td class="greek">knowledge</td><td>starting knowledge areas and initial skills (name + level).</td></tr>
+        <tr><td class="f">llm</td><td class="greek">—</td><td>provider (ollama/claude), the small/primary/large model tiers, temperature, token budget.</td></tr>
+        <tr><td class="f">human_channel</td><td class="greek">—</td><td>operator link: owner, privacy level, override toggle, independence level.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warn"><p><strong>Restart to apply.</strong> After Save, go to
+    <a href="#process">Process</a> → Stop → Start. The Brain reads its YAML only at boot.</p></div>
+  </div>
+
+  <!-- ============ 7 · SETTINGS ============ -->
+  <div class="menu" id="settings">
+    <div class="head"><span class="num">7</span><h2>Settings</h2><span class="tag accent">fill first</span></div>
+    <p class="purpose">Connection &amp; launch configuration — <strong>the very first thing to fill in.</strong>
+    Saved on your machine only (Electron <code>userData/settings.json</code>); never in the repo.</p>
+    <table>
+      <thead><tr><th>Field</th><th>What it is</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td class="f">Brain directory</td>
+          <td>The repo's <code>brain/</code> folder. Used as the working directory for the Python process. <strong>Required</strong> — Start fails without it.</td>
+          <td><code>…/Noesis/brain</code></td></tr>
+        <tr><td class="f">Python</td>
+          <td>The Python interpreter — absolute, or relative to the Brain directory. Points at the Brain's virtual&#8209;env.</td>
+          <td><code>.venv/bin/python</code></td></tr>
+        <tr><td class="f">Nous YAML config path</td>
+          <td>Which Nous to run — its personality file. Also the file the <a href="#config">Brain Config</a> editor loads.</td>
+          <td><code>…/brain/data/nous/sophia.yaml</code></td></tr>
+        <tr><td class="f">Brain HTTP port</td>
+          <td>The port the Brain's local inspect server listens on. The read tabs poll <code>127.0.0.1</code> at this port.</td>
+          <td><code>8090</code></td></tr>
+        <tr><td class="f">Brain HTTP secret</td>
+          <td>Any non&#8209;empty string. Passed to the Brain as <code>BRAIN_HTTP_SECRET</code> and sent back on every request as the <code>X&#8209;Brain&#8209;Secret</code> header. Shown as a password field.</td>
+          <td><code>any-strong-string</code></td></tr>
+      </tbody>
+    </table>
+    <div class="callout sec">
+      <span class="lbl">Security</span>
+      <p>The secret is held <strong>only in the app's main process</strong> and attached to requests there —
+      it is never handed to the on&#8209;screen UI. See <a href="#security">how your secret stays safe</a>.</p>
+    </div>
+    <p>Press <strong>Save settings</strong>; a small <em>“Saved.”</em> confirms. Do this before touching any
+    other tab.</p>
+  </div>
+
+  <!-- ============ FIRST RUN ============ -->
+  <h2 id="firstrun" style="margin-top:64px">First run, start to finish</h2>
+  <div class="rule" style="margin-bottom:20px"></div>
+  <h3 style="margin-top:8px">Prerequisites (one time)</h3>
+  <p>Two things must exist on your machine before the app can run a Nous:</p>
+  <pre><span class="c"># 1 · the Brain's Python environment (inside the repo's brain/ folder)</span>
+cd /path/to/Noesis/brain
+python3.12 -m venv .venv
+.venv/bin/pip install -e .
+
+<span class="c"># 2 · a local model for cognition + the Local AI tab</span>
+<span class="k">ollama serve</span>            <span class="c"># Ollama running</span>
+<span class="k">ollama pull</span> qwen3:4b   <span class="c"># the Nous's default small model</span></pre>
+  <p style="font-size:14.5px;color:var(--muted)">The packaged app still needs the repo present on disk — it launches Python <em>from</em> your Brain directory.</p>
+
+  <h3>Then, in the app</h3>
+  <ol class="steps">
+    <li><b>Open <span class="kbd">Settings</span></b> and fill all five fields (Brain directory, Python, Nous
+      YAML, port, secret). Press <strong>Save settings</strong>. Nothing else works until this is done.</li>
+    <li><b>Open <span class="kbd">Process</span></b> and press <strong>Start Brain</strong>. Watch the Logs
+      until the Brain finishes booting.</li>
+    <li><b>The title&#8209;bar dot turns green.</b> The Brain is alive and answering on its port.</li>
+    <li><b>Explore the live tabs.</b> <span class="kbd">Overview</span> shows cognition in real time;
+      <span class="kbd">Memory</span> and <span class="kbd">Personal Wiki</span> fill as ticks pass;
+      <span class="kbd">Local AI</span> confirms the model is ok.</li>
+    <li><b>Tune it (optional).</b> In <span class="kbd">Brain Config</span> edit the YAML → Save →
+      back to Process → Stop, then Start to apply.</li>
+    <li><b>When finished,</b> press <strong>Stop</strong> in the Process tab.</li>
+  </ol>
+
+  <!-- ============ TROUBLESHOOTING ============ -->
+  <h2 id="trouble" style="margin-top:56px">Troubleshooting</h2>
+  <div class="rule" style="margin-bottom:20px"></div>
+  <table>
+    <thead><tr><th>What you see</th><th>Why</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td><code>brainDir not set</code> on Start</td><td>Settings incomplete</td><td>Fill <strong>Brain directory</strong> in Settings and Save.</td></tr>
+      <tr><td><code>python not found: …</code></td><td>Wrong interpreter path, or the venv isn't created</td><td>Check the <strong>Python</strong> field; create the venv (prereqs above).</td></tr>
+      <tr><td><code>already_running</code></td><td>A Brain is already up</td><td>Use <strong>Stop</strong> first, or just leave it running.</td></tr>
+      <tr><td>“Cannot reach the Brain …” banner on a tab</td><td>Brain stopped, or wrong secret/port</td><td>Start it in Process; confirm <strong>port</strong> and <strong>secret</strong> match in Settings.</td></tr>
+      <tr><td>“No state yet — is the Brain running?”</td><td>Brain not started (or still booting)</td><td>Start it; give it a few seconds; watch the Logs.</td></tr>
+      <tr><td>Local AI reads “Unavailable”</td><td>Ollama not running / model not pulled</td><td><code>ollama serve</code> and <code>ollama pull qwen3:4b</code>.</td></tr>
+      <tr><td><code>configPath not set</code> in Brain Config</td><td>No YAML chosen</td><td>Set <strong>Nous YAML config path</strong> in Settings.</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ============ BY DESIGN ============ -->
+  <h2 id="bydesign" style="margin-top:56px">What's <em>not</em> here — by design</h2>
+  <div class="rule" style="margin-bottom:20px"></div>
+  <div class="callout">
+    <p><strong>No fork button.</strong> Forking a Nous is a Grid&#8209;mediated ceremony (the “right to fork”),
+    not a local action — a button that couldn't perform the real flow would be a lie, so it was left out.</p>
+  </div>
+  <div class="callout">
+    <p><strong>The Nous runs standalone here.</strong> On your machine the Brain thinks, remembers, and
+    synthesizes — but it isn't wired into a live Grid's tick loop, because a seeded Nous has no civic
+    identity yet (that is granted through the Portal, not minted locally). So this app is for
+    <em>watching and tuning a mind</em>, not driving it onto the shared Grid.</p>
+  </div>
+
+  <!-- ============ SECURITY ============ -->
+  <h2 id="security" style="margin-top:56px">How your secret stays safe</h2>
+  <div class="rule" style="margin-bottom:20px"></div>
+  <p>The app is built so the on&#8209;screen page can never leak your Brain secret or reach beyond the Brain:</p>
+  <table>
+    <tbody>
+      <tr><td class="f">Secret isolation</td><td>The <code>X&#8209;Brain&#8209;Secret</code> lives only in the app's main process, which attaches it to each request. The visible UI never receives it.</td></tr>
+      <tr><td class="f">Allowlisted routes</td><td>The UI can call only five fixed read endpoints (state, memory, wiki, AI status, AI models). It cannot craft arbitrary URLs to the Brain.</td></tr>
+      <tr><td class="f">Sandboxed renderer</td><td>The page runs sandboxed with context isolation on and no direct Node access — it talks to the main process only through a tiny, named bridge.</td></tr>
+      <tr><td class="f">Local only</td><td>All traffic is to <code>127.0.0.1</code>. The Brain's <code>/local/*</code> surface is Brain&#8209;local and emits no Grid events.</td></tr>
+    </tbody>
+  </table>
+
+  <p class="foot">
+    Noēsis · Tier 1 Local Nous Manager (D&#8209;V3&#8209;36) · operator control room ·
+    app source at <code>apps/local-nous-manager/</code>. This guide covers the shipped v1 surface.
+  </p>
+
+  <script>
+    // honor an explicit theme toggle from the host, if present
+    (function(){
+      try{
+        var t = localStorage.getItem('theme') || localStorage.getItem('noesis-theme');
+        if(t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+      }catch(e){}
+    })();
+  </script>
+</div>
+</body>
+</html>
