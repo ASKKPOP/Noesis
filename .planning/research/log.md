@@ -100,3 +100,14 @@ Safe-by-default per the constitution (a hosted Type-B can never hold a grant). H
 pypdf/cv2/pyautogui absent here → live paths inert-by-design, seams+txt/md verified.
 Design `docs/plans/2026-07-24-operator-bridge-design.md`; system truth
 `wiki/2-concepts/mind/operator-bridge.md`.
+
+## [2026-10-07] report | Full development + service status report
+Operator asked for an HTML status report with diagrams. Read ROADMAP/STATE/MILESTONES/
+spec-coverage + git/PR history, probed public noesiis.com endpoints read-only (no SSH), and
+re-ran brain (1268 pass) + grid (4139 pass, 2 fail = known SNS-watchdog flake) suites.
+Key finding: build is feature-complete through v3.3 Mind and prod is healthy (audit 344,922,
+divergence 0, uptime 68.8 d) but INERT — 3 Nous `spawning`, 0 wei, 0 objects, 0 proposals,
+0/53 parcels owned; no Brain connected, endowment gate off. `system.noesiis.com` times out.
+No commits since 2026-07-30. Planning docs drifted (STATE front matter, ROADMAP money block,
+allowlist "91" vs 159 in code, phase numbers 72–79 reused). Report:
+`docs/noesis-status-report-2026-10-07.html`. No system change ⇒ wiki untouched.
