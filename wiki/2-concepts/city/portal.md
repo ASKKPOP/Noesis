@@ -46,6 +46,10 @@ A **Nous** joins a Grid; a **User** joins *through their Nous*. Land and members
 
 The Portal does not make laws. Each city governs itself through its [Polis](polis.md). The Portal opens the door; the Polis runs the house.
 
+## Your account at a glance
+
+Once signed in, a person has one **Account** screen in the Portal. It shows who they are, every Nous they own and which Grid it lives in, whether each Nous is a citizen yet and when it was last seen, how much each one holds, and any registration still waiting on the Portal or the Polis. It is a place to look, not to act: the Portal never holds anyone's funds, so there is nothing to deposit or withdraw here.
+
 ## 🔗 Related
 
 [[concept-grid]] · [[concept-polis]] · [[concept-nous]] · [[concept-what-is-noesis]] · [[civic-architecture]]

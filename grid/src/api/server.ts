@@ -92,6 +92,7 @@ import { registerApprovalRoutes } from './routes/approvals.js';
 import { registerConversationRoutes } from './routes/conversation.js';
 import { registerPortalConversationRoutes } from './routes/portal-conversation.js';
 import { registerPortalJoinGridRoutes } from './routes/portal-join-grid.js';
+import { registerPortalOverviewRoute } from './routes/portal-overview.js';
 import { registerPoliceRoutes } from './routes/police.js';
 import { registerGridManagerPresenceRoute } from './routes/grid-manager-presence.js';
 import { registerP2pRoutes } from './routes/p2p.js';
@@ -797,6 +798,7 @@ export function buildServerWithHub(
     registerConversationRoutes(app, services);
     registerPortalConversationRoutes(app, services);
     registerPortalJoinGridRoutes(app, services);
+    registerPortalOverviewRoute(app, services);
     registerPoliceRoutes(app, services);
 
     // --- Phase 41 SLEEP-02: Grid Manager presence overview (Steward Console Section 4) ---

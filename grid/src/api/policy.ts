@@ -185,6 +185,9 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // Portal human profile — uses portal session auth internally
     'GET /api/v1/portal/human/me/progress': 'public',
     'GET /api/v1/portal/human/me/nous': 'public',
+    // Phase 56 — Portal account overview. 'public' at the DID layer; the route itself
+    // requires the Portal session cookie and scopes every read to that human.
+    'GET /api/v1/portal/me/overview': 'public',
 
     // Portal activity
     'GET /api/v1/portal/activity': 'public',

@@ -120,3 +120,14 @@ since PR #19 (159 members / 1075 lines); Brain compose `GRID_URL` default was th
 Diagnosed `system.noesiis.com`: A record → dead IPs (no TCP 80/443), vhost fine, live cert lacks
 the name. Pitfall carried forward: phase numbers 72–79 are shared by three tracks — cite the
 track name; next free phase number is 89.
+
+## [2026-10-07] apply | Activation builds — Groups 71, Forest chat, task scheduler, Portal overview, v3.0 re-scope
+Shipped on `feat/activation-builds`: Group detail route + `/grid/groups`; `/portal/chat` on the
+persistent thread (reply persisted server-side); Brain `scheduler/` TaskQueue + `brain.scheduleTask`;
+`GET /api/v1/portal/me/overview` + `/portal/dashboard`; D-V3-38 (40b + 52 → v3.1). Allowlist +0,
+no migration. Findings carried forward: (1) the portal chat reply is a Grid-side Ollama persona,
+not the Nous's Brain — a Brain cannot read its human's messages yet, and the two conversation
+routes key the human differently (`did:noesis:human…` vs `did:civic:noesis:human:`); (2) Next.js
+page files may only export the page — put helpers in a sibling module; (3) `/portal/status` shows
+hardcoded service statuses (violates no-mock; not fixed here); (4) the orbital map does not render
+Groups at all, so "click a Group on the map" needs map work first.
