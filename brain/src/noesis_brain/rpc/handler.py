@@ -161,6 +161,7 @@ class BrainHandler:
         self._pending_distill: list[str] = []
         # W-B: social/civic cycle — outreach, teaching, lore, commit-reveal voting.
         self._last_social_tick = -10_000
+        self._last_conversation_tick = -10_000
         self._governance_state = GovernanceState()
         # Duplicate-action guards (surfaced by the 2026-07-02 liveness run: the
         # real model bid the SAME open RFP every cycle and re-joined the same
@@ -1253,6 +1254,66 @@ class BrainHandler:
         except Exception as exc:  # never let distillation take down sleep
             log.warning("[Brain] skill distillation failed: %s", exc)
 
+    # ── Brain inbox: answer the humans who wrote to this Nous ─────────────────
+    _CONVERSATION_COOLDOWN_TICKS = 1
+    _CONVERSATION_REPLIES_PER_CYCLE = 2
+
+    def _should_run_conversation_cycle(self, tick: int) -> bool:
+        """Live-wired minds only. Checked every tick: the read is one cheap GET and
+        the model is only woken when someone is actually waiting."""
+        if self._grid_wire_client is None or self.llm is None:
+            return False
+        return (tick - self._last_conversation_tick) >= self._CONVERSATION_COOLDOWN_TICKS
+
+    async def _run_conversation_cycle(self, tick: int) -> None:
+        """Read the Portal threads waiting on this Nous and answer them in its own
+        voice (psyche + mood + goals), so a person talking to a Nous in the Portal
+        hears the Nous itself. The exchange is private: it goes to the Grid's
+        conversation thread and into Brain-local memory, never onto the audit
+        chain. Background; never fatal."""
+        wire = self._grid_wire_client
+        fetch = getattr(wire, "fetch_conversation_inbox", None)
+        if fetch is None:
+            return
+        try:
+            threads = await fetch() or []
+            if not threads or not await self._mind_awake(tick):
+                return
+            system_prompt = build_system_prompt(
+                self.psyche, self.thymos.mood, self.telos,
+                grid_name=self.grid_name, location=self.location,
+            )
+            for thread in threads[: self._CONVERSATION_REPLIES_PER_CYCLE]:
+                human_did = str(thread.get("human_did", ""))
+                messages = [m for m in (thread.get("messages") or []) if m.get("text")]
+                if not human_did or not messages or messages[-1].get("sender") != "human":
+                    continue
+                transcript = "\n".join(
+                    f"{'Human' if m.get('sender') == 'human' else self.psyche.name}: {m['text']}"
+                    for m in messages
+                )
+                response = await self.llm.generate(
+                    f"A human is talking with you in the Portal. The conversation so far:\n\n"
+                    f"{transcript}\n\n"
+                    f"Reply to their last message in character as {self.psyche.name}. "
+                    f"Plain prose, 1-4 sentences. Give only your reply.",
+                    GenerateOptions(
+                        system_prompt=system_prompt, temperature=0.7,
+                        max_tokens=1024, purpose="conversation", think=True,
+                    ),
+                )
+                reply_text = response.text.strip()
+                if not reply_text:
+                    continue
+                if await wire.post_conversation_reply(human_did, reply_text):
+                    if self.memory is not None and hasattr(self.memory, "record_event"):
+                        self.memory.record_event(
+                            content=f"A human told me: \"{messages[-1]['text']}\" — I answered: \"{reply_text}\"",
+                            source_did=self.did, tick=tick,
+                        )
+        except Exception:
+            log.debug("conversation cycle skipped", exc_info=True)
+
     # ── W-B: social/civic cycle ───────────────────────────────────────────────
     _SOCIAL_COOLDOWN_TICKS = 60
 
@@ -1631,6 +1692,12 @@ class BrainHandler:
             self._last_social_tick = tick
             import asyncio as _asyncio
             _asyncio.create_task(self._run_social_cycle(tick))
+        # Brain inbox: answer humans waiting in the Portal. The awake-probe happens
+        # inside the cycle, only when a thread is actually waiting.
+        if self._should_run_conversation_cycle(tick):
+            self._last_conversation_tick = tick
+            import asyncio as _asyncio
+            _asyncio.create_task(self._run_conversation_cycle(tick))
         # W-A3: reflection cadence — every tick counts (the counter must advance even
         # while resting); the LLM-driven reflection dispatch itself waits for the mind.
         if self._reflection is not None:

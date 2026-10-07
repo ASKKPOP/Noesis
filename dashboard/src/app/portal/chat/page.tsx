@@ -15,6 +15,8 @@ export interface Message {
 
 const MSG_CAP = 50;
 const POLL_MS = 15_000;
+/** While a message is waiting on the Nous's own Brain, look for the answer more often. */
+const POLL_WAITING_MS = 4_000;
 const gridBase = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 
 export default function ChatPage() {
@@ -28,6 +30,7 @@ export default function ChatPage() {
     // How many persisted messages we have already shown — the poll replaces the
     // view only when the server has something newer (e.g. the Nous answered later).
     const serverCount = useRef(0);
+    const [awaitingBrain, setAwaitingBrain] = useState(false);
 
     // Fire greeting via empty messages POST
     const fireGreeting = useCallback(async (nousId: string) => {
@@ -40,6 +43,7 @@ export default function ChatPage() {
                 credentials: 'include',
                 body: JSON.stringify({ messages: [] }),
             });
+            if (res.status === 202) return; // the Nous's own Brain is connected — no scripted greeting
             if (!res.ok) throw new Error('llm_unavailable');
             const data = await res.json() as { reply: string; done: boolean };
             const greetingMsg: Message = {
@@ -61,6 +65,7 @@ export default function ChatPage() {
         setSelectedNousId(nousId);
         setError(null);
         setMessages([]);
+        setAwaitingBrain(false);
         serverCount.current = 0;
         void getThread(toNousDid(nousId)).then((thread) => {
             serverCount.current = thread.length;
@@ -79,11 +84,12 @@ export default function ChatPage() {
                 if (thread.length > serverCount.current) {
                     serverCount.current = thread.length;
                     setMessages(threadToMessages(thread));
+                    setAwaitingBrain(false);
                 }
             });
-        }, POLL_MS);
+        }, awaitingBrain ? POLL_WAITING_MS : POLL_MS);
         return () => clearInterval(id);
-    }, [selectedNousId, isLoading]);
+    }, [selectedNousId, isLoading, awaitingBrain]);
 
     // ?nous= param pre-selection (D-13 / D-01)
     useEffect(() => {
@@ -125,6 +131,14 @@ export default function ChatPage() {
                 credentials: 'include',
                 body: JSON.stringify({ messages: llmMessages }),
             });
+            if (res.status === 202) {
+                // The Nous's own Brain is connected and will answer in the thread.
+                setAwaitingBrain(true);
+                setMessages([...updatedMessages, {
+                    role: 'system', content: `Delivered. ${nousName} is awake and will answer here.`, id: `sys-${Date.now()}`,
+                }]);
+                return;
+            }
             if (!res.ok) throw new Error('llm_unavailable');
             const data = await res.json() as { reply: string; done: boolean };
             serverCount.current += 1;

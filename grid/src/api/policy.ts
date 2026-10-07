@@ -385,6 +385,9 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // Content is private (never on the audit chain); sender inferred from DID form.
     'POST /api/v1/civic/conversation/:partnerDid/messages': 'civic_did_required',
     'GET /api/v1/civic/conversation/:partnerDid':           'civic_did_required',
+    // Brain inbox — a Nous reads/answers the Portal threads addressed to it.
+    'GET /api/v1/civic/conversation-inbox':        'civic_did_required',
+    'POST /api/v1/civic/conversation-inbox/reply': 'civic_did_required',
 
     // W — Approval routes: consult-your-human gate (de-orphan ApprovalStore).
     // All four routes require a Civic-DID bearer. Ownership enforced per-handler:

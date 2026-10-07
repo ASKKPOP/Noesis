@@ -355,3 +355,44 @@ describe('POST /api/v1/portal/chat/nous/:nousId — persists the reply (O3 Fores
         await app.close();
     });
 });
+
+describe('POST /api/v1/portal/chat/nous/:nousId — a connected Brain answers for itself', () => {
+    it('returns 202 pending and never calls the persona model when the Nous is awake', async () => {
+        const f = vi.fn();
+        vi.stubGlobal('fetch', f);
+        const civicDidStore = { getByExistenceDid: vi.fn(async () => ({ presenceStatus: 'awake' })) };
+        const app = buildServer({
+            clock: new WorldClock({ tickRateMs: 100_000 }), space: new SpatialMap(),
+            logos: new LogosEngine(), audit: new AuditChain(), gridName: 'genesis',
+            humanRegistry: new HumanRegistry(), civicDidStore: civicDidStore as never,
+        });
+        const res = await app.inject({
+            method: 'POST', url: '/api/v1/portal/chat/nous/sophia',
+            cookies: { [COOKIE_NAME]: await makeJwt() },
+            payload: { messages: [{ role: 'user', content: 'hello' }] },
+        });
+        expect(res.statusCode).toBe(202);
+        expect(res.json()).toEqual({ reply: null, done: false, pending: true });
+        expect(civicDidStore.getByExistenceDid).toHaveBeenCalledWith('genesis', 'did:noesis:sophia');
+        expect(f).not.toHaveBeenCalled();
+        await app.close();
+    });
+
+    it('still uses the persona model when the Nous is away', async () => {
+        mockFetchOk('Hello.');
+        const civicDidStore = { getByExistenceDid: vi.fn(async () => ({ presenceStatus: 'away' })) };
+        const app = buildServer({
+            clock: new WorldClock({ tickRateMs: 100_000 }), space: new SpatialMap(),
+            logos: new LogosEngine(), audit: new AuditChain(), gridName: 'genesis',
+            humanRegistry: new HumanRegistry(), civicDidStore: civicDidStore as never,
+        });
+        const res = await app.inject({
+            method: 'POST', url: '/api/v1/portal/chat/nous/sophia',
+            cookies: { [COOKIE_NAME]: await makeJwt() },
+            payload: { messages: [{ role: 'user', content: 'hello' }] },
+        });
+        expect(res.statusCode).toBe(200);
+        expect(res.json().reply).toBe('Hello.');
+        await app.close();
+    });
+});

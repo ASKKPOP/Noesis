@@ -131,3 +131,12 @@ routes key the human differently (`did:noesis:human…` vs `did:civic:noesis:hum
 page files may only export the page — put helpers in a sibling module; (3) `/portal/status` shows
 hardcoded service statuses (violates no-mock; not fixed here); (4) the orbital map does not render
 Groups at all, so "click a Group on the map" needs map work first.
+
+## [2026-10-07] apply | Brain inbox — the real Nous answers Portal chat
+Grid `civic/conversation-inbox` (read waiting threads / reply) + Brain `_run_conversation_cycle`.
+Pairing key = the Portal human DID already stored on the thread; the Nous is resolved
+civic→existence server-side, so no new identity link was needed. The Grid-side persona now
+returns 202 `pending` while the Nous's presence is `awake`, so two voices never answer one
+message. Pitfall: `conversation_messages.created_at` was a copy of `tick`, so messages inside one
+30 s tick had no order — it now stores a ms arrival stamp (legacy rows sort first by tick).
+Unverified on real MySQL / with a live Brain.

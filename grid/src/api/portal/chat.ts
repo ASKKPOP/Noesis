@@ -206,6 +206,19 @@ export function registerPortalChatRoutes(
             if (!Array.isArray(messages)) return reply.status(400).send({ error: 'invalid_request' });
             if (messages.length > 50) return reply.status(400).send({ error: 'too_many_messages' });
 
+            // 3b. If this Nous's own Brain is connected (presence 'awake'), it answers for
+            //     itself through the Brain inbox — the Grid-side persona must stay silent
+            //     rather than speak in its name. The client keeps polling the thread.
+            const nousDid = nousId.startsWith('did:') ? nousId : `did:noesis:${nousId}`;
+            try {
+                const civic = await services.civicDidStore?.getByExistenceDid(services.gridName ?? 'genesis', nousDid);
+                if (civic?.presenceStatus === 'awake') {
+                    return reply.status(202).send({ reply: null, done: false, pending: true });
+                }
+            } catch (err) {
+                console.error('[chat/nous] presence lookup failed:', err);
+            }
+
             // 4. Ollama non-streaming call (same pattern as /onboard)
             const ollamaHost = process.env['OLLAMA_HOST'] ?? 'http://localhost:11434';
             const ollamaModel = process.env['OLLAMA_MODEL'] ?? 'qwen3:4b';
@@ -251,7 +264,6 @@ export function registerPortalChatRoutes(
             //     and other devices. The human's own message is persisted by the client via
             //     POST /api/v1/portal/conversation/:nousId/messages. Never fails the reply.
             if (messages.length > 0 && services.pool) {
-                const nousDid = nousId.startsWith('did:') ? nousId : `did:noesis:${nousId}`;
                 try {
                     await new ConversationStore(services.pool).postMessage({
                         gridName: services.gridName ?? 'genesis', messageId: crypto.randomUUID(),
