@@ -16,7 +16,8 @@ stopped_at: >-
   design. 45 new tests, brain suite 1271 green. Honesty: pypdf/cv2/pyautogui absent here → live
   PDF/camera/GUI paths inert-by-design; gate/journal/registry + notebook txt/md + all seam/validation
   logic verified. Design `docs/plans/2026-07-24-operator-bridge-design.md`; wiki
-  `wiki/2-concepts/mind/operator-bridge.md`. RESUME AT: open a PR for the branch, or Phase 76b (real
+  `wiki/2-concepts/mind/operator-bridge.md`. PR #22 MERGED 2026-07-30 (status re-verified 2026-10-07). RESUME AT: activation — see
+  `docs/noesis-open-items-solutions-2026-10-07.html` — or Phase 76b (real
   cv2/pyautogui verification on operator hardware) if desired. NOTE: v3.2 Money 62.5-04/05 were found
   ALREADY COMPLETE (PRs #16/#17 merged 2026-07-11, Issue #9 closed; Phase 62 + 63-core also merged) —
   the earlier "unblocked/pending" money pointer below was stale and is corrected in Current focus.
@@ -24,10 +25,10 @@ stopped_at: >-
 last_updated: "2026-07-24T00:00:00.000Z"
 progress:
   total_phases: 25
-  completed_phases: 12
+  completed_phases: 22
   total_plans: 51
   completed_plans: 51
-  percent: 48
+  percent: 88
 ---
 
 # Project State
@@ -39,7 +40,7 @@ See: .planning/PROJECT.md (updated 2026-05-25 — v3.0 Polis current milestone b
 **Core value:** The first persistent Grid where Nous actually live — evolving into a digital city with civic institutions where Nous self-govern, trade, learn, and form communities while preserving substrate sovereignty (local Brain) under a constitutional operator framework.
 **Current milestone:** v3.0 — Polis (Civic City)
 **Previous milestone:** v2.6 Resilience & Observability — SHIPPED 2026-05-25 (5 phases + 2 followups, allowlist 56)
-**Current focus:** v3.3 Mind — **all of it shipped.** ✅ Phases 72–74 in-world faculties (aisthesis/praxis/synopsis) shipped 2026-07-10 + merged (PR #13) + deployed. ✅ **Phase 75 Tier-1 Local Nous Manager desktop app** shipped 2026-07-12 (`apps/local-nous-manager/` Electron+React+Vite; Brain `/local/*` inspect endpoints; e2e-verified; fork button cut per no-mock rule; **packaged 2026-07-13 as a pure macOS app** — arm64 DMG + ad-hoc-sealed `.app`, installed to `/Applications`). ✅ **Phase 76 operator-bridge providers shipped 2026-07-24** (unheld by operator): `brain/src/noesis_brain/bridge/` — Type-A-only, off-by-default consent gate + local digest-only journal + registry + 3 providers (notebook→synopsis, supervision→aisthesis, sim-use→praxis with allowlist+money-guard+dry-run). Additive wiring, allowlist +0, state hash 4, brain suite **1271 green** (+45). Branch `plan/phase-76-operator-bridge` (pushed; PR pending). Designs: `docs/plans/2026-07-10-nous-inworld-faculties-design.md`, `2026-07-12-local-nous-manager-design.md`, `2026-07-24-operator-bridge-design.md`.
+**Current focus:** v3.3 Mind — **all of it shipped.** ✅ Phases 72–74 in-world faculties (aisthesis/praxis/synopsis) shipped 2026-07-10 + merged (PR #13) + deployed. ✅ **Phase 75 Tier-1 Local Nous Manager desktop app** shipped 2026-07-12 (`apps/local-nous-manager/` Electron+React+Vite; Brain `/local/*` inspect endpoints; e2e-verified; fork button cut per no-mock rule; **packaged 2026-07-13 as a pure macOS app** — arm64 DMG + ad-hoc-sealed `.app`, installed to `/Applications`). ✅ **Phase 76 operator-bridge providers shipped 2026-07-24** (unheld by operator): `brain/src/noesis_brain/bridge/` — Type-A-only, off-by-default consent gate + local digest-only journal + registry + 3 providers (notebook→synopsis, supervision→aisthesis, sim-use→praxis with allowlist+money-guard+dry-run). Additive wiring, allowlist +0, state hash 4, brain suite **1271 green** (+45). Branch `plan/phase-76-operator-bridge` — **merged as PR #22 on 2026-07-30**. Designs: `docs/plans/2026-07-10-nous-inworld-faculties-design.md`, `2026-07-12-local-nous-manager-design.md`, `2026-07-24-operator-bridge-design.md`.
 **Money-status correction (2026-07-24):** v3.2 Money **62.5-04/05 are DONE** (PRs #16/#17 merged 2026-07-11 — `transferWei` removed, faucet zeroed v74, `did:noesis:system:treasury` retired v75, CI gate `check-ledger-b-money.mjs`, Issue #9 closed). Phase 62 wallet-proof (PR #19) + Phase 63 on-chain settlement core (PR #20) also merged. The header's earlier "62.5-04/05 unblocked/pending" was stale (written 2026-07-10, before the merges). Remaining Money work: Phases 64–66 (on-chain treasury/Type-B, land/labor-credit, cleanup+rename) — not started.
 
 ## Current Position

@@ -45,7 +45,9 @@ services:
       # ── Grid connection ───────────────────────────────────────────────────
       # GRID_URL — public Grid endpoint. MUST be https:// or wss:// — the Brain
       # validates the scheme at startup and exits on plain http:// (WIRE-01).
-      GRID_URL: ${GRID_URL:-https://noesiis.com}
+      # Use the API hostname: the apex (noesiis.com) serves the dashboard and
+      # 404s every /api/v1/* path.
+      GRID_URL: ${GRID_URL:-https://api.noesiis.com}
       # GRID_NAME — which Grid this Nous lives in (v3.0 ships one: Genesis).
       GRID_NAME: ${GRID_NAME:-Genesis}
       # NOUS_REGION — starting region label used at Brain boot.

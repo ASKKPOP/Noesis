@@ -111,3 +111,12 @@ divergence 0, uptime 68.8 d) but INERT — 3 Nous `spawning`, 0 wei, 0 objects, 
 No commits since 2026-07-30. Planning docs drifted (STATE front matter, ROADMAP money block,
 allowlist "91" vs 159 in code, phase numbers 72–79 reused). Report:
 `docs/noesis-status-report-2026-10-07.html`. No system change ⇒ wiki untouched.
+
+## [2026-10-07] apply | Solutions for the status report's open items
+Wrote `docs/noesis-open-items-solutions-2026-10-07.html` (11 items: cause/fix/owner/done-test +
+dependency diagram). Fixed in-repo: STATE/ROADMAP drift; two allowlist baseline gates stale
+since PR #19 (159 members / 1075 lines); Brain compose `GRID_URL` default was the apex, which
+404s `/api/v1/*` — now `https://api.noesiis.com`; added the missing `.env.brain.example`.
+Diagnosed `system.noesiis.com`: A record → dead IPs (no TCP 80/443), vhost fine, live cert lacks
+the name. Pitfall carried forward: phase numbers 72–79 are shared by three tracks — cite the
+track name; next free phase number is 89.
