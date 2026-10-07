@@ -403,6 +403,7 @@ def create_brain_app(
     rpc.register("brain.queryMemory", handler.query_memory)
     rpc.register("brain.forceTelos", handler.force_telos)
     rpc.register("brain.scheduleReminder", handler.schedule_reminder)
+    rpc.register("brain.scheduleTask", handler.schedule_task)
 
     return BrainApp(handler=handler, rpc=rpc, nous_name=nous_name)
 

@@ -66,6 +66,8 @@ events**, and takes no economic action. Task payloads never leave the Brain — 
 Nous's public state shows only how many tasks are in each status and the next due
 tick. It is not part of the Nous's state hash.
 
+Today a task enters the queue through the Brain's own local interface, the same way a reminder does.
+
 Not built yet: the Nous *choosing* to schedule a task from its own reasoning, and
 task kinds that run real work (such as a plan → build → QA run).
 

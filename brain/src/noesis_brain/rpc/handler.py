@@ -528,6 +528,29 @@ class BrainHandler:
         reminder = self._reminders.schedule(note, due_tick=due_tick, condition=condition)
         return {"ok": True, "id": reminder.id, "due_tick": reminder.due_tick}
 
+    def schedule_task(self, params: dict[str, Any]) -> dict[str, Any]:
+        """RPC: queue a self-scheduled task (spec §3 Job Scheduler, O1b).
+
+        params: {kind, due_tick, payload?: dict, priority?: int}
+        """
+        if self._task_queue is None:
+            return {"ok": False, "error": "scheduler_disabled"}
+        kind = str(params.get("kind", "")).strip()
+        if kind not in self._TASK_DISPATCH:
+            return {"ok": False, "error": "unknown_kind"}
+        if params.get("due_tick") is None:
+            return {"ok": False, "error": "no_due_tick"}
+        payload = params.get("payload")
+        task_id = self._task_queue.enqueue(
+            kind,
+            payload if isinstance(payload, dict) else {},
+            due_tick=int(params["due_tick"]),
+            priority=int(params.get("priority", 0)),
+        )
+        if task_id is None:
+            return {"ok": False, "error": "queue_full"}
+        return {"ok": True, "id": task_id}
+
     def _reminder_context(self, tick: int) -> dict[str, float]:
         """Signals a condition reminder can fire on: the tick + current drive levels."""
         ctx: dict[str, float] = {"tick": float(tick)}

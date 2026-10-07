@@ -131,3 +131,23 @@ async def test_get_state_snapshot_and_restart(tmp_path):
     assert h2.get_state()["scheduler"]["next_due_tick"] == 40
     await h2.on_tick({"tick": 40})
     assert "Scheduled task: after restart" in _contents(mem)
+
+
+@pytest.mark.asyncio
+async def test_schedule_task_rpc_enqueues_and_runs(tmp_path):
+    mem = MemoryStream(MemoryStore(":memory:"))
+    h = _handler(mem, scheduler_db_dir=str(tmp_path))
+    result = h.schedule_task({"kind": "remember", "due_tick": 3, "payload": {"note": "file the report"}})
+    assert result["ok"] is True
+
+    await h.on_tick({"tick": 3})
+    assert h._task_queue.get(result["id"]).status == "done"
+    assert "Scheduled task: file the report" in _contents(mem)
+
+
+def test_schedule_task_rpc_rejects_bad_requests(tmp_path):
+    mem = MemoryStream(MemoryStore(":memory:"))
+    assert _handler(mem).schedule_task({"kind": "remember", "due_tick": 1})["error"] == "scheduler_disabled"
+    h = _handler(mem, scheduler_db_dir=str(tmp_path))
+    assert h.schedule_task({"kind": "trade", "due_tick": 1})["error"] == "unknown_kind"
+    assert h.schedule_task({"kind": "remember"})["error"] == "no_due_tick"
