@@ -100,3 +100,12 @@ Safe-by-default per the constitution (a hosted Type-B can never hold a grant). H
 pypdf/cv2/pyautogui absent here → live paths inert-by-design, seams+txt/md verified.
 Design `docs/plans/2026-07-24-operator-bridge-design.md`; system truth
 `wiki/2-concepts/mind/operator-bridge.md`.
+
+## [2026-10-07] apply | Portal Project Status page de-hardcoded (no-mock rule)
+`/portal/status` rendered invented service statuses/latencies and a roadmap frozen at
+Phase 22. Replaced with live public Grid reads (`/health/detailed`, `/api/v1/grid/status`,
+`/api/v1/system/map`, `/api/v1/grid/nous`) via new `dashboard/src/lib/api/grid-health.ts`;
+unanswered reads are shown as unanswered. Roadmap, latencies and the "no incidents" claim
+removed (no live source). Pitfall carried forward: `PortalAuthGate` login-gates the page on
+a Grid session, so a Grid outage redirects to sign-in before the outage state can render.
+System truth: `wiki/2-concepts/city/portal.md`.

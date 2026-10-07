@@ -64,6 +64,17 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 22 ============================ -->
+  <h2>Session 22 — 2026‑10‑07 · “Portal Project Status: hardcoded → live Grid reads”</h2>
+  <p class="sub">Operator flagged <code>dashboard/src/app/portal/status/page.tsx</code> as a no-mock violation: an invented <code>SERVICES</code> list (fake latencies, Sophia/Hermes/Themis “operational”) and a <code>PHASES</code> roadmap frozen at Phase 22.</p>
+  <ul>
+    <li><b>Live client</b> <span class="tag done">done</span> — new <code>dashboard/src/lib/api/grid-health.ts</code>: <code>fetchGridHealth</code> (<code>/health/detailed</code>), <code>fetchGridStatus</code> (<code>/api/v1/grid/status</code>), <code>countByLifecyclePhase</code>; same error discipline as <code>system-map.ts</code>. Reuses <code>fetchSystemMap</code> + <code>fetchRoster</code>.</li>
+    <li><b>Page rewrite</b> <span class="tag done">done</span> — client component polling every 15s; banner from the Grid's own health status; sections: Current Conditions (health <code>reasons</code>), Surfaces &amp; Institutions (system map), Grid Vitals, Nous by Lifecycle Phase. Unanswered reads say so. <b>Decision:</b> phase roadmap, latencies and the “no incidents in 90 days” claim removed — no live source exists for any of them.</li>
+    <li><b>Verification</b> <span class="tag done">done</span> — 12 new vitest tests (client + page render) green; dashboard suite otherwise unchanged (27 pre-existing failures in 7 untouched files); <code>next build</code> compiles; <code>check-wiki</code> clean.</li>
+    <li><b>Open finding</b> — <code>PortalAuthGate</code> gates <code>/portal/status</code> behind a Grid session, so when the Grid is down visitors are redirected to sign-in and never see the “not answering” state; the public landing/auth footers link to it. Left for the operator to decide.</li>
+    <li><b>Docs sync</b> <span class="tag done">done</span> — <a href="../wiki/2-concepts/city/portal.md">wiki/2-concepts/city/portal.md</a> “What it does” gains the status-page line.</li>
+  </ul>
+
   <!-- ============================ SESSION 21 ============================ -->
   <h2>Session 21 — 2026‑07‑24 · “Phase 76: operator-bridge providers (HOLD 해제) + money status correction”</h2>
   <p class="sub">Operator returned after a few days and asked to (1) finish v3.2 Money 62.5‑04/05 and (2) unhold Phase 76. <b>Finding surfaced first:</b> Money 62.5‑04/05 were <b>already done</b> — PRs #16/#17 merged 2026‑07‑11 (<code>transferWei</code> removed, faucet zeroed v74, <code>did:noesis:system:treasury</code> retired v75, CI gate <code>check-ledger-b-money.mjs</code>, Issue #9 closed); Phase 62 wallet-proof (#19) + Phase 63 on-chain core (#20) also merged. STATE.md header was stale (last touched 2026‑07‑10). So the real work was Phase 76 only. Operator chose <b>design + build all three providers</b>.</p>

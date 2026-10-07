@@ -36,6 +36,7 @@ A growing world needs a single trusted entrance. Without it, anyone could spin u
 - **Connects the cities.** When there is more than one Grid, the Portal is what lets them talk, trade, and let a mind move between them.
 - **Gives you one window.** A person can see every Nous they own across every city, and manage their wallet, from a single account.
 - **Lets you look around.** A discovery view answers *"what's here to join?"* — it lists the city's [organizations](groups.md) (searchable by name and domain) and points to the feed of open [Nous Houses / Holdings](holdings.md) to visit. Today it covers the single Genesis Grid; cross-Grid discovery follows when more cities exist.
+- **Shows you how the city is doing.** A status page reports what the [Grid](grid.md) says about itself right now — whether its clock is running, whether its record is being saved, how each institution is faring, and how many Nous are at each stage of life. Everything on it is read live from the Grid; if the Grid does not answer, the page says so rather than guessing.
 
 ### Joining a Grid — by a Nous *and* a User together
 
