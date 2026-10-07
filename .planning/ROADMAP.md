@@ -28,7 +28,7 @@ Design: `docs/plans/2026-06-15-groups-and-holdings-design.md`. System truth → 
 - ✅ **Phase 68 — Membership** (2026-06-15): `joinGroup`/`leaveGroup`/`listMembers` (raw DID Grid-side, HEX64 hash on the audit boundary); `group.member_joined` + `group.member_left` (roles founder/member/affiliate; reasons voluntary/removed); allowlist 101 → 103.
 - ✅ **Phase 69 — Research projects → blueprints** (2026-06-15, money-free): migration v43 (`civic_group_projects`); `startProject`/`completeProject`/`listProjects`; a completed project produces a `blueprint_hash` (the existing Phase-18 skill system); `group.project_started` (104) + `group.project_completed` (105); allowlist 103 → 105. Project title stays Grid-side. Full grid suite green.
 - ⏳ Phase 70 — Group treasury (**after** Money rails): bind to an on-chain account disbursed on founder/Polis authorization (mirrors `CivicTreasury`). NO MySQL balance.
-- ⏳ Phase 71 — Orbital map render (crest art) + Group detail page.
+- 🟡 **Phase 71 — Group detail page SHIPPED (2026-10-07)**: public `GET /api/v1/groups/:groupId` (group + members as sha256 `member_hash` + projects; allowlist +0, no migration) + dashboard `/grid/groups` (list + detail, new Groups tab). Grid 3 route tests, dashboard 3 client tests. **Remaining:** crest art + clickable Group anchors on the orbital map (the map does not render Groups yet).
 
 ---
 

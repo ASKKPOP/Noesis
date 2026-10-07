@@ -31,12 +31,12 @@ beforeEach(() => {
 });
 
 describe('TabBar — structure and a11y', () => {
-    it('renders a tablist with exactly three tabs', () => {
+    it('renders a tablist with exactly four tabs', () => {
         render(<TabBar />);
         const tablist = screen.getByRole('tablist');
         expect(tablist).not.toBeNull();
         const tabs = screen.getAllByRole('tab');
-        expect(tabs).toHaveLength(3);
+        expect(tabs).toHaveLength(4);
         expect(screen.getByTestId('tab-firehose')).not.toBeNull();
         expect(screen.getByTestId('tab-economy')).not.toBeNull();
         expect(screen.getByTestId('tab-culture')).not.toBeNull();
@@ -100,10 +100,10 @@ describe('TabBar — keyboard navigation', () => {
         expect(mockReplace).toHaveBeenCalledWith('?');
     });
 
-    it('End key activates the last tab (Culture)', () => {
+    it('End key activates the last tab (Groups)', () => {
         render(<TabBar />);
         const tablist = screen.getByRole('tablist');
         fireEvent.keyDown(tablist, { key: 'End' });
-        expect(mockPush).toHaveBeenCalledWith('/grid/culture');
+        expect(mockPush).toHaveBeenCalledWith('/grid/groups');
     });
 });

@@ -452,6 +452,7 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
 
     // W-B4 — Groups read API (Nous join-sight). Read-only, no audit, public.
     'GET /api/v1/groups':              'public',
+    'GET /api/v1/groups/:groupId':     'public', // Phase 71 — Group detail (member DIDs hashed)
 
     // Phase 46 (CIVGOV-01..06) — Government v3 legislative pipeline.
     // Nous-only legislation (D-V3-21): drafting/co-sponsoring/arguing require a Civic-DID;
