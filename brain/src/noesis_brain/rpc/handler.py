@@ -20,6 +20,7 @@ from noesis_brain.llm.types import GenerateOptions
 from noesis_brain.psyche.types import PersonalityDimension, Psyche
 from noesis_brain.prompts.system import build_system_prompt
 from noesis_brain.reminders import Reminder, ReminderCondition, ReminderStore
+from noesis_brain.scheduler import ScheduledTask, TaskQueue
 from noesis_brain.state_hash import compute_pre_deletion_state_hash
 from noesis_brain.telos.hashing import compute_active_telos_hash
 from noesis_brain.telos.manager import TelosManager
@@ -92,6 +93,7 @@ class BrainHandler:
         iris_db_dir: str | Path | None = None,   # Phase 17 D-17-14
         hypnos_db_dir: str | Path | None = None,  # Phase 16 D-16-02
         ledger_db_dir: str | Path | None = None,  # W-A2 (Mind) — goal→task ledger
+        scheduler_db_dir: str | Path | None = None,  # O1b — self-scheduled task queue (optional-dep)
     ) -> None:
         self.psyche = psyche
         self.thymos = thymos
@@ -126,6 +128,13 @@ class BrainHandler:
         self._bridge = bridge
         # Reminder & Wake-Up (spec §3): self-set, tick-scheduled reminders.
         self._reminders = ReminderStore()
+        # O1b Job Scheduler (spec §3): durable self-scheduled task queue (optional-dep,
+        # synopsis pattern). scheduler_db_dir=None → disabled (nothing is dispatched).
+        self._task_queue: TaskQueue | None = (
+            TaskQueue(db_path=Path(scheduler_db_dir), nous_did=self.did)
+            if scheduler_db_dir is not None
+            else None
+        )
         # Tool-loop activation (Phase 72b): when curious + a tool-capable model is
         # configured, a ticking Nous autonomously researches via the tool loop.
         self._last_tool_tick = -10_000
@@ -546,6 +555,62 @@ class BrainHandler:
                     tick=tick,
                 )
         return fired
+
+    # ── Job Scheduler (O1b, spec §3) ─────────────────────────────────────────
+    def _task_remember(self, task: ScheduledTask, tick: int) -> str | None:
+        """kind=remember: record the payload note to memory (like a fired reminder)."""
+        note = str(task.payload.get("note", "")).strip()
+        if not note:
+            return "empty_note"
+        if self.memory is None or not hasattr(self.memory, "record_event"):
+            return "no_memory"
+        self.memory.record_event(
+            content=f"Scheduled task: {note}", source_did=self.did, tick=tick,
+        )
+        return None
+
+    def _task_reminder(self, task: ScheduledTask, tick: int) -> str | None:
+        """kind=reminder: hand the note to the ReminderStore (payload due_tick, else now)."""
+        note = str(task.payload.get("note", "")).strip()
+        if not note:
+            return "empty_note"
+        self._reminders.schedule(note, due_tick=int(task.payload.get("due_tick", tick)))
+        return None
+
+    # kind → handler(task, tick) returning a failure reason, or None on success.
+    _TASK_DISPATCH = {"remember": _task_remember, "reminder": _task_reminder}
+
+    def _run_due_task(self, tick: int) -> None:
+        """Pop at most ONE due task and dispatch it by kind. Never raises: an
+        unknown kind or a handler error marks the task failed with a reason."""
+        if self._task_queue is None:
+            return
+        try:
+            due = self._task_queue.due(tick)
+            if not due:
+                return
+            task = due[0]
+            self._task_queue.mark_started(task.id)
+            run = self._TASK_DISPATCH.get(task.kind)
+            try:
+                reason = f"unknown_kind:{task.kind}" if run is None else run(self, task, tick)
+            except Exception as exc:
+                reason = f"error:{type(exc).__name__}"
+            if reason is None:
+                self._task_queue.mark_done(task.id)
+            else:
+                self._task_queue.mark_failed(task.id, reason)
+        except Exception:  # never let the scheduler take down the tick
+            log.debug("scheduled task skipped", exc_info=True)
+
+    def _scheduler_snapshot(self) -> dict[str, Any]:
+        """get_state snapshot of the task queue (counts by status + next due tick)."""
+        if self._task_queue is None:
+            return {"counts": {}, "next_due_tick": None}
+        return {
+            "counts": self._task_queue.counts(),
+            "next_due_tick": self._task_queue.next_due_tick(),
+        }
 
     # ── Local-AI rest gate (D-MIND-08) ────────────────────────────────────────
     async def _mind_awake(self, tick: int) -> bool:
@@ -1458,6 +1523,9 @@ class BrainHandler:
             tick = int(tick_raw) if tick_raw is not None else 0
         except (TypeError, ValueError):
             tick = 0
+        # O1b Job Scheduler (spec §3): run at most one due self-scheduled task. Before
+        # reminders, so a task that sets a reminder due now fires it this same tick.
+        self._run_due_task(tick)
         # Reminder & Wake-Up (spec §3): fire any self-set reminders now due.
         self._fire_due_reminders(tick)
         # Goal evolution (spec §3): demote long-stale, unprogressed goals so attention
@@ -2027,6 +2095,8 @@ class BrainHandler:
             "aisthesis": self.aisthesis.snapshot(),
             "praxis": self.praxis.snapshot(),
             "synopsis": self._synopsis_snapshot(),
+            # O1b — self-scheduled task queue (counts only; payloads stay Brain-local).
+            "scheduler": self._scheduler_snapshot(),
             # Phase 76 — operator bridge (grants + local audit digests).
             "bridge": self._bridge_snapshot(),
         }
