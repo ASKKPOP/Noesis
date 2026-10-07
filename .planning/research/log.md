@@ -106,6 +106,8 @@ Design `docs/plans/2026-07-24-operator-bridge-design.md`; system truth
 Phase 22. Replaced with live public Grid reads (`/health/detailed`, `/api/v1/grid/status`,
 `/api/v1/system/map`, `/api/v1/grid/nous`) via new `dashboard/src/lib/api/grid-health.ts`;
 unanswered reads are shown as unanswered. Roadmap, latencies and the "no incidents" claim
-removed (no live source). Pitfall carried forward: `PortalAuthGate` login-gates the page on
-a Grid session, so a Grid outage redirects to sign-in before the outage state can render.
+removed (no live source). `PortalAuthGate` login-gated the page on a Grid session, so a
+Grid outage redirected to sign-in before the outage state could render — operator approved
+making `/portal/status` public (public reads only). Pitfall carried forward: any page that
+must render during a Grid outage cannot sit behind the session gate.
 System truth: `wiki/2-concepts/city/portal.md`.
