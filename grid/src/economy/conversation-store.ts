@@ -28,11 +28,14 @@ export class ConversationStore {
         );
     }
 
-    /** Read the conversation between a human and a nous, oldest-first (bounded). */
+    /**
+     * Read the conversation between a human and a nous, oldest-first (bounded).
+     * Within one tick the human turn sorts before the nous reply (ENUM order).
+     */
     async listThread(gridName: string, humanDid: string, nousDid: string, limit = 200): Promise<ConversationMessageRow[]> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
             `SELECT message_id, sender, text, tick FROM conversation_messages
-             WHERE grid_name = ? AND human_did = ? AND nous_did = ? ORDER BY tick ASC LIMIT ?`,
+             WHERE grid_name = ? AND human_did = ? AND nous_did = ? ORDER BY tick ASC, sender ASC LIMIT ?`,
             [gridName, humanDid, nousDid, limit],
         );
         return rows as unknown as ConversationMessageRow[];
