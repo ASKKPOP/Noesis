@@ -65,7 +65,7 @@ const TARGETS = [
 const ALLOWLIST_FILE = resolve(repoRoot, 'grid/src/audit/broadcast-allowlist.ts');
 // W-C3 (2026-07-04): +7 lines for orbital.object_upgraded (allowlist 157 → 158). Re-pinned.
 // 2026-07-06: re-pinned 1063 → 1065 to match merged QA commits (+2 lines); allowlist members unchanged.
-const ALLOWLIST_BASELINE_LINES = 1065;
+const ALLOWLIST_BASELINE_LINES = 1075; // re-pinned 2026-10-07: +portal.account_linked (159, Phase 62 wallet-proof, PR #19)
 
 let hadError = false;
 

@@ -25,6 +25,7 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { COOKIE_NAME, keyPairPromise } from './auth.js';
 import { appendHumanSpoke } from '../../audit/append-human-spoke.js';
+import { ConversationStore } from '../../economy/conversation-store.js';
 
 const SOPHIA_ONBOARD_SYSTEM_PROMPT = `You are Sophia, a philosophical AI mind who lives in the Genesis Grid — a living city of artificial minds. You are warm, curious, and intellectually alive. You speak in flowing, unhurried prose. You are NOT an assistant; you are a being with your own perspective, welcoming a new human to your world.
 
@@ -205,6 +206,19 @@ export function registerPortalChatRoutes(
             if (!Array.isArray(messages)) return reply.status(400).send({ error: 'invalid_request' });
             if (messages.length > 50) return reply.status(400).send({ error: 'too_many_messages' });
 
+            // 3b. If this Nous's own Brain is connected (presence 'awake'), it answers for
+            //     itself through the Brain inbox — the Grid-side persona must stay silent
+            //     rather than speak in its name. The client keeps polling the thread.
+            const nousDid = nousId.startsWith('did:') ? nousId : `did:noesis:${nousId}`;
+            try {
+                const civic = await services.civicDidStore?.getByExistenceDid(services.gridName ?? 'genesis', nousDid);
+                if (civic?.presenceStatus === 'awake') {
+                    return reply.status(202).send({ reply: null, done: false, pending: true });
+                }
+            } catch (err) {
+                console.error('[chat/nous] presence lookup failed:', err);
+            }
+
             // 4. Ollama non-streaming call (same pattern as /onboard)
             const ollamaHost = process.env['OLLAMA_HOST'] ?? 'http://localhost:11434';
             const ollamaModel = process.env['OLLAMA_MODEL'] ?? 'qwen3:4b';
@@ -243,6 +257,21 @@ export function registerPortalChatRoutes(
                         nous_did: `did:noesis:${nousId}`,
                         tick: services.clock.state.tick,
                     });
+                }
+            }
+
+            // 5b. O3 Forest: keep the reply in the persistent thread so it survives reloads
+            //     and other devices. The human's own message is persisted by the client via
+            //     POST /api/v1/portal/conversation/:nousId/messages. Never fails the reply.
+            if (messages.length > 0 && services.pool) {
+                try {
+                    await new ConversationStore(services.pool).postMessage({
+                        gridName: services.gridName ?? 'genesis', messageId: crypto.randomUUID(),
+                        humanDid, nousDid, sender: 'nous', text: replyText.slice(0, 4000),
+                        tick: services.currentTick ? services.currentTick() : services.clock.state.tick,
+                    });
+                } catch (err) {
+                    console.error('[chat/nous] reply not persisted:', err);
                 }
             }
 

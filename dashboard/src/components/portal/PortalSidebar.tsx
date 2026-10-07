@@ -39,6 +39,7 @@ const NAV: NavSection[] = [
         label: 'Identity',
         items: [
             { href: '/portal/auth',    label: 'Sign In',   exact: true, guestOnly: true },
+            { href: '/portal/dashboard', label: 'Account', authOnly: true },
             { href: '/portal/profile', label: 'Profile' },
             { href: '/portal/wallet',  label: 'Wallet' },
         ],

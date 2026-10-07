@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useHumanAuthStore } from '@/lib/stores/human-auth-store';
 import NousSidebar from './NousSidebar';
 import ConversationPane from './ConversationPane';
+import { getThread, postMessage } from '@/lib/api/conversation';
+import { threadToMessages, toNousDid } from './thread';
 
 export interface Message {
     role: 'nous' | 'user' | 'system';
@@ -13,30 +14,23 @@ export interface Message {
 }
 
 const MSG_CAP = 50;
+const POLL_MS = 15_000;
+/** While a message is waiting on the Nous's own Brain, look for the answer more often. */
+const POLL_WAITING_MS = 4_000;
 const gridBase = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 
 export default function ChatPage() {
     const searchParams = useSearchParams();
-    const { currentUser } = useHumanAuthStore();
-    const humanDid = currentUser?.did ?? null;
 
     const [selectedNousId, setSelectedNousId] = useState<string | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Helper: get localStorage key
-    const storageKey = useCallback((nousId: string) =>
-        humanDid ? `noesis:chat:${humanDid}:did:noesis:${nousId}` : null,
-    [humanDid]);
-
-    // Helper: save to localStorage
-    const saveMessages = useCallback((nousId: string, msgs: Message[]) => {
-        const key = storageKey(nousId);
-        if (!key) return;
-        const capped = msgs.slice(-MSG_CAP);
-        localStorage.setItem(key, JSON.stringify(capped));
-    }, [storageKey]);
+    // How many persisted messages we have already shown — the poll replaces the
+    // view only when the server has something newer (e.g. the Nous answered later).
+    const serverCount = useRef(0);
+    const [awaitingBrain, setAwaitingBrain] = useState(false);
 
     // Fire greeting via empty messages POST
     const fireGreeting = useCallback(async (nousId: string) => {
@@ -49,6 +43,7 @@ export default function ChatPage() {
                 credentials: 'include',
                 body: JSON.stringify({ messages: [] }),
             });
+            if (res.status === 202) return; // the Nous's own Brain is connected — no scripted greeting
             if (!res.ok) throw new Error('llm_unavailable');
             const data = await res.json() as { reply: string; done: boolean };
             const greetingMsg: Message = {
@@ -57,28 +52,44 @@ export default function ChatPage() {
                 id: `nous-${Date.now()}`,
             };
             setMessages([greetingMsg]);
-            saveMessages(nousId, [greetingMsg]);
         } catch {
             const nousName = nousId.charAt(0).toUpperCase() + nousId.slice(1);
             setError(`${nousName} is unavailable right now — please try again.`);
         } finally {
             setIsLoading(false);
         }
-    }, [saveMessages]);
+    }, []);
 
-    // When Nous is selected: load localStorage, decide greeting
+    // When Nous is selected: load the persisted thread, decide greeting
     const handleSelectNous = useCallback((nousId: string) => {
         setSelectedNousId(nousId);
         setError(null);
-        const key = storageKey(nousId);
-        const stored = key ? localStorage.getItem(key) : null;
-        const history: Message[] = stored ? (JSON.parse(stored) as Message[]) : [];
-        setMessages(history);
-        // D-04 + Pitfall 4: Fire greeting ONLY when conversation is genuinely empty
-        if (history.length === 0) {
-            void fireGreeting(nousId);
-        }
-    }, [storageKey, fireGreeting]);
+        setMessages([]);
+        setAwaitingBrain(false);
+        serverCount.current = 0;
+        void getThread(toNousDid(nousId)).then((thread) => {
+            serverCount.current = thread.length;
+            // D-04 + Pitfall 4: Fire greeting ONLY when conversation is genuinely empty
+            if (thread.length === 0) void fireGreeting(nousId);
+            else setMessages(threadToMessages(thread));
+        });
+    }, [fireGreeting]);
+
+    // Pick up replies that arrive later (a Nous answering when it wakes).
+    useEffect(() => {
+        if (!selectedNousId) return;
+        const id = setInterval(() => {
+            if (isLoading) return;
+            void getThread(toNousDid(selectedNousId)).then((thread) => {
+                if (thread.length > serverCount.current) {
+                    serverCount.current = thread.length;
+                    setMessages(threadToMessages(thread));
+                    setAwaitingBrain(false);
+                }
+            });
+        }, awaitingBrain ? POLL_WAITING_MS : POLL_MS);
+        return () => clearInterval(id);
+    }, [selectedNousId, isLoading, awaitingBrain]);
 
     // ?nous= param pre-selection (D-13 / D-01)
     useEffect(() => {
@@ -91,16 +102,28 @@ export default function ChatPage() {
 
     const handleSendMessage = useCallback(async (text: string) => {
         if (!selectedNousId || isLoading) return;
+        const nousName = selectedNousId.charAt(0).toUpperCase() + selectedNousId.slice(1);
         const userMsg: Message = { role: 'user', content: text, id: `user-${Date.now()}` };
         const updatedMessages = [...messages, userMsg];
         setMessages(updatedMessages);
-        saveMessages(selectedNousId, updatedMessages);
         setIsLoading(true);
         setError(null);
+
+        // 1. Persist the human turn first — it must not depend on a live reply.
+        const saved = await postMessage(toNousDid(selectedNousId), text);
+        if (!saved.ok) {
+            setError('Your message was not saved. Sign in again and retry.');
+            setIsLoading(false);
+            return;
+        }
+        serverCount.current += 1;
+
+        // 2. Ask for a live reply. The route persists it; if nothing answers now,
+        //    the message stays delivered and the poll shows the reply when it comes.
         try {
-            // Build messages array for LLM — exclude system messages
             const llmMessages = updatedMessages
                 .filter(m => m.role !== 'system')
+                .slice(-MSG_CAP)
                 .map(m => ({ role: m.role === 'nous' ? 'assistant' : 'user', content: m.content }));
             const res = await fetch(`${gridBase}/api/v1/portal/chat/nous/${selectedNousId}`, {
                 method: 'POST',
@@ -108,23 +131,28 @@ export default function ChatPage() {
                 credentials: 'include',
                 body: JSON.stringify({ messages: llmMessages }),
             });
+            if (res.status === 202) {
+                // The Nous's own Brain is connected and will answer in the thread.
+                setAwaitingBrain(true);
+                setMessages([...updatedMessages, {
+                    role: 'system', content: `Delivered. ${nousName} is awake and will answer here.`, id: `sys-${Date.now()}`,
+                }]);
+                return;
+            }
             if (!res.ok) throw new Error('llm_unavailable');
             const data = await res.json() as { reply: string; done: boolean };
-            const nousMsg: Message = {
-                role: 'nous',
-                content: data.reply,
-                id: `nous-${Date.now()}`,
-            };
-            const finalMessages = [...updatedMessages, nousMsg];
-            setMessages(finalMessages);
-            saveMessages(selectedNousId, finalMessages);
+            serverCount.current += 1;
+            setMessages([...updatedMessages, { role: 'nous', content: data.reply, id: `nous-${Date.now()}` }]);
         } catch {
-            const nousName = selectedNousId.charAt(0).toUpperCase() + selectedNousId.slice(1);
-            setError(`${nousName} is unavailable right now — please try again.`);
+            setMessages([...updatedMessages, {
+                role: 'system',
+                content: `Delivered. ${nousName} is not answering right now and will see this on waking.`,
+                id: `sys-${Date.now()}`,
+            }]);
         } finally {
             setIsLoading(false);
         }
-    }, [selectedNousId, messages, isLoading, saveMessages]);
+    }, [selectedNousId, messages, isLoading]);
 
     // D-12: system message inserted after tip confirmed
     const handleTipConfirmed = useCallback((amount: number) => {
@@ -135,10 +163,8 @@ export default function ChatPage() {
             content: `✓ You sent ${amount} USDT to ${nousName}`,
             id: `sys-${Date.now()}`,
         };
-        const newMessages = [...messages, sysMsg];
-        setMessages(newMessages);
-        saveMessages(selectedNousId, newMessages);
-    }, [selectedNousId, messages, saveMessages]);
+        setMessages([...messages, sysMsg]);
+    }, [selectedNousId, messages]);
 
     // Chat page root — CRITICAL: height: 100% + overflow: hidden (Pitfall 2)
     return (

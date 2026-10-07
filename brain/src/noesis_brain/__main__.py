@@ -380,6 +380,9 @@ def create_brain_app(
         # W-A2 (Mind): the goal→task ledger persists next to nous.db so goal
         # pursuit survives restarts (ceaselessness lives in external state).
         ledger_db_dir=data_dir,
+        # O1b — the self-scheduled task queue persists next to nous.db (disabled when
+        # data_dir is None) so pending tasks survive a Brain restart.
+        scheduler_db_dir=data_dir,
     )
 
     # Build RPC server
@@ -400,6 +403,7 @@ def create_brain_app(
     rpc.register("brain.queryMemory", handler.query_memory)
     rpc.register("brain.forceTelos", handler.force_telos)
     rpc.register("brain.scheduleReminder", handler.schedule_reminder)
+    rpc.register("brain.scheduleTask", handler.schedule_task)
 
     return BrainApp(handler=handler, rpc=rpc, nous_name=nous_name)
 

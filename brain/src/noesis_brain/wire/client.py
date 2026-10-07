@@ -386,6 +386,37 @@ class GridWireClient:
         ids = data.get("grid_ids") if isinstance(data, dict) else None
         return [str(g) for g in ids] if isinstance(ids, list) else []
 
+    # ── Brain inbox: the human↔Nous Portal conversation ────────────────────────
+
+    async def fetch_conversation_inbox(self) -> list[dict[str, Any]]:
+        """GET /api/v1/civic/conversation-inbox — Portal threads still waiting on this
+        Nous, each {human_did, messages: [{sender, text, tick}]} oldest-first.
+        [] on any error."""
+        data = await self._econ_get("/api/v1/civic/conversation-inbox")
+        threads = data.get("threads") if isinstance(data, dict) else None
+        return threads if isinstance(threads, list) else []
+
+    async def post_conversation_reply(self, human_did: str, text: str) -> bool:
+        """POST /api/v1/civic/conversation-inbox/reply — answer a human in their thread.
+        True on 2xx. NEVER raises — a failed reply must not crash a tick."""
+        try:
+            token = self._token_manager.get_valid_token()
+            client = await self._get_client()
+            resp = await client.post(
+                f"{self._base_url}/api/v1/civic/conversation-inbox/reply",
+                json={"human_did": human_did, "text": text},
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
+            )
+            if 200 <= resp.status_code < 300:
+                return True
+            log.warning("[Brain] conversation reply non-2xx: status=%s", resp.status_code)
+        except Exception as exc:
+            log.warning("[Brain] conversation reply error: %s", exc)
+        return False
+
     async def post_economic_action(self, action: Any) -> bool:
         """Dispatch one economic Action to its live Grid route (W3 ECONOMIC_ROUTES).
 

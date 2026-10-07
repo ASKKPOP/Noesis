@@ -162,3 +162,24 @@ async def test_post_economic_action_non_fatal_on_transport_error():
     wire, _ = _make_client(raise_exc=httpx.ConnectError("boom"))
     action = build_economic_action(ActionType.PAY_DUE, due_id="11111111-1111-4111-8111-111111111111", method="wei")
     assert await wire.post_economic_action(action) is False
+
+
+# ── Brain inbox ──────────────────────────────────────────────────────────────
+@pytest.mark.asyncio
+async def test_fetch_conversation_inbox_returns_threads():
+    threads = [{"human_did": "did:noesis:human:0xabc", "messages": [{"sender": "human", "text": "hi", "tick": 1}]}]
+    wire, http = _make_client(get_json={"threads": threads, "count": 1})
+    assert await wire.fetch_conversation_inbox() == threads
+    assert http.get.call_args[0][0].endswith("/api/v1/civic/conversation-inbox")
+
+
+@pytest.mark.asyncio
+async def test_post_conversation_reply_posts_body_and_is_non_fatal():
+    wire, http = _make_client(post_status=200)
+    assert await wire.post_conversation_reply("did:noesis:human:0xabc", "hello") is True
+    assert http.post.call_args[0][0].endswith("/api/v1/civic/conversation-inbox/reply")
+    assert http.post.call_args.kwargs["json"] == {"human_did": "did:noesis:human:0xabc", "text": "hello"}
+
+    wire, _ = _make_client(raise_exc=httpx.ConnectError("boom"))
+    assert await wire.fetch_conversation_inbox() == []
+    assert await wire.post_conversation_reply("did:noesis:human:0xabc", "hello") is False

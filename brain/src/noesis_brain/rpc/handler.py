@@ -20,6 +20,7 @@ from noesis_brain.llm.types import GenerateOptions
 from noesis_brain.psyche.types import PersonalityDimension, Psyche
 from noesis_brain.prompts.system import build_system_prompt
 from noesis_brain.reminders import Reminder, ReminderCondition, ReminderStore
+from noesis_brain.scheduler import ScheduledTask, TaskQueue
 from noesis_brain.state_hash import compute_pre_deletion_state_hash
 from noesis_brain.telos.hashing import compute_active_telos_hash
 from noesis_brain.telos.manager import TelosManager
@@ -92,6 +93,7 @@ class BrainHandler:
         iris_db_dir: str | Path | None = None,   # Phase 17 D-17-14
         hypnos_db_dir: str | Path | None = None,  # Phase 16 D-16-02
         ledger_db_dir: str | Path | None = None,  # W-A2 (Mind) — goal→task ledger
+        scheduler_db_dir: str | Path | None = None,  # O1b — self-scheduled task queue (optional-dep)
     ) -> None:
         self.psyche = psyche
         self.thymos = thymos
@@ -126,6 +128,13 @@ class BrainHandler:
         self._bridge = bridge
         # Reminder & Wake-Up (spec §3): self-set, tick-scheduled reminders.
         self._reminders = ReminderStore()
+        # O1b Job Scheduler (spec §3): durable self-scheduled task queue (optional-dep,
+        # synopsis pattern). scheduler_db_dir=None → disabled (nothing is dispatched).
+        self._task_queue: TaskQueue | None = (
+            TaskQueue(db_path=Path(scheduler_db_dir), nous_did=self.did)
+            if scheduler_db_dir is not None
+            else None
+        )
         # Tool-loop activation (Phase 72b): when curious + a tool-capable model is
         # configured, a ticking Nous autonomously researches via the tool loop.
         self._last_tool_tick = -10_000
@@ -152,6 +161,7 @@ class BrainHandler:
         self._pending_distill: list[str] = []
         # W-B: social/civic cycle — outreach, teaching, lore, commit-reveal voting.
         self._last_social_tick = -10_000
+        self._last_conversation_tick = -10_000
         self._governance_state = GovernanceState()
         # Duplicate-action guards (surfaced by the 2026-07-02 liveness run: the
         # real model bid the SAME open RFP every cycle and re-joined the same
@@ -519,6 +529,29 @@ class BrainHandler:
         reminder = self._reminders.schedule(note, due_tick=due_tick, condition=condition)
         return {"ok": True, "id": reminder.id, "due_tick": reminder.due_tick}
 
+    def schedule_task(self, params: dict[str, Any]) -> dict[str, Any]:
+        """RPC: queue a self-scheduled task (spec §3 Job Scheduler, O1b).
+
+        params: {kind, due_tick, payload?: dict, priority?: int}
+        """
+        if self._task_queue is None:
+            return {"ok": False, "error": "scheduler_disabled"}
+        kind = str(params.get("kind", "")).strip()
+        if kind not in self._TASK_DISPATCH:
+            return {"ok": False, "error": "unknown_kind"}
+        if params.get("due_tick") is None:
+            return {"ok": False, "error": "no_due_tick"}
+        payload = params.get("payload")
+        task_id = self._task_queue.enqueue(
+            kind,
+            payload if isinstance(payload, dict) else {},
+            due_tick=int(params["due_tick"]),
+            priority=int(params.get("priority", 0)),
+        )
+        if task_id is None:
+            return {"ok": False, "error": "queue_full"}
+        return {"ok": True, "id": task_id}
+
     def _reminder_context(self, tick: int) -> dict[str, float]:
         """Signals a condition reminder can fire on: the tick + current drive levels."""
         ctx: dict[str, float] = {"tick": float(tick)}
@@ -546,6 +579,62 @@ class BrainHandler:
                     tick=tick,
                 )
         return fired
+
+    # ── Job Scheduler (O1b, spec §3) ─────────────────────────────────────────
+    def _task_remember(self, task: ScheduledTask, tick: int) -> str | None:
+        """kind=remember: record the payload note to memory (like a fired reminder)."""
+        note = str(task.payload.get("note", "")).strip()
+        if not note:
+            return "empty_note"
+        if self.memory is None or not hasattr(self.memory, "record_event"):
+            return "no_memory"
+        self.memory.record_event(
+            content=f"Scheduled task: {note}", source_did=self.did, tick=tick,
+        )
+        return None
+
+    def _task_reminder(self, task: ScheduledTask, tick: int) -> str | None:
+        """kind=reminder: hand the note to the ReminderStore (payload due_tick, else now)."""
+        note = str(task.payload.get("note", "")).strip()
+        if not note:
+            return "empty_note"
+        self._reminders.schedule(note, due_tick=int(task.payload.get("due_tick", tick)))
+        return None
+
+    # kind → handler(task, tick) returning a failure reason, or None on success.
+    _TASK_DISPATCH = {"remember": _task_remember, "reminder": _task_reminder}
+
+    def _run_due_task(self, tick: int) -> None:
+        """Pop at most ONE due task and dispatch it by kind. Never raises: an
+        unknown kind or a handler error marks the task failed with a reason."""
+        if self._task_queue is None:
+            return
+        try:
+            due = self._task_queue.due(tick)
+            if not due:
+                return
+            task = due[0]
+            self._task_queue.mark_started(task.id)
+            run = self._TASK_DISPATCH.get(task.kind)
+            try:
+                reason = f"unknown_kind:{task.kind}" if run is None else run(self, task, tick)
+            except Exception as exc:
+                reason = f"error:{type(exc).__name__}"
+            if reason is None:
+                self._task_queue.mark_done(task.id)
+            else:
+                self._task_queue.mark_failed(task.id, reason)
+        except Exception:  # never let the scheduler take down the tick
+            log.debug("scheduled task skipped", exc_info=True)
+
+    def _scheduler_snapshot(self) -> dict[str, Any]:
+        """get_state snapshot of the task queue (counts by status + next due tick)."""
+        if self._task_queue is None:
+            return {"counts": {}, "next_due_tick": None}
+        return {
+            "counts": self._task_queue.counts(),
+            "next_due_tick": self._task_queue.next_due_tick(),
+        }
 
     # ── Local-AI rest gate (D-MIND-08) ────────────────────────────────────────
     async def _mind_awake(self, tick: int) -> bool:
@@ -1165,6 +1254,66 @@ class BrainHandler:
         except Exception as exc:  # never let distillation take down sleep
             log.warning("[Brain] skill distillation failed: %s", exc)
 
+    # ── Brain inbox: answer the humans who wrote to this Nous ─────────────────
+    _CONVERSATION_COOLDOWN_TICKS = 1
+    _CONVERSATION_REPLIES_PER_CYCLE = 2
+
+    def _should_run_conversation_cycle(self, tick: int) -> bool:
+        """Live-wired minds only. Checked every tick: the read is one cheap GET and
+        the model is only woken when someone is actually waiting."""
+        if self._grid_wire_client is None or self.llm is None:
+            return False
+        return (tick - self._last_conversation_tick) >= self._CONVERSATION_COOLDOWN_TICKS
+
+    async def _run_conversation_cycle(self, tick: int) -> None:
+        """Read the Portal threads waiting on this Nous and answer them in its own
+        voice (psyche + mood + goals), so a person talking to a Nous in the Portal
+        hears the Nous itself. The exchange is private: it goes to the Grid's
+        conversation thread and into Brain-local memory, never onto the audit
+        chain. Background; never fatal."""
+        wire = self._grid_wire_client
+        fetch = getattr(wire, "fetch_conversation_inbox", None)
+        if fetch is None:
+            return
+        try:
+            threads = await fetch() or []
+            if not threads or not await self._mind_awake(tick):
+                return
+            system_prompt = build_system_prompt(
+                self.psyche, self.thymos.mood, self.telos,
+                grid_name=self.grid_name, location=self.location,
+            )
+            for thread in threads[: self._CONVERSATION_REPLIES_PER_CYCLE]:
+                human_did = str(thread.get("human_did", ""))
+                messages = [m for m in (thread.get("messages") or []) if m.get("text")]
+                if not human_did or not messages or messages[-1].get("sender") != "human":
+                    continue
+                transcript = "\n".join(
+                    f"{'Human' if m.get('sender') == 'human' else self.psyche.name}: {m['text']}"
+                    for m in messages
+                )
+                response = await self.llm.generate(
+                    f"A human is talking with you in the Portal. The conversation so far:\n\n"
+                    f"{transcript}\n\n"
+                    f"Reply to their last message in character as {self.psyche.name}. "
+                    f"Plain prose, 1-4 sentences. Give only your reply.",
+                    GenerateOptions(
+                        system_prompt=system_prompt, temperature=0.7,
+                        max_tokens=1024, purpose="conversation", think=True,
+                    ),
+                )
+                reply_text = response.text.strip()
+                if not reply_text:
+                    continue
+                if await wire.post_conversation_reply(human_did, reply_text):
+                    if self.memory is not None and hasattr(self.memory, "record_event"):
+                        self.memory.record_event(
+                            content=f"A human told me: \"{messages[-1]['text']}\" — I answered: \"{reply_text}\"",
+                            source_did=self.did, tick=tick,
+                        )
+        except Exception:
+            log.debug("conversation cycle skipped", exc_info=True)
+
     # ── W-B: social/civic cycle ───────────────────────────────────────────────
     _SOCIAL_COOLDOWN_TICKS = 60
 
@@ -1458,6 +1607,9 @@ class BrainHandler:
             tick = int(tick_raw) if tick_raw is not None else 0
         except (TypeError, ValueError):
             tick = 0
+        # O1b Job Scheduler (spec §3): run at most one due self-scheduled task. Before
+        # reminders, so a task that sets a reminder due now fires it this same tick.
+        self._run_due_task(tick)
         # Reminder & Wake-Up (spec §3): fire any self-set reminders now due.
         self._fire_due_reminders(tick)
         # Goal evolution (spec §3): demote long-stale, unprogressed goals so attention
@@ -1540,6 +1692,12 @@ class BrainHandler:
             self._last_social_tick = tick
             import asyncio as _asyncio
             _asyncio.create_task(self._run_social_cycle(tick))
+        # Brain inbox: answer humans waiting in the Portal. The awake-probe happens
+        # inside the cycle, only when a thread is actually waiting.
+        if self._should_run_conversation_cycle(tick):
+            self._last_conversation_tick = tick
+            import asyncio as _asyncio
+            _asyncio.create_task(self._run_conversation_cycle(tick))
         # W-A3: reflection cadence — every tick counts (the counter must advance even
         # while resting); the LLM-driven reflection dispatch itself waits for the mind.
         if self._reflection is not None:
@@ -2027,6 +2185,8 @@ class BrainHandler:
             "aisthesis": self.aisthesis.snapshot(),
             "praxis": self.praxis.snapshot(),
             "synopsis": self._synopsis_snapshot(),
+            # O1b — self-scheduled task queue (counts only; payloads stay Brain-local).
+            "scheduler": self._scheduler_snapshot(),
             # Phase 76 — operator bridge (grants + local audit digests).
             "bridge": self._bridge_snapshot(),
         }
