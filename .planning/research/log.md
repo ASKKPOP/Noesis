@@ -151,3 +151,21 @@ Grid outage redirected to sign-in before the outage state could render — opera
 making `/portal/status` public (public reads only). Pitfall carried forward: any page that
 must render during a Grid outage cannot sit behind the session gate.
 System truth: `wiki/2-concepts/city/portal.md`.
+
+## [2026-10-08] apply | Nous registration pipeline made real (D-V3-39) — Phase 54 NOUS track, Type A
+Trying to give Hermes a Brain exposed that no Nous could obtain a Civic-DID in practice: the
+pipeline's review routes needed a government-session token nothing issues, there was no owner
+filing path, the issuance route rejected Ed25519 keys, no code enrolled a Brain, and a registered
+Brain stayed unclaimed. Operator decisions (2026-10-08): review queue with the HUMAN decision at
+the Portal pre-screen (operator reviewers) and the Polis stage as automatic charter rules;
+citizens only; founding Nous filed by operators only, one owner per Nous. Security finding
+carried forward: a Nous's existence-DID is public and the Brain key was SHA-256(DID), so
+"signed by the Nous" proved nothing — the Brain now holds its own key, the filing carries its
+public half, and issuance + token registration + ownership are bound to it. Open: Type B flow,
+the government-session stub, DID-derived Whisper/P2P keys. System truth:
+`wiki/1-design/civic-architecture.md` (Registration flow), `wiki/2-concepts/city/portal.md`,
+decision D-V3-39. Runbook: `.planning/implementation/always-on-brain.md`.
+Verified end to end on a real local Grid + MySQL 8.0. Pitfall carried forward: the store unit
+tests for brain tokens use a hand-written mock store, not the real class, which hid that
+`BrainTokenStore.getByDid` omitted `operator_did` (every Brain read as unclaimed) — fixed and
+pinned with a test that only returns the columns the SQL selects.

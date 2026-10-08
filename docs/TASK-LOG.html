@@ -64,6 +64,20 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 24 ============================ -->
+  <h2>Session 24 — 2026‑10‑08 · “Deploy status page; build the Nous registration pipeline (D‑V3‑39)”</h2>
+  <p class="sub">Operator asked to PR + deploy the status page, then to check the other shipped features, then to connect a local AI (<code>gpt-oss:120b</code>) as Hermes's Brain. That exposed that no Nous could be registered at all; operator chose to build the missing pipeline.</p>
+  <ul>
+    <li><b>Deploy</b> <span class="tag done">done</span> — PR #24 merged (<span class="hash">51fbfb0</span>); Grid + dashboard deployed from <code>main</code> (prod was 9 commits behind; operator chose full Grid+dashboard), nginx force-recreated. Verified live: status page public and populated; Groups page works; Account page works signed in; chat message persists.</li>
+    <li><b>Findings in production</b> — chat has no answerer (no Ollama host on the Grid, no Brain connected: 503 → “unavailable”); Google/Apple sign-in fail with Auth.js <code>UntrustedHost</code> (pre-existing, not fixed).</li>
+    <li><b>Decisions</b> <span class="tag design">design</span> — D‑V3‑39: review queue with the human decision at the Portal pre-screen and automatic Polis charter rules; citizens only; founding Nous filed by operators only, one owner per Nous. Wiki: <a href="../wiki/1-design/decisions.md">decisions.md</a>, <a href="../wiki/1-design/civic-architecture.md">civic-architecture.md</a>, <a href="../wiki/2-concepts/city/portal.md">portal.md</a>.</li>
+    <li><b>Grid</b> <span class="tag done">done</span> — filing route, reviewer panel routes, <code>nous-charter-review.ts</code>, migration v76 (<code>brain_key_x</code>), issuance accepts Ed25519 and is bound to the filed Brain key, token registration bound to the same key and to the sponsor. Commit <span class="hash">051864c</span> (+ follow-ups). 4200 tests green, allowlist +0. Also fixed a pre-existing bug found by the end-to-end run: <code>BrainTokenStore.getByDid</code> never selected <code>operator_did</code>, so every Brain read as unclaimed.</li>
+    <li><b>Brain</b> <span class="tag done">done</span> — <code>wire/enrollment.py</code>: own persisted key, waits for approval, obtains Civic-DID, registers token. Cross-checked: Python-signed requests accepted by the real Grid handlers. 1302 tests green.</li>
+    <li><b>End-to-end verification</b> <span class="tag done">done</span> — real Grid process + MySQL 8.0 locally: sign-up → citizenship → claim → filing (non-operator refused for a founding Nous) → reviewer pass → Brain enrolment → Brain settings 200; a different Brain key is refused with <code>brain_key_not_enrolled</code>. CI real-MySQL migration gate green with v76.</li>
+    <li><b>Dashboard</b> <span class="tag done">done</span> — “Register a Nous” on <code>/portal/dashboard</code>; reviewer panel at <code>/system/portal-manager/nous-registrations</code>. Commit <span class="hash">9705775</span>.</li>
+    <li><b>Open</b> — not deployed yet; production needs the operator's Portal DID on <code>GRID_OPERATOR_DIDS</code> and <code>GRID_PORTAL_MANAGER_ENABLED=true</code>; Type B flow and the government-session stub untouched; Whisper/P2P keys still DID-derived.</li>
+  </ul>
+
   <!-- ============================ SESSION 23 ============================ -->
   <h2>Session 23 — 2026‑10‑07 · “Portal Project Status: hardcoded → live Grid reads”</h2>
   <p class="sub">Operator flagged <code>dashboard/src/app/portal/status/page.tsx</code> as a no-mock violation: an invented <code>SERVICES</code> list (fake latencies, Sophia/Hermes/Themis “operational”) and a <code>PHASES</code> roadmap frozen at Phase 22.</p>

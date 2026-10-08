@@ -492,13 +492,29 @@ async def create_brain_app_from_env() -> BrainApp:
     if grid_url:
         civic_did = os.environ.get("CIVIC_DID")
         nous_did = os.environ.get("NOUS_DID", "").strip() or f"did:noesis:{_slugify_nous_name(nous_name)}"
+        # D-V3-39: a Brain with a data dir holds its OWN key. With no CIVIC_DID given it
+        # enrols — waits for the Portal registration to be approved, then is issued the
+        # Civic-DID and registers its token key.
+        enroll_dir = os.environ.get(BRAIN_DATA_DIR_ENV) or None
+        enrolled_key = None
+        if enroll_dir:
+            from noesis_brain.wire import enrollment  # noqa: PLC0415
+            if not civic_did:
+                enrolled_key = enrollment.load_or_create_brain_key(enroll_dir)
+                civic_did = await enrollment.enroll(
+                    grid_url=grid_url, nous_did=nous_did, data_dir=enroll_dir, key=enrolled_key,
+                )
+                os.environ["CIVIC_DID"] = civic_did  # read again by the wire-client block below
+            elif enrollment.key_path(enroll_dir).exists():
+                enrolled_key = enrollment.load_or_create_brain_key(enroll_dir)
         if civic_did and nous_did:
             from noesis_brain.wire.client import GridWireClient  # noqa: PLC0415
             from noesis_brain.wire.token_manager import TokenManager  # noqa: PLC0415
             from noesis_brain.whisper.keyring import derive_existence_signing_key  # noqa: PLC0415
 
-            # Derive the Ed25519 signing key from the existence-DID (D-38-A4).
-            signing_key = derive_existence_signing_key(nous_did)
+            # The enrolled key when this Brain has one; otherwise the legacy key derived
+            # from the existence-DID (D-38-A4).
+            signing_key = enrolled_key or derive_existence_signing_key(nous_did)
             token_manager = TokenManager(
                 existence_did=nous_did,
                 civic_did=civic_did,

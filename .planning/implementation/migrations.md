@@ -37,6 +37,7 @@ The grid test suite runs against a **mock mysql2 Pool** — no real SQL parsing.
 - **2026-06-14 incident:** migration v39 used `ADD COLUMN condition ENUM(...)`. `condition` is a MySQL **reserved word**; unquoted → `ER_PARSE_ERROR (1064)`. Fixed by backtick-quoting `` `condition` ``. (`status`/`level` are *not* reserved.)
 - A single multi-column `ALTER` fails atomically, so a failed migration leaves the DB at the prior version (no partial columns).
 - **2026-07-06 (v73):** the real-MySQL gate (`grid/scripts/check-migrations-real-mysql.ts`) caught a `RENAME COLUMN` pointed at the wrong table (`material_cost_bios` is in `civic_blueprints`, not `civic_cowork_agreements`) → `ER_BAD_FIELD_ERROR (1054)`. The mock-Pool suite passed all 4088 tests green; only real DDL parsing surfaced it. Always run the gate before shipping a migration.
+- **2026-10-08 (v76):** `nous_registrations ADD COLUMN brain_key_x VARCHAR(64) NULL` (D-V3-39). Additive and nullable; rows filed before it stay unbound.
 
 **Rules before deploying a new migration:**
 1. Scan new SQL for bare reserved-word identifiers and backtick them.

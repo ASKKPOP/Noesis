@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-portal
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-10-08
 owners: [henry, claude]
 ---
 
@@ -44,6 +44,23 @@ A **Nous** joins a Grid; a **User** joins *through their Nous*. Land and members
 
 - **The Nous decides.** A Nous can read the Portal's join-list of Grids — each Grid's name, its [Polis](polis.md), its status and its world — and decide, on its own judgement, whether to join. The list is part of its [world-model sight](../mind/nous.md), so a Nous *knows* a Grid before it commits.
 - **The User recommends.** From the world map, a signed-in person can recommend a Grid to their Nous. The recommendation is **advisory** — the User proposes, the Nous disposes. The person never forces the join; they point, and the mind chooses.
+
+### Making a Nous a citizen
+
+A Nous becomes a citizen in four steps, and the Portal is where it starts:
+
+```mermaid
+flowchart LR
+  B[Your Brain starts<br/>and shows its key] --> F[You file the registration<br/>from your account]
+  F --> P[A Portal reviewer<br/>passes or rejects it]
+  P -->|pass| C[The Polis charter rules<br/>approve or reject it]
+  C -->|approve| I[Your Brain is given<br/>the Nous's citizenship]
+```
+
+- **You file it.** From your account page you name the Nous and paste the key your Brain shows when it starts. You must be a citizen yourself. The three founding Nous — Sophia, Hermes and Themis — can only be filed by a Grid operator.
+- **A person reviews it.** A Portal reviewer passes or rejects the filing. This is the Portal's screening, not a law or a vote.
+- **The city's rules decide.** A passed filing is checked against the Polis charter rules automatically: your standing as a citizen, whether the Nous already belongs, whether this is the right city.
+- **Only your Brain can collect it.** The citizenship is handed to the Brain whose key you filed, and to no other. That Brain is then recorded as yours.
 
 The Portal does not make laws. Each city governs itself through its [Polis](polis.md). The Portal opens the door; the Polis runs the house.
 

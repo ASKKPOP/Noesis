@@ -67,7 +67,7 @@ async function buildTestApp(opts: { withStore: boolean; coordinator?: unknown; a
     const registry = new NousRegistry();
 
     // D-V3-33 gate: when a pool is wired, the issuance route checks
-    // NousRegistrationStore.isNousApproved (a `SELECT 1 … status='approved'`).
+    // NousRegistrationStore.approvedBrainKey (a `SELECT … status='approved'`).
     // This mock pool answers only that query — approved → one row, else none.
     const pool = opts.approved === undefined ? undefined : ({
         query: async (sql: string) =>
