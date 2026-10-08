@@ -21,6 +21,7 @@ import { NousRegistry } from '../../src/registry/registry.js';
 import type { CivicDidRecord } from '../../src/civic-registry/index.js';
 
 const NOUS = 'did:noesis:hermes';
+const SPONSOR = 'did:noesis:human:email:op';
 const OATH = 'I pledge to uphold the Genesis Grid civic charter.';
 
 function brainKey() {
@@ -29,7 +30,7 @@ function brainKey() {
     return { privateKey, x, jwk: { kty: 'OKP', crv: 'Ed25519', x, alg: 'EdDSA' } };
 }
 
-function makeApp(boundKey: string | null | undefined) {
+function makeApp(boundKey: string | null | undefined, activeBrains = 0) {
     const records = new Map<string, CivicDidRecord>();
     const civicDidStore = {
         async insert(r: CivicDidRecord) { records.set(r.civicDid, r); },
@@ -38,16 +39,23 @@ function makeApp(boundKey: string | null | undefined) {
     };
     const tokens = new Map<string, unknown>();
     const brainTokenStore = { async insert(r: { brainDid: string }) { if (!tokens.has(r.brainDid)) tokens.set(r.brainDid, r); } };
+    const owners: unknown[][] = [];
     const pool = {
-        query: async (sql: string) =>
-            /status\s*=\s*'approved'/.test(sql) && boundKey !== undefined ? [[{ brain_key_x: boundKey }], {}] : [[], {}],
+        query: async (sql: string, params: unknown[] = []) => {
+            if (/UPDATE brain_tokens SET operator_did/.test(sql)) { owners.push(params); return [{ affectedRows: 1 }, {}]; }
+            if (/COUNT\(\*\) AS cnt FROM brain_tokens/.test(sql)) return [[{ cnt: activeBrains }], {}];
+            if (/status\s*=\s*'approved'/.test(sql) && boundKey !== undefined) {
+                return [[{ brain_key_x: boundKey, registrant_did: boundKey === null ? undefined : SPONSOR }], {}];
+            }
+            return [[], {}];
+        },
     } as unknown as Pool;
     const app = buildServer({
         clock: new WorldClock({ tickRateMs: 100_000 }), space: new SpatialMap(), logos: new LogosEngine(),
         audit: new AuditChain(), gridName: 'genesis', registry: new NousRegistry(), pool,
         civicDidStore: civicDidStore as never, brainTokenStore: brainTokenStore as never,
     });
-    return { app, tokens };
+    return { app, tokens, owners };
 }
 
 async function requestCivicDid(app: ReturnType<typeof makeApp>['app'], key: { privateKey: KeyObject; jwk: object }) {
@@ -123,6 +131,24 @@ describe('Brain token registration — Brain key binding', () => {
 
         expect((await registerToken(app, civicDid, key)).statusCode).toBe(200);
         expect(tokens.has(NOUS)).toBe(true);
+        await app.close();
+    });
+
+    it('binds the Brain to the sponsor named by the approved registration', async () => {
+        const key = brainKey();
+        const { app, owners } = makeApp(key.x);
+        const civicDid = (await requestCivicDid(app, key)).json().civic_did as string;
+        await registerToken(app, civicDid, key);
+        expect(owners).toEqual([[SPONSOR, 'genesis', NOUS]]);
+        await app.close();
+    });
+
+    it('leaves the Brain unclaimed when the sponsor is over the brain-process quota', async () => {
+        const key = brainKey();
+        const { app, owners } = makeApp(key.x, 9_999);
+        const civicDid = (await requestCivicDid(app, key)).json().civic_did as string;
+        expect((await registerToken(app, civicDid, key)).statusCode).toBe(200);
+        expect(owners).toEqual([]);
         await app.close();
     });
 });

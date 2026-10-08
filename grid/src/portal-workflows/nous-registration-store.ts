@@ -100,6 +100,21 @@ export class NousRegistrationStore {
         return r.length ? (r[0].brain_key_x ?? null) : undefined;
     }
 
+    /**
+     * The sponsor of this Nous's approved, key-bound registration (filed under a Portal
+     * session), or null. Older civic-route filings carry an unverified registrant string,
+     * so they never name a sponsor here.
+     */
+    async approvedSponsor(gridName: string, nousDid: string): Promise<string | null> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT registrant_did FROM nous_registrations
+             WHERE target_grid = ? AND nous_did = ? AND status = 'approved' AND brain_key_x IS NOT NULL LIMIT 1`,
+            [gridName, nousDid],
+        );
+        const r = rows as unknown as { registrant_did?: string }[];
+        return r.length ? (r[0].registrant_did ?? null) : null;
+    }
+
     /** Portal pre-screen. Pass → forward to Polis (polis.registration_pending). Fail → rejected. */
     async preScreen(p: { requestId: string; pass: boolean; reason?: NousRejectReason; tick: number }): Promise<{ ok: true; forwarded: boolean } | { ok: false; reason: 'not_found' | 'bad_state' }> {
         const r = await this.get(p.requestId);

@@ -20,6 +20,9 @@ import { createPublicKey, verify as cryptoVerify } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import type { BrainTokenStore } from '../../db/stores/brain-token-store.js';
+import { NousRegistrationStore } from '../../portal-workflows/nous-registration-store.js';
+import { setOwner, countActiveByOperator } from '../../operator/data/operator-brain-store.js';
+import { getQuotaLimit } from '../../operator/data/operator-quota-store.js';
 
 // DID regexes — kept inline so callers can read the intent directly.
 // Standard nous: form + the three founding legacy DIDs (BLOCKER-01) so a founding
@@ -155,8 +158,8 @@ export async function registerBrainTokenRoutes(
             // re-register still returns 200; a different-key hijack silently no-ops).
             // Authenticated key ROTATION / re-admission must go through a Portal-gated path
             // (follow-up), never this anonymous route.
-            // operatorDid is NOT set here per D-39-01: ownership is claimed separately via
-            // POST /api/v1/operator/me/brains (two-step Portal-gated claim model).
+            // operatorDid is not set by the insert (D-39-01): it is bound just below from the
+            // approved Portal registration (D-V3-39), or claimed via POST /api/v1/operator/me/brains.
             await store.insert({
                 brainDid: brain_did,
                 publicKeyJwk: jwk,
@@ -165,6 +168,19 @@ export async function registerBrainTokenRoutes(
                 revoked: false,
                 operatorDid: null,
             });
+
+            // D-V3-39: the approved Portal registration already names this Nous's sponsor, so
+            // ownership is bound here rather than left to a separate first-come claim. The
+            // brain-process quota (D-39-06) still applies; over quota the Brain stays unclaimed.
+            if (services.pool) {
+                const pool = services.pool;
+                const sponsor = await new NousRegistrationStore(pool, services.audit)
+                    .approvedSponsor(services.gridName, brain_did);
+                if (sponsor
+                    && await countActiveByOperator(pool, services.gridName, sponsor) < await getQuotaLimit(pool, services.gridName, sponsor)) {
+                    await setOwner(pool, services.gridName, sponsor, brain_did);
+                }
+            }
 
             // Structured log (no audit event — Phase 38 allowlist delta is 0)
             req.log.info({ event: 'brain_token.registered', brain_did, civic_did });
