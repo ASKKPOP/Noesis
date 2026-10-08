@@ -113,6 +113,8 @@ export default function PortalManagerView({
             <p style={{ fontFamily: sans, fontSize: 13, color: 'var(--muted)', marginBottom: 28 }}>
                 Read-only monitoring of civic registration activity for the Genesis Grid.
                 This console observes the registration log; it grants no approval power.
+                {' '}Nous registrations are decided on the{' '}
+                <a href="/system/portal-manager/nous-registrations" style={{ color: 'var(--bronze)' }}>reviewer panel</a>.
             </p>
 
             {loading && (

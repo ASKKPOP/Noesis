@@ -64,16 +64,6 @@ export class NousRegistrationStore {
         return r.length ? r[0] : null;
     }
 
-    /** Registrations a registrant filed on a Grid, newest first (their own status view). */
-    async listByRegistrant(gridName: string, registrantDid: string): Promise<NousRegListRow[]> {
-        const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT request_id, nous_type, registrant_did, nous_did, target_grid, \`status\`, reason_code, filed_tick FROM nous_registrations
-             WHERE target_grid = ? AND registrant_did = ? ORDER BY filed_tick DESC LIMIT 200`,
-            [gridName, registrantDid],
-        );
-        return rows as unknown as NousRegListRow[];
-    }
-
     /** The Portal reviewer queue for a Grid, newest first, optionally one status. */
     async listForReview(gridName: string, status?: NousRegStatus): Promise<NousRegListRow[]> {
         const [rows] = await this.pool.query<RowDataPacket[]>(

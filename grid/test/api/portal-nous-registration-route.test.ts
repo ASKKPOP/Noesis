@@ -1,5 +1,5 @@
 /**
- * D-V3-39 — Nous registration through the Portal: filing, own status, reviewer
+ * D-V3-39 — Nous registration through the Portal: filing, reviewer
  * pre-screen, and the automatic Polis charter stage.
  *
  * Pins the constitutional seams: a founding Nous can only be filed by an
@@ -58,7 +58,6 @@ function makePool(w: World): Pool {
         if (/FROM nous_registrations/i.test(sql)) {
             if (/request_id = \?/.test(sql)) return [w.regs.filter((r) => r.request_id === params[0]), {}];
             if (/nous_did = \?/.test(sql)) return [w.regs.filter((r) => r.nous_did === params[1] && r.status !== 'rejected'), {}];
-            if (/registrant_did = \?/.test(sql)) return [w.regs.filter((r) => r.registrant_did === params[1]), {}];
             return [params.length === 2 ? w.regs.filter((r) => r.status === params[1]) : w.regs, {}];
         }
         return [[], {}];
@@ -188,19 +187,6 @@ describe('POST /api/v1/portal/nous/:nousId/registration — filing', () => {
     it('a non-founding Nous can be filed by its citizen owner', async () => {
         const { app } = makeApp(world());
         expect((await file(app, ALICE, await cookie(CITIZEN))).statusCode).toBe(201);
-    });
-});
-
-describe('GET /api/v1/portal/nous/registrations — own filings', () => {
-    it('lists only the caller\'s filings, without the registrant DID', async () => {
-        const { app } = makeApp(world());
-        await file(app, HERMES, await cookie(OPERATOR));
-        await file(app, ALICE, await cookie(CITIZEN));
-        const res = await app.inject({ method: 'GET', url: '/api/v1/portal/nous/registrations', cookies: await cookie(CITIZEN) });
-        expect(res.statusCode).toBe(200);
-        expect(res.json().registrations).toHaveLength(1);
-        expect(res.json().registrations[0]).toMatchObject({ nous_did: ALICE, status: 'requested' });
-        expect(res.body).not.toContain(CITIZEN);
     });
 });
 

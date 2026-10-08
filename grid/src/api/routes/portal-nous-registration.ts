@@ -2,7 +2,7 @@
  * Nous registration through the Portal (D-V3-33 pipeline, NOUS track, D-V3-39).
  *
  *   POST /api/v1/portal/nous/:nousId/registration — a citizen files for a Nous they own
- *   GET  /api/v1/portal/nous/registrations         — the caller's own filings
+ *     (their filings are read back through GET /api/v1/portal/me/overview)
  *   GET  /api/v1/portal-reviewer/nous-registrations[?status=]            — reviewer queue
  *   POST /api/v1/portal-reviewer/nous-registrations/:requestId/prescreen — reviewer decision
  *
@@ -108,15 +108,6 @@ export function registerPortalNousRegistrationRoutes(app: FastifyInstance, servi
             return reply.code(201).send({ status: 'requested', request_id: r.requestId });
         },
     );
-
-    app.get('/api/v1/portal/nous/registrations', async (req, reply) => {
-        const humanDid = await humanFromSession(req, reply);
-        if (!humanDid) return;
-        const pool = services.pool; const audit = services.audit;
-        if (!pool || !audit) return reply.code(503).send({ error: 'portal_unavailable' });
-        const rows = await new NousRegistrationStore(pool, audit).listByRegistrant(grid, humanDid);
-        return reply.send({ registrations: rows.map(publicRow) });
-    });
 
     // ── 2 + 3. Reviewer panel (Tier-3 Portal Manager) ─────────────────────────
     // Same attack-surface flag as the Portal Manager monitoring routes.
