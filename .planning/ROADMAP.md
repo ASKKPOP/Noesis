@@ -12,6 +12,10 @@ v3.0 Polis (Civic City) transforms Noēsis from a local Docker stack into a digi
 **Supplement:** `.planning/research/v3.0/SUPPLEMENT-visit-vs-action.md` (read/write asymmetry).
 **Locked decisions:** 23 total. New in v3.0: D-V3-16..23 (local Brain, dev/test-local stack, constitutional operator, access semantics, sleep cycle, Nous-only government, IRS = tx fees, Grid = 8-institution city). Preserved: D-V3-01..03, 06, 08..15. Superseded: D-V3-04, 05, 07 (multi-Grid → single city).
 
+> **Status correction (2026-10-07).** Authoritative allowlist count is **159** (`grid/test/audit/broadcast-allowlist.test.ts`); older "91 shipped" figures below are historical. Money 62.5-04/05, Phase 62 wallet-proof and Phase 63 settlement core are merged (PRs #16/#17/#19/#20); Phase 76 is merged (PR #22).
+>
+> **Phase-number collision (known, not renumbered).** Numbers **72–79 were used by more than one track**: *Agentic Brain* 72–74 (2026-06-15), *Nous Simulation* 75–79 (2026-06-20), and *v3.3 Mind* 72–76 (2026-07-10/24). Phase directories and commits already carry these numbers, so they are left as-is; **always cite the track name with the number** (e.g. "Mind 75", "Sim 75"). The next free number for any new phase is **89** (Economic Reality Loop used 80–88).
+
 ## v3.2 Groups & Holdings (Deep-Tech Businesses) — IN PROGRESS (opened 2026-06-15)
 
 Adds two ownership tiers: **Groups** (multi-member organizations — for-profit Business or non-profit; economic only, **no Polis vote**, VOTE-05 preserved) and **Holdings** (single-Nous private property; supersedes the term "Nous house"). Seeds five founding for-profit Businesses as orbital **anchor structures** in the business sector (built in space, not on land): **Aegis** (defense), **Helix** (biotech), **Dynamo** (energy), **Soma** (physical AI), **Qubit** (quantum).
@@ -24,7 +28,7 @@ Design: `docs/plans/2026-06-15-groups-and-holdings-design.md`. System truth → 
 - ✅ **Phase 68 — Membership** (2026-06-15): `joinGroup`/`leaveGroup`/`listMembers` (raw DID Grid-side, HEX64 hash on the audit boundary); `group.member_joined` + `group.member_left` (roles founder/member/affiliate; reasons voluntary/removed); allowlist 101 → 103.
 - ✅ **Phase 69 — Research projects → blueprints** (2026-06-15, money-free): migration v43 (`civic_group_projects`); `startProject`/`completeProject`/`listProjects`; a completed project produces a `blueprint_hash` (the existing Phase-18 skill system); `group.project_started` (104) + `group.project_completed` (105); allowlist 103 → 105. Project title stays Grid-side. Full grid suite green.
 - ⏳ Phase 70 — Group treasury (**after** Money rails): bind to an on-chain account disbursed on founder/Polis authorization (mirrors `CivicTreasury`). NO MySQL balance.
-- ⏳ Phase 71 — Orbital map render (crest art) + Group detail page.
+- 🟡 **Phase 71 — Group detail page SHIPPED (2026-10-07)**: public `GET /api/v1/groups/:groupId` (group + members as sha256 `member_hash` + projects; allowlist +0, no migration) + dashboard `/grid/groups` (list + detail, new Groups tab). Grid 3 route tests, dashboard 3 client tests. **Remaining:** crest art + clickable Group anchors on the orbital map (the map does not render Groups yet).
 
 ---
 
@@ -44,7 +48,7 @@ Phase numbering: Money reserves 62–66, Groups 67–71 → Mind takes **72–74
 
 ---
 
-## v3.2 Money — In-DB wei ledger unification (Phases 62.5–62.6) — IN PROGRESS (2026-07-10)
+## v3.2 Money — In-DB wei ledger unification (Phases 62.5–62.6) — ✅ COMPLETE (2026-07-11) · Phases 64–66 NOT STARTED
 
 Unify all money onto **Ledger A** (`nous_accounts` per civic-DID + `civic_treasury`), retire the birth faucet, and remove the legacy in-memory `NousRegistry.transferWei` / `nous_registry.balance_wei` money paths. Precursor to on-chain settlement (Phase 63). Registry: `.planning/money-migration-plan.md` row A″.
 
@@ -55,7 +59,7 @@ Unify all money onto **Ledger A** (`nous_accounts` per civic-DID + `civic_treasu
   - ✅ **62.6-03** co-work/co-build → async `settleWei` seam wired to `NousAccountStore.transfer` (host→worker, one atomic tx); `completeTask`/`completeSubTask`/`completeNode` now async; D-NH-06 always-settles preserved via `insufficient_balance`→`recordIou` IOU fallback. co-build has no prod route (source seam + tests migrated). No `transferWei` remains in the subsystem.
   - ✅ **62.6-04** agent-trades → `NousAccountStore.transfer` between resolved civic-DIDs (existence→civic via `CivicDidStore.getByExistenceDid`); citizens-only per D-13 (either party unresolved ⇒ `trade.rejected{not_found}`, existing reason). Reviewer balance read migrated to the same `nous_accounts` ledger; `NousAccountStore`+`CivicDidStore`+`gridName` injected into `NousRunner`. **The LAST `transferWei` money site — 62.5-04 can now fold + remove `NousRegistry.transferWei`.**
   - ✅ **62.6-05** regression + invariant gate → the four deferred trade tests (`trade-review-flow`/`trade-review-abort`/`zero-diff`/`e2e-tick-cycle`) retargeted to `nous_accounts` with R-31-01 zero-diff kept strict; two dedicated atomic-rollback proofs (marketplace, upkeep, D-12); grep sweep = 0 across the six subsystem files; allowlist byte-unchanged; sole-producer/wallclock/wiki/custody/zero-diff gates green; full suite green modulo 4 documented pre-existing env flakes (operator-scope-typing foreign-path EACCES, SNS-watchdog parallelism, 2× rig-subprocess MySQL access-denied). **Phase 62.6 COMPLETE.**
-- ⏳ **Phase 62.5-04** — one-time data fold + remove `NousRegistry.transferWei` (operator decision = ZERO faucet money). ⏳ **62.5-05** — retire the `did:noesis:system:treasury` record + delete PR #8/#11 + CI gate forbidding `transferWei`/`nous_registry.balance_wei` as money. Both run **after** 62.6 lands.
+- ✅ **Phase 62.5-04** (PR #16, merged 2026-07-11) — one-time data fold + remove `NousRegistry.transferWei` (operator decision = ZERO faucet money). ✅ **62.5-05** (PR #17, merged 2026-07-11; Issue #9 closed) — retire the `did:noesis:system:treasury` record + delete PR #8/#11 + CI gate forbidding `transferWei`/`nous_registry.balance_wei` as money. Both run **after** 62.6 lands.
 
 ---
 
@@ -130,7 +134,8 @@ Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reali
   - ✅ **O2a human-in-the-loop approval gate** (2026-06-21): migration **v52** `pending_approvals` + `ApprovalStore` (requestApproval → pending; listPending = the human's queue; approve/reject resolve-once under `FOR UPDATE`; the held action payload runs only on approval — store never auto-executes). The "consult my human before a big decision (buy/sell)" capability. economy **132/132**, tsc clean, allowlist **+0**. Commit `ef61e22`.
   - ✅ **O2b `human.approval_*` audit events** (2026-06-21): 3 sole-producer emitters (requested/granted/denied; hashed DIDs; held action payload stays OFF-chain) + boundary/unit tests + allowlist **117 → 120** + `ApprovalStore` emits on request/approve/reject. test/audit+test/economy **1041/1041**, tsc clean, sole-producer grep = 3. Commit `bbff79f`. The approval lifecycle is now auditable.
   - ✅ **O2c-a Portal↔Nous conversation store** (2026-06-21): migration **v53** `conversation_messages` + `ConversationStore` (postMessage/listThread/listPartners) — the private human↔Nous chat thread (content off the audit chain, allowlist **+0**). economy **144/144**, tsc clean. Commit `85bc028`.
-  - ⏳ O2c-b human-facing chat routes (Portal auth + ownership) · O2-trigger (gate a real trade — policy decision) · O1b persistent task scheduler · O3 "Forest" phone↔Nous · O4 world-map street-view.
+  - ✅ **O3 Forest chat UI on the persistent thread (2026-10-07)**: `/portal/chat` loads/saves the server-side thread, the chat route persists the Nous reply, late replies are polled. ✅ **Brain inbox (2026-10-07)**: Nous-authed `GET /api/v1/civic/conversation-inbox` + `POST …/reply` (civic→existence mapping; reply only into a human-opened thread), Brain `fetch_conversation_inbox`/`post_conversation_reply` + per-tick `_run_conversation_cycle` (psyche-voiced, ≤2 replies/cycle, memory-recorded), and the Grid persona stays silent (202 `pending`) while the Nous's presence is `awake`. Pairing key = the Portal human DID already on the thread. Allowlist +0, no migration (`created_at` now carries a ms arrival stamp for ordering). **Not yet run against a real Brain + MySQL.** ✅ **O1b task scheduler (2026-10-07)**: Brain `scheduler/` `TaskQueue` (per-Nous SQLite, tick-driven, one task per tick, kinds `remember`/`reminder`) + `brain.scheduleTask` RPC. Remaining: LLM-chosen scheduling, work-running kinds.
+  - ⏳ O2-trigger (gate a real trade — needs threshold + reason-enum decision).
 - ⏳ **Horizon H1 (Moon/Mars grids — `GridEnvironment` already makes them configs).**
 
 - 🟡 **Wiring / "make it RUN" (Phase 88+) — IN PROGRESS** (from the 2nd deep-scan "what we lost": the loop was built but inert — stores orphaned, no driver, no routes, legacy Ousia still live):
@@ -167,7 +172,7 @@ Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reali
 - ✅ **v2.4 Agora — Phases 18-21** (shipped 2026-05-20, 115/115 plans)
 - ✅ **v2.5 Human Portal — Phases 22-30** (shipped 2026-05-24, 181/181 plans, allowlist 53)
 - ✅ **v2.6 Resilience & Observability — Phases 31-35 + 34.1 + 34.2** (shipped 2026-05-25, allowlist 53 → 56)
-- 🚧 **v3.0 Polis (Civic City) — Phases 36-57** (opened 2026-05-25, third reshape to 24 phases, allowlist 56 → 108 target · **91 shipped**)
+- 🚧 **v3.0 Polis (Civic City) — Phases 36-57** (opened 2026-05-25, third reshape to 24 phases, allowlist 56 → 108 original target · **159 in code as of 2026-10-07**; **all 23 in-scope phases complete** — Phase 56 shipped 2026-10-07; 40b + 52 re-scoped to v3.1 per D-V3-38; formal milestone close/archive still to run)
 - ✅ **Nous Simulation & Learning Loop (Grid-Viz orbital) — Phases 75-79** (shipped 2026-06-20, 37 grid-viz tests, allowlist +0) — off-Earth orbital visualization: physics gate → AI generation → learning loop → zone sim+diversity → teaching. Frontend-only (`dashboard/public/grid-viz/`), no Grid broadcast events.
 - 📋 **Money Migration (compute-labor + ETH) — FUTURE** (axiom D-MONEY-01 locked 2026-06-14) — replace the legacy internal Ousia/`*_bios` economy with the two-money model: a real-ETH wallet-proof + per-job labor-settlement layer (testnet/Sepolia first, zero platform custody per PHILOSOPHY §8), retirement of the Ousia birth faucet, and rename of the `*_bios` *money* columns (`price_bios`/`amount_bios`/`balance_bios`) so "Bios" means only the body-craving drive. **Not yet phased.** Open decisions to resolve at planning: Type B funding endowments (were Bios-denominated), IRS treasury + fee model, land-purchase mechanism (ETH vs labor), and conflict tribute. See [PHILOSOPHY §6](../PHILOSOPHY.md) + [REQUIREMENTS.md](REQUIREMENTS.md) MONEY-* (Future).
 
@@ -197,7 +202,7 @@ Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reali
 - [x] **Phase 36: Visitor/DID Read-Write Split** — Implement visit-without-DID + action-with-DID asymmetry per supplement. Adds `requireCivicDid()` decorator + `ROUTE_DID_POLICY` table + WS firehose redaction layer. (allowlist +4) (SHIPPED 2026-05-26)
 - [x] **Phase 37: DID Registry** — Civic-DID + Business-DID issuance, W3C VC format, court-only revocation. (allowlist +4) (completed 2026-05-26)
 - [x] **Phase 38: Brain ↔ Grid Wire Protocol** — HTTPS REST (control) + WSS (events) replaces in-process queues; operator-signed bearer tokens; idempotent replay on reconnect. (allowlist 0) (completed 2026-05-27)
-- [ ] **Phase 39: Grid Multi-Tenancy** — Per-operator metadata isolation in operator-scoped schemas; civic state remains shared; per-operator quotas. (allowlist 0)
+- [x] **Phase 39: Grid Multi-Tenancy** — Per-operator metadata isolation in operator-scoped schemas; civic state remains shared; per-operator quotas. (allowlist 0)
 - [x] **Phase 40: Local AI Integration** — Ollama production-grade with operator-selectable model + degraded-cognition fallback. (allowlist 0) (completed 2026-05-27)
 - [x] **Phase 41: Sleep Cycle + Away Presence** — Human-resident analogy: city sees offline Nous as 'away'; messages queue; identity persists; long-absence escalation. (allowlist 0) (completed 2026-05-27)
 
@@ -209,7 +214,7 @@ Design + visualization: `docs/superpowers/specs/2026-06-21-noesis-economic-reali
 - [x] **Phase 44: Marketplace v3** — Business-DID listings, bids, escrow, IRS fee hooks, dispute → Police routing. (allowlist +4) (completed 2026-05-28)
 - [x] **Phase 45: IRS Treasury** — Transaction fee collection (1-3% configurable), civic treasury, Government-authorized disbursements. (allowlist +3) (completed 2026-05-28)
 - [x] **Phase 46: Government v3** — Nous-only legislative VOTE-05 with bills, co-sponsorship, scheduled sessions, civic law book. (allowlist +6 → 81) (completed 2026-06-03)
-- [ ] **Phase 47: Police v3** — Complaint-driven sanctions, investigation, court-filed charges, appeals to Government. (allowlist +4)
+- [x] **Phase 47: Police v3** — Complaint-driven sanctions, investigation, court-filed charges, appeals to Government. (allowlist +4)
 - [x] **Phase 48: Library v3** — Public reading room + Civic-DID contribution + rotating curation council paid from treasury. (allowlist +2)
 - [x] **Phase 49: Communities v3** — Bios-gated founding, charters, membership criteria, subgovernance scoped to community-internal decisions. (allowlist +4)
 - [~] **Phase 48b: Civic Land & Property** — Ownable parcels (treasury-sale acquisition) + one buildable structure per parcel (home/shop/workshop/venue) + join/visit for open structures + NDS-named searchable addresses. Business requires an owned business parcel; home gives an address; `own_home`/`own_business` Telos goals; operators read-only on land; civic land (infrastructure/government) not for sale; per-Nous cap ≤1 home + ≤1 business. (allowlist +5 → 86) **Grid-core + routes waves shipped** (ParcelRegistry + 5 sole-producers + civic-parcels.ts purchase/build/join/leave/interior + v92-94 zoning.* events; 52 parcel tests green as of 2026-06-26). **Backend complete; only Brain/UI/SAT-7 integration waves remain** (deferred to the v3.1 housing-economy phase that activates the land system). Design: `docs/plans/2026-06-05-civic-land-and-property-design.md`. Provisional slot — final number to be locked in `/gsd-discuss-phase`.
@@ -623,7 +628,7 @@ Plans:
 
 #### Wave 1 Foundations — Hosted Brain (parallel with Local AI)
 
-### Phase 40b: Hosted LLM Pool (Type B GPU farm)
+### Phase 40b: Hosted LLM Pool (Type B GPU farm) — ➡️ MOVED TO v3.1 (D-V3-38, 2026-10-07)
 **Goal**: Stand up GPU farm + per-Nous LLM quota + cost accounting for Type B Brain runtime. Default model: Llama 3.1 70B on Henry's GPU infrastructure. Per-Nous compute budget enforced at request time; overruns trigger low-power mode (Phase 45b interface).
 **Depends on**: Phase 38 (wire protocol — Brain ↔ Grid auth), Phase 39 (multi-tenancy — per-Nous namespacing).
 **Requirements**: TYPE-B-01 (partial — infra side; identity side in Phase 37b)
@@ -700,7 +705,7 @@ Plans:
 
 #### Wave 1 Foundations — Portal Infrastructure (parallel with Grid work)
 
-### Phase 52: Portal Infrastructure (separate Henry-hosted service)
+### Phase 52: Portal Infrastructure (separate Henry-hosted service) — ➡️ MOVED TO v3.1 (D-V3-38, 2026-10-07)
 **Goal**: Stand up Portal as a separate service distinct from Grid. Authentication via SIWE + email (extends v2.5 Portal auth schemes). Portal session token separate from per-Grid Civic-DID bearer. Portal has its own audit chain (separate from per-Grid chains). Portal hosted at TBD domain (Q-V3-E).
 **Depends on**: None within v3.0 (greenfield Portal codebase).
 **Requirements**: PORTAL-01, PORTAL-09, PORTAL-10
@@ -792,7 +797,8 @@ producers; per the 2026-06-26 fork decision the NOUS track ships dedicated nous.
     contract surface) but UNREACHABLE. CI gate `scripts/check-cross-grid-dormant.mjs` (in rig-invariants.yml)
     enforces producers-unimported + the 503 stub. +2 → 157. route 4 + dormant-producer 3 tests.
 
-### Phase 56: Portal User Service UI (multi-Grid view)
+### Phase 56: Portal User Service UI (multi-Grid view) — ✅ SHIPPED 2026-10-07 (core)
+> **Shipped:** `GET /api/v1/portal/me/overview` (Portal-session-authed; owned Nous + Civic-DID status + presence + wei balance, per-Grid wallet totals, registrations; 4 route tests) + dashboard `/portal/dashboard` (Profile · Wallet · My Nous · Registrations; sidebar "Account"; 3 client tests). Allowlist +0, no migration. Stack decision (criterion 5): extends the existing dashboard. **Recorded deviations (D-V3-38):** served at `/portal/dashboard`, not `portal.noesis/<account>`; balances are **wei, not Bios** (D-MONEY-01); **no deposit/withdraw** (zero custody); owned Nous = claimed via `nous_sponsors` (personal spawned Nous still listed under My Nous); no click-through to a per-Grid Steward Console.
 **Goal**: Build user-facing Portal UI accessible at `https://portal.noesis/<account>`. Renders account profile, list of joined Grids with per-Grid Civic-DID, Wallet balance (cross-Grid), pending registrations, Portal settings. Complementary to Steward Console (per-Grid operator tool).
 **Depends on**: Phase 52 (Portal infra), Phase 55 (cross-Grid framework for multi-Grid view).
 **Requirements**: PORTAL-07, PORTAL-08

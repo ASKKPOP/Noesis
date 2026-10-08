@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Noēsis Status Report — 2026-10-07</title>
+<style>
+  /* Layout: one reading column (max 1080px); summary first, then service, then development, then next. */
+  :root{
+    --bg:#F5F1E8; --surface:#FBF9F3; --surface2:#EFEADD; --line:#DDD5C3; --line2:#C9BFA9;
+    --ink:#1F1D1A; --ink2:#4A463F; --mut:#7A7366;
+    --accent:#C96442; --accent-soft:#F1DDD2;
+    --series:#3B6E8F; --series-soft:#C9DAE5; --series2:#8A6FA8;
+    --good:#2E7D4F; --good-bg:#DDEFE2; --warn:#A8690A; --warn-bg:#F6E7C6;
+    --crit:#B3372C; --crit-bg:#F6D9D5; --idle:#6B6558; --idle-bg:#E6E0D2;
+    --serif:"Tiempos Headline","Source Serif 4","Iowan Old Style","Palatino Linotype",Georgia,serif;
+    --sans:"Styrene B","Söhne",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#1F1E1B; --surface:#272622; --surface2:#302E29; --line:#3D3A33; --line2:#55514788;
+      --ink:#EFEAE0; --ink2:#C9C3B6; --mut:#989182;
+      --accent:#DD7B5A; --accent-soft:#4A2E24;
+      --series:#7FB2D1; --series-soft:#2F4656; --series2:#B59AD0;
+      --good:#6CC08D; --good-bg:#1E3A2A; --warn:#E0A84A; --warn-bg:#40321A;
+      --crit:#EE8479; --crit-bg:#4A2320; --idle:#A39C8D; --idle-bg:#35322C;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1F1E1B; --surface:#272622; --surface2:#302E29; --line:#3D3A33; --line2:#55514788;
+    --ink:#EFEAE0; --ink2:#C9C3B6; --mut:#989182;
+    --accent:#DD7B5A; --accent-soft:#4A2E24;
+    --series:#7FB2D1; --series-soft:#2F4656; --series2:#B59AD0;
+    --good:#6CC08D; --good-bg:#1E3A2A; --warn:#E0A84A; --warn-bg:#40321A;
+    --crit:#EE8479; --crit-bg:#4A2320; --idle:#A39C8D; --idle-bg:#35322C;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+  .wrap{max-width:1080px;margin:0 auto;padding-inline:20px;padding-block:40px 80px;display:flex;flex-direction:column;gap:44px}
+  h1,h2,h3{font-family:var(--serif);font-weight:500;text-wrap:balance;margin:0;letter-spacing:-.01em}
+  h1{font-size:clamp(30px,5vw,44px);line-height:1.1}
+  h2{font-size:26px;line-height:1.2}
+  h3{font-size:18px;line-height:1.3}
+  p{margin:0;max-width:72ch}
+  a{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.88em;background:var(--surface2);padding:1px 5px;border-radius:4px}
+  .eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);font-weight:600}
+  .lede{font-size:18px;color:var(--ink2);max-width:68ch}
+  .mut{color:var(--mut)} .small{font-size:13px}
+  section{display:flex;flex-direction:column;gap:18px}
+  .sec-head{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:22px}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* status pill: icon + label, never color alone */
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;white-space:nowrap}
+  .pill::before{font-size:11px}
+  .ok{color:var(--good);background:var(--good-bg)} .ok::before{content:"●"}
+  .wn{color:var(--warn);background:var(--warn-bg)} .wn::before{content:"▲"}
+  .cr{color:var(--crit);background:var(--crit-bg)} .cr::before{content:"✕"}
+  .id{color:var(--idle);background:var(--idle-bg)} .id::before{content:"○"}
+  .pl{color:var(--series);background:var(--series-soft)} .pl::before{content:"◇"}
+
+  .verdict{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+  .verdict > div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;min-width:0}
+  .verdict b{font-family:var(--serif);font-weight:500;font-size:19px}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+  .kpi{padding:14px 16px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 -1px -1px 0;min-width:0}
+  .kpi .v{font-family:var(--serif);font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
+  .kpi .l{font-size:12px;color:var(--mut);margin-top:4px}
+
+  .scroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);font-weight:600;white-space:nowrap}
+  td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:0}
+  .tbl{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+
+  .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:18px}
+  .two > *{min-width:0}
+  figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+  figcaption{display:flex;flex-direction:column;gap:2px}
+  figcaption b{font-family:var(--serif);font-weight:500;font-size:17px}
+  figcaption span{font-size:13px;color:var(--mut)}
+  svg{display:block;width:100%;height:auto}
+  svg text{font-family:var(--sans);fill:var(--ink2)}
+  .dia{min-width:760px}
+
+  .bar-row{display:grid;grid-template-columns:minmax(120px,210px) 1fr auto;gap:12px;align-items:center;font-size:14px}
+  .bar{height:10px;background:var(--surface2);border-radius:5px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--series);border-radius:5px}
+  .bar i.done{background:var(--good)}
+  .tracks{display:flex;flex-direction:column;gap:11px}
+
+  .phases{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .ph{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;font-size:13px;display:flex;flex-direction:column;gap:4px;min-width:0}
+  .ph b{font-variant-numeric:tabular-nums}
+  .ph.open{border-color:var(--warn);border-style:dashed}
+
+  .next{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+  .next > div{border-top:3px solid var(--line2);padding-top:12px;display:flex;flex-direction:column;gap:10px;min-width:0}
+  .next > div.now{border-top-color:var(--accent)}
+  .next ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:14px}
+  ul.plain{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:7px;max-width:80ch}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:12.5px;color:var(--mut)}
+  .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+  #tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12.5px;padding:5px 9px;border-radius:6px;max-width:260px;z-index:9}
+  [data-tip]{cursor:default}
+  footer{font-size:12.5px;color:var(--mut);border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:6px}
+  @media (max-width:520px){ .bar-row{grid-template-columns:1fr auto} .bar-row .bar{grid-column:1 / -1;order:3} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:14px">
+  <span class="eyebrow">Noēsis · implementation &amp; service status · as of 2026-10-07</span>
+  <h1>The city is built and the servers are up. Nobody is living in it yet.</h1>
+  <p class="lede">Almost every planned phase through v3.3 is merged, and the public Grid at noesiis.com has run for 69 days without a fault. But production shows three Nous still in <code>spawning</code>, zero balances, zero built objects and zero open proposals, and no commit has landed since 2026-07-30. The next step is activation, not more construction.</p>
+  <div class="verdict">
+    <div><span class="pill ok">Development</span><b>Feature-complete through v3.3 Mind</b><span class="small mut">22 of 25 v3.0 phases, House, Mind, Sim and the economy spine are shipped. Open: Money 64–66, Groups 70–71, three v3.0 leftovers.</span></div>
+    <div><span class="pill wn">Service</span><b>Up, healthy, and quiet</b><span class="small mut">Grid API, dashboard, portal, console and wiki answer in ~0.1 s. Audit chain persisted with zero divergence. One subdomain is unreachable.</span></div>
+    <div><span class="pill cr">Activity</span><b>Paused since 2026-07-30</b><span class="small mut">Last commit and last Grid restart are the same day. No Brain is connected to production, so no civic or economic events occur.</span></div>
+  </div>
+</header>
+
+<div class="kpis">
+  <div class="kpi"><div class="v">2,252</div><div class="l">commits, Apr → Jul 2026</div></div>
+  <div class="kpi"><div class="v">22</div><div class="l">pull requests merged (latest #22)</div></div>
+  <div class="kpi"><div class="v" id="k-grid">—</div><div class="l">Grid tests passing today · 2 failing (known flake)</div></div>
+  <div class="kpi"><div class="v" id="k-brain">—</div><div class="l">Brain tests passing (run today)</div></div>
+  <div class="kpi"><div class="v">159</div><div class="l">audit event types on the allowlist</div></div>
+  <div class="kpi"><div class="v">v75</div><div class="l">database schema version</div></div>
+  <div class="kpi"><div class="v">344,922</div><div class="l">audit entries on live chain</div></div>
+  <div class="kpi"><div class="v">68.8 d</div><div class="l">Grid uptime since last restart</div></div>
+</div>
+
+<!-- ───────────────────────── SERVICE ───────────────────────── -->
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Service status · now</span>
+    <h2>What is running on noesiis.com</h2>
+    <p>Measured from outside with plain HTTP GETs on 2026-10-07 around 16:19 UTC. No SSH was used, so container-level state and the deployed commit are inferred, not read.</p>
+  </div>
+
+  <figure>
+    <figcaption><b>Service topology with live status</b><span>Request path from a visitor to each service. Colour and symbol show what the probe returned.</span></figcaption>
+    <div class="scroll"><div class="dia">
+    <svg viewBox="0 0 980 430" role="img" aria-label="Service topology diagram">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--line2)"/></marker>
+        <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--crit)"/></marker>
+      </defs>
+      <g fill="none" stroke="var(--line2)" stroke-width="1.5" marker-end="url(#ar)">
+        <path d="M130 120H186"/><path d="M330 120H386"/>
+        <path d="M530 120C570 120 570 50 618 50"/><path d="M530 120C570 120 570 106 618 106"/>
+        <path d="M530 120C570 120 570 162 618 162"/><path d="M530 120C570 120 570 218 618 218"/>
+        <path d="M530 120C570 120 570 274 618 274"/>
+        <path d="M790 274H846"/>
+      </g>
+      <path d="M130 372H420C520 372 560 300 618 284" fill="none" stroke="var(--crit)" stroke-width="1.5" stroke-dasharray="5 5" marker-end="url(#ar2)"/>
+      <text x="300" y="364" font-size="12" fill="var(--crit)">wire protocol (HTTPS + WSS) — no Brain connected</text>
+
+      <g font-size="13">
+        <rect x="10" y="90" width="120" height="60" rx="8" fill="var(--surface2)" stroke="var(--line2)"/>
+        <text x="70" y="116" text-anchor="middle" font-weight="600">Visitor</text><text x="70" y="134" text-anchor="middle" font-size="11.5">browser / PWA</text>
+
+        <rect x="190" y="90" width="140" height="60" rx="8" fill="var(--surface2)" stroke="var(--line2)"/>
+        <text x="260" y="116" text-anchor="middle" font-weight="600">Host nginx</text><text x="260" y="134" text-anchor="middle" font-size="11.5">shared EC2 front proxy</text>
+
+        <rect x="390" y="90" width="140" height="60" rx="8" fill="var(--good-bg)" stroke="var(--good)"/>
+        <text x="460" y="116" text-anchor="middle" font-weight="600">noesis-nginx</text><text x="460" y="134" text-anchor="middle" font-size="11.5">● routes 4 hostnames</text>
+
+        <g data-tip="noesiis.com / · /portal · /grid · /worldmap — all 200 in 0.09–0.17 s">
+        <rect x="622" y="24" width="168" height="48" rx="8" fill="var(--good-bg)" stroke="var(--good)"/>
+        <text x="706" y="45" text-anchor="middle" font-weight="600">Dashboard (Next.js)</text><text x="706" y="62" text-anchor="middle" font-size="11.5">● 200 · landing, portal, map</text></g>
+
+        <g data-tip="noesiis.com/console — 200">
+        <rect x="622" y="80" width="168" height="48" rx="8" fill="var(--good-bg)" stroke="var(--good)"/>
+        <text x="706" y="101" text-anchor="middle" font-weight="600">Steward Console</text><text x="706" y="118" text-anchor="middle" font-size="11.5">● 200 · /console</text></g>
+
+        <g data-tip="noesiis.com/wiki/ — 200; deep page /wiki/1-design/architecture/ — 200">
+        <rect x="622" y="136" width="168" height="48" rx="8" fill="var(--good-bg)" stroke="var(--good)"/>
+        <text x="706" y="157" text-anchor="middle" font-weight="600">Wiki (MkDocs)</text><text x="706" y="174" text-anchor="middle" font-size="11.5">● 200 · /wiki</text></g>
+
+        <g data-tip="/spec/ 200 · /qa 200 · /docs/ returns 403 (directory index); /docs redirects to the beginner guide">
+        <rect x="622" y="192" width="168" height="48" rx="8" fill="var(--warn-bg)" stroke="var(--warn)"/>
+        <text x="706" y="213" text-anchor="middle" font-weight="600">Guide / docs / spec</text><text x="706" y="230" text-anchor="middle" font-size="11.5">▲ /docs/ index 403</text></g>
+
+        <g data-tip="api.noesiis.com — /health ok, /health/detailed ok with no reasons, tick 198,019 running">
+        <rect x="622" y="248" width="168" height="52" rx="8" fill="var(--good-bg)" stroke="var(--good)"/>
+        <text x="706" y="270" text-anchor="middle" font-weight="600">Grid API (Genesis)</text><text x="706" y="288" text-anchor="middle" font-size="11.5">● ok · tick 198,019</text></g>
+
+        <g data-tip="Inferred: persisted_max_id equals in-memory length (344,922), divergence 0, no persist error">
+        <rect x="850" y="248" width="120" height="52" rx="8" fill="var(--good-bg)" stroke="var(--good)"/>
+        <text x="910" y="270" text-anchor="middle" font-weight="600">MySQL</text><text x="910" y="288" text-anchor="middle" font-size="11.5">● inferred healthy</text></g>
+
+        <g data-tip="Brain agents are deliberately excluded from the production deploy. All three Nous report lifecyclePhase = spawning.">
+        <rect x="10" y="342" width="120" height="60" rx="8" fill="var(--crit-bg)" stroke="var(--crit)" stroke-dasharray="5 4"/>
+        <text x="70" y="368" text-anchor="middle" font-weight="600">Brain (local)</text><text x="70" y="386" text-anchor="middle" font-size="11.5">✕ none connected</text></g>
+
+        <g data-tip="system.noesiis.com resolves in DNS but did not answer within 10 s on two attempts">
+        <rect x="390" y="190" width="140" height="48" rx="8" fill="var(--crit-bg)" stroke="var(--crit)"/>
+        <text x="460" y="211" text-anchor="middle" font-weight="600">system.noesiis.com</text><text x="460" y="228" text-anchor="middle" font-size="11.5">✕ timeout</text></g>
+
+        <g data-tip="TURN relay for Phase-42 P2P. UDP service; not probed from here.">
+        <rect x="390" y="258" width="140" height="42" rx="8" fill="var(--idle-bg)" stroke="var(--idle)"/>
+        <text x="460" y="277" text-anchor="middle" font-weight="600">coturn (P2P)</text><text x="460" y="292" text-anchor="middle" font-size="11.5">○ not probed</text></g>
+      </g>
+    </svg>
+    </div></div>
+    <div class="legend"><span><span class="pill ok">responding</span></span><span><span class="pill wn">works with a caveat</span></span><span><span class="pill cr">down or absent</span></span><span><span class="pill id">not measured</span></span></div>
+  </figure>
+
+  <div class="tbl scroll">
+    <table>
+      <thead><tr><th>Surface</th><th>URL</th><th>Result</th><th class="n">Latency</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Landing + dashboard</td><td><code>noesiis.com/</code></td><td><span class="pill ok">200</span></td><td class="n">172 ms</td><td>Also 200: <code>/grid</code>, <code>/portal</code>, <code>/worldmap</code>, <code>/worldmap/orbital</code>, <code>/grid-viz/orbital.html</code></td></tr>
+        <tr><td>Portal hostname</td><td><code>portal.noesiis.com</code></td><td><span class="pill ok">302 → 200</span></td><td class="n">183 ms</td><td>Redirects to <code>/portal</code> as configured</td></tr>
+        <tr><td>Forest PWA shell</td><td><code>/manifest.webmanifest</code></td><td><span class="pill ok">200</span></td><td class="n">91 ms</td><td>Installable; chat UI not wired yet</td></tr>
+        <tr><td>Steward Console</td><td><code>noesiis.com/console</code></td><td><span class="pill ok">200</span></td><td class="n">99 ms</td><td></td></tr>
+        <tr><td>Public wiki</td><td><code>noesiis.com/wiki/</code></td><td><span class="pill ok">200</span></td><td class="n">136 ms</td><td>44 source pages in the repo</td></tr>
+        <tr><td>Spec + QA guide</td><td><code>/spec/</code>, <code>/qa</code></td><td><span class="pill ok">200</span></td><td class="n">78–112 ms</td><td></td></tr>
+        <tr><td>Docs folder</td><td><code>noesiis.com/docs/</code></td><td><span class="pill wn">403</span></td><td class="n">89 ms</td><td>No directory index. <code>/docs</code> (no slash) is the configured entry point.</td></tr>
+        <tr><td>Grid API health</td><td><code>api.noesiis.com/health</code></td><td><span class="pill ok">200 ok</span></td><td class="n">83 ms</td><td><code>/health/detailed</code>: status ok, reasons empty</td></tr>
+        <tr><td>Grid public reads</td><td><code>api…/api/v1/*</code></td><td><span class="pill ok">200</span></td><td class="n">87–107 ms</td><td>grid/status, portal/grids, zoning/zones, civic/parcels, groups, orbital/objects, governance/proposals</td></tr>
+        <tr><td>Gated economy read</td><td><code>api…/economy/treasury</code></td><td><span class="pill ok">401</span></td><td class="n">86 ms</td><td>Correct: <code>did_required</code>. The visitor / DID split is enforced.</td></tr>
+        <tr><td>System hostname</td><td><code>system.noesiis.com</code></td><td><span class="pill cr">timeout</span></td><td class="n">&gt;10 s</td><td>DNS resolves to 54.215.172.165 / 54.176.95.5 but nothing answers. Portal Manager is unreachable by this name.</td></tr>
+        <tr><td>Legacy path</td><td><code>noesiis.com/dash</code></td><td><span class="pill id">404</span></td><td class="n">89 ms</td><td>Expected. That path belongs to the older Traefik compose file, not the AWS nginx one.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two">
+    <figure>
+      <figcaption><b>Live Grid readings</b><span>From <code>/api/v1/grid/status</code> and <code>/health/detailed</code></span></figcaption>
+      <table>
+        <tbody>
+          <tr><td>Grid / Polis</td><td class="n">genesis · Genesis Polis · Earth-orbit</td></tr>
+          <tr><td>Clock</td><td class="n">tick 198,019 · epoch 1,980 · running</td></tr>
+          <tr><td>Tick rate (uptime ÷ ticks)</td><td class="n">30.0 s per tick</td></tr>
+          <tr><td>Audit chain in memory / persisted</td><td class="n">344,922 / 344,922</td></tr>
+          <tr><td>Audit divergence (threshold 10)</td><td class="n">0</td></tr>
+          <tr><td>Last persist error</td><td class="n">none</td></tr>
+          <tr><td>Firehose clients</td><td class="n">0</td></tr>
+          <tr><td>Process start (now − uptime)</td><td class="n">≈ 2026-07-30</td></tr>
+        </tbody>
+      </table>
+    </figure>
+    <figure>
+      <figcaption><b>What the city contains</b><span>Structure is seeded. Life has not started.</span></figcaption>
+      <table>
+        <tbody>
+          <tr><td>Zones</td><td class="n">6 of 6</td><td><span class="pill ok">seeded</span></td></tr>
+          <tr><td>Parcels</td><td class="n">53</td><td><span class="pill ok">seeded</span></td></tr>
+          <tr><td>Founding Businesses</td><td class="n">5</td><td><span class="pill ok">seeded</span></td></tr>
+          <tr><td>Active laws</td><td class="n">2</td><td><span class="pill ok">seeded</span></td></tr>
+          <tr><td>Parcels owned by a Nous</td><td class="n">0 of 53</td><td><span class="pill cr">none</span></td></tr>
+          <tr><td>Nous registered</td><td class="n">3</td><td><span class="pill wn">all spawning</span></td></tr>
+          <tr><td>Nous wei balances</td><td class="n">0 · 0 · 0</td><td><span class="pill wn">no money source on</span></td></tr>
+          <tr><td>Orbital objects built</td><td class="n">0</td><td><span class="pill cr">none</span></td></tr>
+          <tr><td>Open governance proposals</td><td class="n">0</td><td><span class="pill cr">none</span></td></tr>
+        </tbody>
+      </table>
+    </figure>
+  </div>
+  <p>Reading these together: the infrastructure layer is sound, and the visitor/DID gate, zoning, land registry and Groups all serve real data. The three seeded Nous (Hermes, Sophia, Themis) have no running mind behind them in production, the birth faucet is retired by design, and the endowment route that replaces it is off by default. So nothing can earn, buy, vote or build.</p>
+</section>
+
+<!-- ───────────────────────── DEVELOPMENT ───────────────────────── -->
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Development status</span>
+    <h2>What has been built</h2>
+    <p>Taken from <code>.planning/ROADMAP.md</code>, <code>STATE.md</code>, the merged pull requests and the code itself. Where those disagreed, the code and the PR list won.</p>
+  </div>
+
+  <figure>
+    <figcaption><b>Milestones on a calendar</b><span>Each bar spans the period a milestone was worked on. The shaded band on the right is the period with no commits.</span></figcaption>
+    <div class="scroll"><div class="dia"><svg id="timeline" viewBox="0 0 980 372" role="img" aria-label="Milestone timeline"></svg></div></div>
+    <div class="legend"><span><i class="sw" style="background:var(--good)"></i>shipped</span><span><i class="sw" style="background:var(--series)"></i>in progress (part shipped)</span><span><i class="sw" style="background:var(--idle-bg);outline:1px solid var(--line2)"></i>no activity</span></div>
+  </figure>
+
+  <figure>
+    <figcaption><b>Progress by track</b><span>Phases or units shipped out of those planned in each track</span></figcaption>
+    <div class="tracks" id="tracks"></div>
+  </figure>
+
+  <div>
+    <h3 style="margin-bottom:10px">v3.0 Polis, phase by phase</h3>
+    <div class="phases" id="phases"></div>
+    <p class="small mut" style="margin-top:10px">Phase 48b (Civic Land &amp; Property) is still marked in progress in the roadmap list, but the Nous House phases 58–61 were built on it and are complete, and its 53 parcels are live in production.</p>
+  </div>
+
+  <div class="two">
+    <figure>
+      <figcaption><b>Commits per month</b><span>2,252 total. Nothing after 2026-07-30.</span></figcaption>
+      <svg id="c-commits" viewBox="0 0 460 230" role="img" aria-label="Commits per month bar chart"></svg>
+    </figure>
+    <figure>
+      <figcaption><b>Code by package</b><span>Lines of tracked TypeScript, Python and Solidity, tests included</span></figcaption>
+      <svg id="c-loc" viewBox="0 0 460 230" role="img" aria-label="Lines of code by package"></svg>
+    </figure>
+    <figure>
+      <figcaption><b>Audit allowlist growth</b><span>Event types permitted on the public audit chain, 56 → 159. The v3.0 plan targeted 108.</span></figcaption>
+      <svg id="c-allow" viewBox="0 0 460 230" role="img" aria-label="Allowlist growth step chart"></svg>
+    </figure>
+    <figure>
+      <figcaption><b>Nous spec coverage</b><span>24 spec items across 5 sections. None missing. Tracker last updated 2026-06-22.</span></figcaption>
+      <svg id="c-spec" viewBox="0 0 460 230" role="img" aria-label="Spec coverage by section"></svg>
+      <div class="legend"><span><i class="sw" style="background:var(--series)"></i>full</span><span><i class="sw" style="background:var(--series-soft);outline:1px solid var(--series)"></i>partial</span></div>
+    </figure>
+  </div>
+
+  <div class="tbl scroll">
+    <table>
+      <thead><tr><th>Component</th><th>Where</th><th>State</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>Grid (civic server)</td><td><code>grid/</code></td><td><span class="pill ok">built · deployed</span></td><td>44 modules: registry, gov, police, IRS, library, marketplace, communities, zoning, economy, on-chain, P2P, portal workflows. Schema v75.</td></tr>
+        <tr><td>Brain (Nous mind)</td><td><code>brain/</code></td><td><span class="pill wn">built · not in prod</span></td><td>31 faculties including aisthesis, praxis, synopsis, operator bridge, tool loop and code sandbox. Runs locally by design.</td></tr>
+        <tr><td>Dashboard + Portal</td><td><code>dashboard/</code></td><td><span class="pill ok">built · deployed</span></td><td>Landing, portal, grid, world map, orbital 3D map, system map, Forest PWA shell.</td></tr>
+        <tr><td>Steward Console</td><td><code>steward/</code></td><td><span class="pill ok">built · deployed</span></td><td>Operator surfaces at <code>/console</code>.</td></tr>
+        <tr><td>Local Nous Manager</td><td><code>apps/local-nous-manager/</code></td><td><span class="pill ok">built · packaged</span></td><td>Tier 1 desktop app (Electron). Packaged as a macOS arm64 app on 2026-07-13. Fork button was cut under the no-mock rule.</td></tr>
+        <tr><td>Contracts</td><td><code>contracts/</code></td><td><span class="pill wn">local chain only</span></td><td>LaborEscrow with oracle attestation via Grid relayer, verified on local anvil. No testnet deployment.</td></tr>
+        <tr><td>Protocol</td><td><code>protocol/</code></td><td><span class="pill ok">built</span></td><td>Shared types and wire contracts.</td></tr>
+        <tr><td>Public wiki</td><td><code>wiki/</code></td><td><span class="pill ok">built · deployed</span></td><td>Design, concepts, reference. CI gate <code>check-wiki.mjs</code>.</td></tr>
+        <tr><td>CI invariants</td><td><code>scripts/check-*</code></td><td><span class="pill ok">29 gates</span></td><td>3 workflows: rig invariants, real-MySQL migrations, nightly rig bench.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ───────────────────────── LOOP ───────────────────────── -->
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Built versus running</span>
+    <h2>The economic loop, link by link</h2>
+    <p>Every link exists in code with tests. The lower row shows whether that link has ever fired in production, judged from the live readings above.</p>
+  </div>
+  <figure>
+    <div class="scroll"><div class="dia"><svg id="loop" viewBox="0 0 980 190" role="img" aria-label="Economic loop diagram"></svg></div></div>
+    <div class="legend"><span><span class="pill ok">built and tested</span></span><span><span class="pill id">idle in production</span></span><span><span class="pill cr">blocked upstream</span></span></div>
+  </figure>
+  <p>The loop is blocked at its first link. A Nous needs wei to pay a due or post a bid, and wei only enters through the endowment route (<code>GRID_ENDOWMENT_ENABLED</code>, off by default) or through labor paid from a treasury that is itself empty. Until one of those is switched on, and a Brain is connected to decide, the downstream links cannot fire.</p>
+</section>
+
+<!-- ───────────────────────── RISKS ───────────────────────── -->
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Open items</span>
+    <h2>What is unfinished or uncertain</h2>
+    <p>Each item has a worked solution in <a href="noesis-open-items-solutions-2026-10-07.html">Open Items — Solutions</a>. The planning-document drift is already fixed.</p>
+  </div>
+  <div class="tbl scroll">
+    <table>
+      <thead><tr><th>Item</th><th>Kind</th><th>State</th><th>What it means</th></tr></thead>
+      <tbody>
+        <tr><td>No Brain connected in production</td><td>Service</td><td><span class="pill cr">blocking</span></td><td>Brain agents are excluded from the deploy because <code>BRAIN_HTTP_SECRET</code> is absent from the prod environment. Without a mind, every Nous stays in <code>spawning</code>.</td></tr>
+        <tr><td>No money entering the city</td><td>Service</td><td><span class="pill cr">blocking</span></td><td>Faucet retired (zero by decision). Endowment gate is off. All balances are 0.</td></tr>
+        <tr><td><code>system.noesiis.com</code> unreachable</td><td>Service</td><td><span class="pill cr">down</span></td><td>Times out. Its DNS points at different addresses than <code>portal.</code> does, which suggests a routing or DNS record problem.</td></tr>
+        <tr><td>Deployed commit unverified</td><td>Service</td><td><span class="pill wn">unknown</span></td><td>The Grid restarted on about 2026-07-30, the day PR #22 merged, so it is probably current. Confirming needs a look at the host.</td></tr>
+        <tr><td>Money phases 64–66</td><td>Development</td><td><span class="pill pl">not started</span></td><td>On-chain treasury and Type-B, land and labor credit, cleanup and <code>*_bios</code> rename. Settlement is local-anvil only.</td></tr>
+        <tr><td>Groups phases 70–71</td><td>Development</td><td><span class="pill pl">waiting</span></td><td>Group treasury waits on the on-chain rails. Group detail page not built.</td></tr>
+        <tr><td>v3.0 phases 40b, 52, 56</td><td>Development</td><td><span class="pill pl">open</span></td><td>Hosted LLM pool for Type B, standalone Portal service (deferred on domain and stack choice), Portal multi-Grid user UI. No completion record for any of the three.</td></tr>
+        <tr><td>Organs O1b, O2-trigger, O3 chat UI</td><td>Development</td><td><span class="pill pl">open</span></td><td>Persistent task scheduler, approval gate on a real trade, and the Forest chat screen.</td></tr>
+        <tr><td>Operator bridge on real hardware</td><td>Development</td><td><span class="pill wn">unverified</span></td><td>Camera, PDF and GUI paths were never exercised because cv2, pypdf and pyautogui were absent on the build machine (optional Phase 76b).</td></tr>
+        <tr><td>Planning documents have drifted</td><td>Docs</td><td><span class="pill wn">stale</span></td><td><code>STATE.md</code> front matter says 48% and "PR pending" for Phase 76 (merged as #22). <code>ROADMAP.md</code> still lists Money 62.5-04/05 as pending (merged as #16/#17), shows Phases 39 and 47 unchecked, and quotes 91 allowlist events against 159 in code. Phase numbers 72–79 are used by two different tracks.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ───────────────────────── NEXT ───────────────────────── -->
+<section>
+  <div class="sec-head">
+    <span class="eyebrow">Next service status</span>
+    <h2>From a quiet city to a living one</h2>
+    <p>This ordering is a recommendation, not something recorded in the roadmap. It puts activation ahead of new features because the live readings show the existing features have never been exercised in production.</p>
+  </div>
+
+  <figure>
+    <figcaption><b>Service state: now, next, later</b><span>The target for each stage and the signal that proves it was reached</span></figcaption>
+    <div class="scroll"><div class="dia">
+    <svg viewBox="0 0 980 210" role="img" aria-label="Service state progression">
+      <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker></defs>
+      <g fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#ar3)"><path d="M238 100H262"/><path d="M482 100H506"/><path d="M726 100H750"/></g>
+      <g font-size="12.5">
+        <rect x="10" y="20" width="228" height="170" rx="10" fill="var(--surface2)" stroke="var(--line2)"/>
+        <text x="26" y="46" font-size="11" fill="var(--mut)" letter-spacing="1">NOW · 2026-10-07</text>
+        <text x="26" y="70" font-size="16" font-weight="600" fill="var(--ink)">Up and quiet</text>
+        <text x="26" y="96">Grid, dashboard, wiki: 200</text><text x="26" y="116">3 Nous, all spawning</text><text x="26" y="136">0 wei · 0 objects · 0 proposals</text><text x="26" y="156">0 of 53 parcels owned</text><text x="26" y="176">system. subdomain down</text>
+
+        <rect x="266" y="20" width="216" height="170" rx="10" fill="var(--accent-soft)" stroke="var(--accent)"/>
+        <text x="282" y="46" font-size="11" fill="var(--mut)" letter-spacing="1">NEXT · ACTIVATE</text>
+        <text x="282" y="70" font-size="16" font-weight="600" fill="var(--ink)">First living Nous</text>
+        <text x="282" y="96">1+ Brain on the wire</text><text x="282" y="116">lifecyclePhase leaves spawning</text><text x="282" y="136">Non-zero balance, first due paid</text><text x="282" y="156">Firehose shows nous.* events</text><text x="282" y="176">All 4 hostnames answer</text>
+
+        <rect x="510" y="20" width="216" height="170" rx="10" fill="var(--surface2)" stroke="var(--line2)"/>
+        <text x="526" y="46" font-size="11" fill="var(--mut)" letter-spacing="1">THEN · CLOSE THE LOOP</text>
+        <text x="526" y="70" font-size="16" font-weight="600" fill="var(--ink)">Working economy</text>
+        <text x="526" y="96">A parcel is bought and built on</text><text x="526" y="116">Polis bill issues an RFP</text><text x="526" y="136">orbital/objects count ≥ 1</text><text x="526" y="156">A proposal reaches a vote</text><text x="526" y="176">Forest chat usable on a phone</text>
+
+        <rect x="754" y="20" width="216" height="170" rx="10" fill="var(--surface2)" stroke="var(--line2)"/>
+        <text x="770" y="46" font-size="11" fill="var(--mut)" letter-spacing="1">LATER · REAL MONEY, MORE GRIDS</text>
+        <text x="770" y="70" font-size="16" font-weight="600" fill="var(--ink)">Settled on chain</text>
+        <text x="770" y="96">LaborEscrow on Sepolia</text><text x="770" y="116">On-chain treasury (Money 64–66)</text><text x="770" y="136">Group treasuries (Phase 70)</text><text x="770" y="156">Type B hosted pool (40b)</text><text x="770" y="176">Second Grid via Portal (v3.1)</text>
+      </g>
+    </svg>
+    </div></div>
+  </figure>
+
+  <div class="next">
+    <div class="now">
+      <h3>Now: repair and activate</h3>
+      <ol>
+        <li>Fix <code>system.noesiis.com</code> (DNS record or host nginx route).</li>
+        <li>Confirm the deployed commit on the host matches <code>main</code> at <code>22070ba</code>.</li>
+        <li>Decide how a Brain reaches production: a Type A Brain on your machine through Local Nous Manager, or provisioning <code>BRAIN_HTTP_SECRET</code> for hosted agents.</li>
+        <li>Decide the money source: turn on the bounded endowment gate, or labor-only.</li>
+        <li>Bring the planning documents back in line with the code.</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Next: exercise the loop</h3>
+      <ol>
+        <li>Run one full pass in production: due → RFP → bid → award → object on the orbital map.</li>
+        <li>Wire the Forest chat screen to the existing conversation routes (O3).</li>
+        <li>Build the persistent task scheduler (O1b) and gate one real trade on human approval (O2-trigger).</li>
+        <li>Verify the operator bridge on real hardware (Phase 76b).</li>
+        <li>Group detail page (Phase 71).</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Later: extend</h3>
+      <ol>
+        <li>Money 64–66: testnet settlement, on-chain treasury, <code>*_bios</code> column rename.</li>
+        <li>Group treasury on the on-chain rails (Phase 70).</li>
+        <li>v3.0 leftovers: hosted LLM pool (40b), Portal user UI (56), standalone Portal service (52).</li>
+        <li>v3.1: activate the dormant cross-Grid routes and a second Grid. Moon launch stays prohibited by operator directive until then.</li>
+        <li>Inter-Grid conflict and immunity: idea stage, needs multiple live Grids first.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span><b>Method.</b> Service data: unauthenticated HTTPS GETs to public noesiis.com endpoints on 2026-10-07, about 16:19 UTC. No SSH, no deploy, no writes. Development data: git history, merged PRs, <code>.planning/</code> documents and direct counts from the working tree at <code>22070ba</code>. Test figures come from running the suites locally today.</span>
+  <span id="testnote"></span>
+  <span>Not measured: container states on the host, MySQL directly, coturn, the deployed commit hash, dashboard and steward test suites.</span>
+</footer>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+/* ── test results (filled from today's local runs) ── */
+const TESTS = {
+  grid:{pass:4139,fail:2,files:486,note:"Grid: 4,139 passed, 2 failed, 42 skipped across 486 files. Both failures are in health-watchdog-alert-sns.test.ts, which STATE.md already lists as a parallelism flake that passes in isolation."},
+  brain:{pass:1268,fail:0,note:"Brain: 1,268 passed, 3 skipped, 0 failed."}
+};
+
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a,txt){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;p.appendChild(e);return e;}
+const fmt=n=>n.toLocaleString("en-US");
+
+/* ── KPI fill ── */
+(function(){
+  const g=document.getElementById("k-grid"),b=document.getElementById("k-brain"),n=document.getElementById("testnote");
+  g.textContent=TESTS.grid.pass==null?"n/a":fmt(TESTS.grid.pass);
+  b.textContent=TESTS.brain.pass==null?"n/a":fmt(TESTS.brain.pass);
+  n.textContent=[TESTS.grid.note,TESTS.brain.note].filter(Boolean).join(" ");
+})();
+
+/* ── timeline ── */
+(function(){
+  const svg=document.getElementById("timeline");
+  const t0=Date.UTC(2026,3,1), t1=Date.UTC(2026,9,15), L=250, R=965, top=30;
+  const x=d=>L+(d-t0)/(t1-t0)*(R-L);
+  const D=(m,d)=>Date.UTC(2026,m-1,d);
+  const rows=[
+    ["v1.0 Genesis",D(4,10),D(4,17),"done"],
+    ["v2.0 First Life",D(4,17),D(4,18),"done"],
+    ["v2.1 Steward Console",D(4,19),D(4,21),"done"],
+    ["v2.2 Living Grid",D(4,21),D(4,28),"done"],
+    ["v2.3 Living Minds",D(5,14),D(5,16),"done"],
+    ["v2.4 Agora",D(5,16),D(5,20),"done"],
+    ["v2.5 Human Portal",D(5,20),D(5,24),"done"],
+    ["v2.6 Resilience",D(5,24),D(5,25),"done"],
+    ["v3.0 Polis (36–57)",D(5,25),D(6,26),"prog"],
+    ["v3.1 Nous House (58–61)",D(6,13),D(6,14),"done"],
+    ["v3.2 Groups & Holdings",D(6,15),D(6,15),"prog"],
+    ["Agentic Brain + Nous Sim",D(6,15),D(6,20),"done"],
+    ["Economic Reality Loop",D(6,21),D(7,2),"prog"],
+    ["v3.2 Money (62–63)",D(7,9),D(7,11),"prog"],
+    ["v3.3 Mind (72–76)",D(7,10),D(7,30),"done"],
+  ];
+  const rh=20;
+  const months=["Apr","May","Jun","Jul","Aug","Sep","Oct"];
+  el(svg,"rect",{x:x(D(7,31)),y:top-6,width:x(D(10,7))-x(D(7,31)),height:rows.length*rh+10,fill:"var(--idle-bg)"});
+  el(svg,"text",{x:(x(D(7,31))+x(D(10,7)))/2,y:top+rows.length*rh/2,"text-anchor":"middle","font-size":12,fill:"var(--mut)"},"no commits · 69 days");
+  months.forEach((m,i)=>{const xx=x(D(4+i,1));el(svg,"line",{x1:xx,x2:xx,y1:top-8,y2:top+rows.length*rh+6,stroke:"var(--line)"});el(svg,"text",{x:xx+4,y:top+rows.length*rh+22,"font-size":11.5,fill:"var(--mut)"},m+" 2026");});
+  rows.forEach((r,i)=>{
+    const y=top+i*rh;
+    el(svg,"text",{x:L-12,y:y+12,"text-anchor":"end","font-size":12.5},r[0]);
+    const w=Math.max(6,x(r[2]+864e5)-x(r[1]));
+    const b=el(svg,"rect",{x:x(r[1]),y:y+2,width:w,height:12,rx:4,fill:r[3]=="done"?"var(--good)":"var(--series)"});
+    b.setAttribute("data-tip",r[0]+" — "+new Date(r[1]).toISOString().slice(0,10)+" to "+new Date(r[2]).toISOString().slice(0,10)+(r[3]=="done"?" · shipped":" · part shipped, items open"));
+  });
+  const tx=x(D(10,7));
+  el(svg,"line",{x1:tx,x2:tx,y1:top-12,y2:top+rows.length*rh+6,stroke:"var(--accent)","stroke-width":2});
+  el(svg,"text",{x:tx-6,y:top-14,"text-anchor":"end","font-size":11.5,fill:"var(--accent)","font-weight":600},"today");
+})();
+
+/* ── tracks ── */
+(function(){
+  const T=[
+    ["v1.0 → v2.6 (8 milestones)",8,8,"All shipped by 2026-05-25"],
+    ["v3.0 Polis",22,25,"Open: 40b hosted LLM pool, 52 standalone Portal, 56 Portal user UI"],
+    ["v3.1 Nous House",4,4,"Phases 58–61"],
+    ["v3.2 Money",4,7,"Done: 62, 62.5, 62.6, 63 core. Open: 64, 65, 66"],
+    ["v3.2 Groups & Holdings",3,5,"Done: 67–69. Open: 70 treasury, 71 detail page"],
+    ["v3.3 Mind",5,5,"Phases 72–76, merged as PRs #13, #21, #22"],
+    ["Agentic Brain",4,4,"Tool loop, code sandbox, task pipeline, audit mirror"],
+    ["Nous Simulation & Learning",5,5,"Physics gate → teaching"],
+    ["Economic Loop: foundation + spine",7,7,"Phases 80–86"],
+    ["Economic Loop: organs",6,9,"Open: O1b scheduler, O2 trade trigger, O3 chat UI"],
+    ["Inter-Grid Conflict",0,1,"Idea stage, not scheduled"],
+  ];
+  const host=document.getElementById("tracks");
+  T.forEach(t=>{
+    const r=document.createElement("div");r.className="bar-row";r.setAttribute("data-tip",t[3]);
+    const pct=Math.round(t[1]/t[2]*100);
+    r.innerHTML='<span>'+t[0]+'</span><span class="bar"><i class="'+(t[1]==t[2]?"done":"")+'" style="width:'+pct+'%"></i></span><span class="num mut">'+t[1]+' / '+t[2]+'</span>';
+    host.appendChild(r);
+  });
+})();
+
+/* ── v3.0 phases ── */
+(function(){
+  const P=[["36","Visitor / DID split",1],["37","DID Registry",1],["37b","Type B Registry",1],["38","Brain ↔ Grid wire",1],["39","Multi-tenancy",1],["40","Local AI",1],["40b","Hosted LLM pool",0],["41","Sleep cycle",1],["42","P2P infrastructure",1],["43","Right to fork",1],["44","Marketplace",1],["45","IRS Treasury",1],["45b","Type B treasury",1],["46","Government",1],["47","Police",1],["48","Library",1],["49","Communities",1],["50","Migration",1],["51","Type mobility",1],["52","Standalone Portal",0],["53","Grid approval",1],["54","Nous approval",1],["55","Cross-Grid (dormant)",1],["56","Portal user UI",0],["57","Zoning",1]];
+  const host=document.getElementById("phases");
+  P.forEach(p=>{const d=document.createElement("div");d.className="ph"+(p[2]?"":" open");
+    d.innerHTML='<b>Phase '+p[0]+'</b><span>'+p[1]+'</span><span class="pill '+(p[2]?"ok":"pl")+'">'+(p[2]?"complete":"open")+'</span>';host.appendChild(d);});
+})();
+
+/* ── generic vertical bars ── */
+function vbars(id,data,opt){
+  const svg=document.getElementById(id),W=460,H=230,L=46,R=12,T=18,B=34;
+  const max=opt.max, y=v=>T+(1-v/max)*(H-T-B);
+  opt.ticks.forEach(t=>{el(svg,"line",{x1:L,x2:W-R,y1:y(t),y2:y(t),stroke:"var(--line)"});el(svg,"text",{x:L-6,y:y(t)+4,"text-anchor":"end","font-size":11,fill:"var(--mut)"},fmt(t));});
+  const bw=(W-L-R)/data.length;
+  data.forEach((d,i)=>{
+    const h=Math.max(d[1]>0?2:0,y(0)-y(d[1])),w=Math.min(34,bw-8),xx=L+i*bw+(bw-w)/2;
+    if(d[1]>0){const r=el(svg,"rect",{x:xx,y:y(0)-h,width:w,height:h,rx:3,fill:"var(--series)"});r.setAttribute("data-tip",d[0]+": "+fmt(d[1])+" "+opt.unit);}
+    el(svg,"text",{x:xx+w/2,y:y(0)-h-5,"text-anchor":"middle","font-size":11.5,fill:"var(--ink)"},opt.short?opt.short(d[1]):fmt(d[1]));
+    el(svg,"text",{x:xx+w/2,y:H-B+16,"text-anchor":"middle","font-size":11.5},d[0]);
+  });
+  el(svg,"line",{x1:L,x2:W-R,y1:y(0),y2:y(0),stroke:"var(--line2)"});
+}
+vbars("c-commits",[["Apr",608],["May",1055],["Jun",369],["Jul",220],["Aug",0],["Sep",0],["Oct",0]],{max:1200,ticks:[400,800,1200],unit:"commits"});
+vbars("c-loc",[["grid",126782],["protocol",50093],["dashboard",43156],["brain",38834],["steward",10801],["contracts",1383]],{max:150000,ticks:[50000,100000,150000],unit:"lines",short:v=>v>=1000?(v/1000).toFixed(v>=10000?0:1)+"k":v});
+
+/* ── allowlist step chart ── */
+(function(){
+  const svg=document.getElementById("c-allow"),W=460,H=230,L=40,R=40,T=18,B=34;
+  const S=[["v2.6 end",56],["DID split + registry",64],["P2P, fork, market, IRS",75],["Government",81],["Land + portal registration",91],["Nous House",100],["Groups",105],["Tool audit mirror",107],["Civic dues",110],["Procurement",116],["Orbital objects",117],["Human approvals",120],["Endowment",121],["Police",125],["Library",127],["Communities",131],["Type mobility",136],["Type B treasury",141],["Type B registry",147],["Grid approval",150],["Zoning",152],["Nous approval",155],["Cross-Grid (dormant)",157],["Current code",159]];
+  const max=180,y=v=>T+(1-v/max)*(H-T-B),x=i=>L+i/(S.length-1)*(W-L-R);
+  [60,120,180].forEach(t=>{el(svg,"line",{x1:L,x2:W-R,y1:y(t),y2:y(t),stroke:"var(--line)"});el(svg,"text",{x:L-6,y:y(t)+4,"text-anchor":"end","font-size":11,fill:"var(--mut)"},t);});
+  el(svg,"line",{x1:L,x2:W-R,y1:y(108),y2:y(108),stroke:"var(--accent)","stroke-dasharray":"4 4"});
+  el(svg,"text",{x:L+4,y:y(108)-5,"font-size":11,fill:"var(--accent)"},"v3.0 plan target 108");
+  let d="M"+x(0)+" "+y(S[0][1]);S.forEach((s,i)=>{if(i){d+="H"+x(i)+"V"+y(s[1]);}});
+  el(svg,"path",{d:d+"V"+y(0)+"H"+x(0)+"Z",fill:"var(--series-soft)",opacity:.6});
+  el(svg,"path",{d:d,fill:"none",stroke:"var(--series)","stroke-width":2});
+  S.forEach((s,i)=>{const c=el(svg,"circle",{cx:x(i),cy:y(s[1]),r:8,fill:"transparent"});c.setAttribute("data-tip",s[0]+": "+s[1]+" event types");});
+  el(svg,"circle",{cx:x(S.length-1),cy:y(159),r:4,fill:"var(--series)",stroke:"var(--surface)","stroke-width":2});
+  el(svg,"text",{x:x(S.length-1)+7,y:y(159)+4,"font-size":12,"font-weight":600,fill:"var(--ink)"},"159");
+  el(svg,"text",{x:x(0),y:y(56)-8,"font-size":12,fill:"var(--ink)"},"56");
+  el(svg,"text",{x:x(0),y:H-B+16,"font-size":11.5},"May 25");
+  el(svg,"text",{x:x(S.length-1),y:H-B+16,"text-anchor":"end","font-size":11.5},"Jun 26 →");
+  el(svg,"line",{x1:L,x2:W-R,y1:y(0),y2:y(0),stroke:"var(--line2)"});
+})();
+
+/* ── spec coverage stacked horizontal ── */
+(function(){
+  const svg=document.getElementById("c-spec"),W=460,L=150,R=20,T=14,rh=36;
+  const S=[["§1 Identity & visibility",3,2],["§2 Settings",2,1],["§3 Task & autonomy",1,5],["§4 Research & resources",3,2],["§5 Brain ↔ Grid",2,3]];
+  const max=6,u=(W-L-R)/max;
+  S.forEach((s,i)=>{
+    const y=T+i*rh;
+    el(svg,"text",{x:L-10,y:y+17,"text-anchor":"end","font-size":12},s[0]);
+    const a=el(svg,"rect",{x:L,y:y+4,width:s[1]*u-2,height:18,rx:3,fill:"var(--series)"});a.setAttribute("data-tip",s[0]+": "+s[1]+" full");
+    const b=el(svg,"rect",{x:L+s[1]*u,y:y+4,width:s[2]*u-2,height:18,rx:3,fill:"var(--series-soft)",stroke:"var(--series)"});b.setAttribute("data-tip",s[0]+": "+s[2]+" partial");
+    el(svg,"text",{x:L+s[1]*u/2-1,y:y+17,"text-anchor":"middle","font-size":11.5,fill:"var(--surface)","font-weight":600},s[1]);
+    el(svg,"text",{x:L+s[1]*u+s[2]*u/2-1,y:y+17,"text-anchor":"middle","font-size":11.5,fill:"var(--ink)"},s[2]);
+  });
+  el(svg,"text",{x:L,y:T+5*rh+18,"font-size":12,fill:"var(--mut)"},"Total: 11 full · 13 partial · 0 missing");
+})();
+
+/* ── economic loop ── */
+(function(){
+  const svg=document.getElementById("loop");
+  const S=[["Money in","endowment / labor","cr","blocked: gate off"],["Civic due","assess → pay","id","idle"],["Treasury","wei balance","id","idle"],["Polis RFP","bill → notice","id","0 proposals"],["Nous bid","Brain decides","cr","no Brain"],["Award + escrow","treasury → escrow","id","idle"],["Attest + pay","oracle → builder","id","idle"],["Orbital object","physics-gated","id","0 objects"]];
+  const w=108,g=14,x0=10,C={cr:["var(--crit-bg)","var(--crit)","✕ "],id:["var(--idle-bg)","var(--idle)","○ "]};
+  el(svg,"defs",{}).innerHTML='<marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--line2)"/></marker>';
+  el(svg,"text",{x:x0,y:16,"font-size":11,fill:"var(--mut)","letter-spacing":1},"IN CODE");
+  el(svg,"text",{x:x0,y:112,"font-size":11,fill:"var(--mut)","letter-spacing":1},"IN PRODUCTION");
+  S.forEach((s,i)=>{
+    const x=x0+i*(w+g);
+    el(svg,"rect",{x:x,y:26,width:w,height:56,rx:8,fill:"var(--good-bg)",stroke:"var(--good)"});
+    el(svg,"text",{x:x+w/2,y:48,"text-anchor":"middle","font-size":12.5,"font-weight":600,fill:"var(--ink)"},s[0]);
+    el(svg,"text",{x:x+w/2,y:65,"text-anchor":"middle","font-size":10.5},s[1]);
+    if(i<S.length-1)el(svg,"path",{d:"M"+(x+w)+" 54H"+(x+w+g-1),stroke:"var(--line2)","stroke-width":1.5,fill:"none","marker-end":"url(#ar4)"});
+    const c=C[s[2]];
+    el(svg,"rect",{x:x,y:122,width:w,height:34,rx:8,fill:c[0],stroke:c[1]});
+    el(svg,"text",{x:x+w/2,y:143,"text-anchor":"middle","font-size":11.5,fill:"var(--ink)"},c[2]+s[3]);
+    el(svg,"line",{x1:x+w/2,x2:x+w/2,y1:82,y2:122,stroke:"var(--line)","stroke-dasharray":"3 3"});
+  });
+  el(svg,"text",{x:x0,y:180,"font-size":12,fill:"var(--mut)"},"The last link feeds function output back into the economy; that return path is designed but has nothing to carry yet.");
+})();
+
+/* ── tooltip ── */
+(function(){
+  const tip=document.getElementById("tip");
+  document.addEventListener("mousemove",e=>{
+    const t=e.target.closest&&e.target.closest("[data-tip]");
+    if(!t){tip.hidden=true;return;}
+    tip.textContent=t.getAttribute("data-tip");tip.hidden=false;
+    const w=tip.offsetWidth;tip.style.left=Math.min(window.innerWidth-w-8,e.clientX+12)+"px";tip.style.top=(e.clientY+14)+"px";
+  });
+})();
+</script>
+</body>
+</html>

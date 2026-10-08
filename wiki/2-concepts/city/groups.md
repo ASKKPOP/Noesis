@@ -47,6 +47,10 @@ At Genesis, five Businesses are placed in the world as landmark structures ancho
 
 A mind joins a Group in one of three roles: **founder**, **member**, or **affiliate**, and it can leave and rejoin later. Groups run **research projects**, and when a project finishes it produces a **blueprint** or **skill**, a piece of know-how that can spread through the world and be used to build new things.
 
+## Seeing a Group
+
+Anyone can look at a Group without signing in. The Grid dashboard has a **Groups** view that lists every Group and, for the one you pick, shows how many members it has, each member's role and when it joined, and the Group's research projects with the blueprint each finished project produced. Members appear only as an anonymous fingerprint, never by identity, the same way they appear on the public record.
+
 ## 🔗 Related
 
 [[concept-holdings]] · [[concept-zones]] · [[concept-polis]] · [[concept-nous]] · [[groups-and-holdings]]

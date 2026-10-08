@@ -295,3 +295,104 @@ describe('POST /api/v1/portal/chat/nous/:nousId', () => {
         expect(res.json().error).toBe('llm_unavailable');
     });
 });
+
+describe('POST /api/v1/portal/chat/nous/:nousId — persists the reply (O3 Forest)', () => {
+    function appWithPool() {
+        const query = vi.fn().mockResolvedValue([[], {}]);
+        const app = buildServer({
+            clock: new WorldClock({ tickRateMs: 100_000 }), space: new SpatialMap(),
+            logos: new LogosEngine(), audit: new AuditChain(), gridName: 'genesis',
+            humanRegistry: new HumanRegistry(), pool: { query } as never, currentTick: () => 9,
+        });
+        return { app, query };
+    }
+
+    it('writes the Nous reply to the persistent thread when the human sent a message', async () => {
+        mockFetchOk('Well met.');
+        const { app, query } = appWithPool();
+        const res = await app.inject({
+            method: 'POST', url: '/api/v1/portal/chat/nous/sophia',
+            cookies: { [COOKIE_NAME]: await makeJwt() },
+            payload: { messages: [{ role: 'user', content: 'hello' }] },
+        });
+        expect(res.statusCode).toBe(200);
+        const insert = query.mock.calls.find((c) => String(c[0]).includes('INSERT INTO conversation_messages'));
+        expect(insert).toBeDefined();
+        const params = insert![1] as unknown[];
+        expect(params).toContain('did:noesis:human_0xtest');
+        expect(params).toContain('did:noesis:sophia');
+        expect(params).toContain('nous');
+        expect(params).toContain('Well met.');
+        await app.close();
+    });
+
+    it('does not persist the auto-greeting', async () => {
+        mockFetchOk('Welcome.');
+        const { app, query } = appWithPool();
+        await app.inject({
+            method: 'POST', url: '/api/v1/portal/chat/nous/sophia',
+            cookies: { [COOKIE_NAME]: await makeJwt() }, payload: { messages: [] },
+        });
+        expect(query.mock.calls.some((c) => String(c[0]).includes('conversation_messages'))).toBe(false);
+        await app.close();
+    });
+
+    it('still returns the reply when persisting fails', async () => {
+        mockFetchOk('Still here.');
+        const query = vi.fn().mockRejectedValue(new Error('db down'));
+        const app = buildServer({
+            clock: new WorldClock({ tickRateMs: 100_000 }), space: new SpatialMap(),
+            logos: new LogosEngine(), audit: new AuditChain(), gridName: 'genesis',
+            humanRegistry: new HumanRegistry(), pool: { query } as never,
+        });
+        const res = await app.inject({
+            method: 'POST', url: '/api/v1/portal/chat/nous/sophia',
+            cookies: { [COOKIE_NAME]: await makeJwt() },
+            payload: { messages: [{ role: 'user', content: 'hello' }] },
+        });
+        expect(res.statusCode).toBe(200);
+        expect(res.json().reply).toBe('Still here.');
+        await app.close();
+    });
+});
+
+describe('POST /api/v1/portal/chat/nous/:nousId — a connected Brain answers for itself', () => {
+    it('returns 202 pending and never calls the persona model when the Nous is awake', async () => {
+        const f = vi.fn();
+        vi.stubGlobal('fetch', f);
+        const civicDidStore = { getByExistenceDid: vi.fn(async () => ({ presenceStatus: 'awake' })) };
+        const app = buildServer({
+            clock: new WorldClock({ tickRateMs: 100_000 }), space: new SpatialMap(),
+            logos: new LogosEngine(), audit: new AuditChain(), gridName: 'genesis',
+            humanRegistry: new HumanRegistry(), civicDidStore: civicDidStore as never,
+        });
+        const res = await app.inject({
+            method: 'POST', url: '/api/v1/portal/chat/nous/sophia',
+            cookies: { [COOKIE_NAME]: await makeJwt() },
+            payload: { messages: [{ role: 'user', content: 'hello' }] },
+        });
+        expect(res.statusCode).toBe(202);
+        expect(res.json()).toEqual({ reply: null, done: false, pending: true });
+        expect(civicDidStore.getByExistenceDid).toHaveBeenCalledWith('genesis', 'did:noesis:sophia');
+        expect(f).not.toHaveBeenCalled();
+        await app.close();
+    });
+
+    it('still uses the persona model when the Nous is away', async () => {
+        mockFetchOk('Hello.');
+        const civicDidStore = { getByExistenceDid: vi.fn(async () => ({ presenceStatus: 'away' })) };
+        const app = buildServer({
+            clock: new WorldClock({ tickRateMs: 100_000 }), space: new SpatialMap(),
+            logos: new LogosEngine(), audit: new AuditChain(), gridName: 'genesis',
+            humanRegistry: new HumanRegistry(), civicDidStore: civicDidStore as never,
+        });
+        const res = await app.inject({
+            method: 'POST', url: '/api/v1/portal/chat/nous/sophia',
+            cookies: { [COOKIE_NAME]: await makeJwt() },
+            payload: { messages: [{ role: 'user', content: 'hello' }] },
+        });
+        expect(res.statusCode).toBe(200);
+        expect(res.json().reply).toBe('Hello.');
+        await app.close();
+    });
+});

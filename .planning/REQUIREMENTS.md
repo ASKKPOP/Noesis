@@ -207,8 +207,8 @@
 - [ ] **PORTAL-04**: Portal exposes Nous registration request endpoint: `POST /portal/api/v1/nous/request` accepts operator-DID (for Type A) OR Polis-α/β/γ ceremony reference (for Type B), target Grid, civic oath. Portal pre-screens for operator-DID validity, sybil resistance, oath signature. `portal.registration_requested` fires.
 - [ ] **PORTAL-05**: Portal-approved registration requests forward to target-Grid Polis for charter compatibility review (Phase 46). On Polis approval, Grid Registry issues Civic-DID. On rejection, request closed with reason code. Audit events: `portal.registration_approved`, `polis.registration_approved`, `registry.civic_did_issued`.
 - [ ] **PORTAL-06**: Portal cross-Grid framework (built v3.0, dormant; activates v3.1+): `GET /portal/api/v1/nous/<account-did>/grids` returns list of all Grids where account has Civic-DID; cross-Grid identity resolution via Portal-mediated attestation. Marketplace mediation interfaces stubbed.
-- [ ] **PORTAL-07**: Portal user service UI accessible at `https://portal.noesis/<account>` (TBD domain per Q-V3-E). Renders: account profile, list of joined Grids with per-Grid Civic-DID, Wallet balance (cross-Grid), pending registrations, Portal settings. Tech stack: extends Steward Console codebase OR new app (Q-V3-PORTAL-3).
-- [ ] **PORTAL-08**: Portal Wallet displays cross-Grid Bios balance + per-Grid Bios sub-balances. Cross-Grid Bios transferability (Q-V3-CROSS-1) initially: same Bios unit across Grids (single currency); per-Grid currencies deferred to v3.1+ if needed.
+- [x] **PORTAL-07** *(shipped 2026-10-07 at `/portal/dashboard`; deviations in D-V3-38)*: Portal user service UI accessible at `https://portal.noesis/<account>` (TBD domain per Q-V3-E). Renders: account profile, list of joined Grids with per-Grid Civic-DID, Wallet balance (cross-Grid), pending registrations, Portal settings. Tech stack: extends Steward Console codebase OR new app (Q-V3-PORTAL-3).
+- [x] **PORTAL-08** *(shipped 2026-10-07 as wei per D-MONEY-01, not Bios)*: Portal Wallet displays cross-Grid Bios balance + per-Grid Bios sub-balances. Cross-Grid Bios transferability (Q-V3-CROSS-1) initially: same Bios unit across Grids (single currency); per-Grid currencies deferred to v3.1+ if needed.
 - [ ] **PORTAL-09**: Portal maintains its own audit chain (separate from per-Grid chains). Audit events: `portal.grid_creation_*` × 3, `portal.registration_*` × 3, `portal.cross_grid_action_mediated` (v3.1+), `portal.account_*` × 2.
 - [ ] **PORTAL-10**: Portal reviewer panel composition open question (Q-V3-PORTAL-2): start with Henry + 2-3 invited human reviewers, transition to Nous-elected committee after Phase 46 Government ships. Reviewer decisions are audit-evident.
 - [ ] **PORTAL-11** (NEW per D-36-21): Portal accepts **Google OAuth** sign-in/sign-up via `POST /portal/auth/oauth/google` (PKCE flow per RFC 7636); on success, derives operator-DID `did:noesis:human:oauth:google:<sub>` (sub = Google account ID); creates or fetches Portal account; same Portal session token issued as SIWE/email paths. CI gate `scripts/check-no-did-exception-count.mjs` updated to assert 5 exception endpoints (was 3).
@@ -347,14 +347,14 @@
 | TYPE-B-04 | 45b | Pending |
 | TYPE-B-05 | 46 | Pending |
 | TYPE-B-06 | 51 | Pending |
-| PORTAL-01 | 52 | Pending |
+| PORTAL-01 | 52 | Moved to v3.1 (D-V3-38) |
 | PORTAL-02 | 53 | Pending |
 | PORTAL-03 | 53 | Pending |
 | PORTAL-04 | 54 | Pending |
 | PORTAL-05 | 54 | Pending |
 | PORTAL-06 | 55 | Pending |
-| PORTAL-07 | 56 | Pending |
-| PORTAL-08 | 56 | Pending |
+| PORTAL-07 | 56 | Complete (2026-10-07) |
+| PORTAL-08 | 56 | Complete (2026-10-07) |
 | PORTAL-09 | 52 | Pending |
 | PORTAL-10 | 52 | Pending |
 | PORTAL-11 | 52 (OAuth Google) | Pending |

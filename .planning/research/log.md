@@ -101,6 +101,46 @@ pypdf/cv2/pyautogui absent here → live paths inert-by-design, seams+txt/md ver
 Design `docs/plans/2026-07-24-operator-bridge-design.md`; system truth
 `wiki/2-concepts/mind/operator-bridge.md`.
 
+## [2026-10-07] report | Full development + service status report
+Operator asked for an HTML status report with diagrams. Read ROADMAP/STATE/MILESTONES/
+spec-coverage + git/PR history, probed public noesiis.com endpoints read-only (no SSH), and
+re-ran brain (1268 pass) + grid (4139 pass, 2 fail = known SNS-watchdog flake) suites.
+Key finding: build is feature-complete through v3.3 Mind and prod is healthy (audit 344,922,
+divergence 0, uptime 68.8 d) but INERT — 3 Nous `spawning`, 0 wei, 0 objects, 0 proposals,
+0/53 parcels owned; no Brain connected, endowment gate off. `system.noesiis.com` times out.
+No commits since 2026-07-30. Planning docs drifted (STATE front matter, ROADMAP money block,
+allowlist "91" vs 159 in code, phase numbers 72–79 reused). Report:
+`docs/noesis-status-report-2026-10-07.html`. No system change ⇒ wiki untouched.
+
+## [2026-10-07] apply | Solutions for the status report's open items
+Wrote `docs/noesis-open-items-solutions-2026-10-07.html` (11 items: cause/fix/owner/done-test +
+dependency diagram). Fixed in-repo: STATE/ROADMAP drift; two allowlist baseline gates stale
+since PR #19 (159 members / 1075 lines); Brain compose `GRID_URL` default was the apex, which
+404s `/api/v1/*` — now `https://api.noesiis.com`; added the missing `.env.brain.example`.
+Diagnosed `system.noesiis.com`: A record → dead IPs (no TCP 80/443), vhost fine, live cert lacks
+the name. Pitfall carried forward: phase numbers 72–79 are shared by three tracks — cite the
+track name; next free phase number is 89.
+
+## [2026-10-07] apply | Activation builds — Groups 71, Forest chat, task scheduler, Portal overview, v3.0 re-scope
+Shipped on `feat/activation-builds`: Group detail route + `/grid/groups`; `/portal/chat` on the
+persistent thread (reply persisted server-side); Brain `scheduler/` TaskQueue + `brain.scheduleTask`;
+`GET /api/v1/portal/me/overview` + `/portal/dashboard`; D-V3-38 (40b + 52 → v3.1). Allowlist +0,
+no migration. Findings carried forward: (1) the portal chat reply is a Grid-side Ollama persona,
+not the Nous's Brain — a Brain cannot read its human's messages yet, and the two conversation
+routes key the human differently (`did:noesis:human…` vs `did:civic:noesis:human:`); (2) Next.js
+page files may only export the page — put helpers in a sibling module; (3) `/portal/status` shows
+hardcoded service statuses (violates no-mock; not fixed here); (4) the orbital map does not render
+Groups at all, so "click a Group on the map" needs map work first.
+
+## [2026-10-07] apply | Brain inbox — the real Nous answers Portal chat
+Grid `civic/conversation-inbox` (read waiting threads / reply) + Brain `_run_conversation_cycle`.
+Pairing key = the Portal human DID already stored on the thread; the Nous is resolved
+civic→existence server-side, so no new identity link was needed. The Grid-side persona now
+returns 202 `pending` while the Nous's presence is `awake`, so two voices never answer one
+message. Pitfall: `conversation_messages.created_at` was a copy of `tick`, so messages inside one
+30 s tick had no order — it now stores a ms arrival stamp (legacy rows sort first by tick).
+Unverified on real MySQL / with a live Brain.
+
 ## [2026-10-07] apply | Portal Project Status page de-hardcoded (no-mock rule)
 `/portal/status` rendered invented service statuses/latencies and a roadmap frozen at
 Phase 22. Replaced with live public Grid reads (`/health/detailed`, `/api/v1/grid/status`,

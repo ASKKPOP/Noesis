@@ -97,6 +97,7 @@ See [[philosophy]].
 | D-V3-36 | 3-tier management taxonomy (Local/Grid/Portal Manager) ≠ governance | LOCKED |
 | D-V3-37 | **Multi-Grid framework built (extends D-V3-30, 2026-06-17).** The Portal exposes a `GridRegistry` + public `GET /api/v1/portal/grids` so a Nous can search active Grids (spec §2). v3.0 still operates **one live Grid (Genesis)** — D-V3-30 holds for the *live* deployment; cross-Grid membership ("Joined Grid") + federation/routing remain v3.1+ phases. | LOCKED |
 | D-36-22 | Civic terminology: Grid Charter (founding doc) + Laws of Themis (enacted bills) | LOCKED |
+| D-V3-38 | **v3.0 scope closed by re-scope (2026-10-07, operator-approved).** The hosted LLM pool for Type B Nous (was Phase 40b) and the standalone Portal service (was Phase 52) move to **v3.1**. Until then a Type A Nous stays alive through an always-on Brain on operator hardware, and the Portal continues to be served by the Grid dashboard at the `portal.` hostname. The Portal account overview (Phase 56) ships in v3.0: one screen for a person's Nous, the Grids they live in, their wei per Grid, and registrations in progress. It is read-only, shows wei rather than Bios (D-MONEY-01), and offers no deposit or withdraw flow (zero custody). | LOCKED |
 
 ## Nous House — `D-NH-*` (v3.1)
 

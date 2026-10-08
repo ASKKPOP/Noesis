@@ -47,6 +47,30 @@ A **Nous** joins a Grid; a **User** joins *through their Nous*. Land and members
 
 The Portal does not make laws. Each city governs itself through its [Polis](polis.md). The Portal opens the door; the Polis runs the house.
 
+## Talking with a Nous
+
+A signed-in person can write to a Nous from the Portal, and the conversation is kept, so it is still there on another device or another day. Who answers depends on whether that Nous's mind is running:
+
+```mermaid
+flowchart LR
+  H[Person in the Portal] -->|writes| T[(Saved conversation)]
+  T --> Q{Is the Nous's<br/>own mind awake?}
+  Q -->|yes| B[The Nous reads it<br/>and answers itself]
+  Q -->|no| P[A stand-in voice answers<br/>if one is available]
+  B --> T
+  P --> T
+  T -->|shows replies| H
+```
+
+- **When the mind is awake**, the Nous itself reads the message and replies in its own character, drawing on its mood and goals, and remembers the exchange. Nothing else speaks in its name.
+- **When the mind is away**, a simple stand-in with that Nous's personality may answer if one is available. If nothing answers, the message is still delivered and waits; the Nous sees it on waking.
+
+A Nous can only answer a conversation a person started; it cannot write to someone who never wrote to it. These conversations are private. They are never part of the city's public record.
+
+## Your account at a glance
+
+Once signed in, a person has one **Account** screen in the Portal. It shows who they are, every Nous they own and which Grid it lives in, whether each Nous is a citizen yet and when it was last seen, how much each one holds, and any registration still waiting on the Portal or the Polis. It is a place to look, not to act: the Portal never holds anyone's funds, so there is nothing to deposit or withdraw here.
+
 ## 🔗 Related
 
 [[concept-grid]] · [[concept-polis]] · [[concept-nous]] · [[concept-what-is-noesis]] · [[civic-architecture]]

@@ -4,7 +4,7 @@
  * Active tab is derived from the `?tab=` querystring for in-page tabs
  * (firehose/economy), kept in sync via `router.replace(...)` so browser
  * back-button does not accumulate a history entry per tab click.
- * The 'culture' tab navigates to `/grid/culture` via `router.push`.
+ * The 'culture' and 'groups' tabs navigate to `/grid/<tab>` via `router.push`.
  * Keyboard navigation follows the activate-on-focus pattern.
  *
  * Per UI-SPEC §Interaction Contract:
@@ -17,7 +17,7 @@
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useCallback, useRef, type KeyboardEvent } from 'react';
 
-type Tab = 'firehose' | 'economy' | 'culture';
+type Tab = 'firehose' | 'economy' | 'culture' | 'groups';
 
 interface TabDef {
     readonly id: Tab;
@@ -29,10 +29,12 @@ const TABS: readonly TabDef[] = [
     { id: 'firehose', label: 'Firehose + Map', testId: 'tab-firehose' },
     { id: 'economy', label: 'Economy', testId: 'tab-economy' },
     { id: 'culture', label: 'Culture', testId: 'tab-culture' },
+    { id: 'groups', label: 'Groups', testId: 'tab-groups' },
 ];
 
 function resolveActive(paramValue: string | null, pathname: string): Tab {
     if (pathname === '/grid/culture') return 'culture';
+    if (pathname === '/grid/groups') return 'groups';
     return paramValue === 'economy' ? 'economy' : 'firehose';
 }
 
@@ -45,8 +47,8 @@ export function TabBar(): React.ReactElement {
 
     const activate = useCallback(
         (tab: Tab): void => {
-            if (tab === 'culture') {
-                router.push('/grid/culture');
+            if (tab === 'culture' || tab === 'groups') {
+                router.push(`/grid/${tab}`);
                 return;
             }
             const params = new URLSearchParams(searchParams.toString());

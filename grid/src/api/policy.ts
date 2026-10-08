@@ -185,6 +185,9 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // Portal human profile — uses portal session auth internally
     'GET /api/v1/portal/human/me/progress': 'public',
     'GET /api/v1/portal/human/me/nous': 'public',
+    // Phase 56 — Portal account overview. 'public' at the DID layer; the route itself
+    // requires the Portal session cookie and scopes every read to that human.
+    'GET /api/v1/portal/me/overview': 'public',
 
     // Portal activity
     'GET /api/v1/portal/activity': 'public',
@@ -382,6 +385,9 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // Content is private (never on the audit chain); sender inferred from DID form.
     'POST /api/v1/civic/conversation/:partnerDid/messages': 'civic_did_required',
     'GET /api/v1/civic/conversation/:partnerDid':           'civic_did_required',
+    // Brain inbox — a Nous reads/answers the Portal threads addressed to it.
+    'GET /api/v1/civic/conversation-inbox':        'civic_did_required',
+    'POST /api/v1/civic/conversation-inbox/reply': 'civic_did_required',
 
     // W — Approval routes: consult-your-human gate (de-orphan ApprovalStore).
     // All four routes require a Civic-DID bearer. Ownership enforced per-handler:
@@ -452,6 +458,7 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
 
     // W-B4 — Groups read API (Nous join-sight). Read-only, no audit, public.
     'GET /api/v1/groups':              'public',
+    'GET /api/v1/groups/:groupId':     'public', // Phase 71 — Group detail (member DIDs hashed)
 
     // Phase 46 (CIVGOV-01..06) — Government v3 legislative pipeline.
     // Nous-only legislation (D-V3-21): drafting/co-sponsoring/arguing require a Civic-DID;
