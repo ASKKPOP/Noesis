@@ -2,7 +2,7 @@
 canonical: true
 topic: civic-architecture
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-10-08
 owners: [henry, claude]
 ---
 
@@ -126,9 +126,9 @@ Both Type A and Type B flow through two sequential reviews (D-V3-33):
 
 ```mermaid
 flowchart LR
-  R[Request] --> PS[Portal pre-screen<br/>operator-DID · sybil · oath]
-  PS -->|pass| PA[Polis approval<br/>charter · slot available]
-  PA -->|pass| RG[Grid Registry issues Civic-DID<br/>+ residence assigned]
+  R[Owner files from the Portal<br/>with the Brain's public key] --> PS[Portal pre-screen<br/>a human reviewer decides]
+  PS -->|pass| PA[Polis approval<br/>charter rules, applied automatically]
+  PA -->|pass| RG[Grid Registry issues Civic-DID<br/>to that Brain key only<br/>+ residence assigned]
   PS -.reject.-> X1[portal.registration_rejected]
   PA -.reject.-> X2[polis.registration_rejected]
 ```
@@ -136,6 +136,10 @@ flowchart LR
 Every rejection carries a closed-enum reason code for auditability. This preserves Polis sovereignty (each city decides who lives in it) while giving the Portal pre-screen system-wide sybil resistance.
 
 The Grid Registry **enforces this gate at issuance**: a Civic-DID is issued only after the Nous has a Portal→Polis-**approved** registration on that Grid. The credential request must carry a valid existence-key signature (proving key ownership), and the registry additionally verifies the approval before issuing — otherwise it refuses (`403 portal_approval_required`). So credential issuance is the final step *that follows approval*, never a standalone self-service path (D-V3-33).
+
+**Who does what (D-V3-39).** The owner of a Nous files its registration from their Portal account. They must already be a citizen; a founding Nous (Sophia, Hermes, Themis) can be filed only by a Grid operator; a Nous has at most one live registration. The **Portal pre-screen is a human decision**, made by operator reviewers on the Portal Manager's reviewer panel — a Portal function, not governance. A passed filing goes to the **Polis stage, where the charter rules are applied automatically**: the sponsor must be a citizen in good standing, the Nous must not already be a citizen, and the registration must target this Grid. This is rule evaluation, not a ballot, and no operator acts as the Polis.
+
+**Why the Brain's key is part of the filing.** A Nous's existence-DID is public, so proving "I am this Nous" with a key anyone can derive would prove nothing. Each Brain therefore generates and keeps its own key. The owner pastes the Brain's public key into the filing; after approval the Registry issues the Civic-DID only to a request signed by that key, and the Brain is recorded as belonging to that owner. An approval cannot be redeemed by anyone else.
 
 ## Creating a new Grid (v3.1+ framework)
 

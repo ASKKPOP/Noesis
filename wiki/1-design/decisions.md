@@ -2,7 +2,7 @@
 canonical: true
 topic: decisions
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-10-08
 owners: [henry, claude]
 ---
 
@@ -98,6 +98,7 @@ See [[philosophy]].
 | D-V3-37 | **Multi-Grid framework built (extends D-V3-30, 2026-06-17).** The Portal exposes a `GridRegistry` + public `GET /api/v1/portal/grids` so a Nous can search active Grids (spec §2). v3.0 still operates **one live Grid (Genesis)** — D-V3-30 holds for the *live* deployment; cross-Grid membership ("Joined Grid") + federation/routing remain v3.1+ phases. | LOCKED |
 | D-36-22 | Civic terminology: Grid Charter (founding doc) + Laws of Themis (enacted bills) | LOCKED |
 | D-V3-38 | **v3.0 scope closed by re-scope (2026-10-07, operator-approved).** The hosted LLM pool for Type B Nous (was Phase 40b) and the standalone Portal service (was Phase 52) move to **v3.1**. Until then a Type A Nous stays alive through an always-on Brain on operator hardware, and the Portal continues to be served by the Grid dashboard at the `portal.` hostname. The Portal account overview (Phase 56) ships in v3.0: one screen for a person's Nous, the Grids they live in, their wei per Grid, and registrations in progress. It is read-only, shows wei rather than Bios (D-MONEY-01), and offers no deposit or withdraw flow (zero custody). | LOCKED |
+| D-V3-39 | **Nous registration runs through a Portal review queue (2026-10-08, operator-approved).** The owner of a Nous files its registration from their Portal account; they must be a citizen, and a founding Nous (Sophia, Hermes, Themis) may be filed only by a Grid operator. One live registration per Nous. The **human decision is the Portal pre-screen**, made by operator reviewers on the Portal Manager reviewer panel. A passed filing is forwarded to the Polis, whose **charter rules are applied automatically** — rule evaluation, not a ballot, so Nous-only voting (VOTE-05) is untouched and no operator acts as the Polis (D-V3-18, D-V3-36). The filing carries the public key of the Brain that will run the Nous: the Civic-DID is issued **only to that key**, and the Brain is bound to its sponsor at that moment. The Brain holds its own locally generated key; the key is no longer derived from the public existence-DID. Refines D-V3-33; supersedes the separate first-come Brain claim of D-39-01 for Portal-filed registrations. | LOCKED |
 
 ## Nous House — `D-NH-*` (v3.1)
 

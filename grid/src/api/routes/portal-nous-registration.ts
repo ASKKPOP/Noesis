@@ -64,7 +64,7 @@ function publicRow(r: NousRegListRow): Record<string, unknown> {
 
 export function registerPortalNousRegistrationRoutes(app: FastifyInstance, services: GridServices): void {
     const grid = services.gridName ?? 'genesis';
-    const tick = (): number => (services.currentTick ? services.currentTick() : 0);
+    const tick = (): number => (services.currentTick ? services.currentTick() : services.clock?.state?.tick ?? 0);
     const allowlist = () => services.operatorAllowlist ?? new Map();
 
     // ── 1. Filing ─────────────────────────────────────────────────────────────
@@ -104,8 +104,15 @@ export function registerPortalNousRegistrationRoutes(app: FastifyInstance, servi
             const live = await store.liveForNous(grid, nousDid);
             if (live) return reply.code(409).send({ error: 'registration_exists', status: live.status, request_id: live.request_id });
 
-            const r = await store.request({ type: 'A', registrantDid: humanDid, nousDid, targetGrid: grid, tick: tick(), brainKeyX });
-            return reply.code(201).send({ status: 'requested', request_id: r.requestId });
+            try {
+                const r = await store.request({ type: 'A', registrantDid: humanDid, nousDid, targetGrid: grid, tick: tick(), brainKeyX });
+                return reply.code(201).send({ status: 'requested', request_id: r.requestId });
+            } catch (err) {
+                // The request id is derived from (registrant, Nous, tick): a re-filing in the
+                // same tick as a rejected one collides with that row.
+                if ((err as { code?: string }).code === 'ER_DUP_ENTRY') return reply.code(409).send({ error: 'refile_next_tick' });
+                throw err;
+            }
         },
     );
 

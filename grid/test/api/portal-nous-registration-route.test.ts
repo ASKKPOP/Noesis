@@ -45,6 +45,7 @@ function makePool(w: World): Pool {
             return [s ? [s] : [], {}];
         }
         if (/INSERT INTO nous_registrations/i.test(sql)) {
+            if (w.regs.some((r) => r.request_id === params[0])) throw Object.assign(new Error('dup'), { code: 'ER_DUP_ENTRY' });
             w.regs.push({ request_id: params[0], nous_type: params[1], registrant_did: params[2], nous_did: params[3], target_grid: params[4], brain_key_x: params[5], status: 'requested', reason_code: null, filed_tick: params[6] });
             return [[], {}];
         }
@@ -267,9 +268,14 @@ describe('reviewer panel — /api/v1/portal-reviewer/nous-registrations', () => 
         expect((await decide(app, 'nope', { pass: true })).statusCode).toBe(404);
     });
 
-    it('a rejected Nous can be filed again', async () => {
-        const { app, requestId } = await filed(world());
+    it('a rejected Nous can be filed again, on a later tick', async () => {
+        const w = world();
+        const { app, requestId } = await filed(w);
         await decide(app, requestId, { pass: false });
+        const sameTick = await file(app, HERMES, await cookie(OPERATOR));
+        expect(sameTick.statusCode).toBe(409);
+        expect(sameTick.json().error).toBe('refile_next_tick');
+        w.regs[0].request_id = 'filed-on-an-earlier-tick';
         expect((await file(app, HERMES, await cookie(OPERATOR))).statusCode).toBe(201);
     });
 });

@@ -90,6 +90,7 @@ const REFUSAL: Record<string, string> = {
     founding_nous_operator_only: 'Sophia, Hermes and Themis can only be registered by a Grid operator.',
     civic_did_required: 'You need to be a citizen of the Genesis Grid before you can register a Nous.',
     already_registered: 'This Nous is already a citizen.',
+    refile_next_tick: 'The Grid has not moved on since the last filing for this Nous. Wait a moment and file again.',
     registration_exists: 'A registration for this Nous is already in progress or approved.',
     not_operator: 'Only a Grid operator can review registrations.',
     portal_session_required: 'Sign in to the Portal to review registrations.',
