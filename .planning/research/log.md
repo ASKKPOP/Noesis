@@ -140,3 +140,14 @@ returns 202 `pending` while the Nous's presence is `awake`, so two voices never 
 message. Pitfall: `conversation_messages.created_at` was a copy of `tick`, so messages inside one
 30 s tick had no order — it now stores a ms arrival stamp (legacy rows sort first by tick).
 Unverified on real MySQL / with a live Brain.
+
+## [2026-10-07] apply | Portal Project Status page de-hardcoded (no-mock rule)
+`/portal/status` rendered invented service statuses/latencies and a roadmap frozen at
+Phase 22. Replaced with live public Grid reads (`/health/detailed`, `/api/v1/grid/status`,
+`/api/v1/system/map`, `/api/v1/grid/nous`) via new `dashboard/src/lib/api/grid-health.ts`;
+unanswered reads are shown as unanswered. Roadmap, latencies and the "no incidents" claim
+removed (no live source). `PortalAuthGate` login-gated the page on a Grid session, so a
+Grid outage redirected to sign-in before the outage state could render — operator approved
+making `/portal/status` public (public reads only). Pitfall carried forward: any page that
+must render during a Grid outage cannot sit behind the session gate.
+System truth: `wiki/2-concepts/city/portal.md`.
