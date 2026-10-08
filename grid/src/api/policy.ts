@@ -82,6 +82,13 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /portal/api/v1/nous/request':              'civic_did_required',
     'POST /portal/api/v1/nous/:requestId/prescreen': 'government_only',
     'POST /api/v1/gov/charter/review/:requestId':    'government_only',
+    // D-V3-39 Nous registration through the Portal. Filing + own-status are 'public' with
+    // in-handler Portal-cookie verification (the /api/v1/portal/* convention). The reviewer
+    // panel is operator_only: tier + identity come from the session DID vs the allowlist.
+    'POST /api/v1/portal/nous/:nousId/registration': 'public',
+    'GET /api/v1/portal/nous/registrations':         'public',
+    'GET /api/v1/portal-reviewer/nous-registrations': 'operator_only',
+    'POST /api/v1/portal-reviewer/nous-registrations/:requestId/prescreen': 'operator_only',
     // Phase 55 Portal Cross-Grid (dormant v3.0) — identity reads public; account views civic.
     'GET /portal/api/v1/nous/:accountDid/grids':       'civic_did_required',
     'GET /portal/api/v1/identity/:existenceDid':       'public',

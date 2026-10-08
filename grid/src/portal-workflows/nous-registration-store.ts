@@ -22,24 +22,26 @@ function uuidFrom(seed: string): string {
     return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
 }
 
+export type NousRegStatus = 'requested' | 'polis_pending' | 'approved' | 'rejected';
+export interface NousRegListRow extends NousRegRow { reason_code: string | null; filed_tick: number; }
 export interface NousRegRow { request_id: string; nous_type: string; registrant_did: string; nous_did: string; target_grid: string; status: string; }
 
 export class NousRegistrationStore {
     constructor(private readonly pool: Pool, private readonly audit: AuditChain) {}
 
     /** A Nous registration enters the Portal pipeline → nous.registration_requested. */
-    async request(p: { type: NousType; registrantDid: string; nousDid: string; targetGrid: string; tick: number }): Promise<{ requestId: string }> {
+    async request(p: { type: NousType; registrantDid: string; nousDid: string; targetGrid: string; tick: number; brainKeyX?: string }): Promise<{ requestId: string }> {
         const requestId = uuidFrom(`${p.registrantDid}|${p.nousDid}|${p.tick}`);
         await this.pool.query(
-            `INSERT INTO nous_registrations (request_id, nous_type, registrant_did, nous_did, target_grid, status, filed_tick)
-             VALUES (?, ?, ?, ?, ?, 'requested', ?)`,
-            [requestId, p.type, p.registrantDid, p.nousDid, p.targetGrid, p.tick],
+            `INSERT INTO nous_registrations (request_id, nous_type, registrant_did, nous_did, target_grid, brain_key_x, status, filed_tick)
+             VALUES (?, ?, ?, ?, ?, ?, 'requested', ?)`,
+            [requestId, p.type, p.registrantDid, p.nousDid, p.targetGrid, p.brainKeyX ?? null, p.tick],
         );
         appendNousRegistrationRequested(this.audit, { registrant_did_hash: sha256Hex(p.registrantDid), request_id: requestId, target_grid: p.targetGrid, tick: p.tick, type: p.type });
         return { requestId };
     }
 
-    private async get(requestId: string): Promise<NousRegRow | null> {
+    async get(requestId: string): Promise<NousRegRow | null> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
             `SELECT request_id, nous_type, registrant_did, nous_did, target_grid, status FROM nous_registrations WHERE request_id = ? LIMIT 1`,
             [requestId],
@@ -49,17 +51,53 @@ export class NousRegistrationStore {
     }
 
     /**
-     * D-V3-33 issuance gate: has this Nous a Portal→Polis-**approved** registration
-     * on the target Grid? The Civic-DID issuance route requires this so no
-     * Civic-DID is issued outside the Portal → Polis pipeline. Matches the
-     * request's existence_did against nous_registrations.nous_did.
+     * The live (not rejected) registration for a Nous on a Grid, or null. One Nous may
+     * hold at most one live registration — the filing route refuses a second.
      */
-    async isNousApproved(gridName: string, nousDid: string): Promise<boolean> {
+    async liveForNous(gridName: string, nousDid: string): Promise<NousRegRow | null> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT 1 FROM nous_registrations WHERE target_grid = ? AND nous_did = ? AND status = 'approved' LIMIT 1`,
+            `SELECT request_id, nous_type, registrant_did, nous_did, target_grid, \`status\` FROM nous_registrations
+             WHERE target_grid = ? AND nous_did = ? AND \`status\` <> 'rejected' LIMIT 1`,
             [gridName, nousDid],
         );
-        return rows.length > 0;
+        const r = rows as unknown as NousRegRow[];
+        return r.length ? r[0] : null;
+    }
+
+    /** Registrations a registrant filed on a Grid, newest first (their own status view). */
+    async listByRegistrant(gridName: string, registrantDid: string): Promise<NousRegListRow[]> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT request_id, nous_type, registrant_did, nous_did, target_grid, \`status\`, reason_code, filed_tick FROM nous_registrations
+             WHERE target_grid = ? AND registrant_did = ? ORDER BY filed_tick DESC LIMIT 200`,
+            [gridName, registrantDid],
+        );
+        return rows as unknown as NousRegListRow[];
+    }
+
+    /** The Portal reviewer queue for a Grid, newest first, optionally one status. */
+    async listForReview(gridName: string, status?: NousRegStatus): Promise<NousRegListRow[]> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT request_id, nous_type, registrant_did, nous_did, target_grid, \`status\`, reason_code, filed_tick FROM nous_registrations
+             WHERE target_grid = ?${status ? ' AND `status` = ?' : ''} ORDER BY filed_tick DESC LIMIT 200`,
+            status ? [gridName, status] : [gridName],
+        );
+        return rows as unknown as NousRegListRow[];
+    }
+
+    /**
+     * D-V3-33 issuance gate: the Civic-DID issuance route requires a Portal→Polis-
+     * **approved** registration, so no Civic-DID is issued outside the pipeline.
+     * Returns the Brain key (Ed25519 public key, base64url `x`) bound to this Nous's
+     * APPROVED registration: `undefined` when there is no approved registration, `null` when the
+     * approved registration is unbound (filed through the older civic route).
+     */
+    async approvedBrainKey(gridName: string, nousDid: string): Promise<string | null | undefined> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT brain_key_x FROM nous_registrations WHERE target_grid = ? AND nous_did = ? AND status = 'approved' LIMIT 1`,
+            [gridName, nousDid],
+        );
+        const r = rows as unknown as { brain_key_x: string | null }[];
+        return r.length ? (r[0].brain_key_x ?? null) : undefined;
     }
 
     /** Portal pre-screen. Pass → forward to Polis (polis.registration_pending). Fail → rejected. */

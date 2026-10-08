@@ -123,6 +123,13 @@ export async function registerBrainTokenRoutes(
                 if (!civicRecord || civicRecord.status !== 'active') {
                     return reply.code(403).send({ error: 'civic_did_not_active' });
                 }
+                // D-V3-39: when the Civic-DID was issued to an enrolled Brain key, only that
+                // key may register the Brain token (first-registration is otherwise open
+                // to whoever arrives first, and the Nous existence DID is public).
+                const enrolledX = (civicRecord.existencePublicKeyJwk as { x?: unknown } | null | undefined)?.x;
+                if (typeof enrolledX === 'string' && enrolledX !== jwk['x']) {
+                    return reply.code(403).send({ error: 'brain_key_not_enrolled' });
+                }
             }
 
             // Verify Ed25519 signature over the canonical message.
