@@ -169,3 +169,9 @@ Verified end to end on a real local Grid + MySQL 8.0. Pitfall carried forward: t
 tests for brain tokens use a hand-written mock store, not the real class, which hid that
 `BrainTokenStore.getByDid` omitted `operator_did` (every Brain read as unclaimed) — fixed and
 pinned with a test that only returns the columns the SQL selects.
+
+## [2026-10-13] apply | Reviewer separation of duties on Nous registrations
+Operator asked to close the self-review gap: the filer of a registration can no longer pass
+or reject it as reviewer (`403 self_review_forbidden`; the queue marks `own_filing`).
+Consequence carried forward: a founding Nous needs two operator accounts — one files, a
+different one reviews.

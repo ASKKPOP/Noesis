@@ -23,6 +23,7 @@ import type { GridServices } from '../../src/api/server.js';
 import type { DIDContext } from '../../src/api/preHandlers/types.js';
 
 const OPERATOR = 'did:noesis:human:email:op';
+const REVIEWER_DID = 'did:noesis:human:email:rev';
 const CITIZEN = 'did:noesis:human:email:cit';
 const HERMES = 'did:noesis:hermes';
 const ALICE = 'did:noesis:nous:alice';
@@ -94,7 +95,9 @@ const world = (over: Partial<World> = {}): World => ({
     ...over,
 });
 
-const REVIEWER: DIDContext = { did: OPERATOR, tier: 'human_visitor', operatorDid: OPERATOR, operatorTier: 5 } as DIDContext;
+const REVIEWER: DIDContext = { did: REVIEWER_DID, tier: 'human_visitor', operatorDid: REVIEWER_DID, operatorTier: 5 } as DIDContext;
+/** The filer, wearing their reviewer hat. */
+const FILER_AS_REVIEWER: DIDContext = { did: OPERATOR, tier: 'human_visitor', operatorDid: OPERATOR, operatorTier: 5 } as DIDContext;
 /** A well-formed Ed25519 public key `x` (32 bytes, base64url, no padding). */
 const BRAIN_KEY = 'A'.repeat(43);
 const file = (app: FastifyInstance, nous: string, cookies?: Record<string, string>, payload: unknown = { brain_public_key_x: BRAIN_KEY }) =>
@@ -221,9 +224,23 @@ describe('reviewer panel — /api/v1/portal-reviewer/nous-registrations', () => 
         const res = await app.inject({ method: 'GET', url: '/api/v1/portal-reviewer/nous-registrations?status=requested' });
         expect(res.statusCode).toBe(200);
         const row = res.json().registrations[0];
-        expect(row).toMatchObject({ nous_did: HERMES, status: 'requested', registrant_is_operator: true, founding_nous: true });
+        expect(row).toMatchObject({ nous_did: HERMES, status: 'requested', registrant_is_operator: true, founding_nous: true, own_filing: false });
         expect(row.registrant_did_hash).toMatch(/^[0-9a-f]{64}$/);
         expect(res.body).not.toContain(OPERATOR);
+    });
+
+    it('a reviewer cannot pass or reject their own filing', async () => {
+        const w = world();
+        const { app, audit, requestId } = await filed(w, FILER_AS_REVIEWER);
+        for (const pass of [true, false]) {
+            const res = await decide(app, requestId, { pass });
+            expect(res.statusCode).toBe(403);
+            expect(res.json().error).toBe('self_review_forbidden');
+        }
+        expect(w.regs[0].status).toBe('requested');
+        expect(audit.query({}).map((e) => e.eventType)).toEqual(['nous.registration_requested']);
+        const list = await app.inject({ method: 'GET', url: '/api/v1/portal-reviewer/nous-registrations' });
+        expect(list.json().registrations[0].own_filing).toBe(true);
     });
 
     it('400 for an unknown status filter or a non-boolean decision', async () => {

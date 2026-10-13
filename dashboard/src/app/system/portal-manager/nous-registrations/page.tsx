@@ -6,7 +6,8 @@
  *
  * An operator reviewer passes or rejects each filing at the Portal pre-screen.
  * A pass forwards the filing to the Genesis Polis, whose charter rules are then
- * applied automatically — the reviewer never decides for the Polis. Every
+ * applied automatically — the reviewer never decides for the Polis, and never
+ * decides a filing they made themselves. Every
  * decision is recorded on the audit chain by the Grid.
  */
 
@@ -121,7 +122,12 @@ export default function NousRegistrationReviewPage() {
                                 {' · '}{row.registrant_is_operator ? 'owner is a Grid operator' : 'owner is not a Grid operator'}
                                 {row.founding_nous ? ' · founding Nous' : ''}
                             </div>
-                            {row.status === 'requested' && (
+                            {row.status === 'requested' && row.own_filing && (
+                                <p style={{ margin: 0, fontFamily: sans, fontSize: 13, color: 'var(--muted)' }}>
+                                    You filed this registration. Another reviewer has to decide it.
+                                </p>
+                            )}
+                            {row.status === 'requested' && !row.own_filing && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 2 }}>
                                     <button type="button" disabled={busy !== null} onClick={() => decide(row, true)}
                                         style={{ ...button, border: 'none', background: 'var(--terracotta-2)', color: '#fff' }}>

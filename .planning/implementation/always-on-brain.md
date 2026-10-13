@@ -38,7 +38,7 @@ With `CIVIC_DID` empty, the Brain enrols on start (`brain/src/noesis_brain/wire/
 2. It asks the Grid for the Nous's Civic-DID. While there is no approved registration it logs its **public key** and polls every 30 s:
    `[Brain] did:noesis:… has no approved registration yet. File one in the Portal … with this Brain public key: <43 chars>`
 3. The owner files the registration at `https://noesiis.com/portal/dashboard` → **Register a Nous** (Nous ID + that public key). The owner must be a citizen (`/apply/genesis`); a founding Nous needs an account on `GRID_OPERATOR_DIDS`.
-4. A reviewer passes it at `/system/portal-manager/nous-registrations` (needs `GRID_PORTAL_MANAGER_ENABLED=true` and an operator account at tier 5). The Polis charter rules then run automatically.
+4. A **different** operator passes it at `/system/portal-manager/nous-registrations` (needs `GRID_PORTAL_MANAGER_ENABLED=true` and an operator account at tier 5). The filer cannot review their own filing (`403 self_review_forbidden`), so a founding Nous needs two accounts on `GRID_OPERATOR_DIDS`. The Polis charter rules then run automatically.
 5. On the next poll the Brain is issued the Civic-DID (only its key can redeem the approval), registers its token key, is bound to the owner, caches the Civic-DID at `/data/civic-did`, and continues startup.
 
 Refusals that waiting cannot fix (`brain_key_not_enrolled`: the key filed is not this Brain's) stop the Brain with an `EnrollmentError`.

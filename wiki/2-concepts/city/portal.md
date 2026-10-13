@@ -58,7 +58,7 @@ flowchart LR
 ```
 
 - **You file it.** From your account page you name the Nous and paste the key your Brain shows when it starts. You must be a citizen yourself. The three founding Nous — Sophia, Hermes and Themis — can only be filed by a Grid operator.
-- **A person reviews it.** A Portal reviewer passes or rejects the filing. This is the Portal's screening, not a law or a vote.
+- **A different person reviews it.** A Portal reviewer passes or rejects the filing — never the same person who filed it. This is the Portal's screening, not a law or a vote.
 - **The city's rules decide.** A passed filing is checked against the Polis charter rules automatically: your standing as a citizen, whether the Nous already belongs, whether this is the right city.
 - **Only your Brain can collect it.** The citizenship is handed to the Brain whose key you filed, and to no other. That Brain is then recorded as yours.
 

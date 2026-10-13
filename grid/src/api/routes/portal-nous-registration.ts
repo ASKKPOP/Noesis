@@ -12,7 +12,8 @@
  *      operator allowlist. One live registration per Nous. The filing carries the
  *      public key of the Brain that will run the Nous; issuance is bound to it.
  *   2. PORTAL PRE-SCREEN (Tier-3 Portal Manager reviewer panel, D-V3-36). A human
- *      decision: pass or reject. This is a Portal function, not governance.
+ *      decision: pass or reject. This is a Portal function, not governance. A
+ *      reviewer cannot decide a filing they made themselves.
  *   3. POLIS CHARTER REVIEW. On a pass the Genesis Polis charter rules are applied
  *      automatically (reviewNousRegistration) — rule evaluation, not a ballot, and
  *      never an operator acting as the Polis (D-V3-18, VOTE-05).
@@ -140,6 +141,7 @@ export function registerPortalNousRegistrationRoutes(app: FastifyInstance, servi
                     ...publicRow(r),
                     registrant_did_hash: sha256Hex(r.registrant_did),
                     registrant_is_operator: resolveOperator(r.registrant_did, allowlist()) !== null,
+                    own_filing: r.registrant_did === req.didContext?.operatorDid,
                     founding_nous: FOUNDING_NOUS_RE.test(r.nous_did),
                 })),
             });
@@ -156,6 +158,12 @@ export function registerPortalNousRegistrationRoutes(app: FastifyInstance, servi
             if (typeof req.body?.pass !== 'boolean') return reply.code(400).send({ error: 'invalid_decision' });
 
             const store = new NousRegistrationStore(pool, audit);
+            // Separation of duties: a reviewer never decides a filing they made themselves.
+            const filing = await store.get(req.params.requestId);
+            if (!filing) return reply.code(404).send({ error: 'not_found' });
+            if (filing.registrant_did === req.didContext?.operatorDid) {
+                return reply.code(403).send({ error: 'self_review_forbidden' });
+            }
             const reason: NousRejectReason = NOUS_REJECT_REASONS.includes(req.body.reason as NousRejectReason)
                 ? (req.body.reason as NousRejectReason) : 'other';
             const screened = await store.preScreen({ requestId: req.params.requestId, pass: req.body.pass, reason, tick: tick() });

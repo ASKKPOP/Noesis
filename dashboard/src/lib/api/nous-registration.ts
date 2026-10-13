@@ -24,6 +24,8 @@ export interface ReviewRow {
     registrant_did_hash: string;
     registrant_is_operator: boolean;
     founding_nous: boolean;
+    /** The signed-in reviewer filed this one, so someone else must decide it. */
+    own_filing: boolean;
 }
 
 /** `code` is the Grid's error string, or 'network' when the Grid did not answer. */
@@ -93,6 +95,7 @@ const REFUSAL: Record<string, string> = {
     refile_next_tick: 'The Grid has not moved on since the last filing for this Nous. Wait a moment and file again.',
     registration_exists: 'A registration for this Nous is already in progress or approved.',
     not_operator: 'Only a Grid operator can review registrations.',
+    self_review_forbidden: 'You filed this registration, so another reviewer has to decide it.',
     portal_session_required: 'Sign in to the Portal to review registrations.',
     portal_manager_disabled: 'The reviewer panel is switched off on this Grid.',
     bad_state: 'This registration was already decided.',

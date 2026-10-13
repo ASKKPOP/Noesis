@@ -10,7 +10,7 @@ function jsonResp(body: unknown, status = 200): Response {
 }
 const ROW = {
     request_id: 'r1', nous_did: 'did:noesis:hermes', type: 'A', status: 'requested', reason_code: null,
-    filed_tick: 1200, registrant_did_hash: 'ab'.repeat(32), registrant_is_operator: true, founding_nous: true,
+    filed_tick: 1200, registrant_did_hash: 'ab'.repeat(32), registrant_is_operator: true, founding_nous: true, own_filing: false,
 };
 
 afterEach(() => {
@@ -56,6 +56,15 @@ describe('NousRegistrationReviewPage', () => {
         await waitFor(() => expect(screen.getByRole('status').textContent).toContain('rejected at the pre-screen'));
         const post = fetchMock.mock.calls.find((c) => c[1]?.method === 'POST')!;
         expect(JSON.parse(post[1]!.body as string)).toEqual({ pass: false, reason: 'prescreen_sybil' });
+    });
+
+    it('offers no decision on a filing the reviewer made themselves', async () => {
+        vi.stubGlobal('fetch', vi.fn(async () => jsonResp({ registrations: [{ ...ROW, own_filing: true }] })));
+        render(<NousRegistrationReviewPage />);
+        const row = await screen.findByTestId('review-r1');
+        expect(row.textContent).toContain('Another reviewer has to decide it');
+        expect(screen.queryByRole('button', { name: 'Pass pre-screen' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Reject' })).toBeNull();
     });
 
     it('says why when the Grid refuses the queue', async () => {
