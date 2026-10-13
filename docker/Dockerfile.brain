@@ -37,6 +37,9 @@ RUN mkdir -p /sockets && chmod 777 /sockets
 
 # Non-root user
 RUN groupadd -r noesis && useradd -r -g noesis nous
+# BRAIN_DATA_DIR home (memories, goal ledger, the Brain's wire key). Owned by the
+# runtime user so a fresh named volume mounted here is writable.
+RUN mkdir -p /data && chown nous:noesis /data
 USER nous
 
 HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=3 \

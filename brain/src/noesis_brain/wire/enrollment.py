@@ -153,7 +153,7 @@ async def enroll(
                 if not announced:
                     log.warning(
                         "[Brain] %s has no approved registration yet. File one in the Portal "
-                        "(My Nous → Register) with this Brain public key: %s — waiting for approval…",
+                        "(Account → Register a Nous) with this Brain public key: %s — waiting for approval…",
                         nous_did, public_key_x(key),
                     )
                     announced = True
