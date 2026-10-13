@@ -37,9 +37,9 @@ services:
       # (did:noesis:<slug>). If unset, the Brain derives did:noesis:<slug(NOUS_NAME)>;
       # set it explicitly so the wire identity matches what the Grid registered.
       NOUS_DID: ${NOUS_DID:-}
-      # CIVIC_DID — the Civic-DID granted via the Portal → Polis pipeline.
-      # REQUIRED together with GRID_URL + NOUS_DID for the Grid wire client:
-      # without it the Brain runs Unix-socket-only and never reaches the Grid.
+      # CIVIC_DID — leave EMPTY. The Brain enrols on start (D-V3-39): it prints its
+      # public key, waits for the Portal registration filed with that key to be
+      # approved, then obtains and caches the Civic-DID in the data volume.
       CIVIC_DID: ${CIVIC_DID:-}
 
       # ── Grid connection ───────────────────────────────────────────────────

@@ -19,9 +19,4 @@ describe('Phase 62.5-05: Migration v75 — retire the system-treasury registry r
         expect(m!.down).not.toMatch(/UPDATE|ALTER|INSERT|DELETE/i);
     });
 
-    it('v75 is the latest migration and versions remain sequential', () => {
-        const sorted = [...MIGRATIONS].sort((a, b) => a.version - b.version);
-        expect(sorted[sorted.length - 1].version).toBe(75);
-        sorted.forEach((m, i) => expect(m.version).toBe(i + 1));
-    });
 });

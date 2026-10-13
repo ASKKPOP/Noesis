@@ -109,7 +109,7 @@ export class BrainTokenStore {
 
     async getByDid(brainDid: string): Promise<BrainTokenRecord | null> {
         const [rows] = await this.pool.query<BrainTokenRow[]>(
-            `SELECT brain_did, public_key_jwk, issued_at, expires_at, revoked
+            `SELECT brain_did, public_key_jwk, issued_at, expires_at, revoked, operator_did
              FROM brain_tokens
              WHERE grid_name = ? AND brain_did = ?
              LIMIT 1`,

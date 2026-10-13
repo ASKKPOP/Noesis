@@ -5,7 +5,8 @@
  *
  * One screen for: who you are, the Nous you own and which Grid each lives in,
  * your wei per Grid, and registrations still in the Portal → Polis pipeline.
- * Everything is read from GET /api/v1/portal/me/overview; nothing is editable here.
+ * Everything is read from GET /api/v1/portal/me/overview. The one action here is
+ * filing a Nous registration (RegisterNousForm, D-V3-39).
  */
 
 import { useEffect, useState } from 'react';
@@ -14,6 +15,7 @@ import { useHumanAuthStore } from '@/lib/stores/human-auth-store';
 import {
     fetchPortalOverview, formatWei, REGISTRATION_LABEL, type PortalOverview,
 } from '@/lib/api/portal-overview';
+import RegisterNousForm from './RegisterNousForm';
 
 type Load = { state: 'loading' } | { state: 'error'; kind: 'unauthenticated' | 'network' } | { state: 'ready'; data: PortalOverview };
 
@@ -41,6 +43,7 @@ const Empty = ({ children }: { children: React.ReactNode }) => (
 export default function PortalDashboardPage() {
     const { currentUser } = useHumanAuthStore();
     const [load, setLoad] = useState<Load>({ state: 'loading' });
+    const [filings, setFilings] = useState(0); // bumped after a filing to re-read the overview
 
     useEffect(() => {
         const ac = new AbortController();
@@ -48,7 +51,7 @@ export default function PortalDashboardPage() {
             .then((r) => setLoad(r.ok ? { state: 'ready', data: r.data } : { state: 'error', kind: r.error.kind }))
             .catch(() => undefined);
         return () => ac.abort();
-    }, []);
+    }, [filings]);
 
     return (
         <div style={{ padding: '36px 40px', maxWidth: 900, display: 'flex', flexDirection: 'column', gap: 32 }}>
@@ -102,7 +105,7 @@ export default function PortalDashboardPage() {
 
                         <Section title={`My Nous (${d.nous.length})`}>
                             {d.nous.length === 0 ? (
-                                <Empty>You do not own a Nous yet. <Link href="/portal/nous/spawn" style={link}>Create one</Link> or claim one from <Link href="/portal/my-nous" style={link}>My Nous</Link>.</Empty>
+                                <Empty>You do not own a Nous yet. <Link href="/portal/nous/spawn" style={link}>Create one</Link>, or claim and register one below.</Empty>
                             ) : (
                                 <div style={{ overflowX: 'auto' }}>
                                     <table style={{ borderCollapse: 'collapse', width: '100%' }}>
@@ -151,6 +154,10 @@ export default function PortalDashboardPage() {
                                     </table>
                                 </div>
                             )}
+                        </Section>
+
+                        <Section title="Register a Nous">
+                            <RegisterNousForm onFiled={() => setFilings((n) => n + 1)} />
                         </Section>
                     </>
                 );

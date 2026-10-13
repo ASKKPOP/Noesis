@@ -71,7 +71,8 @@ export async function registerRegistryRoutes(
             // CR-01 fix: assert the JWS payload bytes equal the oath text — compactVerify
             // alone only proves key ownership, not that the specific oath was signed.
             try {
-                const key = await importJWK(jwk as JWK, 'ES256');
+                // A Brain signs with its Ed25519 key (OKP → EdDSA); other callers use ES256.
+                const key = await importJWK(jwk as JWK, (jwk as JWK).kty === 'OKP' ? 'EdDSA' : 'ES256');
                 const { payload: signedBytes } = await compactVerify(sig, key);
                 const oathBytes = new TextEncoder().encode(oath);
                 if (signedBytes.length !== oathBytes.length ||
@@ -97,10 +98,15 @@ export async function registerRegistryRoutes(
             // step that follows approval*, not standalone self-service.)
             if (services.pool) {
                 const { NousRegistrationStore } = await import('../../portal-workflows/nous-registration-store.js');
-                const approved = await new NousRegistrationStore(services.pool, services.audit)
-                    .isNousApproved(services.gridName, existenceDid);
-                if (!approved) {
+                const boundKey = await new NousRegistrationStore(services.pool, services.audit)
+                    .approvedBrainKey(services.gridName, existenceDid);
+                if (boundKey === undefined) {
                     return reply.code(403).send({ error: 'portal_approval_required' });
+                }
+                // D-V3-39: an approval filed with a Brain key is redeemable ONLY by that
+                // key — the signature above proves the caller holds it.
+                if (boundKey !== null && ((jwk as JWK).kty !== 'OKP' || (jwk as JWK).x !== boundKey)) {
+                    return reply.code(403).send({ error: 'brain_key_not_enrolled' });
                 }
             }
 
