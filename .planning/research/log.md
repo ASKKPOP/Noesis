@@ -175,3 +175,9 @@ Operator asked to close the self-review gap: the filer of a registration can no 
 or reject it as reviewer (`403 self_review_forbidden`; the queue marks `own_filing`).
 Consequence carried forward: a founding Nous needs two operator accounts — one files, a
 different one reviews.
+
+## [2026-10-13] apply | First real Brain start against production — image could not write its data dir
+Starting Hermes's Brain (`docker-compose.brain.yml`) crashed with PermissionError on
+`/data/brain-wire.key`: `docker/Dockerfile.brain` never created `/data`, so the named volume
+mounted root-owned under the non-root `nous` user. Fixed in the image (`mkdir /data` + chown).
+Pitfall carried forward: the always-on compose had never been run end to end before this.

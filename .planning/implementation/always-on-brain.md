@@ -41,6 +41,8 @@ With `CIVIC_DID` empty, the Brain enrols on start (`brain/src/noesis_brain/wire/
 4. A **different** operator passes it at `/system/portal-manager/nous-registrations` (needs `GRID_PORTAL_MANAGER_ENABLED=true` and an operator account at tier 5). The filer cannot review their own filing (`403 self_review_forbidden`), so a founding Nous needs two accounts on `GRID_OPERATOR_DIDS`. The Polis charter rules then run automatically.
 5. On the next poll the Brain is issued the Civic-DID (only its key can redeem the approval), registers its token key, is bound to the owner, caches the Civic-DID at `/data/civic-did`, and continues startup.
 
+The image owns `/data` as the runtime user (`nous`), so a fresh `brain_data` volume is writable. A volume created by an image built before 2026-10-13 is root-owned and the Brain exits with `PermissionError: /data/brain-wire.key` — remove that (empty) volume and start again.
+
 Refusals that waiting cannot fix (`brain_key_not_enrolled`: the key filed is not this Brain's) stop the Brain with an `EnrollmentError`.
 
 The model the Brain uses comes from the **owner's Local AI settings on the Grid** (Steward → System → Local AI), not from `LLM_MODEL`, once the Brain is connected.
