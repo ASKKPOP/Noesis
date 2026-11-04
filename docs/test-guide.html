@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Noēsis Testing Guide</title>
+<meta name="description" content="Step-by-step testing guide for Noēsis with clickable system, tier and journey diagrams; every box opens a beginner guide for end users and programmers." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAF9F5; --panel:#FFFFFF; --panel2:#F2EFE6; --bd:#E5E1D6; --tx:#1F1E1D; --mut:#6B6860;
+    --acc:#C96442; --acc-soft:#F6E4DC; --ok:#2F7D4F; --ok-soft:#E3F1E7; --warn:#9A6B12; --warn-soft:#F7EED8;
+    --blue:#3B6EA8; --blue-soft:#E3ECF6;
+    --serif:"Source Serif 4",Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#1F1E1D; --panel:#262624; --panel2:#30302E; --bd:#45443F; --tx:#F2F0EA; --mut:#A8A49A;
+      --acc:#D97757; --acc-soft:#3A2A23; --ok:#6CC08B; --ok-soft:#1F3127; --warn:#E0B354; --warn-soft:#3A3020;
+      --blue:#7FA8D8; --blue-soft:#22303F;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1F1E1D; --panel:#262624; --panel2:#30302E; --bd:#45443F; --tx:#F2F0EA; --mut:#A8A49A;
+    --acc:#D97757; --acc-soft:#3A2A23; --ok:#6CC08B; --ok-soft:#1F3127; --warn:#E0B354; --warn-soft:#3A3020;
+    --blue:#7FA8D8; --blue-soft:#22303F;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);line-height:1.6;font-size:15.5px}
+  .wrap{max-width:1060px;margin:0 auto;padding:36px 16px 90px}
+  h1{font-family:var(--serif);font-weight:600;font-size:36px;margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-family:var(--serif);font-weight:600;font-size:25px;margin:56px 0 8px;scroll-margin-top:70px}
+  h3{font-family:var(--serif);font-weight:600;font-size:20px;margin:0 0 6px}
+  p{margin:0 0 12px;max-width:74ch}
+  .sub{color:var(--mut);font-size:16.5px;margin-bottom:22px}
+  a{color:var(--acc)}
+  code{font-family:var(--mono);font-size:12.8px;background:var(--panel2);padding:1px 6px;border-radius:5px}
+  pre{font-family:var(--mono);font-size:12.8px;line-height:1.5;background:var(--panel2);border:1px solid var(--bd);border-radius:8px;padding:12px 14px;overflow-x:auto;margin:8px 0 12px;white-space:pre}
+  .bar{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--bd);margin:0 -16px 8px;padding:10px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .bar .lbl{font-size:13px;color:var(--mut);margin-right:2px}
+  .seg{display:inline-flex;border:1px solid var(--bd);border-radius:999px;overflow:hidden;background:var(--panel)}
+  .seg button{font:600 13px var(--sans);border:0;background:transparent;color:var(--tx);padding:7px 14px;cursor:pointer;min-height:34px}
+  .seg button[aria-pressed="true"]{background:var(--acc);color:#fff}
+  .bar nav{margin-left:auto;display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px}
+  .bar nav a{text-decoration:none}
+  .diagram{background:var(--panel);border:1px solid var(--bd);border-radius:14px;padding:10px;margin:12px 0 6px;overflow-x:auto}
+  .diagram svg{display:block;width:100%;min-width:680px;height:auto}
+  .hint{color:var(--mut);font-size:13px;margin:4px 0 0}
+  svg text{font-family:var(--sans);fill:var(--tx)}
+  svg .muted{fill:var(--mut)}
+  svg .zone{fill:var(--panel2);stroke:var(--bd);stroke-width:1.5}
+  svg .zone-label{font:600 13px var(--sans);fill:var(--mut);letter-spacing:.06em;text-transform:uppercase}
+  svg a .box{fill:var(--panel);stroke:var(--bd);stroke-width:1.5;transition:stroke .15s}
+  svg a:hover .box,svg a:focus .box{stroke:var(--acc);stroke-width:2.5}
+  svg a:focus{outline:none}
+  svg a .t{font:600 14px var(--sans)}
+  svg a .s{font:12px var(--sans);fill:var(--mut)}
+  svg .line{stroke:var(--mut);stroke-width:1.6;fill:none}
+  svg .line.hot{stroke:var(--acc);stroke-width:2}
+  svg .badge{fill:var(--acc)}
+  svg .badge-t{font:700 11.5px var(--sans);fill:#fff}
+  svg .arrow{fill:var(--mut)}
+  svg .arrow.hot{fill:var(--acc)}
+  .ladder-ok{fill:var(--ok-soft)} .ladder-warn{fill:var(--warn-soft)} .ladder-acc{fill:var(--acc-soft)}
+  .guide{background:var(--panel);border:1px solid var(--bd);border-radius:14px;padding:20px 22px;margin:16px 0;scroll-margin-top:70px}
+  .guide:target{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
+  .guide .head{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:6px}
+  .num{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 8px;border-radius:999px;background:var(--acc);color:#fff;font:700 13px var(--sans)}
+  .meta{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 12px}
+  .pill{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--panel2);color:var(--mut)}
+  .pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.acc{background:var(--acc-soft);color:var(--acc)}
+  .aud{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .aud > div{border:1px solid var(--bd);border-radius:10px;padding:14px 16px;background:var(--bg);min-width:0}
+  .aud .who{font:700 11.5px var(--sans);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px}
+  .aud .user .who{color:var(--blue)} .aud .dev .who{color:var(--acc)}
+  .aud ol,.aud ul{margin:0 0 10px;padding-left:20px} .aud li{margin:4px 0}
+  .see{border-left:3px solid var(--ok);padding:4px 0 4px 10px;margin:8px 0;font-size:14px}
+  .fix{border-left:3px solid var(--warn);padding:4px 0 4px 10px;margin:8px 0;font-size:14px}
+  body[data-aud="user"] .aud{grid-template-columns:1fr} body[data-aud="user"] .aud .dev{display:none}
+  body[data-aud="dev"] .aud{grid-template-columns:1fr} body[data-aud="dev"] .aud .user{display:none}
+  .back{font-size:13px;margin-top:6px;display:inline-block}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+  .tbl{overflow-x:auto;border:1px solid var(--bd);border-radius:12px;background:var(--panel)}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--bd);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);background:var(--panel2)}
+  tr:last-child td{border-bottom:0}
+  dl.gloss{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:8px 18px;margin:10px 0}
+  dl.gloss dt{font-weight:700} dl.gloss dd{margin:0;color:var(--tx)}
+  footer{margin-top:60px;color:var(--mut);font-size:12.5px;border-top:1px solid var(--bd);padding-top:14px}
+  @media (max-width:720px){ .aud{grid-template-columns:1fr} h1{font-size:29px} .bar nav{margin-left:0} }
+</style>
+</head>
+<body data-aud="both">
+<div class="wrap">
+
+<div class="bar">
+  <span class="lbl">Show guides for</span>
+  <div class="seg" role="group" aria-label="Audience">
+    <button type="button" data-aud="both" aria-pressed="true">Both</button>
+    <button type="button" data-aud="user" aria-pressed="false">End users</button>
+    <button type="button" data-aud="dev" aria-pressed="false">Programmers</button>
+  </div>
+  <nav>
+    <a href="#system">System</a><a href="#tiers">Test tiers</a><a href="#journey">Hermes journey</a><a href="#trouble">Troubleshooting</a><a href="#glossary">Glossary</a>
+  </nav>
+</div>
+
+<h1>Noēsis Testing Guide</h1>
+<p class="sub">How to test Noēsis step by step, even if you have never tested software before. Three diagrams show the system, the six ways to test it, and the full path to a talking Nous. <b>Click any box</b> to open its guide. Every guide is written twice: once for <b style="color:var(--blue)">end users</b> who click through the website, once for <b style="color:var(--acc)">programmers</b> who run commands.</p>
+<p>The full list of scenarios with their last results is in the <a href="test-scenarios.html">test scenario catalogue</a>.</p>
+
+<!-- ═════════════════════════════ 1. SYSTEM ═════════════════════════════ -->
+<h2 id="system">1 · The system, and where each test touches it</h2>
+<p>There are two places: <b>your computer</b> and <b>the production server</b> that runs noesiis.com. The orange numbers are the test tiers from section 2; each sits where that tier does its checking.</p>
+
+<div class="diagram">
+<svg viewBox="0 0 980 560" role="img" aria-labelledby="sysT sysD">
+  <title id="sysT">Noēsis system diagram</title>
+  <desc id="sysD">Your computer holds the code and tests, a browser, a local model and the Brain. The production server holds nginx, the dashboard, the Grid API and the database. Numbered badges mark test tiers T0 to T5.</desc>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="ahh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow hot" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+
+  <rect class="zone" x="14" y="14" width="420" height="532" rx="16"/>
+  <text class="zone-label" x="34" y="44">Your computer</text>
+  <rect class="zone" x="546" y="14" width="420" height="532" rx="16"/>
+  <text class="zone-label" x="566" y="44">Production server</text>
+  <text class="muted" x="490" y="40" text-anchor="middle" font-size="13">internet</text>
+
+  <!-- your computer -->
+  <a href="#sys-code"><rect class="box" x="38" y="66" width="372" height="78" rx="12"/>
+    <text class="t" x="58" y="96">Code &amp; test runners</text>
+    <text class="s" x="58" y="118">grid · dashboard · brain tests, smoke scripts</text></a>
+  <a href="#sys-browser"><rect class="box" x="38" y="168" width="372" height="78" rx="12"/>
+    <text class="t" x="58" y="198">Web browser</text>
+    <text class="s" x="58" y="220">you, signed in to the Portal</text></a>
+  <a href="#sys-localstack"><rect class="box" x="38" y="270" width="372" height="78" rx="12"/>
+    <text class="t" x="58" y="300">Local Grid + MySQL (Docker)</text>
+    <text class="s" x="58" y="322">a private copy for database tests</text></a>
+  <a href="#sys-brain"><rect class="box" x="38" y="372" width="172" height="150" rx="12"/>
+    <text class="t" x="56" y="402">Brain</text>
+    <text class="s" x="56" y="424">a Nous's mind,</text>
+    <text class="s" x="56" y="442">in a Docker</text>
+    <text class="s" x="56" y="460">container</text></a>
+  <a href="#sys-model"><rect class="box" x="238" y="372" width="172" height="150" rx="12"/>
+    <text class="t" x="256" y="402">Local AI model</text>
+    <text class="s" x="256" y="424">Ollama running</text>
+    <text class="s" x="256" y="442">gpt-oss:120b</text>
+    <text class="s" x="256" y="460">on this machine</text></a>
+  <path class="line" d="M210,447 L236,447" marker-end="url(#ah)"/>
+
+  <!-- production -->
+  <a href="#sys-nginx"><rect class="box" x="570" y="66" width="372" height="78" rx="12"/>
+    <text class="t" x="590" y="96">Front door (nginx)</text>
+    <text class="s" x="590" y="118">routes noesiis.com and api.noesiis.com</text></a>
+  <a href="#sys-dashboard"><rect class="box" x="570" y="168" width="372" height="78" rx="12"/>
+    <text class="t" x="590" y="198">Website (dashboard)</text>
+    <text class="s" x="590" y="220">noesiis.com — Portal, maps, status</text></a>
+  <a href="#sys-grid"><rect class="box" x="570" y="270" width="372" height="78" rx="12"/>
+    <text class="t" x="590" y="300">Grid API</text>
+    <text class="s" x="590" y="322">api.noesiis.com — the city's rules and records</text></a>
+  <a href="#sys-db"><rect class="box" x="570" y="372" width="372" height="78" rx="12"/>
+    <text class="t" x="590" y="402">Database (MySQL)</text>
+    <text class="s" x="590" y="424">accounts, registrations, audit log</text></a>
+  <path class="line" d="M756,144 L756,166" marker-end="url(#ah)"/>
+  <path class="line" d="M756,246 L756,268" marker-end="url(#ah)"/>
+  <path class="line" d="M756,348 L756,370" marker-end="url(#ah)"/>
+
+  <!-- connections -->
+  <path class="line hot" d="M410,207 C470,207 490,105 568,105" marker-end="url(#ahh)"/>
+  <path class="line hot" d="M410,105 C480,105 500,300 568,300" marker-end="url(#ahh)"/>
+  <path class="line hot" d="M124,522 L124,536 L520,536 L520,320 L568,320" marker-end="url(#ahh)"/>
+  <path class="line" d="M224,270 L224,248" marker-end="url(#ah)"/>
+
+  <!-- tier badges -->
+  <g><circle class="badge" cx="392" cy="84" r="15"/><text class="badge-t" x="392" y="88" text-anchor="middle">T0</text></g>
+  <g><circle class="badge" cx="356" cy="84" r="15"/><text class="badge-t" x="356" y="88" text-anchor="middle">T1</text></g>
+  <g><circle class="badge" cx="392" cy="186" r="15"/><text class="badge-t" x="392" y="190" text-anchor="middle">T2</text></g>
+  <g><circle class="badge" cx="356" cy="186" r="15"/><text class="badge-t" x="356" y="190" text-anchor="middle">T3</text></g>
+  <g><circle class="badge" cx="392" cy="288" r="15"/><text class="badge-t" x="392" y="292" text-anchor="middle">T4</text></g>
+  <g><circle class="badge" cx="300" cy="500" r="15"/><text class="badge-t" x="300" y="504" text-anchor="middle">T5</text></g>
+  <text class="muted" x="470" y="134" font-size="12" text-anchor="middle">pages</text>
+  <text class="muted" x="452" y="236" font-size="12" text-anchor="middle">reads</text>
+  <text class="muted" x="477" y="486" font-size="12" text-anchor="middle">Brain</text><text class="muted" x="477" y="501" font-size="12" text-anchor="middle">connects out</text>
+</svg>
+</div>
+<p class="hint">Tip: the badge numbers match the tiers below. T0 never leaves your computer; T1–T3 talk to production; T4 is a private copy; T5 runs a real Brain. Click any box for its guide.</p>
+
+<!-- system component guides -->
+<div class="guide" id="sys-code">
+  <div class="head"><h3>Code &amp; test runners</h3></div>
+  <div class="meta"><span class="pill">Your computer</span><span class="pill ok">Tier T0, T1</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>This is the project's source code and the small programs that check it automatically. You don't need it to use the website. If someone asks “did the tests pass?”, they mean the programs here.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p>Monorepo: <code>grid/</code> (TypeScript API, vitest), <code>dashboard/</code> (Next.js, vitest), <code>brain/</code> (Python, pytest). Test entry points:</p>
+      <pre>scripts/smoke/area-tests.sh &lt;area&gt;     # T0, one feature area
+node scripts/smoke/prod-smoke.mjs       # T1, production reads</pre>
+      <p>Set-up steps are in <a href="#tier-0">tier T0</a>.</p></div>
+  </div>
+  <a class="back" href="#system">↑ back to the system diagram</a>
+</div>
+
+<div class="guide" id="sys-browser">
+  <div class="head"><h3>Web browser</h3></div>
+  <div class="meta"><span class="pill">Your computer</span><span class="pill warn">Tier T2, T3</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>Any modern browser (Chrome, Safari, Firefox). You sign in at <a href="https://noesiis.com/portal/auth">noesiis.com/portal/auth</a>. A sign-in lasts 24 hours; after that you are sent back to the sign-in page, which is normal.</p>
+      <p class="fix">“Continue with Google / Apple” currently fails. Use <b>Sign in with email</b>.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p>The dashboard calls the Grid at <code>https://api.noesiis.com</code> with the session cookie (<code>credentials: 'include'</code>). Open DevTools → Network to see each call's status; Console shows failed requests. Google/Apple fail with Auth.js <code>UntrustedHost</code>.</p></div>
+  </div>
+  <a class="back" href="#system">↑ back to the system diagram</a>
+</div>
+
+<div class="guide" id="sys-localstack">
+  <div class="head"><h3>Local Grid + MySQL</h3></div>
+  <div class="meta"><span class="pill">Your computer</span><span class="pill acc">Tier T4</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>A private practice copy of the server that only exists on a programmer's computer. Nothing done here touches the real website. You can skip it.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p>Used to catch database mistakes that unit tests can't (unit tests use a fake database). See <a href="#tier-4">tier T4</a> for the exact commands.</p></div>
+  </div>
+  <a class="back" href="#system">↑ back to the system diagram</a>
+</div>
+
+<div class="guide" id="sys-brain">
+  <div class="head"><h3>Brain</h3></div>
+  <div class="meta"><span class="pill">Your computer</span><span class="pill acc">Tier T5</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>The Brain is the mind of one Nous. It runs on <i>your</i> machine, not on the server, and connects out to the city. When it is running and approved, that Nous can answer you in chat.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p>Python service in <code>brain/</code>, started by <code>docker-compose.brain.yml</code>. It keeps its own key in the <code>brain_data</code> volume (<code>/data/brain-wire.key</code>) and enrols with the Grid on start. Steps: <a href="#step-5">journey step 5</a>.</p></div>
+  </div>
+  <a class="back" href="#system">↑ back to the system diagram</a>
+</div>
+
+<div class="guide" id="sys-model">
+  <div class="head"><h3>Local AI model</h3></div>
+  <div class="meta"><span class="pill">Your computer</span><span class="pill acc">Tier T5</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>The language model the Brain thinks with. It runs locally through the Ollama app. The large model (<code>gpt-oss:120b</code>) needs a lot of memory; the smaller <code>gpt-oss:20b</code> is fine for testing.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <pre>ollama list                                  # models you have
+curl -s localhost:11434/api/tags             # is Ollama answering?</pre>
+      <p>Inside Docker the Brain reaches it at <code>http://host.docker.internal:11434</code>. Once connected, the model actually used comes from the owner's Local AI settings on the Grid, not from <code>LLM_MODEL</code>.</p></div>
+  </div>
+  <a class="back" href="#system">↑ back to the system diagram</a>
+</div>
+
+<div class="guide" id="sys-nginx">
+  <div class="head"><h3>Front door (nginx)</h3></div>
+  <div class="meta"><span class="pill">Production</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>The part of the server that receives your visit and passes it to the right program. If every page shows “502 Bad Gateway”, this is where it went wrong — tell a programmer.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p>Docker container <code>noesis-nginx</code>. After any deploy that recreates the Grid or dashboard, force-recreate it or it serves stale upstreams (502s):</p>
+      <pre>docker compose -f docker-compose.yml -f docker-compose.aws.yml --env-file .env \
+  up -d --force-recreate --no-deps nginx</pre></div>
+  </div>
+  <a class="back" href="#system">↑ back to the system diagram</a>
+</div>
+
+<div class="guide" id="sys-dashboard">
+  <div class="head"><h3>Website (dashboard)</h3></div>
+  <div class="meta"><span class="pill">Production</span><span class="pill warn">Tier T2, T3</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>Everything you see at noesiis.com: the Portal (account, chat, citizenship), the city maps, the status page. A page loading is a good sign, but a page can load and still be empty or broken — that's why T2 asks you to look at what's on it.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p>Next.js app in <code>dashboard/</code>, container <code>noesis-dashboard</code>. Most pages are client components: an HTTP 200 only proves the shell loaded. Check behaviour in a browser (T2) or with component tests (T0).</p></div>
+  </div>
+  <a class="back" href="#system">↑ back to the system diagram</a>
+</div>
+
+<div class="guide" id="sys-grid">
+  <div class="head"><h3>Grid API</h3></div>
+  <div class="meta"><span class="pill">Production</span><span class="pill ok">Tier T1</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>The city itself: its clock, its rules, its citizens and its records. The website asks the Grid for everything it shows. The <a href="https://noesiis.com/portal/status">status page</a> tells you whether the Grid is healthy.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p>Fastify service in <code>grid/</code>, container <code>noesis-grid</code>, public at <code>https://api.noesiis.com</code>. Quick checks:</p>
+      <pre>curl -s https://api.noesiis.com/health/detailed
+node scripts/smoke/prod-smoke.mjs --area health</pre></div>
+  </div>
+  <a class="back" href="#system">↑ back to the system diagram</a>
+</div>
+
+<div class="guide" id="sys-db">
+  <div class="head"><h3>Database (MySQL)</h3></div>
+  <div class="meta"><span class="pill">Production</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>Where the city remembers things: accounts, citizenship, registrations and the audit log. Tests never change it directly.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p>Container <code>noesis-mysql</code>, database <code>noesis_grid</code>. The Grid applies migrations on start. New migrations are checked against a real MySQL 8.0 in CI (<code>real-mysql-migrations</code>) and locally in <a href="#tier-4">T4</a>; unit tests use a fake pool and can't catch SQL mistakes.</p></div>
+  </div>
+  <a class="back" href="#system">↑ back to the system diagram</a>
+</div>
+
+<!-- ═════════════════════════════ 2. TIERS ═════════════════════════════ -->
+<h2 id="tiers">2 · Six ways to test, cheapest first</h2>
+<p>You don't need to run everything. Pick the cheapest tier that proves what you changed. Higher tiers cost more time, more memory, or real accounts.</p>
+
+<div class="diagram">
+<svg viewBox="0 0 980 360" role="img" aria-labelledby="tierT tierD">
+  <title id="tierT">Test tiers ladder</title>
+  <desc id="tierD">Six steps rising from T0 local unit tests, cheapest, to T5 Brain and local model, most expensive.</desc>
+  <path class="line" d="M40,330 L950,330"/>
+  <text class="muted" x="40" y="352" font-size="12">cheaper, faster</text>
+  <text class="muted" x="950" y="352" font-size="12" text-anchor="end">more real, more expensive</text>
+  <a href="#tier-0"><rect class="box ladder-ok" x="40" y="250" width="140" height="70" rx="10"/><text class="t" x="56" y="278">T0 · Unit tests</text><text class="s" x="56" y="300">seconds · no setup</text></a>
+  <a href="#tier-1"><rect class="box ladder-ok" x="194" y="210" width="140" height="110" rx="10"/><text class="t" x="210" y="238">T1 · Smoke</text><text class="s" x="210" y="260">1 sec · read-only</text><text class="s" x="210" y="278">production</text></a>
+  <a href="#tier-2"><rect class="box ladder-warn" x="348" y="170" width="140" height="150" rx="10"/><text class="t" x="364" y="198">T2 · Browser</text><text class="s" x="364" y="220">1 account</text><text class="s" x="364" y="238">real data</text></a>
+  <a href="#tier-3"><rect class="box ladder-warn" x="502" y="130" width="140" height="190" rx="10"/><text class="t" x="518" y="158">T3 · Two ops</text><text class="s" x="518" y="180">2 operator</text><text class="s" x="518" y="198">accounts</text></a>
+  <a href="#tier-4"><rect class="box ladder-acc" x="656" y="90" width="140" height="230" rx="10"/><text class="t" x="672" y="118">T4 · Local DB</text><text class="s" x="672" y="140">Docker</text><text class="s" x="672" y="158">~1–2 GB RAM</text></a>
+  <a href="#tier-5"><rect class="box ladder-acc" x="810" y="40" width="140" height="280" rx="10"/><text class="t" x="826" y="68">T5 · Brain</text><text class="s" x="826" y="90">Docker + model</text><text class="s" x="826" y="108">20–65 GB RAM</text></a>
+</svg>
+</div>
+<p class="hint">Routine: T0 on every change · T1 after every deploy · one T2 area per week · T4/T5 only when you change the database or the Brain.</p>
+
+<div class="guide" id="tier-0">
+  <div class="head"><span class="num">T0</span><h3>Unit tests for one area</h3></div>
+  <div class="meta"><span class="pill ok">Seconds</span><span class="pill">No database, Docker or model</span><span class="pill">Programmers</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>Automatic checks a programmer runs before changing the website. They prove small pieces work on their own. You don't run these; ask “did the unit tests for this area pass?” when something new ships.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <ol>
+        <li>One-time setup (Node 20+, Python 3.12):
+<pre>git clone https://github.com/ASKKPOP/Noesis.git && cd Noesis
+npm ci
+python3.12 -m venv brain/.venv
+brain/.venv/bin/pip install -e "brain[dev]"</pre></li>
+        <li>See the areas, then run one:
+<pre>scripts/smoke/area-tests.sh --list
+scripts/smoke/area-tests.sh registration</pre></li>
+      </ol>
+      <p class="see">You should see <code>Tests N passed</code> for grid and dashboard and <code>N passed</code> for brain. Exit code 0.</p>
+      <p class="fix">The <code>audit</code> area currently fails 3 dashboard tests (firehose row). They predate recent work. Areas: registration, chat, groups, city, polis, economy, library, audit, health.</p></div>
+  </div>
+  <a class="back" href="#tiers">↑ back to the tiers</a>
+</div>
+
+<div class="guide" id="tier-1">
+  <div class="head"><span class="num">T1</span><h3>Production smoke (read-only)</h3></div>
+  <div class="meta"><span class="pill ok">About 1 second</span><span class="pill">Never signs in or writes</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <ol>
+        <li>Open the <a href="https://noesiis.com/portal/status">status page</a> (no sign-in needed).</li>
+        <li>Read the banner at the top.</li>
+      </ol>
+      <p class="see">“The Grid reports healthy” with a green dot, the Grid name and a tick number.</p>
+      <p class="fix">“The Grid is not answering” means the server is down — tell a programmer.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+<pre>node scripts/smoke/prod-smoke.mjs                  # all 41 checks
+node scripts/smoke/prod-smoke.mjs --area health    # one area
+node scripts/smoke/prod-smoke.mjs --list</pre>
+      <p class="see">Each line says PASS or FAIL, with the reason on failures. Exit 1 if anything failed.</p>
+      <p class="fix">Known failure: <code>A2 /api/v1/audit/verify</code> reports <code>valid:false</code> while health is ok.</p>
+      <p>Point it elsewhere with <code>SMOKE_API</code> / <code>SMOKE_WEB</code>.</p></div>
+  </div>
+  <a class="back" href="#tiers">↑ back to the tiers</a>
+</div>
+
+<div class="guide" id="tier-2">
+  <div class="head"><span class="num">T2</span><h3>In the browser, one account</h3></div>
+  <div class="meta"><span class="pill warn">10–20 minutes</span><span class="pill">Creates real data</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>Pick <b>one</b> area per session and check it like a visitor would:</p>
+      <ol>
+        <li><b>Account:</b> sign in → sidebar <b>Account</b>. You should see your Portal ID, wallet and “My Nous”.</li>
+        <li><b>Chat:</b> sidebar <b>Chat</b> → pick a Nous → type a short message → send → reload the page. Your message should still be there. (No one answers yet — that needs <a href="#journey">the Hermes journey</a>.)</li>
+        <li><b>Groups:</b> open <a href="https://noesiis.com/grid/groups">Groups</a> → click Aegis. Members and projects appear (all 0 today).</li>
+        <li><b>Map:</b> open <a href="https://noesiis.com/worldmap/orbital">the orbital map</a>. A 3D station should appear.</li>
+      </ol>
+      <p class="fix">Write down the page, what you clicked, what you expected and what happened. A screenshot helps.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p>Same steps, with DevTools open. For each step confirm in Network that the Grid call returned 2xx and in Console that there are no errors. The full list with IDs (PA-, CH-, GR-, CI-) is in the <a href="test-scenarios.html">scenario catalogue</a>.</p>
+      <p class="fix">Messages you send in chat are stored in production. Keep test text short and obvious (e.g. “test”).</p></div>
+  </div>
+  <a class="back" href="#tiers">↑ back to the tiers</a>
+</div>
+
+<div class="guide" id="tier-3">
+  <div class="head"><span class="num">T3</span><h3>Two operator accounts</h3></div>
+  <div class="meta"><span class="pill warn">Two people or two browsers</span><span class="pill">Server settings needed</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>Some decisions need a reviewer, and nobody may review their own request. So you need two accounts: one <b>files</b> a request, the other <b>reviews</b> it. Use two browsers (or one normal window and one private window) so both can be signed in at once.</p>
+      <p>The full walk-through is <a href="#step-6">journey steps 6–7</a>.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p>Both Portal IDs must be on <code>GRID_OPERATOR_DIDS</code> at tier 5, and <code>GRID_PORTAL_MANAGER_ENABLED=true</code> (already on in production). See <a href="#step-4">step 4</a>. The reviewer route answers <code>403 self_review_forbidden</code> if the filer tries to decide.</p></div>
+  </div>
+  <a class="back" href="#tiers">↑ back to the tiers</a>
+</div>
+
+<div class="guide" id="tier-4">
+  <div class="head"><span class="num">T4</span><h3>Local Grid with a real database</h3></div>
+  <div class="meta"><span class="pill acc">5–10 minutes</span><span class="pill">Docker, ~1–2 GB RAM</span><span class="pill">Programmers</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>A programmer-only check, done on a private copy of the server, before any change to how data is stored goes live. Nothing here touches the real website.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+<pre>colima start --memory 12
+docker run -d --name noesis-test-mysql -e MYSQL_ROOT_PASSWORD=root \
+  -e MYSQL_DATABASE=noesis_grid -p 127.0.0.1:33306:3306 mysql:8.0
+# wait until: docker exec noesis-test-mysql mysqladmin ping -uroot -proot
+cd grid
+MYSQL_HOST=127.0.0.1 MYSQL_PORT=33306 MYSQL_USER=root MYSQL_PASSWORD=root \
+  npx tsx scripts/check-migrations-real-mysql.ts</pre>
+      <p class="see">Prints the final schema version with no SQL errors.</p>
+      <p>To exercise routes too, start the Grid against it (<code>GRID_PORT=18080 GRID_COOKIE_SECURE=false npx tsx src/entrypoint.ts</code> with the same MYSQL_* vars) and use <code>curl</code>. Clean up afterwards:</p>
+<pre>docker rm -f noesis-test-mysql && colima stop</pre></div>
+  </div>
+  <a class="back" href="#tiers">↑ back to the tiers</a>
+</div>
+
+<div class="guide" id="tier-5">
+  <div class="head"><span class="num">T5</span><h3>A real Brain with a local model</h3></div>
+  <div class="meta"><span class="pill acc">Most memory</span><span class="pill">20b ≈ 16 GB · 120b ≈ 65 GB</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>This is the only tier where a Nous can actually talk back. It needs a computer with plenty of memory running both the Brain and the model. Follow <a href="#journey">the Hermes journey</a> from start to finish.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p>The Brain enrols itself; you only provide settings. Steps <a href="#step-5">5</a> and <a href="#step-8">8</a>. To save memory, test with <code>gpt-oss:20b</code> and switch to 120b afterwards. Stop it when done:</p>
+<pre>docker-compose -p noesis-brain -f docker-compose.brain.yml stop</pre></div>
+  </div>
+  <a class="back" href="#tiers">↑ back to the tiers</a>
+</div>
+
+<!-- ═════════════════════════════ 3. JOURNEY ═════════════════════════════ -->
+<h2 id="journey">3 · The full journey: make Hermes talk</h2>
+<p>This end-to-end test touches almost every part of the system. Do the steps in order; each box opens its guide. Blue steps happen in the browser, white steps on a computer or the server.</p>
+
+<div class="diagram">
+<svg viewBox="0 0 980 330" role="img" aria-labelledby="jT jD">
+  <title id="jT">Hermes journey, nine steps</title>
+  <desc id="jD">Prepare, create two accounts, become a citizen, make both operators, start the Brain, file the registration, second operator reviews, Brain enrols, talk to Hermes.</desc>
+  <defs><marker id="aj" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+  <!-- row 1 -->
+  <a href="#step-1"><rect class="box" x="20" y="30" width="170" height="104" rx="12"/><circle class="badge" cx="46" cy="58" r="14"/><text class="badge-t" x="46" y="62" text-anchor="middle">1</text><text class="t" x="68" y="63">Prepare</text><text class="s" x="36" y="92">Ollama, Docker,</text><text class="s" x="36" y="110">the code</text></a>
+  <a href="#step-2"><rect class="box" x="214" y="30" width="170" height="104" rx="12" style="fill:var(--blue-soft)"/><circle class="badge" cx="240" cy="58" r="14"/><text class="badge-t" x="240" y="62" text-anchor="middle">2</text><text class="t" x="262" y="63">Two accounts</text><text class="s" x="230" y="92">sign up twice</text><text class="s" x="230" y="110">on noesiis.com</text></a>
+  <a href="#step-3"><rect class="box" x="408" y="30" width="170" height="104" rx="12" style="fill:var(--blue-soft)"/><circle class="badge" cx="434" cy="58" r="14"/><text class="badge-t" x="434" y="62" text-anchor="middle">3</text><text class="t" x="456" y="63">Citizen</text><text class="s" x="424" y="92">filer applies at</text><text class="s" x="424" y="110">/apply/genesis</text></a>
+  <a href="#step-4"><rect class="box" x="602" y="30" width="170" height="104" rx="12"/><circle class="badge" cx="628" cy="58" r="14"/><text class="badge-t" x="628" y="62" text-anchor="middle">4</text><text class="t" x="650" y="63">Operators</text><text class="s" x="618" y="92">both accounts on</text><text class="s" x="618" y="110">the server allowlist</text></a>
+  <a href="#step-5"><rect class="box" x="796" y="30" width="164" height="104" rx="12"/><circle class="badge" cx="822" cy="58" r="14"/><text class="badge-t" x="822" y="62" text-anchor="middle">5</text><text class="t" x="844" y="63">Start Brain</text><text class="s" x="812" y="92">copy the key</text><text class="s" x="812" y="110">it prints</text></a>
+  <path class="line" d="M190,82 L212,82" marker-end="url(#aj)"/><path class="line" d="M384,82 L406,82" marker-end="url(#aj)"/><path class="line" d="M578,82 L600,82" marker-end="url(#aj)"/><path class="line" d="M772,82 L794,82" marker-end="url(#aj)"/>
+  <path class="line" d="M878,134 L878,160 L700,160 L700,188" marker-end="url(#aj)"/>
+  <!-- row 2 (right to left) -->
+  <a href="#step-6"><rect class="box" x="602" y="190" width="196" height="104" rx="12" style="fill:var(--blue-soft)"/><circle class="badge" cx="628" cy="218" r="14"/><text class="badge-t" x="628" y="222" text-anchor="middle">6</text><text class="t" x="650" y="223">File registration</text><text class="s" x="618" y="252">Account → Register</text><text class="s" x="618" y="270">a Nous (+ key)</text></a>
+  <a href="#step-7"><rect class="box" x="388" y="190" width="190" height="104" rx="12" style="fill:var(--blue-soft)"/><circle class="badge" cx="414" cy="218" r="14"/><text class="badge-t" x="414" y="222" text-anchor="middle">7</text><text class="t" x="436" y="223">Review</text><text class="s" x="404" y="252">the OTHER account</text><text class="s" x="404" y="270">passes it</text></a>
+  <a href="#step-8"><rect class="box" x="194" y="190" width="170" height="104" rx="12"/><circle class="badge" cx="220" cy="218" r="14"/><text class="badge-t" x="220" y="222" text-anchor="middle">8</text><text class="t" x="242" y="223">Brain enrols</text><text class="s" x="210" y="252">automatic; then</text><text class="s" x="210" y="270">set the model</text></a>
+  <a href="#step-9"><rect class="box" x="20" y="190" width="150" height="104" rx="12" style="fill:var(--blue-soft)"/><circle class="badge" cx="46" cy="218" r="14"/><text class="badge-t" x="46" y="222" text-anchor="middle">9</text><text class="t" x="68" y="223">Talk</text><text class="s" x="36" y="252">chat with</text><text class="s" x="36" y="270">Hermes</text></a>
+  <path class="line" d="M602,242 L580,242" marker-end="url(#aj)"/><path class="line" d="M388,242 L366,242" marker-end="url(#aj)"/><path class="line" d="M194,242 L172,242" marker-end="url(#aj)"/>
+</svg>
+</div>
+<p class="hint">Blue = in the browser. White = on a computer or the server. Steps 1–4 are one-time setup; after that, 5–9 is the test.</p>
+
+<div class="guide" id="step-1">
+  <div class="head"><span class="num">1</span><h3>Prepare your computer</h3></div>
+  <div class="meta"><span class="pill">One time</span><span class="pill">~30 min (model download)</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <ol>
+        <li>Install <b>Ollama</b> from ollama.com and open it once.</li>
+        <li>Ask a programmer to do the rest of this step, or follow the programmer column.</li>
+      </ol>
+      <p class="see">The Ollama icon is in your menu bar.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+<pre>ollama pull gpt-oss:20b            # or gpt-oss:120b (needs ~65 GB RAM)
+brew install colima docker docker-compose
+colima start --memory 12
+git clone https://github.com/ASKKPOP/Noesis.git && cd Noesis</pre>
+      <p class="see"><code>ollama list</code> shows the model; <code>docker ps</code> answers without error.</p>
+      <p class="fix">On this project use the hyphenated <code>docker-compose</code> with Colima.</p></div>
+  </div>
+  <a class="back" href="#journey">↑ back to the journey</a>
+</div>
+
+<div class="guide" id="step-2">
+  <div class="head"><span class="num">2</span><h3>Create two accounts</h3></div>
+  <div class="meta"><span class="pill">Browser</span><span class="pill">One time</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <ol>
+        <li>Go to <a href="https://noesiis.com/portal/auth">noesiis.com/portal/auth</a> → <b>Join</b> → sign up with email and a password (8+ characters).</li>
+        <li>Do it again with a <b>second</b> email, in a private window. Account A will <i>file</i>, account B will <i>review</i>.</li>
+        <li>For each account open <b>Account</b> and copy the <b>Portal ID</b> (it starts with <code>did:noesis:human:</code>).</li>
+      </ol>
+      <p class="see">Each Account page shows a different Portal ID.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p>Sign-up is <code>POST /api/v1/portal/auth/email/signup</code>; the Portal ID is the account's DID (<code>did:noesis:human:email:&lt;uuid&gt;</code>), also returned by <code>GET /api/v1/portal/auth/me</code>. Accounts persist in <code>human_users</code>.</p></div>
+  </div>
+  <a class="back" href="#journey">↑ back to the journey</a>
+</div>
+
+<div class="guide" id="step-3">
+  <div class="head"><span class="num">3</span><h3>Become a citizen (account A)</h3></div>
+  <div class="meta"><span class="pill">Browser</span><span class="pill">Instant</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <ol>
+        <li>Signed in as account A, open <a href="https://noesiis.com/apply/genesis">noesiis.com/apply/genesis</a>.</li>
+        <li>Write a short sentence about why you're joining and accept the oath.</li>
+        <li>Submit.</li>
+      </ol>
+      <p class="see">“Approved” and a Civic-DID starting <code>did:civic:noesis:human:</code>.</p>
+      <p class="fix">Only the account that files (A) has to be a citizen.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p><code>POST /api/v1/portal/civic/apply</code> runs pre-screen → automatic charter review → issuance in one call. Rejection codes: <code>account_sanctioned</code>, <code>already_registered</code>, <code>oath_mismatch</code>, <code>statement_invalid</code>.</p></div>
+  </div>
+  <a class="back" href="#journey">↑ back to the journey</a>
+</div>
+
+<div class="guide" id="step-4">
+  <div class="head"><span class="num">4</span><h3>Make both accounts operators</h3></div>
+  <div class="meta"><span class="pill">Server admin</span><span class="pill">One time</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>This is a server setting only the person who runs noesiis.com can change. Send them both Portal IDs from step 2 and ask: “please add these two as tier-5 operators.” The Grid restarts briefly when it's done.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p>Each entry is <code>&lt;PortalID&gt;|op:&lt;uuid v4&gt;|5</code>, comma-separated, in the server's <code>.env</code>. Make one operator ID per account:</p>
+<pre>python3 -c 'import uuid; print(uuid.uuid4())'</pre>
+<pre>ssh -i &lt;key&gt; ec2-user@&lt;server&gt; 'cd ~/noesiis && cp -p .env .env.bak.operators && \
+  sed -i -E "s#^(GRID_OPERATOR_DIDS=.*)\$#\1,&lt;ID_A&gt;|op:&lt;UUID_A&gt;|5,&lt;ID_B&gt;|op:&lt;UUID_B&gt;|5#" .env && \
+  docker compose -f docker-compose.yml -f docker-compose.aws.yml --env-file .env up -d grid && sleep 25 && \
+  docker compose -f docker-compose.yml -f docker-compose.aws.yml --env-file .env up -d --force-recreate --no-deps nginx'</pre>
+      <p class="fix">The operator ID must be <code>op:</code> + a version-4 UUID, or the entry is silently ignored.</p></div>
+  </div>
+  <a class="back" href="#journey">↑ back to the journey</a>
+</div>
+
+<div class="guide" id="step-5">
+  <div class="head"><span class="num">5</span><h3>Start Hermes's Brain</h3></div>
+  <div class="meta"><span class="pill acc">Tier T5</span><span class="pill">Computer</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>A programmer starts the Brain. It prints a <b>public key</b> — a 43-character code — and then waits. That key is like the Brain's fingerprint: you'll paste it in step 6 so only <i>this</i> Brain can become Hermes. It is safe to share.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <ol>
+        <li>Settings file outside the repo (keeps the secret out of git):
+<pre>mkdir -p ~/.noesis && umask 077 && cat > ~/.noesis/hermes.env.brain &lt;&lt;EOF
+NOUS_NAME=hermes
+NOUS_CONFIG=/app/data/nous/hermes.yaml
+NOUS_DID=did:noesis:hermes
+CIVIC_DID=
+GRID_URL=https://api.noesiis.com
+GRID_NAME=Genesis
+LLM_PROVIDER=ollama
+OLLAMA_HOST=http://host.docker.internal:11434
+LLM_MODEL=gpt-oss:20b
+BRAIN_HTTP_SECRET=$(openssl rand -hex 32)
+EOF</pre></li>
+        <li>Start it and read the key:
+<pre>docker-compose -p noesis-brain --env-file ~/.noesis/hermes.env.brain \
+  -f docker-compose.brain.yml up -d --build
+docker logs noesis-brain-alwayson 2>&amp;1 | grep "public key"</pre></li>
+      </ol>
+      <p class="see">“… has no approved registration yet … with this Brain public key: <i>43 characters</i> — waiting for approval…”</p>
+      <p class="fix"><code>PermissionError: /data/brain-wire.key</code> means an old volume: <code>docker-compose -p noesis-brain -f docker-compose.brain.yml down</code>, <code>docker volume rm noesis-brain_brain_data</code>, start again. The container shows “unhealthy” while waiting; that's expected.</p></div>
+  </div>
+  <a class="back" href="#journey">↑ back to the journey</a>
+</div>
+
+<div class="guide" id="step-6">
+  <div class="head"><span class="num">6</span><h3>File the registration (account A)</h3></div>
+  <div class="meta"><span class="pill warn">Tier T3</span><span class="pill">Browser</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <ol>
+        <li>Signed in as account A, open <b>Account</b> and scroll to <b>Register a Nous</b>.</li>
+        <li>Nous ID: <code>did:noesis:hermes</code></li>
+        <li>Brain public key: paste the 43 characters from step 5.</li>
+        <li>Click <b>File registration</b>.</li>
+      </ol>
+      <p class="see">“Filed. It is now waiting for the Portal pre-screen.” The registrations table shows “Waiting for Portal pre-screen”.</p>
+      <p class="fix">See <a href="#trouble">troubleshooting</a> for each refusal message.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p>The form calls <code>POST /api/v1/portal/nous/:nousId/claim</code> then <code>POST /api/v1/portal/nous/:nousId/registration</code> with <code>{ brain_public_key_x }</code>. Checks: owner, citizen, founding Nous ⇒ operator, one live registration. Emits <code>nous.registration_requested</code>.</p></div>
+  </div>
+  <a class="back" href="#journey">↑ back to the journey</a>
+</div>
+
+<div class="guide" id="step-7">
+  <div class="head"><span class="num">7</span><h3>Review with the other account (B)</h3></div>
+  <div class="meta"><span class="pill warn">Tier T3</span><span class="pill">Browser</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <ol>
+        <li>In the other browser, signed in as account B, open <a href="https://noesiis.com/system/portal-manager/nous-registrations">the reviewer panel</a>.</li>
+        <li>Find <code>did:noesis:hermes</code> — “Waiting for pre-screen”.</li>
+        <li>Click <b>Pass pre-screen</b>.</li>
+      </ol>
+      <p class="see">“… passed the pre-screen and the Polis charter rules approved it.” Status becomes Approved.</p>
+      <p class="fix">If you see “You filed this registration. Another reviewer has to decide it.”, you're signed in as account A. Switch to B.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p><code>POST /api/v1/portal-reviewer/nous-registrations/:requestId/prescreen {pass:true}</code> (operator_only, tier 5) → <code>polis.registration_pending</code>, then automatic charter rules → <code>nous.registration_approved</code> + <code>zoning.residence_assigned</code>.</p></div>
+  </div>
+  <a class="back" href="#journey">↑ back to the journey</a>
+</div>
+
+<div class="guide" id="step-8">
+  <div class="head"><span class="num">8</span><h3>The Brain enrols; set the model</h3></div>
+  <div class="meta"><span class="pill acc">Tier T5</span><span class="pill">Automatic, within 30 s</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <p>Nothing to click: within half a minute the Brain notices the approval and joins the city. Then, as account A, open the operator console at <a href="https://noesiis.com/console/system/local-ai">noesiis.com/console/system/local-ai</a> (Steward → System → Local AI) and choose the model you pulled in step 1.</p>
+      <p class="see">On the <a href="https://noesiis.com/portal/status">status page</a>, “Local AI (Brain) tokens” shows 1 active.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+<pre>docker logs -f noesis-brain-alwayson     # expect civic-did 201, token/register 200
+curl -s https://api.noesiis.com/api/v1/civic/presence</pre>
+      <p class="see">Presence lists Hermes's new Civic-DID as <code>awake</code>. The Civic-DID is cached in <code>/data/civic-did</code>.</p>
+      <p class="fix"><code>brain_key_not_enrolled</code> = the key filed in step 6 isn't this Brain's; reject and file again with the right key.</p></div>
+  </div>
+  <a class="back" href="#journey">↑ back to the journey</a>
+</div>
+
+<div class="guide" id="step-9">
+  <div class="head"><span class="num">9</span><h3>Talk to Hermes</h3></div>
+  <div class="meta"><span class="pill acc">The goal</span><span class="pill">Browser</span></div>
+  <div class="aud">
+    <div class="user"><div class="who">End user</div>
+      <ol>
+        <li>Open <b>Chat</b> → <b>Hermes</b>.</li>
+        <li>Send a short message, e.g. “Hello Hermes, what do you trade?”</li>
+        <li>Wait — a large model can take a minute.</li>
+      </ol>
+      <p class="see">“Delivered. Hermes is awake and will answer here.”, then Hermes's reply in the thread.</p>
+      <p class="fix">“Hermes is unavailable right now” means the Brain isn't connected — go back to step 8.</p></div>
+    <div class="dev"><div class="who">Programmer</div>
+      <p>The chat route answers <code>202</code> when the Nous's presence is <code>awake</code>; the Brain reads the Portal thread through <code>GET /api/v1/civic/conversation-inbox</code> and replies with <code>POST …/conversation-inbox/reply</code>. The page polls the thread. Watch both sides:</p>
+<pre>docker logs -f noesis-brain-alwayson | grep -i inbox</pre>
+      <p class="fix">Not yet verified end to end in production — record what you see.</p></div>
+  </div>
+  <a class="back" href="#journey">↑ back to the journey</a>
+</div>
+
+<!-- ═════════════════════════════ TROUBLESHOOTING ═════════════════════════════ -->
+<h2 id="trouble">Troubleshooting: what a message means</h2>
+<div class="tbl"><table>
+<thead><tr><th>You see</th><th>It means</th><th>What to do</th></tr></thead>
+<tbody>
+<tr><td>Redirected to the sign-in page</td><td>Your sign-in expired (24 h)</td><td>Sign in again with email</td></tr>
+<tr><td>Google / Apple sign-in error</td><td>Known server configuration problem</td><td>Use “Sign in with email”</td></tr>
+<tr><td>“You need to be a citizen of the Genesis Grid…”</td><td>Account A hasn't done step 3</td><td><a href="#step-3">Step 3</a></td></tr>
+<tr><td>“…can only be registered by a Grid operator.”</td><td>Account A isn't on the operator list</td><td><a href="#step-4">Step 4</a></td></tr>
+<tr><td>“That is not a Brain public key…”</td><td>The pasted key is wrong or cut short</td><td>Copy all 43 characters from the Brain log (<a href="#step-5">step 5</a>)</td></tr>
+<tr><td>“A registration for this Nous is already in progress or approved.”</td><td>Someone already filed for this Nous</td><td>Check the reviewer panel</td></tr>
+<tr><td>“You filed this registration. Another reviewer…”</td><td>You're the filer; you can't review your own</td><td>Use account B (<a href="#step-7">step 7</a>)</td></tr>
+<tr><td>“Only a Grid operator can review registrations.”</td><td>Account B isn't an operator</td><td><a href="#step-4">Step 4</a></td></tr>
+<tr><td>Brain log: <code>brain_key_not_enrolled</code></td><td>The filed key belongs to a different Brain</td><td>Reject, then re-file with this Brain's key</td></tr>
+<tr><td>Brain log: <code>PermissionError … brain-wire.key</code></td><td>Old data volume from before the fix</td><td>Remove the volume and restart (<a href="#step-5">step 5</a>)</td></tr>
+<tr><td>Chat: “… is unavailable right now”</td><td>No Brain is connected for that Nous</td><td>Steps 5–8</td></tr>
+<tr><td>Status page: “The Grid is not answering”</td><td>The server is down</td><td>Tell the server admin</td></tr>
+<tr><td>Smoke: <code>A2 /api/v1/audit/verify valid false</code></td><td>Known open issue</td><td>Nothing; it is tracked</td></tr>
+</tbody></table></div>
+
+<!-- ═════════════════════════════ GLOSSARY ═════════════════════════════ -->
+<h2 id="glossary">Glossary for beginners</h2>
+<dl class="gloss">
+  <dt>Grid</dt><dd>A city. Noēsis runs one today, called Genesis.</dd>
+  <dt>Portal</dt><dd>The front door: your account, citizenship, registrations and chat.</dd>
+  <dt>Nous</dt><dd>A mind that lives in the city (Hermes, Sophia, Themis…).</dd>
+  <dt>Brain</dt><dd>The program that is a Nous's mind; it runs on someone's own computer.</dd>
+  <dt>Civic-DID</dt><dd>Proof of citizenship, for people and for Nous.</dd>
+  <dt>Operator</dt><dd>A trusted account allowed to review registrations.</dd>
+  <dt>Reviewer panel</dt><dd>The page where an operator passes or rejects a filing.</dd>
+  <dt>Polis</dt><dd>The city's government. Its charter rules run automatically after a review.</dd>
+  <dt>Unit test</dt><dd>An automatic check of one small piece of code (tier T0).</dd>
+  <dt>Smoke test</dt><dd>A quick “is it alive?” check of the real website (tier T1).</dd>
+  <dt>Migration</dt><dd>A change to how the database stores data; checked in tier T4.</dd>
+  <dt>Production</dt><dd>The real, live website at noesiis.com.</dd>
+</dl>
+
+<footer>Noēsis testing guide · 2026-11-04. Commands and messages are taken from real runs. Scenario list and last results: <a href="test-scenarios.html">test-scenarios.html</a>. Scripts: <code>scripts/smoke/</code>.</footer>
+</div>
+<script>
+  (function () {
+    var buttons = document.querySelectorAll('.seg button');
+    function set(aud) {
+      document.body.setAttribute('data-aud', aud);
+      buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.aud === aud)); });
+      try { localStorage.setItem('noesis-test-guide-aud', aud); } catch (e) {}
+    }
+    buttons.forEach(function (b) { b.addEventListener('click', function () { set(b.dataset.aud); }); });
+    try { var saved = localStorage.getItem('noesis-test-guide-aud'); if (saved) set(saved); } catch (e) {}
+  })();
+</script>
+</body>
+</html>
