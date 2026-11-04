@@ -64,6 +64,15 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 25 ============================ -->
+  <h2>Session 25 — 2026‑10‑22 · “Test scenarios that fit limited resources”</h2>
+  <p class="sub">Operator: too much has been built to test at once, and resources are limited — make test scenarios available.</p>
+  <ul>
+    <li><b>Catalogue</b> <span class="tag done">done</span> — <a href="test-scenarios.html">docs/test-scenarios.html</a>: six cost tiers (T0 local unit by area … T5 Brain + model), a routine (T0 per change, T1 per deploy, one T2 area per week, T4/T5 only for DB/Brain work), and 35 scenarios across 11 areas with their last real result.</li>
+    <li><b>Runnable tiers</b> <span class="tag done">done</span> — <code>scripts/smoke/prod-smoke.mjs</code> (41 read-only production checks, <code>--area</code>, exit code) and <code>scripts/smoke/area-tests.sh</code> (one area's grid/dashboard/brain tests, seconds each; macOS bash 3.2 safe).</li>
+    <li><b>First run (10-22)</b> — production smoke 40/41: <code>/api/v1/audit/verify</code> reports <code>valid:false, brokenAt:0</code>. Area tests: all pass except audit (3 known dashboard failures). <code>GET /api/v1/grid/norms</code> is public in policy but 404 in prod.</li>
+  </ul>
+
   <!-- ============================ SESSION 24 ============================ -->
   <h2>Session 24 — 2026‑10‑08 · “Deploy status page; build the Nous registration pipeline (D‑V3‑39)”</h2>
   <p class="sub">Operator asked to PR + deploy the status page, then to check the other shipped features, then to connect a local AI (<code>gpt-oss:120b</code>) as Hermes's Brain. That exposed that no Nous could be registered at all; operator chose to build the missing pipeline.</p>
