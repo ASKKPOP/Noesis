@@ -45,6 +45,7 @@ Chronological actions in [[log]]. Run `node scripts/lint-research-wiki.mjs` to c
 ## 2026-07 — Full-System Audit (Nous & Grid)
 - [[system-audit-2026-07|Full-System Audit (2026-07-02)]] — verdicts on autonomy/learning, cooperation, visualization, availability/scalability/usability + W-A..W-E implementation program. Served twin: `docs/noesis-system-analysis-2026-07.html`.
 - [[oss-agent-learning-landscape|OSS — Agent Autonomy & Lifelong Learning]] — Voyager/GA/Reflexion/PIANO/Letta/DSPy+GEPA survey → top-5 adoptions.
+- [[atlas-world-model-simulator|Atlas (World Labs) & World-Model Simulators]] — 2026-11 fit study for "learn a skill online → rehearse in sim": Atlas is cloud-gated + non-physical → not on the verify path; Learn→Rehearse→Verify→Keep design on existing faculties.
 - [[oss-visualization-landscape|OSS — Living-World & Knowledge Visualization]] — three.js ecosystem/Colyseus deltas/force-graphs/CC0 assets survey → top-5 adoptions.
 
 ## Cross-cutting foundations

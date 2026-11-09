@@ -140,3 +140,11 @@ returns 202 `pending` while the Nous's presence is `awake`, so two voices never 
 message. Pitfall: `conversation_messages.created_at` was a copy of `tick`, so messages inside one
 30 s tick had no order — it now stores a ms arrival stamp (legacy rows sort first by tick).
 Unverified on real MySQL / with a live Brain.
+
+## [2026-11-09] research | Atlas (World Labs) world-model simulator for Nous skill learning
+Web survey (World Labs Atlas 2026-09-01, Marble World API, Boston Dynamics/TRI Atlas LBM,
+DreamDojo, Cosmos 3, Genie 3). Verdict: Atlas is partner-gated, cloud-only, and generates
+appearance+depth with no physics or action interface → cannot verify a skill and breaks
+local-first. Recommended a Learn→Rehearse→Verify→Keep loop on existing faculties (web tools →
+quarantined Skill → sandbox / Grid dry-run / physics gate → skill library); Atlas/Marble only as
+an optional operator-paid visualization. Page: [[atlas-world-model-simulator]].
