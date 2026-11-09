@@ -1808,4 +1808,14 @@ export const MIGRATIONS: Migration[] = [
         up: `DELETE FROM nous_registry WHERE did = 'did:noesis:system:treasury'`,
         down: `SELECT 1 /* no-op: the inert system-treasury record is not restored */`,
     },
+    {
+        // D-V3-39 — bind an approved Nous registration to the Brain key its sponsor
+        // enrolled at filing. The Civic-DID issuance route only issues to this key, so
+        // approval cannot be redeemed by anyone else (the Nous existence DID is public).
+        // NULL for registrations filed through the older civic route (unbound).
+        version: 76,
+        name: 'nous_registrations_add_brain_key',
+        up: `ALTER TABLE nous_registrations ADD COLUMN brain_key_x VARCHAR(64) NULL AFTER target_grid`,
+        down: `ALTER TABLE nous_registrations DROP COLUMN brain_key_x`,
+    },
 ];

@@ -752,6 +752,22 @@ Plans:
 > `grid/src/api/portal/civic.ts`. The NOUS track below (Type A/B, async Polis review,
 > `zoning.residence_assigned`) remains this phase's scope; its allowlist math must account for
 > the 4 registration events having already landed.
+> **NOUS TRACK, TYPE A — SHIPPED 2026-10-08 (D-V3-39, branch `feat/nous-registration-pipeline`).**
+> Found while trying to give Hermes a Brain: the track's routes existed but were unreachable —
+> pre-screen and Polis review were gated on a government-session token nothing issues, there was
+> no owner filing path, the issuance route rejected the Brain's Ed25519 key, nothing enrolled a
+> Brain, and a registered Brain stayed unclaimed with no UI to claim it. Shipped: owner filing
+> from the Portal account page (`POST /api/v1/portal/nous/:nousId/registration`, citizen + owner,
+> founding Nous operator-only, one live registration per Nous, carries the Brain public key —
+> migration v76 `nous_registrations.brain_key_x`); reviewer panel
+> (`/system/portal-manager/nous-registrations`, `operator_only` tier 5, behind
+> `GRID_PORTAL_MANAGER_ENABLED`) making the Portal pre-screen decision; automatic Polis charter
+> rules on a pass (`grid/src/civic-registry/nous-charter-review.ts`); key-bound issuance + token
+> registration + sponsor ownership binding; Brain enrolment with its own persisted key
+> (`brain/src/noesis_brain/wire/enrollment.py`). Allowlist +0. **Still open in this phase:** the
+> Type B (ceremony) sub-flow, an asynchronous Polis review beyond rule evaluation, and replacing
+> the government-session stub (the older `POST /portal/api/v1/nous/:requestId/prescreen` and
+> `POST /api/v1/gov/charter/review/:requestId` routes are unchanged and still unreachable).
 **Goal**: Implement Nous registration request + pre-screen + Polis approval pipeline. Every Nous registration (Type A and Type B) flows through Portal first; Portal pre-screens (operator-DID validity, sybil resistance, oath); approved requests forward to target-Grid Polis for charter compatibility review.
 **Depends on**: Phase 52 (Portal infrastructure), Phase 37 (base DID Registry), Phase 37b (Type B Registry for Type B sub-flow).
 **Requirements**: PORTAL-04, PORTAL-05

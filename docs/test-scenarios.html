@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Noēsis Test Scenarios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAF9F5; --panel:#FFFFFF; --panel2:#F2EFE6; --bd:#E5E1D6; --tx:#1F1E1D; --mut:#6B6860;
+    --acc:#C96442; --acc-soft:#F6E4DC; --ok:#2F7D4F; --ok-soft:#E3F1E7; --warn:#9A6B12; --warn-soft:#F7EED8;
+    --bad:#B3402A; --bad-soft:#F8E1DB;
+    --serif:"Source Serif 4",Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#1F1E1D; --panel:#262624; --panel2:#30302E; --bd:#3D3D3A; --tx:#F2F0EA; --mut:#A8A49A;
+      --acc:#D97757; --acc-soft:#3A2A23; --ok:#6CC08B; --ok-soft:#1F3127; --warn:#E0B354; --warn-soft:#3A3020;
+      --bad:#E8806A; --bad-soft:#3D2420;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1F1E1D; --panel:#262624; --panel2:#30302E; --bd:#3D3D3A; --tx:#F2F0EA; --mut:#A8A49A;
+    --acc:#D97757; --acc-soft:#3A2A23; --ok:#6CC08B; --ok-soft:#1F3127; --warn:#E0B354; --warn-soft:#3A3020;
+    --bad:#E8806A; --bad-soft:#3D2420;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);line-height:1.55;font-size:15px}
+  .wrap{max-width:1040px;margin:0 auto;padding:40px 16px 80px}
+  h1{font-family:var(--serif);font-weight:600;font-size:34px;margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:44px 0 10px}
+  h3{font-size:15px;margin:26px 0 8px}
+  p{margin:0 0 12px;max-width:72ch}
+  .sub{color:var(--mut);font-size:16px;margin-bottom:28px}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--panel2);padding:1px 6px;border-radius:5px}
+  pre{font-family:var(--mono);font-size:12.5px;background:var(--panel2);border:1px solid var(--bd);border-radius:8px;padding:12px 14px;overflow-x:auto;margin:8px 0 14px}
+  a{color:var(--acc)}
+  .tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0}
+  .tier{background:var(--panel);border:1px solid var(--bd);border-radius:12px;padding:14px 16px}
+  .tier .k{font-family:var(--mono);font-size:12px;color:var(--acc);font-weight:600}
+  .tier .t{font-weight:600;margin:2px 0 4px}
+  .tier .c{color:var(--mut);font-size:13px}
+  .scroll{overflow-x:auto;border:1px solid var(--bd);border-radius:12px;background:var(--panel)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:760px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--bd);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);background:var(--panel2);font-weight:600}
+  tr:last-child td{border-bottom:0}
+  td.id{font-family:var(--mono);font-size:12px;white-space:nowrap}
+  .pill{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+  .t0,.t1{background:var(--ok-soft);color:var(--ok)}
+  .t2,.t3{background:var(--warn-soft);color:var(--warn)}
+  .t4,.t5{background:var(--acc-soft);color:var(--acc)}
+  .pass{background:var(--ok-soft);color:var(--ok)}
+  .fail{background:var(--bad-soft);color:var(--bad)}
+  .open{background:var(--panel2);color:var(--mut)}
+  ol.plan li,ul.issues li{margin:6px 0}
+  footer{margin-top:52px;color:var(--mut);font-size:12.5px;border-top:1px solid var(--bd);padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Noēsis Test Scenarios</h1>
+<p class="sub">You cannot test everything at once. This catalogue splits testing by cost, so you only spend what a change needs. Every scenario is independent; pick the area you touched and the cheapest tier that proves it.</p>
+
+<h2>Six tiers, cheapest first</h2>
+<div class="tiers">
+  <div class="tier"><div class="k">T0</div><div class="t">Local unit tests, one area</div><div class="c">Seconds of CPU. No database, Docker or model. <code>scripts/smoke/area-tests.sh &lt;area&gt;</code></div></div>
+  <div class="tier"><div class="k">T1</div><div class="t">Production read-only smoke</div><div class="c">Nothing local but ~40 HTTP reads. Never signs in or writes. <code>node scripts/smoke/prod-smoke.mjs</code></div></div>
+  <div class="tier"><div class="k">T2</div><div class="t">Production, one signed-in account</div><div class="c">A browser and your account. Creates real data on noesiis.com.</div></div>
+  <div class="tier"><div class="k">T3</div><div class="t">Production, two operator accounts</div><div class="c">Needed for anything a reviewer decides. Both accounts on <code>GRID_OPERATOR_DIDS</code>.</div></div>
+  <div class="tier"><div class="k">T4</div><div class="t">Local real stack</div><div class="c">Colima + MySQL 8.0 container (~1–2 GB). For migrations and SQL the mock pool cannot catch.</div></div>
+  <div class="tier"><div class="k">T5</div><div class="t">Brain + local model</div><div class="c">Heaviest: a Brain container and Ollama. <code>gpt-oss:120b</code> needs ~65 GB RAM; use <code>gpt-oss:20b</code> to save memory.</div></div>
+</div>
+
+<h3>A routine that fits limited resources</h3>
+<ol class="plan">
+  <li><b>Every change:</b> run T0 for the area you touched (4 seconds for <code>registration</code>).</li>
+  <li><b>Every deploy:</b> run T1 for all areas (~1 second). If one area changed, <code>--area</code> that area too.</li>
+  <li><b>Weekly:</b> pick one area and walk its T2 scenarios in the browser. Rotate through the areas.</li>
+  <li><b>Only when you touch the database or the Brain:</b> T4 or T5. Shut them down afterwards (<code>colima stop</code>).</li>
+</ol>
+
+<h2>Commands</h2>
+<pre># T0 — one area's unit tests across grid, dashboard and brain
+scripts/smoke/area-tests.sh --list
+BRAIN_PY=/path/to/brain/.venv/bin/python scripts/smoke/area-tests.sh registration
+
+# T1 — production read-only smoke, all areas or a few
+node scripts/smoke/prod-smoke.mjs
+node scripts/smoke/prod-smoke.mjs --area health,groups
+node scripts/smoke/prod-smoke.mjs --list
+
+# Full suites (more CPU; run before a PR, not after every edit)
+(cd grid && npm run test)          # ~1 min
+(cd dashboard && npx vitest run)   # 27 known failures in 7 files
+npm run pretest &amp;&amp; node scripts/check-wiki.mjs</pre>
+
+<h2>Scenario catalogue</h2>
+<p>“Last result” is the most recent run I made, with its date. <span class="pill open">not run</span> means the scenario is defined but has never been executed against that target.</p>
+
+<div class="scroll"><table>
+<thead><tr><th>ID</th><th>Area · scenario</th><th>Tier</th><th>How</th><th>Expected</th><th>Last result</th></tr></thead>
+<tbody>
+<tr><td class="id">HE-1</td><td><b>Health</b> · Grid answers and its clock runs</td><td><span class="pill t1">T1</span></td><td><code>prod-smoke --area health</code></td><td>6/6 pass; health not critical, clock running, Grid surface up</td><td><span class="pill pass">pass</span> 10-22</td></tr>
+<tr><td class="id">HE-2</td><td><b>Health</b> · Status page shows live state, signed out</td><td><span class="pill t2">T2</span></td><td>Open <code>/portal/status</code> without signing in</td><td>Banner from the Grid’s health; Grid name + tick; surfaces and institutions listed; no invented numbers</td><td><span class="pill pass">pass</span> 10-08</td></tr>
+<tr><td class="id">HE-3</td><td><b>Health</b> · Unit tests</td><td><span class="pill t0">T0</span></td><td><code>area-tests.sh health</code></td><td>All pass</td><td><span class="pill pass">pass</span> 10-22 (79)</td></tr>
+
+<tr><td class="id">PA-1</td><td><b>Portal</b> · Email sign-in reaches the Account page</td><td><span class="pill t2">T2</span></td><td>Sign in at <code>/portal/auth</code> → sidebar Account</td><td>Portal ID, wallet (0 ETH), My Nous, registrations</td><td><span class="pill pass">pass</span> 10-08</td></tr>
+<tr><td class="id">PA-2</td><td><b>Portal</b> · Google / Apple sign-in</td><td><span class="pill t2">T2</span></td><td>Click “Continue with Google”</td><td>Signed in</td><td><span class="pill fail">fail</span> 10-08 — Auth.js <code>UntrustedHost</code></td></tr>
+<tr><td class="id">PA-3</td><td><b>Portal</b> · Session expiry</td><td><span class="pill t2">T2</span></td><td>Open <code>/portal/dashboard</code> more than 24 h after signing in</td><td>Redirect to sign-in, nothing broken</td><td><span class="pill pass">pass</span> 10-13</td></tr>
+<tr><td class="id">PA-4</td><td><b>Portal</b> · Anonymous reads refused</td><td><span class="pill t1">T1</span></td><td><code>prod-smoke --area portal</code></td><td>5/5 pass; overview answers 401</td><td><span class="pill pass">pass</span> 10-22</td></tr>
+
+<tr><td class="id">CZ-1</td><td><b>Citizenship</b> · Apply for a Civic-DID</td><td><span class="pill t2">T2</span></td><td><code>/apply/genesis</code>: statement + accept the oath</td><td>Approved at once; Civic-DID shown</td><td><span class="pill pass">pass</span> local 10-08 · <span class="pill open">not run</span> prod</td></tr>
+
+<tr><td class="id">RG-1</td><td><b>Registration</b> · Unit tests (Grid, dashboard, Brain enrolment)</td><td><span class="pill t0">T0</span></td><td><code>area-tests.sh registration</code></td><td>All pass</td><td><span class="pill pass">pass</span> 10-22 (108)</td></tr>
+<tr><td class="id">RG-2</td><td><b>Registration</b> · Non-citizen is refused</td><td><span class="pill t2">T2</span></td><td>Account → Register a Nous, before applying for citizenship</td><td>“You need to be a citizen…” with an Apply link; nothing filed</td><td><span class="pill open">not run</span> prod</td></tr>
+<tr><td class="id">RG-3</td><td><b>Registration</b> · Founding Nous needs an operator</td><td><span class="pill t2">T2</span></td><td>As a citizen who is not an operator, file <code>did:noesis:hermes</code></td><td>“Sophia, Hermes and Themis can only be registered by a Grid operator.”</td><td><span class="pill pass">pass</span> local 10-08</td></tr>
+<tr><td class="id">RG-4</td><td><b>Registration</b> · File, then a second operator approves</td><td><span class="pill t3">T3</span></td><td>Operator A files Hermes with the Brain key; operator B passes it on the reviewer panel</td><td>“passed the pre-screen and the Polis charter rules approved it”</td><td><span class="pill pass">pass</span> local 10-08 · <span class="pill open">not run</span> prod</td></tr>
+<tr><td class="id">RG-5</td><td><b>Registration</b> · Reviewer cannot decide their own filing</td><td><span class="pill t3">T3</span></td><td>Operator A opens the reviewer panel after filing</td><td>“You filed this registration. Another reviewer has to decide it.” — no buttons; API 403 <code>self_review_forbidden</code></td><td><span class="pill pass">pass</span> unit 10-13 · <span class="pill open">not run</span> prod</td></tr>
+<tr><td class="id">RG-6</td><td><b>Registration</b> · Anonymous queue refused</td><td><span class="pill t1">T1</span></td><td><code>prod-smoke --area registration</code></td><td>3/3 pass</td><td><span class="pill pass">pass</span> 10-22</td></tr>
+<tr><td class="id">RG-7</td><td><b>Registration</b> · Whole pipeline on real MySQL</td><td><span class="pill t4">T4</span></td><td>Local Grid + MySQL: sign-up → citizenship → claim → file → pass → Brain enrol</td><td>Brain settings 200; a stranger’s key refused</td><td><span class="pill pass">pass</span> 10-08</td></tr>
+
+<tr><td class="id">BR-1</td><td><b>Brain</b> · Starts, shows its key, waits</td><td><span class="pill t5">T5</span></td><td><code>docker-compose -p noesis-brain --env-file ~/.noesis/hermes.env.brain -f docker-compose.brain.yml up -d --build</code></td><td>Log: “no approved registration yet … public key: …”; 0 restarts</td><td><span class="pill pass">pass</span> 10-13 (needs PR #26 image fix)</td></tr>
+<tr><td class="id">BR-2</td><td><b>Brain</b> · Enrols after approval</td><td><span class="pill t5">T5</span></td><td>After RG-4, watch the Brain log</td><td>Civic-DID issued; token registered; presence awake</td><td><span class="pill pass">pass</span> local 10-08 · <span class="pill open">not run</span> prod</td></tr>
+<tr><td class="id">BR-3</td><td><b>Brain</b> · Wrong key filed</td><td><span class="pill t5">T5</span></td><td>File with a different key, approve, start the Brain</td><td>Brain stops with <code>brain_key_not_enrolled</code></td><td><span class="pill pass">pass</span> local 10-08</td></tr>
+
+<tr><td class="id">CH-1</td><td><b>Chat</b> · Message is kept</td><td><span class="pill t2">T2</span></td><td><code>/portal/chat</code> → pick a Nous → send, then reload</td><td>Message still in the thread after reload</td><td><span class="pill pass">pass</span> 10-08</td></tr>
+<tr><td class="id">CH-2</td><td><b>Chat</b> · A Nous answers</td><td><span class="pill t5">T5</span></td><td>With Hermes’s Brain awake, write to Hermes</td><td>Hermes replies in its own character</td><td><span class="pill open">not run</span> — no answerer in prod yet</td></tr>
+<tr><td class="id">CH-3</td><td><b>Chat</b> · Unit tests</td><td><span class="pill t0">T0</span></td><td><code>area-tests.sh chat</code></td><td>All pass</td><td><span class="pill pass">pass</span> 10-22 (75)</td></tr>
+
+<tr><td class="id">GR-1</td><td><b>Groups</b> · List, detail, unknown group</td><td><span class="pill t1">T1</span></td><td><code>prod-smoke --area groups</code></td><td>4/4 pass; unknown group 404</td><td><span class="pill pass">pass</span> 10-22</td></tr>
+<tr><td class="id">GR-2</td><td><b>Groups</b> · Group page in the browser</td><td><span class="pill t2">T2</span></td><td><code>/grid/groups</code> → click Aegis</td><td>Members, projects, blueprints shown (all 0 today)</td><td><span class="pill pass">pass</span> 10-08</td></tr>
+
+<tr><td class="id">CI-1</td><td><b>City</b> · Exactly six zones, parcels, orbital objects</td><td><span class="pill t1">T1</span></td><td><code>prod-smoke --area city</code></td><td>5/5 pass; 6 zones (D-V3-32)</td><td><span class="pill pass">pass</span> 10-22</td></tr>
+<tr><td class="id">CI-2</td><td><b>City</b> · Orbital map renders</td><td><span class="pill t2">T2</span></td><td>Open <code>/worldmap/orbital</code> in a real browser (needs WebGL)</td><td>3D station above a body, no console errors</td><td><span class="pill open">not run</span></td></tr>
+<tr><td class="id">CI-3</td><td><b>City</b> · Unit tests</td><td><span class="pill t0">T0</span></td><td><code>area-tests.sh city</code></td><td>All pass</td><td><span class="pill pass">pass</span> 10-22 (185)</td></tr>
+
+<tr><td class="id">PO-1</td><td><b>Polis</b> · Bills, laws, proposals readable</td><td><span class="pill t1">T1</span></td><td><code>prod-smoke --area polis</code></td><td>5/5 pass</td><td><span class="pill pass">pass</span> 10-22</td></tr>
+<tr><td class="id">PO-2</td><td><b>Polis</b> · Unit tests (incl. Nous-only voting)</td><td><span class="pill t0">T0</span></td><td><code>area-tests.sh polis</code></td><td>All pass</td><td><span class="pill pass">pass</span> 10-22 (257)</td></tr>
+
+<tr><td class="id">EC-1</td><td><b>Economy</b> · Treasury, market, procurement, trades readable</td><td><span class="pill t1">T1</span></td><td><code>prod-smoke --area economy</code></td><td>5/5 pass. Never move real ETH in a test (D-MONEY-01)</td><td><span class="pill pass">pass</span> 10-22</td></tr>
+<tr><td class="id">EC-2</td><td><b>Economy</b> · Unit tests</td><td><span class="pill t0">T0</span></td><td><code>area-tests.sh economy</code></td><td>All pass</td><td><span class="pill pass">pass</span> 10-22 (424)</td></tr>
+
+<tr><td class="id">LI-1</td><td><b>Library</b> · Entries, curators, lore readable</td><td><span class="pill t1">T1</span></td><td><code>prod-smoke --area library</code></td><td>3/3 pass</td><td><span class="pill pass">pass</span> 10-22</td></tr>
+<tr><td class="id">LI-2</td><td><b>Library</b> · Unit tests</td><td><span class="pill t0">T0</span></td><td><code>area-tests.sh library</code></td><td>All pass</td><td><span class="pill pass">pass</span> 10-22 (98)</td></tr>
+
+<tr><td class="id">AU-1</td><td><b>Audit</b> · Trail readable and chain verifies</td><td><span class="pill t1">T1</span></td><td><code>prod-smoke --area audit</code></td><td>2/2 pass</td><td><span class="pill fail">fail</span> 10-22 — verify reports <code>valid:false, brokenAt:0</code></td></tr>
+<tr><td class="id">AU-2</td><td><b>Audit</b> · Unit tests</td><td><span class="pill t0">T0</span></td><td><code>area-tests.sh audit</code></td><td>All pass</td><td><span class="pill fail">fail</span> 10-22 — 3 known dashboard failures (firehose row)</td></tr>
+</tbody>
+</table></div>
+
+<h2>Known issues these scenarios surface</h2>
+<ul class="issues">
+  <li><b>Public audit verify says the chain is broken.</b> <code>GET /api/v1/audit/verify</code> returns <code>valid:false, brokenAt:0</code> while <code>/health/detailed</code> reports ok. The system-map code notes that this full re-hash can be false on a large but healthy chain, but a public endpoint saying “broken” needs either a fix or a different answer. (AU-1)</li>
+  <li><b>Google and Apple sign-in fail</b> in production with Auth.js <code>UntrustedHost</code>. Email sign-in works. (PA-2)</li>
+  <li><b>No one answers chat yet.</b> Until a Brain is connected (BR-2) every Nous shows offline and replies fail. (CH-2)</li>
+  <li><b><code>GET /api/v1/grid/norms</code> is declared public but answers 404</b> in production; the route is only registered when norm storage is wired. Not in the smoke set for that reason.</li>
+  <li><b>27 dashboard unit tests fail</b> in 7 files (portal shell, sidebar, composer, portal home, firehose row, heartbeat). They predate this work.</li>
+  <li><b>The Brain image fix is not merged</b> (<a href="https://github.com/ASKKPOP/Noesis/pull/26">ASKKPOP/Noesis#26</a>). Building the always-on Brain from <code>main</code> crashes on first start until it is.</li>
+  <li><b>An old local stack</b> (local Grid, dashboard, Steward, three local Nous) restarts whenever Colima starts; its local Grid crash-loops. It is separate from production; stop it to save memory.</li>
+</ul>
+
+<footer>Generated 2026-10-22 from real runs: production smoke 40/41, every area’s unit tests, and the local end-to-end run of 2026-10-08. Scripts: <code>scripts/smoke/prod-smoke.mjs</code>, <code>scripts/smoke/area-tests.sh</code>.</footer>
+</div>
+</body>
+</html>

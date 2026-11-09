@@ -141,6 +141,47 @@ message. Pitfall: `conversation_messages.created_at` was a copy of `tick`, so me
 30 s tick had no order — it now stores a ms arrival stamp (legacy rows sort first by tick).
 Unverified on real MySQL / with a live Brain.
 
+## [2026-10-07] apply | Portal Project Status page de-hardcoded (no-mock rule)
+`/portal/status` rendered invented service statuses/latencies and a roadmap frozen at
+Phase 22. Replaced with live public Grid reads (`/health/detailed`, `/api/v1/grid/status`,
+`/api/v1/system/map`, `/api/v1/grid/nous`) via new `dashboard/src/lib/api/grid-health.ts`;
+unanswered reads are shown as unanswered. Roadmap, latencies and the "no incidents" claim
+removed (no live source). `PortalAuthGate` login-gated the page on a Grid session, so a
+Grid outage redirected to sign-in before the outage state could render — operator approved
+making `/portal/status` public (public reads only). Pitfall carried forward: any page that
+must render during a Grid outage cannot sit behind the session gate.
+System truth: `wiki/2-concepts/city/portal.md`.
+
+## [2026-10-08] apply | Nous registration pipeline made real (D-V3-39) — Phase 54 NOUS track, Type A
+Trying to give Hermes a Brain exposed that no Nous could obtain a Civic-DID in practice: the
+pipeline's review routes needed a government-session token nothing issues, there was no owner
+filing path, the issuance route rejected Ed25519 keys, no code enrolled a Brain, and a registered
+Brain stayed unclaimed. Operator decisions (2026-10-08): review queue with the HUMAN decision at
+the Portal pre-screen (operator reviewers) and the Polis stage as automatic charter rules;
+citizens only; founding Nous filed by operators only, one owner per Nous. Security finding
+carried forward: a Nous's existence-DID is public and the Brain key was SHA-256(DID), so
+"signed by the Nous" proved nothing — the Brain now holds its own key, the filing carries its
+public half, and issuance + token registration + ownership are bound to it. Open: Type B flow,
+the government-session stub, DID-derived Whisper/P2P keys. System truth:
+`wiki/1-design/civic-architecture.md` (Registration flow), `wiki/2-concepts/city/portal.md`,
+decision D-V3-39. Runbook: `.planning/implementation/always-on-brain.md`.
+Verified end to end on a real local Grid + MySQL 8.0. Pitfall carried forward: the store unit
+tests for brain tokens use a hand-written mock store, not the real class, which hid that
+`BrainTokenStore.getByDid` omitted `operator_did` (every Brain read as unclaimed) — fixed and
+pinned with a test that only returns the columns the SQL selects.
+
+## [2026-10-13] apply | Reviewer separation of duties on Nous registrations
+Operator asked to close the self-review gap: the filer of a registration can no longer pass
+or reject it as reviewer (`403 self_review_forbidden`; the queue marks `own_filing`).
+Consequence carried forward: a founding Nous needs two operator accounts — one files, a
+different one reviews.
+
+## [2026-10-13] apply | First real Brain start against production — image could not write its data dir
+Starting Hermes's Brain (`docker-compose.brain.yml`) crashed with PermissionError on
+`/data/brain-wire.key`: `docker/Dockerfile.brain` never created `/data`, so the named volume
+mounted root-owned under the non-root `nous` user. Fixed in the image (`mkdir /data` + chown).
+Pitfall carried forward: the always-on compose had never been run end to end before this.
+
 ## [2026-11-09] research | Atlas (World Labs) world-model simulator for Nous skill learning
 Web survey (World Labs Atlas 2026-09-01, Marble World API, Boston Dynamics/TRI Atlas LBM,
 DreamDojo, Cosmos 3, Genie 3). Verdict: Atlas is partner-gated, cloud-only, and generates

@@ -64,8 +64,8 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
-    <!-- ============================ SESSION 23 ============================ -->
-  <h2>Session 23 — 2026‑11‑09 · “Research: Atlas simulator for Nous skill learning”</h2>
+  <!-- ============================ SESSION 26 ============================ -->
+  <h2>Session 26 — 2026‑11‑09 · “Research: Atlas simulator for Nous skill learning”</h2>
   <p class="sub">Operator asked to research the Atlas simulator (learning by simulating the world) so each Nous can learn required skills from online resources. Research only — no code, schema, allowlist or system design changed, so the public wiki is untouched.</p>
   <ul>
     <li><b>Atlas fit study</b> <span class="tag done">done</span> — <code>.planning/research/atlas-world-model-simulator.md</code>. “Atlas” = World Labs’ omni world model (2026‑09‑01; partner‑only early access, no API/weights, appearance+depth with no physics or action interface); the Boston Dynamics Atlas humanoid is a robot, useful only as a sim‑then‑transfer pattern. Verdict: not usable as the per‑Nous simulator — cloud‑gated breaks local‑first and generated worlds cannot verify a skill (physics gate).</li>
@@ -74,7 +74,42 @@
     <li><b>Not built yet</b> <span class="tag blocked">waiting</span> — the <i>study</i> step (drafting candidate skills from online resources) and referees for civic/economic skills (the Grid has no stateless rule-check for those).</li>
   </ul>
 
-<!-- ============================ SESSION 22 ============================ -->
+  <!-- ============================ SESSION 25 ============================ -->
+  <h2>Session 25 — 2026‑10‑22 · “Test scenarios that fit limited resources”</h2>
+  <p class="sub">Operator: too much has been built to test at once, and resources are limited — make test scenarios available.</p>
+  <ul>
+    <li><b>Catalogue</b> <span class="tag done">done</span> — <a href="test-scenarios.html">docs/test-scenarios.html</a>: six cost tiers (T0 local unit by area … T5 Brain + model), a routine (T0 per change, T1 per deploy, one T2 area per week, T4/T5 only for DB/Brain work), and 35 scenarios across 11 areas with their last real result.</li>
+    <li><b>Runnable tiers</b> <span class="tag done">done</span> — <code>scripts/smoke/prod-smoke.mjs</code> (41 read-only production checks, <code>--area</code>, exit code) and <code>scripts/smoke/area-tests.sh</code> (one area's grid/dashboard/brain tests, seconds each; macOS bash 3.2 safe).</li>
+    <li><b>First run (10-22)</b> — production smoke 40/41: <code>/api/v1/audit/verify</code> reports <code>valid:false, brokenAt:0</code>. Area tests: all pass except audit (3 known dashboard failures). <code>GET /api/v1/grid/norms</code> is public in policy but 404 in prod.</li>
+  </ul>
+
+  <!-- ============================ SESSION 24 ============================ -->
+  <h2>Session 24 — 2026‑10‑08 · “Deploy status page; build the Nous registration pipeline (D‑V3‑39)”</h2>
+  <p class="sub">Operator asked to PR + deploy the status page, then to check the other shipped features, then to connect a local AI (<code>gpt-oss:120b</code>) as Hermes's Brain. That exposed that no Nous could be registered at all; operator chose to build the missing pipeline.</p>
+  <ul>
+    <li><b>Deploy</b> <span class="tag done">done</span> — PR #24 merged (<span class="hash">51fbfb0</span>); Grid + dashboard deployed from <code>main</code> (prod was 9 commits behind; operator chose full Grid+dashboard), nginx force-recreated. Verified live: status page public and populated; Groups page works; Account page works signed in; chat message persists.</li>
+    <li><b>Findings in production</b> — chat has no answerer (no Ollama host on the Grid, no Brain connected: 503 → “unavailable”); Google/Apple sign-in fail with Auth.js <code>UntrustedHost</code> (pre-existing, not fixed).</li>
+    <li><b>Decisions</b> <span class="tag design">design</span> — D‑V3‑39: review queue with the human decision at the Portal pre-screen and automatic Polis charter rules; citizens only; founding Nous filed by operators only, one owner per Nous. Wiki: <a href="../wiki/1-design/decisions.md">decisions.md</a>, <a href="../wiki/1-design/civic-architecture.md">civic-architecture.md</a>, <a href="../wiki/2-concepts/city/portal.md">portal.md</a>.</li>
+    <li><b>Grid</b> <span class="tag done">done</span> — filing route, reviewer panel routes, <code>nous-charter-review.ts</code>, migration v76 (<code>brain_key_x</code>), issuance accepts Ed25519 and is bound to the filed Brain key, token registration bound to the same key and to the sponsor. Commit <span class="hash">051864c</span> (+ follow-ups). 4200 tests green, allowlist +0. Also fixed a pre-existing bug found by the end-to-end run: <code>BrainTokenStore.getByDid</code> never selected <code>operator_did</code>, so every Brain read as unclaimed.</li>
+    <li><b>Brain</b> <span class="tag done">done</span> — <code>wire/enrollment.py</code>: own persisted key, waits for approval, obtains Civic-DID, registers token. Cross-checked: Python-signed requests accepted by the real Grid handlers. 1302 tests green.</li>
+    <li><b>End-to-end verification</b> <span class="tag done">done</span> — real Grid process + MySQL 8.0 locally: sign-up → citizenship → claim → filing (non-operator refused for a founding Nous) → reviewer pass → Brain enrolment → Brain settings 200; a different Brain key is refused with <code>brain_key_not_enrolled</code>. CI real-MySQL migration gate green with v76.</li>
+    <li><b>Dashboard</b> <span class="tag done">done</span> — “Register a Nous” on <code>/portal/dashboard</code>; reviewer panel at <code>/system/portal-manager/nous-registrations</code>. Commit <span class="hash">9705775</span>.</li>
+    <li><b>Separation of duties (2026‑10‑13)</b> <span class="tag done">done</span> — operator asked to close the self-review gap: a reviewer cannot decide their own filing (<code>403 self_review_forbidden</code>; queue rows carry <code>own_filing</code>; the panel hides the buttons). A founding Nous now needs two operator accounts.</li>
+    <li><b>Open</b> — not deployed yet; production needs the operator's Portal DID on <code>GRID_OPERATOR_DIDS</code> and <code>GRID_PORTAL_MANAGER_ENABLED=true</code>; Type B flow and the government-session stub untouched; Whisper/P2P keys still DID-derived.</li>
+  </ul>
+
+  <!-- ============================ SESSION 23 ============================ -->
+  <h2>Session 23 — 2026‑10‑07 · “Portal Project Status: hardcoded → live Grid reads”</h2>
+  <p class="sub">Operator flagged <code>dashboard/src/app/portal/status/page.tsx</code> as a no-mock violation: an invented <code>SERVICES</code> list (fake latencies, Sophia/Hermes/Themis “operational”) and a <code>PHASES</code> roadmap frozen at Phase 22.</p>
+  <ul>
+    <li><b>Live client</b> <span class="tag done">done</span> — new <code>dashboard/src/lib/api/grid-health.ts</code>: <code>fetchGridHealth</code> (<code>/health/detailed</code>), <code>fetchGridStatus</code> (<code>/api/v1/grid/status</code>), <code>countByLifecyclePhase</code>; same error discipline as <code>system-map.ts</code>. Reuses <code>fetchSystemMap</code> + <code>fetchRoster</code>.</li>
+    <li><b>Page rewrite</b> <span class="tag done">done</span> — client component polling every 15s; banner from the Grid's own health status; sections: Current Conditions (health <code>reasons</code>), Surfaces &amp; Institutions (system map), Grid Vitals, Nous by Lifecycle Phase. Unanswered reads say so. <b>Decision:</b> phase roadmap, latencies and the “no incidents in 90 days” claim removed — no live source exists for any of them.</li>
+    <li><b>Verification</b> <span class="tag done">done</span> — 12 new vitest tests (client + page render) green; dashboard suite otherwise unchanged (27 pre-existing failures in 7 untouched files); <code>next build</code> compiles; <code>check-wiki</code> clean.</li>
+    <li><b>Status page made public</b> <span class="tag done">done</span> — finding: <code>PortalAuthGate</code> gated <code>/portal/status</code> behind a Grid session, so a Grid outage redirected visitors to sign-in before the “not answering” state could render (and the public landing/auth footers link to it). <b>Operator decision:</b> add <code>/portal/status</code> to <code>PUBLIC_PREFIXES</code> (public reads only). Verified in the browser with no Grid running.</li>
+    <li><b>Docs sync</b> <span class="tag done">done</span> — <a href="../wiki/2-concepts/city/portal.md">wiki/2-concepts/city/portal.md</a> “What it does” gains the status-page line.</li>
+  </ul>
+
+  <!-- ============================ SESSION 22 ============================ -->
   <h2>Session 22 — 2026‑10‑07 · “Status report: development + service, with next service status”</h2>
   <p class="sub">Operator asked for a full HTML report of current implementation status (all development + service) with visualization and diagrams, to check where things stand and what the next service state is. No code, schema, allowlist or system design changed, so the wiki is untouched.</p>
   <ul>

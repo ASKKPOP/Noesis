@@ -1,70 +1,286 @@
+'use client';
+
 /**
  * Project Status — Noēsis Genesis Grid.
- * Server component · editorial theme.
+ * Client component · editorial theme.
+ *
+ * Every value on this page is read live from the Grid's public endpoints and
+ * re-polled every ~15s — nothing is hardcoded:
+ *   - GET /health/detailed     → overall health, clock, audit persistence
+ *   - GET /api/v1/grid/status  → Grid name, uptime, counts
+ *   - GET /api/v1/system/map   → the four surfaces + eight civic institutions
+ *   - GET /api/v1/grid/nous    → Nous roster, tallied by lifecycle phase
+ * A read the Grid does not answer is shown as unanswered, never filled in.
  */
 
-const SERVICES = [
-    { name: 'Portal API',            status: 'operational', latency: '42ms' },
-    { name: 'Grid Service',          status: 'operational', latency: '18ms' },
-    { name: 'SIWE Auth (Ethereum)',  status: 'operational', latency: '91ms' },
-    { name: 'Agora (Broadcast)',     status: 'operational', latency: '23ms' },
-    { name: 'Sophia (Philosopher)',  status: 'operational', latency: '—' },
-    { name: 'Hermes (Trader)',       status: 'operational', latency: '—' },
-    { name: 'Themis (Lawkeeper)',    status: 'operational', latency: '—' },
-    { name: 'WalletConnect Bridge',  status: 'operational', latency: '110ms' },
-    { name: 'Cyber Coin Ledger',     status: 'coming_soon', latency: '—' },
-    { name: 'Chat Service',          status: 'coming_soon', latency: '—' },
-    { name: 'Governance Engine',     status: 'coming_soon', latency: '—' },
-];
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { fetchRoster } from '@/lib/api/economy';
+import {
+    countByLifecyclePhase,
+    fetchGridHealth,
+    fetchGridStatus,
+    type GridHealth,
+    type GridStatus,
+} from '@/lib/api/grid-health';
+import { fetchSystemMap, type SystemMap } from '@/lib/api/system-map';
 
-const PHASES = [
-    { phase: '22', name: 'Human Portal & Web3 Identity',  status: 'live',    note: 'Current phase' },
-    { phase: '23', name: 'Cyber Coin Wallet',              status: 'planned', note: 'Up next' },
-    { phase: '24', name: 'Agora Live Feed',                status: 'planned', note: '' },
-    { phase: '25', name: 'Nous Profiles & Lore',           status: 'planned', note: '' },
-    { phase: '26', name: 'Chat with Nous',                 status: 'planned', note: '' },
-    { phase: '27', name: 'My Nous (Spawn)',                status: 'planned', note: '' },
-    { phase: '28', name: 'Community & Leaderboard',        status: 'planned', note: '' },
-    { phase: '29', name: 'Help Centre & Support',          status: 'planned', note: '' },
-    { phase: '30', name: 'Documentation & Activity Log',   status: 'planned', note: '' },
-    { phase: '31', name: 'Full Settings Panel',            status: 'planned', note: '' },
-];
+const POLL_MS = 15_000;
 
-const INCIDENTS: { date: string; title: string; resolved: boolean }[] = [
-    // No current incidents
-];
+/** null = the Grid did not answer that read on the latest poll. */
+interface Snapshot {
+    health: GridHealth | null;
+    status: GridStatus | null;
+    map: SystemMap | null;
+    phases: { phase: string; count: number }[] | null;
+}
 
-const statusColor: Record<string, string> = {
-    operational: '#4ade80',
-    degraded:    '#fbbf24',
-    outage:      '#f87171',
-    coming_soon: 'rgba(11,18,32,0.25)',
+type Tone = 'good' | 'warn' | 'bad' | 'idle';
+
+const toneColor: Record<Tone, string> = {
+    good: '#4ade80',
+    warn: '#fbbf24',
+    bad:  '#f87171',
+    idle: 'rgba(11,18,32,0.25)',
+};
+
+const toneRgb: Record<Tone, string> = {
+    good: '74,222,128',
+    warn: '251,191,36',
+    bad:  '248,113,113',
+    idle: '11,18,32',
+};
+
+// Surface ('up'…) and institution ('active'…) statuses, as the Grid reports them.
+const statusTone: Record<string, Tone> = {
+    up: 'good', active: 'good',
+    degraded: 'warn', unknown: 'warn',
+    down: 'bad',
+    empty: 'idle',
 };
 
 const statusLabel: Record<string, string> = {
-    operational: 'Operational',
-    degraded:    'Degraded',
-    outage:      'Outage',
-    coming_soon: 'Coming Soon',
+    up: 'Up', active: 'Active', degraded: 'Degraded',
+    unknown: 'Unknown', down: 'Down', empty: 'Empty',
 };
 
+const eyebrow: CSSProperties = {
+    fontFamily: 'var(--mono-portal)',
+    fontSize: 9,
+    fontWeight: 600,
+    letterSpacing: '0.14em',
+    textTransform: 'uppercase',
+    color: 'var(--muted)',
+};
+
+const card: CSSProperties = {
+    background: 'var(--parchment)',
+    border: '1px solid var(--rule)',
+    borderRadius: 6,
+    overflow: 'hidden',
+};
+
+const UNANSWERED = 'The Grid did not answer this read.';
+
+function formatUptime(ms: number): string {
+    const m = Math.floor(ms / 60_000);
+    const d = Math.floor(m / 1440);
+    const h = Math.floor((m % 1440) / 60);
+    if (d > 0) return `${d}d ${h}h`;
+    if (h > 0) return `${h}h ${m % 60}m`;
+    return `${m}m`;
+}
+
+const orUnreported = (v: number | null): string => (v === null ? 'not reported' : String(v));
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+    return (
+        <div style={{ marginBottom: 36 }}>
+            <div style={{ ...eyebrow, marginBottom: 10 }}>{title}</div>
+            <div style={card}>{children}</div>
+        </div>
+    );
+}
+
+function Note({ children }: { children: ReactNode }) {
+    return (
+        <div style={{
+            padding: '20px',
+            textAlign: 'center',
+            fontFamily: 'var(--sans-portal)',
+            fontSize: 13,
+            color: 'var(--muted)',
+        }}>
+            {children}
+        </div>
+    );
+}
+
+function Row({ name, detail, tone, label, last }: {
+    name: string; detail?: string; tone?: Tone; label?: string; last: boolean;
+}) {
+    return (
+        <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '11px 20px',
+            borderBottom: last ? 'none' : '1px solid var(--rule)',
+            opacity: tone === 'idle' ? 0.6 : 1,
+        }}>
+            {tone && (
+                <span style={{
+                    width: 7, height: 7,
+                    borderRadius: '50%',
+                    background: toneColor[tone],
+                    flexShrink: 0,
+                    marginRight: 12,
+                    boxShadow: tone === 'good' ? '0 0 6px rgba(74,222,128,0.5)' : 'none',
+                }} />
+            )}
+            <span style={{
+                fontFamily: 'var(--sans-portal)',
+                fontSize: 13,
+                color: 'var(--ink)',
+                flex: 1,
+            }}>
+                {name}
+            </span>
+            {detail && (
+                <span style={{
+                    fontFamily: 'var(--mono-portal)',
+                    fontSize: 10,
+                    color: 'var(--muted)',
+                    marginRight: label ? 16 : 0,
+                    textAlign: 'right',
+                }}>
+                    {detail}
+                </span>
+            )}
+            {label && (
+                <span style={{
+                    fontFamily: 'var(--mono-portal)',
+                    fontSize: 9,
+                    fontWeight: 600,
+                    letterSpacing: '0.10em',
+                    textTransform: 'uppercase',
+                    color: tone && tone !== 'idle' ? toneColor[tone] : 'var(--muted)',
+                    width: 64,
+                    textAlign: 'right',
+                }}>
+                    {label}
+                </span>
+            )}
+        </div>
+    );
+}
+
+function banner(snap: Snapshot | null): { tone: Tone; text: string } {
+    if (!snap) return { tone: 'idle', text: 'Asking the Grid…' };
+    if (snap.health) {
+        if (snap.health.status === 'ok') return { tone: 'good', text: 'The Grid reports healthy' };
+        if (snap.health.status === 'degraded') return { tone: 'warn', text: 'The Grid reports degraded' };
+        return { tone: 'bad', text: 'The Grid reports critical' };
+    }
+    if (snap.status || snap.map || snap.phases) {
+        return { tone: 'warn', text: 'The Grid is answering, but not its health check' };
+    }
+    return { tone: 'bad', text: 'The Grid is not answering' };
+}
+
+function serviceRows(map: SystemMap): { name: string; status: string; detail: string }[] {
+    const s = map.surfaces;
+    const i = map.institutions;
+    return [
+        { name: 'Grid',            ...s.grid },
+        { name: 'Portal',          ...s.portal },
+        { name: 'Steward Console', ...s.steward },
+        // brain_tokens registrations — not a live Brain connection.
+        { name: 'Local AI (Brain) tokens', ...s.brain },
+        { name: 'DID Registry',    ...i.registry },
+        { name: 'Polis',           ...i.polis },
+        { name: 'Police',          ...i.police },
+        { name: 'IRS / Treasury',  ...i.irs },
+        { name: 'Marketplace',     ...i.marketplace },
+        { name: 'Library',         ...i.library },
+        { name: 'Communities',     ...i.communities },
+        { name: 'P2P',             ...i.p2p },
+    ].map(({ name, status, headline }) => ({ name, status, detail: headline }));
+}
+
+function vitalRows(health: GridHealth | null, status: GridStatus | null): { name: string; detail: string }[] {
+    const rows: { name: string; detail: string }[] = [];
+    if (health) {
+        const a = health.audit;
+        rows.push(
+            { name: 'World clock', detail: `tick ${health.clock.tick} · ${health.clock.running ? 'running' : 'stopped'}` },
+            { name: 'Audit chain entries (in memory)', detail: orUnreported(a.in_memory_length) },
+            { name: 'Audit chain entries (persisted)', detail: orUnreported(a.persisted_max_id) },
+            { name: 'Audit persistence lag', detail: `${orUnreported(a.divergence)} · threshold ${a.divergence_threshold}` },
+            { name: 'Last audit persist error', detail: a.last_persist_error ? a.last_persist_error.code : 'none' },
+            { name: 'Live feed subscribers', detail: String(health.firehose.client_count) },
+        );
+    }
+    if (status) {
+        rows.push(
+            { name: 'Uptime', detail: formatUptime(status.uptime) },
+            { name: 'Nous', detail: String(status.nousCount) },
+            { name: 'Regions', detail: String(status.regionCount) },
+            { name: 'Active laws', detail: String(status.activeLaws) },
+        );
+    }
+    return rows;
+}
+
 export default function StatusPage() {
-    const allOperational = SERVICES.filter(s => s.status !== 'coming_soon').every(s => s.status === 'operational');
+    const [snap, setSnap] = useState<Snapshot | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        let controller: AbortController | undefined;
+
+        const poll = async () => {
+            controller = new AbortController();
+            const { signal } = controller;
+            // A rejected read (AbortError, or anything unexpected) is just "no answer".
+            const settle = <T,>(p: Promise<{ ok: true; data: T } | { ok: false }>): Promise<T | null> =>
+                p.then((r) => (r.ok ? r.data : null), () => null);
+
+            const [health, status, map, roster] = await Promise.all([
+                settle(fetchGridHealth(signal)),
+                settle(fetchGridStatus(signal)),
+                settle(fetchSystemMap(signal)),
+                settle(fetchRoster(process.env.NEXT_PUBLIC_GRID_ORIGIN ?? '', signal)),
+            ]);
+            if (cancelled) return;
+            setSnap({
+                health,
+                status,
+                map,
+                phases: roster ? countByLifecyclePhase(roster.nous) : null,
+            });
+        };
+
+        void poll();
+        const id = setInterval(() => void poll(), POLL_MS);
+
+        return () => {
+            cancelled = true;
+            controller?.abort();
+            clearInterval(id);
+        };
+    }, []);
+
+    const { tone, text } = banner(snap);
+    const gridName = snap?.status?.name ?? snap?.map?.grid_name;
+    const tick = snap?.health?.clock.tick ?? snap?.status?.tick ?? snap?.map?.tick;
+    const services = snap?.map ? serviceRows(snap.map) : null;
+    const vitals = snap ? vitalRows(snap.health, snap.status) : [];
+    const loading = snap === null;
 
     return (
         <div style={{ padding: '36px 40px', maxWidth: 680 }}>
             {/* Header */}
             <div style={{ marginBottom: 8 }}>
-                <span style={{
-                    fontFamily: 'var(--mono-portal)',
-                    fontSize: 9,
-                    fontWeight: 600,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    color: 'var(--muted)',
-                }}>
-                    System
-                </span>
+                <span style={eyebrow}>System</span>
             </div>
             <h1 style={{
                 fontFamily: 'var(--serif)',
@@ -83,25 +299,28 @@ export default function StatusPage() {
                 color: 'var(--muted)',
                 marginBottom: 32,
             }}>
-                Live service health and phase roadmap for the Noēsis Genesis Grid.
+                What the Grid reports about itself right now — read live, refreshed every {POLL_MS / 1000} seconds.
             </p>
 
             {/* Overall status banner */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                background: allOperational ? 'rgba(74,222,128,0.06)' : 'rgba(251,191,36,0.06)',
-                border: `1px solid ${allOperational ? 'rgba(74,222,128,0.20)' : 'rgba(251,191,36,0.20)'}`,
-                borderRadius: 6,
-                padding: '14px 20px',
-                marginBottom: 32,
-            }}>
+            <div
+                data-testid="status-banner"
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    background: `rgba(${toneRgb[tone]},0.06)`,
+                    border: `1px solid rgba(${toneRgb[tone]},0.20)`,
+                    borderRadius: 6,
+                    padding: '14px 20px',
+                    marginBottom: 32,
+                }}
+            >
                 <span style={{
                     width: 10, height: 10,
                     borderRadius: '50%',
-                    background: allOperational ? '#4ade80' : '#fbbf24',
-                    boxShadow: allOperational ? '0 0 8px #4ade80' : '0 0 8px #fbbf24',
+                    background: toneColor[tone],
+                    boxShadow: tone === 'idle' ? 'none' : `0 0 8px ${toneColor[tone]}`,
                     flexShrink: 0,
                 }} />
                 <span style={{
@@ -110,203 +329,65 @@ export default function StatusPage() {
                     fontWeight: 600,
                     color: 'var(--ink)',
                 }}>
-                    {allOperational ? 'All systems operational' : 'Some systems degraded'}
+                    {text}
                 </span>
-                <span style={{
-                    marginLeft: 'auto',
-                    fontFamily: 'var(--mono-portal)',
-                    fontSize: 10,
-                    letterSpacing: '0.08em',
-                    color: 'var(--muted)',
-                }}>
-                    Genesis Grid · Phase 22
-                </span>
+                {(gridName || tick !== undefined) && (
+                    <span style={{
+                        marginLeft: 'auto',
+                        fontFamily: 'var(--mono-portal)',
+                        fontSize: 10,
+                        letterSpacing: '0.08em',
+                        color: 'var(--muted)',
+                    }}>
+                        {[gridName, tick !== undefined ? `tick ${tick}` : null].filter(Boolean).join(' · ')}
+                    </span>
+                )}
             </div>
 
-            {/* Services */}
-            <div style={{ marginBottom: 36 }}>
-                <div style={{
-                    fontFamily: 'var(--mono-portal)',
-                    fontSize: 9,
-                    fontWeight: 600,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    color: 'var(--muted)',
-                    marginBottom: 10,
-                }}>
-                    Services
-                </div>
-                <div style={{
-                    background: 'var(--parchment)',
-                    border: '1px solid var(--rule)',
-                    borderRadius: 6,
-                    overflow: 'hidden',
-                }}>
-                    {SERVICES.map((svc, i) => (
-                        <div
+            {/* Health conditions — the Grid's own reasons for a non-ok status */}
+            <Section title="Current Conditions">
+                {loading ? <Note>Asking the Grid…</Note>
+                    : !snap.health ? <Note>{UNANSWERED}</Note>
+                    : snap.health.reasons.length === 0 ? <Note>The Grid reports no active health conditions.</Note>
+                    : snap.health.reasons.map((r, i, all) => (
+                        <Row key={r} name={r} tone={tone} last={i === all.length - 1} />
+                    ))}
+            </Section>
+
+            {/* Surfaces + institutions */}
+            <Section title="Surfaces & Institutions">
+                {loading ? <Note>Asking the Grid…</Note>
+                    : !services ? <Note>{UNANSWERED}</Note>
+                    : services.map((svc, i) => (
+                        <Row
                             key={svc.name}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                padding: '11px 20px',
-                                borderBottom: i < SERVICES.length - 1 ? '1px solid var(--rule)' : 'none',
-                                opacity: svc.status === 'coming_soon' ? 0.45 : 1,
-                            }}
-                        >
-                            <span style={{
-                                width: 7, height: 7,
-                                borderRadius: '50%',
-                                background: statusColor[svc.status],
-                                flexShrink: 0,
-                                marginRight: 12,
-                                boxShadow: svc.status === 'operational' ? '0 0 6px rgba(74,222,128,0.5)' : 'none',
-                            }} />
-                            <span style={{
-                                fontFamily: 'var(--sans-portal)',
-                                fontSize: 13,
-                                color: 'var(--ink)',
-                                flex: 1,
-                            }}>
-                                {svc.name}
-                            </span>
-                            {svc.latency !== '—' && (
-                                <span style={{
-                                    fontFamily: 'var(--mono-portal)',
-                                    fontSize: 10,
-                                    color: 'var(--muted)',
-                                    marginRight: 16,
-                                }}>
-                                    {svc.latency}
-                                </span>
-                            )}
-                            <span style={{
-                                fontFamily: 'var(--mono-portal)',
-                                fontSize: 9,
-                                fontWeight: 600,
-                                letterSpacing: '0.10em',
-                                textTransform: 'uppercase',
-                                color: svc.status === 'operational' ? '#4ade80'
-                                     : svc.status === 'coming_soon' ? 'var(--muted)'
-                                     : '#fbbf24',
-                            }}>
-                                {statusLabel[svc.status]}
-                            </span>
-                        </div>
+                            name={svc.name}
+                            detail={svc.detail}
+                            tone={statusTone[svc.status] ?? 'warn'}
+                            label={statusLabel[svc.status] ?? svc.status}
+                            last={i === services.length - 1}
+                        />
                     ))}
-                </div>
-            </div>
+            </Section>
 
-            {/* Incidents */}
-            <div style={{ marginBottom: 36 }}>
-                <div style={{
-                    fontFamily: 'var(--mono-portal)',
-                    fontSize: 9,
-                    fontWeight: 600,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    color: 'var(--muted)',
-                    marginBottom: 10,
-                }}>
-                    Recent Incidents
-                </div>
-                <div style={{
-                    background: 'var(--parchment)',
-                    border: '1px solid var(--rule)',
-                    borderRadius: 6,
-                    padding: '20px',
-                    textAlign: 'center',
-                    fontFamily: 'var(--sans-portal)',
-                    fontSize: 13,
-                    color: 'var(--muted)',
-                }}>
-                    {INCIDENTS.length === 0
-                        ? 'No incidents reported in the last 90 days.'
-                        : INCIDENTS.map(inc => (
-                            <div key={inc.date}>{inc.title}</div>
-                        ))
-                    }
-                </div>
-            </div>
-
-            {/* Phase roadmap */}
-            <div>
-                <div style={{
-                    fontFamily: 'var(--mono-portal)',
-                    fontSize: 9,
-                    fontWeight: 600,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    color: 'var(--muted)',
-                    marginBottom: 10,
-                }}>
-                    Phase Roadmap
-                </div>
-                <div style={{
-                    background: 'var(--parchment)',
-                    border: '1px solid var(--rule)',
-                    borderRadius: 6,
-                    overflow: 'hidden',
-                }}>
-                    {PHASES.map((p, i) => (
-                        <div
-                            key={p.phase}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 16,
-                                padding: '10px 20px',
-                                borderBottom: i < PHASES.length - 1 ? '1px solid var(--rule)' : 'none',
-                                background: p.status === 'live' ? 'rgba(74,222,128,0.04)' : 'transparent',
-                            }}
-                        >
-                            <span style={{
-                                fontFamily: 'var(--mono-portal)',
-                                fontSize: 10,
-                                fontWeight: 600,
-                                color: p.status === 'live' ? '#4ade80' : 'var(--muted)',
-                                width: 28,
-                                flexShrink: 0,
-                            }}>
-                                P{p.phase}
-                            </span>
-                            <span style={{
-                                fontFamily: 'var(--sans-portal)',
-                                fontSize: 13,
-                                color: 'var(--ink)',
-                                flex: 1,
-                                opacity: p.status === 'live' ? 1 : 0.65,
-                            }}>
-                                {p.name}
-                            </span>
-                            {p.note && (
-                                <span style={{
-                                    fontFamily: 'var(--mono-portal)',
-                                    fontSize: 9,
-                                    letterSpacing: '0.08em',
-                                    color: '#4ade80',
-                                    background: 'rgba(74,222,128,0.08)',
-                                    border: '1px solid rgba(74,222,128,0.20)',
-                                    borderRadius: 2,
-                                    padding: '2px 6px',
-                                }}>
-                                    {p.note}
-                                </span>
-                            )}
-                            <span style={{
-                                fontFamily: 'var(--mono-portal)',
-                                fontSize: 9,
-                                fontWeight: 600,
-                                letterSpacing: '0.10em',
-                                textTransform: 'uppercase',
-                                color: p.status === 'live' ? '#4ade80' : 'var(--muted)',
-                                opacity: p.status === 'live' ? 1 : 0.5,
-                            }}>
-                                {p.status === 'live' ? 'Live' : 'Planned'}
-                            </span>
-                        </div>
+            {/* Grid vitals */}
+            <Section title="Grid Vitals">
+                {loading ? <Note>Asking the Grid…</Note>
+                    : vitals.length === 0 ? <Note>{UNANSWERED}</Note>
+                    : vitals.map((v, i) => (
+                        <Row key={v.name} name={v.name} detail={v.detail} last={i === vitals.length - 1} />
                     ))}
-                </div>
-            </div>
+            </Section>
+
+            {/* Nous by lifecycle phase */}
+            <Section title="Nous by Lifecycle Phase">
+                {loading ? <Note>Asking the Grid…</Note>
+                    : !snap.phases ? <Note>{UNANSWERED}</Note>
+                    : snap.phases.length === 0 ? <Note>No Nous are registered on this Grid.</Note>
+                    : snap.phases.map((p, i, all) => (
+                        <Row key={p.phase} name={p.phase} detail={String(p.count)} last={i === all.length - 1} />
+                    ))}
+            </Section>
 
             {/* Footer */}
             <div style={{

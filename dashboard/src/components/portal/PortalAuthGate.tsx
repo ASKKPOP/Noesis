@@ -5,8 +5,9 @@
  *
  * Every /portal/* page is gated on a live Grid session
  * (GET /api/v1/portal/auth/me with credentials). Anonymous visitors are
- * redirected to /portal/auth. Only the auth page itself and the legal pages
- * (terms, privacy — which must be readable BEFORE signing up) stay public.
+ * redirected to /portal/auth. Only the auth page itself, the legal pages
+ * (terms, privacy — which must be readable BEFORE signing up) and the status
+ * page (public reads only — it must render when the Grid is down) stay public.
  *
  * The session cookie lives on the Grid API origin, so Edge middleware cannot
  * see it — the check has to happen client-side, before the portal shell
@@ -18,7 +19,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useHumanAuthStore } from '@/lib/stores/human-auth-store';
 
-const PUBLIC_PREFIXES = ['/portal/auth', '/portal/terms', '/portal/privacy'];
+const PUBLIC_PREFIXES = ['/portal/auth', '/portal/terms', '/portal/privacy', '/portal/status'];
 
 function isPublicPath(pathname: string): boolean {
     return PUBLIC_PREFIXES.some(p => pathname === p || pathname.startsWith(`${p}/`));
