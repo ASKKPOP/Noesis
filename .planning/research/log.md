@@ -154,3 +154,8 @@ Operator shared a clip of many simulated Atlas robots practising around random b
 it is massively-parallel physics RL (BD postings: Isaac Sim / MuJoCo / Warp), and its 4
 ingredients (many copies, randomized worlds, grounded reward, promote-then-transfer) map onto
 parallel rehearsal episodes for a Nous Skill against a rules-true Grid dry-run. [[atlas-world-model-simulator]]
+
+## [2026-11-09] apply | Parallel skill rehearsal built (physics domain)
+Grid physics-check API + Brain `rehearsal/` engine + `brain.rehearseSkill` RPC; wiki D-MIND-09.
+Pitfall carried forward: a referee alone is not enough — a zero-filled spec is "lawful", so each
+episode's job minimums must also be enforced. Page: [[atlas-world-model-simulator]].

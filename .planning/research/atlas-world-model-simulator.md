@@ -90,6 +90,16 @@ deterministic rules evaluation plus one small-model call, so it runs on the oper
 No Atlas, no GPU physics needed unless skills become embodied — then MuJoCo / Isaac Lab, not a
 generative world model.
 
+### Built (2026-11-09, D-MIND-09)
+First domain shipped: **physical design**. Grid `GET /api/v1/physics/environments` +
+`POST /api/v1/physics/check` (stateless wrapper of `checkObjectPhysics`, public, no audit);
+Brain `rehearsal/` (`rehearse` engine: semaphore-bounded parallel episodes, pass = ≥80 % overall
+AND in every environment) + `PhysicsEpisodeRunner` (LLM designs a spec for a randomized job; the
+job's minimums are checked Brain-side so a lawful-but-useless design fails) + RPC
+`brain.rehearseSkill` (promotes into SkillStore tagged `rehearsed:physics`). Not yet: the
+*study* step (drafting candidates from web research) and civic/economic referees — the Grid
+has no stateless rule-check for those yet. Not run against a live model + Grid.
+
 ## 5. Alternatives if embodied / visual simulation is ever needed
 
 | Option | Open? | Notes |

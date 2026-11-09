@@ -552,6 +552,60 @@ class BrainHandler:
             return {"ok": False, "error": "queue_full"}
         return {"ok": True, "id": task_id}
 
+    async def rehearse_skill(self, params: dict[str, Any]) -> dict[str, Any]:
+        """RPC: rehearse a candidate skill in many randomized worlds in parallel,
+        refereed by the Grid's physics gate; keep it only if it passed everywhere.
+
+        params: {name, description, instructions, triggers?, tags?,
+                 domain?='physics', episodes?=12 (1..50), seed?}
+        """
+        import random as _random
+
+        from noesis_brain.rehearsal import PhysicsEpisodeRunner, make_physics_episodes, rehearse
+        from noesis_brain.skills.types import Skill as _Skill
+
+        if self._grid_wire_client is None:
+            return {"ok": False, "error": "no_grid"}
+        if self._skill_store is None or self.llm is None:
+            return {"ok": False, "error": "no_skill_store"}
+        if params.get("domain", "physics") != "physics":
+            return {"ok": False, "error": "unknown_domain"}
+        skill = _Skill(
+            name=str(params.get("name", "")).strip(),
+            description=str(params.get("description", "")).strip(),
+            instructions=str(params.get("instructions", "")).strip(),
+            triggers=[str(t) for t in params.get("triggers") or []],
+            tags=[str(t) for t in params.get("tags") or []],
+        )
+        try:
+            skill.validate()
+        except ValueError:
+            return {"ok": False, "error": "invalid_skill"}
+        if self._skill_store.get(skill.name) is not None:
+            return {"ok": False, "error": "skill_exists"}
+
+        wire = self._grid_wire_client
+        envs = await wire.fetch_physics_environments()
+        n = max(1, min(50, int(params.get("episodes", 12))))
+        episodes = make_physics_episodes(envs, n, _random.Random(params.get("seed")))
+        if not episodes:
+            return {"ok": False, "error": "referee_unavailable"}
+
+        report = await rehearse(skill, episodes, PhysicsEpisodeRunner(self.llm, wire.check_physics))
+        if report.passed:
+            skill.success_rate = report.success_rate
+            skill.tags = [*skill.tags, "rehearsed:physics"]
+            self._skill_store.add(skill)
+        if self.memory is not None and hasattr(self.memory, "record_event"):
+            verdict = "kept" if report.passed else "not kept"
+            self.memory.record_event(
+                content=(f"Rehearsed skill {skill.name} in {len(report.outcomes)} worlds: "
+                         f"{report.success_rate:.0%} lawful — {verdict}."),
+                source_did=self.did,
+                tick=int(params.get("tick", 0)),
+            )
+        return {"ok": True, "promoted": report.passed, **report.summary()}
+
     def _reminder_context(self, tick: int) -> dict[str, float]:
         """Signals a condition reminder can fire on: the tick + current drive levels."""
         ctx: dict[str, float] = {"tick": float(tick)}
