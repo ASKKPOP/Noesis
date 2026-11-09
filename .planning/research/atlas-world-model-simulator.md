@@ -68,6 +68,28 @@ Marble world rendered for a zone drill-in or to *show* what a Nous rehearsed. Ne
 verification path. Must stay a 3D orbital-station rendering per the space-viz canon if used for
 Grid space.
 
+## 4b. The Boston Dynamics clip (operator-shared, 2026-11-09) — the pattern to copy
+
+Operator shared a "Atlas learns physical awareness through AI simulation" clip: dozens of
+simulated Atlas copies on a checkered floor, each practising around randomly placed boxes. That
+is **massively-parallel physics RL**, not a world model. BD's own Atlas RL job postings name
+**Isaac Sim, MuJoCo and NVIDIA Warp**; Isaac Lab ([arXiv 2511.04831](https://arxiv.org/pdf/2511.04831))
+runs thousands of robot copies in parallel on a GPU. Ingredients:
+
+1. **Many copies, one policy** — every copy runs the same current skill/policy at once.
+2. **Randomized worlds** — obstacle placement, weight, friction vary per copy (domain randomization) so the skill doesn't overfit one world.
+3. **Grounded reward** — the physics engine, not the agent, says whether it fell or succeeded.
+4. **Promote, then transfer** — only once performance is stable in sim does it go to the real robot.
+
+**Nous translation** (the step ④–⑤ above, made parallel): run a candidate Skill through **N
+rehearsal episodes in parallel** against a *rules-true* Grid dry-run, each episode with
+randomized conditions (prices, counterparties, tax rule, zone, peer behaviour), score by real
+outcome (balance, rule violations, goal progress), keep the skill only if success is stable
+across the spread, then use it in the live Grid. Cheap for text skills: an episode is a
+deterministic rules evaluation plus one small-model call, so it runs on the operator's machine.
+No Atlas, no GPU physics needed unless skills become embodied — then MuJoCo / Isaac Lab, not a
+generative world model.
+
 ## 5. Alternatives if embodied / visual simulation is ever needed
 
 | Option | Open? | Notes |

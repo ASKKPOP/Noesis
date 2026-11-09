@@ -148,3 +148,9 @@ appearance+depth with no physics or action interface → cannot verify a skill a
 local-first. Recommended a Learn→Rehearse→Verify→Keep loop on existing faculties (web tools →
 quarantined Skill → sandbox / Grid dry-run / physics gate → skill library); Atlas/Marble only as
 an optional operator-paid visualization. Page: [[atlas-world-model-simulator]].
+
+## [2026-11-09] update | Atlas page — Boston Dynamics parallel-sim pattern
+Operator shared a clip of many simulated Atlas robots practising around random boxes. Added §4b:
+it is massively-parallel physics RL (BD postings: Isaac Sim / MuJoCo / Warp), and its 4
+ingredients (many copies, randomized worlds, grounded reward, promote-then-transfer) map onto
+parallel rehearsal episodes for a Nous Skill against a rules-true Grid dry-run. [[atlas-world-model-simulator]]
