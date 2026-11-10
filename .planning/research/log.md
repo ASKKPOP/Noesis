@@ -181,3 +181,22 @@ Starting Hermes's Brain (`docker-compose.brain.yml`) crashed with PermissionErro
 `/data/brain-wire.key`: `docker/Dockerfile.brain` never created `/data`, so the named volume
 mounted root-owned under the non-root `nous` user. Fixed in the image (`mkdir /data` + chown).
 Pitfall carried forward: the always-on compose had never been run end to end before this.
+
+## [2026-11-09] research | Atlas (World Labs) world-model simulator for Nous skill learning
+Web survey (World Labs Atlas 2026-09-01, Marble World API, Boston Dynamics/TRI Atlas LBM,
+DreamDojo, Cosmos 3, Genie 3). Verdict: Atlas is partner-gated, cloud-only, and generates
+appearance+depth with no physics or action interface → cannot verify a skill and breaks
+local-first. Recommended a Learn→Rehearse→Verify→Keep loop on existing faculties (web tools →
+quarantined Skill → sandbox / Grid dry-run / physics gate → skill library); Atlas/Marble only as
+an optional operator-paid visualization. Page: [[atlas-world-model-simulator]].
+
+## [2026-11-09] update | Atlas page — Boston Dynamics parallel-sim pattern
+Operator shared a clip of many simulated Atlas robots practising around random boxes. Added §4b:
+it is massively-parallel physics RL (BD postings: Isaac Sim / MuJoCo / Warp), and its 4
+ingredients (many copies, randomized worlds, grounded reward, promote-then-transfer) map onto
+parallel rehearsal episodes for a Nous Skill against a rules-true Grid dry-run. [[atlas-world-model-simulator]]
+
+## [2026-11-09] apply | Parallel skill rehearsal built (physics domain)
+Grid physics-check API + Brain `rehearsal/` engine + `brain.rehearseSkill` RPC; wiki D-MIND-09.
+Pitfall carried forward: a referee alone is not enough — a zero-filled spec is "lawful", so each
+episode's job minimums must also be enforced. Page: [[atlas-world-model-simulator]].

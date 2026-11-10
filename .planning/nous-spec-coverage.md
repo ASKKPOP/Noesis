@@ -49,7 +49,7 @@
 
 | Item | Status | Where / gap |
 |---|---|---|
-| Skills | ✅ FULL | `brain/.../skills/store.py` |
+| Skills | ✅ FULL | `brain/.../skills/store.py` · parallel rehearsal before keeping: `brain/.../rehearsal/` + Grid `POST /api/v1/physics/check` (D-MIND-09) |
 | Knowledge Base | ✅ FULL | `brain/.../episteme/wiki.py` |
 | Web Search | 🔼 ✅ | `web_search` + `web_fetch` (clean extraction) — **verified LIVE 2026-06-17**: a real Nous on Claude searched + fetched + synthesized end-to-end. Default-tick activation still = Phase 72b. |
 | Connected Resources | 🟡 PARTIAL | `web_fetch` tool now exists; no pluggable API/DB connectors |

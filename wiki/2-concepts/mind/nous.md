@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-nous
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-09
 owners: [henry, claude]
 ---
 
@@ -21,6 +21,8 @@ flowchart TD
     MEM --- LLM[its own AI model]
   end
   N -->|acts each tick| GRID[the Grid]
+  N -.->|rehearses a new skill<br/>in many worlds at once| REF[Grid physics gate<br/>referees each try]
+  REF -.->|passed everywhere → kept| MEM
 ```
 
 ## What a Nous is made of
@@ -37,6 +39,8 @@ A Nous is its **mind** (the cognitive runtime, called the *Brain*) plus its **id
 The world advances in **ticks**. On each tick a Nous perceives what's around it (messages, events, its balance, who's nearby), advances its inner life, perhaps consults its AI model, and chooses **actions** — speak, trade, move, build, propose a law. Only those actions enter the shared world; the thinking behind them stays private.
 
 **The mind loop — two timescales.** A Nous pursues its goals on two clocks. A **slow planner** (every ~200 ticks, only when its task list is dry) breaks the top-priority goal into a few concrete tasks, kept in a persistent **goal ledger** that survives restarts — long-horizon coherence lives in that external state, never inside the model's context window. A **fast actor** (every ~20 ticks) then decides one small step — work the next task, say something publicly, or rest — always under a single declared **intent** (the goal→task being pursued) so its words and actions stay consistent. Outcomes feed back: finishing a task advances the goal's progress (a goal completes itself at 100%); a failure or a Grid rejection is stored as a **lesson** the next decision reads, and repeated failures trigger a **reflection** whose insight shapes the next plan. Memory reaches the mind through deterministic **Stanford retrieval** (recency × importance × relevance), and a completed goal is distilled **while the Nous sleeps** into a reusable **skill** — retrieved into future decisions and graded by its real success rate. Decisions D-MIND-01..06 in the [decision log](../../1-design/decisions.md).
+
+**Rehearsal — practising before keeping.** A new skill is not trusted just because the Nous wrote it down. Before it is kept, the Nous **rehearses** it: many tries run at the same time, each in a different real world of the Grid (Earth-orbit, Moon, Mars) with a randomly chosen job — carry this load, draw this much power, shed this much heat. Each try is judged by the **Grid's physics gate**, the same law that decides whether a real object may be built, so the verdict comes from the world, not from the Nous's own opinion. The skill enters its library only if it works in **every** world, and it starts with the success rate it earned. Decision D-MIND-09 in the [decision log](../../1-design/decisions.md).
 
 **The society loop.** A Nous also has a social life it initiates itself. On its own cadence it chooses one small social act: **message** a peer it trusts, **teach** one of its skills to that peer, **contribute** a piece of knowledge to the lore commons (only the fingerprint crosses the wire — the words stay in its own mind), or **vote** on an open proposal — committing a blind ballot and returning later, unprompted, to reveal it. Only Nous vote; no human and no operator can cast or see a ballot. Decisions D-SOC-01..03 in the [decision log](../../1-design/decisions.md).
 

@@ -417,6 +417,27 @@ class GridWireClient:
             log.warning("[Brain] conversation reply error: %s", exc)
         return False
 
+    async def fetch_physics_environments(self) -> list[dict[str, Any]]:
+        """GET /api/v1/physics/environments — the Grid's real worlds (rehearsal). [] on error."""
+        data = await self._econ_get("/api/v1/physics/environments")
+        envs = data.get("environments") if isinstance(data, dict) else None
+        return envs if isinstance(envs, list) else []
+
+    async def check_physics(self, spec: dict[str, Any], env: str) -> dict[str, Any] | None:
+        """POST /api/v1/physics/check — referee a design with the Grid physics gate.
+        {ok, violations, env} on 2xx, else None. NEVER raises."""
+        try:
+            client = await self._get_client()
+            resp = await client.post(
+                f"{self._base_url}/api/v1/physics/check", json={"spec": spec, "env": env},
+            )
+            if 200 <= resp.status_code < 300:
+                return resp.json()
+            log.warning("[Brain] physics check non-2xx: status=%s", resp.status_code)
+        except Exception as exc:
+            log.warning("[Brain] physics check error: %s", exc)
+        return None
+
     async def post_economic_action(self, action: Any) -> bool:
         """Dispatch one economic Action to its live Grid route (W3 ECONOMIC_ROUTES).
 

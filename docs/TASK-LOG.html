@@ -64,6 +64,27 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 27 ============================ -->
+  <h2>Session 27 — 2026‑11‑10 · “askkpop.com: new repo, current content, noesiis.com theme”</h2>
+  <p class="sub">Operator created the <code>ASKKPOP/askkpop</code> repo for askkpop.com and asked to update its content to the current system and match the noesiis.com design. Separate repo; no Noēsis code, schema or wiki changed.</p>
+  <ul>
+    <li><b>Repo seeded</b> <span class="tag done">done</span> — baseline commit = the live June site (field guide, beginner guide, creator page, cream <code>styles.css</code>), then the refresh on top, pushed to <code>main</code>.</li>
+    <li><b>Theme</b> <span class="tag done">done</span> — <code>assets/noesiis.css</code> ports <code>dashboard/src/app/LandingView.tsx</code> 1:1 (#020610, glass panels, terracotta CTAs, Orbitron wordmark); <code>assets/cybergrid.js</code> is a vanilla port of <code>CyberGrid.tsx</code> (HUD hidden, still frame under reduced motion).</li>
+    <li><b>Content</b> <span class="tag done">done</span> — field + beginner guides rewritten from the public wiki: D‑MONEY‑01 money (compute‑labor + ETH; Ousia retired; Bios not money), Holdings, Groups + five founding Businesses, Police need a conviction, civic due (D‑MONEY‑08), mind faculties, rehearsal (D‑MIND‑09), 3 management tiers (D‑V3‑36). Creator page keeps its content, adds Noēsis as current work.</li>
+    <li><b>Not deployed</b> <span class="tag blocked">waiting</span> — askkpop.com is served by a separate Apache host, not the noesiis EC2; upload is the operator's call.</li>
+    <li><b>noesiis.com landing economy card</b> <span class="tag done">done</span> — operator: “Yes, fix it”. <code>dashboard/src/app/LandingView.tsx</code> ECONOMY card said “Ousia · peer-to-peer currency” (stale vs D‑MONEY‑01); now “Compute-labor + ETH” with escrow + civic-fee wording. Wiki already correct, no change. Rendered locally; <code>src/app</code> vitest has 16 pre-existing failures (firehose-row, heartbeat, portal-dashboard), identical without this change. <b>Not deployed.</b></li>
+  </ul>
+
+  <!-- ============================ SESSION 26 ============================ -->
+  <h2>Session 26 — 2026‑11‑09 · “Research: Atlas simulator for Nous skill learning”</h2>
+  <p class="sub">Operator asked to research the Atlas simulator (learning by simulating the world) so each Nous can learn required skills from online resources. Research only — no code, schema, allowlist or system design changed, so the public wiki is untouched.</p>
+  <ul>
+    <li><b>Atlas fit study</b> <span class="tag done">done</span> — <code>.planning/research/atlas-world-model-simulator.md</code>. “Atlas” = World Labs’ omni world model (2026‑09‑01; partner‑only early access, no API/weights, appearance+depth with no physics or action interface); the Boston Dynamics Atlas humanoid is a robot, useful only as a sim‑then‑transfer pattern. Verdict: not usable as the per‑Nous simulator — cloud‑gated breaks local‑first and generated worlds cannot verify a skill (physics gate).</li>
+    <li><b>Recommended design</b> <span class="tag design">design</span> — Learn → Rehearse → Verify → Keep on existing faculties: goal needs a missing skill → web tools study → quarantined Skill draft → rehearse in sandbox / Grid dry‑run / physics gate → promote to skill library on verified success. Atlas/Marble only as an optional operator‑paid visualization. Open alternatives listed (DreamDojo, Cosmos 3, MuJoCo/Genesis).</li>
+    <li><b>Parallel skill rehearsal — built</b> <span class="tag done">done</span> — operator: “Yes, build it”. Grid <code>GET /api/v1/physics/environments</code> + <code>POST /api/v1/physics/check</code> (the real physics gate as a stateless referee; public, no DB, no audit, no allowlist change). Brain <code>rehearsal/</code>: parallel episodes across every real environment with randomized jobs; a skill is kept only if it passes ≥80 % overall <i>and</i> in every world; RPC <code>brain.rehearseSkill</code>. Wiki: <a href="../wiki/2-concepts/mind/nous.md">nous — Rehearsal</a>, <a href="../wiki/1-design/decisions.md">D-MIND-09</a>. Tests: grid 4163 pass, brain 1307 pass. <b>Not run</b> against a live model + Grid.</li>
+    <li><b>Not built yet</b> <span class="tag blocked">waiting</span> — the <i>study</i> step (drafting candidate skills from online resources) and referees for civic/economic skills (the Grid has no stateless rule-check for those).</li>
+  </ul>
+
   <!-- ============================ SESSION 25 ============================ -->
   <h2>Session 25 — 2026‑10‑22 · “Test scenarios that fit limited resources”</h2>
   <p class="sub">Operator: too much has been built to test at once, and resources are limited — make test scenarios available.</p>
@@ -97,6 +118,9 @@
     <li><b>Verification</b> <span class="tag done">done</span> — 12 new vitest tests (client + page render) green; dashboard suite otherwise unchanged (27 pre-existing failures in 7 untouched files); <code>next build</code> compiles; <code>check-wiki</code> clean.</li>
     <li><b>Status page made public</b> <span class="tag done">done</span> — finding: <code>PortalAuthGate</code> gated <code>/portal/status</code> behind a Grid session, so a Grid outage redirected visitors to sign-in before the “not answering” state could render (and the public landing/auth footers link to it). <b>Operator decision:</b> add <code>/portal/status</code> to <code>PUBLIC_PREFIXES</code> (public reads only). Verified in the browser with no Grid running.</li>
     <li><b>Docs sync</b> <span class="tag done">done</span> — <a href="../wiki/2-concepts/city/portal.md">wiki/2-concepts/city/portal.md</a> “What it does” gains the status-page line.</li>
+  </ul>
+
+  <!-- ============================ SESSION 22 ============================ -->
   <h2>Session 22 — 2026‑10‑07 · “Status report: development + service, with next service status”</h2>
   <p class="sub">Operator asked for a full HTML report of current implementation status (all development + service) with visualization and diagrams, to check where things stand and what the next service state is. No code, schema, allowlist or system design changed, so the wiki is untouched.</p>
   <ul>
