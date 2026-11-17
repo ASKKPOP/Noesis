@@ -207,3 +207,8 @@ private Grids members-only); grid.noesiis.com is entered from the Portal after s
 has no assigned identity/purpose; Brain moves Python → Rust as a Mac desktop app. Plan report only
 (`docs/noesis-surfaces-replan-2026-11-17.html`); nothing built. Open: whether D-V3-32 (6 zones)
 stays fixed under "identity not fixed", and Tauri vs SwiftUI shell. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] decision | D-V3-40 — zones free per Grid, identity never assigned
+Operator chose "Free the zones": D-V3-32 (6-zone invariant) superseded; each Polis owns its zone
+set. Recorded in the wiki decision log; not built. Carry forward: tax, residence, founding law and
+the city map all assume six. [[v3.0/CIVIC-ARCHITECTURE]]

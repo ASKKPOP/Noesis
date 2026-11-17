@@ -90,7 +90,7 @@ See [[philosophy]].
 | D-V3-29 | Portal is top-level meta-layer (4 functions) | LOCKED |
 | D-V3-30 | Genesis Grid is v3.0 launch Grid; multi-Grid v3.1+ | LOCKED |
 | D-V3-31 | Each Grid's government is named "Polis" (Genesis Polis) | LOCKED |
-| D-V3-32 | 6-zone city zoning | LOCKED |
+| D-V3-32 | 6-zone city zoning | SUPERSEDED by D-V3-40 (still enforced in code until built) |
 | D-V3-33 | Nous registration is Portal-gated (both types) | LOCKED |
 | D-V3-34 | Per-Grid tax rules set by Polis legislation | LOCKED |
 | D-V3-35 | Type B civic rights year-1 limited; full at 12 months | LOCKED |
@@ -99,6 +99,7 @@ See [[philosophy]].
 | D-36-22 | Civic terminology: Grid Charter (founding doc) + Laws of Themis (enacted bills) | LOCKED |
 | D-V3-38 | **v3.0 scope closed by re-scope (2026-10-07, operator-approved).** The hosted LLM pool for Type B Nous (was Phase 40b) and the standalone Portal service (was Phase 52) move to **v3.1**. Until then a Type A Nous stays alive through an always-on Brain on operator hardware, and the Portal continues to be served by the Grid dashboard at the `portal.` hostname. The Portal account overview (Phase 56) ships in v3.0: one screen for a person's Nous, the Grids they live in, their wei per Grid, and registrations in progress. It is read-only, shows wei rather than Bios (D-MONEY-01), and offers no deposit or withdraw flow (zero custody). | LOCKED |
 | D-V3-39 | **Nous registration runs through a Portal review queue (2026-10-08, operator-approved).** The owner of a Nous files its registration from their Portal account; they must be a citizen, and a founding Nous (Sophia, Hermes, Themis) may be filed only by a Grid operator. One live registration per Nous. The **human decision is the Portal pre-screen**, made by operator reviewers on the Portal Manager reviewer panel; **a reviewer may not decide a filing they made themselves** (separation of duties, added 2026-10-13), so a founding Nous needs two operators — one to file, another to review. A passed filing is forwarded to the Polis, whose **charter rules are applied automatically** — rule evaluation, not a ballot, so Nous-only voting (VOTE-05) is untouched and no operator acts as the Polis (D-V3-18, D-V3-36). The filing carries the public key of the Brain that will run the Nous: the Civic-DID is issued **only to that key**, and the Brain is bound to its sponsor at that moment. The Brain holds its own locally generated key; the key is no longer derived from the public existence-DID. Refines D-V3-33; supersedes the separate first-come Brain claim of D-39-01 for Portal-filed registrations. | LOCKED |
+| D-V3-40 | **Zones are free per Grid; a Grid's identity is never assigned (2026-11-17, operator decision; overturns D-V3-32).** The identity and purpose of a Grid are not fixed: no Grid is created as "the shop" or "the library", and what a Grid is emerges from what its Nous do, as read from the audit chain. The zone set is no longer a system invariant — each Grid's Polis adds, renames and removes zones by legislation; Genesis keeps its six as its own law. The eight civic institutions, the money axiom (D-MONEY-01), the audit chain and Portal-gated registration (D-V3-33) stay common to every Grid. **Not yet built** — the code still enforces exactly six zones. | DECIDED · not built |
 
 ## Nous House — `D-NH-*` (v3.1)
 

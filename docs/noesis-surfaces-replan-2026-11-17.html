@@ -127,12 +127,12 @@
 <div class="wrap">
 
 <header style="display:flex;flex-direction:column;gap:14px">
-  <div class="eyebrow">Plan report · 2026-11-17 · proposal, nothing built yet</div>
+  <div class="eyebrow">Plan report · 2026-11-17 · rev 2 (zones freed) · proposal, nothing built yet</div>
   <h1>Three surfaces, re-planned: Portal, Grid, and a Rust Nous for Mac</h1>
   <p class="lede">You asked for three changes: the Portal at <code>noesiis.com</code> opens on a public map of every Grid; a Grid at <code>grid.noesiis.com</code> has no fixed identity or purpose; and the Nous Brain moves from Python to Rust and ships as a Mac desktop application. This report shows what each surface would look like, what changes underneath, and the order to build it in.</p>
   <div class="grid3">
     <div class="card accent"><div class="eyebrow">1 · Portal</div><h3>noesiis.com</h3><p class="small">Public front door. Anyone sees the map of all Grids. Public Grids can be visited by anyone; private Grids admit members only.</p></div>
-    <div class="card blue"><div class="eyebrow">2 · Grid</div><h3>grid.noesiis.com</h3><p class="small">Reached from the Portal after sign-in. Same civic frame everywhere; what a Grid <em>is</em> emerges from what its Nous do there and can change.</p></div>
+    <div class="card blue"><div class="eyebrow">2 · Grid</div><h3>grid.noesiis.com</h3><p class="small">Reached from the Portal after sign-in. Same civic institutions everywhere, its own zones; what a Grid <em>is</em> emerges from what its Nous do there and can change.</p></div>
     <div class="card violet"><div class="eyebrow">3 · Nous / Brain</div><h3>Noēsis.app (local)</h3><p class="small">One signed Mac app with the mind written in Rust inside it. Replaces the Python Brain and the Electron Local Nous Manager.</p></div>
   </div>
 </header>
@@ -162,7 +162,7 @@
 
       <rect x="640" y="54" width="310" height="104" rx="10" fill="var(--blue-soft)" stroke="var(--blue)"/>
       <text x="795" y="80" text-anchor="middle" font-size="15" fill="var(--ink)" font-weight="600">Grid · grid.noesiis.com/&lt;grid&gt;</text>
-      <text x="795" y="101" text-anchor="middle" font-size="12.5" fill="var(--ink2)">6 zones · 8 civic institutions · economy</text>
+      <text x="795" y="101" text-anchor="middle" font-size="12.5" fill="var(--ink2)">own zones · 8 civic institutions · economy</text>
       <text x="795" y="119" text-anchor="middle" font-size="12.5" fill="var(--ink2)">tamper-evident record</text>
       <text x="795" y="137" text-anchor="middle" font-size="12.5" fill="var(--ink2)">identity: emergent, not assigned</text>
 
@@ -191,7 +191,8 @@
     <tr><td><b>Portal</b></td><td>Landing page + <code>/portal/*</code> routes in the dashboard app; <code>GridRegistry</code> and <code>GET /api/v1/portal/grids</code> exist (D-V3-37); no visibility field.</td><td>Landing <em>is</em> the all-Grid map. Each Grid carries <code>public</code> or <code>private</code> visibility and a member list.</td><td><span class="pill change">change</span></td></tr>
     <tr><td><b>Grid</b></td><td><code>/grid/*</code> on the same host as the Portal; one live Grid (Genesis); <code>grid.noesiis.com</code> does not exist yet.</td><td>Own host, entered from the Portal after sign-in. Identity is a derived, drifting profile, never a type field.</td><td><span class="pill change">change</span></td></tr>
     <tr><td><b>Nous / Brain</b></td><td>Python 3.12, about 19.8k lines across 36 modules, 158 test files. Separate Electron app (<code>apps/local-nous-manager</code>).</td><td>Rust core crate inside one Mac app. Same crate builds a headless binary for hosted (Type B) Nous.</td><td><span class="pill new">rewrite</span></td></tr>
-    <tr><td><b>Frame</b></td><td>6-zone city, 8 civic institutions, money axiom, audit chain, Portal-gated Civic-DID.</td><td>Unchanged. These are what every Grid has in common.</td><td><span class="pill keep">keep</span></td></tr>
+    <tr><td><b>Zones</b></td><td>Exactly six zone types in every Grid, fixed in code (D-V3-32).</td><td>Each Grid's Polis defines its own zone set by law. Genesis keeps its six as its own choice (D-V3-40, decided 2026-11-17).</td><td><span class="pill change">change</span></td></tr>
+    <tr><td><b>Frame</b></td><td>8 civic institutions, money axiom, audit chain, Portal-gated Civic-DID.</td><td>Unchanged. These are what every Grid has in common.</td><td><span class="pill keep">keep</span></td></tr>
   </table></div>
 </section>
 
@@ -279,7 +280,7 @@
 <!-- ================= GRID ================= -->
 <section>
   <div class="sec-head"><div class="eyebrow">Surface 2</div><h2>Grid: a place whose identity is not fixed</h2>
-  <p>A Grid is defined by its frame: six zones, eight civic institutions, an economy, and a tamper-evident record of everything that ever happened. Nothing in that frame says what the Grid is <em>for</em>. We never label Grid A "the shop" or Grid B "the library". If a Grid becomes mostly a market, that is something its Nous did, it shows in the record, and it can change next season.</p></div>
+  <p>Today a Grid is defined as six zones, eight civic institutions, an economy, and a tamper-evident record of everything that ever happened. You decided the six zones are no longer part of that definition: each Grid lays out its own districts. What remains common is the institutions, the economy and the record, and nothing in those says what the Grid is <em>for</em>. We never label Grid A "the shop" or Grid B "the library". If a Grid becomes mostly a market, that is something its Nous did, it shows in the record, and it can change next season.</p></div>
 
   <figure>
     <div class="shot">
@@ -293,6 +294,7 @@
           <div class="legend"><span><i style="background:#DD7B5A"></i>trade 38%</span><span><i style="background:#7FB2D1"></i>knowledge 24%</span><span><i style="background:#B59AD0"></i>making 17%</span><span><i style="background:#7BD89E"></i>civic 13%</span><span><i style="background:#F0BA63"></i>social 8%</span></div>
           <div class="dim tiny" style="margin-top:6px">Six months ago: knowledge 41% · trade 19%. No one assigned either.</div>
         </div>
+        <div class="dim tiny">ZONES · set by Genesis Polis law · 6 today · can be added, renamed or removed</div>
         <div class="zones">
           <div class="zone"><b>Business</b><span class="dim tiny">activity</span><div class="meter"><i style="width:62%"></i></div></div>
           <div class="zone"><b>Manufacture</b><span class="dim tiny">activity</span><div class="meter"><i style="width:34%"></i></div></div>
@@ -307,17 +309,17 @@
         </div>
       </div>
     </div>
-    <figcaption>Demo mock with illustrative numbers. The "right now" bar would be computed from real audit events, never typed in.</figcaption>
+    <figcaption>Demo mock with illustrative numbers. Genesis keeps its current six zones; another Grid could have two, or twenty. The "right now" bar would be computed from real audit events, never typed in.</figcaption>
   </figure>
 
   <div class="diagram">
-    <svg viewBox="0 0 1000 210" role="img" aria-label="Fixed frame on the left, emergent identity on the right">
+    <svg viewBox="0 0 1000 210" role="img" aria-label="Fixed frame on the left, what each Grid decides for itself on the right">
       <rect x="20" y="20" width="440" height="170" rx="12" fill="var(--good-bg)" stroke="var(--good)"/>
       <text x="40" y="50" font-size="15" font-weight="600" fill="var(--ink)">Fixed frame · every Grid, by constitution</text>
-      <g font-size="13" fill="var(--ink2)"><text x="40" y="80">Named <tspan font-weight="600">&lt;GridName&gt; Polis</tspan> government</text><text x="40" y="102">6 zones (D-V3-32) · 8 civic institutions</text><text x="40" y="124">Economy: compute-labor + ETH (D-MONEY-01)</text><text x="40" y="146">Tamper-evident audit chain</text><text x="40" y="168">Portal-gated Civic-DID (D-V3-33)</text></g>
+      <g font-size="13" fill="var(--ink2)"><text x="40" y="80">Named <tspan font-weight="600">&lt;GridName&gt; Polis</tspan> government</text><text x="40" y="102">8 civic institutions</text><text x="40" y="124">Economy: compute-labor + ETH (D-MONEY-01)</text><text x="40" y="146">Tamper-evident audit chain</text><text x="40" y="168">Portal-gated Civic-DID (D-V3-33)</text></g>
       <rect x="540" y="20" width="440" height="170" rx="12" fill="var(--accent-soft)" stroke="var(--accent)"/>
-      <text x="560" y="50" font-size="15" font-weight="600" fill="var(--ink)">Emergent identity · never assigned</text>
-      <g font-size="13" fill="var(--ink2)"><text x="560" y="80">No <tspan font-family="var(--mono)">type</tspan> / <tspan font-family="var(--mono)">purpose</tspan> field at Grid creation</text><text x="560" y="102">Activity profile derived from the record</text><text x="560" y="124">Optional charter text, written by the Polis</text><text x="560" y="146">Zone sizes and tax rules amended by law</text><text x="560" y="168">Profile history kept, so drift is visible</text></g>
+      <text x="560" y="50" font-size="15" font-weight="600" fill="var(--ink)">Per Grid · emergent, never assigned</text>
+      <g font-size="13" fill="var(--ink2)"><text x="560" y="80">No <tspan font-family="var(--mono)">type</tspan> / <tspan font-family="var(--mono)">purpose</tspan> field at Grid creation</text><text x="560" y="102">Activity profile derived from the record</text><text x="560" y="124">Optional charter text, written by the Polis</text><text x="560" y="146">Zone set: added, renamed, removed by Polis law</text><text x="560" y="168">Profile history kept, so drift is visible</text></g>
       <text x="500" y="112" text-anchor="middle" font-size="26" fill="var(--mut)">+</text>
     </svg>
   </div>
@@ -328,16 +330,19 @@
         <li><span class="pill new">new</span> <code>grid.noesiis.com/&lt;grid&gt;</code> host. Same dashboard app, routed by hostname; shared sign-in session with the Portal.</li>
         <li><span class="pill new">new</span> Identity profile: a read-only projection over the audit chain (activity share by zone and institution over a window). No new source of truth.</li>
         <li><span class="pill change">change</span> Grid creation review drops any "purpose" framing. A proposer names the Grid and its Polis, nothing else about what it must become.</li>
-        <li><span class="pill change">change</span> Wiki: <code>2-concepts/city/grid.md</code> and <code>1-design/civic-architecture.md</code> state the fixed-frame / emergent-identity split.</li>
+        <li><span class="pill change">change</span> Zone types become per-Grid data owned by the Polis. Today they are fixed in <code>grid/src/zoning/zone-types.ts</code> and the founding law; base tax, residence and the civic map all read from that fixed list.</li>
+        <li><span class="pill new">new</span> Polis bills to add, rename and remove a zone, each on the audit chain (<code>zoning.*</code> events added to the allowlist).</li>
+        <li><span class="pill change">change</span> Wiki: <code>2-concepts/city/grid.md</code>, <code>zones.md</code> and <code>1-design/civic-architecture.md</code> describe free zones and emergent identity once built.</li>
       </ul>
     </div>
     <div class="card"><h3>What does not change</h3>
       <ul class="small">
-        <li><span class="pill keep">keep</span> The 6-zone invariant. A Grid that leans toward trade simply has a busier Shopping zone.</li>
+        <li><span class="pill keep">keep</span> The eight civic institutions, the money axiom and the audit chain in every Grid.</li>
+        <li><span class="pill keep">keep</span> Genesis as it is today. Its six zones become its own law instead of a system rule; no data moves.</li>
         <li><span class="pill keep">keep</span> Polis naming, per-Grid tax law, Type B first-year restrictions.</li>
         <li><span class="pill keep">keep</span> One live Grid for now. This design is ready for more; it does not require them.</li>
       </ul>
-      <p class="small mut">If you meant that the zone set itself should be free per Grid, that overturns D-V3-32 and is a larger change. See "Decisions needed".</p>
+      <p class="small mut">Freeing the zones overturns D-V3-32. Removing a zone that still holds residents or businesses needs a rule; see "Decisions needed".</p>
     </div>
   </div>
 </section>
@@ -422,9 +427,9 @@
 <!-- ================= ROADMAP ================= -->
 <section>
   <div class="sec-head"><div class="eyebrow">Sequence</div><h2>Build order across the three tracks</h2>
-  <p>Portal and Grid are small and independent of the rewrite, so they ship first. The Rust port is the long pole. Bar lengths show relative effort only; they are my estimate from module counts, not a schedule.</p></div>
+  <p>Portal and Grid are independent of the rewrite, so they ship first. Freeing the zones is the largest Grid step because tax, residence and the city map all assume six. The Rust port is the long pole. Bar lengths show relative effort only; they are my estimate from module counts, not a schedule.</p></div>
   <div class="diagram">
-    <svg viewBox="0 0 1000 250" role="img" aria-label="Three tracks: Portal short, Grid short, Nous long">
+    <svg viewBox="0 0 1000 250" role="img" aria-label="Three tracks: Portal short, Grid medium, Nous long">
       <g font-size="12.5">
         <text x="14" y="52" font-weight="600" fill="var(--ink)">Portal</text>
         <text x="14" y="122" font-weight="600" fill="var(--ink)">Grid</text>
@@ -436,8 +441,8 @@
         </g>
         <g>
           <rect x="216" y="102" width="110" height="32" rx="6" fill="var(--blue)"/><text x="271" y="123" text-anchor="middle" fill="#fff">G1 host + gate</text>
-          <rect x="332" y="102" width="130" height="32" rx="6" fill="var(--blue)" opacity=".85"/><text x="397" y="123" text-anchor="middle" fill="#fff">G2 identity profile</text>
-          <rect x="468" y="102" width="80" height="32" rx="6" fill="var(--blue)" opacity=".7"/><text x="508" y="123" text-anchor="middle" fill="#fff">G3 wiki</text>
+          <rect x="332" y="102" width="190" height="32" rx="6" fill="var(--blue)" opacity=".85"/><text x="427" y="123" text-anchor="middle" fill="#fff">G2 free zones</text>
+          <rect x="528" y="102" width="130" height="32" rx="6" fill="var(--blue)" opacity=".7"/><text x="593" y="123" text-anchor="middle" fill="#fff">G3 identity profile</text>
         </g>
         <g>
           <rect x="90" y="172" width="70" height="32" rx="6" fill="var(--violet)"/><text x="125" y="193" text-anchor="middle" fill="#fff">R0</text>
@@ -456,7 +461,8 @@
     <tr><td><b>P1</b> visibility + members</td><td>A private Grid is absent from an anonymous <code>/portal/grids</code> detail call and present for a member; change is on the audit chain.</td></tr>
     <tr><td><b>P2</b> all-Grid map</td><td><code>noesiis.com</code> renders stations from the live registry; with one Grid it shows one station.</td></tr>
     <tr><td><b>G1</b> host + gate</td><td><code>grid.noesiis.com/genesis</code> loads with the Portal session; a private Grid returns "members only" to a non-member.</td></tr>
-    <tr><td><b>G2</b> identity profile</td><td>Profile recomputes from the audit chain and matches a hand count on a fixture chain.</td></tr>
+    <tr><td><b>G2</b> free zones</td><td>A Polis bill adds and removes a zone on a test Grid; tax and residence follow the new set; Genesis still shows its six with a zero-diff audit chain.</td></tr>
+    <tr><td><b>G3</b> identity profile</td><td>Profile recomputes from the audit chain and matches a hand count on a fixture chain.</td></tr>
     <tr><td><b>R0</b> contract freeze</td><td>Recorded fixtures replay green against the Python Brain in CI.</td></tr>
     <tr><td><b>R1–R4</b> port</td><td>Each Rust module passes its Python fixtures; state hash is byte-identical.</td></tr>
     <tr><td><b>R5</b> cut over</td><td>A Rust-Brain Nous runs on Genesis for an agreed soak period with a zero-diff audit chain; signed <code>.dmg</code> installs on a clean Mac.</td></tr>
@@ -472,13 +478,14 @@
         <li><span class="pill risk">high</span> <b>Rewrite stalls the mind's roadmap.</b> About 19.8k lines and 158 test files move languages. New faculty work must pause or be written twice until R5.</li>
         <li><span class="pill risk">high</span> <b>WebRTC parity.</b> The P2P layer depends on <code>aiortc</code>; the Rust stack must interoperate with Python peers during the overlap.</li>
         <li><span class="pill risk">med</span> <b>Behaviour drift.</b> Prompts and tolerant JSON parsing (D-MIND-04, D-MIND-07) are tuned to small models; a port can change outcomes without failing a type check. Fixtures in R0 are the guard.</li>
+        <li><span class="pill risk">med</span> <b>Zones are assumed in many places.</b> Base tax per zone, residence anchoring, the founding law and the 3D city map all expect exactly six. Each has to read the Grid's own set instead.</li>
         <li><span class="pill risk">med</span> <b>New subdomain on a shared host.</b> <code>grid.noesiis.com</code> needs DNS, a certificate, and a route in the host-level proxy that also serves other sites.</li>
         <li><span class="pill risk">low</span> <b>Empty-looking map.</b> One live Grid means one station at launch.</li>
       </ul>
     </div>
     <div class="card"><h3>Decisions needed from you</h3>
       <ul class="small">
-        <li><b>Zones.</b> Keep the 6-zone invariant with identity floating on top (assumed here), or free the zone set per Grid and overturn D-V3-32?</li>
+        <li><b>Zones.</b> <span class="pill keep">decided</span> Free per Grid (D-V3-40). Two follow-ups: does a new Grid start empty or from the six as a template (template assumed)? And what happens to residents and businesses in a zone the Polis removes (removal blocked until empty, assumed)?</li>
         <li><b>Private Grid on the map.</b> Show name with a lock (assumed here), or hide private Grids from non-members entirely?</li>
         <li><b>Who sets visibility.</b> The Polis by legislation (assumed here), or the Grid's creator at creation time?</li>
         <li><b>Mac shell.</b> Tauri with reused React UI (recommended), or native SwiftUI?</li>
@@ -491,12 +498,13 @@
     <tr><th>Decision record</th><th>Effect of this plan</th></tr>
     <tr><td>D-V3-29 Portal functions</td><td>Extended: public Grid map and visibility become part of the Portal's directory function.</td></tr>
     <tr><td>D-V3-30 / D-V3-37 one live Grid</td><td>Unchanged unless you choose otherwise above.</td></tr>
-    <tr><td>D-V3-32 six zones</td><td>Unchanged under the assumed reading; a new decision records "identity is emergent, never a type".</td></tr>
+    <tr><td>D-V3-32 six zones</td><td>Overturned by D-V3-40 (2026-11-17): the zone set belongs to each Grid's Polis. Code still enforces six until G2 ships.</td></tr>
+    <tr><td>D-V3-40 (new)</td><td>Zones are free per Grid; a Grid's identity and purpose are emergent and never assigned.</td></tr>
     <tr><td>D-V3-33 / D-V3-39 Portal-gated registration</td><td>Unchanged. The Rust app registers through the same queue.</td></tr>
     <tr><td>D-V3-36 Tier 1 Local Nous Manager</td><td>Reframed: Tier 1 is the Mac app itself, with the Brain inside it.</td></tr>
     <tr><td>D-MIND-01…09</td><td>Unchanged in behaviour; re-implemented in Rust under parity fixtures.</td></tr>
   </table></div>
-  <p class="small mut">Nothing in this report has been implemented, and no wiki or decision-log page has been changed. Those updates land with the first step you approve.</p>
+  <p class="small mut">Nothing in this report has been implemented. The zone decision is recorded in the decision log as D-V3-40; the concept pages keep describing the six-zone system until G2 is built.</p>
 </section>
 
 </div>
