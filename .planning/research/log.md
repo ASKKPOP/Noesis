@@ -223,3 +223,8 @@ GridRegistry visibility (GRID_VISIBILITY), /portal/grids redaction + member flag
 map with registry-fed picker, old landing at /about. Pitfalls carried forward: the civic registry is
 keyed by Grid NAME ("Genesis"), not the lowercase gridId; "private" locks only the registry entry
 until the G1 gate ships; a new dev origin needs GRID_CORS_ORIGINS. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] apply | G1 built — private-Grid gate + Grid entry page
+Public GETs on a private Grid → 403 for non-members (exempt: health, Portal sign-in/Grid list/own
+account); `/g/[grid]` entry page + `grid.*` host rewrite. Pitfall: many 'public'-policy routes do
+their own auth, so the gate covers reads only and exempts by path prefix. [[v3.0/CIVIC-ARCHITECTURE]]

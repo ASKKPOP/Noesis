@@ -15,8 +15,11 @@ import { useEffect, useRef, useState } from 'react';
 import { GENESIS_SEED, type ParcelFeedEntry } from './OrbitalGenesisMap';
 import { mountOrbitalStation, type OrbitalHandle, type OrbitalObjectEntry } from './orbital-station-scene';
 import { pickerEntries, type PickerEntry, type PortalGrid } from './grid-picker';
+import { gridEntryHref } from '@/lib/grid-host';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
+/** The Grid's own host (e.g. grid.noesiis.com). Unset = enter on this origin. */
+const GRID_HOST = process.env.NEXT_PUBLIC_GRID_HOST;
 
 const LEGEND: [string, string][] = [
     ['#8e54b8', 'Government Core · gravity center'],
@@ -35,8 +38,9 @@ function nyClock(): string {
 }
 
 /** `portal` = mounted as the Portal's public front page (D-V3-41): adds the Sign in /
- *  Join / About links. The scene, HUD, legend and picker are the same either way. */
-export function OrbitalStation3D({ portal = false }: { portal?: boolean } = {}): React.ReactElement {
+ *  Join / About links and the "Enter <Grid>" link. `backHref` = mounted as a Grid's own
+ *  entry page: adds a link back to the Portal. Scene, HUD, legend and picker are the same. */
+export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolean; backHref?: string } = {}): React.ReactElement {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const handleRef = useRef<OrbitalHandle | null>(null);
     const [parcels, setParcels] = useState<ParcelFeedEntry[]>(GENESIS_SEED);
@@ -110,6 +114,7 @@ export function OrbitalStation3D({ portal = false }: { portal?: boolean } = {}):
     useEffect(() => { const id = setInterval(() => setClock(nyClock()), 60000); return () => clearInterval(id); }, []);
 
     const entries = pickerEntries(grids);
+    const activeEntry = entries.find((e) => e.name === activeGrid);
     const focus = (e: PickerEntry): void => {
         handleRef.current?.focusGrid(e.name); setActiveGrid(e.name);
         if (e.locked) { setRecMsg(`🔒 ${e.name} is a private Grid — members only`); setTimeout(() => setRecMsg(null), 4500); }
@@ -171,6 +176,13 @@ export function OrbitalStation3D({ portal = false }: { portal?: boolean } = {}):
                         onClick={() => focus(e)}
                     >{e.label}</button>
                 ))}
+                {portal && activeEntry?.gridId && (
+                    <a
+                        href={gridEntryHref(activeEntry.gridId, GRID_HOST)}
+                        title={activeEntry.locked ? 'Private Grid — members only' : `Enter ${activeEntry.name}`}
+                        style={{ ...btn(false), border: '1px solid rgba(0,212,255,.4)', color: '#4fd2f2', whiteSpace: 'nowrap', textDecoration: 'none' }}
+                    >Enter {activeEntry.name} →</a>
+                )}
                 <span style={{ width: 1, height: 18, background: 'rgba(255,255,255,.14)', margin: '0 2px' }} />
                 <button
                     title="Recommend this Grid to your Nous — it decides whether to join"
@@ -193,9 +205,15 @@ export function OrbitalStation3D({ portal = false }: { portal?: boolean } = {}):
                 </div>
             )}
 
+            {backHref && (
+                <div style={{ ...hud, top: 18, right: 124, pointerEvents: 'auto' }}>
+                    <a href={backHref} style={{ ...btn(false), textDecoration: 'none' }}>← Portal map</a>
+                </div>
+            )}
+
             {/* DID-gated info panel */}
             {picked && (
-                <div style={{ ...hud, top: portal ? 60 : 18, right: 18, width: 250, background: 'rgba(2,6,16,.82)', border: '1px solid rgba(0,212,255,.22)', borderRadius: 12, padding: '16px 18px', backdropFilter: 'blur(14px)', fontSize: 11.5, lineHeight: 1.7, color: '#8a93a6', pointerEvents: 'auto' }}>
+                <div style={{ ...hud, top: portal || backHref ? 60 : 18, right: 18, width: 250, background: 'rgba(2,6,16,.82)', border: '1px solid rgba(0,212,255,.22)', borderRadius: 12, padding: '16px 18px', backdropFilter: 'blur(14px)', fontSize: 11.5, lineHeight: 1.7, color: '#8a93a6', pointerEvents: 'auto' }}>
                     {(picked as unknown as { isObject?: boolean }).isObject ? (
                         <>
                             <div style={{ color: '#e7c878', fontSize: 13, marginBottom: 8 }}>{(picked as unknown as { function_type?: string }).function_type ?? 'orbital object'} · built</div>

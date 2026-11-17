@@ -137,7 +137,7 @@
 <div class="wrap">
 
 <header style="display:flex;flex-direction:column;gap:14px">
-  <div class="eyebrow">Plan report · 2026-11-17 · rev 5 · Portal steps P1–P2 built 2026-11-17, rest is proposal</div>
+  <div class="eyebrow">Plan report · 2026-11-17 · rev 6 · Portal P1–P3 and Grid G1 built 2026-11-17, rest is proposal</div>
   <h1>Three surfaces, re-planned: Portal, Grid, and a Rust Nous for Mac</h1>
   <p class="lede">You asked for three changes: the Portal at <code>noesiis.com</code> opens on a public map of every Grid; a Grid at <code>grid.noesiis.com</code> has no fixed identity or purpose; and the Nous Brain moves from Python to Rust and ships as a Mac desktop application. This report shows what each surface would look like, what changes underneath, and the order to build it in.</p>
   <div class="grid3">
@@ -246,7 +246,7 @@
         <li><span class="pill keep">built</span> <code>visibility</code> on the Grid registry entry; the public <code>/portal/grids</code> list returns a private Grid to non-members as name + lock only. No new membership table: a member is a human holding an active Civic-DID in that Grid.</li>
         <li><span class="pill change">change</span> The landing page mounts the existing orbital station component (<code>OrbitalStation3D</code>) unchanged in look: same scene, HUD, legend and focus picker. No second map is built.</li>
         <li><span class="pill change">change</span> Its Grid picker, today a fixed Genesis / Moon / Mars list, reads the live Grid registry and adds a lock for private Grids and an "Enter" action that leads to <code>grid.noesiis.com/&lt;grid&gt;</code>.</li>
-        <li><span class="pill new">not built</span> Access check at the Grid host: public passes, private requires a member session. Until this ships (step G1), "private" locks only the map entry, not the Grid's other public pages.</li>
+        <li><span class="pill keep">built</span> Private-Grid gate: every public read of a private Grid is refused to non-members; sign-in, the Grid list and a person's own account stay open. "Enter" on the map leads to the Grid's entry page, which opens the Grid or shows "members only".</li>
         <li><span class="pill new">new</span> Visibility is set by the Grid's creator: the Portal account whose Grid proposal was approved. For Genesis that is the operator. The Grid Manager cannot change it (D-V3-36).</li>
         <li><span class="pill new">new</span> Audit events for visibility and membership changes, each added to the broadcast allowlist in the phase that introduces it.</li>
       </ul>
@@ -304,7 +304,7 @@
   <div class="grid2">
     <div class="card"><h3>What gets built</h3>
       <ul class="small">
-        <li><span class="pill new">new</span> <code>grid.noesiis.com/&lt;grid&gt;</code> host. Same dashboard app, routed by hostname; shared sign-in session with the Portal.</li>
+        <li><span class="pill keep">built</span> <code>grid.noesiis.com/&lt;grid&gt;</code> entry: same dashboard app, routed by hostname to the Grid entry page. The app side is done; DNS, certificate and proxy route for the host are deploy steps not yet taken.</li>
         <li><span class="pill new">new</span> Identity profile: a read-only projection over the audit chain (activity share by zone and institution over a window). No new source of truth.</li>
         <li><span class="pill change">change</span> Grid creation review drops any "purpose" framing. A proposer names the Grid and its Polis, nothing else about what it must become.</li>
         <li><span class="pill change">change</span> Zone types become per-Grid data owned by the Polis. Today they are fixed in <code>grid/src/zoning/zone-types.ts</code> and the founding law; base tax, residence and the civic map all read from that fixed list.</li>
@@ -437,7 +437,7 @@
     <tr><th>Step</th><th>Done when</th></tr>
     <tr><td><b>P1</b> visibility + members <span class="pill keep">built</span></td><td>A private Grid is absent from an anonymous <code>/portal/grids</code> detail call and present for a member; change is on the audit chain.</td></tr>
     <tr><td><b>P2</b> all-Grid map <span class="pill keep">built</span></td><td><code>noesiis.com</code> shows the same orbital view as <code>/worldmap/orbital</code>, with the picker listing Grids from the live registry and a private Grid shown locked.</td></tr>
-    <tr><td><b>G1</b> host + gate</td><td><code>grid.noesiis.com/genesis</code> loads with the Portal session; a private Grid returns "members only" to a non-member.</td></tr>
+    <tr><td><b>G1</b> host + gate <span class="pill keep">built</span> <span class="pill change">host not routed</span></td><td><code>grid.noesiis.com/genesis</code> loads with the Portal session; a private Grid returns "members only" to a non-member.</td></tr>
     <tr><td><b>G2</b> free zones</td><td>A new test Grid starts with the six-zone template; a Polis bill adds and removes a zone on it; tax and residence follow the new set; Genesis still shows its six with a zero-diff audit chain.</td></tr>
     <tr><td><b>G3</b> identity profile</td><td>Profile recomputes from the audit chain and matches a hand count on a fixture chain.</td></tr>
     <tr><td><b>R0</b> contract freeze</td><td>Recorded fixtures replay green against the Python Brain in CI.</td></tr>
@@ -484,7 +484,7 @@
     <tr><td>D-V3-42 (new)</td><td>Brain is rewritten in Rust; Type A ships as a native SwiftUI Mac app; Type B runs the same Rust core headless.</td></tr>
     <tr><td>D-MIND-01…09</td><td>Unchanged in behaviour; re-implemented in Rust under parity fixtures.</td></tr>
   </table></div>
-  <p class="small mut">Portal steps P1 and P2 are implemented and tested locally, not deployed; everything else is still a proposal. The zone and map decisions are recorded in the decision log as D-V3-40, D-V3-41 and D-V3-42; the concept pages keep describing the six-zone system until G2 is built.</p>
+  <p class="small mut">The Portal steps and Grid step G1 are implemented and tested locally, not deployed; everything else is still a proposal. The zone and map decisions are recorded in the decision log as D-V3-40, D-V3-41 and D-V3-42; the concept pages keep describing the six-zone system until G2 is built.</p>
 </section>
 
 </div>

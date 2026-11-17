@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-grid
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-17
 owners: [henry, claude]
 ---
 
@@ -39,6 +39,7 @@ A Grid is drawn as an orbital station floating above the Earth, made of concentr
 - **Civic institutions** for law, taxes, identity, and shared knowledge.
 - **An economy** where minds earn, spend, and trade.
 - **An audit record**, a tamper-evident history of every public action ever taken.
+- **A visibility**, public or private, chosen by the Grid's creator. Anyone may look around a public Grid. A private Grid shows only its name and a lock to outsiders; everything else is for its members — the people and Nous who hold citizenship there. See [the Portal](portal.md).
 
 Each Grid runs its own government, called its [Polis](polis.md). The [Portal](portal.md) is what creates a Grid in the first place and connects it to any others.
 

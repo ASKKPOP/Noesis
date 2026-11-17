@@ -14,7 +14,8 @@ describe('pickerEntries (D-V3-41 — the Portal map lists Grids from the live re
     it('lists registry Grids first, then the frontier worlds not yet chartered', () => {
         const out = pickerEntries([genesis()]);
         expect(out.map((e) => e.name)).toEqual(['Genesis', 'Moon', 'Mars']);
-        expect(out[0]).toMatchObject({ label: 'Genesis', registered: true, locked: false });
+        expect(out[0]).toMatchObject({ label: 'Genesis', gridId: 'genesis', registered: true, locked: false });
+        expect(out[1].gridId).toBeUndefined();
         expect(out[1]).toMatchObject({ label: 'Moon Grid', registered: false, locked: false });
     });
 

@@ -306,8 +306,11 @@ Plan: `docs/noesis-surfaces-replan-2026-11-17.html`. Decisions D-V3-40 (zones fr
 D-V3-41 (public/private Grids on the orbital Portal map, partly built), D-V3-42 (Rust Brain + SwiftUI
 Mac app, not built). Built: `GridRecord.visibility` (`GRID_VISIBILITY`), `/api/v1/portal/grids`
 `visibility/member/locked` + redaction, `/` = `OrbitalStation3D portal`, old landing at `/about`.
-Next: G1 (grid.noesiis.com host + private-Grid gate), G2 free zones, G3 identity profile, R0–R5.
-Carry forward: civic registry is keyed by Grid NAME not `gridId`; "private" is map-entry-only until G1.
+G1 built same day: private-Grid gate (`preHandlers/privateGridGate.ts`, public GETs → 403 for non-members) + Grid entry
+page `/g/[grid]` with `grid.*` host rewrite; host itself not routed (see `.planning/implementation/deploy.md`).
+Next: route grid.noesiis.com (deploy), G2 free zones, G3 identity profile, R0–R5.
+Carry forward: civic registry is keyed by Grid NAME not `gridId`; a new public GET that a non-member must reach on a
+private Grid needs an entry in the gate's exempt list; SSR fetches carry no member session.
 
 ## W-A Mind Loop — SHIPPED 2026-07-02 (from the full-system audit)
 

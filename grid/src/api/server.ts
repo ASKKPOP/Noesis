@@ -68,6 +68,7 @@ import { tombstoneCheck, TombstonedDidError } from '../registry/tombstone-check.
 import type { HumanRegistry } from '../human/index.js';
 import fastifyCookie from '@fastify/cookie';
 import { lookupPolicy } from './policy.js';
+import { isGridMember, isPrivateGateExempt } from './preHandlers/privateGridGate.js';
 import { tryDid } from './preHandlers/tryDid.js';
 import { requireDid, requirePortalSession } from './preHandlers/requireDid.js';
 import type { RequireDidServices } from './preHandlers/requireDid.js';
@@ -527,6 +528,14 @@ export function buildServerWithHub(
                 gridName: services.gridName,
             });
             req.didContext = ctx;
+            // D-V3-41: a private Grid's public reads are for members only. The Portal
+            // layer (sign-in, the Grid list, a person's own account) stays open.
+            if (req.method === 'GET'
+                && services.gridRegistry?.get(services.gridName.toLowerCase())?.visibility === 'private'
+                && !isPrivateGateExempt(req.url.split('?')[0])
+                && !(await isGridMember(ctx, { gridName: services.gridName, civicDidStore: services.civicDidStore, operatorAllowlist }))) {
+                return reply.code(403).send({ error: 'private_grid_members_only' });
+            }
             return;
         }
         if (policy === 'portal_session_required') {

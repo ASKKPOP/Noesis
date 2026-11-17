@@ -522,7 +522,7 @@ export function configFromEnv(): GridAppConfig {
         // unknown/absent value falls back to Earth-orbit via getEnvironment().
         environment: getEnvironment(process.env.GRID_ENV),
         // D-V3-41: the Grid creator's choice — public unless GRID_VISIBILITY=private.
-        visibility: process.env.GRID_VISIBILITY === 'private' ? 'private' : 'public',
+        visibility: process.env.GRID_VISIBILITY === 'private' ? 'private' as const : 'public' as const,
         tickRateMs: process.env.GRID_TICK_RATE_MS
             ? parseInt(process.env.GRID_TICK_RATE_MS, 10)
             : GENESIS_CONFIG.tickRateMs,

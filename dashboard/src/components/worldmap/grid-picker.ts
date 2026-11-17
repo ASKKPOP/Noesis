@@ -19,6 +19,8 @@ export interface PortalGrid {
 export interface PickerEntry {
     /** Grid name — also the scene's camera-focus key. */
     name: string;
+    /** Registry id (e.g. 'genesis') — only for a Grid in the live registry. */
+    gridId?: string;
     label: string;
     /** In the live Grid registry (false = a frontier world awaiting charter). */
     registered: boolean;
@@ -35,7 +37,7 @@ const label = (name: string, locked: boolean): string =>
 /** `grids` is null while the registry feed is loading or unreachable. */
 export function pickerEntries(grids: PortalGrid[] | null): PickerEntry[] {
     const registered = (grids ?? []).map((g): PickerEntry => ({
-        name: g.name, label: label(g.name, g.locked), registered: true, member: g.member, locked: g.locked,
+        name: g.name, gridId: g.grid_id, label: label(g.name, g.locked), registered: true, member: g.member, locked: g.locked,
     }));
     const have = new Set(registered.map((e) => e.name));
     const frontier = SCENE_GRIDS.filter((n) => !have.has(n)).map((n): PickerEntry => ({
