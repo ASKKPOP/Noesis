@@ -191,7 +191,7 @@
     <tr><td><b>Portal</b></td><td>Landing page + <code>/portal/*</code> routes in the dashboard app; <code>GridRegistry</code> and <code>GET /api/v1/portal/grids</code> exist (D-V3-37); no visibility field.</td><td>Landing <em>is</em> the all-Grid map. Each Grid carries <code>public</code> or <code>private</code> visibility and a member list.</td><td><span class="pill change">change</span></td></tr>
     <tr><td><b>Grid</b></td><td><code>/grid/*</code> on the same host as the Portal; one live Grid (Genesis); <code>grid.noesiis.com</code> does not exist yet.</td><td>Own host, entered from the Portal after sign-in. Identity is a derived, drifting profile, never a type field.</td><td><span class="pill change">change</span></td></tr>
     <tr><td><b>Nous / Brain</b></td><td>Python 3.12, about 19.8k lines across 36 modules, 158 test files. Separate Electron app (<code>apps/local-nous-manager</code>).</td><td>Rust core crate inside one Mac app. Same crate builds a headless binary for hosted (Type B) Nous.</td><td><span class="pill new">rewrite</span></td></tr>
-    <tr><td><b>Zones</b></td><td>Exactly six zone types in every Grid, fixed in code (D-V3-32).</td><td>Each Grid's Polis defines its own zone set by law. Genesis keeps its six as its own choice (D-V3-40, decided 2026-11-17).</td><td><span class="pill change">change</span></td></tr>
+    <tr><td><b>Zones</b></td><td>Exactly six zone types in every Grid, fixed in code (D-V3-32).</td><td>Each Grid's Polis defines its own zone set by law. Genesis keeps its six as its own choice; a new Grid starts from the same six as a template (D-V3-40, decided 2026-11-17).</td><td><span class="pill change">change</span></td></tr>
     <tr><td><b>Frame</b></td><td>8 civic institutions, money axiom, audit chain, Portal-gated Civic-DID.</td><td>Unchanged. These are what every Grid has in common.</td><td><span class="pill keep">keep</span></td></tr>
   </table></div>
 </section>
@@ -461,7 +461,7 @@
     <tr><td><b>P1</b> visibility + members</td><td>A private Grid is absent from an anonymous <code>/portal/grids</code> detail call and present for a member; change is on the audit chain.</td></tr>
     <tr><td><b>P2</b> all-Grid map</td><td><code>noesiis.com</code> renders stations from the live registry; with one Grid it shows one station.</td></tr>
     <tr><td><b>G1</b> host + gate</td><td><code>grid.noesiis.com/genesis</code> loads with the Portal session; a private Grid returns "members only" to a non-member.</td></tr>
-    <tr><td><b>G2</b> free zones</td><td>A Polis bill adds and removes a zone on a test Grid; tax and residence follow the new set; Genesis still shows its six with a zero-diff audit chain.</td></tr>
+    <tr><td><b>G2</b> free zones</td><td>A new test Grid starts with the six-zone template; a Polis bill adds and removes a zone on it; tax and residence follow the new set; Genesis still shows its six with a zero-diff audit chain.</td></tr>
     <tr><td><b>G3</b> identity profile</td><td>Profile recomputes from the audit chain and matches a hand count on a fixture chain.</td></tr>
     <tr><td><b>R0</b> contract freeze</td><td>Recorded fixtures replay green against the Python Brain in CI.</td></tr>
     <tr><td><b>R1–R4</b> port</td><td>Each Rust module passes its Python fixtures; state hash is byte-identical.</td></tr>
@@ -485,7 +485,7 @@
     </div>
     <div class="card"><h3>Decisions needed from you</h3>
       <ul class="small">
-        <li><b>Zones.</b> <span class="pill keep">decided</span> Free per Grid (D-V3-40). Two follow-ups: does a new Grid start empty or from the six as a template (template assumed)? And what happens to residents and businesses in a zone the Polis removes (removal blocked until empty, assumed)?</li>
+        <li><b>Zones.</b> <span class="pill keep">decided</span> Free per Grid (D-V3-40). A new Grid starts from the six as a template, which its Polis may then change. One follow-up: what happens to residents and businesses in a zone the Polis removes (removal blocked until empty, assumed)?</li>
         <li><b>Private Grid on the map.</b> Show name with a lock (assumed here), or hide private Grids from non-members entirely?</li>
         <li><b>Who sets visibility.</b> The Polis by legislation (assumed here), or the Grid's creator at creation time?</li>
         <li><b>Mac shell.</b> Tauri with reused React UI (recommended), or native SwiftUI?</li>
