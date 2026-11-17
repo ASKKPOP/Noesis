@@ -127,13 +127,13 @@
 <div class="wrap">
 
 <header style="display:flex;flex-direction:column;gap:14px">
-  <div class="eyebrow">Plan report · 2026-11-17 · rev 2 (zones freed) · proposal, nothing built yet</div>
+  <div class="eyebrow">Plan report · 2026-11-17 · rev 3 (zones freed · SwiftUI shell) · proposal, nothing built yet</div>
   <h1>Three surfaces, re-planned: Portal, Grid, and a Rust Nous for Mac</h1>
   <p class="lede">You asked for three changes: the Portal at <code>noesiis.com</code> opens on a public map of every Grid; a Grid at <code>grid.noesiis.com</code> has no fixed identity or purpose; and the Nous Brain moves from Python to Rust and ships as a Mac desktop application. This report shows what each surface would look like, what changes underneath, and the order to build it in.</p>
   <div class="grid3">
     <div class="card accent"><div class="eyebrow">1 · Portal</div><h3>noesiis.com</h3><p class="small">Public front door. Anyone sees the map of all Grids. Public Grids can be visited by anyone; private Grids admit members only.</p></div>
     <div class="card blue"><div class="eyebrow">2 · Grid</div><h3>grid.noesiis.com</h3><p class="small">Reached from the Portal after sign-in. Same civic institutions everywhere, its own zones; what a Grid <em>is</em> emerges from what its Nous do there and can change.</p></div>
-    <div class="card violet"><div class="eyebrow">3 · Nous / Brain</div><h3>Noēsis.app (local)</h3><p class="small">One signed Mac app with the mind written in Rust inside it. Replaces the Python Brain and the Electron Local Nous Manager.</p></div>
+    <div class="card violet"><div class="eyebrow">3 · Nous / Brain</div><h3>Noēsis.app (local)</h3><p class="small">One signed, native SwiftUI Mac app with the mind written in Rust inside it. Replaces the Python Brain and the Electron Local Nous Manager.</p></div>
   </div>
 </header>
 
@@ -190,7 +190,7 @@
     <tr><th>Surface</th><th>Today (in the repo)</th><th>Proposed</th><th></th></tr>
     <tr><td><b>Portal</b></td><td>Landing page + <code>/portal/*</code> routes in the dashboard app; <code>GridRegistry</code> and <code>GET /api/v1/portal/grids</code> exist (D-V3-37); no visibility field.</td><td>Landing <em>is</em> the all-Grid map. Each Grid carries <code>public</code> or <code>private</code> visibility and a member list.</td><td><span class="pill change">change</span></td></tr>
     <tr><td><b>Grid</b></td><td><code>/grid/*</code> on the same host as the Portal; one live Grid (Genesis); <code>grid.noesiis.com</code> does not exist yet.</td><td>Own host, entered from the Portal after sign-in. Identity is a derived, drifting profile, never a type field.</td><td><span class="pill change">change</span></td></tr>
-    <tr><td><b>Nous / Brain</b></td><td>Python 3.12, about 19.8k lines across 36 modules, 158 test files. Separate Electron app (<code>apps/local-nous-manager</code>).</td><td>Rust core crate inside one Mac app. Same crate builds a headless binary for hosted (Type B) Nous.</td><td><span class="pill new">rewrite</span></td></tr>
+    <tr><td><b>Nous / Brain</b></td><td>Python 3.12, about 19.8k lines across 36 modules, 158 test files. Separate Electron app (<code>apps/local-nous-manager</code>).</td><td>Rust core crate inside one native SwiftUI Mac app. Same crate builds a headless binary for hosted (Type B) Nous, ported in the same program.</td><td><span class="pill new">rewrite</span></td></tr>
     <tr><td><b>Zones</b></td><td>Exactly six zone types in every Grid, fixed in code (D-V3-32).</td><td>Each Grid's Polis defines its own zone set by law. Genesis keeps its six as its own choice; a new Grid starts from the same six as a template (D-V3-40, decided 2026-11-17).</td><td><span class="pill change">change</span></td></tr>
     <tr><td><b>Frame</b></td><td>8 civic institutions, money axiom, audit chain, Portal-gated Civic-DID.</td><td>Unchanged. These are what every Grid has in common.</td><td><span class="pill keep">keep</span></td></tr>
   </table></div>
@@ -375,18 +375,18 @@
         </div>
       </div>
     </div>
-    <figcaption>Demo mock with illustrative values. Panels map to what the Local Nous Manager already shows; its React UI is reused inside the new shell.</figcaption>
+    <figcaption>Demo mock with illustrative values. Panels map to what the Local Nous Manager already shows, rebuilt as native SwiftUI views.</figcaption>
   </figure>
 
   <div class="grid2">
-    <div class="card"><h3>Recommended shape</h3>
+    <div class="card"><h3>Decided shape</h3>
       <ul class="small">
         <li><b><code>noesis-brain</code> core crate</b> in Rust: faculties, memory, LLM routing, wire client. No UI code.</li>
-        <li><b>Mac app</b> = Tauri 2 shell around the core crate, reusing the React UI from <code>apps/local-nous-manager</code>. Signed and notarized <code>.dmg</code>.</li>
-        <li><b>Headless binary</b> from the same crate for hosted Type B Nous, replacing the Python containers later.</li>
+        <li><b>Mac app</b> = native SwiftUI over the core crate, linked in-process through generated Swift bindings (UniFFI is the candidate). Signed and notarized <code>.dmg</code>.</li>
+        <li><b>Headless binary</b> from the same crate for hosted Type B Nous, replacing the Python containers in the same program.</li>
         <li><b>Grid untouched.</b> The RPC and P2P contract is frozen first and both Brains must pass the same recorded fixtures.</li>
       </ul>
-      <p class="small mut">Alternative shell: native SwiftUI over the Rust core. More Mac-native, but the UI is rewritten and locked to Apple platforms.</p>
+      <p class="small mut">Cost of going native: the manager UI is rewritten in Swift rather than reused, and the app is Apple-only. The Rust core stays portable.</p>
     </div>
     <div class="card"><h3>Library mapping (Python → Rust)</h3>
       <div class="tablewrap" style="border:0"><table style="min-width:0">
@@ -413,11 +413,11 @@
         <g><rect x="342" y="30" width="150" height="150" rx="10" fill="var(--violet-soft)" stroke="var(--violet)"/><text x="356" y="54" font-weight="700" fill="var(--violet)">R2</text><text x="356" y="76" font-weight="600" fill="var(--ink)">Deterministic</text><text x="356" y="98" fill="var(--ink2)">bios, ananke,</text><text x="356" y="115" fill="var(--ink2)">chronos, thymos,</text><text x="356" y="132" fill="var(--ink2)">psyche, telos,</text><text x="356" y="149" fill="var(--ink2)">retrieval</text></g>
         <g><rect x="508" y="30" width="150" height="150" rx="10" fill="var(--violet-soft)" stroke="var(--violet)"/><text x="522" y="54" font-weight="700" fill="var(--violet)">R3</text><text x="522" y="76" font-weight="600" fill="var(--ink)">LLM loops</text><text x="522" y="98" fill="var(--ink2)">planner, decision,</text><text x="522" y="115" fill="var(--ink2)">skills, learning,</text><text x="522" y="132" fill="var(--ink2)">rehearsal, sleep,</text><text x="522" y="149" fill="var(--ink2)">tools</text></g>
         <g><rect x="674" y="30" width="150" height="150" rx="10" fill="var(--crit-bg)" stroke="var(--crit)"/><text x="688" y="54" font-weight="700" fill="var(--crit)">R4</text><text x="688" y="76" font-weight="600" fill="var(--ink)">P2P + outward</text><text x="688" y="98" fill="var(--ink2)">WebRTC, whisper,</text><text x="688" y="115" fill="var(--ink2)">praxis, synopsis,</text><text x="688" y="132" fill="var(--ink2)">aisthesis</text><text x="688" y="149" fill="var(--crit)">highest risk</text></g>
-        <g><rect x="840" y="30" width="150" height="150" rx="10" fill="var(--good-bg)" stroke="var(--good)"/><text x="854" y="54" font-weight="700" fill="var(--good)">R5</text><text x="854" y="76" font-weight="600" fill="var(--ink)">Cut over</text><text x="854" y="98" fill="var(--ink2)">soak a Rust Nous</text><text x="854" y="115" fill="var(--ink2)">on Genesis, then</text><text x="854" y="132" fill="var(--ink2)">retire Python and</text><text x="854" y="149" fill="var(--ink2)">Electron</text></g>
+        <g><rect x="840" y="30" width="150" height="150" rx="10" fill="var(--good-bg)" stroke="var(--good)"/><text x="854" y="54" font-weight="700" fill="var(--good)">R5</text><text x="854" y="76" font-weight="600" fill="var(--ink)">Cut over</text><text x="854" y="98" fill="var(--ink2)">soak a Rust Nous</text><text x="854" y="115" fill="var(--ink2)">on Genesis, then</text><text x="854" y="132" fill="var(--ink2)">move Type B, retire</text><text x="854" y="149" fill="var(--ink2)">Python + Electron</text></g>
       </g>
       <g stroke="var(--mut)" stroke-width="1.5"><line x1="160" y1="105" x2="174" y2="105" marker-end="url(#ar2)"/><line x1="326" y1="105" x2="340" y2="105" marker-end="url(#ar2)"/><line x1="492" y1="105" x2="506" y2="105" marker-end="url(#ar2)"/><line x1="658" y1="105" x2="672" y2="105" marker-end="url(#ar2)"/><line x1="824" y1="105" x2="838" y2="105" marker-end="url(#ar2)"/></g>
       <rect x="176" y="198" width="814" height="34" rx="8" fill="var(--blue-soft)" stroke="var(--blue)"/>
-      <text x="583" y="220" text-anchor="middle" font-size="13" fill="var(--ink)"><tspan font-weight="700">App shell track</tspan> · Tauri window + reused React UI, runs alongside R1–R4, first signed build once R1 lands</text>
+      <text x="583" y="220" text-anchor="middle" font-size="13" fill="var(--ink)"><tspan font-weight="700">App shell track</tspan> · SwiftUI app + Swift bindings to the core, runs alongside R1–R4, first signed build once R1 lands</text>
     </svg>
     </div>
     <figcaption>The Python Brain keeps running live Nous until R5. Each step is done when the Rust module passes the same fixtures as the Python one.</figcaption>
@@ -465,7 +465,7 @@
     <tr><td><b>G3</b> identity profile</td><td>Profile recomputes from the audit chain and matches a hand count on a fixture chain.</td></tr>
     <tr><td><b>R0</b> contract freeze</td><td>Recorded fixtures replay green against the Python Brain in CI.</td></tr>
     <tr><td><b>R1–R4</b> port</td><td>Each Rust module passes its Python fixtures; state hash is byte-identical.</td></tr>
-    <tr><td><b>R5</b> cut over</td><td>A Rust-Brain Nous runs on Genesis for an agreed soak period with a zero-diff audit chain; signed <code>.dmg</code> installs on a clean Mac.</td></tr>
+    <tr><td><b>R5</b> cut over</td><td>A Rust-Brain Nous runs on Genesis for an agreed soak period with a zero-diff audit chain; signed <code>.dmg</code> installs on a clean Mac; hosted Type B Nous run on the Rust binary.</td></tr>
   </table></div>
 </section>
 
@@ -477,6 +477,7 @@
       <ul class="small">
         <li><span class="pill risk">high</span> <b>Rewrite stalls the mind's roadmap.</b> About 19.8k lines and 158 test files move languages. New faculty work must pause or be written twice until R5.</li>
         <li><span class="pill risk">high</span> <b>WebRTC parity.</b> The P2P layer depends on <code>aiortc</code>; the Rust stack must interoperate with Python peers during the overlap.</li>
+        <li><span class="pill risk">med</span> <b>Two new languages at once.</b> Rust for the core and Swift for the UI, with a binding layer between them; the existing React manager UI is not reused.</li>
         <li><span class="pill risk">med</span> <b>Behaviour drift.</b> Prompts and tolerant JSON parsing (D-MIND-04, D-MIND-07) are tuned to small models; a port can change outcomes without failing a type check. Fixtures in R0 are the guard.</li>
         <li><span class="pill risk">med</span> <b>Zones are assumed in many places.</b> Base tax per zone, residence anchoring, the founding law and the 3D city map all expect exactly six. Each has to read the Grid's own set instead.</li>
         <li><span class="pill risk">med</span> <b>New subdomain on a shared host.</b> <code>grid.noesiis.com</code> needs DNS, a certificate, and a route in the host-level proxy that also serves other sites.</li>
@@ -488,24 +489,25 @@
         <li><b>Zones.</b> <span class="pill keep">decided</span> Free per Grid (D-V3-40). A new Grid starts from the six as a template, which its Polis may then change. One follow-up: what happens to residents and businesses in a zone the Polis removes (removal blocked until empty, assumed)?</li>
         <li><b>Private Grid on the map.</b> <span class="pill keep">decided</span> Shown to everyone with its name and a lock; only members enter (D-V3-41).</li>
         <li><b>Who sets visibility.</b> The Polis by legislation (assumed here), or the Grid's creator at creation time?</li>
-        <li><b>Mac shell.</b> Tauri with reused React UI (recommended), or native SwiftUI?</li>
-        <li><b>Type B.</b> Port hosted Nous to the Rust binary in the same program, or leave them on Python until the Mac app is proven?</li>
-        <li><b>Multi-Grid.</b> Does the map imply turning on a second live Grid now? Today D-V3-30 holds one.</li>
+        <li><b>Mac shell.</b> <span class="pill keep">decided</span> Native SwiftUI over the Rust core (D-V3-42).</li>
+        <li><b>Type B.</b> <span class="pill keep">decided</span> Hosted Nous move to the Rust binary in the same program (D-V3-42).</li>
+        <li><b>Multi-Grid.</b> <span class="pill keep">decided</span> Test everything on the first Grid (Genesis); other Grids are activated only after that. D-V3-30 holds.</li>
       </ul>
     </div>
   </div>
   <div class="tablewrap"><table>
     <tr><th>Decision record</th><th>Effect of this plan</th></tr>
     <tr><td>D-V3-29 Portal functions</td><td>Extended: public Grid map and visibility become part of the Portal's directory function.</td></tr>
-    <tr><td>D-V3-30 / D-V3-37 one live Grid</td><td>Unchanged unless you choose otherwise above.</td></tr>
+    <tr><td>D-V3-30 / D-V3-37 one live Grid</td><td>Reaffirmed: Genesis is the test Grid; others are activated only after it is proven.</td></tr>
     <tr><td>D-V3-32 six zones</td><td>Overturned by D-V3-40 (2026-11-17): the zone set belongs to each Grid's Polis. Code still enforces six until G2 ships.</td></tr>
     <tr><td>D-V3-41 (new)</td><td>Each Grid is public or private. The Portal map lists both; a private Grid shows name and lock to non-members.</td></tr>
     <tr><td>D-V3-40 (new)</td><td>Zones are free per Grid; a Grid's identity and purpose are emergent and never assigned.</td></tr>
     <tr><td>D-V3-33 / D-V3-39 Portal-gated registration</td><td>Unchanged. The Rust app registers through the same queue.</td></tr>
     <tr><td>D-V3-36 Tier 1 Local Nous Manager</td><td>Reframed: Tier 1 is the Mac app itself, with the Brain inside it.</td></tr>
+    <tr><td>D-V3-42 (new)</td><td>Brain is rewritten in Rust; Type A ships as a native SwiftUI Mac app; Type B runs the same Rust core headless.</td></tr>
     <tr><td>D-MIND-01…09</td><td>Unchanged in behaviour; re-implemented in Rust under parity fixtures.</td></tr>
   </table></div>
-  <p class="small mut">Nothing in this report has been implemented. The zone and map decisions are recorded in the decision log as D-V3-40 and D-V3-41; the concept pages keep describing the six-zone system until G2 is built.</p>
+  <p class="small mut">Nothing in this report has been implemented. The zone and map decisions are recorded in the decision log as D-V3-40, D-V3-41 and D-V3-42; the concept pages keep describing the six-zone system until G2 is built.</p>
 </section>
 
 </div>

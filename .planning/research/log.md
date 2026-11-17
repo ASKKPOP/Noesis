@@ -212,3 +212,8 @@ stays fixed under "identity not fixed", and Tauri vs SwiftUI shell. [[v3.0/CIVIC
 Operator chose "Free the zones": D-V3-32 (6-zone invariant) superseded; each Polis owns its zone
 set. Recorded in the wiki decision log; not built. Carry forward: tax, residence, founding law and
 the city map all assume six. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] decision | D-V3-41, D-V3-42 — locked private Grids; Rust Brain + SwiftUI Mac app
+Operator decisions: private Grids listed on the Portal map with name + lock (D-V3-41); Brain →
+Rust core, Type A as native SwiftUI Mac app, Type B on the same core headless; first Grid is the
+test Grid, others activated after (D-V3-42, D-V3-30 reaffirmed). Not built. [[v3.0/CIVIC-ARCHITECTURE]]
