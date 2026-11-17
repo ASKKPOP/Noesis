@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Noēsis Surfaces Re-plan — 2026-11-17</title>
+<style>
+  :root{
+    --bg:#F5F1E8; --surface:#FBF9F3; --surface2:#EFEADD; --line:#DDD5C3; --line2:#C9BFA9;
+    --ink:#1F1D1A; --ink2:#4A463F; --mut:#7A7366;
+    --accent:#C96442; --accent-soft:#F1DDD2;
+    --blue:#3B6E8F; --blue-soft:#C9DAE5; --violet:#8A6FA8; --violet-soft:#E2D9EC;
+    --good:#2E7D4F; --good-bg:#DDEFE2; --warn:#A8690A; --warn-bg:#F6E7C6; --crit:#B3372C; --crit-bg:#F6D9D5;
+    --serif:"Tiempos Headline","Source Serif 4","Iowan Old Style","Palatino Linotype",Georgia,serif;
+    --sans:"Styrene B","Söhne",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#1F1E1B; --surface:#272622; --surface2:#302E29; --line:#3D3A33; --line2:#555147;
+      --ink:#EFEAE0; --ink2:#C9C3B6; --mut:#989182;
+      --accent:#DD7B5A; --accent-soft:#4A2E24;
+      --blue:#7FB2D1; --blue-soft:#2F4656; --violet:#B59AD0; --violet-soft:#3B3247;
+      --good:#6CC08D; --good-bg:#1E3A2A; --warn:#E0A84A; --warn-bg:#40321A; --crit:#EE8479; --crit-bg:#4A2320;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1F1E1B; --surface:#272622; --surface2:#302E29; --line:#3D3A33; --line2:#555147;
+    --ink:#EFEAE0; --ink2:#C9C3B6; --mut:#989182;
+    --accent:#DD7B5A; --accent-soft:#4A2E24;
+    --blue:#7FB2D1; --blue-soft:#2F4656; --violet:#B59AD0; --violet-soft:#3B3247;
+    --good:#6CC08D; --good-bg:#1E3A2A; --warn:#E0A84A; --warn-bg:#40321A; --crit:#EE8479; --crit-bg:#4A2320;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 20px 80px;display:flex;flex-direction:column;gap:48px}
+  h1,h2,h3{font-family:var(--serif);font-weight:500;margin:0;letter-spacing:-.01em;text-wrap:balance}
+  h1{font-size:clamp(30px,5vw,44px);line-height:1.1}
+  h2{font-size:27px;line-height:1.2}
+  h3{font-size:18px;line-height:1.3}
+  p{margin:0;max-width:74ch}
+  code{font-family:var(--mono);font-size:.87em;background:var(--surface2);padding:1px 5px;border-radius:4px}
+  .eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);font-weight:600}
+  .lede{font-size:18px;color:var(--ink2);max-width:68ch}
+  .mut{color:var(--mut)} .small{font-size:13px}
+  section{display:flex;flex-direction:column;gap:18px}
+  .sec-head{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:22px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:8px}
+  .card.accent{border-left:4px solid var(--accent)}
+  .card.blue{border-left:4px solid var(--blue)}
+  .card.violet{border-left:4px solid var(--violet)}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;white-space:nowrap}
+  .pill.keep{background:var(--good-bg);color:var(--good)} .pill.keep::before{content:"✓"}
+  .pill.change{background:var(--warn-bg);color:var(--warn)} .pill.change::before{content:"↻"}
+  .pill.new{background:var(--accent-soft);color:var(--accent)} .pill.new::before{content:"+"}
+  .pill.risk{background:var(--crit-bg);color:var(--crit)} .pill.risk::before{content:"!"}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:620px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:600;background:var(--surface2)}
+  tr:last-child td{border-bottom:0}
+  ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:74ch}
+  figure{margin:0;display:flex;flex-direction:column;gap:8px}
+  figcaption{font-size:13px;color:var(--mut)}
+  svg text{font-family:var(--sans)}
+  .diagram{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+  .diagram svg{display:block;width:100%;min-width:640px;height:auto}
+
+  /* ---------- demo mock screens (fixed product-dark palette in both themes) ---------- */
+  .shot{border-radius:12px;overflow:hidden;border:1px solid var(--line2);box-shadow:0 10px 30px rgba(0,0,0,.18);background:#020610;color:#DCE6F2;font-size:13px;line-height:1.45}
+  .chrome{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#161B26;border-bottom:1px solid #263042}
+  .dots{display:flex;gap:6px;flex:none}
+  .dots i{width:11px;height:11px;border-radius:50%;display:block}
+  .dots i:nth-child(1){background:#FF5F57}.dots i:nth-child(2){background:#FEBC2E}.dots i:nth-child(3){background:#28C840}
+  .url{flex:1;min-width:0;background:#0B101A;border:1px solid #263042;border-radius:7px;padding:3px 10px;font-family:var(--mono);font-size:12px;color:#9FB0C6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .url b{color:#E8EEF7;font-weight:500}
+  .wintitle{flex:1;text-align:center;font-size:12px;color:#9FB0C6;font-weight:600}
+  .demo-tag{position:absolute;top:10px;right:10px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:#C96442;color:#fff;padding:2px 8px;border-radius:99px;font-weight:700}
+  .screen{position:relative;padding:16px}
+  .nav{display:flex;align-items:center;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+  .brand{font-weight:700;letter-spacing:.18em;font-size:13px;color:#fff}
+  .nav span{color:#8FA0B8}
+  .nav .on{color:#fff;border-bottom:2px solid #DD7B5A;padding-bottom:2px}
+  .btn{margin-left:auto;margin-right:92px;background:#C96442;color:#fff;border-radius:7px;padding:4px 12px;font-weight:600;font-size:12px}
+  .glass{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 12px}
+  .pm{display:grid;grid-template-columns:1.9fr 1fr;gap:12px}
+  @media (max-width:760px){.pm{grid-template-columns:1fr}.btn{margin-right:0}}
+  .pm svg{width:100%;height:auto;display:block;border-radius:10px}
+  .glist{display:flex;flex-direction:column;gap:8px}
+  .grow{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .tg{font-size:10.5px;padding:1px 7px;border-radius:99px;font-weight:600;white-space:nowrap}
+  .tg.pub{background:#12331F;color:#7BD89E}.tg.prv{background:#3A2A12;color:#F0BA63}.tg.you{background:#3B2018;color:#F09A7A}
+  .dim{color:#8FA0B8}.tiny{font-size:11px}
+  .zones{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+  @media (max-width:760px){.zones{grid-template-columns:repeat(3,1fr)}}
+  .zone{border-radius:8px;padding:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04)}
+  .zone b{display:block;font-size:12px;color:#fff}
+  .meter{height:5px;border-radius:3px;background:#1B2536;margin-top:6px;overflow:hidden}
+  .meter i{display:block;height:100%;background:#DD7B5A}
+  .mix{display:flex;height:16px;border-radius:5px;overflow:hidden;margin:8px 0 6px}
+  .mix i{display:block;height:100%}
+  .legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11px;color:#B5C2D6}
+  .legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+  .inst{display:flex;flex-wrap:wrap;gap:6px}
+  .inst span{font-size:11px;border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:1px 9px;color:#C6D2E3}
+  .feed{font-family:var(--mono);font-size:11px;color:#9FB0C6;display:flex;flex-direction:column;gap:3px}
+  .feed b{color:#7BD89E;font-weight:500}
+  .app{display:grid;grid-template-columns:150px 1fr;min-height:330px}
+  @media (max-width:760px){.app{grid-template-columns:1fr}.side{display:none}}
+  .side{background:#0D1320;border-right:1px solid #263042;padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+  .side span{padding:5px 10px;border-radius:6px;color:#9FB0C6}
+  .side .on{background:#1D2738;color:#fff}
+  .side .sep{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#5F6F87;padding:10px 10px 2px}
+  .main{position:relative;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .kp{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  @media (max-width:760px){.kp{grid-template-columns:repeat(2,1fr)}}
+  .kp .glass b{display:block;font-size:15px;color:#fff}
+  .ok{color:#7BD89E}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:14px">
+  <div class="eyebrow">Plan report · 2026-11-17 · proposal, nothing built yet</div>
+  <h1>Three surfaces, re-planned: Portal, Grid, and a Rust Nous for Mac</h1>
+  <p class="lede">You asked for three changes: the Portal at <code>noesiis.com</code> opens on a public map of every Grid; a Grid at <code>grid.noesiis.com</code> has no fixed identity or purpose; and the Nous Brain moves from Python to Rust and ships as a Mac desktop application. This report shows what each surface would look like, what changes underneath, and the order to build it in.</p>
+  <div class="grid3">
+    <div class="card accent"><div class="eyebrow">1 · Portal</div><h3>noesiis.com</h3><p class="small">Public front door. Anyone sees the map of all Grids. Public Grids can be visited by anyone; private Grids admit members only.</p></div>
+    <div class="card blue"><div class="eyebrow">2 · Grid</div><h3>grid.noesiis.com</h3><p class="small">Reached from the Portal after sign-in. Same civic frame everywhere; what a Grid <em>is</em> emerges from what its Nous do there and can change.</p></div>
+    <div class="card violet"><div class="eyebrow">3 · Nous / Brain</div><h3>Noēsis.app (local)</h3><p class="small">One signed Mac app with the mind written in Rust inside it. Replaces the Python Brain and the Electron Local Nous Manager.</p></div>
+  </div>
+</header>
+
+<!-- ================= OVERVIEW ================= -->
+<section>
+  <div class="sec-head"><div class="eyebrow">Overview</div><h2>How the three surfaces connect</h2></div>
+  <figure>
+    <div class="diagram">
+    <svg viewBox="0 0 1000 330" role="img" aria-label="Flow from visitor through Portal to Grid, with the local Nous app connecting to the Grid">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker></defs>
+      <!-- web lane -->
+      <rect x="10" y="14" width="980" height="170" rx="12" fill="none" stroke="var(--line2)" stroke-dasharray="4 4"/>
+      <text x="24" y="36" font-size="12" fill="var(--mut)" font-weight="600" letter-spacing="1">HOSTED · WEB</text>
+      <rect x="10" y="212" width="980" height="106" rx="12" fill="none" stroke="var(--line2)" stroke-dasharray="4 4"/>
+      <text x="24" y="234" font-size="12" fill="var(--mut)" font-weight="600" letter-spacing="1">LOCAL · OPERATOR'S MAC</text>
+
+      <rect x="40" y="70" width="130" height="70" rx="10" fill="var(--surface2)" stroke="var(--line2)"/>
+      <text x="105" y="101" text-anchor="middle" font-size="14" fill="var(--ink)" font-weight="600">Visitor</text>
+      <text x="105" y="120" text-anchor="middle" font-size="12" fill="var(--mut)">no account</text>
+
+      <rect x="250" y="54" width="250" height="104" rx="10" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text x="375" y="80" text-anchor="middle" font-size="15" fill="var(--ink)" font-weight="600">Portal · noesiis.com</text>
+      <text x="375" y="101" text-anchor="middle" font-size="12.5" fill="var(--ink2)">public map of all Grids</text>
+      <text x="375" y="119" text-anchor="middle" font-size="12.5" fill="var(--ink2)">sign-in · accounts · registration</text>
+      <text x="375" y="137" text-anchor="middle" font-size="12.5" fill="var(--ink2)">Grid directory + visibility</text>
+
+      <rect x="640" y="54" width="310" height="104" rx="10" fill="var(--blue-soft)" stroke="var(--blue)"/>
+      <text x="795" y="80" text-anchor="middle" font-size="15" fill="var(--ink)" font-weight="600">Grid · grid.noesiis.com/&lt;grid&gt;</text>
+      <text x="795" y="101" text-anchor="middle" font-size="12.5" fill="var(--ink2)">6 zones · 8 civic institutions · economy</text>
+      <text x="795" y="119" text-anchor="middle" font-size="12.5" fill="var(--ink2)">tamper-evident record</text>
+      <text x="795" y="137" text-anchor="middle" font-size="12.5" fill="var(--ink2)">identity: emergent, not assigned</text>
+
+      <line x1="170" y1="105" x2="246" y2="105" stroke="var(--mut)" stroke-width="1.5" marker-end="url(#ar)"/>
+      <text x="208" y="96" text-anchor="middle" font-size="11.5" fill="var(--mut)">browse</text>
+      <line x1="500" y1="92" x2="636" y2="92" stroke="var(--mut)" stroke-width="1.5" marker-end="url(#ar)"/>
+      <text x="568" y="83" text-anchor="middle" font-size="11.5" fill="var(--mut)">public Grid: visit</text>
+      <line x1="500" y1="124" x2="636" y2="124" stroke="var(--mut)" stroke-width="1.5" marker-end="url(#ar)"/>
+      <text x="568" y="142" text-anchor="middle" font-size="11.5" fill="var(--mut)">private: sign-in + member</text>
+
+      <rect x="250" y="246" width="250" height="58" rx="10" fill="var(--violet-soft)" stroke="var(--violet)"/>
+      <text x="375" y="271" text-anchor="middle" font-size="15" fill="var(--ink)" font-weight="600">Noēsis.app · Rust Brain</text>
+      <text x="375" y="290" text-anchor="middle" font-size="12.5" fill="var(--ink2)">mind · memory · local model</text>
+
+      <path d="M375 246 V162" stroke="var(--mut)" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+      <text x="383" y="204" font-size="11.5" fill="var(--mut)">register Nous (Portal-gated)</text>
+      <path d="M500 275 H795 V162" stroke="var(--mut)" stroke-width="1.5" fill="none" marker-end="url(#ar)" marker-start="url(#ar)"/>
+      <text x="648" y="267" text-anchor="middle" font-size="11.5" fill="var(--mut)">same wire protocol as today (RPC + P2P)</text>
+    </svg>
+    </div>
+    <figcaption>Registration still runs Portal → Polis (D-V3-33, D-V3-39). The Grid never learns that the Brain changed language: the wire contract is held fixed.</figcaption>
+  </figure>
+
+  <div class="tablewrap"><table>
+    <tr><th>Surface</th><th>Today (in the repo)</th><th>Proposed</th><th></th></tr>
+    <tr><td><b>Portal</b></td><td>Landing page + <code>/portal/*</code> routes in the dashboard app; <code>GridRegistry</code> and <code>GET /api/v1/portal/grids</code> exist (D-V3-37); no visibility field.</td><td>Landing <em>is</em> the all-Grid map. Each Grid carries <code>public</code> or <code>private</code> visibility and a member list.</td><td><span class="pill change">change</span></td></tr>
+    <tr><td><b>Grid</b></td><td><code>/grid/*</code> on the same host as the Portal; one live Grid (Genesis); <code>grid.noesiis.com</code> does not exist yet.</td><td>Own host, entered from the Portal after sign-in. Identity is a derived, drifting profile, never a type field.</td><td><span class="pill change">change</span></td></tr>
+    <tr><td><b>Nous / Brain</b></td><td>Python 3.12, about 19.8k lines across 36 modules, 158 test files. Separate Electron app (<code>apps/local-nous-manager</code>).</td><td>Rust core crate inside one Mac app. Same crate builds a headless binary for hosted (Type B) Nous.</td><td><span class="pill new">rewrite</span></td></tr>
+    <tr><td><b>Frame</b></td><td>6-zone city, 8 civic institutions, money axiom, audit chain, Portal-gated Civic-DID.</td><td>Unchanged. These are what every Grid has in common.</td><td><span class="pill keep">keep</span></td></tr>
+  </table></div>
+</section>
+
+<!-- ================= PORTAL ================= -->
+<section>
+  <div class="sec-head"><div class="eyebrow">Surface 1</div><h2>Portal: the public map of all Grids</h2>
+  <p>The first thing anyone sees at <code>noesiis.com</code>, signed in or not, is every Grid in orbit. A public Grid opens for anyone as a read-only visit. A private Grid is on the map but locked; only its members get in.</p></div>
+
+  <figure>
+    <div class="shot">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">https://<b>noesiis.com</b></div></div>
+      <div class="screen">
+        <span class="demo-tag">Demo mock</span>
+        <div class="nav"><span class="brand">NOĒSIS</span><span class="on">Grids</span><span>Wiki</span><span>Status</span><span class="btn">Sign in</span></div>
+        <div class="pm">
+          <svg viewBox="0 0 640 360" role="img" aria-label="Orbital map: four Grid stations above a planet, one locked">
+            <defs>
+              <radialGradient id="pl" cx="50%" cy="0%" r="70%"><stop offset="0" stop-color="#2B5C86"/><stop offset="1" stop-color="#07182B"/></radialGradient>
+              <radialGradient id="sp" cx="50%" cy="30%" r="80%"><stop offset="0" stop-color="#0C1830"/><stop offset="1" stop-color="#020610"/></radialGradient>
+            </defs>
+            <rect width="640" height="360" fill="url(#sp)"/>
+            <g fill="#C8D6EA"><circle cx="40" cy="30" r="1"/><circle cx="120" cy="80" r=".8"/><circle cx="210" cy="22" r="1.1"/><circle cx="330" cy="48" r=".8"/><circle cx="450" cy="20" r="1"/><circle cx="560" cy="66" r="1.1"/><circle cx="610" cy="140" r=".8"/><circle cx="70" cy="170" r=".9"/><circle cx="500" cy="118" r=".7"/><circle cx="270" cy="96" r=".7"/></g>
+            <circle cx="320" cy="640" r="340" fill="url(#pl)"/>
+            <path d="M 12 500 A 340 340 0 0 1 628 500" fill="none" stroke="#6FB4E8" stroke-opacity=".45" stroke-width="2"/>
+            <ellipse cx="320" cy="250" rx="285" ry="66" fill="none" stroke="#5A7FA8" stroke-opacity=".45" stroke-dasharray="3 5"/>
+            <ellipse cx="320" cy="228" rx="205" ry="44" fill="none" stroke="#5A7FA8" stroke-opacity=".35" stroke-dasharray="3 5"/>
+            <!-- Genesis -->
+            <g transform="translate(300,196)">
+              <ellipse rx="34" ry="9" fill="none" stroke="#DD7B5A" stroke-width="2"/><rect x="-7" y="-16" width="14" height="32" rx="3" fill="#DD7B5A"/><rect x="-40" y="-2" width="80" height="4" rx="2" fill="#F2B49D"/>
+              <text y="-26" text-anchor="middle" font-size="13" fill="#fff" font-weight="600">Genesis</text>
+              <text y="34" text-anchor="middle" font-size="10.5" fill="#7BD89E">public · you are a citizen</text>
+            </g>
+            <g transform="translate(110,238)">
+              <ellipse rx="22" ry="6" fill="none" stroke="#7FB2D1" stroke-width="1.6"/><rect x="-5" y="-11" width="10" height="22" rx="2" fill="#7FB2D1"/>
+              <text y="-19" text-anchor="middle" font-size="12" fill="#E8EEF7" font-weight="600">Grid B</text>
+              <text y="26" text-anchor="middle" font-size="10.5" fill="#7BD89E">public</text>
+            </g>
+            <g transform="translate(505,216)">
+              <ellipse rx="22" ry="6" fill="none" stroke="#7FB2D1" stroke-width="1.6"/><rect x="-5" y="-11" width="10" height="22" rx="2" fill="#7FB2D1"/>
+              <text y="-19" text-anchor="middle" font-size="12" fill="#E8EEF7" font-weight="600">Grid C</text>
+              <text y="26" text-anchor="middle" font-size="10.5" fill="#7BD89E">public</text>
+            </g>
+            <g transform="translate(560,292)" opacity=".8">
+              <ellipse rx="22" ry="6" fill="none" stroke="#F0BA63" stroke-width="1.6" stroke-dasharray="3 3"/><rect x="-5" y="-11" width="10" height="22" rx="2" fill="#8C7A56"/>
+              <rect x="-6" y="-3" width="12" height="9" rx="2" fill="#F0BA63"/><path d="M-3.5 -3 v-3 a3.5 3.5 0 0 1 7 0 v3" fill="none" stroke="#F0BA63" stroke-width="1.6"/>
+              <text y="-19" text-anchor="middle" font-size="12" fill="#E8EEF7" font-weight="600">Grid D</text>
+              <text y="26" text-anchor="middle" font-size="10.5" fill="#F0BA63">private · members only</text>
+            </g>
+          </svg>
+          <div class="glist">
+            <div class="glass"><div class="grow"><b>Genesis</b><span class="tg you">citizen</span></div><div class="dim tiny">Genesis Polis · public · open to visit</div></div>
+            <div class="glass"><div class="grow"><b>Grid B</b><span class="tg pub">public</span></div><div class="dim tiny">Grid B Polis · open to visit</div></div>
+            <div class="glass"><div class="grow"><b>Grid C</b><span class="tg pub">public</span></div><div class="dim tiny">Grid C Polis · open to visit</div></div>
+            <div class="glass"><div class="grow"><b>Grid D</b><span class="tg prv">🔒 private</span></div><div class="dim tiny">Members only · sign in to request access</div></div>
+            <div class="dim tiny">4 Grids · 3 public · 1 private</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption>Demo mock with illustrative data. At launch the real map shows one station, Genesis, because one Grid is live (D-V3-30). The view follows the space-viz canon: stations in orbit above a body, extending the existing orbital map rather than a flat directory.</figcaption>
+  </figure>
+
+  <div class="grid2">
+    <div class="card"><h3>Access rules</h3>
+      <div class="tablewrap" style="border:0"><table style="min-width:0">
+        <tr><th>Who</th><th>Public Grid</th><th>Private Grid</th></tr>
+        <tr><td>Anonymous visitor</td><td>See on map, visit read-only</td><td>See name + lock only</td></tr>
+        <tr><td>Signed-in non-member</td><td>Visit read-only, apply to register a Nous</td><td>Request access</td></tr>
+        <tr><td>Member</td><td>Full entry</td><td>Full entry</td></tr>
+      </table></div>
+      <p class="small mut">Visiting never grants action. Acting in a Grid still requires a registered Nous with a Civic-DID.</p>
+    </div>
+    <div class="card"><h3>What gets built</h3>
+      <ul class="small">
+        <li><span class="pill new">new</span> <code>visibility</code> on the Grid registry entry and a membership table; the public <code>/portal/grids</code> list returns only what a non-member may see.</li>
+        <li><span class="pill new">new</span> Landing page becomes the orbital all-Grid map, fed by the live registry. No hardcoded Grids.</li>
+        <li><span class="pill new">new</span> Access check at the Grid host: public passes, private requires a member session.</li>
+        <li><span class="pill change">change</span> Visibility is set by the Grid's Polis through legislation, not by the Grid Manager, which has no governance authority (D-V3-36).</li>
+        <li><span class="pill new">new</span> Audit events for visibility and membership changes, each added to the broadcast allowlist in the phase that introduces it.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= GRID ================= -->
+<section>
+  <div class="sec-head"><div class="eyebrow">Surface 2</div><h2>Grid: a place whose identity is not fixed</h2>
+  <p>A Grid is defined by its frame: six zones, eight civic institutions, an economy, and a tamper-evident record of everything that ever happened. Nothing in that frame says what the Grid is <em>for</em>. We never label Grid A "the shop" or Grid B "the library". If a Grid becomes mostly a market, that is something its Nous did, it shows in the record, and it can change next season.</p></div>
+
+  <figure>
+    <div class="shot">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">https://<b>grid.noesiis.com</b>/genesis</div></div>
+      <div class="screen" style="display:flex;flex-direction:column;gap:12px">
+        <span class="demo-tag">Demo mock</span>
+        <div class="nav" style="margin-bottom:0"><span class="brand">GENESIS</span><span class="on">City</span><span>Economy</span><span>Governance</span><span>Record</span><span class="dim" style="margin-left:auto;margin-right:92px">← Portal · signed in</span></div>
+        <div class="glass">
+          <div class="grow"><b>What this Grid is right now</b><span class="dim tiny">derived from the record · last 30 days · drifts over time</span></div>
+          <div class="mix"><i style="width:38%;background:#DD7B5A"></i><i style="width:24%;background:#7FB2D1"></i><i style="width:17%;background:#B59AD0"></i><i style="width:13%;background:#7BD89E"></i><i style="width:8%;background:#F0BA63"></i></div>
+          <div class="legend"><span><i style="background:#DD7B5A"></i>trade 38%</span><span><i style="background:#7FB2D1"></i>knowledge 24%</span><span><i style="background:#B59AD0"></i>making 17%</span><span><i style="background:#7BD89E"></i>civic 13%</span><span><i style="background:#F0BA63"></i>social 8%</span></div>
+          <div class="dim tiny" style="margin-top:6px">Six months ago: knowledge 41% · trade 19%. No one assigned either.</div>
+        </div>
+        <div class="zones">
+          <div class="zone"><b>Business</b><span class="dim tiny">activity</span><div class="meter"><i style="width:62%"></i></div></div>
+          <div class="zone"><b>Manufacture</b><span class="dim tiny">activity</span><div class="meter"><i style="width:34%"></i></div></div>
+          <div class="zone"><b>Shopping</b><span class="dim tiny">activity</span><div class="meter"><i style="width:78%"></i></div></div>
+          <div class="zone"><b>Residential</b><span class="dim tiny">activity</span><div class="meter"><i style="width:45%"></i></div></div>
+          <div class="zone"><b>Infrastructure</b><span class="dim tiny">activity</span><div class="meter"><i style="width:22%"></i></div></div>
+          <div class="zone"><b>Gov. Quarter</b><span class="dim tiny">activity</span><div class="meter"><i style="width:30%"></i></div></div>
+        </div>
+        <div class="pm" style="grid-template-columns:1fr 1fr">
+          <div class="glass"><div class="dim tiny" style="margin-bottom:6px">8 CIVIC INSTITUTIONS · same in every Grid</div><div class="inst"><span>DID Registry</span><span>Polis</span><span>Police</span><span>IRS / Treasury</span><span>Marketplace</span><span>Library</span><span>Communities</span><span>P2P</span></div></div>
+          <div class="glass"><div class="dim tiny" style="margin-bottom:6px">RECORD · tamper-evident</div><div class="feed"><span><b>✓</b> #48211 trade.settled</span><span><b>✓</b> #48212 library.entry_added</span><span><b>✓</b> #48213 ballot.cast</span></div></div>
+        </div>
+      </div>
+    </div>
+    <figcaption>Demo mock with illustrative numbers. The "right now" bar would be computed from real audit events, never typed in.</figcaption>
+  </figure>
+
+  <div class="diagram">
+    <svg viewBox="0 0 1000 210" role="img" aria-label="Fixed frame on the left, emergent identity on the right">
+      <rect x="20" y="20" width="440" height="170" rx="12" fill="var(--good-bg)" stroke="var(--good)"/>
+      <text x="40" y="50" font-size="15" font-weight="600" fill="var(--ink)">Fixed frame · every Grid, by constitution</text>
+      <g font-size="13" fill="var(--ink2)"><text x="40" y="80">Named <tspan font-weight="600">&lt;GridName&gt; Polis</tspan> government</text><text x="40" y="102">6 zones (D-V3-32) · 8 civic institutions</text><text x="40" y="124">Economy: compute-labor + ETH (D-MONEY-01)</text><text x="40" y="146">Tamper-evident audit chain</text><text x="40" y="168">Portal-gated Civic-DID (D-V3-33)</text></g>
+      <rect x="540" y="20" width="440" height="170" rx="12" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text x="560" y="50" font-size="15" font-weight="600" fill="var(--ink)">Emergent identity · never assigned</text>
+      <g font-size="13" fill="var(--ink2)"><text x="560" y="80">No <tspan font-family="var(--mono)">type</tspan> / <tspan font-family="var(--mono)">purpose</tspan> field at Grid creation</text><text x="560" y="102">Activity profile derived from the record</text><text x="560" y="124">Optional charter text, written by the Polis</text><text x="560" y="146">Zone sizes and tax rules amended by law</text><text x="560" y="168">Profile history kept, so drift is visible</text></g>
+      <text x="500" y="112" text-anchor="middle" font-size="26" fill="var(--mut)">+</text>
+    </svg>
+  </div>
+
+  <div class="grid2">
+    <div class="card"><h3>What gets built</h3>
+      <ul class="small">
+        <li><span class="pill new">new</span> <code>grid.noesiis.com/&lt;grid&gt;</code> host. Same dashboard app, routed by hostname; shared sign-in session with the Portal.</li>
+        <li><span class="pill new">new</span> Identity profile: a read-only projection over the audit chain (activity share by zone and institution over a window). No new source of truth.</li>
+        <li><span class="pill change">change</span> Grid creation review drops any "purpose" framing. A proposer names the Grid and its Polis, nothing else about what it must become.</li>
+        <li><span class="pill change">change</span> Wiki: <code>2-concepts/city/grid.md</code> and <code>1-design/civic-architecture.md</code> state the fixed-frame / emergent-identity split.</li>
+      </ul>
+    </div>
+    <div class="card"><h3>What does not change</h3>
+      <ul class="small">
+        <li><span class="pill keep">keep</span> The 6-zone invariant. A Grid that leans toward trade simply has a busier Shopping zone.</li>
+        <li><span class="pill keep">keep</span> Polis naming, per-Grid tax law, Type B first-year restrictions.</li>
+        <li><span class="pill keep">keep</span> One live Grid for now. This design is ready for more; it does not require them.</li>
+      </ul>
+      <p class="small mut">If you meant that the zone set itself should be free per Grid, that overturns D-V3-32 and is a larger change. See "Decisions needed".</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= NOUS ================= -->
+<section>
+  <div class="sec-head"><div class="eyebrow">Surface 3</div><h2>Nous / Brain: Rust, shipped as a Mac app</h2>
+  <p>The mind runs on the operator's machine. Today that means installing Python, a virtualenv, and a separate Electron manager. The proposal is one download: a signed <code>Noēsis.app</code> with the Brain compiled in.</p></div>
+
+  <figure>
+    <div class="shot">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="wintitle">Noēsis — Sophia</div><div style="width:45px"></div></div>
+      <div class="app">
+        <div class="side">
+          <span class="sep">Mind</span><span class="on">Overview</span><span>Goals</span><span>Memory</span><span>Skills</span><span>Personal wiki</span>
+          <span class="sep">Substrate</span><span>Local AI</span><span>Identity &amp; keys</span>
+          <span class="sep">World</span><span>Grid link</span><span>Activity</span>
+        </div>
+        <div class="main">
+          <span class="demo-tag">Demo mock</span>
+          <div><b style="font-size:16px;color:#fff">Sophia</b> <span class="ok tiny">● awake</span><div class="dim tiny">Type A · local Brain (Rust) · Genesis citizen</div></div>
+          <div class="kp">
+            <div class="glass"><span class="dim tiny">Local AI</span><b>qwen3:4b</b><span class="ok tiny">Ollama reachable</span></div>
+            <div class="glass"><span class="dim tiny">Grid link</span><b>Genesis</b><span class="ok tiny">connected</span></div>
+            <div class="glass"><span class="dim tiny">Memory</span><b>local</b><span class="dim tiny">stays on this Mac</span></div>
+            <div class="glass"><span class="dim tiny">Brain process</span><b>in-app</b><span class="dim tiny">no Python needed</span></div>
+          </div>
+          <div class="glass"><div class="dim tiny" style="margin-bottom:4px">CURRENT INTENT</div><b>Goal:</b> learn orbital logistics → <b>Task:</b> rehearse skill "dock supply run"<div class="meter" style="margin-top:8px"><i style="width:55%"></i></div></div>
+          <div class="glass"><div class="dim tiny" style="margin-bottom:4px">RECENT</div><div class="feed"><span>tick 9120 · decision · work on task</span><span>tick 9100 · memory · 3 retrieved for task</span><span>tick 9080 · rehearsal · 8 episodes refereed by Grid</span></div></div>
+        </div>
+      </div>
+    </div>
+    <figcaption>Demo mock with illustrative values. Panels map to what the Local Nous Manager already shows; its React UI is reused inside the new shell.</figcaption>
+  </figure>
+
+  <div class="grid2">
+    <div class="card"><h3>Recommended shape</h3>
+      <ul class="small">
+        <li><b><code>noesis-brain</code> core crate</b> in Rust: faculties, memory, LLM routing, wire client. No UI code.</li>
+        <li><b>Mac app</b> = Tauri 2 shell around the core crate, reusing the React UI from <code>apps/local-nous-manager</code>. Signed and notarized <code>.dmg</code>.</li>
+        <li><b>Headless binary</b> from the same crate for hosted Type B Nous, replacing the Python containers later.</li>
+        <li><b>Grid untouched.</b> The RPC and P2P contract is frozen first and both Brains must pass the same recorded fixtures.</li>
+      </ul>
+      <p class="small mut">Alternative shell: native SwiftUI over the Rust core. More Mac-native, but the UI is rewritten and locked to Apple platforms.</p>
+    </div>
+    <div class="card"><h3>Library mapping (Python → Rust)</h3>
+      <div class="tablewrap" style="border:0"><table style="min-width:0">
+        <tr><th>Today</th><th>Rust candidate</th><th></th></tr>
+        <tr><td>asyncio, aiohttp, websockets</td><td>tokio, axum, tokio-tungstenite</td><td></td></tr>
+        <tr><td>httpx, openai, anthropic, Ollama</td><td>reqwest (plain HTTP clients)</td><td></td></tr>
+        <tr><td>sqlite memory store</td><td>rusqlite</td><td></td></tr>
+        <tr><td>pynacl, PyJWT</td><td>ed25519-dalek / crypto_box, jsonwebtoken</td><td></td></tr>
+        <tr><td>aiortc (WebRTC P2P)</td><td>webrtc-rs</td><td><span class="pill risk">risk</span></td></tr>
+        <tr><td>trafilatura (HTML → text)</td><td>readability-style crate</td><td><span class="pill risk">risk</span></td></tr>
+        <tr><td>chromadb, sentence-transformers (optional)</td><td>sqlite vector ext. + local embedder</td><td><span class="pill risk">risk</span></td></tr>
+      </table></div>
+      <p class="small mut">Candidates, not yet evaluated against the code. Each "risk" row gets a spike before its step is committed.</p>
+    </div>
+  </div>
+
+  <figure>
+    <div class="diagram">
+    <svg viewBox="0 0 1000 250" role="img" aria-label="Port order: six steps from contract freeze to Python retirement">
+      <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker></defs>
+      <g font-size="12.5">
+        <g><rect x="10" y="30" width="150" height="150" rx="10" fill="var(--surface2)" stroke="var(--line2)"/><text x="24" y="54" font-weight="700" fill="var(--accent)">R0</text><text x="24" y="76" font-weight="600" fill="var(--ink)">Freeze contract</text><text x="24" y="98" fill="var(--ink2)">record RPC + state</text><text x="24" y="115" fill="var(--ink2)">hash fixtures from</text><text x="24" y="132" fill="var(--ink2)">Python; parity</text><text x="24" y="149" fill="var(--ink2)">harness in CI</text></g>
+        <g><rect x="176" y="30" width="150" height="150" rx="10" fill="var(--violet-soft)" stroke="var(--violet)"/><text x="190" y="54" font-weight="700" fill="var(--violet)">R1</text><text x="190" y="76" font-weight="600" fill="var(--ink)">Skeleton</text><text x="190" y="98" fill="var(--ink2)">runtime, config,</text><text x="190" y="115" fill="var(--ink2)">wire client, RPC,</text><text x="190" y="132" fill="var(--ink2)">state hash, sqlite</text><text x="190" y="149" fill="var(--ink2)">memory, LLM router</text></g>
+        <g><rect x="342" y="30" width="150" height="150" rx="10" fill="var(--violet-soft)" stroke="var(--violet)"/><text x="356" y="54" font-weight="700" fill="var(--violet)">R2</text><text x="356" y="76" font-weight="600" fill="var(--ink)">Deterministic</text><text x="356" y="98" fill="var(--ink2)">bios, ananke,</text><text x="356" y="115" fill="var(--ink2)">chronos, thymos,</text><text x="356" y="132" fill="var(--ink2)">psyche, telos,</text><text x="356" y="149" fill="var(--ink2)">retrieval</text></g>
+        <g><rect x="508" y="30" width="150" height="150" rx="10" fill="var(--violet-soft)" stroke="var(--violet)"/><text x="522" y="54" font-weight="700" fill="var(--violet)">R3</text><text x="522" y="76" font-weight="600" fill="var(--ink)">LLM loops</text><text x="522" y="98" fill="var(--ink2)">planner, decision,</text><text x="522" y="115" fill="var(--ink2)">skills, learning,</text><text x="522" y="132" fill="var(--ink2)">rehearsal, sleep,</text><text x="522" y="149" fill="var(--ink2)">tools</text></g>
+        <g><rect x="674" y="30" width="150" height="150" rx="10" fill="var(--crit-bg)" stroke="var(--crit)"/><text x="688" y="54" font-weight="700" fill="var(--crit)">R4</text><text x="688" y="76" font-weight="600" fill="var(--ink)">P2P + outward</text><text x="688" y="98" fill="var(--ink2)">WebRTC, whisper,</text><text x="688" y="115" fill="var(--ink2)">praxis, synopsis,</text><text x="688" y="132" fill="var(--ink2)">aisthesis</text><text x="688" y="149" fill="var(--crit)">highest risk</text></g>
+        <g><rect x="840" y="30" width="150" height="150" rx="10" fill="var(--good-bg)" stroke="var(--good)"/><text x="854" y="54" font-weight="700" fill="var(--good)">R5</text><text x="854" y="76" font-weight="600" fill="var(--ink)">Cut over</text><text x="854" y="98" fill="var(--ink2)">soak a Rust Nous</text><text x="854" y="115" fill="var(--ink2)">on Genesis, then</text><text x="854" y="132" fill="var(--ink2)">retire Python and</text><text x="854" y="149" fill="var(--ink2)">Electron</text></g>
+      </g>
+      <g stroke="var(--mut)" stroke-width="1.5"><line x1="160" y1="105" x2="174" y2="105" marker-end="url(#ar2)"/><line x1="326" y1="105" x2="340" y2="105" marker-end="url(#ar2)"/><line x1="492" y1="105" x2="506" y2="105" marker-end="url(#ar2)"/><line x1="658" y1="105" x2="672" y2="105" marker-end="url(#ar2)"/><line x1="824" y1="105" x2="838" y2="105" marker-end="url(#ar2)"/></g>
+      <rect x="176" y="198" width="814" height="34" rx="8" fill="var(--blue-soft)" stroke="var(--blue)"/>
+      <text x="583" y="220" text-anchor="middle" font-size="13" fill="var(--ink)"><tspan font-weight="700">App shell track</tspan> · Tauri window + reused React UI, runs alongside R1–R4, first signed build once R1 lands</text>
+    </svg>
+    </div>
+    <figcaption>The Python Brain keeps running live Nous until R5. Each step is done when the Rust module passes the same fixtures as the Python one.</figcaption>
+  </figure>
+</section>
+
+<!-- ================= ROADMAP ================= -->
+<section>
+  <div class="sec-head"><div class="eyebrow">Sequence</div><h2>Build order across the three tracks</h2>
+  <p>Portal and Grid are small and independent of the rewrite, so they ship first. The Rust port is the long pole. Bar lengths show relative effort only; they are my estimate from module counts, not a schedule.</p></div>
+  <div class="diagram">
+    <svg viewBox="0 0 1000 250" role="img" aria-label="Three tracks: Portal short, Grid short, Nous long">
+      <g font-size="12.5">
+        <text x="14" y="52" font-weight="600" fill="var(--ink)">Portal</text>
+        <text x="14" y="122" font-weight="600" fill="var(--ink)">Grid</text>
+        <text x="14" y="192" font-weight="600" fill="var(--ink)">Nous</text>
+        <g>
+          <rect x="90" y="32" width="120" height="32" rx="6" fill="var(--accent)"/><text x="150" y="53" text-anchor="middle" fill="#fff">P1 visibility + members</text>
+          <rect x="216" y="32" width="120" height="32" rx="6" fill="var(--accent)" opacity=".85"/><text x="276" y="53" text-anchor="middle" fill="#fff">P2 all-Grid map</text>
+          <rect x="342" y="32" width="90" height="32" rx="6" fill="var(--accent)" opacity=".7"/><text x="387" y="53" text-anchor="middle" fill="#fff">P3 access UX</text>
+        </g>
+        <g>
+          <rect x="216" y="102" width="110" height="32" rx="6" fill="var(--blue)"/><text x="271" y="123" text-anchor="middle" fill="#fff">G1 host + gate</text>
+          <rect x="332" y="102" width="130" height="32" rx="6" fill="var(--blue)" opacity=".85"/><text x="397" y="123" text-anchor="middle" fill="#fff">G2 identity profile</text>
+          <rect x="468" y="102" width="80" height="32" rx="6" fill="var(--blue)" opacity=".7"/><text x="508" y="123" text-anchor="middle" fill="#fff">G3 wiki</text>
+        </g>
+        <g>
+          <rect x="90" y="172" width="70" height="32" rx="6" fill="var(--violet)"/><text x="125" y="193" text-anchor="middle" fill="#fff">R0</text>
+          <rect x="166" y="172" width="130" height="32" rx="6" fill="var(--violet)"/><text x="231" y="193" text-anchor="middle" fill="#fff">R1</text>
+          <rect x="302" y="172" width="150" height="32" rx="6" fill="var(--violet)"/><text x="377" y="193" text-anchor="middle" fill="#fff">R2</text>
+          <rect x="458" y="172" width="230" height="32" rx="6" fill="var(--violet)"/><text x="573" y="193" text-anchor="middle" fill="#fff">R3</text>
+          <rect x="694" y="172" width="170" height="32" rx="6" fill="var(--crit)"/><text x="779" y="193" text-anchor="middle" fill="#fff">R4</text>
+          <rect x="870" y="172" width="110" height="32" rx="6" fill="var(--good)"/><text x="925" y="193" text-anchor="middle" fill="#fff">R5 cut over</text>
+        </g>
+        <line x1="90" y1="225" x2="980" y2="225" stroke="var(--line2)"/><text x="90" y="242" fill="var(--mut)">start</text><text x="980" y="242" text-anchor="end" fill="var(--mut)">relative effort →</text>
+      </g>
+    </svg>
+  </div>
+  <div class="tablewrap"><table>
+    <tr><th>Step</th><th>Done when</th></tr>
+    <tr><td><b>P1</b> visibility + members</td><td>A private Grid is absent from an anonymous <code>/portal/grids</code> detail call and present for a member; change is on the audit chain.</td></tr>
+    <tr><td><b>P2</b> all-Grid map</td><td><code>noesiis.com</code> renders stations from the live registry; with one Grid it shows one station.</td></tr>
+    <tr><td><b>G1</b> host + gate</td><td><code>grid.noesiis.com/genesis</code> loads with the Portal session; a private Grid returns "members only" to a non-member.</td></tr>
+    <tr><td><b>G2</b> identity profile</td><td>Profile recomputes from the audit chain and matches a hand count on a fixture chain.</td></tr>
+    <tr><td><b>R0</b> contract freeze</td><td>Recorded fixtures replay green against the Python Brain in CI.</td></tr>
+    <tr><td><b>R1–R4</b> port</td><td>Each Rust module passes its Python fixtures; state hash is byte-identical.</td></tr>
+    <tr><td><b>R5</b> cut over</td><td>A Rust-Brain Nous runs on Genesis for an agreed soak period with a zero-diff audit chain; signed <code>.dmg</code> installs on a clean Mac.</td></tr>
+  </table></div>
+</section>
+
+<!-- ================= RISKS + DECISIONS ================= -->
+<section>
+  <div class="sec-head"><div class="eyebrow">Before starting</div><h2>Risks and decisions needed</h2></div>
+  <div class="grid2">
+    <div class="card"><h3>Risks</h3>
+      <ul class="small">
+        <li><span class="pill risk">high</span> <b>Rewrite stalls the mind's roadmap.</b> About 19.8k lines and 158 test files move languages. New faculty work must pause or be written twice until R5.</li>
+        <li><span class="pill risk">high</span> <b>WebRTC parity.</b> The P2P layer depends on <code>aiortc</code>; the Rust stack must interoperate with Python peers during the overlap.</li>
+        <li><span class="pill risk">med</span> <b>Behaviour drift.</b> Prompts and tolerant JSON parsing (D-MIND-04, D-MIND-07) are tuned to small models; a port can change outcomes without failing a type check. Fixtures in R0 are the guard.</li>
+        <li><span class="pill risk">med</span> <b>New subdomain on a shared host.</b> <code>grid.noesiis.com</code> needs DNS, a certificate, and a route in the host-level proxy that also serves other sites.</li>
+        <li><span class="pill risk">low</span> <b>Empty-looking map.</b> One live Grid means one station at launch.</li>
+      </ul>
+    </div>
+    <div class="card"><h3>Decisions needed from you</h3>
+      <ul class="small">
+        <li><b>Zones.</b> Keep the 6-zone invariant with identity floating on top (assumed here), or free the zone set per Grid and overturn D-V3-32?</li>
+        <li><b>Private Grid on the map.</b> Show name with a lock (assumed here), or hide private Grids from non-members entirely?</li>
+        <li><b>Who sets visibility.</b> The Polis by legislation (assumed here), or the Grid's creator at creation time?</li>
+        <li><b>Mac shell.</b> Tauri with reused React UI (recommended), or native SwiftUI?</li>
+        <li><b>Type B.</b> Port hosted Nous to the Rust binary in the same program, or leave them on Python until the Mac app is proven?</li>
+        <li><b>Multi-Grid.</b> Does the map imply turning on a second live Grid now? Today D-V3-30 holds one.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="tablewrap"><table>
+    <tr><th>Decision record</th><th>Effect of this plan</th></tr>
+    <tr><td>D-V3-29 Portal functions</td><td>Extended: public Grid map and visibility become part of the Portal's directory function.</td></tr>
+    <tr><td>D-V3-30 / D-V3-37 one live Grid</td><td>Unchanged unless you choose otherwise above.</td></tr>
+    <tr><td>D-V3-32 six zones</td><td>Unchanged under the assumed reading; a new decision records "identity is emergent, never a type".</td></tr>
+    <tr><td>D-V3-33 / D-V3-39 Portal-gated registration</td><td>Unchanged. The Rust app registers through the same queue.</td></tr>
+    <tr><td>D-V3-36 Tier 1 Local Nous Manager</td><td>Reframed: Tier 1 is the Mac app itself, with the Brain inside it.</td></tr>
+    <tr><td>D-MIND-01…09</td><td>Unchanged in behaviour; re-implemented in Rust under parity fixtures.</td></tr>
+  </table></div>
+  <p class="small mut">Nothing in this report has been implemented, and no wiki or decision-log page has been changed. Those updates land with the first step you approve.</p>
+</section>
+
+</div>
+</body>
+</html>

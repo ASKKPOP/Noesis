@@ -200,3 +200,10 @@ parallel rehearsal episodes for a Nous Skill against a rules-true Grid dry-run. 
 Grid physics-check API + Brain `rehearsal/` engine + `brain.rehearseSkill` RPC; wiki D-MIND-09.
 Pitfall carried forward: a referee alone is not enough — a zero-filled spec is "lawful", so each
 episode's job minimums must also be enforced. Page: [[atlas-world-model-simulator]].
+
+## [2026-11-17] plan | Surfaces re-plan — Portal Grid map, unfixed Grid identity, Rust Nous Mac app
+Operator direction: noesiis.com opens on a public all-Grid map (public Grids visitable by anyone,
+private Grids members-only); grid.noesiis.com is entered from the Portal after sign-in and a Grid
+has no assigned identity/purpose; Brain moves Python → Rust as a Mac desktop app. Plan report only
+(`docs/noesis-surfaces-replan-2026-11-17.html`); nothing built. Open: whether D-V3-32 (6 zones)
+stays fixed under "identity not fixed", and Tauri vs SwiftUI shell. [[v3.0/CIVIC-ARCHITECTURE]]
