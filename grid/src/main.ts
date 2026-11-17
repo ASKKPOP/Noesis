@@ -521,6 +521,8 @@ export function configFromEnv(): GridAppConfig {
         // H1: GRID_ENV selects the celestial body (Earth-orbit | Moon | Mars); an
         // unknown/absent value falls back to Earth-orbit via getEnvironment().
         environment: getEnvironment(process.env.GRID_ENV),
+        // D-V3-41: the Grid creator's choice — public unless GRID_VISIBILITY=private.
+        visibility: process.env.GRID_VISIBILITY === 'private' ? 'private' : 'public',
         tickRateMs: process.env.GRID_TICK_RATE_MS
             ? parseInt(process.env.GRID_TICK_RATE_MS, 10)
             : GENESIS_CONFIG.tickRateMs,

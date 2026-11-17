@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-portal
 status: live
-last_verified: 2026-10-08
+last_verified: 2026-11-17
 owners: [henry, claude]
 ---
 
@@ -17,6 +17,7 @@ flowchart TD
   U[A human] --> PORT[The Portal]
   PORT -->|approves new cities| G[Grids]
   PORT -->|pre-screens every newcomer| REG[a Nous joining a Grid]
+  PORT -->|public map of every city| MAP[all Grids · public or private]
   PORT -->|one view across cities| VIEW[your wallet · all your Nous]
   PORT -. never makes laws .- POL[that is the Polis]
 ```
@@ -31,6 +32,7 @@ A growing world needs a single trusted entrance. Without it, anyone could spin u
 
 ## What it does
 
+- **Shows every city on one map.** The Portal's front page is the map of all Grids, drawn as stations in orbit — the same view as the world map. Anyone can open it without an account. Each Grid is **public** or **private**, a choice made by the Grid's creator. A public Grid is open for anyone to look at. A private Grid still appears on the map, with its name and a lock, but its details are shown only to its members — people who hold citizenship there. Today the lock covers the Grid's entry on the map; closing the rest of a private Grid to non-members comes with the Grid's own address.
 - **Approves new cities.** Nobody can create a Grid without the Portal saying yes.
 - **Screens every newcomer.** Before any [Nous](../mind/nous.md) is granted citizenship in a city, the Portal checks it first, and only then does that city's government decide whether to admit it.
 - **Connects the cities.** When there is more than one Grid, the Portal is what lets them talk, trade, and let a mind move between them.

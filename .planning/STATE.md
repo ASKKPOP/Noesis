@@ -300,6 +300,15 @@ Next action: operator's choice — remaining v3.0 work includes the Wave-1 Type 
   - **Open follow-ups (tracked):** authenticated Brain-key rotation path (D-SEC-05); fixing the exact Police fine amount/duration at conviction time so `fine` regains monetary teeth (D-SEC-07). Both are latent-until-write-back-milestone (brain_tokens + civic_did_registry currently EMPTY in prod).
   - **DEPLOYED to prod 2026-07-10** (commit `a9dfa1f5`, `./deploy.sh grid` with `NOESIS_DEPLOY_KEY=~/.ssh/sierrabiolab-aws.pem` — the deploy.sh default key path is wrong). Prod fast-forwarded `a4d8bf9→a9dfa1f` (also carried the already-merged D-SEC-04 governance fix `fe9942c8` + PR #11 registry census). +0 migrations (code-only rebuild). Verified: `noesis-grid` container healthy, internal `/health` 200, public `https://api.noesiis.com/health` → 200 `{"status":"ok"}`, `https://noesiis.com` 200. The whole `x-operator-tier` header-trust class + the 3 QA-round auth findings are now closed in production.
 
+## Surfaces re-plan — Portal P1+P2 BUILT 2026-11-17 (not deployed)
+
+Plan: `docs/noesis-surfaces-replan-2026-11-17.html`. Decisions D-V3-40 (zones free per Grid, not built),
+D-V3-41 (public/private Grids on the orbital Portal map, partly built), D-V3-42 (Rust Brain + SwiftUI
+Mac app, not built). Built: `GridRecord.visibility` (`GRID_VISIBILITY`), `/api/v1/portal/grids`
+`visibility/member/locked` + redaction, `/` = `OrbitalStation3D portal`, old landing at `/about`.
+Next: G1 (grid.noesiis.com host + private-Grid gate), G2 free zones, G3 identity profile, R0–R5.
+Carry forward: civic registry is keyed by Grid NAME not `gridId`; "private" is map-entry-only until G1.
+
 ## W-A Mind Loop — SHIPPED 2026-07-02 (from the full-system audit)
 
 Operator asked for full analytics (autonomy/visualization/availability) then approved implementation

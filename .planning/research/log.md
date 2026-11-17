@@ -217,3 +217,9 @@ the city map all assume six. [[v3.0/CIVIC-ARCHITECTURE]]
 Operator decisions: private Grids listed on the Portal map with name + lock (D-V3-41); Brain →
 Rust core, Type A as native SwiftUI Mac app, Type B on the same core headless; first Grid is the
 test Grid, others activated after (D-V3-42, D-V3-30 reaffirmed). Not built. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] apply | Portal P1+P2 built — Grid visibility + orbital front page
+GridRegistry visibility (GRID_VISIBILITY), /portal/grids redaction + member flag, root page = orbital
+map with registry-fed picker, old landing at /about. Pitfalls carried forward: the civic registry is
+keyed by Grid NAME ("Genesis"), not the lowercase gridId; "private" locks only the registry entry
+until the G1 gate ships; a new dev origin needs GRID_CORS_ORIGINS. [[v3.0/CIVIC-ARCHITECTURE]]

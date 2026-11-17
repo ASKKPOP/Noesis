@@ -24,7 +24,12 @@ export interface GridRecord {
     readonly status: 'active' | 'forming' | 'closed';
     /** Where this Grid physically is — body/gravity/solar/light-delay/orbital floor. */
     readonly environment: GridEnvironment;
+    /** D-V3-41: set by the Grid's creator. A private Grid is listed on the Portal map
+     *  with name + lock only; its detail is for members. Absent = 'public'. */
+    readonly visibility?: GridVisibility;
 }
+
+export type GridVisibility = 'public' | 'private';
 
 export class GridRegistry {
     private readonly grids = new Map<string, GridRecord>();

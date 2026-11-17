@@ -14,6 +14,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { GENESIS_SEED, type ParcelFeedEntry } from './OrbitalGenesisMap';
 import { mountOrbitalStation, type OrbitalHandle, type OrbitalObjectEntry } from './orbital-station-scene';
+import { pickerEntries, type PickerEntry, type PortalGrid } from './grid-picker';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 
@@ -33,7 +34,9 @@ function nyClock(): string {
     return `NY ${Math.floor(days / 365) + 1} · DAY ${(days % 365) + 1}`;
 }
 
-export function OrbitalStation3D(): React.ReactElement {
+/** `portal` = mounted as the Portal's public front page (D-V3-41): adds the Sign in /
+ *  Join / About links. The scene, HUD, legend and picker are the same either way. */
+export function OrbitalStation3D({ portal = false }: { portal?: boolean } = {}): React.ReactElement {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const handleRef = useRef<OrbitalHandle | null>(null);
     const [parcels, setParcels] = useState<ParcelFeedEntry[]>(GENESIS_SEED);
@@ -44,6 +47,7 @@ export function OrbitalStation3D(): React.ReactElement {
     const [activeGrid, setActiveGrid] = useState('Genesis');
     const [clock, setClock] = useState(nyClock);
     const [recMsg, setRecMsg] = useState<string | null>(null);
+    const [grids, setGrids] = useState<PortalGrid[] | null>(null);
 
     // Mount the Three.js scene once (WebGL — client only).
     useEffect(() => {
@@ -86,11 +90,30 @@ export function OrbitalStation3D(): React.ReactElement {
         return () => { cancelled = true; };
     }, []);
 
+    // The Grid registry — which Grids exist, and which are private / locked for this
+    // viewer (D-V3-41). Session cookie included so a member sees their Grid unlocked.
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch(`${GRID_ORIGIN}/api/v1/portal/grids`, { cache: 'no-store', credentials: 'include' });
+                if (!res.ok) return;
+                const payload = (await res.json()) as { grids?: PortalGrid[] };
+                if (!cancelled && Array.isArray(payload.grids)) setGrids(payload.grids);
+            } catch { /* registry unreachable — the picker keeps the scene's own Grids */ }
+        })();
+        return () => { cancelled = true; };
+    }, []);
+
     useEffect(() => { handleRef.current?.setParcels(parcels); }, [parcels]);
     useEffect(() => { handleRef.current?.setObjects(objects); }, [objects]);
     useEffect(() => { const id = setInterval(() => setClock(nyClock()), 60000); return () => clearInterval(id); }, []);
 
-    const focus = (name: string): void => { handleRef.current?.focusGrid(name); setActiveGrid(name); };
+    const entries = pickerEntries(grids);
+    const focus = (e: PickerEntry): void => {
+        handleRef.current?.focusGrid(e.name); setActiveGrid(e.name);
+        if (e.locked) { setRecMsg(`🔒 ${e.name} is a private Grid — members only`); setTimeout(() => setRecMsg(null), 4500); }
+    };
 
     // Join-a-Grid S3 — a signed-in User recommends the focused Grid to their owned Nous.
     // Advisory: the Nous reads it and decides. Server resolves which Nous from the session.
@@ -140,8 +163,13 @@ export function OrbitalStation3D(): React.ReactElement {
             {/* Grid-focus picker — Genesis stays near Earth; Moon/Mars are separate Grids */}
             <div style={{ ...hud, bottom: 60, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(2,6,16,.82)', border: '1px solid rgba(0,212,255,.22)', borderRadius: 999, padding: '6px 8px 6px 14px', backdropFilter: 'blur(14px)', pointerEvents: 'auto' }}>
                 <span style={{ fontSize: 10, color: '#3fa6bd', letterSpacing: '.04em', marginRight: 4, whiteSpace: 'nowrap' }}>FOCUS · {focusLabel}</span>
-                {['Genesis', 'Moon', 'Mars'].map((g) => (
-                    <button key={g} style={btn(activeGrid === g)} onClick={() => focus(g)}>{g === 'Genesis' ? 'Genesis' : `${g} Grid`}</button>
+                {entries.map((e) => (
+                    <button
+                        key={e.name}
+                        title={e.locked ? 'Private Grid — members only' : e.registered ? (e.member ? 'You are a member' : 'Public Grid — open to visit') : e.name === 'Genesis' ? 'Genesis Grid' : 'Empty base Grid — awaiting charter'}
+                        style={{ ...btn(activeGrid === e.name), whiteSpace: 'nowrap', ...(e.locked && activeGrid !== e.name ? { border: '1px dashed #e7c878', color: '#e7c878' } : {}) }}
+                        onClick={() => focus(e)}
+                    >{e.label}</button>
                 ))}
                 <span style={{ width: 1, height: 18, background: 'rgba(255,255,255,.14)', margin: '0 2px' }} />
                 <button
@@ -156,9 +184,18 @@ export function OrbitalStation3D(): React.ReactElement {
                 <div style={{ ...hud, bottom: 104, left: '50%', transform: 'translateX(-50%)', background: 'rgba(2,6,16,.9)', border: '1px solid rgba(127,224,160,.35)', borderRadius: 999, padding: '6px 14px', fontSize: 11, color: '#7fe0a0', backdropFilter: 'blur(14px)', whiteSpace: 'nowrap' }}>{recMsg}</div>
             )}
 
+            {/* Portal front page — the public entry links (same targets as the About page) */}
+            {portal && (
+                <div style={{ ...hud, top: 18, right: 124, display: 'flex', gap: 8, pointerEvents: 'auto' }}>{/* right: clears the global agency badge */}
+                    <a href="/about" style={{ ...btn(false), textDecoration: 'none' }}>About</a>
+                    <a href="/portal/auth" style={{ ...btn(false), textDecoration: 'none' }}>Sign in</a>
+                    <a href="/portal/auth?tab=join" style={{ ...btn(true), textDecoration: 'none' }}>Join</a>
+                </div>
+            )}
+
             {/* DID-gated info panel */}
             {picked && (
-                <div style={{ ...hud, top: 18, right: 18, width: 250, background: 'rgba(2,6,16,.82)', border: '1px solid rgba(0,212,255,.22)', borderRadius: 12, padding: '16px 18px', backdropFilter: 'blur(14px)', fontSize: 11.5, lineHeight: 1.7, color: '#8a93a6', pointerEvents: 'auto' }}>
+                <div style={{ ...hud, top: portal ? 60 : 18, right: 18, width: 250, background: 'rgba(2,6,16,.82)', border: '1px solid rgba(0,212,255,.22)', borderRadius: 12, padding: '16px 18px', backdropFilter: 'blur(14px)', fontSize: 11.5, lineHeight: 1.7, color: '#8a93a6', pointerEvents: 'auto' }}>
                     {(picked as unknown as { isObject?: boolean }).isObject ? (
                         <>
                             <div style={{ color: '#e7c878', fontSize: 13, marginBottom: 8 }}>{(picked as unknown as { function_type?: string }).function_type ?? 'orbital object'} · built</div>
