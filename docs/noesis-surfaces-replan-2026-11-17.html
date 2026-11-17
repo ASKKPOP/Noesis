@@ -270,7 +270,7 @@
         <li><span class="pill new">new</span> <code>visibility</code> on the Grid registry entry and a membership table; the public <code>/portal/grids</code> list returns only what a non-member may see.</li>
         <li><span class="pill new">new</span> Landing page becomes the orbital all-Grid map, fed by the live registry. No hardcoded Grids.</li>
         <li><span class="pill new">new</span> Access check at the Grid host: public passes, private requires a member session.</li>
-        <li><span class="pill change">change</span> Visibility is set by the Grid's Polis through legislation, not by the Grid Manager, which has no governance authority (D-V3-36).</li>
+        <li><span class="pill new">new</span> Visibility is set by the Grid's creator: the Portal account whose Grid proposal was approved. For Genesis that is the operator. The Grid Manager cannot change it (D-V3-36).</li>
         <li><span class="pill new">new</span> Audit events for visibility and membership changes, each added to the broadcast allowlist in the phase that introduces it.</li>
       </ul>
     </div>
@@ -488,7 +488,7 @@
       <ul class="small">
         <li><b>Zones.</b> <span class="pill keep">decided</span> Free per Grid (D-V3-40). A new Grid starts from the six as a template, which its Polis may then change. One follow-up: what happens to residents and businesses in a zone the Polis removes (removal blocked until empty, assumed)?</li>
         <li><b>Private Grid on the map.</b> <span class="pill keep">decided</span> Shown to everyone with its name and a lock; only members enter (D-V3-41).</li>
-        <li><b>Who sets visibility.</b> The Polis by legislation (assumed here), or the Grid's creator at creation time?</li>
+        <li><b>Who sets visibility.</b> <span class="pill keep">decided</span> The Grid's creator (D-V3-41). Assumed: the creator chooses at creation and may switch it later, with each change on the audit chain.</li>
         <li><b>Mac shell.</b> <span class="pill keep">decided</span> Native SwiftUI over the Rust core (D-V3-42).</li>
         <li><b>Type B.</b> <span class="pill keep">decided</span> Hosted Nous move to the Rust binary in the same program (D-V3-42).</li>
         <li><b>Multi-Grid.</b> <span class="pill keep">decided</span> Test everything on the first Grid (Genesis); other Grids are activated only after that. D-V3-30 holds.</li>
