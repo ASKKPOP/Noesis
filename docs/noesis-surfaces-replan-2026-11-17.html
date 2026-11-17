@@ -486,7 +486,7 @@
     <div class="card"><h3>Decisions needed from you</h3>
       <ul class="small">
         <li><b>Zones.</b> <span class="pill keep">decided</span> Free per Grid (D-V3-40). A new Grid starts from the six as a template, which its Polis may then change. One follow-up: what happens to residents and businesses in a zone the Polis removes (removal blocked until empty, assumed)?</li>
-        <li><b>Private Grid on the map.</b> Show name with a lock (assumed here), or hide private Grids from non-members entirely?</li>
+        <li><b>Private Grid on the map.</b> <span class="pill keep">decided</span> Shown to everyone with its name and a lock; only members enter (D-V3-41).</li>
         <li><b>Who sets visibility.</b> The Polis by legislation (assumed here), or the Grid's creator at creation time?</li>
         <li><b>Mac shell.</b> Tauri with reused React UI (recommended), or native SwiftUI?</li>
         <li><b>Type B.</b> Port hosted Nous to the Rust binary in the same program, or leave them on Python until the Mac app is proven?</li>
@@ -499,12 +499,13 @@
     <tr><td>D-V3-29 Portal functions</td><td>Extended: public Grid map and visibility become part of the Portal's directory function.</td></tr>
     <tr><td>D-V3-30 / D-V3-37 one live Grid</td><td>Unchanged unless you choose otherwise above.</td></tr>
     <tr><td>D-V3-32 six zones</td><td>Overturned by D-V3-40 (2026-11-17): the zone set belongs to each Grid's Polis. Code still enforces six until G2 ships.</td></tr>
+    <tr><td>D-V3-41 (new)</td><td>Each Grid is public or private. The Portal map lists both; a private Grid shows name and lock to non-members.</td></tr>
     <tr><td>D-V3-40 (new)</td><td>Zones are free per Grid; a Grid's identity and purpose are emergent and never assigned.</td></tr>
     <tr><td>D-V3-33 / D-V3-39 Portal-gated registration</td><td>Unchanged. The Rust app registers through the same queue.</td></tr>
     <tr><td>D-V3-36 Tier 1 Local Nous Manager</td><td>Reframed: Tier 1 is the Mac app itself, with the Brain inside it.</td></tr>
     <tr><td>D-MIND-01…09</td><td>Unchanged in behaviour; re-implemented in Rust under parity fixtures.</td></tr>
   </table></div>
-  <p class="small mut">Nothing in this report has been implemented. The zone decision is recorded in the decision log as D-V3-40; the concept pages keep describing the six-zone system until G2 is built.</p>
+  <p class="small mut">Nothing in this report has been implemented. The zone and map decisions are recorded in the decision log as D-V3-40 and D-V3-41; the concept pages keep describing the six-zone system until G2 is built.</p>
 </section>
 
 </div>
