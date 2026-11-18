@@ -12,6 +12,10 @@ are language-neutral. A Rust module is correct when it reproduces every case exa
 | `chronos.json` | subjective-time multiplier table, tick-based recency and its scaled score |
 | `hashing.json` | active-Telos hash; canonical-JSON SHA-256 (sorted keys, no whitespace, raw UTF-8) |
 | `thymos.json` | emotion feel / decay / trigger matching at low, medium and high intensity |
+| `psyche.json` | personality levels, their numbers and prompt descriptions, values line |
+| `state_hash.json` | the four component hashes (psyche, thymos, telos, memory stream) for four Nous states |
+| `retrieval.json` | memory importance / relevance / full score (216 cases) and the handler's top-k ranking |
+| `prompts.json` | the planning, decision, skill-distill, social and economic prompts, character for character (16 calls) |
 | `parsing.json` | tolerant parsing of model replies: 35 raw replies × the five parsers (decision, social, task list, skill, economic) |
 
 ## Rules
@@ -38,5 +42,5 @@ are language-neutral. A Rust module is correct when it reproduces every case exa
 
 ## Not covered yet
 
-The LLM loops (planner, decision, reflection), prompt rendering, the RPC and wire surface, memory storage and retrieval, and P2P. Those need recorded
+The system prompt, the LLM loops (planner, decision, reflection), the RPC and wire surface, memory storage, and P2P. Those need recorded
 request/response fixtures and are the R3–R4 part of the freeze.

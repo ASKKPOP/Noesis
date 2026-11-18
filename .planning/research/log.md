@@ -278,3 +278,10 @@ raise `TypeError` when `action` is a list or object. [[v3.0/CIVIC-ARCHITECTURE]]
 ## [2026-11-18] apply | Python reply parsers: non-text action is "no decision", not a crash
 The `TypeError` seen while porting is fixed in the three action parsers and pinned by two new
 parsing-fixture cases (35). The Rust port already behaved this way. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-18] apply | Rust Brain slice 2 — personality, state hashes, memory scoring, prompts
+Fixtures recorded first (ten now), then ported. Notes: prompt f-strings render missing / null
+values as `None` and booleans as `True`, so the port carries a `py_str`; an empty due object counts
+as no due; the handler's top-k is a stable descending sort over a newest-first pool; `str.split()`
+whitespace differs from Rust's by 0x1C–0x1F. The wall-clock recency path is unused and not ported.
+[[v3.0/CIVIC-ARCHITECTURE]]

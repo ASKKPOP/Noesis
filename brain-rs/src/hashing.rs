@@ -5,7 +5,7 @@ use sha2::{Digest, Sha256};
 
 use crate::json::{dumps_canonical, Value};
 
-fn sha256_hex(text: &str) -> String {
+pub(crate) fn sha256_hex(text: &str) -> String {
     Sha256::digest(text.as_bytes()).iter().map(|b| format!("{b:02x}")).collect()
 }
 

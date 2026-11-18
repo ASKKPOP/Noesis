@@ -8,6 +8,7 @@
 //! parser scans for the first balanced object. They disagree on replies holding two objects.
 
 use crate::json::{self, get, Object, Value};
+use crate::pytext::strip as py_strip;
 
 pub const DECISION_ACTIONS: [&str; 3] = ["rest", "speak", "work_task"];
 pub const SOCIAL_ACTIONS: [&str; 6] =
@@ -59,11 +60,6 @@ fn first_balanced_object(text: &str) -> Option<Object> {
 
 fn action_in(object: &Object, allowed: &[&str]) -> bool {
     matches!(get(object, "action"), Some(Value::Str(a)) if allowed.contains(&a.as_str()))
-}
-
-/// Python's `str.strip()`: Unicode whitespace plus the four ASCII separators 0x1C–0x1F.
-fn py_strip(s: &str) -> &str {
-    s.trim_matches(|c: char| c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c))
 }
 
 fn stripped_strings(items: &[Value]) -> impl Iterator<Item = String> + '_ {

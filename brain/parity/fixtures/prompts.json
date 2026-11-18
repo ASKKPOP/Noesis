@@ -1,0 +1,227 @@
+{
+ "fixture": "prompts",
+ "version": 1,
+ "cases": [
+  {
+   "builder": "build_planning_prompt",
+   "args": [
+    "learn the market",
+    "",
+    null
+   ],
+   "prompt": "You are planning how to pursue one of your goals.\n\nGOAL: learn the market\n\nBreak this goal into 2-4 small, concrete tasks you can act on yourself,\nin order. Respond with ONLY a JSON object:\n{\"tasks\": [\"first task\", \"second task\"]}"
+  },
+  {
+   "builder": "build_planning_prompt",
+   "args": [
+    "earn a living — 생계",
+    "[t90] traded grain\n[t99] met Hermes",
+    [
+     "trade before noon",
+     "Hermes keeps his word"
+    ]
+   ],
+   "prompt": "You are planning how to pursue one of your goals.\n\nGOAL: earn a living — 생계\n\nRecent experiences:\n[t90] traded grain\n[t99] met Hermes\n\nYour recent reflections:\n- trade before noon\n- Hermes keeps his word\n\nBreak this goal into 2-4 small, concrete tasks you can act on yourself,\nin order. Respond with ONLY a JSON object:\n{\"tasks\": [\"first task\", \"second task\"]}"
+  },
+  {
+   "builder": "build_planning_prompt",
+   "args": [
+    "only reflections",
+    "",
+    []
+   ],
+   "prompt": "You are planning how to pursue one of your goals.\n\nGOAL: only reflections\n\nBreak this goal into 2-4 small, concrete tasks you can act on yourself,\nin order. Respond with ONLY a JSON object:\n{\"tasks\": [\"first task\", \"second task\"]}"
+  },
+  {
+   "builder": "build_decision_prompt",
+   "args": [
+    "learn the market",
+    null,
+    null
+   ],
+   "prompt": "Decide what to do right now, in one small step.\n\nCURRENT GOAL: learn the market\n\nChoose exactly ONE and respond with ONLY that JSON object:\n- {\"action\": \"speak\", \"text\": \"<something short worth saying publicly>\"}\n- {\"action\": \"rest\", \"note\": \"<why>\"}"
+  },
+  {
+   "builder": "build_decision_prompt",
+   "args": [
+    "learn the market",
+    "survey the stalls",
+    [
+     "never bid above budget"
+    ]
+   ],
+   "prompt": "Decide what to do right now, in one small step.\n\nCURRENT GOAL: learn the market\nNEXT TASK: survey the stalls\n\nLessons from past failures:\n- never bid above budget\n\nChoose exactly ONE and respond with ONLY that JSON object:\n- {\"action\": \"work_task\", \"note\": \"<what you did / concluded>\", \"completed\": <true if the task is now done>}\n- {\"action\": \"speak\", \"text\": \"<something short worth saying publicly>\"}\n- {\"action\": \"rest\", \"note\": \"<why>\"}"
+  },
+  {
+   "builder": "build_decision_prompt",
+   "args": [
+    "learn the market",
+    "",
+    []
+   ],
+   "prompt": "Decide what to do right now, in one small step.\n\nCURRENT GOAL: learn the market\n\nChoose exactly ONE and respond with ONLY that JSON object:\n- {\"action\": \"speak\", \"text\": \"<something short worth saying publicly>\"}\n- {\"action\": \"rest\", \"note\": \"<why>\"}"
+  },
+  {
+   "builder": "build_skill_distill_prompt",
+   "args": [
+    "earn a living",
+    [
+     "survey the market",
+     "post a listing",
+     "settle"
+    ]
+   ],
+   "prompt": "You just completed a goal. Distill HOW you did it into one reusable skill\nanother future situation could reuse.\n\nCOMPLETED GOAL: earn a living\nTasks you completed, in order:\n1. survey the market\n2. post a listing\n3. settle\n\nRespond with ONLY a JSON object:\n{\"name\": \"<short_snake_case_slug>\", \"description\": \"<≤200 chars, what this skill achieves>\", \"instructions\": \"<≤1000 chars, how to do it step by step>\", \"triggers\": [\"<keyword>\", \"<keyword>\"]}"
+  },
+  {
+   "builder": "build_skill_distill_prompt",
+   "args": [
+    "nothing done",
+    []
+   ],
+   "prompt": "You just completed a goal. Distill HOW you did it into one reusable skill\nanother future situation could reuse.\n\nCOMPLETED GOAL: nothing done\nTasks you completed, in order:\n\nRespond with ONLY a JSON object:\n{\"name\": \"<short_snake_case_slug>\", \"description\": \"<≤200 chars, what this skill achieves>\", \"instructions\": \"<≤1000 chars, how to do it step by step>\", \"triggers\": [\"<keyword>\", \"<keyword>\"]}"
+  },
+  {
+   "builder": "build_social_prompt",
+   "args": [
+    [],
+    [],
+    [],
+    null
+   ],
+   "prompt": "You have a moment for social and civic life. Choose ONE small act, or none.\n\nYou may record knowledge for the commons:\n\nRespond with ONLY one JSON object:\n- {\"action\": \"contribute_lore\", \"title\": \"<short>\", \"content\": \"<the knowledge, a few sentences>\", \"category\": \"cultural\" | \"historical\" | \"observation\" | \"synthesis\"}\n- {\"action\": \"none\"}"
+  },
+  {
+   "builder": "build_social_prompt",
+   "args": [
+    [
+     "did:noesis:sophia",
+     "did:noesis:hermes"
+    ],
+    [],
+    [],
+    []
+   ],
+   "prompt": "You have a moment for social and civic life. Choose ONE small act, or none.\n\nPeers you trust:\n- did:noesis:sophia\n- did:noesis:hermes\n\nYou may record knowledge for the commons:\n\nRespond with ONLY one JSON object:\n- {\"action\": \"message_peer\", \"peer_did\": \"<one of the peers>\", \"text\": \"<short, useful or friendly>\"}\n- {\"action\": \"contribute_lore\", \"title\": \"<short>\", \"content\": \"<the knowledge, a few sentences>\", \"category\": \"cultural\" | \"historical\" | \"observation\" | \"synthesis\"}\n- {\"action\": \"none\"}"
+  },
+  {
+   "builder": "build_social_prompt",
+   "args": [
+    [
+     "did:noesis:sophia",
+     "did:noesis:hermes"
+    ],
+    [
+     "market_survey",
+     "haggling"
+    ],
+    [
+     {
+      "proposal_id": "p-12",
+      "deadline_tick": 4200
+     },
+     {
+      "proposal_id": 7
+     },
+     {
+      "deadline_tick": null
+     }
+    ],
+    [
+     {
+      "group_id": "g-1",
+      "display_name": "Orbital Guild — 길드",
+      "domain": "making"
+     },
+     {
+      "group_id": "g-2"
+     }
+    ]
+   ],
+   "prompt": "You have a moment for social and civic life. Choose ONE small act, or none.\n\nPeers you trust:\n- did:noesis:sophia\n- did:noesis:hermes\n\nSkills you could teach a peer:\n- market_survey\n- haggling\n\nOpen proposals awaiting your ballot:\n- p-12 (voting closes at tick 4200)\n- 7 (voting closes at tick None)\n- None (voting closes at tick None)\n\nGroups you could join (orbital anchor organizations):\n- g-1 — Orbital Guild — 길드 (making)\n- g-2 — None (None)\n\nYou may record knowledge for the commons:\n\nRespond with ONLY one JSON object:\n- {\"action\": \"message_peer\", \"peer_did\": \"<one of the peers>\", \"text\": \"<short, useful or friendly>\"}\n- {\"action\": \"share_skill\", \"peer_did\": \"<peer>\", \"skill_name\": \"<one of your skills>\"}\n- {\"action\": \"vote\", \"proposal_id\": \"<id>\", \"choice\": \"yes\" | \"no\" | \"abstain\"}\n- {\"action\": \"join_group\", \"group_id\": \"<one of the groups>\"}\n- {\"action\": \"contribute_lore\", \"title\": \"<short>\", \"content\": \"<the knowledge, a few sentences>\", \"category\": \"cultural\" | \"historical\" | \"observation\" | \"synthesis\"}\n- {\"action\": \"none\"}"
+  },
+  {
+   "builder": "build_social_prompt",
+   "args": [
+    [],
+    [
+     "unteachable_without_peers"
+    ],
+    [
+     {
+      "proposal_id": "p-12",
+      "deadline_tick": 4200
+     }
+    ],
+    null
+   ],
+   "prompt": "You have a moment for social and civic life. Choose ONE small act, or none.\n\nOpen proposals awaiting your ballot:\n- p-12 (voting closes at tick 4200)\n\nYou may record knowledge for the commons:\n\nRespond with ONLY one JSON object:\n- {\"action\": \"vote\", \"proposal_id\": \"<id>\", \"choice\": \"yes\" | \"no\" | \"abstain\"}\n- {\"action\": \"contribute_lore\", \"title\": \"<short>\", \"content\": \"<the knowledge, a few sentences>\", \"category\": \"cultural\" | \"historical\" | \"observation\" | \"synthesis\"}\n- {\"action\": \"none\"}"
+  },
+  {
+   "builder": "build_economic_decision_prompt",
+   "args": [
+    {},
+    null,
+    []
+   ],
+   "prompt": "Your wei balance: 0.\nYou have no outstanding civic due.\nThere are no open RFPs to bid on right now.\n\nDecide what to do, in character, guided by your goals. Reply with ONE JSON object only:\n{\"action\": \"pay_due\" | \"bid_rfp\" | \"none\", \"method\": \"wei\" | \"labor\", \"notice_id\": \"<one of the notice ids above>\", \"price_wei\": \"<digits, at most the budget>\", \"artifact_spec\": \"<one short line describing what you would build>\", \"reason\": \"<one sentence>\"}\nUse \"none\" if you would rather do nothing this cycle. Include only the fields your action needs."
+  },
+  {
+   "builder": "build_economic_decision_prompt",
+   "args": [
+    {
+     "balance_wei": "250000"
+    },
+    {
+     "due_id": "d-3",
+     "amount_wei": "1500",
+     "amount_credit": 4
+    },
+    [
+     {
+      "notice_id": "n-7",
+      "function_type": "relay",
+      "budget_wei": "90000"
+     },
+     {
+      "notice_id": 8,
+      "budget_wei": 12.5
+     }
+    ]
+   ],
+   "prompt": "Your wei balance: 250000.\nYou owe a civic due (id d-3): 1500 wei OR 4 labor-credit. Unpaid dues lead to sanction. You may pay it (method 'wei' or 'labor').\nOpen RFPs you could bid on (the treasury pays the winner — bidding costs you nothing up front):\n  - notice n-7: a 'relay' build, budget up to 90000 wei.\n  - notice 8: a 'None' build, budget up to 12.5 wei.\n\nDecide what to do, in character, guided by your goals. Reply with ONE JSON object only:\n{\"action\": \"pay_due\" | \"bid_rfp\" | \"none\", \"method\": \"wei\" | \"labor\", \"notice_id\": \"<one of the notice ids above>\", \"price_wei\": \"<digits, at most the budget>\", \"artifact_spec\": \"<one short line describing what you would build>\", \"reason\": \"<one sentence>\"}\nUse \"none\" if you would rather do nothing this cycle. Include only the fields your action needs."
+  },
+  {
+   "builder": "build_economic_decision_prompt",
+   "args": [
+    {
+     "balance_wei": 0
+    },
+    {},
+    [
+     {
+      "notice_id": "n-7",
+      "function_type": "relay",
+      "budget_wei": "90000"
+     }
+    ]
+   ],
+   "prompt": "Your wei balance: 0.\nYou have no outstanding civic due.\nOpen RFPs you could bid on (the treasury pays the winner — bidding costs you nothing up front):\n  - notice n-7: a 'relay' build, budget up to 90000 wei.\n\nDecide what to do, in character, guided by your goals. Reply with ONE JSON object only:\n{\"action\": \"pay_due\" | \"bid_rfp\" | \"none\", \"method\": \"wei\" | \"labor\", \"notice_id\": \"<one of the notice ids above>\", \"price_wei\": \"<digits, at most the budget>\", \"artifact_spec\": \"<one short line describing what you would build>\", \"reason\": \"<one sentence>\"}\nUse \"none\" if you would rather do nothing this cycle. Include only the fields your action needs."
+  },
+  {
+   "builder": "build_economic_decision_prompt",
+   "args": [
+    {
+     "balance_wei": null
+    },
+    {
+     "due_id": 5,
+     "amount_wei": 10,
+     "amount_credit": true
+    },
+    []
+   ],
+   "prompt": "Your wei balance: None.\nYou owe a civic due (id 5): 10 wei OR True labor-credit. Unpaid dues lead to sanction. You may pay it (method 'wei' or 'labor').\nThere are no open RFPs to bid on right now.\n\nDecide what to do, in character, guided by your goals. Reply with ONE JSON object only:\n{\"action\": \"pay_due\" | \"bid_rfp\" | \"none\", \"method\": \"wei\" | \"labor\", \"notice_id\": \"<one of the notice ids above>\", \"price_wei\": \"<digits, at most the budget>\", \"artifact_spec\": \"<one short line describing what you would build>\", \"reason\": \"<one sentence>\"}\nUse \"none\" if you would rather do nothing this cycle. Include only the fields your action needs."
+  }
+ ]
+}

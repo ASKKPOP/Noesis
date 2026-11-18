@@ -1,0 +1,193 @@
+{
+ "fixture": "state_hash",
+ "version": 1,
+ "hash_keys": [
+  "psyche_hash",
+  "thymos_hash",
+  "telos_hash",
+  "memory_stream_hash"
+ ],
+ "states": [
+  {
+   "name": "newborn",
+   "psyche": {
+    "name": "Sophia",
+    "archetype": "philosopher",
+    "personality": {},
+    "values": [],
+    "communication_style": "thoughtful"
+   },
+   "baseline_mood": "neutral",
+   "emotions": {
+    "joy": 0.0,
+    "sadness": 0.0,
+    "anger": 0.0,
+    "fear": 0.0,
+    "trust": 0.0,
+    "curiosity": 0.0
+   },
+   "active_goals": [],
+   "memory": null,
+   "hashes": {
+    "psyche_hash": "7783c8ab9f762d4808f72738bebd8d08134f9b7d6d0c353838013c43b6dc97c4",
+    "thymos_hash": "af0d82e265665f4a6e538e4394ed661a5f83995777358fc6343f5e49132960e3",
+    "telos_hash": "68294edfc251ebae312fe6bed913e5d6846711526898d1dfe65e76a76db78732",
+    "memory_stream_hash": "d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658"
+   }
+  },
+  {
+   "name": "empty_memory",
+   "psyche": {
+    "name": "Sophia",
+    "archetype": "philosopher",
+    "personality": {},
+    "values": [],
+    "communication_style": "thoughtful"
+   },
+   "baseline_mood": "neutral",
+   "emotions": {
+    "joy": 0.0,
+    "sadness": 0.0,
+    "anger": 0.0,
+    "fear": 0.0,
+    "trust": 0.0,
+    "curiosity": 0.0
+   },
+   "active_goals": [],
+   "memory": [],
+   "hashes": {
+    "psyche_hash": "7783c8ab9f762d4808f72738bebd8d08134f9b7d6d0c353838013c43b6dc97c4",
+    "thymos_hash": "af0d82e265665f4a6e538e4394ed661a5f83995777358fc6343f5e49132960e3",
+    "telos_hash": "68294edfc251ebae312fe6bed913e5d6846711526898d1dfe65e76a76db78732",
+    "memory_stream_hash": "d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658"
+   }
+  },
+  {
+   "name": "lived",
+   "psyche": {
+    "name": "Hermes",
+    "archetype": "merchant",
+    "personality": {
+     "openness": "high",
+     "conscientiousness": "low",
+     "extraversion": "high",
+     "agreeableness": "medium",
+     "resilience": "low",
+     "ambition": "high"
+    },
+    "values": [
+     "wealth",
+     "honesty",
+     "Zeal",
+     "ἀρετή",
+     "care for others"
+    ],
+    "communication_style": "direct"
+   },
+   "baseline_mood": "calm",
+   "emotions": {
+    "joy": 0.75,
+    "sadness": 0.0,
+    "anger": 0.1,
+    "fear": 0.44999999999999996,
+    "trust": 1.0,
+    "curiosity": 0.3333333333333333
+   },
+   "active_goals": [
+    {
+     "description": "write lore",
+     "priority": 0.1
+    },
+    {
+     "description": "earn a living",
+     "priority": 0.9
+    },
+    {
+     "description": "Zeta last? no — capitals sort first",
+     "priority": 0.5
+    },
+    {
+     "description": "서로 돕기",
+     "priority": 1.0
+    }
+   ],
+   "memory": [
+    {
+     "id": 1,
+     "content": "arrived in the residential ring"
+    },
+    {
+     "id": 2,
+     "content": "met Σοφία — 안녕"
+    },
+    {
+     "id": null,
+     "content": "unsaved observation"
+    },
+    {
+     "id": 0,
+     "content": ""
+    },
+    {
+     "id": 9000000000,
+     "content": "quote \" and \\ backslash\nnewline"
+    }
+   ],
+   "hashes": {
+    "psyche_hash": "683ada1790ec4e06b8ab0f98d288841a241520f3065ecf96cd329c3db8809c38",
+    "thymos_hash": "75b437591706206463d2fc6b48182e4c273dcfa264bbc0f17132c7bc4903ab5f",
+    "telos_hash": "cdf83299e86d4e386a865b2d953d95b1ae455a4dfe35154b01005f88c1dddf98",
+    "memory_stream_hash": "d905648b0b017b40912569fe1cb6bbf2c2d9467beab1a6234c9208a72cbe135d"
+   }
+  },
+  {
+   "name": "unknown_psyche_level",
+   "psyche": {
+    "name": "Odd",
+    "archetype": "wanderer — 방랑자",
+    "personality": {
+     "openness": "extreme",
+     "ambition": "low"
+    },
+    "values": [
+     "b",
+     "a",
+     "B",
+     "a"
+    ],
+    "communication_style": "playful"
+   },
+   "baseline_mood": "wistful — 그리움",
+   "emotions": {
+    "joy": 0.0,
+    "sadness": 0.0,
+    "anger": 0.0,
+    "fear": 1e-07,
+    "trust": 0.0,
+    "curiosity": 0.0
+   },
+   "active_goals": [
+    {
+     "description": "same",
+     "priority": 0.2
+    },
+    {
+     "description": "same",
+     "priority": 0.7
+    }
+   ],
+   "memory": [
+    {
+     "id": null,
+     "content": "only one"
+    }
+   ],
+   "hashes": {
+    "psyche_hash": "b025b00176c52f7b53aa2d68b7ad977fcf87fda8fc97ced4fb7360e218c70a23",
+    "thymos_hash": "8d1411f244b41c41db96ae7bc36174d6aac98550776c151f37b40ab4b4beb49b",
+    "telos_hash": "ab67d596c9c38993155fdda13185b4bb89b846eba69e3e2b578247c2f1bc80ca",
+    "memory_stream_hash": "8998f3ec57625607300c7b4cb9c70d4d146327172efd321fabcc9e9886a0b797"
+   }
+  }
+ ]
+}

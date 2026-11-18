@@ -3,7 +3,7 @@
 
 use noesis_brain::json::{self, Value};
 use noesis_brain::level::{self, Level};
-use noesis_brain::{ananke, bios, chronos, hashing, parsing, thymos};
+use noesis_brain::{ananke, bios, chronos, hashing, memory, parsing, prompts, psyche, state_hash, thymos};
 use serde_json::Value as J;
 
 fn fixture(name: &str) -> J {
@@ -340,4 +340,133 @@ fn reader_follows_python_json_loads() {
     }
     // Deep nesting is refused, not a stack overflow.
     assert_eq!(json::parse(&"[".repeat(100_000)), None);
+}
+
+fn psyche_of(v: &J) -> psyche::Psyche {
+    psyche::Psyche {
+        name: s(&v["name"]).to_string(),
+        archetype: s(&v["archetype"]).to_string(),
+        personality: psyche::Dimension::ALL.map(|d| v["personality"].get(d.as_str()).map(s).unwrap_or("medium").to_string()),
+        values: names(&v["values"]).into_iter().map(String::from).collect(),
+        communication_style: s(&v["communication_style"]).to_string(),
+    }
+}
+
+#[test]
+fn psyche_matches_python() {
+    let doc = fixture("psyche");
+    let c = &doc["constants"];
+    assert_eq!(names(&c["dimension_order"]), psyche::Dimension::ALL.map(psyche::Dimension::as_str));
+    assert_eq!(names(&c["communication_styles"]), psyche::COMMUNICATION_STYLES);
+    for (level, value) in c["level_map"].as_object().unwrap() {
+        same(psyche::level_numeric(level), value, level);
+    }
+    for d in psyche::Dimension::ALL {
+        let table = c["level_descriptions"][d.as_str()].as_object().unwrap();
+        assert_eq!(table.len(), 3);
+        for (level, text) in table {
+            assert_eq!(psyche::level_description(d, level), s(text));
+        }
+    }
+    let cases = doc["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 3);
+    for case in cases {
+        let p = psyche_of(&case["psyche"]);
+        for d in psyche::Dimension::ALL {
+            assert_eq!(p.level(d), s(&case["levels"][d.as_str()]));
+            same(p.numeric(d), &case["numeric"][d.as_str()], d.as_str());
+        }
+        assert_eq!(p.describe_personality(), s(&case["describe_personality"]), "{}", case["name"]);
+        assert_eq!(p.describe_values(), s(&case["describe_values"]), "{}", case["name"]);
+    }
+}
+
+#[test]
+fn state_hash_matches_python() {
+    let doc = fixture("state_hash");
+    assert_eq!(names(&doc["hash_keys"]), ["psyche_hash", "thymos_hash", "telos_hash", "memory_stream_hash"]);
+    let states = doc["states"].as_array().unwrap();
+    assert_eq!(states.len(), 4);
+    for state in states {
+        let (name, want) = (s(&state["name"]), &state["hashes"]);
+        assert_eq!(want.as_object().unwrap().len(), 4);
+        assert_eq!(state_hash::hash_psyche(&psyche_of(&state["psyche"])), s(&want["psyche_hash"]), "{name}: psyche");
+
+        let intensities = thymos::Emotion::ALL.map(|e| f(&state["emotions"][e.as_str()]));
+        assert_eq!(state_hash::hash_thymos(s(&state["baseline_mood"]), &intensities), s(&want["thymos_hash"]), "{name}: thymos");
+
+        let goals: Vec<(&str, f64)> =
+            state["active_goals"].as_array().unwrap().iter().map(|g| (s(&g["description"]), f(&g["priority"]))).collect();
+        assert_eq!(state_hash::hash_telos(&goals), s(&want["telos_hash"]), "{name}: telos");
+
+        let entries: Option<Vec<(Option<i64>, &str)>> =
+            state["memory"].as_array().map(|list| list.iter().map(|e| (e["id"].as_i64(), s(&e["content"]))).collect());
+        assert_eq!(state_hash::hash_memory_stream(entries.as_deref()), s(&want["memory_stream_hash"]), "{name}: memory");
+    }
+}
+
+#[test]
+fn retrieval_matches_python() {
+    let doc = fixture("retrieval");
+    same(chronos::DEFAULT_DECAY_RATE, &doc["decay_rate"], "decay_rate");
+    let pool: Vec<memory::Memory> = doc["memories"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|m| memory::Memory { content: s(&m["content"]).to_string(), importance: f(&m["importance"]), tick: m["tick"].as_i64().unwrap() })
+        .collect();
+    let scores = doc["scores"].as_array().unwrap();
+    assert_eq!(scores.len(), 216);
+    for case in scores {
+        let m = &pool[case["memory"].as_u64().unwrap() as usize];
+        let query = s(&case["query"]);
+        let at = case.to_string();
+        same(memory::importance_score(m), &case["importance_score"], &at);
+        same(memory::relevance_score(m, query), &case["relevance_score"], &at);
+        let got = memory::score_with_chronos(m, query, case["current_tick"].as_i64().unwrap(), f(&case["multiplier"]));
+        same(got, &case["score"], &at);
+    }
+    for case in doc["ranked"].as_array().unwrap() {
+        let got = memory::ranked_memories(
+            &pool, s(&case["query"]), case["tick"].as_i64().unwrap(), case["k"].as_u64().unwrap() as usize, case["prefix"].as_str(),
+        );
+        assert_eq!(got, names(&case["contents"]), "ranked {}", case["query"]);
+    }
+}
+
+fn refs(v: &[String]) -> Vec<&str> {
+    v.iter().map(String::as_str).collect()
+}
+
+#[test]
+fn prompts_match_python() {
+    let doc = fixture("prompts");
+    let strs = |v: &J| -> Vec<String> { v.as_array().map(|a| a.iter().map(|x| s(x).to_string()).collect()).unwrap_or_default() };
+    let object = |v: &J| -> json::Object {
+        match to_value(v) {
+            Value::Object(o) => o,
+            other => panic!("not an object: {other:?}"),
+        }
+    };
+    let objects = |v: &J| -> Vec<json::Object> { v.as_array().map(|a| a.iter().map(object).collect()).unwrap_or_default() };
+
+    let cases = doc["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 16);
+    for (n, case) in cases.iter().enumerate() {
+        let a = &case["args"];
+        let got = match s(&case["builder"]) {
+            "build_planning_prompt" => prompts::build_planning_prompt(s(&a[0]), s(&a[1]), &refs(&strs(&a[2]))),
+            "build_decision_prompt" => prompts::build_decision_prompt(s(&a[0]), a[1].as_str(), &refs(&strs(&a[2]))),
+            "build_skill_distill_prompt" => prompts::build_skill_distill_prompt(s(&a[0]), &refs(&strs(&a[1]))),
+            "build_social_prompt" => {
+                prompts::build_social_prompt(&refs(&strs(&a[0])), &refs(&strs(&a[1])), &objects(&a[2]), &objects(&a[3]))
+            }
+            "build_economic_decision_prompt" => {
+                let due = (!a[1].is_null()).then(|| object(&a[1]));
+                prompts::build_economic_decision_prompt(&object(&a[0]), due.as_ref(), &objects(&a[2]))
+            }
+            other => panic!("unknown builder {other}"),
+        };
+        assert_eq!(got, s(&case["prompt"]), "case {n}: {}", case["builder"]);
+    }
 }

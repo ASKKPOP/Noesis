@@ -1,0 +1,2061 @@
+{
+ "fixture": "retrieval",
+ "version": 1,
+ "decay_rate": 0.99,
+ "memories": [
+  {
+   "content": "Traded grain with Hermes at the market",
+   "importance": 7.0,
+   "tick": 90
+  },
+  {
+   "content": "Lesson: the market closes early; trade before noon",
+   "importance": 8.0,
+   "tick": 40
+  },
+  {
+   "content": "Lesson: Hermes keeps his word",
+   "importance": 6.5,
+   "tick": 99
+  },
+  {
+   "content": "the THE The the market market",
+   "importance": 5.0,
+   "tick": 100
+  },
+  {
+   "content": "시장 에서 곡물 을 샀다 — ΣΟΦΊΑ was there",
+   "importance": 12.0,
+   "tick": 95
+  },
+  {
+   "content": "tabs\tand\u001fseparators split too",
+   "importance": -1.0,
+   "tick": 100
+  },
+  {
+   "content": "",
+   "importance": 5.0,
+   "tick": 0
+  },
+  {
+   "content": "a later memory than now",
+   "importance": 3.3,
+   "tick": 250
+  }
+ ],
+ "scores": [
+  {
+   "memory": 0,
+   "query": "",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.7,
+   "relevance_score": 0.5,
+   "score": 0.3165337262530815
+  },
+  {
+   "memory": 0,
+   "query": "",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.7,
+   "relevance_score": 0.5,
+   "score": 0.35
+  },
+  {
+   "memory": 0,
+   "query": "",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.7,
+   "relevance_score": 0.5,
+   "score": 0.07913343156327038
+  },
+  {
+   "memory": 0,
+   "query": "   ",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.7,
+   "relevance_score": 0.5,
+   "score": 0.3165337262530815
+  },
+  {
+   "memory": 0,
+   "query": "   ",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.7,
+   "relevance_score": 0.5,
+   "score": 0.35
+  },
+  {
+   "memory": 0,
+   "query": "   ",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.7,
+   "relevance_score": 0.5,
+   "score": 0.07913343156327038
+  },
+  {
+   "memory": 0,
+   "query": "market",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.7,
+   "relevance_score": 1.0,
+   "score": 0.633067452506163
+  },
+  {
+   "memory": 0,
+   "query": "market",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.7,
+   "relevance_score": 1.0,
+   "score": 0.7
+  },
+  {
+   "memory": 0,
+   "query": "market",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.7,
+   "relevance_score": 1.0,
+   "score": 0.15826686312654076
+  },
+  {
+   "memory": 0,
+   "query": "the market trade",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.7,
+   "relevance_score": 0.6666666666666666,
+   "score": 0.422044968337442
+  },
+  {
+   "memory": 0,
+   "query": "the market trade",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.7,
+   "relevance_score": 0.6666666666666666,
+   "score": 0.4666666666666666
+  },
+  {
+   "memory": 0,
+   "query": "the market trade",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.7,
+   "relevance_score": 0.6666666666666666,
+   "score": 0.1055112420843605
+  },
+  {
+   "memory": 0,
+   "query": "MARKET hermes",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.7,
+   "relevance_score": 1.0,
+   "score": 0.633067452506163
+  },
+  {
+   "memory": 0,
+   "query": "MARKET hermes",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.7,
+   "relevance_score": 1.0,
+   "score": 0.7
+  },
+  {
+   "memory": 0,
+   "query": "MARKET hermes",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.7,
+   "relevance_score": 1.0,
+   "score": 0.15826686312654076
+  },
+  {
+   "memory": 0,
+   "query": "σοφία 시장",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.7,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 0,
+   "query": "σοφία 시장",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.7,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 0,
+   "query": "σοφία 시장",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.7,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 0,
+   "query": "separators and tabs split",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.7,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 0,
+   "query": "separators and tabs split",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.7,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 0,
+   "query": "separators and tabs split",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.7,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 0,
+   "query": "nothing matches here",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.7,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 0,
+   "query": "nothing matches here",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.7,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 0,
+   "query": "nothing matches here",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.7,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 0,
+   "query": "market market market",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.7,
+   "relevance_score": 1.0,
+   "score": 0.633067452506163
+  },
+  {
+   "memory": 0,
+   "query": "market market market",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.7,
+   "relevance_score": 1.0,
+   "score": 0.7
+  },
+  {
+   "memory": 0,
+   "query": "market market market",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.7,
+   "relevance_score": 1.0,
+   "score": 0.15826686312654076
+  },
+  {
+   "memory": 1,
+   "query": "",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.8,
+   "relevance_score": 0.5,
+   "score": 0.2188626569563045
+  },
+  {
+   "memory": 1,
+   "query": "",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.8,
+   "relevance_score": 0.5,
+   "score": 0.3917844784558872
+  },
+  {
+   "memory": 1,
+   "query": "",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.8,
+   "relevance_score": 0.5,
+   "score": 0.054715664239076124
+  },
+  {
+   "memory": 1,
+   "query": "   ",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.8,
+   "relevance_score": 0.5,
+   "score": 0.2188626569563045
+  },
+  {
+   "memory": 1,
+   "query": "   ",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.8,
+   "relevance_score": 0.5,
+   "score": 0.3917844784558872
+  },
+  {
+   "memory": 1,
+   "query": "   ",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.8,
+   "relevance_score": 0.5,
+   "score": 0.054715664239076124
+  },
+  {
+   "memory": 1,
+   "query": "market",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.8,
+   "relevance_score": 1.0,
+   "score": 0.437725313912609
+  },
+  {
+   "memory": 1,
+   "query": "market",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.8,
+   "relevance_score": 1.0,
+   "score": 0.7835689569117744
+  },
+  {
+   "memory": 1,
+   "query": "market",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.8,
+   "relevance_score": 1.0,
+   "score": 0.10943132847815225
+  },
+  {
+   "memory": 1,
+   "query": "the market trade",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.8,
+   "relevance_score": 1.0,
+   "score": 0.437725313912609
+  },
+  {
+   "memory": 1,
+   "query": "the market trade",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.8,
+   "relevance_score": 1.0,
+   "score": 0.7835689569117744
+  },
+  {
+   "memory": 1,
+   "query": "the market trade",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.8,
+   "relevance_score": 1.0,
+   "score": 0.10943132847815225
+  },
+  {
+   "memory": 1,
+   "query": "MARKET hermes",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.8,
+   "relevance_score": 0.5,
+   "score": 0.2188626569563045
+  },
+  {
+   "memory": 1,
+   "query": "MARKET hermes",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.8,
+   "relevance_score": 0.5,
+   "score": 0.3917844784558872
+  },
+  {
+   "memory": 1,
+   "query": "MARKET hermes",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.8,
+   "relevance_score": 0.5,
+   "score": 0.054715664239076124
+  },
+  {
+   "memory": 1,
+   "query": "σοφία 시장",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.8,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 1,
+   "query": "σοφία 시장",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.8,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 1,
+   "query": "σοφία 시장",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.8,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 1,
+   "query": "separators and tabs split",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.8,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 1,
+   "query": "separators and tabs split",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.8,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 1,
+   "query": "separators and tabs split",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.8,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 1,
+   "query": "nothing matches here",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.8,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 1,
+   "query": "nothing matches here",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.8,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 1,
+   "query": "nothing matches here",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.8,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 1,
+   "query": "market market market",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.8,
+   "relevance_score": 1.0,
+   "score": 0.437725313912609
+  },
+  {
+   "memory": 1,
+   "query": "market market market",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.8,
+   "relevance_score": 1.0,
+   "score": 0.7835689569117744
+  },
+  {
+   "memory": 1,
+   "query": "market market market",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.8,
+   "relevance_score": 1.0,
+   "score": 0.10943132847815225
+  },
+  {
+   "memory": 2,
+   "query": "",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.5,
+   "score": 0.32175
+  },
+  {
+   "memory": 2,
+   "query": "",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.5,
+   "score": 0.325
+  },
+  {
+   "memory": 2,
+   "query": "",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.65,
+   "relevance_score": 0.5,
+   "score": 0.0804375
+  },
+  {
+   "memory": 2,
+   "query": "   ",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.5,
+   "score": 0.32175
+  },
+  {
+   "memory": 2,
+   "query": "   ",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.5,
+   "score": 0.325
+  },
+  {
+   "memory": 2,
+   "query": "   ",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.65,
+   "relevance_score": 0.5,
+   "score": 0.0804375
+  },
+  {
+   "memory": 2,
+   "query": "market",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "market",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "market",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "the market trade",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "the market trade",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "the market trade",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "MARKET hermes",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.5,
+   "score": 0.32175
+  },
+  {
+   "memory": 2,
+   "query": "MARKET hermes",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.5,
+   "score": 0.325
+  },
+  {
+   "memory": 2,
+   "query": "MARKET hermes",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.65,
+   "relevance_score": 0.5,
+   "score": 0.0804375
+  },
+  {
+   "memory": 2,
+   "query": "σοφία 시장",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "σοφία 시장",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "σοφία 시장",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "separators and tabs split",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "separators and tabs split",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "separators and tabs split",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "nothing matches here",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "nothing matches here",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "nothing matches here",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "market market market",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "market market market",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 2,
+   "query": "market market market",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.65,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 3,
+   "query": "",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.5,
+   "score": 0.25
+  },
+  {
+   "memory": 3,
+   "query": "",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.5,
+   "score": 0.25
+  },
+  {
+   "memory": 3,
+   "query": "",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 0.5,
+   "score": 0.0625
+  },
+  {
+   "memory": 3,
+   "query": "   ",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.5,
+   "score": 0.25
+  },
+  {
+   "memory": 3,
+   "query": "   ",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.5,
+   "score": 0.25
+  },
+  {
+   "memory": 3,
+   "query": "   ",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 0.5,
+   "score": 0.0625
+  },
+  {
+   "memory": 3,
+   "query": "market",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 1.0,
+   "score": 0.5
+  },
+  {
+   "memory": 3,
+   "query": "market",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 1.0,
+   "score": 0.5
+  },
+  {
+   "memory": 3,
+   "query": "market",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 1.0,
+   "score": 0.125
+  },
+  {
+   "memory": 3,
+   "query": "the market trade",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.6666666666666666,
+   "score": 0.3333333333333333
+  },
+  {
+   "memory": 3,
+   "query": "the market trade",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.6666666666666666,
+   "score": 0.3333333333333333
+  },
+  {
+   "memory": 3,
+   "query": "the market trade",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 0.6666666666666666,
+   "score": 0.08333333333333333
+  },
+  {
+   "memory": 3,
+   "query": "MARKET hermes",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.5,
+   "score": 0.25
+  },
+  {
+   "memory": 3,
+   "query": "MARKET hermes",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.5,
+   "score": 0.25
+  },
+  {
+   "memory": 3,
+   "query": "MARKET hermes",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 0.5,
+   "score": 0.0625
+  },
+  {
+   "memory": 3,
+   "query": "σοφία 시장",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 3,
+   "query": "σοφία 시장",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 3,
+   "query": "σοφία 시장",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 3,
+   "query": "separators and tabs split",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 3,
+   "query": "separators and tabs split",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 3,
+   "query": "separators and tabs split",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 3,
+   "query": "nothing matches here",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 3,
+   "query": "nothing matches here",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 3,
+   "query": "nothing matches here",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 3,
+   "query": "market market market",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 1.0,
+   "score": 0.5
+  },
+  {
+   "memory": 3,
+   "query": "market market market",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 1.0,
+   "score": 0.5
+  },
+  {
+   "memory": 3,
+   "query": "market market market",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 1.0,
+   "score": 0.125
+  },
+  {
+   "memory": 4,
+   "query": "",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 1.0,
+   "relevance_score": 0.5,
+   "score": 0.47549502494999996
+  },
+  {
+   "memory": 4,
+   "query": "",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 1.0,
+   "relevance_score": 0.5,
+   "score": 0.5
+  },
+  {
+   "memory": 4,
+   "query": "",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 1.0,
+   "relevance_score": 0.5,
+   "score": 0.11887375623749999
+  },
+  {
+   "memory": 4,
+   "query": "   ",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 1.0,
+   "relevance_score": 0.5,
+   "score": 0.47549502494999996
+  },
+  {
+   "memory": 4,
+   "query": "   ",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 1.0,
+   "relevance_score": 0.5,
+   "score": 0.5
+  },
+  {
+   "memory": 4,
+   "query": "   ",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 1.0,
+   "relevance_score": 0.5,
+   "score": 0.11887375623749999
+  },
+  {
+   "memory": 4,
+   "query": "market",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "market",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "market",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "the market trade",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "the market trade",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "the market trade",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "MARKET hermes",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "MARKET hermes",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "MARKET hermes",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "σοφία 시장",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 1.0,
+   "relevance_score": 1.0,
+   "score": 0.9509900498999999
+  },
+  {
+   "memory": 4,
+   "query": "σοφία 시장",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 1.0,
+   "relevance_score": 1.0,
+   "score": 1.0
+  },
+  {
+   "memory": 4,
+   "query": "σοφία 시장",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 1.0,
+   "relevance_score": 1.0,
+   "score": 0.23774751247499998
+  },
+  {
+   "memory": 4,
+   "query": "separators and tabs split",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "separators and tabs split",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "separators and tabs split",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "nothing matches here",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "nothing matches here",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "nothing matches here",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "market market market",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "market market market",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 4,
+   "query": "market market market",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 1.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.0,
+   "relevance_score": 0.5,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.0,
+   "relevance_score": 0.5,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.0,
+   "relevance_score": 0.5,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "   ",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.0,
+   "relevance_score": 0.5,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "   ",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.0,
+   "relevance_score": 0.5,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "   ",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.0,
+   "relevance_score": 0.5,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "market",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "market",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "market",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "the market trade",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "the market trade",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "the market trade",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "MARKET hermes",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "MARKET hermes",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "MARKET hermes",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "σοφία 시장",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "σοφία 시장",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "σοφία 시장",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "separators and tabs split",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.0,
+   "relevance_score": 1.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "separators and tabs split",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.0,
+   "relevance_score": 1.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "separators and tabs split",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.0,
+   "relevance_score": 1.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "nothing matches here",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "nothing matches here",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "nothing matches here",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "market market market",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "market market market",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 5,
+   "query": "market market market",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.0,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.5,
+   "score": 0.0915080853183073
+  },
+  {
+   "memory": 6,
+   "query": "",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.5,
+   "score": 0.16380796970808742
+  },
+  {
+   "memory": 6,
+   "query": "",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 0.5,
+   "score": 0.022877021329576825
+  },
+  {
+   "memory": 6,
+   "query": "   ",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.5,
+   "score": 0.0915080853183073
+  },
+  {
+   "memory": 6,
+   "query": "   ",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.5,
+   "score": 0.16380796970808742
+  },
+  {
+   "memory": 6,
+   "query": "   ",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 0.5,
+   "score": 0.022877021329576825
+  },
+  {
+   "memory": 6,
+   "query": "market",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "market",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "market",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "the market trade",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "the market trade",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "the market trade",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "MARKET hermes",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "MARKET hermes",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "MARKET hermes",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "σοφία 시장",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "σοφία 시장",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "σοφία 시장",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "separators and tabs split",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "separators and tabs split",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "separators and tabs split",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "nothing matches here",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "nothing matches here",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "nothing matches here",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "market market market",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "market market market",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 6,
+   "query": "market market market",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.5,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.5,
+   "score": 0.16499999999999998
+  },
+  {
+   "memory": 7,
+   "query": "",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.5,
+   "score": 0.16499999999999998
+  },
+  {
+   "memory": 7,
+   "query": "",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.5,
+   "score": 0.041249999999999995
+  },
+  {
+   "memory": 7,
+   "query": "   ",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.5,
+   "score": 0.16499999999999998
+  },
+  {
+   "memory": 7,
+   "query": "   ",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.5,
+   "score": 0.16499999999999998
+  },
+  {
+   "memory": 7,
+   "query": "   ",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.5,
+   "score": 0.041249999999999995
+  },
+  {
+   "memory": 7,
+   "query": "market",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "market",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "market",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "the market trade",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "the market trade",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "the market trade",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "MARKET hermes",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "MARKET hermes",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "MARKET hermes",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "σοφία 시장",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "σοφία 시장",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "σοφία 시장",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "separators and tabs split",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "separators and tabs split",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "separators and tabs split",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "nothing matches here",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "nothing matches here",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "nothing matches here",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "market market market",
+   "current_tick": 100,
+   "multiplier": 1.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "market market market",
+   "current_tick": 180,
+   "multiplier": 4.0,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  },
+  {
+   "memory": 7,
+   "query": "market market market",
+   "current_tick": 100,
+   "multiplier": 0.25,
+   "importance_score": 0.32999999999999996,
+   "relevance_score": 0.0,
+   "score": 0.0
+  }
+ ],
+ "ranked": [
+  {
+   "query": "market",
+   "tick": 100,
+   "k": 8,
+   "prefix": null,
+   "contents": [
+    "Traded grain with Hermes at the market",
+    "the THE The the market market",
+    "Lesson: the market closes early; trade before noon",
+    "Lesson: Hermes keeps his word",
+    "시장 에서 곡물 을 샀다 — ΣΟΦΊΑ was there",
+    "tabs\tand\u001fseparators split too",
+    "",
+    "a later memory than now"
+   ]
+  },
+  {
+   "query": "market trade",
+   "tick": 100,
+   "k": 2,
+   "prefix": null,
+   "contents": [
+    "Lesson: the market closes early; trade before noon",
+    "Traded grain with Hermes at the market"
+   ]
+  },
+  {
+   "query": "",
+   "tick": 100,
+   "k": 3,
+   "prefix": null,
+   "contents": [
+    "시장 에서 곡물 을 샀다 — ΣΟΦΊΑ was there",
+    "Lesson: Hermes keeps his word",
+    "Traded grain with Hermes at the market"
+   ]
+  },
+  {
+   "query": "hermes word",
+   "tick": 120,
+   "k": 8,
+   "prefix": "Lesson:",
+   "contents": [
+    "Lesson: Hermes keeps his word",
+    "Lesson: the market closes early; trade before noon"
+   ]
+  },
+  {
+   "query": "nothing matches here",
+   "tick": 100,
+   "k": 4,
+   "prefix": null,
+   "contents": [
+    "Traded grain with Hermes at the market",
+    "Lesson: the market closes early; trade before noon",
+    "Lesson: Hermes keeps his word",
+    "the THE The the market market"
+   ]
+  },
+  {
+   "query": "the",
+   "tick": 100,
+   "k": 8,
+   "prefix": "zzz",
+   "contents": []
+  }
+ ]
+}

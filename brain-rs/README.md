@@ -17,9 +17,14 @@ The deterministic faculties frozen by `brain/parity/fixtures/`:
 | `json` | JSON read and written the way Python's `json` module does |
 | `hashing` | canonical-JSON SHA-256 and the active-Telos hash |
 | `parsing` | tolerant parsing of model replies (five parsers) |
+| `psyche` | personality dimensions, values, their prompt descriptions |
+| `state_hash` | the four component hashes of a Nous's state |
+| `memory` | retrieval scoring (recency × importance × relevance) and top-k ranking |
+| `prompts` | the planning, decision, skill, social and economic prompts |
+| `pytext` | Python's whitespace and `str()` rules, where they change a result |
 
-Not ported yet: the runtime, configuration, the Grid wire client and RPC surface, memory,
-the LLM router and loops, and P2P.
+Not ported yet: the system prompt, the runtime, configuration, the Grid wire client and RPC
+surface, memory storage, the LLM router and loops, and P2P.
 
 ## Test
 
@@ -32,6 +37,8 @@ passes. Do not edit a fixture to make a test pass — fixtures are recorded from
 
 ## Where the port differs from Python on purpose
 
+- A prompt value that is a list or an object (never the case for the ids and amounts the
+  prompts interpolate) is written as JSON, not as Python's `repr`.
 - A lone UTF-16 surrogate escape (`"\ud83d"`) in a reply: Python keeps it; a Rust string
   cannot, so it becomes U+FFFD.
 - JSON nested deeper than 512 levels is refused; Python allows roughly 1,000 and then
