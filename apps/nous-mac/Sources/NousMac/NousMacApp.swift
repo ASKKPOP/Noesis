@@ -1,66 +1,68 @@
 import AppKit
 import SwiftUI
-import UniformTypeIdentifiers
 
 @main
 struct NousMacApp: App {
-    @StateObject private var model = ViewerModel()
+    @StateObject private var app = AppModel()
 
     var body: some Scene {
         WindowGroup("Nous") {
-            ContentView()
-                .environmentObject(model)
-                .frame(minWidth: 980, minHeight: 640)
+            RootView()
+                .environmentObject(app)
+                .environmentObject(app.viewer)
+                .environmentObject(app.brain)
+                .frame(minWidth: 1040, minHeight: 660)
+                .tint(coral)
                 .onAppear {
                     NSApp.setActivationPolicy(.regular)
                     NSApp.activate(ignoringOtherApps: true)
                     // A configuration path may be given on the command line.
                     if let path = CommandLine.arguments.dropFirst().first(where: { !$0.hasPrefix("-") }) {
-                        model.open(URL(fileURLWithPath: path))
+                        app.useConfig(at: path)
                     }
+                }
+                .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+                    app.brain.stop()
                 }
         }
         .commands {
             CommandGroup(replacing: .newItem) {
-                Button("Open Nous Configuration…") { model.chooseFile() }.keyboardShortcut("o")
+                Button("Choose Nous Configuration…") { app.chooseConfigFile() }.keyboardShortcut("o")
             }
         }
     }
 }
 
-/// The open configuration and the tick being viewed. Every change asks the Rust core again.
+/// The Rust core's view of the configured Nous at a chosen tick.
 final class ViewerModel: ObservableObject {
     static let maxTick = 5000
 
-    @Published private(set) var fileURL: URL?
     @Published private(set) var view: NousView?
     @Published private(set) var problem: String?
     @Published var tick: Double = 0 { didSet { if Int(tick) != Int(oldValue) { refresh() } } }
 
-    private var yaml = ""
+    private var yaml: String?
 
-    func chooseFile() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [UTType(filenameExtension: "yaml"), UTType(filenameExtension: "yml")].compactMap { $0 }
-        panel.message = "Choose a Nous configuration file"
-        if panel.runModal() == .OK, let url = panel.url { open(url) }
-    }
-
-    func open(_ url: URL) {
-        do {
-            yaml = try String(contentsOf: url, encoding: .utf8)
-            fileURL = url
-            tick = 0
-            refresh()
-        } catch {
-            fileURL = url
+    /// Show the configuration at `path`; an empty path shows nothing.
+    func load(path: String) {
+        guard !path.isEmpty else {
+            yaml = nil
             view = nil
-            problem = "Could not read \(url.lastPathComponent): \(error.localizedDescription)"
+            problem = nil
+            return
+        }
+        do {
+            yaml = try String(contentsOfFile: path, encoding: .utf8)
+            if tick != 0 { tick = 0 } else { refresh() }
+        } catch {
+            yaml = nil
+            view = nil
+            problem = "Could not read \((path as NSString).lastPathComponent): \(error.localizedDescription)"
         }
     }
 
     private func refresh() {
-        guard fileURL != nil else { return }
+        guard let yaml else { return }
         do {
             view = try BrainCore.view(yaml: yaml, tick: Int(tick))
             problem = nil

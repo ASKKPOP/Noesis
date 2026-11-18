@@ -112,6 +112,12 @@ class BrainHttpServer:
         async def _local_wiki_route(req: web.Request) -> web.Response:
             return await handle_local_wiki_pages(req, _h, _s)
 
+        # Tier-1 chat: the operator talking to their own Nous. Local only — never reaches the Grid.
+        from .local_chat import handle_local_chat  # noqa: PLC0415
+
+        async def _local_chat_route(req: web.Request) -> web.Response:
+            return await handle_local_chat(req, _h, _s)
+
         self._app.router.add_get("/cognitive-snapshot/{did}", _cognitive_snapshot_route)
         self._app.router.add_get("/skills/{hash}", _skills_lookup_route)
         self._app.router.add_get("/local-ai/models", _local_ai_models_route)
@@ -119,6 +125,7 @@ class BrainHttpServer:
         self._app.router.add_get("/local/state", _local_state_route)
         self._app.router.add_get("/local/memory/recent", _local_memory_route)
         self._app.router.add_get("/local/wiki/pages", _local_wiki_route)
+        self._app.router.add_post("/local/chat", _local_chat_route)
 
         self._runner: web.AppRunner | None = None
         self._site: web.TCPSite | None = None

@@ -300,3 +300,11 @@ tick is also an editable field. Observation: the live handler builds BiosRuntime
 so need crossings never lift drives; the linked form emits a spurious "falling" drive crossing one
 tick later. Operator direction: every Local Nous Manager function moves into this app.
 [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-18] apply | Mac app is the Local Nous Manager; local chat endpoint; router bug
+Found by using it: `ModelRouter.generate(prompt, options)` (the adapter call form the handler
+uses) put options in the tier slot and raised ValueError, so a Brain on the Ollama router could
+not answer any message; fixed. The shipped Nous configs name `qwen3:*` models; a Mac without them
+gets no thinking until a model is chosen (app sets `LLM_MODEL`). Port 8090 may be taken. An app
+killed by signal must stop its Brain itself. Chats are not stored as Nous memories and each
+message is answered without the earlier ones — open product question. [[v3.0/CIVIC-ARCHITECTURE]]

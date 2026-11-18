@@ -1,35 +1,32 @@
 import SwiftUI
 
-private let coral = Color(red: 0xC9 / 255, green: 0x64 / 255, blue: 0x42 / 255)
+let coral = Color(red: 0xC9 / 255, green: 0x64 / 255, blue: 0x42 / 255)
 
-struct ContentView: View {
-    @EnvironmentObject private var model: ViewerModel
+/// Who the Nous is, from its configuration file, computed by the Rust core. Works without a
+/// running Brain.
+struct ProfilePane: View {
+    @EnvironmentObject private var viewer: ViewerModel
 
     var body: some View {
-        Group {
-            if let view = model.view {
+        VStack(spacing: 0) {
+            if let view = viewer.view {
+                HStack {
+                    TickControl()
+                    Spacer()
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
+                Divider()
                 NousDetail(view: view)
             } else {
-                EmptyState(problem: model.problem)
+                EmptyState(problem: viewer.problem)
             }
         }
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button { model.chooseFile() } label: { Label("Open…", systemImage: "folder") }
-                    .help("Open a Nous configuration file")
-            }
-            ToolbarItem(placement: .principal) {
-                if model.view != nil { TickControl() }
-            }
-        }
-        .navigationTitle(model.view?.name ?? "Nous")
-        .navigationSubtitle(model.fileURL?.lastPathComponent ?? "")
-        .tint(coral)
     }
 }
 
 private struct EmptyState: View {
-    @EnvironmentObject private var model: ViewerModel
+    @EnvironmentObject private var app: AppModel
     let problem: String?
 
     var body: some View {
@@ -39,12 +36,12 @@ private struct EmptyState: View {
                 .foregroundStyle(problem == nil ? Color.secondary : coral)
             Text(problem == nil ? "No Nous open" : "This configuration could not be used")
                 .font(.title2.weight(.semibold))
-            Text(problem ?? "Open a Nous configuration file to see who it is, what it wants, and how its body changes over time.")
+            Text(problem ?? "Choose a Nous configuration file to see who it is, what it wants, and how its body changes over time.")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 440)
                 .textSelection(.enabled)
-            Button("Open Nous Configuration…") { model.chooseFile() }
+            Button("Choose Nous Configuration…") { app.chooseConfigFile() }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
         }

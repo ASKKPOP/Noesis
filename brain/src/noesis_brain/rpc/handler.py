@@ -281,6 +281,8 @@ class BrainHandler:
             sender_did: DID of sender
             channel: Agora channel or "direct"
             text: Message content
+            local: True for the operator's own chat (Local Nous Manager) — the reply
+                is returned to the caller only and is NOT forwarded to the Grid.
         """
         sender_name = params.get("sender_name", "Unknown")
         sender_did = params.get("sender_did", "")
@@ -484,7 +486,8 @@ class BrainHandler:
 
         # Phase 38 WIRE-01 (D-38-A2): parallel HTTPS dispatch from on_message.
         # Same discipline as on_tick: forward to Grid when _grid_wire_client is set.
-        if self._grid_wire_client is not None:
+        # A local (operator) chat stays on this machine.
+        if self._grid_wire_client is not None and not params.get("local"):
             import asyncio as _asyncio
 
             async def _fire_message_actions(
