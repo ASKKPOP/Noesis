@@ -304,7 +304,8 @@ Next action: operator's choice — remaining v3.0 work includes the Wave-1 Type 
 
 Plan: `docs/noesis-surfaces-replan-2026-11-17.html`. Decisions D-V3-40 (zones free per Grid, not built),
 D-V3-41 (public/private Grids on the orbital Portal map, partly built), D-V3-42 (Rust Brain + SwiftUI
-Mac app, not built). Built: `GridRecord.visibility` (`GRID_VISIBILITY`), `/api/v1/portal/grids`
+Mac app — Rust core begun: `brain-rs/` holds the deterministic faculties and passes all six parity fixtures via `cargo test`
+(cargo is at `~/.cargo/bin`, not on PATH); no runtime, wire client, memory, LLM loops or P2P yet; no Mac app, no Xcode). Built: `GridRecord.visibility` (`GRID_VISIBILITY`), `/api/v1/portal/grids`
 `visibility/member/locked` + redaction, `/` = `OrbitalStation3D portal`, old landing at `/about`.
 G1 built same day: private-Grid gate (`preHandlers/privateGridGate.ts`, public GETs → 403 for non-members) + Grid entry
 page `/g/[grid]` with `grid.*` host rewrite; host itself not routed (see `.planning/implementation/deploy.md`).

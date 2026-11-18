@@ -265,3 +265,12 @@ suite. Porting hazards found while recording: Python float text in canonical JSO
 `1e+21`, `-0.0`) hashes differently from Rust's default; `exp(-1/500)` must match to the last bit;
 hashes use raw UTF-8. Dev machine has no `cargo` and no Xcode — R1 and the SwiftUI shell cannot
 start until they are installed. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] apply | Rust Brain begun — deterministic faculties pass the parity fixtures (D-V3-42)
+`brain-rs/` (crate `noesis-brain`): needs, drives, subjective time, emotion, hashing, reply parsing.
+What it took to match Python exactly: an own JSON reader (Python accepts `NaN`, duplicate keys,
+big ints) and writer (Python float text; `ensure_ascii` on for the Telos hash, off for state
+hashes); `powf` not `powi` for recency; the decay constant embedded as a literal; first-wins on
+emotion ties; `str.strip()` also strips 0x1C–0x1F. The test reader needs serde_json's
+`float_roundtrip` or fixture doubles can be off by one bit. Python bug seen: the reply parsers
+raise `TypeError` when `action` is a list or object. [[v3.0/CIVIC-ARCHITECTURE]]

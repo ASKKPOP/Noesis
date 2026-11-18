@@ -17,6 +17,7 @@ are language-neutral. A Rust module is correct when it reproduces every case exa
 ## Rules
 
 - Replay: `.venv/bin/pytest test/test_parity_fixtures.py` (part of the normal Brain suite).
+- Replay against the Rust port: `cd ../brain-rs && cargo test`.
 - Re-record: `.venv/bin/python -m scripts.record_parity_fixtures`. This is a contract
   change — only when the Python behaviour changed on purpose; review the diff.
 - Numbers are IEEE-754 doubles written in shortest round-trip decimal form. Compare
