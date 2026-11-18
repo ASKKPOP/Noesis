@@ -246,3 +246,9 @@ needs `-a`, Edit/Write refuse it; `seedZone` numbered from 0001 every call (woul
 owned parcels on a second seeding — now continues); ring-expansion land was never persisted (lost on
 restart — now `insertParcels`); `market.ts` read `ZONE_TAX_BPS[zone]` directly (undefined for a new
 zone, ignored Polis overrides). [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] apply | G3 built — Grid identity profile from the audit chain (D-V3-40)
+Read-only projection: activity share (trade / knowledge / making / civic / social / settling) over
+the latest 2,000 counted actions + the window before. Window is an action COUNT, not wall-clock
+(wallclock gate). Event→activity map lives in `grid/src/identity/grid-profile.ts`; unmapped
+families are substrate and excluded. [[v3.0/CIVIC-ARCHITECTURE]]

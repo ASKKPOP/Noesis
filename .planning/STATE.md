@@ -312,7 +312,9 @@ G2 part 1 built same day: zone law (`grid_zones` v77, `ZoneRegistry.addZone/rela
 `zoning.zone_set_changed` — allowlist 160). G2 part 2 built same day: land keyed on zone kind (`ParcelRegistry.setZones`, `STRUCTURE_KIND_FIT`, caps per kind),
 `seed_ring` bills may carry `zone_id` and opened land is now persisted (`ParcelStore.insertParcels`), zone removal retires
 unclaimed lots, parcel feed `zone_kind`/`zone_label`, civic-map routes live, orbital scene `setZones` + ring 4+ shells,
-Brain world view by kind. Next: route grid.noesiis.com (deploy); G3 identity profile; R0–R5.
+Brain world view by kind. G3 built same day: identity profile (`identity/grid-profile.ts`, `GET /api/v1/grid/profile`, `g/[grid]/GridIdentity.tsx`) —
+window is a COUNT of recorded actions (no wall clock); a new audit event family must be mapped in `BY_FAMILY`/`BY_EVENT`
+or it is left out of the profile. Next: route grid.noesiis.com (deploy); R0–R5.
 Carry forward: civic registry is keyed by Grid NAME not `gridId`; a new public GET that a non-member must reach on a
 private Grid needs an entry in the gate's exempt list; SSR fetches carry no member session.
 Zones: `ParcelRegistry` holds the zone set in memory — anything that changes `grid_zones` outside the zoning routes must

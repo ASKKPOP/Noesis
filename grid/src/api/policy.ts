@@ -134,6 +134,7 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // These use their own internal auth (x-operator-tier headers etc.) or were
     // unauthenticated. Future phases will migrate to stricter policies.
     'GET /api/v1/grid/status': 'public',
+    'GET /api/v1/grid/profile': 'public',
     'GET /api/v1/grid/clock': 'public',
     'GET /api/v1/grid/regions': 'public',
     'GET /api/v1/grid/regions/:id': 'public',

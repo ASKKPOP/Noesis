@@ -137,7 +137,7 @@
 <div class="wrap">
 
 <header style="display:flex;flex-direction:column;gap:14px">
-  <div class="eyebrow">Plan report · 2026-11-17 · rev 8 · Portal P1–P3, Grid G1 and free zones (G2) built 2026-11-17, rest is proposal</div>
+  <div class="eyebrow">Plan report · 2026-11-17 · rev 9 · Portal P1–P3 and Grid G1–G3 built 2026-11-17, the Rust port is proposal</div>
   <h1>Three surfaces, re-planned: Portal, Grid, and a Rust Nous for Mac</h1>
   <p class="lede">You asked for three changes: the Portal at <code>noesiis.com</code> opens on a public map of every Grid; a Grid at <code>grid.noesiis.com</code> has no fixed identity or purpose; and the Nous Brain moves from Python to Rust and ships as a Mac desktop application. This report shows what each surface would look like, what changes underneath, and the order to build it in.</p>
   <div class="grid3">
@@ -309,11 +309,11 @@
     <div class="card"><h3>What gets built</h3>
       <ul class="small">
         <li><span class="pill keep">built</span> <code>grid.noesiis.com/&lt;grid&gt;</code> entry: same dashboard app, routed by hostname to the Grid entry page. The app side is done; DNS, certificate and proxy route for the host are deploy steps not yet taken.</li>
-        <li><span class="pill new">new</span> Identity profile: a read-only projection over the audit chain (activity share by zone and institution over a window). No new source of truth.</li>
+        <li><span class="pill keep">built</span> Identity profile: a read-only projection over the audit chain — the share of trade, knowledge, making, civic, social and settling among the latest 2,000 recorded actions, and the 2,000 before. No new source of truth; shown on the Grid entry page.</li>
         <li><span class="pill change">change</span> Grid creation review drops any "purpose" framing. A proposer names the Grid and its Polis, nothing else about what it must become.</li>
         <li><span class="pill change">change</span> Zone types become per-Grid data owned by the Polis. Today they are fixed in <code>grid/src/zoning/zone-types.ts</code> and the founding law; base tax, residence and the civic map all read from that fixed list.</li>
         <li><span class="pill keep">built</span> Polis law to add, rename and remove a zone, each on the audit chain (<code>zoning.zone_set_changed</code>). Removal is refused while the zone holds land or residents. Each zone carries a kind (home / business / civic).</li>
-        <li><span class="pill new">not built</span> Land sale, ownership caps, structures, the orbital view and the Nous's own view still work on the six template zones only. A Polis-added zone exists in law and is taxed, but has no land yet.</li>
+        <li><span class="pill keep">built</span> Land sale, ownership limits, structures, the orbital view and the Nous's own view all follow the Grid's live zone set, by zone kind. The Polis opens land in a zone by law, one new ring at a time.</li>
         <li><span class="pill change">change</span> Wiki: <code>2-concepts/city/grid.md</code>, <code>zones.md</code> and <code>1-design/civic-architecture.md</code> describe free zones and emergent identity once built.</li>
       </ul>
     </div>
@@ -444,7 +444,7 @@
     <tr><td><b>P2</b> all-Grid map <span class="pill keep">built</span></td><td><code>noesiis.com</code> shows the same orbital view as <code>/worldmap/orbital</code>, with the picker listing Grids from the live registry and a private Grid shown locked.</td></tr>
     <tr><td><b>G1</b> host + gate <span class="pill keep">built</span> <span class="pill change">host not routed</span></td><td><code>grid.noesiis.com/genesis</code> loads with the Portal session; a private Grid returns "members only" to a non-member.</td></tr>
     <tr><td><b>G2</b> free zones <span class="pill keep">built</span></td><td>A new test Grid starts with the six-zone template; a Polis bill adds and removes a zone on it; tax and residence follow the new set; Genesis still shows its six with a zero-diff audit chain.</td></tr>
-    <tr><td><b>G3</b> identity profile</td><td>Profile recomputes from the audit chain and matches a hand count on a fixture chain.</td></tr>
+    <tr><td><b>G3</b> identity profile <span class="pill keep">built</span></td><td>Profile recomputes from the audit chain and matches a hand count on a fixture chain.</td></tr>
     <tr><td><b>R0</b> contract freeze</td><td>Recorded fixtures replay green against the Python Brain in CI.</td></tr>
     <tr><td><b>R1–R4</b> port</td><td>Each Rust module passes its Python fixtures; state hash is byte-identical.</td></tr>
     <tr><td><b>R5</b> cut over</td><td>A Rust-Brain Nous runs on Genesis for an agreed soak period with a zero-diff audit chain; signed <code>.dmg</code> installs on a clean Mac; hosted Type B Nous run on the Rust binary.</td></tr>
@@ -489,7 +489,7 @@
     <tr><td>D-V3-42 (new)</td><td>Brain is rewritten in Rust; Type A ships as a native SwiftUI Mac app; Type B runs the same Rust core headless.</td></tr>
     <tr><td>D-MIND-01…09</td><td>Unchanged in behaviour; re-implemented in Rust under parity fixtures.</td></tr>
   </table></div>
-  <p class="small mut">The Portal steps and Grid steps G1 and G2 are implemented and tested locally, not deployed; everything else is still a proposal. The zone and map decisions are recorded in the decision log as D-V3-40, D-V3-41 and D-V3-42; the concept pages now describe zones as free per Grid.</p>
+  <p class="small mut">The Portal steps and Grid steps G1, G2 and G3 are implemented and tested locally, not deployed; everything else is still a proposal. The zone and map decisions are recorded in the decision log as D-V3-40, D-V3-41 and D-V3-42; the concept pages now describe zones as free per Grid.</p>
 </section>
 
 </div>

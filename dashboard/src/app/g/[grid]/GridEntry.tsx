@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import type { PortalGrid } from '@/components/worldmap/grid-picker';
 import { gridEntryState } from '@/lib/grid-host';
+import GridIdentity from './GridIdentity';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 /** The Portal's origin when the Grid is served from its own host; same origin otherwise. */
@@ -48,6 +49,7 @@ export default function GridEntry({ gridId }: { gridId: string }): React.ReactEl
         return (
             <div style={{ height: '100vh', width: '100vw' }}>
                 <OrbitalStation3D backHref={`${PORTAL}/`} />
+                <GridIdentity gridName={state.grid.name} />
             </div>
         );
     }
