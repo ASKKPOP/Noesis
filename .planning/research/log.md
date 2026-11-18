@@ -258,3 +258,10 @@ families are substrate and excluded. [[v3.0/CIVIC-ARCHITECTURE]]
 `operator.grid_visibility_changed` (allowlist 161). Pitfall: the "creator" of a config-launched
 Grid has no DID of its own — it is the operator; a Portal-created Grid will need the requester
 carried into the Grid's config before this route can serve its creator. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] apply | R0 started — Brain parity fixtures for the Rust port (D-V3-42)
+Deterministic faculties recorded as language-neutral JSON (`brain/parity/`), replayed in the Brain
+suite. Porting hazards found while recording: Python float text in canonical JSON (`1e-07`,
+`1e+21`, `-0.0`) hashes differently from Rust's default; `exp(-1/500)` must match to the last bit;
+hashes use raw UTF-8. Dev machine has no `cargo` and no Xcode — R1 and the SwiftUI shell cannot
+start until they are installed. [[v3.0/CIVIC-ARCHITECTURE]]

@@ -137,7 +137,7 @@
 <div class="wrap">
 
 <header style="display:flex;flex-direction:column;gap:14px">
-  <div class="eyebrow">Plan report · 2026-11-17 · rev 10 · Portal P1–P3, Grid G1–G3 and the visibility switch built 2026-11-17, the Rust port is proposal</div>
+  <div class="eyebrow">Plan report · 2026-11-17 · rev 11 · Portal P1–P3, Grid G1–G3 and the visibility switch built 2026-11-17; Rust port: contract freeze started, rest is proposal</div>
   <h1>Three surfaces, re-planned: Portal, Grid, and a Rust Nous for Mac</h1>
   <p class="lede">You asked for three changes: the Portal at <code>noesiis.com</code> opens on a public map of every Grid; a Grid at <code>grid.noesiis.com</code> has no fixed identity or purpose; and the Nous Brain moves from Python to Rust and ships as a Mac desktop application. This report shows what each surface would look like, what changes underneath, and the order to build it in.</p>
   <div class="grid3">
@@ -445,7 +445,7 @@
     <tr><td><b>G1</b> host + gate <span class="pill keep">built</span> <span class="pill change">host not routed</span></td><td><code>grid.noesiis.com/genesis</code> loads with the Portal session; a private Grid returns "members only" to a non-member.</td></tr>
     <tr><td><b>G2</b> free zones <span class="pill keep">built</span></td><td>A new test Grid starts with the six-zone template; a Polis bill adds and removes a zone on it; tax and residence follow the new set; Genesis still shows its six with a zero-diff audit chain.</td></tr>
     <tr><td><b>G3</b> identity profile <span class="pill keep">built</span></td><td>Profile recomputes from the audit chain and matches a hand count on a fixture chain.</td></tr>
-    <tr><td><b>R0</b> contract freeze</td><td>Recorded fixtures replay green against the Python Brain in CI.</td></tr>
+    <tr><td><b>R0</b> contract freeze <span class="pill change">started</span></td><td>Deterministic faculties recorded and replaying (needs, drives, subjective time, emotion, hashes); the model-driven loops and the wire surface are not recorded yet. Recorded fixtures replay green against the Python Brain in CI.</td></tr>
     <tr><td><b>R1–R4</b> port</td><td>Each Rust module passes its Python fixtures; state hash is byte-identical.</td></tr>
     <tr><td><b>R5</b> cut over</td><td>A Rust-Brain Nous runs on Genesis for an agreed soak period with a zero-diff audit chain; signed <code>.dmg</code> installs on a clean Mac; hosted Type B Nous run on the Rust binary.</td></tr>
   </table></div>
