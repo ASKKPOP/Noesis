@@ -66,7 +66,14 @@ export function registerZoningRoutes(app: FastifyInstance, services: GridService
             const body = req.body ?? {};
             const zoneId = req.params.zoneId ?? (typeof body.zone_id === 'string' ? body.zone_id : '');
             try {
-                const status = await act(new ZoneRegistry(pool, audit), zoneId, body, by);
+                const reg = new ZoneRegistry(pool, audit);
+                const status = await act(reg, zoneId, body, by);
+                // Land rules key on zone kind — keep the land registry's zone set current.
+                const land = services.parcels?.registry;
+                if (land) {
+                    if (status === 'zone_removed') land.dropZone(zoneId);
+                    land.setZones(await reg.listZones(grid));
+                }
                 return reply.code(201).send({ status, zone_id: zoneId });
             } catch (err) {
                 if (err instanceof ZoneError) return reply.code(ZONE_ERROR_STATUS[err.code]).send({ error: err.code });

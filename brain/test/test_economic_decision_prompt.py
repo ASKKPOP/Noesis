@@ -95,6 +95,23 @@ class TestWorldSight:
         assert "with structures" in prompt      # structure tally
         assert "orbital objects built" in prompt and "energy" in prompt
 
+    def test_world_section_reads_zone_kind_not_zone_name(self):
+        """D-V3-40: zones are free per Grid — a zone the Polis added is read by its kind + label."""
+        psyche, thymos, telos = _load_full(SOPHIA_YAML)
+        world = {
+            "parcels": [
+                {"zone": "harbor", "zone_kind": "business", "zone_label": "Harbor", "status": "available", "owner_civic_did_hash": None, "structure": None},
+                {"zone": "green", "zone_kind": "civic", "zone_label": "Commons Green", "status": "available", "owner_civic_did_hash": None, "structure": None},
+                {"zone": "residential", "status": "available", "owner_civic_did_hash": None, "structure": None},
+            ],
+            "objects": [],
+        }
+        prompt = build_system_prompt(psyche, thymos.mood, telos, world_state=world)
+        assert "2 available to claim" in prompt          # civic land is never claimable
+        assert "Harbor (business) 1" in prompt
+        assert "Commons Green (civic) 1" in prompt
+        assert "residential (home) 1" in prompt          # older feed without zone_kind → template kind
+
     def test_no_world_section_when_omitted_or_empty(self):
         psyche, thymos, telos = _load_full(SOPHIA_YAML)
         assert "the world around you" not in build_system_prompt(psyche, thymos.mood, telos).lower()

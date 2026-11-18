@@ -31,6 +31,7 @@ import { PresenceStore } from './civic-presence/presence-store.js';
 import { MessageQueueStore } from './civic-presence/message-queue-store.js';
 import { GraceTimerRegistry } from './civic-presence/grace-timer-registry.js';
 import { PresenceService } from './civic-presence/presence-service.js';
+import { ZoneRegistry } from './zoning/zone-registry.js';
 import { ParcelRegistry } from './civic/parcel-registry.js';
 import { ParcelStore } from './civic/parcel-store.js';
 import { GroupStore } from './economy/group-store.js';
@@ -266,6 +267,8 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         const parcelStore = new ParcelStore(presencePool, config.genesisConfig.gridName);
         await parcelStore.seedGenesisCore(parcelRegistry);
         const parcelCount = await parcelStore.hydrate(parcelRegistry);
+        // D-V3-40: land rules key on each zone's kind — load this Grid's legislated zone set.
+        parcelRegistry.setZones(await new ZoneRegistry(presencePool, chain!).listZones(config.genesisConfig.gridName));
         console.log(`[civic] parcels loaded: ${parcelCount}`);
         parcels = { registry: parcelRegistry, store: parcelStore };
         // Groups & Holdings · Phase 1 (D-GROUP-04): seed the five founding Businesses as
@@ -303,12 +306,15 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         // idempotently (alreadySeeded = ring already has parcels); amendConstant records a Polis
         // override via founding-law.recordPolisOverride. No audit emit (world-creation, R-31-01).
         launcher.governance.attachRingExpansion({
-            seedZone: (ring) => {
-                parcelRegistry.seedZone({
-                    zoneId: 'residential',
-                    count: 24,
-                    priceWei: gravityPrice(ring),
-                    ring,
+            seedZone: (ring, zoneId) => {
+                // D-V3-40: the bill names the zone; absent → the Grid's first home zone.
+                // Civic land and zones the Grid does not have are never opened for sale.
+                const zone = zoneId ?? parcelRegistry.zonesOfKind('home')[0];
+                const kind = zone ? parcelRegistry.zoneInfo(zone)?.kind : undefined;
+                if (!zone || (kind !== 'home' && kind !== 'business')) return;
+                const opened = parcelRegistry.seedZone({ zoneId: zone, count: 24, priceWei: gravityPrice(ring), ring });
+                void parcelStore.insertParcels(opened).catch((e) => {
+                    console.error('[grid] ring expansion: persisting opened land failed', e instanceof Error ? e.message : e);
                 });
             },
             alreadySeeded: (ring) => parcelRegistry.list().some(p => p.ring === ring),

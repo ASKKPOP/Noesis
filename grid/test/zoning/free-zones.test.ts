@@ -14,6 +14,7 @@ interface ZoneRow { grid_name: string; zone_id: string; label: string; zone_kind
 function fakeDb(seed: { parcels?: Record<string, number>; residences?: number } = {}) {
     const zones: ZoneRow[] = [];
     const overrides = new Map<string, number>();
+    const retired: string[] = [];   // zones whose unclaimed lots were retired
     const pool = {
         async query(sql: string, params: unknown[] = []) {
             const s = sql.replace(/\s+/g, ' ');
@@ -31,12 +32,13 @@ function fakeDb(seed: { parcels?: Record<string, number>; residences?: number } 
             }
             if (s.includes('FROM zone_config')) return [[...overrides].map(([zone_id, tax_modifier_bps]) => ({ zone_id, tax_modifier_bps })), {}];
             if (s.includes('INSERT INTO zone_config')) { overrides.set(String(params[1]), Number(params[2])); return [{}, {}]; }
+            if (s.startsWith('DELETE FROM civic_parcels')) { retired.push(String(params[1])); return [{}, {}]; }
             if (s.includes('FROM civic_parcels')) return [[{ n: seed.parcels?.[String(params[1])] ?? 0 }], {}];
             if (s.includes('FROM residence_assignments')) return [[{ n: seed.residences ?? 0 }], {}];
             throw new Error(`unexpected SQL: ${s}`);
         },
     } as unknown as Pool;
-    return { pool, zones };
+    return { pool, zones, retired };
 }
 
 const GOV = 'did:gov:noesis:polis';
@@ -155,4 +157,31 @@ describe('tax modifier on a Grid-defined zone', () => {
 
 describe('ZoneError', () => {
     it('carries a machine code', () => { expect(new ZoneError('unknown_zone').code).toBe('unknown_zone'); });
+});
+
+describe('zone removal and land (D-V3-40 part 2)', () => {
+    it('counts only claimed or built land as occupying a zone', async () => {
+        let sql = '';
+        const { pool } = fakeDb();
+        const spy = { query: async (q: string, p: unknown[]) => { if (q.includes('COUNT(*)') && q.includes('civic_parcels')) sql = q; return (pool as unknown as { query: (q: string, p: unknown[]) => Promise<unknown> }).query(q, p); } } as unknown as Pool;
+        await new ZoneRegistry(spy, new AuditChain()).removeZone({ gridName: 'Genesis', zoneId: 'shopping', changedByDid: GOV, tick: 4 });
+        expect(sql).toMatch(/owner_civic_did IS NOT NULL OR structure_type IS NOT NULL/);
+    });
+
+    it('retires the removed zone\'s unclaimed lots with it', async () => {
+        const { pool, retired } = fakeDb();
+        const r = new ZoneRegistry(pool, new AuditChain());
+        await r.removeZone({ gridName: 'Genesis', zoneId: 'shopping', changedByDid: GOV, tick: 4 });
+        expect(retired).toEqual(['shopping']);
+        expect(await ids(r)).not.toContain('shopping');
+    });
+
+    it('lets a home zone go while residents remain, as long as another home zone exists', async () => {
+        const { pool } = fakeDb({ residences: 3 });
+        const r = new ZoneRegistry(pool, new AuditChain());
+        await r.addZone({ gridName: 'Genesis', zoneId: 'terraces', label: 'Terraces', kind: 'home', allowedActivities: ['residence'], taxModifierBps: 0, changedByDid: GOV, tick: 2 });
+        await r.removeZone({ gridName: 'Genesis', zoneId: 'residential', changedByDid: GOV, tick: 4 });
+        expect(await ids(r)).toContain('terraces');
+        await expect(r.removeZone({ gridName: 'Genesis', zoneId: 'terraces', changedByDid: GOV, tick: 5 })).rejects.toMatchObject({ code: 'zone_occupied' });
+    });
 });

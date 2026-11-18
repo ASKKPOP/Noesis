@@ -236,3 +236,13 @@ Six zones → template; Polis add/relabel/remove via `grid_zones` + `zoning.zone
 scene (ZCOL/rings) and the Brain system prompt — part 2 must key them on zone `kind`. Removal is
 "no parcels at all", so only land-less zones are removable until lots can be retired.
 [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] apply | G2 part 2 built — land, map and Nous view keyed on zone kind (D-V3-40)
+Purchase / caps / structure fit read `ParcelRegistry` zone kinds (boot + after each zone law);
+`seed_ring` bills take `zone_id`; removal retires unclaimed lots; parcel feed carries
+`zone_kind` + `zone_label`; orbital scene draws ring 4+ shells and live signs; Brain reads kind.
+Pitfalls found: `parcel-registry.ts` contains a literal NUL byte (role-edge key separator) — grep
+needs `-a`, Edit/Write refuse it; `seedZone` numbered from 0001 every call (would have overwritten
+owned parcels on a second seeding — now continues); ring-expansion land was never persisted (lost on
+restart — now `insertParcels`); `market.ts` read `ZONE_TAX_BPS[zone]` directly (undefined for a new
+zone, ignored Polis overrides). [[v3.0/CIVIC-ARCHITECTURE]]

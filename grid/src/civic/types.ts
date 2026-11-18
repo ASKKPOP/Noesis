@@ -6,31 +6,24 @@
  * travel/capacity logic is untouched. One buildable Structure per parcel.
  */
 
-/** The 6 civic zones (D-V3-32). */
-export type ZoneId =
-    | 'business'
-    | 'manufacture'
-    | 'shopping'
-    | 'residential'
-    | 'infrastructure'
-    | 'government_quarter';
+import type { ZoneKind } from '../zoning/zone-types.js';
 
-/** Zones a Nous may buy a parcel in. Civic land (infrastructure / government) is not for sale in v1. */
-export const PURCHASABLE_ZONES: readonly ZoneId[] = ['residential', 'business', 'shopping', 'manufacture'];
-
-/** Zone class used for the per-Nous ownership cap (≤1 home + ≤1 business). */
-export const HOME_ZONES: readonly ZoneId[] = ['residential'];
-export const BUSINESS_ZONES: readonly ZoneId[] = ['business', 'shopping', 'manufacture'];
+/**
+ * A zone id. D-V3-40: the zone set belongs to each Grid — the six template zones plus
+ * whatever its Polis adds — so a zone id is any id in that Grid's set, never a fixed union.
+ * Rules key on the zone's KIND (home / business / civic), not on its name.
+ */
+export type ZoneId = string;
 
 export type StructureType = 'home' | 'shop' | 'workshop' | 'venue';
 export type Visibility = 'open' | 'private';
 
-/** Which structure types may be built in which zones. */
-export const STRUCTURE_ZONE_FIT: Readonly<Record<StructureType, readonly ZoneId[]>> = Object.freeze({
-    home: ['residential'],
-    shop: ['business', 'shopping', 'manufacture'],
-    workshop: ['business', 'shopping', 'manufacture'],
-    venue: ['residential', 'business', 'shopping', 'manufacture'],
+/** Which structure types may be built in which KIND of zone. Civic land takes no private build. */
+export const STRUCTURE_KIND_FIT: Readonly<Record<StructureType, readonly ZoneKind[]>> = Object.freeze({
+    home: ['home'],
+    shop: ['business'],
+    workshop: ['business'],
+    venue: ['home', 'business'],
 });
 
 export interface EntryPolicy {

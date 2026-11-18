@@ -16,18 +16,14 @@ import { GENESIS_SEED, type ParcelFeedEntry } from './OrbitalGenesisMap';
 import { mountOrbitalStation, type OrbitalHandle, type OrbitalObjectEntry } from './orbital-station-scene';
 import { pickerEntries, type PickerEntry, type PortalGrid } from './grid-picker';
 import { gridEntryHref } from '@/lib/grid-host';
+import { TEMPLATE_ZONES, landCounts, parseZones, zoneLabel, zoneLegend, type GridZoneView } from './zone-view';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 /** The Grid's own host (e.g. grid.noesiis.com). Unset = enter on this origin. */
 const GRID_HOST = process.env.NEXT_PUBLIC_GRID_HOST;
 
-const LEGEND: [string, string][] = [
-    ['#8e54b8', 'Government Core · gravity center'],
-    ['#8a98ac', 'Infrastructure · commons shell'],
-    ['#c2a878', 'Business · equatorial ring'],
-    ['#3fa6bd', 'Shopping · equatorial ring'],
-    ['#9a5a44', 'Manufacture · equatorial ring'],
-    ['#5a84c4', 'Residential · inclined orbit'],
+/** Legend lines that are not zones (the zone lines come from the Grid's live zone set). */
+const LEGEND_FIXED: [string, string][] = [
     ['#e7c878', 'Orbital objects · economy-built (what the Nous perceives)'],
     ['#9aa6c0', 'Moon · Mars · empty base Grids — defined, awaiting charter'],
 ];
@@ -52,6 +48,8 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
     const [clock, setClock] = useState(nyClock);
     const [recMsg, setRecMsg] = useState<string | null>(null);
     const [grids, setGrids] = useState<PortalGrid[] | null>(null);
+    // The Grid's zone set (D-V3-40). The six-zone template is the offline fallback.
+    const [zones, setZones] = useState<readonly GridZoneView[]>(TEMPLATE_ZONES);
 
     // Mount the Three.js scene once (WebGL — client only).
     useEffect(() => {
@@ -76,6 +74,20 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
                     setParcels(payload.parcels); setSource('live');
                 }
             } catch { if (!cancelled) setSource('seed'); }
+        })();
+        return () => { cancelled = true; };
+    }, []);
+
+    // The Grid's current zones — its Polis may have added, relabeled or removed some.
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch(`${GRID_ORIGIN}/api/v1/zoning/zones`, { cache: 'no-store' });
+                if (!res.ok) return;
+                const live = parseZones(await res.json());
+                if (!cancelled && live) setZones(live);
+            } catch { /* zones unreachable — the map keeps the template */ }
         })();
         return () => { cancelled = true; };
     }, []);
@@ -111,6 +123,7 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
 
     useEffect(() => { handleRef.current?.setParcels(parcels); }, [parcels]);
     useEffect(() => { handleRef.current?.setObjects(objects); }, [objects]);
+    useEffect(() => { handleRef.current?.setZones(zones); }, [zones]);
     useEffect(() => { const id = setInterval(() => setClock(nyClock()), 60000); return () => clearInterval(id); }, []);
 
     const entries = pickerEntries(grids);
@@ -139,7 +152,7 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
     };
 
     const isFuture = (p: ParcelFeedEntry | null): boolean => !!p && (p as unknown as { future?: boolean }).future === true;
-    const purchasable = parcels.filter((p) => !['government_quarter', 'infrastructure'].includes(p.zone)).length;
+    const { purchasable, civic } = landCounts(parcels, zones);
 
     const hud: React.CSSProperties = { position: 'fixed', zIndex: 10, fontFamily: "'JetBrains Mono', ui-monospace, monospace", pointerEvents: 'none', color: '#f5f0ea' };
     const btn = (on: boolean): React.CSSProperties => ({ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, border: on ? '1px solid #da7a4e' : '1px solid rgba(255,255,255,.16)', cursor: 'pointer', borderRadius: 999, padding: '5px 12px', background: on ? '#da7a4e' : 'rgba(255,255,255,.04)', color: on ? '#0b1220' : '#f5f0ea', pointerEvents: 'auto' });
@@ -154,13 +167,13 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
                 <div style={{ fontSize: 10, letterSpacing: '.16em', color: '#da7a4e', textTransform: 'uppercase', marginTop: 2 }}>Genesis Core · Orbital Station</div>
                 <div style={{ fontSize: 10.5, color: '#8a93a6', marginTop: 8, lineHeight: 1.8 }}>
                     <b style={{ color: '#da7a4e' }}>{clock}</b> · Genesis Epoch 2026-06-01 PT<br />
-                    <b style={{ color: '#da7a4e' }}>{purchasable}</b> purchasable slots · <b style={{ color: '#da7a4e' }}>5</b> civic · <b style={{ color: '#e7c878' }}>{objects.length}</b> built objects · <span style={{ color: source === 'live' ? '#7fe0a0' : '#3fa6bd' }}>{source === 'live' ? `live · ${parcels.length} parcels` : 'founding seed'}</span>
+                    <b style={{ color: '#da7a4e' }}>{purchasable}</b> purchasable slots · <b style={{ color: '#da7a4e' }}>{civic}</b> civic · <b style={{ color: '#e7c878' }}>{objects.length}</b> built objects · <span style={{ color: source === 'live' ? '#7fe0a0' : '#3fa6bd' }}>{source === 'live' ? `live · ${parcels.length} parcels` : 'founding seed'}</span>
                 </div>
             </div>
 
             {/* legend */}
             <div style={{ ...hud, bottom: 18, left: 22, fontSize: 11, lineHeight: 1.9, color: '#8a93a6' }}>
-                {LEGEND.map(([c, label]) => (
+                {[...zoneLegend(zones), ...LEGEND_FIXED].map(([c, label]) => (
                     <div key={label}><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 2, marginRight: 7, verticalAlign: 'middle', background: c }} />{label}</div>
                 ))}
             </div>
@@ -226,11 +239,11 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
                     ) : isFuture(picked) ? (
                         <>
                             <div style={{ color: '#3fa6bd', fontSize: 13, marginBottom: 8 }}>{(picked as unknown as { name?: string }).name ?? 'Frontier Grid'} · empty</div>
-                            <div style={{ color: '#da7a4e', fontSize: 11, lineHeight: 1.6 }}>The defined EMPTY base Grid on its own world — the 6-zone design is set, but it stays empty until the Nous and their humans charter it (D-NH-13). Genesis stays near Earth; a separate world on the Earth→Moon→Mars journey, not Genesis relocated.</div>
+                            <div style={{ color: '#da7a4e', fontSize: 11, lineHeight: 1.6 }}>The defined EMPTY base Grid on its own world — the zone template is set, but it stays empty until the Nous and their humans charter it (D-NH-13). Genesis stays near Earth; a separate world on the Earth→Moon→Mars journey, not Genesis relocated.</div>
                         </>
                     ) : (
                         <>
-                            <div style={{ color: '#3fa6bd', fontSize: 13, marginBottom: 8 }}>{picked.zone.replace(/_/g, ' ')} · district</div>
+                            <div style={{ color: '#3fa6bd', fontSize: 13, marginBottom: 8 }}>{zoneLabel(picked, zones)} · district</div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>shell</span><b style={{ color: '#f5f0ea' }}>{picked.ring === 0 ? 'core' : `ring ${picked.ring}`}</b></div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>status</span><b style={{ color: '#f5f0ea' }}>{picked.status}</b></div>
                             <div style={{ marginTop: 11, color: '#da7a4e', fontSize: 11, borderTop: '1px solid rgba(0,212,255,.16)', paddingTop: 10 }}>🔒 Detail of this space is private. Register and sign in with your Civic DID — it opens only within the space&apos;s entry policy &amp; rules.</div>

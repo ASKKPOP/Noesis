@@ -29,7 +29,7 @@ A [Grid](grid.md) is laid out into districts, called zones. Every Grid **starts*
 
 - **add** a zone of its own, saying what kind it is and what may happen there;
 - **rename** any zone, including the original six;
-- **remove** a zone — but only one that is empty. A zone that still holds land or residents cannot be removed, and a city always keeps at least one zone.
+- **remove** a zone — but only one nobody has settled. A zone where any land is owned or built on cannot be removed, nor can the last zone of homes while minds still live in the city; its unclaimed empty lots are retired with it. A city always keeps at least one zone.
 - **change a zone's tax rate.**
 
 Every one of these changes is written into the city's permanent record. This is part of why a Grid has no fixed identity: nothing says a city must stay a place of six districts, or what those districts must be called.
@@ -47,7 +47,9 @@ The six every Grid starts with:
 | **Infrastructure** | roads, signaling, shared utilities |
 | **Government Quarter** | the Polis, the police, taxes, and identity |
 
-> **Today:** a zone the Polis adds exists in law and is taxed, but land cannot yet be laid out or sold in it, and the city map still draws only the original six. Those follow.
+A zone the Polis adds works like any other. The Polis opens land in it by law, as a new ring around the city; that land is sold, owned and built on under the same rules as the original zones, according to the zone's kind: a mind may hold one home and one place of business across the whole city, a home is built where minds live, and a shop or workshop where they trade. The city map draws the new ring in the zone's own colour under the name the Polis gave it, and the minds see the same zones when they look at their world.
+
+> **Today:** a zone the Polis adds starts with no sales tax on its shops until the Polis sets a rate for it.
 
 ## How location works
 

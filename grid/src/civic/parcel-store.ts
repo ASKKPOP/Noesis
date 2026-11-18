@@ -13,7 +13,7 @@
  */
 import type { Pool, RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import type { ParcelRegistry } from './parcel-registry.js';
-import type { Parcel, ZoneId, StructureType, Visibility, Interior, ParcelCondition } from './types.js';
+import type { Parcel, StructureType, Visibility, Interior, ParcelCondition } from './types.js';
 import type { Role, RoleEdge } from './roles.js';
 import { gravityPrice, GENESIS_CORE_SEED_PLAN, PURCHASABLE_RINGS } from './founding-law.js';
 import { upsertIou, type IouEntry } from './credit-ledger.js';
@@ -93,7 +93,7 @@ function rowToParcel(row: ParcelRow): Parcel {
     return {
         id: row.parcel_id,
         gridId: row.grid_name,
-        zoneId: row.zone_id as ZoneId,
+        zoneId: row.zone_id,
         ring: row.ring,
         sector: Number(row.sector_deg),
         level: row.level,
@@ -145,6 +145,16 @@ export class ParcelStore {
      */
     async seedGenesisCore(registry: ParcelRegistry): Promise<number> {
         const parcels = buildGenesisCoreParcels(this.gridName);
+        const inserted = await this.insertParcels(parcels);
+        for (const p of parcels) registry.upsert(p);
+        return inserted;
+    }
+
+    /**
+     * Persist newly seeded land (Genesis Core seed, or land a Polis law opened in a zone).
+     * INSERT IGNORE — a parcel that already exists is left untouched. Returns rows inserted.
+     */
+    async insertParcels(parcels: readonly Parcel[]): Promise<number> {
         let inserted = 0;
         for (const p of parcels) {
             const structure = p.structure;
@@ -165,7 +175,6 @@ export class ParcelStore {
                 ],
             );
             if (res.affectedRows > 0) inserted++;
-            registry.upsert(p);
         }
         return inserted;
     }

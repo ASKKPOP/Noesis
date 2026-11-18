@@ -60,6 +60,18 @@ export const CANONICAL_ZONES: Readonly<Record<ZoneType, ZoneDef>> = Object.freez
     government_quarter: { zone_id: 'government_quarter',  tax_modifier_bps: 0,   allowed_activities: ['governance', 'police', 'court'],                         for_sale: false },
 });
 
+/** The zone set of a Grid with no zone law of its own: the six-zone template. */
+export function templateGridZones(): GridZone[] {
+    return ZONE_TYPES.map((z) => {
+        const c = CANONICAL_ZONES[z];
+        return {
+            zone_id: z, label: TEMPLATE_ZONE_META[z].label, kind: TEMPLATE_ZONE_META[z].kind,
+            tax_modifier_bps: c.tax_modifier_bps, allowed_activities: c.allowed_activities, for_sale: c.for_sale,
+            template: true, current_tax_modifier_bps: c.tax_modifier_bps,
+        };
+    });
+}
+
 export function isZoneType(v: unknown): v is ZoneType {
     return typeof v === 'string' && (ZONE_TYPES as readonly string[]).includes(v);
 }

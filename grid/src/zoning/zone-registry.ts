@@ -12,7 +12,7 @@ import type { AuditChain } from '../audit/chain.js';
 import { appendZoningZoneAmended } from '../audit/append-zoning-zone-amended.js';
 import { appendZoningZoneSetChanged } from '../audit/append-zoning-zone-set-changed.js';
 import {
-    CANONICAL_ZONES, TEMPLATE_ZONE_META, ZONE_TYPES, ZONE_KINDS, ZONE_ID_RE, ZONE_ACTIVITY_RE,
+    CANONICAL_ZONES, templateGridZones, ZONE_KINDS, ZONE_ID_RE, ZONE_ACTIVITY_RE,
     activityAllowed, isZoneType, type ZoneType, type ZoneKind, type GridZone, type ZoneSetAction,
 } from './zone-types.js';
 
@@ -67,15 +67,10 @@ export class ZoneRegistry {
         };
 
         const out: GridZone[] = [];
-        for (const z of ZONE_TYPES) {
-            const r = law.get(z);
+        for (const t of templateGridZones()) {
+            const r = law.get(t.zone_id);
             if (r) { if (r.active) out.push(fromRow(r, true)); continue; }
-            const c = CANONICAL_ZONES[z];
-            out.push({
-                zone_id: z, label: TEMPLATE_ZONE_META[z].label, kind: TEMPLATE_ZONE_META[z].kind,
-                tax_modifier_bps: c.tax_modifier_bps, allowed_activities: c.allowed_activities, for_sale: c.for_sale,
-                template: true, current_tax_modifier_bps: amended.get(z) ?? c.tax_modifier_bps,
-            });
+            out.push({ ...t, current_tax_modifier_bps: amended.get(t.zone_id) ?? t.tax_modifier_bps });
         }
         for (const r of law.values()) {
             if (!isZoneType(r.zone_id) && r.active) out.push(fromRow(r, false));
@@ -141,21 +136,27 @@ export class ZoneRegistry {
         this.emit('relabeled', p.zoneId, label, p.changedByDid, p.tick);
     }
 
-    /** Polis legislation removes a zone. Blocked while it still holds land or residents,
-     *  and a Grid always keeps at least one zone. */
+    /**
+     * Polis legislation removes a zone. Blocked while any of its land is owned or built on,
+     * while it is the last home zone and Nous still hold residences, and a Grid always keeps
+     * at least one zone. Its unclaimed, unbuilt lots are retired with it.
+     */
     async removeZone(p: { gridName: string; zoneId: string; changedByDid: string; tick: number }): Promise<void> {
         const zones = await this.listZones(p.gridName);
         const zone = zones.find((z) => z.zone_id === p.zoneId);
         if (!zone) throw new ZoneError('unknown_zone');
         if (zones.length <= 1) throw new ZoneError('last_zone');
-        if ((await this.count(`SELECT COUNT(*) AS n FROM civic_parcels WHERE grid_name = ? AND zone_id = ?`, [p.gridName, p.zoneId])) > 0) {
+        if ((await this.count(
+            `SELECT COUNT(*) AS n FROM civic_parcels WHERE grid_name = ? AND zone_id = ?
+               AND (owner_civic_did IS NOT NULL OR structure_type IS NOT NULL)`, [p.gridName, p.zoneId])) > 0) {
             throw new ZoneError('zone_occupied');
         }
-        // Residences are assigned in the template Residential zone (ResidenceStore).
-        if (p.zoneId === 'residential'
+        // Residences live in the Grid's home zones — the last one cannot go while Nous hold them.
+        if (zone.kind === 'home' && !zones.some((z) => z.kind === 'home' && z.zone_id !== p.zoneId)
             && (await this.count(`SELECT COUNT(*) AS n FROM residence_assignments WHERE grid_name = ?`, [p.gridName])) > 0) {
             throw new ZoneError('zone_occupied');
         }
+        await this.pool.query(`DELETE FROM civic_parcels WHERE grid_name = ? AND zone_id = ?`, [p.gridName, p.zoneId]);
         await this.upsert(p.gridName, zone, false, p.tick);
         this.emit('removed', p.zoneId, zone.label, p.changedByDid, p.tick);
     }
