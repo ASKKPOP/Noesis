@@ -1818,4 +1818,26 @@ export const MIGRATIONS: Migration[] = [
         up: `ALTER TABLE nous_registrations ADD COLUMN brain_key_x VARCHAR(64) NULL AFTER target_grid`,
         down: `ALTER TABLE nous_registrations DROP COLUMN brain_key_x`,
     },
+    {
+        // D-V3-40 — zones are free per Grid. The 6 canonical zones are the TEMPLATE; this table
+        // holds what a Grid's Polis legislated on top: zones it added, template zones it
+        // relabeled, and zones it removed (active = 0). No rows = the plain template, so
+        // existing Grids need no backfill. Tax amendments stay in zone_config.
+        version: 77,
+        name: 'create_grid_zones',
+        up: `
+            CREATE TABLE IF NOT EXISTS grid_zones (
+                grid_name          VARCHAR(63) NOT NULL,
+                zone_id            VARCHAR(32) NOT NULL,
+                label              VARCHAR(63) NOT NULL,
+                zone_kind          VARCHAR(16) NOT NULL,
+                tax_modifier_bps   INT         NOT NULL DEFAULT 0,
+                allowed_activities JSON        NOT NULL,
+                active             TINYINT(1)  NOT NULL DEFAULT 1,
+                changed_tick       BIGINT      NOT NULL,
+                PRIMARY KEY (grid_name, zone_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS grid_zones`,
+    },
 ];

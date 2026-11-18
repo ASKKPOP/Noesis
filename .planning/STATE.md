@@ -308,7 +308,9 @@ Mac app, not built). Built: `GridRecord.visibility` (`GRID_VISIBILITY`), `/api/v
 `visibility/member/locked` + redaction, `/` = `OrbitalStation3D portal`, old landing at `/about`.
 G1 built same day: private-Grid gate (`preHandlers/privateGridGate.ts`, public GETs → 403 for non-members) + Grid entry
 page `/g/[grid]` with `grid.*` host rewrite; host itself not routed (see `.planning/implementation/deploy.md`).
-Next: route grid.noesiis.com (deploy), G2 free zones, G3 identity profile, R0–R5.
+G2 part 1 built same day: zone law (`grid_zones` v77, `ZoneRegistry.addZone/relabelZone/removeZone`,
+`zoning.zone_set_changed` — allowlist 160). Next: route grid.noesiis.com (deploy); G2 part 2 (parcels, ownership caps,
+structure fit, orbital scene, Brain prompt keyed on zone `kind` instead of the six names); G3 identity profile; R0–R5.
 Carry forward: civic registry is keyed by Grid NAME not `gridId`; a new public GET that a non-member must reach on a
 private Grid needs an entry in the gate's exempt list; SSR fetches carry no member session.
 

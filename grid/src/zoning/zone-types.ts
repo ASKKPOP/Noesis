@@ -1,13 +1,47 @@
 /**
- * Phase 57 Grid Zoning System (D-V3-32) — the 6 canonical zones + per-zone rules.
+ * Grid Zoning System — the zone TEMPLATE + per-zone rules.
  *
- * 6-ZONE INVARIANT: every Grid has exactly these 6 zone types at instantiation. Polises may
- * amend sizes/rules (tax modifier, allowed activities) via legislation but CANNOT add or remove
- * zone types in v3.0. DIDs hashed on the chain; closed-tuple payloads, keys alphabetical.
+ * D-V3-40 (overturns the D-V3-32 6-zone invariant): the zone set belongs to each Grid.
+ * The 6 canonical zones below are the TEMPLATE every Grid starts from; its Polis may then
+ * add, relabel and remove zones by legislation (ZoneRegistry). A zone's `kind` — home /
+ * business / civic — is what rules key on, never its name. DIDs hashed on the chain;
+ * closed-tuple payloads, keys alphabetical.
  */
 
 export const ZONE_TYPES = ['business', 'manufacture', 'shopping', 'residential', 'infrastructure', 'government_quarter'] as const;
 export type ZoneType = typeof ZONE_TYPES[number];
+
+/** What a zone is for, independent of its name: where Nous live, where they trade/make, or civic land. */
+export const ZONE_KINDS = ['home', 'business', 'civic'] as const;
+export type ZoneKind = typeof ZONE_KINDS[number];
+
+/** Zone ids a Polis may define: lowercase snake, 2–31 chars. */
+export const ZONE_ID_RE = /^[a-z][a-z0-9_]{1,30}$/;
+export const ZONE_ACTIVITY_RE = /^[a-z_]{1,32}$/;
+
+/** Kind + display label of each template zone. */
+export const TEMPLATE_ZONE_META: Readonly<Record<ZoneType, { label: string; kind: ZoneKind }>> = Object.freeze({
+    business:           { label: 'Business',           kind: 'business' },
+    manufacture:        { label: 'Manufacture',        kind: 'business' },
+    shopping:           { label: 'Shopping',           kind: 'business' },
+    residential:        { label: 'Residential',        kind: 'home' },
+    infrastructure:     { label: 'Infrastructure',     kind: 'civic' },
+    government_quarter: { label: 'Government Quarter', kind: 'civic' },
+});
+
+/** One zone of one Grid, as the Grid currently defines it. */
+export interface GridZone {
+    readonly zone_id: string;
+    readonly label: string;
+    readonly kind: ZoneKind;
+    readonly tax_modifier_bps: number;
+    readonly allowed_activities: readonly string[];
+    readonly for_sale: boolean;
+    /** True for a zone that came from the template (possibly relabeled). */
+    readonly template: boolean;
+    /** Tax modifier after any Polis amendment. */
+    readonly current_tax_modifier_bps: number;
+}
 
 export interface ZoneDef {
     readonly zone_id: ZoneType;
@@ -40,8 +74,21 @@ export interface ZoningZoneAmendedPayload {
     readonly amended_by_did_hash: string;  // HEX64
     readonly tax_modifier_bps: number;
     readonly tick: number;
-    readonly zone_id: ZoneType;
+    readonly zone_id: string;
 }
+
+/** zoning.zone_set_changed — Polis legislation added, relabeled or removed a zone (D-V3-40).
+ *  The label itself stays Grid-side; only its hash crosses the chain. */
+export const ZONE_SET_ACTIONS = ['added', 'relabeled', 'removed'] as const;
+export type ZoneSetAction = typeof ZONE_SET_ACTIONS[number];
+export interface ZoningZoneSetChangedPayload {
+    readonly action: ZoneSetAction;
+    readonly changed_by_did_hash: string;  // HEX64
+    readonly label_hash: string;           // HEX64 — sha256 of the zone's label after the change
+    readonly tick: number;
+    readonly zone_id: string;
+}
+export const ZONING_ZONE_SET_CHANGED_KEYS = ['action', 'changed_by_did_hash', 'label_hash', 'tick', 'zone_id'] as const;
 export const ZONING_ZONE_AMENDED_KEYS = ['amended_by_did_hash', 'tax_modifier_bps', 'tick', 'zone_id'] as const;
 
 /** zoning.residence_assigned — a new Civic-DID was assigned a residential slot. */

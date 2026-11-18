@@ -228,3 +228,11 @@ until the G1 gate ships; a new dev origin needs GRID_CORS_ORIGINS. [[v3.0/CIVIC-
 Public GETs on a private Grid → 403 for non-members (exempt: health, Portal sign-in/Grid list/own
 account); `/g/[grid]` entry page + `grid.*` host rewrite. Pitfall: many 'public'-policy routes do
 their own auth, so the gate covers reads only and exempts by path prefix. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] apply | G2 part 1 built — zone law (D-V3-40)
+Six zones → template; Polis add/relabel/remove via `grid_zones` + `zoning.zone_set_changed`
+(allowlist 160). Pitfalls: zone semantics are spread by NAME across civic/types.ts
+(PURCHASABLE/HOME/BUSINESS zones, structure fit), founding-law seed, residence store, the orbital
+scene (ZCOL/rings) and the Brain system prompt — part 2 must key them on zone `kind`. Removal is
+"no parcels at all", so only land-less zones are removable until lots can be retired.
+[[v3.0/CIVIC-ARCHITECTURE]]

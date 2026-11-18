@@ -11,8 +11,8 @@ function pool(rows: unknown[] = []): Pool {
     return { query: vi.fn().mockResolvedValue([rows as RowDataPacket[], {}]) } as unknown as Pool;
 }
 
-describe('the 6-zone invariant (D-V3-32)', () => {
-    it('has exactly the 6 canonical zone types', () => {
+describe('the six-zone template (D-V3-40)', () => {
+    it('has exactly the 6 template zone types', () => {
         expect([...ZONE_TYPES].sort()).toEqual(['business', 'government_quarter', 'infrastructure', 'manufacture', 'residential', 'shopping']);
         expect(CANONICAL_ZONES.infrastructure.for_sale).toBe(false);
         expect(CANONICAL_ZONES.government_quarter.for_sale).toBe(false);

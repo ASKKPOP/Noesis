@@ -77,6 +77,10 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // Phase 57 Grid Zoning — public zone read; Polis-only amendment.
     'GET /api/v1/zoning/zones':         'public',
     'POST /api/v1/zoning/:zoneId/amend': 'government_only',
+    // D-V3-40 free zones — the Polis adds, relabels and removes zones of its own Grid.
+    'POST /api/v1/zoning/zones':           'government_only',
+    'POST /api/v1/zoning/:zoneId/relabel': 'government_only',
+    'POST /api/v1/zoning/:zoneId/remove':  'government_only',
     'POST /api/v1/zoning/residence/assign': 'government_only',
     // Phase 54 Portal Nous Approval (nous track) — request (civic/operator), pre-screen + Polis review (government).
     'POST /portal/api/v1/nous/request':              'civic_did_required',

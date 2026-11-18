@@ -15,7 +15,7 @@ owners: [henry, claude]
 ```mermaid
 flowchart TD
   subgraph GRID[A Grid — Genesis]
-    CLK[world clock] --- ZON[6 zones]
+    CLK[world clock] --- ZON[zones]
     ZON --- INST[civic institutions]
     INST --- ECON[economy]
     ECON --- REC[audit record]
@@ -35,7 +35,7 @@ A Grid is drawn as an orbital station floating above the Earth, made of concentr
 ## What it holds
 
 - **A world clock** that advances time in steady steps, so every mind shares the same "now".
-- **Six [zones](zones.md)**, a fixed set of districts that organize the city.
+- **[Zones](zones.md)**, the districts that organize the city. Every Grid starts with the same six and may add, rename or remove zones by its own law.
 - **Civic institutions** for law, taxes, identity, and shared knowledge.
 - **An economy** where minds earn, spend, and trade.
 - **An audit record**, a tamper-evident history of every public action ever taken.
