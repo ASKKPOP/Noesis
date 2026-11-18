@@ -3,7 +3,7 @@
 
 use noesis_brain::json::{self, Value};
 use noesis_brain::level::{self, Level};
-use noesis_brain::{ananke, bios, chronos, hashing, memory, parsing, prompts, psyche, state_hash, system_prompt, telos, thymos};
+use noesis_brain::{ananke, bios, body, chronos, config, hashing, memory, parsing, prompts, psyche, state_hash, system_prompt, telos, thymos};
 use serde_json::Value as J;
 
 fn fixture(name: &str) -> J {
@@ -351,6 +351,7 @@ fn psyche_of(v: &J) -> psyche::Psyche {
         personality: psyche::Dimension::ALL.map(|d| v["personality"].get(d.as_str()).map(s).unwrap_or("medium").to_string()),
         values: names(&v["values"]).into_iter().map(String::from).collect(),
         communication_style: s(&v["communication_style"]).to_string(),
+        birth_date: v.get("birth_date").map(s).unwrap_or("").to_string(),
     }
 }
 
@@ -626,5 +627,84 @@ fn system_prompt_matches_python() {
             let line = got.lines().zip(want.lines()).position(|(a, b)| a != b).unwrap_or(0);
             panic!("{name}: first difference at line {}\n  got : {:?}\n  want: {:?}", line + 1, got.lines().nth(line), want.lines().nth(line));
         }
+    }
+}
+
+#[test]
+fn spawn_matches_python() {
+    let doc = fixture("spawn");
+    let configs = doc["configs"].as_array().unwrap();
+    assert!(configs.len() >= 7);
+    for case in configs {
+        let name = s(&case["name"]);
+        let nous = config::spawn(s(&case["yaml"])).unwrap_or_else(|e| panic!("{name}: {e}"));
+        let p = &case["psyche"];
+        assert_eq!(nous.psyche.name, s(&p["name"]), "{name}");
+        assert_eq!(nous.psyche.archetype, s(&p["archetype"]), "{name}");
+        assert_eq!(nous.psyche.birth_date, s(&p["birth_date"]), "{name}");
+        assert_eq!(nous.psyche.communication_style, s(&p["communication_style"]), "{name}");
+        assert_eq!(nous.psyche.values, names(&p["values"]), "{name}");
+        for d in psyche::Dimension::ALL {
+            assert_eq!(nous.psyche.level(d), s(&p["personality"][d.as_str()]), "{name} {}", d.as_str());
+        }
+        let t = &case["thymos"];
+        assert_eq!(nous.thymos.baseline_mood, s(&t["baseline_mood"]), "{name}");
+        assert_eq!(nous.thymos.emotional_intensity, s(&t["emotional_intensity"]), "{name}");
+        same(thymos::intensity_multiplier(&nous.thymos.emotional_intensity), &t["multiplier"], name);
+        let want_triggers: Vec<(String, Vec<String>)> = t["triggers"].as_object().unwrap().iter()
+            .map(|(k, v)| (k.clone(), names(v).into_iter().map(String::from).collect())).collect();
+        assert_eq!(nous.thymos.triggers(), want_triggers.as_slice(), "{name}: triggers");
+        let want_goals = case["goals"].as_array().unwrap();
+        assert_eq!(nous.telos.goals.len(), want_goals.len(), "{name}: goal count");
+        for (g, w) in nous.telos.goals.iter().zip(want_goals) {
+            assert_eq!(g.description, s(&w["description"]), "{name}");
+            assert_eq!(g.goal_type.as_str(), s(&w["goal_type"]), "{name}");
+            assert_eq!(g.domain.as_str(), s(&w["domain"]), "{name}");
+            same(g.priority, &w["priority"], name);
+        }
+        let prompt = system_prompt::build_system_prompt(&system_prompt::SystemPromptInput::new(&nous.psyche, &nous.thymos, &nous.telos));
+        assert_eq!(prompt, s(&case["system_prompt"]), "{name}: system prompt");
+    }
+}
+
+#[test]
+fn body_matches_python() {
+    let doc = fixture("body");
+    let runs = doc["runs"].as_array().unwrap();
+    assert_eq!(runs.len(), 2);
+    for run in runs {
+        let linked = run["needs_lift_drives"].as_bool().unwrap();
+        let mut b = body::Body::new(0, linked);
+        let mut samples = run["samples"].as_array().unwrap().iter().peekable();
+        let (mut drive_x, mut need_x, mut death) = (Vec::new(), Vec::new(), None);
+        for tick in 1..=run["ticks"].as_i64().unwrap() {
+            let events = b.on_tick(tick);
+            for x in events.drive_crossings {
+                drive_x.push(serde_json::json!({"tick": tick, "drive": x.drive.as_str(), "level": x.level.as_str(), "direction": x.direction.as_str()}));
+            }
+            for x in events.need_crossings {
+                need_x.push(serde_json::json!({"tick": tick, "need": x.need.as_str(), "level": x.level.as_str(), "direction": x.direction.as_str()}));
+            }
+            if events.starved && death.is_none() {
+                death = Some(tick);
+            }
+            if samples.peek().is_some_and(|w| w["tick"] == tick) {
+                let want = samples.next().unwrap();
+                let at = format!("linked={linked} tick {tick}");
+                for d in ananke::Drive::ALL {
+                    same(b.drives.values[d as usize], &want["drive_values"][d.as_str()], &at);
+                    assert_eq!(b.drives.levels[d as usize].as_str(), s(&want["drive_levels"][d.as_str()]), "{at} {}", d.as_str());
+                }
+                for n in bios::Need::ALL {
+                    same(b.needs.values[n as usize], &want["need_values"][n.as_str()], &at);
+                    assert_eq!(b.needs.levels[n as usize].as_str(), s(&want["need_levels"][n.as_str()]), "{at} {}", n.as_str());
+                }
+                assert_eq!(b.epoch_since_spawn(tick), want["epoch_since_spawn"].as_i64().unwrap());
+            }
+        }
+        assert!(samples.next().is_none(), "unreplayed samples");
+        assert_eq!(J::Array(drive_x), run["drive_crossings"], "linked={linked}: drive crossings");
+        assert_eq!(J::Array(need_x), run["need_crossings"], "linked={linked}: need crossings");
+        assert_eq!(death, run["first_death_tick"].as_i64(), "linked={linked}: death tick");
     }
 }

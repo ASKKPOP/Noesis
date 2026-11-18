@@ -70,6 +70,11 @@ impl ThymosTracker {
         }
     }
 
+    /// Configured triggers as `(emotion name, words)`, in configured order.
+    pub fn triggers(&self) -> &[(String, Vec<String>)] {
+        &self.triggers
+    }
+
     /// Add an emotion, scaled by the Nous's emotional intensity, capped at 1.0.
     pub fn feel(&mut self, emotion: Emotion, intensity: f64, trigger: &str) {
         let i = emotion as usize;

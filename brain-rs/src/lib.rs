@@ -6,7 +6,10 @@
 
 pub mod ananke;
 pub mod bios;
+pub mod body;
 pub mod chronos;
+pub mod config;
+pub mod ffi;
 pub mod hashing;
 pub mod json;
 pub mod level;
@@ -19,3 +22,4 @@ pub mod state_hash;
 pub mod system_prompt;
 pub mod telos;
 pub mod thymos;
+pub mod view;

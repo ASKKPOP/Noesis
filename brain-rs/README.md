@@ -23,6 +23,10 @@ The deterministic faculties frozen by `brain/parity/fixtures/`:
 | `prompts` | the planning, decision, skill, social and economic prompts |
 | `telos` | goals: priorities, progress, time-based evolution, the goals block |
 | `system_prompt` | the full system prompt, every section |
+| `config` | a Nous built from its YAML configuration, as at spawn |
+| `body` | the per-tick needs + drives runtime |
+| `view` | what the Mac app shows about a Nous (not a Python port) |
+| `ffi` | the C interface the Mac app calls |
 | `pytext` | Python's whitespace and `str()` rules, where they change a result |
 
 Not ported yet: the goal ledger (task queue), the runtime, configuration, the Grid wire client and RPC
@@ -43,6 +47,8 @@ passes. Do not edit a fixture to make a test pass — fixtures are recorded from
   prompts interpolate) is written as JSON, not as Python's `repr`.
 - A Grid feed with the wrong shape (a non-object where an object belongs, e.g. a text
   `environment` or a text `outstanding_due`) is skipped; the Python prompt builder raises.
+- Configuration is read as YAML 1.2; Python reads YAML 1.1, where bare `yes` / `no` / `on` /
+  `off` are booleans. Quote such words in a Nous configuration.
 - A lone UTF-16 surrogate escape (`"\ud83d"`) in a reply: Python keeps it; a Rust string
   cannot, so it becomes U+FFFD.
 - JSON nested deeper than 512 levels is refused; Python allows roughly 1,000 and then

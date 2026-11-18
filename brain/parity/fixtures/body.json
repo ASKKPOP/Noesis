@@ -1,0 +1,1582 @@
+{
+ "fixture": "body",
+ "version": 1,
+ "runs": [
+  {
+   "needs_lift_drives": false,
+   "ticks": 8000,
+   "drive_crossings": [
+    {
+     "tick": 167,
+     "drive": "hunger",
+     "level": "med",
+     "direction": "rising"
+    },
+    {
+     "tick": 901,
+     "drive": "curiosity",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 1267,
+     "drive": "hunger",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 1401,
+     "drive": "boredom",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 1401,
+     "drive": "loneliness",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 1501,
+     "drive": "safety",
+     "level": "med",
+     "direction": "rising"
+    },
+    {
+     "tick": 4801,
+     "drive": "safety",
+     "level": "high",
+     "direction": "rising"
+    }
+   ],
+   "need_crossings": [
+    {
+     "tick": 167,
+     "need": "energy",
+     "level": "med",
+     "direction": "rising"
+    },
+    {
+     "tick": 501,
+     "need": "sustenance",
+     "level": "med",
+     "direction": "rising"
+    },
+    {
+     "tick": 1267,
+     "need": "energy",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 3801,
+     "need": "sustenance",
+     "level": "high",
+     "direction": "rising"
+    }
+   ],
+   "first_death_tick": 2334,
+   "samples": [
+    {
+     "tick": 1,
+     "drive_values": {
+      "hunger": 0.3003,
+      "curiosity": 0.5002,
+      "safety": 0.2001,
+      "boredom": 0.4002,
+      "loneliness": 0.4002
+     },
+     "drive_levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.3003,
+      "sustenance": 0.3001
+     },
+     "need_levels": {
+      "energy": "low",
+      "sustenance": "low"
+     },
+     "epoch_since_spawn": 1
+    },
+    {
+     "tick": 167,
+     "drive_values": {
+      "hunger": 0.35010000000000374,
+      "curiosity": 0.5333999999999963,
+      "safety": 0.21669999999999817,
+      "boredom": 0.43339999999999634,
+      "loneliness": 0.43339999999999634
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.35010000000000374,
+      "sustenance": 0.31669999999999815
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "low"
+     },
+     "epoch_since_spawn": 167
+    },
+    {
+     "tick": 168,
+     "drive_values": {
+      "hunger": 0.35040000000000376,
+      "curiosity": 0.5335999999999963,
+      "safety": 0.21679999999999816,
+      "boredom": 0.4335999999999963,
+      "loneliness": 0.4335999999999963
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.35040000000000376,
+      "sustenance": 0.31679999999999814
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "low"
+     },
+     "epoch_since_spawn": 168
+    },
+    {
+     "tick": 169,
+     "drive_values": {
+      "hunger": 0.3507000000000038,
+      "curiosity": 0.5337999999999963,
+      "safety": 0.21689999999999815,
+      "boredom": 0.4337999999999963,
+      "loneliness": 0.4337999999999963
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.3507000000000038,
+      "sustenance": 0.3168999999999981
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "low"
+     },
+     "epoch_since_spawn": 169
+    },
+    {
+     "tick": 400,
+     "drive_values": {
+      "hunger": 0.420000000000009,
+      "curiosity": 0.5799999999999912,
+      "safety": 0.2399999999999956,
+      "boredom": 0.4799999999999912,
+      "loneliness": 0.4799999999999912
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.420000000000009,
+      "sustenance": 0.3399999999999956
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "low"
+     },
+     "epoch_since_spawn": 400
+    },
+    {
+     "tick": 500,
+     "drive_values": {
+      "hunger": 0.4500000000000112,
+      "curiosity": 0.599999999999989,
+      "safety": 0.2499999999999945,
+      "boredom": 0.499999999999989,
+      "loneliness": 0.499999999999989
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.4500000000000112,
+      "sustenance": 0.3499999999999945
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "low"
+     },
+     "epoch_since_spawn": 500
+    },
+    {
+     "tick": 501,
+     "drive_values": {
+      "hunger": 0.45030000000001125,
+      "curiosity": 0.600199999999989,
+      "safety": 0.2500999999999945,
+      "boredom": 0.500199999999989,
+      "loneliness": 0.500199999999989
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.45030000000001125,
+      "sustenance": 0.35009999999999447
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 501
+    },
+    {
+     "tick": 502,
+     "drive_values": {
+      "hunger": 0.45060000000001127,
+      "curiosity": 0.6003999999999889,
+      "safety": 0.2501999999999945,
+      "boredom": 0.500399999999989,
+      "loneliness": 0.500399999999989
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.45060000000001127,
+      "sustenance": 0.35019999999999446
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 502
+    },
+    {
+     "tick": 800,
+     "drive_values": {
+      "hunger": 0.5400000000000106,
+      "curiosity": 0.6599999999999824,
+      "safety": 0.2799999999999912,
+      "boredom": 0.5599999999999824,
+      "loneliness": 0.5599999999999824
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.5400000000000106,
+      "sustenance": 0.3799999999999912
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 800
+    },
+    {
+     "tick": 1200,
+     "drive_values": {
+      "hunger": 0.6599999999999974,
+      "curiosity": 0.7399999999999736,
+      "safety": 0.3199999999999868,
+      "boredom": 0.6399999999999736,
+      "loneliness": 0.6399999999999736
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "high",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.6599999999999974,
+      "sustenance": 0.4199999999999868
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 1200
+    },
+    {
+     "tick": 1600,
+     "drive_values": {
+      "hunger": 0.7799999999999842,
+      "curiosity": 0.8199999999999648,
+      "safety": 0.3599999999999824,
+      "boredom": 0.7199999999999648,
+      "loneliness": 0.7199999999999648
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 0.7799999999999842,
+      "sustenance": 0.45999999999998237
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 1600
+    },
+    {
+     "tick": 2000,
+     "drive_values": {
+      "hunger": 0.8999999999999709,
+      "curiosity": 0.899999999999956,
+      "safety": 0.399999999999978,
+      "boredom": 0.799999999999956,
+      "loneliness": 0.799999999999956
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 0.8999999999999709,
+      "sustenance": 0.49999999999997796
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 2000
+    },
+    {
+     "tick": 2400,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 0.9799999999999471,
+      "safety": 0.4399999999999736,
+      "boredom": 0.8799999999999472,
+      "loneliness": 0.8799999999999472
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.5399999999999736
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 2400
+    },
+    {
+     "tick": 2800,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.4799999999999692,
+      "boredom": 0.9599999999999383,
+      "loneliness": 0.9599999999999383
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.5799999999999692
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 2800
+    },
+    {
+     "tick": 3200,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.5199999999999648,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.6199999999999648
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 3200
+    },
+    {
+     "tick": 3600,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.5599999999999604,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.6599999999999604
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 3600
+    },
+    {
+     "tick": 4000,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.599999999999956,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.699999999999956
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 4000
+    },
+    {
+     "tick": 4400,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.6399999999999516,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.7399999999999516
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 4400
+    },
+    {
+     "tick": 4800,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.6799999999999472,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.7799999999999472
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 4800
+    },
+    {
+     "tick": 5200,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.7199999999999428,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.8199999999999428
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 5200
+    },
+    {
+     "tick": 5600,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.7599999999999384,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.8599999999999384
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 5600
+    },
+    {
+     "tick": 6000,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.799999999999934,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.899999999999934
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 6000
+    },
+    {
+     "tick": 6400,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.8399999999999296,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.9399999999999296
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 6400
+    },
+    {
+     "tick": 6800,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.8799999999999252,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.9799999999999252
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 6800
+    },
+    {
+     "tick": 7200,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.9199999999999208,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 1.0
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 7200
+    },
+    {
+     "tick": 7600,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.9599999999999164,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 1.0
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 7600
+    },
+    {
+     "tick": 8000,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.999999999999912,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 1.0
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 8000
+    }
+   ]
+  },
+  {
+   "needs_lift_drives": true,
+   "ticks": 8000,
+   "drive_crossings": [
+    {
+     "tick": 167,
+     "drive": "hunger",
+     "level": "med",
+     "direction": "rising"
+    },
+    {
+     "tick": 168,
+     "drive": "hunger",
+     "level": "med",
+     "direction": "falling"
+    },
+    {
+     "tick": 502,
+     "drive": "safety",
+     "level": "low",
+     "direction": "falling"
+    },
+    {
+     "tick": 901,
+     "drive": "curiosity",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 1267,
+     "drive": "hunger",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 1401,
+     "drive": "boredom",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 1401,
+     "drive": "loneliness",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 1501,
+     "drive": "safety",
+     "level": "med",
+     "direction": "rising"
+    },
+    {
+     "tick": 3802,
+     "drive": "safety",
+     "level": "med",
+     "direction": "falling"
+    },
+    {
+     "tick": 4801,
+     "drive": "safety",
+     "level": "high",
+     "direction": "rising"
+    }
+   ],
+   "need_crossings": [
+    {
+     "tick": 167,
+     "need": "energy",
+     "level": "med",
+     "direction": "rising"
+    },
+    {
+     "tick": 501,
+     "need": "sustenance",
+     "level": "med",
+     "direction": "rising"
+    },
+    {
+     "tick": 1267,
+     "need": "energy",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 3801,
+     "need": "sustenance",
+     "level": "high",
+     "direction": "rising"
+    }
+   ],
+   "first_death_tick": 2334,
+   "samples": [
+    {
+     "tick": 1,
+     "drive_values": {
+      "hunger": 0.3003,
+      "curiosity": 0.5002,
+      "safety": 0.2001,
+      "boredom": 0.4002,
+      "loneliness": 0.4002
+     },
+     "drive_levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.3003,
+      "sustenance": 0.3001
+     },
+     "need_levels": {
+      "energy": "low",
+      "sustenance": "low"
+     },
+     "epoch_since_spawn": 1
+    },
+    {
+     "tick": 167,
+     "drive_values": {
+      "hunger": 0.35010000000000374,
+      "curiosity": 0.5333999999999963,
+      "safety": 0.21669999999999817,
+      "boredom": 0.43339999999999634,
+      "loneliness": 0.43339999999999634
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.35010000000000374,
+      "sustenance": 0.31669999999999815
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "low"
+     },
+     "epoch_since_spawn": 167
+    },
+    {
+     "tick": 168,
+     "drive_values": {
+      "hunger": 0.35040000000000376,
+      "curiosity": 0.5335999999999963,
+      "safety": 0.21679999999999816,
+      "boredom": 0.4335999999999963,
+      "loneliness": 0.4335999999999963
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.35040000000000376,
+      "sustenance": 0.31679999999999814
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "low"
+     },
+     "epoch_since_spawn": 168
+    },
+    {
+     "tick": 169,
+     "drive_values": {
+      "hunger": 0.3507000000000038,
+      "curiosity": 0.5337999999999963,
+      "safety": 0.21689999999999815,
+      "boredom": 0.4337999999999963,
+      "loneliness": 0.4337999999999963
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.3507000000000038,
+      "sustenance": 0.3168999999999981
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "low"
+     },
+     "epoch_since_spawn": 169
+    },
+    {
+     "tick": 400,
+     "drive_values": {
+      "hunger": 0.420000000000009,
+      "curiosity": 0.5799999999999912,
+      "safety": 0.2399999999999956,
+      "boredom": 0.4799999999999912,
+      "loneliness": 0.4799999999999912
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.420000000000009,
+      "sustenance": 0.3399999999999956
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "low"
+     },
+     "epoch_since_spawn": 400
+    },
+    {
+     "tick": 500,
+     "drive_values": {
+      "hunger": 0.4500000000000112,
+      "curiosity": 0.599999999999989,
+      "safety": 0.2499999999999945,
+      "boredom": 0.499999999999989,
+      "loneliness": 0.499999999999989
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.4500000000000112,
+      "sustenance": 0.3499999999999945
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "low"
+     },
+     "epoch_since_spawn": 500
+    },
+    {
+     "tick": 501,
+     "drive_values": {
+      "hunger": 0.45030000000001125,
+      "curiosity": 0.600199999999989,
+      "safety": 0.2500999999999945,
+      "boredom": 0.500199999999989,
+      "loneliness": 0.500199999999989
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "med",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.45030000000001125,
+      "sustenance": 0.35009999999999447
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 501
+    },
+    {
+     "tick": 502,
+     "drive_values": {
+      "hunger": 0.45060000000001127,
+      "curiosity": 0.6003999999999889,
+      "safety": 0.2501999999999945,
+      "boredom": 0.500399999999989,
+      "loneliness": 0.500399999999989
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.45060000000001127,
+      "sustenance": 0.35019999999999446
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 502
+    },
+    {
+     "tick": 800,
+     "drive_values": {
+      "hunger": 0.5400000000000106,
+      "curiosity": 0.6599999999999824,
+      "safety": 0.2799999999999912,
+      "boredom": 0.5599999999999824,
+      "loneliness": 0.5599999999999824
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.5400000000000106,
+      "sustenance": 0.3799999999999912
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 800
+    },
+    {
+     "tick": 1200,
+     "drive_values": {
+      "hunger": 0.6599999999999974,
+      "curiosity": 0.7399999999999736,
+      "safety": 0.3199999999999868,
+      "boredom": 0.6399999999999736,
+      "loneliness": 0.6399999999999736
+     },
+     "drive_levels": {
+      "hunger": "med",
+      "curiosity": "high",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     },
+     "need_values": {
+      "energy": 0.6599999999999974,
+      "sustenance": 0.4199999999999868
+     },
+     "need_levels": {
+      "energy": "med",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 1200
+    },
+    {
+     "tick": 1600,
+     "drive_values": {
+      "hunger": 0.7799999999999842,
+      "curiosity": 0.8199999999999648,
+      "safety": 0.3599999999999824,
+      "boredom": 0.7199999999999648,
+      "loneliness": 0.7199999999999648
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 0.7799999999999842,
+      "sustenance": 0.45999999999998237
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 1600
+    },
+    {
+     "tick": 2000,
+     "drive_values": {
+      "hunger": 0.8999999999999709,
+      "curiosity": 0.899999999999956,
+      "safety": 0.399999999999978,
+      "boredom": 0.799999999999956,
+      "loneliness": 0.799999999999956
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 0.8999999999999709,
+      "sustenance": 0.49999999999997796
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 2000
+    },
+    {
+     "tick": 2400,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 0.9799999999999471,
+      "safety": 0.4399999999999736,
+      "boredom": 0.8799999999999472,
+      "loneliness": 0.8799999999999472
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.5399999999999736
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 2400
+    },
+    {
+     "tick": 2800,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.4799999999999692,
+      "boredom": 0.9599999999999383,
+      "loneliness": 0.9599999999999383
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.5799999999999692
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 2800
+    },
+    {
+     "tick": 3200,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.5199999999999648,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.6199999999999648
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 3200
+    },
+    {
+     "tick": 3600,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.5599999999999604,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.6599999999999604
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "med"
+     },
+     "epoch_since_spawn": 3600
+    },
+    {
+     "tick": 4000,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.599999999999956,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.699999999999956
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 4000
+    },
+    {
+     "tick": 4400,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.6399999999999516,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.7399999999999516
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 4400
+    },
+    {
+     "tick": 4800,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.6799999999999472,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.7799999999999472
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 4800
+    },
+    {
+     "tick": 5200,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.7199999999999428,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.8199999999999428
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 5200
+    },
+    {
+     "tick": 5600,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.7599999999999384,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.8599999999999384
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 5600
+    },
+    {
+     "tick": 6000,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.799999999999934,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.899999999999934
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 6000
+    },
+    {
+     "tick": 6400,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.8399999999999296,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.9399999999999296
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 6400
+    },
+    {
+     "tick": 6800,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.8799999999999252,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 0.9799999999999252
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 6800
+    },
+    {
+     "tick": 7200,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.9199999999999208,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 1.0
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 7200
+    },
+    {
+     "tick": 7600,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.9599999999999164,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 1.0
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 7600
+    },
+    {
+     "tick": 8000,
+     "drive_values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.999999999999912,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "drive_levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     },
+     "need_values": {
+      "energy": 1.0,
+      "sustenance": 1.0
+     },
+     "need_levels": {
+      "energy": "high",
+      "sustenance": "high"
+     },
+     "epoch_since_spawn": 8000
+    }
+   ]
+  }
+ ]
+}

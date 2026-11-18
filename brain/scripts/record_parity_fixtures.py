@@ -699,6 +699,86 @@ def system_prompt_fixture() -> dict[str, Any]:
     return {"cases": [{"name": name, "input": spec, "prompt": _system_prompt(spec)} for name, spec in cases]}
 
 
+# ── spawn: a Nous built from its YAML config ────────────────────────────────
+
+INLINE_NOUS_CONFIGS: list[tuple[str, str]] = [
+    ("empty_document", "{}\n"),
+    ("identity_only", "identity:\n  name: Solo\n"),
+    ("opted_out_of_earning", "identity: {name: Monk, archetype: The Hermit}\ntelos:\n  earn_money: false\n  long_term: [\"sit still\"]\n"),
+    ("unknown_style_and_levels", "identity:\n  name: \"Odd — 이상\"\n  archetype: 'Trickster'\npsyche:\n  personality: {openness: extreme, ambition: low, not_a_dimension: high}\n  values: [mischief]\n  communication_style: sarcastic\nthymos:\n  emotional_intensity: high\n  triggers:\n    fear: [\"being ignored\"]\ntelos:\n  short_term:\n    - \"make someone laugh\"\n"),
+]
+
+
+def _spawn(data: dict[str, Any]) -> dict[str, Any]:
+    """What ``__main__`` builds from a config (psyche, thymos, telos) — the same calls, in the same order."""
+    from noesis_brain.psyche.loader import load_psyche
+    from noesis_brain.telos.manager import TelosManager
+
+    psyche = load_psyche(data=data)
+    thymos = ThymosTracker(config=data.get("thymos", {}))
+    telos_config = data.get("telos", {})
+    telos = TelosManager()
+    for desc in telos_config.get("short_term", []):
+        telos.add_goal(desc, GoalType.SHORT_TERM, priority=0.8)
+    for desc in telos_config.get("medium_term", []):
+        telos.add_goal(desc, GoalType.MEDIUM_TERM, priority=0.5)
+    for desc in telos_config.get("long_term", []):
+        telos.add_goal(desc, GoalType.LONG_TERM, priority=0.3)
+    if telos_config.get("earn_money", True):
+        telos.seed_economic_goal()
+    from noesis_brain.prompts.system import build_system_prompt
+
+    return {
+        "psyche": {"name": psyche.name, "archetype": psyche.archetype, "birth_date": psyche.birth_date,
+                   "personality": {d.value: psyche.personality.get_level(d) for d in PersonalityDimension},
+                   "values": list(psyche.values), "communication_style": psyche.communication_style.value},
+        "thymos": {"baseline_mood": thymos.mood.baseline_mood, "emotional_intensity": thymos.mood.emotional_intensity,
+                   "multiplier": thymos._multiplier, "triggers": thymos._triggers},
+        "goals": [_goal_dump(g) for g in telos.all_goals()],
+        "system_prompt": build_system_prompt(psyche, thymos.mood, telos),
+    }
+
+
+def spawn_fixture() -> dict[str, Any]:
+    import yaml
+
+    nous_dir = Path(__file__).resolve().parent.parent / "data" / "nous"
+    sources = [(p.name, p.read_text(encoding="utf-8")) for p in sorted(nous_dir.glob("*.yaml"))] + INLINE_NOUS_CONFIGS
+    return {"configs": [{"name": name, "yaml": text, **_spawn(yaml.safe_load(text) or {})} for name, text in sources]}
+
+
+# ── body: the per-tick needs + drives runtime, in the handler's order ───────
+
+def _body_run(linked: bool, ticks: int) -> dict[str, Any]:
+    from noesis_brain.ananke.runtime import AnankeRuntime
+    from noesis_brain.bios.runtime import BiosRuntime
+
+    ananke = AnankeRuntime(seed=0)
+    bios = BiosRuntime(seed=0, birth_tick=0, ananke=ananke if linked else None)
+    drive_crossings, need_crossings, samples, death_tick = [], [], [], None
+    for tick in range(1, ticks + 1):
+        ananke.on_tick(tick)   # the handler steps drives first …
+        for c in ananke.drain_crossings():
+            drive_crossings.append({"tick": tick, "drive": c.drive.value, "level": c.level.value, "direction": c.direction.value})
+        bios.on_tick(tick)     # … then needs (which may lift a drive's bucket when linked)
+        for c in bios.drain_crossings():
+            need_crossings.append({"tick": tick, "need": c.need.value, "level": c.level.value, "direction": c.direction.value})
+        if bios.drain_death() and death_tick is None:
+            death_tick = tick
+        if tick % SAMPLE_EVERY == 0 or tick in (1, 167, 168, 169, 500, 501, 502):
+            samples.append({"tick": tick, "drive_values": _enum_keys(ananke.state.values), "drive_levels": _enum_keys(ananke.state.levels),
+                            "need_values": _enum_keys(bios.state.values), "need_levels": _enum_keys(bios.state.levels),
+                            "epoch_since_spawn": bios.epoch_since_spawn(tick)})
+    return {"needs_lift_drives": linked, "ticks": ticks, "drive_crossings": drive_crossings, "need_crossings": need_crossings,
+            "first_death_tick": death_tick, "samples": samples}
+
+
+def body_fixture() -> dict[str, Any]:
+    # The live handler builds the needs runtime WITHOUT the link to drives (needs_lift_drives
+    # false); the runtime also supports the linked form. Both are frozen here.
+    return {"runs": [_body_run(False, TRAJECTORY_TICKS), _body_run(True, TRAJECTORY_TICKS)]}
+
+
 FIXTURES = {
     "bios": bios_fixture,
     "ananke": ananke_fixture,
@@ -712,6 +792,8 @@ FIXTURES = {
     "prompts": prompts_fixture,
     "telos": telos_fixture,
     "system_prompt": system_prompt_fixture,
+    "spawn": spawn_fixture,
+    "body": body_fixture,
 }
 
 

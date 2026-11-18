@@ -90,6 +90,7 @@ pub struct Psyche {
     pub personality: [String; 6],
     pub values: Vec<String>,
     pub communication_style: String,
+    pub birth_date: String,
 }
 
 impl Psyche {

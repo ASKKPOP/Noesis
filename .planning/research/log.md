@@ -291,3 +291,12 @@ Twelve fixtures now. Notes: Rust `{:.N}` formatting matches Python's `:.Nf` / `:
 51k values, ties included); Python truthiness and `x or y` chains over Grid feed values need
 explicit helpers; installing Xcode without accepting its license makes `/usr/bin/git`,
 `/usr/bin/python3` and the Rust linker all refuse to run. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-18] apply | Mac app begun — SwiftUI Nous viewer over the Rust core (D-V3-42)
+Swift Package + Rust static library through a two-function C interface (text in, JSON out); no
+Xcode project needed. Pitfalls: a SwiftUI HStack column squeezed to zero width wraps a character
+per line and makes a tall blank gap; background accessibility cannot set a toolbar Slider, so the
+tick is also an editable field. Observation: the live handler builds BiosRuntime without `ananke`,
+so need crossings never lift drives; the linked form emits a spurious "falling" drive crossing one
+tick later. Operator direction: every Local Nous Manager function moves into this app.
+[[v3.0/CIVIC-ARCHITECTURE]]
