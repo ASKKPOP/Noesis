@@ -22,8 +22,8 @@ Everything the Electron manager did, plus chat, a dashboard and a model picker:
 
 The Nous itself still runs on the **Python Brain**, which this app starts and stops. The
 Rust core cannot run a Nous yet; it powers Profile, the dashboard header and the
-configuration check. Each chat message is answered on its own (the model is not given the
-earlier messages), and chats are not stored as the Nous's memories.
+configuration check. In chat the Nous is shown the last 20 messages of the conversation, and
+keeps each exchange as one of its own memories.
 
 App data lives in `~/Library/Application Support/Nous/`: `settings.json`, `brain-secret`
 (readable only by you), `chats/`, and `brain-data/<nous>/` (the Nous's own memory).

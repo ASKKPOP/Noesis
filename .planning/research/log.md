@@ -308,3 +308,9 @@ not answer any message; fixed. The shipped Nous configs name `qwen3:*` models; a
 gets no thinking until a model is chosen (app sets `LLM_MODEL`). Port 8090 may be taken. An app
 killed by signal must stop its Brain itself. Chats are not stored as Nous memories and each
 message is answered without the earlier ones — open product question. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-18] apply | Local chat: the Nous sees the conversation and remembers it
+Mirrors the Portal conversation cycle (transcript prompt + `record_event` memory) in a dedicated
+`local_chat` method; history comes from the app so it matches what the person sees and survives
+a Brain restart. Memory is one event per exchange — a long chat adds many high-importance events;
+watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]

@@ -157,13 +157,16 @@ final class AppModel: ObservableObject {
     func send(_ text: String) {
         let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, !waitingForReply else { return }
+        // What the Nous is shown of the conversation so far (the Brain keeps the most recent part).
+        let history = messages.filter { $0.role != .problem }.suffix(20)
+            .map { (human: $0.role == .human, text: String($0.text.prefix(4000))) }
         messages.append(ChatMessage(role: .human, text: text))
         saveMessages()
         waitingForReply = true
         let api = api
         Task {
             do {
-                let reply = try await api.chat(text)
+                let reply = try await api.chat(text, history: history)
                 messages.append(ChatMessage(role: .nous, text: reply.isEmpty ? "(no reply)" : reply))
             } catch {
                 messages.append(ChatMessage(role: .problem, text: error.localizedDescription))

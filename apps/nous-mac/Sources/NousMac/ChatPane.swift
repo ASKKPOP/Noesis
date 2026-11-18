@@ -14,7 +14,7 @@ struct ChatPane: View {
                 VStack(spacing: 10) {
                     Text("Talk with \(app.nousName)").font(.system(size: 30, weight: .semibold, design: .serif))
                     Text(brain.isRunning
-                         ? "What you say here stays on this Mac. \(app.nousName) answers in character, one message at a time."
+                         ? "What you say here stays on this Mac. \(app.nousName) answers in character and remembers what you talk about."
                          : "Start the Brain to talk. What you say here stays on this Mac.")
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -56,7 +56,7 @@ struct ChatPane: View {
             ToolbarItem {
                 Button { app.clearChat() } label: { Label("Clear Conversation", systemImage: "trash") }
                     .disabled(app.messages.isEmpty || app.waitingForReply)
-                    .help("Remove this conversation from this Mac. The Nous keeps its own memories.")
+                    .help("Start a fresh conversation. The Nous keeps its memories of what was said.")
             }
         }
         .onAppear { composing = true }

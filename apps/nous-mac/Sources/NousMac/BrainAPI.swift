@@ -60,7 +60,7 @@ struct BrainAPI {
     let port: Int
     let secret: String
 
-    private func request(_ path: String, body: [String: String]? = nil, timeout: TimeInterval) async throws -> Data {
+    private func request(_ path: String, body: Data? = nil, timeout: TimeInterval) async throws -> Data {
         guard let url = URL(string: "http://127.0.0.1:\(port)\(path)") else {
             throw BrainAPIError(message: "Bad address for the Brain.")
         }
@@ -69,7 +69,7 @@ struct BrainAPI {
         if let body {
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.httpBody = try JSONEncoder().encode(body)
+            request.httpBody = body
         }
         let data: Data
         let response: URLResponse
@@ -84,6 +84,9 @@ struct BrainAPI {
         switch status {
         case 200..<300: return data
         case 401: throw BrainAPIError(message: "The Brain refused this app's secret. It was probably started outside this app; stop it and start it here.")
+        case 503:
+            let reason = (try? JSONDecoder().decode(JSON.self, from: data))?["error"].text ?? ""
+            throw BrainAPIError(message: reason.isEmpty ? "The Brain cannot answer right now." : reason + " Check the model on the Local AI screen.")
         case 404: throw BrainAPIError(message: "This Brain is too old for that request (no \(path)).")
         default: throw BrainAPIError(message: "The Brain answered with an error (\(status)): \(String(decoding: data.prefix(300), as: UTF8.self))")
         }
@@ -93,9 +96,13 @@ struct BrainAPI {
         try JSONDecoder().decode(JSON.self, from: try await request(path, timeout: 10))
     }
 
-    /// Say something to the Nous and wait for its reply. Stays on this machine.
-    func chat(_ text: String) async throws -> String {
-        let data = try await request("/local/chat", body: ["text": text], timeout: 300)
+    /// Say something to the Nous and wait for its reply. `history` is the conversation so
+    /// far, oldest first, as (said by the human?, text). Stays on this machine.
+    func chat(_ text: String, history: [(human: Bool, text: String)]) async throws -> String {
+        struct Turn: Encodable { let role: String; let text: String }
+        struct Body: Encodable { let text: String; let history: [Turn] }
+        let body = Body(text: text, history: history.map { Turn(role: $0.human ? "human" : "nous", text: $0.text) })
+        let data = try await request("/local/chat", body: try JSONEncoder().encode(body), timeout: 300)
         return try JSONDecoder().decode(JSON.self, from: data)["reply"].text
     }
 }

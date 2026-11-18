@@ -281,8 +281,6 @@ class BrainHandler:
             sender_did: DID of sender
             channel: Agora channel or "direct"
             text: Message content
-            local: True for the operator's own chat (Local Nous Manager) — the reply
-                is returned to the caller only and is NOT forwarded to the Grid.
         """
         sender_name = params.get("sender_name", "Unknown")
         sender_did = params.get("sender_did", "")
@@ -486,8 +484,7 @@ class BrainHandler:
 
         # Phase 38 WIRE-01 (D-38-A2): parallel HTTPS dispatch from on_message.
         # Same discipline as on_tick: forward to Grid when _grid_wire_client is set.
-        # A local (operator) chat stays on this machine.
-        if self._grid_wire_client is not None and not params.get("local"):
+        if self._grid_wire_client is not None:
             import asyncio as _asyncio
 
             async def _fire_message_actions(
@@ -508,6 +505,43 @@ class BrainHandler:
             _asyncio.create_task(_fire_message_actions())
 
         return result_actions
+
+    async def local_chat(self, text: str, history: list[tuple[str, str]]) -> str:
+        """The operator talking to their own Nous in the Local Nous Manager (Tier 1).
+
+        ``history`` is the conversation so far as ``(role, text)`` pairs, role "human" or
+        "nous", oldest first. The Nous answers in its own voice with those messages in
+        view, and keeps the exchange as a memory. Private: nothing here reads from or
+        writes to the Grid, and no audit event is produced. Raises LLMError when the
+        model cannot answer — the caller reports that rather than inventing a reply.
+        """
+        self.thymos.apply_triggers(text)
+        system_prompt = build_system_prompt(
+            self.psyche, self.thymos.mood, self.telos,
+            grid_name=self.grid_name, location=self.location,
+        )
+        turns = [*history, ("human", text)]
+        transcript = "\n".join(
+            f"{'Your human' if role == 'human' else self.psyche.name}: {said}" for role, said in turns
+        )
+        response = await self.llm.generate(
+            f"Your human is talking with you privately, on their own machine. The conversation so far:\n\n"
+            f"{transcript}\n\n"
+            f"Reply to their last message in character as {self.psyche.name}. "
+            f"Plain prose, 1-4 sentences. Give only your reply.",
+            GenerateOptions(
+                system_prompt=system_prompt, temperature=0.7,
+                max_tokens=1024, purpose="conversation", think=True,
+            ),
+        )
+        reply_text = response.text.strip()
+        self.thymos.decay()
+        if reply_text and self.memory is not None and hasattr(self.memory, "record_event"):
+            self.memory.record_event(
+                content=f"My human told me: \"{text}\" — I answered: \"{reply_text}\"",
+                source_did=self.did, tick=0,
+            )
+        return reply_text
 
     def schedule_reminder(self, params: dict[str, Any]) -> dict[str, Any]:
         """RPC: schedule a self-reminder (spec §3) — fires on a tick and/or a condition.
