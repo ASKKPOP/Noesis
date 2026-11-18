@@ -32,8 +32,6 @@ passes. Do not edit a fixture to make a test pass — fixtures are recorded from
 
 ## Where the port differs from Python on purpose
 
-- A reply whose `"action"` is a list or an object: the Python parsers raise `TypeError`
-  (unhashable value in a set lookup); the port returns no decision.
 - A lone UTF-16 surrogate escape (`"\ud83d"`) in a reply: Python keeps it; a Rust string
   cannot, so it becomes U+FFFD.
 - JSON nested deeper than 512 levels is refused; Python allows roughly 1,000 and then

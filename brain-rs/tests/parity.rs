@@ -291,7 +291,7 @@ fn parsing_matches_python() {
 
     let object = |o: Option<json::Object>| o.map(|o| to_fixture(&Value::Object(o))).unwrap_or(J::Null);
     let cases = doc["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 33);
+    assert_eq!(cases.len(), 35);
     for case in cases {
         let (name, reply, want) = (s(&case["name"]), s(&case["reply"]), &case["parsed"]);
         let got = serde_json::json!({

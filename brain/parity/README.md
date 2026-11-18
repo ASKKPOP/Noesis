@@ -12,7 +12,7 @@ are language-neutral. A Rust module is correct when it reproduces every case exa
 | `chronos.json` | subjective-time multiplier table, tick-based recency and its scaled score |
 | `hashing.json` | active-Telos hash; canonical-JSON SHA-256 (sorted keys, no whitespace, raw UTF-8) |
 | `thymos.json` | emotion feel / decay / trigger matching at low, medium and high intensity |
-| `parsing.json` | tolerant parsing of model replies: 33 raw replies × the five parsers (decision, social, task list, skill, economic) |
+| `parsing.json` | tolerant parsing of model replies: 35 raw replies × the five parsers (decision, social, task list, skill, economic) |
 
 ## Rules
 

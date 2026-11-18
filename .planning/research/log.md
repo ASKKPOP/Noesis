@@ -274,3 +274,7 @@ hashes); `powf` not `powi` for recency; the decay constant embedded as a literal
 emotion ties; `str.strip()` also strips 0x1C–0x1F. The test reader needs serde_json's
 `float_roundtrip` or fixture doubles can be off by one bit. Python bug seen: the reply parsers
 raise `TypeError` when `action` is a list or object. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-18] apply | Python reply parsers: non-text action is "no decision", not a crash
+The `TypeError` seen while porting is fixed in the three action parsers and pinned by two new
+parsing-fixture cases (35). The Rust port already behaved this way. [[v3.0/CIVIC-ARCHITECTURE]]

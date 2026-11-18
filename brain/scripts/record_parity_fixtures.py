@@ -306,6 +306,8 @@ MODEL_REPLIES: list[tuple[str, str]] = [
     ("social_none", '{"action": "none"}'),
     ("number_forms", '{"action": "bid_rfp", "price_wei": 1e3, "notice_id": 12}'),
     ("nan_literal", '{"action": "bid_rfp", "price_wei": NaN}'),
+    ("action_is_list", '{"action": ["rest"]}'),
+    ("action_is_object", '{"action": {"name": "none"}}'),
 ]
 
 

@@ -189,7 +189,8 @@ def parse_social_decision(text: str) -> dict[str, Any] | None:
     obj = _first_json_object(text)
     if obj is None:
         return None
-    if obj.get("action") not in _SOCIAL_ACTIONS:
+    action = obj.get("action")
+    if not isinstance(action, str) or action not in _SOCIAL_ACTIONS:
         return None
     return obj
 
@@ -213,6 +214,7 @@ def parse_decision(text: str) -> dict[str, Any] | None:
     obj = _first_json_object(text)
     if obj is None:
         return None
-    if obj.get("action") not in _DECISION_ACTIONS:
+    action = obj.get("action")
+    if not isinstance(action, str) or action not in _DECISION_ACTIONS:
         return None
     return obj
