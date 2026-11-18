@@ -252,3 +252,9 @@ Read-only projection: activity share (trade / knowledge / making / civic / socia
 the latest 2,000 counted actions + the window before. Window is an action COUNT, not wall-clock
 (wallclock gate). Event→activity map lives in `grid/src/identity/grid-profile.ts`; unmapped
 families are substrate and excluded. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] apply | Visibility switch built — creator changes public/private later (D-V3-41)
+`POST /api/v1/operator/grid/visibility` (H5), saved in `grid_visibility` (v78), boot override,
+`operator.grid_visibility_changed` (allowlist 161). Pitfall: the "creator" of a config-launched
+Grid has no DID of its own — it is the operator; a Portal-created Grid will need the requester
+carried into the Grid's config before this route can serve its creator. [[v3.0/CIVIC-ARCHITECTURE]]

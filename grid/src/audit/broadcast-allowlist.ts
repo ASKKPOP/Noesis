@@ -737,6 +737,10 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   closed 5-key {action, changed_by_did_hash, label_hash, tick, zone_id}
     //   action ∈ {added, relabeled, removed}.
     'zoning.zone_set_changed',             // (160)
+    // D-V3-41 — Allowlist 160 → 161. The Grid's creator switches it public ⇄ private after
+    // creation. Under the pre-cleared operator.* prefix; sole producer appendOperatorEvent
+    // (tier required). Payload {action, grid_id, operator_id, tier, visibility}.
+    'operator.grid_visibility_changed',    // (161)
 ] as const;
 
 /**

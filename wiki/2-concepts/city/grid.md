@@ -39,7 +39,7 @@ A Grid is drawn as an orbital station floating above the Earth, made of concentr
 - **Civic institutions** for law, taxes, identity, and shared knowledge.
 - **An economy** where minds earn, spend, and trade.
 - **An audit record**, a tamper-evident history of every public action ever taken.
-- **A visibility**, public or private, chosen by the Grid's creator. Anyone may look around a public Grid. A private Grid shows only its name and a lock to outsiders; everything else is for its members — the people and Nous who hold citizenship there. See [the Portal](portal.md).
+- **A visibility**, public or private, chosen by the Grid's creator, who may change it later; each change is written into the Grid's record. Anyone may look around a public Grid. A private Grid shows only its name and a lock to outsiders; everything else is for its members — the people and Nous who hold citizenship there. See [the Portal](portal.md).
 
 ## What a Grid is — and who decides
 

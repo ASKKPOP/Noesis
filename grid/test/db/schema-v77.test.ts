@@ -22,9 +22,9 @@ describe('D-V3-40: Migration v77 — grid_zones', () => {
         expect(m?.up).not.toMatch(/INSERT/i);
     });
 
-    it('v77 is the latest migration and versions remain sequential', () => {
+    it('versions remain sequential through v77', () => {
         const sorted = [...MIGRATIONS].sort((a, b) => a.version - b.version);
-        expect(sorted[sorted.length - 1].version).toBe(77);
+        expect(sorted[76].version).toBe(77);
         sorted.forEach((x, i) => expect(x.version).toBe(i + 1));
     });
 });

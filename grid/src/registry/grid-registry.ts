@@ -42,6 +42,16 @@ export class GridRegistry {
         return record;
     }
 
+    /** D-V3-41: the Grid's creator changes its visibility. Returns the updated record,
+     *  or undefined for a Grid this registry does not hold. */
+    setVisibility(gridId: string, visibility: GridVisibility): GridRecord | undefined {
+        const record = this.grids.get(gridId);
+        if (!record) return undefined;
+        const next = { ...record, visibility };
+        this.grids.set(gridId, next);
+        return next;
+    }
+
     get(gridId: string): GridRecord | undefined {
         return this.grids.get(gridId);
     }

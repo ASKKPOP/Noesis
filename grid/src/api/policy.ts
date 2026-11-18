@@ -239,6 +239,7 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // The global onRequest hook runs requirePortalSession + resolveOperator (env
     // allowlist keyed on the Portal-session DID) and attaches operatorTier/operatorId
     // to req.didContext. The spoofable x-operator-tier/-id header pattern is RETIRED.
+    'POST /api/v1/operator/grid/visibility': 'operator_only',
     'POST /api/v1/operator/clock/pause': 'operator_only',
     'POST /api/v1/operator/clock/resume': 'operator_only',
     'GET /api/v1/operator/governance/laws': 'operator_only',

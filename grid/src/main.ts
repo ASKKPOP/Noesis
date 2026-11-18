@@ -32,6 +32,7 @@ import { MessageQueueStore } from './civic-presence/message-queue-store.js';
 import { GraceTimerRegistry } from './civic-presence/grace-timer-registry.js';
 import { PresenceService } from './civic-presence/presence-service.js';
 import { ZoneRegistry } from './zoning/zone-registry.js';
+import { savedGridVisibility } from './api/operator/grid-visibility.js';
 import { ParcelRegistry } from './civic/parcel-registry.js';
 import { ParcelStore } from './civic/parcel-store.js';
 import { GroupStore } from './economy/group-store.js';
@@ -364,6 +365,11 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     // Cross-grid federation/membership remain v3.1+.
     const gridRegistry = new GridRegistry();
     gridRegistry.register(gridRecordFromConfig(config.genesisConfig));
+    // D-V3-41: a visibility the creator saved after creation overrides the launch default.
+    if (dbConn) {
+        const saved = await savedGridVisibility(dbConn.getPool(), config.genesisConfig.gridName);
+        if (saved) gridRegistry.setVisibility(config.genesisConfig.gridName.toLowerCase(), saved);
+    }
 
     // Phase 38 WIRE-01/02 (Brain→Grid write-back): wire a GridCoordinator so an
     // external Brain (over HTTPS) can dispatch a Civic-DID holder's actions to

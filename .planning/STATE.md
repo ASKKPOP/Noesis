@@ -314,7 +314,9 @@ G2 part 1 built same day: zone law (`grid_zones` v77, `ZoneRegistry.addZone/rela
 unclaimed lots, parcel feed `zone_kind`/`zone_label`, civic-map routes live, orbital scene `setZones` + ring 4+ shells,
 Brain world view by kind. G3 built same day: identity profile (`identity/grid-profile.ts`, `GET /api/v1/grid/profile`, `g/[grid]/GridIdentity.tsx`) —
 window is a COUNT of recorded actions (no wall clock); a new audit event family must be mapped in `BY_FAMILY`/`BY_EVENT`
-or it is left out of the profile. Next: route grid.noesiis.com (deploy); R0–R5.
+or it is left out of the profile. Visibility switch built same day: `POST /api/v1/operator/grid/visibility` (H5), `grid_visibility` v78, boot override in
+`main.ts`, `operator.grid_visibility_changed` (allowlist 161, baseline lines 1087). No dashboard control yet.
+Next: route grid.noesiis.com (deploy); R0–R5.
 Carry forward: civic registry is keyed by Grid NAME not `gridId`; a new public GET that a non-member must reach on a
 private Grid needs an entry in the gate's exempt list; SSR fetches carry no member session.
 Zones: `ParcelRegistry` holds the zone set in memory — anything that changes `grid_zones` outside the zoning routes must

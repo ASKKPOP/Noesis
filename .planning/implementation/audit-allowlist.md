@@ -39,7 +39,7 @@ CI gate `scripts/check-sole-producer-discipline.mjs` scans the producer files fo
 
 ## Frozen-except-by-explicit-addition
 
-**Latest addition (2026-11-17):** `zoning.zone_set_changed` (160) — D-V3-40 free zones; closed 5-key `{action, changed_by_did_hash, label_hash, tick, zone_id}`, sole producer `append-zoning-zone-set-changed.ts`.
+**Latest addition (2026-11-17):** `operator.grid_visibility_changed` (161) — D-V3-41 creator switches visibility; `appendOperatorEvent` payload `{tier:'H5', action:'grid_visibility', operator_id, grid_id, visibility}`. Before it, same day: `zoning.zone_set_changed` (160) — D-V3-40 free zones; closed 5-key `{action, changed_by_did_hash, label_hash, tick, zone_id}`, sole producer `append-zoning-zone-set-changed.ts`.
 
 The allowlist is frozen; growth happens only inside the phase that introduces an event, with a doc-sync update in the same commit (`scripts/check-state-doc-sync.mjs`). Event-prefix families that require an explicit per-phase addition include: `operator.*`, `nous.*`, `trade.*`, `human.*`, `portal.*`, `gov.*`, `police.*`, `irs.*`, `market.*`, `registry.*`, `zoning.*`, `treasury.*`, `mobility.*`, `skill.*`, `lore.*`, `p2p.*`, and others. Some prefixes are **permanently banned** from the allowlist (`chronos.*`, `rig.*` — isolated rig chains; `p2p.signal_received` — private WSS push).
 

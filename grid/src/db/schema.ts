@@ -1840,4 +1840,19 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS grid_zones`,
     },
+    {
+        // D-V3-41: a Grid's visibility as its creator last set it. No row = the launch
+        // default (GRID_VISIBILITY, public unless set), so existing Grids need no backfill.
+        version: 78,
+        name: 'create_grid_visibility',
+        up: `
+            CREATE TABLE IF NOT EXISTS grid_visibility (
+                grid_name     VARCHAR(63) NOT NULL,
+                visibility    VARCHAR(16) NOT NULL,
+                changed_tick  BIGINT      NOT NULL,
+                PRIMARY KEY (grid_name)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS grid_visibility`,
+    },
 ];
