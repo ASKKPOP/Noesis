@@ -285,3 +285,9 @@ values as `None` and booleans as `True`, so the port carries a `py_str`; an empt
 as no due; the handler's top-k is a stable descending sort over a newest-first pool; `str.split()`
 whitespace differs from Rust's by 0x1C–0x1F. The wall-clock recency path is unused and not ported.
 [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-18] apply | Rust Brain slice 3 — goal handling and the system prompt
+Twelve fixtures now. Notes: Rust `{:.N}` formatting matches Python's `:.Nf` / `:.0%` (checked on
+51k values, ties included); Python truthiness and `x or y` chains over Grid feed values need
+explicit helpers; installing Xcode without accepting its license makes `/usr/bin/git`,
+`/usr/bin/python3` and the Rust linker all refuse to run. [[v3.0/CIVIC-ARCHITECTURE]]

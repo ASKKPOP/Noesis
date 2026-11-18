@@ -122,6 +122,20 @@ impl ThymosTracker {
         (best, self.intensities[best as usize])
     }
 
+    /// The mood line of the system prompt: the mood, then every emotion at 0.3 or above.
+    pub fn describe(&self) -> String {
+        let active: Vec<String> = Emotion::ALL
+            .into_iter()
+            .filter(|e| self.intensities[*e as usize] >= 0.3)
+            .map(|e| format!("{}({:.1})", e.as_str(), self.intensities[e as usize]))
+            .collect();
+        if active.is_empty() {
+            format!("Mood: {} (calm, no strong emotions)", self.current_mood())
+        } else {
+            format!("Mood: {}. Active emotions: {}", self.current_mood(), active.join(", "))
+        }
+    }
+
     /// The dominant emotion's name, or the baseline mood when nothing is felt strongly.
     pub fn current_mood(&self) -> &str {
         let (emotion, intensity) = self.dominant();

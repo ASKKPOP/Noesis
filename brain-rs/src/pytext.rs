@@ -34,3 +34,26 @@ pub fn py_str(value: Option<&Value>) -> String {
         Some(other) => dumps_canonical(other, false),
     }
 }
+
+/// Python truthiness of a value read from JSON; a missing key is falsy.
+pub fn truthy(value: Option<&Value>) -> bool {
+    match value {
+        None | Some(Value::Null) | Some(Value::Bool(false)) => false,
+        Some(Value::Bool(true)) | Some(Value::BigInt(_)) => true,
+        Some(Value::Int(n)) => *n != 0,
+        Some(Value::Float(x)) => *x != 0.0,
+        Some(Value::Str(s)) => !s.is_empty(),
+        Some(Value::List(items)) => !items.is_empty(),
+        Some(Value::Object(object)) => !object.is_empty(),
+    }
+}
+
+/// `value is not None`: present and not null.
+pub fn non_null(value: Option<&Value>) -> Option<&Value> {
+    value.filter(|v| !matches!(v, Value::Null))
+}
+
+/// `text[:n]` — the first `n` characters (code points), not bytes.
+pub fn first_chars(s: &str, n: usize) -> &str {
+    s.char_indices().nth(n).map_or(s, |(i, _)| &s[..i])
+}

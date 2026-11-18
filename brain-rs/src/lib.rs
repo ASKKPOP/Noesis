@@ -16,4 +16,6 @@ pub mod prompts;
 pub mod psyche;
 pub mod pytext;
 pub mod state_hash;
+pub mod system_prompt;
+pub mod telos;
 pub mod thymos;

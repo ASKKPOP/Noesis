@@ -3,7 +3,7 @@
 
 use noesis_brain::json::{self, Value};
 use noesis_brain::level::{self, Level};
-use noesis_brain::{ananke, bios, chronos, hashing, memory, parsing, prompts, psyche, state_hash, thymos};
+use noesis_brain::{ananke, bios, chronos, hashing, memory, parsing, prompts, psyche, state_hash, system_prompt, telos, thymos};
 use serde_json::Value as J;
 
 fn fixture(name: &str) -> J {
@@ -204,6 +204,8 @@ fn hashing_matches_python() {
                 status: hashing::GoalStatus::parse(s(&g["status"])).unwrap(),
                 priority: f(&g["priority"]),
                 progress: f(&g["progress"]),
+                domain: telos::GoalDomain::General,
+                last_advanced_tick: g["last_advanced_tick"].as_i64().unwrap(),
             })
             .collect();
         assert_eq!(hashing::active_telos_hash(&goals), s(&case["hash"]), "telos hash {}", case["name"]);
@@ -468,5 +470,161 @@ fn prompts_match_python() {
             other => panic!("unknown builder {other}"),
         };
         assert_eq!(got, s(&case["prompt"]), "case {n}: {}", case["builder"]);
+    }
+}
+
+#[test]
+fn telos_matches_python() {
+    let doc = fixture("telos");
+    let c = &doc["constants"];
+    assert_eq!(s(&c["economic_goal_text"]), telos::ECONOMIC_GOAL_TEXT);
+    same(telos::ECONOMIC_GOAL_PRIORITY, &c["economic_goal_priority"], "economic priority");
+    assert_eq!(names(&c["goal_domains"]), telos::GoalDomain::ALL.map(telos::GoalDomain::as_str));
+
+    let descriptions = |goals: Vec<&telos::Goal>| -> Vec<String> { goals.iter().map(|g| g.description.clone()).collect() };
+    for (r, run) in doc["runs"].as_array().unwrap().iter().enumerate() {
+        let list = |key: &str| -> Vec<String> { run["from_yaml"].get(key).map(|v| names(v).into_iter().map(String::from).collect()).unwrap_or_default() };
+        let (short, medium, long) = (list("short_term"), list("medium_term"), list("long_term"));
+        let mut m = telos::TelosManager::from_config(&refs(&short), &refs(&medium), &refs(&long));
+        for (n, step) in run["steps"].as_array().unwrap().iter().enumerate() {
+            let op = &step["op"];
+            let at = format!("run {r} step {n} {op}");
+            let index = || op["index"].as_u64().unwrap() as usize;
+            match s(&op["do"]) {
+                "start" => {}
+                "add_goal" => {
+                    m.add_goal(
+                        s(&op["description"]),
+                        telos::GoalType::parse(s(&op["goal_type"])).unwrap(),
+                        op.get("priority").map(f).unwrap_or(0.5),
+                        telos::GoalDomain::parse(op.get("domain").map(s).unwrap_or("general")).unwrap(),
+                        op.get("tick").and_then(J::as_i64).unwrap_or(0),
+                    );
+                }
+                "seed_economic_goal" => {
+                    m.seed_economic_goal();
+                }
+                "evolve" => {
+                    let changed = m.evolve(
+                        op["current_tick"].as_i64().unwrap(),
+                        op.get("stale_ticks").and_then(J::as_i64).unwrap_or(telos::DEFAULT_STALE_TICKS),
+                        op.get("floor").map(f).unwrap_or(telos::DEFAULT_PRIORITY_FLOOR),
+                    );
+                    assert_eq!(changed, step["changed"].as_bool().unwrap(), "{at}: changed");
+                }
+                "advance" => m.goals[index()].advance(f(&op["amount"]), op.get("tick").and_then(J::as_i64)),
+                "abandon" => m.goals[index()].abandon(),
+                "block" => m.goals[index()].block(),
+                "unblock" => m.goals[index()].unblock(),
+                other => panic!("unknown op {other}"),
+            }
+            let want = step["goals"].as_array().unwrap();
+            assert_eq!(m.goals.len(), want.len(), "{at}: goal count");
+            for (g, w) in m.goals.iter().zip(want) {
+                assert_eq!(g.description, s(&w["description"]), "{at}");
+                assert_eq!(g.goal_type.as_str(), s(&w["goal_type"]), "{at}");
+                assert_eq!(g.status.as_str(), s(&w["status"]), "{at}");
+                assert_eq!(g.domain.as_str(), s(&w["domain"]), "{at}");
+                assert_eq!(g.last_advanced_tick, w["last_advanced_tick"].as_i64().unwrap(), "{at}");
+                same(g.priority, &w["priority"], &format!("{at}: priority of {}", g.description));
+                same(g.progress, &w["progress"], &format!("{at}: progress of {}", g.description));
+            }
+            assert_eq!(m.describe(), s(&step["describe"]), "{at}: describe");
+            assert_eq!(descriptions(m.top_priority(3)), names(&step["top_priority_3"]), "{at}: top 3");
+            assert_eq!(descriptions(m.top_priority(1)), names(&step["top_priority_1"]), "{at}: top 1");
+            assert_eq!(descriptions(m.economic_goals()), names(&step["economic_goals"]), "{at}: economic");
+            assert_eq!(hashing::active_telos_hash(&m.goals), s(&step["active_telos_hash"]), "{at}: hash");
+        }
+    }
+}
+
+fn pair_refs(v: &[(String, String)]) -> Vec<(&str, &str)> {
+    v.iter().map(|(a, b)| (a.as_str(), b.as_str())).collect()
+}
+
+#[test]
+fn system_prompt_matches_python() {
+    let doc = fixture("system_prompt");
+    let cases = doc["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 7);
+    for case in cases {
+        let (name, i) = (s(&case["name"]), &case["input"]);
+        let psyche = psyche_of(&i["psyche"]);
+        let mut mood = thymos::ThymosTracker::new(s(&i["mood"]["baseline_mood"]), "medium", Vec::new());
+        mood.intensities = thymos::Emotion::ALL.map(|e| f(&i["mood"]["intensities"][e.as_str()]));
+        let mut goals = telos::TelosManager::default();
+        for g in i["goals"].as_array().unwrap() {
+            let goal = goals.add_goal(
+                s(&g["description"]),
+                telos::GoalType::parse(s(&g["goal_type"])).unwrap(),
+                f(&g["priority"]),
+                telos::GoalDomain::parse(g.get("domain").map(s).unwrap_or("general")).unwrap(),
+                0,
+            );
+            goal.progress = g.get("progress").map(f).unwrap_or(0.0);
+            goal.status = telos::GoalStatus::parse(g.get("status").map(s).unwrap_or("active")).unwrap();
+        }
+
+        let strings = |key: &str| -> Vec<String> { i.get(key).map(|v| names(v).into_iter().map(String::from).collect()).unwrap_or_default() };
+        let pairs = |key: &str, a: &str, b: &str| -> Vec<(String, String)> {
+            i.get(key).and_then(J::as_array).map(|l| l.iter().map(|x| (s(&x[a]).to_string(), s(&x[b]).to_string())).collect()).unwrap_or_default()
+        };
+        let object = |key: &str| -> Option<json::Object> {
+            match i.get(key).map(to_value) {
+                Some(Value::Object(o)) => Some(o),
+                _ => None,
+            }
+        };
+        let list = |key: &str| -> Vec<Value> {
+            match i.get(key).map(to_value) {
+                Some(Value::List(l)) => l,
+                _ => Vec::new(),
+            }
+        };
+
+        let (rules, reflections, ltm) = (strings("rules"), strings("reflections"), strings("ltm_memories"));
+        let skills = pairs("skills", "name", "instructions");
+        let voices: Vec<(String, String)> = i.get("peer_voices").and_then(J::as_array)
+            .map(|l| l.iter().map(|x| (s(&x[0]).to_string(), s(&x[1]).to_string())).collect()).unwrap_or_default();
+        let tom: Vec<system_prompt::PeerBeliefs> = i.get("tom_context").and_then(J::as_array).map(|l| l.iter().map(|c| system_prompt::PeerBeliefs {
+            target_did: s(&c["target_did"]).to_string(),
+            beliefs: c["beliefs"].as_array().unwrap().iter().map(|b| system_prompt::Belief {
+                dimension: s(&b["dimension"]).to_string(), content: s(&b["content"]).to_string(), confidence: f(&b["confidence"]),
+            }).collect(),
+        }).collect()).unwrap_or_default();
+        let lore: Vec<system_prompt::LoreEntry> = i.get("lore_entries").and_then(J::as_array).map(|l| l.iter().map(|e| system_prompt::LoreEntry {
+            category_tag: s(&e["category_tag"]).to_string(), title: s(&e["title"]).to_string(), content: s(&e["content"]).to_string(),
+        }).collect()).unwrap_or_default();
+        let places = list("my_places");
+        let grids: Vec<json::Object> = list("grids_in_reach").into_iter().map(|v| match v { Value::Object(o) => o, other => panic!("{other:?}") }).collect();
+        let (economic, world) = (object("economic_state"), object("world_state"));
+        let (rules_r, reflections_r, ltm_r) = (refs(&rules), refs(&reflections), refs(&ltm));
+        let (skills_r, voices_r) = (pair_refs(&skills), pair_refs(&voices));
+
+        let mut input = system_prompt::SystemPromptInput::new(&psyche, &mood, &goals);
+        if let Some(grid) = i.get("grid_name") { input.grid_name = s(grid); }
+        if let Some(location) = i.get("location") { input.location = s(location); }
+        input.bios_levels = i.get("bios_levels").filter(|b| !b.is_null()).map(|b| (b.get("energy").map(lvl), b.get("sustenance").map(lvl)));
+        input.epoch_since_spawn = i.get("epoch_since_spawn").and_then(J::as_i64);
+        input.subjective_multiplier = i.get("subjective_multiplier").map(f);
+        input.rules = &rules_r;
+        input.reflections = &reflections_r;
+        input.skills = &skills_r;
+        input.ltm_memories = &ltm_r;
+        input.peer_voices = &voices_r;
+        input.tom_context = &tom;
+        input.lore_entries = &lore;
+        input.my_places = &places;
+        input.economic_state = economic.as_ref();
+        input.grids_in_reach = &grids;
+        input.world_state = world.as_ref();
+        input.intent = i.get("intent").map(s).unwrap_or("");
+
+        let got = system_prompt::build_system_prompt(&input);
+        let want = s(&case["prompt"]);
+        if got != want {
+            let line = got.lines().zip(want.lines()).position(|(a, b)| a != b).unwrap_or(0);
+            panic!("{name}: first difference at line {}\n  got : {:?}\n  want: {:?}", line + 1, got.lines().nth(line), want.lines().nth(line));
+        }
     }
 }

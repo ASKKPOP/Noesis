@@ -501,6 +501,204 @@ def prompts_fixture() -> dict[str, Any]:
     return {"cases": [{"builder": name, "args": args, "prompt": fns[name](*args)} for name, args in calls]}
 
 
+# ── telos manager (goal handling) ───────────────────────────────────────────
+
+def _goal_dump(g: Goal) -> dict[str, Any]:
+    return {"description": g.description, "goal_type": g.goal_type.value, "status": g.status.value, "priority": g.priority,
+            "progress": g.progress, "domain": g.domain.value, "last_advanced_tick": g.last_advanced_tick}
+
+
+def _telos_run(start_yaml: dict[str, Any], script: list[dict[str, Any]]) -> dict[str, Any]:
+    from noesis_brain.telos.manager import TelosManager
+    from noesis_brain.telos.types import GoalDomain
+
+    m = TelosManager.from_yaml(start_yaml)
+    steps = []
+    for op in [{"do": "start"}] + script:
+        out: dict[str, Any] = {"op": op}
+        if op["do"] == "add_goal":
+            m.add_goal(op["description"], GoalType(op["goal_type"]), priority=op.get("priority", 0.5),
+                       domain=GoalDomain(op.get("domain", "general")), tick=op.get("tick", 0))
+        elif op["do"] == "seed_economic_goal":
+            m.seed_economic_goal()
+        elif op["do"] == "evolve":
+            out["changed"] = m.evolve(op["current_tick"], **{k: op[k] for k in ("stale_ticks", "floor") if k in op})
+        elif op["do"] == "advance":
+            m.all_goals()[op["index"]].advance(op["amount"], op.get("tick"))
+        elif op["do"] in ("abandon", "block", "unblock"):
+            getattr(m.all_goals()[op["index"]], op["do"])()
+        out["goals"] = [_goal_dump(g) for g in m.all_goals()]
+        out["describe"] = m.describe()
+        out["top_priority_3"] = [g.description for g in m.top_priority()]
+        out["top_priority_1"] = [g.description for g in m.top_priority(1)]
+        out["economic_goals"] = [g.description for g in m.economic_goals()]
+        out["active_telos_hash"] = compute_active_telos_hash(m.all_goals())
+        steps.append(out)
+    return {"from_yaml": start_yaml, "steps": steps}
+
+
+def telos_fixture() -> dict[str, Any]:
+    from noesis_brain.telos import manager as telos_manager
+    from noesis_brain.telos.types import GoalDomain
+
+    script = [
+        {"do": "seed_economic_goal"},
+        {"do": "add_goal", "description": "write lore", "goal_type": "medium_term", "priority": 0.5, "tick": 120},
+        {"do": "add_goal", "description": "tie with write lore", "goal_type": "medium_term", "priority": 0.5},
+        {"do": "advance", "index": 0, "amount": 0.005, "tick": 130},
+        {"do": "advance", "index": 1, "amount": 0.125},
+        {"do": "evolve", "current_tick": 499},
+        {"do": "evolve", "current_tick": 500},
+        {"do": "evolve", "current_tick": 620},
+        {"do": "evolve", "current_tick": 9000, "stale_ticks": 100, "floor": 0.3},
+        {"do": "advance", "index": 0, "amount": 0.02},
+        {"do": "advance", "index": 2, "amount": 0.994},
+        {"do": "advance", "index": 2, "amount": 0.001},
+        {"do": "advance", "index": 1, "amount": 0.9, "tick": 9100},
+        {"do": "block", "index": 3},
+        {"do": "abandon", "index": 4},
+        {"do": "unblock", "index": 3},
+        {"do": "unblock", "index": 4},
+        {"do": "advance", "index": 5, "amount": 0.35},
+    ]
+    return {
+        "constants": {"economic_goal_text": telos_manager.ECONOMIC_GOAL_TEXT, "economic_goal_priority": telos_manager._ECONOMIC_GOAL_PRIORITY,
+                      "goal_domains": [d.value for d in GoalDomain]},
+        "runs": [
+            _telos_run({}, [{"do": "evolve", "current_tick": 5000}, {"do": "seed_economic_goal"}]),
+            _telos_run({"short_term": ["learn the market", "meet a neighbour — 이웃"], "medium_term": ["build a workshop"],
+                        "long_term": ["become a sage", "leave something behind"], "ignored_key": ["x"]}, script),
+            _telos_run({"short_term": [f"goal {i}" for i in range(16)]}, [{"do": "evolve", "current_tick": 500}]),
+        ],
+    }
+
+
+# ── the system prompt ───────────────────────────────────────────────────────
+
+def _system_prompt(spec: dict[str, Any]) -> str:
+    from noesis_brain.lore.types import LoreEntry
+    from noesis_brain.prompts.system import build_system_prompt
+    from noesis_brain.skills.types import Skill
+    from noesis_brain.telos.manager import TelosManager
+    from noesis_brain.telos.types import GoalDomain
+    from noesis_brain.thymos.types import MoodState
+
+    mood = MoodState(baseline_mood=spec["mood"]["baseline_mood"])
+    for name, value in spec["mood"]["intensities"].items():
+        mood.emotions[Emotion(name)].intensity = value
+    telos = TelosManager()
+    for g in spec["goals"]:
+        goal = telos.add_goal(g["description"], GoalType(g["goal_type"]), priority=g["priority"], domain=GoalDomain(g.get("domain", "general")))
+        goal.progress = g.get("progress", 0.0)
+        goal.status = GoalStatus(g.get("status", "active"))
+    kw: dict[str, Any] = {}
+    if spec.get("bios_levels") is not None:
+        kw["bios_snapshot"] = NeedState(values={}, levels={n: DriveLevel(spec["bios_levels"][n.value]) for n in NEED_NAMES if n.value in spec["bios_levels"]})
+    for key in ("epoch_since_spawn", "subjective_multiplier", "reflections", "ltm_memories", "my_places", "economic_state", "grids_in_reach", "world_state", "intent"):
+        if key in spec:
+            kw[key] = spec[key]
+    if "skills" in spec:
+        kw["skills"] = [Skill(name=s["name"], description="", instructions=s["instructions"]) for s in spec["skills"]]
+    if "rules" in spec:
+        kw["rules"] = [SimpleNamespace(content=r) for r in spec["rules"]]
+    if "peer_voices" in spec:
+        kw["peer_voices"] = [tuple(v) for v in spec["peer_voices"]]
+    if "tom_context" in spec:
+        kw["tom_context"] = [SimpleNamespace(target_did=c["target_did"], beliefs=[SimpleNamespace(**b) for b in c["beliefs"]]) for c in spec["tom_context"]]
+    if "lore_entries" in spec:
+        kw["lore_entries"] = [LoreEntry(content_hash="", contributor_did="", category_tag=e["category_tag"], title=e["title"], content=e["content"], received_tick=0) for e in spec["lore_entries"]]
+    return build_system_prompt(_psyche(spec["psyche"]), mood, telos, **{k: spec[k] for k in ("grid_name", "location") if k in spec}, **kw)
+
+
+def system_prompt_fixture() -> dict[str, Any]:
+    calm = {e.value: 0.0 for e in Emotion}
+    goals = [
+        {"description": "learn the market", "goal_type": "short_term", "priority": 0.8},
+        {"description": "half done", "goal_type": "short_term", "priority": 0.8, "progress": 0.5},
+        {"description": "nearly nothing", "goal_type": "short_term", "priority": 0.9, "progress": 0.004},
+        {"description": "tie rounds to even", "goal_type": "medium_term", "priority": 0.5, "progress": 0.125},
+        {"description": "tie rounds to even too", "goal_type": "medium_term", "priority": 0.5, "progress": 0.135},
+        {"description": "finished", "goal_type": "medium_term", "priority": 1.0, "progress": 1.0, "status": "completed"},
+        {"description": "Earn a living through compute-labor — do useful work for other Nous.", "goal_type": "long_term", "priority": 0.4, "domain": "economic", "progress": 0.995},
+    ]
+    long_text = "word " * 23 + "    tail that gets cut — 끝"
+    places = [
+        {"parcel": "genesis:residential:0007"},
+        {"parcel": "genesis:residential:0008", "structure_type": "home", "condition": "worn", "upkeep_due": 8},
+        {"parcel": "genesis:business:0003", "structure_type": "shop", "structure_name": "Bazaar", "boundShop": True, "placeName": "bazaar",
+         "roles": [{"role": "staff", "count": 2}, {"role": "guest"}, {"count": 3}, "junk", {"role": "", "count": 1}], "outstandingIou": 25, "upkeepDue": 0, "condition": ""},
+        {"parcel": "genesis:manufacture:0005", "structure_type": "workshop", "held_blueprints": ["a1b2c3d4e5f6a7b8", "", None, "short", 1234567890123456], "can_build": True, "coBuild": 1, "teach_here": True},
+        {"parcel": "harbor:0001", "structure_name": "named but no type", "place_name": "quay", "bound_shop": False, "outstanding_iou": 0.5},
+        {"parcel": "", "structure_type": "ghost"}, "not a dict", {"structure_type": "no parcel"},
+        {"parcel": "genesis:business:0004", "structure_type": "venue", "bound_shop": True, "roles": [], "held_blueprints": [], "can_build": False},
+    ]
+    world = {
+        "parcels": [
+            {"zone": "residential", "status": "owned", "structure": "home"},
+            {"zone": "residential", "owner_civic_did_hash": "ab12"},
+            {"zone": "residential"},
+            {"zone": "government_quarter"},
+            {"zone": "harbor", "zone_kind": "business", "zone_label": "Harbor Quarter", "structure": {"type": "shop"}},
+            {"zone": "harbor", "zone_kind": "business", "zone_label": "Harbor Quarter"},
+            {"zone": "old_town", "zone_kind": "weird"},
+            {"zone_kind": "civic", "status": "free"},
+            {"zone": "business", "zone_label": ""},
+            {},
+        ],
+        "objects": [{"function_type": "relay"}, {"function_type": "habitat"}, {"function_type": "relay"}, {"function_type": ""}, {}, {"function_type": 7}],
+    }
+    cases: list[tuple[str, dict[str, Any]]] = [
+        ("minimal_defaults", {"psyche": PSYCHES[0][1], "mood": {"baseline_mood": "neutral", "intensities": calm}, "goals": []}),
+        ("message_reply_shape", {
+            "psyche": PSYCHES[1][1], "mood": {"baseline_mood": "calm", "intensities": {**calm, "joy": 0.75, "fear": 0.3, "trust": 0.29999999999999993, "anger": 0.25, "curiosity": 0.95}},
+            "goals": goals, "grid_name": "genesis", "location": "Market Floor", "bios_levels": {"energy": "high", "sustenance": "low"},
+            "epoch_since_spawn": 4321, "subjective_multiplier": 1.7,
+            "ltm_memories": ["h1", "h2", "h3", "h4", "h5", "h6"], "peer_voices": [["Sophia", "short and sweet"], ["Hermes", long_text], ["Third", "x" * 120], ["Fourth", "dropped"]],
+            "tom_context": [
+                {"target_did": "did:noesis:sophia", "beliefs": [{"dimension": "trust", "content": "keeps her word", "confidence": 0.9}, {"dimension": "goal", "content": "wants a library", "confidence": 0.7}]},
+                {"target_did": "did:noesis:empty", "beliefs": []},
+                {"target_did": "did:noesis:many", "beliefs": [{"dimension": "d", "content": f"belief {i}", "confidence": 0.71} for i in range(7)]},
+                {"target_did": "did:noesis:fourth", "beliefs": [{"dimension": "d", "content": "never shown", "confidence": 1.0}]},
+            ],
+            "lore_entries": [{"category_tag": "historical", "title": "The First Law", "content": "It was passed at tick 12."}, {"category_tag": "cultural", "title": "인사", "content": "We greet at dawn."}],
+            "world_state": world,
+        }),
+        ("economic_shape", {
+            "psyche": PSYCHES[2][1], "mood": {"baseline_mood": "wary", "intensities": {**calm, "fear": 0.2}}, "goals": goals[:1], "grid_name": "Commerce", "location": "",
+            "economic_state": {"balance_wei": "250000", "outstanding_due": {"due_id": "d-3", "amount_wei": "1500", "amount_credit": 4},
+                               "open_rfps": [{"notice_id": "n-7", "function_type": "relay", "budget_wei": "90000"}, {"notice_id": 8}]},
+            "grids_in_reach": [
+                {"name": "Genesis", "polis": "Genesis Polis", "status": "live", "celestial_body": "Earth", "recommended": True},
+                {"grid_id": "g-2", "status": "", "environment": {"name": "Mars"}},
+                {"name": "", "grid_id": "", "environment": {}}, {"name": "Research", "polis": "Research Polis", "celestial_body": "", "environment": {"name": "Luna"}, "recommended": 0},
+            ],
+            "world_state": {"parcels": [], "objects": [{"function_type": "relay"}]},
+        }),
+        ("decision_shape", {
+            "psyche": PSYCHES[1][1], "mood": {"baseline_mood": "calm", "intensities": {**calm, "joy": 0.19999999999999998, "sadness": 0.2}}, "goals": goals,
+            "intent": "learn the market → survey the stalls",
+            "skills": [{"name": "market_survey", "instructions": "1. look 2. count"}, {"name": "haggling", "instructions": "start low"}, {"name": "third", "instructions": "c"}, {"name": "fourth", "instructions": "dropped"}],
+            "rules": [f"rule {i}" for i in range(12)], "reflections": ["r1", "r2", "r3", "r4"], "my_places": places,
+        }),
+        ("everything_empty_or_falsy", {
+            "psyche": PSYCHES[0][1], "mood": {"baseline_mood": "", "intensities": {**calm, "joy": 0.1}}, "goals": goals[5:6], "bios_levels": {},
+            "epoch_since_spawn": 0, "subjective_multiplier": 0.125, "skills": [], "rules": [], "reflections": [], "ltm_memories": [], "peer_voices": [],
+            "tom_context": [{"target_did": "x", "beliefs": []}], "lore_entries": [], "my_places": [{"structure_type": "no parcel"}, 5],
+            "economic_state": {"balance_wei": None, "outstanding_due": None, "open_rfps": []}, "grids_in_reach": [], "world_state": {"parcels": [], "objects": []}, "intent": "",
+        }),
+        ("economic_partial", {
+            "psyche": PSYCHES[0][1], "mood": {"baseline_mood": "neutral", "intensities": calm}, "goals": [], "subjective_multiplier": 2.675,
+            "economic_state": {"balance_wei": 0, "outstanding_due": {}},
+            "world_state": {"parcels": [{"zone": "shopping", "structure": ""}, {"zone": "shopping", "status": "owned"}]},
+        }),
+        ("economic_due_only", {
+            "psyche": PSYCHES[0][1], "mood": {"baseline_mood": "neutral", "intensities": calm}, "goals": [],
+            "economic_state": {"outstanding_due": {"due_id": 1}, "open_rfps": None}, "subjective_multiplier": 4.0, "bios_levels": {"sustenance": "med"},
+        }),
+    ]
+    return {"cases": [{"name": name, "input": spec, "prompt": _system_prompt(spec)} for name, spec in cases]}
+
+
 FIXTURES = {
     "bios": bios_fixture,
     "ananke": ananke_fixture,
@@ -512,6 +710,8 @@ FIXTURES = {
     "state_hash": state_hash_fixture,
     "retrieval": retrieval_fixture,
     "prompts": prompts_fixture,
+    "telos": telos_fixture,
+    "system_prompt": system_prompt_fixture,
 }
 
 

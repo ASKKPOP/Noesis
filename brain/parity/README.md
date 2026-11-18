@@ -16,6 +16,8 @@ are language-neutral. A Rust module is correct when it reproduces every case exa
 | `state_hash.json` | the four component hashes (psyche, thymos, telos, memory stream) for four Nous states |
 | `retrieval.json` | memory importance / relevance / full score (216 cases) and the handler's top-k ranking |
 | `prompts.json` | the planning, decision, skill-distill, social and economic prompts, character for character (16 calls) |
+| `telos.json` | goal handling: configured priorities, progress and completion, time-based evolution, top-priority order, the goals block, the Telos hash after each step |
+| `system_prompt.json` | the full system prompt for seven Nous states, covering every section |
 | `parsing.json` | tolerant parsing of model replies: 35 raw replies × the five parsers (decision, social, task list, skill, economic) |
 
 ## Rules
@@ -42,5 +44,5 @@ are language-neutral. A Rust module is correct when it reproduces every case exa
 
 ## Not covered yet
 
-The system prompt, the LLM loops (planner, decision, reflection), the RPC and wire surface, memory storage, and P2P. Those need recorded
+The goal ledger, the LLM loops (planner, decision, reflection), the RPC and wire surface, memory storage, and P2P. Those need recorded
 request/response fixtures and are the R3–R4 part of the freeze.
