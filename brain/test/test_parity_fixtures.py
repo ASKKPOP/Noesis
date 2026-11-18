@@ -53,3 +53,18 @@ def test_fixtures_exercise_the_behaviour_they_claim() -> None:
 
     thymos = json.loads((FIXTURE_DIR / "thymos.json").read_text(encoding="utf-8"))
     assert any(step.get("matched") for run in thymos["runs"] for step in run["steps"])
+
+
+def test_parsing_fixture_shows_the_two_extraction_strategies_differ() -> None:
+    """The general parsers take first '{' to last '}'; the economic parser scans for the
+    first balanced object. A port must keep BOTH — this case tells them apart."""
+    parsing = json.loads((FIXTURE_DIR / "parsing.json").read_text(encoding="utf-8"))
+    cases = {c["name"]: c["parsed"] for c in parsing["cases"]}
+    assert cases["two_objects"]["parse_decision"] is None
+    # "none" is both a social and an economic action: same reply, opposite outcomes.
+    assert cases["two_objects_shared_action"]["parse_social_decision"] is None
+    assert cases["two_objects_shared_action"]["parse_economic_decision"]["action"] == "none"
+    assert cases["clean_work_task"]["parse_decision"]["action"] == "work_task"
+    assert cases["clean_work_task"]["parse_social_decision"] is None
+    assert cases["tasks_list"]["parse_task_list"] == ["survey the market", "post a listing", "wait for a buyer", "settle"]
+    assert cases["skill"]["parse_skill"]["name"] == "market_survey_v2"

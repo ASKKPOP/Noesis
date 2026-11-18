@@ -12,6 +12,7 @@ are language-neutral. A Rust module is correct when it reproduces every case exa
 | `chronos.json` | subjective-time multiplier table, tick-based recency and its scaled score |
 | `hashing.json` | active-Telos hash; canonical-JSON SHA-256 (sorted keys, no whitespace, raw UTF-8) |
 | `thymos.json` | emotion feel / decay / trigger matching at low, medium and high intensity |
+| `parsing.json` | tolerant parsing of model replies: 33 raw replies × the five parsers (decision, social, task list, skill, economic) |
 
 ## Rules
 
@@ -29,9 +30,12 @@ are language-neutral. A Rust module is correct when it reproduces every case exa
   default formatting (`1e-7`, `1e21`) hashes differently — see the `floats` case.
 - Non-ASCII is hashed as raw UTF-8, not `\u` escapes.
 - Trigger matching lower-cases with Python's `str.lower()`.
+- Model replies are parsed two different ways: the general parsers take the text from the
+  first `{` to the last `}`; the economic parser scans for the first balanced object.
+  They disagree on replies holding two objects — see `two_objects_shared_action`.
+- Python's JSON reader accepts `NaN` and duplicate keys (last wins); strict readers do not.
 
 ## Not covered yet
 
-The LLM loops (planner, decision, reflection), prompt rendering, tolerant JSON parsing,
-the RPC and wire surface, memory storage and retrieval, and P2P. Those need recorded
+The LLM loops (planner, decision, reflection), prompt rendering, the RPC and wire surface, memory storage and retrieval, and P2P. Those need recorded
 request/response fixtures and are the R3–R4 part of the freeze.

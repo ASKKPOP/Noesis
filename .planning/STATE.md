@@ -316,7 +316,7 @@ Brain world view by kind. G3 built same day: identity profile (`identity/grid-pr
 window is a COUNT of recorded actions (no wall clock); a new audit event family must be mapped in `BY_FAMILY`/`BY_EVENT`
 or it is left out of the profile. Visibility switch built same day: `POST /api/v1/operator/grid/visibility` (H5), `grid_visibility` v78, boot override in
 `main.ts`, `operator.grid_visibility_changed` (allowlist 161, baseline lines 1087). No dashboard control yet.
-R0 started same day: `brain/parity/fixtures/*.json` (bios, ananke, chronos, hashing, thymos) recorded by
+R0 started same day: `brain/parity/fixtures/*.json` (bios, ananke, chronos, hashing, thymos, parsing) recorded by
 `brain/scripts/record_parity_fixtures.py`, replayed by `brain/test/test_parity_fixtures.py`; hazards + what is not covered
 in `brain/parity/README.md`. BLOCKED for R1+: no Rust toolchain (`cargo`) and no Xcode on the dev machine.
 Next: route grid.noesiis.com (deploy); rest of R0 (LLM-loop / RPC fixtures); R1–R5.

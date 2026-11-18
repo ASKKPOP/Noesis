@@ -10,7 +10,8 @@ same numbers (IEEE-754 doubles, shortest round-trip decimal form), same hashes.
 
 Regenerating is a CONTRACT CHANGE: do it only when the Python behaviour changed on
 purpose, and review the diff. Everything here is pure — no clock, no randomness, no I/O
-except writing the files. The LLM loops, the RPC surface and P2P are NOT covered here
+except writing the files. Prompt rendering, the LLM loops themselves, the RPC surface and
+P2P are NOT covered here
 (see ``parity/README.md``).
 """
 from __future__ import annotations
@@ -32,6 +33,9 @@ from noesis_brain.chronos.subjective_time import (
     score_with_chronos,
 )
 from noesis_brain.memory.types import Memory, MemoryType
+from noesis_brain.prompts import decision as decision_prompts
+from noesis_brain.prompts import economic_decision as economic_prompts
+from noesis_brain.prompts.economic_decision import parse_economic_decision
 from noesis_brain.state_hash import _sha256_canonical
 from noesis_brain.telos.hashing import compute_active_telos_hash
 from noesis_brain.telos.types import Goal, GoalStatus, GoalType
@@ -266,12 +270,89 @@ def thymos_fixture() -> dict[str, Any]:
     }
 
 
+# ── tolerant parsing of model replies (D-MIND-04 / D-MIND-07) ───────────────
+
+MODEL_REPLIES: list[tuple[str, str]] = [
+    ("clean_work_task", '{"action": "work_task", "task_id": 3, "note": "start with the ledger"}'),
+    ("fenced_json", 'Sure!\n```json\n{"action": "speak", "text": "hello there"}\n```\nHope that helps.'),
+    ("prose_before_and_after", 'I think the best move is {"action": "rest"} for now.'),
+    ("two_objects", '{"action": "rest"} and also {"action": "speak", "text": "hi"}'),
+    ("two_objects_shared_action", '{"action": "none"} — or, thinking again: {"action": "none", "reason": "nothing due"}'),
+    ("malformed_then_valid", '{action: rest} — sorry, I meant {"action": "rest"}'),
+    ("nested_object", '{"action": "bid_rfp", "notice_id": "n-7", "price_wei": 1200, "artifact_spec": {"kind": "relay", "mass_kg": 4.5}, "reason": "I can build it"}'),
+    ("braces_inside_string", '{"action": "speak", "text": "use {curly} braces } carefully"}'),
+    ("unknown_action", '{"action": "fly_away"}'),
+    ("missing_action", '{"task_id": 1}'),
+    ("not_an_object", '["work_task"]'),
+    ("no_json", "I would rather not say."),
+    ("empty", ""),
+    ("whitespace_only", "   \n\t"),
+    ("truncated", '{"action": "work_task", "task_id": '),
+    ("trailing_comma", '{"action": "rest",}'),
+    ("single_quotes", "{'action': 'rest'}"),
+    ("duplicate_keys", '{"action": "speak", "action": "rest"}'),
+    ("unicode_text", '{"action": "speak", "text": "안녕 — νόησις ✓"}'),
+    ("escaped_unicode", '{"action": "speak", "text": "caf\\u00e9"}'),
+    ("pay_due", '{"action": "pay_due", "method": "labor", "reason": "dues are owed"}'),
+    ("economic_none_with_extras", '{"action": "none", "mood": "calm", "price_wei": null}'),
+    ("tasks_list", '{"tasks": ["survey the market", "  ", 7, "post a listing", "wait for a buyer", "settle", "celebrate"]}'),
+    ("tasks_empty", '{"tasks": []}'),
+    ("tasks_not_a_list", '{"tasks": "survey the market"}'),
+    ("skill", '{"name": "Market Survey!! v2", "description": " Find what sells ", "instructions": " 1. look 2. count ", "triggers": ["market", " ", 3, "survey", "a", "b", "c", "d"]}'),
+    ("skill_name_only_symbols", '{"name": "!!!", "instructions": "do it"}'),
+    ("skill_missing_instructions", '{"name": "half_a_skill"}'),
+    ("social_vote", '{"action": "vote", "proposal_id": "p-12", "choice": "yes"}'),
+    ("social_message", 'ok -> {"action": "message_peer", "peer_did": "did:noesis:sophia", "text": "shall we trade?"}'),
+    ("social_none", '{"action": "none"}'),
+    ("number_forms", '{"action": "bid_rfp", "price_wei": 1e3, "notice_id": 12}'),
+    ("nan_literal", '{"action": "bid_rfp", "price_wei": NaN}'),
+]
+
+
+def _plain(value: Any) -> Any:
+    """Parser output as plain JSON. NaN / Infinity are not JSON, so they are written as tagged strings."""
+    if isinstance(value, float) and value != value:
+        return "<<NaN>>"
+    if isinstance(value, float) and value in (float("inf"), float("-inf")):
+        return "<<Infinity>>" if value > 0 else "<<-Infinity>>"
+    if isinstance(value, dict):
+        return {k: _plain(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_plain(v) for v in value]
+    return value
+
+
+def parsing_fixture() -> dict[str, Any]:
+    parsers = {
+        "parse_decision": decision_prompts.parse_decision,
+        "parse_social_decision": decision_prompts.parse_social_decision,
+        "parse_task_list": decision_prompts.parse_task_list,
+        "parse_skill": decision_prompts.parse_skill,
+        "parse_economic_decision": parse_economic_decision,
+    }
+    return {
+        "vocabulary": {
+            "decision_actions": sorted(decision_prompts._DECISION_ACTIONS),
+            "social_actions": sorted(decision_prompts._SOCIAL_ACTIONS),
+            "economic_actions": sorted(economic_prompts._VALID_ACTIONS),
+            "economic_keys": list(economic_prompts._KEYS),
+            "max_tasks": decision_prompts._MAX_TASKS,
+        },
+        # Every parser is run on every reply: what one accepts another must refuse.
+        "cases": [
+            {"name": name, "reply": reply, "parsed": {pname: _plain(fn(reply)) for pname, fn in parsers.items()}}
+            for name, reply in MODEL_REPLIES
+        ],
+    }
+
+
 FIXTURES = {
     "bios": bios_fixture,
     "ananke": ananke_fixture,
     "chronos": chronos_fixture,
     "hashing": hashing_fixture,
     "thymos": thymos_fixture,
+    "parsing": parsing_fixture,
 }
 
 
