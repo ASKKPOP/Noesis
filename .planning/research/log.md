@@ -332,3 +332,8 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 ## [2026-11-19] apply | Mac app: account sign-in with stored auth
 - `GridAccount.swift`: email sign-in on the existing Portal endpoint; password in Keychain; cookie into WKWebView; auto re-sign-in (session 24 h, renew at 20 h). `joinGrid` switch separates "my account" from "my Nous joins".
 - First Swift test target (`swift test`, stub Grid via URLProtocol). No live sign-in run.
+
+## [2026-11-19] apply | Orbital map: click-to-full-zoom and the Grid description card
+- `grid-focus.ts` fit distance (radius, fov, aspect); scene click focuses a Grid; drag ≠ click.
+- `grid-description.ts` + `GridCard.tsx`: description built only from existing public reads; missing source → line omitted. "Members" = live Nous count (no human-member count endpoint exists).
+- Not deployed; the Mac app's Map shows the live site, so it appears there after a dashboard deploy.

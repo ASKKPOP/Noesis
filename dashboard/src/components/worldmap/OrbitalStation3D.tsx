@@ -16,6 +16,7 @@ import { GENESIS_SEED, type ParcelFeedEntry } from './OrbitalGenesisMap';
 import { mountOrbitalStation, type OrbitalHandle, type OrbitalObjectEntry } from './orbital-station-scene';
 import { pickerEntries, type PickerEntry, type PortalGrid } from './grid-picker';
 import { gridEntryHref } from '@/lib/grid-host';
+import GridCard from './GridCard';
 import { TEMPLATE_ZONES, landCounts, parseZones, zoneLabel, zoneLegend, type GridZoneView } from './zone-view';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
@@ -45,6 +46,8 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
     const [picked, setPicked] = useState<ParcelFeedEntry | null>(null);
     const [focusLabel, setFocusLabel] = useState('Genesis · near Earth');
     const [activeGrid, setActiveGrid] = useState('Genesis');
+    // The Grid whose description is open: set when the map zooms to a Grid.
+    const [described, setDescribed] = useState<string | null>(null);
     const [clock, setClock] = useState(nyClock);
     const [recMsg, setRecMsg] = useState<string | null>(null);
     const [grids, setGrids] = useState<PortalGrid[] | null>(null);
@@ -54,7 +57,7 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
     // Mount the Three.js scene once (WebGL — client only).
     useEffect(() => {
         if (!canvasRef.current) return;
-        const h = mountOrbitalStation(canvasRef.current, { onPick: setPicked, onFocusLabel: setFocusLabel });
+        const h = mountOrbitalStation(canvasRef.current, { onPick: setPicked, onFocusLabel: setFocusLabel, onFocusGrid: (name) => { setActiveGrid(name); setDescribed(name); } });
         handleRef.current = h;
         h.setParcels(GENESIS_SEED);
         if (typeof window !== 'undefined') (window as unknown as { __forestScene?: OrbitalHandle }).__forestScene = h;
@@ -129,7 +132,7 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
     const entries = pickerEntries(grids);
     const activeEntry = entries.find((e) => e.name === activeGrid);
     const focus = (e: PickerEntry): void => {
-        handleRef.current?.focusGrid(e.name); setActiveGrid(e.name);
+        handleRef.current?.focusGrid(e.name); setActiveGrid(e.name); setDescribed(e.name);
         if (e.locked) { setRecMsg(`🔒 ${e.name} is a private Grid — members only`); setTimeout(() => setRecMsg(null), 4500); }
     };
 
@@ -170,6 +173,17 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
                     <b style={{ color: '#da7a4e' }}>{purchasable}</b> purchasable slots · <b style={{ color: '#da7a4e' }}>{civic}</b> civic · <b style={{ color: '#e7c878' }}>{objects.length}</b> built objects · <span style={{ color: source === 'live' ? '#7fe0a0' : '#3fa6bd' }}>{source === 'live' ? `live · ${parcels.length} parcels` : 'founding seed'}</span>
                 </div>
             </div>
+
+            {/* full description of the Grid the map zoomed to */}
+            {described && (
+                <GridCard
+                    origin={GRID_ORIGIN} name={described} top={112}
+                    grid={(grids ?? []).find((g) => g.name.toLowerCase() === described.toLowerCase()) ?? null}
+                    registryLoaded={grids !== null}
+                    zoneLabels={zones.map((z) => z.label)} land={{ purchasable, civic }}
+                    onClose={() => setDescribed(null)}
+                />
+            )}
 
             {/* legend */}
             <div style={{ ...hud, bottom: 18, left: 22, fontSize: 11, lineHeight: 1.9, color: '#8a93a6' }}>

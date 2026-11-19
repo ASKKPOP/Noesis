@@ -14,6 +14,11 @@ export interface PortalGrid {
     visibility: 'public' | 'private';
     member: boolean;
     locked: boolean;
+    /** Sent for a Grid the viewer may see in full (not for a locked private Grid). */
+    polis?: string;
+    description?: string;
+    grid_domain?: string;
+    celestial_body?: string;
 }
 
 export interface PickerEntry {

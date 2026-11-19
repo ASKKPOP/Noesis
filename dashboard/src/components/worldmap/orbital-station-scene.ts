@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import type { ParcelFeedEntry } from './OrbitalGenesisMap';
 import { TEMPLATE_ZONES, parcelZoneKind, zoneColor, zoneSign, type GridZoneView } from './zone-view';
+import { fitDistance } from './grid-focus';
 
 /** An economy-built orbital object (L4 feed: GET /api/v1/orbital/objects). The same
  * built world the Nous now perceives — rendered so the map shows it too. */
@@ -36,6 +37,8 @@ export interface OrbitalHandle {
 export interface MountOpts {
     onPick(parcel: ParcelFeedEntry | null): void;
     onFocusLabel?(label: string): void;
+    /** A Grid was clicked in the scene and the camera is zooming to it. */
+    onFocusGrid?(name: string): void;
 }
 
 const R: Record<number, number> = { 1: 30, 2: 56, 3: 84 };
@@ -85,8 +88,9 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         new THREE.MeshBasicMaterial({ color: 0x3a8bd5, transparent: true, opacity: 0.18, side: THREE.BackSide, blending: THREE.AdditiveBlending }));
     atmo.position.copy(planet.position); scene.add(atmo);
 
-    const GRID_FOCUS: Record<string, { pos: THREE.Vector3; dist: number; label: string }> = {
-        Genesis: { pos: new THREE.Vector3(0, 2, 0), dist: 185, label: 'Genesis · near Earth' },
+    // `radius` = what must be in view for the Grid to fill it (full zoom).
+    const GRID_FOCUS: Record<string, { pos: THREE.Vector3; radius: number; label: string }> = {
+        Genesis: { pos: new THREE.Vector3(0, 2, 0), radius: R[3] + 8, label: 'Genesis · near Earth' },
     };
 
     // ── lights ──
@@ -305,7 +309,7 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
     // ── Moon & Mars — SEPARATE forming Grids on their own bodies ──
     const previewGrids: THREE.Group[] = [];   // empty 6-zone skeletons (spin at gridPos)
     const previewBodies: THREE.Group[] = [];  // forming planet bodies (spin on their own axis)
-    function buildPreviewGrid(o: { name: string; gridPos: THREE.Vector3; bodyOffset: THREE.Vector3; bodyR: number; bodyColor: number; bodyEmissive: number; atmoColor?: number; atmoOpacity?: number; sign: number; dist: number }): void {
+    function buildPreviewGrid(o: { name: string; gridPos: THREE.Vector3; bodyOffset: THREE.Vector3; bodyR: number; bodyColor: number; bodyEmissive: number; atmoColor?: number; atmoOpacity?: number; sign: number }): void {
         const grp = new THREE.Group(); grp.position.copy(o.gridPos); scene.add(grp);
         // the forming planet body spins on its OWN axis (its own group), so the land-shell
         // stays wrapped on it — separate from the grid skeleton's spin around gridPos.
@@ -337,12 +341,12 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         const s1 = neonSign(o.name.toUpperCase() + ' GRID', o.sign); s1.position.set(0, 44, 0); grp.add(s1);
         const s2 = neonSign('EMPTY · AWAITING CHARTER', 0x6a7686); s2.position.set(0, 35, 0); s2.scale.set(20, 5, 1); grp.add(s2);
         previewGrids.push(grp);
-        GRID_FOCUS[o.name] = { pos: o.gridPos.clone(), dist: o.dist, label: o.name + ' Grid · empty · awaiting charter' };
+        GRID_FOCUS[o.name] = { pos: o.gridPos.clone(), radius: 58, label: o.name + ' Grid · empty · awaiting charter' };
     }
     // Positioned in the camera's default forward field (−x/−z, beyond Genesis) so
     // they APPEAR in the world map without focusing — the journey receding into space.
-    buildPreviewGrid({ name: 'Moon', gridPos: new THREE.Vector3(-300, 72, -210), bodyOffset: new THREE.Vector3(-14, -62, -24), bodyR: 30, bodyColor: 0x8f8f93, bodyEmissive: 0x33352f, sign: 0x9aa6c0, dist: 120 });
-    buildPreviewGrid({ name: 'Mars', gridPos: new THREE.Vector3(-540, 106, -415), bodyOffset: new THREE.Vector3(-18, -66, -28), bodyR: 26, bodyColor: 0x9c4a2f, bodyEmissive: 0x3a1c12, atmoColor: 0xc78a5a, atmoOpacity: 0.12, sign: 0xc88a5a, dist: 115 });
+    buildPreviewGrid({ name: 'Moon', gridPos: new THREE.Vector3(-300, 72, -210), bodyOffset: new THREE.Vector3(-14, -62, -24), bodyR: 30, bodyColor: 0x8f8f93, bodyEmissive: 0x33352f, sign: 0x9aa6c0 });
+    buildPreviewGrid({ name: 'Mars', gridPos: new THREE.Vector3(-540, 106, -415), bodyOffset: new THREE.Vector3(-18, -66, -28), bodyR: 26, bodyColor: 0x9c4a2f, bodyEmissive: 0x3a1c12, atmoColor: 0xc78a5a, atmoOpacity: 0.12, sign: 0xc88a5a });
 
     // ── built orbital objects — the real, economy-built world (L4 feed). Rendered as
     //    glowing satellites in an outer shell so the map shows what the Nous perceives. ──
@@ -390,7 +394,7 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
     // ── camera (hand-rolled, focus-based) ──
     // Default = a wide "world map" overview angled at the −x/−z journey so Genesis
     // (near Earth) AND the empty Moon/Mars grids are all in frame at load. The Genesis
-    // focus button zooms back in to 185.
+    // Focusing a Grid (its picker button, or a click on it) zooms in until it fills the view.
     let rx = 0.42, ry = 0.92, dist = 235;
     const focus = new THREE.Vector3(0, 2, 0), focusGoal = focus.clone(); let distGoal = 235;
     let drag = false, px = 0, py = 0;
@@ -398,11 +402,15 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         cam.position.set(focus.x + Math.sin(ry) * Math.cos(rx) * dist, focus.y + Math.sin(rx) * dist + 6, focus.z + Math.cos(ry) * Math.cos(rx) * dist);
         cam.lookAt(focus);
     }
+    let focused: string | null = null;   // null = the opening overview
     function focusGrid(name: string): void {
-        const f = GRID_FOCUS[name] ?? GRID_FOCUS.Genesis; focusGoal.copy(f.pos); distGoal = f.dist;
+        const key = name in GRID_FOCUS ? name : 'Genesis';
+        const f = GRID_FOCUS[key]; focused = key;
+        focusGoal.copy(f.pos); distGoal = fitDistance(f.radius, cam.fov, cam.aspect);
         opts.onFocusLabel?.(f.label);
     }
-    const onDown = (e: PointerEvent) => { drag = true; px = e.clientX; py = e.clientY; };
+    let downX = 0, downY = 0;
+    const onDown = (e: PointerEvent) => { drag = true; px = downX = e.clientX; py = downY = e.clientY; };
     const onUp = () => { drag = false; };
     const onMove = (e: PointerEvent) => { if (!drag) return; ry -= (e.clientX - px) * 0.006; rx = Math.max(-0.5, Math.min(1.45, rx + (e.clientY - py) * 0.006)); px = e.clientX; py = e.clientY; place(); };
     const onWheel = (e: WheelEvent) => { dist = Math.max(70, Math.min(680, dist + e.deltaY * 0.14)); distGoal = dist; place(); };
@@ -410,10 +418,17 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
 
     // ── raycast pick ──
     const ray = new THREE.Raycaster(); const pv = new THREE.Vector2();
+    const genesisBounds = new THREE.Sphere(GRID_FOCUS.Genesis.pos, GRID_FOCUS.Genesis.radius);
     const onClick = (e: MouseEvent) => {
+        if (Math.hypot(e.clientX - downX, e.clientY - downY) > 5) return;   // that was an orbit drag, not a click
         pv.x = (e.clientX / innerWidth) * 2 - 1; pv.y = -(e.clientY / innerHeight) * 2 + 1;
         ray.setFromCamera(pv, cam); const hit = ray.intersectObjects(meshes, false)[0];
         opts.onPick(hit ? (hit.object.userData as ParcelFeedEntry) : null);
+        // A click on a Grid the camera is not on zooms in to it. On the Grid already in
+        // focus the camera stays put, so picking its modules does not undo your own zoom.
+        const data = hit?.object.userData as { future?: boolean; body?: string } | undefined;
+        const grid = hit ? (data?.future && data.body ? data.body : 'Genesis') : ray.ray.intersectsSphere(genesisBounds) ? 'Genesis' : null;
+        if (grid && grid !== focused) { focusGrid(grid); opts.onFocusGrid?.(grid); }
     };
     canvas.addEventListener('click', onClick);
     const onResize = () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); };
