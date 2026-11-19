@@ -345,4 +345,4 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 ## [2026-11-19] apply | Map: human member count + six-language switch
 - Human member = human with an active Civic-DID in the Grid (same rule as the private-Grid unlock). `/portal/grids` full entries carry `human_members`; locked private entries do not.
 - `map-i18n.ts`: en / es / ja / ko / vi / fil for the map's own wording only; Grid-supplied text stays as written. Scope is the map page, not the whole dashboard.
-- Not deployed. Translations not reviewed by native speakers.
+- Deployed 2026-11-19 (operator-requested; `deploy.sh` with the branch env now works since the server has the branch). Live: `human_members: 2`. Translations not reviewed by native speakers.
