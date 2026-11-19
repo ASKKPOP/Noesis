@@ -48,11 +48,11 @@ enum ProcessUsage {
     }
 }
 
-/// Samples the model server every few seconds while the Local AI screen is open.
+/// Samples the model server every few seconds for as long as the app is open.
 @MainActor
 final class LocalAIMonitor: ObservableObject {
-    /// Five minutes at one sample every three seconds.
-    static let keep = 100
+    /// One hour at one sample every three seconds.
+    static let keep = 1200
     static let every: Duration = .seconds(3)
 
     @Published private(set) var samples: [UsageSample] = []
@@ -60,7 +60,11 @@ final class LocalAIMonitor: ObservableObject {
     /// False when no model server process is running on this Mac.
     @Published private(set) var serverRunning = true
 
+    private var watching = false
+
     func watch(host: @escaping () -> String) async {
+        guard !watching else { return }
+        watching = true
         while !Task.isCancelled {
             let usage = await Task.detached { ProcessUsage.ofModelServer() }.value
             serverRunning = usage != nil
@@ -82,7 +86,7 @@ final class LocalAIMonitor: ObservableObject {
 /// The "Working now" section of Local AI: status, and processor and memory over time.
 struct LocalAIUsageSection: View {
     @EnvironmentObject private var app: AppModel
-    @StateObject private var monitor = LocalAIMonitor()
+    @EnvironmentObject private var monitor: LocalAIMonitor
 
     private static let physicalMemory = Double(ProcessInfo.processInfo.physicalMemory)
     private static func gigabytes(_ bytes: Double) -> String { String(format: "%.1f GB", bytes / 1_073_741_824) }
@@ -116,9 +120,8 @@ struct LocalAIUsageSection: View {
         } header: {
             Text("Working now")
         } footer: {
-            Text("The model server's processes on this Mac, measured every 3 seconds while this screen is open. The last 5 minutes are shown.")
+            Text("The model server's processes on this Mac, measured every 3 seconds for as long as this app is open. The last hour is shown.")
         }
-        .task { await monitor.watch { app.settings.ollamaHost } }
     }
 
     private func graph(title: String, now: String?, top: Double, value: KeyPath<UsageSample, Double>, axis: @escaping (Double) -> String) -> some View {
@@ -141,9 +144,9 @@ struct LocalAIUsageSection: View {
                     AxisValueLabel { if let v = mark.as(Double.self) { Text(axis(v)) } }
                 }
             }
-            .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) { _ in AxisGridLine(); AxisValueLabel(format: .dateTime.hour().minute().second()) } }
+            .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) { _ in AxisGridLine(); AxisValueLabel(format: .dateTime.hour().minute()) } }
             .frame(height: 110)
-            .accessibilityLabel("\(title) used by the local AI over the last five minutes")
+            .accessibilityLabel("\(title) used by the local AI over the last hour")
         }
         .padding(.vertical, 4)
     }

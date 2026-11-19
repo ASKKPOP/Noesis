@@ -70,6 +70,7 @@ final class AppModel: ObservableObject {
     let brain = BrainProcess()
     let map = MapBrowser()
     let account = GridAccount()
+    let localAI = LocalAIMonitor()
 
     init() {
         settings = AppFiles.loadSettings()

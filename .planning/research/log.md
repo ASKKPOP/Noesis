@@ -356,4 +356,4 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 - SES setup (identity, sandbox exit, role permission, env) is the operator's; steps in `.planning/implementation/alerting.md`. Grid deployed 2026-11-19; no real mail sent.
 
 ## [2026-11-19] apply | Mac app: Local AI usage graphs
-- `LocalAIUsage.swift`: `ps` totals for the model server's processes + Ollama `/api/ps`; Swift Charts, 3 s samples, 5 min window, only while the screen is open.
+- `LocalAIUsage.swift`: `ps` totals for the model server's processes + Ollama `/api/ps`; Swift Charts, 3 s samples for the whole app run, last hour kept in memory (first version sampled only while the screen was open).

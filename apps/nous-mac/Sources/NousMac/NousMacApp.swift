@@ -12,8 +12,10 @@ struct NousMacApp: App {
                 .environmentObject(app.viewer)
                 .environmentObject(app.brain)
                 .environmentObject(app.account)
+                .environmentObject(app.localAI)
                 .task { await app.restoreAccount() }
                 .task { await app.keepAlive() }
+                .task { await app.localAI.watch { app.settings.ollamaHost } }
                 .frame(minWidth: 1040, minHeight: 660)
                 .tint(coral)
                 .onAppear {
