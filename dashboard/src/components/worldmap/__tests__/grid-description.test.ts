@@ -32,7 +32,7 @@ describe('describeGrid', () => {
         expect(row(d, 'Laws in force')).toBe('2');
         expect(row(d, 'Zones')).toBe('2: Business, Residential');
         expect(row(d, 'Land')).toBe('48 purchasable, 5 civic');
-        expect(row(d, 'Active since')).toBe('2026-10-13 (37 days)');
+        expect(row(d, 'Running since')).toBe('2026-10-13 (37 days)');
         expect(row(d, 'Pace')).toBe('one tick every 30 seconds');
         expect(row(d, 'Grid time')).toBe('tick 106,756 · epoch 1,067');
         expect(row(d, 'Recorded actions')).toBe('469,146');

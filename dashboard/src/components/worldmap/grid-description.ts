@@ -2,7 +2,7 @@
  * grid-description — the full description of a Grid shown when the map zooms to it.
  *
  * Every line comes from the Grid itself: its registry entry (GET /api/v1/portal/grids),
- * its status and clock (GET /api/v1/grid/status, /api/v1/grid/clock), its identity
+ * its status and clock (GET /api/v1/grid/status, /api/v1/grid/clock) — the clock starts again each time the Grid is restarted, so "Running since" is the last start, not the founding, its identity
  * profile (GET /api/v1/grid/profile — needs a signed-in member) and its zone set. A line
  * whose source did not answer is left out, never filled in.
  */
@@ -85,7 +85,7 @@ export function describeGrid(name: string, f: GridFacts, now: number): GridDescr
     if (f.zoneLabels.length > 0) add('Zones', `${f.zoneLabels.length}: ${f.zoneLabels.join(', ')}`);
     if (f.land) add('Land', `${count(f.land.purchasable)} purchasable, ${count(f.land.civic)} civic`);
     if (f.clock) {
-        add('Active since', `${new Date(f.clock.startedAt).toISOString().slice(0, 10)} (${days(Math.max(0, now - f.clock.startedAt))})`);
+        add('Running since', `${new Date(f.clock.startedAt).toISOString().slice(0, 10)} (${days(Math.max(0, now - f.clock.startedAt))})`);
         add('Pace', `one tick every ${seconds(f.clock.tickRateMs)}`);
     }
     if (f.status) {
