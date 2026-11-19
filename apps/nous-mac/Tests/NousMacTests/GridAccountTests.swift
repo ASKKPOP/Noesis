@@ -103,4 +103,30 @@ final class GridAccountTests: XCTestCase {
         XCTAssertNil(Keychain.read(account: "\(email)@grid.test", service: service))
         XCTAssertEqual(removed, ["noesis_portal_token"])
     }
+
+    func testAnEmailAlertGoesToTheGridWithTheSession() async {
+        StubGrid.answer = Self.accepted
+        let account = account()
+        await account.signIn(email: email, password: "test-pass", grid: grid)
+        StubGrid.answer = { _ in (200, [:], Data(#"{"ok":true}"#.utf8)) }
+        let problem = await account.emailAlert(.brainDown, nous: "Sophia", email: email, grid: grid)
+        XCTAssertNil(problem)
+        let sent = StubGrid.requests.last
+        XCTAssertEqual(sent?.url?.path, "/api/v1/portal/nous-alert")
+        XCTAssertEqual(sent?.value(forHTTPHeaderField: "Cookie"), "noesis_portal_token=tok123")
+    }
+
+    func testAnEmailAlertSaysWhyNoMailWentOut() async {
+        let signedOut = account()
+        let none = await signedOut.emailAlert(.localAIDown, nous: "Sophia", email: "", grid: grid)
+        XCTAssertEqual(none, "No email was sent: sign in under Grid Access to get these alerts by email too.")
+        XCTAssertTrue(StubGrid.requests.isEmpty)
+
+        StubGrid.answer = Self.accepted
+        let account = account()
+        await account.signIn(email: email, password: "test-pass", grid: grid)
+        StubGrid.answer = { _ in (503, [:], Data(#"{"error":"email_not_configured"}"#.utf8)) }
+        let unconfigured = await account.emailAlert(.localAIDown, nous: "Sophia", email: email, grid: grid)
+        XCTAssertEqual(unconfigured, "No email was sent: the Grid has no mail service set up yet.")
+    }
 }

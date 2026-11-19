@@ -96,6 +96,7 @@ import { registerApprovalRoutes } from './routes/approvals.js';
 import { registerConversationRoutes } from './routes/conversation.js';
 import { registerPortalConversationRoutes } from './routes/portal-conversation.js';
 import { registerPortalJoinGridRoutes } from './routes/portal-join-grid.js';
+import { registerNousAlertRoutes } from './portal/nous-alert.js';
 import { registerPortalOverviewRoute } from './routes/portal-overview.js';
 import { registerCivicConversationInboxRoutes } from './routes/civic-conversation-inbox.js';
 import { registerPoliceRoutes } from './routes/police.js';
@@ -168,6 +169,8 @@ export interface GridServices {
      * When absent, portal auth routes return 503 human_registry_unavailable.
      */
     humanRegistry?: HumanRegistry;
+    /** Sends account notices by email. Unset = built from ALERT_EMAIL_* (none = no email). */
+    alertMailer?: import('./portal/alert-mailer.js').AlertMailer;
     /** ShopRegistry — required by Plan 04-03 shops endpoint. */
     shops?: ShopRegistry;
     /** GroupStore — backs the portal discovery endpoint (organizations to join).
@@ -811,6 +814,7 @@ export function buildServerWithHub(
     registerConversationRoutes(app, services);
     registerPortalConversationRoutes(app, services);
     registerPortalJoinGridRoutes(app, services);
+    registerNousAlertRoutes(app, services);
     registerPortalOverviewRoute(app, services);
     registerCivicConversationInboxRoutes(app, services);
     registerPoliceRoutes(app, services);

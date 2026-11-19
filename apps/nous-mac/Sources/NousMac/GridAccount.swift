@@ -48,6 +48,8 @@ final class GridAccount: ObservableObject {
 
     @Published private(set) var state = State.signedOut
     private var signedInAt: Date?
+    /// The session, kept to sign this app's own requests to the Grid.
+    private var sessionCookie: HTTPCookie?
 
     private let session: URLSession
     private let service: String
@@ -90,6 +92,7 @@ final class GridAccount: ObservableObject {
                 return fail("The password could not be saved in the Keychain.")
             }
             await install(cookie)
+            sessionCookie = cookie
             signedInAt = Date()
             state = .signedIn(did: did)
             return true
@@ -113,8 +116,37 @@ final class GridAccount: ObservableObject {
         request.httpMethod = "POST"
         _ = try? await session.data(for: request)
         await remove(Self.cookieName)
+        sessionCookie = nil
         signedInAt = nil
         state = .signedOut
+    }
+
+    /// What the Grid can email the account about its Local Nous (grid/src/api/portal/nous-alert.ts).
+    enum Alert: String { case brainDown = "brain_down", localAIDown = "local_ai_down" }
+
+    /// Ask the Grid to email this account that its Nous cannot stay running. The Grid
+    /// writes the mail and sends it only to the account's own address. Returns nil when
+    /// the mail went out (or one already did this hour), else why it did not.
+    func emailAlert(_ alert: Alert, nous: String, email: String, grid: URL) async -> String? {
+        await restore(email: email, grid: grid)
+        guard case .signedIn = state, let sessionCookie else {
+            return "No email was sent: sign in under Grid Access to get these alerts by email too."
+        }
+        var request = URLRequest(url: grid.appendingPathComponent("api/v1/portal/nous-alert"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("\(sessionCookie.name)=\(sessionCookie.value)", forHTTPHeaderField: "Cookie")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["kind": alert.rawValue, "nous": nous])
+        guard let (_, response) = try? await session.data(for: request), let http = response as? HTTPURLResponse else {
+            return "No email was sent: the Grid could not be reached."
+        }
+        switch http.statusCode {
+        case 200, 429: return nil
+        case 401: return "No email was sent: the Grid did not accept this sign-in."
+        case 409: return "No email was sent: this account has no email address."
+        case 503: return "No email was sent: the Grid has no mail service set up yet."
+        default: return "No email was sent: the Grid answered with an error (\(http.statusCode))."
+        }
     }
 
     /// One stored password per account per Grid.

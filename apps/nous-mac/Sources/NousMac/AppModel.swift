@@ -63,6 +63,8 @@ final class AppModel: ObservableObject {
     @Published private(set) var brainNotice: String?
     /// Set while the local model server does not answer.
     @Published private(set) var localAINotice: String?
+    /// Why the last alert did not also go out by email, if it did not.
+    @Published private(set) var emailNotice: String?
 
     let viewer = ViewerModel()
     let brain = BrainProcess()
@@ -176,6 +178,7 @@ final class AppModel: ObservableObject {
         settings.keepBrainRunning = false
         brainNotice = nil
         localAINotice = nil
+        emailNotice = nil
         brain.stop()
     }
 
@@ -208,6 +211,7 @@ final class AppModel: ObservableObject {
         if brainWatch.failed() {
             Alerts.send(title: "\(nousName)'s Brain keeps stopping",
                         message: "It has failed to stay running \(FailureWatch.alertAfter) times in a row. The app keeps trying. Open Brain Process to see why.")
+            emailAlert(.brainDown)
         }
         let wait = brainWatch.retryDelay
         brainNotice = "The Brain stopped. Starting it again in \(Int(wait)) seconds (try \(brainWatch.failures))."
@@ -216,6 +220,12 @@ final class AppModel: ObservableObject {
             guard settings.keepBrainRunning, !quitting, !brain.isRunning else { return }
             if launchBrain() == nil { brainNotice = nil } else { brainFailed() }
         }
+    }
+
+    /// The same alert by email, through the signed-in account on the Grid.
+    private func emailAlert(_ alert: GridAccount.Alert) {
+        guard let grid = settings.grid else { return }
+        Task { emailNotice = await account.emailAlert(alert, nous: nousName, email: settings.accountEmail, grid: grid) }
     }
 
     /// The Brain asks the model server afresh for every thought, so it reconnects by
@@ -231,6 +241,7 @@ final class AppModel: ObservableObject {
             if localAIWatch.failed() {
                 Alerts.send(title: "\(nousName) cannot reach its local AI",
                             message: "The model server at \(settings.ollamaHost) has not answered \(FailureWatch.alertAfter) times in a row. The app keeps trying. Check that Ollama is running.")
+                emailAlert(.localAIDown)
             }
             localAINotice = "Local AI is not answering. Trying again every 15 seconds (try \(localAIWatch.failures))."
         }

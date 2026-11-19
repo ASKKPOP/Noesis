@@ -370,6 +370,8 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/portal/nous/:nousId/claim':            'public',
     'GET /api/v1/portal/nous':                           'public',
     'POST /api/v1/portal/grid-recommendations':          'public',
+    // Local Nous alert — the handler requires the Portal session itself and mails only that account.
+    'POST /api/v1/portal/nous-alert':                    'public',
     'GET /api/v1/civic/grid-recommendations':            'civic_did_required',
     // Phase 47 Police v3 (POL-01/02) — complaint + investigation. All civic_member-gated;
     // no operator-direct / Police-direct sanction path exists (D-V3-18).

@@ -70,6 +70,9 @@ services:
   grid:
     environment:
       GRID_CORS_ORIGINS: "https://${DOMAIN:-localhost},https://portal.${DOMAIN:-localhost},https://system.${DOMAIN:-localhost}"
+      # Account notices by email (AWS SES). Empty = the Grid sends no email.
+      ALERT_EMAIL_FROM: ${ALERT_EMAIL_FROM:-}
+      ALERT_EMAIL_REGION: ${ALERT_EMAIL_REGION:-}
 
   # ── Dashboard → ${DOMAIN}/ (apex — the landing page is the first page) ──────
   dashboard:

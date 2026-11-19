@@ -92,7 +92,7 @@ private struct NousHeader: View {
             if let problem = app.startProblem {
                 Text(problem).font(.caption).foregroundStyle(coral).fixedSize(horizontal: false, vertical: true)
             }
-            ForEach([app.brainNotice, app.localAINotice].compactMap { $0 }, id: \.self) { notice in
+            ForEach([app.brainNotice, app.localAINotice, app.emailNotice].compactMap { $0 }, id: \.self) { notice in
                 Text(notice).font(.caption).foregroundStyle(coral).fixedSize(horizontal: false, vertical: true)
             }
         }
