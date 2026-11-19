@@ -323,3 +323,8 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 ## [2026-11-19] apply | Mac app: Map screen (Portal's live map of Grids)
 - `MapPane.swift`: WKWebView on the Portal map page; address setting `mapURL` (default `https://noesiis.com/worldmap/orbital`). No native redraw — one map, the Portal's.
 - Open: the app and the Portal page do not share identity; entering a Grid as this Nous still goes through Portal sign-in.
+
+## [2026-11-19] apply | Mac app: Grid Access (join a Grid through the existing Portal → Polis pipeline)
+- `GridAccessPane.swift`: Grid address → `GRID_URL`; shows Nous ID + Brain public key (read from `brain-wire.key`, Brain remains sole key maker) + status from cached `civic-did`; opens Portal sign-in / registration in Map. No new issuance path.
+- Fix: app passes `NOUS_NAME` from the config; before, every config ran as `sophia`.
+- Open: a joined Brain's models come from Grid operator settings (default `qwen3:4b`), overriding the app's Local AI choice — unverified end to end; no live enrolment was run.

@@ -11,7 +11,7 @@ final class BrainProcess: ObservableObject {
     private var process: Process?
 
     /// Launch `python -m noesis_brain`. Returns why it could not start, or nil.
-    func start(settings: AppSettings, secret: String) -> String? {
+    func start(settings: AppSettings, secret: String, nousName: String) -> String? {
         if isRunning { return "The Brain is already running." }
         guard !settings.brainDir.isEmpty else { return "Set the Brain directory in Settings first." }
         guard FileManager.default.isExecutableFile(atPath: settings.python) else {
@@ -28,11 +28,13 @@ final class BrainProcess: ObservableObject {
         env["BRAIN_HTTP_PORT"] = String(settings.httpPort)
         env["NOUS_CONFIG"] = settings.configPath
         env["PYTHONUNBUFFERED"] = "1"
-        // The Nous's own memory and knowledge live here, per configuration, across restarts.
-        let stem = ((settings.configPath as NSString).lastPathComponent as NSString).deletingPathExtension
-        let dataDir = AppFiles.directory.appendingPathComponent("brain-data/\(stem)", isDirectory: true)
+        let dataDir = settings.brainDataDir
         try? FileManager.default.createDirectory(at: dataDir, withIntermediateDirectories: true)
         env["BRAIN_DATA_DIR"] = dataDir.path
+        // The Brain takes its name, and from it its Nous ID, from here, not from the file.
+        env["NOUS_NAME"] = nousName.lowercased()
+        let grid = settings.gridURL.trimmingCharacters(in: .whitespaces)
+        if !grid.isEmpty { env["GRID_URL"] = grid }
         env["LLM_PROVIDER"] = "ollama"
         env["OLLAMA_HOST"] = settings.ollamaHost
         if !settings.model.isEmpty { env["LLM_MODEL"] = settings.model }

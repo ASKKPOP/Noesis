@@ -3,7 +3,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 enum Pane: String, CaseIterable, Identifiable {
-    case dashboard, chat, map, profile, overview, memory, wiki, localAI, logs, config, settings
+    case dashboard, chat, map, grid, profile, overview, memory, wiki, localAI, logs, config, settings
 
     var id: String { rawValue }
 
@@ -12,6 +12,7 @@ enum Pane: String, CaseIterable, Identifiable {
         case .dashboard: return "Dashboard"
         case .chat: return "Chat"
         case .map: return "Map"
+        case .grid: return "Grid Access"
         case .profile: return "Profile"
         case .overview: return "Live State"
         case .memory: return "Memory"
@@ -28,6 +29,7 @@ enum Pane: String, CaseIterable, Identifiable {
         case .dashboard: return "square.grid.2x2"
         case .chat: return "bubble.left.and.bubble.right"
         case .map: return "globe"
+        case .grid: return "person.badge.key"
         case .profile: return "person.text.rectangle"
         case .overview: return "waveform.path.ecg"
         case .memory: return "clock.arrow.circlepath"
@@ -60,6 +62,7 @@ final class AppModel: ObservableObject {
 
     let viewer = ViewerModel()
     let brain = BrainProcess()
+    let map = MapBrowser()
 
     init() {
         settings = AppFiles.loadSettings()
@@ -132,7 +135,7 @@ final class AppModel: ObservableObject {
     // MARK: Brain process
 
     func startBrain() {
-        startProblem = brain.start(settings: settings, secret: secret)
+        startProblem = brain.start(settings: settings, secret: secret, nousName: nousName)
     }
 
     // MARK: Chat
