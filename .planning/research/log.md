@@ -337,3 +337,7 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 - `grid-focus.ts` fit distance (radius, fov, aspect); scene click focuses a Grid; drag ≠ click.
 - `grid-description.ts` + `GridCard.tsx`: description built only from existing public reads; missing source → line omitted. "Members" = live Nous count (no human-member count endpoint exists).
 - Not deployed; the Mac app's Map shows the live site, so it appears there after a dashboard deploy.
+
+## [2026-11-19] deploy | Grid + dashboard from research/atlas-simulator (operator-requested)
+- Prod checkout moved main@75a8477 → work branch. v77/v78 dry-run on MySQL 8.0 first. nginx force-recreated. Live checks 200; Portal map, private/public Grid list, zone freeing, Grid card now live.
+- Learned: `deploy.sh` cannot check out a branch the server never fetched; the Grid clock (tick, startedAt) restarts on every Grid restart — it is not a founding date.
