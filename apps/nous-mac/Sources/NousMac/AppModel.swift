@@ -59,6 +59,10 @@ final class AppModel: ObservableObject {
     @Published private(set) var messages: [ChatMessage] = []
     @Published private(set) var waitingForReply = false
     @Published var startProblem: String?
+    /// Why the Brain is not up right now while it is meant to be, and what the app is doing about it.
+    @Published private(set) var brainNotice: String?
+    /// Set while the local model server does not answer.
+    @Published private(set) var localAINotice: String?
 
     let viewer = ViewerModel()
     let brain = BrainProcess()
@@ -71,6 +75,7 @@ final class AppModel: ObservableObject {
         viewer.load(path: settings.configPath)
         messages = loadMessages()
         stopBrainWhenKilled()
+        brain.onExit = { [weak self] in self?.brainExited() }
     }
 
     private var termination: DispatchSourceSignal?
@@ -143,8 +148,92 @@ final class AppModel: ObservableObject {
 
     // MARK: Brain process
 
+    private var brainWatch = FailureWatch()
+    private var localAIWatch = FailureWatch()
+    private var brainStartedAt = Date.distantPast
+    private var watching = false
+    private var quitting = false
+
+    /// Start the Brain and keep it running from now on: it is started again with the app
+    /// and restarted whenever it exits, until Stop.
     func startBrain() {
-        startProblem = brain.start(settings: settings, secret: secret, nousName: nousName)
+        startProblem = launchBrain()
+        guard startProblem == nil else { return }
+        settings.keepBrainRunning = true
+        brainWatch = FailureWatch()
+        brainNotice = nil
+        Alerts.askPermission()
+    }
+
+    /// The app is closing: the Brain goes with it and comes back the next time the app opens.
+    func quit() {
+        quitting = true
+        brain.stop()
+    }
+
+    /// The only way the Brain stays stopped.
+    func stopBrain() {
+        settings.keepBrainRunning = false
+        brainNotice = nil
+        localAINotice = nil
+        brain.stop()
+    }
+
+    /// Called once when the app opens: bring the Brain back if it was left running, and
+    /// keep watching the local model server.
+    func keepAlive() async {
+        guard !watching else { return }
+        watching = true
+        if settings.keepBrainRunning, !brain.isRunning, launchBrain() != nil { brainFailed() }
+        while !Task.isCancelled {
+            if settings.keepBrainRunning { await checkLocalAI() }
+            try? await Task.sleep(for: .seconds(15))
+        }
+    }
+
+    private func launchBrain() -> String? {
+        let problem = brain.start(settings: settings, secret: secret, nousName: nousName)
+        if problem == nil { brainStartedAt = Date() }
+        return problem
+    }
+
+    private func brainExited() {
+        guard settings.keepBrainRunning, !quitting else { return }
+        if Date().timeIntervalSince(brainStartedAt) >= FailureWatch.settledAfter { brainWatch.recovered() }
+        brainFailed()
+    }
+
+    /// The Brain is down while it should be up: tell the user if this has gone on, then try again.
+    private func brainFailed() {
+        if brainWatch.failed() {
+            Alerts.send(title: "\(nousName)'s Brain keeps stopping",
+                        message: "It has failed to stay running \(FailureWatch.alertAfter) times in a row. The app keeps trying. Open Brain Process to see why.")
+        }
+        let wait = brainWatch.retryDelay
+        brainNotice = "The Brain stopped. Starting it again in \(Int(wait)) seconds (try \(brainWatch.failures))."
+        Task {
+            try? await Task.sleep(for: .seconds(wait))
+            guard settings.keepBrainRunning, !quitting, !brain.isRunning else { return }
+            if launchBrain() == nil { brainNotice = nil } else { brainFailed() }
+        }
+    }
+
+    /// The Brain asks the model server afresh for every thought, so it reconnects by
+    /// itself the moment the server answers again; this keeps checking and reports.
+    private func checkLocalAI() async {
+        do {
+            _ = try await LocalModels.installed(host: settings.ollamaHost)
+            if localAIWatch.recovered() {
+                Alerts.send(title: "Local AI is connected again", message: "\(nousName) can think again.")
+            }
+            localAINotice = nil
+        } catch {
+            if localAIWatch.failed() {
+                Alerts.send(title: "\(nousName) cannot reach its local AI",
+                            message: "The model server at \(settings.ollamaHost) has not answered \(FailureWatch.alertAfter) times in a row. The app keeps trying. Check that Ollama is running.")
+            }
+            localAINotice = "Local AI is not answering. Trying again every 15 seconds (try \(localAIWatch.failures))."
+        }
     }
 
     // MARK: Chat

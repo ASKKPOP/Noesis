@@ -93,10 +93,10 @@ struct DashboardPane: View {
         Card(title: "Brain") {
             HStack(spacing: 8) {
                 Circle().fill(brain.isRunning ? Color.green : Color.secondary.opacity(0.5)).frame(width: 9, height: 9)
-                Text(brain.isRunning ? "Running" : "Stopped").font(.title3.weight(.medium))
+                Text(brain.isRunning ? "Running" : app.settings.keepBrainRunning ? "Restarting" : "Stopped").font(.title3.weight(.medium))
                 Spacer()
-                if brain.isRunning {
-                    Button("Stop") { brain.stop() }
+                if brain.isRunning || app.settings.keepBrainRunning {
+                    Button("Stop") { app.stopBrain() }
                 } else {
                     Button("Start") { app.startBrain() }.buttonStyle(.borderedProminent)
                 }

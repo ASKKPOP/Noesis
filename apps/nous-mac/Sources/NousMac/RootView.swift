@@ -81,16 +81,19 @@ private struct NousHeader: View {
             Text(app.nousName).font(.system(size: 22, weight: .semibold))
             HStack(spacing: 6) {
                 Circle().fill(brain.isRunning ? Color.green : Color.secondary.opacity(0.5)).frame(width: 8, height: 8)
-                Text(brain.isRunning ? "Brain running" : "Brain stopped").font(.callout).foregroundStyle(.secondary)
+                Text(brain.isRunning ? "Brain running" : app.settings.keepBrainRunning ? "Brain restarting" : "Brain stopped").font(.callout).foregroundStyle(.secondary)
                 Spacer()
-                if brain.isRunning {
-                    Button("Stop") { brain.stop() }.controlSize(.small)
+                if brain.isRunning || app.settings.keepBrainRunning {
+                    Button("Stop") { app.stopBrain() }.controlSize(.small)
                 } else {
                     Button("Start") { app.startBrain() }.controlSize(.small).buttonStyle(.borderedProminent)
                 }
             }
             if let problem = app.startProblem {
                 Text(problem).font(.caption).foregroundStyle(coral).fixedSize(horizontal: false, vertical: true)
+            }
+            ForEach([app.brainNotice, app.localAINotice].compactMap { $0 }, id: \.self) { notice in
+                Text(notice).font(.caption).foregroundStyle(coral).fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(16)

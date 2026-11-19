@@ -8,10 +8,10 @@ struct LogsPane: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 12) {
-                Text(brain.isRunning ? "Running (process \(String(brain.pid ?? 0)))" : "Stopped").font(.headline)
+                Text(brain.isRunning ? "Running (process \(String(brain.pid ?? 0)))" : app.settings.keepBrainRunning ? "Restarting" : "Stopped").font(.headline)
                 Spacer()
                 Button("Start") { app.startBrain() }.disabled(brain.isRunning).buttonStyle(.borderedProminent)
-                Button("Stop") { brain.stop() }.disabled(!brain.isRunning)
+                Button("Stop") { app.stopBrain() }.disabled(!brain.isRunning && !app.settings.keepBrainRunning)
             }
             .padding(16)
             if let problem = app.startProblem {

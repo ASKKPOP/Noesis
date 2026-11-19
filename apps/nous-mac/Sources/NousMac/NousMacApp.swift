@@ -13,6 +13,7 @@ struct NousMacApp: App {
                 .environmentObject(app.brain)
                 .environmentObject(app.account)
                 .task { await app.restoreAccount() }
+                .task { await app.keepAlive() }
                 .frame(minWidth: 1040, minHeight: 660)
                 .tint(coral)
                 .onAppear {
@@ -24,7 +25,7 @@ struct NousMacApp: App {
                     }
                 }
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
-                    app.brain.stop()
+                    app.quit()
                 }
         }
         .commands {

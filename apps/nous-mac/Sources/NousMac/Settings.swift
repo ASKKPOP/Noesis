@@ -23,6 +23,8 @@ struct AppSettings: Codable, Equatable {
     var joinGrid = false
     /// The email of your account on that Grid. The password is in the Keychain, never here.
     var accountEmail = ""
+    /// Set by Start, cleared by Stop: the Brain is started with the app and restarted if it exits.
+    var keepBrainRunning = false
 
     init() {}
 
@@ -42,6 +44,7 @@ struct AppSettings: Codable, Equatable {
         gridURL = grid.isEmpty ? d.gridURL : grid
         joinGrid = try c.decodeIfPresent(Bool.self, forKey: .joinGrid) ?? d.joinGrid
         accountEmail = try c.decodeIfPresent(String.self, forKey: .accountEmail) ?? d.accountEmail
+        keepBrainRunning = try c.decodeIfPresent(Bool.self, forKey: .keepBrainRunning) ?? d.keepBrainRunning
     }
 
     /// Where this configuration's Nous keeps its memory, knowledge and Grid key, across restarts.

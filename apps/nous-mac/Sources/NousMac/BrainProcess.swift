@@ -9,6 +9,8 @@ final class BrainProcess: ObservableObject {
     @Published private(set) var logs: [String] = []
 
     private var process: Process?
+    /// Called on the main queue each time the Brain process ends, however it ended.
+    var onExit: (() -> Void)?
 
     /// Launch `python -m noesis_brain`. Returns why it could not start, or nil.
     func start(settings: AppSettings, secret: String, nousName: String) -> String? {
@@ -55,10 +57,10 @@ final class BrainProcess: ObservableObject {
                 self?.isRunning = false
                 self?.pid = nil
                 self?.process = nil
+                self?.onExit?()
             }
         }
 
-        logs = []
         append("[app] starting \(settings.python) -m noesis_brain in \(settings.brainDir)")
         do {
             try process.run()

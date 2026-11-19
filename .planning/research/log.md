@@ -346,3 +346,7 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 - Human member = human with an active Civic-DID in the Grid (same rule as the private-Grid unlock). `/portal/grids` full entries carry `human_members`; locked private entries do not.
 - `map-i18n.ts`: en / es / ja / ko / vi / fil for the map's own wording only; Grid-supplied text stays as written. Scope is the map page, not the whole dashboard.
 - Deployed 2026-11-19 (operator-requested; `deploy.sh` with the branch env now works since the server has the branch). Live: `human_members: 2`. Translations not reviewed by native speakers.
+
+## [2026-11-19] apply | Mac app: Brain kept running (restart, model-server watch, notification)
+- `keepBrainRunning` set by Start, cleared only by Stop; restart backoff 2→60 s without end; model server polled every 15 s; one notification per outage after 5 failures.
+- Email alert NOT built: no mail-sending path exists in app or Grid (only the operator SNS watchdog). Needs an operator decision on a mail service.
