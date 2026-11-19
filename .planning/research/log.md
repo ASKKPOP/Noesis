@@ -341,3 +341,8 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 ## [2026-11-19] deploy | Grid + dashboard from research/atlas-simulator (operator-requested)
 - Prod checkout moved main@75a8477 → work branch. v77/v78 dry-run on MySQL 8.0 first. nginx force-recreated. Live checks 200; Portal map, private/public Grid list, zone freeing, Grid card now live.
 - Learned: `deploy.sh` cannot check out a branch the server never fetched; the Grid clock (tick, startedAt) restarts on every Grid restart — it is not a founding date.
+
+## [2026-11-19] apply | Map: human member count + six-language switch
+- Human member = human with an active Civic-DID in the Grid (same rule as the private-Grid unlock). `/portal/grids` full entries carry `human_members`; locked private entries do not.
+- `map-i18n.ts`: en / es / ja / ko / vi / fil for the map's own wording only; Grid-supplied text stays as written. Scope is the map page, not the whole dashboard.
+- Not deployed. Translations not reviewed by native speakers.

@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { parseGridProfile, type GridProfile } from '@/lib/grid-profile';
 import { describeGrid, parseGridClock, parseGridStatus, type GridClockView, type GridStatusView } from './grid-description';
 import type { PortalGrid } from './grid-picker';
+import type { Translate } from './map-i18n';
 
 interface Live { status: GridStatusView | null; clock: GridClockView | null; profile: GridProfile | null; profileNeedsSignIn: boolean }
 const NOTHING: Live = { status: null, clock: null, profile: null, profileNeedsSignIn: false };
@@ -22,10 +23,11 @@ export interface GridCardProps {
     zoneLabels: readonly string[];
     land: { purchasable: number; civic: number };
     top: number;
+    t: Translate;
     onClose(): void;
 }
 
-export default function GridCard({ origin, name, grid, registryLoaded, zoneLabels, land, top, onClose }: GridCardProps): React.ReactElement {
+export default function GridCard({ origin, name, grid, registryLoaded, zoneLabels, land, top, t, onClose }: GridCardProps): React.ReactElement {
     const [live, setLive] = useState<Live>(NOTHING);
     // Status, clock, profile, zones and land are this server's own Grid; another Grid
     // in the registry is described by its registry entry alone.
@@ -53,15 +55,15 @@ export default function GridCard({ origin, name, grid, registryLoaded, zoneLabel
         return () => { cancelled = true; };
     }, [origin, name, open]);
 
-    const d = describeGrid(name, { grid, registryLoaded, ...live, zoneLabels: home ? zoneLabels : [], land: home ? land : null }, Date.now());
+    const d = describeGrid(name, { grid, registryLoaded, ...live, zoneLabels: home ? zoneLabels : [], land: home ? land : null }, Date.now(), t);
     return (
         <div
-            role="region" aria-label={`About ${d.title}`}
+            role="region" aria-label={t('aboutGrid', { name: d.title })}
             style={{ position: 'fixed', zIndex: 10, top, left: 22, width: 300, maxHeight: `calc(100vh - ${top + 230}px)`, overflowY: 'auto', fontFamily: "'JetBrains Mono', ui-monospace, monospace", background: 'rgba(2,6,16,.86)', border: '1px solid rgba(0,212,255,.22)', borderRadius: 12, padding: '14px 16px', backdropFilter: 'blur(14px)', fontSize: 11.5, lineHeight: 1.6, color: '#8a93a6', pointerEvents: 'auto' }}
         >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
                 <div style={{ color: '#3fa6bd', fontSize: 14, textTransform: 'capitalize' }}>{d.title}</div>
-                <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', color: '#8a93a6', cursor: 'pointer', fontSize: 14, padding: 0 }}>×</button>
+                <button onClick={onClose} aria-label={t('close')} style={{ background: 'none', border: 'none', color: '#8a93a6', cursor: 'pointer', fontSize: 14, padding: 0 }}>×</button>
             </div>
             {d.purpose && <div style={{ color: '#f5f0ea', margin: '8px 0 10px' }}>{d.purpose}</div>}
             {d.rows.map((r) => (

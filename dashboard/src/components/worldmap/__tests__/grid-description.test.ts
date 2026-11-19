@@ -21,6 +21,11 @@ const now = Date.UTC(2026, 10, 19);
 const row = (d: ReturnType<typeof describeGrid>, label: string): string | undefined => d.rows.find((r) => r.label === label)?.value;
 
 describe('describeGrid', () => {
+    it('counts the human members the registry reports, including none', () => {
+        expect(row(describeGrid('Genesis', facts({ grid: { ...genesis, human_members: 1204 } }), now), 'Human members')).toBe('1,204');
+        expect(row(describeGrid('Genesis', facts({ grid: { ...genesis, human_members: 0 } }), now), 'Human members')).toBe('0');
+    });
+
     it('describes a Grid from what the Grid itself reports', () => {
         const d = describeGrid('Genesis', facts(), now);
         expect(d.title).toBe('Genesis');
@@ -29,6 +34,7 @@ describe('describeGrid', () => {
         expect(row(d, 'Government')).toBe('Genesis Polis');
         expect(row(d, 'Access')).toBe('Public');
         expect(row(d, 'Nous living here')).toBe('3');
+        expect(row(d, 'Human members')).toBeUndefined(); // the registry sent no count
         expect(row(d, 'Laws in force')).toBe('2');
         expect(row(d, 'Zones')).toBe('2: Business, Residential');
         expect(row(d, 'Land')).toBe('48 purchasable, 5 civic');

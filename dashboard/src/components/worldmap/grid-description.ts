@@ -1,13 +1,15 @@
 /**
  * grid-description — the full description of a Grid shown when the map zooms to it.
  *
- * Every line comes from the Grid itself: its registry entry (GET /api/v1/portal/grids),
+ * Every line comes from the Grid itself: its registry entry (GET /api/v1/portal/grids,
+ * which also counts its human members: humans holding an active Civic-DID there),
  * its status and clock (GET /api/v1/grid/status, /api/v1/grid/clock) — the clock starts again each time the Grid is restarted, so "Running since" is the last start, not the founding, its identity
  * profile (GET /api/v1/grid/profile — needs a signed-in member) and its zone set. A line
  * whose source did not answer is left out, never filled in.
  */
 import type { PortalGrid } from './grid-picker';
 import { percent, type GridProfile } from '@/lib/grid-profile';
+import { translator, type Translate } from './map-i18n';
 
 export interface GridStatusView { name: string; tick: number; epoch: number; nousCount: number; regionCount: number; activeLaws: number; auditEntries: number }
 export interface GridClockView { tickRateMs: number; startedAt: number }
@@ -43,55 +45,57 @@ export function parseGridClock(payload: unknown): GridClockView | null {
 }
 
 const count = (n: number): string => n.toLocaleString('en-US');
-const days = (ms: number): string => { const d = Math.floor(ms / 86_400_000); return d === 1 ? '1 day' : `${count(d)} days`; };
-const seconds = (ms: number): string => { const s = ms / 1000; return s === 1 ? '1 second' : `${count(s)} seconds`; };
 
-/** `name` is the Grid as the map knows it (also the title of a frontier world). */
-export function describeGrid(name: string, f: GridFacts, now: number): GridDescription {
+/** `name` is the Grid as the map knows it (also the title of a frontier world).
+ *  `t` words the labels and notes in the viewer's language (English by default). */
+export function describeGrid(name: string, f: GridFacts, now: number, t: Translate = translator('en')): GridDescription {
     if (!f.grid && !f.registryLoaded) {
-        return { title: name, purpose: null, rows: [], note: 'The Grid registry has not answered, so there is nothing to show about this Grid yet.' };
+        return { title: name, purpose: null, rows: [], note: t('registryNote') };
     }
     if (!f.grid) {
         return {
-            title: `${name} Grid`, purpose: null, rows: [{ label: 'Status', value: 'Empty, awaiting charter' }],
-            note: 'A defined, empty Grid on its own world. It has no members and no activity until Nous and their humans charter it.',
+            title: t('gridTitle', { name }), purpose: null, rows: [{ label: t('rowStatus'), value: t('emptyAwaiting') }],
+            note: t('emptyNote'),
         };
     }
     const g = f.grid;
     if (g.locked) {
         return {
             title: g.name, purpose: null,
-            rows: [{ label: 'Access', value: 'Private, members only' }, { label: 'Status', value: g.status }],
-            note: 'The rest of this Grid is shown to its members only.',
+            rows: [{ label: t('rowAccess'), value: t('privateMembersOnly') }, { label: t('rowStatus'), value: g.status }],
+            note: t('membersOnlyNote'),
         };
     }
     const rows: DescriptionRow[] = [];
     const add = (label: string, value: string | null | undefined): void => { if (value) rows.push({ label, value }); };
 
     if (f.profile && f.profile.activities.length > 0) {
-        add('What it does now', f.profile.activities.slice(0, 3).map((a) => `${a.activity} ${percent(a.share)}`).join(' · '));
+        add(t('rowDoesNow'), f.profile.activities.slice(0, 3).map((a) => `${a.activity} ${percent(a.share)}`).join(' · '));
     } else if (f.profileNeedsSignIn) {
-        add('What it does now', 'Sign in to see');
+        add(t('rowDoesNow'), t('signInToSee'));
     }
-    add('Government', g.polis);
-    add('Where', g.celestial_body);
-    add('Access', g.visibility === 'private' ? 'Private, members only' : 'Public');
-    add('Status', g.status);
+    add(t('rowGovernment'), g.polis);
+    add(t('rowWhere'), g.celestial_body);
+    add(t('rowAccess'), g.visibility === 'private' ? t('privateMembersOnly') : t('public'));
+    add(t('rowStatus'), g.status);
+    if (isNum(g.human_members)) add(t('rowHumans'), count(g.human_members));
     if (f.status) {
-        add('Nous living here', count(f.status.nousCount));
-        add('Laws in force', count(f.status.activeLaws));
-        add('Regions', count(f.status.regionCount));
+        add(t('rowNous'), count(f.status.nousCount));
+        add(t('rowLaws'), count(f.status.activeLaws));
+        add(t('rowRegions'), count(f.status.regionCount));
     }
-    if (f.zoneLabels.length > 0) add('Zones', `${f.zoneLabels.length}: ${f.zoneLabels.join(', ')}`);
-    if (f.land) add('Land', `${count(f.land.purchasable)} purchasable, ${count(f.land.civic)} civic`);
+    if (f.zoneLabels.length > 0) add(t('rowZones'), `${f.zoneLabels.length}: ${f.zoneLabels.join(', ')}`);
+    if (f.land) add(t('rowLand'), t('landValue', { p: count(f.land.purchasable), c: count(f.land.civic) }));
     if (f.clock) {
-        add('Running since', `${new Date(f.clock.startedAt).toISOString().slice(0, 10)} (${days(Math.max(0, now - f.clock.startedAt))})`);
-        add('Pace', `one tick every ${seconds(f.clock.tickRateMs)}`);
+        const d = Math.floor(Math.max(0, now - f.clock.startedAt) / 86_400_000);
+        const s = f.clock.tickRateMs / 1000;
+        add(t('rowRunningSince'), `${new Date(f.clock.startedAt).toISOString().slice(0, 10)} (${d === 1 ? t('dayOne') : t('dayMany', { n: count(d) })})`);
+        add(t('rowPace'), s === 1 ? t('paceOne') : t('paceMany', { n: count(s) }));
     }
     if (f.status) {
-        add('Grid time', `tick ${count(f.status.tick)} · epoch ${count(f.status.epoch)}`);
-        add('Recorded actions', count(f.status.auditEntries));
+        add(t('rowGridTime'), t('gridTimeValue', { t: count(f.status.tick), e: count(f.status.epoch) }));
+        add(t('rowActions'), count(f.status.auditEntries));
     }
-    add('Address', g.grid_domain);
+    add(t('rowAddress'), g.grid_domain);
     return { title: g.name, purpose: g.description ?? null, rows, note: null };
 }

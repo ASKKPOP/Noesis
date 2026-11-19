@@ -19,6 +19,8 @@ export interface PortalGrid {
     description?: string;
     grid_domain?: string;
     celestial_body?: string;
+    /** Humans holding an active Civic-DID in the Grid. */
+    human_members?: number;
 }
 
 export interface PickerEntry {

@@ -114,6 +114,9 @@ const civicDidStore = {
     async getByExistenceDid(grid: string, did: string) {
         return grid === 'Genesis' && did === MEMBER_DID ? { civicDid: 'did:noesis:civic-1', status: 'active' } : null;
     },
+    async countActiveHumans(grid: string) {
+        return grid === 'Genesis' ? 7 : 0;
+    },
 };
 
 function makeVisApp(visibility: 'public' | 'private'): FastifyInstance {
@@ -143,6 +146,7 @@ describe('GET /api/v1/portal/grids — visibility + membership (D-V3-41)', () =>
         const g = (await app.inject({ method: 'GET', url: '/api/v1/portal/grids' })).json().grids[0];
         expect(g).toMatchObject({ visibility: 'public', locked: false, member: false, description: 'The first Grid.' });
         expect(g.environment).toBeDefined();
+        expect(g.human_members).toBe(7);
         await app.close();
     });
 
@@ -156,6 +160,7 @@ describe('GET /api/v1/portal/grids — visibility + membership (D-V3-41)', () =>
         expect(g.grid_domain).toBeUndefined();
         expect(g.environment).toBeUndefined();
         expect(g.polis).toBeUndefined();
+        expect(g.human_members).toBeUndefined();
         await app.close();
     });
 

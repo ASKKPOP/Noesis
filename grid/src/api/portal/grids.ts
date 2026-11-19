@@ -11,7 +11,8 @@
  * D-V3-41 — public / private Grids. Every active Grid is listed (the Portal map
  * shows both). A private Grid is returned to a non-member as name + lock only;
  * a member (a signed-in human holding an active Civic-DID in that Grid) gets the
- * full entry. Each entry carries `visibility`, `member` and `locked`.
+ * full entry. Each entry carries `visibility`, `member` and `locked`; a full entry also
+ * carries `human_members`, the number of humans holding an active Civic-DID there.
  */
 
 import type { FastifyInstance, FastifyRequest } from 'fastify';
@@ -60,6 +61,17 @@ export function registerPortalGridsRoutes(app: FastifyInstance, services: GridSe
             }
         };
 
+        // Human members: humans holding an active Civic-DID in the Grid. Left out when
+        // the count cannot be read, never guessed.
+        const humanMembers = async (gridName: string): Promise<number | undefined> => {
+            if (!services.civicDidStore) return undefined;
+            try {
+                return await services.civicDidStore.countActiveHumans(gridName);
+            } catch {
+                return undefined;
+            }
+        };
+
         const out = await Promise.all(grids.map(async (g) => {
             const visibility = g.visibility ?? 'public';
             const member = await isMember(g.name);
@@ -76,6 +88,7 @@ export function registerPortalGridsRoutes(app: FastifyInstance, services: GridSe
             if (locked) return base;
             return {
                 ...base,
+                human_members: await humanMembers(g.name),
                 grid_domain: g.gridDomain,
                 polis: g.polisName,
                 description: g.description,

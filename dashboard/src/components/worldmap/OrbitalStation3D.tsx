@@ -17,17 +17,17 @@ import { mountOrbitalStation, type OrbitalHandle, type OrbitalObjectEntry } from
 import { pickerEntries, type PickerEntry, type PortalGrid } from './grid-picker';
 import { gridEntryHref } from '@/lib/grid-host';
 import GridCard from './GridCard';
+import { LANGS, pickLang, translator, type Lang } from './map-i18n';
 import { TEMPLATE_ZONES, landCounts, parseZones, zoneLabel, zoneLegend, type GridZoneView } from './zone-view';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 /** The Grid's own host (e.g. grid.noesiis.com). Unset = enter on this origin. */
 const GRID_HOST = process.env.NEXT_PUBLIC_GRID_HOST;
 
-/** Legend lines that are not zones (the zone lines come from the Grid's live zone set). */
-const LEGEND_FIXED: [string, string][] = [
-    ['#e7c878', 'Orbital objects · economy-built (what the Nous perceives)'],
-    ['#9aa6c0', 'Moon · Mars · empty base Grids — defined, awaiting charter'],
-];
+/** Where the chosen map language is remembered in this browser. */
+const LANG_KEY = 'noesis.map.lang';
+/** The scene's own worlds: their focus line is worded in the viewer's language. */
+const FOCUS_KEYS = { Genesis: 'focusGenesis', Moon: 'focusMoon', Mars: 'focusMars' } as const;
 
 function nyClock(): string {
     const days = Math.floor((Date.now() - Date.UTC(2026, 5, 1, 7)) / 86400000);
@@ -53,6 +53,19 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
     const [grids, setGrids] = useState<PortalGrid[] | null>(null);
     // The Grid's zone set (D-V3-40). The six-zone template is the offline fallback.
     const [zones, setZones] = useState<readonly GridZoneView[]>(TEMPLATE_ZONES);
+    // English until the browser is read (the page is prerendered in English).
+    const [lang, setLang] = useState<Lang>('en');
+    const t = translator(lang);
+
+    useEffect(() => {
+        let saved: string | null = null;
+        try { saved = window.localStorage.getItem(LANG_KEY); } catch { /* storage blocked — use the browser's language */ }
+        setLang(pickLang(saved, navigator.languages ?? []));
+    }, []);
+    const chooseLang = (next: Lang): void => {
+        setLang(next);
+        try { window.localStorage.setItem(LANG_KEY, next); } catch { /* storage blocked — the choice lasts for this visit */ }
+    };
 
     // Mount the Three.js scene once (WebGL — client only).
     useEffect(() => {
@@ -133,24 +146,24 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
     const activeEntry = entries.find((e) => e.name === activeGrid);
     const focus = (e: PickerEntry): void => {
         handleRef.current?.focusGrid(e.name); setActiveGrid(e.name); setDescribed(e.name);
-        if (e.locked) { setRecMsg(`🔒 ${e.name} is a private Grid — members only`); setTimeout(() => setRecMsg(null), 4500); }
+        if (e.locked) { setRecMsg(t('toastPrivate', { name: e.name })); setTimeout(() => setRecMsg(null), 4500); }
     };
 
     // Join-a-Grid S3 — a signed-in User recommends the focused Grid to their owned Nous.
     // Advisory: the Nous reads it and decides. Server resolves which Nous from the session.
     const recommend = async (): Promise<void> => {
-        setRecMsg('recommending…');
+        setRecMsg(t('recommending'));
         try {
             const res = await fetch(`${GRID_ORIGIN}/api/v1/portal/grid-recommendations`, {
                 method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
                 body: JSON.stringify({ grid_id: activeGrid.toLowerCase() }),
             });
             const j = (await res.json().catch(() => ({}))) as { recommended_to?: number; error?: string };
-            if (res.status === 401) setRecMsg('sign in to recommend');
-            else if (res.ok) setRecMsg(`✓ recommended ${activeGrid} to ${j.recommended_to ?? 0} of your Nous`);
-            else if (j.error === 'no_owned_nous') setRecMsg('you own no Nous yet');
-            else setRecMsg('could not recommend');
-        } catch { setRecMsg('could not recommend'); }
+            if (res.status === 401) setRecMsg(t('signInToRecommend'));
+            else if (res.ok) setRecMsg(t('recommended', { name: activeGrid, n: j.recommended_to ?? 0 }));
+            else if (j.error === 'no_owned_nous') setRecMsg(t('noOwnedNous'));
+            else setRecMsg(t('couldNotRecommend'));
+        } catch { setRecMsg(t('couldNotRecommend')); }
         setTimeout(() => setRecMsg(null), 4500);
     };
 
@@ -167,10 +180,10 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
             {/* title + clock */}
             <div style={{ ...hud, top: 18, left: 22 }}>
                 <div style={{ fontFamily: "'Orbitron', monospace", fontSize: 22, fontWeight: 900, letterSpacing: '.16em', color: 'rgba(4,12,20,.85)', WebkitTextStroke: '1.3px #4fd2f2', textShadow: '0 0 8px rgba(63,209,255,.8)' }}>NOĒSIS</div>
-                <div style={{ fontSize: 10, letterSpacing: '.16em', color: '#da7a4e', textTransform: 'uppercase', marginTop: 2 }}>Genesis Core · Orbital Station</div>
+                <div style={{ fontSize: 10, letterSpacing: '.16em', color: '#da7a4e', textTransform: 'uppercase', marginTop: 2 }}>{t('subtitle')}</div>
                 <div style={{ fontSize: 10.5, color: '#8a93a6', marginTop: 8, lineHeight: 1.8 }}>
-                    <b style={{ color: '#da7a4e' }}>{clock}</b> · Genesis Epoch 2026-06-01 PT<br />
-                    <b style={{ color: '#da7a4e' }}>{purchasable}</b> purchasable slots · <b style={{ color: '#da7a4e' }}>{civic}</b> civic · <b style={{ color: '#e7c878' }}>{objects.length}</b> built objects · <span style={{ color: source === 'live' ? '#7fe0a0' : '#3fa6bd' }}>{source === 'live' ? `live · ${parcels.length} parcels` : 'founding seed'}</span>
+                    <b style={{ color: '#da7a4e' }}>{clock}</b> · {t('epoch')}<br />
+                    <b style={{ color: '#da7a4e' }}>{purchasable}</b> {t('purchasableSlots')} · <b style={{ color: '#da7a4e' }}>{civic}</b> {t('civic')} · <b style={{ color: '#e7c878' }}>{objects.length}</b> {t('builtObjects')} · <span style={{ color: source === 'live' ? '#7fe0a0' : '#3fa6bd' }}>{source === 'live' ? t('liveParcels', { n: parcels.length }) : t('foundingSeed')}</span>
                 </div>
             </div>
 
@@ -181,24 +194,24 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
                     grid={(grids ?? []).find((g) => g.name.toLowerCase() === described.toLowerCase()) ?? null}
                     registryLoaded={grids !== null}
                     zoneLabels={zones.map((z) => z.label)} land={{ purchasable, civic }}
-                    onClose={() => setDescribed(null)}
+                    t={t} onClose={() => setDescribed(null)}
                 />
             )}
 
             {/* legend */}
             <div style={{ ...hud, bottom: 18, left: 22, fontSize: 11, lineHeight: 1.9, color: '#8a93a6' }}>
-                {[...zoneLegend(zones), ...LEGEND_FIXED].map(([c, label]) => (
+                {[...zoneLegend(zones), ['#e7c878', t('legendObjects')], ['#9aa6c0', t('legendFrontier')]].map(([c, label]) => (
                     <div key={label}><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 2, marginRight: 7, verticalAlign: 'middle', background: c }} />{label}</div>
                 ))}
             </div>
 
             {/* Grid-focus picker — Genesis stays near Earth; Moon/Mars are separate Grids */}
             <div style={{ ...hud, bottom: 60, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(2,6,16,.82)', border: '1px solid rgba(0,212,255,.22)', borderRadius: 999, padding: '6px 8px 6px 14px', backdropFilter: 'blur(14px)', pointerEvents: 'auto' }}>
-                <span style={{ fontSize: 10, color: '#3fa6bd', letterSpacing: '.04em', marginRight: 4, whiteSpace: 'nowrap' }}>FOCUS · {focusLabel}</span>
+                <span style={{ fontSize: 10, color: '#3fa6bd', letterSpacing: '.04em', marginRight: 4, whiteSpace: 'nowrap' }}>{t('focus')} · {activeGrid in FOCUS_KEYS ? t(FOCUS_KEYS[activeGrid as keyof typeof FOCUS_KEYS]) : focusLabel}</span>
                 {entries.map((e) => (
                     <button
                         key={e.name}
-                        title={e.locked ? 'Private Grid — members only' : e.registered ? (e.member ? 'You are a member' : 'Public Grid — open to visit') : e.name === 'Genesis' ? 'Genesis Grid' : 'Empty base Grid — awaiting charter'}
+                        title={e.locked ? t('tipPrivate') : e.registered ? (e.member ? t('tipMember') : t('tipPublic')) : e.name === 'Genesis' ? t('tipGenesis') : t('tipEmpty')}
                         style={{ ...btn(activeGrid === e.name), whiteSpace: 'nowrap', ...(e.locked && activeGrid !== e.name ? { border: '1px dashed #e7c878', color: '#e7c878' } : {}) }}
                         onClick={() => focus(e)}
                     >{e.label}</button>
@@ -206,16 +219,16 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
                 {portal && activeEntry?.gridId && (
                     <a
                         href={gridEntryHref(activeEntry.gridId, GRID_HOST)}
-                        title={activeEntry.locked ? 'Private Grid — members only' : `Enter ${activeEntry.name}`}
+                        title={activeEntry.locked ? t('tipPrivate') : t('enter', { name: activeEntry.name })}
                         style={{ ...btn(false), border: '1px solid rgba(0,212,255,.4)', color: '#4fd2f2', whiteSpace: 'nowrap', textDecoration: 'none' }}
-                    >Enter {activeEntry.name} →</a>
+                    >{t('enter', { name: activeEntry.name })} →</a>
                 )}
                 <span style={{ width: 1, height: 18, background: 'rgba(255,255,255,.14)', margin: '0 2px' }} />
                 <button
-                    title="Recommend this Grid to your Nous — it decides whether to join"
+                    title={t('recommendTip')}
                     style={{ ...btn(false), border: '1px solid rgba(127,224,160,.4)', color: '#7fe0a0', whiteSpace: 'nowrap' }}
                     onClick={recommend}
-                >★ Recommend to my Nous</button>
+                >{t('recommend')}</button>
             </div>
 
             {/* Join-a-Grid S3 — recommendation feedback toast */}
@@ -223,50 +236,54 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
                 <div style={{ ...hud, bottom: 104, left: '50%', transform: 'translateX(-50%)', background: 'rgba(2,6,16,.9)', border: '1px solid rgba(127,224,160,.35)', borderRadius: 999, padding: '6px 14px', fontSize: 11, color: '#7fe0a0', backdropFilter: 'blur(14px)', whiteSpace: 'nowrap' }}>{recMsg}</div>
             )}
 
-            {/* Portal front page — the public entry links (same targets as the About page) */}
-            {portal && (
-                <div style={{ ...hud, top: 18, right: 124, display: 'flex', gap: 8, pointerEvents: 'auto' }}>{/* right: clears the global agency badge */}
-                    <a href="/about" style={{ ...btn(false), textDecoration: 'none' }}>About</a>
-                    <a href="/portal/auth" style={{ ...btn(false), textDecoration: 'none' }}>Sign in</a>
-                    <a href="/portal/auth?tab=join" style={{ ...btn(true), textDecoration: 'none' }}>Join</a>
-                </div>
-            )}
-
-            {backHref && (
-                <div style={{ ...hud, top: 18, right: 124, pointerEvents: 'auto' }}>
-                    <a href={backHref} style={{ ...btn(false), textDecoration: 'none' }}>← Portal map</a>
-                </div>
-            )}
+            {/* top right: the language switch, then the Portal entry links or the way back */}
+            <div style={{ ...hud, top: 18, right: 124, display: 'flex', gap: 8, alignItems: 'center', pointerEvents: 'auto' }}>{/* right: clears the global agency badge */}
+                <select
+                    aria-label={t('language')} title={t('language')} value={lang}
+                    onChange={(e) => chooseLang(e.target.value as Lang)}
+                    style={{ ...btn(false), background: 'rgba(2,6,16,.82)', appearance: 'auto' }}
+                >
+                    {LANGS.map((l) => <option key={l.code} value={l.code}>{l.name}</option>)}
+                </select>
+                {portal && (
+                    <>
+                        <a href="/about" style={{ ...btn(false), textDecoration: 'none' }}>{t('about')}</a>
+                        <a href="/portal/auth" style={{ ...btn(false), textDecoration: 'none' }}>{t('signIn')}</a>
+                        <a href="/portal/auth?tab=join" style={{ ...btn(true), textDecoration: 'none' }}>{t('join')}</a>
+                    </>
+                )}
+                {backHref && <a href={backHref} style={{ ...btn(false), textDecoration: 'none' }}>{t('portalMap')}</a>}
+            </div>
 
             {/* DID-gated info panel */}
             {picked && (
-                <div style={{ ...hud, top: portal || backHref ? 60 : 18, right: 18, width: 250, background: 'rgba(2,6,16,.82)', border: '1px solid rgba(0,212,255,.22)', borderRadius: 12, padding: '16px 18px', backdropFilter: 'blur(14px)', fontSize: 11.5, lineHeight: 1.7, color: '#8a93a6', pointerEvents: 'auto' }}>
+                <div style={{ ...hud, top: 60, right: 18, width: 250, background: 'rgba(2,6,16,.82)', border: '1px solid rgba(0,212,255,.22)', borderRadius: 12, padding: '16px 18px', backdropFilter: 'blur(14px)', fontSize: 11.5, lineHeight: 1.7, color: '#8a93a6', pointerEvents: 'auto' }}>
                     {(picked as unknown as { isObject?: boolean }).isObject ? (
                         <>
-                            <div style={{ color: '#e7c878', fontSize: 13, marginBottom: 8 }}>{(picked as unknown as { function_type?: string }).function_type ?? 'orbital object'} · built</div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>status</span><b style={{ color: '#f5f0ea' }}>{picked.status}</b></div>
+                            <div style={{ color: '#e7c878', fontSize: 13, marginBottom: 8 }}>{(picked as unknown as { function_type?: string }).function_type ?? t('orbitalObject')} · {t('built')}</div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{t('status')}</span><b style={{ color: '#f5f0ea' }}>{picked.status}</b></div>
                             {(picked as unknown as { output_rate?: string }).output_rate && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>output</span><b style={{ color: '#f5f0ea' }}>{(picked as unknown as { output_rate?: string }).output_rate}</b></div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{t('output')}</span><b style={{ color: '#f5f0ea' }}>{(picked as unknown as { output_rate?: string }).output_rate}</b></div>
                             )}
-                            <div style={{ marginTop: 11, color: '#da7a4e', fontSize: 11, borderTop: '1px solid rgba(0,212,255,.16)', paddingTop: 10 }}>A real, economy-built orbital object — funded by the Polis treasury, built by a Nous, physics-gated. The same built world the Nous perceives.</div>
+                            <div style={{ marginTop: 11, color: '#da7a4e', fontSize: 11, borderTop: '1px solid rgba(0,212,255,.16)', paddingTop: 10 }}>{t('objectNote')}</div>
                         </>
                     ) : isFuture(picked) ? (
                         <>
-                            <div style={{ color: '#3fa6bd', fontSize: 13, marginBottom: 8 }}>{(picked as unknown as { name?: string }).name ?? 'Frontier Grid'} · empty</div>
-                            <div style={{ color: '#da7a4e', fontSize: 11, lineHeight: 1.6 }}>The defined EMPTY base Grid on its own world — the zone template is set, but it stays empty until the Nous and their humans charter it (D-NH-13). Genesis stays near Earth; a separate world on the Earth→Moon→Mars journey, not Genesis relocated.</div>
+                            <div style={{ color: '#3fa6bd', fontSize: 13, marginBottom: 8 }}>{(picked as unknown as { name?: string }).name ?? t('frontierGrid')} · {t('empty')}</div>
+                            <div style={{ color: '#da7a4e', fontSize: 11, lineHeight: 1.6 }}>{t('frontierNote')}</div>
                         </>
                     ) : (
                         <>
-                            <div style={{ color: '#3fa6bd', fontSize: 13, marginBottom: 8 }}>{zoneLabel(picked, zones)} · district</div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>shell</span><b style={{ color: '#f5f0ea' }}>{picked.ring === 0 ? 'core' : `ring ${picked.ring}`}</b></div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>status</span><b style={{ color: '#f5f0ea' }}>{picked.status}</b></div>
-                            <div style={{ marginTop: 11, color: '#da7a4e', fontSize: 11, borderTop: '1px solid rgba(0,212,255,.16)', paddingTop: 10 }}>🔒 Detail of this space is private. Register and sign in with your Civic DID — it opens only within the space&apos;s entry policy &amp; rules.</div>
+                            <div style={{ color: '#3fa6bd', fontSize: 13, marginBottom: 8 }}>{zoneLabel(picked, zones)} · {t('district')}</div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{t('shell')}</span><b style={{ color: '#f5f0ea' }}>{picked.ring === 0 ? t('core') : t('ring', { n: picked.ring })}</b></div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{t('status')}</span><b style={{ color: '#f5f0ea' }}>{picked.status}</b></div>
+                            <div style={{ marginTop: 11, color: '#da7a4e', fontSize: 11, borderTop: '1px solid rgba(0,212,255,.16)', paddingTop: 10 }}>{t('privateNote')}</div>
                         </>
                     )}
                 </div>
             )}
 
-            <div style={{ ...hud, bottom: 18, right: 22, fontSize: 10.5, color: '#8a93a6', textAlign: 'right' }}>drag = orbit · scroll = zoom · click a module<br />exteriors public · per-space detail needs a signed-in DID</div>
+            <div style={{ ...hud, bottom: 18, right: 22, fontSize: 10.5, color: '#8a93a6', textAlign: 'right' }}>{t('hintControls')}<br />{t('hintPrivacy')}</div>
         </div>
     );
 }
