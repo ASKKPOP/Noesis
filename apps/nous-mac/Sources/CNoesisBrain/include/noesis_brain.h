@@ -8,6 +8,14 @@
 // Returns JSON: {"ok": {...}} or {"error": "..."}. Release with noesis_string_free.
 char *noesis_nous_view(const char *yaml, int64_t tick);
 
+// A configuration as a tree plus the choices a settings screen offers.
+// Returns JSON: {"ok": {"config": {...}, "choices": {...}}} or {"error": "..."}.
+char *noesis_config_json(const char *yaml);
+
+// Merge a JSON patch (RFC 7386) into a configuration.
+// Returns JSON: {"ok": "<new YAML text>"} or {"error": "..."}.
+char *noesis_config_patch(const char *yaml, const char *patch);
+
 // Release a string returned by this library.
 void noesis_string_free(char *text);
 

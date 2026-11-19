@@ -24,6 +24,7 @@ The deterministic faculties frozen by `brain/parity/fixtures/`:
 | `telos` | goals: priorities, progress, time-based evolution, the goals block |
 | `system_prompt` | the full system prompt, every section |
 | `config` | a Nous built from its YAML configuration, as at spawn |
+| `config_edit` | a configuration as a tree, a JSON merge patch into it, and the YAML writer (settings screen; key order kept, comments not) |
 | `body` | the per-tick needs + drives runtime |
 | `view` | what the Mac app shows about a Nous (not a Python port) |
 | `ffi` | the C interface the Mac app calls |

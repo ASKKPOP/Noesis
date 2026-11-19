@@ -17,7 +17,7 @@ Everything the Electron manager did, plus chat, a dashboard and a model picker:
 | Memory · Personal Wiki | the Nous's memories and written knowledge | Brain `/local/memory/recent`, `/local/wiki/pages` |
 | Local AI | models installed on this Mac; choose the one the Nous thinks with | Ollama `/api/tags`, Brain `/local-ai/status` |
 | Brain Process | start, stop, logs | the app runs `python -m noesis_brain` |
-| Configuration | edit the Nous's YAML; the Rust core checks it; previous version kept as `.bak` | file + Rust core |
+| Configuration | the Nous's file as grouped settings (identity, personality, values, emotions, goals, thinking) or as text; the Rust core reads it, merges changes in and checks the result; previous version kept as `.bak` | file + Rust core |
 | Settings | Brain directory, Python, port, extra environment, the local secret | Application Support |
 
 The Nous itself still runs on the **Python Brain**, which this app starts and stops. The

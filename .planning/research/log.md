@@ -314,3 +314,8 @@ Mirrors the Portal conversation cycle (transcript prompt + `record_event` memory
 `local_chat` method; history comes from the app so it matches what the person sees and survives
 a Brain restart. Memory is one event per exchange — a long chat adds many high-importance events;
 watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-18] apply | Mac app: Configuration and Local AI as grouped settings
+- Rust `config_edit`: config tree + choices, JSON merge patch, YAML writer (all strings quoted; order kept; comments dropped). FFI `noesis_config_json` / `noesis_config_patch`.
+- App Configuration = grouped form + Text switch over one file text; patches only what changed. Local AI = grouped form.
+- Finding: without `GRID_URL` the Brain passes `LLM_MODEL` (default `qwen3:4b`) as all three tier overrides, so a config file's `llm.models` never applies locally. Left out of the form; not changed in the Brain.

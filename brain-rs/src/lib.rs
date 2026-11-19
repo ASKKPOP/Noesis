@@ -9,6 +9,7 @@ pub mod bios;
 pub mod body;
 pub mod chronos;
 pub mod config;
+pub mod config_edit;
 pub mod ffi;
 pub mod hashing;
 pub mod json;

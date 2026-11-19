@@ -66,22 +66,54 @@ struct BrainCoreError: LocalizedError {
     var errorDescription: String? { message }
 }
 
+/// A configuration file as a tree, with the closed sets its settings offer.
+struct ConfigTree: Decodable {
+    struct Choices: Decodable {
+        let communicationStyles: [String]
+        let emotions: [String]
+        let levels: [String]
+        let personality: [String]
+
+        enum CodingKeys: String, CodingKey {
+            case communicationStyles = "communication_styles"
+            case emotions, levels, personality
+        }
+    }
+
+    let config: JSON
+    let choices: Choices
+}
+
 enum BrainCore {
-    private struct Reply: Decodable {
-        let ok: NousView?
+    private struct Reply<Value: Decodable>: Decodable {
+        let ok: Value?
         let error: String?
+    }
+
+    /// Read one answer from the Rust core and release it.
+    private static func answer<Value: Decodable>(_ raw: UnsafeMutablePointer<CChar>?, snakeCase: Bool = false) throws -> Value {
+        guard let raw else { throw BrainCoreError(message: "The Brain core returned nothing.") }
+        defer { noesis_string_free(raw) }
+        let decoder = JSONDecoder()
+        if snakeCase { decoder.keyDecodingStrategy = .convertFromSnakeCase }
+        let reply = try decoder.decode(Reply<Value>.self, from: Data(String(cString: raw).utf8))
+        if let value = reply.ok { return value }
+        throw BrainCoreError(message: reply.error ?? "The Brain core gave an unreadable answer.")
     }
 
     /// Ask the Rust core for a Nous built from `yaml`, advanced to `tick`.
     static func view(yaml: String, tick: Int) throws -> NousView {
-        guard let raw = noesis_nous_view(yaml, Int64(tick)) else {
-            throw BrainCoreError(message: "The Brain core returned nothing.")
-        }
-        defer { noesis_string_free(raw) }
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        let reply = try decoder.decode(Reply.self, from: Data(String(cString: raw).utf8))
-        if let view = reply.ok { return view }
-        throw BrainCoreError(message: reply.error ?? "The Brain core gave an unreadable answer.")
+        try answer(noesis_nous_view(yaml, Int64(tick)), snakeCase: true)
+    }
+
+    /// A configuration file as a tree.
+    static func config(yaml: String) throws -> ConfigTree {
+        try answer(noesis_config_json(yaml))
+    }
+
+    /// Merge changes into a configuration file; the new file text.
+    static func patch(yaml: String, changes: [String: Any]) throws -> String {
+        let patch = String(decoding: try JSONSerialization.data(withJSONObject: changes), as: UTF8.self)
+        return try answer(noesis_config_patch(yaml, patch))
     }
 }

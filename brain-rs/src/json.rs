@@ -327,7 +327,7 @@ fn write_value(value: &Value, ensure_ascii: bool, out: &mut String) {
     }
 }
 
-fn write_string(s: &str, ensure_ascii: bool, out: &mut String) {
+pub(crate) fn write_string(s: &str, ensure_ascii: bool, out: &mut String) {
     out.push('"');
     for c in s.chars() {
         match c {
