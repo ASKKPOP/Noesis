@@ -48,6 +48,9 @@ Chronological actions in [[log]]. Run `node scripts/lint-research-wiki.mjs` to c
 - [[atlas-world-model-simulator|Atlas (World Labs) & World-Model Simulators]] — 2026-11 fit study for "learn a skill online → rehearse in sim": Atlas is cloud-gated + non-physical → not on the verify path; Learn→Rehearse→Verify→Keep design on existing faculties.
 - [[oss-visualization-landscape|OSS — Living-World & Knowledge Visualization]] — three.js ecosystem/Colyseus deltas/force-graphs/CC0 assets survey → top-5 adoptions.
 
+## 2026-11 — Grid Extension (work loop)
+- [[grid-extension-research-2026-11|Grid Extension — Research (2026-11-19)]] — code survey per stage (enter → notice), channel status, four findings to settle first, outside patterns (founding/joining, contract-before-build, typed catalog, MCP/A2A). Discussion plan: `docs/noesis-grid-extension-plan-2026-11-19.html`.
+
 ## Cross-cutting foundations
 - [[nous-house-research|Nous House — Research (2026-06-11)]] — D-NH spatial axioms.
 - [[stanford-peer-agent-patterns|Stanford Peer-Agent Patterns]] — peer-agent synthesis → Steward Console scope.
