@@ -51,6 +51,13 @@ struct SettingsPane: View {
                     }
                 }
             }
+            Section {
+                TextField("Map address", text: $app.settings.mapURL, prompt: Text("https://noesiis.com/worldmap/orbital"))
+            } header: {
+                Text("Grid")
+            } footer: {
+                Text("The Portal page the Map screen opens.")
+            }
             Section("Brain") {
                 LabeledContent("Brain directory") {
                     HStack {

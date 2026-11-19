@@ -13,6 +13,9 @@ struct RootView: View {
                         row(.dashboard)
                         row(.chat)
                     }
+                    Section("Grid") {
+                        row(.map)
+                    }
                     Section("This Nous") {
                         row(.profile)
                         row(.overview)
@@ -53,6 +56,7 @@ struct RootView: View {
         switch app.pane {
         case .dashboard: DashboardPane()
         case .chat: ChatPane()
+        case .map: MapPane()
         case .profile: ProfilePane()
         case .overview: OverviewPane()
         case .memory: MemoryPane()

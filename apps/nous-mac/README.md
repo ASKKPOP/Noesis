@@ -17,6 +17,7 @@ Everything the Electron manager did, plus chat, a dashboard and a model picker:
 | Memory · Personal Wiki | the Nous's memories and written knowledge | Brain `/local/memory/recent`, `/local/wiki/pages` |
 | Local AI | models installed on this Mac; choose the one the Nous thinks with | Ollama `/api/tags`, Brain `/local-ai/status` |
 | Brain Process | start, stop, logs | the app runs `python -m noesis_brain` |
+| Map | the Portal's live 3D map of Grids, shown in the app (address in Settings; default `https://noesiis.com/worldmap/orbital`) | Portal web page |
 | Configuration | the Nous's file as grouped settings (identity, personality, values, emotions, goals, thinking) or as text; the Rust core reads it, merges changes in and checks the result; previous version kept as `.bak` | file + Rust core |
 | Settings | Brain directory, Python, port, extra environment, the local secret | Application Support |
 

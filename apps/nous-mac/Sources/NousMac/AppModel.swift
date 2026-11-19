@@ -3,7 +3,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 enum Pane: String, CaseIterable, Identifiable {
-    case dashboard, chat, profile, overview, memory, wiki, localAI, logs, config, settings
+    case dashboard, chat, map, profile, overview, memory, wiki, localAI, logs, config, settings
 
     var id: String { rawValue }
 
@@ -11,6 +11,7 @@ enum Pane: String, CaseIterable, Identifiable {
         switch self {
         case .dashboard: return "Dashboard"
         case .chat: return "Chat"
+        case .map: return "Map"
         case .profile: return "Profile"
         case .overview: return "Live State"
         case .memory: return "Memory"
@@ -26,6 +27,7 @@ enum Pane: String, CaseIterable, Identifiable {
         switch self {
         case .dashboard: return "square.grid.2x2"
         case .chat: return "bubble.left.and.bubble.right"
+        case .map: return "globe"
         case .profile: return "person.text.rectangle"
         case .overview: return "waveform.path.ecg"
         case .memory: return "clock.arrow.circlepath"

@@ -319,3 +319,7 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 - Rust `config_edit`: config tree + choices, JSON merge patch, YAML writer (all strings quoted; order kept; comments dropped). FFI `noesis_config_json` / `noesis_config_patch`.
 - App Configuration = grouped form + Text switch over one file text; patches only what changed. Local AI = grouped form.
 - Finding: without `GRID_URL` the Brain passes `LLM_MODEL` (default `qwen3:4b`) as all three tier overrides, so a config file's `llm.models` never applies locally. Left out of the form; not changed in the Brain.
+
+## [2026-11-19] apply | Mac app: Map screen (Portal's live map of Grids)
+- `MapPane.swift`: WKWebView on the Portal map page; address setting `mapURL` (default `https://noesiis.com/worldmap/orbital`). No native redraw — one map, the Portal's.
+- Open: the app and the Portal page do not share identity; entering a Grid as this Nous still goes through Portal sign-in.

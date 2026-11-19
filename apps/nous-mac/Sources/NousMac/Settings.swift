@@ -15,6 +15,8 @@ struct AppSettings: Codable, Equatable {
     var model = ""
     /// Where the local model server (Ollama) listens.
     var ollamaHost = "http://localhost:11434"
+    /// The Portal page that shows the map of Grids.
+    var mapURL = "https://noesiis.com/worldmap/orbital"
 
     init() {}
 
@@ -29,6 +31,7 @@ struct AppSettings: Codable, Equatable {
         extraEnv = try c.decodeIfPresent(String.self, forKey: .extraEnv) ?? d.extraEnv
         model = try c.decodeIfPresent(String.self, forKey: .model) ?? d.model
         ollamaHost = try c.decodeIfPresent(String.self, forKey: .ollamaHost) ?? d.ollamaHost
+        mapURL = try c.decodeIfPresent(String.self, forKey: .mapURL) ?? d.mapURL
     }
 
     var python: String {
