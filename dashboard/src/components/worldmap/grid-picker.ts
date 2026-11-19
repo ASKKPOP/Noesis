@@ -41,9 +41,13 @@ const label = (name: string, locked: boolean): string =>
 
 /** `grids` is null while the registry feed is loading or unreachable. */
 export function pickerEntries(grids: PortalGrid[] | null): PickerEntry[] {
-    const registered = (grids ?? []).map((g): PickerEntry => ({
-        name: g.name, gridId: g.grid_id, label: label(g.name, g.locked), registered: true, member: g.member, locked: g.locked,
-    }));
+    // The registry may spell a name differently from the scene ("genesis" / "Genesis");
+    // it is the same Grid, and the scene's spelling is the camera-focus key.
+    const sceneName = (n: string): string => SCENE_GRIDS.find((s) => s.toLowerCase() === n.toLowerCase()) ?? n;
+    const registered = (grids ?? []).map((g): PickerEntry => {
+        const name = sceneName(g.name);
+        return { name, gridId: g.grid_id, label: label(name, g.locked), registered: true, member: g.member, locked: g.locked };
+    });
     const have = new Set(registered.map((e) => e.name));
     const frontier = SCENE_GRIDS.filter((n) => !have.has(n)).map((n): PickerEntry => ({
         name: n, label: label(n, false), registered: false, member: false, locked: false,

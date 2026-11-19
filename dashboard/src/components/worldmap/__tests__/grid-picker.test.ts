@@ -35,4 +35,10 @@ describe('pickerEntries (D-V3-41 — the Portal map lists Grids from the live re
         expect(out.map((e) => e.name)).toEqual(['Genesis', 'Moon', 'Mars']);
         expect(out[1]).toMatchObject({ label: '🔒 Moon Grid', registered: true, locked: true });
     });
+
+    it('treats a registry name that differs only in case as the scene\'s own Grid', () => {
+        const entries = pickerEntries([{ grid_id: 'genesis', name: 'genesis', status: 'active', visibility: 'public', member: false, locked: false }]);
+        expect(entries.map((e) => e.name)).toEqual(['Genesis', 'Moon', 'Mars']);
+        expect(entries[0]).toMatchObject({ registered: true, gridId: 'genesis', label: 'Genesis' });
+    });
 });
