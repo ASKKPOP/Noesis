@@ -33,8 +33,7 @@ final class BrainProcess: ObservableObject {
         env["BRAIN_DATA_DIR"] = dataDir.path
         // The Brain takes its name, and from it its Nous ID, from here, not from the file.
         env["NOUS_NAME"] = nousName.lowercased()
-        let grid = settings.gridURL.trimmingCharacters(in: .whitespaces)
-        if !grid.isEmpty { env["GRID_URL"] = grid }
+        if settings.joinGrid, let grid = settings.grid { env["GRID_URL"] = grid.absoluteString }
         env["LLM_PROVIDER"] = "ollama"
         env["OLLAMA_HOST"] = settings.ollamaHost
         if !settings.model.isEmpty { env["LLM_MODEL"] = settings.model }

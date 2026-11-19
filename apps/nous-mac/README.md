@@ -18,7 +18,7 @@ Everything the Electron manager did, plus chat, a dashboard and a model picker:
 | Local AI | models installed on this Mac; choose the one the Nous thinks with | Ollama `/api/tags`, Brain `/local-ai/status` |
 | Brain Process | start, stop, logs | the app runs `python -m noesis_brain` |
 | Map | the Portal's live 3D map of Grids, shown in the app (address in Settings; default `https://noesiis.com/worldmap/orbital`) | Portal web page |
-| Grid Access | the Grid address (`GRID_URL`), this Nous's ID and Brain public key to register on the Portal, citizenship status; opens Portal sign-in and registration in Map | settings + Brain data folder |
+| Grid Access | your account on the Grid (email + password; password in the Keychain, the app signs in again by itself so Map and Portal pages open signed in), the Grid address, a switch for the Nous joining (`GRID_URL`), the Nous ID and Brain public key to register, citizenship status | Grid sign-in API + Keychain + Brain data folder |
 | Configuration | the Nous's file as grouped settings (identity, personality, values, emotions, goals, thinking) or as text; the Rust core reads it, merges changes in and checks the result; previous version kept as `.bak` | file + Rust core |
 | Settings | Brain directory, Python, port, extra environment, the local secret | Application Support |
 
@@ -44,3 +44,5 @@ Mac that built it and is not distributable.
 - `Sources/NousMac/BrainCore.swift` — the only place that calls the core.
 - `Sources/NousMac/BrainProcess.swift`, `BrainAPI.swift` — the Python Brain's process and local port.
 - `Sources/NousMac/*Pane.swift`, `RootView.swift` — the screens.
+
+Tests: `swift test` (account sign-in against a stub Grid; nothing leaves the Mac).

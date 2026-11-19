@@ -328,3 +328,7 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 - `GridAccessPane.swift`: Grid address → `GRID_URL`; shows Nous ID + Brain public key (read from `brain-wire.key`, Brain remains sole key maker) + status from cached `civic-did`; opens Portal sign-in / registration in Map. No new issuance path.
 - Fix: app passes `NOUS_NAME` from the config; before, every config ran as `sophia`.
 - Open: a joined Brain's models come from Grid operator settings (default `qwen3:4b`), overriding the app's Local AI choice — unverified end to end; no live enrolment was run.
+
+## [2026-11-19] apply | Mac app: account sign-in with stored auth
+- `GridAccount.swift`: email sign-in on the existing Portal endpoint; password in Keychain; cookie into WKWebView; auto re-sign-in (session 24 h, renew at 20 h). `joinGrid` switch separates "my account" from "my Nous joins".
+- First Swift test target (`swift test`, stub Grid via URLProtocol). No live sign-in run.

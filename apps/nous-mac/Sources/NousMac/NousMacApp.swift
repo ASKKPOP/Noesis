@@ -11,6 +11,8 @@ struct NousMacApp: App {
                 .environmentObject(app)
                 .environmentObject(app.viewer)
                 .environmentObject(app.brain)
+                .environmentObject(app.account)
+                .task { await app.restoreAccount() }
                 .frame(minWidth: 1040, minHeight: 660)
                 .tint(coral)
                 .onAppear {

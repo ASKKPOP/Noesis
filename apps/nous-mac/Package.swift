@@ -16,5 +16,6 @@ let package = Package(
                 .linkedLibrary("noesis_brain"),
             ]
         ),
+        .testTarget(name: "NousMacTests", dependencies: ["NousMac"]),
     ]
 )

@@ -5,6 +5,7 @@ import WebKit
 /// of its own here: the map, its data and the way into a Grid are the Portal's page.
 struct MapPane: View {
     @EnvironmentObject private var app: AppModel
+    @EnvironmentObject private var account: GridAccount
     @ObservedObject var browser: MapBrowser
 
     private var address: URL? {
@@ -31,10 +32,10 @@ struct MapPane: View {
                     .textSelection(.enabled)
                 if browser.loading { ProgressView().controlSize(.small) }
                 Spacer()
-                if browser.signedIn {
+                if case .signedIn = account.state {
                     Label("Signed in", systemImage: "person.crop.circle.badge.checkmark").foregroundStyle(.secondary)
-                } else if let address {
-                    Button("Sign In") { browser.open(MapBrowser.page("/portal/auth", on: address)) }
+                } else {
+                    Button("Sign In") { app.pane = .grid }
                 }
                 Button("Open in Browser") {
                     if let url = browser.current ?? address { NSWorkspace.shared.open(url) }
@@ -58,7 +59,15 @@ struct MapPane: View {
                 WebView(web: browser.web)
             }
         }
-        .onAppear { if !browser.started { open() } }
+        .task {
+            // Sign in again first if the stored session ran out, so the page opens signed in.
+            await app.restoreAccount()
+            if !browser.started { open() }
+        }
+        .onChange(of: account.state) { old, new in
+            // Signing in or out changes what the Portal shows.
+            if old != new, new != .signingIn, browser.started { browser.web.reload() }
+        }
         .onChange(of: app.settings.mapURL) { _, _ in open() }
     }
 
@@ -77,8 +86,6 @@ final class MapBrowser: NSObject, ObservableObject, WKNavigationDelegate {
     @Published var problem: String?
     /// Something has been asked for, so the pane need not open the map itself.
     private(set) var started = false
-    /// A human is signed in to the Portal in this web view.
-    @Published var signedIn = false
 
     override init() {
         super.init()
@@ -97,12 +104,6 @@ final class MapBrowser: NSObject, ObservableObject, WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         (loading, canGoBack, current) = (false, webView.canGoBack, webView.url)
-        // The Portal keeps a signed-in human in this cookie (COOKIE_NAME in grid/src/api/portal/auth.ts).
-        webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { [weak self] cookies in
-            let now = Date()
-            let held = cookies.contains { $0.name == "noesis_portal_token" && ($0.expiresDate ?? .distantFuture) > now }
-            Task { @MainActor in self?.signedIn = held }
-        }
     }
 
     /// A page of the same site as `address`.

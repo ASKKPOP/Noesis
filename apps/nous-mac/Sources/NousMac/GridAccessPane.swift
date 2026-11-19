@@ -39,13 +39,12 @@ struct GridAccessPane: View {
     @EnvironmentObject private var brain: BrainProcess
     @State private var identity: GridIdentity?
 
-    private var grid: String { app.settings.gridURL.trimmingCharacters(in: .whitespaces) }
+    @EnvironmentObject private var account: GridAccount
+    @State private var email = ""
+    @State private var password = ""
+
     private var gridProblem: String? {
-        if grid.isEmpty { return nil }
-        guard let url = URL(string: grid), url.scheme == "https", url.host != nil else {
-            return "A Grid address must start with https://. The Brain refuses any other."
-        }
-        return nil
+        app.settings.grid == nil ? "A Grid address must start with https://. The Brain refuses any other." : nil
     }
     private var portal: URL? { URL(string: app.settings.mapURL.trimmingCharacters(in: .whitespaces)) }
 
@@ -56,13 +55,15 @@ struct GridAccessPane: View {
                 if let gridProblem {
                     Label(gridProblem, systemImage: "exclamationmark.triangle").foregroundStyle(coral)
                 }
+                Toggle("This Nous joins the Grid", isOn: $app.settings.joinGrid)
             } header: {
                 Text("Grid")
             } footer: {
-                Text(grid.isEmpty
-                     ? "Empty: this Nous runs on its own and reaches no Grid."
-                     : "Used the next time the Brain starts. Until its registration is approved the Brain waits there and does not think or chat.")
+                Text(app.settings.joinGrid
+                     ? "Used the next time the Brain starts. Until its registration is approved the Brain waits there and does not think or chat."
+                     : "Off: this Nous runs on its own and reaches no Grid. Your account below works either way.")
             }
+            accountSection
             if let identity {
                 Section {
                     LabeledContent("Status", value: status(identity))
@@ -86,12 +87,11 @@ struct GridAccessPane: View {
                 }
             }
             Section {
-                Button("Sign In to the Portal") { show("/portal/auth") }
                 Button("Open Nous Registration") { show("/portal/dashboard") }
             } header: {
                 Text("On the Portal")
             } footer: {
-                Text("You sign in yourself, then file the registration with the Nous ID and Brain public key above. A Portal reviewer and the Grid's Polis decide; the Brain picks up its Civic-DID by itself once approved.")
+                Text("Signed in with your account above, file the registration with the Nous ID and Brain public key above. A Portal reviewer and the Grid's Polis decide; the Brain picks up its Civic-DID by itself once approved.")
             }
             .disabled(portal == nil)
         }
@@ -108,9 +108,54 @@ struct GridAccessPane: View {
         .onChange(of: app.settings) { _, _ in identity = GridIdentity(settings: app.settings, nousName: app.nousName) }
     }
 
+    @ViewBuilder private var accountSection: some View {
+        Section {
+            if case .signedIn(let did) = account.state {
+                LabeledContent("Signed in as", value: app.settings.accountEmail)
+                copyRow("Your ID", did)
+                Button("Sign Out") {
+                    Task {
+                        if let grid = app.settings.grid { await account.signOut(email: app.settings.accountEmail, grid: grid) }
+                        app.settings.accountEmail = ""
+                    }
+                }
+            } else {
+                TextField("Email", text: $email).textContentType(.username)
+                SecureField("Password", text: $password).textContentType(.password).onSubmit(signIn)
+                if case .failed(let reason) = account.state {
+                    Label(reason, systemImage: "exclamationmark.triangle").foregroundStyle(coral)
+                }
+                HStack {
+                    Button("Sign In", action: signIn)
+                        .buttonStyle(.borderedProminent)
+                        .disabled(email.isEmpty || password.isEmpty || app.settings.grid == nil || account.state == .signingIn)
+                    if account.state == .signingIn { ProgressView().controlSize(.small) }
+                    Spacer()
+                    Button("Create an Account…") { show("/portal/auth") }.disabled(portal == nil)
+                }
+            }
+        } header: {
+            Text("Your account")
+        } footer: {
+            Text("Sign in once. Your password is kept in this Mac's Keychain, and the app signs in again by itself, so the Map and the Portal always open signed in. Sign Out forgets it.")
+        }
+        .onAppear { if email.isEmpty { email = app.settings.accountEmail } }
+    }
+
+    private func signIn() {
+        guard let grid = app.settings.grid, !email.isEmpty, !password.isEmpty else { return }
+        let (address, secret) = (email.trimmingCharacters(in: .whitespaces), password)
+        Task {
+            if await account.signIn(email: address, password: secret, grid: grid) {
+                app.settings.accountEmail = address
+                password = ""
+            }
+        }
+    }
+
     private func status(_ identity: GridIdentity) -> String {
         if identity.civicDID != nil { return "Citizen" }
-        if grid.isEmpty { return "Not joining a Grid" }
+        if !app.settings.joinGrid { return "Not joining a Grid" }
         if identity.publicKey == nil { return "Not started" }
         return brain.isRunning ? "Waiting for approval" : "Not yet a citizen"
     }

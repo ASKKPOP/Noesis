@@ -63,6 +63,7 @@ final class AppModel: ObservableObject {
     let viewer = ViewerModel()
     let brain = BrainProcess()
     let map = MapBrowser()
+    let account = GridAccount()
 
     init() {
         settings = AppFiles.loadSettings()
@@ -130,6 +131,14 @@ final class AppModel: ObservableObject {
 
     func regenerateSecret() {
         secret = AppFiles.brainSecret(regenerate: true)
+    }
+
+    // MARK: Grid account
+
+    /// Sign in with the stored password if there is one and the session needs it.
+    func restoreAccount() async {
+        guard let grid = settings.grid else { return }
+        await account.restore(email: settings.accountEmail, grid: grid)
     }
 
     // MARK: Brain process

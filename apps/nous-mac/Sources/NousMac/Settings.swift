@@ -17,8 +17,12 @@ struct AppSettings: Codable, Equatable {
     var ollamaHost = "http://localhost:11434"
     /// The Portal page that shows the map of Grids.
     var mapURL = "https://noesiis.com/worldmap/orbital"
-    /// The Grid this Nous joins. Empty = the Nous runs on its own.
-    var gridURL = ""
+    /// The Grid this app reaches: your account there, and the Grid the Nous may join.
+    var gridURL = "https://api.noesiis.com"
+    /// Whether the Nous itself joins that Grid. Off = the Nous runs on its own.
+    var joinGrid = false
+    /// The email of your account on that Grid. The password is in the Keychain, never here.
+    var accountEmail = ""
 
     init() {}
 
@@ -34,13 +38,22 @@ struct AppSettings: Codable, Equatable {
         model = try c.decodeIfPresent(String.self, forKey: .model) ?? d.model
         ollamaHost = try c.decodeIfPresent(String.self, forKey: .ollamaHost) ?? d.ollamaHost
         mapURL = try c.decodeIfPresent(String.self, forKey: .mapURL) ?? d.mapURL
-        gridURL = try c.decodeIfPresent(String.self, forKey: .gridURL) ?? d.gridURL
+        let grid = try c.decodeIfPresent(String.self, forKey: .gridURL) ?? ""
+        gridURL = grid.isEmpty ? d.gridURL : grid
+        joinGrid = try c.decodeIfPresent(Bool.self, forKey: .joinGrid) ?? d.joinGrid
+        accountEmail = try c.decodeIfPresent(String.self, forKey: .accountEmail) ?? d.accountEmail
     }
 
     /// Where this configuration's Nous keeps its memory, knowledge and Grid key, across restarts.
     var brainDataDir: URL {
         let stem = ((configPath as NSString).lastPathComponent as NSString).deletingPathExtension
         return AppFiles.directory.appendingPathComponent("brain-data/\(stem)", isDirectory: true)
+    }
+
+    /// The Grid address when it is one the Brain and the account can use (https only).
+    var grid: URL? {
+        guard let url = URL(string: gridURL.trimmingCharacters(in: .whitespaces)), url.scheme == "https", url.host != nil else { return nil }
+        return url
     }
 
     var python: String {
