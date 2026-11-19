@@ -69,7 +69,7 @@ struct DashboardPane: View {
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(app.nousName).font(.system(size: 34, weight: .semibold, design: .serif))
+                Text(app.nousName).font(.system(size: 34, weight: .semibold))
                 if let view = viewer.view {
                     Text([view.archetype, "speaks \(view.communicationStyle)", "values \(view.values.prefix(3).joined(separator: ", "))"]
                         .filter { !$0.isEmpty }.joined(separator: " · "))

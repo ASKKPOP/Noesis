@@ -112,7 +112,7 @@ private struct Identity: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(view.name).font(.system(size: 34, weight: .semibold, design: .serif))
+            Text(view.name).font(.system(size: 34, weight: .semibold))
             Text([view.archetype, view.birthDate.isEmpty ? "" : "born \(view.birthDate)"].filter { !$0.isEmpty }.joined(separator: " · "))
                 .foregroundStyle(.secondary)
             HStack(spacing: 16) {

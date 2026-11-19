@@ -12,7 +12,7 @@ struct ChatPane: View {
         VStack(spacing: 0) {
             if app.messages.isEmpty {
                 VStack(spacing: 10) {
-                    Text("Talk with \(app.nousName)").font(.system(size: 30, weight: .semibold, design: .serif))
+                    Text("Talk with \(app.nousName)").font(.system(size: 30, weight: .semibold))
                     Text(brain.isRunning
                          ? "What you say here stays on this Mac. \(app.nousName) answers in character and remembers what you talk about."
                          : "Start the Brain to talk. What you say here stays on this Mac.")
@@ -118,7 +118,7 @@ private struct MessageRow: View {
         case .nous:
             VStack(alignment: .leading, spacing: 4) {
                 Text(nousName).font(.caption.weight(.semibold)).foregroundStyle(coral)
-                Text(message.text).font(.system(.body, design: .serif)).lineSpacing(3).textSelection(.enabled)
+                Text(message.text).font(.system(.body)).lineSpacing(3).textSelection(.enabled)
             }
         case .problem:
             Label(message.text, systemImage: "exclamationmark.triangle")

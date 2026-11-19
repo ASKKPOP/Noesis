@@ -72,7 +72,7 @@ private struct NousHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(app.nousName).font(.system(size: 22, weight: .semibold, design: .serif))
+            Text(app.nousName).font(.system(size: 22, weight: .semibold))
             HStack(spacing: 6) {
                 Circle().fill(brain.isRunning ? Color.green : Color.secondary.opacity(0.5)).frame(width: 8, height: 8)
                 Text(brain.isRunning ? "Brain running" : "Brain stopped").font(.callout).foregroundStyle(.secondary)
