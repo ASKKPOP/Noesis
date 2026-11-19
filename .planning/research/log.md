@@ -353,4 +353,7 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 
 ## [2026-11-19] apply | Email alert route (AWS SES) for a Local Nous that cannot stay running
 - `POST /api/v1/portal/nous-alert`: session-only, recipient = the account's own address, fixed wording, 1/hour per kind; no audit event. `ALERT_EMAIL_FROM` unset → 503.
-- SES setup (identity, sandbox exit, role permission, env) is the operator's; steps in `.planning/implementation/alerting.md`. Not deployed; no real mail sent.
+- SES setup (identity, sandbox exit, role permission, env) is the operator's; steps in `.planning/implementation/alerting.md`. Grid deployed 2026-11-19; no real mail sent.
+
+## [2026-11-19] apply | Mac app: Local AI usage graphs
+- `LocalAIUsage.swift`: `ps` totals for the model server's processes + Ollama `/api/ps`; Swift Charts, 3 s samples, 5 min window, only while the screen is open.

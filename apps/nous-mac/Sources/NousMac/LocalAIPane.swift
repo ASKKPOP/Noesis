@@ -29,6 +29,7 @@ struct LocalAIPane: View {
             } footer: {
                 if brain.isRunning { Text("A change applies the next time the Brain starts.") }
             }
+            LocalAIUsageSection()
             Section("Installed on this Mac") {
                 if let problem {
                     Label(problem, systemImage: "exclamationmark.triangle").foregroundStyle(coral).fixedSize(horizontal: false, vertical: true)
