@@ -360,3 +360,6 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 
 ## [2026-11-19] ingest | Grid extension research + discussion plan
 - New page [[grid-extension-research-2026-11]]; index updated. Four surveys (2 code, 2 web). Plan page `docs/noesis-grid-extension-plan-2026-11-19.html` — for discussion, nothing decided, ROADMAP untouched.
+
+## [2026-11-20] ingest | Grid visualization research
+- New page [[grid-visualization-research-2026-11]]; index updated. Three surveys (engines, engagement, code) + NVIDIA page. Verdict: stay in the browser; the gap is live Nous on screen, then art. For discussion; nothing decided.

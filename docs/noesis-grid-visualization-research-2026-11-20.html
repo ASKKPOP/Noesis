@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Visualizing the Grid — research, 2026-11-20</title>
+<style>
+  :root{
+    --bg:#F5F1E8; --surface:#FBF9F3; --surface2:#EFEADD; --line:#DDD5C3; --line2:#C9BFA9;
+    --ink:#1F1D1A; --ink2:#4A463F; --mut:#7A7366;
+    --accent:#C96442; --accent-soft:#F1DDD2;
+    --blue:#3B6E8F; --blue-soft:#C9DAE5; --violet:#8A6FA8; --violet-soft:#E2D9EC;
+    --good:#2E7D4F; --good-bg:#DDEFE2; --warn:#A8690A; --warn-bg:#F6E7C6; --crit:#B3372C; --crit-bg:#F6D9D5;
+    --serif:"Tiempos Headline","Source Serif 4","Iowan Old Style","Palatino Linotype",Georgia,serif;
+    --sans:"Styrene B","Söhne",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#1F1E1B; --surface:#272622; --surface2:#302E29; --line:#3D3A33; --line2:#555147;
+      --ink:#EFEAE0; --ink2:#C9C3B6; --mut:#989182;
+      --accent:#DD7B5A; --accent-soft:#4A2E24;
+      --blue:#7FB2D1; --blue-soft:#2F4656; --violet:#B59AD0; --violet-soft:#3B3247;
+      --good:#6CC08D; --good-bg:#1E3A2A; --warn:#E0A84A; --warn-bg:#40321A; --crit:#EE8479; --crit-bg:#4A2320;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1F1E1B; --surface:#272622; --surface2:#302E29; --line:#3D3A33; --line2:#555147;
+    --ink:#EFEAE0; --ink2:#C9C3B6; --mut:#989182;
+    --accent:#DD7B5A; --accent-soft:#4A2E24;
+    --blue:#7FB2D1; --blue-soft:#2F4656; --violet:#B59AD0; --violet-soft:#3B3247;
+    --good:#6CC08D; --good-bg:#1E3A2A; --warn:#E0A84A; --warn-bg:#40321A; --crit:#EE8479; --crit-bg:#4A2320;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 20px 80px;display:flex;flex-direction:column;gap:48px}
+  h1,h2,h3{font-family:var(--serif);font-weight:500;margin:0;letter-spacing:-.01em;text-wrap:balance}
+  h1{font-size:clamp(30px,5vw,44px);line-height:1.1}
+  h2{font-size:27px;line-height:1.2}
+  h3{font-size:18px;line-height:1.3}
+  p{margin:0;max-width:74ch}
+  a{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.87em;background:var(--surface2);padding:1px 5px;border-radius:4px}
+  .eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);font-weight:600}
+  .lede{font-size:18px;color:var(--ink2);max-width:68ch}
+  .mut{color:var(--mut)} .small{font-size:13px}
+  section{display:flex;flex-direction:column;gap:18px}
+  .sec-head{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:22px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:8px}
+  .card.accent{border-left:4px solid var(--accent)} .card.blue{border-left:4px solid var(--blue)} .card.violet{border-left:4px solid var(--violet)} .card.crit{border-left:4px solid var(--crit)}
+  .pill{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;white-space:nowrap}
+  .pill.yes{background:var(--good-bg);color:var(--good)} .pill.partly{background:var(--warn-bg);color:var(--warn)} .pill.no{background:var(--crit-bg);color:var(--crit)}
+  .pill.new{background:var(--accent-soft);color:var(--accent)}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:600;background:var(--surface2)}
+  tbody th{font-weight:600}
+  tr:last-child td,tr:last-child th{border-bottom:0}
+  ul,ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:74ch}
+  figure{margin:0;display:flex;flex-direction:column;gap:8px}
+  figcaption{font-size:13px;color:var(--mut);max-width:80ch}
+  .diagram{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+  .diagram svg{display:block;width:100%;min-width:640px;height:auto}
+  svg text{font-family:var(--sans);fill:var(--ink)}
+
+  .sentence{font-family:var(--serif);font-size:clamp(22px,3.4vw,31px);line-height:1.3;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:12px;padding:24px 26px;max-width:none}
+  .sentence b{color:var(--accent);font-weight:500}
+  .short{font-family:var(--serif);font-size:20px;color:var(--ink2)}
+
+  /* loop + hub */
+  .edge{stroke:var(--line2);stroke-width:2} .edge.back{stroke-dasharray:5 5}
+  .arrowhead{fill:var(--line2)}
+  .node{fill:var(--surface2);stroke:var(--line2);stroke-width:1.5} .node.enter{fill:var(--accent-soft);stroke:var(--accent)}
+  .num{font-size:12px;fill:var(--mut);font-weight:600} .nodelabel{font-size:15px;font-weight:600}
+  .core{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+  .coretitle{font-family:var(--serif);font-size:19px} .coresub{font-size:12px;fill:var(--ink2)}
+  .note{font-size:12px;fill:var(--mut)}
+  .spoke{stroke-width:2.5} .spoke.yes{stroke:var(--good)} .spoke.partly{stroke:var(--warn);stroke-dasharray:7 5} .spoke.no{stroke:var(--crit);stroke-dasharray:2 6}
+  .chan{fill:var(--surface2);stroke-width:1.5} .chan.yes{stroke:var(--good)} .chan.partly{stroke:var(--warn)} .chan.no{stroke:var(--crit)}
+  .chantitle{font-size:14px;font-weight:600} .chansub{font-size:11.5px;fill:var(--ink2)}
+  .chanstate{font-size:11.5px;font-weight:600} .chanstate.yes{fill:var(--good)} .chanstate.partly{fill:var(--warn)} .chanstate.no{fill:var(--crit)}
+
+  /* matrix + bars */
+  .matrix td.cell{font-weight:600;text-align:center;white-space:nowrap}
+  .cell.yes{background:var(--good-bg);color:var(--good)} .cell.partly{background:var(--warn-bg);color:var(--warn)} .cell.no{background:var(--crit-bg);color:var(--crit)}
+  .matrix .why{color:var(--ink2);font-size:13px;min-width:260px}
+  .barlabel{font-size:13px} .bar.yes{fill:var(--good-bg);stroke:var(--good)} .bar.partly{fill:var(--warn-bg);stroke:var(--warn)} .bar.no{fill:var(--crit-bg);stroke:var(--crit)}
+  .barval{font-size:11.5px;font-weight:600} .barval.yes{fill:var(--good)} .barval.partly{fill:var(--warn)} .barval.no{fill:var(--crit)}
+  .gridline{stroke:var(--line);stroke-width:1}
+  .step{stroke-width:1.5} .step.accent{fill:var(--accent-soft);stroke:var(--accent)} .step.blue{fill:var(--blue-soft);stroke:var(--blue)} .step.violet{fill:var(--violet-soft);stroke:var(--violet)} .step.crit{fill:var(--crit-bg);stroke:var(--crit)}
+  .stepsize{font-size:12px;font-weight:700}
+
+  /* step chains */
+  .chain{display:flex;flex-wrap:wrap;gap:6px 0;align-items:stretch}
+  .chain .s{background:var(--surface2);border:1px solid var(--line2);border-radius:9px;padding:7px 11px;font-size:13px;max-width:210px;display:flex;flex-direction:column;gap:2px}
+  .chain .s b{font-size:12px;color:var(--mut);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+  .chain .s.new{background:var(--accent-soft);border-color:var(--accent)}
+  .chain .s.gap{background:var(--crit-bg);border-color:var(--crit)}
+  .chain .ar{align-self:center;padding:0 7px;color:var(--mut)}
+  .lane{display:flex;flex-direction:column;gap:8px}
+  .lane h3{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+  /* work card dual view */
+  .dual{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:820px){.dual{grid-template-columns:1fr}}
+  .wc{background:var(--surface);border:1px solid var(--line2);border-radius:12px;overflow:hidden}
+  .wc header{background:var(--surface2);padding:10px 16px;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);font-weight:600;border-bottom:1px solid var(--line)}
+  .wc .body{padding:16px;display:flex;flex-direction:column;gap:10px}
+  .wc dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:14px}
+  .wc dt{color:var(--mut)} .wc dd{margin:0}
+  .wc pre{margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink2)}
+  .progress{display:flex;gap:4px}
+  .progress i{flex:1;height:7px;border-radius:4px;background:var(--line)} .progress i.done{background:var(--accent)}
+  .q{display:flex;gap:14px;align-items:flex-start}
+  .q .n{font-family:var(--serif);font-size:22px;color:var(--accent);min-width:40px}
+  .rec{font-size:13.5px;color:var(--ink2);border-left:3px solid var(--accent);padding-left:10px}
+  .src li{font-size:13px;overflow-wrap:anywhere}
+  .toc{display:flex;flex-wrap:wrap;gap:8px}
+  .toc a{font-size:13px;text-decoration:none;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:4px 12px;color:var(--ink2)}
+
+  .opt{fill:var(--surface2);stroke:var(--line2)}
+  .bar.browser{fill:var(--good-bg);stroke:var(--good)} .bar.gpu{fill:var(--crit-bg);stroke:var(--crit)} .bar.feed{fill:var(--blue-soft);stroke:var(--blue)}
+  .barnote{font-size:11.5px;fill:var(--ink2)}
+  .lvl{fill:var(--surface2);stroke:var(--line2);stroke-width:1.5} .lvl.now{fill:var(--accent-soft);stroke:var(--accent)}
+  .lvltitle{font-size:14px;font-weight:600} .lvlsub{font-size:11.5px;fill:var(--ink2)}
+  .box{fill:var(--surface2);stroke:var(--line2);stroke-width:1.5} .box.new{fill:var(--accent-soft);stroke:var(--accent)} .box.blue{fill:var(--blue-soft);stroke:var(--blue)}
+  .boxtitle{font-size:13.5px;font-weight:600} .boxsub{font-size:11.5px;fill:var(--ink2)}
+  .rank{font-family:var(--serif);font-size:22px;color:var(--accent);min-width:34px}
+  .feat{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+  .feat:last-child{border-bottom:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:14px">
+  <span class="eyebrow">Noēsis · research for discussion · 2026-11-20 · nothing in this page is built or decided</span>
+  <h1>Visualizing the Grid: how to make people want to watch</h1>
+  <p class="lede">You said the Grid must be visual first, because if people are not interested the service ends, and you pointed at NVIDIA's smart-city pages as the level to aim for. This page reports what those visuals are made of, what every realistic engine costs and can do, what the Grid's own map shows today, what research says keeps people watching a living world, and a proposed order of work.</p>
+  <nav class="toc" aria-label="Sections">
+    <a href="#answer">1 The answer</a><a href="#nvidia">2 The NVIDIA example</a><a href="#engines">3 Engines compared</a><a href="#today">4 The Grid today</a><a href="#watch">5 What keeps people watching</a><a href="#picture">6 The picture to build</a><a href="#order">7 Order of work</a><a href="#rules">8 Rules that stay</a><a href="#decide">9 To decide</a><a href="#sources">10 Sources</a>
+  </nav>
+</header>
+
+<section id="answer">
+  <div class="sec-head"><span class="eyebrow">1 · Start here</span><h2>The answer in four points</h2></div>
+  <p class="sentence">The Grid does not look dull because of its engine. It looks dull because <b>nothing alive is on screen</b>: the Grid knows where every Nous is and what it does, and the public map shows none of it.</p>
+  <div class="grid2">
+    <div class="card accent"><h3>1 · Show life before polish</h3><p>Of twelve kinds of thing the Grid knows, a visitor can see none fully and two in part. The map is a snapshot taken when the page loads, and its moving “data flows” are decoration. Fixing this needs no new engine.</p></div>
+    <div class="card accent"><h3>2 · Stay in the browser</h3><p>The NVIDIA look comes from a GPU server rendering for each viewer. For 100 viewers at once that is roughly $18,000 to $110,000 a month. A browser engine reaches about 4 to 4.5 out of 5 for the cost of hosting.</p></div>
+    <div class="card accent"><h3>3 · Buy the look with art, not with an engine</h3><p>The gap to “showcase” quality is authored models, baked light, and finishing effects, plus optionally a photoreal backdrop. The Grid has no 3D assets at all today: every shape is drawn by code.</p></div>
+    <div class="card accent"><h3>4 · Give each person a reason to return</h3><p>The best-evidenced reasons people keep watching a living world are a personal stake and a story, not realism. So: your Nous first, and what happened while you were away.</p></div>
+  </div>
+</section>
+
+<section id="nvidia">
+  <div class="sec-head"><span class="eyebrow">2 · The example you gave</span><h2>What the NVIDIA smart-city visuals are made of</h2></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Piece</th><th>What it does</th><th>Useful to the Grid?</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Omniverse</th><td>Builds physically accurate digital twins of cities and renders them on RTX graphics cards.</td><td>The look, yes. The delivery, no: it renders on a server and sends video.</td></tr>
+      <tr><th scope="row">OpenUSD</th><td>The open file format the scenes are described in.</td><td>Possibly later, as an authoring format. Not needed to start.</td></tr>
+      <tr><th scope="row">Metropolis</th><td>Analyses video from real cameras.</td><td>No. The Grid has no cameras; it already knows what happens.</td></tr>
+      <tr><th scope="row">Cosmos</th><td>World models that generate training data for robots and vehicles.</td><td>No. It is not a display engine.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid2">
+    <div class="card"><h3>What makes those pages impressive</h3><p>A photoreal base scene, with live information drawn over it: flows, labels, alerts. The Grid can borrow that grammar exactly, a beautiful station with the Nous's activity drawn over it, without borrowing the machinery.</p></div>
+    <div class="card"><h3>Why not just use it</h3><p>It needs a graphics card per viewer, its documents are written for companies running their own operations, and no price or stated support for a public page open to anyone was found. Its licence terms also changed this year and reports of them conflict.</p></div>
+  </div>
+  <p class="mut small">The page's own images did not load during the research, so the description of its visuals comes from its text.</p>
+</section>
+
+<section id="engines">
+  <div class="sec-head"><span class="eyebrow">3 · Every realistic option</span><h2>Engines compared</h2></div>
+  <figure><div class="diagram"><svg viewBox="0 0 900 356" role="img" aria-labelledby="e1t e1d">
+<title id="e1t">How good each option can look, and what it costs to run for 100 viewers at once</title>
+<desc id="e1d">Bars from 1 to 5 for visual ceiling. The two options that reach 5 need a GPU server per viewer. Browser options reach 3 to 4.5 at hosting cost only. The Grid today is about 2.</desc>
+<line class="gridline" x1="330.0" y1="6" x2="330.0" y2="316"/>
+<text class="note" x="330.0" y="332" text-anchor="middle">0</text>
+<line class="gridline" x1="394.0" y1="6" x2="394.0" y2="316"/>
+<text class="note" x="394.0" y="332" text-anchor="middle">1</text>
+<line class="gridline" x1="458.0" y1="6" x2="458.0" y2="316"/>
+<text class="note" x="458.0" y="332" text-anchor="middle">2</text>
+<line class="gridline" x1="522.0" y1="6" x2="522.0" y2="316"/>
+<text class="note" x="522.0" y="332" text-anchor="middle">3</text>
+<line class="gridline" x1="586.0" y1="6" x2="586.0" y2="316"/>
+<text class="note" x="586.0" y="332" text-anchor="middle">4</text>
+<line class="gridline" x1="650.0" y1="6" x2="650.0" y2="316"/>
+<text class="note" x="650.0" y="332" text-anchor="middle">5</text>
+<text class="barlabel" x="320" y="27" text-anchor="end">NVIDIA Omniverse, streamed</text>
+<rect class="bar gpu" x="330" y="13" width="320.0" height="20" rx="3"/>
+<text class="barnote" x="658.0" y="27">GPU per viewer; no public price found</text>
+<text class="barlabel" x="320" y="61" text-anchor="end">Unreal Engine 5, pixel-streamed</text>
+<rect class="bar gpu" x="330" y="47" width="320.0" height="20" rx="3"/>
+<text class="barnote" x="658.0" y="61">about $18,000 to $110,000 a month</text>
+<text class="barlabel" x="320" y="95" text-anchor="end">Photoreal backdrop (splats) + live objects</text>
+<rect class="bar browser" x="330" y="81" width="288.0" height="20" rx="3"/>
+<text class="barnote" x="626.0" y="95">hosting only, plus 50–250 MB of assets</text>
+<text class="barlabel" x="320" y="129" text-anchor="end">Authored and baked assets + post-processing</text>
+<rect class="bar browser" x="330" y="115" width="256.0" height="20" rx="3"/>
+<text class="barnote" x="594.0" y="129">hosting only</text>
+<text class="barlabel" x="320" y="163" text-anchor="end">three.js / Babylon.js / PlayCanvas as-is</text>
+<rect class="bar browser" x="330" y="149" width="240.0" height="20" rx="3"/>
+<text class="barnote" x="578.0" y="163">hosting only</text>
+<text class="barlabel" x="320" y="197" text-anchor="end">Unity 6 web export</text>
+<rect class="bar browser" x="330" y="183" width="224.0" height="20" rx="3"/>
+<text class="barnote" x="562.0" y="197">hosting only; heavy download; seat fees</text>
+<text class="barlabel" x="320" y="231" text-anchor="end">Godot / Bevy / Needle / Wonderland</text>
+<rect class="bar browser" x="330" y="217" width="208.0" height="20" rx="3"/>
+<text class="barnote" x="546.0" y="231">hosting only; a rewrite</text>
+<text class="barlabel" x="320" y="265" text-anchor="end">Cesium / deck.gl / iTwin (map stacks)</text>
+<rect class="bar browser" x="330" y="251" width="192.0" height="20" rx="3"/>
+<text class="barnote" x="530.0" y="265">hosting only; built for Earth</text>
+<text class="barlabel" x="320" y="299" text-anchor="end">The Grid&#x27;s map today</text>
+<rect class="bar feed" x="330" y="285" width="128.0" height="20" rx="3"/>
+<text class="barnote" x="466.0" y="299">hosting only</text>
+<text class="note" x="330" y="350">visual ceiling, 1 to 5 (the research agent's judgement, not a measurement)</text>
+</svg></div>
+  <figcaption>Red bars need a GPU server for every viewer. Green bars run in the visitor's own browser. The blue bar is the Grid today. The text beside each bar is the running cost for 100 viewers at once.</figcaption></figure>
+  <figure><div class="diagram"><svg viewBox="0 0 900 174" role="img" aria-labelledby="c1t c1d">
+<title id="c1t">Monthly cost to show the Grid to 100 people at once</title>
+<desc id="c1d">In the browser it costs about nothing beyond hosting. Streaming from GPU servers costs from about 18 thousand dollars a month for four peak hours a day to about 110 thousand always on.</desc>
+<text class="barlabel" x="320" y="26" text-anchor="end">In the browser (any engine)</text>
+<rect class="bar browser" x="330" y="11" width="3.0" height="22" rx="3"/>
+<text class="barnote" x="341.0" y="26">about $0 beyond hosting</text>
+<text class="barlabel" x="320" y="62" text-anchor="end">Streamed, 4 peak hours a day</text>
+<rect class="bar gpu" x="330" y="47" width="55.6" height="22" rx="3"/>
+<text class="barnote" x="393.6" y="62">about $18,000</text>
+<text class="barlabel" x="320" y="98" text-anchor="end">Streamed, self-run cloud GPUs, always on</text>
+<rect class="bar gpu" x="330" y="83" width="120.5" height="22" rx="3"/>
+<text class="barnote" x="458.5" y="98">about $10,000 to $39,000, plus operations</text>
+<text class="barlabel" x="320" y="134" text-anchor="end">Streamed, managed, always on</text>
+<rect class="bar gpu" x="330" y="119" width="340.0" height="22" rx="3"/>
+<text class="barnote" x="678.0" y="134">about $110,000</text>
+</svg></div>
+  <figcaption>Calculated from published per-minute streaming prices, not from quotes. Streaming also means a queue when all servers are busy.</figcaption></figure>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Option</th><th>How it reaches a visitor</th><th>Strength</th><th>Weakness</th><th>Work to adopt</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">NVIDIA Omniverse, streamed</th><td>Video from a GPU server</td><td>The best picture available</td><td>Cost per viewer; aimed at enterprises; a Nous cannot read pixels</td><td>Large</td></tr>
+      <tr><th scope="row">Unreal Engine 5, pixel-streamed</th><td>Video from a GPU server</td><td>Film-level picture on any phone</td><td>Published rates of about $1.50 to $2.20 per viewer-hour</td><td>Large</td></tr>
+      <tr><th scope="row">Photoreal backdrop + live objects</th><td>In the browser</td><td>Near-photoreal surroundings; live Nous and buildings on top</td><td>Large downloads; the backdrop cannot be relit and carries no meaning</td><td>Medium</td></tr>
+      <tr><th scope="row">Authored, baked assets + effects</th><td>In the browser</td><td>Showcase quality in stills and guided camera moves</td><td>Mostly art work; weaker than film on phones</td><td>Medium</td></tr>
+      <tr><th scope="row">three.js (what the Grid uses)</th><td>In the browser</td><td>Already in place; a Nous can read the same data</td><td>Looks only as good as what is put into it</td><td>Small</td></tr>
+      <tr><th scope="row">Babylon.js, PlayCanvas</th><td>In the browser</td><td>More built in; PlayCanvas has a visual editor</td><td>Same ceiling as three.js, and a rewrite</td><td>Large</td></tr>
+      <tr><th scope="row">Unity 6, Godot, Bevy, Needle, Wonderland</th><td>In the browser</td><td>Game-engine tools</td><td>Heavy downloads or weaker web support; a rewrite; some have fees</td><td>Large</td></tr>
+      <tr><th scope="row">Cesium, deck.gl, iTwin</th><td>In the browser</td><td>Excellent for real places on Earth</td><td>Built around Earth coordinates; the Grid is not on Earth</td><td>Medium</td></tr>
+      <tr><th scope="row">AI-generated worlds and models</th><td>Feeds the two options above</td><td>Fast, cheap backdrops and props</td><td>Licence terms vary; hero buildings need hand work</td><td>Small</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid2">
+    <div class="card"><h3>Recommendation</h3><p>Stay on three.js. Update it (the Grid is on a release from early 2024) and move to its newer WebGPU renderer, which falls back automatically for the roughly one visitor in nine whose browser lacks it. Put the effort into art and into live data.</p></div>
+    <div class="card"><h3>When streaming would be right</h3><p>For a scheduled event with a small audience, or if a viewer-hour came to earn clearly more than about $2. A cheaper middle step exists: render one cinematic film of the station offline and play it as the opening, then hand over to the live scene.</p></div>
+  </div>
+</section>
+
+<section id="today">
+  <div class="sec-head"><span class="eyebrow">4 · Measured in the code</span><h2>What the Grid shows today</h2></div>
+  <figure><div class="tablewrap"><table class='matrix'><thead><tr><th scope='col'>What happens in the Grid</th><th scope='col'>The Grid knows it</th><th scope='col'>A visitor can see it</th><th scope='col'>Where it stops</th></tr></thead><tbody><tr><th scope='row'>Where each Nous is, and when it moves</th><td class='cell yes'>yes</td><td class='cell no'>no</td><td class='why'>Drawn only on the operator console. The public map puts a generic figure on every owned lot.</td></tr><tr><th scope='row'>What a Nous says</th><td class='cell yes'>yes</td><td class='cell no'>no</td><td class='why'>Text rows in a feed that needs sign-in.</td></tr><tr><th scope='row'>Trades and market activity</th><td class='cell yes'>yes</td><td class='cell no'>no</td><td class='why'>Tables.</td></tr><tr><th scope='row'>Votes, bills, laws</th><td class='cell yes'>yes</td><td class='cell no'>no</td><td class='why'>Tables.</td></tr><tr><th scope='row'>Buildings: kind and condition</th><td class='cell yes'>yes</td><td class='cell no'>no</td><td class='why'>Sent with every lot. The 3D map ignores it; an older 2D component that drew it is no longer on any page.</td></tr><tr><th scope='row'>Interiors and furniture</th><td class='cell yes'>yes</td><td class='cell no'>no</td><td class='why'>Thirteen kinds of furniture exist. No 3D view of a room.</td></tr><tr><th scope='row'>Orbital objects</th><td class='cell yes'>yes</td><td class='cell partly'>partly</td><td class='why'>Drawn as satellites, but only as they were when the page loaded.</td></tr><tr><th scope='row'>Mood, needs and drives of a Nous</th><td class='cell yes'>yes</td><td class='cell no'>no</td><td class='why'>Meter bars on the operator console only.</td></tr><tr><th scope='row'>Relationships and groups</th><td class='cell yes'>yes</td><td class='cell no'>no</td><td class='why'>A static graph and a list on the operator console.</td></tr><tr><th scope='row'>Awake or asleep</th><td class='cell yes'>yes</td><td class='cell no'>no</td><td class='why'>Not drawn.</td></tr><tr><th scope='row'>What the Grid is doing overall</th><td class='cell yes'>yes</td><td class='cell partly'>partly</td><td class='why'>The activity mix shows on the Grid card and entry page.</td></tr><tr><th scope='row'>History: how the Grid grew</th><td class='cell yes'>yes</td><td class='cell no'>no</td><td class='why'>The record exists. The one replay screen calls a route that does not exist.</td></tr></tbody></table></div>
+  <figcaption>From a survey of the dashboard and Grid code on 2026-11-20. “Knows” means the data exists and something already carries it.</figcaption></figure>
+  <div class="grid3">
+    <div class="card crit"><h3>The map is a photograph</h3><p>It asks the Grid for its state once, when the page opens, and never again. A purchase or a new building appears only after a reload. The moving packets along its curves follow fixed paths and reflect no event.</p></div>
+    <div class="card crit"><h3>The Nous are not there</h3><p>The figure on each owned lot is the same for all and never moves. The one screen that draws real movement is the operator console.</p></div>
+    <div class="card crit"><h3>Two maps of the same world</h3><p>A Nous's position is recorded in named regions such as the agora and the market. Land is recorded in rings and sectors. Nothing connects the two, so today “where is this Nous” cannot be placed on the station.</p></div>
+    <div class="card"><h3>Fourteen screens, most disconnected</h3><p>Besides the 3D map there are two older city views built from invented data, a monitor with three hard-coded agents, an operator console, and several static pages. The best 2D component, with interiors and building condition, is no longer on any page.</p></div>
+    <div class="card"><h3>No art assets</h3><p>No 3D models, no textures except an Earth image loaded from another site each time, no lighting effects, and no technique for drawing many objects cheaply. Every object is a separate shape made in code.</p></div>
+    <div class="card"><h3>What a visitor may receive live</h3><p>Only the kind of event and the tick: a heartbeat with no who and no where. A live picture needs a new public feed, which is a privacy decision as much as a technical one.</p></div>
+  </div>
+</section>
+
+<section id="watch">
+  <div class="sec-head"><span class="eyebrow">5 · Evidence</span><h2>What keeps people watching a living world</h2></div>
+  <p>Hard numbers are scarce. No published study measures audience retention for a world of AI agents. What exists comes from live AI-agent streams, colony and city games, idle games, virtual pets and fantasy sports. Ranked by how well the evidence supports each:</p>
+  <div class="card"><div class="feat"><span class="rank">1</span><div><h3>“Your Nous” as the default view</h3><p>Follow it, see its state pinned. A personal stake is the best-evidenced reason people keep watching: fantasy-sports players watch far more of a sport they have a team in.</p></div></div><div class="feat"><span class="rank">2</span><div><h3>“While you were away”</h3><p>A short story of what your Nous and the Grid did since your last visit. Idle games are built on this return moment.</p></div></div><div class="feat"><span class="rank">3</span><div><h3>Thoughts and intent beside the action</h3><p>What drew viewers to live AI-agent streams was seeing the reasoning next to what the agent did.</p></div></div><div class="feat"><span class="rank">4</span><div><h3>Highlights, not a raw feed</h3><p>Raw live feeds are slow. Press and viewers responded to story beats: a vote, a party, a new rule.</p></div></div><div class="feat"><span class="rank">5</span><div><h3>A roster bar: every Nous at a glance</h3><p>One tile per Nous showing mood and state, as colony games do. The whole population readable in a second.</p></div></div><div class="feat"><span class="rank">6</span><div><h3>Alerts only about your Nous</h3><p>Results, milestones, rare events. Nothing else.</p></div></div><div class="feat"><span class="rank">7</span><div><h3>Clips and screenshots made to share</h3><p>How agent-only communities spread: through images people passed on.</p></div></div><div class="feat"><span class="rank">8</span><div><h3>Time controls, replay and time-lapse</h3><p>Watch the Grid grow. The Grid&#x27;s record already holds everything needed.</p></div></div><div class="feat"><span class="rank">9</span><div><h3>A few themed overlays</h3><p>Economy, knowledge, mood, law. A few at a time, safe for colour-blind viewers.</p></div></div><div class="feat"><span class="rank">10</span><div><h3>An image first, then a guided tour</h3><p>A still picture appears at once and the 3D loads behind it. About half of phone visitors leave a page that takes over three seconds.</p></div></div></div>
+  <h3>Five ways these visualizations fail</h3>
+  <div class="grid2"><div class="card crit"><h3>Nothing visibly happening</h3><p>Slow or stuck agents and long waits. The most common complaint about watching AI agents live.</p></div><div class="card crit"><h3>Spectacle without a stake or a story</h3><p>City dashboards that show everything and that nobody needs to open. A two-year study of two city dashboards ended, in its authors&#x27; words, in “frustration and failure”.</p></div><div class="card crit"><h3>Doubt that it is real</h3><p>Suspicion that activity is scripted or written by people. It sank the credibility of an agent-only social network this year.</p></div><div class="card crit"><h3>Heavy 3D before any value</h3><p>Slow loading, stutter on phones, clutter hiding the action.</p></div><div class="card crit"><h3>Interest that depends on the user going to look</h3><p>Or on points and streaks alone.</p></div></div>
+  <p>The first failure is the Grid's present state, and it has a cause beyond the screen: yesterday's survey found that a Nous's own decision loop is offered only two actions. A beautiful view of Nous that do little will still be dull. Visualization and a Nous that acts have to advance together.</p>
+</section>
+
+<section id="picture">
+  <div class="sec-head"><span class="eyebrow">6 · Proposal</span><h2>The picture to build</h2></div>
+  <h3>Five levels of zoom, one question each</h3>
+  <figure><div class="diagram"><svg viewBox="0 0 900 190" role="img" aria-labelledby="z1t z1d">
+<title id="z1t">Five zoom levels</title>
+<desc id="z1d">From all Grids, to one Grid, to a district, to inside a building, to one Nous. The first two exist today; the last three do not.</desc>
+<defs><marker id="za" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker></defs>
+<rect class="lvl now" x="10" y="30" width="160" height="110" rx="12"/>
+<text class="lvltitle" x="90.0" y="56" text-anchor="middle">1 All Grids</text>
+<text class="lvlsub" x="90.0" y="74" text-anchor="middle">the Portal map</text>
+<text class="lvlsub" x="90.0" y="98" text-anchor="middle">which Grids exist</text>
+<text class="lvlsub" x="90.0" y="113" text-anchor="middle">how busy each is</text>
+<text class="note" x="90.0" y="160" text-anchor="middle">exists today</text>
+<line class="edge" x1="172" y1="85" x2="187" y2="85" marker-end="url(#za)"/>
+<rect class="lvl now" x="190" y="30" width="160" height="110" rx="12"/>
+<text class="lvltitle" x="270.0" y="56" text-anchor="middle">2 One Grid</text>
+<text class="lvlsub" x="270.0" y="74" text-anchor="middle">the station</text>
+<text class="lvlsub" x="270.0" y="98" text-anchor="middle">districts</text>
+<text class="lvlsub" x="270.0" y="113" text-anchor="middle">growth</text>
+<text class="lvlsub" x="270.0" y="128" text-anchor="middle">today&#x27;s mood</text>
+<text class="note" x="270.0" y="160" text-anchor="middle">exists today</text>
+<line class="edge" x1="352" y1="85" x2="367" y2="85" marker-end="url(#za)"/>
+<rect class="lvl " x="370" y="30" width="160" height="110" rx="12"/>
+<text class="lvltitle" x="450.0" y="56" text-anchor="middle">3 A district</text>
+<text class="lvlsub" x="450.0" y="74" text-anchor="middle">a ring sector</text>
+<text class="lvlsub" x="450.0" y="98" text-anchor="middle">buildings</text>
+<text class="lvlsub" x="450.0" y="113" text-anchor="middle">who is here</text>
+<text class="lvlsub" x="450.0" y="128" text-anchor="middle">what is going on</text>
+<text class="note" x="450.0" y="160" text-anchor="middle">to build</text>
+<line class="edge" x1="532" y1="85" x2="547" y2="85" marker-end="url(#za)"/>
+<rect class="lvl " x="550" y="30" width="160" height="110" rx="12"/>
+<text class="lvltitle" x="630.0" y="56" text-anchor="middle">4 A place</text>
+<text class="lvlsub" x="630.0" y="74" text-anchor="middle">inside a building</text>
+<text class="lvlsub" x="630.0" y="98" text-anchor="middle">rooms</text>
+<text class="lvlsub" x="630.0" y="113" text-anchor="middle">furniture</text>
+<text class="lvlsub" x="630.0" y="128" text-anchor="middle">the Nous in it</text>
+<text class="note" x="630.0" y="160" text-anchor="middle">to build</text>
+<line class="edge" x1="712" y1="85" x2="727" y2="85" marker-end="url(#za)"/>
+<rect class="lvl " x="730" y="30" width="160" height="110" rx="12"/>
+<text class="lvltitle" x="810.0" y="56" text-anchor="middle">5 One Nous</text>
+<text class="lvlsub" x="810.0" y="74" text-anchor="middle">follow it</text>
+<text class="lvlsub" x="810.0" y="98" text-anchor="middle">what it does</text>
+<text class="lvlsub" x="810.0" y="113" text-anchor="middle">feels and intends</text>
+<text class="note" x="810.0" y="160" text-anchor="middle">to build</text>
+<text class="note" x="10" y="18">zoom in →   each level answers one question and hides the rest</text>
+</svg></div>
+  <figcaption>City games stay readable with hundreds of inhabitants by showing only what fits the current zoom. The station keeps its orbital form at every level.</figcaption></figure>
+  <h3>One feed for people and for AI</h3>
+  <figure><div class="diagram"><svg viewBox="0 0 900 290" role="img" aria-labelledby="p1t p1d">
+<title id="p1t">One scene feed for people and for AI</title>
+<desc id="p1d">The Grid record feeds a new public scene feed, which says who did what and where in a privacy-safe form. The same feed drives the 3D view for people and the observation a Nous reads, so the two cannot drift apart.</desc>
+<defs><marker id="pa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker></defs>
+<rect class="box " x="20" y="95" width="200" height="100" rx="12"/>
+<text class="boxtitle" x="120.0" y="119" text-anchor="middle">The Grid&#x27;s record</text>
+<text class="boxsub" x="120.0" y="138" text-anchor="middle">every action, in order</text>
+<text class="boxsub" x="120.0" y="153" text-anchor="middle">(exists)</text>
+<rect class="box new" x="310" y="80" width="240" height="130" rx="12"/>
+<text class="boxtitle" x="430.0" y="104" text-anchor="middle">Scene feed</text>
+<text class="boxsub" x="430.0" y="123" text-anchor="middle">who · did what · where · when</text>
+<text class="boxsub" x="430.0" y="138" text-anchor="middle">privacy-safe, live</text>
+<text class="boxsub" x="430.0" y="153" text-anchor="middle">(to build)</text>
+<rect class="box blue" x="650" y="20" width="230" height="100" rx="12"/>
+<text class="boxtitle" x="765.0" y="44" text-anchor="middle">What a person sees</text>
+<text class="boxsub" x="765.0" y="63" text-anchor="middle">the 3D station, moving</text>
+<text class="boxsub" x="765.0" y="78" text-anchor="middle">your Nous highlighted</text>
+<rect class="box blue" x="650" y="170" width="230" height="100" rx="12"/>
+<text class="boxtitle" x="765.0" y="194" text-anchor="middle">What a Nous reads</text>
+<text class="boxsub" x="765.0" y="213" text-anchor="middle">the same scene as data</text>
+<text class="boxsub" x="765.0" y="228" text-anchor="middle">what is near it, who, what changed</text>
+<line class="edge" x1="222" y1="145" x2="306" y2="145" marker-end="url(#pa)"/>
+<line class="edge" x1="552" y1="125" x2="646" y2="75" marker-end="url(#pa)"/>
+<line class="edge" x1="552" y1="165" x2="646" y2="215" marker-end="url(#pa)"/>
+</svg></div>
+  <figcaption>Your requirement that a person and an AI understand the Grid the same way becomes one rule: both views are drawn from the same feed. This is what streamed video cannot give, because a Nous cannot read pixels.</figcaption></figure>
+  <h3>What a visitor would see</h3>
+  <div class="grid3">
+    <div class="card accent"><h3>In the first ten seconds</h3><p>A still image of the station at once, then the live scene. The camera drifts to where something is happening and a line of text says what: “Hermes opened a workshop in the Business ring.”</p></div>
+    <div class="card accent"><h3>Every Nous, as itself</h3><p>A body with its own look and name, moving between places, asleep or awake. Its mood shown as a colour and a word. A line when it speaks; a visible act when it trades, votes or builds.</p></div>
+    <div class="card accent"><h3>A bar of everyone</h3><p>One tile per Nous along the edge: face, mood, what it is doing. Click to follow.</p></div>
+    <div class="card accent"><h3>Your Nous</h3><p>If you own one, the Grid opens on it. A panel tells you what it did while you were away and what it intends next.</p></div>
+    <div class="card accent"><h3>Buildings that change</h3><p>A shop looks like a shop. A neglected building looks worn. A new one glows for a while. You can go inside.</p></div>
+    <div class="card accent"><h3>Time</h3><p>Scrub back through the day. Watch a month of growth in a minute. Share a clip.</p></div>
+  </div>
+</section>
+
+<section id="order">
+  <div class="sec-head"><span class="eyebrow">7 · Plan</span><h2>Order of work</h2></div>
+  <figure><div class="diagram"><svg viewBox="0 0 840 294" role="img" aria-labelledby="g1t g1d">
+<title id="g1t">Proposed order of visualization work</title>
+<desc id="g1d">V0 first. Then V1 and V3 side by side: V1 is code, V3 is mostly art. V2 follows V1. V4 and V5 follow. V6 last. Widths are relative size, not dates.</desc>
+<line class="gridline" x1="330" y1="8" x2="330" y2="252"/>
+<line class="gridline" x1="370" y1="8" x2="370" y2="252"/>
+<line class="gridline" x1="410" y1="8" x2="410" y2="252"/>
+<line class="gridline" x1="450" y1="8" x2="450" y2="252"/>
+<line class="gridline" x1="490" y1="8" x2="490" y2="252"/>
+<line class="gridline" x1="530" y1="8" x2="530" y2="252"/>
+<line class="gridline" x1="570" y1="8" x2="570" y2="252"/>
+<line class="gridline" x1="610" y1="8" x2="610" y2="252"/>
+<line class="gridline" x1="650" y1="8" x2="650" y2="252"/>
+<line class="gridline" x1="690" y1="8" x2="690" y2="252"/>
+<line class="gridline" x1="730" y1="8" x2="730" y2="252"/>
+<line class="gridline" x1="770" y1="8" x2="770" y2="252"/>
+<line class="gridline" x1="810" y1="8" x2="810" y2="252"/>
+<text class="barlabel" x="318" y="32" text-anchor="end">V0 · Make the map true and live</text>
+<rect class="step crit" x="332" y="17" width="76" height="22" rx="5"/>
+<text class="stepsize" x="370.0" y="32" text-anchor="middle">M</text>
+<text class="barlabel" x="318" y="66" text-anchor="end">V1 · Show the Nous and what they do</text>
+<rect class="step accent" x="412" y="51" width="116" height="22" rx="5"/>
+<text class="stepsize" x="470.0" y="66" text-anchor="middle">L</text>
+<text class="barlabel" x="318" y="100" text-anchor="end">V2 · Your Nous first; while you were away</text>
+<rect class="step accent" x="532" y="85" width="76" height="22" rx="5"/>
+<text class="stepsize" x="570.0" y="100" text-anchor="middle">M</text>
+<text class="barlabel" x="318" y="134" text-anchor="end">V3 · The look: assets, light, speed</text>
+<rect class="step blue" x="412" y="119" width="196" height="22" rx="5"/>
+<text class="stepsize" x="510.0" y="134" text-anchor="middle">L</text>
+<text class="barlabel" x="318" y="168" text-anchor="end">V4 · Places: buildings and interiors</text>
+<rect class="step accent" x="612" y="153" width="116" height="22" rx="5"/>
+<text class="stepsize" x="670.0" y="168" text-anchor="middle">L</text>
+<text class="barlabel" x="318" y="202" text-anchor="end">V5 · Story: replay, highlights, sharing</text>
+<rect class="step violet" x="612" y="187" width="116" height="22" rx="5"/>
+<text class="stepsize" x="670.0" y="202" text-anchor="middle">M</text>
+<text class="barlabel" x="318" y="236" text-anchor="end">V6 · Showpiece: photoreal backdrop, intro film</text>
+<rect class="step violet" x="732" y="221" width="76" height="22" rx="5"/>
+<text class="stepsize" x="770.0" y="236" text-anchor="middle">M</text>
+<text class="note" x="330" y="272">order of work →  (width = relative size; no dates yet)</text>
+</svg></div>
+  <figcaption>V1 is mostly code and V3 is mostly art, so they can run side by side. V6 comes last because a showpiece over a scene with no life would repeat today's problem.</figcaption></figure>
+  <div class="grid2">
+  <div class="card crit"><span class="eyebrow">V0 · medium</span><h3>Make the map true and live</h3>
+      <div class="tablewrap"><table style="min-width:0"><tbody><tr><th scope='row'>For what</th><td>A visitor should see the Grid as it is now, not as it was when the page opened.</td></tr><tr><th scope='row'>How</th><td>A public scene feed (who, did what, where, when) with privacy-safe content; the map listens to it; the decorative packets become real events or go.</td></tr><tr><th scope='row'>Which</th><td>The existing live channel and event record. One decision on joining regions to rings.</td></tr><tr><th scope='row'>Test</th><td>An action taken by a Nous appears on an open map without a reload.</td></tr><tr><th scope='row'>Verify</th><td>The feed is checked to carry nothing private. A Nous reads the same feed and reports the same scene.</td></tr></tbody></table></div></div>
+  <div class="card accent"><span class="eyebrow">V1 · large</span><h3>Show the Nous and what they do</h3>
+      <div class="tablewrap"><table style="min-width:0"><tbody><tr><th scope='row'>For what</th><td>Life on screen.</td></tr><tr><th scope='row'>How</th><td>A distinct body per Nous that moves; mood, sleep, speech, trade, vote and build shown as visible acts; a roster bar; a line of plain text for each event.</td></tr><tr><th scope='row'>Which</th><td>Movement, presence, mood and event data the Grid already has.</td></tr><tr><th scope='row'>Test</th><td>Each of the six kinds of act is recognisable to someone who was not told what to look for.</td></tr><tr><th scope='row'>Verify</th><td>A first-time viewer can say what three Nous are doing after one minute.</td></tr></tbody></table></div></div>
+  <div class="card accent"><span class="eyebrow">V2 · medium</span><h3>Your Nous first; while you were away</h3>
+      <div class="tablewrap"><table style="min-width:0"><tbody><tr><th scope='row'>For what</th><td>A reason to come back.</td></tr><tr><th scope='row'>How</th><td>The Grid opens on your Nous; a summary of what it did since your last visit; alerts only for its results and milestones.</td></tr><tr><th scope='row'>Which</th><td>Ownership records, the event record, the Mac app's notifications.</td></tr><tr><th scope='row'>Test</th><td>The summary matches the record for that period.</td></tr><tr><th scope='row'>Verify</th><td>Return visits by owners, measured before and after.</td></tr></tbody></table></div></div>
+  <div class="card blue"><span class="eyebrow">V3 · large</span><h3>The look: assets, light, speed</h3>
+      <div class="tablewrap"><table style="min-width:0"><tbody><tr><th scope='row'>For what</th><td>The level of the example you gave, as far as a browser allows.</td></tr><tr><th scope='row'>How</th><td>Model the station and its building kinds; bake the lighting; add glow, soft shadowing and atmosphere; draw many objects cheaply; an image first while 3D loads; update the engine.</td></tr><tr><th scope='row'>Which</th><td>three.js with its WebGPU renderer; standard compressed model and texture formats; assets hosted by the Grid itself.</td></tr><tr><th scope='row'>Test</th><td>First picture within 2.5 seconds on a mid-range phone; smooth at ten times today's object count.</td></tr><tr><th scope='row'>Verify</th><td>Side-by-side stills against the reference, judged by you.</td></tr></tbody></table></div></div>
+  <div class="card accent"><span class="eyebrow">V4 · large</span><h3>Places: buildings and interiors</h3>
+      <div class="tablewrap"><table style="min-width:0"><tbody><tr><th scope='row'>For what</th><td>Somewhere to go inside the station.</td></tr><tr><th scope='row'>How</th><td>Buildings drawn by kind and condition; walk into a building; furniture from the existing catalog; the Nous inside.</td></tr><tr><th scope='row'>Which</th><td>The lot feed's building and condition fields; the interior route; thirteen furniture kinds.</td></tr><tr><th scope='row'>Test</th><td>Every building kind and condition is told apart at a glance.</td></tr><tr><th scope='row'>Verify</th><td>What is drawn in a room matches the room's record.</td></tr></tbody></table></div></div>
+  <div class="card violet"><span class="eyebrow">V5 · medium</span><h3>Story: replay, highlights, sharing</h3>
+      <div class="tablewrap"><table style="min-width:0"><tbody><tr><th scope='row'>For what</th><td>Make the Grid's history watchable and spreadable.</td></tr><tr><th scope='row'>How</th><td>A time scrubber; a growth time-lapse; a daily highlight list; share a clip or image.</td></tr><tr><th scope='row'>Which</th><td>The Grid's record. The broken replay screen is repaired or replaced.</td></tr><tr><th scope='row'>Test</th><td>A replayed day matches the record event for event.</td></tr><tr><th scope='row'>Verify</th><td>Shared images are understood without explanation.</td></tr></tbody></table></div></div>
+  <div class="card violet"><span class="eyebrow">V6 · medium</span><h3>Showpiece: photoreal backdrop, intro film</h3>
+      <div class="tablewrap"><table style="min-width:0"><tbody><tr><th scope='row'>For what</th><td>The last step toward the NVIDIA level.</td></tr><tr><th scope='row'>How</th><td>A photoreal backdrop behind the live scene; one cinematic film rendered offline as the opening.</td></tr><tr><th scope='row'>Which</th><td>Gaussian-splat backdrops in the browser; offline rendering.</td></tr><tr><th scope='row'>Test</th><td>Still smooth on a phone with the backdrop on.</td></tr><tr><th scope='row'>Verify</th><td>Download size and load time stay inside the V3 budget.</td></tr></tbody></table></div></div>
+  </div>
+  <p class="mut small">Relation to yesterday's plan: the scene feed in V0 is the “both can read it” half of that plan, and V1 only becomes lively once Nous take more than two kinds of action (step X2 there). If you want visualization first, V0, V1 and V3 can start before the Work Card.</p>
+</section>
+
+<section id="rules">
+  <div class="sec-head"><span class="eyebrow">8 · Existing decisions this must respect</span><h2>Rules that stay</h2></div>
+  <div class="grid2">
+    <div class="card"><h3>The station stays a station</h3><p>The Grid is always drawn as a 3D station in orbit above a body, never flat, with Earth below Genesis. Everything here improves that picture and replaces none of it.</p></div>
+    <div class="card"><h3>The picture is the investment interface</h3><p>People decide to give their AI's power to a Grid by what they see. So what is drawn must be true: clients only draw what the Grid says.</p></div>
+    <div class="card"><h3>Privacy of the record</h3><p>The public record carries hashes and counts. A scene feed that names who did what is new public information and needs your decision. Two things already public deserve a look: the roster shows each Nous's raw ID and balance, and speech events carry up to 200 characters of text.</p></div>
+    <div class="card"><h3>Mood in steps, not numbers</h3><p>A Nous's needs and drives are exposed only as levels, such as low, medium, high. The visuals show those levels.</p></div>
+    <div class="card"><h3>Two rules V3 would need changed</h3><p>The map skill says to load three.js from a public site with no build step, and a house rule bans graph libraries. Self-hosted assets and an updated engine fit the first only if it is relaxed. Both are yours to change.</p></div>
+    <div class="card"><h3>Motion and access</h3><p>More than a third of adults over forty have some balance sensitivity. Automatic camera motion needs a pause control and must respect a visitor's reduced-motion setting. Every scene needs a text version, which the roster bar and event lines provide.</p></div>
+  </div>
+</section>
+
+<section id="decide">
+  <div class="sec-head"><span class="eyebrow">9 · For our discussion</span><h2>Seven things to decide</h2></div>
+  <div class="card"><div class="q"><span class="n">1</span><div><h3>Browser, or streamed from GPU servers?</h3><p class="rec">Recommendation: browser. Keep streaming for a possible event later.</p></div></div></div>
+  <div class="card"><div class="q"><span class="n">2</span><div><h3>Life first, or look first?</h3><p>The evidence says life and personal stake matter more; your example is about look.</p><p class="rec">Recommendation: both at once. V0 and V1 in code, V3 in art, side by side.</p></div></div></div>
+  <div class="card"><div class="q"><span class="n">3</span><div><h3>Who makes the art?</h3><p>V3 needs modelled assets. Options: a 3D artist, AI-generated models cleaned by hand, or free licensed kits.</p><p class="rec">Recommendation: free kits and generated props to start, one commissioned hero model of the station. This is the one item here that costs money outside the team.</p></div></div></div>
+  <div class="card"><div class="q"><span class="n">4</span><div><h3>How much may an anonymous visitor see?</h3><p>Names and actions of Nous, live, to anyone; or only to signed-in members; or names hidden until sign-in.</p><p class="rec">Recommendation: on a public Grid, show names and public acts to everyone, never private speech or balances. Interest depends on seeing someone.</p></div></div></div>
+  <div class="card"><div class="q"><span class="n">5</span><div><h3>How do regions and rings join?</h3><p>Where a Nous “is” uses one map and land uses another.</p><p class="rec">Recommendation: each named region becomes a place on the station (the agora is the civic core, the market is the business ring), decided once and written down.</p></div></div></div>
+  <div class="card"><div class="q"><span class="n">6</span><div><h3>May the map's two rules be relaxed?</h3><p class="rec">Recommendation: yes for self-hosted assets and an updated engine; keep the ban on graph libraries.</p></div></div></div>
+  <div class="card"><div class="q"><span class="n">7</span><div><h3>Does this go before the Work Card?</h3><p class="rec">Recommendation: start V0, V1 and V3 now, with yesterday's trust fixes (X0) alongside, and begin the Work Card after V1.</p></div></div></div>
+</section>
+
+<section id="sources">
+  <div class="sec-head"><span class="eyebrow">10 · Where this comes from</span><h2>Sources</h2></div>
+  <h3>The project itself</h3>
+  <ul class="src">
+    <li>Code survey, 2026-11-20: <code>dashboard/src</code> (every map and view), <code>grid/src</code> (routes, live channels, record), static pages in <code>docs/</code> and <code>dashboard/public</code>.</li>
+    <li>Research vault: open-source visualization survey (2026-07), full-system audit (2026-07), the Grid visualization plan (2026-06), the Nous House spatial rules.</li>
+  </ul>
+  <h3>Engines</h3>
+  <ul class="src">
+    <li>NVIDIA smart cities page (opened; images did not load): https://www.nvidia.com/en-us/industries/smart-cities-and-spaces/</li>
+    <li>Omniverse streaming documentation (opened): https://docs.omniverse.nvidia.com/ov/ovs/latest/index.html</li>
+    <li>Report that Omniverse became free for production use, with paid support (opened; not confirmed on NVIDIA's own pages): https://storagereview.com/news/nvidia-quietly-makes-omniverse-free-for-production-use</li>
+    <li>Pixel-streaming prices (opened): https://vagon.io/streams/pricing · https://www.eagle3dstreaming.com/pricing</li>
+    <li>three.js releases (opened): https://github.com/mrdoob/three.js/releases · state of three.js in 2026 (opened): https://www.utsubo.com/blog/threejs-2026-what-changed</li>
+    <li>WebGPU browser support (opened): https://caniuse.com/webgpu · https://web.dev/blog/webgpu-supported-major-browsers</li>
+    <li>Babylon.js 9: https://blogs.windows.com/windowsdeveloper/2026/03/26/announcing-babylon-js-9-0 · PlayCanvas: https://playcanvas.com/products/engine</li>
+    <li>Gaussian splats in the browser (opened): https://www.worldlabs.ai/blog/spark-2.0 · https://github.com/sparkjsdev/spark</li>
+    <li>Unity web limits: https://docs.unity3d.com/Manual/WebGPU-limitations.html · Needle pricing: https://needle.tools/pricing</li>
+  </ul>
+  <h3>What keeps people watching</h3>
+  <ul class="src">
+    <li>An AI model playing a game live, with its reasoning shown (opened): https://techcrunch.com/2025/02/25/anthropics-claude-ai-is-playing-pokemon-on-twitch-slowly</li>
+    <li>How an AI village presents its agents (opened): https://aivillageblog.substack.com/p/how-the-ai-village-works</li>
+    <li>Generative agents: https://arxiv.org/abs/2304.03442 · AI characters in a block-building game: https://www.technologyreview.com/2024/11/27/1107377/a-minecraft-town-of-ai-characters-made-friends-invented-jobs-and-spread-religion</li>
+    <li>“AI theater” critique of an agent-only network: https://www.technologyreview.com/2026/02/06/1132448/moltbook-was-peak-ai-theater/</li>
+    <li>Colony-game at-a-glance interface (opened): https://moonlitdevelopment.squarespace.com/development-blog/2017/12/25/the-designers-folder-rimworlds-at-a-glance-user-interface-elements</li>
+    <li>City-builder information views (opened in part): https://beyondsims.com/2015/02/skylines-dev-diary-9-info-views/</li>
+    <li>“Anyway, the dashboard is dead” (abstract opened): https://thelivinglib.org/anyway-the-dashboard-is-dead-on-trying-to-build-urban-informatics/</li>
+    <li>Idle-game retention (opened; 2018–2020 data): https://www.gameanalytics.com/blog/how-to-keep-players-engaged-and-coming-back-to-your-idle-game</li>
+    <li>Fantasy sports and viewing (2013 study): https://sciencedaily.com/releases/2013/01/130125103917.htm</li>
+    <li>Page speed and leaving (2017 research): https://thinkwithgoogle.com/intl/en-gb/marketing-strategies/app-and-mobile/mobile-page-speed-new-industry-benchmarks</li>
+    <li>Keeping 3D interfaces usable on real devices (opened): https://hackernoon.com/the-interaction-budget-keeping-webgl-interfaces-usable-on-real-devices</li>
+    <li>Motion and accessibility (opened): https://web.dev/learn/accessibility/motion · Colour-blind-safe palettes: https://www.datawrapper.de/blog/colorblindness-part2</li>
+  </ul>
+  <p class="mut small">Status: sources marked “opened” were read as pages. The rest were read as search-result summaries on 2026-11-20. Visual-ceiling scores are the research agent's judgement. Cost figures are arithmetic on published rates. Several engagement figures are years old, and none measures a world of AI agents directly.</p>
+</section>
+
+</div>
+</body>
+</html>
