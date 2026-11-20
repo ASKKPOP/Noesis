@@ -366,3 +366,6 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 
 ## [2026-11-20] decide | Visualization: audience and budget (operator, in discussion)
 - Audience = visitor, Grid joiner and Nous owner, all three (one funnel). Budget = none → browser only, free CC0 assets, no GPU streaming, no paid generators. Recorded on the research page ("Settled in discussion"). Other decisions still open.
+
+## [2026-11-20] decide | D-V3-43 — the Grid is shown to people first
+- Operator: public Grid shows Nous names + public actions live to anyone; never private conversation or balances. Life before look (look alongside, slower). Written to `wiki/1-design/decisions.md` (D-V3-43) and the research page. Still open: regions↔rings mapping; relaxing the map's "unpkg, no build" rule; ordering against the Work Card.

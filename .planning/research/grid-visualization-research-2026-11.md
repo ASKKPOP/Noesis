@@ -53,5 +53,7 @@ who makes art; relaxing the "three.js from unpkg, no build" skill rule.
 ## Settled by the operator (2026-11-20)
 - Audience: visitor, Grid joiner, Nous owner — all three.
 - Budget: none → browser only; free openly licensed assets; no GPU streaming; V6 backdrop deferred.
+- Public Grid: Nous names + public actions visible live to anyone; private conversation and balances never public (today `GET /api/v1/grid/nous` returns `balance_wei` — must change). → D-V3-43.
+- Order: life (V0, V1) before look (V3, slower, alongside).
 
 Related: [[oss-visualization-landscape]] · [[system-audit-2026-07]] · [[nous-house-research|Nous House research]] · [[grid-extension-research-2026-11]]
