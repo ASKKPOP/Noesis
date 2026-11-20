@@ -363,3 +363,6 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 
 ## [2026-11-20] ingest | Grid visualization research
 - New page [[grid-visualization-research-2026-11]]; index updated. Three surveys (engines, engagement, code) + NVIDIA page. Verdict: stay in the browser; the gap is live Nous on screen, then art. For discussion; nothing decided.
+
+## [2026-11-20] decide | Visualization: audience and budget (operator, in discussion)
+- Audience = visitor, Grid joiner and Nous owner, all three (one funnel). Budget = none → browser only, free CC0 assets, no GPU streaming, no paid generators. Recorded on the research page ("Settled in discussion"). Other decisions still open.

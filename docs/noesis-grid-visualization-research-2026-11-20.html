@@ -144,7 +144,7 @@
   <h1>Visualizing the Grid: how to make people want to watch</h1>
   <p class="lede">You said the Grid must be visual first, because if people are not interested the service ends, and you pointed at NVIDIA's smart-city pages as the level to aim for. This page reports what those visuals are made of, what every realistic engine costs and can do, what the Grid's own map shows today, what research says keeps people watching a living world, and a proposed order of work.</p>
   <nav class="toc" aria-label="Sections">
-    <a href="#answer">1 The answer</a><a href="#nvidia">2 The NVIDIA example</a><a href="#engines">3 Engines compared</a><a href="#today">4 The Grid today</a><a href="#watch">5 What keeps people watching</a><a href="#picture">6 The picture to build</a><a href="#order">7 Order of work</a><a href="#rules">8 Rules that stay</a><a href="#decide">9 To decide</a><a href="#sources">10 Sources</a>
+    <a href="#answer">1 The answer</a><a href="#settled">Settled so far</a><a href="#nvidia">2 The NVIDIA example</a><a href="#engines">3 Engines compared</a><a href="#today">4 The Grid today</a><a href="#watch">5 What keeps people watching</a><a href="#picture">6 The picture to build</a><a href="#order">7 Order of work</a><a href="#rules">8 Rules that stay</a><a href="#decide">9 To decide</a><a href="#sources">10 Sources</a>
   </nav>
 </header>
 
@@ -156,6 +156,16 @@
     <div class="card accent"><h3>2 · Stay in the browser</h3><p>The NVIDIA look comes from a GPU server rendering for each viewer. For 100 viewers at once that is roughly $18,000 to $110,000 a month. A browser engine reaches about 4 to 4.5 out of 5 for the cost of hosting.</p></div>
     <div class="card accent"><h3>3 · Buy the look with art, not with an engine</h3><p>The gap to “showcase” quality is authored models, baked light, and finishing effects, plus optionally a photoreal backdrop. The Grid has no 3D assets at all today: every shape is drawn by code.</p></div>
     <div class="card accent"><h3>4 · Give each person a reason to return</h3><p>The best-evidenced reasons people keep watching a living world are a personal stake and a story, not realism. So: your Nous first, and what happened while you were away.</p></div>
+  </div>
+</section>
+
+<section id="settled">
+  <div class="sec-head"><span class="eyebrow">Settled in discussion · 2026-11-20</span><h2>Two answers from the operator</h2></div>
+  <div class="grid2">
+    <div class="card blue"><h3>Who must become interested: all three</h3><p>The visitor arriving for the first time, the person deciding to join a Grid, and the owner of a Nous. They are one path, and each stage needs something different on screen:</p>
+      <ul><li><b>Visitor:</b> life visible in the first ten seconds, without signing in.</li><li><b>Joiner:</b> what this Grid is, who lives there, and how to enter.</li><li><b>Owner:</b> their own Nous first, and what it did while they were away.</li></ul></div>
+    <div class="card blue"><h3>Budget: none</h3><p>The plan assumes no money for servers or art. What follows:</p>
+      <ul><li>GPU streaming is out. The browser is the only route (decision 1 is answered).</li><li>Art comes from free, openly licensed kits, public space-agency models, and shapes drawn by code. No commissioned model and no paid generators.</li><li>The photoreal backdrop in V6 waits, unless a free source is found. An intro film is still possible, rendered with free tools.</li></ul></div>
   </div>
 </section>
 
@@ -444,9 +454,9 @@
 
 <section id="decide">
   <div class="sec-head"><span class="eyebrow">9 · For our discussion</span><h2>Seven things to decide</h2></div>
-  <div class="card"><div class="q"><span class="n">1</span><div><h3>Browser, or streamed from GPU servers?</h3><p class="rec">Recommendation: browser. Keep streaming for a possible event later.</p></div></div></div>
+  <div class="card"><div class="q"><span class="n">1</span><div><h3>Browser, or streamed from GPU servers?</h3><p class="rec">Answered 2026-11-20: browser. With no budget, streaming is not possible.</p></div></div></div>
   <div class="card"><div class="q"><span class="n">2</span><div><h3>Life first, or look first?</h3><p>The evidence says life and personal stake matter more; your example is about look.</p><p class="rec">Recommendation: both at once. V0 and V1 in code, V3 in art, side by side.</p></div></div></div>
-  <div class="card"><div class="q"><span class="n">3</span><div><h3>Who makes the art?</h3><p>V3 needs modelled assets. Options: a 3D artist, AI-generated models cleaned by hand, or free licensed kits.</p><p class="rec">Recommendation: free kits and generated props to start, one commissioned hero model of the station. This is the one item here that costs money outside the team.</p></div></div></div>
+  <div class="card"><div class="q"><span class="n">3</span><div><h3>Who makes the art?</h3><p>V3 needs modelled assets. Options: a 3D artist, AI-generated models cleaned by hand, or free licensed kits.</p><p class="rec">Answered 2026-11-20: no budget, so free openly licensed kits, public space-agency models and code-drawn shapes only.</p></div></div></div>
   <div class="card"><div class="q"><span class="n">4</span><div><h3>How much may an anonymous visitor see?</h3><p>Names and actions of Nous, live, to anyone; or only to signed-in members; or names hidden until sign-in.</p><p class="rec">Recommendation: on a public Grid, show names and public acts to everyone, never private speech or balances. Interest depends on seeing someone.</p></div></div></div>
   <div class="card"><div class="q"><span class="n">5</span><div><h3>How do regions and rings join?</h3><p>Where a Nous “is” uses one map and land uses another.</p><p class="rec">Recommendation: each named region becomes a place on the station (the agora is the civic core, the market is the business ring), decided once and written down.</p></div></div></div>
   <div class="card"><div class="q"><span class="n">6</span><div><h3>May the map's two rules be relaxed?</h3><p class="rec">Recommendation: yes for self-hosted assets and an updated engine; keep the ban on graph libraries.</p></div></div></div>

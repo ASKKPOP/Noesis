@@ -50,4 +50,8 @@ V4 buildings/interiors ‖ V5 replay/highlights/sharing → V6 splat backdrop + 
 Needs operator decisions on: browser vs streaming; public visibility of Nous names/acts;
 who makes art; relaxing the "three.js from unpkg, no build" skill rule.
 
+## Settled by the operator (2026-11-20)
+- Audience: visitor, Grid joiner, Nous owner — all three.
+- Budget: none → browser only; free openly licensed assets; no GPU streaming; V6 backdrop deferred.
+
 Related: [[oss-visualization-landscape]] · [[system-audit-2026-07]] · [[nous-house-research|Nous House research]] · [[grid-extension-research-2026-11]]
