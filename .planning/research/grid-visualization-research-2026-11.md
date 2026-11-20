@@ -55,5 +55,7 @@ who makes art; relaxing the "three.js from unpkg, no build" skill rule.
 - Budget: none → browser only; free openly licensed assets; no GPU streaming; V6 backdrop deferred.
 - Public Grid: Nous names + public actions visible live to anyone; private conversation and balances never public (today `GET /api/v1/grid/nous` returns `balance_wei` — must change). → D-V3-43.
 - Order: life (V0, V1) before look (V3, slower, alongside).
+- Name: **Grid Station View** (not a map). Three levels: outside station → district cutaway (built first) → inside a place. → D-V3-44.
+- What is built: a city along the inside of each ring (streets and buildings on the ring's curve), replacing capsule modules. Open: which way buildings stand (D-NH-08 vs spin).
 
 Related: [[oss-visualization-landscape]] · [[system-audit-2026-07]] · [[nous-house-research|Nous House research]] · [[grid-extension-research-2026-11]]
