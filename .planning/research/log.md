@@ -369,3 +369,7 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 
 ## [2026-11-20] decide | D-V3-43 — the Grid is shown to people first
 - Operator: public Grid shows Nous names + public actions live to anyone; never private conversation or balances. Life before look (look alongside, slower). Written to `wiki/1-design/decisions.md` (D-V3-43) and the research page. Still open: regions↔rings mapping; relaxing the map's "unpkg, no build" rule; ordering against the Work Card.
+
+## [2026-11-20] apply | V0 — live, true map (D-V3-43 first step)
+- Public roster: `balance_wei` operator-only. New `GET /api/v1/scene/events` — closed list of 19 public acts, names only for acts under the Nous's own DID, land events without owner (D-58-08 kept), ballots without voter, no text/amounts. Map: 5 s poll, "Happening now" list, event-driven pulse, targeted re-read; decorative packets removed. Not deployed.
+- Open for V1: regions↔rings mapping; whether public speech text and land owners' names may be shown.

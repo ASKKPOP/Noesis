@@ -31,6 +31,8 @@ export interface OrbitalHandle {
     setZones(zones: readonly GridZoneView[]): void;
     setObjects(objects: OrbitalObjectEntry[]): void;
     focusGrid(name: string): void;
+    /** Something happened: send one packet to that lot (to the core when no lot is known). */
+    pulse(parcelId?: string): void;
     dispose(): void;
 }
 
@@ -377,18 +379,23 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         });
     }
 
-    // ── data flows ──
-    const flows: { m: THREE.Mesh; curve: THREE.Curve<THREE.Vector3>; off: number; spd: number }[] = [];
-    function flow(target: THREE.Vector3, hex: number): void {
-        const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 2, 0), new THREE.Vector3(target.x * 0.45, 14 + Math.random() * 8, target.z * 0.45), target.clone().setY(target.y + 2)]);
-        for (let k = 0; k < 2; k++) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.9, 8, 8), new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending })); scene.add(m); flows.push({ m, curve, off: Math.random(), spd: 0.0016 + Math.random() * 0.001 }); }
+    // ── events ── a packet travels from the core to the place an event happened, once,
+    // and only when the Grid's scene feed reports one. Nothing moves on its own.
+    const pulses: { m: THREE.Mesh; curve: THREE.Curve<THREE.Vector3>; born: number }[] = [];
+    const PULSE_FRAMES = 150;
+    function pulse(parcelId?: string): void {
+        const target = new THREE.Vector3(0, 2, 0);
+        const hit = parcelId ? meshes.find((m) => (m.userData as { id?: string }).id === parcelId) : undefined;
+        if (hit) hit.getWorldPosition(target);
+        const from = hit ? new THREE.Vector3(0, 2, 0) : new THREE.Vector3(0, 30, 0); // no place known: it lands on the core
+        const curve = new THREE.CatmullRomCurve3([from, new THREE.Vector3((from.x + target.x) * 0.5, Math.max(from.y, target.y) + 16, (from.z + target.z) * 0.5), target]);
+        const m = new THREE.Mesh(new THREE.SphereGeometry(1.4, 10, 10), new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending }));
+        scene.add(m); pulses.push({ m, curve, born: t });
     }
-    for (const deg of [20, 100, 140, 220, 260, 340]) { const th = deg * Math.PI / 180; const zone = deg < 120 ? 'business' : deg < 240 ? 'shopping' : 'manufacture'; flow(new THREE.Vector3(Math.cos(th) * R[2], (Math.round(deg) % 2 ? 6 : -6), Math.sin(th) * R[2]), zoneColor(zone)); }
-    // survey corridor Genesis → Moon → Mars
+    // survey corridor Genesis → Moon → Mars (a marked route; nothing travels it yet)
     { const corridor = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 2, 0), new THREE.Vector3(-150, 34, -105), GRID_FOCUS.Moon.pos.clone(), new THREE.Vector3(-410, 74, -300), GRID_FOCUS.Mars.pos.clone()]);
         const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(corridor.getPoints(96)), new THREE.LineDashedMaterial({ color: 0x3fa6bd, transparent: true, opacity: 0.30, dashSize: 3, gapSize: 4 }));
         line.computeLineDistances(); scene.add(line);
-        for (let k = 0; k < 3; k++) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.9, 8, 8), new THREE.MeshBasicMaterial({ color: 0x7fd4e8, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending })); scene.add(m); flows.push({ m, curve: corridor, off: k / 3, spd: 0.0006 }); }
     }
 
     // ── camera (hand-rolled, focus-based) ──
@@ -449,7 +456,12 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         councilRing.rotation.y -= 0.0028;
         const bp = 0.4 + Math.abs(Math.sin(t * 0.045)) * 0.35; (beacon.material as THREE.Material & { opacity: number }).opacity = bp; beaconLight.intensity = 0.55 + bp * 0.8;
         coreLight.intensity = 1.6 + Math.sin(t * 0.02) * 0.3;
-        for (const f of flows) { const u = (t * f.spd + f.off) % 1; f.m.position.copy(f.curve.getPoint(u)); (f.m.material as THREE.Material & { opacity: number }).opacity = u < 0.08 ? u / 0.08 : u > 0.92 ? (1 - u) / 0.08 : 0.95; }
+        for (let i = pulses.length - 1; i >= 0; i--) {
+            const p = pulses[i]; const u = (t - p.born) / PULSE_FRAMES;
+            if (u >= 1) { scene.remove(p.m); p.m.geometry.dispose(); (p.m.material as THREE.Material).dispose(); pulses.splice(i, 1); continue; }
+            p.m.position.copy(p.curve.getPoint(u)); p.m.scale.setScalar(u > 0.85 ? 1 + (u - 0.85) * 20 : 1);
+            (p.m.material as THREE.Material & { opacity: number }).opacity = u < 0.08 ? u / 0.08 : u > 0.85 ? (1 - u) / 0.15 : 0.95;
+        }
         renderer.render(scene, cam);
         raf = requestAnimationFrame(loop);
     })();
@@ -458,6 +470,7 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         setParcels(parcels: ParcelFeedEntry[]) { lastParcels = parcels; scaffoldDone || (scaffold(parcels), scaffoldDone = true); renderParcelModules(parcels); },
         setZones(next: readonly GridZoneView[]) { zones = next; refreshZoneSigns(); if (scaffoldDone) renderParcelModules(lastParcels); },
         setObjects(objects: OrbitalObjectEntry[]) { renderObjects(objects); },
+        pulse,
         focusGrid,
         dispose() {
             cancelAnimationFrame(raf);

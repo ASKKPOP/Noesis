@@ -97,6 +97,7 @@ import { registerConversationRoutes } from './routes/conversation.js';
 import { registerPortalConversationRoutes } from './routes/portal-conversation.js';
 import { registerPortalJoinGridRoutes } from './routes/portal-join-grid.js';
 import { registerNousAlertRoutes } from './portal/nous-alert.js';
+import { registerSceneRoutes } from './routes/scene.js';
 import { registerPortalOverviewRoute } from './routes/portal-overview.js';
 import { registerCivicConversationInboxRoutes } from './routes/civic-conversation-inbox.js';
 import { registerPoliceRoutes } from './routes/police.js';
@@ -642,12 +643,13 @@ export function buildServerWithHub(
 
     // --- Plan 04-03: Nous roster + Inspector proxy ---
 
-    app.get('/api/v1/grid/nous', async (): Promise<NousRosterResponse> => {
+    app.get('/api/v1/grid/nous', async (req): Promise<NousRosterResponse> => {
         const registry = services.registry;
         if (!registry) {
             // Legacy test harness path — no registry wired. Treat as empty roster.
             return { nous: [] };
         }
+        const showBalances = !!resolveOperator(req.didContext?.operatorDid, operatorAllowlist);
         // Infrastructure accounts (did:noesis:system:*, e.g. the treasury) are not
         // citizens — exclude them from the public roster.
         const nous: NousRosterEntry[] = registry
@@ -657,7 +659,8 @@ export function buildServerWithHub(
                 did: r.did,
                 name: r.name,
                 region: r.region,
-                balance_wei: r.balance_wei,
+                // D-V3-43: a balance is never public. Only an operator's console gets it.
+                ...(showBalances ? { balance_wei: r.balance_wei } : {}),
                 lifecyclePhase: r.lifecyclePhase,
                 reputation: r.reputation,
                 status: r.status,
@@ -815,6 +818,7 @@ export function buildServerWithHub(
     registerPortalConversationRoutes(app, services);
     registerPortalJoinGridRoutes(app, services);
     registerNousAlertRoutes(app, services);
+    registerSceneRoutes(app, services);
     registerPortalOverviewRoute(app, services);
     registerCivicConversationInboxRoutes(app, services);
     registerPoliceRoutes(app, services);

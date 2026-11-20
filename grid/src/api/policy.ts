@@ -139,6 +139,8 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/grid/regions': 'public',
     'GET /api/v1/grid/regions/:id': 'public',
     'GET /api/v1/grid/nous': 'public',
+    // D-V3-43 — the public scene feed: who did what, where, in privacy-safe form.
+    'GET /api/v1/scene/events': 'public',
     'GET /api/v1/nous/:did/state': 'public',
     'GET /api/v1/economy/trades': 'public',
     'GET /api/v1/economy/shops': 'public',

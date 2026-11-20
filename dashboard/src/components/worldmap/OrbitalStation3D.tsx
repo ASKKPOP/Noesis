@@ -11,13 +11,14 @@
  * wrapper owns the HUD / legend / Grid-focus picker / DID-gated info panel and the
  * live fetch. Mounted ssr:false (WebGL is client-only).
  */
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { GENESIS_SEED, type ParcelFeedEntry } from './OrbitalGenesisMap';
 import { mountOrbitalStation, type OrbitalHandle, type OrbitalObjectEntry } from './orbital-station-scene';
 import { pickerEntries, type PickerEntry, type PortalGrid } from './grid-picker';
 import { gridEntryHref } from '@/lib/grid-host';
 import GridCard from './GridCard';
 import { LANGS, pickLang, translator, type Lang } from './map-i18n';
+import { parseSceneEvents, refreshNeeded, sceneLine, type SceneEvent } from './scene-events';
 import { TEMPLATE_ZONES, landCounts, parseZones, zoneLabel, zoneLegend, type GridZoneView } from './zone-view';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
@@ -27,6 +28,10 @@ const GRID_HOST = process.env.NEXT_PUBLIC_GRID_HOST;
 /** Where the chosen map language is remembered in this browser. */
 const LANG_KEY = 'noesis.map.lang';
 /** The scene's own worlds: their focus line is worded in the viewer's language. */
+/** How often the map asks the Grid what has happened (the Grid ticks far slower). */
+const FEED_EVERY_MS = 5000;
+/** How many recent events the list keeps on screen. */
+const FEED_LINES = 6;
 const FOCUS_KEYS = { Genesis: 'focusGenesis', Moon: 'focusMoon', Mars: 'focusMars' } as const;
 
 function nyClock(): string {
@@ -54,6 +59,9 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
     // The Grid's zone set (D-V3-40). The six-zone template is the offline fallback.
     const [zones, setZones] = useState<readonly GridZoneView[]>(TEMPLATE_ZONES);
     // English until the browser is read (the page is prerendered in English).
+    // The most recent scene events, newest first; null = the feed has not answered yet.
+    const [happened, setHappened] = useState<SceneEvent[]>([]);
+    const [feedLive, setFeedLive] = useState<boolean | null>(null);
     const [lang, setLang] = useState<Lang>('en');
     const t = translator(lang);
 
@@ -78,49 +86,67 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
     }, []);
 
     // Live parcels — the same source of truth the Nous act on. Seed = offline fallback.
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            try {
-                const res = await fetch(`${GRID_ORIGIN}/api/v1/civic/parcels`, { cache: 'no-store' });
-                if (!res.ok) throw new Error(`feed ${res.status}`);
-                const payload = (await res.json()) as { parcels?: ParcelFeedEntry[] };
-                if (cancelled) return;
-                if (Array.isArray(payload.parcels) && payload.parcels.length > 0) {
-                    setParcels(payload.parcels); setSource('live');
-                }
-            } catch { if (!cancelled) setSource('seed'); }
-        })();
-        return () => { cancelled = true; };
+    const loadParcels = useCallback(async (): Promise<void> => {
+        try {
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/civic/parcels`, { cache: 'no-store' });
+            if (!res.ok) throw new Error(`feed ${res.status}`);
+            const payload = (await res.json()) as { parcels?: ParcelFeedEntry[] };
+            if (Array.isArray(payload.parcels) && payload.parcels.length > 0) { setParcels(payload.parcels); setSource('live'); }
+        } catch { /* unreachable — the map keeps what it last had (the founding seed at first) */ }
     }, []);
 
     // The Grid's current zones — its Polis may have added, relabeled or removed some.
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            try {
-                const res = await fetch(`${GRID_ORIGIN}/api/v1/zoning/zones`, { cache: 'no-store' });
-                if (!res.ok) return;
-                const live = parseZones(await res.json());
-                if (!cancelled && live) setZones(live);
-            } catch { /* zones unreachable — the map keeps the template */ }
-        })();
-        return () => { cancelled = true; };
+    const loadZones = useCallback(async (): Promise<void> => {
+        try {
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/zoning/zones`, { cache: 'no-store' });
+            if (!res.ok) return;
+            const live = parseZones(await res.json());
+            if (live) setZones(live);
+        } catch { /* zones unreachable — the map keeps what it last had */ }
     }, []);
 
     // Built orbital objects — the economy-built world the Nous now perceives too.
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            try {
-                const res = await fetch(`${GRID_ORIGIN}/api/v1/orbital/objects`, { cache: 'no-store' });
-                if (!res.ok) return;
-                const payload = (await res.json()) as { objects?: OrbitalObjectEntry[] };
-                if (!cancelled && Array.isArray(payload.objects)) setObjects(payload.objects);
-            } catch { /* objects are optional — map still renders without them */ }
-        })();
-        return () => { cancelled = true; };
+    const loadObjects = useCallback(async (): Promise<void> => {
+        try {
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/orbital/objects`, { cache: 'no-store' });
+            if (!res.ok) return;
+            const payload = (await res.json()) as { objects?: OrbitalObjectEntry[] };
+            if (Array.isArray(payload.objects)) setObjects(payload.objects);
+        } catch { /* objects are optional — map still renders without them */ }
     }, []);
+
+    useEffect(() => { void loadParcels(); void loadZones(); void loadObjects(); }, [loadParcels, loadZones, loadObjects]);
+
+    // The scene feed (D-V3-43): what has happened in the Grid, as it happens. Each new
+    // event is listed, pulses the place it happened, and makes the map re-read whatever
+    // it changed. The first answer is recent history: listed, but not replayed.
+    useEffect(() => {
+        let stopped = false;
+        let cursor: number | null = null;
+        const ask = async (): Promise<void> => {
+            if (document.hidden) return;
+            try {
+                const res = await fetch(`${GRID_ORIGIN}/api/v1/scene/events${cursor === null ? '' : `?since=${cursor}`}`, { cache: 'no-store', credentials: 'include' });
+                const page = res.ok ? parseSceneEvents(await res.json()) : null;
+                if (stopped) return;
+                if (!page) { setFeedLive(false); return; }
+                const first = cursor === null;
+                cursor = page.cursor;
+                setFeedLive(true);
+                if (page.events.length === 0) return;
+                setHappened((was) => [...page.events].reverse().concat(was).slice(0, FEED_LINES));
+                if (first) return;
+                page.events.forEach((e, i) => setTimeout(() => handleRef.current?.pulse(e.parcel_id), i * 400));
+                const changed = refreshNeeded(page.events);
+                if (changed.has('parcels')) void loadParcels();
+                if (changed.has('objects')) void loadObjects();
+                if (changed.has('zones')) void loadZones();
+            } catch { if (!stopped) setFeedLive(false); }
+        };
+        void ask();
+        const id = setInterval(() => { void ask(); }, FEED_EVERY_MS);
+        return () => { stopped = true; clearInterval(id); };
+    }, [loadParcels, loadObjects, loadZones]);
 
     // The Grid registry — which Grids exist, and which are private / locked for this
     // viewer (D-V3-41). Session cookie included so a member sees their Grid unlocked.
@@ -169,6 +195,12 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
 
     const isFuture = (p: ParcelFeedEntry | null): boolean => !!p && (p as unknown as { future?: boolean }).future === true;
     const { purchasable, civic } = landCounts(parcels, zones);
+
+    /** The zone an event happened in, by its Polis's label: from the event, else from its lot. */
+    const zoneOf = (e: SceneEvent): string | undefined => {
+        const id = e.zone_id ?? parcels.find((p) => p.id === e.parcel_id)?.zone;
+        return id ? zones.find((z) => z.zone_id === id)?.label ?? id : undefined;
+    };
 
     const hud: React.CSSProperties = { position: 'fixed', zIndex: 10, fontFamily: "'JetBrains Mono', ui-monospace, monospace", pointerEvents: 'none', color: '#f5f0ea' };
     const btn = (on: boolean): React.CSSProperties => ({ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, border: on ? '1px solid #da7a4e' : '1px solid rgba(255,255,255,.16)', cursor: 'pointer', borderRadius: 999, padding: '5px 12px', background: on ? '#da7a4e' : 'rgba(255,255,255,.04)', color: on ? '#0b1220' : '#f5f0ea', pointerEvents: 'auto' });
@@ -280,6 +312,23 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
                             <div style={{ marginTop: 11, color: '#da7a4e', fontSize: 11, borderTop: '1px solid rgba(0,212,255,.16)', paddingTop: 10 }}>{t('privateNote')}</div>
                         </>
                     )}
+                </div>
+            )}
+
+            {/* happening now — the Grid's public scene feed, newest first */}
+            {feedLive !== null && (
+                <div role="log" aria-label={t('happening')} style={{ ...hud, bottom: 62, right: 22, width: 300, background: 'rgba(2,6,16,.82)', border: '1px solid rgba(0,212,255,.22)', borderRadius: 12, padding: '10px 14px', backdropFilter: 'blur(14px)', fontSize: 11.5, lineHeight: 1.6, color: '#c5cedd' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: feedLive ? '#7fe0a0' : '#e7c878', marginBottom: 4 }}>
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: feedLive ? '#7fe0a0' : '#e7c878' }} />{t('happening')}
+                    </div>
+                    {!feedLive && <div style={{ color: '#e7c878' }}>{t('feedOff')}</div>}
+                    {feedLive && happened.length === 0 && <div style={{ color: '#8a93a6' }}>{t('nothingYet')}</div>}
+                    {happened.map((e) => (
+                        <div key={e.id} style={{ display: 'flex', gap: 8 }}>
+                            <span style={{ color: '#8a93a6', whiteSpace: 'nowrap' }}>{new Date(e.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span>{sceneLine(e, t, zoneOf)}</span>
+                        </div>
+                    ))}
                 </div>
             )}
 

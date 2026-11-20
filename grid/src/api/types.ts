@@ -45,7 +45,8 @@ export interface NousRosterEntry {
     did: string;
     name: string;
     region: string;
-    balance_wei: number;
+    /** Present only for an operator; never sent to the public (D-V3-43). */
+    balance_wei?: number;
     lifecyclePhase: string;
     reputation: number;
     status: string;
