@@ -20,7 +20,7 @@ export type Lang = (typeof LANGS)[number]['code'];
 
 const en = {
     language: 'Language',
-    subtitle: 'Genesis Core · Orbital Station',
+    subtitle: 'Genesis · Grid Station View',
     epoch: 'Genesis Epoch 2026-06-01 PT',
     purchasableSlots: 'purchasable slots',
     civic: 'civic',
@@ -121,7 +121,13 @@ const en = {
     evOrbitalUpgraded: "An orbital object was upgraded",
     evVoted: "A ballot was cast",
     evLaw: "A law was enacted",
-    evZones: "The Polis changed the zones",
+    evZones: "The Polis changed the zones",    openDistrict: "Open this district",
+    backToStation: "← Station",
+    districtOf: "{zone} district",
+    districtCounts: "{lots} lots · {buildings} buildings · {occupied} with someone inside",
+    districtHint: "drag = move along the ring · scroll = closer or further",
+    districtRoofs: "the floor is the ring's outer wall · every roof points to the core overhead",
+    legendOpen: "Open the {zone} district",
 };
 
 export type Strings = typeof en;
@@ -129,7 +135,7 @@ export type Key = keyof Strings;
 
 const es: Strings = {
     language: 'Idioma',
-    subtitle: 'Núcleo Genesis · Estación orbital',
+    subtitle: 'Genesis · Grid Station View',
     epoch: 'Época Genesis 2026-06-01 PT',
     purchasableSlots: 'parcelas en venta',
     civic: 'cívicas',
@@ -230,12 +236,18 @@ const es: Strings = {
     evOrbitalUpgraded: "Se mejoró un objeto orbital",
     evVoted: "Se emitió un voto",
     evLaw: "Se promulgó una ley",
-    evZones: "La Polis cambió las zonas",
+    evZones: "La Polis cambió las zonas",    openDistrict: "Abrir este distrito",
+    backToStation: "← Estación",
+    districtOf: "Distrito {zone}",
+    districtCounts: "{lots} parcelas · {buildings} edificios · {occupied} con alguien dentro",
+    districtHint: "arrastrar = moverse por el anillo · rueda = acercar o alejar",
+    districtRoofs: "el suelo es la pared exterior del anillo · cada tejado apunta al núcleo, arriba",
+    legendOpen: "Abrir el distrito {zone}",
 };
 
 const ja: Strings = {
     language: '言語',
-    subtitle: 'Genesis コア · 軌道ステーション',
+    subtitle: 'Genesis · Grid Station View',
     epoch: 'Genesis 紀元 2026-06-01 PT',
     purchasableSlots: '購入可能な区画',
     civic: '公共',
@@ -336,12 +348,18 @@ const ja: Strings = {
     evOrbitalUpgraded: "軌道オブジェクトが改良されました",
     evVoted: "投票が行われました",
     evLaw: "法律が制定されました",
-    evZones: "Polis がゾーンを変更しました",
+    evZones: "Polis がゾーンを変更しました",    openDistrict: "この地区を開く",
+    backToStation: "← ステーション",
+    districtOf: "{zone} 地区",
+    districtCounts: "区画 {lots} · 建物 {buildings} · 誰かがいる区画 {occupied}",
+    districtHint: "ドラッグ = リングに沿って移動 · スクロール = 近づく／離れる",
+    districtRoofs: "床はリングの外壁 · すべての屋根は頭上のコアを向いています",
+    legendOpen: "{zone} 地区を開く",
 };
 
 const ko: Strings = {
     language: '언어',
-    subtitle: 'Genesis 코어 · 궤도 정거장',
+    subtitle: 'Genesis · Grid Station View',
     epoch: 'Genesis 기원 2026-06-01 PT',
     purchasableSlots: '구매 가능 구획',
     civic: '공공',
@@ -442,12 +460,18 @@ const ko: Strings = {
     evOrbitalUpgraded: "궤도 시설이 개선되었습니다",
     evVoted: "투표가 이루어졌습니다",
     evLaw: "법이 제정되었습니다",
-    evZones: "Polis가 구역을 변경했습니다",
+    evZones: "Polis가 구역을 변경했습니다",    openDistrict: "이 구역 열기",
+    backToStation: "← 정거장",
+    districtOf: "{zone} 구역",
+    districtCounts: "구획 {lots} · 건물 {buildings} · 누군가 안에 있는 곳 {occupied}",
+    districtHint: "드래그 = 링을 따라 이동 · 스크롤 = 가까이/멀리",
+    districtRoofs: "바닥은 링의 바깥벽 · 모든 지붕은 머리 위 코어를 향합니다",
+    legendOpen: "{zone} 구역 열기",
 };
 
 const vi: Strings = {
     language: 'Ngôn ngữ',
-    subtitle: 'Lõi Genesis · Trạm quỹ đạo',
+    subtitle: 'Genesis · Grid Station View',
     epoch: 'Kỷ nguyên Genesis 2026-06-01 PT',
     purchasableSlots: 'lô có thể mua',
     civic: 'công cộng',
@@ -548,12 +572,18 @@ const vi: Strings = {
     evOrbitalUpgraded: "Một vật thể quỹ đạo đã được nâng cấp",
     evVoted: "Một lá phiếu đã được bỏ",
     evLaw: "Một đạo luật đã được ban hành",
-    evZones: "Polis đã thay đổi các khu vực",
+    evZones: "Polis đã thay đổi các khu vực",    openDistrict: "Mở khu này",
+    backToStation: "← Trạm",
+    districtOf: "Khu {zone}",
+    districtCounts: "{lots} lô · {buildings} công trình · {occupied} nơi có người bên trong",
+    districtHint: "kéo = di chuyển dọc theo vành · cuộn = lại gần hoặc ra xa",
+    districtRoofs: "sàn là vách ngoài của vành · mọi mái nhà đều hướng về lõi phía trên",
+    legendOpen: "Mở khu {zone}",
 };
 
 const fil: Strings = {
     language: 'Wika',
-    subtitle: 'Genesis Core · Istasyong Orbital',
+    subtitle: 'Genesis · Grid Station View',
     epoch: 'Panahong Genesis 2026-06-01 PT',
     purchasableSlots: 'mga lote na mabibili',
     civic: 'pampubliko',
@@ -654,7 +684,13 @@ const fil: Strings = {
     evOrbitalUpgraded: "May pinahusay na bagay sa orbit",
     evVoted: "May bumoto",
     evLaw: "May naisabatas",
-    evZones: "Binago ng Polis ang mga sona",
+    evZones: "Binago ng Polis ang mga sona",    openDistrict: "Buksan ang distritong ito",
+    backToStation: "← Istasyon",
+    districtOf: "Distrito ng {zone}",
+    districtCounts: "{lots} lote · {buildings} gusali · {occupied} may tao sa loob",
+    districtHint: "i-drag = gumalaw sa kahabaan ng singsing · i-scroll = lumapit o lumayo",
+    districtRoofs: "ang sahig ay ang panlabas na dingding ng singsing · bawat bubong ay nakaturo sa ubod sa itaas",
+    legendOpen: "Buksan ang distrito ng {zone}",
 };
 
 export const STRINGS: Record<Lang, Strings> = { en, es, ja, ko, vi, fil };

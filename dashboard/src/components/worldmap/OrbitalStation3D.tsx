@@ -17,9 +17,11 @@ import { mountOrbitalStation, type OrbitalHandle, type OrbitalObjectEntry } from
 import { pickerEntries, type PickerEntry, type PortalGrid } from './grid-picker';
 import { gridEntryHref } from '@/lib/grid-host';
 import GridCard from './GridCard';
+import DistrictView from './DistrictView';
+import type { DistrictHandle } from './district-scene';
 import { LANGS, pickLang, translator, type Lang } from './map-i18n';
 import { parseSceneEvents, refreshNeeded, sceneLine, type SceneEvent } from './scene-events';
-import { TEMPLATE_ZONES, landCounts, parseZones, zoneLabel, zoneLegend, type GridZoneView } from './zone-view';
+import { TEMPLATE_ZONES, landCounts, parseZones, zoneColor, zoneLabel, zoneLegend, type GridZoneView } from './zone-view';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
 /** The Grid's own host (e.g. grid.noesiis.com). Unset = enter on this origin. */
@@ -62,6 +64,9 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
     // The most recent scene events, newest first; null = the feed has not answered yet.
     const [happened, setHappened] = useState<SceneEvent[]>([]);
     const [feedLive, setFeedLive] = useState<boolean | null>(null);
+    // The zone whose district is open (the second level of the Grid Station View).
+    const [district, setDistrict] = useState<string | null>(null);
+    const districtRef = useRef<DistrictHandle | null>(null);
     const [lang, setLang] = useState<Lang>('en');
     const t = translator(lang);
 
@@ -136,7 +141,7 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
                 if (page.events.length === 0) return;
                 setHappened((was) => [...page.events].reverse().concat(was).slice(0, FEED_LINES));
                 if (first) return;
-                page.events.forEach((e, i) => setTimeout(() => handleRef.current?.pulse(e.parcel_id), i * 400));
+                page.events.forEach((e, i) => setTimeout(() => { handleRef.current?.pulse(e.parcel_id); districtRef.current?.pulse(e.parcel_id); }, i * 400));
                 const changed = refreshNeeded(page.events);
                 if (changed.has('parcels')) void loadParcels();
                 if (changed.has('objects')) void loadObjects();
@@ -231,8 +236,14 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
             )}
 
             {/* legend */}
-            <div style={{ ...hud, bottom: 18, left: 22, fontSize: 11, lineHeight: 1.9, color: '#8a93a6' }}>
-                {[...zoneLegend(zones), ['#e7c878', t('legendObjects')], ['#9aa6c0', t('legendFrontier')]].map(([c, label]) => (
+            <div style={{ ...hud, bottom: 18, left: 22, fontSize: 11, lineHeight: 1.9, color: '#8a93a6', pointerEvents: 'auto' }}>
+                {zoneLegend(zones).map(([c, label], i) => (
+                    <button
+                        key={zones[i].zone_id} onClick={() => setDistrict(zones[i].zone_id)} title={t('legendOpen', { zone: zones[i].label })}
+                        style={{ display: 'block', background: 'none', border: 'none', padding: 0, font: 'inherit', lineHeight: 'inherit', color: 'inherit', cursor: 'pointer', textAlign: 'left' }}
+                    ><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 2, marginRight: 7, verticalAlign: 'middle', background: c }} />{label} <span style={{ color: '#4fd2f2' }}>→</span></button>
+                ))}
+                {[['#e7c878', t('legendObjects')], ['#9aa6c0', t('legendFrontier')]].map(([c, label]) => (
                     <div key={label}><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 2, marginRight: 7, verticalAlign: 'middle', background: c }} />{label}</div>
                 ))}
             </div>
@@ -307,6 +318,7 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
                     ) : (
                         <>
                             <div style={{ color: '#3fa6bd', fontSize: 13, marginBottom: 8 }}>{zoneLabel(picked, zones)} · {t('district')}</div>
+                            <button onClick={() => setDistrict(picked.zone)} style={{ ...btn(true), marginBottom: 10 }}>{t('openDistrict')} →</button>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{t('shell')}</span><b style={{ color: '#f5f0ea' }}>{picked.ring === 0 ? t('core') : t('ring', { n: picked.ring })}</b></div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{t('status')}</span><b style={{ color: '#f5f0ea' }}>{picked.status}</b></div>
                             <div style={{ marginTop: 11, color: '#da7a4e', fontSize: 11, borderTop: '1px solid rgba(0,212,255,.16)', paddingTop: 10 }}>{t('privateNote')}</div>
@@ -315,9 +327,18 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
                 </div>
             )}
 
+            {/* the district level: one zone as a city along the inside of its ring */}
+            {district && (
+                <DistrictView
+                    zoneId={district} zoneLabel={zones.find((z) => z.zone_id === district)?.label ?? district}
+                    color={zoneColor(district)} parcels={parcels} t={t}
+                    onClose={() => setDistrict(null)} onHandle={(h) => { districtRef.current = h; }}
+                />
+            )}
+
             {/* happening now — the Grid's public scene feed, newest first */}
             {feedLive !== null && (
-                <div role="log" aria-label={t('happening')} style={{ ...hud, bottom: 62, right: 22, width: 300, background: 'rgba(2,6,16,.82)', border: '1px solid rgba(0,212,255,.22)', borderRadius: 12, padding: '10px 14px', backdropFilter: 'blur(14px)', fontSize: 11.5, lineHeight: 1.6, color: '#c5cedd' }}>
+                <div role="log" aria-label={t('happening')} style={{ ...hud, zIndex: 12, bottom: 62, right: 22, width: 300, background: 'rgba(2,6,16,.82)', border: '1px solid rgba(0,212,255,.22)', borderRadius: 12, padding: '10px 14px', backdropFilter: 'blur(14px)', fontSize: 11.5, lineHeight: 1.6, color: '#c5cedd' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: feedLive ? '#7fe0a0' : '#e7c878', marginBottom: 4 }}>
                         <span style={{ width: 7, height: 7, borderRadius: '50%', background: feedLive ? '#7fe0a0' : '#e7c878' }} />{t('happening')}
                     </div>

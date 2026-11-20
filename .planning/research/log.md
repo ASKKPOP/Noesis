@@ -376,3 +376,6 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 
 ## [2026-11-20] decide | D-V3-44 — Grid Station View; a city inside the rings
 - Operator: the Grid's screen is the "Grid Station View" (not a map); levels outside → district cutaway → interior (option D); buildings are a city along the inside of each ring, not capsule modules. Written to decisions.md, the visualizer skill, the research page. Open: building orientation in a ring.
+
+## [2026-11-20] apply | District level of the Grid Station View (first cut)
+- Roofs toward the centre (operator). `district-layout.ts` + `district-scene.ts` + `DistrictView.tsx`: a zone as a street along the ring's curve, lots both sides, code-drawn buildings by kind/condition/occupancy from the lot feed; event flash from the scene feed. Not deployed. Next needs approval: regions→places mapping to put Nous in it.
