@@ -382,3 +382,6 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 
 ## [2026-11-20] apply | Nous in their districts (V1 first cut)
 - Operator approved regions→places. `nous-places.ts` (placing + kind fall-back, roster reader, event following); figures, names, act signs in the district scene; roster bar. Not deployed. Not yet seen with real moves (needs a Nous that acts).
+
+## [2026-11-20] deploy | V0 + district level + Nous in districts (operator-requested)
+- Live and correct. Finding: the live Nous do not act — last 1,000 record entries are ticks; no Brain container on the server. The view is truthful and therefore still. Interest now depends on running Brains (operator's secret) and on Nous taking more than two kinds of action (X2).
