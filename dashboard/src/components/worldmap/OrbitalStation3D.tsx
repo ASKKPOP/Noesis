@@ -20,7 +20,8 @@ import GridCard from './GridCard';
 import DistrictView from './DistrictView';
 import type { DistrictHandle } from './district-scene';
 import { LANGS, pickLang, translator, type Lang } from './map-i18n';
-import { parseSceneEvents, refreshNeeded, sceneLine, type SceneEvent } from './scene-events';
+import { parseSceneEvents, refreshNeeded, sceneLine, type SceneEvent, type SceneKind } from './scene-events';
+import { applySceneEvents, nousColor, parseRoster, placeOf, type NousView } from './nous-places';
 import { TEMPLATE_ZONES, landCounts, parseZones, zoneColor, zoneLabel, zoneLegend, type GridZoneView } from './zone-view';
 
 const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:8080';
@@ -34,6 +35,8 @@ const LANG_KEY = 'noesis.map.lang';
 const FEED_EVERY_MS = 5000;
 /** How many recent events the list keeps on screen. */
 const FEED_LINES = 6;
+/** The sign shown above a Nous for a moment when it does something. */
+const ACT_SIGN: Partial<Record<SceneKind, string>> = { spoke: '…', traded: '⇄', proposed: '✎', used_tool: '⚙', slept: 'z z', woke: '☀', arrived: '✦' };
 const FOCUS_KEYS = { Genesis: 'focusGenesis', Moon: 'focusMoon', Mars: 'focusMars' } as const;
 
 function nyClock(): string {
@@ -67,6 +70,10 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
     // The zone whose district is open (the second level of the Grid Station View).
     const [district, setDistrict] = useState<string | null>(null);
     const districtRef = useRef<DistrictHandle | null>(null);
+    // The Grid's Nous: who they are and which region each is in (no balances).
+    const [nous, setNous] = useState<NousView[]>([]);
+    const nousRef = useRef<NousView[]>([]);
+    useEffect(() => { nousRef.current = nous; }, [nous]);
     const [lang, setLang] = useState<Lang>('en');
     const t = translator(lang);
 
@@ -120,7 +127,17 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
         } catch { /* objects are optional — map still renders without them */ }
     }, []);
 
-    useEffect(() => { void loadParcels(); void loadZones(); void loadObjects(); }, [loadParcels, loadZones, loadObjects]);
+    // The Grid's public list of Nous: names and where each one is.
+    const loadNous = useCallback(async (): Promise<void> => {
+        try {
+            const res = await fetch(`${GRID_ORIGIN}/api/v1/grid/nous`, { cache: 'no-store' });
+            const list = res.ok ? parseRoster(await res.json()) : null;
+            // Sleep is known only from events, so keep what has been seen for a Nous still listed.
+            if (list) setNous((was) => list.map((n) => ({ ...n, asleep: was.find((w) => w.did === n.did)?.asleep ?? false })));
+        } catch { /* unreachable — the roster keeps what it last had */ }
+    }, []);
+
+    useEffect(() => { void loadParcels(); void loadZones(); void loadObjects(); void loadNous(); }, [loadParcels, loadZones, loadObjects, loadNous]);
 
     // The scene feed (D-V3-43): what has happened in the Grid, as it happens. Each new
     // event is listed, pulses the place it happened, and makes the map re-read whatever
@@ -141,6 +158,11 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
                 if (page.events.length === 0) return;
                 setHappened((was) => [...page.events].reverse().concat(was).slice(0, FEED_LINES));
                 if (first) return;
+                // Follow each Nous: where it moved, whether it sleeps; re-read the list for a newcomer.
+                const followed = applySceneEvents(nousRef.current, page.events);
+                setNous(followed.nous);
+                if (followed.unknown) void loadNous();
+                for (const e of page.events) { const sign = ACT_SIGN[e.kind]; if (sign && e.actor) districtRef.current?.act(e.actor.did, sign); }
                 page.events.forEach((e, i) => setTimeout(() => { handleRef.current?.pulse(e.parcel_id); districtRef.current?.pulse(e.parcel_id); }, i * 400));
                 const changed = refreshNeeded(page.events);
                 if (changed.has('parcels')) void loadParcels();
@@ -151,7 +173,7 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
         void ask();
         const id = setInterval(() => { void ask(); }, FEED_EVERY_MS);
         return () => { stopped = true; clearInterval(id); };
-    }, [loadParcels, loadObjects, loadZones]);
+    }, [loadParcels, loadObjects, loadZones, loadNous]);
 
     // The Grid registry — which Grids exist, and which are private / locked for this
     // viewer (D-V3-41). Session cookie included so a member sees their Grid unlocked.
@@ -327,11 +349,31 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
                 </div>
             )}
 
+            {/* everyone at a glance: one tile per Nous — who, where, awake or asleep. Click to go there. */}
+            {nous.length > 0 && (
+                <div style={{ ...hud, zIndex: 12, top: 64, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', maxWidth: '56vw', pointerEvents: 'auto' }}>
+                    {nous.map((n) => {
+                        const zone = placeOf(n, zones);
+                        const where = zone ? zones.find((z) => z.zone_id === zone)?.label ?? zone : t('nousNoPlace');
+                        return (
+                            <button
+                                key={n.did} disabled={!zone} onClick={() => zone && setDistrict(zone)} title={t('goToNous', { name: n.name })}
+                                style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, textAlign: 'left', cursor: zone ? 'pointer' : 'default', borderRadius: 999, padding: '4px 12px 4px 5px', background: 'rgba(2,6,16,.82)', color: '#f5f0ea', border: zone && zone === district ? '1px solid #da7a4e' : '1px solid rgba(255,255,255,.16)', opacity: n.asleep ? 0.6 : 1 }}
+                            >
+                                <span style={{ width: 20, height: 20, borderRadius: '50%', background: `#${nousColor(n.did).toString(16).padStart(6, '0')}`, color: '#020610', display: 'grid', placeItems: 'center', fontWeight: 700 }}>{n.name.slice(0, 1)}</span>
+                                <span>{n.name}<span style={{ color: '#8a93a6' }}> · {where}{n.asleep ? ` · ${t('nousAsleep')}` : ''}</span></span>
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
             {/* the district level: one zone as a city along the inside of its ring */}
             {district && (
                 <DistrictView
                     zoneId={district} zoneLabel={zones.find((z) => z.zone_id === district)?.label ?? district}
                     color={zoneColor(district)} parcels={parcels} t={t}
+                    residents={nous.filter((n) => placeOf(n, zones) === district).map((n) => ({ did: n.did, name: n.name, color: nousColor(n.did), asleep: n.asleep }))}
                     onClose={() => setDistrict(null)} onHandle={(h) => { districtRef.current = h; }}
                 />
             )}

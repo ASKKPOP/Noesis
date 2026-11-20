@@ -11,8 +11,15 @@
 import * as THREE from 'three';
 import { FLOOR_RADIUS as R, ROW_OFFSET, districtSpan, type DistrictLot } from './district-layout';
 
+/** A Nous standing in this district. */
+export interface DistrictNous { did: string; name: string; color: number; asleep: boolean }
+
 export interface DistrictHandle {
     setLots(lots: readonly DistrictLot[]): void;
+    /** Who is in this district now. A newcomer walks in from the end of the street; one who left walks out. */
+    setNous(nous: readonly DistrictNous[]): void;
+    /** This Nous just did something: show a sign above it for a moment. */
+    act(did: string, sign: string): void;
     /** Something happened on this lot: flash it once. */
     pulse(lotId?: string): void;
     dispose(): void;
@@ -142,6 +149,54 @@ export function mountDistrict(canvas: HTMLCanvasElement, accent: number): Distri
         along = Math.max(-span / 2, Math.min(span / 2, along));
     }
 
+    // ── the Nous ── each stands on the street in its own colour, under its name.
+    interface Figure { g: THREE.Group; body: THREE.MeshStandardMaterial; angle: number; z: number; toAngle: number; toZ: number; leaving: boolean; asleep: boolean; sign: THREE.Sprite | null; signBorn: number }
+    const figures = new Map<string, Figure>();
+    function label(text: string, size: number, color: string): THREE.Sprite {
+        const c = document.createElement('canvas'); const ctx = c.getContext('2d')!;
+        ctx.font = `600 ${size}px sans-serif`; c.width = Math.ceil(ctx.measureText(text).width) + 24; c.height = size + 20;
+        ctx.font = `600 ${size}px sans-serif`; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(2,6,16,.72)'; ctx.fillRect(0, 0, c.width, c.height);
+        ctx.fillStyle = color; ctx.fillText(text, c.width / 2, c.height / 2 + 1);
+        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthTest: false, fog: false }));
+        sprite.scale.set((c.width / c.height) * 2.6, 2.6, 1);
+        return sprite;
+    }
+    function drop(o: THREE.Object3D): void {
+        o.traverse((x) => { const m = x as THREE.Mesh & { material?: THREE.Material & { map?: THREE.Texture } }; m.geometry?.dispose(); m.material?.map?.dispose(); m.material?.dispose(); });
+        o.removeFromParent();
+    }
+    const streetEnd = (did: string): number => (span / 2 + 0.09) * (did.charCodeAt(did.length - 1) % 2 ? 1 : -1);
+
+    function setNous(list: readonly DistrictNous[]): void {
+        const here = new Set(list.map((n) => n.did));
+        for (const [did, f] of figures) if (!here.has(did) && !f.leaving) { f.leaving = true; f.toAngle = streetEnd(did); }
+        list.forEach((n, i) => {
+            let f = figures.get(n.did);
+            if (!f) {
+                const g = new THREE.Group();
+                const body = new THREE.MeshStandardMaterial({ color: n.color, emissive: n.color, emissiveIntensity: 0.55, roughness: 0.5 });
+                const torso = new THREE.Mesh(new THREE.CapsuleGeometry(1.05, 2.0, 6, 12), body); torso.position.y = 2.1; g.add(torso);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.95, 16, 12), body); head.position.y = 4.6; g.add(head);
+                const name = label(n.name, 44, '#f5f0ea'); name.position.y = 7.4; g.add(name);
+                scene.add(g);
+                f = { g, body, angle: streetEnd(n.did), z: 0, toAngle: 0, toZ: 0, leaving: false, asleep: n.asleep, sign: null, signBorn: 0 };
+                figures.set(n.did, f);
+            }
+            f.leaving = false; f.asleep = n.asleep;
+            f.toAngle = ((i - (list.length - 1) / 2) * 8) / R;   // spread along the middle of the street
+            f.toZ = (i % 2 ? 1 : -1) * 2.6;
+            f.body.emissiveIntensity = n.asleep ? 0.08 : 0.55;
+        });
+    }
+
+    function act(did: string, sign: string): void {
+        const f = figures.get(did);
+        if (!f) return;
+        if (f.sign) drop(f.sign);
+        f.sign = label(sign, 56, '#ffd9a0'); f.sign.position.y = 10.6; f.signBorn = frame; f.g.add(f.sign);
+    }
+
     const flashes: { m: THREE.Mesh; born: number }[] = [];
     let frame = 0;
     function pulse(lotId?: string): void {
@@ -180,6 +235,12 @@ export function mountDistrict(canvas: HTMLCanvasElement, accent: number): Distri
         frame++;
         place();
         halo.scale.setScalar(1 + Math.sin(frame * 0.02) * 0.05);
+        for (const [did, f] of figures) {
+            f.angle += (f.toAngle - f.angle) * 0.03; f.z += (f.toZ - f.z) * 0.03;
+            if (f.leaving && Math.abs(f.toAngle - f.angle) < 0.004) { drop(f.g); figures.delete(did); continue; }
+            f.g.position.copy(onFloor(f.angle, f.z, 0.4)); f.g.rotation.z = f.angle;
+            if (f.sign && frame - f.signBorn > 260) { drop(f.sign); f.sign = null; }
+        }
         for (let i = flashes.length - 1; i >= 0; i--) {
             const f = flashes[i]; const u = (frame - f.born) / 110;
             if (u >= 1) { scene.remove(f.m); f.m.geometry.dispose(); (f.m.material as THREE.Material).dispose(); flashes.splice(i, 1); continue; }
@@ -190,11 +251,12 @@ export function mountDistrict(canvas: HTMLCanvasElement, accent: number): Distri
     })();
 
     return {
-        setLots, pulse,
+        setLots, setNous, act, pulse,
         dispose() {
             cancelAnimationFrame(raf);
             canvas.removeEventListener('pointerdown', onDown); removeEventListener('pointerup', onUp); removeEventListener('pointermove', onMove);
             canvas.removeEventListener('wheel', onWheel); removeEventListener('resize', onResize);
+            for (const f of figures.values()) drop(f.g);
             renderer.dispose();
         },
     };

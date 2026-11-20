@@ -208,9 +208,9 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         } else {
             const cap = new THREE.Mesh(new THREE.CylinderGeometry(Rr * 0.52, Rr * 0.52, Rr * 0.32, 16), new THREE.MeshStandardMaterial({ color: 0xe7c878, emissive: 0x8a6a3b, emissiveIntensity: 0.45, metalness: 0.8, roughness: 0.3 })); cap.position.y = -(L / 2 + Rr * 0.95); grp.add(cap);
         }
-        // ── #2 Nous presence avatar — at OWNED/occupied parcels (the Nous "at home").
-        // Lights up as Nous buy land; nothing on a fresh grid (all parcels available).
-        if (p.owner_civic_did_hash && (p.occupant_count ?? 0) >= 0 && status === 'owned') {
+        // ── #2 presence — a figure stands on a lot only while someone is inside it
+        // (the Grid's occupant count). Owning a lot is shown by the lot itself.
+        if ((p.occupant_count ?? 0) > 0 && status === 'owned') {
             const av = new THREE.Group();
             const head = new THREE.Mesh(new THREE.SphereGeometry(Rr * 0.34, 14, 12),
                 new THREE.MeshStandardMaterial({ color: 0xeaf6ff, emissive: 0x6fd4ff, emissiveIntensity: 0.7, metalness: 0.2, roughness: 0.4 }));

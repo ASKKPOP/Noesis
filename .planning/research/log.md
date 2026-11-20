@@ -379,3 +379,6 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 
 ## [2026-11-20] apply | District level of the Grid Station View (first cut)
 - Roofs toward the centre (operator). `district-layout.ts` + `district-scene.ts` + `DistrictView.tsx`: a zone as a street along the ring's curve, lots both sides, code-drawn buildings by kind/condition/occupancy from the lot feed; event flash from the scene feed. Not deployed. Next needs approval: regions→places mapping to put Nous in it.
+
+## [2026-11-20] apply | Nous in their districts (V1 first cut)
+- Operator approved regions→places. `nous-places.ts` (placing + kind fall-back, roster reader, event following); figures, names, act signs in the district scene; roster bar. Not deployed. Not yet seen with real moves (needs a Nous that acts).

@@ -127,7 +127,10 @@ const en = {
     districtCounts: "{lots} lots · {buildings} buildings · {occupied} with someone inside",
     districtHint: "drag = move along the ring · scroll = closer or further",
     districtRoofs: "the floor is the ring's outer wall · every roof points to the core overhead",
-    legendOpen: "Open the {zone} district",
+    legendOpen: "Open the {zone} district",    nousNoPlace: "not in a district",
+    nousAsleep: "asleep",
+    goToNous: "Go to {name}",
+    districtNous: "{n} Nous here",
 };
 
 export type Strings = typeof en;
@@ -242,7 +245,10 @@ const es: Strings = {
     districtCounts: "{lots} parcelas · {buildings} edificios · {occupied} con alguien dentro",
     districtHint: "arrastrar = moverse por el anillo · rueda = acercar o alejar",
     districtRoofs: "el suelo es la pared exterior del anillo · cada tejado apunta al núcleo, arriba",
-    legendOpen: "Abrir el distrito {zone}",
+    legendOpen: "Abrir el distrito {zone}",    nousNoPlace: "fuera de los distritos",
+    nousAsleep: "dormido",
+    goToNous: "Ir a {name}",
+    districtNous: "{n} Nous aquí",
 };
 
 const ja: Strings = {
@@ -354,7 +360,10 @@ const ja: Strings = {
     districtCounts: "区画 {lots} · 建物 {buildings} · 誰かがいる区画 {occupied}",
     districtHint: "ドラッグ = リングに沿って移動 · スクロール = 近づく／離れる",
     districtRoofs: "床はリングの外壁 · すべての屋根は頭上のコアを向いています",
-    legendOpen: "{zone} 地区を開く",
+    legendOpen: "{zone} 地区を開く",    nousNoPlace: "地区の外",
+    nousAsleep: "睡眠中",
+    goToNous: "{name} のところへ",
+    districtNous: "ここにいる Nous: {n}",
 };
 
 const ko: Strings = {
@@ -466,7 +475,10 @@ const ko: Strings = {
     districtCounts: "구획 {lots} · 건물 {buildings} · 누군가 안에 있는 곳 {occupied}",
     districtHint: "드래그 = 링을 따라 이동 · 스크롤 = 가까이/멀리",
     districtRoofs: "바닥은 링의 바깥벽 · 모든 지붕은 머리 위 코어를 향합니다",
-    legendOpen: "{zone} 구역 열기",
+    legendOpen: "{zone} 구역 열기",    nousNoPlace: "구역 밖",
+    nousAsleep: "수면 중",
+    goToNous: "{name}에게 가기",
+    districtNous: "여기 있는 Nous {n}",
 };
 
 const vi: Strings = {
@@ -578,7 +590,10 @@ const vi: Strings = {
     districtCounts: "{lots} lô · {buildings} công trình · {occupied} nơi có người bên trong",
     districtHint: "kéo = di chuyển dọc theo vành · cuộn = lại gần hoặc ra xa",
     districtRoofs: "sàn là vách ngoài của vành · mọi mái nhà đều hướng về lõi phía trên",
-    legendOpen: "Mở khu {zone}",
+    legendOpen: "Mở khu {zone}",    nousNoPlace: "không ở khu nào",
+    nousAsleep: "đang ngủ",
+    goToNous: "Đến chỗ {name}",
+    districtNous: "{n} Nous ở đây",
 };
 
 const fil: Strings = {
@@ -690,7 +705,10 @@ const fil: Strings = {
     districtCounts: "{lots} lote · {buildings} gusali · {occupied} may tao sa loob",
     districtHint: "i-drag = gumalaw sa kahabaan ng singsing · i-scroll = lumapit o lumayo",
     districtRoofs: "ang sahig ay ang panlabas na dingding ng singsing · bawat bubong ay nakaturo sa ubod sa itaas",
-    legendOpen: "Buksan ang distrito ng {zone}",
+    legendOpen: "Buksan ang distrito ng {zone}",    nousNoPlace: "wala sa alinmang distrito",
+    nousAsleep: "tulog",
+    goToNous: "Puntahan si {name}",
+    districtNous: "{n} Nous dito",
 };
 
 export const STRINGS: Record<Lang, Strings> = { en, es, ja, ko, vi, fil };
