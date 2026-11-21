@@ -391,3 +391,6 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 
 ## [2026-11-20] apply | A Nous can walk (move in the decision cycle)
 - Correction: the decision cycle already offered work/speak/rest; "only two actions" described the economic cycle. Added move, limited to regions the Grid says are reachable. gpt-oss needed think="low" (ignored think=false, empty answers). Real-model trial 9/9 valid, all moves — watch for a Nous that only ever walks. Not deployed; needs enrolled Brains to be seen live.
+
+## [2026-11-20] deploy | Grid with the Brain binding restored at start (operator-requested)
+- Live and healthy. Live registry: no founding Nous has a Brain key or Civic-DID yet, so enrolment from the operator's Mac is unblocked. Still still: no Nous acts until enrolled and its Brain runs.
