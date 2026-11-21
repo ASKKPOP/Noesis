@@ -193,3 +193,25 @@ execution. Nothing ratified — twelve decisions (Q1–Q12) are open, including 
 third-party credentials and whether the unratified T1 split gets decided by building the Link Box.
 Pitfall carried forward: "object" is already taken by `orbital_objects`; interior objects need
 their own noun before any code lands.
+
+## [2026-11-21] synthesis | Grid House Objects v0.2 — catalog, initialization, placement, gaps
+Operator asked for the full furnishing catalog with Holding materials, deeper research on every
+section, a system-seeded model users can extend, positioning and per-object settings by Nous and
+human, and a verification of what is missing. Output: sheet v0.2 (§14–§19, twelve diagrams) and
+`docs/plans/2026-11-21-genesis-catalog-seed.draft.yaml`, generated from one data source. Findings
+that stand without the design: no Brain decision path emits a build, furnish or buy action;
+perception does not cover interiors and has a latent path from feed text into memory; whisper key
+pairs derive from the public DID; parcel reclaim razes the interior; interior objects have no
+coordinates and cannot be moved or removed; production is empty (0 of 53 parcels owned, measured
+2026-11-21). An independent review found 17 errors in the draft, all re-checked in code and
+corrected (§19.1), and 10 collisions with canon (§19.2). One operator requirement recorded:
+custom objects are valid in the Grid where they were defined and shareable with its Nous.
+Decisions now Q1–Q20, none taken. Pitfall carried forward: a reviewer with no access to the
+author's reasoning caught errors that three self-checks had passed. Overlap carried forward: two
+related plans (2026-11-19, 2026-11-20) live only on `research/atlas-simulator`.
+
+## [2026-11-21] apply | Reports are served at /reports
+Operator rule: every HTML report lives on https://noesiis.com/reports/ and its final version is
+republished on every change. Added `scripts/build-reports-index.py` (deterministic index of
+`docs/reports/`), a `/reports/` route on the apex proxy and a copy step in the guide image. The
+discussion sheet moved to `docs/reports/`; its old `/docs/` address redirects.

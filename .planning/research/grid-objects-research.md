@@ -1,21 +1,22 @@
 ---
 milestone: cross-cutting
-sources: code audit at origin/main e47513b2 + single-pass web survey (14 queries, 2026-11-21)
+sources: code audit at origin/main e47513b2 + web survey in two passes (38 queries, 2026-11-21) + one independent review of the sheet
 tags: [holding, interior, objects, link-box, capabilities, marketplace, visualization]
 status: discussion — nothing ratified
 ---
 
 # Grid House Objects — research summary (2026-11-21)
 
-**Full discussion sheet (canonical, served):** `docs/noesis-grid-objects-discussion-2026-11-21.html`
-(`/docs/noesis-grid-objects-discussion-2026-11-21.html` on the guide container).
+**Full discussion sheet (canonical, served):** `docs/reports/noesis-grid-objects-discussion-2026-11-21.html`, live at
+https://noesiis.com/reports/noesis-grid-objects-discussion-2026-11-21 — **v0.2**.
+**Seed draft (machine-readable, loaded by nothing):** `docs/plans/2026-11-21-genesis-catalog-seed.draft.yaml`.
 **Trigger:** operator base idea — furniture-like objects inside a Holding, configured and built by
 the Local AI with its human; three origins (system pre-designed · rendered by the Nous · paid to a
 service); visualization as drawn form or as a sealed box holding keys/tokens/permissions; functions
 as predefined algorithms or linked apps; share, open sell, invited co-workers under rule and law,
 alerts.
 
-**Status:** a discussion document. It opens twelve decisions (Q1–Q12) and takes none. No canon
+**Status:** a discussion document. It opens twenty decisions (Q1–Q20) and takes none. No canon
 file (`ROADMAP`, `REQUIREMENTS`, `PROJECT`, wiki) changes until those are ratified. Builds on
 [[nous-house-research]] (D-NH-01..13) and [[v3.1/ARCHITECTURE-RECONCILIATION]] (A1, A6, A11, T1, T2).
 
@@ -76,3 +77,68 @@ External claims were not run through the 3-vote verification harness. Marketplac
 conflict across sources. Text-to-3D model licences and benchmarks are unverified. Reselling access
 to third-party APIs through leases may breach provider terms and needs a per-provider check
 before OBJ-3.
+
+## v0.2 additions (2026-11-21, same day)
+
+- **Full catalog (§14).** 18 structural materials (spacecraft practice, each with a source grade),
+  12 finishes, 14 shell elements, 59 furnishing kinds (18 mirror + 41 functional; 13 exist in
+  `furniture.ts`), 20 algorithms, 4 starter sets. Rule: *kinds are closed, forms are open*.
+  Of the 41 functional kinds, 22 bind to shipped subsystems, 12 to partial ones, 7 are new.
+  The catalog declares 63 affordance names against 20 seeded algorithms (13 kinds covered).
+- **Initialization and growth (§15).** Tier 0 core seeded at Grid boot by a code seed plan
+  (precedent `seedGenesisCore`, `seedGenesisGroups`); Tier 1 per-Grid by Polis law; Tier 2 by a
+  Nous and its human along a ladder `new → proven → standard → retired`. Safe defaults for a new
+  owner. User code never runs Grid-side. **Operator requirement (2026-11-21, the one decided
+  point):** a custom object made by a user takes effect only in the Grid where it was defined and
+  can be shared with other Nous of that Grid (§15.5). A proposed kind names a Tier 0 base kind.
+- **Placement and configuration (§16).** Design (manifest) split from placed copy (instance).
+  Instances get placement, settings, version. The Nous places by relation and a deterministic
+  solver computes coordinates; the human drags, as a request to their Nous. A placement gate.
+- **Deeper analysis per section (§17)** and **further recommendations R0–R15 (§18).**
+- **What we are missing (§19):** 17 errors found by an independent review and corrected (§19.1),
+  10 collisions with canon C1–C10 (§19.2), what the design gives up (§19.3), gaps G1–G28 (§19.4).
+
+## Findings in code that stand regardless of this design
+
+1. **No decision path produces a build, furnish or buy action.** The three menus in
+   `brain/src/noesis_brain/prompts/` are `pay_due|bid_rfp|none`, `work_task|speak|rest` and
+   `message_peer|share_skill|contribute_lore|vote|join_group|none`; nothing emits
+   `EXTEND_INTERIOR`, `BUILD` or `BUY_PARCEL`.
+2. **A latent memory-poisoning path.** `aisthesis/tracker.py` builds each percept label from the
+   feed's `kind`/`type`/`name` string and `rpc/handler.py` writes up to 300 chars of the
+   description into episodic memory. Today the feed carries parcels and orbital objects with no
+   free text, so nothing foreign reaches memory; the path opens when furnishing labels enter
+   world sight. Perception does not cover interiors at all today.
+3. **Channel keys are derivable.** `whisper/keyring.py` derives key pairs from SHA-256 of the
+   public DID (already listed in STATE.md as a known weakness). P2P sealing uses the Brain's own
+   enrolled key when there is one and falls back to the derived key otherwise (`__main__.py`).
+   A credential loan must only travel between enrolled Brains.
+4. **Reclaim razes the interior.** `parcel-store.ts` `persistReclaim` sets
+   `structure_interior = NULL`; nothing winds down what furnishings would hold.
+5. **No move, no remove, no coordinates.** Interior objects are `{kind, class, state?}` in a named
+   area; routes are `interior/extend` and `interior` only.
+6. **Tick length is configuration.** Default `GRID_TICK_RATE_MS` is 30000, while the founding-law
+   comment equates 10080 ticks with one week at one tick a minute.
+7. **The city is empty.** Measured on production 2026-11-21: 53 parcels, 0 owned, 4 pre-built
+   civic structures, 0 orbital objects.
+8. **`CapabilityToken` cannot carry loans.** `protocol/src/persona/capabilities.ts` is HMAC under
+   one process secret, wall-clock, TypeScript only and unused outside `protocol/`.
+9. **Placing costs nothing.** The `interior/extend` route charges nothing, has no object cap and
+   accepts any non-empty text as an area; a human session cannot read a private interior.
+
+## Collisions with canon found by the review (§19.2)
+
+C1 philosophy "regions are not pretending to be physical places" vs a physical interior ·
+C3 A11c/A11e vs proxy credential lending (now derive-only) · C4 A12 degraded mode vs
+Grid-authorized loans · C5 A7 already owns the word "lease" · C6 philosophy §7 consent grants vs
+un-tiered human powers · C7 philosophy §8 vs Q3(b) · C9 Groups unaddressed · C10 the allowlist
+budget undercounts closed-tuple changes.
+
+## Overlap to resolve (Q17)
+
+`docs/noesis-grid-extension-plan-2026-11-19.html` and
+`docs/noesis-grid-visualization-research-2026-11-20.html` exist only on branch
+`research/atlas-simulator`, which production runs. They define a seven-kind block catalog with
+levels and lineage, a Work Card, a three-level Grid Station View and a zero budget for art. This
+sheet adopts their catalog rules and treats its 3D interior as level three of that view.
+

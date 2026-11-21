@@ -16,6 +16,9 @@ COPY docker/nginx.guide.conf /etc/nginx/conf.d/guide.conf
 # Ship all docs, and make the beginner guide the landing page (/).
 COPY docs/ /usr/share/nginx/html/docs/
 COPY docs/noesis-services-beginner-guide.html /usr/share/nginx/html/index.html
+# Reports are also served at the short path /reports/ (index built by
+# scripts/build-reports-index.py). The apex proxy forwards /reports/ here unchanged.
+COPY docs/reports/ /usr/share/nginx/html/reports/
 
 EXPOSE 80
 
