@@ -49,4 +49,5 @@ Chronological actions in [[log]]. Run `node scripts/lint-research-wiki.mjs` to c
 
 ## Cross-cutting foundations
 - [[nous-house-research|Nous House — Research (2026-06-11)]] — D-NH spatial axioms.
+- [[grid-objects-research|Grid House Objects — Research (2026-11-21)]] — discussion stage: four-layer object model (form · link · function · governance), Link Box leases, Q1–Q12 open. Served twin: `docs/noesis-grid-objects-discussion-2026-11-21.html`.
 - [[stanford-peer-agent-patterns|Stanford Peer-Agent Patterns]] — peer-agent synthesis → Steward Console scope.
