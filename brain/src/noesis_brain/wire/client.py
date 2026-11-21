@@ -369,6 +369,21 @@ class GridWireClient:
         parcels = data.get("parcels") if isinstance(data, dict) else None
         return parcels if isinstance(parcels, list) else []
 
+    async def fetch_places(self) -> dict[str, list[dict[str, Any]]]:
+        """Who stands where and how the Grid's regions connect: the public roster
+        (GET /api/v1/grid/nous) and region feed (GET /api/v1/grid/regions). Empty
+        lists on any error."""
+        nous = await self._econ_get("/api/v1/grid/nous")
+        regions = await self._econ_get("/api/v1/grid/regions")
+        pick = lambda data, key: (  # noqa: E731
+            data[key] if isinstance(data, dict) and isinstance(data.get(key), list) else []
+        )
+        return {
+            "roster": pick(nous, "nous"),
+            "regions": pick(regions, "regions"),
+            "connections": pick(regions, "connections"),
+        }
+
     async def fetch_objects(self) -> list[dict[str, Any]]:
         """GET /api/v1/orbital/objects — the real, economy-built orbital objects (the
         BUILT world). [] on any error. Lets the Nous perceive what's been built, not

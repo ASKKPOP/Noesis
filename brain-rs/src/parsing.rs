@@ -10,7 +10,7 @@
 use crate::json::{self, get, Object, Value};
 use crate::pytext::strip as py_strip;
 
-pub const DECISION_ACTIONS: [&str; 3] = ["rest", "speak", "work_task"];
+pub const DECISION_ACTIONS: [&str; 4] = ["move", "rest", "speak", "work_task"];
 pub const SOCIAL_ACTIONS: [&str; 6] =
     ["contribute_lore", "join_group", "message_peer", "none", "share_skill", "vote"];
 pub const ECONOMIC_ACTIONS: [&str; 3] = ["bid_rfp", "none", "pay_due"];

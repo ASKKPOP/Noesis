@@ -388,3 +388,6 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 
 ## [2026-11-20] apply | A wire-connected Brain decides on the Grid's clock
 - Finding: the Grid never calls a Brain; the Brain ignored firehose ticks. No Brain anywhere would have acted. Operator chose the Mac as where the Nous think. Built `TickDriver` (Brain) and `restoreCivicDids` (Grid start). Unit-tested both sides; not run end to end, not deployed. Next: enrol the founding Nous (operator, Portal), then offer the Nous more actions (move, speak first).
+
+## [2026-11-20] apply | A Nous can walk (move in the decision cycle)
+- Correction: the decision cycle already offered work/speak/rest; "only two actions" described the economic cycle. Added move, limited to regions the Grid says are reachable. gpt-oss needed think="low" (ignored think=false, empty answers). Real-model trial 9/9 valid, all moves — watch for a Nous that only ever walks. Not deployed; needs enrolled Brains to be seen live.

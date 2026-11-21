@@ -3,6 +3,7 @@
  "version": 1,
  "vocabulary": {
   "decision_actions": [
+   "move",
    "rest",
    "speak",
    "work_task"

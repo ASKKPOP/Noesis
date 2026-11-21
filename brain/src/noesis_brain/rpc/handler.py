@@ -29,6 +29,7 @@ from noesis_brain.thymos.types import Emotion
 from noesis_brain.rpc.types import Action, ActionType, build_civic_land_action, build_economic_action
 from noesis_brain.prompts.decision import (
     build_decision_prompt,
+    places_from,
     build_planning_prompt,
     build_skill_distill_prompt,
     build_social_prompt,
@@ -1169,8 +1170,23 @@ class BrainHandler:
             return False
         return self._top_goal() is not None
 
+    async def _see_places(self) -> "dict[str, Any] | None":
+        """Where this Nous stands and where it can walk to, or None when the Grid
+        cannot be read or does not place it. Keeps `location` true. Never raises."""
+        wire = self._grid_wire_client
+        if wire is None:
+            return None
+        try:
+            seen = await wire.fetch_places()
+            places = places_from(self.did, seen["roster"], seen["regions"], seen["connections"])
+        except Exception:
+            return None
+        if places is not None:
+            self.location = places["here_name"]
+        return places
+
     async def _run_decision_cycle(self, tick: int) -> None:
-        """One small step — work_task / speak / rest — chosen by the Nous under
+        """One small step — work_task / speak / move / rest — chosen by the Nous under
         a single coherent intent (PIANO bottleneck). Every LLM-chosen value is
         validated Brain-side (W3b guardrail discipline). Background; never fatal."""
         try:
@@ -1200,8 +1216,10 @@ class BrainHandler:
                 intent=self._current_intent,
                 skills=skills,
             )
+            # Where it stands and where it can walk to, from the Grid's own feeds.
+            places = await self._see_places()
             user_prompt = build_decision_prompt(
-                goal.description, task.description if task else None, lessons,
+                goal.description, task.description if task else None, lessons, places,
             )
             response = await self.llm.generate(
                 user_prompt,
@@ -1242,6 +1260,18 @@ class BrainHandler:
                         text=text.strip()[:500],
                     )
                     await self._grid_wire_client.post_actions([action.to_dict()], tick=tick)
+            elif act == "move":
+                # Only a place the Grid says is reachable from here (Brain-side guardrail).
+                to = decision.get("to")
+                dest = next((p for p in (places or {}).get("reachable", []) if p["id"] == to), None)
+                if dest is not None and self._grid_wire_client is not None:
+                    action = Action(action_type=ActionType.MOVE, metadata={"region": dest["id"]})
+                    await self._grid_wire_client.post_actions([action.to_dict()], tick=tick)
+                    if self.memory is not None and hasattr(self.memory, "record_event"):
+                        self.memory.record_event(
+                            content=f"Walked from {places['here_name']} to {dest['name']}",
+                            source_did=self.did, tick=tick,
+                        )
             elif act == "rest":
                 note = str(decision.get("note") or "")[:200]
                 if note and self.memory is not None and hasattr(self.memory, "record_event"):
