@@ -77,6 +77,10 @@ class OllamaAdapter(LLMAdapter):
         # want visible reasoning set options.think=True. json_mode additionally
         # constrains output to a JSON object (structured decisions).
         payload["think"] = opts.think if opts.think is not None else False
+        # gpt-oss cannot switch reasoning off (it ignores think=false and spends the
+        # whole budget reasoning); "low" is its floor. Verified against gpt-oss:20b.
+        if payload["think"] is False and self._model.startswith("gpt-oss"):
+            payload["think"] = "low"
         if opts.json_mode:
             payload["format"] = "json"
 

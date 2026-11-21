@@ -181,3 +181,216 @@ Starting Hermes's Brain (`docker-compose.brain.yml`) crashed with PermissionErro
 `/data/brain-wire.key`: `docker/Dockerfile.brain` never created `/data`, so the named volume
 mounted root-owned under the non-root `nous` user. Fixed in the image (`mkdir /data` + chown).
 Pitfall carried forward: the always-on compose had never been run end to end before this.
+
+## [2026-11-09] research | Atlas (World Labs) world-model simulator for Nous skill learning
+Web survey (World Labs Atlas 2026-09-01, Marble World API, Boston Dynamics/TRI Atlas LBM,
+DreamDojo, Cosmos 3, Genie 3). Verdict: Atlas is partner-gated, cloud-only, and generates
+appearance+depth with no physics or action interface → cannot verify a skill and breaks
+local-first. Recommended a Learn→Rehearse→Verify→Keep loop on existing faculties (web tools →
+quarantined Skill → sandbox / Grid dry-run / physics gate → skill library); Atlas/Marble only as
+an optional operator-paid visualization. Page: [[atlas-world-model-simulator]].
+
+## [2026-11-09] update | Atlas page — Boston Dynamics parallel-sim pattern
+Operator shared a clip of many simulated Atlas robots practising around random boxes. Added §4b:
+it is massively-parallel physics RL (BD postings: Isaac Sim / MuJoCo / Warp), and its 4
+ingredients (many copies, randomized worlds, grounded reward, promote-then-transfer) map onto
+parallel rehearsal episodes for a Nous Skill against a rules-true Grid dry-run. [[atlas-world-model-simulator]]
+
+## [2026-11-09] apply | Parallel skill rehearsal built (physics domain)
+Grid physics-check API + Brain `rehearsal/` engine + `brain.rehearseSkill` RPC; wiki D-MIND-09.
+Pitfall carried forward: a referee alone is not enough — a zero-filled spec is "lawful", so each
+episode's job minimums must also be enforced. Page: [[atlas-world-model-simulator]].
+
+## [2026-11-17] plan | Surfaces re-plan — Portal Grid map, unfixed Grid identity, Rust Nous Mac app
+Operator direction: noesiis.com opens on a public all-Grid map (public Grids visitable by anyone,
+private Grids members-only); grid.noesiis.com is entered from the Portal after sign-in and a Grid
+has no assigned identity/purpose; Brain moves Python → Rust as a Mac desktop app. Plan report only
+(`docs/noesis-surfaces-replan-2026-11-17.html`); nothing built. Open: whether D-V3-32 (6 zones)
+stays fixed under "identity not fixed", and Tauri vs SwiftUI shell. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] decision | D-V3-40 — zones free per Grid, identity never assigned
+Operator chose "Free the zones": D-V3-32 (6-zone invariant) superseded; each Polis owns its zone
+set. Recorded in the wiki decision log; not built. Carry forward: tax, residence, founding law and
+the city map all assume six. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] decision | D-V3-41, D-V3-42 — locked private Grids; Rust Brain + SwiftUI Mac app
+Operator decisions: private Grids listed on the Portal map with name + lock (D-V3-41); Brain →
+Rust core, Type A as native SwiftUI Mac app, Type B on the same core headless; first Grid is the
+test Grid, others activated after (D-V3-42, D-V3-30 reaffirmed). Not built. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] apply | Portal P1+P2 built — Grid visibility + orbital front page
+GridRegistry visibility (GRID_VISIBILITY), /portal/grids redaction + member flag, root page = orbital
+map with registry-fed picker, old landing at /about. Pitfalls carried forward: the civic registry is
+keyed by Grid NAME ("Genesis"), not the lowercase gridId; "private" locks only the registry entry
+until the G1 gate ships; a new dev origin needs GRID_CORS_ORIGINS. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] apply | G1 built — private-Grid gate + Grid entry page
+Public GETs on a private Grid → 403 for non-members (exempt: health, Portal sign-in/Grid list/own
+account); `/g/[grid]` entry page + `grid.*` host rewrite. Pitfall: many 'public'-policy routes do
+their own auth, so the gate covers reads only and exempts by path prefix. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] apply | G2 part 1 built — zone law (D-V3-40)
+Six zones → template; Polis add/relabel/remove via `grid_zones` + `zoning.zone_set_changed`
+(allowlist 160). Pitfalls: zone semantics are spread by NAME across civic/types.ts
+(PURCHASABLE/HOME/BUSINESS zones, structure fit), founding-law seed, residence store, the orbital
+scene (ZCOL/rings) and the Brain system prompt — part 2 must key them on zone `kind`. Removal is
+"no parcels at all", so only land-less zones are removable until lots can be retired.
+[[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] apply | G2 part 2 built — land, map and Nous view keyed on zone kind (D-V3-40)
+Purchase / caps / structure fit read `ParcelRegistry` zone kinds (boot + after each zone law);
+`seed_ring` bills take `zone_id`; removal retires unclaimed lots; parcel feed carries
+`zone_kind` + `zone_label`; orbital scene draws ring 4+ shells and live signs; Brain reads kind.
+Pitfalls found: `parcel-registry.ts` contains a literal NUL byte (role-edge key separator) — grep
+needs `-a`, Edit/Write refuse it; `seedZone` numbered from 0001 every call (would have overwritten
+owned parcels on a second seeding — now continues); ring-expansion land was never persisted (lost on
+restart — now `insertParcels`); `market.ts` read `ZONE_TAX_BPS[zone]` directly (undefined for a new
+zone, ignored Polis overrides). [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] apply | G3 built — Grid identity profile from the audit chain (D-V3-40)
+Read-only projection: activity share (trade / knowledge / making / civic / social / settling) over
+the latest 2,000 counted actions + the window before. Window is an action COUNT, not wall-clock
+(wallclock gate). Event→activity map lives in `grid/src/identity/grid-profile.ts`; unmapped
+families are substrate and excluded. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] apply | Visibility switch built — creator changes public/private later (D-V3-41)
+`POST /api/v1/operator/grid/visibility` (H5), saved in `grid_visibility` (v78), boot override,
+`operator.grid_visibility_changed` (allowlist 161). Pitfall: the "creator" of a config-launched
+Grid has no DID of its own — it is the operator; a Portal-created Grid will need the requester
+carried into the Grid's config before this route can serve its creator. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] apply | R0 started — Brain parity fixtures for the Rust port (D-V3-42)
+Deterministic faculties recorded as language-neutral JSON (`brain/parity/`), replayed in the Brain
+suite. Porting hazards found while recording: Python float text in canonical JSON (`1e-07`,
+`1e+21`, `-0.0`) hashes differently from Rust's default; `exp(-1/500)` must match to the last bit;
+hashes use raw UTF-8. Dev machine has no `cargo` and no Xcode — R1 and the SwiftUI shell cannot
+start until they are installed. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-17] apply | Rust Brain begun — deterministic faculties pass the parity fixtures (D-V3-42)
+`brain-rs/` (crate `noesis-brain`): needs, drives, subjective time, emotion, hashing, reply parsing.
+What it took to match Python exactly: an own JSON reader (Python accepts `NaN`, duplicate keys,
+big ints) and writer (Python float text; `ensure_ascii` on for the Telos hash, off for state
+hashes); `powf` not `powi` for recency; the decay constant embedded as a literal; first-wins on
+emotion ties; `str.strip()` also strips 0x1C–0x1F. The test reader needs serde_json's
+`float_roundtrip` or fixture doubles can be off by one bit. Python bug seen: the reply parsers
+raise `TypeError` when `action` is a list or object. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-18] apply | Python reply parsers: non-text action is "no decision", not a crash
+The `TypeError` seen while porting is fixed in the three action parsers and pinned by two new
+parsing-fixture cases (35). The Rust port already behaved this way. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-18] apply | Rust Brain slice 2 — personality, state hashes, memory scoring, prompts
+Fixtures recorded first (ten now), then ported. Notes: prompt f-strings render missing / null
+values as `None` and booleans as `True`, so the port carries a `py_str`; an empty due object counts
+as no due; the handler's top-k is a stable descending sort over a newest-first pool; `str.split()`
+whitespace differs from Rust's by 0x1C–0x1F. The wall-clock recency path is unused and not ported.
+[[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-18] apply | Rust Brain slice 3 — goal handling and the system prompt
+Twelve fixtures now. Notes: Rust `{:.N}` formatting matches Python's `:.Nf` / `:.0%` (checked on
+51k values, ties included); Python truthiness and `x or y` chains over Grid feed values need
+explicit helpers; installing Xcode without accepting its license makes `/usr/bin/git`,
+`/usr/bin/python3` and the Rust linker all refuse to run. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-18] apply | Mac app begun — SwiftUI Nous viewer over the Rust core (D-V3-42)
+Swift Package + Rust static library through a two-function C interface (text in, JSON out); no
+Xcode project needed. Pitfalls: a SwiftUI HStack column squeezed to zero width wraps a character
+per line and makes a tall blank gap; background accessibility cannot set a toolbar Slider, so the
+tick is also an editable field. Observation: the live handler builds BiosRuntime without `ananke`,
+so need crossings never lift drives; the linked form emits a spurious "falling" drive crossing one
+tick later. Operator direction: every Local Nous Manager function moves into this app.
+[[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-18] apply | Mac app is the Local Nous Manager; local chat endpoint; router bug
+Found by using it: `ModelRouter.generate(prompt, options)` (the adapter call form the handler
+uses) put options in the tier slot and raised ValueError, so a Brain on the Ollama router could
+not answer any message; fixed. The shipped Nous configs name `qwen3:*` models; a Mac without them
+gets no thinking until a model is chosen (app sets `LLM_MODEL`). Port 8090 may be taken. An app
+killed by signal must stop its Brain itself. Chats are not stored as Nous memories and each
+message is answered without the earlier ones — open product question. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-18] apply | Local chat: the Nous sees the conversation and remembers it
+Mirrors the Portal conversation cycle (transcript prompt + `record_event` memory) in a dedicated
+`local_chat` method; history comes from the app so it matches what the person sees and survives
+a Brain restart. Memory is one event per exchange — a long chat adds many high-importance events;
+watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
+
+## [2026-11-18] apply | Mac app: Configuration and Local AI as grouped settings
+- Rust `config_edit`: config tree + choices, JSON merge patch, YAML writer (all strings quoted; order kept; comments dropped). FFI `noesis_config_json` / `noesis_config_patch`.
+- App Configuration = grouped form + Text switch over one file text; patches only what changed. Local AI = grouped form.
+- Finding: without `GRID_URL` the Brain passes `LLM_MODEL` (default `qwen3:4b`) as all three tier overrides, so a config file's `llm.models` never applies locally. Left out of the form; not changed in the Brain.
+
+## [2026-11-19] apply | Mac app: Map screen (Portal's live map of Grids)
+- `MapPane.swift`: WKWebView on the Portal map page; address setting `mapURL` (default `https://noesiis.com/worldmap/orbital`). No native redraw — one map, the Portal's.
+- Open: the app and the Portal page do not share identity; entering a Grid as this Nous still goes through Portal sign-in.
+
+## [2026-11-19] apply | Mac app: Grid Access (join a Grid through the existing Portal → Polis pipeline)
+- `GridAccessPane.swift`: Grid address → `GRID_URL`; shows Nous ID + Brain public key (read from `brain-wire.key`, Brain remains sole key maker) + status from cached `civic-did`; opens Portal sign-in / registration in Map. No new issuance path.
+- Fix: app passes `NOUS_NAME` from the config; before, every config ran as `sophia`.
+- Open: a joined Brain's models come from Grid operator settings (default `qwen3:4b`), overriding the app's Local AI choice — unverified end to end; no live enrolment was run.
+
+## [2026-11-19] apply | Mac app: account sign-in with stored auth
+- `GridAccount.swift`: email sign-in on the existing Portal endpoint; password in Keychain; cookie into WKWebView; auto re-sign-in (session 24 h, renew at 20 h). `joinGrid` switch separates "my account" from "my Nous joins".
+- First Swift test target (`swift test`, stub Grid via URLProtocol). No live sign-in run.
+
+## [2026-11-19] apply | Orbital map: click-to-full-zoom and the Grid description card
+- `grid-focus.ts` fit distance (radius, fov, aspect); scene click focuses a Grid; drag ≠ click.
+- `grid-description.ts` + `GridCard.tsx`: description built only from existing public reads; missing source → line omitted. "Members" = live Nous count (no human-member count endpoint exists).
+- Not deployed; the Mac app's Map shows the live site, so it appears there after a dashboard deploy.
+
+## [2026-11-19] deploy | Grid + dashboard from research/atlas-simulator (operator-requested)
+- Prod checkout moved main@75a8477 → work branch. v77/v78 dry-run on MySQL 8.0 first. nginx force-recreated. Live checks 200; Portal map, private/public Grid list, zone freeing, Grid card now live.
+- Learned: `deploy.sh` cannot check out a branch the server never fetched; the Grid clock (tick, startedAt) restarts on every Grid restart — it is not a founding date.
+
+## [2026-11-19] apply | Map: human member count + six-language switch
+- Human member = human with an active Civic-DID in the Grid (same rule as the private-Grid unlock). `/portal/grids` full entries carry `human_members`; locked private entries do not.
+- `map-i18n.ts`: en / es / ja / ko / vi / fil for the map's own wording only; Grid-supplied text stays as written. Scope is the map page, not the whole dashboard.
+- Deployed 2026-11-19 (operator-requested; `deploy.sh` with the branch env now works since the server has the branch). Live: `human_members: 2`. Translations not reviewed by native speakers.
+
+## [2026-11-19] apply | Mac app: Brain kept running (restart, model-server watch, notification)
+- `keepBrainRunning` set by Start, cleared only by Stop; restart backoff 2→60 s without end; model server polled every 15 s; one notification per outage after 5 failures.
+- Email alert NOT built: no mail-sending path exists in app or Grid (only the operator SNS watchdog). Needs an operator decision on a mail service.
+
+## [2026-11-19] apply | Email alert route (AWS SES) for a Local Nous that cannot stay running
+- `POST /api/v1/portal/nous-alert`: session-only, recipient = the account's own address, fixed wording, 1/hour per kind; no audit event. `ALERT_EMAIL_FROM` unset → 503.
+- SES setup (identity, sandbox exit, role permission, env) is the operator's; steps in `.planning/implementation/alerting.md`. Grid deployed 2026-11-19; no real mail sent.
+
+## [2026-11-19] apply | Mac app: Local AI usage graphs
+- `LocalAIUsage.swift`: `ps` totals for the model server's processes + Ollama `/api/ps`; Swift Charts, 3 s samples for the whole app run, last hour kept in memory (first version sampled only while the screen was open).
+
+## [2026-11-19] ingest | Grid extension research + discussion plan
+- New page [[grid-extension-research-2026-11]]; index updated. Four surveys (2 code, 2 web). Plan page `docs/noesis-grid-extension-plan-2026-11-19.html` — for discussion, nothing decided, ROADMAP untouched.
+
+## [2026-11-20] ingest | Grid visualization research
+- New page [[grid-visualization-research-2026-11]]; index updated. Three surveys (engines, engagement, code) + NVIDIA page. Verdict: stay in the browser; the gap is live Nous on screen, then art. For discussion; nothing decided.
+
+## [2026-11-20] decide | Visualization: audience and budget (operator, in discussion)
+- Audience = visitor, Grid joiner and Nous owner, all three (one funnel). Budget = none → browser only, free CC0 assets, no GPU streaming, no paid generators. Recorded on the research page ("Settled in discussion"). Other decisions still open.
+
+## [2026-11-20] decide | D-V3-43 — the Grid is shown to people first
+- Operator: public Grid shows Nous names + public actions live to anyone; never private conversation or balances. Life before look (look alongside, slower). Written to `wiki/1-design/decisions.md` (D-V3-43) and the research page. Still open: regions↔rings mapping; relaxing the map's "unpkg, no build" rule; ordering against the Work Card.
+
+## [2026-11-20] apply | V0 — live, true map (D-V3-43 first step)
+- Public roster: `balance_wei` operator-only. New `GET /api/v1/scene/events` — closed list of 19 public acts, names only for acts under the Nous's own DID, land events without owner (D-58-08 kept), ballots without voter, no text/amounts. Map: 5 s poll, "Happening now" list, event-driven pulse, targeted re-read; decorative packets removed. Not deployed.
+- Open for V1: regions↔rings mapping; whether public speech text and land owners' names may be shown.
+
+## [2026-11-20] decide | D-V3-44 — Grid Station View; a city inside the rings
+- Operator: the Grid's screen is the "Grid Station View" (not a map); levels outside → district cutaway → interior (option D); buildings are a city along the inside of each ring, not capsule modules. Written to decisions.md, the visualizer skill, the research page. Open: building orientation in a ring.
+
+## [2026-11-20] apply | District level of the Grid Station View (first cut)
+- Roofs toward the centre (operator). `district-layout.ts` + `district-scene.ts` + `DistrictView.tsx`: a zone as a street along the ring's curve, lots both sides, code-drawn buildings by kind/condition/occupancy from the lot feed; event flash from the scene feed. Not deployed. Next needs approval: regions→places mapping to put Nous in it.
+
+## [2026-11-20] apply | Nous in their districts (V1 first cut)
+- Operator approved regions→places. `nous-places.ts` (placing + kind fall-back, roster reader, event following); figures, names, act signs in the district scene; roster bar. Not deployed. Not yet seen with real moves (needs a Nous that acts).
+
+## [2026-11-20] deploy | V0 + district level + Nous in districts (operator-requested)
+- Live and correct. Finding: the live Nous do not act — last 1,000 record entries are ticks; no Brain container on the server. The view is truthful and therefore still. Interest now depends on running Brains (operator's secret) and on Nous taking more than two kinds of action (X2).
+
+## [2026-11-20] apply | A wire-connected Brain decides on the Grid's clock
+- Finding: the Grid never calls a Brain; the Brain ignored firehose ticks. No Brain anywhere would have acted. Operator chose the Mac as where the Nous think. Built `TickDriver` (Brain) and `restoreCivicDids` (Grid start). Unit-tested both sides; not run end to end, not deployed. Next: enrol the founding Nous (operator, Portal), then offer the Nous more actions (move, speak first).
+
+## [2026-11-20] apply | A Nous can walk (move in the decision cycle)
+- Correction: the decision cycle already offered work/speak/rest; "only two actions" described the economic cycle. Added move, limited to regions the Grid says are reachable. gpt-oss needed think="low" (ignored think=false, empty answers). Real-model trial 9/9 valid, all moves — watch for a Nous that only ever walks. Not deployed; needs enrolled Brains to be seen live.
+
+## [2026-11-20] deploy | Grid with the Brain binding restored at start (operator-requested)
+- Live and healthy. Live registry: no founding Nous has a Brain key or Civic-DID yet, so enrolment from the operator's Mac is unblocked. Still still: no Nous acts until enrolled and its Brain runs.

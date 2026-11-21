@@ -301,7 +301,7 @@ describe('constitutional guards', () => {
     const SRC = readFileSync(fileURLToPath(new URL('../../src/api/routes/portal-nous-registration.ts', import.meta.url)), 'utf8');
 
     it('adds no broadcast event (allowlist +0)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(159);
+        expect(ALLOWLIST_MEMBERS.length).toBe(161); // 159 at this feature; +1 since for zoning.zone_set_changed (D-V3-40)
     });
     it('never issues a Civic-DID or mints a government session', () => {
         expect(SRC).not.toMatch(/civicDidStore\.insert|\.insert\(|buildCivicDidVc|SignJWT|did:gov:/);

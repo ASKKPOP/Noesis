@@ -98,7 +98,8 @@ services:
   # ── Portal + Grid → api.${DOMAIN} (whole subdomain). CORS allows the apex ───
   grid:
     environment:
-      GRID_CORS_ORIGINS: "https://${DOMAIN:-localhost}"
+      # grid.${DOMAIN} = the Grid entry host (surfaces re-plan G1); harmless until its DNS exists.
+      GRID_CORS_ORIGINS: "https://${DOMAIN:-localhost},https://grid.${DOMAIN:-localhost}"
     labels:
       traefik.enable: "true"
       traefik.http.routers.grid.rule: "Host(`api.${DOMAIN:-localhost}`)"

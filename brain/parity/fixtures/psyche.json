@@ -1,0 +1,165 @@
+{
+ "fixture": "psyche",
+ "version": 1,
+ "constants": {
+  "dimension_order": [
+   "openness",
+   "conscientiousness",
+   "extraversion",
+   "agreeableness",
+   "resilience",
+   "ambition"
+  ],
+  "communication_styles": [
+   "thoughtful",
+   "direct",
+   "warm",
+   "formal",
+   "playful"
+  ],
+  "level_map": {
+   "low": 0.2,
+   "medium": 0.5,
+   "high": 0.8
+  },
+  "level_descriptions": {
+   "openness": {
+    "low": "conventional and practical, prefers familiar approaches",
+    "medium": "balanced between tradition and exploration",
+    "high": "curious, creative, and eager to explore new ideas"
+   },
+   "conscientiousness": {
+    "low": "spontaneous and flexible, adapts on the fly",
+    "medium": "balanced between planning and spontaneity",
+    "high": "methodical, organized, and detail-oriented"
+   },
+   "extraversion": {
+    "low": "reserved and introspective, prefers solitude",
+    "medium": "comfortable alone and in groups",
+    "high": "outgoing, energetic, and socially driven"
+   },
+   "agreeableness": {
+    "low": "competitive and skeptical, challenges others readily",
+    "medium": "balanced between cooperation and self-interest",
+    "high": "cooperative, empathetic, and trusting"
+   },
+   "resilience": {
+    "low": "sensitive to setbacks, takes failures hard",
+    "medium": "recovers from setbacks with moderate effort",
+    "high": "bounces back quickly, sees obstacles as challenges"
+   },
+   "ambition": {
+    "low": "content with the present, not driven by achievement",
+    "medium": "motivated but not consumed by goals",
+    "high": "strongly driven to achieve, always striving for more"
+   }
+  }
+ },
+ "cases": [
+  {
+   "name": "defaults",
+   "psyche": {
+    "name": "Sophia",
+    "archetype": "philosopher",
+    "personality": {},
+    "values": [],
+    "communication_style": "thoughtful"
+   },
+   "levels": {
+    "openness": "medium",
+    "conscientiousness": "medium",
+    "extraversion": "medium",
+    "agreeableness": "medium",
+    "resilience": "medium",
+    "ambition": "medium"
+   },
+   "numeric": {
+    "openness": 0.5,
+    "conscientiousness": 0.5,
+    "extraversion": 0.5,
+    "agreeableness": 0.5,
+    "resilience": 0.5,
+    "ambition": 0.5
+   },
+   "describe_personality": "- Openness: medium — balanced between tradition and exploration\n- Conscientiousness: medium — balanced between planning and spontaneity\n- Extraversion: medium — comfortable alone and in groups\n- Agreeableness: medium — balanced between cooperation and self-interest\n- Resilience: medium — recovers from setbacks with moderate effort\n- Ambition: medium — motivated but not consumed by goals",
+   "describe_values": "No core values defined."
+  },
+  {
+   "name": "mixed",
+   "psyche": {
+    "name": "Hermes",
+    "archetype": "merchant",
+    "personality": {
+     "openness": "high",
+     "conscientiousness": "low",
+     "extraversion": "high",
+     "agreeableness": "medium",
+     "resilience": "low",
+     "ambition": "high"
+    },
+    "values": [
+     "wealth",
+     "honesty",
+     "Zeal",
+     "ἀρετή",
+     "care for others"
+    ],
+    "communication_style": "direct"
+   },
+   "levels": {
+    "openness": "high",
+    "conscientiousness": "low",
+    "extraversion": "high",
+    "agreeableness": "medium",
+    "resilience": "low",
+    "ambition": "high"
+   },
+   "numeric": {
+    "openness": 0.8,
+    "conscientiousness": 0.2,
+    "extraversion": 0.8,
+    "agreeableness": 0.5,
+    "resilience": 0.2,
+    "ambition": 0.8
+   },
+   "describe_personality": "- Openness: high — curious, creative, and eager to explore new ideas\n- Conscientiousness: low — spontaneous and flexible, adapts on the fly\n- Extraversion: high — outgoing, energetic, and socially driven\n- Agreeableness: medium — balanced between cooperation and self-interest\n- Resilience: low — sensitive to setbacks, takes failures hard\n- Ambition: high — strongly driven to achieve, always striving for more",
+   "describe_values": "wealth, honesty, Zeal, ἀρετή, care for others"
+  },
+  {
+   "name": "unknown_level",
+   "psyche": {
+    "name": "Odd",
+    "archetype": "wanderer — 방랑자",
+    "personality": {
+     "openness": "extreme",
+     "ambition": "low"
+    },
+    "values": [
+     "b",
+     "a",
+     "B",
+     "a"
+    ],
+    "communication_style": "playful"
+   },
+   "levels": {
+    "openness": "extreme",
+    "conscientiousness": "medium",
+    "extraversion": "medium",
+    "agreeableness": "medium",
+    "resilience": "medium",
+    "ambition": "low"
+   },
+   "numeric": {
+    "openness": 0.5,
+    "conscientiousness": 0.5,
+    "extraversion": 0.5,
+    "agreeableness": 0.5,
+    "resilience": 0.5,
+    "ambition": 0.2
+   },
+   "describe_personality": "- Openness: extreme — \n- Conscientiousness: medium — balanced between planning and spontaneity\n- Extraversion: medium — comfortable alone and in groups\n- Agreeableness: medium — balanced between cooperation and self-interest\n- Resilience: medium — recovers from setbacks with moderate effort\n- Ambition: low — content with the present, not driven by achievement",
+   "describe_values": "b, a, B, a"
+  }
+ ]
+}

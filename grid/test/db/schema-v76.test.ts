@@ -13,9 +13,9 @@ describe('D-V3-39: Migration v76 — bind a Nous registration to its Brain key',
         expect(m!.down).toMatch(/ALTER\s+TABLE\s+nous_registrations\s+DROP\s+COLUMN\s+brain_key_x/i);
     });
 
-    it('v76 is the latest migration and versions remain sequential', () => {
+    it('v76 exists and versions remain sequential', () => {
         const sorted = [...MIGRATIONS].sort((a, b) => a.version - b.version);
-        expect(sorted[sorted.length - 1].version).toBe(76);
+        expect(sorted.some((m) => m.version === 76)).toBe(true);
         sorted.forEach((m, i) => expect(m.version).toBe(i + 1));
     });
 });

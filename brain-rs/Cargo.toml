@@ -1,0 +1,17 @@
+[package]
+name = "noesis-brain"
+version = "0.1.0"
+edition = "2021"
+description = "Noēsis Brain — Rust port (D-V3-42). Each module reproduces the Python Brain's parity fixtures."
+license = "MIT"
+publish = false
+
+[lib]
+crate-type = ["rlib", "staticlib"]
+
+[dependencies]
+sha2 = "0.10"
+yaml-rust2 = "0.13.0"
+
+[dev-dependencies]
+serde_json = { version = "1", features = ["preserve_order", "float_roundtrip"] }

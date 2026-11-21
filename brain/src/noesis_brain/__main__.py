@@ -404,6 +404,7 @@ def create_brain_app(
     rpc.register("brain.forceTelos", handler.force_telos)
     rpc.register("brain.scheduleReminder", handler.schedule_reminder)
     rpc.register("brain.scheduleTask", handler.schedule_task)
+    rpc.register("brain.rehearseSkill", handler.rehearse_skill)
 
     return BrainApp(handler=handler, rpc=rpc, nous_name=nous_name)
 
@@ -610,8 +611,14 @@ async def create_brain_app_from_env() -> BrainApp:
         app.p2p_client = p2p_client
 
         # Phase 41 SLEEP-03 + Phase 42: wire WssSubscriber with queue= and p2p dispatch
+        # The Grid's clock, received here, is what makes a wire-connected Nous decide.
+        from noesis_brain.wire.tick_driver import TickDriver  # noqa: PLC0415
+        tick_driver = TickDriver(app.handler.on_tick)
+
         async def _on_frame(frame: dict) -> None:
             """Route incoming WSS frames — Phase 42 dispatches p2p.signal_received."""
+            if tick_driver.offer(frame):
+                return
             event_type = frame.get("type") or frame.get("event_type", "")
             # Phase 42 D-42-06: private signal push — NOT audit chain event
             if event_type == "p2p.signal_received":

@@ -1,13 +1,13 @@
 /**
  * Phase 57 (ZONE-01) — Sole-producer for zoning.zone_amended.
  *
- * Emitted when Polis legislation amends a zone's tax modifier (the 6 zone TYPES are immutable —
- * only sizes/rules change, D-V3-32). DID hashed. actorDid = amended_by_did_hash. 4-key (alpha).
+ * Emitted when Polis legislation amends a zone's tax modifier. The zone may be a template zone
+ * or one the Grid defined itself (D-V3-40); the registry checks it exists before calling. DID hashed. actorDid = amended_by_did_hash. 4-key (alpha).
  */
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
-import { type ZoningZoneAmendedPayload, ZONING_ZONE_AMENDED_KEYS, isZoneType } from '../zoning/zone-types.js';
+import { type ZoningZoneAmendedPayload, ZONING_ZONE_AMENDED_KEYS, ZONE_ID_RE } from '../zoning/zone-types.js';
 
 const HEX64_RE = /^[0-9a-f]{64}$/i;
 
@@ -24,8 +24,8 @@ export function appendZoningZoneAmended(audit: AuditChain, payload: ZoningZoneAm
     if (!Number.isInteger(payload.tick) || payload.tick < 0) {
         throw new TypeError(`appendZoningZoneAmended: tick must be non-negative integer, got ${JSON.stringify(payload.tick)}`);
     }
-    if (!isZoneType(payload.zone_id)) {
-        throw new TypeError(`appendZoningZoneAmended: zone_id must be a canonical zone type, got ${JSON.stringify(payload.zone_id)}`);
+    if (typeof payload.zone_id !== 'string' || !ZONE_ID_RE.test(payload.zone_id)) {
+        throw new TypeError(`appendZoningZoneAmended: zone_id must be a zone id, got ${JSON.stringify(payload.zone_id)}`);
     }
     const actualKeys = Object.keys(payload).sort();
     if (actualKeys.length !== ZONING_ZONE_AMENDED_KEYS.length || !actualKeys.every((k, i) => k === ZONING_ZONE_AMENDED_KEYS[i])) {

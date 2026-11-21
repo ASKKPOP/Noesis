@@ -2,8 +2,9 @@
  * Plan 04-03 Task 1: GET /api/v1/grid/nous — roster endpoint.
  *
  * Contract: returns { nous: NousRosterEntry[] } where each entry is
- * { did, name, region, balance_wei, lifecyclePhase, reputation, status } sourced
- * from registry.active(). No pagination — rosters are small.
+ * { did, name, region, lifecyclePhase, reputation, status } sourced from
+ * registry.active(). No pagination — rosters are small. `balance_wei` is added only
+ * for an operator: a balance is never public (D-V3-43).
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
@@ -71,14 +72,14 @@ describe('GET /api/v1/grid/nous — roster with three Nous', () => {
         expect(body.nous).toHaveLength(3);
     });
 
-    it('every entry carries all 7 required fields with correct types', async () => {
+    it('every entry carries its public fields, and no balance (D-V3-43)', async () => {
         const res = await app.inject({ method: 'GET', url: '/api/v1/grid/nous' });
         const body = res.json() as {
             nous: Array<{
                 did: string;
                 name: string;
                 region: string;
-                balance_wei: number;
+                balance_wei?: number;
                 lifecyclePhase: string;
                 reputation: number;
                 status: string;
@@ -88,7 +89,7 @@ describe('GET /api/v1/grid/nous — roster with three Nous', () => {
             expect(typeof entry.did).toBe('string');
             expect(typeof entry.name).toBe('string');
             expect(typeof entry.region).toBe('string');
-            expect(typeof entry.balance_wei).toBe('number');
+            expect(entry.balance_wei).toBeUndefined();
             expect(typeof entry.lifecyclePhase).toBe('string');
             expect(typeof entry.reputation).toBe('number');
             expect(typeof entry.status).toBe('string');
@@ -152,5 +153,39 @@ describe('GET /api/v1/grid/nous — excludes infrastructure accounts', () => {
         expect(dids).not.toContain('did:noesis:system:treasury');
         expect(dids).toContain('did:noesis:sophia');
         expect(dids).toContain('did:noesis:hermes');
+    });
+});
+
+describe('GET /api/v1/grid/nous — balances are for operators only (D-V3-43)', () => {
+    const OPERATOR = 'did:noesis:human:email:11111111-1111-4111-8111-111111111111';
+
+    async function sessionFor(did: string): Promise<Record<string, string>> {
+        const { SignJWT } = await import('jose');
+        const { COOKIE_NAME, keyPairPromise } = await import('../../src/api/portal/auth.js');
+        const { privateKey } = await keyPairPromise;
+        const token = await new SignJWT({ did, grid_name: 'genesis' })
+            .setProtectedHeader({ alg: 'ES256' }).setIssuedAt().setExpirationTime('1h').sign(privateKey);
+        return { [COOKIE_NAME]: token };
+    }
+
+    function server(): { app: FastifyInstance; clock: WorldClock } {
+        const clock = new WorldClock({ tickRateMs: 100_000 });
+        const registry = new NousRegistry();
+        registry.spawn({ name: 'Sophia', did: 'did:noesis:sophia', publicKey: 'pk-s', region: 'agora' }, 'genesis.grid', 0, 500);
+        const app = buildServer({
+            clock, space: new SpatialMap(), logos: new LogosEngine(), audit: new AuditChain(), gridName: 'genesis', registry,
+            operatorAllowlist: new Map([[OPERATOR, { tier: 5, operatorId: 'op-1' }]]) as never,
+        });
+        return { app, clock };
+    }
+
+    it('an operator gets balances; a signed-in person who is not an operator does not', async () => {
+        const { app, clock } = server();
+        const asOperator = await app.inject({ method: 'GET', url: '/api/v1/grid/nous', cookies: await sessionFor(OPERATOR) });
+        expect(asOperator.json().nous[0].balance_wei).toBe(500);
+        const asOther = await app.inject({ method: 'GET', url: '/api/v1/grid/nous', cookies: await sessionFor('did:noesis:human:email:22222222-2222-4222-8222-222222222222') });
+        expect(asOther.json().nous[0].balance_wei).toBeUndefined();
+        await app.close();
+        clock.stop();
     });
 });

@@ -1,0 +1,333 @@
+{
+ "fixture": "chronos",
+ "version": 1,
+ "constants": {
+  "multiplier_min": 0.25,
+  "multiplier_max": 4.0,
+  "curiosity_boost": {
+   "low": 0.0,
+   "med": 1.0,
+   "high": 3.0
+  },
+  "boredom_penalty": {
+   "low": 0.0,
+   "med": 0.3,
+   "high": 0.75
+  }
+ },
+ "compute_multiplier": [
+  {
+   "curiosity_level": "low",
+   "boredom_level": "low",
+   "multiplier": 1.0
+  },
+  {
+   "curiosity_level": "low",
+   "boredom_level": "med",
+   "multiplier": 0.7
+  },
+  {
+   "curiosity_level": "low",
+   "boredom_level": "high",
+   "multiplier": 0.25
+  },
+  {
+   "curiosity_level": "med",
+   "boredom_level": "low",
+   "multiplier": 2.0
+  },
+  {
+   "curiosity_level": "med",
+   "boredom_level": "med",
+   "multiplier": 1.7
+  },
+  {
+   "curiosity_level": "med",
+   "boredom_level": "high",
+   "multiplier": 1.25
+  },
+  {
+   "curiosity_level": "high",
+   "boredom_level": "low",
+   "multiplier": 4.0
+  },
+  {
+   "curiosity_level": "high",
+   "boredom_level": "med",
+   "multiplier": 3.7
+  },
+  {
+   "curiosity_level": "high",
+   "boredom_level": "high",
+   "multiplier": 3.25
+  }
+ ],
+ "recency_score_by_tick": [
+  {
+   "memory_tick": 0,
+   "current_tick": 0,
+   "decay_rate": 0.99,
+   "score": 1.0
+  },
+  {
+   "memory_tick": 10,
+   "current_tick": 10,
+   "decay_rate": 0.99,
+   "score": 1.0
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 1,
+   "decay_rate": 0.99,
+   "score": 0.99
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 100,
+   "decay_rate": 0.99,
+   "score": 0.3660323412732292
+  },
+  {
+   "memory_tick": 40,
+   "current_tick": 1000,
+   "decay_rate": 0.99,
+   "score": 6.453373682464824e-05
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 5000,
+   "decay_rate": 0.99,
+   "score": 1.499591560997954e-22
+  },
+  {
+   "memory_tick": 500,
+   "current_tick": 100,
+   "decay_rate": 0.99,
+   "score": 1.0
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 250,
+   "decay_rate": 0.995,
+   "score": 0.2856078805640319
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 30,
+   "decay_rate": 0.9,
+   "score": 0.04239115827521624
+  }
+ ],
+ "score_with_chronos": [
+  {
+   "memory_tick": 0,
+   "current_tick": 0,
+   "decay_rate": 0.99,
+   "multiplier": 0.25,
+   "score": 0.25
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 0,
+   "decay_rate": 0.99,
+   "multiplier": 0.7,
+   "score": 0.7
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 0,
+   "decay_rate": 0.99,
+   "multiplier": 1.0,
+   "score": 1.0
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 0,
+   "decay_rate": 0.99,
+   "multiplier": 1.7,
+   "score": 1.0
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 0,
+   "decay_rate": 0.99,
+   "multiplier": 4.0,
+   "score": 1.0
+  },
+  {
+   "memory_tick": 10,
+   "current_tick": 10,
+   "decay_rate": 0.99,
+   "multiplier": 0.25,
+   "score": 0.25
+  },
+  {
+   "memory_tick": 10,
+   "current_tick": 10,
+   "decay_rate": 0.99,
+   "multiplier": 0.7,
+   "score": 0.7
+  },
+  {
+   "memory_tick": 10,
+   "current_tick": 10,
+   "decay_rate": 0.99,
+   "multiplier": 1.0,
+   "score": 1.0
+  },
+  {
+   "memory_tick": 10,
+   "current_tick": 10,
+   "decay_rate": 0.99,
+   "multiplier": 1.7,
+   "score": 1.0
+  },
+  {
+   "memory_tick": 10,
+   "current_tick": 10,
+   "decay_rate": 0.99,
+   "multiplier": 4.0,
+   "score": 1.0
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 1,
+   "decay_rate": 0.99,
+   "multiplier": 0.25,
+   "score": 0.2475
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 1,
+   "decay_rate": 0.99,
+   "multiplier": 0.7,
+   "score": 0.693
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 1,
+   "decay_rate": 0.99,
+   "multiplier": 1.0,
+   "score": 0.99
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 1,
+   "decay_rate": 0.99,
+   "multiplier": 1.7,
+   "score": 1.0
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 1,
+   "decay_rate": 0.99,
+   "multiplier": 4.0,
+   "score": 1.0
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 100,
+   "decay_rate": 0.99,
+   "multiplier": 0.25,
+   "score": 0.0915080853183073
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 100,
+   "decay_rate": 0.99,
+   "multiplier": 0.7,
+   "score": 0.2562226388912604
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 100,
+   "decay_rate": 0.99,
+   "multiplier": 1.0,
+   "score": 0.3660323412732292
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 100,
+   "decay_rate": 0.99,
+   "multiplier": 1.7,
+   "score": 0.6222549801644897
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 100,
+   "decay_rate": 0.99,
+   "multiplier": 4.0,
+   "score": 1.0
+  },
+  {
+   "memory_tick": 40,
+   "current_tick": 1000,
+   "decay_rate": 0.99,
+   "multiplier": 0.25,
+   "score": 1.613343420616206e-05
+  },
+  {
+   "memory_tick": 40,
+   "current_tick": 1000,
+   "decay_rate": 0.99,
+   "multiplier": 0.7,
+   "score": 4.517361577725376e-05
+  },
+  {
+   "memory_tick": 40,
+   "current_tick": 1000,
+   "decay_rate": 0.99,
+   "multiplier": 1.0,
+   "score": 6.453373682464824e-05
+  },
+  {
+   "memory_tick": 40,
+   "current_tick": 1000,
+   "decay_rate": 0.99,
+   "multiplier": 1.7,
+   "score": 0.000109707352601902
+  },
+  {
+   "memory_tick": 40,
+   "current_tick": 1000,
+   "decay_rate": 0.99,
+   "multiplier": 4.0,
+   "score": 0.00025813494729859295
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 5000,
+   "decay_rate": 0.99,
+   "multiplier": 0.25,
+   "score": 3.748978902494885e-23
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 5000,
+   "decay_rate": 0.99,
+   "multiplier": 0.7,
+   "score": 1.0497140926985677e-22
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 5000,
+   "decay_rate": 0.99,
+   "multiplier": 1.0,
+   "score": 1.499591560997954e-22
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 5000,
+   "decay_rate": 0.99,
+   "multiplier": 1.7,
+   "score": 2.549305653696522e-22
+  },
+  {
+   "memory_tick": 0,
+   "current_tick": 5000,
+   "decay_rate": 0.99,
+   "multiplier": 4.0,
+   "score": 5.998366243991816e-22
+  }
+ ]
+}

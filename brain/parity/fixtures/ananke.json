@@ -1,0 +1,1486 @@
+{
+ "fixture": "ananke",
+ "version": 1,
+ "constants": {
+  "drive_order": [
+   "hunger",
+   "curiosity",
+   "safety",
+   "boredom",
+   "loneliness"
+  ],
+  "baselines": {
+   "hunger": 0.3,
+   "curiosity": 0.5,
+   "safety": 0.2,
+   "boredom": 0.4,
+   "loneliness": 0.4
+  },
+  "rise_rates": {
+   "hunger": 0.0003,
+   "curiosity": 0.0002,
+   "safety": 0.0001,
+   "boredom": 0.0002,
+   "loneliness": 0.0002
+  },
+  "threshold_low": 0.33,
+  "threshold_high": 0.66,
+  "hysteresis_band": 0.02,
+  "tau": 500,
+  "decay_factor": 0.9980019986673331
+ },
+ "bucket": [
+  {
+   "value": 0.0,
+   "prev_level": "low",
+   "level": "low"
+  },
+  {
+   "value": 0.0,
+   "prev_level": "med",
+   "level": "low"
+  },
+  {
+   "value": 0.0,
+   "prev_level": "high",
+   "level": "low"
+  },
+  {
+   "value": 0.2,
+   "prev_level": "low",
+   "level": "low"
+  },
+  {
+   "value": 0.2,
+   "prev_level": "med",
+   "level": "low"
+  },
+  {
+   "value": 0.2,
+   "prev_level": "high",
+   "level": "low"
+  },
+  {
+   "value": 0.3099,
+   "prev_level": "low",
+   "level": "low"
+  },
+  {
+   "value": 0.3099,
+   "prev_level": "med",
+   "level": "low"
+  },
+  {
+   "value": 0.3099,
+   "prev_level": "high",
+   "level": "low"
+  },
+  {
+   "value": 0.3101,
+   "prev_level": "low",
+   "level": "low"
+  },
+  {
+   "value": 0.3101,
+   "prev_level": "med",
+   "level": "med"
+  },
+  {
+   "value": 0.3101,
+   "prev_level": "high",
+   "level": "med"
+  },
+  {
+   "value": 0.33,
+   "prev_level": "low",
+   "level": "low"
+  },
+  {
+   "value": 0.33,
+   "prev_level": "med",
+   "level": "med"
+  },
+  {
+   "value": 0.33,
+   "prev_level": "high",
+   "level": "med"
+  },
+  {
+   "value": 0.3499,
+   "prev_level": "low",
+   "level": "low"
+  },
+  {
+   "value": 0.3499,
+   "prev_level": "med",
+   "level": "med"
+  },
+  {
+   "value": 0.3499,
+   "prev_level": "high",
+   "level": "med"
+  },
+  {
+   "value": 0.3501,
+   "prev_level": "low",
+   "level": "med"
+  },
+  {
+   "value": 0.3501,
+   "prev_level": "med",
+   "level": "med"
+  },
+  {
+   "value": 0.3501,
+   "prev_level": "high",
+   "level": "med"
+  },
+  {
+   "value": 0.4,
+   "prev_level": "low",
+   "level": "med"
+  },
+  {
+   "value": 0.4,
+   "prev_level": "med",
+   "level": "med"
+  },
+  {
+   "value": 0.4,
+   "prev_level": "high",
+   "level": "med"
+  },
+  {
+   "value": 0.5,
+   "prev_level": "low",
+   "level": "med"
+  },
+  {
+   "value": 0.5,
+   "prev_level": "med",
+   "level": "med"
+  },
+  {
+   "value": 0.5,
+   "prev_level": "high",
+   "level": "med"
+  },
+  {
+   "value": 0.6399,
+   "prev_level": "low",
+   "level": "med"
+  },
+  {
+   "value": 0.6399,
+   "prev_level": "med",
+   "level": "med"
+  },
+  {
+   "value": 0.6399,
+   "prev_level": "high",
+   "level": "med"
+  },
+  {
+   "value": 0.6401,
+   "prev_level": "low",
+   "level": "med"
+  },
+  {
+   "value": 0.6401,
+   "prev_level": "med",
+   "level": "med"
+  },
+  {
+   "value": 0.6401,
+   "prev_level": "high",
+   "level": "high"
+  },
+  {
+   "value": 0.66,
+   "prev_level": "low",
+   "level": "med"
+  },
+  {
+   "value": 0.66,
+   "prev_level": "med",
+   "level": "med"
+  },
+  {
+   "value": 0.66,
+   "prev_level": "high",
+   "level": "high"
+  },
+  {
+   "value": 0.6799,
+   "prev_level": "low",
+   "level": "med"
+  },
+  {
+   "value": 0.6799,
+   "prev_level": "med",
+   "level": "med"
+  },
+  {
+   "value": 0.6799,
+   "prev_level": "high",
+   "level": "high"
+  },
+  {
+   "value": 0.6801,
+   "prev_level": "low",
+   "level": "high"
+  },
+  {
+   "value": 0.6801,
+   "prev_level": "med",
+   "level": "high"
+  },
+  {
+   "value": 0.6801,
+   "prev_level": "high",
+   "level": "high"
+  },
+  {
+   "value": 0.9,
+   "prev_level": "low",
+   "level": "high"
+  },
+  {
+   "value": 0.9,
+   "prev_level": "med",
+   "level": "high"
+  },
+  {
+   "value": 0.9,
+   "prev_level": "high",
+   "level": "high"
+  },
+  {
+   "value": 1.0,
+   "prev_level": "low",
+   "level": "high"
+  },
+  {
+   "value": 1.0,
+   "prev_level": "med",
+   "level": "high"
+  },
+  {
+   "value": 1.0,
+   "prev_level": "high",
+   "level": "high"
+  }
+ ],
+ "initial_state": {
+  "values": {
+   "hunger": 0.3,
+   "curiosity": 0.5,
+   "safety": 0.2,
+   "boredom": 0.4,
+   "loneliness": 0.4
+  },
+  "levels": {
+   "hunger": "low",
+   "curiosity": "med",
+   "safety": "low",
+   "boredom": "med",
+   "loneliness": "med"
+  }
+ },
+ "trajectories": [
+  {
+   "name": "from_initial_state_seed_0",
+   "start": {
+    "values": {
+     "hunger": 0.3,
+     "curiosity": 0.5,
+     "safety": 0.2,
+     "boredom": 0.4,
+     "loneliness": 0.4
+    },
+    "levels": {
+     "hunger": "low",
+     "curiosity": "med",
+     "safety": "low",
+     "boredom": "med",
+     "loneliness": "med"
+    }
+   },
+   "seed": 0,
+   "samples": [
+    {
+     "tick": 400,
+     "values": {
+      "hunger": 0.420000000000009,
+      "curiosity": 0.5799999999999912,
+      "safety": 0.2399999999999956,
+      "boredom": 0.4799999999999912,
+      "loneliness": 0.4799999999999912
+     },
+     "levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 800,
+     "values": {
+      "hunger": 0.5400000000000106,
+      "curiosity": 0.6599999999999824,
+      "safety": 0.2799999999999912,
+      "boredom": 0.5599999999999824,
+      "loneliness": 0.5599999999999824
+     },
+     "levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 1200,
+     "values": {
+      "hunger": 0.6599999999999974,
+      "curiosity": 0.7399999999999736,
+      "safety": 0.3199999999999868,
+      "boredom": 0.6399999999999736,
+      "loneliness": 0.6399999999999736
+     },
+     "levels": {
+      "hunger": "med",
+      "curiosity": "high",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 1600,
+     "values": {
+      "hunger": 0.7799999999999842,
+      "curiosity": 0.8199999999999648,
+      "safety": 0.3599999999999824,
+      "boredom": 0.7199999999999648,
+      "loneliness": 0.7199999999999648
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 2000,
+     "values": {
+      "hunger": 0.8999999999999709,
+      "curiosity": 0.899999999999956,
+      "safety": 0.399999999999978,
+      "boredom": 0.799999999999956,
+      "loneliness": 0.799999999999956
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 2400,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 0.9799999999999471,
+      "safety": 0.4399999999999736,
+      "boredom": 0.8799999999999472,
+      "loneliness": 0.8799999999999472
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 2800,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.4799999999999692,
+      "boredom": 0.9599999999999383,
+      "loneliness": 0.9599999999999383
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 3200,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.5199999999999648,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 3600,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.5599999999999604,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 4000,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.599999999999956,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 4400,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.6399999999999516,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 4800,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.6799999999999472,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 5200,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.7199999999999428,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 5600,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.7599999999999384,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 6000,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.799999999999934,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 6400,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.8399999999999296,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 6800,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.8799999999999252,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 7200,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.9199999999999208,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 7600,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.9599999999999164,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 8000,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.999999999999912,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    }
+   ],
+   "crossings": [
+    {
+     "tick": 167,
+     "drive": "hunger",
+     "level": "med",
+     "direction": "rising"
+    },
+    {
+     "tick": 901,
+     "drive": "curiosity",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 1267,
+     "drive": "hunger",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 1401,
+     "drive": "boredom",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 1401,
+     "drive": "loneliness",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 1501,
+     "drive": "safety",
+     "level": "med",
+     "direction": "rising"
+    },
+    {
+     "tick": 4801,
+     "drive": "safety",
+     "level": "high",
+     "direction": "rising"
+    }
+   ]
+  },
+  {
+   "name": "from_initial_state_seed_7",
+   "start": {
+    "values": {
+     "hunger": 0.3,
+     "curiosity": 0.5,
+     "safety": 0.2,
+     "boredom": 0.4,
+     "loneliness": 0.4
+    },
+    "levels": {
+     "hunger": "low",
+     "curiosity": "med",
+     "safety": "low",
+     "boredom": "med",
+     "loneliness": "med"
+    }
+   },
+   "seed": 7,
+   "samples": [
+    {
+     "tick": 400,
+     "values": {
+      "hunger": 0.420000000000009,
+      "curiosity": 0.5799999999999912,
+      "safety": 0.2399999999999956,
+      "boredom": 0.4799999999999912,
+      "loneliness": 0.4799999999999912
+     },
+     "levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 800,
+     "values": {
+      "hunger": 0.5400000000000106,
+      "curiosity": 0.6599999999999824,
+      "safety": 0.2799999999999912,
+      "boredom": 0.5599999999999824,
+      "loneliness": 0.5599999999999824
+     },
+     "levels": {
+      "hunger": "med",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 1200,
+     "values": {
+      "hunger": 0.6599999999999974,
+      "curiosity": 0.7399999999999736,
+      "safety": 0.3199999999999868,
+      "boredom": 0.6399999999999736,
+      "loneliness": 0.6399999999999736
+     },
+     "levels": {
+      "hunger": "med",
+      "curiosity": "high",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 1600,
+     "values": {
+      "hunger": 0.7799999999999842,
+      "curiosity": 0.8199999999999648,
+      "safety": 0.3599999999999824,
+      "boredom": 0.7199999999999648,
+      "loneliness": 0.7199999999999648
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 2000,
+     "values": {
+      "hunger": 0.8999999999999709,
+      "curiosity": 0.899999999999956,
+      "safety": 0.399999999999978,
+      "boredom": 0.799999999999956,
+      "loneliness": 0.799999999999956
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 2400,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 0.9799999999999471,
+      "safety": 0.4399999999999736,
+      "boredom": 0.8799999999999472,
+      "loneliness": 0.8799999999999472
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 2800,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.4799999999999692,
+      "boredom": 0.9599999999999383,
+      "loneliness": 0.9599999999999383
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 3200,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.5199999999999648,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 3600,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.5599999999999604,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 4000,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.599999999999956,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 4400,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.6399999999999516,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 4800,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.6799999999999472,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "med",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 5200,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.7199999999999428,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 5600,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.7599999999999384,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 6000,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.799999999999934,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 6400,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.8399999999999296,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 6800,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.8799999999999252,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 7200,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.9199999999999208,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 7600,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.9599999999999164,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    },
+    {
+     "tick": 8000,
+     "values": {
+      "hunger": 1.0,
+      "curiosity": 1.0,
+      "safety": 0.999999999999912,
+      "boredom": 1.0,
+      "loneliness": 1.0
+     },
+     "levels": {
+      "hunger": "high",
+      "curiosity": "high",
+      "safety": "high",
+      "boredom": "high",
+      "loneliness": "high"
+     }
+    }
+   ],
+   "crossings": [
+    {
+     "tick": 167,
+     "drive": "hunger",
+     "level": "med",
+     "direction": "rising"
+    },
+    {
+     "tick": 901,
+     "drive": "curiosity",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 1267,
+     "drive": "hunger",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 1401,
+     "drive": "boredom",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 1401,
+     "drive": "loneliness",
+     "level": "high",
+     "direction": "rising"
+    },
+    {
+     "tick": 1501,
+     "drive": "safety",
+     "level": "med",
+     "direction": "rising"
+    },
+    {
+     "tick": 4801,
+     "drive": "safety",
+     "level": "high",
+     "direction": "rising"
+    }
+   ]
+  },
+  {
+   "name": "from_below_baseline",
+   "start": {
+    "values": {
+     "hunger": 0.02,
+     "curiosity": 0.02,
+     "safety": 0.02,
+     "boredom": 0.02,
+     "loneliness": 0.02
+    },
+    "levels": {
+     "hunger": "low",
+     "curiosity": "low",
+     "safety": "low",
+     "boredom": "low",
+     "loneliness": "low"
+    }
+   },
+   "seed": 0,
+   "samples": [
+    {
+     "tick": 400,
+     "values": {
+      "hunger": 0.17418789004717725,
+      "curiosity": 0.28432209722373303,
+      "safety": 0.1191207864588996,
+      "boredom": 0.22925499363545504,
+      "loneliness": 0.22925499363545504
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "low",
+      "safety": "low",
+      "boredom": "low",
+      "loneliness": "low"
+     }
+    },
+    {
+     "tick": 800,
+     "values": {
+      "hunger": 0.24346897496149603,
+      "curiosity": 0.4030896713625647,
+      "safety": 0.16365862676096166,
+      "boredom": 0.3232793231620301,
+      "loneliness": 0.3232793231620301
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "low",
+      "loneliness": "low"
+     }
+    },
+    {
+     "tick": 1200,
+     "values": {
+      "hunger": 0.27459897307896497,
+      "curiosity": 0.4564553824210818,
+      "safety": 0.18367076840790544,
+      "boredom": 0.36552717775002286,
+      "loneliness": 0.36552717775002286
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 1600,
+     "values": {
+      "hunger": 0.28858658288605776,
+      "curiosity": 0.480434142090384,
+      "safety": 0.1926628032838938,
+      "boredom": 0.3845103624882208,
+      "loneliness": 0.3845103624882208
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 2000,
+     "values": {
+      "hunger": 0.2948716211111549,
+      "curiosity": 0.49120849333340727,
+      "safety": 0.19670318500002745,
+      "boredom": 0.3930400572222812,
+      "loneliness": 0.3930400572222812
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 2400,
+     "values": {
+      "hunger": 0.2976956708262745,
+      "curiosity": 0.4960497214164701,
+      "safety": 0.1985186455311762,
+      "boredom": 0.39687269612137266,
+      "loneliness": 0.39687269612137266
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 2800,
+     "values": {
+      "hunger": 0.29896459815938503,
+      "curiosity": 0.49822502541608815,
+      "safety": 0.199334384531033,
+      "boredom": 0.3985948117877364,
+      "loneliness": 0.3985948117877364
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 3200,
+     "values": {
+      "hunger": 0.2995347639635116,
+      "curiosity": 0.4992024525088762,
+      "safety": 0.19970091969082887,
+      "boredom": 0.3993686082361939,
+      "loneliness": 0.3993686082361939
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 3600,
+     "values": {
+      "hunger": 0.29979095597365446,
+      "curiosity": 0.4996416388119793,
+      "safety": 0.19986561455449234,
+      "boredom": 0.39971629739281667,
+      "loneliness": 0.39971629739281667
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 4000,
+     "values": {
+      "hunger": 0.2999060704641873,
+      "curiosity": 0.4998389779386071,
+      "safety": 0.19993961672697777,
+      "boredom": 0.3998725242013973,
+      "loneliness": 0.3998725242013973
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 4400,
+     "values": {
+      "hunger": 0.29995779473897355,
+      "curiosity": 0.4999276481239542,
+      "safety": 0.19997286804648312,
+      "boredom": 0.39994272143146403,
+      "loneliness": 0.39994272143146403
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 4800,
+     "values": {
+      "hunger": 0.2999810359537828,
+      "curiosity": 0.49996749020648446,
+      "safety": 0.19998780882743178,
+      "boredom": 0.3999742630801335,
+      "loneliness": 0.3999742630801335
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 5200,
+     "values": {
+      "hunger": 0.299991478904758,
+      "curiosity": 0.49998539240815604,
+      "safety": 0.19999452215305877,
+      "boredom": 0.39998843565645686,
+      "loneliness": 0.39998843565645686
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 5600,
+     "values": {
+      "hunger": 0.2999961712251019,
+      "curiosity": 0.49999343638588845,
+      "safety": 0.19999753864470843,
+      "boredom": 0.399994803805495,
+      "loneliness": 0.399994803805495
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 6000,
+     "values": {
+      "hunger": 0.2999982796205414,
+      "curiosity": 0.49999705077807055,
+      "safety": 0.1999988940417766,
+      "boredom": 0.3999976651993057,
+      "loneliness": 0.3999976651993057
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 6400,
+     "values": {
+      "hunger": 0.29999922698368026,
+      "curiosity": 0.4999986748291658,
+      "safety": 0.19999950306093695,
+      "boredom": 0.3999989509064228,
+      "loneliness": 0.3999989509064228
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 6800,
+     "values": {
+      "hunger": 0.29999965266137774,
+      "curiosity": 0.499999404562362,
+      "safety": 0.19999977671088567,
+      "boredom": 0.39999952861187016,
+      "loneliness": 0.39999952861187016
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 7200,
+     "values": {
+      "hunger": 0.2999998439306967,
+      "curiosity": 0.499999732452623,
+      "safety": 0.19999989966973364,
+      "boredom": 0.39999978819166,
+      "loneliness": 0.39999978819166
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 7600,
+     "values": {
+      "hunger": 0.29999992987354146,
+      "curiosity": 0.4999998797832142,
+      "safety": 0.19999995491870542,
+      "boredom": 0.39999990482837805,
+      "loneliness": 0.39999990482837805
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    },
+    {
+     "tick": 8000,
+     "values": {
+      "hunger": 0.29999996849015104,
+      "curiosity": 0.49999994598311615,
+      "safety": 0.19999997974366865,
+      "boredom": 0.39999995723663384,
+      "loneliness": 0.39999995723663384
+     },
+     "levels": {
+      "hunger": "low",
+      "curiosity": "med",
+      "safety": "low",
+      "boredom": "med",
+      "loneliness": "med"
+     }
+    }
+   ],
+   "crossings": [
+    {
+     "tick": 582,
+     "drive": "curiosity",
+     "level": "med",
+     "direction": "rising"
+    },
+    {
+     "tick": 1015,
+     "drive": "boredom",
+     "level": "med",
+     "direction": "rising"
+    },
+    {
+     "tick": 1015,
+     "drive": "loneliness",
+     "level": "med",
+     "direction": "rising"
+    }
+   ]
+  }
+ ]
+}

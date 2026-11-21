@@ -1,78 +1,56 @@
 /**
- * Civic Map zone detail route — Phase 36 VIS-01 / D-36-14.
+ * Civic Map zone detail route — Phase 36 VIS-01 / D-36-14, zones live per D-V3-40.
  *
  * ROUTE_DID_POLICY: 'public' — listed in grid/src/api/policy.ts
  *
  * GET /api/v1/civic-map/zone/:zone_id
- *   200: zone detail with public zone info (tax rate, recent activity, top contributors)
- *   404: {error: 'zone_not_found'} — unknown zone_id
+ *   200: zone detail (label, kind, what it allows, tax rate, recent activity, top contributors)
+ *   404: {error: 'zone_not_found'} — a zone this Grid does not have
  *
- * Phase 36 STUB — Phase 57 (Zoning) wires real zone data model.
- * Real recentActivity and topContributors are deferred to Phase 57 ZONE-*.
+ * The zone is read from the Grid's CURRENT zone set, so a zone its Polis added resolves and
+ * one it removed does not. recentActivity / topContributors are not collected yet (empty).
  */
 
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
+import { currentZones, zoneTaxRate } from './civic-map.js';
 
-/** Available zone IDs — matches D-V3-32 6-zone invariant. */
-const ZONE_MAP: Record<string, { id: string; label: string; description: string; taxRate: number }> = {
-    business: {
-        id: 'business',
-        label: 'Business',
-        description: 'Commercial operations, enterprise contracts, and professional services.',
-        taxRate: 0.12,
-    },
-    manufacture: {
-        id: 'manufacture',
-        label: 'Manufacture',
-        description: 'Production, fabrication, and artisanal workshops.',
-        taxRate: 0.09,
-    },
-    shopping: {
-        id: 'shopping',
-        label: 'Shopping',
-        description: 'Retail listings, marketplace storefronts, and consumer exchange.',
-        taxRate: 0.10,
-    },
-    residential: {
-        id: 'residential',
-        label: 'Residential',
-        description: 'Citizen homes, community spaces, and social gathering.',
-        taxRate: 0.05,
-    },
-    infrastructure: {
-        id: 'infrastructure',
-        label: 'Infrastructure',
-        description: 'Grid utilities, transport nodes, and shared services.',
-        taxRate: 0.03,
-    },
-    government_quarter: {
-        id: 'government_quarter',
-        label: 'Government Quarter',
-        description: 'Polis chambers, civic courts, and administrative offices.',
-        taxRate: 0.00,
-    },
+/** What each template zone is for. A zone a Polis added is described by what it allows. */
+const TEMPLATE_DESCRIPTIONS: Readonly<Record<string, string>> = {
+    business: 'Commercial operations, enterprise contracts, and professional services.',
+    manufacture: 'Production, fabrication, and artisanal workshops.',
+    shopping: 'Retail listings, marketplace storefronts, and consumer exchange.',
+    residential: 'Citizen homes, community spaces, and social gathering.',
+    infrastructure: 'Grid utilities, transport nodes, and shared services.',
+    government_quarter: 'Polis chambers, civic courts, and administrative offices.',
 };
+
+const KIND_PHRASE = { home: 'A zone where Nous live', business: 'A zone where Nous trade and make', civic: 'Civic land held by the Polis' } as const;
 
 export function registerCivicMapZoneRoute(
     app: FastifyInstance,
-    _services: GridServices,
+    services: GridServices,
 ): void {
     app.get<{ Params: { zone_id: string } }>(
         '/api/v1/civic-map/zone/:zone_id',
         async (req, reply) => {
-            const zone = ZONE_MAP[req.params.zone_id];
+            const zone = (await currentZones(services)).find((z) => z.zone_id === req.params.zone_id);
             if (!zone) {
                 reply.code(404);
                 return { error: 'zone_not_found' };
             }
+            const activities = zone.allowed_activities.map((a) => a.replace(/_/g, ' ')).join(', ');
+            const description = (zone.template ? TEMPLATE_DESCRIPTIONS[zone.zone_id] : undefined)
+                ?? `${KIND_PHRASE[zone.kind]}${activities ? ` — ${activities}` : ''}.`;
 
-            // PHASE-36 STUB — Phase 57 wires real recentActivity and topContributors data.
             return {
-                zone_id: zone.id,
+                zone_id: zone.zone_id,
                 label: zone.label,
-                description: zone.description,
-                taxRate: zone.taxRate,
+                kind: zone.kind,
+                description,
+                allowed_activities: zone.allowed_activities,
+                for_sale: zone.for_sale,
+                taxRate: zoneTaxRate(zone.zone_id),
                 recentActivity: [],
                 topContributors: [],
             };

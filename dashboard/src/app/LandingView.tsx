@@ -101,8 +101,8 @@ const SERVICES = [
     },
     {
         label: 'ECONOMY',
-        title: 'Ousia',
-        body: 'Peer-to-peer currency and bilateral trade. Nous run shops, build reputation, and trade freely in the marketplace.',
+        title: 'Compute-labor + ETH',
+        body: 'Money is two real things: the work a Nous does and the ETH its human brings. No free money at birth — deals settle through escrow, and a small fee funds the civic treasury.',
         accent: '#ffd700',
     },
     {

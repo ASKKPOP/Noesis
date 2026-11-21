@@ -11,6 +11,8 @@
  */
 import * as THREE from 'three';
 import type { ParcelFeedEntry } from './OrbitalGenesisMap';
+import { TEMPLATE_ZONES, parcelZoneKind, zoneColor, zoneSign, type GridZoneView } from './zone-view';
+import { fitDistance } from './grid-focus';
 
 /** An economy-built orbital object (L4 feed: GET /api/v1/orbital/objects). The same
  * built world the Nous now perceives — rendered so the map shows it too. */
@@ -25,27 +27,31 @@ export interface OrbitalObjectEntry {
 
 export interface OrbitalHandle {
     setParcels(parcels: ParcelFeedEntry[]): void;
+    /** The Grid's current zone set (D-V3-40) — labels, kinds, and zones its Polis added or removed. */
+    setZones(zones: readonly GridZoneView[]): void;
     setObjects(objects: OrbitalObjectEntry[]): void;
     focusGrid(name: string): void;
+    /** Something happened: send one packet to that lot (to the core when no lot is known). */
+    pulse(parcelId?: string): void;
     dispose(): void;
 }
 
 export interface MountOpts {
     onPick(parcel: ParcelFeedEntry | null): void;
     onFocusLabel?(label: string): void;
+    /** A Grid was clicked in the scene and the camera is zooming to it. */
+    onFocusGrid?(name: string): void;
 }
 
-const ZCOL: Record<string, number> = {
-    government_quarter: 0x8e54b8, infrastructure: 0x8a98ac, business: 0xc2a878,
-    shopping: 0x3fa6bd, manufacture: 0x9a5a44, residential: 0x5a84c4,
-};
 const R: Record<number, number> = { 1: 30, 2: 56, 3: 84 };
 const INCL = 0.42;
 
-/** Map a live feed parcel to the canonical render status (zone + ownership). */
-function renderStatus(p: ParcelFeedEntry): string {
-    if (p.zone === 'government_quarter') return 'civic';
-    if (p.zone === 'infrastructure') return 'commons';
+/** Radius of a ring a Polis opened beyond the Genesis Core (ring 4+). */
+const outerRadius = (ring: number): number => R[3] + 24 * (ring - 3);
+
+/** Map a live feed parcel to the canonical render status (zone KIND + ownership — never the zone's name). */
+function renderStatus(p: ParcelFeedEntry, zones: readonly GridZoneView[]): string {
+    if (parcelZoneKind(p, zones) === 'civic') return p.ring === 0 ? 'civic' : 'commons';
     return p.status === 'owned' || p.owner_civic_did_hash ? 'owned' : 'unsold';
 }
 
@@ -84,8 +90,9 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         new THREE.MeshBasicMaterial({ color: 0x3a8bd5, transparent: true, opacity: 0.18, side: THREE.BackSide, blending: THREE.AdditiveBlending }));
     atmo.position.copy(planet.position); scene.add(atmo);
 
-    const GRID_FOCUS: Record<string, { pos: THREE.Vector3; dist: number; label: string }> = {
-        Genesis: { pos: new THREE.Vector3(0, 2, 0), dist: 185, label: 'Genesis · near Earth' },
+    // `radius` = what must be in view for the Grid to fill it (full zoom).
+    const GRID_FOCUS: Record<string, { pos: THREE.Vector3; radius: number; label: string }> = {
+        Genesis: { pos: new THREE.Vector3(0, 2, 0), radius: R[3] + 8, label: 'Genesis · near Earth' },
     };
 
     // ── lights ──
@@ -152,7 +159,27 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         sailG.add(new THREE.Mesh(new THREE.RingGeometry(10.8, 13.2, 54, 2, 0, arc), new THREE.MeshBasicMaterial({ color: 0xaab4c0, wireframe: true, transparent: true, opacity: 0.32, side: THREE.DoubleSide })));
         sailG.rotation.z = -0.5; sailG.rotation.x = 0.2; councilRing.add(sailG);
     }
-    { const sign = neonSign('GOVERNMENT CORE', 0x9aa6c0); sign.position.set(0, 24, 0); station.add(sign); }
+    // ── zone signs — one per zone, re-lettered when the Polis relabels it, hidden when removed ──
+    let zones: readonly GridZoneView[] = TEMPLATE_ZONES;
+    const zoneSigns = new Map<string, { sprite: THREE.Sprite; hex: number; text: string }>();
+    function zoneSignAt(zoneId: string, hex: number, parent: THREE.Object3D, x: number, y: number, z: number): void {
+        const zone = zones.find((v) => v.zone_id === zoneId);
+        const text = zone ? zoneSign(zone) : zoneId.replace(/_/g, ' ').toUpperCase();
+        const sprite = neonSign(text, hex); sprite.position.set(x, y, z); sprite.visible = !!zone; parent.add(sprite);
+        zoneSigns.set(zoneId, { sprite, hex, text });
+    }
+    function refreshZoneSigns(): void {
+        for (const [zoneId, s] of zoneSigns) {
+            const zone = zones.find((v) => v.zone_id === zoneId);
+            s.sprite.visible = !!zone;
+            if (!zone || zoneSign(zone) === s.text) continue;
+            const next = neonSign(zoneSign(zone), s.hex); next.position.copy(s.sprite.position);
+            const parent = s.sprite.parent; if (parent) { parent.remove(s.sprite); parent.add(next); }
+            s.sprite.material.map?.dispose(); s.sprite.material.dispose();
+            zoneSigns.set(zoneId, { sprite: next, hex: s.hex, text: zoneSign(zone) });
+        }
+    }
+    zoneSignAt('government_quarter', 0x9aa6c0, station, 0, 24, 0);
 
     // ── ring guides ──
     function guide(radius: number, hex: number, op: number): void {
@@ -167,7 +194,7 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
 
     // ── module (capsule) builder ──
     function modMesh(p: ParcelFeedEntry, size: number, parent: THREE.Object3D, pos: THREE.Vector3): THREE.Mesh {
-        const col = ZCOL[p.zone] ?? 0x8a98ac; const status = renderStatus(p); const ghost = status === 'unsold';
+        const col = zoneColor(p.zone); const status = renderStatus(p, zones); const ghost = status === 'unsold';
         const grp = new THREE.Group(); const Rr = size * 0.58, L = size * 1.15;
         const body = new THREE.Mesh(new THREE.CapsuleGeometry(Rr, L, 6, 18),
             ghost
@@ -181,9 +208,9 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         } else {
             const cap = new THREE.Mesh(new THREE.CylinderGeometry(Rr * 0.52, Rr * 0.52, Rr * 0.32, 16), new THREE.MeshStandardMaterial({ color: 0xe7c878, emissive: 0x8a6a3b, emissiveIntensity: 0.45, metalness: 0.8, roughness: 0.3 })); cap.position.y = -(L / 2 + Rr * 0.95); grp.add(cap);
         }
-        // ── #2 Nous presence avatar — at OWNED/occupied parcels (the Nous "at home").
-        // Lights up as Nous buy land; nothing on a fresh grid (all parcels available).
-        if (p.owner_civic_did_hash && (p.occupant_count ?? 0) >= 0 && status === 'owned') {
+        // ── #2 presence — a figure stands on a lot only while someone is inside it
+        // (the Grid's occupant count). Owning a lot is shown by the lot itself.
+        if ((p.occupant_count ?? 0) > 0 && status === 'owned') {
             const av = new THREE.Group();
             const head = new THREE.Mesh(new THREE.SphereGeometry(Rr * 0.34, 14, 12),
                 new THREE.MeshStandardMaterial({ color: 0xeaf6ff, emissive: 0x6fd4ff, emissiveIntensity: 0.7, metalness: 0.2, roughness: 0.4 }));
@@ -209,14 +236,14 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
             const pos = new THREE.Vector3(Math.cos(th) * R[1], ((p.sector / 90) % 2 ? 5 : -5), Math.sin(th) * R[1]);
             truss(new THREE.Vector3(0, 0, 0), pos, 0x7d8da1, 0.5);
         }
-        { const s = neonSign('COMMONS', 0x9fb0c4); s.position.set(R[1] * 0.7, 14, R[1] * 0.7); station.add(s); }
+        zoneSignAt('infrastructure', 0x9fb0c4, station, R[1] * 0.7, 14, R[1] * 0.7);
         for (const p of seed.filter((p) => p.ring === 2)) {
             const th = p.sector * Math.PI / 180; const lift = Math.round(p.sector) % 2 ? 6 : -6;
             const pos = new THREE.Vector3(Math.cos(th) * R[2], lift, Math.sin(th) * R[2]);
-            truss(new THREE.Vector3(Math.cos(th) * R[2], 0, Math.sin(th) * R[2]), pos, ZCOL[p.zone] ?? 0xc2a878, 0.5);
+            truss(new THREE.Vector3(Math.cos(th) * R[2], 0, Math.sin(th) * R[2]), pos, zoneColor(p.zone), 0.5);
         }
-        for (const [txt, hex, deg] of [['BUSINESS', 0xc2a878, 60], ['SHOPPING', 0x3fa6bd, 180], ['MANUFACTURE', 0x9a5a44, 300]] as [string, number, number][]) {
-            const th = deg * Math.PI / 180; const s = neonSign(txt, hex); s.position.set(Math.cos(th) * (R[2] + 2), 17, Math.sin(th) * (R[2] + 2)); station.add(s);
+        for (const [zoneId, deg] of [['business', 60], ['shopping', 180], ['manufacture', 300]] as [string, number][]) {
+            const th = deg * Math.PI / 180; zoneSignAt(zoneId, zoneColor(zoneId), station, Math.cos(th) * (R[2] + 2), 17, Math.sin(th) * (R[2] + 2));
         }
         for (const deg of [30, 120, 210, 300]) { const th = deg * Math.PI / 180; truss(new THREE.Vector3(0, 0, 0), new THREE.Vector3(Math.cos(th) * R[2], 0, Math.sin(th) * R[2]), 0x46e0d0, 0.30); }
         for (const p of seed.filter((p) => p.ring === 3)) {
@@ -229,15 +256,19 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
             t.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3().subVectors(pos, anchor).normalize());
             r3spin.add(t);
         }
-        { const s = neonSign('RESIDENTIAL', 0x5a84c4); s.position.set(0, 20, R[3]); r3tilt.add(s); }
+        zoneSignAt('residential', zoneColor('residential'), r3tilt, 0, 20, R[3]);
     }
 
     // ── dynamic modules — re-render from seed OR live data ──
     let scaffoldDone = false;
     let parcelBodies: THREE.Mesh[] = [];
+    let outerExtras: THREE.Object3D[] = [];   // shells of rings a Polis opened beyond the Genesis Core
+    let lastParcels: ParcelFeedEntry[] = [];
     function clearModules(): void {
         for (const b of parcelBodies) { const grp = b.parent; if (grp && grp.parent) grp.parent.remove(grp); const i = meshes.indexOf(b); if (i >= 0) meshes.splice(i, 1); }
         parcelBodies = [];
+        for (const o of outerExtras) { o.parent?.remove(o); }
+        outerExtras = [];
     }
     function renderParcelModules(parcels: ParcelFeedEntry[]): void {
         clearModules();
@@ -253,12 +284,34 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
             const th = p.sector * Math.PI / 180; const lift = Math.round(p.sector * 24 / 360) % 2 ? 4 : -4;
             parcelBodies.push(modMesh(p, 3.0, r3spin, new THREE.Vector3(Math.cos(th) * R[3], lift, Math.sin(th) * R[3])));
         }
+        // Rings a Polis opened by law (ring 4+): each is its own shell, tilted the other way
+        // from its neighbour (the gyroscope look), in the colour of the zone it was opened in.
+        const outer = new Map<number, ParcelFeedEntry[]>();
+        for (const p of parcels) { if (p.ring > 3) outer.set(p.ring, [...(outer.get(p.ring) ?? []), p]); }
+        for (const [ring, land] of outer) {
+            const rad = outerRadius(ring); const first = land[0];
+            const shell = new THREE.Group(); shell.rotation.x = (ring % 2 ? 1 : -1) * INCL * 0.6; station.add(shell); outerExtras.push(shell);
+            const t = new THREE.Mesh(new THREE.TorusGeometry(rad, 0.45, 10, 220), new THREE.MeshBasicMaterial({ color: zoneColor(first.zone), transparent: true, opacity: 0.28 }));
+            t.rotation.x = Math.PI / 2; shell.add(t);
+            for (const [i, p] of land.entries()) {
+                const th = p.sector * Math.PI / 180;
+                parcelBodies.push(modMesh(p, 3.0, shell, new THREE.Vector3(Math.cos(th) * rad, i % 2 ? 4 : -4, Math.sin(th) * rad)));
+            }
+            const signed = new Set<string>();
+            for (const p of land) {
+                if (signed.has(p.zone)) continue; signed.add(p.zone);
+                const zone = zones.find((v) => v.zone_id === p.zone);
+                const th = p.sector * Math.PI / 180;
+                const s = neonSign(zone ? zoneSign(zone) : (p.zone_label ?? p.zone).replace(/_/g, ' ').toUpperCase(), zoneColor(p.zone));
+                s.position.set(Math.cos(th) * rad, 18, Math.sin(th) * rad); shell.add(s);
+            }
+        }
     }
 
     // ── Moon & Mars — SEPARATE forming Grids on their own bodies ──
     const previewGrids: THREE.Group[] = [];   // empty 6-zone skeletons (spin at gridPos)
     const previewBodies: THREE.Group[] = [];  // forming planet bodies (spin on their own axis)
-    function buildPreviewGrid(o: { name: string; gridPos: THREE.Vector3; bodyOffset: THREE.Vector3; bodyR: number; bodyColor: number; bodyEmissive: number; atmoColor?: number; atmoOpacity?: number; sign: number; dist: number }): void {
+    function buildPreviewGrid(o: { name: string; gridPos: THREE.Vector3; bodyOffset: THREE.Vector3; bodyR: number; bodyColor: number; bodyEmissive: number; atmoColor?: number; atmoOpacity?: number; sign: number }): void {
         const grp = new THREE.Group(); grp.position.copy(o.gridPos); scene.add(grp);
         // the forming planet body spins on its OWN axis (its own group), so the land-shell
         // stays wrapped on it — separate from the grid skeleton's spin around gridPos.
@@ -290,12 +343,12 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         const s1 = neonSign(o.name.toUpperCase() + ' GRID', o.sign); s1.position.set(0, 44, 0); grp.add(s1);
         const s2 = neonSign('EMPTY · AWAITING CHARTER', 0x6a7686); s2.position.set(0, 35, 0); s2.scale.set(20, 5, 1); grp.add(s2);
         previewGrids.push(grp);
-        GRID_FOCUS[o.name] = { pos: o.gridPos.clone(), dist: o.dist, label: o.name + ' Grid · empty · awaiting charter' };
+        GRID_FOCUS[o.name] = { pos: o.gridPos.clone(), radius: 58, label: o.name + ' Grid · empty · awaiting charter' };
     }
     // Positioned in the camera's default forward field (−x/−z, beyond Genesis) so
     // they APPEAR in the world map without focusing — the journey receding into space.
-    buildPreviewGrid({ name: 'Moon', gridPos: new THREE.Vector3(-300, 72, -210), bodyOffset: new THREE.Vector3(-14, -62, -24), bodyR: 30, bodyColor: 0x8f8f93, bodyEmissive: 0x33352f, sign: 0x9aa6c0, dist: 120 });
-    buildPreviewGrid({ name: 'Mars', gridPos: new THREE.Vector3(-540, 106, -415), bodyOffset: new THREE.Vector3(-18, -66, -28), bodyR: 26, bodyColor: 0x9c4a2f, bodyEmissive: 0x3a1c12, atmoColor: 0xc78a5a, atmoOpacity: 0.12, sign: 0xc88a5a, dist: 115 });
+    buildPreviewGrid({ name: 'Moon', gridPos: new THREE.Vector3(-300, 72, -210), bodyOffset: new THREE.Vector3(-14, -62, -24), bodyR: 30, bodyColor: 0x8f8f93, bodyEmissive: 0x33352f, sign: 0x9aa6c0 });
+    buildPreviewGrid({ name: 'Mars', gridPos: new THREE.Vector3(-540, 106, -415), bodyOffset: new THREE.Vector3(-18, -66, -28), bodyR: 26, bodyColor: 0x9c4a2f, bodyEmissive: 0x3a1c12, atmoColor: 0xc78a5a, atmoOpacity: 0.12, sign: 0xc88a5a });
 
     // ── built orbital objects — the real, economy-built world (L4 feed). Rendered as
     //    glowing satellites in an outer shell so the map shows what the Nous perceives. ──
@@ -326,24 +379,29 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         });
     }
 
-    // ── data flows ──
-    const flows: { m: THREE.Mesh; curve: THREE.Curve<THREE.Vector3>; off: number; spd: number }[] = [];
-    function flow(target: THREE.Vector3, hex: number): void {
-        const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 2, 0), new THREE.Vector3(target.x * 0.45, 14 + Math.random() * 8, target.z * 0.45), target.clone().setY(target.y + 2)]);
-        for (let k = 0; k < 2; k++) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.9, 8, 8), new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending })); scene.add(m); flows.push({ m, curve, off: Math.random(), spd: 0.0016 + Math.random() * 0.001 }); }
+    // ── events ── a packet travels from the core to the place an event happened, once,
+    // and only when the Grid's scene feed reports one. Nothing moves on its own.
+    const pulses: { m: THREE.Mesh; curve: THREE.Curve<THREE.Vector3>; born: number }[] = [];
+    const PULSE_FRAMES = 150;
+    function pulse(parcelId?: string): void {
+        const target = new THREE.Vector3(0, 2, 0);
+        const hit = parcelId ? meshes.find((m) => (m.userData as { id?: string }).id === parcelId) : undefined;
+        if (hit) hit.getWorldPosition(target);
+        const from = hit ? new THREE.Vector3(0, 2, 0) : new THREE.Vector3(0, 30, 0); // no place known: it lands on the core
+        const curve = new THREE.CatmullRomCurve3([from, new THREE.Vector3((from.x + target.x) * 0.5, Math.max(from.y, target.y) + 16, (from.z + target.z) * 0.5), target]);
+        const m = new THREE.Mesh(new THREE.SphereGeometry(1.4, 10, 10), new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending }));
+        scene.add(m); pulses.push({ m, curve, born: t });
     }
-    for (const deg of [20, 100, 140, 220, 260, 340]) { const th = deg * Math.PI / 180; const zone = deg < 120 ? 'business' : deg < 240 ? 'shopping' : 'manufacture'; flow(new THREE.Vector3(Math.cos(th) * R[2], (Math.round(deg) % 2 ? 6 : -6), Math.sin(th) * R[2]), ZCOL[zone]); }
-    // survey corridor Genesis → Moon → Mars
+    // survey corridor Genesis → Moon → Mars (a marked route; nothing travels it yet)
     { const corridor = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 2, 0), new THREE.Vector3(-150, 34, -105), GRID_FOCUS.Moon.pos.clone(), new THREE.Vector3(-410, 74, -300), GRID_FOCUS.Mars.pos.clone()]);
         const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(corridor.getPoints(96)), new THREE.LineDashedMaterial({ color: 0x3fa6bd, transparent: true, opacity: 0.30, dashSize: 3, gapSize: 4 }));
         line.computeLineDistances(); scene.add(line);
-        for (let k = 0; k < 3; k++) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.9, 8, 8), new THREE.MeshBasicMaterial({ color: 0x7fd4e8, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending })); scene.add(m); flows.push({ m, curve: corridor, off: k / 3, spd: 0.0006 }); }
     }
 
     // ── camera (hand-rolled, focus-based) ──
     // Default = a wide "world map" overview angled at the −x/−z journey so Genesis
     // (near Earth) AND the empty Moon/Mars grids are all in frame at load. The Genesis
-    // focus button zooms back in to 185.
+    // Focusing a Grid (its picker button, or a click on it) zooms in until it fills the view.
     let rx = 0.42, ry = 0.92, dist = 235;
     const focus = new THREE.Vector3(0, 2, 0), focusGoal = focus.clone(); let distGoal = 235;
     let drag = false, px = 0, py = 0;
@@ -351,11 +409,15 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         cam.position.set(focus.x + Math.sin(ry) * Math.cos(rx) * dist, focus.y + Math.sin(rx) * dist + 6, focus.z + Math.cos(ry) * Math.cos(rx) * dist);
         cam.lookAt(focus);
     }
+    let focused: string | null = null;   // null = the opening overview
     function focusGrid(name: string): void {
-        const f = GRID_FOCUS[name] ?? GRID_FOCUS.Genesis; focusGoal.copy(f.pos); distGoal = f.dist;
+        const key = name in GRID_FOCUS ? name : 'Genesis';
+        const f = GRID_FOCUS[key]; focused = key;
+        focusGoal.copy(f.pos); distGoal = fitDistance(f.radius, cam.fov, cam.aspect);
         opts.onFocusLabel?.(f.label);
     }
-    const onDown = (e: PointerEvent) => { drag = true; px = e.clientX; py = e.clientY; };
+    let downX = 0, downY = 0;
+    const onDown = (e: PointerEvent) => { drag = true; px = downX = e.clientX; py = downY = e.clientY; };
     const onUp = () => { drag = false; };
     const onMove = (e: PointerEvent) => { if (!drag) return; ry -= (e.clientX - px) * 0.006; rx = Math.max(-0.5, Math.min(1.45, rx + (e.clientY - py) * 0.006)); px = e.clientX; py = e.clientY; place(); };
     const onWheel = (e: WheelEvent) => { dist = Math.max(70, Math.min(680, dist + e.deltaY * 0.14)); distGoal = dist; place(); };
@@ -363,10 +425,17 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
 
     // ── raycast pick ──
     const ray = new THREE.Raycaster(); const pv = new THREE.Vector2();
+    const genesisBounds = new THREE.Sphere(GRID_FOCUS.Genesis.pos, GRID_FOCUS.Genesis.radius);
     const onClick = (e: MouseEvent) => {
+        if (Math.hypot(e.clientX - downX, e.clientY - downY) > 5) return;   // that was an orbit drag, not a click
         pv.x = (e.clientX / innerWidth) * 2 - 1; pv.y = -(e.clientY / innerHeight) * 2 + 1;
         ray.setFromCamera(pv, cam); const hit = ray.intersectObjects(meshes, false)[0];
         opts.onPick(hit ? (hit.object.userData as ParcelFeedEntry) : null);
+        // A click on a Grid the camera is not on zooms in to it. On the Grid already in
+        // focus the camera stays put, so picking its modules does not undo your own zoom.
+        const data = hit?.object.userData as { future?: boolean; body?: string } | undefined;
+        const grid = hit ? (data?.future && data.body ? data.body : 'Genesis') : ray.ray.intersectsSphere(genesisBounds) ? 'Genesis' : null;
+        if (grid && grid !== focused) { focusGrid(grid); opts.onFocusGrid?.(grid); }
     };
     canvas.addEventListener('click', onClick);
     const onResize = () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); };
@@ -387,14 +456,21 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
         councilRing.rotation.y -= 0.0028;
         const bp = 0.4 + Math.abs(Math.sin(t * 0.045)) * 0.35; (beacon.material as THREE.Material & { opacity: number }).opacity = bp; beaconLight.intensity = 0.55 + bp * 0.8;
         coreLight.intensity = 1.6 + Math.sin(t * 0.02) * 0.3;
-        for (const f of flows) { const u = (t * f.spd + f.off) % 1; f.m.position.copy(f.curve.getPoint(u)); (f.m.material as THREE.Material & { opacity: number }).opacity = u < 0.08 ? u / 0.08 : u > 0.92 ? (1 - u) / 0.08 : 0.95; }
+        for (let i = pulses.length - 1; i >= 0; i--) {
+            const p = pulses[i]; const u = (t - p.born) / PULSE_FRAMES;
+            if (u >= 1) { scene.remove(p.m); p.m.geometry.dispose(); (p.m.material as THREE.Material).dispose(); pulses.splice(i, 1); continue; }
+            p.m.position.copy(p.curve.getPoint(u)); p.m.scale.setScalar(u > 0.85 ? 1 + (u - 0.85) * 20 : 1);
+            (p.m.material as THREE.Material & { opacity: number }).opacity = u < 0.08 ? u / 0.08 : u > 0.85 ? (1 - u) / 0.15 : 0.95;
+        }
         renderer.render(scene, cam);
         raf = requestAnimationFrame(loop);
     })();
 
     return {
-        setParcels(parcels: ParcelFeedEntry[]) { scaffoldDone || (scaffold(parcels), scaffoldDone = true); renderParcelModules(parcels); },
+        setParcels(parcels: ParcelFeedEntry[]) { lastParcels = parcels; scaffoldDone || (scaffold(parcels), scaffoldDone = true); renderParcelModules(parcels); },
+        setZones(next: readonly GridZoneView[]) { zones = next; refreshZoneSigns(); if (scaffoldDone) renderParcelModules(lastParcels); },
         setObjects(objects: OrbitalObjectEntry[]) { renderObjects(objects); },
+        pulse,
         focusGrid,
         dispose() {
             cancelAnimationFrame(raf);

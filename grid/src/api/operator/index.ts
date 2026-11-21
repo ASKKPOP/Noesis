@@ -12,6 +12,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { registerClockOperatorRoutes } from './clock-pause-resume.js';
+import { registerGridVisibilityRoute } from './grid-visibility.js';
 import { registerGovernanceOperatorRoutes } from './governance-laws.js';
 import { registerMemoryQueryRoute } from './memory-query.js';
 import { registerTelosForceRoute } from './telos-force.js';
@@ -31,6 +32,8 @@ export function registerOperatorRoutes(
     services: GridServices,
 ): void {
     registerClockOperatorRoutes(app, services);
+    // D-V3-41: H5 — the Grid's creator switches it public ⇄ private.
+    registerGridVisibilityRoute(app, services);
     registerGovernanceOperatorRoutes(app, services);
     registerMemoryQueryRoute(app, services);
     registerTelosForceRoute(app, services);
