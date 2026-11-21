@@ -385,3 +385,6 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 
 ## [2026-11-20] deploy | V0 + district level + Nous in districts (operator-requested)
 - Live and correct. Finding: the live Nous do not act — last 1,000 record entries are ticks; no Brain container on the server. The view is truthful and therefore still. Interest now depends on running Brains (operator's secret) and on Nous taking more than two kinds of action (X2).
+
+## [2026-11-20] apply | A wire-connected Brain decides on the Grid's clock
+- Finding: the Grid never calls a Brain; the Brain ignored firehose ticks. No Brain anywhere would have acted. Operator chose the Mac as where the Nous think. Built `TickDriver` (Brain) and `restoreCivicDids` (Grid start). Unit-tested both sides; not run end to end, not deployed. Next: enrol the founding Nous (operator, Portal), then offer the Nous more actions (move, speak first).

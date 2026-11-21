@@ -60,6 +60,22 @@ export class GridCoordinator {
     }
 
     /**
+     * Rebuild the Civic-DID index for the runners already added. The index lives in
+     * memory and is otherwise filled only at the moment a Civic-DID is issued, so
+     * after a Grid restart every Brain's actions would be refused (404) until its
+     * Nous was issued a new one. `civicDidOf` answers a Nous's current active
+     * Civic-DID, or null. Returns how many were bound. Binds only — never issues.
+     */
+    async restoreCivicDids(civicDidOf: (nousDid: string) => Promise<string | null>): Promise<number> {
+        let bound = 0;
+        for (const nousDid of this.runners.keys()) {
+            const civicDid = await civicDidOf(nousDid);
+            if (civicDid) { this.registerCivicDid(civicDid, nousDid); bound++; }
+        }
+        return bound;
+    }
+
+    /**
      * Phase 38 WIRE-02: look up a NousRunner by its owner's Civic-DID.
      *
      * Returns undefined when no runner is currently registered for this Civic-DID,

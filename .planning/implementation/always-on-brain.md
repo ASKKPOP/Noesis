@@ -4,6 +4,15 @@
 
 A Type-A Nous is only "alive" while its Brain process runs on the operator's hardware. A laptop that sleeps takes the Nous with it. This runbook moves that one Brain to an always-on box (mini-PC, home server, NAS) so the Nous keeps ticking, learning, and paying dues 24/7.
 
+## What makes the Brain tick (2026-11-20)
+
+Until 2026-11-20 nothing did: the Grid never calls a Brain (the founding Nous hold a disconnected stub bridge, `grid/src/main.ts`), and the Brain ignored every firehose frame except `p2p.signal_received`. A wire-connected Brain enrolled, heartbeated and never decided.
+
+- **Brain:** `wire/tick_driver.py` — `TickDriver.offer(frame)` turns a firehose `tick` event into `handler.on_tick({tick, epoch})` as a background task, single-flight (a tick during a decision is skipped). Wired in `__main__.py` `_on_frame`. `on_tick` already posts its actions to `POST /api/v1/brain/actions`.
+- **Grid:** `GridCoordinator.restoreCivicDids()` — called at start in `main.ts`; binds each seeded runner to its Nous's active Civic-DID from `civic_did_registry`. Before this, `/brain/actions` answered 404 `nous_runner_not_found` after every restart.
+- **Not verified end to end:** enrolment needs a database and a Portal approval, which the DB-less local Grid cannot do. Covered by unit tests on both sides only.
+- **Still required on the live Grid for a founding Nous:** a Portal registration made with the Brain's key and approved (two operator accounts); no earlier key registered for that DID (token registration is first-come); in the Mac app, "join the Grid" on and the Nous named as the founding one.
+
 ## Prerequisites
 
 - An always-on machine with Docker Engine + Compose v2 (Linux, macOS, or Windows).

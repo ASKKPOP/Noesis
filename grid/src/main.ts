@@ -420,6 +420,14 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
             }));
         }
     }
+    // A Nous keeps its Civic-DID across restarts; the coordinator's index does not.
+    if (civicDidStore) {
+        const store = civicDidStore;
+        await coordinator.restoreCivicDids(async (nousDid) => {
+            const record = await store.getByExistenceDid(config.genesisConfig.gridName, nousDid);
+            return record?.status === 'active' ? record.civicDid : null;
+        });
+    }
 
     const server = buildServer({
         clock: launcher.clock,
