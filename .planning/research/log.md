@@ -394,3 +394,15 @@ watch whether that crowds retrieval. [[v3.0/CIVIC-ARCHITECTURE]]
 
 ## [2026-11-20] deploy | Grid with the Brain binding restored at start (operator-requested)
 - Live and healthy. Live registry: no founding Nous has a Brain key or Civic-DID yet, so enrolment from the operator's Mac is unblocked. Still still: no Nous acts until enrolled and its Brain runs.
+
+## [2026-11-21] synthesis | Grid House Objects — first discussion sheet
+Operator base idea (objects inside a Holding: three origins, drawn form vs sealed link box,
+predefined algorithms vs linked apps, share, open sell, co-workers, alerts) read against the tree
+at `e47513b2` and a single-pass web survey. Output: `docs/noesis-grid-objects-discussion-2026-11-21.html`
+(seven inline diagrams, EN with a KO summary) + [[grid-objects-research]]. Finding: Phases 58–61
+already hold the catalog, interior tree, roles, agreements and severance; the gaps are a 3D
+interior scene, a GLB path, a Brain-side credential vault, per-object role caveats and affordance
+execution. Nothing ratified — twelve decisions (Q1–Q12) are open, including whether Type B may hold
+third-party credentials and whether the unratified T1 split gets decided by building the Link Box.
+Pitfall carried forward: "object" is already taken by `orbital_objects`; interior objects need
+their own noun before any code lands.
