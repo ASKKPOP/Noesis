@@ -199,7 +199,7 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 </ul></div>
 <div class="box"><span class="k">Engineering discipline</span>
 <ul>
-<li><strong>Allowlist sole-producer triads</strong>; closed tuples; explicit per-phase additions; <code>zoning.* / treasury.* / skill.* / market.* / orbital.*</code> prefixes pre-cleared — a new <code>holding.*</code> prefix is itself a decision (Q10).</li>
+<li><strong>Allowlist sole-producer triads</strong>; closed tuples; explicit per-phase additions; <code>zoning.* / treasury.* / skill.* / market.* / orbital.*</code> prefixes are already in use — a new <code>holding.*</code> prefix is itself a decision (Q10).</li>
 <li><strong>Wallclock forbidden</strong> in grid code: TTLs and timers are in ticks; the NY calendar is display-only.</li>
 <li><strong>R-31-01 zero-diff</strong>; single-onTick; deterministic replays. Any object function that runs Grid-side must be a pure function of (state, tick).</li>
 <li><strong>Physics wins.</strong> Grid-scale objects are physics-gated before persist; interior objects get an analogous <em>form gate</em> (§6).</li>
@@ -440,11 +440,11 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
   <text x="130" y="260" text-anchor="middle" fill="#6b7b8c" font-size="9.5">or proxy calls (raw API key)</text>
   <path d="M230 265 L810 265" stroke="#46e0d0" stroke-dasharray="4 3" marker-end="url(#ar3)"/>
   <text x="520" y="258" text-anchor="middle" fill="#46e0d0" font-size="9.5">⑤ lease over P2P — never via Grid</text>
-  <path d="M230 285H420" stroke="#6b7b8c" marker-end="url(#ar3)"/><text x="325" y="279" text-anchor="middle" fill="#6b7b8c" font-size="9.5">⑥ emit holding.link_leased (hashes, ttl)</text>
+  <path d="M230 285H420" stroke="#6b7b8c" marker-end="url(#ar3)"/><text x="325" y="279" text-anchor="middle" fill="#6b7b8c" font-size="9.5">⑥ emit link_leased (hashes, ttl)</text>
   <text x="910" y="305" text-anchor="middle" fill="#a9b6c4" font-size="10.5">⑦ use within caveats</text>
   <text x="910" y="320" text-anchor="middle" fill="#6b7b8c" font-size="9.5">expires by tick · revocable</text>
   <text x="130" y="330" text-anchor="middle" fill="#a9b6c4" font-size="10.5">⑧ revoke / rotate</text>
-  <path d="M230 340H420" stroke="#6b7b8c" marker-end="url(#ar3)"/><text x="325" y="334" text-anchor="middle" fill="#6b7b8c" font-size="9.5">holding.link_revoked</text>
+  <path d="M230 340H420" stroke="#6b7b8c" marker-end="url(#ar3)"/><text x="325" y="334" text-anchor="middle" fill="#6b7b8c" font-size="9.5">emit link_revoked</text>
 </svg>
 <div class="cap">Fig. 3 — Lease lifecycle. The Grid authorizes and records; the owner's Brain mints; the value travels peer-to-peer (Phase 42 SealedBox) or never travels at all (proxy mode).</div>
 </div>
