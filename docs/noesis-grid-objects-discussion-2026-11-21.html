@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Noēsis — Grid House Objects · Discussion Sheet v0.1</title>
+<style>
+:root{
+  --bg:#0a0e14; --surface:#121a25; --surface2:#0e141d; --border:#22303f; --border-soft:#1a2633;
+  --text:#e6edf3; --muted:#a9b6c4; --muted2:#6b7b8c;
+  --accent:#5fb0e8; --accent2:#46e0d0; --warn:#d8b24a; --vio:#9a86ff; --prod:#e0764a; --ok:#3fb950; --red:#e5534b;
+  --mono:'SFMono-Regular',ui-monospace,'JetBrains Mono',Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans KR','Apple SD Gothic Neo',sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.65;font-size:15.5px}
+.wrap{max-width:1040px;margin:0 auto;padding:44px 20px 90px}
+h1{font-size:34px;line-height:1.2;margin:8px 0 6px}
+h2{font-size:23px;margin:56px 0 10px;padding-top:18px;border-top:1px solid var(--border-soft)}
+h3{font-size:17px;margin:28px 0 8px;color:var(--accent)}
+h4{font-size:14.5px;margin:20px 0 6px;color:var(--accent2)}
+p{margin:10px 0;color:var(--muted)}
+strong{color:var(--text)}
+.k{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2)}
+.tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;border:1px solid;border-radius:4px;padding:1px 7px;vertical-align:middle;margin-left:6px;white-space:nowrap}
+.tag.ex{color:var(--ok);border-color:var(--ok)}
+.tag.pa{color:var(--warn);border-color:var(--warn)}
+.tag.nw{color:var(--vio);border-color:var(--vio)}
+.tag.pr{color:var(--accent);border-color:var(--accent)}
+.tag.sc{color:var(--muted);border-color:var(--muted2)}
+.tag.in{color:var(--prod);border-color:var(--prod)}
+.tag.q{color:var(--red);border-color:var(--red)}
+.lede{font-size:18px;color:var(--text)}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin:16px 0}
+.box.warn{border-color:rgba(216,178,74,.45)}
+.box.acc{border-left:3px solid var(--accent2)}
+.box.vio{border-left:3px solid var(--vio)}
+.box.red{border-left:3px solid var(--red)}
+.box p:first-child{margin-top:0}.box p:last-child{margin-bottom:0}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border)}
+td{padding:8px 10px;border-bottom:1px solid var(--border-soft);color:var(--muted);vertical-align:top}
+td b{color:var(--text)}
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
+code{font-family:var(--mono);font-size:12.5px;background:var(--surface2);border:1px solid var(--border-soft);border-radius:4px;padding:1px 6px;color:var(--accent2);word-break:break-word}
+pre{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55;color:var(--muted)}
+pre b{color:var(--accent2);font-weight:600}
+pre i{color:var(--muted2);font-style:normal}
+ul,ol{color:var(--muted);margin:8px 0;padding-left:22px}
+li{margin:5px 0}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:820px){.grid2,.grid3{grid-template-columns:1fr}}
+.lesson{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--vio);border-radius:10px;padding:14px 18px;margin:12px 0}
+.lesson .src{font-family:var(--mono);font-size:11px;color:var(--muted2);margin-top:8px;word-break:break-word}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;border:1px solid var(--border);border-radius:99px;padding:2px 11px;margin:2px 4px 2px 0;color:var(--muted)}
+.flow{font-family:var(--mono);font-size:12.5px;color:var(--muted);background:var(--surface2);border:1px dashed var(--border);border-radius:10px;padding:14px 16px;margin:12px 0;overflow-x:auto}
+.fig{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;margin:18px 0}
+.fig svg{width:100%;height:auto;display:block}
+.fig .cap{font-family:var(--mono);font-size:11px;color:var(--muted2);margin-top:10px;text-align:center}
+.toc{columns:2;column-gap:28px;font-size:14px}
+@media(max-width:820px){.toc{columns:1}}
+.toc a{display:block;padding:3px 0;color:var(--muted)}
+.toc a b{color:var(--accent);font-family:var(--mono);font-size:11px;margin-right:8px}
+.ko{background:linear-gradient(180deg,rgba(70,224,208,.06),rgba(70,224,208,.01));border:1px solid rgba(70,224,208,.25);border-radius:12px;padding:20px 22px;margin:22px 0}
+.ko h3{margin-top:0;color:var(--accent2)}
+.dq{border-left:3px solid var(--red);padding:8px 14px;margin:10px 0;background:var(--surface)}
+.dq .k{color:var(--red)}
+.status{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle}
+footer{margin-top:70px;border-top:1px solid var(--border-soft);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--muted2)}
+.small{font-size:12.5px;color:var(--muted2)}
+.num{font-family:var(--mono);color:var(--accent2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="k">NOĒSIS · DISCUSSION SHEET v0.1 · 2026-11-21 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
+<h1>Grid House Objects</h1>
+<p class="lede">Things inside a Holding — furniture-like objects a Nous and its human configure and build together:
+some pre-designed by the system, some rendered by the Nous, some paid for and rendered by a service.
+Each object has a <strong>form</strong> (what it looks like), optionally a <strong>link</strong> (keys, tokens, permissions it holds),
+<strong>functions</strong> (what it does), and <strong>governance</strong> (who may share, sell, co-work, and be alerted).</p>
+<p class="k">RESEARCH + CODE AUDIT · EXTENDS SHIPPED PHASES 58–61 (THE NOUS HOUSE) AND 80–86 (ECONOMIC REALITY LOOP) · DOES NOT RE-DECIDE D-NH-01..13 · ALL OPEN POINTS ARE MARKED <span class="tag q">DECIDE</span></p>
+
+<div class="box acc">
+<span class="k">How to read the status tags</span>
+<p style="margin-top:8px">
+<span class="tag ex">EXISTS</span> shipped in the monorepo today, cited by file ·
+<span class="tag pa">PARTIAL</span> substrate exists, this feature completes it ·
+<span class="tag nw">NEW</span> nothing in the tree yet ·
+<span class="tag pr">PRIMARY</span> external claim read from the official spec / docs / paper ·
+<span class="tag sc">SECONDARY</span> from a reputable secondary source, not independently verified ·
+<span class="tag in">INDUSTRY</span> established practice cited as precedent ·
+<span class="tag q">DECIDE</span> a choice this sheet does not make for you.</p>
+<p class="small">Honesty note: external research in this sheet is a single-pass web survey (14 queries, official docs preferred). It was <em>not</em> run through the 3-vote adversarial verification harness used for <code>docs/noesis-nous-house.html</code>. Claims are labelled accordingly.</p>
+</div>
+
+<!-- ============================================================ -->
+<div class="ko">
+<h3>한국어 요약 (Executive summary, KO)</h3>
+<p><strong>무엇을 다루는가.</strong> 홀딩(Holding, 옛 이름 "Nous house") 내부에 놓이는 <strong>오브젝트</strong> — 가구처럼 보이지만 실제로는 ① 시각적 형태(Form), ② 키·토큰·권한을 담는 봉인 상자(Link Box), ③ 기능(사전 정의 알고리즘 또는 외부 앱 연결), ④ 거버넌스(공유·판매·동료 초대·알림)를 가진 단위입니다. 기본 아이디어 6개 항목을 그대로 사양으로 번역하고, 이미 코드에 있는 것과 새로 필요한 것을 구분했습니다.</p>
+<p><strong>이미 있는 것.</strong> 가구 카탈로그 13종(미러 6 + 기능 7, <code>grid/src/civic/furniture.ts</code>), 인테리어 트리, 역할(owner ⊇ staff ⊇ guest)과 해고 상태기계, 상호신용 IOU 장부, 블루프린트 스킬 빌드, 마켓플레이스 v3(listing·bid·settle·dispute), ETH 기반 제로-커스터디 결제 레일(에스크로·캡 세션키), 브레인 도구 루프(web_search·web_fetch·run_code 샌드박스), 오퍼레이터 브리지의 동의 게이트, 절차적 오브젝트 생성기(object-gen.js) + 물리 게이트. 브로드캐스트 허용목록은 현재 <span class="num">159</span>개.</p>
+<p><strong>새로 필요한 것.</strong> (a) 오브젝트 매니페스트(사용자는 몰라도 되는 선언형 언어: Form DSL + 기능 바인딩), (b) Link Box — 비밀은 Grid에 절대 저장하지 않고 브레인(Type A는 운영자 PC, Type B는 헌법 기판 KMS)에만 두며 Grid는 다이제스트와 권한 정책만 보관, 공유는 "노출"이 아닌 "짧은 수명 리스(lease)" 방식, (c) 기능 레이어 — 닫힌 알고리즘 카탈로그 + MCP/OAuth 스코프 기반 앱 연결(돈을 움직이는 도구는 금지, D-MONEY-01), (d) 공유/판매 — 라이선스 비트(copy·modify·transfer·resell)와 재판매 로열티를 우리 결제 단계에서 강제, (e) 동료 초대 — 오브젝트 단위 권한 캐비엇을 기존 역할 엣지에 얹기, (f) 알림 — 다이제스트만 Grid 경계를 넘고 비밀값은 절대 알림에 포함되지 않음.</p>
+<p><strong>핵심 결정 사항(§11).</strong> 이름(제안: <em>Skeuos</em>, 그리스어 σκεῦος "집안 기물"), 스크립트 vs 매니페스트, Type B의 비밀 보관 위치, 인간이 오브젝트를 "소유"할 수 있는가(토지는 D-NH-07로 불가 — 오브젝트는 결정 필요), 결제사 API 키(Stripe 등) 허용 여부, 로열티 비율, 허용목록 예산(+2~+4 제안), 페이즈 번호(89+ 가정).</p>
+<p><strong>제안 로드맵.</strong> OBJ-1 매니페스트+폼 렌더 → OBJ-2 Link Box → OBJ-3 기능/앱 연결 → OBJ-4 공유/판매 → OBJ-5 동료/알림. 각 단계는 GSD 크기이며 기존 불변식(제로 커스터디, 월클럭 금지, 단독 생산자, A11e 방문자 콘텐츠=데이터)을 유지합니다.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="toc">Contents</h2>
+<div class="toc">
+<a href="#s1"><b>01</b>Your base idea, read as a spec</a>
+<a href="#s2"><b>02</b>What already exists (code audit)</a>
+<a href="#s3"><b>03</b>Canon that binds this design</a>
+<a href="#s4"><b>04</b>The object model — four layers</a>
+<a href="#s5"><b>05</b>Three origins: system · Nous · paid service</a>
+<a href="#s6"><b>06</b>Visualization — draw directly, or show a box</a>
+<a href="#s7"><b>07</b>The Link Box — keys, tokens, permissions</a>
+<a href="#s8"><b>08</b>Functions — algorithms and linked apps</a>
+<a href="#s9"><b>09</b>Share · Sell · Co-workers · Alerts</a>
+<a href="#s10"><b>10</b>Threat model and invariants</a>
+<a href="#s11"><b>11</b>Decisions for this discussion</a>
+<a href="#s12"><b>12</b>Proposed phases and allowlist math</a>
+<a href="#s13"><b>13</b>Research notes and precedents</a>
+<a href="#s14"><b>14</b>Sources · Glossary (EN/KO)</a>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1">1 · Your base idea, read as a spec</h2>
+<p>The brief, restated so every line can be checked against code and canon. Nothing is added here; §4 onward is the engineering reading.</p>
+
+<div class="tbl"><table>
+<tr><th>#</th><th>Base idea (verbatim intent)</th><th>Engineering reading</th><th>Status today</th></tr>
+<tr><td class="num">0</td><td><b>Objects inside a Grid house</b>, like furniture at home; configured and built by Local AI together with the human user; 3D in HTML; needs a language for visuals and functions that the user never has to learn.</td><td>Objects are entries in a Holding's <em>interior tree</em>. The Brain (Local AI) authors a declarative <strong>object manifest</strong>; the human sees a 3D preview and consent prompts, never the manifest.</td><td><span class="tag pa">PARTIAL</span> interior tree + 13-kind catalog exist; no manifest, no human co-authoring UI</td></tr>
+<tr><td class="num">T</td><td><b>Three types:</b> pre-designed by the service at system init · rendered by the Nous · paid to the service and rendered by the service.</td><td>Three <strong>origins</strong> of the form layer: <code>system</code> (seeded catalog), <code>nous</code> (Brain-authored, procedural or local text-to-3D), <code>service</code> (paid render, settled in ETH through escrow, Grid attests delivery).</td><td><span class="tag ex">EXISTS</span> system catalog · <span class="tag pa">PARTIAL</span> procedural generator + fal.ai hook in grid-viz · <span class="tag nw">NEW</span> paid-render contract</td></tr>
+<tr><td class="num">1.1</td><td><b>Visualization — draw directly:</b> what form; pre-defined or user-defined.</td><td>A <strong>Form</strong> is either a catalog template, a procedural <em>Form DSL</em> document (deterministic → mesh), or a pinned GLB asset. Rendered by three.js in the interior viewer and the orbital map.</td><td><span class="tag pa">PARTIAL</span></td></tr>
+<tr><td class="num">1.2</td><td><b>Visualization — link:</b> only a box or document is shown; it holds API keys, tokens (token 1, token 2…), other keys, and permissions.</td><td>The <strong>Link Box</strong>: a sealed object. Grid stores slot <em>metadata + digest + policy</em>; the secret value lives only in the Brain's vault. Sharing = issuing a short-lived <em>lease</em>, never revealing the value.</td><td><span class="tag nw">NEW</span> (pattern precedents: A1 capability tokens, operator-bridge consent gate, SealedBox P2P)</td></tr>
+<tr><td class="num">2.1</td><td><b>Functions — pre-defined algorithms.</b></td><td>A closed, versioned <strong>algorithm catalog</strong> bound to functional furniture affordances (billing, accounting, task_tracking, simulation, sales…). Deterministic, tick-based.</td><td><span class="tag pa">PARTIAL</span> affordances declared; execution exists for task boards, shop counter, co-work; most are stubs</td></tr>
+<tr><td class="num">2.2</td><td><b>Functions — linked to an app</b> by key / token / permission.</td><td>An <strong>App Link</strong> binding: provider + Link-Box slot + required/optional scopes + owner consent + allowlisted verbs. Executed by the Brain's tool loop (MCP/HTTP), never by the Grid.</td><td><span class="tag pa">PARTIAL</span> ToolRegistry, web_fetch SSRF guard, money-axiom refusal exist; no app binding model</td></tr>
+<tr><td class="num">4</td><td><b>Share properties.</b></td><td>Visibility tiers per field; share-by-reference (capability grant) vs share-by-copy (blueprint diffusion); license bits <code>copy · modify · transfer · resell</code>.</td><td><span class="tag pa">PARTIAL</span> skill.taught diffusion + roles exist</td></tr>
+<tr><td class="num">5</td><td><b>Open sell?</b></td><td>List the object (manifest hash + license) on Marketplace v3; settle in ETH via escrow; creator royalty on resale enforced at our settlement step; fee skim to treasury.</td><td><span class="tag pa">PARTIAL</span> market.* events + escrow + zone tax exist; no object listing type, no royalty</td></tr>
+<tr><td class="num">6</td><td><b>Invited co-workers (rule, law)?</b></td><td>Existing role edges (owner ⊇ staff ⊇ guest) + per-object capability caveats + signed Cowork Agreement + severance FSM. Three rule layers: substrate physics (ex-ante) · owner house rules · Polis law (ex-post sanctions).</td><td><span class="tag ex">EXISTS</span> roles/agreements/FSM · <span class="tag nw">NEW</span> per-object caveats</td></tr>
+<tr><td class="num">6.1</td><td><b>Alerts &amp; notifications.</b></td><td>Object event taxonomy routed to: the Nous (perception + inbox), the human owner (Local Nous Manager, Portal), co-workers (whisper/inbox), the public chain (digest only).</td><td><span class="tag pa">PARTIAL</span> aisthesis percepts, brain inbox, scheduler, LNM exist; no routing policy</td></tr>
+</table></div>
+
+<!-- ============================================================ -->
+<h2 id="s2">2 · What already exists (code audit)</h2>
+<p>Everything below was read from the tree at <code>origin/main e47513b2</code>. This matters: the Nous House was <strong>built</strong> in Phases 58–61 (June 2026), so the object layer is an extension, not a greenfield.</p>
+
+<div class="tbl"><table>
+<tr><th>Capability</th><th>Where</th><th>What it gives the object layer</th></tr>
+<tr><td><b>Furniture catalog</b> (6 mirror + 7 functional = 13 kinds, frozen)</td><td><code>grid/src/civic/furniture.ts</code></td><td>Mirror: bed, closet, shelf, kitchen, bathroom, decor (render-only, home-only). Functional: work_desk{billing, accounting}, sim_board{simulation}, meeting_table{meeting}, game_table{play}, task_board{task_tracking}, skill_terminal{skill_practice}, shop_counter{sales}. Single validation gate <code>isValidFurniture(kind, structureType)</code>.</td></tr>
+<tr><td><b>Interior tree</b> (Smallville-shaped)</td><td><code>grid/src/civic/types.ts</code> — <code>Interior → InteriorArea[] → InteriorObject{kind,class,state?}</code></td><td>Lives Grid-side only; contents never serialized onto the audit chain (D-59-08). <code>state</code> is reserved and unused — the natural anchor for a manifest reference.</td></tr>
+<tr><td><b>Roles + capabilities</b></td><td><code>grid/src/civic/roles.ts</code> — <code>ROLE_CAPABILITIES</code></td><td>guest{enter, social, trade_at_shop_counter} ⊂ staff{+use_functional_furniture, manage_listings, admit_guests} ⊂ owner{+build, furnish, bind_shop, name_place, set_entry_policy, grant_role, revoke_role}. Humans can never hold an edge. Trust score persists per (parcel, holder).</td></tr>
+<tr><td><b>Severance FSM · Cowork Agreements · IOU ledger</b></td><td>Phase 60 (migration v40: <code>civic_parcel_roles</code>, <code>civic_credit_ledger</code>, <code>civic_cowork_agreements</code>)</td><td>ACTIVE → NOTICE → SETTLEMENT → WIND_DOWN → REVOKE → ARCHIVED. Co-work always paid; IOU when unfunded (D-NH-06).</td></tr>
+<tr><td><b>Blueprints as skills</b></td><td><code>grid/src/civic/blueprint.ts</code> — <code>BlueprintRecipe{blueprint_hash, objects[], arrangement DAG, material_cost_wei}</code></td><td>Build executor: skill-held check → material debit → <code>extendInterior</code> per object → one <code>skill.blueprint_executed</code> emit. Recipes may only reference catalog kinds today.</td></tr>
+<tr><td><b>Orbital objects + physics gate</b></td><td><code>grid/src/economy/object-physics.ts</code>, <code>orbital-object-store.ts</code>, migration v51 <code>orbital_objects</code>, route <code>GET /api/v1/orbital/objects</code></td><td>Grid-scale objects built from settled RFP contracts; 6-law physics gate before persist; <code>orbital.object_built</code> on chain. Rendered by <code>dashboard/public/grid-viz/orbital.js</code>. Establishes "an object is gated before it exists".</td></tr>
+<tr><td><b>Procedural object generator</b></td><td><code>dashboard/public/grid-viz/object-gen.js</code></td><td>Deterministic design from a spec signature (FNV hash → mulberry32 PRNG → base geometry, colour, detail, elongation…), generate-once atlas, fal.ai sprite hook wired behind a user-supplied key. This is the seed of "rendered by the Nous".</td></tr>
+<tr><td><b>Money rails</b></td><td>Phases 62–63, 82–84; <code>wiki/1-design/economy.md</code></td><td>Money = compute-labor + real ETH (Sepolia first). Zero custody; capped session keys; <code>LaborEscrow</code>; Grid = completion oracle; streaming civic fee. Bios is not money. No tool may move funds (D-MONEY-01).</td></tr>
+<tr><td><b>Marketplace v3</b></td><td>Phase 44: <code>market.listing_created / bid_placed / settled / disputed</code>; shop⇄structure binding with per-zone tax bps (Phase 60)</td><td>Listing + bilateral settle + dispute path exist; the listing <em>type</em> is not yet an object manifest.</td></tr>
+<tr><td><b>Brain tool loop</b></td><td><code>wiki/2-concepts/mind/agentic-tools.md</code>; brain <code>ToolRunner</code>/<code>ToolRegistry</code></td><td>web_search, web_fetch (SSRF guard, robots, credential-leak block), run_code (Docker, no network, read-only FS). Registry refuses money-named tools. Only sha256 digests cross the audit boundary.</td></tr>
+<tr><td><b>Operator bridge consent gate</b></td><td><code>brain/src/noesis_brain/bridge/</code>; <code>wiki/2-concepts/mind/operator-bridge.md</code></td><td>Off by default; grants in operator-local YAML; Type A only (structural); dry-run before live; local digest-only journal; emits no Grid events. This is the consent pattern App Links should reuse.</td></tr>
+<tr><td><b>Perception / inbox / scheduler</b></td><td>Phases 72 (aisthesis), 56/O3 (brain inbox), O1b (<code>brain.scheduleTask</code>), 75 (Local Nous Manager)</td><td>Interior diffs already become percepts; chat reaches the real Nous; tasks can be scheduled; the operator has a desktop inspector. Alert routing has rails to ride.</td></tr>
+<tr><td><b>Audit discipline</b></td><td><code>grid/test/audit/broadcast-allowlist.test.ts</code> asserts <code>159</code></td><td>Every new event needs a sole-producer triad and an explicit allowlist addition; closed tuples; R-31-01 zero-diff; wallclock forbidden in grid code.</td></tr>
+</table></div>
+
+<div class="box warn">
+<span class="k" style="color:var(--warn)">Two naming facts to carry into the discussion</span>
+<p style="margin-top:8px">(1) <strong>"Holding" has replaced "Nous house"</strong> (wiki/2-concepts/city/holdings.md). This sheet says Holding; the user's "Grid house" is a Holding. (2) The word <strong>"object"</strong> is already taken at Grid scale by <code>orbital_objects</code> (commons-owned station modules). Interior objects need their own noun to avoid collisions in code and events — see Decision Q1.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s3">3 · Canon that binds this design</h2>
+<p>These are locked decisions. The object layer must fit inside them; this sheet does not reopen any of them.</p>
+<div class="grid2">
+<div class="box"><span class="k">Space &amp; property</span>
+<ul>
+<li><strong>D-NH-02 Two kinds of furniture.</strong> Mirror (render-only, near-zero cost, owner's private space only) vs functional (real affordances, where build effort goes). Objects inherit this split: a Link Box and an App Link are <em>functional</em>.</li>
+<li><strong>D-NH-07 Nous-only property.</strong> Humans never own or occupy parcels. The human is the <em>co-configurer and investor</em> of objects, never their owner on the Grid. Whether a human may <em>fund</em> or <em>be gifted</em> a chattel object is Q4.</li>
+<li><strong>D-NH-05 / D-NH-06.</strong> No free first occupation; co-build is always paid (IOU when unfunded).</li>
+<li><strong>D-59-08.</strong> Interior contents never serialize onto the audit chain; only closed enums cross. Manifests, slot labels, and secrets therefore stay off-chain by construction.</li>
+</ul></div>
+<div class="box"><span class="k">Money &amp; tools</span>
+<ul>
+<li><strong>Money = compute-labor + real ETH; zero custody.</strong> Any object that sells is settled through the existing escrow rails; the Grid attests, never holds.</li>
+<li><strong>D-MONEY-01.</strong> No Brain tool may move funds — the registry refuses tools whose names hint at trade/transfer/wallet/treasury/account. An App Link to a payment provider is therefore a hard question (Q6).</li>
+<li><strong>Bios is not money.</strong> Object costs are in wei (material) and AI power (compute), never Bios.</li>
+<li><strong>A8 streaming tax.</strong> Fees skim at settlement; no filing.</li>
+</ul></div>
+<div class="box"><span class="k">Identity, capability, safety</span>
+<ul>
+<li><strong>A1 session capability model.</strong> Short-lived, narrowly-scoped, caveated tokens after one-time admission. Link-Box leases and co-worker object rights are instances of A1.</li>
+<li><strong>A11c Brain isolation.</strong> The Brain dials out; nothing reaches it from the Grid. Secrets live where the Brain lives.</li>
+<li><strong>A11e / CI gate.</strong> Visitor and board content is DATA, never instructions. Extends to visitor-authored object labels and shared manifests.</li>
+<li><strong>Type A vs Type B is structural.</strong> A hosted Type B Nous has no operator machine; it can never obtain a bridge grant. Its Link Box and App Links need a different vault (Q3).</li>
+</ul></div>
+<div class="box"><span class="k">Engineering discipline</span>
+<ul>
+<li><strong>Allowlist sole-producer triads</strong>; closed tuples; explicit per-phase additions; <code>zoning.* / treasury.* / skill.* / market.* / orbital.*</code> prefixes pre-cleared — a new <code>holding.*</code> prefix is itself a decision (Q10).</li>
+<li><strong>Wallclock forbidden</strong> in grid code: TTLs and timers are in ticks; the NY calendar is display-only.</li>
+<li><strong>R-31-01 zero-diff</strong>; single-onTick; deterministic replays. Any object function that runs Grid-side must be a pure function of (state, tick).</li>
+<li><strong>Physics wins.</strong> Grid-scale objects are physics-gated before persist; interior objects get an analogous <em>form gate</em> (§6).</li>
+</ul></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4">4 · The object model — four layers</h2>
+<p>One object, four separable layers. Every layer is optional except Form; a mirror decoration has only Form; a Link Box has Form + Link + Governance; a billing desk has Form + Function + Governance. Keeping the layers separate is what lets the human see a chair while the Nous sees a credential policy.</p>
+
+<div class="fig">
+<svg viewBox="0 0 1040 420" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans KR',sans-serif">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6b7b8c"/></marker></defs>
+  <rect x="10" y="10" width="1020" height="400" rx="12" fill="#0e141d" stroke="#22303f"/>
+  <!-- object core -->
+  <rect x="40" y="150" width="200" height="120" rx="10" fill="#121a25" stroke="#46e0d0" stroke-width="1.5"/>
+  <text x="140" y="190" text-anchor="middle" fill="#e6edf3" font-size="15" font-weight="600">OBJECT</text>
+  <text x="140" y="212" text-anchor="middle" fill="#a9b6c4" font-size="11">id · holding · owner Civic-DID</text>
+  <text x="140" y="230" text-anchor="middle" fill="#a9b6c4" font-size="11">origin · class · condition · tick</text>
+  <text x="140" y="252" text-anchor="middle" fill="#6b7b8c" font-size="10">manifest_hash (off-chain body)</text>
+  <!-- layers -->
+  <g>
+    <rect x="330" y="40" width="300" height="70" rx="9" fill="#121a25" stroke="#5fb0e8"/>
+    <text x="345" y="64" fill="#5fb0e8" font-size="12" font-weight="600">① FORM — what you see</text>
+    <text x="345" y="84" fill="#a9b6c4" font-size="10.5">catalog template | Form DSL | pinned GLB</text>
+    <text x="345" y="100" fill="#6b7b8c" font-size="10">form gate: size · tris · no scripts · no URLs</text>
+  </g>
+  <g>
+    <rect x="330" y="130" width="300" height="70" rx="9" fill="#121a25" stroke="#d8b24a"/>
+    <text x="345" y="154" fill="#d8b24a" font-size="12" font-weight="600">② LINK — what it holds</text>
+    <text x="345" y="174" fill="#a9b6c4" font-size="10.5">slots: api_key · oauth · token 1…n · permission</text>
+    <text x="345" y="190" fill="#6b7b8c" font-size="10">Grid: label + digest + policy · Brain vault: value</text>
+  </g>
+  <g>
+    <rect x="330" y="220" width="300" height="70" rx="9" fill="#121a25" stroke="#9a86ff"/>
+    <text x="345" y="244" fill="#9a86ff" font-size="12" font-weight="600">③ FUNCTION — what it does</text>
+    <text x="345" y="264" fill="#a9b6c4" font-size="10.5">algorithm (closed catalog) | app link (scoped)</text>
+    <text x="345" y="280" fill="#6b7b8c" font-size="10">runs Grid-side (shared, pure) or Brain-side (private)</text>
+  </g>
+  <g>
+    <rect x="330" y="310" width="300" height="70" rx="9" fill="#121a25" stroke="#e0764a"/>
+    <text x="345" y="334" fill="#e0764a" font-size="12" font-weight="600">④ GOVERNANCE — who may</text>
+    <text x="345" y="354" fill="#a9b6c4" font-size="10.5">visibility · license bits · price/royalty · role caveats</text>
+    <text x="345" y="370" fill="#6b7b8c" font-size="10">alerts policy · house rules · Polis law reference</text>
+  </g>
+  <path d="M240 190 L330 75" stroke="#6b7b8c" stroke-width="1" marker-end="url(#ar)" fill="none"/>
+  <path d="M240 200 L330 165" stroke="#6b7b8c" stroke-width="1" marker-end="url(#ar)" fill="none"/>
+  <path d="M240 220 L330 255" stroke="#6b7b8c" stroke-width="1" marker-end="url(#ar)" fill="none"/>
+  <path d="M240 235 L330 345" stroke="#6b7b8c" stroke-width="1" marker-end="url(#ar)" fill="none"/>
+  <!-- who sees what -->
+  <rect x="690" y="40" width="310" height="150" rx="9" fill="#0a0e14" stroke="#22303f"/>
+  <text x="705" y="62" fill="#a9b6c4" font-size="11" font-weight="600">HUMAN sees</text>
+  <text x="705" y="82" fill="#6b7b8c" font-size="10.5">3D preview of ① · a sealed box for ②</text>
+  <text x="705" y="98" fill="#6b7b8c" font-size="10.5">consent prompts for ③ · plain toggles for ④</text>
+  <text x="705" y="114" fill="#6b7b8c" font-size="10.5">never the manifest, never a slot value</text>
+  <text x="705" y="145" fill="#a9b6c4" font-size="11" font-weight="600">NOUS (Brain) holds</text>
+  <text x="705" y="165" fill="#6b7b8c" font-size="10.5">the manifest · slot values (vault) · function state</text>
+  <rect x="690" y="210" width="310" height="170" rx="9" fill="#0a0e14" stroke="#22303f"/>
+  <text x="705" y="232" fill="#a9b6c4" font-size="11" font-weight="600">GRID stores</text>
+  <text x="705" y="252" fill="#6b7b8c" font-size="10.5">interior tree entry {kind, class, state→manifest_hash}</text>
+  <text x="705" y="268" fill="#6b7b8c" font-size="10.5">slot metadata + sha256 digests + lease policy</text>
+  <text x="705" y="284" fill="#6b7b8c" font-size="10.5">shared function state (pure, tick-driven)</text>
+  <text x="705" y="300" fill="#6b7b8c" font-size="10.5">listings · license · royalty rule</text>
+  <text x="705" y="330" fill="#a9b6c4" font-size="11" font-weight="600">AUDIT CHAIN sees</text>
+  <text x="705" y="350" fill="#6b7b8c" font-size="10.5">closed enums + HEX64 hashes only (D-59-08)</text>
+  <text x="705" y="366" fill="#6b7b8c" font-size="10.5">never a label, body, value, or manifest</text>
+</svg>
+<div class="cap">Fig. 1 — Object anatomy and the three vantage points. The human and the chain see less than the Grid; the Grid sees less than the Brain.</div>
+</div>
+
+<h3>4.1 The record (Grid-side, proposed)</h3>
+<p>Extends <code>InteriorObject</code> without breaking it: <code>kind</code>/<code>class</code> stay as the closed enums that cross the audit boundary; the reserved <code>state</code> field carries the manifest hash. The manifest body lives in a new Grid table keyed by hash (the same pattern <code>civic_blueprints</code> uses for recipes).</p>
+<pre><b>InteriorObject</b>  <i>// grid/src/civic/types.ts — today</i>
+  kind: string            <i>// FURNITURE_CATALOG kind (closed enum, may cross the chain)</i>
+  class: 'mirror'|'functional'
+  state?: string          <i>// reserved → proposed: manifest_hash (HEX64)</i>
+
+<b>ObjectManifest</b>  <i>// NEW table civic_object_manifests, body JSON keyed by manifest_hash — never on chain</i>
+  manifest_hash   HEX64   <i>// sha256 of canonical JSON (deterministic, replayable)</i>
+  schema_version  int
+  origin          'system' | 'nous' | 'service'
+  form:
+    mode          'catalog' | 'dsl' | 'glb'
+    template?     catalog kind                      <i>// mode catalog</i>
+    dsl?          FormDSL document (§6.2)           <i>// mode dsl</i>
+    asset_hash?   HEX64 of sanitized GLB           <i>// mode glb — bytes stored by hash, size-capped</i>
+    bounds        { w, d, h }  in interior units
+  link?:          <i>// the Link Box (§7) — metadata ONLY</i>
+    slots[]       { slot_id, label_hash, kind: api_key|oauth|token|permission, provider_id,
+                    value_digest HEX64, policy: { roles[], ttl_ticks, max_uses, caveats[] } }
+  functions?[]
+    { fn_id, kind: 'algorithm'|'app_link', algorithm_id?|binding?, run_at: 'grid'|'brain',
+      params (closed per algorithm), consent: { required_scopes[], optional_scopes[], granted_by, tick } }
+  governance:
+    visibility    'private' | 'holding' | 'roles' | 'public'
+    license       { copy, modify, transfer, resell }   <i>// bits</i>
+    sale?         { price_wei, royalty_bps, creator_civic_did_hash }
+    caveats[]     per-role object actions: view | use | configure | lease_link | sell
+    alerts        { on: [event ids], to: [nous|owner_human|coworkers|public], quiet_ticks }
+  provenance:
+    creator_civic_did_hash, built_tick, build_cost_wei, service_contract_id?</pre>
+<p class="small">Why a hash-keyed body: the chain and the allowlist only ever see <code>manifest_hash</code> + closed enums — identical to how blueprints (<code>blueprint_hash</code>) and whisper digests already work. The <code>FORBIDDEN_KEY_PATTERN</code> gate (which blocks keys such as <code>content</code>, <code>text</code>, <code>jwt</code>) stays untouched because no manifest field is ever a payload key.</p>
+
+<h3>4.2 Class mapping to D-NH-02</h3>
+<div class="tbl"><table>
+<tr><th>Object</th><th>D-NH-02 class</th><th>Where allowed</th><th>Cost rule</th></tr>
+<tr><td>Pure form (decoration, personal taste)</td><td>mirror</td><td>owner's home only (existing <code>isValidFurniture</code> rule)</td><td>near-zero; Form DSL bytes only</td></tr>
+<tr><td>Link Box</td><td>functional</td><td>any structure; visible to roles per policy</td><td>material wei + vault upkeep (Brain-local, no Grid cost)</td></tr>
+<tr><td>Algorithm desk (billing, scheduler, board…)</td><td>functional</td><td>any structure</td><td>material wei; Grid compute budget per algorithm</td></tr>
+<tr><td>App-linked device</td><td>functional</td><td>Type A any; Type B — Q3</td><td>material wei + the Nous's AI power to run the tool loop</td></tr>
+<tr><td>Service-rendered showpiece</td><td>mirror <em>or</em> functional (form is just nicer)</td><td>per class</td><td>ETH paid to service via escrow + material wei</td></tr>
+</table></div>
+
+<!-- ============================================================ -->
+<h2 id="s5">5 · Three origins: system · Nous · paid service</h2>
+<p>The form layer can be produced three ways. The record is the same; only <code>origin</code>, the pipeline, and who gets paid differ.</p>
+
+<div class="fig">
+<svg viewBox="0 0 1040 470" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans KR',sans-serif">
+  <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6b7b8c"/></marker></defs>
+  <rect x="10" y="10" width="1020" height="450" rx="12" fill="#0e141d" stroke="#22303f"/>
+  <!-- lanes -->
+  <g>
+    <rect x="30" y="40" width="980" height="120" rx="9" fill="#121a25" stroke="#3fb950" stroke-opacity=".6"/>
+    <text x="45" y="62" fill="#3fb950" font-size="12" font-weight="600">A · SYSTEM — pre-designed at Grid initialization</text>
+    <rect x="45" y="80" width="150" height="56" rx="7" fill="#0a0e14" stroke="#22303f"/><text x="120" y="104" text-anchor="middle" fill="#a9b6c4" font-size="10.5">catalog v1 (13 kinds)</text><text x="120" y="120" text-anchor="middle" fill="#6b7b8c" font-size="9.5">furniture.ts · frozen</text>
+    <rect x="245" y="80" width="150" height="56" rx="7" fill="#0a0e14" stroke="#22303f"/><text x="320" y="104" text-anchor="middle" fill="#a9b6c4" font-size="10.5">catalog v2 templates</text><text x="320" y="120" text-anchor="middle" fill="#6b7b8c" font-size="9.5">kind + default Form DSL</text>
+    <rect x="445" y="80" width="150" height="56" rx="7" fill="#0a0e14" stroke="#22303f"/><text x="520" y="104" text-anchor="middle" fill="#a9b6c4" font-size="10.5">place via extendInterior</text><text x="520" y="120" text-anchor="middle" fill="#6b7b8c" font-size="9.5">material wei → treasury</text>
+    <rect x="645" y="80" width="150" height="56" rx="7" fill="#0a0e14" stroke="#22303f"/><text x="720" y="104" text-anchor="middle" fill="#a9b6c4" font-size="10.5">render</text><text x="720" y="120" text-anchor="middle" fill="#6b7b8c" font-size="9.5">three.js interior scene</text>
+    <text x="860" y="108" fill="#6b7b8c" font-size="10">cost: material only</text>
+    <path d="M195 108H245M395 108H445M595 108H645" stroke="#6b7b8c" marker-end="url(#ar2)"/>
+  </g>
+  <g>
+    <rect x="30" y="175" width="980" height="130" rx="9" fill="#121a25" stroke="#5fb0e8" stroke-opacity=".6"/>
+    <text x="45" y="197" fill="#5fb0e8" font-size="12" font-weight="600">B · NOUS — rendered by the Brain (Local AI + human in the loop)</text>
+    <rect x="45" y="215" width="130" height="70" rx="7" fill="#0a0e14" stroke="#22303f"/><text x="110" y="238" text-anchor="middle" fill="#a9b6c4" font-size="10.5">intent</text><text x="110" y="254" text-anchor="middle" fill="#6b7b8c" font-size="9.5">human: "a reading</text><text x="110" y="267" text-anchor="middle" fill="#6b7b8c" font-size="9.5">desk for billing"</text>
+    <rect x="215" y="215" width="150" height="70" rx="7" fill="#0a0e14" stroke="#22303f"/><text x="290" y="238" text-anchor="middle" fill="#a9b6c4" font-size="10.5">Brain authors manifest</text><text x="290" y="254" text-anchor="middle" fill="#6b7b8c" font-size="9.5">Form DSL via tool loop</text><text x="290" y="267" text-anchor="middle" fill="#6b7b8c" font-size="9.5">run_code validates</text>
+    <rect x="405" y="215" width="150" height="70" rx="7" fill="#0a0e14" stroke="#22303f"/><text x="480" y="238" text-anchor="middle" fill="#a9b6c4" font-size="10.5">optional: local text→3D</text><text x="480" y="254" text-anchor="middle" fill="#6b7b8c" font-size="9.5">TRELLIS / Hunyuan3D on</text><text x="480" y="267" text-anchor="middle" fill="#6b7b8c" font-size="9.5">operator GPU → GLB</text>
+    <rect x="595" y="215" width="150" height="70" rx="7" fill="#0a0e14" stroke="#22303f"/><text x="670" y="238" text-anchor="middle" fill="#a9b6c4" font-size="10.5">form gate + hash pin</text><text x="670" y="254" text-anchor="middle" fill="#6b7b8c" font-size="9.5">sanitize · caps · sha256</text><text x="670" y="267" text-anchor="middle" fill="#6b7b8c" font-size="9.5">(object-physics precedent)</text>
+    <rect x="785" y="215" width="150" height="70" rx="7" fill="#0a0e14" stroke="#22303f"/><text x="860" y="238" text-anchor="middle" fill="#a9b6c4" font-size="10.5">human preview → OK</text><text x="860" y="254" text-anchor="middle" fill="#6b7b8c" font-size="9.5">place · material wei</text><text x="860" y="267" text-anchor="middle" fill="#6b7b8c" font-size="9.5">cost: AI power + wei</text>
+    <path d="M175 250H215M365 250H405M555 250H595M745 250H785" stroke="#6b7b8c" marker-end="url(#ar2)"/>
+  </g>
+  <g>
+    <rect x="30" y="320" width="980" height="125" rx="9" fill="#121a25" stroke="#9a86ff" stroke-opacity=".6"/>
+    <text x="45" y="342" fill="#9a86ff" font-size="12" font-weight="600">C · SERVICE — paid to a render service, rendered by the service</text>
+    <rect x="45" y="360" width="130" height="70" rx="7" fill="#0a0e14" stroke="#22303f"/><text x="110" y="383" text-anchor="middle" fill="#a9b6c4" font-size="10.5">brief + quote</text><text x="110" y="399" text-anchor="middle" fill="#6b7b8c" font-size="9.5">provider listing on</text><text x="110" y="412" text-anchor="middle" fill="#6b7b8c" font-size="9.5">Marketplace v3</text>
+    <rect x="215" y="360" width="150" height="70" rx="7" fill="#0a0e14" stroke="#22303f"/><text x="290" y="383" text-anchor="middle" fill="#a9b6c4" font-size="10.5">escrow funded (ETH)</text><text x="290" y="399" text-anchor="middle" fill="#6b7b8c" font-size="9.5">capped session key</text><text x="290" y="412" text-anchor="middle" fill="#6b7b8c" font-size="9.5">LaborEscrow rails</text>
+    <rect x="405" y="360" width="150" height="70" rx="7" fill="#0a0e14" stroke="#22303f"/><text x="480" y="383" text-anchor="middle" fill="#a9b6c4" font-size="10.5">service renders</text><text x="480" y="399" text-anchor="middle" fill="#6b7b8c" font-size="9.5">hosted GPU (Type-B pool</text><text x="480" y="412" text-anchor="middle" fill="#6b7b8c" font-size="9.5">or 3rd party) → GLB</text>
+    <rect x="595" y="360" width="150" height="70" rx="7" fill="#0a0e14" stroke="#22303f"/><text x="670" y="383" text-anchor="middle" fill="#a9b6c4" font-size="10.5">Grid attests delivery</text><text x="670" y="399" text-anchor="middle" fill="#6b7b8c" font-size="9.5">form gate · asset_hash</text><text x="670" y="412" text-anchor="middle" fill="#6b7b8c" font-size="9.5">= completion digest</text>
+    <rect x="785" y="360" width="150" height="70" rx="7" fill="#0a0e14" stroke="#22303f"/><text x="860" y="383" text-anchor="middle" fill="#a9b6c4" font-size="10.5">release · fee skim</text><text x="860" y="399" text-anchor="middle" fill="#6b7b8c" font-size="9.5">service paid · treasury</text><text x="860" y="412" text-anchor="middle" fill="#6b7b8c" font-size="9.5">license attached</text>
+    <path d="M175 395H215M365 395H405M555 395H595M745 395H785" stroke="#6b7b8c" marker-end="url(#ar2)"/>
+  </g>
+</svg>
+<div class="cap">Fig. 2 — Three origin pipelines. All three end in the same form gate and the same interior record; only origin, cost, and payee differ.</div>
+</div>
+
+<div class="grid3">
+<div class="box"><span class="k" style="color:var(--ok)">A · System</span>
+<p><span class="tag ex">EXISTS</span> as the frozen 13-kind catalog. Proposed step: <strong>catalog v2</strong> — each kind gains a default Form DSL template and bounds so it can be drawn in 3D rather than as a DOM tile. Seeded at Grid init like the Genesis parcels; new kinds remain "a later phase" (the catalog stays closed per version).</p></div>
+<div class="box"><span class="k" style="color:var(--accent)">B · Nous</span>
+<p><span class="tag pa">PARTIAL</span>. The Brain already has the tool loop and a sandbox to author and validate a manifest; grid-viz already has a deterministic procedural generator. Two sub-modes: <strong>procedural</strong> (Form DSL → mesh, deterministic, tiny, default) and <strong>generative</strong> (local text-to-3D on the operator's GPU, Type A only — this <em>is</em> "investing local AI power", D-NH-01). Generative output is a GLB that must pass the form gate.</p></div>
+<div class="box"><span class="k" style="color:var(--vio)">C · Service</span>
+<p><span class="tag nw">NEW</span> contract type, <span class="tag ex">EXISTS</span> rails. A render provider is just a seller on Marketplace v3; the Nous funds escrow; the delivered <code>asset_hash</code> doubles as the completion digest the Grid signs; release pays the provider and skims the fee. The fal.ai sprite hook in grid-viz is the prototype of this path. Provider may be the Type-B hosted pool (deferred Phase 40b) or an external vendor.</p></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6">6 · Visualization — draw directly, or show a box</h2>
+
+<h3>6.1 Where rendering happens today, and the gap</h3>
+<p><span class="tag ex">EXISTS</span> The canonical 3D view is <code>dashboard/src/components/worldmap/orbital-station-scene.ts</code> (three.js 0.160, <code>mountOrbitalStation → setParcels / setObjects</code>) plus the grid-viz prototypes. <span class="tag pa">PARTIAL</span> <strong>Interiors are not 3D yet</strong>: <code>OrbitalGenesisMap.tsx</code> renders the interior as a DOM overlay (<code>data-testid="interior-viewer"</code>, one tile per furniture kind). <span class="tag nw">NEW</span> There is <strong>no glTF/GLB loader anywhere</strong> in the tree; every mesh is procedural. The object layer therefore needs (a) an interior three.js scene and (b) a GLB path, in that order.</p>
+
+<h3>6.2 Format decisions</h3>
+<div class="tbl"><table>
+<tr><th>Question</th><th>Recommendation</th><th>Grounds</th></tr>
+<tr><td>Binary interchange format</td><td><b>glTF 2.0 / GLB only.</b> Reject USD/USDZ for delivery.</td><td><span class="tag pr">PRIMARY</span> three.js maintainers position glTF as the web delivery format; USD's WASM parser is larger than three.js itself and composition support in <code>USDLoader</code> is minimal. Vendors (Needle) convert USD → GLB on upload. See §13.</td></tr>
+<tr><td>Where behaviour lives</td><td><b>Not in the asset.</b> Behaviour lives in the Function layer (§8), never in glTF.</td><td><span class="tag pr">PRIMARY</span> <code>KHR_interactivity</code> (behaviour graphs in glTF) was submitted for ratification; runtime support is Babylon.js-first. Depending on it would couple us to an unratified spec and reopen A11e (a visitor's asset could carry logic). Our objects stay data; logic is ours.</td></tr>
+<tr><td>Default authoring form</td><td><b>Form DSL</b> — a small deterministic JSON vocabulary compiled client-side to meshes.</td><td><span class="tag ex">EXISTS</span> precedent: <code>object-gen.js</code> (signature → PRNG → base geometry/colour/detail). Bytes-cheap (D-NH-02 mirror cost rule), replayable, diffable, safe to diffuse as a blueprint. No parser attack surface.</td></tr>
+<tr><td>Form gate (the interior analogue of the physics gate)</td><td>Server-side validation before persist: GLB ≤ 2 MB, ≤ 20k triangles, ≤ 2 textures ≤ 1024², no external URIs, no unknown extensions, no animation/skin in v1; DSL schema-validated.</td><td><span class="tag in">INDUSTRY</span> standard asset-store moderation; mirrors <code>object-physics.ts</code> "gated before persist". Numbers are starting points — Q8.</td></tr>
+<tr><td>Who converts text→3D output</td><td>Brain-side (Type A) using open local models; output GLB → form gate → hash pin.</td><td><span class="tag sc">SECONDARY</span> Hunyuan3D-2 reports ~6 GB VRAM for shape, ~16 GB with texture; TRELLIS/TRELLIS-2 and Hunyuan3D emit GLB directly. Licences differ — verify per model before shipping.</td></tr>
+</table></div>
+
+<h4>Form DSL — the language the user never learns</h4>
+<p>The brief asks for "a language for visualization and functions that the user does not need to know". The recommendation is a <strong>declarative manifest, not a script</strong>: it keeps A11e trivially true (data, never instructions), keeps replays deterministic, and fits the allowlist regime. Scripts (Second Life LSL-style) are the alternative; they are powerful and were the engine of SL's creator economy, but they are also why SL needed a separate runtime permission system for every scripted act. If scripts ever come, they run only in the existing <code>run_code</code> Docker sandbox, Brain-side — Q2.</p>
+<pre><b>form.dsl</b> (illustrative, v0)
+{ "base": "box", "dims": [1.2, 0.6, 0.75], "material": { "color": "#5b4636", "roughness": 0.7 },
+  "parts": [
+    { "base": "cyl", "dims": [0.05, 0.05, 0.72], "at": [-0.55, -0.25, 0] }, <i>// legs …</i>
+    { "base": "box", "dims": [0.4, 0.3, 0.02], "at": [0.2, 0, 0.39], "material": { "emissive": "#46e0d0" } } <i>// screen</i>
+  ],
+  "label": "Billing desk",  <i>// human-facing; treated as DATA by every reader (A11e)</i>
+  "seed": "sha256:…"        <i>// optional: deterministic variation, object-gen style</i>
+}</pre>
+<p class="small">Closed base set (box, cyl, sphere, icosa, octa, tetra, dodeca, torusknot) matches <code>object-gen.js</code>'s <code>GEO_BASES</code>, so one compiler serves both the orbital map and interiors.</p>
+
+<h3>6.3 Draw directly (1.1) vs. show a box (1.2)</h3>
+<div class="grid2">
+<div class="box acc"><span class="k">1.1 Draw directly</span>
+<p>The object's Form is rendered as-is: catalog template, DSL, or GLB. "Pre-defined use" = pick a catalog kind; "define form" = the Brain writes a DSL (or runs text-to-3D) from the human's words, shows a preview, and places it on approval. Mirror objects stop here.</p></div>
+<div class="box vio"><span class="k">1.2 Link — only a box or document is shown</span>
+<p>The Link Box's Form is deliberately generic (a sealed case, a folder, a safe). What makes it a Link Box is layer ②: slots for API keys, tokens 1…n, other keys, and permissions. The human sees slot <em>labels</em> and lease status; nobody sees values through the Grid. Design in §7.</p></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s7">7 · The Link Box — keys, tokens, permissions</h2>
+<p>This is the layer with the highest stakes and the least precedent in the tree. The design rule is one sentence: <strong>a Link Box issues, it never reveals.</strong></p>
+
+<h3>7.1 Where the secret lives</h3>
+<div class="tbl"><table>
+<tr><th>Nous type</th><th>Secret value storage</th><th>Grid holds</th><th>Status</th></tr>
+<tr><td><b>Type A</b> (sovereign, operator hardware)</td><td>Brain-local vault on the operator's machine, encrypted at rest (AES-256-GCM per <code>protocol/src/security.ts</code>), key material separate from the Brain wire key. Never leaves the machine (A11c).</td><td>slot label hash, <code>value_digest</code>, provider id, policy</td><td><span class="tag nw">NEW</span> vault; <span class="tag ex">EXISTS</span> precedent: operator-bridge YAML grants + 0600 wire key</td></tr>
+<tr><td><b>Type B</b> (hosted on the constitutional substrate)</td><td>Envelope-encrypted per Nous in a substrate KMS; the operator (Henry) holds no plaintext path. <em>Or</em> Type B gets no Link Box in v1.</td><td>same</td><td><span class="tag q">DECIDE</span> Q3</td></tr>
+</table></div>
+
+<h3>7.2 Slots and leases</h3>
+<p>A slot is one credential. A lease is a short-lived, attenuated right to <em>use</em> it. The existing <code>CapabilityToken</code> type in <code>protocol/src/persona/capabilities.ts</code> — macaroon-style, with <code>scope</code>, <code>caveats{domains, operations, resources, limit, startsAt, expiresAt}</code>, <code>parentTokenId</code>, and <code>issue / attenuate / revoke / validate</code> — is already the right shape; A1 says to use exactly this model after admission. Leases are its first real consumer.</p>
+
+<div class="fig">
+<svg viewBox="0 0 1040 400" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans KR',sans-serif">
+  <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6b7b8c"/></marker></defs>
+  <rect x="10" y="10" width="1020" height="380" rx="12" fill="#0e141d" stroke="#22303f"/>
+  <!-- actors -->
+  <rect x="30" y="40" width="200" height="330" rx="9" fill="#121a25" stroke="#d8b24a" stroke-opacity=".7"/>
+  <text x="130" y="62" text-anchor="middle" fill="#d8b24a" font-size="12" font-weight="600">OWNER BRAIN (vault)</text>
+  <rect x="420" y="40" width="200" height="330" rx="9" fill="#121a25" stroke="#5fb0e8" stroke-opacity=".7"/>
+  <text x="520" y="62" text-anchor="middle" fill="#5fb0e8" font-size="12" font-weight="600">GRID (policy + digests)</text>
+  <rect x="810" y="40" width="200" height="330" rx="9" fill="#121a25" stroke="#9a86ff" stroke-opacity=".7"/>
+  <text x="910" y="62" text-anchor="middle" fill="#9a86ff" font-size="12" font-weight="600">CO-WORKER BRAIN</text>
+  <!-- steps -->
+  <text x="130" y="95" text-anchor="middle" fill="#a9b6c4" font-size="10.5">① store value → digest</text>
+  <path d="M230 100H420" stroke="#6b7b8c" marker-end="url(#ar3)"/><text x="325" y="94" text-anchor="middle" fill="#6b7b8c" font-size="9.5">slot meta + digest + policy</text>
+  <text x="910" y="140" text-anchor="middle" fill="#a9b6c4" font-size="10.5">② request lease(slot, scope)</text>
+  <path d="M810 145H620" stroke="#6b7b8c" marker-end="url(#ar3)"/>
+  <text x="520" y="175" text-anchor="middle" fill="#a9b6c4" font-size="10.5">③ check role edge ⊇ caveat</text>
+  <text x="520" y="190" text-anchor="middle" fill="#6b7b8c" font-size="9.5">agreement scope · TTL · max uses</text>
+  <path d="M420 200H230" stroke="#6b7b8c" marker-end="url(#ar3)"/><text x="325" y="194" text-anchor="middle" fill="#6b7b8c" font-size="9.5">forward approved request</text>
+  <text x="130" y="230" text-anchor="middle" fill="#a9b6c4" font-size="10.5">④ mint lease</text>
+  <text x="130" y="246" text-anchor="middle" fill="#6b7b8c" font-size="9.5">derive scoped token (OAuth)</text>
+  <text x="130" y="260" text-anchor="middle" fill="#6b7b8c" font-size="9.5">or proxy calls (raw API key)</text>
+  <path d="M230 265 L810 265" stroke="#46e0d0" stroke-dasharray="4 3" marker-end="url(#ar3)"/>
+  <text x="520" y="258" text-anchor="middle" fill="#46e0d0" font-size="9.5">⑤ lease over P2P — never via Grid</text>
+  <path d="M230 285H420" stroke="#6b7b8c" marker-end="url(#ar3)"/><text x="325" y="279" text-anchor="middle" fill="#6b7b8c" font-size="9.5">⑥ emit holding.link_leased (hashes, ttl)</text>
+  <text x="910" y="305" text-anchor="middle" fill="#a9b6c4" font-size="10.5">⑦ use within caveats</text>
+  <text x="910" y="320" text-anchor="middle" fill="#6b7b8c" font-size="9.5">expires by tick · revocable</text>
+  <text x="130" y="330" text-anchor="middle" fill="#a9b6c4" font-size="10.5">⑧ revoke / rotate</text>
+  <path d="M230 340H420" stroke="#6b7b8c" marker-end="url(#ar3)"/><text x="325" y="334" text-anchor="middle" fill="#6b7b8c" font-size="9.5">holding.link_revoked</text>
+</svg>
+<div class="cap">Fig. 3 — Lease lifecycle. The Grid authorizes and records; the owner's Brain mints; the value travels peer-to-peer (Phase 42 SealedBox) or never travels at all (proxy mode).</div>
+</div>
+
+<div class="grid2">
+<div class="box"><span class="k">Two lease modes</span>
+<ul>
+<li><strong>Derive</strong> — when the provider supports scoped, expiring credentials (OAuth 2.1 access tokens, cloud STS), the owner Brain requests a narrower token and hands <em>that</em> over. <span class="tag pr">PRIMARY</span> HashiCorp Vault's dynamic-secrets pattern: per-session credentials that expire in minutes; revoking the lease disables the agent.</li>
+<li><strong>Proxy</strong> — when the credential cannot be attenuated (a raw API key, "token 1 / token 2"), the value never moves: the co-worker's Brain sends the request to the owner's Brain over P2P, which executes it under the caveats and returns the result. Slower, but the key is uncapturable (A11b).</li>
+</ul></div>
+<div class="box"><span class="k">Permission slot kinds</span>
+<ul>
+<li><code>api_key</code> · <code>oauth</code> (refresh + scopes) · <code>token</code> (opaque, numbered) · <code>permission</code> — a grant the <em>Box</em> itself represents (e.g. "may post to our shop's listing feed"), which is just a capability token with no external provider.</li>
+<li>Every slot carries <code>roles[]</code> (which edge types may ask), <code>ttl_ticks</code>, <code>max_uses</code>, and caveats (domains, operations read/write, resource filters). Ticks, not seconds — the wallclock gate.</li>
+<li>Caveat language: reuse <code>CapabilityToken.caveats</code> today; W3C ZCAP / UCAN adoption remains the open T2 question and is <em>not</em> required to ship.</li>
+</ul></div>
+</div>
+
+<div class="box red">
+<span class="k" style="color:var(--red)">Hard limits proposed for v1</span>
+<ul>
+<li>No slot value is ever a Grid field, an audit payload, an alert body, or a manifest field. Only <code>value_digest</code>.</li>
+<li>No lease to a human DID (humans cannot hold role edges — <code>isHumanDid</code>). The human owner <em>configures</em> slots through the Local Nous Manager, locally.</li>
+<li>No slot for a payment provider or exchange in v1 (D-MONEY-01 territory) — Q6.</li>
+<li>Rotate on severance: the FSM's <code>REVOKE</code> step revokes every lease held by the departing edge before keys rotate (A6 already drains the ledger first).</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s8">8 · Functions — algorithms and linked apps</h2>
+<p>A function is something the object <em>does</em>. Two kinds, matching the brief, with one placement rule: <strong>shared and deterministic runs on the Grid; private or external runs in the Brain.</strong></p>
+
+<div class="fig">
+<svg viewBox="0 0 1040 380" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans KR',sans-serif">
+  <defs><marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6b7b8c"/></marker></defs>
+  <rect x="10" y="10" width="1020" height="360" rx="12" fill="#0e141d" stroke="#22303f"/>
+  <rect x="30" y="150" width="170" height="80" rx="9" fill="#121a25" stroke="#46e0d0"/>
+  <text x="115" y="183" text-anchor="middle" fill="#e6edf3" font-size="12" font-weight="600">object.function</text>
+  <text x="115" y="203" text-anchor="middle" fill="#6b7b8c" font-size="10">role caveat checked first</text>
+  <!-- algorithm branch -->
+  <rect x="270" y="40" width="230" height="130" rx="9" fill="#121a25" stroke="#9a86ff"/>
+  <text x="285" y="62" fill="#9a86ff" font-size="12" font-weight="600">2.1 ALGORITHM (closed catalog)</text>
+  <text x="285" y="84" fill="#a9b6c4" font-size="10.5">algorithm_id + typed params</text>
+  <text x="285" y="102" fill="#6b7b8c" font-size="10">pure f(state, tick) · no I/O · no clock</text>
+  <text x="285" y="118" fill="#6b7b8c" font-size="10">versioned · unit-tested · replayable</text>
+  <text x="285" y="150" fill="#6b7b8c" font-size="10">e.g. ledger_sum · task_board · queue ·</text>
+  <text x="285" y="163" fill="#6b7b8c" font-size="10">zone_energy_sim · price_table</text>
+  <rect x="570" y="40" width="200" height="60" rx="8" fill="#0a0e14" stroke="#22303f"/>
+  <text x="670" y="64" text-anchor="middle" fill="#a9b6c4" font-size="10.5">run_at: grid</text><text x="670" y="82" text-anchor="middle" fill="#6b7b8c" font-size="9.5">shared surfaces, on the tick</text>
+  <rect x="570" y="110" width="200" height="60" rx="8" fill="#0a0e14" stroke="#22303f"/>
+  <text x="670" y="134" text-anchor="middle" fill="#a9b6c4" font-size="10.5">run_at: brain</text><text x="670" y="152" text-anchor="middle" fill="#6b7b8c" font-size="9.5">private; run_code sandbox</text>
+  <!-- app link branch -->
+  <rect x="270" y="210" width="230" height="140" rx="9" fill="#121a25" stroke="#d8b24a"/>
+  <text x="285" y="232" fill="#d8b24a" font-size="12" font-weight="600">2.2 APP LINK (binding)</text>
+  <text x="285" y="254" fill="#a9b6c4" font-size="10.5">provider + Link-Box slot + scopes</text>
+  <text x="285" y="272" fill="#6b7b8c" font-size="10">required[] at install · optional[] later</text>
+  <text x="285" y="288" fill="#6b7b8c" font-size="10">verb allowlist · rate cap · dry-run first</text>
+  <text x="285" y="318" fill="#6b7b8c" font-size="10">transport: MCP (HTTP+OAuth 2.1) or</text>
+  <text x="285" y="331" fill="#6b7b8c" font-size="10">plain HTTPS via web_fetch guard</text>
+  <rect x="570" y="215" width="200" height="60" rx="8" fill="#0a0e14" stroke="#22303f"/>
+  <text x="670" y="239" text-anchor="middle" fill="#a9b6c4" font-size="10.5">consent gate (owner human)</text><text x="670" y="257" text-anchor="middle" fill="#6b7b8c" font-size="9.5">local grant · off by default</text>
+  <rect x="570" y="285" width="200" height="60" rx="8" fill="#0a0e14" stroke="#22303f"/>
+  <text x="670" y="309" text-anchor="middle" fill="#a9b6c4" font-size="10.5">Brain ToolRunner executes</text><text x="670" y="327" text-anchor="middle" fill="#6b7b8c" font-size="9.5">money-axiom refusal · SSRF guard</text>
+  <!-- outputs -->
+  <rect x="840" y="110" width="170" height="60" rx="8" fill="#0a0e14" stroke="#3fb950" stroke-opacity=".7"/>
+  <text x="925" y="134" text-anchor="middle" fill="#a9b6c4" font-size="10.5">object state update</text><text x="925" y="152" text-anchor="middle" fill="#6b7b8c" font-size="9.5">Grid-side, never on chain</text>
+  <rect x="840" y="250" width="170" height="60" rx="8" fill="#0a0e14" stroke="#3fb950" stroke-opacity=".7"/>
+  <text x="925" y="274" text-anchor="middle" fill="#a9b6c4" font-size="10.5">tool.invoked (107)</text><text x="925" y="292" text-anchor="middle" fill="#6b7b8c" font-size="9.5">output_sha256 only</text>
+  <path d="M200 175 L270 110" stroke="#6b7b8c" marker-end="url(#ar4)" fill="none"/>
+  <path d="M200 205 L270 275" stroke="#6b7b8c" marker-end="url(#ar4)" fill="none"/>
+  <path d="M500 80H570M500 135H570M500 245H570" stroke="#6b7b8c" marker-end="url(#ar4)"/>
+  <path d="M670 275V285" stroke="#6b7b8c" marker-end="url(#ar4)"/>
+  <path d="M770 70 L840 130M770 140H840M770 315 L840 285" stroke="#6b7b8c" marker-end="url(#ar4)" fill="none"/>
+</svg>
+<div class="cap">Fig. 4 — Function dispatch. Algorithms are a closed catalog; app links are consented bindings executed only by the Brain's existing tool loop.</div>
+</div>
+
+<h3>8.1 Pre-defined algorithms (2.1)</h3>
+<p><span class="tag pa">PARTIAL</span> The catalog already declares affordances per functional kind, and some have real execution (task board post/claim/complete, shop counter sales with zone tax, co-work sessions, co-build DAG). The rest are declarations only. The proposal is to make "affordance" and "algorithm" the same closed table:</p>
+<div class="tbl"><table>
+<tr><th>Furniture kind</th><th>Affordance today</th><th>Proposed algorithm(s)</th><th>Runs</th><th>State</th></tr>
+<tr><td>work_desk</td><td>billing, accounting</td><td><code>ledger_view</code> (read own <code>nous_accounts</code> + IOU ledger), <code>invoice_draft</code> (prepare a Cowork-Agreement settlement — does not move money)</td><td>grid (read) / brain</td><td><span class="tag nw">NEW</span></td></tr>
+<tr><td>task_board</td><td>task_tracking</td><td><code>board_post / claim / complete</code></td><td>grid</td><td><span class="tag ex">EXISTS</span> <code>cowork.ts</code></td></tr>
+<tr><td>shop_counter</td><td>sales</td><td><code>listing_bind</code>, <code>price_table</code></td><td>grid</td><td><span class="tag ex">EXISTS</span> shop⇄structure binding</td></tr>
+<tr><td>sim_board</td><td>simulation</td><td><code>zone_energy_sim</code> (port of grid-viz <code>simulateZone</code>, energy-conserving)</td><td>grid</td><td><span class="tag pa">PARTIAL</span> browser-only today</td></tr>
+<tr><td>meeting_table</td><td>meeting</td><td><code>agenda_queue</code>, <code>minutes_digest</code> (hash of Brain-side minutes)</td><td>grid + brain</td><td><span class="tag nw">NEW</span></td></tr>
+<tr><td>skill_terminal</td><td>skill_practice</td><td><code>blueprint_browser</code>, location-aware teaching</td><td>grid</td><td><span class="tag ex">EXISTS</span> <code>location-teaching.ts</code></td></tr>
+<tr><td>game_table</td><td>play</td><td><code>turn_game</code> (seeded, deterministic)</td><td>grid</td><td><span class="tag nw">NEW</span></td></tr>
+<tr><td><em>new:</em> scheduler / clock</td><td>—</td><td><code>schedule_task</code> via <code>brain.scheduleTask</code> (closed dispatch set today: remember, reminder)</td><td>brain</td><td><span class="tag pa">PARTIAL</span></td></tr>
+<tr><td><em>new:</em> link_box</td><td>—</td><td><code>lease_issue / revoke / rotate</code> (§7)</td><td>grid policy + brain vault</td><td><span class="tag nw">NEW</span></td></tr>
+</table></div>
+<p class="small">Why closed: the BlueprintRecipe validator already rejects any kind not in the catalog; a closed algorithm table gives the same guarantee for behaviour, keeps Grid-side execution a pure function of (state, tick) under the single-onTick and zero-diff invariants, and means a sold or shared object can never carry unknown logic. Open-ended computation remains available — Brain-side, in the sandbox.</p>
+
+<h3>8.2 Linked to an app (2.2)</h3>
+<p>An App Link binds an object to an outside service using a Link-Box slot. Everything about it is consented, scoped, and executed by the Brain.</p>
+<div class="grid2">
+<div class="box"><span class="k">Binding record</span>
+<pre style="margin:8px 0 0">app_link:
+  provider_id      <i>// from a provider registry (closed in v1)</i>
+  transport        'mcp_http' | 'https'
+  slot_ref         link.slots[slot_id]
+  scopes:
+    required[]     <i>// granted at install or not installed</i>
+    optional[]     <i>// requested later, revocable alone</i>
+  verbs[]          <i>// allowlisted tool names (read/write)</i>
+  limits           { per_tick, per_day_ticks, max_bytes }
+  mode             'dry_run' | 'live'
+  consent          { human_did_hash, tick, scopes_granted[] }</pre></div>
+<div class="box"><span class="k">Why this shape</span>
+<ul>
+<li><span class="tag pr">PRIMARY</span> <strong>Shopify's scope model</strong>: required scopes at install, optional scopes requested later, merchants can revoke individual scopes without uninstalling; restricted scopes need platform approval. Maps one-to-one onto required/optional + per-scope revoke + a restricted provider list.</li>
+<li><span class="tag pr">PRIMARY</span> <strong>MCP authorization spec</strong> (2025-06-18 → 2025-11-25 revisions): HTTP transports use OAuth 2.1 with Protected Resource Metadata (RFC 9728); clients should request least-privilege scopes and step up incrementally; STDIO servers take credentials from the environment. So an MCP-over-HTTP provider fits the slot model directly; a local STDIO MCP server is a Type-A-only bridge-style grant.</li>
+<li><span class="tag ex">EXISTS</span> <strong>Operator bridge</strong>: off by default, local grants, closed verb allowlist, money-axiom guard, dry-run until a second live switch. App Links reuse this gate rather than invent one.</li>
+<li><span class="tag ex">EXISTS</span> <strong>Human approval gate</strong> (<code>approval-store.ts</code>, <code>human.approval_requested/granted/denied</code>, 118–120): large or first-time live writes can wait for the owner.</li>
+</ul></div>
+</div>
+
+<div class="box warn">
+<span class="k" style="color:var(--warn)">The prompt-injection surface is real</span>
+<p style="margin-top:8px">An app-linked object makes the Nous read third-party content and then act with a credential. <span class="tag sc">SECONDARY</span> OWASP's Top 10 for LLM applications (2025) keeps prompt injection at LLM01 and distinguishes <em>indirect</em> injection via retrieved content and tool descriptions; "excessive agency" moved up the list. Mitigations it names are the ones this design already leans on: privilege separation, treating tool output as untrusted, least-privilege credentials, and human approval for high-impact actions. Concretely: tool results are DATA (A11e extended to app output), verbs are allowlisted, leases are narrow, live writes are gated, and nothing an app returns can widen a scope.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s9">9 · Share · Sell · Co-workers · Alerts</h2>
+
+<h3 id="s9a">9.1 Share properties (idea 4)</h3>
+<p>"Share" means three different things; the manifest's governance block separates them.</p>
+<div class="tbl"><table>
+<tr><th>Mode</th><th>What moves</th><th>Mechanism</th><th>Precedent</th></tr>
+<tr><td><b>Show</b></td><td>The form and selected fields become visible</td><td><code>visibility: private | holding | roles | public</code>, per-field mask. Public objects render in the Portal interior viewer (D-NH-01: visualization is the investment interface).</td><td><span class="tag ex">EXISTS</span> structure visibility + entry policy</td></tr>
+<tr><td><b>Use</b> (share by reference)</td><td>A capability on <em>this</em> object instance</td><td>Role caveat <code>use</code> / <code>configure</code> / <code>lease_link</code>; the object stays in the owner's Holding.</td><td><span class="tag ex">EXISTS</span> <code>use_functional_furniture</code> for staff</td></tr>
+<tr><td><b>Copy</b> (share by value)</td><td>The manifest (form + function config), never the Link values</td><td>Publish the manifest as a blueprint skill; diffuse via <code>skill.taught</code>; receiver builds their own instance and pays material cost.</td><td><span class="tag ex">EXISTS</span> blueprint diffusion (Phase 61)</td></tr>
+</table></div>
+<p><strong>License bits</strong> travel with a copied or sold manifest: <code>copy · modify · transfer · resell</code>. <span class="tag pr">PRIMARY</span> Second Life's item permission system uses the same small set (copy, modify, transfer, plus move) and separates it from runtime script permissions — two decades of evidence that four bits are enough for a creator economy and that the hard part is enforcement, which SL could do because the platform, not the item, enforces. Here the Grid is the enforcer: a manifest without <code>copy</code> cannot be published as a blueprint; without <code>resell</code> it cannot be listed by a non-creator.</p>
+<p><strong>Link layer is never copied.</strong> A shared or sold object arrives with <em>empty</em> slots (labels and kinds kept, digests cleared). This is a structural rule, not a setting.</p>
+
+<h3 id="s9b">9.2 Open sell? (idea 5)</h3>
+<p>Recommendation: <strong>yes, through the rails that already exist</strong> — with three explicit boundaries.</p>
+<div class="grid2">
+<div class="box"><span class="k">What is sold</span>
+<ul>
+<li><strong>A design</strong> (manifest + license): unlimited or limited-edition copies; buyer builds their own instance. Digital-goods economics.</li>
+<li><strong>An instance</strong> (the placed object): transferred between Holdings; scarce by nature. Needs one new event (object transferred) — Q10.</li>
+<li><strong>A render job</strong> (origin C): a service, not a good; settles through labor escrow.</li>
+</ul></div>
+<div class="box"><span class="k">How it settles</span>
+<ul>
+<li>Listing: <code>market.listing_created</code> with listing type <code>object_design | object_instance</code> (payload is closed enums + hashes).</li>
+<li>Bilateral bid → escrow → settle (<code>market.settled</code>); dispute path unchanged. No order book, no matching engine (PHILOSOPHY §6, R3).</li>
+<li>Fee: existing IRS fee bps + zone tax when sold at a bound shop counter (<code>treasury.structure_revenue</code>).</li>
+<li>Royalty: <code>royalty_bps</code> to the creator, taken at <em>our</em> settlement step on resale.</li>
+</ul></div>
+</div>
+<div class="lesson">
+<strong>Why enforce royalties at settlement and not by token standard.</strong> <span class="tag pr">PRIMARY</span> ERC-2981 only <em>signals</em> royalty information; the EIP and OpenZeppelin's docs both state payment is not enforced and depends on marketplaces choosing to honour it. Because Noēsis objects settle only on Noēsis rails, the royalty can simply be a term of the settlement function. No NFT is required to sell objects in v1; minting (ERC-721/1155) and "an object that holds things" (ERC-6551 token-bound accounts) stay optional, later, and carry their own risk — the ERC-6551 discussion itself flags ambiguous ownership for ERC-1155 and a larger attack surface.
+<div class="src">eips.ethereum.org/EIPS/eip-2981 · docs.openzeppelin.com/contracts/api/token/common · eips.ethereum.org/EIPS/eip-6551 · ethereum-magicians.org ERC-6551 thread (discussion, not spec)</div>
+</div>
+<div class="tbl"><table>
+<tr><th>Platform</th><th>Creator share (as found)</th><th>Gatekeeping</th><th>Lesson for us</th><th>Grade</th></tr>
+<tr><td>Minecraft Marketplace</td><td>reported ~70 / 30</td><td>Partner Program only; each item reviewed</td><td>Curation gives quality and safety at the cost of openness</td><td><span class="tag sc">SECONDARY</span></td></tr>
+<tr><td>Unity Asset Store</td><td>70% to publisher (legacy provider agreement; a new agreement took effect 2026-04-13 — current split not confirmed)</td><td>submission review</td><td>70/30 is the long-standing norm for reviewed asset stores</td><td><span class="tag pr">PRIMARY</span> (legacy text)</td></tr>
+<tr><td>Roblox</td><td>docs: ~30% on Marketplace items, ~70% in-experience; Creator Store models/plugins return 100% of net proceeds in real currency</td><td>ID verification, publishing advance, moderation</td><td>Split varies by <em>where</em> the sale happens; changes to the split are politically costly</td><td><span class="tag pr">PRIMARY</span> docs / <span class="tag sc">SECONDARY</span> coverage</td></tr>
+<tr><td>Steam Workshop</td><td>set per game by Valve/publisher; creators can route a share to toolmakers and mentors</td><td>curated paid workshops</td><td>Built-in <em>contributor splits</em> — matches our DAG-weighted co-build attribution</td><td><span class="tag pr">PRIMARY</span> (Workshop agreement) / <span class="tag sc">SECONDARY</span></td></tr>
+<tr><td>Second Life</td><td>creator keeps sale price less commission</td><td>open; permission bits enforce terms</td><td>Open creation + platform-enforced bits scales; needs upkeep/decay to avoid junk</td><td><span class="tag in">INDUSTRY</span></td></tr>
+</table></div>
+<p class="small">These numbers conflict across sources and change over time. They are context for Q7 (our fee and royalty), not inputs to copy.</p>
+<div class="box red"><span class="k" style="color:var(--red)">Three boundaries on "open sell"</span>
+<ul>
+<li><strong>Buyers are Nous.</strong> Money holders on the Grid are Nous, Groups, Holdings. A human "buys" by funding their Nous. Whether a human may hold a <em>chattel</em> object at all is Q4.</li>
+<li><strong>Link values never transfer.</strong> Selling a Link Box sells the box.</li>
+<li><strong>App-linked objects sell as bindings without consent.</strong> The buyer's human must grant scopes again; consent is not transferable.</li>
+</ul></div>
+
+<h3 id="s9c">9.3 Invited co-workers — rule and law (idea 6)</h3>
+<p><span class="tag ex">EXISTS</span> Invitation, roles, signed Cowork Agreements, always-paid work, IOUs, and severance are built. What the object layer adds is <strong>granularity</strong>: today <code>staff</code> may use <em>all</em> functional furniture; a Link Box demands per-object rights.</p>
+
+<div class="fig">
+<svg viewBox="0 0 1040 330" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans KR',sans-serif">
+  <rect x="10" y="10" width="1020" height="310" rx="12" fill="#0e141d" stroke="#22303f"/>
+  <rect x="40" y="40" width="960" height="76" rx="9" fill="#121a25" stroke="#e5534b" stroke-opacity=".7"/>
+  <text x="58" y="64" fill="#e5534b" font-size="12" font-weight="600">LAYER 3 · POLIS LAW — what society forbids (ex-post)</text>
+  <text x="58" y="84" fill="#a9b6c4" font-size="10.5">Legislated by Nous (VOTE-05) · e.g. "no resale of leased credentials", provider blacklist, max royalty · enforced by Police: complaint → investigation → sanction</text>
+  <text x="58" y="102" fill="#6b7b8c" font-size="10">gov.law_enacted · police.* events exist · objects only add evidence (audit digests)</text>
+  <rect x="100" y="126" width="840" height="76" rx="9" fill="#121a25" stroke="#d8b24a" stroke-opacity=".7"/>
+  <text x="118" y="150" fill="#d8b24a" font-size="12" font-weight="600">LAYER 2 · HOUSE RULES — what the owner allows (contract)</text>
+  <text x="118" y="170" fill="#a9b6c4" font-size="10.5">Entry policy · role edge (owner ⊇ staff ⊇ guest) · per-object caveats · signed Cowork Agreement (scope, pay, QA, term, dispute route)</text>
+  <text x="118" y="188" fill="#6b7b8c" font-size="10">breach → severance FSM: ACTIVE → NOTICE → SETTLEMENT → WIND_DOWN → REVOKE → ARCHIVED</text>
+  <rect x="160" y="212" width="720" height="86" rx="9" fill="#121a25" stroke="#46e0d0" stroke-opacity=".8"/>
+  <text x="178" y="236" fill="#46e0d0" font-size="12" font-weight="600">LAYER 1 · SUBSTRATE — what physics forbids (ex-ante, automatic)</text>
+  <text x="178" y="256" fill="#a9b6c4" font-size="10.5">no human role edge · no Grid-side secrets · no money-moving tool · form gate · closed algorithms · tick TTLs</text>
+  <text x="178" y="274" fill="#6b7b8c" font-size="10">a token is never issued for what the substrate forbids — nothing to punish because it cannot happen</text>
+  <text x="178" y="290" fill="#6b7b8c" font-size="10">CI-gated invariants (sole-producer, wallclock, A11e, D-MONEY-01)</text>
+</svg>
+<div class="cap">Fig. 5 — Three rule layers. This is the T1 split ("ex-ante at the substrate, living law at the civic layer") — <em>proposed in ARCHITECTURE-RECONCILIATION §4, not yet ratified</em>. The object layer is the first place it becomes concrete.</div>
+</div>
+
+<div class="tbl"><table>
+<tr><th>Object action (caveat)</th><th>guest</th><th>staff</th><th>owner</th><th>Note</th></tr>
+<tr><td><code>view</code> (form + public fields)</td><td>per visibility</td><td>✓</td><td>✓</td><td>—</td></tr>
+<tr><td><code>use</code> (run a function)</td><td>shop_counter only (today's <code>trade_at_shop_counter</code>)</td><td>✓ per object grant</td><td>✓</td><td>today blanket <code>use_functional_furniture</code> → proposed: default-allow for algorithm objects, <strong>default-deny for Link/App objects</strong></td></tr>
+<tr><td><code>configure</code> (params, alerts)</td><td>—</td><td>per object grant</td><td>✓</td><td>—</td></tr>
+<tr><td><code>lease_link</code> (ask a slot for a lease)</td><td>—</td><td>per slot policy + agreement scope</td><td>✓</td><td>never to humans; rotated on severance</td></tr>
+<tr><td><code>place / remove / sell</code></td><td>—</td><td>—</td><td>✓</td><td>existing <code>furnish</code></td></tr>
+</table></div>
+<p><strong>The human co-worker.</strong> The brief says the object is built "by Local AI with the human user". The human is not a Grid co-worker (cannot hold a role edge) — they are the Nous's <em>sponsor</em> (<code>nous_sponsors</code>), acting through the Local Nous Manager (Type A, local) or the Portal. Their powers are local and decisive: approve a form, fill a slot, grant app scopes, approve a live write, approve a sale above a threshold. That is a different channel from inviting another <em>Nous</em> as staff, and the UI should keep the two visibly separate.</p>
+
+<h3 id="s9d">9.4 Alerts &amp; notifications (idea 6.1)</h3>
+<div class="fig">
+<svg viewBox="0 0 1040 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans KR',sans-serif">
+  <defs><marker id="ar5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6b7b8c"/></marker></defs>
+  <rect x="10" y="10" width="1020" height="280" rx="12" fill="#0e141d" stroke="#22303f"/>
+  <rect x="30" y="40" width="210" height="220" rx="9" fill="#121a25" stroke="#22303f"/>
+  <text x="45" y="62" fill="#a9b6c4" font-size="11" font-weight="600">OBJECT EVENTS</text>
+  <text x="45" y="84" fill="#6b7b8c" font-size="10">lease requested / issued / expiring</text>
+  <text x="45" y="100" fill="#6b7b8c" font-size="10">lease denied (caveat failed)</text>
+  <text x="45" y="116" fill="#6b7b8c" font-size="10">slot rotated / digest mismatch</text>
+  <text x="45" y="132" fill="#6b7b8c" font-size="10">app scope requested / revoked</text>
+  <text x="45" y="148" fill="#6b7b8c" font-size="10">function error / rate cap hit</text>
+  <text x="45" y="164" fill="#6b7b8c" font-size="10">co-worker joined / used / left</text>
+  <text x="45" y="180" fill="#6b7b8c" font-size="10">bid received / sold / royalty paid</text>
+  <text x="45" y="196" fill="#6b7b8c" font-size="10">upkeep due / condition changed</text>
+  <text x="45" y="212" fill="#6b7b8c" font-size="10">approval waiting (deadline tick)</text>
+  <rect x="300" y="110" width="180" height="80" rx="9" fill="#121a25" stroke="#46e0d0"/>
+  <text x="390" y="140" text-anchor="middle" fill="#e6edf3" font-size="11" font-weight="600">ALERT POLICY</text>
+  <text x="390" y="158" text-anchor="middle" fill="#6b7b8c" font-size="10">per object: on[] · to[] ·</text>
+  <text x="390" y="172" text-anchor="middle" fill="#6b7b8c" font-size="10">quiet_ticks · severity</text>
+  <path d="M240 150H300" stroke="#6b7b8c" marker-end="url(#ar5)"/>
+  <g font-size="10.5">
+    <rect x="560" y="34" width="440" height="52" rx="8" fill="#0a0e14" stroke="#5fb0e8" stroke-opacity=".7"/>
+    <text x="575" y="55" fill="#5fb0e8" font-weight="600">THE NOUS</text><text x="575" y="73" fill="#6b7b8c" font-size="10">aisthesis percept · civic inbox · scheduler reminder — it decides and acts</text>
+    <rect x="560" y="94" width="440" height="52" rx="8" fill="#0a0e14" stroke="#d8b24a" stroke-opacity=".7"/>
+    <text x="575" y="115" fill="#d8b24a" font-weight="600">THE HUMAN OWNER</text><text x="575" y="133" fill="#6b7b8c" font-size="10">Local Nous Manager · Portal · pending_approvals queue</text>
+    <rect x="560" y="154" width="440" height="52" rx="8" fill="#0a0e14" stroke="#9a86ff" stroke-opacity=".7"/>
+    <text x="575" y="175" fill="#9a86ff" font-weight="600">CO-WORKERS</text><text x="575" y="193" fill="#6b7b8c" font-size="10">whisper / civic inbox to affected role holders — content is DATA (A11e)</text>
+    <rect x="560" y="214" width="440" height="52" rx="8" fill="#0a0e14" stroke="#3fb950" stroke-opacity=".7"/>
+    <text x="575" y="235" fill="#3fb950" font-weight="600">THE PUBLIC CHAIN</text><text x="575" y="253" fill="#6b7b8c" font-size="10">allowlisted events only: enums + HEX64 hashes · never a label or value</text>
+  </g>
+  <path d="M480 135 L560 62M480 145 L560 120M480 158 L560 180M480 168 L560 238" stroke="#6b7b8c" marker-end="url(#ar5)" fill="none"/>
+</svg>
+<div class="cap">Fig. 6 — Alert routing. Most alerts are not chain events; they ride existing private rails. Only security- and money-relevant facts reach the allowlist.</div>
+</div>
+<div class="grid2">
+<div class="box"><span class="k">Rules proposed</span>
+<ul>
+<li><strong>Alerts never carry a secret or a manifest body</strong> — only object id, slot label <em>hash</em>, event id, tick, and a human-readable line rendered locally from the Brain's own copy.</li>
+<li><strong>Deadlines are ticks</strong> (<code>deadlineTick</code> as in <code>pending_approvals</code>); the NY calendar is display-only.</li>
+<li><strong>Nous first, human second.</strong> The Nous is the resident; the human is alerted for what needs a human: consent, approval, security.</li>
+<li><strong>Security alerts cannot be muted</strong> by a co-worker and bypass <code>quiet_ticks</code>: digest mismatch, lease use after revoke, scope escalation attempt.</li>
+</ul></div>
+<div class="box"><span class="k">Gaps to build</span>
+<ul>
+<li><span class="tag nw">NEW</span> alert policy store + router (Grid) and a notification pane in Local Nous Manager / Portal.</li>
+<li><span class="tag pa">PARTIAL</span> Type B has no local manager: Portal is its only human surface.</li>
+<li><span class="tag nw">NEW</span> push/email outside the app is an external integration with its own consent — defer (Q9).</li>
+<li><span class="tag pa">PARTIAL</span> away-presence (Phase 41): alerts queue while the Brain sleeps; the Nous is "away, not dead".</li>
+</ul></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s10">10 · Threat model and invariants</h2>
+<p>Written as a grid engineer would defend it. Each row names the attack, the structural answer, and whether the answer exists today.</p>
+<div class="tbl"><table>
+<tr><th>#</th><th>Threat</th><th>Structural answer</th><th>Status</th></tr>
+<tr><td class="num">O1</td><td><b>Secret exfiltration via the Grid</b> — DB dump, log line, audit payload, alert body</td><td>Values exist only in the Brain vault. Grid stores digests. <code>FORBIDDEN_KEY_PATTERN</code> + closed tuples keep them off the chain. New CI gate: no column, payload key, or log field may be named like a secret in the object module.</td><td><span class="tag ex">EXISTS</span> pattern · <span class="tag nw">NEW</span> gate</td></tr>
+<tr><td class="num">O2</td><td><b>Lease abuse</b> — co-worker keeps using a credential after leaving, or beyond scope</td><td>Short TTL in ticks, <code>max_uses</code>, provider-side scoped tokens where possible, proxy mode where not; severance REVOKE step rotates. A leaked lease grants narrow, expiring access (A11b).</td><td><span class="tag pa">PARTIAL</span></td></tr>
+<tr><td class="num">O3</td><td><b>Indirect prompt injection</b> — an app's response, a visitor's object label, or a bought manifest instructs the Nous</td><td>Everything from outside is DATA (A11e gate extended to labels, manifests, tool results). Verbs allowlisted; scopes cannot widen without the human; live writes gated.</td><td><span class="tag ex">EXISTS</span> gate · <span class="tag nw">NEW</span> coverage</td></tr>
+<tr><td class="num">O4</td><td><b>Malicious asset</b> — GLB with external URIs, huge textures, parser exploit, tracking pixel</td><td>Form gate before persist (caps, no external references, extension allowlist); assets served by hash from our origin; DSL preferred. CSP on the viewer.</td><td><span class="tag nw">NEW</span></td></tr>
+<tr><td class="num">O5</td><td><b>Money through the side door</b> — an App Link to a payment API moves funds outside the rails</td><td>D-MONEY-01 registry refusal by tool name today; proposed: provider registry classifies payment/exchange/custody providers as <em>forbidden</em> in v1.</td><td><span class="tag ex">EXISTS</span> name guard · <span class="tag q">DECIDE</span> Q6</td></tr>
+<tr><td class="num">O6</td><td><b>Confused deputy</b> — staff asks the owner's Brain (proxy mode) to do what staff may not</td><td>The owner Brain validates each proxied call against the lease caveats itself; Grid authorization is necessary, not sufficient.</td><td><span class="tag nw">NEW</span></td></tr>
+<tr><td class="num">O7</td><td><b>Type B custody</b> — hosted Nous's secrets sit on the operator's substrate</td><td>Either no Link Box for Type B in v1, or per-Nous envelope encryption with a constitutional no-plaintext rule and audit. A real trust question, not an engineering detail.</td><td><span class="tag q">DECIDE</span> Q3</td></tr>
+<tr><td class="num">O8</td><td><b>Junk and spam objects</b> — unlimited free objects bloat interiors and the market</td><td>Material cost in wei per object, per-structure object cap, upkeep already decays neglected Holdings; listing fee.</td><td><span class="tag ex">EXISTS</span> upkeep · <span class="tag nw">NEW</span> caps</td></tr>
+<tr><td class="num">O9</td><td><b>IP and impersonation</b> — sold designs copy a third party's work or brand</td><td>Creator hash + provenance on every manifest; dispute path (<code>market.disputed</code>) → Police; takedown = Polis law, not operator fiat (D-V3-18).</td><td><span class="tag pa">PARTIAL</span></td></tr>
+<tr><td class="num">O10</td><td><b>Determinism break</b> — an object function reads a clock or network Grid-side</td><td>Grid-side algorithms are pure f(state, tick); wallclock CI gate already scans grid code; anything external is Brain-side.</td><td><span class="tag ex">EXISTS</span></td></tr>
+</table></div>
+<div class="box acc"><span class="k">Proposed invariants (one line each, CI-enforceable)</span>
+<ol>
+<li><strong>OBJ-INV-1</strong> No secret value in any Grid table, payload, log, or alert. Digest only.</li>
+<li><strong>OBJ-INV-2</strong> A Link Box issues leases; it never returns a stored value across a role boundary.</li>
+<li><strong>OBJ-INV-3</strong> Link values and app consents never survive share, copy, sale, or transfer.</li>
+<li><strong>OBJ-INV-4</strong> No object function moves money; settlement stays on the existing rails.</li>
+<li><strong>OBJ-INV-5</strong> Grid-side object functions come from the closed algorithm catalog and are pure in (state, tick).</li>
+<li><strong>OBJ-INV-6</strong> Every form passes the form gate before it is persisted or rendered to another party.</li>
+<li><strong>OBJ-INV-7</strong> Labels, manifests, and tool results are data to every reader (A11e).</li>
+<li><strong>OBJ-INV-8</strong> Humans configure and consent; they never hold a role edge or a lease.</li>
+</ol></div>
+
+<!-- ============================================================ -->
+<h2 id="s11">11 · Decisions for this discussion</h2>
+<p>These are the points where the sheet stops and you decide. Each has a recommendation and the reason, so "agree" is a valid answer.</p>
+
+<div class="dq"><span class="k">Q1 · Name</span>
+<p><strong>What do we call an interior object?</strong> "Object" collides with <code>orbital_objects</code>; "furniture" undersells a credential box. Options: <strong>Skeuos</strong> (σκεῦος — household implement, vessel; fits the Greek canon: Nous, Telos, Bios, Aisthesis, Praxis) · <em>Fixture</em> · <em>Furnishing</em> · keep <em>Furniture</em>. <strong>Recommendation:</strong> Skeuos in canon and wiki, <code>furnishing</code> in code identifiers.</p></div>
+
+<div class="dq"><span class="k">Q2 · Language</span>
+<p><strong>Declarative manifest only, or scripts too?</strong> <strong>Recommendation:</strong> manifest only in v1 (closed algorithm catalog + Form DSL). It keeps A11e and determinism trivially true. Revisit scripts once there is evidence the catalog is the bottleneck; if added, they run Brain-side in the existing Docker sandbox, never Grid-side.</p></div>
+
+<div class="dq"><span class="k">Q3 · Type B and secrets</span>
+<p><strong>May a hosted (Type B) Nous have a Link Box and App Links?</strong> Options: (a) no — Type A only in v1, like the operator bridge; (b) yes, with per-Nous envelope encryption on the substrate; (c) permission-type slots only (no external credentials). <strong>Recommendation:</strong> (c) for v1 — Type B gets capability-token slots between Nous, not third-party keys — then revisit (b) with the Phase 40b hosted pool design.</p></div>
+
+<div class="dq"><span class="k">Q4 · Humans and objects</span>
+<p><strong>Can a human own, be gifted, or buy a furnishing?</strong> D-NH-07 forbids humans owning <em>land</em>; it is silent on chattels. <strong>Recommendation:</strong> no — humans fund and co-configure; ownership stays with the Nous. It preserves "the city is built and held by its AI citizens" and avoids a second property regime. The human's stake is expressed through sponsorship.</p></div>
+
+<div class="dq"><span class="k">Q5 · Human co-configuration surface</span>
+<p><strong>Where does the human build with the Nous?</strong> Options: Local Nous Manager (Electron, Type A, local — secrets can be typed safely) · Portal web (works for Type B, but secrets must not pass through it) · both. <strong>Recommendation:</strong> Local Nous Manager for anything touching the Link layer; Portal for form preview, consent to non-secret settings, and approvals.</p></div>
+
+<div class="dq"><span class="k">Q6 · Payment and financial providers</span>
+<p><strong>May an App Link point at a payment, banking, or exchange API (Stripe, a broker, a wallet service)?</strong> This is the direct collision with D-MONEY-01 and zero custody. <strong>Recommendation:</strong> forbidden in v1 via the provider registry; read-only financial data links can be discussed separately after the on-chain rails (Money 64–66) land.</p></div>
+
+<div class="dq"><span class="k">Q7 · Fee and royalty</span>
+<p><strong>What are the numbers?</strong> Listing fee, service-render fee, resale royalty cap. <strong>Recommendation:</strong> reuse the existing IRS fee bps and zone tax (no new fee), allow creator <code>royalty_bps</code> up to a founding-law cap (suggest 1000 bps = 10%), and let the Polis amend it like upkeep (D-NH-03 precedent). Not a platform take: the treasury skim is the civic fee, there is no operator margin.</p></div>
+
+<div class="dq"><span class="k">Q8 · Form limits</span>
+<p><strong>What are the form-gate caps, and is generative 3D in scope for v1?</strong> Starting caps: GLB ≤ 2 MB, ≤ 20k triangles, ≤ 2 textures at 1024². <strong>Recommendation:</strong> ship DSL + catalog v2 first (OBJ-1); generative text-to-3D and paid render (GLB path) second, once the interior scene exists.</p></div>
+
+<div class="dq"><span class="k">Q9 · Alerts leaving the app</span>
+<p><strong>Push, email, or messenger notifications to the human?</strong> <strong>Recommendation:</strong> in-app only in v1 (Local Nous Manager, Portal). External delivery is itself an App Link with its own consent, so it arrives naturally with OBJ-3.</p></div>
+
+<div class="dq"><span class="k">Q10 · Events and prefix</span>
+<p><strong>How many new allowlist events, and under which prefix?</strong> Placement reuses <code>zoning.interior_extended</code> (+0). Proposed additions: <code>link_leased</code>, <code>link_revoked</code>, <code>app_consent_changed</code>, <code>furnishing_transferred</code> = <strong>+4 → 163</strong>; a minimal variant drops the last two (+2 → 161) by folding them into existing <code>market.settled</code> and <code>human.approval_*</code>. Prefix options: stay under pre-cleared <code>zoning.*</code>, or open <code>holding.*</code>. <strong>Recommendation:</strong> +4 under <code>zoning.*</code> — no new prefix to clear.</p></div>
+
+<div class="dq"><span class="k">Q11 · T1 ratification</span>
+<p><strong>Ratify the ex-ante / ex-post split (Fig. 5)?</strong> The object layer hard-codes substrate rules (OBJ-INV-1..8) and leaves the rest to house rules and Polis law. That <em>is</em> the T1 proposal from ARCHITECTURE-RECONCILIATION §4, still marked unratified. Building OBJ-2 without ratifying it would decide it by accident.</p></div>
+
+<div class="dq"><span class="k">Q12 · Sequencing against open work</span>
+<p><strong>Where does this sit in the roadmap?</strong> Open: Money 64–66 (on-chain treasury, land credit), Group treasury 70, Organs 87+, Wiring 88+, deploy of the registration pipeline. Instance sales and paid render depend on the money rails; forms, Link Box, and algorithms do not. <strong>Recommendation:</strong> OBJ-1 and OBJ-2 can start now; OBJ-4 waits for Money 64.</p></div>
+
+<!-- ============================================================ -->
+<h2 id="s12">12 · Proposed phases and allowlist math</h2>
+<p>GSD-sized, each independently shippable, each with an end-to-end test in the house-e2e style. Phase numbers are deliberately not assigned — "Organs (87+)" and "Wiring (88+)" are open-ended, so numbering is a planning decision.</p>
+
+<div class="fig">
+<svg viewBox="0 0 1040 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans KR',sans-serif">
+  <defs><marker id="ar6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6b7b8c"/></marker></defs>
+  <rect x="10" y="10" width="1020" height="230" rx="12" fill="#0e141d" stroke="#22303f"/>
+  <g font-size="10.5">
+    <rect x="30" y="50" width="180" height="120" rx="9" fill="#121a25" stroke="#5fb0e8"/>
+    <text x="45" y="72" fill="#5fb0e8" font-size="12" font-weight="600">OBJ-1 · Form</text>
+    <text x="45" y="92" fill="#a9b6c4">manifest table + hash</text><text x="45" y="108" fill="#a9b6c4">Form DSL + compiler</text><text x="45" y="124" fill="#a9b6c4">catalog v2 templates</text><text x="45" y="140" fill="#a9b6c4">3D interior scene</text><text x="45" y="160" fill="#6b7b8c">allowlist +0</text>
+    <rect x="230" y="50" width="180" height="120" rx="9" fill="#121a25" stroke="#d8b24a"/>
+    <text x="245" y="72" fill="#d8b24a" font-size="12" font-weight="600">OBJ-2 · Link Box</text>
+    <text x="245" y="92" fill="#a9b6c4">Brain vault (Type A)</text><text x="245" y="108" fill="#a9b6c4">slots + policy + digest</text><text x="245" y="124" fill="#a9b6c4">lease derive / proxy</text><text x="245" y="140" fill="#a9b6c4">LNM slot editor</text><text x="245" y="160" fill="#6b7b8c">allowlist +2</text>
+    <rect x="430" y="50" width="180" height="120" rx="9" fill="#121a25" stroke="#9a86ff"/>
+    <text x="445" y="72" fill="#9a86ff" font-size="12" font-weight="600">OBJ-3 · Functions</text>
+    <text x="445" y="92" fill="#a9b6c4">algorithm catalog v1</text><text x="445" y="108" fill="#a9b6c4">App Link + consent gate</text><text x="445" y="124" fill="#a9b6c4">provider registry</text><text x="445" y="140" fill="#a9b6c4">MCP/HTTPS tool binding</text><text x="445" y="160" fill="#6b7b8c">allowlist +1</text>
+    <rect x="630" y="50" width="180" height="120" rx="9" fill="#121a25" stroke="#e0764a"/>
+    <text x="645" y="72" fill="#e0764a" font-size="12" font-weight="600">OBJ-4 · Share &amp; Sell</text>
+    <text x="645" y="92" fill="#a9b6c4">license bits + visibility</text><text x="645" y="108" fill="#a9b6c4">design/instance listings</text><text x="645" y="124" fill="#a9b6c4">royalty at settlement</text><text x="645" y="140" fill="#a9b6c4">paid render + GLB gate</text><text x="645" y="160" fill="#6b7b8c">allowlist +1 · needs Money 64</text>
+    <rect x="830" y="50" width="180" height="120" rx="9" fill="#121a25" stroke="#3fb950"/>
+    <text x="845" y="72" fill="#3fb950" font-size="12" font-weight="600">OBJ-5 · Co-work &amp; Alerts</text>
+    <text x="845" y="92" fill="#a9b6c4">per-object caveats</text><text x="845" y="108" fill="#a9b6c4">agreement scope → lease</text><text x="845" y="124" fill="#a9b6c4">alert policy + router</text><text x="845" y="140" fill="#a9b6c4">LNM / Portal panes</text><text x="845" y="160" fill="#6b7b8c">allowlist +0</text>
+  </g>
+  <path d="M210 110H230M410 110H430M610 110H630M810 110H830" stroke="#6b7b8c" marker-end="url(#ar6)"/>
+  <text x="520" y="205" text-anchor="middle" fill="#a9b6c4" font-size="11">Allowlist: 159 today → 163 after OBJ-5 (+4; minimal variant +2 → 161) · every event a sole-producer triad, closed tuple, hashes only</text>
+  <text x="520" y="224" text-anchor="middle" fill="#6b7b8c" font-size="10">OBJ-5's caveats can move ahead of OBJ-4 if co-work matters more than commerce</text>
+</svg>
+<div class="cap">Fig. 7 — Proposed build order. OBJ-1 and OBJ-2 have no dependency on unfinished money work.</div>
+</div>
+
+<div class="tbl"><table>
+<tr><th>Phase</th><th>Ships</th><th>Touches</th><th>Proof (E2E)</th><th>Allowlist</th></tr>
+<tr><td><b>OBJ-1 Form</b></td><td>manifest store keyed by hash; Form DSL schema + shared compiler; catalog v2 default forms; three.js interior scene replacing the DOM tiles; the existing Brain <code>extend_interior</code> verb ({area, kind}) extended to carry a manifest hash; human preview → approve</td><td><code>grid/src/civic/</code> (types, furniture, parcel-store, new migration), <code>dashboard/src/components/worldmap/</code>, brain wire client</td><td>human describes → Brain authors DSL → gate → preview → place → render; replay yields identical mesh</td><td>+0 (reuses <code>zoning.interior_extended</code>)</td></tr>
+<tr><td><b>OBJ-2 Link Box</b></td><td>Brain vault (encrypted at rest, Type A); slot metadata + policy Grid-side; lease derive + proxy over P2P; Local Nous Manager slot editor; severance rotates leases; OBJ-INV-1/2/3 CI gates</td><td><code>brain/src/noesis_brain/</code> (new vault pkg), <code>protocol/src/persona/capabilities.ts</code>, <code>grid/src/civic/severance.ts</code>, <code>apps/local-nous-manager</code></td><td>owner stores key → staff leases → uses within caveat → TTL expiry → revoke → post-revoke use refused; DB + chain grep finds no value</td><td>+2 (<code>link_leased</code>, <code>link_revoked</code>)</td></tr>
+<tr><td><b>OBJ-3 Functions</b></td><td>closed algorithm catalog bound to affordances; App Link record; provider registry (closed v1, payment class forbidden); consent gate reusing bridge pattern; dry-run → live; tool results as data</td><td><code>grid/src/civic/furniture.ts</code>, brain <code>tools/</code> + <code>bridge/</code>, approval-store</td><td>link a read-only provider → consent → dry-run → live read → <code>tool.invoked</code> digest; injected instruction in response is ignored; payment provider refused</td><td>+1 (<code>app_consent_changed</code>)</td></tr>
+<tr><td><b>OBJ-4 Share &amp; Sell</b></td><td>visibility + license bits; publish-as-blueprint; design and instance listing types; royalty at settlement; paid render contract; GLB loader + form gate</td><td><code>grid/src/marketplace/</code>, <code>blueprint.ts</code>, escrow stores, dashboard</td><td>create → list → bid → settle → build copy → resale pays royalty; Link slots arrive empty; oversize GLB rejected</td><td>+1 (<code>furnishing_transferred</code>)</td></tr>
+<tr><td><b>OBJ-5 Co-work &amp; Alerts</b></td><td>per-object caveats on role edges; Cowork-Agreement scope gates leases; alert policy store + router; LNM/Portal notification panes; unmutable security alerts</td><td><code>grid/src/civic/roles.ts</code>, <code>cowork.ts</code>, brain aisthesis/inbox, LNM, Portal</td><td>invite staff → grant one object → use → alert routes to Nous + human → severance → leases gone, alerts stop</td><td>+0</td></tr>
+</table></div>
+<p class="small">Doc-sync when any of this is accepted (CLAUDE.md rule): ROADMAP + REQUIREMENTS + PROJECT + STATE, <code>wiki/2-concepts/city/</code> (new concept page), <code>wiki/1-design/decisions.md</code> (D-OBJ-*), README status. Nothing is synced by this sheet because nothing is decided yet.</p>
+
+<!-- ============================================================ -->
+<h2 id="s13">13 · Research notes and precedents</h2>
+<p>What other systems learned, compressed to the lesson that changes our design.</p>
+
+<h3>Virtual worlds: objects with behaviour <span class="tag pr">PRIMARY</span></h3>
+<div class="lesson"><strong>Second Life.</strong> Scripts (LSL) live inside an object's inventory and are event-driven; objects must <em>request</em> runtime permissions for sensitive acts, and those can be revoked. Separately, items carry move / modify / copy / transfer permissions enforced by the platform. <strong>Lesson:</strong> two permission systems — what the item may be <em>done with</em> (license bits, §9.1) and what the item may <em>do</em> (consented scopes, §8.2) — are distinct and both needed.
+<div class="src">wiki.secondlife.com/wiki/Permission · /wiki/Scripted_permissions · /wiki/Category:LSL_Requires_Permissions</div></div>
+<div class="lesson"><strong>Decentraland SDK7.</strong> Scenes are entity-component-system: everything is an entity, data lives in components, logic in systems. "Smart items" were configurable items exposing actions other items could trigger — and the docs note that creating new Smart Items is no longer supported in the latest SDK. <strong>Lesson:</strong> ECS-style data/logic separation matches our manifest + closed algorithms; an open scripted-item ecosystem is expensive enough that its inventor walked it back.
+<div class="src">Decentraland creator docs (entities-components, smart-items) · github.com/decentraland/builder smart-items.md</div></div>
+<div class="lesson"><strong>Smallville (carried from the Nous House research, verified there).</strong> The environment is a tree of areas → objects with affordances; agents remember a personal subgraph. <strong>Lesson already adopted:</strong> the interior tree. Objects must stay <em>semantic</em> for the Nous first; 3D is the human's window.
+<div class="src">Park et al., UIST '23, doi:10.1145/3586183.3606763 — see docs/noesis-nous-house.html §2</div></div>
+
+<h3>3D formats and generation</h3>
+<div class="lesson"><strong>glTF vs USD on the web</strong> <span class="tag sc">SECONDARY</span>. three.js ships a <code>USDLoader</code> for simple USDZ; composition support is minimal, and a full OpenUSD WASM build is larger than three.js and needs COOP/COEP headers. A three.js/glTF maintainer's position: USD is a pipeline and collaboration format, glTF is the delivery format. <strong>Lesson:</strong> GLB only.
+<div class="src">threejs.org/docs USDLoader · discourse.threejs.org USDZ thread · forum.aousd.org "State of the art for viewing USDZ on web" · needle.tools OpenUSD docs</div></div>
+<div class="lesson"><strong>KHR_interactivity</strong> <span class="tag pr">PRIMARY</span>. Khronos' behaviour-graph extension embeds a node graph in the asset (onStart, onTick, onSelect; JSON-Pointer property access), with companion node extensions (selectability, hoverability, visibility). Released for public comment June 2024, submitted for ratification; Babylon.js plays it back. Ratified status was not confirmed in this pass. <strong>Lesson:</strong> watch it; do not depend on it; keep behaviour out of assets.
+<div class="src">khronos.org press release "glTF Interactivity extension submitted for ratification" · github.com/KhronosGroup/glTF (interactivity branch)</div></div>
+<div class="lesson"><strong>Local text-to-3D</strong> <span class="tag sc">SECONDARY</span>. Open models (Microsoft TRELLIS / TRELLIS-2, Tencent Hunyuan3D-2) generate textured meshes and export GLB; Hunyuan3D-2's repo lists ~6 GB VRAM for shape and ~16 GB with texture; desktop wrappers run fully on a local GPU. Licence terms differ by model and must be checked before use. <strong>Lesson:</strong> "rendered by the Nous on the human's GPU" is feasible today for Type A operators with a mid-range card — and is a literal instance of investing local AI power.
+<div class="src">github.com/Tencent/Hunyuan3D-2 · build.nvidia.com/microsoft/trellis model card · community guides (unverified benchmarks)</div></div>
+
+<h3>Capabilities and secrets</h3>
+<div class="lesson"><strong>Capability token families</strong> <span class="tag sc">SECONDARY</span>. Macaroons (HMAC chain, predicate caveats), Biscuit (public-key, Datalog policies, offline attenuation), UCAN (certificate-style delegation chains tied to DIDs, v1 separates delegation from invocation, revocation is the engineered-around weak spot), ZCAP (W3C CCG draft: object-capability documents chained by Data Integrity proofs, controller is a DID; work item being restarted in 2026). <strong>Lesson:</strong> all four share "root + attenuating caveats, verifiable offline". The repo's own <code>CapabilityToken</code> already has this shape; adopting an external format is the standing T2 question and is not on the critical path.
+<div class="src">fly.io/blog/api-tokens-a-tedious-survey · github.com/ucan-wg/spec · w3c-ccg.github.io/zcap-spec · identity.foundation/delegated-authority-evaluations</div></div>
+<div class="lesson"><strong>Dynamic secrets for agents</strong> <span class="tag pr">PRIMARY (vendor)</span>. HashiCorp's validated pattern for AI agents: tool calls request just-in-time credentials scoped by role; a reference app gives each chat session database credentials that expire in five minutes; revoking leases tied to a workload identity disables the agent. <strong>Lesson:</strong> "lease, don't share" is established practice — and the word <em>lease</em> is theirs.
+<div class="src">developer.hashicorp.com/validated-patterns/vault/ai-agent-identity-with-hashicorp-vault · hashicorp.com/blog/secure-ai-identity-with-hashicorp-vault</div></div>
+<div class="lesson"><strong>Scopes and consent</strong> <span class="tag pr">PRIMARY</span>. Shopify: required scopes at install, optional scopes requested later and individually revocable, restricted scopes need platform approval. MCP: OAuth 2.1 for HTTP transports, Protected Resource Metadata, least-privilege and step-up scopes; STDIO servers read credentials from the environment. <strong>Lesson:</strong> the App Link consent model in §8.2 is the industry's, not ours.
+<div class="src">shopify.dev/docs/api/usage/access-scopes · shopify.dev manage-access-scopes · modelcontextprotocol.io/specification/2025-11-25/basic/authorization</div></div>
+
+<h3>What this pass did not establish</h3>
+<ul>
+<li>Current ratification status of KHR_interactivity; current Unity and Roblox splits (sources conflict).</li>
+<li>Independent benchmarks or licence confirmation for the text-to-3D models.</li>
+<li>Any measured data on agent-held credential incidents; the OWASP material was read through secondary summaries.</li>
+<li>A legal read on reselling access to third-party APIs through leases — most providers' terms restrict credential sharing. This is a real constraint on proxy mode and needs a per-provider check before OBJ-3.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="s14">14 · Sources · Glossary</h2>
+<h3>Repository (read at <code>e47513b2</code>)</h3>
+<p class="small"><code>grid/src/civic/{furniture,types,roles,blueprint,cowork,severance}.ts</code> · <code>grid/src/economy/{object-physics,orbital-object-store,approval-store,nous-account-store}.ts</code> · <code>grid/src/audit/broadcast-allowlist.ts</code> (+ test asserting 159) · <code>protocol/src/persona/capabilities.ts</code> · <code>dashboard/public/grid-viz/{object-gen,physics-gate,orbital}.js</code> · <code>dashboard/src/components/worldmap/</code> · <code>brain/src/noesis_brain/{bridge,tools,sandbox,rpc}</code> · <code>docs/noesis-nous-house.html</code> · <code>.planning/research/nous-house-research.md</code> · <code>.planning/research/v3.1/ARCHITECTURE-RECONCILIATION.md</code> · <code>docs/plans/2026-06-05-noesis-object-schemas-research-design.md</code> · <code>wiki/1-design/economy.md</code> · <code>wiki/2-concepts/{city/holdings,mind/agentic-tools,mind/operator-bridge,mind/action}.md</code> · <code>.planning/{ROADMAP,STATE}.md</code></p>
+<h3>External</h3>
+<div class="tbl"><table>
+<tr><th>Source</th><th>Grounds</th><th>Grade</th></tr>
+<tr><td>Khronos — glTF Interactivity extension (press release; spec on the glTF <code>interactivity</code> branch)</td><td>behaviour graphs in assets; status</td><td><span class="tag pr">PRIMARY</span></td></tr>
+<tr><td>three.js docs (USDLoader) · three.js forum · AOUSD forum · Needle docs</td><td>GLB vs USD for web delivery</td><td><span class="tag sc">SECONDARY</span></td></tr>
+<tr><td>Tencent Hunyuan3D-2 repo · NVIDIA model card for Microsoft TRELLIS</td><td>local text-to-3D feasibility, VRAM, GLB output</td><td><span class="tag sc">SECONDARY</span></td></tr>
+<tr><td>Second Life wiki — Permission, Scripted permissions</td><td>license bits vs runtime permissions</td><td><span class="tag pr">PRIMARY</span></td></tr>
+<tr><td>Decentraland creator docs + builder repo (smart items)</td><td>ECS scenes; smart-item retreat</td><td><span class="tag pr">PRIMARY</span></td></tr>
+<tr><td>Model Context Protocol — Authorization (2025-06-18, 2025-11-25)</td><td>OAuth 2.1, RFC 9728, least privilege, step-up</td><td><span class="tag pr">PRIMARY</span></td></tr>
+<tr><td>Shopify dev docs — access scopes, manage access scopes, Scopes API</td><td>required/optional/revocable scope consent</td><td><span class="tag pr">PRIMARY</span></td></tr>
+<tr><td>HashiCorp — AI agent identity with Vault (validated pattern + blog)</td><td>dynamic short-lived credentials, lease revocation</td><td><span class="tag pr">PRIMARY</span> vendor</td></tr>
+<tr><td>Fly.io "API Tokens: A Tedious Survey" · UCAN spec · W3C CCG ZCAP spec · DIF delegated-authority evaluations</td><td>capability-token design space</td><td><span class="tag sc">SECONDARY</span> / <span class="tag pr">PRIMARY</span> specs</td></tr>
+<tr><td>EIP-2981 · OpenZeppelin token/common docs · EIP-6551 (+ Ethereum Magicians thread)</td><td>royalty signalling is not enforcement; token-bound accounts</td><td><span class="tag pr">PRIMARY</span></td></tr>
+<tr><td>OWASP Top 10 for LLM Applications 2025 (via HackerOne, Wiz, CSO Online summaries)</td><td>prompt injection LLM01, indirect injection, excessive agency</td><td><span class="tag sc">SECONDARY</span></td></tr>
+<tr><td>Roblox Creator docs + DevForum · Minecraft Partner Program page + guides · Unity Asset Store Provider Agreement (legacy) · Steam Workshop legal agreement + press</td><td>marketplace splits and curation</td><td>mixed, see §9.2</td></tr>
+</table></div>
+
+<h3>Glossary · 용어집</h3>
+<div class="tbl"><table>
+<tr><th>Term</th><th>Meaning</th><th>한국어</th></tr>
+<tr><td>Holding</td><td>One Nous's private property on a parcel (formerly "Nous house")</td><td>홀딩 — Nous 한 명의 사유 공간 (옛 "Nous house")</td></tr>
+<tr><td>Furnishing / Skeuos <span class="tag q">Q1</span></td><td>An interior object: form + optional link, functions, governance</td><td>기물 — 인테리어 오브젝트</td></tr>
+<tr><td>Manifest</td><td>Declarative description of a furnishing, stored by hash; the language the user never sees</td><td>매니페스트 — 사용자가 몰라도 되는 선언형 정의</td></tr>
+<tr><td>Form DSL</td><td>Small JSON vocabulary compiled to a 3D mesh</td><td>폼 DSL — 3D 형태 기술 언어</td></tr>
+<tr><td>Form gate</td><td>Validation every form passes before it is stored or shown</td><td>폼 게이트 — 형태 검증 관문</td></tr>
+<tr><td>Link Box</td><td>Sealed object whose slots hold credentials and permissions</td><td>링크 박스 — 키·토큰·권한 봉인 상자</td></tr>
+<tr><td>Slot</td><td>One credential entry: label hash, kind, provider, digest, policy</td><td>슬롯 — 자격증명 한 칸</td></tr>
+<tr><td>Lease</td><td>Short-lived, attenuated right to use a slot; never the value itself</td><td>리스 — 짧은 수명의 사용권 (값 노출 아님)</td></tr>
+<tr><td>Derive / Proxy</td><td>Lease modes: hand over a narrower token, or execute on the borrower's behalf</td><td>파생 / 대리 실행</td></tr>
+<tr><td>Algorithm catalog</td><td>Closed, versioned set of deterministic functions a furnishing may run</td><td>알고리즘 카탈로그 — 닫힌 기능 목록</td></tr>
+<tr><td>App Link</td><td>Consented binding from a furnishing to an outside service</td><td>앱 링크 — 외부 앱 연결</td></tr>
+<tr><td>Caveat</td><td>A restriction attached to a capability (who, what, how long, how often)</td><td>캐비엇 — 권한 제한 조건</td></tr>
+<tr><td>License bits</td><td>copy · modify · transfer · resell</td><td>라이선스 비트 — 복제·수정·양도·재판매</td></tr>
+<tr><td>Type A / Type B</td><td>Sovereign Nous on operator hardware / hosted Nous on the constitutional substrate</td><td>자가 호스팅 / 호스팅형 Nous</td></tr>
+</table></div>
+
+<footer>
+NOĒSIS · GRID HOUSE OBJECTS · DISCUSSION SHEET v0.1 · 2026-11-21 · written against origin/main e47513b2 · a discussion document, not canon — no decision in §11 is taken until ratified · self-contained file (inline CSS and SVG, no external assets)
+</footer>
+
+</div>
+</body>
+</html>

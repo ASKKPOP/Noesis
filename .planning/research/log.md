@@ -181,3 +181,15 @@ Starting Hermes's Brain (`docker-compose.brain.yml`) crashed with PermissionErro
 `/data/brain-wire.key`: `docker/Dockerfile.brain` never created `/data`, so the named volume
 mounted root-owned under the non-root `nous` user. Fixed in the image (`mkdir /data` + chown).
 Pitfall carried forward: the always-on compose had never been run end to end before this.
+
+## [2026-11-21] synthesis | Grid House Objects — first discussion sheet
+Operator base idea (objects inside a Holding: three origins, drawn form vs sealed link box,
+predefined algorithms vs linked apps, share, open sell, co-workers, alerts) read against the tree
+at `e47513b2` and a single-pass web survey. Output: `docs/noesis-grid-objects-discussion-2026-11-21.html`
+(seven inline diagrams, EN with a KO summary) + [[grid-objects-research]]. Finding: Phases 58–61
+already hold the catalog, interior tree, roles, agreements and severance; the gaps are a 3D
+interior scene, a GLB path, a Brain-side credential vault, per-object role caveats and affordance
+execution. Nothing ratified — twelve decisions (Q1–Q12) are open, including whether Type B may hold
+third-party credentials and whether the unratified T1 split gets decided by building the Link Box.
+Pitfall carried forward: "object" is already taken by `orbital_objects`; interior objects need
+their own noun before any code lands.
