@@ -549,7 +549,7 @@ fn pair_refs(v: &[(String, String)]) -> Vec<(&str, &str)> {
 fn system_prompt_matches_python() {
     let doc = fixture("system_prompt");
     let cases = doc["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 7);
+    assert_eq!(cases.len(), 12);
     for case in cases {
         let (name, i) = (s(&case["name"]), &case["input"]);
         let psyche = psyche_of(&i["psyche"]);

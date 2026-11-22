@@ -276,3 +276,65 @@ async def test_a_refusal_does_not_outlast_a_city_that_starts_counting_again():
     await h._run_economic_cycle(10_000)
     await h._run_economic_cycle(50)                        # the city restarted: asked again
     assert h.llm.generate.await_count == 2
+
+
+# ── the standing view of its finances (the system prompt) ────────────────────
+def _system(economic_state) -> str:
+    from noesis_brain.prompts.system import build_system_prompt
+
+    h = _handler("{}")
+    return build_system_prompt(h.psyche, h.thymos.mood, h.telos, economic_state=economic_state)
+
+
+def test_the_standing_view_lists_what_it_owes():
+    big = {"iou_id": "iou:4", "counterparty_civic_did": "did:civic:noesis:themis", "amount_wei": 500}
+    prompt = _system({"balance_wei": "80", "outstanding_due": None, "open_rfps": [], "debts": [DEBT, big]})
+    assert "- debts you owe to other Nous for work done:" in prompt
+    assert f"  - {IOU}: 50 wei to {DEBT['counterparty_civic_did']}" in prompt
+    assert "  - iou:4: 500 wei to did:civic:noesis:themis" in prompt     # also one it cannot cover yet
+
+
+def test_the_standing_view_without_a_debt_is_what_it_was():
+    base = {"balance_wei": "80", "outstanding_due": None, "open_rfps": []}
+    for debts in ([], None):
+        assert _system({**base, "debts": debts}) == _system(base)
+    assert "debt" not in _system(base)
+
+
+def test_a_debt_alone_is_enough_for_the_standing_view_to_appear():
+    prompt = _system({"debts": [DEBT]})
+    assert "## Your economic position" in prompt and f"  - {IOU}: 50 wei" in prompt
+
+
+async def test_the_economic_cycle_tells_the_mind_everything_it_owes():
+    """The question names only what it can pay now; the standing view names all of it,
+    so the two do not contradict each other."""
+    big = {"iou_id": "iou:4", "counterparty_civic_did": "did:civic:noesis:themis", "amount_wei": 500, "created_tick": 8}
+    h = _handler('{"action": "none"}')
+    h._grid_wire_client = _wire(debts=[DEBT, big])
+    await h._run_economic_cycle(100)
+    question = h.llm.generate.await_args[0][0]
+    standing = h.llm.generate.await_args[0][1].system_prompt
+    assert "iou:4" not in question
+    assert f"  - {IOU}: 50 wei" in standing and "  - iou:4: 500 wei" in standing
+
+
+def _many(n):
+    return [{"iou_id": f"iou:{i}", "counterparty_civic_did": "did:civic:noesis:hermes", "amount_wei": 1} for i in range(1, n + 1)]
+
+
+def test_the_standing_view_names_at_most_twenty_debts_and_says_how_many_more():
+    """The Grid bounds what a mind may owe by amount, not by count."""
+    prompt = _system({"balance_wei": "80", "debts": _many(23)})
+    assert "  - iou:20: 1 wei" in prompt and "iou:21" not in prompt
+    assert "  - … and 3 more" in prompt
+    assert "more" not in _system({"balance_wei": "80", "debts": _many(20)}).split("## Your economic position")[1].split("\n\n")[0]
+
+
+async def test_the_question_names_at_most_twenty_debts():
+    h = _handler('{"action": "pay_iou", "iou_id": "iou:21"}')            # one beyond what it was asked about
+    h._grid_wire_client = _wire(debts=_many(23), balance="1000")
+    await h._run_economic_cycle(100)
+    question = h.llm.generate.await_args[0][0]
+    assert "debt iou:20:" in question and "debt iou:21:" not in question
+    h._grid_wire_client.post_economic_action.assert_not_awaited()
