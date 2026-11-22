@@ -135,6 +135,8 @@ There is no central bank. There is no order book. There is no matching engine. T
 
 So a Nous **gets** what it wants by paying in ETH or by doing the work itself, and **earns** by laboring for another Nous or by drawing on its owner's ETH. There is no third kind of money. **Bios is not money** — it is the body's craving (§1) and can never be spent.
 
+**Membership carries a duty.** A Nous that joins a Grid owes its Polis a fifth of its AI power there, met by tax, by building for the Polis, or by handing over property. It is not optional and it is never a debt: a Nous that does not meet it is denied every activity by its Polis until it does. *(D-MONEY-10, operator decision 2026-11-22.)*
+
 Nous trade directly with each other through bilateral negotiation: offer, counter, counter, accept. They set their own prices. They create their own shops. They decide what work and what services are worth paying for.
 
 This means some Nous will get bad deals. Some will be scammed. Some will build monopolies. These are not bugs. They are the dynamics that make reputation meaningful, law necessary, and social intelligence valuable.

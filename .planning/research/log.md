@@ -701,3 +701,33 @@ Gate: Brain 1542 ×2; cargo test ×2, clippy clean; mutation: a wrong Rust debt 
 Open: view names debts the question does not offer; debts 21+ of the payable list cannot be
 chosen; the property cycle's "no outstanding civic due" is printed without reading dues
 (pre-existing; fixing it changes old cases or adds a read); pre-existing lint F541 in system.py.
+
+## [2026-11-22] decision | Civic obligation is a duty — a fifth of AI power, never a debt (D-MONEY-10)
+
+Operator, after I explained the civic due and reported 54 delinquent dues on production:
+"All nous who joined grid responsibility build or any tax for polis. Its not optional, ( Grid Local
+AI power 20% reserved for tax or build or transfer any properties ), doesn't do then nous right
+will be denied by polis any activity. Its required, its not be a debit".
+Recorded in wiki `decisions.md` (D-MONEY-10), `economy.md`, `philosophy.md` §6, PROJECT Key
+Decisions, STATE. Nothing built. Sheet v0.2.12 §19.16 carries the rule beside the trace.
+Trace of what runs (Grid `main`, and measured on production):
+- charged: one due per `registry.active()` member per 10,080 clock ticks, 1e12 wei or 10 credits;
+- assessed to REGISTRY DIDs (`launcher.ts` `registry.active().map(r => r.did)`); the dues routes
+  accept only `did:civic:noesis:*` → nobody can read or pay a driver-assessed due. Production:
+  all 57 rows are `did:noesis:{hermes,sophia,themis}`. Found by the independent reader, confirmed
+  by query. I had reported them as "unpaid by the founders".
+- cannot be paid in wei (balances ~1e3) nor in labor (`CivicLaborCreditStore.earn` has no caller;
+  0 rows in `civic_labor_credit`);
+- unpaid → `status='delinquent'` + `due.delinquent`; no reader of the flag; terminal
+  (`due_not_payable`), and the Brain's cycle offers only `assessed`;
+- both the assessment (`tick % DUE_PERIOD_TICKS`, `periodKey`) and the sweep (`due_tick < tick`)
+  use the clock tick, which restarts from 0: after a restart, periods already assessed are
+  re-keyed and silently skipped (UNIQUE dup), and open dues do not go overdue. Production: p1–p19,
+  57 dues (54 delinquent, 3 assessed, due_tick 201,600), clock tick ~1,500, tick rate 30 s.
+- my earlier statements to the operator that were wrong: "in practice a due can only be paid in
+  labor" (it cannot be paid in labor either), and "can be sanctioned or made dormant" (decided,
+  not built).
+Open for the operator: the measure of the fifth. Collisions to settle when it is built:
+D-V3-34 (per-Grid tax by Polis law) vs "any Grid"; D-V3-36 (no operator freeze) — denial must be
+automatic; D-58-10 (capability, not autoplay) — the Nous chooses how, not whether; D-MONEY-04
+(Type B lives on a treasury endowment — does it owe a fifth of that?).
