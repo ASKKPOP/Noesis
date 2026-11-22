@@ -531,3 +531,31 @@ at a time. Brain 1511 twice. Pitfalls carried forward: the server's fetch refspe
 `rm` is aliased, use `/bin/rm`; the server checkout is no longer dirty.
 Still open: §19.8 rows 5-7; links 1-3; whether the firehose reaches a Brain off the Grid's host
 (needs an enrolled Brain's token); the catalog half of Q17.
+
+## [2026-11-21] fix+deploy | Reclaim: roles end, condition and upkeep periods survive a restart
+Operator: "Yes, fix them" (sheet §19.8 rows 5-7). PR #37, main db3db4f4, deployed to production.
+(5) `ParcelRegistry.reclaimToTreasury(address, tick)` stamps `revoked_tick` on every active role
+edge of the parcel (kept as history); the scanner emits `zoning.role_revoked`
+(`severance_complete`) per ended role before `zoning.parcel_reclaimed`; IOUs are not drained.
+(6) `ParcelStore.persistUpkeep` writes `condition` with the stamp and missed periods.
+(7) `UpkeepScannerDeps.ticksBeforeStart` = `ticksRecorded(chain.all())`, computed in main.ts after
+the chain is restored and before the clock starts; due-ness and `last_upkeep_tick` use lifetime
+ticks (that + clock tick); events and the ledger keep the clock tick. Boot logs
+`[civic] upkeep counts from lifetime tick N`. A stamp ahead of the count is restamped with a
+warning, no charge.
+Two review rounds (unanchored reader, read-only) changed the fix: removed a dead UPDATE of
+`civic_parcel_roles` (nothing writes that table); the reclaim is now written DATABASE-FIRST (a
+refused write changes nothing and is retried next sweep — swallowing it after the memory
+transition would have let a buyer inherit the former owner's row); a failed ladder write warns
+instead of rejecting out of the un-awaited sweep; `advanceCondition`/`reclaimToTreasury` require
+the tick; `house-2-e2e` now composes the facade exactly as production. Each fix undone in turn
+fails a test. Grid 4340 green twice, tsc clean.
+Production: boot log lifetime tick 476011 == 476011 `tick` rows; last tick before the restart
+(99) persisted, no gap; 0 owned, 0 stamped rows (no conversion needed). Deployed by
+fast-forwarding `research/atlas-simulator` to main, then the server checkout; rollback image
+`noesiis-grid:pre-reclaim3-2026-11-21`.
+Open, reported, not changed: `persistRole`/`persistRoleRevoke` have no caller (roles are lost at
+any restart); `board/complete` has no role check, `claimTask` no parcel check; `ZONE_ID_RE`
+allows digits but the audit producers' `PARCEL_ID_RE` does not (paid branch would re-charge every
+tick for such a parcel); a persist failure after a successful charge is logged as
+`upkeep_charge_failed` and recharged after a restart; re-grant resumes trust_score across owners.

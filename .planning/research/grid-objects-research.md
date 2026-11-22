@@ -217,3 +217,11 @@ enrolled Brain's `post_actions` answer 404.
 - **Clock follower corrected**: it posted actions twice and could overlap a running decision.
 - **Unchanged:** no Brain on production, no owned parcel, endowments off, property cycle off
   unless `BRAIN_PROPERTY_CYCLE=on`.
+
+## Reclaim defects 5-7 fixed (v0.2.6, 2026-11-21)
+
+- Roles end with a reclaim (history kept, one `zoning.role_revoked` each); condition is saved with
+  every assessment; upkeep periods are counted in lifetime ticks read from the Grid's own chain.
+- Reclaim is written to the database first. Live on production (PR #37).
+- Open in the same area: roles are never persisted; the task board's checks; zone ids with a
+  digit; see sheet §19.10.
