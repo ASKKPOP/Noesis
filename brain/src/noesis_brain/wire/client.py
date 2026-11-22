@@ -53,6 +53,10 @@ ALLOWED_SCHEMES = {"https", "wss"}
 # A parcel address as the Grid mints it (e.g. "genesis:residential:0007"). It is
 # substituted into a URL path, so anything else is refused before a request is made.
 _PARCEL_ID_RE = re.compile(r"[A-Za-z0-9:_-]{1,128}")
+# A Grid refusal code as the routes define them ("insufficient_funds"). The code is
+# remembered by the Nous and shown to it again, so free text from a response body
+# (a raw exception message, say) is never passed on — the HTTP status stands in.
+_ERROR_CODE_RE = re.compile(r"[a-z0-9_]{1,48}")
 # Keys of a civic-land Action that are the Brain's own record, not part of the request body.
 _CIVIC_LAND_NON_BODY_KEYS = frozenset({"parcel", "zone", "max_price"})
 
@@ -492,7 +496,8 @@ class GridWireClient:
         every verb carries it in its metadata (extend_interior does not).
 
         Returns (True, None) on 2xx. On a refusal returns (False, code), where code
-        is the Grid's `error` string when the body carries one, else "http_<status>".
+        is the Grid's `error` when the body carries a code-shaped one, else
+        "http_<status>"; "transport_error" means no answer was received.
         NEVER raises and never queues — a refused purchase is a lesson, not a retry.
         """
         try:
@@ -518,8 +523,9 @@ class GridWireClient:
             code = f"http_{resp.status_code}"
             try:
                 payload = resp.json()
-                if isinstance(payload, dict) and isinstance(payload.get("error"), str) and payload["error"]:
-                    code = payload["error"]
+                err = payload.get("error") if isinstance(payload, dict) else None
+                if isinstance(err, str) and _ERROR_CODE_RE.fullmatch(err):
+                    code = err
             except Exception:  # noqa: BLE001 — a proxy error page is not JSON; the status is the code
                 pass
             log.warning(

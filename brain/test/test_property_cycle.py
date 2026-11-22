@@ -251,3 +251,50 @@ async def test_the_model_is_asked_with_json_mode_and_a_small_budget():
     assert options.json_mode is True
     assert options.max_tokens == 256
     assert options.purpose == "property_decision"
+
+
+# ── found by independent review ──────────────────────────────────────────────
+async def test_a_choice_that_did_not_match_the_offer_is_a_lesson_not_a_wait():
+    # The model DID choose to build; the Brain refused the value. Remembering that as
+    # "chose to wait" would be false and would repeat every cooldown.
+    h = _handler('{"action":"build","type":"shop","name":"%s","visibility":"open"}' % ("x" * 41))
+    h._grid_wire_client = _wire(parcels=BARE)
+    before = h._failed_since_reflection
+    await h._run_property_cycle(100)
+    h._grid_wire_client.post_civic_land_action.assert_not_awaited()
+    mem = _memories(h)
+    assert not any("chose to wait" in m for m in mem)
+    lessons = [m for m in mem if m.startswith("Lesson:")]
+    assert len(lessons) == 1 and "build" in lessons[0] and "was not sent" in lessons[0]
+    assert "x" * 41 not in lessons[0]            # the model's own text is not echoed into memory
+    assert h._failed_since_reflection == before + 1
+
+
+async def test_no_answer_from_the_grid_is_not_called_a_refusal():
+    # A timeout after the Grid committed the purchase must not teach "the Grid refused".
+    h = _handler('{"action":"buy_parcel","parcel":"%s"}' % RES)
+    h._grid_wire_client = _wire(parcels=FOR_SALE, post=(False, "transport_error"))
+    await h._run_property_cycle(100)
+    lessons = [m for m in _memories(h) if m.startswith("Lesson:")]
+    assert len(lessons) == 1
+    assert "refused" not in lessons[0]
+    assert "got no answer" in lessons[0]
+
+
+async def test_a_furnish_refusal_is_named_by_the_verb_the_nous_was_offered():
+    h = _handler('{"action":"furnish","area":"front_room","kind":"shop_counter"}')
+    h._grid_wire_client = _wire(parcels=SHOP, interior={"areas": []}, post=(False, "not_owner"))
+    await h._run_property_cycle(100)
+    lessons = [m for m in _memories(h) if m.startswith("Lesson:")]
+    assert lessons == ["Lesson: my furnish was refused by the Grid (not_owner)"]
+
+
+async def test_earlier_lessons_reach_the_property_prompt():
+    lesson = "Lesson: my buy_parcel was refused by the Grid (cap_exceeded)"
+    h = _handler('{"action":"none"}')
+    h._grid_wire_client = _wire(parcels=FOR_SALE)
+    h._ranked_memories = MagicMock(return_value=[lesson])
+    await h._run_property_cycle(100)
+    assert h._ranked_memories.call_args.kwargs["prefix"] == "Lesson:"
+    prompt = h.llm.generate.await_args[0][0]
+    assert lesson in prompt

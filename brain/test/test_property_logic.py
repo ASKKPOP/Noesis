@@ -225,3 +225,26 @@ def test_validate_furnish_refusals(decision):
 def test_validate_furnish_refused_at_cap():
     full = {"areas": [{"name": "a", "objects": [{"kind": "work_desk"}] * 12}]}
     assert pl.validate(FURNISH, {"action": "furnish", "area": "front_room", "kind": "shop_counter"}, 0, full) is None
+
+
+def test_candidates_show_every_zone_the_nous_can_afford():
+    # 24 homes at 400 must not hide the 900 business land: a shortlist of the five
+    # cheapest would choose "a home" for the Nous before it was ever asked.
+    feed = [_p(f"genesis:residential:{i:04d}") for i in range(1, 25)]
+    for zone in ("business", "shopping", "manufacture"):
+        feed += [_p(f"genesis:{zone}:{i:04d}", zone=zone, price=900) for i in range(1, 9)]
+    got = pl.candidates(feed, 1000)
+    assert len(got) == 5
+    assert {c["zone"] for c in got} == {"residential", "business", "shopping", "manufacture"}
+    assert [c["id"] for c in got] == [
+        "genesis:residential:0001", "genesis:residential:0002",
+        "genesis:business:0001", "genesis:manufacture:0001", "genesis:shopping:0001",
+    ]
+
+
+def test_candidates_only_affordable_zones_are_shown():
+    feed = [_p(f"genesis:residential:{i:04d}") for i in range(1, 25)]
+    feed += [_p("genesis:business:0001", zone="business", price=900)]
+    got = pl.candidates(feed, 500)          # 900 + 90 is out of reach
+    assert {c["zone"] for c in got} == {"residential"}
+    assert len(got) == 5

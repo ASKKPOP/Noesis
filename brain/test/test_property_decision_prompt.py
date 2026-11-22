@@ -73,3 +73,11 @@ def test_parse_rejects_unknown_action_and_non_json():
     assert parse_property_decision("[1, 2]") is None
     assert parse_property_decision('{"action": ["buy_parcel"]}') is None  # unhashable action
     assert parse_property_decision('{"action": {"a": 1}}') is None
+
+
+def test_lessons_are_shown_when_there_are_any():
+    lesson = "Lesson: my buy_parcel was refused by the Grid (cap_exceeded)"
+    p = build_property_decision_prompt(LAND, 1000, lessons=[lesson])
+    assert "What you learned before:" in p and lesson in p
+    assert "What you learned before:" not in build_property_decision_prompt(LAND, 1000)
+    assert "What you learned before:" not in build_property_decision_prompt(LAND, 1000, lessons=[])

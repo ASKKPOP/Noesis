@@ -18,7 +18,10 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from noesis_brain.rpc.types import ActionType
+# This module imports nothing from the rest of the Brain on purpose: rpc.handler
+# imports the prompt module, which imports this one. Verbs are returned as their
+# wire names; the handler turns them into ActionType.
+VERB_BUY, VERB_BUILD, VERB_EXTEND = "buy_parcel", "build", "extend_interior"
 
 # Mirrors PURCHASABLE_ZONES. Civic commons also show as `available` in the
 # public feed and are refused with zone_not_purchasable, so they are never offered.
@@ -97,7 +100,13 @@ def own_parcel(parcels: list[Any], civic_did: str) -> dict[str, Any] | None:
 
 
 def candidates(parcels: list[Any], balance: int) -> list[dict[str, Any]]:
-    """Parcels this Nous could buy now and still hold the reserve, cheapest first."""
+    """Parcels this Nous could buy now and still hold the reserve.
+
+    At most MAX_CANDIDATES, and every zone it can afford is represented before any
+    zone is shown twice. A plain "five cheapest" list would show only homes while
+    homes are cheapest, and so would choose the kind of Holding for the Nous.
+    The result is ordered by (price, id).
+    """
     out: list[tuple[int, str, dict[str, Any]]] = []
     for p in parcels:
         if not isinstance(p, dict):
@@ -114,7 +123,20 @@ def candidates(parcels: list[Any], balance: int) -> list[dict[str, Any]]:
             continue
         out.append((price, pid, p))
     out.sort(key=lambda t: (t[0], t[1]))
-    return [p for _, _, p in out[:MAX_CANDIDATES]]
+    by_zone: dict[str, list[tuple[int, str, dict[str, Any]]]] = {}
+    for item in out:
+        by_zone.setdefault(item[2]["zone"], []).append(item)
+    # Zones in order of their cheapest parcel, then name; one parcel from each in turn.
+    zones = sorted(by_zone, key=lambda z: (by_zone[z][0][0], z))
+    picked: list[tuple[int, str, dict[str, Any]]] = []
+    depth = 0
+    while len(picked) < MAX_CANDIDATES and any(depth < len(by_zone[z]) for z in zones):
+        for z in zones:
+            if depth < len(by_zone[z]) and len(picked) < MAX_CANDIDATES:
+                picked.append(by_zone[z][depth])
+        depth += 1
+    picked.sort(key=lambda t: (t[0], t[1]))
+    return [p for _, _, p in picked]
 
 
 def allowed_types(zone: Any) -> list[str]:
@@ -168,10 +190,10 @@ def plan_stage(parcels: list[Any], civic_did: str, balance: int, tick: int) -> S
 
 def validate(
     stage: Stage, decision: Any, balance: int, interior: Any,
-) -> tuple[ActionType, str, dict[str, Any]] | None:
+) -> tuple[str, str, dict[str, Any]] | None:
     """Check a parsed decision against the stage it was offered in.
 
-    Returns (action type, parcel id, metadata for build_civic_land_action), or
+    Returns (verb wire name, parcel id, metadata for build_civic_land_action), or
     None when the decision is `none`, belongs to another stage, or carries a
     value that was not offered. Never raises on a malformed decision.
     """
@@ -189,7 +211,7 @@ def validate(
         price = _price(chosen)
         if price is None or price + reserve_for(price) > balance:
             return None
-        return ActionType.BUY_PARCEL, pid, {"parcel": pid, "zone": chosen.get("zone"), "max_price": price}
+        return VERB_BUY, pid, {"parcel": pid, "zone": chosen.get("zone"), "max_price": price}
 
     if stage.name == "build" and action == "build" and stage.parcel is not None:
         kind, name, visibility = decision.get("type"), decision.get("name"), decision.get("visibility")
@@ -203,7 +225,7 @@ def validate(
         if not 1 <= len(name) <= NAME_MAX:
             return None
         pid = stage.parcel["id"]
-        return ActionType.BUILD, pid, {"parcel": pid, "type": kind, "name": name, "visibility": visibility}
+        return VERB_BUILD, pid, {"parcel": pid, "type": kind, "name": name, "visibility": visibility}
 
     if stage.name == "furnish" and action == "furnish" and stage.parcel is not None:
         area, kind = decision.get("area"), decision.get("kind")
@@ -213,6 +235,6 @@ def validate(
             return None
         if interior_count(interior) >= FURNISH_CAP:
             return None
-        return ActionType.EXTEND_INTERIOR, stage.parcel["id"], {"area": area, "kind": kind}
+        return VERB_EXTEND, stage.parcel["id"], {"area": area, "kind": kind}
 
     return None

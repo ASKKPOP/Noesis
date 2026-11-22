@@ -24,10 +24,20 @@ _CLOSING = 'Choosing "none" is a real choice.'
 
 
 def build_property_decision_prompt(
-    stage: Stage, balance: int, interior: dict[str, Any] | None = None,
+    stage: Stage,
+    balance: int,
+    interior: dict[str, Any] | None = None,
+    lessons: list[str] | None = None,
 ) -> str:
-    """Build the user-turn prompt for the one stage that applies."""
+    """Build the user-turn prompt for the one stage that applies.
+
+    `lessons` are the Nous's own earlier "Lesson: …" memories; they are what makes
+    a refusal by the Grid something the Nous can act on at its next decision.
+    """
     lines: list[str] = [f"Your wei balance: {balance}."]
+    if lessons:
+        lines.append("What you learned before:")
+        lines += [f"  - {str(lesson)[:200]}" for lesson in lessons[:3]]
 
     if stage.name == "land":
         lines.append(

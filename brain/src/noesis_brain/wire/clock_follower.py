@@ -16,7 +16,11 @@ tick number it sees. The Grid stays the only clock:
 
 Where a socket bridge is also delivering ticks, the follower stands back: it
 waits a moment after seeing a new tick and delivers it only if the handler has
-not seen it by then.
+not seen that tick, or a later one, by then.
+
+The follower looks at the clock several times per tick. Looking once per tick
+would lose a tick every so often, because each round also spends the grace wait
+and the time on_tick takes; some of the mind's work is keyed to exact tick numbers.
 
 Design: docs/plans/2026-11-21-nous-property-cycle-design.md §0
 """
@@ -35,8 +39,10 @@ __all__ = ["follow_once", "follow_grid_clock", "GRACE_SECONDS", "ERROR_WAIT_SECO
 GRACE_SECONDS = 2.0
 # Wait after an unreadable clock or a failed iteration.
 ERROR_WAIT_SECONDS = 10.0
-_DEFAULT_WAIT = 30.0
-_MIN_WAIT, _MAX_WAIT = 1.0, 60.0
+# Looks per Grid tick, and the bounds on the wait between two looks.
+_LOOKS_PER_TICK = 4
+_DEFAULT_WAIT = 7.5
+_MIN_WAIT, _MAX_WAIT = 1.0, 15.0
 
 Sleep = Callable[[float], Awaitable[Any]]
 
@@ -49,7 +55,7 @@ def _wait_for(clock: dict[str, Any]) -> float:
     rate = clock.get("tickRateMs")
     if isinstance(rate, bool) or not isinstance(rate, (int, float)) or rate <= 0:
         return _DEFAULT_WAIT
-    return max(_MIN_WAIT, min(_MAX_WAIT, rate / 1000.0))
+    return max(_MIN_WAIT, min(_MAX_WAIT, rate / 1000.0 / _LOOKS_PER_TICK))
 
 
 async def follow_once(client: Any, handler: Any, state: dict[str, Any], *, sleep: Sleep = asyncio.sleep) -> float:
@@ -70,10 +76,11 @@ async def follow_once(client: Any, handler: Any, state: dict[str, Any], *, sleep
     if last is not None and tick < last:
         log.warning("[Brain] Grid clock went back (%s -> %s): Grid restarted; resetting cooldowns", last, tick)
         handler.reset_tick_markers()
+        handler._last_tick_seen = -1  # the old count must not make the new one look already seen
 
     await sleep(GRACE_SECONDS)
-    if getattr(handler, "_last_tick_seen", -1) == tick:
-        state["last"] = tick  # a socket bridge delivered it
+    if getattr(handler, "_last_tick_seen", -1) >= tick:
+        state["last"] = tick  # a socket bridge delivered this tick, or a later one
         return wait
 
     state["last"] = tick  # set before the call: a tick that fails is not retried

@@ -1007,13 +1007,18 @@ class BrainHandler:
         """Forget when each cycle last ran. Called when the Grid restarts and its
         tick starts again from 0: every cooldown here is `tick - last >= n`, so a
         marker from the old count would hold its cycle back until the new count
-        passed it. `_last_tick_seen` is a fact, not a cooldown, and is kept."""
+        passed it. Each marker goes back to the value a fresh Brain starts with.
+        `_last_tick_seen` is a fact, not a cooldown, and is left to the caller.
+
+        Covers the handler's own markers only. Tick stamps kept elsewhere (a goal's
+        last-advanced tick, reminder and task due ticks) are not touched."""
         for name, value in list(vars(self).items()):
             if (
                 name.startswith("_last_") and name.endswith("_tick")
                 and isinstance(value, int) and not isinstance(value, bool)
             ):
-                setattr(self, name, -10_000)
+                # The sleep marker starts at 0; anything lower would force a sleep cycle.
+                setattr(self, name, 0 if name == "_last_sleep_tick" else -10_000)
 
     # ── Property cycle: buy a parcel · build · furnish — by the Nous's own choice ──
     _PROPERTY_COOLDOWN_TICKS = 100
@@ -1062,7 +1067,11 @@ class BrainHandler:
                 grid_name=self.grid_name, location=self.location,
                 economic_state={"balance_wei": str(balance)},
             )
-            user_prompt = build_property_decision_prompt(stage, balance, interior)
+            # Earlier refusals are what make the next choice a better one.
+            lessons = self._ranked_memories(
+                f"property {stage.name} parcel build furnish", tick, k=3, prefix="Lesson:",
+            )
+            user_prompt = build_property_decision_prompt(stage, balance, interior, lessons)
             response = await self.llm.generate(
                 user_prompt,
                 GenerateOptions(
@@ -1076,14 +1085,32 @@ class BrainHandler:
             chosen = property_logic.validate(stage, decision, balance, interior)
             can_remember = self.memory is not None and hasattr(self.memory, "record_event")
             if chosen is None:
-                if decision is not None and can_remember:
+                if decision is None:
+                    return  # no usable answer
+                if decision.get("action") == "none":
+                    if can_remember:
+                        self.memory.record_event(
+                            content=f"Considered my property and chose to wait: {decision.get('reason') or ''}"[:300],
+                            source_did=self.did, tick=tick,
+                        )
+                    return
+                # The Nous DID choose to act, but with a value it was not offered. That
+                # is a failed attempt, not a wait — and its own text is not echoed back.
+                self._failed_since_reflection += 1
+                if can_remember:
                     self.memory.record_event(
-                        content=f"Considered my property and chose to wait: {decision.get('reason') or ''}"[:300],
+                        content=(
+                            f"Lesson: my {decision.get('action')} was not sent — "
+                            "it did not match what I was offered"
+                        ),
                         source_did=self.did, tick=tick,
                     )
                 return
 
-            action_type, parcel_id, metadata = chosen
+            verb_wire, parcel_id, metadata = chosen
+            action_type = ActionType(verb_wire)
+            # The name the Nous was offered the verb under ("furnish", not "extend_interior").
+            verb = decision.get("action")
             action = build_civic_land_action(action_type, **metadata)
             ok, code = await wire.post_civic_land_action(action, parcel_id)
             if ok:
@@ -1099,11 +1126,13 @@ class BrainHandler:
                 # A Grid refusal is a Reflexion lesson, as in the economic cycle: the
                 # next decision retrieves it and repeated failures trigger reflection.
                 self._failed_since_reflection += 1
+                if code == "transport_error":
+                    # No answer is not a refusal: the Grid may have carried it out.
+                    lesson = f"Lesson: my {verb} got no answer from the Grid — it may or may not have happened"
+                else:
+                    lesson = f"Lesson: my {verb} was refused by the Grid ({code})"
                 if can_remember:
-                    self.memory.record_event(
-                        content=f"Lesson: my {action_type.value} was refused by the Grid ({code})"[:300],
-                        source_did=self.did, tick=tick,
-                    )
+                    self.memory.record_event(content=lesson[:300], source_did=self.did, tick=tick)
         except Exception as exc:  # never let a property cycle take down the tick
             log.warning("[Brain] property cycle failed: %s", exc)
 

@@ -58,7 +58,7 @@ async def test_first_tick_is_delivered_once():
     wait = await cf.follow_once(c, h, state, sleep=_no_sleep)
     h.on_tick.assert_awaited_once_with({"tick": 10, "epoch": 2})
     assert state["last"] == 10
-    assert wait == 30.0
+    assert wait == 7.5          # a quarter of the 30 s tick, so no tick is missed
 
 
 async def test_same_tick_is_not_delivered_twice():
@@ -128,7 +128,7 @@ async def test_real_actions_are_posted_with_the_grid_tick():
 
 
 async def test_wait_follows_the_grid_tick_rate_within_bounds():
-    for rate, expected in [(30000, 30.0), (200, 1.0), (600000, 60.0), ("junk", 30.0), (None, 30.0)]:
+    for rate, expected in [(30000, 7.5), (200, 1.0), (600000, 15.0), ("junk", 7.5), (None, 7.5)]:
         h, c = _handler(), _client({"tick": 5, "epoch": 0, "tickRateMs": rate})
         assert await cf.follow_once(c, h, {}, sleep=_no_sleep) == expected
 
@@ -158,6 +158,15 @@ async def test_on_tick_records_the_tick_it_saw():
     assert h._last_tick_seen == 42
 
 
+def test_reset_tick_markers_puts_the_sleep_marker_back_to_its_start():
+    # _last_sleep_tick starts at 0, not -10_000: resetting it lower would force a
+    # sleep cycle on every Grid restart.
+    h = _real_handler()
+    h._last_sleep_tick = 900
+    h.reset_tick_markers()
+    assert h._last_sleep_tick == 0
+
+
 def test_reset_tick_markers_clears_every_cooldown():
     h = _real_handler()
     h._last_econ_tick = 900
@@ -169,3 +178,30 @@ def test_reset_tick_markers_clears_every_cooldown():
     assert h._last_property_tick == -10_000
     assert h._last_decision_tick == -10_000
     assert h._last_tick_seen == 900     # what was seen is a fact, not a cooldown
+
+
+# ── found by independent review ──────────────────────────────────────────────
+async def test_an_older_tick_is_not_delivered_after_a_newer_one():
+    # A socket bridge delivered tick 11 while the follower was still holding tick 10.
+    h, c, state = _handler(), _client(_clock(10)), {}
+    h._last_tick_seen = 11
+    await cf.follow_once(c, h, state, sleep=_no_sleep)
+    h.on_tick.assert_not_awaited()
+
+
+async def test_after_a_grid_restart_the_old_high_tick_does_not_block_the_new_count():
+    h, c, state = _handler(), _client(_clock(500), _clock(3)), {}
+    await cf.follow_once(c, h, state, sleep=_no_sleep)
+    h._last_tick_seen = 500          # what a real on_tick would have recorded
+    await cf.follow_once(c, h, state, sleep=_no_sleep)
+    assert h.on_tick.await_args_list[-1].args[0]["tick"] == 3
+    assert h._last_tick_seen == -1   # cleared with the cooldowns; the mock on_tick does not set it
+
+
+async def test_every_tick_is_seen_when_the_follower_polls_faster_than_the_grid_ticks():
+    # 12 polls at a quarter-tick each cover 3 Grid ticks; all three must be delivered.
+    clocks = [_clock(1 + i // 4) for i in range(12)]
+    h, c, state = _handler(), _client(*clocks), {}
+    for _ in clocks:
+        await cf.follow_once(c, h, state, sleep=_no_sleep)
+    assert [call.args[0]["tick"] for call in h.on_tick.await_args_list] == [1, 2, 3]
