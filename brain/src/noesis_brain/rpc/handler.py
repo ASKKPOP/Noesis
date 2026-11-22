@@ -150,6 +150,9 @@ class BrainHandler:
         # Property cycle cooldown: a Nous that could buy a parcel, build on one, or
         # furnish a structure it owns is offered that one choice (D-58-10: offered, never made for it).
         self._last_property_tick = -10_000
+        # The last tick on_tick was called with, from any source. The clock follower
+        # reads it so it does not deliver a tick a socket bridge already delivered.
+        self._last_tick_seen = -1
         # W-A (Mind, 2026-07-02): two-timescale mind loop. The slow planner
         # decomposes the top Telos goal into GoalLedger tasks; the fast decision
         # cycle works the next task every ~20 ticks under ONE coherent intent
@@ -1000,6 +1003,18 @@ class BrainHandler:
             )
         return None
 
+    def reset_tick_markers(self) -> None:
+        """Forget when each cycle last ran. Called when the Grid restarts and its
+        tick starts again from 0: every cooldown here is `tick - last >= n`, so a
+        marker from the old count would hold its cycle back until the new count
+        passed it. `_last_tick_seen` is a fact, not a cooldown, and is kept."""
+        for name, value in list(vars(self).items()):
+            if (
+                name.startswith("_last_") and name.endswith("_tick")
+                and isinstance(value, int) and not isinstance(value, bool)
+            ):
+                setattr(self, name, -10_000)
+
     # ── Property cycle: buy a parcel · build · furnish — by the Nous's own choice ──
     _PROPERTY_COOLDOWN_TICKS = 100
 
@@ -1617,6 +1632,10 @@ class BrainHandler:
                 Absence/empty list preserves Phase 6 behavior (D-10
                 additive widening).
         """
+        _tick_seen = params.get("tick")
+        if isinstance(_tick_seen, int) and not isinstance(_tick_seen, bool):
+            self._last_tick_seen = _tick_seen
+
         # Decay emotions each tick (Phase 6 behavior — preserved exactly).
         self.thymos.decay()
 
