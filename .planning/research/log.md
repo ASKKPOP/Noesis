@@ -271,3 +271,28 @@ issuance, so a Grid restart makes `post_actions` 404 for every enrolled Brain. F
 forward: the Grid creates runners for the three founders only; the Grid tick restarts from 0 on
 restart. Pitfall carried forward: a green full run does not show import-order defects — run each
 new test file on its own.
+
+## [2026-11-21] lint | Wrong branch; per-tick upkeep; Grid reclaim path fixed on main (sheet v0.2.4)
+Operator said to fix the two Grid defects. Findings while doing it:
+(1) AUTHOR ERROR — every code-derived statement about "production" in the sheet was read from
+`main`, while production's Grid runs `research/atlas-simulator` (57 commits not on main). On that
+branch commit `aeee7173` (2026-11-20) already added `brain/.../wire/tick_driver.py` (firehose tick
+-> on_tick: the sheet's "eighth link") and `GridCoordinator.restoreCivicDids` (the "restart
+unbinds runners" defect; live on production). The author's duplicate runner-binding fix was
+dropped; the clock follower on main now duplicates TickDriver.
+(2) An independent review of the reclaim fix found the path broken more deeply, confirmed in code
+on both branches and reproduced by tests against the real ParcelRegistry: upkeep charged on EVERY
+tick (memory never learned `lastUpkeepTick`); a reclaimed parcel owned by the treasury in memory
+and by nobody in the database, reclaimed again every tick and unpurchasable until restart; razed
+structure `undefined` -> public parcel feed 500; `persistReclaim` leaving structure name/type,
+shop binding and allowlist. All four fixed on main (`createUpkeepRegistryFacade`,
+`ParcelRegistry.stampUpkeep`, reclaim -> no owner; BEHAVIOUR CHANGE: memory no longer reports
+TREASURY_DID as owner of a reclaimed parcel). Grid suite 4214 green; in shuffled order five older
+tests in four unrelated files fail (pre-existing order dependence). NOT on production.
+(3) Brain: property cycle now off unless `BRAIN_PROPERTY_CYCLE=on`. Brain suite 1432 green twice.
+Open, not fixed: role edges survive reclaim; condition not persisted between periods; failing
+persistReclaim splits memory and DB; tick stamps not comparable across a Grid restart.
+A raw NUL byte in `grid/src/civic/parcel-registry.ts` (in a comment) made grep treat the file as
+binary and hid it from text search; removed on main, still present on the production branch,
+where it makes that file a binary merge conflict. Pitfalls carried forward: read the branch
+production runs before describing production; `grep` silently skips files with a NUL byte.

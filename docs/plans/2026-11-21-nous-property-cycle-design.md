@@ -324,3 +324,36 @@ first run.
 - `reset_tick_markers` resets the handler's own cooldowns. Tick stamps kept elsewhere (a goal's
   last-advanced tick, reminder and task due ticks) keep the old count after a Grid restart.
 - The economic cycle can still spend into the upkeep reserve (author's call, see §3).
+
+## Correction, later the same day
+
+**The author read `main` to describe production. Production's Grid runs
+`research/atlas-simulator`.** Checked against that branch:
+
+- §0 (a clock for a remote Brain) duplicates work already on that branch: commit `aeee7173`
+  (2026-11-20) added `wire/tick_driver.py`, which turns the Grid's firehose tick events into
+  `on_tick`. The clock follower here polls the public clock instead. The two can coexist — the
+  follower stands back once `on_tick` has seen a tick — and the follower adds what the driver
+  lacks (a tick source when the firehose is down, and the cooldown reset after a Grid restart).
+  Which one stays is part of merging the branches.
+- "Two defects in the Grid", number 2 (a restart unbinds runners): fixed on that branch by the
+  same commit (`restoreCivicDids`) and live on production. It is true of `main` only.
+- §1 to §5 (the property cycle) are new on both branches.
+
+**Upkeep was charged on every tick.** The design's reserve ("five periods of upkeep") assumed a
+period was a period. It was not: the scanner wrote an assessment to the database only, memory
+never learned it, and the parcel was due again one tick later. With 1000 and the cheapest parcel
+a Nous would have been empty in about 37 minutes and reclaimed 90 seconds after that. Fixed in the
+Grid on `main` (`createUpkeepRegistryFacade`, `ParcelRegistry.stampUpkeep`, reclaim returns the
+parcel to the pool with no owner). **Not fixed on production.**
+
+**Consequences for the first run.**
+
+- The property cycle is **off by default**. Add `BRAIN_PROPERTY_CYCLE=on` to the Brain's
+  environment only for a Grid that runs the upkeep fix.
+- Precondition for step 7 (funding): the production Grid runs the upkeep fix.
+
+Still open in the Grid's reclaim path, not fixed: role edges survive a reclaim; condition is not
+persisted between periods; a failing `persistReclaim` leaves memory and database apart; tick
+stamps (`last_upkeep_tick`, `acquired_at_tick`) are not comparable across a Grid restart, because
+the Grid's tick starts again from 0.

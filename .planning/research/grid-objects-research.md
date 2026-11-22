@@ -194,3 +194,15 @@ Links 4-8 are built in the Brain and proven by tests only (design
 `publicView` throws → public parcel feed 500 until Grid restart; must be fixed before a Nous buys
 land on production. (2) Civic-DID → runner index is memory-only; a Grid restart makes every
 enrolled Brain's `post_actions` answer 404.
+
+## Correction and Grid fix (v0.2.4, 2026-11-21)
+
+- **Branch error.** Production's Grid runs `research/atlas-simulator`; the sheet's code-derived
+  claims about production were read from `main`. On that branch link 8 (`wire/tick_driver.py`) and
+  the runner rebinding (`restoreCivicDids`) were already done on 2026-11-20 (`aeee7173`).
+- **Upkeep was per tick, not per period**, on both branches. Fixed on `main` together with the
+  reclaim loop, the feed crash and the razed structure returning after a restart. Not on
+  production. The property cycle is off unless `BRAIN_PROPERTY_CYCLE=on`.
+- **Q17 is now blocking:** the upkeep fix reaches production only through
+  `research/atlas-simulator`. A trial merge of `main` into it conflicts in one file
+  (`grid/src/civic/parcel-registry.ts`, binary because of a NUL byte on that branch).
