@@ -658,3 +658,25 @@ grid items default to `min-width:auto`). Fixed with `.grid2>*,.grid3>*{min-width
 carry forward for every report: at phone width, `document.documentElement.scrollWidth` must
 equal `clientWidth` for the WHOLE page, and the browser pane must be visible (a hidden pane
 reports a viewport of 0).
+
+## [2026-11-22] feat | A Nous can choose to pay a debt — Python and Rust Brains together
+
+Operator approved installing Rust (`brew install rust`, 1.100; remove with `brew uninstall rust`).
+Baseline `cargo test` in `brain-rs/` was green before any change.
+Change (PR #49, merged d7278189; Brain only, Grid untouched, nothing deployed but documents):
+`prompts/economic_decision.py` — `debts` argument, a debts block after the due and before the
+RFPs, `pay_iou` in the action list and `iou_id` in the keys ONLY when a debt is offered (no debt →
+byte-identical prompt, so every earlier fixture is unchanged). `rpc/handler.py` — `_debts_i_owe`
+(never raises), `_payable` (str id, int non-bool amount, 0 < amount <= balance), offered-id match,
+`_refused_iou_ticks` + `_IOU_RETRY_TICKS` = 500, memory text with amount and creditor.
+Fixtures: `python -m scripts.record_parity_fixtures` from `brain/` (repeatable — a second run
+writes the same bytes); prompts 16 → 20 cases, parsing 35 → 37 replies. `brain-rs`: `parsing.rs`
+constants (sorted action list, key order), `prompts.rs` fourth argument `debts: &[Object]`,
+`tests/parity.rs` passes `a.get(3)` when present.
+Review, two rounds: (1) a refused debt was asked again every cycle → back-off; (2) memory text
+thin → amount + creditor; (3) wiki not updated in the change → `economy.md`, `holdings.md`;
+(4) my back-off did not allow for the Grid tick restarting from 0 → `0 <= tick - t < window`.
+Gate: Brain 1534 ×2; cargo test ×2 (16 parity + 4 + 2), clippy clean. CI runs neither.
+Open: a declined debt is asked again each cycle (one model call per 50 ticks); the system
+prompt's economic section says nothing of debts (changing it = `system_prompt.json` + Rust);
+a failed send counts as a refusal; offer rules live only in the Python handler; no real model run.
