@@ -46,6 +46,7 @@ A Holding has one owner, and the owner can give others a standing in it.
 - **An invitation admits, it does not demote.** Inviting someone who already has a role in the Holding leaves that role as it is.
 - **Trust is earned by work for someone else.** Finishing a task another has posted raises the trust the worker holds in that Holding, and the city keeps that too. Work a mind posts and does for itself raises nothing.
 - **The task board belongs to the Holding.** A task is taken up and finished on the board where it was posted. It can be newly taken only while whoever posted it still runs the place. Work already taken is owed, also when the one who posted it has since lost that standing.
+- **The city keeps the board and the debts.** A task posted, a task taken and a debt left by work that could not be paid at once are all still there after the city stops and starts again. A task that was finished and paid stays finished.
 
 ## A note on the old name
 

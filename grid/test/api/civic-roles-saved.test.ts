@@ -15,7 +15,7 @@ import { NousRegistry } from '../../src/registry/registry.js';
 import { registerCivicParcelRoutes } from '../../src/api/routes/civic-parcels.js';
 import { onUpkeepTick, createUpkeepRegistryFacade } from '../../src/civic/upkeep-scanner.js';
 import { UPKEEP_PERIOD_TICKS } from '../../src/civic/founding-law.js';
-import { makeAccountsPool } from '../helpers/accounts-pool.js';
+import { makeCivicDb } from '../helpers/civic-db.js';
 import { _resetCowork, allAgreements } from '../../src/civic/cowork.js';
 import { _resetLedger } from '../../src/civic/credit-ledger.js';
 import type { GridServices } from '../../src/api/server.js';
@@ -28,76 +28,6 @@ const GUEST = 'did:civic:noesis:carol';
 const SHOP = 'genesis:shopping:0001';
 const SHOP2 = 'genesis:shopping:0002';
 const TICK = 7;
-
-type RoleRow = {
-    parcel_id: string; holder_civic_did: string; role: string; granted_by_civic_did: string;
-    granted_tick: number; trust_score: number; revoked_tick: number | null;
-};
-
-/** The civic_parcel_roles table, kept the way the database keeps it. Every other write succeeds. */
-const UPSERT = 'INSERT INTO civic_parcel_roles (parcel_id, holder_civic_did, role, granted_by_civic_did, granted_tick, trust_score, revoked_tick) '
-    + 'VALUES (?, ?, ?, ?, ?, ?, NULL) ON DUPLICATE KEY UPDATE role = VALUES(role), granted_by_civic_did = VALUES(granted_by_civic_did), '
-    + 'granted_tick = VALUES(granted_tick), revoked_tick = NULL';
-
-function fakeRoleTable() {
-    let rows = new Map<string, RoleRow>();
-    let snapshot: Map<string, RoleRow> | null = null;
-    const failing: RegExp[] = [];
-    const key = (parcel: unknown, holder: unknown) => `${String(parcel)} ${String(holder)}`;
-    const ok = [{ affectedRows: 1 }, []];
-    const copy = (m: Map<string, RoleRow>) => new Map([...m].map(([k, v]) => [k, { ...v }]));
-    const query = vi.fn(async (sql: string, params: unknown[] = []) => {
-        const q = sql.replace(/\s+/g, ' ').trim();
-        const hit = failing.findIndex((re) => re.test(q));
-        if (hit >= 0) { failing.splice(hit, 1); throw new Error('db down'); }
-        if (/^SELECT r\.\* FROM civic_parcel_roles r /.test(q)) return [[...rows.values()].map((r) => ({ ...r })), []];
-        if (/^SELECT/.test(q)) return [[], []];
-        if (!/civic_parcel_roles/.test(q)) return ok;
-        if (/^INSERT INTO civic_parcel_roles /.test(q)) {
-            // The statement itself is part of the contract: a re-grant must clear revoked_tick
-            // and must not write trust_score over what the row has earned.
-            if (q !== UPSERT) throw new Error(`fakeRoleTable: upsert changed: ${q}`);
-            const [parcel, holder, role, grantor, grantedTick, trust] = params as [string, string, string, string, number, number];
-            const prior = rows.get(key(parcel, holder));
-            rows.set(key(parcel, holder), {
-                parcel_id: parcel, holder_civic_did: holder, role, granted_by_civic_did: grantor,
-                granted_tick: grantedTick, trust_score: prior ? prior.trust_score : trust, revoked_tick: null,
-            });
-            return ok;
-        }
-        if (q === 'UPDATE civic_parcel_roles SET revoked_tick = ? WHERE parcel_id = ? AND holder_civic_did = ?') {
-            const row = rows.get(key(params[1], params[2]));
-            if (row) row.revoked_tick = params[0] as number;
-            return ok;
-        }
-        if (q === 'UPDATE civic_parcel_roles SET revoked_tick = ? WHERE parcel_id = ? AND revoked_tick IS NULL') {
-            for (const row of rows.values()) {
-                if (row.parcel_id === params[1] && row.revoked_tick === null) row.revoked_tick = params[0] as number;
-            }
-            return ok;
-        }
-        if (q === 'UPDATE civic_parcel_roles SET trust_score = ? WHERE parcel_id = ? AND holder_civic_did = ?') {
-            const row = rows.get(key(params[1], params[2]));
-            if (row) row.trust_score = params[0] as number;
-            return ok;
-        }
-        throw new Error(`fakeRoleTable: unexpected statement: ${q}`);
-    });
-    // A connection whose transaction can be rolled back, the way the database would.
-    const getConnection = async () => ({
-        query,
-        beginTransaction: async () => { snapshot = copy(rows); },
-        commit: async () => { snapshot = null; },
-        rollback: async () => { if (snapshot) rows = snapshot; snapshot = null; },
-        release: () => {},
-    });
-    return {
-        row: (parcel: string, holder: string) => rows.get(key(parcel, holder)),
-        /** The next statement matching `re` fails once. */
-        failNext: (re: RegExp) => { failing.push(re); },
-        pool: { query, getConnection } as never,
-    };
-}
 
 function seededRegistry(): ParcelRegistry {
     const registry = new ParcelRegistry('genesis');
@@ -113,9 +43,10 @@ function seededRegistry(): ParcelRegistry {
 function buildApp() {
     const audit = new AuditChain();
     const registry = seededRegistry();
-    const table = fakeRoleTable();
+    const db = makeCivicDb();
+    const table = { row: db.role, failNext: db.failNext, pool: db.pool };
     const store = new ParcelStore(table.pool, 'genesis');
-    const accts = makeAccountsPool();
+    const accts = db.accts;
     for (const did of [OWNER, STAFF, GUEST]) accts.seedAccount(did, 100_000);
     let ctx: DIDContext | null = { did: OWNER, tier: 'civic_member' };
     const app = Fastify({ logger: false });
@@ -124,7 +55,7 @@ function buildApp() {
     });
     registerCivicParcelRoutes(app, {
         parcels: { registry, store }, registry: new NousRegistry(), audit,
-        pool: accts.pool, gridName: 'genesis', currentTick: () => TICK,
+        pool: db.pool, gridName: 'genesis', currentTick: () => TICK,
     } as unknown as GridServices);
     const as = (did: string) => { ctx = { did, tier: 'civic_member' }; };
     const post = (url: string, payload: Record<string, unknown>) => app.inject({ method: 'POST', url, payload });

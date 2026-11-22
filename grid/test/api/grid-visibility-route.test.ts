@@ -103,9 +103,9 @@ describe('Migration v78 — grid_visibility', () => {
         expect(m?.up).not.toMatch(/INSERT/i);
         expect(m?.down).toMatch(/DROP TABLE IF EXISTS grid_visibility/);
     });
-    it('v78 is the latest migration and versions remain sequential', () => {
+    it('versions remain sequential up to and past v78', () => {
         const sorted = [...MIGRATIONS].sort((a, b) => a.version - b.version);
-        expect(sorted[sorted.length - 1].version).toBe(78);
+        expect(sorted[sorted.length - 1].version).toBeGreaterThanOrEqual(78);
         sorted.forEach((x, i) => expect(x.version).toBe(i + 1));
     });
 });

@@ -48,7 +48,8 @@ import { appendZoningCoworkSession } from '../../audit/append-zoning-cowork-sess
 import { appendSkillBlueprintExecuted } from '../../audit/append-skill-blueprint-executed.js';
 import { isHumanDid, type RoleEdge } from '../../civic/roles.js';
 import type { ParcelRegistry } from '../../civic/parcel-registry.js';
-import { postTask, claimTask, completeTask, getAgreement } from '../../civic/cowork.js';
+import { postTask, claimTask, completeTask, getAgreement, removeAgreement } from '../../civic/cowork.js';
+import { recordIou, allIous, outstandingBetween, type LedgerDeps } from '../../civic/credit-ledger.js';
 import { buildFromBlueprint } from '../../civic/blueprint.js';
 import { coBuildStaffOf } from '../../civic/co-build.js';
 import { NousAccountStore } from '../../economy/nous-account-store.js';
@@ -754,7 +755,15 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             // Database first: if this write fails nothing has changed. The other order would
             // let a role that was revoked in memory come back at the next restart.
             await guarded.store.persistRoleRevoke(addr, holder, tick);
+            // Severance settles every debt between the two in the ledger; note which, and
+            // save them as they stand afterwards.
+            const drained = outstandingBetween(buyerDid, holder).map((e) => e.iou_id);
             parcelRegistry.revokeRole(addr, holder, forCause ? 'for_cause' : 'owner_revoked', tick);
+            try {
+                await saveIous(guarded.store, drained);
+            } catch (e) {
+                req.log.warn({ parcel_id: addr, err: e instanceof Error ? e.message : String(e) }, 'severance_ledger_persist_failed');
+            }
             appendZoningRoleRevoked(services.audit, {
                 holder_civic_did_hash: sha256Hex(holder),
                 parcel_id: addr,
@@ -776,10 +785,11 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             const body = (req.body ?? {}) as Record<string, unknown>;
             const taskRef = body['task_ref'];
             const payBios = body['pay_bios'];
-            if (typeof taskRef !== 'string' || taskRef.length === 0) {
+            // The board is saved; the column that holds the task text takes 255 characters.
+            if (typeof taskRef !== 'string' || taskRef.length === 0 || taskRef.length > 255) {
                 return reply.code(400).send({ error: 'invalid_task_ref' });
             }
-            if (!Number.isInteger(payBios) || (payBios as number) <= 0) {
+            if (!Number.isSafeInteger(payBios) || (payBios as number) <= 0) {
                 return reply.code(400).send({ error: 'invalid_pay_bios' });
             }
             // Owner/staff only (the board-post affordance).
@@ -795,6 +805,13 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
                 settlement_amount_wei: payBios as number,
                 term_ticks: 0,
             });
+            // Saved, or not posted: a task the database refused is taken off the board again.
+            try {
+                await guarded.store.persistCowork(agreement, { created: currentTick(services) });
+            } catch (e) {
+                removeAgreement(agreement.agreement_id);
+                throw e;
+            }
             return reply.code(200).send({ posted: true, parcel_id: addr, task_id: agreement.agreement_id });
         },
     );
@@ -825,6 +842,13 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             if (hostRole !== 'owner' && hostRole !== 'staff') {
                 return reply.code(409).send({ error: 'task_host_left' });
             }
+            if (task.status !== 'posted') return reply.code(409).send({ error: 'cowork_not_claimable' });
+            // The database decides: its row changes only while the task is still posted, so of
+            // two claims arriving together one wins there and the other is told no. A claim
+            // the database refused, or could not take, leaves the task on the board.
+            if (!(await guarded.store.persistClaim(taskId, buyerDid))) {
+                return reply.code(409).send({ error: 'cowork_not_claimable' });
+            }
             try {
                 const agreement = claimTask(taskId, buyerDid);
                 return reply.code(200).send({ claimed: true, task_id: agreement.agreement_id });
@@ -854,30 +878,60 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             // is claimed it is owed (D-NH-06), also when the host has since lost the place.
             const task = getAgreement(taskId);
             if (!task || task.parcel_id !== addr) return reply.code(404).send({ error: 'task_not_found' });
+            // One completion of a task at a time: a second request for the same task while the
+            // first is still settling would otherwise pass the same check and settle it again.
+            if (completing.has(taskId)) return reply.code(409).send({ error: 'cowork_not_completable' });
+            completing.add(taskId);
             const startTick = currentTick(services);
             const endTick = startTick;
             try {
-                // D-NH-06 — completion ALWAYS settles: Ousia when funded, else an IOU. The
-                // Ousia move is a Nous→Nous NousAccountStore.transfer (host → worker) on the
-                // unified in-DB ledger (Phase 62.6-03); an underfunded host is caught inside
-                // completeTask and falls back to an IOU (credit-ledger). funded:true is safe —
-                // both parties are civic-DID citizens with nous_accounts rows, and the
-                // insufficient_balance→IOU fallback guarantees always-settles.
-                const pool = services.pool;
-                if (!pool) return reply.code(503).send({ error: 'civic_registry_unavailable' });
-                const accountStore = new NousAccountStore(pool);
+                // D-NH-06 — completion ALWAYS settles: money when the host is funded, else an
+                // IOU. Either way the task row and what settles it are written in ONE database
+                // transaction (ParcelStore.settleCowork): the row goes claimed → completed only
+                // once, so a task can be paid once, also across a restart.
+                const touched = new Set<string>();
+                const noteIou: LedgerDeps = {
+                    persistIou: (e) => { touched.add(e.iou_id); },
+                    persistIouSettle: (id) => { touched.add(id); },
+                };
+                let paid = false;
                 const agreement = await completeTask(taskId, buyerDid, {
                     funded: true,
                     start_tick: startTick,
                     end_tick: endTick,
-                    settleWei: (from, to, amt) => accountStore.transfer({
-                        gridName: services.gridName, fromDid: from, toDid: to, amountWei: BigInt(amt), currentTick: endTick,
-                    }),
+                    // Funded: flip the row and move host → worker together. An underfunded host
+                    // throws insufficient_balance with nothing changed, and completeTask falls
+                    // back to an IOU.
+                    settleWei: async (from, to, amt) => {
+                        await guarded.store.settleCowork({
+                            agreementId: taskId, tick: endTick,
+                            pay: { fromDid: from, toDid: to, amountWei: BigInt(amt) },
+                        });
+                        paid = true;
+                    },
+                    recordIou: (creditor, debtor, amount, reasonRef, tick) => {
+                        recordIou(creditor, debtor, amount, reasonRef, tick, noteIou);
+                    },
                     bumpTrust: (parcelId, workerDid, delta) => parcelRegistry.bumpTrust(parcelId, workerDid, delta),
                 });
+                let saved = paid;
+                if (!paid) {
+                    // No money moved (an IOU stands in memory, or the host did the work itself):
+                    // flip the row and write the debts together. If this fails nothing was paid;
+                    // the task reads as claimed again after a restart and can be finished then.
+                    try {
+                        const byId = new Map(allIous().map((e) => [e.iou_id, e]));
+                        const ious = [...touched].map((id) => byId.get(id)).filter((e) => e !== undefined);
+                        await guarded.store.settleCowork({ agreementId: taskId, tick: endTick, ious });
+                        saved = true;
+                    } catch (e) {
+                        req.log.warn({ parcel_id: addr, task_id: taskId, err: e instanceof Error ? e.message : String(e) }, 'cowork_settlement_persist_failed');
+                    }
+                }
+                // A settlement the database did not take will be done again after a restart.
+                // Its trust and its session are recorded then, once — not now and again later.
+                if (!saved) return reply.code(200).send({ completed: true, task_id: agreement.agreement_id });
                 // Honored work raised the worker's trust on this parcel; save it with the edge.
-                // The work is settled by now: a failed write here must not turn the answer
-                // into an error, so it is logged and the completion stands.
                 const workerEdge = parcelRegistry.rolesFor(addr)
                     .find((e) => e.holder_civic_did === agreement.parties[1] && e.revoked_tick === undefined);
                 if (workerEdge) {
@@ -906,10 +960,29 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
                 const msg = err instanceof Error ? err.message : 'cowork_error';
                 if (msg.startsWith('cowork_not_found')) return reply.code(404).send({ error: 'task_not_found' });
                 if (msg.startsWith('cowork_not_host')) return reply.code(403).send({ error: 'not_host' });
-                return reply.code(409).send({ error: msg.split(':')[0] });
+                // A rule the board or the ledger refused is a 409 with its code. Anything else
+                // (a database fault) is not the caller's doing and must not hand them its text.
+                if (/^(cowork|iou)_[a-z_]+/.test(msg)) return reply.code(409).send({ error: msg.split(':')[0] });
+                throw err;
+            } finally {
+                completing.delete(taskId);
             }
         },
     );
+}
+
+/** Task ids with a completion in flight (one process, so a Set is the whole lock). */
+const completing = new Set<string>();
+
+/** Write the ledger entries with these ids as they stand now (new, netted or settled). */
+async function saveIous(
+    store: NonNullable<GridServices['parcels']>['store'], ids: Iterable<string>,
+): Promise<void> {
+    const byId = new Map(allIous().map((e) => [e.iou_id, e]));
+    for (const id of ids) {
+        const entry = byId.get(id);
+        if (entry) await store.persistIou(entry);
+    }
 }
 
 /**
