@@ -13,7 +13,7 @@
  */
 import type { Pool, RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import type { ParcelRegistry } from './parcel-registry.js';
-import type { Parcel, ZoneId, StructureType, Visibility, Interior, ParcelCondition } from './types.js';
+import type { Parcel, StructureType, Visibility, Interior, ParcelCondition } from './types.js';
 import type { Role, RoleEdge } from './roles.js';
 import { gravityPrice, GENESIS_CORE_SEED_PLAN, PURCHASABLE_RINGS } from './founding-law.js';
 import { upsertIou, type IouEntry } from './credit-ledger.js';
@@ -93,7 +93,7 @@ function rowToParcel(row: ParcelRow): Parcel {
     return {
         id: row.parcel_id,
         gridId: row.grid_name,
-        zoneId: row.zone_id as ZoneId,
+        zoneId: row.zone_id,
         ring: row.ring,
         sector: Number(row.sector_deg),
         level: row.level,
@@ -145,6 +145,16 @@ export class ParcelStore {
      */
     async seedGenesisCore(registry: ParcelRegistry): Promise<number> {
         const parcels = buildGenesisCoreParcels(this.gridName);
+        const inserted = await this.insertParcels(parcels);
+        for (const p of parcels) registry.upsert(p);
+        return inserted;
+    }
+
+    /**
+     * Persist newly seeded land (Genesis Core seed, or land a Polis law opened in a zone).
+     * INSERT IGNORE — a parcel that already exists is left untouched. Returns rows inserted.
+     */
+    async insertParcels(parcels: readonly Parcel[]): Promise<number> {
         let inserted = 0;
         for (const p of parcels) {
             const structure = p.structure;
@@ -165,7 +175,6 @@ export class ParcelStore {
                 ],
             );
             if (res.affectedRows > 0) inserted++;
-            registry.upsert(p);
         }
         return inserted;
     }
@@ -288,14 +297,25 @@ export class ParcelStore {
     }
 
     /**
-     * Persist a reclaim DB-first (Wave 4): ownership returns to the treasury, the
-     * interior + structure are razed, and the condition ladder resets to maintained.
+     * Persist a reclaim DB-first (Wave 4): the parcel goes back to the pool with no
+     * owner, the structure and interior are razed, and the ladder resets to maintained.
+     * Everything that belonged to the former owner's structure is cleared with it — the
+     * loader rebuilds a structure whenever name and type are set, and would attach a
+     * left-over shop binding or allowlist to whatever the next owner builds.
      */
     async persistReclaim(parcel: Parcel): Promise<void> {
         await this.pool.query<ResultSetHeader>(
             `UPDATE civic_parcels
                 SET owner_civic_did = NULL,
+                    acquired_at_tick = NULL,
+                    last_upkeep_tick = NULL,
+                    structure_name = NULL,
+                    structure_type = NULL,
+                    built_at_tick = NULL,
                     structure_interior = NULL,
+                    bound_shop_id = NULL,
+                    entry_policy = 'open',
+                    entry_allowlist = NULL,
                     \`condition\` = 'maintained',
                     missed_periods = 0
               WHERE parcel_id = ?`,

@@ -1,0 +1,523 @@
+{
+ "fixture": "parsing",
+ "version": 1,
+ "vocabulary": {
+  "decision_actions": [
+   "move",
+   "rest",
+   "speak",
+   "work_task"
+  ],
+  "social_actions": [
+   "contribute_lore",
+   "join_group",
+   "message_peer",
+   "none",
+   "share_skill",
+   "vote"
+  ],
+  "economic_actions": [
+   "bid_rfp",
+   "none",
+   "pay_due"
+  ],
+  "economic_keys": [
+   "action",
+   "method",
+   "notice_id",
+   "price_wei",
+   "artifact_spec",
+   "reason"
+  ],
+  "max_tasks": 4
+ },
+ "cases": [
+  {
+   "name": "clean_work_task",
+   "reply": "{\"action\": \"work_task\", \"task_id\": 3, \"note\": \"start with the ledger\"}",
+   "parsed": {
+    "parse_decision": {
+     "action": "work_task",
+     "task_id": 3,
+     "note": "start with the ledger"
+    },
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "fenced_json",
+   "reply": "Sure!\n```json\n{\"action\": \"speak\", \"text\": \"hello there\"}\n```\nHope that helps.",
+   "parsed": {
+    "parse_decision": {
+     "action": "speak",
+     "text": "hello there"
+    },
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "prose_before_and_after",
+   "reply": "I think the best move is {\"action\": \"rest\"} for now.",
+   "parsed": {
+    "parse_decision": {
+     "action": "rest"
+    },
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "two_objects",
+   "reply": "{\"action\": \"rest\"} and also {\"action\": \"speak\", \"text\": \"hi\"}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "two_objects_shared_action",
+   "reply": "{\"action\": \"none\"} — or, thinking again: {\"action\": \"none\", \"reason\": \"nothing due\"}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": {
+     "action": "none",
+     "method": null,
+     "notice_id": null,
+     "price_wei": null,
+     "artifact_spec": null,
+     "reason": null
+    }
+   }
+  },
+  {
+   "name": "malformed_then_valid",
+   "reply": "{action: rest} — sorry, I meant {\"action\": \"rest\"}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "nested_object",
+   "reply": "{\"action\": \"bid_rfp\", \"notice_id\": \"n-7\", \"price_wei\": 1200, \"artifact_spec\": {\"kind\": \"relay\", \"mass_kg\": 4.5}, \"reason\": \"I can build it\"}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": {
+     "action": "bid_rfp",
+     "method": null,
+     "notice_id": "n-7",
+     "price_wei": 1200,
+     "artifact_spec": {
+      "kind": "relay",
+      "mass_kg": 4.5
+     },
+     "reason": "I can build it"
+    }
+   }
+  },
+  {
+   "name": "braces_inside_string",
+   "reply": "{\"action\": \"speak\", \"text\": \"use {curly} braces } carefully\"}",
+   "parsed": {
+    "parse_decision": {
+     "action": "speak",
+     "text": "use {curly} braces } carefully"
+    },
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "unknown_action",
+   "reply": "{\"action\": \"fly_away\"}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "missing_action",
+   "reply": "{\"task_id\": 1}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "not_an_object",
+   "reply": "[\"work_task\"]",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "no_json",
+   "reply": "I would rather not say.",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "empty",
+   "reply": "",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "whitespace_only",
+   "reply": "   \n\t",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "truncated",
+   "reply": "{\"action\": \"work_task\", \"task_id\": ",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "trailing_comma",
+   "reply": "{\"action\": \"rest\",}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "single_quotes",
+   "reply": "{'action': 'rest'}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "duplicate_keys",
+   "reply": "{\"action\": \"speak\", \"action\": \"rest\"}",
+   "parsed": {
+    "parse_decision": {
+     "action": "rest"
+    },
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "unicode_text",
+   "reply": "{\"action\": \"speak\", \"text\": \"안녕 — νόησις ✓\"}",
+   "parsed": {
+    "parse_decision": {
+     "action": "speak",
+     "text": "안녕 — νόησις ✓"
+    },
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "escaped_unicode",
+   "reply": "{\"action\": \"speak\", \"text\": \"caf\\u00e9\"}",
+   "parsed": {
+    "parse_decision": {
+     "action": "speak",
+     "text": "café"
+    },
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "pay_due",
+   "reply": "{\"action\": \"pay_due\", \"method\": \"labor\", \"reason\": \"dues are owed\"}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": {
+     "action": "pay_due",
+     "method": "labor",
+     "notice_id": null,
+     "price_wei": null,
+     "artifact_spec": null,
+     "reason": "dues are owed"
+    }
+   }
+  },
+  {
+   "name": "economic_none_with_extras",
+   "reply": "{\"action\": \"none\", \"mood\": \"calm\", \"price_wei\": null}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": {
+     "action": "none",
+     "mood": "calm",
+     "price_wei": null
+    },
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": {
+     "action": "none",
+     "method": null,
+     "notice_id": null,
+     "price_wei": null,
+     "artifact_spec": null,
+     "reason": null
+    }
+   }
+  },
+  {
+   "name": "tasks_list",
+   "reply": "{\"tasks\": [\"survey the market\", \"  \", 7, \"post a listing\", \"wait for a buyer\", \"settle\", \"celebrate\"]}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": [
+     "survey the market",
+     "post a listing",
+     "wait for a buyer",
+     "settle"
+    ],
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "tasks_empty",
+   "reply": "{\"tasks\": []}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "tasks_not_a_list",
+   "reply": "{\"tasks\": \"survey the market\"}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "skill",
+   "reply": "{\"name\": \"Market Survey!! v2\", \"description\": \" Find what sells \", \"instructions\": \" 1. look 2. count \", \"triggers\": [\"market\", \" \", 3, \"survey\", \"a\", \"b\", \"c\", \"d\"]}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": {
+     "name": "market_survey_v2",
+     "description": "Find what sells",
+     "instructions": "1. look 2. count",
+     "triggers": [
+      "market",
+      "survey",
+      "a",
+      "b",
+      "c"
+     ]
+    },
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "skill_name_only_symbols",
+   "reply": "{\"name\": \"!!!\", \"instructions\": \"do it\"}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "skill_missing_instructions",
+   "reply": "{\"name\": \"half_a_skill\"}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "social_vote",
+   "reply": "{\"action\": \"vote\", \"proposal_id\": \"p-12\", \"choice\": \"yes\"}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": {
+     "action": "vote",
+     "proposal_id": "p-12",
+     "choice": "yes"
+    },
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "social_message",
+   "reply": "ok -> {\"action\": \"message_peer\", \"peer_did\": \"did:noesis:sophia\", \"text\": \"shall we trade?\"}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": {
+     "action": "message_peer",
+     "peer_did": "did:noesis:sophia",
+     "text": "shall we trade?"
+    },
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "social_none",
+   "reply": "{\"action\": \"none\"}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": {
+     "action": "none"
+    },
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": {
+     "action": "none",
+     "method": null,
+     "notice_id": null,
+     "price_wei": null,
+     "artifact_spec": null,
+     "reason": null
+    }
+   }
+  },
+  {
+   "name": "number_forms",
+   "reply": "{\"action\": \"bid_rfp\", \"price_wei\": 1e3, \"notice_id\": 12}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": {
+     "action": "bid_rfp",
+     "method": null,
+     "notice_id": 12,
+     "price_wei": 1000.0,
+     "artifact_spec": null,
+     "reason": null
+    }
+   }
+  },
+  {
+   "name": "nan_literal",
+   "reply": "{\"action\": \"bid_rfp\", \"price_wei\": NaN}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": {
+     "action": "bid_rfp",
+     "method": null,
+     "notice_id": null,
+     "price_wei": "<<NaN>>",
+     "artifact_spec": null,
+     "reason": null
+    }
+   }
+  },
+  {
+   "name": "action_is_list",
+   "reply": "{\"action\": [\"rest\"]}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  },
+  {
+   "name": "action_is_object",
+   "reply": "{\"action\": {\"name\": \"none\"}}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": null
+   }
+  }
+ ]
+}

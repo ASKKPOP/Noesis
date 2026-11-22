@@ -172,3 +172,12 @@ describe('CivicDidStore.markRevoked', () => {
         expect(queries[0].sql).toMatch(/AND status = 'active'/);
     });
 });
+
+describe('CivicDidStore.countActiveHumans', () => {
+    it('counts active human Civic-DIDs of one Grid', async () => {
+        const { pool, queries } = makeMockPool([{ n: 4 }]);
+        expect(await new CivicDidStore(pool).countActiveHumans('Genesis')).toBe(4);
+        expect(queries[0].sql).toMatch(/status = 'active' AND existence_did LIKE 'did:noesis:human:%'/);
+        expect(queries[0].params).toEqual(['Genesis']);
+    });
+});

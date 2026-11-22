@@ -34,6 +34,9 @@ const GRID_ORIGIN = process.env.NEXT_PUBLIC_GRID_ORIGIN ?? 'http://localhost:808
 export interface ParcelFeedEntry {
     id: string;
     zone: string;
+    // D-V3-40: zones are free per Grid — the feed carries the zone's kind + the Polis's label.
+    zone_kind?: 'home' | 'business' | 'civic' | null;
+    zone_label?: string | null;
     ring: number;
     sector: number;
     level: number;

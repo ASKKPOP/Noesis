@@ -399,3 +399,21 @@ class TestModelRouterAvailabilityEvents:
         assert result is False
         # is_available should NOT have been called since we're not in fallback mode
         primary.is_available.assert_not_called()
+
+
+class TestRouterAsPlainAdapter:
+    """The handler calls ``llm.generate(prompt, options)`` — the LLMAdapter form. A router
+    standing in for an adapter must take options in that position, not mistake them for a tier."""
+
+    @pytest.mark.asyncio
+    async def test_options_in_second_position_are_options_on_the_primary_tier(self):
+        router = ModelRouter(_make_config())
+        adapter = _make_adapter("ollama", "primary response")
+        router.register_tier(ModelTier.PRIMARY, adapter)
+        opts = GenerateOptions(temperature=0.2, max_tokens=64, system_prompt="be brief")
+
+        resp = await router.generate("Hello", opts)
+
+        assert resp.text == "primary response"
+        assert resp.tier == ModelTier.PRIMARY
+        assert adapter.generate.await_args[0][1] is opts

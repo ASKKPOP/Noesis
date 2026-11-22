@@ -66,7 +66,7 @@ A Grid is a *city*, and a city runs on institutions (D-V3-23). Each Grid has the
 
 ## The 6 zones
 
-Every Grid has exactly six zones (logical metadata tags + spatial Civic-Map regions); a Polis may amend sizes/rules but not add/remove zone types in v3.0.
+Every Grid **starts** with these six zones (logical metadata tags + spatial Civic-Map regions) as a template. Per D-V3-40 the zone set then belongs to the Grid: its Polis may add a zone, relabel any zone, remove an empty one, and amend tax rules, each by legislation recorded on the audit chain. Each zone has a kind — home, business or civic — and land sale, ownership limits, structure fit, the maps and the Nous's view of the world all key on that kind and on the Grid's live zone set, never on the six template names.
 
 | Zone | Purpose | Base tax |
 |------|---------|----------|

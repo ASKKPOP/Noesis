@@ -1,0 +1,589 @@
+{
+ "fixture": "thymos",
+ "version": 1,
+ "constants": {
+  "emotion_order": [
+   "joy",
+   "sadness",
+   "anger",
+   "fear",
+   "trust",
+   "curiosity"
+  ],
+  "decay_rate": 0.05,
+  "intensity_multiplier": {
+   "low": 0.5,
+   "medium": 1.0,
+   "high": 1.5
+  }
+ },
+ "runs": [
+  {
+   "emotional_intensity": "low",
+   "triggers": {
+    "joy": [
+     "trade",
+     "friend"
+    ],
+    "fear": [
+     "police",
+     "fine"
+    ],
+    "curiosity": [
+     "library"
+    ],
+    "not_an_emotion": [
+     "x"
+    ]
+   },
+   "steps": [
+    {
+     "op": {
+      "do": "feel",
+      "emotion": "joy",
+      "intensity": 0.3,
+      "trigger": "a good trade"
+     },
+     "intensities": {
+      "joy": 0.15,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.0,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "joy",
+     "mood": "calm"
+    },
+    {
+     "op": {
+      "do": "feel",
+      "emotion": "joy",
+      "intensity": 0.45
+     },
+     "intensities": {
+      "joy": 0.375,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.0,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "joy",
+     "mood": "joy"
+    },
+    {
+     "op": {
+      "do": "decay"
+     },
+     "intensities": {
+      "joy": 0.325,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.0,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "joy",
+     "mood": "joy"
+    },
+    {
+     "op": {
+      "do": "feel",
+      "emotion": "fear",
+      "intensity": 0.9
+     },
+     "intensities": {
+      "joy": 0.325,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.45,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "fear",
+     "mood": "fear"
+    },
+    {
+     "op": {
+      "do": "feel",
+      "emotion": "fear",
+      "intensity": 0.9
+     },
+     "intensities": {
+      "joy": 0.325,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.9,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "fear",
+     "mood": "fear"
+    },
+    {
+     "op": {
+      "do": "decay",
+      "times": 3
+     },
+     "intensities": {
+      "joy": 0.17500000000000004,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.7499999999999999,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "fear",
+     "mood": "fear"
+    },
+    {
+     "op": {
+      "do": "apply_triggers",
+      "text": "A Friend told me the POLICE issued a fine near the library."
+     },
+     "matched": [
+      [
+       "joy",
+       "friend"
+      ],
+      [
+       "fear",
+       "police"
+      ],
+      [
+       "fear",
+       "fine"
+      ],
+      [
+       "curiosity",
+       "library"
+      ]
+     ],
+     "intensities": {
+      "joy": 0.37500000000000006,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 1.0,
+      "trust": 0.0,
+      "curiosity": 0.2
+     },
+     "dominant": "fear",
+     "mood": "fear"
+    },
+    {
+     "op": {
+      "do": "apply_triggers",
+      "text": "nothing of note",
+      "base_intensity": 0.7
+     },
+     "matched": [],
+     "intensities": {
+      "joy": 0.37500000000000006,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 1.0,
+      "trust": 0.0,
+      "curiosity": 0.2
+     },
+     "dominant": "fear",
+     "mood": "fear"
+    },
+    {
+     "op": {
+      "do": "decay",
+      "times": 30
+     },
+     "intensities": {
+      "joy": 0.0,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.0,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "joy",
+     "mood": "calm"
+    }
+   ]
+  },
+  {
+   "emotional_intensity": "medium",
+   "triggers": {
+    "joy": [
+     "trade",
+     "friend"
+    ],
+    "fear": [
+     "police",
+     "fine"
+    ],
+    "curiosity": [
+     "library"
+    ],
+    "not_an_emotion": [
+     "x"
+    ]
+   },
+   "steps": [
+    {
+     "op": {
+      "do": "feel",
+      "emotion": "joy",
+      "intensity": 0.3,
+      "trigger": "a good trade"
+     },
+     "intensities": {
+      "joy": 0.3,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.0,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "joy",
+     "mood": "joy"
+    },
+    {
+     "op": {
+      "do": "feel",
+      "emotion": "joy",
+      "intensity": 0.45
+     },
+     "intensities": {
+      "joy": 0.75,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.0,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "joy",
+     "mood": "joy"
+    },
+    {
+     "op": {
+      "do": "decay"
+     },
+     "intensities": {
+      "joy": 0.7,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.0,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "joy",
+     "mood": "joy"
+    },
+    {
+     "op": {
+      "do": "feel",
+      "emotion": "fear",
+      "intensity": 0.9
+     },
+     "intensities": {
+      "joy": 0.7,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.9,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "fear",
+     "mood": "fear"
+    },
+    {
+     "op": {
+      "do": "feel",
+      "emotion": "fear",
+      "intensity": 0.9
+     },
+     "intensities": {
+      "joy": 0.7,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 1.0,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "fear",
+     "mood": "fear"
+    },
+    {
+     "op": {
+      "do": "decay",
+      "times": 3
+     },
+     "intensities": {
+      "joy": 0.5499999999999998,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.8499999999999999,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "fear",
+     "mood": "fear"
+    },
+    {
+     "op": {
+      "do": "apply_triggers",
+      "text": "A Friend told me the POLICE issued a fine near the library."
+     },
+     "matched": [
+      [
+       "joy",
+       "friend"
+      ],
+      [
+       "fear",
+       "police"
+      ],
+      [
+       "fear",
+       "fine"
+      ],
+      [
+       "curiosity",
+       "library"
+      ]
+     ],
+     "intensities": {
+      "joy": 0.9499999999999998,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 1.0,
+      "trust": 0.0,
+      "curiosity": 0.4
+     },
+     "dominant": "fear",
+     "mood": "fear"
+    },
+    {
+     "op": {
+      "do": "apply_triggers",
+      "text": "nothing of note",
+      "base_intensity": 0.7
+     },
+     "matched": [],
+     "intensities": {
+      "joy": 0.9499999999999998,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 1.0,
+      "trust": 0.0,
+      "curiosity": 0.4
+     },
+     "dominant": "fear",
+     "mood": "fear"
+    },
+    {
+     "op": {
+      "do": "decay",
+      "times": 30
+     },
+     "intensities": {
+      "joy": 0.0,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.0,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "joy",
+     "mood": "calm"
+    }
+   ]
+  },
+  {
+   "emotional_intensity": "high",
+   "triggers": {
+    "joy": [
+     "trade",
+     "friend"
+    ],
+    "fear": [
+     "police",
+     "fine"
+    ],
+    "curiosity": [
+     "library"
+    ],
+    "not_an_emotion": [
+     "x"
+    ]
+   },
+   "steps": [
+    {
+     "op": {
+      "do": "feel",
+      "emotion": "joy",
+      "intensity": 0.3,
+      "trigger": "a good trade"
+     },
+     "intensities": {
+      "joy": 0.44999999999999996,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.0,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "joy",
+     "mood": "joy"
+    },
+    {
+     "op": {
+      "do": "feel",
+      "emotion": "joy",
+      "intensity": 0.45
+     },
+     "intensities": {
+      "joy": 1.0,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.0,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "joy",
+     "mood": "joy"
+    },
+    {
+     "op": {
+      "do": "decay"
+     },
+     "intensities": {
+      "joy": 0.95,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.0,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "joy",
+     "mood": "joy"
+    },
+    {
+     "op": {
+      "do": "feel",
+      "emotion": "fear",
+      "intensity": 0.9
+     },
+     "intensities": {
+      "joy": 0.95,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 1.0,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "fear",
+     "mood": "fear"
+    },
+    {
+     "op": {
+      "do": "feel",
+      "emotion": "fear",
+      "intensity": 0.9
+     },
+     "intensities": {
+      "joy": 0.95,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 1.0,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "fear",
+     "mood": "fear"
+    },
+    {
+     "op": {
+      "do": "decay",
+      "times": 3
+     },
+     "intensities": {
+      "joy": 0.7999999999999998,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.8499999999999999,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "fear",
+     "mood": "fear"
+    },
+    {
+     "op": {
+      "do": "apply_triggers",
+      "text": "A Friend told me the POLICE issued a fine near the library."
+     },
+     "matched": [
+      [
+       "joy",
+       "friend"
+      ],
+      [
+       "fear",
+       "police"
+      ],
+      [
+       "fear",
+       "fine"
+      ],
+      [
+       "curiosity",
+       "library"
+      ]
+     ],
+     "intensities": {
+      "joy": 1.0,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 1.0,
+      "trust": 0.0,
+      "curiosity": 0.6000000000000001
+     },
+     "dominant": "joy",
+     "mood": "joy"
+    },
+    {
+     "op": {
+      "do": "apply_triggers",
+      "text": "nothing of note",
+      "base_intensity": 0.7
+     },
+     "matched": [],
+     "intensities": {
+      "joy": 1.0,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 1.0,
+      "trust": 0.0,
+      "curiosity": 0.6000000000000001
+     },
+     "dominant": "joy",
+     "mood": "joy"
+    },
+    {
+     "op": {
+      "do": "decay",
+      "times": 30
+     },
+     "intensities": {
+      "joy": 0.0,
+      "sadness": 0.0,
+      "anger": 0.0,
+      "fear": 0.0,
+      "trust": 0.0,
+      "curiosity": 0.0
+     },
+     "dominant": "joy",
+     "mood": "calm"
+    }
+   ]
+  }
+ ]
+}

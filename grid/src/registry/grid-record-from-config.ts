@@ -17,5 +17,6 @@ export function gridRecordFromConfig(config: GenesisConfig): GridRecord {
         description: config.description ?? `The ${config.gridName} Grid.`,
         status: 'active',
         environment: config.environment,
+        visibility: config.visibility ?? 'public',   // D-V3-41: creator's choice, public unless set
     };
 }

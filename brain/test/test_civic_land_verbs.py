@@ -64,40 +64,57 @@ class TestCivicLandActionTypes:
 
 
 class TestMetadataValidation:
-    def test_buy_parcel_requires_zone_and_max_price(self) -> None:
+    def test_buy_parcel_requires_parcel_zone_and_max_price(self) -> None:
         action = build_civic_land_action(
-            ActionType.BUY_PARCEL, zone="residential", max_price=400
+            ActionType.BUY_PARCEL,
+            parcel="genesis:residential:0007", zone="residential", max_price=400,
         )
         assert action.action_type == ActionType.BUY_PARCEL
-        assert action.metadata == {"zone": "residential", "max_price": 400}
+        assert action.metadata == {
+            "parcel": "genesis:residential:0007", "zone": "residential", "max_price": 400,
+        }
 
     def test_buy_parcel_missing_zone_rejected(self) -> None:
         with pytest.raises(ValueError):
-            build_civic_land_action(ActionType.BUY_PARCEL, max_price=400)
+            build_civic_land_action(ActionType.BUY_PARCEL, parcel="p", max_price=400)
 
     def test_buy_parcel_missing_max_price_rejected(self) -> None:
         with pytest.raises(ValueError):
-            build_civic_land_action(ActionType.BUY_PARCEL, zone="residential")
+            build_civic_land_action(ActionType.BUY_PARCEL, parcel="p", zone="residential")
 
-    def test_build_requires_parcel_type_name(self) -> None:
+    def test_buy_parcel_requires_parcel(self) -> None:
+        # The purchase route is per-parcel: without an address there is nothing to dispatch to.
+        with pytest.raises(ValueError, match="parcel"):
+            build_civic_land_action(ActionType.BUY_PARCEL, zone="residential", max_price=400)
+
+    def test_build_requires_parcel_type_name_visibility(self) -> None:
         action = build_civic_land_action(
             ActionType.BUILD,
             parcel="genesis:residential:0007",
             type="home",
             name="My Home",
+            visibility="private",
         )
         assert action.metadata == {
             "parcel": "genesis:residential:0007",
             "type": "home",
             "name": "My Home",
+            "visibility": "private",
         }
+
+    def test_build_requires_visibility(self) -> None:
+        # The Grid's build route answers 400 invalid_visibility without it.
+        with pytest.raises(ValueError, match="visibility"):
+            build_civic_land_action(
+                ActionType.BUILD, parcel="genesis:residential:0001", type="home", name="Oikos",
+            )
 
     @pytest.mark.parametrize(
         "missing",
         [
-            {"type": "home", "name": "My Home"},  # no parcel
-            {"parcel": "p", "name": "My Home"},  # no type
-            {"parcel": "p", "type": "home"},  # no name
+            {"type": "home", "name": "My Home", "visibility": "open"},  # no parcel
+            {"parcel": "p", "name": "My Home", "visibility": "open"},  # no type
+            {"parcel": "p", "type": "home", "visibility": "open"},  # no name
         ],
     )
     def test_build_missing_key_rejected(self, missing: dict) -> None:

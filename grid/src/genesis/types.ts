@@ -17,6 +17,9 @@ export interface GenesisConfig {
     environment: GridEnvironment;
     // One-line discovery blurb surfaced by GET /api/v1/portal/grids.
     description?: string;
+    // D-V3-41: the Grid creator's choice. A private Grid is listed on the Portal map
+    // with name + lock only; only members (active Civic-DID holders) see its detail.
+    visibility?: 'public' | 'private';
     tickRateMs: number;         // Clock speed (default: 30000)
     ticksPerEpoch: number;      // Ticks per epoch (default: 100)
     regions: Region[];          // Initial regions

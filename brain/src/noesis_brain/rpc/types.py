@@ -67,19 +67,21 @@ class ActionType(str, Enum):
     LORE_RESPONSE   = "lore_response"    # Brain-internal; decoded from __lore_response:{hash}:{base64} whisper
     # Phase 58 Wave 4 — D-58-10 / R-58-10: Nous House HOUSE-1 civic-land verbs.
     # These are CAPABILITIES (not autoplay scripts): the Nous chooses to emit them,
-    # GridWireClient dispatches them to POST /api/v1/brain/actions, and the Grid
-    # action handler routes each to its civic-parcels route (see wire/client.py
-    # CIVIC_LAND_ROUTES). Decision pressure stays with the Nous.
+    # and GridWireClient.post_civic_land_action sends each DIRECTLY to its
+    # civic-parcels route (see wire/client.py CIVIC_LAND_ROUTES). They do NOT ride
+    # the POST /api/v1/brain/actions batch: the Grid's batch intake
+    # (NousRunner.executeActions) has no case for them and would drop them.
+    # Decision pressure stays with the Nous.
     # Metadata shapes (the capability builder build_civic_land_action validates them):
-    #   buy_parcel       {zone, max_price}
-    #   build            {parcel, type, name}
+    #   buy_parcel       {parcel, zone, max_price}
+    #   build            {parcel, type, name, visibility}
     #   visit            {parcel}
     #   set_entry_policy {parcel, policy, allowlist?}
     #   list_parcels     {} (no metadata)
     #   leave            {} (no metadata)
     LIST_PARCELS     = "list_parcels"      # GET /api/v1/civic/parcels (public map feed)
-    BUY_PARCEL       = "buy_parcel"        # -> :id/purchase. Metadata: {zone, max_price}
-    BUILD            = "build"             # -> :id/build. Metadata: {parcel, type, name}
+    BUY_PARCEL       = "buy_parcel"        # -> :id/purchase. Metadata: {parcel, zone, max_price}
+    BUILD            = "build"             # -> :id/build. Metadata: {parcel, type, name, visibility}
     VISIT            = "visit"             # -> :id/join. Metadata: {parcel}
     LEAVE            = "leave"             # -> :id/leave. No metadata.
     SET_ENTRY_POLICY = "set_entry_policy"  # -> :id/entry-policy. Metadata: {parcel, policy, allowlist?}
@@ -238,7 +240,7 @@ class Action:
 # build_civic_land_action() is the SCHEMA GATE for the six civic-land verbs.
 # It validates the documented metadata shape and raises ValueError when a
 # required key is missing, so a malformed action fails locally before it
-# ever reaches the Grid action handler (and the civic-parcels routes).
+# ever reaches the civic-parcels routes.
 #
 # This is a CAPABILITY constructor, not a script: it only builds an Action
 # when a caller (the Nous's chosen behaviour) asks for one. Nothing here
@@ -249,8 +251,11 @@ class Action:
 # leave) take no metadata. set_entry_policy's `allowlist` is OPTIONAL and so
 # is not listed as required.
 _CIVIC_LAND_REQUIRED_KEYS: dict[ActionType, tuple[str, ...]] = {
-    ActionType.BUY_PARCEL: ("zone", "max_price"),
-    ActionType.BUILD: ("parcel", "type", "name"),
+    # `parcel` is the address the purchase route is dispatched to; `zone` and
+    # `max_price` are the Brain's own record of what it was willing to pay.
+    ActionType.BUY_PARCEL: ("parcel", "zone", "max_price"),
+    # The Grid's build route requires `visibility` (400 invalid_visibility without it).
+    ActionType.BUILD: ("parcel", "type", "name", "visibility"),
     ActionType.VISIT: ("parcel",),
     ActionType.SET_ENTRY_POLICY: ("parcel", "policy"),
     # Phase 59 Wave 5 (D-59-10): interior verbs. `kind` is validated by the
@@ -311,8 +316,9 @@ def build_civic_land_action(action_type: ActionType, **metadata: Any) -> Action:
     not a civic-land verb. ``list_parcels`` and ``leave`` accept no metadata;
     ``set_entry_policy.allowlist`` is optional.
 
-    Returns an :class:`Action` ready for ``GridWireClient`` dispatch (the
-    Grid action handler routes by ``action_type`` to the civic-parcels route).
+    Returns an :class:`Action` ready for
+    ``GridWireClient.post_civic_land_action``, which sends it directly to its
+    civic-parcels route.
     """
     if action_type not in _CIVIC_LAND_VERBS:
         raise ValueError(f"{action_type!r} is not a civic-land verb")

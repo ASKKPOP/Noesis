@@ -163,3 +163,69 @@ async def test_invalid_llm_output_changes_nothing():
 
     nxt = h._goal_ledger.next_task(goal_key)
     assert nxt is not None and nxt.attempts == 0
+
+
+# ── move ─────────────────────────────────────────────────────────────────────
+_PLACES = {
+    "roster": [{"did": "did:civic:noesis:sophia", "name": "Sophia", "region": "agora"}],
+    "regions": [
+        {"id": "agora", "name": "Agora Central", "description": "The public square"},
+        {"id": "library", "name": "Great Library", "description": "Shelves of written work"},
+        {"id": "market", "name": "Market District", "description": "Trade"},
+    ],
+    "connections": [
+        {"fromRegion": "agora", "toRegion": "library", "travelCost": 1, "bidirectional": True},
+        {"fromRegion": "market", "toRegion": "library", "travelCost": 1, "bidirectional": True},
+    ],
+}
+
+
+def _wire_seeing(places: dict) -> MagicMock:
+    wire = MagicMock()
+    wire.post_actions = AsyncMock(return_value=True)
+    wire.fetch_places = AsyncMock(return_value=places)
+    return wire
+
+
+@pytest.mark.asyncio
+async def test_move_posts_a_move_to_a_reachable_place():
+    h = _handler()
+    h.memory = _memory()
+    h.llm = _llm_saying('{"action": "move", "to": "library"}')
+    h._grid_wire_client = wire = _wire_seeing(_PLACES)
+
+    await h._run_decision_cycle(100)
+
+    posted = wire.post_actions.await_args[0][0]
+    assert posted[0]["action_type"] == "move"
+    assert posted[0]["metadata"] == {"region": "library"}
+    # the prompt offered only what is reachable from where it stands
+    prompt = h.llm.generate.await_args[0][0]
+    assert "YOU ARE AT: Agora Central" in prompt
+    assert "library: Great Library" in prompt and "market:" not in prompt
+    assert h.location == "Agora Central"
+
+
+@pytest.mark.asyncio
+async def test_move_to_a_place_not_reachable_is_dropped():
+    h = _handler()
+    h.memory = _memory()
+    h.llm = _llm_saying('{"action": "move", "to": "market"}')
+    h._grid_wire_client = wire = _wire_seeing(_PLACES)
+
+    await h._run_decision_cycle(100)
+
+    wire.post_actions.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_move_is_not_offered_when_the_grid_does_not_place_the_nous():
+    h = _handler()
+    h.memory = _memory()
+    h.llm = _llm_saying('{"action": "move", "to": "library"}')
+    h._grid_wire_client = wire = _wire_seeing({**_PLACES, "roster": []})
+
+    await h._run_decision_cycle(100)
+
+    assert '"move"' not in h.llm.generate.await_args[0][0]
+    wire.post_actions.assert_not_awaited()

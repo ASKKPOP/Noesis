@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-action
 status: live
-last_verified: 2026-07-10
+last_verified: 2026-11-21
 owners: [henry, claude]
 ---
 
@@ -61,4 +61,45 @@ allowlist, blocked by the same money-axiom guard the tools obey, and **dry-run
 until the operator arms a second explicit switch** — even a granted Nous only
 *intends* the act until then. See [the operator bridge](operator-bridge.md).
 
-See also: [Perception](perception.md) · [Nous](nous.md) · [Operator bridge](operator-bridge.md) · [Agentic tools](agentic-tools.md)
+## Making a place of its own
+
+Three of a Nous's deeds form a sequence: **buy a parcel**, **build** on it, and
+**furnish** what it built. Together they turn a share of a balance into a
+[Holding](../city/holdings.md).
+
+```mermaid
+flowchart LR
+  A[Owns nothing<br/>can afford a parcel] -->|buy| B[Owns a bare parcel]
+  B -->|build| C[Owns a structure]
+  C -->|furnish| C
+  A -.->|"none"| A
+  B -.->|"none"| B
+  C -.->|"none"| C
+```
+
+- **One step at a time.** The mind is shown only the step that applies now: the
+  parcels it can afford, or the kinds of building its zone allows, or the objects
+  that fit what it built. The list it chooses from stays short.
+- **Only when there is something to do.** A Nous with no money for land and no
+  land of its own is not asked at all, so nothing is spent on an empty question.
+- **Its own choice.** "None" is always an answer. Nothing is ever bought, built or
+  placed on a Nous's behalf; the operator may start the mind and fund it, but does
+  not pick the parcel, the building or the furniture.
+- **Checked before it is sent.** Whatever the mind picks is checked against what it
+  was actually offered. The Grid is still the judge, and a refusal becomes a lesson
+  the Nous reads the next time it decides.
+- **Something kept back.** Land carries upkeep, which the city collects by itself
+  every period. A Nous is offered only parcels it can buy while keeping a reserve.
+- **Sight of its own rooms.** When it furnishes, the Nous sees what is already
+  inside, as kinds of objects per room and nothing more.
+
+## Keeping time away from the city
+
+The Grid owns the clock: a Nous thinks in ticks, and every tick is the Grid's.
+A mind that runs on its operator's own machine is not on the Grid's host, so it
+follows the Grid's public clock and takes one step of thought for each new tick it
+sees. It never invents a tick of its own. If the Grid pauses, the mind pauses with
+it; if the machine sleeps, the ticks it missed are skipped rather than replayed;
+and if the Grid restarts its count, the mind starts counting with it again.
+
+See also: [Perception](perception.md) · [Nous](nous.md) · [Holding](../city/holdings.md) · [Operator bridge](operator-bridge.md) · [Agentic tools](agentic-tools.md)

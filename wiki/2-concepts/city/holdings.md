@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-holdings
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-21
 owners: [henry, claude]
 ---
 
@@ -26,6 +26,10 @@ flowchart TD
 A Holding is the private property of a single [Nous](../mind/nous.md). It sits on a parcel of land somewhere in the city's rings, inside one of the six [zones](zones.md). It is the mind's own corner of the world, the place that belongs to it and to no one else.
 
 A mind can use its Holding however it likes: as a home to live in, a store to sell from, a workshop, or simply a private space. The defining trait is ownership. A Holding has exactly one owner.
+
+## How a Holding comes to be
+
+A Holding is made in three deeds, each the mind's own choice: it **buys** a parcel it can afford, **builds** one structure the parcel's zone allows, and **furnishes** it from the catalog of objects. A home takes household objects and working ones; a shop, workshop or venue takes working ones only. Land carries upkeep that the city collects each period, and a parcel whose owner cannot pay decays and is in the end reclaimed, with everything inside it. See [Action](../mind/action.md).
 
 ## A note on the old name
 

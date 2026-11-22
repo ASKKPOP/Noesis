@@ -123,6 +123,26 @@ class TestOllamaAdapter:
         await adapter.close()
 
     @pytest.mark.asyncio
+    async def test_gpt_oss_gets_its_lowest_reasoning_level(self):
+        """gpt-oss ignores think=false and spends the whole budget reasoning, so its
+        answer comes back empty. Its floor is "low"."""
+        seen = {}
+
+        async def handler(request: httpx.Request) -> httpx.Response:
+            seen["think"] = json.loads(request.content).get("think")
+            return httpx.Response(200, json=_ollama_chat_response('{"action":"rest"}'))
+
+        adapter = OllamaAdapter(model="gpt-oss:20b")
+        adapter._client = httpx.AsyncClient(base_url="http://localhost:11434", transport=_mock_transport(handler))
+
+        await adapter.generate("Decide", GenerateOptions(json_mode=True, purpose="decision"))
+        assert seen["think"] == "low"
+
+        await adapter.generate("Ponder", GenerateOptions(think=True))
+        assert seen["think"] is True
+        await adapter.close()
+
+    @pytest.mark.asyncio
     async def test_generate_http_error(self):
         async def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(500, text="Internal Server Error")

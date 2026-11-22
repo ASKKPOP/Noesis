@@ -12,7 +12,8 @@
  * D-58-03 (Genesis Core seed, D-NH-04/09): exactly 53 parcels (48 purchasable + 5 civic).
  */
 
-import type { ZoneId, StructureType, Visibility, Parcel } from './types.js';
+import type { StructureType, Visibility, Parcel } from './types.js';
+import type { ZoneType } from '../zoning/zone-types.js';
 
 /**
  * Gravity pricing (D-58-04 / D-NH-08): land nearer the Government Core (lower ring)
@@ -29,8 +30,8 @@ export const PURCHASABLE_RINGS: readonly number[] = [2, 3];
 export interface SeedPlanEntry {
     /** Vector-address ring (0 = Government Core, larger = farther out). */
     ring: number;
-    /** The civic zone every parcel in this band belongs to. */
-    zoneId: ZoneId;
+    /** The template zone every parcel in this band belongs to. */
+    zoneId: ZoneType;
     /** How many parcels to seed in this band. */
     count: number;
     /**
@@ -95,7 +96,7 @@ const polisOverrides = new Map<string, number>();
  */
 export function recordPolisOverride(key: string, value: number): void {
     if (!Number.isInteger(value) || value < 0) return;
-    if (key === 'UPKEEP_RATE_BPS' || /^ZONE_TAX_BPS\.[a-z_]+$/.test(key)) {
+    if (key === 'UPKEEP_RATE_BPS' || /^ZONE_TAX_BPS\.[a-z][a-z0-9_]{1,30}$/.test(key)) {
         polisOverrides.set(key, value);
     }
 }
@@ -156,7 +157,8 @@ type TaxableZoneId = keyof typeof ZONE_TAX_BPS;
 
 /**
  * Read-through: the per-zone tax rate, returning the Polis override (`ZONE_TAX_BPS.<zoneId>`)
- * if amended, else the constant default. Civic zones with no table entry return 0 (untaxed).
+ * if amended, else the constant default. Zones with no table entry — civic zones, and a zone a
+ * Polis added (D-V3-40) until it legislates a rate with an `amend_law` bill — return 0 (untaxed).
  * The constants stay the DEFAULT FALLBACK; this is the single patch point downstream reads use.
  */
 export function getZoneTaxBps(zoneId: string): number {

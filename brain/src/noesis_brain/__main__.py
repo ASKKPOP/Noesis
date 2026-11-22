@@ -102,6 +102,8 @@ class BrainApp:
         # Phase 42 — P2P announce task (300s cadence, separate from 60s presence heartbeat)
         self._p2p_announce_task: asyncio.Task | None = None  # type: ignore[type-arg]
         self.p2p_client: Any | None = None  # BrainP2PClient set by create_brain_app_from_env
+        # Clock follower: ticks for a Brain that is not on the Grid's host (wire/clock_follower.py)
+        self._clock_follower_task: asyncio.Task | None = None  # type: ignore[type-arg]
 
     async def _p2p_announce_loop(self) -> None:
         """Phase 42 — 300s P2P announce heartbeat, separate from 60s presence (Pitfall 6)."""
@@ -133,6 +135,19 @@ class BrainApp:
         if self._p2p_announce_task is None and hasattr(self.handler, "_grid_wire_client") and self.handler._grid_wire_client is not None:
             self._p2p_announce_task = asyncio.create_task(self._p2p_announce_loop())
             log.info("[Brain:%s] p2p announce task started (300s interval)", self.nous_name)
+        # A Brain wired to a Grid over HTTPS gets no tick from a socket bridge unless it
+        # shares the Grid's host, so it follows the Grid's public clock. Where a bridge
+        # is delivering ticks too, the follower stands back (see clock_follower.py).
+        if (
+            self._clock_follower_task is None
+            and getattr(self.handler, "_grid_wire_client", None) is not None
+            and os.environ.get("BRAIN_CLOCK_FOLLOW", "").strip().lower() != "off"
+        ):
+            from noesis_brain.wire.clock_follower import follow_grid_clock  # noqa: PLC0415
+            self._clock_follower_task = asyncio.create_task(
+                follow_grid_clock(self.handler._grid_wire_client, self.handler)
+            )
+            log.info("[Brain:%s] clock follower started (following the Grid's clock)", self.nous_name)
         self._running = True
         log.info("[Brain:%s] RPC server started", self.nous_name)
 
@@ -154,6 +169,14 @@ class BrainApp:
             except Exception as exc:
                 log.warning("[Brain:%s] p2p_client.close error: %s", self.nous_name, exc)
             self.p2p_client = None
+        if self._clock_follower_task is not None:
+            self._clock_follower_task.cancel()
+            try:
+                await self._clock_follower_task
+            except (asyncio.CancelledError, Exception):
+                pass
+            self._clock_follower_task = None
+            log.info("[Brain:%s] clock follower cancelled", self.nous_name)
         # Phase 41: cancel heartbeat task and stop WSS subscriber
         if self._heartbeat_task is not None:
             self._heartbeat_task.cancel()
@@ -404,6 +427,7 @@ def create_brain_app(
     rpc.register("brain.forceTelos", handler.force_telos)
     rpc.register("brain.scheduleReminder", handler.schedule_reminder)
     rpc.register("brain.scheduleTask", handler.schedule_task)
+    rpc.register("brain.rehearseSkill", handler.rehearse_skill)
 
     return BrainApp(handler=handler, rpc=rpc, nous_name=nous_name)
 
@@ -610,8 +634,14 @@ async def create_brain_app_from_env() -> BrainApp:
         app.p2p_client = p2p_client
 
         # Phase 41 SLEEP-03 + Phase 42: wire WssSubscriber with queue= and p2p dispatch
+        # The Grid's clock, received here, is what makes a wire-connected Nous decide.
+        from noesis_brain.wire.tick_driver import TickDriver  # noqa: PLC0415
+        tick_driver = TickDriver(app.handler.on_tick)
+
         async def _on_frame(frame: dict) -> None:
             """Route incoming WSS frames — Phase 42 dispatches p2p.signal_received."""
+            if tick_driver.offer(frame):
+                return
             event_type = frame.get("type") or frame.get("event_type", "")
             # Phase 42 D-42-06: private signal push — NOT audit chain event
             if event_type == "p2p.signal_received":

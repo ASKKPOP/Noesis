@@ -183,3 +183,24 @@ async def test_post_conversation_reply_posts_body_and_is_non_fatal():
     wire, _ = _make_client(raise_exc=httpx.ConnectError("boom"))
     assert await wire.fetch_conversation_inbox() == []
     assert await wire.post_conversation_reply("did:noesis:human:0xabc", "hello") is False
+
+
+# ── Skill rehearsal referee (physics gate) ───────────────────────────────────
+@pytest.mark.asyncio
+async def test_physics_environments_and_check():
+    wire, http = _make_client(get_json={"environments": [{"name": "Moon", "min_stable_altitude_km": 15}]})
+    assert await wire.fetch_physics_environments() == [{"name": "Moon", "min_stable_altitude_km": 15}]
+    assert http.get.call_args[0][0].endswith("/api/v1/physics/environments")
+
+    http.post.return_value.json.return_value = {"ok": False, "violations": ["thermal"], "env": "Moon"}
+    out = await wire.check_physics({"mass_kg": 1}, "Moon")
+    assert out == {"ok": False, "violations": ["thermal"], "env": "Moon"}
+    assert http.post.call_args[0][0].endswith("/api/v1/physics/check")
+    assert http.post.call_args.kwargs["json"] == {"spec": {"mass_kg": 1}, "env": "Moon"}
+
+
+@pytest.mark.asyncio
+async def test_physics_check_is_none_when_the_grid_is_unreachable():
+    wire, _ = _make_client(raise_exc=httpx.ConnectError("down"))
+    assert await wire.check_physics({}, "Mars") is None
+    assert await wire.fetch_physics_environments() == []

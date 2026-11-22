@@ -42,11 +42,14 @@ function walk(dir: string): string[] {
 
 const SOLE_EMITTER_PROPOSAL_OPENED = 'governance/appendProposalOpened.ts';
 const GOVERNANCE_TYPES_FILE = 'governance/types.ts';
+// The public scene feed (D-V3-43) reads these events to project them; it never appends.
+const SCENE_FEED_FILE = 'scene/scene-feed.ts';
 
 // Known consumers that reference 'proposal.opened' but never call audit.append.
 // governance/types.ts references it in SYNC docblock.
 const KNOWN_CONSUMERS_PROPOSAL_OPENED: string[] = [
     GOVERNANCE_TYPES_FILE,
+    SCENE_FEED_FILE,
 ];
 
 describe("'proposal.opened' sole-producer boundary (VOTE-01 / D-12-01)", () => {
@@ -104,6 +107,7 @@ const SOLE_EMITTER_BALLOT_COMMITTED = 'governance/appendBallotCommitted.ts';
 // Known consumers: governance/types.ts references it in SYNC docblock.
 const KNOWN_CONSUMERS_BALLOT_COMMITTED: string[] = [
     GOVERNANCE_TYPES_FILE,
+    SCENE_FEED_FILE,
 ];
 
 describe("'ballot.committed' sole-producer boundary (VOTE-02 / D-12-01)", () => {

@@ -98,6 +98,6 @@ def parse_economic_decision(text: str) -> dict[str, Any] | None:
     if obj is None:
         return None
     action = obj.get("action")
-    if action not in _VALID_ACTIONS:
+    if not isinstance(action, str) or action not in _VALID_ACTIONS:
         return None
     return {k: obj.get(k) for k in _KEYS}

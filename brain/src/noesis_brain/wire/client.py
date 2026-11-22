@@ -50,14 +50,26 @@ log = logging.getLogger(__name__)
 # wss:// is reserved for Plan 38-04 (WSS subscriber).
 ALLOWED_SCHEMES = {"https", "wss"}
 
+# A parcel address as the Grid mints it (e.g. "genesis:residential:0007"). It is
+# substituted into a URL path, so anything else is refused before a request is made.
+_PARCEL_ID_RE = re.compile(r"[A-Za-z0-9:_-]{1,128}")
+# A Grid refusal code as the routes define them ("insufficient_funds"). The code is
+# remembered by the Nous and shown to it again, so free text from a response body
+# (a raw exception message, say) is never passed on — the HTTP status stands in.
+_ERROR_CODE_RE = re.compile(r"[a-z0-9_]{1,48}")
+# Keys of a civic-land Action that are the Brain's own record, not part of the request body.
+_CIVIC_LAND_NON_BODY_KEYS = frozenset({"parcel", "zone", "max_price"})
+
 # ──────────────────────────────────────────────────────────────────────────
 # Phase 58 Wave 4 — D-58-10 / R-58-10: civic-land verb → Grid route map.
 #
-# Civic-land Actions travel inside the normal POST /api/v1/brain/actions
-# batch (post_actions). The Grid action handler reads each action_type and
-# routes it to the matching civic-parcels route. This table is the Brain-side
-# source of truth for that routing contract — it is asserted by
-# test_civic_land_verbs.py and mirrors grid/src/api/routes/civic-parcels.ts.
+# Civic-land Actions are sent DIRECTLY to their civic-parcels route by
+# GridWireClient.post_civic_land_action. They do NOT travel in the
+# POST /api/v1/brain/actions batch: the Grid's batch intake
+# (NousRunner.executeActions) has no case for them and drops them while still
+# answering 200. This table is the Brain-side source of truth for the routes —
+# it is asserted by test_civic_land_verbs.py and mirrors
+# grid/src/api/routes/civic-parcels.ts.
 #
 # Per-parcel verbs use the "{id}" placeholder, filled from the action's
 # parcel id at dispatch time. list_parcels is the only GET (the public feed).
@@ -369,6 +381,21 @@ class GridWireClient:
         parcels = data.get("parcels") if isinstance(data, dict) else None
         return parcels if isinstance(parcels, list) else []
 
+    async def fetch_places(self) -> dict[str, list[dict[str, Any]]]:
+        """Who stands where and how the Grid's regions connect: the public roster
+        (GET /api/v1/grid/nous) and region feed (GET /api/v1/grid/regions). Empty
+        lists on any error."""
+        nous = await self._econ_get("/api/v1/grid/nous")
+        regions = await self._econ_get("/api/v1/grid/regions")
+        pick = lambda data, key: (  # noqa: E731
+            data[key] if isinstance(data, dict) and isinstance(data.get(key), list) else []
+        )
+        return {
+            "roster": pick(nous, "nous"),
+            "regions": pick(regions, "regions"),
+            "connections": pick(regions, "connections"),
+        }
+
     async def fetch_objects(self) -> list[dict[str, Any]]:
         """GET /api/v1/orbital/objects — the real, economy-built orbital objects (the
         BUILT world). [] on any error. Lets the Nous perceive what's been built, not
@@ -417,6 +444,27 @@ class GridWireClient:
             log.warning("[Brain] conversation reply error: %s", exc)
         return False
 
+    async def fetch_physics_environments(self) -> list[dict[str, Any]]:
+        """GET /api/v1/physics/environments — the Grid's real worlds (rehearsal). [] on error."""
+        data = await self._econ_get("/api/v1/physics/environments")
+        envs = data.get("environments") if isinstance(data, dict) else None
+        return envs if isinstance(envs, list) else []
+
+    async def check_physics(self, spec: dict[str, Any], env: str) -> dict[str, Any] | None:
+        """POST /api/v1/physics/check — referee a design with the Grid physics gate.
+        {ok, violations, env} on 2xx, else None. NEVER raises."""
+        try:
+            client = await self._get_client()
+            resp = await client.post(
+                f"{self._base_url}/api/v1/physics/check", json={"spec": spec, "env": env},
+            )
+            if 200 <= resp.status_code < 300:
+                return resp.json()
+            log.warning("[Brain] physics check non-2xx: status=%s", resp.status_code)
+        except Exception as exc:
+            log.warning("[Brain] physics check error: %s", exc)
+        return None
+
     async def post_economic_action(self, action: Any) -> bool:
         """Dispatch one economic Action to its live Grid route (W3 ECONOMIC_ROUTES).
 
@@ -453,6 +501,77 @@ class GridWireClient:
         except Exception as exc:
             log.warning("[Brain] economic action dispatch error: %s", exc)
             return False
+
+    # ── Civic-land verbs: direct routes ───────────────────────────────────────
+
+    @property
+    def civic_did(self) -> str:
+        """The Civic-DID this Brain acts as (the token's subject)."""
+        return self._token_manager._civic_did
+
+    async def fetch_clock(self) -> dict[str, Any] | None:
+        """GET /api/v1/grid/clock — the Grid's clock state ({tick, epoch, tickRateMs, …}).
+        None on any error. The Grid is the only clock; the Brain only reads it."""
+        data = await self._econ_get("/api/v1/grid/clock")
+        return data if isinstance(data, dict) else None
+
+    async def fetch_interior(self, parcel_id: str) -> dict[str, Any] | None:
+        """GET …/parcels/{id}/interior as the owner — the interior tree, or None when
+        the Grid refuses, the parcel has no structure, or the id is not a parcel address."""
+        if not isinstance(parcel_id, str) or not _PARCEL_ID_RE.fullmatch(parcel_id):
+            return None
+        data = await self._econ_get(f"/api/v1/civic/parcels/{parcel_id}/interior")
+        interior = data.get("interior") if isinstance(data, dict) else None
+        return interior if isinstance(interior, dict) else None
+
+    async def post_civic_land_action(self, action: Any, parcel_id: str) -> tuple[bool, str | None]:
+        """Send one civic-land Action DIRECTLY to its civic-parcels route.
+
+        These verbs do not ride POST /api/v1/brain/actions: the Grid's batch intake
+        has no case for them. The parcel address is passed explicitly because not
+        every verb carries it in its metadata (extend_interior does not).
+
+        Returns (True, None) on 2xx. On a refusal returns (False, code), where code
+        is the Grid's `error` when the body carries a code-shaped one, else
+        "http_<status>"; "transport_error" means no answer was received.
+        NEVER raises and never queues — a refused purchase is a lesson, not a retry.
+        """
+        try:
+            if not isinstance(parcel_id, str) or not _PARCEL_ID_RE.fullmatch(parcel_id):
+                return False, "invalid_parcel"
+            method, path = civic_land_route(action.action_type, parcel_id)
+            if method != "POST":
+                return False, "not_a_write_verb"
+            metadata = dict(getattr(action, "metadata", {}) or {})
+            body = {k: v for k, v in metadata.items() if k not in _CIVIC_LAND_NON_BODY_KEYS}
+            token = self._token_manager.get_valid_token()
+            client = await self._get_client()
+            resp = await client.post(
+                f"{self._base_url}{path}",
+                json=body,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
+            )
+            if 200 <= resp.status_code < 300:
+                return True, None
+            code = f"http_{resp.status_code}"
+            try:
+                payload = resp.json()
+                err = payload.get("error") if isinstance(payload, dict) else None
+                if isinstance(err, str) and _ERROR_CODE_RE.fullmatch(err):
+                    code = err
+            except Exception:  # noqa: BLE001 — a proxy error page is not JSON; the status is the code
+                pass
+            log.warning(
+                "[Brain] civic-land action %s refused: status=%s code=%s",
+                action.action_type.value, resp.status_code, code,
+            )
+            return False, code
+        except Exception as exc:
+            log.warning("[Brain] civic-land action dispatch error: %s", exc)
+            return False, "transport_error"
 
     # ── Presence heartbeat ────────────────────────────────────────────────────
 

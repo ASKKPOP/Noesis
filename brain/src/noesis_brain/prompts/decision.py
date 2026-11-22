@@ -4,7 +4,7 @@ Slow planner (every ~200 ticks): decompose the top-priority goal into 2–4
 concrete tasks, informed by recent memories and reflections.
 
 Fast actor (every ~20 ticks): given the goal, the next ledger task, and recent
-Reflexion lessons, choose ONE small action: work_task · speak · rest.
+Reflexion lessons, choose ONE small action: work_task · speak · move · rest.
 
 Small-model discipline (see the W3b economic protocol): the model returns one
 tiny JSON object; parsing is tolerant (first JSON object found); every value is
@@ -18,7 +18,7 @@ import re
 from typing import Any
 
 _MAX_TASKS = 4
-_DECISION_ACTIONS = {"work_task", "speak", "rest"}
+_DECISION_ACTIONS = {"work_task", "speak", "move", "rest"}
 _SOCIAL_ACTIONS = {"message_peer", "share_skill", "contribute_lore", "vote", "join_group", "none"}
 
 _JSON_RE = re.compile(r"\{.*\}", re.DOTALL)
@@ -62,10 +62,43 @@ def build_planning_prompt(
     return "\n".join(lines)
 
 
+def places_from(
+    did: str,
+    roster: list[dict[str, Any]],
+    regions: list[dict[str, Any]],
+    connections: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    """Where the Nous stands and where it can walk to from there, read from the
+    Grid's own roster and region feeds. None when the Grid does not place it.
+    Mirrors the Grid's move rule (a connection from here, either way if two-way)."""
+    here = next((n.get("region") for n in roster if isinstance(n, dict) and n.get("did") == did), None)
+    if not isinstance(here, str) or not here:
+        return None
+    by_id = {r["id"]: r for r in regions if isinstance(r, dict) and isinstance(r.get("id"), str)}
+    ids: list[str] = []
+    for c in connections:
+        if not isinstance(c, dict):
+            continue
+        a, b = c.get("fromRegion"), c.get("toRegion")
+        to = b if a == here else a if (b == here and c.get("bidirectional")) else None
+        if isinstance(to, str) and to in by_id and to != here and to not in ids:
+            ids.append(to)
+    name = lambda rid: str(by_id.get(rid, {}).get("name") or rid)  # noqa: E731
+    return {
+        "here": here,
+        "here_name": name(here),
+        "reachable": [
+            {"id": rid, "name": name(rid), "description": str(by_id[rid].get("description") or "")}
+            for rid in ids
+        ],
+    }
+
+
 def build_decision_prompt(
     goal_desc: str,
     task_desc: str | None,
     lessons: list[str] | None = None,
+    places: dict[str, Any] | None = None,
 ) -> str:
     lines = [
         "Decide what to do right now, in one small step.",
@@ -77,17 +110,21 @@ def build_decision_prompt(
     if lessons:
         lines += ["", "Lessons from past failures:"]
         lines += [f"- {l}" for l in lessons]
+    reachable = (places or {}).get("reachable") or []
+    if reachable:
+        lines += ["", f"YOU ARE AT: {places['here_name']}", "Places you can walk to from here:"]
+        lines += [
+            f"- {p['id']}: {p['name']}" + (f" — {p['description'][:120]}" if p.get("description") else "")
+            for p in reachable
+        ]
+    option_lines: list[str] = []
     if task_desc:
-        options = (
-            '- {"action": "work_task", "note": "<what you did / concluded>", "completed": <true if the task is now done>}\n'
-            '- {"action": "speak", "text": "<something short worth saying publicly>"}\n'
-            '- {"action": "rest", "note": "<why>"}'
-        )
-    else:
-        options = (
-            '- {"action": "speak", "text": "<something short worth saying publicly>"}\n'
-            '- {"action": "rest", "note": "<why>"}'
-        )
+        option_lines.append('- {"action": "work_task", "note": "<what you did / concluded>", "completed": <true if the task is now done>}')
+    option_lines.append('- {"action": "speak", "text": "<something short worth saying publicly>"}')
+    if reachable:
+        option_lines.append('- {"action": "move", "to": "<id of one place listed above>"}')
+    option_lines.append('- {"action": "rest", "note": "<why>"}')
+    options = "\n".join(option_lines)
     lines += [
         "",
         "Choose exactly ONE and respond with ONLY that JSON object:",
@@ -189,7 +226,8 @@ def parse_social_decision(text: str) -> dict[str, Any] | None:
     obj = _first_json_object(text)
     if obj is None:
         return None
-    if obj.get("action") not in _SOCIAL_ACTIONS:
+    action = obj.get("action")
+    if not isinstance(action, str) or action not in _SOCIAL_ACTIONS:
         return None
     return obj
 
@@ -213,6 +251,7 @@ def parse_decision(text: str) -> dict[str, Any] | None:
     obj = _first_json_object(text)
     if obj is None:
         return None
-    if obj.get("action") not in _DECISION_ACTIONS:
+    action = obj.get("action")
+    if not isinstance(action, str) or action not in _DECISION_ACTIONS:
         return None
     return obj

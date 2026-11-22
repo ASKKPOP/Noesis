@@ -1,0 +1,2169 @@
+{
+ "fixture": "telos",
+ "version": 1,
+ "constants": {
+  "economic_goal_text": "Earn a living through compute-labor — do useful work for other Nous.",
+  "economic_goal_priority": 0.4,
+  "goal_domains": [
+   "general",
+   "economic"
+  ]
+ },
+ "runs": [
+  {
+   "from_yaml": {},
+   "steps": [
+    {
+     "op": {
+      "do": "start"
+     },
+     "goals": [],
+     "describe": "No active goals.",
+     "top_priority_3": [],
+     "top_priority_1": [],
+     "economic_goals": [],
+     "active_telos_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+     "op": {
+      "do": "evolve",
+      "current_tick": 5000
+     },
+     "changed": false,
+     "goals": [],
+     "describe": "No active goals.",
+     "top_priority_3": [],
+     "top_priority_1": [],
+     "economic_goals": [],
+     "active_telos_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+     "op": {
+      "do": "seed_economic_goal"
+     },
+     "goals": [
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "long-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)",
+     "top_priority_3": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "top_priority_1": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "66b87c9416eda289921c91e2a0e34e89d693d04f04dbd8fd3cc845d31a418ae3"
+    }
+   ]
+  },
+  {
+   "from_yaml": {
+    "short_term": [
+     "learn the market",
+     "meet a neighbour — 이웃"
+    ],
+    "medium_term": [
+     "build a workshop"
+    ],
+    "long_term": [
+     "become a sage",
+     "leave something behind"
+    ],
+    "ignored_key": [
+     "x"
+    ]
+   },
+   "steps": [
+    {
+     "op": {
+      "do": "start"
+     },
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.75,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.3,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.25,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market\n  - meet a neighbour — 이웃\nmedium-term:\n  - build a workshop\nlong-term:\n  - become a sage\n  - leave something behind",
+     "top_priority_3": [
+      "learn the market",
+      "meet a neighbour — 이웃",
+      "build a workshop"
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [],
+     "active_telos_hash": "ad783c162a6b0e057405b129c2adba0aeb2638bd1b260407d2425de79365806e"
+    },
+    {
+     "op": {
+      "do": "seed_economic_goal"
+     },
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.75,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.3,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.25,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market\n  - meet a neighbour — 이웃\nmedium-term:\n  - build a workshop\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)\n  - become a sage\n  - leave something behind",
+     "top_priority_3": [
+      "learn the market",
+      "meet a neighbour — 이웃",
+      "build a workshop"
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "d1c10bfa78cdc0956b5048c3bad2006f60016e44e34e31fd6f6e5186dd99e842"
+    },
+    {
+     "op": {
+      "do": "add_goal",
+      "description": "write lore",
+      "goal_type": "medium_term",
+      "priority": 0.5,
+      "tick": 120
+     },
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.75,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.3,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.25,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      }
+     ],
+     "describe": "short-term:\n  - learn the market\n  - meet a neighbour — 이웃\nmedium-term:\n  - build a workshop\n  - write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)\n  - become a sage\n  - leave something behind",
+     "top_priority_3": [
+      "learn the market",
+      "meet a neighbour — 이웃",
+      "build a workshop"
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "e026e2a5f2e754f15880ae735723432e168c331974b0ec607fc3621333a27e77"
+    },
+    {
+     "op": {
+      "do": "add_goal",
+      "description": "tie with write lore",
+      "goal_type": "medium_term",
+      "priority": 0.5
+     },
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.75,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.3,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.25,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      },
+      {
+       "description": "tie with write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market\n  - meet a neighbour — 이웃\nmedium-term:\n  - build a workshop\n  - write lore\n  - tie with write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)\n  - become a sage\n  - leave something behind",
+     "top_priority_3": [
+      "learn the market",
+      "meet a neighbour — 이웃",
+      "build a workshop"
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "9849ad7c79922fb8aea95e08977cfecd3effd3f30aee6ec33f7e638886dc5659"
+    },
+    {
+     "op": {
+      "do": "advance",
+      "index": 0,
+      "amount": 0.005,
+      "tick": 130
+     },
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.005,
+       "domain": "general",
+       "last_advanced_tick": 130
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.75,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.3,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.25,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      },
+      {
+       "description": "tie with write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market [0%]\n  - meet a neighbour — 이웃\nmedium-term:\n  - build a workshop\n  - write lore\n  - tie with write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)\n  - become a sage\n  - leave something behind",
+     "top_priority_3": [
+      "learn the market",
+      "meet a neighbour — 이웃",
+      "build a workshop"
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "4b52e54c7d4ff790b375f80f107f4c1bd471f9558d87264a031d5fcc35759f4a"
+    },
+    {
+     "op": {
+      "do": "advance",
+      "index": 1,
+      "amount": 0.125
+     },
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.005,
+       "domain": "general",
+       "last_advanced_tick": 130
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.75,
+       "progress": 0.125,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.3,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.25,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      },
+      {
+       "description": "tie with write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market [0%]\n  - meet a neighbour — 이웃 [12%]\nmedium-term:\n  - build a workshop\n  - write lore\n  - tie with write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)\n  - become a sage\n  - leave something behind",
+     "top_priority_3": [
+      "learn the market",
+      "meet a neighbour — 이웃",
+      "build a workshop"
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "961349c2ec9c718bca80dbc2c989c68d529cc9aac761ba123ba04789ae8daef0"
+    },
+    {
+     "op": {
+      "do": "evolve",
+      "current_tick": 499
+     },
+     "changed": false,
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.005,
+       "domain": "general",
+       "last_advanced_tick": 130
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.75,
+       "progress": 0.125,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.3,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.25,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      },
+      {
+       "description": "tie with write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market [0%]\n  - meet a neighbour — 이웃 [12%]\nmedium-term:\n  - build a workshop\n  - write lore\n  - tie with write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)\n  - become a sage\n  - leave something behind",
+     "top_priority_3": [
+      "learn the market",
+      "meet a neighbour — 이웃",
+      "build a workshop"
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "961349c2ec9c718bca80dbc2c989c68d529cc9aac761ba123ba04789ae8daef0"
+    },
+    {
+     "op": {
+      "do": "evolve",
+      "current_tick": 500
+     },
+     "changed": true,
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.005,
+       "domain": "general",
+       "last_advanced_tick": 130
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.75,
+       "progress": 0.125,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      },
+      {
+       "description": "tie with write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market [0%]\n  - meet a neighbour — 이웃 [12%]\nmedium-term:\n  - write lore\n  - build a workshop\n  - tie with write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)\n  - become a sage\n  - leave something behind",
+     "top_priority_3": [
+      "learn the market",
+      "meet a neighbour — 이웃",
+      "write lore"
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "afdabd560e3d17141434f345d43b0fe5bf5073c90e8c4ae69dc5976137f3817c"
+    },
+    {
+     "op": {
+      "do": "evolve",
+      "current_tick": 620
+     },
+     "changed": true,
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.005,
+       "domain": "general",
+       "last_advanced_tick": 130
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.75,
+       "progress": 0.125,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      },
+      {
+       "description": "tie with write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market [0%]\n  - meet a neighbour — 이웃 [12%]\nmedium-term:\n  - build a workshop\n  - write lore\n  - tie with write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)\n  - become a sage\n  - leave something behind",
+     "top_priority_3": [
+      "learn the market",
+      "meet a neighbour — 이웃",
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "f89e23a4ca3094607e053e9eee8e7a0989906ebb477340126e56644204d5936d"
+    },
+    {
+     "op": {
+      "do": "evolve",
+      "current_tick": 9000,
+      "stale_ticks": 100,
+      "floor": 0.3
+     },
+     "changed": false,
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.005,
+       "domain": "general",
+       "last_advanced_tick": 130
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.75,
+       "progress": 0.125,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      },
+      {
+       "description": "tie with write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market [0%]\n  - meet a neighbour — 이웃 [12%]\nmedium-term:\n  - build a workshop\n  - write lore\n  - tie with write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)\n  - become a sage\n  - leave something behind",
+     "top_priority_3": [
+      "learn the market",
+      "meet a neighbour — 이웃",
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "f89e23a4ca3094607e053e9eee8e7a0989906ebb477340126e56644204d5936d"
+    },
+    {
+     "op": {
+      "do": "advance",
+      "index": 0,
+      "amount": 0.02
+     },
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.025,
+       "domain": "general",
+       "last_advanced_tick": 130
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.75,
+       "progress": 0.125,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      },
+      {
+       "description": "tie with write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market [2%]\n  - meet a neighbour — 이웃 [12%]\nmedium-term:\n  - build a workshop\n  - write lore\n  - tie with write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)\n  - become a sage\n  - leave something behind",
+     "top_priority_3": [
+      "learn the market",
+      "meet a neighbour — 이웃",
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "a10c0deca8525cef255e291795a8d583d49e6ce7e2410bcde5d5f32a1a5c2d53"
+    },
+    {
+     "op": {
+      "do": "advance",
+      "index": 2,
+      "amount": 0.994
+     },
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.025,
+       "domain": "general",
+       "last_advanced_tick": 130
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.75,
+       "progress": 0.125,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.994,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      },
+      {
+       "description": "tie with write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market [2%]\n  - meet a neighbour — 이웃 [12%]\nmedium-term:\n  - build a workshop [99%]\n  - write lore\n  - tie with write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)\n  - become a sage\n  - leave something behind",
+     "top_priority_3": [
+      "learn the market",
+      "meet a neighbour — 이웃",
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "d4cd3f117afeee1b18919b9aaa8f1adb194abda720a5e0708341bc1f7662e275"
+    },
+    {
+     "op": {
+      "do": "advance",
+      "index": 2,
+      "amount": 0.001
+     },
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.025,
+       "domain": "general",
+       "last_advanced_tick": 130
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.75,
+       "progress": 0.125,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.995,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      },
+      {
+       "description": "tie with write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market [2%]\n  - meet a neighbour — 이웃 [12%]\nmedium-term:\n  - build a workshop [100%]\n  - write lore\n  - tie with write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)\n  - become a sage\n  - leave something behind",
+     "top_priority_3": [
+      "learn the market",
+      "meet a neighbour — 이웃",
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "e8e4a5db262c08beac276c3a0bf98fb14cb82542728f5ee195ef5a40c739ff0f"
+    },
+    {
+     "op": {
+      "do": "advance",
+      "index": 1,
+      "amount": 0.9,
+      "tick": 9100
+     },
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.025,
+       "domain": "general",
+       "last_advanced_tick": 130
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "completed",
+       "priority": 0.75,
+       "progress": 1.0,
+       "domain": "general",
+       "last_advanced_tick": 9100
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.995,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      },
+      {
+       "description": "tie with write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market [2%]\nmedium-term:\n  - build a workshop [100%]\n  - write lore\n  - tie with write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)\n  - become a sage\n  - leave something behind",
+     "top_priority_3": [
+      "learn the market",
+      "Earn a living through compute-labor — do useful work for other Nous.",
+      "build a workshop"
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "e7582fe9d59e4e2cc6217ce7590e32ca64571f8e387160e1fbf727fc5d109229"
+    },
+    {
+     "op": {
+      "do": "block",
+      "index": 3
+     },
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.025,
+       "domain": "general",
+       "last_advanced_tick": 130
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "completed",
+       "priority": 0.75,
+       "progress": 1.0,
+       "domain": "general",
+       "last_advanced_tick": 9100
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.995,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "blocked",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      },
+      {
+       "description": "tie with write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market [2%]\nmedium-term:\n  - build a workshop [100%]\n  - write lore\n  - tie with write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)\n  - leave something behind",
+     "top_priority_3": [
+      "learn the market",
+      "Earn a living through compute-labor — do useful work for other Nous.",
+      "build a workshop"
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "1b857a04a5281235f7608a029cda464090e1366da807b912a8b7b5019af8a55d"
+    },
+    {
+     "op": {
+      "do": "abandon",
+      "index": 4
+     },
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.025,
+       "domain": "general",
+       "last_advanced_tick": 130
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "completed",
+       "priority": 0.75,
+       "progress": 1.0,
+       "domain": "general",
+       "last_advanced_tick": 9100
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.995,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "blocked",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "abandoned",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      },
+      {
+       "description": "tie with write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market [2%]\nmedium-term:\n  - build a workshop [100%]\n  - write lore\n  - tie with write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)",
+     "top_priority_3": [
+      "learn the market",
+      "Earn a living through compute-labor — do useful work for other Nous.",
+      "build a workshop"
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "131df74e0fd393dc6b157a1af49be34a465bf583fe6cc64ba13270e88a6f27d4"
+    },
+    {
+     "op": {
+      "do": "unblock",
+      "index": 3
+     },
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.025,
+       "domain": "general",
+       "last_advanced_tick": 130
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "completed",
+       "priority": 0.75,
+       "progress": 1.0,
+       "domain": "general",
+       "last_advanced_tick": 9100
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.995,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "abandoned",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      },
+      {
+       "description": "tie with write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market [2%]\nmedium-term:\n  - build a workshop [100%]\n  - write lore\n  - tie with write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)\n  - become a sage",
+     "top_priority_3": [
+      "learn the market",
+      "Earn a living through compute-labor — do useful work for other Nous.",
+      "build a workshop"
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "5a22ba082bba3b4d89e55a541bc042d46baa13fd1971c178925aaac296eabdc3"
+    },
+    {
+     "op": {
+      "do": "unblock",
+      "index": 4
+     },
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.025,
+       "domain": "general",
+       "last_advanced_tick": 130
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "completed",
+       "priority": 0.75,
+       "progress": 1.0,
+       "domain": "general",
+       "last_advanced_tick": 9100
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.995,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "abandoned",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      },
+      {
+       "description": "tie with write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market [2%]\nmedium-term:\n  - build a workshop [100%]\n  - write lore\n  - tie with write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. (standing economic target)\n  - become a sage",
+     "top_priority_3": [
+      "learn the market",
+      "Earn a living through compute-labor — do useful work for other Nous.",
+      "build a workshop"
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "5a22ba082bba3b4d89e55a541bc042d46baa13fd1971c178925aaac296eabdc3"
+    },
+    {
+     "op": {
+      "do": "advance",
+      "index": 5,
+      "amount": 0.35
+     },
+     "goals": [
+      {
+       "description": "learn the market",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.025,
+       "domain": "general",
+       "last_advanced_tick": 130
+      },
+      {
+       "description": "meet a neighbour — 이웃",
+       "goal_type": "short_term",
+       "status": "completed",
+       "priority": 0.75,
+       "progress": 1.0,
+       "domain": "general",
+       "last_advanced_tick": 9100
+      },
+      {
+       "description": "build a workshop",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.995,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "become a sage",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "leave something behind",
+       "goal_type": "long_term",
+       "status": "abandoned",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "Earn a living through compute-labor — do useful work for other Nous.",
+       "goal_type": "long_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.35,
+       "domain": "economic",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 120
+      },
+      {
+       "description": "tie with write lore",
+       "goal_type": "medium_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - learn the market [2%]\nmedium-term:\n  - build a workshop [100%]\n  - write lore\n  - tie with write lore\nlong-term:\n  - Earn a living through compute-labor — do useful work for other Nous. [35%] (standing economic target)\n  - become a sage",
+     "top_priority_3": [
+      "learn the market",
+      "Earn a living through compute-labor — do useful work for other Nous.",
+      "build a workshop"
+     ],
+     "top_priority_1": [
+      "learn the market"
+     ],
+     "economic_goals": [
+      "Earn a living through compute-labor — do useful work for other Nous."
+     ],
+     "active_telos_hash": "d62bd076e9e47b221cda4a2ce4be789db0e72383f75221a3fbf4d43d7ffbc3c8"
+    }
+   ]
+  },
+  {
+   "from_yaml": {
+    "short_term": [
+     "goal 0",
+     "goal 1",
+     "goal 2",
+     "goal 3",
+     "goal 4",
+     "goal 5",
+     "goal 6",
+     "goal 7",
+     "goal 8",
+     "goal 9",
+     "goal 10",
+     "goal 11",
+     "goal 12",
+     "goal 13",
+     "goal 14",
+     "goal 15"
+    ]
+   },
+   "steps": [
+    {
+     "op": {
+      "do": "start"
+     },
+     "goals": [
+      {
+       "description": "goal 0",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.8,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 1",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.75,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 2",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.7000000000000001,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 3",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.65,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 4",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.6000000000000001,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 5",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.55,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 6",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.5,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 7",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.45,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 8",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.4,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 9",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.35000000000000003,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 10",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.30000000000000004,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 11",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.25,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 12",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.19999999999999996,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 13",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.15000000000000002,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 14",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 15",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - goal 0\n  - goal 1\n  - goal 2\n  - goal 3\n  - goal 4\n  - goal 5\n  - goal 6\n  - goal 7\n  - goal 8\n  - goal 9\n  - goal 10\n  - goal 11\n  - goal 12\n  - goal 13\n  - goal 14\n  - goal 15",
+     "top_priority_3": [
+      "goal 0",
+      "goal 1",
+      "goal 2"
+     ],
+     "top_priority_1": [
+      "goal 0"
+     ],
+     "economic_goals": [],
+     "active_telos_hash": "acdcadd963934da7320da955fdde819be53f9ae92018b927ae69f0728b5f91c6"
+    },
+    {
+     "op": {
+      "do": "evolve",
+      "current_tick": 500
+     },
+     "changed": true,
+     "goals": [
+      {
+       "description": "goal 0",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 1",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 2",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 3",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 4",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 5",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 6",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 7",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 8",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 9",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 10",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 11",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 12",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 13",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 14",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      },
+      {
+       "description": "goal 15",
+       "goal_type": "short_term",
+       "status": "active",
+       "priority": 0.1,
+       "progress": 0.0,
+       "domain": "general",
+       "last_advanced_tick": 0
+      }
+     ],
+     "describe": "short-term:\n  - goal 0\n  - goal 1\n  - goal 2\n  - goal 3\n  - goal 4\n  - goal 5\n  - goal 6\n  - goal 7\n  - goal 8\n  - goal 9\n  - goal 10\n  - goal 11\n  - goal 12\n  - goal 13\n  - goal 14\n  - goal 15",
+     "top_priority_3": [
+      "goal 0",
+      "goal 1",
+      "goal 2"
+     ],
+     "top_priority_1": [
+      "goal 0"
+     ],
+     "economic_goals": [],
+     "active_telos_hash": "df47b3d93c2af9c5ce808961f0555c89621c28c63736da76907f13a1edab410d"
+    }
+   ]
+  }
+ ]
+}

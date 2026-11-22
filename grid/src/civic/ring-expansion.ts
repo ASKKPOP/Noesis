@@ -29,6 +29,8 @@
  * the existing governance dispatch (single-onTick R-H-03 preserved).
  */
 
+import { ZONE_ID_RE } from '../zoning/zone-types.js';
+
 /** The closed set of constants a Polis amendment bill may override (D-NH-03 amendability). */
 export type AmendableConstantKey = 'UPKEEP_RATE_BPS' | 'ZONE_TAX_BPS';
 
@@ -38,8 +40,9 @@ export type AmendableConstantKey = 'UPKEEP_RATE_BPS' | 'ZONE_TAX_BPS';
  * dep simply makes the corresponding action a no-op rather than throwing.
  */
 export interface RingExpansionDeps {
-    /** Phase 58 seeder: add the legislated ring at frontier prices (gravity formula). */
-    seedZone?: (ring: number) => void;
+    /** Phase 58 seeder: add the legislated ring at frontier prices (gravity formula).
+     *  `zoneId` is the zone the bill opens the land in (D-V3-40); absent → the Grid's home zone. */
+    seedZone?: (ring: number, zoneId?: string) => void;
     /** Idempotency guard: true when ring N is already seeded (INSERT IGNORE semantics). */
     alreadySeeded?: (ring: number) => boolean;
     /** Record a Polis override of a founding-law constant (read-through indirection). */
@@ -55,6 +58,7 @@ export interface RingExpansionDeps {
 interface EnactedBillBody {
     action?: unknown;
     ring?: unknown;
+    zone_id?: unknown;
     key?: unknown;
     value?: unknown;
 }
@@ -87,7 +91,9 @@ export function onLawEnacted(billBody: unknown, deps: RingExpansionDeps): void {
         if (typeof ring !== 'number' || !Number.isInteger(ring) || ring < 0) return;
         // Idempotent (INSERT IGNORE): skip if this ring is already seeded.
         if (deps.alreadySeeded?.(ring)) return;
-        deps.seedZone?.(ring);
+        // Optional zone (D-V3-40): a malformed zone_id voids the bill rather than seeding elsewhere.
+        if (body.zone_id !== undefined && (typeof body.zone_id !== 'string' || !ZONE_ID_RE.test(body.zone_id))) return;
+        deps.seedZone?.(ring, body.zone_id as string | undefined);
         // NO audit emit — ring seeding is world-creation (Phase 58). NO allowlist member added.
         return;
     }
