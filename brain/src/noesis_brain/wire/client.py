@@ -53,11 +53,13 @@ ALLOWED_SCHEMES = {"https", "wss"}
 # ──────────────────────────────────────────────────────────────────────────
 # Phase 58 Wave 4 — D-58-10 / R-58-10: civic-land verb → Grid route map.
 #
-# Civic-land Actions travel inside the normal POST /api/v1/brain/actions
-# batch (post_actions). The Grid action handler reads each action_type and
-# routes it to the matching civic-parcels route. This table is the Brain-side
-# source of truth for that routing contract — it is asserted by
-# test_civic_land_verbs.py and mirrors grid/src/api/routes/civic-parcels.ts.
+# Civic-land Actions are sent DIRECTLY to their civic-parcels route by
+# GridWireClient.post_civic_land_action. They do NOT travel in the
+# POST /api/v1/brain/actions batch: the Grid's batch intake
+# (NousRunner.executeActions) has no case for them and drops them while still
+# answering 200. This table is the Brain-side source of truth for the routes —
+# it is asserted by test_civic_land_verbs.py and mirrors
+# grid/src/api/routes/civic-parcels.ts.
 #
 # Per-parcel verbs use the "{id}" placeholder, filled from the action's
 # parcel id at dispatch time. list_parcels is the only GET (the public feed).

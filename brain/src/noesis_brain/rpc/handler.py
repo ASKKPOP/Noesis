@@ -2610,9 +2610,10 @@ class BrainHandler:
     # These verbs are CAPABILITIES, not autoplay. The handler produces a
     # civic-land Action only when the Nous (its chosen behaviour) asks for
     # one — there is NO loop here that auto-buys or auto-builds. The produced
-    # Action rides the normal post_actions batch; the Grid action handler
-    # routes it by action_type to the civic-parcels route (see wire/client.py
-    # CIVIC_LAND_ROUTES). build_civic_land_action() is the local schema gate.
+    # Action is sent DIRECTLY to its civic-parcels route by
+    # GridWireClient.post_civic_land_action (see wire/client.py
+    # CIVIC_LAND_ROUTES); it does not ride the post_actions batch, which the
+    # Grid would drop. build_civic_land_action() is the local schema gate.
     # ────────────────────────────────────────────────────────────────────
 
     def produce_civic_land_action(
