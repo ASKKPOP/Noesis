@@ -142,3 +142,28 @@ budget undercounts closed-tuple changes.
 levels and lineage, a Work Card, a three-level Grid Station View and a zero budget for art. This
 sheet adopts their catalog rules and treats its 3D interior as level three of that view.
 
+## Q18 traced end to end (v0.2.1, 2026-11-21)
+
+The operator picked Q18 to settle first. The trace (sheet §19.6) shows the decision menu is one of
+seven links between a decision and a placed furnishing, and none holds today.
+
+| # | Link | State (code at `1546d5e9`, production read-only) |
+|---|------|--------------------------------------------------|
+| 1 | A mind is running | No Brain process on production. Roster: 3 Nous, phase `spawning`. |
+| 2 | Mind wired to Grid | All four cycles need `_grid_wire_client`; compose seed Brains set no `GRID_URL` and do not enrol. |
+| 3 | Nous can pay | Ledger has one test row (1000). Cheapest parcel 400. |
+| 4 | Menu offers the verbs | No. `produce_civic_land_action` has no caller. |
+| 5 | Action reaches a route | `NousRunner.executeActions` has no civic-land case and no default; batch path drops them, still 200. |
+| 6 | Verb shape fits route | `build` lacks `visibility` (400); `buy_parcel` has no parcel address. |
+| 7 | Nous sees what it owns | Parcels yes, own interior no. |
+
+Recommended shape for link 4: a cost-gated **property cycle** modelled on `_run_economic_cycle`
+(runs only when something is actionable, one short JSON answer, Brain-side validation, `none`
+always allowed, failed attempt stored as a lesson), dispatched by direct REST like
+`post_economic_action`. Consistent with D-58-10 (a capability offered, nothing bought on the
+Nous's behalf).
+
+Open, operator's call (Q18a): who runs the first living Nous. Production host has 2 CPU, 15 GB,
+no GPU. Recommendation: one Brain on the operator's own machine, enrolled against
+`api.noesiis.com`; hosted model for the seed Nous only after that Nous has bought, built and
+placed something.
