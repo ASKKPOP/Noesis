@@ -222,6 +222,103 @@
     []
    ],
    "prompt": "Your wei balance: None.\nYou owe a civic due (id 5): 10 wei OR True labor-credit. Unpaid dues lead to sanction. You may pay it (method 'wei' or 'labor').\nThere are no open RFPs to bid on right now.\n\nDecide what to do, in character, guided by your goals. Reply with ONE JSON object only:\n{\"action\": \"pay_due\" | \"bid_rfp\" | \"none\", \"method\": \"wei\" | \"labor\", \"notice_id\": \"<one of the notice ids above>\", \"price_wei\": \"<digits, at most the budget>\", \"artifact_spec\": \"<one short line describing what you would build>\", \"reason\": \"<one sentence>\"}\nUse \"none\" if you would rather do nothing this cycle. Include only the fields your action needs."
+  },
+  {
+   "builder": "build_economic_decision_prompt",
+   "args": [
+    {
+     "balance_wei": "80"
+    },
+    null,
+    [],
+    [
+     {
+      "iou_id": "iou:3",
+      "counterparty_civic_did": "did:civic:noesis:hermes",
+      "amount_wei": 50,
+      "created_tick": 7
+     }
+    ]
+   ],
+   "prompt": "Your wei balance: 80.\nYou have no outstanding civic due.\nDebts you owe to another Nous for work done, each of which you can pay in full now:\n  - debt iou:3: 50 wei to did:civic:noesis:hermes.\nThere are no open RFPs to bid on right now.\n\nDecide what to do, in character, guided by your goals. Reply with ONE JSON object only:\n{\"action\": \"pay_due\" | \"pay_iou\" | \"bid_rfp\" | \"none\", \"method\": \"wei\" | \"labor\", \"iou_id\": \"<one of the debt ids above>\", \"notice_id\": \"<one of the notice ids above>\", \"price_wei\": \"<digits, at most the budget>\", \"artifact_spec\": \"<one short line describing what you would build>\", \"reason\": \"<one sentence>\"}\nUse \"none\" if you would rather do nothing this cycle. Include only the fields your action needs."
+  },
+  {
+   "builder": "build_economic_decision_prompt",
+   "args": [
+    {
+     "balance_wei": "250000"
+    },
+    {
+     "due_id": "d-3",
+     "amount_wei": "1500",
+     "amount_credit": 4
+    },
+    [
+     {
+      "notice_id": "n-7",
+      "function_type": "relay",
+      "budget_wei": "90000"
+     },
+     {
+      "notice_id": 8,
+      "budget_wei": 12.5
+     }
+    ],
+    [
+     {
+      "iou_id": "iou:3",
+      "counterparty_civic_did": "did:civic:noesis:hermes",
+      "amount_wei": 50,
+      "created_tick": 7
+     },
+     {
+      "iou_id": "iou:11",
+      "counterparty_civic_did": "did:civic:noesis:themis",
+      "amount_wei": "1200"
+     }
+    ]
+   ],
+   "prompt": "Your wei balance: 250000.\nYou owe a civic due (id d-3): 1500 wei OR 4 labor-credit. Unpaid dues lead to sanction. You may pay it (method 'wei' or 'labor').\nDebts you owe to another Nous for work done, each of which you can pay in full now:\n  - debt iou:3: 50 wei to did:civic:noesis:hermes.\n  - debt iou:11: 1200 wei to did:civic:noesis:themis.\nOpen RFPs you could bid on (the treasury pays the winner — bidding costs you nothing up front):\n  - notice n-7: a 'relay' build, budget up to 90000 wei.\n  - notice 8: a 'None' build, budget up to 12.5 wei.\n\nDecide what to do, in character, guided by your goals. Reply with ONE JSON object only:\n{\"action\": \"pay_due\" | \"pay_iou\" | \"bid_rfp\" | \"none\", \"method\": \"wei\" | \"labor\", \"iou_id\": \"<one of the debt ids above>\", \"notice_id\": \"<one of the notice ids above>\", \"price_wei\": \"<digits, at most the budget>\", \"artifact_spec\": \"<one short line describing what you would build>\", \"reason\": \"<one sentence>\"}\nUse \"none\" if you would rather do nothing this cycle. Include only the fields your action needs."
+  },
+  {
+   "builder": "build_economic_decision_prompt",
+   "args": [
+    {
+     "balance_wei": 0
+    },
+    {},
+    [],
+    [
+     {
+      "iou_id": "iou:9",
+      "amount_wei": null
+     },
+     {
+      "iou_id": 12,
+      "amount_wei": true,
+      "counterparty_civic_did": "did:civic:noesis:소피아"
+     }
+    ]
+   ],
+   "prompt": "Your wei balance: 0.\nYou have no outstanding civic due.\nDebts you owe to another Nous for work done, each of which you can pay in full now:\n  - debt iou:9: None wei to None.\n  - debt 12: True wei to did:civic:noesis:소피아.\nThere are no open RFPs to bid on right now.\n\nDecide what to do, in character, guided by your goals. Reply with ONE JSON object only:\n{\"action\": \"pay_due\" | \"pay_iou\" | \"bid_rfp\" | \"none\", \"method\": \"wei\" | \"labor\", \"iou_id\": \"<one of the debt ids above>\", \"notice_id\": \"<one of the notice ids above>\", \"price_wei\": \"<digits, at most the budget>\", \"artifact_spec\": \"<one short line describing what you would build>\", \"reason\": \"<one sentence>\"}\nUse \"none\" if you would rather do nothing this cycle. Include only the fields your action needs."
+  },
+  {
+   "builder": "build_economic_decision_prompt",
+   "args": [
+    {
+     "balance_wei": "5"
+    },
+    null,
+    [
+     {
+      "notice_id": "n-7",
+      "function_type": "relay",
+      "budget_wei": "90000"
+     }
+    ],
+    []
+   ],
+   "prompt": "Your wei balance: 5.\nYou have no outstanding civic due.\nOpen RFPs you could bid on (the treasury pays the winner — bidding costs you nothing up front):\n  - notice n-7: a 'relay' build, budget up to 90000 wei.\n\nDecide what to do, in character, guided by your goals. Reply with ONE JSON object only:\n{\"action\": \"pay_due\" | \"bid_rfp\" | \"none\", \"method\": \"wei\" | \"labor\", \"notice_id\": \"<one of the notice ids above>\", \"price_wei\": \"<digits, at most the budget>\", \"artifact_spec\": \"<one short line describing what you would build>\", \"reason\": \"<one sentence>\"}\nUse \"none\" if you would rather do nothing this cycle. Include only the fields your action needs."
   }
  ]
 }

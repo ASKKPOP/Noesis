@@ -300,6 +300,8 @@ MODEL_REPLIES: list[tuple[str, str]] = [
     ("escaped_unicode", '{"action": "speak", "text": "caf\\u00e9"}'),
     ("pay_due", '{"action": "pay_due", "method": "labor", "reason": "dues are owed"}'),
     ("economic_none_with_extras", '{"action": "none", "mood": "calm", "price_wei": null}'),
+    ("pay_iou", '{"action": "pay_iou", "iou_id": "iou:3", "reason": "I keep my word"}'),
+    ("pay_iou_in_prose_without_id", 'Yes. {"action": "pay_iou"} I will pay what I owe.'),
     ("tasks_list", '{"tasks": ["survey the market", "  ", 7, "post a listing", "wait for a buyer", "settle", "celebrate"]}'),
     ("tasks_empty", '{"tasks": []}'),
     ("tasks_not_a_list", '{"tasks": "survey the market"}'),
@@ -473,6 +475,10 @@ def prompts_fixture() -> dict[str, Any]:
     groups = [{"group_id": "g-1", "display_name": "Orbital Guild — 길드", "domain": "making"}, {"group_id": "g-2"}]
     due = {"due_id": "d-3", "amount_wei": "1500", "amount_credit": 4}
     rfps = [{"notice_id": "n-7", "function_type": "relay", "budget_wei": "90000"}, {"notice_id": 8, "budget_wei": 12.5}]
+    debts = [
+        {"iou_id": "iou:3", "counterparty_civic_did": "did:civic:noesis:hermes", "amount_wei": 50, "created_tick": 7},
+        {"iou_id": "iou:11", "counterparty_civic_did": "did:civic:noesis:themis", "amount_wei": "1200"},
+    ]
     calls: list[tuple[str, list[Any]]] = [
         ("build_planning_prompt", ["learn the market", "", None]),
         ("build_planning_prompt", ["earn a living — 생계", "[t90] traded grain\n[t99] met Hermes", ["trade before noon", "Hermes keeps his word"]]),
@@ -490,6 +496,12 @@ def prompts_fixture() -> dict[str, Any]:
         ("build_economic_decision_prompt", [{"balance_wei": "250000"}, due, rfps]),
         ("build_economic_decision_prompt", [{"balance_wei": 0}, {}, rfps[:1]]),
         ("build_economic_decision_prompt", [{"balance_wei": None}, {"due_id": 5, "amount_wei": 10, "amount_credit": True}, []]),
+        # A debt the Nous can pay: the debts are named and "pay_iou" joins the choices.
+        ("build_economic_decision_prompt", [{"balance_wei": "80"}, None, [], debts[:1]]),
+        ("build_economic_decision_prompt", [{"balance_wei": "250000"}, due, rfps, debts]),
+        ("build_economic_decision_prompt", [{"balance_wei": 0}, {}, [], [{"iou_id": "iou:9", "amount_wei": None}, {"iou_id": 12, "amount_wei": True, "counterparty_civic_did": "did:civic:noesis:소피아"}]]),
+        # No debt (an empty list, like no list at all): the prompt of before, word for word.
+        ("build_economic_decision_prompt", [{"balance_wei": "5"}, None, rfps[:1], []]),
     ]
     fns = {
         "build_planning_prompt": decision_prompts.build_planning_prompt,

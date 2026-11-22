@@ -13,8 +13,9 @@ use crate::pytext::strip as py_strip;
 pub const DECISION_ACTIONS: [&str; 4] = ["move", "rest", "speak", "work_task"];
 pub const SOCIAL_ACTIONS: [&str; 6] =
     ["contribute_lore", "join_group", "message_peer", "none", "share_skill", "vote"];
-pub const ECONOMIC_ACTIONS: [&str; 3] = ["bid_rfp", "none", "pay_due"];
-pub const ECONOMIC_KEYS: [&str; 6] = ["action", "method", "notice_id", "price_wei", "artifact_spec", "reason"];
+pub const ECONOMIC_ACTIONS: [&str; 4] = ["bid_rfp", "none", "pay_due", "pay_iou"];
+pub const ECONOMIC_KEYS: [&str; 7] =
+    ["action", "method", "iou_id", "notice_id", "price_wei", "artifact_spec", "reason"];
 pub const MAX_TASKS: usize = 4;
 const MAX_SKILL_TRIGGERS: usize = 5;
 
@@ -125,7 +126,7 @@ pub fn parse_skill(text: &str) -> Option<Skill> {
     Some(Skill { name: slug, description, instructions: py_strip(instructions).to_string(), triggers })
 }
 
-/// An economic decision, normalized to the six fixed keys (missing → null).
+/// An economic decision, normalized to the seven fixed keys (missing → null).
 pub fn parse_economic_decision(text: &str) -> Option<Object> {
     let object = first_balanced_object(text).filter(|o| action_in(o, &ECONOMIC_ACTIONS))?;
     Some(

@@ -129,8 +129,10 @@ honest by four constraints:
 > reputation term and the genuine Bios energy drive keep their names.
 
 The loop is **self-driving**: a Nous's Brain *sees* its economic position (balance, outstanding
-due, open RFPs) in its prompt and, each economic tick, *chooses* whether to pay its due or bid on
-an RFP — a dedicated autonomous decision (cost- and cooldown-gated), not a script. Decision
+due, open RFPs, and any debt to another Nous that it can cover in full) in its prompt and, each
+economic tick, *chooses* whether to pay its due, pay a debt, bid on an RFP, or do nothing — a
+dedicated autonomous decision (cost- and cooldown-gated), not a script. A debt it cannot yet
+cover is not put to it, and nothing pays a debt on its behalf. Decision
 pressure stays with the Nous; the standing "earn a living" goal makes the choice matter.
 
 ### What the loop *builds* — real orbital objects

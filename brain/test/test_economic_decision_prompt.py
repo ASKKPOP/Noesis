@@ -136,7 +136,7 @@ class TestDecisionPrompt:
 class TestParseDecision:
     def test_parses_pay_due(self):
         d = parse_economic_decision('{"action": "pay_due", "method": "wei", "reason": "civic duty"}')
-        assert d == {"action": "pay_due", "method": "wei", "notice_id": None, "price_wei": None, "artifact_spec": None, "reason": "civic duty"}
+        assert d == {"action": "pay_due", "method": "wei", "iou_id": None, "notice_id": None, "price_wei": None, "artifact_spec": None, "reason": "civic duty"}
 
     def test_parses_bid_rfp(self):
         d = parse_economic_decision('{"action":"bid_rfp","notice_id":"n1","price_wei":"300","artifact_spec":"solar"}')
