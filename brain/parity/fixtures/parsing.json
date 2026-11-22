@@ -19,11 +19,13 @@
   "economic_actions": [
    "bid_rfp",
    "none",
-   "pay_due"
+   "pay_due",
+   "pay_iou"
   ],
   "economic_keys": [
    "action",
    "method",
+   "iou_id",
    "notice_id",
    "price_wei",
    "artifact_spec",
@@ -96,6 +98,7 @@
     "parse_economic_decision": {
      "action": "none",
      "method": null,
+     "iou_id": null,
      "notice_id": null,
      "price_wei": null,
      "artifact_spec": null,
@@ -125,6 +128,7 @@
     "parse_economic_decision": {
      "action": "bid_rfp",
      "method": null,
+     "iou_id": null,
      "notice_id": "n-7",
      "price_wei": 1200,
      "artifact_spec": {
@@ -300,6 +304,7 @@
     "parse_economic_decision": {
      "action": "pay_due",
      "method": "labor",
+     "iou_id": null,
      "notice_id": null,
      "price_wei": null,
      "artifact_spec": null,
@@ -322,6 +327,45 @@
     "parse_economic_decision": {
      "action": "none",
      "method": null,
+     "iou_id": null,
+     "notice_id": null,
+     "price_wei": null,
+     "artifact_spec": null,
+     "reason": null
+    }
+   }
+  },
+  {
+   "name": "pay_iou",
+   "reply": "{\"action\": \"pay_iou\", \"iou_id\": \"iou:3\", \"reason\": \"I keep my word\"}",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": {
+     "action": "pay_iou",
+     "method": null,
+     "iou_id": "iou:3",
+     "notice_id": null,
+     "price_wei": null,
+     "artifact_spec": null,
+     "reason": "I keep my word"
+    }
+   }
+  },
+  {
+   "name": "pay_iou_in_prose_without_id",
+   "reply": "Yes. {\"action\": \"pay_iou\"} I will pay what I owe.",
+   "parsed": {
+    "parse_decision": null,
+    "parse_social_decision": null,
+    "parse_task_list": null,
+    "parse_skill": null,
+    "parse_economic_decision": {
+     "action": "pay_iou",
+     "method": null,
+     "iou_id": null,
      "notice_id": null,
      "price_wei": null,
      "artifact_spec": null,
@@ -454,6 +498,7 @@
     "parse_economic_decision": {
      "action": "none",
      "method": null,
+     "iou_id": null,
      "notice_id": null,
      "price_wei": null,
      "artifact_spec": null,
@@ -472,6 +517,7 @@
     "parse_economic_decision": {
      "action": "bid_rfp",
      "method": null,
+     "iou_id": null,
      "notice_id": 12,
      "price_wei": 1000.0,
      "artifact_spec": null,
@@ -490,6 +536,7 @@
     "parse_economic_decision": {
      "action": "bid_rfp",
      "method": null,
+     "iou_id": null,
      "notice_id": null,
      "price_wei": "<<NaN>>",
      "artifact_spec": null,

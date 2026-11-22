@@ -191,6 +191,9 @@ class BrainHandler:
         # on this session; a notice leaving the open list prunes its entry.
         self._bid_notice_ids: set[str] = set()
         self._joined_group_ids: set[str] = set()
+        # Debts whose payment the Grid refused, by the tick of the refusal: not put
+        # to the Nous again until _IOU_RETRY_TICKS have passed. Pruned to debts still owed.
+        self._refused_iou_ticks: dict[str, int] = {}
         self._reflection: ReflectionEngine | None = None
         if memory is not None and hasattr(memory, "add_reflection") and hasattr(memory, "recent"):
             self._reflection = ReflectionEngine(memory, llm)
@@ -958,6 +961,7 @@ class BrainHandler:
 
     # ── Economic decision cycle (W3b / D-MONEY-09) ────────────────────────────
     _ECON_COOLDOWN_TICKS = 50
+    _IOU_RETRY_TICKS = 500  # how long a debt whose payment was refused is left alone
 
     def _should_run_economic_cycle(self, tick: int) -> bool:
         """Run the economic decision cycle only when a Grid wire client is wired
@@ -1000,11 +1004,26 @@ class BrainHandler:
             open_ids = {str(r.get("notice_id")) for r in open_rfps}
             self._bid_notice_ids &= open_ids
             open_rfps = [r for r in open_rfps if str(r.get("notice_id")) not in self._bid_notice_ids]
-            if due is None and not open_rfps:
+            owed = await self._debts_i_owe(wire)
+            if due is None and not open_rfps and not owed:
                 return  # nothing to decide — do NOT spend an LLM call
 
             account = await wire.fetch_account()
             balance = int(account.get("balance_wei", "0") or 0)
+            # Only debts it can cover in full are put to the Nous: the Grid takes no part payment.
+            debts = [d for d in owed if self._payable(d, balance)]
+            # A payment the Grid refused is left alone for a while, so one debt cannot
+            # cost a thought and a refusal every cycle. A debt it can no longer pay (gone, or
+            # beyond its balance) is forgotten,
+            # and so is a refusal from before the Grid's tick started again from zero.
+            payable_ids = {d["iou_id"] for d in debts}
+            self._refused_iou_ticks = {
+                i: t for i, t in self._refused_iou_ticks.items()
+                if i in payable_ids and 0 <= tick - t < self._IOU_RETRY_TICKS
+            }
+            debts = [d for d in debts if d["iou_id"] not in self._refused_iou_ticks]
+            if due is None and not open_rfps and not debts:
+                return  # it owes, but cannot pay yet — nothing it could act on
 
             # Join-a-Grid sight: the Portal join-list of Grids the Nous could consider
             # (never raises → [] on error). Flag any Grid its human recommended (S3 —
@@ -1028,7 +1047,7 @@ class BrainHandler:
                 grids_in_reach=grids_in_reach,
                 **({"world_state": world_sight} if world_sight else {}),
             )
-            user_prompt = build_economic_decision_prompt(account, due, open_rfps)
+            user_prompt = build_economic_decision_prompt(account, due, open_rfps, debts)
             response = await self.llm.generate(
                 user_prompt,
                 GenerateOptions(
@@ -1039,7 +1058,7 @@ class BrainHandler:
                 ),
             )
             decision = parse_economic_decision(response.text)
-            action = self._economic_action_from_decision(decision, due, open_rfps, balance)
+            action = self._economic_action_from_decision(decision, due, open_rfps, balance, debts)
             if action is None:
                 if decision is not None and self.memory is not None and hasattr(self.memory, "record_event"):
                     self.memory.record_event(
@@ -1051,11 +1070,17 @@ class BrainHandler:
             ok = await wire.post_economic_action(action)
             if ok and action.action_type == ActionType.BID_RFP:
                 self._bid_notice_ids.add(str(action.metadata.get("notice_id")))
+            if not ok and action.action_type == ActionType.PAY_IOU:
+                self._refused_iou_ticks[action.metadata["iou_id"]] = tick
             if ok and self.memory is not None and hasattr(self.memory, "record_event"):
-                self.memory.record_event(
-                    content=f"Economic decision: {action.action_type.value} {action.metadata}"[:300],
-                    source_did=self.did, tick=tick,
-                )
+                content = f"Economic decision: {action.action_type.value} {action.metadata}"
+                if action.action_type == ActionType.PAY_IOU:
+                    paid = next(d for d in debts if d["iou_id"] == action.metadata["iou_id"])
+                    content = (
+                        f"Paid a debt I owed: {paid['amount_wei']} wei to "
+                        f"{paid.get('counterparty_civic_did')} (debt {paid['iou_id']})."
+                    )
+                self.memory.record_event(content=content[:300], source_did=self.did, tick=tick)
             elif not ok:
                 # W-A4: a Grid rejection is a Reflexion lesson, not a silent shrug —
                 # the next decision prompt retrieves it, and repeated failures
@@ -1069,8 +1094,29 @@ class BrainHandler:
         except Exception as exc:  # never let an economic cycle take down the tick
             log.warning("[Brain] economic cycle failed: %s", exc)
 
+    async def _debts_i_owe(self, wire: Any) -> list[dict[str, Any]]:
+        """The debts this Nous owes, as the Grid lists them. [] when the Grid has none
+        to show or the read fails — a failed look at the ledger must not stop the cycle."""
+        try:
+            data = await wire.fetch_ious()
+        except Exception:  # noqa: BLE001 — sight never breaks the cycle
+            return []
+        rows = data.get("i_owe") if isinstance(data, dict) else None
+        return [r for r in rows if isinstance(r, dict)] if isinstance(rows, list) else []
+
+    @staticmethod
+    def _payable(debt: dict[str, Any], balance: int) -> bool:
+        """True for a debt with an id and a whole positive amount the balance covers."""
+        amount = debt.get("amount_wei")
+        return (
+            isinstance(debt.get("iou_id"), str)
+            and isinstance(amount, int) and not isinstance(amount, bool)
+            and 0 < amount <= balance
+        )
+
     def _economic_action_from_decision(
-        self, decision: "dict | None", due: "dict | None", open_rfps: list, balance: int
+        self, decision: "dict | None", due: "dict | None", open_rfps: list, balance: int,
+        debts: "list | None" = None,
     ) -> "Action | None":
         """Turn a parsed decision into a validated economic Action, or None.
 
@@ -1089,6 +1135,13 @@ class BrainHandler:
             if method == "wei" and balance < int(due.get("amount_wei", "0") or 0):
                 return None  # can't afford it in wei — skip (Grid would reject anyway)
             return build_economic_action(ActionType.PAY_DUE, due_id=due["due_id"], method=method)
+        if act == "pay_iou":
+            # Only a debt that was put to it: the id is matched against the offered list
+            # (each of which it can cover), never taken from the model alone.
+            chosen = next((d for d in (debts or []) if d.get("iou_id") == decision.get("iou_id")), None)
+            if chosen is None:
+                return None
+            return build_economic_action(ActionType.PAY_IOU, iou_id=chosen["iou_id"])
         if act == "bid_rfp":
             notice_id = decision.get("notice_id")
             chosen = next((r for r in open_rfps if r.get("notice_id") == notice_id), None)

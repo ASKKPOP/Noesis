@@ -15,12 +15,12 @@ are language-neutral. A Rust module is correct when it reproduces every case exa
 | `psyche.json` | personality levels, their numbers and prompt descriptions, values line |
 | `state_hash.json` | the four component hashes (psyche, thymos, telos, memory stream) for four Nous states |
 | `retrieval.json` | memory importance / relevance / full score (216 cases) and the handler's top-k ranking |
-| `prompts.json` | the planning, decision, skill-distill, social and economic prompts, character for character (16 calls) |
+| `prompts.json` | the planning, decision, skill-distill, social and economic prompts, character for character (20 calls) |
 | `telos.json` | goal handling: configured priorities, progress and completion, time-based evolution, top-priority order, the goals block, the Telos hash after each step |
 | `system_prompt.json` | the full system prompt for seven Nous states, covering every section |
 | `spawn.json` | a Nous built from its YAML configuration: the three shipped configurations and four edge cases |
 | `body.json` | the per-tick needs + drives runtime in the handler's order, 8,000 ticks, with and without needs lifting drives |
-| `parsing.json` | tolerant parsing of model replies: 35 raw replies × the five parsers (decision, social, task list, skill, economic) |
+| `parsing.json` | tolerant parsing of model replies: 37 raw replies × the five parsers (decision, social, task list, skill, economic) |
 
 ## Rules
 

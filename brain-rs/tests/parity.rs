@@ -293,7 +293,7 @@ fn parsing_matches_python() {
 
     let object = |o: Option<json::Object>| o.map(|o| to_fixture(&Value::Object(o))).unwrap_or(J::Null);
     let cases = doc["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 35);
+    assert_eq!(cases.len(), 37);
     for case in cases {
         let (name, reply, want) = (s(&case["name"]), s(&case["reply"]), &case["parsed"]);
         let got = serde_json::json!({
@@ -454,7 +454,7 @@ fn prompts_match_python() {
     let objects = |v: &J| -> Vec<json::Object> { v.as_array().map(|a| a.iter().map(object).collect()).unwrap_or_default() };
 
     let cases = doc["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 16);
+    assert_eq!(cases.len(), 20);
     for (n, case) in cases.iter().enumerate() {
         let a = &case["args"];
         let got = match s(&case["builder"]) {
@@ -466,7 +466,9 @@ fn prompts_match_python() {
             }
             "build_economic_decision_prompt" => {
                 let due = (!a[1].is_null()).then(|| object(&a[1]));
-                prompts::build_economic_decision_prompt(&object(&a[0]), due.as_ref(), &objects(&a[2]))
+                // The debts are the optional fourth argument (absent in the calls recorded before it existed).
+                let debts = a.get(3).map(objects).unwrap_or_default();
+                prompts::build_economic_decision_prompt(&object(&a[0]), due.as_ref(), &objects(&a[2]), &debts)
             }
             other => panic!("unknown builder {other}"),
         };

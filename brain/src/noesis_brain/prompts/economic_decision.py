@@ -13,20 +13,25 @@ from __future__ import annotations
 import json
 from typing import Any
 
-_VALID_ACTIONS = {"pay_due", "bid_rfp", "none"}
-_KEYS = ("action", "method", "notice_id", "price_wei", "artifact_spec", "reason")
+_VALID_ACTIONS = {"pay_due", "pay_iou", "bid_rfp", "none"}
+_KEYS = ("action", "method", "iou_id", "notice_id", "price_wei", "artifact_spec", "reason")
 
 
 def build_economic_decision_prompt(
     account: dict[str, Any],
     due: dict[str, Any] | None,
     rfps: list[dict[str, Any]],
+    debts: list[dict[str, Any]] | None = None,
 ) -> str:
     """Build the user-turn prompt that asks the Nous what to do economically.
 
     Presents the wei balance, the single outstanding due (if any), and the open
     RFPs (if any), then asks for ONE JSON object. Only the situations that exist
     are offered, but the schema lists every field so the model knows the shape.
+
+    ``debts`` are the debts this Nous owes another Nous and can pay in full now.
+    With none, nothing is said about debts and the prompt is exactly what it was:
+    paying a debt is offered only when there is one to pay.
     """
     lines: list[str] = []
     balance = account.get("balance_wei", "0")
@@ -41,6 +46,13 @@ def build_economic_decision_prompt(
     else:
         lines.append("You have no outstanding civic due.")
 
+    if debts:
+        lines.append("Debts you owe to another Nous for work done, each of which you can pay in full now:")
+        for d in debts:
+            lines.append(
+                f"  - debt {d.get('iou_id')}: {d.get('amount_wei')} wei to {d.get('counterparty_civic_did')}."
+            )
+
     if rfps:
         lines.append("Open RFPs you could bid on (the treasury pays the winner — bidding costs you nothing up front):")
         for r in rfps:
@@ -53,8 +65,14 @@ def build_economic_decision_prompt(
 
     lines.append(
         "\nDecide what to do, in character, guided by your goals. Reply with ONE JSON object only:\n"
-        '{"action": "pay_due" | "bid_rfp" | "none", '
-        '"method": "wei" | "labor", '
+        + (
+            '{"action": "pay_due" | "pay_iou" | "bid_rfp" | "none", '
+            '"method": "wei" | "labor", '
+            '"iou_id": "<one of the debt ids above>", '
+            if debts else
+            '{"action": "pay_due" | "bid_rfp" | "none", '
+            '"method": "wei" | "labor", '
+        ) +
         '"notice_id": "<one of the notice ids above>", '
         '"price_wei": "<digits, at most the budget>", '
         '"artifact_spec": "<one short line describing what you would build>", '

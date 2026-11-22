@@ -118,9 +118,18 @@ pub fn build_social_prompt(peers: &[&str], skill_names: &[&str], proposals: &[Ob
     lines.join("\n")
 }
 
-/// The economic situation — balance, the one outstanding due, open RFPs — and the ask for
-/// one JSON decision. An absent or empty `due` means nothing is owed.
-pub fn build_economic_decision_prompt(account: &Object, due: Option<&Object>, rfps: &[Object]) -> String {
+/// The economic situation — balance, the one outstanding due, debts it can pay, open RFPs —
+/// and the ask for one JSON decision. An absent or empty `due` means nothing is owed.
+///
+/// `debts` are the debts this Nous owes another Nous and can pay in full now. With none,
+/// nothing is said about debts and the prompt is exactly what it was: paying a debt is
+/// offered only when there is one to pay.
+pub fn build_economic_decision_prompt(
+    account: &Object,
+    due: Option<&Object>,
+    rfps: &[Object],
+    debts: &[Object],
+) -> String {
     let balance = match get(account, "balance_wei") {
         None => "0".to_string(),
         some => py_str(some),
@@ -134,6 +143,19 @@ pub fn build_economic_decision_prompt(account: &Object, due: Option<&Object>, rf
             py_str(get(due, "amount_credit")),
         )),
         None => lines.push("You have no outstanding civic due.".to_string()),
+    }
+    if !debts.is_empty() {
+        lines.push(
+            "Debts you owe to another Nous for work done, each of which you can pay in full now:".to_string(),
+        );
+        lines.extend(debts.iter().map(|d| {
+            format!(
+                "  - debt {}: {} wei to {}.",
+                py_str(get(d, "iou_id")),
+                py_str(get(d, "amount_wei")),
+                py_str(get(d, "counterparty_civic_did")),
+            )
+        }));
     }
     if rfps.is_empty() {
         lines.push("There are no open RFPs to bid on right now.".to_string());
@@ -150,19 +172,27 @@ pub fn build_economic_decision_prompt(account: &Object, due: Option<&Object>, rf
             )
         }));
     }
-    lines.push(
+    let choices = if debts.is_empty() {
+        concat!(r#"{"action": "pay_due" | "bid_rfp" | "none", "#, r#""method": "wei" | "labor", "#)
+    } else {
         concat!(
-            "\nDecide what to do, in character, guided by your goals. Reply with ONE JSON object only:\n",
-            r#"{"action": "pay_due" | "bid_rfp" | "none", "#,
+            r#"{"action": "pay_due" | "pay_iou" | "bid_rfp" | "none", "#,
             r#""method": "wei" | "labor", "#,
+            r#""iou_id": "<one of the debt ids above>", "#,
+        )
+    };
+    lines.push(
+        [
+            "\nDecide what to do, in character, guided by your goals. Reply with ONE JSON object only:\n",
+            choices,
             r#""notice_id": "<one of the notice ids above>", "#,
             r#""price_wei": "<digits, at most the budget>", "#,
             r#""artifact_spec": "<one short line describing what you would build>", "#,
             r#""reason": "<one sentence>"}"#,
             "\n",
             r#"Use "none" if you would rather do nothing this cycle. Include only the fields your action needs."#,
-        )
-        .to_string(),
+        ]
+        .concat(),
     );
     lines.join("\n")
 }
