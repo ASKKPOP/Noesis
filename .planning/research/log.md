@@ -624,3 +624,32 @@ Local real-MySQL gate: `docker run -d --name noesis-gate-mysql -e MYSQL_ROOT_PAS
 -e MYSQL_DATABASE=noesis_grid -p 127.0.0.1:33079:3306 mysql:8.0`, then from grid/ with
 MYSQL_HOST=127.0.0.1 MYSQL_PORT=33079 MYSQL_USER=root MYSQL_PASSWORD=root:
 `npx tsx scripts/check-migrations-real-mysql.ts && npx tsx scripts/check-civic-settlement-real-mysql.ts`.
+
+## [2026-11-22] feat+deploy | A debtor can pay a debt
+Operator: "Yes, add it". PR #46 (main cdb0f7a9), deployed to production (schema 79 -> 80).
+Grid: `GET /api/v1/civic/ious` (caller's own outstanding debts/credits) and
+`POST /api/v1/civic/ious/:id/pay` (debtor, in full) in `civic-parcels.ts`, both
+`civic_did_required` in `policy.ts`. `ParcelStore.payIou` = ONE transaction: conditional UPDATE
+(`settled_tick`, `paid_tick`; WHERE grid, id, debtor, creditor, amount, settled_tick IS NULL;
+throws `iou_not_payable`), then debit debtor / credit creditor. Migration 80 adds nullable
+`paid_tick`, set only by a payment. `ParcelStore.iouPaidTick` is read when a payment fails for an
+unknown reason (lost commit ack) or meets `iou_not_payable`, to bring memory up to date.
+`withLedger(fn, waitMs = 30 s)`: promise-chain lock around the pay route, the completion's
+`completeTask` + owed `settleCowork`, and the revoke's `persistRoleRevoke` + drain + save; the
+clock starts when the step STARTS; after `waitMs` the next step goes ahead and it is logged. No
+audit event; allowlist unchanged.
+Brain: `ActionType.PAY_IOU` (economic family: `_ECONOMIC_REQUIRED_KEYS`, `ECONOMIC_ROUTES`) and
+`GridWireClient.fetch_ious`. NOT done: the economic cycle does not offer the choice. Doing so
+changes `prompts/economic_decision.py` (`_VALID_ACTIONS`, the prompt text), which
+`brain/parity/fixtures/{prompts,parsing}.json` freeze for the Rust port (D-V3-42;
+`brain-rs/src/{prompts,parsing}.rs`); `cargo`/`rustc` are not installed on this machine, so the
+port could not be verified and the contract was left untouched.
+CI: `check-civic-settlement-real-mysql.ts` step 7. Grid 4410 green twice; Brain 1519 twice.
+Production: schema 80, `paid_tick` present; lifetime tick 476499 == rows; `payIou` on a
+non-existent id threw `iou_not_payable` and rolled back; counts and SUM(balance_wei) unchanged;
+both routes answer 401 without a civic identity. Rollback image `noesiis-grid:pre-pay-2026-11-22`.
+Open: the mind's choice (Python + Rust together); the severance drain still settles debts with no
+money; no part payment; posted tasks never cancelled; overlap possible after the lock gives way.
+Pitfall: before touching any Brain prompt, parser, need/drive constant or hash, read
+`brain/parity/README.md` — those are frozen fixtures; a change means re-recording AND changing
+`brain-rs`.
