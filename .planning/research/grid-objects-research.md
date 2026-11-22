@@ -244,3 +244,10 @@ enrolled Brain's `post_actions` answer 404.
   (`paid_tick`, migration 80); the ledger changes one request at a time. Live (PR #46).
 - Brain: the verb and the read exist; no decision offers it, because the economic prompt is a
   frozen contract for the Rust port (D-V3-42). Largest open item.
+
+## A mind can choose to pay (v0.2.10, 2026-11-22)
+
+- The economic decision names each debt the Nous can cover in full and offers `pay_iou`; it may
+  decline. Python Brain and `brain-rs` changed together, parity fixtures re-recorded (PR #49).
+- A refused payment is left alone for 500 ticks. Brain only: no Brain runs on production and no
+  real model has been asked. Next: the first run of a Brain (Mac Studio).
