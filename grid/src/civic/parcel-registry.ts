@@ -24,11 +24,9 @@ import {
     type JoinReason,
     type LeaveReason,
     type EntryPolicyReason,
-    PURCHASABLE_ZONES,
-    HOME_ZONES,
-    BUSINESS_ZONES,
-    STRUCTURE_ZONE_FIT,
+    STRUCTURE_KIND_FIT,
 } from './types.js';
+import { TEMPLATE_ZONE_META, type ZoneKind } from '../zoning/zone-types.js';
 import { FURNITURE_CATALOG, isValidFurniture } from './furniture.js';
 import { RECLAIM_GRACE_PERIODS } from './founding-law.js';
 import { type Role, type GrantableRole, type RoleEdge, isHumanDid } from './roles.js';
@@ -71,6 +69,15 @@ export class ParcelRegistry {
      */
     private shopRegistry?: ShopRegistry;
 
+    /**
+     * This Grid's zones → kind + label (D-V3-40). Starts as the six-zone template; the
+     * bootstrap and the zone-law routes replace it with the Grid's legislated set via
+     * setZones(). Every land rule below keys on the KIND, never on a zone's name.
+     */
+    private zones = new Map<string, { kind: ZoneKind; label: string }>(
+        Object.entries(TEMPLATE_ZONE_META).map(([id, m]) => [id, { kind: m.kind, label: m.label }]),
+    );
+
     constructor(private readonly gridId: string = 'genesis') {}
 
     /** Wire the ShopRegistry so shop⇄structure binding also stamps parcel_id on the shop (D-60-03). */
@@ -78,8 +85,34 @@ export class ParcelRegistry {
         this.shopRegistry = shops;
     }
 
-    /** Seed `count` unclaimed parcels into a zone. Ids are zero-padded 4-digit slugs. */
-    seedZone(input: SeedZoneInput): void {
+    /** Replace the zone set with the Grid's current one (boot + after every zone law). */
+    setZones(zones: readonly { zone_id: string; kind: ZoneKind; label: string }[]): void {
+        this.zones = new Map(zones.map((z) => [z.zone_id, { kind: z.kind, label: z.label }]));
+    }
+
+    /** Kind + label of a zone in this Grid's set; undefined for a zone the Grid does not have. */
+    zoneInfo(zoneId: string): { kind: ZoneKind; label: string } | undefined {
+        return this.zones.get(zoneId);
+    }
+
+    /** Zone ids of one kind, in the Grid's order. */
+    zonesOfKind(kind: ZoneKind): string[] {
+        return [...this.zones].filter(([, z]) => z.kind === kind).map(([id]) => id);
+    }
+
+    /** Drop a removed zone's land from the read cache (the zone law already deleted the rows). */
+    dropZone(zoneId: string): void {
+        for (const [id, p] of this.parcels) {
+            if (p.zoneId === zoneId) { this.parcels.delete(id); this.presence.delete(id); }
+        }
+    }
+
+    /**
+     * Seed `count` unclaimed parcels into a zone. Ids are zero-padded 4-digit slugs that
+     * continue after the zone's existing land, so opening more land never overwrites a parcel.
+     * Returns the new parcels (the caller persists them).
+     */
+    seedZone(input: SeedZoneInput): Parcel[] {
         if (!Number.isInteger(input.count) || input.count <= 0) {
             throw new Error(`seedZone: count must be a positive integer, got ${input.count}`);
         }
@@ -88,8 +121,13 @@ export class ParcelRegistry {
         }
         this.seeded = true;
         const level = input.level ?? 0;
+        const created: Parcel[] = [];
+        let last = 0;
+        for (const p of this.parcels.values()) {
+            if (p.zoneId === input.zoneId) last = Math.max(last, Number(p.id.split(':')[2]) || 0);
+        }
         for (let i = 0; i < input.count; i++) {
-            const seq = String(i + 1).padStart(4, '0');
+            const seq = String(last + i + 1).padStart(4, '0');
             const id = `${this.gridId}:${input.zoneId}:${seq}`;
             // Spread the band's parcels evenly around the ring (D-NH-10 sector in degrees).
             const sector = input.count > 0 ? (360 * i) / input.count : 0;
@@ -108,7 +146,9 @@ export class ParcelRegistry {
                 condition: 'maintained',
                 missedPeriods: 0,
             });
+            created.push(this.clone(this.parcels.get(id)!));
         }
+        return created;
     }
 
     /**
@@ -151,8 +191,7 @@ export class ParcelRegistry {
     private isWellFormedAddress(address: string): boolean {
         const parts = address.split(':');
         if (parts.length < 3) return false;
-        const KNOWN_ZONES = ['business', 'manufacture', 'shopping', 'residential', 'infrastructure', 'government_quarter'];
-        return KNOWN_ZONES.includes(parts[1]);
+        return this.zones.has(parts[1]);
     }
 
     /** Currently-present visitor DIDs inside a structure (occupancy). */
@@ -170,8 +209,10 @@ export class ParcelRegistry {
         const p = this.parcels.get(address);
         if (!p) return { ok: false, reason: 'parcel_not_found' };
         if (p.ownerDid !== null) return { ok: false, reason: 'already_owned' };
-        if (!PURCHASABLE_ZONES.includes(p.zoneId)) return { ok: false, reason: 'zone_not_purchasable' };
-        if (this.exceedsCap(buyerDid, p.zoneId)) return { ok: false, reason: 'cap_exceeded' };
+        // Civic land — and land in a zone the Grid no longer has — is never for sale.
+        const kind = this.zones.get(p.zoneId)?.kind;
+        if (kind !== 'home' && kind !== 'business') return { ok: false, reason: 'zone_not_purchasable' };
+        if (this.exceedsCap(buyerDid, kind)) return { ok: false, reason: 'cap_exceeded' };
         if (buyerBalanceBios < p.priceWei) return { ok: false, reason: 'insufficient_funds' };
 
         p.ownerDid = buyerDid;
@@ -204,7 +245,8 @@ export class ParcelRegistry {
         if (!p) return { ok: false, reason: 'parcel_not_found' };
         if (p.ownerDid !== ownerDid) return { ok: false, reason: 'not_owner' };
         if (p.structure !== null) return { ok: false, reason: 'already_built' };
-        if (!STRUCTURE_ZONE_FIT[input.type].includes(p.zoneId)) {
+        const kind = this.zones.get(p.zoneId)?.kind;
+        if (!kind || !STRUCTURE_KIND_FIT[input.type].includes(kind)) {
             return { ok: false, reason: 'type_zone_mismatch' };
         }
         const structure: Structure = {
@@ -630,13 +672,12 @@ export class ParcelRegistry {
 
     /** Parse the zone segment from a `grid:zone:seq` address. */
     private zoneForAddress(address: string): ZoneId {
-        return address.split(':')[1] as ZoneId;
+        return address.split(':')[1];
     }
 
-    /** A representative structure type for the address's zone (home for residential). */
+    /** A representative structure type for the address's zone (home in a home-kind zone). */
     private structureTypeForAddress(address: string): StructureType {
-        const zoneId = this.zoneForAddress(address);
-        return zoneId === 'residential' ? 'home' : 'shop';
+        return this.zones.get(this.zoneForAddress(address))?.kind === 'home' ? 'home' : 'shop';
     }
 
     /** Total parcels seeded. */
@@ -644,11 +685,10 @@ export class ParcelRegistry {
         return this.parcels.size;
     }
 
-    /** True if buyer already holds the max allowed in the target zone's class (≤1 home, ≤1 business). */
-    private exceedsCap(buyerDid: string, zoneId: ZoneId): boolean {
-        const classZones = HOME_ZONES.includes(zoneId) ? HOME_ZONES : BUSINESS_ZONES;
+    /** True if buyer already holds the max allowed in zones of this kind (≤1 home, ≤1 business). */
+    private exceedsCap(buyerDid: string, kind: ZoneKind): boolean {
         for (const p of this.parcels.values()) {
-            if (p.ownerDid === buyerDid && classZones.includes(p.zoneId)) return true;
+            if (p.ownerDid === buyerDid && this.zones.get(p.zoneId)?.kind === kind) return true;
         }
         return false;
     }

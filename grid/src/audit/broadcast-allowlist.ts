@@ -729,6 +729,18 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   sole-producer grid/src/audit/append-portal-account-linked.ts
     //   closed 4-key {civic_did_hash, nous_account, owner_address_hash, tick}
     'portal.account_linked',               // (159)
+    // D-V3-40 (free zones) — Allowlist 159 → 160. A Grid's Polis adds, relabels or removes
+    // a zone of its own Grid. Under the pre-cleared zoning.* prefix. The label stays
+    // Grid-side; only its sha256 crosses. Legislator DID hashed.
+    // zoning.zone_set_changed (160): actorDid = changed_by_did_hash.
+    //   sole-producer grid/src/audit/append-zoning-zone-set-changed.ts
+    //   closed 5-key {action, changed_by_did_hash, label_hash, tick, zone_id}
+    //   action ∈ {added, relabeled, removed}.
+    'zoning.zone_set_changed',             // (160)
+    // D-V3-41 — Allowlist 160 → 161. The Grid's creator switches it public ⇄ private after
+    // creation. Under the pre-cleared operator.* prefix; sole producer appendOperatorEvent
+    // (tier required). Payload {action, grid_id, operator_id, tier, visibility}.
+    'operator.grid_visibility_changed',    // (161)
 ] as const;
 
 /**

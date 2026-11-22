@@ -31,6 +31,8 @@ import { PresenceStore } from './civic-presence/presence-store.js';
 import { MessageQueueStore } from './civic-presence/message-queue-store.js';
 import { GraceTimerRegistry } from './civic-presence/grace-timer-registry.js';
 import { PresenceService } from './civic-presence/presence-service.js';
+import { ZoneRegistry } from './zoning/zone-registry.js';
+import { savedGridVisibility } from './api/operator/grid-visibility.js';
 import { ParcelRegistry } from './civic/parcel-registry.js';
 import { ParcelStore } from './civic/parcel-store.js';
 import { createUpkeepRegistryFacade } from './civic/upkeep-scanner.js';
@@ -267,6 +269,8 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         const parcelStore = new ParcelStore(presencePool, config.genesisConfig.gridName);
         await parcelStore.seedGenesisCore(parcelRegistry);
         const parcelCount = await parcelStore.hydrate(parcelRegistry);
+        // D-V3-40: land rules key on each zone's kind — load this Grid's legislated zone set.
+        parcelRegistry.setZones(await new ZoneRegistry(presencePool, chain!).listZones(config.genesisConfig.gridName));
         console.log(`[civic] parcels loaded: ${parcelCount}`);
         parcels = { registry: parcelRegistry, store: parcelStore };
         // Groups & Holdings · Phase 1 (D-GROUP-04): seed the five founding Businesses as
@@ -298,12 +302,15 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         // idempotently (alreadySeeded = ring already has parcels); amendConstant records a Polis
         // override via founding-law.recordPolisOverride. No audit emit (world-creation, R-31-01).
         launcher.governance.attachRingExpansion({
-            seedZone: (ring) => {
-                parcelRegistry.seedZone({
-                    zoneId: 'residential',
-                    count: 24,
-                    priceWei: gravityPrice(ring),
-                    ring,
+            seedZone: (ring, zoneId) => {
+                // D-V3-40: the bill names the zone; absent → the Grid's first home zone.
+                // Civic land and zones the Grid does not have are never opened for sale.
+                const zone = zoneId ?? parcelRegistry.zonesOfKind('home')[0];
+                const kind = zone ? parcelRegistry.zoneInfo(zone)?.kind : undefined;
+                if (!zone || (kind !== 'home' && kind !== 'business')) return;
+                const opened = parcelRegistry.seedZone({ zoneId: zone, count: 24, priceWei: gravityPrice(ring), ring });
+                void parcelStore.insertParcels(opened).catch((e) => {
+                    console.error('[grid] ring expansion: persisting opened land failed', e instanceof Error ? e.message : e);
                 });
             },
             alreadySeeded: (ring) => parcelRegistry.list().some(p => p.ring === ring),
@@ -353,6 +360,11 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     // Cross-grid federation/membership remain v3.1+.
     const gridRegistry = new GridRegistry();
     gridRegistry.register(gridRecordFromConfig(config.genesisConfig));
+    // D-V3-41: a visibility the creator saved after creation overrides the launch default.
+    if (dbConn) {
+        const saved = await savedGridVisibility(dbConn.getPool(), config.genesisConfig.gridName);
+        if (saved) gridRegistry.setVisibility(config.genesisConfig.gridName.toLowerCase(), saved);
+    }
 
     // Phase 38 WIRE-01/02 (Brain→Grid write-back): wire a GridCoordinator so an
     // external Brain (over HTTPS) can dispatch a Civic-DID holder's actions to
@@ -402,6 +414,14 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
                     : {}),
             }));
         }
+    }
+    // A Nous keeps its Civic-DID across restarts; the coordinator's index does not.
+    if (civicDidStore) {
+        const store = civicDidStore;
+        await coordinator.restoreCivicDids(async (nousDid) => {
+            const record = await store.getByExistenceDid(config.genesisConfig.gridName, nousDid);
+            return record?.status === 'active' ? record.civicDid : null;
+        });
     }
 
     const server = buildServer({
@@ -516,6 +536,8 @@ export function configFromEnv(): GridAppConfig {
         // H1: GRID_ENV selects the celestial body (Earth-orbit | Moon | Mars); an
         // unknown/absent value falls back to Earth-orbit via getEnvironment().
         environment: getEnvironment(process.env.GRID_ENV),
+        // D-V3-41: the Grid creator's choice — public unless GRID_VISIBILITY=private.
+        visibility: process.env.GRID_VISIBILITY === 'private' ? 'private' as const : 'public' as const,
         tickRateMs: process.env.GRID_TICK_RATE_MS
             ? parseInt(process.env.GRID_TICK_RATE_MS, 10)
             : GENESIS_CONFIG.tickRateMs,

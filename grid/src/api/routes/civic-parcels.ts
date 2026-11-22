@@ -73,10 +73,13 @@ function currentTick(services: GridServices): number {
 }
 
 /** Public-feed projection of a parcel — owner DID hashed, structure name omitted. */
-function publicView(p: Parcel, occupantCount: number): Record<string, unknown> {
+function publicView(p: Parcel, occupantCount: number, zone?: { kind: string; label: string }): Record<string, unknown> {
     return {
         id: p.id,
         zone: p.zoneId,
+        // D-V3-40: zones are free per Grid — readers key on the kind, and show the Polis's label.
+        zone_kind: zone?.kind ?? null,
+        zone_label: zone?.label ?? null,
         ring: p.ring,
         sector: p.sector,
         level: p.level,
@@ -126,7 +129,7 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
         const parcelRegistry = services.parcels?.registry;
         if (!parcelRegistry) return reply.code(503).send({ error: 'civic_parcels_unavailable' });
         const parcels = parcelRegistry.list().map((p) =>
-            publicView(p, parcelRegistry.occupants(p.id).length),
+            publicView(p, parcelRegistry.occupants(p.id).length, parcelRegistry.zoneInfo(p.zoneId)),
         );
         return reply.code(200).send({ parcels });
     });
@@ -137,7 +140,7 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
         if (!parcelRegistry) return reply.code(503).send({ error: 'civic_parcels_unavailable' });
         const parcel = parcelRegistry.get(req.params.id);
         if (!parcel) return reply.code(404).send({ error: 'parcel_not_found' });
-        return reply.code(200).send(publicView(parcel, parcelRegistry.occupants(parcel.id).length));
+        return reply.code(200).send(publicView(parcel, parcelRegistry.occupants(parcel.id).length, parcelRegistry.zoneInfo(parcel.zoneId)));
     });
 
     // --- POST /api/v1/civic/parcels/:id/purchase (civic_did_required) ---

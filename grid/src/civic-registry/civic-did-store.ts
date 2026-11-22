@@ -109,6 +109,16 @@ export class CivicDidStore {
         return rows[0] ? rowToRecord(rows[0]) : null;
     }
 
+    /** Humans holding an active Civic-DID in this Grid — its human members (D-V3-41). */
+    async countActiveHumans(gridName: string): Promise<number> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT COUNT(*) AS n FROM civic_did_registry
+             WHERE grid_name = ? AND status = 'active' AND existence_did LIKE 'did:noesis:human:%'`,
+            [gridName],
+        );
+        return Number(rows[0]?.['n'] ?? 0);
+    }
+
     async markRevoked(
         gridName: string,
         civicDid: string,

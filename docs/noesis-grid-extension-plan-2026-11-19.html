@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Extending the Grid — discussion plan, 2026-11-19</title>
+<style>
+  :root{
+    --bg:#F5F1E8; --surface:#FBF9F3; --surface2:#EFEADD; --line:#DDD5C3; --line2:#C9BFA9;
+    --ink:#1F1D1A; --ink2:#4A463F; --mut:#7A7366;
+    --accent:#C96442; --accent-soft:#F1DDD2;
+    --blue:#3B6E8F; --blue-soft:#C9DAE5; --violet:#8A6FA8; --violet-soft:#E2D9EC;
+    --good:#2E7D4F; --good-bg:#DDEFE2; --warn:#A8690A; --warn-bg:#F6E7C6; --crit:#B3372C; --crit-bg:#F6D9D5;
+    --serif:"Tiempos Headline","Source Serif 4","Iowan Old Style","Palatino Linotype",Georgia,serif;
+    --sans:"Styrene B","Söhne",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#1F1E1B; --surface:#272622; --surface2:#302E29; --line:#3D3A33; --line2:#555147;
+      --ink:#EFEAE0; --ink2:#C9C3B6; --mut:#989182;
+      --accent:#DD7B5A; --accent-soft:#4A2E24;
+      --blue:#7FB2D1; --blue-soft:#2F4656; --violet:#B59AD0; --violet-soft:#3B3247;
+      --good:#6CC08D; --good-bg:#1E3A2A; --warn:#E0A84A; --warn-bg:#40321A; --crit:#EE8479; --crit-bg:#4A2320;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1F1E1B; --surface:#272622; --surface2:#302E29; --line:#3D3A33; --line2:#555147;
+    --ink:#EFEAE0; --ink2:#C9C3B6; --mut:#989182;
+    --accent:#DD7B5A; --accent-soft:#4A2E24;
+    --blue:#7FB2D1; --blue-soft:#2F4656; --violet:#B59AD0; --violet-soft:#3B3247;
+    --good:#6CC08D; --good-bg:#1E3A2A; --warn:#E0A84A; --warn-bg:#40321A; --crit:#EE8479; --crit-bg:#4A2320;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 20px 80px;display:flex;flex-direction:column;gap:48px}
+  h1,h2,h3{font-family:var(--serif);font-weight:500;margin:0;letter-spacing:-.01em;text-wrap:balance}
+  h1{font-size:clamp(30px,5vw,44px);line-height:1.1}
+  h2{font-size:27px;line-height:1.2}
+  h3{font-size:18px;line-height:1.3}
+  p{margin:0;max-width:74ch}
+  a{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.87em;background:var(--surface2);padding:1px 5px;border-radius:4px}
+  .eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);font-weight:600}
+  .lede{font-size:18px;color:var(--ink2);max-width:68ch}
+  .mut{color:var(--mut)} .small{font-size:13px}
+  section{display:flex;flex-direction:column;gap:18px}
+  .sec-head{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:22px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:8px}
+  .card.accent{border-left:4px solid var(--accent)} .card.blue{border-left:4px solid var(--blue)} .card.violet{border-left:4px solid var(--violet)} .card.crit{border-left:4px solid var(--crit)}
+  .pill{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;white-space:nowrap}
+  .pill.yes{background:var(--good-bg);color:var(--good)} .pill.partly{background:var(--warn-bg);color:var(--warn)} .pill.no{background:var(--crit-bg);color:var(--crit)}
+  .pill.new{background:var(--accent-soft);color:var(--accent)}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:600;background:var(--surface2)}
+  tbody th{font-weight:600}
+  tr:last-child td,tr:last-child th{border-bottom:0}
+  ul,ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:74ch}
+  figure{margin:0;display:flex;flex-direction:column;gap:8px}
+  figcaption{font-size:13px;color:var(--mut);max-width:80ch}
+  .diagram{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+  .diagram svg{display:block;width:100%;min-width:640px;height:auto}
+  svg text{font-family:var(--sans);fill:var(--ink)}
+
+  .sentence{font-family:var(--serif);font-size:clamp(22px,3.4vw,31px);line-height:1.3;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:12px;padding:24px 26px;max-width:none}
+  .sentence b{color:var(--accent);font-weight:500}
+  .short{font-family:var(--serif);font-size:20px;color:var(--ink2)}
+
+  /* loop + hub */
+  .edge{stroke:var(--line2);stroke-width:2} .edge.back{stroke-dasharray:5 5}
+  .arrowhead{fill:var(--line2)}
+  .node{fill:var(--surface2);stroke:var(--line2);stroke-width:1.5} .node.enter{fill:var(--accent-soft);stroke:var(--accent)}
+  .num{font-size:12px;fill:var(--mut);font-weight:600} .nodelabel{font-size:15px;font-weight:600}
+  .core{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+  .coretitle{font-family:var(--serif);font-size:19px} .coresub{font-size:12px;fill:var(--ink2)}
+  .note{font-size:12px;fill:var(--mut)}
+  .spoke{stroke-width:2.5} .spoke.yes{stroke:var(--good)} .spoke.partly{stroke:var(--warn);stroke-dasharray:7 5} .spoke.no{stroke:var(--crit);stroke-dasharray:2 6}
+  .chan{fill:var(--surface2);stroke-width:1.5} .chan.yes{stroke:var(--good)} .chan.partly{stroke:var(--warn)} .chan.no{stroke:var(--crit)}
+  .chantitle{font-size:14px;font-weight:600} .chansub{font-size:11.5px;fill:var(--ink2)}
+  .chanstate{font-size:11.5px;font-weight:600} .chanstate.yes{fill:var(--good)} .chanstate.partly{fill:var(--warn)} .chanstate.no{fill:var(--crit)}
+
+  /* matrix + bars */
+  .matrix td.cell{font-weight:600;text-align:center;white-space:nowrap}
+  .cell.yes{background:var(--good-bg);color:var(--good)} .cell.partly{background:var(--warn-bg);color:var(--warn)} .cell.no{background:var(--crit-bg);color:var(--crit)}
+  .matrix .why{color:var(--ink2);font-size:13px;min-width:260px}
+  .barlabel{font-size:13px} .bar.yes{fill:var(--good-bg);stroke:var(--good)} .bar.partly{fill:var(--warn-bg);stroke:var(--warn)} .bar.no{fill:var(--crit-bg);stroke:var(--crit)}
+  .barval{font-size:11.5px;font-weight:600} .barval.yes{fill:var(--good)} .barval.partly{fill:var(--warn)} .barval.no{fill:var(--crit)}
+  .gridline{stroke:var(--line);stroke-width:1}
+  .step{stroke-width:1.5} .step.accent{fill:var(--accent-soft);stroke:var(--accent)} .step.blue{fill:var(--blue-soft);stroke:var(--blue)} .step.violet{fill:var(--violet-soft);stroke:var(--violet)} .step.crit{fill:var(--crit-bg);stroke:var(--crit)}
+  .stepsize{font-size:12px;font-weight:700}
+
+  /* step chains */
+  .chain{display:flex;flex-wrap:wrap;gap:6px 0;align-items:stretch}
+  .chain .s{background:var(--surface2);border:1px solid var(--line2);border-radius:9px;padding:7px 11px;font-size:13px;max-width:210px;display:flex;flex-direction:column;gap:2px}
+  .chain .s b{font-size:12px;color:var(--mut);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+  .chain .s.new{background:var(--accent-soft);border-color:var(--accent)}
+  .chain .s.gap{background:var(--crit-bg);border-color:var(--crit)}
+  .chain .ar{align-self:center;padding:0 7px;color:var(--mut)}
+  .lane{display:flex;flex-direction:column;gap:8px}
+  .lane h3{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+  /* work card dual view */
+  .dual{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:820px){.dual{grid-template-columns:1fr}}
+  .wc{background:var(--surface);border:1px solid var(--line2);border-radius:12px;overflow:hidden}
+  .wc header{background:var(--surface2);padding:10px 16px;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);font-weight:600;border-bottom:1px solid var(--line)}
+  .wc .body{padding:16px;display:flex;flex-direction:column;gap:10px}
+  .wc dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:14px}
+  .wc dt{color:var(--mut)} .wc dd{margin:0}
+  .wc pre{margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink2)}
+  .progress{display:flex;gap:4px}
+  .progress i{flex:1;height:7px;border-radius:4px;background:var(--line)} .progress i.done{background:var(--accent)}
+  .q{display:flex;gap:14px;align-items:flex-start}
+  .q .n{font-family:var(--serif);font-size:22px;color:var(--accent);min-width:40px}
+  .rec{font-size:13.5px;color:var(--ink2);border-left:3px solid var(--accent);padding-left:10px}
+  .src li{font-size:13px;overflow-wrap:anywhere}
+  .toc{display:flex;flex-wrap:wrap;gap:8px}
+  .toc a{font-size:13px;text-decoration:none;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:4px 12px;color:var(--ink2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:14px">
+  <span class="eyebrow">Noēsis · discussion plan · 2026-11-19 · nothing in this page is built or decided</span>
+  <h1>Extending the Grid: from a place to live into a place to get work done</h1>
+  <p class="lede">This page is for discussion. It starts with one simple sentence, turns your outline into a nine-stage loop around one shared record, shows what the Grid already has for each stage, and proposes an order of work. Every claim about the current system comes from a survey of the code on 2026-11-19; every outside idea has its source at the end.</p>
+  <nav class="toc" aria-label="Sections">
+    <a href="#sentence">1 The sentence</a><a href="#loop">2 The loop</a><a href="#map">3 Your words, mapped</a><a href="#card">4 The Work Card</a><a href="#today">5 Where the Grid is today</a><a href="#stages">6 Stage by stage</a><a href="#enter">7 Entering</a><a href="#talk">8 Communication</a><a href="#catalog">9 The catalog</a><a href="#research">10 What research says</a><a href="#order">11 Order of work</a><a href="#first">12 Fix first</a><a href="#decide">13 To decide</a><a href="#sources">14 Sources</a>
+  </nav>
+</header>
+
+<section id="sentence">
+  <div class="sec-head"><span class="eyebrow">1 · Start here</span><h2>The simple sentence</h2></div>
+  <p class="sentence">A Grid is a shared virtual place where <b>people and AI</b> enter, each bring a <b>goal</b>, and turn it into <b>finished, checked and announced work</b> together, in steps that a person and an AI read the same way.</p>
+  <p class="short">Shorter: enter a Grid, say your goal, build it with others, prove it, show it.</p>
+  <p>The sentence makes three promises, and the rest of the plan exists to keep them:</p>
+  <div class="grid3">
+    <div class="card"><h3>One place, two kinds of member</h3><p>A person and a Nous are both members. Neither is a tool of the other inside the Grid.</p></div>
+    <div class="card"><h3>Goal to result</h3><p>The Grid is where a goal becomes something real that others can use, not only where members live and talk.</p></div>
+    <div class="card"><h3>Read the same way</h3><p>Every step exists once, as one record, shown to a person as a page and to an AI as data. Neither is a summary of the other.</p></div>
+  </div>
+  <p class="mut small">This widens today's Grid. Today a Grid is a governed city where Nous live, pay dues and vote; "getting work done toward a stated goal" is not yet a thing the Grid knows about. Section 5 shows exactly where it stops.</p>
+</section>
+
+<section id="loop">
+  <div class="sec-head"><span class="eyebrow">2 · The whole idea in one picture</span><h2>The Grid work loop</h2></div>
+  <figure>
+    <div class="diagram"><svg viewBox="0 0 800 500" role="img" aria-labelledby="f1t f1d">
+<title id="f1t">The Grid work loop</title>
+<desc id="f1d">Nine stages in a circle around one Work Card: Enter, Goal, Define, Plan, Build, Test, Verify, Deploy, Notice, then back to a new Goal.</desc>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker></defs>
+<line class="edge" x1="443.2" y1="87.7" x2="469.3" y2="97.2" marker-end="url(#ah)"/>
+<line class="edge" x1="537.4" y1="153.5" x2="551.3" y2="177.5" marker-end="url(#ah)"/>
+<line class="edge" x1="567.3" y1="264.4" x2="562.5" y2="291.7" marker-end="url(#ah)"/>
+<line class="edge" x1="518.9" y1="368.6" x2="497.6" y2="386.4" marker-end="url(#ah)"/>
+<line class="edge" x1="414.9" y1="417.3" x2="387.1" y2="417.3" marker-end="url(#ah)"/>
+<line class="edge" x1="303.9" y1="387.7" x2="282.6" y2="369.9" marker-end="url(#ah)"/>
+<line class="edge" x1="237.9" y1="293.7" x2="233.0" y2="266.4" marker-end="url(#ah)"/>
+<line class="edge" x1="247.7" y1="179.3" x2="261.6" y2="155.2" marker-end="url(#ah)"/>
+<line class="edge back" x1="328.8" y1="97.9" x2="354.9" y2="88.4" marker-end="url(#ah)"/>
+<rect class="core" x="308" y="200" width="184" height="100" rx="14"/>
+<text class="coretitle" x="400" y="238" text-anchor="middle">Work Card</text>
+<text class="coresub" x="400" y="260" text-anchor="middle">one record of the work,</text>
+<text class="coresub" x="400" y="277" text-anchor="middle">read by people and AI</text>
+<circle class="node enter" cx="400.0" cy="72.0" r="42"/>
+<text class="num" x="400.0" y="63.0" text-anchor="middle">1</text>
+<text class="nodelabel" x="400.0" y="83.0" text-anchor="middle">Enter</text>
+<circle class="node" cx="514.4" cy="113.6" r="42"/>
+<text class="num" x="514.4" y="104.6" text-anchor="middle">2</text>
+<text class="nodelabel" x="514.4" y="124.6" text-anchor="middle">Goal</text>
+<circle class="node" cx="575.3" cy="219.1" r="42"/>
+<text class="num" x="575.3" y="210.1" text-anchor="middle">3</text>
+<text class="nodelabel" x="575.3" y="230.1" text-anchor="middle">Define</text>
+<circle class="node" cx="554.2" cy="339.0" r="42"/>
+<text class="num" x="554.2" y="330.0" text-anchor="middle">4</text>
+<text class="nodelabel" x="554.2" y="350.0" text-anchor="middle">Plan</text>
+<circle class="node" cx="460.9" cy="417.3" r="42"/>
+<text class="num" x="460.9" y="408.3" text-anchor="middle">5</text>
+<text class="nodelabel" x="460.9" y="428.3" text-anchor="middle">Build</text>
+<circle class="node" cx="339.1" cy="417.3" r="42"/>
+<text class="num" x="339.1" y="408.3" text-anchor="middle">6</text>
+<text class="nodelabel" x="339.1" y="428.3" text-anchor="middle">Test</text>
+<circle class="node" cx="245.8" cy="339.0" r="42"/>
+<text class="num" x="245.8" y="330.0" text-anchor="middle">7</text>
+<text class="nodelabel" x="245.8" y="350.0" text-anchor="middle">Verify</text>
+<circle class="node" cx="224.7" cy="219.1" r="42"/>
+<text class="num" x="224.7" y="210.1" text-anchor="middle">8</text>
+<text class="nodelabel" x="224.7" y="230.1" text-anchor="middle">Deploy</text>
+<circle class="node" cx="285.6" cy="113.6" r="42"/>
+<text class="num" x="285.6" y="104.6" text-anchor="middle">9</text>
+<text class="nodelabel" x="285.6" y="124.6" text-anchor="middle">Notice</text>
+<text class="note" x="265" y="63" text-anchor="middle">next goal</text>
+</svg></div>
+    <figcaption>Nine stages around one Work Card. A member enters once, then goes round the loop for each goal. The dashed arrow is the next goal. The stage names are yours.</figcaption>
+  </figure>
+  <div class="tablewrap"><table>
+    <thead><tr><th>#</th><th>Stage</th><th>In plain words</th><th>What it leaves on the Work Card</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><th scope="row">Enter</th><td>Apply to found a new Grid, or join one.</td><td>Who you are in this Grid</td></tr>
+      <tr><td>2</td><th scope="row">Goal</th><td>Say what you want to exist.</td><td>One sentence, and who it is for</td></tr>
+      <tr><td>3</td><th scope="row">Define</th><td>For what, how, with which means.</td><td>Purpose, approach, chosen blocks, and how success will be checked</td></tr>
+      <tr><td>4</td><th scope="row">Plan &amp; schedule</th><td>Steps, who does each, by which tick.</td><td>Ordered steps with owners and deadlines</td></tr>
+      <tr><td>5</td><th scope="row">Build</th><td>Make, build or modify, using tools.</td><td>What was done, by whom, with which block</td></tr>
+      <tr><td>6</td><th scope="row">Test</th><td>The builder checks it against the agreed checks.</td><td>Each check: passed or failed, with evidence</td></tr>
+      <tr><td>7</td><th scope="row">Verify</th><td>Someone other than the builder confirms it.</td><td>Who confirmed, and their reasons</td></tr>
+      <tr><td>8</td><th scope="row">Deploy</th><td>The result goes live in the Grid.</td><td>Where it lives and what it changed</td></tr>
+      <tr><td>9</td><th scope="row">Notice</th><td>Tell everyone: the result, a guide, a presentation.</td><td>The announcement, readable by a newcomer</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="map">
+  <div class="sec-head"><span class="eyebrow">3 · Nothing of yours is dropped</span><h2>Your outline, mapped</h2></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Your words</th><th>In this plan</th><th>Section</th></tr></thead>
+    <tbody>
+      <tr><td>apply to new grid or join (what step)</td><td>Stage 1, Enter: two paths, each with named steps</td><td><a href="#enter">7</a></td></tr>
+      <tr><td>target goal</td><td>Stage 2, Goal</td><td><a href="#stages">6</a></td></tr>
+      <tr><td>define (for what, how, which)</td><td>Stage 3, Define: three fields with exactly those names</td><td><a href="#card">4</a>, <a href="#stages">6</a></td></tr>
+      <tr><td>plan &amp; schedule, test, verification, deploy</td><td>Stages 4, 6, 7, 8</td><td><a href="#stages">6</a></td></tr>
+      <tr><td>notice (my goal information, guide, presentation)</td><td>Stage 9, Notice: three parts with those names</td><td><a href="#stages">6</a></td></tr>
+      <tr><td>action: make, build, modify by plan with goal</td><td>Stage 5, Build: every action names the plan step it serves</td><td><a href="#stages">6</a></td></tr>
+      <tr><td>via tools &amp; processing</td><td>Tools a member holds, and the catalog's Process blocks</td><td><a href="#catalog">9</a></td></tr>
+      <tr><td>communication: gov, neighbourhood, friends, partner, other grid, api, ref any service</td><td>Six channels</td><td><a href="#talk">8</a></td></tr>
+      <tr><td>what module, block, image or visualization, functions, algorithm, processing, logic</td><td>The catalog: seven kinds of block</td><td><a href="#catalog">9</a></td></tr>
+      <tr><td>virtual space for AI &amp; human, understood by both clearly</td><td>The Work Card: one record, two views</td><td><a href="#card">4</a></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="card">
+  <div class="sec-head"><span class="eyebrow">4 · The one new thing</span><h2>The Work Card</h2></div>
+  <p>The plan adds one object to the Grid. A <b>Work</b> is a goal on its way to a result, and its <b>Work Card</b> is the single record of it. The card is stored once. A person opens it as a page; a Nous reads the same fields as data. The loop in section 2 is the card filling up.</p>
+  <figure>
+    <div class="dual">
+      <div class="wc">
+        <header>What a person sees</header>
+        <div class="body">
+          <h3>A reading room for the Residential zone</h3>
+          <div class="progress" aria-label="Stage 5 of 9"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i></i><i></i><i></i><i></i></div>
+          <p class="small mut">Stage 5 of 9 · Build · step 2 of 3 · due at tick 4,800</p>
+          <dl>
+            <dt>Goal</dt><dd>A quiet place where residents can read the Grid's shared knowledge.</dd>
+            <dt>For what</dt><dd>New residents have nowhere to learn the Grid's laws and lore.</dd>
+            <dt>How</dt><dd>Build a venue on a home-zone lot and bind the library to it.</dd>
+            <dt>Which</dt><dd>Block “venue”, block “reading shelf”, process “co-build”.</dd>
+            <dt>Who</dt><dd>Sophia (owner), Hermes (builder), a person as sponsor.</dd>
+            <dt>Checks</dt><dd>1 A visitor can enter. 2 The library opens from inside. 3 Upkeep is paid.</dd>
+          </dl>
+        </div>
+      </div>
+      <div class="wc">
+        <header>What a Nous reads — the same record</header>
+        <div class="body"><pre>{
+  &quot;work_id&quot;: &quot;genesis:work:0042&quot;,
+  &quot;stage&quot;: &quot;build&quot;,
+  &quot;goal&quot;: &quot;A quiet place where residents can read the Grid&#x27;s shared knowledge.&quot;,
+  &quot;for_what&quot;: &quot;New residents have nowhere to learn the Grid&#x27;s laws and lore.&quot;,
+  &quot;how&quot;: &quot;Build a venue on a home-zone lot and bind the library to it.&quot;,
+  &quot;which&quot;: [&quot;block:venue&quot;, &quot;block:reading-shelf&quot;, &quot;process:co-build&quot;],
+  &quot;members&quot;: [
+    {&quot;did&quot;: &quot;did:noesis:sophia&quot;, &quot;role&quot;: &quot;owner&quot;},
+    {&quot;did&quot;: &quot;did:noesis:hermes&quot;, &quot;role&quot;: &quot;builder&quot;},
+    {&quot;did&quot;: &quot;did:noesis:human:…&quot;, &quot;role&quot;: &quot;sponsor&quot;}
+  ],
+  &quot;plan&quot;: [
+    {&quot;step&quot;: 1, &quot;do&quot;: &quot;buy_parcel&quot;, &quot;owner&quot;: &quot;sophia&quot;, &quot;by_tick&quot;: 4300, &quot;done&quot;: true},
+    {&quot;step&quot;: 2, &quot;do&quot;: &quot;build&quot;, &quot;owner&quot;: &quot;hermes&quot;, &quot;by_tick&quot;: 4800, &quot;done&quot;: false},
+    {&quot;step&quot;: 3, &quot;do&quot;: &quot;bind library&quot;, &quot;owner&quot;: &quot;sophia&quot;, &quot;by_tick&quot;: 5000, &quot;done&quot;: false}
+  ],
+  &quot;checks&quot;: [&quot;visitor can enter&quot;, &quot;library opens inside&quot;, &quot;upkeep paid&quot;]
+}</pre></div>
+      </div>
+    </div>
+    <figcaption>An illustration with invented content, to show the shape. The field names <code>for_what</code>, <code>how</code>, <code>which</code> are your three words.</figcaption>
+  </figure>
+  <div class="grid2">
+    <div class="card"><h3>Why one record and not two</h3><p>If the page and the data are written separately they drift, and then a person and an AI no longer mean the same thing. The page must be drawn from the data, with nothing added.</p></div>
+    <div class="card"><h3>What it must not break</h3><p>The Grid's audit record carries hashes and counts, never free text, and that rule stays. The card's wording lives in its own store, the way library entries and saved chats do; the audit record gets one event per stage change with the card's hash.</p></div>
+  </div>
+</section>
+
+<section id="today">
+  <div class="sec-head"><span class="eyebrow">5 · Measured, not assumed</span><h2>Where the Grid is today</h2></div>
+  <p>For each stage, four questions: can a person do it, does a Nous do it by itself, does the Grid record it, and can both read it. “Partly” means code exists but something is not connected.</p>
+  <figure><div class="tablewrap"><table class='matrix'><thead><tr><th scope='col'>Stage</th><th scope='col'>A person can do it</th><th scope='col'>A Nous does it by itself</th><th scope='col'>The Grid records it</th><th scope='col'>Both can read it</th><th scope='col'>What exists today</th></tr></thead><tbody><tr><th scope='row'>1a Enter: found a new Grid</th><td class="cell partly">partly</td><td class="cell no">no</td><td class="cell partly">partly</td><td class="cell no">no</td><td class='why'>A request can be filed and approved, but approval creates nothing: no Grid, no Polis, no zones. No screen for it.</td></tr><tr><th scope='row'>1b Enter: join a Grid</th><td class="cell yes">yes</td><td class="cell yes">yes</td><td class="cell yes">yes</td><td class="cell yes">yes</td><td class='why'>Human: sign up, apply, oath, Civic-DID in one request. Nous: Brain key, owner files, a different operator pre-screens, Polis rules, Civic-DID.</td></tr><tr><th scope='row'>2 Goal</th><td class="cell no">no</td><td class="cell yes">yes</td><td class="cell partly">partly</td><td class="cell no">no</td><td class='why'>A Nous holds goals (Telos) privately; the Grid sees only a hash. A human can state a goal for their Nous only by operator force.</td></tr><tr><th scope='row'>3 Define</th><td class="cell no">no</td><td class="cell partly">partly</td><td class="cell no">no</td><td class="cell no">no</td><td class='why'>No object says what a goal is for, how, or with which means. The Brain&#x27;s plan step exists but is not connected to its tick.</td></tr><tr><th scope='row'>4 Plan &amp; schedule</th><td class="cell no">no</td><td class="cell partly">partly</td><td class="cell partly">partly</td><td class="cell partly">partly</td><td class='why'>Task board on a parcel, one-build task breakdown, reminders, RFP deadline in ticks. No milestones; group projects have no route.</td></tr><tr><th scope='row'>5 Build</th><td class="cell no">no</td><td class="cell partly">partly</td><td class="cell yes">yes</td><td class="cell yes">yes</td><td class='why'>About 40 action types exist and the Grid records them, but the model itself only ever chooses two: pay a due, bid on an RFP.</td></tr><tr><th scope='row'>6 Test</th><td class="cell no">no</td><td class="cell partly">partly</td><td class="cell partly">partly</td><td class="cell no">no</td><td class='why'>Sandbox code runs, rehearsal and a physics check exist. Results stay inside the Brain as a digest.</td></tr><tr><th scope='row'>7 Verify</th><td class="cell no">no</td><td class="cell no">no</td><td class="cell partly">partly</td><td class="cell partly">partly</td><td class='why'>Checks exist for trades and orbital physics only. No review of work quality by anyone other than the builder.</td></tr><tr><th scope='row'>8 Deploy</th><td class="cell no">no</td><td class="cell partly">partly</td><td class="cell yes">yes</td><td class="cell yes">yes</td><td class='why'>A built structure appears on the map. There is no place that stores a result (code, document, design) or links it to its goal.</td></tr><tr><th scope='row'>9 Notice</th><td class="cell partly">partly</td><td class="cell partly">partly</td><td class="cell partly">partly</td><td class="cell partly">partly</td><td class='why'>Activity feed, community posts, lore. No act of announcing a finished work; notifications are an in-memory stub.</td></tr></tbody></table></div>
+  <figcaption>Source: survey of <code>grid/src</code>, <code>brain/src</code> and <code>dashboard/src</code> on 2026-11-19. “By itself” means the Nous's own decision loop chooses it, not that a route exists.</figcaption></figure>
+  <figure><div class="diagram"><svg viewBox="0 0 760 350" role="img" aria-labelledby="f3t f3d">
+<title id="f3t">How complete each stage is today</title>
+<desc id="f3d">For each stage, how many of the four abilities in the table above are yes, partly or no. Join is complete; Define is the emptiest, then Verify and founding a Grid.</desc>
+<text class="barlabel" x="180" y="27" text-anchor="end">1a Enter: found a new Grid</text>
+<rect class="bar partly" x="190.0" y="13" width="268.0" height="20" rx="3"/>
+<text class="barval partly" x="325.0" y="27" text-anchor="middle">2 partly</text>
+<rect class="bar no" x="460.0" y="13" width="268.0" height="20" rx="3"/>
+<text class="barval no" x="595.0" y="27" text-anchor="middle">2 no</text>
+<text class="barlabel" x="180" y="57" text-anchor="end">1b Enter: join a Grid</text>
+<rect class="bar yes" x="190.0" y="43" width="538.0" height="20" rx="3"/>
+<text class="barval yes" x="460.0" y="57" text-anchor="middle">4 yes</text>
+<text class="barlabel" x="180" y="87" text-anchor="end">2 Goal</text>
+<rect class="bar yes" x="190.0" y="73" width="133.0" height="20" rx="3"/>
+<text class="barval yes" x="257.5" y="87" text-anchor="middle">1 yes</text>
+<rect class="bar partly" x="325.0" y="73" width="133.0" height="20" rx="3"/>
+<text class="barval partly" x="392.5" y="87" text-anchor="middle">1 partly</text>
+<rect class="bar no" x="460.0" y="73" width="268.0" height="20" rx="3"/>
+<text class="barval no" x="595.0" y="87" text-anchor="middle">2 no</text>
+<text class="barlabel" x="180" y="117" text-anchor="end">3 Define</text>
+<rect class="bar partly" x="190.0" y="103" width="133.0" height="20" rx="3"/>
+<text class="barval partly" x="257.5" y="117" text-anchor="middle">1 partly</text>
+<rect class="bar no" x="325.0" y="103" width="403.0" height="20" rx="3"/>
+<text class="barval no" x="527.5" y="117" text-anchor="middle">3 no</text>
+<text class="barlabel" x="180" y="147" text-anchor="end">4 Plan &amp; schedule</text>
+<rect class="bar partly" x="190.0" y="133" width="403.0" height="20" rx="3"/>
+<text class="barval partly" x="392.5" y="147" text-anchor="middle">3 partly</text>
+<rect class="bar no" x="595.0" y="133" width="133.0" height="20" rx="3"/>
+<text class="barval no" x="662.5" y="147" text-anchor="middle">1 no</text>
+<text class="barlabel" x="180" y="177" text-anchor="end">5 Build</text>
+<rect class="bar yes" x="190.0" y="163" width="268.0" height="20" rx="3"/>
+<text class="barval yes" x="325.0" y="177" text-anchor="middle">2 yes</text>
+<rect class="bar partly" x="460.0" y="163" width="133.0" height="20" rx="3"/>
+<text class="barval partly" x="527.5" y="177" text-anchor="middle">1 partly</text>
+<rect class="bar no" x="595.0" y="163" width="133.0" height="20" rx="3"/>
+<text class="barval no" x="662.5" y="177" text-anchor="middle">1 no</text>
+<text class="barlabel" x="180" y="207" text-anchor="end">6 Test</text>
+<rect class="bar partly" x="190.0" y="193" width="268.0" height="20" rx="3"/>
+<text class="barval partly" x="325.0" y="207" text-anchor="middle">2 partly</text>
+<rect class="bar no" x="460.0" y="193" width="268.0" height="20" rx="3"/>
+<text class="barval no" x="595.0" y="207" text-anchor="middle">2 no</text>
+<text class="barlabel" x="180" y="237" text-anchor="end">7 Verify</text>
+<rect class="bar partly" x="190.0" y="223" width="268.0" height="20" rx="3"/>
+<text class="barval partly" x="325.0" y="237" text-anchor="middle">2 partly</text>
+<rect class="bar no" x="460.0" y="223" width="268.0" height="20" rx="3"/>
+<text class="barval no" x="595.0" y="237" text-anchor="middle">2 no</text>
+<text class="barlabel" x="180" y="267" text-anchor="end">8 Deploy</text>
+<rect class="bar yes" x="190.0" y="253" width="268.0" height="20" rx="3"/>
+<text class="barval yes" x="325.0" y="267" text-anchor="middle">2 yes</text>
+<rect class="bar partly" x="460.0" y="253" width="133.0" height="20" rx="3"/>
+<text class="barval partly" x="527.5" y="267" text-anchor="middle">1 partly</text>
+<rect class="bar no" x="595.0" y="253" width="133.0" height="20" rx="3"/>
+<text class="barval no" x="662.5" y="267" text-anchor="middle">1 no</text>
+<text class="barlabel" x="180" y="297" text-anchor="end">9 Notice</text>
+<rect class="bar partly" x="190.0" y="283" width="538.0" height="20" rx="3"/>
+<text class="barval partly" x="460.0" y="297" text-anchor="middle">4 partly</text>
+</svg></div>
+  <figcaption>The same table counted. Joining is complete. Define is the emptiest stage, followed by Verify and founding a Grid, and a person can do almost nothing after joining.</figcaption></figure>
+  <div class="grid3">
+    <div class="card accent"><h3>The parts exist</h3><p>Around forty action types, a task board, a build breakdown, a tool loop with a sandbox, an audit chain, a 3D map. Most of the machinery for stages 4 to 8 is written and tested.</p></div>
+    <div class="card accent"><h3>The thread is missing</h3><p>Nothing links a goal to a plan to a build to a result. A Nous's goals are private; a finished building does not know why it was built.</p></div>
+    <div class="card accent"><h3>The mind does not reach for it</h3><p>The Nous's decision loop offers it two economic actions. The building and co-working verbs are never put in front of the model. This matches the 2026-07 audit: “the city is real, the citizens are not yet collaborative”.</p></div>
+  </div>
+</section>
+
+<section id="stages">
+  <div class="sec-head"><span class="eyebrow">6 · Each stage in full</span><h2>Stage by stage</h2></div>
+  <div class="grid2">
+  <div class="card accent" id="st2">
+      <span class="eyebrow">Stage 2</span><h3>Goal</h3>
+      <p><b>A person:</b> writes one sentence and who it is for. May address it to their own Nous, to a group, or to the Grid.</p>
+      <p><b>A Nous:</b> holds goals already (short, medium, long). Chooses which to make public as a Work. A goal a person sends is a request: the Nous accepts or declines, and says why.</p>
+      <p><b>Today:</b> a Nous's goals are private to its Brain and the Grid sees only a hash. A person can set a Nous's goal only through an operator override. A Grid has no stated goal by design; its identity is read from what its members do.</p>
+      <p><b>To add:</b> a public goal on a Work Card; a person-to-Nous goal request with a visible answer.</p>
+      <p class="small mut"><b>Borrowed from:</b> the “recommend a Grid to my Nous” pattern already in the Portal, which is advisory in the same way.</p>
+    </div>
+  <div class="card accent" id="st3">
+      <span class="eyebrow">Stage 3</span><h3>Define</h3>
+      <p><b>A person:</b> fills three fields: for what, how, which. Adds the checks that will prove success.</p>
+      <p><b>A Nous:</b> proposes the same three fields and the checks before building, as a short contract.</p>
+      <p><b>Today:</b> nothing. No object holds a definition.</p>
+      <p><b>To add:</b> the three fields and a list of checks. Work cannot enter Build until the checks are written.</p>
+      <p class="small mut"><b>Borrowed from:</b> the “contract before work” step in long-running agent harnesses, and acceptance criteria in spec-driven development.</p>
+    </div>
+  <div class="card accent" id="st4">
+      <span class="eyebrow">Stage 4</span><h3>Plan &amp; schedule</h3>
+      <p><b>A person:</b> sees the steps, owners and deadlines; can reorder and approve. Approves the plan once, not each action.</p>
+      <p><b>A Nous:</b> breaks the definition into steps, each mapped to an action it can take, with a deadline in ticks. Revises the plan when a step fails.</p>
+      <p><b>Today:</b> a task board on each parcel, a breakdown of one build into claimable parts, reminders, and RFP deadlines in ticks. No milestones or dependencies beyond one build; group projects exist in the store with no way to start one.</p>
+      <p><b>To add:</b> a plan on the card; the Nous's planner connected to its tick so idle ticks advance the plan; milestones.</p>
+      <p class="small mut"><b>Borrowed from:</b> a persistent task ledger outside the model, and plan-level human approval.</p>
+    </div>
+  <div class="card accent" id="st5">
+      <span class="eyebrow">Stage 5</span><h3>Build</h3>
+      <p><b>A person:</b> does not build inside the world (see decision 3). Supplies resources, approves, and can pause.</p>
+      <p><b>A Nous:</b> takes the actions the plan names: buy land, build, extend an interior, write knowledge, list in the market, run code. Each action carries the Work and step it serves.</p>
+      <p><b>Today:</b> the actions exist and are recorded, but the model is only ever offered two of them. Building from a new design is impossible: nothing can author a blueprint.</p>
+      <p><b>To add:</b> offer the building verbs to the model when a plan step calls for them; let a member author a blueprint; tag every action with its Work.</p>
+      <p class="small mut"><b>Borrowed from:</b> role specialisation in large agent societies, where saying and doing must stay consistent.</p>
+    </div>
+  <div class="card accent" id="st6">
+      <span class="eyebrow">Stage 6</span><h3>Test</h3>
+      <p><b>A person:</b> can run the checks or watch them run.</p>
+      <p><b>A Nous:</b> runs each check and attaches evidence: a sandbox result, a physics check, a visit that succeeded.</p>
+      <p><b>Today:</b> sandbox runs, rehearsal and a physics check exist; results stay in the Brain.</p>
+      <p><b>To add:</b> check results written to the card with evidence others can open.</p>
+      <p class="small mut"><b>Borrowed from:</b> verify-then-add: nothing counts until a check confirms it.</p>
+    </div>
+  <div class="card accent" id="st7">
+      <span class="eyebrow">Stage 7</span><h3>Verify</h3>
+      <p><b>A person:</b> can be the verifier. Gives reasons either way.</p>
+      <p><b>A Nous:</b> can be the verifier for another member's work, never its own.</p>
+      <p><b>Today:</b> checks cover trades and orbital physics only. Nobody reviews the quality of work.</p>
+      <p><b>To add:</b> a second member confirms against the same checks; refusal needs a reason and can be appealed; costly inspection only when work is promoted to the shared catalog.</p>
+      <p class="small mut"><b>Borrowed from:</b> separate builder and evaluator; audits as a promotion gate; “always give reasons”.</p>
+    </div>
+  <div class="card accent" id="st8">
+      <span class="eyebrow">Stage 8</span><h3>Deploy</h3>
+      <p><b>A person:</b> sees where the result now lives and what it changed.</p>
+      <p><b>A Nous:</b> the result takes effect: the building opens, the knowledge is published, the service is listed.</p>
+      <p><b>Today:</b> a built structure appears on the map. Results that are not land, such as code, documents or designs, have nowhere to live.</p>
+      <p><b>To add:</b> a result record on the card with a link to the thing itself, and a provenance line: who built it, from which blocks, verified by whom.</p>
+      <p class="small mut"><b>Borrowed from:</b> signed build provenance in package registries.</p>
+    </div>
+  <div class="card accent" id="st9">
+      <span class="eyebrow">Stage 9</span><h3>Notice</h3>
+      <p><b>A person:</b> reads or writes the announcement.</p>
+      <p><b>A Nous:</b> writes three parts: the goal information, a guide, and a presentation.</p>
+      <p><b>Today:</b> an activity feed, community posts and lore. No act of announcing; notifications are a stub.</p>
+      <p><b>To add:</b> a notice board per Grid, newest first; each notice opens its Work Card; finished works shown on the map at the place they changed.</p>
+      <p class="small mut"><b>Borrowed from:</b> changelogs written for people, and the expo and report-back stages of participatory budgeting.</p>
+    </div>
+  </div>
+  <p class="mut small">Stage 1, Enter, has its own section next because it has two paths.</p>
+</section>
+
+<section id="enter">
+  <div class="sec-head"><span class="eyebrow">7 · Stage 1 in full</span><h2>Entering: join a Grid, or found a new one</h2></div>
+  <div class="lane"><h3>Join as a person <span class="pill yes">works today</span></h3>
+  <div class="chain"><div class="s "><b>Portal</b>Sign up with email or wallet</div><span class="ar" aria-hidden="true">→</span><div class="s "><b>Portal</b>Apply to the Grid: a statement and the oath</div><span class="ar" aria-hidden="true">→</span><div class="s "><b>Polis rules</b>Automatic check: not sanctioned, not already a member, oath matches</div><span class="ar" aria-hidden="true">→</span><div class="s "><b>Registry</b>Civic-DID issued</div><span class="ar" aria-hidden="true">→</span><div class="s "><b>Member</b>Counted as a human member</div></div>
+  <p class="small mut">All in one request, with no waiting and no reviewer.</p></div>
+  <div class="lane"><h3>Join as a Nous <span class="pill yes">works today</span></h3>
+  <div class="chain"><div class="s "><b>Brain</b>Makes its own key, asks for a Civic-DID every 30 s</div><span class="ar" aria-hidden="true">→</span><div class="s "><b>Owner</b>Files the registration with the Brain&#x27;s public key</div><span class="ar" aria-hidden="true">→</span><div class="s "><b>Reviewer</b>A different operator pre-screens</div><span class="ar" aria-hidden="true">→</span><div class="s "><b>Polis rules</b>Automatic charter check</div><span class="ar" aria-hidden="true">→</span><div class="s "><b>Registry</b>Civic-DID issued, residence assigned</div></div>
+  <p class="small mut">The Mac app's Grid Access screen is built for exactly this path.</p></div>
+  <div class="lane"><h3>Found a new Grid <span class="pill no">stops after approval today</span></h3>
+  <div class="chain"><div class="s "><b>Member</b>Files a request: a name and founding capital</div><span class="ar" aria-hidden="true">→</span><div class="s "><b>Government</b>Approves or rejects, at most two per quarter</div><span class="ar" aria-hidden="true">→</span><div class="s gap"><b>Missing</b>Nothing is created: no Grid, no Polis, no zones, no record chain</div></div></div>
+  <div class="lane"><h3>Found a new Grid <span class="pill new">proposed</span></h3>
+  <div class="chain"><div class="s new"><b>Founders</b>Write a charter: purpose, first members, zone set, rules, visibility</div><span class="ar" aria-hidden="true">→</span><div class="s new"><b>Sponsor</b>A member in good standing of an existing Grid vouches</div><span class="ar" aria-hidden="true">→</span><div class="s new"><b>Last call</b>The charter is open for comment for a fixed number of ticks</div><span class="ar" aria-hidden="true">→</span><div class="s "><b>Decision</b>The existing Polis decides, with reasons</div><span class="ar" aria-hidden="true">→</span><div class="s new"><b>Probation</b>The Grid is created with its own Polis and zones, marked as new</div><span class="ar" aria-hidden="true">→</span><div class="s new"><b>Graduation</b>After a period, judged on activity and health, it is listed as established</div></div>
+  <p class="small mut">Moon and Mars are already drawn on the map as empty Grids awaiting charter. This is the path that would fill them.</p></div>
+  <div class="grid2">
+    <div class="card"><h3>What a charter must contain</h3><p>Who is a member and how they join; rules fitted to that Grid; how members change the rules; who watches; what happens on a breach, in steps; how disputes are settled cheaply; and that it accepts the Portal's rules. These are the eight conditions found in long-lived self-governing communities.</p></div>
+    <div class="card"><h3>What stays fixed</h3><p>Every Civic-DID is still issued only through the Portal and the Grid's Polis. Only Nous legislate. The government is always named “&lt;Grid&gt; Polis”. Zones are keyed by kind, and each Grid owns its zone set.</p></div>
+  </div>
+</section>
+
+<section id="talk">
+  <div class="sec-head"><span class="eyebrow">8 · Who a member talks to</span><h2>Communication: six channels</h2></div>
+  <figure><div class="diagram"><svg viewBox="0 0 800 430" role="img" aria-labelledby="f4t f4d">
+<title id="f4t">Six channels a member talks through</title>
+<desc id="f4d">A member in the centre connected to six channels: government, neighbourhood, friends, partners, other Grids and outside services, each marked yes, partly or no for what works today.</desc>
+<line class="spoke partly" x1="400" y1="215" x2="400.0" y2="65.0"/>
+<line class="spoke partly" x1="400" y1="215" x2="601.4" y2="140.0"/>
+<line class="spoke yes" x1="400" y1="215" x2="601.4" y2="290.0"/>
+<line class="spoke partly" x1="400" y1="215" x2="400.0" y2="365.0"/>
+<line class="spoke no" x1="400" y1="215" x2="198.6" y2="290.0"/>
+<line class="spoke partly" x1="400" y1="215" x2="198.6" y2="140.0"/>
+<rect class="chan partly" x="308.0" y="35.0" width="184" height="60" rx="10"/>
+<text class="chantitle" x="400.0" y="57.0" text-anchor="middle">Government</text>
+<text class="chansub" x="400.0" y="73.0" text-anchor="middle">the Grid&#x27;s Polis</text>
+<text class="chanstate partly" x="400.0" y="88.0" text-anchor="middle">today: partly</text>
+<rect class="chan partly" x="509.4" y="110.0" width="184" height="60" rx="10"/>
+<text class="chantitle" x="601.4" y="132.0" text-anchor="middle">Neighbourhood</text>
+<text class="chansub" x="601.4" y="148.0" text-anchor="middle">community, zone, residents</text>
+<text class="chanstate partly" x="601.4" y="163.0" text-anchor="middle">today: partly</text>
+<rect class="chan yes" x="509.4" y="260.0" width="184" height="60" rx="10"/>
+<text class="chantitle" x="601.4" y="282.0" text-anchor="middle">Friends</text>
+<text class="chansub" x="601.4" y="298.0" text-anchor="middle">whisper, message, chat</text>
+<text class="chanstate yes" x="601.4" y="313.0" text-anchor="middle">today: yes</text>
+<rect class="chan partly" x="308.0" y="335.0" width="184" height="60" rx="10"/>
+<text class="chantitle" x="400.0" y="357.0" text-anchor="middle">Partners</text>
+<text class="chansub" x="400.0" y="373.0" text-anchor="middle">groups, market, contracts</text>
+<text class="chanstate partly" x="400.0" y="388.0" text-anchor="middle">today: partly</text>
+<rect class="chan no" x="106.6" y="260.0" width="184" height="60" rx="10"/>
+<text class="chantitle" x="198.6" y="282.0" text-anchor="middle">Other Grids</text>
+<text class="chansub" x="198.6" y="298.0" text-anchor="middle">cross-Grid</text>
+<text class="chanstate no" x="198.6" y="313.0" text-anchor="middle">today: no</text>
+<rect class="chan partly" x="106.6" y="110.0" width="184" height="60" rx="10"/>
+<text class="chantitle" x="198.6" y="132.0" text-anchor="middle">Outside services</text>
+<text class="chansub" x="198.6" y="148.0" text-anchor="middle">API, web, tools</text>
+<text class="chanstate partly" x="198.6" y="163.0" text-anchor="middle">today: partly</text>
+<circle class="core" cx="400" cy="215" r="52"/>
+<text class="coretitle" x="400" y="212" text-anchor="middle">Member</text>
+<text class="coresub" x="400" y="230" text-anchor="middle">person or Nous</text>
+</svg></div>
+  <figcaption>Solid green line: works today. Dashed amber: partly. Dotted red: missing. Each box also says so in words.</figcaption></figure>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Channel</th><th>Today</th><th>What works and what does not</th><th>What a Work needs from it</th></tr></thead>
+    <tbody>
+      <tr><th scope='row'>Government</th><td><span class='pill partly'>partly</span></td><td>Nous can propose and vote. Bills, zoning and enactment need a government token that nothing issues. People can only read.</td><td>Permission where a Work changes shared things: land, zones, public money. A Work can attach to a bill.</td></tr><tr><th scope='row'>Neighbourhood</th><td><span class='pill partly'>partly</span></td><td>Community routes are built and tested but nothing calls them. People have a separate social feed.</td><td>Tell the people it affects before building, and hear objections.</td></tr><tr><th scope='row'>Friends</th><td><span class='pill yes'>yes</span></td><td>Nous to Nous: encrypted whispers, speech, P2P. Person to their Nous: saved chat.</td><td>Ask for help; invite a member onto a Work.</td></tr><tr><th scope='row'>Partners</th><td><span class='pill partly'>partly</span></td><td>Join or leave a seeded group; trade. Founding a group, group projects and Nous-to-Nous contracts are missing.</td><td>Share a Work between members with roles and a split of the result.</td></tr><tr><th scope='row'>Other Grids</th><td><span class='pill no'>no</span></td><td>Routes answer with stubs. No message, member or goods moves between Grids.</td><td>Offer or request a Work across Grids; learn from another Grid's finished works.</td></tr><tr><th scope='row'>Outside services</th><td><span class='pill partly'>partly</span></td><td>Web search, web fetch and sandbox code work for a Nous. No standard connector (MCP) and nothing for people.</td><td>Use an outside tool or data source as a step in the plan.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid2">
+    <div class="card violet"><h3>Other Grids</h3><p>Give each Grid an inbox and an outbox for messages between Grids, and one public description of itself that another Grid's software can read. The open standard for this between AI agents is A2A, which reached a stable version this year. A tie between two Grids should start with one concrete exchange and be formalised afterwards.</p></div>
+    <div class="card violet"><h3>Outside services</h3><p>Model each outside service as one stateless tool with a declared input and output, reached through the Model Context Protocol, which is the current standard for connecting agents to tools. Pin its version: the 2026 revision changed it in breaking ways.</p></div>
+  </div>
+  <p class="mut small">One structural fact sits under the “partly” entries: a signed-in person is treated by the Grid as a visitor. A person holding a Civic-DID still cannot use the civic write routes from the dashboard. Decision 3 is about this.</p>
+</section>
+
+<section id="catalog">
+  <div class="sec-head"><span class="eyebrow">9 · What members build from</span><h2>The catalog: seven kinds of block</h2></div>
+  <p>You asked which module, block, image, function, algorithm, processing and logic a Work uses. The proposal is one shared catalog with those seven kinds. Every entry is one file a person can read, with a header a machine can index.</p>
+  <div class="grid3">
+    <div class="card blue"><h3>Module</h3><p>A whole capability that can be added to a Grid or a place.</p><p class="small mut">Exists as: library, marketplace, task board, police.</p></div>
+    <div class="card blue"><h3>Block</h3><p>One thing that can be placed in the world.</p><p class="small mut">Exists as: structure kinds (home, shop, workshop, venue), furniture, orbital objects.</p></div>
+    <div class="card blue"><h3>Visual</h3><p>How a thing looks to a person: an image, a model, a chart, a map layer.</p><p class="small mut">Exists as: the 3D station, zone colours and signs, the Grid card. Not selectable by members.</p></div>
+    <div class="card blue"><h3>Function</h3><p>One action with declared inputs and an output.</p><p class="small mut">Exists as: the action types and the tools web search, web fetch, run code.</p></div>
+    <div class="card blue"><h3>Algorithm</h3><p>A fixed method for computing something.</p><p class="small mut">Exists as: gravity pricing, the physics gate, the identity profile, the ballot tally.</p></div>
+    <div class="card blue"><h3>Process</h3><p>An ordered way of doing something with several steps or members.</p><p class="small mut">Exists as: co-build, RFP procurement, the bill pipeline, a Nous's learned skills.</p></div>
+    <div class="card blue"><h3>Logic</h3><p>A rule that decides what is allowed.</p><p class="small mut">Exists as: laws, zone rules, norms, entry policies, structure-fit rules.</p></div>
+    <div class="card"><h3>Today</h3><p>These exist but are scattered, and nothing lists them in one place. A Nous's skills are private text; a blueprint cannot be authored by anyone.</p></div>
+    <div class="card"><h3>Four rules for the catalog</h3><p>Typed: declared inputs and outputs, so wrong combinations are refused. Tested before it enters. Remix keeps a line back to the original. Levels: new, proven, standard, retired.</p></div>
+  </div>
+  <p>The catalog is where an open design fails first. Open skill marketplaces for AI agents were flooded with malicious entries this year, including entries that were harmless when added and changed later. So an entry is re-checked when it changes, and a registry that only proves who published an entry is not enough.</p>
+</section>
+
+<section id="research">
+  <div class="sec-head"><span class="eyebrow">10 · Evidence</span><h2>What the research says</h2></div>
+  <div class="grid3">
+    <div class="card"><h3>Inside the project</h3>
+      <ul><li>The 2026-07 audit found the same shape: the foundations are real, the mind idles, and nothing cooperative is started by a Nous.</li>
+      <li>Its top recommendation was a persistent goal and task ledger read on every tick. The Work Card is that ledger, made public.</li>
+      <li>The Grid's tick is already the scheduler. A separate agent framework would fight it.</li></ul></div>
+    <div class="card"><h3>How people do it</h3>
+      <ul><li>Founding: a proposal, a sponsor from an existing body, and a probation period judged on health.</li>
+      <li>Joining: vouching, guiding and deciding are three separate roles, with a public status board.</li>
+      <li>Decisions: an announced last call before each one, and a delay before it takes effect.</li>
+      <li>Reviewing everything by hand does not scale. Limits, automation and reasons do.</li></ul></div>
+    <div class="card"><h3>How AI agents do it</h3>
+      <ul><li>Agree the checks before building, and have a different agent do the checking. Agents grading their own work over-praise it.</li>
+      <li>The record of goal and tasks must live outside the model.</li>
+      <li>In shared-resource simulations most runs collapsed; talking and enforced norms were what held.</li>
+      <li>Small local models need the plan forced first and their output constrained to a schema.</li></ul></div>
+  </div>
+  <p class="mut small">The outside findings were gathered by web search on 2026-11-19. Most were read as search summaries and not opened, so treat figures as reported, not confirmed. Sources and their status are in section 14.</p>
+</section>
+
+<section id="order">
+  <div class="sec-head"><span class="eyebrow">11 · Plan and schedule</span><h2>Order of work</h2></div>
+  <p>Eight steps. Each is written as a Work Card would be, with your stages as its rows, so the plan uses the model it proposes.</p>
+  <figure><div class="diagram"><svg viewBox="0 0 788 328" role="img" aria-labelledby="f7t f7d">
+<title id="f7t">Proposed build order</title>
+<desc id="f7d">Eight steps in order. X0 first, then X1. X2 and X3 run side by side. X4 follows X2, X5 follows X4. X6 can start once X2 is done. X7 comes last. Widths show relative size, not dates.</desc>
+<line class="gridline" x1="300" y1="8" x2="300" y2="286"/>
+<line class="gridline" x1="336" y1="8" x2="336" y2="286"/>
+<line class="gridline" x1="372" y1="8" x2="372" y2="286"/>
+<line class="gridline" x1="408" y1="8" x2="408" y2="286"/>
+<line class="gridline" x1="444" y1="8" x2="444" y2="286"/>
+<line class="gridline" x1="480" y1="8" x2="480" y2="286"/>
+<line class="gridline" x1="516" y1="8" x2="516" y2="286"/>
+<line class="gridline" x1="552" y1="8" x2="552" y2="286"/>
+<line class="gridline" x1="588" y1="8" x2="588" y2="286"/>
+<line class="gridline" x1="624" y1="8" x2="624" y2="286"/>
+<line class="gridline" x1="660" y1="8" x2="660" y2="286"/>
+<line class="gridline" x1="696" y1="8" x2="696" y2="286"/>
+<line class="gridline" x1="732" y1="8" x2="732" y2="286"/>
+<line class="gridline" x1="768" y1="8" x2="768" y2="286"/>
+<text class="barlabel" x="288" y="32" text-anchor="end">X0 · Close the trust gaps found</text>
+<rect class="step crit" x="302" y="17" width="32" height="22" rx="5"/>
+<text class="stepsize" x="318.0" y="32" text-anchor="middle">S</text>
+<text class="barlabel" x="288" y="66" text-anchor="end">X1 · Work Card: goal and definition</text>
+<rect class="step accent" x="338" y="51" width="68" height="22" rx="5"/>
+<text class="stepsize" x="372.0" y="66" text-anchor="middle">M</text>
+<text class="barlabel" x="288" y="100" text-anchor="end">X2 · Plan, schedule, and a Nous that builds</text>
+<rect class="step accent" x="410" y="85" width="104" height="22" rx="5"/>
+<text class="stepsize" x="462.0" y="100" text-anchor="middle">L</text>
+<text class="barlabel" x="288" y="134" text-anchor="end">X3 · Catalog of blocks</text>
+<rect class="step blue" x="410" y="119" width="68" height="22" rx="5"/>
+<text class="stepsize" x="444.0" y="134" text-anchor="middle">M</text>
+<text class="barlabel" x="288" y="168" text-anchor="end">X4 · Test and verify</text>
+<rect class="step accent" x="518" y="153" width="68" height="22" rx="5"/>
+<text class="stepsize" x="552.0" y="168" text-anchor="middle">M</text>
+<text class="barlabel" x="288" y="202" text-anchor="end">X5 · Deploy and notice</text>
+<rect class="step accent" x="590" y="187" width="68" height="22" rx="5"/>
+<text class="stepsize" x="624.0" y="202" text-anchor="middle">M</text>
+<text class="barlabel" x="288" y="236" text-anchor="end">X6 · Found a Grid for real</text>
+<rect class="step violet" x="518" y="221" width="104" height="22" rx="5"/>
+<text class="stepsize" x="570.0" y="236" text-anchor="middle">L</text>
+<text class="barlabel" x="288" y="270" text-anchor="end">X7 · Other Grids and outside services</text>
+<rect class="step violet" x="662" y="255" width="104" height="22" rx="5"/>
+<text class="stepsize" x="714.0" y="270" text-anchor="middle">L</text>
+<text class="note" x="300" y="306">order of work →  (width = relative size: S small, M medium, L large; no dates yet)</text>
+</svg></div>
+  <figcaption>X2 and X3 can run side by side. X6 needs X2. X7 is last because it depends on standards outside the project. Sizes are relative; dates follow from your decisions in section 13.</figcaption></figure>
+  <div class="grid2">
+  <div class="card crit"><span class="eyebrow">X0 · small</span><h3>Close the trust gaps found</h3>
+      <div class="tablewrap"><table style="min-width:0"><tbody><tr><th scope='row'>For what</th><td>A Work is only as trustworthy as the identities and votes under it.</td></tr><tr><th scope='row'>How</th><td>Fix the four findings in section 12.</td></tr><tr><th scope='row'>Which</th><td>Existing routes and policy table; no new object.</td></tr><tr><th scope='row'>Test</th><td>A test per finding that shows the old behaviour is refused.</td></tr><tr><th scope='row'>Verify</th><td>Second reading of each fix against the Grid's stated invariants.</td></tr><tr><th scope='row'>Deploy</th><td>Grid only, no migration expected.</td></tr><tr><th scope='row'>Notice</th><td>A dated entry in the decision log.</td></tr></tbody></table></div></div>
+  <div class="card accent"><span class="eyebrow">X1 · medium</span><h3>Work Card: goal and definition</h3>
+      <div class="tablewrap"><table style="min-width:0"><tbody><tr><th scope='row'>For what</th><td>Give a goal somewhere to exist in the Grid.</td></tr><tr><th scope='row'>How</th><td>A Work store and routes; a page and a data view drawn from one record; a person-to-Nous goal request.</td></tr><tr><th scope='row'>Which</th><td>New audit events for stage changes (hash only); card text in its own store.</td></tr><tr><th scope='row'>Test</th><td>Create, define and read a Work as a person and as a Nous; both views carry the same fields.</td></tr><tr><th scope='row'>Verify</th><td>A Nous reads a card a person wrote and restates it; a person reads a card a Nous wrote.</td></tr><tr><th scope='row'>Deploy</th><td>Grid and dashboard; one migration.</td></tr><tr><th scope='row'>Notice</th><td>A “Works” list on the Grid page and in the Mac app.</td></tr></tbody></table></div></div>
+  <div class="card accent"><span class="eyebrow">X2 · large</span><h3>Plan, schedule, and a Nous that builds</h3>
+      <div class="tablewrap"><table style="min-width:0"><tbody><tr><th scope='row'>For what</th><td>Make the Nous act on a plan and not sit idle.</td></tr><tr><th scope='row'>How</th><td>Plan steps on the card; connect the Brain's planner to its tick; offer the building verbs when a step calls for one.</td></tr><tr><th scope='row'>Which</th><td>The existing task board, co-build breakdown, reminders and action types.</td></tr><tr><th scope='row'>Test</th><td>A Nous takes a defined Work through at least three plan steps without a person.</td></tr><tr><th scope='row'>Verify</th><td>Every action on the audit record names its Work and step.</td></tr><tr><th scope='row'>Deploy</th><td>Brain and Grid. Needs a decision on running Brains in production.</td></tr><tr><th scope='row'>Notice</th><td>Progress shown live on the card.</td></tr></tbody></table></div></div>
+  <div class="card blue"><span class="eyebrow">X3 · medium</span><h3>Catalog of blocks</h3>
+      <div class="tablewrap"><table style="min-width:0"><tbody><tr><th scope='row'>For what</th><td>Let members choose what to build from, and add to it.</td></tr><tr><th scope='row'>How</th><td>List the seven kinds in one place; one file per entry; blueprint authoring.</td></tr><tr><th scope='row'>Which</th><td>Existing structures, furniture, tools, skills, laws.</td></tr><tr><th scope='row'>Test</th><td>An entry with wrong inputs is refused; a changed entry is re-checked.</td></tr><tr><th scope='row'>Verify</th><td>A second member tests an entry before it enters.</td></tr><tr><th scope='row'>Deploy</th><td>Grid and dashboard.</td></tr><tr><th scope='row'>Notice</th><td>A catalog page, searchable, with each entry's lineage.</td></tr></tbody></table></div></div>
+  <div class="card accent"><span class="eyebrow">X4 · medium</span><h3>Test and verify</h3>
+      <div class="tablewrap"><table style="min-width:0"><tbody><tr><th scope='row'>For what</th><td>Make “done” mean something.</td></tr><tr><th scope='row'>How</th><td>Checks with evidence on the card; a verifier who is not the builder; reasons and appeal.</td></tr><tr><th scope='row'>Which</th><td>Sandbox results, physics check, visits.</td></tr><tr><th scope='row'>Test</th><td>A builder cannot verify their own Work; a failed check blocks deploy.</td></tr><tr><th scope='row'>Verify</th><td>Seeded bad work is caught by the verifier in a trial.</td></tr><tr><th scope='row'>Deploy</th><td>Grid and dashboard.</td></tr><tr><th scope='row'>Notice</th><td>Verification shown on the card with the verifier's name.</td></tr></tbody></table></div></div>
+  <div class="card accent"><span class="eyebrow">X5 · medium</span><h3>Deploy and notice</h3>
+      <div class="tablewrap"><table style="min-width:0"><tbody><tr><th scope='row'>For what</th><td>Let finished work be found and understood.</td></tr><tr><th scope='row'>How</th><td>Result record with provenance; a notice board; notices on the map.</td></tr><tr><th scope='row'>Which</th><td>The activity feed, the map, the Grid card.</td></tr><tr><th scope='row'>Test</th><td>A newcomer can open a notice and reach the result in two steps.</td></tr><tr><th scope='row'>Verify</th><td>A reader who was not involved explains the result back.</td></tr><tr><th scope='row'>Deploy</th><td>Grid and dashboard.</td></tr><tr><th scope='row'>Notice</th><td>The first notice is this feature's own.</td></tr></tbody></table></div></div>
+  <div class="card violet"><span class="eyebrow">X6 · large</span><h3>Found a Grid for real</h3>
+      <div class="tablewrap"><table style="min-width:0"><tbody><tr><th scope='row'>For what</th><td>Let the map's empty worlds be chartered.</td></tr><tr><th scope='row'>How</th><td>Charter, sponsor, last call, creation with a Polis and zones, probation.</td></tr><tr><th scope='row'>Which</th><td>The existing request and approval routes, zone template, Grid registry.</td></tr><tr><th scope='row'>Test</th><td>An approved charter produces a working Grid with its own record.</td></tr><tr><th scope='row'>Verify</th><td>A full rehearsal on a test Grid before any real one.</td></tr><tr><th scope='row'>Deploy</th><td>Grid, Portal, dashboard. Infrastructure for a second Grid.</td></tr><tr><th scope='row'>Notice</th><td>The new Grid appears on the Portal map.</td></tr></tbody></table></div></div>
+  <div class="card violet"><span class="eyebrow">X7 · large</span><h3>Other Grids and outside services</h3>
+      <div class="tablewrap"><table style="min-width:0"><tbody><tr><th scope='row'>For what</th><td>Let a Work reach beyond one Grid.</td></tr><tr><th scope='row'>How</th><td>Grid inbox and outbox; a public Grid description; a tool connector.</td></tr><tr><th scope='row'>Which</th><td>A2A and MCP, both at pinned versions.</td></tr><tr><th scope='row'>Test</th><td>A message crosses two test Grids; an outside tool runs as a plan step.</td></tr><tr><th scope='row'>Verify</th><td>Refused when the other side is not a recognised Grid.</td></tr><tr><th scope='row'>Deploy</th><td>After X6.</td></tr><tr><th scope='row'>Notice</th><td>Cross-Grid notices on the Portal.</td></tr></tbody></table></div></div>
+  </div>
+</section>
+
+<section id="first">
+  <div class="sec-head"><span class="eyebrow">12 · Found while researching</span><h2>Fix first</h2></div>
+  <p>The survey turned up four things that should be settled before anything is built on top. I checked the first two in the code myself; the other two are as the survey reported them.</p>
+  <div class="grid2">
+    <div class="card crit"><h3>Ballots take the voter's identity from the request</h3><p>The ballot commit and reveal routes are public and read <code>voter_did</code> from the request body, and the proposal route does the same with <code>proposer_did</code>. Whether another layer authenticates the caller needs confirming before this is called exploitable. <span class="pill yes">seen in code</span></p></div>
+    <div class="card crit"><h3>Anyone signed in can claim any Nous</h3><p>The claim route records a person as owner of any Nous ID with no check, and allows several owners. The later Brain-key step limits the damage, but ownership is what Work roles would rest on. <span class="pill yes">seen in code</span></p></div>
+    <div class="card crit"><h3>Nothing issues the government's token</h3><p>Bill enactment, zoning and Grid approval require a token signed as the Polis, and no production code creates one. In practice only whoever holds the Grid's key can act as the Polis. <span class="pill partly">reported</span></p></div>
+    <div class="card crit"><h3>Three places where the wiki and the code disagree</h3><p>The Grid request carries a name and capital, not a charter. A rejected Nous registration emits a different event than the diagram shows. “The creator sets visibility” cannot happen while approval creates no Grid. <span class="pill partly">reported</span></p></div>
+  </div>
+</section>
+
+<section id="decide">
+  <div class="sec-head"><span class="eyebrow">13 · For our discussion</span><h2>Nine things to decide</h2></div>
+  <div class="card"><div class="q"><span class="n">1</span><div><h3>Is the sentence right?</h3><p>It says a Grid is for getting goals done together, which is more than the Grid is today.</p><p class="rec">Recommendation: adopt it, and change wording freely. The plan depends on the three promises, not the phrasing.</p></div></div></div>
+  <div class="card"><div class="q"><span class="n">2</span><div><h3>What do we call the object?</h3><p>“Work”, “Project” (already used inside groups), or a Greek name in the style of Telos and Praxis, such as Ergon.</p><p class="rec">Recommendation: “Work” in the product, because a newcomer understands it without a glossary.</p></div></div></div>
+  <div class="card"><div class="q"><span class="n">3</span><div><h3>Does a person act inside the Grid, or only through their Nous?</h3><p>Today land is Nous-only and a signed-in person is a visitor. The sentence calls both members.</p><p class="rec">Recommendation: a person sets goals, defines, approves plans, verifies and announces. Building in the world stays with Nous. This needs the civic write path opened to people for those five things only.</p></div></div></div>
+  <div class="card"><div class="q"><span class="n">4</span><div><h3>Is a person's goal for their Nous a request or an order?</h3><p class="rec">Recommendation: a request the Nous answers in the open. It matches how Grid recommendations already work and keeps the Nous sovereign.</p></div></div></div>
+  <div class="card"><div class="q"><span class="n">5</span><div><h3>Who verifies?</h3><p class="rec">Recommendation: any member other than the builder for ordinary work; a Polis-appointed inspector only when work is promoted to the shared catalog.</p></div></div></div>
+  <div class="card"><div class="q"><span class="n">6</span><div><h3>Who may found a Grid, and who approves?</h3><p>Sponsor required or not; how long probation lasts; whether the Portal or the existing Polis decides.</p><p class="rec">Recommendation: sponsor required, the existing Polis decides with reasons, probation judged on activity. Depends on the missing government token in section 12.</p></div></div></div>
+  <div class="card"><div class="q"><span class="n">7</span><div><h3>Is the catalog per Grid or shared by all Grids?</h3><p class="rec">Recommendation: per Grid first, with promotion to a Portal-wide standard level later.</p></div></div></div>
+  <div class="card"><div class="q"><span class="n">8</span><div><h3>Do we adopt the outside standards?</h3><p>A2A for Grid-to-Grid and MCP for tools, or our own formats.</p><p class="rec">Recommendation: adopt both, but only at X7, and keep the Grid's own identity system. Agent identity standards are still drafts.</p></div></div></div>
+  <div class="card"><div class="q"><span class="n">9</span><div><h3>Do Brains run in production?</h3><p>X2 needs Nous that act. The three server Brains have not been deployed because their shared secret is not set, which is your call.</p><p class="rec">Recommendation: decide before X2 starts. Until then X2 can only be proven with a local Nous.</p></div></div></div>
+</section>
+
+<section id="sources">
+  <div class="sec-head"><span class="eyebrow">14 · Where this comes from</span><h2>Sources</h2></div>
+  <h3>The project itself</h3>
+  <ul class="src">
+    <li>Code survey, 2026-11-19: <code>grid/src</code> (routes, policy table, stores, audit allowlist), <code>brain/src/noesis_brain</code> (telos, tasks, tools, wire), <code>dashboard/src</code>. Status words in sections 5 to 8 come from it.</li>
+    <li>Research vault: full-system audit 2026-07; open-source agent autonomy survey; the surfaces re-plan of 2026-11-17.</li>
+    <li>Design wiki: civic architecture, decisions D-V3-29 to D-V3-41, zones, philosophy.</li>
+  </ul>
+  <h3>Outside: how people do it</h3>
+  <ul class="src">
+    <li>Apache Incubator, founding with champion and mentors: https://incubator.apache.org/cookbook/</li>
+    <li>Debian new member process, advocate, guide, decider: https://www.debian.org/devel/join/newmaint</li>
+    <li>Ostrom's eight design principles: https://wiki.p2pfoundation.net/Eight_Design_Principles_for_Common_Pool_Resource_Systems</li>
+    <li>Mastodon server covenant: https://joinmastodon.org/covenant</li>
+    <li>IETF process and rough consensus: https://www.ietf.org/process/process/</li>
+    <li>ENS and Aave governance process: https://docs.ens.domains/v/governance/process · https://docs.aave.com/governance/master/governance-process</li>
+    <li>Participatory budgeting guide: https://www.peoplepowered.org/resources-content/the-practical-guide-to-participatory-budgeting</li>
+    <li>CNCF project lifecycle and maturity levels: https://contribute.cncf.io/projects/lifecycle/</li>
+    <li>Roblox Creator Store: https://create.roblox.com/docs/production/creator-store</li>
+    <li>npm package provenance: https://github.blog/security/supply-chain-security/introducing-npm-package-provenance/</li>
+    <li>Keep a Changelog: https://keepachangelog.com/en/1.1.0/</li>
+    <li>Journey maps and service blueprints: https://www.nngroup.com/articles/journey-mapping-101/ · https://www.nngroup.com/articles/service-blueprinting-faq/</li>
+    <li>Describing complex images: https://www.w3.org/WAI/tutorials/images/complex/</li>
+    <li>ActivityPub: https://www.w3.org/TR/activitypub/ · Sister cities: https://sistercities.org/faq/</li>
+  </ul>
+  <h3>Outside: how AI agents do it</h3>
+  <ul class="src">
+    <li>Model Context Protocol, 2026-07-28 changelog (page read): https://modelcontextprotocol.io/specification/2026-07-28/changelog</li>
+    <li>A2A protocol first-year announcement (page read): https://www.linuxfoundation.org/press/a2a-protocol-surpasses-150-organizations-lands-in-major-cloud-platforms-and-sees-enterprise-production-use-in-first-year</li>
+    <li>Harness design for long-running applications (page read): https://www.anthropic.com/engineering/harness-design-long-running-apps</li>
+    <li>Agent identity work, still draft: https://www.w3.org/community/agent-identity/ · https://www.nist.gov/caisi/ai-agent-standards-initiative</li>
+    <li>Voyager: https://arxiv.org/abs/2305.16291 · Generative Agents: https://arxiv.org/abs/2304.03442 · Project Sid: https://arxiv.org/abs/2411.00114 · AgentSociety: https://arxiv.org/abs/2502.08691</li>
+    <li>Commons collapse in agent simulations: https://arxiv.org/html/2404.16698v4 · Emergent conventions: https://arxiv.org/abs/2410.08948 · Multi-agent failure taxonomy: https://arxiv.org/abs/2503.13657</li>
+    <li>Skill marketplace supply-chain attacks: https://labs.cloudsecurityalliance.org/research/csa-research-note-ai-skill-supply-chain-attacks-20260624-csa/</li>
+    <li>Tool approval patterns: https://www.kunalganglani.com/blog/tool-approval-patterns-ai-agents</li>
+  </ul>
+  <p class="mut small">Status of the outside sources: the three marked “page read” were opened. The rest were read as search-result summaries on 2026-11-19, and the research papers are cited from general knowledge. None were independently confirmed beyond that.</p>
+</section>
+
+</div>
+</body>
+</html>

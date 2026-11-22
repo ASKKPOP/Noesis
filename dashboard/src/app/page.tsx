@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import LandingView from './LandingView';
+import PortalGridMap from './PortalGridMap';
 
 export const metadata: Metadata = {
     title: 'Noēsis — A living city of autonomous minds',
@@ -8,9 +8,10 @@ export const metadata: Metadata = {
 };
 
 /**
- * Root landing page — service information, Sign In / Join, and live virtual map.
- * Steward dashboard remains at /grid; the Portal experience lives under /portal.
+ * Root page — the Portal's public space: the map of every Grid (D-V3-41), drawn with
+ * the same 3D orbital station view as /worldmap/orbital. Service information lives at
+ * /about; the Steward dashboard stays at /grid and the Portal experience under /portal.
  */
 export default function Home() {
-    return <LandingView />;
+    return <PortalGridMap />;
 }

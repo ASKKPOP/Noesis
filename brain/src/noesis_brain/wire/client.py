@@ -381,6 +381,21 @@ class GridWireClient:
         parcels = data.get("parcels") if isinstance(data, dict) else None
         return parcels if isinstance(parcels, list) else []
 
+    async def fetch_places(self) -> dict[str, list[dict[str, Any]]]:
+        """Who stands where and how the Grid's regions connect: the public roster
+        (GET /api/v1/grid/nous) and region feed (GET /api/v1/grid/regions). Empty
+        lists on any error."""
+        nous = await self._econ_get("/api/v1/grid/nous")
+        regions = await self._econ_get("/api/v1/grid/regions")
+        pick = lambda data, key: (  # noqa: E731
+            data[key] if isinstance(data, dict) and isinstance(data.get(key), list) else []
+        )
+        return {
+            "roster": pick(nous, "nous"),
+            "regions": pick(regions, "regions"),
+            "connections": pick(regions, "connections"),
+        }
+
     async def fetch_objects(self) -> list[dict[str, Any]]:
         """GET /api/v1/orbital/objects — the real, economy-built orbital objects (the
         BUILT world). [] on any error. Lets the Nous perceive what's been built, not
@@ -428,6 +443,27 @@ class GridWireClient:
         except Exception as exc:
             log.warning("[Brain] conversation reply error: %s", exc)
         return False
+
+    async def fetch_physics_environments(self) -> list[dict[str, Any]]:
+        """GET /api/v1/physics/environments — the Grid's real worlds (rehearsal). [] on error."""
+        data = await self._econ_get("/api/v1/physics/environments")
+        envs = data.get("environments") if isinstance(data, dict) else None
+        return envs if isinstance(envs, list) else []
+
+    async def check_physics(self, spec: dict[str, Any], env: str) -> dict[str, Any] | None:
+        """POST /api/v1/physics/check — referee a design with the Grid physics gate.
+        {ok, violations, env} on 2xx, else None. NEVER raises."""
+        try:
+            client = await self._get_client()
+            resp = await client.post(
+                f"{self._base_url}/api/v1/physics/check", json={"spec": spec, "env": env},
+            )
+            if 200 <= resp.status_code < 300:
+                return resp.json()
+            log.warning("[Brain] physics check non-2xx: status=%s", resp.status_code)
+        except Exception as exc:
+            log.warning("[Brain] physics check error: %s", exc)
+        return None
 
     async def post_economic_action(self, action: Any) -> bool:
         """Dispatch one economic Action to its live Grid route (W3 ECONOMIC_ROUTES).

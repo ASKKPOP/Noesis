@@ -31,7 +31,7 @@ import { appendIrsTaxCollected } from '../../audit/append-irs-tax-collected.js';
 import { appendTreasuryStructureRevenue } from '../../audit/append-treasury-structure-revenue.js';
 import { MarketplaceStore, MIN_LISTING_PRICE_WEI } from '../../marketplace/marketplace-store.js';
 import { NousAccountStore } from '../../economy/nous-account-store.js';
-import { structureRevenueDue, ZONE_TAX_BPS } from '../../civic/founding-law.js';
+import { structureRevenueDue, getZoneTaxBps } from '../../civic/founding-law.js';
 
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 
@@ -445,7 +445,7 @@ export async function registerMarketRoutes(
                             amount_wei: skim,
                             parcel_id: parcelId,
                             tick: currentTick,
-                            zone_tax_bps: ZONE_TAX_BPS[parcel.zoneId as keyof typeof ZONE_TAX_BPS],
+                            zone_tax_bps: getZoneTaxBps(parcel.zoneId),
                         });
                     } catch (e) {
                         // Skim failure must never 500 the committed settle. Log and swallow.

@@ -36,6 +36,7 @@ import { HealthWatchdog } from '../diagnostics/health-watchdog.js';
 import { registerHealthDetailedRoute } from './routes/health-detailed.js';
 import { registerCivicMapRoute } from './routes/civic-map.js';
 import { registerCivicMapZoneRoute } from './routes/civic-map-zone.js';
+import { registerGridProfileRoute } from './routes/grid-profile.js';
 import { registerLibraryRoutes } from './routes/library.js';
 import { registerCommunityRoutes } from './routes/community.js';
 import { registerTreasuryTypeBRoutes } from './routes/treasury-type-b.js';
@@ -50,6 +51,7 @@ import { registerMarketRoutes } from './routes/market.js';
 import { registerIrsRoutes } from './routes/irs.js';
 import { registerSystemMapRoute } from './routes/system-map.js';
 import { registerOrbitalRoutes } from './routes/orbital.js';
+import { registerPhysicsRoutes } from './routes/physics.js';
 import { registerGroupRoutes } from './routes/groups.js';
 import { registerGovRoutes } from './routes/gov.js';
 import { registerPolisBillsRoute } from './routes/polis-bills.js';
@@ -67,6 +69,7 @@ import { tombstoneCheck, TombstonedDidError } from '../registry/tombstone-check.
 import type { HumanRegistry } from '../human/index.js';
 import fastifyCookie from '@fastify/cookie';
 import { lookupPolicy } from './policy.js';
+import { isGridMember, isPrivateGateExempt } from './preHandlers/privateGridGate.js';
 import { tryDid } from './preHandlers/tryDid.js';
 import { requireDid, requirePortalSession } from './preHandlers/requireDid.js';
 import type { RequireDidServices } from './preHandlers/requireDid.js';
@@ -93,6 +96,8 @@ import { registerApprovalRoutes } from './routes/approvals.js';
 import { registerConversationRoutes } from './routes/conversation.js';
 import { registerPortalConversationRoutes } from './routes/portal-conversation.js';
 import { registerPortalJoinGridRoutes } from './routes/portal-join-grid.js';
+import { registerNousAlertRoutes } from './portal/nous-alert.js';
+import { registerSceneRoutes } from './routes/scene.js';
 import { registerPortalOverviewRoute } from './routes/portal-overview.js';
 import { registerCivicConversationInboxRoutes } from './routes/civic-conversation-inbox.js';
 import { registerPoliceRoutes } from './routes/police.js';
@@ -165,6 +170,8 @@ export interface GridServices {
      * When absent, portal auth routes return 503 human_registry_unavailable.
      */
     humanRegistry?: HumanRegistry;
+    /** Sends account notices by email. Unset = built from ALERT_EMAIL_* (none = no email). */
+    alertMailer?: import('./portal/alert-mailer.js').AlertMailer;
     /** ShopRegistry — required by Plan 04-03 shops endpoint. */
     shops?: ShopRegistry;
     /** GroupStore — backs the portal discovery endpoint (organizations to join).
@@ -526,6 +533,14 @@ export function buildServerWithHub(
                 gridName: services.gridName,
             });
             req.didContext = ctx;
+            // D-V3-41: a private Grid's public reads are for members only. The Portal
+            // layer (sign-in, the Grid list, a person's own account) stays open.
+            if (req.method === 'GET'
+                && services.gridRegistry?.get(services.gridName.toLowerCase())?.visibility === 'private'
+                && !isPrivateGateExempt(req.url.split('?')[0])
+                && !(await isGridMember(ctx, { gridName: services.gridName, civicDidStore: services.civicDidStore, operatorAllowlist }))) {
+                return reply.code(403).send({ error: 'private_grid_members_only' });
+            }
             return;
         }
         if (policy === 'portal_session_required') {
@@ -628,12 +643,13 @@ export function buildServerWithHub(
 
     // --- Plan 04-03: Nous roster + Inspector proxy ---
 
-    app.get('/api/v1/grid/nous', async (): Promise<NousRosterResponse> => {
+    app.get('/api/v1/grid/nous', async (req): Promise<NousRosterResponse> => {
         const registry = services.registry;
         if (!registry) {
             // Legacy test harness path — no registry wired. Treat as empty roster.
             return { nous: [] };
         }
+        const showBalances = !!resolveOperator(req.didContext?.operatorDid, operatorAllowlist);
         // Infrastructure accounts (did:noesis:system:*, e.g. the treasury) are not
         // citizens — exclude them from the public roster.
         const nous: NousRosterEntry[] = registry
@@ -643,7 +659,8 @@ export function buildServerWithHub(
                 did: r.did,
                 name: r.name,
                 region: r.region,
-                balance_wei: r.balance_wei,
+                // D-V3-43: a balance is never public. Only an operator's console gets it.
+                ...(showBalances ? { balance_wei: r.balance_wei } : {}),
                 lifecyclePhase: r.lifecyclePhase,
                 reputation: r.reputation,
                 status: r.status,
@@ -800,6 +817,8 @@ export function buildServerWithHub(
     registerConversationRoutes(app, services);
     registerPortalConversationRoutes(app, services);
     registerPortalJoinGridRoutes(app, services);
+    registerNousAlertRoutes(app, services);
+    registerSceneRoutes(app, services);
     registerPortalOverviewRoute(app, services);
     registerCivicConversationInboxRoutes(app, services);
     registerPoliceRoutes(app, services);
@@ -854,6 +873,7 @@ export function buildServerWithHub(
     //        polis-bills, nous-public-profile, visitor-audit-trail.
     registerCivicMapRoute(app, services);
     registerCivicMapZoneRoute(app, services);
+    registerGridProfileRoute(app, services);
     registerLibraryRoutes(app, services);  // Phase 48 Library v3 — reading room + contribute/cite
     registerCommunityRoutes(app, services);  // Phase 49 Communities v3 — found + charter + join
     registerMobilityRoutes(app, services);  // Phase 51 Type Mobility — abandon + adopt
@@ -868,6 +888,7 @@ export function buildServerWithHub(
     void registerIrsRoutes(app, services);
     registerSystemMapRoute(app, services);  // System Map — live aggregate of 4 surfaces + 8 institutions
     registerOrbitalRoutes(app, services);
+    registerPhysicsRoutes(app);
     registerGroupRoutes(app, services);   // W-B4 — Nous group join-sight
     void registerGovRoutes(app, services);
     registerPolisBillsRoute(app, services);

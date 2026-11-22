@@ -77,4 +77,26 @@ threshold (`> 100`) so the watchdog transitions to `critical`.
 - stale firehose frame (> 60 s with clients) → degraded
 - reconcile stale (> 5× snapshot cadence) → degraded
 
+## Account email — a person's Local Nous cannot stay running (2026-11-19)
+
+Separate from the operator alerts above. `POST /api/v1/portal/nous-alert`
+(`grid/src/api/portal/nous-alert.ts`) lets a signed-in account's Local Nous Manager ask
+the Grid to email **that account's own address** one of two fixed notices
+(`brain_down`, `local_ai_down`). The caller chooses neither recipient nor wording; one
+mail per kind per account per hour (in memory); no audit event. Sent with AWS SES
+(`alert-mailer.ts`, SDK loaded on first send).
+
+One-time setup, done by the operator (not in the repository, not done by Claude):
+
+1. In AWS SES (same region as the instance, or set `ALERT_EMAIL_REGION`): verify the
+   sending domain or address, e.g. `alerts@noesiis.com`, and add its DKIM records to DNS.
+2. Ask AWS to move the SES account out of the sandbox — in the sandbox SES only delivers
+   to verified addresses.
+3. Allow the EC2 instance role `ses:SendEmail` on that identity.
+4. In the server's `.env`: `ALERT_EMAIL_FROM=alerts@noesiis.com` (and `ALERT_EMAIL_REGION`
+   if it differs), then redeploy `grid`. `docker-compose.aws.yml` passes both through.
+
+Unset → the route answers `503 email_not_configured` and the app shows “the Grid has no
+mail service set up yet”; the Mac notification still goes out.
+
 Related: [backups.md](backups.md) · [always-on-brain.md](always-on-brain.md) · [deploy.md](deploy.md)

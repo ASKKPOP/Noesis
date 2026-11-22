@@ -301,6 +301,34 @@ Next action: operator's choice — remaining v3.0 work includes the Wave-1 Type 
   - **Open follow-ups (tracked):** authenticated Brain-key rotation path (D-SEC-05); fixing the exact Police fine amount/duration at conviction time so `fine` regains monetary teeth (D-SEC-07). Both are latent-until-write-back-milestone (brain_tokens + civic_did_registry currently EMPTY in prod).
   - **DEPLOYED to prod 2026-07-10** (commit `a9dfa1f5`, `./deploy.sh grid` with `NOESIS_DEPLOY_KEY=~/.ssh/sierrabiolab-aws.pem` — the deploy.sh default key path is wrong). Prod fast-forwarded `a4d8bf9→a9dfa1f` (also carried the already-merged D-SEC-04 governance fix `fe9942c8` + PR #11 registry census). +0 migrations (code-only rebuild). Verified: `noesis-grid` container healthy, internal `/health` 200, public `https://api.noesiis.com/health` → 200 `{"status":"ok"}`, `https://noesiis.com` 200. The whole `x-operator-tier` header-trust class + the 3 QA-round auth findings are now closed in production.
 
+## Surfaces re-plan — Portal P1+P2 BUILT 2026-11-17 (deployed 2026-11-19 with the Grid, from research/atlas-simulator)
+
+Plan: `docs/noesis-surfaces-replan-2026-11-17.html`. Decisions D-V3-40 (zones free per Grid, not built),
+D-V3-41 (public/private Grids on the orbital Portal map, partly built), D-V3-42 (Rust Brain + SwiftUI
+Mac app — Rust core begun: `brain-rs/` holds the deterministic faculties and passes all six parity fixtures via `cargo test`
+(cargo is at `~/.cargo/bin`, not on PATH); 14 fixtures as of 2026-11-18 incl. prompts, telos, spawn, body; Mac app `apps/nous-mac` (SwiftUI Nous viewer over `noesis_nous_view`, `./build.sh`) begun;
+now the full Local Nous Manager (dashboard, chat via Brain `POST /local/chat`, live panes, Local AI model picker, process, config, settings) managing the PYTHON Brain; no Rust LLM runtime, wire client, memory storage or P2P yet). Built: `GridRecord.visibility` (`GRID_VISIBILITY`), `/api/v1/portal/grids`
+`visibility/member/locked` + redaction, `/` = `OrbitalStation3D portal`, old landing at `/about`.
+G1 built same day: private-Grid gate (`preHandlers/privateGridGate.ts`, public GETs → 403 for non-members) + Grid entry
+page `/g/[grid]` with `grid.*` host rewrite; host itself not routed (see `.planning/implementation/deploy.md`).
+G2 part 1 built same day: zone law (`grid_zones` v77, `ZoneRegistry.addZone/relabelZone/removeZone`,
+`zoning.zone_set_changed` — allowlist 160). G2 part 2 built same day: land keyed on zone kind (`ParcelRegistry.setZones`, `STRUCTURE_KIND_FIT`, caps per kind),
+`seed_ring` bills may carry `zone_id` and opened land is now persisted (`ParcelStore.insertParcels`), zone removal retires
+unclaimed lots, parcel feed `zone_kind`/`zone_label`, civic-map routes live, orbital scene `setZones` + ring 4+ shells,
+Brain world view by kind. G3 built same day: identity profile (`identity/grid-profile.ts`, `GET /api/v1/grid/profile`, `g/[grid]/GridIdentity.tsx`) —
+window is a COUNT of recorded actions (no wall clock); a new audit event family must be mapped in `BY_FAMILY`/`BY_EVENT`
+or it is left out of the profile. Visibility switch built same day: `POST /api/v1/operator/grid/visibility` (H5), `grid_visibility` v78, boot override in
+`main.ts`, `operator.grid_visibility_changed` (allowlist 161, baseline lines 1087). No dashboard control yet.
+R0 started same day: `brain/parity/fixtures/*.json` (bios, ananke, chronos, hashing, thymos, parsing) recorded by
+`brain/scripts/record_parity_fixtures.py`, replayed by `brain/test/test_parity_fixtures.py`; hazards + what is not covered
+in `brain/parity/README.md`. BLOCKED for R1+: no Rust toolchain (`cargo`) and no Xcode on the dev machine.
+Next: route grid.noesiis.com (deploy); rest of R0 (LLM-loop / RPC fixtures); R1–R5.
+Carry forward: civic registry is keyed by Grid NAME not `gridId`; a new public GET that a non-member must reach on a
+private Grid needs an entry in the gate's exempt list; SSR fetches carry no member session.
+Zones: `ParcelRegistry` holds the zone set in memory — anything that changes `grid_zones` outside the zoning routes must
+call `setZones`; land for a zone is opened one NEW ring per `seed_ring` law (a ring that already has parcels is skipped);
+a Polis-added zone has structure-revenue rate 0 until an `amend_law` bill sets `ZONE_TAX_BPS.<zone_id>`.
+
 ## W-A Mind Loop — SHIPPED 2026-07-02 (from the full-system audit)
 
 Operator asked for full analytics (autonomy/visualization/availability) then approved implementation

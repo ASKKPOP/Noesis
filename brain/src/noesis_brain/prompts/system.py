@@ -183,6 +183,22 @@ def build_system_prompt(
     return "\n\n".join(sections)
 
 
+# Kinds of the six template zones — used only when a parcel feed carries no zone_kind.
+_TEMPLATE_ZONE_KIND = {
+    "residential": "home",
+    "business": "business", "shopping": "business", "manufacture": "business",
+    "infrastructure": "civic", "government_quarter": "civic",
+}
+
+
+def _zone_kind(parcel: "dict") -> "str | None":
+    """What a parcel's zone is for: 'home', 'business' or 'civic' (None if unknown)."""
+    kind = parcel.get("zone_kind")
+    if kind in ("home", "business", "civic"):
+        return kind
+    return _TEMPLATE_ZONE_KIND.get(str(parcel.get("zone")))
+
+
 def _world_section(state: "dict") -> str:
     """Render a COMPACT view of the world model — the same parcels + built objects the
     world map shows — so the Nous always 'sees' the world, not only its own land. A
@@ -195,16 +211,20 @@ def _world_section(state: "dict") -> str:
     if parcels:
         owned = sum(1 for p in parcels if p.get("owner_civic_did_hash") or p.get("status") == "owned")
         built = sum(1 for p in parcels if p.get("structure"))
+        # Zones are free per Grid (D-V3-40): the Polis may add, rename or remove them, so
+        # read each zone's KIND and label from the feed — never assume the six template names.
         avail = sum(
             1 for p in parcels
             if not (p.get("owner_civic_did_hash") or p.get("status") == "owned")
-            and p.get("zone") not in ("government_quarter", "infrastructure")
+            and _zone_kind(p) != "civic"
         )
         zones: "dict[str, int]" = {}
         for p in parcels:
-            z = str(p.get("zone") or "?")
+            label = str(p.get("zone_label") or str(p.get("zone") or "?").replace("_", " "))
+            kind = _zone_kind(p)
+            z = f"{label} ({kind})" if kind else label
             zones[z] = zones.get(z, 0) + 1
-        ztxt = ", ".join(f"{z.replace('_', ' ')} {n}" for z, n in sorted(zones.items()))
+        ztxt = ", ".join(f"{z} {n}" for z, n in sorted(zones.items()))
         lines.append(f"- {len(parcels)} parcels · {owned} owned · {avail} available to claim · {built} with structures")
         lines.append(f"- zones: {ztxt}")
     if objects:

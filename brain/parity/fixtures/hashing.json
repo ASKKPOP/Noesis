@@ -1,0 +1,205 @@
+{
+ "fixture": "hashing",
+ "version": 1,
+ "telos_goal_types": [
+  "short_term",
+  "medium_term",
+  "long_term"
+ ],
+ "telos_goal_statuses": [
+  "active",
+  "completed",
+  "abandoned",
+  "blocked"
+ ],
+ "active_telos_hash": [
+  {
+   "name": "empty",
+   "goals": [],
+   "hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "name": "one_active",
+   "goals": [
+    {
+     "description": "learn the market",
+     "goal_type": "short_term",
+     "status": "active",
+     "priority": 0.5,
+     "progress": 0.0,
+     "last_advanced_tick": 0
+    }
+   ],
+   "hash": "4530bd3159f5c73659b1bd87d77eb76b3f362be6dfb1627b1bdea086c9274a17"
+  },
+  {
+   "name": "mixed_statuses",
+   "goals": [
+    {
+     "description": "earn a living",
+     "goal_type": "long_term",
+     "status": "active",
+     "priority": 0.9,
+     "progress": 0.25,
+     "last_advanced_tick": 0
+    },
+    {
+     "description": "finished thing",
+     "goal_type": "short_term",
+     "status": "completed",
+     "priority": 0.5,
+     "progress": 1.0,
+     "last_advanced_tick": 0
+    },
+    {
+     "description": "given up",
+     "goal_type": "short_term",
+     "status": "abandoned",
+     "priority": 0.5,
+     "progress": 0.0,
+     "last_advanced_tick": 0
+    },
+    {
+     "description": "blocked for now",
+     "goal_type": "medium_term",
+     "status": "blocked",
+     "priority": 0.4,
+     "progress": 0.0,
+     "last_advanced_tick": 0
+    },
+    {
+     "description": "write lore",
+     "goal_type": "medium_term",
+     "status": "active",
+     "priority": 0.1,
+     "progress": 0.3333333333333333,
+     "last_advanced_tick": 0
+    }
+   ],
+   "hash": "87c54a3392d76b22f16ee2b630316a4d5b66526b576bca6f56995f5e2e145d94"
+  },
+  {
+   "name": "non_ascii_and_order",
+   "goals": [
+    {
+     "description": "νόησις — know thyself",
+     "goal_type": "long_term",
+     "status": "active",
+     "priority": 1.0,
+     "progress": 0.0,
+     "last_advanced_tick": 0
+    },
+    {
+     "description": "서로 돕기",
+     "goal_type": "short_term",
+     "status": "active",
+     "priority": 0.0,
+     "progress": 0.5,
+     "last_advanced_tick": 0
+    },
+    {
+     "description": "quote \" and \\ backslash",
+     "goal_type": "short_term",
+     "status": "active",
+     "priority": 0.5,
+     "progress": 0.0,
+     "last_advanced_tick": 0
+    }
+   ],
+   "hash": "d5c2a51622fc3c8c048ce8615bc0822b15d4ff5ca85eebec8d09f70dc05f4b6c"
+  },
+  {
+   "name": "not_hashed_fields_ignored",
+   "goals": [
+    {
+     "description": "same goal",
+     "goal_type": "short_term",
+     "status": "active",
+     "priority": 0.5,
+     "progress": 0.0,
+     "last_advanced_tick": 991
+    }
+   ],
+   "hash": "d0974eae03d14635cb733e48da9c298344eeaf2a7022c1abe18ad1180e1110eb"
+  },
+  {
+   "name": "not_hashed_fields_ignored_twin",
+   "goals": [
+    {
+     "description": "same goal",
+     "goal_type": "short_term",
+     "status": "active",
+     "priority": 0.5,
+     "progress": 0.0,
+     "last_advanced_tick": 3
+    }
+   ],
+   "hash": "d0974eae03d14635cb733e48da9c298344eeaf2a7022c1abe18ad1180e1110eb"
+  }
+ ],
+ "sha256_canonical": [
+  {
+   "name": "empty_object",
+   "input": {},
+   "canonical_json": "{}",
+   "hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  {
+   "name": "key_order",
+   "input": {
+    "b": 1,
+    "a": 2,
+    "c": {
+     "z": true,
+     "y": null
+    }
+   },
+   "canonical_json": "{\"a\":2,\"b\":1,\"c\":{\"y\":null,\"z\":true}}",
+   "hash": "e238c7551aeab3a4d63763242b13268386f4975976255faf6cd722430bbe8800"
+  },
+  {
+   "name": "floats",
+   "input": {
+    "half": 0.5,
+    "third": 0.3333333333333333,
+    "tiny": 1e-07,
+    "big": 1e+21,
+    "int_like": 2.0,
+    "neg_zero": -0.0
+   },
+   "canonical_json": "{\"big\":1e+21,\"half\":0.5,\"int_like\":2.0,\"neg_zero\":-0.0,\"third\":0.3333333333333333,\"tiny\":1e-07}",
+   "hash": "a5e75ccbcedbe3b24012ec60ac8ef1702a23319086cef5c5f4278c630191c3fd"
+  },
+  {
+   "name": "non_ascii_kept_raw",
+   "input": {
+    "name": "Σοφία",
+    "note": "한글 ✓",
+    "quote": "a\"b\\c",
+    "control": "tab\tnewline\n"
+   },
+   "canonical_json": "{\"control\":\"tab\\tnewline\\n\",\"name\":\"Σοφία\",\"note\":\"한글 ✓\",\"quote\":\"a\\\"b\\\\c\"}",
+   "hash": "30e04456cac23817a067c7216ac69d42da8e0db4b95ec9075ecd86a68b4832a1"
+  },
+  {
+   "name": "nested_lists",
+   "input": {
+    "values": [
+     "b",
+     "a",
+     [
+      "x",
+      1,
+      2.5
+     ]
+    ],
+    "emotions": {
+     "joy": 0.4,
+     "anger": 0.0
+    }
+   },
+   "canonical_json": "{\"emotions\":{\"anger\":0.0,\"joy\":0.4},\"values\":[\"b\",\"a\",[\"x\",1,2.5]]}",
+   "hash": "d5df23fd1184ead4f4a66ec2ee1b74ca43ea23dfc0b6b2a64a6b94789d13ce4b"
+  }
+ ]
+}

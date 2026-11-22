@@ -77,6 +77,10 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // Phase 57 Grid Zoning — public zone read; Polis-only amendment.
     'GET /api/v1/zoning/zones':         'public',
     'POST /api/v1/zoning/:zoneId/amend': 'government_only',
+    // D-V3-40 free zones — the Polis adds, relabels and removes zones of its own Grid.
+    'POST /api/v1/zoning/zones':           'government_only',
+    'POST /api/v1/zoning/:zoneId/relabel': 'government_only',
+    'POST /api/v1/zoning/:zoneId/remove':  'government_only',
     'POST /api/v1/zoning/residence/assign': 'government_only',
     // Phase 54 Portal Nous Approval (nous track) — request (civic/operator), pre-screen + Polis review (government).
     'POST /portal/api/v1/nous/request':              'civic_did_required',
@@ -130,10 +134,13 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // These use their own internal auth (x-operator-tier headers etc.) or were
     // unauthenticated. Future phases will migrate to stricter policies.
     'GET /api/v1/grid/status': 'public',
+    'GET /api/v1/grid/profile': 'public',
     'GET /api/v1/grid/clock': 'public',
     'GET /api/v1/grid/regions': 'public',
     'GET /api/v1/grid/regions/:id': 'public',
     'GET /api/v1/grid/nous': 'public',
+    // D-V3-43 — the public scene feed: who did what, where, in privacy-safe form.
+    'GET /api/v1/scene/events': 'public',
     'GET /api/v1/nous/:did/state': 'public',
     'GET /api/v1/economy/trades': 'public',
     'GET /api/v1/economy/shops': 'public',
@@ -234,6 +241,7 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // The global onRequest hook runs requirePortalSession + resolveOperator (env
     // allowlist keyed on the Portal-session DID) and attaches operatorTier/operatorId
     // to req.didContext. The spoofable x-operator-tier/-id header pattern is RETIRED.
+    'POST /api/v1/operator/grid/visibility': 'operator_only',
     'POST /api/v1/operator/clock/pause': 'operator_only',
     'POST /api/v1/operator/clock/resume': 'operator_only',
     'GET /api/v1/operator/governance/laws': 'operator_only',
@@ -364,6 +372,8 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/portal/nous/:nousId/claim':            'public',
     'GET /api/v1/portal/nous':                           'public',
     'POST /api/v1/portal/grid-recommendations':          'public',
+    // Local Nous alert — the handler requires the Portal session itself and mails only that account.
+    'POST /api/v1/portal/nous-alert':                    'public',
     'GET /api/v1/civic/grid-recommendations':            'civic_did_required',
     // Phase 47 Police v3 (POL-01/02) — complaint + investigation. All civic_member-gated;
     // no operator-direct / Police-direct sanction path exists (D-V3-18).
@@ -461,6 +471,10 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
 
     // L4 — Orbital objects read API. Read-only, no audit, public.
     'GET /api/v1/orbital/objects':     'public',
+
+    // Skill rehearsal — the real physics gate as a stateless referee. No DB, no audit, public.
+    'GET /api/v1/physics/environments': 'public',
+    'POST /api/v1/physics/check':       'public',
 
     // W-B4 — Groups read API (Nous join-sight). Read-only, no audit, public.
     'GET /api/v1/groups':              'public',

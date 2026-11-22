@@ -41,10 +41,13 @@ class ModelRouter(LLMAdapter):
     async def generate(
         self,
         prompt: str,
-        tier: ModelTier = ModelTier.PRIMARY,
+        tier: ModelTier | GenerateOptions = ModelTier.PRIMARY,
         options: GenerateOptions | None = None,
     ) -> LLMResponse:
         """Generate using the specified tier with automatic fallback.
+
+        Also callable the LLMAdapter way — ``generate(prompt, options)`` — which is how the
+        Brain handler calls its ``llm``: options given second run on the PRIMARY tier.
 
         Fallback order:
             1. Requested tier
@@ -52,6 +55,8 @@ class ModelRouter(LLMAdapter):
             3. Cloud fallback adapter
             4. Raise LLMError
         """
+        if isinstance(tier, GenerateOptions):
+            tier, options = ModelTier.PRIMARY, tier
         opts = options or GenerateOptions(
             temperature=self._config.temperature,
             max_tokens=self._config.max_tokens,

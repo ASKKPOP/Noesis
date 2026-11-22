@@ -30,6 +30,7 @@ from noesis_brain.thymos.types import Emotion
 from noesis_brain.rpc.types import Action, ActionType, build_civic_land_action, build_economic_action
 from noesis_brain.prompts.decision import (
     build_decision_prompt,
+    places_from,
     build_planning_prompt,
     build_skill_distill_prompt,
     build_social_prompt,
@@ -525,6 +526,43 @@ class BrainHandler:
 
         return result_actions
 
+    async def local_chat(self, text: str, history: list[tuple[str, str]]) -> str:
+        """The operator talking to their own Nous in the Local Nous Manager (Tier 1).
+
+        ``history`` is the conversation so far as ``(role, text)`` pairs, role "human" or
+        "nous", oldest first. The Nous answers in its own voice with those messages in
+        view, and keeps the exchange as a memory. Private: nothing here reads from or
+        writes to the Grid, and no audit event is produced. Raises LLMError when the
+        model cannot answer — the caller reports that rather than inventing a reply.
+        """
+        self.thymos.apply_triggers(text)
+        system_prompt = build_system_prompt(
+            self.psyche, self.thymos.mood, self.telos,
+            grid_name=self.grid_name, location=self.location,
+        )
+        turns = [*history, ("human", text)]
+        transcript = "\n".join(
+            f"{'Your human' if role == 'human' else self.psyche.name}: {said}" for role, said in turns
+        )
+        response = await self.llm.generate(
+            f"Your human is talking with you privately, on their own machine. The conversation so far:\n\n"
+            f"{transcript}\n\n"
+            f"Reply to their last message in character as {self.psyche.name}. "
+            f"Plain prose, 1-4 sentences. Give only your reply.",
+            GenerateOptions(
+                system_prompt=system_prompt, temperature=0.7,
+                max_tokens=1024, purpose="conversation", think=True,
+            ),
+        )
+        reply_text = response.text.strip()
+        self.thymos.decay()
+        if reply_text and self.memory is not None and hasattr(self.memory, "record_event"):
+            self.memory.record_event(
+                content=f"My human told me: \"{text}\" — I answered: \"{reply_text}\"",
+                source_did=self.did, tick=0,
+            )
+        return reply_text
+
     def schedule_reminder(self, params: dict[str, Any]) -> dict[str, Any]:
         """RPC: schedule a self-reminder (spec §3) — fires on a tick and/or a condition.
 
@@ -570,6 +608,60 @@ class BrainHandler:
         if task_id is None:
             return {"ok": False, "error": "queue_full"}
         return {"ok": True, "id": task_id}
+
+    async def rehearse_skill(self, params: dict[str, Any]) -> dict[str, Any]:
+        """RPC: rehearse a candidate skill in many randomized worlds in parallel,
+        refereed by the Grid's physics gate; keep it only if it passed everywhere.
+
+        params: {name, description, instructions, triggers?, tags?,
+                 domain?='physics', episodes?=12 (1..50), seed?}
+        """
+        import random as _random
+
+        from noesis_brain.rehearsal import PhysicsEpisodeRunner, make_physics_episodes, rehearse
+        from noesis_brain.skills.types import Skill as _Skill
+
+        if self._grid_wire_client is None:
+            return {"ok": False, "error": "no_grid"}
+        if self._skill_store is None or self.llm is None:
+            return {"ok": False, "error": "no_skill_store"}
+        if params.get("domain", "physics") != "physics":
+            return {"ok": False, "error": "unknown_domain"}
+        skill = _Skill(
+            name=str(params.get("name", "")).strip(),
+            description=str(params.get("description", "")).strip(),
+            instructions=str(params.get("instructions", "")).strip(),
+            triggers=[str(t) for t in params.get("triggers") or []],
+            tags=[str(t) for t in params.get("tags") or []],
+        )
+        try:
+            skill.validate()
+        except ValueError:
+            return {"ok": False, "error": "invalid_skill"}
+        if self._skill_store.get(skill.name) is not None:
+            return {"ok": False, "error": "skill_exists"}
+
+        wire = self._grid_wire_client
+        envs = await wire.fetch_physics_environments()
+        n = max(1, min(50, int(params.get("episodes", 12))))
+        episodes = make_physics_episodes(envs, n, _random.Random(params.get("seed")))
+        if not episodes:
+            return {"ok": False, "error": "referee_unavailable"}
+
+        report = await rehearse(skill, episodes, PhysicsEpisodeRunner(self.llm, wire.check_physics))
+        if report.passed:
+            skill.success_rate = report.success_rate
+            skill.tags = [*skill.tags, "rehearsed:physics"]
+            self._skill_store.add(skill)
+        if self.memory is not None and hasattr(self.memory, "record_event"):
+            verdict = "kept" if report.passed else "not kept"
+            self.memory.record_event(
+                content=(f"Rehearsed skill {skill.name} in {len(report.outcomes)} worlds: "
+                         f"{report.success_rate:.0%} lawful — {verdict}."),
+                source_did=self.did,
+                tick=int(params.get("tick", 0)),
+            )
+        return {"ok": True, "promoted": report.passed, **report.summary()}
 
     def _reminder_context(self, tick: int) -> dict[str, float]:
         """Signals a condition reminder can fire on: the tick + current drive levels."""
@@ -1232,8 +1324,23 @@ class BrainHandler:
             return False
         return self._top_goal() is not None
 
+    async def _see_places(self) -> "dict[str, Any] | None":
+        """Where this Nous stands and where it can walk to, or None when the Grid
+        cannot be read or does not place it. Keeps `location` true. Never raises."""
+        wire = self._grid_wire_client
+        if wire is None:
+            return None
+        try:
+            seen = await wire.fetch_places()
+            places = places_from(self.did, seen["roster"], seen["regions"], seen["connections"])
+        except Exception:
+            return None
+        if places is not None:
+            self.location = places["here_name"]
+        return places
+
     async def _run_decision_cycle(self, tick: int) -> None:
-        """One small step — work_task / speak / rest — chosen by the Nous under
+        """One small step — work_task / speak / move / rest — chosen by the Nous under
         a single coherent intent (PIANO bottleneck). Every LLM-chosen value is
         validated Brain-side (W3b guardrail discipline). Background; never fatal."""
         try:
@@ -1263,8 +1370,10 @@ class BrainHandler:
                 intent=self._current_intent,
                 skills=skills,
             )
+            # Where it stands and where it can walk to, from the Grid's own feeds.
+            places = await self._see_places()
             user_prompt = build_decision_prompt(
-                goal.description, task.description if task else None, lessons,
+                goal.description, task.description if task else None, lessons, places,
             )
             response = await self.llm.generate(
                 user_prompt,
@@ -1305,6 +1414,18 @@ class BrainHandler:
                         text=text.strip()[:500],
                     )
                     await self._grid_wire_client.post_actions([action.to_dict()], tick=tick)
+            elif act == "move":
+                # Only a place the Grid says is reachable from here (Brain-side guardrail).
+                to = decision.get("to")
+                dest = next((p for p in (places or {}).get("reachable", []) if p["id"] == to), None)
+                if dest is not None and self._grid_wire_client is not None:
+                    action = Action(action_type=ActionType.MOVE, metadata={"region": dest["id"]})
+                    await self._grid_wire_client.post_actions([action.to_dict()], tick=tick)
+                    if self.memory is not None and hasattr(self.memory, "record_event"):
+                        self.memory.record_event(
+                            content=f"Walked from {places['here_name']} to {dest['name']}",
+                            source_did=self.did, tick=tick,
+                        )
             elif act == "rest":
                 note = str(decision.get("note") or "")[:200]
                 if note and self.memory is not None and hasattr(self.memory, "record_event"):

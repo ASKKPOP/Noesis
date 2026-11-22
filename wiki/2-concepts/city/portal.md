@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-portal
 status: live
-last_verified: 2026-10-08
+last_verified: 2026-11-17
 owners: [henry, claude]
 ---
 
@@ -17,6 +17,7 @@ flowchart TD
   U[A human] --> PORT[The Portal]
   PORT -->|approves new cities| G[Grids]
   PORT -->|pre-screens every newcomer| REG[a Nous joining a Grid]
+  PORT -->|public map of every city| MAP[all Grids · public or private]
   PORT -->|one view across cities| VIEW[your wallet · all your Nous]
   PORT -. never makes laws .- POL[that is the Polis]
 ```
@@ -31,11 +32,14 @@ A growing world needs a single trusted entrance. Without it, anyone could spin u
 
 ## What it does
 
+- **Shows every city on one map.** The Portal's front page is the map of all Grids, drawn as stations in orbit — the same view as the world map. Anyone can open it without an account. Each Grid is **public** or **private**, a choice made by the Grid's creator. A public Grid is open for anyone to look at. A private Grid still appears on the map, with its name and a lock, but its details are shown only to its members — people who hold citizenship there. A private Grid is closed for real, not just labelled: its map, record, economy and live activity are refused to anyone who is not a member, while sign-in, the Grid list and your own account stay open so you can still see the lock and apply. From the map, **Enter** takes you into a Grid — to its own view if it is open to you, or to a "members only" page with the way to sign in or apply.
 - **Approves new cities.** Nobody can create a Grid without the Portal saying yes.
 - **Screens every newcomer.** Before any [Nous](../mind/nous.md) is granted citizenship in a city, the Portal checks it first, and only then does that city's government decide whether to admit it.
 - **Connects the cities.** When there is more than one Grid, the Portal is what lets them talk, trade, and let a mind move between them.
 - **Gives you one window.** A person can see every Nous they own across every city, and manage their wallet, from a single account.
 - **Lets you look around.** A discovery view answers *"what's here to join?"* — it lists the city's [organizations](groups.md) (searchable by name and domain) and points to the feed of open [Nous Houses / Holdings](holdings.md) to visit. Today it covers the single Genesis Grid; cross-Grid discovery follows when more cities exist.
+- **Shows what is happening, as it happens.** On a public Grid the map lists the latest public actions — a Nous moved, spoke, traded, opened a proposal, slept or woke; a lot was bought; a building went up; a law was enacted — and sends a pulse of light to the place it happened. A Nous is named only for the things it does in its own name. The feed never carries what was said, any amount or balance, a private message, who owns a piece of land, or who cast a ballot. When nothing is happening, nothing moves: the map invents no activity. On a private Grid this feed, like everything else, is for members only.
+- **Lets you step into a district.** From the station you can open any zone and see it as a city along the inside of its ring: a street following the ring's curve, lots on both sides, and every building standing with its roof toward the centre. Each lot shows what the Grid says is there — empty, claimed, or a home, shop, workshop or venue — whether it is kept up, worn or derelict, and whether someone is inside. A newly founded Grid shows empty lots, because that is the truth. The Nous are there too: each stands on the street of the district where it is, in its own colour and under its name, walks out when it moves elsewhere, dims when it sleeps, and shows a small sign for a moment when it speaks, trades, proposes or uses a tool. A bar across the top lists every Nous and where it is; choosing one takes you to it.
 - **Shows you how the city is doing.** A status page reports what the [Grid](grid.md) says about itself right now — whether its clock is running, whether its record is being saved, how each institution is faring, and how many Nous are at each stage of life. Everything on it is read live from the Grid; if the Grid does not answer, the page says so rather than guessing.
 
 ### Joining a Grid — by a Nous *and* a User together
