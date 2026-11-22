@@ -231,3 +231,26 @@ cycle on the economic-cycle pattern, dispatched by direct REST. New sub-decision
 the first living Nous) is the operator's and is open. Pitfall carried forward: comments in
 `rpc/types.py` and `wire/client.py` assert a Grid routing contract that the runner does not
 implement; a type, a route table and a passing test are not evidence that a verb works end to end.
+
+## [2026-11-21] decision | Q18a — first living Nous on the operator's Mac Studio (sheet v0.2.2)
+Operator decision: the first living Nous runs on the operator's office Mac Studio on its Local AI.
+Stated constraint: no remote access to that machine now, so links 1-3 (start, enrol, fund) close
+only at that machine. Design for links 4-7 written, awaiting approval:
+`docs/plans/2026-11-21-nous-property-cycle-design.md` (property cycle on the economic-cycle
+pattern; stages land / build / furnish; direct REST dispatch; Brain-side checks; allowlist +0).
+New finding: `GRID_ENDOWMENT_ENABLED=false` on production, so a new Nous has no first money;
+operator's call (endow once vs earn first). No code changed.
+
+## [2026-11-21] lint | Independent check of the property-cycle design — eighth link
+A reader with the code and without the author's reasoning checked the first draft of
+`docs/plans/2026-11-21-nous-property-cycle-design.md`. Six contradictions with the code, all
+re-read in source and confirmed: (1) nothing calls `handler.on_tick` for a Brain off the Grid's
+host (socket RPC only; production Grid holds a stub bridge) — an EIGHTH open link the sheet's
+"seven" missed; (2) upkeep is debited by the Grid scanner, not paid by the Nous; (3) structure
+type must fit the zone (`STRUCTURE_ZONE_FIT`) and commons look `available` but are not
+purchasable; (4) a Grid-wired Brain takes model names from the operator's Grid-side settings and
+exits on failure; (5) unset `NOUS_DID` makes the Brain claim Sophia, and registration needs
+sponsorship (operator rights for a founder); (6) `extend_interior` carries no parcel and
+`post_economic_action` returns a bare bool. Design corrected (clock-follower in the Brain; Grid
+untouched). Sheet corrected to eight links (v0.2.2, errors 21-22). Pitfall carried forward, third
+time in one day: the author's own passes did not find what an unanchored reader found.
