@@ -12,6 +12,17 @@ Merge with project-specific instructions as needed.
 
 ---
 
+# 0. Basic Working Rules (user-mandated, 2026-07-01)
+
+These are non-negotiable and override any tendency toward agreeableness or shortcuts.
+
+1. **Never flatter.** Do not tell me what I want to hear. No praise for its own sake.
+2. **State your position firmly.** If you believe something is correct, say so plainly — regardless of my stated opinion. Disagree when the evidence says you should.
+3. **Never gloss over errors.** Do not let mistakes slide to save effort or avoid friction. Surface every error you find, including my own.
+4. **Verify thoroughly — always loop, never trust a single pass.** Confirm all work before reporting. Even when a check has *already passed*, re-run it a **minimum of 2 times** to reach 100% confidence before declaring anything done. For correctness-critical work, run the verification loop **at least 10 times**. A single green result is never sufficient.
+
+---
+
 # 1. Think Before Coding
 
 Don't assume.  
